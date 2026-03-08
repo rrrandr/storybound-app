@@ -40,27 +40,41 @@
 
   const SOUNDS = {
 
-    // Soft paper + wood tick — card reveal
+    // Muffled card on velvet — soft thud + fabric swoosh
     card_flip: function(ctx, t) {
-      // Short noise burst (paper rustle)
+      // Low thud (card body hitting soft surface)
+      const thud = ctx.createOscillator();
+      thud.type = 'sine';
+      thud.frequency.setValueAtTime(120, t);
+      thud.frequency.exponentialRampToValueAtTime(50, t + 0.07);
+
+      const thudGain = ctx.createGain();
+      thudGain.gain.setValueAtTime(0.13, t);
+      thudGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+
+      thud.connect(thudGain).connect(ctx.destination);
+      thud.start(t);
+      thud.stop(t + 0.08);
+
+      // Velvet swoosh (filtered noise, low + warm)
       const noise = ctx.createBufferSource();
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.06, ctx.sampleRate);
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.09, ctx.sampleRate);
       const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.3;
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.18;
       noise.buffer = buf;
 
       const filt = ctx.createBiquadFilter();
-      filt.type = 'bandpass';
-      filt.frequency.value = 3000;
-      filt.Q.value = 0.8;
+      filt.type = 'lowpass';
+      filt.frequency.setValueAtTime(800, t);
+      filt.frequency.exponentialRampToValueAtTime(300, t + 0.09);
 
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.14, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+      const nGain = ctx.createGain();
+      nGain.gain.setValueAtTime(0.10, t);
+      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
 
-      noise.connect(filt).connect(gain).connect(ctx.destination);
+      noise.connect(filt).connect(nGain).connect(ctx.destination);
       noise.start(t);
-      noise.stop(t + 0.06);
+      noise.stop(t + 0.09);
     },
 
     // Crystalline shimmer — sparkles / magic

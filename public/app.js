@@ -2066,6 +2066,12 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       }
       _supabaseProfileId = userId;
 
+      // Neutralize auth form inputs to prevent Safari Keychain/TouchID autofill prompts
+      const _authEmail = document.getElementById('auth-email');
+      const _authPass  = document.getElementById('auth-password');
+      if (_authEmail) { _authEmail.setAttribute('autocomplete', 'off'); _authEmail.setAttribute('tabindex', '-1'); _authEmail.value = ''; }
+      if (_authPass)  { _authPass.setAttribute('autocomplete', 'off');  _authPass.setAttribute('tabindex', '-1');  _authPass.value = ''; }
+
       const profile = await hydrateProfile(userId);
       if (!profile) {
         routeToLegalAcceptance();
@@ -2242,12 +2248,13 @@ Introduce the name naturally within the first few paragraphs — do not announce
           ensureInitialized();
           // Previous is always enabled on scene pages (goes back to synopsis from scene 1)
           if (prevBtn) prevBtn.disabled = isAnimating;
-          // Next is invisible (not display:none) when no next page — preserves layout
+          // Next is always visible — disabled+greyed when no next page
           if (nextBtn) {
               const hasNext = currentPageIndex < pages.length - 1 && !isAnimating;
               nextBtn.disabled = !hasNext;
-              nextBtn.style.visibility = hasNext ? '' : 'hidden';
-              nextBtn.style.pointerEvents = hasNext ? '' : 'none';
+              nextBtn.style.visibility = '';
+              nextBtn.style.pointerEvents = '';
+              nextBtn.title = hasNext ? '' : 'Say or do something to continue.';
           }
           if (indicator) indicator.textContent = pages.length > 0 ? `Page ${currentPageIndex + 1} of ${pages.length}` : 'Page 1 of 1';
       }
@@ -25431,15 +25438,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div></div>
   <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${scenes} scenes · ${words.toLocaleString()} words</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div></div>
   <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div></div>
-  <div class="book-pages"></div>
+  <div class="book-pages-right"></div>
+  <div class="book-pages-top"></div>
+  <div class="book-pages-bottom"></div>
   <div class="page-shimmer"></div>
 </div>`;
 
       // Depth variance and lean (deterministic, no randomness)
       const depthVariance = (index % 3) - 1; // -1, 0, 1
-      // Depth variance applied to inner .book-3d, not the wrapper
-      const book3dEl = book.querySelector('.book-3d');
-      if (book3dEl) book3dEl.style.transform = `rotateX(6deg) translateZ(${depthVariance * 2}px)`;
+      // CSS controls base orientation (rotateX + rotateY via .mode-cover/.mode-spine)
+      // Depth variance is minimal (±2px) — omitted to avoid overriding CSS transform
       const isMobile = window.innerWidth < 900;
       if (!isMobile && (index % 7 === 0) && isForward) {
         book.classList.add('mode-lean');
@@ -25500,26 +25508,90 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   let _zoomRafId = null;
   let _zoomSource = 'forbidden'; // 'forbidden' | 'vault' — tracks which shelf opened the zoom
   let _zoomStarterDef = null;    // set when zooming a starter book
+  let _zoomSourceBook = null;    // reference to the shelf .library-book that opened the zoom
+  let _zoomBook3d = null;        // the .book-3d element moved into zoom container
+  let _zoomOrigNextSibling = null; // for restoring .book-3d to its parent
+  let _zoomSourceRect = null;    // shelf rect at time of open (for return animation)
+  let _zoomResizeHandler = null; // resize listener during zoom
+  let _zoomClosing = false;      // guard against double-close
 
   function _openLibraryZoom(entry, sourceBook) {
+    // Guard: don't open if already zoomed or closing
+    if (_zoomClosing || _zoomBook3d) return;
     _zoomEntry = entry;
+    _zoomSourceBook = sourceBook;
+    _zoomClosing = false;
     const overlay = $('libraryZoomOverlay');
     const container = $('zoomBookContainer');
     const readBtn = $('zoomReadBtn');
     if (!overlay || !container) return;
 
-    // Clone book 3D structure into zoom container
     const book3d = sourceBook.querySelector('.book-3d');
     if (!book3d) return;
+    _zoomBook3d = book3d;
+    _zoomOrigNextSibling = book3d.nextSibling; // may be null
+
+    // Capture shelf rect BEFORE moving the element
+    const sourceRect = sourceBook.getBoundingClientRect();
+    _zoomSourceRect = { top: sourceRect.top, left: sourceRect.left, width: sourceRect.width, height: sourceRect.height };
+
+    // Compute the book-3d's rect (it has transforms, so measure it)
+    const book3dRect = book3d.getBoundingClientRect();
+
+    // Move (not clone) .book-3d into zoom container
     container.innerHTML = '';
-    const clonedBook = book3d.cloneNode(true);
-    // Spine/lean books must open in full cover orientation
-    clonedBook.classList.remove('mode-spine');
-    clonedBook.classList.remove('mode-lean');
-    clonedBook.classList.add('mode-cover');
-    clonedBook.style.transform = 'rotateY(0deg)';
-    clonedBook.style.width = '';
-    container.appendChild(clonedBook);
+    container.appendChild(book3d);
+
+    // Remove shelf-specific classes for zoom display
+    book3d.classList.remove('mode-spine');
+    book3d.classList.remove('mode-lean');
+    book3d.classList.add('mode-cover');
+
+    // Inject 3D cover-edge thickness faces (3px deep boards)
+    ['book-front', 'book-back'].forEach(cls => {
+      const face = book3d.querySelector('.' + cls);
+      if (!face) return;
+      // Skip if edges already exist
+      if (face.parentNode.querySelector('.cover-edge-bottom[data-cover="' + cls + '"]')) return;
+      const bot = document.createElement('div');
+      bot.className = 'cover-edge cover-edge-bottom';
+      face.parentNode.appendChild(bot);
+      const rt = document.createElement('div');
+      rt.className = 'cover-edge cover-edge-right';
+      face.parentNode.appendChild(rt);
+      const tp = document.createElement('div');
+      tp.className = 'cover-edge cover-edge-top';
+      face.parentNode.appendChild(tp);
+      [bot, rt, tp].forEach(el => el.dataset.cover = cls);
+    });
+
+    // Compute zoom target size (70vh tall, 5:7 ratio)
+    const zoomH = window.innerHeight * 0.7;
+    const zoomW = zoomH * (5 / 7);
+
+    // Position container at the shelf book's location (using book-3d's visual rect)
+    container.style.top = book3dRect.top + 'px';
+    container.style.left = book3dRect.left + 'px';
+    container.style.width = book3dRect.width + 'px';
+    container.style.height = book3dRect.height + 'px';
+    container.classList.remove('zoom-settled');
+    container.classList.remove('zoom-flying');
+
+    // Start with shelf transform on .book-3d (no transition yet)
+    book3d.style.transition = 'none';
+    // Determine shelf transform based on mode
+    const wasSpine = sourceBook.classList.contains('mode-spine');
+    const wasLean = sourceBook.classList.contains('mode-lean');
+    let shelfTransform;
+    if (wasSpine) {
+      shelfTransform = 'rotateX(15deg) rotateY(90deg) rotateZ(-1deg)';
+    } else if (wasLean) {
+      shelfTransform = 'rotateX(15deg) rotateY(2deg) rotateZ(-2.5deg)';
+    } else {
+      shelfTransform = 'rotateX(15deg) rotateY(2deg) rotateZ(-1deg)';
+    }
+    book3d.style.transform = shelfTransform;
+    book3d.style.transformOrigin = 'center bottom'; // match shelf origin initially
 
     // Set CTA text — context-aware
     if (readBtn) {
@@ -25530,61 +25602,108 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       } else {
         readBtn.textContent = 'Read This Story';
       }
+      readBtn.style.opacity = '0';
+      readBtn.style.transition = 'opacity 0.3s ease';
     }
 
-    // Show overlay
+    // Show overlay (transparent — just captures clicks)
     overlay.classList.add('active');
     document.body.classList.add('library-zoom-active');
     _playLibrarySound('book-open');
-    if (window.playUISound) window.playUISound('book_open');
-
-    // References for animation
-    const zoomBook = container.querySelector('.book-3d');
-    const bookFront = container.querySelector('.book-front');
-    const shimmer = container.querySelector('.page-shimmer');
 
     // Cancel any lingering RAF from a previous zoom
     if (_zoomRafId) { cancelAnimationFrame(_zoomRafId); _zoomRafId = null; }
 
-    // Premium rotation with cubic edge resistance
-    const maxRotation = 60;
-    let targetRotation = 0;
-    let currentRotation = 0;
+    // Compute fly-to-center position
+    const targetTop = (window.innerHeight - zoomH) / 2 - 20; // -20 to leave room for CTA
+    const targetLeft = (window.innerWidth - zoomW) / 2;
 
-    function onMouseMove(e) {
-      if (e.target.closest && e.target.closest('.book-back')) return;
-      const rect = container.getBoundingClientRect();
-      const normalized = (e.clientX - rect.left) / rect.width;
-      targetRotation = (Math.max(0, Math.min(1, normalized)) - 0.5) * 2 * maxRotation;
-    }
+    // Force layout, then animate to center
+    container.getBoundingClientRect(); // force reflow
+    container.classList.add('zoom-flying');
 
-    function animate() {
-      currentRotation += (targetRotation - currentRotation) * 0.12;
-      if (zoomBook) zoomBook.style.transform = `rotateY(${currentRotation}deg)`;
+    // Animate container position + size
+    container.style.top = targetTop + 'px';
+    container.style.left = targetLeft + 'px';
+    container.style.width = zoomW + 'px';
+    container.style.height = zoomH + 'px';
 
-      // Dynamic front-edge shadow tied to rotation depth
-      if (bookFront) {
-        const depth = Math.abs(currentRotation) / maxRotation;
-        bookFront.style.boxShadow = `inset -14px 0 28px rgba(0,0,0,${(0.25 + depth * 0.25).toFixed(3)})`;
+    // Animate .book-3d to zoom rotation
+    book3d.style.transformOrigin = 'center center';
+    book3d.style.transform = 'rotateX(10deg) rotateY(0deg)';
+
+    // After fly animation completes, enable rotation
+    let _flySettled = false;
+    function onFlyEnd(e) {
+      if (e.target !== container && e.target !== book3d) return;
+      if (_flySettled) return;
+      _flySettled = true;
+      container.removeEventListener('transitionend', onFlyEnd);
+      book3d.removeEventListener('transitionend', onFlyEnd);
+      container.classList.add('zoom-settled');
+
+      // Enable mouse rotation RAF
+      const maxRotation = 160;
+      let targetRotation = 0;
+      let currentRotation = 0;
+      const zoomBook = book3d;
+      const bookFront = book3d.querySelector('.book-front');
+      const shimmer = book3d.querySelector('.page-shimmer');
+
+      // Kill transition so RAF can drive rotation smoothly
+      zoomBook.style.transition = 'none';
+
+      function onMouseMove(e) {
+        const rect = container.getBoundingClientRect();
+        const normalized = (e.clientX - rect.left) / rect.width;
+        targetRotation = (Math.max(0, Math.min(1, normalized)) - 0.5) * 2 * maxRotation;
       }
 
-      // Page-edge shimmer — fades in with rotation
-      if (shimmer) {
-        shimmer.style.opacity = Math.abs(currentRotation) > 20 ? (Math.min(Math.abs(currentRotation) / maxRotation, 1) * 0.25).toFixed(3) : '0';
+      function animate() {
+        currentRotation += (targetRotation - currentRotation) * 0.12;
+        zoomBook.style.transform = `rotateX(10deg) rotateY(${currentRotation}deg)`;
+
+        if (bookFront) {
+          const depth = Math.abs(currentRotation) / maxRotation;
+          bookFront.style.boxShadow = `inset -14px 0 28px rgba(0,0,0,${(0.25 + depth * 0.25).toFixed(3)})`;
+          const absAngle = Math.abs(currentRotation);
+          const specular = absAngle < 20 ? 0 : absAngle > 90 ? 0 : Math.sin((absAngle - 20) / 70 * Math.PI);
+          bookFront.style.setProperty('--specular-strength', specular.toFixed(3));
+        }
+
+        if (shimmer) {
+          shimmer.style.opacity = Math.abs(currentRotation) > 20 ? (Math.min(Math.abs(currentRotation) / maxRotation, 1) * 0.25).toFixed(3) : '0';
+        }
+
+        _zoomRafId = requestAnimationFrame(animate);
       }
+
+      container.addEventListener('mousemove', onMouseMove);
+
+      // Touch support
+      function onTouchMove(e) {
+        if (e.touches.length === 1) {
+          const touch = e.touches[0];
+          const rect = container.getBoundingClientRect();
+          const normalized = (touch.clientX - rect.left) / rect.width;
+          targetRotation = (Math.max(0, Math.min(1, normalized)) - 0.5) * 2 * maxRotation;
+        }
+      }
+      container.addEventListener('touchmove', onTouchMove, { passive: true });
 
       _zoomRafId = requestAnimationFrame(animate);
+
+      // CTA fade-in
+      if (readBtn) {
+        setTimeout(() => { if (readBtn) readBtn.style.opacity = '1'; }, 100);
+      }
+
+      // Store cleanup refs
+      overlay._mouseMoveHandler = onMouseMove;
+      overlay._touchMoveHandler = onTouchMove;
     }
-
-    container.addEventListener('mousemove', onMouseMove);
-
-    // CTA fade-in with 250ms delay
-    if (readBtn) {
-      readBtn.style.opacity = '0';
-      setTimeout(() => { if (readBtn) readBtn.style.opacity = '1'; }, 250);
-    }
-
-    _zoomRafId = requestAnimationFrame(animate);
+    container.addEventListener('transitionend', onFlyEnd);
+    book3d.addEventListener('transitionend', onFlyEnd);
 
     // Close on overlay click (but not on book/CTA)
     overlay._closeHandler = (e) => {
@@ -25592,43 +25711,50 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     };
     overlay.addEventListener('click', overlay._closeHandler);
 
-    // Touch support with same premium easing
-    function onTouchMove(e) {
-      if (e.target.closest && e.target.closest('.book-back')) return;
-      if (e.touches.length === 1) {
-        const touch = e.touches[0];
-        const rect = container.getBoundingClientRect();
-        const normalized = (touch.clientX - rect.left) / rect.width;
-        targetRotation = (Math.max(0, Math.min(1, normalized)) - 0.5) * 2 * maxRotation;
-      }
-    }
-    container.addEventListener('touchmove', onTouchMove, { passive: true });
-
     // Escape key
     function onKeyDown(e) { if (e.key === 'Escape') _closeLibraryZoom(); }
     document.addEventListener('keydown', onKeyDown);
 
-    // Store cleanup refs
-    overlay._mouseMoveHandler = onMouseMove;
-    overlay._touchMoveHandler = onTouchMove;
+    // Resize handler — recompute center position if window resizes during zoom
+    _zoomResizeHandler = () => {
+      if (_zoomClosing) return;
+      const rh = window.innerHeight * 0.7;
+      const rw = rh * (5 / 7);
+      const rt = (window.innerHeight - rh) / 2 - 20;
+      const rl = (window.innerWidth - rw) / 2;
+      // Instant reposition (no transition)
+      container.classList.remove('zoom-flying');
+      container.style.top = rt + 'px';
+      container.style.left = rl + 'px';
+      container.style.width = rw + 'px';
+      container.style.height = rh + 'px';
+    };
+    window.addEventListener('resize', _zoomResizeHandler);
+
     overlay._keyDownHandler = onKeyDown;
     overlay._zoomContainer = container;
   }
 
   function _closeLibraryZoom() {
+    if (_zoomClosing) return;
+    _zoomClosing = true;
     const overlay = $('libraryZoomOverlay');
-    if (!overlay) return;
+    const container = $('zoomBookContainer');
+    const readBtn = $('zoomReadBtn');
+    if (!overlay || !container) return;
 
-    overlay.classList.remove('active');
-    document.body.classList.remove('library-zoom-active');
     _playLibrarySound('book-close');
 
-    // Cleanup animation and reset rotation state
+    // Stop rotation RAF
     if (_zoomRafId) { cancelAnimationFrame(_zoomRafId); _zoomRafId = null; }
-    const zoomBook = overlay._zoomContainer?.querySelector('.book-3d');
-    if (zoomBook) zoomBook.style.transform = 'rotateY(0deg)';
 
-    // Cleanup listeners
+    // Remove resize listener
+    if (_zoomResizeHandler) { window.removeEventListener('resize', _zoomResizeHandler); _zoomResizeHandler = null; }
+
+    // Fade out CTA immediately
+    if (readBtn) readBtn.style.opacity = '0';
+
+    // Cleanup mouse/touch listeners
     if (overlay._zoomContainer) {
       if (overlay._mouseMoveHandler) overlay._zoomContainer.removeEventListener('mousemove', overlay._mouseMoveHandler);
       if (overlay._touchMoveHandler) overlay._zoomContainer.removeEventListener('touchmove', overlay._touchMoveHandler);
@@ -25636,8 +25762,152 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (overlay._closeHandler) overlay.removeEventListener('click', overlay._closeHandler);
     if (overlay._keyDownHandler) document.removeEventListener('keydown', overlay._keyDownHandler);
 
+    container.classList.remove('zoom-settled');
+
+    // Re-enable book3d transition for return animation (was set to 'none' for RAF rotation)
+    if (_zoomBook3d) _zoomBook3d.style.transition = '';
+
+    // Force reflow before adding zoom-flying to ensure transition starts from current state
+    container.getBoundingClientRect();
+    container.classList.add('zoom-flying');
+
+    // Re-measure source book position (may have shifted due to scroll/resize)
+    const sourceBook = _zoomSourceBook;
+    let returnRect = _zoomSourceRect;
+    if (sourceBook) {
+      const freshRect = sourceBook.getBoundingClientRect();
+      returnRect = { top: freshRect.top, left: freshRect.left, width: freshRect.width, height: freshRect.height };
+    }
+
+    // Compute where the book-3d should visually return to
+    // Use source book center, offset to account for book-3d positioning within .library-book
+    const book3d = _zoomBook3d;
+
+    // Determine return shelf transform
+    const wasSpine = sourceBook && sourceBook.classList.contains('mode-spine');
+    const wasLean = sourceBook && sourceBook.classList.contains('mode-lean');
+    let returnTransform;
+    if (wasSpine) {
+      returnTransform = 'rotateX(15deg) rotateY(90deg) rotateZ(-1deg)';
+    } else if (wasLean) {
+      returnTransform = 'rotateX(15deg) rotateY(2deg) rotateZ(-2.5deg)';
+    } else {
+      returnTransform = 'rotateX(15deg) rotateY(2deg) rotateZ(-1deg)';
+    }
+
+    // Animate container back to shelf position
+    if (returnRect) {
+      container.style.top = returnRect.top + 'px';
+      container.style.left = returnRect.left + 'px';
+      container.style.width = returnRect.width + 'px';
+      container.style.height = returnRect.height + 'px';
+    }
+
+    // Animate .book-3d back to shelf rotation
+    if (book3d) {
+      book3d.style.transformOrigin = 'center bottom'; // match shelf origin
+      book3d.style.transform = returnTransform;
+    }
+
+    let _returnSettled = false;
+    function onReturnEnd(e) {
+      if (e.target !== container && e.target !== book3d) return;
+      if (_returnSettled) return;
+      _returnSettled = true;
+      container.removeEventListener('transitionend', onReturnEnd);
+      if (book3d) book3d.removeEventListener('transitionend', onReturnEnd);
+
+      // Move .book-3d back to its original parent
+      if (book3d && sourceBook) {
+        // Remove cover-edge faces
+        book3d.querySelectorAll('.cover-edge').forEach(el => el.remove());
+        // Clear inline styles
+        book3d.style.transform = '';
+        book3d.style.transition = '';
+        book3d.style.transformOrigin = '';
+        book3d.style.width = '';
+        book3d.style.height = '';
+        // Restore mode classes
+        if (wasSpine) { book3d.classList.add('mode-spine'); book3d.classList.remove('mode-cover'); }
+        // Restore into original parent
+        if (_zoomOrigNextSibling && _zoomOrigNextSibling.parentNode === sourceBook) {
+          sourceBook.insertBefore(book3d, _zoomOrigNextSibling);
+        } else {
+          sourceBook.appendChild(book3d);
+        }
+      }
+
+      // Hide overlay
+      overlay.classList.remove('active');
+      document.body.classList.remove('library-zoom-active');
+      container.classList.remove('zoom-flying');
+
+      // Clear container inline styles
+      container.style.top = '';
+      container.style.left = '';
+      container.style.width = '';
+      container.style.height = '';
+
+      _zoomEntry = null;
+      _zoomStarterDef = null;
+      _zoomSourceBook = null;
+      _zoomBook3d = null;
+      _zoomOrigNextSibling = null;
+      _zoomSourceRect = null;
+      _zoomClosing = false;
+    }
+    container.addEventListener('transitionend', onReturnEnd);
+    if (book3d) book3d.addEventListener('transitionend', onReturnEnd);
+
+    // Fallback: if transitionend doesn't fire (e.g. no transition applied), clean up after timeout
+    setTimeout(() => { if (_zoomClosing) onReturnEnd({ target: container }); }, 800);
+  }
+
+  // Instant close (no return animation) — for when navigating away from library
+  function _closeLibraryZoomInstant() {
+    const overlay = $('libraryZoomOverlay');
+    const container = $('zoomBookContainer');
+    if (!overlay || !container) return;
+    if (_zoomRafId) { cancelAnimationFrame(_zoomRafId); _zoomRafId = null; }
+    if (_zoomResizeHandler) { window.removeEventListener('resize', _zoomResizeHandler); _zoomResizeHandler = null; }
+    // Cleanup listeners
+    if (overlay._zoomContainer) {
+      if (overlay._mouseMoveHandler) overlay._zoomContainer.removeEventListener('mousemove', overlay._mouseMoveHandler);
+      if (overlay._touchMoveHandler) overlay._zoomContainer.removeEventListener('touchmove', overlay._touchMoveHandler);
+    }
+    if (overlay._closeHandler) overlay.removeEventListener('click', overlay._closeHandler);
+    if (overlay._keyDownHandler) document.removeEventListener('keydown', overlay._keyDownHandler);
+    // Move book-3d back to source
+    const book3d = _zoomBook3d;
+    const sourceBook = _zoomSourceBook;
+    if (book3d && sourceBook) {
+      book3d.querySelectorAll('.cover-edge').forEach(el => el.remove());
+      book3d.style.transform = '';
+      book3d.style.transition = '';
+      book3d.style.transformOrigin = '';
+      book3d.style.width = '';
+      book3d.style.height = '';
+      if (sourceBook.classList.contains('mode-spine')) { book3d.classList.add('mode-spine'); book3d.classList.remove('mode-cover'); }
+      if (_zoomOrigNextSibling && _zoomOrigNextSibling.parentNode === sourceBook) {
+        sourceBook.insertBefore(book3d, _zoomOrigNextSibling);
+      } else {
+        sourceBook.appendChild(book3d);
+      }
+    }
+    overlay.classList.remove('active');
+    document.body.classList.remove('library-zoom-active');
+    container.classList.remove('zoom-flying', 'zoom-settled');
+    container.style.top = '';
+    container.style.left = '';
+    container.style.width = '';
+    container.style.height = '';
     _zoomEntry = null;
     _zoomStarterDef = null;
+    _zoomSourceBook = null;
+    _zoomBook3d = null;
+    _zoomOrigNextSibling = null;
+    _zoomSourceRect = null;
+    _zoomClosing = false;
   }
 
   // Zoom CTA — read story (vault-aware)
@@ -25646,7 +25916,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const entry = _zoomEntry;
       const source = _zoomSource;
       const starterDef = _zoomStarterDef;
-      _closeLibraryZoom();
+      if (window.playUISound) window.playUISound('page_turn');
+      _closeLibraryZoomInstant();
       if (entry._isStarter && starterDef) {
         _launchStarterStory(starterDef);
       } else {
@@ -25964,13 +26235,24 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     return !!state.hasSeenLibrarySummon;
   }
 
+  // Library book responsive scaling — books track background image size
+  // Reference width: 147px book height = 10.6vw → shelf gap 31.1-20.5 → W=1387
+  (function() {
+    const REF = 1387;
+    function scaleBooks() {
+      document.documentElement.style.setProperty('--book-zoom', window.innerWidth / REF);
+    }
+    window.addEventListener('resize', scaleBooks);
+    scaleBooks();
+  })();
+
   function _injectStarterStoryBook(listEl) {
     // Check if starters already injected
     if (listEl.querySelector('[data-starter-story]')) return;
 
     STARTER_STORIES.forEach((starterDef) => {
       const book = document.createElement('div');
-      book.className = 'library-book mode-cover';
+      book.className = 'library-book mode-cover initializing';
       book.dataset.starterStory = 'true';
       book.dataset.storyId = starterDef.id;
       book.dataset.world = (starterDef.world || '').toLowerCase();
@@ -25993,7 +26275,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   <div class="book-front">${frontContent}</div>
   <div class="book-back">${backContent}</div>
   <div class="book-spine">${spineContent}</div>
-  <div class="book-pages"></div>
+  <div class="book-pages-right"></div>
+  <div class="book-pages-top"></div>
+  <div class="book-pages-bottom"></div>
   <div class="page-shimmer"></div>
 </div>`;
 
@@ -26068,7 +26352,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   <div class="book-front">${frontContent}</div>
   <div class="book-back">${backContent2}</div>
   <div class="book-spine">${spineContent2}</div>
-  <div class="book-pages"></div>
+  <div class="book-pages-right"></div>
+  <div class="book-pages-top"></div>
+  <div class="book-pages-bottom"></div>
   <div class="page-shimmer"></div>
 </div>`;
 
@@ -26244,11 +26530,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         // Only clear and inject if starters not already present
         if (!listEl.querySelector('[data-starter-story]')) {
           listEl.innerHTML = '';
-          if (!_hasSeenLibrarySummon()) {
-            _runStarterBookSummonSequence(listEl);
-          } else {
-            _injectStarterStoryBook(listEl);
-          }
+          _injectStarterStoryBook(listEl);
         }
       }
       return;
@@ -26852,15 +27134,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div>${bookAuthor ? `<div class="book-front-author">${escapeHTML(bookAuthor)}</div>` : ''}</div></div>
   <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box">${bookAuthor ? `<p class="back-synopsis">${escapeHTML(bookAuthor)}</p>` : ''}</div><p class="back-meta">${scenes} scenes</p><p class="back-meta-vault">${metaLines.join('<br>')}</p></div></div>
   <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)}${bookAuthor ? ` <span class="spine-author">${escapeHTML(bookAuthor)}</span>` : ''}</div></div>
-  <div class="book-pages"></div>
+  <div class="book-pages-right"></div>
+  <div class="book-pages-top"></div>
+  <div class="book-pages-bottom"></div>
   <div class="page-shimmer"></div>
 </div>`;
 
       // Depth variance and lean (deterministic, no randomness)
       const depthVariance = (index % 3) - 1;
-      // Depth variance applied to inner .book-3d, not the wrapper
-      const book3dEl = book.querySelector('.book-3d');
-      if (book3dEl) book3dEl.style.transform = `rotateX(6deg) translateZ(${depthVariance * 2}px)`;
+      // CSS controls base orientation (rotateX + rotateY via .mode-cover/.mode-spine)
+      // Depth variance is minimal (±2px) — omitted to avoid overriding CSS transform
       const isMobile = window.innerWidth < 900;
       if (!isMobile && (index % 7 === 0) && isForward) {
         book.classList.add('mode-lean');
@@ -26884,11 +27167,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // LIBRARY-FIRST: Inject starter story book for new users (skip if already present)
     if (state.flags?.libraryFirstOnboarding && _vaultAuthoredEntries.length === 0 && !listEl.querySelector('[data-starter-story]')) {
-      if (!_hasSeenLibrarySummon()) {
-        _runStarterBookSummonSequence(listEl);
-      } else {
-        _injectStarterStoryBook(listEl);
-      }
+      _injectStarterStoryBook(listEl);
     }
 
     // Remove .initializing after layout pass to enable future transitions
@@ -42431,6 +42710,9 @@ Generate the title and synopsis now.` }
     // Cover loading UI is ONLY controlled by cover generation, never by story
     // Pre-generated cover comes from "Generate Your Book Cover" button
     // ═══════════════════════════════════════════════════════════════════════
+    // Clear ALL stale cover layers from any prior render before showing new cover
+    if (typeof resetCoverLayers === 'function') resetCoverLayers();
+
     const preGeneratedCover = window.getPreGeneratedCover ? window.getPreGeneratedCover() : null;
 
     if (preGeneratedCover) {
@@ -44826,7 +45108,8 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
                       // PAGE-CURL: If no frontispiece active (non-Fantasy, or after map dismissed),
                       // activate setting plate as a curl page so it curls to reveal scene text.
                       // SKIP on synopsis page — image shows inline via #synopsisSettingImg instead.
-                      if (_readerPage !== 1 && !window._titlePageActive && !window._frontispieceActive && !window._settingPlateActive) {
+                      // SKIP if scene is already active — late image must never replace Scene 1.
+                      if (_readerPage === 0 && !window._titlePageActive && !window._frontispieceActive && !window._settingPlateActive) {
                           showSettingPlateAsCurlPage();
                       }
                       console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display, mountPath: 'settingPlate', mode: 'inline' });
@@ -45016,7 +45299,13 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
 
           if (loadingState) loadingState.classList.add('hidden');
           if (bookObject) bookObject.classList.remove('hidden');
-          if (coverImg && coverUrl) coverImg.src = coverUrl;
+          if (coverImg && coverUrl) {
+              coverImg.src = coverUrl;
+              coverImg.style.display = '';
+          } else if (coverImg) {
+              // No valid cover URL — hide the empty <img> so it doesn't overlay fallback
+              coverImg.style.display = 'none';
+          }
 
           // ✅ Do NOT auto-advance off COVER
           // Cover waits for explicit user interaction
@@ -48665,6 +48954,8 @@ ${buildVisualContinuityDirective()}`;
    * before Scene 1 (only if a setting image is loaded).
    */
   function showSettingPlateAsCurlPage() {
+      // GUARD: Never show setting plate once user is on scene pages (prevents async race)
+      if (_readerPage >= 2) return false;
       const settingPlate = document.getElementById('settingPlate');
       const sceneImg = document.getElementById('bookSceneImg');
       if (!settingPlate || !sceneImg) return false;
@@ -48682,6 +48973,13 @@ ${buildVisualContinuityDirective()}`;
 
       const indicator = document.getElementById('pageIndicator');
       if (indicator) indicator.textContent = 'Setting';
+
+      // Nav coherence: Setting is between Cover and Scene 1
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+      if (prevBtn) { prevBtn.classList.remove('hidden'); prevBtn.disabled = false; }
+      if (nextBtn) { nextBtn.disabled = false; nextBtn.style.visibility = ''; nextBtn.style.pointerEvents = ''; nextBtn.classList.remove('hidden'); }
+
       console.log('[SETTING-CURL] Setting plate shown as curl page');
       return true;
   }
@@ -48715,22 +49013,14 @@ ${buildVisualContinuityDirective()}`;
               window._synopsisWaitingForImage = false;
               console.log('[CURL-CHAIN] → synopsis page: storyText revealed with inline image');
           } else {
-              // No image yet — keep synopsis hidden, wait for image onload
+              // No image yet — show synopsis text immediately, image will append when ready
               if (storyText) {
-                  storyText.classList.add('hidden');
-                  storyText.style.opacity = '0';
+                  storyText.classList.remove('hidden');
+                  storyText.style.opacity = '1';
                   storyText.classList.add('synopsis-page-active');
               }
               window._synopsisWaitingForImage = true;
-              setTimeout(function() {
-                  if (window._synopsisWaitingForImage) {
-                      window._synopsisWaitingForImage = false;
-                      const st = document.getElementById('storyText');
-                      if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
-                      console.log('[CURL-CHAIN] Safety timeout — revealing synopsis without image');
-                  }
-              }, 20000);
-              console.log('[CURL-CHAIN] → synopsis page: waiting for setting image');
+              console.log('[CURL-CHAIN] → synopsis page: showing text, waiting for setting image');
           }
           _restorePageIndicator();
           return;
@@ -48746,6 +49036,11 @@ ${buildVisualContinuityDirective()}`;
           window._settingPlateActive = true;
           const indicator = document.getElementById('pageIndicator');
           if (indicator) indicator.textContent = 'Setting';
+          // Nav coherence: Setting is between Cover and Scene 1
+          const prevBtn = document.getElementById('prevPageBtn');
+          const nextBtn = document.getElementById('nextPageBtn');
+          if (prevBtn) { prevBtn.classList.remove('hidden'); prevBtn.disabled = false; }
+          if (nextBtn) { nextBtn.disabled = false; nextBtn.style.visibility = ''; nextBtn.style.pointerEvents = ''; nextBtn.classList.remove('hidden'); }
           console.log('[CURL-CHAIN] → setting plate revealed');
       } else {
           const storyText = document.getElementById('storyText');
@@ -48769,7 +49064,8 @@ ${buildVisualContinuityDirective()}`;
   const _SYNOPSIS_PAGE_HIDE_IDS = [
       'fateCardHeader', 'cardMount', 'actionWrapper', 'dialogueWrapper',
       'submitBtn', 'saveBtn', 'gameIntensity', 'edgeCovenantBtn',
-      'fortuneBalanceBtn', 'vizSceneBtn', 'pageNavControls'
+      'fortuneBalanceBtn', 'vizSceneBtn', 'pageNavControls',
+      'fateOwnHandsLabel', 'fateSpecialCards'
   ];
 
   /**
@@ -48853,22 +49149,8 @@ ${buildVisualContinuityDirective()}`;
               synImg.classList.remove('hidden');
           } else if (synImg) {
               synImg.classList.add('hidden');
-              // Image not loaded yet — hide synopsis until image arrives
-              // The image onload at line ~43000 will reveal it
-              if (storyText && !curlChainActive) {
-                  storyText.classList.add('hidden');
-                  storyText.style.opacity = '0';
-                  window._synopsisWaitingForImage = true;
-                  // Safety timeout: reveal synopsis after 20s even if image never arrives
-                  setTimeout(function() {
-                      if (window._synopsisWaitingForImage) {
-                          window._synopsisWaitingForImage = false;
-                          const st = document.getElementById('storyText');
-                          if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
-                          console.log('[SYNOPSIS] Safety timeout — revealing without image');
-                      }
-                  }, 20000);
-              }
+              // Image not loaded yet — show synopsis text immediately, image will append when ready
+              window._synopsisWaitingForImage = true;
           }
 
           // Hide fate cards, inputs, buttons — only Next survives
@@ -59255,4 +59537,231 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
 //
 // ═══════════════════════════════════════════════════════════════════════════════
 
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// LIBRARY DESIGN MODE — Ctrl+Shift+D to toggle
+// Drag books & shelf overlay, scale books. Prints CSS values on close.
+// ═══════════════════════════════════════════════════════════════════════════════
+(function initLibraryDesignMode() {
+  let active = false, panel = null;
+
+  // Current adjustable values (read from CSS custom properties or defaults)
+  const state = {
+    booksPaddingTop: 0,   // px offset added to books margin-top
+    shelfTopOffset: 0,    // px offset added to shelf overlay top
+    bookScale: 1.19,      // multiplier on book size (baked: 1.19)
+    shelfWidth: 56.1,     // vw (baked: 56.1)
+    bookRotateX: 15,      // degrees backward lean
+    bookRotateY: 8,       // degrees Y turn
+    bookRotateZ: -1,      // degrees Z roll
+  };
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+      e.preventDefault();
+      active ? closeDesignMode() : openDesignMode();
+    }
+  });
+
+  function openDesignMode() {
+    active = true;
+    // Read current computed positions
+    const bookList = document.querySelector('.library-book-list');
+    if (bookList) {
+      state.booksPaddingTop = 0;
+      state.shelfTopOffset = 0;
+    }
+
+    panel = document.createElement('div');
+    panel.id = 'libraryDesignPanel';
+    panel.innerHTML = `
+      <style>
+        #libraryDesignPanel {
+          position: fixed; top: 10px; right: 10px; z-index: 99999;
+          background: rgba(0,0,0,0.92); color: #c9a84c; font-family: monospace;
+          padding: 16px; border-radius: 8px; border: 1px solid #c9a84c;
+          font-size: 12px; min-width: 280px; cursor: move;
+          user-select: none;
+        }
+        #libraryDesignPanel h3 { margin: 0 0 10px; font-size: 14px; color: #fff; }
+        #libraryDesignPanel label { display: block; margin: 8px 0 2px; }
+        #libraryDesignPanel input[type=range] { width: 100%; accent-color: #c9a84c; }
+        #libraryDesignPanel .val { color: #fff; float: right; }
+        #libraryDesignPanel button {
+          margin-top: 12px; background: #c9a84c; color: #000; border: none;
+          padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
+          margin-right: 6px;
+        }
+        #libraryDesignPanel button:hover { background: #e6c35a; }
+        #libraryDesignPanel .output { margin-top: 10px; background: #111; padding: 8px;
+          border-radius: 4px; font-size: 11px; color: #8f8; white-space: pre-wrap; display: none; }
+      </style>
+      <h3>Library Design Mode</h3>
+
+      <label>Books Y offset <span class="val" id="dm-books-y-val">0px</span></label>
+      <input type="range" id="dm-books-y" min="-200" max="200" value="0" step="1">
+
+      <label>Shelf overlay Y offset <span class="val" id="dm-shelf-y-val">0px</span></label>
+      <input type="range" id="dm-shelf-y" min="-200" max="200" value="0" step="1">
+
+      <label>Shelf overlay width <span class="val" id="dm-shelf-w-val">55.2vw</span></label>
+      <input type="range" id="dm-shelf-w" min="30" max="100" value="55.2" step="0.1">
+
+      <label>Book scale <span class="val" id="dm-scale-val">1.09</span></label>
+      <input type="range" id="dm-scale" min="0.3" max="3.0" value="1.09" step="0.01">
+
+      <label>Book rotation X (tilt) <span class="val" id="dm-rotate-val">15°</span></label>
+      <input type="range" id="dm-rotate" min="-30" max="30" value="15" step="1">
+
+      <label>Book rotation Y (turn) <span class="val" id="dm-rotateY-val">0°</span></label>
+      <input type="range" id="dm-rotateY" min="-90" max="90" value="0" step="1">
+
+      <label>Book rotation Z (roll) <span class="val" id="dm-rotateZ-val">0°</span></label>
+      <input type="range" id="dm-rotateZ" min="-30" max="30" value="0" step="1">
+
+      <button id="dm-print">Print CSS</button>
+      <button id="dm-copy">Copy CSS</button>
+      <button id="dm-close">Close</button>
+      <div class="output" id="dm-output"></div>
+    `;
+    document.body.appendChild(panel);
+
+    // Wire up sliders
+    const booksYSlider = panel.querySelector('#dm-books-y');
+    const shelfYSlider = panel.querySelector('#dm-shelf-y');
+    const shelfWSlider = panel.querySelector('#dm-shelf-w');
+    const scaleSlider  = panel.querySelector('#dm-scale');
+    const rotateSlider = panel.querySelector('#dm-rotate');
+
+    booksYSlider.addEventListener('input', () => {
+      state.booksPaddingTop = parseInt(booksYSlider.value);
+      panel.querySelector('#dm-books-y-val').textContent = state.booksPaddingTop + 'px';
+      applyDesign();
+    });
+    shelfYSlider.addEventListener('input', () => {
+      state.shelfTopOffset = parseInt(shelfYSlider.value);
+      panel.querySelector('#dm-shelf-y-val').textContent = state.shelfTopOffset + 'px';
+      applyDesign();
+    });
+    shelfWSlider.addEventListener('input', () => {
+      state.shelfWidth = parseFloat(shelfWSlider.value);
+      panel.querySelector('#dm-shelf-w-val').textContent = state.shelfWidth.toFixed(1) + 'vw';
+      applyDesign();
+    });
+    scaleSlider.addEventListener('input', () => {
+      state.bookScale = parseFloat(scaleSlider.value);
+      panel.querySelector('#dm-scale-val').textContent = state.bookScale.toFixed(2);
+      applyDesign();
+    });
+    rotateSlider.addEventListener('input', () => {
+      state.bookRotateX = parseInt(rotateSlider.value);
+      panel.querySelector('#dm-rotate-val').textContent = state.bookRotateX + '°';
+      applyDesign();
+    });
+    const rotateYSlider = panel.querySelector('#dm-rotateY');
+    rotateYSlider.addEventListener('input', () => {
+      state.bookRotateY = parseInt(rotateYSlider.value);
+      panel.querySelector('#dm-rotateY-val').textContent = state.bookRotateY + '°';
+      applyDesign();
+    });
+    const rotateZSlider = panel.querySelector('#dm-rotateZ');
+    rotateZSlider.addEventListener('input', () => {
+      state.bookRotateZ = parseInt(rotateZSlider.value);
+      panel.querySelector('#dm-rotateZ-val').textContent = state.bookRotateZ + '°';
+      applyDesign();
+    });
+
+    panel.querySelector('#dm-print').addEventListener('click', printCSS);
+    panel.querySelector('#dm-copy').addEventListener('click', () => {
+      printCSS();
+      const text = panel.querySelector('#dm-output').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = panel.querySelector('#dm-copy');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy CSS'; }, 1500);
+      });
+    });
+    panel.querySelector('#dm-close').addEventListener('click', closeDesignMode);
+
+    // Make panel draggable
+    let dx = 0, dy = 0, mx = 0, my = 0;
+    panel.addEventListener('mousedown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      mx = e.clientX; my = e.clientY;
+      const move = ev => {
+        dx = ev.clientX - mx; dy = ev.clientY - my;
+        mx = ev.clientX; my = ev.clientY;
+        panel.style.top = (panel.offsetTop + dy) + 'px';
+        panel.style.right = 'auto';
+        panel.style.left = (panel.offsetLeft + dx) + 'px';
+      };
+      const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+
+    applyDesign();
+  }
+
+  function applyDesign() {
+    const bookList = document.querySelector('.library-book-list');
+    if (!bookList) return;
+
+    // Apply all design overrides via a single style tag
+    let styleEl = document.getElementById('dm-live-style');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'dm-live-style';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+      .forbidden-library.library-variant--vault > .library-book-list::before {
+        top: calc(31.1vw + ${state.shelfTopOffset}px) !important;
+        width: ${state.shelfWidth}vw !important;
+        height: calc(42 / 855 * ${state.shelfWidth}vw) !important;
+      }
+      .library-book {
+        margin-top: ${state.booksPaddingTop}px !important;
+      }
+      .library-book .book-3d {
+        transform: translateX(-50%) rotateX(${state.bookRotateX}deg) rotateY(${state.bookRotateY}deg) rotateZ(${state.bookRotateZ}deg) scale(${state.bookScale}) !important;
+      }
+    `;
+  }
+
+  function printCSS() {
+    const out = panel.querySelector('#dm-output');
+    const finalShelfTop = `calc(31.1vw + ${state.shelfTopOffset}px)`;
+
+    out.style.display = 'block';
+    out.textContent =
+`/* Books Y offset */
+.library-book { margin-top: ${state.booksPaddingTop}px; }
+
+/* Shelf overlay */
+top: ${finalShelfTop};
+width: ${state.shelfWidth.toFixed(1)}vw;
+height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
+
+/* Book scale & rotation */
+.book-3d { transform: ... rotateX(${state.bookRotateX}deg) rotateY(${state.bookRotateY}deg) rotateZ(${state.bookRotateZ}deg) scale(${state.bookScale.toFixed(2)}); }
+
+/* Raw offsets: booksY=${state.booksPaddingTop}px shelfY=${state.shelfTopOffset}px */`;
+  }
+
+  function closeDesignMode() {
+    active = false;
+    if (panel) { panel.remove(); panel = null; }
+    const styleEl = document.getElementById('dm-live-style');
+    if (styleEl) styleEl.remove();
+    // Reset inline styles
+    const bookList = document.querySelector('.library-book-list');
+    if (bookList) {
+      bookList.style.paddingTop = '';
+      bookList.style.removeProperty('--dm-books-y');
+      bookList.style.removeProperty('--dm-shelf-y');
+      bookList.style.removeProperty('--dm-shelf-w');
+    }
+  }
 })();

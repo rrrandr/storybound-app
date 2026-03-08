@@ -1859,10 +1859,7 @@ function setSelectedState(mount, selectedCardEl){
                     }
                 }, 600);
 
-                // Zoom the selected card face into view
-                if (typeof window.openFateCardZoom === 'function') {
-                    window.openFateCardZoom(card);
-                }
+                // Standard fate cards: flip-all only, no per-card zoom
             };
 
             mount.appendChild(card);
@@ -1882,19 +1879,26 @@ function setSelectedState(mount, selectedCardEl){
                 <div class="back" style="background-image:url('/assets/card-art/cards/Tarot-Gold-PetitionFate-front.png');"></div>
             </div>
         `;
-        petitionCard.onclick = () => {
-            // Block card interaction in design mode
-            if (document.querySelector('.design-mode-badge')) return;
+        // Petition Fate: hover flips, mouseleave unflips, click zooms
+        petitionCard.addEventListener('mouseenter', () => {
             if (!petitionCard.classList.contains('flipped')) {
                 petitionCard.classList.add('flipped');
                 if (window.playUISound) window.playUISound('card_flip');
-                return;
             }
+        });
+        petitionCard.addEventListener('mouseleave', () => {
+            if (!petitionCard.classList.contains('petition-zoomed')) {
+                petitionCard.classList.remove('flipped');
+            }
+        });
+        petitionCard.onclick = () => {
+            if (document.querySelector('.design-mode-badge')) return;
+            if (!petitionCard.classList.contains('flipped')) petitionCard.classList.add('flipped');
             if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
         };
         specialMount.appendChild(petitionCard);
 
-        // Tempt Fate card — always visible, flips on first click, invokes on second
+        // Tempt Fate card
         const temptCard = document.createElement('div');
         temptCard.className = 'fate-card tempt-fate-card';
         temptCard.innerHTML = `
@@ -1903,14 +1907,21 @@ function setSelectedState(mount, selectedCardEl){
                 <div class="back" style="background-image:url('/assets/card-art/cards/Tarot-RED-front-TemptFate.png?v=2');"></div>
             </div>
         `;
-        temptCard.onclick = () => {
-            // Block card interaction in design mode
-            if (document.querySelector('.design-mode-badge')) return;
+        // Tempt Fate: hover flips, mouseleave unflips, click zooms
+        temptCard.addEventListener('mouseenter', () => {
             if (!temptCard.classList.contains('flipped')) {
                 temptCard.classList.add('flipped');
                 if (window.playUISound) window.playUISound('card_flip');
-                return;
             }
+        });
+        temptCard.addEventListener('mouseleave', () => {
+            if (!temptCard.classList.contains('tempt-zoomed')) {
+                temptCard.classList.remove('flipped');
+            }
+        });
+        temptCard.onclick = () => {
+            if (document.querySelector('.design-mode-badge')) return;
+            if (!temptCard.classList.contains('flipped')) temptCard.classList.add('flipped');
             if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
         };
         specialMount.appendChild(temptCard);
@@ -2053,10 +2064,7 @@ function setSelectedState(mount, selectedCardEl){
                     }
                 }, 600);
 
-                // Zoom the selected card face into view
-                if (typeof window.openFateCardZoom === 'function') {
-                    window.openFateCardZoom(card);
-                }
+                // Standard fate cards: flip-all only, no per-card zoom
             };
         });
 
@@ -2064,14 +2072,23 @@ function setSelectedState(mount, selectedCardEl){
         const specialMount = document.getElementById('fateSpecialCards');
         const petitionCard = (specialMount || mount).querySelector('.petition-fate-card');
         if (petitionCard) {
-            petitionCard.onclick = () => {
-                // Block card interaction in design mode
-                if (document.querySelector('.design-mode-badge')) return;
+            // Reset flipped state on rebind — cards must start face-down
+            petitionCard.classList.remove('flipped');
+            // Hover flips, mouseleave unflips, click zooms
+            petitionCard.onmouseenter = () => {
                 if (!petitionCard.classList.contains('flipped')) {
                     petitionCard.classList.add('flipped');
                     if (window.playUISound) window.playUISound('card_flip');
-                    return;
                 }
+            };
+            petitionCard.onmouseleave = () => {
+                if (!petitionCard.classList.contains('petition-zoomed')) {
+                    petitionCard.classList.remove('flipped');
+                }
+            };
+            petitionCard.onclick = () => {
+                if (document.querySelector('.design-mode-badge')) return;
+                if (!petitionCard.classList.contains('flipped')) petitionCard.classList.add('flipped');
                 if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
             };
         }
@@ -2079,14 +2096,23 @@ function setSelectedState(mount, selectedCardEl){
         // Rebind Tempt Fate card (now in #fateSpecialCards)
         const temptCard = (specialMount || mount).querySelector('.tempt-fate-card');
         if (temptCard) {
-            temptCard.onclick = () => {
-                // Block card interaction in design mode
-                if (document.querySelector('.design-mode-badge')) return;
+            // Reset flipped state on rebind — cards must start face-down
+            temptCard.classList.remove('flipped');
+            // Hover flips, mouseleave unflips, click zooms
+            temptCard.onmouseenter = () => {
                 if (!temptCard.classList.contains('flipped')) {
                     temptCard.classList.add('flipped');
                     if (window.playUISound) window.playUISound('card_flip');
-                    return;
                 }
+            };
+            temptCard.onmouseleave = () => {
+                if (!temptCard.classList.contains('tempt-zoomed')) {
+                    temptCard.classList.remove('flipped');
+                }
+            };
+            temptCard.onclick = () => {
+                if (document.querySelector('.design-mode-badge')) return;
+                if (!temptCard.classList.contains('flipped')) temptCard.classList.add('flipped');
                 if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
             };
         }

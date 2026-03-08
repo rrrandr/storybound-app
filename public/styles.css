@@ -3941,8 +3941,8 @@ select:-webkit-autofill {
     opacity: 1;
 }
 @keyframes pactStarBreathe {
-    0%, 100% { opacity: 0.15; }
-    50%      { opacity: 0.7; }
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 1; }
 }
 
 /* ── Accept zone at bottom of zoomed card ── */
@@ -3957,13 +3957,16 @@ select:-webkit-autofill {
 .pact-accept-zone:hover {
     background: rgba(212, 168, 67, 0.06);
 }
-/* 4-pointed star breathing at bottom of zoomed pact card */
+/* Gold 4-pointed star breathing at bottom of zoomed pact card */
 .pact-accept-zone::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background: url('/assets/card-art/cards/WHITE-Accepted.png') center / 100% 100% no-repeat;
-    clip-path: inset(0 30% 0 30%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 48px;
+    height: 48px;
+    background: url('/assets/card-art/cards/gold-4ptStar.png') center / contain no-repeat;
     pointer-events: none;
     animation: pactStarBreathe 2.5s ease-in-out infinite;
 }
@@ -4337,14 +4340,18 @@ select:-webkit-autofill {
     pointer-events: none;
     z-index: 0;
 }
+/* Vault variant: suppress the dark falloff overlay */
+.forbidden-library.library-variant--vault::after {
+    background: none;
+}
 /* Vault / Private Library — distinct backdrop */
 .forbidden-library.library-variant--vault {
     display: flex;
     flex-direction: column;
     background:
-        radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.9) 0%, transparent 60%),
-        linear-gradient(180deg, rgba(14,9,6,0.85) 0%, rgba(26,16,10,0.8) 30%, rgba(14,9,6,0.85) 100%),
-        url('/assets/Forbidde-Library-Art/Private-Library-closer.png') center top / cover no-repeat;
+        radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.15) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(14,9,6,0.1) 0%, rgba(26,16,10,0.05) 30%, rgba(14,9,6,0.15) 100%),
+        url('/assets/Forbidde-Library-Art/Private-Library-closer.png') center top / 100vw auto no-repeat;
 }
 
 /* Shelf back-wall parallax layer */
@@ -4386,32 +4393,34 @@ select:-webkit-autofill {
 }
 /* Library shelf grid — 3D book objects */
 .library-book-list {
-    max-width: 720px;
+    max-width: 52vw;
     margin: 0 auto;
-    padding: 20px 16px;
+    padding: 0 16px;
+    /* Pure vw — scales proportionally with the library background image */
+    padding-top: 20.5vw;
     display: flex;
     flex-wrap: wrap;
-    gap: 32px 24px;
+    gap: 2.3vw 3.5vw;
     justify-content: center;
+    align-items: flex-start;
     position: relative;
     z-index: 1;
-    background: linear-gradient(to bottom, rgba(255,245,220,0.04) 0%, rgba(0,0,0,0.25) 100%);
+    background: none;
 }
 
-/* Shelf cavity — back wall depth illusion */
-.library-book-list::before {
+/* Shelf lip overlay — top shelf edge from baked art, overlaps bottom of books */
+.forbidden-library.library-variant--vault > .library-book-list::before {
     content: '';
     position: absolute;
-    inset: -4px -8px;
-    background:
-        radial-gradient(ellipse at 50% 20%, rgba(0,0,0,0.08) 0%, transparent 70%),
-        linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 35%, transparent 100%),
-        linear-gradient(to bottom, rgba(18,10,5,0.28) 0%, rgba(18,10,5,0.12) 50%, transparent 100%);
-    border-radius: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 56.1vw;
+    height: calc(42 / 855 * 56.1vw);
+    /* Pure vw — tracks shelf position in background image on resize */
+    top: calc(31.1vw + 3px);
+    background: url('/assets/Forbidde-Library-Art/privat-library-top-shelf.jpg') center / 100% 100% no-repeat;
     pointer-events: none;
-    z-index: 0;
-    transform: translateX(var(--shelf-parallax-x, 0px));
-    transition: transform 0.15s ease-out;
+    z-index: 3;
 }
 
 /* Shelf lip highlight — polished wood front edge */
@@ -4446,6 +4455,16 @@ select:-webkit-autofill {
     cursor: pointer;
     flex: 0 0 auto;
     position: relative;
+    transform: none;
+    overflow: visible;
+    width: 105px;
+    height: 147px;
+    margin-top: 13px;
+    /* Scale books proportionally with viewport so they track the background image */
+    zoom: var(--book-zoom, 1);
+    background: none;
+    border: none;
+    box-shadow: none;
 }
 /* Bottom embed contact shadow */
 .library-book::after {
@@ -4461,25 +4480,28 @@ select:-webkit-autofill {
     pointer-events: none;
 }
 .book-3d {
-    position: relative;
-    width: 150px;
-    height: 210px;
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 105px;
+    height: 147px;
     transform-style: preserve-3d;
-    transform: rotateX(6deg);
+    transform: translateX(-50%) rotateX(15deg) rotateY(8deg) rotateZ(-1deg) scale(1.19);
+    transform-origin: center bottom;
     transition: transform 0.5s ease;
 }
 /* Spine compression for overflow books */
 .library-book.mode-spine .book-3d {
-    transform: rotateX(6deg) rotateY(90deg);
-    width: 24px;
+    transform: translateX(-50%) rotateX(15deg) rotateY(90deg) rotateZ(-1deg) scale(1.19);
+    width: 60px;
 }
 @media (max-width: 600px) {
     .library-book.mode-spine .book-3d {
-        width: 30px;
+        width: 60px;
     }
 }
 .library-book.mode-cover .book-3d {
-    transform: rotateX(6deg) rotateY(-6deg);
+    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-1deg) scale(1.19);
     box-shadow:
         0 2px 4px rgba(0,0,0,0.22),
         0 6px 18px rgba(0,0,0,0.18),
@@ -4487,7 +4509,7 @@ select:-webkit-autofill {
 }
 /* Occasional leaned book — cover mode only, never spine */
 .library-book.mode-cover.mode-lean .book-3d {
-    transform: rotateX(6deg) rotateY(-6deg) rotateZ(-1.5deg);
+    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-2.5deg) scale(1.19);
 }
 /* Suppress transition during initial layout */
 .library-book.initializing .book-3d {
@@ -4495,38 +4517,24 @@ select:-webkit-autofill {
 }
 .library-book.mode-cover:hover .book-3d,
 .library-book.mode-cover.mode-lean:hover .book-3d {
-    transform: rotateX(6deg) rotateY(-7deg);
+    transform: translateX(-50%) rotateX(15deg) rotateY(1deg) rotateZ(-1deg) scale(1.19);
     box-shadow:
         0 10px 24px rgba(0,0,0,0.3),
         0 20px 44px rgba(0,0,0,0.16);
 }
 .library-book.mode-spine:hover .book-3d {
-    transform: rotateX(6deg) rotateY(80deg) translateY(-4px);
+    transform: translateX(-50%) rotateX(15deg) rotateY(80deg) rotateZ(-1deg) translateY(-4px) scale(1.19);
 }
 /* Disable shelf hover when zoom is active */
 body.library-zoom-active .library-book:hover .book-3d {
-    transform: rotateX(6deg);
+    transform: translateX(-50%) rotateX(15deg) rotateZ(-1deg) scale(1.19);
 }
 body.library-zoom-active .library-book.mode-spine:hover .book-3d {
-    transform: rotateX(6deg) rotateY(90deg);
+    transform: translateX(-50%) rotateX(15deg) rotateY(90deg) rotateZ(-1deg) scale(1.19);
 }
-/* Depth-of-field blur on shelf during zoom */
+/* Depth-of-field blur on shelf during zoom — disabled for fly-out animation */
 .library-book-list {
     transition: filter 0.35s ease;
-}
-body.library-zoom-active .library-book-list {
-    filter: blur(6px) brightness(0.7);
-}
-body.library-zoom-active .vault-book-list {
-    filter: blur(6px) brightness(0.75);
-}
-@media (max-width: 900px) {
-    body.library-zoom-active .library-book-list {
-        filter: blur(3px) brightness(0.8);
-    }
-    body.library-zoom-active .vault-book-list {
-        filter: blur(3px) brightness(0.8);
-    }
 }
 /* ── Starter Book Summon Sequence ── */
 .summon-text {
@@ -4554,7 +4562,7 @@ body.library-zoom-active .vault-book-list {
     top: -40px;
     left: 50%;
     transform: translateX(-50%);
-    width: 120px;
+    width: 60px;
     height: 320px;
     background: radial-gradient(ellipse at center, rgba(255, 215, 100, 0.18) 0%, transparent 70%);
     filter: blur(8px);
@@ -4566,31 +4574,31 @@ body.library-zoom-active .vault-book-list {
 .summon-light-beam.visible { opacity: 1; }
 .summon-light-beam.fading { opacity: 0; transition: opacity 300ms ease; }
 
-.library-book.summon-hidden {
+.library-book.summon-hidden .book-3d {
     opacity: 0;
-    transform: scale(0.7) translateY(10px);
+    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-1deg) scale(1.19);
+    filter: brightness(1.8) drop-shadow(0 0 12px rgba(201, 168, 76, 0.6));
+    transition: none;
+}
+.library-book.summon-hidden {
     pointer-events: none;
 }
 
+.library-book.summon-materializing .book-3d {
+    opacity: 0.5;
+    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-1deg) scale(1.19);
+    filter: brightness(1.4) drop-shadow(0 0 20px rgba(201, 168, 76, 0.8));
+    transition: opacity 600ms ease, filter 600ms ease;
+}
 .library-book.summon-materializing {
-    opacity: 0.3;
-    transform: scale(0.85) translateY(5px);
-    transition: opacity 500ms ease, transform 500ms ease;
     pointer-events: none;
 }
 
-.library-book.summon-solid {
+.library-book.summon-solid .book-3d {
     opacity: 1;
-    transform: translateY(0);
-    transition: opacity 500ms ease, transform 500ms ease;
-    animation: summon-land 240ms 500ms ease-out both;
-}
-
-@keyframes summon-land {
-    0%   { transform: translateY(-6px); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.18)); }
-    40%  { transform: translateY(0); filter: drop-shadow(0 8px 12px rgba(0,0,0,0.32)); }
-    70%  { transform: translateY(-2px); filter: drop-shadow(0 5px 8px rgba(0,0,0,0.22)); }
-    100% { transform: translateY(0); filter: drop-shadow(0 6px 8px rgba(0,0,0,0.20)); }
+    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-1deg) scale(1.19);
+    filter: brightness(1) drop-shadow(0 0 0 transparent);
+    transition: opacity 500ms ease, filter 800ms ease;
 }
 
 /* ── Trophy Wall Modal ── */
@@ -4850,30 +4858,39 @@ body.library-zoom-active .vault-book-list {
     height: 100%;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
-    border-radius: 2px;
+    /* Rounded spine-side edges to match spine curvature, sharp fore-edge */
+    border-radius: 4px 2px 2px 4px;
 }
 .book-front {
     background: linear-gradient(170deg, #1f1610 0%, #120b06 60%, #1a100a 100%);
-    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    transform: translateZ(12px);
-    z-index: 2;
-    box-shadow: inset -1px 0 6px rgba(0, 0, 0, 0.35);
+    transform: translateZ(30px);
+    /* Spine-side hinge crease + cover edge depth + ambient shadow */
+    box-shadow:
+        inset 8px 0 10px -3px rgba(0, 0, 0, 0.6),
+        inset 1px 0 0 rgba(0,0,0,0.4),
+        inset 0 -3px 6px -3px rgba(0,0,0,0.25),
+        inset 0 3px 6px -3px rgba(0,0,0,0.25),
+        /* Board edge lip shadow — visible overhang over page block */
+        3px 3px 4px -1px rgba(0,0,0,0.4),
+        0 2px 8px rgba(0,0,0,0.3);
     overflow: hidden;
+    border: none;
 }
-/* Top-edge specular highlight — hardcover laminate catching light */
+/* Specular highlight — sweeps across cover during rotation */
 .book-front::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, transparent 5%, rgba(201, 168, 76, 0.15) 30%, rgba(255, 235, 180, 0.12) 50%, rgba(201, 168, 76, 0.15) 70%, transparent 95%);
-    border-radius: 2px 2px 0 0;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.25) 50%, transparent 70%);
+    opacity: var(--specular-strength, 0);
     pointer-events: none;
     z-index: 3;
+    border-radius: 2px;
+    transition: opacity 0.1s ease;
 }
 /* Cover curvature — very subtle horizontal light variation */
 .book-front::after {
@@ -4899,7 +4916,7 @@ body.library-zoom-active .vault-book-list {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 2px;
+    border-radius: 4px 2px 2px 4px;
     display: block;
 }
 /* Text-based front cover (when no cover image) */
@@ -4937,14 +4954,22 @@ body.library-zoom-active .vault-book-list {
     text-transform: uppercase;
 }
 .book-back {
-    transform: rotateY(180deg) translateZ(12px);
+    transform: rotateY(180deg) translateZ(30px);
     background: linear-gradient(160deg, #1a1410 0%, #0e0906 100%);
-    border: none;
     padding: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    /* Spine-side hinge crease + cover edge depth */
+    box-shadow:
+        inset -8px 0 10px -3px rgba(0, 0, 0, 0.6),
+        inset -1px 0 0 rgba(0,0,0,0.4),
+        inset 0 -3px 6px -3px rgba(0,0,0,0.25),
+        inset 0 3px 6px -3px rgba(0,0,0,0.25),
+        3px 3px 4px -1px rgba(0,0,0,0.4),
+        0 2px 8px rgba(0,0,0,0.3);
+    border: none;
 }
 .back-title {
     font-family: 'Lora', serif;
@@ -4961,13 +4986,20 @@ body.library-zoom-active .vault-book-list {
     align-items: center;
     justify-content: center;
     flex: 1;
-    padding: 8px 10px;
+    padding: 6px 8px;
+    margin: 4px 8px;
     text-align: center;
+    background: linear-gradient(170deg, #c9a84c 0%, #a8873a 40%, #8b6e2f 100%);
+    border-radius: 3px;
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.25),
+        inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 1px 3px rgba(0,0,0,0.3);
 }
 .back-synopsis {
     font-family: 'Lora', serif;
     font-size: 0.65em;
-    color: rgba(201, 168, 76, 0.55);
+    color: #1a1008;
     line-height: 1.6;
     margin: 0;
     font-style: italic;
@@ -4990,11 +5022,18 @@ body.library-zoom-active .vault-book-list {
 .back-content-overlay {
     position: absolute;
     inset: 0;
-    padding: 16px 12px;
+    padding: 28px 8px 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+}
+/* Baked art backs: synopsis floats over the PNG's gold rectangle */
+.back-content-overlay .back-synopsis-box {
+    background: none;
+    box-shadow: none;
+    flex: 0 0 auto;
+    margin: 2px 6px;
 }
 /* Text-only back covers need padding */
 .back-content:not(.back-content-overlay) {
@@ -5007,13 +5046,12 @@ body.library-zoom-active .vault-book-list {
 /* Spine */
 .book-spine {
     position: absolute;
-    width: 20px;
+    width: 60px;
     height: 100%;
-    left: -10px;
-    transform: rotateY(-90deg);
-    transform-origin: right;
+    transform: rotateY(-90deg) translateZ(30px);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
     background: linear-gradient(180deg, #2a1d0e 0%, #1a100a 100%);
-    border-left: 1px solid rgba(201, 168, 76, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -5021,8 +5059,16 @@ body.library-zoom-active .vault-book-list {
     /* Hidden in front-view; visible only on shelf/rotation */
     opacity: 0;
     transition: opacity 0.3s ease;
-    /* Spine-cover crease shadow */
-    box-shadow: inset -3px 0 5px rgba(0, 0, 0, 0.4);
+    /* Rounded spine — prominent curvature at outer edge */
+    border-radius: 10px 0 0 10px;
+    /* Spine hinge joints — deep shadow troughs at front and back cover edges */
+    box-shadow:
+        inset -12px 0 14px -4px rgba(0, 0, 0, 0.7),
+        inset 12px 0 14px -4px rgba(0, 0, 0, 0.7),
+        inset -2px 0 0 rgba(0,0,0,0.5),
+        inset 2px 0 0 rgba(0,0,0,0.5),
+        /* Center highlight for spine curvature */
+        inset 0 0 24px 4px rgba(255,255,255,0.08);
 }
 .book-spine img {
     width: 100%;
@@ -5030,9 +5076,36 @@ body.library-zoom-active .vault-book-list {
     object-fit: cover;
     display: block;
 }
-/* Show spine on shelf or when book is rotated */
-.shelf-view .book-spine,
-.book-object.rotated .book-spine {
+/* Spine curvature overlay — strong cylindrical shading for rounded look */
+.book-spine::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        /* Central highlight ridge — bright specular strip */
+        linear-gradient(90deg,
+            transparent 30%,
+            rgba(255,255,255,0.18) 42%,
+            rgba(255,255,255,0.25) 50%,
+            rgba(255,255,255,0.18) 58%,
+            transparent 70%),
+        /* Heavy edge darkening — creates strong cylindrical curvature illusion */
+        linear-gradient(90deg,
+            rgba(0,0,0,0.55) 0%,
+            rgba(0,0,0,0.3) 8%,
+            rgba(0,0,0,0.12) 18%,
+            transparent 35%,
+            transparent 65%,
+            rgba(0,0,0,0.12) 82%,
+            rgba(0,0,0,0.3) 92%,
+            rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+    z-index: 1;
+    border-radius: 6px 0 0 6px;
+}
+/* Show spine in cover mode (slightly visible at angle) and spine mode */
+.library-book.mode-cover .book-spine,
+.library-book.mode-spine .book-spine {
     opacity: 1;
 }
 .spine-text {
@@ -5056,36 +5129,113 @@ body.library-zoom-active .vault-book-list {
     opacity: 0.5;
 }
 
-/* Page edge — multi-layer paper illusion */
-.book-pages {
+/* Page edge — shared texture for all page faces */
+.book-pages-right,
+.book-pages-top,
+.book-pages-bottom {
     position: absolute;
-    width: 8px;
-    height: calc(100% - 4px);
-    top: 2px;
-    right: -4px;
-    transform: rotateY(90deg);
-    transform-origin: left;
-    background:
-        repeating-linear-gradient(to bottom, rgba(0,0,0,0.03) 0px, transparent 1px, transparent 3px) 0 0 / 100% 100%,
-        linear-gradient(90deg, #f4efe4, #e6dcc8 40%, #d2c7a8 60%, #b9ad8c);
-    box-shadow:
-        inset -1px 0 2px rgba(0,0,0,0.25),
-        inset 1px 0 2px rgba(255,255,255,0.15),
-        0 0 4px rgba(0, 0, 0, 0.20);
-    border-radius: 0 1px 1px 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background: #ebe3ce;
     pointer-events: none;
     z-index: 0;
+}
+
+/* Right page block — anchored at right edge, rotated to face right */
+/* Recessed 6px from cover fore-edge + 7px top/bottom for cover board overhang */
+.book-pages-right {
+    width: 60px;
+    height: calc(100% - 14px);
+    top: 7px;
+    right: 6px;
+    left: auto;
+    transform-origin: right center;
+    transform: translateZ(-30px) rotateY(90deg);
+    background: url('/assets/Forbidde-Library-Art/2-inch-side-edge.jpg') center / cover no-repeat;
+    box-shadow:
+        /* Cover board overhang shadows — top and bottom */
+        inset 0 5px 8px -2px rgba(0,0,0,0.5),
+        inset 0 -5px 8px -2px rgba(0,0,0,0.5),
+        /* Depth shading on the page slab */
+        inset -3px 0 6px rgba(0,0,0,0.25),
+        inset 3px 0 5px rgba(255,255,255,0.15),
+        /* Subtle outer contact shadow */
+        0 0 3px rgba(0, 0, 0, 0.15);
+    border-radius: 0 1px 1px 0;
+}
+/* Fore-edge realism — page-stack depth, wedge taper, directional lighting */
+.book-pages-right::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        /* Directional light from upper-left — highlights top, shadows bottom */
+        linear-gradient(170deg,
+            rgba(255,255,255,0.15) 0%,
+            rgba(255,255,255,0.08) 30%,
+            transparent 50%,
+            rgba(0,0,0,0.08) 80%,
+            rgba(0,0,0,0.15) 100%),
+        /* Page wedge taper — spine side slightly compressed/shadowed */
+        linear-gradient(to right,
+            rgba(180,165,140,0.3) 0%,
+            rgba(245,240,228,0.2) 8%,
+            rgba(255,255,255,0.2) 20%,
+            transparent 45%,
+            rgba(0,0,0,0.06) 100%),
+        /* Cover overhang shadow at top/bottom */
+        linear-gradient(to bottom,
+            rgba(0,0,0,0.12) 0%, transparent 6%,
+            transparent 94%, rgba(0,0,0,0.12) 100%);
+    pointer-events: none;
+    border-radius: 0 1px 1px 0;
+}
+
+/* Top page block — anchored at top edge, rotated to face up */
+/* Inset 3px on sides so cover boards overhang */
+.book-pages-top {
+    width: calc(100% - 7px);
+    height: 60px;
+    top: 0;
+    left: 0;
+    transform-origin: center top;
+    transform: translateZ(-30px) rotateX(90deg);
+    background: url('/assets/Forbidde-Library-Art/2-inch-top-edge.jpg') center / cover no-repeat;
+    box-shadow:
+        inset 0 -3px 6px rgba(0,0,0,0.3),
+        inset 0 1px 3px rgba(255,255,255,0.12),
+        inset -5px 0 6px -2px rgba(0,0,0,0.3),
+        inset 5px 0 6px -2px rgba(0,0,0,0.15);
+}
+
+/* Bottom page block — anchored at bottom edge, rotated to face down */
+/* Width stops 1px short of side page edge to prevent corner overlap/black line */
+.book-pages-bottom {
+    width: calc(100% - 7px);
+    height: 60px;
+    bottom: 0;
+    left: 0;
+    top: auto;
+    transform-origin: center bottom;
+    transform: translateZ(-30px) rotateX(-90deg);
+    background: url('/assets/Forbidde-Library-Art/2-inch-bottom-edge.jpg') center / cover no-repeat;
+    box-shadow:
+        inset 0 3px 6px rgba(0,0,0,0.3),
+        inset 0 -1px 3px rgba(255,255,255,0.12),
+        inset -5px 0 6px -2px rgba(0,0,0,0.3),
+        inset 5px 0 6px -2px rgba(0,0,0,0.15);
 }
 
 /* Page-edge shimmer — visible only past ±90° rotation */
 .page-shimmer {
     position: absolute;
-    right: -4px;
-    top: 2px;
-    width: 8px;
-    height: calc(100% - 4px);
-    transform: rotateY(90deg);
-    transform-origin: left;
+    width: 60px;
+    height: calc(100% - 14px);
+    top: 7px;
+    right: 6px;
+    left: auto;
+    transform-origin: right center;
+    transform: translateZ(-30px) rotateY(90deg);
     background: linear-gradient(
         120deg,
         rgba(255, 255, 255, 0) 0%,
@@ -5094,6 +5244,7 @@ body.library-zoom-active .vault-book-list {
     );
     opacity: 0;
     pointer-events: none;
+    z-index: 1;
     transition: opacity 0.3s ease;
     z-index: 1;
 }
@@ -5150,7 +5301,7 @@ body.library-zoom-active .vault-book-list {
     position: fixed;
     inset: 0;
     z-index: 9500;
-    background: rgba(0, 0, 0, 0.85);
+    background: transparent;
     align-items: center;
     justify-content: center;
     flex-direction: column;
@@ -5161,34 +5312,150 @@ body.library-zoom-active .vault-book-list {
     display: flex;
 }
 #zoomBookContainer {
-    perspective: 1800px;
+    perspective: 1600px;
     cursor: grab;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: fit-content;
+    position: fixed;
+    z-index: 9501;
+    overflow: visible;
+    transform-origin: center center;
+    transition: none;
+    pointer-events: none;
+}
+#zoomBookContainer.zoom-flying {
+    transition: top 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                left 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                width 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                height 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+#zoomBookContainer.zoom-flying .book-3d {
+    transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+}
+#zoomBookContainer.zoom-settled {
+    pointer-events: auto;
 }
 #zoomBookContainer:active {
     cursor: grabbing;
 }
 #zoomBookContainer .book-3d {
-    height: 70vh;
-    width: calc(70vh * (5 / 7));
-    transform: rotateY(0deg);
+    position: relative;
+    left: auto;
+    top: auto;
+    bottom: auto;
+    width: 100%;
+    height: 100%;
+    transform: rotateX(15deg) rotateY(0deg);
+    transform-origin: center center;
     transition: none;
     pointer-events: none;
+    transform-style: preserve-3d;
+}
+/* Zoom-specific geometry: 120px spine/edges, 60px translateZ */
+#zoomBookContainer .book-front {
+    transform: translateZ(60px);
+    border: none;
+    box-shadow:
+        inset 12px 0 14px -4px rgba(0, 0, 0, 0.5),
+        inset 2px 0 4px rgba(0,0,0,0.35),
+        4px 4px 8px -2px rgba(0,0,0,0.5);
+}
+#zoomBookContainer .book-back {
+    transform: rotateY(180deg) translateZ(60px);
+    border: none;
+    box-shadow:
+        inset -12px 0 14px -4px rgba(0, 0, 0, 0.5),
+        inset -2px 0 4px rgba(0,0,0,0.35),
+        4px 4px 8px -2px rgba(0,0,0,0.5);
+}
+/* 3D cover-edge thickness faces — real geometry, not shadows */
+#zoomBookContainer .cover-edge {
+    position: absolute;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background: linear-gradient(180deg, #1e150c 0%, #120b06 100%);
+    pointer-events: none;
+}
+/* Bottom edge of cover — 3px tall strip across full width */
+#zoomBookContainer .cover-edge-bottom {
+    width: 100%;
+    height: 3px;
+    bottom: 0;
+    left: 0;
+    transform-origin: center bottom;
+    transform: translateZ(60px) rotateX(-90deg);
+    background: #0e0804;
+}
+#zoomBookContainer .cover-edge-bottom[data-cover="book-back"] {
+    transform: rotateY(180deg) translateZ(60px) rotateX(-90deg);
+}
+/* Top edge of cover */
+#zoomBookContainer .cover-edge-top {
+    width: 100%;
+    height: 3px;
+    top: 0;
+    left: 0;
+    transform-origin: center top;
+    transform: translateZ(60px) rotateX(90deg);
+    background: #1a1008;
+}
+#zoomBookContainer .cover-edge-top[data-cover="book-back"] {
+    transform: rotateY(180deg) translateZ(60px) rotateX(90deg);
+}
+/* Right (fore-edge) of cover */
+#zoomBookContainer .cover-edge-right {
+    width: 3px;
+    height: 100%;
+    top: 0;
+    right: 0;
+    transform-origin: right center;
+    transform: translateZ(60px) rotateY(90deg);
+    background: #120b06;
+}
+#zoomBookContainer .cover-edge-right[data-cover="book-back"] {
+    transform: rotateY(180deg) translateZ(60px) rotateY(90deg);
+}
+/* Zoom page insets — cover overhangs page block (midway: ~9px) */
+#zoomBookContainer .book-pages-right {
+    width: 120px;
+    right: 9px;
+    top: 9px;
+    height: calc(100% - 18px);
+    transform: translateZ(-60px) rotateY(90deg);
+}
+#zoomBookContainer .book-pages-top {
+    width: calc(100% - 9px);
+    height: 120px;
+    transform: translateZ(-60px) rotateX(90deg);
+}
+#zoomBookContainer .book-pages-bottom {
+    width: calc(100% - 9px);
+    height: 120px;
+    bottom: 9px;
+    transform: translateZ(-60px) rotateX(-90deg);
+}
+#zoomBookContainer .page-shimmer {
+    width: 120px;
+    right: 9px;
+    top: 9px;
+    height: calc(100% - 18px);
+    transform: translateZ(-60px) rotateY(90deg);
 }
 #zoomBookContainer .book-front img {
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
 }
-/* Spine visible during zoom rotation — 2:7 ratio matches spine art */
+/* Spine visible during zoom rotation — matches book thickness */
 #zoomBookContainer .book-spine {
     opacity: 1;
-    width: calc(70vh * (2 / 7));
-    left: calc(-1 * 70vh * (2 / 7) / 2);
+    width: 120px;
+    transform: rotateY(-90deg) translateZ(60px);
     box-shadow:
-        inset -3px 0 6px rgba(0,0,0,0.45),
-        inset 2px 0 4px rgba(201,168,76,0.08);
+        inset -10px 0 12px -4px rgba(0, 0, 0, 0.7),
+        inset 10px 0 12px -4px rgba(0, 0, 0, 0.7),
+        inset -2px 0 0 rgba(0,0,0,0.5),
+        inset 2px 0 0 rgba(0,0,0,0.5),
+        inset 0 0 20px 2px rgba(255,255,255,0.06),
+        /* Soft blur bleeding onto cover faces at spine-cover junction */
+        -4px 0 6px 0 rgba(0,0,0,0.3),
+        4px 0 6px 0 rgba(0,0,0,0.3);
 }
 #zoomBookContainer .spine-text {
     font-size: 0.75em;
@@ -5205,7 +5472,6 @@ body.library-zoom-active .vault-book-list {
     background:
         linear-gradient(160deg, rgba(30,22,14,0.9) 0%, rgba(18,12,6,0.95) 100%),
         repeating-linear-gradient(0deg, transparent 0px, rgba(201,168,76,0.02) 1px, transparent 2px, transparent 6px);
-    border: none;
     padding: 0;
 }
 /* When back cover has artwork, suppress fallback background */
@@ -5221,10 +5487,14 @@ body.library-zoom-active .vault-book-list {
     margin-bottom: 8px;
     letter-spacing: 0.03em;
 }
+#zoomBookContainer .back-synopsis-box {
+    padding: 10px 14px;
+    margin: 6px 12px;
+}
 #zoomBookContainer .back-synopsis {
-    font-size: 0.82em;
-    color: rgba(201, 168, 76, 0.72);
-    line-height: 1.75;
+    font-size: 0.74em;
+    color: #1a1008;
+    line-height: 1.45;
     font-style: italic;
     max-width: 95%;
     margin: 0 auto;
@@ -5240,6 +5510,8 @@ body.library-zoom-active .vault-book-list {
     display: flex;
     gap: 12px;
     align-items: center;
+    z-index: 9502;
+    position: relative;
 }
 .zoom-cta .sb-btn-primary {
     font-family: 'Lora', serif;
@@ -5891,8 +6163,11 @@ select {
     font-variant: small-caps !important;
     color: #ffffff !important;
     text-shadow: none !important;
-    font-size: 1.2em;
+    font-size: 1.8em;
+    letter-spacing: 0.6em;
     text-align: center;
+    display: flex;
+    justify-content: center;
     margin: 15px 0 10px;
 }
 .fate-special-row {
@@ -7552,7 +7827,7 @@ textarea.fate-field {
 /* Character cards: Proportional sizing, allow shrinking to fit viewport */
 #characterSectionRow .character-tarot-card {
     flex-shrink: 1;
-    min-width: 120px; /* Minimum readable size */
+    min-width: 60px; /* Minimum readable size */
     border: none !important; /* PNG has frame baked in */
 }
 
@@ -7707,7 +7982,7 @@ textarea.fate-field {
 
     .character-destiny-card-tall {
         width: 60px;
-        height: 84px;
+        height: 60px;
     }
 
     .character-fields-row {
@@ -7740,7 +8015,7 @@ textarea.fate-field {
 
 /* Committed Phrases (Debossed/Carved Look) */
 .committed-phrases {
-    max-height: 120px;
+    max-height: 60px;
     overflow-y: auto;
     margin-bottom: 8px;
     display: flex;
@@ -9297,31 +9572,7 @@ textarea.fate-field {
     pointer-events: none;
 }
 
-/* Book spine - enhanced hardcover feel with visible thickness */
-.book-spine {
-    position: absolute;
-    left: -22px;
-    top: 0;
-    bottom: 0;
-    width: 22px;
-    background: linear-gradient(to right, #1a0f08, #2a1a10, #3d2817);
-    transform: rotateY(-90deg) translateX(-11px);
-    transform-origin: right center;
-    border-radius: 3px 0 0 3px;
-    box-shadow: inset -2px 0 4px rgba(0,0,0,0.3);
-}
-
-/* Book spine text band */
-.book-spine::after {
-    content: '';
-    position: absolute;
-    top: 20%;
-    bottom: 20%;
-    left: 4px;
-    right: 4px;
-    background: linear-gradient(to bottom, rgba(200,170,120,0.2), rgba(200,170,120,0.1));
-    border-radius: 1px;
-}
+/* Book spine text band — see primary .book-spine rule above */
 
 /* Book thickness - hidden (3D mockup provides depth) */
 .book-thickness {
@@ -15051,11 +15302,11 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
 @keyframes submit-pulse {
     0%, 100% {
-        box-shadow: 0 0 8px var(--pink), 0 0 16px var(--pink);
+        box-shadow: 0 0 6px rgba(212, 168, 67, 0.3);
         transform: scale(1);
     }
     50% {
-        box-shadow: 0 0 20px var(--pink), 0 0 40px var(--pink), 0 0 60px rgba(255, 20, 147, 0.4);
+        box-shadow: 0 0 12px rgba(212, 168, 67, 0.5);
         transform: scale(1.02);
     }
 }
@@ -16152,7 +16403,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    ═══════════════════════════════════════════════════════════════════════════════ */
 .world-flavor-dropdown {
     position: fixed;
-    width: 120px;
+    width: 60px;
     background: url('/assets/ui/DSP-Gold-Blk-720x1040.png') center / cover no-repeat;
     border-radius: 0 0 6px 6px;
     font-family: 'Lora', serif;
@@ -16630,58 +16881,54 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 49.70cqi; left: 32.74cqi;
 }
 
-/* ── Story Pull (Pressure) — Flipped front content ── */
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 31.85cqi; left: 19.64cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 27.08cqi; left: 21.43cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
-    right: auto; bottom: auto;
-    top: 74.11cqi; left: 21.73cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 27.08cqi; left: 22.92cqi;
-}
+/* ── Story Pull (Pressure) — Flipped front content (Card Designer output, cqi-locked) ── */
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 154.46cqi; left: 23.21cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 154.46cqi; left: 25.00cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 154.17cqi; left: 25.60cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
-    right: auto; bottom: auto;
-    top: 75.89cqi; left: 17.56cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="ForbiddenRomance"] {
-    right: auto; bottom: auto;
-    top: -5.95cqi; left: 0;
+    top: 153.27cqi; left: 28.87cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     right: auto; bottom: auto;
-    top: 75.89cqi; left: 24.70cqi;
+    top: 72.92cqi; left: 27.68cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 25.60cqi; left: 19.64cqi;
+    top: 27.98cqi; left: 26.79cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.27cqi; left: 29.17cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    right: auto; bottom: auto;
+    top: 76.49cqi; left: 23.81cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 30.36cqi; left: 24.11cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 152.98cqi; left: 27.38cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    right: auto; bottom: auto;
+    top: 75.89cqi; left: 22.02cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 31.55cqi; left: 23.81cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 151.79cqi; left: 37.50cqi;
+    top: 152.08cqi; left: 38.99cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     right: auto; bottom: auto;
-    top: 73.51cqi; left: 32.74cqi;
+    top: 70.24cqi; left: 34.82cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 29.76cqi; left: 23.21cqi;
 }
 
 /* ── Story Pull (Pressure) — Zoomed front content ── */
@@ -16800,27 +17047,27 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── Dynamic — Back titles ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 50.89cqi; left: 11.90cqi;
+    top: 37.20cqi; left: 5.36cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 50.89cqi; left: 19.64cqi;
+    top: 41.37cqi; left: 10.71cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 51.49cqi; left: 14.88cqi;
+    top: 38.99cqi; left: 7.14cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 50.89cqi; left: 14.88cqi;
+    top: 38.39cqi; left: 9.52cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 48.81cqi; left: 26.19cqi;
+    top: 42.26cqi; left: 16.67cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 50.89cqi; left: 19.64cqi;
+    top: 41.96cqi; left: 7.74cqi;
 }
 
 /* ── Length — Taste front desc ── */
