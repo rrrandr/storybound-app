@@ -3921,27 +3921,30 @@ select:-webkit-autofill {
     border-radius: 8px;
 }
 
-/* Bottom-only overlay showing the gold star from WHITE-Accepted.png */
-/* Full-card overlay clipped to bottom — guarantees pixel-perfect alignment */
-/* Breathing pulse on flipped but unaccepted cards */
+/* Gold 4-pointed star breathing + rotating at bottom of flipped pact card */
 .pact-card.flipped .pact-card-front::after {
     content: '';
     position: absolute;
-    inset: 0;
-    background: url('/assets/card-art/cards/WHITE-Accepted.png') center / 100% 100% no-repeat;
+    bottom: 4%;
+    left: calc(50% - 14px);
+    width: 28px;
+    height: 28px;
+    background: url('/assets/card-art/cards/gold-4ptStar-cropped.png') center / contain no-repeat;
     z-index: 3;
     pointer-events: none;
-    border-radius: 8px;
-    clip-path: inset(88% 35% 0 35%);
-    animation: pactStarBreathe 2.5s ease-in-out infinite;
+    animation: pactStarSpin 3s linear infinite, pactStarFade 3s ease-in-out infinite;
 }
-/* Solid on accepted — no animation */
+/* Solid on accepted — no animation, full opacity */
 .pact-card.accepted .pact-card-front::after {
     animation: none;
     opacity: 1;
 }
-@keyframes pactStarBreathe {
-    0%, 100% { opacity: 0.3; }
+@keyframes pactStarSpin {
+    from { rotate: 0deg; }
+    to   { rotate: 360deg; }
+}
+@keyframes pactStarFade {
+    0%, 100% { opacity: 0.5; }
     50%      { opacity: 1; }
 }
 
@@ -3957,18 +3960,17 @@ select:-webkit-autofill {
 .pact-accept-zone:hover {
     background: rgba(212, 168, 67, 0.06);
 }
-/* Gold 4-pointed star breathing at bottom of zoomed pact card */
+/* Gold 4-pointed star breathing + rotating at bottom of zoomed pact card */
 .pact-accept-zone::after {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: calc(50% - 24px);
+    left: calc(50% - 24px);
     width: 48px;
     height: 48px;
-    background: url('/assets/card-art/cards/gold-4ptStar.png') center / contain no-repeat;
+    background: url('/assets/card-art/cards/gold-4ptStar-cropped.png') center / contain no-repeat;
     pointer-events: none;
-    animation: pactStarBreathe 2.5s ease-in-out infinite;
+    animation: pactStarSpin 3s linear infinite, pactStarFade 3s ease-in-out infinite;
 }
 .pact-accept-zone:hover::after {
     animation: none;
@@ -4358,6 +4360,36 @@ select:-webkit-autofill {
 .library-book-list > .library-book {
     z-index: 1;
 }
+/* ── Arced "Private Library" title along the black arch ── */
+.library-arch-title {
+    position: absolute;
+    top: 1.5vw;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 52vw;
+    height: auto;
+    z-index: 2;
+    pointer-events: none;
+}
+.library-arch-title text {
+    font-family: 'Lora', serif;
+    font-weight: 400;
+    font-size: 36px;
+    letter-spacing: 0.18em;
+    fill: url(#archGoldGrad);
+}
+/* Embossed gold — multi-layer text-shadow trick via SVG filters isn't great,
+   so we use a gold gradient fill + subtle stroke for the bevel illusion */
+.library-arch-title textPath {
+    fill: url(#archGoldGrad);
+    stroke: rgba(90, 65, 20, 0.45);
+    stroke-width: 0.5px;
+    paint-order: stroke fill;
+    filter: drop-shadow(0 1px 0 rgba(255, 230, 150, 0.45))
+            drop-shadow(0 -1px 0 rgba(30, 20, 5, 0.8))
+            drop-shadow(0 0 8px rgba(201, 168, 76, 0.25));
+}
+
 .forbidden-library-header {
     display: flex;
     align-items: center;
@@ -4417,7 +4449,7 @@ select:-webkit-autofill {
     width: 56.1vw;
     height: calc(42 / 855 * 56.1vw);
     /* Pure vw — tracks shelf position in background image on resize */
-    top: calc(31.1vw + 3px);
+    top: calc(31.1vw + 0px);
     background: url('/assets/Forbidde-Library-Art/privat-library-top-shelf.jpg') center / 100% 100% no-repeat;
     pointer-events: none;
     z-index: 3;
@@ -4459,12 +4491,16 @@ select:-webkit-autofill {
     overflow: visible;
     width: 105px;
     height: 147px;
-    margin-top: 13px;
+    margin-top: 49px;
     /* Scale books proportionally with viewport so they track the background image */
     zoom: var(--book-zoom, 1);
     background: none;
     border: none;
     box-shadow: none;
+}
+/* Spine books take less shelf space — narrower wrapper */
+.library-book.mode-spine {
+    width: 35px;
 }
 /* Bottom embed contact shadow */
 .library-book::after {
@@ -4486,13 +4522,13 @@ select:-webkit-autofill {
     width: 105px;
     height: 147px;
     transform-style: preserve-3d;
-    transform: translateX(-50%) rotateX(15deg) rotateY(8deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
     transform-origin: center bottom;
     transition: transform 0.5s ease;
 }
 /* Spine compression for overflow books */
 .library-book.mode-spine .book-3d {
-    transform: translateX(-50%) rotateX(15deg) rotateY(90deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(90deg) rotateZ(-1deg) scale(1.08);
     width: 60px;
 }
 @media (max-width: 600px) {
@@ -4501,7 +4537,7 @@ select:-webkit-autofill {
     }
 }
 .library-book.mode-cover .book-3d {
-    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
     box-shadow:
         0 2px 4px rgba(0,0,0,0.22),
         0 6px 18px rgba(0,0,0,0.18),
@@ -4509,7 +4545,7 @@ select:-webkit-autofill {
 }
 /* Occasional leaned book — cover mode only, never spine */
 .library-book.mode-cover.mode-lean .book-3d {
-    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-2.5deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-2.5deg) scale(1.08);
 }
 /* Suppress transition during initial layout */
 .library-book.initializing .book-3d {
@@ -4517,20 +4553,41 @@ select:-webkit-autofill {
 }
 .library-book.mode-cover:hover .book-3d,
 .library-book.mode-cover.mode-lean:hover .book-3d {
-    transform: translateX(-50%) rotateX(15deg) rotateY(1deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(13deg) rotateZ(-1deg) scale(1.08);
     box-shadow:
         0 10px 24px rgba(0,0,0,0.3),
         0 20px 44px rgba(0,0,0,0.16);
 }
 .library-book.mode-spine:hover .book-3d {
-    transform: translateX(-50%) rotateX(15deg) rotateY(80deg) rotateZ(-1deg) translateY(-4px) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(80deg) rotateZ(-1deg) translateY(-4px) scale(1.08);
+    box-shadow:
+        0 10px 24px rgba(0,0,0,0.3),
+        0 20px 44px rgba(0,0,0,0.16);
+}
+/* Spine specular gleam — sweep right-to-left on hover */
+.book-spine::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 30%, rgba(255,255,255,0.2) 48%, rgba(255,255,255,0.25) 52%, transparent 70%) 200% 0 / 200% 100% no-repeat;
+    pointer-events: none;
+    z-index: 2;
+    border-radius: 6px 0 0 6px;
+    transition: none;
+}
+.library-book.mode-spine:hover .book-spine::before {
+    animation: spine-gleam 500ms ease-out forwards;
+}
+@keyframes spine-gleam {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 /* Disable shelf hover when zoom is active */
 body.library-zoom-active .library-book:hover .book-3d {
-    transform: translateX(-50%) rotateX(15deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
 }
 body.library-zoom-active .library-book.mode-spine:hover .book-3d {
-    transform: translateX(-50%) rotateX(15deg) rotateY(90deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(90deg) rotateZ(-1deg) scale(1.08);
 }
 /* Depth-of-field blur on shelf during zoom — disabled for fly-out animation */
 .library-book-list {
@@ -4576,7 +4633,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 
 .library-book.summon-hidden .book-3d {
     opacity: 0;
-    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
     filter: brightness(1.8) drop-shadow(0 0 12px rgba(201, 168, 76, 0.6));
     transition: none;
 }
@@ -4586,7 +4643,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 
 .library-book.summon-materializing .book-3d {
     opacity: 0.5;
-    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
     filter: brightness(1.4) drop-shadow(0 0 20px rgba(201, 168, 76, 0.8));
     transition: opacity 600ms ease, filter 600ms ease;
 }
@@ -4596,7 +4653,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 
 .library-book.summon-solid .book-3d {
     opacity: 1;
-    transform: translateX(-50%) rotateX(15deg) rotateY(2deg) rotateZ(-1deg) scale(1.19);
+    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
     filter: brightness(1) drop-shadow(0 0 0 transparent);
     transition: opacity 500ms ease, filter 800ms ease;
 }
@@ -5343,7 +5400,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     bottom: auto;
     width: 100%;
     height: 100%;
-    transform: rotateX(15deg) rotateY(0deg);
+    transform: rotateX(20deg) rotateY(0deg);
     transform-origin: center center;
     transition: none;
     pointer-events: none;

@@ -27,7 +27,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260308w">
+  <link rel="stylesheet" href="/styles.css?v=20260308z10">
 </head>
 
 <body class="booting">
@@ -1605,7 +1605,7 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260308w"></script>
+<script src="/app.js?v=20260308z13"></script>
 <script src="/card-designer.js"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
@@ -1655,6 +1655,22 @@
      ═══════════════════════════════════════════════════════════════════════════════ -->
 <div id="vaultLibraryScreen" class="screen hidden">
   <div class="forbidden-library library-variant library-variant--vault">
+    <!-- Arced "Private Library" title along the black arch -->
+    <svg class="library-arch-title" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <path id="archTextPath" d="M 120,180 Q 400,20 680,180" fill="none"/>
+        <linearGradient id="archGoldGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f5e6a3"/>
+          <stop offset="30%" stop-color="#d4a84a"/>
+          <stop offset="50%" stop-color="#c9a84c"/>
+          <stop offset="70%" stop-color="#b8912e"/>
+          <stop offset="100%" stop-color="#8a6914"/>
+        </linearGradient>
+      </defs>
+      <text>
+        <textPath href="#archTextPath" startOffset="50%" text-anchor="middle">Private Library</textPath>
+      </text>
+    </svg>
     <div id="vaultLibraryLoading" class="forbidden-library-loading">
       <p class="forbidden-library-empty">Gathering volumes...</p>
     </div>

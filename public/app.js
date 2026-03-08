@@ -20765,7 +20765,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const card = _fateZoomCard;
       if (!card) return;
 
+      const portal = document.getElementById('sbZoomPortal');
       const backdrop = document.getElementById('sbZoomBackdrop');
+
+      // Remove nav arrows
+      if (portal) portal.querySelectorAll('.zoom-nav-arrow').forEach(el => el.remove());
+
       if (backdrop) {
           backdrop.classList.remove('active');
           if (backdrop._fateCloseHandler) {
@@ -20794,6 +20799,89 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       _fateZoomCard = null;
       _fateZoomParent = null;
       _fateZoomSibling = null;
+  }
+
+  // Get ordered list of navigable fate cards (excludes petition)
+  function _getFateCardList() {
+      const mount = document.getElementById('cardMount');
+      if (!mount) return [];
+      return Array.from(mount.querySelectorAll('.fate-card:not(.petition-fate-card)'));
+  }
+
+  function _addFateZoomArrows(portal) {
+      // Remove existing arrows
+      portal.querySelectorAll('.zoom-nav-arrow').forEach(el => el.remove());
+
+      const cards = _getFateCardList();
+      if (cards.length <= 1) return;
+
+      const leftArrow = document.createElement('div');
+      leftArrow.className = 'zoom-nav-arrow zoom-nav-left';
+      leftArrow.textContent = '\u2039';
+      leftArrow.addEventListener('click', (e) => {
+          e.stopPropagation();
+          _navigateFateZoom(-1);
+      });
+
+      const rightArrow = document.createElement('div');
+      rightArrow.className = 'zoom-nav-arrow zoom-nav-right';
+      rightArrow.textContent = '\u203A';
+      rightArrow.addEventListener('click', (e) => {
+          e.stopPropagation();
+          _navigateFateZoom(1);
+      });
+
+      portal.appendChild(leftArrow);
+      portal.appendChild(rightArrow);
+  }
+
+  function _navigateFateZoom(direction) {
+      if (!_fateZoomCard) return;
+      const cards = _getFateCardList();
+      // The current card is in the portal, so find it by reference
+      // (it was removed from #cardMount — find its original index via _fateZoomParent/_fateZoomSibling)
+      // Restore card to DOM temporarily to find its index
+      const portal = document.getElementById('sbZoomPortal');
+      const currentCard = _fateZoomCard;
+
+      // Restore to original position
+      if (_fateZoomParent) {
+          if (_fateZoomSibling) {
+              _fateZoomParent.insertBefore(currentCard, _fateZoomSibling);
+          } else {
+              _fateZoomParent.appendChild(currentCard);
+          }
+      }
+
+      // Clean up zoom styles on current card
+      currentCard.classList.remove('fate-card-zoomed');
+      currentCard.style.transform = '';
+      currentCard.style.transformOrigin = '';
+      currentCard.style.width = '';
+      currentCard.style.height = '';
+      currentCard.style.position = '';
+      currentCard.style.margin = '';
+
+      // Now get fresh card list with current card back in place
+      const freshCards = _getFateCardList();
+      const currentIdx = freshCards.indexOf(currentCard);
+      if (currentIdx === -1) return;
+
+      let newIdx = currentIdx + direction;
+      if (newIdx < 0) newIdx = freshCards.length - 1;
+      if (newIdx >= freshCards.length) newIdx = 0;
+
+      const nextCard = freshCards[newIdx];
+
+      // Reset tracking so openFateCardZoom can proceed
+      _fateZoomCard = null;
+      _fateZoomParent = null;
+      _fateZoomSibling = null;
+
+      // Remove arrows before opening new card (openFateCardZoom will re-add them)
+      if (portal) portal.querySelectorAll('.zoom-nav-arrow').forEach(el => el.remove());
+
+      window.openFateCardZoom(nextCard);
   }
 
   window.openFateCardZoom = function(card) {
@@ -20837,6 +20925,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.transformOrigin = 'center center';
       card.style.position = '';
       card.style.margin = '0';
+
+      // Add navigation arrows
+      if (portal) _addFateZoomArrows(portal);
 
       if (backdrop) {
           backdrop.classList.add('active');
@@ -25396,6 +25487,114 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // Collector's Edition threshold (scene count)
   const COLLECTOR_EDITION_THRESHOLD = 40;
 
+  // Shelf capacity constants
+  const COVERS_PER_SHELF = 6;   // max cover-facing books per shelf row
+  const NUM_SHELVES = 3;        // shelf rows in the background art
+  const MAX_COVERS = COVERS_PER_SHELF * NUM_SHELVES; // 18 — beyond this, books become spines
+  const EDGE_SPINES_MAX = 3;    // max spine books per edge stack (left + right)
+
+  /**
+   * Assign cover vs spine mode per-shelf.
+   * Returns array of booleans (true = cover) for each index.
+   */
+  function assignShelfModes(totalBooks) {
+    const shelvesNeeded = Math.min(Math.ceil(totalBooks / COVERS_PER_SHELF), NUM_SHELVES);
+    const booksPerShelf = Math.ceil(totalBooks / shelvesNeeded);
+    const modes = [];
+    for (let i = 0; i < totalBooks; i++) {
+      const shelfIndex = Math.floor(i / booksPerShelf);
+      const posOnShelf = i - (shelfIndex * booksPerShelf);
+      modes.push(posOnShelf < COVERS_PER_SHELF);
+    }
+    return modes;
+  }
+
+  /**
+   * Determine which books are cover-facing vs spine-facing.
+   * Most recently opened / in-progress → cover; finished or long-abandoned → spine.
+   * Returns sorted array with `.isForward` set on each entry.
+   */
+  function classifyBookModes(entries, maxCovers) {
+    // Score each entry: higher = more deserving of cover display
+    const ABANDON_DAYS = 60; // days since last update to consider "abandoned"
+    const now = Date.now();
+    return entries.map(entry => {
+      const updatedMs = entry.updated_at ? new Date(entry.updated_at).getTime() : 0;
+      const daysSinceUpdate = updatedMs ? (now - updatedMs) / 86400000 : 999;
+      const isAbandoned = daysSinceUpdate > ABANDON_DAYS;
+      // Heuristic: recent + in-progress gets cover priority
+      // scene_count > 0 but low = in-progress; high scene_count = potentially finished
+      const recencyScore = updatedMs ? (1 / (1 + daysSinceUpdate)) : 0; // 0-1, higher = more recent
+      const coverPriority = isAbandoned ? 0 : recencyScore;
+      return { ...entry, _coverPriority: coverPriority };
+    }).sort((a, b) => b._coverPriority - a._coverPriority)
+      .map((entry, i) => ({ ...entry, isForward: i < maxCovers }));
+  }
+
+  /**
+   * Arrange books on a shelf row with spines at edges first, then interleaved.
+   *
+   * Placement order for spines:
+   *   1st spine → far right, 2nd → far left, alternating until 3 per side
+   *   Additional spines → between cover books, distributed evenly
+   *
+   * @param {Array} books - array of { ..., isForward: boolean }
+   * @returns {Array} reordered array
+   */
+  function arrangeShelfBooks(books) {
+    const covers = books.filter(b => b.isForward);
+    const spines = books.filter(b => !b.isForward);
+    if (spines.length === 0) return covers;
+    if (covers.length === 0) return spines;
+
+    // Split spines into edge stacks and middle overflow
+    const rightEdge = [];
+    const leftEdge = [];
+    const middle = [];
+    for (let i = 0; i < spines.length; i++) {
+      if (i % 2 === 0 && rightEdge.length < EDGE_SPINES_MAX) {
+        rightEdge.push(spines[i]);
+      } else if (i % 2 === 1 && leftEdge.length < EDGE_SPINES_MAX) {
+        leftEdge.push(spines[i]);
+      } else {
+        middle.push(spines[i]);
+      }
+    }
+
+    // Interleave middle spines between covers
+    // Distribute as evenly as possible into gaps between covers
+    const result = [];
+    if (middle.length === 0) {
+      // Simple: left edge + covers + right edge
+      result.push(...leftEdge, ...covers, ...rightEdge);
+    } else {
+      // Insert middle spines into gaps between covers
+      const gaps = covers.length + 1; // gaps: before first, between each, after last
+      // Skip first and last gaps (those are edge stacks)
+      const innerGaps = Math.max(covers.length - 1, 1);
+      const spinesPerGap = Array(innerGaps).fill(0);
+      for (let s = 0; s < middle.length; s++) {
+        spinesPerGap[s % innerGaps]++;
+      }
+      let mIdx = 0;
+      result.push(...leftEdge);
+      for (let c = 0; c < covers.length; c++) {
+        result.push(covers[c]);
+        if (c < innerGaps) {
+          for (let s = 0; s < spinesPerGap[c]; s++) {
+            result.push(middle[mIdx++]);
+          }
+        }
+      }
+      result.push(...rightEdge);
+    }
+    return result;
+  }
+
+  // Expose for mid-row design mode IIFE
+  window.arrangeShelfBooks = arrangeShelfBooks;
+  window.EDGE_SPINES_MAX = EDGE_SPINES_MAX;
+
   // — Render 3D book shelf —
   function renderLibraryList() {
     const loadingEl = $('forbiddenLibraryLoading');
@@ -25405,30 +25604,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     listEl.style.display = '';
     listEl.innerHTML = '';
 
-    // Determine forward-facing capacity (evaluated once per render)
-    const MAX_FORWARD = window.innerWidth > 1400 ? 8 :
-                        window.innerWidth > 1100 ? 6 :
-                        window.innerWidth > 900  ? 4 :
-                        window.innerWidth > 600  ? 3 :
-                        2;
+    // Classify: recent/in-progress → cover, old/finished → spine
+    const classified = classifyBookModes(_libraryEntries, MAX_COVERS);
+    // Arrange: spines at edges, then interleaved between covers
+    const arranged = arrangeShelfBooks(classified);
 
-    // Priority sort: collector first, then highest scene_count, then most recent
-    const sorted = _libraryEntries.slice().sort((a, b) => {
-      const aCollector = (a.scene_count || 0) >= COLLECTOR_EDITION_THRESHOLD ? 1 : 0;
-      const bCollector = (b.scene_count || 0) >= COLLECTOR_EDITION_THRESHOLD ? 1 : 0;
-      if (bCollector !== aCollector) return bCollector - aCollector;
-      if ((b.scene_count || 0) !== (a.scene_count || 0)) return (b.scene_count || 0) - (a.scene_count || 0);
-      return new Date(b.created_at || 0) - new Date(a.created_at || 0);
-    });
-
-    sorted.forEach((entry, index) => {
+    arranged.forEach((entry, index) => {
       const bookTitle = entry.title || 'Untitled';
       const bookAuthor = entry.author || 'S. Tory Bound';
       const scenes = entry.scene_count || 0;
       const words = entry.word_count || 0;
       const worldKey = (entry.world || 'modern').toLowerCase();
       const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
-      const isForward = index < MAX_FORWARD;
+      const isForward = entry.isForward;
 
       const book = document.createElement('div');
       book.className = 'library-book initializing' + (isCollector ? ' collector-edition' : '') + (isForward ? ' mode-cover' : ' mode-spine');
@@ -25520,6 +25708,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_zoomClosing || _zoomBook3d) return;
     _zoomEntry = entry;
     _zoomSourceBook = sourceBook;
+    _zoomSource = _zoomSource || 'vault'; // ensure source is set
     _zoomClosing = false;
     const overlay = $('libraryZoomOverlay');
     const container = $('zoomBookContainer');
@@ -25584,11 +25773,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const wasLean = sourceBook.classList.contains('mode-lean');
     let shelfTransform;
     if (wasSpine) {
-      shelfTransform = 'rotateX(15deg) rotateY(90deg) rotateZ(-1deg)';
+      shelfTransform = 'rotateX(7deg) rotateY(90deg) rotateZ(-1deg)';
     } else if (wasLean) {
-      shelfTransform = 'rotateX(15deg) rotateY(2deg) rotateZ(-2.5deg)';
+      shelfTransform = 'rotateX(7deg) rotateY(15deg) rotateZ(-2.5deg)';
     } else {
-      shelfTransform = 'rotateX(15deg) rotateY(2deg) rotateZ(-1deg)';
+      shelfTransform = 'rotateX(7deg) rotateY(15deg) rotateZ(-1deg)';
     }
     book3d.style.transform = shelfTransform;
     book3d.style.transformOrigin = 'center bottom'; // match shelf origin initially
@@ -25734,6 +25923,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     overlay._keyDownHandler = onKeyDown;
     overlay._zoomContainer = container;
   }
+  // Expose for design mode mid-row test books
+  window._openLibraryZoomFromDesign = function(entry, book) {
+    _zoomSource = 'vault';
+    _openLibraryZoom(entry, book);
+  };
 
   function _closeLibraryZoom() {
     if (_zoomClosing) return;
@@ -25788,11 +25982,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const wasLean = sourceBook && sourceBook.classList.contains('mode-lean');
     let returnTransform;
     if (wasSpine) {
-      returnTransform = 'rotateX(15deg) rotateY(90deg) rotateZ(-1deg)';
+      returnTransform = 'rotateX(7deg) rotateY(90deg) rotateZ(-1deg)';
     } else if (wasLean) {
-      returnTransform = 'rotateX(15deg) rotateY(2deg) rotateZ(-2.5deg)';
+      returnTransform = 'rotateX(7deg) rotateY(15deg) rotateZ(-2.5deg)';
     } else {
-      returnTransform = 'rotateX(15deg) rotateY(2deg) rotateZ(-1deg)';
+      returnTransform = 'rotateX(7deg) rotateY(15deg) rotateZ(-1deg)';
     }
 
     // Animate container back to shelf position
@@ -27087,28 +27281,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     listEl.style.display = '';
     listEl.innerHTML = '';
 
-    // Determine forward-facing capacity (evaluated once per render)
-    const MAX_FORWARD = window.innerWidth > 1400 ? 8 :
-                        window.innerWidth > 1100 ? 6 :
-                        window.innerWidth > 900  ? 4 :
-                        window.innerWidth > 600  ? 3 :
-                        2;
+    // Classify: recent/in-progress → cover, old/finished → spine
+    const classified = classifyBookModes(_vaultLibraryEntries, MAX_COVERS);
+    // Arrange: spines at edges, then interleaved between covers
+    const arranged = arrangeShelfBooks(classified);
 
-    // Priority sort: authored first, then highest scene_count, then most recently updated
-    const sorted = _vaultLibraryEntries.slice().sort((a, b) => {
-      const aAuthored = a._authored ? 1 : 0;
-      const bAuthored = b._authored ? 1 : 0;
-      if (bAuthored !== aAuthored) return bAuthored - aAuthored;
-      if ((b.scene_count || 0) !== (a.scene_count || 0)) return (b.scene_count || 0) - (a.scene_count || 0);
-      return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
-    });
-
-    sorted.forEach((entry, index) => {
+    arranged.forEach((entry, index) => {
       const bookTitle = entry.title || 'Untitled';
       const bookAuthor = entry._borrowed ? '' : 'You';
       const scenes = entry.scene_count || 0;
       const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
-      const isForward = index < MAX_FORWARD;
+      const isForward = entry.isForward;
 
       // "Last opened" relative timestamp
       let lastOpened = '';
@@ -27140,10 +27323,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   <div class="page-shimmer"></div>
 </div>`;
 
-      // Depth variance and lean (deterministic, no randomness)
-      const depthVariance = (index % 3) - 1;
-      // CSS controls base orientation (rotateX + rotateY via .mode-cover/.mode-spine)
-      // Depth variance is minimal (±2px) — omitted to avoid overriding CSS transform
+      // Lean only on cover books, deterministic
       const isMobile = window.innerWidth < 900;
       if (!isMobile && (index % 7 === 0) && isForward) {
         book.classList.add('mode-lean');
@@ -59550,10 +59730,10 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   const state = {
     booksPaddingTop: 0,   // px offset added to books margin-top
     shelfTopOffset: 0,    // px offset added to shelf overlay top
-    bookScale: 1.19,      // multiplier on book size (baked: 1.19)
+    bookScale: 1.08,      // multiplier on book size
     shelfWidth: 56.1,     // vw (baked: 56.1)
-    bookRotateX: 15,      // degrees backward lean
-    bookRotateY: 8,       // degrees Y turn
+    bookRotateX: 7,       // degrees backward lean
+    bookRotateY: 15,      // degrees Y turn
     bookRotateZ: -1,      // degrees Z roll
   };
 
@@ -59724,8 +59904,11 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       .library-book {
         margin-top: ${state.booksPaddingTop}px !important;
       }
-      .library-book .book-3d {
+      .library-book.mode-cover .book-3d {
         transform: translateX(-50%) rotateX(${state.bookRotateX}deg) rotateY(${state.bookRotateY}deg) rotateZ(${state.bookRotateZ}deg) scale(${state.bookScale}) !important;
+      }
+      .library-book.mode-spine .book-3d {
+        transform: translateX(-50%) rotateX(${state.bookRotateX}deg) rotateY(90deg) rotateZ(${state.bookRotateZ}deg) scale(${state.bookScale}) !important;
       }
     `;
   }
@@ -59764,4 +59947,529 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       bookList.style.removeProperty('--dm-shelf-w');
     }
   }
+})();
+
+// ── Per-Shelf Design Mode (Ctrl+Shift+M) ────────────────────────────────────
+(function initShelfDesignMode() {
+  let active = false, panel = null;
+
+  const DUMMY_TITLES = [
+    'The First Taste', 'The First Sacrifice',
+    'Crimson Pact', 'Thornfield Manor', 'The Ember Throne',
+    'Midnight Accord', 'Veil of Stars', 'Ashborn Legacy',
+    'The Gilded Cage', 'Serpent\'s Kiss', 'Iron Petals',
+    'House of Dusk', 'Broken Oaths', 'The Ashen Court',
+    'Ruin of Crowns', 'Silk & Thorns', 'The Last Accord',
+    'Nightbloom', 'Wolves of Winter', 'Ivory Chains',
+    'The Scarlet Vow', 'Ember & Dust', 'Veiled Throne',
+    'Blood of Stars', 'The Hollow King', 'Dusk Protocol',
+    'Shattered Realm'
+  ];
+
+  // Shelf capacity constants
+  const COVER_WIDTH = 105;
+  const SPINE_WIDTH = 35;
+  const SHELF_MAX_PX = 720;
+  const SHELF_COUNT = 3;
+  // Max covers that physically fit: floor(720/105) = 6
+  const MAX_COVERS_FIT = Math.floor(SHELF_MAX_PX / COVER_WIDTH); // 6
+  // Max books when all spines: floor(720/35) = 20
+  const MAX_ALL_SPINES = Math.floor(SHELF_MAX_PX / SPINE_WIDTH); // 20
+
+  // Given N covers, how many total books fit on a shelf?
+  function computeShelfCapacity(numCovers) {
+    const coverSpace = numCovers * COVER_WIDTH;
+    const remaining = SHELF_MAX_PX - coverSpace;
+    return numCovers + Math.max(0, Math.floor(remaining / SPINE_WIDTH));
+  }
+
+  // Given total books on this shelf, how many covers can we keep?
+  // Start with maxCovers, reduce until they fit.
+  function coversForBookCount(booksOnShelf, maxCovers) {
+    let covers = Math.min(maxCovers, booksOnShelf, MAX_COVERS_FIT);
+    while (covers > 0 && computeShelfCapacity(covers) < booksOnShelf) {
+      covers--;
+    }
+    return covers;
+  }
+
+  // Shelf lip images per shelf index (null = no overlay yet)
+  const SHELF_LIP_IMAGES = [
+    '/assets/Forbidde-Library-Art/privat-library-top-shelf.jpg',
+    '/assets/Forbidde-Library-Art/privat-library-mid-shelf.jpg',
+    null,  // bottom shelf — add when available
+  ];
+
+  // Per-shelf state: each shelf has independent transform values + shelf overlay
+  const shelfDefaults = [
+    { y: 49, scale: 1.08, rx: 7, ry: 15, rz: -1, gap: 2.5, lipY: 0, lipW: 56.1 },   // shelf 0 (top)
+    { y: 77, scale: 1.08, rx: 4, ry: 10, rz: -1, gap: 2.5, lipY: 0, lipW: 56.1 },   // shelf 1 (mid)
+    { y: 58, scale: 1.08, rx: 4, ry: 2, rz: 0, gap: 2.5, lipY: 0, lipW: 56.1 },     // shelf 2 (bottom)
+  ];
+
+  const shelfStates = shelfDefaults.map(d => ({ ...d }));
+  let activeShelf = 0; // which shelf tab is selected
+  let bookCount = 10;
+  let coverCount = 6;
+
+  const MIN_COVERS = 3; // always keep at least 3 cover-facing per shelf
+
+  // Distribute books across shelves.
+  //
+  // Phase 1 (≤18 books): Fill top→mid→bot with up to 6 covers each, no spines.
+  // Phase 2 (>18 books): Overflow goes to top shelf first; covers flip to
+  //   spines one-by-one to make room, but never below MIN_COVERS.
+  //   When top shelf is at capacity, overflow to mid (same rule), then bot.
+  function distributeToShelves(totalBooks, _unused) {
+    // Phase 1: assign up to 6 cover-facing per shelf
+    const phase1 = [0, 0, 0]; // books per shelf
+    let assigned = 0;
+    for (let s = 0; s < SHELF_COUNT && assigned < totalBooks; s++) {
+      const n = Math.min(MAX_COVERS_FIT, totalBooks - assigned);
+      phase1[s] = n;
+      assigned += n;
+    }
+
+    if (assigned >= totalBooks) {
+      // All books are cover-facing, done
+      return _buildShelves(phase1, phase1.slice());
+    }
+
+    // Phase 2: remaining books overflow into shelves top→bot
+    let overflow = totalBooks - assigned;
+    const shelfBooks = phase1.slice();   // total books per shelf
+    const shelfCovers = phase1.slice();  // covers per shelf
+
+    for (let s = 0; s < SHELF_COUNT && overflow > 0; s++) {
+      // How many more books can this shelf absorb?
+      // Start from current count, add books while flipping covers→spines
+      while (overflow > 0) {
+        const currentTotal = shelfBooks[s] + 1;
+        // How many covers can we keep with currentTotal books?
+        const coversIfAdded = coversForBookCount(currentTotal, MAX_COVERS_FIT);
+        if (coversIfAdded < MIN_COVERS) {
+          // Can't add more without going below min covers — shelf is full
+          break;
+        }
+        // Also check absolute capacity with MIN_COVERS
+        if (currentTotal > computeShelfCapacity(MIN_COVERS)) {
+          break;
+        }
+        shelfBooks[s] = currentTotal;
+        shelfCovers[s] = coversIfAdded;
+        overflow--;
+      }
+    }
+
+    return _buildShelves(shelfBooks, shelfCovers);
+  }
+
+  // Starter book art for first two entries
+  const STARTER_ART = [
+    {
+      coverImage: '/assets/Forbidde-Library-Art/Storybound-MaskedGala-Cover5x7-type.jpg',
+      backCoverImage: '/assets/Forbidde-Library-Art/Storybound-MaskedGala-Cover5x7-back.jpg',
+      spineImage: '/assets/Forbidde-Library-Art/Storybound-MaskedGala-Spine2x7.jpg',
+      author: 'S. Tory Bound',
+    },
+    {
+      coverImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Cover5x7-text.jpg',
+      backCoverImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Cover5x7-back.jpg',
+      spineImage: '/assets/Forbidde-Library-Art/Storybound-Fantasy-Spine2x7.jpg',
+      author: 'S. Tory Bound',
+    },
+  ];
+
+  function _buildShelves(shelfBooks, shelfCovers) {
+    const shelves = [];
+    let bookIndex = 0;
+    for (let s = 0; s < SHELF_COUNT; s++) {
+      if (shelfBooks[s] === 0) continue;
+      const books = [];
+      for (let i = 0; i < shelfBooks[s]; i++) {
+        const globalIdx = bookIndex + i;
+        const art = STARTER_ART[globalIdx] || null;
+        books.push({
+          story_id: 'dm-shelf-' + globalIdx,
+          title: DUMMY_TITLES[globalIdx % DUMMY_TITLES.length],
+          author: art ? art.author : 'Test Author',
+          _dmTest: true,
+          isForward: i < shelfCovers[s],
+          coverImage: art ? art.coverImage : null,
+          backCoverImage: art ? art.backCoverImage : null,
+          spineImage: art ? art.spineImage : null,
+        });
+      }
+      shelves.push(books);
+      bookIndex += shelfBooks[s];
+    }
+    return shelves;
+  }
+
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'M') {
+      e.preventDefault();
+      active ? closeMode() : openMode();
+    }
+  });
+
+  function rebuildShelves() {
+    const libraryEl = document.querySelector('.forbidden-library.library-variant--vault')
+                   || document.querySelector('.forbidden-library');
+    if (!libraryEl) return;
+
+    // Remove old design shelves
+    libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
+
+    const shelves = distributeToShelves(bookCount, coverCount);
+    const bookList = libraryEl.querySelector('.library-book-list');
+    let insertAfter = bookList;
+
+    shelves.forEach((shelfBooks, shelfIdx) => {
+      const shelf = document.createElement('div');
+      shelf.className = 'dm-shelf-row';
+      shelf.dataset.shelf = shelfIdx;
+
+      const arranged = window.arrangeShelfBooks(shelfBooks);
+
+      arranged.forEach((entry) => {
+        const book = document.createElement('div');
+        book.className = 'library-book dm-shelf-book' + (entry.isForward ? ' mode-cover' : ' mode-spine');
+        book.dataset.shelf = shelfIdx;
+        book.dataset.storyId = entry.story_id;
+        const frontContent = entry.coverImage
+          ? `<img src="${entry.coverImage}" alt="${entry.title}">`
+          : `<div class="book-front-text"><div class="book-front-title">${entry.title}</div><div class="book-front-author">${entry.author}</div></div>`;
+        const backContent = entry.backCoverImage
+          ? `<img src="${entry.backCoverImage}" alt="Back cover"><div class="back-content back-content-overlay"><div class="back-synopsis-box"><p class="back-synopsis">Test book</p></div></div>`
+          : `<div class="back-content"><h3 class="back-title">${entry.title}</h3><div class="back-synopsis-box"><p class="back-synopsis">Test book</p></div><p class="back-meta">${entry.author}</p></div>`;
+        const spineContent = entry.spineImage
+          ? `<img src="${entry.spineImage}" alt="Spine">`
+          : `<div class="spine-text">${entry.title} <span class="spine-author">${entry.author}</span></div>`;
+        book.innerHTML = `<div class="book-3d">
+  <div class="book-front">${frontContent}</div>
+  <div class="book-back">${backContent}</div>
+  <div class="book-spine">${spineContent}</div>
+  <div class="book-pages-right"></div>
+  <div class="book-pages-top"></div>
+  <div class="book-pages-bottom"></div>
+  <div class="page-shimmer"></div>
+</div>`;
+        book.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (typeof window._openLibraryZoomFromDesign === 'function') {
+            window._openLibraryZoomFromDesign(entry, book);
+          }
+        });
+        shelf.appendChild(book);
+      });
+
+      if (insertAfter && insertAfter.nextSibling) {
+        libraryEl.insertBefore(shelf, insertAfter.nextSibling);
+      } else {
+        libraryEl.appendChild(shelf);
+      }
+      insertAfter = shelf;
+    });
+
+    // Update info
+    if (panel) {
+      const info = panel.querySelector('#dms-info');
+      if (info) info.textContent = `${shelves.length} shelf${shelves.length > 1 ? 'es' : ''} used`;
+    }
+  }
+
+  function openMode() {
+    active = true;
+    rebuildShelves();
+
+    panel = document.createElement('div');
+    panel.id = 'shelfDesignPanel';
+    panel.innerHTML = buildPanelHTML();
+    document.body.appendChild(panel);
+
+    wireSliders();
+    wireShelfTabs();
+    applyAllStyles();
+
+    // Draggable
+    let dx = 0, dy = 0, mx = 0, my = 0;
+    panel.addEventListener('mousedown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      mx = e.clientX; my = e.clientY;
+      const move = ev => {
+        dx = ev.clientX - mx; dy = ev.clientY - my;
+        mx = ev.clientX; my = ev.clientY;
+        panel.style.top = (panel.offsetTop + dy) + 'px';
+        panel.style.left = (panel.offsetLeft + dx) + 'px';
+      };
+      const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+
+  function buildPanelHTML() {
+    const s = shelfStates[activeShelf];
+    return `
+      <style>
+        #shelfDesignPanel {
+          position: fixed; top: 10px; left: 10px; z-index: 99999;
+          background: rgba(0,0,0,0.92); color: #c9a84c; font-family: monospace;
+          padding: 16px; border-radius: 8px; border: 1px solid #c9a84c;
+          font-size: 12px; min-width: 290px; cursor: move;
+          user-select: none; max-height: 90vh; overflow-y: auto;
+        }
+        #shelfDesignPanel h3 { margin: 0 0 10px; font-size: 14px; color: #fff; }
+        #shelfDesignPanel label { display: block; margin: 8px 0 2px; }
+        #shelfDesignPanel input[type=range] { width: 100%; accent-color: #c9a84c; }
+        #shelfDesignPanel .val { color: #fff; float: right; }
+        #shelfDesignPanel button {
+          background: #c9a84c; color: #000; border: none;
+          padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
+          margin-right: 6px;
+        }
+        #shelfDesignPanel button:hover { background: #e6c35a; }
+        #shelfDesignPanel .output { margin-top: 10px; background: #111; padding: 8px;
+          border-radius: 4px; font-size: 11px; color: #8f8; white-space: pre-wrap; display: none; }
+        #shelfDesignPanel hr { border: none; border-top: 1px solid rgba(201,168,76,0.3); margin: 12px 0 8px; }
+        .dms-tab-bar { display: flex; gap: 4px; margin-bottom: 10px; }
+        .dms-tab {
+          flex: 1; padding: 6px 0; text-align: center; border: 1px solid #c9a84c;
+          border-radius: 4px; cursor: pointer; font-family: monospace; font-size: 11px;
+          color: #c9a84c; background: transparent; font-weight: bold;
+        }
+        .dms-tab.active { background: #c9a84c; color: #000; }
+      </style>
+      <h3>Shelf Design (Ctrl+Shift+M)</h3>
+
+      <label>Total books <span class="val" id="dms-count-val">${bookCount}</span></label>
+      <input type="range" id="dms-count" min="1" max="60" value="${bookCount}" step="1">
+
+      <label>Covers/shelf <span class="val" id="dms-covers-val">${coverCount}</span></label>
+      <input type="range" id="dms-covers" min="0" max="${MAX_COVERS_FIT}" value="${coverCount}" step="1">
+
+      <div style="margin-top:6px;font-size:11px;color:#8f8;" id="dms-info"></div>
+
+      <hr>
+
+      <div class="dms-tab-bar">
+        <button class="dms-tab${activeShelf === 0 ? ' active' : ''}" data-shelf="0">Top</button>
+        <button class="dms-tab${activeShelf === 1 ? ' active' : ''}" data-shelf="1">Mid</button>
+        <button class="dms-tab${activeShelf === 2 ? ' active' : ''}" data-shelf="2">Bot</button>
+      </div>
+
+      <label>Y offset <span class="val" id="dms-y-val">${s.y}px</span></label>
+      <input type="range" id="dms-y" min="-200" max="200" value="${s.y}" step="1">
+
+      <label>Scale <span class="val" id="dms-scale-val">${s.scale.toFixed(2)}</span></label>
+      <input type="range" id="dms-scale" min="0.3" max="3.0" value="${s.scale}" step="0.01">
+
+      <label>Rotate X (tilt) <span class="val" id="dms-rx-val">${s.rx}°</span></label>
+      <input type="range" id="dms-rx" min="-45" max="45" value="${s.rx}" step="1">
+
+      <label>Rotate Y (turn) <span class="val" id="dms-ry-val">${s.ry}°</span></label>
+      <input type="range" id="dms-ry" min="-90" max="90" value="${s.ry}" step="1">
+
+      <label>Rotate Z (roll) <span class="val" id="dms-rz-val">${s.rz}°</span></label>
+      <input type="range" id="dms-rz" min="-30" max="30" value="${s.rz}" step="1">
+
+      <label>Column gap <span class="val" id="dms-gap-val">${s.gap.toFixed(1)}vw</span></label>
+      <input type="range" id="dms-gap" min="0" max="10" value="${s.gap}" step="0.1">
+
+      <hr>
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">Shelf Lip Overlay${SHELF_LIP_IMAGES[activeShelf] ? '' : ' (no image)'}</div>
+
+      <label>Lip Y offset <span class="val" id="dms-lipY-val">${s.lipY}px</span></label>
+      <input type="range" id="dms-lipY" min="-200" max="200" value="${s.lipY}" step="1">
+
+      <label>Lip width <span class="val" id="dms-lipW-val">${s.lipW.toFixed(1)}vw</span></label>
+      <input type="range" id="dms-lipW" min="20" max="80" value="${s.lipW}" step="0.1">
+
+      <hr>
+      <div style="margin-top:4px;">
+        <button id="dms-print">Print CSS</button>
+        <button id="dms-copy">Copy CSS</button>
+        <button id="dms-close">Close</button>
+      </div>
+      <div class="output" id="dms-output"></div>
+    `;
+  }
+
+  function syncSlidersToShelf() {
+    const s = shelfStates[activeShelf];
+    const set = (id, val, suffix) => {
+      const slider = panel.querySelector(id);
+      if (slider) slider.value = val;
+      const label = panel.querySelector(id + '-val');
+      if (label) label.textContent = (typeof val === 'number' && suffix !== 'px' && suffix !== '°' ? val.toFixed(2) : val) + suffix;
+    };
+    set('#dms-y', s.y, 'px');
+    set('#dms-scale', s.scale, '');
+    panel.querySelector('#dms-scale-val').textContent = s.scale.toFixed(2);
+    set('#dms-rx', s.rx, '°');
+    set('#dms-ry', s.ry, '°');
+    set('#dms-rz', s.rz, '°');
+    set('#dms-gap', s.gap, 'vw');
+    panel.querySelector('#dms-gap-val').textContent = s.gap.toFixed(1) + 'vw';
+    set('#dms-lipY', s.lipY, 'px');
+    set('#dms-lipW', s.lipW, 'vw');
+    panel.querySelector('#dms-lipW-val').textContent = s.lipW.toFixed(1) + 'vw';
+
+    // Update tab active state
+    panel.querySelectorAll('.dms-tab').forEach(t => {
+      t.classList.toggle('active', parseInt(t.dataset.shelf) === activeShelf);
+    });
+  }
+
+  function wireShelfTabs() {
+    panel.querySelectorAll('.dms-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        activeShelf = parseInt(tab.dataset.shelf);
+        syncSlidersToShelf();
+      });
+    });
+  }
+
+  function wireSliders() {
+    const wireOne = (id, key, fmt, suffix) => {
+      panel.querySelector(id).addEventListener('input', function() {
+        shelfStates[activeShelf][key] = parseFloat(this.value);
+        panel.querySelector(id + '-val').textContent = fmt(shelfStates[activeShelf][key]) + suffix;
+        applyAllStyles();
+      });
+    };
+
+    // Book count
+    const countSlider = panel.querySelector('#dms-count');
+    const coversSlider = panel.querySelector('#dms-covers');
+    countSlider.addEventListener('input', function() {
+      bookCount = parseInt(this.value);
+      panel.querySelector('#dms-count-val').textContent = bookCount;
+      if (coverCount > bookCount) {
+        coverCount = Math.min(bookCount, MAX_COVERS_FIT);
+        coversSlider.value = coverCount;
+        panel.querySelector('#dms-covers-val').textContent = coverCount;
+      }
+      rebuildShelves();
+      applyAllStyles();
+    });
+    coversSlider.addEventListener('input', function() {
+      coverCount = parseInt(this.value);
+      panel.querySelector('#dms-covers-val').textContent = coverCount;
+      rebuildShelves();
+      applyAllStyles();
+    });
+
+    wireOne('#dms-y', 'y', v => v, 'px');
+    wireOne('#dms-scale', 'scale', v => v.toFixed(2), '');
+    wireOne('#dms-rx', 'rx', v => v, '°');
+    wireOne('#dms-ry', 'ry', v => v, '°');
+    wireOne('#dms-rz', 'rz', v => v, '°');
+    wireOne('#dms-gap', 'gap', v => v.toFixed(1), 'vw');
+    wireOne('#dms-lipY', 'lipY', v => v, 'px');
+    wireOne('#dms-lipW', 'lipW', v => v.toFixed(1), 'vw');
+
+    panel.querySelector('#dms-print').addEventListener('click', printCSS);
+    panel.querySelector('#dms-copy').addEventListener('click', () => {
+      printCSS();
+      const text = panel.querySelector('#dms-output').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = panel.querySelector('#dms-copy');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy CSS'; }, 1500);
+      });
+    });
+    panel.querySelector('#dms-close').addEventListener('click', closeMode);
+  }
+
+  function applyAllStyles() {
+    let styleEl = document.getElementById('dms-live-style');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'dms-live-style';
+      document.head.appendChild(styleEl);
+    }
+
+    let css = '';
+    for (let i = 0; i < SHELF_COUNT; i++) {
+      const s = shelfStates[i];
+      css += `
+      .dm-shelf-row[data-shelf="${i}"] {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 0 ${s.gap}vw;
+        position: relative;
+        z-index: 1;
+        max-width: 52vw;
+        margin: 0 auto;
+        padding: 0 16px;
+      }
+      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine {
+        margin-left: -${s.gap / 2}vw;
+        margin-right: -${s.gap / 2}vw;
+      }
+      .dm-shelf-row[data-shelf="${i}"] .library-book {
+        margin-top: ${s.y}px !important;
+        outline: none !important;
+      }
+      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+      }
+      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(90deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+      }
+      `;
+      // Shelf lip overlay via ::before
+      if (SHELF_LIP_IMAGES[i]) {
+        css += `
+      .dm-shelf-row[data-shelf="${i}"]::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: ${s.lipY}px;
+        width: ${s.lipW}vw;
+        height: calc(42 / 855 * ${s.lipW}vw);
+        background: url('${SHELF_LIP_IMAGES[i]}') center / 100% 100% no-repeat;
+        pointer-events: none;
+        z-index: 3;
+      }
+        `;
+      }
+    }
+    styleEl.textContent = css;
+  }
+
+  function printCSS() {
+    const out = panel.querySelector('#dms-output');
+    out.style.display = 'block';
+    let text = '';
+    for (let i = 0; i < SHELF_COUNT; i++) {
+      const s = shelfStates[i];
+      const label = ['Top', 'Mid', 'Bottom'][i];
+      text += `/* ── Shelf ${i} (${label}) ── */
+[data-shelf="${i}"] .library-book { margin-top: ${s.y}px; }
+[data-shelf="${i}"] .book-3d { transform: ... rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale.toFixed(2)}); }
+/* gap: ${s.gap.toFixed(1)}vw */
+/* lip: bottom=${s.lipY}px width=${s.lipW.toFixed(1)}vw */
+
+`;
+    }
+    out.textContent = text.trim();
+  }
+
+  function closeMode() {
+    active = false;
+    if (panel) { panel.remove(); panel = null; }
+    const styleEl = document.getElementById('dms-live-style');
+    if (styleEl) styleEl.remove();
+    const libraryEl = document.querySelector('.forbidden-library.library-variant--vault')
+                   || document.querySelector('.forbidden-library');
+    if (libraryEl) libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
+  }
+
 })();
