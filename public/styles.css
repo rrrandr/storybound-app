@@ -4626,70 +4626,6 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .library-book-list {
     transition: filter 0.35s ease;
 }
-/* ── Starter Book Summon Sequence ── */
-.summon-text {
-    text-align: center;
-    font-family: 'Lora', serif;
-    color: var(--gold, #c9a84c);
-    font-size: 1.3em;
-    font-style: italic;
-    opacity: 0;
-    transition: opacity 700ms ease;
-    text-shadow: 0 0 12px rgba(201, 168, 76, 0.4);
-    margin: 20px 0 10px;
-    width: 100%;
-}
-.summon-text.visible { opacity: 1; }
-
-.summon-slot {
-    position: relative;
-    display: inline-flex;
-    justify-content: center;
-}
-
-.summon-light-beam {
-    position: absolute;
-    top: -40px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 320px;
-    background: radial-gradient(ellipse at center, rgba(255, 215, 100, 0.18) 0%, transparent 70%);
-    filter: blur(8px);
-    opacity: 0;
-    transition: opacity 400ms ease;
-    pointer-events: none;
-    z-index: 0;
-}
-.summon-light-beam.visible { opacity: 1; }
-.summon-light-beam.fading { opacity: 0; transition: opacity 300ms ease; }
-
-.library-book.summon-hidden .book-3d {
-    opacity: 0;
-    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
-    filter: brightness(1.8) drop-shadow(0 0 12px rgba(201, 168, 76, 0.6));
-    transition: none;
-}
-.library-book.summon-hidden {
-    pointer-events: none;
-}
-
-.library-book.summon-materializing .book-3d {
-    opacity: 0.5;
-    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
-    filter: brightness(1.4) drop-shadow(0 0 20px rgba(201, 168, 76, 0.8));
-    transition: opacity 600ms ease, filter 600ms ease;
-}
-.library-book.summon-materializing {
-    pointer-events: none;
-}
-
-.library-book.summon-solid .book-3d {
-    opacity: 1;
-    transform: translateX(-50%) rotateX(7deg) rotateY(15deg) rotateZ(-1deg) scale(1.08);
-    filter: brightness(1) drop-shadow(0 0 0 transparent);
-    transition: opacity 500ms ease, filter 800ms ease;
-}
 
 /* ── Trophy Wall Modal ── */
 .trophy-wall-modal {
@@ -4761,8 +4697,8 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 /* Vault library variant — buttons sit inside the arch half-circle, locked to bg */
 .library-variant--vault > .vault-exit-row {
     position: absolute;
-    top: 12.09vw;
-    left: 50%;
+    top: 10.22vw;
+    left: 23.6%;
     transform: translateX(-50%);
     z-index: 3;
     margin-top: 0;
@@ -4773,9 +4709,9 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     font-size: 0.72em;
 }
 .library-variant--vault > .vault-exit-row .sb-btn-png.sm {
-    width: 11.7vw;
-    height: 3.2vw;
-    font-size: 0.9vw;
+    width: 12.2vw;
+    height: 3.1vw;
+    font-size: 1.00vw;
     padding: 0.5vw 1.5vw;
     box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
 }
@@ -5144,8 +5080,8 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     margin: 2px 6px;
 }
 /* Per-starter synopsis position tuning */
-[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 43px; }
-[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 23px; }
+[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 56px; }
+[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 18px; }
 /* Text-only back covers need padding */
 .back-content:not(.back-content-overlay) {
     padding: 16px 12px;

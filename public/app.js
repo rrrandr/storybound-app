@@ -385,12 +385,7 @@ window.config = window.config || {
     return null;
   }
 
-  const PROFILE_COLUMNS = `
-    tier, subscription_fortunes, purchased_fortunes, is_subscriber, subscription_tier, has_storypass,
-    age_confirmed, tos_version, privacy_version, adult_ack_version,
-    romance_preferences, free_story_consumed, first_tempt_fate_vision_triggered,
-    has_seen_library_summon
-  `;
+  const PROFILE_COLUMNS = 'tier,subscription_fortunes,purchased_fortunes,is_subscriber,subscription_tier,has_storypass,age_confirmed,tos_version,privacy_version,adult_ack_version,romance_preferences,free_story_consumed,first_tempt_fate_vision_triggered';
 
   async function hydrateProfile(userId) {
     let { data: profile, error } = await sb
@@ -398,7 +393,7 @@ window.config = window.config || {
       .select(PROFILE_COLUMNS)
       .eq('id', userId)
       .maybeSingle();
-    if (error) { console.error('Profile fetch error:', error); return null; }
+    if (error) { console.error('Profile fetch error:', error.message, error.details, error.hint, error); return null; }
     if (!profile) {
       const { error: insertErr } = await sb.from('profiles').insert({ id: userId });
       if (insertErr) { console.error('Profile insert error:', insertErr); return null; }
@@ -422,7 +417,6 @@ window.config = window.config || {
     // Migrate legacy freeStoryConsumed → freeCustomStoryCredits
     _migrateFreeStoryCredits();
     state.first_tempt_fate_vision_triggered = !!profile.first_tempt_fate_vision_triggered;
-    state.hasSeenLibrarySummon = !!profile.has_seen_library_summon;
     syncTierFromAccess();
     activateKeyholeMarkIfEligible();
     decayFateResonanceCrossSession();
@@ -25641,16 +25635,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       { y: -5,  scale: 0.78, rx: -3, ry: -8,  rz: 0,    crush: -4 },
     ]},
     B: { left: 33.2, width: 33.6, perRow: 5, shelfDefs: [
-      { y: 180, scale: 0.80, rx: 4, ry: 5,  rz: -0.5, crush: -3 },
-      { y: -9,  scale: 0.75, rx: 4, ry: 3,  rz: -0.5, crush: -3 },
-      { y: -5,  scale: 0.80, rx: 2, ry: -3, rz: 0,    crush: -3 },
-      { y: -5,  scale: 0.80, rx: 2, ry: -5, rz: 0,    crush: -3 },
+      { y: 180, scale: 0.80, rx: 4,  ry: 18,  rz: -0.5, crush: -3 },
+      { y: -9,  scale: 0.75, rx: 4,  ry: -8,  rz: -0.5, crush: -3 },
+      { y: -5,  scale: 0.80, rx: -3, ry: -9,  rz: 0,    crush: -3 },
+      { y: -5,  scale: 0.80, rx: -4, ry: 16,  rz: 0,    crush: -3 },
     ]},
-    C: { left: 70.3, width: 23.2, perRow: 3, shelfDefs: [
-      { y: 180, scale: 0.75, rx: 4, ry: -12, rz: 0.5, crush: -4 },
-      { y: -9,  scale: 0.72, rx: 4, ry: -10, rz: 0.5, crush: -4 },
-      { y: -5,  scale: 0.75, rx: 2, ry: -8,  rz: 0,   crush: -4 },
-      { y: -5,  scale: 0.78, rx: 2, ry: -6,  rz: 0,   crush: -4 },
+    C: { left: 72.8, width: 23.2, perRow: 3, shelfDefs: [
+      { y: 180, scale: 0.75, rx: 4,  ry: 17, rz: -1, crush: -4 },
+      { y: -9,  scale: 0.72, rx: 4,  ry: 18, rz: -1, crush: -4 },
+      { y: -5,  scale: 0.75, rx: -3, ry: 21, rz: 0,  crush: -4 },
+      { y: -5,  scale: 0.78, rx: -4, ry: 12, rz: 0,  crush: -4 },
     ]},
   };
 
@@ -26622,15 +26616,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     loadVaultLibrary();
   }
 
-  /**
-   * Inject the starter story book into the vault library render.
-   * Called from renderVaultBookList when libraryFirstOnboarding is active
-   * and user has no authored stories.
-   */
-  function _hasSeenLibrarySummon() {
-    return !!state.hasSeenLibrarySummon;
-  }
-
   // Library book responsive scaling — books track background image size
   // Reference width: 147px book height = 10.6vw → shelf gap 31.1-20.5 → W=1387
   (function() {
@@ -26697,152 +26682,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Trigger initialization animation
       requestAnimationFrame(() => book.classList.remove('initializing'));
     });
-  }
-
-  /**
-   * Animated summon sequence: empty shelf → sparkles → books materialize.
-   * Runs once per user; sets sb_library_summon_seen afterwards.
-   */
-  function _runStarterBookSummonSequence(listEl) {
-    // Guard against double-injection
-    if (listEl.querySelector('[data-starter-story]')) return;
-
-    let _summonBooksReady = false;
-
-    // --- Step 0: Insert summon text + hidden books in summon-slot wrappers ---
-    const summonText = document.createElement('div');
-    summonText.className = 'summon-text';
-    summonText.textContent = 'Two beginnings await you.';
-    listEl.appendChild(summonText);
-
-    const slots = [];
-    STARTER_STORIES.forEach((starterDef) => {
-      const slot = document.createElement('div');
-      slot.className = 'summon-slot';
-      slot.id = 'summonSlot_' + starterDef.id;
-
-      // Light beam (behind book)
-      const beam = document.createElement('div');
-      beam.className = 'summon-light-beam';
-      slot.appendChild(beam);
-
-      // Book element (same as _injectStarterStoryBook)
-      const book = document.createElement('div');
-      book.className = 'library-book mode-cover summon-hidden';
-      book.dataset.starterStory = 'true';
-      book.dataset.storyId = starterDef.id;
-      book.dataset.world = (starterDef.world || '').toLowerCase();
-
-      const subtitle = starterDef.subtitle ? `<div class="book-front-subtitle">${escapeHTML(starterDef.subtitle)}</div>` : '';
-      const frontContent = starterDef.coverImage
-        ? `<img src="${starterDef.coverImage}" alt="${escapeHTML(starterDef.title)}">`
-        : `<div class="book-front-text"><div class="book-front-title">${escapeHTML(starterDef.title)}</div>${subtitle}<div class="book-front-author">${escapeHTML(starterDef.author)}</div></div>`;
-      const synopsisText = starterDef.synopsis ? escapeHTML(starterDef.synopsis) : escapeHTML(starterDef.author);
-      const backContent2 = starterDef.backCoverImage
-        ? `<img src="${starterDef.backCoverImage}" alt="Back cover"><div class="back-content back-content-overlay"><div class="back-synopsis-box"><p class="back-synopsis">${synopsisText}</p></div></div>`
-        : `<div class="back-content"><h3 class="back-title">${escapeHTML(starterDef.title)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${synopsisText}</p></div><p class="back-meta">${escapeHTML(starterDef.author)}</p></div>`;
-      const spineContent2 = starterDef.spineImage
-        ? `<img src="${starterDef.spineImage}" alt="Spine">`
-        : `<div class="spine-text">${escapeHTML(starterDef.title)} <span class="spine-author">${escapeHTML(starterDef.author)}</span></div>`;
-      book.innerHTML = `<div class="book-3d">
-  <div class="book-front">${frontContent}</div>
-  <div class="book-back">${backContent2}</div>
-  <div class="book-spine">${spineContent2}</div>
-  <div class="book-pages-right"></div>
-  <div class="book-pages-top"></div>
-  <div class="book-pages-bottom"></div>
-  <div class="page-shimmer"></div>
-</div>`;
-
-      // Hover sound
-      let _hoverPlayed = false;
-      book.addEventListener('mouseenter', () => {
-        if (!_hoverPlayed) { _hoverPlayed = true; if (typeof _playLibrarySound === 'function') _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
-      });
-      book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
-
-      // Click handler — gated until materialization completes
-      book.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (!_summonBooksReady) return;
-        _zoomSource = 'vault';
-        _zoomStarterDef = starterDef;
-        _openLibraryZoom({ story_id: starterDef.id, title: starterDef.title, author: starterDef.author, _isStarter: true }, book);
-      });
-
-      slot.appendChild(book);
-      listEl.appendChild(slot);
-      slots.push({ slot, beam, book, starterDef });
-    });
-
-    // --- Step 50ms: Fade in summon text ---
-    setTimeout(() => { summonText.classList.add('visible'); }, 50);
-
-    // --- Step 800ms: Show light beams + start sparkles ---
-    setTimeout(() => {
-      slots.forEach(({ slot, beam }) => {
-        beam.classList.add('visible');
-        if (typeof startSparkleEmitter === 'function') {
-          startSparkleEmitter(slot.id, 'librarySummon', 6, { initialBurst: 4 });
-        }
-      });
-    }, 800);
-
-    // --- Step 1500ms: Silhouette phase ---
-    setTimeout(() => {
-      slots.forEach(({ book }) => {
-        book.classList.remove('summon-hidden');
-        book.classList.add('summon-materializing');
-      });
-    }, 1500);
-
-    // --- Step 1700ms: Solid phase ---
-    setTimeout(() => {
-      slots.forEach(({ book }) => {
-        book.classList.remove('summon-materializing');
-        book.classList.add('summon-solid');
-      });
-    }, 1700);
-
-    // --- Step 2000ms: Enable clicks after materialization settles ---
-    setTimeout(() => {
-      _summonBooksReady = true;
-      if (window.playUISound) window.playUISound('book_land');
-    }, 2000);
-
-    // --- Step 2500ms: Cleanup sparkles, fade beams + text ---
-    setTimeout(() => {
-      slots.forEach(({ slot, beam }) => {
-        if (typeof stopSparkleEmitter === 'function') stopSparkleEmitter(slot.id);
-        beam.classList.add('fading');
-      });
-      summonText.classList.remove('visible');
-    }, 2500);
-
-    // --- Step 2800ms: Final cleanup, unwrap books into listEl ---
-    setTimeout(() => {
-      // Remove summon text
-      if (summonText.parentNode) summonText.parentNode.removeChild(summonText);
-
-      // Unwrap books from slots into listEl directly
-      slots.forEach(({ slot, beam, book }) => {
-        // Remove beam
-        if (beam.parentNode) beam.parentNode.removeChild(beam);
-        // Remove summon class
-        book.classList.remove('summon-solid');
-        // Move book out of slot into listEl
-        listEl.appendChild(book);
-        // Remove empty slot
-        if (slot.parentNode) slot.parentNode.removeChild(slot);
-      });
-
-      // Set flag so animation doesn't replay
-      state.hasSeenLibrarySummon = true;
-      if (sb && _supabaseProfileId) {
-        sb.from('profiles').update({ has_seen_library_summon: true }).eq('id', _supabaseProfileId)
-          .then(({ error }) => { if (error) console.warn('[SUMMON] Profile update failed:', error); });
-      }
-    }, 2800);
   }
 
   /**
@@ -60382,16 +60221,16 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       { y: -5,  scale: 0.78, rx: -3, ry: -8,  rz: 0,    crush: -4 },
     ],
     B: [
-      { y: 180, scale: 0.80, rx: 4, ry: 5,  rz: -0.5, crush: -3 },
-      { y: -9,  scale: 0.75, rx: 4, ry: 3,  rz: -0.5, crush: -3 },
-      { y: -5,  scale: 0.80, rx: 2, ry: -3, rz: 0,    crush: -3 },
-      { y: -5,  scale: 0.80, rx: 2, ry: -5, rz: 0,    crush: -3 },
+      { y: 180, scale: 0.80, rx: 4,  ry: 18,  rz: -0.5, crush: -3 },
+      { y: -9,  scale: 0.75, rx: 4,  ry: -8,  rz: -0.5, crush: -3 },
+      { y: -5,  scale: 0.80, rx: -3, ry: -9,  rz: 0,    crush: -3 },
+      { y: -5,  scale: 0.80, rx: -4, ry: 16,  rz: 0,    crush: -3 },
     ],
     C: [
-      { y: 180, scale: 0.75, rx: 4, ry: -12, rz: 0.5, crush: -4 },
-      { y: -9,  scale: 0.72, rx: 4, ry: -10, rz: 0.5, crush: -4 },
-      { y: -5,  scale: 0.75, rx: 2, ry: -8,  rz: 0,   crush: -4 },
-      { y: -5,  scale: 0.78, rx: 2, ry: -6,  rz: 0,   crush: -4 },
+      { y: 180, scale: 0.75, rx: 4,  ry: 17, rz: -1, crush: -4 },
+      { y: -9,  scale: 0.72, rx: 4,  ry: 18, rz: -1, crush: -4 },
+      { y: -5,  scale: 0.75, rx: -3, ry: 21, rz: 0,  crush: -4 },
+      { y: -5,  scale: 0.78, rx: -4, ry: 12, rz: 0,  crush: -4 },
     ],
   };
 
@@ -60606,7 +60445,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       bl.style.display = 'none';
       bl.dataset.dmHidden = '1';
     });
-    libraryEl.querySelectorAll('.summon-text, .vault-trophy-shelf, .summon-slot').forEach(el => {
+    libraryEl.querySelectorAll('.vault-trophy-shelf').forEach(el => {
       el.style.display = 'none';
       el.dataset.dmHidden = '1';
     });
@@ -60820,8 +60659,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
       <hr>
       <div style="font-size:11px;color:#888;margin-bottom:4px;">Column Position</div>
-      <label>Left <span class="val" id="dms-colLeft-val">${s.colLeft != null ? s.colLeft.toFixed(1) : (_forbiddenCol === 'A' ? '3.6' : _forbiddenCol === 'B' ? '33.2' : '70.3')}vw</span></label>
-      <input type="range" id="dms-colLeft" min="0" max="90" value="${s.colLeft != null ? s.colLeft : (_forbiddenCol === 'A' ? 3.6 : _forbiddenCol === 'B' ? 33.2 : 70.3)}" step="0.1">
+      <label>Left <span class="val" id="dms-colLeft-val">${s.colLeft != null ? s.colLeft.toFixed(1) : (_forbiddenCol === 'A' ? '3.6' : _forbiddenCol === 'B' ? '33.2' : '72.8')}vw</span></label>
+      <input type="range" id="dms-colLeft" min="0" max="90" value="${s.colLeft != null ? s.colLeft : (_forbiddenCol === 'A' ? 3.6 : _forbiddenCol === 'B' ? 33.2 : 72.8)}" step="0.1">
       <label>Width <span class="val" id="dms-colWidth-val">${s.colWidth != null ? s.colWidth.toFixed(1) : (_forbiddenCol === 'A' ? '23.2' : _forbiddenCol === 'B' ? '33.6' : '23.2')}vw</span></label>
       <input type="range" id="dms-colWidth" min="5" max="50" value="${s.colWidth != null ? s.colWidth : (_forbiddenCol === 'A' ? 23.2 : _forbiddenCol === 'B' ? 33.6 : 23.2)}" step="0.1">`;
     } else {
@@ -61051,7 +60890,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     const scope = '#forbiddenLibraryScreen';
     const states = _getActiveStates();
     const colId = _forbiddenCol;
-    const defaultCfg = { A: { left: 3.6, width: 23.2 }, B: { left: 33.2, width: 33.6 }, C: { left: 70.3, width: 23.2 } }[colId];
+    const defaultCfg = { A: { left: 3.6, width: 23.2 }, B: { left: 33.2, width: 33.6 }, C: { left: 72.8, width: 23.2 } }[colId];
     const colLeft = (states[0] && states[0].colLeft != null) ? states[0].colLeft : defaultCfg.left;
     const colWidth = (states[0] && states[0].colWidth != null) ? states[0].colWidth : defaultCfg.width;
 
@@ -61100,7 +60939,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     const isForbidden = _activeLibrary === 'forbidden';
 
     if (isForbidden) {
-      const defaultCfg = { A: { left: 3.6, width: 23.2 }, B: { left: 33.2, width: 33.6 }, C: { left: 70.3, width: 23.2 } }[_forbiddenCol];
+      const defaultCfg = { A: { left: 3.6, width: 23.2 }, B: { left: 33.2, width: 33.6 }, C: { left: 72.8, width: 23.2 } }[_forbiddenCol];
       const colLeft = (states[0] && states[0].colLeft != null) ? states[0].colLeft : defaultCfg.left;
       const colWidth = (states[0] && states[0].colWidth != null) ? states[0].colWidth : defaultCfg.width;
       text += `/* ── Column ${_forbiddenCol}: left=${colLeft.toFixed(1)}vw, width=${colWidth.toFixed(1)}vw ── */\n\n`;
@@ -61302,6 +61141,373 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     }
   };
 
+})();
+
+// ── Library Button Design Mode (Ctrl+Shift+O) ───────────────────────────────
+// Per-button control: each button has independent position, size, font-size.
+// Row-level properties (top, left, gap) remain shared.
+(function initButtonDesignMode() {
+  let active = false, panel = null, liveStyle = null;
+  let _whichLib = 'vault';
+  let _activeBtn = 0; // 0 = first button, 1 = second button
+
+  // Per-library state: row position + per-button arrays
+  const _btnState = {
+    vault: {
+      top: 10.22, left: 23.6, gap: 0.3,
+      btns: [
+        { w: 12.2, h: 3.1, fontSize: 1.00, offsetX: 0, offsetY: 0 },
+        { w: 12.2, h: 3.1, fontSize: 1.00, offsetX: 0, offsetY: 0 },
+      ]
+    },
+    forbidden: {
+      top: 10.56, left: 50, gap: 0.3,
+      btns: [
+        { w: 11.7, h: 3.2, fontSize: 0.9, offsetX: 0, offsetY: 0 },
+        { w: 11.7, h: 3.2, fontSize: 0.9, offsetX: 0, offsetY: 0 },
+      ]
+    },
+  };
+
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'O') {
+      e.preventDefault();
+      active ? closeMode() : openMode();
+    }
+  });
+
+  function detectLibrary() {
+    if (document.querySelector('#forbiddenLibraryScreen:not(.hidden)')) return 'forbidden';
+    if (document.querySelector('#vaultLibraryScreen:not(.hidden)')) return 'vault';
+    return 'vault';
+  }
+
+  function getRowSelector() {
+    return _whichLib === 'vault'
+      ? '.library-variant--vault > .vault-exit-row'
+      : '.library-variant--forbidden > .vault-exit-row';
+  }
+
+  function getBtnElements() {
+    const row = document.querySelector(getRowSelector());
+    if (!row) return [];
+    return Array.from(row.querySelectorAll('.sb-btn-png.sm'));
+  }
+
+  function getBtnNames() {
+    const els = getBtnElements();
+    return els.map(el => el.textContent.trim() || 'Button');
+  }
+
+  function applyStyles() {
+    if (!liveStyle) {
+      liveStyle = document.createElement('style');
+      liveStyle.id = 'btn-design-live-style';
+      document.head.appendChild(liveStyle);
+    }
+    const st = _btnState[_whichLib];
+    const rowSel = getRowSelector();
+    const variant = _whichLib === 'vault' ? '--vault' : '--forbidden';
+    const btnBaseSel = `.library-variant${variant} > .vault-exit-row .sb-btn-png.sm`;
+
+    let css = `
+      ${rowSel} {
+        position: absolute !important;
+        top: ${st.top}vw !important;
+        left: ${st.left}% !important;
+        transform: translateX(-50%) !important;
+        gap: ${st.gap}vw !important;
+        z-index: 9999 !important;
+        display: flex !important;
+        justify-content: center !important;
+        margin-top: 0 !important;
+        padding: 0 !important;
+      }
+    `;
+    // Per-button styles via nth-child
+    st.btns.forEach((b, i) => {
+      css += `
+      ${btnBaseSel}:nth-child(${i + 1}) {
+        width: ${b.w}vw !important;
+        height: ${b.h}vw !important;
+        font-size: ${b.fontSize}vw !important;
+        padding: 0.5vw 1.5vw !important;
+        position: relative !important;
+        left: ${b.offsetX}vw !important;
+        top: ${b.offsetY}vw !important;
+      }
+      `;
+    });
+    liveStyle.textContent = css;
+  }
+
+  function enableDrag() {
+    const btns = getBtnElements();
+    btns.forEach((btn, idx) => {
+      btn.style.cursor = 'move';
+      let startX, startY, startOX, startOY;
+      function onDown(e) {
+        if (!active) return;
+        e.preventDefault();
+        e.stopPropagation();
+        _activeBtn = idx;
+        highlightActiveBtn();
+        syncSliders();
+        const vw = window.innerWidth / 100;
+        startX = e.clientX;
+        startY = e.clientY;
+        const b = _btnState[_whichLib].btns[idx];
+        startOX = b.offsetX;
+        startOY = b.offsetY;
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+      }
+      function onMove(e) {
+        const vw = window.innerWidth / 100;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        _btnState[_whichLib].btns[idx].offsetX = startOX + dx / vw;
+        _btnState[_whichLib].btns[idx].offsetY = startOY + dy / vw;
+        applyStyles();
+        syncSliders();
+      }
+      function onUp() {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+      }
+      btn.addEventListener('mousedown', onDown);
+      btn._btnDesignDown = onDown;
+    });
+  }
+
+  function disableDrag() {
+    const btns = getBtnElements();
+    btns.forEach(btn => {
+      btn.style.cursor = '';
+      btn.style.outline = '';
+      if (btn._btnDesignDown) {
+        btn.removeEventListener('mousedown', btn._btnDesignDown);
+        delete btn._btnDesignDown;
+      }
+    });
+  }
+
+  function highlightActiveBtn() {
+    const btns = getBtnElements();
+    btns.forEach((btn, i) => {
+      btn.style.outline = i === _activeBtn ? '2px solid #c9a84c' : '';
+    });
+  }
+
+  function syncSliders() {
+    if (!panel) return;
+    const st = _btnState[_whichLib];
+    const b = st.btns[_activeBtn];
+    const set = (id, val, dec, suffix) => {
+      const sl = panel.querySelector(id);
+      if (sl) sl.value = val;
+      const lbl = panel.querySelector(id + '-val');
+      if (lbl) lbl.textContent = val.toFixed(dec) + suffix;
+    };
+    set('#bds-top', st.top, 2, 'vw');
+    set('#bds-left', st.left, 1, '%');
+    set('#bds-gap', st.gap, 1, 'vw');
+    set('#bds-btnW', b.w, 1, 'vw');
+    set('#bds-btnH', b.h, 1, 'vw');
+    set('#bds-fontSize', b.fontSize, 2, 'vw');
+    set('#bds-offsetX', b.offsetX, 2, 'vw');
+    set('#bds-offsetY', b.offsetY, 2, 'vw');
+    // Update tab highlight
+    const tabs = panel.querySelectorAll('.bds-btn-tab');
+    tabs.forEach((t, i) => {
+      t.style.background = i === _activeBtn ? '#c9a84c' : '#333';
+      t.style.color = i === _activeBtn ? '#000' : '#c9a84c';
+    });
+  }
+
+  function openMode() {
+    active = true;
+    _whichLib = detectLibrary();
+    _activeBtn = 0;
+    applyStyles();
+    enableDrag();
+
+    const st = _btnState[_whichLib];
+    const b = st.btns[_activeBtn];
+    const libLabel = _whichLib === 'vault' ? 'Private Library' : 'Forbidden Library';
+    const names = getBtnNames();
+
+    panel = document.createElement('div');
+    panel.id = 'btnDesignPanel';
+    panel.innerHTML = `
+      <style>
+        #btnDesignPanel {
+          position: fixed; top: 10px; right: 10px; z-index: 99999;
+          background: rgba(0,0,0,0.92); color: #c9a84c; font-family: monospace;
+          padding: 16px; border-radius: 8px; border: 1px solid #c9a84c;
+          font-size: 12px; min-width: 280px; cursor: move;
+          user-select: none; max-height: 90vh; overflow-y: auto;
+        }
+        #btnDesignPanel h3 { margin: 0 0 10px; font-size: 13px; color: #fff; }
+        #btnDesignPanel label { display: block; margin: 8px 0 2px; }
+        #btnDesignPanel input[type=range] { width: 100%; accent-color: #c9a84c; }
+        #btnDesignPanel .val { color: #fff; float: right; }
+        #btnDesignPanel button {
+          background: #c9a84c; color: #000; border: none;
+          padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
+          margin-right: 6px;
+        }
+        #btnDesignPanel button:hover { background: #e6c35a; }
+        #btnDesignPanel .bds-btn-tab {
+          padding: 4px 10px; border-radius: 4px; font-size: 11px; margin-right: 4px;
+          cursor: pointer; border: 1px solid #c9a84c;
+        }
+        #btnDesignPanel .output { margin-top: 10px; background: #111; padding: 8px;
+          border-radius: 4px; font-size: 11px; color: #8f8; white-space: pre-wrap; display: none; }
+        #btnDesignPanel hr { border: none; border-top: 1px solid rgba(201,168,76,0.3); margin: 12px 0 8px; }
+      </style>
+      <h3>Button Design — ${libLabel} (Ctrl+Shift+O)</h3>
+      <div style="font-size:11px;color:#8f8;margin-bottom:8px;">Drag individual buttons to reposition</div>
+
+      <div style="margin-bottom:10px;font-size:11px;color:#aaa;">ROW POSITION</div>
+      <label>Row Top <span class="val" id="bds-top-val">${st.top.toFixed(2)}vw</span></label>
+      <input type="range" id="bds-top" min="0" max="50" value="${st.top}" step="0.01">
+
+      <label>Row Left <span class="val" id="bds-left-val">${st.left.toFixed(1)}%</span></label>
+      <input type="range" id="bds-left" min="0" max="100" value="${st.left}" step="0.1">
+
+      <label>Gap <span class="val" id="bds-gap-val">${st.gap.toFixed(1)}vw</span></label>
+      <input type="range" id="bds-gap" min="0" max="5" value="${st.gap}" step="0.1">
+
+      <hr>
+      <div style="margin-bottom:8px;font-size:11px;color:#aaa;">PER-BUTTON — click tab or drag button</div>
+      <div style="margin-bottom:8px;">
+        ${names.map((n, i) => `<span class="bds-btn-tab" data-idx="${i}" style="background:${i === 0 ? '#c9a84c' : '#333'};color:${i === 0 ? '#000' : '#c9a84c'}">${n}</span>`).join('')}
+      </div>
+
+      <label>Width <span class="val" id="bds-btnW-val">${b.w.toFixed(1)}vw</span></label>
+      <input type="range" id="bds-btnW" min="3" max="25" value="${b.w}" step="0.1">
+
+      <label>Height <span class="val" id="bds-btnH-val">${b.h.toFixed(1)}vw</span></label>
+      <input type="range" id="bds-btnH" min="1" max="10" value="${b.h}" step="0.1">
+
+      <label>Font size <span class="val" id="bds-fontSize-val">${b.fontSize.toFixed(2)}vw</span></label>
+      <input type="range" id="bds-fontSize" min="0.3" max="3" value="${b.fontSize}" step="0.01">
+
+      <label>Offset X <span class="val" id="bds-offsetX-val">${b.offsetX.toFixed(2)}vw</span></label>
+      <input type="range" id="bds-offsetX" min="-10" max="10" value="${b.offsetX}" step="0.01">
+
+      <label>Offset Y <span class="val" id="bds-offsetY-val">${b.offsetY.toFixed(2)}vw</span></label>
+      <input type="range" id="bds-offsetY" min="-10" max="10" value="${b.offsetY}" step="0.01">
+
+      <hr>
+      <div style="margin-top:4px;">
+        <button id="bds-print">Print CSS</button>
+        <button id="bds-copy">Copy CSS</button>
+        <button id="bds-close">Close</button>
+      </div>
+      <div class="output" id="bds-output"></div>
+    `;
+    document.body.appendChild(panel);
+    highlightActiveBtn();
+
+    // Tab switching
+    panel.querySelectorAll('.bds-btn-tab').forEach(tab => {
+      tab.addEventListener('click', e => {
+        e.stopPropagation();
+        _activeBtn = parseInt(tab.dataset.idx);
+        highlightActiveBtn();
+        syncSliders();
+      });
+    });
+
+    // Wire row sliders
+    const wireRow = (id, key, dec, suffix) => {
+      panel.querySelector(id).addEventListener('input', function() {
+        _btnState[_whichLib][key] = parseFloat(this.value);
+        panel.querySelector(id + '-val').textContent = parseFloat(this.value).toFixed(dec) + suffix;
+        applyStyles();
+      });
+    };
+    wireRow('#bds-top', 'top', 2, 'vw');
+    wireRow('#bds-left', 'left', 1, '%');
+    wireRow('#bds-gap', 'gap', 1, 'vw');
+
+    // Wire per-button sliders
+    const wireBtn = (id, key, dec, suffix) => {
+      panel.querySelector(id).addEventListener('input', function() {
+        _btnState[_whichLib].btns[_activeBtn][key] = parseFloat(this.value);
+        panel.querySelector(id + '-val').textContent = parseFloat(this.value).toFixed(dec) + suffix;
+        applyStyles();
+      });
+    };
+    wireBtn('#bds-btnW', 'w', 1, 'vw');
+    wireBtn('#bds-btnH', 'h', 1, 'vw');
+    wireBtn('#bds-fontSize', 'fontSize', 2, 'vw');
+    wireBtn('#bds-offsetX', 'offsetX', 2, 'vw');
+    wireBtn('#bds-offsetY', 'offsetY', 2, 'vw');
+
+    panel.querySelector('#bds-print').addEventListener('click', printCSS);
+    panel.querySelector('#bds-copy').addEventListener('click', () => {
+      printCSS();
+      const text = panel.querySelector('#bds-output').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = panel.querySelector('#bds-copy');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy CSS'; }, 1500);
+      });
+    });
+    panel.querySelector('#bds-close').addEventListener('click', closeMode);
+
+    // Draggable panel
+    let dx = 0, dy = 0, mx = 0, my = 0;
+    panel.addEventListener('mousedown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.classList.contains('bds-btn-tab')) return;
+      mx = e.clientX; my = e.clientY;
+      const move = ev => {
+        dx = ev.clientX - mx; dy = ev.clientY - my;
+        mx = ev.clientX; my = ev.clientY;
+        panel.style.top = (panel.offsetTop + dy) + 'px';
+        panel.style.left = (panel.offsetLeft + dx) + 'px';
+        panel.style.right = 'auto';
+      };
+      const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+
+  function printCSS() {
+    const out = panel.querySelector('#bds-output');
+    out.style.display = 'block';
+    const st = _btnState[_whichLib];
+    const variant = _whichLib === 'vault' ? '--vault' : '--forbidden';
+    const names = getBtnNames();
+    let css = `/* ${_whichLib === 'vault' ? 'Private' : 'Forbidden'} Library buttons */
+.library-variant${variant} > .vault-exit-row {
+    top: ${st.top.toFixed(2)}vw;
+    left: ${st.left.toFixed(1)}%;
+    gap: ${st.gap.toFixed(1)}vw;
+}`;
+    st.btns.forEach((b, i) => {
+      css += `\n/* ${names[i] || 'Button ' + (i+1)} */
+.library-variant${variant} > .vault-exit-row .sb-btn-png.sm:nth-child(${i + 1}) {
+    width: ${b.w.toFixed(1)}vw;
+    height: ${b.h.toFixed(1)}vw;
+    font-size: ${b.fontSize.toFixed(2)}vw;${
+      b.offsetX !== 0 || b.offsetY !== 0 ? `\n    position: relative;\n    left: ${b.offsetX.toFixed(2)}vw;\n    top: ${b.offsetY.toFixed(2)}vw;` : ''
+    }
+}`;
+    });
+    out.textContent = css;
+  }
+
+  function closeMode() {
+    active = false;
+    disableDrag();
+    if (panel) { panel.remove(); panel = null; }
+    if (liveStyle) { liveStyle.remove(); liveStyle = null; }
+  }
 })();
 
 // ── Pact Star Design Mode (Cmd+Shift+P) ─────────────────────────────────────
