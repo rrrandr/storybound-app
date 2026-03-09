@@ -40,73 +40,77 @@
 
   const SOUNDS = {
 
-    // Muffled card on velvet — soft thud + fabric swoosh
+    // Card on velvet — breathy fabric brush, no tonal oscillator
     card_flip: function(ctx, t) {
-      // Low thud (card body hitting soft surface)
-      const thud = ctx.createOscillator();
-      thud.type = 'sine';
-      thud.frequency.setValueAtTime(120, t);
-      thud.frequency.exponentialRampToValueAtTime(50, t + 0.07);
-
-      const thudGain = ctx.createGain();
-      thudGain.gain.setValueAtTime(0.13, t);
-      thudGain.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-
-      thud.connect(thudGain).connect(ctx.destination);
-      thud.start(t);
-      thud.stop(t + 0.08);
-
-      // Velvet swoosh (filtered noise, low + warm)
+      const dur = 0.14;
       const noise = ctx.createBufferSource();
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.09, ctx.sampleRate);
+      const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
       const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.18;
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.22;
+      noise.buffer = buf;
+
+      // Low bandpass — warm fabric swoosh, no highs
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(400, t);
+      bp.frequency.exponentialRampToValueAtTime(180, t + dur);
+      bp.Q.value = 0.7;
+
+      // Gentle fade-in then out (avoids click transient)
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0, t);
+      gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+      noise.connect(bp).connect(gain).connect(ctx.destination);
+      noise.start(t);
+      noise.stop(t + dur);
+    },
+
+    // Soft shimmer — filtered noise sparkle, no tonal oscillator
+    sparkle: function(ctx, t) {
+      const dur = 0.10;
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.12;
+      noise.buffer = buf;
+
+      const bp = ctx.createBiquadFilter();
+      bp.type = 'bandpass';
+      bp.frequency.value = 3000;
+      bp.Q.value = 1.5;
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0, t);
+      gain.gain.linearRampToValueAtTime(0.05, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+      noise.connect(bp).connect(gain).connect(ctx.destination);
+      noise.start(t);
+      noise.stop(t + dur);
+    },
+
+    // Soft tactile tap — buttons (noise-only, no oscillator)
+    button_click: function(ctx, t) {
+      const dur = 0.04;
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.15;
       noise.buffer = buf;
 
       const filt = ctx.createBiquadFilter();
       filt.type = 'lowpass';
-      filt.frequency.setValueAtTime(800, t);
-      filt.frequency.exponentialRampToValueAtTime(300, t + 0.09);
+      filt.frequency.value = 500;
 
-      const nGain = ctx.createGain();
-      nGain.gain.setValueAtTime(0.10, t);
-      nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.10, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
 
-      noise.connect(filt).connect(nGain).connect(ctx.destination);
+      noise.connect(filt).connect(gain).connect(ctx.destination);
       noise.start(t);
-      noise.stop(t + 0.09);
-    },
-
-    // Crystalline shimmer — sparkles / magic
-    sparkle: function(ctx, t) {
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(4200, t);
-      osc.frequency.exponentialRampToValueAtTime(6800, t + 0.08);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.06, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.12);
-    },
-
-    // Short tactile tick — buttons
-    button_click: function(ctx, t) {
-      const osc = ctx.createOscillator();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, t);
-      osc.frequency.exponentialRampToValueAtTime(400, t + 0.03);
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.12, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + 0.05);
+      noise.stop(t + dur);
     },
 
     // Soft page + leather creak — book opening

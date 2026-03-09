@@ -62,6 +62,22 @@
 
   function px(v) { return Math.round(v * 2) / 2 + 'px'; }
 
+  // Card face container base width (px) — used for px→cqi conversion in output
+  const CARD_FACE_BASE_WIDTH = 168;
+
+  /**
+   * Convert a CSS value from px to cqi if it's a px value.
+   * Used in buildCSS() output so card text positions scale proportionally.
+   */
+  function pxToCqi(value) {
+    if (typeof value !== 'string') return value;
+    const m = value.match(/^(-?[\d.]+)px$/);
+    if (!m) return value;
+    const pxVal = parseFloat(m[1]);
+    const cqiVal = Math.round((pxVal / CARD_FACE_BASE_WIDTH * 100) * 100) / 100;
+    return cqiVal + 'cqi';
+  }
+
   /** Force-set an inline style with !important to override stylesheet rules. */
   function forceStyle(el, prop, value) {
     el.style.setProperty(prop, value, 'important');
@@ -310,12 +326,18 @@
     if (btn) panel.appendChild(btn);
   }
 
+  // Properties that should be converted from px to cqi in card face output
+  const CQI_CONVERTIBLE_PROPS = new Set(['top', 'left', 'right', 'bottom', 'width', 'height', 'font-size']);
+
   function buildCSS() {
     let css = '/* Card Designer output */\n\n';
     for (const [sel, props] of mods) {
+      // Convert px→cqi for elements inside .sb-card-face
+      const isCardFaceChild = sel.includes('sb-card-face');
       css += `${sel} {\n`;
       for (const [p, v] of Object.entries(props)) {
-        css += `    ${p}: ${v};\n`;
+        const outputVal = (isCardFaceChild && CQI_CONVERTIBLE_PROPS.has(p)) ? pxToCqi(v) : v;
+        css += `    ${p}: ${outputVal};\n`;
       }
       css += '}\n\n';
     }

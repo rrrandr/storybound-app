@@ -6,40 +6,36 @@
 // Idempotent: safe to invoke repeatedly.
 //
 // Eligibility: snapshot.stateSnapshot.turnCount >= 20
+//
+// Sanitization pipeline:
+//   1. Strip HTML → plain text
+//   2. Replace player/partner character names with fixed pseudonyms
+//   3. LLM pass (OpenAI gpt-4o-mini) for context-aware scrubbing:
+//      - Fantasy stories: scrub real-world cities, college names
+//      - Modern/contemporary: keep cities and colleges intact
+//      - Social media handles → in-universe synonyms
+//      - Emails → subtly corrupted (still readable, won't deliver)
+//      - Phone numbers → preserve plot-meaningful ones, scrub brand names
+//      - Company names → creative fictional renames
+//   4. Collapse whitespace, normalize
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import "@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// ── Sanitization constants ──────────────────────────────────────────────────
+// ── Constants ────────────────────────────────────────────────────────────────
 
 const PROTAGONIST_NAME = "Aurelia Vale";
 const LOVE_INTEREST_NAME = "Lucien Vale";
 
-const COMPANY_PATTERN =
-  /\b(Goldman(?:\s+Sachs)?|JPMorgan|JP\s*Morgan|Morgan\s+Stanley|BlackRock|McKinsey|Deloitte|Bain)\b/gi;
-const LOCATION_PATTERN =
-  /\b(Brooklyn|Manhattan|Queens|Bronx|Staten\s+Island|Harlem|SoHo|Tribeca|Chelsea|Williamsburg|New\s+York(?:\s+City)?|Los\s+Angeles|San\s+Francisco|Chicago|Boston|Miami|Seattle|Portland|Austin|Denver|Atlanta|Houston|Dallas|Philadelphia|Phoenix|Washington\s+D\.?C\.?)\b/gi;
-const EMAIL_PATTERN =
-  /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
-const PHONE_PATTERN =
-  /(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g;
-
 const MIN_TURN_COUNT = 20;
 const BATCH_SIZE = 500;
+const LLM_MAX_CHARS = 24000; // truncate very long stories before sending to LLM
 
-// ── Sanitization ────────────────────────────────────────────────────────────
+// ── Basic text cleanup (pre-LLM) ────────────────────────────────────────────
 
-function sanitizeText(
-  html: string,
-  playerName: string | null,
-  partnerName: string | null,
-  displayPlayerName: string | null,
-  displayPartnerName: string | null
-): string {
-  // Strip HTML tags → plain text
+function stripHTML(html: string): string {
   let text = html.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ");
-  // Decode common HTML entities
   text = text
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -52,39 +48,157 @@ function sanitizeText(
     .replace(/&mdash;/g, "\u2014")
     .replace(/&ndash;/g, "\u2013")
     .replace(/&hellip;/g, "\u2026");
+  return text;
+}
 
-  // Replace character names (longest first to avoid partial matches)
-  const names = [
-    playerName,
-    displayPlayerName,
-    partnerName,
-    displayPartnerName,
-  ]
+function replaceCharacterNames(
+  text: string,
+  playerName: string | null,
+  partnerName: string | null,
+  displayPlayerName: string | null,
+  displayPartnerName: string | null
+): string {
+  const names = [playerName, displayPlayerName, partnerName, displayPartnerName]
     .filter(Boolean)
     .map((n) => n!.trim())
     .filter((n) => n.length >= 2);
 
-  // Deduplicate and sort longest-first
-  const uniqueNames = [...new Set(names)].sort(
-    (a, b) => b.length - a.length
-  );
+  const uniqueNames = [...new Set(names)].sort((a, b) => b.length - a.length);
 
   for (const name of uniqueNames) {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const rx = new RegExp(`\\b${escaped}\\b`, "gi");
-    // Determine replacement: is this a player name or partner name?
-    const isPlayer =
-      name === playerName || name === displayPlayerName;
+    const isPlayer = name === playerName || name === displayPlayerName;
     text = text.replace(rx, isPlayer ? PROTAGONIST_NAME : LOVE_INTEREST_NAME);
   }
+  return text;
+}
 
-  // Scrub real-world identifiers
-  text = text.replace(COMPANY_PATTERN, "a private firm");
-  text = text.replace(LOCATION_PATTERN, "the city");
-  text = text.replace(EMAIL_PATTERN, "[redacted]");
-  text = text.replace(PHONE_PATTERN, "[redacted]");
+// ── LLM-powered context-aware sanitization ───────────────────────────────────
 
-  // Collapse whitespace
+const SANITIZATION_SYSTEM_PROMPT = `You are a text sanitization engine for a public fiction library. Your job is to modify story text to remove legally sensitive real-world references while keeping the prose natural and readable. Return ONLY the modified text, no commentary.
+
+RULES BY STORY WORLD TYPE:
+
+FANTASY stories:
+- Remove all real-world city names, replace with fitting fantasy equivalents (e.g., "New York" → "Thornhaven", "London" → "Ashenmere")
+- Remove all real-world college/university names, replace with fantasy equivalents (e.g., "Harvard" → "The Obsidian Academy")
+- Remove all real-world country names if they break immersion
+
+MODERN / CONTEMPORARY / SCI-FI stories:
+- KEEP city names — they are part of the setting
+- KEEP college/university names — they are part of the setting
+
+ALL stories regardless of world:
+- COMPANY NAMES: Rename to creative fictional equivalents that evoke the same feeling. Examples:
+  - "Goldman Sachs" → "S.A.C. Silverman"
+  - "McKinsey" → "Ashford & Hale"
+  - "JPMorgan" → "Blackwell Morgan"
+  - "Google" → "Nexus"
+  - "Apple" → "Prism"
+  - "Amazon" → "Titan Logistics"
+  - "Tesla" → "Volta Motors"
+  Keep the replacement consistent throughout the text (same company → same replacement).
+
+- SOCIAL MEDIA HANDLES (@mentions):
+  - If the handle uses a name (e.g., @MrBig), replace with a synonym handle (@SirLarge)
+  - If the handle uses descriptive words, replace with synonyms (@DarkKnight → @ShadowGuard)
+  - Keep the @ prefix and make it feel natural
+
+- EMAIL ADDRESSES:
+  - Do NOT redact. Instead, insert one extra character into the domain that would cause delivery failure but keeps readability (e.g., "john@gmail.com" → "john@gmaill.com", "sara@company.co" → "sara@commpany.co")
+
+- PHONE NUMBERS:
+  - If the number spells out something plot-relevant (e.g., "1-800-GET-JACKED" for a character's business), KEEP IT
+  - Scrub obvious real brand vanity numbers (e.g., "1-800-MATTRESS", "1-800-FLOWERS", "1-800-GOT-JUNK")
+  - For random phone numbers with no plot significance, shuffle 2 digits
+
+- BRAND NAMES (Coke, Nike, Gucci, etc.):
+  - Replace with evocative fictional equivalents ("Coke" → "Crimson Cola", "Nike" → "Stride", "Gucci" → "Aureli")
+  - If a brand name is used generically (e.g., "googled it"), leave the verb form but lowercase it
+
+CRITICAL: Preserve the story's tone, pacing, and meaning. Changes should be invisible to a casual reader. Do NOT add commentary, headers, or explanations. Return only the modified story text.`;
+
+async function llmSanitize(
+  text: string,
+  worldType: string,
+  openaiKey: string
+): Promise<string> {
+  // Truncate very long texts to stay within token limits
+  const truncated = text.length > LLM_MAX_CHARS ? text.slice(0, LLM_MAX_CHARS) : text;
+
+  const userPrompt = `STORY WORLD TYPE: ${worldType || "Modern"}
+
+TEXT TO SANITIZE:
+${truncated}`;
+
+  try {
+    const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${openaiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: SANITIZATION_SYSTEM_PROMPT },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 8000,
+      }),
+    });
+
+    if (!resp.ok) {
+      const errBody = await resp.text();
+      console.error(`[library-publisher] OpenAI API error ${resp.status}:`, errBody);
+      return text; // Fall back to unsanitized-by-LLM text
+    }
+
+    const json = await resp.json();
+    const result = json.choices?.[0]?.message?.content?.trim();
+    if (!result) {
+      console.warn("[library-publisher] OpenAI returned empty content, using original text");
+      return text;
+    }
+
+    // If text was truncated, append the remainder unsanitized
+    if (text.length > LLM_MAX_CHARS) {
+      return result + text.slice(LLM_MAX_CHARS);
+    }
+    return result;
+  } catch (err) {
+    console.error("[library-publisher] OpenAI call failed:", err);
+    return text; // Graceful fallback
+  }
+}
+
+// ── Full sanitization pipeline ───────────────────────────────────────────────
+
+async function sanitizeText(
+  html: string,
+  playerName: string | null,
+  partnerName: string | null,
+  displayPlayerName: string | null,
+  displayPartnerName: string | null,
+  worldType: string,
+  openaiKey: string
+): Promise<string> {
+  // Step 1: Strip HTML
+  let text = stripHTML(html);
+
+  // Step 2: Replace character names (deterministic, no LLM needed)
+  text = replaceCharacterNames(text, playerName, partnerName, displayPlayerName, displayPartnerName);
+
+  // Step 3: LLM context-aware scrubbing
+  if (openaiKey) {
+    text = await llmSanitize(text, worldType, openaiKey);
+  } else {
+    console.warn("[library-publisher] No OPENAI_API_KEY — skipping LLM sanitization pass");
+  }
+
+  // Step 4: Collapse whitespace
   text = text.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 
   return text;
@@ -100,12 +214,17 @@ function countWords(text: string): number {
 Deno.serve(async (_req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const openaiKey = Deno.env.get("OPENAI_API_KEY") || "";
 
   if (!supabaseUrl || !serviceRoleKey) {
     return new Response(
       JSON.stringify({ error: "Missing environment variables" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
+  }
+
+  if (!openaiKey) {
+    console.warn("[library-publisher] OPENAI_API_KEY not set — LLM sanitization will be skipped");
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -117,8 +236,6 @@ Deno.serve(async (_req) => {
   let updated = 0;
 
   try {
-    // Fetch eligible snapshots in batches
-    // Service role bypasses RLS — reads all story_snapshots
     let offset = 0;
     let hasMore = true;
 
@@ -160,12 +277,17 @@ Deno.serve(async (_req) => {
         const displayPlayerName = stateSnap.displayPlayerName || null;
         const displayPartnerName = stateSnap.displayPartnerName || null;
 
-        const sanitizedText = sanitizeText(
+        // Extract world type for context-aware scrubbing
+        const worldType = stateSnap.fantasyRegionLabel || stateSnap.world || "Modern";
+
+        const sanitizedText = await sanitizeText(
           storyHTML,
           playerName,
           partnerName,
           displayPlayerName,
-          displayPartnerName
+          displayPartnerName,
+          worldType,
+          openaiKey
         );
 
         const title = snap.title || "Untitled";

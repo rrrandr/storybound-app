@@ -25690,30 +25690,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     el.textContent = css;
   }
 
-  // Dummy book titles for the Forbidden Library (community shelf placeholders, no starters)
-  const FORBIDDEN_DUMMY_TITLES = [
-    'Crimson Pact', 'Thornfield Manor', 'The Ember Throne',
-    'Midnight Accord', 'Veil of Stars', 'Ashborn Legacy',
-    'The Gilded Cage', 'Serpent\'s Kiss', 'Iron Petals',
-    'House of Dusk', 'Broken Oaths', 'The Ashen Court',
-    'Ruin of Crowns', 'Silk & Thorns', 'The Last Accord',
-    'Nightbloom', 'Wolves of Winter', 'Ivory Chains',
-    'The Scarlet Vow', 'Ember & Dust', 'Veiled Throne',
-    'Blood of Stars', 'The Hollow King', 'Dusk Protocol',
-    'Shattered Realm'
-  ];
-  const FORBIDDEN_DUMMY_AUTHORS = [
-    'V. Blackthorn', 'E. Ashwood', 'L. Ravencroft',
-    'M. Silverthorn', 'A. Nightfall', 'C. Duskwell',
-    'R. Ironwood', 'S. Embervale', 'J. Stormcrest',
-    'D. Foxglove', 'K. Wolfsbane', 'P. Gloomhaven',
-    'T. Redmoor', 'N. Darkhollow', 'W. Thornheart',
-    'B. Starling', 'F. Wintermere', 'H. Goldcrest',
-    'I. Crowley', 'O. Dawnforge', 'G. Shadowmere',
-    'Q. Ebondale', 'U. Greymist', 'X. Flamecrest',
-    'Z. Voidborn'
-  ];
-
   function _buildForbiddenBook(entry) {
     const bookTitle = entry.title || 'Untitled';
     const bookAuthor = entry.author || 'S. Tory Bound';
@@ -25789,21 +25765,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         updated_at: e.updated_at,
       });
     });
-
-    // 3 columns × 4 rows: B=5×4=20, A=3×4=12, C=3×4=12 → 44 min
-    const minBooks = 44;
-    const dummiesNeeded = Math.max(0, minBooks - allEntries.length);
-    for (let i = 0; i < dummiesNeeded; i++) {
-      allEntries.push({
-        story_id: 'forbidden-dummy-' + i,
-        title: FORBIDDEN_DUMMY_TITLES[i % FORBIDDEN_DUMMY_TITLES.length],
-        author: FORBIDDEN_DUMMY_AUTHORS[i % FORBIDDEN_DUMMY_AUTHORS.length],
-        scene_count: Math.floor(Math.random() * 20) + 3,
-        word_count: Math.floor(Math.random() * 40000) + 5000,
-        _isDummy: true,
-        updated_at: new Date().toISOString(),
-      });
-    }
 
     if (allEntries.length === 0) return;
 
@@ -31092,8 +31053,10 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         }
         dropdown.style.display = '';
         const rect = card.getBoundingClientRect();
-        const rawLeft = rect.left + rect.width / 2 - 60; // 60 = half of 120px width
-        dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - 124)) + 'px';
+        const ddWidth = rect.width;
+        dropdown.style.width = ddWidth + 'px';
+        const rawLeft = rect.left + rect.width / 2 - ddWidth / 2;
+        dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - ddWidth - 4)) + 'px';
         dropdown.style.top = (rect.bottom) + 'px';
       });
     }
@@ -31181,8 +31144,10 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
           if (isFlipped && !dropdown.classList.contains('dropdown-open')) {
             // Position immediately (hidden via max-height:0), then open after delay
             const rect = card.getBoundingClientRect();
-            const rawLeft = rect.left + rect.width / 2 - 60;
-            dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - 124)) + 'px';
+            const ddWidth = rect.width;
+            dropdown.style.width = ddWidth + 'px';
+            const rawLeft = rect.left + rect.width / 2 - ddWidth / 2;
+            dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - ddWidth - 4)) + 'px';
             dropdown.style.top = (rect.bottom) + 'px';
             pendingTimeout = setTimeout(() => {
               dropdown.classList.add('dropdown-open');
@@ -42829,8 +42794,12 @@ Generate the title and synopsis now.` }
   let _beginStoryInProgress = false;
   async function handleBeginStory() {
     console.log('[BeginStory] handleBeginStory() called');
+    console.log('[BeginStory] DEBUG state.picks:', JSON.stringify(state.picks));
+    console.log('[BeginStory] DEBUG state.archetype:', JSON.stringify(state.archetype));
+    console.log('[BeginStory] DEBUG state.mode:', state.mode, 'state.storyLength:', state.storyLength);
     if (_beginStoryInProgress) {
       console.warn('[BeginStory] Already in progress — ignoring duplicate call');
+      showToast('Begin Story already in progress...');
       return;
     }
     _beginStoryInProgress = true;
@@ -42845,6 +42814,7 @@ Generate the title and synopsis now.` }
     if (!state._skipCorridorValidation && typeof validateCorridorComplete === 'function' && !validateCorridorComplete()) {
       // validateCorridorComplete shows modal with missing selections
       console.log('[BeginStory] EXITING — corridor validation failed');
+      console.log('[BeginStory] DEBUG corridorSelections:', [...(typeof corridorSelections !== 'undefined' ? corridorSelections.keys() : [])]);
       return;
     }
 
@@ -42888,7 +42858,8 @@ Generate the title and synopsis now.` }
     // TEASE TIER GATE: Block new story creation if free story already consumed
     // ═══════════════════════════════════════════════════════════════════
     if (isTeaseStoryBlocked()) {
-        console.log('[BeginStory] EXITING — Tease story blocked');
+        console.log('[BeginStory] EXITING — Tease story blocked (credits:', getFreeCustomStoryCredits(), 'access:', state.access, 'subscribed:', state.subscribed, ')');
+        showToast('Free story credit used — unlock to continue');
         window.showPaywall('unlock');
         return;
     }
@@ -61154,17 +61125,17 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // Per-library state: row position + per-button arrays
   const _btnState = {
     vault: {
-      top: 10.22, left: 23.6, gap: 0.3,
+      top: 9.06, left: 48.6, gap: 45.35,
       btns: [
-        { w: 12.2, h: 3.1, fontSize: 1.00, offsetX: 0, offsetY: 0 },
-        { w: 12.2, h: 3.1, fontSize: 1.00, offsetX: 0, offsetY: 0 },
+        { w: 17.1, h: 4.3, fontSize: 1.40, offsetX: 0, offsetY: 0 },
+        { w: 17.1, h: 4.3, fontSize: 1.40, offsetX: 2.44, offsetY: 0 },
       ]
     },
     forbidden: {
-      top: 10.56, left: 50, gap: 0.3,
+      top: 6.84, left: 45.8, gap: 26.04,
       btns: [
-        { w: 11.7, h: 3.2, fontSize: 0.9, offsetX: 0, offsetY: 0 },
-        { w: 11.7, h: 3.2, fontSize: 0.9, offsetX: 0, offsetY: 0 },
+        { w: 16.4, h: 4.5, fontSize: 1.26, offsetX: 0, offsetY: 0 },
+        { w: 16.4, h: 4.5, fontSize: 1.26, offsetX: 8.29, offsetY: 0 },
       ]
     },
   };
@@ -61214,7 +61185,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       ${rowSel} {
         position: absolute !important;
         top: ${st.top}vw !important;
-        left: ${st.left}% !important;
+        left: ${st.left}vw !important;
         transform: translateX(-50%) !important;
         gap: ${st.gap}vw !important;
         z-index: 9999 !important;
@@ -61310,8 +61281,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       if (lbl) lbl.textContent = val.toFixed(dec) + suffix;
     };
     set('#bds-top', st.top, 2, 'vw');
-    set('#bds-left', st.left, 1, '%');
-    set('#bds-gap', st.gap, 1, 'vw');
+    set('#bds-left', st.left, 1, 'vw');
+    set('#bds-gap', st.gap, 2, 'vw');
     set('#bds-btnW', b.w, 1, 'vw');
     set('#bds-btnH', b.h, 1, 'vw');
     set('#bds-fontSize', b.fontSize, 2, 'vw');
@@ -61373,11 +61344,11 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       <label>Row Top <span class="val" id="bds-top-val">${st.top.toFixed(2)}vw</span></label>
       <input type="range" id="bds-top" min="0" max="50" value="${st.top}" step="0.01">
 
-      <label>Row Left <span class="val" id="bds-left-val">${st.left.toFixed(1)}%</span></label>
+      <label>Row Left <span class="val" id="bds-left-val">${st.left.toFixed(1)}vw</span></label>
       <input type="range" id="bds-left" min="0" max="100" value="${st.left}" step="0.1">
 
-      <label>Gap <span class="val" id="bds-gap-val">${st.gap.toFixed(1)}vw</span></label>
-      <input type="range" id="bds-gap" min="0" max="5" value="${st.gap}" step="0.1">
+      <label>Gap <span class="val" id="bds-gap-val">${st.gap.toFixed(2)}vw</span></label>
+      <input type="range" id="bds-gap" min="0" max="50" value="${st.gap}" step="0.01">
 
       <hr>
       <div style="margin-bottom:8px;font-size:11px;color:#aaa;">PER-BUTTON — click tab or drag button</div>
@@ -61430,8 +61401,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       });
     };
     wireRow('#bds-top', 'top', 2, 'vw');
-    wireRow('#bds-left', 'left', 1, '%');
-    wireRow('#bds-gap', 'gap', 1, 'vw');
+    wireRow('#bds-left', 'left', 1, 'vw');
+    wireRow('#bds-gap', 'gap', 2, 'vw');
 
     // Wire per-button sliders
     const wireBtn = (id, key, dec, suffix) => {
@@ -61486,8 +61457,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     let css = `/* ${_whichLib === 'vault' ? 'Private' : 'Forbidden'} Library buttons */
 .library-variant${variant} > .vault-exit-row {
     top: ${st.top.toFixed(2)}vw;
-    left: ${st.left.toFixed(1)}%;
-    gap: ${st.gap.toFixed(1)}vw;
+    left: ${st.left.toFixed(1)}vw;
+    gap: ${st.gap.toFixed(2)}vw;
 }`;
     st.btns.forEach((b, i) => {
       css += `\n/* ${names[i] || 'Button ' + (i+1)} */

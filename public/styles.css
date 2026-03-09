@@ -4363,20 +4363,29 @@ select:-webkit-autofill {
 /* Forbidden Library — buttons sit inside the arch half-circle, locked to bg */
 .library-variant--forbidden > .vault-exit-row {
     position: absolute;
-    top: 10.56vw;
-    left: 50%;
+    top: 6.84vw;
+    left: 45.8vw;
     transform: translateX(-50%);
     z-index: 3;
     display: flex;
     justify-content: center;
-    gap: 0.3vw;
+    gap: 26.04vw;
 }
-.library-variant--forbidden > .vault-exit-row .sb-btn-png.sm {
-    width: 11.7vw;
-    height: 3.2vw;
-    font-size: 0.9vw;
-    padding: 0.5vw 1.5vw;
+.library-variant--forbidden > .vault-exit-row .sb-btn-png.sm:nth-child(1) {
+    width: 16.4vw;
+    height: 4.5vw;
+    font-size: 1.26vw;
+    padding: 0.7vw 2.1vw;
     box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
+}
+.library-variant--forbidden > .vault-exit-row .sb-btn-png.sm:nth-child(2) {
+    width: 16.4vw;
+    height: 4.5vw;
+    font-size: 1.26vw;
+    padding: 0.7vw 2.1vw;
+    box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
+    position: relative;
+    left: 8.29vw;
 }
 /* Forbidden Library arch title uses the shared gold gradient — reference by its own ID */
 .library-variant--forbidden .library-arch-title textPath {
@@ -4697,23 +4706,32 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 /* Vault library variant — buttons sit inside the arch half-circle, locked to bg */
 .library-variant--vault > .vault-exit-row {
     position: absolute;
-    top: 10.22vw;
-    left: 23.6%;
+    top: 9.06vw;
+    left: 48.6vw;
     transform: translateX(-50%);
     z-index: 3;
     margin-top: 0;
     padding: 0;
-    gap: 0.3vw;
+    gap: 45.35vw;
 }
 .vault-exit-row .sb-btn-png.sm {
     font-size: 0.72em;
 }
-.library-variant--vault > .vault-exit-row .sb-btn-png.sm {
-    width: 12.2vw;
-    height: 3.1vw;
-    font-size: 1.00vw;
-    padding: 0.5vw 1.5vw;
+.library-variant--vault > .vault-exit-row .sb-btn-png.sm:nth-child(1) {
+    width: 17.1vw;
+    height: 4.3vw;
+    font-size: 1.40vw;
+    padding: 0.7vw 2.1vw;
     box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
+}
+.library-variant--vault > .vault-exit-row .sb-btn-png.sm:nth-child(2) {
+    width: 17.1vw;
+    height: 4.3vw;
+    font-size: 1.40vw;
+    padding: 0.7vw 2.1vw;
+    box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
+    position: relative;
+    left: 2.44vw;
 }
 .trophy-hotspot {
     position: absolute;
@@ -16451,7 +16469,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    ═══════════════════════════════════════════════════════════════════════════════ */
 .world-flavor-dropdown {
     position: fixed;
-    width: 60px;
+    /* width set dynamically by JS to match card width */
     background: url('/assets/ui/DSP-Gold-Blk-720x1040.png') center / cover no-repeat;
     border-radius: 0 0 6px 6px;
     font-family: 'Lora', serif;
@@ -16929,80 +16947,59 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 49.70cqi; left: 32.74cqi;
 }
 
-/* ── Story Pull (Pressure) — Flipped front content (Card Designer output, cqi-locked) ── */
+/* ── Story Pull (Pressure) — In-grid flipped front positions (cqi-locked) ── */
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 153.27cqi; left: 28.87cqi;
+    top: 153.57cqi; left: 26.49cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="Billionaire"] {
     right: auto; bottom: auto;
-    top: 72.92cqi; left: 27.68cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="CrimeSyndicate"] {
     right: auto; bottom: auto;
-    top: 27.98cqi; left: 26.79cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.27cqi; left: 29.17cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
-    right: auto; bottom: auto;
-    top: 76.49cqi; left: 23.81cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 30.36cqi; left: 24.11cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 152.98cqi; left: 27.38cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
-    right: auto; bottom: auto;
-    top: 75.89cqi; left: 22.02cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 31.55cqi; left: 23.81cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 152.08cqi; left: 38.99cqi;
+    top: -6.25cqi; left: -0.60cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     right: auto; bottom: auto;
-    top: 70.24cqi; left: 34.82cqi;
+    top: 73.81cqi; left: 33.63cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 29.76cqi; left: 23.21cqi;
+    top: 32.74cqi; left: 22.92cqi;
 }
 
-/* ── Story Pull (Pressure) — Zoomed front content ── */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
+/* ── Story Pull (Pressure) — Zoomed front content (cqi-locked) ── */
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 50.30cqi; left: 3.27cqi;
-}
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.87cqi; left: 33.04cqi;
-}
-#sbZoomPortal > div.sb-card.zoomed.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 152.68cqi; left: 31.85cqi; font-size: 8.04cqi;
-}
-#sbZoomPortal > div.sb-card.zoomed.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 25.60cqi; left: 15.48cqi;
-}
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 27.08cqi; left: 20.54cqi;
+    top: 35.42cqi; left: 17.26cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 153.87cqi; left: 20.54cqi; font-size: 6.55cqi;
+    top: 153.87cqi; left: 25.30cqi;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 31.55cqi; left: 21.43cqi;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.87cqi; left: 22.02cqi;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 33.93cqi; left: 24.70cqi;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 152.68cqi; left: 33.04cqi;
+}
+#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+}
+/* Zoom content containers (preserved from previous calibration) */
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
+    right: auto; bottom: auto;
+    top: 50.30cqi; left: 3.27cqi;
 }
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
     right: auto; bottom: auto;
@@ -17012,14 +17009,6 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     right: auto; bottom: auto;
     top: 53.57cqi; left: -0.60cqi;
 }
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.57cqi; left: 20.54cqi; font-size: 6.85cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 36.61cqi; left: 13.99cqi; font-size: 5.06cqi;
-}
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
     right: auto; bottom: auto;
     top: 5.65cqi; left: 0.60cqi; height: 79.76cqi;
@@ -17028,10 +17017,6 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     right: auto; bottom: auto;
     top: 58.33cqi; left: 0.60cqi;
 }
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.57cqi; left: 17.86cqi; font-size: 6.55cqi;
-}
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content > div.sb-zoom-flavors {
     right: auto; bottom: auto;
     top: 4.17cqi; left: 2.68cqi; height: 77.38cqi;
@@ -17039,10 +17024,6 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
     right: auto; bottom: auto;
     top: 59.23cqi; left: -2.68cqi;
-}
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 33.63cqi; left: 24.11cqi;
 }
 
 /* ── POV — Back titles ── */
@@ -17088,34 +17069,73 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     right: auto; bottom: auto;
     top: 44.94cqi; left: 38.69cqi; font-size: 9.52cqi;
 }
-#toneGrid > div.sb-card.selected.flipped[data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto; font-size: 7.74cqi;
+
+/* ── Tone — Flipped front desc/title positions (cqi-locked) ── */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.83cqi; left: 0.60cqi; width: 85.71cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 152.98cqi; left: 42.26cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.83cqi; left: 0.60cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 152.98cqi; left: 42.26cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    width: 77.38cqi; top: -22.02cqi; left: 0.60cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.27cqi; left: 43.45cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -22.32cqi; left: -0.60cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.27cqi; left: 43.15cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -22.32cqi; left: 0cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.27cqi; left: 37.50cqi;
 }
 
-/* ── Dynamic — Back titles ── */
+/* ── Dynamic — Back titles (cqi-locked) ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 37.20cqi; left: 5.36cqi;
+    top: 47.92cqi; left: 10.71cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 41.37cqi; left: 10.71cqi;
+    top: 49.11cqi; left: 20.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 38.99cqi; left: 7.14cqi;
+    top: 50.89cqi; left: 14.88cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 38.39cqi; left: 9.52cqi;
+    top: 50.89cqi; left: 14.88cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 42.26cqi; left: 16.67cqi;
+    top: 50.60cqi; left: 26.79cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 41.96cqi; left: 7.74cqi;
+    top: 50.30cqi; left: 17.86cqi;
 }
 
 /* ── Length — Taste front desc ── */
