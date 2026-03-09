@@ -3745,7 +3745,8 @@ select:-webkit-autofill {
     font-family: 'Lora', serif !important;
     font-size: 1.6em;
     font-weight: 400;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.30em;
+    font-variant: small-caps;
     text-transform: none;
     text-align: center;
     margin-bottom: 8px;
@@ -3921,31 +3922,38 @@ select:-webkit-autofill {
     border-radius: 8px;
 }
 
-/* Gold 4-pointed star breathing + rotating at bottom of flipped pact card */
-.pact-card.flipped .pact-card-front::after {
+/* Gold 4-pointed star breathing + rotating at bottom of pact card.
+   MUST live on .pact-card (not .pact-card-front) to escape overflow:hidden
+   and the preserve-3d context that distorts 2D rotation. */
+.pact-card.flipped::after {
     content: '';
     position: absolute;
-    bottom: 4%;
-    left: calc(50% - 14px);
-    width: 28px;
-    height: 28px;
+    top: 95%;
+    left: 50%;
+    width: 24px;
+    height: 24px;
+    margin-left: -12px;
+    margin-top: -12px;
     background: url('/assets/card-art/cards/gold-4ptStar-cropped.png') center / contain no-repeat;
-    z-index: 3;
+    z-index: 30;
     pointer-events: none;
-    animation: pactStarSpin 3s linear infinite, pactStarFade 3s ease-in-out infinite;
+    animation: pactStarBreathe 3s ease-in-out infinite, pactStarGleam 3s ease-in-out infinite;
 }
-/* Solid on accepted — no animation, full opacity */
-.pact-card.accepted .pact-card-front::after {
+/* Solid on accepted — no animation, full opacity, normal size */
+.pact-card.accepted::after {
     animation: none;
     opacity: 1;
+    transform: scale(1);
+    filter: none;
 }
-@keyframes pactStarSpin {
-    from { rotate: 0deg; }
-    to   { rotate: 360deg; }
+@keyframes pactStarBreathe {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.2); }
 }
-@keyframes pactStarFade {
-    0%, 100% { opacity: 0.5; }
-    50%      { opacity: 1; }
+@keyframes pactStarGleam {
+    0%, 40%  { filter: brightness(1) drop-shadow(0 0 0px transparent); }
+    50%      { filter: brightness(1.6) drop-shadow(0 0 8px rgba(212, 168, 67, 0.8)); }
+    60%, 100%{ filter: brightness(1) drop-shadow(0 0 0px transparent); }
 }
 
 /* ── Accept zone at bottom of zoomed card ── */
@@ -3964,38 +3972,33 @@ select:-webkit-autofill {
 .pact-accept-zone::after {
     content: '';
     position: absolute;
-    top: calc(50% - 24px);
-    left: calc(50% - 24px);
+    top: 62.5%;
+    left: 50%;
     width: 48px;
     height: 48px;
+    margin-left: -24px;
+    margin-top: -24px;
     background: url('/assets/card-art/cards/gold-4ptStar-cropped.png') center / contain no-repeat;
     pointer-events: none;
-    animation: pactStarSpin 3s linear infinite, pactStarFade 3s ease-in-out infinite;
+    animation: pactStarBreathe 3s ease-in-out infinite, pactStarGleam 3s ease-in-out infinite;
 }
 .pact-accept-zone:hover::after {
     animation: none;
     opacity: 1;
+    transform: scale(1.2);
+    filter: brightness(1.6) drop-shadow(0 0 10px rgba(212, 168, 67, 0.9));
 }
 
-/* Gold-star overlay — covers bottom of card after acceptance */
+/* Gold-star overlay — hidden; acceptance now keeps the gold star static */
 .pact-accepted-overlay {
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 100%;
-    background: url('/assets/card-art/cards/WHITE-Accepted.png') center / cover no-repeat;
-    pointer-events: none;
-    z-index: 4;
-    clip-path: inset(85% 0 0 0);
-    opacity: 0;
-    transition: opacity 0.4s ease;
+    display: none;
 }
-.pact-accepted-overlay.visible {
-    opacity: 1;
-}
-.pact-accepted-overlay.visible ~ .pact-accept-zone::after {
+/* When accepted: zoomed star stops animating, stays fully visible */
+.pact-card.accepted .pact-accept-zone::after {
     animation: none;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1.4) drop-shadow(0 0 6px rgba(212, 168, 67, 0.6));
 }
 
 /* Expanded overlay state */
@@ -4111,7 +4114,7 @@ select:-webkit-autofill {
 /* ── "Read Full Text" link under card labels ── */
 .pact-read-link {
     position: absolute;
-    top: calc(33% + 1.4em); /* Directly below .pact-card-label */
+    top: calc(33% + 1.4em + 5px); /* Directly below .pact-card-label + 5px */
     left: 0; right: 0;
     z-index: 2;
     font-family: 'Lora', serif;
@@ -4356,6 +4359,10 @@ select:-webkit-autofill {
         url('/assets/Forbidde-Library-Art/Private-Library-closer.png') center top / 100vw auto no-repeat;
 }
 
+/* OG Shelf — hidden while dummy/design shelf system is primary */
+.library-variant--vault > .library-book-list {
+    display: none !important;
+}
 /* Shelf back-wall parallax layer */
 .library-book-list > .library-book {
     z-index: 1;
@@ -4363,7 +4370,7 @@ select:-webkit-autofill {
 /* ── Arced "Private Library" title along the black arch ── */
 .library-arch-title {
     position: absolute;
-    top: 1.5vw;
+    top: -1.26vw;
     left: 50%;
     transform: translateX(-50%);
     width: 52vw;
@@ -4374,8 +4381,9 @@ select:-webkit-autofill {
 .library-arch-title text {
     font-family: 'Lora', serif;
     font-weight: 400;
-    font-size: 36px;
-    letter-spacing: 0.18em;
+    font-size: 2.5vw;
+    font-variant: small-caps;
+    letter-spacing: 0.54em;
     fill: url(#archGoldGrad);
 }
 /* Embossed gold — multi-layer text-shadow trick via SVG filters isn't great,
@@ -4383,11 +4391,13 @@ select:-webkit-autofill {
 .library-arch-title textPath {
     fill: url(#archGoldGrad);
     stroke: rgba(90, 65, 20, 0.45);
-    stroke-width: 0.5px;
+    stroke-width: 0.035vw;
     paint-order: stroke fill;
-    filter: drop-shadow(0 1px 0 rgba(255, 230, 150, 0.45))
-            drop-shadow(0 -1px 0 rgba(30, 20, 5, 0.8))
-            drop-shadow(0 0 8px rgba(201, 168, 76, 0.25));
+    filter: drop-shadow(0 0.07vw 0 rgba(255, 230, 150, 0.45))
+            drop-shadow(0 -0.07vw 0 rgba(30, 20, 5, 0.8))
+            drop-shadow(0 0 0.55vw rgba(201, 168, 76, 0.25))
+            drop-shadow(0 0.28vw 0.2vw rgba(0, 0, 0, 0.7))
+            drop-shadow(0 0.42vw 0.42vw rgba(0, 0, 0, 0.3));
 }
 
 .forbidden-library-header {
@@ -4725,8 +4735,26 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     z-index: 1;
     padding: 24px 0 12px;
 }
+/* Vault library variant — buttons sit inside the arch half-circle, locked to bg */
+.library-variant--vault > .vault-exit-row {
+    position: absolute;
+    top: 12.09vw;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    margin-top: 0;
+    padding: 0;
+    gap: 0.3vw;
+}
 .vault-exit-row .sb-btn-png.sm {
     font-size: 0.72em;
+}
+.library-variant--vault > .vault-exit-row .sb-btn-png.sm {
+    width: 11.7vw;
+    height: 3.2vw;
+    font-size: 0.9vw;
+    padding: 0.5vw 1.5vw;
+    box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
 }
 .trophy-hotspot {
     position: absolute;

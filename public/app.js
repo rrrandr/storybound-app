@@ -1642,6 +1642,32 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       overlay.appendChild(acceptBtn);
     }
 
+    // ── Navigation arrows to swipe between pact cards ──
+    var pactKeys = ['tos', 'privacy', 'adult'];
+    var currentIdx = pactKeys.indexOf(pactKey);
+    if (pactKeys.length > 1) {
+      var leftArrow = document.createElement('div');
+      leftArrow.className = 'zoom-nav-arrow zoom-nav-left';
+      leftArrow.textContent = '\u2039';
+      leftArrow.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var prevIdx = (currentIdx - 1 + pactKeys.length) % pactKeys.length;
+        overlay.remove();
+        _openPactExpand(pactKeys[prevIdx]);
+      });
+      var rightArrow = document.createElement('div');
+      rightArrow.className = 'zoom-nav-arrow zoom-nav-right';
+      rightArrow.textContent = '\u203A';
+      rightArrow.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var nextIdx = (currentIdx + 1) % pactKeys.length;
+        overlay.remove();
+        _openPactExpand(pactKeys[nextIdx]);
+      });
+      overlay.appendChild(leftArrow);
+      overlay.appendChild(rightArrow);
+    }
+
     document.body.appendChild(overlay);
 
     // ── Accept logic ──
@@ -27272,89 +27298,248 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   window.openTrophyWall = openTrophyWall;
 
-  // — Render vault 3D book shelf (reuses same DOM structure as Forbidden Library) —
+  // — Generate shelf CSS for vault book rows (self-contained, no design mode dependency) —
+  function _applyVaultShelfCSS(shelfCount, defs, lipImgs) {
+    let el = document.getElementById('vault-shelf-style');
+    if (!el) { el = document.createElement('style'); el.id = 'vault-shelf-style'; document.head.appendChild(el); }
+    let css = '';
+    for (let i = 0; i < shelfCount; i++) {
+      const s = i < defs.length ? defs[i] : { ...defs[2] };
+      css += `
+      .dm-shelf-row[data-shelf="${i}"] {
+        display: flex; flex-wrap: nowrap; justify-content: center; align-items: flex-end;
+        gap: 0 ${s.gap}vw; position: relative; z-index: 1;
+        max-width: 52vw; margin: 0 auto; padding: 0 16px; overflow: visible;
+      }
+      .dm-shelf-row[data-shelf="${i}"] .library-book { margin-top: ${s.y}px !important; outline: none !important; }
+      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine { margin-left: -${s.gap / 2}vw; margin-right: -${s.gap / 2}vw; }
+      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+      }
+      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(90deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+      }`;
+      if (lipImgs[i]) {
+        css += `
+      .dm-shelf-row[data-shelf="${i}"]::before {
+        content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+        bottom: ${s.lipY}px; width: ${s.lipW}vw; height: 2.4vw;
+        background: url('${lipImgs[i]}') center / 100% 100% no-repeat;
+        pointer-events: none; z-index: 3;
+      }`;
+      }
+      if (i >= 3) {
+        css += `
+      .dm-shelf-row[data-shelf="${i}"] { background: rgb(14, 9, 6); }
+      .dm-shelf-row[data-shelf="${i}"]::after {
+        content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+        bottom: -13vw; width: 100vw; height: 15.4vw;
+        background: url('/assets/Forbidde-Library-Art/Private-shelf.jpg') center top / 100vw auto no-repeat;
+        pointer-events: none; z-index: -1;
+      }`;
+      }
+    }
+    el.textContent = css;
+  }
+
+  // — Render vault 3D book shelf using the shelf distribution system —
   function renderVaultBookList() {
     const loadingEl = $('vaultLibraryLoading');
     const listEl = $('vaultLibraryList');
     if (loadingEl) loadingEl.style.display = 'none';
     if (!listEl) return;
-    listEl.style.display = '';
-    listEl.innerHTML = '';
+    // Don't render if design mode is active (it manages its own shelves)
+    if (listEl.dataset.dmHidden) return;
+    listEl.style.display = 'none'; // Hide OG flat list — we use shelf rows instead
 
-    // Classify: recent/in-progress → cover, old/finished → spine
-    const classified = classifyBookModes(_vaultLibraryEntries, MAX_COVERS);
-    // Arrange: spines at edges, then interleaved between covers
-    const arranged = arrangeShelfBooks(classified);
+    const libraryEl = listEl.closest('.forbidden-library') || listEl.parentElement;
 
-    arranged.forEach((entry, index) => {
-      const bookTitle = entry.title || 'Untitled';
-      const bookAuthor = entry._borrowed ? '' : 'You';
-      const scenes = entry.scene_count || 0;
-      const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
-      const isForward = entry.isForward;
+    // Remove any previous vault shelf rows
+    libraryEl.querySelectorAll('.dm-shelf-row:not([data-dm-design])').forEach(el => el.remove());
 
-      // "Last opened" relative timestamp
-      let lastOpened = '';
-      if (entry.updated_at) {
-        const diff = Date.now() - new Date(entry.updated_at).getTime();
-        const days = Math.floor(diff / 86400000);
-        if (days === 0) lastOpened = 'Today';
-        else if (days === 1) lastOpened = '1 day ago';
-        else lastOpened = days + ' days ago';
+    // Build unified entry list: starters first, then user-authored, then borrowed
+    const allEntries = [];
+
+    // Always include the 2 starter stories
+    STARTER_STORIES.forEach(sd => {
+      // Skip if user already has an authored story with this starter's ID
+      const alreadyAuthored = _vaultAuthoredEntries.some(e => e.story_id === sd.id);
+      allEntries.push({
+        story_id: sd.id,
+        title: sd.title,
+        author: sd.author,
+        coverImage: sd.coverImage,
+        backCoverImage: sd.backCoverImage,
+        spineImage: sd.spineImage,
+        synopsis: sd.synopsis,
+        _isStarter: true,
+        _alreadyAuthored: alreadyAuthored,
+        updated_at: new Date().toISOString(), // keep starters at high recency
+      });
+    });
+
+    // Add user-authored stories (excluding starter IDs already added)
+    const starterIds = new Set(STARTER_STORIES.map(s => s.id));
+    _vaultAuthoredEntries.forEach(e => {
+      if (starterIds.has(e.story_id)) return;
+      allEntries.push({ ...e, author: 'You' });
+    });
+
+    // Add borrowed stories
+    _vaultBorrowedEntries.forEach(e => {
+      allEntries.push({ ...e, _borrowed: true });
+    });
+
+    const totalBooks = allEntries.length;
+    if (totalBooks === 0) return;
+
+    // ── Inline shelf layout constants (must be self-contained; design mode IIFE loads later) ──
+    const _COVER_W = 105, _SPINE_W = 35, _COVERS_PS = 5, _MAX_PS = 9;
+    const _shelfDefs = [
+      { y: 290, scale: 1.08, rx: 7, ry: 15, rz: -1, gap: 2.5, lipY: -26, lipW: 55.5 },
+      { y: 54, scale: 1.08, rx: 4, ry: 10, rz: -1, gap: 2.5, lipY: -26, lipW: 55.5 },
+      { y: 74, scale: 1.08, rx: 2, ry: -13, rz: 0, gap: 2.5, lipY: 0, lipW: 56.1 },
+    ];
+    const _lipImgs = [
+      '/assets/Forbidde-Library-Art/privat-library-top-shelf.jpg',
+      '/assets/Forbidde-Library-Art/privat-library-mid-shelf.jpg',
+      null,
+    ];
+    function _sdef(i) { return i < _shelfDefs.length ? _shelfDefs[i] : { ..._shelfDefs[2] }; }
+    function _rowW(c, sp, g) { return c * _COVER_W + sp * _SPINE_W + Math.max(0, c - 1) * g; }
+    const _gapPx = (_shelfDefs[0].gap / 100) * window.innerWidth;
+    const _maxPx = (52 / 100) * window.innerWidth - 32;
+
+    // Distribute books across shelves
+    const _sc = Math.max(3, Math.ceil(totalBooks / _MAX_PS));
+    const _sb = [], _scov = [];
+    for (let i = 0; i < _sc; i++) { _sb.push(0); _scov.push(0); }
+    let _assigned = 0;
+    for (let s = 0; s < _sc && _assigned < totalBooks; s++) {
+      const n = Math.min(_COVERS_PS, totalBooks - _assigned);
+      _sb[s] = n; _scov[s] = n; _assigned += n;
+    }
+    if (_assigned < totalBooks) {
+      let _rem = totalBooks - _assigned;
+      for (let s = 0; s < _sb.length && _rem > 0; s++) {
+        while (_rem > 0 && _sb[s] < _MAX_PS) {
+          const nt = _sb[s] + 1, sp = nt - _scov[s];
+          if (_rowW(_scov[s], sp, _gapPx) <= _maxPx) { _sb[s] = nt; _rem--; continue; }
+          let cv = _scov[s] - 1;
+          if (cv >= 1 && _rowW(cv, nt - cv, _gapPx) <= _maxPx) { _sb[s] = nt; _scov[s] = cv; _rem--; continue; }
+          break;
+        }
       }
+      while (_rem > 0) {
+        const si = _sb.length; _sb.push(0); _scov.push(0);
+        while (_rem > 0 && _sb[si] < _MAX_PS) {
+          const nt = _sb[si] + 1, cv = Math.min(_COVERS_PS, nt), sp = nt - cv;
+          if (_rowW(cv, sp, _gapPx) > _maxPx) break;
+          _sb[si] = nt; _scov[si] = cv; _rem--;
+        }
+      }
+    }
+    const shelfBooks = _sb, shelfCovers = _scov;
+    const shelfCount = shelfBooks.length;
 
-      const book = document.createElement('div');
-      book.className = 'library-book initializing' + (isCollector ? ' collector-edition' : '') + (isForward ? ' mode-cover' : ' mode-spine');
-      book.dataset.storyId = entry.story_id;
-      if (entry._borrowed) book.dataset.borrowed = 'true';
+    // Apply shelf CSS
+    _applyVaultShelfCSS(shelfCount, _shelfDefs, _lipImgs);
 
-      // Back cover includes vault-specific meta
-      const metaLines = [`Scenes: ${scenes}`];
-      if (lastOpened) metaLines.push(`Last opened: ${lastOpened}`);
-      if (entry._borrowed) metaLines.push('Borrowed');
+    // Build shelf rows
+    let bookIndex = 0;
+    let insertAfter = listEl;
 
-      book.innerHTML = `<div class="book-3d">
-  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div>${bookAuthor ? `<div class="book-front-author">${escapeHTML(bookAuthor)}</div>` : ''}</div></div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box">${bookAuthor ? `<p class="back-synopsis">${escapeHTML(bookAuthor)}</p>` : ''}</div><p class="back-meta">${scenes} scenes</p><p class="back-meta-vault">${metaLines.join('<br>')}</p></div></div>
-  <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)}${bookAuthor ? ` <span class="spine-author">${escapeHTML(bookAuthor)}</span>` : ''}</div></div>
+    for (let s = 0; s < shelfCount; s++) {
+      if (shelfBooks[s] === 0) continue;
+
+      // Collect entries for this shelf and assign cover/spine mode
+      const shelfEntries = [];
+      for (let i = 0; i < shelfBooks[s]; i++) {
+        const entry = allEntries[bookIndex + i];
+        if (!entry) break;
+        shelfEntries.push({ ...entry, isForward: i < shelfCovers[s] });
+      }
+      bookIndex += shelfBooks[s];
+
+      // Arrange with spines at edges
+      const arranged = arrangeShelfBooks(shelfEntries);
+
+      const shelf = document.createElement('div');
+      shelf.className = 'dm-shelf-row';
+      shelf.dataset.shelf = s;
+
+      arranged.forEach((entry) => {
+        const bookTitle = entry.title || 'Untitled';
+        const bookAuthor = entry.author || (entry._borrowed ? '' : 'You');
+        const scenes = entry.scene_count || 0;
+        const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
+        const isForward = entry.isForward;
+
+        const book = document.createElement('div');
+        book.className = 'library-book initializing' + (isCollector ? ' collector-edition' : '') + (isForward ? ' mode-cover' : ' mode-spine');
+        book.dataset.storyId = entry.story_id;
+        if (entry._isStarter) book.dataset.starterStory = 'true';
+        if (entry._borrowed) book.dataset.borrowed = 'true';
+
+        // Front: use cover image if available, else text
+        const frontContent = entry.coverImage
+          ? `<img src="${entry.coverImage}" alt="${escapeHTML(bookTitle)}">`
+          : `<div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div>${bookAuthor ? `<div class="book-front-author">${escapeHTML(bookAuthor)}</div>` : ''}</div>`;
+
+        // Back: use back cover image if available, else text
+        const synopsisText = entry.synopsis ? escapeHTML(entry.synopsis) : (bookAuthor ? escapeHTML(bookAuthor) : '');
+        const backContent = entry.backCoverImage
+          ? `<img src="${entry.backCoverImage}" alt="Back cover"><div class="back-content back-content-overlay"><div class="back-synopsis-box"><p class="back-synopsis">${synopsisText}</p></div></div>`
+          : `<div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${synopsisText}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
+
+        // Spine: use spine image if available, else text
+        const spineContent = entry.spineImage
+          ? `<img src="${entry.spineImage}" alt="Spine">`
+          : `<div class="spine-text">${escapeHTML(bookTitle)}${bookAuthor ? ` <span class="spine-author">${escapeHTML(bookAuthor)}</span>` : ''}</div>`;
+
+        book.innerHTML = `<div class="book-3d">
+  <div class="book-front">${frontContent}</div>
+  <div class="book-back">${backContent}</div>
+  <div class="book-spine">${spineContent}</div>
   <div class="book-pages-right"></div>
   <div class="book-pages-top"></div>
   <div class="book-pages-bottom"></div>
   <div class="page-shimmer"></div>
 </div>`;
 
-      // Lean only on cover books, deterministic
-      const isMobile = window.innerWidth < 900;
-      if (!isMobile && (index % 7 === 0) && isForward) {
-        book.classList.add('mode-lean');
+        // Hover sound
+        let _hoverPlayed = false;
+        book.addEventListener('mouseenter', () => {
+          if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
+        });
+        book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
+
+        // Click to zoom
+        book.addEventListener('click', (e) => {
+          e.stopPropagation();
+          _zoomSource = 'vault';
+          if (entry._isStarter) _zoomStarterDef = STARTER_STORIES.find(sd => sd.id === entry.story_id);
+          _openLibraryZoom(entry, book);
+        });
+
+        shelf.appendChild(book);
+      });
+
+      if (insertAfter && insertAfter.nextSibling) {
+        libraryEl.insertBefore(shelf, insertAfter.nextSibling);
+      } else {
+        libraryEl.appendChild(shelf);
       }
-
-      // Hover sound
-      let _hoverPlayed = false;
-      book.addEventListener('mouseenter', () => {
-        if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
-      });
-      book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
-
-      // Click to zoom — mark source as vault
-      book.addEventListener('click', (e) => {
-        e.stopPropagation();
-        _zoomSource = 'vault';
-        _openLibraryZoom(entry, book);
-      });
-      listEl.appendChild(book);
-    });
-
-    // LIBRARY-FIRST: Inject starter story book for new users (skip if already present)
-    if (state.flags?.libraryFirstOnboarding && _vaultAuthoredEntries.length === 0 && !listEl.querySelector('[data-starter-story]')) {
-      _injectStarterStoryBook(listEl);
+      insertAfter = shelf;
     }
 
-    // Remove .initializing after layout pass to enable future transitions
+    // Remove .initializing after layout pass
     requestAnimationFrame(() => {
-      listEl.querySelectorAll('.library-book.initializing').forEach(b => b.classList.remove('initializing'));
+      libraryEl.querySelectorAll('.dm-shelf-row .library-book.initializing').forEach(b => b.classList.remove('initializing'));
     });
   }
+
+  window.renderVaultBookList = renderVaultBookList;
 
   // Hook into showScreen: load library when screen opens
   const _origShowScreen = window.showScreen;
@@ -59969,29 +60154,8 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   // Shelf capacity constants
   const COVER_WIDTH = 105;
   const SPINE_WIDTH = 35;
-  const SHELF_MAX_PX = 720;
-  const SHELF_COUNT = 3;
-  // Max covers that physically fit: floor(720/105) = 6
-  const MAX_COVERS_FIT = Math.floor(SHELF_MAX_PX / COVER_WIDTH); // 6
-  // Max books when all spines: floor(720/35) = 20
-  const MAX_ALL_SPINES = Math.floor(SHELF_MAX_PX / SPINE_WIDTH); // 20
-
-  // Given N covers, how many total books fit on a shelf?
-  function computeShelfCapacity(numCovers) {
-    const coverSpace = numCovers * COVER_WIDTH;
-    const remaining = SHELF_MAX_PX - coverSpace;
-    return numCovers + Math.max(0, Math.floor(remaining / SPINE_WIDTH));
-  }
-
-  // Given total books on this shelf, how many covers can we keep?
-  // Start with maxCovers, reduce until they fit.
-  function coversForBookCount(booksOnShelf, maxCovers) {
-    let covers = Math.min(maxCovers, booksOnShelf, MAX_COVERS_FIT);
-    while (covers > 0 && computeShelfCapacity(covers) < booksOnShelf) {
-      covers--;
-    }
-    return covers;
-  }
+  const COVERS_PER_SHELF = 5;  // 5 cover-facing per shelf before overflow
+  const MAX_PER_SHELF = 9;     // hard cap: never more than 9 books on any shelf
 
   // Shelf lip images per shelf index (null = no overlay yet)
   const SHELF_LIP_IMAGES = [
@@ -60001,63 +60165,115 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   ];
 
   // Per-shelf state: each shelf has independent transform values + shelf overlay
+  // Extra shelves beyond 3 clone the bottom shelf defaults
   const shelfDefaults = [
-    { y: 49, scale: 1.08, rx: 7, ry: 15, rz: -1, gap: 2.5, lipY: 0, lipW: 56.1 },   // shelf 0 (top)
-    { y: 77, scale: 1.08, rx: 4, ry: 10, rz: -1, gap: 2.5, lipY: 0, lipW: 56.1 },   // shelf 1 (mid)
-    { y: 58, scale: 1.08, rx: 4, ry: 2, rz: 0, gap: 2.5, lipY: 0, lipW: 56.1 },     // shelf 2 (bottom)
+    { y: 290, scale: 1.08, rx: 7, ry: 15, rz: -1, gap: 2.5, lipY: -26, lipW: 55.5 },   // shelf 0 (top)
+    { y: 54, scale: 1.08, rx: 4, ry: 10, rz: -1, gap: 2.5, lipY: -26, lipW: 55.5 },     // shelf 1 (mid)
+    { y: 74, scale: 1.08, rx: 2, ry: -13, rz: 0, gap: 2.5, lipY: 0, lipW: 56.1 },       // shelf 2 (bottom)
   ];
 
   const shelfStates = shelfDefaults.map(d => ({ ...d }));
   let activeShelf = 0; // which shelf tab is selected
   let bookCount = 10;
-  let coverCount = 6;
+  let coverCount = 5;
 
-  const MIN_COVERS = 3; // always keep at least 3 cover-facing per shelf
+  function getShelfState(idx) {
+    // For shelves beyond the initial 3, clone the bottom shelf defaults
+    while (shelfStates.length <= idx) {
+      shelfStates.push({ ...shelfDefaults[2] });
+    }
+    return shelfStates[idx];
+  }
+
+  // Compute the pixel width a shelf row would occupy given covers, spines, and gap.
+  // Covers get the full gap between them; spines crush gap to 0 (negative margins).
+  // Layout: [spines-left][gap][cover][gap][cover]...[gap][spines-right]
+  // Between adjacent covers: gap. Between cover and spine: gap/2. Between spines: 0.
+  // Simplified: total = covers*COVER_WIDTH + spines*SPINE_WIDTH + (covers-1)*gapPx
+  //   (spines collapse their gap via negative margins, so only cover gaps count)
+  function shelfRowWidth(covers, spines, gapPx) {
+    const coverGaps = Math.max(0, covers - 1);
+    return covers * COVER_WIDTH + spines * SPINE_WIDTH + coverGaps * gapPx;
+  }
+
+  // Get the gap in px for the current viewport (shelves use 2.5vw default gap)
+  function getGapPx() {
+    return (shelfStates[0]?.gap || 2.5) / 100 * window.innerWidth;
+  }
+
+  // Get the shelf max width in px (52vw minus padding)
+  function getShelfMaxPx() {
+    return 52 / 100 * window.innerWidth - 32; // 52vw - 2×16px padding
+  }
 
   // Distribute books across shelves.
   //
-  // Phase 1 (≤18 books): Fill top→mid→bot with up to 6 covers each, no spines.
-  // Phase 2 (>18 books): Overflow goes to top shelf first; covers flip to
-  //   spines one-by-one to make room, but never below MIN_COVERS.
-  //   When top shelf is at capacity, overflow to mid (same rule), then bot.
+  // Phase 1: Fill shelves top→down with up to COVERS_PER_SHELF (5) covers each.
+  //          All books are cover-facing. Uses 3 shelves for up to 15 books.
+  // Phase 2 (>15): Additional books overflow to shelves, flipping covers→spines
+  //          one at a time to make room. Max MAX_PER_SHELF per shelf.
+  //          Pixel-fit check ensures books don't exceed shelf width.
   function distributeToShelves(totalBooks, _unused) {
-    // Phase 1: assign up to 6 cover-facing per shelf
-    const phase1 = [0, 0, 0]; // books per shelf
+    const gapPx = getGapPx();
+    const maxPx = getShelfMaxPx();
+
+    // Phase 1: assign up to 5 covers per shelf across 3 initial shelves
+    const shelfCount = Math.max(3, Math.ceil(totalBooks / MAX_PER_SHELF));
+    const shelfBooks = [];
+    const shelfCovers = [];
+    for (let i = 0; i < shelfCount; i++) { shelfBooks.push(0); shelfCovers.push(0); }
+
     let assigned = 0;
-    for (let s = 0; s < SHELF_COUNT && assigned < totalBooks; s++) {
-      const n = Math.min(MAX_COVERS_FIT, totalBooks - assigned);
-      phase1[s] = n;
+    for (let s = 0; s < shelfCount && assigned < totalBooks; s++) {
+      const n = Math.min(COVERS_PER_SHELF, totalBooks - assigned);
+      shelfBooks[s] = n;
+      shelfCovers[s] = n;
       assigned += n;
     }
 
     if (assigned >= totalBooks) {
-      // All books are cover-facing, done
-      return _buildShelves(phase1, phase1.slice());
+      return _buildShelves(shelfBooks, shelfCovers);
     }
 
-    // Phase 2: remaining books overflow into shelves top→bot
-    let overflow = totalBooks - assigned;
-    const shelfBooks = phase1.slice();   // total books per shelf
-    const shelfCovers = phase1.slice();  // covers per shelf
+    // Phase 2: overflow — add remaining books to shelves
+    let remaining = totalBooks - assigned;
+    for (let s = 0; s < shelfCount && remaining > 0; s++) {
+      while (remaining > 0 && shelfBooks[s] < MAX_PER_SHELF) {
+        const newTotal = shelfBooks[s] + 1;
+        const spines = newTotal - shelfCovers[s];
+        // Check if it fits with current covers
+        if (shelfRowWidth(shelfCovers[s], spines, gapPx) <= maxPx) {
+          shelfBooks[s] = newTotal;
+          remaining--;
+          continue;
+        }
+        // Doesn't fit — try flipping a cover to spine
+        let covers = shelfCovers[s] - 1;
+        const newSpines = newTotal - covers;
+        if (covers >= 1 && shelfRowWidth(covers, newSpines, gapPx) <= maxPx) {
+          shelfBooks[s] = newTotal;
+          shelfCovers[s] = covers;
+          remaining--;
+          continue;
+        }
+        // Still doesn't fit — this shelf is full
+        break;
+      }
+    }
 
-    for (let s = 0; s < SHELF_COUNT && overflow > 0; s++) {
-      // How many more books can this shelf absorb?
-      // Start from current count, add books while flipping covers→spines
-      while (overflow > 0) {
-        const currentTotal = shelfBooks[s] + 1;
-        // How many covers can we keep with currentTotal books?
-        const coversIfAdded = coversForBookCount(currentTotal, MAX_COVERS_FIT);
-        if (coversIfAdded < MIN_COVERS) {
-          // Can't add more without going below min covers — shelf is full
-          break;
-        }
-        // Also check absolute capacity with MIN_COVERS
-        if (currentTotal > computeShelfCapacity(MIN_COVERS)) {
-          break;
-        }
-        shelfBooks[s] = currentTotal;
-        shelfCovers[s] = coversIfAdded;
-        overflow--;
+    // If still remaining, add more shelves
+    while (remaining > 0) {
+      const s = shelfBooks.length;
+      shelfBooks.push(0);
+      shelfCovers.push(0);
+      while (remaining > 0 && shelfBooks[s] < MAX_PER_SHELF) {
+        const newTotal = shelfBooks[s] + 1;
+        const covers = Math.min(COVERS_PER_SHELF, newTotal);
+        const spines = newTotal - covers;
+        if (shelfRowWidth(covers, spines, gapPx) > maxPx) break;
+        shelfBooks[s] = newTotal;
+        shelfCovers[s] = covers;
+        remaining--;
       }
     }
 
@@ -60083,7 +60299,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   function _buildShelves(shelfBooks, shelfCovers) {
     const shelves = [];
     let bookIndex = 0;
-    for (let s = 0; s < SHELF_COUNT; s++) {
+    for (let s = 0; s < shelfBooks.length; s++) {
       if (shelfBooks[s] === 0) continue;
       const books = [];
       for (let i = 0; i < shelfBooks[s]; i++) {
@@ -60106,8 +60322,9 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     return shelves;
   }
 
+  // Ctrl+Shift+L (Library shelf design) — also accepts M as fallback
   document.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'M') {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'M')) {
       e.preventDefault();
       active ? closeMode() : openMode();
     }
@@ -60121,8 +60338,20 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     // Remove old design shelves
     libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
 
-    const shelves = distributeToShelves(bookCount, coverCount);
+    // Hide ALL real book lists so they don't overlap with design-mode dummies
     const bookList = libraryEl.querySelector('.library-book-list');
+    libraryEl.querySelectorAll('.library-book-list').forEach(bl => {
+      bl.style.display = 'none';
+      bl.dataset.dmHidden = '1';
+    });
+    // Also hide summon text / trophy shelf
+    libraryEl.querySelectorAll('.summon-text, .vault-trophy-shelf, .summon-slot').forEach(el => {
+      el.style.display = 'none';
+      el.dataset.dmHidden = '1';
+    });
+
+    const shelves = distributeToShelves(bookCount, coverCount);
+    // Insert design shelves right where the real book list is
     let insertAfter = bookList;
 
     shelves.forEach((shelfBooks, shelfIdx) => {
@@ -60181,7 +60410,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
   function openMode() {
     active = true;
-    rebuildShelves();
+    try { rebuildShelves(); } catch (err) { console.error('[ShelfDesign] rebuildShelves error:', err); }
 
     panel = document.createElement('div');
     panel.id = 'shelfDesignPanel';
@@ -60241,13 +60470,13 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         }
         .dms-tab.active { background: #c9a84c; color: #000; }
       </style>
-      <h3>Shelf Design (Ctrl+Shift+M)</h3>
+      <h3>Shelf Design (Ctrl+Shift+L)</h3>
 
       <label>Total books <span class="val" id="dms-count-val">${bookCount}</span></label>
       <input type="range" id="dms-count" min="1" max="60" value="${bookCount}" step="1">
 
       <label>Covers/shelf <span class="val" id="dms-covers-val">${coverCount}</span></label>
-      <input type="range" id="dms-covers" min="0" max="${MAX_COVERS_FIT}" value="${coverCount}" step="1">
+      <input type="range" id="dms-covers" min="0" max="${COVERS_PER_SHELF}" value="${coverCount}" step="1">
 
       <div style="margin-top:6px;font-size:11px;color:#8f8;" id="dms-info"></div>
 
@@ -60260,7 +60489,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       </div>
 
       <label>Y offset <span class="val" id="dms-y-val">${s.y}px</span></label>
-      <input type="range" id="dms-y" min="-200" max="200" value="${s.y}" step="1">
+      <input type="range" id="dms-y" min="-200" max="500" value="${s.y}" step="1">
 
       <label>Scale <span class="val" id="dms-scale-val">${s.scale.toFixed(2)}</span></label>
       <input type="range" id="dms-scale" min="0.3" max="3.0" value="${s.scale}" step="0.01">
@@ -60348,7 +60577,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       bookCount = parseInt(this.value);
       panel.querySelector('#dms-count-val').textContent = bookCount;
       if (coverCount > bookCount) {
-        coverCount = Math.min(bookCount, MAX_COVERS_FIT);
+        coverCount = Math.min(bookCount, COVERS_PER_SHELF);
         coversSlider.value = coverCount;
         panel.querySelector('#dms-covers-val').textContent = coverCount;
       }
@@ -60393,8 +60622,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     }
 
     let css = '';
-    for (let i = 0; i < SHELF_COUNT; i++) {
-      const s = shelfStates[i];
+    // Count how many shelves are currently in DOM
+    const shelfCount = document.querySelectorAll('.dm-shelf-row').length || shelfStates.length;
+    for (let i = 0; i < shelfCount; i++) {
+      const s = getShelfState(i);
       css += `
       .dm-shelf-row[data-shelf="${i}"] {
         display: flex;
@@ -60407,14 +60638,16 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         max-width: 52vw;
         margin: 0 auto;
         padding: 0 16px;
-      }
-      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine {
-        margin-left: -${s.gap / 2}vw;
-        margin-right: -${s.gap / 2}vw;
+        overflow: visible;
       }
       .dm-shelf-row[data-shelf="${i}"] .library-book {
         margin-top: ${s.y}px !important;
         outline: none !important;
+      }
+      /* Crush spine gap to 0 by eating the flex gap with negative margins */
+      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine {
+        margin-left: -${s.gap / 2}vw;
+        margin-right: -${s.gap / 2}vw;
       }
       .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
         transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
@@ -60433,10 +60666,30 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         transform: translateX(-50%);
         bottom: ${s.lipY}px;
         width: ${s.lipW}vw;
-        height: calc(42 / 855 * ${s.lipW}vw);
+        height: 2.4vw;
         background: url('${SHELF_LIP_IMAGES[i]}') center / 100% 100% no-repeat;
         pointer-events: none;
         z-index: 3;
+      }
+        `;
+      }
+      // Extra shelves (idx >= 3) get a shelf background image (1535×236 → same width as main bg 1536×1024)
+      if (i >= 3) {
+        css += `
+      .dm-shelf-row[data-shelf="${i}"] {
+        background: rgb(14, 9, 6);
+      }
+      .dm-shelf-row[data-shelf="${i}"]::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: -13vw;
+        width: 100vw;
+        height: 15.4vw;
+        background: url('/assets/Forbidde-Library-Art/Private-shelf.jpg') center top / 100vw auto no-repeat;
+        pointer-events: none;
+        z-index: -1;
       }
         `;
       }
@@ -60448,9 +60701,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     const out = panel.querySelector('#dms-output');
     out.style.display = 'block';
     let text = '';
-    for (let i = 0; i < SHELF_COUNT; i++) {
-      const s = shelfStates[i];
-      const label = ['Top', 'Mid', 'Bottom'][i];
+    const shelfCount = document.querySelectorAll('.dm-shelf-row').length || shelfStates.length;
+    for (let i = 0; i < shelfCount; i++) {
+      const s = getShelfState(i);
+      const label = ['Top', 'Mid', 'Bottom'][i] || `Extra ${i - 2}`;
       text += `/* ── Shelf ${i} (${label}) ── */
 [data-shelf="${i}"] .library-book { margin-top: ${s.y}px; }
 [data-shelf="${i}"] .book-3d { transform: ... rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale.toFixed(2)}); }
@@ -60465,11 +60719,309 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   function closeMode() {
     active = false;
     if (panel) { panel.remove(); panel = null; }
+    // Remove design-mode-only style overrides (shelf CSS is now permanent via vault-shelf-style)
     const styleEl = document.getElementById('dms-live-style');
     if (styleEl) styleEl.remove();
     const libraryEl = document.querySelector('.forbidden-library.library-variant--vault')
                    || document.querySelector('.forbidden-library');
-    if (libraryEl) libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
+    if (libraryEl) {
+      libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
+      // Restore real book lists and hidden elements
+      libraryEl.querySelectorAll('[data-dm-hidden]').forEach(el => {
+        el.style.display = '';
+        delete el.dataset.dmHidden;
+      });
+    }
+    // Re-render vault shelves so real books come back
+    if (typeof window.renderVaultBookList === 'function') window.renderVaultBookList();
   }
 
+  // ── Expose shelf layout system for vault book rendering ──
+  window._shelfLayout = {
+    COVERS_PER_SHELF,
+    MAX_PER_SHELF,
+    COVER_WIDTH,
+    SPINE_WIDTH,
+    SHELF_LIP_IMAGES,
+    shelfDefaults,
+    getShelfState,
+    shelfRowWidth,
+    getGapPx,
+    getShelfMaxPx,
+    applyShelfCSS: function(shelfCount) {
+      // Apply shelf CSS to a permanent style element (not the design-mode one)
+      let el = document.getElementById('vault-shelf-style');
+      if (!el) {
+        el = document.createElement('style');
+        el.id = 'vault-shelf-style';
+        document.head.appendChild(el);
+      }
+      let css = '';
+      for (let i = 0; i < shelfCount; i++) {
+        const s = getShelfState(i);
+        css += `
+        .dm-shelf-row[data-shelf="${i}"] {
+          display: flex;
+          flex-wrap: nowrap;
+          justify-content: center;
+          align-items: flex-end;
+          gap: 0 ${s.gap}vw;
+          position: relative;
+          z-index: 1;
+          max-width: 52vw;
+          margin: 0 auto;
+          padding: 0 16px;
+          overflow: visible;
+        }
+        .dm-shelf-row[data-shelf="${i}"] .library-book {
+          margin-top: ${s.y}px !important;
+          outline: none !important;
+        }
+        .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine {
+          margin-left: -${s.gap / 2}vw;
+          margin-right: -${s.gap / 2}vw;
+        }
+        .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
+          transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+        }
+        .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
+          transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(90deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+        }
+        `;
+        if (SHELF_LIP_IMAGES[i]) {
+          css += `
+        .dm-shelf-row[data-shelf="${i}"]::before {
+          content: '';
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          bottom: ${s.lipY}px;
+          width: ${s.lipW}vw;
+          height: 2.4vw;
+          background: url('${SHELF_LIP_IMAGES[i]}') center / 100% 100% no-repeat;
+          pointer-events: none;
+          z-index: 3;
+        }
+          `;
+        }
+        if (i >= 3) {
+          css += `
+        .dm-shelf-row[data-shelf="${i}"] {
+          background: rgb(14, 9, 6);
+        }
+        .dm-shelf-row[data-shelf="${i}"]::after {
+          content: '';
+          position: absolute;
+          left: 50%;
+          transform: translateX(-50%);
+          bottom: -13vw;
+          width: 100vw;
+          height: 15.4vw;
+          background: url('/assets/Forbidde-Library-Art/Private-shelf.jpg') center top / 100vw auto no-repeat;
+          pointer-events: none;
+          z-index: -1;
+        }
+          `;
+        }
+      }
+      el.textContent = css;
+    },
+    distribute: function(totalBooks) {
+      const gapPx = getGapPx();
+      const maxPx = getShelfMaxPx();
+      const shelfCount = Math.max(3, Math.ceil(totalBooks / MAX_PER_SHELF));
+      const shelfBooks = [];
+      const shelfCovers = [];
+      for (let i = 0; i < shelfCount; i++) { shelfBooks.push(0); shelfCovers.push(0); }
+      let assigned = 0;
+      for (let s = 0; s < shelfCount && assigned < totalBooks; s++) {
+        const n = Math.min(COVERS_PER_SHELF, totalBooks - assigned);
+        shelfBooks[s] = n;
+        shelfCovers[s] = n;
+        assigned += n;
+      }
+      if (assigned >= totalBooks) return { shelfBooks, shelfCovers };
+      let remaining = totalBooks - assigned;
+      for (let s = 0; s < shelfCount && remaining > 0; s++) {
+        while (remaining > 0 && shelfBooks[s] < MAX_PER_SHELF) {
+          const newTotal = shelfBooks[s] + 1;
+          const spines = newTotal - shelfCovers[s];
+          if (shelfRowWidth(shelfCovers[s], spines, gapPx) <= maxPx) {
+            shelfBooks[s] = newTotal;
+            remaining--;
+            continue;
+          }
+          let covers = shelfCovers[s] - 1;
+          const newSpines = newTotal - covers;
+          if (covers >= 1 && shelfRowWidth(covers, newSpines, gapPx) <= maxPx) {
+            shelfBooks[s] = newTotal;
+            shelfCovers[s] = covers;
+            remaining--;
+            continue;
+          }
+          break;
+        }
+      }
+      while (remaining > 0) {
+        const s = shelfBooks.length;
+        shelfBooks.push(0);
+        shelfCovers.push(0);
+        while (remaining > 0 && shelfBooks[s] < MAX_PER_SHELF) {
+          const newTotal = shelfBooks[s] + 1;
+          const covers = Math.min(COVERS_PER_SHELF, newTotal);
+          const spines = newTotal - covers;
+          if (shelfRowWidth(covers, spines, gapPx) > maxPx) break;
+          shelfBooks[s] = newTotal;
+          shelfCovers[s] = covers;
+          remaining--;
+        }
+      }
+      return { shelfBooks, shelfCovers };
+    }
+  };
+
+})();
+
+// ── Pact Star Design Mode (Cmd+Shift+P) ─────────────────────────────────────
+(function initPactStarDesignMode() {
+  let active = false, panel = null;
+  let starTop = 96;       // % — unzoomed star top position
+  let starZoomTop = 38;   // % — zoomed star top position within accept-zone
+  let starSize = 28;      // px — unzoomed star size
+  let starZoomSize = 48;  // px — zoomed star size
+
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && (e.key === 'K' || e.key === 'k')) {
+      e.preventDefault();
+      active ? closePactDM() : openPactDM();
+    }
+  });
+
+  function openPactDM() {
+    active = true;
+    panel = document.createElement('div');
+    panel.id = 'pactStarDesignPanel';
+    panel.innerHTML = `
+      <style>
+        #pactStarDesignPanel {
+          position: fixed; top: 10px; right: 10px; z-index: 99999;
+          background: rgba(0,0,0,0.92); color: #c9a84c; font-family: monospace;
+          padding: 16px; border-radius: 8px; border: 1px solid #c9a84c;
+          font-size: 12px; min-width: 260px; cursor: move; user-select: none;
+        }
+        #pactStarDesignPanel h3 { margin: 0 0 10px; font-size: 14px; color: #fff; }
+        #pactStarDesignPanel label { display: block; margin: 8px 0 2px; }
+        #pactStarDesignPanel input[type=range] { width: 100%; accent-color: #c9a84c; }
+        #pactStarDesignPanel .val { color: #fff; float: right; }
+        #pactStarDesignPanel button {
+          background: #c9a84c; color: #000; border: none;
+          padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
+          margin-right: 6px; margin-top: 8px;
+        }
+        #pactStarDesignPanel button:hover { background: #e6c35a; }
+        #pactStarDesignPanel .output { margin-top: 10px; background: #111; padding: 8px;
+          border-radius: 4px; font-size: 11px; color: #8f8; white-space: pre-wrap; display: none; }
+        #pactStarDesignPanel hr { border: none; border-top: 1px solid rgba(201,168,76,0.3); margin: 12px 0 8px; }
+      </style>
+      <h3>Pact Star Design (Ctrl+Shift+K)</h3>
+
+      <label>Star top (unzoomed) <span class="val" id="psd-top-val">${starTop}%</span></label>
+      <input type="range" id="psd-top" min="80" max="100" value="${starTop}" step="0.5">
+
+      <label>Star size (unzoomed) <span class="val" id="psd-size-val">${starSize}px</span></label>
+      <input type="range" id="psd-size" min="10" max="60" value="${starSize}" step="1">
+
+      <hr>
+
+      <label>Star top (zoomed) <span class="val" id="psd-ztop-val">${starZoomTop}%</span></label>
+      <input type="range" id="psd-ztop" min="0" max="100" value="${starZoomTop}" step="0.5">
+
+      <label>Star size (zoomed) <span class="val" id="psd-zsize-val">${starZoomSize}px</span></label>
+      <input type="range" id="psd-zsize" min="20" max="100" value="${starZoomSize}" step="1">
+
+      <hr>
+      <div>
+        <button id="psd-print">Print CSS</button>
+        <button id="psd-close">Close</button>
+      </div>
+      <div class="output" id="psd-output"></div>
+    `;
+    document.body.appendChild(panel);
+    wireSliders();
+    applyStyles();
+
+    // Draggable
+    let mx = 0, my = 0;
+    panel.addEventListener('mousedown', e => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      mx = e.clientX; my = e.clientY;
+      const move = ev => {
+        panel.style.top = (panel.offsetTop + ev.clientY - my) + 'px';
+        panel.style.left = (panel.offsetLeft + ev.clientX - mx) + 'px';
+        panel.style.right = 'auto';
+        mx = ev.clientX; my = ev.clientY;
+      };
+      const up = () => { document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  }
+
+  function wireSliders() {
+    const wire = (id, setter) => {
+      panel.querySelector(id).addEventListener('input', function() {
+        setter(parseFloat(this.value));
+        applyStyles();
+      });
+    };
+    wire('#psd-top', v => { starTop = v; panel.querySelector('#psd-top-val').textContent = v + '%'; });
+    wire('#psd-size', v => { starSize = v; panel.querySelector('#psd-size-val').textContent = v + 'px'; });
+    wire('#psd-ztop', v => { starZoomTop = v; panel.querySelector('#psd-ztop-val').textContent = v + '%'; });
+    wire('#psd-zsize', v => { starZoomSize = v; panel.querySelector('#psd-zsize-val').textContent = v + 'px'; });
+
+    panel.querySelector('#psd-print').addEventListener('click', printCSS);
+    panel.querySelector('#psd-close').addEventListener('click', closePactDM);
+  }
+
+  function applyStyles() {
+    let styleEl = document.getElementById('psd-live-style');
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = 'psd-live-style';
+      document.head.appendChild(styleEl);
+    }
+    styleEl.textContent = `
+      .pact-card.flipped::after {
+        top: ${starTop}% !important;
+        width: ${starSize}px !important;
+        height: ${starSize}px !important;
+        margin-left: -${starSize / 2}px !important;
+        margin-top: -${starSize / 2}px !important;
+      }
+      .pact-accept-zone::after {
+        top: ${starZoomTop}% !important;
+        width: ${starZoomSize}px !important;
+        height: ${starZoomSize}px !important;
+        margin-left: -${starZoomSize / 2}px !important;
+        margin-top: -${starZoomSize / 2}px !important;
+      }
+    `;
+  }
+
+  function printCSS() {
+    const out = panel.querySelector('#psd-output');
+    out.style.display = 'block';
+    out.textContent = `/* Pact Star positions */
+--pact-star-top: ${starTop}%;
+--pact-star-zoom-top: ${starZoomTop}%;
+/* Unzoomed: top:${starTop}% size:${starSize}px margin:-${starSize/2}px */
+/* Zoomed:   top:${starZoomTop}% size:${starZoomSize}px margin:-${starZoomSize/2}px */`;
+  }
+
+  function closePactDM() {
+    active = false;
+    if (panel) { panel.remove(); panel = null; }
+    const styleEl = document.getElementById('psd-live-style');
+    if (styleEl) styleEl.remove();
+  }
 })();
