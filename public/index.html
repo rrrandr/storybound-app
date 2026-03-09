@@ -27,7 +27,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260308z28">
+  <link rel="stylesheet" href="/styles.css?v=20260309z37">
 </head>
 
 <body class="booting">
@@ -1605,7 +1605,7 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260308z33"></script>
+<script src="/app.js?v=20260309z49"></script>
 <script src="/card-designer.js"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
@@ -1636,7 +1636,23 @@
 </div>
 
 <div id="forbiddenLibraryScreen" class="screen hidden">
-  <div class="forbidden-library">
+  <div class="forbidden-library library-variant--forbidden">
+    <!-- Arced "Forbidden Library" title along the black arch -->
+    <svg class="library-arch-title" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <path id="forbiddenArchTextPath" d="M 120,180 Q 400,20 680,180" fill="none"/>
+        <linearGradient id="forbiddenArchGoldGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f5e6a3"/>
+          <stop offset="30%" stop-color="#d4a84a"/>
+          <stop offset="50%" stop-color="#c9a84c"/>
+          <stop offset="70%" stop-color="#b8912e"/>
+          <stop offset="100%" stop-color="#8a6914"/>
+        </linearGradient>
+      </defs>
+      <text>
+        <textPath href="#forbiddenArchTextPath" startOffset="50%" text-anchor="middle"><tspan dy="-2">F</tspan><tspan dy="1">o</tspan><tspan>r</tspan><tspan>b</tspan><tspan>i</tspan><tspan>d</tspan><tspan>d</tspan><tspan>e</tspan><tspan>n</tspan><tspan> </tspan><tspan>L</tspan><tspan>i</tspan><tspan>b</tspan><tspan>r</tspan><tspan>a</tspan><tspan>r</tspan><tspan dy="-1">y</tspan></textPath>
+      </text>
+    </svg>
     <div id="forbiddenLibraryLoading" class="forbidden-library-loading">
       <p class="forbidden-library-empty">Opening the vault...</p>
     </div>
@@ -1645,6 +1661,7 @@
       <p class="forbidden-library-empty">No Stories Available Yet. Start one yourself.</p>
     </div>
     <div class="vault-exit-row">
+      <button class="sb-btn-png sm" id="startNewStoryForbiddenBtn">Start New Story</button>
       <button class="sb-btn-png sm" id="exitForbiddenLibraryBtn">Exit Library</button>
     </div>
   </div>
@@ -1698,8 +1715,8 @@
 <div id="trophyWallModal" class="overlay trophy-wall-modal hidden">
   <div class="trophy-wall-container">
     <button id="trophyWallClose" class="trophy-wall-close">&times;</button>
-    <button id="trophyDesignToggle" class="trophy-design-toggle">Design Mode</button>
-    <button id="trophyDumpBtn" class="trophy-dump-btn">Dump Coords</button>
+    <button id="trophyDesignToggle" class="trophy-design-toggle" style="display:none">Design Mode</button>
+    <button id="trophyDumpBtn" class="trophy-dump-btn" style="display:none">Dump Coords</button>
     <div class="trophy-vitrine">
       <img src="/assets/Forbidde-Library-Art/greyed-vitrine.jpg"
            class="vitrine-grey" alt="Trophy Wall" />

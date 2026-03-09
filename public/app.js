@@ -2051,18 +2051,25 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
   function resolveLegalGate(profile) {
     // Age gate is now handled by the adult pact card — skip straight to legal gate
-    if (!profile.tos_version ||
-        !profile.privacy_version ||
-        !profile.adult_ack_version ||
-        profile.age_confirmed !== true) {
+    // Use Number() coercion to handle string/int type mismatches from DB
+    const pTos = Number(profile.tos_version) || 0;
+    const pPriv = Number(profile.privacy_version) || 0;
+    const pAdult = Number(profile.adult_ack_version) || 0;
+    const ageOk = !!profile.age_confirmed;
+    console.log('[LEGAL] Gate check — tos:', pTos, '/', LEGAL.TOS_VERSION,
+      '| privacy:', pPriv, '/', LEGAL.PRIVACY_VERSION,
+      '| adult:', pAdult, '/', LEGAL.ADULT_ACK_VERSION,
+      '| age_confirmed:', profile.age_confirmed);
+
+    if (!pTos || !pPriv || !pAdult || !ageOk) {
       routeToLegalAcceptance();
       return;
     }
 
-    if (profile.tos_version !== LEGAL.TOS_VERSION ||
-        profile.privacy_version !== LEGAL.PRIVACY_VERSION ||
-        profile.adult_ack_version !== LEGAL.ADULT_ACK_VERSION) {
-      const isReaccept = profile.tos_version && profile.tos_version !== LEGAL.TOS_VERSION;
+    if (pTos !== LEGAL.TOS_VERSION ||
+        pPriv !== LEGAL.PRIVACY_VERSION ||
+        pAdult !== LEGAL.ADULT_ACK_VERSION) {
+      const isReaccept = pTos > 0 && pTos !== LEGAL.TOS_VERSION;
       routeToLegalAcceptance(isReaccept);
       return;
     }
@@ -25453,16 +25460,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // — Load library entries from Supabase —
   async function loadLibraryEntries() {
-    if (!sb) {
-      _showLibraryEmpty('Library unavailable');
-      return;
-    }
     const loadingEl = $('forbiddenLibraryLoading');
     const listEl = $('forbiddenLibraryList');
     const emptyEl = $('forbiddenLibraryEmpty');
     if (loadingEl) loadingEl.style.display = '';
     if (listEl) listEl.style.display = 'none';
     if (emptyEl) emptyEl.style.display = 'none';
+
+    if (!sb) {
+      // No Supabase — render with dummy books only
+      _libraryEntries = [];
+      _libraryLoaded = true;
+      renderLibraryList();
+      return;
+    }
 
     try {
       const { data, error } = await sb
@@ -25474,8 +25485,6 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
       if (error) {
         console.error('[Library] Query failed:', error.message);
-        _showLibraryEmpty('Failed to load library');
-        return;
       }
 
       // Filter out starter stories — they must never appear in the Forbidden Library
@@ -25483,15 +25492,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       _libraryEntries = (data || []).filter(e => !starterIds.has(e.story_id));
       _libraryLoaded = true;
 
-      if (_libraryEntries.length === 0) {
-        _showLibraryEmpty();
-        return;
-      }
-
+      // Always render — dummies fill empty shelves
       renderLibraryList();
     } catch (err) {
       console.error('[Library] Load error:', err);
-      _showLibraryEmpty('Failed to load library');
+      _libraryEntries = [];
+      renderLibraryList();
     }
   }
 
@@ -25622,71 +25628,247 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.EDGE_SPINES_MAX = EDGE_SPINES_MAX;
 
   // — Render 3D book shelf —
-  function renderLibraryList() {
-    const loadingEl = $('forbiddenLibraryLoading');
-    const listEl = $('forbiddenLibraryList');
-    if (loadingEl) loadingEl.style.display = 'none';
-    if (!listEl) return;
-    listEl.style.display = '';
-    listEl.innerHTML = '';
+  // — Generate shelf CSS for Forbidden Library rows —
+  // ── Forbidden Library 3-column layout ──
+  // Background art (Forbidden-Library-v2.png) has 3 shelf bays separated by pillars.
+  // Column A (left, 3 covers), Column B (center, 5 covers), Column C (right, mirrors A).
+  // All books are forward-facing covers only (no spine mode).
+  const FORBIDDEN_COL_CONFIG = {
+    A: { left: 3.6, width: 23.2, perRow: 3, shelfDefs: [
+      { y: 180, scale: 0.75, rx: 3,  ry: -10, rz: -0.5, crush: -4 },
+      { y: -9,  scale: 0.72, rx: 2,  ry: -10, rz: -0.5, crush: -4 },
+      { y: -5,  scale: 0.75, rx: -2, ry: -9,  rz: 0,    crush: -4 },
+      { y: -5,  scale: 0.78, rx: -3, ry: -8,  rz: 0,    crush: -4 },
+    ]},
+    B: { left: 33.2, width: 33.6, perRow: 5, shelfDefs: [
+      { y: 180, scale: 0.80, rx: 4, ry: 5,  rz: -0.5, crush: -3 },
+      { y: -9,  scale: 0.75, rx: 4, ry: 3,  rz: -0.5, crush: -3 },
+      { y: -5,  scale: 0.80, rx: 2, ry: -3, rz: 0,    crush: -3 },
+      { y: -5,  scale: 0.80, rx: 2, ry: -5, rz: 0,    crush: -3 },
+    ]},
+    C: { left: 70.3, width: 23.2, perRow: 3, shelfDefs: [
+      { y: 180, scale: 0.75, rx: 4, ry: -12, rz: 0.5, crush: -4 },
+      { y: -9,  scale: 0.72, rx: 4, ry: -10, rz: 0.5, crush: -4 },
+      { y: -5,  scale: 0.75, rx: 2, ry: -8,  rz: 0,   crush: -4 },
+      { y: -5,  scale: 0.78, rx: 2, ry: -6,  rz: 0,   crush: -4 },
+    ]},
+  };
 
-    // Classify: recent/in-progress → cover, old/finished → spine
-    const classified = classifyBookModes(_libraryEntries, MAX_COVERS);
-    // Arrange: spines at edges, then interleaved between covers
-    const arranged = arrangeShelfBooks(classified);
+  function _applyForbiddenShelfCSS(colConfig, rowCounts) {
+    let el = document.getElementById('forbidden-shelf-style');
+    if (!el) { el = document.createElement('style'); el.id = 'forbidden-shelf-style'; document.head.appendChild(el); }
+    const scope = '#forbiddenLibraryScreen';
+    let css = `
+      ${scope} .forbidden-col {
+        position: absolute; top: 0; display: flex; flex-direction: column; z-index: 1;
+        pointer-events: none;
+      }
+      ${scope} .forbidden-col .dm-shelf-row,
+      ${scope} .forbidden-col .library-book { pointer-events: auto; }
+    `;
+    for (const [colId, cfg] of Object.entries(colConfig)) {
+      css += `
+      ${scope} .forbidden-col[data-col="${colId}"] {
+        left: ${cfg.left}vw; width: ${cfg.width}vw;
+      }`;
+      const rows = rowCounts[colId] || 4;
+      for (let i = 0; i < rows; i++) {
+        const s = i < cfg.shelfDefs.length ? cfg.shelfDefs[i] : { ...cfg.shelfDefs[cfg.shelfDefs.length - 1] };
+        css += `
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] {
+        display: flex; flex-wrap: nowrap; justify-content: center; align-items: flex-end;
+        gap: 0; position: relative; z-index: 1; width: 100%; padding: 0; overflow: visible;
+      }
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] .library-book {
+        margin-top: ${s.y}px !important; margin-left: ${s.crush}px; margin-right: ${s.crush}px;
+        outline: none !important;
+      }
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] .library-book .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] .library-book:hover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry > 0 ? Math.max(s.ry - 2, 0) : Math.min(s.ry + 2, 0)}deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
+      }`;
+      }
+    }
+    el.textContent = css;
+  }
 
-    arranged.forEach((entry, index) => {
-      const bookTitle = entry.title || 'Untitled';
-      const bookAuthor = entry.author || 'S. Tory Bound';
-      const scenes = entry.scene_count || 0;
-      const words = entry.word_count || 0;
-      const worldKey = (entry.world || 'modern').toLowerCase();
-      const isCollector = scenes >= COLLECTOR_EDITION_THRESHOLD;
-      const isForward = entry.isForward;
+  // Dummy book titles for the Forbidden Library (community shelf placeholders, no starters)
+  const FORBIDDEN_DUMMY_TITLES = [
+    'Crimson Pact', 'Thornfield Manor', 'The Ember Throne',
+    'Midnight Accord', 'Veil of Stars', 'Ashborn Legacy',
+    'The Gilded Cage', 'Serpent\'s Kiss', 'Iron Petals',
+    'House of Dusk', 'Broken Oaths', 'The Ashen Court',
+    'Ruin of Crowns', 'Silk & Thorns', 'The Last Accord',
+    'Nightbloom', 'Wolves of Winter', 'Ivory Chains',
+    'The Scarlet Vow', 'Ember & Dust', 'Veiled Throne',
+    'Blood of Stars', 'The Hollow King', 'Dusk Protocol',
+    'Shattered Realm'
+  ];
+  const FORBIDDEN_DUMMY_AUTHORS = [
+    'V. Blackthorn', 'E. Ashwood', 'L. Ravencroft',
+    'M. Silverthorn', 'A. Nightfall', 'C. Duskwell',
+    'R. Ironwood', 'S. Embervale', 'J. Stormcrest',
+    'D. Foxglove', 'K. Wolfsbane', 'P. Gloomhaven',
+    'T. Redmoor', 'N. Darkhollow', 'W. Thornheart',
+    'B. Starling', 'F. Wintermere', 'H. Goldcrest',
+    'I. Crowley', 'O. Dawnforge', 'G. Shadowmere',
+    'Q. Ebondale', 'U. Greymist', 'X. Flamecrest',
+    'Z. Voidborn'
+  ];
 
-      const book = document.createElement('div');
-      book.className = 'library-book initializing' + (isCollector ? ' collector-edition' : '') + (isForward ? ' mode-cover' : ' mode-spine');
-      book.dataset.storyId = entry.story_id;
-      book.dataset.world = worldKey;
-      book.innerHTML = `<div class="book-3d">
-  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div></div>
-  <div class="book-back"><div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${scenes} scenes · ${words.toLocaleString()} words</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div></div>
-  <div class="book-spine"><div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div></div>
+  function _buildForbiddenBook(entry) {
+    const bookTitle = entry.title || 'Untitled';
+    const bookAuthor = entry.author || 'S. Tory Bound';
+    const scenes = entry.scene_count || 0;
+    const words = entry.word_count || 0;
+
+    const book = document.createElement('div');
+    book.className = 'library-book initializing mode-cover';
+    book.dataset.storyId = entry.story_id;
+
+    const frontContent = entry.coverImage
+      ? `<img src="${entry.coverImage}" alt="${escapeHTML(bookTitle)}">`
+      : `<div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div>`;
+
+    const backContent = entry.backCoverImage
+      ? `<img src="${entry.backCoverImage}" alt="Back cover"><div class="back-content back-content-overlay"><div class="back-synopsis-box"><p class="back-synopsis">${scenes} scenes · ${words.toLocaleString()} words</p></div></div>`
+      : `<div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${scenes} scenes · ${words.toLocaleString()} words</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
+
+    const spineContent = entry.spineImage
+      ? `<img src="${entry.spineImage}" alt="Spine">`
+      : `<div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div>`;
+
+    book.innerHTML = `<div class="book-3d">
+  <div class="book-front">${frontContent}</div>
+  <div class="book-back">${backContent}</div>
+  <div class="book-spine">${spineContent}</div>
   <div class="book-pages-right"></div>
   <div class="book-pages-top"></div>
   <div class="book-pages-bottom"></div>
   <div class="page-shimmer"></div>
 </div>`;
 
-      // Depth variance and lean (deterministic, no randomness)
-      const depthVariance = (index % 3) - 1; // -1, 0, 1
-      // CSS controls base orientation (rotateX + rotateY via .mode-cover/.mode-spine)
-      // Depth variance is minimal (±2px) — omitted to avoid overriding CSS transform
-      const isMobile = window.innerWidth < 900;
-      if (!isMobile && (index % 7 === 0) && isForward) {
-        book.classList.add('mode-lean');
-      }
+    let _hoverPlayed = false;
+    book.addEventListener('mouseenter', () => {
+      if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
+    });
+    book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
 
-      // Hover sound (debounced, one per entry)
-      let _hoverPlayed = false;
-      book.addEventListener('mouseenter', () => {
-        if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
-      });
-      book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
-
-      book.addEventListener('click', (e) => {
-        e.stopPropagation();
-        _zoomSource = 'forbidden';
-        _openLibraryZoom(entry, book);
-      });
-      listEl.appendChild(book);
+    book.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _zoomSource = 'forbidden';
+      _openLibraryZoom(entry, book);
     });
 
-    // Remove .initializing after layout pass to enable future transitions
+    return book;
+  }
+
+  function renderLibraryList() {
+    const loadingEl = $('forbiddenLibraryLoading');
+    const listEl = $('forbiddenLibraryList');
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (!listEl) return;
+    listEl.style.display = 'none';
+
+    const libraryEl = listEl.closest('.forbidden-library') || listEl.parentElement;
+
+    // Remove previous columns and shelf rows
+    libraryEl.querySelectorAll('.forbidden-col').forEach(el => el.remove());
+    libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
+
+    // Build entry list: real entries first, then pad with dummies
+    const allEntries = [];
+    _libraryEntries.forEach(e => {
+      allEntries.push({
+        story_id: e.story_id,
+        title: e.title || 'Untitled',
+        author: e.author || 'S. Tory Bound',
+        scene_count: e.scene_count || 0,
+        word_count: e.word_count || 0,
+        coverImage: e.coverImage || null,
+        backCoverImage: e.backCoverImage || null,
+        spineImage: e.spineImage || null,
+        updated_at: e.updated_at,
+      });
+    });
+
+    // 3 columns × 4 rows: B=5×4=20, A=3×4=12, C=3×4=12 → 44 min
+    const minBooks = 44;
+    const dummiesNeeded = Math.max(0, minBooks - allEntries.length);
+    for (let i = 0; i < dummiesNeeded; i++) {
+      allEntries.push({
+        story_id: 'forbidden-dummy-' + i,
+        title: FORBIDDEN_DUMMY_TITLES[i % FORBIDDEN_DUMMY_TITLES.length],
+        author: FORBIDDEN_DUMMY_AUTHORS[i % FORBIDDEN_DUMMY_AUTHORS.length],
+        scene_count: Math.floor(Math.random() * 20) + 3,
+        word_count: Math.floor(Math.random() * 40000) + 5000,
+        _isDummy: true,
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    if (allEntries.length === 0) return;
+
+    // ── Distribute to 3 columns: B (center) first, then A and C symmetrically ──
+    const colEntries = { A: [], B: [], C: [] };
+    const perRow = { A: FORBIDDEN_COL_CONFIG.A.perRow, B: FORBIDDEN_COL_CONFIG.B.perRow, C: FORBIDDEN_COL_CONFIG.C.perRow };
+    let idx = 0;
+
+    // Fill all columns row-by-row: each "round" fills one row of B, one row of A, one row of C
+    while (idx < allEntries.length) {
+      // B row
+      for (let i = 0; i < perRow.B && idx < allEntries.length; i++) colEntries.B.push(allEntries[idx++]);
+      // A row
+      for (let i = 0; i < perRow.A && idx < allEntries.length; i++) colEntries.A.push(allEntries[idx++]);
+      // C row
+      for (let i = 0; i < perRow.C && idx < allEntries.length; i++) colEntries.C.push(allEntries[idx++]);
+    }
+
+    // Track row counts for CSS generation
+    const rowCounts = {
+      A: Math.ceil(colEntries.A.length / perRow.A),
+      B: Math.ceil(colEntries.B.length / perRow.B),
+      C: Math.ceil(colEntries.C.length / perRow.C),
+    };
+
+    // Apply CSS
+    _applyForbiddenShelfCSS(FORBIDDEN_COL_CONFIG, rowCounts);
+
+    // Build column DOM
+    function buildColumn(colId, entries, booksPerRow) {
+      const col = document.createElement('div');
+      col.className = 'forbidden-col';
+      col.dataset.col = colId;
+      const rows = Math.ceil(entries.length / booksPerRow);
+      for (let r = 0; r < rows; r++) {
+        const shelf = document.createElement('div');
+        shelf.className = 'dm-shelf-row';
+        shelf.dataset.shelf = r;
+        const start = r * booksPerRow;
+        const end = Math.min(start + booksPerRow, entries.length);
+        for (let i = start; i < end; i++) {
+          shelf.appendChild(_buildForbiddenBook(entries[i]));
+        }
+        col.appendChild(shelf);
+      }
+      return col;
+    }
+
+    libraryEl.appendChild(buildColumn('A', colEntries.A, perRow.A));
+    libraryEl.appendChild(buildColumn('B', colEntries.B, perRow.B));
+    libraryEl.appendChild(buildColumn('C', colEntries.C, perRow.C));
+
+    // Remove .initializing after layout pass
     requestAnimationFrame(() => {
-      listEl.querySelectorAll('.library-book.initializing').forEach(b => b.classList.remove('initializing'));
+      libraryEl.querySelectorAll('.forbidden-col .library-book.initializing').forEach(b => b.classList.remove('initializing'));
     });
   }
+
+  window.renderForbiddenLibraryList = renderLibraryList;
 
   // — Shelf depth parallax (subtle back-wall shift on mouse move) —
   (function initShelfParallax() {
@@ -26285,7 +26467,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   async function loadVaultLibrary() {
     if (_vaultLibraryLoading) return;
     if (!sb || !_supabaseProfileId) {
-      _showVaultLibraryEmpty('Sign in to see your library');
+      // Still render starter books even when not signed in
+      renderVaultBookList();
       return;
     }
     _vaultLibraryLoading = true;
@@ -26362,15 +26545,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       _vaultLibraryEntries = [..._vaultAuthoredEntries, ..._vaultBorrowedEntries];
       _vaultLibraryLoaded = true;
 
-      if (_vaultLibraryEntries.length === 0) {
-        _showVaultLibraryEmpty();
-        // Still render trophies even with no stories
-        renderVaultTrophies(achievementsResult.data || []);
-        _vaultLibraryLoading = false;
-        return;
-      }
-
       renderVaultTrophies(achievementsResult.data || []);
+      // Always render shelf (starter books show even with 0 user stories)
       renderVaultBookList();
     } catch (err) {
       console.error('[VaultLibrary] Load error:', err);
@@ -27252,15 +27428,26 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     _preVaultScreenId = null;
   });
 
-  // Exit Forbidden Library button — return to setup screen
+  // Exit Forbidden Library button — return to previous screen or mode select
   $('exitForbiddenLibraryBtn')?.addEventListener('click', () => {
+    if (_preVaultScreenId && _preVaultScreenId !== 'forbiddenLibraryScreen' && _preVaultScreenId !== 'vaultLibraryScreen') {
+      window.showScreen(_preVaultScreenId);
+    } else {
+      window.showScreen('modeSelect');
+    }
+  });
+
+  // Start New Story from Forbidden Library — go to corridor/setup
+  $('startNewStoryForbiddenBtn')?.addEventListener('click', () => {
     window.showScreen('setup');
   });
 
   // Exit Library button — return to pre-vault screen
   $('exitLibraryBtn')?.addEventListener('click', () => {
-    if (_preVaultScreenId && _preVaultScreenId !== 'vaultLibraryScreen') {
+    if (_preVaultScreenId && _preVaultScreenId !== 'vaultLibraryScreen' && _preVaultScreenId !== 'forbiddenLibraryScreen') {
       window.showScreen(_preVaultScreenId);
+    } else {
+      window.showScreen('modeSelect');
     }
     _preVaultScreenId = null;
   });
@@ -27302,26 +27489,37 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function _applyVaultShelfCSS(shelfCount, defs, lipImgs) {
     let el = document.getElementById('vault-shelf-style');
     if (!el) { el = document.createElement('style'); el.id = 'vault-shelf-style'; document.head.appendChild(el); }
+    const scope = '#vaultLibraryScreen';
     let css = '';
     for (let i = 0; i < shelfCount; i++) {
       const s = i < defs.length ? defs[i] : { ...defs[2] };
       css += `
-      .dm-shelf-row[data-shelf="${i}"] {
+      ${scope} .dm-shelf-row[data-shelf="${i}"] {
         display: flex; flex-wrap: nowrap; justify-content: center; align-items: flex-end;
         gap: 0 ${s.gap}vw; position: relative; z-index: 1;
         max-width: 52vw; margin: 0 auto; padding: 0 16px; overflow: visible;
       }
-      .dm-shelf-row[data-shelf="${i}"] .library-book { margin-top: ${s.y}px !important; outline: none !important; }
-      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine { margin-left: -${s.gap / 2}vw; margin-right: -${s.gap / 2}vw; }
-      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
+      ${scope} .dm-shelf-row[data-shelf="${i}"] .library-book { margin-top: ${s.y}px !important; outline: none !important; }
+      ${scope} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine { margin-left: -${s.gap / 2}vw; margin-right: -${s.gap / 2}vw; }
+      ${scope} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
         transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
-      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
+      ${scope} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover:hover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${Math.max(s.ry - 2, -15)}deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
+      }
+      ${scope} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
         transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(90deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      ${scope} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine:hover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(80deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
       }`;
       if (lipImgs[i]) {
         css += `
-      .dm-shelf-row[data-shelf="${i}"]::before {
+      ${scope} .dm-shelf-row[data-shelf="${i}"]::before {
         content: ''; position: absolute; left: 50%; transform: translateX(-50%);
         bottom: ${s.lipY}px; width: ${s.lipW}vw; height: 2.4vw;
         background: url('${lipImgs[i]}') center / 100% 100% no-repeat;
@@ -27330,8 +27528,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
       if (i >= 3) {
         css += `
-      .dm-shelf-row[data-shelf="${i}"] { background: rgb(14, 9, 6); }
-      .dm-shelf-row[data-shelf="${i}"]::after {
+      ${scope} .dm-shelf-row[data-shelf="${i}"] { background: rgb(14, 9, 6); }
+      ${scope} .dm-shelf-row[data-shelf="${i}"]::after {
         content: ''; position: absolute; left: 50%; transform: translateX(-50%);
         bottom: -13vw; width: 100vw; height: 15.4vw;
         background: url('/assets/Forbidde-Library-Art/Private-shelf.jpg') center top / 100vw auto no-repeat;
@@ -27396,7 +27594,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     // ── Inline shelf layout constants (must be self-contained; design mode IIFE loads later) ──
     const _COVER_W = 105, _SPINE_W = 35, _COVERS_PS = 5, _MAX_PS = 9;
     const _shelfDefs = [
-      { y: 290, scale: 1.08, rx: 7, ry: 15, rz: -1, gap: 2.5, lipY: -26, lipW: 55.5 },
+      { y: 290, scale: 1.08, rx: 7, ry: 15, rz: -1, gap: 2.5, lipY: -23, lipW: 55.5 },
       { y: 54, scale: 1.08, rx: 4, ry: 10, rz: -1, gap: 2.5, lipY: -26, lipW: 55.5 },
       { y: 74, scale: 1.08, rx: 2, ry: -13, rz: 0, gap: 2.5, lipY: 0, lipW: 56.1 },
     ];
@@ -56897,7 +57095,7 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       clearInterval(modeCardSparkleInterval);
     }
 
-    // Create sparkle particles continuously
+    // Create sparkle particles continuously — slow and lazy
     modeCardSparkleInterval = setInterval(() => {
       if (!card.classList.contains('flipped')) {
         clearInterval(modeCardSparkleInterval);
@@ -56905,11 +57103,11 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
         return;
       }
       createModeSparkle(sparkleContainer);
-    }, 150);
+    }, 400);
 
-    // Initial burst of sparkles
-    for (let i = 0; i < 8; i++) {
-      setTimeout(() => createModeSparkle(sparkleContainer), i * 50);
+    // Initial gentle burst
+    for (let i = 0; i < 5; i++) {
+      setTimeout(() => createModeSparkle(sparkleContainer), i * 200);
     }
   }
 
@@ -56917,32 +57115,36 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
     const sparkle = document.createElement('div');
     sparkle.className = 'mode-sparkle';
 
-    // Random position around the edge
-    const side = Math.floor(Math.random() * 4);
-    let x, y;
-    switch (side) {
-      case 0: x = Math.random() * 100; y = 0; break;        // top
-      case 1: x = 100; y = Math.random() * 100; break;      // right
-      case 2: x = Math.random() * 100; y = 100; break;      // bottom
-      case 3: x = 0; y = Math.random() * 100; break;        // left
-    }
+    // Random position across the card face (not just edges)
+    const x = 10 + Math.random() * 80;
+    const y = 10 + Math.random() * 80;
+
+    // Random lazy drift direction
+    const dx = (Math.random() - 0.5) * 30;   // ±15px lateral
+    const dy = -(10 + Math.random() * 30);    // -10 to -40px upward
+    const dx2 = dx + (Math.random() - 0.5) * 20;
+    const dy2 = dy - (10 + Math.random() * 20);
+    const dur = 2.5 + Math.random() * 1.5;    // 2.5–4s
+    const size = 3 + Math.random() * 3;       // 3–6px
 
     sparkle.style.cssText = `
       position: absolute;
       left: ${x}%;
       top: ${y}%;
-      width: 4px;
-      height: 4px;
-      background: radial-gradient(circle, rgba(255,215,0,1) 0%, rgba(255,215,0,0) 70%);
+      width: ${size}px;
+      height: ${size}px;
+      background: radial-gradient(circle, rgba(255,215,0,0.9) 0%, rgba(255,215,0,0) 70%);
       border-radius: 50%;
       pointer-events: none;
-      animation: modeSparkle 1.2s ease-out forwards;
+      --sparkle-dx: ${dx}px;
+      --sparkle-dy: ${dy}px;
+      --sparkle-dx2: ${dx2}px;
+      --sparkle-dy2: ${dy2}px;
+      animation: modeSparkle ${dur}s ease-in-out forwards;
     `;
 
     container.appendChild(sparkle);
-
-    // Remove after animation
-    setTimeout(() => sparkle.remove(), 1200);
+    setTimeout(() => sparkle.remove(), dur * 1000);
   }
 
   function proceedWithMode(mode) {
@@ -60166,23 +60368,66 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
   // Per-shelf state: each shelf has independent transform values + shelf overlay
   // Extra shelves beyond 3 clone the bottom shelf defaults
-  const shelfDefaults = [
-    { y: 290, scale: 1.08, rx: 7, ry: 15, rz: -1, gap: 2.5, lipY: -26, lipW: 55.5 },   // shelf 0 (top)
+  const vaultShelfDefaults = [
+    { y: 290, scale: 1.08, rx: 7, ry: 15, rz: -1, gap: 2.5, lipY: -23, lipW: 55.5 },   // shelf 0 (top)
     { y: 54, scale: 1.08, rx: 4, ry: 10, rz: -1, gap: 2.5, lipY: -26, lipW: 55.5 },     // shelf 1 (mid)
     { y: 74, scale: 1.08, rx: 2, ry: -13, rz: 0, gap: 2.5, lipY: 0, lipW: 56.1 },       // shelf 2 (bottom)
   ];
+  // Per-column defaults for forbidden library (4 rows each, with crush margin)
+  const forbiddenColDefaults = {
+    A: [
+      { y: 180, scale: 0.75, rx: 3,  ry: -10, rz: -0.5, crush: -4 },
+      { y: -9,  scale: 0.72, rx: 2,  ry: -10, rz: -0.5, crush: -4 },
+      { y: -5,  scale: 0.75, rx: -2, ry: -9,  rz: 0,    crush: -4 },
+      { y: -5,  scale: 0.78, rx: -3, ry: -8,  rz: 0,    crush: -4 },
+    ],
+    B: [
+      { y: 180, scale: 0.80, rx: 4, ry: 5,  rz: -0.5, crush: -3 },
+      { y: -9,  scale: 0.75, rx: 4, ry: 3,  rz: -0.5, crush: -3 },
+      { y: -5,  scale: 0.80, rx: 2, ry: -3, rz: 0,    crush: -3 },
+      { y: -5,  scale: 0.80, rx: 2, ry: -5, rz: 0,    crush: -3 },
+    ],
+    C: [
+      { y: 180, scale: 0.75, rx: 4, ry: -12, rz: 0.5, crush: -4 },
+      { y: -9,  scale: 0.72, rx: 4, ry: -10, rz: 0.5, crush: -4 },
+      { y: -5,  scale: 0.75, rx: 2, ry: -8,  rz: 0,   crush: -4 },
+      { y: -5,  scale: 0.78, rx: 2, ry: -6,  rz: 0,   crush: -4 },
+    ],
+  };
 
-  const shelfStates = shelfDefaults.map(d => ({ ...d }));
-  let activeShelf = 0; // which shelf tab is selected
+  // Separate shelf states per library; forbidden has per-column arrays
+  const _libraryShelfStates = {
+    vault: vaultShelfDefaults.map(d => ({ ...d })),
+    forbiddenA: forbiddenColDefaults.A.map(d => ({ ...d })),
+    forbiddenB: forbiddenColDefaults.B.map(d => ({ ...d })),
+    forbiddenC: forbiddenColDefaults.C.map(d => ({ ...d })),
+  };
+  let _activeLibrary = 'vault'; // 'vault' or 'forbidden'
+  let _forbiddenCol = null; // 'A', 'B', or 'C' when editing forbidden
+  let activeShelf = 0;
   let bookCount = 10;
   let coverCount = 5;
 
-  function getShelfState(idx) {
-    // For shelves beyond the initial 3, clone the bottom shelf defaults
-    while (shelfStates.length <= idx) {
-      shelfStates.push({ ...shelfDefaults[2] });
+  // Accessor: returns state array for active library + column
+  function _getActiveStates() {
+    if (_activeLibrary === 'forbidden' && _forbiddenCol) {
+      return _libraryShelfStates['forbidden' + _forbiddenCol];
     }
-    return shelfStates[idx];
+    return _libraryShelfStates.vault;
+  }
+
+  function getShelfState(idx) {
+    const states = _getActiveStates();
+    while (states.length <= idx) {
+      // Clone the last default row for overflow
+      const lastState = states[states.length - 1] || (
+        _activeLibrary === 'forbidden' && _forbiddenCol
+          ? forbiddenColDefaults[_forbiddenCol][forbiddenColDefaults[_forbiddenCol].length - 1]
+          : vaultShelfDefaults[vaultShelfDefaults.length - 1]
+      );
+      states.push({ ...lastState });
+    }
+    return states[idx];
   }
 
   // Compute the pixel width a shelf row would occupy given covers, spines, and gap.
@@ -60198,7 +60443,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 
   // Get the gap in px for the current viewport (shelves use 2.5vw default gap)
   function getGapPx() {
-    return (shelfStates[0]?.gap || 2.5) / 100 * window.innerWidth;
+    return (_getActiveStates()[0]?.gap || 2.5) / 100 * window.innerWidth;
   }
 
   // Get the shelf max width in px (52vw minus padding)
@@ -60304,7 +60549,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       const books = [];
       for (let i = 0; i < shelfBooks[s]; i++) {
         const globalIdx = bookIndex + i;
-        const art = STARTER_ART[globalIdx] || null;
+        const art = (_activeLibrary === 'vault' && STARTER_ART[globalIdx]) || null;
         books.push({
           story_id: 'dm-shelf-' + globalIdx,
           title: DUMMY_TITLES[globalIdx % DUMMY_TITLES.length],
@@ -60322,45 +60567,66 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     return shelves;
   }
 
-  // Ctrl+Shift+L (Library shelf design) — also accepts M as fallback
+  // ── Hotkeys ──
+  // Ctrl+Shift+L = vault (Private Library) design mode
+  // Ctrl+Shift+A/B/C = forbidden library column A/B/C design mode
   document.addEventListener('keydown', e => {
-    if (e.ctrlKey && e.shiftKey && (e.key === 'L' || e.key === 'M')) {
+    if (!e.ctrlKey || !e.shiftKey) return;
+    if (e.key === 'L' || e.key === 'M') {
       e.preventDefault();
-      active ? closeMode() : openMode();
+      if (active && _activeLibrary === 'vault') { closeMode(); return; }
+      if (active) closeMode();
+      _activeLibrary = 'vault';
+      _forbiddenCol = null;
+      openMode();
+    } else if (e.key === 'A' || e.key === 'B' || e.key === 'C') {
+      e.preventDefault();
+      const col = e.key;
+      if (active && _activeLibrary === 'forbidden' && _forbiddenCol === col) { closeMode(); return; }
+      if (active) closeMode();
+      _activeLibrary = 'forbidden';
+      _forbiddenCol = col;
+      openMode();
     }
   });
 
   function rebuildShelves() {
-    const libraryEl = document.querySelector('.forbidden-library.library-variant--vault')
-                   || document.querySelector('.forbidden-library');
+    const vaultScreen = document.querySelector('#vaultLibraryScreen:not(.hidden)');
+    const forbiddenScreen = document.querySelector('#forbiddenLibraryScreen:not(.hidden)');
+    const visibleScreen = _activeLibrary === 'vault' ? vaultScreen : forbiddenScreen;
+    const libraryEl = visibleScreen ? visibleScreen.querySelector('.forbidden-library') : null;
     if (!libraryEl) return;
 
-    // Remove old design shelves
+    // Remove old design shelves and forbidden-col wrappers
     libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
+    libraryEl.querySelectorAll('.forbidden-col').forEach(el => el.remove());
 
-    // Hide ALL real book lists so they don't overlap with design-mode dummies
-    const bookList = libraryEl.querySelector('.library-book-list');
+    // Hide real book lists
     libraryEl.querySelectorAll('.library-book-list').forEach(bl => {
       bl.style.display = 'none';
       bl.dataset.dmHidden = '1';
     });
-    // Also hide summon text / trophy shelf
     libraryEl.querySelectorAll('.summon-text, .vault-trophy-shelf, .summon-slot').forEach(el => {
       el.style.display = 'none';
       el.dataset.dmHidden = '1';
     });
 
-    const shelves = distributeToShelves(bookCount, coverCount);
-    // Insert design shelves right where the real book list is
-    let insertAfter = bookList;
+    if (_activeLibrary === 'vault') {
+      _rebuildVaultShelves(libraryEl);
+    } else {
+      _rebuildForbiddenColumn(libraryEl);
+    }
+  }
 
+  function _rebuildVaultShelves(libraryEl) {
+    const bookList = libraryEl.querySelector('.library-book-list');
+    const shelves = distributeToShelves(bookCount, coverCount);
+    let insertAfter = bookList;
     shelves.forEach((shelfBooks, shelfIdx) => {
       const shelf = document.createElement('div');
       shelf.className = 'dm-shelf-row';
       shelf.dataset.shelf = shelfIdx;
-
       const arranged = window.arrangeShelfBooks(shelfBooks);
-
       arranged.forEach((entry) => {
         const book = document.createElement('div');
         book.className = 'library-book dm-shelf-book' + (entry.isForward ? ' mode-cover' : ' mode-spine');
@@ -60386,30 +60652,67 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
 </div>`;
         book.addEventListener('click', (e) => {
           e.stopPropagation();
-          if (typeof window._openLibraryZoomFromDesign === 'function') {
-            window._openLibraryZoomFromDesign(entry, book);
-          }
+          if (typeof window._openLibraryZoomFromDesign === 'function') window._openLibraryZoomFromDesign(entry, book);
         });
         shelf.appendChild(book);
       });
-
-      if (insertAfter && insertAfter.nextSibling) {
-        libraryEl.insertBefore(shelf, insertAfter.nextSibling);
-      } else {
-        libraryEl.appendChild(shelf);
-      }
+      if (insertAfter && insertAfter.nextSibling) libraryEl.insertBefore(shelf, insertAfter.nextSibling);
+      else libraryEl.appendChild(shelf);
       insertAfter = shelf;
     });
-
-    // Update info
     if (panel) {
       const info = panel.querySelector('#dms-info');
       if (info) info.textContent = `${shelves.length} shelf${shelves.length > 1 ? 'es' : ''} used`;
     }
   }
 
+  function _rebuildForbiddenColumn(libraryEl) {
+    if (!_forbiddenCol) return;
+    const states = _getActiveStates();
+    const perRow = { A: 3, B: 5, C: 3 }[_forbiddenCol];
+    const rows = Math.ceil(bookCount / perRow);
+    const col = document.createElement('div');
+    col.className = 'forbidden-col';
+    col.dataset.col = _forbiddenCol;
+    let booksLeft = bookCount;
+    for (let r = 0; r < rows; r++) {
+      const shelf = document.createElement('div');
+      shelf.className = 'dm-shelf-row';
+      shelf.dataset.shelf = r;
+      const count = Math.min(perRow, booksLeft);
+      for (let i = 0; i < count; i++) {
+        const idx = r * perRow + i;
+        const book = document.createElement('div');
+        book.className = 'library-book dm-shelf-book mode-cover';
+        book.dataset.shelf = r;
+        book.dataset.storyId = 'dm-col-' + _forbiddenCol + '-' + idx;
+        book.innerHTML = `<div class="book-3d">
+  <div class="book-front"><div class="book-front-text"><div class="book-front-title">${DUMMY_TITLES[idx % DUMMY_TITLES.length]}</div><div class="book-front-author">Test Author</div></div></div>
+  <div class="book-back"><div class="back-content"><h3 class="back-title">Test</h3></div></div>
+  <div class="book-spine"><div class="spine-text">Test</div></div>
+  <div class="book-pages-right"></div>
+  <div class="book-pages-top"></div>
+  <div class="book-pages-bottom"></div>
+  <div class="page-shimmer"></div>
+</div>`;
+        shelf.appendChild(book);
+      }
+      booksLeft -= count;
+      col.appendChild(shelf);
+    }
+    libraryEl.appendChild(col);
+    if (panel) {
+      const info = panel.querySelector('#dms-info');
+      if (info) info.textContent = `Col ${_forbiddenCol}: ${rows} row${rows > 1 ? 's' : ''}, ${perRow}/row`;
+    }
+  }
+
   function openMode() {
     active = true;
+    activeShelf = 0;
+    if (_activeLibrary === 'forbidden') {
+      bookCount = { A: 12, B: 20, C: 12 }[_forbiddenCol] || 12;
+    }
     try { rebuildShelves(); } catch (err) { console.error('[ShelfDesign] rebuildShelves error:', err); }
 
     panel = document.createElement('div');
@@ -60439,8 +60742,12 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   }
 
   function buildPanelHTML() {
-    const s = shelfStates[activeShelf];
-    return `
+    const isForbidden = _activeLibrary === 'forbidden';
+    const s = _getActiveStates()[activeShelf] || (isForbidden && _forbiddenCol ? forbiddenColDefaults[_forbiddenCol][0] : vaultShelfDefaults[0]);
+    const label = isForbidden ? `Forbidden Library — Col ${_forbiddenCol} (Ctrl+Shift+${_forbiddenCol})` : 'Private Library (Ctrl+Shift+L)';
+    const perRow = isForbidden ? { A: 3, B: 5, C: 3 }[_forbiddenCol] : COVERS_PER_SHELF;
+
+    let html = `
       <style>
         #shelfDesignPanel {
           position: fixed; top: 10px; left: 10px; z-index: 99999;
@@ -60449,7 +60756,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
           font-size: 12px; min-width: 290px; cursor: move;
           user-select: none; max-height: 90vh; overflow-y: auto;
         }
-        #shelfDesignPanel h3 { margin: 0 0 10px; font-size: 14px; color: #fff; }
+        #shelfDesignPanel h3 { margin: 0 0 10px; font-size: 13px; color: #fff; }
         #shelfDesignPanel label { display: block; margin: 8px 0 2px; }
         #shelfDesignPanel input[type=range] { width: 100%; accent-color: #c9a84c; }
         #shelfDesignPanel .val { color: #fff; float: right; }
@@ -60470,22 +60777,25 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         }
         .dms-tab.active { background: #c9a84c; color: #000; }
       </style>
-      <h3>Shelf Design (Ctrl+Shift+L)</h3>
+      <h3>${label}</h3>
 
-      <label>Total books <span class="val" id="dms-count-val">${bookCount}</span></label>
-      <input type="range" id="dms-count" min="1" max="60" value="${bookCount}" step="1">
+      <label>Books <span class="val" id="dms-count-val">${bookCount}</span></label>
+      <input type="range" id="dms-count" min="1" max="60" value="${bookCount}" step="1">`;
 
+    if (!isForbidden) {
+      html += `
       <label>Covers/shelf <span class="val" id="dms-covers-val">${coverCount}</span></label>
-      <input type="range" id="dms-covers" min="0" max="${COVERS_PER_SHELF}" value="${coverCount}" step="1">
+      <input type="range" id="dms-covers" min="0" max="${COVERS_PER_SHELF}" value="${coverCount}" step="1">`;
+    }
 
+    html += `
       <div style="margin-top:6px;font-size:11px;color:#8f8;" id="dms-info"></div>
-
       <hr>
-
       <div class="dms-tab-bar">
-        <button class="dms-tab${activeShelf === 0 ? ' active' : ''}" data-shelf="0">Top</button>
-        <button class="dms-tab${activeShelf === 1 ? ' active' : ''}" data-shelf="1">Mid</button>
-        <button class="dms-tab${activeShelf === 2 ? ' active' : ''}" data-shelf="2">Bot</button>
+        <button class="dms-tab${activeShelf === 0 ? ' active' : ''}" data-shelf="0">Row 0</button>
+        <button class="dms-tab${activeShelf === 1 ? ' active' : ''}" data-shelf="1">Row 1</button>
+        <button class="dms-tab${activeShelf === 2 ? ' active' : ''}" data-shelf="2">Row 2</button>
+        <button class="dms-tab${activeShelf === 3 ? ' active' : ''}" data-shelf="3">Row 3</button>
       </div>
 
       <label>Y offset <span class="val" id="dms-y-val">${s.y}px</span></label>
@@ -60501,20 +60811,32 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       <input type="range" id="dms-ry" min="-90" max="90" value="${s.ry}" step="1">
 
       <label>Rotate Z (roll) <span class="val" id="dms-rz-val">${s.rz}°</span></label>
-      <input type="range" id="dms-rz" min="-30" max="30" value="${s.rz}" step="1">
+      <input type="range" id="dms-rz" min="-30" max="30" value="${s.rz}" step="1">`;
 
-      <label>Column gap <span class="val" id="dms-gap-val">${s.gap.toFixed(1)}vw</span></label>
-      <input type="range" id="dms-gap" min="0" max="10" value="${s.gap}" step="0.1">
+    if (isForbidden) {
+      html += `
+      <label>Crush margin <span class="val" id="dms-crush-val">${s.crush || 0}px</span></label>
+      <input type="range" id="dms-crush" min="-20" max="10" value="${s.crush || 0}" step="1">
 
       <hr>
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">Column Position</div>
+      <label>Left <span class="val" id="dms-colLeft-val">${s.colLeft != null ? s.colLeft.toFixed(1) : (_forbiddenCol === 'A' ? '3.6' : _forbiddenCol === 'B' ? '33.2' : '70.3')}vw</span></label>
+      <input type="range" id="dms-colLeft" min="0" max="90" value="${s.colLeft != null ? s.colLeft : (_forbiddenCol === 'A' ? 3.6 : _forbiddenCol === 'B' ? 33.2 : 70.3)}" step="0.1">
+      <label>Width <span class="val" id="dms-colWidth-val">${s.colWidth != null ? s.colWidth.toFixed(1) : (_forbiddenCol === 'A' ? '23.2' : _forbiddenCol === 'B' ? '33.6' : '23.2')}vw</span></label>
+      <input type="range" id="dms-colWidth" min="5" max="50" value="${s.colWidth != null ? s.colWidth : (_forbiddenCol === 'A' ? 23.2 : _forbiddenCol === 'B' ? 33.6 : 23.2)}" step="0.1">`;
+    } else {
+      html += `
+      <label>Column gap <span class="val" id="dms-gap-val">${s.gap.toFixed(1)}vw</span></label>
+      <input type="range" id="dms-gap" min="0" max="10" value="${s.gap}" step="0.1">
+      <hr>
       <div style="font-size:11px;color:#888;margin-bottom:4px;">Shelf Lip Overlay${SHELF_LIP_IMAGES[activeShelf] ? '' : ' (no image)'}</div>
-
       <label>Lip Y offset <span class="val" id="dms-lipY-val">${s.lipY}px</span></label>
       <input type="range" id="dms-lipY" min="-200" max="200" value="${s.lipY}" step="1">
-
       <label>Lip width <span class="val" id="dms-lipW-val">${s.lipW.toFixed(1)}vw</span></label>
-      <input type="range" id="dms-lipW" min="20" max="80" value="${s.lipW}" step="0.1">
+      <input type="range" id="dms-lipW" min="20" max="80" value="${s.lipW}" step="0.1">`;
+    }
 
+    html += `
       <hr>
       <div style="margin-top:4px;">
         <button id="dms-print">Print CSS</button>
@@ -60523,10 +60845,12 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       </div>
       <div class="output" id="dms-output"></div>
     `;
+    return html;
   }
 
   function syncSlidersToShelf() {
-    const s = shelfStates[activeShelf];
+    const s = _getActiveStates()[activeShelf];
+    if (!s || !panel) return;
     const set = (id, val, suffix) => {
       const slider = panel.querySelector(id);
       if (slider) slider.value = val;
@@ -60535,17 +60859,21 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     };
     set('#dms-y', s.y, 'px');
     set('#dms-scale', s.scale, '');
-    panel.querySelector('#dms-scale-val').textContent = s.scale.toFixed(2);
+    if (panel.querySelector('#dms-scale-val')) panel.querySelector('#dms-scale-val').textContent = s.scale.toFixed(2);
     set('#dms-rx', s.rx, '°');
     set('#dms-ry', s.ry, '°');
     set('#dms-rz', s.rz, '°');
-    set('#dms-gap', s.gap, 'vw');
-    panel.querySelector('#dms-gap-val').textContent = s.gap.toFixed(1) + 'vw';
-    set('#dms-lipY', s.lipY, 'px');
-    set('#dms-lipW', s.lipW, 'vw');
-    panel.querySelector('#dms-lipW-val').textContent = s.lipW.toFixed(1) + 'vw';
 
-    // Update tab active state
+    if (_activeLibrary === 'forbidden') {
+      set('#dms-crush', s.crush || 0, 'px');
+    } else {
+      set('#dms-gap', s.gap, 'vw');
+      if (panel.querySelector('#dms-gap-val')) panel.querySelector('#dms-gap-val').textContent = s.gap.toFixed(1) + 'vw';
+      set('#dms-lipY', s.lipY, 'px');
+      set('#dms-lipW', s.lipW, 'vw');
+      if (panel.querySelector('#dms-lipW-val')) panel.querySelector('#dms-lipW-val').textContent = s.lipW.toFixed(1) + 'vw';
+    }
+
     panel.querySelectorAll('.dms-tab').forEach(t => {
       t.classList.toggle('active', parseInt(t.dataset.shelf) === activeShelf);
     });
@@ -60562,43 +60890,74 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   }
 
   function wireSliders() {
+    const isForbidden = _activeLibrary === 'forbidden';
     const wireOne = (id, key, fmt, suffix) => {
-      panel.querySelector(id).addEventListener('input', function() {
-        shelfStates[activeShelf][key] = parseFloat(this.value);
-        panel.querySelector(id + '-val').textContent = fmt(shelfStates[activeShelf][key]) + suffix;
+      const el = panel.querySelector(id);
+      if (!el) return;
+      el.addEventListener('input', function() {
+        _getActiveStates()[activeShelf][key] = parseFloat(this.value);
+        panel.querySelector(id + '-val').textContent = fmt(_getActiveStates()[activeShelf][key]) + suffix;
         applyAllStyles();
       });
     };
 
     // Book count
     const countSlider = panel.querySelector('#dms-count');
-    const coversSlider = panel.querySelector('#dms-covers');
     countSlider.addEventListener('input', function() {
       bookCount = parseInt(this.value);
       panel.querySelector('#dms-count-val').textContent = bookCount;
-      if (coverCount > bookCount) {
-        coverCount = Math.min(bookCount, COVERS_PER_SHELF);
-        coversSlider.value = coverCount;
-        panel.querySelector('#dms-covers-val').textContent = coverCount;
+      if (!isForbidden) {
+        const coversSlider = panel.querySelector('#dms-covers');
+        if (coverCount > bookCount) {
+          coverCount = Math.min(bookCount, COVERS_PER_SHELF);
+          if (coversSlider) coversSlider.value = coverCount;
+          panel.querySelector('#dms-covers-val').textContent = coverCount;
+        }
       }
       rebuildShelves();
       applyAllStyles();
     });
-    coversSlider.addEventListener('input', function() {
-      coverCount = parseInt(this.value);
-      panel.querySelector('#dms-covers-val').textContent = coverCount;
-      rebuildShelves();
-      applyAllStyles();
-    });
+
+    if (!isForbidden) {
+      const coversSlider = panel.querySelector('#dms-covers');
+      if (coversSlider) {
+        coversSlider.addEventListener('input', function() {
+          coverCount = parseInt(this.value);
+          panel.querySelector('#dms-covers-val').textContent = coverCount;
+          rebuildShelves();
+          applyAllStyles();
+        });
+      }
+    }
 
     wireOne('#dms-y', 'y', v => v, 'px');
     wireOne('#dms-scale', 'scale', v => v.toFixed(2), '');
     wireOne('#dms-rx', 'rx', v => v, '°');
     wireOne('#dms-ry', 'ry', v => v, '°');
     wireOne('#dms-rz', 'rz', v => v, '°');
-    wireOne('#dms-gap', 'gap', v => v.toFixed(1), 'vw');
-    wireOne('#dms-lipY', 'lipY', v => v, 'px');
-    wireOne('#dms-lipW', 'lipW', v => v.toFixed(1), 'vw');
+
+    if (isForbidden) {
+      wireOne('#dms-crush', 'crush', v => v, 'px');
+      // Column position sliders — these update all rows at once
+      const leftSlider = panel.querySelector('#dms-colLeft');
+      if (leftSlider) leftSlider.addEventListener('input', function() {
+        const v = parseFloat(this.value);
+        _getActiveStates().forEach(s => s.colLeft = v);
+        panel.querySelector('#dms-colLeft-val').textContent = v.toFixed(1) + 'vw';
+        applyAllStyles();
+      });
+      const widthSlider = panel.querySelector('#dms-colWidth');
+      if (widthSlider) widthSlider.addEventListener('input', function() {
+        const v = parseFloat(this.value);
+        _getActiveStates().forEach(s => s.colWidth = v);
+        panel.querySelector('#dms-colWidth-val').textContent = v.toFixed(1) + 'vw';
+        applyAllStyles();
+      });
+    } else {
+      wireOne('#dms-gap', 'gap', v => v.toFixed(1), 'vw');
+      wireOne('#dms-lipY', 'lipY', v => v, 'px');
+      wireOne('#dms-lipW', 'lipW', v => v.toFixed(1), 'vw');
+    }
 
     panel.querySelector('#dms-print').addEventListener('click', printCSS);
     panel.querySelector('#dms-copy').addEventListener('click', () => {
@@ -60621,78 +60980,114 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       document.head.appendChild(styleEl);
     }
 
+    if (_activeLibrary === 'forbidden') {
+      _applyForbiddenDesignStyles(styleEl);
+    } else {
+      _applyVaultDesignStyles(styleEl);
+    }
+  }
+
+  function _applyVaultDesignStyles(styleEl) {
+    const screenId = '#vaultLibraryScreen';
+    const states = _getActiveStates();
     let css = '';
-    // Count how many shelves are currently in DOM
-    const shelfCount = document.querySelectorAll('.dm-shelf-row').length || shelfStates.length;
+    const activeScreen = document.querySelector(screenId);
+    const shelfCount = (activeScreen ? activeScreen.querySelectorAll('.dm-shelf-row').length : 0) || states.length;
     for (let i = 0; i < shelfCount; i++) {
       const s = getShelfState(i);
       css += `
-      .dm-shelf-row[data-shelf="${i}"] {
-        display: flex;
-        flex-wrap: nowrap;
-        justify-content: center;
-        align-items: flex-end;
-        gap: 0 ${s.gap}vw;
-        position: relative;
-        z-index: 1;
-        max-width: 52vw;
-        margin: 0 auto;
-        padding: 0 16px;
-        overflow: visible;
+      ${screenId} .dm-shelf-row[data-shelf="${i}"] {
+        display: flex; flex-wrap: nowrap; justify-content: center; align-items: flex-end;
+        gap: 0 ${s.gap}vw; position: relative; z-index: 1;
+        max-width: 52vw; margin: 0 auto; padding: 0 16px; overflow: visible;
       }
-      .dm-shelf-row[data-shelf="${i}"] .library-book {
-        margin-top: ${s.y}px !important;
-        outline: none !important;
+      ${screenId} .dm-shelf-row[data-shelf="${i}"] .library-book {
+        margin-top: ${s.y}px !important; outline: none !important;
       }
-      /* Crush spine gap to 0 by eating the flex gap with negative margins */
-      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine {
-        margin-left: -${s.gap / 2}vw;
-        margin-right: -${s.gap / 2}vw;
+      ${screenId} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine {
+        margin-left: -${s.gap / 2}vw; margin-right: -${s.gap / 2}vw;
       }
-      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
+      ${screenId} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
         transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
-      .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
+      ${screenId} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover:hover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${Math.max(s.ry - 2, -15)}deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
+      }
+      ${screenId} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
         transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(90deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
       }
-      `;
-      // Shelf lip overlay via ::before
+      ${screenId} .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine:hover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(80deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
+      }`;
       if (SHELF_LIP_IMAGES[i]) {
         css += `
-      .dm-shelf-row[data-shelf="${i}"]::before {
-        content: '';
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: ${s.lipY}px;
-        width: ${s.lipW}vw;
-        height: 2.4vw;
+      ${screenId} .dm-shelf-row[data-shelf="${i}"]::before {
+        content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+        bottom: ${s.lipY}px; width: ${s.lipW}vw; height: 2.4vw;
         background: url('${SHELF_LIP_IMAGES[i]}') center / 100% 100% no-repeat;
-        pointer-events: none;
-        z-index: 3;
+        pointer-events: none; z-index: 3;
+      }`;
       }
-        `;
-      }
-      // Extra shelves (idx >= 3) get a shelf background image (1535×236 → same width as main bg 1536×1024)
       if (i >= 3) {
         css += `
-      .dm-shelf-row[data-shelf="${i}"] {
-        background: rgb(14, 9, 6);
-      }
-      .dm-shelf-row[data-shelf="${i}"]::after {
-        content: '';
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: -13vw;
-        width: 100vw;
-        height: 15.4vw;
+      ${screenId} .dm-shelf-row[data-shelf="${i}"] { background: rgb(14, 9, 6); }
+      ${screenId} .dm-shelf-row[data-shelf="${i}"]::after {
+        content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+        bottom: -13vw; width: 100vw; height: 15.4vw;
         background: url('/assets/Forbidde-Library-Art/Private-shelf.jpg') center top / 100vw auto no-repeat;
-        pointer-events: none;
-        z-index: -1;
+        pointer-events: none; z-index: -1;
+      }`;
       }
-        `;
+    }
+    styleEl.textContent = css;
+  }
+
+  function _applyForbiddenDesignStyles(styleEl) {
+    if (!_forbiddenCol) return;
+    const scope = '#forbiddenLibraryScreen';
+    const states = _getActiveStates();
+    const colId = _forbiddenCol;
+    const defaultCfg = { A: { left: 3.6, width: 23.2 }, B: { left: 33.2, width: 33.6 }, C: { left: 70.3, width: 23.2 } }[colId];
+    const colLeft = (states[0] && states[0].colLeft != null) ? states[0].colLeft : defaultCfg.left;
+    const colWidth = (states[0] && states[0].colWidth != null) ? states[0].colWidth : defaultCfg.width;
+
+    let css = `
+      ${scope} .forbidden-col[data-col="${colId}"] {
+        position: absolute; top: 0; display: flex; flex-direction: column; z-index: 1;
+        pointer-events: none; left: ${colLeft}vw; width: ${colWidth}vw;
       }
+      ${scope} .forbidden-col .dm-shelf-row,
+      ${scope} .forbidden-col .library-book { pointer-events: auto; }
+    `;
+
+    const activeScreen = document.querySelector(scope);
+    const colEl = activeScreen ? activeScreen.querySelector(`.forbidden-col[data-col="${colId}"]`) : null;
+    const shelfCount = colEl ? colEl.querySelectorAll('.dm-shelf-row').length : states.length;
+
+    for (let i = 0; i < shelfCount; i++) {
+      const s = getShelfState(i);
+      const crush = s.crush || 0;
+      css += `
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] {
+        display: flex; flex-wrap: nowrap; justify-content: center; align-items: flex-end;
+        gap: 0; position: relative; z-index: 1; width: 100%; padding: 0; overflow: visible;
+      }
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] .library-book {
+        margin-top: ${s.y}px !important; margin-left: ${crush}px; margin-right: ${crush}px;
+        outline: none !important;
+      }
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] .library-book .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] .library-book:hover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry > 0 ? Math.max(s.ry - 2, 0) : Math.min(s.ry + 2, 0)}deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
+      }`;
     }
     styleEl.textContent = css;
   }
@@ -60701,17 +61096,31 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     const out = panel.querySelector('#dms-output');
     out.style.display = 'block';
     let text = '';
-    const shelfCount = document.querySelectorAll('.dm-shelf-row').length || shelfStates.length;
-    for (let i = 0; i < shelfCount; i++) {
-      const s = getShelfState(i);
-      const label = ['Top', 'Mid', 'Bottom'][i] || `Extra ${i - 2}`;
-      text += `/* ── Shelf ${i} (${label}) ── */
-[data-shelf="${i}"] .library-book { margin-top: ${s.y}px; }
-[data-shelf="${i}"] .book-3d { transform: ... rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale.toFixed(2)}); }
-/* gap: ${s.gap.toFixed(1)}vw */
-/* lip: bottom=${s.lipY}px width=${s.lipW.toFixed(1)}vw */
+    const states = _getActiveStates();
+    const isForbidden = _activeLibrary === 'forbidden';
 
-`;
+    if (isForbidden) {
+      const defaultCfg = { A: { left: 3.6, width: 23.2 }, B: { left: 33.2, width: 33.6 }, C: { left: 70.3, width: 23.2 } }[_forbiddenCol];
+      const colLeft = (states[0] && states[0].colLeft != null) ? states[0].colLeft : defaultCfg.left;
+      const colWidth = (states[0] && states[0].colWidth != null) ? states[0].colWidth : defaultCfg.width;
+      text += `/* ── Column ${_forbiddenCol}: left=${colLeft.toFixed(1)}vw, width=${colWidth.toFixed(1)}vw ── */\n\n`;
+      for (let i = 0; i < states.length; i++) {
+        const s = states[i];
+        text += `/* Row ${i} */\n`;
+        text += `{ y: ${s.y}, scale: ${s.scale.toFixed(2)}, rx: ${s.rx}, ry: ${s.ry}, rz: ${s.rz}, crush: ${s.crush || 0} }\n\n`;
+      }
+    } else {
+      const screenId = '#vaultLibraryScreen';
+      const activeScreen = document.querySelector(screenId);
+      const shelfCount = (activeScreen ? activeScreen.querySelectorAll('.dm-shelf-row').length : 0) || states.length;
+      for (let i = 0; i < shelfCount; i++) {
+        const s = getShelfState(i);
+        const label = ['Top', 'Mid', 'Bottom'][i] || `Extra ${i - 2}`;
+        text += `/* ── Shelf ${i} (${label}) ── */\n`;
+        text += `[data-shelf="${i}"] .library-book { margin-top: ${s.y}px; }\n`;
+        text += `[data-shelf="${i}"] .book-3d { transform: ... rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale.toFixed(2)}); }\n`;
+        text += `/* gap: ${s.gap.toFixed(1)}vw */\n/* lip: bottom=${s.lipY}px width=${s.lipW.toFixed(1)}vw */\n\n`;
+      }
     }
     out.textContent = text.trim();
   }
@@ -60719,21 +61128,24 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
   function closeMode() {
     active = false;
     if (panel) { panel.remove(); panel = null; }
-    // Remove design-mode-only style overrides (shelf CSS is now permanent via vault-shelf-style)
     const styleEl = document.getElementById('dms-live-style');
     if (styleEl) styleEl.remove();
-    const libraryEl = document.querySelector('.forbidden-library.library-variant--vault')
-                   || document.querySelector('.forbidden-library');
-    if (libraryEl) {
-      libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
-      // Restore real book lists and hidden elements
-      libraryEl.querySelectorAll('[data-dm-hidden]').forEach(el => {
-        el.style.display = '';
-        delete el.dataset.dmHidden;
-      });
+    const screenId = _activeLibrary === 'vault' ? '#vaultLibraryScreen' : '#forbiddenLibraryScreen';
+    const screenEl = document.querySelector(screenId);
+    if (screenEl) {
+      const libraryEl = screenEl.querySelector('.forbidden-library');
+      if (libraryEl) {
+        libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
+        libraryEl.querySelectorAll('.forbidden-col').forEach(el => el.remove());
+        libraryEl.querySelectorAll('[data-dm-hidden]').forEach(el => {
+          el.style.display = '';
+          delete el.dataset.dmHidden;
+        });
+      }
     }
-    // Re-render vault shelves so real books come back
-    if (typeof window.renderVaultBookList === 'function') window.renderVaultBookList();
+    if (_activeLibrary === 'vault' && typeof window.renderVaultBookList === 'function') window.renderVaultBookList();
+    if (_activeLibrary === 'forbidden' && typeof window.renderForbiddenLibraryList === 'function') window.renderForbiddenLibraryList();
+    _forbiddenCol = null;
   }
 
   // ── Expose shelf layout system for vault book rendering ──
@@ -60743,7 +61155,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
     COVER_WIDTH,
     SPINE_WIDTH,
     SHELF_LIP_IMAGES,
-    shelfDefaults,
+    shelfDefaults: vaultShelfDefaults,
     getShelfState,
     shelfRowWidth,
     getGapPx,
@@ -60760,7 +61172,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
       for (let i = 0; i < shelfCount; i++) {
         const s = getShelfState(i);
         css += `
-        .dm-shelf-row[data-shelf="${i}"] {
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"] {
           display: flex;
           flex-wrap: nowrap;
           justify-content: center;
@@ -60773,24 +61185,34 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
           padding: 0 16px;
           overflow: visible;
         }
-        .dm-shelf-row[data-shelf="${i}"] .library-book {
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"] .library-book {
           margin-top: ${s.y}px !important;
           outline: none !important;
         }
-        .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine {
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine {
           margin-left: -${s.gap / 2}vw;
           margin-right: -${s.gap / 2}vw;
         }
-        .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover .book-3d {
           transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry}deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"] .library-book.mode-cover:hover .book-3d {
+          transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${Math.max(s.ry - 2, -15)}deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
+        }
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine .book-3d {
           transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(90deg) rotateZ(${s.rz}deg) scale(${s.scale}) !important;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"] .library-book.mode-spine:hover .book-3d {
+          transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(80deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
         }
         `;
         if (SHELF_LIP_IMAGES[i]) {
           css += `
-        .dm-shelf-row[data-shelf="${i}"]::before {
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"]::before {
           content: '';
           position: absolute;
           left: 50%;
@@ -60806,10 +61228,10 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
         }
         if (i >= 3) {
           css += `
-        .dm-shelf-row[data-shelf="${i}"] {
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"] {
           background: rgb(14, 9, 6);
         }
-        .dm-shelf-row[data-shelf="${i}"]::after {
+        #vaultLibraryScreen .dm-shelf-row[data-shelf="${i}"]::after {
           content: '';
           position: absolute;
           left: 50%;

@@ -4329,25 +4329,16 @@ select:-webkit-autofill {
 .forbidden-library {
     min-height: 100vh;
     background:
-        radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.9) 0%, transparent 60%),
-        linear-gradient(180deg, rgba(14,9,6,0.85) 0%, rgba(26,16,10,0.8) 30%, rgba(14,9,6,0.85) 100%),
-        url('/assets/Forbidde-Library-Art/Forbidden-Library-v2.png') center top / cover no-repeat;
+        radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.15) 0%, transparent 60%),
+        linear-gradient(180deg, rgba(14,9,6,0.1) 0%, rgba(26,16,10,0.05) 30%, rgba(14,9,6,0.15) 100%),
+        url('/assets/Forbidde-Library-Art/Forbidden-Library-v2.png') center top / 100vw auto no-repeat;
     padding: 0 20px 40px;
     --shelf-parallax-x: 0px;
     position: relative;
 }
-/* Light falloff — overhead lighting fades toward bottom shelves */
+/* Light falloff overlay — disabled (both libraries use clean background) */
 .forbidden-library::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(255,245,220,0.015) 0%, transparent 30%, rgba(0,0,0,0.12) 100%);
-    pointer-events: none;
-    z-index: 0;
-}
-/* Vault variant: suppress the dark falloff overlay */
-.forbidden-library.library-variant--vault::after {
-    background: none;
+    display: none;
 }
 /* Vault / Private Library — distinct backdrop */
 .forbidden-library.library-variant--vault {
@@ -4360,8 +4351,39 @@ select:-webkit-autofill {
 }
 
 /* OG Shelf — hidden while dummy/design shelf system is primary */
-.library-variant--vault > .library-book-list {
+.library-variant--vault > .library-book-list,
+.library-variant--forbidden > .library-book-list {
     display: none !important;
+}
+/* Forbidden Library variant — same layout as vault */
+.forbidden-library.library-variant--forbidden {
+    display: flex;
+    flex-direction: column;
+}
+/* Forbidden Library — buttons sit inside the arch half-circle, locked to bg */
+.library-variant--forbidden > .vault-exit-row {
+    position: absolute;
+    top: 10.56vw;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    display: flex;
+    justify-content: center;
+    gap: 0.3vw;
+}
+.library-variant--forbidden > .vault-exit-row .sb-btn-png.sm {
+    width: 11.7vw;
+    height: 3.2vw;
+    font-size: 0.9vw;
+    padding: 0.5vw 1.5vw;
+    box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
+}
+/* Forbidden Library arch title uses the shared gold gradient — reference by its own ID */
+.library-variant--forbidden .library-arch-title textPath {
+    fill: url(#forbiddenArchGoldGrad);
+}
+.library-variant--forbidden .library-arch-title text {
+    font-size: 30px;
 }
 /* Shelf back-wall parallax layer */
 .library-book-list > .library-book {
@@ -4381,7 +4403,7 @@ select:-webkit-autofill {
 .library-arch-title text {
     font-family: 'Lora', serif;
     font-weight: 400;
-    font-size: 2.5vw;
+    font-size: 38px;
     font-variant: small-caps;
     letter-spacing: 0.54em;
     fill: url(#archGoldGrad);
@@ -4391,7 +4413,7 @@ select:-webkit-autofill {
 .library-arch-title textPath {
     fill: url(#archGoldGrad);
     stroke: rgba(90, 65, 20, 0.45);
-    stroke-width: 0.035vw;
+    stroke-width: 0.5px;
     paint-order: stroke fill;
     filter: drop-shadow(0 0.07vw 0 rgba(255, 230, 150, 0.45))
             drop-shadow(0 -0.07vw 0 rgba(30, 20, 5, 0.8))
@@ -4479,7 +4501,8 @@ select:-webkit-autofill {
 }
 
 /* Top shelf shadow — overhead shadow onto books */
-.library-book-list > *::before {
+.library-book-list > *::before,
+.dm-shelf-row > .library-book::before {
     content: '';
     position: absolute;
     top: -10px;
@@ -5120,6 +5143,9 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     flex: 0 0 auto;
     margin: 2px 6px;
 }
+/* Per-starter synopsis position tuning */
+[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 43px; }
+[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 23px; }
 /* Text-only back covers need padding */
 .back-content:not(.back-content-overlay) {
     padding: 16px 12px;
@@ -5746,19 +5772,22 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     border-color: rgba(90, 62, 26, 0.3);
 }
 
-/* Sparkle animation for mode cards */
+/* Sparkle animation for mode cards — lazy float with drift */
 @keyframes modeSparkle {
     0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.3);
+    }
+    15% {
         opacity: 1;
-        transform: scale(0.5);
     }
     50% {
-        opacity: 1;
-        transform: scale(1.5);
+        opacity: 0.8;
+        transform: translate(var(--sparkle-dx, 8px), var(--sparkle-dy, -20px)) scale(1);
     }
     100% {
         opacity: 0;
-        transform: scale(0.5) translateY(-10px);
+        transform: translate(var(--sparkle-dx2, -5px), var(--sparkle-dy2, -40px)) scale(0.4);
     }
 }
 
