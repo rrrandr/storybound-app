@@ -1440,8 +1440,8 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 }
 
 /* Character cards and deck stay in row - allow shrinking to fit */
-#characterSectionRow > .character-tarot-card,
-#characterSectionRow > .destiny-mini-deck {
+.character-cards-row > .character-tarot-card,
+.character-cards-row > .destiny-mini-deck {
     flex-shrink: 1;
 }
 
@@ -1458,6 +1458,7 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     width: 206px;
     max-width: 45vw; /* Scale down on narrow viewports */
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
+    container-type: inline-size; /* children use cqi for linear scaling */
     /* CHARACTER CARD ART PNG — frame baked into PNG, no CSS border */
     background-image: url('/assets/card-art/cards/Character-face.png');
     background-size: 102%; /* Slightly oversized to hide PNG edge irregularities */
@@ -1505,12 +1506,14 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 .character-tarot-fields {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 1.9cqi;
     flex: 0 0 auto; /* Don't stretch - natural height */
     overflow: hidden;
-    /* Padding to keep content inside black border lines of PNG */
-    padding: 60px 25px 48px 25px;
+    /* Padding to keep content inside black border lines of PNG — cqi locks to card width */
+    padding: 29.1cqi 12.1cqi 23.3cqi 12.1cqi;
     background: transparent;
+    /* Base font-size scales linearly with card width (16px at 206px) */
+    font-size: 7.8cqi;
 }
 
 .character-tarot-card .character-field {
@@ -1531,7 +1534,7 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 
 .character-tarot-card .character-field label {
     font-size: 0.65em;
-    margin-bottom: 2px;
+    margin-bottom: 0.15em;
     width: 100%;
     text-align: center;
     /* Engraved label: deep charcoal with subtle highlight */
@@ -1545,7 +1548,7 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 .character-tarot-card .character-field input,
 .character-tarot-card .character-field select {
     font-size: 0.8em;
-    padding: 4px 6px;
+    padding: 0.3em 0.45em;
     width: 100%; /* Full width of container */
     box-sizing: border-box;
     /* Pressed/embossed input field */
@@ -1599,10 +1602,10 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 
 .character-tarot-card .character-field-ancestry .rotating-placeholder {
     position: absolute;
-    top: 14px;  /* Align with input top (label ~12px + 2px margin) */
-    left: 6px;
-    right: 6px;
-    height: 22px;
+    top: 6.8cqi;  /* Align with input top — scales with card */
+    left: 2.9cqi;
+    right: 2.9cqi;
+    height: 10.7cqi;
     font-size: 0.65em;
     color: rgba(30, 25, 15, 0.4);
     pointer-events: none;
@@ -1611,7 +1614,7 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 
 /* Override global 10px padding-top that pushes text out of small container */
 .character-tarot-card .character-field-ancestry .rotating-placeholder-inner {
-    padding-top: 4px;
+    padding-top: 1.9cqi;
 }
 
 /* Hide native placeholder when rotating suggestions are present */
@@ -1684,22 +1687,7 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 /* Move fields up so Ancestry stays visible; shrink Destiny deck 50%              */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-    /* Reduce top padding to push fields up — keeps Ancestry visible */
-    .character-tarot-fields {
-        padding: 40px 20px 30px 20px;
-        gap: 2px;
-    }
-
-    .character-tarot-card .character-field label {
-        font-size: 0.55em;
-        margin-bottom: 1px;
-    }
-
-    .character-tarot-card .character-field input,
-    .character-tarot-card .character-field select {
-        font-size: 0.7em;
-        padding: 3px 5px;
-    }
+    /* Card internals now scale via cqi — no px overrides needed */
 
     /* Shrink Destiny deck 55% — transform + negative margins to reclaim layout space */
     #characterSectionRow .destiny-mini-deck-stack {
@@ -1714,6 +1702,11 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
         padding: 0 8px;
     }
 
+    .character-cards-row {
+        gap: 12px;
+        padding: 0 8px;
+    }
+
     /* Allow character cards to shrink further */
     #characterSectionRow .character-tarot-card {
         min-width: 110px;
@@ -1721,23 +1714,14 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 }
 
 @media (max-width: 500px) {
-    /* Extra-narrow: even tighter field spacing */
-    .character-tarot-fields {
-        padding: 30px 15px 20px 15px;
-        gap: 1px;
-    }
-
-    .character-tarot-card .character-field label {
-        font-size: 0.5em;
-    }
-
-    .character-tarot-card .character-field input,
-    .character-tarot-card .character-field select {
-        font-size: 0.65em;
-        padding: 2px 4px;
-    }
+    /* Card internals now scale via cqi — no px overrides needed */
 
     .story-shape-row {
+        gap: 6px;
+        padding: 0 4px;
+    }
+
+    .character-cards-row {
         gap: 6px;
         padding: 0 4px;
     }
@@ -6187,9 +6171,9 @@ select {
 }
 /* Fate card — Rounded corners, no glow */
 /* FLIP FIX: Explicit transform-origin center to prevent hinge artifacts */
-.fate-card .inner { position:absolute; inset:0; border-radius:8px; transform-style:preserve-3d; transition:transform 0.6s; box-shadow:0 5px 15px rgba(0,0,0,0.5); transform-origin: center center; }
+.fate-card .inner { position:absolute; inset:0; border-radius:12px; transform-style:preserve-3d; transition:transform 0.6s; box-shadow:0 5px 15px rgba(0,0,0,0.5); transform-origin: center center; }
 .fate-card.flipped .inner { transform:rotateY(180deg); }
-.fate-card .front, .fate-card .back { position:absolute; inset:1px; backface-visibility:hidden; border-radius:8px; display:flex; align-items:center; justify-content:center; border:1px solid rgba(255,215,0,0.3); flex-direction: column; padding: 5px; box-sizing: border-box; overflow: hidden; }
+.fate-card .front, .fate-card .back { position:absolute; inset:0; backface-visibility:hidden; border-radius:12px; display:flex; align-items:center; justify-content:center; border:none; flex-direction: column; padding: 5px; box-sizing: border-box; overflow: hidden; }
 .fate-card .front {
     background: url('/assets/card-art/cards/Romance-black-back.png') center/cover no-repeat, #111;
     z-index:2;
@@ -6617,10 +6601,10 @@ select {
   font-family: 'Lora', serif; font-size: 0.8em; margin-top: 8px; transition: opacity 0.2s;
 }
 .petition-close-btn:hover { opacity: 1; }
-.petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 8px !important; }
+.petition-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 12px !important; }
 
 /* ── Tempt Fate Card ── */
-.tempt-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 8px !important; }
+.tempt-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 12px !important; }
 .tempt-fate-card.flipped .inner { border-color: rgba(218,165,32,0.7) !important; box-shadow: 0 0 8px rgba(218,165,32,0.3); }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -6645,7 +6629,7 @@ select {
   border-width: calc(1px / var(--petition-scale, 1)) !important;
   border-style: solid !important;
   border-color: rgba(218,165,32,0.6) !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
 }
 
 /* ── Petition Sparkles — orbiting dots around card perimeter ── */
@@ -6797,18 +6781,18 @@ select {
 }
 .petition-tier-btn {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  background: rgba(45, 32, 18, 0.85);
-  border: 1px solid rgba(160, 120, 50, 0.4);
+  background: rgb(62, 44, 22);
+  border: 1px solid rgba(160, 120, 50, 0.6);
   padding: calc(3px / var(--petition-scale, 1)) calc(2px / var(--petition-scale, 1));
   cursor: pointer; transition: border-color 0.2s, background 0.2s;
   min-width: 0; position: relative;
   border-radius: calc(3px / var(--petition-scale, 1));
 }
 .petition-tier-btn:hover:not(:disabled) {
-  border-color: rgba(218, 165, 32, 0.7); background: rgba(55, 40, 20, 0.9);
+  border-color: rgba(218, 165, 32, 0.7); background: rgb(72, 52, 26);
 }
 .petition-tier-btn.petition-tier-active {
-  border-color: rgba(218,165,32,0.9); background: rgba(60, 42, 15, 0.95);
+  border-color: rgba(218,165,32,0.9); background: rgb(78, 56, 20);
   box-shadow: 0 0 calc(4px / var(--petition-scale, 1)) rgba(218,165,32,0.4);
 }
 .petition-tier-btn.petition-tier-disabled,
@@ -6819,7 +6803,7 @@ select {
 }
 .petition-tier-btn.petition-tier-disabled:hover,
 .petition-tier-btn.sb-tier-disabled:hover {
-  border-color: rgba(160, 120, 50, 0.2); background: rgba(45, 32, 18, 0.85);
+  border-color: rgba(160, 120, 50, 0.2); background: rgb(62, 44, 22);
   box-shadow: none;
 }
 /* Tooltip on disabled tier tap */
@@ -6914,7 +6898,7 @@ select {
   border-width: calc(1px / var(--tempt-scale, 1)) !important;
   border-style: solid !important;
   border-color: rgba(218,165,32,0.6) !important;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
 }
 
 .tempt-zoom-overlay {
@@ -12297,7 +12281,12 @@ textarea.fate-field {
     font-size: 4.76cqi;
 }
 
-/* Pressure front desc visible (descriptions live on front/black face) */
+/* Pressure + Dynamic front desc: positioned for Card Designer cqi offsets */
+
+/* Dynamic front desc: relative positioning enables cqi top/left offsets */
+#dynamicGrid .sb-card .sb-card-front .sb-card-desc {
+    position: relative;
+}
 
 /* Pressure front desc: above flavor buttons, inside gold text box */
 #pressureGrid .sb-card:not(.zoomed) .sb-card-front .sb-card-desc {
@@ -12362,6 +12351,7 @@ textarea.fate-field {
 }
 /* Smaller flavor buttons for unzoomed card face */
 .pressure-front-flavors .sb-flavor-btn {
+    position: relative; /* Enable per-button top/left cqi offsets from Card Designer */
     font-size: 2.68cqi;
     font-family: 'Crimson Text', serif;
     font-variant: normal;
@@ -12797,6 +12787,18 @@ textarea.fate-field {
     /* Reserve bottom space for modifier box + Continue button so card centers higher */
     padding-bottom: 50px;
     box-sizing: border-box;
+}
+/* Scrollable mode: petition/tempt cards use transform-origin: top center + margin-bottom
+   to expand layout box. Portal switches to scroll-friendly alignment.
+   pointer-events: auto enables scrolling; JS click handler on portal closes zoom. */
+.sb-zoom-portal.zoom-scrollable {
+    overflow-y: auto;
+    overflow-x: hidden;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 20px;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: auto;
 }
 
 /* Zoomed card state - card is INSIDE portal, centered by flexbox */
@@ -15877,11 +15879,17 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     /* Trigger etching animation */
     animation: filigree-etch 1.2s ease-out forwards;
 
-    /* Deeper engraved text — pronounced inset effect */
+    /* Lacquered black 3D text — deepened for ready state */
     text-shadow:
-        0 2px 1px rgba(0, 0, 0, 0.95),
-        0 1px 0 rgba(0, 0, 0, 0.7),
-        0 -1px 0 rgba(90, 69, 16, 0.15);
+        /* Top gleam — sharper on ready */
+        0 -1px 0 rgba(255, 248, 220, 0.3),
+        /* 3D depth stack */
+        0 1px 0 #1a1a1a,
+        0 2px 0 #141414,
+        0 3px 0 #0e0e0e,
+        /* Cast shadow */
+        0 4px 6px rgba(0, 0, 0, 0.5),
+        0 6px 12px rgba(0, 0, 0, 0.25);
 }
 
 /* Diamond fully visible when ready */
@@ -16198,11 +16206,26 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
     background-repeat: no-repeat;
 
-    color: var(--plaque-gold-text);
+    /* 25% wider: horizontal padding from 24px → 40px */
+    padding: 10px 40px;
+    /* 25% larger text (0.95em base × 1.25) */
+    font-size: 1.19em;
+    /* Wide kerning */
+    letter-spacing: 0.28em;
+
+    /* Lacquered black 3D text — gleam on top, cast shadow below */
+    color: #080808;
+    font-weight: 700;
     text-shadow:
-        0 1px 0 rgba(255, 215, 0, 0.3),
-        0 -1px 0 rgba(0, 0, 0, 0.4);
-    font-weight: 600;
+        /* Top gleam — lacquer reflection */
+        0 -1px 0 rgba(255, 248, 220, 0.25),
+        /* 3D depth stack */
+        0 1px 0 #1c1c1c,
+        0 2px 0 #161616,
+        0 3px 0 #111,
+        /* Cast shadow */
+        0 4px 6px rgba(0, 0, 0, 0.45),
+        0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* Diamond accents removed — prefer subtraction over unclear embellishment */
@@ -16755,8 +16778,8 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     pointer-events: auto;
 }
 .world-flavor-item {
-    padding: 3px 4px;
-    border-radius: 3px;
+    padding: 0.27em 0.36em;
+    border-radius: 0.27em;
     cursor: pointer;
     border: 1px solid transparent;
     transition: background 0.15s ease, box-shadow 0.15s ease;
@@ -16980,11 +17003,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    STORY PULL — Unzoomed flipped Survival card: flavor button layout
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Survival unzoomed: title, desc, flavor container */
-#pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="Survival"] .sb-card-front .sb-card-title {
-    font-size: 7.74cqi;
-    top: 126.79cqi;
-}
+/* Survival unzoomed: desc, flavor container (title uses default bottom positioning) */
 #pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="Survival"] .sb-card-front .sb-card-desc {
     font-size: 5.06cqi;
     width: 60.71cqi;
@@ -17050,10 +17069,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     font-size: 6.55cqi;
     top: 17.86cqi;
 }
-#pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="PowerControl"] .sb-card-front .sb-card-title {
-    font-size: 7.14cqi;
-    top: 127.08cqi;
-}
+/* PowerControl unzoomed: title uses default bottom positioning */
 #pressureGrid .sb-card.flipped[data-val="PowerControl"] .sb-flavor-btn[data-val="Billionaire"] {
     top: -12.50cqi;
     font-size: 6.55cqi;
@@ -17088,12 +17104,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     left: 11.90cqi;
     bottom: auto;
 }
-#pressureGrid .sb-card.flipped[data-grp="pressure"][data-val="EscapePursuit"] .sb-card-front .sb-card-title {
-    top: 127.68cqi;
-    left: 11.31cqi;
-    bottom: auto;
-    font-size: 6.85cqi;
-}
+/* EscapePursuit unzoomed: title uses default bottom positioning */
 #pressureGrid .sb-card.flipped[data-val="EscapePursuit"] .sb-flavor-btn[data-val="Heist"] {
     top: -6.55cqi;
     font-size: 6.55cqi;
@@ -17209,16 +17220,17 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 /* ── Story Pull (Pressure) — In-grid flipped front positions (cqi-locked) ── */
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 153.57cqi; left: 26.49cqi;
+    top: 100.3cqi; left: 34.82cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="Billionaire"] {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     right: auto; bottom: auto;
+    top: 68.45cqi; left: 27.08cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="CrimeSyndicate"] {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="Political"] {
     right: auto; bottom: auto;
-    top: -6.25cqi; left: -0.60cqi;
+    top: -0.89cqi; left: -4.17cqi;
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     right: auto; bottom: auto;
@@ -17232,28 +17244,26 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── Story Pull (Pressure) — Zoomed front content (cqi-locked) ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 35.42cqi; left: 17.26cqi;
+    top: 32.44cqi; left: 12.2cqi;
 }
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    width: 53.57cqi; font-size: 10.71cqi; height: 9.52cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
-    top: 153.87cqi; left: 25.30cqi;
+    top: 153.87cqi; left: 23.81cqi;
 }
+/* EscapePursuit zoomed: title uses default bottom positioning */
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
     top: 31.55cqi; left: 21.43cqi;
 }
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.87cqi; left: 22.02cqi;
-}
+/* DesireObsession zoomed: title uses default bottom positioning */
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
     top: 33.93cqi; left: 24.70cqi;
 }
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 152.68cqi; left: 33.04cqi;
-}
+/* Survival zoomed: title uses default bottom positioning */
 #sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
 }
@@ -17331,46 +17341,22 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 44.94cqi; left: 38.69cqi; font-size: 9.52cqi;
 }
 
-/* ── Tone — Flipped front desc/title positions (cqi-locked) ── */
+/* ── Tone — Flipped front desc positions (cqi-locked, Card Designer output) ── */
+/* Title uses default bottom: calc(4% + 3px) from generic rule — do NOT override with cqi top */
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -20.83cqi; left: 0.60cqi; width: 85.71cqi;
-}
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 152.98cqi; left: 42.26cqi;
+    right: auto; bottom: auto; top: -21.43cqi; width: 74.4cqi; height: 164.29cqi; left: 0cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -20.83cqi; left: 0.60cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 152.98cqi; left: 42.26cqi;
+    right: auto; bottom: auto; top: -21.43cqi; width: 74.4cqi; height: 164.29cqi; left: 0cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    width: 77.38cqi; top: -22.02cqi; left: 0.60cqi;
-}
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.27cqi; left: 43.45cqi;
+    right: auto; bottom: auto; top: -22.32cqi; left: 0cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -22.32cqi; left: -0.60cqi;
-}
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.27cqi; left: 43.15cqi;
+    right: auto; bottom: auto; top: -21.43cqi; left: -0.6cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -22.32cqi; left: 0cqi;
-}
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.27cqi; left: 37.50cqi;
+    right: auto; bottom: auto; top: -20.83cqi; left: 0cqi;
 }
 
 /* ── Dynamic — Back titles (cqi-locked) ── */
@@ -17397,6 +17383,98 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; bottom: auto;
     top: 50.30cqi; left: 17.86cqi;
+}
+
+/* ── Polarity (Dynamic) — In-grid flipped front positions (cqi-locked) ── */
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    width: 71.13cqi; font-size: 7.14cqi; height: 161.61cqi;
+    top: -20.24cqi; left: 0.6cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 7.14cqi; left: 21.73cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -19.64cqi; left: -0.6cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 7.14cqi; left: 22.62cqi; top: 153.27cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -19.05cqi; left: 1.19cqi; font-size: 6.55cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.24cqi; left: 0cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 7.14cqi; left: 24.4cqi; top: 152.98cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.83cqi; left: 0.6cqi; font-size: 7.74cqi; width: 79.46cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 7.14cqi; left: 33.04cqi; top: 153.27cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.83cqi; left: 0cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.57cqi; left: 27.68cqi; font-size: 7.14cqi;
+}
+
+/* ── Polarity (Dynamic) — Zoomed front content (cqi-locked) ── */
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.57cqi; left: 18.15cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 154.46cqi; left: 17.86cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    font-size: 5.36cqi; width: 51.49cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.83cqi; left: 0.3cqi; font-size: 5.65cqi; width: 64.58cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 8.04cqi; top: 153.87cqi; left: 20.83cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.57cqi; left: 16.07cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    font-size: 5.65cqi; width: 70.24cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.87cqi; left: 28.87cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -21.13cqi; left: 0.3cqi; font-size: 5.36cqi; width: 65.48cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.57cqi; left: 21.73cqi;
 }
 
 /* ── Length — Taste front desc ── */
@@ -17694,18 +17772,31 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
 /* ── Echo Corridor Strip (Identity / Character Naming Row) ── */
 
-/* Allow echo strip to wrap below character cards */
+/* Column layout so cards-row and echo strip stack vertically */
 #characterSectionRow {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Cards row keeps the three cards in a single non-wrapping row */
+.character-cards-row {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+    width: 100%;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
 /* Scale down character cards ~10% to make room for echo strip */
-#characterSectionRow > .character-tarot-card {
+.character-cards-row > .character-tarot-card {
     width: 185px;
 }
 
 .echo-corridor-strip {
-    flex-basis: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -17891,7 +17982,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 .echo-soul-stars .echo-star {
-    font-size: 9px;
+    font-size: 0.56em;
 }
 
 .echo-soul-legend {

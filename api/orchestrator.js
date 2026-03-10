@@ -230,6 +230,18 @@ const ALLOWED_MODELS = {
   FATE_ELEVATION: [
     'gpt-4o',
     'gpt-4o-mini'
+  ],
+
+  // Strategy pre-pass: structural scene decisions (low temp, JSON mode)
+  STRATEGY_PASS: [
+    'gpt-4o',
+    'gpt-4o-mini'
+  ],
+
+  // Post-render additive structural correction
+  STRUCTURAL_CORRECTION: [
+    'gpt-4o',
+    'gpt-4o-mini'
   ]
 };
 
@@ -242,7 +254,9 @@ const DEFAULT_MODELS = {
   RENDERER: 'grok-4-fast-non-reasoning',        // Visual bible, visualization prompts ONLY
   INTIMACY_SPECIALIST: 'grok-4-fast-reasoning',        // Explicit scenes (ESD-gated)
   FATE_STRUCTURAL: 'gpt-4o-mini',
-  FATE_ELEVATION: 'gpt-4o-mini'
+  FATE_ELEVATION: 'gpt-4o-mini',
+  STRATEGY_PASS: 'gpt-4o-mini',
+  STRUCTURAL_CORRECTION: 'gpt-4o-mini'
 };
 
 // =============================================================================

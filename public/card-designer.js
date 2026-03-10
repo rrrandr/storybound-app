@@ -52,6 +52,8 @@
     '.petition-zoom-overlay .petition-fortune-tiers',
     '.petition-zoom-overlay .petition-tier-btn',
     '.petition-zoom-overlay .petition-suggest-panel',
+    '.petition-zoom-overlay .petition-suggest-col',
+    '.petition-zoom-overlay',
     '.tempt-zoom-overlay .tempt-wish-zone',
     '.tempt-zoom-overlay .tempt-wish-columns',
     '.tempt-zoom-overlay .tempt-wish-col',
@@ -208,6 +210,11 @@
     const cs = getComputedStyle(el);
     const parent = el.offsetParent || el.parentElement;
     if (!parent) return;
+
+    // Record position: relative in CSS output for originally-static elements
+    if (el.__designWasStatic) {
+      recordMod(el, 'position', 'relative');
+    }
 
     // Use getBoundingClientRect relative to parent for reliable pixel positions
     const parentRect = parent.getBoundingClientRect();
@@ -677,6 +684,8 @@
     const pos = el.style.position || getComputedStyle(el).position;
     if (!pos || pos === 'static') {
       forceStyle(el, 'position', 'relative');
+      // Record so CSS output includes position: relative for originally-static elements
+      el.__designWasStatic = true;
     }
     // Disable transitions so designer changes are instant
     forceStyle(el, 'transition', 'none');
@@ -730,12 +739,25 @@
   }
 
   function unDecorateElements() {
+    // Properties the designer can set via forceStyle (!important)
+    const designProps = ['position', 'top', 'left', 'right', 'bottom', 'font-size', 'width', 'height'];
+
     handles.forEach(el => {
       el.classList.remove('design-handle');
       el.style.cursor = '';
       el.style.outline = '';
       el.style.outlineOffset = '';
       el.style.removeProperty('transition');
+
+      // Remove designer-applied inline !important properties so they don't
+      // leak between contexts (e.g. zoom portal → grid)
+      designProps.forEach(prop => {
+        if (el.style.getPropertyPriority(prop) === 'important') {
+          el.style.removeProperty(prop);
+        }
+      });
+      delete el.__designWasStatic;
+
       // Remove corner handles
       el.querySelectorAll('.design-corner').forEach(c => c.remove());
     });

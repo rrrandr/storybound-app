@@ -2615,6 +2615,11 @@ Introduce the name naturally within the first few paragraphs — do not announce
 
       function goToPrevPage() {
           if (isAnimating) return;
+          // On synopsis page → go back to cover (reader page 0)
+          if (typeof _readerPage !== 'undefined' && _readerPage === 1) {
+              showReaderPage(0);
+              return;
+          }
           // At first scene page → go back to synopsis (reader page 1)
           if (currentPageIndex <= 0) {
               if (typeof showReaderPage === 'function') showReaderPage(1);
@@ -2723,7 +2728,8 @@ Introduce the name naturally within the first few paragraphs — do not announce
           setAllContent,
           getPages,
           setPages,
-          isAnimating: () => isAnimating
+          isAnimating: () => isAnimating,
+          updateNavigation
       };
   })();
 
@@ -15547,6 +15553,7 @@ Return ONLY valid JSON:
           if (lastPeriod > 200) trimmed = trimmed.slice(0, lastPeriod + 1);
       }
 
+      if (!Array.isArray(state.sceneWindow)) state.sceneWindow = [];
       state.sceneWindow.push(trimmed);
       if (state.sceneWindow.length > 2) state.sceneWindow.shift();
   }
@@ -21172,6 +21179,26 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   let _petitionZoomOriginalNextSibling = null;
   let _petitionZoomCard = null;
 
+  // ── Petition zoom scale helper (called on open + resize) ──
+  let _petitionResizeHandler = null;
+
+  function _applyPetitionZoomScale(card, origW, origH) {
+      const sidePadding = 40;
+      const topPadding = 20;
+      const bottomPadding = 60;
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
+      const scale = Math.min(maxWidth / origW, maxHeight / origH);
+      card.style.setProperty('--petition-scale', scale);
+      card.style.transform = `scale(${scale})`;
+      card.style.transformOrigin = 'top center';
+      // Expand layout box to match visual size so portal can scroll
+      const visualH = origH * scale;
+      const extraH = visualH - origH;
+      card.style.marginBottom = `${extraH}px`;
+      card.style.marginTop = '0';
+  }
+
   window.openPetitionZoom = function() {
       const card = document.querySelector('.petition-fate-card');
       if (!card) return;
@@ -21192,33 +21219,36 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
 
       // Get card position BEFORE moving to portal
       const rect = card.getBoundingClientRect();
+      const origW = rect.width;
+      const origH = rect.height;
 
       // Move card to zoom portal
       const portal = document.getElementById('sbZoomPortal');
       const backdrop = document.getElementById('sbZoomBackdrop');
-      if (portal) portal.appendChild(card);
-
-      // Scale zoom: card stays at original size, scale enlarges uniformly
-      const sidePadding = 40;
-      const topPadding = 20;
-      const bottomPadding = 60;
-      const maxWidth = window.innerWidth - sidePadding * 2;
-      const maxHeight = window.innerHeight - topPadding - bottomPadding;
-      const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
+      if (portal) {
+          portal.classList.add('zoom-scrollable');
+          portal.appendChild(card);
+          // Portal click-to-close (replaces backdrop since portal has pointer-events: auto)
+          portal._petitionPortalClose = (e) => {
+              if (e.target === portal) closePetitionZoom();
+          };
+          portal.addEventListener('click', portal._petitionPortalClose);
+      }
 
       card.classList.add('petition-zoomed');
-      card.style.setProperty('--petition-scale', scale);
-      card.style.width = `${rect.width}px`;
-      card.style.height = `${rect.height}px`;
-      card.style.transform = `scale(${scale})`;
-      card.style.transformOrigin = 'center center';
+      card.style.width = `${origW}px`;
+      card.style.height = `${origH}px`;
       // Clear residual positioning so portal flexbox can center the card
       card.style.position = '';
       card.style.left = '';
       card.style.top = '';
       card.style.right = '';
       card.style.bottom = '';
-      card.style.margin = '0';
+
+      // Apply initial scale + listen for resize
+      _applyPetitionZoomScale(card, origW, origH);
+      _petitionResizeHandler = () => _applyPetitionZoomScale(card, origW, origH);
+      window.addEventListener('resize', _petitionResizeHandler);
 
       // Trigger speculative preload while user writes petition
       scheduleSpeculativePreload();
@@ -21320,8 +21350,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           <div id="petitionZoomResult" class="petition-result hidden"></div>
       `;
       // Stop click propagation so card handler doesn't re-fire
+      // Allow mousedown through when card designer is active (drag needs it)
       overlay.addEventListener('click', e => e.stopPropagation());
-      overlay.addEventListener('mousedown', e => e.stopPropagation());
+      overlay.addEventListener('mousedown', e => {
+          if (window.__cardDesignerActive && window.__cardDesignerActive()) return;
+          e.stopPropagation();
+      });
       visibleFace.appendChild(overlay);
 
       // Track selected petition text (from suggestion or custom)
@@ -21563,6 +21597,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           delete backFace._origBg;
       }
 
+      // Remove resize listener
+      if (_petitionResizeHandler) {
+          window.removeEventListener('resize', _petitionResizeHandler);
+          _petitionResizeHandler = null;
+      }
+
       // Remove zoom styles
       card.classList.remove('petition-zoomed');
       card.style.removeProperty('--petition-scale');
@@ -21576,6 +21616,18 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.right = '';
       card.style.bottom = '';
       card.style.margin = '';
+      card.style.marginBottom = '';
+      card.style.marginTop = '';
+
+      // Remove scrollable class + portal click handler
+      const portalEl = document.getElementById('sbZoomPortal');
+      if (portalEl) {
+          portalEl.classList.remove('zoom-scrollable');
+          if (portalEl._petitionPortalClose) {
+              portalEl.removeEventListener('click', portalEl._petitionPortalClose);
+              delete portalEl._petitionPortalClose;
+          }
+      }
 
       // Restore card to original DOM position
       if (_petitionZoomOriginalParent) {
@@ -21638,6 +21690,26 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       ]
   };
 
+  // ── Tempt zoom scale helper (called on open + resize) ──
+  let _temptResizeHandler = null;
+
+  function _applyTemptZoomScale(card, origW, origH) {
+      const sidePadding = 40;
+      const topPadding = 20;
+      const bottomPadding = 60;
+      const maxWidth = window.innerWidth - sidePadding * 2;
+      const maxHeight = window.innerHeight - topPadding - bottomPadding;
+      const scale = Math.min(maxWidth / origW, maxHeight / origH);
+      card.style.setProperty('--tempt-scale', scale);
+      card.style.transform = `scale(${scale})`;
+      card.style.transformOrigin = 'top center';
+      // Expand layout box to match visual size so portal can scroll
+      const visualH = origH * scale;
+      const extraH = visualH - origH;
+      card.style.marginBottom = `${extraH}px`;
+      card.style.marginTop = '0';
+  }
+
   window.openTemptZoom = function() {
       const card = document.querySelector('.tempt-fate-card');
       if (!card) return;
@@ -21650,33 +21722,36 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       _temptZoomCard = card;
 
       const rect = card.getBoundingClientRect();
+      const origW = rect.width;
+      const origH = rect.height;
 
       // Move card to zoom portal
       const portal = document.getElementById('sbZoomPortal');
       const backdrop = document.getElementById('sbZoomBackdrop');
-      if (portal) portal.appendChild(card);
-
-      // Scale zoom
-      const sidePadding = 40;
-      const topPadding = 20;
-      const bottomPadding = 60;
-      const maxWidth = window.innerWidth - sidePadding * 2;
-      const maxHeight = window.innerHeight - topPadding - bottomPadding;
-      const scale = Math.min(maxWidth / rect.width, maxHeight / rect.height);
+      if (portal) {
+          portal.classList.add('zoom-scrollable');
+          portal.appendChild(card);
+          // Portal click-to-close (replaces backdrop since portal has pointer-events: auto)
+          portal._temptPortalClose = (e) => {
+              if (e.target === portal) closeTemptZoom();
+          };
+          portal.addEventListener('click', portal._temptPortalClose);
+      }
 
       card.classList.add('tempt-zoomed');
-      card.style.setProperty('--tempt-scale', scale);
-      card.style.width = `${rect.width}px`;
-      card.style.height = `${rect.height}px`;
-      card.style.transform = `scale(${scale})`;
-      card.style.transformOrigin = 'center center';
+      card.style.width = `${origW}px`;
+      card.style.height = `${origH}px`;
       // Clear residual positioning so portal flexbox can center the card
       card.style.position = '';
       card.style.left = '';
       card.style.top = '';
       card.style.right = '';
       card.style.bottom = '';
-      card.style.margin = '0';
+
+      // Apply initial scale + listen for resize
+      _applyTemptZoomScale(card, origW, origH);
+      _temptResizeHandler = () => _applyTemptZoomScale(card, origW, origH);
+      window.addEventListener('resize', _temptResizeHandler);
 
       // Swap to high-res zoomed art on the BACK face (visible after flip)
       const backFace = card.querySelector('.back');
@@ -21863,6 +21938,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           delete backFace._origBg;
       }
 
+      // Remove resize listener
+      if (_temptResizeHandler) {
+          window.removeEventListener('resize', _temptResizeHandler);
+          _temptResizeHandler = null;
+      }
+
       // Remove zoom styles
       card.classList.remove('tempt-zoomed');
       card.style.removeProperty('--tempt-scale');
@@ -21876,6 +21957,18 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       card.style.right = '';
       card.style.bottom = '';
       card.style.margin = '';
+      card.style.marginBottom = '';
+      card.style.marginTop = '';
+
+      // Remove scrollable class + portal click handler
+      const portalEl = document.getElementById('sbZoomPortal');
+      if (portalEl) {
+          portalEl.classList.remove('zoom-scrollable');
+          if (portalEl._temptPortalClose) {
+              portalEl.removeEventListener('click', portalEl._temptPortalClose);
+              delete portalEl._temptPortalClose;
+          }
+      }
 
       // Restore card to original DOM position
       if (_temptZoomOriginalParent) {
@@ -23791,12 +23884,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           }
       }
 
-      // Save button follows paywall rules (uses story metadata for mode)
+      // Save button — free for all tiers (Tease/Taste limited to 3 stories)
       const saveBtn = document.getElementById('saveBtn');
       if(saveBtn) {
-          if(couple || paid) saveBtn.classList.remove('locked-style');
-          else saveBtn.classList.add('locked-style');
-          setPaywallClickGuard(saveBtn, !(couple || paid), lockPaywallMode);
+          saveBtn.classList.remove('locked-style');
+          setPaywallClickGuard(saveBtn, false);
       }
 
       if (!couple) {
@@ -24102,7 +24194,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (optUnlock) {
         // ROOT RULE: StoryPass hidden if caller passes 'sub_only', else check eligibility
         const storypassAllowed = (mode !== 'sub_only') && (getPaywallMode() === 'unlock');
-        const hideStoryPass = !storypassAllowed || state.subscribed || hasPassNow;
+        // Also hide StoryPass when story-blocked (credits exhausted) — not applicable
+        const hideStoryPass = !storypassAllowed || state.subscribed || hasPassNow || isTeaseStoryBlocked();
 
         optUnlock.classList.toggle('hidden', hideStoryPass);
         optUnlock.classList.remove('storypass-disabled');
@@ -24160,6 +24253,20 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (fortuneUpsellHint) {
         fortuneUpsellHint.classList.toggle('hidden', !isTeaseCap || state.subscribed || !!state.hasPass);
     }
+
+    // STORY-BLOCKED SECTIONS — show storypass, fortune packs, sub header, library cancel
+    const paywallStorypassSection = document.getElementById('paywallStorypassSection');
+    const paywallFortuneSection = document.getElementById('paywallFortuneSection');
+    const paywallSubHeader = document.getElementById('paywallSubHeader');
+    const cancelDefault = document.getElementById('paywallCancelDefault');
+    const cancelLibrary = document.getElementById('paywallCancelLibrary');
+    const showStoryBlockedOptions = isStoryBlocked && !isSceneCap;
+    if (paywallStorypassSection) paywallStorypassSection.classList.toggle('hidden', !showStoryBlockedOptions);
+    if (paywallFortuneSection) paywallFortuneSection.classList.toggle('hidden', !showStoryBlockedOptions);
+    if (paywallSubHeader) paywallSubHeader.classList.toggle('hidden', !showStoryBlockedOptions);
+    // Swap cancel buttons: story-blocked → Forbidden Library; default → Cancel
+    if (cancelDefault) cancelDefault.classList.toggle('hidden', showStoryBlockedOptions);
+    if (cancelLibrary) cancelLibrary.classList.toggle('hidden', !showStoryBlockedOptions);
 
     pm.classList.remove('hidden');
 
@@ -28380,7 +28487,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (window._devBypass) {
         console.log(`%c[DEV] Faking fortune purchase: +${packSize}`, 'color: #ffd700');
         state.fortunes = (state.fortunes || 0) + packSize;
+        // Grant a story credit (buying fortunes unlocks another original story)
+        grantFreeCustomStoryCredit('fortune_purchase');
         closeFortunePurchaseModal();
+        // Also dismiss paywall modal if fortune was bought from there
+        const pm = $('payModal');
+        if (pm && !pm.classList.contains('hidden')) {
+            pm.classList.add('hidden');
+            if (window.onPaywallDismiss) window.onPaywallDismiss();
+        }
         if (window.updateFortuneDisplay) window.updateFortuneDisplay();
         showToast(`+${packSize} Fortunes added (dev mode)`);
         return;
@@ -31646,8 +31761,13 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         }
         dropdown.style.display = '';
         const rect = card.getBoundingClientRect();
-        const ddWidth = rect.width;
+        const ddWidth = rect.width * 0.9; // slightly narrower than card
+        const scaleFactor = rect.width / 168; // 168px = card base max-width
         dropdown.style.width = ddWidth + 'px';
+        dropdown.style.fontSize = (11 * scaleFactor) + 'px';
+        dropdown.style.gap = (2 * scaleFactor) + 'px';
+        dropdown.style.padding = dropdown.classList.contains('dropdown-open')
+          ? `${6 * scaleFactor}px ${6 * scaleFactor}px` : `0 ${6 * scaleFactor}px`;
         const rawLeft = rect.left + rect.width / 2 - ddWidth / 2;
         dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - ddWidth - 4)) + 'px';
         dropdown.style.top = (rect.bottom) + 'px';
@@ -31737,8 +31857,11 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
           if (isFlipped && !dropdown.classList.contains('dropdown-open')) {
             // Position immediately (hidden via max-height:0), then open after delay
             const rect = card.getBoundingClientRect();
-            const ddWidth = rect.width;
+            const ddWidth = rect.width * 0.9;
+            const scaleFactor = rect.width / 168;
             dropdown.style.width = ddWidth + 'px';
+            dropdown.style.fontSize = (11 * scaleFactor) + 'px';
+            dropdown.style.gap = (2 * scaleFactor) + 'px';
             const rawLeft = rect.left + rect.width / 2 - ddWidth / 2;
             dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - ddWidth - 4)) + 'px';
             dropdown.style.top = (rect.bottom) + 'px';
@@ -40255,6 +40378,11 @@ Generate the title and synopsis now.` }
     initiateStripeCheckout('storypass');
   });
 
+  // Storypass $3 — duplicate button in story-blocked paywall section
+  $('payOneTimeBlocked')?.addEventListener('click', () => {
+    initiateStripeCheckout('storypass');
+  });
+
   // Storied subscription ($6/mo)
   document.getElementById('paySubStoried')?.addEventListener('click', () => {
     initiateStripeCheckout('storied');
@@ -40263,6 +40391,14 @@ Generate the title and synopsis now.` }
   // Favored subscription ($9/mo)
   document.getElementById('paySubFavored')?.addEventListener('click', () => {
     initiateStripeCheckout('favored');
+  });
+
+  // Story-blocked cancel — dismiss paywall and navigate to Forbidden Library
+  $('paywallCancelLibrary')?.addEventListener('click', () => {
+    const pm = document.getElementById('payModal');
+    if (pm) pm.classList.add('hidden');
+    if (window.onPaywallDismiss) window.onPaywallDismiss();
+    if (window.showScreen) window.showScreen('forbiddenLibraryScreen');
   });
 
 
@@ -45497,24 +45633,16 @@ ${text.slice(0, 800)}`}]);
         }
 
         // ═══════════════════════════════════════════════════════════════════════
-        // TITLE PAGE GATE — Wait for setting image before showing title/synopsis
-        // User must never see title/synopsis load and THEN image pop in later.
-        // Timeout after 20s so we don't hang forever on image gen failure.
+        // SETTING IMAGE — Generate in background; user controls page via Next btn
+        // No auto-advance: user stays on cover until they click Next.
+        // Setting image will appear inline on synopsis page when ready.
         // ═══════════════════════════════════════════════════════════════════════
         const settingSynopsis = state._synopsisMetadata || state._synopsisBlurb || '';
-        const settingImagePromise = (settingSynopsis && typeof generateBookSceneArt === 'function')
-            ? generateBookSceneArt(settingSynopsis).catch(err => {
+        if (settingSynopsis && typeof generateBookSceneArt === 'function') {
+            generateBookSceneArt(settingSynopsis).catch(err => {
                 console.warn('[SETTING-IMG] Background generation failed:', err.message);
-                return null;
-            })
-            : Promise.resolve(null);
-
-        const titlePageTimeout = new Promise(resolve => setTimeout(resolve, 20000));
-
-        Promise.race([settingImagePromise, titlePageTimeout]).then(() => {
-            if (!state._titlePageShown) showTitlePage();
-            advanceReaderPage();
-        });
+            });
+        }
 
         // Pre-load visualization prompt in background while user reads
         if (typeof preloadVizPrompt === 'function') preloadVizPrompt();
@@ -46096,13 +46224,8 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
                       }
                       sceneImg.style.display = 'block';
                       if (loadingEl) loadingEl.style.display = 'none';
-                      // PAGE-CURL: If no frontispiece active (non-Fantasy, or after map dismissed),
-                      // activate setting plate as a curl page so it curls to reveal scene text.
-                      // SKIP on synopsis page — image shows inline via #synopsisSettingImg instead.
-                      // SKIP if scene is already active — late image must never replace Scene 1.
-                      if (_readerPage === 0 && !window._titlePageActive && !window._frontispieceActive && !window._settingPlateActive) {
-                          showSettingPlateAsCurlPage();
-                      }
+                      // Setting image loaded — no curl page needed on cover.
+                      // Synopsis page handles image inline via #synopsisSettingImg.
                       console.log('[BookScene:DEBUG] IMAGE_LOADED', { display: sceneImg.style.display, mountPath: 'settingPlate', mode: 'inline' });
                   } else {
                       // ABORT: Setting image mounted in wrong container
@@ -50081,17 +50204,23 @@ ${buildVisualContinuityDirective()}`;
       }
 
       if (page === 0) {
-          // COVER: Show cover only
+          // COVER: Show cover with Next button
           if (bookCoverPage) bookCoverPage.classList.remove('hidden');
           if (storyContent) storyContent.classList.add('hidden');
+          // Re-show the cover Next button when navigating back to cover
+          const coverNextC = document.getElementById('coverNextContainer');
+          if (coverNextC) coverNextC.classList.remove('hidden');
           console.log('[READER] Page 0: COVER (static full-screen)');
 
       } else if (page === 1) {
           // ═══════════════════════════════════════════════════════════════
           // SYNOPSIS PAGE: 5x7 book page with title, synopsis, setting image
-          // No fate cards, no petition, no action inputs — only Next button
+          // Previous button → cover, Next button → Scene 1
           // ═══════════════════════════════════════════════════════════════
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
+          // Hide cover-level controls
+          const coverNextC1 = document.getElementById('coverNextContainer');
+          if (coverNextC1) coverNextC1.classList.add('hidden');
           if (storyContent) storyContent.classList.remove('hidden');
 
           // Hide title page if it wasn't dismissed via curl (e.g. page nav)
@@ -50150,13 +50279,13 @@ ${buildVisualContinuityDirective()}`;
               if (el) el.classList.add('hidden');
           });
 
-          // Show page-level Next button
+          // Show page-level Next AND Previous buttons
           const nextBtn = document.getElementById('nextPageBtn');
           if (nextBtn) { nextBtn.disabled = false; nextBtn.classList.remove('hidden'); }
           const pageNav = document.getElementById('pageNavControls');
           if (pageNav) pageNav.classList.remove('hidden');
           const prevBtn = document.getElementById('prevPageBtn');
-          if (prevBtn) prevBtn.classList.add('hidden');
+          if (prevBtn) { prevBtn.classList.remove('hidden'); prevBtn.disabled = false; }
           const indicator = document.getElementById('pageIndicator');
           if (indicator) indicator.textContent = 'Synopsis';
 
@@ -50216,9 +50345,14 @@ ${buildVisualContinuityDirective()}`;
               if (el) el.classList.remove('hidden');
           });
 
-          // Restore page navigation
+          // Restore page navigation with correct button states
           const prevBtn = document.getElementById('prevPageBtn');
-          if (prevBtn) prevBtn.classList.remove('hidden');
+          if (prevBtn) { prevBtn.classList.remove('hidden'); prevBtn.disabled = false; }
+          // Sync Next button disabled state with pagination (greyed when no next page)
+          StoryPagination.updateNavigation();
+
+          // Show Vision orb on scene pages
+          if (typeof updateVisionOrbVisibility === 'function') updateVisionOrbVisibility();
 
           precomputeVizPrompt();
 
@@ -54179,9 +54313,8 @@ Respond in this EXACT format (no labels, just two lines):
   function updateVisionOrbVisibility() {
       const orb = document.getElementById('visionOrb');
       if (!orb) return;
-      // Never show during cover page
-      const coverPage = document.getElementById('bookCoverPage');
-      if (coverPage && !coverPage.classList.contains('hidden')) {
+      // Only show on scene pages (reader page >= 2)
+      if (_readerPage < 2) {
           orb.classList.add('hidden');
           const panel = document.getElementById('visionOrbPanel');
           if (panel) panel.classList.add('hidden');
@@ -54189,7 +54322,9 @@ Respond in this EXACT format (no labels, just two lines):
       }
       const sc = document.getElementById('storyContent');
       const hasContent = sc && !sc.classList.contains('hidden') && sc.offsetParent;
-      const hasPages = hasContent && document.querySelector('#storyPagesContainer .story-page.active p[data-paragraph-id]');
+      const pagesContainer = document.getElementById('storyPagesContainer');
+      const pagesVisible = pagesContainer && !pagesContainer.classList.contains('hidden');
+      const hasPages = hasContent && pagesVisible && document.querySelector('#storyPagesContainer .story-page.active p[data-paragraph-id]');
       if (hasPages) {
           orb.classList.remove('hidden');
       } else {
@@ -62149,7 +62284,7 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
 })();
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// LIBRARY DESIGN MODE — Ctrl+Shift+D to toggle
+// LIBRARY DESIGN MODE — Ctrl+Shift+D to toggle (ONLY on library screens)
 // Drag books & shelf overlay, scale books. Prints CSS values on close.
 // ═══════════════════════════════════════════════════════════════════════════════
 (function initLibraryDesignMode() {
@@ -62166,8 +62301,16 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
     bookRotateZ: -1,      // degrees Z roll
   };
 
+  function isLibraryVisible() {
+    const vault = document.querySelector('#vaultLibraryScreen:not(.hidden)');
+    const forbidden = document.querySelector('#forbiddenLibraryScreen:not(.hidden)');
+    return !!(vault || forbidden);
+  }
+
   document.addEventListener('keydown', e => {
     if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'D') {
+      // Only activate library design mode when a library screen is visible
+      if (!active && !isLibraryVisible()) return; // Let card-designer.js handle it
       e.preventDefault();
       active ? closeDesignMode() : openDesignMode();
     }

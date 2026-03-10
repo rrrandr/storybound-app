@@ -419,6 +419,26 @@
     </div>
 
     <div id="standardPay">
+        <!-- STORYPASS SECTION — shown when story-blocked (0 credits) -->
+        <div id="paywallStorypassSection" class="hidden" style="text-align:center; margin-bottom:18px;">
+            <h4 style="color:var(--gold); font-family:'Lora',serif; font-size:1em; letter-spacing:0.08em; margin:0 0 10px;">Unlock This Story</h4>
+            <p style="font-size:0.8em; color:var(--ink); opacity:0.7; margin:0 0 12px; line-height:1.5;">Unlock this story arc. Extended narrative, longer pacing, full Petition Fate.</p>
+            <button id="payOneTimeBlocked" class="fortune-pack-btn" style="max-width:280px;">Storypass &mdash; $3</button>
+        </div>
+
+        <!-- FORTUNE PACKS SECTION — shown when story-blocked (0 credits) -->
+        <div id="paywallFortuneSection" class="hidden" style="text-align:center; margin-bottom:18px;">
+            <h4 style="color:var(--gold); font-family:'Lora',serif; font-size:1em; letter-spacing:0.08em; margin:0 0 10px;">Use Fortune Packs</h4>
+            <p style="font-size:0.8em; color:var(--ink); opacity:0.7; margin:0 0 12px; line-height:1.5;">Every Fortune pack unlocks another original story.</p>
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:center; max-width:280px; margin:0 auto;">
+                <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(60, '$5');">60 Fortunes &mdash; $5</button>
+                <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">120 Fortunes &mdash; $9</button>
+                <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(240, '$16');">240 Fortunes &mdash; $16</button>
+            </div>
+        </div>
+        <!-- SUB SECTION HEADER — shown when story-blocked -->
+        <h4 id="paywallSubHeader" class="hidden" style="color:var(--gold); font-family:'Lora',serif; font-size:1em; letter-spacing:0.08em; text-align:center; margin:0 0 12px;">Start With Storied</h4>
+
         <div class="pay-tier-row">
             <div class="pay-tier-card" id="optUnlock">
                 <h4>Unlock This Story</h4>
@@ -459,7 +479,10 @@
         </p>
     </div>
 
-    <button class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="margin-top:15px;">Cancel</button>
+    <!-- Default cancel button (non-story-blocked contexts) -->
+    <button id="paywallCancelDefault" class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="margin-top:15px;">Cancel</button>
+    <!-- Story-blocked cancel — navigates to Forbidden Library -->
+    <button id="paywallCancelLibrary" class="hidden" style="margin-top:18px; background:none; border:none; color:var(--ink); opacity:0.7; font-family:'Lora',serif; font-size:0.85em; font-style:italic; cursor:pointer; padding:8px 12px; line-height:1.4;">I'll read for free from The Forbidden Library. For now.</button>
   </div>
 </div>
 
@@ -576,17 +599,14 @@
     </p>
 
     <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(20, '$5');">
-        20 Fortunes &mdash; $5
+      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(60, '$5');">
+        60 Fortunes &mdash; $5
       </button>
-      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(50, '$10');">
-        50 Fortunes &mdash; $10
+      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">
+        120 Fortunes &mdash; $9
       </button>
-      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$20');">
-        120 Fortunes &mdash; $20
-      </button>
-      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(100, '$4/mo');">
-        100 Fortunes &mdash; $4/month
+      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(240, '$16');">
+        240 Fortunes &mdash; $16
       </button>
     </div>
 
@@ -714,6 +734,7 @@
     <!-- ROW MUST OWN ACTIVE STATE — claim corridor until Continue pressed -->
     <div class="story-shape-row corridor-section hidden" id="characterSectionRow" data-corridor-stage="identity">
 
+    <div class="character-cards-row">
     <!-- Player Character Tarot Card (canonical 2.75:4.75 ratio) -->
     <div class="character-tarot-card" id="playerCharacterCard">
         <div class="character-tarot-header">Your Character</div>
@@ -799,6 +820,7 @@
             </div>
         </div>
     </div>
+    </div><!-- /.character-cards-row -->
 
     <!-- Character Section Continue Button (bottom center) -->
     <div class="character-continue-wrapper">
@@ -1327,9 +1349,13 @@
         <div class="book-thickness"></div>
       </div>
 
-      <!-- Cover Next button (below book, before full button row) -->
+      <!-- Cover Next button (below book — matches synopsis page nav style) -->
       <div id="coverNextContainer" class="cover-next-container hidden">
-          <button id="coverNextBtn" class="cover-view-btn begin-btn">Next →</button>
+          <div class="page-nav-controls">
+              <button class="page-nav-btn" id="coverNextBtn">
+                  Next <span>→</span>
+              </button>
+          </div>
       </div>
 
       <!-- Cover View Buttons (below the book) -->
