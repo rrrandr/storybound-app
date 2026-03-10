@@ -3649,6 +3649,21 @@ select:-webkit-autofill {
     box-sizing: border-box;
 }
 
+/* Mode title — 3D gold italic Lora */
+.mode-title {
+    font-family: 'Lora', Georgia, serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(0.5rem, 1.75vw, 0.675rem);
+    line-height: 1.5;
+    text-align: center;
+    max-width: 460px;
+    padding: 0 20px;
+    margin: 0 0 8px;
+    letter-spacing: 0.04em;
+    color: #daa520;
+}
+
 /* Mode card row - centers cards on screen */
 .mode-card-row {
     display: flex;
@@ -12425,6 +12440,39 @@ textarea.fate-field {
     opacity: 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   CARD FLIP TEXT CROSSFADE — Prevent title position jump during 3D flip.
+   Back face text fades out as flip starts; front face text fades in after flip.
+   Scoped to corridor grid cards (not archetype cards, which reveal differently).
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Back face text: fade out when flip begins */
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card .sb-card-back .sb-card-title,
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card .sb-card-back .sb-card-desc {
+    transition: opacity 0.12s ease;
+}
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card.flipped .sb-card-back .sb-card-title,
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card.flipped .sb-card-back .sb-card-desc {
+    opacity: 0;
+}
+
+/* Front face text: invisible until flip completes */
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card .sb-card-front .sb-card-title,
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card .sb-card-front .sb-card-desc {
+    opacity: 0;
+    transition: opacity 0.15s ease 0.4s; /* 0.4s delay ≈ flip duration */
+}
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card.selected.flipped .sb-card-front .sb-card-title,
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card.selected.flipped .sb-card-front .sb-card-desc {
+    opacity: 1;
+}
+/* Locked cards flip on hover via CSS — front text must also become visible */
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card.locked:hover .sb-card-front .sb-card-title,
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card.locked:hover .sb-card-front .sb-card-desc {
+    opacity: 1;
+    transition: opacity 0.15s ease;
+}
+
 .sb-card-front .sb-card-title {
     font-family: 'lust-script-display', serif;
     font-size: 15px;
@@ -14358,8 +14406,8 @@ body.corridor-mode .sb-grid.corridor-section {
 #beginStoryRow #beginBtn {
     position: relative;
     z-index: 1;
-    width: 195px !important;
-    height: 72px;
+    width: 244px !important;  /* 195 × 1.25 */
+    height: 80px;
     padding: 16px 36px;
     min-width: 0;
     background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
@@ -14367,14 +14415,18 @@ body.corridor-mode .sb-grid.corridor-section {
     background-position: center !important;
     font-family: 'Lora', serif !important;
     font-variant: small-caps;
-    font-size: 1.3em;
-    color: #111 !important;
+    font-size: 1.625em;  /* 1.3 × 1.25 */
+    letter-spacing: 0.05em;
+    /* 3D lacquered black — glossy depth via stacked shadows */
+    color: #080808 !important;
+    -webkit-text-fill-color: #080808;
     text-shadow:
-        -1px -1px 0 rgba(218, 165, 32, 0.5),
-        1px -1px 0 rgba(218, 165, 32, 0.5),
-        -1px 1px 0 rgba(218, 165, 32, 0.5),
-        1px 1px 0 rgba(218, 165, 32, 0.5),
-        0 0 4px rgba(218, 165, 32, 0.3) !important;
+        0 1px 0 #1a1a1a,
+        0 2px 0 #111,
+        0 3px 1px rgba(0,0,0,0.6),
+        0 -1px 0 rgba(60,60,60,0.4),
+        0 0 3px rgba(0,0,0,0.5),
+        0 0 8px rgba(0,0,0,0.3) !important;
 }
 
 #beginStoryRow .story-continue-hint {
@@ -17322,91 +17374,76 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 49.70cqi; left: 32.74cqi;
 }
 
-/* ── Story Pull (Pressure) — Locked text positions (cqi, grid + portal) ── */
-/* Comma-grouped: #pressureGrid for grid context, #sbZoomPortal for zoom portal.
-   Same cqi values in both — transform: scale() handles visual scaling. */
+/* ── Story Pull (Pressure) — Locked text positions (portal-only) ──
+   Grid-scoped rules REMOVED: they forced zoomed-scale cqi positions at unzoomed
+   corridor size, causing text to jump during flip. Portal rules handle zoom.   */
 
 /* ── PowerControl ── */
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors {
-    right: auto; bottom: auto;
-    top: 8.33cqi; left: 48.21cqi;
+    right: auto !important; bottom: auto !important;
+    top: 8.33cqi !important; left: 48.21cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 35.71cqi; left: 22.02cqi; font-size: 5.95cqi;
+    right: auto !important; bottom: auto !important;
+    top: 35.71cqi !important; left: 22.02cqi !important; font-size: 5.95cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 7.14cqi; top: 153.27cqi; left: 23.21cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 7.14cqi !important; top: 153.27cqi !important; left: 23.21cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
-    right: auto; bottom: auto;
-    top: 78.27cqi; left: 25.6cqi;
+    right: auto !important; bottom: auto !important;
+    top: 78.27cqi !important; left: 25.6cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="Political"],
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="Political"] {
-    right: auto; bottom: auto;
-    top: -0.89cqi; left: -4.17cqi;
+    right: auto !important; bottom: auto !important;
+    top: -0.89cqi !important; left: -4.17cqi !important;
 }
 
 /* ── EscapePursuit ── */
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 33.63cqi; left: 27.98cqi; font-size: 5.95cqi; width: 43.45cqi;
+    right: auto !important; bottom: auto !important;
+    top: 33.63cqi !important; left: 27.98cqi !important; font-size: 5.95cqi !important; width: 43.45cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors {
-    right: auto; bottom: auto;
-    top: 8.33cqi; left: 48.81cqi;
+    right: auto !important; bottom: auto !important;
+    top: 8.33cqi !important; left: 48.81cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 7.14cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 7.14cqi !important; top: 153cqi !important; left: 20cqi !important;
 }
 
 /* ── DesireObsession ── */
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors {
-    right: auto; bottom: auto;
-    top: 9.52cqi; left: 49.4cqi;
+    right: auto !important; bottom: auto !important;
+    top: 9.52cqi !important; left: 49.4cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 37.2cqi; left: 24.11cqi; font-size: 5.95cqi; width: 53.57cqi;
+    right: auto !important; bottom: auto !important;
+    top: 37.2cqi !important; left: 24.11cqi !important; font-size: 5.95cqi !important; width: 53.57cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 8.33cqi; left: 15.77cqi; top: 152.68cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 8.33cqi !important; left: 15.77cqi !important; top: 152.68cqi !important;
 }
 
 /* ── Survival ── */
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors {
-    right: auto; bottom: auto;
-    top: 8.93cqi; left: 48.81cqi;
+    right: auto !important; bottom: auto !important;
+    top: 8.93cqi !important; left: 48.81cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 30.95cqi; left: 19.05cqi; font-size: 5.95cqi; width: 60.71cqi;
+    right: auto !important; bottom: auto !important;
+    top: 30.95cqi !important; left: 19.05cqi !important; font-size: 5.95cqi !important; width: 60.71cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 7.14cqi; top: 152.98cqi; left: 37.5cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 7.14cqi !important; top: 152.98cqi !important; left: 37.5cqi !important;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
-    right: auto; bottom: auto;
-    top: 76.19cqi; left: 33.33cqi;
+    right: auto !important; bottom: auto !important;
+    top: 76.19cqi !important; left: 33.33cqi !important;
 }
 
 /* ── Pressure zoom structural overrides (size only, not position) ── */
@@ -17487,67 +17524,47 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 44.94cqi; left: 38.69cqi; font-size: 9.52cqi;
 }
 
-/* ── Tone — Locked text positions (cqi, grid + portal) ──
-   Comma-grouped: same cqi values in both contexts.
-   !important required: base rule uses #toneGrid ID descendant selectors.  */
+/* ── Tone — Locked text positions (portal-only) ──
+   Grid-scoped rules REMOVED: they forced zoomed-scale cqi positions at unzoomed
+   corridor size, causing text to jump during flip. Portal rules handle zoom.  */
 
 /* Mythic */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto !important; bottom: auto !important;
     font-size: 9.52cqi !important; top: 150.89cqi !important; left: 34.52cqi !important;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto !important; bottom: auto !important; top: -20.83cqi !important; left: 0cqi !important;
-}
-/* Mythic — portal structural (zoom adds font-size/width/position for desc) */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: relative !important; font-size: 5.06cqi !important; width: 67.26cqi !important;
 }
 
 /* Dark */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto !important; bottom: auto !important;
     font-size: 11.9cqi !important; top: 149.4cqi !important; left: 37.8cqi !important;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto !important; bottom: auto !important; top: -21.43cqi !important; left: -0.6cqi !important;
-}
-/* Dark — portal structural */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: relative !important; font-size: 5.65cqi !important; width: 67.86cqi !important;
 }
 
 /* WryConfession */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto !important; bottom: auto !important;
     font-size: 11.9cqi !important; top: 150cqi !important;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto !important; bottom: auto !important; top: -22.32cqi !important; left: 0cqi !important;
-}
-/* WryConfession — portal structural */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: relative !important; font-size: 5.65cqi !important; width: 65.77cqi !important;
 }
 
 /* Earnest */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto !important; bottom: auto !important;
     font-size: 9.52cqi !important; top: 152.08cqi !important; left: 34.52cqi !important;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto !important; bottom: auto !important; top: -21.43cqi !important; left: 0cqi !important;
-}
-/* Earnest — portal structural */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: relative !important; font-size: 5.65cqi !important;
 }
 
@@ -17577,99 +17594,73 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 50.30cqi; left: 17.86cqi;
 }
 
-/* ── Polarity (Dynamic) — Locked text positions (cqi, grid + portal) ── */
-/* Comma-grouped: #dynamicGrid for grid, #sbZoomPortal for zoom portal.
-   Same cqi values — transform: scale() handles visual scaling.          */
+/* ── Polarity (Dynamic) — Locked text positions (portal-only) ──
+   Grid-scoped rules REMOVED: they forced zoomed-scale cqi positions at unzoomed
+   corridor size, causing text to jump during flip. Portal rules handle zoom.  */
 
 /* ── Enemies ── */
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    width: 71.13cqi; font-size: 7.14cqi; height: 161.61cqi;
-    top: -20.24cqi; left: 0.6cqi;
+    right: auto !important; bottom: auto !important;
+    width: 71.13cqi !important; font-size: 7.14cqi !important; height: 161.61cqi !important;
+    top: -20.24cqi !important; left: 0.6cqi !important;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 7.14cqi; left: 21.73cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 7.14cqi !important; left: 21.73cqi !important; top: 153cqi !important;
 }
 
 /* ── Friends ── */
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -19.64cqi; left: -0.6cqi;
+    right: auto !important; bottom: auto !important;
+    top: -19.64cqi !important; left: -0.6cqi !important;
+    font-size: 5.36cqi !important; width: 51.49cqi !important;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 7.14cqi; left: 22.62cqi; top: 153.27cqi;
-}
-/* Friends — portal structural (zoom adds font-size/width for desc) */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    font-size: 5.36cqi; width: 51.49cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 7.14cqi !important; left: 22.62cqi !important; top: 153.27cqi !important;
 }
 
 /* ── SecretIdentity ── */
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -19.05cqi; left: 1.19cqi; font-size: 6.55cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-}
-/* SecretIdentity — portal structural (zoom adds width for desc, title position) */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    width: 64.58cqi;
+    right: auto !important; bottom: auto !important;
+    top: -19.05cqi !important; left: 1.19cqi !important; font-size: 6.55cqi !important;
+    width: 64.58cqi !important;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    font-size: 8.04cqi; top: 153.87cqi; left: 20.83cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 8.04cqi !important; top: 153.87cqi !important; left: 20.83cqi !important;
 }
 
 /* ── Proximity ── */
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -20.24cqi; left: 0cqi;
+    right: auto !important; bottom: auto !important;
+    top: -20.24cqi !important; left: 0cqi !important;
+    font-size: 5.65cqi !important; width: 70.24cqi !important;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 7.14cqi; left: 24.4cqi; top: 152.98cqi;
-}
-/* Proximity — portal structural (zoom adds font-size/width for desc) */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    font-size: 5.65cqi; width: 70.24cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 7.14cqi !important; left: 24.4cqi !important; top: 152.98cqi !important;
 }
 
 /* ── SecondChance ── */
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -20.83cqi; left: 0.6cqi; font-size: 7.74cqi; width: 79.46cqi;
+    right: auto !important; bottom: auto !important;
+    top: -20.83cqi !important; left: 0.6cqi !important; font-size: 7.74cqi !important; width: 79.46cqi !important;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 7.14cqi; left: 33.04cqi; top: 153.27cqi;
+    right: auto !important; bottom: auto !important;
+    font-size: 7.14cqi !important; left: 33.04cqi !important; top: 153.27cqi !important;
 }
 
 /* ── Forbidden ── */
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -20.83cqi; left: 0cqi;
+    right: auto !important; bottom: auto !important;
+    top: -20.83cqi !important; left: 0cqi !important;
+    font-size: 5.36cqi !important; width: 65.48cqi !important;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.57cqi; left: 27.68cqi; font-size: 7.14cqi;
-}
-/* Forbidden — portal structural (zoom adds font-size/width for desc) */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    font-size: 5.36cqi; width: 65.48cqi;
+    right: auto !important; bottom: auto !important;
+    top: 153.57cqi !important; left: 27.68cqi !important; font-size: 7.14cqi !important;
 }
 
 /* ── Length — Taste front desc ── */
@@ -17986,9 +17977,119 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     box-sizing: border-box;
 }
 
-/* Scale down character cards ~10% to make room for echo strip */
+/* Scale down character cards to make room for echo reincarnation row */
 .character-cards-row > .character-tarot-card {
-    width: 185px;
+    width: 170px;
+}
+
+/* ── Echo Reincarnation Section — mini-cards below character cards ── */
+.echo-reinc-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 0 0 0;
+}
+
+.echo-reinc-explainer {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.65em;
+    color: var(--gold, #c8a84e);
+    opacity: 0.55;
+    text-align: center;
+    letter-spacing: 0.03em;
+    padding: 0 20px;
+}
+
+.echo-reinc-cards {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 2px 10px;
+}
+
+.echo-reinc-card {
+    width: 56px;
+    aspect-ratio: 2.75 / 4.75;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 3px 2px;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.echo-reinc-card-empty {
+    background: url('/assets/card-art/cards/Romance-black-back-DC.png') center / cover no-repeat;
+    border: 1px dashed rgba(200, 168, 78, 0.25);
+    opacity: 0.4;
+}
+
+.echo-reinc-card-filled {
+    background: linear-gradient(145deg, #1a1810 0%, #0f0e0a 50%, #1a1810 100%);
+    border: 1px solid rgba(200, 168, 78, 0.35);
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+
+.echo-reinc-card-filled:hover {
+    border-color: var(--gold, #c8a84e);
+    box-shadow: 0 0 8px rgba(200, 168, 78, 0.2), 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+
+.echo-reinc-card-filled.echo-reinc-selected {
+    border-color: var(--gold, #c8a84e);
+    box-shadow: 0 0 10px rgba(200, 168, 78, 0.3), inset 0 0 6px rgba(200, 168, 78, 0.1);
+}
+
+.echo-reinc-card-name {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: rgba(200, 168, 78, 0.75);
+    font-size: 0.45em;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+    word-break: break-word;
+    padding: 0 2px;
+}
+
+.echo-reinc-card-role {
+    font-family: 'Lora', serif;
+    color: var(--ink, #e8e0d0);
+    font-size: 0.38em;
+    opacity: 0.45;
+    margin-top: 1px;
+}
+
+.echo-reinc-card-legend {
+    font-size: 0.36em;
+    color: var(--gold, #c8a84e);
+    opacity: 0.6;
+    margin-top: 1px;
+}
+
+.echo-reinc-card-plus {
+    font-size: 1em;
+    color: var(--gold, #c8a84e);
+    font-weight: 300;
+    line-height: 1;
+    text-shadow: 0 0 6px rgba(200, 168, 78, 0.2);
+}
+
+.echo-reinc-card-add-label {
+    font-family: 'Lora', serif;
+    font-size: 0.36em;
+    color: var(--gold, #c8a84e);
+    margin-top: 1px;
 }
 
 .echo-corridor-strip {

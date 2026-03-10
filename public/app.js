@@ -38913,8 +38913,11 @@ Generate the title and synopsis now.` }
       // Lock chosen card to its current visual position (position:fixed) BEFORE
       // removing dissolved cards — grid reflow would shift its natural position
       // and cause the transform-based placement to jump.
+      // Hoist lockedRect so sparkle trail can use the pre-lock viewport coords
+      // (position:fixed may misplace if ancestor has a CSS transform).
+      let lockedRect;
       if (chosenCard) {
-          const lockedRect = chosenCard.getBoundingClientRect();
+          lockedRect = chosenCard.getBoundingClientRect();
           chosenCard.style.position = 'fixed';
           chosenCard.style.left = lockedRect.left + 'px';
           chosenCard.style.top = lockedRect.top + 'px';
@@ -38930,10 +38933,10 @@ Generate the title and synopsis now.` }
       });
 
       // STEP 9: Sparkle teleport — dissolution, JS-driven travel, convergence
-      if (chosenCard && targetX !== undefined) {
-          const cardRect = chosenCard.getBoundingClientRect();
-          const cardCenterX = cardRect.left + cardRect.width / 2;
-          const cardCenterY = cardRect.top + cardRect.height / 2;
+      // Use lockedRect (captured before position:fixed) for accurate sparkle origin
+      if (chosenCard && targetX !== undefined && lockedRect) {
+          const cardCenterX = lockedRect.left + lockedRect.width / 2;
+          const cardCenterY = lockedRect.top + lockedRect.height / 2;
 
           // Phase 1: Dissolution sparkles from card surface
           chosenCard.style.transition = 'opacity 0.3s ease-out';
@@ -38944,8 +38947,8 @@ Generate the title and synopsis now.` }
               setTimeout(() => {
                   const sparkle = document.createElement('div');
                   sparkle.className = 'dissolution-sparkle';
-                  const sx = cardRect.left + Math.random() * cardRect.width;
-                  const sy = cardRect.top + Math.random() * cardRect.height;
+                  const sx = lockedRect.left + Math.random() * lockedRect.width;
+                  const sy = lockedRect.top + Math.random() * lockedRect.height;
                   sparkle.style.cssText = `left: ${sx}px; top: ${sy}px;`;
                   document.body.appendChild(sparkle);
                   setTimeout(() => sparkle.remove(), 400);
@@ -38954,7 +38957,7 @@ Generate the title and synopsis now.` }
 
           // Phase 2: JS-driven sparkle trail from card center to breadcrumb
           setTimeout(() => {
-              fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
+              fireSparkleTrail(cardCenterX, cardCenterY, lockedRect.width, lockedRect.height, targetX, targetY);
           }, 200);
 
           await new Promise(r => setTimeout(r, 1200));
@@ -39135,8 +39138,10 @@ Generate the title and synopsis now.` }
       await new Promise(r => setTimeout(r, 700));
 
       // Lock chosen card to fixed position before DOM cleanup
+      // Hoist lockedRect for sparkle trail accuracy (position:fixed may misplace)
+      let lockedRect;
       if (chosenCard) {
-          const lockedRect = chosenCard.getBoundingClientRect();
+          lockedRect = chosenCard.getBoundingClientRect();
           chosenCard.style.position = 'fixed';
           chosenCard.style.left = lockedRect.left + 'px';
           chosenCard.style.top = lockedRect.top + 'px';
@@ -39152,10 +39157,10 @@ Generate the title and synopsis now.` }
       });
 
       // STEP 9: Sparkle teleport — dissolution, JS-driven travel, convergence
-      if (chosenCard && targetX !== undefined) {
-          const cardRect = chosenCard.getBoundingClientRect();
-          const cardCenterX = cardRect.left + cardRect.width / 2;
-          const cardCenterY = cardRect.top + cardRect.height / 2;
+      // Use lockedRect (captured before position:fixed) for accurate sparkle origin
+      if (chosenCard && targetX !== undefined && lockedRect) {
+          const cardCenterX = lockedRect.left + lockedRect.width / 2;
+          const cardCenterY = lockedRect.top + lockedRect.height / 2;
 
           // Phase 1: Dissolution sparkles
           chosenCard.style.transition = 'opacity 0.3s ease-out';
@@ -39166,8 +39171,8 @@ Generate the title and synopsis now.` }
               setTimeout(() => {
                   const sparkle = document.createElement('div');
                   sparkle.className = 'dissolution-sparkle';
-                  const sx = cardRect.left + Math.random() * cardRect.width;
-                  const sy = cardRect.top + Math.random() * cardRect.height;
+                  const sx = lockedRect.left + Math.random() * lockedRect.width;
+                  const sy = lockedRect.top + Math.random() * lockedRect.height;
                   sparkle.style.cssText = `left: ${sx}px; top: ${sy}px;`;
                   document.body.appendChild(sparkle);
                   setTimeout(() => sparkle.remove(), 400);
@@ -39176,7 +39181,7 @@ Generate the title and synopsis now.` }
 
           // Phase 2: JS-driven sparkle trail from card center to breadcrumb
           setTimeout(() => {
-              fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
+              fireSparkleTrail(cardCenterX, cardCenterY, lockedRect.width, lockedRect.height, targetX, targetY);
           }, 200);
 
           await new Promise(r => setTimeout(r, 1200));
@@ -39351,8 +39356,10 @@ Generate the title and synopsis now.` }
       await new Promise(r => setTimeout(r, 700));
 
       // Lock position before DOM cleanup
+      // Hoist lockedRect for sparkle trail accuracy (position:fixed may misplace)
+      let lockedRect;
       if (chosenCard) {
-          const lockedRect = chosenCard.getBoundingClientRect();
+          lockedRect = chosenCard.getBoundingClientRect();
           chosenCard.style.position = 'fixed';
           chosenCard.style.left = lockedRect.left + 'px';
           chosenCard.style.top = lockedRect.top + 'px';
@@ -39368,10 +39375,10 @@ Generate the title and synopsis now.` }
       });
 
       // STEP 9: Sparkle teleport — dissolution, JS-driven travel, convergence
-      if (chosenCard && targetX !== undefined) {
-          const cardRect = chosenCard.getBoundingClientRect();
-          const cardCenterX = cardRect.left + cardRect.width / 2;
-          const cardCenterY = cardRect.top + cardRect.height / 2;
+      // Use lockedRect (captured before position:fixed) for accurate sparkle origin
+      if (chosenCard && targetX !== undefined && lockedRect) {
+          const cardCenterX = lockedRect.left + lockedRect.width / 2;
+          const cardCenterY = lockedRect.top + lockedRect.height / 2;
 
           chosenCard.style.transition = 'opacity 0.3s ease-out';
           chosenCard.style.opacity = '0.2';
@@ -39382,8 +39389,8 @@ Generate the title and synopsis now.` }
               setTimeout(() => {
                   const sparkle = document.createElement('div');
                   sparkle.className = 'dissolution-sparkle';
-                  const sx = cardRect.left + Math.random() * cardRect.width;
-                  const sy = cardRect.top + Math.random() * cardRect.height;
+                  const sx = lockedRect.left + Math.random() * lockedRect.width;
+                  const sy = lockedRect.top + Math.random() * lockedRect.height;
                   sparkle.style.cssText = `left: ${sx}px; top: ${sy}px;`;
                   document.body.appendChild(sparkle);
                   setTimeout(() => sparkle.remove(), 400);
@@ -39392,7 +39399,7 @@ Generate the title and synopsis now.` }
 
           // Phase 2: JS-driven sparkle trail from card center to breadcrumb
           setTimeout(() => {
-              fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
+              fireSparkleTrail(cardCenterX, cardCenterY, lockedRect.width, lockedRect.height, targetX, targetY);
           }, 200);
 
           await new Promise(r => setTimeout(r, 1200));
@@ -58168,7 +58175,12 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   function resetModeCards() {
     const allCards = document.querySelectorAll('.mode-card');
     allCards.forEach(c => {
-      c.classList.remove('flipped', 'selected', 'dimmed');
+      c.classList.remove('flipped', 'selected', 'dimmed', 'dissipating');
+      c.style.removeProperty('opacity');
+      c.style.removeProperty('transform');
+      c.style.removeProperty('filter');
+      c.style.removeProperty('pointer-events');
+      c.style.removeProperty('animation');
       const sparkleContainer = c.querySelector('.mode-card-sparkles');
       if (sparkleContainer) sparkleContainer.innerHTML = '';
     });
@@ -60326,6 +60338,9 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
           } else if (costEl) {
               costEl.style.display = 'none';
           }
+
+          // Keep mini-cards in sync
+          if (typeof _renderReincMiniCards === 'function') _renderReincMiniCards();
       }
 
       function _addEchoToCorridorSlot(echo, role) {
@@ -60486,8 +60501,89 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
       // Initial render (strip hidden until vault has echoes)
       _renderEchoCorridorStrip();
 
+      // ── Reincarnation Mini-Cards (below character cards) ──
+      var EMPTY_SLOT_COUNT = 3; // placeholder slots when no reincarnations saved
+
+      function _renderReincMiniCards() {
+          const section = document.getElementById('echoReincSection');
+          const container = document.getElementById('echoReincCards');
+          const explainer = document.getElementById('echoReincExplainer');
+          if (!section || !container) return;
+
+          const reincarnations = _loadReincarnations();
+          container.innerHTML = '';
+
+          if (reincarnations.length === 0) {
+              // Empty state — show greyed placeholder cards + explainer
+              if (explainer) {
+                  explainer.textContent = 'Finish a story to save its characters here as reincarnations.';
+              }
+              for (var i = 0; i < EMPTY_SLOT_COUNT; i++) {
+                  var empty = document.createElement('div');
+                  empty.className = 'echo-reinc-card echo-reinc-card-empty';
+                  empty.innerHTML = '<div class="echo-reinc-card-plus">?</div>';
+                  empty.addEventListener('click', function() {
+                      if (typeof showToast === 'function') showToast('Complete a story to extract character souls here.');
+                  });
+                  container.appendChild(empty);
+              }
+              return;
+          }
+
+          // Populated state
+          if (explainer) {
+              explainer.textContent = reincarnations.length === 1
+                  ? 'A soul from a past story awaits. Tap to weave them into this one.'
+                  : reincarnations.length + ' souls from past stories await. Tap to weave them in.';
+          }
+
+          // Render a mini-card for each saved reincarnation
+          const usedIds = _getTypedEchoIds();
+          const corridorIds = new Set(_corridorEchoSlots.map(function(s) { return s.echo.echo_id; }));
+
+          reincarnations.forEach(function(echo) {
+              const card = document.createElement('div');
+              const isActive = usedIds.has(echo.echo_id) || corridorIds.has(echo.echo_id);
+              card.className = 'echo-reinc-card echo-reinc-card-filled' + (isActive ? ' echo-reinc-selected' : '');
+              card.dataset.echoId = echo.echo_id;
+
+              var name = echo.canonical_name || echo.name || 'Unknown';
+              var legendScore = echo.legend_score || 0;
+              var legendHtml = legendScore > 0 ? '<div class="echo-reinc-card-legend">' + _esc(String(legendScore)) + '</div>' : '';
+              var roleHtml = echo.role_archetype
+                  ? '<div class="echo-reinc-card-role">' + _esc(echo.role_archetype.slice(0, 30)) + '</div>'
+                  : '';
+
+              card.innerHTML = '<div class="echo-reinc-card-name">' + _esc(name) + '</div>'
+                  + roleHtml + legendHtml;
+
+              card.addEventListener('click', function() {
+                  if (isActive) {
+                      // Deselect: remove from corridor slots
+                      _corridorEchoSlots = _corridorEchoSlots.filter(function(s) { return s.echo.echo_id !== echo.echo_id; });
+                      _renderEchoCorridorStrip();
+                      _renderReincMiniCards();
+                      return;
+                  }
+                  if (_corridorEchoSlots.length >= MAX_CORRIDOR_SLOTS) {
+                      if (typeof showToast === 'function') showToast('Maximum ' + MAX_CORRIDOR_SLOTS + ' echoes reached.');
+                      return;
+                  }
+                  // Add to corridor as 'supporting character' by default
+                  _addEchoToCorridorSlot(echo, 'supporting character');
+                  _renderReincMiniCards();
+              });
+
+              container.appendChild(card);
+          });
+      }
+
+      // Render on init
+      _renderReincMiniCards();
+
       // Expose corridor functions
       window._initEchoCorridorStrip = _renderEchoCorridorStrip;
+      window._renderReincMiniCards = _renderReincMiniCards;
       window._collectCorridorEchoes = _collectCorridorEchoes;
       window._clearCorridorEchoSlots = _clearCorridorEchoSlots;
       Object.defineProperty(window, '_corridorEchoSlots', { get: () => _corridorEchoSlots });

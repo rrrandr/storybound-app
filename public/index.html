@@ -27,7 +27,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260310b3">
+  <link rel="stylesheet" href="/styles.css?v=20260310b8">
 </head>
 
 <body class="booting">
@@ -645,6 +645,7 @@
 <div id="app" class="hidden">
 
   <div id="modeSelect" class="screen">
+    <p class="mode-title">Will you enter a world of danger and decadence alone, or with a liaison?</p>
     <div class="mode-card-row" id="modeCardContainer">
         <div class="mode-card" data-mode="solo">
             <div class="mode-card-inner">
@@ -840,6 +841,14 @@
         </div>
     </div>
     </div><!-- /.character-cards-row -->
+
+    <!-- Reincarnation Echoes — mini-card row below character cards -->
+    <div class="echo-reinc-section" id="echoReincSection">
+        <div class="echo-reinc-explainer" id="echoReincExplainer">
+            Souls you've saved from past stories can be summoned here.
+        </div>
+        <div class="echo-reinc-cards" id="echoReincCards"></div>
+    </div>
 
     <!-- Character Section Continue Button (bottom center) -->
     <div class="character-continue-wrapper">
@@ -1726,8 +1735,8 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260310b3"></script>
-<script src="/card-designer.js?v=20260310b3"></script>
+<script src="/app.js?v=20260310b8"></script>
+<script src="/card-designer.js?v=20260310b8"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">
