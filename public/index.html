@@ -27,10 +27,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260310b1">
+  <link rel="stylesheet" href="/styles.css?v=20260310b3">
 </head>
 
 <body class="booting">
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SPLASH — Masked gala intro, fades to reveal app                         -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="splashOverlay" class="splash-overlay">
+  <img id="splashGala" class="splash-img" src="/assets/splash/gala.jpg" alt="">
+  <img id="splashTitle" class="splash-img splash-title" src="/assets/splash/gala-title.jpg" alt="">
+</div>
 
 <div id="auth-panel" class="hidden">
   <div id="auth-title" style="color:gold; font-family:'Lora',serif; font-size:0.95em; text-align:center; margin-bottom:2px;">Sign In</div>
@@ -507,6 +515,17 @@
 
     <!-- Step away -->
     <button id="fatePausesStepAway" class="fate-pauses-step-away">Step away for now</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- FORTUNE TURN DISCLOSURE — One-time first-use consent gate                  -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="fortuneDisclosureModal" class="overlay hidden" style="z-index:10070;">
+  <div class="box fortune-disclosure-box">
+    <div class="fortune-disclosure-icon">✧</div>
+    <p class="fortune-disclosure-text">Every new scene draws on Fortune.<br>One Fortune is sacrificed each turn.</p>
+    <button id="fortuneDisclosureConsent" class="fortune-disclosure-btn">I Consent</button>
   </div>
 </div>
 
@@ -1190,6 +1209,11 @@
                 <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Begin Story</button>
             </div>
             <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
+            <button id="beginFortuneBtn" class="begin-fortune-btn" onclick="window.openFortunePurchaseModal()">
+                <span class="begin-fortune-label">Fortunes</span>
+                <span class="begin-fortune-star">✧</span>
+                <span id="beginFortuneCount" class="begin-fortune-count">0</span>
+            </button>
         </div>
     </div>
 
@@ -1395,6 +1419,13 @@
 
     <!-- Main story content (hidden during cover) -->
     <div id="storyContent" class="story-content hidden">
+
+    <!-- Fortune HUD — persistent during story play -->
+    <div id="fortuneHud" class="fortune-hud" title="Fortune fuels your story.&#10;One Fortune advances the narrative by one scene.">
+      <span class="fortune-hud-label">Fortunes</span>
+      <span class="fortune-hud-star">✧</span>
+      <span id="fortuneHudCount" class="fortune-hud-count">0</span>
+    </div>
 
     <div id="billingBanner" style="display:none;"></div>
 
@@ -1695,8 +1726,8 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260310b1"></script>
-<script src="/card-designer.js?v=20260310b1"></script>
+<script src="/app.js?v=20260310b3"></script>
+<script src="/card-designer.js?v=20260310b3"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">

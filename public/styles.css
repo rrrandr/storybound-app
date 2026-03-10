@@ -3,6 +3,42 @@ body.booting .screen {
   display: none !important;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* SPLASH — Masked gala intro overlay                                        */
+/* ══════════════════════════════════════════════════════════════════════════ */
+.splash-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.splash-overlay.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.2s ease-in-out;
+}
+.splash-overlay.splash-done {
+    display: none;
+}
+.splash-img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+.splash-title {
+    opacity: 0;
+    transition: opacity 1s ease-in;
+}
+.splash-title.visible {
+    opacity: 1;
+}
+
 /* GLOBAL VARS */
 :root {
     --bg1: #0a0a0a; --bg2: #121212; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(10,10,10,.8);
@@ -13120,7 +13156,7 @@ textarea.fate-field {
     right: 0;
     padding: 0;
     justify-content: flex-start;
-    overflow: hidden;
+    overflow: visible;
 }
 
 /* Pressure zoomed: flavor grid pulled up to sit tight under desc */
@@ -14346,6 +14382,72 @@ body.corridor-mode .sb-grid.corridor-section {
     font-size: 0.85em;
     color: var(--text-secondary);
     opacity: 0.8;
+}
+
+/* Begin Story — Fortune counter button */
+.begin-fortune-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    margin-top: 14px;
+    padding: 7px 22px;
+    background: url('/assets/ui/Black-Gold-120x36.png') center/100% 100% no-repeat, #0a0a0a;
+    border: none;
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    color: var(--gold, #c8a84e);
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(252, 246, 186, 0.12),
+        0 0 6px rgba(191, 149, 63, 0.15);
+}
+.begin-fortune-btn:hover {
+    filter: brightness(1.15);
+}
+.begin-fortune-label {
+    font-variant: small-caps;
+    opacity: 0.8;
+}
+.begin-fortune-star {
+    font-size: 1.05em;
+    opacity: 0.9;
+}
+.begin-fortune-count {
+    font-weight: 700;
+    min-width: 1.2em;
+    text-align: center;
+}
+
+/* –1 Fortune float feedback (begin story context) */
+.begin-fortune-feedback {
+    position: absolute;
+    left: 50%;
+    bottom: 100%;
+    transform: translateX(-50%);
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    color: var(--gold, #c8a84e);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    animation: fortune-float 900ms ease-out forwards;
+}
+
+/* Count-up pulse on fortune numbers */
+.begin-fortune-count.counting-up,
+.fortune-hud-count.counting-up,
+#fortuneBalanceDisplay.counting-up,
+#fortuneModalBalance.counting-up {
+    animation: fortune-count-pulse 120ms ease-out;
+}
+@keyframes fortune-count-pulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.35); color: #fff; }
+    100% { transform: scale(1); }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -17220,53 +17322,96 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 49.70cqi; left: 32.74cqi;
 }
 
-/* ── Story Pull (Pressure) — In-grid flipped front positions (cqi-locked) ── */
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+/* ── Story Pull (Pressure) — Locked text positions (cqi, grid + portal) ── */
+/* Comma-grouped: #pressureGrid for grid context, #sbZoomPortal for zoom portal.
+   Same cqi values in both — transform: scale() handles visual scaling. */
+
+/* ── PowerControl ── */
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors {
     right: auto; bottom: auto;
-    top: 100.3cqi; left: 34.82cqi;
+    top: 8.33cqi; left: 48.21cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 68.45cqi; left: 27.08cqi;
+    top: 35.71cqi; left: 22.02cqi; font-size: 5.95cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="Political"] {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 7.14cqi; top: 153.27cqi; left: 23.21cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    right: auto; bottom: auto;
+    top: 78.27cqi; left: 25.6cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="Political"],
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors > button.sb-flavor-btn[data-val="Political"] {
     right: auto; bottom: auto;
     top: -0.89cqi; left: -4.17cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+
+/* ── EscapePursuit ── */
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
-    top: 73.81cqi; left: 33.63cqi;
+    top: 33.63cqi; left: 27.98cqi; font-size: 5.95cqi; width: 43.45cqi;
 }
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors {
     right: auto; bottom: auto;
-    top: 32.74cqi; left: 22.92cqi;
+    top: 8.33cqi; left: 48.81cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 7.14cqi;
 }
 
-/* ── Story Pull (Pressure) — Zoomed front content (cqi-locked) ── */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+/* ── DesireObsession ── */
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors {
     right: auto; bottom: auto;
-    top: 32.44cqi; left: 12.2cqi;
+    top: 9.52cqi; left: 49.4cqi;
 }
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 37.2cqi; left: 24.11cqi; font-size: 5.95cqi; width: 53.57cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 8.33cqi; left: 15.77cqi; top: 152.68cqi;
+}
+
+/* ── Survival ── */
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-card-arc-flavors {
+    right: auto; bottom: auto;
+    top: 8.93cqi; left: 48.81cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: 30.95cqi; left: 19.05cqi; font-size: 5.95cqi; width: 60.71cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 7.14cqi; top: 152.98cqi; left: 37.5cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
+    right: auto; bottom: auto;
+    top: 76.19cqi; left: 33.33cqi;
+}
+
+/* ── Pressure zoom structural overrides (size only, not position) ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.pressure-front-flavors {
     width: 53.57cqi; font-size: 10.71cqi; height: 9.52cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.87cqi; left: 23.81cqi;
-}
-/* EscapePursuit zoomed: title uses default bottom positioning */
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 31.55cqi; left: 21.43cqi;
-}
-/* DesireObsession zoomed: title uses default bottom positioning */
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: 33.93cqi; left: 24.70cqi;
-}
-/* Survival zoomed: title uses default bottom positioning */
-#sbZoomPortal > div.sb-card.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
 }
 /* Zoom content containers (preserved from previous calibration) */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > div.sb-zoom-content {
@@ -17342,77 +17487,68 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 44.94cqi; left: 38.69cqi; font-size: 9.52cqi;
 }
 
-/* ── Tone — Flipped front positions (cqi-locked, Card Designer output) ──
-   !important required: base rule at line ~12250 uses descendant selectors
-   with #toneGrid ID; despite lower specificity (0,1,3,0 vs 0,1,9,4),
-   something in the cascade prevents override without !important.           */
+/* ── Tone — Locked text positions (cqi, grid + portal) ──
+   Comma-grouped: same cqi values in both contexts.
+   !important required: base rule uses #toneGrid ID descendant selectors.  */
 
 /* Mythic */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto !important; bottom: auto !important;
     font-size: 9.52cqi !important; top: 150.89cqi !important; left: 34.52cqi !important;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto !important; bottom: auto !important; top: -20.83cqi !important; left: 0cqi !important;
 }
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto !important; bottom: auto !important;
-    top: 153.27cqi !important; left: 36.31cqi !important;
-}
+/* Mythic — portal structural (zoom adds font-size/width/position for desc) */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: relative !important; right: auto !important; bottom: auto !important;
-    font-size: 5.06cqi !important; width: 67.26cqi !important; top: -20.54cqi !important; left: 0cqi !important;
+    position: relative !important; font-size: 5.06cqi !important; width: 67.26cqi !important;
 }
 
 /* Dark */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto !important; bottom: auto !important;
     font-size: 11.9cqi !important; top: 149.4cqi !important; left: 37.8cqi !important;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto !important; bottom: auto !important; top: -21.43cqi !important; left: -0.6cqi !important;
 }
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto !important; bottom: auto !important;
-    top: 152.98cqi !important; left: 38.39cqi !important; font-size: 7.44cqi !important;
-}
+/* Dark — portal structural */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: relative !important; right: auto !important; bottom: auto !important;
-    top: -20.24cqi !important; left: 0cqi !important; font-size: 5.65cqi !important; width: 67.86cqi !important;
+    position: relative !important; font-size: 5.65cqi !important; width: 67.86cqi !important;
 }
 
 /* WryConfession */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto !important; bottom: auto !important;
     font-size: 11.9cqi !important; top: 150cqi !important;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto !important; bottom: auto !important; top: -22.32cqi !important; left: 0cqi !important;
 }
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto !important; bottom: auto !important;
-    top: 153.57cqi !important; left: 39.58cqi !important; font-size: 7.44cqi !important;
-}
+/* WryConfession — portal structural */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: relative !important; right: auto !important; bottom: auto !important;
-    top: -20.83cqi !important; left: 0cqi !important; font-size: 5.65cqi !important; width: 65.77cqi !important;
+    position: relative !important; font-size: 5.65cqi !important; width: 65.77cqi !important;
 }
 
 /* Earnest */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto !important; bottom: auto !important;
     font-size: 9.52cqi !important; top: 152.08cqi !important; left: 34.52cqi !important;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto !important; bottom: auto !important; top: -21.43cqi !important; left: 0cqi !important;
 }
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto !important; bottom: auto !important;
-    top: 154.46cqi !important; left: 35.71cqi !important;
-}
+/* Earnest — portal structural */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: relative !important; right: auto !important; bottom: auto !important;
-    font-size: 5.65cqi !important;
+    position: relative !important; font-size: 5.65cqi !important;
 }
 
 /* ── Dynamic — Back titles (cqi-locked) ── */
@@ -17441,96 +17577,99 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 50.30cqi; left: 17.86cqi;
 }
 
-/* ── Polarity (Dynamic) — In-grid flipped front positions (cqi-locked) ── */
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+/* ── Polarity (Dynamic) — Locked text positions (cqi, grid + portal) ── */
+/* Comma-grouped: #dynamicGrid for grid, #sbZoomPortal for zoom portal.
+   Same cqi values — transform: scale() handles visual scaling.          */
+
+/* ── Enemies ── */
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
     width: 71.13cqi; font-size: 7.14cqi; height: 161.61cqi;
     top: -20.24cqi; left: 0.6cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
     font-size: 7.14cqi; left: 21.73cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+
+/* ── Friends ── */
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
     top: -19.64cqi; left: -0.6cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
     font-size: 7.14cqi; left: 22.62cqi; top: 153.27cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+/* Friends — portal structural (zoom adds font-size/width for desc) */
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    font-size: 5.36cqi; width: 51.49cqi;
+}
+
+/* ── SecretIdentity ── */
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
     top: -19.05cqi; left: 1.19cqi; font-size: 6.55cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+/* SecretIdentity — portal structural (zoom adds width for desc, title position) */
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    width: 64.58cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    font-size: 8.04cqi; top: 153.87cqi; left: 20.83cqi;
+}
+
+/* ── Proximity ── */
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
     top: -20.24cqi; left: 0cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
     font-size: 7.14cqi; left: 24.4cqi; top: 152.98cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+/* Proximity — portal structural (zoom adds font-size/width for desc) */
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    font-size: 5.65cqi; width: 70.24cqi;
+}
+
+/* ── SecondChance ── */
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
     top: -20.83cqi; left: 0.6cqi; font-size: 7.74cqi; width: 79.46cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
     font-size: 7.14cqi; left: 33.04cqi; top: 153.27cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+
+/* ── Forbidden ── */
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto;
     top: -20.83cqi; left: 0cqi;
 }
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title,
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; bottom: auto;
     top: 153.57cqi; left: 27.68cqi; font-size: 7.14cqi;
 }
-
-/* ── Polarity (Dynamic) — Zoomed front content (cqi-locked) ── */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.57cqi; left: 18.15cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 154.46cqi; left: 17.86cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    font-size: 5.36cqi; width: 51.49cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -20.83cqi; left: 0.3cqi; font-size: 5.65cqi; width: 64.58cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    font-size: 8.04cqi; top: 153.87cqi; left: 20.83cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.57cqi; left: 16.07cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    font-size: 5.65cqi; width: 70.24cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.87cqi; left: 28.87cqi;
-}
+/* Forbidden — portal structural (zoom adds font-size/width for desc) */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -21.13cqi; left: 0.3cqi; font-size: 5.36cqi; width: 65.48cqi;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 153.57cqi; left: 21.73cqi;
+    font-size: 5.36cqi; width: 65.48cqi;
 }
 
 /* ── Length — Taste front desc ── */
@@ -18095,4 +18234,103 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     .echo-corridor-label {
         font-size: 0.6em;
     }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* FORTUNE HUD — Persistent indicator during story play                      */
+/* ══════════════════════════════════════════════════════════════════════════ */
+.fortune-hud {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 0;
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    color: var(--gold, #c8a84e);
+    letter-spacing: 0.08em;
+    background: linear-gradient(180deg, rgba(10,10,10,0.95) 60%, transparent);
+    cursor: default;
+}
+.fortune-hud-label {
+    opacity: 0.7;
+    font-variant: small-caps;
+}
+.fortune-hud-star {
+    font-size: 1.1em;
+    opacity: 0.9;
+}
+.fortune-hud-count {
+    font-weight: 700;
+    min-width: 1.4em;
+    text-align: center;
+}
+
+/* –1 Fortune float feedback */
+.fortune-hud-feedback {
+    position: absolute;
+    right: calc(50% - 60px);
+    top: 0;
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    color: var(--gold, #c8a84e);
+    opacity: 0;
+    pointer-events: none;
+    white-space: nowrap;
+    animation: fortune-float 900ms ease-out forwards;
+}
+@keyframes fortune-float {
+    0%   { opacity: 0; transform: translateY(0); }
+    15%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-22px); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════ */
+/* FORTUNE DISCLOSURE MODAL — First-use consent gate                         */
+/* ══════════════════════════════════════════════════════════════════════════ */
+#fortuneDisclosureModal {
+    background: rgba(0, 0, 0, 0.80);
+}
+.fortune-disclosure-box {
+    text-align: center;
+    max-width: 380px;
+    padding: 36px 32px 28px;
+    border: 1px solid var(--gold, #c8a84e);
+    background: #0e0e0e;
+}
+.fortune-disclosure-icon {
+    font-size: 2.4em;
+    color: var(--gold, #c8a84e);
+    margin-bottom: 16px;
+    opacity: 0.85;
+}
+.fortune-disclosure-text {
+    font-family: 'Lora', serif;
+    font-size: 1.05em;
+    line-height: 1.65;
+    color: var(--gold, #c8a84e);
+    margin-bottom: 24px;
+    letter-spacing: 0.02em;
+}
+.fortune-disclosure-btn {
+    background: url('/assets/ui/Black-Gold-320x88.png') center/100% 100% no-repeat, #0a0a0a;
+    border: none;
+    color: #d4a843;
+    -webkit-text-fill-color: #d4a843;
+    font-family: 'Lora', serif;
+    font-size: 1em;
+    font-weight: 600;
+    padding: 12px 40px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(252, 246, 186, 0.12),
+        0 0 6px rgba(191, 149, 63, 0.15);
+}
+.fortune-disclosure-btn:hover {
+    filter: brightness(1.15);
 }

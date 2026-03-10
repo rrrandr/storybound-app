@@ -785,6 +785,14 @@
             overflowOverrides.push(container);
           }
         });
+
+        // Suppress gleam clip layers — they sit at z-index:10 and paint above
+        // zoom-content (z-index:1) / zoom-flavor-arc (z-index:2), hiding the
+        // design outlines and corner handles behind the gleam.
+        card.querySelectorAll('.card-gleam-clip').forEach(clip => {
+          forceStyle(clip, 'display', 'none');
+          overflowOverrides.push(clip);
+        });
       }
     });
 
@@ -826,9 +834,10 @@
     });
     handles.length = 0;
 
-    // Restore overflow on containers we overrode
+    // Restore overflow on containers we overrode, and display on gleam clips
     overflowOverrides.forEach(el => {
       el.style.removeProperty('overflow');
+      el.style.removeProperty('display');
     });
     overflowOverrides.length = 0;
 

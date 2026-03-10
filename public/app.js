@@ -1,3 +1,27 @@
+// ══════════════════════════════════════════════════════════════════════════
+// SPLASH — Masked gala intro sequence
+// Runs immediately on script load. Boot proceeds behind the overlay.
+// Timeline: 0s show gala → 2s fade in title → 5s fade out overlay.
+// ══════════════════════════════════════════════════════════════════════════
+(function initSplash() {
+    const overlay = document.getElementById('splashOverlay');
+    if (!overlay) return;
+
+    const title = document.getElementById('splashTitle');
+    // 2s: fade in title
+    setTimeout(() => { if (title) title.classList.add('visible'); }, 2000);
+    // 5s: fade out entire overlay
+    setTimeout(() => {
+        overlay.classList.add('fade-out');
+        // After transition ends, remove from flow
+        overlay.addEventListener('transitionend', () => {
+            overlay.classList.add('splash-done');
+        }, { once: true });
+        // Safety fallback if transitionend never fires
+        setTimeout(() => { overlay.classList.add('splash-done'); }, 1500);
+    }, 5000);
+})();
+
 // Wait for Supabase SDK to be available before using it
 async function waitForSupabaseSDK(timeoutMs = 2000) {
   const start = Date.now();
@@ -414,6 +438,7 @@ window.config = window.config || {
     state.subscriptionTier = profile.subscription_tier || (state.subscribed ? 'storied' : null);
     state.hasPass = !!profile.has_storypass;
     state.fortunes = (profile.subscription_fortunes || 0) + (profile.purchased_fortunes || 0);
+    state.hasSeenFortuneTurnDisclosure = localStorage.getItem('sb_fortune_disclosure') === '1';
     if (window.updateFortuneDisplay) window.updateFortuneDisplay();
     state.romancePreferences = Array.isArray(profile.romance_preferences) ? profile.romance_preferences : [];
     state.romanceVector = computeRomanceVector(state.romancePreferences);
@@ -429,6 +454,20 @@ window.config = window.config || {
     activateKeyholeMarkIfEligible();
     decayFateResonanceCrossSession();
     console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.tier, '| Keyhole:', state.keyhole?.marked, '| Fortunes:', state.fortunes, '| Resonance:', getFateResonanceState());
+
+    // Post-checkout fortune count-up animation (Stripe redirect → page reload)
+    try {
+        const preCheckout = sessionStorage.getItem('sb_pre_checkout_fortunes');
+        if (preCheckout !== null) {
+            sessionStorage.removeItem('sb_pre_checkout_fortunes');
+            const oldVal = parseInt(preCheckout, 10) || 0;
+            const newVal = state.fortunes || 0;
+            if (newVal > oldVal) {
+                // Delay slightly so DOM is ready
+                setTimeout(() => animateFortuneCountUp(oldVal, newVal), 600);
+            }
+        }
+    } catch(e) {}
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -15245,6 +15284,8 @@ Return ONLY valid JSON:
       state.turnCount = 0;
       state.storyId = null;
       state.storypassFortunes = 0; // Story-locked fortunes expire on story change
+      state.is_starter_story = false;       // Must clear — starter bypass must not leak to custom stories
+      state._starterStoryFreeInput = false;
       state._loggedStoryStart = false;
       state._loggedScene3 = false;
       state._loggedScene6 = false;
@@ -24763,6 +24804,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       _closeFatePausesModal(false);
   });
 
+  // ── Fortune Turn Disclosure — consent handler ──
+  document.getElementById('fortuneDisclosureConsent')?.addEventListener('click', () => {
+      state.hasSeenFortuneTurnDisclosure = true;
+      localStorage.setItem('sb_fortune_disclosure', '1');
+      const modal = $('fortuneDisclosureModal');
+      if (modal) modal.classList.add('hidden');
+      // Re-trigger submit so the player's turn proceeds
+      $('submitBtn')?.click();
+  });
+
   // Expose for external wiring
   window._checkPersistedFatePausesTurn = _checkPersistedFatePausesTurn;
   window._closeFatePausesModal = _closeFatePausesModal;
@@ -24771,6 +24822,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function completePurchase() {
       // Clear any stuck toasts first
       clearToasts();
+
+      // Snapshot pre-purchase fortunes for count-up animation
+      const _prePurchaseFortunes = state.fortunes || 0;
 
       const pm = document.getElementById('payModal');
       if (pm) pm.classList.add('hidden');
@@ -24935,6 +24989,12 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (fpModal && !fpModal.classList.contains('hidden')) fpModal.classList.add('hidden');
           state._fatePausesOpen = false;
           _resumePendingTurn();
+      }
+
+      // Fortune count-up animation (covers StoryPass storypassFortunes + any global changes)
+      const _postPurchaseFortunes = state.fortunes || 0;
+      if (_postPurchaseFortunes > _prePurchaseFortunes) {
+          animateFortuneCountUp(_prePurchaseFortunes, _postPurchaseFortunes);
       }
   }
 
@@ -28409,16 +28469,79 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // Update the fortune display UI
   function updateFortuneDisplay() {
+      const f = state.fortunes || 0;
       const display = $('coverCreditDisplay');
       if (display) {
-          const f = state.fortunes || 0;
           display.textContent = `${f} Fortune${f !== 1 ? 's' : ''} remaining`;
       }
       // Also update the persistent fortune counter in game UI
       const gameDisplay = $('fortuneBalanceDisplay');
       if (gameDisplay) {
-          gameDisplay.textContent = state.fortunes || 0;
+          gameDisplay.textContent = f;
       }
+      // Fortune HUD (persistent during story play)
+      const hudCount = $('fortuneHudCount');
+      if (hudCount) {
+          hudCount.textContent = f;
+      }
+      // Begin Story fortune counter
+      const beginCount = $('beginFortuneCount');
+      if (beginCount) {
+          beginCount.textContent = f;
+      }
+  }
+
+  // Show floating "–1 Fortune" feedback near the HUD
+  function showFortuneSacrificeFeedback() {
+      const hud = $('fortuneHud');
+      if (!hud) return;
+      const fb = document.createElement('span');
+      fb.className = 'fortune-hud-feedback';
+      fb.textContent = '–1 Fortune';
+      hud.appendChild(fb);
+      fb.addEventListener('animationend', () => fb.remove());
+  }
+
+  // Show floating "–1 Fortune" feedback under Begin Story button
+  function showBeginFortuneSacrificeFeedback() {
+      const btn = $('beginFortuneBtn');
+      if (!btn) return;
+      const fb = document.createElement('span');
+      fb.className = 'begin-fortune-feedback';
+      fb.textContent = '–1 Fortune';
+      btn.appendChild(fb);
+      fb.addEventListener('animationend', () => fb.remove());
+  }
+
+  // Animate fortune count from oldVal up to newVal with stepping
+  function animateFortuneCountUp(oldVal, newVal) {
+      if (newVal <= oldVal) return;
+      const targets = ['beginFortuneCount', 'fortuneBalanceDisplay', 'fortuneHudCount', 'fortuneModalBalance'];
+      const delta = newVal - oldVal;
+      const stepDuration = Math.min(80, 1200 / delta); // cap total ~1.2s
+      let current = oldVal;
+      const interval = setInterval(() => {
+          current++;
+          targets.forEach(id => {
+              const el = $(id);
+              if (el) {
+                  el.textContent = current;
+                  el.classList.remove('counting-up');
+                  void el.offsetWidth; // reflow to re-trigger animation
+                  el.classList.add('counting-up');
+              }
+          });
+          if (current >= newVal) {
+              clearInterval(interval);
+              // Clean up animation class after last pulse
+              setTimeout(() => {
+                  targets.forEach(id => {
+                      const el = $(id);
+                      if (el) el.classList.remove('counting-up');
+                  });
+              }, 150);
+          }
+      }, stepDuration);
   }
 
   // Check if prompt contains blocked terms
@@ -28504,7 +28627,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function purchaseFortunePack(packSize, priceLabel) {
       if (window._devBypass) {
         console.log(`%c[DEV] Faking fortune purchase: +${packSize}`, 'color: #ffd700');
-        state.fortunes = (state.fortunes || 0) + packSize;
+        const oldFortunes = state.fortunes || 0;
+        state.fortunes = oldFortunes + packSize;
         // Grant a story credit (buying fortunes unlocks another original story)
         grantFreeCustomStoryCredit('fortune_purchase');
         closeFortunePurchaseModal();
@@ -28515,6 +28639,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
             if (window.onPaywallDismiss) window.onPaywallDismiss();
         }
         if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+        animateFortuneCountUp(oldFortunes, state.fortunes);
         showToast(`+${packSize} Fortunes added (dev mode)`);
         return;
       }
@@ -34496,18 +34621,33 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         // Clear corridor selection
         corridorSelections.delete(downstreamStage);
 
+        // Reset Destiny's Choice flags for downstream stages
+        if (downstreamStage === 'storybeau') archetypeSelectedViaDestiny = false;
+        if (downstreamStage === 'pressure') pressureSelectedViaDestiny = false;
+        if (downstreamStage === 'dynamic') dynamicSelectedViaDestiny = false;
+
         // Restore ALL cards in stored corridor rows (dissipated + selected + dissolved)
         const stored = corridorRowStore.get(i);
         if (stored) {
           stored.elements.forEach(el => {
             el.querySelectorAll('.sb-card').forEach(card => {
-              card.classList.remove('dissipating', 'selected', 'flipped', 'dissolving-to-breadcrumb');
+              card.classList.remove('dissipating', 'selected', 'flipped', 'dissolving-to-breadcrumb', 'dissolving', 'destiny-chosen');
               card.style.opacity = '';
               card.style.visibility = '';
+              card.style.display = '';
               card.style.animation = '';
               card.style.animationFillMode = '';
               card.style.pointerEvents = '';
               card.style.filter = '';
+              card.style.transform = '';
+              card.style.transition = '';
+              card.style.zIndex = '';
+              card.style.position = '';
+              card.style.left = '';
+              card.style.top = '';
+              card.style.width = '';
+              card.style.height = '';
+              card.style.margin = '';
             });
           });
         }
@@ -35578,13 +35718,23 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
             // - selected cards (visibility:hidden set by animateCardToBreadcrumb)
             // - dissolving cards (dissolving-to-breadcrumb class with CSS animation)
             el.querySelectorAll('.sb-card').forEach(card => {
-              card.classList.remove('dissipating', 'selected', 'flipped', 'dissolving-to-breadcrumb');
+              card.classList.remove('dissipating', 'selected', 'flipped', 'dissolving-to-breadcrumb', 'dissolving', 'destiny-chosen');
               card.style.opacity = '';
               card.style.visibility = '';
+              card.style.display = '';
               card.style.animation = '';
               card.style.animationFillMode = '';
               card.style.pointerEvents = '';
               card.style.filter = '';
+              card.style.transform = '';
+              card.style.transition = '';
+              card.style.zIndex = '';
+              card.style.position = '';
+              card.style.left = '';
+              card.style.top = '';
+              card.style.width = '';
+              card.style.height = '';
+              card.style.margin = '';
             });
           }
         });
@@ -35616,8 +35766,13 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
             }
         }
 
-        // DYNAMIC MOUNT: Re-inject Destiny card if removed during animation
+        // DYNAMIC MOUNT: Restore group labels + re-inject Destiny card
         if (stage === 'dynamic') {
+            // Restore group labels that may have been hidden during Destiny animation
+            document.querySelectorAll('#dynamicGrid .dynamic-group-label').forEach(lbl => {
+                lbl.style.opacity = '';
+                lbl.style.transition = '';
+            });
             if (!document.getElementById('dynamicDestinyChoiceCard') && typeof window.injectDynamicDestinyCard === 'function') {
                 window.injectDynamicDestinyCard();
             }
@@ -38769,10 +38924,12 @@ Generate the title and synopsis now.` }
           chosenCard.style.margin = '0';
       }
 
-      // Clean up dissolved cards from DOM (card is now position:fixed, immune to reflow)
-      grid.querySelectorAll('.dissolving').forEach(el => el.remove());
+      // Hide dissolved cards (NOT remove — they must survive for back-navigation restore)
+      grid.querySelectorAll('.dissolving').forEach(el => {
+          el.style.display = 'none';
+      });
 
-      // STEP 9: Sparkle teleport from corridor center to breadcrumb
+      // STEP 9: Sparkle teleport — dissolution, JS-driven travel, convergence
       if (chosenCard && targetX !== undefined) {
           const cardRect = chosenCard.getBoundingClientRect();
           const cardCenterX = cardRect.left + cardRect.width / 2;
@@ -38795,39 +38952,15 @@ Generate the title and synopsis now.` }
               }, i * 25);
           }
 
-          // Phase 2: Traveling sparkles arc from card center to breadcrumb
+          // Phase 2: JS-driven sparkle trail from card center to breadcrumb
           setTimeout(() => {
-              const travelCount = 8 + Math.floor(Math.random() * 4);
-              for (let i = 0; i < travelCount; i++) {
-                  setTimeout(() => {
-                      const sparkle = document.createElement('div');
-                      sparkle.className = 'traveling-sparkle';
-                      const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
-                      const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
-                      const sx = cardCenterX + offX;
-                      const sy = cardCenterY + offY;
-                      const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
-                      const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
-                      sparkle.style.cssText = `
-                          left: ${sx}px; top: ${sy}px;
-                          --target-x: ${targetX - sx}px;
-                          --target-y: ${targetY - sy}px;
-                          --arc-x: ${midX - sx}px;
-                          --arc-y: ${midY - sy}px;
-                      `;
-                      document.body.appendChild(sparkle);
-                      setTimeout(() => sparkle.remove(), 600);
-                  }, i * 45);
-              }
+              fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
           }, 200);
 
-          // Phase 3: Convergence sparkles + breadcrumb creation
-          await new Promise(r => setTimeout(r, 700));
-
-          // Hide the card fully
+          await new Promise(r => setTimeout(r, 1200));
           chosenCard.style.opacity = '0';
 
-          // Convergence sparkles at breadcrumb position
+          // Phase 3: Convergence sparkles at breadcrumb
           for (let i = 0; i < 6; i++) {
               const sparkle = document.createElement('div');
               sparkle.className = 'convergence-sparkle';
@@ -39013,10 +39146,12 @@ Generate the title and synopsis now.` }
           chosenCard.style.margin = '0';
       }
 
-      // Remove dissolved cards from DOM
-      grid.querySelectorAll('.dissolving').forEach(el => el.remove());
+      // Hide dissolved cards (NOT remove — they must survive for back-navigation restore)
+      grid.querySelectorAll('.dissolving').forEach(el => {
+          el.style.display = 'none';
+      });
 
-      // STEP 9: Sparkle teleport to breadcrumb
+      // STEP 9: Sparkle teleport — dissolution, JS-driven travel, convergence
       if (chosenCard && targetX !== undefined) {
           const cardRect = chosenCard.getBoundingClientRect();
           const cardCenterX = cardRect.left + cardRect.width / 2;
@@ -39039,37 +39174,15 @@ Generate the title and synopsis now.` }
               }, i * 25);
           }
 
-          // Phase 2: Traveling sparkles
+          // Phase 2: JS-driven sparkle trail from card center to breadcrumb
           setTimeout(() => {
-              const travelCount = 8 + Math.floor(Math.random() * 4);
-              for (let i = 0; i < travelCount; i++) {
-                  setTimeout(() => {
-                      const sparkle = document.createElement('div');
-                      sparkle.className = 'traveling-sparkle';
-                      const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
-                      const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
-                      const sx = cardCenterX + offX;
-                      const sy = cardCenterY + offY;
-                      const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
-                      const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
-                      sparkle.style.cssText = `
-                          left: ${sx}px; top: ${sy}px;
-                          --target-x: ${targetX - sx}px;
-                          --target-y: ${targetY - sy}px;
-                          --arc-x: ${midX - sx}px;
-                          --arc-y: ${midY - sy}px;
-                      `;
-                      document.body.appendChild(sparkle);
-                      setTimeout(() => sparkle.remove(), 600);
-                  }, i * 45);
-              }
+              fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
           }, 200);
 
-          // Phase 3: Convergence sparkles + breadcrumb
-          await new Promise(r => setTimeout(r, 700));
-
+          await new Promise(r => setTimeout(r, 1200));
           chosenCard.style.opacity = '0';
 
+          // Phase 3: Convergence sparkles at breadcrumb
           for (let i = 0; i < 6; i++) {
               const sparkle = document.createElement('div');
               sparkle.className = 'convergence-sparkle';
@@ -39249,10 +39362,12 @@ Generate the title and synopsis now.` }
           chosenCard.style.margin = '0';
       }
 
-      // Remove dissolved cards
-      dynamicGrid.querySelectorAll('.dissolving').forEach(el => el.remove());
+      // Hide dissolved cards (NOT remove — they must survive for back-navigation restore)
+      dynamicGrid.querySelectorAll('.dissolving').forEach(el => {
+          el.style.display = 'none';
+      });
 
-      // STEP 9: Sparkle teleport
+      // STEP 9: Sparkle teleport — dissolution, JS-driven travel, convergence
       if (chosenCard && targetX !== undefined) {
           const cardRect = chosenCard.getBoundingClientRect();
           const cardCenterX = cardRect.left + cardRect.width / 2;
@@ -39261,6 +39376,7 @@ Generate the title and synopsis now.` }
           chosenCard.style.transition = 'opacity 0.3s ease-out';
           chosenCard.style.opacity = '0.2';
 
+          // Phase 1: Dissolution sparkles from card surface
           const dissolutionCount = 14 + Math.floor(Math.random() * 6);
           for (let i = 0; i < dissolutionCount; i++) {
               setTimeout(() => {
@@ -39274,34 +39390,15 @@ Generate the title and synopsis now.` }
               }, i * 25);
           }
 
+          // Phase 2: JS-driven sparkle trail from card center to breadcrumb
           setTimeout(() => {
-              const travelCount = 8 + Math.floor(Math.random() * 4);
-              for (let i = 0; i < travelCount; i++) {
-                  setTimeout(() => {
-                      const sparkle = document.createElement('div');
-                      sparkle.className = 'traveling-sparkle';
-                      const offX = (Math.random() - 0.5) * cardRect.width * 0.5;
-                      const offY = (Math.random() - 0.5) * cardRect.height * 0.5;
-                      const sx = cardCenterX + offX;
-                      const sy = cardCenterY + offY;
-                      const midX = (sx + targetX) / 2 + (Math.random() - 0.5) * 80;
-                      const midY = Math.min(sy, targetY) - 40 - Math.random() * 60;
-                      sparkle.style.cssText = `
-                          left: ${sx}px; top: ${sy}px;
-                          --target-x: ${targetX - sx}px;
-                          --target-y: ${targetY - sy}px;
-                          --arc-x: ${midX - sx}px;
-                          --arc-y: ${midY - sy}px;
-                      `;
-                      document.body.appendChild(sparkle);
-                      setTimeout(() => sparkle.remove(), 600);
-                  }, i * 45);
-              }
+              fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
           }, 200);
 
-          await new Promise(r => setTimeout(r, 700));
+          await new Promise(r => setTimeout(r, 1200));
           chosenCard.style.opacity = '0';
 
+          // Phase 3: Convergence sparkles at breadcrumb
           for (let i = 0; i < 6; i++) {
               const sparkle = document.createElement('div');
               sparkle.className = 'convergence-sparkle';
@@ -40384,6 +40481,8 @@ Generate the title and synopsis now.` }
         return;
       }
 
+      // Store pre-checkout fortune count for count-up animation on return
+      try { sessionStorage.setItem('sb_pre_checkout_fortunes', String(state.fortunes || 0)); } catch(e) {}
       window.location.href = data.url;
     } catch (err) {
       console.error(`[STRIPE] ${tier} checkout error:`, err);
@@ -43644,6 +43743,25 @@ Generate the title and synopsis now.` }
         showToast('Free story credit used — unlock to continue');
         window.showPaywall('unlock');
         return;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FORTUNE GATE: Story creation costs 1 Fortune (free tease range exempt)
+    // ═══════════════════════════════════════════════════════════════════
+    const _beginInFreeTease = isTeaseTier() && getFreeCustomStoryCredits() > 0;
+    if (!_beginInFreeTease && !state.is_starter_story) {
+        if (!hasFortunes()) {
+            console.log('[BeginStory] EXITING — no Fortunes available');
+            window.openFortunePurchaseModal();
+            return;
+        }
+        const burned = await consumeFortune(1, 'begin_story');
+        if (!burned) {
+            console.log('[BeginStory] EXITING — fortune consumption failed');
+            window.openFortunePurchaseModal();
+            return;
+        }
+        showBeginFortuneSacrificeFeedback();
     }
 
     // Capture raw form values synchronously (needed for early validation)
@@ -54837,6 +54955,18 @@ Respond in this EXACT format (no labels, just two lines):
       }
 
       // ═══════════════════════════════════════════════════════════════════
+      // FORTUNE TURN DISCLOSURE — One-time first-use consent gate
+      // Shows on the very first Submit ever; persists via localStorage.
+      // ═══════════════════════════════════════════════════════════════════
+      if (!state.hasSeenFortuneTurnDisclosure) {
+          state._isAdvancingScene = false;
+          if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
+          const modal = $('fortuneDisclosureModal');
+          if (modal) modal.classList.remove('hidden');
+          return; // turn will be re-submitted after consent
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
       // FATE PAUSES — CLIFFHANGER / TASTE GATE
       // Intercepts submit at tease cap; shows narrative modal instead of
       // old paywall. Player's turn is preserved for resume after purchase.
@@ -54894,6 +55024,7 @@ Respond in this EXACT format (no labels, just two lines):
           if ((state.storypassFortunes || 0) > 0) {
               state.storypassFortunes--;
               console.log('[Fortunes] StoryPass fortune consumed for scene. Remaining:', state.storypassFortunes);
+              showFortuneSacrificeFeedback();
           } else {
               // 2. Fall back to global fortune balance
               if (!hasFortunes()) {
@@ -54916,6 +55047,7 @@ Respond in this EXACT format (no labels, just two lines):
                   _openFatePausesModal('zero_fortunes');
                   return;
               }
+              showFortuneSacrificeFeedback();
           }
       }
       // Reset petition flag for new scene
