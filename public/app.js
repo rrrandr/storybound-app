@@ -10244,6 +10244,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   const WORLD_COMPLEXITY_MAP = {
     // Top-level worlds
     Dystopia: 3,
+    Prehistoric: 2,
     PostApocalyptic: 2,
     Historical: 2,
     Fantasy: 2,
@@ -10277,21 +10278,40 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     const eroticDetected = !!(state.intimacyInterrupted?.first_kiss && state.intimacyInterrupted?.first_intimacy);
     const isEroticMicro = intimacyAllowed && eroticDetected;
 
+    // Render Tier A detection — stories requiring continuous GPT-4 involvement
+    // must always get at least pass tier 2 (beat outline) for literary quality.
+    const isRenderTierA = state.povMode === 'environment4th'
+        || state.povMode === 'author5th'
+        || state.picks?.worldSubtype === 'glass_house'
+        || (state.picks?.world === 'Prehistoric' && state.picks?.tone === 'WryConfession')
+        || state._experimentalNarrativeMode === true;
+
+    // Wry tone also forces minimum pass tier 2 (narrative discipline)
+    const isWryTone = state.picks?.tone === 'WryConfession';
+    const minPassTier = (isRenderTierA || isWryTone) ? 2 : 1;
+
     // ST1 or ST6 → always Tier 3
     if (st === 'ST1' || st === 'ST6') {
       console.log(`[PASS_ROUTING] Tier 3, ST: ${st}, complexity: ${complexity}, reason: ST1/ST6`);
       return 3;
     }
 
-    // Erotic micro-scenes → always Tier 1
+    // Erotic micro-scenes → Tier 1 (unless Render Tier A / Wry forces Tier 2)
     if (isEroticMicro) {
-      console.log(`[PASS_ROUTING] Tier 1, ST: ${st}, complexity: ${complexity}, reason: erotic micro-scene`);
-      return 1;
+      const tier = Math.max(1, minPassTier);
+      console.log(`[PASS_ROUTING] Tier ${tier}, ST: ${st}, complexity: ${complexity}, reason: erotic micro-scene${tier > 1 ? ' (renderTierA/Wry floor)' : ''}`);
+      return tier;
     }
 
     // High-complexity worlds at ST3/ST4 → Tier 3
     if (complexity === 3 && (st === 'ST3' || st === 'ST4')) {
       console.log(`[PASS_ROUTING] Tier 3, ST: ${st}, complexity: ${complexity}, reason: high-complexity ST3/ST4`);
+      return 3;
+    }
+
+    // Render Tier A at ST3/ST4 → Tier 3 (key scenes get full passes)
+    if (isRenderTierA && (st === 'ST3' || st === 'ST4')) {
+      console.log(`[PASS_ROUTING] Tier 3, ST: ${st}, complexity: ${complexity}, reason: renderTierA ST3/ST4`);
       return 3;
     }
 
@@ -10303,8 +10323,9 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
     // Low complexity
     if (complexity === 1) {
-      const tier = (st === 'ST4') ? 2 : 1;
-      console.log(`[PASS_ROUTING] Tier ${tier}, ST: ${st}, complexity: ${complexity}, reason: low complexity${st === 'ST4' ? ' ST4 bump' : ''}`);
+      const baseTier = (st === 'ST4') ? 2 : 1;
+      const tier = Math.max(baseTier, minPassTier);
+      console.log(`[PASS_ROUTING] Tier ${tier}, ST: ${st}, complexity: ${complexity}, reason: low complexity${st === 'ST4' ? ' ST4 bump' : ''}${tier > baseTier ? ' (renderTierA/Wry floor)' : ''}`);
       return tier;
     }
 
@@ -15324,6 +15345,7 @@ Return ONLY valid JSON:
       state.petitionUsedThisScene = false;
       state._reincarnationImports = [];
       state._legendEvaluationComplete = false;
+      state.voiceAnchor = null; // Voice Anchor — generated once per story after Scene 1
       if (typeof window._clearCorridorEchoSlots === 'function') window._clearCorridorEchoSlots();
 
       // Fate object — per-story tracking
@@ -15439,6 +15461,7 @@ Return ONLY valid JSON:
       state.sceneIntent = null; // Scene Intent — compact narrative goal for the renderer
       state._persistentDirectiveCache = null; // Cached persistent directives (POV, tone, safety, etc.)
       state._persistentDirectiveKey = null; // Change detection key
+      state._lastRenderModel = null; // Last model used for render tier momentum window
       state.forceDirectiveRefresh = false; // Force full directive resend on next scene
       state.motifLedger = []; // Motif Echo Memory — max 5 active symbolic motifs
       state.motifExpressionLedger = {}; // last 5 expressions per motif for rotation
@@ -15589,6 +15612,449 @@ Return ONLY valid JSON:
           parts.push(ARCHETYPE_LEXICON[archId]);
       }
       return parts.length > 0 ? '\n\n' + parts.join('\n\n') : '';
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VOICE ANCHOR — per-story narration blueprint (generated once after Scene 1)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * World-specific constraints injected into the Voice Anchor generation prompt.
+   * These shape the anchor's language prohibitions and framing rules.
+   */
+  const VOICE_ANCHOR_WORLD_CONSTRAINTS = {
+      Prehistoric: `World constraints for Voice Anchor:
+- Prohibit all modern metaphors, industrial language, and technological references
+- No mechanical, electrical, or manufactured-object imagery
+- Language must be elemental: stone, bone, fire, water, sky, earth, blood, breath
+- Sensory framing grounded in animal awareness, weather, terrain, body
+- No abstract institutional vocabulary (law, court, market, guild)`,
+
+      Fantasy: `World constraints for Voice Anchor:
+- Prohibit modern astrophysics terminology (black holes, supernovae, quantum)
+- Prohibit modern scientific framing (DNA, evolution, psychology as clinical discipline)
+- Magic must feel sacrificial and embodied, not systematic or academic
+- Metaphors may draw from nature, blood, fate, shadow, flame — never circuits or engines`,
+
+      SciFi: `World constraints for Voice Anchor:
+- Technology is ambient, not marveled at — characters live inside it
+- Avoid fantasy-register language (fate, destiny, prophecy, enchantment)
+- Emotional framing can use mechanical/technological metaphor naturally
+- Scientific vocabulary is permitted but must serve character, not exposition`,
+
+      Historical: `World constraints for Voice Anchor:
+- Language register must match the era — no anachronistic slang or modern idiom
+- Avoid clinical psychology vocabulary (trauma, toxic, boundaries, gaslighting)
+- Social hierarchy and material constraints of the era must be felt in prose rhythm
+- Metaphors should draw from the material world of the period`,
+
+      Dystopia: `World constraints for Voice Anchor:
+- Systemic pressure must be felt in prose rhythm — not explained, experienced
+- Avoid fantasy-register language unless the dystopia is explicitly magical
+- Institutional language should feel oppressive, not expository
+- Love operates under structural constraint — never free, always observed or measured`,
+
+      PostApocalyptic: `World constraints for Voice Anchor:
+- Scarcity must be sensory — felt in texture, taste, temperature, not just narrated
+- Avoid pre-collapse nostalgia as default emotional register
+- Technology references only if broken, repurposed, or mourned
+- Beauty exists but is brief, fragile, and often dangerous`,
+
+      Modern: `World constraints for Voice Anchor:
+- No fantasy, dystopian, or historical vocabulary bleed
+- Urban/suburban/digital texture is ambient — phones, traffic, screens, weather
+- Emotional register can be casual or literary but must feel contemporary
+- Avoid archaic phrasing, feudal metaphors, or magical-realist framing unless explicitly chosen`
+  };
+
+  /**
+   * Generate a Voice Anchor from Scene 1 output.
+   * Called once after Scene 1 prose is finalized. Result stored in state.voiceAnchor.
+   * Non-blocking — failure is silent (story continues without anchor).
+   *
+   * @param {string} sceneText - The finalized Scene 1 prose
+   */
+  async function generateVoiceAnchor(sceneText) {
+      if (state.voiceAnchor) return; // Already generated — immutable
+
+      const tone = state.picks?.tone || 'Earnest';
+      const world = state.picks?.world || 'Modern';
+      const pov = state.picks?.pov || 'First';
+      const worldConstraints = VOICE_ANCHOR_WORLD_CONSTRAINTS[world] || '';
+
+      // Glass House sub-world gets additional Chorus perception constraints
+      const glassHouseExtra = (state.picks?.worldSubtype === 'glass_house')
+          ? '\n- Reinforce Chorus perception logic: narration is always slightly observed, intimacy is never fully private\n- Observational framing — the world watches, and characters know it'
+          : '';
+
+      // WryConfession tone — narrator may display quiet observational irony
+      const wryNarratorHint = (tone === 'WryConfession')
+          ? `\nWRY NARRATOR OBSERVATION:
+In this WryConfession story, the narrator may occasionally display quiet irony or gentle amusement when recognizing familiar human patterns.
+This should feel like a narrator who has witnessed many similar romantic moments before and recognizes their recurring shapes.
+The narrator may:
+• Quietly notice the predictability of a hesitation or deflection
+• Recognize the familiar choreography of attraction
+• Observe a moment with restrained amusement
+The humor must remain subtle and literary — dry observational irony, not jokes.
+The narrator must NOT mock the characters, become sarcastic or comedic, break immersion, or comment on story mechanics.`
+          : '';
+
+      // POV-specific narrator identity hint for the generation prompt
+      const povMode = state.povMode || '';
+
+      // WryConfession + 4th Person — environment displays quiet familiarity with human patterns
+      const wryEnv4thHint = (tone === 'WryConfession' && povMode === 'environment4th')
+          ? `\nWRY ENVIRONMENTAL OBSERVATION:
+In this WryConfession story using 4th Person POV, the environment may occasionally convey quiet familiarity with recurring human behavior.
+Objects and places may appear to have witnessed similar moments before.
+The environment may:
+• Recognize a hesitation it has seen many times (a chair, a doorway, a window)
+• Frame a pause or silence as something familiar rather than novel
+• Convey the sense that the space has quietly observed many similar encounters
+The environment must NOT speak directly, behave like a character, express explicit humor or sarcasm, or break immersion.
+Objects remain observational frames, not sentient narrators — an experienced room quietly witnessing familiar human behavior.`
+          : '';
+      let narratorIdentityHint = '';
+      if (povMode === 'author5th') {
+          narratorIdentityHint = `\nNarrator identity context: This story uses 5th Person POV — the narrator is "the Story" itself, a knowing presence that observes and shapes events. The narrator should feel like a continuous intelligence with memory of its own earlier observations. It perceives emerging tension before consequences unfold — it senses fragile moments, convergences, and turning points as they form, never after.
+
+NARRATIVE ROLE SEPARATION:
+• "Fate" is the cosmic force influencing probability within the story world — it is a system characters interact with (Tempt Fate, Fate Cards, Petition Fate). Fate is part of the WORLD, not the narrator.
+• "The Story" is the narrator observing the unfolding events — it is the narrating presence itself.
+The narrator must never present itself as Fate. When self-awareness appears, the narrator refers to itself indirectly as "the Story."
+
+NARRATOR SELF-REFERENCE RULE:
+The narrator must NOT use first-person pronouns ("I", "we") or refer to itself as "Fate."
+When the narrator expresses self-awareness, it should take indirect forms such as:
+• "The Story waited."
+• "The Story noticed the hesitation."
+• "The Story felt its pattern begin to loosen."
+• "The Story expected the moment to resolve differently."
+Self-reference should be occasional and subtle, appearing primarily when the narrator recognizes patterns, disturbances, or narrative shifts.`;
+      } else if (povMode === 'environment4th') {
+          narratorIdentityHint = `\nNarrator identity context: This story uses 4th Person Environmental POV — the narrator is the physical space itself (rooms, weather, objects). The narrator perceives through material sensation and should remember what it has witnessed in prior scenes.
+
+ENVIRONMENTAL OBSERVATION RULES:
+Objects and places should behave like experienced settings that have witnessed many similar human moments.
+They may:
+• Recognize recurring physical behaviors (hesitation, approach, retreat)
+• Notice patterns of attraction or avoidance through what they can observe
+• Frame events through sensory contact — weight, warmth, vibration, stillness
+
+ANTI-TALKING FURNITURE (STRICT):
+Objects and environments must NEVER think, feel emotions, speculate about character thoughts, or speak as characters.
+FORBIDDEN constructions: "The chair thought…", "The lamp felt…", "The table wondered…", "The room knew…"
+Objects may only observe external behavior and physical signals.
+Environmental narration should feel like a place quietly witnessing human patterns over time, not like sentient objects.
+
+CINEMATIC OBJECT FRAMING:
+Environmental narration should often frame moments through a single object or setting element.
+Instead of describing events directly, anchor the observation through something present in the scene — a table holding a silence, a doorway framing a hesitation, a window observing the street beyond a conversation.
+The object acts as a visual frame for the moment, similar to a camera shot. This creates the feeling that the environment is quietly witnessing events.
+
+ENVIRONMENTAL CAMERA STABILITY:
+Environmental narration should anchor a moment through one primary environmental frame.
+The narrator may linger on that object or setting element before shifting perspective.
+Avoid rapid switching between multiple objects describing the same moment.
+Prefer one object framing the moment with occasional continuation through the same frame.
+BAD: "The table noticed their silence. The lamp watched him hesitate. The chair recognized the pause."
+GOOD: "The table held their silence. It had seen many conversations begin this way."
+
+CONVERGING ENVIRONMENTAL FOCUS:
+During emotionally important moments, environmental narration may gradually shift from distant observers toward objects closer to the characters.
+Typical progression: distant setting (room, window, doorway) → nearby furniture (table, chair) → personal objects (glass, book, clothing) → body-adjacent details (fabric, hands, breath).
+This creates a sense that the environment is closing in on the moment, like a camera slowly moving closer.
+The transition should remain subtle and natural. Objects still observe physical signals only — no thoughts, emotions, or sentience.
+
+RELEVANT ENVIRONMENTAL ANCHORS:
+Environmental observers must be physically near the characters or interacting with them.
+Prefer objects that are touched or leaned against, support physical posture (chairs, tables, beds), frame entrances or exits (doorways, windows), or receive physical signals (breath, movement, silence).
+Avoid selecting distant or uninvolved objects (ceiling fans, distant clouds, decorative items not interacting with the scene) unless they are actively part of the moment.
+Environmental POV should remain emotionally and physically connected to the characters.`;
+      } else if (povMode === 'loveInterestPOV') {
+          narratorIdentityHint = `\nNarrator identity context: This story uses Love Interest POV — narration is filtered through the love interest's perception. The narrator carries forward the love interest's accumulated observations and emotional responses.`;
+      }
+
+      // Story context metadata for anchor specificity
+      const genre = state.picks?.genre || '';
+      const archetypePrimary = state.archetype?.primary || '';
+      const archetypeModifier = state.archetype?.modifier || '';
+      const archetypeStr = archetypePrimary + (archetypeModifier ? ' / ' + archetypeModifier : '');
+
+      const prompt = `Analyze this opening scene and generate a VOICE ANCHOR — a concise narration blueprint that will maintain voice consistency across all future scenes.
+
+STORY CONTEXT:
+- World: ${world}${state.picks?.worldSubtype ? ' (' + state.picks.worldSubtype + ')' : ''}
+- Tone: ${tone}
+- POV: ${pov}
+- Genre: ${genre}
+- Archetype: ${archetypeStr}
+${narratorIdentityHint}
+
+${worldConstraints}${glassHouseExtra}${wryNarratorHint}${wryEnv4thHint}
+
+OPENING SCENE:
+${sceneText.slice(0, 1500)}
+
+Generate a Voice Anchor with EXACTLY this structure (prose instructions, not metrics):
+
+VOICE ANCHOR
+
+Narrator identity:
+Who is narrating — their relationship to the story, their stance toward events (1-2 sentences)
+
+Observational style:
+• How the narrator perceives and frames what happens (sensory vs analytical vs emotional)
+• How emotional states are conveyed (interior monologue vs behavioral cues vs environmental mirroring)
+
+Emotional stance:
+• The narrator's default emotional posture toward events (detached, invested, amused, grieving, etc.)
+• How that stance shifts under pressure
+
+Cadence:
+• Sentence rhythm tendency (short/punchy vs flowing vs mixed)
+• Pacing pattern (when prose accelerates, when it lingers)
+
+Language constraints:
+• World-specific prohibitions (what vocabulary/imagery is forbidden)
+• Anachronism or register rules
+
+Voice prohibitions:
+• Specific tendencies to avoid (melodrama, generic phrasing, etc.)
+• Anti-patterns that would break this story's voice
+
+Narrator continuity:
+The narrator remembers prior observations and may reference them indirectly in later scenes.
+Observations accumulate across the story and shape how the narrator frames new events.
+The narrator must NEVER summarize past scenes, explain the story, or break immersion.
+Continuity must remain subtle and literary — a quiet awareness, not exposition.
+The narrator speaks as though it has witnessed many versions of similar moments before.
+
+Narrative anticipation:
+The narrator may sense fragile moments where events could unfold in multiple ways.
+These moments may be framed as tension, hesitation, or convergence — noticed, not explained.
+The narrator should observe: moments of choice, emotional turning points, fragile alignments between characters, small events that may reshape the story.
+The narrator must NOT predict outcomes, reveal future events, or state that something will happen.
+Anticipation must remain observational, not prophetic.
+
+Narrative pattern awareness:
+The narrator perceives patterns forming within events rather than merely describing outcomes.
+It notices convergences, hesitations, echoes of earlier moments, and fragile alignments between characters.
+The narrator may recognize when a moment resembles something it has witnessed before.
+This recognition should deepen tension or irony but must never reveal future events or explain the plot.
+The narrator must NOT predict outcomes, state what will happen, summarize the story, or break immersion.
+Pattern awareness should feel like quiet recognition rather than prophecy.
+
+Keep the total anchor between 140–220 tokens. Be specific to THIS story's voice, not generic writing advice.
+Return ONLY the Voice Anchor text, no preamble.`;
+
+      try {
+          // Use GPT-4o (not mini) for higher-quality anchor generation — runs once per story
+          const anchor = await window.StoryboundOrchestration.callChatGPT(
+              [{ role: 'user', content: prompt }],
+              'PRIMARY_AUTHOR',
+              { temperature: 0.4, max_tokens: 400, model: 'gpt-4o' }
+          );
+
+          if (anchor && anchor.trim().length > 50) {
+              state.voiceAnchor = anchor.trim();
+              console.log('[VOICE_ANCHOR] Generated (' + state.voiceAnchor.length + ' chars)');
+          } else {
+              console.warn('[VOICE_ANCHOR] Generation returned insufficient content, skipping');
+          }
+      } catch (err) {
+          console.warn('[VOICE_ANCHOR] Generation failed (non-fatal):', err.message);
+      }
+  }
+
+  /**
+   * Build the Voice Anchor directive for prompt injection.
+   * Returns empty string if no anchor exists (Scene 1, or generation failed).
+   */
+  function buildVoiceAnchorDirective() {
+      if (!state.voiceAnchor) return '';
+      return `\n\nMaintain the following narration voice exactly.\n\n${state.voiceAnchor}\n`;
+  }
+
+  /**
+   * Voice Anchor Calibration — lightweight GPT pass every 4 scenes.
+   * Adjusts rendered prose phrasing to align with the Voice Anchor.
+   * Does NOT change plot events. Returns calibrated text or original on failure.
+   *
+   * @param {string} sceneText - The rendered scene prose
+   * @returns {Promise<string>} Calibrated prose
+   */
+  async function runVoiceAnchorCalibration(sceneText) {
+      if (!state.voiceAnchor) return sceneText;
+      if (!sceneText || sceneText.length < 100) return sceneText;
+
+      // Only calibrate every 4 scenes, starting from scene 5 (scenes 5, 9, 13, ...)
+      if (state.turnCount < 4 || state.turnCount % 4 !== 0) return sceneText;
+
+      // Build narrator memory context from available story state
+      const priorScenes = (state.sceneWindow || []).map((s, i) => {
+          const fragment = typeof s === 'string' && s.length > 250 ? s.slice(0, 247) + '...' : (s || '');
+          return `[Prior scene ${i + 1}]: ${fragment}`;
+      }).join('\n');
+      const motifEchoes = (state.storyMotifs && state.storyMotifs.length > 0)
+          ? `Recurring motifs: ${state.storyMotifs.join(', ')}`
+          : '';
+      const narratorMemoryBlock = (priorScenes || motifEchoes)
+          ? `\nNARRATOR MEMORY (for continuity — do NOT quote or summarize these):
+${priorScenes}
+${motifEchoes}`.trim()
+          : '';
+
+      try {
+          const calibrated = await window.StoryboundOrchestration.callChatGPT(
+              [{
+                  role: 'system',
+                  content: `You are a prose calibration tool. Adjust the phrasing of the following scene so it aligns with the VOICE ANCHOR below.
+
+VOICE ANCHOR:
+${state.voiceAnchor}
+
+CALIBRATION RULES:
+- Do NOT change plot events, character actions, dialogue content, or scene structure
+- Do NOT add or remove scenes, beats, or narrative elements
+- ONLY adjust word choice, sentence rhythm, and tonal register to match the anchor
+- Preserve the exact length (±10%)
+
+NARRATIVE CONTINUITY REINFORCEMENT:
+When adjusting the scene, allow the narrator to subtly recognize patterns or echoes from earlier observations in the story.
+
+The narrator may:
+• Notice when a moment resembles something previously observed
+• Recognize recurring emotional patterns across scenes
+• Sense tension building across the arc of events
+• Frame present events in light of earlier impressions
+• Subtly echo established motifs through word choice or imagery
+
+The narrator must NOT:
+• Summarize earlier scenes
+• Explain the plot or narrate backstory
+• Reference scene numbers, time jumps, or structural mechanics
+• Reveal future events or foreshadow explicitly
+• Add exposition or break immersion
+
+Continuity should appear as quiet recognition rather than commentary — a narrator who remembers without announcing that it remembers.
+
+NARRATIVE SYMMETRY AWARENESS:
+When adjusting prose, allow the narrator to recognize emotional symmetry — moments that mirror, invert, or reverse earlier ones.
+The narrator may:
+• Notice when a gesture or phrase echoes an earlier moment in reversed context
+• Sense when roles have quietly swapped (the one who led now follows, the guarded one now reaches)
+• Let word choice or rhythm subtly rhyme with an earlier scene's cadence
+• Recognize when a moment completes or inverts an earlier emotional arc
+
+The narrator must NOT:
+• Name the symmetry ("just as before", "the roles had reversed")
+• Summarize what changed or explain the reversal
+• Narrate structural mechanics or call attention to the pattern
+• Force symmetry where none exists — only echo what the story has genuinely produced
+
+Symmetry should feel inevitable, not constructed — a narrator who perceives pattern without performing it.
+
+RELATIONSHIP SHIFT AWARENESS:
+When revising narration, the narrator may occasionally recognize when the emotional balance between characters subtly changes.
+The narrator may notice:
+• Attraction becoming visible after earlier hesitation
+• Power dynamics reversing in conversation
+• Vulnerability replacing confidence
+• Mutual tension becoming one-sided
+• A previously uncertain bond becoming clearer
+
+The narrator may frame such moments as small changes in alignment, tension, or emotional probability.
+
+The narrator must NOT:
+• Explain relationship mechanics or describe hidden systems
+• Summarize character arcs or predict future outcomes
+• Label the shift ("the dynamic had changed", "the balance shifted")
+
+Recognition should remain observational and literary — a narrator who senses the change without naming it.
+
+${(function() {
+    // Tempt Fate awareness — only for 5th Person narration after a Tempt Fate intervention
+    if (state.povMode !== 'author5th') return '';
+    const heat = state.tempt_fate_heat || 0;
+    const consecutive = state.consecutive_tempt_fate_count || 0;
+    if (heat === 0 && consecutive === 0) return '';
+
+    let temptBlock = `TEMPT FATE AWARENESS:
+The narrator may occasionally recognize moments where the story's expected trajectory has been disturbed.\n`;
+
+    if (consecutive <= 1 && heat <= 1) {
+        // First or isolated use
+        temptBlock += `\nThe narrator may express subtle surprise, curiosity, or fascination — as if something unexpected has entered the narrative.
+The narrator may:
+• Pause to notice a shift in the story's expected direction
+• Sense a moment that feels newly uncertain
+• Observe a pattern that no longer behaves as expected\n`;
+    } else if (consecutive >= 2) {
+        // Consecutive uses — rising unease
+        temptBlock += `\nThe narrator may show rising unease or tension — as if narrative control is weakening.
+The narrator may:
+• Sense the story's structure straining under repeated disruption
+• Notice events feeling slightly unstable or rearranged
+• Briefly doubt its own predictions or expectations\n`;
+    }
+
+    temptBlock += `\nThe narrator must NOT:
+• Mention Tempt Fate, player actions, or game mechanics
+• Explain narrative systems or reference external forces
+• Break character or address the reader directly
+
+All reactions must remain subtle, literary, and embedded in normal narration — a writer watching their own story begin to change unexpectedly.\n`;
+
+    return temptBlock;
+})()}
+${(function() {
+    // Narrative resistance — rare, only under elevated Tempt Fate pressure in 5th Person
+    if (state.povMode !== 'author5th') return '';
+    const heat = state.tempt_fate_heat || 0;
+    const consecutive = state.consecutive_tempt_fate_count || 0;
+    if (heat < 2 && consecutive < 2) return '';
+
+    return `NARRATIVE RESISTANCE (rare):
+The narrator may VERY OCCASIONALLY behave as though it is attempting to restore the story's natural pattern — only to recognize that the expected structure no longer holds.
+
+This may appear as:
+• A moment where the Story expects events to resolve in a familiar way, but the pattern fails to close
+• A narrative impulse toward balance or inevitability that does not complete itself
+• The subtle sense that the narrator is reaching for a shape the scene has already abandoned
+
+The scene must ultimately continue along the altered path. The resistance is a momentary reflex, not a sustained effort.
+
+The narrator must NOT:
+• Mention Tempt Fate or reference mechanics
+• Attempt to change events or contradict the scene outcome
+• Repeat this behavior in every scene — it should feel rare and atmospheric
+
+This moment should feel like a storyteller realizing the page has begun rewriting itself.\n`;
+})()}
+${narratorMemoryBlock}
+
+Return the calibrated scene text only, no commentary.`
+              },
+              {
+                  role: 'user',
+                  content: sceneText
+              }],
+              'PRIMARY_AUTHOR',
+              { temperature: 0.3, max_tokens: 1200 }
+          );
+
+          if (calibrated && calibrated.trim().length > sceneText.length * 0.7) {
+              console.log('[VOICE_ANCHOR:CALIBRATION] Scene', state.turnCount, 'calibrated');
+              return calibrated.trim();
+          }
+          console.warn('[VOICE_ANCHOR:CALIBRATION] Output too short, using original');
+          return sceneText;
+      } catch (err) {
+          console.warn('[VOICE_ANCHOR:CALIBRATION] Failed (non-fatal):', err.message);
+          return sceneText;
+      }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -43259,10 +43725,15 @@ Generate the title and synopsis now.` }
 
     // Set transform origin on inner element - the hinge edge
     const inner = card.querySelector('.destiny-flying-card-inner');
+    const isVertical = (direction === 'up' || direction === 'down');
     if (inner) {
-      // 'left' direction: hinge on LEFT edge (opens like a book to the right)
-      // 'right' direction: hinge on RIGHT edge (opens like a book to the left)
-      inner.style.transformOrigin = direction === 'left' ? 'left center' : 'right center';
+      // 'left'/'right': hinge on left/right edge (rotateY)
+      // 'up'/'down': hinge on top/bottom edge (rotateX)
+      if (isVertical) {
+        inner.style.transformOrigin = direction === 'up' ? 'center top' : 'center bottom';
+      } else {
+        inner.style.transformOrigin = direction === 'left' ? 'left center' : 'right center';
+      }
       inner.style.transformStyle = 'preserve-3d';
     }
 
@@ -43274,9 +43745,9 @@ Generate the title and synopsis now.` }
     const startTime = performance.now();
 
     // Rotation direction based on hinge position
-    // 'left' hinge + NEGATIVE rotateY = right edge lifts UP toward viewer (like opening a book outward)
-    // 'right' hinge + POSITIVE rotateY = left edge lifts UP toward viewer
-    const rotationSign = direction === 'left' ? -1 : 1;
+    // Horizontal: 'left' hinge + NEGATIVE rotateY, 'right' hinge + POSITIVE rotateY
+    // Vertical: 'up' hinge + POSITIVE rotateX (bottom lifts toward viewer), 'down' + NEGATIVE rotateX
+    const rotationSign = (direction === 'left' || direction === 'down') ? -1 : 1;
 
     function animate(currentTime) {
       const elapsed = currentTime - startTime;
@@ -43312,8 +43783,12 @@ Generate the title and synopsis now.` }
 
         // At detach point, card center shifts from hinge edge to card center
         // Calculate where the card center should be at the start of phase 2
-        const detachCenterX = startRect.left + (direction === 'left' ? 0 : startWidth);
-        const detachCenterY = startRect.top + startHeight / 2;
+        const detachCenterX = isVertical
+            ? startRect.left + startWidth / 2
+            : startRect.left + (direction === 'left' ? 0 : startWidth);
+        const detachCenterY = isVertical
+            ? startRect.top + (direction === 'up' ? 0 : startHeight)
+            : startRect.top + startHeight / 2;
 
         // Target center
         const targetCenterX = endRect.left + endWidth / 2;
@@ -43347,9 +43822,9 @@ Generate the title and synopsis now.` }
       card.style.width = `${currentWidth}px`;
       card.style.height = `${currentHeight}px`;
 
-      // Apply rotation to inner element
+      // Apply rotation to inner element — rotateX for vertical, rotateY for horizontal
       if (inner) {
-        inner.style.transform = `rotateY(${rotateY}deg)`;
+        inner.style.transform = isVertical ? `rotateX(${rotateY}deg)` : `rotateY(${rotateY}deg)`;
       }
 
       if (progress < 1) {
@@ -43393,21 +43868,26 @@ Generate the title and synopsis now.` }
       top: deckRect.top
     };
 
-    // First card: peel LEFT to Character card
+    // Detect vertical layout: if player card is above the deck, cards are stacked
+    const isVerticalLayout = playerRect.bottom <= deckRect.top + deckRect.height / 2;
+    const dirPlayer = isVerticalLayout ? 'up' : 'left';
+    const dirLI = isVerticalLayout ? 'down' : 'right';
+
+    // First card: peel to Character card
     const playerFlyingCard = createFlyingCard(playerChar, true);
     animateFlyingCard(playerFlyingCard, startRect, {
       left: playerRect.left,
       top: playerRect.top,
       width: playerRect.width,
       height: playerRect.height
-    }, 'left', () => {
+    }, dirPlayer, () => {
       // Fill fields directly - no overlay, same editable component
       fillCharacterFields(true, playerChar);
       // Brief highlight to show landing
       playerCharCard.classList.add('fate-landed');
       setTimeout(() => playerCharCard.classList.remove('fate-landed'), 300);
 
-      // After first card lands, start second card: peel RIGHT to Love Interest
+      // After first card lands, start second card: peel to Love Interest
       setTimeout(() => {
         const liFlyingCard = createFlyingCard(liChar, false);
         animateFlyingCard(liFlyingCard, startRect, {
@@ -43415,7 +43895,7 @@ Generate the title and synopsis now.` }
           top: liRect.top,
           width: liRect.width,
           height: liRect.height
-        }, 'right', () => {
+        }, dirLI, () => {
           // Fill fields directly - no overlay, same editable component
           fillCharacterFields(false, liChar);
           // Brief highlight to show landing
@@ -45758,6 +46238,17 @@ ${text.slice(0, 800)}`}]);
         } catch (e) {
             console.warn('[BLURB] Generation failed, falling back to synopsis:', e.message);
             state._synopsisBlurb = synopsis || '';
+        }
+
+        // ============================================================
+        // VOICE ANCHOR — Generate narration blueprint from Scene 1
+        // ============================================================
+        // Non-blocking: anchor generates in background while user reads.
+        // Will be available for Scene 2+ prompt injection.
+        if (!state.voiceAnchor && typeof generateVoiceAnchor === 'function') {
+            generateVoiceAnchor(text).catch(err => {
+                console.warn('[VOICE_ANCHOR] Background generation failed:', err.message);
+            });
         }
 
         // ============================================================
@@ -55086,6 +55577,9 @@ Respond in this EXACT format (no labels, just two lines):
       const act = actNorm.canonical_instruction || actNorm.normalized_text || rawAct;
       const dia = diaNorm.canonical_instruction || diaNorm.normalized_text || rawDia;
 
+      // Store current player input for render tier routing (input complexity detection)
+      state._currentPlayerInput = (act + ' ' + dia).trim();
+
       // Get selected Fate Card title for separator
       let selectedFateCard = null;
       if (state.fateOptions && typeof state.fateSelectedIndex === 'number' && state.fateSelectedIndex >= 0) {
@@ -56048,7 +56542,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
           || state._persistentDirectiveKey !== _persistentKey;
 
       if (needPersistentRefresh) {
-          state._persistentDirectiveCache = `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${safetyDirective}\n${vetoRules}\n${lensEnforcement}\n${eroticModeBlock}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${buildEmotionEmbodimentDirective()}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.`;
+          state._persistentDirectiveCache = `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${safetyDirective}\n${vetoRules}\n${lensEnforcement}\n${eroticModeBlock}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${buildEmotionEmbodimentDirective()}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nSPECIFICITY ENFORCEMENT:\nPrefer observable behavior, physical gesture, and environmental detail over abstract emotion statements.\nDo not tell the reader what a character feels — show it through action, hesitation, breath, posture, or timing.\n- BAD: "His heart raced." → GOOD: "His reply came half a breath too late."\n- BAD: "She felt a wave of longing." → GOOD: "Her hand hovered near his sleeve but didn't land."\n- BAD: "Their eyes locked with intensity." → GOOD: "Neither of them blinked first."\nInternal states may be implied through sensory experience, never declared as fact.`;
           state._persistentDirectiveKey = _persistentKey;
           state.forceDirectiveRefresh = false;
           console.log('[DIRECTIVES] Persistent directive cache refreshed (scene', state.turnCount, ')');
@@ -56057,7 +56551,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       // Scene-specific directives — rebuilt every turn
       const sceneDirectives = `\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${strategyDirective}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}`;
 
-      const fullSys = state.sysPrompt + state._persistentDirectiveCache + sceneDirectives + `\n\nTURN INSTRUCTIONS:
+      const fullSys = state.sysPrompt + state._persistentDirectiveCache + buildVoiceAnchorDirective() + sceneDirectives + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -56891,6 +57385,11 @@ ABSOLUTE RULES:
 
           // Literary Illusion Layer — update voice profile + motifs from scene output
           _updateLiteraryIllusion(raw);
+
+          // Voice Anchor Calibration — every 4 scenes, align prose with anchor (non-destructive)
+          if (state.voiceAnchor && typeof runVoiceAnchorCalibration === 'function') {
+              raw = await runVoiceAnchorCalibration(raw);
+          }
 
           // Continuity Auto-Repair — check scene text against physical state, repair if needed
           if (state.physicalState && (state.physicalState.mc_position || state.physicalState.proximity)) {
@@ -60502,7 +61001,7 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
       _renderEchoCorridorStrip();
 
       // ── Reincarnation Mini-Cards (below character cards) ──
-      var EMPTY_SLOT_COUNT = 3; // placeholder slots when no reincarnations saved
+      var EMPTY_SLOT_COUNT = 5; // placeholder slots when no reincarnations saved
 
       function _renderReincMiniCards() {
           const section = document.getElementById('echoReincSection');
@@ -60523,7 +61022,7 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
                   empty.className = 'echo-reinc-card echo-reinc-card-empty';
                   empty.innerHTML = '<div class="echo-reinc-card-plus">?</div>';
                   empty.addEventListener('click', function() {
-                      if (typeof showToast === 'function') showToast('Complete a story to extract character souls here.');
+                      if (typeof showToast === 'function') showToast('Complete a story to extract character reincarnations here.');
                   });
                   container.appendChild(empty);
               }
@@ -60533,8 +61032,8 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
           // Populated state
           if (explainer) {
               explainer.textContent = reincarnations.length === 1
-                  ? 'A soul from a past story awaits. Tap to weave them into this one.'
-                  : reincarnations.length + ' souls from past stories await. Tap to weave them in.';
+                  ? 'A reincarnation from a past story awaits. Tap to weave them into this one.'
+                  : reincarnations.length + ' reincarnations from past stories await. Tap to weave them in.';
           }
 
           // Render a mini-card for each saved reincarnation

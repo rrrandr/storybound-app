@@ -1749,6 +1749,28 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     }
 }
 
+/* Narrow: stack character cards vertically with Destiny deck between them */
+@media (max-width: 600px) {
+    .character-cards-row {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        gap: 10px;
+        padding: 0 10px;
+        align-items: center;
+    }
+
+    .character-cards-row > .character-tarot-card {
+        width: 200px;
+    }
+
+    /* Destiny deck shrinks and loses negative margins in vertical layout */
+    #characterSectionRow .destiny-mini-deck-stack {
+        transform: scale(0.45);
+        transform-origin: center center;
+        margin: -60px -38px;
+    }
+}
+
 @media (max-width: 500px) {
     /* Card internals now scale via cqi — no px overrides needed */
 
@@ -1757,20 +1779,8 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
         padding: 0 4px;
     }
 
-    .character-cards-row {
-        gap: 6px;
-        padding: 0 4px;
-    }
-
     #characterSectionRow .character-tarot-card {
         min-width: 90px;
-    }
-
-    /* Shrink Destiny deck further on extra-narrow */
-    #characterSectionRow .destiny-mini-deck-stack {
-        transform: scale(0.4);
-        transform-origin: center center;
-        margin: -74px -44px;
     }
 }
 
@@ -17524,48 +17534,72 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 44.94cqi; left: 38.69cqi; font-size: 9.52cqi;
 }
 
-/* ── Tone — Locked text positions (portal-only) ──
-   Grid-scoped rules REMOVED: they forced zoomed-scale cqi positions at unzoomed
-   corridor size, causing text to jump during flip. Portal rules handle zoom.  */
+/* ── Tone — Card Designer locked text positions ── */
 
-/* Mythic */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto !important; bottom: auto !important;
-    font-size: 9.52cqi !important; top: 150.89cqi !important; left: 34.52cqi !important;
+/* Earnest — grid */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    width: 83.33cqi; font-size: 7.14cqi; top: -20.83cqi; left: 1.19cqi;
 }
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto !important; bottom: auto !important; top: -20.83cqi !important; left: 0cqi !important;
-    position: relative !important; font-size: 5.06cqi !important; width: 67.26cqi !important;
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 9.52cqi; top: 151.49cqi;
 }
-
-/* Dark */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto !important; bottom: auto !important;
-    font-size: 11.9cqi !important; top: 149.4cqi !important; left: 37.8cqi !important;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto !important; bottom: auto !important; top: -21.43cqi !important; left: -0.6cqi !important;
-    position: relative !important; font-size: 5.65cqi !important; width: 67.86cqi !important;
-}
-
-/* WryConfession */
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto !important; bottom: auto !important;
-    font-size: 11.9cqi !important; top: 150cqi !important;
-}
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto !important; bottom: auto !important; top: -22.32cqi !important; left: 0cqi !important;
-    position: relative !important; font-size: 5.65cqi !important; width: 65.77cqi !important;
-}
-
-/* Earnest */
+/* Earnest — portal */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto !important; bottom: auto !important;
-    font-size: 9.52cqi !important; top: 152.08cqi !important; left: 34.52cqi !important;
+    right: auto; bottom: auto;
+    top: 297.28cqi; left: 66.06cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto !important; bottom: auto !important; top: -21.43cqi !important; left: 0cqi !important;
-    position: relative !important; font-size: 5.65cqi !important;
+    right: auto; bottom: auto;
+}
+
+/* WryConfession — grid */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.24cqi; left: 0cqi; width: 78.57cqi; font-size: 7.14cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 151.79cqi; left: 41.07cqi; font-size: 9.52cqi;
+}
+
+/* Dark — grid */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.24cqi; left: 0.6cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 152.38cqi; left: 40.77cqi; font-size: 9.52cqi;
+}
+/* Dark — portal */
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 297.86cqi; left: 73.59cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    font-size: 13.33cqi;
+}
+
+/* Mythic — grid */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    top: -20.83cqi; left: -0.6cqi; width: 76.19cqi; font-size: 7.14cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 9.52cqi; top: 152.08cqi;
+}
+/* Mythic — portal */
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 298.43cqi; left: 66.06cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto;
+    font-size: 11.01cqi;
 }
 
 /* ── Dynamic — Back titles (cqi-locked) ── */
@@ -18029,9 +18063,9 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 .echo-reinc-card-empty {
-    background: url('/assets/card-art/cards/Romance-black-back-DC.png') center / cover no-repeat;
-    border: 1px dashed rgba(200, 168, 78, 0.25);
-    opacity: 0.4;
+    background: linear-gradient(145deg, #1a1810 0%, #0f0e0a 50%, #1a1810 100%);
+    border: 1px dashed rgba(200, 168, 78, 0.3);
+    opacity: 0.6;
 }
 
 .echo-reinc-card-filled {

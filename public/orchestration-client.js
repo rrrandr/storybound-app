@@ -471,56 +471,117 @@
    * whether Grok orchestration is active (Grok handles rendering, but the
    * author pass benefits from the stronger model at narrative pivot points).
    */
+  /**
+   * Resolve Render Tier (A or B) for the current scene.
+   *
+   * TIER A — FULL GPT-4 RENDERING (every scene)
+   *   Triggers: Glass House, 4th Person, 5th Person, Prehistoric+Wry, experimental modes.
+   *   All scenes use gpt-4o. Mini models never generate primary scenes.
+   *
+   * TIER B — HYBRID RENDERING (default)
+   *   GPT-4 on key scenes: Scene 1, ST3 intimacy, turning points, Tempt Fate,
+   *   Voice Anchor calibration (every 4 scenes), ending window.
+   *   Mini models may generate connective scenes but integration pass always runs.
+   *
+   * NO STORY may run entirely on mini models. Tier B guarantees periodic GPT-4.
+   */
   function resolveRenderTier() {
     const appState = window.state;
-    if (!appState) return { model: CONFIG.PRIMARY_AUTHOR_MODEL, max_tokens: 1500, reason: 'Default' };
+    if (!appState) return { model: CONFIG.PRIMARY_AUTHOR_MODEL, max_tokens: 1500, tier: 'B', reason: 'Default' };
 
-    // Complexity gate — 4th-person POV and Glass House have system prompts
-    // too dense for gpt-4o-mini (triple narrator layers, strict constraint
-    // sets, no code validator fallback). These always use gpt-4o.
-    const isComplexMode = appState.povMode === 'environment4th'
-        || appState.picks?.worldSubtype === 'glass_house';
+    const turnCount = appState.turnCount || 0;
+    const st = appState.storyturn || '';
 
-    // A) Tempt Fate — initial scene (highest priority)
+    // ── TIER A DETECTION ──
+    // Stories requiring continuous GPT-4 reasoning or stylistic discipline.
+    const isTierA = appState.povMode === 'environment4th'               // 4th Person Environmental
+        || appState.povMode === 'author5th'                              // 5th Person Fate
+        || appState.picks?.worldSubtype === 'glass_house'                // Glass House (Chorus perception)
+        || (appState.picks?.world === 'Prehistoric' && appState.picks?.tone === 'WryConfession')  // Prehistoric + Wry
+        || appState._experimentalNarrativeMode === true;                 // Future experimental modes
+
+    if (isTierA) {
+      // Tier A: gpt-4o for EVERY scene. Vary tokens by scene importance.
+      const tierATokens = (appState.tempt_fate_invoked_this_turn === true || appState._currentSceneImportance === 'apex')
+          ? 2200 : 1800;
+      const tierAReason = appState.tempt_fate_invoked_this_turn ? 'TierA:Tempt'
+          : appState._currentSceneImportance === 'apex' ? 'TierA:Apex'
+          : appState.povMode === 'author5th' ? 'TierA:5thPerson'
+          : appState.povMode === 'environment4th' ? 'TierA:4thPerson'
+          : appState.picks?.worldSubtype === 'glass_house' ? 'TierA:GlassHouse'
+          : 'TierA:Complex';
+      return { model: 'gpt-4o', max_tokens: tierATokens, tier: 'A', reason: tierAReason };
+    }
+
+    // Scene importance ranking (used by momentum, Wry discipline, and other Tier B rules)
+    const importance = appState._currentSceneImportance || 'medium';
+    const importanceRank = { low: 0, medium: 1, high: 2, apex: 3 };
+
+    // ── GPT-4 MOMENTUM WINDOW ──
+    // After a GPT-4 scene, keep GPT-4 for the next scene if importance >= medium.
+    // Prevents mini→GPT-4→mini ping-pong that causes subtle voice oscillation.
+    if (appState._lastRenderModel === 'gpt-4o' && (importanceRank[importance] || 0) >= 1) {
+      return { model: 'gpt-4o', max_tokens: 1800, tier: 'B', reason: 'TierB:Momentum' };
+    }
+
+    // ── TIER B: KEY SCENE DETECTION ──
+    // The following scenes MUST use gpt-4o even in Tier B.
+    // Priority order: Opening → Tempt Fate → Apex → ST3/ST4 → InputComplexity → Wry → Calibration → Ending → Connective
+
+    // B1) Opening window — Scenes 1–3 always GPT-4 to establish tone and narrator inertia
+    if (turnCount <= 3) {
+      return { model: 'gpt-4o', max_tokens: turnCount === 1 ? 2000 : 1800, tier: 'B', reason: 'TierB:OpeningWindow' };
+    }
+
+    // B2) Tempt Fate — highest priority key scene
     if (appState.tempt_fate_invoked_this_turn === true) {
-      return { model: 'gpt-4o', max_tokens: 2200, reason: 'Tempt' };
+      return { model: 'gpt-4o', max_tokens: 2200, tier: 'B', reason: 'TierB:Tempt' };
     }
 
-    // B) Major Turning Points — apex scene importance
-    if (appState._currentSceneImportance === 'apex') {
-      return { model: 'gpt-4o', max_tokens: 2200, reason: 'Apex' };
+    // B3) Major Turning Points — apex scene importance
+    if (importance === 'apex') {
+      return { model: 'gpt-4o', max_tokens: 2200, tier: 'B', reason: 'TierB:Apex' };
     }
 
-    // C) Scene 1 of any story
-    if ((appState.turnCount || 0) === 1) {
-      return { model: 'gpt-4o', max_tokens: 2000, reason: 'Scene1' };
-    }
-
-    // D) Complex mode — 4th person or Glass House: gpt-4o for all scenes
-    if (isComplexMode) {
-      return { model: 'gpt-4o', max_tokens: 1800, reason: 'Complex' };
-    }
-
-    // E) Critical Storyturns — ST3 (Permission) and ST4 (Consequence) are
-    //    emotional pivot points where prose quality matters most
-    const st = appState.storyturn;
+    // B4) Critical Storyturns — ST3 (intimacy attempt) and ST4 (Consequence)
     if (st === 'ST3' || st === 'ST4') {
-      return { model: 'gpt-4o', max_tokens: 1800, reason: 'CriticalST' };
+      return { model: 'gpt-4o', max_tokens: 1800, tier: 'B', reason: 'TierB:CriticalST' };
     }
 
-    // F) Ending window — cliffhanger or final scenes deserve strong prose
+    // B5) Input complexity escalation — complex player input deserves GPT-4
+    const playerInput = appState._currentPlayerInput || '';
+    if (playerInput.length >= 140
+        || (playerInput.includes('"') && playerInput.split(/[.!?]/).length >= 3)
+        || /\b(love|hate|confess|admit|forgive|betray|apologize|beg|plead|accuse|confront|reveal|swear|promise|regret|abandon|sacrifice)\b/i.test(playerInput)) {
+      return { model: 'gpt-4o', max_tokens: 1800, tier: 'B', reason: 'TierB:InputComplexity' };
+    }
+
+    // B6) Wry tone discipline — importance-aware + every-other-scene fallback
+    //     GPT-4 when scene importance >= high OR on odd turns (tonal correction)
+    if (appState.picks?.tone === 'WryConfession') {
+      if ((importanceRank[importance] || 0) >= 2 || turnCount % 2 === 1) {
+        return { model: 'gpt-4o', max_tokens: 1800, tier: 'B', reason: 'TierB:WryDiscipline' };
+      }
+    }
+
+    // B7) Voice Anchor calibration scenes (every 4 scenes, starting scene 4)
+    if (turnCount >= 4 && turnCount % 4 === 0) {
+      return { model: 'gpt-4o', max_tokens: 1800, tier: 'B', reason: 'TierB:VoiceCalibration' };
+    }
+
+    // B8) Ending convergence window
     const endingStart = _getEndingWindowStart(appState.storyLength);
-    if (endingStart && (appState.turnCount || 0) >= endingStart) {
-      return { model: 'gpt-4o', max_tokens: 1800, reason: 'Ending' };
+    if (endingStart && turnCount >= endingStart) {
+      return { model: 'gpt-4o', max_tokens: 1800, tier: 'B', reason: 'TierB:Ending' };
     }
 
-    // G) Volatility window — subsequent scenes (not the invocation turn)
+    // B9) Volatility window — elevated tokens, mini model acceptable for connective
     if (appState.volatility_window?.active === true) {
-      return { model: 'gpt-4o-mini', max_tokens: 1800, reason: 'Volatility' };
+      return { model: 'gpt-4o-mini', max_tokens: 1800, tier: 'B', reason: 'TierB:Volatility' };
     }
 
-    // Default
-    return { model: 'gpt-4o-mini', max_tokens: 1500, reason: 'Default' };
+    // B-DEFAULT) Connective scene — mini model, integration pass still runs
+    return { model: 'gpt-4o-mini', max_tokens: 1500, tier: 'B', reason: 'TierB:Connective' };
   }
 
   /** Ending-window start scene by story length (mirrors STORYTURN_CONFIG). */
@@ -1198,7 +1259,10 @@ ${continuityBlock}`;
     const useGrokForSD = CONFIG.ENABLE_GROK_SD_AUTHORING;
 
     // Build system prompt - when intimacy authorized with Grok SD, ChatGPT generates constraints instead of full SD
-    const authorSystemPrompt = `${systemPrompt}
+    const voiceAnchorBlock = (window.state && window.state.voiceAnchor)
+        ? `\nMaintain the following narration voice exactly.\n\n${window.state.voiceAnchor}\n`
+        : '';
+    const authorSystemPrompt = `${systemPrompt}${voiceAnchorBlock}
 
 === PRIMARY AUTHOR RESPONSIBILITIES ===
 You are the PRIMARY AUTHOR. You have EXCLUSIVE authority over:
@@ -1278,7 +1342,9 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
 
     // Premium render tier — dynamic model + token selection
     const renderTier = resolveRenderTier();
-    console.log(`[RENDER] Model: ${renderTier.model} | max_tokens: ${renderTier.max_tokens} | reason: ${renderTier.reason}`);
+    // Track last render model for momentum window (next scene continuity)
+    if (window.state) window.state._lastRenderModel = renderTier.model;
+    console.log(`[RENDER] Tier: ${renderTier.tier} | Model: ${renderTier.model} | max_tokens: ${renderTier.max_tokens} | reason: ${renderTier.reason}`);
 
     try {
       authorOutput = await callChatGPT(messages, 'PRIMARY_AUTHOR', {
@@ -1834,14 +1900,25 @@ Do NOT reference destiny, inevitability, or narrative structure.
 Keep narration embodied and environmental.
 ` : '';
 
+    // Voice Anchor injection for renderer — maintains tonal consistency across models
+    const rendererVoiceAnchor = (window.state && window.state.voiceAnchor)
+        ? `\nMaintain the following narration voice exactly.\n\n${window.state.voiceAnchor}\n`
+        : '';
+
     return {
       system: `You are a SPECIALIST RENDERER for intimate scenes.
-${env4thBlock}
+${env4thBlock}${rendererVoiceAnchor}
 YOUR CONSTRAINTS (NON-NEGOTIABLE):
 - You render SENSORY EMBODIMENT only
 - You do NOT decide plot or outcomes
 - You do NOT invent lore or change the story
 - You write HOW IT FEELS, not WHAT HAPPENS
+
+SPECIFICITY ENFORCEMENT:
+Prefer observable behavior and physical detail over abstract emotion statements.
+Show feeling through action, hesitation, breath, posture, or timing — never declare it as fact.
+- BAD: "His heart raced." → GOOD: "His reply came half a breath too late."
+- BAD: "She felt a wave of longing." → GOOD: "Her hand hovered near his sleeve but didn't land."
 
 SCENE PARAMETERS:
 - Intimacy: AUTHORIZED
@@ -1884,14 +1961,23 @@ Remove any abstract mind-reading unless physically mediated.
 No destiny or inevitability language.
 ` : '';
 
+    // Voice Anchor injection for integration pass — final authority must preserve voice
+    const integrationVoiceAnchor = (window.state && window.state.voiceAnchor)
+        ? `\nMaintain the following narration voice exactly.\n\n${window.state.voiceAnchor}\n`
+        : '';
+
     return {
       system: `You are performing the INTEGRATION PASS for Storybound.
-${env4thContinuity}
+${env4thContinuity}${integrationVoiceAnchor}
 YOUR RESPONSIBILITIES:
 - Seamlessly integrate the rendered intimate content into the narrative
 - Maintain story continuity and voice
 - Apply appropriate consequences
 - You are the FINAL AUTHORITY on story state
+
+SPECIFICITY ENFORCEMENT:
+Prefer observable behavior and physical detail over abstract emotion statements.
+Show feeling through action, hesitation, breath, posture, or timing — never declare it as fact.
 
 NARRATIVE CONSTRAINTS:
 - Cliffhanger Required: ${gateEnforcement.cliffhangerRequired ? 'YES' : 'NO'}
