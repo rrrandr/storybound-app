@@ -12283,8 +12283,9 @@ textarea.fate-field {
 
 /* Pressure + Dynamic front desc: positioned for Card Designer cqi offsets */
 
-/* Dynamic front desc: relative positioning enables cqi top/left offsets */
-#dynamicGrid .sb-card .sb-card-front .sb-card-desc {
+/* Dynamic + Tone front desc: relative positioning enables cqi top/left offsets */
+#dynamicGrid .sb-card .sb-card-front .sb-card-desc,
+#toneGrid .sb-card .sb-card-front .sb-card-desc {
     position: relative;
 }
 
@@ -17341,22 +17342,74 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 44.94cqi; left: 38.69cqi; font-size: 9.52cqi;
 }
 
-/* ── Tone — Flipped front desc positions (cqi-locked, Card Designer output) ── */
-/* Title uses default bottom: calc(4% + 3px) from generic rule — do NOT override with cqi top */
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto; top: -21.43cqi; width: 74.4cqi; height: 164.29cqi; left: 0cqi;
+/* ── Tone — Flipped front positions (cqi-locked, Card Designer output) ── */
+
+/* Mythic */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 9.52cqi; top: 150.89cqi; left: 34.52cqi;
 }
-#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto; top: -21.43cqi; width: 74.4cqi; height: 164.29cqi; left: 0cqi;
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto; top: -20.83cqi; left: 0cqi;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto; top: -22.32cqi; left: 0cqi;
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.27cqi; left: 36.31cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: relative; right: auto; bottom: auto;
+    font-size: 5.06cqi; width: 67.26cqi; top: -20.54cqi; left: 0cqi;
+}
+
+/* Dark */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 11.9cqi; top: 149.4cqi; left: 37.8cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; bottom: auto; top: -21.43cqi; left: -0.6cqi;
 }
-#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto; top: -20.83cqi; left: 0cqi;
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 152.98cqi; left: 38.39cqi; font-size: 7.44cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: relative; right: auto; bottom: auto;
+    top: -20.24cqi; left: 0cqi; font-size: 5.65cqi; width: 67.86cqi;
+}
+
+/* WryConfession */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 11.9cqi; top: 150cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto; top: -22.32cqi; left: 0cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 153.57cqi; left: 39.58cqi; font-size: 7.44cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: relative; right: auto; bottom: auto;
+    top: -20.83cqi; left: 0cqi; font-size: 5.65cqi; width: 65.77cqi;
+}
+
+/* Earnest */
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    font-size: 9.52cqi; top: 152.08cqi; left: 34.52cqi;
+}
+#toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; bottom: auto; top: -21.43cqi; width: 74.4cqi; height: 164.29cqi; left: 0cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; bottom: auto;
+    top: 154.46cqi; left: 35.71cqi;
+}
+#sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: relative; right: auto; bottom: auto;
+    font-size: 5.65cqi;
 }
 
 /* ── Dynamic — Back titles (cqi-locked) ── */

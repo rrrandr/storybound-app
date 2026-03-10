@@ -166,8 +166,8 @@
   function selectDesignEl(el) {
     if (selectedEl) deselectDesignEl();
     selectedEl = el;
-    el.style.outline = '2px solid #d4a844';
-    el.style.outlineOffset = '2px';
+    forceStyle(el, 'outline', '2px solid #d4a844');
+    forceStyle(el, 'outline-offset', '2px');
     // Kill transitions so position/size changes are instant
     forceStyle(el, 'transition', 'none');
     // Kill ancestor transitions (card zoom, flip, etc.)
@@ -183,9 +183,9 @@
 
   function deselectDesignEl() {
     if (!selectedEl) return;
-    // Restore dashed outline
-    selectedEl.style.outline = '2px solid rgba(212,168,68,0.7)';
-    selectedEl.style.outlineOffset = '2px';
+    // Restore default design outline
+    forceStyle(selectedEl, 'outline', '2px solid rgba(212,168,68,0.7)');
+    forceStyle(selectedEl, 'outline-offset', '2px');
     // Keep transition disabled to prevent snap-back after deselect
     selectedEl = null;
     hideTooltip();
@@ -678,8 +678,14 @@
 
     el.classList.add('design-handle');
     el.style.cursor = 'move';
-    el.style.outline = '2px solid rgba(212,168,68,0.7)';
-    el.style.outlineOffset = '2px';
+    // Use !important so stylesheet rules (resets, etc.) can't override the outline
+    forceStyle(el, 'outline', '2px solid rgba(212,168,68,0.7)');
+    forceStyle(el, 'outline-offset', '2px');
+    // Override pointer-events: none so elements like .sb-zoom-flavor-arc are clickable
+    if (getComputedStyle(el).pointerEvents === 'none') {
+      forceStyle(el, 'pointer-events', 'auto');
+      el.__designWasPointerNone = true;
+    }
     // Ensure positioned for top/left to work
     const pos = el.style.position || getComputedStyle(el).position;
     if (!pos || pos === 'static') {
@@ -711,12 +717,37 @@
     handles.push(el);
   }
 
+  // Track containers where we override overflow for design mode
+  const overflowOverrides = [];
+
+  // Track design context to detect grid↔portal transitions
+  let lastDesignContext = null; // 'grid' or 'portal'
+
+  // Properties the designer can set via forceStyle (!important)
+  const DESIGN_PROPS = ['top', 'left', 'right', 'bottom', 'font-size', 'width', 'height'];
+
   function decorateElements() {
     // Only decorate elements that are actually visible / in the viewport.
     // When a card is zoomed into #sbZoomPortal, only decorate inside the portal
     // to avoid layout shifts on unzoomed cards.
     const portal = document.getElementById('sbZoomPortal');
     const portalHasCard = portal && portal.querySelector('.sb-card, .fate-card');
+    const currentContext = portalHasCard ? 'portal' : 'grid';
+
+    // On context change (zoom/unzoom), strip inline design props from all handles
+    // so the context-appropriate CSS takes effect. Without this, moving text in
+    // the grid leaves !important inline styles that override portal CSS (and vice
+    // versa), causing text to jump between contexts.
+    if (lastDesignContext && lastDesignContext !== currentContext) {
+      DESIGN_PROPS.forEach(prop => {
+        handles.forEach(el => {
+          if (el.style.getPropertyPriority(prop) === 'important') {
+            el.style.removeProperty(prop);
+          }
+        });
+      });
+    }
+    lastDesignContext = currentContext;
 
     // Standard corridor cards
     const cardScope = portalHasCard ? portal : document;
@@ -726,6 +757,18 @@
         const base = sel.split(' > ').pop();
         card.querySelectorAll(base).forEach(decorateEl);
       });
+
+      // Override overflow: hidden on zoomed card faces and zoom-content so all
+      // elements (outlines, clipped buttons) are visible during design mode
+      if (card.classList.contains('zoomed')) {
+        ['.sb-card-front', '.sb-card-back', '.sb-zoom-content'].forEach(sel => {
+          const container = card.querySelector(sel);
+          if (container && getComputedStyle(container).overflow !== 'visible') {
+            forceStyle(container, 'overflow', 'visible');
+            overflowOverrides.push(container);
+          }
+        });
+      }
     });
 
     // Fate cards (petition, tempt, etc.)
@@ -739,19 +782,22 @@
   }
 
   function unDecorateElements() {
-    // Properties the designer can set via forceStyle (!important)
-    const designProps = ['position', 'top', 'left', 'right', 'bottom', 'font-size', 'width', 'height'];
-
     handles.forEach(el => {
       el.classList.remove('design-handle');
       el.style.cursor = '';
-      el.style.outline = '';
-      el.style.outlineOffset = '';
+      el.style.removeProperty('outline');
+      el.style.removeProperty('outline-offset');
       el.style.removeProperty('transition');
+
+      // Restore pointer-events on elements that had pointer-events: none
+      if (el.__designWasPointerNone) {
+        el.style.removeProperty('pointer-events');
+        delete el.__designWasPointerNone;
+      }
 
       // Remove designer-applied inline !important properties so they don't
       // leak between contexts (e.g. zoom portal → grid)
-      designProps.forEach(prop => {
+      ['position', ...DESIGN_PROPS].forEach(prop => {
         if (el.style.getPropertyPriority(prop) === 'important') {
           el.style.removeProperty(prop);
         }
@@ -762,6 +808,15 @@
       el.querySelectorAll('.design-corner').forEach(c => c.remove());
     });
     handles.length = 0;
+
+    // Restore overflow on containers we overrode
+    overflowOverrides.forEach(el => {
+      el.style.removeProperty('overflow');
+    });
+    overflowOverrides.length = 0;
+
+    // Reset context tracking
+    lastDesignContext = null;
   }
 
   // ── Activate / Deactivate ────────────────────────────────────────────

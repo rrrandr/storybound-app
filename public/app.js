@@ -31761,7 +31761,7 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         }
         dropdown.style.display = '';
         const rect = card.getBoundingClientRect();
-        const ddWidth = rect.width * 0.9; // slightly narrower than card
+        const ddWidth = rect.width * 0.75; // narrower than card gold frame
         const scaleFactor = rect.width / 168; // 168px = card base max-width
         dropdown.style.width = ddWidth + 'px';
         dropdown.style.fontSize = (11 * scaleFactor) + 'px';
@@ -31857,7 +31857,7 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
           if (isFlipped && !dropdown.classList.contains('dropdown-open')) {
             // Position immediately (hidden via max-height:0), then open after delay
             const rect = card.getBoundingClientRect();
-            const ddWidth = rect.width * 0.9;
+            const ddWidth = rect.width * 0.75;
             const scaleFactor = rect.width / 168;
             dropdown.style.width = ddWidth + 'px';
             dropdown.style.fontSize = (11 * scaleFactor) + 'px';
