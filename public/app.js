@@ -774,16 +774,34 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       });
     }
 
-    input.addEventListener('input', () => showSuggestions(input.value));
+    // Add one or more comma-separated entries (max 5 total)
+    function addEntries(raw) {
+      const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+      for (const val of parts) {
+        if (selected.length >= 5) break;
+        if (!selected.some(s => s.toLowerCase() === val.toLowerCase())) {
+          selected.push(val);
+        }
+      }
+      renderTags();
+    }
+
+    input.addEventListener('input', () => {
+      const v = input.value;
+      // Commit on trailing comma (chip-style entry)
+      if (v.includes(',') && v.endsWith(',')) {
+        addEntries(v);
+        input.value = '';
+        suggestEl.style.display = 'none';
+        return;
+      }
+      showSuggestions(v);
+    });
     input.addEventListener('blur', () => { setTimeout(() => { suggestEl.style.display = 'none'; }, 150); });
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        const val = input.value.trim();
-        if (val && selected.length < 5 && !selected.some(s => s.toLowerCase() === val.toLowerCase())) {
-          selected.push(val);
-          renderTags();
-        }
+        addEntries(input.value);
         input.value = '';
         suggestEl.style.display = 'none';
       }
@@ -5391,8 +5409,8 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       redirectCooldownTurns: 0,
       seductionEligible: false,
       gooseCooldown: 0,
-      romancePreferences: [],
-      romanceVector: null,
+      romancePreferences: [],    // Array of taste signals (books, authors, characters — stored as-is)
+      romanceVector: null,       // Computed bias vector from known titles (unrecognized entries pass through)
       freeStoryConsumed: false,       // LEGACY — migrated to freeCustomStoryCredits
       freeCustomStoryCredits: 1,      // Explicit credit counter: free users start with 1 custom story slot
 
@@ -43357,6 +43375,23 @@ Generate the title and synopsis now.` }
           showToast(check.reason);
           return;
         }
+
+        // ── Echo import pricing: corridor echoes only (typed are free) ──
+        const corridorCount = window._corridorEchoSlots?.length || 0;
+        const echoCost = (typeof window._getEchoImportCost === 'function') ? window._getEchoImportCost(corridorCount) : 0;
+        if (echoCost > 0) {
+          if ((state.fortunes || 0) < echoCost) {
+            showToast('You lack the Fortune required to bend fate.');
+            if (continueBtn) continueBtn.classList.add('visible');
+            return;
+          }
+          // Deduct fortunes (server-side atomic)
+          consumeFortune(echoCost, 'echo_import').then(ok => {
+            if (!ok) console.warn('[ECHO CORRIDOR] Fortune deduction failed on server, local state updated');
+          });
+          console.log(`[ECHO CORRIDOR] Deducted ${echoCost} Fortune(s) for ${corridorCount} corridor echoes`);
+        }
+
         window._storeReincarnationImports?.(corridorEchoes);
         window._incrementStoriesAppeared?.(corridorEchoes);
         console.log('[ECHO CORRIDOR] Stored imports:', corridorEchoes.map(s => `${s.echo.canonical_name || s.echo.name} as ${s.role}`));
@@ -60061,6 +60096,20 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
       let _typedPlayerEcho = null; // {echo, role} or null
       let _typedLIEcho = null;     // {echo, role} or null
 
+      // ── Echo Import Pricing ──
+      // Typed echoes (player/LI) are always free.
+      // Corridor echoes cost Fortunes based on count:
+      //   1 → free, 2 → 1, 3 → 2, 4 → 3, 5 → 5
+      function _getEchoImportCost(corridorCount) {
+          if (corridorCount <= 1) return 0;
+          if (corridorCount === 2) return 1;
+          if (corridorCount === 3) return 2;
+          if (corridorCount === 4) return 3;
+          if (corridorCount === 5) return 5;
+          return 0;
+      }
+      window._getEchoImportCost = _getEchoImportCost;
+
       function _getTypedEchoIds() {
           var ids = new Set();
           if (_typedPlayerEcho) ids.add(_typedPlayerEcho.echo.echo_id);
@@ -60127,6 +60176,23 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
               selector.innerHTML = '<div class="echo-slot-plus">+</div><div class="echo-slot-selector-label">Add Echo</div>';
               selector.addEventListener('click', _openEchoCorridorPicker);
               container.appendChild(selector);
+          }
+
+          // ── Cost display (below slots, inside the strip) ──
+          const costCount = _corridorEchoSlots.length;
+          const cost = _getEchoImportCost(costCount);
+          let costEl = strip.querySelector('.echo-corridor-cost');
+          if (cost > 0) {
+              if (!costEl) {
+                  costEl = document.createElement('div');
+                  costEl.className = 'echo-corridor-cost';
+                  strip.appendChild(costEl);
+              }
+              costEl.innerHTML = '<span class="echo-cost-label">Bending Fate: ' + cost + ' Fortune' + (cost !== 1 ? 's' : '') + '</span>'
+                  + '<span class="echo-cost-tip">Bending fate draws many souls back into the same story.</span>';
+              costEl.style.display = '';
+          } else if (costEl) {
+              costEl.style.display = 'none';
           }
       }
 
@@ -60292,6 +60358,7 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
       window._initEchoCorridorStrip = _renderEchoCorridorStrip;
       window._collectCorridorEchoes = _collectCorridorEchoes;
       window._clearCorridorEchoSlots = _clearCorridorEchoSlots;
+      Object.defineProperty(window, '_corridorEchoSlots', { get: () => _corridorEchoSlots });
 
       console.log('[REINCARNATION] System initialized');
   })();

@@ -64,19 +64,24 @@
 
   function px(v) { return Math.round(v * 2) / 2 + 'px'; }
 
-  // Card face container base width (px) — used for px→cqi conversion in output
+  // Card face container base width (px) — fallback for px→cqi conversion
   const CARD_FACE_BASE_WIDTH = 168;
+
+  // Per-selector measured container widths (recorded at drag time)
+  const containerWidths = new Map();
 
   /**
    * Convert a CSS value from px to cqi if it's a px value.
-   * Used in buildCSS() output so card text positions scale proportionally.
+   * @param {string} value — CSS value like "253px"
+   * @param {number} [containerWidth] — actual container width (measured at drag time)
    */
-  function pxToCqi(value) {
+  function pxToCqi(value, containerWidth) {
     if (typeof value !== 'string') return value;
     const m = value.match(/^(-?[\d.]+)px$/);
     if (!m) return value;
     const pxVal = parseFloat(m[1]);
-    const cqiVal = Math.round((pxVal / CARD_FACE_BASE_WIDTH * 100) * 100) / 100;
+    const base = containerWidth || CARD_FACE_BASE_WIDTH;
+    const cqiVal = Math.round((pxVal / base * 100) * 100) / 100;
     return cqiVal + 'cqi';
   }
 
@@ -158,6 +163,17 @@
     const sel = cssSelectorFor(el);
     if (!mods.has(sel)) mods.set(sel, {});
     mods.get(sel)[prop] = value;
+
+    // Record container width for accurate px→cqi conversion
+    if (!containerWidths.has(sel)) {
+      const face = el.closest('.sb-card-face');
+      if (face) {
+        const scale = getAncestorScale(face);
+        // Use clientWidth (padding-box, no border) ÷ ancestor scale
+        containerWidths.set(sel, face.clientWidth / scale);
+      }
+    }
+
     refreshPanel();
   }
 
@@ -341,9 +357,10 @@
     for (const [sel, props] of mods) {
       // Convert px→cqi for elements inside .sb-card-face
       const isCardFaceChild = sel.includes('sb-card-face');
+      const cw = containerWidths.get(sel); // measured at drag time
       css += `${sel} {\n`;
       for (const [p, v] of Object.entries(props)) {
-        const outputVal = (isCardFaceChild && CQI_CONVERTIBLE_PROPS.has(p)) ? pxToCqi(v) : v;
+        const outputVal = (isCardFaceChild && CQI_CONVERTIBLE_PROPS.has(p)) ? pxToCqi(v, cw) : v;
         css += `    ${p}: ${outputVal};\n`;
       }
       css += '}\n\n';
@@ -817,6 +834,7 @@
 
     // Reset context tracking
     lastDesignContext = null;
+    containerWidths.clear();
   }
 
   // ── Activate / Deactivate ────────────────────────────────────────────
