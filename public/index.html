@@ -75,6 +75,7 @@
     <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
     <button class="sb-btn-png sm" onclick="window.openTrophyWall()">Achievements</button>
     <button class="sb-btn-png sm" onclick="window.changeTier()">Change Tier</button>
+    <button id="menuReincarnationsBtn" class="sb-btn-png sm">Reincarnations</button>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
@@ -463,6 +464,30 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- FATE PAUSES MODAL — Submit-turn intercept for cliffhanger / zero-fortune -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<div id="fatePausesModal" class="overlay hidden" style="z-index:10060;">
+  <div class="box fate-pauses-box">
+    <h3 class="fate-pauses-title">Fate Pauses</h3>
+
+    <!-- Echo: player's entered turn (subtle) -->
+    <div id="fatePausesEcho" class="fate-pauses-echo hidden">
+      <span class="fate-pauses-echo-label">You:</span>
+      <span id="fatePausesEchoText" class="fate-pauses-echo-text"></span>
+    </div>
+
+    <!-- Body copy (variant-specific) -->
+    <p id="fatePausesBody" class="fate-pauses-body"></p>
+
+    <!-- Offer area (populated by JS) -->
+    <div id="fatePausesOffers" class="fate-pauses-offers"></div>
+
+    <!-- Step away -->
+    <button id="fatePausesStepAway" class="fate-pauses-step-away">Step away for now</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
 <!-- DESTRUCTIVE CHANGE WARNING MODAL — Story state locking enforcement       -->
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 <div id="destructiveChangeModal" class="overlay hidden" style="z-index:10050;">
@@ -778,6 +803,12 @@
     <!-- Character Section Continue Button (bottom center) -->
     <div class="character-continue-wrapper">
         <button class="flow-continue-btn sb-btn-png sm" id="continueFromCharacters">Proceed</button>
+    </div>
+
+    <!-- Returning Echoes — corridor echo import strip -->
+    <div class="echo-corridor-strip hidden" id="echoCorridorStrip">
+        <div class="echo-corridor-label">Returning Echoes</div>
+        <div class="echo-corridor-slots" id="echoCorridorSlots"></div>
     </div>
     </div>
 
@@ -1481,6 +1512,7 @@
         <p class="sb-end-page-book-label">Book I — Complete</p>
         <div class="sb-end-page-rule"></div>
         <div class="sb-end-page-actions">
+          <button id="btnExtractReincarnation" class="sb-end-page-cta sb-end-page-cta-alt" onclick="window.openReincarnationExtract()">Extract Reincarnations</button>
           <button id="btnStartBook2" class="sb-end-page-cta" onclick="window.startBook2()">Start Book 2</button>
           <button id="btnNewInWorld" class="sb-end-page-cta sb-end-page-cta-alt" onclick="window.startNewInWorld()">New story in this world</button>
           <div class="sb-end-page-secondary">
@@ -1514,6 +1546,38 @@
         <span id="book2PrepStatus">Preparing your next story...</span>
       </div>
       <button id="btnBook1InterstitialContinue" class="sb-end-page-cta hidden">Continue to Book 2</button>
+    </div>
+  </div>
+
+  <!-- ── REINCARNATION EXTRACTION MODAL ── -->
+  <div id="reincarnationExtractModal" class="overlay hidden" style="z-index:10008;">
+    <div class="reincarnation-extract-box">
+      <div class="reincarnation-extract-epitaph">Some souls deserve to live beyond a single tale.</div>
+      <div id="reincarnationExtractList" class="reincarnation-extract-list"></div>
+      <button id="reincarnationExtractConfirm" class="sb-btn-png sm" style="margin-top:12px;" disabled>Extract Selected</button>
+      <button id="reincarnationExtractSkip" class="sb-btn-png sm" style="margin-top:6px;">Not this time</button>
+    </div>
+  </div>
+
+  <!-- ── REINCARNATION VAULT SCREEN ── -->
+  <div id="reincarnationVaultScreen" class="overlay hidden" style="z-index:10006;">
+    <div class="reincarnation-vault-box">
+      <div class="reincarnation-vault-title">Reincarnations</div>
+      <div id="reincarnationVaultList" class="reincarnation-vault-list"></div>
+      <div id="reincarnationVaultEmpty" class="reincarnation-vault-empty">No souls extracted yet.</div>
+      <button id="reincarnationVaultClose" class="sb-btn-png sm" style="margin-top:14px;">Close</button>
+    </div>
+  </div>
+
+  <!-- ── REINCARNATION IMPORT MODAL (pre-story) ── -->
+  <div id="reincarnationImportModal" class="overlay hidden" style="z-index:10005;">
+    <div class="reincarnation-import-box">
+      <div class="reincarnation-import-title">Summon Reincarnations</div>
+      <p class="reincarnation-import-hint">Choose up to 3 souls to weave into your new story.</p>
+      <div id="reincarnationImportList" class="reincarnation-import-list"></div>
+      <div id="reincarnationImportRoles" class="reincarnation-import-roles hidden"></div>
+      <button id="reincarnationImportConfirm" class="sb-btn-png sm" style="margin-top:12px;">Weave Into Story</button>
+      <button id="reincarnationImportSkip" class="sb-btn-png sm" style="margin-top:6px;">Start Fresh</button>
     </div>
   </div>
 
@@ -1779,5 +1843,52 @@
     <div id="devHudLog" class="dev-hud-log"></div>
   </div>
 </div>
+
+<!-- QA Reset Panel (dev/sandbox only — never in production) -->
+<div id="qaResetPanel" class="overlay hidden" style="z-index:10100;">
+  <div class="qa-panel-box">
+    <div class="qa-panel-header">
+      <span class="qa-panel-title">QA / DEV ONLY</span>
+      <button id="qaResetPanelClose" class="qa-panel-close">&times;</button>
+    </div>
+    <p class="qa-panel-warning">Sandbox testing tools. Not available in production.</p>
+
+    <!-- Current state display -->
+    <div class="qa-panel-state" id="qaStateDisplay"></div>
+
+    <!-- Action groups -->
+    <div class="qa-panel-section">
+      <div class="qa-panel-section-label">Economy</div>
+      <div class="qa-panel-btns">
+        <button class="qa-btn qa-btn--danger" data-qa="reset-fortunes">Reset Fortunes to 0</button>
+        <button class="qa-btn" data-qa="grant-50">+50 Fortunes</button>
+        <button class="qa-btn" data-qa="grant-200">+200 Fortunes</button>
+        <button class="qa-btn" data-qa="grant-1000">+1000 Fortunes</button>
+      </div>
+    </div>
+
+    <div class="qa-panel-section">
+      <div class="qa-panel-section-label">Subscription Tier</div>
+      <div class="qa-panel-btns">
+        <button class="qa-btn" data-qa="set-storied">Set Storied</button>
+        <button class="qa-btn" data-qa="set-favored">Set Favored</button>
+        <button class="qa-btn" data-qa="set-chosen">Set Chosen</button>
+        <button class="qa-btn qa-btn--danger" data-qa="remove-sub">Remove Subscription</button>
+      </div>
+    </div>
+
+    <div class="qa-panel-section">
+      <div class="qa-panel-section-label">Gates & State</div>
+      <div class="qa-panel-btns">
+        <button class="qa-btn qa-btn--danger" data-qa="remove-storypass">Remove Storypass</button>
+        <button class="qa-btn" data-qa="scene-20">Return to Scene 20</button>
+        <button class="qa-btn" data-qa="clear-pending">Clear Pending Turn</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QA trigger (dev only, rendered by JS) -->
+<button id="qaResetTrigger" class="qa-trigger hidden" title="QA Panel">QA</button>
 </body>
 </html>

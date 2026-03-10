@@ -405,6 +405,10 @@ window.config = window.config || {
   }
 
   function hydrateState(profile) {
+    // Store real Stripe-derived entitlements (never mutated by QA)
+    state._realSubscribed = !!profile.is_subscriber;
+    state._realSubscriptionTier = profile.subscription_tier || (state._realSubscribed ? 'storied' : null);
+
     state.tier = profile.tier || 'free';
     state.subscribed = !!profile.is_subscriber;
     state.subscriptionTier = profile.subscription_tier || (state.subscribed ? 'storied' : null);
@@ -417,10 +421,170 @@ window.config = window.config || {
     // Migrate legacy freeStoryConsumed → freeCustomStoryCredits
     _migrateFreeStoryCredits();
     state.first_tempt_fate_vision_triggered = !!profile.first_tempt_fate_vision_triggered;
+
+    // QA entitlement overlay — dev/sandbox only, persisted in localStorage
+    _applyQaEntitlementOverride();
+
     syncTierFromAccess();
     activateKeyholeMarkIfEligible();
     decayFateResonanceCrossSession();
     console.log('Profile hydrated. Subscribed:', state.subscribed, '| Tier:', state.tier, '| Keyhole:', state.keyhole?.marked, '| Fortunes:', state.fortunes, '| Resonance:', getFateResonanceState());
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // QA ENTITLEMENT OVERLAY — Dev/sandbox only
+  // Persisted in Supabase (authoritative) with localStorage fallback.
+  // Applied AFTER real Supabase hydration, BEFORE syncTierFromAccess().
+  // Real Stripe entitlements are preserved in state._realSubscribed/Tier.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Allowed hosts: localhost, 127.0.0.1, Vercel preview/dev (*.vercel.app)
+  // NEVER matches production custom domain (storybound.love)
+  function _isQaHost() {
+      const host = location.hostname;
+      return host === 'localhost' ||
+             host === '127.0.0.1' ||
+             host.endsWith('.vercel.app');
+  }
+
+  function _isQaOverrideAllowed() {
+      return _isQaHost() && !!window._devBypass;
+  }
+
+  // Track whether Supabase QA columns are available (set during boot hydration)
+  let _qaSupabaseAvailable = false;
+
+  function _readQaSubscriptionOverride() {
+      // Prefer Supabase source (set during hydrateState from profile columns)
+      if (_qaSupabaseAvailable && state._qaFromSupabase) {
+          return state._qaFromSupabase;
+      }
+      // Fallback: localStorage
+      try {
+          const active = localStorage.getItem('sb_qa_sub_active');
+          const tier = localStorage.getItem('sb_qa_sub_tier');
+          if (active === 'true' && tier) return { active: true, tier, source: 'localStorage' };
+          if (active === 'false') return { active: false, tier: null, source: 'localStorage' };
+          return null;
+      } catch (e) { return null; }
+  }
+
+  function _getQaSource() {
+      if (_qaSupabaseAvailable && state._qaFromSupabase) return 'supabase';
+      try {
+          if (localStorage.getItem('sb_qa_sub_active') !== null) return 'localStorage';
+      } catch (e) {}
+      return 'none';
+  }
+
+  function _writeQaSubscriptionOverride(active, tier) {
+      // Always write localStorage (immediate, reliable)
+      try {
+          localStorage.setItem('sb_qa_sub_active', active ? 'true' : 'false');
+          if (tier) localStorage.setItem('sb_qa_sub_tier', tier);
+          else localStorage.removeItem('sb_qa_sub_tier');
+      } catch (e) { console.warn('[QA] localStorage write failed:', e); }
+
+      // Write to Supabase (authoritative when columns exist)
+      _writeQaSubToSupabase(active, tier);
+  }
+
+  async function _writeQaSubToSupabase(active, tier) {
+      try {
+          const user = window.supabase?.auth?.getUser
+              ? (await window.supabase.auth.getUser()).data?.user : null;
+          if (!user) return;
+          const { error } = await window.supabase.from('profiles').update({
+              qa_subscription_active: active,
+              qa_subscription_tier: tier || null
+          }).eq('id', user.id);
+          if (error) {
+              console.warn('[QA] Supabase qa_subscription write FAILED:', error.message);
+              console.warn('[QA] Add columns qa_subscription_active (bool) and qa_subscription_tier (text) to profiles table.');
+              _qaSupabaseAvailable = false;
+              return;
+          }
+          _qaSupabaseAvailable = true;
+          // Keep in-memory mirror current
+          state._qaFromSupabase = active
+              ? { active: true, tier, source: 'supabase' }
+              : { active: false, tier: null, source: 'supabase' };
+          console.log('[QA] Supabase qa_subscription written:', { active, tier });
+      } catch (e) {
+          console.warn('[QA] Supabase qa_subscription write FAILED (exception):', e.message || e);
+          _qaSupabaseAvailable = false;
+      }
+  }
+
+  /**
+   * Separate Supabase fetch for QA columns. Does NOT use PROFILE_COLUMNS
+   * (adding unknown columns there would break the main query if they don't exist).
+   * Called from hydrateState() — results cached in state._qaFromSupabase.
+   */
+  async function _fetchQaColumnsFromSupabase(userId) {
+      if (!_isQaOverrideAllowed()) return;
+      if (!userId || !window.supabase) return;
+      try {
+          const { data, error } = await window.supabase
+              .from('profiles')
+              .select('qa_subscription_active,qa_subscription_tier')
+              .eq('id', userId)
+              .maybeSingle();
+          if (error) {
+              // Column doesn't exist → PostgREST returns 400/42703
+              _qaSupabaseAvailable = false;
+              state._qaFromSupabase = null;
+              console.warn('[QA] Supabase QA columns NOT available:', error.message);
+              console.warn('[QA] Using localStorage fallback. To enable durable QA persistence, add to profiles table:');
+              console.warn('[QA]   qa_subscription_active  boolean  default false');
+              console.warn('[QA]   qa_subscription_tier    text     nullable');
+              return;
+          }
+          _qaSupabaseAvailable = true;
+          if (data && data.qa_subscription_active) {
+              state._qaFromSupabase = {
+                  active: true,
+                  tier: data.qa_subscription_tier || null,
+                  source: 'supabase'
+              };
+          } else if (data && data.qa_subscription_active === false) {
+              state._qaFromSupabase = {
+                  active: false,
+                  tier: null,
+                  source: 'supabase'
+              };
+          } else {
+              state._qaFromSupabase = null; // columns exist but no value set
+          }
+          console.log('[QA] Supabase QA columns detected. Source: supabase',
+              state._qaFromSupabase || '(no override set)');
+      } catch (e) {
+          _qaSupabaseAvailable = false;
+          state._qaFromSupabase = null;
+          console.warn('[QA] Supabase QA fetch failed:', e.message || e);
+      }
+  }
+
+  function _applyQaEntitlementOverride() {
+      if (!_isQaOverrideAllowed()) return;
+      const override = _readQaSubscriptionOverride();
+      if (!override) return;
+
+      const src = _getQaSource();
+      if (override.active && override.tier) {
+          state.subscribed = true;
+          state.subscriptionTier = override.tier;
+          state.billingStatus = 'active';
+          console.log('[QA] Entitlement override applied:', override.tier,
+              '| source:', src,
+              '| real:', state._realSubscribed ? state._realSubscriptionTier : 'none');
+      } else if (override.active === false) {
+          state.subscribed = false;
+          state.subscriptionTier = null;
+          state.billingStatus = null;
+          console.log('[QA] Subscription removed by QA override | source:', src,
+              '| real:', state._realSubscribed ? state._realSubscriptionTier : 'none');
+      }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -2099,26 +2263,36 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       if (_authEmail) { _authEmail.setAttribute('autocomplete', 'off'); _authEmail.setAttribute('tabindex', '-1'); _authEmail.value = ''; }
       if (_authPass)  { _authPass.setAttribute('autocomplete', 'off');  _authPass.setAttribute('tabindex', '-1');  _authPass.value = ''; }
 
+      // DEV BYPASS — dev/preview hosts + ?devpass=storybound makes purchase buttons fake success
+      // Must be set BEFORE hydrateState so QA entitlement overlay can apply on boot
+      if (_isQaHost() &&
+          new URLSearchParams(window.location.search).get('devpass') === 'storybound') {
+        window._devBypass = true;
+        console.log('%c[DEV] Purchase bypass active — buy buttons will fake success', 'color: #ffd700; font-weight: bold');
+      }
+      // Activate QA panel now that _devBypass is resolved (trigger + click handler)
+      if (typeof window._activateQaPanel === 'function') window._activateQaPanel();
+
       const profile = await hydrateProfile(userId);
       if (!profile) {
         routeToLegalAcceptance();
         return;
       }
 
+      // QA: Fetch Supabase QA columns before hydration (async, separate from main profile query)
+      if (_isQaOverrideAllowed()) {
+          await _fetchQaColumnsFromSupabase(userId);
+      }
+
       hydrateState(profile);
 
       renderBurgerMenu();
 
-      // DEV BYPASS — localhost only, ?devpass=storybound makes purchase buttons fake success
-      const _host = window.location.hostname;
-      if ((_host === 'localhost' || _host === '127.0.0.1') &&
-          new URLSearchParams(window.location.search).get('devpass') === 'storybound') {
-        window._devBypass = true;
-        console.log('%c[DEV] Purchase bypass active — buy buttons will fake success', 'color: #ffd700; font-weight: bold');
-      }
-
 
       resolveLegalGate(profile);
+
+      // FATE PAUSES: Check for persisted pending turn (Stripe redirect return)
+      if (window._checkPersistedFatePausesTurn) window._checkPersistedFatePausesTurn();
     } catch (e) {
       console.error('[BOOT] Boot sequence failed:', e);
       routeToLegalAcceptance();
@@ -5125,6 +5299,23 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       // Tempt Fate — explicit invocation (per-turn, per-session)
       tempt_fate_invoked_this_turn: false,
       consecutive_tempt_fate_count: 0,
+      tempt_fate_heat: 0,   // economic heat: +1 per Tempt, -1 per non-Tempt scene, clamped 0-4
+
+      // Inline contextual Tempt Fate (ephemeral, per-scene)
+      _inlineTemptActive: false,
+      _inlineTemptParaId: null,
+      _inlineTemptSuggestions: null,
+      _inlineTemptSource: false,
+      lastInlineTemptScene: null,
+
+      // Reincarnation imports for current story (ephemeral)
+      _reincarnationImports: [],
+      _legendEvaluationComplete: false,
+
+      // Fate Pauses — submit-turn intercept (ephemeral)
+      _fatePausesPending: null,     // { rawAct, rawDia, fateSelectedIndex, fateOptions, petitionPayload } or null
+      _fatePausesGateType: null,    // 'cliffhanger_taste' | 'zero_fortunes' | null
+      _fatePausesOpen: false,
 
       // Onboarding milestone Visions — first story only
       onboarding_story_id: null,
@@ -14740,6 +14931,11 @@ Return ONLY the title, no quotes or explanation.`;
       state.book_complete = true;
       saveStorySnapshot();
 
+      // Detect legendary moments for imported echoes (fire-and-forget, once per story)
+      if (!state._legendEvaluationComplete && (state._reincarnationImports || []).length > 0 && typeof window._detectLegendaryMoment === 'function') {
+          window._detectLegendaryMoment(state._reincarnationImports).catch(() => {});
+      }
+
       console.log('[END-PAGE] Story End Page shown (Book ' + (state.book_number || 1) + ' complete)');
   }
 
@@ -15051,6 +15247,7 @@ Return ONLY valid JSON:
       state.fate_saturation = 0;
       state.volatility_window = { active: false, severity: 0, remaining_scenes: 0 };
       state.consecutive_tempt_fate_count = 0;
+      state.tempt_fate_heat = 0;
       state.tempt_fate_invoked_this_turn = false;
       state.temptFateWish = '';
       state._temptUsageCount = 0;
@@ -15060,6 +15257,9 @@ Return ONLY valid JSON:
       state._lastEmotionalPolarity = null;
       state._emotionalMythicFloorActivated = false;
       state.petitionUsedThisScene = false;
+      state._reincarnationImports = [];
+      state._legendEvaluationComplete = false;
+      if (typeof window._clearCorridorEchoSlots === 'function') window._clearCorridorEchoSlots();
 
       // Fate object — per-story tracking
       state.fate = { stance: 'neutral', minorUsedThisScene: false, greaterUsedThisScene: false, lastGreaterSceneIndex: null, earnedIntimacy: false, earlyGamingCount: 0, pendingPetition: null };
@@ -21506,65 +21706,109 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       const overlay = document.createElement('div');
       overlay.className = 'tempt-zoom-overlay';
 
-      // Build scrolling columns HTML
-      const leftItems = TEMPT_WISH_EXAMPLES.left.map(t =>
-          `<div class="tempt-wish-item">${t}</div>`
-      ).join('');
-      const rightItems = TEMPT_WISH_EXAMPLES.right.map(t =>
-          `<div class="tempt-wish-item">${t}</div>`
-      ).join('');
+      // Contextual suggestions path (from inline thumbnail)
+      const hasCtxSuggestions = state._inlineTemptSource && Array.isArray(state._inlineTemptSuggestions) && state._inlineTemptSuggestions.length >= 3;
 
-      overlay.innerHTML = `
-          <div class="tempt-wish-zone">
-              <div class="tempt-wish-columns">
-                  <div class="tempt-wish-col">
-                      <div class="tempt-wish-scroll" data-dir="up">${leftItems}${leftItems}</div>
+      if (hasCtxSuggestions) {
+          // Scene-specific suggestions layout
+          const ctxItems = state._inlineTemptSuggestions.map(t =>
+              `<div class="tempt-ctx-item">${t}</div>`
+          ).join('');
+          overlay.innerHTML = `
+              <div class="tempt-wish-zone">
+                  <div class="tempt-ctx-suggestions">
+                      ${ctxItems}
+                      <div class="tempt-ctx-own">or write your own\u2026</div>
                   </div>
-                  <div class="tempt-wish-col">
-                      <div class="tempt-wish-scroll" data-dir="up">${rightItems}${rightItems}</div>
+                  <div class="tempt-custom-input hidden">
+                      <textarea id="temptZoomInput" placeholder="Write your wish\u2026" rows="3"></textarea>
                   </div>
               </div>
-              <div class="tempt-custom-input hidden">
-                  <textarea id="temptZoomInput" placeholder="Write your wish\u2026" rows="3"></textarea>
+          `;
+      } else {
+          // Default scrolling columns (standard path)
+          const leftItems = TEMPT_WISH_EXAMPLES.left.map(t =>
+              `<div class="tempt-wish-item">${t}</div>`
+          ).join('');
+          const rightItems = TEMPT_WISH_EXAMPLES.right.map(t =>
+              `<div class="tempt-wish-item">${t}</div>`
+          ).join('');
+          overlay.innerHTML = `
+              <div class="tempt-wish-zone">
+                  <div class="tempt-wish-columns">
+                      <div class="tempt-wish-col">
+                          <div class="tempt-wish-scroll" data-dir="up">${leftItems}${leftItems}</div>
+                      </div>
+                      <div class="tempt-wish-col">
+                          <div class="tempt-wish-scroll" data-dir="up">${rightItems}${rightItems}</div>
+                      </div>
+                  </div>
+                  <div class="tempt-custom-input hidden">
+                      <textarea id="temptZoomInput" placeholder="Write your wish\u2026" rows="3"></textarea>
+                  </div>
               </div>
-          </div>
-      `;
+          `;
+      }
 
       overlay.addEventListener('click', e => e.stopPropagation());
       overlay.addEventListener('mousedown', e => e.stopPropagation());
       visibleFace.appendChild(overlay);
 
-      // Start scrolling animation
-      const scrollers = overlay.querySelectorAll('.tempt-wish-scroll');
-      scrollers.forEach(scroller => {
-          const dir = scroller.dataset.dir;
-          const speed = dir === 'up' ? -0.15 : 0.15;
-          let pos = dir === 'up' ? 0 : -(scroller.scrollHeight / 2);
-          scroller._temptAnim = true;
-          function tick() {
-              if (!scroller._temptAnim) return;
-              pos += speed;
-              const half = scroller.scrollHeight / 2;
-              if (dir === 'up' && Math.abs(pos) >= half) pos = 0;
-              if (dir === 'down' && pos >= 0) pos = -half;
-              scroller.style.transform = `translateY(${pos}px)`;
-              requestAnimationFrame(tick);
-          }
-          requestAnimationFrame(tick);
-      });
-
-      // Click on wish columns → switch to custom input
-      const wishColumns = overlay.querySelector('.tempt-wish-columns');
       const customInput = overlay.querySelector('.tempt-custom-input');
       const textarea = overlay.querySelector('#temptZoomInput');
 
-      wishColumns.addEventListener('click', () => {
-          // Stop scrolling
-          scrollers.forEach(s => { s._temptAnim = false; });
-          wishColumns.classList.add('hidden');
-          customInput.classList.remove('hidden');
-          if (textarea) setTimeout(() => textarea.focus(), 100);
-      });
+      if (hasCtxSuggestions) {
+          // Contextual suggestion click → prefill textarea
+          const ctxSuggestionsEl = overlay.querySelector('.tempt-ctx-suggestions');
+          ctxSuggestionsEl.querySelectorAll('.tempt-ctx-item').forEach(item => {
+              item.addEventListener('click', () => {
+                  ctxSuggestionsEl.classList.add('hidden');
+                  customInput.classList.remove('hidden');
+                  if (textarea) {
+                      textarea.value = item.textContent;
+                      setTimeout(() => textarea.focus(), 100);
+                  }
+              });
+          });
+          // "Write your own" link
+          const ownLink = ctxSuggestionsEl.querySelector('.tempt-ctx-own');
+          if (ownLink) {
+              ownLink.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  ctxSuggestionsEl.classList.add('hidden');
+                  customInput.classList.remove('hidden');
+                  if (textarea) setTimeout(() => textarea.focus(), 100);
+              });
+          }
+      } else {
+          // Default: start scrolling animation
+          const scrollers = overlay.querySelectorAll('.tempt-wish-scroll');
+          scrollers.forEach(scroller => {
+              const dir = scroller.dataset.dir;
+              const speed = dir === 'up' ? -0.15 : 0.15;
+              let pos = dir === 'up' ? 0 : -(scroller.scrollHeight / 2);
+              scroller._temptAnim = true;
+              function tick() {
+                  if (!scroller._temptAnim) return;
+                  pos += speed;
+                  const half = scroller.scrollHeight / 2;
+                  if (dir === 'up' && Math.abs(pos) >= half) pos = 0;
+                  if (dir === 'down' && pos >= 0) pos = -half;
+                  scroller.style.transform = `translateY(${pos}px)`;
+                  requestAnimationFrame(tick);
+              }
+              requestAnimationFrame(tick);
+          });
+
+          // Click on wish columns → switch to custom input
+          const wishColumns = overlay.querySelector('.tempt-wish-columns');
+          wishColumns.addEventListener('click', () => {
+              scrollers.forEach(s => { s._temptAnim = false; });
+              wishColumns.classList.add('hidden');
+              customInput.classList.remove('hidden');
+              if (textarea) setTimeout(() => textarea.focus(), 100);
+          });
+      }
 
       // Proceed button (portal sibling, NOT inside card — avoids inheriting scale transform)
       const proceedBtn = document.createElement('button');
@@ -21585,6 +21829,14 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           // Invoke Tempt Fate (handles cost, stance — skip confirm since zoom IS confirmation)
           if (typeof invokeTemptFate === 'function') {
               await invokeTemptFate(true);
+          }
+
+          // Grey out bottom Tempt Fate card if invoked from inline thumbnail
+          if (state._inlineTemptSource) {
+              const bottomCard = document.querySelector('.tempt-fate-card');
+              if (bottomCard) bottomCard.classList.add('tempt-inline-used');
+              // Remove the inline thumbnail
+              document.querySelectorAll('.inline-tempt-anchor').forEach(el => el.remove());
           }
 
           // Close zoom after invocation
@@ -21647,6 +21899,9 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       _temptZoomOriginalParent = null;
       _temptZoomOriginalNextSibling = null;
       _temptZoomCard = null;
+
+      // Clear inline Tempt Fate source flag (keep _inlineTemptActive — prevents re-show)
+      state._inlineTemptSource = false;
 
       enableTurnControls();
   }
@@ -24073,6 +24328,320 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   // Expose for DevHUD
   window.validatePaywallRouting = validatePaywallRouting;
 
+  // ═══════════════════════════════════════════════════════════════════════
+  // FATE PAUSES — Submit-turn intercept system
+  // Captures pending turn, shows narrative-first modal, resumes on purchase
+  // ═══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Capture the current turn payload for deferred resume.
+   */
+  function _capturePendingTurn() {
+      const rawAct = document.getElementById('actionInput')?.value?.trim() || '';
+      const rawDia = document.getElementById('dialogueInput')?.value?.trim() || '';
+      return {
+          rawAct,
+          rawDia,
+          fateSelectedIndex: typeof state.fateSelectedIndex === 'number' ? state.fateSelectedIndex : null,
+          fateOptions: state.fateOptions ? JSON.parse(JSON.stringify(state.fateOptions)) : null,
+          petitionPayload: state._lastPetitionPayload ? JSON.parse(JSON.stringify(state._lastPetitionPayload)) : null,
+          temptFateInvoked: state.tempt_fate_invoked_this_turn || false
+      };
+  }
+
+  /**
+   * Determine player commerce context for offer routing.
+   */
+  function _getPlayerCommerceContext() {
+      const isSubscriber = !!state.subscribed;
+      const subTier = state.subscriptionTier || null; // 'storied' | 'favored' | null
+      const hasHigherTier = isSubscriber && subTier !== 'favored';
+      const storypassEligible = state.storypassEligible !== false;
+      const fortunes = state.fortunes || 0;
+      return { isSubscriber, subTier, hasHigherTier, storypassEligible, fortunes };
+  }
+
+  /**
+   * Build offer HTML for the Fate Pauses modal based on gate type and commerce context.
+   */
+  function _buildFatePausesOffers(gateType) {
+      const ctx = _getPlayerCommerceContext();
+      const offersEl = document.getElementById('fatePausesOffers');
+      if (!offersEl) return;
+      offersEl.innerHTML = '';
+
+      if (gateType === 'cliffhanger_taste') {
+          // Primary: Storypass (if eligible)
+          if (ctx.storypassEligible) {
+              const btn = document.createElement('button');
+              btn.className = 'fate-pauses-offer-btn primary';
+              btn.innerHTML = 'Continue the Story<span class="fate-pauses-offer-sublabel">Storypass — $3</span>';
+              btn.addEventListener('click', () => {
+                  _persistPendingTurn();
+                  initiateStripeCheckout('storypass');
+              });
+              offersEl.appendChild(btn);
+          }
+          // Secondary: Subscription
+          const subBtn = document.createElement('button');
+          subBtn.className = 'fate-pauses-offer-btn secondary';
+          subBtn.innerHTML = 'Indulge — Full Experience<span class="fate-pauses-offer-sublabel">From $6/month</span>';
+          subBtn.addEventListener('click', () => {
+              _persistPendingTurn();
+              initiateStripeCheckout('storied');
+          });
+          offersEl.appendChild(subBtn);
+
+      } else if (gateType === 'zero_fortunes') {
+          if (ctx.isSubscriber) {
+              // Subscriber at 0: higher tier + fortune packs
+              if (ctx.hasHigherTier) {
+                  const tierName = ctx.subTier === 'storied' ? 'Favored' : 'Favored';
+                  const upgradeBtn = document.createElement('button');
+                  upgradeBtn.className = 'fate-pauses-offer-btn secondary';
+                  upgradeBtn.innerHTML = `Become ${tierName}<span class="fate-pauses-offer-sublabel">$9/month</span>`;
+                  upgradeBtn.addEventListener('click', () => {
+                      _persistPendingTurn();
+                      initiateStripeCheckout('favored');
+                  });
+                  offersEl.appendChild(upgradeBtn);
+              }
+              // Fortune packs
+              _appendFortunePacks(offersEl);
+          } else {
+              // Non-subscriber at 0: subscription + fortune packs
+              const subBtn = document.createElement('button');
+              subBtn.className = 'fate-pauses-offer-btn primary';
+              subBtn.innerHTML = 'Indulge — Full Experience<span class="fate-pauses-offer-sublabel">From $6/month</span>';
+              subBtn.addEventListener('click', () => {
+                  _persistPendingTurn();
+                  initiateStripeCheckout('storied');
+              });
+              offersEl.appendChild(subBtn);
+              // Fortune packs
+              _appendFortunePacks(offersEl);
+          }
+      }
+  }
+
+  /**
+   * Append fortune pack buttons to an offers container.
+   */
+  function _appendFortunePacks(container) {
+      const packs = [
+          { size: 20, label: '20 Fortunes', price: '$5' },
+          { size: 50, label: '50 Fortunes', price: '$10' },
+          { size: 120, label: '120 Fortunes', price: '$20' }
+      ];
+      packs.forEach(pack => {
+          const btn = document.createElement('button');
+          btn.className = 'fate-pauses-offer-btn secondary';
+          btn.innerHTML = `${pack.label}<span class="fate-pauses-offer-sublabel">${pack.price}</span>`;
+          btn.addEventListener('click', () => {
+              if (window._devBypass) {
+                  // Dev mode: instant fortune grant + resume
+                  state.fortunes = (state.fortunes || 0) + pack.size;
+                  if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+                  showToast(`+${pack.size} Fortunes added (dev mode)`);
+                  _closeFatePausesModal(true);
+                  return;
+              }
+              _persistPendingTurn();
+              window.purchaseFortunePack(pack.size, pack.price);
+          });
+          container.appendChild(btn);
+      });
+  }
+
+  /**
+   * Open the Fate Pauses modal.
+   */
+  function _openFatePausesModal(gateType) {
+      const pending = _capturePendingTurn();
+      state._fatePausesPending = pending;
+      state._fatePausesGateType = gateType;
+      state._fatePausesOpen = true;
+
+      // Populate echo
+      const echoEl = document.getElementById('fatePausesEcho');
+      const echoText = document.getElementById('fatePausesEchoText');
+      if (echoEl && echoText) {
+          const echoStr = (pending.rawDia || pending.rawAct || '').slice(0, 120);
+          if (echoStr) {
+              echoText.textContent = echoStr + (echoStr.length >= 120 ? '...' : '');
+              echoEl.classList.remove('hidden');
+          } else {
+              echoEl.classList.add('hidden');
+          }
+      }
+
+      // Populate body copy
+      const bodyEl = document.getElementById('fatePausesBody');
+      if (bodyEl) {
+          if (gateType === 'cliffhanger_taste') {
+              bodyEl.innerHTML =
+                  'Your words are ready to shape what happens next.<br>' +
+                  'But some moments demand more than a taste.<br>' +
+                  'Continue beyond this moment.';
+          } else {
+              bodyEl.innerHTML =
+                  'Your words are ready.<br>' +
+                  'But fate has run thin, and this moment cannot move without more to carry it forward.<br>' +
+                  'Choose how you want to continue.';
+          }
+      }
+
+      // Build offers
+      _buildFatePausesOffers(gateType);
+
+      // Show modal
+      const modal = document.getElementById('fatePausesModal');
+      if (modal) modal.classList.remove('hidden');
+
+      console.log('[FATE_PAUSES] Modal opened:', gateType, pending);
+  }
+
+  /**
+   * Close the Fate Pauses modal. If resume=true, auto-submit the pending turn.
+   */
+  function _closeFatePausesModal(resume) {
+      const modal = document.getElementById('fatePausesModal');
+      if (modal) modal.classList.add('hidden');
+      state._fatePausesOpen = false;
+
+      if (resume && state._fatePausesPending) {
+          _resumePendingTurn();
+      } else {
+          // Cancel: restore inputs without generating
+          _restoreInputsFromPending();
+          state._fatePausesPending = null;
+          state._fatePausesGateType = null;
+      }
+  }
+
+  /**
+   * Restore say/do inputs from pending payload without triggering generation.
+   */
+  function _restoreInputsFromPending() {
+      const pending = state._fatePausesPending;
+      if (!pending) return;
+      const actInput = document.getElementById('actionInput');
+      const diaInput = document.getElementById('dialogueInput');
+      if (actInput) { actInput.disabled = false; actInput.value = pending.rawAct || ''; }
+      if (diaInput) { diaInput.disabled = false; diaInput.value = pending.rawDia || ''; }
+  }
+
+  /**
+   * Resume the pending submitted turn after successful purchase.
+   * Restores inputs, fate state, then programmatically clicks Submit.
+   */
+  function _resumePendingTurn() {
+      const pending = state._fatePausesPending;
+      if (!pending) {
+          console.warn('[FATE_PAUSES] No pending turn to resume');
+          return;
+      }
+
+      // Restore inputs
+      const actInput = document.getElementById('actionInput');
+      const diaInput = document.getElementById('dialogueInput');
+      if (actInput) { actInput.disabled = false; actInput.value = pending.rawAct || ''; }
+      if (diaInput) { diaInput.disabled = false; diaInput.value = pending.rawDia || ''; }
+
+      // Restore fate card selection
+      if (pending.fateOptions) state.fateOptions = pending.fateOptions;
+      if (pending.fateSelectedIndex !== null) state.fateSelectedIndex = pending.fateSelectedIndex;
+      if (pending.temptFateInvoked) state.tempt_fate_invoked_this_turn = true;
+      if (pending.petitionPayload) state._lastPetitionPayload = pending.petitionPayload;
+
+      // Clear pending state
+      state._fatePausesPending = null;
+      state._fatePausesGateType = null;
+
+      // Clear sessionStorage persistence
+      try { sessionStorage.removeItem('sb_fatePausesPending'); } catch(e) {}
+
+      // Reset the in-flight lock so Submit can fire
+      state._isAdvancingScene = false;
+
+      console.log('[FATE_PAUSES] Resuming pending turn');
+
+      // Programmatically click Submit — gate conditions are now cleared by purchase
+      setTimeout(() => {
+          const submitBtn = document.getElementById('submitBtn');
+          if (submitBtn) submitBtn.click();
+      }, 100);
+  }
+
+  /**
+   * Persist pending turn to sessionStorage (survives Stripe redirect page reload).
+   */
+  function _persistPendingTurn() {
+      const pending = state._fatePausesPending;
+      if (!pending) return;
+      try {
+          sessionStorage.setItem('sb_fatePausesPending', JSON.stringify({
+              ...pending,
+              gateType: state._fatePausesGateType,
+              timestamp: Date.now()
+          }));
+      } catch (e) {
+          console.warn('[FATE_PAUSES] Failed to persist pending turn:', e);
+      }
+  }
+
+  /**
+   * Check for persisted pending turn on app init (after Stripe redirect return).
+   * Called once during initialization after story state is loaded.
+   */
+  function _checkPersistedFatePausesTurn() {
+      try {
+          const raw = sessionStorage.getItem('sb_fatePausesPending');
+          if (!raw) return;
+          const data = JSON.parse(raw);
+          // Expire after 10 minutes
+          if (Date.now() - data.timestamp > 10 * 60 * 1000) {
+              sessionStorage.removeItem('sb_fatePausesPending');
+              return;
+          }
+          // Check if gate condition is now cleared (purchase succeeded)
+          const gateStillActive =
+              (data.gateType === 'cliffhanger_taste' && isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP && state.tempQuillAllowance <= 0) ||
+              (data.gateType === 'zero_fortunes' && !hasFortunes() && (state.storypassFortunes || 0) <= 0);
+
+          if (gateStillActive) {
+              // Purchase was cancelled — restore inputs but don't auto-submit
+              const actInput = document.getElementById('actionInput');
+              const diaInput = document.getElementById('dialogueInput');
+              if (actInput) actInput.value = data.rawAct || '';
+              if (diaInput) diaInput.value = data.rawDia || '';
+              if (data.fateOptions) state.fateOptions = data.fateOptions;
+              if (data.fateSelectedIndex !== null) state.fateSelectedIndex = data.fateSelectedIndex;
+              console.log('[FATE_PAUSES] Restored pending turn (gate still active — purchase cancelled)');
+          } else {
+              // Purchase succeeded — restore and auto-submit
+              state._fatePausesPending = data;
+              state._fatePausesGateType = data.gateType;
+              console.log('[FATE_PAUSES] Purchase detected — auto-resuming pending turn');
+              // Delay to let story state fully load
+              setTimeout(() => _resumePendingTurn(), 500);
+          }
+          sessionStorage.removeItem('sb_fatePausesPending');
+      } catch (e) {
+          console.warn('[FATE_PAUSES] Error checking persisted turn:', e);
+          try { sessionStorage.removeItem('sb_fatePausesPending'); } catch(e2) {}
+      }
+  }
+
+  // Step away button handler
+  document.getElementById('fatePausesStepAway')?.addEventListener('click', () => {
+      _closeFatePausesModal(false);
+  });
+
+  // Expose for external wiring
+  window._checkPersistedFatePausesTurn = _checkPersistedFatePausesTurn;
+  window._closeFatePausesModal = _closeFatePausesModal;
+
   // PASS 1 FIX: Refactored completePurchase with canonical access resolution
   function completePurchase() {
       // Clear any stuck toasts first
@@ -24188,17 +24757,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           synopsisText.classList.remove('dsp-dissolving', 'dsp-revealing');
       }
 
-      // Re-enable Say/Do inputs
+      // Re-enable Say/Do inputs — skip clearing if Fate Pauses resume is pending
+      const _hasFatePausesPending = !!(state._fatePausesPending || state._fatePausesGateType);
       const actInput = document.getElementById('actionInput');
       const diaInput = document.getElementById('dialogueInput');
-      if (actInput) { actInput.disabled = false; actInput.value = ''; }
-      if (diaInput) { diaInput.disabled = false; diaInput.value = ''; }
+      if (!_hasFatePausesPending) {
+          if (actInput) { actInput.disabled = false; actInput.value = ''; }
+          if (diaInput) { diaInput.disabled = false; diaInput.value = ''; }
+      } else {
+          if (actInput) actInput.disabled = false;
+          if (diaInput) diaInput.disabled = false;
+      }
 
       // Full card re-deal (not just init) — gives clickable, flippable, unlocked cards
-      if (window.dealFateCards) window.dealFateCards();
-      else if (window.initCards) window.initCards();
-      // REBIND: Ensure FX handlers are attached after navigation
-      if (window.initFateCards) window.initFateCards();
+      if (!_hasFatePausesPending) {
+          if (window.dealFateCards) window.dealFateCards();
+          else if (window.initCards) window.initCards();
+          // REBIND: Ensure FX handlers are attached after navigation
+          if (window.initFateCards) window.initFateCards();
+      }
 
       // Clear the ceremony-cancelled flag
       state._paywallCancelledCeremony = false;
@@ -24225,6 +24802,15 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           storyLength: state.storyLength,
           upgraded
       });
+
+      // FATE PAUSES RESUME: If a pending turn was stored, auto-resume after purchase
+      if (_hasFatePausesPending) {
+          // Close the Fate Pauses modal if still open and trigger resume
+          const fpModal = document.getElementById('fatePausesModal');
+          if (fpModal && !fpModal.classList.contains('hidden')) fpModal.classList.add('hidden');
+          state._fatePausesOpen = false;
+          _resumePendingTurn();
+      }
   }
 
   function renderFlingCheckpoint() {
@@ -25441,6 +26027,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       resetVaultState();
       window.showScreen('vaultLibraryScreen');
       loadVaultLibrary();
+  });
+
+  // Reincarnations vault button
+  $('menuReincarnationsBtn')?.addEventListener('click', () => {
+      document.getElementById('menuOverlay')?.classList.add('hidden');
+      resetVaultState();
+      window.openReincarnationVault();
   });
 
 
@@ -39737,9 +40330,10 @@ Generate the title and synopsis now.` }
           }
       }
 
-      // Set invocation flag + increment consecutive count
+      // Set invocation flag + increment consecutive count + raise heat
       state.tempt_fate_invoked_this_turn = true;
       state.consecutive_tempt_fate_count = (state.consecutive_tempt_fate_count || 0) + 1;
+      state.tempt_fate_heat = Math.min((state.tempt_fate_heat || 0) + 1, 4);
 
       // Badge engine — Tempt Fate milestones
       withProfileId(profileId => {
@@ -39763,7 +40357,7 @@ Generate the title and synopsis now.` }
       const btn = document.querySelector('.meta-stance[onclick="window.setMetaStance(\'seduce\')"]');
       if (btn) btn.classList.add('active');
 
-      console.log(`[TEMPT_FATE] Invoked. ${usedFreeCharge ? 'Cost: FREE (bonus charge)' : 'Cost: ' + getTemptFateCost()}, Consecutive: ${state.consecutive_tempt_fate_count}, Remaining Fortunes: ${state.fortunes}, Resonance: ${state.fate_resonance_intensity} (${getFateResonanceState()})`);
+      console.log(`[TEMPT_FATE] Invoked. ${usedFreeCharge ? 'Cost: FREE (bonus charge)' : 'Cost: ' + getTemptFateCost()}, Heat: ${state.tempt_fate_heat}, Consecutive: ${state.consecutive_tempt_fate_count}, Remaining Fortunes: ${state.fortunes}, Resonance: ${state.fate_resonance_intensity} (${getFateResonanceState()})`);
   }
 
   // --- BEGIN STORY VALIDATION GUARDRAIL ---
@@ -41015,6 +41609,7 @@ Generate the title and synopsis now.` }
     state.tempt_fate_invoked_this_turn = false;
     state.temptFateWish = '';
     state.consecutive_tempt_fate_count = 0;
+    state.tempt_fate_heat = 0;
     state.cautiousStreak = 0;
     state.dynamicDominanceBoost = 0;
     state.vulnerabilityPulse = 0;
@@ -41264,6 +41859,7 @@ Generate the title and synopsis now.` }
     state.tempt_fate_invoked_this_turn = false;
     state.temptFateWish = '';
     state.consecutive_tempt_fate_count = 0;
+    state.tempt_fate_heat = 0;
     state.cautiousStreak = 0;
     state.dynamicDominanceBoost = 0;
     state.vulnerabilityPulse = 0;
@@ -42616,6 +43212,21 @@ Generate the title and synopsis now.` }
       displayPartnerName: displayPartnerName
     };
 
+    // Collect corridor echo selections
+    if (typeof window._collectCorridorEchoes === 'function') {
+      const corridorEchoes = window._collectCorridorEchoes();
+      if (corridorEchoes.length > 0) {
+        const check = window._validateReincarnationDiversity?.(corridorEchoes);
+        if (check && !check.valid) {
+          showToast(check.reason);
+          return;
+        }
+        window._storeReincarnationImports?.(corridorEchoes);
+        window._incrementStoriesAppeared?.(corridorEchoes);
+        console.log('[ECHO CORRIDOR] Stored imports:', corridorEchoes.map(s => `${s.echo.canonical_name || s.echo.name} as ${s.role}`));
+      }
+    }
+
     // Get breadcrumb target position (identity slot)
     const { x: targetX, y: targetY } = resolveGhostTarget('identity');
 
@@ -42922,6 +43533,8 @@ Generate the title and synopsis now.` }
         return;
     }
     console.log('[BeginStory] All validation passed — proceeding to story generation');
+
+    // Reincarnation import — now handled in Echo Corridor strip (identity corridor stage)
 
     // Seed per-story visual identity before any image generation
     seedStoryVisualStyle();
@@ -43717,8 +44330,13 @@ INCORRECT:
 "I grabbed her hand and pulled her into the room." (LI seizing agency — FORBIDDEN)
     ` : ''}
     `;
-    
-    state.sysPrompt = sys;
+
+    // Inject reincarnation identity templates if any were imported
+    const _reincarnationDirective = (typeof window._buildReincarnationDirective === 'function' && (state._reincarnationImports || []).length > 0)
+        ? window._buildReincarnationDirective(state._reincarnationImports)
+        : '';
+
+    state.sysPrompt = sys + _reincarnationDirective;
     state.storyId = state.storyId || makeStoryId();
 
     // Onboarding: lock first story ID for milestone Visions
@@ -52423,9 +53041,12 @@ Condensed (under ${maxLength} chars):` }
       initVizModifierPills();
   }
 
-  // Tempt Fate escalating cost — uses consecutive_tempt_fate_count (explicit invocation counter)
+  // Tempt Fate escalating cost — heat-based lookup table
+  // Heat rises +1 per Tempt invocation, cools -1 per non-Tempt scene, clamped 0-4
+  const TEMPT_FATE_COST_TABLE = [60, 80, 110, 150, 200];
   function getTemptFateCost() {
-      return Math.min(50 + 10 * (state.consecutive_tempt_fate_count || 0), 80);
+      const heat = Math.min(Math.max(state.tempt_fate_heat || 0, 0), 4);
+      return TEMPT_FATE_COST_TABLE[heat];
   }
 
   // ============================================================
@@ -53595,7 +54216,252 @@ Respond in this EXACT format (no labels, just two lines):
       _origInitParagraphObserver();
       updateVisionOrbVisibility();
       positionVisionOrb();
+      // Inject inline Tempt Fate thumbnail if conditions met
+      _maybeInjectInlineTempt();
   };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INLINE CONTEXTUAL TEMPT FATE — margin thumbnail at high-stakes paragraphs
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const _INLINE_TEMPT_STAKES_PATTERNS = {
+    confession:    /\b(admit(ted)?|confess(ed|ion)?|tell you (something|the truth)|truth is|honest with you|can['']?t hide|never told)\b/gi,
+    betrayal:      /\b(betray(ed|al)?|stab.{0,8}back|double[- ]cross|sold.{0,6}out|turn(ed)? on (me|him|her|them))\b/gi,
+    loss:          /\b(los[et](s|ing)?|gone|too late|slip(ped|ping) away|can['']?t save|never see .{0,10}again|goodbye|farewell)\b/gi,
+    reversal:      /\b(everything changed|nothing .{0,8}same|world .{0,8}(shifted|tilted|cracked)|floor .{0,8}(dropped|fell)|rug .{0,8}pulled)\b/gi,
+    confrontation: /\b(confront(ed)?|face[ds]? (him|her|them|me|it)|stand.{0,8}ground|look(ed)? .{0,6}(in the|into) .{0,4}eye|reckoning)\b/gi,
+    desire:        /\b(want(ed)? (him|her|them|you)|need(ed)? (him|her|them|you)|ach(e[ds]?|ing) (for|to)|desperate|hunger(ed)?|crav(e[ds]?|ing))\b/gi,
+    risk:          /\b(risk(ed|ing)?|gambl(e[ds]?|ing)|no turning back|point of no return|irreversibl[ey]|can['']?t take .{0,6}back|line.{0,6}cross(ed)?)\b/gi,
+    power_shift:   /\b(surrender(ed)?|kneel(s|ed)?|submit(ted)?|yield(ed)?|relent(ed)?|upper hand|dominat|command(ed)?)\b/gi,
+    rupture:       /\b(shatter(ed|ing)?|crack(ed|ing)?|broke[n]?\s*(apart|open|down)|torn|rip(ped)?|collapse[ds]?|fractur)\b/gi,
+    revelation:    /\b(reveal(ed|ing)?|secret|expos(e[ds]?|ing)|unmas[k]|discover(ed)?|found out|the truth)\b/gi
+  };
+
+  const _INLINE_TEMPT_OMEN_POOL = [
+    'Fate stirs.',
+    'A seam opens.',
+    'The thread pulls taut.',
+    'Something shifts.',
+    'Fate leans closer.'
+  ];
+
+  /**
+   * Score each paragraph for high-stakes dramatic density.
+   * Returns the data-paragraph-id of the strongest paragraph, or null.
+   */
+  function _detectHighStakesParagraph() {
+    const container = document.getElementById('storyPagesContainer');
+    if (!container) return null;
+    const paragraphs = container.querySelectorAll('.story-page.active p[data-paragraph-id]');
+    if (!paragraphs.length) return null;
+
+    let bestId = null;
+    let bestScore = 0;
+
+    paragraphs.forEach(p => {
+      const text = p.textContent || '';
+      if (text.length < 40) return; // skip tiny paragraphs
+      let score = 0;
+      for (const [, rx] of Object.entries(_INLINE_TEMPT_STAKES_PATTERNS)) {
+        const matches = text.match(rx);
+        if (matches) score += matches.length;
+      }
+      if (score > bestScore) {
+        bestScore = score;
+        bestId = p.dataset.paragraphId;
+      }
+    });
+
+    // Minimum threshold: at least 3 signal hits
+    return bestScore >= 3 ? { paraId: bestId, score: bestScore } : null;
+  }
+
+  /**
+   * Gate check: should we show the inline Tempt Fate thumbnail this scene?
+   */
+  function _shouldShowInlineTempt() {
+    // Not if already used this scene or Tempt Fate already invoked
+    if (state._inlineTemptActive) return false;
+    if (state.tempt_fate_invoked_this_turn) return false;
+    // Cooldown: never appear in consecutive scenes
+    const sceneIdx = state.turnCount || 0;
+    if (state.lastInlineTemptScene != null && sceneIdx <= state.lastInlineTemptScene + 1) return false;
+    // Minimum scene count (let the story build)
+    if (sceneIdx < 3) return false;
+    // Minimum storyturn: ST2+
+    const stIdx = typeof getStoryturnIndex === 'function' ? getStoryturnIndex(state.storyturn || 'ST1') : 0;
+    if (stIdx < 1) return false;
+    // Probability gate: 40% base, 70% at ST3/ST4/apex
+    const isHighStakes = stIdx >= 2 || state._currentSceneImportance === 'apex' || state._currentSceneImportance === 'high';
+    const chance = isHighStakes ? 0.70 : 0.40;
+    if (Math.random() > chance) return false;
+    return true;
+  }
+
+  /**
+   * LLM turning-point classifier — confirms a regex-selected paragraph is a
+   * genuine narrative turning point. gpt-4o-mini, 30 tokens, temp 0.
+   * Returns true/false. Falls back to true (regex stands) on API failure.
+   */
+  async function _confirmTurningPoint(paragraphText, contextWindow) {
+    if (!window.StoryboundOrchestration?.callChatGPT) return true; // fallback: trust regex
+    const para = (paragraphText || '').slice(0, 300);
+    const ctx = (contextWindow || '').slice(0, 300);
+    const timeout = new Promise(resolve => setTimeout(() => {
+      console.log('[INLINE_TEMPT] Classifier timed out (800ms), falling back to regex');
+      resolve(true);
+    }, 800));
+    const classify = (async () => {
+      try {
+        const raw = await window.StoryboundOrchestration.callChatGPT(
+          [
+            { role: 'system', content: 'Answer ONLY "yes" or "no".' },
+            { role: 'user', content: `Is this paragraph a narrative turning point or emotionally pivotal moment in a story?\n\nParagraph:\n${para}\n\nRecent context:\n${ctx}` }
+          ],
+          'STRATEGY_PASS',
+          { temperature: 0, max_tokens: 30 }
+        );
+        const answer = (raw || '').trim().toLowerCase();
+        console.log('[INLINE_TEMPT] Turning-point classifier:', answer);
+        return answer.startsWith('yes');
+      } catch (e) {
+        console.warn('[INLINE_TEMPT] Classifier failed, falling back to regex:', e.message);
+        return true;
+      }
+    })();
+    return Promise.race([classify, timeout]);
+  }
+
+  /**
+   * Main entry: detect + confirm + inject inline Tempt Fate thumbnail.
+   * Called from the paragraph observer post-render hook.
+   * Async — does not block rendering; injects thumbnail only after LLM confirms.
+   */
+  function _maybeInjectInlineTempt() {
+    // Guard: only on the latest scene page, only once
+    if (state._inlineTemptActive) return;
+    // Remove any stale thumbnails from prior scenes
+    document.querySelectorAll('.inline-tempt-anchor').forEach(el => el.remove());
+
+    if (!_shouldShowInlineTempt()) return;
+
+    const result = _detectHighStakesParagraph();
+    if (!result) return;
+    const { paraId, score } = result;
+
+    const container = document.getElementById('storyPagesContainer');
+    if (!container) return;
+    const targetP = container.querySelector(`.story-page.active p[data-paragraph-id="${paraId}"]`);
+    if (!targetP) return;
+
+    // Strong signal (score >= 6): trust regex, skip classifier for speed
+    if (score >= 6) {
+      console.log('[INLINE_TEMPT] Strong signal (score=' + score + '), skipping classifier');
+      _injectInlineTemptThumb(targetP, paraId);
+      return;
+    }
+
+    // Moderate signal: confirm via LLM classifier (with 800ms timeout)
+    const sceneAtRequest = state.turnCount || 0;
+    const paragraphText = targetP.textContent || '';
+    const contextWindow = (state.sceneWindow?.length > 0 ? state.sceneWindow[state.sceneWindow.length - 1] : '').slice(0, 300);
+
+    _confirmTurningPoint(paragraphText, contextWindow).then(confirmed => {
+      // Stale-check: scene may have advanced while classifier ran
+      if ((state.turnCount || 0) !== sceneAtRequest) return;
+      if (state._inlineTemptActive) return;
+      if (!confirmed) {
+        console.log('[INLINE_TEMPT] Classifier rejected paragraph', paraId);
+        return;
+      }
+
+      // Re-verify target still exists in DOM
+      const freshTarget = container.querySelector(`.story-page.active p[data-paragraph-id="${paraId}"]`);
+      if (!freshTarget) return;
+
+      _injectInlineTemptThumb(freshTarget, paraId);
+    });
+  }
+
+  /**
+   * DOM injection of the inline Tempt Fate thumbnail (called after all gates pass).
+   */
+  function _injectInlineTemptThumb(targetP, paraId) {
+    const anchor = document.createElement('div');
+    anchor.className = 'inline-tempt-anchor';
+
+    const omenText = _INLINE_TEMPT_OMEN_POOL[Math.floor(Math.random() * _INLINE_TEMPT_OMEN_POOL.length)];
+
+    anchor.innerHTML = `
+      <div class="inline-tempt-thumb" role="button" aria-label="Tempt Fate" tabindex="0">
+        <img class="inline-tempt-thumb-img" src="/assets/card-art/cards/Tarot-RED-front-TemptFate.png" alt="Tempt Fate" draggable="false">
+        <div class="inline-tempt-omen">${omenText}</div>
+      </div>
+    `;
+
+    // Insert after the target paragraph
+    targetP.insertAdjacentElement('afterend', anchor);
+
+    // Delayed fade-in (Fate surfacing from the moment)
+    const thumb = anchor.querySelector('.inline-tempt-thumb');
+    setTimeout(() => { if (thumb) thumb.classList.add('visible'); }, 800);
+
+    // Click → open Tempt Fate zoom with contextual source flag
+    thumb.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (window.playUISound) window.playUISound('card_flip');
+      state._inlineTemptSource = true;
+      state._inlineTemptParaId = paraId;
+      // Ensure the bottom card is flipped for zoom
+      const bottomCard = document.querySelector('.tempt-fate-card');
+      if (bottomCard && !bottomCard.classList.contains('flipped')) {
+        bottomCard.classList.add('flipped');
+      }
+      if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
+    });
+    // Keyboard support
+    thumb.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); thumb.click(); }
+    });
+
+    state._inlineTemptActive = true;
+    state._inlineTemptParaId = paraId;
+    state.lastInlineTemptScene = state.turnCount || 0;
+
+    // Preload contextual suggestions in background
+    _preloadInlineTemptSuggestions(targetP.textContent);
+  }
+
+  /**
+   * Preload 3-4 scene-specific Tempt Fate suggestions via lightweight LLM call.
+   */
+  async function _preloadInlineTemptSuggestions(paragraphText) {
+    if (!window.StoryboundOrchestration?.callChatGPT) return;
+    const sceneText = (state.sceneWindow?.length > 0 ? state.sceneWindow[state.sceneWindow.length - 1] : '').slice(0, 300);
+    const world = state.picks?.world || 'Modern';
+    const tone = state.picks?.tone || 'Earnest';
+    const st = state.storyturn || 'ST1';
+    const paraExcerpt = (paragraphText || '').slice(0, 250);
+
+    const sysMsg = `You generate Tempt Fate wish suggestions for a romance/adventure story. Each wish is a short (4-9 word) evocative phrase — a directional desire, not a guaranteed outcome. Phrased as poetic possibility, fate-like. No meta-language, no currency references, no system terms. Tonally match: ${tone} tone, ${world} world.`;
+    const userMsg = `Scene context: "${sceneText}"\nTriggering paragraph: "${paraExcerpt}"\nStoryturn: ${st}\n\nGenerate exactly 4 Tempt Fate wish suggestions as a JSON array of strings. Short, specific to this moment, evocative.`;
+
+    try {
+      const raw = await window.StoryboundOrchestration.callChatGPT(
+        [{ role: 'system', content: sysMsg }, { role: 'user', content: userMsg }],
+        'STRATEGY_PASS',
+        { temperature: 0.85, max_tokens: 120, jsonMode: true }
+      );
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length >= 3) {
+        state._inlineTemptSuggestions = parsed.slice(0, 4);
+        console.log('[INLINE_TEMPT] Suggestions preloaded:', state._inlineTemptSuggestions);
+      }
+    } catch (e) {
+      console.warn('[INLINE_TEMPT] Suggestion preload failed:', e.message);
+      // Fallback handled at zoom-open time
+    }
+  }
 
   window.addEventListener('resize', positionVisionOrb);
 
@@ -53801,13 +54667,15 @@ Respond in this EXACT format (no labels, just two lines):
       }
 
       // ═══════════════════════════════════════════════════════════════════
-      // TEASE TIER CLIFFHANGER GATE: Diegetic omen + ritual overlay
+      // FATE PAUSES — CLIFFHANGER / TASTE GATE
+      // Intercepts submit at tease cap; shows narrative modal instead of
+      // old paywall. Player's turn is preserved for resume after purchase.
       // ═══════════════════════════════════════════════════════════════════
       if (isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP && state.tempQuillAllowance <= 0) {
           state._isAdvancingScene = false;
           if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
-          console.log('[TEASE] Scene cap reached:', state.turnCount, '>=', state.TEASE_SCENE_CAP);
-          // Diegetic omen: subtle shake + fade
+          console.log('[FATE_PAUSES] Cliffhanger gate:', state.turnCount, '>=', state.TEASE_SCENE_CAP);
+          // Diegetic omen: subtle shake + fade before modal
           const storyContent = document.getElementById('storyContent');
           if (storyContent) {
               storyContent.style.transition = 'opacity 0.3s ease, transform 0.15s ease';
@@ -53816,8 +54684,7 @@ Respond in this EXACT format (no labels, just two lines):
               setTimeout(() => { storyContent.style.transform = 'translateX(3px)'; }, 150);
               setTimeout(() => { storyContent.style.transform = ''; storyContent.style.opacity = '1'; }, 500);
           }
-          // Show ritual overlay after brief omen delay
-          setTimeout(() => window.showPaywall('unlock'), 600);
+          setTimeout(() => _openFatePausesModal('cliffhanger_taste'), 600);
           return;
       }
 
@@ -53860,16 +54727,23 @@ Respond in this EXACT format (no labels, just two lines):
           } else {
               // 2. Fall back to global fortune balance
               if (!hasFortunes()) {
+                  // ═══════════════════════════════════════════════════════
+                  // FATE PAUSES — ZERO-FORTUNE GATE
+                  // Player is entitled but has 0 usable fortunes.
+                  // Capture turn, show narrative modal with offers.
+                  // ═══════════════════════════════════════════════════════
                   state._isAdvancingScene = false;
                   if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
-                  openFortunePurchaseModal();
+                  console.log('[FATE_PAUSES] Zero-fortune gate — no usable fortunes');
+                  _openFatePausesModal('zero_fortunes');
                   return;
               }
               const burned = await consumeFortune(1, 'scene');
               if (!burned) {
                   state._isAdvancingScene = false;
                   if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
-                  openFortunePurchaseModal();
+                  console.log('[FATE_PAUSES] Fortune consumption failed — zero-fortune gate');
+                  _openFatePausesModal('zero_fortunes');
                   return;
               }
           }
@@ -56057,9 +56931,11 @@ ABSOLUTE RULES:
           updateSafeWordVisibility();
 
           // PART 8 — Clear Tempt Fate invocation flag after scene completes
-          // Reset consecutive count if this was NOT a Tempt Fate turn
+          // Heat cooling: -1 on non-Tempt scenes (economic cost curve)
+          // consecutive_tempt_fate_count: hard reset on non-Tempt (drives saturation formula)
           if (!state.tempt_fate_invoked_this_turn) {
               state.consecutive_tempt_fate_count = 0;
+              state.tempt_fate_heat = Math.max((state.tempt_fate_heat || 0) - 1, 0);
           }
 
           // Fate Resonance decay (narrative-only, no gameplay math)
@@ -56070,6 +56946,15 @@ ABSOLUTE RULES:
           state._currentSceneImportance = undefined;
           state._explicitEmbodimentAuthorized = false;
           state.milestone_vision_fired_this_turn = false;
+
+          // Reset inline Tempt Fate state for next scene
+          state._inlineTemptActive = false;
+          state._inlineTemptParaId = null;
+          state._inlineTemptSuggestions = null;
+          state._inlineTemptSource = false;
+          document.querySelectorAll('.inline-tempt-anchor').forEach(el => el.remove());
+          const _btmTempt = document.querySelector('.tempt-fate-card');
+          if (_btmTempt) _btmTempt.classList.remove('tempt-inline-used');
           state._syzygyActiveThisScene = false;
           state._syzygyModelTriggeredLast = false;
 
@@ -57232,8 +58117,8 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   // ============================================================
 
   (function initDevHud() {
-      const isDev = location.hostname === 'localhost' ||
-                    location.hostname === '127.0.0.1';
+      const isDev = typeof _isQaHost === 'function' ? _isQaHost() :
+          (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
       if (!isDev) return;
 
       const hudEl = document.getElementById('devHud');
@@ -58174,8 +59059,1355 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
               return;
           }
 
+          // --- OPEN QA PANEL ---
+          if (/^qa\b/i.test(input)) {
+              if (window._openQaResetPanel) window._openQaResetPanel();
+              else log('QA panel not available');
+              return;
+          }
+
           log('Unknown command. Type "help" for options.');
       }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // REINCARNATION SYSTEM — Extract character essences, store, import
+  // ═══════════════════════════════════════════════════════════════════
+  (function initReincarnationSystem() {
+
+      const REINCARNATION_STORAGE_KEY = 'sb_reincarnations';
+      const REINCARNATION_THREADS_KEY = 'sb_reincarnation_threads';
+      const REINCARNATION_CONSTELLATIONS_KEY = 'sb_reincarnation_constellations';
+      const MAX_IMPORT_PER_STORY = 7;   // total max including typed echoes (5 corridor + 2 typed)
+      const MAX_CORRIDOR_SLOTS = 5;    // max manual corridor selections
+      const MAX_ECHO_LEGEND = 100;
+
+      const IMPORT_ROLES = ['ally', 'rival', 'romantic interest', 'mentor', 'antagonist', 'wild card'];
+
+      // ── Backward-compatible migration ──
+
+      function _migrateEcho(echo) {
+          // name → canonical_name
+          if (!echo.canonical_name && echo.name) echo.canonical_name = echo.name;
+          // Legend fields — default to 0
+          if (echo.legend_score === undefined) echo.legend_score = 0;
+          if (echo.stories_appeared_in === undefined) echo.stories_appeared_in = 0;
+          if (echo.legendary_moments === undefined) echo.legendary_moments = 0;
+          if (echo.tragic_betrayals === undefined) echo.tragic_betrayals = 0;
+          // World history — initialize empty array if missing
+          if (!Array.isArray(echo.world_history)) echo.world_history = [];
+          return echo;
+      }
+
+      // ── Persistence (localStorage primary, Supabase secondary) ──
+
+      function _loadReincarnations() {
+          try {
+              const raw = JSON.parse(localStorage.getItem(REINCARNATION_STORAGE_KEY) || '[]');
+              return raw.map(_migrateEcho);
+          } catch { return []; }
+      }
+
+      function _saveReincarnations(list) {
+          localStorage.setItem(REINCARNATION_STORAGE_KEY, JSON.stringify(list));
+          _syncReincarnationsToSupabase(list);
+      }
+
+      function _loadThreads() {
+          try {
+              return JSON.parse(localStorage.getItem(REINCARNATION_THREADS_KEY) || '[]');
+          } catch { return []; }
+      }
+
+      function _saveThreads(list) {
+          localStorage.setItem(REINCARNATION_THREADS_KEY, JSON.stringify(list));
+      }
+
+      function _loadConstellations() {
+          try {
+              return JSON.parse(localStorage.getItem(REINCARNATION_CONSTELLATIONS_KEY) || '[]');
+          } catch { return []; }
+      }
+
+      function _saveConstellations(list) {
+          localStorage.setItem(REINCARNATION_CONSTELLATIONS_KEY, JSON.stringify(list));
+      }
+
+      async function _syncReincarnationsToSupabase(list) {
+          if (!sb || !_supabaseProfileId) return;
+          try {
+              await sb.from('profiles').update({
+                  reincarnations: JSON.stringify(list)
+              }).eq('id', _supabaseProfileId);
+          } catch (e) {
+              console.warn('[REINCARNATION] Supabase sync failed (non-critical):', e.message);
+          }
+      }
+
+      // ── World-Adaptive Name Generator (deterministic, no LLM) ──
+
+      const _FANTASY_SUFFIX_MAP = {
+          'vale': 'Vael', 'carter': 'Cartre', 'blackwood': 'Blacke', 'smith': 'Smythe',
+          'stone': 'Stonne', 'gray': 'Grael', 'black': 'Blacke', 'green': 'Grenne',
+          'white': 'Whyte', 'brown': 'Braune', 'wood': 'Wode', 'ford': 'Forde',
+          'field': 'Fielde', 'lake': 'Laeke', 'wolf': 'Wulfe', 'fox': 'Foxe',
+          'hart': 'Harte', 'rose': 'Rhose', 'winter': 'Wynter', 'frost': 'Froste',
+          'storm': 'Storme', 'night': 'Nyte', 'cross': 'Crosse', 'hunt': 'Hunte',
+          'king': 'Kynge', 'ward': 'Warde', 'cole': 'Kael', 'west': 'Weste',
+          'reed': 'Rheed', 'price': 'Pryce', 'young': 'Younge', 'moon': 'Moone',
+      };
+      const _FANTASY_FIRST_MAP = {
+          'aria': 'Arielle', 'alex': 'Aelexan', 'max': 'Maxen', 'jack': 'Jacaen',
+          'kate': 'Katael', 'james': 'Jaemes', 'emma': 'Emmael', 'ryan': 'Ryael',
+          'nick': 'Nicael', 'sam': 'Saemuel', 'dan': 'Daeven', 'ben': 'Benvael',
+          'mike': 'Mikael', 'sarah': 'Sarael', 'luke': 'Lucael', 'john': 'Johaen',
+          'jane': 'Janael', 'lily': 'Lilael', 'mark': 'Marcael', 'eve': 'Evael',
+      };
+      const _HISTORICAL_SUFFIX_MAP = {
+          'vale': 'Valois', 'carter': 'Cartier', 'blackwood': 'Boisnoir',
+          'smith': 'Lefèvre', 'stone': 'Pierrefort', 'gray': 'Grisham',
+          'green': 'Verdant', 'brown': 'Bruneau', 'wood': 'Dubois',
+          'ford': 'Beauford', 'wolf': 'Wulfric', 'fox': 'Renard',
+          'rose': 'Rosenthal', 'winter': 'Winterbourne', 'frost': 'Frostwick',
+          'storm': 'Stormwell', 'night': 'Nightingale', 'cross': 'Crossley',
+          'king': 'Kingston', 'ward': 'Wardwick', 'west': 'Westmoreland',
+          'price': 'Pryce-Jones', 'moon': 'Moonsworth',
+      };
+
+      function _generateWorldAdaptedName(canonicalName, world) {
+          if (!canonicalName || !world) return canonicalName || '';
+          const w = (world || '').toLowerCase();
+
+          // Modern / Near-Future — keep unchanged
+          if (w === 'modern' || w === 'near-future' || w === 'nearfuture' || w === 'contemporary') {
+              return canonicalName;
+          }
+
+          const parts = canonicalName.trim().split(/\s+/);
+          const first = parts[0] || '';
+          const last = parts.length > 1 ? parts[parts.length - 1] : '';
+
+          if (w === 'fantasy' || w === 'mythic' || w === 'enchanted') {
+              const adaptedFirst = _FANTASY_FIRST_MAP[first.toLowerCase()] || first;
+              const adaptedLast = last ? (_FANTASY_SUFFIX_MAP[last.toLowerCase()] || last) : '';
+              return (adaptedLast ? adaptedFirst + ' ' + adaptedLast : adaptedFirst).trim();
+          }
+
+          if (w === 'sci-fi' || w === 'scifi' || w === 'space' || w === 'cyberpunk') {
+              // Shorten: initial + last name
+              const initial = first.charAt(0).toUpperCase() + '.';
+              return last ? initial + ' ' + last : first;
+          }
+
+          if (w === 'historical' || w === 'regency' || w === 'victorian' || w === 'medieval') {
+              const adaptedFirst = first; // keep given name
+              const adaptedLast = last ? (_HISTORICAL_SUFFIX_MAP[last.toLowerCase()] || last) : '';
+              return (adaptedLast ? adaptedFirst + ' ' + adaptedLast : adaptedFirst).trim();
+          }
+
+          if (w === 'dystopia' || w === 'post-apocalyptic' || w === 'postapocalyptic') {
+              // Gritty: first name only, or abbreviated
+              return first;
+          }
+
+          // Default: return unchanged
+          return canonicalName;
+      }
+
+      // ── Extraction — offered at story completion ──
+
+      function _buildExtractableCharacters() {
+          const chars = [];
+          // Player character
+          const pName = state.picks?.identity?.displayPlayerName || state.playerName || '';
+          if (pName) {
+              chars.push({
+                  name: pName,
+                  source: 'player',
+                  gender: state.gender || 'Unknown',
+                  pronouns: state.authorPronouns || ''
+              });
+          }
+          // Love interest
+          const liName = state.picks?.identity?.displayPartnerName || state.loveInterestName || '';
+          if (liName) {
+              chars.push({
+                  name: liName,
+                  source: 'npc_love_interest',
+                  gender: state.loveInterest || 'Unknown',
+                  pronouns: state.loveInterest === 'Female' ? 'She/Her' : state.loveInterest === 'Male' ? 'He/Him' : 'They/Them'
+              });
+          }
+          return chars;
+      }
+
+      async function _extractCharacterEssence(charInfo) {
+          if (!window.StoryboundOrchestration?.callChatGPT) {
+              console.warn('[REINCARNATION] Orchestration not available — using fallback extraction');
+              return _fallbackExtraction(charInfo);
+          }
+
+          const allContent = (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
+              ? StoryPagination.getAllContent().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+              : '';
+          const storySlice = allContent.slice(-3000);
+          const memoryContext = JSON.stringify({
+              relationship: state.relationshipTension || {},
+              history: (state.sharedHistory || []).map(h => h.text),
+              callbacks: (state.callbackLedger || []).filter(c => !c.resolved).map(c => c.text),
+              narrative: state.narrativeState || {}
+          });
+
+          try {
+              const result = await window.StoryboundOrchestration.callChatGPT([
+                  { role: 'system', content: 'You extract character essence profiles from fiction. Respond ONLY with valid JSON, no markdown.' },
+                  { role: 'user', content: `Extract the narrative essence of "${charInfo.name}" from this story. This is for a reincarnation system — the character will appear in future stories in different worlds, so capture their SOUL, not their biography.
+
+CHARACTER: ${charInfo.name} (${charInfo.source === 'player' ? 'protagonist' : 'love interest'}, ${charInfo.gender}, ${charInfo.pronouns})
+WORLD: ${state.picks?.world || 'Unknown'}
+ARCHETYPE: ${state.archetype?.primary || 'Unknown'}
+
+STORY EXCERPT (last 3000 chars):
+"${storySlice}"
+
+RELATIONSHIP MEMORY:
+${memoryContext}
+
+Return JSON with these exact fields:
+{
+  "canonical_name": "${charInfo.name}",
+  "role_archetype": "one-line role description (e.g. 'ruthless smuggler with a hidden heart')",
+  "core_traits": ["trait1", "trait2", "trait3"],
+  "speech_style": "brief description of how they talk",
+  "behavior_patterns": ["pattern1", "pattern2"],
+  "dominant_desire": "what drives them most",
+  "central_wound": "their deepest vulnerability",
+  "fear_pattern": "what they avoid or dread",
+  "relationship_archetype": "how they relate to others (e.g. 'protector who refuses to be protected')",
+  "signature_motifs": ["recurring image or symbol", "another motif"],
+  "memory_fragments": ["short narrative anchor 1", "short narrative anchor 2", "short narrative anchor 3"],
+  "tone_markers": ["emotional quality 1", "emotional quality 2"]
+}
+
+Rules:
+- memory_fragments: 3-5 SHORT anchors (under 12 words each), not full scenes
+- core_traits: exactly 3
+- All fields: concise, evocative, setting-agnostic (no world-specific references)
+- Total output must be under 300 tokens` }
+              ], { max_tokens: 400, temperature: 0.4 });
+
+              const parsed = JSON.parse(result);
+              parsed.echo_id = crypto.randomUUID ? crypto.randomUUID() : 'reinc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 6);
+              // Ensure canonical_name is set (LLM may return "name" instead)
+              if (!parsed.canonical_name && parsed.name) parsed.canonical_name = parsed.name;
+              if (!parsed.canonical_name) parsed.canonical_name = charInfo.name;
+              parsed.source_story_id = state.storyId || '';
+              parsed.source_world = state.picks?.world || '';
+              parsed.source_character_type = charInfo.source;
+              parsed.extracted_at = new Date().toISOString();
+              parsed.legend_score = 0;
+              parsed.stories_appeared_in = 0;
+              parsed.legendary_moments = 0;
+              parsed.tragic_betrayals = 0;
+              return parsed;
+          } catch (e) {
+              console.warn('[REINCARNATION] LLM extraction failed, using fallback:', e.message);
+              return _fallbackExtraction(charInfo);
+          }
+      }
+
+      function _fallbackExtraction(charInfo) {
+          return {
+              echo_id: crypto.randomUUID ? crypto.randomUUID() : 'reinc_' + Date.now().toString(36),
+              canonical_name: charInfo.name,
+              role_archetype: charInfo.source === 'player' ? 'protagonist soul' : 'love interest soul',
+              core_traits: ['determined', 'complex', 'magnetic'],
+              speech_style: 'distinctive and memorable',
+              behavior_patterns: ['drawn to danger', 'fiercely loyal when tested'],
+              dominant_desire: 'connection despite the odds',
+              central_wound: 'trust betrayed in the past',
+              fear_pattern: 'vulnerability without armor',
+              relationship_archetype: charInfo.source === 'player' ? 'seeker who transforms others' : 'enigma who reveals slowly',
+              signature_motifs: ['fire imagery', 'thresholds and doors'],
+              memory_fragments: ['A moment of recognition across a crowded room', 'A promise made in the dark', 'The last look before parting'],
+              tone_markers: ['longing', 'defiance'],
+              source_story_id: state.storyId || '',
+              source_world: state.picks?.world || '',
+              source_character_type: charInfo.source,
+              extracted_at: new Date().toISOString(),
+              legend_score: 0,
+              stories_appeared_in: 0,
+              legendary_moments: 0,
+              tragic_betrayals: 0
+          };
+      }
+
+      // ── Relationship Thread extraction ──
+
+      async function _extractRelationshipThread(echoA, echoB) {
+          if (!window.StoryboundOrchestration?.callChatGPT) {
+              return _fallbackThread(echoA, echoB);
+          }
+          const memoryContext = JSON.stringify({
+              relationship: state.relationshipTension || {},
+              history: (state.sharedHistory || []).map(h => h.text)
+          });
+          try {
+              const result = await window.StoryboundOrchestration.callChatGPT([
+                  { role: 'system', content: 'You extract relationship dynamics from fiction. Respond ONLY with valid JSON, no markdown.' },
+                  { role: 'user', content: `Extract the relationship pattern between "${echoA.canonical_name || echoA.name}" and "${echoB.canonical_name || echoB.name}".
+
+RELATIONSHIP MEMORY:
+${memoryContext}
+
+Return JSON:
+{
+  "bond_type": "lovers|rivals|protector_protected|mentor_student|sworn_enemies|complicated",
+  "attraction_level": 0.0-1.0,
+  "resentment_level": 0.0-1.0,
+  "loyalty_level": 0.0-1.0,
+  "dominance_pattern": "who leads, who yields, or equal",
+  "unresolved_tension": "the thing between them that never got settled",
+  "shared_memory_fragments": ["anchor 1", "anchor 2"]
+}
+Keep all values concise. Under 200 tokens total.` }
+              ], { max_tokens: 250, temperature: 0.4 });
+              const parsed = JSON.parse(result);
+              parsed.echo_a = echoA.echo_id;
+              parsed.echo_b = echoB.echo_id;
+              return parsed;
+          } catch (e) {
+              console.warn('[REINCARNATION] Thread extraction failed:', e.message);
+              return _fallbackThread(echoA, echoB);
+          }
+      }
+
+      function _fallbackThread(echoA, echoB) {
+          return {
+              echo_a: echoA.echo_id,
+              echo_b: echoB.echo_id,
+              bond_type: 'complicated',
+              attraction_level: 0.7,
+              resentment_level: 0.2,
+              loyalty_level: 0.6,
+              dominance_pattern: 'shifting',
+              unresolved_tension: 'What they almost said but never did',
+              shared_memory_fragments: ['A silence that said everything', 'The moment everything changed']
+          };
+      }
+
+      // ── Extraction UI ──
+
+      window.openReincarnationExtract = function() {
+          const chars = _buildExtractableCharacters();
+          if (chars.length === 0) return;
+
+          const list = document.getElementById('reincarnationExtractList');
+          const confirmBtn = document.getElementById('reincarnationExtractConfirm');
+          if (!list || !confirmBtn) return;
+
+          list.innerHTML = '';
+          const selected = new Set();
+
+          chars.forEach((c, i) => {
+              const card = document.createElement('div');
+              card.className = 'reincarnation-card';
+              card.innerHTML = `<div class="reincarnation-card-name">${_esc(c.name)}</div>
+                  <div class="reincarnation-card-role">${c.source === 'player' ? 'Protagonist' : 'Love Interest'} — ${_esc(c.gender)}</div>`;
+              card.addEventListener('click', () => {
+                  if (selected.has(i)) { selected.delete(i); card.classList.remove('selected'); }
+                  else { selected.add(i); card.classList.add('selected'); }
+                  confirmBtn.disabled = selected.size === 0;
+              });
+              list.appendChild(card);
+          });
+
+          confirmBtn.disabled = true;
+          confirmBtn.onclick = async () => {
+              confirmBtn.disabled = true;
+              confirmBtn.textContent = 'Extracting...';
+              const existing = _loadReincarnations();
+              const extracted = [];
+              for (const idx of selected) {
+                  const essence = await _extractCharacterEssence(chars[idx]);
+                  // Avoid duplicates by canonical_name+source_story
+                  const cName = essence.canonical_name || essence.name;
+                  const dupeIdx = existing.findIndex(e => (e.canonical_name || e.name) === cName && e.source_story_id === essence.source_story_id);
+                  if (dupeIdx >= 0) existing[dupeIdx] = essence;
+                  else existing.push(essence);
+                  extracted.push(essence);
+              }
+              // If both characters extracted, also extract relationship thread
+              if (extracted.length === 2) {
+                  const thread = await _extractRelationshipThread(extracted[0], extracted[1]);
+                  const threads = _loadThreads();
+                  threads.push(thread);
+                  _saveThreads(threads);
+              }
+              _saveReincarnations(existing);
+              confirmBtn.textContent = 'Extract Selected';
+              document.getElementById('reincarnationExtractModal')?.classList.add('hidden');
+              console.log(`[REINCARNATION] Extracted ${extracted.length} character(s)`, extracted.map(e => e.canonical_name || e.name));
+          };
+
+          document.getElementById('reincarnationExtractSkip')?.addEventListener('click', () => {
+              document.getElementById('reincarnationExtractModal')?.classList.add('hidden');
+          }, { once: true });
+
+          document.getElementById('reincarnationExtractModal')?.classList.remove('hidden');
+      };
+
+      // ── Vault UI ──
+
+      // World → CSS class mapping for constellation stars
+      const WORLD_STAR_CLASS = {
+          fantasy: 'star-world-fantasy', enchanted: 'star-world-fantasy', mythic: 'star-world-fantasy',
+          'sci-fi': 'star-world-scifi', scifi: 'star-world-scifi', space: 'star-world-scifi', cyberpunk: 'star-world-scifi',
+          historical: 'star-world-historical', regency: 'star-world-historical', victorian: 'star-world-historical', medieval: 'star-world-historical',
+          dystopia: 'star-world-dystopia', 'post-apocalyptic': 'star-world-dystopia', postapocalyptic: 'star-world-dystopia',
+          modern: 'star-world-modern', 'near-future': 'star-world-modern', nearfuture: 'star-world-modern', contemporary: 'star-world-modern',
+      };
+
+      function _buildStarRow(echo, threads, allEchoes) {
+          const history = echo.world_history || [];
+          const count = Math.max(history.length, echo.stories_appeared_in || 0);
+          if (count === 0) return '';
+
+          // Build set of echo_ids this echo shares a thread with
+          const threadPartners = new Set();
+          for (const t of threads) {
+              if (t.echo_a === echo.echo_id) threadPartners.add(t.echo_b);
+              if (t.echo_b === echo.echo_id) threadPartners.add(t.echo_a);
+          }
+          // Find which story indices had a thread partner also present
+          // (simplified: if a thread partner exists, mark the first star as connected)
+          const partnerInVault = allEchoes.some(e => threadPartners.has(e.echo_id));
+
+          let html = '<div class="echo-star-row" title="Each star marks a life this Echo has lived. Star colors show the world.">';
+          for (let s = 0; s < count; s++) {
+              // Insert thread connector before second star if partner exists
+              if (s === 1 && partnerInVault) {
+                  html += '<span class="echo-thread-connector">\u2014</span>';
+              }
+              if (s < history.length) {
+                  const w = (history[s].world || '').toLowerCase();
+                  const cls = WORLD_STAR_CLASS[w] || 'star-world-unknown';
+                  html += `<span class="echo-star ${cls}">\u2605</span>`;
+              } else {
+                  // Failsafe: legacy echo with count but no history entry
+                  html += '<span class="echo-star star-world-unknown">\u2605</span>';
+              }
+          }
+          html += '</div>';
+          return html;
+      }
+
+      function _renderVaultList() {
+          const list = document.getElementById('reincarnationVaultList');
+          const empty = document.getElementById('reincarnationVaultEmpty');
+          if (!list) return;
+
+          const reincarnations = _loadReincarnations();
+          const threads = _loadThreads();
+          list.innerHTML = '';
+
+          if (reincarnations.length === 0) {
+              if (empty) empty.style.display = '';
+              return;
+          }
+          if (empty) empty.style.display = 'none';
+
+          reincarnations.forEach((r, i) => {
+              const card = document.createElement('div');
+              card.className = 'reincarnation-card';
+              const displayName = r.canonical_name || r.name || 'Unknown';
+              const legendLine = r.stories_appeared_in > 0
+                  ? `${r.stories_appeared_in} stories · Legend ${r.legend_score || 0}`
+                  : '';
+              const starRow = _buildStarRow(r, threads, reincarnations);
+              card.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;">
+                  <div>
+                      <div class="reincarnation-card-name">${_esc(displayName)}</div>
+                      ${starRow}
+                      <div class="reincarnation-card-role">${_esc(r.role_archetype || '')}</div>
+                      <div class="reincarnation-card-traits">${(r.core_traits || []).join(' · ')}${legendLine ? ' · ' + legendLine : ''}</div>
+                  </div>
+                  <button class="reincarnation-delete-btn" title="Release this soul">&times;</button>
+              </div>`;
+              card.querySelector('.reincarnation-delete-btn').addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  if (!confirm(`Release ${displayName}? This cannot be undone.`)) return;
+                  const all = _loadReincarnations();
+                  all.splice(all.findIndex(x => x.echo_id === r.echo_id), 1);
+                  _saveReincarnations(all);
+                  // Clean up threads referencing this echo
+                  const cleanThreads = _loadThreads().filter(t => t.echo_a !== r.echo_id && t.echo_b !== r.echo_id);
+                  _saveThreads(cleanThreads);
+                  _renderVaultList();
+              });
+              list.appendChild(card);
+          });
+      }
+
+      window.openReincarnationVault = function() {
+          _renderVaultList();
+          document.getElementById('reincarnationVaultScreen')?.classList.remove('hidden');
+      };
+
+      document.getElementById('reincarnationVaultClose')?.addEventListener('click', () => {
+          document.getElementById('reincarnationVaultScreen')?.classList.add('hidden');
+      });
+
+      // ── Import UI (pre-story selection) ──
+
+      let _importSelections = []; // [{echo, role}]
+      let _importCap = MAX_CORRIDOR_SLOTS;
+      let _excludeEchoIds = new Set();
+
+      function _renderImportList() {
+          const list = document.getElementById('reincarnationImportList');
+          const rolesArea = document.getElementById('reincarnationImportRoles');
+          if (!list) return;
+
+          let reincarnations = _loadReincarnations();
+          if (_excludeEchoIds.size > 0) {
+              reincarnations = reincarnations.filter(r => !_excludeEchoIds.has(r.echo_id));
+          }
+          list.innerHTML = '';
+          _importSelections = [];
+
+          if (reincarnations.length === 0) {
+              list.innerHTML = '<div class="reincarnation-vault-empty">No reincarnations available.</div>';
+              return;
+          }
+
+          const selected = new Set();
+
+          reincarnations.forEach((r, i) => {
+              const card = document.createElement('div');
+              card.className = 'reincarnation-card';
+              const dName = r.canonical_name || r.name || 'Unknown';
+              card.innerHTML = `<div class="reincarnation-card-name">${_esc(dName)}</div>
+                  <div class="reincarnation-card-role">${_esc(r.role_archetype || '')}</div>
+                  <div class="reincarnation-card-traits">${(r.core_traits || []).join(' · ')}</div>`;
+              card.addEventListener('click', () => {
+                  if (selected.has(i)) {
+                      selected.delete(i);
+                      card.classList.remove('selected');
+                  } else {
+                      if (selected.size >= _importCap) return; // enforce cap
+                      selected.add(i);
+                      card.classList.add('selected');
+                  }
+                  _updateImportRoles(reincarnations, selected, rolesArea);
+              });
+              list.appendChild(card);
+          });
+      }
+
+      function _updateImportRoles(reincarnations, selected, rolesArea) {
+          if (!rolesArea) return;
+          if (selected.size === 0) {
+              rolesArea.classList.add('hidden');
+              _importSelections = [];
+              return;
+          }
+          rolesArea.classList.remove('hidden');
+          rolesArea.innerHTML = '';
+          _importSelections = [];
+
+          for (const idx of selected) {
+              const r = reincarnations[idx];
+              const row = document.createElement('div');
+              row.className = 'reincarnation-role-row';
+              const sel = document.createElement('select');
+              sel.className = 'reincarnation-role-select';
+              IMPORT_ROLES.forEach(role => {
+                  const opt = document.createElement('option');
+                  opt.value = role;
+                  opt.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+                  sel.appendChild(opt);
+              });
+              // Default: player chars → ally, LI → romantic interest
+              if (r.source_character_type === 'player') sel.value = 'ally';
+              else sel.value = 'romantic interest';
+
+              row.innerHTML = `<span class="reincarnation-card-name">${_esc(r.canonical_name || r.name)}</span>`;
+              row.appendChild(sel);
+              rolesArea.appendChild(row);
+
+              _importSelections.push({ echo: r, role: sel.value });
+              sel.addEventListener('change', () => {
+                  const entry = _importSelections.find(s => s.echo.echo_id === r.echo_id);
+                  if (entry) entry.role = sel.value;
+              });
+          }
+      }
+
+      window.openReincarnationImport = function() {
+          return new Promise((resolve) => {
+              const reincarnations = _loadReincarnations();
+              if (reincarnations.length === 0) {
+                  resolve([]); // no reincarnations, skip
+                  return;
+              }
+
+              _renderImportList();
+
+              const confirmBtn = document.getElementById('reincarnationImportConfirm');
+              const skipBtn = document.getElementById('reincarnationImportSkip');
+
+              const cleanup = () => {
+                  document.getElementById('reincarnationImportModal')?.classList.add('hidden');
+              };
+
+              confirmBtn.onclick = () => {
+                  cleanup();
+                  resolve(_importSelections.slice());
+              };
+              skipBtn.onclick = () => {
+                  cleanup();
+                  resolve([]);
+              };
+
+              document.getElementById('reincarnationImportModal')?.classList.remove('hidden');
+          });
+      };
+
+      // ── Prompt Injection — build reincarnation directives for system prompt ──
+
+      function _buildReincarnationDirective(imports) {
+          if (!imports || imports.length === 0) return '';
+
+          const threads = _loadThreads();
+          let directive = '\n\n────────────────────────────────────\nREINCARNATION IDENTITY TEMPLATES\n\n';
+          directive += 'The following characters are REINCARNATED SOULS appearing in this new story.\n';
+          directive += 'They are NATIVE to this world — their background must be regenerated to fit the current setting.\n';
+          directive += 'Their core personality, behavioral patterns, and relationship style persist.\n';
+          directive += 'They do NOT remember past lives explicitly. Subtle familiarity cues are permitted but not required.\n';
+          directive += `At least 50% of the cast must be freshly generated characters not from this list.\n`;
+          directive += 'Reincarnated characters must NOT dominate all primary narrative roles simultaneously.\n';
+          directive += 'If a reincarnation has role "player character" or "love interest", their soul template defines that main character.\n\n';
+
+          const currentWorld = state.picks?.world || '';
+
+          imports.forEach((imp, i) => {
+              const e = imp.echo;
+              const canonName = e.canonical_name || e.name || 'Unknown';
+              const isMainChar = (imp.role === 'player character' || imp.role === 'love interest');
+              if (isMainChar) {
+                  directive += `REINCARNATION ${i + 1} (${imp.role.toUpperCase()}):\n`;
+                  directive += `  Soul Identity: ${canonName}\n`;
+                  directive += `  Instruction: This soul defines the ${imp.role}'s personality. The player-chosen name takes precedence.\n`;
+              } else {
+                  const adaptedName = _generateWorldAdaptedName(canonName, currentWorld);
+                  directive += `REINCARNATION ${i + 1}:\n`;
+                  directive += `  Canonical Name: ${canonName}\n`;
+                  directive += `  Adapted Name For This World: ${adaptedName}\n`;
+                  directive += `  Instruction: The character is native to this world. Use the adapted name in narration and dialogue. The canonical name represents the persistent identity across lives.\n`;
+              }
+              directive += `  Story Role: ${imp.role}\n`;
+              directive += `  Soul Archetype: ${e.role_archetype || 'undefined'}\n`;
+              directive += `  Core Traits: ${(e.core_traits || []).join(', ')}\n`;
+              directive += `  Speech Style: ${e.speech_style || 'distinctive'}\n`;
+              directive += `  Behavior Patterns: ${(e.behavior_patterns || []).join('; ')}\n`;
+              directive += `  Dominant Desire: ${e.dominant_desire || 'unknown'}\n`;
+              directive += `  Central Wound: ${e.central_wound || 'unknown'}\n`;
+              directive += `  Fear Pattern: ${e.fear_pattern || 'unknown'}\n`;
+              directive += `  Relationship Archetype: ${e.relationship_archetype || 'complex'}\n`;
+              directive += `  Signature Motifs: ${(e.signature_motifs || []).join(', ')}\n`;
+              directive += `  Memory Echoes: ${(e.memory_fragments || []).join(' | ')}\n`;
+              directive += `  Tone: ${(e.tone_markers || []).join(', ')}\n`;
+              directive += `  ADAPTATION RULE: Reinterpret "${e.role_archetype}" for the current world setting. `;
+              directive += `The role must change to fit the world while the personality stays constant.\n\n`;
+          });
+
+          // Include relationship threads between imported echoes
+          const importedIds = new Set(imports.map(imp => imp.echo.echo_id));
+          const relevantThreads = threads.filter(t => importedIds.has(t.echo_a) && importedIds.has(t.echo_b));
+          if (relevantThreads.length > 0) {
+              directive += 'RELATIONSHIP THREADS (between reincarnated characters):\n';
+              relevantThreads.forEach(t => {
+                  const eA = imports.find(i => i.echo.echo_id === t.echo_a)?.echo;
+                  const eB = imports.find(i => i.echo.echo_id === t.echo_b)?.echo;
+                  const nameA = eA ? (eA.canonical_name || eA.name) : '?';
+                  const nameB = eB ? (eB.canonical_name || eB.name) : '?';
+                  directive += `  ${nameA} <-> ${nameB}: ${t.bond_type}, `;
+                  directive += `attraction ${t.attraction_level}, loyalty ${t.loyalty_level}, `;
+                  directive += `dominance: ${t.dominance_pattern}\n`;
+                  directive += `  Unresolved: ${t.unresolved_tension}\n`;
+                  if (t.shared_memory_fragments?.length) {
+                      directive += `  Shared echoes: ${t.shared_memory_fragments.join(' | ')}\n`;
+                  }
+                  directive += '\n';
+              });
+
+              // Echo Resonance — activated when two imported echoes share a thread
+              directive += 'ECHO RESONANCE\n\n';
+              directive += 'These characters have encountered each other in other lives.\n';
+              directive += 'They do not remember past events.\n';
+              directive += 'However they may experience:\n';
+              directive += '- inexplicable familiarity\n';
+              directive += '- instant attraction\n';
+              directive += '- instinctive distrust\n';
+              directive += '- recurring emotional patterns\n\n';
+              directive += 'These feelings must manifest subtly in dialogue, behavior, or narrative tone.\n';
+              directive += 'Do NOT reveal previous worlds. Do NOT imply literal reincarnation memory.\n';
+              directive += 'This is emotional resonance only.\n';
+              directive += 'Echo Resonance must NOT override Fate Cards, alter Storyturn structure, or force romance or conflict. It is purely atmospheric.\n\n';
+              directive += 'ECHO RESONANCE ACTIVE\nCharacters:\n';
+              relevantThreads.forEach(t => {
+                  const eA = imports.find(i => i.echo.echo_id === t.echo_a)?.echo;
+                  const eB = imports.find(i => i.echo.echo_id === t.echo_b)?.echo;
+                  const adaptedA = eA ? _generateWorldAdaptedName(eA.canonical_name || eA.name, currentWorld) : '?';
+                  const adaptedB = eB ? _generateWorldAdaptedName(eB.canonical_name || eB.name, currentWorld) : '?';
+                  directive += `  ${adaptedA}\n  ${adaptedB}\n`;
+              });
+              directive += 'Their emotional patterns echo across lives.\n';
+              directive += 'The story may allow them to feel strangely drawn together or repelled.\n\n';
+          }
+
+          directive += '────────────────────────────────────\n';
+          return directive;
+      }
+
+      // ── Legend System — reputation tracking across stories ──
+
+      function _incrementStoriesAppeared(imports) {
+          if (!imports || imports.length === 0) return;
+          const all = _loadReincarnations();
+          const importedIds = new Set(imports.map(i => i.echo.echo_id));
+          const currentWorld = (state.picks?.world || 'unknown').toLowerCase();
+          let changed = false;
+          for (const echo of all) {
+              if (importedIds.has(echo.echo_id)) {
+                  echo.stories_appeared_in = (echo.stories_appeared_in || 0) + 1;
+                  if (!Array.isArray(echo.world_history)) echo.world_history = [];
+                  echo.world_history.push({ world: currentWorld });
+                  changed = true;
+              }
+          }
+          if (changed) {
+              _saveReincarnations(all);
+              console.log('[REINCARNATION] Incremented stories_appeared_in for', importedIds.size, 'echo(es), world:', currentWorld);
+          }
+      }
+
+      async function _detectLegendaryMoment(imports) {
+          if (!imports || imports.length === 0) return;
+          if (state._legendEvaluationComplete) return;
+          if (!window.StoryboundOrchestration?.callChatGPT) return;
+
+          const allContent = (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
+              ? StoryPagination.getAllContent().replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+              : '';
+          const endingSlice = allContent.slice(-1500);
+          if (endingSlice.length < 100) return;
+
+          const charNames = imports.map(i => i.echo.canonical_name || i.echo.name).join(', ');
+
+          try {
+              const result = await window.StoryboundOrchestration.callChatGPT([
+                  { role: 'system', content: 'You classify story endings. Respond ONLY with valid JSON, no markdown.' },
+                  { role: 'user', content: `Analyze this story ending for characters: ${charNames}
+
+ENDING EXCERPT:
+"${endingSlice}"
+
+For each character, classify:
+- legendary: boolean (heroic sacrifice, world-changing decision, redemption arc, tragic downfall)
+- betrayal: boolean (betrayal, corruption, moral collapse)
+
+Return JSON array:
+[{"name":"...","legendary":true/false,"betrayal":true/false}]
+
+Only include characters that appear in the excerpt. Be strict — only TRUE for clear, unambiguous cases.` }
+              ], { max_tokens: 80, temperature: 0.2 });
+
+              const parsed = JSON.parse(result);
+              if (!Array.isArray(parsed)) return;
+
+              // Build name→echo_id map from imports (LLM returns names, we resolve to echo_id)
+              const nameToId = {};
+              for (const imp of imports) {
+                  const n = (imp.echo.canonical_name || imp.echo.name || '').toLowerCase();
+                  if (n) nameToId[n] = imp.echo.echo_id;
+              }
+
+              const all = _loadReincarnations();
+              let changed = false;
+
+              for (const classification of parsed) {
+                  const matchName = (classification.name || '').toLowerCase();
+                  const echoId = nameToId[matchName];
+                  if (!echoId) continue;
+                  const echo = all.find(e => e.echo_id === echoId);
+                  if (!echo) continue;
+
+                  if (classification.legendary) {
+                      echo.legendary_moments = (echo.legendary_moments || 0) + 1;
+                      echo.legend_score = Math.min(MAX_ECHO_LEGEND, (echo.legend_score || 0) + 5);
+                      changed = true;
+                      console.log(`[REINCARNATION] Legendary moment for ${echo.canonical_name || echo.name} (+5 legend, total: ${echo.legend_score})`);
+                  }
+                  if (classification.betrayal) {
+                      echo.tragic_betrayals = (echo.tragic_betrayals || 0) + 1;
+                      echo.legend_score = Math.min(MAX_ECHO_LEGEND, (echo.legend_score || 0) + 3);
+                      changed = true;
+                      console.log(`[REINCARNATION] Betrayal for ${echo.canonical_name || echo.name} (+3 legend, total: ${echo.legend_score})`);
+                  }
+              }
+
+              if (changed) _saveReincarnations(all);
+              state._legendEvaluationComplete = true;
+          } catch (e) {
+              console.warn('[REINCARNATION] Legend detection failed (non-critical):', e.message);
+              state._legendEvaluationComplete = true; // prevent retry on failure too
+          }
+      }
+
+      function _getEchoLegendSummary(echo) {
+          return {
+              name: echo.canonical_name || echo.name || 'Unknown',
+              stories: echo.stories_appeared_in || 0,
+              legend_score: echo.legend_score || 0,
+              legendary_moments: echo.legendary_moments || 0,
+              betrayals: echo.tragic_betrayals || 0
+          };
+      }
+
+      // ── Integration hooks ──
+
+      // Expose for system prompt builder
+      window._buildReincarnationDirective = _buildReincarnationDirective;
+
+      // Store current story's import selections on state
+      window._storeReincarnationImports = function(imports) {
+          state._reincarnationImports = imports || [];
+      };
+
+      // Expose for begin-story flow
+      window._getReincarnationImports = function() {
+          return state._reincarnationImports || [];
+      };
+
+      // Diversity safeguard check — called before story generation
+      window._validateReincarnationDiversity = function(imports) {
+          if (!imports || imports.length === 0) return { valid: true };
+          if (imports.length > MAX_IMPORT_PER_STORY) {
+              return { valid: false, reason: `Maximum ${MAX_IMPORT_PER_STORY} reincarnations per story.` };
+          }
+          // Check: not all primary roles occupied
+          const roles = imports.map(i => i.role);
+          const primaryRoles = ['romantic interest', 'antagonist', 'mentor'];
+          const occupiedPrimary = primaryRoles.filter(r => roles.includes(r));
+          if (occupiedPrimary.length >= primaryRoles.length) {
+              return { valid: false, reason: 'Reincarnations cannot fill all primary narrative roles. Leave room for fresh characters.' };
+          }
+          return { valid: true };
+      };
+
+      // Expose legend system
+      window._incrementStoriesAppeared = _incrementStoriesAppeared;
+      window._detectLegendaryMoment = _detectLegendaryMoment;
+      window._getEchoLegendSummary = _getEchoLegendSummary;
+      window._generateWorldAdaptedName = _generateWorldAdaptedName;
+
+      // HTML escape helper
+      function _esc(s) {
+          const d = document.createElement('div');
+          d.textContent = s || '';
+          return d.innerHTML;
+      }
+
+      // ── Echo Corridor Strip (Character Naming row) ──
+      // Manual corridor slots only — typed echoes stored separately
+
+      let _corridorEchoSlots = []; // [{echo, role}] — manual selections only
+      let _typedPlayerEcho = null; // {echo, role} or null
+      let _typedLIEcho = null;     // {echo, role} or null
+
+      function _getTypedEchoIds() {
+          var ids = new Set();
+          if (_typedPlayerEcho) ids.add(_typedPlayerEcho.echo.echo_id);
+          if (_typedLIEcho) ids.add(_typedLIEcho.echo.echo_id);
+          return ids;
+      }
+
+      function _renderEchoCorridorStrip() {
+          const container = document.getElementById('echoCorridorSlots');
+          const strip = document.getElementById('echoCorridorStrip');
+          if (!container || !strip) return;
+
+          const reincarnations = _loadReincarnations();
+          if (reincarnations.length === 0) {
+              strip.classList.add('hidden');
+              return;
+          }
+          strip.classList.remove('hidden');
+          container.innerHTML = '';
+
+          // Build thread lookup for adjacent connector rendering
+          const threads = _loadThreads();
+          const _threadPairSet = new Set();
+          if (threads.length > 0 && _corridorEchoSlots.length >= 2) {
+              for (var ti = 0; ti < _corridorEchoSlots.length - 1; ti++) {
+                  var idA = _corridorEchoSlots[ti].echo.echo_id;
+                  var idB = _corridorEchoSlots[ti + 1].echo.echo_id;
+                  var hasThread = threads.some(function(t) {
+                      return (t.echo_a === idA && t.echo_b === idB) || (t.echo_a === idB && t.echo_b === idA);
+                  });
+                  if (hasThread) _threadPairSet.add(ti);
+              }
+          }
+
+          // Render filled manual slots only (typed echoes show on cards, not here)
+          _corridorEchoSlots.forEach((slot, i) => {
+              // Insert thread connector before this card if linked to previous
+              if (i > 0 && _threadPairSet.has(i - 1)) {
+                  const connector = document.createElement('div');
+                  connector.className = 'echo-corridor-thread';
+                  container.appendChild(connector);
+              }
+
+              const card = document.createElement('div');
+              card.className = 'echo-slot-card echo-slot-filled';
+              card.dataset.index = i;
+              const name = slot.echo.canonical_name || slot.echo.name || 'Unknown';
+              const roleLabel = slot.role.charAt(0).toUpperCase() + slot.role.slice(1);
+              card.innerHTML = '<div class="echo-slot-name">' + _esc(name) + '</div>'
+                  + '<div class="echo-slot-role">' + _esc(roleLabel) + '</div>'
+                  + '<div class="echo-slot-remove" title="Remove">\u00d7</div>';
+              card.querySelector('.echo-slot-remove').addEventListener('click', function(e) {
+                  e.stopPropagation();
+                  _corridorEchoSlots.splice(i, 1);
+                  _renderEchoCorridorStrip();
+              });
+              container.appendChild(card);
+          });
+
+          // Selector card if room remains (max 5 manual slots)
+          if (_corridorEchoSlots.length < MAX_CORRIDOR_SLOTS) {
+              const selector = document.createElement('div');
+              selector.className = 'echo-slot-card echo-slot-selector';
+              selector.innerHTML = '<div class="echo-slot-plus">+</div><div class="echo-slot-selector-label">Add Echo</div>';
+              selector.addEventListener('click', _openEchoCorridorPicker);
+              container.appendChild(selector);
+          }
+      }
+
+      function _addEchoToCorridorSlot(echo, role) {
+          if (_corridorEchoSlots.length >= MAX_CORRIDOR_SLOTS) return;
+          if (_corridorEchoSlots.some(function(s) { return s.echo.echo_id === echo.echo_id; })) return;
+          // Prevent adding an echo already bound as a typed echo
+          if (_getTypedEchoIds().has(echo.echo_id)) return;
+          _corridorEchoSlots.push({ echo: echo, role: role });
+          _renderEchoCorridorStrip();
+          // Sparkle animation on newly added card
+          var container = document.getElementById('echoCorridorSlots');
+          if (container) {
+              var cards = container.querySelectorAll('.echo-slot-filled');
+              var lastCard = cards[cards.length - 1];
+              if (lastCard) {
+                  lastCard.classList.add('echo-slot-sparkle-in');
+                  setTimeout(function() { lastCard.classList.remove('echo-slot-sparkle-in'); }, 400);
+              }
+          }
+      }
+
+      async function _openEchoCorridorPicker() {
+          var remaining = MAX_CORRIDOR_SLOTS - _corridorEchoSlots.length;
+          if (remaining <= 0) return;
+          _importCap = remaining;
+          // Exclude both corridor slots and typed echoes from picker
+          var exclude = new Set(_corridorEchoSlots.map(function(s) { return s.echo.echo_id; }));
+          _getTypedEchoIds().forEach(function(id) { exclude.add(id); });
+          _excludeEchoIds = exclude;
+          try {
+              var imports = await window.openReincarnationImport();
+              if (imports && imports.length > 0) {
+                  imports.forEach(function(imp) { _addEchoToCorridorSlot(imp.echo, imp.role); });
+              }
+          } catch (e) {
+              console.warn('[ECHO CORRIDOR] Picker error:', e.message);
+          }
+          _importCap = MAX_CORRIDOR_SLOTS;
+          _excludeEchoIds = new Set();
+      }
+
+      // ── Echo Card Soul Display (inside character tarot cards) ──
+
+      function _renderEchoCardSoul(cardId, echo) {
+          var card = document.getElementById(cardId);
+          if (!card) return;
+          var fields = card.querySelector('.character-tarot-fields');
+          if (!fields) return;
+          var existing = fields.querySelector('.echo-card-soul');
+
+          if (!echo) {
+              if (existing) existing.remove();
+              return;
+          }
+
+          if (!existing) {
+              existing = document.createElement('div');
+              existing.className = 'echo-card-soul';
+              fields.appendChild(existing);
+          }
+
+          // Build star row from world_history
+          var history = echo.world_history || [];
+          var count = Math.max(history.length, echo.stories_appeared_in || 0);
+          var starsHtml = '';
+          for (var s = 0; s < count; s++) {
+              if (s < history.length) {
+                  var w = (history[s].world || '').toLowerCase();
+                  var cls = WORLD_STAR_CLASS[w] || 'star-world-unknown';
+                  starsHtml += '<span class="echo-star ' + cls + '">\u2605</span>';
+              } else {
+                  starsHtml += '<span class="echo-star star-world-unknown">\u2605</span>';
+              }
+          }
+
+          var legendScore = echo.legend_score || 0;
+          existing.innerHTML = '<div class="echo-soul-divider"></div>'
+              + '<div class="echo-soul-label">Echo Soul</div>'
+              + (starsHtml ? '<div class="echo-soul-stars">' + starsHtml + '</div>' : '')
+              + '<div class="echo-soul-legend">Legend ' + legendScore + '</div>';
+      }
+
+      function _autoDetectEchoByName(name, source) {
+          var cardId = (source === 'typed_player') ? 'playerCharacterCard' : 'loveInterestCharacterCard';
+
+          if (!name || name.trim().length < 2) {
+              if (source === 'typed_player') _typedPlayerEcho = null;
+              else _typedLIEcho = null;
+              _renderEchoCardSoul(cardId, null);
+              return;
+          }
+
+          var reincarnations = _loadReincarnations();
+          var normalized = name.toLowerCase().trim();
+          var match = reincarnations.find(function(r) {
+              var canonical = (r.canonical_name || r.name || '').toLowerCase().trim();
+              return canonical === normalized;
+          });
+
+          if (match) {
+              var matchedId = match.echo_id;
+
+              // ── Duplicate typed echo protection ──
+              if (source === 'typed_player' && _typedLIEcho && _typedLIEcho.echo.echo_id === matchedId) {
+                  // Player role takes precedence — evict from LI
+                  _typedLIEcho = null;
+                  _renderEchoCardSoul('loveInterestCharacterCard', null);
+              } else if (source === 'typed_li' && _typedPlayerEcho && _typedPlayerEcho.echo.echo_id === matchedId) {
+                  // LI role refuses duplicate — player already owns this soul
+                  if (typeof showToast === 'function') showToast('This soul already inhabits you.');
+                  _typedLIEcho = null;
+                  _renderEchoCardSoul(cardId, null);
+                  return;
+              }
+
+              var role = (source === 'typed_player') ? 'player character' : 'love interest';
+              var entry = { echo: match, role: role };
+              if (source === 'typed_player') _typedPlayerEcho = entry;
+              else _typedLIEcho = entry;
+              _renderEchoCardSoul(cardId, match);
+              // Remove from corridor slots if duplicate (typed takes precedence)
+              var prevLen = _corridorEchoSlots.length;
+              _corridorEchoSlots = _corridorEchoSlots.filter(function(s) { return s.echo.echo_id !== matchedId; });
+              if (_corridorEchoSlots.length !== prevLen) _renderEchoCorridorStrip();
+          } else {
+              if (source === 'typed_player') _typedPlayerEcho = null;
+              else _typedLIEcho = null;
+              _renderEchoCardSoul(cardId, null);
+          }
+      }
+
+      function _collectCorridorEchoes() {
+          var result = [];
+          if (_typedPlayerEcho) result.push(_typedPlayerEcho);
+          if (_typedLIEcho) result.push(_typedLIEcho);
+          return result.concat(_corridorEchoSlots).slice(0, MAX_IMPORT_PER_STORY);
+      }
+
+      function _clearCorridorEchoSlots() {
+          _corridorEchoSlots = [];
+          _typedPlayerEcho = null;
+          _typedLIEcho = null;
+          _renderEchoCardSoul('playerCharacterCard', null);
+          _renderEchoCardSoul('loveInterestCharacterCard', null);
+          _renderEchoCorridorStrip();
+      }
+
+      // Auto-detect echo names from character name inputs
+      var _playerNameInput = document.getElementById('playerNameInput');
+      var _partnerNameInput = document.getElementById('partnerNameInput');
+      if (_playerNameInput) {
+          _playerNameInput.addEventListener('blur', function() { _autoDetectEchoByName(_playerNameInput.value, 'typed_player'); });
+      }
+      if (_partnerNameInput) {
+          _partnerNameInput.addEventListener('blur', function() { _autoDetectEchoByName(_partnerNameInput.value, 'typed_li'); });
+      }
+
+      // Initial render (strip hidden until vault has echoes)
+      _renderEchoCorridorStrip();
+
+      // Expose corridor functions
+      window._initEchoCorridorStrip = _renderEchoCorridorStrip;
+      window._collectCorridorEchoes = _collectCorridorEchoes;
+      window._clearCorridorEchoSlots = _clearCorridorEchoSlots;
+
+      console.log('[REINCARNATION] System initialized');
+  })();
+
+      // ═══════════════════════════════════════════════════════════════════
+      // QA RESET PANEL — Dev/sandbox testing tools
+      // Guards: localhost + _devBypass active (Stripe must be in test mode)
+      // NEVER appears in production.
+      // ═══════════════════════════════════════════════════════════════════
+      (function initQaResetPanel() {
+
+          const QA_ADMIN_EMAILS = [
+              'roman@storybound.love',
+              'test@storybound.love',
+              'admin@storybound.love'
+          ];
+
+          const triggerBtn = document.getElementById('qaResetTrigger');
+          const panelEl = document.getElementById('qaResetPanel');
+          const closeBtn = document.getElementById('qaResetPanelClose');
+          const stateDisplay = document.getElementById('qaStateDisplay');
+
+          if (!triggerBtn) { console.warn('[QA] #qaResetTrigger not found in DOM — aborting QA panel init'); return; }
+          if (!panelEl)    { console.warn('[QA] #qaResetPanel not found in DOM — aborting QA panel init'); return; }
+
+          // ── Single authoritative QA guard ──
+          // Allows: localhost, 127.0.0.1, *.vercel.app (preview/dev)
+          // Requires: ?devpass=storybound (sets window._devBypass at boot)
+          // Blocks: production domains (storybound.love, www.storybound.love)
+          //
+          // BUG FIX: Previously, the trigger was shown at parse time via _isQaHost()
+          // (inside the parent DevHUD IIFE), but the click handler checked _devBypass
+          // which is set LATER in the async boot sequence. On Vercel preview, the
+          // trigger was visible but _devBypass was always false at parse time, so
+          // clicking did nothing. Now we defer BOTH visibility and handler attachment
+          // to _activateQaPanel(), called from boot after _devBypass is set.
+          let _qaActivated = false;
+
+          window._activateQaPanel = function() {
+              if (_qaActivated) return;
+              const allowed = (typeof _isQaHost === 'function') && _isQaHost() && !!window._devBypass;
+              if (!allowed) {
+                  console.log('[QA] Not enabled — host:', location.hostname,
+                      '| _isQaHost:', typeof _isQaHost === 'function' ? _isQaHost() : 'n/a',
+                      '| _devBypass:', !!window._devBypass);
+                  return;
+              }
+              _qaActivated = true;
+              triggerBtn.classList.remove('hidden');
+              triggerBtn.addEventListener('click', openPanel);
+              if (closeBtn) closeBtn.addEventListener('click', closePanel);
+              console.log('[QA] QA enabled | host:', location.hostname,
+                  '| devpass: present | trigger: found | panel: found | click handler: attached');
+          };
+
+          function refreshStateDisplay() {
+              if (!stateDisplay) return;
+              const fortunes = (state.fortunes || 0);
+              const spFortunes = (state.storypassFortunes || 0);
+              const hasPass = state.storyId ? (localStorage.getItem('sb_storypass_' + state.storyId) === '1') : false;
+              const sceneNum = state.turnCount || 0;
+              const hasPending = !!(state._fatePausesPending);
+              const access = state.access || 'unknown';
+
+              // Real vs QA vs Effective tier display
+              const realTier = state._realSubscribed ? (state._realSubscriptionTier || 'unknown') : 'none';
+              const qaOverride = _readQaSubscriptionOverride();
+              const qaDisplay = (qaOverride && qaOverride.active) ? qaOverride.tier : 'none';
+              const effectiveTier = state.subscribed ? (state.subscriptionTier || 'unknown') : 'none';
+              const qaSource = _getQaSource();
+
+              stateDisplay.textContent =
+                  'Fortunes: ' + fortunes + ' (storypass: ' + spFortunes + ')\n' +
+                  'Real Tier: ' + realTier + '\n' +
+                  'QA Override: ' + qaDisplay + '\n' +
+                  'QA Source: ' + qaSource + (_qaSupabaseAvailable ? '' : ' (supabase unavailable)') + '\n' +
+                  'Effective Tier: ' + effectiveTier + '\n' +
+                  'Access: ' + access + '\n' +
+                  'Storypass: ' + hasPass + ' (server: ' + !!state.hasPass + ')\n' +
+                  'Scene: ' + sceneNum + '\n' +
+                  'Pending Turn: ' + hasPending;
+          }
+
+          function openPanel() {
+              refreshStateDisplay();
+              panelEl.classList.remove('hidden');
+          }
+
+          function closePanel() {
+              panelEl.classList.add('hidden');
+          }
+
+          // Expose for DevHUD command
+          window._openQaResetPanel = openPanel;
+
+          // ── Button handlers ──
+          panelEl.addEventListener('click', async (e) => {
+              const btn = e.target.closest('[data-qa]');
+              if (!btn || btn.disabled) return;
+              const action = btn.dataset.qa;
+              btn.disabled = true;
+
+              try {
+                  switch (action) {
+
+                  // ── RESET ECONOMY ──
+                  case 'reset-fortunes':
+                      state.fortunes = 0;
+                      state.storypassFortunes = 0;
+                      if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+                      // Server-side reset via Supabase if user available
+                      try {
+                          const user = window.supabase?.auth?.getUser
+                              ? (await window.supabase.auth.getUser()).data?.user : null;
+                          if (user) {
+                              await window.supabase.from('profiles')
+                                  .update({ fortunes: 0 })
+                                  .eq('id', user.id);
+                              console.log('[QA] Server fortunes reset to 0');
+                          }
+                      } catch (err) { console.warn('[QA] Server reset failed:', err); }
+                      log('QA: Fortunes reset to 0');
+                      break;
+
+                  // ── GRANT FORTUNES ──
+                  case 'grant-50':
+                  case 'grant-200':
+                  case 'grant-1000': {
+                      const amount = action === 'grant-50' ? 50 : action === 'grant-200' ? 200 : 1000;
+                      state.fortunes = (state.fortunes || 0) + amount;
+                      if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+                      try {
+                          const user = window.supabase?.auth?.getUser
+                              ? (await window.supabase.auth.getUser()).data?.user : null;
+                          if (user) {
+                              await window.supabase.from('profiles')
+                                  .update({ fortunes: state.fortunes })
+                                  .eq('id', user.id);
+                              // Ledger entry
+                              await window.supabase.from('fortune_ledger').insert({
+                                  user_id: user.id,
+                                  source: 'qa_grant',
+                                  amount: amount,
+                                  reason: 'testing'
+                              });
+                              console.log('[QA] Server fortunes granted:', amount);
+                          }
+                      } catch (err) { console.warn('[QA] Server grant failed:', err); }
+                      log('QA: +' + amount + ' fortunes (total: ' + state.fortunes + ')');
+                      break;
+                  }
+
+                  // ── SUBSCRIPTION TIER (persisted to localStorage + Supabase attempt) ──
+                  case 'set-storied':
+                      _writeQaSubscriptionOverride(true, 'storied');
+                      state.subscribed = true;
+                      state.subscriptionTier = 'storied';
+                      state.billingStatus = 'active';
+                      syncTierFromAccess();
+                      log('QA: Tier → Storied (persisted)');
+                      break;
+
+                  case 'set-favored':
+                      _writeQaSubscriptionOverride(true, 'favored');
+                      state.subscribed = true;
+                      state.subscriptionTier = 'favored';
+                      state.billingStatus = 'active';
+                      syncTierFromAccess();
+                      log('QA: Tier → Favored (persisted)');
+                      break;
+
+                  case 'set-chosen':
+                      _writeQaSubscriptionOverride(true, 'chosen');
+                      state.subscribed = true;
+                      state.subscriptionTier = 'chosen';
+                      state.billingStatus = 'active';
+                      syncTierFromAccess();
+                      log('QA: Tier → Chosen (persisted)');
+                      break;
+
+                  case 'remove-sub':
+                      _writeQaSubscriptionOverride(false, null);
+                      state.subscribed = false;
+                      state.subscriptionTier = null;
+                      state.billingStatus = null;
+                      syncTierFromAccess();
+                      log('QA: Subscription removed (persisted)');
+                      break;
+
+                  // ── STORYPASS (localStorage + Supabase has_storypass) ──
+                  case 'remove-storypass':
+                      if (state.storyId) {
+                          // Clear localStorage (client-side gate source)
+                          localStorage.removeItem('sb_storypass_' + state.storyId);
+                          state.hasPass = false;
+                          state.storypassFortunes = 0;
+                          // Clear Supabase has_storypass (server-side gate source)
+                          (async () => {
+                              try {
+                                  const user = window.supabase?.auth?.getUser
+                                      ? (await window.supabase.auth.getUser()).data?.user : null;
+                                  if (user) {
+                                      await window.supabase.from('profiles')
+                                          .update({ has_storypass: false })
+                                          .eq('id', user.id);
+                                      console.log('[QA] Supabase has_storypass cleared');
+                                  }
+                              } catch (err) { console.warn('[QA] Supabase storypass clear failed:', err); }
+                          })();
+                          syncTierFromAccess();
+                          log('QA: Storypass removed (localStorage + Supabase) for story ' + state.storyId);
+                      } else {
+                          log('QA: No active storyId');
+                      }
+                      break;
+
+                  // ── SCENE REWIND ──
+                  case 'scene-20':
+                      state.turnCount = 20;
+                      state.tempQuillAllowance = 0;
+                      // Ensure tease tier state is consistent for gate testing
+                      log('QA: Scene → 20 (turnCount set, tempQuillAllowance cleared)');
+                      break;
+
+                  // ── CLEAR PENDING TURN ──
+                  case 'clear-pending':
+                      state._fatePausesPending = null;
+                      state._fatePausesGateType = null;
+                      state._fatePausesOpen = false;
+                      state._isAdvancingScene = false;
+                      try { sessionStorage.removeItem('sb_fatePausesPending'); } catch(e2) {}
+                      // Restore input state
+                      const actI = document.getElementById('actionInput');
+                      const diaI = document.getElementById('dialogueInput');
+                      if (actI) { actI.disabled = false; actI.value = ''; }
+                      if (diaI) { diaI.disabled = false; diaI.value = ''; }
+                      const subBtn = document.getElementById('submitBtn');
+                      if (subBtn) { subBtn.classList.remove('submitting'); subBtn.disabled = false; }
+                      // Close Fate Pauses modal if open
+                      const fpM = document.getElementById('fatePausesModal');
+                      if (fpM) fpM.classList.add('hidden');
+                      log('QA: Pending turn cleared');
+                      break;
+                  }
+
+                  refreshStateDisplay();
+              } finally {
+                  btn.disabled = false;
+              }
+          });
+      })();
 
       log('Dev HUD ready — press ` to toggle');
   })();

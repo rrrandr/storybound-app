@@ -465,38 +465,69 @@
   /**
    * Resolve the render tier for the PRIMARY_AUTHOR call.
    * Returns { model, max_tokens, reason } based on current app state.
-   * Priority: TemptFate > Apex > Scene1 > Volatility > Default
+   * Priority: TemptFate > Apex > Scene1 > Complex > CriticalST > Ending > Volatility > Default
+   *
+   * Critical scenes always use gpt-4o for prose quality, regardless of
+   * whether Grok orchestration is active (Grok handles rendering, but the
+   * author pass benefits from the stronger model at narrative pivot points).
    */
   function resolveRenderTier() {
     const appState = window.state;
     if (!appState) return { model: CONFIG.PRIMARY_AUTHOR_MODEL, max_tokens: 1500, reason: 'Default' };
 
-    // When orchestration is active (explicitEmbodimentAuthorized), Grok handles
-    // rendering — stay on gpt-4o-mini for the author pass, only raise tokens.
-    const inOrchestration = appState._explicitEmbodimentAuthorized === true;
+    // Complexity gate — 4th-person POV and Glass House have system prompts
+    // too dense for gpt-4o-mini (triple narrator layers, strict constraint
+    // sets, no code validator fallback). These always use gpt-4o.
+    const isComplexMode = appState.povMode === 'environment4th'
+        || appState.picks?.worldSubtype === 'glass_house';
 
     // A) Tempt Fate — initial scene (highest priority)
     if (appState.tempt_fate_invoked_this_turn === true) {
-      return { model: inOrchestration ? 'gpt-4o-mini' : 'gpt-4o', max_tokens: 2200, reason: 'Tempt' };
+      return { model: 'gpt-4o', max_tokens: 2200, reason: 'Tempt' };
     }
 
-    // D) Major Turning Points — apex scene importance
+    // B) Major Turning Points — apex scene importance
     if (appState._currentSceneImportance === 'apex') {
-      return { model: inOrchestration ? 'gpt-4o-mini' : 'gpt-4o', max_tokens: 2200, reason: 'Apex' };
+      return { model: 'gpt-4o', max_tokens: 2200, reason: 'Apex' };
     }
 
     // C) Scene 1 of any story
     if ((appState.turnCount || 0) === 1) {
-      return { model: inOrchestration ? 'gpt-4o-mini' : 'gpt-4o', max_tokens: 2000, reason: 'Scene1' };
+      return { model: 'gpt-4o', max_tokens: 2000, reason: 'Scene1' };
     }
 
-    // B) Volatility window — subsequent scenes (not the invocation turn)
+    // D) Complex mode — 4th person or Glass House: gpt-4o for all scenes
+    if (isComplexMode) {
+      return { model: 'gpt-4o', max_tokens: 1800, reason: 'Complex' };
+    }
+
+    // E) Critical Storyturns — ST3 (Permission) and ST4 (Consequence) are
+    //    emotional pivot points where prose quality matters most
+    const st = appState.storyturn;
+    if (st === 'ST3' || st === 'ST4') {
+      return { model: 'gpt-4o', max_tokens: 1800, reason: 'CriticalST' };
+    }
+
+    // F) Ending window — cliffhanger or final scenes deserve strong prose
+    const endingStart = _getEndingWindowStart(appState.storyLength);
+    if (endingStart && (appState.turnCount || 0) >= endingStart) {
+      return { model: 'gpt-4o', max_tokens: 1800, reason: 'Ending' };
+    }
+
+    // G) Volatility window — subsequent scenes (not the invocation turn)
     if (appState.volatility_window?.active === true) {
-      return { model: 'gpt-4o-mini', max_tokens: inOrchestration ? 1500 : 1800, reason: 'Volatility' };
+      return { model: 'gpt-4o-mini', max_tokens: 1800, reason: 'Volatility' };
     }
 
     // Default
     return { model: 'gpt-4o-mini', max_tokens: 1500, reason: 'Default' };
+  }
+
+  /** Ending-window start scene by story length (mirrors STORYTURN_CONFIG). */
+  const _ENDING_WINDOW_START = { taste: 10, fling: 18, affair: 28, soulmates: 55 };
+
+  function _getEndingWindowStart(storyLength) {
+    return _ENDING_WINDOW_START[(storyLength || 'taste').toLowerCase()] || null;
   }
 
   // ===========================================================================
