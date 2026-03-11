@@ -64,23 +64,35 @@
 
   function px(v) { return Math.round(v * 2) / 2 + 'px'; }
 
-  // Card face container base width (px) — fallback for px→cqi conversion
-  const CARD_FACE_BASE_WIDTH = 168;
-
-  // Per-selector measured container widths (recorded at drag time)
+  // Per-selector measured cqi bases (recorded at drag time)
   const containerWidths = new Map();
+
+  /**
+   * Empirically measure the cqi base for a container element.
+   * Creates a temporary element with width:100cqi, reads its pixel width,
+   * and returns that as the definitive cqi base. No guessing about
+   * content-box vs padding-box — whatever the browser uses, we use.
+   */
+  function measureCqiBase(container) {
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;width:100cqi;height:0;visibility:hidden;pointer-events:none;';
+    container.appendChild(probe);
+    const base = probe.getBoundingClientRect().width;
+    probe.remove();
+    return base || 168; // fallback to 168 if measurement fails
+  }
 
   /**
    * Convert a CSS value from px to cqi if it's a px value.
    * @param {string} value — CSS value like "253px"
-   * @param {number} [containerWidth] — actual container width (measured at drag time)
+   * @param {number} [cqiBase] — actual 100cqi width in px (measured at drag time)
    */
-  function pxToCqi(value, containerWidth) {
+  function pxToCqi(value, cqiBase) {
     if (typeof value !== 'string') return value;
     const m = value.match(/^(-?[\d.]+)px$/);
     if (!m) return value;
     const pxVal = parseFloat(m[1]);
-    const base = containerWidth || CARD_FACE_BASE_WIDTH;
+    const base = cqiBase || 168;
     const cqiVal = Math.round((pxVal / base * 100) * 100) / 100;
     return cqiVal + 'cqi';
   }
@@ -161,16 +173,35 @@
 
   function recordMod(el, prop, value) {
     const sel = cssSelectorFor(el);
-    if (!mods.has(sel)) mods.set(sel, {});
+    const isNew = !mods.has(sel);
+    if (isNew) mods.set(sel, {});
     mods.get(sel)[prop] = value;
 
-    // Record container width for accurate px→cqi conversion
+    // First modification for a card-face child: snapshot ALL essential properties
+    // so the output is self-contained and doesn't depend on prior stylesheet rules.
+    // Without this, properties like position/width that were inherited from a previous
+    // rule get lost when the output CSS replaces that rule.
+    if (isNew && el.closest('.sb-card-face')) {
+      const cs = getComputedStyle(el);
+      const props = mods.get(sel);
+      if (!props['position'])  props['position']  = 'absolute';
+      if (!props['right'])     props['right']     = 'auto';
+      if (!props['bottom'])    props['bottom']    = 'auto';
+      if (!props['top'])       props['top']       = cs.top;
+      if (!props['left'])      props['left']      = cs.left;
+      if (!props['width'])     props['width']     = cs.width;
+      if (!props['font-size']) props['font-size'] = cs.fontSize;
+    }
+
+    // Record cqi base for accurate px→cqi conversion.
+    // Empirically measures what 100cqi equals in px — no guessing about
+    // content-box vs padding-box; whatever the browser uses, we use.
     if (!containerWidths.has(sel)) {
       const face = el.closest('.sb-card-face');
       if (face) {
         const scale = getAncestorScale(face);
-        // Use clientWidth (padding-box, no border) ÷ ancestor scale
-        containerWidths.set(sel, face.clientWidth / scale);
+        const base = measureCqiBase(face) / scale;
+        containerWidths.set(sel, base);
       }
     }
 
@@ -227,9 +258,10 @@
     const parent = el.offsetParent || el.parentElement;
     if (!parent) return;
 
-    // Record position: relative in CSS output for originally-static elements
+    // Record position in CSS output for elements that were changed to positioned
     if (el.__designWasStatic) {
-      recordMod(el, 'position', 'relative');
+      const isCardFaceChild = !!el.closest('.sb-card-face');
+      recordMod(el, 'position', isCardFaceChild ? 'absolute' : 'relative');
     }
 
     // Use getBoundingClientRect relative to parent for reliable pixel positions
@@ -357,8 +389,17 @@
     for (const [sel, props] of mods) {
       // Convert px→cqi for elements inside .sb-card-face
       const isCardFaceChild = sel.includes('sb-card-face');
-      const cw = containerWidths.get(sel); // measured at drag time
+      const cw = containerWidths.get(sel); // empirically measured cqi base
       css += `${sel} {\n`;
+
+      // Card-face children: always emit baseline positioning so output is
+      // self-contained — won't break if it replaces a prior stylesheet rule
+      if (isCardFaceChild) {
+        if (!props['position'])  css += '    position: absolute;\n';
+        if (!props['right'])     css += '    right: auto;\n';
+        if (!props['bottom'])    css += '    bottom: auto;\n';
+      }
+
       for (const [p, v] of Object.entries(props)) {
         const outputVal = (isCardFaceChild && CQI_CONVERTIBLE_PROPS.has(p)) ? pxToCqi(v, cw) : v;
         css += `    ${p}: ${outputVal};\n`;
@@ -703,11 +744,33 @@
       forceStyle(el, 'pointer-events', 'auto');
       el.__designWasPointerNone = true;
     }
-    // Ensure positioned for top/left to work
+    // Ensure positioned for top/left to work.
+    // Card-face children MUST use position:absolute — position:relative offsets
+    // depend on flex layout, content centering, and font metrics, causing positions
+    // to drift between Card Designer capture and page render.
     const pos = el.style.position || getComputedStyle(el).position;
-    if (!pos || pos === 'static') {
+    const isCardFaceChild = !!el.closest('.sb-card-face');
+    if (isCardFaceChild && pos !== 'absolute') {
+      // Snapshot visual position before changing position mode
+      const face = el.closest('.sb-card-face');
+      const faceRect = face.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const scale = getAncestorScale(el);
+      const absTop = (elRect.top - faceRect.top) / scale;
+      const absLeft = (elRect.left - faceRect.left) / scale;
+      // Lock current rendered size so removing flex doesn't collapse the element
+      const absWidth = elRect.width / scale;
+      const absHeight = elRect.height / scale;
+      forceStyle(el, 'position', 'absolute');
+      forceStyle(el, 'top', px(absTop));
+      forceStyle(el, 'left', px(absLeft));
+      forceStyle(el, 'width', px(absWidth));
+      forceStyle(el, 'height', px(absHeight));
+      forceStyle(el, 'bottom', 'auto');
+      forceStyle(el, 'right', 'auto');
+      el.__designWasStatic = true; // ensure position: absolute is recorded in output
+    } else if (!pos || pos === 'static') {
       forceStyle(el, 'position', 'relative');
-      // Record so CSS output includes position: relative for originally-static elements
       el.__designWasStatic = true;
     }
     // Disable transitions so designer changes are instant

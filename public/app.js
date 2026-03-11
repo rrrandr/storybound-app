@@ -32719,6 +32719,162 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
     }
     window.dissipateWorldDropdowns = dissipateWorldDropdowns;
 
+    // ═══════════════════════════════════════════════════════════════════
+    // PRESSURE FLAVOR DROPDOWNS — Floating panels beneath flipped pressure cards
+    // Same pattern as world dropdowns: position:fixed, MutationObserver, RAF tracking
+    // ═══════════════════════════════════════════════════════════════════
+    const _pressureDropdownState = { timeouts: [], observers: [], dropdowns: [], rafId: null };
+
+    function _repositionPressureDropdowns() {
+      _pressureDropdownState.dropdowns.forEach(({ card, dropdown }) => {
+        if (!dropdown.classList.contains('dropdown-open')) return;
+        dropdown.style.display = '';
+        const rect = card.getBoundingClientRect();
+        const ddWidth = rect.width * 0.75;
+        const scaleFactor = rect.width / 168;
+        dropdown.style.width = ddWidth + 'px';
+        dropdown.style.fontSize = (11 * scaleFactor) + 'px';
+        dropdown.style.gap = (2 * scaleFactor) + 'px';
+        dropdown.style.padding = dropdown.classList.contains('dropdown-open')
+          ? `${6 * scaleFactor}px ${6 * scaleFactor}px` : `0 ${6 * scaleFactor}px`;
+        const rawLeft = rect.left + rect.width / 2 - ddWidth / 2;
+        dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - ddWidth - 4)) + 'px';
+        dropdown.style.top = (rect.bottom) + 'px';
+      });
+    }
+
+    function _startPressureDropdownTracking() {
+      if (_pressureDropdownState.rafId) return;
+      (function tick() {
+        _repositionPressureDropdowns();
+        const anyOpen = _pressureDropdownState.dropdowns.some(d => d.dropdown.classList.contains('dropdown-open'));
+        if (anyOpen) {
+          _pressureDropdownState.rafId = requestAnimationFrame(tick);
+        } else {
+          _pressureDropdownState.rafId = null;
+        }
+      })();
+    }
+
+    function initPressureFlavorDropdowns() {
+      // Clean up previous state
+      _pressureDropdownState.timeouts.forEach(t => clearTimeout(t));
+      _pressureDropdownState.observers.forEach(o => o.disconnect());
+      _pressureDropdownState.dropdowns.forEach(({ dropdown }) => dropdown.remove());
+      if (_pressureDropdownState.rafId) cancelAnimationFrame(_pressureDropdownState.rafId);
+      _pressureDropdownState.timeouts = [];
+      _pressureDropdownState.observers = [];
+      _pressureDropdownState.dropdowns = [];
+      _pressureDropdownState.rafId = null;
+
+      const cards = document.querySelectorAll('#pressureGrid .sb-card[data-grp="pressure"]');
+      cards.forEach(card => {
+        const pressureVal = card.dataset.val;
+        if (pressureVal === 'destiny') return;
+        const flavors = PRESSURE_FLAVORS[pressureVal];
+        if (!flavors || !flavors.length) return;
+
+        const dropdown = document.createElement('div');
+        dropdown.className = 'pressure-flavor-dropdown';
+        dropdown.dataset.pressure = pressureVal;
+
+        flavors.forEach(f => {
+          const item = document.createElement('div');
+          item.className = 'pressure-flavor-item';
+          item.dataset.val = f.id;
+          item.textContent = f.label;
+
+          if (state.picks.flavor === f.id) {
+            item.classList.add('selected');
+          }
+
+          item.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            if (state.picks.flavor === f.id) {
+              // Deselect
+              state.picks.flavor = null;
+              state.picks.genre = getEffectiveGenre(pressureVal, null);
+              item.classList.remove('selected');
+            } else {
+              // Deselect all items across ALL pressure dropdowns, then select this one
+              document.querySelectorAll('.pressure-flavor-item.selected').forEach(el => el.classList.remove('selected'));
+              state.picks.flavor = f.id;
+              state.picks.genre = getEffectiveGenre(pressureVal, f.id);
+              item.classList.add('selected');
+            }
+            incrementDSPActivation();
+            updateSynopsisPanel(true);
+          });
+
+          dropdown.appendChild(item);
+        });
+
+        document.body.appendChild(dropdown);
+        _pressureDropdownState.dropdowns.push({ card, dropdown });
+
+        let pendingTimeout = null;
+        const observer = new MutationObserver(() => {
+          const isFlipped = card.classList.contains('flipped');
+          if (isFlipped && !dropdown.classList.contains('dropdown-open')) {
+            const rect = card.getBoundingClientRect();
+            const ddWidth = rect.width * 0.75;
+            const scaleFactor = rect.width / 168;
+            dropdown.style.width = ddWidth + 'px';
+            dropdown.style.fontSize = (11 * scaleFactor) + 'px';
+            dropdown.style.gap = (2 * scaleFactor) + 'px';
+            const rawLeft = rect.left + rect.width / 2 - ddWidth / 2;
+            dropdown.style.left = Math.max(4, Math.min(rawLeft, window.innerWidth - ddWidth - 4)) + 'px';
+            dropdown.style.top = (rect.bottom) + 'px';
+            pendingTimeout = setTimeout(() => {
+              dropdown.classList.add('dropdown-open');
+              _startPressureDropdownTracking();
+              pendingTimeout = null;
+            }, 2000);
+            _pressureDropdownState.timeouts.push(pendingTimeout);
+          } else if (!isFlipped) {
+            dropdown.classList.remove('dropdown-open');
+            if (pendingTimeout) {
+              clearTimeout(pendingTimeout);
+              pendingTimeout = null;
+            }
+          }
+        });
+        observer.observe(card, { attributes: true, attributeFilter: ['class'] });
+        _pressureDropdownState.observers.push(observer);
+      });
+    }
+
+    window.initPressureFlavorDropdowns = initPressureFlavorDropdowns;
+
+    function dissipatePressureDropdowns() {
+      if (_pressureDropdownState.rafId) {
+        cancelAnimationFrame(_pressureDropdownState.rafId);
+        _pressureDropdownState.rafId = null;
+      }
+      _pressureDropdownState.timeouts.forEach(t => clearTimeout(t));
+      _pressureDropdownState.timeouts = [];
+      _pressureDropdownState.observers.forEach(o => o.disconnect());
+      _pressureDropdownState.observers = [];
+
+      _pressureDropdownState.dropdowns.forEach(({ dropdown }) => {
+        if (!dropdown.classList.contains('dropdown-open')) {
+          dropdown.remove();
+          return;
+        }
+        if (typeof createDissipationSparkles === 'function') {
+          createDissipationSparkles(dropdown);
+        }
+        dropdown.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        dropdown.style.opacity = '0';
+        dropdown.style.transform = 'scale(0.3)';
+        dropdown.style.pointerEvents = 'none';
+        setTimeout(() => dropdown.remove(), 600);
+      });
+      _pressureDropdownState.dropdowns = [];
+    }
+    window.dissipatePressureDropdowns = dissipatePressureDropdowns;
+
     // Populate World card zoom view with flavor buttons and optional custom field
     // Baked-in button positions for world cards with custom PNG art.
     // Positions are percentages of the card face. Hit zones are transparent
@@ -33663,7 +33819,7 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
       // Start sparkles after brief delay
       setTimeout(() => {
         if (typeof startSparkleEmitter === 'function') {
-          startSparkleEmitter('pressureDestinySparkles', 'destinyDeck', 3);
+          startSparkleEmitter('pressureDestinySparkles', 'beginStory', 3);
         }
       }, 100);
     }
@@ -33713,7 +33869,7 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
 
       setTimeout(() => {
         if (typeof startSparkleEmitter === 'function') {
-          startSparkleEmitter('dynamicDestinySparkles', 'destinyDeck', 3);
+          startSparkleEmitter('dynamicDestinySparkles', 'beginStory', 3);
         }
       }, 100);
     }
@@ -33820,8 +33976,8 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
 
         if (isAlreadySelected) {
-          // Destiny's Choice has no zoom view — it auto-selects only
-          if (grp === 'pressure' && val === 'destiny') return;
+          // No zoom for tone, pressure, or dynamic cards
+          if (grp === 'tone' || grp === 'pressure' || grp === 'dynamic') return;
           // STATE 2 → STATE 3: Open zoom view (NEVER deselect)
           openSbCardZoom(card, grp, val);
           return;
@@ -34973,8 +35129,9 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
     // Sparkles converge, breadcrumb appears with reveal animation
     // ═══════════════════════════════════════════════════════════════════════════
     setTimeout(() => {
-      // Hide original card completely
-      card.style.visibility = 'hidden';
+      // Hide original card completely — use display:none so child visibility:visible
+      // (from crossfade CSS on .selected.flipped) cannot override parent hiding
+      card.style.display = 'none';
       card.classList.remove('dissolving-to-breadcrumb');
 
       // Get structured label with optional subtitle
@@ -35286,7 +35443,7 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         const stored = corridorRowStore.get(i);
         if (stored) {
           stored.elements.forEach(el => {
-            el.querySelectorAll('.sb-card').forEach(card => {
+            el.querySelectorAll('.sb-card, .character-tarot-card').forEach(card => {
               card.classList.remove('dissipating', 'selected', 'flipped', 'dissolving-to-breadcrumb', 'dissolving', 'destiny-chosen');
               card.style.opacity = '';
               card.style.visibility = '';
@@ -36345,6 +36502,11 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
    *   - INVARIANT 3: corridorActiveRowIndex is ONLY source of truth
    */
   function updateCorridorVisibility() {
+    // Force-remove any body-appended dropdowns (position:fixed, survive corridor unmount)
+    document.querySelectorAll('.pressure-flavor-dropdown, .world-flavor-dropdown').forEach(d => d.remove());
+    if (typeof window.dissipatePressureDropdowns === 'function') window.dissipatePressureDropdowns();
+    if (typeof window.dissipateWorldDropdowns === 'function') window.dissipateWorldDropdowns();
+
     let mountedCount = 0;
 
     CORRIDOR_STAGES.forEach((stage, idx) => {
@@ -36371,9 +36533,10 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
             el.style.pointerEvents = '';
             // Clean up ALL cards from Guided Fate autoplay / breadcrumb animation:
             // - dissipating cards (non-selected, faded via CSS animation forwards)
-            // - selected cards (visibility:hidden set by animateCardToBreadcrumb)
+            // - selected cards (display:none set by animateCardToBreadcrumb)
             // - dissolving cards (dissolving-to-breadcrumb class with CSS animation)
-            el.querySelectorAll('.sb-card').forEach(card => {
+            // - character-tarot-cards (identity stage, dissolved with display:none)
+            el.querySelectorAll('.sb-card, .character-tarot-card').forEach(card => {
               card.classList.remove('dissipating', 'selected', 'flipped', 'dissolving-to-breadcrumb', 'dissolving', 'destiny-chosen');
               card.style.opacity = '';
               card.style.visibility = '';
@@ -36401,9 +36564,9 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
             window.onArchetypeRowMount();
         }
 
-        // PRESSURE MOUNT: Init front flavors + re-inject Destiny card if removed during animation
+        // PRESSURE MOUNT: Init flavor dropdowns + re-inject Destiny card if removed during animation
         if (stage === 'pressure') {
-            if (typeof window.initPressureFrontFlavors === 'function') window.initPressureFrontFlavors();
+            if (typeof window.initPressureFlavorDropdowns === 'function') window.initPressureFlavorDropdowns();
             if (!document.getElementById('pressureDestinyChoiceCard') && typeof window.injectPressureDestinyCard === 'function') {
                 window.injectPressureDestinyCard();
             }
@@ -36446,9 +36609,11 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
             miniDeck.classList.remove('retracted');
             // Restart sparkles on mini-deck
             if (typeof startSparkleEmitter === 'function') {
-              startSparkleEmitter('destinyDeckSparkles', 'destinyDeck', 3);
+              startSparkleEmitter('destinyDeckSparkles', 'beginStory', 3);
             }
           }
+          // Render Reincarnation mini-cards (initial render ran when row was unmounted)
+          if (typeof window._renderReincMiniCards === 'function') window._renderReincMiniCards();
           // Initialize ancestry rotating placeholders (identity row was unmounted
           // when initFateHandSystem ran, so these were skipped)
           ['ancestryInputPlayer', 'ancestryInputLI'].forEach(id => {
@@ -36997,9 +37162,12 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
       const stored = corridorRowStore.get(stage);
       const flowRow = stored?.elements?.[0] || (selectors ? document.querySelector(selectors.split(',')[0].trim()) : null);
 
-      // Sparkle-dissolve world flavor dropdowns alongside the card animation
+      // Sparkle-dissolve flavor dropdowns alongside the card animation
       if (grp === 'world' && typeof window.dissipateWorldDropdowns === 'function') {
         window.dissipateWorldDropdowns();
+      }
+      if (grp === 'pressure' && typeof window.dissipatePressureDropdowns === 'function') {
+        window.dissipatePressureDropdowns();
       }
 
       animateCardToBreadcrumb(selectedCard, grp, selectedVal, selectedTitle, () => {
@@ -37549,7 +37717,10 @@ Generate the title and synopsis now.` }
 
         // Get parent row for card dissipation
         // Use .dynamic-grouped first (dynamic row has multiple .sb-grid sub-groups)
-        const parentRow = selectedCard.closest('.dynamic-grouped, .card-flow-row, .corridor-row, .sb-grid');
+        // Dynamic stage: must reach .dynamic-grouped (full container) not .sb-grid (sub-group)
+        const parentRow = (grp === 'dynamic')
+            ? selectedCard.closest('.dynamic-grouped')
+            : selectedCard.closest('.dynamic-grouped, .card-flow-row, .corridor-row, .sb-grid');
 
         // Archetype stage: use Destiny's Choice mask breadcrumb (don't reveal LI archetype)
         if (stage === 'storybeau') {
@@ -39257,7 +39428,7 @@ Generate the title and synopsis now.` }
       if (window.applyCardGleam) window.applyCardGleam(destinyCard);
 
       // Start sparkles on Destiny's Choice card in archetype grid
-      setTimeout(() => startSparkleEmitter('destinyChoiceSparkles', 'destinyDeck', 3), 100);
+      setTimeout(() => startSparkleEmitter('destinyChoiceSparkles', 'beginStory', 3), 100);
 
       // Schedule automatic reveal of all archetype cards (after row mount delay)
       if (!archetypeCardsRevealed) {
@@ -39418,7 +39589,7 @@ Generate the title and synopsis now.` }
 
       // Start sparkle emitter on selected archetype card (high intensity when all masks visible)
       lastZoomedSparkleEmitterId = sparkleContainer.id;
-      startSparkleEmitter(sparkleContainer.id, 'destinyDeck', 18);
+      startSparkleEmitter(sparkleContainer.id, 'beginStory', 18);
   }
 
   /**
@@ -43314,7 +43485,7 @@ Generate the title and synopsis now.` }
    */
   function initDestinyDeckSparkles() {
     // Destiny Deck: visible sparkle halo around mini-deck
-    startSparkleEmitter('destinyDeckSparkles', 'destinyDeck', 3);
+    startSparkleEmitter('destinyDeckSparkles', 'beginStory', 3);
   }
 
   /**
@@ -43551,7 +43722,7 @@ Generate the title and synopsis now.` }
     // PHASE 3: Create breadcrumb card at target + convergence sparkles
     // ═══════════════════════════════════════════════════════════════════════════
     setTimeout(() => {
-      card.style.visibility = 'hidden';
+      card.style.display = 'none';
       card.classList.remove('dissolving-to-breadcrumb');
       card.classList.add('selected-static');
 
@@ -44196,11 +44367,12 @@ Generate the title and synopsis now.` }
       const cardCenterX = cardRect.left + cardRect.width / 2;
       const cardCenterY = cardRect.top + cardRect.height / 2;
 
-      // Phase 1: Dissolution sparkles from card
-      playerCharCard.style.opacity = '0.3';
-      if (loveInterestCharCard) loveInterestCharCard.style.opacity = '0.3';
+      // Phase 1: Dissolve both character cards with cardDissolve animation + sparkle burst
+      playerCharCard.classList.add('dissolving-to-breadcrumb');
+      if (loveInterestCharCard) loveInterestCharCard.classList.add('dissolving-to-breadcrumb');
 
-      const dissolutionCount = 10 + Math.floor(Math.random() * 5);
+      // Dissolution sparkles from player card
+      const dissolutionCount = 12 + Math.floor(Math.random() * 6);
       for (let i = 0; i < dissolutionCount; i++) {
         setTimeout(() => {
           const sparkle = document.createElement('div');
@@ -44210,47 +44382,39 @@ Generate the title and synopsis now.` }
           sparkle.style.cssText = `left: ${startX}px; top: ${startY}px;`;
           document.body.appendChild(sparkle);
           setTimeout(() => sparkle.remove(), 400);
-        }, i * 25);
+        }, i * 30);
       }
 
-      // Phase 2: Sparkle travel to breadcrumb target
-      setTimeout(() => {
-        const travelCount = 6 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < travelCount; i++) {
+      // Dissolution sparkles from love interest card
+      if (loveInterestCharCard) {
+        const liRect = loveInterestCharCard.getBoundingClientRect();
+        const liSparkleCount = 12 + Math.floor(Math.random() * 6);
+        for (let i = 0; i < liSparkleCount; i++) {
           setTimeout(() => {
             const sparkle = document.createElement('div');
-            sparkle.className = 'traveling-sparkle';
-            const offsetX = (Math.random() - 0.5) * cardRect.width * 0.5;
-            const offsetY = (Math.random() - 0.5) * cardRect.height * 0.5;
-            const startX = cardCenterX + offsetX;
-            const startY = cardCenterY + offsetY;
-            const midX = (startX + targetX) / 2 + (Math.random() - 0.5) * 80;
-            const midY = Math.min(startY, targetY) - 40 - Math.random() * 60;
-            const travelPerpAngle = Math.atan2(targetY - startY, targetX - startX) + Math.PI / 2;
-            const travelCurveAmp = 8 + Math.random() * 16;
-            sparkle.style.cssText = `
-              left: ${startX}px; top: ${startY}px;
-              --target-x: ${targetX - startX}px;
-              --target-y: ${targetY - startY}px;
-              --arc-x: ${midX - startX}px;
-              --arc-y: ${midY - startY}px;
-              --travel-curve-x: ${Math.cos(travelPerpAngle) * travelCurveAmp}px;
-              --travel-curve-y: ${Math.sin(travelPerpAngle) * travelCurveAmp}px;
-            `;
+            sparkle.className = 'dissolution-sparkle';
+            const startX = liRect.left + Math.random() * liRect.width;
+            const startY = liRect.top + Math.random() * liRect.height;
+            sparkle.style.cssText = `left: ${startX}px; top: ${startY}px;`;
             document.body.appendChild(sparkle);
-            setTimeout(() => sparkle.remove(), 600);
-          }, i * 40);
+            setTimeout(() => sparkle.remove(), 400);
+          }, i * 30);
         }
-      }, 200);
+      }
+
+      // Phase 2: Sparkle travel to breadcrumb target (JS-driven via requestAnimationFrame)
+      setTimeout(() => {
+        fireSparkleTrail(cardCenterX, cardCenterY, cardRect.width, cardRect.height, targetX, targetY);
+      }, 250);
 
       // Phase 3: Convergence sparkles + create breadcrumb + advance
       setTimeout(() => {
         // Convergence sparkles at target
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 6; i++) {
           const sparkle = document.createElement('div');
           sparkle.className = 'convergence-sparkle';
-          const angle = (Math.PI * 2 * i) / 5;
-          const dist = 15 + Math.random() * 10;
+          const angle = (Math.PI * 2 * i) / 6;
+          const dist = 20 + Math.random() * 15;
           sparkle.style.cssText = `
             left: ${targetX + Math.cos(angle) * dist}px;
             top: ${targetY + Math.sin(angle) * dist}px;
@@ -44259,18 +44423,20 @@ Generate the title and synopsis now.` }
           setTimeout(() => sparkle.remove(), 500);
         }
 
-        // Clean up cards
+        // Clean up cards — use display:none (matches other dissolution paths)
         if (playerCharCard) {
+          playerCharCard.classList.remove('dissolving-to-breadcrumb');
+          playerCharCard.style.display = 'none';
           const overlay = playerCharCard.querySelector('.fate-overlay-card');
           if (overlay) overlay.remove();
           playerCharCard.classList.remove('has-fate-card');
-          playerCharCard.style.opacity = '';
         }
         if (loveInterestCharCard) {
+          loveInterestCharCard.classList.remove('dissolving-to-breadcrumb');
+          loveInterestCharCard.style.display = 'none';
           const overlay = loveInterestCharCard.querySelector('.fate-overlay-card');
           if (overlay) overlay.remove();
           loveInterestCharCard.classList.remove('has-fate-card');
-          loveInterestCharCard.style.opacity = '';
         }
 
         // Hide character section
@@ -44294,7 +44460,7 @@ Generate the title and synopsis now.` }
           }
           console.log('[Character Section] Sparkle teleport complete — Archetype row now visible');
         }, 600);
-      }, 600);
+      }, 1300);
 
     } else {
       // Fallback: no animation if elements missing
@@ -44345,18 +44511,22 @@ Generate the title and synopsis now.` }
       miniDeck.classList.remove('retracted');
     }
 
-    // Clear fate overlays from character tarot cards (authoritative targets)
+    // Clear fate overlays and restore character tarot cards (authoritative targets)
     const playerCharCard = $('playerCharacterCard');
     const loveInterestCharCard = $('loveInterestCharacterCard');
     if (playerCharCard) {
       const overlay = playerCharCard.querySelector('.fate-overlay-card');
       if (overlay) overlay.remove();
-      playerCharCard.classList.remove('has-fate-card');
+      playerCharCard.classList.remove('has-fate-card', 'dissolving-to-breadcrumb');
+      playerCharCard.style.display = '';
+      playerCharCard.style.opacity = '';
     }
     if (loveInterestCharCard) {
       const overlay = loveInterestCharCard.querySelector('.fate-overlay-card');
       if (overlay) overlay.remove();
-      loveInterestCharCard.classList.remove('has-fate-card');
+      loveInterestCharCard.classList.remove('has-fate-card', 'dissolving-to-breadcrumb');
+      loveInterestCharCard.style.display = '';
+      loveInterestCharCard.style.opacity = '';
     }
   };
 
@@ -44431,6 +44601,9 @@ Generate the title and synopsis now.` }
     if (isTeaseStoryBlocked()) {
         console.log('[BeginStory] EXITING — Tease story blocked (credits:', getFreeCustomStoryCredits(), 'access:', state.access, 'subscribed:', state.subscribed, ')');
         showToast('Free story credit used — unlock to continue');
+        // Resolve storypass eligibility to prevent showPaywall deferral loop
+        // (no active story yet — storyId may be stale from previous session)
+        if (state.storypassEligible === undefined) state.storypassEligible = true;
         window.showPaywall('unlock');
         return;
     }
@@ -44645,9 +44818,12 @@ Generate the title and synopsis now.` }
     // Initialize simplified reader state (when book disabled)
     _readerPage = 0;
 
-    // Clean up world flavor dropdowns (position:fixed on body, persist past corridor)
+    // Clean up flavor dropdowns (position:fixed on body, persist past corridor)
     if (typeof window.dissipateWorldDropdowns === 'function') {
         window.dissipateWorldDropdowns();
+    }
+    if (typeof window.dissipatePressureDropdowns === 'function') {
+        window.dissipatePressureDropdowns();
     }
 
     window.showScreen('game');
