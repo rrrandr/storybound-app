@@ -15346,6 +15346,7 @@ Return ONLY valid JSON:
       state._reincarnationImports = [];
       state._legendEvaluationComplete = false;
       state.voiceAnchor = null; // Voice Anchor — generated once per story after Scene 1
+      state.cliffhangerProtectionUsed = false; // One-use narrative safeguard per depletion cycle
       if (typeof window._clearCorridorEchoSlots === 'function') window._clearCorridorEchoSlots();
 
       // Fate object — per-story tracking
@@ -25289,6 +25290,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       // Clear any stuck toasts first
       clearToasts();
 
+      // Reset Cliffhanger Protection + low-Fortune warning — player has replenished
+      state.cliffhangerProtectionUsed = false;
+      state._lowFortuneModalShown = false;
+
       // Snapshot pre-purchase fortunes for count-up animation
       const _prePurchaseFortunes = state.fortunes || 0;
 
@@ -28897,6 +28902,86 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       'drugs', 'cocaine', 'heroin', 'meth', 'racist', 'hate'
   ];
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPLEXITY-SCALED FORTUNE COSTS
+  // Scene 1 always costs 1 Fortune (preserves low-friction exploration).
+  // Scene 2+ scales with narrative complexity tier.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Determine the Fortune cost tier for the current story configuration.
+   * Returns 'standard' (1F), 'advanced' (2F), or 'experimental' (3F).
+   */
+  function getStoryComplexityTier() {
+      const pov = state.povMode || '';
+      const tone = state.picks?.tone || '';
+      const world = state.picks?.world || '';
+      const worldSubtype = state.picks?.worldSubtype || '';
+
+      // Tier C (Experimental) — full GPT-4 narratives
+      if (pov === 'environment4th'
+          || pov === 'author5th'
+          || worldSubtype === 'glass_house'
+          || state._experimentalNarrativeMode === true) {
+          return 'experimental';
+      }
+
+      // Tier B (Advanced) — heavy GPT-4 hybrid routing
+      if (tone === 'WryConfession'
+          || (world === 'Prehistoric' && tone === 'WryConfession')) {
+          return 'advanced';
+      }
+
+      // Tier A (Standard) — normal routing
+      return 'standard';
+  }
+
+  /** Fortune cost per scene based on complexity tier and turn count. */
+  const COMPLEXITY_FORTUNE_COST = { standard: 1, advanced: 2, experimental: 3 };
+
+  /**
+   * Get the Fortune cost for the current scene.
+   * Scene 1 always costs 1 Fortune regardless of complexity.
+   */
+  function getSceneFortuneCost() {
+      const turnCount = state.turnCount || 0;
+      if (turnCount <= 1) return 1; // Scene 1: always 1 Fortune
+      return COMPLEXITY_FORTUNE_COST[getStoryComplexityTier()] || 1;
+  }
+
+  /**
+   * Get a human-readable complexity label for UI display.
+   * Returns { tier, label, burnLabel, stars } for the current story config.
+   */
+  function getComplexityDisplay() {
+      const tier = getStoryComplexityTier();
+      switch (tier) {
+          case 'experimental':
+              return { tier, label: 'Experimental Narrative', burnLabel: 'This story burns Fortune faster.', stars: 5 };
+          case 'advanced':
+              return { tier, label: 'Advanced Narrative', burnLabel: 'Deeper narration — burns Fortune faster.', stars: 4 };
+          default:
+              return { tier, label: 'Standard Narrative', burnLabel: '', stars: 2 };
+      }
+  }
+
+  /**
+   * Cliffhanger Moment detection — determines if the current scene is a narrative
+   * turning point that should not be interrupted by Fortune depletion.
+   * Used by Cliffhanger Protection (one-use safeguard per depletion cycle).
+   */
+  function isCliffhangerMoment() {
+      const st = state.storyturn || '';
+      // ST3 (intimacy attempt) or ST4 (consequence) — peak narrative tension
+      if (st === 'ST3' || st === 'ST4') return true;
+      // Elevated scene importance (high or apex)
+      const importance = state._currentSceneImportance || 'medium';
+      if (importance === 'high' || importance === 'apex') return true;
+      // Volatility window active (Tempt Fate aftermath — narrative momentum)
+      if (state.volatility_window?.active === true) return true;
+      return false;
+  }
+
   // Check if user has fortunes available
   function hasFortunes() {
       return (state.fortunes || 0) > 0;
@@ -28955,15 +29040,58 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       if (beginCount) {
           beginCount.textContent = f;
       }
+
+      // ── LOW-FORTUNE WARNING ──
+      const warnEl = $('fortuneLowWarning');
+      if (warnEl) {
+          const sceneCost = (typeof getSceneFortuneCost === 'function') ? getSceneFortuneCost() : 1;
+          const remaining = Math.floor(f / Math.max(sceneCost, 1));
+
+          // Fortune icon glow target
+          const starEl = warnEl.parentElement?.querySelector('.fortune-hud-star');
+
+          if (remaining > 5 || (state.turnCount || 0) < 1) {
+              // Not in story or plenty of Fortune — hide warning + reset icon
+              warnEl.classList.add('hidden');
+              warnEl.removeAttribute('data-urgency');
+              if (starEl) starEl.removeAttribute('data-fortune-glow');
+          } else {
+              warnEl.classList.remove('hidden');
+              const label = remaining === 1 ? 'Last Scene of Fortune'
+                  : `${remaining} Scenes Left`;
+              warnEl.textContent = `· ${label}`;
+
+              // Escalating urgency levels
+              let urgency;
+              if (remaining <= 0)      urgency = 'depleted';
+              else if (remaining === 1) urgency = 'critical';
+              else if (remaining === 2) urgency = 'urgent';
+              else if (remaining === 3) urgency = 'high';
+              else if (remaining === 4) urgency = 'medium';
+              else                      urgency = 'low';
+              warnEl.setAttribute('data-urgency', urgency);
+
+              // Fortune icon glow when ≤ 3 scenes remain
+              if (starEl) {
+                  if (remaining <= 3) {
+                      starEl.setAttribute('data-fortune-glow', urgency);
+                  } else {
+                      starEl.removeAttribute('data-fortune-glow');
+                  }
+              }
+
+              // Modal trigger moved to scene submission (during loading overlay)
+          }
+      }
   }
 
-  // Show floating "–1 Fortune" feedback near the HUD
-  function showFortuneSacrificeFeedback() {
+  // Show floating Fortune cost feedback near the HUD
+  function showFortuneSacrificeFeedback(amount = 1) {
       const hud = $('fortuneHud');
       if (!hud) return;
       const fb = document.createElement('span');
       fb.className = 'fortune-hud-feedback';
-      fb.textContent = '–1 Fortune';
+      fb.textContent = amount === 1 ? '–1 Fortune' : `–${amount} Fortunes`;
       hud.appendChild(fb);
       fb.addEventListener('animationend', () => fb.remove());
   }
@@ -29071,15 +29199,40 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       };
   }
 
-  // Show fortune purchase modal
+  // Show fortune purchase modal — adapts sections to player subscription state
   function openFortunePurchaseModal() {
       const modal = $('fortunePurchaseModal');
       if (!modal) {
           console.error('[Fortunes] Purchase modal not found');
           return;
       }
-      const bal = $('fortuneModalBalance');
-      if (bal) bal.textContent = state.fortunes || 0;
+
+      // Adaptive section visibility based on subscription tier
+      const tier = state.subscriptionTier; // 'storied', 'favored', 'chosen', or null/undefined
+      const isChosen = tier === 'chosen';
+      const isFavored = tier === 'favored';
+      const isSubscribed = !!state.subscribed;
+
+      // Storypass: hidden for any subscriber (they already get Fortunes monthly)
+      const storypassSection = $('fortuneModalStorypass');
+      if (storypassSection) {
+          storypassSection.style.display = isSubscribed ? 'none' : '';
+      }
+
+      // Membership: hidden for Chosen (already top tier)
+      const membershipSection = $('fortuneModalMembership');
+      if (membershipSection) {
+          membershipSection.style.display = isChosen ? 'none' : '';
+      }
+
+      // Within membership, hide tiers at or below current tier
+      const tierStoried = $('fortuneModalTierStoried');
+      const tierFavored = $('fortuneModalTierFavored');
+      const tierChosen = $('fortuneModalTierChosen');
+      if (tierStoried) tierStoried.style.display = (tier === 'storied' || isFavored || isChosen) ? 'none' : '';
+      if (tierFavored) tierFavored.style.display = (isFavored || isChosen) ? 'none' : '';
+      if (tierChosen) tierChosen.style.display = isChosen ? 'none' : '';
+
       modal.classList.remove('hidden');
   }
 
@@ -29087,6 +29240,41 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   function closeFortunePurchaseModal() {
       const modal = $('fortunePurchaseModal');
       if (modal) modal.classList.add('hidden');
+  }
+
+  // Storypass purchase — routes to Stripe checkout for story-locked scenes
+  function purchaseStorypass() {
+      if (window._devBypass) {
+          console.log('%c[DEV] Faking Storypass purchase: +20 story-locked scenes', 'color: #ffd700');
+          state.storypassFortunes = (state.storypassFortunes || 0) + 20;
+          state.hasPass = true;
+          closeFortunePurchaseModal();
+          showToast('Storypass activated — 20 scenes added (dev mode)');
+          return;
+      }
+      console.log('[Storypass] Purchase requested');
+      showToast('Storypass purchase coming soon. Check back shortly!');
+      closeFortunePurchaseModal();
+  }
+
+  // Subscription purchase — routes to Stripe subscription checkout
+  function purchaseSubscription(tierName) {
+      if (window._devBypass) {
+          console.log(`%c[DEV] Faking subscription: ${tierName}`, 'color: #ffd700');
+          state.subscribed = true;
+          state.subscriptionTier = tierName;
+          const bonuses = { storied: 100, favored: 200, chosen: 400 };
+          const oldFortunes = state.fortunes || 0;
+          state.fortunes = oldFortunes + (bonuses[tierName] || 100);
+          closeFortunePurchaseModal();
+          if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+          animateFortuneCountUp(oldFortunes, state.fortunes);
+          showToast(`${tierName.charAt(0).toUpperCase() + tierName.slice(1)} membership activated (dev mode)`);
+          return;
+      }
+      console.log(`[Subscription] Purchase requested: ${tierName}`);
+      showToast('Subscription purchase coming soon. Check back shortly!');
+      closeFortunePurchaseModal();
   }
 
   // Handle fortune pack purchase (Stripe integration)
@@ -29232,6 +29420,8 @@ The final image must look like a real published novel cover.`;
   window.openFortunePurchaseModal = openFortunePurchaseModal;
   window.closeFortunePurchaseModal = closeFortunePurchaseModal;
   window.purchaseFortunePack = purchaseFortunePack;
+  window.purchaseStorypass = purchaseStorypass;
+  window.purchaseSubscription = purchaseSubscription;
   window.hasFortunes = hasFortunes;
   window.updateFortuneDisplay = updateFortuneDisplay;
 
@@ -36290,10 +36480,23 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         }
 
 
-        // BEGIN STORY MOUNT: Start sparkles around Begin Story button
+        // BEGIN STORY MOUNT: Start sparkles + burn rate indicator
         if (stage === 'beginstory') {
           if (typeof startSparkleEmitter === 'function') {
             startSparkleEmitter('beginBtnSparkles', 'beginStory', 8);
+          }
+          // Update burn rate indicator based on story complexity
+          const burnEl = document.getElementById('burnRateIndicator');
+          if (burnEl) {
+            const cx = getComplexityDisplay();
+            if (cx.tier === 'standard') {
+              burnEl.classList.add('hidden');
+            } else {
+              const starCount = cx.stars;
+              const stars = '★'.repeat(starCount) + '☆'.repeat(5 - starCount);
+              burnEl.innerHTML = `<span class="burn-rate-stars">${stars}</span><span class="burn-rate-label">${cx.label}</span>${cx.burnLabel}`;
+              burnEl.classList.remove('hidden');
+            }
           }
           console.log('[Corridor] Begin Story mount: Started sparkles');
         }
@@ -55512,40 +55715,81 @@ Respond in this EXACT format (no labels, just two lines):
       }
 
       // ═══════════════════════════════════════════════════════════════════
-      // FORTUNE BURN: Every scene costs 1 fortune (unless free tease range)
+      // FORTUNE BURN: Complexity-scaled cost (Scene 1 = 1F, Scene 2+ scales)
       // Consumption order: storypassFortunes → global fortunes
       // StoryPass fortunes are story-locked, scene-only, non-transferable
       // ═══════════════════════════════════════════════════════════════════
+      const sceneCost = getSceneFortuneCost();
       const inFreeTease = isTeaseTier() && (state.turnCount || 0) < state.TEASE_SCENE_CAP;
       if (!inFreeTease) {
           // 1. Try story-locked StoryPass fortunes first
-          if ((state.storypassFortunes || 0) > 0) {
-              state.storypassFortunes--;
-              console.log('[Fortunes] StoryPass fortune consumed for scene. Remaining:', state.storypassFortunes);
-              showFortuneSacrificeFeedback();
+          if ((state.storypassFortunes || 0) >= sceneCost) {
+              state.storypassFortunes -= sceneCost;
+              console.log(`[Fortunes] StoryPass fortune consumed for scene (cost: ${sceneCost}). Remaining:`, state.storypassFortunes);
+              showFortuneSacrificeFeedback(sceneCost);
+          } else if ((state.storypassFortunes || 0) > 0) {
+              // Partial StoryPass + global fallback
+              const fromStorypass = state.storypassFortunes;
+              const fromGlobal = sceneCost - fromStorypass;
+              state.storypassFortunes = 0;
+              console.log(`[Fortunes] StoryPass partially consumed (${fromStorypass}/${sceneCost}). Remainder from global: ${fromGlobal}`);
+              if ((state.fortunes || 0) < fromGlobal) {
+                  // ── CLIFFHANGER PROTECTION: narrative turning point bypass ──
+                  if (!state.cliffhangerProtectionUsed && isCliffhangerMoment()) {
+                      state.cliffhangerProtectionUsed = true;
+                      state._cliffhangerProtectedThisScene = true;
+                      state.storypassFortunes = 0; // Already zeroed above
+                      console.log('[CLIFFHANGER] Protection activated — scene proceeds at 0 cost (partial path)');
+                  } else {
+                      state.storypassFortunes += fromStorypass; // Rollback
+                      state._isAdvancingScene = false;
+                      if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
+                      console.log('[FATE_PAUSES] Insufficient combined fortunes');
+                      _openFatePausesModal('zero_fortunes');
+                      return;
+                  }
+              } else {
+                  const burned = await consumeFortune(fromGlobal, 'scene');
+                  if (!burned) {
+                      state.storypassFortunes += fromStorypass; // Rollback
+                      state._isAdvancingScene = false;
+                      if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
+                      _openFatePausesModal('zero_fortunes');
+                      return;
+                  }
+              }
+              showFortuneSacrificeFeedback(sceneCost);
           } else {
               // 2. Fall back to global fortune balance
-              if (!hasFortunes()) {
-                  // ═══════════════════════════════════════════════════════
-                  // FATE PAUSES — ZERO-FORTUNE GATE
-                  // Player is entitled but has 0 usable fortunes.
-                  // Capture turn, show narrative modal with offers.
-                  // ═══════════════════════════════════════════════════════
-                  state._isAdvancingScene = false;
-                  if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
-                  console.log('[FATE_PAUSES] Zero-fortune gate — no usable fortunes');
-                  _openFatePausesModal('zero_fortunes');
-                  return;
+              if ((state.fortunes || 0) < sceneCost) {
+                  // ── CLIFFHANGER PROTECTION: narrative turning point bypass ──
+                  if (!state.cliffhangerProtectionUsed && isCliffhangerMoment()) {
+                      state.cliffhangerProtectionUsed = true;
+                      state._cliffhangerProtectedThisScene = true;
+                      console.log('[CLIFFHANGER] Protection activated — scene proceeds at 0 cost');
+                  } else {
+                      // ═══════════════════════════════════════════════════════
+                      // FATE PAUSES — ZERO-FORTUNE GATE
+                      // Player is entitled but has insufficient fortunes.
+                      // Capture turn, show narrative modal with offers.
+                      // ═══════════════════════════════════════════════════════
+                      state._isAdvancingScene = false;
+                      if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
+                      console.log(`[FATE_PAUSES] Insufficient fortunes (need ${sceneCost}, have ${state.fortunes || 0})`);
+                      _openFatePausesModal('zero_fortunes');
+                      return;
+                  }
+              } else {
+                  const burned = await consumeFortune(sceneCost, 'scene');
+                  if (!burned) {
+                      state._isAdvancingScene = false;
+                      if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
+                      console.log('[FATE_PAUSES] Fortune consumption failed — zero-fortune gate');
+                      _openFatePausesModal('zero_fortunes');
+                      return;
+                  }
+                  showFortuneSacrificeFeedback(sceneCost);
               }
-              const burned = await consumeFortune(1, 'scene');
-              if (!burned) {
-                  state._isAdvancingScene = false;
-                  if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
-                  console.log('[FATE_PAUSES] Fortune consumption failed — zero-fortune gate');
-                  _openFatePausesModal('zero_fortunes');
-                  return;
-              }
-              showFortuneSacrificeFeedback();
           }
       }
       // Reset petition flag for new scene
@@ -55561,6 +55805,18 @@ Respond in this EXACT format (no labels, just two lines):
 
       // TASK F: Start loading IMMEDIATELY after validation (before normalization)
       startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
+
+      // ── LOW-FORTUNE MODAL: Show during loading overlay (non-blocking) ──
+      if (!state._lowFortuneModalShown) {
+          const _sceneCost = getSceneFortuneCost();
+          const _remaining = Math.floor((state.fortunes || 0) / Math.max(_sceneCost, 1));
+          if (_remaining <= 3) {
+              state._lowFortuneModalShown = true;
+              setTimeout(() => {
+                  if (typeof openFortunePurchaseModal === 'function') openFortunePurchaseModal();
+              }, 1500);
+          }
+      }
 
       // RUNTIME NORMALIZATION: Action/dialogue inputs flow through ChatGPT normalization layer
       const axis = 'action';
@@ -57840,6 +58096,14 @@ ABSOLUTE RULES:
           // Guaranteed per-turn flag cleanup (prevents sticky flags on error/refresh)
           state.milestone_vision_fired_this_turn = false;
           state._pendingReversalVision = false;
+
+          // ── CLIFFHANGER PROTECTION: post-scene narrative message ──
+          if (state._cliffhangerProtectedThisScene) {
+              state._cliffhangerProtectedThisScene = false;
+              setTimeout(() => {
+                  showToast('The Story carried the moment forward. You may need more Fortune to continue.');
+              }, 1500);
+          }
       }
   });
 

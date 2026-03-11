@@ -2910,6 +2910,46 @@ button:disabled::after, .dsp-btn:disabled::after {
 .fortune-dismiss-btn:hover {
     filter: brightness(1.15);
 }
+
+/* Fortune Modal — adaptive sections */
+.fortune-modal-section { margin-top: 4px; }
+.fortune-modal-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200,168,78,0.25), transparent);
+    margin: 14px 0 10px;
+}
+.fortune-modal-header {
+    color: var(--gold, #c8a84e);
+    font-family: 'Lora', serif;
+    font-size: 0.95em;
+    font-style: italic;
+    margin-bottom: 2px;
+}
+.fortune-modal-label {
+    font-variant: small-caps;
+    font-size: 0.82em;
+    letter-spacing: 0.1em;
+    opacity: 0.55;
+    margin-bottom: 6px;
+}
+.fortune-modal-desc {
+    font-size: 0.88em;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+.fortune-modal-fine {
+    font-size: 0.75em;
+    opacity: 0.45;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+.fortune-tier-perks {
+    font-size: 0.75em;
+    opacity: 0.5;
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+.fortune-modal-box { max-height: 85vh; overflow-y: auto; }
 #vizSceneBtn {
     background: url('/assets/ui/Black-Gold-400x112.png') center/100% 100% no-repeat, #0a0a0a !important;
     padding: 14px 44px;
@@ -14484,6 +14524,30 @@ body.corridor-mode .sb-grid.corridor-section {
     text-align: center;
 }
 
+/* Burn Rate Indicator — complexity-scaled Fortune cost label */
+.burn-rate-indicator {
+    margin-top: 8px;
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    color: var(--gold, #c8a84e);
+    opacity: 0.75;
+    text-align: center;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+}
+.burn-rate-indicator .burn-rate-stars {
+    display: block;
+    font-size: 0.9em;
+    letter-spacing: 0.15em;
+    margin-bottom: 2px;
+}
+.burn-rate-indicator .burn-rate-label {
+    display: block;
+    font-variant: small-caps;
+    font-size: 0.85em;
+    opacity: 0.65;
+}
+
 /* –1 Fortune float feedback (begin story context) */
 .begin-fortune-feedback {
     position: absolute;
@@ -18397,11 +18461,62 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 .fortune-hud-star {
     font-size: 1.1em;
     opacity: 0.9;
+    transition: text-shadow 0.4s ease, opacity 0.4s ease;
+}
+/* Fortune icon glow — escalates as scenes run low */
+.fortune-hud-star[data-fortune-glow="high"] {
+    opacity: 1;
+    text-shadow: 0 0 6px rgba(200, 168, 78, 0.5);
+    animation: fortune-star-glow 2s ease-in-out infinite;
+}
+.fortune-hud-star[data-fortune-glow="urgent"] {
+    opacity: 1;
+    text-shadow: 0 0 8px rgba(232, 180, 60, 0.6);
+    animation: fortune-star-glow 1.6s ease-in-out infinite;
+}
+.fortune-hud-star[data-fortune-glow="critical"],
+.fortune-hud-star[data-fortune-glow="depleted"] {
+    opacity: 1;
+    text-shadow: 0 0 10px rgba(232, 144, 64, 0.7);
+    animation: fortune-star-glow 1s ease-in-out infinite;
+}
+@keyframes fortune-star-glow {
+    0%, 100% { opacity: 0.9; text-shadow: 0 0 4px rgba(200, 168, 78, 0.3); }
+    50%      { opacity: 1;   text-shadow: 0 0 12px rgba(232, 180, 60, 0.8); }
 }
 .fortune-hud-count {
     font-weight: 700;
     min-width: 1.4em;
     text-align: center;
+}
+
+/* Low-Fortune warning — escalating urgency */
+.fortune-low-warning {
+    font-size: 0.85em;
+    font-variant: small-caps;
+    letter-spacing: 0.06em;
+    margin-left: 6px;
+    opacity: 0.9;
+    white-space: nowrap;
+    transition: color 0.4s ease;
+}
+.fortune-low-warning[data-urgency="low"]    { color: rgba(255,255,255,0.8); }
+.fortune-low-warning[data-urgency="medium"] { color: #e8d57e; }
+.fortune-low-warning[data-urgency="high"]   { color: #e8c44a; animation: fortune-heartbeat 2s ease-in-out infinite; }
+.fortune-low-warning[data-urgency="urgent"] { color: #e89040; animation: fortune-heartbeat 1.4s ease-in-out infinite; }
+.fortune-low-warning[data-urgency="critical"] { color: #d94040; animation: fortune-heartbeat 1s ease-in-out infinite; }
+.fortune-low-warning[data-urgency="depleted"] { color: #b02020; animation: fortune-heartbeat 0.8s ease-in-out infinite, fortune-shake 0.4s ease-in-out infinite; }
+
+@keyframes fortune-heartbeat {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    30%      { opacity: 1;    transform: scale(1.06); }
+    50%      { opacity: 0.9;  transform: scale(1); }
+    70%      { opacity: 1;    transform: scale(1.04); }
+}
+@keyframes fortune-shake {
+    0%, 100% { transform: translateX(0); }
+    25%      { transform: translateX(-1px); }
+    75%      { transform: translateX(1px); }
 }
 
 /* –1 Fortune float feedback */

@@ -608,26 +608,60 @@
 <!-- FORTUNE PURCHASE MODAL — Prepaid fortune packs                          -->
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 <div id="fortunePurchaseModal" class="overlay hidden" style="z-index:10020;">
-  <div class="box" style="max-width:420px; text-align:center;">
-    <h3 style="color:var(--gold); margin-bottom:10px;">Be Rich in Fortunes</h3>
-    <p style="opacity:0.8; font-size:0.9em; margin-bottom:5px;">
-      Fortunes fuel every action:<br>scenes, covers, visualizations, petitions
-    </p>
-    <p style="opacity:0.6; font-size:0.85em; margin-bottom:20px;">
-      Current balance: <strong style="color:var(--gold);"><span id="fortuneModalBalance">0</span> Fortunes</strong>
-    </p>
+  <div class="box fortune-modal-box" style="max-width:440px; text-align:center;">
+    <h3 style="color:var(--gold); margin-bottom:6px;">Your Fortunes are dwindling.</h3>
+    <p style="opacity:0.7; font-size:0.88em; font-style:italic; margin-bottom:16px;">But your story is far from over.</p>
 
-    <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
-      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(60, '$5');">
-        60 Fortunes &mdash; $5
-      </button>
-      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">
-        120 Fortunes &mdash; $9
-      </button>
-      <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(240, '$16');">
-        240 Fortunes &mdash; $16
-      </button>
+    <!-- STORYPASS SECTION (hidden for subscribers) -->
+    <div id="fortuneModalStorypass" class="fortune-modal-section">
+      <div class="fortune-modal-divider"></div>
+      <p class="fortune-modal-header">Undress the next chapter.</p>
+      <p class="fortune-modal-label">Storypass</p>
+      <p class="fortune-modal-desc">Continue this story for the next <strong>20 scenes</strong>.</p>
+      <p class="fortune-modal-fine">Applies only to this story. Does not add to Fortune balance.<br>Cannot be used for Tempt Fate or Petition Fate.</p>
+      <button class="fortune-pack-btn" onclick="window.purchaseStorypass();">Continue This Story &mdash; $3</button>
     </div>
+
+    <!-- FORTUNE PACKS SECTION (always visible) -->
+    <div id="fortuneModalPacks" class="fortune-modal-section">
+      <div class="fortune-modal-divider"></div>
+      <p class="fortune-modal-header">Be rich in Fortunes.</p>
+      <p class="fortune-modal-label">Fortune Packs</p>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(60, '$5');">60 Fortunes &mdash; $5</button>
+        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">120 Fortunes &mdash; $9</button>
+        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(240, '$16');">240 Fortunes &mdash; $16</button>
+      </div>
+    </div>
+
+    <!-- MEMBERSHIP SECTION (hidden for Chosen subscribers) -->
+    <div id="fortuneModalMembership" class="fortune-modal-section">
+      <div class="fortune-modal-divider"></div>
+      <p class="fortune-modal-header">Let Fate favor you.</p>
+      <p class="fortune-modal-label">Membership</p>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+        <div id="fortuneModalTierStoried" class="fortune-tier-option">
+          <button class="fortune-pack-btn" onclick="window.purchaseSubscription('storied');">
+            <strong>Storied</strong> &mdash; $6/mo
+          </button>
+          <p class="fortune-tier-perks">100 Fortunes/mo + small Fate boost</p>
+        </div>
+        <div id="fortuneModalTierFavored" class="fortune-tier-option">
+          <button class="fortune-pack-btn" onclick="window.purchaseSubscription('favored');">
+            <strong>Favored</strong> &mdash; $9/mo
+          </button>
+          <p class="fortune-tier-perks">200 Fortunes/mo + larger Fate boost + 1 Free Tempt Fate</p>
+        </div>
+        <div id="fortuneModalTierChosen" class="fortune-tier-option">
+          <button class="fortune-pack-btn" onclick="window.purchaseSubscription('chosen');">
+            <strong>Chosen</strong> &mdash; $16/mo
+          </button>
+          <p class="fortune-tier-perks">400 Fortunes/mo + biggest Fate boost + 3 Free Tempt Fates</p>
+        </div>
+      </div>
+    </div>
+
+    <p style="opacity:0.35; font-size:0.78em; font-style:italic; margin-top:16px; margin-bottom:12px;">Fortune keeps the story moving.</p>
 
     <button class="fortune-dismiss-btn" onclick="window.closeFortunePurchaseModal();">
       Delay Gratification
@@ -1223,6 +1257,7 @@
                 <span class="begin-fortune-star">✧</span>
                 <span id="beginFortuneCount" class="begin-fortune-count">0</span>
             </button>
+            <div id="burnRateIndicator" class="burn-rate-indicator hidden"></div>
         </div>
     </div>
 
@@ -1434,6 +1469,7 @@
       <span class="fortune-hud-label">Fortunes</span>
       <span class="fortune-hud-star">✧</span>
       <span id="fortuneHudCount" class="fortune-hud-count">0</span>
+      <span id="fortuneLowWarning" class="fortune-low-warning hidden"></span>
     </div>
 
     <div id="billingBanner" style="display:none;"></div>
