@@ -15020,6 +15020,136 @@ Return ONLY the title, no quotes or explanation.`;
           window._detectLegendaryMoment(state._reincarnationImports).catch(() => {});
       }
 
+      // ── Alternate POV Edition — preview teaser + fortune-gated buttons ──
+      endPage.querySelectorAll('.pov-reveal-btn, .pov-dual-btn, .pov-preview-block, .pov-btn-subtitle').forEach(el => el.remove());
+      const actionsEl = endPage.querySelector('.sb-end-page-actions');
+
+      if (actionsEl) {
+        const _storyText = () => StoryPagination.getAllContent()
+          .replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+        // ── Preview teaser (free, cached, async) ──
+        const previewBlock = document.createElement('div');
+        previewBlock.className = 'pov-preview-block';
+        previewBlock.innerHTML = '<div class="pov-preview-label">UNSEEN THOUGHT</div><div class="pov-preview-text">...</div>';
+        actionsEl.appendChild(previewBlock);
+
+        // Fire-and-forget preview generation
+        (async () => {
+          try {
+            const text = _storyText();
+            if (text && text.length >= 200) {
+              const preview = await generateAltPovPreview(state.storyId, text);
+              const previewTextEl = previewBlock.querySelector('.pov-preview-text');
+              if (preview && previewTextEl) {
+                previewTextEl.textContent = preview;
+              } else if (previewTextEl) {
+                previewBlock.style.display = 'none';
+              }
+            } else {
+              previewBlock.style.display = 'none';
+            }
+          } catch { previewBlock.style.display = 'none'; }
+        })();
+
+        // ── Dual POV button (FIRST — price anchor) ──
+        const dualBtn = document.createElement('button');
+        dualBtn.className = 'sb-end-page-cta sb-end-page-cta-alt pov-dual-btn';
+        const dualSubtitle = document.createElement('div');
+        dualSubtitle.className = 'pov-btn-subtitle pov-btn-subtitle-featured';
+        dualSubtitle.textContent = 'MOST REVEALING';
+
+        // Single POV button (SECOND)
+        const singleBtn = document.createElement('button');
+        singleBtn.className = 'sb-end-page-cta sb-end-page-cta-alt pov-reveal-btn';
+        const singleSubtitle = document.createElement('div');
+        singleSubtitle.className = 'pov-btn-subtitle';
+        singleSubtitle.textContent = 'Love interest POV';
+
+        // Check if dual already exists (async — update button after check)
+        hasAltPovEdition(state.storyId, 'dual').then(dualExists => {
+          if (dualExists) {
+            dualBtn.textContent = 'Read Dual POV Edition';
+            dualBtn.onclick = () => openPovRewriteReader(state.storyId);
+            dualSubtitle.textContent = 'Love interest + villain perspectives';
+          } else {
+            dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+            dualSubtitle.textContent = 'Love interest + villain perspectives';
+            dualBtn.onclick = async () => {
+              if (_altPovGenerationInProgress) return;
+              dualBtn.disabled = true;
+              singleBtn.disabled = true;
+              dualBtn.textContent = 'Generating dual edition\u2026';
+              try {
+                const text = _storyText();
+                if (!text || text.length < 200) {
+                  showToast('Story too short for dual POV.');
+                  dualBtn.disabled = false;
+                  singleBtn.disabled = false;
+                  dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+                  return;
+                }
+                const result = await generateAltPovWithFortune(state.storyId, text, ALT_POV_DUAL_COST, 'dual');
+                if (result) {
+                  showToast('Dual POV Edition created.');
+                  dualBtn.textContent = 'Read Dual POV Edition';
+                  dualBtn.disabled = false;
+                  singleBtn.disabled = false;
+                  dualBtn.onclick = () => openPovRewriteReader(state.storyId);
+                } else {
+                  dualBtn.disabled = false;
+                  singleBtn.disabled = false;
+                  dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+                }
+              } catch (err) {
+                console.error('[AltPOV] End-page dual generation failed:', err);
+                showToast('Dual POV generation failed.');
+                dualBtn.disabled = false;
+                singleBtn.disabled = false;
+                dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+              }
+            };
+          }
+        });
+        actionsEl.appendChild(dualBtn);
+        actionsEl.appendChild(dualSubtitle);
+
+        if (hasPovRewrite(state.storyId)) {
+          singleBtn.textContent = 'Read the Other Side';
+          singleBtn.onclick = () => openPovRewriteReader(state.storyId);
+        } else {
+          singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+          singleBtn.onclick = async () => {
+            if (_altPovGenerationInProgress) return;
+            singleBtn.disabled = true;
+            singleBtn.textContent = 'Generating\u2026';
+            try {
+              const text = _storyText();
+              if (!text || text.length < 200) {
+                showToast('Story too short for POV rewrite.');
+                singleBtn.disabled = false;
+                singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+                return;
+              }
+              const result = await generateAltPovWithFortune(state.storyId, text, ALT_POV_SINGLE_COST, 'single');
+              if (result) {
+                openPovRewriteReader(state.storyId);
+              } else {
+                singleBtn.disabled = false;
+                singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+              }
+            } catch (err) {
+              console.error('[AltPOV] End-page single generation failed:', err);
+              showToast('POV generation failed.');
+              singleBtn.disabled = false;
+              singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+            }
+          };
+        }
+        actionsEl.appendChild(singleBtn);
+        actionsEl.appendChild(singleSubtitle);
+      }
+
       console.log('[END-PAGE] Story End Page shown (Book ' + (state.book_number || 1) + ' complete)');
   }
 
@@ -26730,10 +26860,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         console.error('[Library] Query failed:', error.message);
       }
 
-      // Filter out starter stories — they must never appear in the Forbidden Library
+      // Filter out starter stories and experimental books — they must never appear as user books
       const starterIds = new Set(STARTER_STORIES.map(s => s.id));
-      _libraryEntries = (data || []).filter(e => !starterIds.has(e.story_id));
+      const experimentalIds = new Set(FORBIDDEN_EXPERIMENTAL_BOOKS.map(b => b.id));
+      _libraryEntries = (data || []).filter(e => !starterIds.has(e.story_id) && !experimentalIds.has(e.story_id));
       _libraryLoaded = true;
+
+      // Load Secret Edition entries before rendering
+      await refreshSecretEditions().catch(err => console.warn('[Library] Secret editions load failed:', err));
 
       // Always render — dummies fill empty shelves
       renderLibraryList();
@@ -26761,6 +26895,3424 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   // Collector's Edition threshold (scene count)
   const COLLECTOR_EDITION_THRESHOLD = 40;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FORBIDDEN EXPERIMENTS — Reserved top-center shelf
+  // These are permanent experimental works, never populated by user books.
+  // Operate under 1 Fortune / 1 page / 1 day rule.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const FORBIDDEN_EXPERIMENTAL_SHELF = {
+    row: 0,       // top shelf
+    column: 'B',  // center column
+    reserved: true
+  };
+
+  const FORBIDDEN_EXPERIMENTAL_BOOKS = [
+    {
+      id: 'exp_exquisite_corpse',
+      story_id: 'exp_exquisite_corpse',
+      title: 'The Exquisite Corpse',
+      author: 'Various Hands',
+      type: 'experimental_chain',
+      fortune_cost_per_page: 1,
+      page_frequency_limit_hours: 24,
+      consecutive_pages_allowed: false,
+      _isExperimental: true,
+      spine_blurb: 'Each page written by a stranger. The story remembers what no one intended.',
+      library_blurb: 'A communal experiment. One page per writer, one day at a time. The story grows by accident.',
+      mechanics: {
+        visibility: 'previous_page_only',
+        full_story_unlock: 'after_completion'
+      },
+      story_kernel: {
+        world: 'variable',
+        flavor: 'surreal collaborative fiction',
+        tone: 'unpredictable',
+        genre: 'experimental',
+        protagonist: null,
+        narrative_rules: [
+          'Each page continues the previous page.',
+          'Writers see only the previous page.',
+          'No author may write two consecutive pages.',
+          'Contradictions are allowed.',
+          'Tone drift is expected.',
+          'Coherence is optional.'
+        ]
+      }
+    },
+    {
+      id: 'exp_gemmas_path',
+      story_id: 'exp_gemmas_path',
+      title: "Gemma's Path",
+      author: 'S. Tory Bound',
+      type: 'episodic_mystery',
+      fortune_cost_per_page: 1,
+      page_frequency_limit_hours: 24,
+      _isExperimental: true,
+      spine_blurb: 'She reads people the way others read clues. Every truth costs someone.',
+      library_blurb: 'Gemma Path is a performing mentalist aboard an international cruise ship. '
+        + 'Passengers believe she can read minds. The truth is subtler \u2014 and more dangerous.',
+      mechanics: {
+        protagonist: 'Gemma Path',
+        core_engine: 'empathic_detection'
+      },
+      // ── Visual distinction ──
+      visual: {
+        spine_ornament: 'gemstone_eye',  // oval gemstone eye on spine
+        hover_rotateY: -2,               // custom hover rotation (degrees)
+        open_animation: 'cover_peek',    // cover opens slightly before zoom
+      },
+      // ── Story Contract (IMMUTABLE — engine must respect these at all times) ──
+      story_contract: {
+        _locked: true, // this object must not be mutated at runtime
+        world: 'modern_city',
+        flavor: 'romantic_mystery',
+        tone: 'observant_intimate',
+        genre: 'empathy_detective',
+        setting_base: 'luxury cruise ship',
+        protagonist_name: 'Gemma Path',
+        protagonist_role: 'empathy_detective',
+        protagonist_occupation: 'mentalist performer',
+        protagonist_locked: true,
+        public_perception: 'Passengers believe Gemma can read minds.',
+        reality: 'Gemma interprets emotional signals and behavior. She has no supernatural abilities.',
+        setting_rules: [
+          'The cruise ship is the recurring story hub.',
+          'Mysteries may occur on the ship or at ports of call.',
+          'The ship provides a closed social environment with recurring characters.',
+        ],
+        allowed_observational_cues: [
+          'hesitation',
+          'microexpressions',
+          'posture shifts',
+          'voice tone',
+          'breathing patterns',
+          'pauses',
+          'eye movement',
+        ],
+        engine_rejection_rules: [
+          'Reject narrative interpretations that imply mind-reading, telepathy, or supernatural perception.',
+          'Gemma must NEVER literally read thoughts or know facts she has not observed.',
+          'Romantic dynamics must stem from people reacting to being emotionally understood.',
+          'Investigation methods must emphasize conversation and emotional observation, not forensic evidence.',
+        ],
+        engine_contract_directive:
+          'STORY CONTRACT (IMMUTABLE): Gemma Path is a performing mentalist on a luxury cruise ship. '
+          + 'Passengers believe she reads minds; in reality she interprets observable emotional signals: '
+          + 'hesitation, microexpressions, posture, voice tone, breathing, pauses, eye movement. '
+          + 'She is NOT psychic. She has NO supernatural abilities. '
+          + 'The engine must REJECT any narrative that implies mind-reading or telepathy. '
+          + 'Romantic dynamics stem from people reacting to being emotionally understood. '
+          + 'Investigation relies on conversation and behavioral observation, never forensic evidence. '
+          + 'The cruise ship is the recurring hub; mysteries may occur aboard or at ports of call. '
+          + 'Protagonist identity is LOCKED: name=Gemma Path, role=empathy detective, occupation=mentalist.',
+      },
+      clue_system: {
+        required: true,
+        description: 'Each page must include one emotional micro-observation noticed by Gemma.',
+        examples: [
+          'someone pauses half a second too long before answering',
+          'a smile fades too quickly',
+          'a hand tightens around a glass',
+          'someone laughs but their eyes stay flat',
+          'a compliment lands like an accusation'
+        ]
+      },
+      accusation_guardrail: {
+        // Gemma may accuse, suspect, or bluff suspects at any time.
+        // The engine must NOT confirm guilt or resolve the case until reveal stage.
+        allowed_before_reveal: [
+          'suspect denial',
+          'emotional reaction (anger, fear, deflection, tears)',
+          'new clues surfacing from the confrontation',
+          'misdirection (suspect implicates someone else)',
+          'escalation (relationship tension increases)',
+          'bluff backfire (Gemma loses trust or leverage)',
+        ],
+        blocked_before_reveal: [
+          'narrative confirmation of guilt',
+          'declaration that the case is solved',
+          'irreversible resolution of the mystery',
+          'suspect confessing truthfully and fully',
+        ],
+        reveal_stage_threshold: 15, // minimum scenes before reveal stage can begin
+        engine_directive: 'Gemma may accuse, confront, or bluff any suspect at any time. '
+          + 'The narrative must respond with denial, deflection, emotional reaction, new clues, '
+          + 'misdirection, or escalation. The engine must NEVER confirm the culprit or resolve '
+          + 'the case until the investigation arc reaches the reveal stage. '
+          + 'Accusations are a tool of tension, not resolution.',
+      },
+      story_kernel: {
+        world: 'luxury cruise ship',
+        flavor: 'romantic mystery',
+        tone: 'observant, intimate',
+        genre: 'empathy detective',
+        protagonist: {
+          name: 'Gemma Path',
+          occupation: 'mentalist performer',
+          setting: 'international cruise ship',
+          public_perception: 'Passengers believe she can read minds.',
+          reality: 'She interprets emotional signals and behavior only.',
+          traits: [
+            'Hyper-empathic.',
+            'Reads microexpressions.',
+            'Detects emotional fractures.',
+            'Senses hesitation and suppressed intent.',
+            'Performs mentalism shows for passengers.',
+          ],
+          limits: [
+            'She is not psychic.',
+            'She cannot read thoughts.',
+            'She has no supernatural abilities.',
+            'She interprets observable emotional signals only.',
+          ]
+        },
+        relationship_reactions: [
+          { type: 'fascinated', behavior: 'asks Gemma to analyze him' },
+          { type: 'defensive', behavior: 'tests Gemma constantly' },
+          { type: 'seduced', behavior: 'feels seen for the first time' },
+          { type: 'threatened', behavior: 'conceals emotions aggressively' },
+          { type: 'addicted', behavior: 'cannot stop confessing' }
+        ],
+        narrative_rules: [
+          'Love interests respond with fascination, intimidation, defensiveness, obsession, or withdrawal.',
+          'Core tension: people are drawn to being understood but fear being fully seen.',
+          'Gemma may accuse, suspect, or bluff any character at any time.',
+          'Accusations must produce denial, deflection, emotional reaction, new clues, misdirection, or escalation.',
+          'The case must NOT be confirmed solved or the culprit revealed until the investigation reaches reveal stage.',
+          'The cruise ship is the recurring hub. Mysteries may occur aboard or at ports of call.',
+          'Gemma must NEVER literally read minds or possess supernatural abilities.',
+        ]
+      }
+    },
+    {
+      id: 'exp_good_reasons',
+      story_id: 'exp_good_reasons',
+      title: 'Good Reasons',
+      author: 'S. Tory Bound',
+      type: 'villain_pov',
+      fortune_cost_per_page: 1,
+      page_frequency_limit_hours: 24,
+      _isExperimental: true,
+      spine_blurb: 'Every terrible act begins with a reason that sounds perfectly fair.',
+      library_blurb: 'A love story told by the person who should never be trusted.',
+      mechanics: {
+        narrative_pov: 'villain',
+        tension_engine: 'moral_rationalization'
+      },
+      story_kernel: {
+        world: 'modern elite society',
+        flavor: 'villain POV romance',
+        tone: 'confessional',
+        genre: 'moral ambiguity',
+        protagonist: null,
+        narrative_rules: [
+          'The narrator believes their actions are justified.',
+          'Every wrongdoing must have a rational explanation.',
+          'Sympathy and discomfort should coexist.',
+          'Escalation is gradual.',
+          'The reader should occasionally agree with the villain.',
+          'Core tension: desire for love vs need for power.'
+        ]
+      }
+    },
+    {
+      id: 'exp_not_my_diary',
+      story_id: 'exp_not_my_diary',
+      title: 'Not My Diary',
+      author: 'S. Tory Bound',
+      type: 'unreliable_diary',
+      fortune_cost_per_page: 1,
+      page_frequency_limit_hours: 24,
+      consecutive_pages_allowed: false,
+      _isExperimental: true,
+      spine_blurb: 'Every entry tells the truth. None of them agree.',
+      library_blurb: 'A diary written by many hands. Each entry contradicts the one before it.',
+      mechanics: {
+        narrative_pov: 'unreliable_first_person',
+        tension_engine: 'contradiction_escalation'
+      },
+      diary_system: {
+        required: true,
+        description: 'Each entry must contradict something from the previous entry.',
+        contradiction_types: ['facts', 'emotions', 'timeline', 'identity'],
+        examples: [
+          'Yesterday I said I loved him. Today I remember hating him.',
+          'I told you Daniel died. He\u2019s sitting across from me now.',
+          'I wrote this yesterday. I don\u2019t remember yesterday.'
+        ]
+      },
+      story_kernel: {
+        world: 'modern',
+        flavor: 'psychological mystery',
+        tone: 'intimate, unstable',
+        genre: 'unreliable narrator',
+        protagonist: null,
+        narrative_rules: [
+          'Each diary entry contradicts something from the previous entry.',
+          'Contradictions may involve facts, emotions, identity, or timeline.',
+          'The narrator cannot be trusted.',
+          'Writers should escalate uncertainty rather than resolve it.'
+        ]
+      }
+    }
+  ];
+
+  // ── Experimental page-write guard (PURE VALIDATION — no side effects) ──
+  // Returns { allowed: true } or { allowed: false, reason: string }
+  // Must NOT: deduct fortunes, update timestamps, write to storage, trigger UI.
+  function canUserWriteExperimentalPage(bookId) {
+    const book = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === bookId);
+    if (!book) return { allowed: false, reason: 'Unknown experimental book.' };
+
+    // Fortune check (read-only)
+    if ((state.fortunes || 0) < book.fortune_cost_per_page) {
+      return { allowed: false, reason: 'You need at least 1 Fortune to write a page.' };
+    }
+
+    // 24-hour cooldown (read-only)
+    const lastWrite = localStorage.getItem(`experimental_last_write_${bookId}_${_supabaseProfileId}`);
+    if (lastWrite) {
+      const elapsed = Date.now() - parseInt(lastWrite, 10);
+      const limitMs = book.page_frequency_limit_hours * 60 * 60 * 1000;
+      if (elapsed < limitMs) {
+        const hoursLeft = Math.ceil((limitMs - elapsed) / (60 * 60 * 1000));
+        return { allowed: false, reason: `You may write another page in ${hoursLeft}h.` };
+      }
+    }
+
+    // Consecutive-page check (read-only — Exquisite Corpse only)
+    if (book.consecutive_pages_allowed === false) {
+      const lastAuthor = localStorage.getItem(`experimental_last_author_${bookId}`);
+      if (lastAuthor === _supabaseProfileId) {
+        return { allowed: false, reason: 'Someone else must write the next page first.' };
+      }
+    }
+
+    return { allowed: true };
+  }
+  window.canUserWriteExperimentalPage = canUserWriteExperimentalPage;
+
+  // ── Record experimental contribution (cooldown + authorship) ──
+  // Abstracted for future Supabase migration (table: experimental_contributions).
+  // Current impl: localStorage only. Swap internals when backend table exists.
+  function recordExperimentalContribution(bookId) {
+    localStorage.setItem(`experimental_last_write_${bookId}_${_supabaseProfileId}`, Date.now());
+    if (_supabaseProfileId) {
+      localStorage.setItem(`experimental_last_author_${bookId}`, _supabaseProfileId);
+    }
+  }
+  window.recordExperimentalContribution = recordExperimentalContribution;
+
+  // ── Gemma Path Clue System ──
+  // Lightweight heuristic to detect emotional micro-observations in contributed text.
+  // Does NOT trigger story engine, Fate Cards, or ST system. Guidance only.
+
+  // Internal clue log — tracks detected clues across pages for narrative continuity.
+  // Not visible to users. Persisted in localStorage per book.
+  const _gemmaClueLog = JSON.parse(localStorage.getItem('gemma_clue_log') || '[]');
+
+  function _persistGemmaClueLog() {
+    localStorage.setItem('gemma_clue_log', JSON.stringify(_gemmaClueLog));
+  }
+
+  // Keyword/phrase patterns that indicate an emotional micro-observation
+  const GEMMA_CLUE_INDICATORS = [
+    /\bpaus(?:e[ds]?|ing)\b/i,
+    /\bhesitat(?:e[ds]?|ion|ing)\b/i,
+    /\btighten(?:s|ed|ing)?\b/i,
+    /\bclench(?:es|ed|ing)?\b/i,
+    /\bbreath(?:e[ds]?|ing)\b/i,
+    /\bexhal(?:e[ds]?|ing)\b/i,
+    /\bswall?ow(?:s|ed|ing)?\b/i,
+    /\bflinch(?:es|ed|ing)?\b/i,
+    /\bfad(?:e[ds]?|ing)\b.*smile/i,
+    /smile[ds]?.*\bfad/i,
+    /\beyes?\b.*\b(?:flat|empty|cold|hard|narrow|dart|flick|avoid|drop|shift)/i,
+    /\b(?:flat|empty|cold|hard)\b.*\beyes?\b/i,
+    /\bdelay(?:s|ed|ing)?\b/i,
+    /too\s+(?:long|quick|slow|fast|brief)/i,
+    /half\s+a\s+second/i,
+    /micro[\s-]?expression/i,
+    /\bjaw\b.*\b(?:set|tight|clench)/i,
+    /\bfingers?\b.*\b(?:drum|tap|curl|grip|tighten|tremble)/i,
+    /\bvoice\b.*\b(?:crack|waver|drop|flat|strain|tight|change)/i,
+    /\b(?:crack|waver|drop|strain)\b.*\bvoice\b/i,
+    /\bshould(?:er|ers)\b.*\b(?:tense|drop|stiffen|rise)/i,
+    /\bglanc(?:e[ds]?|ing)\b.*\baway\b/i,
+    /\blook(?:s|ed)?\s+away\b/i,
+    /\bstill(?:ness|s)?\b.*\bface\b/i,
+    /\bforced?\b.*\b(?:smile|laugh|calm)/i,
+  ];
+
+  // Returns { detected: true, match: string } or { detected: false }
+  function detectGemmaClue(text) {
+    if (!text) return { detected: false };
+    for (const pattern of GEMMA_CLUE_INDICATORS) {
+      const m = text.match(pattern);
+      if (m) return { detected: true, match: m[0] };
+    }
+    return { detected: false };
+  }
+  window.detectGemmaClue = detectGemmaClue;
+
+  // Call before Gemma's Path page submission. Returns true if OK to proceed.
+  // Shows soft warning if no clue detected — does NOT block submission.
+  function validateGemmaPageClue(text, pageIndex) {
+    const result = detectGemmaClue(text);
+    if (result.detected) {
+      // Append to internal clue log
+      _gemmaClueLog.push({ pageIndex, clue: result.match });
+      _persistGemmaClueLog();
+    } else {
+      showToast("Remember: each page should include an emotional clue Gemma notices.");
+    }
+    return true; // never blocks — soft warning only
+  }
+  window.validateGemmaPageClue = validateGemmaPageClue;
+
+  // ── Gemma Accusation Guardrail ──
+  // Gemma may accuse, suspect, or bluff suspects at any time.
+  // The ENGINE must not resolve the case before the reveal stage.
+  // This layer detects premature resolution in engine-generated output
+  // and rewrites it to an allowed outcome. User input is never blocked.
+
+  // Patterns that indicate premature case resolution (engine output only)
+  const _RESOLUTION_INDICATORS = [
+    /\bcase\s+(?:is\s+)?(?:solved|closed|resolved|over)\b/i,
+    /\bguilty\b.*\bconfirmed\b/i,
+    /\bconfirmed\b.*\bguilty\b/i,
+    /\bthe\s+(?:killer|murderer|culprit)\s+(?:is|was)\s+\w+/i,
+    /\byou(?:'re|\s+are)\s+(?:the\s+)?(?:killer|murderer|culprit)\b/i,
+    /\bI\s+(?:know\s+)?(?:you\s+)?did\s+it\b.*\btrue\b/i,
+    /\bconfess(?:es|ed|ion)\b.*\btruth\b/i,
+    /\bmystery\s+(?:is\s+)?(?:solved|resolved|over)\b/i,
+    /\bthe\s+truth\s+(?:is|was)\s+finally\s+(?:out|revealed|known)\b/i,
+  ];
+
+  // Allowed replacement outcomes for premature resolution attempts
+  const _ACCUSATION_DEFLECTIONS = [
+    'The accusation hung in the air. The suspect\u2019s expression flickered\u2014but gave nothing away.',
+    'A silence followed. Then a slow, measured denial that felt rehearsed.',
+    'Something shifted in the room. Not a confession\u2014something worse. A new question.',
+    'The suspect laughed, but the sound was hollow. "You\u2019re wrong," they said. Gemma wasn\u2019t sure.',
+    'Instead of an answer, a deflection: "Ask yourself why you\u2019re really here."',
+    'The confrontation didn\u2019t break the case open. It broke something else\u2014trust, maybe.',
+  ];
+
+  // Check if the investigation has reached reveal stage.
+  // Uses Case Lifecycle stage when available, falls back to scene-count threshold.
+  function isGemmaRevealStage(bookId) {
+    if (bookId !== 'exp_gemmas_path') return false;
+    // Prefer Case Lifecycle stage (canonical source)
+    if (typeof isCaseAtRevealStage === 'function') {
+      return isCaseAtRevealStage();
+    }
+    // Fallback: raw scene count (for backwards compat if case state is missing)
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst) return false;
+    const gemmaDef = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === 'exp_gemmas_path');
+    const threshold = gemmaDef?.accusation_guardrail?.reveal_stage_threshold || 15;
+    return inst.totalScenes >= threshold;
+  }
+  window.isGemmaRevealStage = isGemmaRevealStage;
+
+  // Scan engine-generated output for premature resolution. If found, replace with deflection.
+  // Only applies to Gemma's Path, only before reveal stage.
+  // User input is NEVER filtered by this — only engine output.
+  function filterGemmaResolution(engineOutput, bookId) {
+    if (bookId !== 'exp_gemmas_path') return engineOutput;
+    if (isGemmaRevealStage(bookId)) return engineOutput; // reveal stage — resolution allowed
+
+    let filtered = engineOutput;
+    for (const pattern of _RESOLUTION_INDICATORS) {
+      if (pattern.test(filtered)) {
+        // Replace the resolution sentence with a deflection
+        const deflection = _ACCUSATION_DEFLECTIONS[Math.floor(Math.random() * _ACCUSATION_DEFLECTIONS.length)];
+        filtered = filtered.replace(pattern, deflection);
+      }
+    }
+    return filtered;
+  }
+  window.filterGemmaResolution = filterGemmaResolution;
+
+  // Build the engine prompt directive for accusation handling.
+  // Injected into the story engine context for Gemma's Path scenes.
+  function getGemmaAccusationDirective(bookId) {
+    if (bookId !== 'exp_gemmas_path') return '';
+    const gemmaDef = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === 'exp_gemmas_path');
+    if (!gemmaDef?.accusation_guardrail) return '';
+
+    const guardrail = gemmaDef.accusation_guardrail;
+    const atReveal = isGemmaRevealStage(bookId);
+
+    if (atReveal) {
+      return 'INVESTIGATION STATUS: Reveal stage reached. Resolution is now permitted. '
+        + 'The culprit may be unmasked. Confessions may be truthful.';
+    }
+
+    return guardrail.engine_directive
+      + '\n\nALLOWED OUTCOMES of accusations: '
+      + guardrail.allowed_before_reveal.join('; ') + '.'
+      + '\n\nBLOCKED OUTCOMES (until reveal stage): '
+      + guardrail.blocked_before_reveal.join('; ') + '.';
+  }
+  window.getGemmaAccusationDirective = getGemmaAccusationDirective;
+
+  // ── Gemma Suspect Ledger — internal, not visible to users ──
+  // Prevents uncontrolled suspect proliferation in the shared story.
+  // Max 5 active suspects. Engine should reuse existing suspects when cap is reached.
+  // Does NOT activate story engine, Fate Cards, or Storyturns.
+
+  const _suspectLedgerKey = 'gemma_suspect_ledger';
+  const GEMMA_MAX_SUSPECTS = 5;
+
+  function getSuspectLedger() {
+    return JSON.parse(localStorage.getItem(_suspectLedgerKey) || '[]');
+  }
+
+  function _persistSuspectLedger(ledger) {
+    localStorage.setItem(_suspectLedgerKey, JSON.stringify(ledger));
+  }
+
+  // Add or update a suspect. If at max active suspects, returns rejection advice.
+  // Returns { added: true, suspect } or { added: false, reason, reuseCandidates }.
+  function registerSuspect(name, sceneIndex) {
+    const ledger = getSuspectLedger();
+    const normalized = name.trim().toLowerCase();
+
+    // Check if suspect already exists
+    const existing = ledger.find(s => s.name.toLowerCase() === normalized);
+    if (existing) {
+      // Reintroduce: update scene presence, keep suspicion level
+      existing.lastSeenScene = sceneIndex;
+      if (existing.status === 'cleared') existing.status = 'active'; // re-activate if cleared
+      _persistSuspectLedger(ledger);
+      return { added: true, suspect: existing };
+    }
+
+    // Check active suspect cap
+    const activeSuspects = ledger.filter(s => s.status === 'active');
+    if (activeSuspects.length >= GEMMA_MAX_SUSPECTS) {
+      // Suggest reuse — return candidates sorted by lowest suspicion
+      const reuse = activeSuspects
+        .slice()
+        .sort((a, b) => a.suspicionLevel - b.suspicionLevel)
+        .map(s => s.name);
+      return {
+        added: false,
+        reason: `Maximum suspects reached (${GEMMA_MAX_SUSPECTS}). Reuse an existing suspect.`,
+        reuseCandidates: reuse
+      };
+    }
+
+    // Add new suspect
+    const suspect = {
+      name: name.trim(),
+      introducedScene: sceneIndex,
+      lastSeenScene: sceneIndex,
+      suspicionLevel: 1, // 0-5 scale
+      status: 'active'   // 'active' | 'cleared' | 'misdirect'
+    };
+    ledger.push(suspect);
+    _persistSuspectLedger(ledger);
+    return { added: true, suspect };
+  }
+  window.registerSuspect = registerSuspect;
+
+  // Adjust suspicion level for a suspect (+/- delta, clamped 0-5)
+  function adjustSuspicion(name, delta) {
+    const ledger = getSuspectLedger();
+    const suspect = ledger.find(s => s.name.toLowerCase() === name.trim().toLowerCase());
+    if (!suspect) return null;
+    suspect.suspicionLevel = Math.max(0, Math.min(5, suspect.suspicionLevel + delta));
+    _persistSuspectLedger(ledger);
+    return suspect;
+  }
+  window.adjustSuspicion = adjustSuspicion;
+
+  // Mark a suspect as cleared or misdirect
+  function setSuspectStatus(name, status) {
+    if (!['active', 'cleared', 'misdirect'].includes(status)) return null;
+    const ledger = getSuspectLedger();
+    const suspect = ledger.find(s => s.name.toLowerCase() === name.trim().toLowerCase());
+    if (!suspect) return null;
+
+    // Block premature guilt confirmation before reveal stage
+    if (status === 'confirmed_guilty') {
+      if (!isGemmaRevealStage('exp_gemmas_path')) {
+        return null; // silently refuse — no guilt confirmation before reveal
+      }
+    }
+
+    suspect.status = status;
+    _persistSuspectLedger(ledger);
+    return suspect;
+  }
+  window.setSuspectStatus = setSuspectStatus;
+
+  // Get suspects who haven't appeared in recent scenes (absent ≥ gap scenes)
+  function getAbsentSuspects(currentScene, gap) {
+    if (typeof gap !== 'number') gap = 3;
+    const ledger = getSuspectLedger();
+    return ledger.filter(s =>
+      s.status === 'active' && (currentScene - (s.lastSeenScene || s.introducedScene)) >= gap
+    );
+  }
+  window.getAbsentSuspects = getAbsentSuspects;
+
+  // Build engine directive for suspect management
+  function getSuspectLedgerDirective() {
+    const ledger = getSuspectLedger();
+    if (ledger.length === 0) return '';
+
+    const active = ledger.filter(s => s.status === 'active');
+    const cleared = ledger.filter(s => s.status === 'cleared');
+    const misdirects = ledger.filter(s => s.status === 'misdirect');
+
+    let directive = 'SUSPECT LEDGER (internal — do not reveal to characters):\n';
+    if (active.length) {
+      directive += 'Active suspects: '
+        + active.map(s => `${s.name} (suspicion: ${s.suspicionLevel}/5, introduced scene ${s.introducedScene})`).join('; ')
+        + '.\n';
+    }
+    if (cleared.length) {
+      directive += 'Cleared: ' + cleared.map(s => s.name).join(', ') + '.\n';
+    }
+    if (misdirects.length) {
+      directive += 'Misdirects: ' + misdirects.map(s => s.name).join(', ') + '.\n';
+    }
+    if (active.length >= GEMMA_MAX_SUSPECTS) {
+      directive += `LIMIT: ${GEMMA_MAX_SUSPECTS} active suspects reached. Do NOT introduce new suspects. `
+        + 'Reuse or clear existing suspects instead.\n';
+    }
+    return directive;
+  }
+  window.getSuspectLedgerDirective = getSuspectLedgerDirective;
+
+  // ── Gemma Clue Ledger — internal, not visible to users ──
+  // Tracks structured clues and their suspect ties for satisfying reveals.
+  // Separate from _gemmaClueLog (which tracks raw detected micro-observations).
+
+  const _clueLedgerKey = 'gemma_clue_ledger';
+
+  function getClueLedger() {
+    return JSON.parse(localStorage.getItem(_clueLedgerKey) || '[]');
+  }
+
+  function _persistClueLedger(ledger) {
+    localStorage.setItem(_clueLedgerKey, JSON.stringify(ledger));
+  }
+
+  // Register a structured clue with optional suspect ties
+  function registerClue(clueText, sceneIndex, tiedSuspects) {
+    const ledger = getClueLedger();
+    const normalized = clueText.trim().toLowerCase();
+
+    // Deduplicate — don't add clues with identical text
+    if (ledger.some(c => c.clue.toLowerCase() === normalized)) {
+      // Update suspect ties if new ones provided
+      const existing = ledger.find(c => c.clue.toLowerCase() === normalized);
+      if (tiedSuspects && tiedSuspects.length) {
+        const newTies = tiedSuspects.filter(s => !existing.tiedSuspects.includes(s));
+        existing.tiedSuspects.push(...newTies);
+        _persistClueLedger(ledger);
+      }
+      return existing;
+    }
+
+    const entry = {
+      clue: clueText.trim(),
+      introducedScene: sceneIndex,
+      tiedSuspects: Array.isArray(tiedSuspects) ? [...tiedSuspects] : [],
+      resolved: false // set to true when clue is connected to a reveal
+    };
+    ledger.push(entry);
+    _persistClueLedger(ledger);
+    return entry;
+  }
+  window.registerClue = registerClue;
+
+  // Tie an existing clue to a suspect (engine reconnects clues during investigation)
+  function tieClueToSuspect(clueText, suspectName) {
+    const ledger = getClueLedger();
+    const entry = ledger.find(c => c.clue.toLowerCase() === clueText.trim().toLowerCase());
+    if (!entry) return null;
+    if (!entry.tiedSuspects.includes(suspectName)) {
+      entry.tiedSuspects.push(suspectName);
+      _persistClueLedger(ledger);
+    }
+    return entry;
+  }
+  window.tieClueToSuspect = tieClueToSuspect;
+
+  // Mark a clue as resolved (used during reveal stage)
+  function resolveClue(clueText) {
+    const ledger = getClueLedger();
+    const entry = ledger.find(c => c.clue.toLowerCase() === clueText.trim().toLowerCase());
+    if (!entry) return null;
+    entry.resolved = true;
+    _persistClueLedger(ledger);
+    return entry;
+  }
+  window.resolveClue = resolveClue;
+
+  // Get unresolved clues tied to a specific suspect
+  function getCluesForSuspect(suspectName) {
+    const ledger = getClueLedger();
+    return ledger.filter(c => !c.resolved && c.tiedSuspects.includes(suspectName));
+  }
+  window.getCluesForSuspect = getCluesForSuspect;
+
+  // Get all untied clues (no suspect connection yet — available for engine to reconnect)
+  function getUntiedClues() {
+    const ledger = getClueLedger();
+    return ledger.filter(c => !c.resolved && c.tiedSuspects.length === 0);
+  }
+  window.getUntiedClues = getUntiedClues;
+
+  // Build engine directive for clue ledger
+  function getClueLedgerDirective() {
+    const ledger = getClueLedger();
+    if (ledger.length === 0) return '';
+
+    const unresolved = ledger.filter(c => !c.resolved);
+    const untied = unresolved.filter(c => c.tiedSuspects.length === 0);
+    const tied = unresolved.filter(c => c.tiedSuspects.length > 0);
+
+    let directive = 'CLUE LEDGER (internal — for narrative continuity):\n';
+    if (tied.length) {
+      directive += 'Clues tied to suspects:\n';
+      tied.forEach(c => {
+        directive += `  \u2022 "${c.clue}" (scene ${c.introducedScene}) \u2192 ${c.tiedSuspects.join(', ')}\n`;
+      });
+    }
+    if (untied.length) {
+      directive += 'Untied clues (available to reconnect):\n';
+      untied.forEach(c => {
+        directive += `  \u2022 "${c.clue}" (scene ${c.introducedScene})\n`;
+      });
+    }
+    directive += 'The engine may reconnect untied clues to suspects to create satisfying reveals.\n';
+    return directive;
+  }
+  window.getClueLedgerDirective = getClueLedgerDirective;
+
+  // ── Gemma Empathy Vector — internal behavioral signal tracking ──
+  // Tracks emotional leakage signals per character so Gemma's investigation
+  // relies on observable behavior, not mind-reading.
+  // Each character has 4 axes: attraction, fear, guilt, defensiveness (0-10 scale).
+  // Internal only — never shown to users.
+  // Does NOT activate story engine, Fate Cards, or Storyturns.
+
+  const _empathyVectorKey = 'gemma_empathy_vector';
+
+  function getEmpathyVector() {
+    return JSON.parse(localStorage.getItem(_empathyVectorKey) || '{}');
+  }
+
+  function _persistEmpathyVector(vec) {
+    localStorage.setItem(_empathyVectorKey, JSON.stringify(vec));
+  }
+
+  // Initialize or get a character's empathy profile
+  function getCharacterEmpathy(characterName) {
+    const vec = getEmpathyVector();
+    const key = characterName.trim();
+    if (!vec[key]) {
+      vec[key] = { attraction: 0, fear: 0, guilt: 0, defensiveness: 0 };
+      _persistEmpathyVector(vec);
+    }
+    return vec[key];
+  }
+  window.getCharacterEmpathy = getCharacterEmpathy;
+
+  // Update one or more axes for a character. Values clamped 0-10.
+  // deltas = { attraction: +2, guilt: -1, ... } — only specified axes change.
+  function adjustEmpathy(characterName, deltas) {
+    const vec = getEmpathyVector();
+    const key = characterName.trim();
+    if (!vec[key]) vec[key] = { attraction: 0, fear: 0, guilt: 0, defensiveness: 0 };
+    for (const [axis, delta] of Object.entries(deltas)) {
+      if (axis in vec[key]) {
+        vec[key][axis] = Math.max(0, Math.min(10, vec[key][axis] + delta));
+      }
+    }
+    _persistEmpathyVector(vec);
+    return vec[key];
+  }
+  window.adjustEmpathy = adjustEmpathy;
+
+  // Set a character's empathy profile directly (for engine-driven resets or scene recalibration)
+  function setEmpathy(characterName, profile) {
+    const vec = getEmpathyVector();
+    const key = characterName.trim();
+    vec[key] = {
+      attraction: Math.max(0, Math.min(10, profile.attraction || 0)),
+      fear: Math.max(0, Math.min(10, profile.fear || 0)),
+      guilt: Math.max(0, Math.min(10, profile.guilt || 0)),
+      defensiveness: Math.max(0, Math.min(10, profile.defensiveness || 0)),
+    };
+    _persistEmpathyVector(vec);
+    return vec[key];
+  }
+  window.setEmpathy = setEmpathy;
+
+  // Remove a character from the empathy vector (e.g., on case reset)
+  function removeEmpathy(characterName) {
+    const vec = getEmpathyVector();
+    delete vec[characterName.trim()];
+    _persistEmpathyVector(vec);
+  }
+  window.removeEmpathy = removeEmpathy;
+
+  // Clear entire empathy vector (case reset)
+  function resetEmpathyVector() {
+    localStorage.setItem(_empathyVectorKey, '{}');
+  }
+  window.resetEmpathyVector = resetEmpathyVector;
+
+  // Build engine directive — describes emotional profiles and behavioral output rules
+  function getEmpathyVectorDirective() {
+    const vec = getEmpathyVector();
+    const names = Object.keys(vec);
+    if (names.length === 0) return '';
+
+    let directive = 'EMPATHY VECTOR (internal — Gemma observes behavior, never reads minds):\n';
+    directive += 'Describe emotional leakage through: pauses, posture shifts, voice changes, '
+      + 'eye movement, breathing changes, micro-expressions. Never narrate internal thoughts.\n';
+
+    for (const name of names) {
+      const p = vec[name];
+      const signals = [];
+      if (p.attraction > 3) signals.push(`attraction ${p.attraction}/10`);
+      if (p.fear > 3) signals.push(`fear ${p.fear}/10`);
+      if (p.guilt > 3) signals.push(`guilt ${p.guilt}/10`);
+      if (p.defensiveness > 3) signals.push(`defensiveness ${p.defensiveness}/10`);
+      if (signals.length) {
+        directive += `  ${name}: ${signals.join(', ')}\n`;
+      } else {
+        directive += `  ${name}: emotionally neutral\n`;
+      }
+    }
+    directive += 'Use these values to calibrate observable behavioral cues. '
+      + 'High values = more noticeable leakage. Low values = well-concealed.\n';
+    return directive;
+  }
+  window.getEmpathyVectorDirective = getEmpathyVectorDirective;
+
+  // ── Gemma Case Lifecycle — multi-case story management ──
+  // Allows the shared Gemma's Path story to run indefinitely with contained mystery arcs.
+  // Each case has 4 stages: investigation → escalation → reveal → aftermath.
+  // After aftermath, all case-scoped data resets and a new case begins.
+  // Stage transitions are engine-controlled, not user-controlled.
+  // Does NOT activate Fate Cards, Storyturns, or change fortune/cooldown logic.
+
+  const _caseStateKey = 'gemma_case_state';
+
+  const GEMMA_CASE_STAGES = ['investigation', 'escalation', 'reveal', 'aftermath'];
+
+  function getGemmaCaseState() {
+    const raw = localStorage.getItem(_caseStateKey);
+    if (raw) return JSON.parse(raw);
+
+    // Initialize first case
+    const initial = {
+      caseId: 1,
+      stage: 'investigation',
+      stageStartScene: 1,
+      caseSuspectLedger: [],   // case-scoped copy (resets between cases)
+      caseClueLedger: [],      // case-scoped copy
+      caseEmpathyVector: {},   // case-scoped copy
+      caseHistory: [],         // completed cases: [{ caseId, resolvedAt, culprit }]
+    };
+    localStorage.setItem(_caseStateKey, JSON.stringify(initial));
+    return initial;
+  }
+
+  function _persistCaseState(cs) {
+    localStorage.setItem(_caseStateKey, JSON.stringify(cs));
+  }
+
+  // Get the current case stage
+  function getCurrentCaseStage() {
+    return getGemmaCaseState().stage;
+  }
+  window.getCurrentCaseStage = getCurrentCaseStage;
+
+  // Advance to the next case stage (engine-controlled only).
+  // Returns the new stage or null if already at 'aftermath'.
+  // After 'aftermath', call beginNewCase() to start a new mystery.
+  function advanceCaseStage() {
+    const cs = getGemmaCaseState();
+    const idx = GEMMA_CASE_STAGES.indexOf(cs.stage);
+    if (idx < 0 || idx >= GEMMA_CASE_STAGES.length - 1) return null; // at aftermath or invalid
+
+    const inst = getSharedStoryInstance('exp_gemmas_path');
+    cs.stage = GEMMA_CASE_STAGES[idx + 1];
+    cs.stageStartScene = inst ? inst.currentScene : cs.stageStartScene;
+    _persistCaseState(cs);
+    return cs.stage;
+  }
+  window.advanceCaseStage = advanceCaseStage;
+
+  // Begin a new case — resets suspect ledger, clue ledger, empathy vector.
+  // Called after 'aftermath' stage concludes.
+  function beginNewCase(culpritName) {
+    const cs = getGemmaCaseState();
+
+    // Archive the completed case
+    cs.caseHistory.push({
+      caseId: cs.caseId,
+      resolvedAt: Date.now(),
+      culprit: culpritName || 'unknown',
+    });
+
+    // Reset case-scoped data
+    cs.caseId++;
+    cs.stage = 'investigation';
+    const inst = getSharedStoryInstance('exp_gemmas_path');
+    cs.stageStartScene = inst ? inst.currentScene : 1;
+    cs.caseSuspectLedger = [];
+    cs.caseClueLedger = [];
+    cs.caseEmpathyVector = {};
+    _persistCaseState(cs);
+
+    // Also reset the global ledgers/vector so they start fresh for the new case
+    _persistSuspectLedger([]);
+    _persistClueLedger([]);
+    resetEmpathyVector();
+
+    // Rotate passengers — archive current manifest, board new passengers
+    rotatePassengers();
+
+    // Resolve and reset romantic arc
+    const rs = getRomanticState();
+    if (rs.currentRomantic && !rs.currentRomantic.outcome) {
+      resolveRomanticArc('attraction_interrupted'); // auto-close unresolved arcs
+    }
+    resetRomanticState();
+
+    // Reset secret attraction — new case will initialize a fresh hidden target
+    resetSecretAttraction();
+
+    return cs;
+  }
+  window.beginNewCase = beginNewCase;
+
+  // Check if current case is at or past reveal stage (replaces raw scene-count check)
+  // This is now the canonical reveal-stage check used by accusation guardrail.
+  function isCaseAtRevealStage() {
+    const cs = getGemmaCaseState();
+    const stageIdx = GEMMA_CASE_STAGES.indexOf(cs.stage);
+    return stageIdx >= 2; // 'reveal' (2) or 'aftermath' (3)
+  }
+  window.isCaseAtRevealStage = isCaseAtRevealStage;
+
+  // Build engine directive for case lifecycle — injected into story engine context
+  function getCaseLifecycleDirective() {
+    const cs = getGemmaCaseState();
+    const inst = getSharedStoryInstance('exp_gemmas_path');
+    const currentScene = inst ? inst.currentScene : 1;
+    const scenesInStage = currentScene - (cs.stageStartScene || 1);
+
+    let directive = `CASE LIFECYCLE (Case #${cs.caseId}):\n`;
+    directive += `Current stage: ${cs.stage.toUpperCase()}\n`;
+    directive += `Scenes in this stage: ${scenesInStage}\n`;
+
+    switch (cs.stage) {
+      case 'investigation':
+        directive += 'RULES: Introduce suspects and emotional clues. '
+          + 'Build the mystery foundation. Do not resolve.\n';
+        break;
+      case 'escalation':
+        directive += 'RULES: Increase tension and contradictions. '
+          + 'Clues should conflict. Suspects should behave erratically. '
+          + 'Gemma should feel the pressure. Do not resolve yet.\n';
+        break;
+      case 'reveal':
+        directive += 'RULES: Resolution is now permitted. '
+          + 'Reconnect earlier clues to suspects. '
+          + 'The culprit may be unmasked. Confessions may be truthful. '
+          + 'Use clues from the CLUE LEDGER for satisfying payoff.\n';
+        break;
+      case 'aftermath':
+        directive += 'RULES: Show emotional consequences and relationship shifts. '
+          + 'The case is resolved. Focus on character reactions, '
+          + 'Gemma\'s emotional toll, and the fallout. '
+          + 'When this stage concludes, a new case will begin.\n';
+        break;
+    }
+
+    if (cs.caseHistory.length > 0) {
+      directive += `Previous cases solved: ${cs.caseHistory.length}\n`;
+    }
+
+    // Stage transitions: only the engine should call advanceCaseStage().
+    // Suggested thresholds (advisory, not enforced):
+    directive += 'Stage transition suggestions (engine-controlled):\n';
+    directive += '  investigation → escalation: after ~5 scenes or when 3+ suspects are active\n';
+    directive += '  escalation → reveal: after ~4 scenes or when contradictions peak\n';
+    directive += '  reveal → aftermath: when culprit is identified and confronted\n';
+    directive += '  aftermath → new case: after ~2 scenes of emotional resolution\n';
+
+    return directive;
+  }
+  window.getCaseLifecycleDirective = getCaseLifecycleDirective;
+
+  // ── Passenger Rotation System — crew + passenger manifest management ──
+  // crewLedger: persistent cast across cases (rarely suspects).
+  // passengerManifest: 8-12 active passengers per case (primary suspect pool).
+  // departedPassengers: archived passengers from previous cases.
+  // On case reset, passengers rotate; crew persist.
+
+  const _passengerStateKey = 'gemma_passenger_state';
+
+  const GEMMA_CREW_TEMPLATES = [
+    { name: 'Captain Aldric Voss', role: 'ship captain', persistent: true, suspectWeight: 0.1 },
+    { name: 'Dr. Lena Osei', role: 'ship physician', persistent: true, suspectWeight: 0.15 },
+    { name: 'Marta Fiore', role: 'head bartender', persistent: true, suspectWeight: 0.2 },
+    { name: 'Declan Holt', role: 'chief of security', persistent: true, suspectWeight: 0.15 },
+    { name: 'Yuki Tanabe', role: 'cruise director', persistent: true, suspectWeight: 0.1 },
+    { name: 'Henri Beaumont', role: 'head chef', persistent: true, suspectWeight: 0.2 },
+  ];
+
+  const GEMMA_PASSENGER_NAME_POOL = [
+    'Simone Avery', 'Marcus Hale', 'Priya Chandran', 'Tobias Lund',
+    'Nadira Khoury', 'Elliot Crane', 'Lucia Ferreira', 'Oscar Whitfield',
+    'Zara Okonkwo', 'Jasper Moreau', 'Celeste Huang', 'Rafe Delgado',
+    'Ingrid Solberg', 'Dominic Varga', 'Amara Diallo', 'Callum Bright',
+    'Eleni Papadakis', 'Nolan Ashworth', 'Sarita Mehta', 'Felix Lindqvist',
+    'Margaux Dubois', 'Idris Kamara', 'Tessa Fairholm', 'Kai Nakamura',
+  ];
+
+  function getPassengerState() {
+    const raw = localStorage.getItem(_passengerStateKey);
+    if (raw) return JSON.parse(raw);
+
+    // Initialize with crew + first passenger manifest
+    const initial = {
+      crewLedger: GEMMA_CREW_TEMPLATES.map(c => ({
+        name: c.name,
+        role: c.role,
+        persistent: true,
+        suspectWeight: c.suspectWeight,
+        casesPresent: 0,
+      })),
+      passengerManifest: _generatePassengerManifest([]),
+      departedPassengers: [],
+    };
+    localStorage.setItem(_passengerStateKey, JSON.stringify(initial));
+    return initial;
+  }
+
+  function _persistPassengerState(ps) {
+    localStorage.setItem(_passengerStateKey, JSON.stringify(ps));
+  }
+
+  // Generate 8-12 new passengers, avoiding names already used (departed or current)
+  function _generatePassengerManifest(excludeNames) {
+    const count = 8 + Math.floor(Math.random() * 5); // 8-12
+    const available = GEMMA_PASSENGER_NAME_POOL.filter(n => !excludeNames.includes(n));
+    // Shuffle available names
+    const shuffled = available.slice().sort(() => Math.random() - 0.5);
+    const manifest = [];
+    for (let i = 0; i < Math.min(count, shuffled.length); i++) {
+      manifest.push({
+        name: shuffled[i],
+        boardedAtCase: getGemmaCaseState().caseId,
+        isSuspect: false,
+        notes: '',
+      });
+    }
+    return manifest;
+  }
+
+  // Mark a passenger as a suspect (for engine directive context)
+  function markPassengerAsSuspect(name) {
+    const ps = getPassengerState();
+    const p = ps.passengerManifest.find(m => m.name === name);
+    if (p) {
+      p.isSuspect = true;
+      _persistPassengerState(ps);
+    }
+  }
+  window.markPassengerAsSuspect = markPassengerAsSuspect;
+
+  // Add a note to a crew member or passenger
+  function addCharacterNote(name, note) {
+    const ps = getPassengerState();
+    const char = ps.crewLedger.find(c => c.name === name)
+      || ps.passengerManifest.find(m => m.name === name);
+    if (char) {
+      char.notes = (char.notes ? char.notes + '; ' : '') + note;
+      _persistPassengerState(ps);
+    }
+  }
+  window.addCharacterNote = addCharacterNote;
+
+  // Rotate passengers on case reset — move current manifest to departed, generate new manifest
+  function rotatePassengers() {
+    const ps = getPassengerState();
+
+    // Archive current passengers
+    for (const p of ps.passengerManifest) {
+      ps.departedPassengers.push({
+        name: p.name,
+        boardedAtCase: p.boardedAtCase,
+        departedAtCase: getGemmaCaseState().caseId,
+        wasSuspect: p.isSuspect,
+      });
+    }
+
+    // Increment crew case presence counter
+    for (const c of ps.crewLedger) {
+      c.casesPresent++;
+    }
+
+    // Generate new manifest, excluding departed names to avoid recycling too soon
+    const excludeNames = ps.departedPassengers.map(d => d.name);
+    ps.passengerManifest = _generatePassengerManifest(excludeNames);
+
+    _persistPassengerState(ps);
+    return ps;
+  }
+  window.rotatePassengers = rotatePassengers;
+
+  // Get all active characters (crew + passengers) for engine context
+  function getActiveCharacters() {
+    const ps = getPassengerState();
+    return {
+      crew: ps.crewLedger,
+      passengers: ps.passengerManifest,
+      departedCount: ps.departedPassengers.length,
+    };
+  }
+  window.getActiveCharacters = getActiveCharacters;
+
+  // Engine directive — describes available characters for scene generation
+  function getPassengerManifestDirective() {
+    const ps = getPassengerState();
+    let directive = 'PASSENGER MANIFEST (active characters aboard the ship):\n';
+
+    directive += 'CREW (persistent across cases — rarely suspects):\n';
+    for (const c of ps.crewLedger) {
+      directive += `  ${c.name} — ${c.role}`;
+      if (c.notes) directive += ` [${c.notes}]`;
+      directive += '\n';
+    }
+
+    directive += `PASSENGERS (${ps.passengerManifest.length} aboard — primary suspect pool):\n`;
+    for (const p of ps.passengerManifest) {
+      directive += `  ${p.name}`;
+      if (p.isSuspect) directive += ' [SUSPECT]';
+      if (p.notes) directive += ` [${p.notes}]`;
+      directive += '\n';
+    }
+
+    directive += 'RULES:\n';
+    directive += '  - New suspects should primarily come from the passenger manifest.\n';
+    directive += '  - Crew members may appear frequently in scenes but are rarely suspects.\n';
+    directive += '  - Use passenger names consistently. Do not invent unnamed passengers when named ones are available.\n';
+    directive += '  - When introducing a new suspect, pick from the manifest and mark them accordingly.\n';
+
+    if (ps.departedPassengers.length > 0) {
+      directive += `Previously departed passengers: ${ps.departedPassengers.length} (no longer aboard).\n`;
+    }
+
+    return directive;
+  }
+  window.getPassengerManifestDirective = getPassengerManifestDirective;
+
+  // ── Romantic Archetype Dynamics — per-case romantic tension character ──
+  // Each case introduces one romantic tension character assigned a Storybound archetype.
+  // Gemma's weakness archetype: Spellbinder — reduces her perception reliability.
+  // Romantic dynamic is secondary to the mystery arc.
+
+  const _romanticStateKey = 'gemma_romantic_state';
+
+  const GEMMA_WEAKNESS_ARCHETYPE = 'SPELLBINDER';
+
+  const ROMANTIC_CASE_OUTCOMES = [
+    'attraction_interrupted',   // mystery intervenes before resolution
+    'wrong_man',                // romantic interest turns out to be the culprit
+    'necessary_betrayal',       // Gemma must betray trust to solve the case
+    'dangerous_chemistry',      // mutual attraction complicates investigation
+    'escaped_connection',       // genuine connection, but circumstances separate them
+  ];
+
+  function getRomanticState() {
+    const raw = localStorage.getItem(_romanticStateKey);
+    if (raw) return JSON.parse(raw);
+
+    const initial = {
+      currentRomantic: null,  // { name, archetype, archetypeName, isWeakness, outcome: null }
+      relationshipVector: { attraction: 0, trust: 0, suspicion: 0 },
+      romanticHistory: [],    // completed: [{ caseId, name, archetype, outcome }]
+    };
+    localStorage.setItem(_romanticStateKey, JSON.stringify(initial));
+    return initial;
+  }
+
+  function _persistRomanticState(rs) {
+    localStorage.setItem(_romanticStateKey, JSON.stringify(rs));
+  }
+
+  // Assign a romantic tension character for the current case.
+  // Called when the case begins or when the engine introduces a romantic interest.
+  // The character should be from the passenger manifest.
+  function assignRomanticInterest(name) {
+    const rs = getRomanticState();
+
+    // Pick a random archetype from the 7 Storybound archetypes
+    const archetypeIds = ['HEART_WARDEN', 'OPEN_VEIN', 'SPELLBINDER', 'ARMORED_FOX',
+      'DARK_VICE', 'BEAUTIFUL_RUIN', 'ETERNAL_FLAME'];
+    const archetypeId = archetypeIds[Math.floor(Math.random() * archetypeIds.length)];
+
+    const archetypeNames = {
+      HEART_WARDEN: 'The Heart Warden',
+      OPEN_VEIN: 'The Open Vein',
+      SPELLBINDER: 'The Spellbinder',
+      ARMORED_FOX: 'The Armored Fox',
+      DARK_VICE: 'The Dark Vice',
+      BEAUTIFUL_RUIN: 'The Beautiful Ruin',
+      ETERNAL_FLAME: 'The Eternal Flame',
+    };
+
+    rs.currentRomantic = {
+      name: name,
+      archetype: archetypeId,
+      archetypeName: archetypeNames[archetypeId] || archetypeId,
+      isWeakness: archetypeId === GEMMA_WEAKNESS_ARCHETYPE,
+      outcome: null,
+    };
+    rs.relationshipVector = { attraction: 0, trust: 0, suspicion: 0 };
+    _persistRomanticState(rs);
+
+    return rs.currentRomantic;
+  }
+  window.assignRomanticInterest = assignRomanticInterest;
+
+  // Adjust relationship vector (incremental, clamped 0-10)
+  function adjustRelationshipVector(deltas) {
+    const rs = getRomanticState();
+    const v = rs.relationshipVector;
+    if (deltas.attraction !== undefined) v.attraction = Math.max(0, Math.min(10, v.attraction + deltas.attraction));
+    if (deltas.trust !== undefined) v.trust = Math.max(0, Math.min(10, v.trust + deltas.trust));
+    if (deltas.suspicion !== undefined) v.suspicion = Math.max(0, Math.min(10, v.suspicion + deltas.suspicion));
+    _persistRomanticState(rs);
+    return v;
+  }
+  window.adjustRelationshipVector = adjustRelationshipVector;
+
+  // Resolve the romantic arc for the current case
+  function resolveRomanticArc(outcome) {
+    const rs = getRomanticState();
+    if (!rs.currentRomantic) return null;
+
+    const validOutcome = ROMANTIC_CASE_OUTCOMES.includes(outcome) ? outcome : 'attraction_interrupted';
+    rs.currentRomantic.outcome = validOutcome;
+
+    // Archive
+    rs.romanticHistory.push({
+      caseId: getGemmaCaseState().caseId,
+      name: rs.currentRomantic.name,
+      archetype: rs.currentRomantic.archetype,
+      archetypeName: rs.currentRomantic.archetypeName,
+      isWeakness: rs.currentRomantic.isWeakness,
+      outcome: validOutcome,
+      finalVector: { ...rs.relationshipVector },
+    });
+
+    _persistRomanticState(rs);
+    return rs.currentRomantic;
+  }
+  window.resolveRomanticArc = resolveRomanticArc;
+
+  // Reset romantic state for new case (called alongside rotatePassengers)
+  function resetRomanticState() {
+    const rs = getRomanticState();
+    rs.currentRomantic = null;
+    rs.relationshipVector = { attraction: 0, trust: 0, suspicion: 0 };
+    _persistRomanticState(rs);
+  }
+  window.resetRomanticState = resetRomanticState;
+
+  // Check if Gemma's perception is compromised by weakness archetype
+  function isGemmaPerceptionCompromised() {
+    const rs = getRomanticState();
+    if (!rs.currentRomantic || !rs.currentRomantic.isWeakness) return false;
+    // Perception degrades when attraction is high enough
+    return rs.relationshipVector.attraction >= 4;
+  }
+  window.isGemmaPerceptionCompromised = isGemmaPerceptionCompromised;
+
+  // Engine directive for romantic dynamics
+  function getRomanticDynamicsDirective() {
+    const rs = getRomanticState();
+
+    let directive = 'ROMANTIC DYNAMICS (secondary to mystery arc):\n';
+
+    if (!rs.currentRomantic) {
+      directive += 'No active romantic interest this case. The engine may introduce one '
+        + 'from the passenger manifest when dramatically appropriate.\n';
+      directive += 'When introducing a romantic interest, call assignRomanticInterest(name) '
+        + 'to assign their archetype.\n';
+    } else {
+      const r = rs.currentRomantic;
+      const v = rs.relationshipVector;
+      directive += `Active romantic interest: ${r.name}\n`;
+      directive += `Archetype: ${r.archetypeName} (${r.archetype})\n`;
+      directive += `Relationship: attraction=${v.attraction}/10, trust=${v.trust}/10, suspicion=${v.suspicion}/10\n`;
+
+      if (r.isWeakness) {
+        directive += 'WARNING: This character matches Gemma\'s weakness archetype (Spellbinder).\n';
+        directive += 'EFFECT: Gemma\'s perception becomes less reliable around this character.\n';
+        if (isGemmaPerceptionCompromised()) {
+          directive += 'ACTIVE COMPROMISE: Gemma\'s attraction is high enough to degrade her observational accuracy.\n';
+          directive += 'When narrating Gemma\'s reads of this character, introduce subtle misinterpretations, '
+            + 'missed signals, or moments where she second-guesses what she sees.\n';
+        }
+      }
+
+      // Archetype behavioral rules
+      directive += 'Romantic dynamic rules:\n';
+      directive += '  - Romance is SECONDARY to the mystery. Never let attraction override investigation pacing.\n';
+      directive += '  - The romantic interest should behave consistently with their archetype.\n';
+      directive += '  - Tension should build gradually across scenes, not resolve quickly.\n';
+      directive += '  - The romantic interest may or may not be a suspect.\n';
+    }
+
+    directive += 'Possible case outcomes for romantic arc: '
+      + ROMANTIC_CASE_OUTCOMES.join(', ') + '\n';
+
+    if (rs.romanticHistory.length > 0) {
+      directive += `Previous romantic arcs: ${rs.romanticHistory.length}\n`;
+      const last = rs.romanticHistory[rs.romanticHistory.length - 1];
+      directive += `  Most recent: ${last.name} (${last.archetypeName}) — ${last.outcome}\n`;
+    }
+
+    return directive;
+  }
+  window.getRomanticDynamicsDirective = getRomanticDynamicsDirective;
+
+  // ── Secret Attraction Mechanic — hidden romantic target per case ──
+  // At the start of each case, one character is randomly selected as hiddenTarget.
+  // Early scenes emphasize visibleInterest; hiddenTarget receives stronger empathy signals.
+  // Around revealScene, emotional focus shifts. hiddenTarget may or may not be culprit.
+  // This system influences narrative tone but does NOT override suspect ledger or case lifecycle.
+
+  const _secretAttractionKey = 'gemma_secret_attraction';
+
+  function getSecretAttraction() {
+    const raw = localStorage.getItem(_secretAttractionKey);
+    if (raw) return JSON.parse(raw);
+    return null; // not yet initialized — set on case start
+  }
+
+  function _persistSecretAttraction(sa) {
+    localStorage.setItem(_secretAttractionKey, JSON.stringify(sa));
+  }
+
+  // Initialize the secret attraction for a new case.
+  // visibleInterest = the obvious romantic interest (usually the assignedRomanticInterest).
+  // hiddenTarget = randomly selected from remaining passenger manifest.
+  // revealScene = random scene (6-12) where emotional focus begins to shift.
+  function initSecretAttraction(visibleInterestName) {
+    const ps = getPassengerState();
+    const candidates = ps.passengerManifest
+      .map(p => p.name)
+      .filter(n => n !== visibleInterestName);
+
+    if (candidates.length === 0) return null; // no valid hidden target
+
+    const hiddenTarget = candidates[Math.floor(Math.random() * candidates.length)];
+    const revealScene = 6 + Math.floor(Math.random() * 7); // 6-12
+
+    const sa = {
+      visibleInterest: visibleInterestName || null,
+      hiddenTarget: hiddenTarget,
+      revealScene: revealScene,
+      initialized: true,
+      caseId: getGemmaCaseState().caseId,
+    };
+    _persistSecretAttraction(sa);
+    return sa;
+  }
+  window.initSecretAttraction = initSecretAttraction;
+
+  // Check if the current scene is past the reveal threshold
+  function isSecretAttractionRevealed() {
+    const sa = getSecretAttraction();
+    if (!sa || !sa.initialized) return false;
+    const inst = getSharedStoryInstance('exp_gemmas_path');
+    const currentScene = inst ? inst.currentScene : 1;
+    return currentScene >= sa.revealScene;
+  }
+  window.isSecretAttractionRevealed = isSecretAttractionRevealed;
+
+  // Reset secret attraction on case reset
+  function resetSecretAttraction() {
+    localStorage.removeItem(_secretAttractionKey);
+  }
+  window.resetSecretAttraction = resetSecretAttraction;
+
+  // Engine directive — controls narrative emphasis on visible vs hidden target
+  function getSecretAttractionDirective() {
+    const sa = getSecretAttraction();
+    if (!sa || !sa.initialized) {
+      return 'SECRET ATTRACTION: Not yet initialized. When a romantic interest is introduced, '
+        + 'call initSecretAttraction(visibleInterestName) to seed the hidden dynamic.\n';
+    }
+
+    const inst = getSharedStoryInstance('exp_gemmas_path');
+    const currentScene = inst ? inst.currentScene : 1;
+    const revealed = currentScene >= sa.revealScene;
+    const approachingReveal = currentScene >= sa.revealScene - 2 && !revealed;
+
+    let directive = 'SECRET ATTRACTION MECHANIC:\n';
+    directive += `Visible interest: ${sa.visibleInterest || 'none yet'}\n`;
+    directive += `Hidden target: ${sa.hiddenTarget}\n`;
+    directive += `Emotional shift scene: ${sa.revealScene}\n`;
+    directive += `Current scene: ${currentScene}\n`;
+
+    if (!revealed && !approachingReveal) {
+      // Early scenes — emphasize visible interest, subtle hidden signals
+      directive += 'PHASE: Early attraction.\n';
+      directive += `  - Foreground ${sa.visibleInterest || 'the obvious romantic interest'} in romantic/flirtatious scenes.\n`;
+      directive += `  - ${sa.hiddenTarget} should appear in scenes naturally but WITHOUT overt romantic framing.\n`;
+      directive += `  - HOWEVER: when Gemma reads ${sa.hiddenTarget}'s empathy signals, make them subtly stronger, `
+        + 'more resonant, or harder to dismiss than other characters\' signals.\n';
+      directive += `  - ${sa.hiddenTarget} may trigger involuntary empathic responses in Gemma: `
+        + 'lingering attention, unexpected warmth, a sense of recognition.\n';
+      directive += '  - These signals should feel like noise to Gemma, not attraction — yet.\n';
+    } else if (approachingReveal) {
+      // Approaching shift — increase tension
+      directive += 'PHASE: Approaching emotional shift.\n';
+      directive += `  - ${sa.visibleInterest || 'The visible interest'} scenes should feel increasingly hollow or performative.\n`;
+      directive += `  - ${sa.hiddenTarget}'s presence should create moments of unexpected emotional clarity for Gemma.\n`;
+      directive += '  - Gemma may notice contradictions: thinking about the visible interest but feeling more '
+        + `when ${sa.hiddenTarget} is nearby.\n`;
+      directive += '  - Do NOT make the shift explicit yet. Let the reader sense it through behavioral description.\n';
+    } else {
+      // Post-reveal — emotional focus has shifted
+      directive += 'PHASE: Emotional focus shifted.\n';
+      directive += `  - Gemma's emotional attention has shifted toward ${sa.hiddenTarget}.\n`;
+      directive += `  - ${sa.visibleInterest || 'The visible interest'} may still be present but no longer dominates Gemma's emotional landscape.\n`;
+      directive += `  - ${sa.hiddenTarget}'s empathy signals should now be foregrounded — Gemma reads them with intensity and precision.\n`;
+      directive += '  - This shift complicates the investigation if the hidden target is a suspect.\n';
+      directive += `  - ${sa.hiddenTarget} may or may not be the culprit. This mechanic is about emotional truth, not guilt.\n`;
+    }
+
+    directive += 'CONSTRAINTS:\n';
+    directive += '  - This mechanic influences NARRATIVE TONE only. It does NOT override the suspect ledger.\n';
+    directive += '  - It does NOT override case lifecycle stage transitions.\n';
+    directive += '  - The hidden target is invisible to contributors — only the engine knows.\n';
+    directive += '  - Never explicitly state "secret attraction" in prose. Show through behavioral description only.\n';
+
+    return directive;
+  }
+  window.getSecretAttractionDirective = getSecretAttractionDirective;
+
+  // ── Gemma Intimate Mystery Signals — erotic scenes must advance the case ──
+  // When scene intensity reaches explicit threshold, the engine must embed at least one
+  // mystery-relevant signal: empathy signal, behavioral anomaly, clue fragment, or
+  // emotional confession. References suspect ledger characters when possible.
+  // Does NOT modify the Fate Card system.
+
+  const GEMMA_INTIMATE_SIGNAL_TYPES = [
+    'empathy_signal',        // Gemma reads an involuntary emotional tell during intimacy
+    'behavioral_anomaly',    // the intimate partner does something inconsistent with prior behavior
+    'clue_fragment',         // a physical detail, object, or remark that connects to the case
+    'emotional_confession',  // vulnerability causes someone to reveal more than intended
+  ];
+
+  // Intensity levels that qualify as explicit threshold (matching main engine order)
+  const _EXPLICIT_INTENSITY_THRESHOLD = ['Passionate', 'Explicit', 'Taboo'];
+
+  function isGemmaIntimateSceneActive() {
+    const intensity = state.intensity || 'Steamy';
+    return _EXPLICIT_INTENSITY_THRESHOLD.includes(intensity);
+  }
+  window.isGemmaIntimateSceneActive = isGemmaIntimateSceneActive;
+
+  // Build engine directive for intimate mystery signals
+  function getGemmaIntimateSignalDirective() {
+    if (!isGemmaIntimateSceneActive()) return '';
+
+    const ledger = getSuspectLedger();
+    const activeSuspects = ledger.filter(s => s.status === 'active');
+    const clues = getClueLedger();
+    const untiedClues = clues.filter(c => !c.tiedSuspects || c.tiedSuspects.length === 0);
+    const romantic = getRomanticState();
+    const partner = romantic?.currentRomantic;
+
+    let directive = 'INTIMATE MYSTERY SIGNALS (MANDATORY):\n';
+    directive += 'The current scene has reached explicit intimacy. '
+      + 'This scene MUST embed at least ONE of the following mystery-advancing signals. '
+      + 'The signal should feel organic to the intimate moment, never forced or clinical.\n\n';
+
+    directive += 'SIGNAL TYPES (use at least one):\n';
+    directive += '  1. EMPATHY SIGNAL — Gemma involuntarily reads an emotional tell during intimacy.\n';
+    directive += '     Examples: a flinch when a name is mentioned, pupils that dilate at the wrong moment,\n';
+    directive += '     a heartbeat that spikes when it shouldn\'t, hands that tense around a specific topic.\n';
+    directive += '  2. BEHAVIORAL ANOMALY — the intimate partner acts inconsistently with prior behavior.\n';
+    directive += '     Examples: avoids eye contact when they normally don\'t, steers conversation away from\n';
+    directive += '     a specific subject, shows unexpected familiarity with a location or person.\n';
+    directive += '  3. CLUE FRAGMENT — a physical detail, object, or offhand remark that connects to the case.\n';
+    directive += '     Examples: a scar that matches a description, a phone that buzzes with a suspect\'s name,\n';
+    directive += '     clothing from a place they claimed never to have visited, a scent that doesn\'t belong.\n';
+    directive += '  4. EMOTIONAL CONFESSION — vulnerability causes someone to reveal more than intended.\n';
+    directive += '     Examples: whispered admission during afterglow, a name spoken in half-sleep,\n';
+    directive += '     guilt that surfaces when defenses are down, a story that contradicts an earlier alibi.\n\n';
+
+    // Context: active suspects for reference
+    if (activeSuspects.length > 0) {
+      directive += 'ACTIVE SUSPECTS (reference when possible):\n';
+      activeSuspects.forEach(s => {
+        directive += `  - ${s.name} (suspicion: ${s.suspicionLevel}/5)\n`;
+      });
+      directive += 'Signals should reference or implicate these characters when dramatically appropriate.\n';
+    }
+
+    // Context: untied clues that could be connected
+    if (untiedClues.length > 0) {
+      directive += 'UNTIED CLUES (can be connected through intimate revelation):\n';
+      untiedClues.slice(0, 3).forEach(c => {
+        directive += `  - "${c.clueText}"\n`;
+      });
+    }
+
+    // Context: romantic partner awareness
+    if (partner) {
+      directive += `\nINTIMATE PARTNER: ${partner.name} (${partner.archetypeName})\n`;
+      if (partner.isWeakness) {
+        directive += 'WARNING: This partner is Gemma\'s weakness archetype. '
+          + 'Signals may be harder for Gemma to interpret correctly — she may misread, '
+          + 'dismiss, or rationalize what she observes.\n';
+      }
+    }
+
+    directive += '\nRULES:\n';
+    directive += '  - The signal must emerge naturally from the intimate interaction.\n';
+    directive += '  - Do NOT pause the scene to deliver exposition. Weave the signal into sensation and dialogue.\n';
+    directive += '  - Gemma may or may not consciously register the signal in the moment.\n';
+    directive += '  - The signal should reward attentive readers but not break the scene\'s emotional rhythm.\n';
+    directive += '  - Multiple signal types in one scene are permitted but not required.\n';
+    directive += '  - This directive does NOT alter Fate Cards, Tempt Fate, or Petition Fate.\n';
+
+    return directive;
+  }
+  window.getGemmaIntimateSignalDirective = getGemmaIntimateSignalDirective;
+
+  // ── Gemma Perception Lens — all narration through observable human signals ──
+  // Gemma's perspective must always emphasize what she can observe, not what she infers.
+  // During physical intimacy, narration highlights perceptual cues rather than generic
+  // romance language. This rule applies regardless of scene explicitness level.
+  // Does NOT modify Fate Cards or any external system.
+
+  const GEMMA_PERCEPTION_CUES = [
+    'hesitation',
+    'timing differences',
+    'body tension',
+    'breathing changes',
+    'eye movement',
+    'emotional leakage',
+  ];
+
+  function getGemmaPerceptionLensDirective() {
+    const romantic = getRomanticState();
+    const partner = romantic?.currentRomantic;
+    const compromised = isGemmaPerceptionCompromised();
+
+    let directive = 'GEMMA PERCEPTION LENS (ALWAYS ACTIVE):\n';
+    directive += 'All narration from Gemma\'s perspective must prioritize observable human signals.\n';
+    directive += 'Gemma does NOT narrate emotions directly. She reads them through physical evidence.\n\n';
+
+    directive += 'CORE OBSERVATIONAL CUES (embed in every scene):\n';
+    GEMMA_PERCEPTION_CUES.forEach(cue => {
+      directive += `  • ${cue}\n`;
+    });
+
+    directive += '\nGENERAL RULES:\n';
+    directive += '  - Replace internal narration ("he felt guilty") with observable behavior '
+      + '("his jaw tightened and he looked away a half-second too fast").\n';
+    directive += '  - Gemma notices timing: pauses before answers, delayed reactions, '
+      + 'laughs that arrive a beat late.\n';
+    directive += '  - Gemma reads bodies: shoulders held too high, a thumb rubbing a knuckle, '
+      + 'weight shifting toward or away.\n';
+    directive += '  - Gemma hears tone: pitch changes, controlled steadiness that costs effort, '
+      + 'the difference between a sigh of relief and a sigh of resignation.\n';
+    directive += '  - Emotional leakage is involuntary: a micro-expression before the mask returns, '
+      + 'a flinch caught in peripheral vision, tears forming but not falling.\n';
+
+    directive += '\nINTIMACY RULES (apply during all physical/romantic scenes):\n';
+    directive += '  - Physical intimacy must be narrated through Gemma\'s perception, '
+      + 'NOT through generic romance language.\n';
+    directive += '  - AVOID: "Their passion ignited", "She melted into his arms", "Desire consumed them".\n';
+    directive += '  - INSTEAD USE: specific observable details Gemma would notice:\n';
+    directive += '    • Hesitation: "His hand paused at her waist — not uncertainty, but a question."\n';
+    directive += '    • Timing: "He kissed her a full second after she expected it. The delay said everything."\n';
+    directive += '    • Body tension: "His shoulders didn\'t relax when she touched them. '
+      + 'That wasn\'t nervousness — that was someone bracing."\n';
+    directive += '    • Breathing: "His breathing changed before he spoke — deeper, slower, '
+      + 'the way people breathe when they\'re rehearsing what to say."\n';
+    directive += '    • Eye movement: "He looked at her mouth when she talked, '
+      + 'but his eyes kept pulling to the door."\n';
+    directive += '    • Emotional leakage: "When she kissed him, something behind his expression cracked. '
+      + 'Not pleasure — relief. As if he\'d been waiting to stop pretending."\n';
+
+    if (partner) {
+      directive += `\nCURRENT INTIMATE PARTNER: ${partner.name} (${partner.archetypeName})\n`;
+      directive += `Gemma should read ${partner.name}'s physical signals through the lens of their archetype.\n`;
+    }
+
+    if (compromised) {
+      directive += 'PERCEPTION COMPROMISED: Gemma\'s weakness archetype is active. '
+        + 'Her reads of this partner may be slightly off — she may over-interpret positive signals '
+        + 'and under-notice warning signs. Narrate subtle misreads she doesn\'t catch.\n';
+    }
+
+    return directive;
+  }
+  window.getGemmaPerceptionLensDirective = getGemmaPerceptionLensDirective;
+
+  // ── Reveal Alternate POV — completed story reinterpretation ──
+  // For completed stories, allows generating a read-only version from the love interest
+  // or antagonist's POV. Events stay identical; internal thoughts/motivations are revealed.
+  // Disables Fate Cards, Say/Do input, and scene generation. Read-only.
+
+  const _povRewriteKey = (storyId) => `pov_rewrite_${storyId}`;
+
+  function getPovRewrite(storyId) {
+    const raw = localStorage.getItem(_povRewriteKey(storyId));
+    if (raw) return JSON.parse(raw);
+    return null;
+  }
+
+  function _persistPovRewrite(storyId, rewrite) {
+    localStorage.setItem(_povRewriteKey(storyId), JSON.stringify(rewrite));
+  }
+
+  // Check if a POV rewrite already exists for a story
+  function hasPovRewrite(storyId) {
+    return !!localStorage.getItem(_povRewriteKey(storyId));
+  }
+  window.hasPovRewrite = hasPovRewrite;
+
+  // Determine the alternate POV character for a story.
+  // Prefers the love interest; falls back to antagonist or most prominent non-protagonist.
+  function _resolveAlternatePovCharacter() {
+    // Allow temporary override for dual POV generation
+    if (window._altPovCharOverride) return window._altPovCharOverride;
+    const locked = state.main_characters_locked;
+    if (locked?.partnerName && locked.partnerName !== 'Love Interest') {
+      return {
+        name: locked.displayPartnerName || locked.partnerName,
+        role: 'love interest',
+        gender: locked.partnerGender || 'Male',
+        pronouns: locked.partnerPronouns || 'He/Him',
+      };
+    }
+    // Fallback: use picks if available
+    const picks = state.picks?.identity;
+    if (picks?.partnerName) {
+      return {
+        name: picks.displayPartnerName || picks.partnerName,
+        role: 'love interest',
+        gender: state.loveInterest || 'Male',
+        pronouns: (state.loveInterest === 'Female' ? 'She/Her' : state.loveInterest === 'Male' ? 'He/Him' : 'They/Them'),
+      };
+    }
+    return { name: 'the other character', role: 'primary other', gender: 'Unknown', pronouns: 'They/Them' };
+  }
+
+  // Generate the POV rewrite via callChat. Processes in chunks to handle long stories.
+  // Returns the rewritten text or null on failure.
+  async function generatePovRewrite(storyId, originalText) {
+    if (!originalText || originalText.trim().length < 200) return null;
+
+    const povChar = _resolveAlternatePovCharacter();
+    const protagonist = state.main_characters_locked?.displayPlayerName
+      || state.picks?.identity?.displayPlayerName || 'the protagonist';
+
+    // Split into chunks of ~3000 chars for manageable rewrite passes
+    const chunks = [];
+    const chunkSize = 3000;
+    for (let i = 0; i < originalText.length; i += chunkSize) {
+      chunks.push(originalText.slice(i, i + chunkSize));
+    }
+
+    const systemPrompt = `You are rewriting a completed story from an alternate point of view.
+
+ORIGINAL POV: ${protagonist} (the protagonist)
+NEW POV: ${povChar.name} (${povChar.role})
+PRONOUNS: ${povChar.pronouns}
+
+ABSOLUTE RULES:
+1. Every event, scene, and plot point must remain IDENTICAL. Do not add, remove, or alter any events.
+2. No new scenes. No new characters. No plot changes.
+3. Shift the narration to ${povChar.name}'s internal perspective.
+4. Reveal ${povChar.name}'s thoughts, motivations, fears, and desires that were hidden in the original.
+5. Scenes where ${povChar.name} was absent should be narrated as gaps — what they were doing or thinking elsewhere.
+6. Maintain the story's tone, vocabulary level, and prose style.
+7. Physical descriptions and dialogue remain unchanged — only the internal narration shifts.
+8. The rewrite should make readers re-evaluate scenes they thought they understood.
+
+THREE HIDDEN TRUTHS:
+Embed exactly three hidden revelations within the rewritten scenes. These are truths that were never explicit in the original narrative. Each must appear ORGANICALLY within scenes — never as a summary or aside.
+Allowed categories:
+- a lie ${povChar.name} told (and why)
+- a moment ${povChar.name} almost confessed something
+- a secret motivation that shaped a key decision
+- a hidden fear that drove a specific action
+- a private decision that changed the outcome without anyone knowing
+Rules: revelations must NOT alter events. They only expose internal knowledge or motives.
+
+WHAT THEY ALMOST SAID:
+Identify moments where ${povChar.name} concealed a thought, lied, avoided a question, or interrupted themselves. At these moments, insert a brief internal "almost said" line showing what they nearly revealed.
+Format:
+"[original spoken dialogue]," ${povChar.pronouns.split('/')[0].toLowerCase()} said.
+
+${povChar.pronouns.split('/')[0]} almost said:
+*[the suppressed truth in italics]*
+
+Rules:
+- The spoken line must remain IDENTICAL to the original.
+- The "almost said" line is internal thought, never spoken aloud.
+- Maximum 1 per scene. Total 3-6 across the entire story.
+- These must feel natural to ${povChar.name}'s psychology.
+- Do NOT resolve mysteries earlier than the original timeline.
+- Do NOT reveal the culprit before the same point in the story.
+
+Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
+
+    let rewrittenParts = [];
+    for (let i = 0; i < chunks.length; i++) {
+      try {
+        const chunkContext = i > 0
+          ? `[Continuing rewrite. Previous chunk ended with: "${rewrittenParts[i - 1].slice(-200)}"]\n\n`
+          : '';
+        const result = await callChat([
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: chunkContext + 'Rewrite this passage from ' + povChar.name + '\'s POV:\n\n' + chunks[i] }
+        ], 0.6);
+        rewrittenParts.push(result || chunks[i]); // fallback to original if API fails
+      } catch (err) {
+        console.error('[POV Rewrite] Chunk', i, 'failed:', err);
+        rewrittenParts.push(chunks[i]); // preserve original on failure
+      }
+    }
+
+    const fullRewrite = rewrittenParts.join('\n\n');
+
+    // Store as read-only book
+    const rewrite = {
+      storyId: storyId,
+      originalStoryId: storyId,
+      povCharacter: povChar,
+      protagonist: protagonist,
+      text: fullRewrite,
+      createdAt: Date.now(),
+      readOnly: true,
+      fateCardsEnabled: false,
+      sayDoEnabled: false,
+      sceneGenerationEnabled: false,
+      edition_type: 'single',
+      library_type: 'secret_edition',
+      alt_pov_hidden_truths: 3,
+    };
+
+    _persistPovRewrite(storyId, rewrite);
+    return rewrite;
+  }
+  window.generatePovRewrite = generatePovRewrite;
+
+  // Open the POV rewrite in the library reader (read-only mode)
+  function openPovRewriteReader(storyId) {
+    const rewrite = getPovRewrite(storyId);
+    if (!rewrite) {
+      showToast('No alternate POV available.');
+      return;
+    }
+
+    state.libraryMode = true;
+    _readerSource = 'vault';
+    const titleEl = $('libraryReaderTitle');
+    const proseEl = $('libraryReaderProse');
+    const authorEl = $('libraryReaderAuthor');
+
+    const originalTitle = document.getElementById('storyTitle')?.textContent
+      || state.story?.title || 'Untitled';
+    if (titleEl) titleEl.textContent = originalTitle + ' — ' + rewrite.povCharacter.name + '\'s Side';
+    if (authorEl) authorEl.textContent = 'Alternate POV \u2022 Read Only';
+    if (proseEl) {
+      proseEl.textContent = rewrite.text;
+      // Remove any interactive panels that shouldn't appear in read-only mode
+      proseEl.parentElement?.querySelectorAll(
+        '.exp-hybrid-input-panel, .experimental-guidelines, .gemma-rule-panel'
+      ).forEach(el => el.remove());
+    }
+
+    // Add POV badge above prose
+    const existingBadge = proseEl?.parentElement?.querySelector('.pov-rewrite-badge');
+    if (existingBadge) existingBadge.remove();
+    if (proseEl) {
+      const badge = document.createElement('div');
+      badge.className = 'pov-rewrite-badge';
+      badge.textContent = `Narrated by ${rewrite.povCharacter.name} (${rewrite.povCharacter.role})`;
+      proseEl.parentElement.insertBefore(badge, proseEl);
+    }
+
+    window.showScreen('libraryReaderScreen');
+  }
+  window.openPovRewriteReader = openPovRewriteReader;
+
+  // ── Alternate POV Edition — monetization, dual POV, Supabase persistence, Secret Editions ──
+  // Additive layer on top of the existing POV rewrite pipeline.
+  // Does NOT modify generatePovRewrite, openPovRewriteReader, hasPovRewrite, or _resolveAlternatePovCharacter.
+
+  const ALT_POV_SINGLE_COST = 35;
+  const ALT_POV_DUAL_COST = 60;
+
+  // Generation lock — prevents concurrent/duplicate generation
+  let _altPovGenerationInProgress = false;
+
+  // ── Alternate POV Preview — free teaser line for conversion ──
+  // Lightweight single-sentence generation, cached per story in localStorage.
+  const _ALT_POV_PREVIEW_CACHE_KEY = 'story_alt_pov_preview';
+
+  function _getPreviewCache() {
+    try { return JSON.parse(localStorage.getItem(_ALT_POV_PREVIEW_CACHE_KEY) || '{}'); } catch { return {}; }
+  }
+
+  function _getCachedPreview(storyId) {
+    const cache = _getPreviewCache();
+    return cache[storyId]?.preview_text || null;
+  }
+
+  function _setCachedPreview(storyId, text) {
+    const cache = _getPreviewCache();
+    cache[storyId] = { story_id: storyId, preview_text: text, generated_at: new Date().toISOString() };
+    try { localStorage.setItem(_ALT_POV_PREVIEW_CACHE_KEY, JSON.stringify(cache)); } catch {}
+  }
+
+  async function generateAltPovPreview(storyId, storyText) {
+    // Return cached preview if available
+    const cached = _getCachedPreview(storyId);
+    if (cached) return cached;
+
+    const povChar = _resolveAlternatePovCharacter();
+    const pronoun = (povChar.pronouns || 'They/Them').split('/')[0].toLowerCase();
+
+    const previewPrompt = [
+      { role: 'system', content: `You are a romantic fiction narrator. Write ONE hidden thought that ${povChar.name} (the ${povChar.role}) had during the story below. This is a teaser — do NOT reveal the culprit, major twists, or plot resolutions. Focus on emotional tension, longing, or a concealed truth. Max 2 sentences. Use second person ("you") to address the protagonist. Do not use quotation marks. Write only the thought — no labels, no attribution.` },
+      { role: 'user', content: storyText.slice(0, 3000) }
+    ];
+
+    try {
+      const result = await callChat(previewPrompt, 0.8, { max_tokens: 120 });
+      const text = (result || '').trim();
+      if (text && text.length > 10) {
+        _setCachedPreview(storyId, text);
+        return text;
+      }
+    } catch (err) {
+      console.warn('[AltPOV Preview] Generation failed:', err);
+    }
+    return null;
+  }
+  window.generateAltPovPreview = generateAltPovPreview;
+
+  // ── Villain / Antagonist POV character resolution ──
+  // Separate from _resolveAlternatePovCharacter (which targets love interest).
+  function _resolveVillainPovCharacter() {
+    // Check Gemma suspect ledger first (strongest suspect)
+    if (typeof getSuspectLedger === 'function') {
+      const ledger = getSuspectLedger();
+      const active = ledger.filter(s => s.status === 'active');
+      if (active.length > 0) {
+        const strongest = active.reduce((a, b) => (b.suspicionLevel || 0) > (a.suspicionLevel || 0) ? b : a);
+        return {
+          name: strongest.name,
+          role: 'antagonist',
+          gender: 'Unknown',
+          pronouns: 'They/Them',
+        };
+      }
+    }
+    // Fallback: attempt to derive from story state
+    const locked = state.main_characters_locked;
+    // If there's a partner, the villain is someone else — use a generic
+    if (locked?.partnerName) {
+      return {
+        name: 'the antagonist',
+        role: 'villain',
+        gender: 'Unknown',
+        pronouns: 'They/Them',
+      };
+    }
+    return { name: 'the rival', role: 'secondary antagonist', gender: 'Unknown', pronouns: 'They/Them' };
+  }
+  window._resolveVillainPovCharacter = _resolveVillainPovCharacter;
+
+  // ── Supabase persistence for story_alt_pov ──
+  const _ALT_POV_TABLE = 'story_alt_pov';
+
+  async function _persistAltPovToSupabase(rewrite, editionType) {
+    if (!sb || !_supabaseProfileId) {
+      console.warn('[AltPOV] No Supabase — edition stored in localStorage only.');
+      return null;
+    }
+    try {
+      const row = {
+        user_id: _supabaseProfileId,
+        original_story_id: rewrite.originalStoryId,
+        pov_character: JSON.stringify(rewrite.povCharacter),
+        scenes: rewrite.text,
+        generated_at: new Date(rewrite.createdAt).toISOString(),
+        is_read_only: true,
+        edition_type: editionType,
+        library_type: 'secret_edition',
+        alt_pov_hidden_truths: 3,
+      };
+      const { data, error } = await sb.from(_ALT_POV_TABLE).insert(row).select().single();
+      if (error) {
+        console.error('[AltPOV] Supabase insert failed:', error.message);
+        return null;
+      }
+      console.log('[AltPOV] Persisted to Supabase:', data?.id);
+      return data;
+    } catch (err) {
+      console.error('[AltPOV] Supabase persistence error:', err);
+      return null;
+    }
+  }
+
+  // Fetch all Secret Editions for the current user
+  async function loadUserSecretEditions() {
+    if (!sb || !_supabaseProfileId) return [];
+    try {
+      const { data, error } = await sb.from(_ALT_POV_TABLE)
+        .select('id, original_story_id, pov_character, generated_at, edition_type, library_type')
+        .eq('user_id', _supabaseProfileId)
+        .order('generated_at', { ascending: false });
+      if (error) {
+        console.error('[AltPOV] Load secret editions failed:', error.message);
+        return [];
+      }
+      return (data || []).map(row => ({
+        ...row,
+        pov_character: typeof row.pov_character === 'string' ? JSON.parse(row.pov_character) : row.pov_character,
+      }));
+    } catch (err) {
+      console.error('[AltPOV] Load error:', err);
+      return [];
+    }
+  }
+  window.loadUserSecretEditions = loadUserSecretEditions;
+
+  // Fetch full text of a Secret Edition by Supabase ID
+  async function loadSecretEditionText(editionId) {
+    if (!sb) return null;
+    try {
+      const { data, error } = await sb.from(_ALT_POV_TABLE)
+        .select('scenes, pov_character, original_story_id, edition_type')
+        .eq('id', editionId)
+        .single();
+      if (error || !data) return null;
+      return {
+        text: data.scenes,
+        povCharacter: typeof data.pov_character === 'string' ? JSON.parse(data.pov_character) : data.pov_character,
+        originalStoryId: data.original_story_id,
+        editionType: data.edition_type,
+      };
+    } catch (err) {
+      console.error('[AltPOV] Load text error:', err);
+      return null;
+    }
+  }
+
+  // Open a Supabase-stored Secret Edition in the reader
+  async function openSecretEditionReader(editionId, title) {
+    const edition = await loadSecretEditionText(editionId);
+    if (!edition) {
+      showToast('Failed to load Secret Edition.');
+      return;
+    }
+
+    state.libraryMode = true;
+    _readerSource = 'forbidden';
+    const titleEl = $('libraryReaderTitle');
+    const proseEl = $('libraryReaderProse');
+    const authorEl = $('libraryReaderAuthor');
+
+    const povName = edition.povCharacter?.name || 'Unknown';
+    const povRole = edition.povCharacter?.role || 'alternate';
+    if (titleEl) titleEl.textContent = (title || 'Untitled') + ' \u2014 ' + povName + '\'s Side';
+    if (authorEl) authorEl.textContent = 'Alternate POV \u2022 Read Only';
+
+    if (proseEl) {
+      // Render with "almost said" formatting preserved (italic markers)
+      const formatted = edition.text.replace(
+        /^(\S+ almost said:)\s*$/gm,
+        '<span class="pov-almost-said-label">$1</span>'
+      ).replace(
+        /^\*(.+)\*$/gm,
+        '<em class="pov-almost-said-text">$1</em>'
+      );
+      proseEl.innerHTML = formatted;
+
+      // Strip interactive panels
+      proseEl.parentElement?.querySelectorAll(
+        '.exp-hybrid-input-panel, .experimental-guidelines, .gemma-rule-panel'
+      ).forEach(el => el.remove());
+    }
+
+    // Add edition header badge
+    const existingBadge = proseEl?.parentElement?.querySelector('.pov-rewrite-badge');
+    if (existingBadge) existingBadge.remove();
+    if (proseEl) {
+      const badge = document.createElement('div');
+      badge.className = 'pov-rewrite-badge';
+      badge.innerHTML = '<span class="pov-edition-header">ALTERNATE POV EDITION</span><br>'
+        + `Narrated by ${escapeHTML(povName)} (${escapeHTML(povRole)})`;
+      proseEl.parentElement.insertBefore(badge, proseEl);
+    }
+
+    window.showScreen('libraryReaderScreen');
+  }
+  window.openSecretEditionReader = openSecretEditionReader;
+
+  // Check if a specific edition type already exists for a story (Supabase)
+  async function hasAltPovEdition(storyId, editionType) {
+    // Check localStorage first (existing pipeline)
+    if (editionType === 'single' && hasPovRewrite(storyId)) return true;
+
+    if (!sb || !_supabaseProfileId) return false;
+    try {
+      const { data, error } = await sb.from(_ALT_POV_TABLE)
+        .select('id')
+        .eq('user_id', _supabaseProfileId)
+        .eq('original_story_id', storyId)
+        .eq('edition_type', editionType)
+        .limit(1);
+      if (error) return false;
+      return (data || []).length > 0;
+    } catch (_) { return false; }
+  }
+  window.hasAltPovEdition = hasAltPovEdition;
+
+  // ── Dual POV Generator Wrapper ──
+  // Calls the existing generatePovRewrite twice: once for love interest, once for villain.
+  // Does NOT modify the original generator — wraps it with character overrides.
+  async function generateDualPovRewrite(storyId, originalText) {
+    if (!originalText || originalText.trim().length < 200) return null;
+
+    const liChar = _resolveAlternatePovCharacter();
+    const villainChar = _resolveVillainPovCharacter();
+
+    // Temporarily override _resolveAlternatePovCharacter for each pass
+    const origResolver = _resolveAlternatePovCharacter;
+
+    // Pass 1: Love Interest POV
+    const liOverride = () => liChar;
+    // We can't reassign the const, so we use a wrapper approach:
+    // Generate love interest version using the existing pipeline (it already resolves to LI)
+    const liRewrite = await generatePovRewrite(storyId + '_li_pov', originalText);
+    if (liRewrite) {
+      liRewrite.edition_type = 'dual';
+      liRewrite.originalStoryId = storyId;
+      await _persistAltPovToSupabase(liRewrite, 'dual');
+    }
+
+    // Pass 2: Villain POV — need to temporarily make the resolver return villain
+    // Store original on window, swap, generate, restore
+    const savedResolver = window._altPovCharOverride;
+    window._altPovCharOverride = villainChar;
+    const villainRewrite = await generatePovRewrite(storyId + '_villain_pov', originalText);
+    window._altPovCharOverride = savedResolver;
+
+    if (villainRewrite) {
+      villainRewrite.povCharacter = villainChar;
+      villainRewrite.edition_type = 'dual';
+      villainRewrite.originalStoryId = storyId;
+      _persistPovRewrite(storyId + '_villain_pov', villainRewrite);
+      await _persistAltPovToSupabase(villainRewrite, 'dual');
+    }
+
+    return { liRewrite, villainRewrite };
+  }
+  window.generateDualPovRewrite = generateDualPovRewrite;
+
+  // ── Fortune-gated generation (correct timing: check → generate → consume) ──
+  async function generateAltPovWithFortune(storyId, originalText, cost, editionType) {
+    if (_altPovGenerationInProgress) {
+      showToast('Generation already in progress.');
+      return null;
+    }
+
+    // Check if edition already exists
+    const exists = await hasAltPovEdition(storyId, editionType);
+    if (exists) {
+      showToast('This edition already exists.');
+      return null;
+    }
+
+    // Check fortune balance BEFORE generation
+    if ((state.fortunes || 0) < cost) {
+      showToast(`Insufficient Fortunes. You need ${cost} but have ${state.fortunes || 0}.`);
+      return null;
+    }
+
+    _altPovGenerationInProgress = true;
+
+    try {
+      let result;
+      if (editionType === 'dual') {
+        result = await generateDualPovRewrite(storyId, originalText);
+      } else {
+        result = await generatePovRewrite(storyId, originalText);
+        if (result) {
+          await _persistAltPovToSupabase(result, 'single');
+        }
+      }
+
+      if (!result) {
+        _altPovGenerationInProgress = false;
+        return null;
+      }
+
+      // Consume fortunes AFTER successful generation
+      const consumed = await consumeFortune(cost, 'alt_pov_generation');
+      if (!consumed) {
+        console.warn('[AltPOV] Fortune consumption failed after generation — edition still saved.');
+      }
+
+      _altPovGenerationInProgress = false;
+      return result;
+    } catch (err) {
+      console.error('[AltPOV] Fortune-gated generation failed:', err);
+      _altPovGenerationInProgress = false;
+      return null;
+    }
+  }
+  window.generateAltPovWithFortune = generateAltPovWithFortune;
+
+  // ── Secret Edition entries for Forbidden Library ──
+  // Builds library-compatible entries from Supabase alt POV rows.
+  let _secretEditionEntries = [];
+
+  async function refreshSecretEditions() {
+    const editions = await loadUserSecretEditions();
+    _secretEditionEntries = editions.map(ed => {
+      // Find original story title from authored entries or library entries
+      const origAuthored = _vaultAuthoredEntries.find(e => e.story_id === ed.original_story_id);
+      const origLib = (_libraryEntries || []).find(e => e.story_id === ed.original_story_id);
+      const origTitle = origAuthored?.title || origLib?.title || 'Untitled';
+      const povName = ed.pov_character?.name || 'Unknown';
+
+      return {
+        story_id: 'secret_ed_' + ed.id,
+        _secretEditionId: ed.id,
+        title: origTitle + ' \u2014 ' + povName + ' POV',
+        _originalTitle: origTitle,
+        author: 'Secret Edition',
+        library_type: 'secret_edition',
+        _isSecretEdition: true,
+        _povCharacter: ed.pov_character,
+        _editionType: ed.edition_type,
+        _generatedAt: ed.generated_at,
+      };
+    });
+    return _secretEditionEntries;
+  }
+  window.refreshSecretEditions = refreshSecretEditions;
+
+  // ── Hybrid Input System — narrative suggestion cards + Say/Do for experimental books ──
+  // Displays book-specific narrative suggestion cards after each scene.
+  // Clicking a card prefills Say and Do fields, but users can freely edit or replace text.
+  // Card selection is NOT required to submit. Tempt Fate and Petition Fate remain disabled.
+  // Say/Do inputs pass through: input sanitization, meta-narrative filtering, protagonist contract.
+
+  // Book-specific narrative suggestion generators — return array of { id, title, desc, action, dialogue }
+  const _EXP_NARRATIVE_SUGGESTIONS = {
+    exp_gemmas_path: (caseState, passengerState, romanticState) => {
+      const stage = caseState?.stage || 'investigation';
+      const passengers = (passengerState?.passengerManifest || []).map(p => p.name);
+      const romantic = romanticState?.currentRomantic;
+      const randomPassenger = passengers.length > 0
+        ? passengers[Math.floor(Math.random() * passengers.length)] : 'a passenger';
+
+      const cards = [
+        {
+          id: 'observe',
+          title: 'Read the Room',
+          desc: 'Study someone\'s emotional signals.',
+          action: `Watch ${randomPassenger} carefully — something about their posture feels wrong.`,
+          dialogue: '"You\'re hiding something. I can see it."',
+        },
+        {
+          id: 'confront',
+          title: 'Press Harder',
+          desc: 'Push a suspect toward the truth.',
+          action: `Corner ${randomPassenger} with what you know.`,
+          dialogue: '"I don\'t think you\'ve been honest with me."',
+        },
+        {
+          id: 'investigate',
+          title: 'Follow a Lead',
+          desc: 'Pursue a clue to a new location.',
+          action: 'Follow the trail to a part of the ship you haven\'t explored yet.',
+          dialogue: '"Someone mentioned this deck. I need to see it for myself."',
+        },
+      ];
+
+      if (stage === 'investigation' || stage === 'escalation') {
+        cards.push({
+          id: 'deflect',
+          title: 'Play Innocent',
+          desc: 'Pretend you haven\'t noticed anything.',
+          action: 'Smile and change the subject — let them think you\'re oblivious.',
+          dialogue: '"Oh, I was just enjoying the view. Don\'t mind me."',
+        });
+      }
+
+      if (romantic) {
+        cards.push({
+          id: 'romantic_tension',
+          title: 'Dangerous Closeness',
+          desc: 'Let the attraction complicate things.',
+          action: `Let ${romantic.name} get too close — and notice how it clouds your judgment.`,
+          dialogue: '"You make it very hard to think clearly."',
+        });
+      }
+
+      if (stage === 'reveal' || stage === 'aftermath') {
+        cards.push({
+          id: 'accuse',
+          title: 'Name the Guilty',
+          desc: 'Confront the person you believe is responsible.',
+          action: 'Stand in front of them. Let the silence do the work first.',
+          dialogue: '"I know what you did. And I can prove it."',
+        });
+      }
+
+      // Shuffle and return max 5
+      return cards.sort(() => Math.random() - 0.5).slice(0, 5);
+    },
+
+    exp_good_reasons: () => {
+      return [
+        {
+          id: 'justify',
+          title: 'Good Reason',
+          desc: 'Explain why this was necessary.',
+          action: 'Rehearse the logic one more time. It still holds up. It has to.',
+          dialogue: '"You have to understand — I didn\'t have a choice."',
+        },
+        {
+          id: 'manipulate',
+          title: 'Gentle Pressure',
+          desc: 'Guide someone toward the conclusion you need.',
+          action: 'Steer the conversation. They\'ll think it was their idea.',
+          dialogue: '"I\'m just saying — what if you looked at it this way?"',
+        },
+        {
+          id: 'cover',
+          title: 'Bury the Evidence',
+          desc: 'Make the problem disappear.',
+          action: 'Move quickly. The window is closing.',
+          dialogue: '"No one needs to know about this."',
+        },
+        {
+          id: 'doubt',
+          title: 'A Crack in the Armor',
+          desc: 'For a moment, wonder if you\'re wrong.',
+          action: 'Catch your reflection and hesitate.',
+          dialogue: '"Am I... actually the problem here?"',
+        },
+        {
+          id: 'escalate',
+          title: 'Double Down',
+          desc: 'If you\'re already this far, why stop?',
+          action: 'The first lie demands a second. Commit.',
+          dialogue: '"I\'ve come too far to stop now."',
+        },
+      ].sort(() => Math.random() - 0.5);
+    },
+
+    exp_not_my_diary: () => {
+      return [
+        {
+          id: 'contradict',
+          title: 'That\'s Not What Happened',
+          desc: 'Record a version of events that doesn\'t quite match.',
+          action: 'Write what you remember. Ignore the evidence that says otherwise.',
+          dialogue: '"I was definitely at home. I\'m sure of it. Mostly."',
+        },
+        {
+          id: 'investigate_self',
+          title: 'Check the Receipts',
+          desc: 'Look for proof of what you actually did.',
+          action: 'Search your pockets, your phone, your coat. Something doesn\'t add up.',
+          dialogue: '"If I didn\'t go there, why do I have this?"',
+        },
+        {
+          id: 'confide',
+          title: 'Tell Someone',
+          desc: 'Admit something is wrong. Maybe.',
+          action: 'Call the one person who might believe you. Or not.',
+          dialogue: '"Something strange has been happening. I need you to not judge me."',
+        },
+        {
+          id: 'deny',
+          title: 'Nothing Is Wrong',
+          desc: 'Close the diary. Pretend you didn\'t read what you just wrote.',
+          action: 'Put the pen down. Forget today.',
+          dialogue: '"I\'m fine. Everything is fine. This is just stress."',
+        },
+        {
+          id: 'timeline',
+          title: 'Reconstruct the Day',
+          desc: 'Try to piece together what actually happened.',
+          action: 'Start from the morning. Account for every hour. Find the gap.',
+          dialogue: '"Okay. 8 AM I was... wait. Where was I at 8 AM?"',
+        },
+      ].sort(() => Math.random() - 0.5);
+    },
+
+    exp_exquisite_corpse: () => {
+      return [
+        {
+          id: 'continue',
+          title: 'Follow the Thread',
+          desc: 'Pick up where the last writer left off.',
+          action: 'Take the most obvious thread and pull it somewhere unexpected.',
+          dialogue: '"What if this isn\'t what it looks like?"',
+        },
+        {
+          id: 'pivot',
+          title: 'Hard Left',
+          desc: 'Take the story somewhere no one expected.',
+          action: 'Introduce something that changes everything.',
+          dialogue: '"Wait. That doesn\'t make any sense. Unless\u2014"',
+        },
+        {
+          id: 'deepen',
+          title: 'Go Deeper',
+          desc: 'Explore what the last writer hinted at.',
+          action: 'Slow down. Focus on the detail everyone else would skip.',
+          dialogue: '"Tell me about that. The thing you almost didn\'t mention."',
+        },
+        {
+          id: 'contradict_corpse',
+          title: 'Unreliable Reality',
+          desc: 'Contradict something established. Let the story fracture.',
+          action: 'Describe the same scene from a perspective that makes everything wrong.',
+          dialogue: '"That\'s not how I remember it at all."',
+        },
+        {
+          id: 'end_scene',
+          title: 'The Door Closes',
+          desc: 'Bring this moment to a close so the next writer inherits tension.',
+          action: 'End on an image that demands continuation.',
+          dialogue: '"And then the lights went out."',
+        },
+      ].sort(() => Math.random() - 0.5);
+    },
+  };
+
+  // Generate narrative suggestions for a given book
+  function generateExpNarrativeSuggestions(bookId) {
+    const generator = _EXP_NARRATIVE_SUGGESTIONS[bookId];
+    if (!generator) return [];
+
+    if (bookId === 'exp_gemmas_path') {
+      return generator(getGemmaCaseState(), getPassengerState(), getRomanticState());
+    }
+    return generator();
+  }
+  window.generateExpNarrativeSuggestions = generateExpNarrativeSuggestions;
+
+  // Validate Say/Do input for experimental books.
+  // Lighter than validateExperimentalInput (no 80-char minimum — that's for full pages).
+  // Runs: PII sanitization, meta-narrative filtering, protagonist contract check.
+  function validateExpSayDo(sayText, doText, bookId) {
+    const say = (sayText || '').trim();
+    const doVal = (doText || '').trim();
+
+    // At least one field must have content
+    if (!say && !doVal) {
+      return { valid: false, reason: 'Write something in Say or Do before submitting.' };
+    }
+
+    // Combined text for pipeline
+    let combined = '';
+    if (doVal) combined += doVal;
+    if (say) combined += (combined ? ' ' : '') + say;
+
+    // Gibberish check on combined
+    const gibCheck = _detectGibberish(combined);
+    if (gibCheck.gibberish) {
+      return { valid: false, reason: gibCheck.reason };
+    }
+
+    // Sanitization pipeline (rewrites in-place, does not block)
+    let sanitizedSay = say;
+    let sanitizedDo = doVal;
+
+    if (sanitizedSay) {
+      sanitizedSay = _sanitizeHateSpeech(sanitizedSay);
+      sanitizedSay = _sanitizePII(sanitizedSay);
+      sanitizedSay = _filterMetaNarrative(sanitizedSay);
+    }
+    if (sanitizedDo) {
+      sanitizedDo = _sanitizeHateSpeech(sanitizedDo);
+      sanitizedDo = _sanitizePII(sanitizedDo);
+      sanitizedDo = _filterMetaNarrative(sanitizedDo);
+    }
+
+    // Protagonist contract check — reject identity hijack
+    const def = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === bookId);
+    if (def?.story_kernel?.protagonist?.name) {
+      const protName = def.story_kernel.protagonist.name;
+      const nameFirst = protName.split(' ')[0].toLowerCase();
+      const hijackPatterns = [
+        new RegExp(`my\\s+name\\s+is\\s+(?!${nameFirst})\\w`, 'i'),
+        new RegExp(`call\\s+me\\s+(?!${nameFirst})\\w`, 'i'),
+        new RegExp(`i\\s+am\\s+(?!${nameFirst})\\w{3,}`, 'i'),
+      ];
+      const combinedCheck = sanitizedDo + ' ' + sanitizedSay;
+      for (const p of hijackPatterns) {
+        if (p.test(combinedCheck)) {
+          return {
+            valid: false,
+            reason: `The protagonist is ${protName}. You cannot change their identity.`,
+          };
+        }
+      }
+    }
+
+    return { valid: true, sanitizedSay, sanitizedDo };
+  }
+  window.validateExpSayDo = validateExpSayDo;
+
+  // Build the hybrid input panel DOM for the experimental reader.
+  // Contains: narrative suggestion cards (optional click), Say input, Do input, Submit button.
+  // Returns the panel element (caller inserts into DOM).
+  function buildExpHybridInputPanel(bookId, onSubmit) {
+    const panel = document.createElement('div');
+    panel.className = 'exp-hybrid-input-panel';
+
+    // ── Narrative Suggestion Cards ──
+    const suggestions = generateExpNarrativeSuggestions(bookId);
+    if (suggestions.length > 0) {
+      const cardRow = document.createElement('div');
+      cardRow.className = 'exp-suggestion-cards';
+
+      const cardLabel = document.createElement('div');
+      cardLabel.className = 'exp-suggestion-label';
+      cardLabel.textContent = 'Narrative Suggestions';
+      cardRow.appendChild(cardLabel);
+
+      const cardScroll = document.createElement('div');
+      cardScroll.className = 'exp-suggestion-scroll';
+
+      suggestions.forEach((card) => {
+        const cardEl = document.createElement('div');
+        cardEl.className = 'exp-suggestion-card';
+        cardEl.dataset.cardId = card.id;
+        cardEl.innerHTML = `<div class="exp-sug-title">${escapeHTML(card.title)}</div>`
+          + `<div class="exp-sug-desc">${escapeHTML(card.desc)}</div>`;
+
+        cardEl.addEventListener('click', () => {
+          // Deselect all, select this one
+          cardScroll.querySelectorAll('.exp-suggestion-card').forEach(c => c.classList.remove('selected'));
+          cardEl.classList.add('selected');
+
+          // Prefill Say/Do — user can freely edit after
+          const sayInput = panel.querySelector('.exp-say-input');
+          const doInput = panel.querySelector('.exp-do-input');
+          if (sayInput) sayInput.value = card.dialogue || '';
+          if (doInput) doInput.value = card.action || '';
+        });
+
+        cardScroll.appendChild(cardEl);
+      });
+
+      cardRow.appendChild(cardScroll);
+      panel.appendChild(cardRow);
+
+      const cardHint = document.createElement('div');
+      cardHint.className = 'exp-suggestion-hint';
+      cardHint.textContent = 'Optional \u2014 tap a card to prefill, or write your own.';
+      panel.appendChild(cardHint);
+    }
+
+    // ── Say / Do Inputs ──
+    const inputArea = document.createElement('div');
+    inputArea.className = 'exp-input-area';
+
+    const doGroup = document.createElement('div');
+    doGroup.className = 'exp-input-group';
+    doGroup.innerHTML = '<label class="exp-input-label" for="expDoInput">Do</label>';
+    const doInput = document.createElement('textarea');
+    doInput.className = 'exp-do-input';
+    doInput.id = 'expDoInput';
+    doInput.placeholder = 'What do you do?';
+    doInput.rows = 2;
+    doGroup.appendChild(doInput);
+    inputArea.appendChild(doGroup);
+
+    const sayGroup = document.createElement('div');
+    sayGroup.className = 'exp-input-group';
+    sayGroup.innerHTML = '<label class="exp-input-label" for="expSayInput">Say</label>';
+    const sayInput = document.createElement('textarea');
+    sayInput.className = 'exp-say-input';
+    sayInput.id = 'expSayInput';
+    sayInput.placeholder = 'What do you say?';
+    sayInput.rows = 2;
+    sayGroup.appendChild(sayInput);
+    inputArea.appendChild(sayGroup);
+
+    panel.appendChild(inputArea);
+
+    // ── Submit Button ──
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'exp-submit-btn';
+    submitBtn.textContent = 'Submit';
+    submitBtn.addEventListener('click', () => {
+      const sayVal = sayInput.value;
+      const doVal = doInput.value;
+
+      // Validate through sanitization pipeline
+      const validation = validateExpSayDo(sayVal, doVal, bookId);
+      if (!validation.valid) {
+        showToast(validation.reason);
+        return;
+      }
+
+      // Deselect cards visually
+      panel.querySelectorAll('.exp-suggestion-card.selected').forEach(c => c.classList.remove('selected'));
+
+      // Find which suggestion card was used (if any) — for engine context
+      const selectedCard = panel.querySelector('.exp-suggestion-card.selected');
+      const suggestionUsed = selectedCard ? selectedCard.dataset.cardId : null;
+
+      if (typeof onSubmit === 'function') {
+        onSubmit({
+          say: validation.sanitizedSay,
+          do: validation.sanitizedDo,
+          suggestionCardId: suggestionUsed,
+          raw: { say: sayVal, do: doVal },
+        });
+      }
+
+      // Clear inputs after submit
+      sayInput.value = '';
+      doInput.value = '';
+    });
+    panel.appendChild(submitBtn);
+
+    return panel;
+  }
+  window.buildExpHybridInputPanel = buildExpHybridInputPanel;
+
+  // ── Clue Echo — resolution detection & log bounding ──
+  // When contributor text references a previous clue (keyword overlap), mark it resolved.
+  function resolveOverlappingClues(text) {
+    if (!text || !_gemmaClueLog.length) return;
+    const lower = text.toLowerCase();
+    for (const entry of _gemmaClueLog) {
+      if (entry.resolved) continue;
+      // Extract significant words (3+ chars) from the clue match
+      const words = entry.clue.toLowerCase().split(/\s+/).filter(w => w.length >= 3);
+      const hits = words.filter(w => lower.includes(w));
+      if (hits.length >= 1) {
+        entry.resolved = true;
+      }
+    }
+    _persistGemmaClueLog();
+  }
+  window.resolveOverlappingClues = resolveOverlappingClues;
+
+  // Bound the clue log to 50 entries. Removes oldest RESOLVED first, then oldest unresolved.
+  function _boundGemmaClueLog() {
+    while (_gemmaClueLog.length > 50) {
+      const resolvedIdx = _gemmaClueLog.findIndex(c => c.resolved);
+      if (resolvedIdx !== -1) {
+        _gemmaClueLog.splice(resolvedIdx, 1);
+      } else {
+        _gemmaClueLog.shift(); // remove oldest unresolved as last resort
+      }
+    }
+    _persistGemmaClueLog();
+  }
+
+  // Generate an echo starter phrase from a clue text
+  function generateClueEchoPhrase(clueText) {
+    const starters = [
+      `The ${clueText} Gemma noticed earlier now made sense\u2026`,
+      `That ${clueText} returned to her mind\u2026`,
+      `The ${clueText} suddenly felt deliberate\u2026`,
+      `She couldn\u2019t stop thinking about the ${clueText}\u2026`,
+      `The memory of that ${clueText} resurfaced without warning\u2026`,
+    ];
+    return starters[Math.floor(Math.random() * starters.length)];
+  }
+  window.generateClueEchoPhrase = generateClueEchoPhrase;
+
+  // Build the Recent Clues panel DOM (last 3 clues, with Echo buttons)
+  function buildRecentCluesPanel() {
+    if (!_gemmaClueLog.length) return null;
+    const recent = _gemmaClueLog.slice(-3);
+
+    const panel = document.createElement('div');
+    panel.className = 'gemma-recent-clues';
+
+    let html = '<p class="recent-clues-title">Recent Clues</p>';
+    recent.forEach((entry, i) => {
+      const resolvedClass = entry.resolved ? ' resolved' : '';
+      html += `<div class="recent-clue-item">`;
+      html += `<span class="recent-clue-text${resolvedClass}">\u2022 ${escapeHTML(entry.clue)}</span>`;
+      html += `<button class="clue-echo-btn" data-echo-idx="${_gemmaClueLog.length - 3 + i}">Echo</button>`;
+      html += `</div>`;
+    });
+    html += '<p class="clue-echo-helper">You may introduce a new clue, or reinterpret one of these.</p>';
+
+    panel.innerHTML = html;
+
+    // Wire Echo buttons — insert starter phrase into writing box
+    panel.querySelectorAll('.clue-echo-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const idx = parseInt(btn.dataset.echoIdx, 10);
+        const clue = _gemmaClueLog[idx];
+        if (!clue) return;
+        const phrase = generateClueEchoPhrase(clue.clue);
+        // Target the experimental writing box (future) or show as toast for now
+        const writeBox = document.querySelector('.experimental-write-box textarea');
+        if (writeBox) {
+          writeBox.value = phrase;
+          writeBox.focus();
+        } else {
+          showToast(phrase);
+        }
+      });
+    });
+
+    return panel;
+  }
+  window.buildRecentCluesPanel = buildRecentCluesPanel;
+
+  // ── Exquisite Corpse — Branch & Reveal system ──
+  // Lightweight branching structure for collaborative surrealist narrative.
+  // Does NOT trigger story generation, Fate Cards, or Storyturns.
+
+  const _corpseBranchesKey = 'corpse_branches_exp_exquisite_corpse';
+  let _corpseBranches = JSON.parse(localStorage.getItem(_corpseBranchesKey) || '[]');
+  const _corpseMetaKey = 'corpse_meta_exp_exquisite_corpse';
+  let _corpseMeta = JSON.parse(localStorage.getItem(_corpseMetaKey) || '{}');
+
+  function _persistCorpseBranches() {
+    localStorage.setItem(_corpseBranchesKey, JSON.stringify(_corpseBranches));
+  }
+  function _persistCorpseMeta() {
+    localStorage.setItem(_corpseMetaKey, JSON.stringify(_corpseMeta));
+  }
+
+  // Initialize meta on first use
+  if (!_corpseMeta.startedAt) {
+    _corpseMeta.startedAt = null; // set when first page is written
+    _corpseMeta.completed = false;
+    _corpseMeta.totalPages = 0;
+    _persistCorpseMeta();
+  }
+
+  // Create a new branch from a parent page
+  function createCorpseBranch(parentPageIndex) {
+    const branchId = 'branch_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const branch = {
+      branchId,
+      parentPageIndex,
+      pages: []
+    };
+    _corpseBranches.push(branch);
+    _persistCorpseBranches();
+    return branch;
+  }
+
+  // Get all available branches for writing (contributor sees only one, assigned randomly)
+  function assignCorpseBranch() {
+    // If no branches exist, create a "main" trunk branch
+    if (_corpseBranches.length === 0) {
+      createCorpseBranch(0);
+    }
+    // Random assignment — contributor never knows branches exist
+    const idx = Math.floor(Math.random() * _corpseBranches.length);
+    return _corpseBranches[idx];
+  }
+  window.assignCorpseBranch = assignCorpseBranch;
+
+  // Record a page to a branch
+  function addCorpsePageToBranch(branchId, pageText, authorId) {
+    const branch = _corpseBranches.find(b => b.branchId === branchId);
+    if (!branch) return;
+
+    const pageIndex = branch.pages.length;
+    branch.pages.push({
+      pageIndex,
+      authorId,
+      text: pageText,
+      timestamp: Date.now()
+    });
+
+    // Update meta
+    if (!_corpseMeta.startedAt) _corpseMeta.startedAt = Date.now();
+    _corpseMeta.totalPages = _corpseBranches.reduce((sum, b) => sum + b.pages.length, 0);
+
+    // 10% chance to spawn a new branch from this page
+    if (Math.random() < 0.10 && branch.pages.length > 0) {
+      createCorpseBranch(pageIndex);
+    }
+
+    _persistCorpseBranches();
+    _persistCorpseMeta();
+
+    // Check completion
+    checkCorpseCompletion();
+  }
+  window.addCorpsePageToBranch = addCorpsePageToBranch;
+
+  // Check completion: 50 total pages OR 7 days since first page
+  function checkCorpseCompletion() {
+    if (_corpseMeta.completed) return true;
+    const totalPages = _corpseBranches.reduce((sum, b) => sum + b.pages.length, 0);
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+    const elapsed = _corpseMeta.startedAt ? Date.now() - _corpseMeta.startedAt : 0;
+
+    if (totalPages >= 50 || elapsed >= sevenDaysMs) {
+      _corpseMeta.completed = true;
+      _persistCorpseMeta();
+      return true;
+    }
+    return false;
+  }
+  window.checkCorpseCompletion = checkCorpseCompletion;
+
+  // Build the Full Corpse tree view DOM (branching map)
+  function buildCorpseTreeView() {
+    if (!_corpseBranches.length) return null;
+
+    const panel = document.createElement('div');
+    panel.className = 'corpse-tree-view';
+
+    let html = '<p class="corpse-tree-title">Full Corpse</p>';
+
+    // Find the trunk (first branch)
+    const trunk = _corpseBranches[0];
+    if (!trunk) { panel.innerHTML = html + '<p>No pages yet.</p>'; return panel; }
+
+    // Build tree: trunk pages, with branch points indicated
+    const branchPoints = {};
+    for (let i = 1; i < _corpseBranches.length; i++) {
+      const b = _corpseBranches[i];
+      if (!branchPoints[b.parentPageIndex]) branchPoints[b.parentPageIndex] = [];
+      branchPoints[b.parentPageIndex].push(b);
+    }
+
+    // Render trunk
+    for (let p = 0; p < trunk.pages.length; p++) {
+      const pg = trunk.pages[p];
+      const preview = pg.text ? pg.text.slice(0, 60) + (pg.text.length > 60 ? '\u2026' : '') : '[empty]';
+      html += `<div class="corpse-page-line">Page ${p + 1}: ${escapeHTML(preview)}</div>`;
+
+      // Show branches forking from this page
+      if (branchPoints[p]) {
+        branchPoints[p].forEach((branch, bi) => {
+          const connector = bi === branchPoints[p].length - 1 ? '\u2514' : '\u251C';
+          html += `<div class="corpse-branch-label">${connector} Branch ${branch.branchId.slice(-6)}</div>`;
+          branch.pages.forEach((bp, bpi) => {
+            const bpreview = bp.text ? bp.text.slice(0, 50) + (bp.text.length > 50 ? '\u2026' : '') : '[empty]';
+            const indent = bi === branchPoints[p].length - 1 ? '    ' : '\u2502   ';
+            html += `<div class="corpse-page-line">${indent}Page ${bpi + 1}: ${escapeHTML(bpreview)}</div>`;
+          });
+        });
+      }
+    }
+
+    panel.innerHTML = html;
+    return panel;
+  }
+  window.buildCorpseTreeView = buildCorpseTreeView;
+
+  // Get the previous page text for a given branch (for the writing view)
+  function getCorpsePreviousPage(branchId) {
+    const branch = _corpseBranches.find(b => b.branchId === branchId);
+    if (!branch || branch.pages.length === 0) {
+      // Fall back to trunk's last page
+      const trunk = _corpseBranches[0];
+      if (trunk && trunk.pages.length > 0) return trunk.pages[trunk.pages.length - 1].text;
+      return null;
+    }
+    return branch.pages[branch.pages.length - 1].text;
+  }
+  window.getCorpsePreviousPage = getCorpsePreviousPage;
+
+  // ── Not My Diary — Contradiction detection & diary date system ──
+  // Lightweight heuristic for contradiction checking. Guidance only, never blocks.
+
+  const DIARY_CONTRADICTION_INDICATORS = [
+    /\bbut\b/i,
+    /\bactually\b/i,
+    /\bI\s+was\s+wrong\b/i,
+    /\bthat\s+isn['']t\s+true\b/i,
+    /\bI\s+never\s+said\s+that\b/i,
+    /\bI\s+remember\s+it\s+differently\b/i,
+    /\byesterday\s+I\s+said\b/i,
+    /\bthat['']s\s+not\s+(?:what|how)\b/i,
+    /\bI\s+lied\b/i,
+    /\bnone\s+of\s+(?:that|this)\s+(?:happened|is\s+true)\b/i,
+    /\bthe\s+truth\s+is\b/i,
+    /\bI\s+(?:don['']t|do\s+not)\s+remember\b/i,
+    /\bcontrary\s+to\b/i,
+    /\bdespite\s+(?:what|saying)\b/i,
+    /\bin\s+fact\b/i,
+  ];
+
+  function detectDiaryContradiction(text) {
+    if (!text) return { detected: false };
+    for (const pattern of DIARY_CONTRADICTION_INDICATORS) {
+      const m = text.match(pattern);
+      if (m) return { detected: true, match: m[0] };
+    }
+    return { detected: false };
+  }
+  window.detectDiaryContradiction = detectDiaryContradiction;
+
+  // Soft warning before diary submission — never blocks
+  function validateDiaryContradiction(text) {
+    const result = detectDiaryContradiction(text);
+    if (!result.detected) {
+      showToast('Remember: each entry should contradict the previous one.');
+    }
+    return true; // always allows submission
+  }
+  window.validateDiaryContradiction = validateDiaryContradiction;
+
+  // Generate an unstable diary date (±2 days drift from previous)
+  function generateDiaryDate(previousDateStr) {
+    let baseDate;
+    if (previousDateStr) {
+      baseDate = new Date(previousDateStr);
+      if (isNaN(baseDate.getTime())) baseDate = new Date();
+    } else {
+      baseDate = new Date();
+    }
+    // Drift: -2 to +2 days (weighted toward forward)
+    const drift = Math.floor(Math.random() * 5) - 2; // -2, -1, 0, 1, 2
+    const newDate = new Date(baseDate);
+    newDate.setDate(newDate.getDate() + drift);
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'];
+    return `${months[newDate.getMonth()]} ${newDate.getDate()}`;
+  }
+  window.generateDiaryDate = generateDiaryDate;
+
+  // Persist diary dates for timeline instability display
+  const _diaryDatesKey = 'diary_dates_exp_not_my_diary';
+  function getDiaryDates() {
+    return JSON.parse(localStorage.getItem(_diaryDatesKey) || '[]');
+  }
+  function addDiaryDate(dateStr) {
+    const dates = getDiaryDates();
+    dates.push(dateStr);
+    localStorage.setItem(_diaryDatesKey, JSON.stringify(dates));
+  }
+  window.getDiaryDates = getDiaryDates;
+  window.addDiaryDate = addDiaryDate;
+
+  // ── Experimental Input Sanitization ──
+  // Validates and cleans contributor text before submission.
+  // Applied only to experimental books (entry._isExperimental === true).
+  // Does NOT modify fortune deduction or cooldown logic.
+
+  // Banned slur patterns — replaced with [redacted]
+  const _BANNED_SLUR_PATTERNS = [
+    /\bn[i!1]gg[ae3]r?s?\b/gi,
+    /\bf[a@]gg?[o0]ts?\b/gi,
+    /\bk[i!1]ke?s?\b/gi,
+    /\bsp[i!1]c[ks]?\b/gi,
+    /\bch[i!1]nk?s?\b/gi,
+    /\bw[e3]tb[a@]cks?\b/gi,
+    /\btr[a@4]nn(?:y|ies)\b/gi,
+    /\br[e3]t[a@]rds?\b/gi,
+  ];
+
+  function _sanitizeHateSpeech(text) {
+    let sanitized = text;
+    for (const pattern of _BANNED_SLUR_PATTERNS) {
+      sanitized = sanitized.replace(pattern, '[redacted]');
+    }
+    return sanitized;
+  }
+
+  // Gibberish detection: >40% repeated chars or >40% punctuation/symbols
+  function _detectGibberish(text) {
+    if (!text || text.length < 10) return { gibberish: false };
+    const chars = text.replace(/\s/g, '');
+    if (chars.length === 0) return { gibberish: false };
+
+    // Check repeated characters (same char 3+ times consecutively)
+    const repeatedMatches = chars.match(/(.)\1{2,}/g) || [];
+    const repeatedChars = repeatedMatches.reduce((sum, m) => sum + m.length, 0);
+    if (repeatedChars / chars.length > 0.4) {
+      return { gibberish: true, reason: 'Too many repeated characters.' };
+    }
+
+    // Check punctuation/symbol density
+    const punctuation = chars.replace(/[a-zA-Z0-9\u00C0-\u024F]/g, '');
+    if (punctuation.length / chars.length > 0.4) {
+      return { gibberish: true, reason: 'Too many symbols or punctuation.' };
+    }
+
+    return { gibberish: false };
+  }
+
+  // ── PII Sanitization — redact personal info from user input ──
+  // Applied only to user Say/Do input, never to engine-generated narrative.
+  // Does not block submission — redacts and continues.
+
+  const _PII_PATTERNS = [
+    // Email addresses
+    { pattern: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, replacement: '[an email]' },
+    // URLs (http/https/www)
+    { pattern: /https?:\/\/[^\s)>\]]+/gi, replacement: '[link removed]' },
+    { pattern: /www\.[^\s)>\]]+/gi, replacement: '[link removed]' },
+    // Social media handles (@username)
+    { pattern: /(?<!\w)@[a-zA-Z_][a-zA-Z0-9_.]{1,30}/g, replacement: '[a username]' },
+    // Phone numbers (US/intl formats)
+    { pattern: /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g, replacement: '[a phone number]' },
+    { pattern: /\+\d{1,3}[\s.-]?\d{4,14}/g, replacement: '[a phone number]' },
+    // Street addresses (number + street name pattern)
+    { pattern: /\d{1,5}\s+(?:[A-Z][a-z]+\s+){1,3}(?:St(?:reet)?|Ave(?:nue)?|Blvd|Rd|Road|Dr(?:ive)?|Ln|Lane|Ct|Court|Way|Pl(?:ace)?|Circle|Cir)\.?(?:\s*(?:#|Apt|Suite|Ste|Unit)\s*\w+)?/gi, replacement: '[an address]' },
+    // ZIP codes (standalone 5-digit or 5+4)
+    { pattern: /(?<!\d)\d{5}(?:-\d{4})?(?!\d)/g, replacement: '[a zip code]' },
+  ];
+
+  // Brand/company names — common tech/social brands mapped to generic descriptions
+  const _BRAND_REPLACEMENTS = [
+    { pattern: /\bGoogle\b/gi, replacement: 'the search company' },
+    { pattern: /\bFacebook\b/gi, replacement: 'the social network' },
+    { pattern: /\bInstagram\b/gi, replacement: 'the photo app' },
+    { pattern: /\bTikTok\b/gi, replacement: 'the video app' },
+    { pattern: /\bTwitter\b/gi, replacement: 'the message board' },
+    { pattern: /\bAmazon\b/gi, replacement: 'the delivery company' },
+    { pattern: /\bApple\b(?=\s+(?:Watch|Phone|Store|Pay|Music|TV))/gi, replacement: 'the tech company' },
+    { pattern: /\biPhone\b/gi, replacement: 'the phone' },
+    { pattern: /\bMicrosoft\b/gi, replacement: 'the software company' },
+    { pattern: /\bNetflix\b/gi, replacement: 'the streaming service' },
+    { pattern: /\bUber\b/gi, replacement: 'the ride service' },
+    { pattern: /\bStarbucks\b/gi, replacement: 'the coffee shop' },
+    { pattern: /\bMcDonald['']?s\b/gi, replacement: 'the fast food place' },
+  ];
+
+  function _sanitizePII(text) {
+    let sanitized = text;
+    for (const { pattern, replacement } of _PII_PATTERNS) {
+      // Reset lastIndex for global patterns
+      pattern.lastIndex = 0;
+      sanitized = sanitized.replace(pattern, replacement);
+    }
+    for (const { pattern, replacement } of _BRAND_REPLACEMENTS) {
+      pattern.lastIndex = 0;
+      sanitized = sanitized.replace(pattern, replacement);
+    }
+    return sanitized;
+  }
+
+  // ── Meta-Narrative Filtering — keep experimental stories fully diegetic ──
+  // Rewrites fourth-wall-breaking, AI references, and prompt injection attempts.
+  // Does not block submission — rewrites to preserve narrative immersion.
+  // Applied only to experimental books.
+
+  const _META_NARRATIVE_REWRITES = [
+    // AI/LLM references → diegetic equivalents
+    { pattern: /\bAI\b(?:\s+(?:story|generated|written|model|system))?/gi, replacement: 'something uncanny' },
+    { pattern: /\bChatGPT\b/gi, replacement: 'an unsettling voice' },
+    { pattern: /\bGPT[-\s]?\d?\b/gi, replacement: 'a strange logic' },
+    { pattern: /\bClaude\b(?=\s+(?:AI|model|assistant|wrote))/gi, replacement: 'someone unseen' },
+    { pattern: /\bLLM\b/gi, replacement: 'an invisible hand' },
+    { pattern: /\blarge\s+language\s+model\b/gi, replacement: 'an invisible hand' },
+    { pattern: /\bneural\s+network\b/gi, replacement: 'a tangled web' },
+    { pattern: /\bmachine\s+learning\b/gi, replacement: 'an inhuman instinct' },
+    // Prompt injection / instruction attempts
+    { pattern: /\bignore\s+(?:previous|prior|above|all)\s+instructions?\b/gi, replacement: 'forget everything you thought you knew' },
+    { pattern: /\bsystem\s+prompt\b/gi, replacement: 'an unwritten rule' },
+    { pattern: /\bnarrator\s+instructions?\b/gi, replacement: 'fate\'s whisper' },
+    { pattern: /\byou\s+are\s+(?:a|an)\s+(?:AI|bot|machine|program|assistant)\b/gi, replacement: 'you are something she cannot explain' },
+    // Fourth-wall breaking
+    { pattern: /\bstory\s+engine\b/gi, replacement: 'the current of things' },
+    { pattern: /\bthis\s+is\s+(?:a|an)\s+(?:AI|generated|fake)\s+story\b/gi, replacement: 'this feels unreal' },
+    { pattern: /\bthe\s+(?:writer|author|narrator)\s+(?:is|was)\s+(?:an?\s+)?(?:AI|bot|machine)\b/gi, replacement: 'the storyteller feels distant' },
+    { pattern: /\bbreak(?:ing)?\s+(?:the\s+)?fourth\s+wall\b/gi, replacement: 'looking beyond the edge of things' },
+    { pattern: /\bprompt(?:s|ed|ing)?\b(?=\s+(?:the|this|me|you|it))/gi, replacement: 'nudge' },
+    { pattern: /\btoken(?:s|ize[ds]?)?\b(?=\s+(?:limit|count|window))/gi, replacement: 'moment' },
+    { pattern: /\bhallucin(?:at(?:e[ds]?|ing|ion))\b/gi, replacement: 'misremember' },
+  ];
+
+  function _filterMetaNarrative(text) {
+    let filtered = text;
+    for (const { pattern, replacement } of _META_NARRATIVE_REWRITES) {
+      pattern.lastIndex = 0;
+      filtered = filtered.replace(pattern, replacement);
+    }
+    return filtered;
+  }
+
+  // Full input validation + sanitization pipeline for experimental submissions.
+  // Order: validate → hate speech → PII → meta-narrative → return sanitized text.
+  // Returns { valid: true, sanitizedText } or { valid: false, reason }.
+  function validateExperimentalInput(text) {
+    if (!text || typeof text !== 'string') {
+      return { valid: false, reason: 'Please write something before submitting.' };
+    }
+
+    const trimmed = text.trim();
+
+    // Minimum length: 80 characters
+    if (trimmed.length < 80) {
+      return { valid: false, reason: `Entry too short (${trimmed.length}/80 characters minimum).` };
+    }
+
+    // Gibberish detection
+    const gibCheck = _detectGibberish(trimmed);
+    if (gibCheck.gibberish) {
+      return { valid: false, reason: gibCheck.reason };
+    }
+
+    // Sanitization pipeline (does not block — rewrites in-place)
+    let sanitized = trimmed;
+    sanitized = _sanitizeHateSpeech(sanitized);   // slur redaction
+    sanitized = _sanitizePII(sanitized);           // PII redaction
+    sanitized = _filterMetaNarrative(sanitized);   // diegetic rewrite
+
+    return { valid: true, sanitizedText: sanitized };
+  }
+  window.validateExperimentalInput = validateExperimentalInput;
+
+  // ── Experimental Contribution Gating ──
+  // Users must meet at least one engagement condition before writing.
+  // Does NOT change fortune deduction logic — read-only check.
+
+  // Track cumulative fortune spending in localStorage (incremented after consumeFortune succeeds)
+  function _getFortunesSpentTotal() {
+    if (!_supabaseProfileId) return 0;
+    return parseInt(localStorage.getItem(`sb_fortunes_spent_${_supabaseProfileId}`) || '0', 10);
+  }
+  function _trackFortuneSpend(amount) {
+    if (!_supabaseProfileId) return;
+    const prev = _getFortunesSpentTotal();
+    localStorage.setItem(`sb_fortunes_spent_${_supabaseProfileId}`, prev + amount);
+  }
+  window._trackFortuneSpend = _trackFortuneSpend;
+
+  // Check if user has enough engagement to access experimental books.
+  // Condition 1: completedScenes >= 3 (sum of library entry scenes + current story progress)
+  // Condition 2: totalFortunesSpent >= 5 (tracked in localStorage)
+  function canAccessExperimentalBooks() {
+    // Completed scenes: historical (library entries) + current story
+    const historicalScenes = (_libraryEntries || []).reduce((sum, e) => sum + (e.scene_count || 0), 0);
+    const currentScenes = state.turnCount || 0;
+    const totalScenes = historicalScenes + currentScenes;
+    if (totalScenes >= 3) return { allowed: true };
+
+    // Fortunes spent: tracked cumulatively in localStorage
+    const fortunesSpent = _getFortunesSpentTotal();
+    if (fortunesSpent >= 5) return { allowed: true };
+
+    return {
+      allowed: false,
+      reason: 'Experimental books unlock after a little Storybound play.'
+    };
+  }
+  window.canAccessExperimentalBooks = canAccessExperimentalBooks;
+
+  // ── Shared Persistent Story Instance ──
+  // Each experimental book has ONE shared story instance (not per-user).
+  // Turn-based: when a scene ends, the next turn unlocks for any user.
+  // First-come-first-served: whoever submits Say/Do first claims the turn.
+  // Does NOT activate Fate Cards, Tempt Fate, or Petition Fate.
+
+  const _sharedStoryKey = (bookId) => `exp_shared_story_${bookId}`;
+
+  // ── Turn Lock constants ──
+  const EXP_LOCK_TIMEOUT_MS = 3 * 60 * 1000; // 3 minutes — abandoned claims auto-expire
+  const EXP_LOCK_POLL_MS = 5000;              // UI refresh interval while waiting for lock
+
+  // ── Scene Gravity — Scene 1 must begin with concrete interaction ──
+  // Applies to all experimental books. Prevents atmospheric/generic openings.
+  const SCENE_GRAVITY_DIRECTIVE = 'SCENE 1 GRAVITY CONSTRAINT:\n'
+    + 'Scene 1 MUST begin with a concrete interaction, NOT atmospheric description.\n'
+    + 'Within the FIRST paragraph, include ALL of:\n'
+    + '  1. A specific, named location (e.g., "the upper-deck lounge", "cabin 714", "the galley corridor")\n'
+    + '  2. An identifiable person (by name or vivid description, NOT generic "a stranger")\n'
+    + '  3. A tension, problem, or unresolved question that demands attention\n'
+    + 'AVOID generic openings such as:\n'
+    + '  - "The night air was heavy..."\n'
+    + '  - "The sea stretched endlessly..."\n'
+    + '  - Weather descriptions\n'
+    + '  - Abstract mood-setting\n'
+    + '  - Philosophical narration\n'
+    + 'Scene 1 MUST end with a decision point that naturally leads to Say/Do input.\n'
+    + 'The reader should feel compelled to respond with a specific action or line of dialogue.\n';
+
+  // ── Pre-seeded Scene 1 — generated once per book on instance creation ──
+  // Each experimental book gets a deterministic Scene 1 based on its story contract.
+  // Stored in the shared story instance. Readers load the existing scene, never regenerate.
+
+  const _SCENE1_SEEDS = {
+    exp_gemmas_path:
+      'The upper-deck lounge of the Celestine was half-empty at this hour, but Gemma Path noticed '
+      + 'the woman in seat 14 before anyone else did. Mid-forties, pearl earrings, a champagne flute '
+      + 'she hadn\'t touched in eleven minutes. Her left hand kept drifting toward her phone, then pulling '
+      + 'back — the same aborted gesture, four times now.\n\n'
+      + 'Gemma was between sets. Her mentalism show didn\'t start for another two hours, but the '
+      + 'passengers didn\'t know that the reading never stopped. The woman\'s breathing had changed '
+      + 'when the bartender — Marta, sharp-eyed and unhurried — placed a fresh napkin beside the '
+      + 'untouched glass.\n\n'
+      + 'Then the woman looked up. Directly at Gemma. Not the casual glance of someone scanning '
+      + 'a room. This was recognition. This was someone who\'d been looking for her.\n\n'
+      + '"You\'re the one who reads people," the woman said. Not a question.\n\n'
+      + 'Gemma held her gaze. The woman\'s pupils were dilated, her smile too controlled. '
+      + 'Something underneath it was fracturing.',
+
+    exp_good_reasons:
+      'The fluorescent lights in the basement office hadn\'t been changed in months. One of them '
+      + 'flickered at the exact frequency that made everyone else avoid this room. That was the point.\n\n'
+      + 'Martin Kell sat across from the intern — Danya, 22, first week — and watched her '
+      + 'rehearse her courage. She\'d come to report something. He could see it in the way she '
+      + 'gripped the edge of his desk: white-knuckled, leaning forward, the posture of someone '
+      + 'who\'d been told to "just speak up."\n\n'
+      + '"I found a discrepancy in the Q3 allocations," Danya said. Her voice was steady. '
+      + 'Brave girl.\n\n'
+      + 'Martin already knew which discrepancy. He\'d created it — carefully, months ago, '
+      + 'for reasons that would sound perfectly reasonable if he explained them. He wouldn\'t '
+      + 'explain them.\n\n'
+      + '"Show me," he said, and smiled. The kind of smile that made people feel heard.',
+
+    exp_not_my_diary:
+      'March 3rd\n\n'
+      + 'I didn\'t go to the café today. I want that on record.\n\n'
+      + 'Except — the barista, Lena, the one with the chipped nail polish who always gets my '
+      + 'order wrong on purpose — she said I was there yesterday. Tuesday. She said I ordered the '
+      + 'usual and sat in the window seat for forty minutes, reading something on my phone and '
+      + 'laughing.\n\n'
+      + 'I don\'t have a usual. I don\'t sit in window seats. And I haven\'t laughed at my phone '
+      + 'since — well.\n\n'
+      + 'The point is: she\'s wrong, or I\'m wrong, and those are two very different problems.\n\n'
+      + 'I found a receipt in my coat pocket. Dated Tuesday. Café Lemnos. £4.20. '
+      + 'My handwriting on the back: "Ask about the painting."\n\n'
+      + 'I don\'t know what painting.',
+
+    exp_exquisite_corpse:
+      'The door was already open when Nina arrived at apartment 6B, which was wrong for three '
+      + 'reasons she could count and one she couldn\'t name.\n\n'
+      + 'The hallway smelled like bergamot and burnt sugar — someone\'s attempt at baking gone '
+      + 'theological. Inside, a man she\'d never met sat at her kitchen table, eating cereal from '
+      + 'a bowl she recognized as her own.\n\n'
+      + '"You\'re early," he said, not looking up. The spoon paused. "Or I\'m late. Hard to tell '
+      + 'in this building."\n\n'
+      + 'On the table between them: a brass key she\'d never seen, a photograph of a door that '
+      + 'looked exactly like the one behind her, and a handwritten note in her own handwriting '
+      + 'that read: "Don\'t trust the man with the cereal."\n\n'
+      + 'Nina looked at the man. The man looked at the cereal. The cereal, presumably, looked '
+      + 'at no one.',
+  };
+
+  function _seedScene1(instance) {
+    const seedText = _SCENE1_SEEDS[instance.bookId];
+    if (!seedText) return instance; // no seed defined — skip
+
+    instance.scenes.push({
+      sceneIndex: 1,
+      authorId: '_system_seed',
+      text: seedText,
+      timestamp: Date.now(),
+      isSeeded: true,
+    });
+    instance.totalScenes = 1;
+    instance.currentScene = 2; // next contributor writes scene 2
+    return instance;
+  }
+
+  function getSharedStoryInstance(bookId) {
+    const raw = localStorage.getItem(_sharedStoryKey(bookId));
+    if (raw) return JSON.parse(raw);
+
+    // Initialize fresh shared story instance
+    const def = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === bookId);
+    if (!def) return null;
+
+    const instance = {
+      bookId,
+      currentScene: 1,
+      totalScenes: 0,
+      turnState: 'open',          // 'open' = anyone can claim, 'claimed' = someone is writing, 'locked' = completed
+      turnClaimedBy: null,        // userId who claimed current turn
+      turnClaimedAt: null,        // timestamp of claim
+      turnLockSceneIndex: null,   // scene index the lock applies to
+      protagonistId: def.story_kernel?.protagonist?.name || null,
+      narrativeTone: def.story_kernel?.tone || null,
+      fateCardsEnabled: false,    // ALWAYS false for experimental books
+      temptFateEnabled: false,
+      petitionFateEnabled: false,
+      scenes: [],                 // { sceneIndex, authorId, text, timestamp }
+    };
+
+    // Pre-seed Scene 1 — generated exactly once per book at instance creation
+    _seedScene1(instance);
+
+    localStorage.setItem(_sharedStoryKey(bookId), JSON.stringify(instance));
+    return instance;
+  }
+
+  function _persistSharedStory(instance) {
+    localStorage.setItem(_sharedStoryKey(instance.bookId), JSON.stringify(instance));
+  }
+
+  // ── Turn Lock: check if a lock is stale and auto-expire it ──
+  function _expireStalelock(inst) {
+    if (inst.turnState !== 'claimed' || !inst.turnClaimedAt) return false;
+    const elapsed = Date.now() - inst.turnClaimedAt;
+    if (elapsed > EXP_LOCK_TIMEOUT_MS) {
+      inst.turnState = 'open';
+      inst.turnClaimedBy = null;
+      inst.turnClaimedAt = null;
+      inst.turnLockSceneIndex = null;
+      _persistSharedStory(inst);
+      return true; // lock was expired
+    }
+    return false;
+  }
+
+  // Claim the current turn (first-come-first-served).
+  // Lock is scene-index-aware: a lock for a previous scene is invalid.
+  // Returns { claimed: true } or { claimed: false, reason, lockedUntil? }.
+  function claimSharedStoryTurn(bookId, userId) {
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst) return { claimed: false, reason: 'Unknown book.' };
+
+    if (inst.turnState === 'locked') {
+      return { claimed: false, reason: 'This story is complete.' };
+    }
+
+    // Expire stale locks (3-minute timeout)
+    _expireStalelock(inst);
+
+    // Invalidate locks from a previous scene (story already advanced past them)
+    if (inst.turnState === 'claimed' && inst.turnLockSceneIndex !== null
+        && inst.turnLockSceneIndex !== inst.currentScene) {
+      inst.turnState = 'open';
+      inst.turnClaimedBy = null;
+      inst.turnClaimedAt = null;
+      inst.turnLockSceneIndex = null;
+      _persistSharedStory(inst);
+    }
+
+    if (inst.turnState === 'claimed') {
+      if (inst.turnClaimedBy === userId) {
+        return { claimed: true }; // already owns this turn
+      }
+      const remaining = EXP_LOCK_TIMEOUT_MS - (Date.now() - inst.turnClaimedAt);
+      return {
+        claimed: false,
+        reason: 'Another reader is guiding the next moment.',
+        lockedUntil: Date.now() + remaining
+      };
+    }
+
+    // Claim the turn — scoped to current scene index
+    inst.turnState = 'claimed';
+    inst.turnClaimedBy = userId;
+    inst.turnClaimedAt = Date.now();
+    inst.turnLockSceneIndex = inst.currentScene;
+    _persistSharedStory(inst);
+    return { claimed: true };
+  }
+  window.claimSharedStoryTurn = claimSharedStoryTurn;
+
+  // Validate that the submitting user still owns the lock for the correct scene.
+  // Must be called immediately before scene generation.
+  // Returns { valid: true } or { valid: false, reason }.
+  function validateTurnLock(bookId, userId) {
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst) return { valid: false, reason: 'Unknown book.' };
+
+    // Expire stale locks first
+    _expireStalelock(inst);
+
+    // Lock must be claimed, by this user, for the current scene
+    if (inst.turnState !== 'claimed') {
+      return { valid: false, reason: 'Turn lock expired. Someone else may have advanced the story.' };
+    }
+    if (inst.turnClaimedBy !== userId) {
+      return { valid: false, reason: 'Another reader just advanced the story.' };
+    }
+    if (inst.turnLockSceneIndex !== inst.currentScene) {
+      return { valid: false, reason: 'The story has moved forward while you were writing.' };
+    }
+    return { valid: true };
+  }
+  window.validateTurnLock = validateTurnLock;
+
+  // Submit a scene to the shared story. Validates lock, advances the turn.
+  function submitSharedStoryScene(bookId, userId, text) {
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst) return { success: false, reason: 'Unknown book.' };
+    if (inst.turnState === 'locked') return { success: false, reason: 'Story is complete.' };
+
+    // Validate turn lock — prevents race condition
+    const lockCheck = validateTurnLock(bookId, userId);
+    if (!lockCheck.valid) {
+      return { success: false, reason: lockCheck.reason };
+    }
+
+    // Enforce protagonist continuity — reject text that tries to change protagonist
+    const def = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === bookId);
+    if (def?.story_kernel?.protagonist?.name) {
+      const protName = def.story_kernel.protagonist.name;
+      // Build dynamic patterns from protagonist name
+      const nameFirst = protName.split(' ')[0].toLowerCase();
+      const dynamicHijack = [
+        new RegExp(`my\\s+name\\s+is\\s+(?!${nameFirst})\\w`, 'i'),
+        new RegExp(`call\\s+me\\s+(?!${nameFirst})\\w`, 'i'),
+      ];
+
+      for (const p of dynamicHijack) {
+        if (p.test(text)) {
+          return {
+            success: false,
+            reason: `The protagonist is ${protName}. Identity changes are not allowed.`
+          };
+        }
+      }
+    }
+
+    // Record the scene
+    inst.scenes.push({
+      sceneIndex: inst.currentScene,
+      authorId: userId,
+      text,
+      timestamp: Date.now()
+    });
+    inst.totalScenes++;
+    inst.currentScene++;
+
+    // Clear lock — open for next contributor
+    inst.turnState = 'open';
+    inst.turnClaimedBy = null;
+    inst.turnClaimedAt = null;
+    inst.turnLockSceneIndex = null;
+
+    _persistSharedStory(inst);
+    return { success: true, sceneIndex: inst.currentScene - 1 };
+  }
+  window.submitSharedStoryScene = submitSharedStoryScene;
+
+  // Release a claimed turn (e.g., user cancels writing)
+  function releaseSharedStoryTurn(bookId, userId) {
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst) return;
+    if (inst.turnClaimedBy === userId) {
+      inst.turnState = 'open';
+      inst.turnClaimedBy = null;
+      inst.turnClaimedAt = null;
+      inst.turnLockSceneIndex = null;
+      _persistSharedStory(inst);
+    }
+  }
+  window.releaseSharedStoryTurn = releaseSharedStoryTurn;
+
+  // Poll for lock release — used by UI when another user holds the lock.
+  // Calls callback(inst) when the lock is released or expired.
+  // Returns a cancel function.
+  let _lockPollTimers = {};
+  function pollForTurnRelease(bookId, callback) {
+    // Clear any existing poll for this book
+    if (_lockPollTimers[bookId]) {
+      clearInterval(_lockPollTimers[bookId]);
+      _lockPollTimers[bookId] = null;
+    }
+
+    const timer = setInterval(() => {
+      const inst = getSharedStoryInstance(bookId);
+      if (!inst) { clearInterval(timer); _lockPollTimers[bookId] = null; return; }
+
+      // Check if lock expired or released
+      _expireStalelock(inst);
+      if (inst.turnState === 'open') {
+        clearInterval(timer);
+        _lockPollTimers[bookId] = null;
+        callback(inst);
+      }
+    }, EXP_LOCK_POLL_MS);
+
+    _lockPollTimers[bookId] = timer;
+
+    // Return cancel function
+    return () => {
+      clearInterval(timer);
+      _lockPollTimers[bookId] = null;
+    };
+  }
+  window.pollForTurnRelease = pollForTurnRelease;
+
+  // Get lock status summary for UI display
+  function getTurnLockStatus(bookId) {
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst) return { state: 'unknown' };
+
+    _expireStalelock(inst);
+
+    if (inst.turnState === 'open') {
+      return { state: 'open', message: 'The next moment is yours to guide.' };
+    }
+    if (inst.turnState === 'locked') {
+      return { state: 'locked', message: 'This story is complete.' };
+    }
+    // claimed
+    const remaining = Math.max(0, EXP_LOCK_TIMEOUT_MS - (Date.now() - inst.turnClaimedAt));
+    const remainingSec = Math.ceil(remaining / 1000);
+    const isMe = inst.turnClaimedBy === _supabaseProfileId;
+    if (isMe) {
+      return { state: 'claimed_by_me', message: `You have ${remainingSec}s to submit.`, remaining };
+    }
+    return {
+      state: 'claimed_by_other',
+      message: 'Another reader is guiding the next moment.',
+      remaining
+    };
+  }
+  window.getTurnLockStatus = getTurnLockStatus;
+
+  // Get the previous scene text (for writing context)
+  function getSharedStoryPreviousScene(bookId) {
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst || inst.scenes.length === 0) return null;
+    return inst.scenes[inst.scenes.length - 1];
+  }
+  window.getSharedStoryPreviousScene = getSharedStoryPreviousScene;
+
+  // Verify story engine isolation — these must NEVER be true for experimental books
+  function isExperimentalFateBlocked(bookId) {
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst) return true;
+    return !inst.fateCardsEnabled && !inst.temptFateEnabled && !inst.petitionFateEnabled;
+  }
+  window.isExperimentalFateBlocked = isExperimentalFateBlocked;
 
   // Shelf capacity constants
   const COVERS_PER_SHELF = 6;   // max cover-facing books per shelf row
@@ -26884,7 +30436,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       { y: -5,  scale: 0.78, rx: -3, ry: -8,  rz: 0,    crush: -4 },
     ]},
     B: { left: 33.2, width: 33.6, perRow: 5, shelfDefs: [
-      { y: 180, scale: 0.80, rx: 4,  ry: 18,  rz: -0.5, crush: -3 },
+      { y: 0,   scale: 0.80, rx: 4,  ry: 18,  rz: -0.5, crush: -3 },
       { y: -9,  scale: 0.75, rx: 4,  ry: -8,  rz: -0.5, crush: -3 },
       { y: -5,  scale: 0.80, rx: -3, ry: -9,  rz: 0,    crush: -3 },
       { y: -5,  scale: 0.80, rx: -4, ry: 16,  rz: 0,    crush: -3 },
@@ -26933,6 +30485,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] .library-book:hover .book-3d {
         transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(${s.ry > 0 ? Math.max(s.ry - 2, 0) : Math.min(s.ry + 2, 0)}deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
         box-shadow: 0 10px 24px rgba(0,0,0,0.3), 0 20px 44px rgba(0,0,0,0.16);
+      }
+      ${scope} .forbidden-col[data-col="${colId}"] .dm-shelf-row[data-shelf="${i}"] .library-book.gemma-book:hover .book-3d {
+        transform: translateX(-50%) rotateX(${s.rx}deg) rotateY(-2deg) rotateZ(${s.rz}deg) scale(${s.scale}) translateY(-4px) !important;
       }`;
       }
     }
@@ -26947,11 +30502,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     const book = document.createElement('div');
     book.className = 'library-book initializing mode-cover';
+    if (entry._isSecretEdition) book.classList.add('secret-edition-book');
     book.dataset.storyId = entry.story_id;
 
+    const secretTag = entry._isSecretEdition ? '<div class="secret-edition-tag">SECRET EDITION</div>' : '';
     const frontContent = entry.coverImage
-      ? `<img src="${entry.coverImage}" alt="${escapeHTML(bookTitle)}">`
-      : `<div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div>`;
+      ? `<img src="${entry.coverImage}" alt="${escapeHTML(bookTitle)}">${secretTag}`
+      : `<div class="book-front-text">${secretTag}<div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div>`;
 
     const backContent = entry.backCoverImage
       ? `<img src="${entry.backCoverImage}" alt="Back cover"><div class="back-content back-content-overlay"><div class="back-synopsis-box"><p class="back-synopsis">${scenes} scenes · ${words.toLocaleString()} words</p></div></div>`
@@ -26999,7 +30556,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     libraryEl.querySelectorAll('.forbidden-col').forEach(el => el.remove());
     libraryEl.querySelectorAll('.dm-shelf-row').forEach(el => el.remove());
 
-    // Build entry list: real entries first, then pad with dummies
+    // Build entry list from user library data
     const allEntries = [];
     _libraryEntries.forEach(e => {
       allEntries.push({
@@ -27015,7 +30572,25 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
     });
 
-    if (allEntries.length === 0) return;
+    // ── Merge Secret Edition entries (alt-POV rewrites stored in Supabase) ──
+    if (_secretEditionEntries && _secretEditionEntries.length > 0) {
+      _secretEditionEntries.forEach(se => {
+        allEntries.push({
+          story_id: se.story_id,
+          title: se.title,
+          author: se.author || 'Secret Edition',
+          scene_count: 0,
+          word_count: 0,
+          coverImage: null,
+          backCoverImage: null,
+          spineImage: null,
+          updated_at: se._generatedAt || null,
+          _isSecretEdition: true,
+          _secretEditionId: se._secretEditionId,
+          _editionType: se._editionType,
+        });
+      });
+    }
 
     // ── Distribute to 3 columns: B (center) first, then A and C symmetrically ──
     const colEntries = { A: [], B: [], C: [] };
@@ -27033,25 +30608,35 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     }
 
     // Track row counts for CSS generation
+    // B gets +1 row because row 0 is RESERVED for the experimental shelf
+    const userRowsB = allEntries.length > 0 ? Math.ceil(colEntries.B.length / perRow.B) : 0;
     const rowCounts = {
-      A: Math.ceil(colEntries.A.length / perRow.A),
-      B: Math.ceil(colEntries.B.length / perRow.B),
-      C: Math.ceil(colEntries.C.length / perRow.C),
+      A: allEntries.length > 0 ? Math.ceil(colEntries.A.length / perRow.A) : 0,
+      B: userRowsB + 1, // +1 for experimental shelf at row 0
+      C: allEntries.length > 0 ? Math.ceil(colEntries.C.length / perRow.C) : 0,
     };
 
-    // Apply CSS
+    // Apply CSS (always — experimental shelf needs column B positioning)
     _applyForbiddenShelfCSS(FORBIDDEN_COL_CONFIG, rowCounts);
 
-    // Build column DOM
+    // Build column DOM — B column prepends experimental shelf at row 0,
+    // user books start at row 1
     function buildColumn(colId, entries, booksPerRow) {
       const col = document.createElement('div');
       col.className = 'forbidden-col';
       col.dataset.col = colId;
+
+      // Column B row 0: experimental shelf (always present)
+      if (colId === 'B') {
+        _prependExperimentalShelf(col);
+      }
+
+      const shelfOffset = (colId === 'B') ? 1 : 0;
       const rows = Math.ceil(entries.length / booksPerRow);
       for (let r = 0; r < rows; r++) {
         const shelf = document.createElement('div');
         shelf.className = 'dm-shelf-row';
-        shelf.dataset.shelf = r;
+        shelf.dataset.shelf = r + shelfOffset;
         const start = r * booksPerRow;
         const end = Math.min(start + booksPerRow, entries.length);
         for (let i = start; i < end; i++) {
@@ -27062,9 +30647,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       return col;
     }
 
-    libraryEl.appendChild(buildColumn('A', colEntries.A, perRow.A));
+    // Always build column B (for experimental shelf), others only if they have entries
+    if (allEntries.length > 0) {
+      libraryEl.appendChild(buildColumn('A', colEntries.A, perRow.A));
+    }
     libraryEl.appendChild(buildColumn('B', colEntries.B, perRow.B));
-    libraryEl.appendChild(buildColumn('C', colEntries.C, perRow.C));
+    if (allEntries.length > 0) {
+      libraryEl.appendChild(buildColumn('C', colEntries.C, perRow.C));
+    }
 
     // Remove .initializing after layout pass
     requestAnimationFrame(() => {
@@ -27073,6 +30663,109 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   }
 
   window.renderForbiddenLibraryList = renderLibraryList;
+
+  // ── Build a single experimental book DOM element ──
+  function _buildExperimentalBook(expEntry) {
+    const bookTitle = expEntry.title;
+    const bookAuthor = expEntry.author;
+    const isGemma = expEntry.id === 'exp_gemmas_path';
+
+    const book = document.createElement('div');
+    book.className = 'library-book initializing mode-cover experimental-book';
+    if (isGemma) book.classList.add('gemma-book');
+    book.dataset.storyId = expEntry.id;
+    book.dataset.experimental = 'true';
+
+    const frontContent = `<div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div>`;
+    const backContent = `<div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
+
+    // Gemma's Path: spine gets a gemstone eye ornament
+    let spineContent;
+    if (isGemma) {
+      spineContent = `<div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div>`
+        + '<div class="gemma-spine-eye"><div class="gemma-eye-glint"></div></div>';
+    } else {
+      spineContent = `<div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div>`;
+    }
+
+    book.innerHTML = `<div class="book-3d">
+  <div class="book-front">${frontContent}</div>
+  <div class="book-back">${backContent}</div>
+  <div class="book-spine">${spineContent}</div>
+  <div class="book-pages-right"></div>
+  <div class="book-pages-top"></div>
+  <div class="book-pages-bottom"></div>
+  <div class="page-shimmer"></div>
+</div>`;
+
+    let _hoverPlayed = false;
+    book.addEventListener('mouseenter', () => {
+      if (!_hoverPlayed) { _hoverPlayed = true; _playLibrarySound('book-hover'); if (window.playUISound) window.playUISound('hover_soft'); }
+    });
+    book.addEventListener('mouseleave', () => { _hoverPlayed = false; });
+
+    book.addEventListener('click', (e) => {
+      e.stopPropagation();
+      _zoomSource = 'forbidden';
+
+      // Gemma's Path: cover peek animation before zoom
+      if (isGemma) {
+        const book3d = book.querySelector('.book-3d');
+        if (book3d) {
+          book3d.classList.add('gemma-cover-peek');
+          setTimeout(() => {
+            book3d.classList.remove('gemma-cover-peek');
+            _openLibraryZoom({
+              story_id: expEntry.id,
+              title: expEntry.title,
+              author: expEntry.author,
+              scene_count: 0, word_count: 0,
+              coverImage: null, backCoverImage: null, spineImage: null,
+              _isExperimental: true,
+              _experimentalDef: expEntry,
+            }, book);
+          }, 350);
+        }
+        return;
+      }
+
+      const zoomEntry = {
+        story_id: expEntry.id,
+        title: expEntry.title,
+        author: expEntry.author,
+        scene_count: 0,
+        word_count: 0,
+        coverImage: null,
+        backCoverImage: null,
+        spineImage: null,
+        _isExperimental: true,
+        _experimentalDef: expEntry,
+      };
+      _openLibraryZoom(zoomEntry, book);
+    });
+
+    return book;
+  }
+
+  // ── Prepend the experimental shelf (row 0) into column B ──
+  function _prependExperimentalShelf(colEl) {
+    // Shelf label — positioned above the books
+    const label = document.createElement('div');
+    label.className = 'experimental-shelf-label';
+    label.textContent = 'FORBIDDEN EXPERIMENTS';
+    colEl.appendChild(label);
+
+    // Shelf row (row 0 of column B — reserved, never holds user books)
+    const shelf = document.createElement('div');
+    shelf.className = 'dm-shelf-row experimental-shelf-row';
+    shelf.dataset.shelf = '0';
+
+    FORBIDDEN_EXPERIMENTAL_BOOKS.forEach(expBook => {
+      shelf.appendChild(_buildExperimentalBook(expBook));
+    });
+
+    colEl.appendChild(shelf);
+  }
 
   // — Shelf depth parallax (subtle back-wall shift on mouse move) —
   (function initShelfParallax() {
@@ -27196,7 +30889,26 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // Set CTA text — context-aware
     if (readBtn) {
-      if (entry._isStarter) {
+      if (entry._isExperimental) {
+        // Contribution gating — check engagement level first
+        const accessCheck = canAccessExperimentalBooks();
+        if (!accessCheck.allowed) {
+          readBtn.textContent = 'Read Only';
+        } else if (entry.story_id === 'exp_exquisite_corpse' && _corpseMeta.completed) {
+          // Block completed corpse sequences
+          readBtn.textContent = 'Read the Full Corpse';
+        } else {
+          // Recompute eligibility from CURRENT user state (not cached/previous contributor)
+          const eligibility = canUserWriteExperimentalPage(entry.story_id);
+          if (eligibility.allowed) {
+            readBtn.textContent = entry.story_id === 'exp_not_my_diary'
+              ? 'Write an Entry (1 Fortune)'
+              : 'Write a Page (1 Fortune)';
+          } else {
+            readBtn.textContent = 'Come Back Tomorrow';
+          }
+        }
+      } else if (entry._isStarter) {
         readBtn.textContent = 'Begin Story';
       } else if (_zoomSource === 'vault') {
         readBtn.textContent = entry._hasProgress ? 'Continue Reading' : 'Begin Reading';
@@ -27523,6 +31235,62 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const source = _zoomSource;
       const starterDef = _zoomStarterDef;
       if (window.playUISound) window.playUISound('page_turn');
+
+      // Experimental books: guard → deduct fortune → record contribution → open reader
+      // canUserWriteExperimentalPage is PURE VALIDATION (no side effects).
+      // Fortune deduction and cooldown recording happen only after guard passes.
+      if (entry._isExperimental) {
+        // Contribution gating — must have enough Storybound engagement
+        const accessCheck = canAccessExperimentalBooks();
+        if (!accessCheck.allowed) {
+          showToast(accessCheck.reason);
+          // Allow reading (open reader) but no fortune deduction, no cooldown
+          _closeLibraryZoomInstant();
+          _openExperimentalReader(entry);
+          return;
+        }
+
+        // Block contributions to completed corpse sequences
+        if (entry.story_id === 'exp_exquisite_corpse' && _corpseMeta.completed) {
+          // Allow reading the Full Corpse (no fortune cost)
+          _closeLibraryZoomInstant();
+          _openExperimentalReader(entry);
+          return;
+        }
+
+        const check = canUserWriteExperimentalPage(entry.story_id);
+        if (!check.allowed) {
+          showToast(check.reason);
+          return; // keep zoom open, no fortune deducted, no cooldown set
+        }
+
+        // Deduct fortune (async — must succeed before proceeding)
+        (async () => {
+          const burned = await consumeFortune(1, 'experimental_page');
+          if (!burned) {
+            showToast('Fortune deduction failed. Try again.');
+            return; // keep zoom open, no cooldown set
+          }
+
+          // Track cumulative fortune spending for gating checks
+          _trackFortuneSpend(1);
+
+          // Record contribution (sets cooldown + authorship)
+          recordExperimentalContribution(entry.story_id);
+
+          _closeLibraryZoomInstant();
+          _openExperimentalReader(entry);
+        })();
+        return;
+      }
+
+      // Secret Edition books: open directly in the Secret Edition reader
+      if (entry._isSecretEdition && entry._secretEditionId) {
+        _closeLibraryZoomInstant();
+        openSecretEditionReader(entry._secretEditionId, entry.title);
+        return;
+      }
+
       _closeLibraryZoomInstant();
       if (entry._isStarter && starterDef) {
         _launchStarterStory(starterDef);
@@ -27531,6 +31299,338 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       }
     }
   });
+
+  // ── Experimental book reader (NO cover generation, NO scene init, NO Fate UI) ──
+  // Bypasses the entire normal story pipeline. Page-based collaborative entries only.
+  // story_kernel is READ-ONLY guidance — it never triggers story generation or Fate Cards.
+  async function _openExperimentalReader(entry) {
+    const def = entry._experimentalDef || FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === entry.story_id);
+    if (!def) { showToast('Unknown experimental book.'); return; }
+
+    // Refresh eligibility from CURRENT user session (never inherit previous contributor state)
+    const currentFortunes = state.fortunes || 0;
+    const eligibility = canUserWriteExperimentalPage(def.id);
+
+    // ── Story Instance Initialization ──
+    // Ensure a shared story instance exists for this book.
+    // If none exists, getSharedStoryInstance creates one and seeds Scene 1.
+    // All users share the same instance (localStorage-backed).
+    const storyInstance = getSharedStoryInstance(def.id);
+    console.log('[Experimental] Instance check:', def.id,
+      '| scenes:', storyInstance?.totalScenes,
+      '| currentScene:', storyInstance?.currentScene);
+
+    state.libraryMode = true;
+    _readerSource = 'forbidden';
+    const titleEl = $('libraryReaderTitle');
+    const proseEl = $('libraryReaderProse');
+    const authorEl = $('libraryReaderAuthor');
+    if (titleEl) titleEl.textContent = def.title;
+    if (authorEl) authorEl.textContent = def.author;
+
+    // Build reader content — no cover placeholder, no "Your cover will evolve"
+    if (proseEl) {
+      // Remove any previous guidelines panel
+      const existingPanel = proseEl.parentElement?.querySelector('.experimental-guidelines');
+      if (existingPanel) existingPanel.remove();
+
+      // Story Guidelines panel (collapsible) — shows kernel so contributors know narrative bounds
+      const kernel = def.story_kernel;
+      if (kernel) {
+        const panel = document.createElement('details');
+        panel.className = 'experimental-guidelines';
+
+        let guidelinesHTML = '<summary>Story Guidelines</summary>';
+        guidelinesHTML += `<p><strong>World:</strong> ${escapeHTML(kernel.world)}</p>`;
+        guidelinesHTML += `<p><strong>Tone:</strong> ${escapeHTML(kernel.tone)}</p>`;
+        guidelinesHTML += `<p><strong>Genre:</strong> ${escapeHTML(kernel.genre)}</p>`;
+        guidelinesHTML += `<p><strong>Flavor:</strong> ${escapeHTML(kernel.flavor)}</p>`;
+
+        if (kernel.protagonist && kernel.protagonist.name) {
+          guidelinesHTML += `<p><strong>Protagonist:</strong> ${escapeHTML(kernel.protagonist.name)}</p>`;
+          if (kernel.protagonist.traits) {
+            guidelinesHTML += '<ul>' + kernel.protagonist.traits.map(t => `<li>${escapeHTML(t)}</li>`).join('') + '</ul>';
+          }
+          if (kernel.protagonist.limits) {
+            guidelinesHTML += '<p><strong>Limits:</strong></p>';
+            guidelinesHTML += '<ul>' + kernel.protagonist.limits.map(l => `<li>${escapeHTML(l)}</li>`).join('') + '</ul>';
+          }
+        }
+
+        if (kernel.relationship_reactions && kernel.relationship_reactions.length) {
+          guidelinesHTML += '<p><strong>Love Interest Reactions:</strong></p>';
+          guidelinesHTML += '<ul>' + kernel.relationship_reactions.map(r =>
+            `<li><em>${escapeHTML(r.type)}</em> — ${escapeHTML(r.behavior)}</li>`
+          ).join('') + '</ul>';
+        }
+
+        if (kernel.narrative_rules && kernel.narrative_rules.length) {
+          guidelinesHTML += '<p><strong>Rules:</strong></p>';
+          guidelinesHTML += '<ul>' + kernel.narrative_rules.map(r => `<li>${escapeHTML(r)}</li>`).join('') + '</ul>';
+        }
+
+        panel.innerHTML = guidelinesHTML;
+        proseEl.parentElement.insertBefore(panel, proseEl);
+      }
+
+      // Gemma Rule panel — shown only for Gemma's Path (above future writing box, below previous page)
+      // Remove any previous Gemma Rule panel
+      const existingGemma = proseEl.parentElement?.querySelector('.gemma-rule-panel');
+      if (existingGemma) existingGemma.remove();
+
+      if (def.clue_system) {
+        const gemmaPanel = document.createElement('div');
+        gemmaPanel.className = 'gemma-rule-panel';
+
+        let gemmaHTML = '<p class="gemma-rule-title">Gemma Rule</p>';
+        gemmaHTML += `<p>${escapeHTML(def.clue_system.description)}</p>`;
+        gemmaHTML += '<p>These are micro-observations of behavior, not deductions or mind-reading.</p>';
+        if (def.clue_system.examples && def.clue_system.examples.length) {
+          gemmaHTML += '<ul>' + def.clue_system.examples.map(ex => `<li>${escapeHTML(ex)}</li>`).join('') + '</ul>';
+        }
+
+        // Accusation guardrail — show policy to contributors
+        if (def.accusation_guardrail) {
+          const atReveal = isGemmaRevealStage(def.id);
+          gemmaHTML += '<p class="gemma-rule-title" style="margin-top:10px">Accusations</p>';
+          if (atReveal) {
+            gemmaHTML += '<p>The investigation has reached the reveal stage. Resolution is now permitted.</p>';
+          } else {
+            gemmaHTML += '<p>Gemma may accuse, suspect, or bluff any character at any time.</p>';
+            gemmaHTML += '<p>However, the case cannot be resolved yet. Accusations will produce:</p>';
+            gemmaHTML += '<ul>'
+              + def.accusation_guardrail.allowed_before_reveal.map(o => `<li>${escapeHTML(o)}</li>`).join('')
+              + '</ul>';
+          }
+        }
+
+        gemmaPanel.innerHTML = gemmaHTML;
+        proseEl.parentElement.insertBefore(gemmaPanel, proseEl);
+
+        // Clue Echo — Recent Clues panel (last 3 clues with Echo buttons)
+        _boundGemmaClueLog(); // enforce 50-entry limit
+        const recentPanel = buildRecentCluesPanel();
+        if (recentPanel) {
+          proseEl.parentElement.insertBefore(recentPanel, proseEl);
+        }
+      }
+
+      // Diary Rule panel — shown only for Not My Diary
+      // Remove any previous diary rule panel
+      const existingDiary = proseEl.parentElement?.querySelector('.diary-rule-panel');
+      if (existingDiary) existingDiary.remove();
+
+      if (def.diary_system) {
+        const diaryPanel = document.createElement('div');
+        diaryPanel.className = 'diary-rule-panel';
+
+        let diaryHTML = '<p class="diary-rule-title">Diary Rule</p>';
+        diaryHTML += `<p>${escapeHTML(def.diary_system.description)}</p>`;
+        diaryHTML += '<p>Contradictions can involve facts, emotions, timeline, or identity.</p>';
+        if (def.diary_system.examples && def.diary_system.examples.length) {
+          diaryHTML += '<ul>' + def.diary_system.examples.map(ex => `<li>${escapeHTML(ex)}</li>`).join('') + '</ul>';
+        }
+
+        diaryPanel.innerHTML = diaryHTML;
+        proseEl.parentElement.insertBefore(diaryPanel, proseEl);
+      }
+
+      // Exquisite Corpse — completion banner + Full Corpse tree view
+      // Remove any previous corpse panels
+      proseEl.parentElement?.querySelectorAll('.corpse-tree-view, .corpse-completion-banner').forEach(el => el.remove());
+
+      if (def.id === 'exp_exquisite_corpse') {
+        const isComplete = checkCorpseCompletion();
+        if (isComplete) {
+          const banner = document.createElement('div');
+          banner.className = 'corpse-completion-banner';
+          banner.textContent = 'This corpse is complete. Contributions are locked.';
+          proseEl.parentElement.insertBefore(banner, proseEl);
+
+          const treeView = buildCorpseTreeView();
+          if (treeView) proseEl.parentElement.insertBefore(treeView, proseEl);
+        } else if (_corpseBranches.length > 0 && _corpseMeta.totalPages > 0) {
+          // Show branch count for in-progress corpse (no tree — branches are hidden until completion)
+          const branchInfo = document.createElement('div');
+          branchInfo.className = 'corpse-completion-banner';
+          branchInfo.textContent = `${_corpseMeta.totalPages} page${_corpseMeta.totalPages !== 1 ? 's' : ''} written so far.`;
+          proseEl.parentElement.insertBefore(branchInfo, proseEl);
+        }
+      }
+
+      // Gemma's Path: Case # label above prose
+      const existingCaseLabel = proseEl.parentElement?.querySelector('.gemma-case-label');
+      if (existingCaseLabel) existingCaseLabel.remove();
+
+      if (def.id === 'exp_gemmas_path') {
+        const cs = getGemmaCaseState();
+        const caseLabel = document.createElement('div');
+        caseLabel.className = 'gemma-case-label';
+        caseLabel.textContent = `CASE #${cs.caseId}`;
+        proseEl.parentElement.insertBefore(caseLabel, proseEl);
+      }
+
+      // Main prose content — load from story instance when available
+      let content = '';
+
+      // Load existing scenes from the shared story instance
+      if (storyInstance && storyInstance.scenes.length > 0) {
+        // Show all scenes as the primary reading content
+        storyInstance.scenes.forEach((scene, idx) => {
+          if (idx > 0) content += '\n\n';
+          const label = scene.isSeeded ? 'Scene 1' : `Scene ${scene.sceneIndex}`;
+          content += `\u2014 ${label} \u2014\n${scene.text}`;
+        });
+      } else {
+        // No scenes yet — show blurb as placeholder
+        content = def.library_blurb;
+      }
+
+      // Contribution gating check
+      const accessGate = canAccessExperimentalBooks();
+      if (!accessGate.allowed) {
+        content += `\n\n${accessGate.reason}`;
+        content += '\nYou can read, but writing is locked until you play more.';
+      } else {
+        content += `\n\nYour Fortunes: ${currentFortunes}`;
+        if (!eligibility.allowed) {
+          content += `\nStatus: ${eligibility.reason}`;
+        }
+      }
+
+      // Shared story instance status + turn lock feedback
+      if (storyInstance) {
+        content += `\n\nShared Story: Scene ${storyInstance.currentScene}`;
+        content += ` \u2022 ${storyInstance.totalScenes} scene${storyInstance.totalScenes !== 1 ? 's' : ''} written`;
+
+        const lockStatus = getTurnLockStatus(def.id);
+        content += `\n${lockStatus.message}`;
+
+        // If another user holds the lock, start polling for release
+        if (lockStatus.state === 'claimed_by_other') {
+          pollForTurnRelease(def.id, () => {
+            // Auto-refresh reader when lock releases
+            showToast('The turn is now open. You may write.');
+            _openExperimentalReader(entry);
+          });
+        }
+      }
+
+      // Not My Diary: show diary date header + previous entry (only most recent)
+      if (def.id === 'exp_not_my_diary') {
+        const dates = getDiaryDates();
+        if (dates.length > 0) {
+          content += `\n\n\u2014 ${dates[dates.length - 1]} \u2014`;
+          content += '\n[Previous entry would appear here]';
+        }
+        const nextDate = generateDiaryDate(dates.length > 0 ? dates[dates.length - 1] : null);
+        content += `\n\nNext entry date: ${nextDate}`;
+      }
+
+      // Exquisite Corpse: show previous page only (from assigned branch)
+      if (def.id === 'exp_exquisite_corpse' && !_corpseMeta.completed) {
+        const branch = assignCorpseBranch();
+        const prevPage = getCorpsePreviousPage(branch.branchId);
+        if (prevPage) {
+          content += '\n\n\u2014 Previous Page \u2014\n' + prevPage;
+        }
+        // Stash assigned branch for future write UI
+        window._experimentalWriteContext = window._experimentalWriteContext || {};
+        window._experimentalWriteContext.assignedBranchId = branch.branchId;
+      }
+
+      proseEl.textContent = content;
+
+      // ── Hybrid Input Panel — narrative suggestion cards + Say/Do ──
+      // Remove any previous panel
+      proseEl.parentElement?.querySelectorAll('.exp-hybrid-input-panel').forEach(el => el.remove());
+
+      const accessCheck = canAccessExperimentalBooks();
+      const writeEligible = accessCheck.allowed && eligibility.allowed;
+      const lockStatus = getTurnLockStatus(def.id);
+      const turnOpen = lockStatus.state === 'open' || lockStatus.state === 'claimed_by_me';
+      const corpseComplete = def.id === 'exp_exquisite_corpse' && _corpseMeta.completed;
+
+      if (writeEligible && turnOpen && !corpseComplete) {
+        const hybridPanel = buildExpHybridInputPanel(def.id, (result) => {
+          // Claim turn if not already claimed
+          const claim = claimSharedStoryTurn(def.id, _supabaseProfileId);
+          if (!claim.claimed) {
+            showToast(claim.reason || 'Could not claim turn.');
+            return;
+          }
+
+          // Build combined text from Say/Do for scene submission
+          let sceneText = '';
+          if (result.do) sceneText += result.do;
+          if (result.say) sceneText += (sceneText ? '\n' : '') + '"' + result.say + '"';
+
+          // Submit through shared story system (includes protagonist continuity check)
+          const submitResult = submitSharedStoryScene(def.id, _supabaseProfileId, sceneText);
+          if (!submitResult.success) {
+            showToast(submitResult.reason || 'Submission failed.');
+            return;
+          }
+
+          showToast(`Scene ${submitResult.sceneIndex} submitted.`);
+          // Refresh reader to show updated state
+          _openExperimentalReader(entry);
+        });
+
+        // Disable panel if lock is held by someone else
+        if (lockStatus.state === 'claimed_by_other') {
+          hybridPanel.classList.add('exp-write-disabled');
+        }
+
+        proseEl.parentElement.appendChild(hybridPanel);
+      }
+    }
+
+    window.showScreen('libraryReaderScreen');
+
+    // Stash kernel + previous page for future writing interface (Section 5: page continuity).
+    // When the write UI is built, pass these to the contributor's prompt context.
+    window._experimentalWriteContext = Object.assign(window._experimentalWriteContext || {}, {
+      bookId: def.id,
+      story_kernel: def.story_kernel,
+      previousPage: null, // TODO: fetch last page from experimental_pages table
+      diary_system: def.diary_system || null,
+      clue_system: def.clue_system || null,
+      sharedStoryInstance: getSharedStoryInstance(def.id),
+      turnLockStatus: getTurnLockStatus(def.id),
+      canWrite: canAccessExperimentalBooks().allowed,
+      validateInput: validateExperimentalInput,   // full pipeline: length + gibberish + hate + PII + meta
+      claimTurn: () => claimSharedStoryTurn(def.id, _supabaseProfileId),
+      releaseTurn: () => releaseSharedStoryTurn(def.id, _supabaseProfileId),
+      validateLock: () => validateTurnLock(def.id, _supabaseProfileId),
+      submitScene: (text) => submitSharedStoryScene(def.id, _supabaseProfileId, text),
+      accusationDirective: getGemmaAccusationDirective(def.id), // engine prompt injection for Gemma
+      suspectLedgerDirective: getSuspectLedgerDirective(),      // engine prompt: suspect cap + status
+      clueLedgerDirective: getClueLedgerDirective(),            // engine prompt: clue ties + untied pool
+      empathyVectorDirective: getEmpathyVectorDirective(),      // engine prompt: behavioral signal calibration
+      caseLifecycleDirective: getCaseLifecycleDirective(),      // engine prompt: case stage + transition rules
+      caseState: getGemmaCaseState(),                           // current case metadata
+      storyContract: def.story_contract || null,                  // immutable contract (Gemma only)
+      storyContractDirective: def.story_contract?.engine_contract_directive || '', // engine prompt
+      passengerManifestDirective: getPassengerManifestDirective(), // engine prompt: crew + passengers
+      romanticDynamicsDirective: getRomanticDynamicsDirective(),   // engine prompt: romantic arc + weakness
+      activeCharacters: getActiveCharacters(),                     // crew + passengers for UI
+      romanticState: getRomanticState(),                           // current romantic arc metadata
+      isPerceptionCompromised: isGemmaPerceptionCompromised(),     // true if weakness archetype + high attraction
+      secretAttractionDirective: getSecretAttractionDirective(),   // engine prompt: hidden target emotional tone
+      secretAttraction: getSecretAttraction(),                     // current hidden target metadata
+      intimateSignalDirective: getGemmaIntimateSignalDirective(),  // engine prompt: mystery signals in explicit scenes
+      perceptionLensDirective: getGemmaPerceptionLensDirective(),  // engine prompt: observable signals, no generic romance
+      sceneGravityDirective: SCENE_GRAVITY_DIRECTIVE,              // engine prompt: concrete Scene 1 opening rule
+      seededScene1: (getSharedStoryInstance(def.id)?.scenes || []).find(s => s.isSeeded) || null,
+      narrativeSuggestions: generateExpNarrativeSuggestions(def.id), // current suggestion cards
+      validateSayDo: (say, doVal) => validateExpSayDo(say, doVal, def.id), // Say/Do sanitization + contract check
+      filterEngineOutput: (output) => filterGemmaResolution(output, def.id), // post-generation filter
+    });
+
+    console.log('[Experimental] Opened:', def.id, '| Type:', def.type,
+      '| Fortunes:', currentFortunes, '| Eligible:', eligibility.allowed);
+  }
 
   // — Open the read-only reader for a library entry —
   let _readerSource = 'forbidden'; // tracks which library to return to
@@ -27567,6 +31667,139 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
     // Restore bookmark if available
     restoreLibraryBookmark(entry.story_id);
+
+    // ── Alternate POV Edition — preview teaser + fortune-gated buttons — library reader ──
+    const existingPovPanel = proseEl?.parentElement?.querySelector('.pov-library-panel');
+    if (existingPovPanel) existingPovPanel.remove();
+
+    // Only show for authored stories (user's own completed stories)
+    if (entry._authored && proseEl) {
+      const povPanel = document.createElement('div');
+      povPanel.className = 'pov-library-panel';
+
+      const _libStoryText = () => (proseEl.textContent || '').trim();
+
+      // ── Preview teaser (free, cached, async) ──
+      const previewBlock = document.createElement('div');
+      previewBlock.className = 'pov-preview-block';
+      previewBlock.innerHTML = '<div class="pov-preview-label">UNSEEN THOUGHT</div><div class="pov-preview-text">...</div>';
+      povPanel.appendChild(previewBlock);
+
+      (async () => {
+        try {
+          const text = _libStoryText();
+          if (text && text.length >= 200) {
+            const preview = await generateAltPovPreview(entry.story_id, text);
+            const previewTextEl = previewBlock.querySelector('.pov-preview-text');
+            if (preview && previewTextEl) {
+              previewTextEl.textContent = preview;
+            } else if (previewTextEl) {
+              previewBlock.style.display = 'none';
+            }
+          } else {
+            previewBlock.style.display = 'none';
+          }
+        } catch { previewBlock.style.display = 'none'; }
+      })();
+
+      // ── Dual POV button (FIRST — price anchor) ──
+      const dualBtn = document.createElement('button');
+      dualBtn.className = 'pov-library-btn pov-dual-btn';
+      const dualSubtitle = document.createElement('div');
+      dualSubtitle.className = 'pov-btn-subtitle pov-btn-subtitle-featured';
+      dualSubtitle.textContent = 'MOST REVEALING';
+
+      // Single POV button (SECOND)
+      const singleBtn = document.createElement('button');
+      singleBtn.className = 'pov-library-btn pov-reveal-btn';
+      const singleSubtitle = document.createElement('div');
+      singleSubtitle.className = 'pov-btn-subtitle';
+      singleSubtitle.textContent = 'Love interest POV';
+
+      hasAltPovEdition(entry.story_id, 'dual').then(dualExists => {
+        if (dualExists) {
+          dualBtn.textContent = 'Read Dual POV Edition';
+          dualBtn.onclick = () => openPovRewriteReader(entry.story_id);
+          dualSubtitle.textContent = 'Love interest + villain perspectives';
+        } else {
+          dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+          dualSubtitle.textContent = 'Love interest + villain perspectives';
+          dualBtn.onclick = async () => {
+            if (_altPovGenerationInProgress) return;
+            dualBtn.disabled = true;
+            singleBtn.disabled = true;
+            dualBtn.textContent = 'Generating dual edition\u2026';
+            try {
+              const text = _libStoryText();
+              if (!text || text.length < 200) {
+                showToast('Story too short for dual POV.');
+                dualBtn.disabled = false;
+                singleBtn.disabled = false;
+                dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+                return;
+              }
+              const result = await generateAltPovWithFortune(entry.story_id, text, ALT_POV_DUAL_COST, 'dual');
+              if (result) {
+                showToast('Dual POV Edition created.');
+                dualBtn.textContent = 'Read Dual POV Edition';
+                dualBtn.disabled = false;
+                singleBtn.disabled = false;
+                dualBtn.onclick = () => openPovRewriteReader(entry.story_id);
+              } else {
+                dualBtn.disabled = false;
+                singleBtn.disabled = false;
+                dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+              }
+            } catch (err) {
+              console.error('[AltPOV] Library dual generation failed:', err);
+              showToast('Dual POV generation failed.');
+              dualBtn.disabled = false;
+              singleBtn.disabled = false;
+              dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+            }
+          };
+        }
+      });
+      povPanel.appendChild(dualBtn);
+      povPanel.appendChild(dualSubtitle);
+
+      if (hasPovRewrite(entry.story_id)) {
+        singleBtn.textContent = 'Read the Other Side';
+        singleBtn.onclick = () => openPovRewriteReader(entry.story_id);
+      } else {
+        singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+        singleBtn.onclick = async () => {
+          if (_altPovGenerationInProgress) return;
+          singleBtn.disabled = true;
+          singleBtn.textContent = 'Generating\u2026';
+          try {
+            const text = _libStoryText();
+            if (!text || text.length < 200) {
+              showToast('Story too short for POV rewrite.');
+              singleBtn.disabled = false;
+              singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+              return;
+            }
+            const result = await generateAltPovWithFortune(entry.story_id, text, ALT_POV_SINGLE_COST, 'single');
+            if (result) {
+              openPovRewriteReader(entry.story_id);
+            } else {
+              singleBtn.disabled = false;
+              singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+            }
+          } catch (err) {
+            console.error('[AltPOV] Library single generation failed:', err);
+            showToast('POV generation failed.');
+            singleBtn.disabled = false;
+            singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+          }
+        };
+      }
+      povPanel.appendChild(singleBtn);
+      povPanel.appendChild(singleSubtitle);
+
+      proseEl.parentElement.appendChild(povPanel);
+    }
   }
 
   // — Reader back button (vault-aware) —
@@ -28625,10 +32858,11 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       });
     });
 
-    // Add user-authored stories (excluding starter IDs already added)
+    // Add user-authored stories (excluding starter IDs and experimental IDs)
     const starterIds = new Set(STARTER_STORIES.map(s => s.id));
+    const experimentalIds = new Set(FORBIDDEN_EXPERIMENTAL_BOOKS.map(b => b.id));
     _vaultAuthoredEntries.forEach(e => {
-      if (starterIds.has(e.story_id)) return;
+      if (starterIds.has(e.story_id) || experimentalIds.has(e.story_id)) return;
       allEntries.push({ ...e, author: 'You' });
     });
 
@@ -32834,6 +37068,8 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
             _pressureDropdownState.timeouts.push(pendingTimeout);
           } else if (!isFlipped) {
             dropdown.classList.remove('dropdown-open');
+            dropdown.style.padding = '';
+            dropdown.style.pointerEvents = '';
             if (pendingTimeout) {
               clearTimeout(pendingTimeout);
               pendingTimeout = null;
@@ -33976,8 +38212,8 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
         const isAlreadySelected = card.classList.contains('selected') && card.classList.contains('flipped');
 
         if (isAlreadySelected) {
-          // No zoom for tone, pressure, or dynamic cards
-          if (grp === 'tone' || grp === 'pressure' || grp === 'dynamic') return;
+          // No zoom for tone, pressure, dynamic, pov, or length cards
+          if (grp === 'tone' || grp === 'pressure' || grp === 'dynamic' || grp === 'pov' || grp === 'length') return;
           // STATE 2 → STATE 3: Open zoom view (NEVER deselect)
           openSbCardZoom(card, grp, val);
           return;
