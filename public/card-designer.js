@@ -26,6 +26,82 @@
 
   // Track all modifications: selector → { prop: value }
   const mods = new Map();
+  const MODS_STORAGE_KEY = 'card_designer_mods';
+  const CW_STORAGE_KEY = 'card_designer_cw';
+
+  // Persist mods + containerWidths to localStorage
+  function persistMods() {
+    try {
+      const obj = {};
+      for (const [sel, props] of mods) obj[sel] = props;
+      localStorage.setItem(MODS_STORAGE_KEY, JSON.stringify(obj));
+      const cwObj = {};
+      for (const [sel, cw] of containerWidths) cwObj[sel] = cw;
+      localStorage.setItem(CW_STORAGE_KEY, JSON.stringify(cwObj));
+    } catch (e) { /* quota */ }
+  }
+
+  // Load mods from localStorage into memory
+  function loadMods() {
+    try {
+      const raw = localStorage.getItem(MODS_STORAGE_KEY);
+      if (!raw) return;
+      const obj = JSON.parse(raw);
+      for (const [sel, props] of Object.entries(obj)) {
+        mods.set(sel, props);
+      }
+      const cwRaw = localStorage.getItem(CW_STORAGE_KEY);
+      if (cwRaw) {
+        const cwObj = JSON.parse(cwRaw);
+        for (const [sel, cw] of Object.entries(cwObj)) {
+          containerWidths.set(sel, cw);
+        }
+      }
+    } catch (e) { /* parse error */ }
+  }
+
+  // Apply persisted styles as a <style> element (works even without design mode)
+  function applyPersistedStyles() {
+    const raw = localStorage.getItem(MODS_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const obj = JSON.parse(raw);
+      const cwRaw = localStorage.getItem(CW_STORAGE_KEY);
+      const cwObj = cwRaw ? JSON.parse(cwRaw) : {};
+      const cqiProps = new Set(['top', 'left', 'right', 'bottom', 'width', 'height', 'font-size']);
+      let css = '/* Card Designer persisted styles */\n';
+      for (const [sel, props] of Object.entries(obj)) {
+        const isCardFaceChild = sel.includes('sb-card-face');
+        const cw = cwObj[sel];
+        css += `${sel} {\n`;
+        for (const [p, v] of Object.entries(props)) {
+          let outputVal = v;
+          if (isCardFaceChild && cqiProps.has(p) && cw) {
+            // Convert stored px values to cqi for proper scaling
+            const m = typeof v === 'string' && v.match(/^(-?[\d.]+)px$/);
+            if (m) {
+              const cqiVal = Math.round((parseFloat(m[1]) / cw * 100) * 100) / 100;
+              outputVal = cqiVal + 'cqi';
+            }
+          }
+          css += `    ${p}: ${outputVal} !important;\n`;
+        }
+        css += '}\n';
+      }
+      let styleEl = document.getElementById('card-designer-persisted');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'card-designer-persisted';
+        document.head.appendChild(styleEl);
+      }
+      styleEl.textContent = css;
+    } catch (e) { /* parse error */ }
+  }
+
+  // Load saved mods into memory on init
+  loadMods();
+  // Apply persisted styles immediately so cards render correctly
+  applyPersistedStyles();
 
   // Which elements inside cards are designable
   const ELEMENT_SELECTORS = [
@@ -206,6 +282,7 @@
     }
 
     refreshPanel();
+    persistMods();
   }
 
   // ── Selection (click to select for keyboard control) ─────────────────

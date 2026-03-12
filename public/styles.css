@@ -3737,6 +3737,14 @@ select:-webkit-autofill {
     opacity: 0.7;
     margin-bottom: 6px;
 }
+.pay-card-tier-perks {
+    font-family: 'Lora', serif;
+    font-size: 0.5em;
+    color: #8b6914;
+    opacity: 0.6;
+    line-height: 1.4;
+    margin-bottom: 6px;
+}
 .pay-card-tier .pay-card-btn {
     font-size: 0.6em;
     padding: 4px 10px;
@@ -5920,9 +5928,16 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
         0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
-/* Gold filter overlay on the experimental shelf — behind books */
+/* Gold back-wall on the experimental shelf — top shelf only */
 .experimental-shelf-row {
     position: relative;
+    background: linear-gradient(
+        180deg,
+        rgb(42, 33, 14) 0%,
+        rgb(50, 39, 16) 40%,
+        rgb(44, 34, 14) 80%,
+        rgb(36, 28, 12) 100%
+    ) !important;
 }
 .experimental-shelf-row::before {
     content: '';
@@ -5930,13 +5945,13 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     inset: -20px -8% -6px;
     background: linear-gradient(
         180deg,
-        rgba(201, 168, 76, 0.06) 0%,
-        rgba(201, 168, 76, 0.12) 30%,
-        rgba(201, 168, 76, 0.10) 70%,
-        rgba(201, 168, 76, 0.04) 100%
+        rgba(201, 168, 76, 0.10) 0%,
+        rgba(201, 168, 76, 0.18) 30%,
+        rgba(201, 168, 76, 0.14) 70%,
+        rgba(201, 168, 76, 0.06) 100%
     );
-    border-top: 1px solid rgba(201, 168, 76, 0.15);
-    border-bottom: 1px solid rgba(201, 168, 76, 0.10);
+    border-top: 1px solid rgba(201, 168, 76, 0.20);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.12);
     border-radius: 2px;
     z-index: 0;
     pointer-events: none;
@@ -5976,26 +5991,54 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 
 /* ── Gemma's Path — visual distinction ── */
 
-/* Spine ornament: oval gemstone eye */
-.gemma-spine-eye {
+/* Gemma book: dark navy spine + back, gold text */
+.gemma-book .book-spine {
+    background: #0d1520 !important;
+}
+.gemma-spine-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 10px;
-    height: 6px;
-    border-radius: 50%;
-    background: radial-gradient(ellipse at center,
-        rgba(120, 200, 180, 0.7) 0%,
-        rgba(80, 160, 140, 0.5) 40%,
-        rgba(40, 100, 80, 0.3) 70%,
-        transparent 100%
-    );
-    box-shadow:
-        0 0 3px rgba(120, 200, 180, 0.4),
-        inset 0 0 2px rgba(255, 255, 255, 0.3);
-    pointer-events: none;
-    z-index: 2;
+    inset: 0;
+    z-index: 1;
+}
+.gemma-book .book-back {
+    background: linear-gradient(180deg, #0d1520 0%, #162035 50%, #0d1520 100%) !important;
+}
+.gemma-back .back-title {
+    color: #d4a843 !important;
+    font-family: 'Playfair Display', 'Lora', serif !important;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-shadow:
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 0 6px rgba(212, 168, 67, 0.15);
+}
+.gemma-back .back-synopsis {
+    color: #111 !important;
+    font-family: 'Lora', serif !important;
+}
+.gemma-back .back-meta {
+    color: rgba(201, 168, 76, 0.6) !important;
+    font-family: 'Lora', serif !important;
+    letter-spacing: 0.06em;
+}
+
+/* Gemma zoom overrides — spine + back in opaque navy
+   .book-3d is moved into #zoomBookContainer (not .gemma-book),
+   so target via child classes that survive the move */
+#zoomBookContainer .book-back:has(.gemma-back) {
+    background: linear-gradient(160deg, #0d1520 0%, #162035 50%, #0d1520 100%) !important;
+}
+#zoomBookContainer .book-spine:has(.gemma-spine-img) {
+    background: #0d1520 !important;
+}
+
+/* Spine ornament: oval gemstone eye — hidden */
+.gemma-spine-eye {
+    display: none;
 }
 
 /* Glint highlight — sweeps across the gemstone */
@@ -6040,6 +6083,16 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     color: rgba(120, 200, 180, 0.55);
     margin-bottom: 10px;
     text-shadow: 0 0 8px rgba(120, 200, 180, 0.15);
+}
+
+/* Setting image — Gemma Path cruise poster */
+.gemma-setting-img {
+    display: block;
+    width: 100%;
+    max-width: 520px;
+    margin: 12px auto 24px;
+    border-radius: 4px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* ── Experimental Guidelines Panel (collapsible) ── */
@@ -6571,6 +6624,91 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 .exp-submit-btn:active {
     transform: translateY(0);
+}
+
+/* ── Diary Input Panel — Not My Diary (user-written mode) ── */
+.exp-diary-input-panel {
+    margin-top: 24px;
+    padding: 20px;
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    border-radius: 6px;
+    background: rgba(10, 10, 10, 0.6);
+}
+.exp-diary-guidance {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+.exp-diary-guidance-label {
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    color: var(--gold, #c9a84c);
+    letter-spacing: 0.08em;
+    font-variant: small-caps;
+}
+.exp-diary-guidance-hint {
+    font-size: 0.72em;
+    color: rgba(201, 168, 76, 0.5);
+    font-style: italic;
+}
+.exp-diary-guidance-rule {
+    font-size: 0.72em;
+    color: rgba(201, 168, 76, 0.65);
+    margin-top: 4px;
+}
+.exp-diary-textarea {
+    width: 100%;
+    min-height: 180px;
+    padding: 14px;
+    font-family: 'Lora', serif;
+    font-size: 0.9em;
+    line-height: 1.7;
+    color: var(--ink, #d4d0c8);
+    background: rgba(20, 20, 20, 0.8);
+    border: 1px solid rgba(201, 168, 76, 0.12);
+    border-radius: 4px;
+    resize: vertical;
+}
+.exp-diary-textarea::placeholder {
+    color: rgba(201, 168, 76, 0.3);
+    font-style: italic;
+}
+.exp-diary-textarea:focus {
+    outline: none;
+    border-color: rgba(201, 168, 76, 0.35);
+}
+.exp-diary-word-count {
+    font-size: 0.7em;
+    color: rgba(201, 168, 76, 0.4);
+    text-align: right;
+    margin: 6px 0 12px;
+}
+.exp-diary-wc-low { color: rgba(220, 160, 60, 0.6); }
+.exp-diary-wc-ok { color: rgba(120, 200, 120, 0.6); }
+.exp-diary-wc-high { color: rgba(220, 120, 60, 0.6); }
+
+/* ── EXPERIMENTAL tag on book covers ── */
+.exp-book-tag {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Lora', serif;
+    font-size: 0.35em;
+    font-variant: small-caps;
+    letter-spacing: 0.18em;
+    color: rgba(201, 168, 76, 0.55);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 3;
+    white-space: nowrap;
+}
+
+/* Write-disabled overlay */
+.exp-diary-input-panel.exp-write-disabled {
+    opacity: 0.4;
+    pointer-events: none;
 }
 
 /* Crown ornament */
@@ -18285,7 +18423,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.31cqi; left: 25cqi; width: 54.53cqi; font-size: 8.78cqi;
+    top: 173.31cqi; left: 18.92cqi; width: 76.01cqi; font-size: 8.78cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -18301,7 +18439,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.97cqi; left: 26.35cqi; width: 34.55cqi; font-size: 8.78cqi;
+    top: 172.97cqi; left: 20.95cqi; width: 72.3cqi; font-size: 8.78cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -18317,7 +18455,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.31cqi; left: 22.97cqi; width: 50.6cqi; font-size: 8.78cqi;
+    top: 173.31cqi; left: 18.92cqi; width: 76.35cqi; font-size: 8.78cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -18333,7 +18471,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.64cqi; left: 44.59cqi; width: 16.81cqi; font-size: 8.78cqi;
+    top: 172.64cqi; left: 29.05cqi; width: 56.08cqi; font-size: 8.78cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -18594,14 +18732,54 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     top: 45.83cqi; left: 20.83cqi; font-size: 9.52cqi;
 }
 
-/* ── POV First — Card Designer locked positions (grid + portal) ── */
+/* ── POV — Card Designer locked positions (grid) ── */
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -17.57cqi; left: 12.16cqi; width: 82.43cqi; font-size: 8.11cqi;
+    top: -18.92cqi; left: 15.54cqi; width: 78.38cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 174.32cqi; left: 31.42cqi; width: 40.48cqi; font-size: 8.78cqi;
+    top: 174.32cqi; left: 23.99cqi; width: 67.57cqi; font-size: 8.78cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: -18.24cqi; left: 13.51cqi; width: 77.03cqi; font-size: 8.11cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 173.65cqi; left: 16.89cqi; width: 79.39cqi; font-size: 8.78cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: -18.24cqi; left: 12.16cqi; width: 79.73cqi; font-size: 8.11cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 172.3cqi; left: 19.59cqi; width: 78.04cqi; font-size: 8.78cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; position: absolute; bottom: auto;
+    top: 75.68cqi; left: 12.84cqi; width: 77.03cqi; font-size: 8.11cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 172.3cqi; left: 14.86cqi; width: 83.45cqi; font-size: 8.78cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: -19.59cqi; left: 12.16cqi; width: 79.73cqi; font-size: 8.11cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 173.65cqi; left: 22.97cqi; width: 70.95cqi; font-size: 8.78cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: -20.27cqi; left: 12.16cqi; width: 79.73cqi; font-size: 8.11cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 172.97cqi; left: 16.89cqi; width: 80.07cqi; font-size: 8.78cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
@@ -18789,7 +18967,8 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.71cqi; left: 28.44cqi; width: 47.3cqi; font-size: 8.91cqi;
+    top: 172.71cqi; left: 14cqi; width: 80cqi; font-size: 8.91cqi;
+    white-space: nowrap;
 }
 /* ── Forbidden — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {

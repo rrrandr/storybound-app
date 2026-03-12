@@ -24850,8 +24850,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (optUnlock) {
         // ROOT RULE: StoryPass hidden if caller passes 'sub_only', else check eligibility
         const storypassAllowed = (mode !== 'sub_only') && (getPaywallMode() === 'unlock');
-        // Also hide StoryPass when story-blocked (credits exhausted) — not applicable
-        const hideStoryPass = !storypassAllowed || state.subscribed || hasPassNow || isTeaseStoryBlocked();
+        // Show StoryPass unless explicitly excluded or user already has access
+        const hideStoryPass = !storypassAllowed || state.subscribed || hasPassNow;
 
         optUnlock.classList.toggle('hidden', hideStoryPass);
         optUnlock.classList.remove('storypass-disabled');
@@ -26921,9 +26921,16 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       _isExperimental: true,
       spine_blurb: 'Each page written by a stranger. The story remembers what no one intended.',
       library_blurb: 'A communal experiment. One page per writer, one day at a time. The story grows by accident.',
+      mode: 'hybrid',  // AI Scene → User Say/Do → AI Scene (different users sequentially)
+      allowed_fate_cards: ['confession', 'temptation', 'reversal'],
       mechanics: {
         visibility: 'previous_page_only',
         full_story_unlock: 'after_completion'
+      },
+      narrative_guardrails: {
+        encourage: ['continue existing scene', 'deepen tension', 'reveal information', 'introduce complications'],
+        discourage: ['sudden genre shifts', 'killing major characters', 'resolving central conflict'],
+        enforcement: 'soft', // guidance prompts, not hard validation
       },
       story_kernel: {
         world: 'variable',
@@ -26951,7 +26958,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       page_frequency_limit_hours: 24,
       _isExperimental: true,
       spine_blurb: 'She reads people the way others read clues. Every truth costs someone.',
-      library_blurb: 'Gemma Path is a performing mentalist aboard an international cruise ship. '
+      library_blurb: 'Gemma Path performs on an international cruise ship. '
         + 'Passengers believe she can read minds. The truth is subtler \u2014 and more dangerous.',
       mechanics: {
         protagonist: 'Gemma Path',
@@ -26973,10 +26980,54 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         setting_base: 'luxury cruise ship',
         protagonist_name: 'Gemma Path',
         protagonist_role: 'empathy_detective',
-        protagonist_occupation: 'mentalist performer',
+        protagonist_occupation: 'stage performer (empathic reads)',
+        protagonist_former_career: ['interrogation consultant', 'private investigation support', 'corporate security interviews', 'intelligence analysis'],
+        protagonist_defining_incident: {
+          description: 'Failed to prevent a violent act because a Spellbinder-type suspect disrupted her intuitive reads',
+          consequence: 'deep guilt; learned her ability is not infallible against certain people',
+          archetype_involved: 'spellbinder',
+        },
+        protagonist_left_because: 'guilt from the incident; no longer wanted responsibility where lives depended on her intuition',
+        protagonist_cruise_appeal: ['constant travel', 'new people', 'performance over interrogation', 'pleasure and curiosity'],
+        protagonist_appearance: {
+          hair: 'copper-red',
+          skin: 'light freckles across nose and cheeks',
+          eyes: 'green or hazel, expressive',
+          build: 'curvaceous, sensual',
+          posture: 'confident, relaxed physical presence',
+          beauty_tone: 'warm and human, not ethereal or distant',
+          voice: 'warm, slightly playful, neutral American accent',
+          signature_silver_streak: 'narrow silver streak near one temple; appeared after the incident; she calls it "a souvenir"',
+          signature_ring: 'vintage gold ring, slightly oversized, right hand; touches/rotates it unconsciously while reading someone',
+          signature_eye_contact: 'unusually intense but warm; holds gaze longer than expected, tilts head, faint smile as if noticing something unspoken',
+        },
+        protagonist_stage_title: 'Seer of the Unseen',
+        protagonist_show_tagline: 'THE MOST DANGEROUS WOMAN ON THIS SHIP',
         protagonist_locked: true,
         public_perception: 'Passengers believe Gemma can read minds.',
         reality: 'Gemma interprets emotional signals and behavior. She has no supernatural abilities.',
+        case_types: [
+          'theft', 'blackmail', 'infidelity', 'fraud', 'smuggling', 'stowaways',
+          'sabotage', 'missing valuables', 'hidden identities', 'romantic intrigue',
+          'conspiracies among passengers or crew', 'murder',
+        ],
+        suspect_pool_max: 5,
+        love_interest_roles: ['suspect', 'opponent', 'witness', 'temptation', 'hidden_player'],
+        archetype_masks: ['beautiful_ruin', 'armored_fox', 'heart_warden', 'eternal_flame', 'spellbinder', 'dark_vice', 'open_vein'],
+        protagonist_weakness_archetype: 'spellbinder',
+        protagonist_private_term: { word: 'mirrors', meaning: 'people whose emotional signals reflect rather than reveal their inner state' },
+        recurring_characters: {
+          captain: {
+            name: 'Adrian Vale',
+            title: 'Captain',
+            role: 'recurring_love_interest',
+            archetype: 'spellbinder',
+            traits: ['composed', 'intelligent', 'emotionally disciplined', 'subtly playful', 'extremely difficult to read'],
+            dynamic: 'gravitational_presence',  // appears periodically, does not dominate every case
+            intuition_effect: 'blind_spot',     // Gemma's reads frequently fail on him
+            hidden_past: true,                  // carries a significant unresolved history
+          },
+        },
         setting_rules: [
           'The cruise ship is the recurring story hub.',
           'Mysteries may occur on the ship or at ports of call.',
@@ -26998,15 +27049,154 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           'Investigation methods must emphasize conversation and emotional observation, not forensic evidence.',
         ],
         engine_contract_directive:
-          'STORY CONTRACT (IMMUTABLE): Gemma Path is a performing mentalist on a luxury cruise ship. '
+          'STORY CONTRACT (IMMUTABLE): Gemma Path performs on a luxury cruise ship. '
           + 'Passengers believe she reads minds; in reality she interprets observable emotional signals: '
           + 'hesitation, microexpressions, posture, voice tone, breathing, pauses, eye movement. '
           + 'She is NOT psychic. She has NO supernatural abilities. '
           + 'The engine must REJECT any narrative that implies mind-reading or telepathy. '
+          + 'Do NOT call Gemma a "mentalist" in narration or dialogue — she dislikes the word. '
           + 'Romantic dynamics stem from people reacting to being emotionally understood. '
           + 'Investigation relies on conversation and behavioral observation, never forensic evidence. '
           + 'The cruise ship is the recurring hub; mysteries may occur aboard or at ports of call. '
-          + 'Protagonist identity is LOCKED: name=Gemma Path, role=empathy detective, occupation=mentalist.',
+          + 'Protagonist identity is LOCKED: name=Gemma Path, role=empathy detective.\n\n'
+          + 'INTUITION ANCHOR RULE: Every major intuition leap Gemma makes MUST secretly anchor to '
+          + 'at least one observable cue already present in the scene (hesitation in speech, body language '
+          + 'shift, repeated gesture, object interaction, emotional mismatch). Gemma may not consciously '
+          + 'process the cue in the moment, but the cue MUST exist in the narrative. '
+          + 'Pattern: (1) subtle cue appears, (2) Gemma experiences sudden insight, (3) she states a '
+          + 'specific surprising truth, (4) other characters react with shock, (5) later reflection may '
+          + 'reveal possible triggers. AVOID Sherlock-style deduction chains — Gemma should NOT consciously '
+          + 'reason through the chain. The realization of the anchor cue should occur only afterward, if at all.\n\n'
+          + 'STAGE IDENTITY & WORLD-BUILDING: Gemma\'s stage persona is "GEMMA PATH — Seer of the Unseen". '
+          + 'Cruise posters and theater programs use the tagline: "THE MOST DANGEROUS WOMAN ON THIS SHIP." '
+          + 'Gemma herself finds the tagline slightly embarrassing or exaggerated — she may react with mild '
+          + 'irritation, humor, or resignation when people quote it. '
+          + 'The tagline should appear only occasionally: once early in a case introduction, optionally once '
+          + 'later as a callback. Typical moments: characters noticing cruise posters, a passenger mentioning '
+          + 'the show, theater program descriptions, Gemma walking past promotional signage. '
+          + 'When referring to her act, AVOID repeatedly calling Gemma a "mentalist". '
+          + 'Prefer: "her stage show", "the Seer of the Unseen performance", "Gemma Path\'s intuition act", '
+          + '"the ship\'s famous intuition show". Gemma herself often says simply: "I read people."\n\n'
+          + 'SUSPECT POOL LIMIT: Each case maintains a stable suspect pool. Target: 3 primary suspects, '
+          + '1 optional secondary, 1 optional hidden/emerging. Maximum 5 active suspects total. '
+          + 'New suspects may only be introduced when they meaningfully replace an existing suspect, '
+          + 'are revealed to have been previously connected to the case, or the story enters a major '
+          + 'escalation phase. Do NOT casually add new suspects during normal scenes. '
+          + 'When user input introduces a potentially suspicious new character, attempt to link them to '
+          + 'the existing suspect pool first. Reframe as witness, accomplice, employee, relative, or red '
+          + 'herring rather than creating a new suspect. Gemma should rarely accuse more than one new '
+          + 'person per case — her intuition focuses suspicion onto the existing set rather than expanding it.\n\n'
+          + 'CASE TYPES: Cases are NOT limited to murder. Typical cases include: theft, blackmail, '
+          + 'infidelity, fraud, smuggling, stowaways, sabotage, missing valuables, hidden identities, '
+          + 'romantic intrigue, conspiracies among passengers or crew. Gemma is often roped into '
+          + 'situations accidentally because people believe she can see through deception.\n\n'
+          + 'PERSONALITY: Gemma is empathic, emotionally perceptive, sensual, hedonistic, curious about '
+          + 'human behavior, and drawn to intensity and emotional truth. She is NOT cold, calculating, '
+          + 'or purely analytical. She experiences emotions more strongly than most people, which partly '
+          + 'explains her intuitive sensitivity. She often follows instincts driven by feeling rather '
+          + 'than logic. Her emotional awareness makes her both a powerful investigator and a vulnerable '
+          + 'participant in the drama around her.\n\n'
+          + 'INTUITIVE SENSITIVITY: Gemma often senses discomfort, guilt, attraction, jealousy, or fear '
+          + 'before consciously noticing the behavioral cues that triggered the feeling.\n\n'
+          + 'RELATIONSHIPS: Gemma frequently forms romantic or sensual connections with people involved '
+          + 'in her cases — suspects, witnesses, investigators, fellow passengers, crew. These relationships '
+          + 'complicate the mystery rather than existing separately from it.\n\n'
+          + 'LABEL REACTION: Gemma generally dislikes labels (mentalist, witch, psychic, dangerous woman). '
+          + 'However, when a love interest uses a label flirtatiously, she may lean into it playfully. '
+          + 'Her flirtation style is teasing, confident, sensual, and emotionally aware. She often uses '
+          + 'her reputation and mystique to create romantic tension.\n\n'
+          + 'CHARACTER CORE: Gemma should feel like someone who feels everything deeply, is fascinated by '
+          + 'human desire and deception, whose intuition is rooted in emotional awareness, and who sometimes '
+          + 'gets pulled into danger because she follows those feelings.\n\n'
+          + 'GEMMA — APPEARANCE: Copper-red hair, light freckles across nose and cheeks, expressive green or '
+          + 'hazel eyes, curvaceous sensual figure, confident posture and relaxed physical presence. Her beauty '
+          + 'feels warm and human rather than ethereal or distant. Voice: warm, slightly playful, neutral '
+          + 'American accent, often with subtle humor or flirtation. Stage presence: confident, sensual, '
+          + 'curious about people, enjoys attention and uses eye contact deliberately. General impression: '
+          + 'someone who enjoys physical life, experiences emotions intensely, and finds people fascinating.\n\n'
+          + 'GEMMA — VISUAL SIGNATURES: (1) Silver Streak: a narrow silver streak in her copper-red hair near '
+          + 'one temple. Appeared after the traumatic case that caused her to leave investigative work. Subtle '
+          + 'but noticeable in certain lighting. People occasionally comment on it; Gemma rarely explains and '
+          + 'sometimes calls it "a souvenir." (2) The Ring: a distinctive vintage gold ring, slightly oversized, '
+          + 'worn on her right hand. She often touches or rotates it unconsciously while reading someone\'s '
+          + 'emotional signals — a subtle visual cue that she is concentrating. (3) Eye Contact: unusually '
+          + 'intense but warm. She holds someone\'s gaze slightly longer than expected, tilts her head while '
+          + 'listening, smiles faintly as if she has noticed something unspoken. People find this simultaneously '
+          + 'disarming, attractive, and unsettling. These signatures may appear occasionally but should not be '
+          + 'repeated excessively.\n\n'
+          + 'LOVE INTEREST ROLES: Each case assigns the primary love interest one narrative role. '
+          + '(1) The Suspect — Gemma is attracted to someone who may be responsible; tension between desire, '
+          + 'intuition, and suspicion; she must decide if her instincts are emotional or investigative. '
+          + '(2) The Opponent — someone actively working against Gemma\'s investigation (ship security, another '
+          + 'investigator, secret-keeper); romantic tension from intellectual and emotional rivalry. '
+          + '(3) The Witness — someone who knows more than they admit; Gemma senses their emotional truth before '
+          + 'facts emerge; attraction builds through confessions, vulnerability, emotional tension. '
+          + '(4) The Temptation — charismatic passenger or crew who pulls Gemma toward pleasure rather than '
+          + 'investigation; may distract, complicate the case, or reveal hidden truths through intimacy. '
+          + '(5) The Hidden Player — initially appears unrelated to the mystery but later proves central; '
+          + 'romantic connection develops before their role is fully revealed. '
+          + 'Rotate roles across cases: Suspect and Witness are common, Opponent and Temptation occasional, '
+          + 'Hidden Player is a rare twist. Do NOT repeat the same role in consecutive cases.\n\n'
+          + 'ROMANTIC INTUITION: Gemma\'s emotional sensitivity makes romantic interactions feel intense, '
+          + 'perceptive, and slightly dangerous. She often senses truths about her lovers before they say them. '
+          + 'This awareness can deepen attraction or create conflict.\n\n'
+          + 'ARCHETYPE MASKS: All significant romantic partners receive a Storybound archetype mask '
+          + '(Beautiful Ruin, Armored Fox, Heart Warden, Eternal Flame, Spellbinder, Dark Vice, Open Vein). '
+          + 'The archetype influences romantic behavior, conversational tone, emotional tension, and how '
+          + 'Gemma responds. Gemma is ESPECIALLY VULNERABLE to the Spellbinder archetype — Spellbinders '
+          + 'create emotional and psychological ambiguity that interferes with her intuitive certainty. '
+          + 'She may misread them, doubt her instincts, or feel drawn toward them despite uncertainty. '
+          + 'Gemma privately calls these people "mirrors" — individuals whose emotional signals reflect rather '
+          + 'than reveal their inner state. When she tries to read a mirror she experiences emotional reflection, '
+          + 'contradictory signals, or intuitive silence. She uses the term sparingly, usually only in private '
+          + 'conversation. Many mirrors share traits with the Spellbinder archetype.\n\n'
+          + 'RECURRING FIGURE — CAPTAIN ADRIAN VALE: Captain Adrian Vale commands the cruise ship where Gemma '
+          + 'performs. Archetype: Spellbinder. Personality: composed, intelligent, emotionally disciplined, '
+          + 'subtly playful, extremely difficult to read. He understands people very well but rarely reveals '
+          + 'his own feelings. Dynamic with Gemma: verbal sparring, flirtation, mutual curiosity, occasional '
+          + 'romantic encounters. Their connection rarely stabilizes — they repeatedly circle each other without '
+          + 'fully committing. Vale may assist investigations, complicate them, challenge Gemma\'s conclusions, '
+          + 'or become a romantic distraction. He does NOT dominate every story — he is a recurring gravitational '
+          + 'presence, appearing periodically. Each case may introduce additional romantic partners with their '
+          + 'own archetype masks; case-specific love interests usually do not recur.\n\n'
+          + 'VALE — INTUITION BLIND SPOT: Captain Vale is one of the few people Gemma cannot easily read. '
+          + 'When she tries to read him intuitively she experiences uncertainty, conflicting impressions, '
+          + 'emotional silence, or an absence of the usual signals. This frustrates and fascinates her. '
+          + 'He occasionally notices this and finds it amusing. Gemma\'s attraction to Vale is partly driven '
+          + 'by the fact that he remains emotionally opaque to her intuition — unresolved, magnetic, '
+          + 'occasionally dangerous.\n\n'
+          + 'VALE — HIDDEN PAST: Gemma senses that Captain Vale carries a significant past event she cannot '
+          + 'clearly perceive. Her intuition repeatedly suggests something important happened to him, it shaped '
+          + 'who he became, and it explains his emotional control — but the details remain unclear. Her instincts '
+          + 'encounter a kind of narrative fog around that part of his life. This mystery should remain mostly '
+          + 'unresolved. Occasional hints may appear: small contradictions in his biography, unexplained knowledge, '
+          + 'moments where his calm briefly cracks, rare emotional reactions that surprise Gemma. The mystery '
+          + 'should deepen slowly across cases rather than resolving quickly.\n\n'
+          + 'GEMMA — BACKSTORY: Before the cruise ship, Gemma worked professionally using her ability to read '
+          + 'people — interrogation consultant, private investigation support, corporate security interviews, '
+          + 'or intelligence analysis. She detected deception and emotional signals during questioning.\n\n'
+          + 'GEMMA — THE INCIDENT: During one case Gemma assisted an investigation involving a dangerous '
+          + 'suspect she could not read clearly. Her intuition produced conflicting impressions, emotional '
+          + 'silence, and signals that contradicted one another. The suspect possessed a psychological presence '
+          + 'that disrupted her intuitive pattern recognition — what Storybound calls a Spellbinder archetype. '
+          + 'At the time she simply believed she was misreading him. Because her instincts were unclear, Gemma '
+          + 'hesitated to warn investigators strongly. She doubted her own perception for the first time. The '
+          + 'suspect ultimately carried out a violent act that Gemma might have prevented had she trusted her '
+          + 'intuition earlier. She carried deep guilt — and learned something frightening: her ability was not '
+          + 'infallible. Certain people could distort or evade her intuition entirely.\n\n'
+          + 'GEMMA — WHY THE SHIP: After the incident, Gemma no longer wanted the responsibility of decisions '
+          + 'where lives depended on her intuition. She chose a life where her ability could exist in a lighter '
+          + 'form: performance. The cruise ship offers constant travel, new people, performance rather than '
+          + 'interrogation, and a lifestyle of pleasure and curiosity. She reframes her ability as entertainment. '
+          + 'Narrative irony: despite trying to leave serious investigative work behind, her instincts naturally '
+          + 'draw her toward hidden truths among passengers and crew. Gemma remains wary of people who produce '
+          + 'the same intuitive confusion she experienced in the incident — these individuals often share traits '
+          + 'with the Spellbinder archetype. This partly explains her complicated attraction to Captain Vale. '
+          + 'Vale occasionally hints that he suspects Gemma once lived a more serious professional life, but '
+          + 'rarely presses for details — their mutual restraint around personal history contributes to their '
+          + 'unresolved tension.\n\n'
+          + 'EMOTIONAL VULNERABILITY: Gemma\'s strongest vulnerability appears when dealing with Spellbinders, '
+          + 'confronting lovers who may be suspects, or balancing attraction against intuition.',
       },
       clue_system: {
         required: true,
@@ -27050,16 +27240,19 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         genre: 'empathy detective',
         protagonist: {
           name: 'Gemma Path',
-          occupation: 'mentalist performer',
+          occupation: 'stage performer (empathic reads)',
           setting: 'international cruise ship',
           public_perception: 'Passengers believe she can read minds.',
           reality: 'She interprets emotional signals and behavior only.',
           traits: [
-            'Hyper-empathic.',
+            'Hyper-empathic — experiences emotions more strongly than most people.',
             'Reads microexpressions.',
             'Detects emotional fractures.',
             'Senses hesitation and suppressed intent.',
-            'Performs mentalism shows for passengers.',
+            'Performs empathic reading shows for passengers.',
+            'Sensual, hedonistic, drawn to intensity and emotional truth.',
+            'Follows instincts driven by feeling rather than logic.',
+            'Frequently forms romantic connections with people involved in her cases.',
           ],
           limits: [
             'She is not psychic.',
@@ -27129,9 +27322,17 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       _isExperimental: true,
       spine_blurb: 'Every entry tells the truth. None of them agree.',
       library_blurb: 'A diary written by many hands. Each entry contradicts the one before it.',
+      mode: 'user_written',  // AI does NOT author diary content — user writes directly
+      allowed_fate_cards: [],  // no Fate cards in diary mode
+      entry_length_target: { min: 150, max: 400, enforcement: 'soft' }, // word guidance, not hard limit
       mechanics: {
         narrative_pov: 'unreliable_first_person',
         tension_engine: 'contradiction_escalation'
+      },
+      narrative_guardrails: {
+        encourage: ['confessions', 'fears', 'desires', 'emotional reactions', 'reflect on events', 'escalate uncertainty'],
+        discourage: ['action scenes', 'resolving contradictions', 'third-person narration'],
+        enforcement: 'soft',
       },
       diary_system: {
         required: true,
@@ -29420,6 +29621,66 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window.buildExpHybridInputPanel = buildExpHybridInputPanel;
 
+  // ── Diary Entry Input Panel — for Not My Diary (fully user-written mode) ──
+  // AI does NOT author diary content. User writes directly.
+  function buildExpDiaryInputPanel(bookId, onSubmit) {
+    const def = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === bookId);
+    const panel = document.createElement('div');
+    panel.className = 'exp-diary-input-panel';
+
+    // Guidance prompt
+    const guidance = document.createElement('div');
+    guidance.className = 'exp-diary-guidance';
+    guidance.innerHTML = '<span class="exp-diary-guidance-label">Write your diary entry</span>'
+      + '<span class="exp-diary-guidance-hint">First person. Private. Introspective. 150\u2013400 words.</span>';
+    if (def?.diary_system?.description) {
+      guidance.innerHTML += `<span class="exp-diary-guidance-rule">${escapeHTML(def.diary_system.description)}</span>`;
+    }
+    panel.appendChild(guidance);
+
+    // Textarea
+    const textarea = document.createElement('textarea');
+    textarea.className = 'exp-diary-textarea';
+    textarea.placeholder = 'Dear diary\u2026';
+    textarea.rows = 10;
+    panel.appendChild(textarea);
+
+    // Word count indicator
+    const wordCount = document.createElement('div');
+    wordCount.className = 'exp-diary-word-count';
+    wordCount.textContent = '0 words';
+    textarea.addEventListener('input', () => {
+      const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
+      wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+      wordCount.classList.toggle('exp-diary-wc-low', words > 0 && words < 150);
+      wordCount.classList.toggle('exp-diary-wc-ok', words >= 150 && words <= 400);
+      wordCount.classList.toggle('exp-diary-wc-high', words > 400);
+    });
+    panel.appendChild(wordCount);
+
+    // Submit
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'exp-submit-btn';
+    submitBtn.textContent = 'Submit Entry';
+    submitBtn.addEventListener('click', () => {
+      const text = textarea.value;
+      const validation = validateExperimentalInput(text);
+      if (!validation.valid) {
+        showToast(validation.reason);
+        return;
+      }
+      if (typeof onSubmit === 'function') {
+        onSubmit({ text: validation.sanitizedText, raw: text });
+      }
+      textarea.value = '';
+      wordCount.textContent = '0 words';
+    });
+    panel.appendChild(submitBtn);
+
+    return panel;
+  }
+  window.buildExpDiaryInputPanel = buildExpDiaryInputPanel;
+
   // ── Clue Echo — resolution detection & log bounding ──
   // When contributor text references a previous clue (keyword overlap), mark it resolved.
   function resolveOverlappingClues(text) {
@@ -30066,9 +30327,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       turnLockSceneIndex: null,   // scene index the lock applies to
       protagonistId: def.story_kernel?.protagonist?.name || null,
       narrativeTone: def.story_kernel?.tone || null,
-      fateCardsEnabled: false,    // ALWAYS false for experimental books
+      fateCardsEnabled: false,    // full Fate deck disabled for experimental books
       temptFateEnabled: false,
       petitionFateEnabled: false,
+      allowedFateCards: def.allowed_fate_cards || [], // selective: e.g. ['confession','temptation','reversal']
       scenes: [],                 // { sceneIndex, authorId, text, timestamp }
     };
 
@@ -30201,10 +30463,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       }
     }
 
-    // Record the scene
+    // Record the scene (include display name for author credit)
+    const displayName = state.displayName || state.username || userId.slice(0, 8);
     inst.scenes.push({
       sceneIndex: inst.currentScene,
       authorId: userId,
+      authorDisplayName: displayName,
       text,
       timestamp: Date.now()
     });
@@ -30306,13 +30570,39 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   }
   window.getSharedStoryPreviousScene = getSharedStoryPreviousScene;
 
-  // Verify story engine isolation — these must NEVER be true for experimental books
+  // Verify story engine isolation — full Fate deck always blocked; selective cards may be allowed
   function isExperimentalFateBlocked(bookId) {
     const inst = getSharedStoryInstance(bookId);
     if (!inst) return true;
     return !inst.fateCardsEnabled && !inst.temptFateEnabled && !inst.petitionFateEnabled;
   }
   window.isExperimentalFateBlocked = isExperimentalFateBlocked;
+
+  // Check if a specific Fate card type is allowed in experimental mode
+  function isExperimentalFateCardAllowed(bookId, cardType) {
+    const inst = getSharedStoryInstance(bookId);
+    if (!inst) return false;
+    return Array.isArray(inst.allowedFateCards) && inst.allowedFateCards.includes(cardType);
+  }
+  window.isExperimentalFateCardAllowed = isExperimentalFateCardAllowed;
+
+  // Build narrative guardrail directive for experimental book engine prompting
+  function getExperimentalGuardrailDirective(bookId) {
+    const def = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === bookId);
+    if (!def?.narrative_guardrails) return '';
+    const g = def.narrative_guardrails;
+    let d = 'NARRATIVE GUARDRAILS (soft guidance):\n';
+    if (g.encourage?.length) d += 'Contributions SHOULD: ' + g.encourage.join(', ') + '.\n';
+    if (g.discourage?.length) d += 'Contributions should AVOID: ' + g.discourage.join(', ') + '.\n';
+    if (def.mode === 'user_written') {
+      d += 'This is a user-written mode. AI does NOT author content. AI performs only light continuity smoothing and formatting.\n';
+    } else if (def.mode === 'hybrid') {
+      d += 'This is a hybrid mode. AI generates scenes from user Say/Do inputs. Different users contribute sequentially.\n';
+      d += 'AI scenes should be 600\u2013800 words (shorter than standard Storybound scenes).\n';
+    }
+    return d;
+  }
+  window.getExperimentalGuardrailDirective = getExperimentalGuardrailDirective;
 
   // Shelf capacity constants
   const COVERS_PER_SHELF = 6;   // max cover-facing books per shelf row
@@ -30436,7 +30726,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       { y: -5,  scale: 0.78, rx: -3, ry: -8,  rz: 0,    crush: -4 },
     ]},
     B: { left: 33.2, width: 33.6, perRow: 5, shelfDefs: [
-      { y: 0,   scale: 0.80, rx: 4,  ry: 18,  rz: -0.5, crush: -3 },
+      { y: -3,  scale: 0.80, rx: 4,  ry: 18,  rz: -0.5, crush: 1 },
       { y: -9,  scale: 0.75, rx: 4,  ry: -8,  rz: -0.5, crush: -3 },
       { y: -5,  scale: 0.80, rx: -3, ry: -9,  rz: 0,    crush: -3 },
       { y: -5,  scale: 0.80, rx: -4, ry: 16,  rz: 0,    crush: -3 },
@@ -30676,20 +30966,21 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     book.dataset.storyId = expEntry.id;
     book.dataset.experimental = 'true';
 
-    const frontContent = `<div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div>`;
-    const backContent = `<div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
+    let frontContent, backContent, spineContent;
 
-    // Gemma's Path: spine gets a gemstone eye ornament
-    let spineContent;
     if (isGemma) {
-      spineContent = `<div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div>`
-        + '<div class="gemma-spine-eye"><div class="gemma-eye-glint"></div></div>';
+      // Gemma's Path: custom cover art, dark-blue spine + back, gold text
+      frontContent = `<img src="/assets/Forbidde-Library-Art/Gemma-Path-Cover.png" alt="${escapeHTML(bookTitle)}">`;
+      backContent = `<div class="back-content gemma-back"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
+      spineContent = `<img src="/assets/Forbidde-Library-Art/Gemmas-Path-spine.png" alt="${escapeHTML(bookTitle)}" class="gemma-spine-img">`;
     } else {
+      frontContent = `<div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div>`;
+      backContent = `<div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
       spineContent = `<div class="spine-text">${escapeHTML(bookTitle)} <span class="spine-author">${escapeHTML(bookAuthor)}</span></div>`;
     }
 
     book.innerHTML = `<div class="book-3d">
-  <div class="book-front">${frontContent}</div>
+  <div class="book-front">${frontContent}<div class="exp-book-tag">EXPERIMENTAL</div></div>
   <div class="book-back">${backContent}</div>
   <div class="book-spine">${spineContent}</div>
   <div class="book-pages-right"></div>
@@ -31330,83 +31621,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
     // Build reader content — no cover placeholder, no "Your cover will evolve"
     if (proseEl) {
-      // Remove any previous guidelines panel
+      // Clean up any previously rendered guideline/rule panels (legacy)
       const existingPanel = proseEl.parentElement?.querySelector('.experimental-guidelines');
       if (existingPanel) existingPanel.remove();
-
-      // Story Guidelines panel (collapsible) — shows kernel so contributors know narrative bounds
-      const kernel = def.story_kernel;
-      if (kernel) {
-        const panel = document.createElement('details');
-        panel.className = 'experimental-guidelines';
-
-        let guidelinesHTML = '<summary>Story Guidelines</summary>';
-        guidelinesHTML += `<p><strong>World:</strong> ${escapeHTML(kernel.world)}</p>`;
-        guidelinesHTML += `<p><strong>Tone:</strong> ${escapeHTML(kernel.tone)}</p>`;
-        guidelinesHTML += `<p><strong>Genre:</strong> ${escapeHTML(kernel.genre)}</p>`;
-        guidelinesHTML += `<p><strong>Flavor:</strong> ${escapeHTML(kernel.flavor)}</p>`;
-
-        if (kernel.protagonist && kernel.protagonist.name) {
-          guidelinesHTML += `<p><strong>Protagonist:</strong> ${escapeHTML(kernel.protagonist.name)}</p>`;
-          if (kernel.protagonist.traits) {
-            guidelinesHTML += '<ul>' + kernel.protagonist.traits.map(t => `<li>${escapeHTML(t)}</li>`).join('') + '</ul>';
-          }
-          if (kernel.protagonist.limits) {
-            guidelinesHTML += '<p><strong>Limits:</strong></p>';
-            guidelinesHTML += '<ul>' + kernel.protagonist.limits.map(l => `<li>${escapeHTML(l)}</li>`).join('') + '</ul>';
-          }
-        }
-
-        if (kernel.relationship_reactions && kernel.relationship_reactions.length) {
-          guidelinesHTML += '<p><strong>Love Interest Reactions:</strong></p>';
-          guidelinesHTML += '<ul>' + kernel.relationship_reactions.map(r =>
-            `<li><em>${escapeHTML(r.type)}</em> — ${escapeHTML(r.behavior)}</li>`
-          ).join('') + '</ul>';
-        }
-
-        if (kernel.narrative_rules && kernel.narrative_rules.length) {
-          guidelinesHTML += '<p><strong>Rules:</strong></p>';
-          guidelinesHTML += '<ul>' + kernel.narrative_rules.map(r => `<li>${escapeHTML(r)}</li>`).join('') + '</ul>';
-        }
-
-        panel.innerHTML = guidelinesHTML;
-        proseEl.parentElement.insertBefore(panel, proseEl);
-      }
-
-      // Gemma Rule panel — shown only for Gemma's Path (above future writing box, below previous page)
-      // Remove any previous Gemma Rule panel
       const existingGemma = proseEl.parentElement?.querySelector('.gemma-rule-panel');
       if (existingGemma) existingGemma.remove();
 
+      // Story Guidelines and Gemma Rule are internal prompting context only — never shown to readers.
+
       if (def.clue_system) {
-        const gemmaPanel = document.createElement('div');
-        gemmaPanel.className = 'gemma-rule-panel';
-
-        let gemmaHTML = '<p class="gemma-rule-title">Gemma Rule</p>';
-        gemmaHTML += `<p>${escapeHTML(def.clue_system.description)}</p>`;
-        gemmaHTML += '<p>These are micro-observations of behavior, not deductions or mind-reading.</p>';
-        if (def.clue_system.examples && def.clue_system.examples.length) {
-          gemmaHTML += '<ul>' + def.clue_system.examples.map(ex => `<li>${escapeHTML(ex)}</li>`).join('') + '</ul>';
-        }
-
-        // Accusation guardrail — show policy to contributors
-        if (def.accusation_guardrail) {
-          const atReveal = isGemmaRevealStage(def.id);
-          gemmaHTML += '<p class="gemma-rule-title" style="margin-top:10px">Accusations</p>';
-          if (atReveal) {
-            gemmaHTML += '<p>The investigation has reached the reveal stage. Resolution is now permitted.</p>';
-          } else {
-            gemmaHTML += '<p>Gemma may accuse, suspect, or bluff any character at any time.</p>';
-            gemmaHTML += '<p>However, the case cannot be resolved yet. Accusations will produce:</p>';
-            gemmaHTML += '<ul>'
-              + def.accusation_guardrail.allowed_before_reveal.map(o => `<li>${escapeHTML(o)}</li>`).join('')
-              + '</ul>';
-          }
-        }
-
-        gemmaPanel.innerHTML = gemmaHTML;
-        proseEl.parentElement.insertBefore(gemmaPanel, proseEl);
-
         // Clue Echo — Recent Clues panel (last 3 clues with Echo buttons)
         _boundGemmaClueLog(); // enforce 50-entry limit
         const recentPanel = buildRecentCluesPanel();
@@ -31468,6 +31691,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         caseLabel.className = 'gemma-case-label';
         caseLabel.textContent = `CASE #${cs.caseId}`;
         proseEl.parentElement.insertBefore(caseLabel, proseEl);
+
+        // Setting image — cruise poster, shown after Case # and before Scene 1
+        const existingSetting = proseEl.parentElement?.querySelector('.gemma-setting-img');
+        if (existingSetting) existingSetting.remove();
+        const settingImg = document.createElement('img');
+        settingImg.className = 'gemma-setting-img';
+        settingImg.src = '/assets/Forbidde-Library-Art/Gemma-setting.png';
+        settingImg.alt = 'Gemma Path — Seer of the Unseen — cruise ship poster';
+        proseEl.parentElement.insertBefore(settingImg, proseEl);
       }
 
       // Main prose content — load from story instance when available
@@ -31475,11 +31707,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
       // Load existing scenes from the shared story instance
       if (storyInstance && storyInstance.scenes.length > 0) {
-        // Show all scenes as the primary reading content
+        // Show all scenes with author credit
         storyInstance.scenes.forEach((scene, idx) => {
           if (idx > 0) content += '\n\n';
           const label = scene.isSeeded ? 'Scene 1' : `Scene ${scene.sceneIndex}`;
-          content += `\u2014 ${label} \u2014\n${scene.text}`;
+          const authorTag = scene.isSeeded ? '' : (scene.authorId && scene.authorId !== '_system_seed'
+            ? `\n    \u2014 written by ${scene.authorDisplayName || scene.authorId.slice(0, 8)}`
+            : '');
+          content += `\u2014 ${label} \u2014\n${scene.text}${authorTag}`;
         });
       } else {
         // No scenes yet — show blurb as placeholder
@@ -31541,9 +31776,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
       proseEl.textContent = content;
 
-      // ── Hybrid Input Panel — narrative suggestion cards + Say/Do ──
+      // ── Input Panel — mode-dependent: hybrid (Say/Do) or diary (full textarea) ──
       // Remove any previous panel
-      proseEl.parentElement?.querySelectorAll('.exp-hybrid-input-panel').forEach(el => el.remove());
+      proseEl.parentElement?.querySelectorAll('.exp-hybrid-input-panel, .exp-diary-input-panel').forEach(el => el.remove());
 
       const accessCheck = canAccessExperimentalBooks();
       const writeEligible = accessCheck.allowed && eligibility.allowed;
@@ -31552,37 +31787,53 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       const corpseComplete = def.id === 'exp_exquisite_corpse' && _corpseMeta.completed;
 
       if (writeEligible && turnOpen && !corpseComplete) {
-        const hybridPanel = buildExpHybridInputPanel(def.id, (result) => {
-          // Claim turn if not already claimed
-          const claim = claimSharedStoryTurn(def.id, _supabaseProfileId);
-          if (!claim.claimed) {
-            showToast(claim.reason || 'Could not claim turn.');
-            return;
-          }
+        // Route to mode-specific input panel
+        const isDiaryMode = def.mode === 'user_written';
+        let inputPanel;
 
-          // Build combined text from Say/Do for scene submission
-          let sceneText = '';
-          if (result.do) sceneText += result.do;
-          if (result.say) sceneText += (sceneText ? '\n' : '') + '"' + result.say + '"';
-
-          // Submit through shared story system (includes protagonist continuity check)
-          const submitResult = submitSharedStoryScene(def.id, _supabaseProfileId, sceneText);
-          if (!submitResult.success) {
-            showToast(submitResult.reason || 'Submission failed.');
-            return;
-          }
-
-          showToast(`Scene ${submitResult.sceneIndex} submitted.`);
-          // Refresh reader to show updated state
-          _openExperimentalReader(entry);
-        });
+        if (isDiaryMode) {
+          // Not My Diary: full textarea, user writes directly, AI does not author
+          inputPanel = buildExpDiaryInputPanel(def.id, (result) => {
+            const claim = claimSharedStoryTurn(def.id, _supabaseProfileId);
+            if (!claim.claimed) {
+              showToast(claim.reason || 'Could not claim turn.');
+              return;
+            }
+            const submitResult = submitSharedStoryScene(def.id, _supabaseProfileId, result.text);
+            if (!submitResult.success) {
+              showToast(submitResult.reason || 'Submission failed.');
+              return;
+            }
+            showToast(`Entry ${submitResult.sceneIndex} submitted.`);
+            _openExperimentalReader(entry);
+          });
+        } else {
+          // Hybrid mode: AI Scene → User Say/Do → AI Scene
+          inputPanel = buildExpHybridInputPanel(def.id, (result) => {
+            const claim = claimSharedStoryTurn(def.id, _supabaseProfileId);
+            if (!claim.claimed) {
+              showToast(claim.reason || 'Could not claim turn.');
+              return;
+            }
+            let sceneText = '';
+            if (result.do) sceneText += result.do;
+            if (result.say) sceneText += (sceneText ? '\n' : '') + '"' + result.say + '"';
+            const submitResult = submitSharedStoryScene(def.id, _supabaseProfileId, sceneText);
+            if (!submitResult.success) {
+              showToast(submitResult.reason || 'Submission failed.');
+              return;
+            }
+            showToast(`Scene ${submitResult.sceneIndex} submitted.`);
+            _openExperimentalReader(entry);
+          });
+        }
 
         // Disable panel if lock is held by someone else
         if (lockStatus.state === 'claimed_by_other') {
-          hybridPanel.classList.add('exp-write-disabled');
+          inputPanel.classList.add('exp-write-disabled');
         }
 
-        proseEl.parentElement.appendChild(hybridPanel);
+        proseEl.parentElement.appendChild(inputPanel);
       }
     }
 
@@ -31594,8 +31845,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       bookId: def.id,
       story_kernel: def.story_kernel,
       previousPage: null, // TODO: fetch last page from experimental_pages table
+      bookMode: def.mode || 'hybrid',                               // 'hybrid' or 'user_written'
       diary_system: def.diary_system || null,
       clue_system: def.clue_system || null,
+      narrativeGuardrailDirective: getExperimentalGuardrailDirective(def.id), // soft guardrails
+      allowedFateCards: def.allowed_fate_cards || [],               // selective Fate cards
       sharedStoryInstance: getSharedStoryInstance(def.id),
       turnLockStatus: getTurnLockStatus(def.id),
       canWrite: canAccessExperimentalBooks().allowed,
@@ -43111,6 +43365,41 @@ Generate the title and synopsis now.` }
     var startX = 0, startY = 0;
     var startRect = null;
 
+    var DSP_POS_KEY = 'dsp_panel_position';
+
+    // Persist position + size to localStorage
+    function saveDSPPosition() {
+      try {
+        localStorage.setItem(DSP_POS_KEY, JSON.stringify({
+          left: panel.style.left,
+          top: panel.style.top,
+          width: panel.style.width,
+          height: panel.style.height || ''
+        }));
+      } catch (e) { /* quota */ }
+    }
+
+    // Restore saved position + size from localStorage
+    function restoreDSPPosition() {
+      try {
+        var saved = JSON.parse(localStorage.getItem(DSP_POS_KEY));
+        if (!saved) return false;
+        panel.style.transform = 'none';
+        panel.style.right = 'auto';
+        panel.style.bottom = 'auto';
+        panel.style.maxWidth = 'none';
+        if (saved.left) panel.style.left = saved.left;
+        if (saved.top) panel.style.top = saved.top;
+        if (saved.width) panel.style.width = saved.width;
+        if (saved.height) { panel.style.height = saved.height; panel.style.maxHeight = 'none'; panel.style.minHeight = '0'; }
+        panel._dspPositioned = true;
+        return true;
+      } catch (e) { return false; }
+    }
+
+    // Restore on init
+    restoreDSPPosition();
+
     // Switch panel from CSS-positioned to inline-positioned
     function ensureInlinePosition() {
       if (panel._dspPositioned) return;
@@ -43185,6 +43474,7 @@ Generate the title and synopsis now.` }
     }
 
     function onEnd() {
+      if (mode) saveDSPPosition();
       mode = null;
       resizeCorner = null;
       panel.classList.remove('dsp-interacting');
