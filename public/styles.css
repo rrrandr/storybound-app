@@ -3690,6 +3690,15 @@ select:-webkit-autofill {
 }
 
 /* Fortune options — stacked inside card */
+.pay-card-fortune-label {
+    font-family: 'Lora', serif;
+    font-size: 0.5em;
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    color: #8b6914;
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
 .pay-card-fortune-options {
     display: flex;
     flex-direction: column;
@@ -3721,6 +3730,97 @@ select:-webkit-autofill {
     height: 50px;
     background: rgba(139, 105, 20, 0.2);
     flex-shrink: 0;
+}
+/* ── Membership tier accordion ── */
+
+/* Layout guard: membership card keeps fixed width; accordion overflows
+   vertically without affecting sibling card positions.
+   .pay-card width + aspect-ratio lock the outer box.
+   .pay-card-front overflow-y:visible lets expanded content show.
+   .pay-card-content uses absolute positioning — no document-flow reflow. */
+.pay-card:has(.pay-card-tiers-accordion) .pay-card-front {
+    overflow: visible;
+}
+.pay-card:has(.pay-card-tiers-accordion) .pay-card-content {
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-color: #c9a84c rgba(0,0,0,0.2);
+    scrollbar-width: thin;
+}
+.pay-card:has(.pay-card-tiers-accordion) .pay-card-content::-webkit-scrollbar {
+    width: 6px;
+}
+.pay-card:has(.pay-card-tiers-accordion) .pay-card-content::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
+}
+.pay-card:has(.pay-card-tiers-accordion) .pay-card-content::-webkit-scrollbar-thumb {
+    background: #c9a84c;
+    border-radius: 3px;
+}
+.pay-card:has(.pay-card-tiers-accordion) .pay-card-content::-webkit-scrollbar-thumb:hover {
+    background: #dbb85a;
+}
+
+.pay-card-tiers-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+}
+.pay-card-tier-drop {
+    border-top: 1px solid rgba(139, 105, 20, 0.15);
+}
+.pay-card-tier-drop:last-child {
+    border-bottom: 1px solid rgba(139, 105, 20, 0.15);
+}
+.pay-card-tier-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 2px;
+    cursor: pointer;
+    user-select: none;
+}
+.pay-card-tier-header:hover {
+    background: rgba(139, 105, 20, 0.06);
+}
+.pay-card-tier-arrow {
+    font-size: 0.5em;
+    color: #8b6914;
+    opacity: 0.5;
+    margin-left: auto;
+    transition: transform 0.2s ease;
+}
+.pay-card-tier-drop.open .pay-card-tier-arrow {
+    transform: rotate(180deg);
+}
+.pay-card-tier-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+}
+.pay-card-tier-drop.open .pay-card-tier-body {
+    max-height: 200px;
+}
+.pay-card-tier-details {
+    list-style: none;
+    padding: 0 2px 4px;
+    margin: 0;
+    font-family: 'Lora', serif;
+    font-size: 0.42em;
+    color: #8b6914;
+    opacity: 0.7;
+    line-height: 1.6;
+}
+.pay-card-tier-details li::before {
+    content: '\2022 ';
+    opacity: 0.5;
+}
+.pay-card-tier-body .pay-card-btn {
+    font-size: 0.55em;
+    padding: 3px 10px;
+    margin: 2px 0 6px;
 }
 .pay-card-tier-name {
     font-family: 'Lora', serif;
@@ -3756,6 +3856,21 @@ select:-webkit-autofill {
     text-align: center;
     margin: 8px 0 0;
     line-height: 1.5;
+}
+
+/* Forbidden Library cancel button — PNG background */
+.paywall-library-btn {
+    margin-top: 18px;
+    padding: 10px 24px;
+    background: url('/assets/ui/Black-Gold-Text-840x128.png') center / cover no-repeat;
+    border: none;
+    border-radius: 4px;
+    color: var(--gold, #c9a84c);
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    font-style: italic;
+    cursor: pointer;
+    line-height: 1.4;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════ */
@@ -5961,24 +6076,42 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     z-index: 1;
 }
 
-/* Subtle sparkle particle on the label */
-.experimental-shelf-label::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 3px;
-    height: 3px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 248, 220, 0.8) 0%, rgba(201, 168, 76, 0.4) 60%, transparent 100%);
-    transform: translate(-50%, -50%);
-    animation: expLabelSparkle 3s ease-in-out infinite;
-    pointer-events: none;
-}
+/* Sparkle particle removed — caused flashing pixel artifact on shelf label */
 
-@keyframes expLabelSparkle {
-    0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-    50%      { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+/* ── Good Reasons — visual distinction ── */
+.goodreasons-book .book-spine {
+    background: #1a1a18 !important;
+}
+.goodreasons-spine-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+.goodreasons-book .book-back {
+    background: linear-gradient(180deg, #1a1a18 0%, #252520 50%, #1a1a18 100%) !important;
+}
+.goodreasons-back .back-title {
+    color: #d4c8a0 !important;
+    font-family: 'Lora', serif !important;
+    text-shadow: none;
+}
+.goodreasons-back .back-synopsis {
+    color: #c8c0a8 !important;
+    font-family: 'Lora', serif !important;
+}
+.goodreasons-back .back-meta {
+    color: rgba(212, 200, 160, 0.5) !important;
+    font-family: 'Lora', serif !important;
+}
+#zoomBookContainer .book-back:has(.goodreasons-back) {
+    background: linear-gradient(160deg, #1a1a18 0%, #252520 50%, #1a1a18 100%) !important;
+}
+#zoomBookContainer .book-spine:has(.goodreasons-spine-img) {
+    background: #1a1a18 !important;
 }
 
 /* Experimental book front cover — distinguished from normal library books */
@@ -6093,6 +6226,73 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     margin: 12px auto 24px;
     border-radius: 4px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ── Exquisite Corpse — visual distinction ── */
+
+/* Corpse book: parchment spine + back — seamless wrap with cover/back */
+.corpse-book .book-spine {
+    background: #e8dcc8 !important;
+    /* Kill the deep hinge shadows — spine art should blend continuously */
+    box-shadow: none !important;
+    border-radius: 4px 0 0 4px;
+}
+/* Override cylindrical shading overlay — gentle curvature only */
+.corpse-book .book-spine::after {
+    background:
+        linear-gradient(90deg,
+            rgba(255,255,255,0.10) 42%,
+            rgba(255,255,255,0.15) 50%,
+            rgba(255,255,255,0.10) 58%,
+            transparent 70%,
+            transparent 30%) !important;
+}
+.corpse-spine-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+.corpse-book .book-back {
+    background: linear-gradient(180deg, #e8dcc8 0%, #ded2be 50%, #e8dcc8 100%) !important;
+}
+.corpse-back .back-title {
+    color: #1a1410 !important;
+    font-family: 'Playfair Display', 'Lora', serif !important;
+    font-weight: 700;
+    font-style: italic;
+    letter-spacing: 0.04em;
+    text-shadow: none;
+}
+.corpse-back .back-synopsis {
+    color: #2a2018 !important;
+    font-family: 'Lora', serif !important;
+}
+.corpse-back .back-meta {
+    color: rgba(40, 30, 20, 0.55) !important;
+    font-family: 'Lora', serif !important;
+    letter-spacing: 0.06em;
+}
+
+/* Corpse zoom overrides — spine + back in parchment */
+#zoomBookContainer .book-back:has(.corpse-back) {
+    background: linear-gradient(160deg, #e8dcc8 0%, #ded2be 50%, #e8dcc8 100%) !important;
+}
+#zoomBookContainer .book-spine:has(.corpse-spine-img) {
+    background: #e8dcc8 !important;
+    box-shadow: none !important;
+}
+#zoomBookContainer .book-spine:has(.corpse-spine-img)::after {
+    background:
+        linear-gradient(90deg,
+            rgba(255,255,255,0.10) 42%,
+            rgba(255,255,255,0.15) 50%,
+            rgba(255,255,255,0.10) 58%,
+            transparent 70%,
+            transparent 30%) !important;
 }
 
 /* ── Experimental Guidelines Panel (collapsible) ── */
@@ -6688,21 +6888,9 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .exp-diary-wc-ok { color: rgba(120, 200, 120, 0.6); }
 .exp-diary-wc-high { color: rgba(220, 120, 60, 0.6); }
 
-/* ── EXPERIMENTAL tag on book covers ── */
+/* EXPERIMENTAL tag removed — too small to render crisply on book covers */
 .exp-book-tag {
-    position: absolute;
-    bottom: 6px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-family: 'Lora', serif;
-    font-size: 0.35em;
-    font-variant: small-caps;
-    letter-spacing: 0.18em;
-    color: rgba(201, 168, 76, 0.55);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-    pointer-events: none;
-    z-index: 3;
-    white-space: nowrap;
+    display: none;
 }
 
 /* Write-disabled overlay */
@@ -18029,6 +18217,156 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     cursor: default;
 }
 
+/* ── Seasonal Promotion Dev HUD Banner ── */
+.promo-dev-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10200;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border-bottom: 2px solid rgba(64, 224, 208, 0.4);
+    padding: 12px 16px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.78em;
+    color: #ccc;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+.promo-dev-banner-badge {
+    background: rgba(255, 215, 0, 0.15);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    color: #ffd700;
+    font-weight: 700;
+    font-size: 0.75em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.promo-dev-banner-body {
+    flex: 1;
+    min-width: 0;
+}
+.promo-dev-banner-title {
+    color: #40e0d0;
+    font-weight: 700;
+    font-size: 1em;
+    margin-bottom: 2px;
+}
+.promo-dev-banner-countdown {
+    color: #f4a460;
+    font-size: 0.9em;
+    margin-bottom: 4px;
+}
+.promo-dev-banner-copy {
+    color: #aaa;
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+.promo-dev-banner-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+.promo-dev-banner-close {
+    background: transparent;
+    border: none;
+    color: #666;
+    font-size: 1.4em;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+.promo-dev-banner-close:hover { color: #fff; }
+
+/* ── Fate Event Badge (near Fortune packs) ── */
+.fate-event-badge {
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    color: var(--gold, #c8a84e);
+    text-align: center;
+    padding: 4px 10px;
+    margin-bottom: 4px;
+    letter-spacing: 0.06em;
+    border: 1px solid rgba(200, 168, 78, 0.25);
+    background: rgba(200, 168, 78, 0.06);
+    border-radius: 2px;
+}
+.fate-event-badge.hidden {
+    display: none;
+}
+
+/* ── Fate Event Loading Message ── */
+.fate-event-loading-msg {
+    text-align: center;
+    padding: 16px 12px;
+    animation: fateEventFadeIn 0.8s ease-out;
+}
+.fate-event-loading-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold, #c8a84e);
+    letter-spacing: 0.4em;
+    font-size: 1em;
+    margin-bottom: 6px;
+}
+.fate-event-loading-ack {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--gold, #c8a84e);
+    font-size: 0.82em;
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+.fate-event-loading-body {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--ink, #e8e0d0);
+    font-size: 0.78em;
+    opacity: 0.65;
+    line-height: 1.5;
+    margin: 0 0 6px 0;
+}
+.fate-event-loading-bonus {
+    font-family: 'Lora', serif;
+    color: var(--gold, #c8a84e);
+    font-size: 0.82em;
+    letter-spacing: 0.08em;
+}
+.fate-event-loading-timer {
+    font-family: 'Lora', serif;
+    font-size: 0.68em;
+    color: var(--ink, #e8e0d0);
+    opacity: 0.45;
+    margin-top: 4px;
+}
+@keyframes fateEventFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Seasonal Promo Badge (user-facing, on Fortune buttons) ── */
+.fortune-promo-badge {
+    display: inline-block;
+    background: rgba(255, 215, 0, 0.12);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    color: var(--gold, #c8a84e);
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    font-style: italic;
+    padding: 4px 10px;
+    border-radius: 2px;
+    text-align: center;
+    margin-bottom: 6px;
+    letter-spacing: 0.03em;
+}
+
 /* Spin animation for loading spinner */
 @keyframes spin {
     from { transform: rotate(0deg); }
@@ -18423,7 +18761,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.31cqi; left: 18.92cqi; width: 76.01cqi; font-size: 8.78cqi;
+    top: 152.68cqi; left: 16.67cqi; width: 66.96cqi; font-size: 7.73cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -18439,7 +18777,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.97cqi; left: 20.95cqi; width: 72.3cqi; font-size: 8.78cqi;
+    top: 152.38cqi; left: 18.45cqi; width: 63.69cqi; font-size: 7.73cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -18455,7 +18793,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.31cqi; left: 18.92cqi; width: 76.35cqi; font-size: 8.78cqi;
+    top: 152.68cqi; left: 16.67cqi; width: 67.26cqi; font-size: 7.73cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -18471,7 +18809,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.64cqi; left: 29.05cqi; width: 56.08cqi; font-size: 8.78cqi;
+    top: 152.08cqi; left: 25.6cqi; width: 49.4cqi; font-size: 7.73cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -18735,51 +19073,51 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── POV — Card Designer locked positions (grid) ── */
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -18.92cqi; left: 15.54cqi; width: 78.38cqi; font-size: 8.11cqi;
+    top: 47.02cqi; left: 12.5cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 174.32cqi; left: 23.99cqi; width: 67.57cqi; font-size: 8.78cqi;
+    top: 153.57cqi; left: 21.13cqi; width: 59.52cqi; font-size: 7.73cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -18.24cqi; left: 13.51cqi; width: 77.03cqi; font-size: 8.11cqi;
+    top: -17.26cqi; left: 11.9cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.65cqi; left: 16.89cqi; width: 79.39cqi; font-size: 8.78cqi;
+    top: 152.98cqi; left: 14.88cqi; width: 69.94cqi; font-size: 7.74cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -18.24cqi; left: 12.16cqi; width: 79.73cqi; font-size: 8.11cqi;
+    top: -17.26cqi; left: 11.31cqi; width: 70.24cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.3cqi; left: 19.59cqi; width: 78.04cqi; font-size: 8.78cqi;
+    top: 151.79cqi; left: 17.26cqi; width: 68.75cqi; font-size: 7.74cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; position: absolute; bottom: auto;
-    top: 75.68cqi; left: 12.84cqi; width: 77.03cqi; font-size: 8.11cqi;
+    top: 66.67cqi; left: 11.31cqi; width: 67.86cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.3cqi; left: 14.86cqi; width: 83.45cqi; font-size: 8.78cqi;
+    top: 151.79cqi; left: 13.1cqi; width: 73.51cqi; font-size: 7.74cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -19.59cqi; left: 12.16cqi; width: 79.73cqi; font-size: 8.11cqi;
+    top: -16.07cqi; left: 11.31cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.65cqi; left: 22.97cqi; width: 70.95cqi; font-size: 8.78cqi;
+    top: 152.98cqi; left: 20.24cqi; width: 62.5cqi; font-size: 7.74cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -20.27cqi; left: 12.16cqi; width: 79.73cqi; font-size: 8.11cqi;
+    top: -16.67cqi; left: 11.31cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.97cqi; left: 16.89cqi; width: 80.07cqi; font-size: 8.78cqi;
+    top: 152.38cqi; left: 14.88cqi; width: 70.54cqi; font-size: 7.74cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
@@ -18881,11 +19219,11 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── Proximity — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 71.28cqi; left: 6.85cqi; width: 100.06cqi; font-size: 8.22cqi;
+    top: 61.01cqi; left: 5.36cqi; width: 88.1cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.4cqi; left: 26.04cqi; width: 53.35cqi; font-size: 8.91cqi;
+    top: 152.76cqi; left: 17.56cqi; width: 64.88cqi; font-size: 7.85cqi;
 }
 /* ── Proximity — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -18900,11 +19238,11 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── SecretIdentity — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 77.45cqi; left: 6.85cqi; width: 100.06cqi; font-size: 8.22cqi;
+    top: 61.01cqi; left: 5.95cqi; width: 88.1cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.4cqi; left: 28.1cqi; width: 47.39cqi; font-size: 8.91cqi;
+    top: 152.76cqi; left: 19.35cqi; width: 61.9cqi; font-size: 7.85cqi;
 }
 /* ── SecretIdentity — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -18914,12 +19252,12 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
 /* ── Friends — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; bottom: auto;
-    top: -20.24cqi; left: 0cqi;
+    position: absolute; right: auto; bottom: auto;
+    top: 52.68cqi; left: 5.95cqi; width: 88.1cqi; font-size: 7.14cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.06cqi; left: 23.65cqi; width: 54.69cqi; font-size: 8.91cqi;
+    top: 152.46cqi; left: 15.48cqi; width: 68.45cqi; font-size: 7.85cqi;
 }
 /* ── Friends — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -18933,11 +19271,11 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── Enemies — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 72.65cqi; left: 17.13cqi; width: 82.24cqi; font-size: 8.22cqi;
+    top: 57.74cqi; left: 15.18cqi; width: 72.32cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.71cqi; left: 24.33cqi; width: 56.08cqi; font-size: 8.91cqi;
+    top: 152.15cqi; left: 13.1cqi; width: 70.83cqi; font-size: 7.85cqi;
 }
 /* ── Enemies — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -18948,11 +19286,11 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── SecondChance — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 88.41cqi; left: 6.85cqi; width: 100.06cqi; font-size: 8.22cqi;
+    top: 56.85cqi; left: 13.69cqi; width: 73.81cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.74cqi; left: 33.93cqi; width: 36.36cqi; font-size: 8.91cqi;
+    top: 153.06cqi; left: 22.02cqi; width: 54.76cqi; font-size: 7.85cqi;
 }
 /* ── SecondChance — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -18963,12 +19301,11 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── Forbidden — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 88.41cqi; left: 6.85cqi; width: 100.06cqi; font-size: 8.22cqi;
+    top: 60.42cqi; left: 7.14cqi; width: 88.1cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.71cqi; left: 14cqi; width: 80cqi; font-size: 8.91cqi;
-    white-space: nowrap;
+    top: 152.15cqi; left: 14.58cqi; width: 70.47cqi; font-size: 7.85cqi;
 }
 /* ── Forbidden — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -18980,14 +19317,38 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     bottom: auto !important;
 }
 
-/* ── Length — Taste: Card Designer locked positions (grid) ── */
+/* ── Length — Card Designer locked positions (grid) ── */
 #lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: -20.27cqi; left: 8.78cqi; width: 86.49cqi; font-size: 8.11cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 51.19cqi; left: 13.1cqi; width: 66.67cqi; font-size: 7.14cqi;
 }
 #lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.65cqi; left: 50cqi; width: 16.98cqi; font-size: 8.78cqi;
+    top: 152.98cqi; left: 33.93cqi; width: 36.31cqi; font-size: 7.74cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 60.14cqi; left: 14.19cqi; width: 79.73cqi; font-size: 8.11cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 172.97cqi; left: 40.54cqi; width: 32.43cqi; font-size: 8.78cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 52.03cqi; left: 14.19cqi; width: 79.73cqi; font-size: 8.11cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 173.65cqi; left: 41.89cqi; width: 28.72cqi; font-size: 8.78cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 58.11cqi; left: 13.51cqi; width: 78.38cqi; font-size: 8.11cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.98cqi; left: 26.19cqi; width: 49.11cqi; font-size: 7.74cqi;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
@@ -19111,12 +19472,75 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   REINCARNATION SYSTEM — Extraction, Vault, Import modals
+   SCENE ACTIONS — Kebab menu in reader page nav
+   ════════════════════════════════════════════════════════════════ */
+.scene-actions-wrap {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+.scene-actions-btn {
+    background: none;
+    border: 1px solid rgba(200, 168, 78, 0.25);
+    color: var(--gold, #c8a84e);
+    font-size: 1.3em;
+    letter-spacing: 2px;
+    cursor: pointer;
+    padding: 2px 8px;
+    line-height: 1;
+    border-radius: 3px;
+    transition: border-color 0.2s, background 0.2s;
+}
+.scene-actions-btn:hover {
+    border-color: var(--gold, #c8a84e);
+    background: rgba(200, 168, 78, 0.1);
+}
+.scene-actions-menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    min-width: 180px;
+    background: var(--panel, #1a1a2e);
+    border: 1px solid var(--gold, #c8a84e);
+    border-radius: 3px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.scene-actions-menu.hidden {
+    display: none;
+}
+.scene-actions-item {
+    background: none;
+    border: none;
+    color: var(--ink, #e8e0d0);
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    text-align: left;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    letter-spacing: 0.04em;
+}
+.scene-actions-item:hover {
+    background: rgba(200, 168, 78, 0.15);
+    color: var(--gold, #c8a84e);
+}
+.page-nav-controls {
+    position: relative;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   REINCARNATION SYSTEM — Extraction, Vault, Import, Capture modals
    ════════════════════════════════════════════════════════════════ */
 
 .reincarnation-extract-box,
 .reincarnation-vault-box,
-.reincarnation-import-box {
+.reincarnation-import-box,
+.reincarnation-capture-box {
     background: var(--panel, #1a1a2e);
     border: 2px double var(--gold, #c8a84e);
     padding: 24px 20px;
@@ -19250,6 +19674,100 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     color: #ff6b6b;
 }
 
+/* ── Reincarnation Capture Modal (mid-story) ── */
+.reincarnation-capture-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold, #c8a84e);
+    letter-spacing: 0.5em;
+    font-size: 1.1em;
+    margin-bottom: 2px;
+}
+.reincarnation-capture-subtitle {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--ink, #e8e0d0);
+    font-size: 0.82em;
+    opacity: 0.65;
+    margin: 0 0 10px 0;
+}
+.reincarnation-capture-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 50vh;
+    overflow-y: auto;
+}
+.reincarnation-capture-card {
+    background: rgba(200, 168, 78, 0.08);
+    border: 1px solid rgba(200, 168, 78, 0.3);
+    padding: 10px 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.reincarnation-capture-card:hover {
+    border-color: var(--gold, #c8a84e);
+    background: rgba(200, 168, 78, 0.15);
+}
+.reincarnation-capture-card.selected {
+    border-color: var(--gold, #c8a84e);
+    background: rgba(200, 168, 78, 0.2);
+    box-shadow: inset 0 0 8px rgba(200, 168, 78, 0.15);
+}
+.reincarnation-capture-radio {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(200, 168, 78, 0.4);
+    flex-shrink: 0;
+    transition: border-color 0.2s, background 0.2s;
+}
+.reincarnation-capture-card.selected .reincarnation-capture-radio {
+    border-color: var(--gold, #c8a84e);
+    background: var(--gold, #c8a84e);
+    box-shadow: inset 0 0 0 2px var(--panel, #1a1a2e);
+}
+.reincarnation-capture-info {
+    flex: 1;
+    min-width: 0;
+}
+.reincarnation-capture-name {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold, #c8a84e);
+    font-size: 0.95em;
+    letter-spacing: 0.15em;
+}
+.reincarnation-capture-role {
+    font-family: 'Lora', serif;
+    color: var(--ink, #e8e0d0);
+    font-size: 0.78em;
+    opacity: 0.65;
+    margin-top: 2px;
+}
+@keyframes reincSparkle {
+    0%   { opacity: 1; transform: scale(1); }
+    50%  { opacity: 0.6; transform: scale(1.2); }
+    100% { opacity: 0; transform: scale(0.8) translateY(-8px); }
+}
+.reinc-capture-sparkle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    pointer-events: none;
+    color: var(--gold, #c8a84e);
+    font-size: 18px;
+    animation: reincSparkle 0.6s ease-out forwards;
+}
+
 /* ── Echo Constellation Stars ── */
 .echo-star-row {
     display: flex;
@@ -19357,6 +19875,20 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     background: linear-gradient(145deg, #1a1810 0%, #0f0e0a 50%, #1a1810 100%);
     border: 1px dashed rgba(200, 168, 78, 0.3);
     opacity: 0.6;
+}
+
+.echo-reinc-card-locked {
+    background: linear-gradient(145deg, #12110e 0%, #0a0908 50%, #12110e 100%);
+    border: 1px dashed rgba(100, 90, 60, 0.25);
+    opacity: 0.35;
+    cursor: not-allowed;
+    filter: grayscale(0.6);
+}
+
+.echo-reinc-card-lock {
+    font-size: 0.7em;
+    line-height: 1;
+    filter: grayscale(1) brightness(0.5);
 }
 
 .echo-reinc-card-filled {

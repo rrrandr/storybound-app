@@ -141,6 +141,7 @@
     <div id="loadingText">Stoking the embers...</div>
     <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
     <div id="loadingPercent">0%</div>
+    <div id="fateEventLoadingSlot"></div>
   </div>
 </div>
 
@@ -400,40 +401,34 @@
 
 <div id="payModal" class="overlay hidden" style="z-index:10000;">
   <div class="box pay-box">
-    <h3 id="payModalHeading">Upgrade Your Story</h3>
+    <h3 id="payModalHeading">Go deeper into the story</h3>
+    <p style="font-size:1.1em; color:var(--gold); font-style:italic; text-align:center; margin:0 0 18px;">The ink runs dry. Fate's quill trembles above the page.</p>
 
-    <!-- TEASE CAP VARIANT — diegetic ritual invitation -->
-    <div id="teaseCliffhangerCopy" class="hidden" style="text-align:center; margin-bottom:18px;">
-      <p id="teaseOmenText" style="font-size:1.1em; color:var(--gold); font-style:italic; margin:0 0 10px;">The ink runs dry. Fate's quill trembles above the page.</p>
-      <p style="font-size:0.85em; color:var(--ink); opacity:0.8; line-height:1.6; margin:0;">
-        Your story pauses at the edge of what comes next.<br>
-        The world is listening. The characters are waiting.<br>
-        To cross the threshold, choose how you wish to continue.
+    <!-- Subscriber empty-Fortune hint -->
+    <div id="subscriberFortuneHint" class="hidden" style="text-align:center; margin:0 0 16px;">
+      <p style="font-size:0.82em; color:var(--ink); opacity:0.75; line-height:1.6; margin:0;">
+        Your Fortune pool is empty. Fate favors you with 1 Fleeting Fortune every 4 hours which fade if unused &mdash; or refill now to keep the story flowing and bend it to your will.
       </p>
-      <!-- Offering sacrifice option — primary CTA for tease cap -->
-      <div id="teaseOfferingOption" class="hidden" style="margin:16px 0 8px; padding:12px; border:1px solid var(--gold); border-radius:4px; background:rgba(255,215,0,0.05);">
-        <button id="btnSacrificeOffering" style="background:transparent; border:1px solid var(--gold); color:var(--gold); padding:8px 20px; cursor:pointer; font-family:'Lora',serif; font-size:0.95em; letter-spacing:0.5px;">Sacrifice 1 Fortune to fill Fate's quill</button>
-        <p id="offeringBalanceHint" style="font-size:0.7em; color:#888; margin:6px 0 0;"></p>
-        <p id="fortuneUpsellHint" class="hidden" style="font-size:0.75em; color:var(--gold); opacity:0.85; margin:8px 0 0; font-style:italic;">Buy Fortunes, unlock another original story.</p>
-      </div>
     </div>
 
-    <!-- CREDIT HINT: Shown when story-blocked (0 custom story credits) -->
-    <div id="storySlotCreditHint" class="hidden" style="text-align:center; margin-bottom:14px;">
-      <p style="font-size:0.85em; color:var(--ink); opacity:0.8; line-height:1.6; margin:0;">
-        Free includes two starter books and one original story.<br>
-        Buying Fortunes unlocks another original story.
+    <!-- Taste Tier hint — shown only for free-tier users -->
+    <div id="tasteTierHint" class="hidden" style="text-align:center; margin:0 0 16px;">
+      <p style="font-size:0.82em; color:var(--ink); opacity:0.75; line-height:1.6; margin:0;">
+        Taste Tier includes two starter books and one original story.<br>
+        Buying Storypass or Fortunes unlocks further scenes and another original story.
       </p>
+    </div>
+
+    <!-- Offering sacrifice option — shown when user has Fortunes -->
+    <div id="teaseOfferingOption" class="hidden" style="margin:0 0 16px; padding:12px; border:1px solid var(--gold); border-radius:4px; background:rgba(255,215,0,0.05); text-align:center;">
+      <button id="btnSacrificeOffering" style="background:transparent; border:1px solid var(--gold); color:var(--gold); padding:8px 20px; cursor:pointer; font-family:'Lora',serif; font-size:0.95em; letter-spacing:0.5px;">Sacrifice 1 Fortune to fill Fate's quill</button>
+      <p id="offeringBalanceHint" style="font-size:0.7em; color:#888; margin:6px 0 0;"></p>
     </div>
 
     <div id="standardPay">
         <!-- Story-blocked sections — toggled by JS, visually hidden when cards are shown -->
         <div id="paywallStorypassSection" class="hidden"></div>
         <div id="paywallFortuneSection" class="hidden"></div>
-        <h4 id="paywallSubHeader" class="hidden" style="color:var(--gold); font-family:'Lora',serif; font-size:1em; letter-spacing:0.08em; text-align:center; margin:0 0 12px;">Choose Your Path</h4>
-
-        <p class="pay-card-hint">Hover to reveal</p>
-
         <div class="pay-card-row">
             <!-- ── STORYPASS CARD ── -->
             <div class="pay-card" id="optUnlock">
@@ -444,14 +439,13 @@
                     <div class="pay-card-front">
                         <img src="/assets/card-art/cards/White-Storypass-front.jpg" alt="Storypass">
                         <div class="pay-card-content">
-                            <div class="pay-card-price">$3</div>
                             <div class="pay-card-tagline">Undress the next chapter.</div>
                             <ul class="pay-card-features">
-                                <li>Next 20 scenes</li>
-                                <li>Longer pacing</li>
-                                <li>Full Petition Fate</li>
+                                <li>Reveal 20 more scenes in this story</li>
+                                <li>Full Fate Card access</li>
+                                <li>Unlocks another original story (Taste Tier)</li>
                             </ul>
-                            <button id="payOneTime" class="pay-card-btn">Unlock Story</button>
+                            <button id="payOneTime" class="pay-card-btn">$3 &mdash; Continue Story</button>
                             <button id="payOneTimeBlocked" class="pay-card-btn hidden">Unlock Story</button>
                             <div id="storypassDisabledNotice" class="hidden" style="font-size:0.65em; color:#888; text-align:center; margin-top:6px;">Unavailable with current settings</div>
                         </div>
@@ -468,7 +462,16 @@
                     <div class="pay-card-front">
                         <img src="/assets/card-art/cards/White-Fortunes-front.jpg" alt="Fortunes">
                         <div class="pay-card-content">
-                            <div class="pay-card-tagline">Spend on stories, POV editions, and more.</div>
+                            <div class="pay-card-tagline">Fuel Fate's quill.</div>
+                            <ul class="pay-card-features">
+                                <li>Extend your stories</li>
+                                <li>Unlock alternate POV books</li>
+                                <li>Tempt Fate more often</li>
+                                <li>Play experimental stories</li>
+                            </ul>
+                            <div class="pay-card-fortune-label">Fortune Reserves</div>
+                            <div id="payCardPromoBadge" class="fortune-promo-badge hidden"></div>
+                            <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
                             <div class="pay-card-fortune-options">
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(60, '$5');">60 &mdash; $5</button>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(120, '$9');">120 &mdash; $9</button>
@@ -488,35 +491,66 @@
                     <div class="pay-card-front">
                         <img src="/assets/card-art/cards/White-Membership-front.jpg" alt="Membership">
                         <div class="pay-card-content">
-                            <div class="pay-card-tagline">Let Fate favor you.</div>
-                            <div class="pay-card-content-split">
-                                <div class="pay-card-tier" id="optSubStoried">
-                                    <div class="pay-card-tier-name">Storied</div>
-                                    <div class="pay-card-tier-price">$6/mo</div>
-                                    <div class="pay-card-tier-perks">100 Fortunes/mo<br>+ small Fate boost</div>
-                                    <button id="paySubStoried" class="pay-card-btn">Subscribe</button>
+                            <div class="pay-card-tagline">Claim Fate's favor.</div>
+                            <ul class="pay-card-features">
+                                <li>All powers unlocked by Fortunes</li>
+                                <li>Fate takes an interest in you</li>
+                                <li>The power to Tempt Fate</li>
+                                <li>10% more Fortunes when adding to your reserves</li>
+                            </ul>
+                            <div class="pay-card-tiers-accordion">
+                                <div class="pay-card-tier-drop" id="optSubStoried" data-tier="storied">
+                                    <div class="pay-card-tier-header">
+                                        <span class="pay-card-tier-name">Storied</span>
+                                        <span class="pay-card-tier-price">&mdash; $6/mo</span>
+                                        <span class="pay-card-tier-arrow">&#9662;</span>
+                                    </div>
+                                    <div class="pay-card-tier-body">
+                                        <ul class="pay-card-tier-details">
+                                            <li>100 Fortunes</li>
+                                            <li>Fate tilts toward The Storied</li>
+                                            <li>Tempt Fate x1</li>
+                                            <li>3 Reincarnations</li>
+                                            <li>Save unlimited stories</li>
+                                        </ul>
+                                        <button id="paySubStoried" class="pay-card-btn">Subscribe</button>
+                                    </div>
                                 </div>
-                                <div class="pay-card-tier-divider"></div>
-                                <div class="pay-card-tier" id="optSubFavored">
-                                    <div class="pay-card-tier-name">Favored</div>
-                                    <div class="pay-card-tier-price">$9/mo</div>
-                                    <div class="pay-card-tier-perks">200 Fortunes/mo<br>+ larger Fate boost<br>+ 1 Free Tempt Fate</div>
-                                    <button id="paySubFavored" class="pay-card-btn">Subscribe</button>
+                                <div class="pay-card-tier-drop" id="optSubFavored" data-tier="favored">
+                                    <div class="pay-card-tier-header">
+                                        <span class="pay-card-tier-name">Favored</span>
+                                        <span class="pay-card-tier-price">&mdash; $9/mo</span>
+                                        <span class="pay-card-tier-arrow">&#9662;</span>
+                                    </div>
+                                    <div class="pay-card-tier-body">
+                                        <ul class="pay-card-tier-details">
+                                            <li>200 Fortunes</li>
+                                            <li>Fate bends for The Favored</li>
+                                            <li>Tempt Fates x2</li>
+                                            <li>4 Reincarnations</li>
+                                            <li>Save unlimited stories</li>
+                                        </ul>
+                                        <button id="paySubFavored" class="pay-card-btn">Subscribe</button>
+                                    </div>
                                 </div>
-                                <div class="pay-card-tier-divider"></div>
-                                <div class="pay-card-tier" id="optSubChosen">
-                                    <div class="pay-card-tier-name">Chosen</div>
-                                    <div class="pay-card-tier-price">$16/mo</div>
-                                    <div class="pay-card-tier-perks">400 Fortunes/mo<br>+ biggest Fate boost<br>+ 3 Free Tempt Fates</div>
-                                    <button id="paySubChosen" class="pay-card-btn">Subscribe</button>
+                                <div class="pay-card-tier-drop" id="optSubChosen" data-tier="chosen">
+                                    <div class="pay-card-tier-header">
+                                        <span class="pay-card-tier-name">Chosen</span>
+                                        <span class="pay-card-tier-price">&mdash; $16/mo</span>
+                                        <span class="pay-card-tier-arrow">&#9662;</span>
+                                    </div>
+                                    <div class="pay-card-tier-body">
+                                        <ul class="pay-card-tier-details">
+                                            <li>400 Fortunes</li>
+                                            <li>Fate fetes The Chosen</li>
+                                            <li>Tempt Fates x3</li>
+                                            <li>7 Reincarnations</li>
+                                            <li>Save unlimited stories</li>
+                                        </ul>
+                                        <button id="paySubChosen" class="pay-card-btn">Subscribe</button>
+                                    </div>
                                 </div>
                             </div>
-                            <ul class="pay-card-features pay-card-features-shared">
-                                <li>Extended arcs</li>
-                                <li>Long-form stories</li>
-                                <li>Unlimited Petitions</li>
-                                <li>Save anytime</li>
-                            </ul>
                         </div>
                     </div>
                 </div>
@@ -531,7 +565,7 @@
     <!-- Default cancel button (non-story-blocked contexts) -->
     <button id="paywallCancelDefault" class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="margin-top:15px;">Cancel</button>
     <!-- Story-blocked cancel — navigates to Forbidden Library -->
-    <button id="paywallCancelLibrary" class="hidden" style="margin-top:18px; background:none; border:none; color:var(--ink); opacity:0.7; font-family:'Lora',serif; font-size:0.85em; font-style:italic; cursor:pointer; padding:8px 12px; line-height:1.4;">I'll read for free from The Forbidden Library. For now.</button>
+    <button id="paywallCancelLibrary" class="hidden paywall-library-btn">I'll read for free from The Forbidden Library. For now.</button>
   </div>
 </div>
 
@@ -668,6 +702,8 @@
       <div class="fortune-modal-divider"></div>
       <p class="fortune-modal-header">Be rich in Fortunes.</p>
       <p class="fortune-modal-label">Fortune Packs</p>
+      <div id="fortuneModalPromoBadge" class="fortune-promo-badge hidden"></div>
+      <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
       <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
         <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(60, '$5');">60 Fortunes &mdash; $5</button>
         <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">120 Fortunes &mdash; $9</button>
@@ -1588,6 +1624,13 @@
         <button class="page-nav-btn" id="nextPageBtn" disabled>
             Next <span>→</span>
         </button>
+        <!-- Scene Actions kebab -->
+        <div class="scene-actions-wrap">
+            <button class="scene-actions-btn" id="sceneActionsBtn" title="Scene Actions">⋯</button>
+            <div class="scene-actions-menu hidden" id="sceneActionsMenu">
+                <button class="scene-actions-item" id="btnBindReincarnation">Bind Reincarnation</button>
+            </div>
+        </div>
     </div>
 
     <div id="vizSceneBtnWrap" class="vision-mobile-only" style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
@@ -1699,6 +1742,17 @@
       <div id="reincarnationExtractList" class="reincarnation-extract-list"></div>
       <button id="reincarnationExtractConfirm" class="sb-btn-png sm" style="margin-top:12px;" disabled>Extract Selected</button>
       <button id="reincarnationExtractSkip" class="sb-btn-png sm" style="margin-top:6px;">Not this time</button>
+    </div>
+  </div>
+
+  <!-- ── REINCARNATION CAPTURE MODAL (mid-story) ── -->
+  <div id="reincarnationCaptureModal" class="overlay hidden" style="z-index:10007;">
+    <div class="reincarnation-capture-box">
+      <div class="reincarnation-capture-title">Bind a Reincarnation</div>
+      <p class="reincarnation-capture-subtitle">Choose a soul from this story to preserve.</p>
+      <div id="reincarnationCaptureList" class="reincarnation-capture-list"></div>
+      <button id="reincarnationCaptureConfirm" class="sb-btn-png sm" style="margin-top:12px;" disabled>Preserve Reincarnation</button>
+      <button id="reincarnationCaptureCancel" class="sb-btn-png sm" style="margin-top:6px;">Cancel</button>
     </div>
   </div>
 
@@ -1979,6 +2033,9 @@
 </div>
 
 <!-- Dev HUD (developer-only, toggled with backtick key) -->
+<!-- Seasonal Promotion Dev HUD Banner (dev-only, rendered by JS) -->
+<div id="promoDevBanner" class="promo-dev-banner hidden"></div>
+
 <div id="devHud" class="dev-hud">
   <div class="dev-hud-bar">
     <span class="dev-hud-label">DEV</span>

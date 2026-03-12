@@ -15015,6 +15015,11 @@ Return ONLY the title, no quotes or explanation.`;
       state.book_complete = true;
       saveStorySnapshot();
 
+      // Fate Event — first story completed
+      if (typeof window._tryTriggerFateEvent === 'function') {
+          window._tryTriggerFateEvent('first_story_completed');
+      }
+
       // Detect legendary moments for imported echoes (fire-and-forget, once per story)
       if (!state._legendEvaluationComplete && (state._reincarnationImports || []).length > 0 && typeof window._detectLegendaryMoment === 'function') {
           window._detectLegendaryMoment(state._reincarnationImports).catch(() => {});
@@ -15474,6 +15479,7 @@ Return ONLY valid JSON:
       state._emotionalMythicFloorActivated = false;
       state.petitionUsedThisScene = false;
       state._reincarnationImports = [];
+      state._reincarnationsSavedThisStory = 0;
       state._legendEvaluationComplete = false;
       state.voiceAnchor = null; // Voice Anchor — generated once per story after Scene 1
       state.cliffhangerProtectionUsed = false; // One-use narrative safeguard per depletion cycle
@@ -24868,63 +24874,61 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     if (_actInput) _actInput.disabled = true;
     if (_diaInput) _diaInput.disabled = true;
 
-    // TEASE CAP VARIANT: Show ritual invitation copy instead of generic heading
-    const teaseCliffCopy = document.getElementById('teaseCliffhangerCopy');
-    const payHeading = document.getElementById('payModalHeading');
+    // Determine paywall context
     const isSceneCap = isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP;
     const isStoryBlocked = isTeaseStoryBlocked();
     const isTeaseCap = isSceneCap || isStoryBlocked;
-    if (teaseCliffCopy) teaseCliffCopy.classList.toggle('hidden', !isTeaseCap);
-    if (payHeading) {
-        payHeading.classList.toggle('hidden', isTeaseCap);
-        // When story-blocked (not scene-capped), update heading to credit-specific copy
-        if (isStoryBlocked && !isSceneCap) {
-            payHeading.textContent = 'Start Another Story';
-            payHeading.classList.remove('hidden');
-            if (teaseCliffCopy) teaseCliffCopy.classList.add('hidden');
-        } else if (!isTeaseCap) {
-            payHeading.textContent = 'Upgrade Your Story';
-        }
+
+    // Subscriber empty-Fortune hint — visible only for subscribers with 0 Fortunes
+    const subscriberFortuneHint = document.getElementById('subscriberFortuneHint');
+    if (subscriberFortuneHint) {
+        const isSubscriberEmpty = state.subscribed && (state.fortunes || 0) <= 0;
+        subscriberFortuneHint.classList.toggle('hidden', !isSubscriberEmpty);
     }
 
-    // CREDIT HINT: Show when story-blocked (0 credits), not scene-capped
-    const creditHintEl = document.getElementById('storySlotCreditHint');
-    if (creditHintEl) {
-        creditHintEl.classList.toggle('hidden', !isStoryBlocked || isSceneCap);
+    // Taste Tier hint — visible only for free-tier users
+    const tasteTierHint = document.getElementById('tasteTierHint');
+    if (tasteTierHint) {
+        tasteTierHint.classList.toggle('hidden', !isTeaseTier() || state.subscribed || !!state.hasPass);
     }
 
-    // Show/hide Fortune sacrifice option for tease cap
+    // Show/hide Fortune sacrifice option — ONLY for in-story scene cap (not story-blocked)
     const teaseOfferingEl = document.getElementById('teaseOfferingOption');
     if (teaseOfferingEl) {
-        teaseOfferingEl.classList.toggle('hidden', !isTeaseCap);
+        teaseOfferingEl.classList.toggle('hidden', !isSceneCap);
     }
     const balanceHint = document.getElementById('offeringBalanceHint');
-    if (balanceHint && isTeaseCap) {
+    if (balanceHint && isSceneCap) {
         const fortunes = state.fortunes || 0;
         balanceHint.textContent = `(${fortunes} Fortune${fortunes !== 1 ? 's' : ''} remaining)`;
     }
 
-    // Fortune upsell hint — visible for free users at cliffhanger, never for subscribers
-    const fortuneUpsellHint = document.getElementById('fortuneUpsellHint');
-    if (fortuneUpsellHint) {
-        fortuneUpsellHint.classList.toggle('hidden', !isTeaseCap || state.subscribed || !!state.hasPass);
-    }
-
-    // STORY-BLOCKED SECTIONS — show storypass, fortune packs, sub header, library cancel
-    const paywallStorypassSection = document.getElementById('paywallStorypassSection');
-    const paywallFortuneSection = document.getElementById('paywallFortuneSection');
-    const paywallSubHeader = document.getElementById('paywallSubHeader');
+    // STORY-BLOCKED SECTIONS — swap cancel buttons
     const cancelDefault = document.getElementById('paywallCancelDefault');
     const cancelLibrary = document.getElementById('paywallCancelLibrary');
     const showStoryBlockedOptions = isStoryBlocked && !isSceneCap;
-    if (paywallStorypassSection) paywallStorypassSection.classList.toggle('hidden', !showStoryBlockedOptions);
-    if (paywallFortuneSection) paywallFortuneSection.classList.toggle('hidden', !showStoryBlockedOptions);
-    if (paywallSubHeader) paywallSubHeader.classList.toggle('hidden', !showStoryBlockedOptions);
-    // Swap cancel buttons: story-blocked → Forbidden Library; default → Cancel
     if (cancelDefault) cancelDefault.classList.toggle('hidden', showStoryBlockedOptions);
     if (cancelLibrary) cancelLibrary.classList.toggle('hidden', !showStoryBlockedOptions);
 
     pm.classList.remove('hidden');
+
+    // ── Membership tier accordion — only one open at a time, Favored default ──
+    const tierDrops = pm.querySelectorAll('.pay-card-tier-drop');
+    tierDrops.forEach(drop => {
+        drop.classList.remove('open');
+        const header = drop.querySelector('.pay-card-tier-header');
+        if (header && !header._tierAccordionBound) {
+            header._tierAccordionBound = true;
+            header.addEventListener('click', () => {
+                const wasOpen = drop.classList.contains('open');
+                tierDrops.forEach(d => d.classList.remove('open'));
+                if (!wasOpen) drop.classList.add('open');
+            });
+        }
+    });
+    // Auto-open Favored
+    const favoredDrop = pm.querySelector('.pay-card-tier-drop[data-tier="favored"]');
+    if (favoredDrop) favoredDrop.classList.add('open');
 
     // ═══════════════════════════════════════════════════════════════════════
     // DIAGNOSTIC: #optUnlock visibility check (NO BEHAVIOR CHANGE)
@@ -30959,10 +30963,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     const bookTitle = expEntry.title;
     const bookAuthor = expEntry.author;
     const isGemma = expEntry.id === 'exp_gemmas_path';
+    const isCorpse = expEntry.id === 'exp_exquisite_corpse';
+    const isGoodReasons = expEntry.id === 'exp_good_reasons';
 
     const book = document.createElement('div');
     book.className = 'library-book initializing mode-cover experimental-book';
     if (isGemma) book.classList.add('gemma-book');
+    if (isCorpse) book.classList.add('corpse-book');
+    if (isGoodReasons) book.classList.add('goodreasons-book');
     book.dataset.storyId = expEntry.id;
     book.dataset.experimental = 'true';
 
@@ -30973,6 +30981,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       frontContent = `<img src="/assets/Forbidde-Library-Art/Gemma-Path-Cover.png" alt="${escapeHTML(bookTitle)}">`;
       backContent = `<div class="back-content gemma-back"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
       spineContent = `<img src="/assets/Forbidde-Library-Art/Gemmas-Path-spine.png" alt="${escapeHTML(bookTitle)}" class="gemma-spine-img">`;
+    } else if (isCorpse) {
+      // Exquisite Corpse: custom cover art + spine art, parchment/cream back
+      frontContent = `<img src="/assets/Forbidde-Library-Art/ExquisiteCorpse-Cover.png" alt="${escapeHTML(bookTitle)}">`;
+      backContent = `<div class="back-content corpse-back"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
+      spineContent = `<img src="/assets/Forbidde-Library-Art/ExquisiteCorpse-spine.png" alt="${escapeHTML(bookTitle)}" class="corpse-spine-img">`;
+    } else if (isGoodReasons) {
+      // Good Reasons: custom cover art + spine art, dark back
+      frontContent = `<img src="/assets/Forbidde-Library-Art/GoodReasons-Cover.png" alt="${escapeHTML(bookTitle)}">`;
+      backContent = `<div class="back-content goodreasons-back"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
+      spineContent = `<img src="/assets/Forbidde-Library-Art/GoodReasons-Spine.png" alt="${escapeHTML(bookTitle)}" class="goodreasons-spine-img">`;
     } else {
       frontContent = `<div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div>`;
       backContent = `<div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
@@ -33767,10 +33785,28 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
   // Handle fortune pack purchase (Stripe integration)
   function purchaseFortunePack(packSize, priceLabel) {
+      /* Membership bonus: members receive +10% Fortunes when adding reserves */
+      const memberMultiplier = state.subscribed ? 1.10 : 1;
+      /* Seasonal promotion bonus (stacks with membership) */
+      const seasonalMultiplier = (typeof window._getSeasonalBonusMultiplier === 'function')
+          ? window._getSeasonalBonusMultiplier() : 1;
+      /* Fate Event bonus (stacks with membership + seasonal) */
+      const fateEventMultiplier = (typeof window._getFateEventBonusMultiplier === 'function')
+          ? window._getFateEventBonusMultiplier() : 1;
+      const combinedMultiplier = memberMultiplier * seasonalMultiplier * fateEventMultiplier;
+      const effectiveSize = Math.round(packSize * combinedMultiplier);
+
+      // Build bonus breakdown for logging/display
+      const bonusParts = [];
+      if (state.subscribed) bonusParts.push('+10% member bonus');
+      if (seasonalMultiplier > 1) bonusParts.push('+' + Math.round((seasonalMultiplier - 1) * 100) + '% seasonal bonus');
+      if (fateEventMultiplier > 1) bonusParts.push('+' + Math.round((fateEventMultiplier - 1) * 100) + '% Fate Event bonus');
+      const bonusDesc = bonusParts.length > 0 ? ' (' + bonusParts.join(', ') + ')' : '';
+
       if (window._devBypass) {
-        console.log(`%c[DEV] Faking fortune purchase: +${packSize}`, 'color: #ffd700');
+        console.log(`%c[DEV] Faking fortune purchase: +${effectiveSize} (base ${packSize}${bonusDesc})`, 'color: #ffd700');
         const oldFortunes = state.fortunes || 0;
-        state.fortunes = oldFortunes + packSize;
+        state.fortunes = oldFortunes + effectiveSize;
         // Grant a story credit (buying fortunes unlocks another original story)
         grantFreeCustomStoryCredit('fortune_purchase');
         closeFortunePurchaseModal();
@@ -33782,10 +33818,10 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         }
         if (window.updateFortuneDisplay) window.updateFortuneDisplay();
         animateFortuneCountUp(oldFortunes, state.fortunes);
-        showToast(`+${packSize} Fortunes added (dev mode)`);
+        showToast(`+${effectiveSize} Fortunes added${bonusDesc} (dev mode)`);
         return;
       }
-      console.log(`[Fortunes] Purchase requested: ${packSize} fortunes (${priceLabel})`);
+      console.log(`[Fortunes] Purchase requested: ${effectiveSize} fortunes (base ${packSize}, ${priceLabel})${bonusDesc}`);
       showToast('Fortune purchase coming soon. Check back shortly!');
       closeFortunePurchaseModal();
   }
@@ -45654,6 +45690,15 @@ Generate the title and synopsis now.` }
     // Start loading bar sparkles
     startOverlayLoadingSparkles();
 
+    // Fate Event — inject promo message during loading (up to 3 times)
+    var fateSlot = document.getElementById('fateEventLoadingSlot');
+    if (fateSlot) {
+        fateSlot.innerHTML = '';
+        if (typeof window._injectFateEventLoadingMessage === 'function') {
+            window._injectFateEventLoadingMessage(fateSlot);
+        }
+    }
+
     // Always show cancel X so users can abort loading
     if (cancelBtn) cancelBtn.classList.add('visible');
 
@@ -45743,6 +45788,10 @@ Generate the title and synopsis now.` }
     if(fill) fill.style.width = '100%';
     if(percentEl) percentEl.textContent = '100%';
     if(cancelBtn) cancelBtn.classList.remove('visible');
+
+    // Clear Fate Event loading slot
+    var fateSlot = document.getElementById('fateEventLoadingSlot');
+    if (fateSlot) fateSlot.innerHTML = '';
 
     // Reset text opacity for next loading cycle
     if(textEl) {
@@ -45960,6 +46009,11 @@ Generate the title and synopsis now.` }
       state.tempt_fate_invoked_this_turn = true;
       state.consecutive_tempt_fate_count = (state.consecutive_tempt_fate_count || 0) + 1;
       state.tempt_fate_heat = Math.min((state.tempt_fate_heat || 0) + 1, 4);
+
+      // Fate Event — Tempt Fate used
+      if (typeof window._tryTriggerFateEvent === 'function') {
+          window._tryTriggerFateEvent('tempt_fate_used');
+      }
 
       // Badge engine — Tempt Fate milestones
       withProfileId(profileId => {
@@ -48881,6 +48935,11 @@ Generate the title and synopsis now.` }
         window._storeReincarnationImports?.(corridorEchoes);
         window._incrementStoriesAppeared?.(corridorEchoes);
         console.log('[ECHO CORRIDOR] Stored imports:', corridorEchoes.map(s => `${s.echo.canonical_name || s.echo.name} as ${s.role}`));
+
+        // Fate Event — first reincarnation summoned
+        if (corridorEchoes.length > 0 && typeof window._tryTriggerFateEvent === 'function') {
+            window._tryTriggerFateEvent('first_reincarnation_summoned');
+        }
       }
     }
 
@@ -49127,9 +49186,9 @@ Generate the title and synopsis now.` }
     if (isTeaseStoryBlocked()) {
         console.log('[BeginStory] EXITING — Tease story blocked (credits:', getFreeCustomStoryCredits(), 'access:', state.access, 'subscribed:', state.subscribed, ')');
         showToast('Free story credit used — unlock to continue');
-        // Resolve storypass eligibility to prevent showPaywall deferral loop
-        // (no active story yet — storyId may be stale from previous session)
-        if (state.storypassEligible === undefined) state.storypassEligible = true;
+        // Resolve storypass eligibility — always allow StoryPass for story-blocked users
+        // (stale false from a previous Soulmates story must not carry over)
+        state.storypassEligible = true;
         window.showPaywall('unlock');
         return;
     }
@@ -60478,6 +60537,10 @@ Respond in this EXACT format (no labels, just two lines):
                       state._isAdvancingScene = false;
                       if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
                       console.log(`[FATE_PAUSES] Insufficient fortunes (need ${sceneCost}, have ${state.fortunes || 0})`);
+                      // Fate Event — fortune depleted
+                      if ((state.fortunes || 0) === 0 && typeof window._tryTriggerFateEvent === 'function') {
+                          window._tryTriggerFateEvent('first_time_fortune_depleted');
+                      }
                       _openFatePausesModal('zero_fortunes');
                       return;
                   }
@@ -62245,6 +62308,11 @@ ABSOLUTE RULES:
 
           state.turnCount++;
           _sessionTurnCount++;
+
+          // Fate Event — scene 10 milestone
+          if (state.turnCount === 10 && typeof window._tryTriggerFateEvent === 'function') {
+              window._tryTriggerFateEvent('scene_10_reached');
+          }
 
           // Phrase Entropy Guard — extract fragments for next-turn variety constraint
           try { extractPhraseFragments(raw); } catch (_) { /* silent */ }
@@ -64851,14 +64919,66 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   // ═══════════════════════════════════════════════════════════════════
   // REINCARNATION SYSTEM — Extract character essences, store, import
   // ═══════════════════════════════════════════════════════════════════
+  // SCENE ACTIONS MENU — Kebab dropdown in reader page nav
+  // ═══════════════════════════════════════════════════════════════════
+  (function initSceneActionsMenu() {
+      const btn = document.getElementById('sceneActionsBtn');
+      const menu = document.getElementById('sceneActionsMenu');
+      if (!btn || !menu) return;
+
+      btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          menu.classList.toggle('hidden');
+      });
+
+      // Close on outside click
+      document.addEventListener('click', function() {
+          if (!menu.classList.contains('hidden')) menu.classList.add('hidden');
+      });
+      menu.addEventListener('click', function(e) { e.stopPropagation(); });
+
+      // Bind Reincarnation item
+      const bindBtn = document.getElementById('btnBindReincarnation');
+      if (bindBtn) {
+          bindBtn.addEventListener('click', function() {
+              menu.classList.add('hidden');
+              if (typeof window._openReincarnationCaptureModal === 'function') {
+                  window._openReincarnationCaptureModal();
+              }
+          });
+      }
+  })();
+
+  // ═══════════════════════════════════════════════════════════════════
   (function initReincarnationSystem() {
 
       const REINCARNATION_STORAGE_KEY = 'sb_reincarnations';
       const REINCARNATION_THREADS_KEY = 'sb_reincarnation_threads';
       const REINCARNATION_CONSTELLATIONS_KEY = 'sb_reincarnation_constellations';
-      const MAX_IMPORT_PER_STORY = 7;   // total max including typed echoes (5 corridor + 2 typed)
-      const MAX_CORRIDOR_SLOTS = 5;    // max manual corridor selections
+      const MAX_IMPORT_PER_STORY = 9;   // total max including typed echoes (7 corridor + 2 typed)
+      const MAX_CORRIDOR_SLOTS = 7;    // max corridor selections (Chosen tier cap)
       const MAX_ECHO_LEGEND = 100;
+
+      /** Tier-gated reincarnation slot limit (Vault + corridor slots) */
+      function _getTierReincLimit() {
+          if (!state.subscribed) return 0;
+          switch (state.subscriptionTier) {
+              case 'chosen':  return 7;
+              case 'favored': return 5;
+              case 'storied': return 4;
+              default:        return 0;
+          }
+      }
+
+      function _getReincLockTooltip(slotIndex) {
+          if (!state.subscribed) return 'Members can Reincarnate their favorite characters in new stories';
+          switch (state.subscriptionTier) {
+              case 'chosen':  return 'Fate loves bringing people together';
+              case 'favored': return 'Claim Chosen Membership for additional Reincarnations';
+              case 'storied': return 'Claim Favored or Chosen Membership for additional Reincarnations';
+              default:        return 'Members can Reincarnate their favorite characters in new stories';
+          }
+      }
 
       const IMPORT_ROLES = ['ally', 'rival', 'romantic interest', 'mentor', 'antagonist', 'wild card'];
 
@@ -65180,6 +65300,19 @@ Keep all values concise. Under 200 tokens total.` }
           const chars = _buildExtractableCharacters();
           if (chars.length === 0) return;
 
+          // Filter out characters already preserved mid-story
+          const alreadySaved = _loadReincarnations();
+          const currentStoryId = state.storyId || '';
+          const filteredChars = chars.filter(function(c) {
+              return !alreadySaved.some(function(r) {
+                  return (r.canonical_name || r.name) === c.name && r.source_story_id === currentStoryId;
+              });
+          });
+          if (filteredChars.length === 0) {
+              if (typeof showToast === 'function') showToast('All characters from this story have already been preserved.');
+              return;
+          }
+
           const list = document.getElementById('reincarnationExtractList');
           const confirmBtn = document.getElementById('reincarnationExtractConfirm');
           if (!list || !confirmBtn) return;
@@ -65187,7 +65320,7 @@ Keep all values concise. Under 200 tokens total.` }
           list.innerHTML = '';
           const selected = new Set();
 
-          chars.forEach((c, i) => {
+          filteredChars.forEach((c, i) => {
               const card = document.createElement('div');
               card.className = 'reincarnation-card';
               card.innerHTML = `<div class="reincarnation-card-name">${_esc(c.name)}</div>
@@ -65207,7 +65340,7 @@ Keep all values concise. Under 200 tokens total.` }
               const existing = _loadReincarnations();
               const extracted = [];
               for (const idx of selected) {
-                  const essence = await _extractCharacterEssence(chars[idx]);
+                  const essence = await _extractCharacterEssence(filteredChars[idx]);
                   // Avoid duplicates by canonical_name+source_story
                   const cName = essence.canonical_name || essence.name;
                   const dupeIdx = existing.findIndex(e => (e.canonical_name || e.name) === cName && e.source_story_id === essence.source_story_id);
@@ -65339,7 +65472,7 @@ Keep all values concise. Under 200 tokens total.` }
       // ── Import UI (pre-story selection) ──
 
       let _importSelections = []; // [{echo, role}]
-      let _importCap = MAX_CORRIDOR_SLOTS;
+      let _importCap = _getTierReincLimit() || MAX_CORRIDOR_SLOTS;
       let _excludeEchoIds = new Set();
 
       function _renderImportList() {
@@ -65732,7 +65865,8 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
           if (!container || !strip) return;
 
           const reincarnations = _loadReincarnations();
-          if (reincarnations.length === 0) {
+          const _tierLimit = _getTierReincLimit();
+          if (reincarnations.length === 0 || _tierLimit <= 0) {
               strip.classList.add('hidden');
               return;
           }
@@ -65778,8 +65912,9 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
               container.appendChild(card);
           });
 
-          // Selector card if room remains (max 5 manual slots)
-          if (_corridorEchoSlots.length < MAX_CORRIDOR_SLOTS) {
+          // Selector card if room remains (tier-gated slots)
+          var _slotLimit = _getTierReincLimit();
+          if (_corridorEchoSlots.length < _slotLimit) {
               const selector = document.createElement('div');
               selector.className = 'echo-slot-card echo-slot-selector';
               selector.innerHTML = '<div class="echo-slot-plus">+</div><div class="echo-slot-selector-label">Add Echo</div>';
@@ -65809,7 +65944,7 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
       }
 
       function _addEchoToCorridorSlot(echo, role) {
-          if (_corridorEchoSlots.length >= MAX_CORRIDOR_SLOTS) return;
+          if (_corridorEchoSlots.length >= _getTierReincLimit()) return;
           if (_corridorEchoSlots.some(function(s) { return s.echo.echo_id === echo.echo_id; })) return;
           // Prevent adding an echo already bound as a typed echo
           if (_getTypedEchoIds().has(echo.echo_id)) return;
@@ -65828,7 +65963,7 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
       }
 
       async function _openEchoCorridorPicker() {
-          var remaining = MAX_CORRIDOR_SLOTS - _corridorEchoSlots.length;
+          var remaining = _getTierReincLimit() - _corridorEchoSlots.length;
           if (remaining <= 0) return;
           _importCap = remaining;
           // Exclude both corridor slots and typed echoes from picker
@@ -65843,7 +65978,7 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
           } catch (e) {
               console.warn('[ECHO CORRIDOR] Picker error:', e.message);
           }
-          _importCap = MAX_CORRIDOR_SLOTS;
+          _importCap = _getTierReincLimit();
           _excludeEchoIds = new Set();
       }
 
@@ -65967,7 +66102,7 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
       _renderEchoCorridorStrip();
 
       // ── Reincarnation Mini-Cards (below character cards) ──
-      var EMPTY_SLOT_COUNT = 5; // placeholder slots when no reincarnations saved
+      var EMPTY_SLOT_COUNT = 7; // visual total (matches Chosen tier max)
 
       function _renderReincMiniCards() {
           const section = document.getElementById('echoReincSection');
@@ -65976,75 +66111,329 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
           if (!section || !container) return;
 
           const reincarnations = _loadReincarnations();
+          const slotLimit = _getTierReincLimit();
           container.innerHTML = '';
 
-          if (reincarnations.length === 0) {
-              // Empty state — show greyed placeholder cards + explainer
-              if (explainer) {
+          // ── Explainer text ──
+          if (explainer) {
+              if (!state.subscribed) {
+                  explainer.textContent = 'Members can Reincarnate their favorite characters in new stories.';
+              } else if (reincarnations.length === 0) {
                   explainer.textContent = 'Finish a story to save its characters here as reincarnations.';
+              } else if (state.subscriptionTier === 'chosen') {
+                  explainer.textContent = 'Fate loves bringing people together.';
+              } else {
+                  explainer.textContent = reincarnations.length === 1
+                      ? 'A reincarnation from a past story awaits. Tap to weave them into this one.'
+                      : reincarnations.length + ' reincarnations from past stories await. Tap to weave them in.';
               }
-              for (var i = 0; i < EMPTY_SLOT_COUNT; i++) {
+          }
+
+          // ── Build lookup for active echoes ──
+          const usedIds = _getTypedEchoIds();
+          const corridorIds = new Set(_corridorEchoSlots.map(function(s) { return s.echo.echo_id; }));
+
+          // ── Render 7 slots: available ones first (filled or empty), then locked ──
+          for (var i = 0; i < EMPTY_SLOT_COUNT; i++) {
+              var isLocked = i >= slotLimit;
+              var echo = reincarnations[i] || null;
+
+              if (isLocked) {
+                  // Locked slot — greyed out
+                  var locked = document.createElement('div');
+                  locked.className = 'echo-reinc-card echo-reinc-card-locked';
+                  locked.innerHTML = '<div class="echo-reinc-card-lock">\u{1F512}</div>';
+                  locked.title = _getReincLockTooltip(i);
+                  (function(tip) {
+                      locked.addEventListener('click', function() {
+                          if (typeof showToast === 'function') showToast(tip);
+                      });
+                  })(_getReincLockTooltip(i));
+                  container.appendChild(locked);
+              } else if (echo) {
+                  // Available slot with a saved reincarnation
+                  var card = document.createElement('div');
+                  var isActive = usedIds.has(echo.echo_id) || corridorIds.has(echo.echo_id);
+                  card.className = 'echo-reinc-card echo-reinc-card-filled' + (isActive ? ' echo-reinc-selected' : '');
+                  card.dataset.echoId = echo.echo_id;
+                  if (state.subscriptionTier === 'chosen') card.title = 'Fate loves bringing people together';
+
+                  var name = echo.canonical_name || echo.name || 'Unknown';
+                  var legendScore = echo.legend_score || 0;
+                  var legendHtml = legendScore > 0 ? '<div class="echo-reinc-card-legend">' + _esc(String(legendScore)) + '</div>' : '';
+                  var roleHtml = echo.role_archetype
+                      ? '<div class="echo-reinc-card-role">' + _esc(echo.role_archetype.slice(0, 30)) + '</div>'
+                      : '';
+
+                  card.innerHTML = '<div class="echo-reinc-card-name">' + _esc(name) + '</div>'
+                      + roleHtml + legendHtml;
+
+                  (function(echo, isActive) {
+                      card.addEventListener('click', function() {
+                          if (isActive) {
+                              // If bound via Character/Love Interest name card, can't deselect here
+                              if (_getTypedEchoIds().has(echo.echo_id)) {
+                                  if (typeof showToast === 'function') showToast('Change the Character or Love Interest name to free this reincarnation.');
+                                  return;
+                              }
+                              _corridorEchoSlots = _corridorEchoSlots.filter(function(s) { return s.echo.echo_id !== echo.echo_id; });
+                              _renderEchoCorridorStrip();
+                              _renderReincMiniCards();
+                              return;
+                          }
+                          var currentLimit = _getTierReincLimit();
+                          if (_corridorEchoSlots.length >= currentLimit) {
+                              if (typeof showToast === 'function') showToast('Maximum ' + currentLimit + ' reincarnation slots for your tier.');
+                              return;
+                          }
+                          _addEchoToCorridorSlot(echo, 'supporting character');
+                          _renderReincMiniCards();
+                      });
+                  })(echo, isActive);
+
+                  container.appendChild(card);
+              } else {
+                  // Available but empty slot — placeholder
                   var empty = document.createElement('div');
                   empty.className = 'echo-reinc-card echo-reinc-card-empty';
                   empty.innerHTML = '<div class="echo-reinc-card-plus">?</div>';
+                  if (state.subscriptionTier === 'chosen') empty.title = 'Fate loves bringing people together';
                   empty.addEventListener('click', function() {
                       if (typeof showToast === 'function') showToast('Complete a story to extract character reincarnations here.');
                   });
                   container.appendChild(empty);
               }
-              return;
           }
-
-          // Populated state
-          if (explainer) {
-              explainer.textContent = reincarnations.length === 1
-                  ? 'A reincarnation from a past story awaits. Tap to weave them into this one.'
-                  : reincarnations.length + ' reincarnations from past stories await. Tap to weave them in.';
-          }
-
-          // Render a mini-card for each saved reincarnation
-          const usedIds = _getTypedEchoIds();
-          const corridorIds = new Set(_corridorEchoSlots.map(function(s) { return s.echo.echo_id; }));
-
-          reincarnations.forEach(function(echo) {
-              const card = document.createElement('div');
-              const isActive = usedIds.has(echo.echo_id) || corridorIds.has(echo.echo_id);
-              card.className = 'echo-reinc-card echo-reinc-card-filled' + (isActive ? ' echo-reinc-selected' : '');
-              card.dataset.echoId = echo.echo_id;
-
-              var name = echo.canonical_name || echo.name || 'Unknown';
-              var legendScore = echo.legend_score || 0;
-              var legendHtml = legendScore > 0 ? '<div class="echo-reinc-card-legend">' + _esc(String(legendScore)) + '</div>' : '';
-              var roleHtml = echo.role_archetype
-                  ? '<div class="echo-reinc-card-role">' + _esc(echo.role_archetype.slice(0, 30)) + '</div>'
-                  : '';
-
-              card.innerHTML = '<div class="echo-reinc-card-name">' + _esc(name) + '</div>'
-                  + roleHtml + legendHtml;
-
-              card.addEventListener('click', function() {
-                  if (isActive) {
-                      // Deselect: remove from corridor slots
-                      _corridorEchoSlots = _corridorEchoSlots.filter(function(s) { return s.echo.echo_id !== echo.echo_id; });
-                      _renderEchoCorridorStrip();
-                      _renderReincMiniCards();
-                      return;
-                  }
-                  if (_corridorEchoSlots.length >= MAX_CORRIDOR_SLOTS) {
-                      if (typeof showToast === 'function') showToast('Maximum ' + MAX_CORRIDOR_SLOTS + ' echoes reached.');
-                      return;
-                  }
-                  // Add to corridor as 'supporting character' by default
-                  _addEchoToCorridorSlot(echo, 'supporting character');
-                  _renderReincMiniCards();
-              });
-
-              container.appendChild(card);
-          });
       }
 
       // Render on init
       _renderReincMiniCards();
+
+      // ══════════════════════════════════════════════════════════════
+      // MID-STORY REINCARNATION CAPTURE — "Bind Reincarnation"
+      // ══════════════════════════════════════════════════════════════
+
+      const MAX_REINCARNATIONS_PER_STORY = 5;
+
+      /**
+       * Build list of capturable characters from current story state.
+       * Returns array of { character_id, name, role_type, scene_count, dialogue_count, source }
+       */
+      function _getEligibleReincarnationCandidates() {
+          const candidates = [];
+          const turnCount = state.turnCount || 0;
+
+          // Player character — always eligible if story has begun
+          const pName = state.picks?.identity?.displayPlayerName || state.playerName || '';
+          if (pName && turnCount >= 1) {
+              candidates.push({
+                  character_id: 'player_' + (state.storyId || ''),
+                  name: pName,
+                  role_type: 'protagonist',
+                  scene_count: turnCount,
+                  dialogue_count: turnCount,
+                  source: 'player',
+                  gender: state.gender || 'Unknown',
+                  pronouns: state.authorPronouns || ''
+              });
+          }
+
+          // Love interest — eligible if named
+          const liName = state.picks?.identity?.displayPartnerName || state.loveInterestName || '';
+          if (liName && turnCount >= 1) {
+              candidates.push({
+                  character_id: 'li_' + (state.storyId || ''),
+                  name: liName,
+                  role_type: 'love interest',
+                  scene_count: turnCount,
+                  dialogue_count: turnCount,
+                  source: 'npc_love_interest',
+                  gender: state.loveInterest || 'Unknown',
+                  pronouns: state.loveInterest === 'Female' ? 'She/Her' : state.loveInterest === 'Male' ? 'He/Him' : 'They/Them'
+              });
+          }
+
+          // Secondary characters (rivals, observers, antagonists)
+          const secondary = state.secondaryCharacters || { rivals: [], observers: [], antagonists: [] };
+          const roleMap = { rivals: 'rival', observers: 'observer', antagonists: 'antagonist' };
+          for (const [key, role] of Object.entries(roleMap)) {
+              const names = secondary[key] || [];
+              for (const name of names) {
+                  if (!name || typeof name !== 'string' || name.trim().length === 0) continue;
+                  candidates.push({
+                      character_id: role + '_' + name.toLowerCase().replace(/\s+/g, '_') + '_' + (state.storyId || ''),
+                      name: name.trim(),
+                      role_type: role,
+                      scene_count: Math.max(2, Math.floor(turnCount * 0.5)),
+                      dialogue_count: 1,
+                      source: 'npc_' + role,
+                      gender: 'Unknown',
+                      pronouns: ''
+                  });
+              }
+          }
+
+          return candidates;
+      }
+
+      /**
+       * Render the capture modal character list with radio selection.
+       */
+      function _renderReincarnationCaptureList() {
+          const list = document.getElementById('reincarnationCaptureList');
+          const confirmBtn = document.getElementById('reincarnationCaptureConfirm');
+          if (!list || !confirmBtn) return;
+
+          const candidates = _getEligibleReincarnationCandidates();
+          list.innerHTML = '';
+          let _selectedIdx = -1;
+
+          if (candidates.length === 0) {
+              list.innerHTML = '<div style="font-family:Lora,serif; color:var(--ink); opacity:0.5; font-style:italic; padding:16px 0;">No characters available yet. Continue the story first.</div>';
+              confirmBtn.disabled = true;
+              return;
+          }
+
+          // Check which characters are already preserved from this story
+          const existing = _loadReincarnations();
+          const currentStoryId = state.storyId || '';
+
+          candidates.forEach(function(c, i) {
+              const alreadySaved = existing.some(function(r) {
+                  return (r.canonical_name || r.name) === c.name && r.source_story_id === currentStoryId;
+              });
+
+              const card = document.createElement('div');
+              card.className = 'reincarnation-capture-card' + (alreadySaved ? ' already-saved' : '');
+              if (alreadySaved) {
+                  card.style.opacity = '0.4';
+                  card.style.pointerEvents = 'none';
+              }
+
+              const roleLabel = c.role_type.charAt(0).toUpperCase() + c.role_type.slice(1);
+              card.innerHTML = '<div class="reincarnation-capture-radio"></div>'
+                  + '<div class="reincarnation-capture-info">'
+                  + '<div class="reincarnation-capture-name">' + _esc(c.name) + '</div>'
+                  + '<div class="reincarnation-capture-role">Role: ' + _esc(roleLabel)
+                  + (alreadySaved ? ' — <em>already preserved</em>' : '') + '</div>'
+                  + '</div>';
+
+              if (!alreadySaved) {
+                  card.addEventListener('click', function() {
+                      // Deselect previous
+                      list.querySelectorAll('.reincarnation-capture-card.selected').forEach(function(el) { el.classList.remove('selected'); });
+                      card.classList.add('selected');
+                      _selectedIdx = i;
+                      confirmBtn.disabled = false;
+                  });
+              }
+              list.appendChild(card);
+          });
+
+          confirmBtn.disabled = true;
+
+          // Wire confirm button
+          confirmBtn.onclick = async function() {
+              if (_selectedIdx < 0 || _selectedIdx >= candidates.length) return;
+              const candidate = candidates[_selectedIdx];
+
+              // Per-story save cap
+              if ((state._reincarnationsSavedThisStory || 0) >= MAX_REINCARNATIONS_PER_STORY) {
+                  if (typeof showToast === 'function') showToast('You have preserved the maximum Reincarnations from this story.');
+                  return;
+              }
+
+              // Duplicate check
+              const existingNow = _loadReincarnations();
+              const isDupe = existingNow.some(function(r) {
+                  return (r.canonical_name || r.name) === candidate.name && r.source_story_id === (state.storyId || '');
+              });
+              if (isDupe) {
+                  if (typeof showToast === 'function') showToast('This soul has already been preserved.');
+                  return;
+              }
+
+              confirmBtn.disabled = true;
+              confirmBtn.textContent = 'Preserving...';
+
+              try {
+                  // Use existing extraction pipeline
+                  const charInfo = {
+                      name: candidate.name,
+                      source: candidate.source,
+                      gender: candidate.gender,
+                      pronouns: candidate.pronouns
+                  };
+                  const essence = await _extractCharacterEssence(charInfo);
+
+                  // Persist
+                  const all = _loadReincarnations();
+                  const dupeIdx = all.findIndex(function(e) {
+                      return (e.canonical_name || e.name) === (essence.canonical_name || essence.name)
+                          && e.source_story_id === essence.source_story_id;
+                  });
+                  if (dupeIdx >= 0) all[dupeIdx] = essence;
+                  else all.push(essence);
+                  _saveReincarnations(all);
+
+                  // Track per-story count
+                  state._reincarnationsSavedThisStory = (state._reincarnationsSavedThisStory || 0) + 1;
+
+                  // Close modal
+                  document.getElementById('reincarnationCaptureModal')?.classList.add('hidden');
+
+                  // Toast + sparkle
+                  if (typeof showToast === 'function') showToast('Reincarnation preserved.');
+
+                  // Sparkle effect on toast
+                  var toast = document.getElementById('toast');
+                  if (toast) {
+                      var sparkle = document.createElement('span');
+                      sparkle.className = 'reinc-capture-sparkle';
+                      sparkle.textContent = '✦';
+                      toast.style.position = 'relative';
+                      toast.appendChild(sparkle);
+                      setTimeout(function() { sparkle.remove(); }, 700);
+                  }
+
+                  console.log('[REINCARNATION] Mid-story capture:', essence.canonical_name || essence.name);
+              } catch (e) {
+                  console.error('[REINCARNATION] Capture failed:', e);
+                  if (typeof showToast === 'function') showToast('Capture failed — try again.');
+              } finally {
+                  confirmBtn.textContent = 'Preserve Reincarnation';
+                  confirmBtn.disabled = false;
+              }
+          };
+      }
+
+      /**
+       * Open the mid-story Reincarnation capture modal.
+       */
+      function _openReincarnationCaptureModal() {
+          // Must be in an active story
+          if (!state.storyId || (state.turnCount || 0) < 1) {
+              if (typeof showToast === 'function') showToast('Begin a story first.');
+              return;
+          }
+
+          // Per-story cap check
+          if ((state._reincarnationsSavedThisStory || 0) >= MAX_REINCARNATIONS_PER_STORY) {
+              if (typeof showToast === 'function') showToast('You have preserved the maximum Reincarnations from this story.');
+              return;
+          }
+
+          _renderReincarnationCaptureList();
+          document.getElementById('reincarnationCaptureModal')?.classList.remove('hidden');
+      }
+
+      // Cancel button
+      document.getElementById('reincarnationCaptureCancel')?.addEventListener('click', function() {
+          document.getElementById('reincarnationCaptureModal')?.classList.add('hidden');
+      });
+
+      // Expose to window for Scene Actions menu
+      window._openReincarnationCaptureModal = _openReincarnationCaptureModal;
 
       // Expose corridor functions
       window._initEchoCorridorStrip = _renderEchoCorridorStrip;
@@ -66054,6 +66443,527 @@ Only include characters that appear in the excerpt. Be strict — only TRUE for 
       Object.defineProperty(window, '_corridorEchoSlots', { get: () => _corridorEchoSlots });
 
       console.log('[REINCARNATION] System initialized');
+  })();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FATE EVENTS — Story-triggered Fortune promotions (+25% for 12h)
+  // Triggers on narrative milestones. Max 1 per week per player.
+  // ═══════════════════════════════════════════════════════════════════
+  (function initFateEvents() {
+
+      const FATE_EVENT_CONFIG = {
+          bonus_multiplier: 1.25,
+          duration_hours: 12,
+          cooldown_days: 7
+      };
+
+      const FATE_EVENT_STORAGE_KEY = 'sb_fate_event';
+
+      const VALID_TRIGGERS = [
+          'scene_10_reached',
+          'first_story_completed',
+          'tempt_fate_used',
+          'first_reincarnation_summoned',
+          'first_time_fortune_depleted'
+      ];
+
+      const FATE_TRIGGER_COPY = {
+          scene_10_reached: "Fate honors your journey deeper into the story.",
+          first_story_completed: "Fate honors your first story completion.",
+          tempt_fate_used: "You tempted Fate — and Fate answers.",
+          first_reincarnation_summoned: "A soul returns. Fate stirs.",
+          first_time_fortune_depleted: "Even when Fortune falters, Fate remembers.",
+          trophy_earned: "Your legend grows. Fate takes notice."
+      };
+
+      // ── State Hydration ──
+
+      function _loadFateEventState() {
+          try {
+              const raw = localStorage.getItem(FATE_EVENT_STORAGE_KEY);
+              if (!raw) return null;
+              return JSON.parse(raw);
+          } catch { return null; }
+      }
+
+      function _saveFateEventState(data) {
+          localStorage.setItem(FATE_EVENT_STORAGE_KEY, JSON.stringify(data));
+          // Non-critical Supabase sync
+          _syncFateEventToSupabase(data);
+      }
+
+      function _syncFateEventToSupabase(data) {
+          try {
+              if (!sb || !sb.auth) return;
+              sb.auth.getUser().then(function(res) {
+                  var user = res?.data?.user;
+                  if (!user) return;
+                  sb.from('profiles').update({
+                      fate_event_state: JSON.stringify(data)
+                  }).eq('id', user.id).then(function() {}, function(err) {
+                      console.warn('[FATE_EVENT] Supabase sync failed:', err);
+                  });
+              });
+          } catch (e) {
+              console.warn('[FATE_EVENT] Supabase sync error:', e);
+          }
+      }
+
+      // Hydrate on init
+      var _fateState = _loadFateEventState() || {
+          lastFateEventAt: null,
+          activeFateEvent: null,
+          triggersUsed: {}
+      };
+
+      // Also set on state for external access
+      state.lastFateEventAt = _fateState.lastFateEventAt || null;
+      state.activeFateEvent = _fateState.activeFateEvent || null;
+
+      // ── Expiration Check ──
+
+      function _isFateEventActive() {
+          if (!_fateState.activeFateEvent) return false;
+          var expiresAt = typeof _fateState.activeFateEvent.expires_at === 'number'
+              ? _fateState.activeFateEvent.expires_at
+              : new Date(_fateState.activeFateEvent.expires_at).getTime();
+          if (Date.now() >= expiresAt) {
+              // Expired — clear state + loading counter
+              _fateState.activeFateEvent = null;
+              state.activeFateEvent = null;
+              state.fateEventLoadingDisplays = 0;
+              _saveFateEventState(_fateState);
+              _updateFateEventBadges();
+              return false;
+          }
+          return true;
+      }
+
+      // ── Trigger ──
+
+      function _tryTriggerFateEvent(triggerType) {
+          if (VALID_TRIGGERS.indexOf(triggerType) === -1) {
+              console.warn('[FATE_EVENT] Invalid trigger type:', triggerType);
+              return false;
+          }
+
+          // Safety guard: prevent duplicate activation during same story moment
+          if (state.activeFateEvent && Date.now() < new Date(state.activeFateEvent.expires_at).getTime()) {
+              return false;
+          }
+
+          // Already active?
+          if (_isFateEventActive()) {
+              console.log('[FATE_EVENT] Already active, skipping trigger:', triggerType);
+              return false;
+          }
+
+          // Cooldown enforcement (7 days, timestamp-based)
+          if (_fateState.lastFateEventAt) {
+              var lastTs = typeof _fateState.lastFateEventAt === 'number'
+                  ? _fateState.lastFateEventAt
+                  : new Date(_fateState.lastFateEventAt).getTime();
+              if (Date.now() - lastTs < FATE_EVENT_CONFIG.cooldown_days * 86400000) {
+                  console.log('[FATE_EVENT] Cooldown active, skipping. Last:', _fateState.lastFateEventAt);
+                  return false;
+              }
+          }
+
+          // Per-story dedup: some triggers only fire once per story
+          var storyKey = triggerType + '_' + (state.storyId || 'none');
+          if (_fateState.triggersUsed[storyKey]) {
+              console.log('[FATE_EVENT] Trigger already used this story:', storyKey);
+              return false;
+          }
+
+          // Activate (timestamps as epoch ms for timezone safety)
+          var nowTs = Date.now();
+          var expiresTs = nowTs + FATE_EVENT_CONFIG.duration_hours * 3600000;
+
+          _fateState.lastFateEventAt = nowTs;
+          _fateState.activeFateEvent = {
+              started_at: nowTs,
+              expires_at: expiresTs,
+              trigger: triggerType
+          };
+          _fateState.triggersUsed[storyKey] = true;
+
+          state.lastFateEventAt = nowTs;
+          state.activeFateEvent = _fateState.activeFateEvent;
+          state.fateEventLoadingDisplays = 0;
+
+          _saveFateEventState(_fateState);
+
+          console.log('[FATE_EVENT] Activated! Trigger:', triggerType, 'Expires:', new Date(expiresTs).toISOString());
+
+          // Update badges (no modal — message shown during loading moments instead)
+          _updateFateEventBadges();
+
+          return true;
+      }
+
+      // ── Badge UI ──
+
+      function _updateFateEventBadges() {
+          var isActive = _isFateEventActive();
+          var badges = document.querySelectorAll('.fate-event-badge');
+          badges.forEach(function(badge) {
+              if (isActive) {
+                  badge.classList.remove('hidden');
+              } else {
+                  badge.classList.add('hidden');
+              }
+          });
+      }
+
+      // ── Bonus Multiplier (exposed for purchaseFortunePack) ──
+
+      window._getFateEventBonusMultiplier = function() {
+          return _isFateEventActive() ? FATE_EVENT_CONFIG.bonus_multiplier : 1;
+      };
+
+      window._isFateEventActive = _isFateEventActive;
+
+      // ── Expose trigger for integration hooks ──
+
+      window._tryTriggerFateEvent = _tryTriggerFateEvent;
+
+      // ── Periodic expiration check (every 60s) ──
+
+      setInterval(function() {
+          if (_fateState.activeFateEvent && !_isFateEventActive()) {
+              console.log('[FATE_EVENT] Event expired during session');
+          }
+      }, 60000);
+
+      // ── Init badge state ──
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', _updateFateEventBadges);
+      } else {
+          _updateFateEventBadges();
+      }
+
+      // ── Loading-moment message injection ──
+      // Exposed for loading bar sequences to call
+      window._injectFateEventLoadingMessage = function(containerEl) {
+          if (!_isFateEventActive()) return false;
+          if ((state.fateEventLoadingDisplays || 0) >= 3) return false;
+
+          var triggerType = _fateState.activeFateEvent ? _fateState.activeFateEvent.trigger : null;
+          var triggerLine = (triggerType && FATE_TRIGGER_COPY[triggerType]) ? FATE_TRIGGER_COPY[triggerType] : '';
+
+          var msg = document.createElement('div');
+          msg.className = 'fate-event-loading-msg';
+          msg.innerHTML = '<div class="fate-event-loading-title">The Stars Align</div>'
+              + (triggerLine ? '<div class="fate-event-loading-ack">' + triggerLine + '</div>' : '')
+              + '<div class="fate-event-loading-body">Fortune favors the bold.<br>+25% Fortunes on all reserves.</div>'
+              + '<div class="fate-event-loading-timer">The stars will align for 12 hours.</div>';
+
+          containerEl.appendChild(msg);
+          state.fateEventLoadingDisplays = (state.fateEventLoadingDisplays || 0) + 1;
+          return true;
+      };
+
+      console.log('[FATE_EVENT] System initialized. Active:', _isFateEventActive());
+
+  })();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SEASONAL FORTUNE PROMOTIONS — Configurable bonus events
+  // Dev HUD warning system + preview mode + purchase multiplier
+  // ═══════════════════════════════════════════════════════════════════
+  (function initSeasonalPromotions() {
+
+      // ── PROMOTION CONFIG ──
+      const SEASONAL_FORTUNE_EVENTS = [
+          {
+              id: 'christmas_fate',
+              start_date: '12-22',
+              end_date: '12-27',
+              bonus_multiplier: 1.25,
+              promo_copy: "Fortune favors the bold. Celebrate with 25% more Fortunes per purchase."
+          },
+          {
+              id: 'valentines_desire',
+              start_date: '02-12',
+              end_date: '02-15',
+              bonus_multiplier: 1.20,
+              promo_copy: "Love is in the ink. 20% more Fortunes this Valentine's season."
+          },
+          {
+              id: 'summer_solstice',
+              start_date: '06-20',
+              end_date: '06-23',
+              bonus_multiplier: 1.15,
+              promo_copy: "The longest day deserves the longest stories. 15% bonus Fortunes."
+          },
+          {
+              id: 'halloween_veil',
+              start_date: '10-29',
+              end_date: '11-01',
+              bonus_multiplier: 1.30,
+              promo_copy: "The veil between worlds is thin. 30% more Fortunes to tempt fate."
+          }
+      ];
+
+      const UPCOMING_WARNING_WINDOW = 72; // hours
+
+      // ── STATE CALCULATION ──
+
+      /**
+       * Parse "MM-DD" to a Date object in the current year.
+       * Handles cross-year promos (e.g., 12-30 to 01-02) by checking if end < start.
+       */
+      function _parsePromoDate(mmdd, yearOffset) {
+          const [mm, dd] = mmdd.split('-').map(Number);
+          const d = new Date();
+          d.setFullYear(d.getFullYear() + (yearOffset || 0));
+          d.setMonth(mm - 1, dd);
+          d.setHours(0, 0, 0, 0);
+          return d;
+      }
+
+      function _getPromoState(event) {
+          const now = new Date();
+          const thisYear = now.getFullYear();
+          let start = _parsePromoDate(event.start_date);
+          let end = _parsePromoDate(event.end_date);
+
+          // Handle cross-year (e.g., start 12-30, end 01-02)
+          if (end < start) {
+              // If we're past the start, end is next year
+              if (now >= start) {
+                  end.setFullYear(thisYear + 1);
+              } else {
+                  // We might be in the first days of next year
+                  start.setFullYear(thisYear - 1);
+              }
+          }
+          end.setHours(23, 59, 59, 999);
+
+          if (now >= start && now <= end) return 'active';
+          if (now > end) return 'expired';
+          return 'upcoming';
+      }
+
+      function _hoursUntilStart(event) {
+          const start = _parsePromoDate(event.start_date);
+          const now = new Date();
+          // Handle cross-year
+          if (start < now) start.setFullYear(start.getFullYear() + 1);
+          return Math.max(0, (start - now) / (1000 * 60 * 60));
+      }
+
+      /**
+       * Get the currently active promotion (or preview override).
+       * Returns { event, state } or null.
+       */
+      function _getActivePromotion() {
+          // Preview mode: ?preview_sale={event_id}
+          const previewId = new URLSearchParams(window.location.search).get('preview_sale');
+          if (previewId) {
+              const previewEvent = SEASONAL_FORTUNE_EVENTS.find(e => e.id === previewId);
+              if (previewEvent) return { event: previewEvent, state: 'active', preview: true };
+          }
+
+          // Check for active promotion
+          for (const event of SEASONAL_FORTUNE_EVENTS) {
+              const st = _getPromoState(event);
+              if (st === 'active') return { event, state: st, preview: false };
+          }
+          return null;
+      }
+
+      /**
+       * Get upcoming promotions within the warning window.
+       */
+      function _getUpcomingPromotions() {
+          const upcoming = [];
+          for (const event of SEASONAL_FORTUNE_EVENTS) {
+              const st = _getPromoState(event);
+              if (st === 'upcoming') {
+                  const hours = _hoursUntilStart(event);
+                  if (hours <= UPCOMING_WARNING_WINDOW) {
+                      upcoming.push({ event, hoursUntil: hours });
+                  }
+              }
+          }
+          return upcoming;
+      }
+
+      // ── PROMOTION EFFECT (exposed for purchaseFortunePack) ──
+
+      window._getSeasonalBonusMultiplier = function() {
+          const promo = _getActivePromotion();
+          return promo ? promo.event.bonus_multiplier : 1;
+      };
+
+      window._getSeasonalPromoLabel = function() {
+          const promo = _getActivePromotion();
+          return promo ? promo.event.promo_copy : null;
+      };
+
+      // ── PROMO BADGE UI ──
+
+      function _updatePromoBadges() {
+          const promo = _getActivePromotion();
+          const badges = [
+              document.getElementById('payCardPromoBadge'),
+              document.getElementById('fortuneModalPromoBadge')
+          ];
+
+          badges.forEach(function(badge) {
+              if (!badge) return;
+              if (promo) {
+                  badge.textContent = promo.event.promo_copy;
+                  badge.classList.remove('hidden');
+              } else {
+                  badge.classList.add('hidden');
+              }
+          });
+      }
+
+      // Update badges when paywall or fortune modal opens
+      const _origShowPaywall = window.showPaywall;
+      if (typeof _origShowPaywall === 'function') {
+          window.showPaywall = function() {
+              _updatePromoBadges();
+              return _origShowPaywall.apply(this, arguments);
+          };
+      }
+      const _origOpenFortune = window.openFortunePurchaseModal;
+      if (typeof _origOpenFortune === 'function') {
+          window.openFortunePurchaseModal = function() {
+              _updatePromoBadges();
+              return _origOpenFortune.apply(this, arguments);
+          };
+      }
+
+      // ── DEV HUD BANNER ──
+
+      let _promoBannerDismissed = new Set();
+
+      function _renderPromoDevBanner() {
+          const banner = document.getElementById('promoDevBanner');
+          if (!banner) return;
+
+          // Only show for dev hosts
+          const isDev = (typeof _isQaHost === 'function' && _isQaHost()) ||
+                        new URLSearchParams(window.location.search).get('devpass') === 'storybound';
+          if (!isDev) { banner.classList.add('hidden'); return; }
+
+          // Check for upcoming promotions
+          const upcoming = _getUpcomingPromotions();
+          // Also check active preview
+          const activePromo = _getActivePromotion();
+
+          if (upcoming.length === 0 && !(activePromo && activePromo.preview)) {
+              banner.classList.add('hidden');
+              return;
+          }
+
+          // Prefer showing upcoming warning; fall back to active preview
+          let targetEvent, countdownHtml, badgeText;
+
+          if (upcoming.length > 0) {
+              const u = upcoming[0];
+              if (_promoBannerDismissed.has(u.event.id)) { banner.classList.add('hidden'); return; }
+              targetEvent = u.event;
+              const hours = Math.round(u.hoursUntil);
+              countdownHtml = `Starts in <strong>${hours}</strong> hour${hours !== 1 ? 's' : ''}`;
+              badgeText = 'UPCOMING';
+          } else {
+              if (_promoBannerDismissed.has(activePromo.event.id)) { banner.classList.add('hidden'); return; }
+              targetEvent = activePromo.event;
+              countdownHtml = '<strong>PREVIEW MODE</strong> — forced active via URL';
+              badgeText = 'PREVIEW';
+          }
+
+          const bonusPct = Math.round((targetEvent.bonus_multiplier - 1) * 100);
+
+          banner.innerHTML = ''
+              + '<div class="promo-dev-banner-badge">' + badgeText + '</div>'
+              + '<div class="promo-dev-banner-body">'
+              +   '<div class="promo-dev-banner-title">' + _escHtml(targetEvent.id.replace(/_/g, ' ')) + ' (+' + bonusPct + '% bonus)</div>'
+              +   '<div class="promo-dev-banner-countdown">' + countdownHtml + '</div>'
+              +   '<div class="promo-dev-banner-copy">' + _escHtml(targetEvent.promo_copy) + '</div>'
+              +   '<div class="promo-dev-banner-actions">'
+              +     '<button class="qa-btn" data-promo-action="preview">Preview</button>'
+              +     '<button class="qa-btn" data-promo-action="edit">Edit Config</button>'
+              +     '<button class="qa-btn qa-btn--danger" data-promo-action="disable">Disable</button>'
+              +   '</div>'
+              + '</div>'
+              + '<button class="promo-dev-banner-close" data-promo-action="dismiss">&times;</button>';
+
+          banner.classList.remove('hidden');
+
+          // Wire action buttons
+          banner.querySelectorAll('[data-promo-action]').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                  var action = btn.dataset.promoAction;
+                  if (action === 'dismiss') {
+                      _promoBannerDismissed.add(targetEvent.id);
+                      banner.classList.add('hidden');
+                  } else if (action === 'preview') {
+                      // Navigate to preview mode
+                      var url = new URL(window.location);
+                      url.searchParams.set('preview_sale', targetEvent.id);
+                      window.location.href = url.toString();
+                  } else if (action === 'edit') {
+                      console.log('%c[PROMO CONFIG] SEASONAL_FORTUNE_EVENTS:', 'color: #ffd700; font-weight: bold');
+                      console.log(JSON.parse(JSON.stringify(SEASONAL_FORTUNE_EVENTS)));
+                      if (typeof showToast === 'function') showToast('Promotion config logged to console.');
+                  } else if (action === 'disable') {
+                      targetEvent._disabled = true;
+                      _promoBannerDismissed.add(targetEvent.id);
+                      banner.classList.add('hidden');
+                      _updatePromoBadges();
+                      if (typeof showToast === 'function') showToast('Promotion disabled for this session.');
+                  }
+              }, { once: true });
+          });
+      }
+
+      function _escHtml(s) {
+          var d = document.createElement('div');
+          d.textContent = s;
+          return d.innerHTML;
+      }
+
+      // ── INIT ──
+
+      // Override _getActivePromotion to respect _disabled flag
+      var _origGetActive = _getActivePromotion;
+      function _getActivePromotionSafe() {
+          var result = _origGetActive();
+          if (result && result.event._disabled) return null;
+          return result;
+      }
+      // Patch the exposed multiplier to respect disabled state
+      window._getSeasonalBonusMultiplier = function() {
+          var promo = _getActivePromotionSafe();
+          return promo ? promo.event.bonus_multiplier : 1;
+      };
+      window._getSeasonalPromoLabel = function() {
+          var promo = _getActivePromotionSafe();
+          return promo ? promo.event.promo_copy : null;
+      };
+
+      // Expose config for dev console access
+      window.SEASONAL_FORTUNE_EVENTS = SEASONAL_FORTUNE_EVENTS;
+
+      // Render dev banner on DOMContentLoaded (or immediately if already loaded)
+      if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', _renderPromoDevBanner);
+      } else {
+          setTimeout(_renderPromoDevBanner, 100);
+      }
+
+      // Initial badge update
+      _updatePromoBadges();
+
+      console.log('[PROMO] Seasonal promotions initialized. Active:', _getActivePromotionSafe()?.event?.id || 'none');
+
   })();
 
       // ═══════════════════════════════════════════════════════════════════
