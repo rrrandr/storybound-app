@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { stripe as stripeClient } from '../lib/stripe.js';
 
 // Vercel: disable automatic body parsing so we can read the raw buffer
 export const config = { api: { bodyParser: false } };
@@ -98,7 +99,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid JSON' });
   }
 
-  console.log(`[stripe-webhook] Received event: ${event.type} (${event.id})`);
+  console.log(`[stripe-webhook] Received: ${event.id} ${event.type}`);
 
   // ── Shared Supabase client (after signature verification) ──
   const sbUrl = process.env.SUPABASE_URL;
@@ -110,38 +111,74 @@ export default async function handler(req, res) {
   const supabase = createClient(sbUrl, sbKey);
 
   // ── Idempotency guard — prevent duplicate event processing ──
-  // Requires table: stripe_events (id text primary key, created_at timestamptz default now())
+  // Requires table: stripe_events
+  //   id TEXT PRIMARY KEY,
+  //   type TEXT,
+  //   created_at TIMESTAMPTZ DEFAULT NOW(),
+  //   payload JSONB,
+  //   processed BOOLEAN DEFAULT FALSE
   {
     const { data: existing } = await supabase
       .from('stripe_events')
-      .select('id')
+      .select('id, processed')
       .eq('id', event.id)
       .single();
 
     if (existing) {
-      console.log(`[stripe-webhook] Duplicate event ${event.id}, skipping`);
-      return res.status(200).json({ received: true });
+      if (existing.processed) {
+        // Already successfully processed — skip
+        console.log(`[stripe-webhook] Duplicate event ${event.id} (already processed), skipping`);
+        return res.status(200).json({ received: true });
+      }
+      // Event exists but processing failed previously — allow retry
+      console.log(`[stripe-webhook] Retrying unprocessed event ${event.id}`);
     }
 
-    const { error: insertErr } = await supabase
-      .from('stripe_events')
-      .insert({ id: event.id });
+    // Store event with full payload BEFORE processing — ensures audit trail
+    // even if processing fails (Stripe will retry, and processed=false signals incomplete).
+    // Uses upsert so retries of failed events don't conflict on the existing row.
+    if (!existing) {
+      const { error: insertErr } = await supabase
+        .from('stripe_events')
+        .insert({
+          id: event.id,
+          type: event.type,
+          payload: event,
+          processed: false,
+        });
 
-    if (insertErr) {
-      // Race: another instance already inserted — safe to skip
-      console.warn(`[stripe-webhook] Event insert race (${event.id}):`, insertErr.message);
-      return res.status(200).json({ received: true });
+      if (insertErr) {
+        // Race: another instance already inserted — safe to skip
+        console.warn(`[stripe-webhook] Event insert race (${event.id}):`, insertErr.message);
+        return res.status(200).json({ received: true });
+      }
     }
   }
+
+  // ── Process event — all handlers below; mark processed at the end ──
+  let processingError = null;
+  let detectedUserId = null;
+  let checkoutSessionId = null;
+  let stripeCustomerIdForEvent = null;
+  let checkoutStoryId = null;
+
+  try {
 
   // ── checkout.session.completed ──
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
-    const supabaseUserId = session.client_reference_id || session.metadata?.supabase_user_id;
+    // Metadata is authoritative — client_reference_id is a fallback
+    const supabaseUserId = session.metadata?.supabase_user_id || session.client_reference_id;
+    detectedUserId = supabaseUserId || null;
+    checkoutSessionId = session.id || null;
     const stripeCustomerId = session.customer;
+    stripeCustomerIdForEvent = stripeCustomerId || null;
     const stripeSubscriptionId = session.subscription;
     const priceId = session.metadata?.price_id;
+    const storyId = session.metadata?.story_id || null;
+    checkoutStoryId = storyId;
+    const purchaseType = session.metadata?.purchase_type || null;
     if (!priceId) console.warn('[stripe-webhook] No price_id found in session metadata');
 
     if (!supabaseUserId) {
@@ -149,7 +186,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true, error: 'no_user_id' });
     }
 
-    console.log(`[stripe-webhook] checkout.session.completed — user: ${supabaseUserId}, price: ${priceId}, customer: ${stripeCustomerId}, subscription: ${stripeSubscriptionId}`);
+    console.log(`[stripe-webhook] checkout.session.completed — user: ${supabaseUserId}, price: ${priceId}, customer: ${stripeCustomerId}, subscription: ${stripeSubscriptionId}, story: ${storyId || 'none'}, type: ${purchaseType || 'unknown'}`);
 
     const updates = {};
     if (stripeCustomerId) updates.stripe_customer_id = stripeCustomerId;
@@ -167,6 +204,44 @@ export default async function handler(req, res) {
         .single();
       updates.purchased_fortunes = (currentProfile?.purchased_fortunes || 0) + 20;
       console.log(`[stripe-webhook] Granting 20 purchased fortunes with StoryPass to ${supabaseUserId}`);
+
+      // ── Arc-based entitlement — check then insert into storypass_entitlements ──
+      const arcNumber = parseInt(session.metadata?.arc_number, 10) || null;
+      if (storyId && arcNumber) {
+        // Check for existing entitlement before inserting
+        const { data: existingArc } = await supabase
+          .from('storypass_entitlements')
+          .select('id')
+          .eq('user_id', supabaseUserId)
+          .eq('story_id', storyId)
+          .eq('arc_number', arcNumber)
+          .single();
+
+        if (existingArc) {
+          console.log(`[stripe-webhook] Duplicate Storypass purchase ignored — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}`);
+        } else {
+          const { error: arcErr } = await supabase
+            .from('storypass_entitlements')
+            .insert({
+              user_id: supabaseUserId,
+              story_id: storyId,
+              arc_number: arcNumber,
+            });
+          if (arcErr) {
+            // Unique constraint catch — race condition between check and insert
+            if (arcErr.code === '23505') {
+              console.log(`[stripe-webhook] Duplicate Storypass purchase ignored (constraint) — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}`);
+            } else {
+              console.error(`[stripe-webhook] Failed to create arc entitlement (arc ${arcNumber}, story ${storyId}):`, arcErr.message);
+            }
+          } else {
+            console.log(`[stripe-webhook] Arc entitlement created — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}`);
+          }
+        }
+      } else {
+        // Fallback: no arc metadata — has_storypass + fortunes still granted above
+        console.warn(`[stripe-webhook] Storypass purchased without arc metadata — story: ${storyId || 'none'}, arc: ${arcNumber || 'none'}`);
+      }
     }
 
     const isSubscription = priceId && (
@@ -223,6 +298,7 @@ export default async function handler(req, res) {
     const customerId = invoice.customer;
 
     const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
+    detectedUserId = userId || null;
     if (userId) {
       const { error } = await supabase
         .from('profiles')
@@ -248,6 +324,7 @@ export default async function handler(req, res) {
     const customerId = invoice.customer;
 
     const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
+    detectedUserId = userId || null;
     if (userId) {
       const { error } = await supabase
         .from('profiles')
@@ -270,6 +347,7 @@ export default async function handler(req, res) {
     const customerId = subscription.customer;
 
     const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
+    detectedUserId = userId || null;
     if (userId) {
       const { error } = await supabase
         .from('profiles')
@@ -300,14 +378,14 @@ export default async function handler(req, res) {
         .single();
 
       if (profile) {
+        detectedUserId = profile.id;
         // Try to resolve what was purchased via checkout session metadata
         let priceId = null;
         let fortunesGranted = 0;
         try {
-          const stripe = new (await import('stripe')).default(process.env.STRIPE_SECRET_KEY);
           const paymentIntent = charge.payment_intent;
           if (paymentIntent) {
-            const sessions = await stripe.checkout.sessions.list({ payment_intent: paymentIntent, limit: 1 });
+            const sessions = await stripeClient.checkout.sessions.list({ payment_intent: paymentIntent, limit: 1 });
             const session = sessions.data?.[0];
             if (session?.metadata) {
               priceId = session.metadata.price_id || null;
@@ -362,8 +440,7 @@ export default async function handler(req, res) {
     // Resolve customer from the disputed charge
     let customerId = null;
     try {
-      const stripe = new (await import('stripe')).default(process.env.STRIPE_SECRET_KEY);
-      const charge = await stripe.charges.retrieve(chargeId);
+      const charge = await stripeClient.charges.retrieve(chargeId);
       customerId = charge.customer;
     } catch (err) {
       console.error('[stripe-webhook] charge.dispute.created — failed to retrieve charge:', err.message);
@@ -377,6 +454,7 @@ export default async function handler(req, res) {
         .single();
 
       if (profile) {
+        detectedUserId = profile.id;
         const { error } = await supabase
           .from('profiles')
           .update({
@@ -396,6 +474,54 @@ export default async function handler(req, res) {
         console.warn(`[stripe-webhook] charge.dispute.created — no profile found for customer: ${customerId}`);
       }
     }
+  }
+
+  } catch (err) {
+    processingError = err;
+    console.error(`[stripe-webhook] Failed: ${event.id} ${event.type} user=${detectedUserId || 'unknown'}`, err.message);
+  }
+
+  // ── Store traceability fields on event record for debugging ──
+  {
+    const eventUpdates = {};
+    if (detectedUserId) eventUpdates.user_id = detectedUserId;
+    if (checkoutSessionId) eventUpdates.checkout_session_id = checkoutSessionId;
+    if (stripeCustomerIdForEvent) eventUpdates.stripe_customer_id = stripeCustomerIdForEvent;
+    if (checkoutStoryId) eventUpdates.story_id = checkoutStoryId;
+
+    if (Object.keys(eventUpdates).length > 0) {
+      const { error: traceErr } = await supabase
+        .from('stripe_events')
+        .update(eventUpdates)
+        .eq('id', event.id);
+      if (traceErr) {
+        console.warn(`[stripe-webhook] Failed to store traceability fields on event ${event.id}:`, traceErr.message);
+      }
+    }
+  }
+
+  // ── Debug log for checkout completions ──
+  if (checkoutSessionId || stripeCustomerIdForEvent) {
+    console.log(`[stripe-webhook] Checkout completed — event: ${event.id}, customer: ${stripeCustomerIdForEvent || 'unknown'}, checkout_session: ${checkoutSessionId || 'unknown'}, story: ${checkoutStoryId || 'none'}`);
+  }
+
+  // ── Mark event as processed (or leave false on failure for Stripe retry) ──
+  if (!processingError) {
+    const { error: markErr } = await supabase
+      .from('stripe_events')
+      .update({ processed: true })
+      .eq('id', event.id);
+    if (markErr) {
+      console.warn(`[stripe-webhook] Failed to mark event ${event.id} as processed:`, markErr.message);
+    } else {
+      console.log(`[stripe-webhook] Processed: ${event.id} ${event.type} user=${detectedUserId || 'unknown'}`);
+    }
+  }
+
+  // Processing failure → 500 so Stripe retries. Guard allows retry (processed=false).
+  // Processing success → 200.
+  if (processingError) {
+    return res.status(500).json({ error: 'webhook_processing_failed' });
   }
 
   res.status(200).json({ received: true });

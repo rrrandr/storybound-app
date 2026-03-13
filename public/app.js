@@ -2312,13 +2312,87 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     }
   }
 
+  // ── Checkout Return Detection ──
+  // Detects /checkout-success or /checkout-cancel paths from Stripe redirect
+  function _isCheckoutReturn() {
+    return window.location.pathname === '/checkout-success';
+  }
+  function _isCheckoutCancel() {
+    return window.location.pathname === '/checkout-cancel';
+  }
+
+  // Handle post-checkout return: verify purchase, restore story, navigate
+  async function _handleCheckoutReturn(profile) {
+    // Read from URL query params (server-set) with localStorage fallback
+    const urlParams = new URLSearchParams(window.location.search);
+    const pendingStory = urlParams.get('story_id') || localStorage.getItem('storybound_pending_checkout_story');
+    const pendingTier = urlParams.get('tier') || localStorage.getItem('storybound_pending_checkout_tier');
+
+    // Clean up pending state regardless of outcome
+    localStorage.removeItem('storybound_pending_checkout_story');
+    localStorage.removeItem('storybound_pending_checkout_tier');
+
+    // Clean the URL so the user doesn't sit on /checkout-success
+    try { window.history.replaceState({}, '', '/'); } catch(e) {}
+
+    console.log('[CHECKOUT_RETURN] Success return — tier:', pendingTier, '| story:', pendingStory);
+
+    // Re-fetch profile to get updated entitlements (webhook may have already fired)
+    let freshProfile = profile;
+    if (sb && _supabaseProfileId) {
+      const refetch = await sb.from('profiles')
+        .select(PROFILE_COLUMNS)
+        .eq('id', _supabaseProfileId)
+        .maybeSingle();
+      if (refetch.data) freshProfile = refetch.data;
+    }
+
+    // Re-hydrate state with updated entitlements
+    hydrateState(freshProfile);
+
+    // Show success toast
+    if (typeof showToast === 'function') {
+      const tierLabel = pendingTier === 'storypass' ? 'Storypass' :
+                        pendingTier === 'storied' ? 'Storied membership' :
+                        pendingTier === 'favored' ? 'Favored membership' : 'Purchase';
+      showToast(tierLabel + ' unlocked. Your story awaits.');
+    }
+
+    // Navigate to the story that was active before checkout, or fall back to library
+    if (pendingStory && pendingStory !== 'undefined') {
+      state.storyId = pendingStory;
+      // If library-first onboarding, go to vault library
+      if (state.flags?.libraryFirstOnboarding) {
+        _navigateToVaultWithStarter();
+      } else {
+        window.showScreen && window.showScreen('forbiddenLibraryScreen');
+      }
+    } else {
+      // Fallback: go to library, NOT Pact of Binding
+      if (state.flags?.libraryFirstOnboarding) {
+        _navigateToVaultWithStarter();
+      } else {
+        window.showScreen && window.showScreen('forbiddenLibraryScreen');
+      }
+    }
+  }
+
   async function bootApp() {
     if (window.__booted) return;
     window.__booted = true;
 
     try {
+      // Await Supabase auth session restoration BEFORE any UI decisions.
+      // This prevents the app from defaulting to Pact of Binding while
+      // the session token is still being restored from storage.
       const userId = await ensureAnonSession();
       if (!userId || !sb) {
+        // No session — but if this is a checkout cancel, clean up and go to library
+        if (_isCheckoutCancel()) {
+          localStorage.removeItem('storybound_pending_checkout_story');
+          localStorage.removeItem('storybound_pending_checkout_tier');
+          try { window.history.replaceState({}, '', '/'); } catch(e) {}
+        }
         renderBurgerMenu();
         routeToLegalAcceptance();
         return;
@@ -2356,6 +2430,22 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
 
       renderBurgerMenu();
 
+      // ── Checkout Return Intercept ──
+      // If returning from Stripe checkout, handle purchase verification + story resume
+      // BEFORE resolveLegalGate, to prevent flashing Pact of Binding
+      if (_isCheckoutReturn()) {
+        await _handleCheckoutReturn(profile);
+        // FATE PAUSES: still check on checkout return
+        if (window._checkPersistedFatePausesTurn) window._checkPersistedFatePausesTurn();
+        return; // skip normal legal gate routing
+      }
+
+      if (_isCheckoutCancel()) {
+        // Cancelled — clean up and continue normal boot
+        localStorage.removeItem('storybound_pending_checkout_story');
+        localStorage.removeItem('storybound_pending_checkout_tier');
+        try { window.history.replaceState({}, '', '/'); } catch(e) {}
+      }
 
       resolveLegalGate(profile);
 
@@ -25008,6 +25098,27 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
                 });
             }
         }, 0);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ARC COMPLETION INTERSTITIAL — shown before paywall at arc boundaries
+  // ═══════════════════════════════════════════════════════════════════════════
+  window.showArcCompleteCard = function() {
+    const overlay = $('arcCompleteOverlay');
+    if (!overlay) { window.showPaywall('unlock'); return; }
+    overlay.classList.remove('hidden');
+    console.log('[ARC] Showing chapter completion interstitial');
+
+    const btn = $('arcCompleteContinueBtn');
+    if (btn) {
+      // Replace handler to avoid stacking
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      newBtn.addEventListener('click', () => {
+        overlay.classList.add('hidden');
+        window.showPaywall('unlock');
+      });
     }
   };
 
@@ -49618,6 +49729,43 @@ Generate the title and synopsis now.` }
   // Bind cancel button
   document.getElementById('loadingCancelBtn')?.addEventListener('click', cancelLoading);
 
+  // Arc calculation — 20 scenes per arc, 1-indexed
+  // Scenes 1–20 → Arc 1, 21–40 → Arc 2, etc.
+  function _getArcNumber(turnCount) {
+    if (!turnCount || turnCount <= 0) return 1;
+    return Math.ceil(turnCount / 20);
+  }
+  window._getArcNumber = _getArcNumber;
+
+  // Check whether user owns a specific arc for a story
+  async function _checkArcEntitlement(userId, storyId, arcNumber) {
+    if (!userId || !storyId || !arcNumber) return false;
+    try {
+      const { data } = await window.supabase
+        .from('storypass_entitlements')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('story_id', storyId)
+        .eq('arc_number', arcNumber)
+        .single();
+      return !!data;
+    } catch (e) {
+      console.warn('[ARC] Entitlement check failed:', e.message);
+      return false;
+    }
+  }
+  window._checkArcEntitlement = _checkArcEntitlement;
+
+  // Check whether user needs to purchase the current arc
+  async function _requiresArcPurchase(userId, storyId, turnCount) {
+    if (!userId || !storyId) return false;
+    const arc = _getArcNumber(turnCount);
+    // Arc 1 is free (covered by tease tier)
+    if (arc <= 1) return false;
+    return !(await _checkArcEntitlement(userId, storyId, arc));
+  }
+  window._requiresArcPurchase = _requiresArcPurchase;
+
   // Stripe checkout helper — sends tier name to server, server resolves price ID
   async function initiateStripeCheckout(tier) {
     console.log(`[STRIPE] ${tier} checkout initiated`);
@@ -49644,16 +49792,30 @@ Generate the title and synopsis now.` }
       }
       const user = { id: userId };
 
+      // For storypass: calculate arc number from current scene count
+      const checkoutBody = {
+        tier: tier,
+        supabaseUserId: user.id,
+        storyId: state.storyId || ''
+      };
+      if (tier === 'storypass') {
+        checkoutBody.arcNumber = _getArcNumber(state.turnCount || 0);
+        console.log(`[STRIPE] Storypass arc: ${checkoutBody.arcNumber} (scene ${state.turnCount || 0})`);
+      }
+
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tier: tier,
-          supabaseUserId: user.id
-        })
+        body: JSON.stringify(checkoutBody)
       });
 
       const data = await response.json();
+
+      // Handle duplicate arc ownership
+      if (data.error === 'arc_already_owned') {
+        showToast(data.message || 'You already unlocked this arc.');
+        return;
+      }
 
       if (!data.url) {
         console.error('[STRIPE] No checkout URL returned', data);
@@ -49661,8 +49823,12 @@ Generate the title and synopsis now.` }
         return;
       }
 
-      // Store pre-checkout fortune count for count-up animation on return
-      try { sessionStorage.setItem('sb_pre_checkout_fortunes', String(state.fortunes || 0)); } catch(e) {}
+      // Store pre-checkout context for return navigation
+      try {
+        sessionStorage.setItem('sb_pre_checkout_fortunes', String(state.fortunes || 0));
+        localStorage.setItem('storybound_pending_checkout_story', state.storyId || '');
+        localStorage.setItem('storybound_pending_checkout_tier', tier);
+      } catch(e) {}
       window.location.href = data.url;
     } catch (err) {
       console.error(`[STRIPE] ${tier} checkout error:`, err);
@@ -64287,6 +64453,30 @@ Respond in this EXACT format (no labels, just two lines):
               }
           } catch (err) {
               console.warn('[TEASE] Server guard check failed (proceeding):', err);
+          }
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // ARC ENTITLEMENT CHECK: Verify user owns the current arc
+      // ═══════════════════════════════════════════════════════════════════
+      if (!isTeaseTier() || (state.turnCount || 0) >= state.TEASE_SCENE_CAP) {
+          try {
+              const arcNeeded = _getArcNumber(state.turnCount || 0);
+              if (arcNeeded > 1 && state.storyId && typeof _requiresArcPurchase === 'function') {
+                  const user = sb.auth.getUser ? (await sb.auth.getUser()).data?.user : null;
+                  if (user) {
+                      const needsPurchase = await _requiresArcPurchase(user.id, state.storyId, state.turnCount || 0);
+                      if (needsPurchase) {
+                          state._isAdvancingScene = false;
+                          if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
+                          console.log(`[ARC] Arc ${arcNeeded} not owned — showing chapter complete`);
+                          window.showArcCompleteCard();
+                          return;
+                      }
+                  }
+              }
+          } catch (err) {
+              console.warn('[ARC] Entitlement check failed (proceeding):', err);
           }
       }
 

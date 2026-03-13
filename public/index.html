@@ -400,6 +400,15 @@
   </div>
 </div>
 
+<!-- ── ARC COMPLETION INTERSTITIAL ── -->
+<div id="arcCompleteOverlay" class="overlay hidden" style="z-index:9999;">
+  <div class="box arc-complete-box">
+    <h3 class="arc-complete-headline">Chapter Complete</h3>
+    <p class="arc-complete-subtext">The page turns.<br>Fate awaits your decision.</p>
+    <button id="arcCompleteContinueBtn" class="arc-complete-btn">Continue the Story</button>
+  </div>
+</div>
+
 <div id="payModal" class="overlay hidden" style="z-index:10000;">
   <div class="box pay-box">
     <h3 id="payModalHeading">Go deeper into the story</h3>
@@ -444,10 +453,12 @@
                             <ul class="pay-card-features">
                                 <li>Reveal 20 more scenes in this story</li>
                                 <li>Full Fate Card access</li>
-                                <li>Unlocks another original story (Taste Tier)</li>
+                                <li>Continue this story</li>
+                                <li>Unlock a new Taste story</li>
                             </ul>
                             <button id="payOneTime" class="pay-card-btn">$3 &mdash; Continue Story</button>
                             <button id="payOneTimeBlocked" class="pay-card-btn hidden">Unlock Story</button>
+                            <div class="stripe-secure-note">Secure checkout on Stripe</div>
                             <div id="storypassDisabledNotice" class="hidden" style="font-size:0.65em; color:#888; text-align:center; margin-top:6px;">Unavailable with current settings</div>
                         </div>
                     </div>
@@ -475,8 +486,12 @@
                             <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
                             <div class="pay-card-fortune-options">
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(60, '$5');">60<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $5</button>
+                                <p class="fortune-pack-subline">Keep Fate's quill moving.</p>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(120, '$9');">120<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $9</button>
+                                <p class="fortune-pack-subline">Let the story deepen.</p>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(240, '$16');">240<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $16</button>
+                                <p class="fortune-pack-subline">Bend Fate to your will.</p>
+                                <div class="stripe-secure-note">Secure checkout on Stripe</div>
                             </div>
                         </div>
                     </div>
@@ -515,6 +530,7 @@
                                             <li>Save unlimited stories</li>
                                         </ul>
                                         <button id="paySubStoried" class="pay-card-btn">Subscribe</button>
+                                        <div class="stripe-secure-note">Secure checkout on Stripe</div>
                                     </div>
                                 </div>
                                 <div class="pay-card-tier-drop" id="optSubFavored" data-tier="favored">
@@ -532,6 +548,7 @@
                                             <li>Save unlimited stories</li>
                                         </ul>
                                         <button id="paySubFavored" class="pay-card-btn">Subscribe</button>
+                                        <div class="stripe-secure-note">Secure checkout on Stripe</div>
                                     </div>
                                 </div>
                                 <div class="pay-card-tier-drop" id="optSubChosen" data-tier="chosen">
@@ -549,6 +566,7 @@
                                             <li>Save unlimited stories</li>
                                         </ul>
                                         <button id="paySubChosen" class="pay-card-btn">Subscribe</button>
+                                        <div class="stripe-secure-note">Secure checkout on Stripe</div>
                                     </div>
                                 </div>
                             </div>
@@ -696,6 +714,7 @@
       <p class="fortune-modal-desc">Continue this story for the next <strong>20 scenes</strong>.</p>
       <p class="fortune-modal-fine">Applies only to this story. Does not add to Fortune balance.<br>Cannot be used for Tempt Fate or Petition Fate.</p>
       <button class="fortune-pack-btn" onclick="window.purchaseStorypass();">Continue This Story &mdash; $3</button>
+      <div class="stripe-secure-note">Secure checkout on Stripe</div>
     </div>
 
     <!-- FORTUNE PACKS SECTION (always visible) -->
@@ -710,6 +729,7 @@
         <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">120<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $9</button>
         <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(240, '$16');">240<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $16</button>
       </div>
+      <div class="stripe-secure-note">Secure checkout on Stripe</div>
     </div>
 
     <!-- MEMBERSHIP SECTION (hidden for Chosen subscribers) -->
@@ -737,6 +757,7 @@
           <p class="fortune-tier-perks">400 Fortunes/mo + biggest Fate boost + 3 Free Tempt Fate</p>
         </div>
       </div>
+      <div class="stripe-secure-note">Secure checkout on Stripe</div>
     </div>
 
     <p style="opacity:0.35; font-size:0.78em; font-style:italic; margin-top:16px; margin-bottom:12px;">Fortune keeps the story moving.</p>
