@@ -196,14 +196,8 @@ export default async function handler(req, res) {
       updates.has_storypass = true;
       console.log(`[stripe-webhook] Granting StoryPass to ${supabaseUserId}`);
 
-      // StoryPass also grants 20 purchased fortunes
-      const { data: currentProfile } = await supabase
-        .from('profiles')
-        .select('purchased_fortunes')
-        .eq('id', supabaseUserId)
-        .single();
-      updates.purchased_fortunes = (currentProfile?.purchased_fortunes || 0) + 20;
-      console.log(`[stripe-webhook] Granting 20 purchased fortunes with StoryPass to ${supabaseUserId}`);
+      // NOTE: Storypass fortunes are story-scoped (stored on storypass_entitlements),
+      // NOT added to the global profiles.purchased_fortunes balance.
 
       // ── Arc-based entitlement — check then insert into storypass_entitlements ──
       const arcNumber = parseInt(session.metadata?.arc_number, 10) || null;
@@ -226,6 +220,7 @@ export default async function handler(req, res) {
               user_id: supabaseUserId,
               story_id: storyId,
               arc_number: arcNumber,
+              storypass_fortunes_remaining: 20,
             });
           if (arcErr) {
             // Unique constraint catch — race condition between check and insert
@@ -235,11 +230,10 @@ export default async function handler(req, res) {
               console.error(`[stripe-webhook] Failed to create arc entitlement (arc ${arcNumber}, story ${storyId}):`, arcErr.message);
             }
           } else {
-            console.log(`[stripe-webhook] Arc entitlement created — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}`);
+            console.log(`[stripe-webhook] Arc entitlement created with 20 story-scoped fortunes — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}`);
           }
         }
       } else {
-        // Fallback: no arc metadata — has_storypass + fortunes still granted above
         console.warn(`[stripe-webhook] Storypass purchased without arc metadata — story: ${storyId || 'none'}, arc: ${arcNumber || 'none'}`);
       }
     }
@@ -275,6 +269,21 @@ export default async function handler(req, res) {
 
     if (!updates.has_storypass && !updates.is_subscriber && !updates.purchased_fortunes && !updates.subscription_fortunes) {
       console.warn(`[stripe-webhook] No entitlement matched for priceId: ${priceId}`);
+    }
+
+    // ── Mark purchase intent as completed ──
+    const purchaseIntentId = session.metadata?.purchase_intent_id;
+    if (purchaseIntentId) {
+      const { error: intentErr } = await supabase
+        .from('purchase_intents')
+        .update({ status: 'completed', completed_at: new Date().toISOString() })
+        .eq('id', purchaseIntentId)
+        .eq('status', 'pending');
+      if (intentErr) {
+        console.warn(`[stripe-webhook] Failed to mark purchase intent ${purchaseIntentId} as completed:`, intentErr.message);
+      } else {
+        console.log(`[stripe-webhook] Purchase intent ${purchaseIntentId} marked completed`);
+      }
     }
 
     if (Object.keys(updates).length > 0) {
@@ -400,7 +409,13 @@ export default async function handler(req, res) {
         const updates = {};
         if (priceId === process.env.STRIPE_PRICE_ID_STORYPASS) {
           updates.has_storypass = false;
-          updates.purchased_fortunes = Math.max(0, (profile.purchased_fortunes || 0) - 20);
+          // Storypass fortunes are story-scoped (on storypass_entitlements), not global.
+          // Zero out any entitlements for this user.
+          await supabase
+            .from('storypass_entitlements')
+            .update({ storypass_fortunes_remaining: 0 })
+            .eq('user_id', profile.id);
+          console.log(`[stripe-webhook] Zeroed storypass entitlement fortunes for ${profile.id}`);
         } else if (priceId === process.env.STRIPE_PRICE_ID_STORIED || priceId === process.env.STRIPE_PRICE_ID_FAVORED) {
           updates.is_subscriber = false;
           updates.subscription_tier = null;

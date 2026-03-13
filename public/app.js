@@ -2315,7 +2315,9 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
   // ── Checkout Return Detection ──
   // Detects /checkout-success or /checkout-cancel paths from Stripe redirect
   function _isCheckoutReturn() {
-    return window.location.pathname === '/checkout-success';
+    if (window.location.pathname === '/checkout-success') return true;
+    const sp = new URLSearchParams(window.location.search);
+    return sp.get('storypass_success') === '1' || sp.get('purchase_return') === '1';
   }
   function _isCheckoutCancel() {
     return window.location.pathname === '/checkout-cancel';
@@ -2328,14 +2330,12 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     const pendingStory = urlParams.get('story_id') || localStorage.getItem('storybound_pending_checkout_story');
     const pendingTier = urlParams.get('tier') || localStorage.getItem('storybound_pending_checkout_tier');
 
-    // Clean up pending state regardless of outcome
+    // Clean up localStorage pending state regardless of outcome
     localStorage.removeItem('storybound_pending_checkout_story');
     localStorage.removeItem('storybound_pending_checkout_tier');
 
-    // Clean the URL so the user doesn't sit on /checkout-success
+    // Clean the URL so the user doesn't sit on /checkout-success or /?purchase_return=1
     try { window.history.replaceState({}, '', '/'); } catch(e) {}
-
-    console.log('[CHECKOUT_RETURN] Success return — tier:', pendingTier, '| story:', pendingStory);
 
     // Re-fetch profile to get updated entitlements (webhook may have already fired)
     let freshProfile = profile;
@@ -2350,30 +2350,125 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     // Re-hydrate state with updated entitlements
     hydrateState(freshProfile);
 
-    // Show success toast
+    // ── Try server-side purchase intent first (survives browser state loss) ──
+    let intent = null;
+    if (sb && _supabaseProfileId) {
+      const { data } = await sb
+        .from('purchase_intents')
+        .select('*')
+        .eq('user_id', _supabaseProfileId)
+        .eq('status', 'completed')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) intent = data;
+    }
+
+    if (intent && intent.resume_payload) {
+      const payload = intent.resume_payload;
+      const intentTier = intent.type || pendingTier;
+      console.log('[CHECKOUT_RETURN] Resuming from purchase intent:', intent.id, '| type:', intentTier, '| action:', intent.resume_action);
+
+      // Restore story configuration from server-side payload
+      if (payload.story_id) state.storyId = payload.story_id;
+      if (payload.picks) state.picks = payload.picks;
+      if (payload.archetype) state.archetype = payload.archetype;
+      if (payload.intensity) state.intensity = payload.intensity;
+      if (payload.storyLength) state.storyLength = payload.storyLength;
+      if (payload.fantasyRegion) state.fantasyRegion = payload.fantasyRegion;
+      if (payload.worldSubtype) state.worldSubtype = payload.worldSubtype;
+      if (payload.worldCustomText !== undefined) state.worldCustomText = payload.worldCustomText;
+      if (payload.storypassEligible !== undefined) state.storypassEligible = payload.storypassEligible;
+      if (payload.turnCount) state.turnCount = payload.turnCount;
+
+      // Load story-scoped storypass fortunes from entitlement (async)
+      if (state.storyId && typeof _loadStorypassFortunes === 'function') _loadStorypassFortunes();
+
+      console.log('[CHECKOUT_RETURN] Restored state from intent:', Object.keys(payload).join(', '));
+
+      // Mark intent as resumed IMMEDIATELY (prevents double execution on refresh)
+      if (sb) {
+        const { error: resumeErr } = await sb
+          .from('purchase_intents')
+          .update({ status: 'resumed' })
+          .eq('id', intent.id);
+        if (resumeErr) console.warn('[CHECKOUT_RETURN] Failed to mark intent resumed:', resumeErr.message);
+        else console.log('[CHECKOUT_RETURN] Intent marked resumed:', intent.id);
+      }
+
+      // Clean up localStorage fallback (no longer needed)
+      try { localStorage.removeItem('storybound_pending_story'); } catch(e) {}
+
+      // Show success toast and navigate based on intent type
+      if (intentTier === 'storypass' && intent.resume_action === 'begin_story') {
+        if (typeof showToast === 'function') showToast('Storypass activated.\nYour story awaits.');
+        window.showScreen && window.showScreen('setup');
+      } else {
+        const tierLabel = intentTier === 'storied' ? 'Storied membership' :
+                          intentTier === 'favored' ? 'Favored membership' :
+                          intentTier === 'fortune_pack' ? 'Fortune pack' : 'Purchase';
+        if (typeof showToast === 'function') showToast(tierLabel + ' unlocked. Your story awaits.');
+        if (state.flags?.libraryFirstOnboarding) {
+          _navigateToVaultWithStarter();
+        } else {
+          window.showScreen && window.showScreen('forbiddenLibraryScreen');
+        }
+      }
+      return;
+    }
+
+    // ── Fallback: localStorage-based resume (backward compat / intent not yet completed) ──
+    let pendingStoryState = null;
+    try {
+      const raw = localStorage.getItem('storybound_pending_story');
+      if (raw) pendingStoryState = JSON.parse(raw);
+    } catch(e) {}
+    // NOTE: storybound_pending_story cleaned up after Scene 1 generates (not here)
+
+    console.log('[CHECKOUT_RETURN] Success return (localStorage fallback) — tier:', pendingTier, '| story:', pendingStory, '| has pending state:', !!pendingStoryState);
+
+    // ── Storypass: restore full corridor state and return to setup screen ──
+    if (pendingTier === 'storypass' && pendingStoryState && pendingStoryState.picks) {
+      // Restore story configuration
+      state.storyId = pendingStoryState.story_id || pendingStory || '';
+      state.picks = pendingStoryState.picks;
+      state.archetype = pendingStoryState.archetype || {};
+      state.intensity = pendingStoryState.intensity || '';
+      state.storyLength = pendingStoryState.storyLength || '';
+      state.fantasyRegion = pendingStoryState.fantasyRegion || '';
+      state.worldSubtype = pendingStoryState.worldSubtype || '';
+      state.worldCustomText = pendingStoryState.worldCustomText || '';
+      state.storypassEligible = pendingStoryState.storypassEligible;
+      state.turnCount = pendingStoryState.turnCount || 0;
+
+      // Load story-scoped storypass fortunes from entitlement
+      if (state.storyId && typeof _loadStorypassFortunes === 'function') _loadStorypassFortunes();
+
+      console.log('[CHECKOUT_RETURN] Restored corridor state:', Object.keys(state.picks).join(', '));
+
+      if (typeof showToast === 'function') {
+        showToast('Storypass activated.\nYour story awaits.');
+      }
+
+      window.showScreen && window.showScreen('setup');
+      return;
+    }
+
+    // ── Non-storypass purchases: navigate to library ──
     if (typeof showToast === 'function') {
-      const tierLabel = pendingTier === 'storypass' ? 'Storypass' :
-                        pendingTier === 'storied' ? 'Storied membership' :
+      const tierLabel = pendingTier === 'storied' ? 'Storied membership' :
                         pendingTier === 'favored' ? 'Favored membership' : 'Purchase';
       showToast(tierLabel + ' unlocked. Your story awaits.');
     }
 
-    // Navigate to the story that was active before checkout, or fall back to library
     if (pendingStory && pendingStory !== 'undefined') {
       state.storyId = pendingStory;
-      // If library-first onboarding, go to vault library
-      if (state.flags?.libraryFirstOnboarding) {
-        _navigateToVaultWithStarter();
-      } else {
-        window.showScreen && window.showScreen('forbiddenLibraryScreen');
-      }
+    }
+    // Fallback: go to library, NOT Pact of Binding
+    if (state.flags?.libraryFirstOnboarding) {
+      _navigateToVaultWithStarter();
     } else {
-      // Fallback: go to library, NOT Pact of Binding
-      if (state.flags?.libraryFirstOnboarding) {
-        _navigateToVaultWithStarter();
-      } else {
-        window.showScreen && window.showScreen('forbiddenLibraryScreen');
-      }
+      window.showScreen && window.showScreen('forbiddenLibraryScreen');
     }
   }
 
@@ -2391,6 +2486,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         if (_isCheckoutCancel()) {
           localStorage.removeItem('storybound_pending_checkout_story');
           localStorage.removeItem('storybound_pending_checkout_tier');
+          localStorage.removeItem('storybound_pending_story');
           try { window.history.replaceState({}, '', '/'); } catch(e) {}
         }
         renderBurgerMenu();
@@ -2444,7 +2540,29 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         // Cancelled — clean up and continue normal boot
         localStorage.removeItem('storybound_pending_checkout_story');
         localStorage.removeItem('storybound_pending_checkout_tier');
+        localStorage.removeItem('storybound_pending_story');
         try { window.history.replaceState({}, '', '/'); } catch(e) {}
+      }
+
+      // ── Deferred Purchase Intent Resume ──
+      // User paid on Stripe but didn't return via redirect (closed tab, opened app later).
+      // Check for completed-but-unresumed intents and resume if found.
+      if (!_isCheckoutCancel() && sb && _supabaseProfileId) {
+        const { data: deferredIntent } = await sb
+          .from('purchase_intents')
+          .select('*')
+          .eq('user_id', _supabaseProfileId)
+          .eq('status', 'completed')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (deferredIntent) {
+          console.log('[BOOT] Found unresumed purchase intent:', deferredIntent.id, '| type:', deferredIntent.type);
+          await _handleCheckoutReturn(profile);
+          if (window._checkPersistedFatePausesTurn) window._checkPersistedFatePausesTurn();
+          return;
+        }
       }
 
       resolveLegalGate(profile);
@@ -25535,7 +25653,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           // Check if gate condition is now cleared (purchase succeeded)
           const gateStillActive =
               (data.gateType === 'cliffhanger_taste' && isTeaseTier() && (state.turnCount || 0) >= state.TEASE_SCENE_CAP && state.tempQuillAllowance <= 0) ||
-              (data.gateType === 'zero_fortunes' && !hasFortunes() && (state.storypassFortunes || 0) <= 0);
+              (data.gateType === 'zero_fortunes' && !hasFortunes());
 
           if (gateStillActive) {
               // Purchase was cancelled — restore inputs but don't auto-submit
@@ -25636,9 +25754,10 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               state.storyLength = 'fling';
               console.log('[ENTITLEMENT] Downgraded story length to Fling (pass cannot access affair/soulmates)');
           }
-          // StoryPass grants story-locked Fortunes for scene generation only
-          state.storypassFortunes = 15;
-          console.log('[ENTITLEMENT] StoryPass granted 15 story-locked Fortunes');
+          // StoryPass grants story-locked Fortunes — load from entitlement server-side
+          // (async; storypassFortunes will be populated when _loadStorypassFortunes resolves)
+          if (typeof _loadStorypassFortunes === 'function') _loadStorypassFortunes();
+          console.log('[ENTITLEMENT] StoryPass — loading story-scoped fortunes from entitlement');
           // StoryPass grants +1 custom story credit (engagement reward)
           grantFreeCustomStoryCredit('storypass');
       }
@@ -37313,8 +37432,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       return false;
   }
 
-  // Check if user has fortunes available
+  // Check if user has fortunes available (global + story-scoped storypass)
   function hasFortunes() {
+      return (state.fortunes || 0) > 0 || (state.storypassFortunes || 0) > 0;
+  }
+
+  // Check if user has global-only fortunes (for Tempt Fate / Petition Fate)
+  function hasGlobalFortunes() {
       return (state.fortunes || 0) > 0;
   }
 
@@ -37359,6 +37483,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // Update the fortune display UI
   function updateFortuneDisplay() {
       const f = state.fortunes || 0;
+      const sp = state.storypassFortunes || 0;
       const display = $('coverCreditDisplay');
       if (display) {
           display.innerHTML = `${f}${_fortuneIconHTML()} remaining`;
@@ -37366,12 +37491,20 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // Also update the persistent fortune counter in game UI
       const gameDisplay = $('fortuneBalanceDisplay');
       if (gameDisplay) {
-          gameDisplay.innerHTML = `${f}${_fortuneIconHTML()}`;
+          if (state.storyId && sp > 0) {
+              gameDisplay.innerHTML = `<span class="fortune-sp-label">Story</span> ${sp}${_fortuneIconHTML()} <span class="fortune-global-label">Account</span> ${f}${_fortuneIconHTML()}`;
+          } else {
+              gameDisplay.innerHTML = `${f}${_fortuneIconHTML()}`;
+          }
       }
       // Fortune HUD (persistent during story play)
       const hudCount = $('fortuneHudCount');
       if (hudCount) {
-          hudCount.innerHTML = `${f}${_fortuneIconHTML()}`;
+          if (state.storyId && sp > 0) {
+              hudCount.innerHTML = `<span class="fortune-sp-label">Story</span> ${sp}${_fortuneIconHTML()} <span class="fortune-global-label">Account</span> ${f}${_fortuneIconHTML()}`;
+          } else {
+              hudCount.innerHTML = `${f}${_fortuneIconHTML()}`;
+          }
       }
       // Begin Story fortune counter
       const beginCount = $('beginFortuneCount');
@@ -37383,7 +37516,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       const warnEl = $('fortuneLowWarning');
       if (warnEl) {
           const sceneCost = (typeof getSceneFortuneCost === 'function') ? getSceneFortuneCost() : 1;
-          const remaining = Math.floor(f / Math.max(sceneCost, 1));
+          const combinedFortunes = f + sp; // storypass + global for scene availability
+          const remaining = Math.floor(combinedFortunes / Math.max(sceneCost, 1));
 
           // Fortune icon glow target — apply to HUD container for CSS icon glow
           const hudEl = warnEl.parentElement;
@@ -49743,7 +49877,7 @@ Generate the title and synopsis now.` }
     try {
       const { data } = await window.supabase
         .from('storypass_entitlements')
-        .select('id')
+        .select('id, storypass_fortunes_remaining')
         .eq('user_id', userId)
         .eq('story_id', storyId)
         .eq('arc_number', arcNumber)
@@ -49766,9 +49900,57 @@ Generate the title and synopsis now.` }
   }
   window._requiresArcPurchase = _requiresArcPurchase;
 
+  // ── Storypass Fortune Management (server-persisted, story-scoped) ──
+
+  // Load storypass fortunes from the entitlement row for the current story + arc.
+  // Sets state.storypassFortunes from the server value.
+  async function _loadStorypassFortunes() {
+    if (!sb || !_supabaseProfileId || !state.storyId) {
+      state.storypassFortunes = 0;
+      return;
+    }
+    const arc = _getArcNumber(state.turnCount || 0);
+    try {
+      const { data } = await sb
+        .from('storypass_entitlements')
+        .select('storypass_fortunes_remaining')
+        .eq('user_id', _supabaseProfileId)
+        .eq('story_id', state.storyId)
+        .eq('arc_number', arc)
+        .maybeSingle();
+      state.storypassFortunes = data?.storypass_fortunes_remaining ?? 0;
+      console.log(`[Fortunes] Loaded storypass fortunes: ${state.storypassFortunes} (story: ${state.storyId}, arc: ${arc})`);
+    } catch (e) {
+      console.warn('[Fortunes] Failed to load storypass fortunes:', e.message);
+      state.storypassFortunes = 0;
+    }
+    if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+  }
+  window._loadStorypassFortunes = _loadStorypassFortunes;
+
+  // Persist storypass fortune decrement to the server after scene consumption.
+  // Called after state.storypassFortunes has already been decremented locally.
+  async function _persistStorypassFortunes() {
+    if (!sb || !_supabaseProfileId || !state.storyId) return;
+    const arc = _getArcNumber(state.turnCount || 0);
+    const remaining = Math.max(state.storypassFortunes || 0, 0);
+    try {
+      const { error } = await sb
+        .from('storypass_entitlements')
+        .update({ storypass_fortunes_remaining: remaining })
+        .eq('user_id', _supabaseProfileId)
+        .eq('story_id', state.storyId)
+        .eq('arc_number', arc);
+      if (error) console.warn('[Fortunes] Failed to persist storypass fortunes:', error.message);
+    } catch (e) {
+      console.warn('[Fortunes] Storypass fortune persist error:', e.message);
+    }
+  }
+
   // Stripe checkout helper — sends tier name to server, server resolves price ID
   async function initiateStripeCheckout(tier) {
     console.log(`[STRIPE] ${tier} checkout initiated`);
+    showToast('Checkout will complete on Stripe in a few seconds.');
 
     try {
       // Try cached session first (avoids network failure on token refresh),
@@ -49796,7 +49978,21 @@ Generate the title and synopsis now.` }
       const checkoutBody = {
         tier: tier,
         supabaseUserId: user.id,
-        storyId: state.storyId || ''
+        storyId: state.storyId || '',
+        resumeAction: tier === 'storypass' ? 'begin_story' : tier === 'fortune_pack' ? 'buy_fortunes' : 'subscribe',
+        resumePayload: {
+          story_id: state.storyId || '',
+          arc_number: tier === 'storypass' ? _getArcNumber(state.turnCount || 0) : undefined,
+          picks: state.picks || {},
+          archetype: state.archetype || {},
+          intensity: state.intensity || '',
+          storyLength: state.storyLength || '',
+          fantasyRegion: state.fantasyRegion || '',
+          worldSubtype: state.worldSubtype || '',
+          worldCustomText: state.worldCustomText || '',
+          storypassEligible: state.storypassEligible,
+          turnCount: state.turnCount || 0,
+        }
       };
       if (tier === 'storypass') {
         checkoutBody.arcNumber = _getArcNumber(state.turnCount || 0);
@@ -49828,6 +50024,25 @@ Generate the title and synopsis now.` }
         sessionStorage.setItem('sb_pre_checkout_fortunes', String(state.fortunes || 0));
         localStorage.setItem('storybound_pending_checkout_story', state.storyId || '');
         localStorage.setItem('storybound_pending_checkout_tier', tier);
+
+        // Persist full story configuration so we can restore the corridor on return
+        if (tier === 'storypass') {
+          const pendingStory = {
+            story_id: state.storyId || '',
+            picks: state.picks || {},
+            archetype: state.archetype || {},
+            intensity: state.intensity || '',
+            storyLength: state.storyLength || '',
+            fantasyRegion: state.fantasyRegion || '',
+            worldSubtype: state.worldSubtype || '',
+            worldCustomText: state.worldCustomText || '',
+            storypassEligible: state.storypassEligible,
+            turnCount: state.turnCount || 0,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('storybound_pending_story', JSON.stringify(pendingStory));
+          console.log('[STRIPE] Saved pending story state for checkout return');
+        }
       } catch(e) {}
       window.location.href = data.url;
     } catch (err) {
@@ -54002,6 +54217,9 @@ INCORRECT:
 
     state.sysPrompt = sys + _reincarnationDirective;
     state.storyId = state.storyId || makeStoryId();
+
+    // Load story-scoped Storypass fortunes from entitlement (async, non-blocking)
+    if (typeof _loadStorypassFortunes === 'function') _loadStorypassFortunes();
 
     // Onboarding: lock first story ID for milestone Visions
     if (!state.onboarding_story_id && !localStorage.getItem('sb_onboarding_story_id')) {
@@ -64491,6 +64709,7 @@ Respond in this EXACT format (no labels, just two lines):
           // 1. Try story-locked StoryPass fortunes first
           if ((state.storypassFortunes || 0) >= sceneCost) {
               state.storypassFortunes -= sceneCost;
+              await _persistStorypassFortunes();
               console.log(`[Fortunes] StoryPass fortune consumed for scene (cost: ${sceneCost}). Remaining:`, state.storypassFortunes);
               showFortuneSacrificeFeedback(sceneCost);
           } else if ((state.storypassFortunes || 0) > 0) {
@@ -64505,6 +64724,7 @@ Respond in this EXACT format (no labels, just two lines):
                       state.cliffhangerProtectionUsed = true;
                       state._cliffhangerProtectedThisScene = true;
                       state.storypassFortunes = 0; // Already zeroed above
+                      await _persistStorypassFortunes();
                       console.log('[CLIFFHANGER] Protection activated — scene proceeds at 0 cost (partial path)');
                   } else {
                       state.storypassFortunes += fromStorypass; // Rollback
@@ -64523,6 +64743,7 @@ Respond in this EXACT format (no labels, just two lines):
                       _openFatePausesModal('zero_fortunes');
                       return;
                   }
+                  await _persistStorypassFortunes(); // storypass portion consumed
               }
               showFortuneSacrificeFeedback(sceneCost);
           } else {
@@ -66346,6 +66567,11 @@ ABSOLUTE RULES:
           state.turnCount++;
           _sessionTurnCount++;
 
+          // Clean up pending story state after Scene 1 generates (checkout return flow)
+          if (state.turnCount === 1) {
+              try { localStorage.removeItem('storybound_pending_story'); } catch(e) {}
+          }
+
           // Fate Event — scene 10 milestone
           if (state.turnCount === 10 && typeof window._tryTriggerFateEvent === 'function') {
               window._tryTriggerFateEvent('scene_10_reached');
@@ -68005,6 +68231,9 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   // Restore persisted state (Supabase anon session auto-provisioned at boot)
   state.storyId = localStorage.getItem('sb_current_story_id');
   // state.subscribed is set by Supabase profile hydration (not localStorage)
+
+  // Load story-scoped Storypass fortunes if there's an active story
+  if (state.storyId && typeof _loadStorypassFortunes === 'function') _loadStorypassFortunes();
 
   // Restore onboarding story ID (account-level, survives across stories)
   state.onboarding_story_id = state.onboarding_story_id || localStorage.getItem('sb_onboarding_story_id') || null;

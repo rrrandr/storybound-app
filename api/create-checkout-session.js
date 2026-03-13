@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 
 // Map tier names to env var keys, Stripe checkout modes, and fortunes granted (for refund reversal)
 const TIER_CONFIG = {
-  storypass: { envKey: 'STRIPE_PRICE_ID_STORYPASS', mode: 'payment', fortunesGranted: 20 },
+  storypass: { envKey: 'STRIPE_PRICE_ID_STORYPASS', mode: 'payment', fortunesGranted: 0 },  // fortunes are story-scoped (on storypass_entitlements), not global
   storied:   { envKey: 'STRIPE_PRICE_ID_STORIED',   mode: 'subscription', fortunesGranted: 0 },
   favored:   { envKey: 'STRIPE_PRICE_ID_FAVORED',   mode: 'subscription', fortunesGranted: 0 },
   fortune_pack: { envKey: 'STRIPE_PRICE_ID_FORTUNE_PACK', mode: 'payment', fortunesGranted: 10 },
@@ -45,29 +45,29 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Stripe not configured' });
   }
 
-  const { tier, supabaseUserId, storyId, arcNumber } = req.body || {};
+  const { tier, supabaseUserId, storyId, arcNumber, resumeAction, resumePayload } = req.body || {};
   if (!tier) return res.status(400).json({ error: 'tier required' });
   if (!supabaseUserId) return res.status(400).json({ error: 'supabaseUserId required' });
 
   const config = TIER_CONFIG[tier];
   if (!config) return res.status(400).json({ error: 'Unknown tier' });
 
+  // ── Shared Supabase client ──
+  const sbUrl = process.env.SUPABASE_URL;
+  const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const supabase = (sbUrl && sbKey) ? createClient(sbUrl, sbKey) : null;
+
   // ── Storypass duplicate arc check ──
-  if (tier === 'storypass' && storyId && arcNumber) {
-    const sbUrl = process.env.SUPABASE_URL;
-    const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (sbUrl && sbKey) {
-      const supabase = createClient(sbUrl, sbKey);
-      const { data: existing } = await supabase
-        .from('storypass_entitlements')
-        .select('id')
-        .eq('user_id', supabaseUserId)
-        .eq('story_id', storyId)
-        .eq('arc_number', arcNumber)
-        .single();
-      if (existing) {
-        return res.status(409).json({ error: 'arc_already_owned', message: 'You already unlocked this arc.' });
-      }
+  if (tier === 'storypass' && storyId && arcNumber && supabase) {
+    const { data: existing } = await supabase
+      .from('storypass_entitlements')
+      .select('id')
+      .eq('user_id', supabaseUserId)
+      .eq('story_id', storyId)
+      .eq('arc_number', arcNumber)
+      .single();
+    if (existing) {
+      return res.status(409).json({ error: 'arc_already_owned', message: 'You already unlocked this arc.' });
     }
   }
 
@@ -78,6 +78,32 @@ export default async function handler(req, res) {
   }
 
   try {
+    // ── Create purchase intent (server-side, survives browser state loss) ──
+    let purchaseIntentId = null;
+    if (supabase) {
+      // Upsert: replace any existing pending intent for this user+type
+      // (partial unique index on (user_id, type) WHERE status = 'pending')
+      const intentRow = {
+        user_id: supabaseUserId,
+        type: tier,
+        status: 'pending',
+        resume_action: resumeAction || null,
+        resume_payload: resumePayload || null,
+      };
+      const { data: intent, error: intentErr } = await supabase
+        .from('purchase_intents')
+        .upsert(intentRow, { onConflict: 'idx_purchase_intents_pending' })
+        .select('id')
+        .single();
+
+      if (intentErr) {
+        console.warn('[checkout] Failed to create purchase intent:', intentErr.message);
+      } else if (intent) {
+        purchaseIntentId = intent.id;
+        console.log(`[checkout] Purchase intent created: ${purchaseIntentId}`);
+      }
+    }
+
     const metadata = {
       supabase_user_id: supabaseUserId,
       price_id: priceId,
@@ -87,11 +113,13 @@ export default async function handler(req, res) {
     if (storyId) metadata.story_id = storyId;
     if (arcNumber) metadata.arc_number = String(arcNumber);
     if (config.mode === 'subscription') metadata.subscription_tier = tier;
+    if (purchaseIntentId) metadata.purchase_intent_id = purchaseIntentId;
 
     // Build return URLs using the resolved base URL (environment-aware)
-    const successParams = new URLSearchParams({ tier });
+    // All tiers use ?purchase_return=1 — boot handler resumes via purchase intent
+    const successParams = new URLSearchParams({ purchase_return: '1', tier });
     if (storyId) successParams.set('story_id', storyId);
-    const successUrl = `${baseUrl}/checkout-success?${successParams.toString()}`;
+    const successUrl = `${baseUrl}/?${successParams.toString()}`;
     const cancelUrl = `${baseUrl}/checkout-cancel`;
 
     const session = await stripe.checkout.sessions.create({
@@ -103,7 +131,15 @@ export default async function handler(req, res) {
       metadata,
     });
 
-    console.log(`[checkout] Session created: ${session.id} for tier: ${tier} (price: ${priceId}) → ${baseUrl}`);
+    // Back-fill stripe_session_id on the intent
+    if (purchaseIntentId && supabase) {
+      await supabase
+        .from('purchase_intents')
+        .update({ stripe_session_id: session.id })
+        .eq('id', purchaseIntentId);
+    }
+
+    console.log(`[checkout] Session created: ${session.id} for tier: ${tier} (price: ${priceId}) intent: ${purchaseIntentId || 'none'} → ${baseUrl}`);
     res.status(200).json({ url: session.url });
   } catch (err) {
     console.error('[checkout] Stripe error:', err.message);
