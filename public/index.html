@@ -25,6 +25,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400&family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
   <link rel="stylesheet" href="/styles.css?v=20260310c1">
@@ -169,7 +170,7 @@
 
     <!-- Fortune display (always visible) -->
     <div id="vizCreditDisplay" style="font-size:0.85em; color:var(--gold); margin:10px 0; text-align:center;">
-        Fortunes = <span id="vizCreditCount">0</span>
+        Fortunes = <span id="vizCreditCount">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span>
     </div>
 
     <!-- No-fortunes notice (INSIDE modal, not blocking) -->
@@ -178,7 +179,7 @@
             <strong>Fortunes required</strong>
         </p>
         <p style="font-size:0.85em; color:#888; margin-bottom:15px;">
-            Each Vision costs 1 Fortune. Purchase Fortunes to continue.
+            Each Vision costs 1<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true">. Purchase Fortunes to continue.
         </p>
         <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
             <button class="sb-btn-png text-sm" id="vizEnablePayAsYouGo" onclick="window.enablePayAsYouGoFromViz();">
@@ -192,7 +193,7 @@
 
     <!-- Image placeholder and container -->
     <div id="vizPlaceholder" style="display:flex; align-items:center; justify-content:center; min-height:200px; color:#888; font-style:italic; text-align:center; padding:20px;">
-        1 Fortune per image. Purchase Fortunes to summon Visions.
+        1<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> per image. Purchase Fortunes to summon Visions.
     </div>
 
     <div id="vizImgContainer">
@@ -473,9 +474,9 @@
                             <div id="payCardPromoBadge" class="fortune-promo-badge hidden"></div>
                             <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
                             <div class="pay-card-fortune-options">
-                                <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(60, '$5');">60 &mdash; $5</button>
-                                <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(120, '$9');">120 &mdash; $9</button>
-                                <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(240, '$16');">240 &mdash; $16</button>
+                                <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(60, '$5');">60<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $5</button>
+                                <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(120, '$9');">120<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $9</button>
+                                <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(240, '$16');">240<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $16</button>
                             </div>
                         </div>
                     </div>
@@ -526,7 +527,7 @@
                                         <ul class="pay-card-tier-details">
                                             <li>200 Fortunes</li>
                                             <li>Fate bends for The Favored</li>
-                                            <li>Tempt Fates x2</li>
+                                            <li>Tempt Fate x2</li>
                                             <li>4 Reincarnations</li>
                                             <li>Save unlimited stories</li>
                                         </ul>
@@ -543,7 +544,7 @@
                                         <ul class="pay-card-tier-details">
                                             <li>400 Fortunes</li>
                                             <li>Fate fetes The Chosen</li>
-                                            <li>Tempt Fates x3</li>
+                                            <li>Tempt Fate x3</li>
                                             <li>7 Reincarnations</li>
                                             <li>Save unlimited stories</li>
                                         </ul>
@@ -565,7 +566,7 @@
     <!-- Default cancel button (non-story-blocked contexts) -->
     <button id="paywallCancelDefault" class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="margin-top:15px;">Cancel</button>
     <!-- Story-blocked cancel — navigates to Forbidden Library -->
-    <button id="paywallCancelLibrary" class="hidden paywall-library-btn">I'll read for free from The Forbidden Library. For now.</button>
+    <button id="paywallCancelLibrary" class="hidden paywall-library-btn">Not yet; the free Forbidden Library books are enough. For now.</button>
   </div>
 </div>
 
@@ -705,9 +706,9 @@
       <div id="fortuneModalPromoBadge" class="fortune-promo-badge hidden"></div>
       <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
       <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
-        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(60, '$5');">60 Fortunes &mdash; $5</button>
-        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">120 Fortunes &mdash; $9</button>
-        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(240, '$16');">240 Fortunes &mdash; $16</button>
+        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(60, '$5');">60<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $5</button>
+        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">120<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $9</button>
+        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(240, '$16');">240<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $16</button>
       </div>
     </div>
 
@@ -733,7 +734,7 @@
           <button class="fortune-pack-btn" onclick="window.purchaseSubscription('chosen');">
             <strong>Chosen</strong> &mdash; $16/mo
           </button>
-          <p class="fortune-tier-perks">400 Fortunes/mo + biggest Fate boost + 3 Free Tempt Fates</p>
+          <p class="fortune-tier-perks">400 Fortunes/mo + biggest Fate boost + 3 Free Tempt Fate</p>
         </div>
       </div>
     </div>
@@ -1331,8 +1332,7 @@
             <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
             <button id="beginFortuneBtn" class="begin-fortune-btn" onclick="window.openFortunePurchaseModal()">
                 <span class="begin-fortune-label">Fortunes</span>
-                <span class="begin-fortune-star">✧</span>
-                <span id="beginFortuneCount" class="begin-fortune-count">0</span>
+                <span id="beginFortuneCount" class="begin-fortune-count">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span>
             </button>
             <div id="burnRateIndicator" class="burn-rate-indicator hidden"></div>
         </div>
@@ -1544,8 +1544,7 @@
     <!-- Fortune HUD — persistent during story play -->
     <div id="fortuneHud" class="fortune-hud" title="Fortune fuels your story.&#10;One Fortune advances the narrative by one scene.">
       <span class="fortune-hud-label">Fortunes</span>
-      <span class="fortune-hud-star">✧</span>
-      <span id="fortuneHudCount" class="fortune-hud-count">0</span>
+      <span id="fortuneHudCount" class="fortune-hud-count">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span>
       <span id="fortuneLowWarning" class="fortune-low-warning hidden"></span>
     </div>
 
@@ -1682,7 +1681,7 @@
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
        <button id="fortuneBalanceBtn" class="small-btn" onclick="window.openFortunePurchaseModal()">
-         <span id="fortuneBalanceDisplay">0</span> <span id="fortuneBalanceLabel">Fortunes</span>
+         <span id="fortuneBalanceDisplay">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span> <span id="fortuneBalanceLabel">Fortunes</span>
        </button>
        <button id="safeWordBtn" class="small-btn safe-word-btn" style="display:none;" onclick="window.triggerSafeWord()">Safe Word</button>
     </div>

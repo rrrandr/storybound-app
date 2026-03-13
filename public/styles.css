@@ -159,7 +159,7 @@ body.theme-easy { --bg1:#fffee8; --bg2:#fffce0; --pink:#333; --hot:#000; --gold:
 body.theme-print .fate-card h3, body.theme-easy .fate-card h3 { color: #000 !important; text-shadow: none !important; font-weight: bold; }
 body.theme-print .section-title, body.theme-easy .section-title { text-shadow: none; }
 
-html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:var(--font-main); overflow-x:hidden; min-height:100vh; }
+html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:var(--font-main); overflow-x:hidden; min-height:100vh; scrollbar-gutter: stable; }
 body { text-align:center; padding:0; transition: background 0.3s, color 0.3s; }
 
 /* Custom scrollbar — grey/charcoal to match dark theme */
@@ -2537,6 +2537,242 @@ p.vision-active-paragraph {
     .vision-mobile-only { display: none !important; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   READ ORB — Gemma's Path empathic read mode (replaces Vision Orb)
+   ═══════════════════════════════════════════════════════════════════ */
+.vision-orb.read-orb-mode {
+    background: rgba(15, 25, 20, 0.75);
+    border-color: rgba(100, 200, 160, 0.35);
+}
+.vision-orb.read-orb-mode:hover {
+    border-color: rgba(100, 200, 160, 0.7);
+    box-shadow: 0 0 12px rgba(100, 200, 160, 0.25);
+}
+.vision-orb.read-orb-mode .vision-orb-icon {
+    color: #7ecba1;
+}
+/* Read Orb panel inner */
+.read-orb-panel-inner {
+    text-align: center;
+}
+.read-orb-title {
+    color: #7ecba1;
+    font-size: 0.9em;
+    font-style: italic;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+.read-orb-question {
+    color: #ddd;
+    font-size: 0.85em;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+.read-orb-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.read-orb-option {
+    background: rgba(100, 200, 160, 0.08);
+    border: 1px solid rgba(100, 200, 160, 0.25);
+    border-radius: 4px;
+    color: #b0d8c4;
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.read-orb-option:hover {
+    background: rgba(100, 200, 160, 0.18);
+    border-color: rgba(100, 200, 160, 0.5);
+    color: #d0f0e0;
+}
+
+/* Read Reveal Toast — non-blocking delayed feedback */
+.read-reveal-toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: rgba(10, 10, 10, 0.92);
+    border-radius: 8px;
+    padding: 14px 24px;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+    text-align: center;
+    max-width: 320px;
+}
+.read-reveal-toast.read-reveal-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.read-reveal-toast.read-reveal-fading {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+}
+.read-reveal-correct {
+    border: 1px solid rgba(100, 200, 160, 0.4);
+}
+.read-reveal-incorrect {
+    border: 1px solid rgba(200, 120, 80, 0.4);
+}
+.read-reveal-title {
+    font-size: 0.9em;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.read-reveal-correct .read-reveal-title { color: #7ecba1; }
+.read-reveal-incorrect .read-reveal-title { color: #d4886a; }
+.read-reveal-detail {
+    font-size: 0.8em;
+    color: #aaa;
+    font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CAPTAIN READ DISTORTION — Orb animation irregularity
+   ═══════════════════════════════════════════════════════════════════ */
+/* When the Read Orb targets the Captain, pulse becomes subtly irregular */
+.vision-orb.read-orb-distorted {
+    animation: captainOrbDistort 2.8s ease-in-out infinite;
+}
+.vision-orb.read-orb-distorted .vision-orb-icon {
+    animation: captainIconFlicker 3.4s ease-in-out infinite;
+}
+@keyframes captainOrbDistort {
+    0%   { border-color: rgba(100, 200, 160, 0.35); box-shadow: 0 0 6px rgba(100, 200, 160, 0.10); }
+    18%  { border-color: rgba(100, 200, 160, 0.50); box-shadow: 0 0 10px rgba(100, 200, 160, 0.20); }
+    32%  { border-color: rgba(100, 200, 160, 0.28); box-shadow: 0 0 4px rgba(100, 200, 160, 0.06); }
+    51%  { border-color: rgba(100, 200, 160, 0.55); box-shadow: 0 0 12px rgba(100, 200, 160, 0.22); }
+    67%  { border-color: rgba(100, 200, 160, 0.20); box-shadow: 0 0 3px rgba(100, 200, 160, 0.04); }
+    84%  { border-color: rgba(100, 200, 160, 0.45); box-shadow: 0 0 8px rgba(100, 200, 160, 0.15); }
+    100% { border-color: rgba(100, 200, 160, 0.35); box-shadow: 0 0 6px rgba(100, 200, 160, 0.10); }
+}
+@keyframes captainIconFlicker {
+    0%   { opacity: 1; }
+    22%  { opacity: 0.85; }
+    38%  { opacity: 1; }
+    55%  { opacity: 0.72; }
+    70%  { opacity: 0.95; }
+    82%  { opacity: 0.78; }
+    100% { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GEMMA INNER NARRATION — Diegetic feedback (replaces system toasts)
+   ═══════════════════════════════════════════════════════════════════ */
+.gemma-inner-narration {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%) translateY(16px);
+    background: transparent;
+    color: rgba(126, 203, 161, 0.85);
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.88em;
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+    text-align: center;
+    max-width: 380px;
+    padding: 0 20px;
+    z-index: 9500;
+    opacity: 0;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    pointer-events: none;
+    /* No background, no border — purely narrative text floating over the scene */
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 0, 0, 0.4);
+}
+.gemma-inner-narration.gemma-narration-visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.gemma-inner-narration.gemma-narration-fading {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-12px);
+}
+
+/* POV Extension Modal — Fortune-gated perspective hold */
+.pov-ext-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.pov-ext-overlay.pov-ext-visible {
+    opacity: 1;
+}
+.pov-ext-modal {
+    background: rgba(15, 12, 20, 0.96);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 10px;
+    padding: 24px 32px;
+    text-align: center;
+    max-width: 340px;
+    width: 90%;
+}
+.pov-ext-title {
+    color: var(--gold);
+    font-family: 'Lora', serif;
+    font-size: 1em;
+    font-style: italic;
+    margin-bottom: 12px;
+    line-height: 1.4;
+}
+.pov-ext-cost {
+    color: #ccc;
+    font-size: 0.9em;
+    margin-bottom: 16px;
+}
+.pov-ext-cost .fortune-icon {
+    vertical-align: -0.05em;
+}
+.pov-ext-btn {
+    display: block;
+    width: 100%;
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    margin-bottom: 8px;
+    transition: background 0.2s, color 0.2s;
+}
+.pov-ext-accept {
+    background: linear-gradient(180deg, #d4b45c 0%, #b89840 100%);
+    color: #3a2e10;
+    font-weight: 600;
+}
+.pov-ext-accept:hover {
+    filter: brightness(1.1);
+}
+.pov-ext-decline {
+    background: transparent;
+    color: #888;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-style: italic;
+}
+.pov-ext-decline:hover {
+    color: #bbb;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.pov-ext-insufficient {
+    color: #d4886a;
+    font-size: 0.8em;
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
 /* DECISION SNAPSHOTS */
 .decision-snapshot {
     text-align: center;
@@ -3596,8 +3832,8 @@ select:-webkit-autofill {
     overflow: hidden;
 }
 
-.pay-card-back img,
-.pay-card-front img {
+.pay-card-back img:not(.fortune-icon),
+.pay-card-front img:not(.fortune-icon) {
     width: calc(100% + 2px);
     height: calc(100% + 2px);
     margin: -1px;
@@ -3609,7 +3845,7 @@ select:-webkit-autofill {
     transform: rotateY(180deg);
 }
 
-.pay-card-front img {
+.pay-card-front img:not(.fortune-icon) {
     position: absolute;
     inset: 0;
     width: calc(100% + 2px);
@@ -3661,7 +3897,7 @@ select:-webkit-autofill {
     text-align: center;
 }
 .pay-card-features li::before {
-    content: '\2022 ';
+    content: '\2022\00a0\00a0';
     color: #c9a84c;
 }
 .pay-card-features-shared {
@@ -3676,17 +3912,17 @@ select:-webkit-autofill {
     font-weight: 600;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #8b6914;
-    background: transparent;
-    border: 1px solid rgba(139, 105, 20, 0.4);
+    color: #5a4210;
+    background: linear-gradient(180deg, #d4b45c 0%, #c9a84c 50%, #b89840 100%);
+    border: 1px solid rgba(180, 150, 60, 0.6);
     border-radius: 3px;
     padding: 6px 16px;
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
+    transition: background 0.2s, border-color 0.2s, filter 0.2s;
 }
 .pay-card-btn:hover {
-    background: rgba(201, 168, 76, 0.12);
-    border-color: #c9a84c;
+    filter: brightness(1.1);
+    border-color: #d4b45c;
 }
 
 /* Fortune options — stacked inside card */
@@ -3795,6 +4031,17 @@ select:-webkit-autofill {
 .pay-card-tier-drop.open .pay-card-tier-arrow {
     transform: rotate(180deg);
 }
+/* Favored arrow pulse-glow — draws attention when all tiers are closed */
+.pay-card-tier-drop[data-tier="favored"] .pay-card-tier-arrow {
+    animation: favored-arrow-pulse 2s ease-in-out infinite;
+}
+.pay-card-tier-drop[data-tier="favored"].open .pay-card-tier-arrow {
+    animation: none;
+}
+@keyframes favored-arrow-pulse {
+    0%, 100% { opacity: 0.5; color: #8b6914; text-shadow: none; }
+    50% { opacity: 1; color: #fff; text-shadow: 0 0 6px rgba(255, 255, 255, 0.6); }
+}
 .pay-card-tier-body {
     max-height: 0;
     overflow: hidden;
@@ -3814,7 +4061,7 @@ select:-webkit-autofill {
     line-height: 1.6;
 }
 .pay-card-tier-details li::before {
-    content: '\2022 ';
+    content: '\2022\00a0\00a0';
     opacity: 0.5;
 }
 .pay-card-tier-body .pay-card-btn {
@@ -3861,8 +4108,8 @@ select:-webkit-autofill {
 /* Forbidden Library cancel button — PNG background */
 .paywall-library-btn {
     margin-top: 18px;
-    padding: 10px 24px;
-    background: url('/assets/ui/Black-Gold-Text-840x128.png') center / cover no-repeat;
+    padding: 12px 28px;
+    background: url('/assets/ui/Black-Gold-Text-840x128.png') center / 100% 100% no-repeat;
     border: none;
     border-radius: 4px;
     color: var(--gold, #c9a84c);
@@ -4079,6 +4326,7 @@ select:-webkit-autofill {
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
+    overflow: visible;
 }
 
 .mode-card-inner {
@@ -4118,11 +4366,12 @@ select:-webkit-autofill {
 /* Sparkle container for mode cards */
 .mode-card-sparkles {
     position: absolute;
-    inset: -10px;
+    inset: -30px;
     pointer-events: none;
     z-index: 10;
     opacity: 0;
     transition: opacity 0.3s ease;
+    overflow: visible;
 }
 
 .mode-card.flipped .mode-card-sparkles {
@@ -6114,6 +6363,43 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     background: #1a1a18 !important;
 }
 
+/* ── Not My Diary — cream leather visual distinction ── */
+.nmd-book .book-spine {
+    background: #e8dfc8 !important;
+}
+.nmd-spine-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+.nmd-book .book-back {
+    background: linear-gradient(180deg, #e2d8c0 0%, #ede5d2 50%, #e2d8c0 100%) !important;
+}
+.nmd-back .back-title {
+    color: #8a7440 !important;
+    font-family: 'Lora', serif !important;
+    font-weight: 700;
+    text-shadow: none;
+}
+.nmd-back .back-synopsis {
+    color: #3a3225 !important;
+    font-family: 'Lora', serif !important;
+}
+.nmd-back .back-meta {
+    color: rgba(100, 85, 50, 0.6) !important;
+    font-family: 'Lora', serif !important;
+}
+#zoomBookContainer .book-back:has(.nmd-back) {
+    background: linear-gradient(160deg, #e2d8c0 0%, #ede5d2 50%, #e2d8c0 100%) !important;
+}
+#zoomBookContainer .book-spine:has(.nmd-spine-img) {
+    background: #e8dfc8 !important;
+}
+
 /* Experimental book front cover — distinguished from normal library books */
 .experimental-book .book-front-title {
     font-style: italic;
@@ -6887,6 +7173,172 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .exp-diary-wc-low { color: rgba(220, 160, 60, 0.6); }
 .exp-diary-wc-ok { color: rgba(120, 200, 120, 0.6); }
 .exp-diary-wc-high { color: rgba(220, 120, 60, 0.6); }
+
+/* NMD validation warning */
+.exp-diary-validation-msg {
+    font-size: 0.82rem;
+    min-height: 1.3em;
+    color: rgba(220, 120, 60, 0.85);
+    padding: 2px 0 4px;
+}
+.exp-diary-validation-msg:empty { display: none; }
+.exp-diary-validation-error { color: rgba(220, 100, 60, 0.9); }
+
+/* NMD volume status */
+.exp-diary-volume-status {
+    font-size: 0.85rem;
+    color: var(--gold, #c9a84c);
+    opacity: 0.7;
+    padding-bottom: 6px;
+    letter-spacing: 0.08em;
+}
+.exp-diary-locked-msg {
+    font-style: italic;
+    color: rgba(200, 180, 140, 0.7);
+    padding: 8px 0;
+}
+
+/* NMD contradiction selector */
+.exp-diary-contradict-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0 8px;
+}
+.exp-diary-contradict-label {
+    font-size: 0.85rem;
+    color: rgba(200, 180, 140, 0.8);
+    white-space: nowrap;
+}
+.exp-diary-contradict-select {
+    flex: 1;
+    background: rgba(30, 25, 20, 0.6);
+    color: rgba(220, 200, 170, 0.9);
+    border: 1px solid rgba(160, 130, 80, 0.3);
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 0.82rem;
+}
+
+/* NMD diary entry rendering */
+.nmd-diary-scroll {
+    padding: 0;
+}
+.nmd-volume-header {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    color: rgba(200, 180, 140, 0.8);
+    margin-bottom: 4px;
+}
+.nmd-volume-closed {
+    font-size: 0.75rem;
+    color: rgba(200, 180, 140, 0.5);
+    margin-bottom: 12px;
+}
+.nmd-entry {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(139, 105, 20, 0.08);
+}
+.nmd-entry:last-child {
+    border-bottom: none;
+}
+.nmd-entry-meta {
+    font-family: 'Lora', serif;
+    font-size: 0.6rem;
+    color: rgba(200, 180, 140, 0.35);
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+.nmd-entry-text {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    /* font-family set inline per entry via handwriting style */
+}
+.nmd-entry-closing .nmd-entry-meta {
+    color: rgba(201, 168, 76, 0.5);
+}
+/* Possible Truth block */
+.nmd-possible-truth {
+    margin-top: 24px;
+}
+.nmd-pt-divider {
+    width: 60px;
+    height: 1px;
+    background: rgba(200, 180, 140, 0.3);
+    margin: 0 auto 12px;
+}
+.nmd-pt-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    color: rgba(200, 180, 140, 0.6);
+    text-align: center;
+    margin-bottom: 8px;
+}
+.nmd-pt-body {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: rgba(200, 180, 140, 0.7);
+    line-height: 1.5;
+}
+
+/* Disabled Post button */
+.exp-submit-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* NMD fragment prompt */
+.exp-diary-fragment {
+    background: rgba(40, 35, 25, 0.5);
+    border-left: 2px solid rgba(201, 168, 76, 0.3);
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.82rem;
+    color: rgba(220, 200, 170, 0.8);
+    line-height: 1.4;
+}
+.exp-diary-fragment-icon {
+    margin-right: 6px;
+    opacity: 0.6;
+}
+.exp-diary-fragment-text {
+    /* inherits italic from parent */
+}
+
+/* NMD join gate */
+.exp-diary-join-gate {
+    text-align: center;
+    padding: 16px 12px;
+}
+.exp-diary-join-title {
+    font-size: 1rem;
+    color: var(--gold, #c9a84c);
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+}
+.exp-diary-join-cost {
+    font-size: 0.9rem;
+    color: rgba(220, 200, 170, 0.85);
+    margin-bottom: 8px;
+}
+.exp-diary-join-desc {
+    font-size: 0.82rem;
+    color: rgba(200, 180, 140, 0.65);
+    max-width: 300px;
+    margin: 0 auto 12px;
+    line-height: 1.4;
+}
+.exp-diary-join-btn {
+    min-width: 140px;
+}
 
 /* EXPERIMENTAL tag removed — too small to render crisply on book covers */
 .exp-book-tag {
@@ -15755,6 +16207,38 @@ body.corridor-mode .sb-grid.corridor-section {
     font-size: 1.05em;
     opacity: 0.9;
 }
+/* Inline Fortune icon — used after numbers wherever Fortunes are referenced */
+.fortune-icon {
+    display: inline-block;
+    width: 0.85em !important;
+    height: 0.85em !important;
+    max-width: 0.85em !important;
+    max-height: 0.85em !important;
+    vertical-align: -0.05em;
+    object-fit: contain;
+    margin-left: 0.12em;
+    filter: brightness(1);
+    pointer-events: none;
+    font-size: inherit;
+}
+/* Match glow states when inside HUD */
+.fortune-hud .fortune-icon {
+    transition: filter 0.4s ease, opacity 0.4s ease;
+}
+.fortune-hud-star[data-fortune-glow="high"] ~ .fortune-hud-count .fortune-icon,
+.fortune-hud[data-fortune-glow="high"] .fortune-icon {
+    filter: drop-shadow(0 0 4px rgba(200, 168, 78, 0.5));
+}
+.fortune-hud-star[data-fortune-glow="urgent"] ~ .fortune-hud-count .fortune-icon,
+.fortune-hud[data-fortune-glow="urgent"] .fortune-icon {
+    filter: drop-shadow(0 0 6px rgba(232, 180, 60, 0.6));
+}
+.fortune-hud-star[data-fortune-glow="critical"] ~ .fortune-hud-count .fortune-icon,
+.fortune-hud[data-fortune-glow="critical"] .fortune-icon,
+.fortune-hud-star[data-fortune-glow="depleted"] ~ .fortune-hud-count .fortune-icon,
+.fortune-hud[data-fortune-glow="depleted"] .fortune-icon {
+    filter: drop-shadow(0 0 8px rgba(232, 144, 64, 0.7));
+}
 .begin-fortune-count {
     font-weight: 700;
     min-width: 1.2em;
@@ -20342,4 +20826,324 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 .fortune-disclosure-btn:hover {
     filter: brightness(1.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GOOD REASONS — Reason Mirror + Library Variant Gallery
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Reason Mirror (Visual Reveal) ── */
+.gr-reason-mirror {
+    margin: 32px auto;
+    max-width: 480px;
+    text-align: center;
+    padding: 24px 16px;
+}
+.gr-mirror-preamble {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--ink, #e8e0d0);
+    opacity: 0.7;
+    font-size: 0.88em;
+    line-height: 1.8;
+    margin-bottom: 24px;
+}
+.gr-mirror-preamble p {
+    margin: 0 0 12px 0;
+}
+.gr-mirror-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+.gr-mirror-reason {
+    font-family: 'Lora', serif;
+    font-size: 1em;
+    color: var(--gold, #c8a84e);
+    letter-spacing: 0.02em;
+    opacity: 0;
+    animation: grMirrorReveal 0.8s ease-out forwards;
+}
+.gr-mirror-reason-visible {
+    opacity: 1;
+    animation: none;
+}
+@keyframes grMirrorReveal {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Variant Gallery ── */
+.gr-variant-gallery {
+    margin: 16px 0 24px 0;
+    padding: 0 12px;
+}
+.gr-gallery-header {
+    text-align: center;
+    margin-bottom: 16px;
+}
+.gr-gallery-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold, #c8a84e);
+    font-size: 1.1em;
+    letter-spacing: 0.3em;
+    margin-bottom: 2px;
+}
+.gr-gallery-author {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: var(--ink, #e8e0d0);
+    opacity: 0.55;
+    font-size: 0.78em;
+    margin-bottom: 8px;
+}
+.gr-gallery-count {
+    font-family: 'Lora', serif;
+    color: var(--ink, #e8e0d0);
+    opacity: 0.7;
+    font-size: 0.82em;
+}
+.gr-variant-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+}
+.gr-variant-card {
+    background: rgba(30, 28, 24, 0.85);
+    border: 1px solid rgba(200, 168, 78, 0.18);
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+}
+.gr-variant-card:hover {
+    border-color: rgba(200, 168, 78, 0.45);
+    transform: translateY(-2px);
+}
+.gr-variant-cover {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    background: rgba(20, 18, 14, 0.6);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.gr-variant-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.gr-variant-cover-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(145deg, #1a1816 0%, #2a2520 100%);
+}
+.gr-variant-label {
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    color: var(--gold, #c8a84e);
+    margin-bottom: 4px;
+    line-height: 1.3;
+}
+.gr-variant-synopsis {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.68em;
+    color: var(--ink, #e8e0d0);
+    opacity: 0.6;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+.gr-variant-meta {
+    font-size: 0.64em;
+    color: var(--ink, #e8e0d0);
+    opacity: 0.4;
+}
+
+/* ── Locked / Silhouette Slots ── */
+.gr-variant-locked {
+    cursor: default;
+    opacity: 0.4;
+}
+.gr-variant-locked:hover {
+    border-color: rgba(200, 168, 78, 0.18);
+    transform: none;
+}
+.gr-variant-silhouette {
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 13, 10, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Lora', serif;
+    font-size: 1.8em;
+    color: rgba(200, 168, 78, 0.15);
+}
+.gr-variant-label-locked {
+    color: var(--ink, #e8e0d0);
+    opacity: 0.35;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GEMMA'S PATH — Turn-Based Collaborative Input Panel
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Turn Panel Container ── */
+.gemma-turn-panel {
+    margin: 16px 0;
+    padding: 14px;
+    background: rgba(20, 18, 14, 0.5);
+    border: 1px solid rgba(200, 168, 78, 0.12);
+    border-radius: 8px;
+}
+
+/* ── Header: "YOU ARE CONTROLLING: [NAME]" ── */
+.gemma-turn-header {
+    text-align: center;
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(200, 168, 78, 0.1);
+}
+.gemma-turn-label {
+    display: block;
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold, #c8a84e);
+    letter-spacing: 0.25em;
+    font-size: 0.68em;
+    opacity: 0.7;
+    margin-bottom: 4px;
+}
+.gemma-turn-character {
+    display: block;
+    font-family: 'Lora', serif;
+    font-weight: 700;
+    color: var(--gold, #c8a84e);
+    font-size: 1.1em;
+    letter-spacing: 0.08em;
+}
+
+/* ── Turn Order Chips ── */
+.gemma-turn-order {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+.gemma-turn-chip {
+    font-family: 'Lora', serif;
+    font-size: 0.68em;
+    padding: 3px 8px;
+    border-radius: 10px;
+    background: rgba(30, 28, 24, 0.6);
+    border: 1px solid rgba(200, 168, 78, 0.1);
+    color: var(--ink, #e8e0d0);
+    opacity: 0.5;
+    transition: opacity 0.2s, border-color 0.2s, background 0.2s;
+}
+.gemma-turn-chip.active {
+    opacity: 1;
+    border-color: rgba(200, 168, 78, 0.5);
+    background: rgba(200, 168, 78, 0.12);
+    color: var(--gold, #c8a84e);
+}
+.gemma-turn-chip.completed {
+    opacity: 0.35;
+    text-decoration: line-through;
+}
+
+/* ── Turn Input Fields ── */
+.gemma-turn-input-group {
+    margin-bottom: 10px;
+}
+.gemma-turn-say,
+.gemma-turn-do {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(15, 13, 10, 0.6);
+    border: 1px solid rgba(200, 168, 78, 0.1);
+    border-radius: 4px;
+    color: var(--ink, #e8e0d0);
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    resize: vertical;
+}
+.gemma-turn-say::placeholder,
+.gemma-turn-do::placeholder {
+    color: rgba(232, 224, 208, 0.25);
+    font-style: italic;
+}
+.gemma-turn-say:focus,
+.gemma-turn-do:focus {
+    outline: none;
+    border-color: rgba(200, 168, 78, 0.35);
+}
+
+/* ── Timer Bar (25s countdown) ── */
+.gemma-turn-timer-bar {
+    height: 3px;
+    background: rgba(200, 168, 78, 0.08);
+    border-radius: 2px;
+    margin: 8px 0;
+    overflow: hidden;
+}
+.gemma-turn-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, rgba(200, 168, 78, 0.6), rgba(180, 80, 60, 0.8));
+    border-radius: 2px;
+    transition: width 25s linear;
+}
+
+/* ── Submit Button ── */
+.gemma-turn-submit-btn {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    background: linear-gradient(180deg, rgba(200, 168, 78, 0.2) 0%, rgba(200, 168, 78, 0.08) 100%);
+    border: 1px solid rgba(200, 168, 78, 0.3);
+    border-radius: 6px;
+    color: var(--gold, #c8a84e);
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.88em;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+.gemma-turn-submit-btn:hover {
+    border-color: rgba(200, 168, 78, 0.5);
+    background: linear-gradient(180deg, rgba(200, 168, 78, 0.28) 0%, rgba(200, 168, 78, 0.12) 100%);
+}
+
+/* ── Waiting State ── */
+.gemma-turn-waiting {
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.78em;
+    color: var(--ink, #e8e0d0);
+    opacity: 0.45;
+    padding: 16px 0;
+}
+
+/* ── Scene Progress ── */
+.gemma-turn-progress {
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-size: 0.65em;
+    color: var(--ink, #e8e0d0);
+    opacity: 0.35;
+    margin-top: 10px;
+    letter-spacing: 0.08em;
 }

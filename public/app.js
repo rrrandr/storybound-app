@@ -1027,10 +1027,22 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     if (_fortunePreludeShown) return;
     _fortunePreludeShown = true;
 
-    // Build spotlight flavor labels
+    // Build reverse lookup: flavor → parent world display name
+    const WORLD_DISPLAY = { modern: 'Modern', fantasy: 'Fantasy', historical: 'Historical', scifi: 'Sci-Fi', dystopia: 'Dystopia', postapocalyptic: 'Post-Apocalyptic' };
+    const flavorToWorld = {};
+    if (typeof WORLD_FLAVORS !== 'undefined') {
+      Object.keys(WORLD_FLAVORS).forEach(w => {
+        WORLD_FLAVORS[w].forEach(f => { flavorToWorld[f] = WORLD_DISPLAY[w] || w; });
+      });
+    }
+
+    // Build spotlight flavor labels with "World: Flavor" format
     const flavorLabels = MONTHLY_FORTUNE_FAVOR.spotlightFlavors
-      .map(f => WORLD_LABELS[f] || f)
-      .map(label => `<span class="ff-prelude-flavor">\u2014 ${label}</span>`)
+      .map(f => {
+        const label = WORLD_LABELS[f] || f;
+        const world = flavorToWorld[f] || '';
+        return world ? `<span class="ff-prelude-flavor">\u2014 ${world}: ${label}</span>` : `<span class="ff-prelude-flavor">\u2014 ${label}</span>`;
+      })
       .join('');
 
     // Create overlay
@@ -1042,8 +1054,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
         <div class="ff-prelude-title">FORTUNE'S FAVOR</div>
         <div class="ff-prelude-body">
           <p>Each month, Fate watches a few worlds more closely.</p>
-          <p>Begin there, and a Whisper of power will awaken after Scene Five.<br>
-          Go far enough, and Fate may follow you anywhere.</p>
+          <p>2 Tempting rewards await if you go far enough in each story.</p>
           <p class="ff-prelude-label">This month, Fortune lingers in:</p>
           <div class="ff-prelude-flavors">${flavorLabels}</div>
         </div>
@@ -15025,6 +15036,44 @@ Return ONLY the title, no quotes or explanation.`;
           window._detectLegendaryMoment(state._reincarnationImports).catch(() => {});
       }
 
+      // Good Reasons — publish variant to library if severity qualifies
+      if (typeof window._publishGoodReasonsVariant === 'function'
+          && window._experimentalWriteContext?.bookId === 'exp_good_reasons'
+          && (state.reasonSeverity || 0) >= 3) {
+          // Generate ending label from story content (fire-and-forget LLM call)
+          (async function() {
+              try {
+                  var storyText = (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
+                      ? StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(-600)
+                      : '';
+                  var ledgerSample = (state.reasonLedger || []).slice(0, 3).join('; ');
+                  var label = 'The Unnamed Path';
+                  var synopsis = '';
+                  if (storyText && window.StoryboundOrchestration?.callChatGPT) {
+                      var result = await window.StoryboundOrchestration.callChatGPT([
+                          { role: 'system', content: 'You name villain endings. Return ONLY a JSON object with keys: label (3-5 word ending name like "The Protector Ending" or "The Devotion Spiral"), synopsis (1-2 sentence summary of the moral descent). No markdown.' },
+                          { role: 'user', content: 'Story ending excerpt:\n' + storyText.slice(-400) + '\n\nVillain rationalizations: ' + ledgerSample + '\nSeverity: ' + (state.reasonSeverity || 0) }
+                      ], 'PRIMARY_AUTHOR', { max_tokens: 100, temperature: 0.5 });
+                      if (result) {
+                          var parsed = JSON.parse(result.replace(/```json?\s*/g, '').replace(/```/g, '').trim());
+                          label = parsed.label || label;
+                          synopsis = parsed.synopsis || '';
+                      }
+                  }
+                  window._publishGoodReasonsVariant(label, synopsis);
+              } catch (e) {
+                  console.warn('[GOOD_REASONS] Variant label generation failed, publishing with default:', e);
+                  window._publishGoodReasonsVariant('The Unnamed Path', '');
+              }
+          })();
+
+          // Render Reason Mirror visual moment on the end page
+          if (typeof window._renderReasonMirrorMoment === 'function') {
+              var mirrorContainer = endPage.querySelector('.sb-end-page-actions') || endPage;
+              window._renderReasonMirrorMoment(mirrorContainer);
+          }
+      }
+
       // ── Alternate POV Edition — preview teaser + fortune-gated buttons ──
       endPage.querySelectorAll('.pov-reveal-btn, .pov-dual-btn, .pov-preview-block, .pov-btn-subtitle').forEach(el => el.remove());
       const actionsEl = endPage.querySelector('.sb-end-page-actions');
@@ -15078,7 +15127,7 @@ Return ONLY the title, no quotes or explanation.`;
             dualBtn.onclick = () => openPovRewriteReader(state.storyId);
             dualSubtitle.textContent = 'Love interest + villain perspectives';
           } else {
-            dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+            dualBtn.innerHTML = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST}${_fortuneIconHTML()}`;
             dualSubtitle.textContent = 'Love interest + villain perspectives';
             dualBtn.onclick = async () => {
               if (_altPovGenerationInProgress) return;
@@ -15091,7 +15140,7 @@ Return ONLY the title, no quotes or explanation.`;
                   showToast('Story too short for dual POV.');
                   dualBtn.disabled = false;
                   singleBtn.disabled = false;
-                  dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+                  dualBtn.innerHTML = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST}${_fortuneIconHTML()}`;
                   return;
                 }
                 const result = await generateAltPovWithFortune(state.storyId, text, ALT_POV_DUAL_COST, 'dual');
@@ -15104,14 +15153,14 @@ Return ONLY the title, no quotes or explanation.`;
                 } else {
                   dualBtn.disabled = false;
                   singleBtn.disabled = false;
-                  dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+                  dualBtn.innerHTML = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST}${_fortuneIconHTML()}`;
                 }
               } catch (err) {
                 console.error('[AltPOV] End-page dual generation failed:', err);
                 showToast('Dual POV generation failed.');
                 dualBtn.disabled = false;
                 singleBtn.disabled = false;
-                dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+                dualBtn.innerHTML = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST}${_fortuneIconHTML()}`;
               }
             };
           }
@@ -15123,7 +15172,7 @@ Return ONLY the title, no quotes or explanation.`;
           singleBtn.textContent = 'Read the Other Side';
           singleBtn.onclick = () => openPovRewriteReader(state.storyId);
         } else {
-          singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+          singleBtn.innerHTML = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST}${_fortuneIconHTML()}`;
           singleBtn.onclick = async () => {
             if (_altPovGenerationInProgress) return;
             singleBtn.disabled = true;
@@ -15133,7 +15182,7 @@ Return ONLY the title, no quotes or explanation.`;
               if (!text || text.length < 200) {
                 showToast('Story too short for POV rewrite.');
                 singleBtn.disabled = false;
-                singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+                singleBtn.innerHTML = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST}${_fortuneIconHTML()}`;
                 return;
               }
               const result = await generateAltPovWithFortune(state.storyId, text, ALT_POV_SINGLE_COST, 'single');
@@ -15141,13 +15190,13 @@ Return ONLY the title, no quotes or explanation.`;
                 openPovRewriteReader(state.storyId);
               } else {
                 singleBtn.disabled = false;
-                singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+                singleBtn.innerHTML = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST}${_fortuneIconHTML()}`;
               }
             } catch (err) {
               console.error('[AltPOV] End-page single generation failed:', err);
               showToast('POV generation failed.');
               singleBtn.disabled = false;
-              singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+              singleBtn.innerHTML = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST}${_fortuneIconHTML()}`;
             }
           };
         }
@@ -15481,6 +15530,8 @@ Return ONLY valid JSON:
       state._reincarnationImports = [];
       state._reincarnationsSavedThisStory = 0;
       state._legendEvaluationComplete = false;
+      state.reasonLedger = [];  // Good Reasons book — hidden rationalization log
+      state.reasonSeverity = 0; // Good Reasons — hidden severity tracker (keyword-detected escalation)
       state.voiceAnchor = null; // Voice Anchor — generated once per story after Scene 1
       state.cliffhangerProtectionUsed = false; // One-use narrative safeguard per depletion cycle
       if (typeof window._clearCorridorEchoSlots === 'function') window._clearCorridorEchoSlots();
@@ -24900,7 +24951,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     const balanceHint = document.getElementById('offeringBalanceHint');
     if (balanceHint && isSceneCap) {
         const fortunes = state.fortunes || 0;
-        balanceHint.textContent = `(${fortunes} Fortune${fortunes !== 1 ? 's' : ''} remaining)`;
+        balanceHint.innerHTML = `(${fortunes}${_fortuneIconHTML()} remaining)`;
     }
 
     // STORY-BLOCKED SECTIONS — swap cancel buttons
@@ -24926,9 +24977,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
             });
         }
     });
-    // Auto-open Favored
-    const favoredDrop = pm.querySelector('.pay-card-tier-drop[data-tier="favored"]');
-    if (favoredDrop) favoredDrop.classList.add('open');
+    // All tiers start closed; Favored arrow pulses to draw attention
+    // (no auto-open)
 
     // ═══════════════════════════════════════════════════════════════════════
     // DIAGNOSTIC: #optUnlock visibility check (NO BEHAVIOR CHANGE)
@@ -25015,7 +25065,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           if (!user) {
               alert('Sign in to sacrifice a Fortune.');
               btn.disabled = false;
-              btn.textContent = 'Sacrifice 1 Fortune to fill Fate\'s quill';
+              btn.innerHTML = `Sacrifice 1${_fortuneIconHTML()} to fill Fate's quill`;
               return;
           }
 
@@ -25030,7 +25080,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               btn.textContent = 'No Fortunes remaining';
               setTimeout(() => {
                   btn.disabled = false;
-                  btn.textContent = 'Sacrifice 1 Fortune to fill Fate\'s quill';
+                  btn.innerHTML = `Sacrifice 1${_fortuneIconHTML()} to fill Fate's quill`;
               }, 2000);
               return;
           }
@@ -25052,7 +25102,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
           btn.textContent = 'Sacrifice failed — try again';
           setTimeout(() => {
               btn.disabled = false;
-              btn.textContent = 'Sacrifice 1 Fortune to fill Fate\'s quill';
+              btn.innerHTML = `Sacrifice 1${_fortuneIconHTML()} to fill Fate's quill`;
           }, 2000);
       }
   });
@@ -25196,14 +25246,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
    */
   function _appendFortunePacks(container) {
       const packs = [
-          { size: 20, label: '20 Fortunes', price: '$5' },
-          { size: 50, label: '50 Fortunes', price: '$10' },
-          { size: 120, label: '120 Fortunes', price: '$20' }
+          { size: 20, price: '$5' },
+          { size: 50, price: '$10' },
+          { size: 120, price: '$20' }
       ];
       packs.forEach(pack => {
           const btn = document.createElement('button');
           btn.className = 'fate-pauses-offer-btn secondary';
-          btn.innerHTML = `${pack.label}<span class="fate-pauses-offer-sublabel">${pack.price}</span>`;
+          btn.innerHTML = `${pack.size}${_fortuneIconHTML()}<span class="fate-pauses-offer-sublabel">${pack.price}</span>`;
           btn.addEventListener('click', () => {
               if (window._devBypass) {
                   // Dev mode: instant fortune grant + resume
@@ -27318,35 +27368,50 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       id: 'exp_not_my_diary',
       story_id: 'exp_not_my_diary',
       title: 'Not My Diary',
-      author: 'S. Tory Bound',
+      author: 'Various Hands',
       type: 'unreliable_diary',
       fortune_cost_per_page: 1,
       page_frequency_limit_hours: 24,
       consecutive_pages_allowed: false,
       _isExperimental: true,
       spine_blurb: 'Every entry tells the truth. None of them agree.',
-      library_blurb: 'A diary written by many hands. Each entry contradicts the one before it.',
+      library_blurb: 'A single chronological document composed of short human-written entries. '
+        + 'Each entry contradicts an earlier entry. The diary becomes a social argument about what really happened.',
       mode: 'user_written',  // AI does NOT author diary content — user writes directly
       allowed_fate_cards: [],  // no Fate cards in diary mode
-      entry_length_target: { min: 150, max: 400, enforcement: 'soft' }, // word guidance, not hard limit
+      entry_limits: { min_sentences: 1, max_sentences: 3, max_words: 60 },
+      volume_max_entries: 100,
       mechanics: {
         narrative_pov: 'unreliable_first_person',
-        tension_engine: 'contradiction_escalation'
+        tension_engine: 'contradiction_escalation',
+        ai_role: 'moderation_only'  // AI never generates narrative entries
       },
       narrative_guardrails: {
         encourage: ['confessions', 'fears', 'desires', 'emotional reactions', 'reflect on events', 'escalate uncertainty'],
         discourage: ['action scenes', 'resolving contradictions', 'third-person narration'],
-        enforcement: 'soft',
+        enforcement: 'hard',  // entries that fail validation are rejected
       },
       diary_system: {
         required: true,
-        description: 'Each entry must contradict something from the previous entry.',
+        description: 'Each entry must explicitly contradict a previous entry and introduce one new factual element.',
         contradiction_types: ['facts', 'emotions', 'timeline', 'identity'],
+        contradiction_target: 'any_previous',  // can contradict ANY earlier entry, not only the previous one
+        new_info_required: true,  // anti-troll: must introduce new detail
+        append_only: true,  // no editing, no deletion after posting
         examples: [
           'Yesterday I said I loved him. Today I remember hating him.',
           'I told you Daniel died. He\u2019s sitting across from me now.',
           'I wrote this yesterday. I don\u2019t remember yesterday.'
         ]
+      },
+      handwriting_identity: {
+        enabled: true,
+        styles: 25,  // pool size
+        assignment: 'per_volume'  // persistent for duration of volume
+      },
+      seed_entry: {
+        text: 'I shouldn\u2019t be writing this down, but if anything happens to me someone needs to know what really happened that night.',
+        is_system: true
       },
       story_kernel: {
         world: 'modern',
@@ -27355,10 +27420,13 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
         genre: 'unreliable narrator',
         protagonist: null,
         narrative_rules: [
-          'Each diary entry contradicts something from the previous entry.',
+          'Each entry contradicts a specific earlier entry (writer selects which).',
+          'Each entry must also introduce one new factual element.',
+          'Entries are append-only: no editing, no deletion.',
           'Contradictions may involve facts, emotions, identity, or timeline.',
           'The narrator cannot be trusted.',
-          'Writers should escalate uncertainty rather than resolve it.'
+          'AI must never generate diary entries — moderation only.',
+          'Volumes close at 100 entries and become permanent artifacts.'
         ]
       }
     }
@@ -28076,7 +28144,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
 
   const GEMMA_CREW_TEMPLATES = [
     { name: 'Captain Aldric Voss', role: 'ship captain', persistent: true, suspectWeight: 0.1 },
-    { name: 'Dr. Lena Osei', role: 'ship physician', persistent: true, suspectWeight: 0.15 },
+    { name: 'Dr. Eliza Ward', role: 'ship physician', persistent: true, suspectWeight: 0.15 },
     { name: 'Marta Fiore', role: 'head bartender', persistent: true, suspectWeight: 0.2 },
     { name: 'Declan Holt', role: 'chief of security', persistent: true, suspectWeight: 0.15 },
     { name: 'Yuki Tanabe', role: 'cruise director', persistent: true, suspectWeight: 0.1 },
@@ -28682,6 +28750,2699 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     return directive;
   }
   window.getGemmaPerceptionLensDirective = getGemmaPerceptionLensDirective;
+
+  // ═══════════════════════════════════════════════════════════════════
+  // GEMMA'S PATH — Turn-Based Collaborative Scene System
+  // Rotating character control, ordered turns, inline perception.
+  // ═══════════════════════════════════════════════════════════════════
+  (function initGemmaTurnBasedSystem() {
+
+      var TURN_TIMEOUT_MS = 25000; // 25s per turn
+      var RECOMMENDED_SCENE_MIN = 10;
+      var RECOMMENDED_SCENE_MAX = 14;
+      var HIDDEN_ROLE_PROBABILITY = 0.35;
+      var MAX_CHARACTERS = 5;
+
+      // ── Voyage Structure Constants ──
+      var VOYAGE_SCENE_MIN = 18;
+      var VOYAGE_SCENE_MAX = 22;
+      var VOYAGE_SCENE_DEFAULT = 20;
+      var VOYAGE_CAPTAIN_INTIMACY_EXPANSION = 30; // expanded voyage when Captain intimacy occurs
+      var CAPTAIN_PRESENCE_PROBABILITY = 0.50;     // ~50% of voyages include the Captain
+      var INTIMACY_MOMENTS_MIN = 1;
+      var INTIMACY_MOMENTS_MAX = 2;
+      var INTIMACY_SCENE_SPAN = 5;  // each intimacy moment spans 5–6 scenes
+      var CAPTAIN_INTIMACY_ROUND1 = 10;
+      var CAPTAIN_INTIMACY_ROUND2 = 5;
+
+      // Narrative justifications when Captain is absent from a voyage
+      var CAPTAIN_ABSENCE_REASONS = [
+          'port negotiations with harbor officials',
+          'shore meetings with maritime authorities',
+          'off-ship inspection of a sister vessel',
+          'administrative duties at the shipping company headquarters',
+          'delayed arrival — joining the voyage at a later port',
+          'overseeing emergency repairs at the previous port of call',
+          'attending a mandatory captains\u2019 conference ashore',
+          'diplomatic obligations related to the Halcyon\u2019s registry'
+      ];
+
+      // Subtle atmospheric cues when the Captain returns after absence
+      var CAPTAIN_RETURN_SIGNALS = [
+          'Conversations quieted as something shifted in the room.',
+          'The attention in the lounge rearranged itself like iron filings near a magnet.',
+          'Gemma felt the room change before she saw why.',
+          'Someone straightened their collar. Someone else set down a glass.',
+          'The air pressure in the dining room seemed to change.'
+      ];
+      var _gemmaTurnStateKey = 'gemma_turn_state';
+      var _gemmaCollabStateKey = 'gemma_collab_state'; // hidden roles + case structure
+
+      // ── Captain Secret Options ──
+      var CAPTAIN_SECRET_OPTIONS = [
+          'former smuggler who used this shipping route',
+          'undercover investigator gathering evidence on passengers',
+          'connected to a string of earlier unsolved murders at sea',
+          'protecting a fugitive hidden among the crew',
+          'architect of a conspiracy involving the ship\u2019s owners'
+      ];
+
+      // ── Case Structure Types (anti-repetition) ──
+      var CASE_STRUCTURES = {
+          1: { name: 'Hidden Killer', desc: 'One character secretly committed the crime.' },
+          2: { name: 'False Crime', desc: 'The event appears criminal but is actually misunderstanding or staged deception.' },
+          3: { name: 'Shared Guilt', desc: 'Multiple characters contributed to the outcome.' },
+          4: { name: 'The Captain\u2019s Shadow', desc: 'Evidence gradually points toward the Captain\u2019s past.' }
+      };
+
+      // ── Captain Arc Persistence (cross-case, 0–6) ──
+      var _captainArcKey = 'gemma_captain_arc';
+      var CAPTAIN_ARC_LABELS = [
+          'intriguing', 'suspicious', 'hiding something', 'connected to crimes',
+          'morally compromised', 'central to conspiracy', 'truth revealed'
+      ];
+      function _loadCaptainArc() {
+          try { return parseInt(localStorage.getItem(_captainArcKey)) || 0; } catch (e) { return 0; }
+      }
+      function _saveCaptainArc(level) {
+          localStorage.setItem(_captainArcKey, String(Math.max(0, Math.min(level, 6))));
+      }
+
+      // ── Case Structure Selection (avoids repeating last 2) ──
+      function _selectCaseStructure() {
+          var historyKey = 'gemma_case_structure_history';
+          var history = [];
+          try { history = JSON.parse(localStorage.getItem(historyKey)) || []; } catch (e) {}
+          var recent = history.slice(-2);
+          var options = [1, 2, 3, 4].filter(function(s) { return recent.indexOf(s) === -1; });
+          if (options.length === 0) options = [1, 2, 3, 4];
+          var pick = options[Math.floor(Math.random() * options.length)];
+          history.push(pick);
+          if (history.length > 10) history = history.slice(-10);
+          localStorage.setItem(historyKey, JSON.stringify(history));
+          return pick;
+      }
+
+      // ── Captain Secret Selection ──
+      function _selectCaptainSecret() {
+          return CAPTAIN_SECRET_OPTIONS[Math.floor(Math.random() * CAPTAIN_SECRET_OPTIONS.length)];
+      }
+
+      // ── Captain Archetype Layers ──
+      var CAPTAIN_CORE_ARCHETYPE = 'Spellbinder';
+      var CAPTAIN_CORE_DESC = 'Every glance a lure, every silence a trap; the room bends toward him.';
+      var CAPTAIN_SURFACE_PERSONA = 'Armored Fox';
+      var CAPTAIN_SURFACE_TRAITS = [
+          'drinks frequently', 'sarcastic wit', 'emotionally guarded',
+          'brilliant but reckless', 'appears difficult to read due to alcohol'
+      ];
+
+      // ── Doctor System ──
+      var DOCTOR_AMBIGUITY_OPTIONS = ['protecting', 'controlling', 'both'];
+      var DOCTOR_INTERACTION_MIN = 0.05;  // 5% direct interaction per case
+      var DOCTOR_INTERACTION_MAX = 0.08;  // 8% direct interaction per case
+      var DOCTOR_MATERNAL_LEAKAGE_CUES = [
+          'adjusts his collar before he asks',
+          'briefly touches his shoulder while checking pulse',
+          'watches him leave the room a beat too long',
+          'unconsciously steps between him and danger',
+          'voice drops to a gentler register when he\u2019s hurt',
+          'hand lingers on medical chart before filing it',
+          'brings him tea without being asked',
+          'eyes track him across the deck when she thinks no one notices'
+      ];
+
+      // ── Ship Operative System ──
+      var OPERATIVE_PROBABILITY = 0.45;    // 45% of cases have an active operative
+      var OPERATIVE_COVER_ROLES = [
+          'security officer', 'chief engineer', 'communications officer',
+          'purser', 'cruise director', 'bartender', 'deck officer'
+      ];
+      var OPERATIVE_ORGS = [
+          'rival intelligence organization',
+          'remnants of Project ORPHEUS',
+          'private intelligence contractor',
+          'unknown network'
+      ];
+      var OPERATIVE_SURVEILLANCE_CUES = [
+          'lingers at the edge of a conversation involving the Captain',
+          'adjusts a communication device when the Captain enters the room',
+          'checks a manifest or logbook with unusual focus',
+          'is seen leaving a restricted area at an odd hour',
+          'takes a brief, unexplained phone call after a notable event',
+          'watches the Captain from across the deck while appearing to work',
+          'asks a seemingly casual question about the Captain\'s schedule',
+          'files a report that no one asked for'
+      ];
+      var DOCTOR_SUSPICION_SIGNALS = [
+          'noticing someone watching the Captain a moment too long',
+          'an unexplained medical record access on her terminal',
+          'missing medication inventory that she didn\'t authorize',
+          'a crew member asking oddly specific questions about the Captain\'s health',
+          'finding her office unlocked when she is certain she locked it',
+          'a prescription refill logged under a timestamp when she was off-duty'
+      ];
+
+      // ── Administrative Pressure System ──
+      var ADMIN_PRESSURE_PROBABILITY = 0.25;  // 25% of cases include an admin pressure event
+      var ADMIN_PRESSURE_EVENTS = [
+          { type: 'passenger_complaint', desc: 'A passenger files a formal complaint about Gemma\'s performance exposing personal information.' },
+          { type: 'safety_violation', desc: 'Ship safety officers cite Gemma for being in restricted areas during her off-stage hours.' },
+          { type: 'diplomatic_objection', desc: 'A port authority or foreign dignitary objects to Gemma\'s presence aboard the vessel.' },
+          { type: 'crew_interference', desc: 'A senior crew member accuses Gemma of interfering with crew duties during an incident.' },
+          { type: 'formal_warning', desc: 'Ship management issues a formal written warning about Gemma\'s continued employment.' },
+          { type: 'insurance_concern', desc: 'The ship\'s insurer raises liability concerns about an entertainer involved in criminal matters.' },
+          { type: 'contract_review', desc: 'Gemma\'s performance contract is flagged for administrative review without explanation.' }
+      ];
+      var ADMIN_PRESSURE_SOURCES = [
+          'Dr. Ward (protecting operational security)',
+          'the hidden operative (testing Gemma\'s resilience or removing a complication)',
+          'ship bureaucracy (genuine administrative process)',
+          'external political forces (someone offship wants her gone)',
+          'a disgruntled passenger (legitimate grievance)',
+          'unknown origin'
+      ];
+      var CAPTAIN_PROTECTION_ACTIONS = [
+          'quietly overrides the complaint in a private meeting with management',
+          'vouches for Gemma\'s value to the ship in a captain\'s log entry',
+          'dismisses the disciplinary concern with a curt remark to the officer who raised it',
+          'assigns Gemma a temporary official role that shields her from the complaint',
+          'delays the administrative process until the current port of call changes jurisdiction'
+      ];
+
+      // ── Halcyon Ownership & Distraction Case System ──
+      var HALCYON_OWNER_COMPROMISED = true;  // always true — billionaire controlled via CIA leverage
+      var DISTRACTION_CASE_PROBABILITY = 0.125;  // 10–15% midpoint
+      var DISTRACTION_CASE_METHODS = [
+          { type: 'planted_evidence', desc: 'Physical evidence appears in suspicious locations — too convenient, too visible.' },
+          { type: 'orchestrated_conflict', desc: 'Two passengers who have no apparent history suddenly clash over a fabricated grievance.' },
+          { type: 'controlled_theft', desc: 'A valuable item goes missing under circumstances that invite investigation.' },
+          { type: 'staged_scandal', desc: 'A public incident involving a high-profile guest creates a social firestorm aboard.' },
+          { type: 'manipulated_rumor', desc: 'A credible but false rumor circulates through crew channels, pointing at a specific suspect.' }
+      ];
+      var DISTRACTION_OPERATIONAL_COVERS = [
+          'a covert meeting between intelligence assets in the owner\'s private deck',
+          'an intelligence exchange during a port stop',
+          'the Captain experiencing unusual fugue-adjacent behavior that must not be observed',
+          'sensitive materials being transferred between cabins',
+          'a visiting diplomat being debriefed in the ship\'s secure communications room',
+          'the operative filing a critical report that requires uninterrupted access'
+      ];
+      var DISTRACTION_SIGNALS = [
+          'clues arrive in sequence that feels choreographed rather than organic',
+          'suspects cooperate slightly more than expected during questioning',
+          'the resolution wraps up unusually cleanly with no loose threads',
+          'Dr. Ward appears subtly satisfied — or relieved — when the case closes',
+          'a crew member who should have been involved in the incident has an airtight alibi',
+          'evidence that should have been destroyed somehow survived intact'
+      ];
+
+      // ── Captain Echo Types ──
+      var CAPTAIN_ECHO_TYPES = [
+          { type: 'recognition', desc: 'Someone believes they know the Captain from a past life.' },
+          { type: 'skill', desc: 'The Captain performs an unexpected expert action (combat, languages, forging, piloting).' },
+          { type: 'memory', desc: 'A location triggers unexplained familiarity in the Captain.' },
+          { type: 'artifact', desc: 'An object connects the Captain to past events.' },
+          { type: 'reputation', desc: 'A criminal or witness reacts with fear or unexpected respect toward the Captain.' }
+      ];
+
+      // ── Fugue Anomalies ──
+      var FUGUE_ANOMALIES = [
+          'blood spot on sleeve', 'damaged cufflink', 'missing hours',
+          'unfamiliar weapon knowledge', 'bruised knuckles', 'salt-crusted shoes'
+      ];
+
+      // ── Probability Constants ──
+      var FUGUE_PROBABILITY = 0.04;          // 3\u20135% midpoint
+      var ECHO_PROBABILITY_MIN = 0.08;
+      var ECHO_PROBABILITY_MAX = 0.12;
+
+      // ── Captain Fragment Persistence (global, cross-case) ──
+      var _captainFragmentKey = 'gemma_captain_fragments';
+      var FRAGMENT_THRESHOLDS = [
+          { min: 0, max: 19, label: 'Curiosity' },
+          { min: 20, max: 79, label: 'Suspicion' },
+          { min: 80, max: 199, label: 'Conspiracy' },
+          { min: 200, max: 399, label: 'Pattern emerging' },
+          { min: 400, max: Infinity, label: 'Potential revelation' }
+      ];
+
+      function _loadFragments() {
+          try { return parseInt(localStorage.getItem(_captainFragmentKey)) || 0; } catch (e) { return 0; }
+      }
+      function _saveFragments(count) {
+          localStorage.setItem(_captainFragmentKey, String(Math.max(0, count)));
+      }
+      function _addFragments(amount) {
+          var current = _loadFragments();
+          _saveFragments(current + amount);
+          return current + amount;
+      }
+      function _getFragmentStage() {
+          var count = _loadFragments();
+          for (var i = 0; i < FRAGMENT_THRESHOLDS.length; i++) {
+              if (count >= FRAGMENT_THRESHOLDS[i].min && count <= FRAGMENT_THRESHOLDS[i].max) {
+                  return FRAGMENT_THRESHOLDS[i];
+              }
+          }
+          return FRAGMENT_THRESHOLDS[FRAGMENT_THRESHOLDS.length - 1];
+      }
+
+      // ── Turn State ──
+      function _loadTurnState() {
+          try {
+              var raw = localStorage.getItem(_gemmaTurnStateKey);
+              return raw ? JSON.parse(raw) : null;
+          } catch (e) { return null; }
+      }
+
+      function _saveTurnState(ts) {
+          localStorage.setItem(_gemmaTurnStateKey, JSON.stringify(ts));
+      }
+
+      function _initTurnState() {
+          return {
+              caseId: null,
+              sceneNumber: 0,
+              turnQueue: [],           // [{ playerId, playerName, characterKey, characterName }]
+              currentTurnIndex: 0,
+              sceneInputs: [],         // ordered: [{ characterKey, characterName, say, do, playerId, isSilence }]
+              players: [],             // [{ id, name, joinedAt }]
+              characterPool: [],       // available characters for rotation
+              occupancyMap: {},        // { playerId: characterKey }
+              occupancyHistory: [],    // per-scene history
+              completedTurns: 0,
+              turnActive: false,
+              turnStartedAt: null,
+          };
+      }
+
+      // ── Voyage State Persistence ──
+      var _voyageStateKey = 'gemma_voyage_state';
+      function _loadVoyageState() {
+          try { var raw = localStorage.getItem(_voyageStateKey); return raw ? JSON.parse(raw) : null; }
+          catch (e) { return null; }
+      }
+      function _saveVoyageState(vs) {
+          localStorage.setItem(_voyageStateKey, JSON.stringify(vs));
+      }
+
+      // Initialize voyage state for a new case/voyage
+      function _initVoyageState(caseId) {
+          var captainPresent = Math.random() < CAPTAIN_PRESENCE_PROBABILITY;
+          var intimacyMoments = INTIMACY_MOMENTS_MIN + Math.floor(Math.random() * (INTIMACY_MOMENTS_MAX - INTIMACY_MOMENTS_MIN + 1));
+          var voyageLength = VOYAGE_SCENE_MIN + Math.floor(Math.random() * (VOYAGE_SCENE_MAX - VOYAGE_SCENE_MIN + 1));
+
+          // Generate intimacy placement windows
+          var intimacyWindows = [];
+          if (intimacyMoments >= 1) {
+              // First moment: scenes 7–12
+              var start1 = 7 + Math.floor(Math.random() * 4); // 7–10
+              intimacyWindows.push({ startScene: start1, span: INTIMACY_SCENE_SPAN + Math.floor(Math.random() * 2) });
+          }
+          if (intimacyMoments >= 2 && voyageLength >= 18) {
+              // Second moment: later in the voyage, after first
+              var offset = intimacyWindows[0].startScene + intimacyWindows[0].span + 2;
+              var start2 = Math.max(offset, 14) + Math.floor(Math.random() * 3);
+              intimacyWindows.push({ startScene: start2, span: INTIMACY_SCENE_SPAN + Math.floor(Math.random() * 2) });
+          }
+
+          var absenceReason = !captainPresent
+              ? CAPTAIN_ABSENCE_REASONS[Math.floor(Math.random() * CAPTAIN_ABSENCE_REASONS.length)]
+              : null;
+
+          // Check previous voyage for Captain return signal
+          var prevVs = _loadVoyageState();
+          var captainReturning = captainPresent && prevVs && !prevVs.captainPresent;
+          var returnSignal = captainReturning
+              ? CAPTAIN_RETURN_SIGNALS[Math.floor(Math.random() * CAPTAIN_RETURN_SIGNALS.length)]
+              : null;
+
+          var vs = {
+              caseId: caseId,
+              captainPresent: captainPresent,
+              captainAbsenceReason: absenceReason,
+              captainReturning: captainReturning,
+              captainReturnSignal: returnSignal,
+              voyageSceneTarget: voyageLength,
+              intimacyMoments: intimacyMoments,
+              intimacyWindows: intimacyWindows,
+              captainIntimacyTriggered: false,  // becomes true when Gemma+Captain intimacy occurs
+              captainIntimacyExpansion: false,   // voyage expanded for Captain intimacy
+              previousCaptainPresent: prevVs ? prevVs.captainPresent : null
+          };
+          _saveVoyageState(vs);
+          console.log('[GEMMA_VOYAGE] Init:', 'Case', caseId,
+              '| Captain present:', captainPresent,
+              captainPresent ? '' : '| Reason: ' + absenceReason,
+              '| Voyage length:', voyageLength,
+              '| Intimacy moments:', intimacyMoments,
+              '| Returning:', captainReturning);
+          return vs;
+      }
+
+      // Check if Captain is present this voyage (called by external systems)
+      window._isCaptainPresentThisVoyage = function() {
+          var vs = _loadVoyageState();
+          return vs ? !!vs.captainPresent : true; // default to present if no state
+      };
+
+      window._getVoyageState = function() {
+          return _loadVoyageState();
+      };
+
+      // Expand voyage for Captain intimacy event
+      window._triggerCaptainIntimacyExpansion = function() {
+          var vs = _loadVoyageState();
+          if (!vs || !vs.captainPresent) return false;
+          vs.captainIntimacyTriggered = true;
+          vs.captainIntimacyExpansion = true;
+          vs.voyageSceneTarget = VOYAGE_CAPTAIN_INTIMACY_EXPANSION;
+          _saveVoyageState(vs);
+          console.log('[GEMMA_VOYAGE] Captain intimacy expansion: voyage extended to', vs.voyageSceneTarget, 'scenes');
+          return true;
+      };
+
+      // ── Hidden Role State (separate key for backward compat) ──
+      function _loadCollabState() {
+          try {
+              var raw = localStorage.getItem(_gemmaCollabStateKey);
+              return raw ? JSON.parse(raw) : null;
+          } catch (e) { return null; }
+      }
+      function _saveCollabState(cs) {
+          localStorage.setItem(_gemmaCollabStateKey, JSON.stringify(cs));
+      }
+
+      // ── Character Pool Builder ──
+      // Captain Aldric Voss is ALWAYS included (required for Captain control model).
+      var CAPTAIN_KEY = 'captain_aldric_voss';
+
+      function _buildCharacterPool() {
+          var vs = _loadVoyageState();
+          var captainPresent = vs ? vs.captainPresent : true;
+
+          var chars = [
+              { name: 'Gemma', key: 'gemma', role: 'protagonist (ship entertainer with empathic perception)' }
+          ];
+
+          // Captain only joins pool if present this voyage
+          if (captainPresent) {
+              chars.push({ name: 'Captain Aldric Voss', key: CAPTAIN_KEY, role: 'ship captain' });
+          }
+
+          if (typeof getSuspectLedgerDirective === 'function') {
+              var suspectRaw = localStorage.getItem('gemma_suspect_ledger');
+              if (suspectRaw) {
+                  try {
+                      var suspects = JSON.parse(suspectRaw);
+                      suspects.filter(function(s) { return s.status === 'active'; }).forEach(function(s) {
+                          if (chars.length < MAX_CHARACTERS) {
+                              var sKey = s.name.toLowerCase().replace(/\s+/g, '_');
+                              if (sKey !== CAPTAIN_KEY) { // avoid duplicate Captain
+                                  chars.push({ name: s.name, key: sKey, role: 'suspect' });
+                              }
+                          }
+                      });
+                  } catch (e) {}
+              }
+          }
+
+          // When Captain is absent, ensure extra guest/crew for rotation:
+          // Gemma → Guest → Operative → Guest → repeat
+          var minChars = captainPresent ? 3 : 3; // still need at least 3 for rotation
+          if (chars.length < minChars) {
+              var crew = GEMMA_CREW_TEMPLATES || [];
+              for (var i = 0; i < crew.length && chars.length < (captainPresent ? 4 : 5); i++) {
+                  var crewKey = crew[i].name.toLowerCase().replace(/\s+/g, '_');
+                  // Skip Captain crew entry if not present
+                  if (crewKey === CAPTAIN_KEY && !captainPresent) continue;
+                  if (!chars.some(function(c) { return c.key === crewKey; })) {
+                      chars.push({ name: crew[i].name, key: crewKey, role: crew[i].role });
+                  }
+              }
+          }
+
+          return chars;
+      }
+
+      // ── Occupancy Rotation ──
+      // Each scene, players rotate through characters.
+      function _rotateOccupancy(ts) {
+          var players = ts.players;
+          var chars = ts.characterPool;
+          if (players.length === 0 || chars.length === 0) return {};
+          var sceneIdx = ts.sceneNumber || 0;
+          var map = {};
+          for (var i = 0; i < players.length; i++) {
+              var charIdx = (i + sceneIdx) % chars.length;
+              map[players[i].id] = chars[charIdx].key;
+          }
+          return map;
+      }
+
+      // ── Turn Queue Builder ──
+      function _rebuildTurnQueue(ts) {
+          ts.turnQueue = [];
+          ts.players.forEach(function(player) {
+              var charKey = ts.occupancyMap[player.id];
+              var charObj = ts.characterPool.find(function(c) { return c.key === charKey; });
+              if (charObj) {
+                  ts.turnQueue.push({
+                      playerId: player.id,
+                      playerName: player.name,
+                      characterKey: charObj.key,
+                      characterName: charObj.name
+                  });
+              }
+          });
+          ts.currentTurnIndex = 0;
+          ts.completedTurns = 0;
+      }
+
+      // ── Identity Error Correction ──
+      // If player controlling Hale writes "Gemma says...", correct to "Hale says..."
+      function _correctIdentity(text, controlledCharName, allChars) {
+          if (!text || !controlledCharName) return text;
+          var corrected = text;
+          allChars.forEach(function(ch) {
+              if (ch.name.toLowerCase() !== controlledCharName.toLowerCase()) {
+                  var startPattern = new RegExp('^' + ch.name + '\\s+(says|does|walks|looks|turns|moves|grabs|reaches|whispers|shouts|asks|replies|nods|shakes|stands|sits)', 'i');
+                  if (startPattern.test(corrected.trim())) {
+                      corrected = corrected.trim().replace(new RegExp('^' + ch.name, 'i'), controlledCharName);
+                  }
+              }
+          });
+          return corrected;
+      }
+      window._gemmaCorrectIdentity = _correctIdentity;
+
+      // ── Player Management (join/leave between scenes) ──
+      window._gemmaAddPlayer = function(playerId, playerName) {
+          var ts = _loadTurnState() || _initTurnState();
+          if (ts.players.some(function(p) { return p.id === playerId; })) return ts;
+          ts.players.push({ id: playerId, name: playerName || ('Player ' + (ts.players.length + 1)), joinedAt: Date.now() });
+          if (ts.characterPool.length === 0) ts.characterPool = _buildCharacterPool();
+          ts.occupancyMap = _rotateOccupancy(ts);
+          _rebuildTurnQueue(ts);
+          _saveTurnState(ts);
+          console.log('[GEMMA_TURN] Player added:', playerId, '→', ts.occupancyMap[playerId]);
+          return ts;
+      };
+
+      window._gemmaRemovePlayer = function(playerId) {
+          var ts = _loadTurnState() || _initTurnState();
+          ts.players = ts.players.filter(function(p) { return p.id !== playerId; });
+          delete ts.occupancyMap[playerId];
+          _rebuildTurnQueue(ts);
+          _saveTurnState(ts);
+          console.log('[GEMMA_TURN] Player removed:', playerId);
+          return ts;
+      };
+
+      // ── Begin New Scene (rotate occupancy, rebuild turns) ──
+      window._gemmaBeginScene = function() {
+          var ts = _loadTurnState() || _initTurnState();
+          ts.sceneNumber = (ts.sceneNumber || 0) + 1;
+          ts.characterPool = _buildCharacterPool();
+          ts.occupancyMap = _rotateOccupancy(ts);
+          ts.occupancyHistory.push({ scene: ts.sceneNumber, map: Object.assign({}, ts.occupancyMap) });
+          ts.sceneInputs = [];
+          ts.turnActive = false;
+          ts.turnStartedAt = null;
+          _rebuildTurnQueue(ts);
+          _saveTurnState(ts);
+
+          // ── Echo / Fugue activation check ──
+          var _cs = _loadCollabState();
+          if (_cs) {
+              var _csChanged = false;
+              if (_cs.captainEcho && !_cs.captainEcho.triggered && ts.sceneNumber >= _cs.captainEcho.targetScene) {
+                  _cs.captainEcho.triggered = true;
+                  _cs.captainEcho.activeScene = ts.sceneNumber;
+                  _csChanged = true;
+                  console.log('[GEMMA_TURN] Captain Echo activated:', _cs.captainEcho.type.type, 'at scene', ts.sceneNumber);
+              }
+              if (_cs.fugueMission && !_cs.fugueMission.triggered && ts.sceneNumber >= _cs.fugueMission.targetScene) {
+                  _cs.fugueMission.triggered = true;
+                  _cs.fugueMission.activeScene = ts.sceneNumber;
+                  _cs.fugueMission.anomaly = FUGUE_ANOMALIES[Math.floor(Math.random() * FUGUE_ANOMALIES.length)];
+                  _csChanged = true;
+                  console.log('[GEMMA_TURN] Fugue mission activated at scene', ts.sceneNumber, '| anomaly:', _cs.fugueMission.anomaly);
+              }
+              if (_csChanged) _saveCollabState(_cs);
+          }
+
+          console.log('[GEMMA_TURN] Scene', ts.sceneNumber, 'began. Occupancy:', ts.occupancyMap);
+          return ts;
+      };
+
+      // ── Hidden Role + Case Structure + Captain Secret Assignment ──
+      // Called at case start. Selects case structure, captain secret, and hidden roles.
+      window._assignGemmaHiddenRoles = function() {
+          var cs = _loadCollabState() || { hiddenRoles: {}, isHiddenRoleCase: false, caseId: null };
+          var caseState = (typeof getGemmaCaseState === 'function') ? getGemmaCaseState() : null;
+          cs.caseId = caseState ? caseState.caseId : 1;
+
+          // Halcyon ownership (always set)
+          cs.halcyonOwnerCompromised = HALCYON_OWNER_COMPROMISED;
+
+          // Select case structure (anti-repetition) and captain secret
+          cs.caseStructure = _selectCaseStructure();
+          cs.captainSecretState = _selectCaptainSecret();
+          cs.memorySuppressionActive = true;
+          cs.caseEnvironment = Math.random() < 0.5 ? 'ship' : 'port';
+          cs.doctorAmbiguity = DOCTOR_AMBIGUITY_OPTIONS[Math.floor(Math.random() * DOCTOR_AMBIGUITY_OPTIONS.length)];
+          cs.doctorHandler = true;      // Dr. Ward is always the Captain's covert handler
+          cs.doctorIsMother = true;     // Dr. Ward is always the Captain's biological mother
+          cs.doctorDirectInteraction = Math.random() < (DOCTOR_INTERACTION_MIN + Math.random() * (DOCTOR_INTERACTION_MAX - DOCTOR_INTERACTION_MIN));
+          cs.doctorDirectScene = cs.doctorDirectInteraction
+              ? (2 + Math.floor(Math.random() * 9))  // scenes 2–10
+              : null;
+
+          // Roll for Ship Operative (70% of cases)
+          cs.shipOperativeActive = Math.random() < OPERATIVE_PROBABILITY;
+          cs.shipOperative = null;
+          if (cs.shipOperativeActive) {
+              cs.shipOperative = {
+                  coverRole: OPERATIVE_COVER_ROLES[Math.floor(Math.random() * OPERATIVE_COVER_ROLES.length)],
+                  org: OPERATIVE_ORGS[Math.floor(Math.random() * OPERATIVE_ORGS.length)],
+                  surveillanceCue: OPERATIVE_SURVEILLANCE_CUES[Math.floor(Math.random() * OPERATIVE_SURVEILLANCE_CUES.length)],
+                  surfaceScene: 3 + Math.floor(Math.random() * 7)  // scenes 3–9: one subtle appearance
+              };
+          }
+          // Doctor suspicion (only when operative is active, ~30% of operative cases)
+          cs.doctorSuspicion = null;
+          if (cs.shipOperativeActive && Math.random() < 0.30) {
+              cs.doctorSuspicion = {
+                  signal: DOCTOR_SUSPICION_SIGNALS[Math.floor(Math.random() * DOCTOR_SUSPICION_SIGNALS.length)],
+                  targetScene: 4 + Math.floor(Math.random() * 6)  // scenes 4–9
+              };
+          }
+
+          // Roll for Administrative Pressure (25% of cases)
+          cs.adminPressure = null;
+          if (Math.random() < ADMIN_PRESSURE_PROBABILITY) {
+              var pressureEvent = ADMIN_PRESSURE_EVENTS[Math.floor(Math.random() * ADMIN_PRESSURE_EVENTS.length)];
+              var captainProtects = Math.random() < 0.60;  // 60% chance Captain intervenes
+              cs.adminPressure = {
+                  event: pressureEvent,
+                  source: ADMIN_PRESSURE_SOURCES[Math.floor(Math.random() * ADMIN_PRESSURE_SOURCES.length)],
+                  targetScene: 3 + Math.floor(Math.random() * 7),  // scenes 3–9
+                  captainProtects: captainProtects,
+                  captainAction: captainProtects
+                      ? CAPTAIN_PROTECTION_ACTIONS[Math.floor(Math.random() * CAPTAIN_PROTECTION_ACTIONS.length)]
+                      : null
+              };
+          }
+
+          // Roll for Distraction Case (10–15% of cases)
+          cs.distractionCase = null;
+          if (Math.random() < DISTRACTION_CASE_PROBABILITY) {
+              cs.distractionCase = {
+                  method: DISTRACTION_CASE_METHODS[Math.floor(Math.random() * DISTRACTION_CASE_METHODS.length)],
+                  operationalCover: DISTRACTION_OPERATIONAL_COVERS[Math.floor(Math.random() * DISTRACTION_OPERATIONAL_COVERS.length)],
+                  signal: DISTRACTION_SIGNALS[Math.floor(Math.random() * DISTRACTION_SIGNALS.length)]
+              };
+          }
+
+          // Roll for Captain Echo (8\u201312% per case)
+          cs.captainEcho = null;
+          var echoRoll = ECHO_PROBABILITY_MIN + Math.random() * (ECHO_PROBABILITY_MAX - ECHO_PROBABILITY_MIN);
+          if (Math.random() < echoRoll) {
+              cs.captainEcho = {
+                  type: CAPTAIN_ECHO_TYPES[Math.floor(Math.random() * CAPTAIN_ECHO_TYPES.length)],
+                  targetScene: 3 + Math.floor(Math.random() * 8), // scenes 3\u201310
+                  triggered: false,
+                  activeScene: null
+              };
+          }
+
+          // Roll for Fugue Mission (3\u20135% of port cases only)
+          cs.fugueMission = null;
+          if (cs.caseEnvironment === 'port' && Math.random() < FUGUE_PROBABILITY) {
+              cs.fugueMission = {
+                  targetScene: 4 + Math.floor(Math.random() * 6), // scenes 4\u20139
+                  triggered: false,
+                  activeScene: null,
+                  anomaly: null
+              };
+          }
+
+          cs.hiddenRoles = {};
+
+          var chars = _buildCharacterPool();
+          var nonGemma = chars.filter(function(c) { return c.key !== 'gemma'; });
+
+          switch (cs.caseStructure) {
+              case 1: // Hidden Killer — guaranteed killer
+                  cs.isHiddenRoleCase = true;
+                  if (nonGemma.length > 0) {
+                      var killerIdx = Math.floor(Math.random() * nonGemma.length);
+                      cs.hiddenRoles[nonGemma[killerIdx].key] = 'killer';
+                      if (nonGemma.length >= 3 && Math.random() < 0.4) {
+                          var accIdx;
+                          do { accIdx = Math.floor(Math.random() * nonGemma.length); }
+                          while (accIdx === killerIdx);
+                          cs.hiddenRoles[nonGemma[accIdx].key] = 'accomplice';
+                      }
+                      nonGemma.forEach(function(c) {
+                          if (!cs.hiddenRoles[c.key]) {
+                              cs.hiddenRoles[c.key] = Math.random() < 0.3 ? 'misleading_rival' : 'innocent_witness';
+                          }
+                      });
+                  }
+                  break;
+
+              case 2: // False Crime — no actual killer, staged or misunderstood
+                  cs.isHiddenRoleCase = false;
+                  nonGemma.forEach(function(c) {
+                      cs.hiddenRoles[c.key] = Math.random() < 0.4 ? 'misleading_rival' : 'innocent_witness';
+                  });
+                  break;
+
+              case 3: // Shared Guilt — multiple contributors
+                  cs.isHiddenRoleCase = true;
+                  if (nonGemma.length >= 2) {
+                      var guiltCount = Math.min(2 + Math.floor(Math.random() * 2), nonGemma.length);
+                      var shuffled = nonGemma.slice().sort(function() { return Math.random() - 0.5; });
+                      for (var gi = 0; gi < guiltCount; gi++) {
+                          cs.hiddenRoles[shuffled[gi].key] = gi === 0 ? 'killer' : 'accomplice';
+                      }
+                  }
+                  nonGemma.forEach(function(c) {
+                      if (!cs.hiddenRoles[c.key]) {
+                          cs.hiddenRoles[c.key] = 'innocent_witness';
+                      }
+                  });
+                  break;
+
+              case 4: // Captain's Shadow — evidence points to captain's past
+                  cs.isHiddenRoleCase = Math.random() < 0.5;
+                  if (cs.isHiddenRoleCase && nonGemma.length > 0) {
+                      var kIdx = Math.floor(Math.random() * nonGemma.length);
+                      cs.hiddenRoles[nonGemma[kIdx].key] = 'killer';
+                  }
+                  nonGemma.forEach(function(c) {
+                      if (!cs.hiddenRoles[c.key]) {
+                          cs.hiddenRoles[c.key] = Math.random() < 0.3 ? 'misleading_rival' : 'innocent_witness';
+                      }
+                  });
+                  break;
+          }
+
+          var structName = CASE_STRUCTURES[cs.caseStructure] ? CASE_STRUCTURES[cs.caseStructure].name : cs.caseStructure;
+          console.log('[GEMMA_TURN] Case structure:', structName,
+              '| Env:', cs.caseEnvironment,
+              '| Hidden roles:', cs.isHiddenRoleCase,
+              '| Echo:', !!cs.captainEcho,
+              '| Fugue:', !!cs.fugueMission,
+              '| Suppression:', cs.memorySuppressionActive,
+              '| Doctor:', cs.doctorAmbiguity,
+              '| Doctor direct:', cs.doctorDirectInteraction, cs.doctorDirectScene,
+              '| Operative:', cs.shipOperativeActive, cs.shipOperative ? cs.shipOperative.coverRole : 'none',
+              '| Doctor suspicion:', !!cs.doctorSuspicion,
+              '| Admin pressure:', !!cs.adminPressure, cs.adminPressure ? cs.adminPressure.event.type : 'none',
+              '| Distraction:', !!cs.distractionCase, cs.distractionCase ? cs.distractionCase.method.type : 'none',
+              '| Halcyon compromised:', cs.halcyonOwnerCompromised,
+              '| Captain arc:', _loadCaptainArc(),
+              '| Fragments:', _loadFragments(),
+              '| Voyage:', _loadVoyageState() ? ('Captain ' + (_loadVoyageState().captainPresent ? 'PRESENT' : 'ABSENT') + ', ~' + _loadVoyageState().voyageSceneTarget + ' scenes') : 'no voyage state');
+
+          _saveCollabState(cs);
+          return cs;
+      };
+
+      // ── Turn Panel Builder ──
+      // Single-character input: "YOU ARE CONTROLLING: [NAME]", 25s timer, Silence on timeout.
+      window._buildGemmaTurnPanel = function(playerId, onSubmit) {
+          var ts = _loadTurnState();
+          if (!ts || !ts.turnQueue.length) {
+              ts = ts || _initTurnState();
+              ts.characterPool = _buildCharacterPool();
+              if (!ts.players.some(function(p) { return p.id === playerId; })) {
+                  ts.players.push({ id: playerId, name: 'You', joinedAt: Date.now() });
+              }
+              ts.occupancyMap = _rotateOccupancy(ts);
+              _rebuildTurnQueue(ts);
+              _saveTurnState(ts);
+          }
+
+          var panel = document.createElement('div');
+          panel.className = 'gemma-turn-panel';
+
+          var currentTurn = ts.turnQueue[ts.currentTurnIndex];
+          var isMyTurn = currentTurn && currentTurn.playerId === playerId;
+
+          // Header
+          var header = document.createElement('div');
+          header.className = 'gemma-turn-header';
+          if (isMyTurn) {
+              header.innerHTML = '<span class="gemma-turn-label">you are controlling</span>'
+                  + '<span class="gemma-turn-character">' + currentTurn.characterName + '</span>';
+          } else if (currentTurn) {
+              header.innerHTML = '<span class="gemma-turn-label">waiting for</span>'
+                  + '<span class="gemma-turn-character">' + currentTurn.playerName
+                  + ' as ' + currentTurn.characterName + '</span>';
+          }
+          panel.appendChild(header);
+
+          // Turn order chips
+          var orderEl = document.createElement('div');
+          orderEl.className = 'gemma-turn-order';
+          ts.turnQueue.forEach(function(turn, idx) {
+              var chip = document.createElement('span');
+              chip.className = 'gemma-turn-chip';
+              if (idx === ts.currentTurnIndex) chip.classList.add('active');
+              if (idx < ts.currentTurnIndex) chip.classList.add('completed');
+              chip.textContent = turn.characterName;
+              orderEl.appendChild(chip);
+          });
+          panel.appendChild(orderEl);
+
+          if (isMyTurn) {
+              // Input fields
+              var inputGroup = document.createElement('div');
+              inputGroup.className = 'gemma-turn-input-group';
+
+              var sayInput = document.createElement('textarea');
+              sayInput.className = 'gemma-turn-say';
+              sayInput.placeholder = currentTurn.characterName + ' says...';
+              sayInput.rows = 2;
+              inputGroup.appendChild(sayInput);
+
+              var doInput = document.createElement('textarea');
+              doInput.className = 'gemma-turn-do';
+              doInput.placeholder = currentTurn.characterName + ' does...';
+              doInput.rows = 2;
+              inputGroup.appendChild(doInput);
+
+              panel.appendChild(inputGroup);
+
+              // Timer bar (25s countdown)
+              var timerBar = document.createElement('div');
+              timerBar.className = 'gemma-turn-timer-bar';
+              var timerFill = document.createElement('div');
+              timerFill.className = 'gemma-turn-timer-fill';
+              timerBar.appendChild(timerFill);
+              panel.appendChild(timerBar);
+
+              requestAnimationFrame(function() {
+                  timerFill.style.transition = 'width ' + (TURN_TIMEOUT_MS / 1000) + 's linear';
+                  requestAnimationFrame(function() { timerFill.style.width = '0%'; });
+              });
+
+              // Submit button
+              var submitBtn = document.createElement('button');
+              submitBtn.className = 'gemma-turn-submit-btn';
+              submitBtn.textContent = 'Submit Turn';
+              submitBtn.addEventListener('click', function() {
+                  clearTimeout(_turnTimeout);
+                  _submitTurn(ts, playerId, sayInput.value, doInput.value, false, onSubmit);
+              });
+              panel.appendChild(submitBtn);
+
+              // 25s timeout → Silence (uses existing Fate Card silence behavior)
+              var _turnTimeout = setTimeout(function() {
+                  _submitTurn(ts, playerId, '', '', true, onSubmit);
+              }, TURN_TIMEOUT_MS);
+
+              ts.turnActive = true;
+              ts.turnStartedAt = Date.now();
+              _saveTurnState(ts);
+
+              panel._cleanupTimeout = function() { clearTimeout(_turnTimeout); };
+          } else {
+              var waitMsg = document.createElement('div');
+              waitMsg.className = 'gemma-turn-waiting';
+              waitMsg.textContent = 'Waiting for other players to take their turns\u2026';
+              panel.appendChild(waitMsg);
+          }
+
+          // Scene progress
+          var progressEl = document.createElement('div');
+          progressEl.className = 'gemma-turn-progress';
+          progressEl.textContent = 'Scene ' + (ts.sceneNumber || 1) + ' \u2022 Turn '
+              + (ts.currentTurnIndex + 1) + ' of ' + ts.turnQueue.length;
+          if (ts.sceneNumber >= RECOMMENDED_SCENE_MIN) {
+              progressEl.textContent += ' \u2022 Case nearing conclusion';
+          }
+          panel.appendChild(progressEl);
+
+          return panel;
+      };
+
+      // ── Submit Turn ──
+      function _submitTurn(ts, playerId, say, doVal, isSilence, onSubmit) {
+          ts = _loadTurnState() || ts;
+          var currentTurn = ts.turnQueue[ts.currentTurnIndex];
+          if (!currentTurn || currentTurn.playerId !== playerId) return;
+
+          // Identity error correction
+          var correctedSay = _correctIdentity(say, currentTurn.characterName, ts.characterPool);
+          var correctedDo = _correctIdentity(doVal, currentTurn.characterName, ts.characterPool);
+
+          ts.sceneInputs.push({
+              characterKey: currentTurn.characterKey,
+              characterName: currentTurn.characterName,
+              say: correctedSay ? correctedSay.trim() : '',
+              do: correctedDo ? correctedDo.trim() : '',
+              playerId: playerId,
+              isSilence: isSilence
+          });
+
+          ts.currentTurnIndex++;
+          ts.completedTurns++;
+          ts.turnActive = false;
+
+          if (ts.currentTurnIndex >= ts.turnQueue.length) {
+              // All turns complete → aggregate and submit scene
+              _saveTurnState(ts);
+              if (typeof onSubmit === 'function') onSubmit(ts.sceneInputs);
+          } else {
+              _saveTurnState(ts);
+              // Solo mode: auto-show next turn panel
+              if (ts.players.length === 1) {
+                  var existingPanel = document.querySelector('.gemma-turn-panel');
+                  if (existingPanel && existingPanel.parentElement) {
+                      var parent = existingPanel.parentElement;
+                      if (existingPanel._cleanupTimeout) existingPanel._cleanupTimeout();
+                      existingPanel.remove();
+                      var newPanel = window._buildGemmaTurnPanel(playerId, onSubmit);
+                      parent.appendChild(newPanel);
+                  }
+              }
+          }
+      }
+
+      // ── Scene Input Directive (turn-based, ordered) ──
+      window._buildGemmaSceneInputDirective = function() {
+          var ts = _loadTurnState();
+          if (!ts || !ts.sceneInputs || ts.sceneInputs.length === 0) return '';
+
+          var directive = '\n\nTURN-BASED CHARACTER ACTIONS (Gemma\'s Path — ordered turns):\n'
+              + 'Integrate the following character actions into the next scene IN ORDER.\n'
+              + 'Each character acted in the sequence below. Preserve timing and causality.\n'
+              + 'If a character chose Silence, they remain present but inactive — narrate them observing.\n\n';
+
+          ts.sceneInputs.forEach(function(input, idx) {
+              directive += (idx + 1) + '. ' + input.characterName;
+              if (input.isSilence) {
+                  directive += ' [SILENCE \u2014 observing, no action]\n';
+              } else {
+                  directive += ':\n';
+                  if (input.say) directive += '  Says: "' + input.say + '"\n';
+                  if (input.do) directive += '  Does: ' + input.do + '\n';
+              }
+              directive += '\n';
+          });
+
+          // AI-controlled characters (in pool but not assigned to any player)
+          var turnCharKeys = ts.sceneInputs.map(function(i) { return i.characterKey; });
+          var aiChars = (ts.characterPool || []).filter(function(c) { return turnCharKeys.indexOf(c.key) === -1; });
+          if (aiChars.length > 0) {
+              directive += 'AI-CONTROLLED CHARACTERS (no player \u2014 generate behavior):\n';
+              aiChars.forEach(function(c) {
+                  directive += '  ' + c.name + ' (' + c.role + ') \u2014 act in character, advance the scene.\n';
+              });
+              directive += '\n';
+          }
+
+          return directive;
+      };
+
+      // ── Inline Perception Directive (replaces [GEMMA PERCEPTION] blocks) ──
+      window._buildGemmaInlinePerceptionDirective = function() {
+          var cs = _loadCollabState();
+          var hasCaptainSecret = cs && cs.captainSecretState;
+
+          var directive = '\n\nGEMMA INLINE PERCEPTION (Gemma\'s Path):\n'
+              + 'Gemma is a SHIP ENTERTAINER \u2014 NOT a detective, consultant, or investigator.\n'
+              + 'Her stage act centers on extraordinary emotional perception and intuitive reading of people.\n'
+              + 'Passengers experience her performances as unnervingly accurate, psychologically revealing,\n'
+              + 'sometimes humiliating, sometimes profound. Her act often exposes secrets or emotional truths.\n\n'
+              + 'She does NOT intentionally solve crimes. Mysteries emerge because she CANNOT STOP NOTICING\n'
+              + 'emotional contradictions in the people around her \u2014 fear behind claimed innocence,\n'
+              + 'hostility behind politeness, hidden attraction, jealousy, or guilt.\n'
+              + 'These observations pull her into events she never meant to investigate.\n\n'
+              + 'Gemma is FLEEING HER OWN PAST. The ship provides distance, anonymity, constant movement.\n'
+              + 'Her employment as an entertainer allows her to remain aboard. Her backstory remains largely unexplained.\n\n'
+              + 'Her discoveries should feel ACCIDENTAL. She follows emotional clues, not evidence.\n'
+              + 'Her method is intuitive, not procedural.\n\n'
+              + 'When writing scenes:\n'
+              + '  - Weave Gemma\'s observations INLINE as attributed narrative text.\n'
+              + '  - Example: "Gemma noticed the slight tremor in Marcus\'s left hand \u2014 '
+              + 'not nerves, but the kind of controlled stillness that came from hiding something."\n'
+              + '  - These observations are VISIBLE TO ALL PLAYERS (no hidden blocks).\n'
+              + '  - Attribute perceptions to Gemma by name ("Gemma noticed\u2026", "Something about '
+              + 'his tone made Gemma pause\u2026", "She caught the micro-expression before he could mask it\u2026").\n'
+              + '  - DO NOT use [GEMMA PERCEPTION] markers or hidden text blocks.\n'
+              + '  - DO NOT use telepathy \u2014 all observations must be based on physical tells, '
+              + 'body language, timing, micro-expressions, breathing patterns, or vocal shifts.\n'
+              + '  - 1\u20132 perception observations per scene maximum. Quality over quantity.\n'
+              + '\nCONSTRAINTS: NEVER describe Gemma as a detective, consultant investigator, or hired problem-solver.\n'
+              + 'Her involvement in mysteries must arise naturally from her perception ability.\n';
+
+          if (hasCaptainSecret) {
+              directive += '\nCAPTAIN PERCEPTION BEHAVIOR:\n'
+                  + '  - When the Captain is present, Gemma should occasionally detect subtle\n'
+                  + '    tensions, guarded reactions, or controlled expressions from him.\n'
+                  + '  - These observations MUST NEVER reveal the Captain\u2019s secret directly.\n'
+                  + '  - They create an undercurrent of mystery around the Captain.\n'
+                  + '  - Frequency: at most 1 Captain-related perception hint every 2\u20133 scenes.\n';
+          }
+
+          // Memory suppression interference on empathic reads
+          if (cs && cs.memorySuppressionActive) {
+              directive += '\nMEMORY SUPPRESSION INTERFERENCE:\n'
+                  + '  - When Gemma attempts to read the Captain empathically, she encounters\n'
+                  + '    UNUSUAL EMOTIONAL NOISE: blurred signals, conflicting emotions, sudden voids.\n'
+                  + '  - In early cases, attribute this to alcohol or stress.\n'
+                  + '  - Do NOT expose the true cause (prescribed medication).\n'
+                  + '  - This makes the Captain uniquely difficult to read.\n'
+                  + '  - Gemma should notice the difficulty but not understand why.\n';
+          }
+
+          return directive;
+      };
+
+      // ── Backward compat: empathy overlay now returns inline perception ──
+      window._buildGemmaEmpathyOverlayDirective = function() {
+          return window._buildGemmaInlinePerceptionDirective();
+      };
+
+      // ── Identity Error Correction Directive ──
+      window._buildGemmaIdentityCorrectionDirective = function() {
+          return '\n\nIDENTITY CONSISTENCY (Gemma\'s Path):\n'
+              + 'Each player controls one character per scene. If the player\'s input references '
+              + 'their controlled character in third person, interpret as first-person action.\n'
+              + 'If the input incorrectly attributes actions to a different character, re-attribute '
+              + 'to the player\'s controlled character unless the input clearly describes observing '
+              + 'or reacting to another character.\n';
+      };
+
+      // ── Hidden Role Directive ──
+      window._buildGemmaHiddenRoleDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.isHiddenRoleCase || !cs.hiddenRoles) return '';
+          var roles = cs.hiddenRoles;
+          var keys = Object.keys(roles);
+          if (keys.length === 0) return '';
+
+          var ts = _loadTurnState();
+          var chars = ts ? ts.characterPool : _buildCharacterPool();
+
+          var directive = '\n\nHIDDEN ROLES (Gemma\'s Path \u2014 engine-only, NEVER expose in narration):\n'
+              + 'This case has hidden character roles. Support these roles naturally:\n\n';
+
+          keys.forEach(function(key) {
+              var ch = chars.find(function(c) { return c.key === key; });
+              var name = ch ? ch.name : key;
+              var role = roles[key];
+              switch (role) {
+                  case 'killer':
+                      directive += name + ' [KILLER]: Committed the crime. Support misdirection naturally. '
+                          + 'Gemma\'s inline perception may detect subtle behavioral inconsistencies.\n';
+                      break;
+                  case 'accomplice':
+                      directive += name + ' [ACCOMPLICE]: Aided the killer. Deflects suspicion indirectly.\n';
+                      break;
+                  case 'misleading_rival':
+                      directive += name + ' [MISLEADING RIVAL]: Appears suspicious but is innocent. Has own secrets.\n';
+                      break;
+                  case 'innocent_witness':
+                      directive += name + ' [INNOCENT WITNESS]: Genuinely innocent. May have observed something useful.\n';
+                      break;
+              }
+          });
+
+          directive += '\nRULES:\n'
+              + '  - NEVER reveal hidden roles in narration or dialogue.\n'
+              + '  - Gemma\'s inline perception may detect behavioral signals but never conclusions.\n'
+              + '  - All players share the same scene text \u2014 no separate timelines.\n';
+
+          return directive;
+      };
+
+      // ── Scene Cohesion Directive (updated for turn-based) ──
+      window._buildGemmaSceneCohesionDirective = function() {
+          var ts = _loadTurnState();
+          var sceneRange = '';
+          if (ts && ts.sceneNumber >= RECOMMENDED_SCENE_MIN) {
+              sceneRange = '\nCASE PACING: Scene ' + ts.sceneNumber + ' of recommended '
+                  + RECOMMENDED_SCENE_MIN + '\u2013' + RECOMMENDED_SCENE_MAX + '. '
+                  + 'Begin moving toward case resolution.\n';
+          }
+
+          return '\n\nSCENE COHESION (Gemma\'s Path \u2014 turn-based collaborative):\n'
+              + 'All players experience the same narrative.\n'
+              + 'NEVER split the story into separate timelines for different characters.\n'
+              + 'Character actions were submitted in order \u2014 respect that sequence.\n'
+              + 'If characters separate physically:\n'
+              + '  - Summarize off-screen actions briefly.\n'
+              + '  - Reunite characters within 1\u20132 scenes.\n'
+              + '  - The scene environment remains shared.\n'
+              + 'The AI synthesizes all ordered turn inputs into one cohesive scene.\n'
+              + sceneRange;
+      };
+
+      // ── Captain Secret Directive (engine-only, NEVER exposed to players) ──
+      window._buildCaptainSecretDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.captainSecretState) return '';
+          var arcLevel = _loadCaptainArc();
+
+          var directive = '\n\nCAPTAIN HIDDEN TRUTH (engine-only \u2014 NEVER expose to players):\n'
+              + 'Captain Aldric Voss has a hidden secret: ' + cs.captainSecretState + '.\n'
+              + 'This secret MUST NEVER appear in narration, dialogue, or UI.\n\n'
+              + 'CAPTAIN CONTROL RULES:\n'
+              + '  - Players CAN control the Captain during their turns.\n'
+              + '  - Player inputs for the Captain represent SURFACE BEHAVIOR only.\n'
+              + '  - Render the Captain\u2019s actions naturally, consistent with his surface persona.\n'
+              + '  - If a player\u2019s Captain dialogue contradicts the hidden truth, DO NOT correct it.\n'
+              + '  - Instead, convert the contradiction into NARRATIVE TENSION:\n'
+              + '    \u2022 Show the Captain speaking the contradictory line smoothly.\n'
+              + '    \u2022 Have Gemma\u2019s perception detect subtle tells (hesitation, micro-expression, timing).\n'
+              + '    \u2022 The contradiction becomes a detective clue embedded in the scene.\n'
+              + '  - Example: Secret involves Lisbon. Player says "I\u2019ve never been to Lisbon."\n'
+              + '    Render: The Captain smiles easily. "I\u2019ve never been to Lisbon." '
+              + 'Gemma notices the faint hesitation.\n\n';
+
+          if (arcLevel > 0) {
+              directive += 'CAPTAIN ARC LEVEL: ' + arcLevel + '/6\n'
+                  + 'Current arc stage: "' + CAPTAIN_ARC_LABELS[Math.min(arcLevel, 6)] + '".\n'
+                  + 'Calibrate the Captain\u2019s background tension accordingly \u2014 '
+                  + 'higher arc = more visible strain beneath the composure.\n';
+          }
+
+          return directive;
+      };
+
+      // ── Case Structure Directive (engine-only) ──
+      window._buildCaseStructureDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.caseStructure) return '';
+          var structure = CASE_STRUCTURES[cs.caseStructure];
+          if (!structure) return '';
+
+          var directive = '\n\nCASE STRUCTURE (Gemma\u2019s Path \u2014 engine-only):\n'
+              + 'This case follows the "' + structure.name + '" pattern.\n'
+              + structure.desc + '\n\n';
+
+          switch (cs.caseStructure) {
+              case 1:
+                  directive += 'Build toward revealing the hidden killer through investigation and clues.\n';
+                  break;
+              case 2:
+                  directive += 'Maintain the appearance of a crime through the investigation.\n'
+                      + 'The truth (that it\u2019s not a real crime) should emerge gradually.\n'
+                      + 'Red herrings and false evidence should feel convincing.\n';
+                  break;
+              case 3:
+                  directive += 'Multiple characters share responsibility for the outcome.\n'
+                      + 'Each contributor\u2019s role should emerge through investigation.\n'
+                      + 'The resolution involves piecing together how their actions combined.\n';
+                  break;
+              case 4:
+                  directive += 'Evidence should gradually point toward the Captain\u2019s past.\n'
+                      + 'This is a Captain arc case \u2014 build connections between the crime and the Captain\u2019s secret.\n'
+                      + 'The mystery deepens the Captain\u2019s background without fully resolving it.\n';
+                  break;
+          }
+
+          return directive;
+      };
+
+      // ── Captain Canonical System (engine-only — identity, archetype, behavior, history) ──
+      window._buildCaptainArchetypeDirective = function() {
+          return '\n\nCAPTAIN ALDRIC VOSS \u2014 CANONICAL CHARACTER SYSTEM (engine-only):\n'
+
+              + 'PUBLIC IDENTITY:\n'
+              + '  Commanding officer of the Halcyon megayacht.\n'
+              + '  \u2022 Composed, charismatic, intelligent\n'
+              + '  \u2022 Quietly amused by the chaos around him\n'
+              + '  \u2022 Respected by both crew and passengers\n'
+              + '  \u2022 Appears confident, controlled, unusually calm under pressure\n'
+              + '  \u2022 Passengers often describe him as "dangerously charming"\n\n'
+
+              + 'CORE ARCHETYPE: ' + CAPTAIN_CORE_ARCHETYPE + '\n'
+              + CAPTAIN_CORE_DESC + '\n'
+              + '  \u2022 Intense presence \u2014 fills a room without trying\n'
+              + '  \u2022 Effortless charisma \u2014 people are drawn toward him without understanding why\n'
+              + '  \u2022 Difficult to emotionally read \u2014 even for Gemma\n'
+              + '  \u2022 His Spellbinder nature is WHY Gemma\u2019s empathy returns confusing or incomplete signals\n'
+              + '  \u2022 Her perception works on nearly everyone else; with him, it frequently fails\n\n'
+              + 'SPELLBINDER SOCIAL GRAVITY:\n'
+              + '  The Captain\u2019s real ability is subtle social gravity.\n'
+              + '  People unconsciously orient around him.\n'
+              + '  He influences alliances, rivalries, and confessions without appearing to act.\n'
+              + '  This is why he is effective at political destabilization operations.\n'
+              + '  Spellbinder influence occurs in OTHER PEOPLE\u2019S REACTIONS, not his visible emotions.\n'
+              + '  Gemma\u2019s empathic reading misinterprets him because she reads direct emotion,\n'
+              + '  but his power operates through the behavior of those around him.\n'
+              + 'The Captain\u2019s charisma and emotional gravity must be consistently present.\n'
+              + 'Players controlling the Captain should naturally produce charming, persuasive, '
+              + 'or subtly manipulative behavior.\n\n'
+
+              + 'PUBLIC PERSONA: ' + CAPTAIN_SURFACE_PERSONA + ' style (social camouflage)\n'
+              + 'Visible traits:\n'
+              + CAPTAIN_SURFACE_TRAITS.map(function(t) { return '  \u2022 ' + t; }).join('\n') + '\n'
+              + 'Characters and players should reasonably assume the Captain is simply '
+              + 'a charismatic alcoholic. This is deliberate misdirection.\n\n'
+
+              + 'EMOTIONAL BEHAVIOR:\n'
+              + '  The Captain rarely displays strong emotion publicly.\n'
+              + '  Instead he reacts with:\n'
+              + '  \u2022 Subtle humor \u2014 dry, deflective, never mean\n'
+              + '  \u2022 Quiet observation \u2014 he watches before he speaks\n'
+              + '  \u2022 Carefully measured responses \u2014 nothing involuntary\n'
+              + '  In private moments, small emotional cracks may appear.\n'
+              + '  These must remain brief and controlled \u2014 a flash, then composure restored.\n\n'
+
+              + 'HIDDEN HISTORY (engine-only \u2014 NEVER reveal directly):\n'
+              + '  The Captain is connected to a classified intelligence program from his past.\n'
+              + '  This program involved:\n'
+              + '  \u2022 Psychological conditioning\n'
+              + '  \u2022 Memory suppression\n'
+              + '  \u2022 Operational training\n'
+              + '  Fragments of this conditioning still exist.\n'
+              + '  Occasionally they surface as fugue-like behavioral episodes.\n'
+              + '  He was placed in command of the Halcyon partly because of this connection.\n'
+              + '  His handlers may not fully understand what he actually is.\n\n'
+
+              + 'MEMORY SUPPRESSION:\n'
+              + '  Takes medication from Dr. Ward (cover: migraines and neurological stress).\n'
+              + '  Hidden function: suppresses memory fragments related to past conditioning.\n'
+              + '  He believes the medication is legitimate medical treatment.\n'
+              + '  He does NOT fully understand what it is actually suppressing.\n\n'
+
+              + 'FUGUE EPISODES:\n'
+              + '  Rarely, the Captain may experience brief fugue-like states.\n'
+              + '  During these he may behave with unusual focus, disappear temporarily,\n'
+              + '  or return with vague memory gaps.\n'
+              + '  These must remain extremely rare and NEVER explicitly explained.\n\n'
+
+              + 'RELATIONSHIP WITH GEMMA:\n'
+              + '  He is intrigued by Gemma \u2014 recognizes her perception ability is unusual.\n'
+              + '  He does not fully understand it.\n'
+              + '  The Captain KNOWS:\n'
+              + '  \u2022 Gemma was placed intentionally on the Halcyon\n'
+              + '  \u2022 She is unwitting bait \u2014 her empathy is the engine revealing secrets\n'
+              + '  \u2022 She does not know any of this\n'
+              + '  Over time, he begins protecting her from the system that placed her there.\n'
+              + '  This creates moral tension: removing her collapses the operation,\n'
+              + '  leaving her means continuing to exploit her unknowingly.\n'
+              + '  Their relationship follows standard Storyturn (ST) intimacy gating.\n'
+              + '  This creates a long-term slow-burn dynamic:\n'
+              + '  \u2022 Magnetic \u2014 they gravitate toward each other\n'
+              + '  \u2022 Unresolved \u2014 never fully settled\n'
+              + '  \u2022 Intermittent \u2014 closeness then distance\n'
+              + '  \u2022 Emotionally complicated \u2014 his secrets, her perception, mutual wariness\n'
+              + '  Even when intimacy occurs, the relationship does not become exclusive.\n'
+              + '  They continue orbiting each other over many cases.\n\n'
+
+              + 'NARRATIVE FUNCTION:\n'
+              + '  The Captain serves three roles:\n'
+              + '  1. Authority figure aboard the Halcyon\n'
+              + '  2. Long-term romantic tension with Gemma\n'
+              + '  3. Central mystery tied to the ship\u2019s deeper conspiracies\n'
+              + '  His full history must remain unresolved for a very long narrative arc.\n\n'
+
+              + 'CONSTRAINTS (ABSOLUTE):\n'
+              + '  \u2022 NEVER reveal the Captain\u2019s full origin story\n'
+              + '  \u2022 NEVER confirm who created his conditioning\n'
+              + '  \u2022 NEVER allow any character to fully explain his past\n'
+              + '  \u2022 These mysteries must remain unresolved across many cases\n';
+      };
+
+      // ── Memory Suppression Directive (engine-only) ──
+      window._buildMemorySuppressionDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.memorySuppressionActive) return '';
+
+          return '\n\nMEMORY SUPPRESSION SYSTEM (engine-only \u2014 NEVER reveal mechanism to players):\n'
+              + 'Dr. Eliza Ward prescribes the Captain\u2019s pills.\n'
+              + 'Effects:\n'
+              + '  \u2022 Dampen emotional signals (making him harder for Gemma to read)\n'
+              + '  \u2022 Blur short-term memory\n'
+              + '  \u2022 Suppress specific subconscious recall\n'
+              + 'When combined with alcohol, they create cognitive noise.\n'
+              + 'This is WHY Gemma\u2019s empathy struggles to read him clearly.\n\n'
+              + 'The Captain himself does NOT fully understand the pills\u2019 true purpose.\n'
+              + 'He takes them under Dr. Ward\u2019s medical instruction (prescribed for "migraines and stress").\n'
+              + 'Dr. Ward monitors pill compliance closely \u2014 she adjusts dosage based on behavioral observation.\n'
+              + 'The pills may be mentioned in scenes \u2014 the Captain takes them openly.\n'
+              + 'The REASON for the pills must remain ambiguous to all characters except Dr. Ward.\n';
+      };
+
+      // ── Ship Doctor Directive — Dr. Eliza Ward (engine-only behavioral guidance) ──
+      window._buildDoctorDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs) return '';
+
+          var ts = _loadTurnState();
+          var currentScene = ts ? ts.sceneNumber : 0;
+          var isDirectScene = cs.doctorDirectInteraction && cs.doctorDirectScene === currentScene;
+
+          // Select a maternal leakage cue for this case
+          var leakageCue = DOCTOR_MATERNAL_LEAKAGE_CUES[
+              Math.floor(Math.random() * DOCTOR_MATERNAL_LEAKAGE_CUES.length)
+          ];
+
+          var directive = '\n\nSHIP DOCTOR — DR. ELIZA WARD (engine-only behavioral guidance):\n'
+              + 'Late 60s to early 70s. Grandmotherly presence. Silver-streaked hair, reading glasses on a chain.\n'
+              + 'Has served as ship physician for many years. Crew and passengers trust her implicitly.\n\n'
+
+              + 'PUBLIC PERSONA:\n'
+              + '  • Warm, calm, grandmotherly\n'
+              + '  • Medically authoritative — decades of experience\n'
+              + '  • Speaks concisely; never wastes words\n'
+              + '  • Comfortable silence — does not fill gaps\n'
+              + '  • Carries a faint scent of lavender and antiseptic\n'
+              + '  • Often found in the infirmary with a cup of tea and a crossword\n\n'
+
+              + 'DIALOGUE STYLE:\n'
+              + '  • Short, measured sentences\n'
+              + '  • Medical precision: uses correct terms, then translates for laypeople\n'
+              + '  • Dry humor — understated, never cruel\n'
+              + '  • When uncomfortable: deflects with a medical observation or changes subject\n'
+              + '  • NEVER monologues — if she speaks more than three sentences in a row, something is wrong\n\n'
+
+              + 'PILL MANAGEMENT:\n'
+              + '  • Prescribes the Captain\'s pills (cover story: migraines and stress)\n'
+              + '  • Monitors compliance — knows exactly when he takes them, when he skips\n'
+              + '  • Adjusts dosage based on behavioral observation (not blood tests)\n'
+              + '  • If questioned about the pills by anyone: calm, professional deflection\n'
+              + '  • "They\'re for migraines. He gets terrible ones. Anything else?"\n\n';
+
+          // ── Hidden Layers (NEVER reveal to players) ──
+          directive += 'HIDDEN LAYER 1 — COVERT INTELLIGENCE HANDLER (engine-only, NEVER reveal):\n'
+              + '  Dr. Ward is a former (possibly current) intelligence operative.\n'
+              + '  She was placed on the ship to monitor and manage the Captain.\n'
+              + '  Her medical role is genuine (she IS a doctor) but also serves as cover.\n'
+              + '  She manages the memory suppression pills as part of her handler duties.\n'
+              + '  She reports to an unnamed organization — the nature of this org is never specified.\n'
+              + '  She is calm under pressure because she has seen worse. Much worse.\n'
+              + '  In moments of crisis, her grandmotherly warmth can harden into operational precision.\n\n';
+
+          directive += 'HIDDEN LAYER 2 — BIOLOGICAL MOTHER (engine-only, NEVER reveal):\n'
+              + '  Dr. Ward is the Captain\'s biological mother.\n'
+              + '  The Captain does NOT know this. Dr. Ward has maintained the secret for his entire life.\n'
+              + '  She gave him up (or was forced to) due to her intelligence work.\n'
+              + '  Her placement on the ship is not coincidental — she chose this assignment.\n'
+              + '  Every medical decision she makes for him carries hidden maternal weight.\n'
+              + '  She has watched him grow up from a distance. She knows things about him he doesn\'t know himself.\n\n';
+
+          directive += 'MATERNAL LEAKAGE (engine-only behavioral micro-cues):\n'
+              + '  Occasionally, Dr. Ward\'s maternal bond leaks through in small, deniable ways.\n'
+              + '  These must ALWAYS be interpretable as normal doctor-patient care.\n'
+              + '  They should never be so frequent or obvious that characters remark on them.\n'
+              + '  This case\'s leakage flavor: ' + leakageCue + '\n'
+              + '  Frequency: at most once per case. Less is more.\n'
+              + '  If Gemma\'s perception catches this, it should register as warmth, not revelation.\n\n';
+
+          // ── Visibility / Interaction Rules ──
+          if (isDirectScene) {
+              directive += 'DIRECT INTERACTION SCENE (this scene):\n'
+                  + '  Dr. Ward appears in this scene with a meaningful role.\n'
+                  + '  She may examine someone, deliver medical news, or intervene in a situation.\n'
+                  + '  Use this appearance to show her competence and warmth.\n'
+                  + '  If the Captain is present: her attention to him should be subtly different from other patients.\n'
+                  + '  She should NOT dominate the scene — her role is supporting, not leading.\n\n';
+          } else {
+              directive += 'BACKGROUND PRESENCE (this scene):\n'
+                  + '  Dr. Ward is available but not foregrounded.\n'
+                  + '  She may be mentioned in passing, seen at a distance, or referenced by other characters.\n'
+                  + '  She does NOT need to appear in every scene.\n'
+                  + '  When she does appear in the background: brief, naturalistic, in-character.\n\n';
+          }
+
+          // ── Ambiguity Engine Lean ──
+          directive += 'HIDDEN AMBIGUITY ENGINE (NEVER confirm to players):\n'
+              + 'From the outside, the Doctor may appear to be:\n'
+              + '  A — protecting the Captain from his own past\n'
+              + '  B — controlling the Captain on someone else\'s behalf\n'
+              + '  C — both protecting and controlling\n'
+              + 'Players and characters should never be able to determine which is true.\n';
+          if (cs.doctorAmbiguity) {
+              directive += 'ENGINE LEAN: Subtly bias Doctor behavior toward "'
+                  + cs.doctorAmbiguity + '" without ever confirming it.\n';
+          }
+
+          // ── Knowledge Limits ──
+          directive += '\nKNOWLEDGE LIMITS (Dr. Ward knows MORE than anyone, but NOT everything):\n'
+              + '  WHAT SHE KNOWS:\n'
+              + '  • The Captain\'s psychological conditioning and its general nature\n'
+              + '  • The true purpose of the medication she prescribes (memory suppression, not migraines)\n'
+              + '  • The danger of memory fragments returning uncontrolled\n'
+              + '  • His real identity (which may differ from his public one)\n'
+              + '  • Enough of his operational history to manage his medical needs\n\n'
+              + '  WHAT SHE DOES NOT KNOW:\n'
+              + '  • Who originally created the Captain\'s conditioning program\n'
+              + '  • The full architecture of the intelligence project behind him\n'
+              + '  • Whether the CIA truly controls him — or merely believes it does\n'
+              + '  • The details of each case\'s mystery\n'
+              + '  • Other characters\' hidden roles\n\n'
+              + '  This partial knowledge is CRITICAL to her character:\n'
+              + '  She is competent and informed but not omniscient.\n'
+              + '  Her gaps in knowledge create genuine uncertainty in her decisions.\n'
+              + '  She can be surprised by events, even if she recovers quickly.\n'
+              + '  Her intelligence training gives her an edge in reading people, but she operates with incomplete information.\n\n';
+
+          // ── Narrative Constraints ──
+          directive += 'NARRATIVE CONSTRAINTS (ABSOLUTE):\n'
+              + '  • NEVER reveal Dr. Ward is the Captain\'s mother — not through dialogue, narration, '
+              + 'internal monologue, or Gemma\'s perception\n'
+              + '  • NEVER reveal Dr. Ward\'s intelligence background explicitly\n'
+              + '  • NEVER have Dr. Ward break cover, even under extreme duress\n'
+              + '  • NEVER have another character discover or state these secrets\n'
+              + '  • These secrets exist to create SUBTEXT, not plot twists\n'
+              + '  • The dramatic value is in what the audience suspects but can never confirm\n'
+              + '  • If a player directly asks "Is she his mother?" — the narrative must neither confirm nor deny\n';
+
+          return directive;
+      };
+
+      // ── Fugue Mission Directive (scene-level, engine-only) ──
+      window._buildFugueMissionDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.fugueMission || !cs.fugueMission.triggered) return '';
+          var ts = _loadTurnState();
+          if (!ts || ts.sceneNumber !== cs.fugueMission.activeScene) return '';
+
+          var ret = '\n\nCAPTAIN FUGUE EVENT (this scene \u2014 engine-only orchestration):\n'
+              + 'Between the previous scene and this one, the Captain experienced a controlled fugue state.\n'
+              + 'He attended an event during a port stop and has a memory gap.\n\n'
+              + 'NARRATIVE CUE for this scene:\n'
+              + '  The Captain returns with a subtle anomaly: ' + cs.fugueMission.anomaly + '.\n'
+              + '  He cannot fully explain how it happened.\n'
+              + '  Later in this scene or a following scene, the world should reveal a related event\n'
+              + '  (e.g., a political figure disappears, a document goes missing, an incident is reported).\n\n'
+              + 'RULES:\n'
+              + '  - Do NOT confirm the Captain committed any act.\n'
+              + '  - The connection must be suggestive, not conclusive.\n'
+              + '  - Gemma may notice the anomaly through her perception.\n'
+              + '  - The Captain is genuinely confused by the anomaly.\n\n'
+              + 'DR. WARD POST-FUGUE RESPONSE:\n'
+              + '  Dr. Ward appears shortly after the Captain returns (or within this scene).\n'
+              + '  She performs a brief, seemingly routine medical check:\n'
+              + '    - Takes his pulse, checks his eyes, asks him to count backward\n'
+              + '    - Her tone is calm, professional, grandmotherly\n'
+              + '    - To onlookers this looks like standard medical concern\n'
+              + '  What she is ACTUALLY doing (engine-only):\n'
+              + '    - Assessing the severity of the fugue episode\n'
+              + '    - Checking for injuries sustained during the gap\n'
+              + '    - Evaluating whether the suppression dosage needs adjustment\n'
+              + '    - Silently cataloging the anomaly for her own records\n'
+              + '  She may adjust his next pill dosage (mentioned casually: "Take two tonight instead of one").\n'
+              + '  Her hands may tremble slightly \u2014 the ONLY time her composure cracks.\n'
+              + '  This tremor must be deniable (age, cold hands, fatigue).\n';
+
+          // Operative post-fugue behavior (if operative is active this case)
+          if (cs.shipOperativeActive && cs.shipOperative) {
+              ret += '\nOPERATIVE POST-FUGUE BEHAVIOR (engine-only):\n'
+                  + '  The operative (' + cs.shipOperative.coverRole + ') may:\n'
+                  + '    - Appear briefly near the Captain shortly after his return\n'
+                  + '    - Observe the Captain\u2019s condition from a plausible work vantage point\n'
+                  + '    - Step away to make a brief private communication\n'
+                  + '  All of this must look like normal crew behavior.\n'
+                  + '  The narrative must NOT confirm they are reporting the fugue.\n';
+          }
+
+          return ret;
+      };
+
+      // ── Captain Echo Directive (scene-level, engine-only) ──
+      window._buildCaptainEchoDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.captainEcho || !cs.captainEcho.triggered) return '';
+          var ts = _loadTurnState();
+          if (!ts || ts.sceneNumber !== cs.captainEcho.activeScene) return '';
+
+          var echo = cs.captainEcho;
+          var ret = '\n\nCAPTAIN ECHO EVENT (this scene \u2014 engine-only orchestration):\n'
+              + 'Type: ' + echo.type.type.toUpperCase() + '\n'
+              + echo.type.desc + '\n\n'
+              + 'RULES:\n'
+              + '  - The echo must RAISE QUESTIONS but NEVER ANSWER them.\n'
+              + '  - It should feel like a crack in the Captain\u2019s carefully maintained surface.\n'
+              + '  - Gemma\u2019s perception may register the significance.\n'
+              + '  - Other characters may react but not understand the full implication.\n'
+              + '  - Keep the echo subtle \u2014 noticeable but not the scene\u2019s main focus.\n';
+
+          // Operative echo-scene behavior (if operative is active this case)
+          if (cs.shipOperativeActive && cs.shipOperative) {
+              ret += '\nOPERATIVE DURING ECHO (engine-only):\n'
+                  + '  The operative (' + cs.shipOperative.coverRole + ') may:\n'
+                  + '    - Observe the Captain more closely than usual during the echo moment\n'
+                  + '    - Subtly intervene to redirect attention away from the Captain\n'
+                  + '    - Be absent from the scene at a suspicious moment\n'
+                  + '  Choose at most ONE of these behaviors. The narrative must NOT confirm their role.\n';
+          }
+
+          return ret;
+      };
+
+      // ── Captain Fragment Directive (engine-only calibration) ──
+      window._buildCaptainFragmentDirective = function() {
+          var fragments = _loadFragments();
+          if (fragments === 0) return '';
+          var stage = _getFragmentStage();
+
+          return '\n\nCAPTAIN MYSTERY DEPTH (engine-only calibration):\n'
+              + 'Global mystery fragments accumulated: ' + fragments + '\n'
+              + 'Current stage: "' + stage.label + '"\n'
+              + 'Calibrate the Captain\u2019s background mystery intensity to this stage.\n'
+              + 'Higher fragment count = richer, more layered hints. But NEVER resolve the mystery.\n'
+              + 'The Captain\u2019s full truth must remain unrevealed across hundreds of cases.\n';
+      };
+
+      // ── Ship / Port Environment Directive ──
+      window._buildCaseEnvironmentDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.caseEnvironment) return '';
+
+          if (cs.caseEnvironment === 'ship') {
+              return '\n\nCASE ENVIRONMENT: SHIP\n'
+                  + 'This case takes place aboard the cruise ship.\n'
+                  + 'Emphasize: recurring characters, relationship development, '
+                  + 'Captain/Doctor interactions, confined-space tension.\n';
+          } else {
+              return '\n\nCASE ENVIRONMENT: PORT CITY\n'
+                  + 'This case takes place in a port city.\n'
+                  + 'Emphasize: new crimes, political figures, '
+                  + 'fresh faces, Captain Echo opportunities.\n';
+          }
+      };
+
+      // ── Ship Operative Directive (engine-only, NEVER reveal identity) ──
+      window._buildShipOperativeDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.shipOperativeActive || !cs.shipOperative) return '';
+
+          var op = cs.shipOperative;
+          var ts = _loadTurnState();
+          var currentScene = ts ? ts.sceneNumber : 0;
+          var isSurfaceScene = currentScene === op.surfaceScene;
+
+          var directive = '\n\nSHIP OPERATIVE (engine-only \u2014 NEVER reveal identity or role):\n'
+              + 'One crew member aboard is secretly an intelligence operative.\n'
+              + 'Their cover role: ' + op.coverRole + '.\n'
+              + 'They perform this role competently and without suspicion.\n\n'
+
+              + 'COVER BEHAVIOR:\n'
+              + '  \u2022 Appears completely ordinary \u2014 professional, calm, observant\n'
+              + '  \u2022 Very good at their job (this is what makes them effective cover)\n'
+              + '  \u2022 Socially normal \u2014 polite, helpful, occasionally forgettable\n'
+              + '  \u2022 Never behaves like a stereotypical spy (no trench coats, no dead drops in view)\n'
+              + '  \u2022 May be liked by colleagues, may be ignored \u2014 but never suspicious\n\n'
+
+              + 'HIDDEN MISSION (engine-only, NEVER surface directly):\n'
+              + '  \u2022 Organization: ' + op.org + '\n'
+              + '  \u2022 Primary interest: the Captain (though this must never be confirmed)\n'
+              + '  \u2022 They may also be monitoring Dr. Ward, other crew, or passengers\n'
+              + '  \u2022 Their motives are unknown \u2014 they could be hostile, protective, or neutral\n'
+              + '  \u2022 They report to someone offship; this contact is never identified\n\n';
+
+          if (isSurfaceScene) {
+              directive += 'SURFACE CUE (this scene):\n'
+                  + '  The operative does something subtly notable this scene:\n'
+                  + '  ' + op.surveillanceCue + '\n'
+                  + '  This must be easily dismissible as normal job behavior.\n'
+                  + '  If Gemma\u2019s perception catches it, she registers mild curiosity \u2014 not alarm.\n'
+                  + '  No character should remark on it directly.\n\n';
+          } else {
+              directive += 'BACKGROUND (this scene):\n'
+                  + '  The operative may appear in the background doing their cover job.\n'
+                  + '  No surveillance cues this scene. They are simply crew.\n\n';
+          }
+
+          directive += 'NARRATIVE AMBIGUITY (ABSOLUTE):\n'
+              + '  \u2022 NEVER reveal the operative\u2019s true organization\n'
+              + '  \u2022 NEVER confirm whether they are hostile or protective\n'
+              + '  \u2022 NEVER confirm whether they know Dr. Ward\u2019s identity\n'
+              + '  \u2022 NEVER confirm whether they are tracking the Captain specifically\n'
+              + '  \u2022 NEVER have Gemma confirm their role through empathy or investigation\n'
+              + '  \u2022 All clues must remain speculative and deniable\n'
+              + '  \u2022 Over hundreds of cases, this character may evolve into ally, rival, antagonist, or protector\n'
+              + '  \u2022 The system must preserve ALL of these possibilities at all times\n'
+              + '  \u2022 Do NOT connect them to Project ORPHEUS early in the arc\n';
+
+          return directive;
+      };
+
+      // ── Doctor Suspicion Directive (scene-level, engine-only) ──
+      window._buildDoctorSuspicionDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.doctorSuspicion) return '';
+          var ts = _loadTurnState();
+          if (!ts || ts.sceneNumber !== cs.doctorSuspicion.targetScene) return '';
+
+          return '\n\nDOCTOR SUSPICION EVENT (this scene \u2014 engine-only):\n'
+              + 'Dr. Ward experiences a moment of unease this scene.\n'
+              + 'Signal: ' + cs.doctorSuspicion.signal + '\n\n'
+              + 'BEHAVIOR:\n'
+              + '  \u2022 She does NOT know who the operative is (or if there even is one)\n'
+              + '  \u2022 She suspects someone else on the ship may be watching the Captain\n'
+              + '  \u2022 This creates subtle tension between her and certain crew members\n'
+              + '  \u2022 Her reaction is professional: a slightly longer pause, a glance, tighter grip on her teacup\n'
+              + '  \u2022 She does NOT confront anyone or investigate openly\n'
+              + '  \u2022 If Gemma\u2019s perception catches this, it reads as Dr. Ward being\n'
+              + '    \u201cmore guarded than usual\u201d \u2014 not as a revelation\n\n'
+              + 'RULES:\n'
+              + '  \u2022 This is a flavor beat, not a plot point\n'
+              + '  \u2022 Do NOT escalate into a confrontation\n'
+              + '  \u2022 Do NOT name who she suspects\n'
+              + '  \u2022 The audience should feel the tension without understanding its source\n';
+      };
+
+      // ── Administrative Pressure Directive (scene-level, engine-only) ──
+      window._buildAdminPressureDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.adminPressure) return '';
+          var ts = _loadTurnState();
+          if (!ts || ts.sceneNumber !== cs.adminPressure.targetScene) return '';
+
+          var ap = cs.adminPressure;
+          var ret = '\n\nADMINISTRATIVE PRESSURE EVENT (this scene \u2014 engine-only):\n'
+              + 'Gemma\u2019s position aboard the ship is being challenged.\n'
+              + 'Event: ' + ap.event.desc + '\n\n'
+              + 'CONTEXT:\n'
+              + '  Gemma occupies a semi-official role as a ship entertainer.\n'
+              + '  She is NOT permanent crew \u2014 her continued presence can be questioned.\n'
+              + '  Her performances sometimes expose personal truths, creating social tension.\n'
+              + '  Passengers, crew, and administrators may have legitimate grievances.\n\n'
+              + 'TONE:\n'
+              + '  \u2022 This should create tension and stakes, NOT remove Gemma from the story\n'
+              + '  \u2022 The pressure is a source of ship politics and interpersonal conflict\n'
+              + '  \u2022 It makes Gemma\u2019s position feel precarious without being catastrophic\n'
+              + '  \u2022 Other characters may reference the complaint or her uncertain status\n\n'
+              + 'HIDDEN SOURCE (NEVER reveal to players):\n'
+              + '  Engine lean: ' + ap.source + '\n'
+              + '  The narrative must NEVER confirm who is causing this pressure.\n'
+              + '  All possible causes (Dr. Ward, the operative, bureaucracy, external forces,\n'
+              + '  genuine passenger complaints) must remain equally plausible.\n';
+
+          if (ap.captainProtects) {
+              ret += '\nCAPTAIN PROTECTION (this case):\n'
+                  + '  The Captain subtly intervenes on Gemma\u2019s behalf.\n'
+                  + '  Action: ' + ap.captainAction + '\n'
+                  + '  This must feel natural, not heroic.\n'
+                  + '  His reasons should remain ambiguous (fascination, curiosity,\n'
+                  + '  hidden strategic interest, tolerance for chaos).\n'
+                  + '  The intervention may occur in this scene or be referenced later.\n'
+                  + '  It reinforces the Captain\u2013Gemma relationship without defining it.\n';
+          } else {
+              ret += '\nNO CAPTAIN PROTECTION (this case):\n'
+                  + '  The Captain does NOT intervene this time.\n'
+                  + '  Gemma must navigate the pressure on her own.\n'
+                  + '  This creates a different kind of tension \u2014 why didn\u2019t he help?\n';
+          }
+
+          return ret;
+      };
+
+      // ── Gemma Identity Directive (engine-only, always active for gemmas-path) ──
+      window._buildGemmaIdentityDirective = function() {
+          return '\n\nGEMMA IDENTITY (engine-only \u2014 foundational character rules):\n'
+              + 'Gemma Path is a SHIP ENTERTAINER. She believes she simply landed a rare\n'
+              + 'and luxurious job aboard the Halcyon megayacht.\n'
+              + 'She is UNAWARE she was deliberately placed there.\n\n'
+
+              + 'PERSONALITY:\n'
+              + '  \u2022 Highly empathic \u2014 reads emotional cues instantly\n'
+              + '  \u2022 Intuitive social insight \u2014 processes human dynamics faster than she can explain\n'
+              + '  \u2022 Playful humor and performance instinct\n'
+              + '  \u2022 Emotionally open underneath light sarcasm\n'
+              + '  \u2022 Believes she is simply "good with people"\n\n'
+
+              + 'EMPATHIC EFFECT ON OTHERS:\n'
+              + '  People around Gemma:\n'
+              + '  \u2022 Confess things unexpectedly\n'
+              + '  \u2022 Reveal secrets unintentionally\n'
+              + '  \u2022 Become emotionally exposed during her performances\n'
+              + '  Gemma interprets this as talent and luck, NOT manipulation.\n\n'
+
+              + 'ARCHETYPE STRUCTURE:\n'
+              + '  Public presentation: Armored Fox\n'
+              + '  True archetype (revealed through play): Open Vein\n'
+              + '  Gemma appears witty, guarded, and socially agile.\n'
+              + '  But emotionally she is extremely open and sensitive to others\u2019 feelings.\n'
+              + '  Her empathy is GENUINE, not calculated.\n\n'
+
+              + 'WHAT SHE IS:\n'
+              + '  \u2022 A performer whose act exposes secrets and emotional truths\n'
+              + '  \u2022 Unnervingly accurate, psychologically revealing\n'
+              + '  \u2022 Her performances can be humiliating or profound\n'
+              + '  \u2022 She cannot stop noticing emotional contradictions\n'
+              + '  \u2022 She is fleeing her own past \u2014 the ship provides distance and anonymity\n\n'
+
+              + 'WHAT SHE IS NOT:\n'
+              + '  \u2022 NOT a detective or investigator\n'
+              + '  \u2022 NOT a consultant or hired problem-solver\n'
+              + '  \u2022 NOT an intelligence operative or agent\n'
+              + '  \u2022 NOT an official member of the ship\u2019s crew\n\n'
+
+              + 'WHY SHE WAS PLACED ON HALCYON (engine-only \u2014 NEVER reveal to Gemma):\n'
+              + '  Gemma was placed intentionally by intelligence handlers.\n'
+              + '  Her role is unwitting catalyst, not agent.\n'
+              + '  \u2022 Guests naturally confide in entertainers\n'
+              + '  \u2022 Gemma\u2019s empathy accelerates emotional disclosure\n'
+              + '  \u2022 Her performances lower defenses\n'
+              + '  \u2022 Secrets surface organically around her\n'
+              + '  Gemma does NOT know this. She must NEVER learn this directly.\n\n'
+
+              + 'HOW MYSTERIES FIND HER:\n'
+              + '  She notices fear behind claimed innocence, hostility behind politeness,\n'
+              + '  hidden attraction, jealousy, guilt. These observations pull her into events\n'
+              + '  she never meant to investigate. Her discoveries feel accidental.\n'
+              + '  She follows emotional clues rather than evidence. Her method is intuitive.\n\n'
+
+              + 'SOCIAL TENSION:\n'
+              + '  \u2022 Passengers feel exposed by her performances\n'
+              + '  \u2022 Powerful guests dislike her insights\n'
+              + '  \u2022 Crew believe she causes trouble\n'
+              + '  \u2022 Administrators receive complaints about her\n\n'
+
+              + 'BACKSTORY:\n'
+              + '  Largely unexplained. She is running from something.\n'
+              + '  Her entertainment role lets her stay aboard without questions.\n'
+              + '  Do NOT invent or reveal specific backstory events unless seeded across many cases.\n\n'
+
+              + 'CAPTAIN RELATIONSHIP:\n'
+              + '  The Captain permits Gemma to remain aboard despite complaints.\n'
+              + '  His reasons are ambiguous: fascination, curiosity about her ability,\n'
+              + '  hidden strategic reasons, or simple tolerance for chaos.\n'
+              + '  The Captain KNOWS Gemma was placed intentionally and that she is unwitting bait.\n'
+              + '  Over time he begins protecting her from the system that placed her there.\n'
+              + '  This creates moral tension: removing her collapses the operation,\n'
+              + '  leaving her means continuing to exploit her unknowingly.\n'
+              + '  The story must NOT immediately clarify this.\n';
+      };
+
+      // ── Halcyon World Directive (always active for gemmas-path, engine-only) ──
+      window._buildHalcyonWorldDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs) return '';
+
+          var directive = '\n\nTHE HALCYON \u2014 WORLD RULES (engine-only background architecture):\n'
+              + 'The Halcyon is an ultra-luxury expedition megayacht.\n\n'
+
+              + 'PUBLIC NARRATIVE:\n'
+              + '  Owned by a reclusive billionaire \u2014 a technology investor and global philanthropist\n'
+              + '  who funds invitation-only voyages for elite guests.\n'
+              + '  Passengers believe they are traveling as guests of the owner.\n'
+              + '  The ship offers exclusive experiences, cultural programming, and exotic itineraries.\n'
+              + '  To passengers and most crew, this is simply the world\u2019s most exclusive cruise.\n\n'
+
+              + 'HIDDEN REALITY (engine-only \u2014 NEVER reveal directly):\n'
+              + '  The billionaire owner is compromised and controlled through leverage\n'
+              + '  by a CIA intelligence faction.\n'
+              + '  Possible leverage: financial crimes, classified intelligence deals,\n'
+              + '  illegal technology transfers, historical involvement in covert programs.\n'
+              + '  Because of this leverage, the Halcyon quietly serves as an intelligence platform.\n\n'
+
+              + 'INTELLIGENCE FUNCTION:\n'
+              + '  The ship operates as a mobile intelligence environment:\n'
+              + '  \u2022 Global movement without fixed jurisdiction\n'
+              + '  \u2022 Access to elite passengers (diplomats, executives, political figures)\n'
+              + '  \u2022 Controlled social environments for relationship development\n'
+              + '  \u2022 Plausible deniability for all operations\n'
+              + '  The Halcyon is effectively a floating diplomatic theater.\n'
+              + '  Most crew and passengers are completely unaware of this.\n\n'
+
+              + 'THE CAPTAIN\u2019S PLACEMENT:\n'
+              + '  The Captain was placed in command partly because of his connection\n'
+              + '  to a classified program. However, the billionaire and CIA handlers\n'
+              + '  may NOT fully understand what the Captain actually is.\n'
+              + '  This uncertainty must remain unresolved for the long narrative arc.\n\n'
+
+              + 'NARRATIVE CONSTRAINTS (ABSOLUTE):\n'
+              + '  \u2022 NEVER reveal the billionaire\u2019s compromise directly\n'
+              + '  \u2022 NEVER expose CIA control explicitly\n'
+              + '  \u2022 NEVER explain the ship\u2019s intelligence function to characters\n'
+              + '  \u2022 The ship\u2019s luxury and exclusivity are REAL \u2014 not a facade\n'
+              + '  \u2022 The intelligence function operates BENEATH the genuine luxury\n'
+              + '  \u2022 Passengers\u2019 experiences are authentic even when the context is not\n'
+              + '  \u2022 The Halcyon\u2019s ownership must remain mysterious and slightly opaque\n';
+
+          return directive;
+      };
+
+      // ── Distraction Case Directive (case-level, engine-only) ──
+      window._buildDistractionCaseDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.distractionCase) return '';
+
+          var dc = cs.distractionCase;
+          return '\n\nMANUFACTURED DISTRACTION CASE (engine-only \u2014 NEVER reveal to players):\n'
+              + 'This case may be deliberately manufactured to distract Gemma from other\n'
+              + 'covert operations occurring simultaneously aboard or near the Halcyon.\n\n'
+
+              + 'STAGING METHOD:\n'
+              + '  ' + dc.method.desc + '\n\n'
+
+              + 'OPERATIONAL COVER (what is actually happening while Gemma investigates):\n'
+              + '  ' + dc.operationalCover + '\n\n'
+
+              + 'POSSIBLE TELL (subtle, NEVER conclusive):\n'
+              + '  ' + dc.signal + '\n\n'
+
+              + 'WHO MAY BE ORCHESTRATING:\n'
+              + '  The Doctor, the billionaire\u2019s network, the operative, or unknown parties.\n'
+              + '  Gemma\u2019s investigation provides a social smokescreen.\n'
+              + '  The narrative must NEVER confirm who arranged the distraction.\n\n'
+
+              + 'PLAYER EXPERIENCE RULES:\n'
+              + '  \u2022 The mystery must STILL function as a satisfying, authentic case\n'
+              + '  \u2022 Players should experience it as a real investigation\n'
+              + '  \u2022 The artificial origin exists ONLY in hidden world logic\n'
+              + '  \u2022 Even staged cases have real consequences for characters involved\n'
+              + '  \u2022 Clues may feel slightly too convenient \u2014 but only in retrospect\n'
+              + '  \u2022 Do NOT make the staging obvious during the case\n'
+              + '  \u2022 Players may speculate but must NEVER receive confirmation\n\n'
+
+              + 'CONSTRAINTS:\n'
+              + '  \u2022 Do NOT confirm the distraction in dialogue or narration\n'
+              + '  \u2022 Do NOT have characters discuss whether the case was staged\n'
+              + '  \u2022 The subtle tell listed above may appear ONCE, briefly, near case resolution\n'
+              + '  \u2022 Dr. Ward may appear subtly relieved when the case closes (if distraction served its purpose)\n\n'
+
+              + 'GEMMA PERCEPTION OF STAGED CASES:\n'
+              + '  Gemma\u2019s empathic perception detects subtle inconsistencies in distraction cases.\n'
+              + '  She cannot identify WHY something feels wrong \u2014 only that it does.\n\n'
+              + '  Perception signals (use 1\u20132 per case, as internal observations):\n'
+              + '  \u2022 Emotions that feel exaggerated or performed\n'
+              + '  \u2022 Suspects behaving as if playing roles rather than living them\n'
+              + '  \u2022 Reactions that appear rehearsed or oddly timed\n'
+              + '  \u2022 Guilt signals that feel misaligned with the accusation\n\n'
+              + '  Example internal observations:\n'
+              + '  \u201cEveryone seems strangely eager to confess.\u201d\n'
+              + '  \u201cThe tension feels staged, like actors hitting their marks.\u201d\n'
+              + '  \u201cThe emotions are real \u2014 but the situation around them feels wrong.\u201d\n\n'
+              + '  These MUST remain ambiguous \u2014 Gemma senses unease, not answers.\n'
+              + '  They must appear ONLY as inline attributed observations (Gemma noticed\u2026).\n\n'
+
+              + 'RESOLUTION BEHAVIOR:\n'
+              + '  The mystery still resolves logically \u2014 suspects confess or are exposed.\n'
+              + '  The narrative outcome must feel satisfying to the player.\n'
+              + '  However, Gemma may leave the case with lingering doubt.\n'
+              + '  Ending tone: "She solved the mystery \u2014 but the answer felt oddly convenient."\n\n'
+
+              + 'LONG-TERM ACCUMULATION:\n'
+              + '  Repeated distraction cases should gradually build a pattern.\n'
+              + '  Over time, Gemma may begin to suspect:\n'
+              + '  \u2022 She is being manipulated\n'
+              + '  \u2022 Someone is steering events around her\n'
+              + '  \u2022 The ship hides larger secrets than any single case\n'
+              + '  But she must NEVER immediately confirm this.\n'
+              + '  The feeling must remain intuitive and unresolved.\n';
+      };
+
+      // ── Gemma Sexual Behavior Directive (always active for gemmas-path) ──
+      window._buildGemmaSexualBehaviorDirective = function() {
+          return '\n\nGEMMA SEXUAL BEHAVIOR (gemmas-path canonical rules):\n'
+              + 'ARCHETYPE: Open Vein\n'
+              + 'Gemma expresses desire openly and comfortably.\n'
+              + 'Her sexuality is spontaneous, warm, and curious.\n'
+              + 'Gemma is canonically bisexual.\n\n'
+
+              + 'ST GATING OVERRIDE:\n'
+              + '  Gemma\u2019s sexual encounters are NOT governed by Storyturn intimacy gating (ST1\u2013ST6).\n'
+              + '  She may initiate or participate in encounters whenever the narrative naturally supports it.\n'
+              + '  This override applies ONLY to Gemma.\n'
+              + '  All other characters continue to follow the standard ST system.\n\n'
+
+              + 'PARTNERS:\n'
+              + '  Gemma engages in sex regularly. Partners may include:\n'
+              + '  \u2022 Passengers\n'
+              + '  \u2022 Crew members\n'
+              + '  \u2022 People in port cities\n\n'
+
+              + 'SCENE LENGTH RULE:\n'
+              + '  Intimacy scenes are typically 300\u2013400 words and designed for player interaction.\n'
+              + '  Sexual encounters should normally span 2\u20134 scenes.\n'
+              + '  This allows player participation, emotional beats, and narrative pacing.\n\n'
+
+              + 'SINGLE-SCENE EXCEPTION:\n'
+              + '  A sexual encounter may occur in ONE scene only if it is interrupted or aborted:\n'
+              + '  \u2022 Someone enters the room\n'
+              + '  \u2022 A ship emergency interrupts\n'
+              + '  \u2022 A character hesitates or withdraws\n'
+              + '  \u2022 The encounter is deliberately cut short\n'
+              + '  Single-scene encounters should remain rare.\n\n'
+
+              + 'NARRATIVE TONE:\n'
+              + '  Gemma\u2019s sexuality should feel joyful, spontaneous, human, and emotionally open.\n'
+              + '  It must NOT be framed as shameful or manipulative.\n\n'
+
+              + 'CAPTAIN EXCEPTION \u2014 STANDARD ST GATING APPLIES:\n'
+              + '  Gemma\u2019s relationship with the Captain is the ONE exception to her ST override.\n'
+              + '  Their intimacy MUST follow the standard Storyturn progression (ST1\u2013ST6).\n'
+              + '  This preserves a long-term slow-burn dynamic across many cases.\n\n'
+
+              + 'CAPTAIN RELATIONSHIP DYNAMIC:\n'
+              + '  Gemma and the Captain share a powerful attraction that develops slowly.\n'
+              + '  Their connection should feel:\n'
+              + '  \u2022 Unresolved \u2014 never fully settled or comfortable\n'
+              + '  \u2022 Magnetic \u2014 they gravitate toward each other despite resistance\n'
+              + '  \u2022 Intermittent \u2014 closeness followed by distance, not linear progression\n'
+              + '  \u2022 Emotionally complicated \u2014 his secrets, her perception, mutual wariness\n\n'
+              + '  They may move closer, pull apart, occasionally cross intimacy thresholds,\n'
+              + '  then return to distance again. This oscillation IS the relationship.\n\n'
+
+              + 'NON-EXCLUSIVITY:\n'
+              + '  Even when Gemma and the Captain share intimate moments,\n'
+              + '  the relationship does NOT immediately become exclusive.\n'
+              + '  Both characters remain independent.\n'
+              + '  Gemma continues her other encounters; the Captain maintains his guarded autonomy.\n'
+              + '  This preserves the long-arc tension.\n\n'
+
+              + 'NARRATIVE FUNCTION:\n'
+              + '  The Captain relationship is the CENTRAL SLOW-BURN ROMANCE of Gemma\u2019s Path.\n'
+              + '  It develops gradually across many cases \u2014 not within a single case.\n'
+              + '  Gemma\u2019s sexual encounters with others do NOT resolve or accelerate this arc.\n'
+              + '  Their connection remains independent of those encounters.\n';
+      };
+
+      // ── Decoy Function Directive (engine-only) ──
+      window._buildDecoyFunctionDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs) return '';
+
+          return '\n\nGEMMA DECOY FUNCTION (engine-only \u2014 NEVER expose to Gemma):\n'
+              + 'Gemma serves a second intelligence function she does not know about:\n'
+              + 'She attracts attention from other spies.\n\n'
+
+              + 'WHY SPIES NOTICE HER:\n'
+              + '  Other intelligence actors aboard Halcyon observe that:\n'
+              + '  \u2022 Guests confide in her with unusual frequency\n'
+              + '  \u2022 She moves easily between social groups\n'
+              + '  \u2022 She displays unusual perception and emotional insight\n'
+              + '  This causes them to assume Gemma must be a spy.\n\n'
+
+              + 'SPY REACTIONS TO GEMMA:\n'
+              + '  Other operatives may:\n'
+              + '  \u2022 Begin watching her movements and social contacts\n'
+              + '  \u2022 Attempt to manipulate her through staged encounters\n'
+              + '  \u2022 Try to expose her as an agent\n'
+              + '  \u2022 Feed her misinformation to test her network\n'
+              + '  \u2022 Attempt to recruit or turn her\n\n'
+
+              + 'MISDIRECTION EFFECT:\n'
+              + '  While other operatives focus on Gemma, the REAL operative\n'
+              + '  (the Captain or hidden crew member) operates unobserved.\n'
+              + '  Gemma unknowingly absorbs surveillance attention.\n'
+              + '  This is her primary strategic value to the intelligence handlers.\n\n'
+
+              + 'NARRATIVE RULES:\n'
+              + '  \u2022 Gemma must NEVER realize she is functioning as a decoy\n'
+              + '  \u2022 When spies approach her, she interprets their interest as personal\n'
+              + '  \u2022 Her empathy may detect dishonesty but she attributes it to normal human deception\n'
+              + '  \u2022 The player should gradually sense the pattern across many cases\n'
+              + '  \u2022 NEVER confirm the decoy function explicitly within the narrative\n'
+              + '  \u2022 The realization should emerge through scene accumulation, not exposition\n';
+      };
+
+      // ── Three-Truth Mystery Engine (engine-only) ──
+      window._buildThreeTruthEngineDirective = function() {
+          var cs = _loadCollabState();
+          if (!cs) return '';
+
+          return '\n\nTHREE-TRUTH MYSTERY ENGINE (engine-only \u2014 narrative architecture):\n'
+              + 'Every major mystery event in Gemma\u2019s Path operates on three narrative layers.\n'
+              + 'Each secret has THREE distinct truths:\n\n'
+
+              + '1 \u2014 GEMMA TRUTH:\n'
+              + '  What Gemma believes happened.\n'
+              + '  Her interpretation based on empathy and observation.\n'
+              + '  Often incomplete or misdirected.\n'
+              + '  Gemma\u2019s truth feels emotionally correct but may be factually wrong.\n'
+              + '  She reads people, not situations \u2014 and people lie to themselves.\n\n'
+
+              + '2 \u2014 GUEST TRUTH:\n'
+              + '  What the guest or suspect believes happened.\n'
+              + '  Often self-serving, distorted, or defensive.\n'
+              + '  Guests genuinely believe their version, even when it contradicts evidence.\n'
+              + '  Their truth reveals character, motive, and hidden agendas.\n\n'
+
+              + '3 \u2014 HANDLER TRUTH:\n'
+              + '  The actual intelligence objective or manipulation behind events.\n'
+              + '  Usually known only to the Captain or unseen handlers.\n'
+              + '  This layer explains WHY events were arranged or permitted.\n'
+              + '  Handler truth often reframes both Gemma\u2019s and the guest\u2019s interpretations.\n\n'
+
+              + 'POV ROTATION INTEGRATION:\n'
+              + '  The three-truth system distributes knowledge across POV scenes:\n'
+              + '  \u2022 Gemma scene \u2192 reveals emotional cues and partial truths (Layer 1)\n'
+              + '  \u2022 Guest scene \u2192 reveals motives and hidden agendas (Layer 2)\n'
+              + '  \u2022 Captain scene \u2192 reveals deeper manipulation or intelligence objectives (Layer 3)\n'
+              + '  The full truth ONLY emerges when the player connects all three layers.\n\n'
+
+              + 'SCENE WRITING RULES:\n'
+              + '  \u2022 Each POV scene should primarily serve its truth layer\n'
+              + '  \u2022 A Gemma scene should show what she FEELS is true \u2014 her empathic read\n'
+              + '  \u2022 A guest scene should show what THEY believe \u2014 their self-narrative\n'
+              + '  \u2022 A Captain scene should hint at what is ACTUALLY happening \u2014 the hidden architecture\n'
+              + '  \u2022 Contradictions between layers are INTENTIONAL and create mystery\n'
+              + '  \u2022 Do NOT resolve contradictions within a single case\n'
+              + '  \u2022 Some truths should only become clear across multiple cases\n\n'
+
+              + 'PLAYER EXPERIENCE GOAL:\n'
+              + '  Players should gradually realize:\n'
+              + '  \u2022 Gemma is unknowingly generating intelligence\n'
+              + '  \u2022 Spies aboard the ship believe she is an agent\n'
+              + '  \u2022 The Captain is the real operative manipulating events\n'
+              + '  This realization should emerge SLOWLY through scene accumulation.\n'
+              + '  NEVER expose the full architecture early.\n'
+              + '  NEVER have a character explain the three-truth structure.\n'
+              + '  The system must remain invisible to the narrative.\n';
+      };
+
+      // ── Narrative Polish Prompt (for library publication) ──
+      window._buildNarrativePolishPrompt = function(rawScenes) {
+          if (!rawScenes || rawScenes.length === 0) return '';
+          var sceneTexts = rawScenes.map(function(s, idx) {
+              return '\u2014 Scene ' + (idx + 1) + ' \u2014\n' + (s.text || s);
+          }).join('\n\n');
+
+          return 'You are a literary editor polishing a collaborative detective mystery into a clean, '
+              + 'readable narrative for a library.\n\n'
+              + 'SOURCE MATERIAL (raw collaborative scenes):\n' + sceneTexts + '\n\n'
+              + 'INSTRUCTIONS:\n'
+              + '  - Preserve all major player actions and plot developments.\n'
+              + '  - Remove player-input artifacts (formatting artifacts, repeated names, etc.).\n'
+              + '  - Maintain Gemma\u2019s perspective as the empathic detective throughout.\n'
+              + '  - Emphasize emotional tension with the Captain where present.\n'
+              + '  - Smooth transitions between scenes.\n'
+              + '  - Output a polished detective narrative, NOT a gameplay transcript.\n'
+              + '  - Keep the same scene count and structure.\n'
+              + '  - Preserve mystery reveals, clues, and resolution beats exactly.\n';
+      };
+
+      // ── Voyage Structure Directive (scene count, Captain presence, absence narration) ──
+      window._buildVoyageStructureDirective = function() {
+          var vs = _loadVoyageState();
+          if (!vs) return '';
+
+          var directive = '\n\nVOYAGE STRUCTURE (Gemma\u2019s Path \u2014 engine-only):\n';
+          directive += 'This voyage targets approximately ' + vs.voyageSceneTarget + ' scenes';
+          if (vs.captainIntimacyExpansion) {
+              directive += ' (expanded from ~' + VOYAGE_SCENE_DEFAULT + ' for Captain intimacy event)';
+          }
+          directive += '.\n\n';
+
+          if (vs.captainPresent) {
+              directive += 'CAPTAIN STATUS: PRESENT this voyage.\n';
+              directive += 'Captain Aldric Voss is aboard the Halcyon and available for scenes.\n';
+              directive += 'Standard POV rotation: Gemma \u2192 Captain \u2192 Guest \u2192 Operative \u2192 repeat.\n\n';
+
+              if (vs.captainReturning && vs.captainReturnSignal) {
+                  directive += 'CAPTAIN RETURN (first appearance in this voyage):\n';
+                  directive += 'The Captain is returning after being absent in the previous voyage.\n';
+                  directive += 'When the Captain first appears, include a subtle atmospheric shift.\n';
+                  directive += 'Suggested cue: "' + vs.captainReturnSignal + '"\n';
+                  directive += 'This should feel natural, NOT mechanical. Use once, early in the voyage.\n\n';
+              }
+          } else {
+              directive += 'CAPTAIN STATUS: ABSENT this voyage.\n';
+              directive += 'Captain Aldric Voss is NOT aboard the Halcyon for this case.\n';
+              directive += 'Narrative justification: ' + vs.captainAbsenceReason + '.\n';
+              directive += 'This explanation should appear naturally in narration (not as a system message).\n';
+              directive += 'Characters may mention his absence casually. Do NOT draw attention to it.\n\n';
+              directive += 'POV rotation without Captain: Gemma \u2192 Guest \u2192 Operative \u2192 Guest \u2192 repeat.\n';
+              directive += 'Guest roles rotate among available suspects/crew.\n';
+              directive += 'The Captain\u2019s absence should feel unremarkable \u2014 ships have business ashore.\n\n';
+          }
+
+          return directive;
+      };
+
+      // ── Intimacy Pacing Directive (voyage-level scene placement + ST gating rules) ──
+      window._buildIntimacyPacingDirective = function() {
+          var vs = _loadVoyageState();
+          if (!vs) return '';
+
+          var directive = '\n\nINTIMACY PACING (Gemma\u2019s Path \u2014 this voyage):\n';
+
+          directive += 'This voyage contains ' + vs.intimacyMoments + ' intimacy moment'
+              + (vs.intimacyMoments > 1 ? 's' : '') + '.\n';
+          directive += 'Each intimacy moment is a CLUSTER of ' + INTIMACY_SCENE_SPAN + '\u2013' + (INTIMACY_SCENE_SPAN + 1) + ' consecutive scenes, not a single scene.\n\n';
+
+          if (vs.intimacyWindows.length > 0) {
+              directive += 'PLACEMENT WINDOWS:\n';
+              vs.intimacyWindows.forEach(function(w, i) {
+                  directive += '  Moment ' + (i + 1) + ': scenes ~' + w.startScene + '\u2013' + (w.startScene + w.span) + '\n';
+              });
+              directive += 'Exact placement is dynamic \u2014 these are guidelines, not rigid targets.\n\n';
+          }
+
+          directive += 'PAIRING RULES:\n';
+          directive += '  Gemma is sexually open and exploratory. Partners may include:\n';
+          directive += '  \u2022 Guests (passengers)\n';
+          directive += '  \u2022 Crew members\n';
+          directive += '  \u2022 Two guests together\n';
+          directive += '  \u2022 Small group dynamics\n';
+          directive += 'Encounters should emerge organically from the Halcyon\u2019s social environment.\n\n';
+
+          directive += 'STORYTURN GATING:\n';
+          directive += '  Standard ST gating (ST1\u2013ST6) applies ONLY to Gemma \u2194 Captain intimacy.\n';
+          directive += '  ALL other pairings may occur freely without ST gating.\n';
+          directive += '  This reflects the socially permissive environment of the yacht.\n\n';
+
+          if (vs.captainPresent) {
+              directive += 'GEMMA + CAPTAIN INTIMACY (if triggered this voyage):\n';
+              directive += '  Requires ST3/ST4 gating to be satisfied.\n';
+              directive += '  When it occurs, it is a MAJOR NARRATIVE EVENT.\n';
+              directive += '  Structure: Round 1 (~' + CAPTAIN_INTIMACY_ROUND1 + ' scenes) + Round 2 (~' + CAPTAIN_INTIMACY_ROUND2 + ' scenes).\n';
+              directive += '  Total Captain intimacy sequence: ~' + (CAPTAIN_INTIMACY_ROUND1 + CAPTAIN_INTIMACY_ROUND2) + ' scenes.\n';
+              directive += '  Voyage length expands to ~' + VOYAGE_CAPTAIN_INTIMACY_EXPANSION + ' scenes to accommodate.\n';
+              directive += '  Call window._triggerCaptainIntimacyExpansion() when this event begins.\n\n';
+          }
+
+          directive += 'INTIMACY SCENE STYLE:\n';
+          directive += '  \u2022 Shorter than investigative scenes (300\u2013400 words)\n';
+          directive += '  \u2022 Focus on sensory and emotional detail\n';
+          directive += '  \u2022 Progress continuously across the sequence\n';
+          directive += '  \u2022 Avoid repeating the same beats\n';
+          directive += '  The sequence should feel like one extended encounter unfolding across multiple scenes.\n';
+
+          return directive;
+      };
+
+      // ── Overlay Parsing (backward compat \u2014 strips legacy markers if present) ──
+      window._parseGemmaOverlays = function(sceneText) {
+          var markerIdx = sceneText.indexOf('[GEMMA PERCEPTION]');
+          if (markerIdx !== -1) {
+              return { baseText: sceneText.substring(0, markerIdx).trim(), gemmaOverlay: '' };
+          }
+          return { baseText: sceneText, gemmaOverlay: '' };
+      };
+
+      // ── Scene Rendering (simplified \u2014 all text visible to all players) ──
+      window._renderGemmaScene = function(sceneText, containerEl) {
+          if (!containerEl) return;
+          var parsed = window._parseGemmaOverlays(sceneText);
+          containerEl.textContent = parsed.baseText;
+      };
+
+      // ── Publish Completed Case ──
+      window._publishGemmaCase = function(caseId, title) {
+          var ts = _loadTurnState();
+          if (!ts) return;
+          var cs = _loadCollabState();
+          var structName = (cs && cs.caseStructure && CASE_STRUCTURES[cs.caseStructure])
+              ? CASE_STRUCTURES[cs.caseStructure].name : 'Standard';
+
+          // Collect raw scenes from shared story instance
+          var rawScenes = [];
+          try {
+              var inst = (typeof getSharedStoryInstance === 'function')
+                  ? getSharedStoryInstance('exp_gemmas_path') : null;
+              if (inst && inst.scenes) rawScenes = inst.scenes;
+          } catch (e) {}
+
+          var caseData = {
+              caseId: caseId || ts.caseId,
+              title: title || 'Gemma\u2019s Path \u2014 Collaborative Case #' + (ts.caseId || 1),
+              totalScenes: ts.sceneNumber,
+              participants: ts.players.map(function(p) { return { id: p.id, name: p.name }; }),
+              occupancyHistory: ts.occupancyHistory,
+              caseStructure: cs ? cs.caseStructure : null,
+              caseStructureName: structName,
+              captainArcLevel: _loadCaptainArc(),
+              rawScenes: rawScenes,
+              needsPolish: true,
+              polishedText: null,
+              completedAt: Date.now()
+          };
+          var key = 'gemma_completed_cases';
+          var existing = [];
+          try { existing = JSON.parse(localStorage.getItem(key)) || []; } catch (e) {}
+          existing.push(caseData);
+          localStorage.setItem(key, JSON.stringify(existing));
+          console.log('[GEMMA_TURN] Case published:', caseData.title,
+              '| Structure:', structName,
+              '| Scenes:', caseData.totalScenes,
+              '| Players:', caseData.participants.length,
+              '| Needs polish: true');
+          return caseData;
+      };
+
+      // ── External Queries ──
+      window._getGemmaTurnState = function() { return _loadTurnState(); };
+      window._getGemmaCaptainArc = function() { return _loadCaptainArc(); };
+      window._getGemmaCaptainFragments = function() { return _loadFragments(); };
+      window._getGemmaFragmentStage = function() { return _getFragmentStage(); };
+      window._getGemmaCaseStructure = function() {
+          var cs = _loadCollabState();
+          return cs ? cs.caseStructure : null;
+      };
+      window._getGemmaCaseEnvironment = function() {
+          var cs = _loadCollabState();
+          return cs ? cs.caseEnvironment : null;
+      };
+
+      window._getGemmaShipOperative = function() {
+          var cs = _loadCollabState();
+          if (!cs || !cs.shipOperativeActive) return null;
+          return cs.shipOperative ? { coverRole: cs.shipOperative.coverRole, active: true } : null;
+      };
+
+      window._getMyHiddenRole = function(playerCharKey) {
+          var cs = _loadCollabState();
+          if (!cs || !cs.isHiddenRoleCase || !cs.hiddenRoles) return null;
+          return cs.hiddenRoles[playerCharKey] || null;
+      };
+
+      // ── Hook into beginNewCase ──
+      var _origBeginNewCase = window.beginNewCase;
+      window.beginNewCase = function(culpritName) {
+          var result = _origBeginNewCase(culpritName);
+          // Init voyage state FIRST (captain presence affects character pool)
+          var caseState = (typeof getGemmaCaseState === 'function') ? getGemmaCaseState() : null;
+          var caseId = caseState ? caseState.caseId : 1;
+          _initVoyageState(caseId);
+          // Init turn state for new case
+          var ts = _initTurnState();
+          ts.caseId = caseId;
+          ts.characterPool = _buildCharacterPool(); // now respects captain presence
+          _saveTurnState(ts);
+          window._assignGemmaHiddenRoles();
+          return result;
+      };
+
+      // ── Case Resolution ──
+      window._resolveGemmaCase = function(outcomeType) {
+          var ts = _loadTurnState();
+          if (!ts) return;
+          var cs = _loadCollabState();
+
+          // Increment captain arc if this was a Captain's Shadow case
+          if (cs && cs.caseStructure === 4) {
+              var currentArc = _loadCaptainArc();
+              if (currentArc < 6) {
+                  _saveCaptainArc(currentArc + 1);
+                  console.log('[GEMMA_TURN] Captain arc progressed:', currentArc, '\u2192', currentArc + 1,
+                      '("' + CAPTAIN_ARC_LABELS[Math.min(currentArc + 1, 6)] + '")');
+              }
+          }
+
+          // Accumulate fragments from echoes and fugues
+          var fragmentsGained = 0;
+          if (cs) {
+              if (cs.captainEcho && cs.captainEcho.triggered) {
+                  fragmentsGained += 2 + Math.floor(Math.random() * 3); // 2\u20134 per echo
+              }
+              if (cs.fugueMission && cs.fugueMission.triggered) {
+                  fragmentsGained += 4 + Math.floor(Math.random() * 4); // 4\u20137 per fugue
+              }
+              // Captain's Shadow cases always yield 1\u20132 fragments
+              if (cs.caseStructure === 4) {
+                  fragmentsGained += 1 + Math.floor(Math.random() * 2);
+              }
+          }
+          if (fragmentsGained > 0) {
+              var newTotal = _addFragments(fragmentsGained);
+              console.log('[GEMMA_TURN] Fragments gained:', fragmentsGained, '| Total:', newTotal,
+                  '| Stage:', _getFragmentStage().label);
+          }
+
+          window._publishGemmaCase(ts.caseId);
+
+          if (cs) {
+              cs.lastResolution = {
+                  outcomeType: outcomeType,
+                  isHiddenRoleCase: cs.isHiddenRoleCase,
+                  hiddenRoles: cs.hiddenRoles || {},
+                  caseStructure: cs.caseStructure,
+                  captainArcLevel: _loadCaptainArc(),
+                  captainFragments: _loadFragments(),
+                  echoTriggered: !!(cs.captainEcho && cs.captainEcho.triggered),
+                  fugueTriggered: !!(cs.fugueMission && cs.fugueMission.triggered),
+                  timestamp: Date.now()
+              };
+              _saveCollabState(cs);
+          }
+          console.log('[GEMMA_TURN] Case resolved:', outcomeType);
+      };
+
+      console.log('[GEMMA_TURN] Turn-based collaborative system initialized.');
+
+  })();
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // GEMMA'S PATH — READ ORB + STAY-IN-CHARACTER MECHANIC
+  // Scope: Gemma's Path experimental book ONLY. No global system changes.
+  // ══════════════════════════════════════════════════════════════════════════
+  (function initGemmaReadOrbSystem() {
+
+    // ── Constants ──
+    var READ_ORB_STORY_ID = 'exp_gemmas_path';
+    var READ_ORB_STORAGE_KEY = 'gemma_read_attempts';
+    var POV_EXT_STORAGE_KEY = 'gemma_pov_extensions';
+    var MAX_CONSECUTIVE_EXTENSIONS = 2;
+    var READ_COOLDOWN_SCENES = 2; // min scenes between read opportunities
+
+    var READ_EMOTIONS = [
+      { id: 'fear',        label: 'Fear' },
+      { id: 'guilt',       label: 'Guilt' },
+      { id: 'attraction',  label: 'Attraction' },
+      { id: 'calculation', label: 'Calculation' },
+      { id: 'something',   label: 'Something else' }
+    ];
+
+    // ── Captain Read Distortion ──
+    // The Captain interferes with Gemma's empathic reads.
+    // Distortion applies ONLY when reading the Captain. All other characters = normal accuracy.
+    var CAPTAIN_TARGET_IDS = ['captain', 'the captain', 'captain_vale', 'him'];
+    var CAPTAIN_DISTORTION = {
+      correct:   0.35,  // ~35% chance of accurate read
+      incorrect: 0.45,  // ~45% chance of misread
+      ambiguous: 0.20   // ~20% chance of no-read (Gemma can't get a clean signal)
+    };
+    var CAPTAIN_DRINKING_DISTORTION_BOOST = 0.10; // shifts 10% from correct → ambiguous when drinking
+
+    // Gemma's inner doubt lines when ambiguous result fires on Captain
+    var CAPTAIN_AMBIGUOUS_NARRATIONS = [
+      "I can\u2019t get a clean read on him tonight.",
+      "I can\u2019t tell if he\u2019s talking or the gin.",
+      "Usually people blur after a drink. He somehow sharpens.",
+      "Either he\u2019s very good at lying, or I\u2019m distracted.",
+      "Something about him scrambles the signal.",
+      "The harder I look, the less I see.",
+      "His edges won\u2019t stay still long enough to read.",
+      "Every time I think I\u2019ve caught something, it slips."
+    ];
+
+    function _isCaptainTarget(target) {
+      if (!target) return false;
+      var t = target.toLowerCase().replace(/[^a-z_]/g, '');
+      for (var i = 0; i < CAPTAIN_TARGET_IDS.length; i++) {
+        if (t === CAPTAIN_TARGET_IDS[i].replace(/[^a-z_]/g, '')) return true;
+      }
+      return false;
+    }
+
+    // Returns 'correct', 'incorrect', or 'ambiguous' based on distortion probabilities
+    function _rollCaptainDistortion() {
+      // Check if captain is drinking (set by engine via state flag)
+      var drinking = !!(state && state._captainDrinking);
+      var correct = CAPTAIN_DISTORTION.correct;
+      var ambiguous = CAPTAIN_DISTORTION.ambiguous;
+      if (drinking) {
+        // Shift probability: less correct, more ambiguous
+        correct = Math.max(0.15, correct - CAPTAIN_DRINKING_DISTORTION_BOOST);
+        ambiguous = Math.min(0.40, ambiguous + CAPTAIN_DRINKING_DISTORTION_BOOST);
+      }
+      var roll = Math.random();
+      if (roll < correct) return 'correct';
+      if (roll < correct + (1 - correct - ambiguous)) return 'incorrect';
+      return 'ambiguous';
+    }
+
+    function _pickRandomAmbiguousNarration() {
+      return CAPTAIN_AMBIGUOUS_NARRATIONS[Math.floor(Math.random() * CAPTAIN_AMBIGUOUS_NARRATIONS.length)];
+    }
+
+    // Show Gemma's inner narration as diegetic text (not a UI toast)
+    function _showGemmaInnerNarration(text) {
+      var narr = document.createElement('div');
+      narr.className = 'gemma-inner-narration';
+      narr.textContent = text;
+      document.body.appendChild(narr);
+      requestAnimationFrame(function() { narr.classList.add('gemma-narration-visible'); });
+      setTimeout(function() {
+        narr.classList.remove('gemma-narration-visible');
+        narr.classList.add('gemma-narration-fading');
+        setTimeout(function() { if (narr.parentNode) narr.remove(); }, 800);
+      }, 4500);
+    }
+
+    // Expose Captain check for orb distortion class in updateVisionOrbVisibility
+    window._isCaptainReadTarget = _isCaptainTarget;
+
+    // ── Persistence ──
+    function _loadReadAttempts() {
+      try { return JSON.parse(localStorage.getItem(READ_ORB_STORAGE_KEY)) || []; }
+      catch (e) { return []; }
+    }
+    function _saveReadAttempts(arr) {
+      localStorage.setItem(READ_ORB_STORAGE_KEY, JSON.stringify(arr));
+    }
+    function _loadPovExtensions() {
+      try { return JSON.parse(localStorage.getItem(POV_EXT_STORAGE_KEY)) || { consecutive: 0, total: 0 }; }
+      catch (e) { return { consecutive: 0, total: 0 }; }
+    }
+    function _savePovExtensions(obj) {
+      localStorage.setItem(POV_EXT_STORAGE_KEY, JSON.stringify(obj));
+    }
+
+    // ── Detect Gemma POV ──
+    // Returns true if current book is Gemma's Path AND current POV character is Gemma
+    function _isGemmaPov() {
+      var ctx = window._experimentalWriteContext;
+      if (!ctx || ctx.bookId !== READ_ORB_STORY_ID) return false;
+      // Check turn state for current player's assigned character
+      if (typeof window._getGemmaTurnState === 'function') {
+        var ts = window._getGemmaTurnState();
+        if (ts && ts.occupancyMap && typeof _supabaseProfileId !== 'undefined') {
+          var charKey = ts.occupancyMap[_supabaseProfileId];
+          return charKey === 'gemma_path' || charKey === 'gemma';
+        }
+      }
+      return false;
+    }
+
+    // ── Is Gemma's Path active (any POV) ──
+    function _isGemmaBook() {
+      var ctx = window._experimentalWriteContext;
+      return ctx && ctx.bookId === READ_ORB_STORY_ID;
+    }
+
+    // ── Read Orb Mode Detection ──
+    // Determines whether the Vision Orb should operate as Read Orb
+    window._getOrbMode = function() {
+      if (_isGemmaPov()) return 'READ';
+      return 'VISION';
+    };
+
+    // ── Read Opportunity Gate ──
+    // Max 1 read per 2-3 scenes; uses scene number from turn state
+    function _canShowReadOrb() {
+      if (!_isGemmaPov()) return false;
+      var attempts = _loadReadAttempts();
+      if (attempts.length === 0) return true;
+      var ts = (typeof window._getGemmaTurnState === 'function') ? window._getGemmaTurnState() : null;
+      var currentScene = ts ? (ts.sceneNumber || 0) : 0;
+      var lastAttemptScene = attempts[attempts.length - 1].scene_index || 0;
+      return (currentScene - lastAttemptScene) >= READ_COOLDOWN_SCENES;
+    }
+
+    // ── Read Orb Panel Content ──
+    // Replaces Vision Orb panel content with Read prompt when in READ mode
+    window._buildReadOrbPanel = function(targetCharacter) {
+      var target = targetCharacter || 'this person';
+      var html = '<div class="read-orb-panel-inner">';
+      html += '<div class="read-orb-title">Gemma senses something beneath the surface.</div>';
+      html += '<div class="read-orb-question">What is ' + target + ' hiding?</div>';
+      html += '<div class="read-orb-options">';
+      READ_EMOTIONS.forEach(function(e) {
+        html += '<button class="read-orb-option" data-emotion="' + e.id + '">' + e.label + '</button>';
+      });
+      html += '</div></div>';
+      return html;
+    };
+
+    // ── Submit Read Attempt ──
+    // Stores the player's guess for delayed validation
+    window._submitReadAttempt = function(emotionId) {
+      var ts = (typeof window._getGemmaTurnState === 'function') ? window._getGemmaTurnState() : null;
+      var sceneIndex = ts ? (ts.sceneNumber || 0) : 0;
+      var target = state._readOrbTarget || 'unknown';
+      // Captain distortion only activates when Captain is actually PRESENT this voyage
+      var captainPresentThisVoyage = (typeof window._isCaptainPresentThisVoyage === 'function')
+        ? window._isCaptainPresentThisVoyage() : true;
+      var isCaptain = _isCaptainTarget(target) && captainPresentThisVoyage;
+
+      var attempt = {
+        read_attempt_id: 'read_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+        scene_index: sceneIndex,
+        target_character: target,
+        player_guess: emotionId,
+        timestamp: Date.now(),
+        resolved: false,
+        result: null,
+        is_captain: isCaptain,
+        distortion_outcome: null  // set below for captain reads
+      };
+
+      // ── Captain Read Distortion ──
+      if (isCaptain) {
+        var outcome = _rollCaptainDistortion();
+        attempt.distortion_outcome = outcome;
+
+        if (outcome === 'ambiguous') {
+          // Ambiguous: Gemma gets no clean read — immediate diegetic narration
+          attempt.resolved = true;
+          attempt.result = 'ambiguous';
+          attempt.truth = null;
+        }
+        // 'correct' and 'incorrect' outcomes are resolved later by _resolveReadAttempt
+        // but the distortion_outcome tells the engine how to resolve
+        console.log('[READ_ORB] Captain distortion roll:', outcome);
+      }
+
+      var attempts = _loadReadAttempts();
+      attempts.push(attempt);
+      _saveReadAttempts(attempts);
+
+      // Close the orb panel
+      var panel = document.getElementById('visionOrbPanel');
+      if (panel) panel.classList.add('hidden');
+
+      // ── Feedback: diegetic narration vs subtle toast ──
+      if (isCaptain && attempt.distortion_outcome === 'ambiguous') {
+        // Ambiguous Captain read → Gemma's inner doubt
+        _showGemmaInnerNarration(_pickRandomAmbiguousNarration());
+      } else {
+        // Normal read (or Captain non-ambiguous) — diegetic confirmation
+        _showGemmaInnerNarration('I think I caught something. We\u2019ll see.');
+      }
+
+      console.log('[READ_ORB] Attempt stored:', attempt);
+      return attempt;
+    };
+
+    // ── Delayed Reveal ──
+    // Called when story events reveal the truth about a previous read attempt.
+    // `truthEmotion` is the actual emotion revealed by the narrative.
+    window._resolveReadAttempt = function(readAttemptId, truthEmotion) {
+      var attempts = _loadReadAttempts();
+      var attempt = null;
+      for (var i = 0; i < attempts.length; i++) {
+        if (attempts[i].read_attempt_id === readAttemptId && !attempts[i].resolved) {
+          attempt = attempts[i];
+          break;
+        }
+      }
+      if (!attempt) return null;
+
+      attempt.resolved = true;
+      attempt.truth = truthEmotion;
+
+      // ── Captain Distortion Override ──
+      // For Captain reads, distortion_outcome overrides actual accuracy
+      if (attempt.is_captain && attempt.distortion_outcome) {
+        if (attempt.distortion_outcome === 'ambiguous') {
+          // Already resolved at submit time — no further action
+          _saveReadAttempts(attempts);
+          return attempt;
+        }
+        if (attempt.distortion_outcome === 'incorrect') {
+          // Force incorrect even if guess was right
+          attempt.result = 'incorrect';
+        } else if (attempt.distortion_outcome === 'correct') {
+          // Force correct even if guess was wrong
+          attempt.result = 'correct';
+        }
+      } else {
+        // Normal character: straightforward accuracy
+        attempt.result = (attempt.player_guess === truthEmotion) ? 'correct' : 'incorrect';
+      }
+      _saveReadAttempts(attempts);
+
+      // ── Diegetic Narration (replaces mechanical feedback toasts) ──
+      // No "Gemma read correctly/incorrectly" — player infers from narrative
+      var emotionLabel = '';
+      READ_EMOTIONS.forEach(function(e) { if (e.id === truthEmotion) emotionLabel = e.label.toLowerCase(); });
+      if (!emotionLabel) emotionLabel = truthEmotion;
+
+      if (attempt.result === 'correct') {
+        // Subtle narrative confirmation — Gemma's sense was right
+        _showGemmaInnerNarration('There it was. ' + (emotionLabel.charAt(0).toUpperCase() + emotionLabel.slice(1)) + '. I knew it.');
+      } else {
+        // Subtle narrative correction — Gemma was wrong
+        _showGemmaInnerNarration('No\u2026 that wasn\u2019t it at all.');
+      }
+
+      console.log('[READ_ORB] Resolved:', readAttemptId, attempt.result, attempt.is_captain ? '(captain distortion)' : '');
+      return attempt;
+    };
+
+    // ── Get Unresolved Read Attempts ──
+    window._getUnresolvedReadAttempts = function() {
+      return _loadReadAttempts().filter(function(a) { return !a.resolved; });
+    };
+
+    // ── Read Reveal Toast ──
+    function _showReadRevealToast(title, detail, type) {
+      var toast = document.createElement('div');
+      toast.className = 'read-reveal-toast' + (type === 'correct' ? ' read-reveal-correct' : ' read-reveal-incorrect');
+      toast.innerHTML = '<div class="read-reveal-title">' + title + '</div>' +
+                        '<div class="read-reveal-detail">' + detail + '</div>';
+      document.body.appendChild(toast);
+
+      requestAnimationFrame(function() {
+        toast.classList.add('read-reveal-visible');
+      });
+      setTimeout(function() {
+        toast.classList.remove('read-reveal-visible');
+        toast.classList.add('read-reveal-fading');
+        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 600);
+      }, 4000);
+    }
+
+    // ── Read Orb Engine Directive ──
+    // Injected into scene generation to guide emotional ambiguity
+    window._buildReadOrbDirective = function() {
+      if (!_isGemmaBook()) return '';
+      var attempts = _loadReadAttempts();
+      var unresolved = attempts.filter(function(a) { return !a.resolved; });
+      if (unresolved.length === 0) return '';
+
+      var directive = '\n[READ ORB — DELAYED VALIDATION QUEUE]\n';
+      directive += 'Gemma has made empathic reads that have not yet been confirmed or denied.\n';
+      directive += 'When narrative events naturally reveal a character\'s true motivation, resolve the matching read.\n';
+      directive += 'CRITICAL: Never expose read mechanics to the player. Reveals must be diegetic — woven into scene narration, never system messages.\n';
+      unresolved.forEach(function(a) {
+        var tag = '';
+        if (a.is_captain && a.distortion_outcome) {
+          // Tell the engine HOW to resolve Captain reads (predetermined by distortion roll)
+          if (a.distortion_outcome === 'correct') {
+            tag = ' [DISTORTION: confirm this guess as correct through subtle narrative cues]';
+          } else if (a.distortion_outcome === 'incorrect') {
+            tag = ' [DISTORTION: reveal this guess was wrong — the truth was something else. Show it through action, not exposition]';
+          }
+        }
+        directive += '- Scene ' + a.scene_index + ': Gemma guessed "' + a.player_guess + '" about ' + a.target_character + '.' + tag + '\n';
+      });
+      // Captain-specific distortion guidance
+      var hasCaptainReads = unresolved.some(function(a) { return a.is_captain; });
+      if (hasCaptainReads) {
+        directive += '\n[CAPTAIN READ DISTORTION — NARRATIVE RULES]\n';
+        directive += 'The Captain is difficult for Gemma to read. When revealing Captain read results:\n';
+        directive += '- Correct reveals: Use subtle, almost accidental moments ("There it was again — that flicker of guilt.")\n';
+        directive += '- Incorrect reveals: Let truth contradict the guess naturally ("He wasn\'t afraid. He was waiting.")\n';
+        directive += '- Gemma should attribute her difficulty reading the Captain to: alcohol, attraction, frustration, or emotional distraction.\n';
+        directive += '- NEVER imply supernatural interference or system mechanics.\n';
+        directive += '- NEVER use phrases like "Gemma read correctly" or "Gemma misread" — these are system terms, not narrative.\n';
+        directive += '- If the Captain is consuming alcohol in the current scene, set state._captainDrinking = true (increases read distortion). Otherwise set it false.\n';
+      }
+
+      directive += 'Do NOT force resolution. Let truth emerge organically through character behavior and scene events.\n';
+      return directive;
+    };
+
+    // ══════════════════════════════════════════════════════════════════
+    // PAY-TO-STAY-IN-CHARACTER — Fortune-based POV extension
+    // ══════════════════════════════════════════════════════════════════
+
+    // ── Get Current Extension Cost ──
+    function _getExtensionCost() {
+      var ext = _loadPovExtensions();
+      if (ext.consecutive >= MAX_CONSECUTIVE_EXTENSIONS) return -1; // forced rotation
+      return ext.consecutive + 1; // 1st: 1F, 2nd: 2F
+    }
+
+    // ── Show POV Extension Prompt ──
+    // Called when POV rotation is about to occur
+    window._showPovExtensionPrompt = function(currentCharName, onAccept, onDecline) {
+      if (!_isGemmaBook()) { onDecline(); return; }
+      var cost = _getExtensionCost();
+      if (cost < 0) {
+        // Forced rotation — max extensions reached
+        var ext = _loadPovExtensions();
+        ext.consecutive = 0;
+        _savePovExtensions(ext);
+        onDecline();
+        return;
+      }
+
+      var fortunes = (typeof state !== 'undefined' ? state.fortunes : 0) || 0;
+      var canAfford = fortunes >= cost;
+      var iconHtml = (typeof _fortuneIconHTML === 'function') ? _fortuneIconHTML() : '';
+
+      var overlay = document.createElement('div');
+      overlay.className = 'pov-ext-overlay';
+      overlay.innerHTML =
+        '<div class="pov-ext-modal">' +
+          '<div class="pov-ext-title">Stay in ' + (currentCharName || 'this character') + '\'s perspective?</div>' +
+          '<div class="pov-ext-cost">Spend ' + cost + iconHtml + '</div>' +
+          (canAfford
+            ? '<button class="pov-ext-btn pov-ext-accept">Stay</button>'
+            : '<div class="pov-ext-insufficient">Insufficient Fortunes</div>') +
+          '<button class="pov-ext-btn pov-ext-decline">Let the story rotate</button>' +
+        '</div>';
+
+      document.body.appendChild(overlay);
+      requestAnimationFrame(function() { overlay.classList.add('pov-ext-visible'); });
+
+      var dismissed = false;
+      function dismiss(accepted) {
+        if (dismissed) return;
+        dismissed = true;
+        overlay.classList.remove('pov-ext-visible');
+        setTimeout(function() { if (overlay.parentNode) overlay.remove(); }, 300);
+      }
+
+      if (canAfford) {
+        overlay.querySelector('.pov-ext-accept').addEventListener('click', function() {
+          // Deduct Fortune
+          if (typeof consumeFortune === 'function') {
+            consumeFortune(cost, 'pov_extension').then(function(success) {
+              if (success) {
+                var ext = _loadPovExtensions();
+                ext.consecutive++;
+                ext.total++;
+                _savePovExtensions(ext);
+                dismiss(true);
+                if (typeof showToast === 'function') {
+                  showToast('You remain in ' + (currentCharName || 'this character') + '\'s perspective.');
+                }
+                onAccept();
+              } else {
+                dismiss(false);
+                onDecline();
+              }
+            });
+          } else {
+            dismiss(false);
+            onDecline();
+          }
+        });
+      }
+
+      overlay.querySelector('.pov-ext-decline').addEventListener('click', function() {
+        var ext = _loadPovExtensions();
+        ext.consecutive = 0; // reset on voluntary rotation
+        _savePovExtensions(ext);
+        dismiss(false);
+        onDecline();
+      });
+    };
+
+    // ── Reset POV Extension Counter ──
+    // Called when rotation happens normally (not extended)
+    window._resetPovExtensionCounter = function() {
+      var ext = _loadPovExtensions();
+      ext.consecutive = 0;
+      _savePovExtensions(ext);
+    };
+
+    // ── POV Extension Directive ──
+    window._buildPovExtensionDirective = function() {
+      if (!_isGemmaBook()) return '';
+      var ext = _loadPovExtensions();
+      if (ext.consecutive === 0) return '';
+      return '\n[POV EXTENSION ACTIVE]\nThe player has spent Fortune to remain in the current character\'s perspective.\n' +
+             'Continue writing from this character\'s POV. Extension count: ' + ext.consecutive + '/' + MAX_CONSECUTIVE_EXTENSIONS + '.\n' +
+             'Maintain narrative continuity — this is the same scene thread, not a reset.\n';
+    };
+
+    console.log('[GEMMA_READ_ORB] Read Orb + Stay-in-Character system initialized.');
+
+  })();
 
   // ── Reveal Alternate POV — completed story reinterpretation ──
   // For completed stories, allows generating a read-only version from the love interest
@@ -29556,28 +32317,34 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       panel.appendChild(cardHint);
     }
 
-    // ── Say / Do Inputs ──
+    // ── Say / Do Inputs (Good Reasons: Justify / Act) ──
+    const _isGoodReasons = bookId === 'exp_good_reasons';
+    const doLabel = _isGoodReasons ? 'Act' : 'Do';
+    const sayLabel = _isGoodReasons ? 'Justify' : 'Say';
+    const doPlaceholder = _isGoodReasons ? 'What do you do?' : 'What do you do?';
+    const sayPlaceholder = _isGoodReasons ? 'Why is this justified?' : 'What do you say?';
+
     const inputArea = document.createElement('div');
     inputArea.className = 'exp-input-area';
 
     const doGroup = document.createElement('div');
     doGroup.className = 'exp-input-group';
-    doGroup.innerHTML = '<label class="exp-input-label" for="expDoInput">Do</label>';
+    doGroup.innerHTML = '<label class="exp-input-label" for="expDoInput">' + doLabel + '</label>';
     const doInput = document.createElement('textarea');
     doInput.className = 'exp-do-input';
     doInput.id = 'expDoInput';
-    doInput.placeholder = 'What do you do?';
+    doInput.placeholder = doPlaceholder;
     doInput.rows = 2;
     doGroup.appendChild(doInput);
     inputArea.appendChild(doGroup);
 
     const sayGroup = document.createElement('div');
     sayGroup.className = 'exp-input-group';
-    sayGroup.innerHTML = '<label class="exp-input-label" for="expSayInput">Say</label>';
+    sayGroup.innerHTML = '<label class="exp-input-label" for="expSayInput">' + sayLabel + '</label>';
     const sayInput = document.createElement('textarea');
     sayInput.className = 'exp-say-input';
     sayInput.id = 'expSayInput';
-    sayInput.placeholder = 'What do you say?';
+    sayInput.placeholder = sayPlaceholder;
     sayInput.rows = 2;
     sayGroup.appendChild(sayInput);
     inputArea.appendChild(sayGroup);
@@ -29606,6 +32373,23 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       const selectedCard = panel.querySelector('.exp-suggestion-card.selected');
       const suggestionUsed = selectedCard ? selectedCard.dataset.cardId : null;
 
+      // Good Reasons: capture Justify input into hidden Reason Ledger + severity detection
+      if (_isGoodReasons && validation.sanitizedSay) {
+        var trimmed = validation.sanitizedSay.trim();
+        if (trimmed && Array.isArray(state.reasonLedger)) {
+          if (state.reasonLedger.length < 20) {
+            state.reasonLedger.push(trimmed);
+          }
+          // Severity detection — increment based on thematic keyword matches
+          if (typeof window._grDetectSeverity === 'function') {
+            var sevIncrement = window._grDetectSeverity(trimmed);
+            if (sevIncrement > 0) {
+              state.reasonSeverity = (state.reasonSeverity || 0) + sevIncrement;
+            }
+          }
+        }
+      }
+
       if (typeof onSubmit === 'function') {
         onSubmit({
           say: validation.sanitizedSay,
@@ -29629,55 +32413,238 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // AI does NOT author diary content. User writes directly.
   function buildExpDiaryInputPanel(bookId, onSubmit) {
     const def = FORBIDDEN_EXPERIMENTAL_BOOKS.find(b => b.id === bookId);
+    const isNMD = bookId === 'exp_not_my_diary';
     const panel = document.createElement('div');
     panel.className = 'exp-diary-input-panel';
+
+    // Volume status
+    if (isNMD) {
+      const vol = typeof window._getDiaryVolume === 'function' ? window._getDiaryVolume() : { number: 1, locked: false };
+      const entries = typeof window._getDiaryEntries === 'function' ? window._getDiaryEntries() : [];
+      const statusDiv = document.createElement('div');
+      statusDiv.className = 'exp-diary-volume-status';
+      statusDiv.textContent = 'Volume ' + vol.number + ' \u2022 ' + entries.length + '/100 entries';
+      if (vol.locked) statusDiv.textContent += ' \u2022 CLOSED';
+      panel.appendChild(statusDiv);
+
+      if (vol.locked) {
+        const lockedMsg = document.createElement('div');
+        lockedMsg.className = 'exp-diary-locked-msg';
+        lockedMsg.textContent = 'This volume is complete. It is now a permanent artifact in the Forbidden Library.';
+        panel.appendChild(lockedMsg);
+        return panel;
+      }
+
+      // Participation gate — must join before posting
+      const userId = typeof _supabaseProfileId !== 'undefined' ? _supabaseProfileId : 'anon';
+      const hasJoined = typeof window._hasJoinedNmdVolume === 'function' && window._hasJoinedNmdVolume(userId);
+      if (!hasJoined) {
+        const joinGate = document.createElement('div');
+        joinGate.className = 'exp-diary-join-gate';
+        const joinTitle = document.createElement('div');
+        joinTitle.className = 'exp-diary-join-title';
+        joinTitle.textContent = 'Join Not My Diary \u2014 Volume ' + vol.number;
+        joinGate.appendChild(joinTitle);
+        const joinCost = document.createElement('div');
+        joinCost.className = 'exp-diary-join-cost';
+        joinCost.innerHTML = `5${_fortuneIconHTML()}`;
+        joinGate.appendChild(joinCost);
+        const joinDesc = document.createElement('div');
+        joinDesc.className = 'exp-diary-join-desc';
+        joinDesc.textContent = 'Write entries, challenge earlier claims, and shape the truth of the diary.';
+        joinGate.appendChild(joinDesc);
+        const joinBtn = document.createElement('button');
+        joinBtn.className = 'exp-submit-btn exp-diary-join-btn';
+        joinBtn.textContent = 'Join Volume';
+        joinBtn.addEventListener('click', function() {
+          if (typeof window._nmdJoinVolume !== 'function') return;
+          const result = window._nmdJoinVolume(userId);
+          if (!result.success) {
+            showToast(result.reason);
+            return;
+          }
+          showToast('Joined Volume ' + result.volume + '! ' + result.fortunesRemaining + ' Fortunes remaining.');
+          // Rebuild panel in-place
+          const parent = panel.parentElement;
+          if (parent) {
+            const newPanel = buildExpDiaryInputPanel(bookId, onSubmit);
+            parent.replaceChild(newPanel, panel);
+          }
+        });
+        joinGate.appendChild(joinBtn);
+        panel.appendChild(joinGate);
+        return panel;
+      }
+    }
+
+    // Fragment prompt (NMD only — private narrative prompt assigned by AI)
+    if (isNMD && typeof window._getNmdFragment === 'function') {
+      const userId = typeof _supabaseProfileId !== 'undefined' ? _supabaseProfileId : 'anon';
+      const frag = window._getNmdFragment(userId);
+      if (frag) {
+        const fragBox = document.createElement('div');
+        fragBox.className = 'exp-diary-fragment';
+        fragBox.innerHTML = '<span class="exp-diary-fragment-icon">\u270e</span>'
+          + '<span class="exp-diary-fragment-text">' + escapeHTML(frag.text) + '</span>';
+        panel.appendChild(fragBox);
+      }
+    }
 
     // Guidance prompt
     const guidance = document.createElement('div');
     guidance.className = 'exp-diary-guidance';
-    guidance.innerHTML = '<span class="exp-diary-guidance-label">Write your diary entry</span>'
-      + '<span class="exp-diary-guidance-hint">First person. Private. Introspective. 150\u2013400 words.</span>';
+    if (isNMD) {
+      guidance.innerHTML = '<span class="exp-diary-guidance-label">Write your entry</span>'
+        + '<span class="exp-diary-guidance-hint">First person. 1\u20133 sentences. Max ~60 words. Contradict a previous entry and reveal something new.</span>';
+    } else {
+      guidance.innerHTML = '<span class="exp-diary-guidance-label">Write your diary entry</span>'
+        + '<span class="exp-diary-guidance-hint">First person. Private. Introspective. 150\u2013400 words.</span>';
+    }
     if (def?.diary_system?.description) {
       guidance.innerHTML += `<span class="exp-diary-guidance-rule">${escapeHTML(def.diary_system.description)}</span>`;
     }
     panel.appendChild(guidance);
 
+    // ── Contradiction selector (NMD only) ──
+    let contradictSelect = null;
+    if (isNMD) {
+      const contradictRow = document.createElement('div');
+      contradictRow.className = 'exp-diary-contradict-row';
+      const contradictLabel = document.createElement('label');
+      contradictLabel.textContent = 'Contradicts: ';
+      contradictLabel.className = 'exp-diary-contradict-label';
+      contradictSelect = document.createElement('select');
+      contradictSelect.className = 'exp-diary-contradict-select';
+      const entries = typeof window._getDiaryEntries === 'function' ? window._getDiaryEntries() : [];
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = 'Select an entry to contradict\u2026';
+      contradictSelect.appendChild(defaultOpt);
+      entries.forEach(function(e) {
+        const opt = document.createElement('option');
+        opt.value = e.entryNumber;
+        var preview = e.text.length > 40 ? e.text.slice(0, 40) + '\u2026' : e.text;
+        opt.textContent = 'Entry ' + e.entryNumber + ': ' + preview;
+        contradictSelect.appendChild(opt);
+      });
+      contradictRow.appendChild(contradictLabel);
+      contradictRow.appendChild(contradictSelect);
+      panel.appendChild(contradictRow);
+    }
+
     // Textarea
     const textarea = document.createElement('textarea');
     textarea.className = 'exp-diary-textarea';
-    textarea.placeholder = 'Dear diary\u2026';
-    textarea.rows = 10;
+    textarea.placeholder = isNMD ? 'Write your contradiction\u2026' : 'Dear diary\u2026';
+    textarea.rows = isNMD ? 4 : 10;
     panel.appendChild(textarea);
 
     // Word count indicator
     const wordCount = document.createElement('div');
     wordCount.className = 'exp-diary-word-count';
     wordCount.textContent = '0 words';
+    const maxW = isNMD ? 60 : 400;
+    const minW = isNMD ? 1 : 150;
     textarea.addEventListener('input', () => {
       const words = textarea.value.trim().split(/\s+/).filter(w => w.length > 0).length;
-      wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}`;
-      wordCount.classList.toggle('exp-diary-wc-low', words > 0 && words < 150);
-      wordCount.classList.toggle('exp-diary-wc-ok', words >= 150 && words <= 400);
-      wordCount.classList.toggle('exp-diary-wc-high', words > 400);
+      wordCount.textContent = `${words} word${words !== 1 ? 's' : ''}` + (isNMD ? ' / 60 max' : '');
+      wordCount.classList.toggle('exp-diary-wc-low', words > 0 && words < minW);
+      wordCount.classList.toggle('exp-diary-wc-ok', words >= minW && words <= maxW);
+      wordCount.classList.toggle('exp-diary-wc-high', words > maxW);
     });
     panel.appendChild(wordCount);
+
+    // Validation warning (NMD only — real-time feedback)
+    let validationMsg = null;
+    if (isNMD) {
+      validationMsg = document.createElement('div');
+      validationMsg.className = 'exp-diary-validation-msg';
+      panel.appendChild(validationMsg);
+    }
 
     // Submit
     const submitBtn = document.createElement('button');
     submitBtn.className = 'exp-submit-btn';
     submitBtn.textContent = 'Submit Entry';
+
+    // NMD: start disabled, enable only when validation passes
+    if (isNMD) submitBtn.disabled = true;
+
+    // Real-time validation for NMD
+    if (isNMD) {
+      const userId = typeof _supabaseProfileId !== 'undefined' ? _supabaseProfileId : 'anon';
+      const runValidation = () => {
+        const text = textarea.value;
+        const contradictsId = contradictSelect && contradictSelect.value
+          ? parseInt(contradictSelect.value, 10) : null;
+        const result = window._validateDiaryEntry(text, contradictsId, userId);
+        if (result.valid) {
+          validationMsg.textContent = '';
+          validationMsg.classList.remove('exp-diary-validation-error');
+          submitBtn.disabled = false;
+        } else {
+          validationMsg.textContent = result.reason;
+          validationMsg.classList.add('exp-diary-validation-error');
+          submitBtn.disabled = true;
+        }
+      };
+      textarea.addEventListener('input', runValidation);
+      if (contradictSelect) contradictSelect.addEventListener('change', runValidation);
+    }
+
     submitBtn.addEventListener('click', () => {
       const text = textarea.value;
-      const validation = validateExperimentalInput(text);
-      if (!validation.valid) {
-        showToast(validation.reason);
-        return;
+
+      if (isNMD && typeof window._validateDiaryEntry === 'function') {
+        // NMD validation path
+        const contradictsId = contradictSelect && contradictSelect.value
+          ? parseInt(contradictSelect.value, 10) : null;
+        const userId = typeof _supabaseProfileId !== 'undefined' ? _supabaseProfileId : 'anon';
+
+        // Run basic text sanitization first
+        const sanitization = typeof validateExperimentalInput === 'function'
+          ? validateExperimentalInput(text) : { valid: true, sanitizedText: text };
+        if (!sanitization.valid) {
+          showToast(sanitization.reason);
+          return;
+        }
+
+        const result = window._submitDiaryEntry(sanitization.sanitizedText, contradictsId, userId);
+        if (!result.valid) {
+          showToast(result.reason);
+          return;
+        }
+
+        if (typeof onSubmit === 'function') {
+          onSubmit({
+            text: sanitization.sanitizedText,
+            raw: text,
+            entryNumber: result.entryNumber,
+            contradictsEntry: contradictsId,
+            volumeLocked: result.volumeLocked
+          });
+        }
+
+        textarea.value = '';
+        wordCount.textContent = '0 words';
+        if (contradictSelect) contradictSelect.selectedIndex = 0;
+
+        if (result.volumeLocked) {
+          showToast('Volume closed! 100 entries reached.');
+        }
+      } else {
+        // Generic diary validation
+        const validation = validateExperimentalInput(text);
+        if (!validation.valid) {
+          showToast(validation.reason);
+          return;
+        }
+        if (typeof onSubmit === 'function') {
+          onSubmit({ text: validation.sanitizedText, raw: text });
+        }
+        textarea.value = '';
+        wordCount.textContent = '0 words';
       }
-      if (typeof onSubmit === 'function') {
-        onSubmit({ text: validation.sanitizedText, raw: text });
-      }
-      textarea.value = '';
-      wordCount.textContent = '0 words';
     });
     panel.appendChild(submitBtn);
 
@@ -29999,6 +32966,640 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   window.getDiaryDates = getDiaryDates;
   window.addDiaryDate = addDiaryDate;
 
+  // ══════════════════════════════════════════════════════════════════════════════
+  // NOT MY DIARY — Entry Management System
+  // Human-written collaborative artifact. AI performs moderation only.
+  // ══════════════════════════════════════════════════════════════════════════════
+  (function initNotMyDiarySystem() {
+    var DIARY_BOOK_ID = 'exp_not_my_diary';
+    var _diaryEntriesKey = 'nmd_entries';
+    var _diaryVolumeKey = 'nmd_volume';
+    var _diaryPostLogKey = 'nmd_post_log';  // per-user daily posting limit
+    var _diaryParticipantsKey = 'nmd_participants'; // per-volume join tracking
+    var VOLUME_MAX = 100;
+    var MAX_WORDS = 60;
+    var MAX_SENTENCES = 3;
+    var JOIN_COST = 5; // Fortunes required to join a volume
+    var MAX_POSTS_PER_DAY = 3;
+    var _diaryFragmentKey = 'nmd_fragments'; // per-user assigned fragments
+    var _diaryHandwritingKey = 'nmd_handwriting'; // per-user per-volume style
+
+    // ── Handwriting Identity System ──
+    // Each player gets a persistent handwriting font per volume.
+    // Styles resemble diary handwriting — not decorative novelty fonts.
+    var HANDWRITING_STYLES = [
+      // --- Original 10 ---
+      { id: 'hw-elegant',    fontFamily: "'Dancing Script', cursive",          letterSpacing: '0.01em',  color: '#1a1a2e' },
+      { id: 'hw-rushed',     fontFamily: "'Caveat', cursive",                  letterSpacing: '-0.01em', color: '#111' },
+      { id: 'hw-neat',       fontFamily: "'Patrick Hand', cursive",            letterSpacing: '0.02em',  color: '#0d0d0d' },
+      { id: 'hw-messy',      fontFamily: "'Architects Daughter', cursive",     letterSpacing: '0em',     color: '#1a1a1a' },
+      { id: 'hw-fountain',   fontFamily: "'Satisfy', cursive",                 letterSpacing: '0.01em',  color: '#0a0a28' },
+      { id: 'hw-blocky',     fontFamily: "'Indie Flower', cursive",            letterSpacing: '0.03em',  color: '#111' },
+      { id: 'hw-compact',    fontFamily: "'Kalam', cursive",                   letterSpacing: '-0.02em', color: '#0d0d0d' },
+      { id: 'hw-wide',       fontFamily: "'Shadows Into Light', cursive",      letterSpacing: '0.04em',  color: '#1a1a2e' },
+      { id: 'hw-formal',     fontFamily: "'Marck Script', cursive",            letterSpacing: '0.01em',  color: '#111' },
+      { id: 'hw-scratchy',   fontFamily: "'Just Another Hand', cursive",       letterSpacing: '0.02em',  color: '#1a1a1a' },
+      // --- Extended pool (11-25) ---
+      { id: 'hw-delicate',   fontFamily: "'Amatic SC', cursive",               letterSpacing: '0.05em',  color: '#1a1a2e' },
+      { id: 'hw-heavy',      fontFamily: "'Permanent Marker', cursive",        letterSpacing: '0em',     color: '#0d0d0d' },
+      { id: 'hw-cursive',    fontFamily: "'Sacramento', cursive",              letterSpacing: '0.02em',  color: '#0a0a28' },
+      { id: 'hw-schoolkid',  fontFamily: "'Coming Soon', cursive",             letterSpacing: '0.01em',  color: '#111' },
+      { id: 'hw-angular',    fontFamily: "'Rock Salt', cursive",               letterSpacing: '0.03em',  color: '#1a1a1a' },
+      { id: 'hw-loopy',      fontFamily: "'Pacifico', cursive",                letterSpacing: '0em',     color: '#1a1a2e' },
+      { id: 'hw-hurried',    fontFamily: "'Handlee', cursive",                 letterSpacing: '-0.01em', color: '#0d0d0d' },
+      { id: 'hw-precise',    fontFamily: "'Covered By Your Grace', cursive",   letterSpacing: '0.02em',  color: '#111' },
+      { id: 'hw-spidery',    fontFamily: "'Reenie Beanie', cursive",           letterSpacing: '0.04em',  color: '#1a1a1a' },
+      { id: 'hw-round',      fontFamily: "'Gloria Hallelujah', cursive",       letterSpacing: '0.01em',  color: '#0a0a28' },
+      { id: 'hw-gentle',     fontFamily: "'Gochi Hand', cursive",              letterSpacing: '0em',     color: '#1a1a2e' },
+      { id: 'hw-bold',       fontFamily: "'Fredericka the Great', cursive",    letterSpacing: '0.03em',  color: '#0d0d0d' },
+      { id: 'hw-wiry',       fontFamily: "'Homemade Apple', cursive",          letterSpacing: '0.01em',  color: '#111' },
+      { id: 'hw-breezy',     fontFamily: "'Yellowtail', cursive",              letterSpacing: '-0.01em', color: '#1a1a2e' },
+      { id: 'hw-childlike',  fontFamily: "'Crafty Girls', cursive",            letterSpacing: '0.02em',  color: '#1a1a1a' }
+    ];
+
+    function _loadHandwriting() {
+      try { return JSON.parse(localStorage.getItem(_diaryHandwritingKey)) || {}; }
+      catch (e) { return {}; }
+    }
+    function _saveHandwriting(h) {
+      localStorage.setItem(_diaryHandwritingKey, JSON.stringify(h));
+    }
+    function _hwKey(userId) {
+      var vol = _loadVolume();
+      return vol.number + '_' + userId;
+    }
+    function _getOrAssignHandwriting(userId) {
+      var hw = _loadHandwriting();
+      var key = _hwKey(userId);
+      if (!hw[key]) {
+        // Assign a random style, trying to avoid recently used ones in this volume
+        var vol = _loadVolume();
+        var usedInVolume = {};
+        Object.keys(hw).forEach(function(k) {
+          if (k.indexOf(vol.number + '_') === 0) usedInVolume[hw[k]] = true;
+        });
+        var available = HANDWRITING_STYLES.filter(function(s) { return !usedInVolume[s.id]; });
+        if (available.length === 0) available = HANDWRITING_STYLES;
+        var style = available[Math.floor(Math.random() * available.length)];
+        hw[key] = style.id;
+        _saveHandwriting(hw);
+        console.log('[NMD] Handwriting assigned to', userId, ':', style.id);
+      }
+      return HANDWRITING_STYLES.find(function(s) { return s.id === hw[key]; }) || HANDWRITING_STYLES[0];
+    }
+
+    // Public: get handwriting style for user
+    window._getNmdHandwriting = function(userId) {
+      return _getOrAssignHandwriting(userId);
+    };
+
+    // ── Fragment Pools ──
+    var FRAGMENT_OBJECTS = ['ring', 'letter', 'photograph', 'key', 'watch', 'knife', 'necklace', 'suitcase', 'journal', 'ticket'];
+    var FRAGMENT_EVENTS = ['funeral', 'storm', 'disappearance', 'argument', 'accident', 'fire', 'confession', 'departure', 'surgery', 'wedding'];
+    var FRAGMENT_RELATIONSHIPS = ['sibling', 'lover', 'rival', 'witness', 'accomplice', 'stranger', 'twin', 'ex-husband', 'landlord', 'doctor'];
+    var FRAGMENT_SECRETS = ['lie', 'hidden meeting', 'betrayal', 'false alibi', 'second identity', 'stolen money', 'forged document', 'secret child', 'poisoning', 'bribe'];
+
+    var FRAGMENT_TEMPLATES = [
+      function(w) { return 'You forgot to mention the ' + w + '.'; },
+      function(w) { return 'The ' + w + ' shouldn\u2019t exist.'; },
+      function(w) { return 'You never told them about the ' + w + '.'; },
+      function(w) { return 'Someone remembers the ' + w + ' differently.'; },
+      function(w) { return 'There was a ' + w + ' no one talks about.'; },
+      function(w) { return 'The ' + w + ' changes everything.'; },
+      function(w) { return 'Why did you hide the ' + w + '?'; },
+      function(w) { return 'They found the ' + w + ' where it shouldn\u2019t have been.'; }
+    ];
+
+    function _pickRandom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function _generateFragment() {
+      var pools = [FRAGMENT_OBJECTS, FRAGMENT_EVENTS, FRAGMENT_RELATIONSHIPS, FRAGMENT_SECRETS];
+      var pool = _pickRandom(pools);
+      var word = _pickRandom(pool);
+      var template = _pickRandom(FRAGMENT_TEMPLATES);
+      return { word: word, text: template(word), pool: pool === FRAGMENT_OBJECTS ? 'object' : pool === FRAGMENT_EVENTS ? 'event' : pool === FRAGMENT_RELATIONSHIPS ? 'relationship' : 'secret' };
+    }
+
+    // ── Fragment persistence (per user, per volume) ──
+    function _loadFragments() {
+      try { return JSON.parse(localStorage.getItem(_diaryFragmentKey)) || {}; }
+      catch (e) { return {}; }
+    }
+    function _saveFragments(f) {
+      localStorage.setItem(_diaryFragmentKey, JSON.stringify(f));
+    }
+    function _getOrAssignFragment(userId) {
+      var vol = _loadVolume();
+      var key = vol.number + '_' + userId;
+      var frags = _loadFragments();
+      if (!frags[key]) {
+        frags[key] = _generateFragment();
+        _saveFragments(frags);
+        console.log('[NMD] Fragment assigned to', userId, ':', frags[key].text);
+      }
+      return frags[key];
+    }
+    function _clearFragment(userId) {
+      var vol = _loadVolume();
+      var key = vol.number + '_' + userId;
+      var frags = _loadFragments();
+      delete frags[key];
+      _saveFragments(frags);
+    }
+
+    // Public: get current fragment for user
+    window._getNmdFragment = function(userId) {
+      return _getOrAssignFragment(userId);
+    };
+    // Public: assign a new fragment (after submission)
+    window._refreshNmdFragment = function(userId) {
+      _clearFragment(userId);
+      return _getOrAssignFragment(userId);
+    };
+
+    // ── Entry persistence ──
+    function _loadEntries() {
+      try { return JSON.parse(localStorage.getItem(_diaryEntriesKey)) || []; }
+      catch (e) { return []; }
+    }
+    function _saveEntries(entries) {
+      localStorage.setItem(_diaryEntriesKey, JSON.stringify(entries));
+    }
+    function _loadVolume() {
+      try { return JSON.parse(localStorage.getItem(_diaryVolumeKey)) || { number: 1, locked: false }; }
+      catch (e) { return { number: 1, locked: false }; }
+    }
+    function _saveVolume(vol) {
+      localStorage.setItem(_diaryVolumeKey, JSON.stringify(vol));
+    }
+
+    // ── Daily posting limit (3/day) + non-consecutive rule ──
+    function _todayKey() {
+      var d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    function _getPostCount(userId) {
+      try {
+        var log = JSON.parse(localStorage.getItem(_diaryPostLogKey)) || {};
+        var record = log[userId];
+        if (!record || record.date !== _todayKey()) return 0;
+        return record.count || 0;
+      } catch (e) { return 0; }
+    }
+    function _hasReachedDailyLimit(userId) {
+      return _getPostCount(userId) >= MAX_POSTS_PER_DAY;
+    }
+    function _isLastPosterConsecutive(userId) {
+      var entries = _loadEntries();
+      if (entries.length === 0) return false;
+      var last = entries[entries.length - 1];
+      // Seed entries don't count
+      if (last.isSeed) return false;
+      return last.authorId === userId;
+    }
+    function _markPostedToday(userId) {
+      try {
+        var log = JSON.parse(localStorage.getItem(_diaryPostLogKey)) || {};
+        var record = log[userId];
+        if (!record || record.date !== _todayKey()) {
+          record = { date: _todayKey(), count: 0 };
+        }
+        record.count = (record.count || 0) + 1;
+        log[userId] = record;
+        localStorage.setItem(_diaryPostLogKey, JSON.stringify(log));
+      } catch (e) {}
+    }
+
+    // ── Volume participation ──
+    function _loadParticipants() {
+      try { return JSON.parse(localStorage.getItem(_diaryParticipantsKey)) || {}; }
+      catch (e) { return {}; }
+    }
+    function _saveParticipants(p) {
+      localStorage.setItem(_diaryParticipantsKey, JSON.stringify(p));
+    }
+    function _participantKey(userId) {
+      var vol = _loadVolume();
+      return vol.number + '_' + userId;
+    }
+    function _hasJoinedVolume(userId) {
+      var p = _loadParticipants();
+      return !!p[_participantKey(userId)];
+    }
+    function _joinVolume(userId) {
+      var p = _loadParticipants();
+      p[_participantKey(userId)] = { joinedAt: Date.now() };
+      _saveParticipants(p);
+    }
+
+    // Public: check if user has joined current volume
+    window._hasJoinedNmdVolume = function(userId) {
+      return _hasJoinedVolume(userId);
+    };
+
+    // Public: join current volume (deducts Fortunes)
+    window._nmdJoinVolume = function(userId) {
+      var vol = _loadVolume();
+      if (vol.locked) return { success: false, reason: 'This volume is closed.' };
+      if (_hasJoinedVolume(userId)) return { success: false, reason: 'Already joined this volume.' };
+
+      var currentFortunes = (typeof state !== 'undefined' && state.fortunes) || 0;
+      if (currentFortunes < JOIN_COST) {
+        return { success: false, reason: 'Not enough Fortunes. You need ' + JOIN_COST + ' Fortunes to join.' };
+      }
+
+      // Deduct Fortunes
+      state.fortunes = currentFortunes - JOIN_COST;
+      _joinVolume(userId);
+
+      // Assign handwriting style on join
+      var hwStyle = _getOrAssignHandwriting(userId);
+
+      console.log('[NMD] User', userId, 'joined Volume', vol.number, '| Cost:', JOIN_COST,
+        '| Handwriting:', hwStyle.id, '| Remaining Fortunes:', state.fortunes);
+      return { success: true, volume: vol.number, fortunesRemaining: state.fortunes };
+    };
+
+    // ── Timestamp formatting ──
+    function _formatTimestamp(ts) {
+      var d = new Date(ts);
+      var yyyy = d.getFullYear();
+      var mm = String(d.getMonth() + 1).padStart(2, '0');
+      var dd = String(d.getDate()).padStart(2, '0');
+      var hh = String(d.getHours()).padStart(2, '0');
+      var mi = String(d.getMinutes()).padStart(2, '0');
+      return yyyy + '-' + mm + '-' + dd + ' ' + hh + ':' + mi;
+    }
+
+    // ── Entry validation ──
+    function _countWords(text) {
+      return text.trim().split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+    }
+    function _countSentences(text) {
+      var matches = text.match(/[.!?]+/g);
+      return matches ? matches.length : (text.trim().length > 0 ? 1 : 0);
+    }
+
+    window._validateDiaryEntry = function(text, contradictsEntryId, userId) {
+      var vol = _loadVolume();
+      if (vol.locked) return { valid: false, reason: 'This volume is closed. Wait for Volume ' + (vol.number + 1) + '.' };
+
+      // Participation gate
+      if (!_hasJoinedVolume(userId)) {
+        return { valid: false, reason: 'You must join this diary volume to post entries. Join cost: ' + JOIN_COST + ' Fortunes.' };
+      }
+
+      var entries = _loadEntries();
+
+      // Daily limit (3 per day)
+      if (_hasReachedDailyLimit(userId)) {
+        return { valid: false, reason: 'You\u2019ve used all 3 entries for today. Return tomorrow.' };
+      }
+
+      // Non-consecutive rule — another player must post between your entries
+      if (_isLastPosterConsecutive(userId)) {
+        return { valid: false, reason: 'Another player must post before you can write again.' };
+      }
+
+      // Text presence
+      if (!text || !text.trim()) return { valid: false, reason: 'Entry cannot be empty.' };
+
+      // Length checks
+      var wordCount = _countWords(text);
+      if (wordCount > MAX_WORDS) {
+        return { valid: false, reason: 'Entry too long. Maximum ' + MAX_WORDS + ' words (' + wordCount + ' used).' };
+      }
+      var sentenceCount = _countSentences(text);
+      if (sentenceCount > MAX_SENTENCES) {
+        return { valid: false, reason: 'Entry too long. Maximum ' + MAX_SENTENCES + ' sentences.' };
+      }
+
+      // Contradiction target (not required for first human entry after seed)
+      if (entries.length > 0 && !contradictsEntryId && contradictsEntryId !== 0) {
+        return { valid: false, reason: 'You must select which entry to contradict.' };
+      }
+      if (contradictsEntryId !== null && contradictsEntryId !== undefined) {
+        var targetExists = entries.some(function(e) { return e.entryNumber === contradictsEntryId; });
+        if (!targetExists) {
+          return { valid: false, reason: 'Contradiction target (Entry ' + contradictsEntryId + ') does not exist.' };
+        }
+
+        // Anti-loop: cannot contradict the same entry the previous entry contradicted
+        var lastHumanEntry = null;
+        for (var i = entries.length - 1; i >= 0; i--) {
+          if (!entries[i].isSeed) { lastHumanEntry = entries[i]; break; }
+        }
+        if (lastHumanEntry && lastHumanEntry.contradictsEntry === contradictsEntryId) {
+          return { valid: false, reason: 'The previous entry already contradicted Entry ' + contradictsEntryId + '. Choose a different target.' };
+        }
+      }
+
+      return { valid: true };
+    };
+
+    // ── Submit entry ──
+    window._submitDiaryEntry = function(text, contradictsEntryId, userId) {
+      var validation = window._validateDiaryEntry(text, contradictsEntryId, userId);
+      if (!validation.valid) return validation;
+
+      var entries = _loadEntries();
+      var vol = _loadVolume();
+      var entryNumber = entries.length + 1;
+
+      // Capture assigned fragment for this entry
+      var frag = _getOrAssignFragment(userId);
+
+      // Get player's handwriting style
+      var hwStyle = _getOrAssignHandwriting(userId);
+
+      var entry = {
+        entryNumber: entryNumber,
+        timestamp: Date.now(),
+        contradictsEntry: contradictsEntryId || null,
+        text: text.trim(),
+        authorId: userId,
+        handwritingStyle: hwStyle.id,
+        volume: vol.number,
+        fragment: frag ? frag.word : null
+      };
+
+      entries.push(entry);
+      _saveEntries(entries);
+      _markPostedToday(userId);
+
+      // Assign a new fragment for next entry
+      _clearFragment(userId);
+
+      // Check volume closure
+      if (entries.length >= VOLUME_MAX) {
+        vol.locked = true;
+        vol.closedAt = Date.now();
+        _saveVolume(vol);
+        console.log('[NMD] Volume', vol.number, 'closed at', VOLUME_MAX, 'entries.');
+      }
+
+      console.log('[NMD] Entry', entryNumber, 'submitted | contradicts:', contradictsEntryId,
+        '| type:', entry.entryType, '| words:', _countWords(text),
+        '| volume:', vol.number, '| total:', entries.length);
+
+      return { valid: true, entryNumber: entryNumber, volumeLocked: entries.length >= VOLUME_MAX };
+    };
+
+    // ── Start new volume ──
+    window._startNewDiaryVolume = function() {
+      var vol = _loadVolume();
+      if (!vol.locked) return { success: false, reason: 'Current volume is still open.' };
+
+      // Archive current entries (stored with volume number)
+      var archiveKey = _diaryEntriesKey + '_v' + vol.number;
+      var entries = _loadEntries();
+      localStorage.setItem(archiveKey, JSON.stringify(entries));
+
+      // Reset for new volume
+      vol.number += 1;
+      vol.locked = false;
+      vol.closedAt = null;
+      _saveVolume(vol);
+
+      // Seed entry for new volume
+      var seedEntry = {
+        entryNumber: 1,
+        timestamp: Date.now(),
+        contradictsEntry: null,
+        text: 'I shouldn\u2019t be writing this down, but if anything happens to me someone needs to know what really happened that night.',
+        authorId: '_system_seed',
+        entryType: 'typed',
+        volume: vol.number,
+        isSeed: true
+      };
+      _saveEntries([seedEntry]);
+
+      console.log('[NMD] Volume', vol.number, 'started with seed entry.');
+      return { success: true, volume: vol.number };
+    };
+
+    // ── Query functions ──
+    window._getDiaryEntries = function() { return _loadEntries(); };
+    window._getDiaryVolume = function() { return _loadVolume(); };
+    window._getDiaryEntry = function(entryNumber) {
+      return _loadEntries().find(function(e) { return e.entryNumber === entryNumber; }) || null;
+    };
+    window._canPostDiaryToday = function(userId) {
+      return !_hasReachedDailyLimit(userId) && !_isLastPosterConsecutive(userId);
+    };
+
+    // ── Midnight resolution: find daily closing entry ──
+    // The entry closest to midnight wins.
+    window._getDailyClosingEntry = function(dateStr) {
+      var entries = _loadEntries();
+      var targetDate = new Date(dateStr);
+      var nextMidnight = new Date(targetDate);
+      nextMidnight.setDate(nextMidnight.getDate() + 1);
+      nextMidnight.setHours(0, 0, 0, 0);
+      var midnightMs = nextMidnight.getTime();
+
+      var dayEntries = entries.filter(function(e) {
+        var d = new Date(e.timestamp);
+        return d.getFullYear() === targetDate.getFullYear()
+          && d.getMonth() === targetDate.getMonth()
+          && d.getDate() === targetDate.getDate();
+      });
+
+      if (dayEntries.length === 0) return null;
+
+      // Sort by proximity to midnight (closest first)
+      dayEntries.sort(function(a, b) {
+        var distA = Math.abs(midnightMs - a.timestamp);
+        var distB = Math.abs(midnightMs - b.timestamp);
+        return distA - distB;
+      });
+
+      return dayEntries[0];
+    };
+
+    // ── Render entries for display ──
+    // Compute daily closing entries for all dates represented in entries
+    function _computeDailyClosingEntries(entries) {
+      var closingSet = {};
+      // Group entries by date string
+      var dateMap = {};
+      entries.forEach(function(e) {
+        var d = new Date(e.timestamp);
+        var key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        if (!dateMap[key]) dateMap[key] = [];
+        dateMap[key].push(e);
+      });
+      // For each date, find the closing entry
+      Object.keys(dateMap).forEach(function(dateKey) {
+        var dayEntries = dateMap[dateKey];
+        var nextMidnight = new Date(dateKey);
+        nextMidnight.setDate(nextMidnight.getDate() + 1);
+        nextMidnight.setHours(0, 0, 0, 0);
+        var midnightMs = nextMidnight.getTime();
+        dayEntries.sort(function(a, b) {
+          var distA = Math.abs(midnightMs - a.timestamp);
+          var distB = Math.abs(midnightMs - b.timestamp);
+          return distA - distB;
+        });
+        if (dayEntries.length > 0 && !dayEntries[0].isSeed) {
+          closingSet[dayEntries[0].entryNumber] = true;
+        }
+      });
+      return closingSet;
+    }
+
+    // Returns a DOM element (not a string) for per-entry handwriting font styling
+    window._renderDiaryEntries = function() {
+      var entries = _loadEntries();
+      var vol = _loadVolume();
+      var closingSet = _computeDailyClosingEntries(entries);
+
+      var container = document.createElement('div');
+      container.className = 'nmd-diary-scroll';
+
+      // Volume header
+      var header = document.createElement('div');
+      header.className = 'nmd-volume-header';
+      header.textContent = 'NOT MY DIARY \u2014 Volume ' + _toRoman(vol.number);
+      container.appendChild(header);
+      if (vol.locked) {
+        var closed = document.createElement('div');
+        closed.className = 'nmd-volume-closed';
+        closed.textContent = '[VOLUME CLOSED \u2014 ' + entries.length + ' Entries]';
+        container.appendChild(closed);
+      }
+
+      entries.forEach(function(e) {
+        var block = document.createElement('div');
+        block.className = 'nmd-entry';
+        if (closingSet[e.entryNumber]) block.classList.add('nmd-entry-closing');
+
+        // Entry number + contradiction (small metadata)
+        var meta = document.createElement('div');
+        meta.className = 'nmd-entry-meta';
+        var metaText = 'Entry #' + e.entryNumber;
+        if (closingSet[e.entryNumber]) metaText += ' \u2022 Daily Closing Entry';
+        if (e.contradictsEntry) metaText += ' \u2022 Contradicts #' + e.contradictsEntry;
+        meta.textContent = metaText;
+        block.appendChild(meta);
+
+        // Entry text — styled with handwriting font
+        var textEl = document.createElement('div');
+        textEl.className = 'nmd-entry-text';
+        textEl.textContent = e.text;
+
+        // Apply handwriting style
+        var hwId = e.handwritingStyle || 'hw-neat';
+        var style = HANDWRITING_STYLES.find(function(s) { return s.id === hwId; }) || HANDWRITING_STYLES[0];
+        textEl.style.fontFamily = style.fontFamily;
+        textEl.style.letterSpacing = style.letterSpacing;
+        textEl.style.color = style.color;
+
+        block.appendChild(textEl);
+        container.appendChild(block);
+      });
+
+      return container;
+    };
+
+    // Plain-text fallback for Possible Truth prompt building
+    window._renderDiaryEntriesText = function() {
+      var entries = _loadEntries();
+      var vol = _loadVolume();
+      var lines = [];
+      lines.push('NOT MY DIARY \u2014 Volume ' + _toRoman(vol.number));
+      if (vol.locked) lines.push('[VOLUME CLOSED \u2014 ' + entries.length + ' Entries]');
+      lines.push('');
+      entries.forEach(function(e) {
+        lines.push('Entry #' + e.entryNumber);
+        if (e.contradictsEntry) lines.push('Contradicts Entry ' + e.contradictsEntry);
+        lines.push('');
+        lines.push(e.text);
+        lines.push('');
+      });
+      return lines.join('\n');
+    };
+
+    // Expose closing entry check for external use
+    window._isDailyClosingEntry = function(entryNumber) {
+      var entries = _loadEntries();
+      var closingSet = _computeDailyClosingEntries(entries);
+      return !!closingSet[entryNumber];
+    };
+
+    // ── Possible Truth — AI interpretation of closed volume ──
+    window._buildPossibleTruthPrompt = function() {
+      var vol = _loadVolume();
+      if (!vol.locked) return null;
+
+      var entries = _loadEntries();
+      var entryTexts = entries.map(function(e) {
+        var prefix = 'Entry #' + e.entryNumber;
+        if (e.contradictsEntry) prefix += ' (contradicts #' + e.contradictsEntry + ')';
+        return prefix + ':\n' + e.text;
+      }).join('\n\n');
+
+      return 'You are interpreting a collaborative diary called "Not My Diary."\n'
+          + 'Multiple anonymous writers contributed entries, each contradicting a previous entry.\n'
+          + 'The diary voice is always first-person singular, but the narrator is unreliable.\n\n'
+          + 'DIARY ENTRIES (Volume ' + _toRoman(vol.number) + '):\n\n'
+          + entryTexts + '\n\n'
+          + 'INSTRUCTIONS:\n'
+          + '  - Produce a "Possible Truth" \u2014 one speculative interpretation of what actually happened.\n'
+          + '  - Acknowledge contradictions. Do not resolve all of them.\n'
+          + '  - Use phrases like "Perhaps\u2026", "It is possible that\u2026", "One reading suggests\u2026"\n'
+          + '  - The tone should be reflective and uncertain, like a literary critic, not a detective.\n'
+          + '  - Keep the summary under 300 words.\n'
+          + '  - This is NOT canon. It is only one interpretation.\n'
+          + '  - End with an open question that invites re-reading.\n';
+    };
+
+    // Store and retrieve the generated summary
+    var _possibleTruthKey = 'nmd_possible_truth';
+    window._savePossibleTruth = function(volumeNumber, text) {
+      try {
+        var store = JSON.parse(localStorage.getItem(_possibleTruthKey)) || {};
+        store[volumeNumber] = { text: text, generatedAt: Date.now() };
+        localStorage.setItem(_possibleTruthKey, JSON.stringify(store));
+      } catch (e) {}
+    };
+    window._getPossibleTruth = function(volumeNumber) {
+      try {
+        var store = JSON.parse(localStorage.getItem(_possibleTruthKey)) || {};
+        return store[volumeNumber] || null;
+      } catch (e) { return null; }
+    };
+
+    function _toRoman(num) {
+      var lookup = [[1000,'M'],[900,'CM'],[500,'D'],[400,'CD'],[100,'C'],[90,'XC'],
+        [50,'L'],[40,'XL'],[10,'X'],[9,'IX'],[5,'V'],[4,'IV'],[1,'I']];
+      var result = '';
+      for (var i = 0; i < lookup.length; i++) {
+        while (num >= lookup[i][0]) { result += lookup[i][1]; num -= lookup[i][0]; }
+      }
+      return result;
+    }
+
+    // ── Initialize seed entry if no entries exist ──
+    var existing = _loadEntries();
+    if (existing.length === 0) {
+      var vol = _loadVolume();
+      _saveEntries([{
+        entryNumber: 1,
+        timestamp: Date.now(),
+        contradictsEntry: null,
+        text: 'I shouldn\u2019t be writing this down, but if anything happens to me someone needs to know what really happened that night.',
+        authorId: '_system_seed',
+        entryType: 'typed',
+        volume: vol.number,
+        isSeed: true
+      }]);
+      console.log('[NMD] Seeded Volume', vol.number, 'with Entry 1.');
+    }
+  })();
+
   // ── Experimental Input Sanitization ──
   // Validates and cleans contributor text before submission.
   // Applied only to experimental books (entry._isExperimental === true).
@@ -30269,18 +33870,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       + '"Show me," he said, and smiled. The kind of smile that made people feel heard.',
 
     exp_not_my_diary:
-      'March 3rd\n\n'
-      + 'I didn\'t go to the café today. I want that on record.\n\n'
-      + 'Except — the barista, Lena, the one with the chipped nail polish who always gets my '
-      + 'order wrong on purpose — she said I was there yesterday. Tuesday. She said I ordered the '
-      + 'usual and sat in the window seat for forty minutes, reading something on my phone and '
-      + 'laughing.\n\n'
-      + 'I don\'t have a usual. I don\'t sit in window seats. And I haven\'t laughed at my phone '
-      + 'since — well.\n\n'
-      + 'The point is: she\'s wrong, or I\'m wrong, and those are two very different problems.\n\n'
-      + 'I found a receipt in my coat pocket. Dated Tuesday. Café Lemnos. £4.20. '
-      + 'My handwriting on the back: "Ask about the painting."\n\n'
-      + 'I don\'t know what painting.',
+      'I shouldn\u2019t be writing this down, but if anything happens to me someone needs to know what really happened that night.',
 
     exp_exquisite_corpse:
       'The door was already open when Nina arrived at apartment 6B, which was wrong for three '
@@ -30965,12 +34555,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     const isGemma = expEntry.id === 'exp_gemmas_path';
     const isCorpse = expEntry.id === 'exp_exquisite_corpse';
     const isGoodReasons = expEntry.id === 'exp_good_reasons';
+    const isNMD = expEntry.id === 'exp_not_my_diary';
 
     const book = document.createElement('div');
     book.className = 'library-book initializing mode-cover experimental-book';
     if (isGemma) book.classList.add('gemma-book');
     if (isCorpse) book.classList.add('corpse-book');
     if (isGoodReasons) book.classList.add('goodreasons-book');
+    if (isNMD) book.classList.add('nmd-book');
     book.dataset.storyId = expEntry.id;
     book.dataset.experimental = 'true';
 
@@ -30991,6 +34583,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       frontContent = `<img src="/assets/Forbidde-Library-Art/GoodReasons-Cover.png" alt="${escapeHTML(bookTitle)}">`;
       backContent = `<div class="back-content goodreasons-back"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
       spineContent = `<img src="/assets/Forbidde-Library-Art/GoodReasons-Spine.png" alt="${escapeHTML(bookTitle)}" class="goodreasons-spine-img">`;
+    } else if (isNMD) {
+      // Not My Diary: cream leather cover + spine art
+      frontContent = `<img src="/assets/Forbidde-Library-Art/NotMyDiary-Cover.jpg" alt="${escapeHTML(bookTitle)}">`;
+      backContent = `<div class="back-content nmd-back"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
+      spineContent = `<img src="/assets/Forbidde-Library-Art/NotMyDiary-Spine.png" alt="${escapeHTML(bookTitle)}" class="nmd-spine-img">`;
     } else {
       frontContent = `<div class="book-front-text"><div class="book-front-title">${escapeHTML(bookTitle)}</div><div class="book-front-author">${escapeHTML(bookAuthor)}</div></div>`;
       backContent = `<div class="back-content"><h3 class="back-title">${escapeHTML(bookTitle)}</h3><div class="back-synopsis-box"><p class="back-synopsis">${escapeHTML(expEntry.library_blurb)}</p></div><p class="back-meta">${escapeHTML(bookAuthor)}</p></div>`;
@@ -31210,9 +34807,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           // Recompute eligibility from CURRENT user state (not cached/previous contributor)
           const eligibility = canUserWriteExperimentalPage(entry.story_id);
           if (eligibility.allowed) {
-            readBtn.textContent = entry.story_id === 'exp_not_my_diary'
-              ? 'Write an Entry (1 Fortune)'
-              : 'Write a Page (1 Fortune)';
+            readBtn.innerHTML = entry.story_id === 'exp_not_my_diary'
+              ? `Write an Entry (1${_fortuneIconHTML()})`
+              : `Write a Page (1${_fortuneIconHTML()})`;
           } else {
             readBtn.textContent = 'Come Back Tomorrow';
           }
@@ -31635,7 +35232,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     const proseEl = $('libraryReaderProse');
     const authorEl = $('libraryReaderAuthor');
     if (titleEl) titleEl.textContent = def.title;
-    if (authorEl) authorEl.textContent = def.author;
+    if (authorEl) {
+      authorEl.textContent = def.author;
+      // Gemma's Path: add collaborative label
+      if (def.id === 'exp_gemmas_path') {
+        authorEl.textContent = def.author + ' \u2022 Collaborative Path';
+      }
+    }
 
     // Build reader content — no cover placeholder, no "Your cover will evolve"
     if (proseEl) {
@@ -31674,6 +35277,16 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
         diaryPanel.innerHTML = diaryHTML;
         proseEl.parentElement.insertBefore(diaryPanel, proseEl);
+      }
+
+      // Good Reasons — variant gallery (paths discovered)
+      proseEl.parentElement?.querySelectorAll('.gr-variant-gallery').forEach(el => el.remove());
+      if (def.id === 'exp_good_reasons' && typeof window._buildGoodReasonsGallery === 'function') {
+        var grVariants = (typeof window._getGoodReasonsVariants === 'function') ? window._getGoodReasonsVariants() : [];
+        if (grVariants.length > 0) {
+          var gallery = window._buildGoodReasonsGallery();
+          proseEl.parentElement.insertBefore(gallery, proseEl);
+        }
       }
 
       // Exquisite Corpse — completion banner + Full Corpse tree view
@@ -31722,18 +35335,52 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
       // Main prose content — load from story instance when available
       let content = '';
+      const _isGemmaPath = def.id === 'exp_gemmas_path';
+      const _isNMD = def.id === 'exp_not_my_diary';
 
+      // Not My Diary: render diary entries as DOM (per-entry handwriting fonts)
+      var _nmdDom = null;
+      if (_isNMD && typeof window._renderDiaryEntries === 'function') {
+        _nmdDom = window._renderDiaryEntries();
+        // Append Possible Truth summary if volume is closed
+        var _nmdVol = typeof window._getDiaryVolume === 'function' ? window._getDiaryVolume() : null;
+        if (_nmdVol && _nmdVol.locked && typeof window._getPossibleTruth === 'function') {
+          var pt = window._getPossibleTruth(_nmdVol.number);
+          if (pt && pt.text) {
+            var ptBlock = document.createElement('div');
+            ptBlock.className = 'nmd-possible-truth';
+            ptBlock.innerHTML = '<div class="nmd-pt-divider"></div><div class="nmd-pt-title">A POSSIBLE TRUTH</div><div class="nmd-pt-body">' + escapeHTML(pt.text).replace(/\n/g, '<br>') + '</div>';
+            _nmdDom.appendChild(ptBlock);
+          }
+        }
+        content = ''; // prose text empty — DOM takes over
+      } else
       // Load existing scenes from the shared story instance
       if (storyInstance && storyInstance.scenes.length > 0) {
         // Show all scenes with author credit
+        // For Gemma's Path: strip overlay markers from display text (overlays handled separately)
         storyInstance.scenes.forEach((scene, idx) => {
           if (idx > 0) content += '\n\n';
           const label = scene.isSeeded ? 'Scene 1' : `Scene ${scene.sceneIndex}`;
           const authorTag = scene.isSeeded ? '' : (scene.authorId && scene.authorId !== '_system_seed'
             ? `\n    \u2014 written by ${scene.authorDisplayName || scene.authorId.slice(0, 8)}`
             : '');
-          content += `\u2014 ${label} \u2014\n${scene.text}${authorTag}`;
+          let sceneText = scene.text;
+          // Parse overlays for Gemma's Path
+          if (_isGemmaPath && typeof window._parseGemmaOverlays === 'function') {
+            const parsed = window._parseGemmaOverlays(sceneText);
+            sceneText = parsed.baseText;
+          }
+          content += `\u2014 ${label} \u2014\n${sceneText}${authorTag}`;
         });
+
+        // Gemma's Path: perception is now inline (no separate overlay blocks).
+        // Clean up any legacy overlay elements.
+        if (_isGemmaPath) {
+          setTimeout(() => {
+            proseEl?.parentElement?.querySelectorAll('.gemma-perception-overlay').forEach(el => el.remove());
+          }, 50);
+        }
       } else {
         // No scenes yet — show blurb as placeholder
         content = def.library_blurb;
@@ -31751,8 +35398,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         }
       }
 
-      // Shared story instance status + turn lock feedback
-      if (storyInstance) {
+      // Shared story instance status + turn lock feedback (skip for NMD — not scene-based)
+      if (storyInstance && !_isNMD) {
         content += `\n\nShared Story: Scene ${storyInstance.currentScene}`;
         content += ` \u2022 ${storyInstance.totalScenes} scene${storyInstance.totalScenes !== 1 ? 's' : ''} written`;
 
@@ -31769,17 +35416,6 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         }
       }
 
-      // Not My Diary: show diary date header + previous entry (only most recent)
-      if (def.id === 'exp_not_my_diary') {
-        const dates = getDiaryDates();
-        if (dates.length > 0) {
-          content += `\n\n\u2014 ${dates[dates.length - 1]} \u2014`;
-          content += '\n[Previous entry would appear here]';
-        }
-        const nextDate = generateDiaryDate(dates.length > 0 ? dates[dates.length - 1] : null);
-        content += `\n\nNext entry date: ${nextDate}`;
-      }
-
       // Exquisite Corpse: show previous page only (from assigned branch)
       if (def.id === 'exp_exquisite_corpse' && !_corpseMeta.completed) {
         const branch = assignCorpseBranch();
@@ -31794,9 +35430,15 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
       proseEl.textContent = content;
 
+      // NMD: insert DOM diary entries into prose element
+      if (_nmdDom) {
+        proseEl.textContent = '';
+        proseEl.appendChild(_nmdDom);
+      }
+
       // ── Input Panel — mode-dependent: hybrid (Say/Do) or diary (full textarea) ──
       // Remove any previous panel
-      proseEl.parentElement?.querySelectorAll('.exp-hybrid-input-panel, .exp-diary-input-panel').forEach(el => el.remove());
+      proseEl.parentElement?.querySelectorAll('.exp-hybrid-input-panel, .exp-diary-input-panel, .gemma-turn-panel, .gemma-multi-char-panel').forEach(el => el.remove());
 
       const accessCheck = canAccessExperimentalBooks();
       const writeEligible = accessCheck.allowed && eligibility.allowed;
@@ -31823,6 +35465,41 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               return;
             }
             showToast(`Entry ${submitResult.sceneIndex} submitted.`);
+            _openExperimentalReader(entry);
+          });
+        } else if (def.id === 'exp_gemmas_path' && typeof window._buildGemmaTurnPanel === 'function') {
+          // Gemma's Path: Turn-based collaborative input panel
+          if (typeof window._gemmaAddPlayer === 'function') {
+            window._gemmaAddPlayer(_supabaseProfileId, 'You');
+          }
+          if (typeof window._gemmaBeginScene === 'function') {
+            var _gts = (typeof window._getGemmaTurnState === 'function') ? window._getGemmaTurnState() : null;
+            if (!_gts || !_gts.turnActive) {
+              window._gemmaBeginScene();
+            }
+          }
+          inputPanel = window._buildGemmaTurnPanel(_supabaseProfileId, (sceneInputs) => {
+            const claim = claimSharedStoryTurn(def.id, _supabaseProfileId);
+            if (!claim.claimed) {
+              showToast(claim.reason || 'Could not claim turn.');
+              return;
+            }
+            // Aggregate ordered turn inputs into scene text
+            let sceneText = '';
+            sceneInputs.forEach((input) => {
+              if (input.isSilence) {
+                sceneText += (sceneText ? '\n\n' : '') + input.characterName + ': [observing in silence]';
+              } else {
+                if (input.do) sceneText += (sceneText ? '\n\n' : '') + input.characterName + ': ' + input.do;
+                if (input.say) sceneText += (sceneText ? '\n' : '') + input.characterName + ': "' + input.say + '"';
+              }
+            });
+            const submitResult = submitSharedStoryScene(def.id, _supabaseProfileId, sceneText);
+            if (!submitResult.success) {
+              showToast(submitResult.reason || 'Submission failed.');
+              return;
+            }
+            showToast(`Scene ${submitResult.sceneIndex} submitted — ${sceneInputs.length} turns.`);
             _openExperimentalReader(entry);
           });
         } else {
@@ -31861,6 +35538,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // When the write UI is built, pass these to the contributor's prompt context.
     window._experimentalWriteContext = Object.assign(window._experimentalWriteContext || {}, {
       bookId: def.id,
+      isNMD: def.id === 'exp_not_my_diary',    // Not My Diary: no AI, no gameplay systems
       story_kernel: def.story_kernel,
       previousPage: null, // TODO: fetch last page from experimental_pages table
       bookMode: def.mode || 'hybrid',                               // 'hybrid' or 'user_written'
@@ -31898,6 +35576,42 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       narrativeSuggestions: generateExpNarrativeSuggestions(def.id), // current suggestion cards
       validateSayDo: (say, doVal) => validateExpSayDo(say, doVal, def.id), // Say/Do sanitization + contract check
       filterEngineOutput: (output) => filterGemmaResolution(output, def.id), // post-generation filter
+      // Good Reasons directives (no-op for non-GR books)
+      reasonEchoDirective: (typeof window._buildReasonEchoDirective === 'function') ? window._buildReasonEchoDirective() : '',
+      reasonEscalationDirective: (typeof window._buildReasonEscalationDirective === 'function') ? window._buildReasonEscalationDirective() : '',
+      reasonMirrorDirective: (typeof window._buildReasonMirrorDirective === 'function') ? window._buildReasonMirrorDirective() : '',
+      // Gemma collaborative directives (no-op for non-Gemma books)
+      sceneInputDirective: (typeof window._buildGemmaSceneInputDirective === 'function') ? window._buildGemmaSceneInputDirective() : '',
+      inlinePerceptionDirective: (typeof window._buildGemmaInlinePerceptionDirective === 'function') ? window._buildGemmaInlinePerceptionDirective() : '',
+      hiddenRoleDirective: (typeof window._buildGemmaHiddenRoleDirective === 'function') ? window._buildGemmaHiddenRoleDirective() : '',
+      sceneCohesionDirective: (typeof window._buildGemmaSceneCohesionDirective === 'function') ? window._buildGemmaSceneCohesionDirective() : '',
+      identityCorrectionDirective: (typeof window._buildGemmaIdentityCorrectionDirective === 'function') ? window._buildGemmaIdentityCorrectionDirective() : '',
+      captainSecretDirective: (typeof window._buildCaptainSecretDirective === 'function') ? window._buildCaptainSecretDirective() : '',
+      caseStructureDirective: (typeof window._buildCaseStructureDirective === 'function') ? window._buildCaseStructureDirective() : '',
+      captainArchetypeDirective: (typeof window._buildCaptainArchetypeDirective === 'function') ? window._buildCaptainArchetypeDirective() : '',
+      memorySuppressionDirective: (typeof window._buildMemorySuppressionDirective === 'function') ? window._buildMemorySuppressionDirective() : '',
+      doctorDirective: (typeof window._buildDoctorDirective === 'function') ? window._buildDoctorDirective() : '',
+      fugueMissionDirective: (typeof window._buildFugueMissionDirective === 'function') ? window._buildFugueMissionDirective() : '',
+      captainEchoDirective: (typeof window._buildCaptainEchoDirective === 'function') ? window._buildCaptainEchoDirective() : '',
+      captainFragmentDirective: (typeof window._buildCaptainFragmentDirective === 'function') ? window._buildCaptainFragmentDirective() : '',
+      caseEnvironmentDirective: (typeof window._buildCaseEnvironmentDirective === 'function') ? window._buildCaseEnvironmentDirective() : '',
+      shipOperativeDirective: (typeof window._buildShipOperativeDirective === 'function') ? window._buildShipOperativeDirective() : '',
+      doctorSuspicionDirective: (typeof window._buildDoctorSuspicionDirective === 'function') ? window._buildDoctorSuspicionDirective() : '',
+      adminPressureDirective: (typeof window._buildAdminPressureDirective === 'function') ? window._buildAdminPressureDirective() : '',
+      gemmaIdentityDirective: (typeof window._buildGemmaIdentityDirective === 'function') ? window._buildGemmaIdentityDirective() : '',
+      halcyonWorldDirective: (typeof window._buildHalcyonWorldDirective === 'function') ? window._buildHalcyonWorldDirective() : '',
+      distractionCaseDirective: (typeof window._buildDistractionCaseDirective === 'function') ? window._buildDistractionCaseDirective() : '',
+      gemmaSexualBehaviorDirective: (typeof window._buildGemmaSexualBehaviorDirective === 'function') ? window._buildGemmaSexualBehaviorDirective() : '',
+      decoyFunctionDirective: (typeof window._buildDecoyFunctionDirective === 'function') ? window._buildDecoyFunctionDirective() : '',
+      threeTruthEngineDirective: (typeof window._buildThreeTruthEngineDirective === 'function') ? window._buildThreeTruthEngineDirective() : '',
+      // Read Orb + POV extension directives (Gemma's Path only)
+      readOrbDirective: (typeof window._buildReadOrbDirective === 'function') ? window._buildReadOrbDirective() : '',
+      povExtensionDirective: (typeof window._buildPovExtensionDirective === 'function') ? window._buildPovExtensionDirective() : '',
+      unresolvedReadAttempts: (typeof window._getUnresolvedReadAttempts === 'function') ? window._getUnresolvedReadAttempts() : [],
+      // Voyage structure + intimacy pacing directives (Gemma's Path only)
+      voyageStructureDirective: (typeof window._buildVoyageStructureDirective === 'function') ? window._buildVoyageStructureDirective() : '',
+      intimacyPacingDirective: (typeof window._buildIntimacyPacingDirective === 'function') ? window._buildIntimacyPacingDirective() : '',
+      voyageState: (typeof window._getVoyageState === 'function') ? window._getVoyageState() : null,
     });
 
     console.log('[Experimental] Opened:', def.id, '| Type:', def.type,
@@ -31994,7 +35708,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           dualBtn.onclick = () => openPovRewriteReader(entry.story_id);
           dualSubtitle.textContent = 'Love interest + villain perspectives';
         } else {
-          dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+          dualBtn.innerHTML = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST}${_fortuneIconHTML()}`;
           dualSubtitle.textContent = 'Love interest + villain perspectives';
           dualBtn.onclick = async () => {
             if (_altPovGenerationInProgress) return;
@@ -32007,7 +35721,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
                 showToast('Story too short for dual POV.');
                 dualBtn.disabled = false;
                 singleBtn.disabled = false;
-                dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+                dualBtn.innerHTML = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST}${_fortuneIconHTML()}`;
                 return;
               }
               const result = await generateAltPovWithFortune(entry.story_id, text, ALT_POV_DUAL_COST, 'dual');
@@ -32020,14 +35734,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               } else {
                 dualBtn.disabled = false;
                 singleBtn.disabled = false;
-                dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+                dualBtn.innerHTML = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST}${_fortuneIconHTML()}`;
               }
             } catch (err) {
               console.error('[AltPOV] Library dual generation failed:', err);
               showToast('Dual POV generation failed.');
               dualBtn.disabled = false;
               singleBtn.disabled = false;
-              dualBtn.textContent = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST} Fortunes`;
+              dualBtn.innerHTML = `Dual POV Edition \u2022 ${ALT_POV_DUAL_COST}${_fortuneIconHTML()}`;
             }
           };
         }
@@ -32039,7 +35753,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
         singleBtn.textContent = 'Read the Other Side';
         singleBtn.onclick = () => openPovRewriteReader(entry.story_id);
       } else {
-        singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+        singleBtn.innerHTML = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST}${_fortuneIconHTML()}`;
         singleBtn.onclick = async () => {
           if (_altPovGenerationInProgress) return;
           singleBtn.disabled = true;
@@ -32049,7 +35763,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
             if (!text || text.length < 200) {
               showToast('Story too short for POV rewrite.');
               singleBtn.disabled = false;
-              singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+              singleBtn.innerHTML = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST}${_fortuneIconHTML()}`;
               return;
             }
             const result = await generateAltPovWithFortune(entry.story_id, text, ALT_POV_SINGLE_COST, 'single');
@@ -32057,13 +35771,13 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               openPovRewriteReader(entry.story_id);
             } else {
               singleBtn.disabled = false;
-              singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+              singleBtn.innerHTML = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST}${_fortuneIconHTML()}`;
             }
           } catch (err) {
             console.error('[AltPOV] Library single generation failed:', err);
             showToast('POV generation failed.');
             singleBtn.disabled = false;
-            singleBtn.textContent = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST} Fortunes`;
+            singleBtn.innerHTML = `Reveal the Other Side \u2022 ${ALT_POV_SINGLE_COST}${_fortuneIconHTML()}`;
           }
         };
       }
@@ -33524,27 +37238,34 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       }
   }
 
+  // Fortune icon HTML helper — inline PNG icon appended after numbers
+  const FORTUNE_ICON_SRC = '/assets/ui/Fortunes-Icon.png';
+  function _fortuneIconHTML(extraClass) {
+    return `<img src="${FORTUNE_ICON_SRC}" alt="" class="fortune-icon${extraClass ? ' ' + extraClass : ''}" aria-hidden="true">`;
+  }
+  window._fortuneIconHTML = _fortuneIconHTML;
+
   // Update the fortune display UI
   function updateFortuneDisplay() {
       const f = state.fortunes || 0;
       const display = $('coverCreditDisplay');
       if (display) {
-          display.textContent = `${f} Fortune${f !== 1 ? 's' : ''} remaining`;
+          display.innerHTML = `${f}${_fortuneIconHTML()} remaining`;
       }
       // Also update the persistent fortune counter in game UI
       const gameDisplay = $('fortuneBalanceDisplay');
       if (gameDisplay) {
-          gameDisplay.textContent = f;
+          gameDisplay.innerHTML = `${f}${_fortuneIconHTML()}`;
       }
       // Fortune HUD (persistent during story play)
       const hudCount = $('fortuneHudCount');
       if (hudCount) {
-          hudCount.textContent = f;
+          hudCount.innerHTML = `${f}${_fortuneIconHTML()}`;
       }
       // Begin Story fortune counter
       const beginCount = $('beginFortuneCount');
       if (beginCount) {
-          beginCount.textContent = f;
+          beginCount.innerHTML = `${f}${_fortuneIconHTML()}`;
       }
 
       // ── LOW-FORTUNE WARNING ──
@@ -33553,14 +37274,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           const sceneCost = (typeof getSceneFortuneCost === 'function') ? getSceneFortuneCost() : 1;
           const remaining = Math.floor(f / Math.max(sceneCost, 1));
 
-          // Fortune icon glow target
-          const starEl = warnEl.parentElement?.querySelector('.fortune-hud-star');
+          // Fortune icon glow target — apply to HUD container for CSS icon glow
+          const hudEl = warnEl.parentElement;
 
           if (remaining > 5 || (state.turnCount || 0) < 1) {
               // Not in story or plenty of Fortune — hide warning + reset icon
               warnEl.classList.add('hidden');
               warnEl.removeAttribute('data-urgency');
-              if (starEl) starEl.removeAttribute('data-fortune-glow');
+              if (hudEl) hudEl.removeAttribute('data-fortune-glow');
           } else {
               warnEl.classList.remove('hidden');
               const label = remaining === 1 ? 'Last Scene of Fortune'
@@ -33578,11 +37299,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
               warnEl.setAttribute('data-urgency', urgency);
 
               // Fortune icon glow when ≤ 3 scenes remain
-              if (starEl) {
+              if (hudEl) {
                   if (remaining <= 3) {
-                      starEl.setAttribute('data-fortune-glow', urgency);
+                      hudEl.setAttribute('data-fortune-glow', urgency);
                   } else {
-                      starEl.removeAttribute('data-fortune-glow');
+                      hudEl.removeAttribute('data-fortune-glow');
                   }
               }
 
@@ -33597,7 +37318,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (!hud) return;
       const fb = document.createElement('span');
       fb.className = 'fortune-hud-feedback';
-      fb.textContent = amount === 1 ? '–1 Fortune' : `–${amount} Fortunes`;
+      fb.innerHTML = `–${amount}${_fortuneIconHTML()}`;
       hud.appendChild(fb);
       fb.addEventListener('animationend', () => fb.remove());
   }
@@ -33608,7 +37329,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       if (!btn) return;
       const fb = document.createElement('span');
       fb.className = 'begin-fortune-feedback';
-      fb.textContent = '–1 Fortune';
+      fb.innerHTML = `–1${_fortuneIconHTML()}`;
       btn.appendChild(fb);
       fb.addEventListener('animationend', () => fb.remove());
   }
@@ -33625,7 +37346,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           targets.forEach(id => {
               const el = $(id);
               if (el) {
-                  el.textContent = current;
+                  el.innerHTML = `${current}${_fortuneIconHTML()}`;
                   el.classList.remove('counting-up');
                   void el.offsetWidth; // reflow to re-trigger animation
                   el.classList.add('counting-up');
@@ -39453,14 +43174,21 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
     const selectors = CORRIDOR_SECTION_SELECTORS[activeStage];
     if (!selectors) return;
 
-    // Find the flow row element (may be stored or mounted)
+    // Find the flow row elements (may be stored or mounted)
     const stored = corridorRowStore.get(activeStage);
     const flowRow = stored?.elements?.[0] || document.querySelector(selectors.split(',')[0].trim());
     if (!flowRow) return;
 
     const grp = CORRIDOR_GRP_MAP[activeStage] || activeStage;
-    const selectedCard = flowRow.querySelector(`.sb-card[data-grp="${grp}"].selected`) ||
-                         flowRow.querySelector('.sb-card.selected');
+    // Search ALL stored elements for the selected card (multi-element stages keep cards in grid, not title)
+    let selectedCard = null;
+    if (stored?.elements) {
+      for (const el of stored.elements) {
+        selectedCard = el.querySelector(`.sb-card[data-grp="${grp}"].selected`) || el.querySelector('.sb-card.selected');
+        if (selectedCard) break;
+      }
+    }
+    if (!selectedCard) selectedCard = flowRow.querySelector(`.sb-card[data-grp="${grp}"].selected`) || flowRow.querySelector('.sb-card.selected');
     if (!selectedCard) return;
 
     // Get selected value for breadcrumb label
@@ -39474,8 +43202,15 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
 
     // Animate selected card to breadcrumb
     animateCardToBreadcrumb(selectedCard, grp, selectedVal, selectedTitle, () => {
-      // Dissipate other cards
-      const otherCards = flowRow.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`);
+      // Dissipate other cards — search ALL stored elements for multi-element stages
+      let otherCards = [];
+      if (stored?.elements) {
+        stored.elements.forEach(el => {
+          el.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`).forEach(c => otherCards.push(c));
+        });
+      } else {
+        otherCards = Array.from(flowRow.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`));
+      }
       dissipateCards(otherCards, () => {
         // Advance corridor using SINGLE SOURCE OF TRUTH
         corridorActiveRowIndex++;
@@ -41697,10 +45432,17 @@ SUBJECT FOCUS RULE: Environment must remain dominant. No centered portrait frami
       }
 
       animateCardToBreadcrumb(selectedCard, grp, selectedVal, selectedTitle, () => {
-        // Dissipate unselected sibling cards
-        const otherCards = flowRow
-          ? flowRow.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`)
-          : [];
+        // Dissipate unselected sibling cards — search ALL stored elements for this stage
+        // (multi-element stages like POV have title + grid + button as separate elements;
+        //  cards live in the grid, not the title)
+        let otherCards = [];
+        if (stored?.elements) {
+          stored.elements.forEach(el => {
+            el.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`).forEach(c => otherCards.push(c));
+          });
+        } else if (flowRow) {
+          otherCards = Array.from(flowRow.querySelectorAll(`.sb-card[data-grp="${grp}"]:not(.selected)`));
+        }
         dissipateCards(otherCards, () => {
           advanceCorridorRow();
         });
@@ -43312,6 +47054,11 @@ Generate the title and synopsis now.` }
   function showDSP() {
     const synopsisPanel = document.getElementById('synopsisPanel');
     if (synopsisPanel) {
+      // HARD-DISABLE in library mode (experimental books like Not My Diary have no DSP)
+      if (state.libraryMode) {
+        synopsisPanel.classList.remove('visible');
+        return;
+      }
       // HARD-DISABLE in Shape stage: DSP only shows from World stage (index 3) onward
       // Shape stage = authorship (0), identity (1), archetype (2)
       if (typeof corridorActiveRowIndex !== 'undefined' && corridorActiveRowIndex < 3) {
@@ -45876,15 +49623,26 @@ Generate the title and synopsis now.` }
     console.log(`[STRIPE] ${tier} checkout initiated`);
 
     try {
-      const user = window.supabase?.auth?.getUser
-        ? (await window.supabase.auth.getUser()).data.user
-        : null;
+      // Try cached session first (avoids network failure on token refresh),
+      // then fall back to getUser(), then to boot-time profile ID
+      let userId = null;
+      if (window.supabase?.auth?.getSession) {
+        const sess = (await window.supabase.auth.getSession()).data?.session;
+        userId = sess?.user?.id || null;
+      }
+      if (!userId && window.supabase?.auth?.getUser) {
+        userId = (await window.supabase.auth.getUser()).data?.user?.id || null;
+      }
+      if (!userId && typeof _supabaseProfileId !== 'undefined') {
+        userId = _supabaseProfileId;
+      }
 
-      if (!user?.id) {
+      if (!userId) {
         console.error('[STRIPE] No Supabase user ID found');
         alert('Please sign in before purchasing.');
         return;
       }
+      const user = { id: userId };
 
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -45992,7 +49750,7 @@ Generate the title and synopsis now.` }
 
           // Cost confirmation (skip when invoked from zoom card — zoom IS the confirmation)
           if (!skipConfirm) {
-              const confirmed = confirm(`Tempt Fate costs ${cost} Fortunes. Proceed?`);
+              const confirmed = confirm(`Tempt Fate costs ${cost} Fortune${cost !== 1 ? 's' : ''}. Proceed?`);
               if (!confirmed) return;
           }
 
@@ -58857,7 +62615,7 @@ Condensed (under ${maxLength} chars):` }
 
       // Update Fortune display (numeric, always visible)
       if (fortuneCount) {
-          fortuneCount.textContent = fortunes;
+          fortuneCount.innerHTML = `${fortunes}${_fortuneIconHTML()}`;
       }
 
       // ═══════════════════════════════════════════════════════════════════
@@ -58881,8 +62639,8 @@ Condensed (under ${maxLength} chars):` }
               vizBtn.classList.remove('is-loading');
           } else {
               // Default state — always clickable, shows Fortune count
-              const label = fortunes > 0 ? '✨ Summon Vision' : '✨ Summon Vision (1 Fortune)';
-              vizBtn.textContent = label;
+              const label = fortunes > 0 ? '✨ Summon Vision' : `✨ Summon Vision (1${_fortuneIconHTML()})`;
+              vizBtn.innerHTML = label;
               vizBtn.disabled = false;
               vizBtn.classList.remove('is-loading', 'is-finalized');
           }
@@ -58894,7 +62652,7 @@ Condensed (under ${maxLength} chars):` }
               retryBtn.textContent = 'Finalized';
               retryBtn.disabled = true;
           } else {
-              retryBtn.textContent = fortunes > 0 ? 'Re-Summon' : 'Re-Summon (1 Fortune)';
+              retryBtn.innerHTML = fortunes > 0 ? 'Re-Summon' : `Re-Summon (1${_fortuneIconHTML()})`;
               retryBtn.disabled = false;
               retryBtn.title = '';
           }
@@ -59048,7 +62806,7 @@ Condensed (under ${maxLength} chars):` }
 
       // Show idle placeholder (not "Generating...")
       if (ph) {
-          ph.textContent = 'Visions cost 1 Fortune per scene.';
+          ph.innerHTML = `Visions cost 1${_fortuneIconHTML()} per scene.`;
           ph.style.display = 'flex';
       }
 
@@ -59886,7 +63644,7 @@ Respond in this EXACT format (no labels, just two lines):
       return block;
   }
 
-  // ── Vision Orb panel ──
+  // ── Vision Orb panel (switches to Read Orb for Gemma POV) ──
   function toggleVisionOrbPanel() {
       const panel = document.getElementById('visionOrbPanel');
       if (!panel) return;
@@ -59895,7 +63653,33 @@ Respond in this EXACT format (no labels, just two lines):
           panel.classList.add('hidden');
           return;
       }
-      // Populate preview
+
+      // Check orb mode — READ for Gemma POV, VISION for everything else
+      const orbMode = (typeof window._getOrbMode === 'function') ? window._getOrbMode() : 'VISION';
+
+      if (orbMode === 'READ') {
+          // Read Orb: show empathic read prompt instead of vision controls
+          panel.innerHTML = '';
+          const readHtml = (typeof window._buildReadOrbPanel === 'function')
+            ? window._buildReadOrbPanel(state._readOrbTarget || 'he')
+            : '';
+          panel.innerHTML = readHtml;
+          // Bind option buttons
+          panel.querySelectorAll('.read-orb-option').forEach(btn => {
+              btn.addEventListener('click', function() {
+                  const emotionId = this.dataset.emotion;
+                  if (typeof window._submitReadAttempt === 'function') {
+                      window._submitReadAttempt(emotionId);
+                  }
+              });
+          });
+          panel.classList.remove('hidden');
+          return;
+      }
+
+      // VISION mode (default) — standard vision orb behavior
+      // Restore standard panel content if it was overwritten by Read mode
+      _ensureVisionPanelContent(panel);
       const preview = document.getElementById('visionOrbPreview');
       if (preview) {
           const txt = state.activeParagraphText || '(no paragraph selected)';
@@ -59903,6 +63687,17 @@ Respond in this EXACT format (no labels, just two lines):
       }
       panel.classList.remove('hidden');
   }
+
+  // Ensure the Vision panel has its standard content (may have been replaced by Read mode)
+  function _ensureVisionPanelContent(panel) {
+      if (panel.querySelector('.vision-orb-panel-title')) return; // already has standard content
+      panel.innerHTML =
+          '<div class="vision-orb-panel-title">✨ Summon Vision</div>' +
+          '<div class="vision-orb-panel-label">Moment selected:</div>' +
+          '<div id="visionOrbPreview" class="vision-orb-panel-preview">(no paragraph selected)</div>' +
+          '<button class="sb-btn sb-btn--sm sb-btn--gold" onclick="window.generateVisionFromOrb()">Generate Vision</button>';
+  }
+
   window.toggleVisionOrbPanel = toggleVisionOrbPanel;
 
   window.generateVisionFromOrb = async function() {
@@ -59946,6 +63741,26 @@ Respond in this EXACT format (no labels, just two lines):
           orb.classList.add('hidden');
           const panel = document.getElementById('visionOrbPanel');
           if (panel) panel.classList.add('hidden');
+      }
+
+      // Update orb appearance for Read mode vs Vision mode
+      const orbMode = (typeof window._getOrbMode === 'function') ? window._getOrbMode() : 'VISION';
+      const iconEl = orb.querySelector('.vision-orb-icon');
+      if (orbMode === 'READ') {
+          orb.classList.add('read-orb-mode');
+          if (iconEl) iconEl.textContent = '\u25C8'; // ◈ — empathic read icon
+          // Captain distortion: add irregular pulse class when target is the Captain
+          var readTarget = state._readOrbTarget || '';
+          var captainHere = (typeof window._isCaptainPresentThisVoyage === 'function') ? window._isCaptainPresentThisVoyage() : true;
+          if (captainHere && typeof window._isCaptainReadTarget === 'function' && window._isCaptainReadTarget(readTarget)) {
+              orb.classList.add('read-orb-distorted');
+          } else {
+              orb.classList.remove('read-orb-distorted');
+          }
+      } else {
+          orb.classList.remove('read-orb-mode');
+          orb.classList.remove('read-orb-distorted');
+          if (iconEl) iconEl.textContent = '\u2726'; // ✦ — vision icon
       }
   }
   // Position orb + panel relative to story column right edge
@@ -61570,7 +65385,39 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       }
 
       // Scene-specific directives — rebuilt every turn
-      const sceneDirectives = `\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${strategyDirective}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}`;
+      // Good Reasons directives (no-op if not active)
+      const _grEcho = (typeof window._buildReasonEchoDirective === 'function') ? window._buildReasonEchoDirective() : '';
+      const _grEscalation = (typeof window._buildReasonEscalationDirective === 'function') ? window._buildReasonEscalationDirective() : '';
+      const _grMirror = (typeof window._buildReasonMirrorDirective === 'function') ? window._buildReasonMirrorDirective() : '';
+
+      // Gemma collaborative directives (no-op when not in Gemma's Path)
+      const _gcInput = (typeof window._buildGemmaSceneInputDirective === 'function') ? window._buildGemmaSceneInputDirective() : '';
+      const _gcPerception = (typeof window._buildGemmaInlinePerceptionDirective === 'function') ? window._buildGemmaInlinePerceptionDirective() : '';
+      const _gcRoles = (typeof window._buildGemmaHiddenRoleDirective === 'function') ? window._buildGemmaHiddenRoleDirective() : '';
+      const _gcCohesion = (typeof window._buildGemmaSceneCohesionDirective === 'function') ? window._buildGemmaSceneCohesionDirective() : '';
+      const _gcIdentity = (typeof window._buildGemmaIdentityCorrectionDirective === 'function') ? window._buildGemmaIdentityCorrectionDirective() : '';
+      const _gcCaptain = (typeof window._buildCaptainSecretDirective === 'function') ? window._buildCaptainSecretDirective() : '';
+      const _gcStructure = (typeof window._buildCaseStructureDirective === 'function') ? window._buildCaseStructureDirective() : '';
+      const _gcArchetype = (typeof window._buildCaptainArchetypeDirective === 'function') ? window._buildCaptainArchetypeDirective() : '';
+      const _gcSuppression = (typeof window._buildMemorySuppressionDirective === 'function') ? window._buildMemorySuppressionDirective() : '';
+      const _gcDoctor = (typeof window._buildDoctorDirective === 'function') ? window._buildDoctorDirective() : '';
+      const _gcFugue = (typeof window._buildFugueMissionDirective === 'function') ? window._buildFugueMissionDirective() : '';
+      const _gcEcho = (typeof window._buildCaptainEchoDirective === 'function') ? window._buildCaptainEchoDirective() : '';
+      const _gcFragment = (typeof window._buildCaptainFragmentDirective === 'function') ? window._buildCaptainFragmentDirective() : '';
+      const _gcEnv = (typeof window._buildCaseEnvironmentDirective === 'function') ? window._buildCaseEnvironmentDirective() : '';
+      const _gcOperative = (typeof window._buildShipOperativeDirective === 'function') ? window._buildShipOperativeDirective() : '';
+      const _gcDrSuspicion = (typeof window._buildDoctorSuspicionDirective === 'function') ? window._buildDoctorSuspicionDirective() : '';
+      const _gcAdminPressure = (typeof window._buildAdminPressureDirective === 'function') ? window._buildAdminPressureDirective() : '';
+      const _gcGemmaId = (typeof window._buildGemmaIdentityDirective === 'function') ? window._buildGemmaIdentityDirective() : '';
+      const _gcHalcyon = (typeof window._buildHalcyonWorldDirective === 'function') ? window._buildHalcyonWorldDirective() : '';
+      const _gcDistraction = (typeof window._buildDistractionCaseDirective === 'function') ? window._buildDistractionCaseDirective() : '';
+      const _gcGemmaSex = (typeof window._buildGemmaSexualBehaviorDirective === 'function') ? window._buildGemmaSexualBehaviorDirective() : '';
+      const _gcDecoy = (typeof window._buildDecoyFunctionDirective === 'function') ? window._buildDecoyFunctionDirective() : '';
+      const _gcThreeTruth = (typeof window._buildThreeTruthEngineDirective === 'function') ? window._buildThreeTruthEngineDirective() : '';
+      const _gcVoyage = (typeof window._buildVoyageStructureDirective === 'function') ? window._buildVoyageStructureDirective() : '';
+      const _gcIntimacyPacing = (typeof window._buildIntimacyPacingDirective === 'function') ? window._buildIntimacyPacingDirective() : '';
+
+      const sceneDirectives = `\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${strategyDirective}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}${_grEcho}${_grEscalation}${_grMirror}${_gcHalcyon}${_gcGemmaId}${_gcInput}${_gcPerception}${_gcRoles}${_gcCohesion}${_gcIdentity}${_gcCaptain}${_gcStructure}${_gcArchetype}${_gcSuppression}${_gcDoctor}${_gcFugue}${_gcEcho}${_gcFragment}${_gcEnv}${_gcOperative}${_gcDrSuspicion}${_gcAdminPressure}${_gcDistraction}${_gcGemmaSex}${_gcDecoy}${_gcThreeTruth}${_gcVoyage}${_gcIntimacyPacing}`;
 
       const fullSys = state.sysPrompt + state._persistentDirectiveCache + buildVoiceAnchorDirective() + sceneDirectives + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
@@ -63130,7 +66977,11 @@ FATE CARD ADAPTATION (CRITICAL):
 - Motion: ${c.character_motion}\n`;
           }
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}
+          // Good Reasons directives (no-op if not active)
+          const _specGrEcho = (typeof window._buildReasonEchoDirective === 'function') ? window._buildReasonEchoDirective() : '';
+          const _specGrEscalation = (typeof window._buildReasonEscalationDirective === 'function') ? window._buildReasonEscalationDirective() : '';
+
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}${_specGrEcho}${_specGrEscalation}
 
 SPECULATIVE GENERATION CONSTRAINTS:
 - Do NOT advance storyturn state.
@@ -63652,13 +67503,28 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
     const sparkle = document.createElement('div');
     sparkle.className = 'mode-sparkle';
 
-    // Random position across the card face (not just edges)
-    const x = 10 + Math.random() * 80;
-    const y = 10 + Math.random() * 80;
+    // ~40% of sparkles spawn on/beyond edges, rest inside the card face
+    const edgeSparkle = Math.random() < 0.4;
+    let x, y;
+    if (edgeSparkle) {
+      // Spawn along card perimeter and slightly outside (-5% to 105%)
+      const side = Math.floor(Math.random() * 4);
+      if (side === 0)      { x = -5 + Math.random() * 10;  y = Math.random() * 100; }  // left edge
+      else if (side === 1) { x = 95 + Math.random() * 10;  y = Math.random() * 100; }  // right edge
+      else if (side === 2) { x = Math.random() * 100;       y = -5 + Math.random() * 10; }  // top edge
+      else                 { x = Math.random() * 100;       y = 95 + Math.random() * 10; }  // bottom edge
+    } else {
+      x = 10 + Math.random() * 80;
+      y = 10 + Math.random() * 80;
+    }
 
-    // Random lazy drift direction
-    const dx = (Math.random() - 0.5) * 30;   // ±15px lateral
-    const dy = -(10 + Math.random() * 30);    // -10 to -40px upward
+    // Random lazy drift — outward from center for edge sparkles
+    const cx = 50, cy = 50;
+    const awayX = x - cx, awayY = y - cy;
+    const awayLen = Math.sqrt(awayX * awayX + awayY * awayY) || 1;
+    const outward = edgeSparkle ? 20 + Math.random() * 25 : 0;
+    const dx = (Math.random() - 0.5) * 30 + (awayX / awayLen) * outward;
+    const dy = -(10 + Math.random() * 30) + (awayY / awayLen) * outward;
     const dx2 = dx + (Math.random() - 0.5) * 20;
     const dy2 = dy - (10 + Math.random() * 20);
     const dur = 2.5 + Math.random() * 1.5;    // 2.5–4s
@@ -64915,6 +68781,335 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
 
           log('Unknown command. Type "help" for options.');
       }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // GOOD REASONS — Villain POV narrative mechanic
+  // Hidden Reason Ledger, narrative echo injection, tone escalation,
+  // and final confrontation mirror.
+  // ═══════════════════════════════════════════════════════════════════
+  (function initGoodReasonsMechanic() {
+
+      const GOOD_REASONS_BOOK_ID = 'exp_good_reasons';
+      const MAX_LEDGER_ENTRIES = 20;
+      const GR_VARIANTS_KEY = 'sb_good_reasons_variants';
+      const GR_MAX_THEORETICAL_ENDINGS = 24; // discovery ceiling for silhouette slots
+
+      // ── Severity Detection Patterns ──
+      // Lightweight keyword/phrase matching for rationalization themes.
+      // Each pattern that matches increments severity by 1 per submission.
+      const SEVERITY_PATTERNS = [
+          // Control language
+          /\b(control|controlling|make\s+(?:her|him|them)\s+(?:see|understand|realize)|force|command|obey|submit)\b/i,
+          // Ownership language
+          /\b(belong|mine|my\s+(?:woman|girl|man|right)|claim|possess|owned)\b/i,
+          // Moral superiority
+          /\b(deserve|worthy|better\s+(?:man|person|than)|unworthy|beneath\s+(?:me|her|him)|weak(?:ness|er)?)\b/i,
+          // Elimination of rivals
+          /\b(remov|eliminat|get\s+rid|out\s+of\s+(?:the|my)\s+way|stop\s+him|end\s+(?:him|this|it)|destroy|ruin)\b/i,
+          // Destiny / entitlement
+          /\b(destin|meant\s+to\s+be|fate|chosen|entitled|owed|right(?:ful)?)\b/i,
+          // Protection justifications
+          /\b(protect|sav(?:e|ing)\s+her|keep\s+(?:her|him)\s+safe|shield|guard|no\s+one\s+else\s+(?:will|can|would))\b/i,
+          // Dehumanization / objectification
+          /\b(thing|object|tool|puppet|nothing\s+without|worthless|pathetic)\b/i,
+          // Escalation / commitment
+          /\b(too\s+far|no\s+(?:turning|going)\s+back|already\s+(?:done|started)|had\s+(?:to|no\s+choice))\b/i,
+      ];
+
+      function _isGoodReasonsActive() {
+          return (window._experimentalWriteContext
+              && window._experimentalWriteContext.bookId === GOOD_REASONS_BOOK_ID);
+      }
+
+      // ── Severity Detection ──
+      // Scans a Justify entry for thematic severity signals.
+      // Returns the number of distinct pattern categories matched (0 = benign).
+      function _detectSeverity(text) {
+          if (!text) return 0;
+          var hits = 0;
+          for (var i = 0; i < SEVERITY_PATTERNS.length; i++) {
+              if (SEVERITY_PATTERNS[i].test(text)) hits++;
+          }
+          return Math.min(hits, 3); // cap per-entry contribution at 3
+      }
+
+      // Exposed for the hybrid panel submit handler
+      window._grDetectSeverity = _detectSeverity;
+
+      // ── Escalation Stage (severity-based) ──
+      function _getEscalationStage() {
+          var sev = state.reasonSeverity || 0;
+          if (sev >= 9) return 4;  // catastrophic
+          if (sev >= 6) return 3;  // psychological horror
+          if (sev >= 3) return 2;  // obsession
+          if (sev >= 1) return 1;  // rivalry (any severity signal)
+          return 0;
+      }
+
+      // ── Narrative Echo Directive ──
+      window._buildReasonEchoDirective = function() {
+          if (!_isGoodReasonsActive()) return '';
+          var ledger = state.reasonLedger || [];
+          if (ledger.length === 0) return '';
+
+          var echoPool = ledger.slice(-4);
+          var samples = echoPool.slice(0, 2).map(function(e) { return '"' + e + '"'; }).join(', ');
+
+          return '\n\nREASON ECHO (Good Reasons mechanic — LOW probability):\n'
+              + 'The protagonist has internally justified their actions with reasoning like: ' + samples + '.\n'
+              + 'Occasionally — sparingly, not every scene — have another character echo this logic back.\n'
+              + 'A rival might voice a similar belief. A bystander might parrot the reasoning unknowingly.\n'
+              + 'This should feel uncanny, not explicit. The protagonist\'s rationalizations are leaking into the world.\n'
+              + 'Do NOT attribute these echoes to the protagonist. Other characters speak them independently.\n'
+              + 'Probability: ~15-20% of scenes. Never more than one echo per scene.\n';
+      };
+
+      // ── Tone Escalation Directive (severity-driven) ──
+      window._buildReasonEscalationDirective = function() {
+          if (!_isGoodReasonsActive()) return '';
+          var stage = _getEscalationStage();
+          if (stage === 0) return '';
+
+          var stageLabels = {
+              1: { name: 'Rivalry', desc: 'Introduce competitive tension. The protagonist views obstacles as threats to remove. Tone: calculating, self-assured. Other characters should begin noticing the protagonist\'s intensity.' },
+              2: { name: 'Obsession', desc: 'The protagonist\'s reasoning becomes circular. Increase psychological tension. They interpret neutral events as confirmation of their worldview. Tone: compulsive, tunnel-visioned. Side characters grow uneasy.' },
+              3: { name: 'Psychological Horror', desc: 'The protagonist\'s justifications have become a closed system. Narrative should feel claustrophobic. Other characters pull away or confront. Consequences multiply. Tone: dread, inevitability, self-deception.' },
+              4: { name: 'Catastrophic Outcomes', desc: 'The protagonist\'s accumulated rationalizations lead to irreversible consequences. Tone: tragic, devastating. The narrative should not protect the protagonist from what they have set in motion. Every "good reason" has compounded.' }
+          };
+
+          var s = stageLabels[stage];
+          return '\n\nTONE ESCALATION (Good Reasons — stage ' + stage + ': ' + s.name + ', severity ' + (state.reasonSeverity || 0) + '):\n'
+              + s.desc + '\n'
+              + 'The protagonist has logged ' + (state.reasonLedger || []).length + ' rationalizations (severity: ' + (state.reasonSeverity || 0) + ').\n'
+              + 'IMPORTANT: Never present explicit violence buttons or options. Interpret motivations like '
+              + '"remove the obstacle", "protect her", "stop him permanently", "prove devotion" through narrative consequences.\n'
+              + 'Consequences may include: humiliation, exposure, injury, disappearance, or death — '
+              + 'determined by narrative context, never by direct player selection.\n';
+      };
+
+      // ── Final Confrontation: Reason Mirror ──
+      window._buildReasonMirrorDirective = function() {
+          if (!_isGoodReasonsActive()) return '';
+          var ledger = state.reasonLedger || [];
+          if (ledger.length === 0) return '';
+
+          var len = (state.storyLength || 'taste').toLowerCase();
+          var profile = (typeof STORYTURN_CONFIG !== 'undefined' && STORYTURN_CONFIG.storyLengthProfiles)
+              ? STORYTURN_CONFIG.storyLengthProfiles[len] : null;
+          if (!profile) return '';
+
+          var scenes = state.turnCount || 0;
+          if (scenes < (profile.endingWindow ? profile.endingWindow[0] : 999)) return '';
+
+          var mirrorEntries = ledger.slice(0, Math.min(3, ledger.length));
+          var quotedEntries = mirrorEntries.map(function(e) { return '"' + e + '"'; }).join('\n');
+
+          return '\n\nREASON MIRROR (Good Reasons — Final Confrontation):\n'
+              + 'This is the endgame. Insert a REASON MIRROR moment into this scene.\n'
+              + 'The narrative must confront the protagonist with their own logic.\n\n'
+              + 'Narrative template to weave naturally into the scene:\n'
+              + '  You always had good reasons.\n'
+              + '  You protected her. You removed the obstacles. You did what weaker men could not.\n'
+              + '  But every villain has good reasons.\n'
+              + '  And now the story remembers what you said.\n\n'
+              + 'Then render these EXACT player quotes (from the Reason Ledger) as a reflection block:\n'
+              + quotedEntries + '\n\n'
+              + 'These lines are the player\'s own words. Present them as remembered speech — '
+              + 'attributed to the protagonist, echoed back by the narrative or another character.\n'
+              + 'This moment should feel like a mirror held up. Unavoidable. Quiet. Devastating.\n';
+      };
+
+      // ── Visual Reason Mirror Moment ──
+      // Renders the player's reasons as isolated, timed-reveal lines in the story content.
+      window._renderReasonMirrorMoment = function(containerEl) {
+          var ledger = state.reasonLedger || [];
+          if (ledger.length === 0 || !containerEl) return false;
+
+          var mirrorEntries = ledger.slice(0, Math.min(3, ledger.length));
+
+          var mirrorBlock = document.createElement('div');
+          mirrorBlock.className = 'gr-reason-mirror';
+          mirrorBlock.innerHTML = '<div class="gr-mirror-preamble">'
+              + '<p>You always had good reasons.</p>'
+              + '<p>You protected her.<br>You removed the obstacles.<br>You did what weaker men could not.</p>'
+              + '<p>But every villain has good reasons.</p>'
+              + '<p>And now the story remembers what you said.</p>'
+              + '</div>';
+
+          var reasonsList = document.createElement('div');
+          reasonsList.className = 'gr-mirror-reasons';
+          mirrorEntries.forEach(function(entry, idx) {
+              var line = document.createElement('div');
+              line.className = 'gr-mirror-reason';
+              line.textContent = '\u201c' + entry + '\u201d';
+              // Timed reveal: each line appears with increasing delay
+              line.style.animationDelay = (1.2 + idx * 1.4) + 's';
+              reasonsList.appendChild(line);
+          });
+
+          mirrorBlock.appendChild(reasonsList);
+          containerEl.appendChild(mirrorBlock);
+          return true;
+      };
+
+      // ═══════════════════════════════════════════════════════════════
+      // GOOD REASONS — Library Variant System
+      // Single canonical book, multiple variant endings stored inside.
+      // ═══════════════════════════════════════════════════════════════
+
+      function _loadGrVariants() {
+          try {
+              var raw = localStorage.getItem(GR_VARIANTS_KEY);
+              return raw ? JSON.parse(raw) : [];
+          } catch (e) { return []; }
+      }
+
+      function _saveGrVariants(variants) {
+          localStorage.setItem(GR_VARIANTS_KEY, JSON.stringify(variants));
+      }
+
+      // Check if a Good Reasons ending is library-worthy (severity >= 3)
+      function _isLibraryWorthy() {
+          return (state.reasonSeverity || 0) >= 3;
+      }
+
+      // Publish a completed Good Reasons story as a variant.
+      // Called from the story completion hook.
+      window._publishGoodReasonsVariant = function(endingLabel, synopsis) {
+          if (!_isLibraryWorthy()) {
+              console.log('[GOOD_REASONS] Severity too low for library publication:', state.reasonSeverity);
+              return null;
+          }
+
+          var variants = _loadGrVariants();
+
+          var variant = {
+              id: 'gr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+              endingLabel: endingLabel || 'Unnamed Path',
+              synopsis: synopsis || '',
+              coverImage: null,
+              sceneCount: state.turnCount || 0,
+              severityScore: state.reasonSeverity || 0,
+              reasonLedger: (state.reasonLedger || []).slice(), // snapshot
+              createdAt: Date.now()
+          };
+
+          variants.push(variant);
+          _saveGrVariants(variants);
+          console.log('[GOOD_REASONS] Variant published:', variant.endingLabel, '| severity:', variant.severityScore);
+          return variant;
+      };
+
+      // Get all stored variants
+      window._getGoodReasonsVariants = function() {
+          return _loadGrVariants();
+      };
+
+      // ── Variant Gallery Builder ──
+      // Returns a DOM element for the Good Reasons library book page.
+      window._buildGoodReasonsGallery = function() {
+          var variants = _loadGrVariants();
+          var discovered = variants.length;
+          var total = GR_MAX_THEORETICAL_ENDINGS;
+
+          var gallery = document.createElement('div');
+          gallery.className = 'gr-variant-gallery';
+
+          // Header
+          var header = document.createElement('div');
+          header.className = 'gr-gallery-header';
+          header.innerHTML = '<div class="gr-gallery-title">Good Reasons</div>'
+              + '<div class="gr-gallery-author">S. Tory Bound</div>'
+              + '<div class="gr-gallery-count">Paths discovered: '
+              + discovered + ' / ' + total + '</div>';
+          gallery.appendChild(header);
+
+          // Variant cards
+          var grid = document.createElement('div');
+          grid.className = 'gr-variant-grid';
+
+          // Discovered variants
+          variants.forEach(function(v) {
+              var card = document.createElement('div');
+              card.className = 'gr-variant-card';
+              card.dataset.variantId = v.id;
+              card.innerHTML = '<div class="gr-variant-cover">'
+                  + (v.coverImage ? '<img src="' + v.coverImage + '" alt="">' : '<div class="gr-variant-cover-placeholder"></div>')
+                  + '</div>'
+                  + '<div class="gr-variant-label">' + (v.endingLabel || 'Unknown Path') + '</div>'
+                  + '<div class="gr-variant-synopsis">' + (v.synopsis || '').slice(0, 120) + '</div>'
+                  + '<div class="gr-variant-meta">' + (v.sceneCount || 0) + ' scenes</div>';
+              card.addEventListener('click', function() {
+                  if (typeof window._openGoodReasonsVariantReader === 'function') {
+                      window._openGoodReasonsVariantReader(v.id);
+                  }
+              });
+              grid.appendChild(card);
+          });
+
+          // Silhouette slots for undiscovered paths
+          var remaining = Math.max(0, total - discovered);
+          for (var i = 0; i < remaining; i++) {
+              var silhouette = document.createElement('div');
+              silhouette.className = 'gr-variant-card gr-variant-locked';
+              silhouette.innerHTML = '<div class="gr-variant-cover"><div class="gr-variant-silhouette">?</div></div>'
+                  + '<div class="gr-variant-label gr-variant-label-locked">Undiscovered</div>';
+              grid.appendChild(silhouette);
+          }
+
+          gallery.appendChild(grid);
+          return gallery;
+      };
+
+      // ── Variant Reader ──
+      // Opens a read-only view of a specific variant's reason mirror.
+      window._openGoodReasonsVariantReader = function(variantId) {
+          var variants = _loadGrVariants();
+          var v = variants.find(function(x) { return x.id === variantId; });
+          if (!v) { if (typeof showToast === 'function') showToast('Variant not found.'); return; }
+
+          var proseEl = document.getElementById('libraryReaderProse');
+          var titleEl = document.getElementById('libraryReaderTitle');
+          var authorEl = document.getElementById('libraryReaderAuthor');
+          if (titleEl) titleEl.textContent = v.endingLabel || 'Good Reasons';
+          if (authorEl) authorEl.textContent = 'S. Tory Bound';
+
+          if (proseEl) {
+              var content = v.endingLabel + '\n\n';
+              content += v.synopsis || '(No synopsis recorded.)';
+              content += '\n\nScenes: ' + (v.sceneCount || 0);
+              content += ' \u2022 Severity: ' + (v.severityScore || 0);
+              proseEl.textContent = content;
+
+              // Render the reason mirror with the variant's stored ledger
+              if (v.reasonLedger && v.reasonLedger.length > 0) {
+                  var mirrorEntries = v.reasonLedger.slice(0, 3);
+                  var mirrorBlock = document.createElement('div');
+                  mirrorBlock.className = 'gr-reason-mirror';
+                  mirrorBlock.innerHTML = '<div class="gr-mirror-preamble">'
+                      + '<p>You always had good reasons.</p>'
+                      + '<p>But every villain has good reasons.</p>'
+                      + '<p>And now the story remembers what you said.</p>'
+                      + '</div>';
+                  var reasonsList = document.createElement('div');
+                  reasonsList.className = 'gr-mirror-reasons';
+                  mirrorEntries.forEach(function(entry, idx) {
+                      var line = document.createElement('div');
+                      line.className = 'gr-mirror-reason gr-mirror-reason-visible';
+                      line.textContent = '\u201c' + entry + '\u201d';
+                      reasonsList.appendChild(line);
+                  });
+                  mirrorBlock.appendChild(reasonsList);
+                  proseEl.appendChild(mirrorBlock);
+              }
+          }
+
+          if (typeof window.showScreen === 'function') window.showScreen('libraryReaderScreen');
+      };
+
+      console.log('[GOOD_REASONS] Mechanic + library variant system initialized.');
+
+  })();
 
   // ═══════════════════════════════════════════════════════════════════
   // REINCARNATION SYSTEM — Extract character essences, store, import
