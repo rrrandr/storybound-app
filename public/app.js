@@ -437,9 +437,13 @@ window.config = window.config || {
     state.subscribed = !!profile.is_subscriber;
     state.subscriptionTier = profile.subscription_tier || (state.subscribed ? 'storied' : null);
     state.hasPass = !!profile.has_storypass;
-    state.fortunes = (profile.subscription_fortunes || 0) + (profile.purchased_fortunes || 0);
+    state.subscriptionFortunes = profile.subscription_fortunes || 0;
+    state.purchasedFortunes = profile.purchased_fortunes || 0;
+    state.fortunes = state.subscriptionFortunes + state.purchasedFortunes;
     state.hasSeenFortuneTurnDisclosure = localStorage.getItem('sb_fortune_disclosure') === '1';
     if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+    // Start drip fortune timer after fortune state is hydrated
+    if (typeof _startDripFortuneTimer === 'function') _startDripFortuneTimer();
     state.romancePreferences = Array.isArray(profile.romance_preferences) ? profile.romance_preferences : [];
     state.romanceVector = computeRomanceVector(state.romancePreferences);
     state.freeStoryConsumed = !!profile.free_story_consumed;
@@ -996,7 +1000,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
   }
 
   function consumeFortuneFavorCharge() {
-    // Returns true if a free charge was consumed (spotlight first, then universal)
+    // Returns true if a free charge was consumed (spotlight first, then universal, then pioneer)
     const ff = state.fortuneFavor;
     // Story-scoped spotlight charge (consumed first)
     if (ff && ff.unlocked && !ff.used && ff.monthKey === MONTHLY_FORTUNE_FAVOR.monthKey) {
@@ -1008,6 +1012,12 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     if ((state.bonus_tempt_charges || 0) > 0) {
       state.bonus_tempt_charges--;
       console.log(`[FORTUNE_FAVOR] Universal Tempt charge consumed (remaining: ${state.bonus_tempt_charges})`);
+      return true;
+    }
+    // Pioneer Bonus — world-scoped free Tempt Fate (from Premium World upgrade)
+    if (typeof hasPioneerTemptFate === 'function' && hasPioneerTemptFate()) {
+      consumePioneerTemptFate();
+      console.log('[FORTUNE_FAVOR] Pioneer Tempt charge consumed (world:', state._pioneerBonus?.world, ')');
       return true;
     }
     return false;
@@ -2329,6 +2339,7 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     const urlParams = new URLSearchParams(window.location.search);
     const pendingStory = urlParams.get('story_id') || localStorage.getItem('storybound_pending_checkout_story');
     const pendingTier = urlParams.get('tier') || localStorage.getItem('storybound_pending_checkout_tier');
+    const purchaseIntentIdFromUrl = urlParams.get('purchase_intent_id');
 
     // Clean up localStorage pending state regardless of outcome
     localStorage.removeItem('storybound_pending_checkout_story');
@@ -2350,14 +2361,37 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
     // Re-hydrate state with updated entitlements
     hydrateState(freshProfile);
 
+    // Grant Pioneer Tempt Fate if the user upgraded from the Pioneer Bonus modal
+    if (state._pioneerBonus && !state._pioneerBonus.grantedAt && !isTeaseTier()) {
+        const pb = state._pioneerBonus;
+        const isRecent = pb.createdAt && (Date.now() - pb.createdAt) < 5 * 60 * 1000; // 5 min
+        const matchesWorld = !pb.world || state.picks?.world === pb.world;
+        if (isRecent && matchesWorld) {
+            _grantPioneerTemptFate();
+        } else {
+            console.log('[PIONEER] Bonus expired or world mismatch — discarding', {
+                age: pb.createdAt ? Math.round((Date.now() - pb.createdAt) / 1000) + 's' : 'no timestamp',
+                bonusWorld: pb.world,
+                currentWorld: state.picks?.world
+            });
+            delete state._pioneerBonus;
+        }
+    }
+
     // ── Try server-side purchase intent first (survives browser state loss) ──
+    // Look for completed OR pending intents — the redirect from Stripe may land
+    // before the webhook fires, so the intent could still be 'pending'.
     let intent = null;
     if (sb && _supabaseProfileId) {
-      const { data } = await sb
+      let query = sb
         .from('purchase_intents')
         .select('*')
         .eq('user_id', _supabaseProfileId)
-        .eq('status', 'completed')
+        .in('status', ['completed', 'pending']);
+      if (purchaseIntentIdFromUrl) {
+        query = query.eq('id', purchaseIntentIdFromUrl);
+      }
+      const { data } = await query
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -2381,8 +2415,8 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       if (payload.storypassEligible !== undefined) state.storypassEligible = payload.storypassEligible;
       if (payload.turnCount) state.turnCount = payload.turnCount;
 
-      // Load story-scoped storypass fortunes from entitlement (async)
-      if (state.storyId && typeof _loadStorypassFortunes === 'function') _loadStorypassFortunes();
+      // Load story-scoped storypass fortunes from entitlement (awaited to ensure hasStoryPass is set before UI)
+      if (state.storyId && typeof _loadStorypassFortunes === 'function') await _loadStorypassFortunes();
 
       console.log('[CHECKOUT_RETURN] Restored state from intent:', Object.keys(payload).join(', '));
 
@@ -2441,8 +2475,8 @@ Favor these tonal biases subtly in character behavior and narrative texture.`;
       state.storypassEligible = pendingStoryState.storypassEligible;
       state.turnCount = pendingStoryState.turnCount || 0;
 
-      // Load story-scoped storypass fortunes from entitlement
-      if (state.storyId && typeof _loadStorypassFortunes === 'function') _loadStorypassFortunes();
+      // Load story-scoped storypass fortunes from entitlement (awaited to ensure hasStoryPass is set)
+      if (state.storyId && typeof _loadStorypassFortunes === 'function') await _loadStorypassFortunes();
 
       console.log('[CHECKOUT_RETURN] Restored corridor state:', Object.keys(state.picks).join(', '));
 
@@ -24227,6 +24261,184 @@ RULES:
       }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // PREMIUM WORLDS — Taste-tier gate for complex world settings
+  // Taste users are redirected to Forbidden Library or offered Pioneer Bonus.
+  // ═══════════════════════════════════════════════════════════════════
+  const PREMIUM_WORLDS = new Set(['Fantasy', 'SciFi', 'Dystopia', 'PostApocalyptic']);
+
+  function isPremiumWorld(world) {
+      return PREMIUM_WORLDS.has(world);
+  }
+
+  // Minimum scene count for a Library entry to be eligible for redirect
+  const MIN_LIBRARY_REDIRECT_SCENES = 10;
+
+  // Filter library entries to those eligible for redirect (same rules as shelf renderer)
+  function _eligibleLibraryEntries() {
+      if (!_libraryEntries || _libraryEntries.length === 0) return [];
+      return _libraryEntries.filter(e =>
+          e.library_opt_in !== false
+          && e.visibility !== 'private'
+          && (e.scene_count || 0) >= MIN_LIBRARY_REDIRECT_SCENES
+      );
+  }
+
+  // Sort candidates: highest scene_count, then most recent updated_at
+  function _rankLibraryCandidates(arr) {
+      return arr.slice().sort((a, b) => {
+          const scDiff = (b.scene_count || 0) - (a.scene_count || 0);
+          if (scDiff !== 0) return scDiff;
+          return new Date(b.updated_at || 0) - new Date(a.updated_at || 0);
+      });
+  }
+
+  // Find the best Forbidden Library book matching a world (and optionally flavor).
+  // Search order: world+flavor → world only → flavor only → newest premium book.
+  function findBestLibraryBook(world, flavor) {
+      const eligible = _eligibleLibraryEntries();
+      if (eligible.length === 0) return null;
+
+      const wLower = world ? world.toLowerCase() : '';
+      const fLower = flavor ? flavor.toLowerCase() : '';
+
+      // 1. world + flavor match
+      if (wLower && fLower) {
+          const both = eligible.filter(e =>
+              e.world && e.world.toLowerCase() === wLower
+              && e.worldSubtype && e.worldSubtype.toLowerCase() === fLower
+          );
+          if (both.length > 0) return _rankLibraryCandidates(both)[0];
+      }
+
+      // 2. world only
+      if (wLower) {
+          const byWorld = eligible.filter(e => e.world && e.world.toLowerCase() === wLower);
+          if (byWorld.length > 0) return _rankLibraryCandidates(byWorld)[0];
+      }
+
+      // 3. flavor only
+      if (fLower) {
+          const byFlavor = eligible.filter(e => e.worldSubtype && e.worldSubtype.toLowerCase() === fLower);
+          if (byFlavor.length > 0) return _rankLibraryCandidates(byFlavor)[0];
+      }
+
+      // 4. newest premium-world Library book
+      const premiumBooks = eligible.filter(e => e.world && PREMIUM_WORLDS.has(e.world));
+      if (premiumBooks.length > 0) return _rankLibraryCandidates(premiumBooks)[0];
+
+      return null;
+  }
+
+  // Handle taste-tier user attempting to start a Premium World story.
+  // Returns true if the redirect was triggered (caller should return).
+  function handlePremiumWorldTasteRedirect(world, flavor) {
+      const book = findBestLibraryBook(world, flavor);
+
+      if (book) {
+          // Redirect to Library reader
+          console.log('[PREMIUM_WORLD] Redirecting taste user to Library book:', book.title, '(world:', world, ')');
+          showToast('This world already holds stories. Read one before writing your own.');
+          // Open the library reader with this entry
+          if (typeof openLibraryReader === 'function') {
+              openLibraryReader(book, 'forbidden');
+          } else {
+              // Fallback: navigate to Library screen
+              window.showScreen('forbiddenLibraryScreen');
+          }
+          return true;
+      }
+
+      // No book found — show Pioneer Bonus modal
+      _showPioneerBonusModal(world, flavor);
+      return true;
+  }
+
+  // Pioneer Bonus modal — offered when no Library book exists for a Premium World
+  function _showPioneerBonusModal(world, flavor) {
+      console.log('[PREMIUM_WORLD] No library book found for', world, '— showing Pioneer Bonus modal');
+
+      // Remove any existing pioneer modal
+      document.querySelector('.pioneer-bonus-overlay')?.remove();
+
+      const worldLabel = (typeof WORLD_LABELS !== 'undefined' && WORLD_LABELS[flavor])
+          ? WORLD_LABELS[flavor]
+          : world;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'pioneer-bonus-overlay';
+
+      const modal = document.createElement('div');
+      modal.className = 'pioneer-bonus-modal';
+
+      modal.innerHTML = `
+        <div class="pioneer-bonus-text">
+          <p class="pioneer-bonus-headline">This world has not yet been written in the Library.</p>
+          <p class="pioneer-bonus-subtext">The first storytellers shape its legend.</p>
+        </div>
+        <button class="pioneer-bonus-upgrade-btn">Upgrade &amp; Begin Story</button>
+        <p class="pioneer-bonus-incentive">Upgrade and receive one free Tempt Fate usable only in ${escapeHTML(worldLabel)}.</p>
+        <button class="pioneer-bonus-browse-btn">Browse Other Worlds</button>
+      `;
+
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+
+      // Upgrade & Begin Story
+      modal.querySelector('.pioneer-bonus-upgrade-btn').addEventListener('click', () => {
+          overlay.remove();
+          // Stash pioneer context for post-purchase grant (with timestamp for staleness check)
+          state._pioneerBonus = {
+              world: world,
+              flavor: flavor,
+              createdAt: Date.now(),
+              grantedAt: null,
+              expires: null,
+              used: false
+          };
+          window.showPaywall('unlock');
+      });
+
+      // Browse Other Worlds — dismiss and return to corridor
+      modal.querySelector('.pioneer-bonus-browse-btn').addEventListener('click', () => {
+          overlay.remove();
+      });
+
+      // Overlay click to dismiss
+      overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) overlay.remove();
+      });
+  }
+
+  // Grant Pioneer Tempt Fate after upgrade (called from purchase return flow)
+  function _grantPioneerTemptFate() {
+      if (!state._pioneerBonus || state._pioneerBonus.grantedAt) return;
+      state._pioneerBonus.grantedAt = Date.now();
+      state._pioneerBonus.expires = Date.now() + (24 * 60 * 60 * 1000); // 24h
+      state._pioneerBonus.used = false;
+      console.log('[PIONEER] Tempt Fate granted for', state._pioneerBonus.world, '/', state._pioneerBonus.flavor);
+      showToast('Pioneer Bonus: one free Tempt Fate in ' + (state._pioneerBonus.world || 'this world'));
+  }
+
+  // Check if Pioneer Tempt Fate is available for the current world/flavor
+  function hasPioneerTemptFate() {
+      const pb = state._pioneerBonus;
+      if (!pb || !pb.grantedAt || pb.used) return false;
+      if (pb.expires && Date.now() > pb.expires) return false;
+      // Must match current world
+      if (state.picks?.world !== pb.world) return false;
+      return true;
+  }
+
+  // Consume the Pioneer Tempt Fate token
+  function consumePioneerTemptFate() {
+      if (!hasPioneerTemptFate()) return false;
+      state._pioneerBonus.used = true;
+      console.log('[PIONEER] Tempt Fate consumed for', state._pioneerBonus.world);
+      return true;
+  }
+  window._grantPioneerTemptFate = _grantPioneerTemptFate;
+
   // Get random suggestion from pool
   function getRandomSuggestion(type, exclude = []) {
       const pool = FATE_SUGGESTIONS[type] || [];
@@ -25032,6 +25244,9 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
   window.showPaywall = function(modeOrOptions){
     const pm = document.getElementById('payModal');
     if(!pm) return;
+
+    // Loop guard — prevent reopening if already visible
+    if (!pm.classList.contains('hidden')) return;
 
     // Close Petition modal if open (prevents z-index stacking)
     const petModal = document.getElementById('petitionFateModal');
@@ -27135,7 +27350,7 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
     try {
       const { data, error } = await sb
         .from('library_entries')
-        .select('story_id, title, author, scene_count, word_count')
+        .select('story_id, title, author, scene_count, word_count, world, updated_at, visibility, library_opt_in')
         .eq('eligible', true)
         .order('updated_at', { ascending: false })
         .limit(50);
@@ -36016,6 +36231,69 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
 
       proseEl.parentElement.appendChild(povPanel);
     }
+
+    // ── Library CTA — "Begin your own story in [World]" ──
+    // Appears after page 3 of reading (scroll-based page index), bridges reader → corridor
+
+    // Prevent duplicate injection
+    if (!document.getElementById('library-world-cta') && !entry._isExperimental) {
+      // Resolve world metadata: starter stories have it directly, library entries may have .world
+      const starterDef = entry._isStarter
+          ? STARTER_STORIES.find(sd => sd.id === entry.story_id) : null;
+      const ctaWorld = starterDef?.world || entry.world || null;
+      const ctaWorldSubtype = starterDef?.worldSubtype || entry.worldSubtype || null;
+      const ctaWorldLabel = ctaWorld || 'this world';
+
+      const ctaContainer = document.createElement('div');
+      ctaContainer.id = 'library-world-cta';
+      ctaContainer.className = 'library-world-cta';
+      ctaContainer.style.display = 'none'; // hidden until page 3+
+
+      const ctaText = document.createElement('p');
+      ctaText.className = 'library-world-cta-text';
+      ctaText.innerHTML = 'This story belongs to its author.<br>But the world remains open.<br><br><em>Your choices would create a different fate.</em>';
+      ctaContainer.appendChild(ctaText);
+
+      const ctaBtn = document.createElement('button');
+      ctaBtn.className = 'library-world-cta-btn';
+      ctaBtn.textContent = `Begin your own story in ${ctaWorldLabel}`;
+      ctaBtn.addEventListener('click', () => {
+        state.libraryMode = false;
+        // Pre-populate world + flavor selection
+        if (!state.picks) state.picks = {};
+        if (ctaWorld) state.picks.world = ctaWorld;
+        if (ctaWorldSubtype) state.picks.worldSubtype = ctaWorldSubtype;
+        window.showScreen('modeSelect');
+      });
+      ctaContainer.appendChild(ctaBtn);
+      proseEl.parentElement.appendChild(ctaContainer);
+
+      // Show CTA after page index >= 3 (scroll position / viewport height)
+      const readerContent = $('libraryReaderContent');
+      if (readerContent) {
+        let _ctaRevealed = false;
+        const _ctaScrollHandler = () => {
+          if (_ctaRevealed) return;
+          const pageIndex = Math.floor(readerContent.scrollTop / window.innerHeight);
+          if (pageIndex >= 3) {
+            _ctaRevealed = true;
+            ctaContainer.style.display = '';
+            ctaContainer.classList.add('cta-fade-in');
+            readerContent.removeEventListener('scroll', _ctaScrollHandler);
+          }
+        };
+        readerContent.addEventListener('scroll', _ctaScrollHandler);
+        // Cleanup on reader close
+        const backBtn = $('libraryReaderBackBtn');
+        if (backBtn) {
+          const _ctaCleanup = () => {
+            readerContent.removeEventListener('scroll', _ctaScrollHandler);
+            backBtn.removeEventListener('click', _ctaCleanup);
+          };
+          backBtn.addEventListener('click', _ctaCleanup);
+        }
+      }
+    }
   }
 
   // — Reader back button (vault-aware) —
@@ -37432,30 +37710,177 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       return false;
   }
 
+  // ── Centralized fortune resolver — single source of truth for all fortune pools ──
+  function getAvailableFortunes() {
+      const drip = state.dripFortunes || 0;
+      const storypass = state.storypassFortunes || 0;
+      const subscription = state.subscriptionFortunes || 0;
+      const purchased = state.purchasedFortunes || 0;
+      const global = subscription + purchased;
+      const total = drip + storypass + global;
+      return { drip, storypass, subscription, purchased, global, total };
+  }
+
+  function debugFortunes(label = '') {
+      if (!window.location.hostname.includes('localhost')) return;
+      const f = getAvailableFortunes();
+      console.log('[FORTUNE STATE]', label, {
+          drip: f.drip,
+          storypass: f.storypass,
+          subscription: f.subscription,
+          purchased: f.purchased,
+          global: f.global,
+          total: f.total,
+          storyId: state.storyId,
+      });
+  }
+
   // Check if user has fortunes available (global + story-scoped storypass)
   function hasFortunes() {
-      return (state.fortunes || 0) > 0 || (state.storypassFortunes || 0) > 0;
+      return getAvailableFortunes().total > 0;
   }
 
   // Check if user has global-only fortunes (for Tempt Fate / Petition Fate)
   function hasGlobalFortunes() {
-      return (state.fortunes || 0) > 0;
+      return getAvailableFortunes().global > 0;
   }
 
-  // Consume fortunes via server-side atomic decrement
+  // Contexts where storypass fortunes should be burned first (active story only).
+  // 'scene' is excluded because scene advancement already handles storypass upstream.
+  // tempt_fate excluded — it's a premium mechanic that must only burn global fortunes.
+  const STORY_SCOPED_FORTUNE_CONTEXTS = new Set([
+      'pov_extension', 'alt_pov_generation', 'visualization', 'petition'
+  ]);
+
+  // Consume fortunes via deterministic burn order:
+  // 1. dripFortunes       (expiring credits — always first)
+  // 2. storypassFortunes  (story-scoped contexts only)
+  // 3. subscriptionFortunes → purchasedFortunes (server-side RPC)
+  // Contexts that must ONLY burn global fortunes (subscription/purchased).
+  // Storypass and drip pools are never used for these premium mechanics.
+  const GLOBAL_ONLY_FORTUNE_CONTEXTS = new Set(['tempt_fate']);
+
   async function consumeFortune(amount = 1, context = 'general') {
-      if ((state.fortunes || 0) < amount) {
+      // ── Global-only guard (premium mechanics) ──
+      if (GLOBAL_ONLY_FORTUNE_CONTEXTS.has(context)) {
+          const globalBalance = (state.subscriptionFortunes || 0) + (state.purchasedFortunes || 0);
+          if (globalBalance < amount) {
+              console.warn(`[Fortunes] ${context} requires global fortunes (have ${globalBalance}, need ${amount})`);
+              return false;
+          }
+          // Skip drip + storypass — go directly to server RPC
+          try {
+              const resp = await fetch('/api/consume-fortune', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userId: _supabaseProfileId, amount, context })
+              });
+              const data = await resp.json();
+              if (!resp.ok) {
+                  console.warn('[Fortunes] Server declined fortune consumption:', data.error);
+                  if (data.fortunesRemaining !== undefined) state.fortunes = data.fortunesRemaining;
+                  return false;
+              }
+              if (data.fortunesRemaining != null) state.fortunes = data.fortunesRemaining;
+              if (data.subscriptionFortunes !== undefined) state.subscriptionFortunes = data.subscriptionFortunes;
+              if (data.purchasedFortunes !== undefined) state.purchasedFortunes = data.purchasedFortunes;
+              console.log(`[Fortunes] ${amount} fortune(s) consumed (context: ${context}, source: global). Global remaining:`, state.fortunes);
+              if (location.hostname === 'localhost') {
+                  console.log('[FORTUNE CONSUMED]', {
+                      source: 'global',
+                      context,
+                      cost: amount,
+                      subscriptionRemaining: state.subscriptionFortunes || 0,
+                      purchasedRemaining: state.purchasedFortunes || 0,
+                  });
+              }
+              logEvent('fortune_spent', { amount, context, source: 'global' });
+              if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+              return true;
+          } catch (err) {
+              console.error('[Fortunes] Server fortune consumption failed:', err);
+              return false;
+          }
+      }
+
+      let remaining = amount;
+
+      // ── 1. Drip-first burn (expiring credits, any context) ──
+      let fromDrip = 0;
+      if ((state.dripFortunes || 0) > 0) {
+          fromDrip = Math.min(state.dripFortunes, remaining);
+          state.dripFortunes = Math.max(0, (state.dripFortunes || 0) - fromDrip);
+          remaining -= fromDrip;
+      }
+
+      // ── 2. Storypass burn (story-scoped contexts only) ──
+      let fromStorypass = 0;
+      const isStoryScoped = STORY_SCOPED_FORTUNE_CONTEXTS.has(context)
+          && state.storyId
+          && (state.storypassFortunes || 0) > 0;
+      if (isStoryScoped && remaining > 0) {
+          fromStorypass = Math.min(state.storypassFortunes, remaining);
+          state.storypassFortunes = Math.max(0, (state.storypassFortunes || 0) - fromStorypass);
+          remaining -= fromStorypass;
+      }
+
+      const fromGlobal = remaining;
+
+      // Pre-check: enough global balance for the remainder?
+      if (fromGlobal > 0 && (state.fortunes || 0) < fromGlobal) {
+          // Rollback local burns
+          if (fromStorypass > 0) state.storypassFortunes += fromStorypass;
+          if (fromDrip > 0) state.dripFortunes = (state.dripFortunes || 0) + fromDrip;
           console.warn('[Fortunes] Attempted consumption with insufficient balance');
           return false;
       }
+
+      // Persist storypass portion
+      if (fromStorypass > 0) {
+          await _persistStorypassFortunes();
+      }
+
+      // Debug log (localhost only)
+      if (location.hostname === 'localhost') {
+          const parts = [];
+          if (fromDrip > 0) parts.push(`drip:${fromDrip}`);
+          if (fromStorypass > 0) parts.push(`storypass:${fromStorypass}`);
+          if (fromGlobal > 0) parts.push(`global:${fromGlobal}`);
+          console.log('[FORTUNE CONSUMED]', {
+              source: parts.join('+') || 'none',
+              context,
+              cost: amount,
+              dripRemaining: state.dripFortunes || 0,
+              storypassRemaining: state.storypassFortunes || 0,
+              subscriptionRemaining: state.subscriptionFortunes || 0,
+              purchasedRemaining: state.purchasedFortunes || 0,
+          });
+      }
+
+      // If local pools covered the entire cost, done
+      if (fromGlobal <= 0) {
+          const source = fromDrip > 0 ? (fromStorypass > 0 ? 'drip+storypass' : 'drip') : 'storypass';
+          console.log(`[Fortunes] ${amount} fortune(s) consumed from ${source} (context: ${context})`);
+          logEvent('fortune_spent', { amount, context, source });
+          if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+          return true;
+      }
+
+      // ── 3. Burn global portion via server-side atomic decrement ──
       try {
           const resp = await fetch('/api/consume-fortune', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: _supabaseProfileId, amount, context })
+              body: JSON.stringify({ userId: _supabaseProfileId, amount: fromGlobal, context })
           });
           const data = await resp.json();
           if (!resp.ok) {
+              // Rollback local burns on server failure
+              if (fromStorypass > 0) {
+                  state.storypassFortunes += fromStorypass;
+                  await _persistStorypassFortunes();
+              }
+              if (fromDrip > 0) state.dripFortunes = (state.dripFortunes || 0) + fromDrip;
               console.warn('[Fortunes] Server declined fortune consumption:', data.error);
               if (data.fortunesRemaining !== undefined) state.fortunes = data.fortunesRemaining;
               return false;
@@ -37463,11 +37888,26 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           if (data.fortunesRemaining !== null && data.fortunesRemaining !== undefined) {
               state.fortunes = data.fortunesRemaining;
           }
-          console.log(`[Fortunes] ${amount} fortune(s) consumed (context: ${context}). Remaining:`, state.fortunes);
-          logEvent('fortune_spent', { amount, context });
+          if (data.subscriptionFortunes !== undefined) state.subscriptionFortunes = data.subscriptionFortunes;
+          if (data.purchasedFortunes !== undefined) state.purchasedFortunes = data.purchasedFortunes;
+          // Safety clamp — prevent drift from overlapping calls
+          state.storypassFortunes = Math.max(0, state.storypassFortunes || 0);
+          const parts = [];
+          if (fromDrip > 0) parts.push(`drip(${fromDrip})`);
+          if (fromStorypass > 0) parts.push(`storypass(${fromStorypass})`);
+          parts.push(`global(${fromGlobal})`);
+          const source = parts.join('+');
+          console.log(`[Fortunes] ${amount} fortune(s) consumed (context: ${context}, source: ${source}). Global remaining:`, state.fortunes);
+          logEvent('fortune_spent', { amount, context, source: (fromDrip > 0 || fromStorypass > 0) ? 'mixed' : 'global' });
           if (window.updateFortuneDisplay) window.updateFortuneDisplay();
           return true;
       } catch (err) {
+          // Rollback local burns on network failure
+          if (fromStorypass > 0) {
+              state.storypassFortunes += fromStorypass;
+              await _persistStorypassFortunes();
+          }
+          if (fromDrip > 0) state.dripFortunes = (state.dripFortunes || 0) + fromDrip;
           console.error('[Fortunes] Server fortune consumption failed:', err);
           return false;
       }
@@ -37566,6 +38006,61 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       fb.innerHTML = `–${amount}${_fortuneIconHTML()}`;
       hud.appendChild(fb);
       fb.addEventListener('animationend', () => fb.remove());
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DRIP FORTUNE SYSTEM — Expiring temporary credits (4-hour lifespan)
+  // Grants 1 free fortune when all permanent pools are empty.
+  // ═══════════════════════════════════════════════════════════════════
+  const DRIP_FORTUNE_INTERVAL_MS = 4 * 60 * 60 * 1000; // 4 hours
+  const DRIP_FORTUNE_MAX = 1; // max drip credits that can accumulate
+  let _dripFortuneTimerId = null;
+
+  function _shouldGrantDripFortune() {
+      const f = getAvailableFortunes();
+      // Only grant when all permanent pools are empty
+      if (f.global > 0 || f.storypass > 0) return false;
+      // Cap accumulation
+      if ((state.dripFortunes || 0) >= DRIP_FORTUNE_MAX) return false;
+      return true;
+  }
+
+  function _grantDripFortune() {
+      if (!_shouldGrantDripFortune()) return;
+      state.dripFortunes = (state.dripFortunes || 0) + 1;
+      state._dripFortuneGrantedAt = Date.now();
+      console.log('[DRIP] Fortune granted. Balance:', state.dripFortunes);
+      if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+  }
+
+  function _expireDripFortunes() {
+      if ((state.dripFortunes || 0) <= 0) return;
+      const grantedAt = state._dripFortuneGrantedAt || 0;
+      if (grantedAt && (Date.now() - grantedAt) >= DRIP_FORTUNE_INTERVAL_MS) {
+          console.log('[DRIP] Fortune expired. Was:', state.dripFortunes);
+          state.dripFortunes = 0;
+          state._dripFortuneGrantedAt = null;
+          if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+      }
+  }
+
+  function _startDripFortuneTimer() {
+      if (_dripFortuneTimerId) return;
+      // Check expiry + eligibility every 60s
+      _dripFortuneTimerId = setInterval(() => {
+          _expireDripFortunes();
+          _grantDripFortune();
+      }, 60 * 1000);
+      // Immediate check on start
+      _expireDripFortunes();
+      _grantDripFortune();
+  }
+
+  function _stopDripFortuneTimer() {
+      if (_dripFortuneTimerId) {
+          clearInterval(_dripFortuneTimerId);
+          _dripFortuneTimerId = null;
+      }
   }
 
   // Show floating "–1 Fortune" feedback under Begin Story button
@@ -37671,47 +38166,20 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       };
   }
 
-  // Show fortune purchase modal — adapts sections to player subscription state
+  // Legacy fortune modal — redirects to 3-card paywall (payModal)
   function openFortunePurchaseModal() {
-      const modal = $('fortunePurchaseModal');
-      if (!modal) {
-          console.error('[Fortunes] Purchase modal not found');
-          return;
+      console.log('[Fortunes] Redirecting legacy fortune modal to 3-card paywall');
+      if (typeof window.showPaywall === 'function') {
+          window.showPaywall('unlock');
       }
-
-      // Adaptive section visibility based on subscription tier
-      const tier = state.subscriptionTier; // 'storied', 'favored', 'chosen', or null/undefined
-      const isChosen = tier === 'chosen';
-      const isFavored = tier === 'favored';
-      const isSubscribed = !!state.subscribed;
-
-      // Storypass: hidden for any subscriber (they already get Fortunes monthly)
-      const storypassSection = $('fortuneModalStorypass');
-      if (storypassSection) {
-          storypassSection.style.display = isSubscribed ? 'none' : '';
-      }
-
-      // Membership: hidden for Chosen (already top tier)
-      const membershipSection = $('fortuneModalMembership');
-      if (membershipSection) {
-          membershipSection.style.display = isChosen ? 'none' : '';
-      }
-
-      // Within membership, hide tiers at or below current tier
-      const tierStoried = $('fortuneModalTierStoried');
-      const tierFavored = $('fortuneModalTierFavored');
-      const tierChosen = $('fortuneModalTierChosen');
-      if (tierStoried) tierStoried.style.display = (tier === 'storied' || isFavored || isChosen) ? 'none' : '';
-      if (tierFavored) tierFavored.style.display = (isFavored || isChosen) ? 'none' : '';
-      if (tierChosen) tierChosen.style.display = isChosen ? 'none' : '';
-
-      modal.classList.remove('hidden');
   }
 
-  // Hide fortune purchase modal
+  // Close fortune purchase modal — dismiss both legacy and new paywall
   function closeFortunePurchaseModal() {
-      const modal = $('fortunePurchaseModal');
-      if (modal) modal.classList.add('hidden');
+      const legacy = $('fortunePurchaseModal');
+      if (legacy) legacy.classList.add('hidden');
+      const paywall = $('payModal');
+      if (paywall) paywall.classList.add('hidden');
   }
 
   // Storypass purchase — routes to Stripe checkout for story-locked scenes
@@ -37724,9 +38192,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           showToast('Storypass activated — 20 scenes added (dev mode)');
           return;
       }
-      console.log('[Storypass] Purchase requested');
-      showToast('Storypass purchase coming soon. Check back shortly!');
+      console.log('[Storypass] Purchase requested — routing to Stripe');
       closeFortunePurchaseModal();
+      initiateStripeCheckout('storypass');
   }
 
   // Subscription purchase — routes to Stripe subscription checkout
@@ -37913,6 +38381,8 @@ The final image must look like a real published novel cover.`;
   window.purchaseStorypass = purchaseStorypass;
   window.purchaseSubscription = purchaseSubscription;
   window.hasFortunes = hasFortunes;
+  window.getAvailableFortunes = getAvailableFortunes;
+  window.debugFortunes = debugFortunes;
   window.updateFortuneDisplay = updateFortuneDisplay;
 
   // EARNED COVER SYSTEM exports
@@ -46112,6 +46582,7 @@ Generate the title and synopsis now.` }
   async function autoplayCorridorFromGuidedFate() {
     console.log('[Corridor] Starting row-by-row autoplay from Guided Fate');
     _fateAutoplayActive = true;
+    document.body.classList.add('guided-fate-autoplay');
 
     // Start from row 1 (Guided Fate is row 0, already handled)
     // Advance past row 0 first
@@ -46281,7 +46752,9 @@ Generate the title and synopsis now.` }
     corridorActiveRowIndex = CORRIDOR_STAGES.length;
     console.log('[Corridor] Autoplay complete. All rows processed.');
     _fateAutoplayActive = false;
+    document.body.classList.remove('guided-fate-autoplay');
     _dspGuidedFateActive = false; // Unlock DSP for manual edits
+    showToast('Fate has spoken. Click Begin Story when ready.');
     onCorridorComplete();
   }
 
@@ -49919,12 +50392,15 @@ Generate the title and synopsis now.` }
         .eq('arc_number', arc)
         .maybeSingle();
       state.storypassFortunes = data?.storypass_fortunes_remaining ?? 0;
+      // Grant localStorage storypass flag when entitlement exists (ensures hasStoryPass() works synchronously)
+      if (state.storypassFortunes > 0 && state.storyId) grantStoryPass(state.storyId);
       console.log(`[Fortunes] Loaded storypass fortunes: ${state.storypassFortunes} (story: ${state.storyId}, arc: ${arc})`);
     } catch (e) {
       console.warn('[Fortunes] Failed to load storypass fortunes:', e.message);
       state.storypassFortunes = 0;
     }
     if (window.updateFortuneDisplay) window.updateFortuneDisplay();
+    if (typeof debugFortunes === 'function') debugFortunes('after_load_storypass');
   }
   window._loadStorypassFortunes = _loadStorypassFortunes;
 
@@ -50005,11 +50481,27 @@ Generate the title and synopsis now.` }
         body: JSON.stringify(checkoutBody)
       });
 
-      const data = await response.json();
+      const resp = await response.json();
+      const data = resp?.data || resp;
 
-      // Handle duplicate arc ownership
-      if (data.error === 'arc_already_owned') {
-        showToast(data.message || 'You already unlocked this arc.');
+      // Handle already-unlocked arc — skip Stripe, resume story immediately
+      if (data.alreadyUnlocked) {
+        console.log('[STRIPE] Arc already unlocked — resuming story without Stripe');
+        if (data.resume_payload) {
+          const p = data.resume_payload;
+          if (p.story_id) state.storyId = p.story_id;
+          if (p.picks) state.picks = p.picks;
+          if (p.archetype) state.archetype = p.archetype;
+          if (p.intensity) state.intensity = p.intensity;
+          if (p.storyLength) state.storyLength = p.storyLength;
+          if (p.fantasyRegion) state.fantasyRegion = p.fantasyRegion;
+          if (p.worldSubtype) state.worldSubtype = p.worldSubtype;
+          if (p.worldCustomText !== undefined) state.worldCustomText = p.worldCustomText;
+          if (p.storypassEligible !== undefined) state.storypassEligible = p.storypassEligible;
+          if (p.turnCount) state.turnCount = p.turnCount;
+        }
+        if (state.storyId && typeof _loadStorypassFortunes === 'function') await _loadStorypassFortunes();
+        if (typeof beginStoryEntry === 'function') beginStoryEntry();
         return;
       }
 
@@ -51618,7 +52110,8 @@ Generate the title and synopsis now.` }
     // deactivateGuidedFateVisuals() is called when dwell completes in openBook()
 
     highlightBeginButton();
-    showToast('Fate has spoken. Click Begin Story when ready.');
+
+    // Toast moved to end of autoplayCorridorFromGuidedFate() — after all rows animate
 
     // CORRIDOR: Mark corridor as complete since Guided Fate made all selections
     if (typeof completeCorridorFromGuidedFate === 'function') {
@@ -52193,8 +52686,7 @@ Generate the title and synopsis now.` }
    * Called when authorship row becomes visible
    */
   function initAuthorshipSparkles() {
-    // Both cards: same sparkle energy (6/sec each)
-    startSparkleEmitter('chooseHandSparkles', 'chooseHand', 6);
+    // Only Guided Fate gets ambient sparkles; Choose Your Hand sparkles appear on selection
     startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
   }
 
@@ -52291,8 +52783,8 @@ Generate the title and synopsis now.` }
     if (chooseCard?.classList.contains('selected')) {
       chooseCard.classList.remove('selected', 'flipped');
       state.authorship = null;
-      // Restore sparkles on both cards (same rate for both)
-      startSparkleEmitter('chooseHandSparkles', 'chooseHand', 6);
+      // Stop Choose Your Hand sparkles, restore Guided Fate ambient sparkles
+      stopSparkleEmitter('chooseHandSparkles');
       startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
       // Update control plane Continue visibility
       if (typeof updateCorridorContinueButtonVisibility === 'function') {
@@ -52334,8 +52826,7 @@ Generate the title and synopsis now.` }
     if (fateCard?.classList.contains('selected')) {
       fateCard.classList.remove('selected', 'flipped');
       state.authorship = null;
-      // Restore sparkles on both cards (same rate for both)
-      startSparkleEmitter('chooseHandSparkles', 'chooseHand', 6);
+      // Restore Guided Fate ambient sparkles (Choose Your Hand stays sparkle-free until selected)
       startSparkleEmitter('guidedFateSparkles', 'guidedFate', 6);
       // Update control plane Continue visibility
       if (typeof updateCorridorContinueButtonVisibility === 'function') {
@@ -53284,6 +53775,15 @@ Generate the title and synopsis now.` }
     }
 
     // ========================================
+    // PREMIUM WORLD GATE — Taste-tier redirect for complex worlds
+    // ========================================
+    if (!state.is_starter_story && isTeaseTier() && isPremiumWorld(state.picks?.world)) {
+        console.log('[BeginStory] EXITING — Premium World gate (taste tier, world:', state.picks.world, ')');
+        handlePremiumWorldTasteRedirect(state.picks.world, state.picks.worldSubtype);
+        return;
+    }
+
+    // ========================================
     // CONTINUE STORY CHECK — Navigate to existing story if shape matches
     // ========================================
     // If story exists AND shape snapshot matches → navigate only, NO regeneration
@@ -53320,9 +53820,17 @@ Generate the title and synopsis now.` }
     }
 
     // ═══════════════════════════════════════════════════════════════════
+    // STORYPASS ARC BYPASS — active storypass entitlement skips tease/fortune gates
+    // ═══════════════════════════════════════════════════════════════════
+    if (typeof debugFortunes === 'function') debugFortunes('before_fortune_gate');
+    const fortunes = getAvailableFortunes();
+    const _hasActiveStorypass = fortunes.storypass > 0
+        || (state.storyId && hasStoryPass(state.storyId));
+
+    // ═══════════════════════════════════════════════════════════════════
     // TEASE TIER GATE: Block new story creation if free story already consumed
     // ═══════════════════════════════════════════════════════════════════
-    if (isTeaseStoryBlocked()) {
+    if (!_hasActiveStorypass && isTeaseStoryBlocked()) {
         console.log('[BeginStory] EXITING — Tease story blocked (credits:', getFreeCustomStoryCredits(), 'access:', state.access, 'subscribed:', state.subscribed, ')');
         showToast('Free story credit used — unlock to continue');
         // Resolve storypass eligibility — always allow StoryPass for story-blocked users
@@ -53336,7 +53844,7 @@ Generate the title and synopsis now.` }
     // FORTUNE GATE: Story creation costs 1 Fortune (free tease range exempt)
     // ═══════════════════════════════════════════════════════════════════
     const _beginInFreeTease = isTeaseTier() && getFreeCustomStoryCredits() > 0;
-    if (!_beginInFreeTease && !state.is_starter_story) {
+    if (!_hasActiveStorypass && !_beginInFreeTease && !state.is_starter_story) {
         if (!hasFortunes()) {
             console.log('[BeginStory] EXITING — no Fortunes available');
             window.openFortunePurchaseModal();
@@ -64700,24 +65208,38 @@ Respond in this EXACT format (no labels, just two lines):
 
       // ═══════════════════════════════════════════════════════════════════
       // FORTUNE BURN: Complexity-scaled cost (Scene 1 = 1F, Scene 2+ scales)
-      // Consumption order: storypassFortunes → global fortunes
+      // Consumption order: drip → storypass → global (subscription → purchased)
+      // Drip fortunes expire — always consumed first
       // StoryPass fortunes are story-locked, scene-only, non-transferable
       // ═══════════════════════════════════════════════════════════════════
       const sceneCost = getSceneFortuneCost();
       const inFreeTease = isTeaseTier() && (state.turnCount || 0) < state.TEASE_SCENE_CAP;
       if (!inFreeTease) {
-          // 1. Try story-locked StoryPass fortunes first
-          if ((state.storypassFortunes || 0) >= sceneCost) {
-              state.storypassFortunes -= sceneCost;
+          // 0. Burn expiring drip fortunes first
+          let _sceneFromDrip = 0;
+          let _sceneCostAfterDrip = sceneCost;
+          if ((state.dripFortunes || 0) > 0) {
+              _sceneFromDrip = Math.min(state.dripFortunes, _sceneCostAfterDrip);
+              state.dripFortunes = Math.max(0, (state.dripFortunes || 0) - _sceneFromDrip);
+              _sceneCostAfterDrip -= _sceneFromDrip;
+              if (_sceneFromDrip > 0) console.log(`[Fortunes] Drip fortune consumed for scene: ${_sceneFromDrip}. Remaining drip: ${state.dripFortunes}`);
+          }
+
+          // If drip covered the full cost, done
+          if (_sceneCostAfterDrip <= 0) {
+              showFortuneSacrificeFeedback(sceneCost);
+          // 1. Try story-locked StoryPass fortunes
+          } else if ((state.storypassFortunes || 0) >= _sceneCostAfterDrip) {
+              state.storypassFortunes = Math.max(0, (state.storypassFortunes || 0) - _sceneCostAfterDrip);
               await _persistStorypassFortunes();
-              console.log(`[Fortunes] StoryPass fortune consumed for scene (cost: ${sceneCost}). Remaining:`, state.storypassFortunes);
+              console.log(`[Fortunes] StoryPass fortune consumed for scene (cost: ${_sceneCostAfterDrip}). Remaining:`, state.storypassFortunes);
               showFortuneSacrificeFeedback(sceneCost);
           } else if ((state.storypassFortunes || 0) > 0) {
               // Partial StoryPass + global fallback
-              const fromStorypass = state.storypassFortunes;
-              const fromGlobal = sceneCost - fromStorypass;
+              const fromStorypass = Math.min(state.storypassFortunes, _sceneCostAfterDrip);
+              const fromGlobal = _sceneCostAfterDrip - fromStorypass;
               state.storypassFortunes = 0;
-              console.log(`[Fortunes] StoryPass partially consumed (${fromStorypass}/${sceneCost}). Remainder from global: ${fromGlobal}`);
+              console.log(`[Fortunes] StoryPass partially consumed (${fromStorypass}/${_sceneCostAfterDrip}). Remainder from global: ${fromGlobal}`);
               if ((state.fortunes || 0) < fromGlobal) {
                   // ── CLIFFHANGER PROTECTION: narrative turning point bypass ──
                   if (!state.cliffhangerProtectionUsed && isCliffhangerMoment()) {
@@ -64727,7 +65249,8 @@ Respond in this EXACT format (no labels, just two lines):
                       await _persistStorypassFortunes();
                       console.log('[CLIFFHANGER] Protection activated — scene proceeds at 0 cost (partial path)');
                   } else {
-                      state.storypassFortunes += fromStorypass; // Rollback
+                      state.storypassFortunes += fromStorypass; // Rollback storypass
+                      if (_sceneFromDrip > 0) state.dripFortunes = (state.dripFortunes || 0) + _sceneFromDrip; // Rollback drip
                       state._isAdvancingScene = false;
                       if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
                       console.log('[FATE_PAUSES] Insufficient combined fortunes');
@@ -64737,7 +65260,8 @@ Respond in this EXACT format (no labels, just two lines):
               } else {
                   const burned = await consumeFortune(fromGlobal, 'scene');
                   if (!burned) {
-                      state.storypassFortunes += fromStorypass; // Rollback
+                      state.storypassFortunes += fromStorypass; // Rollback storypass
+                      if (_sceneFromDrip > 0) state.dripFortunes = (state.dripFortunes || 0) + _sceneFromDrip; // Rollback drip
                       state._isAdvancingScene = false;
                       if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
                       _openFatePausesModal('zero_fortunes');
@@ -64748,7 +65272,7 @@ Respond in this EXACT format (no labels, just two lines):
               showFortuneSacrificeFeedback(sceneCost);
           } else {
               // 2. Fall back to global fortune balance
-              if ((state.fortunes || 0) < sceneCost) {
+              if ((state.fortunes || 0) < _sceneCostAfterDrip) {
                   // ── CLIFFHANGER PROTECTION: narrative turning point bypass ──
                   if (!state.cliffhangerProtectionUsed && isCliffhangerMoment()) {
                       state.cliffhangerProtectionUsed = true;
@@ -64760,9 +65284,10 @@ Respond in this EXACT format (no labels, just two lines):
                       // Player is entitled but has insufficient fortunes.
                       // Capture turn, show narrative modal with offers.
                       // ═══════════════════════════════════════════════════════
+                      if (_sceneFromDrip > 0) state.dripFortunes = (state.dripFortunes || 0) + _sceneFromDrip; // Rollback drip
                       state._isAdvancingScene = false;
                       if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
-                      console.log(`[FATE_PAUSES] Insufficient fortunes (need ${sceneCost}, have ${state.fortunes || 0})`);
+                      console.log(`[FATE_PAUSES] Insufficient fortunes (need ${_sceneCostAfterDrip}, have ${state.fortunes || 0})`);
                       // Fate Event — fortune depleted
                       if ((state.fortunes || 0) === 0 && typeof window._tryTriggerFateEvent === 'function') {
                           window._tryTriggerFateEvent('first_time_fortune_depleted');
@@ -64771,8 +65296,9 @@ Respond in this EXACT format (no labels, just two lines):
                       return;
                   }
               } else {
-                  const burned = await consumeFortune(sceneCost, 'scene');
+                  const burned = await consumeFortune(_sceneCostAfterDrip, 'scene');
                   if (!burned) {
+                      if (_sceneFromDrip > 0) state.dripFortunes = (state.dripFortunes || 0) + _sceneFromDrip; // Rollback drip
                       state._isAdvancingScene = false;
                       if (submitBtn) { submitBtn.classList.remove('submitting'); submitBtn.disabled = false; }
                       console.log('[FATE_PAUSES] Fortune consumption failed — zero-fortune gate');
@@ -64798,9 +65324,13 @@ Respond in this EXACT format (no labels, just two lines):
       startLoading("Fate is weaving...", STORY_LOADING_MESSAGES);
 
       // ── LOW-FORTUNE MODAL: Show during loading overlay (non-blocking) ──
-      if (!state._lowFortuneModalShown) {
+      // Skip for storypass arcs — they use story-scoped fortunes, not global
+      const _lowFortunes = getAvailableFortunes();
+      const _hasStorypassArc = _lowFortunes.storypass > 0
+          || (state.storyId && hasStoryPass(state.storyId));
+      if (!_hasStorypassArc && !state._lowFortuneModalShown) {
           const _sceneCost = getSceneFortuneCost();
-          const _remaining = Math.floor((state.fortunes || 0) / Math.max(_sceneCost, 1));
+          const _remaining = Math.floor(_lowFortunes.global / Math.max(_sceneCost, 1));
           if (_remaining <= 3) {
               state._lowFortuneModalShown = true;
               setTimeout(() => {

@@ -1,43 +1,9 @@
-import crypto from 'crypto';
+import { buffer } from 'micro';
 import { createClient } from '@supabase/supabase-js';
 import { stripe as stripeClient } from '../lib/stripe.js';
 
 // Vercel: disable automatic body parsing so we can read the raw buffer
 export const config = { api: { bodyParser: false } };
-
-function readRawBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    req.on('data', (chunk) => chunks.push(chunk));
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
-}
-
-function verifyStripeSignature(rawBody, sigHeader, secret) {
-  if (!sigHeader || !secret) return false;
-
-  const parts = {};
-  for (const item of sigHeader.split(',')) {
-    const [key, val] = item.split('=');
-    parts[key] = val;
-  }
-
-  const timestamp = parts.t;
-  const expectedSig = parts.v1;
-  if (!timestamp || !expectedSig) return false;
-
-  const payload = `${timestamp}.${rawBody}`;
-  const computed = crypto
-    .createHmac('sha256', secret)
-    .update(payload, 'utf8')
-    .digest('hex');
-
-  return crypto.timingSafeEqual(
-    Buffer.from(computed, 'hex'),
-    Buffer.from(expectedSig, 'hex')
-  );
-}
 
 /**
  * Look up a profile by stripe_subscription_id first, fall back to stripe_customer_id.
@@ -79,24 +45,37 @@ export default async function handler(req, res) {
 
   let rawBody;
   try {
-    rawBody = await readRawBody(req);
+    rawBody = await buffer(req);
   } catch (err) {
     console.error('[stripe-webhook] Failed to read body:', err);
     return res.status(400).json({ error: 'Bad request' });
   }
 
-  const sig = req.headers['stripe-signature'];
-  if (!verifyStripeSignature(rawBody.toString('utf8'), sig, secret)) {
-    console.warn('[stripe-webhook] Signature verification failed');
-    return res.status(400).json({ error: 'Invalid signature' });
-  }
-
   let event;
-  try {
-    event = JSON.parse(rawBody.toString('utf8'));
-  } catch (err) {
-    console.error('[stripe-webhook] Invalid JSON:', err);
-    return res.status(400).json({ error: 'Invalid JSON' });
+  if (
+    req.headers.host?.includes('localhost') ||
+    process.env.VERCEL_ENV === 'development'
+  ) {
+    // Local development: skip signature verification
+    try {
+      event = JSON.parse(rawBody.toString());
+      console.log('[stripe-webhook] Local dev — skipped signature verification');
+    } catch (err) {
+      console.error('[stripe-webhook] Invalid JSON:', err.message);
+      return res.status(400).json({ error: 'Invalid JSON' });
+    }
+  } else {
+    // Production: verify Stripe signature
+    try {
+      event = stripeClient.webhooks.constructEvent(
+        rawBody,
+        req.headers['stripe-signature'],
+        secret
+      );
+    } catch (err) {
+      console.error('[stripe-webhook] Signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
   }
 
   console.log(`[stripe-webhook] Received: ${event.id} ${event.type}`);

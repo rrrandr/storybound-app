@@ -67,7 +67,11 @@ export default async function handler(req, res) {
       .eq('arc_number', arcNumber)
       .single();
     if (existing) {
-      return res.status(409).json({ error: 'arc_already_owned', message: 'You already unlocked this arc.' });
+      console.log(`[checkout] Arc already owned — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}. Returning resume payload.`);
+      return res.status(200).json({
+        alreadyUnlocked: true,
+        resume_payload: resumePayload || null,
+      });
     }
   }
 
@@ -90,11 +94,13 @@ export default async function handler(req, res) {
         resume_action: resumeAction || null,
         resume_payload: resumePayload || null,
       };
+      console.log('[checkout][DIAG] About to insert purchase_intents. supabase client exists:', !!supabase, 'intentRow:', JSON.stringify(intentRow));
       const { data: intent, error: intentErr } = await supabase
         .from('purchase_intents')
-        .upsert(intentRow, { onConflict: 'idx_purchase_intents_pending' })
+        .insert(intentRow)
         .select('id')
         .single();
+      console.log('[checkout][DIAG] Insert returned. data:', JSON.stringify(intent), 'error:', intentErr ? JSON.stringify({ message: intentErr.message, code: intentErr.code, details: intentErr.details, hint: intentErr.hint }) : 'null');
 
       if (intentErr) {
         console.warn('[checkout] Failed to create purchase intent:', intentErr.message);
@@ -119,6 +125,7 @@ export default async function handler(req, res) {
     // All tiers use ?purchase_return=1 — boot handler resumes via purchase intent
     const successParams = new URLSearchParams({ purchase_return: '1', tier });
     if (storyId) successParams.set('story_id', storyId);
+    if (purchaseIntentId) successParams.set('purchase_intent_id', purchaseIntentId);
     const successUrl = `${baseUrl}/?${successParams.toString()}`;
     const cancelUrl = `${baseUrl}/checkout-cancel`;
 

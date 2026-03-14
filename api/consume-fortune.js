@@ -44,5 +44,10 @@ export default async function handler(req, res) {
 
   const remaining = (result.subscription_fortunes || 0) + (result.purchased_fortunes || 0);
   console.log(`[consume-fortune] User ${userId}: ${burnAmount} fortune(s) consumed (context: ${context || 'none'}). Sub: ${result.subscription_fortunes}, Purchased: ${result.purchased_fortunes}, Total: ${remaining}`);
-  return res.status(200).json({ success: true, fortunesRemaining: remaining });
+  return res.status(200).json({
+    success: true,
+    fortunesRemaining: remaining,
+    subscriptionFortunes: result.subscription_fortunes || 0,
+    purchasedFortunes: result.purchased_fortunes || 0,
+  });
 }
