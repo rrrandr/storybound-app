@@ -1408,112 +1408,38 @@
         <button id="coverAbortBtn" class="cover-abort-btn" title="Cancel cover generation">✕</button>
       </div>
 
-      <!-- Physical book object - no buttons, click anywhere to open -->
+      <!-- Physical book object — CSS 3D white book, click anywhere to open -->
       <div id="bookObject" class="book-object hidden">
         <!-- Bookmark ribbon (visible for returning readers) -->
         <div id="bookmarkRibbon" class="bookmark-ribbon hidden"></div>
 
-        <!-- 3D book mockup base image (always visible) -->
-        <img id="book3dBase" class="book-3d-base"
-             src="/assets/Forbidde-Library-Art/3d-blank-book.png" alt="">
-
-        <!-- Cover art overlay — perspective-mapped onto the book's front face -->
-        <div id="bookCover" class="book-cover">
-          <img id="bookCoverImg" src="" alt="Book Cover" class="book-cover-image">
-          <!-- Blank white placeholder when no cover exists yet -->
-          <div id="coverBlankPlaceholder" class="cover-blank-placeholder hidden">
-            <p class="cover-blank-message">Your cover design will evolve as you shape the story</p>
-          </div>
-          <!-- Fallback cover: Intentional empty-state design (textured, Art Deco border, watermark) -->
-          <div id="coverFallback" class="cover-fallback hidden">
-            <!-- Art Deco border frame -->
-            <svg class="fallback-border" viewBox="0 0 320 480" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- Outer frame -->
-              <rect x="8" y="8" width="304" height="464" rx="4" stroke="currentColor" stroke-width="1.5"/>
-              <!-- Inner frame -->
-              <rect x="16" y="16" width="288" height="448" rx="2" stroke="currentColor" stroke-width="0.75" opacity="0.5"/>
-              <!-- Corner flourishes -->
-              <g opacity="0.6">
-                <!-- Top-left -->
-                <path d="M8,40 L8,8 L40,8" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M16,32 L16,16 L32,16" stroke="currentColor" stroke-width="0.75"/>
-                <!-- Top-right -->
-                <path d="M312,40 L312,8 L280,8" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M304,32 L304,16 L288,16" stroke="currentColor" stroke-width="0.75"/>
-                <!-- Bottom-left -->
-                <path d="M8,440 L8,472 L40,472" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M16,448 L16,464 L32,464" stroke="currentColor" stroke-width="0.75"/>
-                <!-- Bottom-right -->
-                <path d="M312,440 L312,472 L280,472" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M304,448 L304,464 L288,464" stroke="currentColor" stroke-width="0.75"/>
-              </g>
-              <!-- Top center keystone -->
-              <g transform="translate(160,0)" opacity="0.5">
-                <line x1="0" y1="24" x2="-20" y2="6" stroke="currentColor" stroke-width="0.6"/>
-                <line x1="0" y1="22" x2="0" y2="4" stroke="currentColor" stroke-width="0.7"/>
-                <line x1="0" y1="24" x2="20" y2="6" stroke="currentColor" stroke-width="0.6"/>
-                <circle cx="0" cy="18" r="4" stroke="currentColor" stroke-width="0.75"/>
-              </g>
-              <!-- Bottom center flourish -->
-              <g transform="translate(160,480)" opacity="0.5">
-                <line x1="0" y1="-24" x2="-20" y2="-6" stroke="currentColor" stroke-width="0.6"/>
-                <line x1="0" y1="-22" x2="0" y2="-4" stroke="currentColor" stroke-width="0.7"/>
-                <line x1="0" y1="-24" x2="20" y2="-6" stroke="currentColor" stroke-width="0.6"/>
-                <circle cx="0" cy="-18" r="4" stroke="currentColor" stroke-width="0.75"/>
-              </g>
-            </svg>
-            <!-- Embossed watermark (symbolic key) -->
-            <div class="fallback-watermark">
-              <svg viewBox="0 0 80 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Key bow (ring) -->
-                <circle cx="40" cy="24" r="18" stroke="currentColor" stroke-width="2"/>
-                <circle cx="40" cy="24" r="10" stroke="currentColor" stroke-width="1" opacity="0.5"/>
-                <!-- Key shaft -->
-                <line x1="40" y1="42" x2="40" y2="105" stroke="currentColor" stroke-width="3"/>
-                <!-- Key teeth -->
-                <path d="M40,85 L52,85 L52,92 L40,92" stroke="currentColor" stroke-width="2"/>
-                <path d="M40,95 L48,95 L48,102 L40,102" stroke="currentColor" stroke-width="2"/>
-              </svg>
+        <!-- CSS 3D Book — all-white placeholder; cover art replaces front face when generated -->
+        <div class="book-3d cover-book-3d">
+          <!-- Front cover -->
+          <div class="book-front cover-book-front" id="coverBookFront">
+            <!-- Cover art image (hidden until generated) -->
+            <img id="bookCoverImg" src="" alt="" class="cover-book-art">
+            <!-- White text placeholder (shown by default) -->
+            <div class="book-front-text cover-book-text" id="coverBookText">
+              <div class="book-front-title cover-book-title" id="coverBookTitle">Your Story</div>
+              <div class="book-front-author cover-book-author" id="coverBookAuthor">by S. Tory Bound</div>
             </div>
-            <!-- Title and author -->
-            <div class="fallback-title" id="fallbackTitle">Untitled</div>
-            <div class="fallback-author">by S. Tory Bound</div>
           </div>
-          <!-- Layer 2: Ornate border overlay (world-specific asset-based frame) -->
-          <!-- ORNATE BORDER SYSTEM: Image-based borders, one per world (6 total)
-               Asset path: /assets/borders/ornate/{world}_base.png
-               Worlds: modern, fantasy, scifi, historical, postapocalyptic, dystopia
-               Flavor: Affects surface condition (damage/aging/corrosion) via CSS filters, NOT geometry -->
-          <div id="coverOrnateBorder" class="cover-ornate-border hidden">
-            <img id="ornateBorderImg" class="ornate-border-img" src="" alt="" />
+          <!-- Spine -->
+          <div class="book-spine cover-book-spine">
+            <span class="spine-text" id="spineTitle"></span>
           </div>
-          <!-- Layer 3: Dirty keyhole takeover (world-specific mask-based frame) -->
-          <!-- DIRTY KEYHOLE SYSTEM: Mask-based keyholes, one silhouette per world (6 total)
-               Asset path: /assets/keyholes/{world}_mask.png
-               Worlds: modern, historical, fantasy, scifi, dystopia, postapocalyptic
-               Geometry: 8% top/bottom margin, 55-65% crown width, ≥22% stem width
-               Flavor: Affects surface condition (wear/corrosion/damage) via CSS filters, NOT aperture geometry
-               Content: Symbolic objects ONLY visible through aperture (no humans/body parts) -->
-          <div id="coverKeyholeOverlay" class="cover-keyhole-overlay hidden">
-            <div class="keyhole-plate" id="keyholeplate"></div>
-            <div class="keyhole-title"></div>
+          <!-- Back cover -->
+          <div class="book-back cover-book-back">
+            <div class="cover-book-back-inner">
+              <p class="cover-book-evolve-text">Your cover will evolve<br>as you shape the story</p>
+            </div>
           </div>
+          <!-- Page edges -->
+          <div class="book-pages-right"></div>
+          <div class="book-pages-top"></div>
+          <div class="book-pages-bottom"></div>
         </div>
-
-        <!-- Book pages underneath (visible during courtesy hinge) -->
-        <div id="bookPagesPreview" class="book-pages-preview">
-          <div class="page-edge-stack"></div>
-          <!-- Inside cover: BLANK paper only (no text, no images per spec) -->
-          <div id="bookInsideCover" class="book-inside-cover">
-            <!-- Intentionally empty: pure white/paper texture -->
-          </div>
-        </div>
-
-        <!-- Book spine/thickness -->
-        <div class="book-spine">
-            <span id="spineTitle" class="spine-text"></span>
-        </div>
-        <div class="book-thickness"></div>
       </div>
 
       <!-- Cover Next button (below book — matches synopsis page nav style) -->
@@ -1654,6 +1580,18 @@
         </div>
     </div>
 
+    <!-- Fate Threads Panel — optional narrative thread tracker -->
+    <div id="fateThreadsWrap" class="fate-threads-wrap hidden">
+      <button id="fateThreadsToggle" class="fate-threads-toggle">✦ Fate Threads</button>
+      <div id="fateThreadsPanel" class="fate-threads-panel hidden">
+        <div class="fate-threads-header">
+          <span class="fate-threads-title">Active Threads</span>
+          <button id="fateThreadsClose" class="fate-threads-close">&times;</button>
+        </div>
+        <ul id="fateThreadsList" class="fate-threads-list"></ul>
+      </div>
+    </div>
+
     <div id="vizSceneBtnWrap" class="vision-mobile-only" style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
         <button id="vizSceneBtn" onclick="window.summonVision()" class="small-btn">✨ Summon Vision</button>
     </div>
@@ -1688,6 +1626,7 @@
        <button id="submitBtn" style="font-size:1.3em;">Submit</button>
     </div>
 
+    <div id="fateCardWhisper" class="fate-card-whisper hidden"></div>
     <div id="fateCardHeader" class="section-title">Let Fate Guide You</div>
 
     <div style="display:flex; align-items:flex-start; justify-content:center;">

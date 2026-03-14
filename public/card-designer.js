@@ -257,7 +257,7 @@
     // so the output is self-contained and doesn't depend on prior stylesheet rules.
     // Without this, properties like position/width that were inherited from a previous
     // rule get lost when the output CSS replaces that rule.
-    if (isNew && el.closest('.sb-card-face')) {
+    if (isNew && el.closest('.sb-card-face') && !el.closest('.petition-zoom-overlay, .tempt-zoom-overlay')) {
       const cs = getComputedStyle(el);
       const props = mods.get(sel);
       if (!props['position'])  props['position']  = 'absolute';
@@ -337,7 +337,8 @@
 
     // Record position in CSS output for elements that were changed to positioned
     if (el.__designWasStatic) {
-      const isCardFaceChild = !!el.closest('.sb-card-face');
+      const isZoomOverlayChild = !!el.closest('.petition-zoom-overlay, .tempt-zoom-overlay');
+      const isCardFaceChild = !isZoomOverlayChild && !!el.closest('.sb-card-face');
       recordMod(el, 'position', isCardFaceChild ? 'absolute' : 'relative');
     }
 
@@ -825,8 +826,11 @@
     // Card-face children MUST use position:absolute — position:relative offsets
     // depend on flex layout, content centering, and font metrics, causing positions
     // to drift between Card Designer capture and page render.
+    // EXCEPTION: Petition/Tempt zoom overlay zones use their own flex layout and
+    // must NOT be ripped out of flow — only the overlay itself is absolute.
     const pos = el.style.position || getComputedStyle(el).position;
-    const isCardFaceChild = !!el.closest('.sb-card-face');
+    const isZoomOverlayChild = !!el.closest('.petition-zoom-overlay, .tempt-zoom-overlay');
+    const isCardFaceChild = !isZoomOverlayChild && !!el.closest('.sb-card-face');
     if (isCardFaceChild && pos !== 'absolute') {
       // Snapshot visual position before changing position mode
       const face = el.closest('.sb-card-face');

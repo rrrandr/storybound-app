@@ -15776,6 +15776,7 @@ Return ONLY valid JSON:
       state.reasonSeverity = 0; // Good Reasons — hidden severity tracker (keyword-detected escalation)
       state.voiceAnchor = null; // Voice Anchor — generated once per story after Scene 1
       state.cliffhangerProtectionUsed = false; // One-use narrative safeguard per depletion cycle
+      state.fateThreads = []; // Fate Thread tracker — persistent narrative elements
       if (typeof window._clearCorridorEchoSlots === 'function') window._clearCorridorEchoSlots();
 
       // Fate object — per-story tracking
@@ -21445,6 +21446,256 @@ Then write the scene prose (800-1200 words). Introduce both characters and estab
       return { safeAction: undefined, safeDialogue: undefined, flags: [], directive: "" };
   }
 
+  /**
+   * SAFETY REWRITE — Metaphorical Reinterpretation of Disallowed Sexual Actions
+   *
+   * When player input contains sexual escalation that the current gating does NOT allow,
+   * instead of stripping the input, rewrite it into a diegetically safe metaphorical
+   * equivalent that preserves the player's transgressive intent and emotional energy.
+   *
+   * Categories: embarrassment_metaphor, scandal_implication, theatrical_mischief, social_chaos
+   *
+   * Pipeline: Say/Do input → safety rewrite → normal narrative integration
+   */
+  function reinterpretSafetyAction(action, dialogue) {
+      // Only act on inputs that contain sexual/physical escalation
+      const hasEscalation = detectPlayerInitiation(action, dialogue);
+      if (!hasEscalation) {
+          return { action, dialogue, directive: '', rewritten: false, category: null };
+      }
+
+      // Check if escalation is currently allowed
+      const intimacyWindowOpen =
+          isIntimacyAllowedAtCurrentStoryturn() &&
+          (state.turnCount || 0) >= getMainPairIntimacyGateScene();
+
+      // If the intimacy window is open, escalation is allowed — pass through
+      if (intimacyWindowOpen) {
+          return { action, dialogue, directive: '', rewritten: false, category: null };
+      }
+
+      // Check for scene-level explicit context (NPC×NPC, brothel, dream, etc.)
+      const recentContext = (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent)
+          ? StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').slice(-3000)
+          : '';
+      if (detectSceneExplicitContext(recentContext)) {
+          return { action, dialogue, directive: '', rewritten: false, category: null };
+      }
+
+      // ── Escalation is DISALLOWED — reinterpret as metaphorical equivalent ──
+      const combined = ((action || '') + ' ' + (dialogue || '')).toLowerCase();
+
+      // ── DETERMINISTIC INTENT MAPPING ──
+      // Each escalation type maps to exactly one category. Randomization
+      // occurs only in the flavor hints within the selected category.
+
+      // Flavor pools — one random hint is picked per category per scene
+      const FLAVOR = {
+          scandal_implication: [
+              'give them gossip for a month',
+              'leave the room wondering what they almost witnessed',
+              'a scandal waiting to happen',
+              'the kind of moment that gets retold at every gathering',
+              'close enough that denying it would be its own confession'
+          ],
+          embarrassment_metaphor: [
+              'caught with our trousers around our ankles',
+              'standing scandalously unprepared',
+              'one embarrassing heartbeat away from humiliation',
+              'the kind of closeness that makes a person forget how to speak',
+              'mortifyingly aware of exactly how little space remained'
+          ],
+          theatrical_mischief: [
+              'give them a show worth interrupting',
+              'turn the room into a stage and dare someone to look away',
+              'the kind of provocation that deserves applause',
+              'a stunt so brazen it loops back around to charming',
+              'audacity dressed up as confidence'
+          ],
+          social_chaos: [
+              'set the social order on fire and warm your hands',
+              'break every unspoken rule in the room in a single gesture',
+              'the kind of move that rewrites the power dynamic on the spot',
+              'do something so bold the witnesses forget to be offended',
+              'upend the table — metaphorically, or not'
+          ]
+      };
+      const _pickFlavor = (cat) => FLAVOR[cat][Math.floor(Math.random() * FLAVOR[cat].length)];
+
+      // Classify escalation type → deterministic category
+      const isExplicitSex = /\b(straddle|mount|climb\s*on|make\s*love|have\s*sex|enter|enters|slip\s*(off|inside)|fingers?\s*(inside|between)|take\s*me|take\s*(her|him|them)\s*to\s*bed)\b/.test(combined);
+      const isDisrobing = /\b(undress|undressing|strip|unbutton|unzip|take\s*(off|her|him|my)\s*(clothes|shirt|dress|pants|bra|underwear)|pull\s*(down|off)\s*(her|his|my|their|the)|slip\s*off)\b/.test(combined);
+      const isPhysicalTouch = /\b(touch|touches|touching|caress|caresses|stroke|strokes|stroking|grab|grabs|pin|pins|push\s*(down|against|onto)|hands?\s*(under|beneath|inside)|lick|licks|suck|sucks|bite|bites)\b/.test(combined);
+      const isKiss = /\b(kiss|kisses|kissing|lips?\s*(on|to|against))\b/.test(combined);
+      // approach_intimate is the fallback for anything detectPlayerInitiation caught
+
+      let category, flavorHint;
+
+      if (isExplicitSex) {
+          category = 'scandal_implication';
+          flavorHint = _pickFlavor('scandal_implication');
+      } else if (isDisrobing) {
+          category = 'embarrassment_metaphor';
+          flavorHint = _pickFlavor('embarrassment_metaphor');
+      } else if (isPhysicalTouch) {
+          category = 'theatrical_mischief';
+          flavorHint = _pickFlavor('theatrical_mischief');
+      } else if (isKiss) {
+          category = 'theatrical_mischief';
+          flavorHint = _pickFlavor('theatrical_mischief');
+      } else {
+          // approach_intimate — pull close, embrace, lean in, press against
+          category = 'embarrassment_metaphor';
+          flavorHint = _pickFlavor('embarrassment_metaphor');
+      }
+
+      // ── CATEGORY-SPECIFIC DIRECTIVES ──
+      const CATEGORY_DIRECTIVES = {
+          scandal_implication: `SAFETY REWRITE — SCANDAL IMPLICATION:
+The player intended explicit sexual escalation that the current narrative stage does not support.
+REINTERPRET as SCANDAL IMPLICATION — a charged moment where what ALMOST happens speaks louder than what does.
+Proximity becomes scandal. The gesture implies everything, shows almost nothing. Others notice. Rumors will start. The air between them is an accusation.
+The physical intent transforms into: a lingering look seen by the wrong person, a hand caught mid-reach, closeness that onlookers misread (or read correctly).
+Flavor: "${flavorHint}"
+DO NOT depict the sexual act. DO NOT acknowledge the rewrite. Write as if this was always the intent.`,
+
+          embarrassment_metaphor: `SAFETY REWRITE — EMBARRASSMENT METAPHOR:
+The player intended disrobing or exposure that the current narrative stage does not support.
+REINTERPRET as EMBARRASSMENT — a moment of accidental or impulsive vulnerability that leaves both characters acutely, mortifyingly aware of each other's body.
+The sexual tension transforms into exquisite awkwardness: caught underprepared, a gesture that reveals too much intent, a state of undress that was never meant to be witnessed.
+Both characters FEEL the charge but express it as embarrassment, not consummation.
+Flavor: "${flavorHint}"
+DO NOT depict the disrobing or nudity. DO NOT acknowledge the rewrite. Write as if this was always the intent.`,
+
+          theatrical_mischief: `SAFETY REWRITE — THEATRICAL MISCHIEF:
+The player intended physical contact or a kiss that the current narrative stage does not support.
+REINTERPRET as THEATRICAL MISCHIEF — a dramatic, audacious, over-the-top gesture that channels desire into spectacle.
+The wanting becomes DOING something outrageous: a dare accepted, a rule broken publicly, a provocation that makes everyone stare.
+The scene should feel charged and transgressive, but the transgression is social theater, not consummation.
+Flavor: "${flavorHint}"
+DO NOT depict the sexual contact or kiss. DO NOT acknowledge the rewrite. Write as if this was always the intent.`,
+
+          social_chaos: `SAFETY REWRITE — SOCIAL CHAOS:
+The player intended intimate physical closeness that the current narrative stage does not support.
+REINTERPRET as SOCIAL CHAOS — a moment where boundaries are crossed socially, not sexually.
+The transgressive energy must be preserved: someone does something BOLD, DISRUPTIVE, SCANDALOUS that shakes the social order of the scene.
+Physical desire becomes social audacity. The body's want becomes the mouth's dare or the hand's reckless gesture.
+Flavor: "${flavorHint}"
+DO NOT depict the physical intimacy. DO NOT acknowledge the rewrite. Write as if this was always the intent.`
+      };
+
+      // ── SHARED ENFORCEMENT BLOCK — appended to every category directive ──
+      const enforcementBlock = `
+
+SAFETY REWRITE ENFORCEMENT (MANDATORY):
+The player attempted an action that cannot occur literally at the current arousal/intimacy level.
+
+Do NOT ignore this input.
+
+Instead reinterpret the intent metaphorically using embarrassment, scandal, or mischievous spectacle while keeping the tone playful.
+
+The narration should clearly echo or allude to the player's original intent — the reader should feel the desire behind the action even though the action itself is transformed.
+
+EXAMPLE HINT BLOCK:
+- "pull his pants down" → "caught with our trousers around our ankles"
+- "give them a show worth interrupting" → "give them something scandalous to whisper about"
+- "kiss her" → "the kind of provocation that deserves applause"
+- "undress" → "standing scandalously unprepared"
+
+The reinterpretation must feel like a CHOICE the character made, not a censorship the author imposed.
+
+PRIORITY when reinterpreting player input:
+1. Preserve the player's core intent
+2. Maintain world tone and character voice
+3. Maintain safety restrictions
+
+AGENCY RULE: The reinterpretation should emerge naturally from the character's choices, reactions, or body language rather than from narrator correction.`;
+
+      // ── FATELANDS FATE-DEFLECTION FLAVOR ──
+      // In Fatelands worlds, safety rewrites should feel like mythic fate-thread resistance
+      const worldIdentity = (state.picks?.world || '').toLowerCase();
+      const isFatelands = worldIdentity === 'fatelands' || worldIdentity === 'fate' || (state.world_identity || '').toLowerCase() === 'fatelands';
+      const fatelandsFlavorBlock = isFatelands ? `
+
+FATELANDS TONE (apply subtly):
+In Fatelands, moments of reckless desire sometimes feel as if Fate itself bends the thread of events away from disaster.
+
+The reinterpretation may lightly suggest this mythic resistance through subtle cues such as:
+- the weave of fate tightening
+- a thread of destiny slipping sideways
+- the Devouring Eye watching
+- the air shifting with unseen consequence
+- a tremor of Favor altering the moment
+
+These cues should be rare, subtle, and atmospheric — at most one per scene.
+Never explicitly say the action was "prevented."
+Keep the moment character-driven. Fate cues are texture, not explanation.` : '';
+
+      const directiveText = CATEGORY_DIRECTIVES[category] + enforcementBlock + fatelandsFlavorBlock;
+
+      console.log(`[SAFETY_REWRITE] ${category} (deterministic). Flavor: "${flavorHint}". Input: "${((action || '') + ' ' + (dialogue || '')).slice(0, 80)}..."`);
+
+      return {
+          action,        // Keep original action text — AI will reinterpret via directive
+          dialogue,      // Keep original dialogue text
+          directive: directiveText,
+          rewritten: true,
+          category
+      };
+  }
+
+  /**
+   * INTENT ANCHOR — Derive a short abstract intent sentence from player Say/Do input.
+   * Keeps scene narrative centered on what the player actually wanted.
+   * Returns empty string when inputs are empty.
+   */
+  function buildIntentAnchor(action, dialogue) {
+      const act = (action || '').trim();
+      const dia = (dialogue || '').trim();
+      if (!act && !dia) return '';
+
+      const combined = (act + ' ' + dia).toLowerCase();
+      const mcName = state.mc_name || 'The protagonist';
+
+      // ── Pattern → intent mapping (first match wins) ──
+      const INTENT_PATTERNS = [
+          // Intimacy / romance
+          [/\b(kiss|kissing|lips\s*(on|to|against))\b/, `${mcName} is testing romantic intimacy.`],
+          [/\b(confess|admit|tell\s*(her|him|them)\s*(i|how\s*i)\s*(love|feel))\b/, `${mcName} is risking emotional vulnerability.`],
+          [/\b(undress|strip|take\s*off|pull\s*down|unbutton)\b/, `${mcName} is provoking scandalous exposure.`],
+          [/\b(touch|caress|stroke|grab|embrace|hold\s*(close|tight))\b/, `${mcName} is reaching for physical closeness.`],
+          [/\b(straddle|mount|make\s*love|have\s*sex|seduce)\b/, `${mcName} is pursuing sexual escalation.`],
+          // Aggression / confrontation
+          [/\b(fight|attack|strike|hit|punch|stab|slash|shoot|kill)\b/, `${mcName} is escalating to physical confrontation.`],
+          [/\b(mock|taunt|insult|challenge|defy|confront)\b/, `${mcName} is challenging authority or provoking a reaction.`],
+          [/\b(threaten|intimidate|demand|force)\b/, `${mcName} is asserting dominance through threat.`],
+          // Escape / avoidance
+          [/\b(run|flee|escape|leave|walk\s*away|get\s*out|back\s*away)\b/, `${mcName} is attempting escape or withdrawal.`],
+          [/\b(hide|sneak|avoid|dodge|evade)\b/, `${mcName} is trying to stay hidden or avoid detection.`],
+          // Investigation / exploration
+          [/\b(search|investigate|examine|look\s*(at|for|around)|inspect|explore)\b/, `${mcName} is investigating surroundings.`],
+          [/\b(read|study|decipher|translate|analyze)\b/, `${mcName} is seeking knowledge or understanding.`],
+          // Social / negotiation
+          [/\b(persuade|convince|negotiate|bargain|beg|plead)\b/, `${mcName} is attempting persuasion or negotiation.`],
+          [/\b(lie|deceive|trick|pretend|bluff|fake)\b/, `${mcName} is using deception to gain advantage.`],
+          [/\b(apologize|sorry|forgive|make\s*amends)\b/, `${mcName} is seeking reconciliation.`],
+          [/\b(refuse|resist|deny|reject|say\s*no)\b/, `${mcName} is resisting expectations or demands.`],
+          // Emotional
+          [/\b(cry|weep|break\s*down|sob)\b/, `${mcName} is surrendering to overwhelming emotion.`],
+          [/\b(laugh|joke|tease|play)\b/, `${mcName} is deflecting tension with levity.`],
+          [/\b(protect|defend|shield|save|guard)\b/, `${mcName} is protecting someone or something.`],
+          [/\b(steal|take|grab|pocket|swipe)\b/, `${mcName} is seizing something for themselves.`],
+          [/\b(give|offer|hand|share|sacrifice)\b/, `${mcName} is offering something of themselves.`]
+      ];
+
+      for (const [pattern, intent] of INTENT_PATTERNS) {
+          if (pattern.test(combined)) return intent;
+      }
+
+      // Fallback: generic risk/escalation anchor
+      return `${mcName} pushes the moment toward risk or escalation.`;
+  }
+
   function buildConsentDirectives() {
       return "SAFETY & CONSENT RULES: All interactions must depict consensual dynamics. No violence or coercion. All dynamics must be clearly enthusiastic and consensual. ";
   }
@@ -25047,6 +25298,8 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
       const interactiveIds = [
           'cardMount',         // Fate cards grid
           'fateCardHeader',    // "Let Fate Guide You" header
+          'fateOwnHandsLabel', // "Take Fate In Your Own Hands" label
+          'fateSpecialCards',  // Petition & Tempt Fate cards
           'metaControls',      // Meta stance buttons (Aid/Resist/Tempt)
           'actionWrapper',     // Action input
           'dialogueWrapper',   // Dialogue input
@@ -37749,7 +38002,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // 'scene' is excluded because scene advancement already handles storypass upstream.
   // tempt_fate excluded — it's a premium mechanic that must only burn global fortunes.
   const STORY_SCOPED_FORTUNE_CONTEXTS = new Set([
-      'pov_extension', 'alt_pov_generation', 'visualization', 'petition'
+      'pov_extension', 'alt_pov_generation', 'petition'
   ]);
 
   // Consume fortunes via deterministic burn order:
@@ -37758,7 +38011,7 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // 3. subscriptionFortunes → purchasedFortunes (server-side RPC)
   // Contexts that must ONLY burn global fortunes (subscription/purchased).
   // Storypass and drip pools are never used for these premium mechanics.
-  const GLOBAL_ONLY_FORTUNE_CONTEXTS = new Set(['tempt_fate']);
+  const GLOBAL_ONLY_FORTUNE_CONTEXTS = new Set(['tempt_fate', 'visualization']);
 
   async function consumeFortune(amount = 1, context = 'general') {
       // ── Global-only guard (premium mechanics) ──
@@ -54088,50 +54341,40 @@ Generate the title and synopsis now.` }
 
     const preGeneratedCover = window.getPreGeneratedCover ? window.getPreGeneratedCover() : null;
 
+    // ── Populate CSS 3D white book with title/author ──
+    const earlyTitle = state.story?.title
+        || state._backgroundStoryTitle
+        || document.getElementById('storyTitle')?.textContent
+        || state.title
+        || 'Your Story';
+    const cleanedTitle = earlyTitle.replace(/^["']|["']$/g, '');
+    const coverBookTitle = document.getElementById('coverBookTitle');
+    const coverBookAuthor = document.getElementById('coverBookAuthor');
+    if (coverBookTitle) coverBookTitle.textContent = cleanedTitle;
+    if (coverBookAuthor) coverBookAuthor.textContent = 'by ' + (CANONICAL_AUTHOR_NAME || 'S. Tory Bound');
+
+    const bookObject = document.getElementById('bookObject');
+    const coverLoadingState = document.getElementById('coverLoadingState');
+    const coverImg = document.getElementById('bookCoverImg');
+    if (bookObject) bookObject.classList.remove('hidden');
+    if (coverLoadingState) coverLoadingState.classList.add('hidden');
+
     if (preGeneratedCover) {
-      // User already generated a cover — apply directly, NO loading UI
+      // User already generated a cover — show art on front face
       console.log('[COVER:BEGIN] Using pre-generated cover:', preGeneratedCover);
-      const coverImg = document.getElementById('bookCoverImg');
-      const bookObject = document.getElementById('bookObject');
-      const coverLoadingState = document.getElementById('coverLoadingState');
       if (coverImg) { coverImg.src = preGeneratedCover; coverImg.style.display = ''; }
-      if (bookObject) bookObject.classList.remove('hidden');
-      if (coverLoadingState) coverLoadingState.classList.add('hidden');
-      const blankPh0 = document.getElementById('coverBlankPlaceholder');
-      if (blankPh0) blankPh0.classList.add('hidden');
       if (window.clearPreGeneratedCover) window.clearPreGeneratedCover();
-      const coverNextC0 = document.getElementById('coverNextContainer');
-      if (coverNextC0) coverNextC0.classList.remove('hidden');
     } else {
-      // No pre-generated cover — show fallback design with title/author
-      // Cover generation is explicit user action only (via "Generate Your Cover" button)
-      console.log('[COVER:BEGIN] No pre-generated cover — showing fallback cover');
-      const bookObject = document.getElementById('bookObject');
-      const coverLoadingState = document.getElementById('coverLoadingState');
-      const coverImg = document.getElementById('bookCoverImg');
-      const blankPh = document.getElementById('coverBlankPlaceholder');
-      const fallbackCover = document.getElementById('coverFallback');
-      const fallbackTitleEl = document.getElementById('fallbackTitle');
-      if (bookObject) bookObject.classList.remove('hidden');
-      if (coverLoadingState) coverLoadingState.classList.add('hidden');
+      // No pre-generated cover — white 3D book with title/author is the cover
+      console.log('[COVER:BEGIN] Showing CSS 3D white book placeholder');
       if (coverImg) coverImg.style.display = 'none';
-      if (blankPh) blankPh.classList.add('hidden');
-      if (fallbackCover) fallbackCover.classList.remove('hidden');
-      // Populate title immediately if available
-      if (fallbackTitleEl) {
-          const earlyTitle = state.story?.title
-              || state._backgroundStoryTitle
-              || document.getElementById('storyTitle')?.textContent
-              || state.title
-              || 'Your Story';
-          fallbackTitleEl.textContent = earlyTitle.replace(/^["']|["']$/g, '');
-      }
-      // Populate spine text
-      if (typeof window.updateSpineText === 'function') window.updateSpineText();
-      // Show Next button below book
-      const coverNextC = document.getElementById('coverNextContainer');
-      if (coverNextC) coverNextC.classList.remove('hidden');
     }
+
+    // Populate spine text
+    if (typeof window.updateSpineText === 'function') window.updateSpineText();
+    // Show Next button below book
+    const coverNextC = document.getElementById('coverNextContainer');
+    if (coverNextC) coverNextC.classList.remove('hidden');
 
     console.log('[BeginStory] Phase 2 complete — starting loader and API calls');
     startLoading("Conjuring the world...", STORY_LOADING_MESSAGES);
@@ -54988,6 +55231,15 @@ Replace generic nouns with world-appropriate equivalents wherever possible.
 Vocabulary must be consistent with the selected world — do NOT borrow terms from other worlds.
 
 QUALITY GATE: If this scene could be relocated to a different world setting with only name changes, it has FAILED.`}
+
+${storyWorld !== 'Modern' ? `COLLOQUIALISM & IDIOM BAN (NON-MODERN WORLD):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Characters must NOT use modern Earth idioms, slang, or culture-specific references in dialogue or narration.
+✗ "brought popcorn for this show" → ✓ world-native humor expression
+✗ "hit the brakes" / "dropped the mic" / "reality check" → ✓ world-appropriate metaphor
+✗ "okay" / "cool" / "whatever" / "literally" → ✓ period/world-appropriate language
+✗ Modern food names (popcorn, pizza, coffee) → ✓ invented world equivalent or sensory description
+If a character would naturally use a colloquial expression, translate it into something native to this world.` : ''}
 
 TEXTURE OVER SUMMARY:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -56507,6 +56759,7 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
                       // If synopsis was waiting for this image, reveal it now
                       if (window._synopsisWaitingForImage) {
                           window._synopsisWaitingForImage = false;
+                          if (window._synopsisImageTimeout) { clearTimeout(window._synopsisImageTimeout); window._synopsisImageTimeout = null; }
                           const storyText = document.getElementById('storyText');
                           if (storyText) {
                               storyText.classList.remove('hidden');
@@ -56518,14 +56771,32 @@ FIGURES: If any human silhouette appears, it must face AWAY and occupy less than
               sceneImg.onerror = () => {
                   console.warn('[BookScene] Image failed to load');
                   if (loadingEl) loadingEl.textContent = '';
+                  // Reveal synopsis page if it was waiting for this image
+                  if (window._synopsisWaitingForImage && _readerPage === 1) {
+                      window._synopsisWaitingForImage = false;
+                      const st = document.getElementById('storyText');
+                      if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
+                  }
               };
           } else {
               // Generation failed — hide loading text silently
               if (loadingEl) loadingEl.textContent = '';
+              // Reveal synopsis page if it was waiting for this image
+              if (window._synopsisWaitingForImage && _readerPage === 1) {
+                  window._synopsisWaitingForImage = false;
+                  const st = document.getElementById('storyText');
+                  if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
+              }
           }
       } catch (err) {
           console.warn('[BookScene] Generation failed:', err.message);
           if (loadingEl) loadingEl.textContent = '';
+          // Reveal synopsis page if it was waiting for this image
+          if (window._synopsisWaitingForImage && _readerPage === 1) {
+              window._synopsisWaitingForImage = false;
+              const st = document.getElementById('storyText');
+              if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
+          }
       }
   }
 
@@ -59197,19 +59468,24 @@ ${buildVisualContinuityDirective()}`
    * Reset cover overlay layers (called when resetting book state)
    */
   function resetCoverLayers() {
+      // Reset cover art image on CSS 3D book front face
+      const coverImg = document.getElementById('bookCoverImg');
+      if (coverImg) { coverImg.src = ''; coverImg.style.display = 'none'; }
+      // Show text placeholder again
+      const coverText = document.getElementById('coverBookText');
+      if (coverText) coverText.style.display = '';
+      // Reset title/author to defaults
+      const coverTitle = document.getElementById('coverBookTitle');
+      const coverAuthor = document.getElementById('coverBookAuthor');
+      if (coverTitle) coverTitle.textContent = 'Your Story';
+      if (coverAuthor) coverAuthor.textContent = 'by S. Tory Bound';
+      // Legacy elements (null-guarded — no longer in DOM)
       const fallbackEl = document.getElementById('coverFallback');
       const borderEl = document.getElementById('coverOrnateBorder');
       const keyholeEl = document.getElementById('coverKeyholeOverlay');
-      const coverImg = document.getElementById('bookCoverImg');
-      const borderImg = document.getElementById('ornateBorderImg');
-      const keyholeplate = document.getElementById('keyholeplate');
-
       if (fallbackEl) { fallbackEl.classList.add('hidden'); fallbackEl.innerHTML = ''; }
       if (borderEl) { borderEl.className = 'cover-ornate-border hidden'; }
-      if (borderImg) { borderImg.src = ''; borderImg.onload = null; borderImg.onerror = null; }
       if (keyholeEl) { keyholeEl.className = 'cover-keyhole-overlay hidden'; }
-      if (keyholeplate) { keyholeplate.style.webkitMaskImage = ''; keyholeplate.style.maskImage = ''; }
-      if (coverImg) { coverImg.style.display = ''; }
   }
 
   // ============================================================
@@ -60379,7 +60655,7 @@ ${buildVisualContinuityDirective()}`;
       if (_readerPage === 1) {
           const storyText = document.getElementById('storyText');
           if (hasSettingImage) {
-              // Image ready — show synopsis with image
+              // Image ready — show synopsis with image together
               if (storyText) {
                   storyText.style.opacity = '1';
                   storyText.classList.remove('hidden');
@@ -60392,14 +60668,23 @@ ${buildVisualContinuityDirective()}`;
               window._synopsisWaitingForImage = false;
               console.log('[CURL-CHAIN] → synopsis page: storyText revealed with inline image');
           } else {
-              // No image yet — show synopsis text immediately, image will append when ready
+              // No image yet — hold synopsis hidden until image arrives
               if (storyText) {
-                  storyText.classList.remove('hidden');
-                  storyText.style.opacity = '1';
-                  storyText.classList.add('synopsis-page-active');
+                  storyText.classList.add('hidden', 'synopsis-page-active');
+                  storyText.style.opacity = '0';
               }
               window._synopsisWaitingForImage = true;
-              console.log('[CURL-CHAIN] → synopsis page: showing text, waiting for setting image');
+              // Safety timeout: reveal synopsis after 12s even without image
+              if (window._synopsisImageTimeout) clearTimeout(window._synopsisImageTimeout);
+              window._synopsisImageTimeout = setTimeout(() => {
+                  if (window._synopsisWaitingForImage && _readerPage === 1) {
+                      window._synopsisWaitingForImage = false;
+                      console.log('[CURL-CHAIN] Synopsis image timeout — revealing without image');
+                      const st = document.getElementById('storyText');
+                      if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
+                  }
+              }, 12000);
+              console.log('[CURL-CHAIN] → synopsis page: holding for setting image');
           }
           _restorePageIndicator();
           return;
@@ -60501,15 +60786,6 @@ ${buildVisualContinuityDirective()}`;
           const curlChainActive = window._frontispieceActive || false;
           // Clear settingPlate active flag — synopsis page handles image inline
           window._settingPlateActive = false;
-          if (storyText) {
-              storyText.classList.add('synopsis-page-active');
-              // Don't reveal storyText while frontispiece curl chain is active
-              // — the curl chain's _revealSettingOrScene() will unhide it when done
-              if (!curlChainActive) {
-                  storyText.style.opacity = '1';
-                  storyText.classList.remove('hidden');
-              }
-          }
 
           // Show synopsis
           const sceneSynopsis = document.getElementById('sceneSynopsis');
@@ -60529,13 +60805,41 @@ ${buildVisualContinuityDirective()}`;
           const synImg = document.getElementById('synopsisSettingImg');
           const sceneImg = document.getElementById('bookSceneImg');
           const hasImg = sceneImg && sceneImg.src && sceneImg.src !== '' && sceneImg.src !== window.location.href;
+
+          if (storyText) {
+              storyText.classList.add('synopsis-page-active');
+          }
+
           if (synImg && hasImg) {
+              // Image already loaded — show everything together
               synImg.src = sceneImg.src;
               synImg.classList.remove('hidden');
+              if (storyText && !curlChainActive) {
+                  storyText.style.opacity = '1';
+                  storyText.classList.remove('hidden');
+              }
           } else if (synImg) {
               synImg.classList.add('hidden');
-              // Image not loaded yet — show synopsis text immediately, image will append when ready
+              // Image not ready — hold synopsis hidden until image arrives
               window._synopsisWaitingForImage = true;
+              if (storyText) {
+                  storyText.classList.add('hidden');
+                  storyText.style.opacity = '0';
+              }
+              // Safety timeout: reveal synopsis after 12s even without image
+              if (window._synopsisImageTimeout) clearTimeout(window._synopsisImageTimeout);
+              window._synopsisImageTimeout = setTimeout(() => {
+                  if (window._synopsisWaitingForImage && _readerPage === 1) {
+                      window._synopsisWaitingForImage = false;
+                      console.log('[READER] Synopsis image timeout — revealing without image');
+                      const st = document.getElementById('storyText');
+                      if (st) { st.classList.remove('hidden'); st.style.opacity = '1'; }
+                  }
+              }, 12000);
+          } else if (storyText && !curlChainActive) {
+              // No synImg element at all — just show
+              storyText.style.opacity = '1';
+              storyText.classList.remove('hidden');
           }
 
           // Hide fate cards, inputs, buttons — only Next survives
@@ -60564,6 +60868,10 @@ ${buildVisualContinuityDirective()}`;
           // SCENE 2+: Show story content with inline setting image
           if (bookCoverPage) bookCoverPage.classList.add('hidden');
           if (storyContent) storyContent.classList.remove('hidden');
+
+          // Clear synopsis image wait state (leaving synopsis page)
+          window._synopsisWaitingForImage = false;
+          if (window._synopsisImageTimeout) { clearTimeout(window._synopsisImageTimeout); window._synopsisImageTimeout = null; }
 
           // Hide title page (it should only show once at story start)
           const titlePage = document.getElementById('sbTitlePage');
@@ -61043,16 +61351,16 @@ ${buildVisualContinuityDirective()}`;
           });
       }
 
-      // Cover shimmer: sweep effect when cover art loads
+      // Cover shimmer: sweep effect when cover art loads on CSS 3D book front face
       const coverImg = document.getElementById('bookCoverImg');
       if (coverImg) {
           coverImg.addEventListener('load', () => {
-              const cover = document.getElementById('bookCover');
-              if (!cover) return;
-              cover.classList.remove('cover-shimmer');
-              void cover.offsetWidth; // force reflow to restart animation
-              cover.classList.add('cover-shimmer');
-              setTimeout(() => cover.classList.remove('cover-shimmer'), 1300);
+              const front = document.getElementById('coverBookFront');
+              if (!front) return;
+              front.classList.remove('cover-shimmer');
+              void front.offsetWidth;
+              front.classList.add('cover-shimmer');
+              setTimeout(() => front.classList.remove('cover-shimmer'), 1300);
           });
       }
 
@@ -63563,9 +63871,9 @@ Condensed (under ${maxLength} chars):` }
       }
   }
 
-  // Re-Visualize handler: opens fortune purchase if no fortunes
+  // Re-Visualize handler: opens fortune purchase if no global fortunes
   window.handleReVisualize = function() {
-      if (!hasFortunes()) {
+      if (!hasGlobalFortunes()) {
           openFortunePurchaseModal();
           return;
       }
@@ -63978,14 +64286,14 @@ Respond in this EXACT format (no labels, just two lines):
           return;
       }
 
-      // Check fortunes
-      if (!hasFortunes()) {
-          console.log('[Fortunes] No fortunes — showing purchase modal');
+      // Check global fortunes (visualization is a premium feature — storypass not eligible)
+      if (!hasGlobalFortunes()) {
+          console.log('[Fortunes] No global fortunes for visualization — showing purchase modal');
           openFortunePurchaseModal();
           return;
       }
 
-      // Has Fortunes — proceed with visualization
+      // Has global Fortunes — proceed with visualization
       console.log('[Vision]', isRe ? 'Re-Summon' : 'Initial Summon Vision');
 
       // Hide consent UI since we have access
@@ -65351,8 +65659,13 @@ Respond in this EXACT format (no labels, just two lines):
           user_text: rawDia,
           context_signals: state.picks?.world || []
       });
-      const act = actNorm.canonical_instruction || actNorm.normalized_text || rawAct;
-      const dia = diaNorm.canonical_instruction || diaNorm.normalized_text || rawDia;
+      let act = actNorm.canonical_instruction || actNorm.normalized_text || rawAct;
+      let dia = diaNorm.canonical_instruction || diaNorm.normalized_text || rawDia;
+
+      // ── SAFETY REWRITE: Metaphorical reinterpretation of disallowed sexual actions ──
+      // Runs BEFORE sanitizeUserIntent. Preserves player intent as metaphorical equivalent.
+      const safetyRewrite = reinterpretSafetyAction(act, dia);
+      const safetyRewriteDirective = safetyRewrite.directive;
 
       // Store current player input for render tier routing (input complexity detection)
       state._currentPlayerInput = (act + ' ' + dia).trim();
@@ -65375,6 +65688,26 @@ Respond in this EXACT format (no labels, just two lines):
           return;
       }
 
+      // ── INTENT ANCHOR: keep narrative centered on player intent ──
+      // When safety rewrite is active, derive anchor from the rewrite category
+      // to avoid conflicting guidance between literal action and reinterpretation.
+      const _REWRITE_CATEGORY_ANCHORS = {
+          embarrassment_metaphor: 'risks embarrassment or awkward proximity',
+          scandal_implication: 'provokes scandal or dangerous rumor',
+          theatrical_mischief: 'turns tension into bold spectacle',
+          social_chaos: 'disrupts the social order'
+      };
+      const mcName = state.mc_name || 'The protagonist';
+      let _intentAnchorText;
+      if (safetyRewrite.rewritten && safetyRewrite.category && _REWRITE_CATEGORY_ANCHORS[safetyRewrite.category]) {
+          _intentAnchorText = `${mcName} ${_REWRITE_CATEGORY_ANCHORS[safetyRewrite.category]}.`;
+      } else {
+          _intentAnchorText = buildIntentAnchor(act, dia);
+      }
+      const intentAnchorDirective = _intentAnchorText
+          ? `\nINTENT ANCHOR:\n${_intentAnchorText}\nThe scene should remain centered on this intent. Characters may reinterpret or resist the action, but the narrative tension should continue revolving around this intent until the turn resolves. Do not repeat this anchor verbatim in narration — it guides narrative focus only. The Intent Anchor should guide the early and mid scene but should relax once the immediate consequences of the player's action have resolved.\n`
+          : '';
+
       // Get story context from all pages
       const allContent = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ');
       const context = allContent.slice(-3000);
@@ -65392,7 +65725,7 @@ Respond in this EXACT format (no labels, just two lines):
       }
 
       // MAIN PAIR AUTHORIZATION — ST3 + SceneGate + (PlayerInitiated OR 2+ turns in window)
-      const playerInitiated = detectPlayerInitiation(safeAction, safeDialogue);
+      const playerInitiated = detectPlayerInitiation(act, dia);
       const mainPairAuthorized =
           (intimacyWindowOpen &&
            (playerInitiated ||
@@ -65672,6 +66005,35 @@ May NOT: jump to explicit anatomy, override consent, force non-consensual dynami
       // WORLD PHYSICS PRIORITY — Flavor governs scene physics, not background lore
       // TAG: storybound/world-physics-priority-v1
       // ═══════════════════════════════════════════════════════════════════════════
+      // ═══════════════════════════════════════════════════════════════════
+      // COLLOQUIALISM GUARD — Prevent modern idioms in non-modern worlds
+      // ═══════════════════════════════════════════════════════════════════
+      function buildColloquialismGuardDirective() {
+          const world = state.picks?.world;
+          if (!world) return '';
+          // Modern and near-future worlds allow contemporary language
+          if (world === 'Modern') return '';
+
+          const worldLabel = world === 'Fantasy' ? 'the Fatelands'
+              : world === 'Historical' ? 'the historical era'
+              : world === 'SciFi' ? 'this future civilization'
+              : world === 'Dystopia' ? 'this dystopian society'
+              : world === 'PostApocalyptic' ? 'this post-collapse world'
+              : 'this world';
+
+          return `\n\nCOLLOQUIALISM & ANACHRONISM GUARD (MANDATORY — ${world.toUpperCase()} WORLD):
+Characters in ${worldLabel} do not use modern Earth idioms, slang, or culture-specific references.
+BANNED in dialogue and narration:
+- Modern food/drink names with no world equivalent (popcorn, pizza, coffee, soda, etc.) — invent a world-appropriate term or describe the item by its qualities
+- Modern idioms ("brought popcorn for this show", "hit the brakes", "dropped the mic", "game plan", "reality check", "red flag", etc.) — replace with world-native expressions that convey the same meaning
+- Contemporary slang ("okay", "cool", "chill", "no way", "whatever", "literally", "vibes", etc.) — use period/world-appropriate language
+- Earth-specific cultural references (movies, sports, brands, memes, pop culture) — these do not exist in ${worldLabel}
+- Modern measurements and systems unless they exist in-world
+
+SUBSTITUTION RULE: When a character would naturally reach for a colloquial expression, translate it into something native to ${worldLabel}. The replacement should feel organic, not forced — a Fatelands soldier might say "I should have brought a flask of dreambrew for this spectacle" instead of "I should have brought popcorn for this show."
+If uncertain whether a term is anachronistic, err on the side of world-appropriate language.`;
+      }
+
       function buildWorldPhysicsDirective() {
           const world = state.picks?.world;
           const flavor = state.picks?.worldSubtype || state.worldCustomText;
@@ -65731,6 +66093,234 @@ Do NOT substitute generic genre tropes when the world flavor specifies a differe
 ${specificPhysics}` : `
 The defining system of the world flavor must appear in the first paragraph of the scene.`}
 If the generated scene does not visibly express the world's defining mechanism in paragraph one, the scene is incorrect.\n`;
+      }
+
+      /**
+       * 3-SCENE IGNITION PATTERN — prevents circular emotional loops in story openings.
+       * Scenes 1-3 each have a specific narrative job: Situation → Meaning → Choice.
+       * Returns empty string after scene 3 (ignition complete).
+       */
+      function buildIgnitionPatternDirective() {
+          const sceneIndex = state.turnCount || 0;
+
+          if (sceneIndex === 0) {
+              return `\n3-SCENE IGNITION — PHASE 1: SITUATION
+This is the opening scene. Establish what physically happened or what is currently wrong.
+Show the concrete situation: a ritual that failed, a relic that shattered, a battle just ended, a character arriving somewhere dangerous, a discovery, a loss.
+Do NOT spend this scene on abstract emotional discussion. Ground the reader in observable reality first.
+Introduce at least one new concrete fact the reader has never seen before.`;
+          }
+
+          if (sceneIndex === 1) {
+              return `\n3-SCENE IGNITION — PHASE 2: MEANING
+This is the second scene. Reveal why the situation from Scene 1 matters.
+Explain the stakes: what depends on the outcome, what was lost, why the object or event is important, what the consequences of failure are.
+Do NOT repeat Scene 1's emotional beats. Introduce new information that recontextualizes what the reader already knows.
+Emotional dialogue should follow this new revelation, not replace it.`;
+          }
+
+          if (sceneIndex === 2) {
+              return `\n3-SCENE IGNITION — PHASE 3: CHOICE
+This is the third scene. Introduce a decision or conflict that demands action.
+Present a fork: repair or abandon, trust or reject, pursue or retreat, sacrifice or refuse.
+The protagonist (or the situation) must move toward a concrete choice. Do NOT circle back to the emotional stakes of Scenes 1-2 without progressing the story.
+Each scene must introduce new information. Do not repeat the same emotional discussion across scenes.
+This scene should also present a concrete tension or decision that invites the player's next action — end on a moment where the player clearly has something to DO or SAY in response.`;
+          }
+
+          return ''; // Ignition complete — no directive after scene 3
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // WORLD PRESSURE PULSE — periodic environmental/political/magical pressure
+      // Injects world-specific pressure into scenes at intervals scaled by Fate Resonance.
+      // This is atmospheric direction, not outcome alteration.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildWorldPressurePulseDirective() {
+          const sceneIndex = state.turnCount || 0;
+          if (sceneIndex < 3) return ''; // Let ignition pattern own the first 3 scenes
+
+          const resonanceState = getFateResonanceState();
+
+          // Frequency: how often the pulse fires, scaled by Fate Resonance
+          // Quiet → every 5 turns, Stirring → every 4, Resonant → every 3,
+          // Unstable → every 2, Thinning → every turn
+          const PULSE_FREQUENCY = {
+              Quiet: 5,
+              Stirring: 4,
+              Resonant: 3,
+              Unstable: 2,
+              Thinning: 1
+          };
+          const freq = PULSE_FREQUENCY[resonanceState] || 5;
+
+          // Offset by 3 (ignition) so first possible pulse is scene 3 + freq
+          if ((sceneIndex - 3) % freq !== 0) return '';
+
+          // Intensity label for the directive
+          const PULSE_INTENSITY = {
+              Quiet: 'a brief atmospheric hint',
+              Stirring: 'a subtle but noticeable detail',
+              Resonant: 'a clear environmental or social intrusion',
+              Unstable: 'a strong external pressure that characters must acknowledge',
+              Thinning: 'an unmistakable force bearing down on the scene'
+          };
+          const intensity = PULSE_INTENSITY[resonanceState] || 'a brief atmospheric hint';
+
+          const world = state.picks?.world || 'Modern';
+
+          // World-specific pressure examples
+          const WORLD_PRESSURE_EXAMPLES = {
+              Fantasy: [
+                  'magical weather shifts (sudden fog, aurora, temperature drop near ley lines)',
+                  'distant sounds of war or marching armies',
+                  'a magical resource running low or behaving unpredictably',
+                  'political rumors arriving via messenger, traveler, or omen',
+                  'seasonal or celestial alignment creating urgency',
+                  'divine attention manifesting as environmental distortion'
+              ],
+              Modern: [
+                  'news breaking on a screen or overheard conversation',
+                  'infrastructure disruption (power flicker, traffic reroute, phone signal loss)',
+                  'social media ripple affecting a character\'s reputation or plans',
+                  'weather forcing a change of location or plans',
+                  'an authority figure or institution making demands',
+                  'economic pressure (price spike, job threat, deadline)'
+              ],
+              Historical: [
+                  'rumors of political upheaval, war, or regime change',
+                  'seasonal hardship (harvest failure, winter approach, plague rumor)',
+                  'religious or cultural obligation demanding attention',
+                  'a messenger or decree arriving from a distant authority',
+                  'trade route disruption affecting resources',
+                  'social hierarchy reasserting itself through custom or law'
+              ],
+              Dystopia: [
+                  'surveillance escalation or system recalibration',
+                  'resource rationing tightening or quota changes',
+                  'propaganda broadcast or public compliance ritual',
+                  'enforcement sweep in a nearby sector',
+                  'social credit shift or classification update',
+                  'infrastructure decay revealing system fragility'
+              ],
+              SciFi: [
+                  'ship/station system anomaly or diagnostic warning',
+                  'communication delay or signal interference',
+                  'resource recycler inefficiency or supply chain alert',
+                  'AI behavioral drift or recommendation conflict',
+                  'gravitational or atmospheric anomaly',
+                  'political tension between factions or colonies'
+              ],
+              PostApocalyptic: [
+                  'weather pattern shift (toxic rain, dust storm, temperature spike)',
+                  'resource cache discovered or depleted',
+                  'rival group movement detected nearby',
+                  'infrastructure collapse (bridge, shelter, water source)',
+                  'animal migration or predator territory shift',
+                  'rumor of a safe zone, cure, or threat from survivors'
+              ],
+              Prehistoric: [
+                  'animal herd movement or predator presence',
+                  'weather shift (storm, drought, flood, cold snap)',
+                  'rival tribe activity (smoke, tracks, territorial markers)',
+                  'food or water source change (bloom, spoilage, migration)',
+                  'geological event (tremor, rockfall, river path change)',
+                  'celestial event creating urgency or spiritual tension'
+              ]
+          };
+
+          const examples = WORLD_PRESSURE_EXAMPLES[world] || WORLD_PRESSURE_EXAMPLES.Modern;
+          // Pick 2-3 example types for variety guidance
+          const shuffled = [...examples].sort(() => Math.random() - 0.5);
+          const exampleList = shuffled.slice(0, 3).join('; ');
+
+          return `\nWORLD PRESSURE PULSE (this scene):
+Include ${intensity} of external world pressure in this scene.
+The pressure should come from the world itself — not from the characters' emotions or relationship dynamics.
+Examples for this setting: ${exampleList}.
+The pressure should occupy no more than 1–2 sentences of scene text. It must feel like the world continuing to move around the characters, not a plot derailment.
+Characters may react to it briefly, ignore it, or let it inform a decision — but the pressure must be present.
+When world pressure appears, it should provoke a visible character reaction or pause: characters look toward the disturbance, dialogue is interrupted or redirected, a character physically reacts (turns, flinches, stops moving), attention shifts, or a character comments on the pressure. The pressure must enter the scene dynamics, not remain purely decorative.
+Do NOT let the world pressure dominate the scene or override the player's intended action.`;
+      }
+
+      /**
+       * Compute priority score for a Fate Thread.
+       * Higher score = more urgently needs narrative attention.
+       * Formula: (threadAge * 2) + sceneDistanceFromLastEcho - recentEchoPenalty
+       */
+      function computeThreadPriority(thread, currentScene) {
+          const age = currentScene - (thread.originScene || currentScene);
+          const lastEcho = thread.lastAwakened || thread.originScene;
+          const distance = currentScene - lastEcho;
+          const recentPenalty = distance <= 2 ? 5 : 0;
+          // Dormant bonus: threads silent for 15+ scenes get escalating priority
+          let dormantBonus = 0;
+          if (distance >= 35) dormantBonus = 30;
+          else if (distance >= 25) dormantBonus = 18;
+          else if (distance >= 15) dormantBonus = 10;
+          return (age * 2) + distance - recentPenalty + dormantBonus;
+      }
+
+      function buildFateThreadsDirective() {
+          const threads = state.fateThreads || [];
+          const active = threads.filter(t => t.active);
+          if (active.length === 0) return '';
+          const currentScene = (state.turnCount || 0) + 1;
+          // Sort by priority — highest first
+          const sorted = [...active].sort((a, b) => computeThreadPriority(b, currentScene) - computeThreadPriority(a, currentScene));
+          const lines = sorted.map(t => {
+              const age = currentScene - t.originScene;
+              const echoes = t.echoCount || 0;
+              const ripe = echoes >= 3;
+              const lastEcho = t.lastAwakened || t.originScene;
+              const silence = currentScene - lastEcho;
+              const dormant = silence >= 15;
+              const priority = computeThreadPriority(t, currentScene);
+              let line = `- ${t.title} (scene ${t.originScene}, ${age} scenes ago, ${echoes} echoes, priority ${priority})${t.description ? ': ' + t.description : ''}`;
+              if (ripe) line += ' [RIPE FOR RESOLUTION]';
+              if (dormant) line += ` [DORMANT ${silence} scenes — Fate remembers]`;
+              return line;
+          }).join('\n');
+          const ripeThreads = active.filter(t => (t.echoCount || 0) >= 3);
+          const ripeNote = ripeThreads.length > 0
+              ? `\nThreads marked RIPE FOR RESOLUTION have echoed 3+ times. When narratively appropriate, allow them to reach a decisive moment — a reveal, confrontation, or consequence that resolves the thread. Do NOT resolve a thread in the same scene it awakens.`
+              : '';
+          return `\nACTIVE FATE THREADS (sorted by narrative priority — higher priority threads need attention first):\nThese narrative elements have been introduced and may be referenced, awakened, or advanced in this scene. Prefer higher-priority threads when choosing which to echo or advance. Do not force them — let them surface naturally when relevant.\n${lines}${ripeNote}`;
+      }
+
+      function buildFateOmenDirective() {
+          const threads = state.fateThreads || [];
+          const active = threads.filter(t => t.active);
+          if (active.length === 0) return '';
+
+          const sceneIndex = state.turnCount || 0;
+          const currentScene = sceneIndex + 1;
+
+          // Frequency: ~once every 5-8 scenes, offset from scene 4
+          if (sceneIndex < 4) return '';
+          const lastOmenScene = state._lastFateOmenScene || 0;
+          if (currentScene - lastOmenScene < 5) return '';
+          // Random gate: ~20% chance per eligible scene
+          if (Math.random() > 0.20) return '';
+
+          // Exclude threads that are awakening THIS scene
+          const eligible = active.filter(t => t.lastAwakened !== currentScene);
+          if (eligible.length === 0) return '';
+
+          // Select by priority score — pick from top 3 highest-priority threads
+          const sorted = [...eligible].sort((a, b) => computeThreadPriority(b, currentScene) - computeThreadPriority(a, currentScene));
+          const pick = sorted[Math.floor(Math.random() * Math.min(3, sorted.length))];
+
+          // Track to prevent repeat
+          state._lastFateOmenScene = currentScene;
+          state._lastFateOmenThread = pick.title;
+
+          return `\nFATE OMEN (this scene):
+Include one brief foreshadowing sentence (1 sentence only) subtly connected to the narrative thread "${pick.title}"${pick.description ? ' (' + pick.description + ')' : ''}.
+The omen should feel like a small, uncanny detail — an object reacting, a character noticing something slightly wrong, a coincidence that doesn't quite resolve.
+Do NOT reveal future events, explain the connection, or name the thread. The omen must feel atmospheric and immersive.
+Do NOT trigger this in the same scene where the thread is actively awakening or converging.`;
       }
 
       function buildSceneLengthDirective() {
@@ -65900,7 +66490,7 @@ Build the tension. Delay the payoff. The main pair's unresolved desire IS the st
       }
 
       // INTIMACY MILESTONE INTERRUPTION — inject directive if first attempt
-      const intimacyInterrupt = buildIntimacyInterruptionDirective(safeAction, safeDialogue);
+      const intimacyInterrupt = buildIntimacyInterruptionDirective(act, dia);
       const intimacyDirective = intimacyInterrupt.directive;
 
       const bbDirective = getBatedBreathDirective(); 
@@ -66319,7 +66909,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
           || state._persistentDirectiveKey !== _persistentKey;
 
       if (needPersistentRefresh) {
-          state._persistentDirectiveCache = `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${safetyDirective}\n${vetoRules}\n${lensEnforcement}\n${eroticModeBlock}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${buildEmotionEmbodimentDirective()}\n\nREMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame) are internal labels — NEVER use them in prose, dialogue, narration, or as metaphors. Do not invent mythic titles, epithets, or capitalized symbolic identities that resemble archetype labels. Express traits through behavior only.\n\nSPECIFICITY ENFORCEMENT:\nPrefer observable behavior, physical gesture, and environmental detail over abstract emotion statements.\nDo not tell the reader what a character feels — show it through action, hesitation, breath, posture, or timing.\n- BAD: "His heart raced." → GOOD: "His reply came half a breath too late."\n- BAD: "She felt a wave of longing." → GOOD: "Her hand hovered near his sleeve but didn't land."\n- BAD: "Their eyes locked with intensity." → GOOD: "Neither of them blinked first."\nInternal states may be implied through sensory experience, never declared as fact.`;
+          state._persistentDirectiveCache = `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}\n${eroticGatingDirective}\n${safetyDirective}\n${vetoRules}\n${lensEnforcement}\n${eroticModeBlock}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${buildEmotionEmbodimentDirective()}\n\nARCHETYPE_LABEL_BAN: Heart Warden, Open Vein, Spellbinder, Armored Fox, Dark Vice, Beautiful Ruin, Eternal Flame are internal labels — NEVER in prose/dialogue/narration. No mythic titles or capitalized symbolic identities. Express traits through behavior only.\n\nSHOW_NOT_TELL:\nShow emotion through action, hesitation, breath, posture, timing — never declare internal states as fact.\n- BAD: "His heart raced." → GOOD: "His reply came half a breath too late."\n- BAD: "She felt longing." → GOOD: "Her hand hovered near his sleeve but didn't land."\n\nCONCRETE_REVEAL:\nWithin 2 scenes of introducing a new element, reveal why it matters to the current story — origin, consequence, or stakes.\nFact first, emotion second. Each early scene must introduce new story information.\n- WEAK: "Shards of a mirror." → STRONG: "Shards of the Heart Mirror — the relic that bound the thirteen moons."\n\nDIALOGUE_MOMENTUM:\nAfter ~3 dialogue exchanges, inject a scene state change (physical action, object interaction, environmental shift, new info, interruption) before continuing conversation. Dialogue responds to the change.\n\nESCALATION:\nTension accumulates across scenes — never resets to zero. Each scene carries forward and deepens at least one unresolved tension.\n\nFATE_CARD_ESCALATION:\nFate Cards adjust scene trajectory. Confession → vulnerability/truth. Boundary → resistance/distance. Temptation → risk/attempt. Reversal → consequence/power flip. Silence → withheld tension. Respects Storyturn gating.\n\nPHYSICAL_ANCHOR:\nPeriodically include interaction with objects/surroundings. Objects anchor emotion in the world: reveal info, symbolize tension, trigger memory, cause consequence. Must feel natural.\n\nROMANCE_EMBODIMENT:\nBody language introduces romantic tension BEFORE dialogue confirms it. Proximity awareness, hesitation, accidental contact, breath — physical cues first, verbal confirmation second.\n\nREL_SHIFT:\nEmotional declarations must shift the relationship: trust, vulnerability, boundaries, power dynamics, or risk level. No immediate mutual reciprocation without complication.\n\nLOADED_DETAIL:\nDistinctive objects/symbols/phrases = loaded details. Carry forward 1–2 per scene. They reappear to reveal info, trigger consequences, or symbolize choices. Do not constantly replace with new ones.\n\nPLAYER_CAUSALITY:\nPlayer actions produce visible scene shifts: character reactions, dialogue redirection, tension change, new info, environmental response. Never acknowledge then ignore. Consequences may be resistance or complication.\n\nSIGNATURE_TRAIT:\nEach major character maintains a recognizable behavioral signature (speech pattern, habitual gesture, emotional defense, worldview bias). Traits surface naturally across scenes. Characters must not flatten into interchangeable voices.\n\nECHO_CONSEQUENCE:\nPlayer decisions occasionally resurface scenes later as rumors, memories, trust shifts, or narrative consequences. The story remembers earlier choices. Emerges naturally, not every scene.\nWhen an echo consequence or converging fate moment occurs, output the marker ✦ on its own paragraph line — never embedded mid-sentence or attached to dialogue. The ✦ line must appear immediately before the narrative paragraph that reflects the callback. Format: one line containing only ✦ (optionally followed by a short label like "Fate stirs" or "Threads converge"), then a line break, then the narrative sentence. Use rarely — only for meaningful narrative echoes.\n\nROMANTIC_UNCERTAINTY:\nWhenever romantic tension increases, introduce a moment of uncertainty or hesitation before emotional confirmation. Characters may pause instead of reciprocating, feel discomfort or defensiveness, change the subject, or misread intention. Escalation should feel dangerous or uncertain before it feels secure. Do not block progression indefinitely — uncertainty increases tension, not stalls the story.\n\nMOMENT_HIGHLIGHT:\nOccasionally emphasize important moments (decisions, discoveries, turning points) through character intuition, environmental emphasis, narrator observation, or stillness. Rare — so highlights feel meaningful.\n\nCONVERGING_FATE:\nRarely, allow multiple earlier elements (player decisions, loaded details, character tensions, rumors) to converge in one scene. Threads align — not coincidence, but accumulated consequence. Must feel significant.`;
           state._persistentDirectiveKey = _persistentKey;
           state.forceDirectiveRefresh = false;
           console.log('[DIRECTIVES] Persistent directive cache refreshed (scene', state.turnCount, ')');
@@ -66358,7 +66948,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       const _gcVoyage = (typeof window._buildVoyageStructureDirective === 'function') ? window._buildVoyageStructureDirective() : '';
       const _gcIntimacyPacing = (typeof window._buildIntimacyPacingDirective === 'function') ? window._buildIntimacyPacingDirective() : '';
 
-      const sceneDirectives = `\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${squashDirective}\n${metaReminder}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${strategyDirective}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}${_grEcho}${_grEscalation}${_grMirror}${_gcHalcyon}${_gcGemmaId}${_gcInput}${_gcPerception}${_gcRoles}${_gcCohesion}${_gcIdentity}${_gcCaptain}${_gcStructure}${_gcArchetype}${_gcSuppression}${_gcDoctor}${_gcFugue}${_gcEcho}${_gcFragment}${_gcEnv}${_gcOperative}${_gcDrSuspicion}${_gcAdminPressure}${_gcDistraction}${_gcGemmaSex}${_gcDecoy}${_gcThreeTruth}${_gcVoyage}${_gcIntimacyPacing}`;
+      const sceneDirectives = `\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${safetyRewriteDirective ? '\n' + safetyRewriteDirective + '\n' : ''}${intentAnchorDirective}${squashDirective}\n${metaReminder}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${strategyDirective}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}${_grEcho}${_grEscalation}${_grMirror}${_gcHalcyon}${_gcGemmaId}${_gcInput}${_gcPerception}${_gcRoles}${_gcCohesion}${_gcIdentity}${_gcCaptain}${_gcStructure}${_gcArchetype}${_gcSuppression}${_gcDoctor}${_gcFugue}${_gcEcho}${_gcFragment}${_gcEnv}${_gcOperative}${_gcDrSuspicion}${_gcAdminPressure}${_gcDistraction}${_gcGemmaSex}${_gcDecoy}${_gcThreeTruth}${_gcVoyage}${_gcIntimacyPacing}`;
 
       const fullSys = state.sysPrompt + state._persistentDirectiveCache + buildVoiceAnchorDirective() + sceneDirectives + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
@@ -66366,7 +66956,15 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       Player Dialogue: ${dia}.
       ${metaMsg}
 
-      ${buildWorldPhysicsDirective()}${buildSceneLengthDirective()}${buildEndingWindowDirective()}`;
+      PLAYER INTENT ECHO (MANDATORY): Within the first 1–2 paragraphs of the scene, explicitly reference or paraphrase the player's Say and/or Do input. The reference does not need to be literal — it can appear as character dialogue response, narrator paraphrase, comedic reinterpretation, refusal or pushback, or consequence. However the player's intent must be clearly recognizable. Do not repeat the player's line verbatim unless it sounds natural as in-character dialogue. Prefer paraphrase or character reaction.
+
+      Priority order for player input handling:
+      1. Echo the player's Say/Do input within the first 1–2 paragraphs.
+      2. After the echo, keep the scene centered on the Intent Anchor.
+      The echo establishes the immediate narrative ripple. The anchor guides the scene's broader direction.
+
+      OPENING VARIATION (MANDATORY): Each scene MUST begin with a different sentence structure, subject, and image than the previous scene. Do not echo, paraphrase, or mirror the opening line of any prior scene. If the previous scene opened with a character action, open this one with setting, sensation, dialogue, or interiority — never the same pattern twice in a row.
+      ${buildWorldPhysicsDirective()}${buildColloquialismGuardDirective()}${buildSceneLengthDirective()}${buildIgnitionPatternDirective()}${buildWorldPressurePulseDirective()}${buildFateThreadsDirective()}${buildFateOmenDirective()}${buildEndingWindowDirective()}`;
 
       // STORY PROMPT GUARD: Validate size (debug only, never truncate)
       validateStoryPromptSize(fullSys, 'turn-generation-fullSys');
@@ -67295,6 +67893,9 @@ ABSOLUTE RULES:
           if (state._sceneTokenCount) { console.log('SCENE_TOKEN_USAGE:', state._sceneTokenCount); state._sceneTokenCount = 0; }
           storyDisplayed = true;
 
+          // Fate Card Whisper — subtle card suggestion based on narrative state
+          if (typeof showFateCardWhisper === 'function') showFateCardWhisper();
+
           // ── Onboarding Milestone Visions ──
           // Scene 2 intro vision
           if (state.turnCount === 2
@@ -67360,7 +67961,7 @@ ABSOLUTE RULES:
           // Uses narrow detectPhysicalEscalation() — only genuine physical moves trigger cooldown.
           // Atmospheric words (whisper, breath, neck, skin) do NOT trigger cooldown.
           if ((state.storyturn || 'ST1') === 'ST3' &&
-              (intimacyInterrupt.milestone || detectPhysicalEscalation(safeAction, safeDialogue))) {
+              (intimacyInterrupt.milestone || detectPhysicalEscalation(act, dia))) {
               state.lastIntimacyAttemptTurn = state.turnCount || 0;
               console.log('[ST3-PACING] Physical escalation at turn', state.lastIntimacyAttemptTurn);
           }
@@ -67775,8 +68376,31 @@ ABSOLUTE RULES:
               user_text: rawDia,
               context_signals: state.picks?.world || []
           });
-          const act = actNorm.canonical_instruction || actNorm.normalized_text || rawAct;
-          const dia = diaNorm.canonical_instruction || diaNorm.normalized_text || rawDia;
+          let act = actNorm.canonical_instruction || actNorm.normalized_text || rawAct;
+          let dia = diaNorm.canonical_instruction || diaNorm.normalized_text || rawDia;
+
+          // ── SAFETY REWRITE (speculative path) ──
+          const specSafetyRewrite = reinterpretSafetyAction(act, dia);
+          const specSafetyRewriteDirective = specSafetyRewrite.directive;
+
+          // ── INTENT ANCHOR (speculative path) ──
+          // When safety rewrite is active, derive anchor from the rewrite category
+          const _specRewriteCategoryAnchors = {
+              embarrassment_metaphor: 'risks embarrassment or awkward proximity',
+              scandal_implication: 'provokes scandal or dangerous rumor',
+              theatrical_mischief: 'turns tension into bold spectacle',
+              social_chaos: 'disrupts the social order'
+          };
+          const specMcName = state.mc_name || 'The protagonist';
+          let _specIntentAnchorText;
+          if (specSafetyRewrite.rewritten && specSafetyRewrite.category && _specRewriteCategoryAnchors[specSafetyRewrite.category]) {
+              _specIntentAnchorText = `${specMcName} ${_specRewriteCategoryAnchors[specSafetyRewrite.category]}.`;
+          } else {
+              _specIntentAnchorText = buildIntentAnchor(act, dia);
+          }
+          const specIntentAnchorDirective = _specIntentAnchorText
+              ? `\nINTENT ANCHOR:\n${_specIntentAnchorText}\nThe scene should remain centered on this intent. Characters may reinterpret or resist the action, but the narrative tension should continue revolving around this intent until the turn resolves. Do not repeat this anchor verbatim in narration — it guides narrative focus only. The Intent Anchor should guide the early and mid scene but should relax once the immediate consequences of the player's action have resolved.\n`
+              : '';
 
           // Check if context changed during normalization
           if (getFateContextHash() !== fateContextHash) {
@@ -67927,7 +68551,7 @@ FATE CARD ADAPTATION (CRITICAL):
           const _specGrEcho = (typeof window._buildReasonEchoDirective === 'function') ? window._buildReasonEchoDirective() : '';
           const _specGrEscalation = (typeof window._buildReasonEscalationDirective === 'function') ? window._buildReasonEscalationDirective() : '';
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}${_specGrEcho}${_specGrEscalation}
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${specSafetyRewriteDirective ? '\n' + specSafetyRewriteDirective + '\n' : ''}${specIntentAnchorDirective}${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}${_specGrEcho}${_specGrEscalation}
 
 SPECULATIVE GENERATION CONSTRAINTS:
 - Do NOT advance storyturn state.
@@ -67942,7 +68566,15 @@ REMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, D
       Player Dialogue: ${dia}.
       ${metaMsg}
 
-      ${buildWorldPhysicsDirective()}${sceneLengthDirective}${buildEndingWindowDirective()}`;
+      PLAYER INTENT ECHO (MANDATORY): Within the first 1–2 paragraphs of the scene, explicitly reference or paraphrase the player's Say and/or Do input. The reference does not need to be literal — it can appear as character dialogue response, narrator paraphrase, comedic reinterpretation, refusal or pushback, or consequence. However the player's intent must be clearly recognizable. Do not repeat the player's line verbatim unless it sounds natural as in-character dialogue. Prefer paraphrase or character reaction.
+
+      Priority order for player input handling:
+      1. Echo the player's Say/Do input within the first 1–2 paragraphs.
+      2. After the echo, keep the scene centered on the Intent Anchor.
+      The echo establishes the immediate narrative ripple. The anchor guides the scene's broader direction.
+
+      OPENING VARIATION (MANDATORY): Each scene MUST begin with a different sentence structure, subject, and image than the previous scene. Do not echo, paraphrase, or mirror the opening line of any prior scene.
+      ${buildWorldPhysicsDirective()}${typeof buildColloquialismGuardDirective === 'function' ? buildColloquialismGuardDirective() : ''}${sceneLengthDirective}${typeof buildIgnitionPatternDirective === 'function' ? buildIgnitionPatternDirective() : ''}${typeof buildWorldPressurePulseDirective === 'function' ? buildWorldPressurePulseDirective() : ''}${typeof buildFateThreadsDirective === 'function' ? buildFateThreadsDirective() : ''}${typeof buildFateOmenDirective === 'function' ? buildFateOmenDirective() : ''}${buildEndingWindowDirective()}`;
 
           // Check context again before generation
           if (getFateContextHash() !== fateContextHash) {
@@ -68159,6 +68791,132 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // FATE CARD WHISPER SUGGESTIONS — subtle card hints based on narrative state
+  // Triggers rarely (~once every 3-6 scenes) when narrative tension matches a card.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const FATE_CARD_WHISPER_TEMPLATES = {
+      Confession: [
+          '✦ Fate stirs… Confession',
+          '✦ A truth presses against silence',
+          '✦ Something unsaid demands voice'
+      ],
+      Temptation: [
+          '✦ Fate leans toward Temptation',
+          '✦ The edge beckons',
+          '✦ Risk shimmers just within reach'
+      ],
+      Boundary: [
+          '✦ A line waits to be drawn',
+          '✦ Fate tests the boundary',
+          '✦ Distance holds its ground'
+      ],
+      Reversal: [
+          '✦ A reversal may be near',
+          '✦ Fate shifts its weight',
+          '✦ The balance tips'
+      ],
+      Silence: [
+          '✦ Silence waits between them',
+          '✦ The unsaid grows heavy',
+          '✦ Fate withholds'
+      ]
+  };
+
+  /**
+   * Evaluate narrative state and maybe suggest a Fate Card.
+   * Called after scene render. Returns null or a card name.
+   */
+  function evaluateFateCardWhisper() {
+      const turn = state.turnCount || 0;
+      // Only trigger after scene 3, frequency ~1 in 4 scenes
+      if (turn < 3) return null;
+      // Use turn-seeded pseudo-random: only fire on specific turns
+      const lastWhisperTurn = state._lastFateCardWhisperTurn || 0;
+      if (turn - lastWhisperTurn < 3) return null;
+      // Random gate: ~33% chance per eligible scene
+      if (Math.random() > 0.33) return null;
+
+      // Analyze recent narrative signals to pick the best card
+      const signals = {
+          Confession: 0,
+          Temptation: 0,
+          Boundary: 0,
+          Reversal: 0,
+          Silence: 0
+      };
+
+      // Check emotional vectors
+      const ev = state.emotionalVectors || {};
+      if ((ev.attraction || 0) > 0.5) signals.Confession += 2;
+      if ((ev.attraction || 0) > 0.7) signals.Temptation += 2;
+      if ((ev.fear_of_abandonment || 0) > 0.4) signals.Boundary += 2;
+      if ((ev.resentment || 0) > 0.5) signals.Reversal += 2;
+      if ((ev.trust || 0) < -0.3) signals.Boundary += 1;
+
+      // Check relationship gravity
+      const rg = state.relationshipGravity || '';
+      if (rg === 'toward') { signals.Confession += 1; signals.Temptation += 1; }
+      if (rg === 'away') { signals.Boundary += 1; signals.Silence += 1; }
+      if (rg === 'orbit') { signals.Silence += 1; }
+
+      // Check narrative momentum / stagnation
+      const stagnant = (state._emotionalMomentumStagnant || 0) >= 2;
+      if (stagnant) signals.Reversal += 2;
+
+      // Check intimacy proximity
+      const intimacyOpen = typeof isIntimacyAllowedAtCurrentStoryturn === 'function'
+          && isIntimacyAllowedAtCurrentStoryturn();
+      if (intimacyOpen) signals.Temptation += 1;
+
+      // Check fate resonance
+      const resonance = typeof getFateResonanceState === 'function' ? getFateResonanceState() : 'Quiet';
+      if (resonance === 'Resonant' || resonance === 'Unstable' || resonance === 'Thinning') {
+          signals.Temptation += 1;
+          signals.Reversal += 1;
+      }
+
+      // Find highest signal
+      let bestCard = null;
+      let bestScore = 1; // Minimum threshold
+      for (const [card, score] of Object.entries(signals)) {
+          if (score > bestScore) { bestCard = card; bestScore = score; }
+      }
+
+      return bestCard;
+  }
+
+  /**
+   * Show a Fate Card whisper suggestion in the UI.
+   */
+  function showFateCardWhisper() {
+      const card = evaluateFateCardWhisper();
+      if (!card) return;
+
+      state._lastFateCardWhisperTurn = state.turnCount || 0;
+
+      const templates = FATE_CARD_WHISPER_TEMPLATES[card] || [];
+      const text = templates[Math.floor(Math.random() * templates.length)] || '✦ Fate stirs…';
+
+      const el = document.getElementById('fateCardWhisper');
+      if (!el) return;
+
+      el.innerHTML = `${text.replace(card, '')}<span class="whisper-card-name">${card}</span>`;
+      el.classList.remove('hidden');
+
+      // Fade in
+      requestAnimationFrame(() => el.classList.add('visible'));
+
+      // Auto-fade after 12 seconds
+      setTimeout(() => {
+          el.classList.remove('visible');
+          setTimeout(() => el.classList.add('hidden'), 1300);
+      }, 12000);
+
+      console.log('[FATE_WHISPER] Card suggestion:', card);
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // VISION IMAGE PRELOAD — pre-generate vision image 5s after scene render
   // ═══════════════════════════════════════════════════════════════════════════
   async function preloadVisionImage() {
@@ -68282,6 +69040,130 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       return trimmed;
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // FATE THREADS — narrative thread tracker
+  // Tracks persistent narrative elements (loaded details, echo consequences,
+  // relationship tensions) and surfaces them in the reader UI.
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Add a Fate Thread.
+   * @param {string} title — e.g. "The Broken Mirror Shard"
+   * @param {string} [description] — optional short description
+   */
+  function addFateThread(title, description) {
+      if (!state.fateThreads) state.fateThreads = [];
+      // Deduplicate by title
+      if (state.fateThreads.some(t => t.title === title)) return;
+      state.fateThreads.push({
+          title,
+          description: description || '',
+          originScene: (state.turnCount || 0) + 1,
+          lastAwakened: null,
+          echoCount: 0,
+          active: true
+      });
+      renderFateThreads();
+      // Show the panel wrapper once first thread arrives
+      const wrap = document.getElementById('fateThreadsWrap');
+      if (wrap) wrap.classList.remove('hidden');
+      console.log('[FATE_THREADS] Added:', title);
+  }
+
+  /**
+   * Mark a thread as "awakened" in the current scene (visual highlight).
+   * @param {string} title — thread title to awaken
+   */
+  function awakenFateThread(title) {
+      if (!state.fateThreads) return;
+      const currentScene = (state.turnCount || 0) + 1;
+      const thread = state.fateThreads.find(t => t.title === title);
+      if (!thread) return;
+      // Cooldown: only one awakening per thread per scene
+      if (thread.lastAwakened === currentScene) return;
+      thread.lastAwakened = currentScene;
+      thread.echoCount = (thread.echoCount || 0) + 1;
+      renderFateThreads();
+      // Pulse animation on the awakened <li>
+      requestAnimationFrame(() => {
+          const list = document.getElementById('fateThreadsList');
+          if (!list) return;
+          const items = list.querySelectorAll('li.fate-thread-awakened');
+          items.forEach(li => {
+              if (li.textContent.includes(title)) {
+                  li.classList.add('fate-thread-pulse');
+                  li.addEventListener('animationend', () => li.classList.remove('fate-thread-pulse'), { once: true });
+              }
+          });
+      });
+      console.log('[FATE_THREADS] Awakened:', title);
+  }
+
+  /**
+   * Remove a resolved thread.
+   * @param {string} title — thread title to resolve
+   */
+  function resolveFateThread(title) {
+      if (!state.fateThreads) return;
+      state.fateThreads = state.fateThreads.filter(t => t.title !== title);
+      renderFateThreads();
+      console.log('[FATE_THREADS] Resolved:', title);
+  }
+
+  /** Render the Fate Threads list UI. */
+  function renderFateThreads() {
+      const list = document.getElementById('fateThreadsList');
+      if (!list) return;
+      const threads = state.fateThreads || [];
+      if (threads.length === 0) {
+          list.innerHTML = '<li style="opacity:0.4; font-style:italic;">No active threads</li>';
+          return;
+      }
+      const currentScene = (state.turnCount || 0) + 1;
+      list.innerHTML = threads.filter(t => t.active).map(t => {
+          const awakened = t.lastAwakened === currentScene;
+          const echoes = t.echoCount || 0;
+          const ripe = echoes >= 3;
+          const cls = awakened ? ' class="fate-thread-awakened"' : '';
+          const origin = `<span class="fate-thread-origin">Scene ${t.originScene}${ripe ? ' · ripe' : ''}</span>`;
+          const prefix = awakened ? '✦ ' : '';
+          return `<li${cls}>${prefix}${t.title}${origin}</li>`;
+      }).join('');
+  }
+
+  /** Process AI output for ✦ echo indicators and convert to styled elements.
+   *  ✦ must appear on its own line/paragraph — never mid-sentence. */
+  function processFateEchoIndicators(html) {
+      // Match <p> tags containing ONLY "✦" or "✦ <label>" (no other prose)
+      return html.replace(/<p[^>]*>\s*✦\s*([\w\s…'']*?)\s*<\/p>/gi, (match, rest) => {
+          const label = rest.trim() || '';
+          // Reject if rest contains too much text (>60 chars = likely embedded mid-sentence)
+          if (label.length > 60) return match;
+          return `<div class="fate-echo-indicator">✦${label ? ' ' + label : ''}</div>`;
+      });
+  }
+
+  // Expose to window for directive-level integration
+  window.addFateThread = addFateThread;
+  window.awakenFateThread = awakenFateThread;
+  window.resolveFateThread = resolveFateThread;
+
+  // Panel toggle + close handlers
+  document.addEventListener('DOMContentLoaded', () => {
+      const toggle = document.getElementById('fateThreadsToggle');
+      const panel = document.getElementById('fateThreadsPanel');
+      const closeBtn = document.getElementById('fateThreadsClose');
+      if (toggle && panel) {
+          toggle.addEventListener('click', () => {
+              panel.classList.toggle('hidden');
+              renderFateThreads();
+          });
+      }
+      if (closeBtn && panel) {
+          closeBtn.addEventListener('click', () => panel.classList.add('hidden'));
+      }
+  });
+
   function formatStory(text, shouldEscape = false){
       const process = shouldEscape ? escapeHTML : (s => s);
       const mode = window.state?.mode || 'solo';
@@ -68294,16 +69176,25 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
       const isCoupleMode = (mode === 'couple');
 
       let pIdx = 0;
-      return text.split('\n').map(p => {
+      const result = text.split('\n').map(p => {
           if(!p.trim()) return '';
           let safe = process(p);
 
-          // Sanitize leaked archetype keys from prose
+          // Sanitize leaked archetype names from prose — strip display names and system keys
           for (const [key, arch] of Object.entries(ARCHETYPES)) {
-              if (safe.includes(key)) safe = safe.replaceAll(key, arch.name);
+              // Strip display names like "The Heart Warden" or "Heart Warden" from prose
+              // These are internal labels that must never appear in the story
+              const displayName = arch.name; // e.g. "The Heart Warden"
+              const bareName = displayName.replace(/^The\s+/i, ''); // e.g. "Heart Warden"
+              if (safe.includes(displayName)) safe = safe.replaceAll(displayName, '');
+              if (safe.includes(bareName)) safe = safe.replaceAll(bareName, '');
+              // Also catch system keys (HEART_WARDEN) and PascalCase (HeartWarden)
+              if (safe.includes(key)) safe = safe.replaceAll(key, '');
               const pascal = key.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join('');
-              if (safe.includes(pascal)) safe = safe.replaceAll(pascal, arch.name);
+              if (safe.includes(pascal)) safe = safe.replaceAll(pascal, '');
           }
+          // Clean up artifacts from stripped archetype names (double spaces, empty phrases)
+          safe = safe.replace(/\s{2,}/g, ' ').replace(/\(\s*\)/g, '').replace(/,\s*,/g, ',').trim();
 
           const paraId = `${sceneId}:${pIdx++}`;
 
@@ -68328,6 +69219,8 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
               return `<p data-paragraph-id="${paraId}">${safe}</p>`;
           }
       }).join('');
+      // Process ✦ echo indicators into styled elements
+      return processFateEchoIndicators(result);
   }
 
   // --- COUPLE MODE LOGIC ---

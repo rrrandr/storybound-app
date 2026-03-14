@@ -530,7 +530,7 @@ function stopContinuousSparkles() {
             altAction: 'The moment asks: how far?',
             altDialogue: '"Tell me if this is too much."'
         },
-        power: {
+        reversal: {
             action: 'The dynamic between you shifts. Lean into it or resist.',
             dialogue: '"Who\'s in control here?"',
             altAction: 'You feel the balance tipping. Guide it.',
@@ -1051,9 +1051,9 @@ function stopContinuousSparkles() {
 
         if (isSetup || !liIntroduced) {
             return {
-                action: 'The balance of control wavers. Tip it in your favor, or cede ground.',
+                action: 'You straighten, letting the room feel the shift in you.',
                 dialogue: '"Your move."',
-                altAction: 'Someone must lead. Decide if it\'s you.',
+                altAction: 'You take a half-step forward, claiming the space between you.',
                 altDialogue: '"I\'m waiting."'
             };
         }
@@ -1061,25 +1061,25 @@ function stopContinuousSparkles() {
         // WITHDRAW or ASSERT based on beat
         if (lastEmotionalBeat === 'intimacy') {
             return {
-                action: `After that closeness, reclaim control—or surrender more.`,
+                action: `You pull back just enough to take the reins from ${liName}.`,
                 dialogue: '"Now it\'s my turn."',
-                altAction: `${liName} had you vulnerable. Reassert yourself, or let them keep the advantage.`,
+                altAction: `You catch ${liName}'s wrist and draw them closer.`,
                 altDialogue: '"You think you have the upper hand?"'
             };
         }
         if (lastEmotionalBeat === 'conflict') {
             return {
-                action: `The argument left you both exposed. Seize the advantage, or extend mercy.`,
+                action: `You let the silence after the argument settle, then close the distance.`,
                 dialogue: '"I could end this. But I won\'t."',
-                altAction: `One of you must yield. Make ${liName} bend first, or offer the first surrender.`,
+                altAction: `You stop retreating and hold your ground against ${liName}.`,
                 altDialogue: '"Admit you were wrong."'
             };
         }
         if (lastEmotionalBeat === 'vulnerability') {
             return {
-                action: `${liName}'s vulnerability is power. Protect it, or exploit it.`,
+                action: `You reach out and steady ${liName}, anchoring the moment.`,
                 dialogue: '"You just gave me everything."',
-                altAction: `They trusted you with weakness. Honor that, or use it.`,
+                altAction: `You let ${liName}'s openness draw you closer instead of pulling away.`,
                 altDialogue: '"Thank you for trusting me."'
             };
         }
@@ -1088,17 +1088,17 @@ function stopContinuousSparkles() {
         if (presentCharacters.length > 1) {
             const otherPerson = presentCharacters.find(p => p !== liName) || 'them';
             return {
-                action: `With ${otherPerson} watching, assert your claim on ${liName}—or defer.`,
+                action: `You step between ${otherPerson} and ${liName}, making your position clear.`,
                 dialogue: `"${liName} is with me."`,
-                altAction: `The presence of others changes the dynamic. Use it.`,
+                altAction: `You catch ${liName}'s eye across the room and tilt your head toward the door.`,
                 altDialogue: '"We should discuss this privately."'
             };
         }
 
         return {
-            action: `Shift the balance with ${liName}. Command, or invite them to lead.`,
+            action: `You step forward, tipping the balance between you and ${liName}.`,
             dialogue: '"Come here."',
-            altAction: `You could take charge. Or make ${liName} earn it.`,
+            altAction: `You hold ${liName}'s gaze and let the power shift.`,
             altDialogue: '"Show me what you want."'
         };
     }
