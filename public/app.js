@@ -15777,6 +15777,16 @@ Return ONLY valid JSON:
       state.voiceAnchor = null; // Voice Anchor — generated once per story after Scene 1
       state.cliffhangerProtectionUsed = false; // One-use narrative safeguard per depletion cycle
       state.fateThreads = []; // Fate Thread tracker — persistent narrative elements
+      state.foreshadowAnchors = []; // Foreshadow anchors — subtle pre-planted narrative details
+      state.themeTracker = { activeThemes: [], themeMentions: {} }; // Narrative Theme Gravity
+      state.relationshipEmotionalState = {}; // Emotional Engine — per-relationship fragility tracking
+      state.misunderstandings = []; // Mutual Misunderstanding Pressure — active false-belief pairs
+      state.characterSecrets = []; // Character Secret Engine — hidden truths that detonate later
+      state.echoMemories = []; // Narrative Memory Echo — emotionally weighted past moments
+      state.characterGravity = {}; // Character Gravity — emotional importance scores per character
+      state._lastGraceMomentScene = 0; // Moments of Grace — last scene with a grace moment
+      state.locationMemories = {}; // Emotional Location Memory — places with accumulated meaning
+      state.unansweredQuestions = []; // Unanswered Question Engine — long-range narrative curiosity
       if (typeof window._clearCorridorEchoSlots === 'function') window._clearCorridorEchoSlots();
 
       // Fate object — per-story tracking
@@ -66323,6 +66333,996 @@ Do NOT reveal future events, explain the connection, or name the thread. The ome
 Do NOT trigger this in the same scene where the thread is actively awakening or converging.`;
       }
 
+      // ═══════════════════════════════════════════════════════════════════
+      // FORESHADOW ANCHOR — plants subtle details that later connect to threads
+      // Creates the illusion the story was preparing future events in advance.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildForeshadowAnchorDirective() {
+          const threads = state.fateThreads || [];
+          const active = threads.filter(t => t.active);
+          const currentScene = (state.turnCount || 0) + 1;
+          if (!state.foreshadowAnchors) state.foreshadowAnchors = [];
+
+          // ── REUSE PHASE: if an active anchor matches a thread awakening this scene,
+          //    instruct the AI to reference the earlier detail ──
+          const awakeningThreads = active.filter(t => t.lastAwakened === currentScene);
+          const anchors = state.foreshadowAnchors || [];
+          let reuseParts = [];
+          for (const at of awakeningThreads) {
+              const match = anchors.find(a => a.relatedThread === at.title && !a.used);
+              if (match) {
+                  match.used = true;
+                  reuseParts.push(`The detail planted in scene ${match.sceneCreated} ("${match.description}") now connects to "${at.title}". Reference or echo that earlier detail naturally — the reader should feel the earlier moment was always preparation for this one.`);
+              }
+          }
+          if (reuseParts.length > 0) {
+              return `\nFORESHADOW ANCHOR PAYOFF:\n${reuseParts.join('\n')}`;
+          }
+
+          // ── PLANT PHASE: occasionally introduce a new anchor ──
+          if (currentScene < 3) return '';
+          if (active.length === 0) return '';
+
+          // Frequency: ~once every 5-7 scenes
+          const lastAnchorScene = state._lastForeshadowAnchorScene || 0;
+          if (currentScene - lastAnchorScene < 5) return '';
+          if (Math.random() > 0.18) return '';
+
+          // Select a thread to foreshadow — prefer threads that:
+          // 1. are newly created (age <= 3), or
+          // 2. are approaching dormancy (distance >= 10), or
+          // 3. have high convergence potential (echoCount === 2, one away from ripe)
+          const candidates = active.filter(t => {
+              const age = currentScene - t.originScene;
+              const lastEcho = t.lastAwakened || t.originScene;
+              const distance = currentScene - lastEcho;
+              return age <= 3 || distance >= 10 || (t.echoCount || 0) === 2;
+          });
+          const pool = candidates.length > 0 ? candidates : active;
+          // Use priority to pick
+          const sorted = [...pool].sort((a, b) => computeThreadPriority(b, currentScene) - computeThreadPriority(a, currentScene));
+          const pick = sorted[Math.floor(Math.random() * Math.min(3, sorted.length))];
+
+          state._lastForeshadowAnchorScene = currentScene;
+          state._lastForeshadowAnchorThread = pick.title;
+
+          return `\nFORESHADOW ANCHOR (this scene):
+Include one small, easily overlooked narrative detail subtly connected to the thread "${pick.title}"${pick.description ? ' (' + pick.description + ')' : ''}.
+The detail should NOT resolve, explain itself, or draw attention. It should feel like ordinary scene texture — a background object, a passing remark, a minor sensory detail, a small coincidence.
+Examples: a symbol noticed on a wall, a faint sound, an object briefly mentioned, a character's offhand comment, an environmental feature that seems incidental.
+The player should not recognize this as foreshadowing. Only later, when the thread awakens or converges, should the connection become clear.
+Do NOT name the thread or reference the Fate Thread system. The detail must be purely diegetic.
+After writing the scene, identify the planted detail in a brief parenthetical at the very end of your output: (ANCHOR: [one-line description of the planted detail])`;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // CHARACTER GRAVITY — characters accumulate emotional importance
+      // through shared moments, making them narratively irreplaceable.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildCharacterGravityDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 5) return ''; // Let characters establish first
+          if (!state.characterGravity) state.characterGravity = {};
+
+          const gravity = state.characterGravity;
+          const entries = Object.entries(gravity).filter(([, g]) => g.gravityScore > 0);
+
+          if (entries.length === 0) {
+              // No gravity tracked — invite AI to begin tracking
+              return `\nCHARACTER GRAVITY SEED:
+If major characters have shared emotionally significant moments with the player character — vulnerable conversations, shared danger, revealed secrets, romantic tension, sacrifices — begin tracking their emotional importance.
+Output at the end: (GRAVITY: [character name] +[points] for "[reason]")
+Points: vulnerable conversation +2, shared danger +2, secret revealed +3, romantic moment +3, sacrifice +4, misunderstanding +1, quiet personal moment +2.
+Only track characters with genuine emotional connection to the player character.`;
+          }
+
+          // Sort by gravity score
+          const sorted = entries.sort(([, a], [, b]) => b.gravityScore - a.gravityScore);
+          const lines = sorted.map(([name, g]) => {
+              let tier;
+              if (g.gravityScore >= 30) tier = 'defining relationship';
+              else if (g.gravityScore >= 20) tier = 'story pillar';
+              else if (g.gravityScore >= 10) tier = 'central figure';
+              else tier = 'emerging';
+              return `- ${name}: gravity ${g.gravityScore} (${tier}) — ${g.momentsShared || 0} shared moments, ${g.emotionalMoments || 0} emotional, ${g.threadConnections || 0} thread connections`;
+          }).join('\n');
+
+          // Check for absent high-gravity characters
+          const absenceNotes = [];
+          for (const [name, g] of sorted) {
+              if (g.gravityScore >= 10 && g.lastSeenScene && (currentScene - g.lastSeenScene) >= 4) {
+                  absenceNotes.push(`${name} has been absent for ${currentScene - g.lastSeenScene} scenes — the narrative should subtly acknowledge their absence (mention by other characters, locations that remind of them, unresolved threads referencing them).`);
+              }
+          }
+
+          return `\nCHARACTER GRAVITY:
+${lines}
+Higher-gravity characters naturally draw scenes toward themselves — they appear more often, carry greater emotional weight, and influence turning points.
+Events involving high-gravity characters hit harder: their betrayal hurts more, their affection matters more, their absence is noticeable.
+Secrets and misunderstandings involving high-gravity characters generate stronger tension.${absenceNotes.length > 0 ? '\nABSENCE EFFECTS:\n' + absenceNotes.join('\n') : ''}
+Continue tracking: output (GRAVITY: [character] +[points] for "[reason]") when emotionally significant moments occur.
+Points: vulnerable conversation +2, shared danger +2, secret revealed +3, romantic moment +3, sacrifice +4, misunderstanding +1, quiet personal moment +2.`;
+      }
+
+      /**
+       * Extract (GRAVITY: ...) tags from AI output.
+       * Updates character gravity scores. Strips tags from display text.
+       */
+      function extractGravityTags(raw) {
+          if (!raw) return raw;
+          if (!state.characterGravity) state.characterGravity = {};
+          const currentScene = (state.turnCount || 0) + 1;
+
+          raw = raw.replace(/\(GRAVITY:\s*([^+]+)\+(\d+)\s+for\s+"([^"]+)"\)/gi, (match, name, points, reason) => {
+              const n = name.trim();
+              const p = parseInt(points, 10);
+              if (!state.characterGravity[n]) {
+                  state.characterGravity[n] = { gravityScore: 0, momentsShared: 0, emotionalMoments: 0, threadConnections: 0 };
+              }
+              const g = state.characterGravity[n];
+              g.gravityScore += p;
+              g.momentsShared = (g.momentsShared || 0) + 1;
+              g.lastSeenScene = currentScene;
+              // Categorize the moment
+              if (/romantic|kiss|intimat|attract/i.test(reason)) g.emotionalMoments = (g.emotionalMoments || 0) + 1;
+              else if (/secret|reveal|confess|vulnerab|sacrifice/i.test(reason)) g.emotionalMoments = (g.emotionalMoments || 0) + 1;
+              if (/thread|fate|converge/i.test(reason)) g.threadConnections = (g.threadConnections || 0) + 1;
+              console.log(`[GRAVITY] ${n} +${p} (now ${g.gravityScore}) — "${reason}"`);
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // MOMENTS OF GRACE — quiet emotional connection scenes that balance
+      // tension with warmth, vulnerability, and human beauty.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildMomentsOfGraceDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 4) return '';
+
+          const lastGrace = state._lastGraceMomentScene || 0;
+          const scenesSinceGrace = currentScene - lastGrace;
+
+          // Only suggest grace when enough tension has built (5-8 scene gap)
+          if (scenesSinceGrace < 5) return '';
+
+          // Check if recent scenes had high tension indicators
+          const secrets = (state.characterSecrets || []).filter(s => !s.revealed && s.pressureLevel !== 'low').length;
+          const misunderstandings = (state.misunderstandings || []).filter(m => !m.resolved).length;
+          const threads = (state.fateThreads || []).filter(t => t.active).length;
+          const tensionIndicators = secrets + misunderstandings + threads;
+
+          // Higher tension = more likely to suggest grace
+          if (tensionIndicators < 2 && scenesSinceGrace < 8) return '';
+
+          return `\nMOMENT OF GRACE (optional this scene):
+Recent scenes have carried significant emotional tension. If narratively appropriate, allow a quiet moment of emotional connection — shared laughter, unexpected kindness, vulnerability without consequence, emotional reassurance, or a peaceful pause after danger.
+Grace moments deepen trust, strengthen attachment, and reveal character. They must feel earned, not forced.
+A grace moment does NOT eliminate conflict — it provides emotional breathing space that makes future tension more impactful.
+If a grace moment occurs, output at the end: (GRACE_MOMENT: [brief description])
+Do NOT force this. Only include if the scene naturally supports a moment of warmth or connection.`;
+      }
+
+      /**
+       * Extract (GRACE_MOMENT: ...) tags from AI output.
+       * Tracks grace timing. Strips tags from display text.
+       */
+      function extractGraceMomentTags(raw) {
+          if (!raw) return raw;
+          const currentScene = (state.turnCount || 0) + 1;
+
+          raw = raw.replace(/\(GRACE_MOMENT:\s*([^)]+)\)/gi, (match, desc) => {
+              state._lastGraceMomentScene = currentScene;
+              console.log(`[GRACE] Moment of grace at scene ${currentScene}: "${desc.trim()}"`);
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // EMOTIONAL LOCATION MEMORY — locations accumulate emotional meaning
+      // through repeated narrative events, creating a lived-in story world.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildLocationMemoryDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 4) return '';
+          if (!state.locationMemories) state.locationMemories = {};
+
+          const locations = state.locationMemories;
+          const entries = Object.entries(locations).filter(([, loc]) => loc.events && loc.events.length > 0);
+
+          if (entries.length === 0) {
+              // No locations tracked yet — invite recording
+              if (currentScene < 6) return '';
+              return `\nLOCATION MEMORY (if applicable):
+If this scene takes place in a specific, identifiable location where an emotionally significant event occurs (confession, argument, betrayal, revelation, moment of grace, near-kiss, sacrifice), record it:
+(LOCATION: [place name] | event: "[what happened]" | characters: [names])
+Only record locations where emotional events give the place narrative meaning. Not every scene qualifies.`;
+          }
+
+          // Build memory for locations with history
+          const sorted = entries.sort(([, a], [, b]) => (b.events?.length || 0) - (a.events?.length || 0));
+          const lines = sorted.slice(0, 6).map(([name, loc]) => {
+              const eventList = loc.events.slice(-3).map(e => e.description).join('; ');
+              return `- ${name}: ${loc.events.length} memories (${eventList}) — characters: ${(loc.charactersInvolved || []).join(', ')}`;
+          }).join('\n');
+
+          return `\nEMOTIONAL LOCATION MEMORY:
+Places with accumulated emotional meaning:
+${lines}
+When characters revisit these locations, the narrative may: subtly reference past events, evoke remembered emotions, mirror earlier scenes, or create emotional contrast. The location itself becomes an emotional anchor.
+Do NOT explicitly narrate "they remembered what happened here" — let the setting evoke emotion through atmosphere, sensory detail, or character hesitation.
+Continue recording: (LOCATION: [place] | event: "[what happened]" | characters: [names])`;
+      }
+
+      /**
+       * Extract (LOCATION: ...) tags from AI output.
+       * Records emotional events at locations. Strips tags from display text.
+       */
+      function extractLocationMemoryTags(raw) {
+          if (!raw) return raw;
+          if (!state.locationMemories) state.locationMemories = {};
+          const currentScene = (state.turnCount || 0) + 1;
+
+          raw = raw.replace(/\(LOCATION:\s*([^|]+)\|\s*event:\s*"([^"]+)"\s*\|\s*characters:\s*([^)]+)\)/gi, (match, place, event, chars) => {
+              const p = place.trim();
+              if (!state.locationMemories[p]) {
+                  state.locationMemories[p] = { events: [], charactersInvolved: [] };
+              }
+              const loc = state.locationMemories[p];
+              loc.events.push({ description: event.trim(), scene: currentScene });
+              loc.lastScene = currentScene;
+              // Merge characters
+              const newChars = chars.trim().split(/[,&]+/).map(c => c.trim()).filter(Boolean);
+              for (const c of newChars) {
+                  if (!loc.charactersInvolved.includes(c)) loc.charactersInvolved.push(c);
+              }
+              console.log(`[LOCATION] ${p}: "${event.trim()}" (scene ${currentScene})`);
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // NARRATIVE NOTICING — the narrator occasionally observes subtle
+      // details without explaining them, creating narrative intelligence.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildNarrativeNoticingDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 4) return '';
+
+          // Check if conditions favor noticing (secrets, misunderstandings, threads)
+          const secrets = (state.characterSecrets || []).filter(s => !s.revealed).length;
+          const misunderstandings = (state.misunderstandings || []).filter(m => !m.resolved).length;
+          const threads = (state.fateThreads || []).filter(t => t.active).length;
+          const tensionPresent = secrets + misunderstandings + threads;
+
+          if (tensionPresent === 0) return '';
+
+          // Don't fire every scene — use subtle frequency
+          const lastNoticing = state._lastNoticingScene || 0;
+          if (currentScene - lastNoticing < 2) return '';
+          if (Math.random() > 0.40) return ''; // ~40% of eligible scenes
+
+          state._lastNoticingScene = currentScene;
+
+          let focus = '';
+          if (secrets > 0 && Math.random() < 0.5) {
+              focus = ' The detail may relate to a character hiding something — a hesitation, an avoidance, a phrase that sounds rehearsed.';
+          } else if (misunderstandings > 0 && Math.random() < 0.5) {
+              focus = ' The detail may relate to a misread between characters — guarded behavior, a glance that lingers wrong, a word chosen too carefully.';
+          }
+
+          return `\nNARRATIVE NOTICING (this scene):
+Include one brief observational detail where the narrator draws attention to something small without explaining its meaning.
+Examples: a strange hesitation in someone's voice, a character avoiding eye contact, an object slightly out of place, a phrase that sounds rehearsed, a gesture that feels unusual.
+The detail must be observed but NOT interpreted. The reader should sense meaning before it is revealed.
+Format: a single short sentence woven naturally into the scene prose.${focus}
+Do NOT overuse — one noticing detail per scene maximum. The power comes from restraint.`;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // UNANSWERED QUESTION ENGINE — plants unresolved narrative curiosity
+      // that lingers across scenes and resolves with transformative payoffs.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildUnansweredQuestionDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 5) return '';
+          if (!state.unansweredQuestions) state.unansweredQuestions = [];
+
+          const active = state.unansweredQuestions.filter(q => !q.resolved);
+
+          // ── REACTIVATION: remind reader of lingering questions ──
+          let reactivation = '';
+          if (active.length > 0) {
+              // Pick a question to subtly reactivate (~25% of scenes, minimum 4-scene gap)
+              const eligible = active.filter(q => {
+                  const lastTouch = q.lastReactivated || q.scene;
+                  return (currentScene - lastTouch) >= 4;
+              });
+              if (eligible.length > 0 && Math.random() < 0.25) {
+                  // Prefer older questions
+                  const sorted = [...eligible].sort((a, b) => a.scene - b.scene);
+                  const pick = sorted[Math.floor(Math.random() * Math.min(3, sorted.length))];
+                  pick.lastReactivated = currentScene;
+                  reactivation = `\nQUESTION REACTIVATION: Subtly remind the reader of the unanswered question from scene ${pick.scene}: "${pick.description}". Methods: similar dialogue, returning to a related location, another character referencing the topic, or an emotional echo. Do NOT answer the question — only increase curiosity.`;
+              }
+          }
+
+          // ── RESOLUTION CHECK: old questions may resolve during high-momentum moments ──
+          let resolutionNote = '';
+          const ripeQuestions = active.filter(q => (currentScene - q.scene) >= 10);
+          if (ripeQuestions.length > 0) {
+              const arcMomentum = currentScene >= 25;
+              if (arcMomentum || ripeQuestions.some(q => (currentScene - q.scene) >= 20)) {
+                  resolutionNote = `\nQuestions lingering 10+ scenes may resolve when narratively inevitable. The reveal should transform the reader's understanding of earlier scenes. Output (QUESTION_RESOLVED: "[question description]") when resolved.`;
+              }
+          }
+
+          // ── Active questions list ──
+          let questionList = '';
+          if (active.length > 0) {
+              const lines = active.map(q => {
+                  const age = currentScene - q.scene;
+                  const lifespan = age >= 15 ? 'long-range' : age >= 8 ? 'medium' : 'short';
+                  return `- "${q.description}" (scene ${q.scene}, ${age} scenes ago, ${lifespan})${q.relatedThread ? ' — thread: ' + q.relatedThread : ''}`;
+              }).join('\n');
+              questionList = `\nUNANSWERED QUESTIONS (active):
+${lines}
+These unresolved curiosities linger across the narrative. Do not answer them casually — they resolve during significant moments.${resolutionNote}`;
+          }
+
+          // ── PLANTING: occasionally create a new question ──
+          let plantNote = '';
+          if (active.length < 5) { // Cap at 5 active questions
+              const lastPlant = state._lastQuestionPlantScene || 0;
+              if (currentScene - lastPlant >= 6 && Math.random() < 0.18) {
+                  plantNote = `\nQUESTION SEED (optional):
+If this scene naturally contains a moment of unexplained curiosity — a strange reaction, an evasive answer, an object without explanation, a character who knows more than they admit — you may plant an unanswered question.
+The question must arise organically from dialogue, behavior, or subtle observation. The story invites curiosity but withholds the explanation.
+Output at the end: (QUESTION: "[what the reader wonders]" | characters: [names]${state.fateThreads?.some(t => t.active) ? ' | thread: [related thread name if any]' : ''})`;
+              }
+          }
+
+          return `${questionList}${reactivation}${plantNote}`;
+      }
+
+      /**
+       * Extract (QUESTION: ...) and (QUESTION_RESOLVED: ...) tags from AI output.
+       * Creates new questions or resolves existing ones. Strips tags from display text.
+       */
+      function extractQuestionTags(raw) {
+          if (!raw) return raw;
+          if (!state.unansweredQuestions) state.unansweredQuestions = [];
+          const currentScene = (state.turnCount || 0) + 1;
+
+          // Extract new question creation
+          raw = raw.replace(/\(QUESTION:\s*"([^"]+)"\s*\|\s*characters:\s*([^)|]+)(?:\s*\|\s*thread:\s*([^)]+))?\)/gi, (match, desc, chars, thread) => {
+              state.unansweredQuestions.push({
+                  scene: currentScene,
+                  description: desc.trim(),
+                  charactersInvolved: chars.trim().split(/[,&]+/).map(c => c.trim()).filter(Boolean),
+                  relatedThread: thread ? thread.trim() : null,
+                  resolved: false,
+                  lastReactivated: null
+              });
+              state._lastQuestionPlantScene = currentScene;
+              console.log(`[QUESTION] Planted: "${desc.trim()}" (scene ${currentScene})`);
+              return '';
+          });
+
+          // Extract resolution
+          raw = raw.replace(/\(QUESTION_RESOLVED:\s*"([^"]+)"\)/gi, (match, desc) => {
+              const d = desc.trim().toLowerCase();
+              const found = state.unansweredQuestions.find(q =>
+                  !q.resolved && q.description.toLowerCase().includes(d.substring(0, 30))
+              );
+              if (found) {
+                  found.resolved = true;
+                  found.resolvedScene = currentScene;
+                  console.log(`[QUESTION] Resolved: "${found.description}" (planted scene ${found.scene}, resolved scene ${currentScene})`);
+              }
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // NARRATIVE DIRECTOR — coordinates multiple narrative systems so they
+      // reinforce each other. Computes scene focus + energy budget + pressure
+      // governor + character focus in one unified governance directive.
+      // ═══════════════════════════════════════════════════════════════════
+
+      /**
+       * Compute which narrative focus should dominate this scene.
+       * Returns { focus, energyUsed, coreCharacters }
+       */
+      function computeSceneGovernance() {
+          const currentScene = (state.turnCount || 0) + 1;
+          const threads = (state.fateThreads || []).filter(t => t.active);
+          const secrets = (state.characterSecrets || []).filter(s => !s.revealed);
+          const misunderstandings = (state.misunderstandings || []).filter(m => !m.resolved);
+          const gravity = state.characterGravity || {};
+
+          // ── NARRATIVE DIRECTOR: determine scene focus ──
+          const focusCandidates = [];
+
+          // Check for ripe threads wanting convergence
+          const ripeThreads = threads.filter(t => (t.echoCount || 0) >= 3);
+          if (ripeThreads.length > 0) focusCandidates.push({ focus: 'thread_awakening', weight: ripeThreads.length * 3 });
+
+          // Check for critical secrets
+          const criticalSecrets = secrets.filter(s => s.pressureLevel === 'critical' || s.pressureLevel === 'high');
+          if (criticalSecrets.length > 0) focusCandidates.push({ focus: 'secret_pressure', weight: criticalSecrets.length * 3 });
+
+          // Check for escalated misunderstandings
+          const escalated = misunderstandings.filter(m => (currentScene - (m.originScene || currentScene)) >= 6);
+          if (escalated.length > 0) focusCandidates.push({ focus: 'relationship_tension', weight: escalated.length * 3 });
+
+          // Check for grace opportunity
+          const lastGrace = state._lastGraceMomentScene || 0;
+          if (currentScene - lastGrace >= 6) focusCandidates.push({ focus: 'emotional_grace', weight: 2 });
+
+          // Check themes
+          const themes = state.themeTracker?.activeThemes || [];
+          if (themes.length > 0 && currentScene % 5 === 0) focusCandidates.push({ focus: 'thematic_reflection', weight: 2 });
+
+          // Default: mystery/exploration
+          focusCandidates.push({ focus: 'mystery_escalation', weight: 1 });
+
+          // Rotate: use scene number to break ties and add variety
+          const rotationBonus = currentScene % focusCandidates.length;
+          focusCandidates.forEach((c, i) => { if (i === rotationBonus) c.weight += 1; });
+
+          focusCandidates.sort((a, b) => b.weight - a.weight);
+          const primaryFocus = focusCandidates[0].focus;
+
+          // ── ENERGY BUDGET: estimate how much dramatic energy is already active ──
+          let energyUsed = 0;
+          if (criticalSecrets.length > 0) energyUsed += 4;
+          if (ripeThreads.length > 0) energyUsed += 4;
+          if (escalated.length > 0) energyUsed += 3;
+          // Echo memory resurface
+          const lastResurface = state._lastEchoMemoryResurfaceScene || 0;
+          if (lastResurface === currentScene) energyUsed += 1;
+
+          // ── CHARACTER FOCUS: identify core characters ──
+          const gravityEntries = Object.entries(gravity).filter(([, g]) => g.gravityScore >= 10);
+          const coreCharacters = gravityEntries.sort(([, a], [, b]) => b.gravityScore - a.gravityScore).slice(0, 5).map(([name]) => name);
+
+          return { focus: primaryFocus, energyUsed, coreCharacters };
+      }
+
+      function buildNarrativeGovernanceDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 6) return ''; // Too early for governance
+
+          const { focus, energyUsed, coreCharacters } = computeSceneGovernance();
+
+          const FOCUS_LABELS = {
+              thread_awakening: 'Fate Thread awakening or convergence',
+              secret_pressure: 'character secret approaching revelation',
+              relationship_tension: 'relationship tension or misunderstanding',
+              emotional_grace: 'emotional connection and grace',
+              thematic_reflection: 'thematic resonance and meaning',
+              mystery_escalation: 'mystery, discovery, or world-building'
+          };
+
+          const FOCUS_GUIDANCE = {
+              thread_awakening: 'Prioritize Fate Thread echoes and convergence. Secrets and misunderstandings provide atmosphere but should not climax simultaneously.',
+              secret_pressure: 'Prioritize the secret approaching revelation. Threads and misunderstandings provide background tension but should not independently escalate.',
+              relationship_tension: 'Prioritize the emotional dynamic between characters. Threads and secrets add texture but should not dominate.',
+              emotional_grace: 'Prioritize warmth, vulnerability, and connection. Reduce dramatic escalation — let the characters breathe.',
+              thematic_reflection: 'Prioritize scenes that naturally echo the story\'s themes. Other systems provide subtle undertones.',
+              mystery_escalation: 'Prioritize curiosity, discovery, and world-building. Emotional and thread systems provide background flavor.'
+          };
+
+          let parts = [];
+
+          // Narrative Director
+          parts.push(`SCENE FOCUS: ${FOCUS_LABELS[focus] || focus}.
+${FOCUS_GUIDANCE[focus] || ''}`);
+
+          // Pressure Governor
+          if (energyUsed >= 5) {
+              parts.push(`PRESSURE GOVERNOR: Multiple high-intensity narrative forces are active (energy ${energyUsed}/6). This scene should contain AT MOST ONE major dramatic escalation. Other systems should favor subtle tension, emotional dialogue, character reflection, or quiet buildup. Let the primary dramatic moment breathe — do not stack additional climaxes.`);
+          } else if (energyUsed >= 3) {
+              parts.push(`PRESSURE GOVERNOR: Moderate narrative pressure active (energy ${energyUsed}/6). A major dramatic moment is possible, but avoid stacking multiple revelations, confrontations, or convergences in the same scene.`);
+          }
+
+          // Character Focus Stabilizer
+          if (coreCharacters.length > 0) {
+              parts.push(`CHARACTER FOCUS: Core characters (${coreCharacters.join(', ')}). Most scenes should involve or influence at least one core character. Secondary characters may appear briefly but should not accumulate major narrative weight, secrets, or relationship arcs.`);
+          }
+
+          return `\nNARRATIVE GOVERNANCE (scene ${currentScene}):
+${parts.join('\n')}
+These coordination rules ensure scenes feel focused and purposeful. One dominant dramatic thread per scene — others provide texture, not competition.`;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // CHARACTER SECRET ENGINE — every major character carries a hidden
+      // truth that builds pressure and eventually detonates emotionally.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildCharacterSecretDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 4) return ''; // Let characters establish before secrets surface
+          if (!state.characterSecrets) state.characterSecrets = [];
+
+          const active = state.characterSecrets.filter(s => !s.revealed);
+
+          if (active.length === 0) {
+              // No secrets tracked yet — invite creation after enough story depth
+              const lastCreation = state._lastSecretCreationScene || 0;
+              if (currentScene - lastCreation < 6) return '';
+              if (Math.random() > 0.20) return '';
+
+              return `\nCHARACTER SECRET SEED (optional):
+If a major character in this scene is naturally hiding something — a past betrayal, forbidden knowledge, hidden identity, secret allegiance, concealed feelings, or responsibility for a past event — you may register it.
+The secret must matter: if revealed, it would significantly change a relationship or the story's direction.
+Output at the end: (SECRET: [owner] hides "[secret description]" | stakes: "[what changes if revealed]")
+Only register secrets that emerge naturally from the narrative. Do NOT force secrets onto characters.`;
+          }
+
+          // Build pressure from active secrets
+          const threads = state.fateThreads || [];
+          const activeThreads = threads.filter(t => t.active);
+
+          const lines = active.map(s => {
+              const age = currentScene - (s.originScene || currentScene);
+              // Pressure escalates with age and thread proximity
+              let pressure = s.pressureLevel || 'low';
+              if (age >= 15 || pressure === 'critical') pressure = 'critical';
+              else if (age >= 10 || pressure === 'high') pressure = 'high';
+              else if (age >= 5) pressure = 'medium';
+              s.pressureLevel = pressure;
+
+              const revealedNames = (s.revealedTo || []).join(', ');
+              const revealNote = revealedNames ? ` (known to: ${revealedNames})` : '';
+              return `- ${s.owner}: "${s.secretDescription}" [${pressure} pressure, ${age} scenes]${revealNote} — stakes: ${s.stakes}`;
+          }).join('\n');
+
+          // Check for thread collisions — secrets near active threads are more volatile
+          const collisionNotes = [];
+          for (const s of active) {
+              const related = activeThreads.find(t =>
+                  t.title.toLowerCase().includes(s.owner.toLowerCase()) ||
+                  (s.secretDescription && t.description && t.description.toLowerCase().includes(s.secretDescription.toLowerCase().substring(0, 20)))
+              );
+              if (related) {
+                  collisionNotes.push(`Secret collision: "${s.owner}" secret intersects with thread "${related.title}" — pressure increases when thread awakens.`);
+              }
+          }
+
+          const critical = active.filter(s => s.pressureLevel === 'critical');
+          const revealNote = critical.length > 0
+              ? `\nSecrets at CRITICAL pressure may surface this scene if: Arc Momentum is high, a misunderstanding forces confrontation, a Fate Thread converges with the secret, or a character chooses honesty. Reveals should feel inevitable, not random. Output (SECRET_REVEALED: [owner] | revealed to: [character]) when revealed.`
+              : '';
+
+          return `\nCHARACTER SECRET ENGINE:
+Active character secrets:
+${lines}${collisionNotes.length > 0 ? '\n' + collisionNotes.join('\n') : ''}
+Characters with secrets: avoid certain questions, redirect conversations, hesitate near the truth, react strongly when topics approach the secret.
+The player may know secrets before characters do — use dramatic irony.
+Secrets should not be revealed immediately. They build pressure across scenes and detonate when narratively inevitable.${revealNote}`;
+      }
+
+      /**
+       * Extract (SECRET: ...) and (SECRET_REVEALED: ...) tags from AI output.
+       * Creates new secrets or marks them revealed. Strips tags from display text.
+       */
+      function extractSecretTags(raw) {
+          if (!raw) return raw;
+          if (!state.characterSecrets) state.characterSecrets = [];
+          const currentScene = (state.turnCount || 0) + 1;
+
+          // Extract new secret creation
+          raw = raw.replace(/\(SECRET:\s*([^|]+)\|\s*stakes:\s*"([^"]+)"\)/gi, (match, secretPart, stakes) => {
+              const secretMatch = secretPart.trim().match(/^(.+?)\s+hides?\s*"([^"]+)"/i);
+              if (secretMatch) {
+                  state.characterSecrets.push({
+                      owner: secretMatch[1].trim(),
+                      secretDescription: secretMatch[2].trim(),
+                      stakes: stakes.trim(),
+                      revealedTo: [],
+                      originScene: currentScene,
+                      pressureLevel: 'low',
+                      revealed: false
+                  });
+                  state._lastSecretCreationScene = currentScene;
+                  console.log(`[SECRET] Created: ${secretMatch[1].trim()} — "${secretMatch[2].trim()}"`);
+              }
+              return '';
+          });
+
+          // Extract reveal
+          raw = raw.replace(/\(SECRET_REVEALED:\s*([^|]+)\|\s*revealed to:\s*([^)]+)\)/gi, (match, owner, target) => {
+              const o = owner.trim();
+              const t = target.trim();
+              const found = state.characterSecrets.find(s =>
+                  !s.revealed && s.owner.toLowerCase() === o.toLowerCase()
+              );
+              if (found) {
+                  found.revealed = true;
+                  found.revealedScene = currentScene;
+                  if (!found.revealedTo.includes(t)) found.revealedTo.push(t);
+                  console.log(`[SECRET] Revealed: ${o} → ${t}`);
+              }
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // NARRATIVE MEMORY ECHO — records emotionally weighted moments and
+      // subtly resurfaces them later, making the story feel reflective.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildNarrativeMemoryEchoDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 3) return '';
+          if (!state.echoMemories) state.echoMemories = [];
+
+          const memories = state.echoMemories;
+
+          // ── RESURFACE PHASE: occasionally reference an earlier emotional moment ──
+          if (memories.length > 0 && currentScene >= 8) {
+              const lastResurface = state._lastEchoMemoryResurfaceScene || 0;
+              // Frequency: ~once every 6-10 scenes
+              if (currentScene - lastResurface >= 6 && Math.random() < 0.20) {
+                  // Pick a memory — prefer older ones with more emotional weight
+                  const sorted = [...memories].sort((a, b) => {
+                      const ageA = currentScene - a.scene;
+                      const ageB = currentScene - b.scene;
+                      return ageB - ageA; // Older memories first
+                  });
+                  const pick = sorted[Math.floor(Math.random() * Math.min(3, sorted.length))];
+
+                  state._lastEchoMemoryResurfaceScene = currentScene;
+
+                  return `\nNARRATIVE MEMORY ECHO (this scene):
+Subtly reference the emotional moment from scene ${pick.scene}: "${pick.description}" (involving ${pick.charactersInvolved.join(', ')}, emotion: ${pick.emotionType}).
+The callback may appear as: a character remembering the moment, a location triggering the memory, a similar emotional situation occurring, a line of dialogue echoing the earlier moment, a repeated gesture or phrase, or emotional mirroring (a role reversal of the earlier moment).
+The reference must be subtle — readers should feel the connection without it being explicitly explained. The earlier moment gains new meaning in the current context.
+Do NOT explain the callback. Let the resonance speak for itself.`;
+              }
+          }
+
+          // ── RECORD PHASE: invite AI to mark emotionally significant moments ──
+          // Only prompt for recording if we have room (cap at 12 stored memories)
+          if (memories.length >= 12) return '';
+
+          const lastRecord = state._lastEchoMemoryRecordScene || 0;
+          if (currentScene - lastRecord < 3) return ''; // Don't record every scene
+
+          return `\nNARRATIVE MEMORY (if applicable):
+If this scene contains a strongly emotional moment — a confession, betrayal, near-kiss, sacrifice, painful argument, shocking revelation, or moment of deep vulnerability — record it by outputting at the end:
+(ECHO_MEMORY: characters: [names] | emotion: [type] | moment: "[brief description]")
+Only record moments with genuine emotional weight. Not every scene qualifies. Max 1 per scene.`;
+      }
+
+      /**
+       * Extract (ECHO_MEMORY: ...) tags from AI output.
+       * Stores emotional moments for later resurfacing. Strips tags from display text.
+       */
+      function extractEchoMemoryTags(raw) {
+          if (!raw) return raw;
+          if (!state.echoMemories) state.echoMemories = [];
+          const currentScene = (state.turnCount || 0) + 1;
+
+          raw = raw.replace(/\(ECHO_MEMORY:\s*characters:\s*([^|]+)\|\s*emotion:\s*([^|]+)\|\s*moment:\s*"([^"]+)"\)/gi, (match, chars, emotion, desc) => {
+              state.echoMemories.push({
+                  scene: currentScene,
+                  charactersInvolved: chars.trim().split(/[,&]+/).map(c => c.trim()).filter(Boolean),
+                  emotionType: emotion.trim(),
+                  description: desc.trim()
+              });
+              state._lastEchoMemoryRecordScene = currentScene;
+              console.log(`[ECHO_MEMORY] Recorded: "${desc.trim()}" (${emotion.trim()})`);
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // MUTUAL MISUNDERSTANDING PRESSURE — creates emotionally painful
+      // tension where characters care about each other but misinterpret
+      // each other's intentions. Classic "almost connection" dynamic.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildMisunderstandingPressureDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 5) return ''; // Let relationships establish first
+          if (!state.misunderstandings) state.misunderstandings = [];
+
+          const active = state.misunderstandings.filter(m => !m.resolved);
+
+          if (active.length === 0) {
+              // No active misunderstandings — check if conditions favor creating one
+              // Only suggest creation every 8-12 scenes, after enough relationship depth
+              const lastCreation = state._lastMisunderstandingScene || 0;
+              if (currentScene - lastCreation < 8) return '';
+              if (Math.random() > 0.15) return '';
+
+              return `\nMISUNDERSTANDING SEED (optional):
+If the scene naturally involves secrets, partial truths, interrupted conversations, overheard fragments, or protective lies between two characters who care about each other — you may plant a mutual misunderstanding.
+Both characters should form an incorrect belief about the other's motives or feelings based on incomplete information.
+The misunderstanding must arise from believable circumstances (never from stupidity). Both characters must remain sympathetic.
+If planted, output at the end: (MISUNDERSTANDING: [characterA] believes "[false belief A]" | [characterB] believes "[false belief B]")
+Do NOT force this. Only plant if the scene naturally supports it.`;
+          }
+
+          // Build pressure from active misunderstandings
+          const lines = active.map(m => {
+              const age = currentScene - (m.originScene || currentScene);
+              let intensity;
+              if (age >= 10) intensity = 'fracture-risk';
+              else if (age >= 6) intensity = 'emotional withdrawal';
+              else if (age >= 3) intensity = 'growing tension';
+              else intensity = 'awkward distance';
+
+              return `- ${m.characterA} believes: "${m.falseBeliefA}" | ${m.characterB} believes: "${m.falseBeliefB}" (${age} scenes, ${intensity})`;
+          }).join('\n');
+
+          // Check if any misunderstanding is ripe for resolution
+          const ripe = active.filter(m => (currentScene - (m.originScene || currentScene)) >= 8);
+          const resolutionNote = ripe.length > 0
+              ? `\nMisunderstandings aged 8+ scenes may resolve this scene if: the truth is revealed, a confession occurs, hidden information surfaces, or a Fate Thread converges with the relationship. Resolution scenes should be emotionally powerful — one character finally understanding what the other truly meant. Output (MISUNDERSTANDING_RESOLVED: [characterA] | [characterB]) if resolved.`
+              : '';
+
+          return `\nMUTUAL MISUNDERSTANDING PRESSURE:
+Active false beliefs between characters:
+${lines}
+Scenes involving these characters should contain: guarded dialogue, subtle suspicion, emotional hesitation, delayed confessions. Characters may say the wrong thing, hide vulnerability, or test each other indirectly.
+The player often knows the truth — use dramatic irony to create emotional investment.
+Misunderstandings must never feel contrived — both characters remain sympathetic, acting on incomplete information.${resolutionNote}`;
+      }
+
+      /**
+       * Extract (MISUNDERSTANDING: ...) and (MISUNDERSTANDING_RESOLVED: ...) tags from AI output.
+       * Creates new misunderstandings or resolves existing ones. Strips tags from display text.
+       */
+      function extractMisunderstandingTags(raw) {
+          if (!raw) return raw;
+          if (!state.misunderstandings) state.misunderstandings = [];
+          const currentScene = (state.turnCount || 0) + 1;
+
+          // Extract new misunderstanding creation
+          raw = raw.replace(/\(MISUNDERSTANDING:\s*([^|]+)\|\s*([^)]+)\)/gi, (match, partA, partB) => {
+              // Parse: [charA] believes "[beliefA]" | [charB] believes "[beliefB]"
+              const matchA = partA.trim().match(/^(.+?)\s+believes?\s*"([^"]+)"/i);
+              const matchB = partB.trim().match(/^(.+?)\s+believes?\s*"([^"]+)"/i);
+              if (matchA && matchB) {
+                  state.misunderstandings.push({
+                      characterA: matchA[1].trim(),
+                      characterB: matchB[1].trim(),
+                      falseBeliefA: matchA[2].trim(),
+                      falseBeliefB: matchB[2].trim(),
+                      originScene: currentScene,
+                      resolved: false
+                  });
+                  state._lastMisunderstandingScene = currentScene;
+                  console.log(`[MISUNDERSTANDING] Created: ${matchA[1].trim()} / ${matchB[1].trim()}`);
+              }
+              return '';
+          });
+
+          // Extract resolution
+          raw = raw.replace(/\(MISUNDERSTANDING_RESOLVED:\s*([^|]+)\|\s*([^)]+)\)/gi, (match, charA, charB) => {
+              const a = charA.trim();
+              const b = charB.trim();
+              const found = state.misunderstandings.find(m =>
+                  !m.resolved &&
+                  ((m.characterA.toLowerCase() === a.toLowerCase() && m.characterB.toLowerCase() === b.toLowerCase()) ||
+                   (m.characterA.toLowerCase() === b.toLowerCase() && m.characterB.toLowerCase() === a.toLowerCase()))
+              );
+              if (found) {
+                  found.resolved = true;
+                  found.resolvedScene = currentScene;
+                  console.log(`[MISUNDERSTANDING] Resolved: ${a} / ${b}`);
+              }
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // PROMISE OF THE SCENE — ensures every scene opens with a compelling
+      // micro-mystery or unresolved tension that creates immediate curiosity.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildScenePromiseDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 2) return ''; // Scene 1 has its own opening rules
+
+          const threads = state.fateThreads || [];
+          const active = threads.filter(t => t.active);
+          const misunderstandings = (state.misunderstandings || []).filter(m => !m.resolved);
+          const themes = (state.themeTracker?.activeThemes) || [];
+
+          // Build a pool of promise types relevant to current story state
+          const promiseTypes = [
+              'INFORMATION — the reader expects to learn something (a letter opened, a discovery made, an answer hinted at)',
+              'EMOTIONAL — a relationship moment is about to unfold (a confession, a confrontation, a decision about trust)',
+              'DANGER — something may go wrong (a door already open, an unexpected arrival, a warning sign)',
+              'MYSTERY — something unexplained has occurred (an object out of place, strange behavior, an unanswered question)'
+          ];
+
+          if (active.length > 0) {
+              promiseTypes.push('FATE — a Fate Thread may awaken (a familiar symbol, an echo of an earlier event, a thread stirring)');
+          }
+          if (misunderstandings.length > 0) {
+              promiseTypes.push('TENSION — a misunderstanding may surface or deepen (guarded behavior, a test, almost-truth)');
+          }
+
+          // Rotate suggestion emphasis to avoid repetition
+          const suggested = promiseTypes[currentScene % promiseTypes.length];
+
+          return `\nSCENE PROMISE (MANDATORY):
+The scene MUST open with a micro-mystery or unresolved tension in the first paragraph — something that creates immediate curiosity.
+Avoid neutral setup openings (weather, scenery, routine). Instead open with: something unexpected, a question unanswered, a character behaving strangely, an object out of place, an emotional confrontation brewing, or a hint of hidden information.
+The promise creates a question the reader wants answered. The scene then gradually delivers — through escalation, partial reveals, or emotional shifts.
+Promise types to consider:
+${promiseTypes.map(p => '- ' + p).join('\n')}
+Suggested emphasis this scene: ${suggested}
+The promise does not need to fully resolve — it may deepen the mystery, trigger a new question, or escalate tension. Resolution can shift the question rather than eliminate it.`;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // NARRATIVE THEME GRAVITY — discovers repeating emotional tensions
+      // and subtly reinforces them to make long stories feel cohesive.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildThemeGravityDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 6) return ''; // Themes emerge after scene 5
+          if (!state.themeTracker) state.themeTracker = { activeThemes: [], themeMentions: {} };
+
+          const tracker = state.themeTracker;
+          const themes = tracker.activeThemes || [];
+          if (themes.length === 0) {
+              // No themes yet — ask AI to identify emerging patterns
+              return `\nTHEME EMERGENCE (scene ${currentScene}):
+Analyze the story so far for 1-2 recurring emotional tensions or philosophical questions (e.g., trust vs betrayal, freedom vs duty, love vs fear, power vs responsibility, identity vs deception, fate vs choice).
+If a pattern has appeared multiple times across scenes, register it by outputting at the end of the scene: (THEME: [tension description, e.g. "trust vs betrayal"])
+Only register themes that genuinely emerge from the narrative — never force or invent them. Maximum 3 themes total.
+Do NOT mention themes explicitly in prose. They must remain implicit.`;
+          }
+
+          // Build gravity directive from active themes
+          const sorted = [...themes].sort((a, b) => (tracker.themeMentions[b] || 0) - (tracker.themeMentions[a] || 0));
+          const themeLines = sorted.map(t => {
+              const count = tracker.themeMentions[t] || 0;
+              const gravity = count >= 6 ? 'strong' : count >= 3 ? 'moderate' : 'emerging';
+              return `- "${t}" (${count} echoes, ${gravity} gravity)`;
+          }).join('\n');
+
+          // Allow new theme discovery if under cap
+          const discoveryNote = themes.length < 3
+              ? `\nIf a new emotional tension has emerged from recent events, you may register it: (THEME: [tension description]). Max 3 themes total.`
+              : '';
+
+          return `\nNARRATIVE THEME GRAVITY:
+Active themes shaping this story:
+${themeLines}
+Let these themes subtly influence the scene through: dialogue reflecting the tension, character decisions mirroring the theme, environmental symbolism, or characters embodying different sides.
+Higher-gravity themes should more strongly color scene tone and character conflict.
+Themes must remain IMPLICIT — express through arguments, choices, emotional reactions, symbolic events. Never explain or name themes in prose.
+If a theme naturally surfaces in this scene, output at the end: (THEME_ECHO: [theme name])${discoveryNote}`;
+      }
+
+      /**
+       * Extract (THEME: ...) and (THEME_ECHO: ...) tags from AI output.
+       * Registers new themes or increments mention counts. Strips tags from display text.
+       */
+      function extractThemeTags(raw) {
+          if (!raw) return raw;
+          if (!state.themeTracker) state.themeTracker = { activeThemes: [], themeMentions: {} };
+          const tracker = state.themeTracker;
+
+          // Extract new theme registrations
+          raw = raw.replace(/\(THEME:\s*([^)]+)\)/gi, (match, theme) => {
+              const t = theme.trim();
+              if (!tracker.activeThemes.includes(t) && tracker.activeThemes.length < 3) {
+                  tracker.activeThemes.push(t);
+                  tracker.themeMentions[t] = 1;
+                  console.log(`[THEME] Registered new theme: "${t}"`);
+              }
+              return '';
+          });
+
+          // Extract theme echo acknowledgements
+          raw = raw.replace(/\(THEME_ECHO:\s*([^)]+)\)/gi, (match, theme) => {
+              const t = theme.trim();
+              if (tracker.activeThemes.includes(t)) {
+                  tracker.themeMentions[t] = (tracker.themeMentions[t] || 0) + 1;
+                  console.log(`[THEME] Echo for "${t}" — now ${tracker.themeMentions[t]} mentions`);
+              }
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // ARC MOMENTUM — gives long stories forward movement toward climax.
+      // Scales narrative pressure as scene count increases.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildArcMomentumDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 10) return ''; // No momentum pressure in exploratory phase
+
+          const threads = state.fateThreads || [];
+          const active = threads.filter(t => t.active);
+          const ripeCount = active.filter(t => (t.echoCount || 0) >= 3).length;
+
+          let phase, pressure;
+          if (currentScene >= 40) {
+              phase = 'convergence';
+              pressure = `Multiple narrative threads should begin converging — secrets revealed during confrontations, consequences colliding, decisive irreversible choices.${ripeCount > 1 ? ` ${ripeCount} threads are RIPE — favor scenes where multiple ripe threads intersect.` : ''}
+Scenes should contain difficult decisions, emotional confrontations, and revelations about earlier events.
+The story approaches its natural emotional conclusion — but do NOT force an ending.`;
+          } else if (currentScene >= 25) {
+              phase = 'high-pressure';
+              pressure = `Narrative pressure is high. Favor revelations, confrontations, and decisive choices. Shorten the distance between thread echoes and resolutions.${ripeCount > 0 ? ` ${ripeCount} thread(s) marked RIPE — lean toward resolving them when narratively appropriate.` : ''}
+Scenes should carry irreversible consequences more often.`;
+          } else {
+              phase = 'rising-tension';
+              pressure = `Tension is building. Threads should begin awakening and producing consequences. Conflicts deepen, secrets surface, and earlier choices begin to matter.`;
+          }
+
+          return `\nARC MOMENTUM (scene ${currentScene}, ${phase} phase):
+${pressure}
+Arc Momentum must never force an ending — it increases intensity, favors decisive scenes, and shortens the gap between echoes and resolutions.`;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // EMOTIONAL ENGINE — five interacting emotional dynamics that make
+      // scenes gripping: risk, desire pressure, momentum, dramatic irony,
+      // and emotional payoffs.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildEmotionalEngineDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 3) return ''; // Let story establish before emotional engine kicks in
+
+          const threads = state.fateThreads || [];
+          const active = threads.filter(t => t.active);
+          const ripeCount = active.filter(t => (t.echoCount || 0) >= 3).length;
+
+          // Determine which emotional dynamics to emphasize this scene
+          // Rotate emphasis to prevent mechanical feel — use scene number for variety
+          const dynamics = [];
+
+          // EMOTIONAL RISK — always active but emphasize periodically
+          if (currentScene % 3 === 0 || ripeCount > 0) {
+              dynamics.push(`EMOTIONAL RISK: This scene should carry the possibility of emotional consequence — losing trust, revealing too much, pushing someone away, or vulnerability being punished. Choices must feel like they could damage something.`);
+          }
+
+          // DESIRE PRESSURE — every scene needs urgency
+          dynamics.push(`DESIRE PRESSURE: At least one character in this scene strongly wants something RIGHT NOW — a confession, to hide a secret, to leave, to stay, revenge, affection. Best scenes contain conflicting desires between characters.`);
+
+          // EMOTIONAL MOMENTUM — micro-shifts every scene
+          dynamics.push(`EMOTIONAL MOMENTUM: At least one relationship variable (trust, attraction, suspicion, resentment, vulnerability) must shift slightly by scene end. Even micro-changes create page-turning momentum.`);
+
+          // PRIVATE KNOWLEDGE — occasional dramatic irony
+          if (active.length >= 2 && currentScene % 4 === 1) {
+              dynamics.push(`DRAMATIC IRONY: Allow the reader to understand a danger or tension before the characters realize it — someone hiding a motive, an impending collision of threads, knowledge the reader has that characters lack.`);
+          }
+
+          // EMOTIONAL PAYOFF — when conditions are ripe
+          if (ripeCount > 0 || currentScene >= 25) {
+              dynamics.push(`EMOTIONAL PAYOFF: Conditions favor a turning point — a secret revealed, a confession, someone walking away, trust broken, or a sacrifice. Let these moments breathe. Short scenes with minimal dialogue can carry the strongest impact.`);
+          }
+
+          return `\nEMOTIONAL ENGINE:
+${dynamics.join('\n')}
+Characters express emotion through arguments, choices, physical reactions, and symbolic events — never through narrator explanation. Relationships can fracture, not just grow.`;
+      }
+
       function buildSceneLengthDirective() {
           const sceneIndex = state.turnCount || 0;
           const isMainPairIntimacyScene = isMainCharacterIntimacySceneAllowed() && detectMainPairEroticContent();
@@ -66964,7 +67964,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       The echo establishes the immediate narrative ripple. The anchor guides the scene's broader direction.
 
       OPENING VARIATION (MANDATORY): Each scene MUST begin with a different sentence structure, subject, and image than the previous scene. Do not echo, paraphrase, or mirror the opening line of any prior scene. If the previous scene opened with a character action, open this one with setting, sensation, dialogue, or interiority — never the same pattern twice in a row.
-      ${buildWorldPhysicsDirective()}${buildColloquialismGuardDirective()}${buildSceneLengthDirective()}${buildIgnitionPatternDirective()}${buildWorldPressurePulseDirective()}${buildFateThreadsDirective()}${buildFateOmenDirective()}${buildEndingWindowDirective()}`;
+      ${buildWorldPhysicsDirective()}${buildColloquialismGuardDirective()}${buildSceneLengthDirective()}${buildIgnitionPatternDirective()}${buildWorldPressurePulseDirective()}${buildFateThreadsDirective()}${buildFateOmenDirective()}${buildForeshadowAnchorDirective()}${buildThemeGravityDirective()}${buildArcMomentumDirective()}${buildEmotionalEngineDirective()}${buildMisunderstandingPressureDirective()}${buildScenePromiseDirective()}${buildCharacterSecretDirective()}${buildNarrativeMemoryEchoDirective()}${buildCharacterGravityDirective()}${buildMomentsOfGraceDirective()}${buildLocationMemoryDirective()}${buildNarrativeNoticingDirective()}${buildUnansweredQuestionDirective()}${buildNarrativeGovernanceDirective()}${buildEndingWindowDirective()}`;
 
       // STORY PROMPT GUARD: Validate size (debug only, never truncate)
       validateStoryPromptSize(fullSys, 'turn-generation-fullSys');
@@ -67874,6 +68874,33 @@ ABSOLUTE RULES:
           // Trim to last complete sentence (prevents mid-word/mid-sentence truncation from max_tokens)
           raw = trimToCompleteSentence(raw);
 
+          // Extract foreshadow anchor tags from AI output (strip before display)
+          raw = extractForeshadowAnchor(raw);
+
+          // Extract theme tags from AI output (strip before display, update tracker)
+          raw = extractThemeTags(raw);
+
+          // Extract misunderstanding tags from AI output (strip before display, update tracker)
+          raw = extractMisunderstandingTags(raw);
+
+          // Extract character secret tags from AI output (strip before display, update tracker)
+          raw = extractSecretTags(raw);
+
+          // Extract echo memory tags from AI output (strip before display, store moments)
+          raw = extractEchoMemoryTags(raw);
+
+          // Extract character gravity tags from AI output (strip before display, update scores)
+          raw = extractGravityTags(raw);
+
+          // Extract grace moment tags from AI output (strip before display, track timing)
+          raw = extractGraceMomentTags(raw);
+
+          // Extract location memory tags from AI output (strip before display, record events)
+          raw = extractLocationMemoryTags(raw);
+
+          // Extract unanswered question tags from AI output (strip before display, track questions)
+          raw = extractQuestionTags(raw);
+
           // Add AI response only
           pageContent += formatStory(raw);
 
@@ -68574,7 +69601,7 @@ REMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, D
       The echo establishes the immediate narrative ripple. The anchor guides the scene's broader direction.
 
       OPENING VARIATION (MANDATORY): Each scene MUST begin with a different sentence structure, subject, and image than the previous scene. Do not echo, paraphrase, or mirror the opening line of any prior scene.
-      ${buildWorldPhysicsDirective()}${typeof buildColloquialismGuardDirective === 'function' ? buildColloquialismGuardDirective() : ''}${sceneLengthDirective}${typeof buildIgnitionPatternDirective === 'function' ? buildIgnitionPatternDirective() : ''}${typeof buildWorldPressurePulseDirective === 'function' ? buildWorldPressurePulseDirective() : ''}${typeof buildFateThreadsDirective === 'function' ? buildFateThreadsDirective() : ''}${typeof buildFateOmenDirective === 'function' ? buildFateOmenDirective() : ''}${buildEndingWindowDirective()}`;
+      ${buildWorldPhysicsDirective()}${typeof buildColloquialismGuardDirective === 'function' ? buildColloquialismGuardDirective() : ''}${sceneLengthDirective}${typeof buildIgnitionPatternDirective === 'function' ? buildIgnitionPatternDirective() : ''}${typeof buildWorldPressurePulseDirective === 'function' ? buildWorldPressurePulseDirective() : ''}${typeof buildFateThreadsDirective === 'function' ? buildFateThreadsDirective() : ''}${typeof buildFateOmenDirective === 'function' ? buildFateOmenDirective() : ''}${typeof buildForeshadowAnchorDirective === 'function' ? buildForeshadowAnchorDirective() : ''}${typeof buildThemeGravityDirective === 'function' ? buildThemeGravityDirective() : ''}${typeof buildArcMomentumDirective === 'function' ? buildArcMomentumDirective() : ''}${typeof buildEmotionalEngineDirective === 'function' ? buildEmotionalEngineDirective() : ''}${typeof buildMisunderstandingPressureDirective === 'function' ? buildMisunderstandingPressureDirective() : ''}${typeof buildScenePromiseDirective === 'function' ? buildScenePromiseDirective() : ''}${typeof buildCharacterSecretDirective === 'function' ? buildCharacterSecretDirective() : ''}${typeof buildNarrativeMemoryEchoDirective === 'function' ? buildNarrativeMemoryEchoDirective() : ''}${typeof buildCharacterGravityDirective === 'function' ? buildCharacterGravityDirective() : ''}${typeof buildMomentsOfGraceDirective === 'function' ? buildMomentsOfGraceDirective() : ''}${typeof buildLocationMemoryDirective === 'function' ? buildLocationMemoryDirective() : ''}${typeof buildNarrativeNoticingDirective === 'function' ? buildNarrativeNoticingDirective() : ''}${typeof buildUnansweredQuestionDirective === 'function' ? buildUnansweredQuestionDirective() : ''}${typeof buildNarrativeGovernanceDirective === 'function' ? buildNarrativeGovernanceDirective() : ''}${buildEndingWindowDirective()}`;
 
           // Check context again before generation
           if (getFateContextHash() !== fateContextHash) {
@@ -69141,6 +70168,29 @@ CONSTRAINTS: No dialogue. No plot events. No character names. No storyturn advan
           if (label.length > 60) return match;
           return `<div class="fate-echo-indicator">✦${label ? ' ' + label : ''}</div>`;
       });
+  }
+
+  /**
+   * Extract (ANCHOR: ...) tags from AI output, store as foreshadow anchors, strip from display.
+   * @param {string} raw — raw AI scene text
+   * @returns {string} — text with anchor tag removed
+   */
+  function extractForeshadowAnchor(raw) {
+      const anchorMatch = raw.match(/\(ANCHOR:\s*(.+?)\)\s*$/i);
+      if (!anchorMatch) return raw;
+      const description = anchorMatch[1].trim();
+      if (!state.foreshadowAnchors) state.foreshadowAnchors = [];
+      // Find the most recently selected thread from the directive (stored during buildForeshadowAnchorDirective)
+      const relatedThread = state._lastForeshadowAnchorThread || '';
+      state.foreshadowAnchors.push({
+          description,
+          sceneCreated: (state.turnCount || 0) + 1,
+          relatedThread,
+          used: false
+      });
+      console.log('[FORESHADOW] Anchor stored:', description, '→', relatedThread);
+      // Strip the tag from display
+      return raw.replace(/\s*\(ANCHOR:\s*.+?\)\s*$/, '').trimEnd();
   }
 
   // Expose to window for directive-level integration
