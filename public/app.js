@@ -15787,6 +15787,41 @@ Return ONLY valid JSON:
       state._lastGraceMomentScene = 0; // Moments of Grace — last scene with a grace moment
       state.locationMemories = {}; // Emotional Location Memory — places with accumulated meaning
       state.unansweredQuestions = []; // Unanswered Question Engine — long-range narrative curiosity
+      state.earlyEchoForeshadows = []; // Early Echo Foreshadow — subtle details planted early that become significant later
+      state._userSayPhrases = []; // Dialogue Strategy Layer — stored user SAY phrases for later mirroring
+      state.conversationMemories = []; // Conversational Memory Engine — relationship-specific dialogue history
+      state.dialogueMomentum = null; // Dialogue Momentum Layer — carries emotional tone between scenes
+      state._lastMomentumScene = 0; // Dialogue Momentum — scene of last momentum assignment
+      state.characterDesires = {}; // Character Desire Engine — per-character active objectives
+      state.narrativeMotifs = []; // Motif Engine — recurring thematic textures
+      state.lastDialogueMode = null; // Dialogue Mode Persistence — previous scene mode
+      state.lastDialogueModeScene = null; // Dialogue Mode Persistence — scene of previous mode
+      state._mode1Count = 0; // Mode-1 Direct Desire — lifetime usage counter (max 3)
+      state.characterEmotionalBeats = {}; // Emotional Beat Engine — per-character emotional event history
+      state.lastConvergenceScene = null; // Convergence Engine — last scene with a convergence event
+      state._convergenceCount = 0; // Convergence Engine — lifetime count (max 3)
+      state.narrativePressureLevel = 0; // Pressure Escalation Engine — 0=stable, 1=stirring, 2=unstable, 3=critical
+      state.lastPressureEventScene = null; // Pressure Escalation — cooldown tracker
+      state.characterVoiceProfiles = {}; // Character Voice Lock — persistent speech identity per character
+      state.romanticTensionLevel = 0; // Romantic Tension Oscillation — 0=calm, 1=simmering, 2=strained, 3=volatile
+      state.lastTensionEventScene = null; // Romantic Tension — cooldown tracker
+      state.dominanceBalance = {}; // Dominance Dynamics — per-character power score (-3 to +3)
+      state.devotionPressureLevel = 0; // Devotion Pressure (Beautiful Ruin) — 0=calm, 1=probing, 2=testing, 3=severe
+      state.lastDevotionTestScene = null; // Devotion Pressure — cooldown tracker
+      state._almostLossTriggered = false; // Almost-Loss Engine — max 1 per story
+      state._almostLossScene = null; // Almost-Loss — scene of trigger
+      state.characterIntentDrift = {}; // Character Intent Drift — hidden motivations per character
+      state.sceneGravityTargets = []; // Magnetic Scene Gravity — pulls characters toward inevitable encounters
+      state._lastGravityScene = null; // Scene Gravity — cooldown tracker
+      state._pillowTalkScene = null; // Pillow Talk — persistence tracker
+      state.archetypeRewardMoments = {}; // Archetype Reward Scarcity — tracks rare emotional reward timing
+      state._lastActiveDirectives = []; // Directive Novelty Marker — previous scene's active directives
+      state._sceneNarrativeVector = null; // Narrative Vector Field — combined directional pull
+      state.irreversibleChoice = { occurred: false, scene: null, character: null, description: null, aftermathScenesRemaining: 0 }; // Irreversible Choice Engine
+      state.destinyCollision = { triggered: false, scene: null, type: null, description: null }; // Destiny Collision Engine
+      state.foreshadowDebt = { entries: [], resolved: [] }; // Foreshadow Debt Engine
+      state.inevitableScene = { triggered: false, scene: null }; // Inevitable Scene Engine
+      state.delayedPayoffs = { entries: [], resolved: [] }; // Delayed Payoff Engine
       if (typeof window._clearCorridorEchoSlots === 'function') window._clearCorridorEchoSlots();
 
       // Fate object — per-story tracking
@@ -18700,6 +18735,2573 @@ Attraction should not move in a straight line. Closeness creates vulnerability o
       if (!_canActivateDirective()) return '';
 
       return `\n\nPROSE CADENCE: Vary sentence rhythm and paragraph structure. Occasionally use a very short sentence for emphasis. Follow short sentences with a longer reflective sentence. Allow paragraph breaks around emotional beats. Avoid repeating identical sentence length patterns. Maintain natural narrative voice. Do not change story events. Focus only on rhythm and pacing of prose.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DIALOGUE STRATEGY LAYER — pre-render dialogue planning pass.
+  // Computes speaker goals, hidden conflict, emotional ladder, speech
+  // style biasing, and soft quality constraints. ~80-120 tokens added
+  // per scene. Does not alter Storyturn, Fate, or rendering systems.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const DIALOGUE_SPEECH_STYLES = {
+      SPELLBINDER:    'smooth, metaphorical, indirect; seductive cadence; sentences medium-long; rare interruptions',
+      HEART_WARDEN:   'protective, direct, restrained emotion; dry warmth; sentences short-medium; low interruptions',
+      DARK_VICE:      'playful menace, ironic humor; varied sentence length; medium interruptions; power-aware phrasing',
+      OPEN_VEIN:      'emotionally transparent, impulsive; self-deprecating humor; burst sentences; frequent interruptions',
+      BEAUTIFUL_RUIN: 'defensive dominance, quiet authority; teasing skepticism, probing questions; melancholic irony; medium-long sentences; rare interruptions',
+      ARMORED_FOX:    'deflective wit, clipped delivery; evasive humor; short sentences; frequent interruptions',
+      ETERNAL_FLAME:  'slow, deliberate, emotionally deep; gentle nostalgia; measured sentences; rare interruptions'
+  };
+
+  const DIALOGUE_GOAL_SEEDS = {
+      curiosity:            { a: 'understand who this person is', b: 'maintain mystery' },
+      attraction:           { a: 'get closer without showing it', b: 'test boundaries playfully' },
+      tension:              { a: 'force honesty', b: 'avoid exposure' },
+      vulnerability:        { a: 'earn trust', b: 'risk revealing a wound' },
+      intimacy:             { a: 'deepen connection', b: 'protect what they\'ve built' },
+      false_summit:         { a: 'close the distance', b: 'hesitate at the threshold' },
+      commitment_conflict:  { a: 'demand clarity', b: 'resist finality' },
+      resolution:           { a: 'offer certainty', b: 'accept without conditions' }
+  };
+
+  const DIALOGUE_LADDERS = {
+      curiosity:            'guarded \u2192 curious \u2192 intrigued \u2192 unsettled',
+      attraction:           'neutral \u2192 playful \u2192 charged \u2192 retreating',
+      tension:              'stiff \u2192 probing \u2192 defensive \u2192 raw',
+      vulnerability:        'cautious \u2192 honest \u2192 exposed \u2192 tender',
+      intimacy:             'warm \u2192 testing \u2192 yielding \u2192 intimate',
+      false_summit:         'hopeful \u2192 reaching \u2192 hesitant \u2192 redirecting',
+      commitment_conflict:  'controlled \u2192 pressured \u2192 breaking \u2192 deciding',
+      resolution:           'reflective \u2192 certain \u2192 open \u2192 surrendered'
+  };
+
+  // ── Dialogue Orchestrator — selects which rule subset is active per scene ──
+
+  const STORYTURN_MODE_MAP = {
+      'ST1': 'emotional_reveal',
+      'ST2': 'confrontation',
+      'ST3': 'romantic_tension',
+      'ST4': 'confrontation',
+      'ST5': 'emotional_reveal',
+      'ST6': 'quiet_intimacy'
+  };
+
+  const DIALOGUE_MODE_RULESETS = {
+      romantic_tension: {
+          active: ['subtext', 'romantic_ladder', 'memorable_line', 'silence_beats', 'physical_anchoring', 'power_shift'],
+          disabled: ['heavy_interruptions', 'tarantino_tension']
+      },
+      confrontation: {
+          active: ['hidden_agendas', 'interruptions', 'destabilizing_question', 'power_shift', 'three_beat_rhythm', 'physical_anchoring'],
+          disabled: ['memorable_line', 'romantic_ladder']
+      },
+      suspense: {
+          active: ['tarantino_tension', 'silence_beats', 'subtext', 'physical_anchoring', 'power_shift'],
+          disabled: ['heavy_interruptions', 'overt_escalation']
+      },
+      emotional_reveal: {
+          active: ['subtext', 'memorable_line', 'emotional_ladder', 'silence_beats', 'power_shift', 'physical_anchoring'],
+          disabled: ['heavy_interruptions', 'comedic_banter']
+      },
+      playful_banter: {
+          active: ['interruptions', 'deflection_humor', 'three_beat_rhythm', 'physical_anchoring'],
+          disabled: ['deep_escalation', 'silence_beats']
+      },
+      quiet_intimacy: {
+          active: ['silence_beats', 'physical_anchoring', 'subtext', 'memorable_line', 'emotional_ladder'],
+          disabled: ['interruptions', 'confrontational_escalation']
+      },
+      pillow_talk: {
+          active: ['silence_beats', 'physical_anchoring', 'memorable_line', 'emotional_ladder', 'subtext'],
+          disabled: ['interruptions', 'confrontational_escalation', 'three_beat_rhythm', 'destabilizing_question']
+      }
+  };
+
+  const DIALOGUE_RULE_TEXTS = {
+      subtext: 'Convert 40-60% of direct emotional statements to subtext/implication.',
+      interruptions: 'Include 1 interrupted sentence and 1 unfinished thought.',
+      three_beat_rhythm: 'Use statement\u2192deflection\u2192escalation rhythm.',
+      power_shift: 'End with power shift, emotional reveal, or destabilizing question \u2014 never static equilibrium.',
+      physical_anchoring: 'Anchor dialogue physically every 2-3 exchanges (gesture, posture, environment).',
+      memorable_line: 'Include one memorable/poetic line.',
+      destabilizing_question: 'Include one destabilizing question that forces emotional movement.',
+      silence_beats: 'Include at least one meaningful silence beat.',
+      romantic_ladder: 'Oscillate between distance and intimacy; avoid direct declarations.',
+      tarantino_tension: 'Layer danger beneath casual conversation \u2014 mundane surface, charged undercurrent.',
+      hidden_agendas: 'Each speaker pursues a hidden objective; all dialogue indirectly serves their goal.',
+      emotional_ladder: 'Progress through the emotional ladder.',
+      deflection_humor: 'Use deflective humor and quick verbal sparring.'
+  };
+
+  /**
+   * Select dialogue mode for the current scene. Defaults from Storyturn,
+   * overrides based on relationship vector and romance progression.
+   */
+  const MOMENTUM_MODE_BIAS = {
+      heated: 'confrontation',
+      intimate: 'quiet_intimacy',
+      deflective: 'playful_banter',
+      curious: 'suspense',
+      unresolved: 'confrontation'
+  };
+
+  function _selectDialogueMode() {
+      const st = state.storyturn || 'ST1';
+      let mode = STORYTURN_MODE_MAP[st] || 'emotional_reveal';
+      const currentScene = (state.turnCount || 0) + 1;
+
+      const rv = state.relationshipVector || {};
+      const rpmStage = state.romanceProgression?.stage || 'curiosity';
+
+      // Override based on scene context
+      if ((rv.resentment || 0) > 0.5) mode = 'confrontation';
+      else if ((state.misunderstandings || []).some(m => !m.resolved && (m.pressureLevel === 'critical' || m.pressureLevel === 'high'))) mode = 'confrontation';
+      else if ((rpmStage === 'tension' || rpmStage === 'commitment_conflict') && Math.random() < 0.15) mode = 'suspense';
+      else if (rpmStage === 'attraction' && (rv.trust || 0) > 0.3 && Math.random() < 0.25) mode = 'playful_banter';
+      else if (rpmStage === 'intimacy' && (rv.trust || 0) > 0.7) mode = 'quiet_intimacy';
+
+      // ── Pillow Talk: post-intimacy dialogue mode (primary + secondary trigger) ──
+      if (state.dialogueMomentum === 'intimate' && (rv.trust || 0) > 0.6) {
+          // Primary: during/after explicit scenes
+          if (rpmStage === 'intimacy' && state.explicitEmbodimentAuthorized) {
+              mode = 'pillow_talk';
+              state._pillowTalkScene = currentScene;
+          }
+          // Secondary: quiet post-intimacy closeness (non-explicit, intimacy stage, recent intimate momentum)
+          else if (rpmStage === 'intimacy' && state.lastDialogueMode === 'quiet_intimacy') {
+              mode = 'pillow_talk';
+              state._pillowTalkScene = currentScene;
+          }
+      }
+
+      // ── Pillow Talk persistence: protect mode for 1 scene after activation ──
+      const ptScene = state._pillowTalkScene || 0;
+      if (ptScene && (currentScene - ptScene) === 1 && (state.romanticTensionLevel || 0) < 2) {
+          if (mode !== 'pillow_talk' && mode !== 'quiet_intimacy') {
+              mode = 'quiet_intimacy'; // gentle transition, not abrupt confrontation
+          }
+      }
+
+      // ── Romantic Tension Oscillation: bias mode when tension is elevated ──
+      const romanticTension = state.romanticTensionLevel || 0;
+      if (romanticTension >= 3) mode = 'confrontation';
+      else if (romanticTension >= 2 && mode !== 'confrontation') mode = 'confrontation';
+
+      // ── Dialogue Mode Persistence: momentum bias within 2-scene window ──
+      const momentum = state.dialogueMomentum || 'neutral';
+      const lastMode = state.lastDialogueMode;
+      const lastModeScene = state.lastDialogueModeScene || 0;
+      const modeAge = currentScene - lastModeScene;
+
+      if (momentum !== 'neutral' && modeAge <= 2 && lastMode) {
+          const biasModeFromMomentum = MOMENTUM_MODE_BIAS[momentum];
+          // If momentum and previous mode agree, carry forward
+          if (biasModeFromMomentum && biasModeFromMomentum === lastMode) {
+              mode = lastMode;
+          }
+          // Otherwise, apply momentum bias with weakening probability
+          else if (biasModeFromMomentum) {
+              const biasStrength = modeAge <= 1 ? 0.60 : 0.30;
+              if (Math.random() < biasStrength) mode = biasModeFromMomentum;
+          }
+      }
+
+      // Store for next scene's persistence check
+      state.lastDialogueMode = mode;
+      state.lastDialogueModeScene = currentScene;
+
+      return mode;
+  }
+
+  /**
+   * Compute dialogue strategy object from current state.
+   * Deterministic — no API call. Returns structured hints for directive.
+   */
+  function _computeDialogueStrategy(act, dia) {
+      const archetype = state.archetype?.primary || '';
+      const rpmStage = state.romanceProgression?.stage || 'curiosity';
+      const rv = state.relationshipVector || {};
+      const misunderstandings = state.misunderstandings || [];
+
+      // Momentum decay: if 3+ scenes since last momentum, reset to neutral
+      const currentScene = (state.turnCount || 0) + 1;
+      if (state.dialogueMomentum && state._lastMomentumScene && (currentScene - state._lastMomentumScene) > 3) {
+          state.dialogueMomentum = 'neutral';
+      }
+      const momentum = state.dialogueMomentum || 'neutral';
+
+      // Speaker goals from romance stage (adjusted by momentum)
+      const goals = { ...((DIALOGUE_GOAL_SEEDS[rpmStage] || DIALOGUE_GOAL_SEEDS.curiosity)) };
+      // Momentum adjusts speaker goals
+      if (momentum === 'heated') { goals.a = 'seek resolution or escalate'; goals.b = 'explain or defend'; }
+      else if (momentum === 'intimate') { goals.a = goals.a || 'deepen connection'; }
+      else if (momentum === 'deflective') { goals.b = 'deflect or redirect'; }
+      else if (momentum === 'curious') { goals.a = 'uncover truth'; }
+
+      // Hidden conflict: prefer active misunderstanding, fall back to tension heuristic
+      let hiddenConflict = '';
+      if (misunderstandings.length > 0) {
+          const active = misunderstandings.filter(m => !m.resolved);
+          if (active.length > 0) {
+              hiddenConflict = active[0].falseBeliefA || active[0].description || 'unspoken misunderstanding';
+          }
+      }
+      if (!hiddenConflict) {
+          if ((rv.resentment || 0) > 0.3) hiddenConflict = 'buried resentment shapes every exchange';
+          else if ((rv.trust || 0) < 0.3) hiddenConflict = 'distrust colors each word';
+          else if ((rv.attraction || 0) > 0.5 && (rv.trust || 0) < 0.5) hiddenConflict = 'attraction fights caution';
+          else hiddenConflict = 'what they cannot say aloud';
+      }
+
+      // Emotional ladder from romance stage
+      const ladder = DIALOGUE_LADDERS[rpmStage] || DIALOGUE_LADDERS.curiosity;
+
+      // Power shift target
+      let powerShift = 'balance shifts toward vulnerability';
+      if ((rv.trust || 0) > 0.7) powerShift = 'power equalizes through mutual openness';
+      else if ((rv.resentment || 0) > 0.4) powerShift = 'one speaker gains emotional leverage';
+      else if (rpmStage === 'tension' || rpmStage === 'commitment_conflict') powerShift = 'control transfers mid-conversation';
+
+      // Speech style from archetype
+      const speechStyle = DIALOGUE_SPEECH_STYLES[archetype] || '';
+
+      // User input mirroring — store phrases, pick one to echo later
+      let echoPhrase = '';
+      if (!state._userSayPhrases) state._userSayPhrases = [];
+      if (dia && dia.trim().length > 5) {
+          const stripped = dia.replace(/[^\w\s']/g, '').trim();
+          if (stripped.split(/\s+/).length >= 4) {
+              state._userSayPhrases.push({ phrase: stripped, scene: (state.turnCount || 0) + 1 });
+              if (state._userSayPhrases.length > 8) state._userSayPhrases.shift();
+          }
+      }
+      const echoable = state._userSayPhrases.filter(p => currentScene - p.scene >= 3);
+      if (echoable.length > 0 && Math.random() < 0.30) {
+          echoPhrase = echoable[Math.floor(Math.random() * echoable.length)].phrase;
+      }
+
+      // Character desires for speakers
+      _refreshCharacterDesires();
+      const desires = state.characterDesires || {};
+      const liName = state.storybeau?.name || state.loveInterestName || '';
+      const speakerBDesire = liName && desires[liName] ? desires[liName].current_desire : null;
+
+      return {
+          speakerA_goal: goals.a,
+          speakerB_goal: goals.b,
+          hidden_conflict: hiddenConflict,
+          emotional_ladder: ladder,
+          power_shift_target: powerShift,
+          speech_style: speechStyle,
+          echoPhrase,
+          momentum,
+          speakerBDesire
+      };
+  }
+
+  /**
+   * Build the Dialogue Strategy directive — a compact pre-render hint block
+   * injected into the scene prompt. ~80-120 tokens. Uses the Dialogue
+   * Orchestrator to select a mode (romantic_tension, confrontation, suspense,
+   * emotional_reveal, playful_banter, quiet_intimacy) which determines which
+   * rules are active. Coordinates with Character Secrets Engine for leak hints.
+   */
+  function buildDialogueStrategyDirective(act, dia) {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 2) return '';
+      // Skip for scenes with minimal dialogue potential
+      if ((!act || act.trim().length < 3) && (!dia || dia.trim().length < 3)) return '';
+
+      const mode = _selectDialogueMode();
+      const ruleset = DIALOGUE_MODE_RULESETS[mode] || DIALOGUE_MODE_RULESETS.emotional_reveal;
+      const s = _computeDialogueStrategy(act, dia);
+      if (!s.speech_style && !s.hidden_conflict) return '';
+
+      const parts = [];
+      parts.push(`\nDIALOGUE STRATEGY [${mode.replace(/_/g, ' ')}]:`);
+      if (s.speech_style) parts.push(`Voice: ${s.speech_style}`);
+      parts.push(`Goals: A wants to ${s.speakerA_goal}; B wants to ${s.speakerB_goal}`);
+      parts.push(`Tension: ${s.hidden_conflict}`);
+      // Include ladder only if mode activates it
+      if (ruleset.active.includes('emotional_ladder') || ruleset.active.includes('romantic_ladder')) {
+          parts.push(`Ladder: ${s.emotional_ladder}`);
+      }
+      parts.push(`Power: ${s.power_shift_target}`);
+      if (s.echoPhrase) parts.push(`Echo seed: subtly mirror the phrase "${s.echoPhrase}" from an earlier scene`);
+
+      // Build rules from active set
+      const activeRules = ruleset.active
+          .map(r => DIALOGUE_RULE_TEXTS[r])
+          .filter(Boolean);
+      if (activeRules.length > 0) {
+          parts.push(`Rules: ${activeRules.join(' ')}`);
+      }
+
+      // Momentum carryover — emotional continuity from previous scene
+      if (s.momentum && s.momentum !== 'neutral') {
+          parts.push(`Momentum: previous scene ended ${s.momentum} \u2014 this scene should acknowledge that emotional residue before shifting`);
+      }
+
+      // Character desire hints
+      if (s.speakerBDesire) {
+          const desireHint = DESIRE_CATEGORY_HINTS[s.speakerBDesire] || '';
+          if (desireHint) {
+              parts.push(`B desire (${s.speakerBDesire}): ${desireHint}`);
+          }
+      }
+      // Desire conflict detection
+      const desires = state.characterDesires || {};
+      const desireEntries = Object.entries(desires);
+      if (desireEntries.length >= 2) {
+          const opposing = { learn: 'hide', hide: 'learn', seduce: 'escape', escape: 'seduce', confess: 'withhold_truth', withhold_truth: 'confess', test: 'gain_trust', gain_trust: 'test', persuade: 'escape' };
+          for (let i = 0; i < desireEntries.length; i++) {
+              for (let j = i + 1; j < desireEntries.length; j++) {
+                  if (opposing[desireEntries[i][1].current_desire] === desireEntries[j][1].current_desire) {
+                      parts.push(`Desire conflict: ${desireEntries[i][0]} wants to ${desireEntries[i][1].current_desire}, ${desireEntries[j][0]} wants to ${desireEntries[j][1].current_desire} \u2014 elevated tension`);
+                      break;
+                  }
+              }
+          }
+      }
+
+      // Secret-aware dialogue hint — coordinate with Character Secrets Engine
+      const activeSecrets = (state.characterSecrets || []).filter(sec => !sec.revealed);
+      if (activeSecrets.length > 0) {
+          const leakHints = activeSecrets.slice(0, 2).map(sec => {
+              const pressure = sec.pressureLevel || 'low';
+              if (pressure === 'critical') return `${sec.owner}: near breaking point \u2014 evasion falters, truth bleeds through`;
+              if (pressure === 'high') return `${sec.owner}: deflects with increasing effort`;
+              return `${sec.owner}: subtle evasion and topic shifts`;
+          });
+          parts.push(`Secret leaks: ${leakHints.join('; ')}`);
+      }
+
+      // ── Mode-1 Direct Desire — rare high-impact blunt attraction statement ──
+      const MODE1_ELIGIBLE = ['DARK_VICE', 'SPELLBINDER', 'OPEN_VEIN'];
+      const archetype = state.archetype?.primary || '';
+      const rpmStage = state.romanceProgression?.stage || 'curiosity';
+      const RPM_ATTEMPT_PLUS = ['tension', 'vulnerability', 'intimacy', 'false_summit', 'commitment_conflict', 'resolution'];
+      if (
+          MODE1_ELIGIBLE.includes(archetype) &&
+          currentScene >= 5 &&
+          s.momentum && s.momentum !== 'neutral' &&
+          RPM_ATTEMPT_PLUS.includes(rpmStage) &&
+          (state._mode1Count || 0) < 3 &&
+          Math.random() < 0.10
+      ) {
+          state._mode1Count = (state._mode1Count || 0) + 1;
+          parts.push(`MODE-1 DIRECT DESIRE: The love interest expresses attraction or desire directly and bluntly \u2014 no subtext, no implication. One raw, honest statement. Follow with: pause/reaction beat, then power shift. This should feel like a conversational rupture. Increase silence beats and emotional momentum shift afterward.`);
+      }
+
+      return parts.join('\n');
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DIALOGUE MOMENTUM LAYER — carries emotional tone between scenes.
+  // Prevents conversations from resetting tone each scene.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const MOMENTUM_SIGNALS = {
+      heated: /\b(accus(ed?|ation)|shout(ed)?|furious|rage[ds]?|betray(ed|al)?|liar?|demand(ed)?|slap(ped)?|storm(ed)?\s*out|how dare|can.?t believe|never\s+forgive)\b/gi,
+      intimate: /\b(confess(ed|ion)?|vulnerab(le|ility)|whispere?d?|tender(ly|ness)?|forgave|trust(ed)?\s*(me|you|him|her)|open(ed)?\s*up|held\s*(me|her|him|close)|kiss(ed)?)\b/gi,
+      volatile_intimacy: /\b(jealous.{0,15}(touch|kiss|bed)|accus.{0,10}(while|as\s*(we|they))|argue[ds]?\s*(in|during|after)\s*(bed|intimacy)|fight.{0,10}(naked|close|lips)|angry.{0,10}(kiss|touch|pull)|how.{0,8}(you\s*look|at\s*her|at\s*him).{0,10}(tonight|today|earlier))\b/gi,
+      deflective: /\b(jok(ed|ing)|laugh(ed|ing)|teas(ed|ing)|sarcas(m|tic)|change[ds]?\s*(the\s*)?subject|anyway|whatever|shrug(ged)?|smirk(ed)?|let.?s\s*not)\b/gi,
+      curious: /\b(wonder(ed|ing)?|what\s*(if|do|did|are|is|happened)|why\s*(did|do|would|is)|investigat|suspicious|something.{0,8}(off|wrong|hidden)|clue|secret|puzzle)\b/gi
+  };
+
+  /**
+   * Detect dialogue momentum from scene text. Keyword heuristic, zero API cost.
+   * Sets state.dialogueMomentum and state._lastMomentumScene.
+   */
+  function _computeDialogueMomentum(sceneText) {
+      if (!sceneText || sceneText.length < 100) return;
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+
+      let best = null;
+      let bestCount = 0;
+
+      for (const [mood, pattern] of Object.entries(MOMENTUM_SIGNALS)) {
+          const hits = (plain.match(pattern) || []).length;
+          if (hits >= 2 && hits > bestCount) {
+              best = mood;
+              bestCount = hits;
+          }
+      }
+
+      // Require minimum signal strength to override
+      if (best && bestCount >= 3) {
+          state.dialogueMomentum = best;
+          state._lastMomentumScene = state.turnCount || 0;
+          console.log(`[MOMENTUM] ${best} (${bestCount} signals, scene ${state.turnCount})`);
+      } else if (!best) {
+          state.dialogueMomentum = 'neutral';
+          state._lastMomentumScene = state.turnCount || 0;
+      }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CHARACTER DESIRE ENGINE — ensures every major character has a
+  // current objective influencing dialogue and behavior. Deterministic,
+  // no LLM calls. Max 1 desire per character, max 4 characters tracked.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const DESIRE_CATEGORY_HINTS = {
+      protect:        'evasive, guarded dialogue; steers conversation away from threats',
+      learn:          'questioning, investigative dialogue; probes for information',
+      hide:           'deflective, careful phrasing; avoids direct answers',
+      seduce:         'teasing, charged dialogue; tests boundaries playfully',
+      test:           'provocative, boundary-pushing dialogue; challenges loyalty',
+      persuade:       'logical framing, emotional appeals; builds arguments subtly',
+      confess:        'halting, vulnerable dialogue; approaches truth and retreats',
+      escape:         'distracted, avoidant dialogue; seeks exits from confrontation',
+      gain_trust:     'consistent, open dialogue; demonstrates reliability',
+      withhold_truth: 'careful wording, partial answers; technically honest but incomplete'
+  };
+
+  /**
+   * Infer character desires from narrative state. Deterministic heuristic.
+   * Called from buildCharacterDesireDirective, updates state.characterDesires.
+   */
+  function _refreshCharacterDesires() {
+      const currentScene = (state.turnCount || 0) + 1;
+      const desires = state.characterDesires || {};
+      const rv = state.relationshipVector || {};
+      const secrets = (state.characterSecrets || []).filter(s => !s.revealed);
+      const rpmStage = state.romanceProgression?.stage || 'curiosity';
+
+      // Determine love interest name
+      const liName = state.storybeau?.name || state.loveInterestName || '';
+
+      // Expire stale desires (duration 3-6 scenes)
+      for (const [name, d] of Object.entries(desires)) {
+          if (d.scene_assigned && (currentScene - d.scene_assigned) > (d.duration || 5)) {
+              delete desires[name];
+          }
+      }
+
+      // Assign desires for love interest if not already assigned
+      if (liName && !desires[liName]) {
+          let desire = 'gain_trust';
+          let target = state.playerName || 'player';
+          let intensity = 'medium';
+          const duration = 3 + Math.floor(Math.random() * 4); // 3-6
+
+          // Infer from romance stage + secrets
+          const hasSecret = secrets.some(s => s.owner === liName);
+          if (hasSecret) {
+              desire = (rv.trust || 0) > 0.5 ? 'confess' : 'hide';
+              intensity = 'high';
+          } else if (rpmStage === 'attraction' || rpmStage === 'tension') {
+              desire = 'seduce';
+          } else if (rpmStage === 'vulnerability') {
+              desire = 'confess';
+              intensity = 'high';
+          } else if (rpmStage === 'commitment_conflict') {
+              desire = 'persuade';
+              intensity = 'high';
+          } else if ((rv.resentment || 0) > 0.4) {
+              desire = 'test';
+          } else if ((rv.trust || 0) < 0.3) {
+              desire = 'withhold_truth';
+          }
+
+          desires[liName] = { current_desire: desire, desire_target: target, desire_intensity: intensity, scene_assigned: currentScene, duration };
+      }
+
+      // Assign desires for secret-holding characters not already tracked
+      for (const s of secrets) {
+          if (s.owner === liName) continue; // already handled
+          if (desires[s.owner]) continue;
+          if (Object.keys(desires).length >= 4) break; // max 4 tracked
+
+          const pressure = s.pressureLevel || 'low';
+          let desire = 'hide';
+          if (pressure === 'critical') desire = 'confess';
+          else if (pressure === 'high') desire = 'withhold_truth';
+
+          desires[s.owner] = {
+              current_desire: desire,
+              desire_target: 'everyone',
+              desire_intensity: pressure === 'critical' ? 'high' : 'medium',
+              scene_assigned: currentScene,
+              duration: 3 + Math.floor(Math.random() * 4)
+          };
+      }
+
+      state.characterDesires = desires;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NARRATIVE META-ORCHESTRATOR — ensures only one major narrative
+  // signal fires per scene. Prevents engine competition and keeps
+  // scenes focused. Background texture (motif texture, physical
+  // anchoring, minor callbacks) does NOT consume the budget.
+  //
+  // Priority: secret_reveal > thread_awakening > echo_payoff >
+  //   pressure_event > question_resolution > motif_foreground >
+  //   conversation_memory_recall > emotional_callback
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Select which narrative signal (if any) may fire this scene.
+   * Called once before directives are assembled. Sets state._sceneCallbackSelection.
+   * Only one major signal per scene. Engines check this before activating.
+   */
+  function _selectNarrativeCallbackForScene() {
+      const currentScene = (state.turnCount || 0) + 1;
+      state._sceneCallbackSelection = 'none';
+
+      // Priority 1: Secret reveal/leak at critical/high pressure
+      const secrets = (state.characterSecrets || []).filter(s => !s.revealed);
+      if (secrets.some(s => s.pressureLevel === 'critical' || s.pressureLevel === 'high')) {
+          state._sceneCallbackSelection = 'secret';
+          return;
+      }
+
+      // Priority 2: Thread awakening (dormant 8+ scenes)
+      const activeThreads = (state.fateThreads || []).filter(t => t.active);
+      const ripeThreads = activeThreads.filter(t => {
+          const lastEcho = t.lastAwakened || t.originScene;
+          return (currentScene - lastEcho) >= 8;
+      });
+      if (ripeThreads.length > 0 && Math.random() < 0.15) {
+          state._sceneCallbackSelection = 'thread_awakening';
+          return;
+      }
+
+      // Priority 3: Early Echo payoff (ripe echoes with narrative trigger)
+      const echoes = (state.earlyEchoForeshadows || []).filter(f => !f.resolved);
+      const ripeEchoes = echoes.filter(f => (currentScene - f.scene) >= 8);
+      if (ripeEchoes.length > 0) {
+          const recentThreadAwakening = activeThreads.some(t => t.lastAwakened === currentScene);
+          const recentSecretReveal = secrets.some(s => s.revealedScene === currentScene - 1);
+          const recentQuestionResolved = (state.unansweredQuestions || []).some(q => q.resolved && q.resolvedScene === currentScene - 1);
+          const secretSynergy = ripeEchoes.some(f => f.relatedThread && secrets.some(s =>
+              f.relatedThread.toLowerCase().includes(s.owner.toLowerCase().substring(0, 8))
+          ));
+          if (recentThreadAwakening || recentSecretReveal || recentQuestionResolved || secretSynergy || currentScene >= 20) {
+              state._sceneCallbackSelection = 'echo';
+              return;
+          }
+      }
+
+      // Priority 4: Pressure escalation event
+      const pressureLevel = state.narrativePressureLevel || 0;
+      const lastPressure = state.lastPressureEventScene || 0;
+      if (pressureLevel >= 1 && (currentScene - lastPressure) >= 4) {
+          state._sceneCallbackSelection = 'pressure_event';
+          return;
+      }
+
+      // Priority 5: Question resolution (aged 10+ scenes)
+      const ripeQuestions = (state.unansweredQuestions || []).filter(q => !q.resolved && (currentScene - q.scene) >= 10);
+      if (ripeQuestions.length > 0 && Math.random() < 0.12) {
+          state._sceneCallbackSelection = 'question_resolution';
+          return;
+      }
+
+      // Priority 6: Motif foreground callback
+      const nMotifs = (state.narrativeMotifs || []);
+      if (nMotifs.length > 0) {
+          const eligible = nMotifs.filter(m => (currentScene - (m.last_used_scene || m.first_scene)) >= 5);
+          if (eligible.length > 0 && Math.random() < 0.12) {
+              state._sceneCallbackSelection = 'motif';
+              return;
+          }
+      }
+
+      // Priority 7: Conversation memory recall
+      const memories = (state.conversationMemories || []);
+      if (memories.length > 0) {
+          const eligible = memories.filter(m => (currentScene - m.scene_index) >= 3);
+          if (eligible.length > 0 && Math.random() < 0.15) {
+              state._sceneCallbackSelection = 'conversation_memory';
+              return;
+          }
+      }
+
+      // Priority 8: Emotional callback (repeated beat type)
+      const beats = state.characterEmotionalBeats || {};
+      for (const [, charBeats] of Object.entries(beats)) {
+          const recent = charBeats.filter(b => b.beatType !== 'history');
+          if (recent.length >= 2) {
+              const last = recent[recent.length - 1];
+              if (recent.slice(0, -1).some(b => b.beatType === last.beatType) && Math.random() < 0.10) {
+                  state._sceneCallbackSelection = 'emotional_callback';
+                  return;
+              }
+          }
+      }
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // UNIFIED NARRATIVE SIGNAL EXTRACTION COORDINATOR — processes all
+  // narrative tags in guaranteed order. Replaces scattered extraction
+  // calls with a single deterministic pipeline.
+  // ═══════════════════════════════════════════════════════════════════
+
+  window.DEBUG_NARRATIVE_PIPELINE = false;
+
+  /**
+   * Orchestrate all narrative signal extraction in consistent order.
+   * Each extractor returns cleaned text with tags stripped.
+   * Momentum + beat detection run last on fully cleaned text.
+   *
+   * Order: questions → echoes → motifs → conversation memory → desires
+   *        → momentum detection → emotional beat detection
+   */
+  function _extractNarrativeSignals(sceneText) {
+      let text = sceneText;
+
+      // 1. Unanswered Questions — establish curiosity state first
+      text = extractQuestionTags(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Questions extracted');
+
+      // 2. Early Echo Foreshadow — may create or resolve foreshadowing
+      text = extractEarlyEchoForeshadowTags(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Echoes extracted');
+
+      // 3. Conversation Memory — builds relationship history after narrative details exist
+      text = extractConversationMemoryTags(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Conversation memories extracted');
+
+      // 4. Motifs — depends on cleaned echoes and conversation context
+      text = extractMotifTags(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Motifs extracted');
+
+      // 5. Desire shifts — may react to memory or echo outcomes
+      text = extractDesireTags(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Desires extracted');
+
+      // 5b. Foreshadow Debt — narrative hints for future decisions
+      text = extractForeshadowDebtTag(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Foreshadow debt extracted');
+
+      // 5c. Irreversible Choice — decisive relationship commitment
+      text = extractIrreversibleChoiceTag(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Irreversible choice extracted');
+
+      // 5d. Destiny Collision — external event colliding with choice
+      text = extractDestinyCollisionTag(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Destiny collision extracted');
+
+      // 5e. Inevitable Scene — narrative convergence moment
+      text = extractInevitableSceneTag(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Inevitable scene extracted');
+
+      // 5f. Delayed Payoffs — deferred emotional truths
+      text = extractDelayedPayoffTag(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Delayed payoffs extracted');
+
+      // 6. Dialogue Momentum — runs on cleaned text
+      _computeDialogueMomentum(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log(`[PIPELINE] Momentum: ${state.dialogueMomentum}`);
+
+      // 7. Emotional Beat detection — runs on cleaned text
+      _detectEmotionalBeats(text);
+      if (window.DEBUG_NARRATIVE_PIPELINE) console.log('[PIPELINE] Emotional beats detected');
+
+      // Safety guard: detect unprocessed tags
+      if (text.includes('(EARLY_ECHO:') || text.includes('(QUESTION:') || text.includes('(CONV_MEMORY:') || text.includes('(MOTIF:') || text.includes('(DESIRE_SHIFT:') || text.includes('(FORESHADOW:') || text.includes('(IRREVERSIBLE_CHOICE:') || text.includes('(DESTINY_COLLISION:') || text.includes('(INEVITABLE_SCENE:') || text.includes('(DELAYED_PAYOFF:')) {
+          console.warn('[PIPELINE] Unprocessed narrative tags detected after extraction');
+      }
+
+      return text;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // EMOTIONAL BEAT ENGINE — tracks relationship-impacting emotional
+  // moments per character. Improves emotional continuity and enables
+  // callbacks that deepen character arcs. Max 12 beats per character.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const EMOTIONAL_BEAT_SIGNALS = {
+      trust_gain:           /\b(trust(ed|ing)?\s*(you|me|him|her)|believed?\s*(in\s*)?(you|me|him|her)|proved?\s*(yourself|loyalty)|reliable|dependable|kept\s*(your|the)\s*promise)\b/gi,
+      trust_loss:           /\b(betray(ed|al)?|li(ed|ar)|broke[n]?\s*(my|the|your)\s*(trust|promise|word)|deceiv(ed|ing)|can.?t\s*trust|never\s*trust)\b/gi,
+      jealousy:             /\b(jealous(y)?|envious|who\s*(is|was)\s*(she|he|they)|watching.{0,15}(smile|laugh|touch)|another\s*(wo)?man|possessiv|why\s*were\s*you\s*with)\b/gi,
+      vulnerability:        /\b(afraid|scared|never\s*told\s*(anyone|you)|open(ed)?\s*up|raw|broke[n]?\s*(inside|apart)|wound(ed)?|scar[rs]?|my\s*past|admit(ted)?)\b/gi,
+      dominance_shift:      /\b(kneel|submit(ted)?|surrender(ed)?|command(ed)?|back\s*down|yield(ed)?|upper\s*hand|controlled?\b|dominat|relent(ed)?|obey)\b/gi,
+      attraction_spike:     /\b(couldn.?t\s*(stop\s*)?look(ing)?|drawn\s*to|magnetic|pulse[ds]?\s*(quicken|race)|breath\s*(caught|hitched)|electric|beautiful|gorgeous|irresistible)\b/gi,
+      betrayal:             /\b(stab(bed)?\s*(in\s*the\s*back)?|sold\s*(me|us)\s*out|double.?cross|turn(ed)?\s*(on\s*(me|us))|traitor|set\s*(me|us)\s*up)\b/gi,
+      defensive_withdrawal: /\b(pull(ed)?\s*(away|back)|shut\s*(down|out|me\s*out)|wall(s)?\s*(up|went\s*up)|cold\s*shoulder|distanc(e[ds]?|ing)|turn(ed)?\s*away|walked?\s*out|left\s*the\s*room)\b/gi,
+      confession:           /\b(need\s*to\s*(tell|say|confess)|truth\s*is|honest\s*with\s*you|I\s*(did|was|have)\s*(something|been)|hiding\s*(something|this)|secret\s*(is|was)|I\s*lied)\b/gi,
+      protective_instinct:  /\b(protect(ed|ing)?|shield(ed)?|step(ped)?\s*in\s*front|won.?t\s*let\s*(anyone|them|him|her)\s*(hurt|touch)|guard(ed|ing)?|keep\s*(you|her|him)\s*safe)\b/gi
+  };
+
+  const EMOTIONAL_BEAT_PRIORITY = ['betrayal', 'confession', 'jealousy', 'trust_loss', 'attraction_spike', 'vulnerability', 'dominance_shift', 'trust_gain', 'protective_instinct', 'defensive_withdrawal'];
+
+  const EMOTIONAL_BEAT_DIALOGUE_BIAS = {
+      trust_gain:           'openness, willingness to be direct, relaxed tone',
+      trust_loss:           'suspicion, testing questions, guarded tone',
+      jealousy:             'pointed questions, possessive undertones, competitive edge',
+      vulnerability:        'hesitation, gentleness, careful phrasing',
+      dominance_shift:      'power-aware language, command or submission signals',
+      attraction_spike:     'proximity awareness, hesitation, charged subtext',
+      betrayal:             'confrontation, emotional volatility, defensive responses',
+      defensive_withdrawal: 'clipped answers, avoidance, physical distance',
+      confession:           'halting speech, emotional exposure, bracing for reaction',
+      protective_instinct:  'decisive tone, selfless focus, urgency'
+  };
+
+  /**
+   * Detect emotional beats from scene text. Keyword heuristic, zero API cost.
+   * Records max 1 beat per scene. Maintains max 12 beats per character.
+   */
+  function _detectEmotionalBeats(sceneText) {
+      if (!sceneText || sceneText.length < 100) return;
+      if (!state.characterEmotionalBeats) state.characterEmotionalBeats = {};
+      const plain = sceneText.replace(/<[^>]+>/g, '').toLowerCase();
+      const currentScene = (state.turnCount || 0) + 1;
+
+      let bestBeat = null;
+      let bestCount = 0;
+
+      for (const beatType of EMOTIONAL_BEAT_PRIORITY) {
+          const pattern = EMOTIONAL_BEAT_SIGNALS[beatType];
+          if (!pattern) continue;
+          // Reset lastIndex for global regex
+          pattern.lastIndex = 0;
+          const hits = (plain.match(pattern) || []).length;
+          if (hits >= 2 && hits > bestCount) {
+              bestBeat = beatType;
+              bestCount = hits;
+          }
+      }
+
+      if (!bestBeat) return;
+
+      // Determine intensity: 1=subtle (2 hits), 2=moderate (3-4), 3=major (5+)
+      const intensity = bestCount >= 5 ? 3 : bestCount >= 3 ? 2 : 1;
+
+      // Attribute to love interest by default
+      const liName = state.storybeau?.name || state.loveInterestName || 'LI';
+      const targetChar = state.playerName || 'player';
+
+      if (!state.characterEmotionalBeats[liName]) state.characterEmotionalBeats[liName] = [];
+      const beats = state.characterEmotionalBeats[liName];
+
+      beats.push({
+          beatType: bestBeat,
+          scene: currentScene,
+          targetCharacter: targetChar,
+          intensity
+      });
+
+      // Cap at 12 per character — compress oldest
+      if (beats.length > 12) {
+          const removed = beats.splice(0, beats.length - 10);
+          const summary = [...new Set(removed.map(b => b.beatType))].join(', ');
+          beats.unshift({ beatType: 'history', scene: removed[0].scene, targetCharacter: targetChar, intensity: 0, summary: `Compressed: ${summary}` });
+      }
+
+      // Fate thread synergy: if beat relates to a thread, nudge awakening
+      const threads = (state.fateThreads || []).filter(t => t.active);
+      for (const thread of threads) {
+          const threadDesc = (thread.description || '').toLowerCase();
+          if (threadDesc.includes(bestBeat.replace(/_/g, ' ')) || threadDesc.includes(bestBeat.replace(/_/g, ''))) {
+              thread.echoCount = (thread.echoCount || 0) + 1;
+              if (window.DEBUG_NARRATIVE_PIPELINE) console.log(`[BEAT] Thread synergy: ${bestBeat} → "${thread.title}" (echoCount: ${thread.echoCount})`);
+          }
+      }
+
+      // Update dominance balance based on detected beat
+      _updateDominanceBalance(bestBeat, liName, targetChar);
+
+      console.log(`[BEAT] ${bestBeat} (intensity ${intensity}, ${bestCount} signals, scene ${currentScene})`);
+  }
+
+  /**
+   * Build emotional beat directive — surfaces recent beats for dialogue biasing.
+   * Characters should behave consistently with their emotional history.
+   */
+  function buildEmotionalBeatDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 3) return '';
+      if (!state.characterEmotionalBeats) return '';
+
+      const entries = Object.entries(state.characterEmotionalBeats);
+      if (entries.length === 0) return '';
+
+      const parts = [];
+      for (const [charName, beats] of entries) {
+          const recent = beats.filter(b => b.beatType !== 'history' && (currentScene - b.scene) <= 8);
+          if (recent.length === 0) continue;
+
+          const beatLines = recent.slice(-3).map(b => {
+              const age = currentScene - b.scene;
+              const bias = EMOTIONAL_BEAT_DIALOGUE_BIAS[b.beatType] || '';
+              return `  ${b.beatType} (${age} scenes ago, intensity ${b.intensity})${bias ? ' \u2014 ' + bias : ''}`;
+          }).join('\n');
+          parts.push(`${charName}:\n${beatLines}`);
+      }
+
+      if (parts.length === 0) return '';
+
+      // Callback: if a similar situation recurs, amplify the reaction
+      let callbackNote = '';
+      for (const [charName, beats] of entries) {
+          const recent = beats.filter(b => b.beatType !== 'history');
+          if (recent.length < 2) continue;
+          const last = recent[recent.length - 1];
+          const prior = recent.slice(0, -1).filter(b => b.beatType === last.beatType);
+          if (prior.length > 0) {
+              callbackNote = `\nEmotional echo: ${charName} has experienced ${last.beatType.replace(/_/g, ' ')} before (scene ${prior[prior.length - 1].scene}). Similar situations should trigger a stronger, more layered reaction.`;
+              break; // one callback per scene
+          }
+      }
+
+      _registerDirectiveSignal('EMOTIONAL_BEATS');
+      return `\nEMOTIONAL BEATS:
+${parts.join('\n')}
+Characters carry emotional memory. Recent beats should bias dialogue tone, body language, and reaction intensity. Do not reset emotional state between scenes.${callbackNote}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CONVERGENCE ENGINE — produces rare moments where multiple narrative
+  // elements collide in a single scene. Max 3 per story, 6-scene gap.
+  // Coordinates Fate Threads, Echoes, Secrets, Questions, Motifs.
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Check if a convergence event should fire this scene.
+   * Selects up to 3 narrative elements to collide.
+   * Returns null or { elements: [...], directive: string }.
+   */
+  function _selectConvergenceOpportunity() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 12) return null;
+      if ((state._convergenceCount || 0) >= 3) return null;
+
+      const lastConv = state.lastConvergenceScene || 0;
+      if (currentScene - lastConv < 6) return null;
+
+      const activeThreads = (state.fateThreads || []).filter(t => t.active);
+      if (activeThreads.length < 2) return null;
+
+      // Probability: 8-12%
+      if (Math.random() > 0.10) return null;
+
+      // Gather eligible elements by priority
+      const elements = [];
+
+      // 1. Secret at high/critical pressure
+      const secrets = (state.characterSecrets || []).filter(s => !s.revealed && (s.pressureLevel === 'high' || s.pressureLevel === 'critical'));
+      if (secrets.length > 0) {
+          const pick = secrets[0];
+          elements.push({ type: 'secret', description: `${pick.owner}'s secret ("${pick.secretDescription}") at ${pick.pressureLevel} pressure` });
+      }
+
+      // 2. Thread ripe for awakening
+      const ripeThreads = activeThreads.filter(t => {
+          const lastEcho = t.lastAwakened || t.originScene;
+          return (currentScene - lastEcho) >= 8;
+      });
+      if (ripeThreads.length > 0) {
+          const pick = ripeThreads[0];
+          elements.push({ type: 'thread', description: `Thread "${pick.title}" ripe for awakening` });
+      }
+
+      // 3. Echo at payoff stage
+      const ripeEchoes = (state.earlyEchoForeshadows || []).filter(f => !f.resolved && (currentScene - f.scene) >= 8);
+      if (ripeEchoes.length > 0) {
+          const pick = ripeEchoes[0];
+          elements.push({ type: 'echo', description: `Echo from scene ${pick.scene}: "${pick.description}" (${pick.echoType || 'reaction'})` });
+      }
+
+      // 4. Motif foreground opportunity
+      const motifs = (state.narrativeMotifs || []).filter(m => (currentScene - (m.last_used_scene || m.first_scene)) >= 5);
+      if (motifs.length > 0) {
+          const pick = motifs[0];
+          elements.push({ type: 'motif', description: `Motif "${pick.motif_text}" (${pick.thematic_valence})` });
+      }
+
+      // 5. Question aged 10+ scenes
+      const ripeQuestions = (state.unansweredQuestions || []).filter(q => !q.resolved && (currentScene - q.scene) >= 10);
+      if (ripeQuestions.length > 0) {
+          const pick = ripeQuestions[0];
+          elements.push({ type: 'question', description: `Question from scene ${pick.scene}: "${pick.description}"` });
+      }
+
+      // Need at least 2 elements for a convergence
+      if (elements.length < 2) return null;
+
+      // Take up to 3
+      const selected = elements.slice(0, 3);
+      return { elements: selected };
+  }
+
+  /**
+   * Build convergence directive if a convergence event is triggered.
+   * Returns directive string or empty.
+   */
+  function buildConvergenceDirective() {
+      const opportunity = _selectConvergenceOpportunity();
+      if (!opportunity) return '';
+
+      const currentScene = (state.turnCount || 0) + 1;
+      state.lastConvergenceScene = currentScene;
+      state._convergenceCount = (state._convergenceCount || 0) + 1;
+
+      const elementLines = opportunity.elements.map(e => `- ${e.type}: ${e.description}`).join('\n');
+
+      console.log(`[CONVERGENCE] Event #${state._convergenceCount} at scene ${currentScene}: ${opportunity.elements.map(e => e.type).join(', ')}`);
+
+      _registerDirectiveSignal('CONVERGENCE');
+      return `\nCONVERGENCE EVENT (scene ${currentScene}):
+Multiple narrative elements collide in this scene. Allow these signals to intersect naturally:
+${elementLines}
+
+This scene should feel like hidden structure suddenly revealing itself. Allow:
+\u2022 connections between previously separate threads
+\u2022 a secret or truth surfacing at the worst/best moment
+\u2022 symbolic details gaining sudden meaning
+\u2022 emotional stakes escalating through collision
+
+The convergence must feel inevitable, not forced. Do not explain the connections \u2014 let the reader experience them.
+Mark the convergence moment with a standalone \u2726 on its own line before the pivotal paragraph.
+After this scene, narrative tension should shift permanently.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // NARRATIVE PRESSURE ESCALATION ENGINE — prevents mid-story plateau
+  // by introducing destabilizing events when tension flatlines.
+  // Pressure: 0=stable, 1=stirring, 2=unstable, 3=critical.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const PRESSURE_EVENT_HINTS = {
+      1: [ // Stirring
+          'A rumor begins to spread among characters.',
+          'A symbolic object reappears unexpectedly.',
+          'An environmental disturbance unsettles the scene.',
+          'A misunderstanding quietly intensifies.'
+      ],
+      2: [ // Unstable
+          'A secret nearly slips into the open.',
+          'An unplanned confrontation begins.',
+          'A Fate Thread awakens unexpectedly.',
+          'Relationship tension spikes without warning.'
+      ],
+      3: [ // Critical
+          'A betrayal or hidden truth is forced into the light.',
+          'A character is forced into a decision they cannot delay.',
+          'Multiple narrative threads collide.',
+          'A major relationship shift becomes unavoidable.'
+      ]
+  };
+
+  /**
+   * Detect narrative plateau and adjust pressure level.
+   * Called before directives are assembled each scene.
+   */
+  function _detectNarrativePlateau() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 22) return;
+
+      // Check for natural escalation → decay pressure
+      const threads = (state.fateThreads || []).filter(t => t.active);
+      const recentAwakening = threads.some(t => t.lastAwakened && (currentScene - t.lastAwakened) <= 2);
+      const recentSecretEscalation = (state.characterSecrets || []).some(s =>
+          !s.revealed && (s.pressureLevel === 'high' || s.pressureLevel === 'critical')
+      );
+      const beats = state.characterEmotionalBeats || {};
+      const recentIntenseBeat = Object.values(beats).some(charBeats =>
+          charBeats.some(b => b.beatType !== 'history' && b.intensity >= 2 && (currentScene - b.scene) <= 2)
+      );
+
+      if (recentAwakening || recentSecretEscalation || recentIntenseBeat) {
+          // Natural escalation — decay pressure
+          if ((state.narrativePressureLevel || 0) > 0) {
+              state.narrativePressureLevel = Math.max(0, state.narrativePressureLevel - 1);
+              console.log(`[PRESSURE] Decay → ${state.narrativePressureLevel} (natural escalation detected)`);
+          }
+          return;
+      }
+
+      // Check for plateau conditions
+      const lastMajorEvent = Math.max(
+          state.lastPressureEventScene || 0,
+          state.lastConvergenceScene || 0,
+          ...threads.map(t => t.lastAwakened || 0),
+          ...(state.characterSecrets || []).filter(s => s.revealedScene).map(s => s.revealedScene)
+      );
+      const scenesSinceEvent = currentScene - lastMajorEvent;
+
+      if (scenesSinceEvent < 5) return;
+
+      const noRecentAwakening = !threads.some(t => t.lastAwakened && (currentScene - t.lastAwakened) <= 4);
+      const noRecentBeat = !Object.values(beats).some(charBeats =>
+          charBeats.some(b => b.beatType !== 'history' && b.intensity >= 2 && (currentScene - b.scene) <= 4)
+      );
+
+      if (noRecentAwakening && !recentSecretEscalation && noRecentBeat) {
+          state.narrativePressureLevel = Math.min(3, (state.narrativePressureLevel || 0) + 1);
+          console.log(`[PRESSURE] Escalation → ${state.narrativePressureLevel} (plateau detected, ${scenesSinceEvent} scenes since event)`);
+      }
+  }
+
+  /**
+   * Build pressure escalation directive when pressure has built up.
+   * Gated by meta-orchestrator callback budget.
+   */
+  function buildPressureEscalationDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      const pressure = state.narrativePressureLevel || 0;
+      if (pressure < 1) return '';
+
+      const callbackSlot = state._sceneCallbackSelection || 'none';
+      if (callbackSlot !== 'pressure_event') return '';
+
+      const lastPressure = state.lastPressureEventScene || 0;
+      if (currentScene - lastPressure < 4) return '';
+
+      state.lastPressureEventScene = currentScene;
+
+      const hints = PRESSURE_EVENT_HINTS[pressure] || PRESSURE_EVENT_HINTS[1];
+      const hint = hints[Math.floor(Math.random() * hints.length)];
+
+      // Fate thread synergy at pressure ≥ 2
+      let threadSynergy = '';
+      if (pressure >= 2) {
+          const threads = (state.fateThreads || []).filter(t => t.active);
+          if (threads.length > 0) {
+              threadSynergy = ` Fate Thread pressure increases \u2014 threads "${threads.slice(0, 2).map(t => t.title).join('", "')}" are more likely to awaken or echo.`;
+          }
+      }
+
+      console.log(`[PRESSURE] Event at scene ${currentScene}, level ${pressure}: "${hint}"`);
+
+      _registerDirectiveSignal('PRESSURE_ESCALATION');
+      return `\nPRESSURE ESCALATION (level ${pressure}):
+The story has plateaued. Introduce a destabilizing force this scene.
+Suggestion: ${hint}${threadSynergy}
+The event should force characters to react or decide. Avoid repeating earlier destabilizing events.
+Escalate emotional or narrative conflict \u2014 the story must accelerate, not drift.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CHARACTER VOICE LOCK — persistent speech identity per character.
+  // Prevents AI dialogue drift where characters begin sounding alike.
+  // Initializes from archetype, modulates with momentum/beats.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const VOICE_PROFILE_TEMPLATES = {
+      SPELLBINDER: {
+          cadence: 'slow, deliberate',
+          metaphorDensity: 'high',
+          directness: 'indirect',
+          humorStyle: 'subtle, knowing',
+          interruptionStyle: 'rare',
+          sentenceLengthBias: 'medium-long'
+      },
+      HEART_WARDEN: {
+          cadence: 'steady, measured',
+          metaphorDensity: 'low',
+          directness: 'direct',
+          humorStyle: 'dry warmth',
+          interruptionStyle: 'low',
+          sentenceLengthBias: 'short-medium'
+      },
+      DARK_VICE: {
+          cadence: 'confident, unhurried',
+          metaphorDensity: 'low',
+          directness: 'blunt',
+          humorStyle: 'teasing, ironic',
+          interruptionStyle: 'frequent',
+          sentenceLengthBias: 'short'
+      },
+      OPEN_VEIN: {
+          cadence: 'intense, impulsive',
+          metaphorDensity: 'emotional',
+          directness: 'direct',
+          humorStyle: 'self-deprecating',
+          interruptionStyle: 'occasional',
+          sentenceLengthBias: 'variable'
+      },
+      BEAUTIFUL_RUIN: {
+          cadence: 'controlled, deliberate',
+          metaphorDensity: 'high',
+          directness: 'probing, challenging',
+          humorStyle: 'teasing skepticism, melancholic irony',
+          interruptionStyle: 'rare',
+          sentenceLengthBias: 'medium-long'
+      },
+      ARMORED_FOX: {
+          cadence: 'quick, clipped',
+          metaphorDensity: 'low',
+          directness: 'evasive',
+          humorStyle: 'deflective wit',
+          interruptionStyle: 'frequent',
+          sentenceLengthBias: 'short'
+      },
+      ETERNAL_FLAME: {
+          cadence: 'slow, nostalgic',
+          metaphorDensity: 'high',
+          directness: 'measured',
+          humorStyle: 'gentle, wistful',
+          interruptionStyle: 'rare',
+          sentenceLengthBias: 'medium-long'
+      }
+  };
+
+  const VOICE_MOMENTUM_MODS = {
+      heated:     { sentenceLengthBias: 'shorter', interruptionStyle: 'more frequent', cadence: 'clipped' },
+      intimate:   { cadence: 'slower', metaphorDensity: 'slightly higher', sentenceLengthBias: 'longer' },
+      deflective: { humorStyle: 'heightened', interruptionStyle: 'more frequent' },
+      curious:    { directness: 'more questioning', sentenceLengthBias: 'medium' }
+  };
+
+  /**
+   * Initialize voice profile for a character from archetype.
+   * Only initializes once per character.
+   */
+  function _initCharacterVoiceProfile(charName) {
+      if (!state.characterVoiceProfiles) state.characterVoiceProfiles = {};
+      if (state.characterVoiceProfiles[charName]) return;
+
+      const archetype = state.archetype?.primary || '';
+      const template = VOICE_PROFILE_TEMPLATES[archetype];
+      if (!template) return;
+
+      state.characterVoiceProfiles[charName] = { ...template };
+      console.log(`[VOICE] Profile initialized for ${charName} (${archetype})`);
+  }
+
+  /**
+   * Build voice lock directive — emits persistent voice profiles
+   * with optional momentum-based modulation.
+   */
+  function buildVoiceLockDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 2) return '';
+      if (!state.characterVoiceProfiles) state.characterVoiceProfiles = {};
+
+      // Initialize love interest voice if not yet set
+      const liName = state.storybeau?.name || state.loveInterestName || '';
+      if (liName) _initCharacterVoiceProfile(liName);
+
+      const profiles = state.characterVoiceProfiles;
+      const entries = Object.entries(profiles);
+      if (entries.length === 0) return '';
+
+      const momentum = state.dialogueMomentum || 'neutral';
+      const mods = VOICE_MOMENTUM_MODS[momentum];
+
+      const profileLines = entries.map(([name, p]) => {
+          let line = `${name}: cadence=${p.cadence}, metaphor=${p.metaphorDensity}, directness=${p.directness}, humor=${p.humorStyle}, interruptions=${p.interruptionStyle}, sentence=${p.sentenceLengthBias}`;
+          if (mods) {
+              const modParts = Object.entries(mods).map(([k, v]) => `${k}\u2192${v}`).join(', ');
+              line += ` [momentum shift: ${modParts}]`;
+          }
+          return line;
+      }).join('\n');
+
+      return `\nVOICE LOCK:
+${profileLines}
+Maintain each character\u2019s voice consistently. Characters must NOT adopt another character\u2019s speech style. Sarcastic characters stay sarcastic, poetic characters stay poetic. Momentum shifts are temporary modulations, not identity changes.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ROMANTIC TENSION OSCILLATION ENGINE — maintains push-pull rhythm
+  // in long romance narratives. Introduces controlled relational
+  // friction when attraction stabilizes. 0=calm..3=volatile.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const ROMANTIC_TENSION_HINTS = {
+      1: [ // Simmering
+          'An ambiguous remark introduces doubt about intentions.',
+          'A jealousy trigger surfaces naturally.',
+          'A moment of closeness is interrupted.',
+          'A misunderstanding about motives quietly takes hold.'
+      ],
+      2: [ // Strained
+          'A disagreement about goals or values emerges.',
+          'A hidden vulnerability is revealed at an awkward moment.',
+          'Rival attention or interest appears.',
+          'Trust is shaken by a small but significant detail.'
+      ],
+      3: [ // Volatile
+          'An emotional confrontation becomes unavoidable.',
+          'A confession is delivered badly or at the wrong moment.',
+          'Suspicion of betrayal surfaces.',
+          'Forced emotional distance separates the characters.'
+      ]
+  };
+
+  /**
+   * Detect romantic plateau and adjust tension level.
+   * Called before directives are assembled.
+   */
+  function _detectRomanticPlateau() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 18) return;
+
+      const beats = state.characterEmotionalBeats || {};
+      const momentum = state.dialogueMomentum || 'neutral';
+
+      // Check for tension release → decay (allowed even during explicit scenes)
+      const recentIntenseBeat = Object.values(beats).some(charBeats =>
+          charBeats.some(b => b.beatType !== 'history' && b.intensity >= 2 && (currentScene - b.scene) <= 2)
+      );
+      if (recentIntenseBeat) {
+          if ((state.romanticTensionLevel || 0) > 0) {
+              state.romanticTensionLevel = Math.max(0, state.romanticTensionLevel - 1);
+              console.log(`[ROMANTIC_TENSION] Release \u2192 ${state.romanticTensionLevel} (intense beat detected)`);
+          }
+          return;
+      }
+
+      // Pause escalation during explicit embodiment — scene is already intense
+      if (state.explicitEmbodimentAuthorized) return;
+
+      // Plateau conditions
+      const noRecentIntenseBeat = !Object.values(beats).some(charBeats =>
+          charBeats.some(b => b.beatType !== 'history' && b.intensity >= 2 && (currentScene - b.scene) <= 5)
+      );
+      const calmMomentumStreak = (momentum === 'neutral' || momentum === 'intimate' || momentum === 'deflective');
+      const lastTension = state.lastTensionEventScene || 0;
+      const noRecentSetback = (currentScene - lastTension) >= 5;
+
+      if (noRecentIntenseBeat && calmMomentumStreak && noRecentSetback) {
+          state.romanticTensionLevel = Math.min(3, (state.romanticTensionLevel || 0) + 1);
+          console.log(`[ROMANTIC_TENSION] Escalation \u2192 ${state.romanticTensionLevel} (plateau detected)`);
+      }
+  }
+
+  /**
+   * Build romantic tension directive when tension has built up.
+   */
+  function buildRomanticTensionDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      const tension = state.romanticTensionLevel || 0;
+      if (tension < 1) return '';
+
+      const lastTension = state.lastTensionEventScene || 0;
+      if (currentScene - lastTension < 4) return '';
+
+      state.lastTensionEventScene = currentScene;
+      // Track that primary relationship directive fired — used by modifier budget
+      state._relationshipPrimaryFired = true;
+      _registerDirectiveSignal('ROMANTIC_TENSION');
+
+      const hints = ROMANTIC_TENSION_HINTS[tension] || ROMANTIC_TENSION_HINTS[1];
+      const hint = hints[Math.floor(Math.random() * hints.length)];
+
+      console.log(`[ROMANTIC_TENSION] Event at scene ${currentScene}, level ${tension}: "${hint}"`);
+
+      return `\nROMANTIC TENSION SHIFT (level ${tension}):
+The romantic dynamic has plateaued. Introduce relational friction that complicates attraction without ending it.
+Suggestion: ${hint}
+Key rule: friction must intensify attraction rather than destroy it. Create emotional ambiguity. Allow characters to react defensively. Avoid repeating earlier conflicts.
+The rhythm is: attraction \u2192 friction \u2192 vulnerability \u2192 renewed attraction.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SUBTEXTUAL CONFLICT ENGINE — shapes how conflict appears in
+  // dialogue. When emotional tension is high, characters speak around
+  // the issue rather than naming it directly.
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Build subtextual conflict directive when conditions warrant indirection.
+   */
+  function buildSubtextualConflictDirective() {
+      const momentum = state.dialogueMomentum || 'neutral';
+      const tension = state.romanticTensionLevel || 0;
+      const beats = state.characterEmotionalBeats || {};
+      const hasIntenseBeat = Object.values(beats).some(charBeats =>
+          charBeats.some(b => b.beatType !== 'history' && b.intensity >= 2 && ((state.turnCount || 0) + 1 - b.scene) <= 2)
+      );
+
+      // Activation conditions — includes volatile_intimacy for conflict during explicit scenes
+      const highMomentum = momentum === 'heated' || momentum === 'unresolved' || momentum === 'volatile_intimacy';
+      const highTension = tension >= 2;
+      const isActive = highMomentum || highTension || hasIntenseBeat;
+
+      if (!isActive) return '';
+
+      // Check for moment of truth — direct speech allowed briefly
+      const veryIntenseBeat = Object.values(beats).some(charBeats =>
+          charBeats.some(b => b.beatType !== 'history' && b.intensity >= 3 && ((state.turnCount || 0) + 1 - b.scene) <= 1)
+      );
+      const convergenceActive = state.lastConvergenceScene === ((state.turnCount || 0) + 1);
+      const secretRevealing = (state.characterSecrets || []).some(s => s.revealedScene === (state.turnCount || 0) + 1);
+
+      if (veryIntenseBeat || convergenceActive || secretRevealing) {
+          _registerDirectiveSignal('SUBTEXT_CONFLICT');
+          return `\nSUBTEXT RELEASE: Emotional pressure has reached breaking point. One character may briefly speak the real truth directly \u2014 raw, unfiltered, no deflection. This moment should feel like armor cracking. Return to subtext afterward.`;
+      }
+
+      _registerDirectiveSignal('SUBTEXT_CONFLICT');
+      return `\nSUBTEXT CONFLICT:
+Characters must avoid directly stating the real conflict. Express tension through:
+\u2022 deflection or topic changes
+\u2022 sarcasm or rhetorical questions
+\u2022 metaphor or symbolic references
+\u2022 humor masking real emotion
+\u2022 indirect accusations
+Do not repeat the same subtext strategy within a scene. Characters speak around the issue, not about it. The reader should understand what\u2019s really being said beneath the surface.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SAY/DO PSYCHOLOGICAL GRADIENT — ensures player choice options
+  // represent distinct relational strategies (advance, deflect,
+  // escalate) rather than cosmetic variations.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const PSYCHOLOGICAL_GRADIENT_LABELS = {
+      advance:  'Move the relationship forward carefully \u2014 openness, sincerity, or measured vulnerability.',
+      deflect:  'Avoid emotional exposure \u2014 humor, distance, ambiguity, or redirection.',
+      escalate: 'Increase tension, challenge, or attraction directly \u2014 boldness, provocation, or raw honesty.'
+  };
+
+  const GRADIENT_MOMENTUM_MODS = {
+      heated:     { escalate: 'sharper, more challenging', deflect: 'cooler, more dismissive', advance: 'urgently honest' },
+      intimate:   { advance: 'more vulnerable', deflect: 'gently evasive', escalate: 'daringly open' },
+      deflective: { deflect: 'wittier, more ironic', advance: 'disarmingly sincere', escalate: 'playfully provocative' },
+      curious:    { advance: 'inquisitive, probing', deflect: 'mysteriously evasive', escalate: 'directly challenging' }
+  };
+
+  /**
+   * Build psychological gradient directive for Say/Do option generation.
+   * Injected when Say/Do options are constructed.
+   */
+  function buildPsychologicalGradientDirective() {
+      const momentum = state.dialogueMomentum || 'neutral';
+      const mods = GRADIENT_MOMENTUM_MODS[momentum];
+
+      let modNote = '';
+      if (mods) {
+          const modParts = Object.entries(mods).map(([strategy, bias]) => `${strategy}: ${bias}`).join('; ');
+          modNote = `\nMomentum (${momentum}) bias: ${modParts}`;
+      }
+
+      return `\nSAY/DO GRADIENT:
+When generating player choice options, ensure three distinct psychological strategies:
+\u2022 ADVANCE \u2014 ${PSYCHOLOGICAL_GRADIENT_LABELS.advance}
+\u2022 DEFLECT \u2014 ${PSYCHOLOGICAL_GRADIENT_LABELS.deflect}
+\u2022 ESCALATE \u2014 ${PSYCHOLOGICAL_GRADIENT_LABELS.escalate}
+Each option must represent a different emotional move. Avoid clustering options around the same tone.${modNote}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DOMINANCE DYNAMICS ENGINE — tracks relational power balance
+  // between characters. Score range: -3 (strong submission) to
+  // +3 (strong dominance). Shifts on emotional beats.
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Update dominance balance based on detected emotional beat.
+   * Called from _detectEmotionalBeats after a beat is recorded.
+   */
+  function _updateDominanceBalance(beatType, initiatorName, targetName) {
+      if (!state.dominanceBalance) state.dominanceBalance = {};
+      if (!state.dominanceBalance[initiatorName]) state.dominanceBalance[initiatorName] = 0;
+      if (!state.dominanceBalance[targetName]) state.dominanceBalance[targetName] = 0;
+
+      const shifts = {
+          dominance_shift: { initiator: 1, target: -1 },
+          jealousy:        { initiator: 1, target: 0 },
+          vulnerability:   { initiator: -1, target: 1 },
+          confession:      { initiator: -1, target: 1 },
+          protective_instinct: { initiator: 1, target: -1 },
+          betrayal:        { initiator: 1, target: -1 },
+          attraction_spike: { initiator: 0, target: 0 },
+          trust_gain:      { initiator: 0, target: 0 },
+          trust_loss:      { initiator: 0, target: 0 },
+          defensive_withdrawal: { initiator: -1, target: 0 }
+      };
+
+      const shift = shifts[beatType];
+      if (!shift) return;
+
+      const prevInit = state.dominanceBalance[initiatorName];
+      state.dominanceBalance[initiatorName] = Math.max(-3, Math.min(3, state.dominanceBalance[initiatorName] + shift.initiator));
+      state.dominanceBalance[targetName] = Math.max(-3, Math.min(3, state.dominanceBalance[targetName] + shift.target));
+
+      // Beautiful Ruin dominance reflex: respond to vulnerability/trust with dominance
+      const archetype = state.archetype?.primary || '';
+      if (archetype === 'BEAUTIFUL_RUIN') {
+          const brReflex = ['vulnerability', 'confession', 'trust_gain', 'attraction_spike'];
+          if (brReflex.includes(beatType)) {
+              state.dominanceBalance[initiatorName] = Math.min(3, state.dominanceBalance[initiatorName] + 1);
+          }
+          // Passive bias: relationship deepening pushes BR toward dominance
+          if ((state.romanticTensionLevel || 0) >= 2 && (state.relationshipVector?.trust || 0) > 0.6) {
+              state.dominanceBalance[initiatorName] = Math.min(3, state.dominanceBalance[initiatorName] + 1);
+          }
+          // High intensity escalation: intense beats or explicit scenes push to max
+          const currentScene = (state.turnCount || 0) + 1;
+          const recentIntense = Object.values(state.characterEmotionalBeats || {}).some(cb =>
+              cb.some(b => b.intensity >= 3 && (currentScene - b.scene) <= 1)
+          );
+          if (recentIntense || state.explicitEmbodimentAuthorized || state._almostLossScene === currentScene) {
+              state.dominanceBalance[initiatorName] = 3;
+          }
+      }
+
+      // Detect reversal (crossing zero)
+      if (prevInit > 0 && state.dominanceBalance[initiatorName] <= 0) {
+          state._dominanceReversalDetected = true;
+          console.log(`[DOMINANCE] Reversal: ${initiatorName} lost dominant position`);
+      } else if (prevInit < 0 && state.dominanceBalance[initiatorName] >= 0) {
+          state._dominanceReversalDetected = true;
+          console.log(`[DOMINANCE] Reversal: ${initiatorName} gained dominant position`);
+      }
+  }
+
+  /**
+   * Build dominance dynamics directive. Surfaces current power balance
+   * and any reversal events.
+   */
+  function buildDominanceDynamicsDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 4) return '';
+      if (!state.dominanceBalance) return '';
+
+      // Modifier budget: suppress reversal note if devotion test already claimed modifier slot
+      if (state._relationshipModifierUsed && state._dominanceReversalDetected) {
+          state._dominanceReversalDetected = false; // consumed silently
+      }
+
+      const entries = Object.entries(state.dominanceBalance);
+      if (entries.length === 0) return '';
+
+      const labels = { '-3': 'strongly submissive', '-2': 'submissive', '-1': 'slightly deferring', '0': 'balanced', '1': 'slightly dominant', '2': 'dominant', '3': 'strongly dominant' };
+
+      const lines = entries.map(([name, score]) => {
+          const label = labels[String(score)] || 'balanced';
+          return `${name}: ${label} (${score > 0 ? '+' : ''}${score})`;
+      }).join(', ');
+
+      let reversalNote = '';
+      if (state._dominanceReversalDetected) {
+          state._dominanceReversalDetected = false;
+          state._relationshipModifierUsed = true; // claim modifier slot
+          reversalNote = '\nDOMINANCE REVERSAL: Power has shifted between characters. This should produce a strong emotional beat \u2014 surprise, vulnerability, or charged silence.';
+      }
+
+      // Archetype-specific dominance guidance
+      const archetype = state.archetype?.primary || '';
+      let archetypeNote = '';
+      if (archetype === 'BEAUTIFUL_RUIN') {
+          const liName = state.storybeau?.name || state.loveInterestName || '';
+          const liScore = state.dominanceBalance[liName] || 0;
+          if (liScore < 0) {
+              archetypeNote = `\nBEAUTIFUL RUIN CORRECTION: ${liName} should maintain dominant emotional control (score \u2265 0). Express defensive dominance \u2014 quiet authority, teasing skepticism, probing challenges. Avoid passive sadness, submissive longing, or self-pity. Vulnerability appears briefly as armor cracking, never as surrender.`;
+          }
+      }
+
+      if (reversalNote) _registerDirectiveSignal('DOMINANCE_REVERSAL');
+      return `\nDOMINANCE DYNAMIC: ${lines}
+Characters should subtly express their current power position through dialogue cadence, initiative, and body language. Dominant: calm control, leading interaction. Deferring: testing, seeking approval, provoking.${reversalNote}${archetypeNote}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DEVOTION PRESSURE SYSTEM — Beautiful Ruin archetype periodically
+  // tests the lover's commitment. Creates: attraction → devotion test
+  // → reassurance → deeper intimacy → new doubt cycle.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const DEVOTION_TEST_HINTS = {
+      1: [ // Probing
+          'Teasing skepticism about the lover\u2019s attraction.',
+          'Questioning whether the lover truly understands them.',
+          'Suggesting the lover deserves someone simpler.'
+      ],
+      2: [ // Testing
+          'Emotional withdrawal to see if the lover pursues.',
+          'Hinting they might leave or disappear.',
+          'Daring the lover to explain their devotion.'
+      ],
+      3: [ // Severe
+          'Pushing the lover away with deliberate coldness.',
+          'Claiming love is impossible for someone like them.',
+          'Inviting abandonment as a final test.'
+      ]
+  };
+
+  /**
+   * Detect conditions for devotion pressure increase.
+   * Only activates for Beautiful Ruin archetype.
+   */
+  function _detectDevotionPressure() {
+      const archetype = state.archetype?.primary || '';
+      if (archetype !== 'BEAUTIFUL_RUIN') return;
+
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 12) return;
+      if ((state.romanticTensionLevel || 0) < 1) return;
+
+      // Check for triggers: affection, vulnerability beat, trust_gain
+      const beats = state.characterEmotionalBeats || {};
+      const recentTrigger = Object.values(beats).some(charBeats =>
+          charBeats.some(b => (b.beatType === 'trust_gain' || b.beatType === 'vulnerability' || b.beatType === 'attraction_spike') && (currentScene - b.scene) <= 2)
+      );
+
+      if (recentTrigger) {
+          state.devotionPressureLevel = Math.min(3, (state.devotionPressureLevel || 0) + 1);
+          console.log(`[DEVOTION] Pressure \u2192 ${state.devotionPressureLevel} (affection/vulnerability trigger)`);
+      }
+
+      // Decay: successful devotion response (protective_instinct or trust_gain from player)
+      const recentProtective = Object.values(beats).some(charBeats =>
+          charBeats.some(b => b.beatType === 'protective_instinct' && (currentScene - b.scene) <= 2)
+      );
+      if (recentProtective && (state.devotionPressureLevel || 0) > 0) {
+          state.devotionPressureLevel = Math.max(0, state.devotionPressureLevel - 1);
+          console.log(`[DEVOTION] Release \u2192 ${state.devotionPressureLevel} (devotion confirmed)`);
+      }
+  }
+
+  /**
+   * Build devotion test directive for Beautiful Ruin archetype.
+   */
+  function buildDevotionPressureDirective() {
+      const archetype = state.archetype?.primary || '';
+      if (archetype !== 'BEAUTIFUL_RUIN') return '';
+
+      // Modifier budget: skip if modifier slot already used
+      if (state._relationshipModifierUsed) return '';
+
+      const currentScene = (state.turnCount || 0) + 1;
+      const pressure = state.devotionPressureLevel || 0;
+      if (pressure < 1) return '';
+
+      const lastTest = state.lastDevotionTestScene || 0;
+      if (currentScene - lastTest < 5) return '';
+
+      state.lastDevotionTestScene = currentScene;
+      state._relationshipModifierUsed = true; // claim modifier slot
+
+      const hints = DEVOTION_TEST_HINTS[pressure] || DEVOTION_TEST_HINTS[1];
+      const hint = hints[Math.floor(Math.random() * hints.length)];
+      const liName = state.storybeau?.name || state.loveInterestName || 'the love interest';
+
+      console.log(`[DEVOTION] Test at scene ${currentScene}, level ${pressure}: "${hint}"`);
+
+      _registerDirectiveSignal('DEVOTION_TEST');
+      return `\nDEVOTION TEST (Beautiful Ruin, level ${pressure}):
+${liName} tests the lover\u2019s commitment. This is not cruelty \u2014 it\u2019s a dare born from fear of genuine love.
+Suggestion: ${hint}
+${liName} maintains dominant emotional control during the test: quiet authority, seductive challenge, controlled teasing.
+Avoid submissive tone or passive sadness. The test should feel like a dare, not a plea.
+Example tones: "Tell me why you\u2019re still here." / "You should think very carefully about wanting me." / "You don\u2019t know what you\u2019re signing up for."`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // PILLOW TALK MODE — special post-intimacy dialogue mode. Softer
+  // cadence, heightened vulnerability, confession-safe space.
+  // Activates when momentum=intimate + RPM=intimacy + trust high.
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Build pillow talk directive — adds post-intimacy dialogue guidance.
+   * Only emits when pillow_talk mode is selected by the orchestrator.
+   */
+  function buildPillowTalkDirective() {
+      const mode = state.lastDialogueMode;
+      if (mode !== 'pillow_talk') return '';
+
+      _registerDirectiveSignal('PILLOW_TALK');
+      return `\nPILLOW TALK:
+Post-intimacy dialogue mode. Characters are emotionally exposed and physically close.
+\u2022 Cadence: slow, unhurried, sentences trail naturally
+\u2022 Vulnerability: confessions feel safer here \u2014 secrets may surface without confrontation
+\u2022 Physical: constant tactile awareness (warmth, breath, skin, proximity)
+\u2022 Humor: gentle, private, affectionate teasing
+\u2022 Silence: long pauses carry weight without tension
+\u2022 Avoid: destabilizing questions, confrontation, power plays, dramatic escalation
+This is a confession-safe space. Characters may reveal truths they would never say elsewhere.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ALMOST-LOSS ENGINE — introduces a single late-stage crisis where
+  // the relationship appears endangered but is not truly over.
+  // Max 1 per story. Resolution within 2-4 scenes.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const ALMOST_LOSS_EVENTS = [
+      'The lover believes a betrayal occurred \u2014 evidence is ambiguous but damning.',
+      'A misunderstanding suggests abandonment or emotional withdrawal.',
+      'An external force separates the characters against their will.',
+      'One character attempts to leave to protect the other from harm.',
+      'A secret is revealed at the worst possible moment, threatening trust.',
+      'A rival relationship or obligation demands an impossible choice.'
+  ];
+
+  /**
+   * Build Almost-Loss directive if conditions are met.
+   * Max 1 per story. Triggers late-stage emotional crisis.
+   */
+  function buildAlmostLossDirective() {
+      if (state._almostLossTriggered) return '';
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 40) return '';
+      if ((state.romanticTensionLevel || 0) < 2) return '';
+
+      // Tone gate: only trigger during scenes with sufficient emotional pressure
+      const momentum = state.dialogueMomentum || 'neutral';
+      const pressureLevel = state.narrativePressureLevel || 0;
+      const toneEligible = (momentum === 'heated' || momentum === 'confrontation' || momentum === 'volatile_intimacy') || pressureLevel >= 2;
+      if (!toneEligible) return '';
+
+      const activeThreads = (state.fateThreads || []).filter(t => t.active);
+      if (activeThreads.length < 2) return '';
+
+      const lastConv = state.lastConvergenceScene || 0;
+      if (currentScene - lastConv < 6) return '';
+
+      if (Math.random() > 0.12) return '';
+
+      state._almostLossTriggered = true;
+      state._almostLossScene = currentScene;
+
+      const event = ALMOST_LOSS_EVENTS[Math.floor(Math.random() * ALMOST_LOSS_EVENTS.length)];
+
+      console.log(`[ALMOST_LOSS] Triggered at scene ${currentScene}: "${event}"`);
+
+      _registerDirectiveSignal('ALMOST_LOSS');
+      return `\nALMOST-LOSS EVENT:
+The relationship faces its most serious threat. The characters must believe they may lose each other.
+Crisis: ${event}
+\u2022 Raise emotional stakes dramatically
+\u2022 Threaten separation \u2014 make it feel real
+\u2022 Force characters to confront their deepest fears
+\u2022 Create urgency for emotional truth
+The relationship must appear genuinely endangered but NOT actually end. Resolution should occur within 2\u20134 scenes through confession, vulnerability breakthrough, revealed truth, or sacrifice. The resolution must produce a major emotional beat (intensity \u2265 3).`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // CHARACTER INTENT DRIFT ENGINE — hidden motivations that subtly
+  // influence character behavior across scenes. Low-frequency layer
+  // creating the illusion of independent emotional agendas.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const ARCHETYPE_INTENT_POOLS = {
+      BEAUTIFUL_RUIN: ['test lover devotion', 'maintain emotional control', 'prove self unlovable'],
+      HEART_WARDEN:   ['protect partner from harm', 'maintain emotional stability', 'avoid vulnerability'],
+      SPELLBINDER:    ['maintain intrigue', 'test emotional influence', 'control social dynamics'],
+      DARK_VICE:      ['push boundaries', 'test obedience', 'provoke emotional response'],
+      OPEN_VEIN:      ['seek emotional reciprocity', 'demand honesty', 'expose hidden feelings'],
+      ARMORED_FOX:    ['deflect genuine connection', 'test through humor', 'maintain escape routes'],
+      ETERNAL_FLAME:  ['preserve the relationship', 'earn deeper trust', 'prove devotion is permanent']
+  };
+
+  /**
+   * Initialize or refresh a character's hidden intent.
+   * Derives from archetype + current narrative state.
+   */
+  function _initCharacterIntent(charName) {
+      if (!state.characterIntentDrift) state.characterIntentDrift = {};
+      const existing = state.characterIntentDrift[charName];
+      const currentScene = (state.turnCount || 0) + 1;
+
+      // Don't reinitialize if recently set (within 6 scenes), but force after 12
+      const intentAge = existing?.lastIntentShiftScene ? (currentScene - existing.lastIntentShiftScene) : 999;
+      if (intentAge < 6) return;
+      if (intentAge >= 12) console.log(`[INTENT] Rotation: ${charName} intent aged ${intentAge} scenes, reinitializing`);
+
+      const archetype = state.archetype?.primary || '';
+      const pool = ARCHETYPE_INTENT_POOLS[archetype] || ['maintain emotional equilibrium'];
+
+      // Select based on current narrative state
+      const tension = state.romanticTensionLevel || 0;
+      const pressure = state.devotionPressureLevel || 0;
+      let intent;
+
+      if (tension >= 2 && pool.some(p => p.includes('control') || p.includes('test'))) {
+          intent = pool.find(p => p.includes('control') || p.includes('test')) || pool[0];
+      } else if (pressure >= 2 && pool.some(p => p.includes('devotion') || p.includes('protect'))) {
+          intent = pool.find(p => p.includes('devotion') || p.includes('protect')) || pool[0];
+      } else {
+          intent = pool[Math.floor(Math.random() * pool.length)];
+      }
+
+      const intensity = tension >= 2 ? 3 : tension >= 1 ? 2 : 1;
+
+      state.characterIntentDrift[charName] = {
+          primaryIntent: intent,
+          intensity,
+          lastIntentShiftScene: currentScene
+      };
+      console.log(`[INTENT] ${charName}: "${intent}" (intensity ${intensity})`);
+  }
+
+  /**
+   * Check if intent should evolve based on strong emotional events.
+   */
+  function _evolveCharacterIntents() {
+      if (!state.characterIntentDrift) return;
+      const currentScene = (state.turnCount || 0) + 1;
+      const beats = state.characterEmotionalBeats || {};
+
+      // Check for intense beat that triggers intent shift
+      const intenseBeat = Object.values(beats).some(charBeats =>
+          charBeats.some(b => b.beatType !== 'history' && b.intensity >= 3 && (currentScene - b.scene) <= 1)
+      );
+      const almostLoss = state._almostLossScene === currentScene;
+      const secretReveal = (state.characterSecrets || []).some(s => s.revealedScene === currentScene);
+
+      if (intenseBeat || almostLoss || secretReveal) {
+          // Force reinitialize all tracked characters
+          for (const name of Object.keys(state.characterIntentDrift)) {
+              state.characterIntentDrift[name].lastIntentShiftScene = 0; // allow reinit
+              _initCharacterIntent(name);
+          }
+      }
+  }
+
+  /**
+   * Build intent drift directive. Low-frequency: fires ~20% of scenes.
+   */
+  function buildIntentDriftDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 5) return '';
+
+      // Priority gate: skip during major narrative events
+      const callbackSlot = state._sceneCallbackSelection || 'none';
+      if (callbackSlot === 'secret' || callbackSlot === 'pressure_event') return '';
+      // Skip during convergence or almost-loss scenes
+      if (state.lastConvergenceScene === currentScene || state._almostLossScene === currentScene) return '';
+
+      if (!state.characterIntentDrift) state.characterIntentDrift = {};
+
+      // Initialize love interest intent if not set
+      const liName = state.storybeau?.name || state.loveInterestName || '';
+      if (liName) _initCharacterIntent(liName);
+
+      // Evolve intents based on recent events
+      _evolveCharacterIntents();
+
+      const entries = Object.entries(state.characterIntentDrift);
+      if (entries.length === 0) return '';
+
+      // Fire ~20% of scenes
+      if (Math.random() > 0.20) return '';
+
+      const lines = entries.map(([name, d]) => {
+          const intensityLabel = d.intensity >= 3 ? 'dominant' : d.intensity >= 2 ? 'persistent' : 'subtle';
+          return `${name}: "${d.primaryIntent}" (${intensityLabel})`;
+      }).join('\n');
+
+      _registerDirectiveSignal('INTENT_DRIFT');
+      return `\nINTENT DRIFT:
+${lines}
+Characters carry hidden motivations that subtly shape their behavior. Express these through dialogue tone, reactions, and choices \u2014 not through explicit statements. Intent should remain subtextual. Characters act on private agendas that the reader gradually perceives.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // MAGNETIC SCENE GRAVITY — subtly pulls characters toward
+  // emotionally significant interactions. Creates the feeling that
+  // certain encounters are destined or inevitable.
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * Update scene gravity targets based on current narrative state.
+   * Called before directives are assembled.
+   */
+  function _updateSceneGravity() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 5) return;
+      if (!state.sceneGravityTargets) state.sceneGravityTargets = [];
+
+      const liName = state.storybeau?.name || state.loveInterestName || '';
+      const playerName = state.playerName || 'player';
+      if (!liName) return;
+
+      // Find or create gravity target for main pair
+      let target = state.sceneGravityTargets.find(t => t.characters.includes(liName) && t.characters.includes(playerName));
+      if (!target) {
+          target = { characters: [playerName, liName], reason: 'unresolved attraction', gravityStrength: 0 };
+          state.sceneGravityTargets.push(target);
+      }
+
+      // Increase gravity based on conditions
+      const tension = state.romanticTensionLevel || 0;
+      const devotion = state.devotionPressureLevel || 0;
+      const beats = state.characterEmotionalBeats || {};
+      const unresolvedBeat = Object.values(beats).some(cb =>
+          cb.some(b => b.beatType !== 'history' && (currentScene - b.scene) <= 3 && b.intensity >= 2)
+      );
+      const almostLossApproaching = !state._almostLossTriggered && currentScene >= 35 && tension >= 2;
+
+      if (tension >= 2) target.reason = 'romantic tension demands confrontation';
+      else if (devotion >= 2) target.reason = 'devotion test unresolved';
+      else if (unresolvedBeat) target.reason = 'unresolved emotional beat';
+      else if (almostLossApproaching) target.reason = 'approaching emotional crisis';
+
+      const shouldIncrease = tension >= 2 || unresolvedBeat || devotion >= 2 || almostLossApproaching;
+      if (shouldIncrease && target.gravityStrength < 3) {
+          target.gravityStrength = Math.min(3, target.gravityStrength + 1);
+      }
+
+      // Decay on resolution
+      const recentResolution = Object.values(beats).some(cb =>
+          cb.some(b => (b.beatType === 'trust_gain' || b.beatType === 'confession') && (currentScene - b.scene) <= 1 && b.intensity >= 2)
+      );
+      if (recentResolution && target.gravityStrength > 0) {
+          target.gravityStrength = Math.max(0, target.gravityStrength - 1);
+      }
+  }
+
+  /**
+   * Build scene gravity directive when gravitational pull is strong.
+   */
+  function buildSceneGravityDirective() {
+      if (!state.sceneGravityTargets) return '';
+      const currentScene = (state.turnCount || 0) + 1;
+
+      // Cooldown: minimum 4 scenes between gravity directives
+      const lastGravity = state._lastGravityScene || 0;
+      if (currentScene - lastGravity < 4) return '';
+
+      const active = state.sceneGravityTargets.filter(t => t.gravityStrength >= 2);
+      if (active.length === 0) return '';
+
+      const target = active[0];
+      const strengthLabel = target.gravityStrength >= 3 ? 'inevitable convergence' : 'noticeable pull';
+
+      state._lastGravityScene = currentScene;
+      _registerDirectiveSignal('SCENE_GRAVITY');
+      return `\nSCENE GRAVITY (${strengthLabel}):
+Characters ${target.characters.join(' and ')} are being pulled toward meaningful interaction. Reason: ${target.reason}.
+Subtly bias the scene toward their encounter. Methods: unexpected proximity, conversation drifting toward unresolved topics, thinking about each other during unrelated moments. This should feel like narrative momentum, not coincidence.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ARCHETYPE REWARD SCARCITY ENGINE — ensures characters provide
+  // rare but meaningful emotional rewards. Each archetype expresses
+  // reward differently. Cooldown: 6 scenes. Probability: 25%.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const ARCHETYPE_REWARD_EXPRESSIONS = {
+      BEAUTIFUL_RUIN: { subtle: '"You didn\u2019t run."', meaningful: '"Hm. Interesting."', breakthrough: '"I didn\u2019t expect you to stay."' },
+      HEART_WARDEN:   { subtle: '"Stay close."', meaningful: '"I\u2019ve got you."', breakthrough: '"I trust you with this."' },
+      ETERNAL_FLAME:  { subtle: '"I remember this feeling."', meaningful: '"It was always you."', breakthrough: '"I\u2019ve waited longer than you know."' },
+      SPELLBINDER:    { subtle: '"You pay attention."', meaningful: '"You see more than most."', breakthrough: '"I didn\u2019t expect you to notice."' },
+      DARK_VICE:      { subtle: '"You don\u2019t scare easily."', meaningful: '"You\u2019re braver than you should be."', breakthrough: '"You should leave\u2026 but I hope you don\u2019t."' },
+      OPEN_VEIN:      { subtle: '"You see everything."', meaningful: '"I can\u2019t hide this from you."', breakthrough: '"I want you to know how much this matters."' },
+      ARMORED_FOX:    { subtle: '"That was clever."', meaningful: '"Fine. You win this one."', breakthrough: '"I\u2019ll admit that impressed me."' }
+  };
+
+  /**
+   * Build archetype reward scarcity directive. Rare emotional reward
+   * that matches archetype psychology. Max every 6 scenes, 25% probability.
+   */
+  function buildArchetypeRewardDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 8) return '';
+
+      const archetype = state.archetype?.primary || '';
+      const expressions = ARCHETYPE_REWARD_EXPRESSIONS[archetype];
+      if (!expressions) return '';
+
+      const liName = state.storybeau?.name || state.loveInterestName || '';
+      if (!liName) return '';
+      if (!state.archetypeRewardMoments) state.archetypeRewardMoments = {};
+      if (!state.archetypeRewardMoments[liName]) state.archetypeRewardMoments[liName] = { lastRewardScene: 0, rewardIntensity: 0 };
+
+      const reward = state.archetypeRewardMoments[liName];
+      if (currentScene - reward.lastRewardScene < 6) return '';
+
+      // Check eligibility
+      const beats = state.characterEmotionalBeats || {};
+      const recentEligible = Object.values(beats).some(cb =>
+          cb.some(b => (b.beatType === 'protective_instinct' || b.beatType === 'trust_gain' || b.beatType === 'vulnerability') && (currentScene - b.scene) <= 2)
+      );
+      const devotionActive = (state.devotionPressureLevel || 0) >= 1;
+      if (!recentEligible && !devotionActive) return '';
+      if ((state.romanticTensionLevel || 0) < 1) return '';
+
+      if (Math.random() > 0.25) return '';
+
+      // Determine intensity
+      let intensity = 1;
+      const almostLossResolved = state._almostLossTriggered && state._almostLossScene && (currentScene - state._almostLossScene) >= 2 && (currentScene - state._almostLossScene) <= 5;
+      const highTrustTension = (state.relationshipVector?.trust || 0) > 0.7 && (state.romanticTensionLevel || 0) >= 2;
+      const majorBeat = Object.values(beats).some(cb => cb.some(b => b.intensity >= 3 && (currentScene - b.scene) <= 2));
+
+      if (almostLossResolved || majorBeat) intensity = 3;
+      else if (highTrustTension) intensity = 2;
+
+      reward.lastRewardScene = currentScene;
+      reward.rewardIntensity = intensity;
+
+      const intensityLabel = intensity >= 3 ? 'breakthrough' : intensity >= 2 ? 'meaningful' : 'subtle';
+      const example = expressions[intensityLabel] || expressions.subtle;
+
+      console.log(`[REWARD] ${archetype} reward for ${liName}: intensity ${intensity} (${intensityLabel})`);
+
+      _registerDirectiveSignal('ARCHETYPE_REWARD');
+      return `\nARCHETYPE REWARD (${intensityLabel}):
+${liName} offers a rare moment of emotional recognition. This must feel earned, not freely given.
+Archetype tone: ${example}
+Intensity ${intensity}: ${intensityLabel === 'subtle' ? 'A small signal \u2014 a glance, a faint smile, restrained approval.' : intensityLabel === 'meaningful' ? 'A clear moment of recognition \u2014 the character acknowledges something real.' : 'A quietly monumental moment \u2014 unexpected sincerity that shifts the relationship.'}
+Never use obvious praise. Express through restrained signals: brief eye contact, a relaxed posture, words that acknowledge presence without overt sentimentality.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DIRECTIVE CONSOLIDATION LAYER — gathers all active narrative
+  // signals and emits a final summary block. Max 5 signals prioritized.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const DIRECTIVE_SIGNAL_PRIORITY = [
+      'ALMOST_LOSS',
+      'IRREVERSIBLE_CHOICE',
+      'DESTINY_COLLISION',
+      'INEVITABLE_SCENE',
+      'IRREVERSIBLE_AFTERSHOCK',
+      'CONVERGENCE',
+      'PRESSURE_ESCALATION',
+      'ROMANTIC_TENSION',
+      'DEVOTION_TEST',
+      'DOMINANCE_REVERSAL',
+      'SUBTEXT_CONFLICT',
+      'FORESHADOW_PLANT',
+      'DELAYED_PAYOFF_SETUP',
+      'PAYOFF_DELAY',
+      'PAYOFF_RELEASE',
+      'PILLOW_TALK',
+      'INTENT_DRIFT',
+      'SCENE_GRAVITY',
+      'ARCHETYPE_REWARD',
+      'EMOTIONAL_BEATS',
+      'VOICE_LOCK'
+  ];
+
+  const LOCKED_DIRECTIVES = new Set([
+      'IRREVERSIBLE_CHOICE',
+      'DESTINY_COLLISION',
+      'INEVITABLE_SCENE'
+  ]);
+
+  /**
+   * Register a directive signal for consolidation.
+   * Called by each engine when it emits a non-empty directive.
+   */
+  function _registerDirectiveSignal(signalName) {
+      if (!state._activeDirectiveSignals) state._activeDirectiveSignals = [];
+      if (!state._activeDirectiveSignals.includes(signalName)) {
+          state._activeDirectiveSignals.push(signalName);
+      }
+  }
+
+  const STYLE_DIRECTIVES = ['EMOTIONAL_BEATS', 'VOICE_LOCK'];
+
+  const VECTOR_MAP = {
+      ALMOST_LOSS: 'separate',
+      IRREVERSIBLE_CHOICE: 'reveal',
+      DESTINY_COLLISION: 'escalate',
+      IRREVERSIBLE_AFTERSHOCK: 'escalate',
+      CONVERGENCE: 'converge',
+      PRESSURE_ESCALATION: 'escalate',
+      ROMANTIC_TENSION: 'escalate',
+      DEVOTION_TEST: 'reveal',
+      DOMINANCE_REVERSAL: 'escalate',
+      SUBTEXT_CONFLICT: 'reveal',
+      INEVITABLE_SCENE: 'converge',
+      FORESHADOW_PLANT: 'reveal',
+      DELAYED_PAYOFF_SETUP: 'reveal',
+      PAYOFF_RELEASE: 'reveal',
+      PILLOW_TALK: 'stabilize',
+      INTENT_DRIFT: 'reveal',
+      SCENE_GRAVITY: 'converge',
+      ARCHETYPE_REWARD: 'stabilize'
+  };
+
+  /**
+   * Build the consolidated directive summary block with novelty markers,
+   * style/narrative separation, and narrative vector.
+   * Placed at the very end of the directive chain, just before generation.
+   */
+  function buildDirectiveConsolidationBlock() {
+      const signals = state._activeDirectiveSignals || [];
+      if (signals.length === 0) return '';
+
+      const prev = state._lastActiveDirectives || [];
+
+      // Separate narrative vs style directives
+      const narrativeSignals = signals.filter(s => !STYLE_DIRECTIVES.includes(s));
+      const styleSignals = signals.filter(s => STYLE_DIRECTIVES.includes(s));
+
+      // Sort narrative by priority
+      const sorted = [...narrativeSignals].sort((a, b) => {
+          const ai = DIRECTIVE_SIGNAL_PRIORITY.indexOf(a);
+          const bi = DIRECTIVE_SIGNAL_PRIORITY.indexOf(b);
+          return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+      });
+
+      // Directive locking: structural directives get priority + reduced cap
+      const lockedSignals = sorted.filter(s => LOCKED_DIRECTIVES.has(s));
+      const lockedDirective = lockedSignals.length > 0 ? lockedSignals[0] : null;
+      const cap = lockedDirective ? 3 : 5;
+      let activeNarrative = sorted.slice(0, cap);
+      // Ensure locked directive is first
+      if (lockedDirective && activeNarrative[0] !== lockedDirective) {
+          activeNarrative = activeNarrative.filter(s => s !== lockedDirective);
+          activeNarrative.unshift(lockedDirective);
+          activeNarrative = activeNarrative.slice(0, cap);
+      }
+
+      // Track for debugging
+      if (lockedDirective) state.lastStructuralDirective = lockedDirective;
+
+      // Novelty marker: mark signals not in previous scene
+      const narrativeLines = activeNarrative.map(s => {
+          const isNew = !prev.includes(s);
+          const isLocked = LOCKED_DIRECTIVES.has(s);
+          return `\u2022 ${s.replace(/_/g, ' ')}${isNew ? ' (NEW)' : ''}${isLocked ? ' [STRUCTURAL]' : ''}`;
+      }).join('\n');
+
+      // Structural preamble for locked directives
+      let structuralPreamble = '';
+      if (lockedDirective) {
+          structuralPreamble = `\nSTRUCTURAL STORY REQUIREMENT:\nThe following directive represents a structural event in the narrative. It must occur in this scene or be actively set in motion. Do not ignore or postpone it. This event changes the trajectory of the story. The scene should revolve around this moment.\n`;
+      }
+
+      let styleBlock = '';
+      if (styleSignals.length > 0) {
+          styleBlock = `\n\nSTYLE GUIDANCE:\n${styleSignals.map(s => '\u2022 ' + s.replace(/_/g, ' ')).join('\n')}`;
+      }
+
+      // Determine narrative vector from highest-priority active directive
+      let vectorLine = '';
+      for (const sig of activeNarrative) {
+          if (VECTOR_MAP[sig]) {
+              state._sceneNarrativeVector = VECTOR_MAP[sig];
+              const vectorLabels = {
+                  converge: 'bring characters together toward meaningful interaction',
+                  escalate: 'increase emotional stakes and narrative pressure',
+                  reveal: 'surface hidden motivations, truths, or tensions',
+                  separate: 'threaten distance, loss, or emotional withdrawal',
+                  stabilize: 'deepen trust, connection, and emotional safety'
+              };
+              vectorLine = `\nSCENE VECTOR: ${VECTOR_MAP[sig]} \u2014 ${vectorLabels[VECTOR_MAP[sig]]}`;
+              break;
+          }
+      }
+
+      // Update memory for next scene's novelty detection
+      state._lastActiveDirectives = [...activeNarrative, ...styleSignals];
+
+      return `\n${structuralPreamble}\nACTIVE STORY DIRECTIVES:\n${narrativeLines}\nThese are the current emotional and narrative forces shaping this scene. Prioritize them when generating dialogue, behavior, and character decisions.${vectorLine}${styleBlock}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // FORESHADOW DEBT ENGINE — plants subtle hints 10-20 scenes before
+  // the Irreversible Choice so the decision feels inevitable. Max 6
+  // active entries. Resolved when the choice occurs.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const FORESHADOW_DEBT_TYPES = [
+      'LOYALTY_TEST', 'SECRET_WARNING', 'RIVAL_PRESSURE', 'PROMISE_OR_VOW',
+      'FEAR_OF_LOSS', 'FUTURE_CHOICE_HINT', 'POWER_IMBALANCE'
+  ];
+
+  function buildForeshadowDebtDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 8) return '';
+      if (state.irreversibleChoice?.occurred) return '';
+      if (!state.foreshadowDebt) state.foreshadowDebt = { entries: [], resolved: [] };
+
+      const entries = state.foreshadowDebt.entries;
+      if (entries.length >= 6) return '';
+
+      const lastPlant = state._lastForeshadowDebtScene || 0;
+      if (currentScene - lastPlant < 4) return '';
+      if (Math.random() > 0.20) return '';
+
+      _registerDirectiveSignal('FORESHADOW_PLANT');
+
+      return `\nFORESHADOW DEBT SEED:
+Introduce a subtle moment hinting at a future decision or relationship turning point. Types: loyalty test, secret warning, rival pressure, promise/vow, fear of loss, future choice hint, power imbalance.
+The moment should feel natural and not draw explicit attention. Examples: a warning about future consequences, a promise that may later break, a rival questioning loyalty, a character expressing fear of eventual loss, a hint that a choice will someday be unavoidable.
+Output: (FORESHADOW: type="[category]" description="[short summary]")`;
+  }
+
+  function extractForeshadowDebtTag(raw) {
+      if (!raw) return raw;
+      if (!state.foreshadowDebt) state.foreshadowDebt = { entries: [], resolved: [] };
+      const currentScene = (state.turnCount || 0) + 1;
+
+      raw = raw.replace(/\(FORESHADOW:\s*type="([^"]+)"\s*description="([^"]+)"\)/gi, (match, type, desc) => {
+          if (state.foreshadowDebt.entries.length >= 6) return '';
+          state.foreshadowDebt.entries.push({
+              scene: currentScene,
+              type: type.trim(),
+              description: desc.trim(),
+              relatedCharacters: [],
+              weight: 1
+          });
+          state._lastForeshadowDebtScene = currentScene;
+          console.log(`[FORESHADOW_DEBT] Planted: "${desc.trim()}" (${type.trim()}, scene ${currentScene})`);
+          return '';
+      });
+      return raw;
+  }
+
+  function _resolveForeshadowDebtDirective() {
+      if (!state.foreshadowDebt?.entries?.length) return '';
+      const entries = state.foreshadowDebt.entries.slice(0, 3);
+      const lines = entries.map(e => `\u2022 Scene ${e.scene}: "${e.description}" (${e.type})`).join('\n');
+
+      return `\nFORESHADOW DEBT RESOLUTION:
+The character\u2019s decision should pay off earlier narrative hints:
+${lines}
+The choice should feel like the natural culmination of these earlier tensions.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // IRREVERSIBLE CHOICE ENGINE — forces a decisive relationship
+  // commitment that permanently alters the trajectory. Max 1 per story.
+  // ═══════════════════════════════════════════════════════════════════
+
+  function buildIrreversibleChoiceDirective() {
+      if (state.irreversibleChoice?.occurred) {
+          // Post-choice: emit trajectory lock
+          return `\nRELATIONSHIP TRAJECTORY LOCK:
+The relationship direction is now fixed after the irreversible choice (scene ${state.irreversibleChoice.scene}: "${state.irreversibleChoice.description}").
+The story should explore consequences, not return to earlier romantic uncertainty. Conflicts may continue, but the core commitment cannot be undone.`;
+      }
+
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene < 25) return '';
+
+      // Suppress during active ST3 intimacy or unresolved major arc
+      if (state.explicitEmbodimentAuthorized) return '';
+      if (state._almostLossScene && (currentScene - state._almostLossScene) <= 2) return '';
+
+      // Escalating probability
+      let prob = 0.15;
+      if (currentScene >= 45) prob = 0.50;
+      else if (currentScene >= 35) prob = 0.30;
+
+      if (Math.random() > prob) return '';
+
+      // Gather foreshadow debt resolution
+      const debtDirective = _resolveForeshadowDebtDirective();
+
+      _registerDirectiveSignal('IRREVERSIBLE_CHOICE');
+      console.log(`[IRREVERSIBLE_CHOICE] Directive triggered at scene ${currentScene}`);
+
+      return `\nIRREVERSIBLE CHOICE:
+A decisive moment approaches. One character must make a choice that permanently alters the relationship trajectory.
+The decision should:
+\u2022 Close one path forever
+\u2022 Reveal true loyalty or love
+\u2022 Carry meaningful cost
+\u2022 Trigger consequences that cannot be undone
+Examples: leaving a marriage, confessing love publicly, rejecting a rival forever, sacrificing power or safety, destroying a secret.
+Once this decision is made, the story must move forward into consequences. It cannot revert to previous romantic ambiguity.${debtDirective}
+Output: (IRREVERSIBLE_CHOICE: character="[Name]" description="[brief summary]")`;
+  }
+
+  function extractIrreversibleChoiceTag(raw) {
+      if (!raw) return raw;
+      const currentScene = (state.turnCount || 0) + 1;
+
+      raw = raw.replace(/\(IRREVERSIBLE_CHOICE:\s*character="([^"]+)"\s*description="([^"]+)"\)/gi, (match, char, desc) => {
+          if (state.irreversibleChoice?.occurred) return '';
+          state.irreversibleChoice = {
+              occurred: true,
+              scene: currentScene,
+              character: char.trim(),
+              description: desc.trim(),
+              aftermathScenesRemaining: 3 + Math.floor(Math.random() * 4)  // 3-6 scenes
+          };
+          // Resolve foreshadow debt
+          if (state.foreshadowDebt?.entries?.length) {
+              state.foreshadowDebt.resolved = [...state.foreshadowDebt.resolved, ...state.foreshadowDebt.entries];
+              state.foreshadowDebt.entries = [];
+          }
+          // Scene gravity boost
+          const gravityTarget = (state.sceneGravityTargets || []).find(t => t.gravityStrength >= 0);
+          if (gravityTarget) gravityTarget.gravityStrength = Math.min(3, gravityTarget.gravityStrength + 1);
+          console.log(`[IRREVERSIBLE_CHOICE] Occurred: ${char.trim()} — "${desc.trim()}" (scene ${currentScene}, aftermath: ${state.irreversibleChoice.aftermathScenesRemaining})`);
+          return '';
+      });
+      return raw;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // IRREVERSIBLE CHOICE AFTERMATH ENGINE — ensures consequence cascade
+  // for 3-6 scenes after the choice. High emotional intensity.
+  // ═══════════════════════════════════════════════════════════════════
+
+  function isIrreversibleAftermathActive() {
+      return state.irreversibleChoice?.occurred && (state.irreversibleChoice.aftermathScenesRemaining || 0) > 0;
+  }
+
+  function buildIrreversibleAftershockDirective() {
+      if (!isIrreversibleAftermathActive()) return '';
+
+      state.irreversibleChoice.aftermathScenesRemaining--;
+      const remaining = state.irreversibleChoice.aftermathScenesRemaining;
+
+      _registerDirectiveSignal('IRREVERSIBLE_AFTERSHOCK');
+
+      let resolutionHint = '';
+      if (remaining <= 0) {
+          resolutionHint = '\nRESOLUTION GRAVITY: The aftermath window is closing. The story should move toward emotional closure \u2014 reconciliation, permanent separation, or reflection on the decision made.';
+      }
+
+      return `\nIRREVERSIBLE AFTERSHOCK (${remaining} scenes remaining):
+The relationship trajectory changed permanently. This scene explores consequences of: "${state.irreversibleChoice.description}".
+Focus on: rival/ex-lover responses, social consequences, loyalty tests, emotional vulnerability, fear of sacrifice, unexpected allies or enemies.
+Scenes should feel volatile and emotionally heightened. Avoid returning to earlier romantic ambiguity. The decision has been made.
+DIALOGUE_HIGH_STAKES: fewer casual exchanges, more emotionally direct dialogue \u2014 confessions, accusations, ultimatums.${resolutionHint}`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DESTINY COLLISION ENGINE — introduces external event colliding
+  // with the irreversible choice. Forces characters to prove their
+  // decision against world-level consequences.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const DESTINY_COLLISION_TYPES = [
+      'SCANDAL', 'POWER_SHIFT', 'PUBLIC_EXPOSURE', 'RIVAL_INTERVENTION',
+      'WORLD_EVENT', 'HIDDEN_SECRET', 'SUDDEN_DEPARTURE'
+  ];
+
+  function buildDestinyCollisionDirective() {
+      if (state.destinyCollision?.triggered) return '';
+      if (!state.irreversibleChoice?.occurred) return '';
+
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene <= (state.irreversibleChoice.scene || 0)) return '';
+
+      const remaining = state.irreversibleChoice.aftermathScenesRemaining || 0;
+
+      // 40% during aftermath, guarantee if aftermath ending
+      let prob = 0.40;
+      if (remaining <= 2 && remaining > 0) prob = 1.0;
+      if (!isIrreversibleAftermathActive()) return '';
+
+      if (Math.random() > prob) return '';
+
+      const collisionType = DESTINY_COLLISION_TYPES[Math.floor(Math.random() * DESTINY_COLLISION_TYPES.length)];
+
+      _registerDirectiveSignal('DESTINY_COLLISION');
+      console.log(`[DESTINY_COLLISION] Directive triggered at scene ${currentScene}: ${collisionType}`);
+
+      return `\nDESTINY COLLISION:
+A major external event collides with the lovers\u2019 decision. The world reacts to the irreversible choice.
+Suggested collision type: ${collisionType.replace(/_/g, ' ').toLowerCase()}
+Possible events: public scandal or exposure, rival intervention, sudden power shift, revelation of hidden identity, urgent external crisis, forced departure.
+This event tests whether the characters truly stand by their decision. It should escalate tension and propel the story toward resolution.
+Output: (DESTINY_COLLISION: type="${collisionType}" description="[brief summary]")`;
+  }
+
+  function extractDestinyCollisionTag(raw) {
+      if (!raw) return raw;
+      const currentScene = (state.turnCount || 0) + 1;
+
+      raw = raw.replace(/\(DESTINY_COLLISION:\s*type="([^"]+)"\s*description="([^"]+)"\)/gi, (match, type, desc) => {
+          if (state.destinyCollision?.triggered) return '';
+          state.destinyCollision = {
+              triggered: true,
+              scene: currentScene,
+              type: type.trim(),
+              description: desc.trim()
+          };
+          // Boost gravity
+          const gravityTarget = (state.sceneGravityTargets || []).find(t => t.gravityStrength >= 0);
+          if (gravityTarget) gravityTarget.gravityStrength = 3;
+          console.log(`[DESTINY_COLLISION] Occurred: ${type.trim()} \u2014 "${desc.trim()}" (scene ${currentScene})`);
+          return '';
+      });
+      return raw;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // INEVITABLE SCENE ENGINE — the moment where all narrative forces
+  // converge. Foreshadow, choice, collision, and desires intersect.
+  // Max 1 per story. Produces "of course this was always going to happen."
+  // ═══════════════════════════════════════════════════════════════════
+
+  function buildInevitableSceneDirective() {
+      if (state.inevitableScene?.triggered) {
+          // Post-inevitable: resolution mode
+          return `\nSTORY RESOLUTION:
+The story\u2019s inevitable moment has passed. Move toward emotional closure: reconciliation, permanent separation, sacrifice, or triumph. Avoid introducing new major conflicts.`;
+      }
+
+      if (!state.irreversibleChoice?.occurred) return '';
+      if (!state.destinyCollision?.triggered) return '';
+      if (state.inevitableScene?.triggered) return '';
+
+      const currentScene = (state.turnCount || 0) + 1;
+      if (currentScene <= (state.destinyCollision.scene || 0)) return '';
+
+      const remaining = state.irreversibleChoice.aftermathScenesRemaining || 0;
+
+      // 30% chance, force when aftermath ends
+      let prob = 0.30;
+      if (remaining <= 0) prob = 1.0;
+
+      if (Math.random() > prob) return '';
+
+      // Gather foreshadow callbacks
+      const resolvedDebt = (state.foreshadowDebt?.resolved || []).slice(0, 3);
+      let foreshadowCallback = '';
+      if (resolvedDebt.length > 0) {
+          const lines = resolvedDebt.map(e => `\u2022 Scene ${e.scene}: "${e.description}" (${e.type})`).join('\n');
+          foreshadowCallback = `\nEcho earlier moments that now gain full meaning:\n${lines}`;
+      }
+
+      // Release all delayed payoffs
+      if (state.delayedPayoffs?.entries) {
+          state.delayedPayoffs.entries.forEach(p => { p.earliestResolutionScene = 0; });
+      }
+
+      _registerDirectiveSignal('INEVITABLE_SCENE');
+      console.log(`[INEVITABLE_SCENE] Directive triggered at scene ${currentScene}`);
+
+      return `\nINEVITABLE SCENE:
+This scene should feel like the inevitable culmination of the story. Past tensions, foreshadowed warnings, promises, and sacrifices converge here.
+The characters must confront the emotional truth created by their choices. This moment should feel like the point where the reader realizes the story could only end this way.${foreshadowCallback}
+DIALOGUE_FINAL_TRUTH: Characters should say the thing they have avoided saying, confront their deepest fear or desire, and acknowledge what the relationship now truly means.
+Output: (INEVITABLE_SCENE: description="[brief summary]")`;
+  }
+
+  function extractInevitableSceneTag(raw) {
+      if (!raw) return raw;
+      const currentScene = (state.turnCount || 0) + 1;
+
+      raw = raw.replace(/\(INEVITABLE_SCENE:\s*description="([^"]+)"\)/gi, (match, desc) => {
+          if (state.inevitableScene?.triggered) return '';
+          state.inevitableScene = { triggered: true, scene: currentScene };
+          // Boost gravity for resolution
+          const gravityTarget = (state.sceneGravityTargets || []).find(t => t.gravityStrength >= 0);
+          if (gravityTarget) gravityTarget.gravityStrength = 3;
+          console.log(`[INEVITABLE_SCENE] Occurred: "${desc.trim()}" (scene ${currentScene})`);
+          return '';
+      });
+      return raw;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DELAYED PAYOFF ENGINE — prevents premature emotional resolutions.
+  // Emotional truths are recorded and delayed until the structurally
+  // correct moment. Max 5 active entries.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const DELAYED_PAYOFF_TYPES = [
+      'CONFESSION_OF_LOVE', 'TRUE_DESIRE_ADMISSION', 'SECRET_REVEAL',
+      'LOYALTY_DECLARATION', 'EMOTIONAL_SURRENDER'
+  ];
+
+  function buildDelayedPayoffDirective() {
+      const currentScene = (state.turnCount || 0) + 1;
+      if (!state.delayedPayoffs) state.delayedPayoffs = { entries: [], resolved: [] };
+
+      const active = state.delayedPayoffs.entries.filter(p => !p.resolved);
+
+      // Check for payoffs ready to release
+      const releasable = active.filter(p => currentScene >= p.earliestResolutionScene);
+      const blocked = active.filter(p => currentScene < p.earliestResolutionScene);
+
+      // Inevitable scene releases all payoffs
+      const inevitableActive = state.inevitableScene?.triggered && state.inevitableScene.scene === currentScene;
+      if (inevitableActive && active.length > 0) {
+          const lines = active.map(p => `\u2022 "${p.description}" (${p.type})`).join('\n');
+          return `\nPAYOFF CONVERGENCE:
+Emotional truths that have been building throughout the story may now surface:
+${lines}
+Allow these long-delayed moments to resolve with full emotional weight.`;
+      }
+
+      let parts = [];
+
+      // Block early resolution
+      if (blocked.length > 0) {
+          _registerDirectiveSignal('PAYOFF_DELAY');
+          parts.push(`\nPAYOFF DELAY: ${blocked.length} emotional truth(s) remain unresolved. Allow tension to deepen rather than resolving. Characters may hesitate, deflect, or be interrupted.`);
+      }
+
+      // Release eligible payoffs
+      if (releasable.length > 0) {
+          _registerDirectiveSignal('PAYOFF_RELEASE');
+          const lines = releasable.map(p => `\u2022 "${p.description}"`).join('\n');
+          parts.push(`\nPAYOFF RELEASE:
+The following long-building emotional truths may now surface:
+${lines}
+Allow these moments to resolve with honesty or vulnerability.`);
+      }
+
+      // Setup: seed new delayed payoffs
+      if (currentScene >= 10 && !state.irreversibleChoice?.occurred && active.length < 5) {
+          const lastSetup = state._lastDelayedPayoffSetup || 0;
+          if (currentScene - lastSetup >= 5 && Math.random() < 0.18) {
+              _registerDirectiveSignal('DELAYED_PAYOFF_SETUP');
+              parts.push(`\nDELAYED PAYOFF SETUP:
+A character approaches an emotional truth but does not fully express it. The moment should hint that something deeper remains unsaid. The character may hesitate, deflect, or be interrupted before the truth emerges.
+Output: (DELAYED_PAYOFF: type="[CONFESSION_OF_LOVE/TRUE_DESIRE_ADMISSION/SECRET_REVEAL/LOYALTY_DECLARATION/EMOTIONAL_SURRENDER]" description="[short summary]")`);
+          }
+      }
+
+      // Narrative physics: accumulated unresolved payoffs increase tension
+      if (active.length >= 3) {
+          state.romanticTensionLevel = Math.min(3, (state.romanticTensionLevel || 0) + 1);
+      }
+
+      return parts.join('');
+  }
+
+  function extractDelayedPayoffTag(raw) {
+      if (!raw) return raw;
+      if (!state.delayedPayoffs) state.delayedPayoffs = { entries: [], resolved: [] };
+      const currentScene = (state.turnCount || 0) + 1;
+
+      raw = raw.replace(/\(DELAYED_PAYOFF:\s*type="([^"]+)"\s*description="([^"]+)"\)/gi, (match, type, desc) => {
+          if (state.delayedPayoffs.entries.length >= 5) return '';
+          const delay = 6 + Math.floor(Math.random() * 7); // 6-12 scenes
+          state.delayedPayoffs.entries.push({
+              sceneIntroduced: currentScene,
+              type: type.trim(),
+              description: desc.trim(),
+              earliestResolutionScene: currentScene + delay,
+              resolved: false
+          });
+          state._lastDelayedPayoffSetup = currentScene;
+          console.log(`[DELAYED_PAYOFF] Setup: "${desc.trim()}" (${type.trim()}, earliest scene ${currentScene + delay})`);
+          return '';
+      });
+      return raw;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WORLD FATE TRANSLATION LAYER — translates Fate-driven narrative
+  // signals into world-appropriate expressions. Fantasy=mystical,
+  // Modern=psychological, SciFi=probabilistic, Dystopia=systemic,
+  // PostApocalyptic=instinctual, Historical=superstitious.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const FATE_WORLD_VOCABULARY = {
+      Fantasy: {
+          omen: 'a chill like an omen, a whisper of fate',
+          convergence: 'the sense of prophecy, a sign the gods were watching',
+          echo: 'a memory stirred by ancient resonance',
+          gravity: 'the pull of destiny drawing them together'
+      },
+      Modern: {
+          omen: 'a strange feeling of inevitability, a moment that lingered',
+          convergence: 'an intuition that something important was happening',
+          echo: 'a memory that suddenly felt significant',
+          gravity: 'the sense that this meeting was always going to happen'
+      },
+      SciFi: {
+          omen: 'an unexpected convergence of variables, a probability spike',
+          convergence: 'a statistical pattern that shouldn\u2019t exist',
+          echo: 'a data echo from an earlier anomaly',
+          gravity: 'a gravitational pull in the probability matrix'
+      },
+      Dystopia: {
+          omen: 'a pattern the system had flagged earlier, a deviation in the data',
+          convergence: 'a convergence no one was supposed to notice',
+          echo: 'an anomaly buried in the data stream resurfacing',
+          gravity: 'the algorithm predicted this encounter'
+      },
+      PostApocalyptic: {
+          omen: 'the kind of feeling you learned not to ignore',
+          convergence: 'a pattern survivors recognized too late',
+          echo: 'a memory sharpened by instinct',
+          gravity: 'instinct pulling them toward each other like a survival reflex'
+      },
+      Historical: {
+          omen: 'a shiver of superstition, a sign read in the fire',
+          convergence: 'the hand of providence or cruel coincidence',
+          echo: 'a tale retold from the old stories',
+          gravity: 'the sense that this was written long before they met'
+      }
+  };
+
+  /**
+   * Build world fate translation directive. Provides the storyteller
+   * with world-appropriate vocabulary for Fate-driven narrative signals.
+   */
+  function buildWorldFateTranslationDirective() {
+      const world = state.picks?.world || 'Modern';
+      const vocab = FATE_WORLD_VOCABULARY[world] || FATE_WORLD_VOCABULARY.Modern;
+
+      return `\nFATE LANGUAGE (${world}):
+When expressing omens, fate echoes, convergences, or scene gravity, use world-appropriate framing:
+\u2022 Omens: ${vocab.omen}
+\u2022 Convergence: ${vocab.convergence}
+\u2022 Echoes: ${vocab.echo}
+\u2022 Gravity: ${vocab.gravity}
+Do not use mystical language in non-fantasy worlds. Fate mechanics are constant \u2014 their narrative expression adapts to the setting.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // WORLD-TRANSLATED FATE CARDS — provides world-appropriate flavor
+  // descriptions for Fate Card themes. Mechanics unchanged; only the
+  // narrative framing adapts to the setting.
+  // ═══════════════════════════════════════════════════════════════════
+
+  const FATE_CARD_WORLD_FLAVOR = {
+      Fantasy: {
+          confession: 'Truth spills like prophecy finally spoken.',
+          boundary:   'A vow or law is invoked that cannot be crossed.',
+          temptation: 'A dangerous desire whispers like fate\u2019s test.',
+          reversal:   'Fate twists the story\u2019s path.',
+          silence:    'A moment where fate waits without speaking.'
+      },
+      Modern: {
+          confession: 'Someone finally says what they\u2019ve been avoiding.',
+          boundary:   'Someone finally draws a line.',
+          temptation: 'Someone is pushed toward a choice they shouldn\u2019t make.',
+          reversal:   'Everything suddenly changes direction.',
+          silence:    'No one says what they\u2019re really thinking.'
+      },
+      SciFi: {
+          confession: 'Hidden data surfaces and changes everything.',
+          boundary:   'Protocol overrides emotion.',
+          temptation: 'A risky variable enters the equation.',
+          reversal:   'The model produces an unexpected outcome.',
+          silence:    'The signal drops into quiet.'
+      },
+      Dystopia: {
+          confession: 'A forbidden truth breaks through the system\u2019s silence.',
+          boundary:   'The system enforces a limit no one can ignore.',
+          temptation: 'The system offers something it shouldn\u2019t.',
+          reversal:   'The system\u2019s prediction collapses.',
+          silence:    'The system goes dark.'
+      },
+      PostApocalyptic: {
+          confession: 'Someone admits what survival has kept buried.',
+          boundary:   'A rule of survival is invoked.',
+          temptation: 'A choice appears that could change everything.',
+          reversal:   'The situation turns in a way no one expected.',
+          silence:    'Silence carries more meaning than words.'
+      },
+      Historical: {
+          confession: 'A truth too dangerous for the age is finally spoken.',
+          boundary:   'Custom or duty draws an impassable line.',
+          temptation: 'A forbidden desire tests propriety.',
+          reversal:   'Fortune reverses without warning.',
+          silence:    'What cannot be spoken hangs heavy in the air.'
+      }
+  };
+
+  /**
+   * Build world-translated fate card flavor directive.
+   * Provides the storyteller with setting-appropriate descriptions
+   * for whichever Fate Card is active this scene.
+   */
+  function buildWorldFateCardFlavorDirective(selectedFateCard) {
+      if (!selectedFateCard || !selectedFateCard.id) return '';
+
+      const world = state.picks?.world || 'Modern';
+      const worldFlavors = FATE_CARD_WORLD_FLAVOR[world] || FATE_CARD_WORLD_FLAVOR.Modern;
+      const cardId = selectedFateCard.id.toLowerCase();
+      const flavor = worldFlavors[cardId];
+
+      if (!flavor) return '';
+
+      return `\nFATE CARD FLAVOR (${world}): ${flavor}
+When this Fate Card\u2019s theme manifests in narration, use this world-appropriate framing rather than generic descriptions.`;
   }
 
   /**
@@ -64208,6 +66810,12 @@ TASK: Generate TWO short, contextual previews that fit THIS EXACT SCENE:
 1. "Do" — A specific physical action the protagonist could take RIGHT NOW (max 12 words)
 2. "Say" — A specific line of dialogue the protagonist could speak RIGHT NOW (max 15 words, in quotes)
 
+PSYCHOLOGICAL STRATEGY: Each Say/Do pair should represent one clear relational move:
+- ADVANCE (move relationship forward with sincerity/vulnerability)
+- DEFLECT (avoid exposure via humor, distance, or ambiguity)
+- ESCALATE (increase tension or attraction directly)
+Choose the strategy that best matches the card's theme.
+
 These must:
 - Reference actual details from the scene (location, objects, other characters)
 - Match the ${tone} tone
@@ -66733,6 +69341,454 @@ Output at the end: (QUESTION: "[what the reader wonders]" | characters: [names]$
       }
 
       // ═══════════════════════════════════════════════════════════════════
+      // EARLY ECHO FORESHADOW — plants subtle, ordinary-seeming details
+      // early in the narrative that later become significant. Creates the
+      // illusion that future events were quietly prepared from the start.
+      // Readers experience this as narrative fate / long-range design.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildEarlyEchoForeshadowDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 4) return '';
+          if (!state.earlyEchoForeshadows) state.earlyEchoForeshadows = [];
+
+          const active = state.earlyEchoForeshadows.filter(f => !f.resolved);
+          const resolved = state.earlyEchoForeshadows.filter(f => f.resolved);
+
+          // ── PAYOFF PHASE: check if any planted detail should resurface (callback budget gated) ──
+          const callbackSlot = state._sceneCallbackSelection || 'none';
+          const ECHO_MODALITY_HINTS = {
+              object: 'The original object reappears or is rediscovered in a new context.',
+              gesture: 'The same gesture is repeated, now carrying new weight.',
+              line_of_dialogue: 'The original phrase is echoed or reinterpreted by a character.',
+              location: 'The characters return to the original location, now transformed by events.',
+              symbol: 'The symbol recurs with its meaning now visible.',
+              reaction: 'The same emotional response surfaces, but the reader now understands why.'
+          };
+          let payoffNote = '';
+          if (active.length > 0 && callbackSlot === 'echo') {
+              // A detail is ripe for payoff when it's aged 8+ scenes and a narrative trigger aligns
+              const ripe = active.filter(f => (currentScene - f.scene) >= 8);
+              if (ripe.length > 0) {
+                  // Check for narrative triggers: thread awakening, secret reveal, question resolution
+                  const recentThreadAwakening = (state.fateThreads || []).some(t => t.active && t.lastAwakened === currentScene);
+                  const recentSecretReveal = (state.characterSecrets || []).some(s => s.revealedScene === currentScene - 1);
+                  const recentQuestionResolved = (state.unansweredQuestions || []).some(q => q.resolved && q.resolvedScene === currentScene - 1);
+                  const highMomentum = currentScene >= 20;
+
+                  // Secret synergy: boost payoff probability if echo thread matches an active secret
+                  const secretSynergy = ripe.some(f => f.relatedThread && (state.characterSecrets || []).some(s =>
+                      !s.revealed && s.secretDescription && f.relatedThread.toLowerCase().includes(s.owner.toLowerCase().substring(0, 8))
+                  ));
+
+                  if (recentThreadAwakening || recentSecretReveal || recentQuestionResolved || highMomentum || secretSynergy) {
+                      // Pick the oldest ripe detail for payoff (prefer secret-synergy matches)
+                      const sorted = [...ripe].sort((a, b) => a.scene - b.scene);
+                      const pick = secretSynergy ? (ripe.find(f => f.relatedThread && (state.characterSecrets || []).some(s =>
+                          !s.revealed && f.relatedThread.toLowerCase().includes(s.owner.toLowerCase().substring(0, 8))
+                      )) || sorted[0]) : sorted[0];
+                      const age = currentScene - pick.scene;
+                      const echoType = pick.echoType || 'reaction';
+                      const modalityHint = ECHO_MODALITY_HINTS[echoType] || ECHO_MODALITY_HINTS.reaction;
+                      payoffNote = `\nEARLY ECHO PAYOFF:
+The detail planted in scene ${pick.scene} ("${pick.description}", type: ${echoType}) is now ripe (${age} scenes ago).
+Modality: ${modalityHint}
+Find a natural way to make this earlier detail suddenly meaningful. The reader should experience a flash of recognition \u2014 "that detail from earlier was important."
+Resolve using the same narrative modality as the original (${echoType}). Do NOT explain the callback explicitly \u2014 let the reader feel the connection.
+After the payoff, output: (ECHO_RESOLVED: "${pick.description}")`;
+                  }
+              }
+          }
+
+          // ── ECHO REMINDER: occasionally recall a planted detail without resolving it (callback budget gated) ──
+          let echoReminder = '';
+          if (active.length > 0 && !payoffNote && callbackSlot === 'echo') {
+              const eligible = active.filter(f => {
+                  const age = currentScene - f.scene;
+                  const lastTouch = f.lastEchoed || f.scene;
+                  return age >= 5 && (currentScene - lastTouch) >= 5;
+              });
+              if (eligible.length > 0 && Math.random() < 0.15) {
+                  const pick = eligible[Math.floor(Math.random() * eligible.length)];
+                  pick.lastEchoed = currentScene;
+                  echoReminder = `\nEARLY ECHO WHISPER: Subtly reference the detail from scene ${pick.scene} ("${pick.description}") — a passing similarity, a faint reminder, a character briefly noticing something related. Do NOT resolve or explain it. Just let the reader feel a flicker of recognition.`;
+              }
+          }
+
+          // ── Active echoes list ──
+          let echoList = '';
+          if (active.length > 0) {
+              const lines = active.map(f => {
+                  const age = currentScene - f.scene;
+                  const echoType = f.echoType || 'reaction';
+                  return `- "${f.description}" (scene ${f.scene}, ${age} scenes ago, ${echoType})${f.relatedThread ? ' \u2014 thread: ' + f.relatedThread : ''}${f.charactersInvolved?.length ? ' \u2014 characters: ' + f.charactersInvolved.join(', ') : ''}`;
+              }).join('\n');
+              echoList = `\nEARLY ECHO FORESHADOWS (planted):
+${lines}
+These details are waiting to become significant. Do not resolve them casually \u2014 they pay off during transformative moments. Resolve each echo using the same modality as the original (object \u2192 rediscovered object, gesture \u2192 repeated gesture, etc.).`;
+          }
+
+          // ── PLANT PHASE: rarely introduce a new foreshadow detail ──
+          let plantNote = '';
+          if (active.length < 4) { // Cap at 4 active foreshadows
+              const lastPlant = state._lastEarlyEchoPlantScene || 0;
+              // Frequency: 1 every 8-12 scenes
+              if (currentScene - lastPlant >= 8 && Math.random() < 0.15) {
+                  // Gather context for richer planting
+                  const activeThreads = (state.fateThreads || []).filter(t => t.active);
+                  const threadHint = activeThreads.length > 0 ? ` Active narrative threads for possible connection: ${activeThreads.slice(0, 3).map(t => '"' + t.title + '"').join(', ')}.` : '';
+
+                  plantNote = `\nEARLY ECHO SEED (this scene):
+Plant one small, easily overlooked detail that feels ordinary now but could become meaningful later. The detail should be woven naturally into the scene \u2014 a background object, a symbol, an unusual reaction, an unexplained location feature, or a fragment of dialogue that seems incidental.${threadHint}
+The detail MUST NOT feel important, mysterious, or highlighted. It should read as texture, not foreshadowing.
+Examples: a character briefly notices a mark on a wall (object); an offhand mention of a sound (symbol); a minor gesture or hesitation (gesture); a place name dropped in passing (location); a small phrase a character uses (line_of_dialogue); an unexplained emotional response (reaction).
+After writing the scene, output: (EARLY_ECHO: "[detail description]" | characters: [names involved]${activeThreads.length > 0 ? ' | thread: [related thread if any]' : ''} | type: [object/gesture/line_of_dialogue/location/symbol/reaction])`;
+              }
+          }
+
+          return `${echoList}${payoffNote}${echoReminder}${plantNote}`;
+      }
+
+      /**
+       * Extract (EARLY_ECHO: ...) and (ECHO_RESOLVED: ...) tags from AI output.
+       * Creates new foreshadow entries or resolves existing ones. Strips tags from display text.
+       */
+      function extractEarlyEchoForeshadowTags(raw) {
+          if (!raw) return raw;
+          if (!state.earlyEchoForeshadows) state.earlyEchoForeshadows = [];
+          const currentScene = (state.turnCount || 0) + 1;
+
+          // Extract new foreshadow planting (with optional type: field)
+          raw = raw.replace(/\(EARLY_ECHO:\s*"([^"]+)"\s*\|\s*characters:\s*([^)|]+)(?:\s*\|\s*thread:\s*([^)|]+))?(?:\s*\|\s*type:\s*([^)]+))?\)/gi, (match, desc, chars, thread, echoType) => {
+              const validTypes = ['object', 'gesture', 'line_of_dialogue', 'location', 'symbol', 'reaction'];
+              const parsedType = echoType ? echoType.trim().toLowerCase() : 'reaction';
+              state.earlyEchoForeshadows.push({
+                  scene: currentScene,
+                  description: desc.trim(),
+                  charactersInvolved: chars.trim().split(/[,&]+/).map(c => c.trim()).filter(Boolean),
+                  relatedThread: thread ? thread.trim() : null,
+                  echoType: validTypes.includes(parsedType) ? parsedType : 'reaction',
+                  resolved: false,
+                  lastEchoed: null
+              });
+              state._lastEarlyEchoPlantScene = currentScene;
+              console.log(`[EARLY_ECHO] Planted: "${desc.trim()}" (type: ${parsedType}, scene ${currentScene})`);
+              return '';
+          });
+
+          // Extract resolution
+          raw = raw.replace(/\(ECHO_RESOLVED:\s*"([^"]+)"\)/gi, (match, desc) => {
+              const d = desc.trim().toLowerCase();
+              const found = state.earlyEchoForeshadows.find(f =>
+                  !f.resolved && f.description.toLowerCase().includes(d.substring(0, 30))
+              );
+              if (found) {
+                  found.resolved = true;
+                  found.resolvedScene = currentScene;
+                  console.log(`[EARLY_ECHO] Resolved: "${found.description}" (planted scene ${found.scene}, resolved scene ${currentScene})`);
+              }
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // CONVERSATIONAL MEMORY ENGINE — relationship-specific dialogue history.
+      // Characters speak differently to different people and reference prior
+      // emotional exchanges. Creates the illusion of deep relational history.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildConversationMemoryDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 4) return '';
+          if (!state.conversationMemories) state.conversationMemories = [];
+
+          const memories = state.conversationMemories;
+
+          // ── RECALL PHASE: occasionally surface a past conversation memory (callback budget gated) ──
+          const callbackSlot = state._sceneCallbackSelection || 'none';
+          let recallNote = '';
+          if (memories.length > 0 && callbackSlot === 'conversation_memory') {
+              const eligible = memories.filter(m => (currentScene - m.scene_index) >= 3);
+              if (eligible.length > 0) {
+                  const pick = eligible[Math.floor(Math.random() * eligible.length)];
+                  recallNote = `\nCONVERSATION ECHO: In scene ${pick.scene_index}, ${pick.characterA} and ${pick.characterB} shared a ${pick.memory_type} moment (${pick.emotional_tone}): "${pick.summary}"${pick.trigger_phrase ? ' \u2014 key phrase: "' + pick.trigger_phrase + '"' : ''}.
+If these characters interact this scene, subtly reference that exchange. Methods: echo the phrase in new context, changed tone of address, an unfinished reference, or emotional callback. Do NOT repeat the original dialogue \u2014 transform it.`;
+              }
+          }
+
+          // ── RELATIONSHIP SPEECH MODULATION ──
+          let modulationNote = '';
+          if (memories.length >= 2) {
+              const pairs = {};
+              for (const m of memories) {
+                  const key = [m.characterA, m.characterB].sort().join('\u2194');
+                  if (!pairs[key]) pairs[key] = { chars: [m.characterA, m.characterB], count: 0, tones: [] };
+                  pairs[key].count++;
+                  if (m.emotional_tone && !pairs[key].tones.includes(m.emotional_tone)) {
+                      pairs[key].tones.push(m.emotional_tone);
+                  }
+              }
+              const modLines = Object.values(pairs)
+                  .filter(p => p.count >= 2)
+                  .map(p => `${p.chars[0]} \u2194 ${p.chars[1]}: history of ${p.tones.slice(0, 3).join(', ')} \u2014 speech should reflect this relational depth`)
+                  .slice(0, 3);
+              if (modLines.length > 0) {
+                  modulationNote = `\nRELATIONSHIP SPEECH:\n${modLines.join('\n')}`;
+              }
+          }
+
+          // ── MEMORY CREATION SEED ──
+          let plantNote = '';
+          const lastCreation = state._lastConvMemoryScene || 0;
+          if (currentScene - lastCreation >= 2 && memories.length < 20) {
+              plantNote = `\nIf this scene contains a significant dialogue moment between characters \u2014 a confession, argument, promise, betrayal, shared vulnerability, first attraction, teasing exchange, or shared secret \u2014 output at the end:
+(CONV_MEMORY: "[brief summary]" | characters: [A, B] | type: [confession/argument/teasing/promise/betrayal/vulnerability/first_attraction/shared_secret] | tone: [emotional tone] | phrase: "[key memorable phrase if any]")
+Only for emotionally meaningful exchanges. One per scene maximum.`;
+          }
+
+          return `${recallNote}${modulationNote}${plantNote}`;
+      }
+
+      /**
+       * Extract (CONV_MEMORY: ...) tags from AI output.
+       * Creates new conversation memory entries. Strips tags from display text.
+       * Compresses oldest entries when over 20 to prevent unbounded growth.
+       */
+      function extractConversationMemoryTags(raw) {
+          if (!raw) return raw;
+          if (!state.conversationMemories) state.conversationMemories = [];
+          const currentScene = (state.turnCount || 0) + 1;
+
+          raw = raw.replace(/\(CONV_MEMORY:\s*"([^"]+)"\s*\|\s*characters:\s*\[([^\]]+)\]\s*\|\s*type:\s*(\w+)\s*\|\s*tone:\s*([^)|]+)(?:\s*\|\s*phrase:\s*"([^"]*)")?\)/gi, (match, summary, chars, type, tone, phrase) => {
+              const charList = chars.split(/[,&]+/).map(c => c.trim().replace(/['"]/g, '')).filter(Boolean);
+              if (charList.length < 2) return '';
+
+              state.conversationMemories.push({
+                  characterA: charList[0],
+                  characterB: charList[1],
+                  scene_index: currentScene,
+                  memory_type: type.trim().toLowerCase(),
+                  emotional_tone: tone.trim(),
+                  trigger_phrase: phrase ? phrase.trim() : null,
+                  summary: summary.trim()
+              });
+              state._lastConvMemoryScene = currentScene;
+
+              // Memory decay: compress oldest when over limit
+              if (state.conversationMemories.length > 20) {
+                  const toCompress = state.conversationMemories.splice(0, Math.min(5, state.conversationMemories.length - 15));
+                  const pairGroups = {};
+                  for (const m of toCompress) {
+                      const key = [m.characterA, m.characterB].sort().join('\u2194');
+                      if (!pairGroups[key]) pairGroups[key] = { chars: [m.characterA, m.characterB], entries: [] };
+                      pairGroups[key].entries.push(m);
+                  }
+                  for (const p of Object.values(pairGroups)) {
+                      const types = [...new Set(p.entries.map(e => e.memory_type))].join(', ');
+                      const tones = [...new Set(p.entries.map(e => e.emotional_tone))].join(', ');
+                      state.conversationMemories.unshift({
+                          characterA: p.chars[0],
+                          characterB: p.chars[1],
+                          scene_index: p.entries[0].scene_index,
+                          memory_type: 'history',
+                          emotional_tone: tones,
+                          trigger_phrase: null,
+                          summary: `Multiple ${types} exchanges with tones of ${tones}.`
+                      });
+                  }
+                  while (state.conversationMemories.length > 20) state.conversationMemories.shift();
+              }
+
+              console.log(`[CONV_MEMORY] Stored: ${charList[0]} \u2194 ${charList[1]} (${type.trim()}, scene ${currentScene})`);
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // MOTIF ENGINE — recurring thematic textures that deepen across the
+      // story. Unlike Early Echo (setup/payoff), motifs recur to become
+      // familiar, resonant, and symbolically loaded. Max 5 active motifs.
+      // ═══════════════════════════════════════════════════════════════════
+
+      const MOTIF_MODE_HINTS = {
+          confrontation:    'sharp phrase callbacks, repeated accusatory gesture, storm/pressure imagery',
+          quiet_intimacy:   'soft sound motifs, remembered phrase fragments, gentle repeated objects',
+          suspense:         'eerie environmental motifs, repeated symbolic imagery, sensory callbacks',
+          playful_banter:   'recurring joke phrase, teasing gesture callback',
+          romantic_tension: 'charged sensory detail, repeated proximity image, lingering sound',
+          emotional_reveal: 'symbolic object with accumulated weight, phrase from a turning point'
+      };
+
+      function buildMotifDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 4) return '';
+          if (!state.narrativeMotifs) state.narrativeMotifs = [];
+
+          const motifs = state.narrativeMotifs;
+          const callbackSlot = state._sceneCallbackSelection || 'none';
+          const mode = state.lastDialogueMode || 'emotional_reveal';
+
+          // ── FOREGROUND CALLBACK: resurface a motif with full thematic weight (budget gated) ──
+          let foregroundNote = '';
+          if (callbackSlot === 'motif' && motifs.length > 0) {
+              const eligible = motifs.filter(m => (currentScene - (m.last_used_scene || m.first_scene)) >= 5);
+              if (eligible.length > 0) {
+                  const pick = eligible[Math.floor(Math.random() * eligible.length)];
+                  pick.last_used_scene = currentScene;
+                  pick.use_count = (pick.use_count || 1) + 1;
+                  const modeHint = MOTIF_MODE_HINTS[mode] || '';
+                  foregroundNote = `\nMOTIF CALLBACK (foreground):
+Resurface the motif "${pick.motif_text}" (${pick.motif_type}, valence: ${pick.thematic_valence}, used ${pick.use_count} times).
+Transform it through the current emotional context \u2014 same element, elevated meaning. Do not copy-paste the original.${modeHint ? ' Mode hint: ' + modeHint + '.' : ''}`;
+              }
+          }
+
+          // ── BACKGROUND TEXTURE: very light motif reference (does NOT consume budget) ──
+          let backgroundNote = '';
+          if (!foregroundNote && motifs.length > 0 && Math.random() < 0.18) {
+              const eligible = motifs.filter(m => (currentScene - (m.last_used_scene || m.first_scene)) >= 3);
+              if (eligible.length > 0) {
+                  const pick = eligible[Math.floor(Math.random() * eligible.length)];
+                  pick.last_used_scene = currentScene;
+                  pick.use_count = (pick.use_count || 1) + 1;
+                  backgroundNote = `\nMOTIF TEXTURE: Lightly reference "${pick.motif_text}" as background detail \u2014 a brief sensory echo, not a focal moment.`;
+              }
+          }
+
+          // ── Active motifs list ──
+          let motifList = '';
+          if (motifs.length > 0) {
+              const lines = motifs.map(m => {
+                  const age = currentScene - m.first_scene;
+                  return `- "${m.motif_text}" (${m.motif_type}, ${m.thematic_valence}, ${m.use_count || 1} uses, ${age} scenes)${m.associated_thread ? ' \u2014 thread: ' + m.associated_thread : ''}`;
+              }).join('\n');
+              motifList = `\nSTORY MOTIFS:\n${lines}`;
+          }
+
+          // ── PLANT PHASE: create new motif sparingly ──
+          let plantNote = '';
+          if (motifs.length < 5) {
+              const lastPlant = state._lastMotifPlantScene || 0;
+              if (currentScene - lastPlant >= 8 && Math.random() < 0.12) {
+                  // Check for overlap with active Early Echoes
+                  const activeEchoes = (state.earlyEchoForeshadows || []).filter(f => !f.resolved);
+                  const overlapWarning = activeEchoes.length > 0 ? ' Do NOT duplicate any active Early Echo detail \u2014 motifs recur for resonance, echoes resolve for payoff.' : '';
+
+                  // Secret synergy hint
+                  const secrets = (state.characterSecrets || []).filter(s => !s.revealed && (s.pressureLevel === 'medium' || s.pressureLevel === 'high'));
+                  const secretHint = secrets.length > 0 ? ` Active secret holders (${secrets.map(s => s.owner).join(', ')}) may inspire motifs that subtly reinforce concealment.` : '';
+
+                  plantNote = `\nMOTIF SEED (optional):
+If the scene naturally contains a recurring element \u2014 an object, phrase, weather, sound, gesture, color, or sensory image that feels thematically charged \u2014 register it as a story motif.
+Motifs are NOT foreshadowing (that is Early Echo). A motif recurs to become familiar and symbolically loaded.${overlapWarning}${secretHint}
+Output: (MOTIF: "[motif text]" | type: [object/phrase/weather/color/sound/song/gesture/location_texture/sensory_image/symbol] | valence: [longing/danger/fate/grief/desire/control/freedom/secrecy/devotion] | characters: [names] | thread: "[related thread if any]")`;
+              }
+          }
+
+          return `${motifList}${foregroundNote}${backgroundNote}${plantNote}`;
+      }
+
+      /**
+       * Extract (MOTIF: ...) tags from AI output.
+       * Creates new motif entries. Strips tags from display text.
+       */
+      function extractMotifTags(raw) {
+          if (!raw) return raw;
+          if (!state.narrativeMotifs) state.narrativeMotifs = [];
+          const currentScene = (state.turnCount || 0) + 1;
+
+          raw = raw.replace(/\(MOTIF:\s*"([^"]+)"\s*\|\s*type:\s*([^|]+)\|\s*valence:\s*([^|]+)\|\s*characters:\s*([^)|]+)(?:\s*\|\s*thread:\s*"([^"]*)")?\)/gi, (match, text, type, valence, chars, thread) => {
+              // Prevent overlap: skip if text matches an active Early Echo
+              const activeEchoes = (state.earlyEchoForeshadows || []).filter(f => !f.resolved);
+              const textLower = text.trim().toLowerCase();
+              if (activeEchoes.some(e => e.description.toLowerCase().includes(textLower.substring(0, 20)))) {
+                  console.log(`[MOTIF] Skipped (overlaps Early Echo): "${text.trim()}"`);
+                  return '';
+              }
+
+              if (state.narrativeMotifs.length >= 5) return ''; // hard cap
+
+              state.narrativeMotifs.push({
+                  motif_text: text.trim(),
+                  motif_type: type.trim().toLowerCase(),
+                  thematic_valence: valence.trim().toLowerCase(),
+                  associated_characters: chars.trim().split(/[,&]+/).map(c => c.trim().replace(/['"[\]]/g, '')).filter(Boolean),
+                  associated_thread: thread ? thread.trim() : null,
+                  first_scene: currentScene,
+                  last_used_scene: currentScene,
+                  use_count: 1
+              });
+              state._lastMotifPlantScene = currentScene;
+              console.log(`[MOTIF] Planted: "${text.trim()}" (${type.trim()}, ${valence.trim()}, scene ${currentScene})`);
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
+      // CHARACTER DESIRE DIRECTIVE — surfaces active character objectives
+      // into the scene prompt so dialogue reflects purposeful motivation.
+      // Desire assignment is handled by _refreshCharacterDesires() which
+      // is called from _computeDialogueStrategy.
+      // ═══════════════════════════════════════════════════════════════════
+      function buildCharacterDesireDirective() {
+          const currentScene = (state.turnCount || 0) + 1;
+          if (currentScene < 3) return '';
+          const desires = state.characterDesires || {};
+          const entries = Object.entries(desires);
+          if (entries.length === 0) return '';
+
+          const lines = entries.map(([name, d]) => {
+              const hint = DESIRE_CATEGORY_HINTS[d.current_desire] || '';
+              const age = currentScene - (d.scene_assigned || currentScene);
+              return `- ${name}: wants to ${d.current_desire}${d.desire_target ? ' (toward ' + d.desire_target + ')' : ''} [${d.desire_intensity}, ${age} scenes]${hint ? ' \u2014 ' + hint : ''}`;
+          }).join('\n');
+
+          // Desire creation/resolution seed
+          let seedNote = '';
+          if (entries.length < 4 && Math.random() < 0.12) {
+              seedNote = `\nIf a character\u2019s situation changes significantly this scene (secret revealed, trust broken, confrontation resolved), their desire may shift. Output: (DESIRE_SHIFT: [character] | new_desire: [protect/learn/hide/seduce/test/persuade/confess/escape/gain_trust/withhold_truth] | reason: "[brief reason]")`;
+          }
+
+          return `\nCHARACTER DESIRES:
+${lines}
+Characters should pursue these objectives through dialogue and behavior \u2014 not explicitly, but through word choice, topic steering, and emotional strategy.${seedNote}`;
+      }
+
+      /**
+       * Extract (DESIRE_SHIFT: ...) tags from AI output.
+       * Updates character desires when the AI signals a shift. Strips tags from display text.
+       */
+      function extractDesireTags(raw) {
+          if (!raw) return raw;
+          const currentScene = (state.turnCount || 0) + 1;
+          if (!state.characterDesires) state.characterDesires = {};
+
+          raw = raw.replace(/\(DESIRE_SHIFT:\s*([^|]+)\|\s*new_desire:\s*([^|]+)\|\s*reason:\s*"([^"]+)"\)/gi, (match, charName, newDesire, reason) => {
+              const name = charName.trim();
+              const desire = newDesire.trim().toLowerCase();
+              const validDesires = ['protect', 'learn', 'hide', 'seduce', 'test', 'persuade', 'confess', 'escape', 'gain_trust', 'withhold_truth'];
+              if (!validDesires.includes(desire)) return '';
+
+              const existing = state.characterDesires[name];
+              state.characterDesires[name] = {
+                  current_desire: desire,
+                  desire_target: existing?.desire_target || 'unknown',
+                  desire_intensity: 'high',
+                  scene_assigned: currentScene,
+                  duration: 3 + Math.floor(Math.random() * 4)
+              };
+              console.log(`[DESIRE] Shift: ${name} \u2192 ${desire} ("${reason.trim()}")`);
+              return '';
+          });
+
+          return raw;
+      }
+
+      // ═══════════════════════════════════════════════════════════════════
       // NARRATIVE DIRECTOR — coordinates multiple narrative systems so they
       // reinforce each other. Computes scene focus + energy budget + pressure
       // governor + character focus in one unified governance directive.
@@ -67948,7 +71004,19 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       const _gcVoyage = (typeof window._buildVoyageStructureDirective === 'function') ? window._buildVoyageStructureDirective() : '';
       const _gcIntimacyPacing = (typeof window._buildIntimacyPacingDirective === 'function') ? window._buildIntimacyPacingDirective() : '';
 
-      const sceneDirectives = `\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${safetyRewriteDirective ? '\n' + safetyRewriteDirective + '\n' : ''}${intentAnchorDirective}${squashDirective}\n${metaReminder}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${strategyDirective}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}${_grEcho}${_grEscalation}${_grMirror}${_gcHalcyon}${_gcGemmaId}${_gcInput}${_gcPerception}${_gcRoles}${_gcCohesion}${_gcIdentity}${_gcCaptain}${_gcStructure}${_gcArchetype}${_gcSuppression}${_gcDoctor}${_gcFugue}${_gcEcho}${_gcFragment}${_gcEnv}${_gcOperative}${_gcDrSuspicion}${_gcAdminPressure}${_gcDistraction}${_gcGemmaSex}${_gcDecoy}${_gcThreeTruth}${_gcVoyage}${_gcIntimacyPacing}`;
+      // Reset per-scene directive consolidation buffer + relationship modifier budget
+      state._activeDirectiveSignals = [];
+      state._relationshipPrimaryFired = false;
+      state._relationshipModifierUsed = false;
+      // Detect narrative and romantic plateaus, adjust pressure/gravity levels
+      _detectNarrativePlateau();
+      _detectRomanticPlateau();
+      _detectDevotionPressure();
+      _updateSceneGravity();
+      // Select which narrative signal may fire this scene (budget: 1)
+      _selectNarrativeCallbackForScene();
+
+      const sceneDirectives = `\n${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${intimacyDirective}\n${safetyRewriteDirective ? '\n' + safetyRewriteDirective + '\n' : ''}${intentAnchorDirective}${squashDirective}\n${metaReminder}\n${petitionDirective}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${strategyDirective}\n${gooseBlock}\n${romanceVectorBlock}${teaseCliffhangerDirective}${worldLawDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildDialogueStrategyDirective(act, dia)}${buildVoiceLockDirective()}${buildPsychologicalGradientDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildWorldFateCardFlavorDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}${_grEcho}${_grEscalation}${_grMirror}${_gcHalcyon}${_gcGemmaId}${_gcInput}${_gcPerception}${_gcRoles}${_gcCohesion}${_gcIdentity}${_gcCaptain}${_gcStructure}${_gcArchetype}${_gcSuppression}${_gcDoctor}${_gcFugue}${_gcEcho}${_gcFragment}${_gcEnv}${_gcOperative}${_gcDrSuspicion}${_gcAdminPressure}${_gcDistraction}${_gcGemmaSex}${_gcDecoy}${_gcThreeTruth}${_gcVoyage}${_gcIntimacyPacing}`;
 
       const fullSys = state.sysPrompt + state._persistentDirectiveCache + buildVoiceAnchorDirective() + sceneDirectives + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
@@ -67964,7 +71032,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       The echo establishes the immediate narrative ripple. The anchor guides the scene's broader direction.
 
       OPENING VARIATION (MANDATORY): Each scene MUST begin with a different sentence structure, subject, and image than the previous scene. Do not echo, paraphrase, or mirror the opening line of any prior scene. If the previous scene opened with a character action, open this one with setting, sensation, dialogue, or interiority — never the same pattern twice in a row.
-      ${buildWorldPhysicsDirective()}${buildColloquialismGuardDirective()}${buildSceneLengthDirective()}${buildIgnitionPatternDirective()}${buildWorldPressurePulseDirective()}${buildFateThreadsDirective()}${buildFateOmenDirective()}${buildForeshadowAnchorDirective()}${buildThemeGravityDirective()}${buildArcMomentumDirective()}${buildEmotionalEngineDirective()}${buildMisunderstandingPressureDirective()}${buildScenePromiseDirective()}${buildCharacterSecretDirective()}${buildNarrativeMemoryEchoDirective()}${buildCharacterGravityDirective()}${buildMomentsOfGraceDirective()}${buildLocationMemoryDirective()}${buildNarrativeNoticingDirective()}${buildUnansweredQuestionDirective()}${buildNarrativeGovernanceDirective()}${buildEndingWindowDirective()}`;
+      ${buildWorldPhysicsDirective()}${buildColloquialismGuardDirective()}${buildSceneLengthDirective()}${buildIgnitionPatternDirective()}${buildWorldPressurePulseDirective()}${buildFateThreadsDirective()}${buildFateOmenDirective()}${buildWorldFateTranslationDirective()}${buildForeshadowAnchorDirective()}${buildThemeGravityDirective()}${buildArcMomentumDirective()}${buildEmotionalEngineDirective()}${buildMisunderstandingPressureDirective()}${buildScenePromiseDirective()}${buildCharacterSecretDirective()}${buildNarrativeMemoryEchoDirective()}${buildCharacterGravityDirective()}${buildMomentsOfGraceDirective()}${buildLocationMemoryDirective()}${buildNarrativeNoticingDirective()}${buildUnansweredQuestionDirective()}${buildEarlyEchoForeshadowDirective()}${buildConversationMemoryDirective()}${buildMotifDirective()}${buildCharacterDesireDirective()}${buildEmotionalBeatDirective()}${buildConvergenceDirective()}${buildPressureEscalationDirective()}${buildRomanticTensionDirective()}${buildSubtextualConflictDirective()}${buildDominanceDynamicsDirective()}${buildDevotionPressureDirective()}${buildPillowTalkDirective()}${buildAlmostLossDirective()}${buildIntentDriftDirective()}${buildSceneGravityDirective()}${buildArchetypeRewardDirective()}${buildForeshadowDebtDirective()}${buildIrreversibleChoiceDirective()}${buildIrreversibleAftershockDirective()}${buildDestinyCollisionDirective()}${buildInevitableSceneDirective()}${buildDelayedPayoffDirective()}${buildNarrativeGovernanceDirective()}${buildDirectiveConsolidationBlock()}${buildEndingWindowDirective()}`;
 
       // STORY PROMPT GUARD: Validate size (debug only, never truncate)
       validateStoryPromptSize(fullSys, 'turn-generation-fullSys');
@@ -68846,6 +71914,7 @@ ABSOLUTE RULES:
           _checkPerspectiveReframe();
           _checkDialogueDrift();
           _detectNarrativeBeat(raw);
+          // _computeDialogueMomentum and _detectEmotionalBeats now run inside _extractNarrativeSignals
           _checkEmotionalForeshadow();
           _checkChoiceMemory();
           _captureChoiceMemory(state._lastPlayerChoiceType);
@@ -68898,8 +71967,9 @@ ABSOLUTE RULES:
           // Extract location memory tags from AI output (strip before display, record events)
           raw = extractLocationMemoryTags(raw);
 
-          // Extract unanswered question tags from AI output (strip before display, track questions)
-          raw = extractQuestionTags(raw);
+          // Unified narrative signal extraction — processes all narrative tags
+          // in guaranteed order and detects momentum + emotional beats
+          raw = _extractNarrativeSignals(raw);
 
           // Add AI response only
           pageContent += formatStory(raw);
@@ -69578,7 +72648,7 @@ FATE CARD ADAPTATION (CRITICAL):
           const _specGrEcho = (typeof window._buildReasonEchoDirective === 'function') ? window._buildReasonEchoDirective() : '';
           const _specGrEscalation = (typeof window._buildReasonEscalationDirective === 'function') ? window._buildReasonEscalationDirective() : '';
 
-          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${specSafetyRewriteDirective ? '\n' + specSafetyRewriteDirective + '\n' : ''}${specIntentAnchorDirective}${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}${_specGrEcho}${_specGrEscalation}
+          const fullSys = state.sysPrompt + `\n\n${turnPOVContract}${turnToneEnforcement}${intensityGuard}${specEroticGating}\n${specSafetyRewriteDirective ? '\n' + specSafetyRewriteDirective + '\n' : ''}${specIntentAnchorDirective}${squashDirective}\n${metaReminder}\n${vetoRules}\n${bbDirective}\n${safetyDirective}\n${edgeDirective}\n${pacingDirective}\n${lensEnforcement}${buildLiteraryIllusionDirective()}${buildEmotionalResidueDirective()}${ENGINE_VOCAB_FIREWALL_DIRECTIVE}${specComponentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${buildNarrativeSignatureDirective()}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildDialogueStrategyDirective(act, dia)}${buildEmotionalChoiceEchoDirective(act, dia, null)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(null)}${buildMilestoneDirective()}${_specGrEcho}${_specGrEscalation}
 
 SPECULATIVE GENERATION CONSTRAINTS:
 - Do NOT advance storyturn state.
