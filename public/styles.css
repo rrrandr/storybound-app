@@ -10601,12 +10601,16 @@ textarea.fate-field {
     aspect-ratio: auto;
     max-width: none;
     transform-style: preserve-3d;
-    cursor: pointer;
+    cursor: grab;
     animation: bookAppear 0.8s ease forwards;
-    /* Let the 3D book inside determine width */
+    /* Widen capture area for mouse tracking — generous padding around book */
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0 120px;
+}
+.book-object:active {
+    cursor: grabbing;
 }
 
 .book-object.hidden {
@@ -10775,6 +10779,35 @@ textarea.fate-field {
     height: 30px;
     transform: translateZ(-15px) rotateX(-90deg);
     background: linear-gradient(0deg, #ece7dd 0%, #f0ebe3 100%);
+}
+
+/* ── Page shimmer (glows on page edges during rotation) ── */
+.cover-book-3d .page-shimmer {
+    position: absolute;
+    right: -1px;
+    top: 0;
+    width: 30px;
+    height: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+    transform: translateZ(-15px) rotateY(90deg);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s ease;
+}
+
+/* ── "Click anywhere to continue" hint ── */
+.book-cover-page::after {
+    content: 'click anywhere to continue';
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Lora', serif;
+    font-size: 0.75em;
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.35);
+    letter-spacing: 0.15em;
+    pointer-events: none;
 }
 
 /* ── Shadow on book object (lighter for white book) ── */
