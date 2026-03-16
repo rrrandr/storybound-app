@@ -1584,19 +1584,6 @@
       <button class="highlight-action-btn story-highlight-quote-image" data-action="quoteimage">&#x1F5BC; Quote Image</button>
     </div>
 
-    <!-- Bookmarks Button + Panel — below page nav -->
-    <div id="storyBookmarksWrap" class="story-bookmarks-wrap hidden">
-      <button id="storyBookmarksBtn" class="story-bookmarks-button">&#x1F516; Bookmarks</button>
-      <div id="storyBookmarksPanel" class="story-bookmarks-panel hidden">
-        <div class="story-bookmarks-header">
-          <span>Bookmarked Lines</span>
-          <button id="storyBookmarksPanelClose" class="story-bookmarks-close">&times;</button>
-        </div>
-        <ul id="storyBookmarksList" class="story-bookmarks-list"></ul>
-        <div id="storyBookmarksEmpty" class="story-bookmarks-empty">No bookmarks yet. Highlight text in the scene to save lines.</div>
-      </div>
-    </div>
-
     <div class="page-nav-controls" id="pageNavControls">
         <button class="page-nav-btn" id="prevPageBtn" disabled>
             <span>←</span> Previous
@@ -1612,6 +1599,19 @@
                 <button class="scene-actions-item" id="btnBindReincarnation">Bind Reincarnation</button>
             </div>
         </div>
+    </div>
+
+    <!-- Bookmarks Button + Panel — below page nav -->
+    <div id="storyBookmarksWrap" class="story-bookmarks-wrap hidden">
+      <button id="storyBookmarksBtn" class="story-bookmarks-button">&#x1F516; Bookmarks</button>
+      <div id="storyBookmarksPanel" class="story-bookmarks-panel hidden">
+        <div class="story-bookmarks-header">
+          <span>Bookmarked Lines</span>
+          <button id="storyBookmarksPanelClose" class="story-bookmarks-close">&times;</button>
+        </div>
+        <ul id="storyBookmarksList" class="story-bookmarks-list"></ul>
+        <div id="storyBookmarksEmpty" class="story-bookmarks-empty">No bookmarks yet. Highlight text in the scene to save lines.</div>
+      </div>
     </div>
 
     <!-- Fate Threads Panel — optional narrative thread tracker -->
@@ -1679,6 +1679,11 @@
          <span id="fortuneBalanceDisplay">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span> <span id="fortuneBalanceLabel">Fortunes</span>
        </button>
        <button id="safeWordBtn" class="small-btn safe-word-btn" style="display:none;" onclick="window.triggerSafeWord()">Safe Word</button>
+    </div>
+
+    <!-- Reader Cover Generation Button -->
+    <div style="margin-top:14px; text-align:center;">
+      <button id="btnReaderCover" class="sb-btn-png sm">Generate Cover</button>
     </div>
 
   </div>
