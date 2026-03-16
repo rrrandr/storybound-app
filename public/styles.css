@@ -8841,15 +8841,15 @@ select {
 .petition-tier-name {
   font-family: 'Lora', serif; font-variant: small-caps;
   font-size: calc(11px / var(--petition-scale, 1));
-  color: rgba(218, 165, 32, 0.85); line-height: 1.2; white-space: nowrap;
+  color: rgba(255, 230, 150, 0.95); line-height: 1.2; white-space: nowrap;
 }
 .petition-tier-cost {
   font-family: 'Lora', serif;
   font-size: calc(9px / var(--petition-scale, 1));
-  color: rgba(218, 165, 32, 0.5); line-height: 1.1;
+  color: rgba(255, 230, 150, 0.75); line-height: 1.1;
 }
-.petition-tier-active .petition-tier-name { color: rgba(218, 165, 32, 1); }
-.petition-tier-active .petition-tier-cost { color: rgba(218, 165, 32, 0.8); }
+.petition-tier-active .petition-tier-name { color: #fff; }
+.petition-tier-active .petition-tier-cost { color: rgba(255, 235, 180, 0.9); }
 
 /* ── Petition Result (shown after seal) ── */
 .petition-zoom-overlay .petition-result {
@@ -8889,7 +8889,8 @@ select {
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-suggest-panel {
     right: auto; bottom: auto;
     top: 1px; left: 7px;
-    height: 70.5px; width: 91px;
+    width: 91px;
+    /* height auto — suggestion list scrolls internally */
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone {
     right: auto; bottom: auto;
@@ -15061,6 +15062,10 @@ body.guided-fate-autoplay .card-gleam-layer {
 .sb-zoom-backdrop.active {
     opacity: 1;
     pointer-events: auto; /* Catch clicks to close */
+}
+/* Design Mode: suppress backdrop click-to-close so handles are interactive */
+body:has(.design-mode-badge) .sb-zoom-backdrop.active {
+    pointer-events: none;
 }
 
 /* Zoom portal - holds zoomed card ABOVE backdrop, uses flexbox for centering */
