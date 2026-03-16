@@ -4313,6 +4313,40 @@ select:-webkit-autofill {
     width: 100%;
 }
 
+/* ── Treasury panel inside Account ── */
+.treasury-panel {
+    width: 100%;
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.treasury-panel.hidden { display: none; }
+.treasury-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.1);
+}
+.treasury-row:last-child { border-bottom: none; }
+.treasury-label {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    letter-spacing: 0.15em;
+    font-size: 0.8em;
+    color: rgba(201, 168, 76, 0.7);
+}
+.treasury-value {
+    font-family: 'Lora', serif;
+    font-size: 0.8em;
+    color: var(--gold, #c9a84c);
+    text-align: right;
+}
+
 /* CHOICE BUTTONS - Responsive Stack */
 .choice-buttons { 
     display:flex; 
@@ -5086,7 +5120,7 @@ select:-webkit-autofill {
     background:
         radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.15) 0%, transparent 60%),
         linear-gradient(180deg, rgba(14,9,6,0.1) 0%, rgba(26,16,10,0.05) 30%, rgba(14,9,6,0.15) 100%),
-        url('/assets/Forbidde-Library-Art/Forbidden-Library-v2.png') center top / 100vw auto no-repeat;
+        url('/assets/Forbidde-Library-Art/Forbidden-Library-quotes.jpg') center top / 100vw auto no-repeat;
     padding: 0 20px 40px;
     --shelf-parallax-x: 0px;
     position: relative;
@@ -5102,7 +5136,7 @@ select:-webkit-autofill {
     background:
         radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.15) 0%, transparent 60%),
         linear-gradient(180deg, rgba(14,9,6,0.1) 0%, rgba(26,16,10,0.05) 30%, rgba(14,9,6,0.15) 100%),
-        url('/assets/Forbidde-Library-Art/Private-Library-closer.png') center top / 100vw auto no-repeat;
+        url('/assets/Forbidde-Library-Art/Private-Library-quotes.jpg') center top / 100vw auto no-repeat;
 }
 
 /* OG Shelf — hidden while dummy/design shelf system is primary */
@@ -5184,6 +5218,52 @@ select:-webkit-autofill {
             drop-shadow(0 0 0.55vw rgba(201, 168, 76, 0.25))
             drop-shadow(0 0.28vw 0.2vw rgba(0, 0, 0, 0.7))
             drop-shadow(0 0.42vw 0.42vw rgba(0, 0, 0, 0.3));
+}
+
+/* ── Shelf inscription — carved into 2nd shelf of Forbidden Library ── */
+.shelf-inscription {
+    position: absolute;
+    top: 29.3vw;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    pointer-events: none;
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-weight: 400;
+    font-size: 0.82vw;
+    letter-spacing: 0.45em;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    margin: 0;
+    color: rgba(201, 168, 76, 0.55);
+    text-shadow:
+        0 -1px 0 rgba(0, 0, 0, 0.8),
+        0  1px 0 rgba(255, 255, 255, 0.12);
+}
+
+/* ── Arch inscription — beneath the Private Library arch ── */
+.arch-inscription {
+    position: absolute;
+    top: 6.5vw;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    pointer-events: none;
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-weight: 400;
+    font-size: 1.1vw;
+    letter-spacing: 0.225em;
+    line-height: 1.225;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.7);
+    text-shadow:
+        0 -1px 0 rgba(0, 0, 0, 0.8),
+        0  1px 0 rgba(255, 255, 255, 0.12);
+    margin: 0;
+    white-space: nowrap;
 }
 
 .forbidden-library-header {
@@ -5661,9 +5741,9 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 /* Vault back-cover meta additions */
 .back-meta-vault {
     font-family: 'Lora', serif;
-    font-size: 0.6em;
+    font-size: 4cqw;
     color: rgba(201, 168, 76, 0.35);
-    margin-top: 4px;
+    margin-top: 2.7%;
     line-height: 1.5;
 }
 
@@ -5777,7 +5857,8 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 5.4%;
+    container-type: size;
     /* Spine-side hinge crease + cover edge depth */
     box-shadow:
         inset -8px 0 10px -3px rgba(0, 0, 0, 0.6),
@@ -5790,11 +5871,11 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 .back-title {
     font-family: 'Lora', serif;
-    font-size: 0.8em;
+    font-size: 5.4cqw;
     font-weight: 700;
     color: var(--gold, #c9a84c);
     text-shadow: 0 0 6px rgba(201, 168, 76, 0.15);
-    margin: 0 0 4px;
+    margin: 0 0 2.7%;
     line-height: 1.3;
     text-align: center;
 }
@@ -5803,11 +5884,11 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     align-items: center;
     justify-content: center;
     flex: 1;
-    padding: 6px 8px;
-    margin: 4px 8px;
+    padding: 4.1% 7.6%;
+    margin: 2.7% 7.6%;
     text-align: center;
     background: linear-gradient(170deg, #c9a84c 0%, #a8873a 40%, #8b6e2f 100%);
-    border-radius: 3px;
+    border-radius: 2.9%;
     box-shadow:
         inset 0 1px 0 rgba(255,255,255,0.25),
         inset 0 -1px 0 rgba(0,0,0,0.2),
@@ -5815,7 +5896,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 .back-synopsis {
     font-family: 'Lora', serif;
-    font-size: 0.65em;
+    font-size: 4.4cqw;
     color: #1a1008;
     line-height: 1.6;
     margin: 0;
@@ -5823,7 +5904,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 .back-meta {
     font-family: 'Lora', serif;
-    font-size: 0.6em;
+    font-size: 4cqw;
     color: rgba(201, 168, 76, 0.25);
     margin-top: auto;
     text-align: center;
@@ -5839,7 +5920,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .back-content-overlay {
     position: absolute;
     inset: 0;
-    padding: 28px 8px 0;
+    padding: 19% 7.6% 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -5850,14 +5931,14 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     background: none;
     box-shadow: none;
     flex: 0 0 auto;
-    margin: 2px 6px;
+    margin: 1.4% 5.7%;
 }
 /* Per-starter synopsis position tuning */
-[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 56px; }
-[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 18px; }
+[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 38.1%; }
+[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 12.2%; }
 /* Text-only back covers need padding */
 .back-content:not(.back-content-overlay) {
-    padding: 16px 12px;
+    padding: 10.9% 11.4%;
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -6304,20 +6385,20 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     background: none;
 }
 #zoomBookContainer .back-title {
-    font-size: 1.05em;
+    font-size: 5.4cqw;
     font-weight: 700;
     color: var(--gold, #c9a84c);
     text-shadow: 0 0 10px rgba(201, 168, 76, 0.25);
     text-align: center;
-    margin-bottom: 8px;
+    margin-bottom: 3.8%;
     letter-spacing: 0.03em;
 }
 #zoomBookContainer .back-synopsis-box {
-    padding: 10px 14px;
-    margin: 6px 12px 6px;
+    padding: 4.8% 6.7%;
+    margin: 2.9% 5.7% 2.9%;
 }
 #zoomBookContainer .back-synopsis {
-    font-size: 0.74em;
+    font-size: 4.4cqw;
     color: #1a1008;
     line-height: 1.45;
     font-style: italic;
@@ -6325,11 +6406,11 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     margin: 0 auto;
 }
 #zoomBookContainer .back-meta {
-    font-size: 0.7em;
+    font-size: 4cqw;
     color: rgba(201, 168, 76, 0.35);
     margin-top: auto;
     text-align: center;
-    padding-top: 6px;
+    padding-top: 2.9%;
 }
 .zoom-cta {
     display: flex;
@@ -6357,50 +6438,9 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 
 /* ── Experimental Shelf — reserved top-center (column B, row 0) ── */
-.experimental-shelf-label {
-    font-family: 'Lora', serif;
-    font-variant: small-caps;
-    letter-spacing: 0.35em;
-    font-size: 0.7vw;
-    color: rgba(201, 168, 76, 0.45);
-    text-align: center;
-    position: relative;
-    z-index: 2;
-    margin-top: 168px;
-    margin-bottom: -12px;
-    pointer-events: none;
-    text-shadow:
-        0 0 6px rgba(201, 168, 76, 0.15),
-        0 1px 2px rgba(0, 0, 0, 0.6);
-}
-
-/* Gold back-wall on the experimental shelf — top shelf only */
+/* Experimental shelf row — no background */
 .experimental-shelf-row {
     position: relative;
-    background: linear-gradient(
-        180deg,
-        rgb(42, 33, 14) 0%,
-        rgb(50, 39, 16) 40%,
-        rgb(44, 34, 14) 80%,
-        rgb(36, 28, 12) 100%
-    ) !important;
-}
-.experimental-shelf-row::before {
-    content: '';
-    position: absolute;
-    inset: -20px -8% -6px;
-    background: linear-gradient(
-        180deg,
-        rgba(201, 168, 76, 0.10) 0%,
-        rgba(201, 168, 76, 0.18) 30%,
-        rgba(201, 168, 76, 0.14) 70%,
-        rgba(201, 168, 76, 0.06) 100%
-    );
-    border-top: 1px solid rgba(201, 168, 76, 0.20);
-    border-bottom: 1px solid rgba(201, 168, 76, 0.12);
-    border-radius: 2px;
-    z-index: 0;
-    pointer-events: none;
 }
 .experimental-shelf-row .library-book {
     position: relative;
@@ -13062,7 +13102,8 @@ textarea.fate-field {
 
 /* Base archetype card face styling — PNG has frame baked in, no CSS border */
 .archetype-card .sb-card-back,
-.archetype-card .sb-card-front {
+.archetype-card .sb-card-front,
+.playermask-card .sb-card-front {
     background-size: 102%; /* Slightly oversized to hide PNG edge irregularities */
     background-position: center;
     background-repeat: no-repeat;
@@ -13075,7 +13116,8 @@ textarea.fate-field {
    CARD EDGE MASKING — Handled via background-size: 102% (slightly oversized)
    and overflow: hidden on parent. No clip-path needed (breaks 3D transforms).
    ═══════════════════════════════════════════════════════════════════════════════ */
-.archetype-card {
+.archetype-card,
+.playermask-card {
     overflow: hidden; /* Clip any edge artifacts at card level */
 }
 
@@ -13084,35 +13126,23 @@ textarea.fate-field {
 }
 
 /* BACK CARDS — Black tarot backs (visible in grid) */
-.archetype-card .sb-card-back {
+.archetype-card .sb-card-back,
+.playermask-card .sb-card-back {
     background-image: url('/assets/card-art/cards/Romance-black-back.png');
 }
 
 /* FRONT CARDS — Gold tarot fronts (visible when zoomed/selected) */
-.archetype-card .sb-card-front[data-archetype="HEART_WARDEN"] {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-front-HeartWarden.png');
-}
-.archetype-card .sb-card-front[data-archetype="OPEN_VEIN"] {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-front-OpenVein.png');
-}
-.archetype-card .sb-card-front[data-archetype="SPELLBINDER"] {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-front-Spellbinder.png');
-}
-.archetype-card .sb-card-front[data-archetype="ARMORED_FOX"] {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-front-AFox.png');
-}
-.archetype-card .sb-card-front[data-archetype="DARK_VICE"] {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-front-DarkVice.png');
-}
-.archetype-card .sb-card-front[data-archetype="BEAUTIFUL_RUIN"] {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-front-BRuin.png');
-}
-.archetype-card .sb-card-front[data-archetype="ETERNAL_FLAME"] {
-    background-image: url('/assets/card-art/cards/Tarot-Gold-front-EternalFlame.png');
-}
+/* HEART_WARDEN front art is gender-aware — set inline by JS */
+/* OPEN_VEIN front art is gender-aware — set inline by JS */
+/* SPELLBINDER front art is gender-aware — set inline by JS */
+/* ARMORED_FOX front art is gender-aware — set inline by JS */
+/* DARK_VICE front art is gender-aware — set inline by JS */
+/* BEAUTIFUL_RUIN front art is gender-aware — set inline by JS */
+/* ETERNAL_FLAME front art is gender-aware — set inline by JS */
 
-/* Hide card name on archetype cards — PNG art has name baked in */
-.archetype-card .sb-card-title {
+/* Hide card name on archetype/playermask cards — PNG art has name baked in */
+.archetype-card .sb-card-title,
+.playermask-card .sb-card-title {
     display: none !important;
 }
 
@@ -13139,7 +13169,8 @@ textarea.fate-field {
 }
 
 /* Show description only when card is zoomed — scaled for larger card */
-.archetype-card.zoomed .archetype-printed-desc {
+.archetype-card.zoomed .archetype-printed-desc,
+.playermask-card.zoomed .archetype-printed-desc {
     display: block;
     font-size: 6px;
     line-height: 1.15;
@@ -13168,6 +13199,43 @@ textarea.fate-field {
 }
 .archetype-card.zoomed .sb-card-front[data-archetype="ETERNAL_FLAME"] .archetype-printed-desc {
     bottom: calc(22% - 10px);
+}
+
+/* ARCHETYPE EXEMPLARS — alternating crossfade with description */
+.archetype-exemplars {
+    display: none; /* Hidden in grid view (same as description) */
+    position: absolute;
+    bottom: 30%;
+    left: 8px;
+    right: 8px;
+    font-family: 'Lora', serif;
+    font-size: 7px;
+    line-height: 1.25;
+    color: rgba(15, 12, 8, 0.4);
+    text-align: center;
+    text-shadow: 0 0.5px 0 rgba(255, 235, 180, 0.35);
+    background: transparent;
+    padding: 4px 3px;
+    border-radius: 2px;
+    opacity: 0;
+    transition: opacity 500ms ease;
+}
+.archetype-printed-desc {
+    transition: opacity 500ms ease;
+}
+.archetype-card.zoomed .archetype-exemplars,
+.playermask-card.zoomed .archetype-exemplars {
+    display: block;
+    font-size: 5.5px;
+    line-height: 1.15;
+    top: auto;
+    bottom: calc(22% - 15px);
+    left: 14px;
+    right: 14px;
+    padding: 3px 6px;
+    color: rgba(15, 12, 8, 0.5);
+    text-shadow: 0 0.5px 0 rgba(255, 235, 180, 0.35);
+    letter-spacing: 0.03em;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
