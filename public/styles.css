@@ -16693,6 +16693,7 @@ body.corridor-mode .sb-grid.corridor-section {
     flex: 1 1 auto !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
+    justify-content: flex-start !important;
     padding-bottom: 90px !important;
     scrollbar-width: none;
 }
