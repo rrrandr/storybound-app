@@ -1577,6 +1577,26 @@
         <img id="settingShotImg" src="" alt="Setting" style="display:none; width:100%;">
     </div>
 
+    <!-- Highlight Action Bar — floating Copy / Share / Bookmark on text selection -->
+    <div id="highlightActionBar" class="story-highlight-actions hidden">
+      <button class="highlight-action-btn" data-action="copy">&#x1F4CB; Copy</button>
+      <button class="highlight-action-btn" data-action="bookmark">&#x1F516; Bookmark</button>
+      <button class="highlight-action-btn story-highlight-quote-image" data-action="quoteimage">&#x1F5BC; Quote Image</button>
+    </div>
+
+    <!-- Bookmarks Button + Panel — below page nav -->
+    <div id="storyBookmarksWrap" class="story-bookmarks-wrap hidden">
+      <button id="storyBookmarksBtn" class="story-bookmarks-button">&#x1F516; Bookmarks</button>
+      <div id="storyBookmarksPanel" class="story-bookmarks-panel hidden">
+        <div class="story-bookmarks-header">
+          <span>Bookmarked Lines</span>
+          <button id="storyBookmarksPanelClose" class="story-bookmarks-close">&times;</button>
+        </div>
+        <ul id="storyBookmarksList" class="story-bookmarks-list"></ul>
+        <div id="storyBookmarksEmpty" class="story-bookmarks-empty">No bookmarks yet. Highlight text in the scene to save lines.</div>
+      </div>
+    </div>
+
     <div class="page-nav-controls" id="pageNavControls">
         <button class="page-nav-btn" id="prevPageBtn" disabled>
             <span>←</span> Previous

@@ -947,6 +947,24 @@
         const base = sel.split(' > ').pop();
         card.querySelectorAll(base).forEach(decorateEl);
       });
+
+      // Override overflow: hidden on zoomed fate card faces so all elements
+      // (petition suggestions, overlays) are visible during design mode
+      if (card.classList.contains('petition-zoomed') || card.classList.contains('zoomed')) {
+        ['.front', '.back', '.inner', '.petition-zoom-overlay', '.petition-top-zone'].forEach(sel => {
+          const container = card.querySelector(sel);
+          if (container && getComputedStyle(container).overflow !== 'visible') {
+            forceStyle(container, 'overflow', 'visible');
+            overflowOverrides.push(container);
+          }
+        });
+        // Ensure petition-zoom-overlay is pointer-events:auto in design mode
+        const overlay = card.querySelector('.petition-zoom-overlay');
+        if (overlay && getComputedStyle(overlay).pointerEvents === 'none') {
+          forceStyle(overlay, 'pointer-events', 'auto');
+          overlay.__designWasPointerNone = true;
+        }
+      }
     });
   }
 

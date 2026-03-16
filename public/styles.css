@@ -1914,6 +1914,14 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 }
 #storyText p { margin-bottom: 1.5em; }
 
+/* Gold selection highlight inside story text */
+.story-pages-container ::selection {
+    background: rgba(212, 175, 55, 0.25);
+}
+.story-pages-container ::-moz-selection {
+    background: rgba(212, 175, 55, 0.25);
+}
+
 /* PAGINATED STORY PAGES */
 .story-pages-container {
     position: relative;
@@ -8148,7 +8156,7 @@ select {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
                 0 0 30px rgba(255, 105, 180, 0.3);
     outline: 1px solid rgba(218, 165, 32, 0.6);
-    outline-offset: -1px;
+    outline-offset: -3px;
 }
 
 .card h3 { margin:0 0 5px; color:#ff6b6b; font-size:1.1em; font-family:'lust-script-display',serif; }
@@ -8340,6 +8348,174 @@ select {
     font-size: 1em;
 }
 @keyframes toastFadeInOut { 0%{opacity:0; transform:translate(-50%, calc(-50% + 20px));} 10%{opacity:1; transform:translate(-50%, -50%);} 90%{opacity:1;} 100%{opacity:0;} }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   HIGHLIGHT ACTION BAR — Floating Copy / Share / Bookmark on text selection
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.story-highlight-actions {
+    position: absolute;
+    z-index: 9500;
+    display: flex;
+    gap: 2px;
+    background: #0d0d0d;
+    border: 1px solid rgba(201, 168, 76, 0.5);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.8);
+    padding: 4px;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+}
+.story-highlight-actions.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.story-highlight-actions.hidden {
+    display: none;
+}
+.highlight-action-btn {
+    background: transparent;
+    border: none;
+    color: var(--gold, #d4a843);
+    font-size: 0.78em;
+    padding: 6px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+    border-radius: 4px;
+    font-family: 'Lora', serif;
+    transition: background 0.15s ease;
+}
+.highlight-action-btn:hover {
+    background: rgba(201, 168, 76, 0.15);
+}
+.highlight-action-btn:active {
+    background: rgba(201, 168, 76, 0.25);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   BOOKMARKS BUTTON + PANEL — Scene line bookmarks
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.story-bookmarks-wrap {
+    text-align: center;
+    margin: 8px auto 0;
+    position: relative;
+    max-width: 860px;
+}
+.story-bookmarks-wrap.hidden { display: none; }
+
+.story-bookmarks-button {
+    background: transparent;
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    color: var(--gold, #d4a843);
+    font-family: 'Lora', serif;
+    font-size: 0.8em;
+    padding: 5px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+.story-bookmarks-button:hover {
+    border-color: rgba(201, 168, 76, 0.6);
+    background: rgba(201, 168, 76, 0.08);
+}
+
+.story-bookmarks-panel {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 500px;
+    max-height: 320px;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #1a1a1a 0%, #0d0d0d 100%);
+    border: 1px solid rgba(201, 168, 76, 0.4);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.7);
+    margin-bottom: 8px;
+    z-index: 9000;
+    scrollbar-width: none;
+}
+.story-bookmarks-panel.hidden { display: none; }
+.story-bookmarks-panel::-webkit-scrollbar { display: none; }
+
+.story-bookmarks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+    color: var(--gold, #d4a843);
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    font-variant: small-caps;
+    letter-spacing: 0.15em;
+    position: sticky;
+    top: 0;
+    background: #1a1a1a;
+    z-index: 1;
+}
+.story-bookmarks-close {
+    background: transparent;
+    border: none;
+    color: var(--gold, #d4a843);
+    font-size: 1.3em;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.story-bookmarks-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.story-bookmarks-list li {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.story-bookmarks-list li:hover {
+    background: rgba(201, 168, 76, 0.08);
+}
+.story-bookmarks-list li:last-child { border-bottom: none; }
+
+.story-bookmark-scene {
+    font-size: 0.7em;
+    color: rgba(201, 168, 76, 0.6);
+    font-variant: small-caps;
+    letter-spacing: 0.1em;
+    margin-bottom: 3px;
+}
+.story-bookmark-text {
+    font-size: 0.82em;
+    color: rgba(255, 255, 255, 0.8);
+    font-style: italic;
+    line-height: 1.4;
+    font-family: var(--font-story, 'Lora', serif);
+}
+.story-bookmark-remove {
+    float: right;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.25);
+    font-size: 0.9em;
+    cursor: pointer;
+    padding: 0 2px;
+    margin-left: 8px;
+}
+.story-bookmark-remove:hover { color: rgba(255, 100, 100, 0.7); }
+
+.story-bookmarks-empty {
+    padding: 20px 14px;
+    text-align: center;
+    font-size: 0.78em;
+    color: rgba(255, 255, 255, 0.35);
+    font-style: italic;
+}
 
 /* LOADING BAR — Golden ceremonial glow */
 #loadingOverlayInner {
@@ -8643,11 +8819,11 @@ select {
 .petition-fate-card.petition-zoomed .back {
   border: none;
 }
-/* Gold outline: counteract scale so it stays 1px visual */
+/* Gold outline: counteract scale so it stays 1px visual, inset -2px to hug card edge */
 .petition-fate-card.petition-zoomed .inner {
-  border-width: calc(1px / var(--petition-scale, 1)) !important;
-  border-style: solid !important;
-  border-color: rgba(218,165,32,0.6) !important;
+  border: none !important;
+  outline: calc(1px / var(--petition-scale, 1)) solid rgba(218,165,32,0.6) !important;
+  outline-offset: calc(-3px / var(--petition-scale, 1)) !important;
   border-radius: 12px !important;
 }
 
@@ -8878,6 +9054,10 @@ select {
 .petition-zoom-overlay .petition-fortune-row { display: none; }
 
 /* ── Petition zoom — Card Designer position overrides ── */
+#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay {
+    right: auto; bottom: auto;
+    top: 30px; left: 13px;
+}
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
     right: auto; bottom: auto;
     top: 154.5px; left: 18px;
@@ -13162,6 +13342,7 @@ textarea.fate-field {
 .archetype-card,
 .playermask-card {
     overflow: hidden; /* Clip any edge artifacts at card level */
+    border-radius: 10px; /* Match face border-radius for consistent clipping */
 }
 
 .character-tarot-card {
@@ -13186,10 +13367,11 @@ textarea.fate-field {
 /* BEAUTIFUL_RUIN front art is gender-aware — set inline by JS */
 /* ETERNAL_FLAME front art is gender-aware — set inline by JS */
 
-/* Gold outline on player mask cards — hides JPG white corner artifacts */
+/* Gold outline on player mask cards — rounded to match card art corners, hides JPG white artifacts */
 .playermask-card .sb-card-face {
-    outline: 1px solid rgba(201, 168, 76, 0.6);
-    outline-offset: -1px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.6);
 }
 
 /* Hide card name on archetype/playermask cards — PNG art has name baked in */
@@ -13846,7 +14028,11 @@ textarea.fate-field {
     align-items: center;
     justify-content: center;
     container-type: inline-size; /* Enable cqi units for proportional text scaling */
-    padding: 8px;
+    /* Horizontal padding MUST be percentage (not px) so content-box width stays a
+       fixed fraction of card width.  cqi resolves against content-box, so fixed-px
+       padding makes cqi scale non-linearly as the card resizes.
+       8px / 168px max-width = 4.762% */
+    padding: 8px 4.762%;
     box-sizing: border-box;
 }
 
@@ -14334,7 +14520,8 @@ body.guided-fate-autoplay .card-gleam-layer {
     border: none;
     border-radius: 8px;
     justify-content: center;
-    padding: 8px 10px;
+    /* 10px / 168px = 5.952%  — proportional so cqi stays linear at all card widths */
+    padding: 8px 5.952%;
     outline: 1px solid rgba(218, 165, 32, 0.6);
     outline-offset: -1px;
 }
@@ -14349,7 +14536,7 @@ body.guided-fate-autoplay .card-gleam-layer {
     border: none;
     border-radius: 8px;
     justify-content: center;
-    padding: 8px 10px;
+    padding: 8px 5.952%;
     outline: 1px solid rgba(218, 165, 32, 0.6);
     outline-offset: -1px;
 }
@@ -15168,7 +15355,7 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     outline: 1px solid rgba(218, 165, 32, 0.6);
-    outline-offset: -1px;
+    outline-offset: -3px;
 }
 .sb-card.zoomed .sb-card-back {
     border-radius: 8px;
@@ -15181,7 +15368,7 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
     border: none;
     outline: 1px solid rgba(218, 165, 32, 0.6);
-    outline-offset: -1px;
+    outline-offset: -3px;
 }
 
 /* ZOOMED ARCHETYPE/MASK: Allow sparkles to escape card bounds */
@@ -16487,6 +16674,32 @@ body.corridor-mode .sb-grid.corridor-section {
    These elements share one corridor but should NOT each get 100vh
    ═══════════════════════════════════════════════════════════════════════════════ */
 
+/* Identity (character naming) title — not full viewport, just centered text */
+#identitySectionTitle.corridor-section {
+    min-height: auto !important;
+    max-height: auto !important;
+    padding: 0 !important;
+    margin-bottom: 8px !important;
+    display: block !important;
+    flex-direction: unset !important;
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+}
+
+/* Character section row — scrollable, not locked to viewport */
+#characterSectionRow.corridor-section {
+    min-height: auto !important;
+    max-height: none !important;
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-bottom: 90px !important;
+    scrollbar-width: none;
+}
+#characterSectionRow.corridor-section::-webkit-scrollbar {
+    display: none;
+}
+
 /* Player mask + Storybeau section titles — not full viewport, just centered text */
 #playerMaskSectionTitle.corridor-section,
 #archetypeSectionTitle.corridor-section {
@@ -16951,6 +17164,7 @@ body.corridor-mode #flowRowDynamic.corridor-section {
 }
 
 /* Archetype sub-sections share a stage — only the grid should flex-grow */
+body.corridor-mode #playerMaskSectionTitle.corridor-section,
 body.corridor-mode #archetypeSectionTitle.corridor-section {
     flex: 0 0 auto !important;
     overflow-y: visible !important;
@@ -16961,6 +17175,19 @@ body.corridor-mode #archetypeSelectionSummary.corridor-section {
     flex: 0 0 auto !important;
     padding-bottom: 0 !important;
     overflow-y: visible !important;
+}
+
+/* Identity / Character Naming sub-sections share a stage — title shrinks, row grows */
+body.corridor-mode #identitySectionTitle.corridor-section {
+    flex: 0 0 auto !important;
+    overflow-y: visible !important;
+    padding-bottom: 0 !important;
+}
+body.corridor-mode #characterSectionRow.corridor-section {
+    flex: 1 1 auto !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    justify-content: flex-start !important;
 }
 
 /* POV sub-sections share a stage — title shrinks, grid grows */
@@ -20082,7 +20309,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── POV — Card Designer locked positions (grid) ── */
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.02cqi; left: 12.5cqi; width: 69.05cqi; font-size: 7.14cqi;
+    top: -17.57cqi; left: 11.49cqi; width: 83.78cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20090,7 +20317,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -17.26cqi; left: 11.9cqi; width: 69.05cqi; font-size: 7.14cqi;
+    top: -18.92cqi; left: 12.16cqi; width: 85.14cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20098,7 +20325,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -17.26cqi; left: 11.31cqi; width: 70.24cqi; font-size: 7.14cqi;
+    top: -19.59cqi; left: 10.81cqi; width: 85.14cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20114,7 +20341,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -16.07cqi; left: 11.31cqi; width: 69.05cqi; font-size: 7.14cqi;
+    top: -11.49cqi; left: 10.81cqi; width: 86.49cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20122,7 +20349,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -16.67cqi; left: 11.31cqi; width: 69.05cqi; font-size: 7.14cqi;
+    top: 48.65cqi; left: 12.84cqi; width: 78.38cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20337,23 +20564,23 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 60.14cqi; left: 14.19cqi; width: 79.73cqi; font-size: 8.11cqi;
+    top: 52.98cqi; left: 12.5cqi; width: 70.24cqi; font-size: 7.14cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 172.97cqi; left: 40.54cqi; width: 32.43cqi; font-size: 8.78cqi;
+    top: 152.38cqi; left: 35.71cqi; width: 28.57cqi; font-size: 7.74cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 52.03cqi; left: 14.19cqi; width: 79.73cqi; font-size: 8.11cqi;
+    top: 45.83cqi; left: 12.5cqi; width: 70.24cqi; font-size: 7.14cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.65cqi; left: 41.89cqi; width: 28.72cqi; font-size: 8.78cqi;
+    top: 152.98cqi; left: 36.9cqi; width: 25.3cqi; font-size: 7.74cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 58.11cqi; left: 13.51cqi; width: 78.38cqi; font-size: 8.11cqi;
+    top: 51.19cqi; left: 11.9cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
