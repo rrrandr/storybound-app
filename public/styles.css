@@ -1481,6 +1481,15 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     flex-shrink: 1;
 }
 
+/* Identity row needs column stacking: cards row, reinc section, echo strip */
+#characterSectionRow.story-shape-row {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
 /* Continue button wrapper - hidden, control plane owns Continue now */
 #characterSectionRow > .character-continue-wrapper {
     display: none;
@@ -13129,6 +13138,9 @@ textarea.fate-field {
 .archetype-card .sb-card-back,
 .playermask-card .sb-card-back {
     background-image: url('/assets/card-art/cards/Romance-black-back.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 /* FRONT CARDS — Gold tarot fronts (visible when zoomed/selected) */
@@ -13139,6 +13151,12 @@ textarea.fate-field {
 /* DARK_VICE front art is gender-aware — set inline by JS */
 /* BEAUTIFUL_RUIN front art is gender-aware — set inline by JS */
 /* ETERNAL_FLAME front art is gender-aware — set inline by JS */
+
+/* Gold outline on player mask cards — hides JPG white corner artifacts */
+.playermask-card .sb-card-face {
+    outline: 1px solid rgba(201, 168, 76, 0.6);
+    outline-offset: -1px;
+}
 
 /* Hide card name on archetype/playermask cards — PNG art has name baked in */
 .archetype-card .sb-card-title,
@@ -13188,16 +13206,20 @@ textarea.fate-field {
 }
 
 /* Per-archetype description nudges (+5px = up from default 22% - 15px) */
-.archetype-card.zoomed .sb-card-front[data-archetype="SPELLBINDER"] .archetype-printed-desc {
+.archetype-card.zoomed .sb-card-front[data-archetype="SPELLBINDER"] .archetype-printed-desc,
+.playermask-card.zoomed .sb-card-front[data-archetype="SPELLBINDER"] .archetype-printed-desc {
     bottom: calc(22% - 16px);
 }
-.archetype-card.zoomed .sb-card-front[data-archetype="ARMORED_FOX"] .archetype-printed-desc {
+.archetype-card.zoomed .sb-card-front[data-archetype="ARMORED_FOX"] .archetype-printed-desc,
+.playermask-card.zoomed .sb-card-front[data-archetype="ARMORED_FOX"] .archetype-printed-desc {
     bottom: calc(22% - 10px);
 }
-.archetype-card.zoomed .sb-card-front[data-archetype="DARK_VICE"] .archetype-printed-desc {
+.archetype-card.zoomed .sb-card-front[data-archetype="DARK_VICE"] .archetype-printed-desc,
+.playermask-card.zoomed .sb-card-front[data-archetype="DARK_VICE"] .archetype-printed-desc {
     bottom: calc(22% - 8px);
 }
-.archetype-card.zoomed .sb-card-front[data-archetype="ETERNAL_FLAME"] .archetype-printed-desc {
+.archetype-card.zoomed .sb-card-front[data-archetype="ETERNAL_FLAME"] .archetype-printed-desc,
+.playermask-card.zoomed .sb-card-front[data-archetype="ETERNAL_FLAME"] .archetype-printed-desc {
     bottom: calc(22% - 10px);
 }
 
@@ -13236,6 +13258,19 @@ textarea.fate-field {
     color: rgba(15, 12, 8, 0.5);
     text-shadow: 0 0.5px 0 rgba(255, 235, 180, 0.35);
     letter-spacing: 0.03em;
+}
+/* Per-archetype exemplar nudges (up 5px from default for cards with lower gold zones) */
+.archetype-card.zoomed .sb-card-front[data-archetype="HEART_WARDEN"] .archetype-exemplars,
+.playermask-card.zoomed .sb-card-front[data-archetype="HEART_WARDEN"] .archetype-exemplars,
+.archetype-card.zoomed .sb-card-front[data-archetype="BEAUTIFUL_RUIN"] .archetype-exemplars,
+.playermask-card.zoomed .sb-card-front[data-archetype="BEAUTIFUL_RUIN"] .archetype-exemplars,
+.archetype-card.zoomed .sb-card-front[data-archetype="SPELLBINDER"] .archetype-exemplars,
+.playermask-card.zoomed .sb-card-front[data-archetype="SPELLBINDER"] .archetype-exemplars,
+.archetype-card.zoomed .sb-card-front[data-archetype="OPEN_VEIN"] .archetype-exemplars,
+.playermask-card.zoomed .sb-card-front[data-archetype="OPEN_VEIN"] .archetype-exemplars,
+.archetype-card.zoomed .sb-card-front[data-archetype="ARMORED_FOX"] .archetype-exemplars,
+.playermask-card.zoomed .sb-card-front[data-archetype="ARMORED_FOX"] .archetype-exemplars {
+    bottom: calc(22% - 10px);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -15103,24 +15138,28 @@ body.guided-fate-autoplay .card-gleam-layer {
 }
 
 /* ARCHETYPE ZOOMED CARD — No glow, clean presentation */
-.archetype-card.zoomed .sb-card-front {
+.archetype-card.zoomed .sb-card-front,
+.playermask-card.zoomed .sb-card-front {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
     border: none;
     outline: 1px solid rgba(218, 165, 32, 0.6);
     outline-offset: -1px;
 }
 
-/* ZOOMED ARCHETYPE: Allow sparkles to escape card bounds */
-.archetype-card.zoomed {
+/* ZOOMED ARCHETYPE/MASK: Allow sparkles to escape card bounds */
+.archetype-card.zoomed,
+.playermask-card.zoomed {
     overflow: visible;
 }
-.archetype-card.zoomed .sb-card-front {
+.archetype-card.zoomed .sb-card-front,
+.playermask-card.zoomed .sb-card-front {
     overflow: visible;
 }
 
 
-/* ARCHETYPE EDGE SPARKLES — Subtle particles around zoomed card */
-.archetype-card.zoomed::before {
+/* ARCHETYPE/MASK EDGE SPARKLES — Subtle particles around zoomed card */
+.archetype-card.zoomed::before,
+.playermask-card.zoomed::before {
     content: '';
     position: absolute;
     inset: -8px;
@@ -16410,29 +16449,36 @@ body.corridor-mode .sb-grid.corridor-section {
    These elements share one corridor but should NOT each get 100vh
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-/* Storybeau section title — not full viewport, just centered text */
+/* Player mask + Storybeau section titles — not full viewport, just centered text */
+#playerMaskSectionTitle.corridor-section,
 #archetypeSectionTitle.corridor-section {
     min-height: auto !important;
     max-height: auto !important;
     padding: 0 !important;
+    margin-bottom: 8px !important;
     display: block !important;
     flex-direction: unset !important;
 }
 
-/* Archetype grid — NOT full viewport, grid owns its height */
+/* Archetype/mask grid — NOT full viewport, grid owns its height */
 #archetypeCardGrid.corridor-section,
+#playerMaskCardGrid.corridor-section,
 .archetype-grid-8.corridor-section {
     min-height: auto !important;
     max-height: none !important;
     flex: 1 1 auto !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     align-content: start !important;
     padding-bottom: 90px !important; /* Space for fixed control plane (Proceed button) */
     scrollbar-width: none; /* Firefox */
-    /* Grid display already set in .archetype-grid-8 */
+    -ms-overflow-style: none; /* IE/Edge */
 }
-.archetype-grid-8.corridor-section::-webkit-scrollbar {
+.archetype-grid-8.corridor-section::-webkit-scrollbar,
+#playerMaskCardGrid.corridor-section::-webkit-scrollbar {
     display: none; /* Chrome/Safari */
+    width: 0;
+    height: 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
