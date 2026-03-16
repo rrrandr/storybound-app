@@ -17047,25 +17047,24 @@ body.corridor-mode .sb-grid.corridor-section {
     transform: translateY(-50%);
     width: 40px;
     height: 80px;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(218, 165, 32, 0.3);
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid rgba(218, 165, 32, 0.5);
     color: var(--gold);
     font-size: 28px;
     font-weight: 300;
     cursor: pointer;
-    z-index: 600;
+    z-index: 9050;
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 0.4;
+    opacity: 0.7;
     transition: opacity 0.2s ease, background 0.2s ease;
-    /* Subtle, not intrusive */
     pointer-events: auto;
 }
 
 .corridor-nav-arrow:hover {
-    opacity: 0.9;
-    background: rgba(0, 0, 0, 0.7);
+    opacity: 1;
+    background: rgba(10, 10, 10, 0.85);
     border-color: var(--gold);
 }
 
@@ -17436,6 +17435,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 .authorship-choice-row > .flow-continue-btn:not(#continueButton),
 #continueFromAuthorship,
 #continueFromCharacters,
+#continueFromPlayerMask,
 #continueFromStorybeau,
 #continueFromWorld,
 #continueFromTone,
