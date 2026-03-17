@@ -70,6 +70,7 @@
     <div id="vaultAuthRow" class="vault-auth-row" style="text-align:center; margin-bottom:8px;"></div>
     <div class="vault-tabs">
       <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="SavedStories">Saved Stories</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
     </div>
@@ -91,6 +92,13 @@
       <div class="treasury-row"><span class="treasury-label">Tempt Fates</span><span class="treasury-value" id="treasuryTemptFates">—</span></div>
     </div>
     <button id="menuReincarnationsBtn" class="sb-btn-png sm">Reincarnations</button>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── SAVED STORIES SUB-PANEL ── -->
+  <div id="vaultSavedStories" class="vault-sub hidden">
+    <div class="vault-sub-title">Saved Stories</div>
+    <div id="vaultSavedStoriesList"></div>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
@@ -1884,6 +1892,20 @@
     <div id="romancePrefStatus" style="font-size:0.75em; color:#888; margin-top:4px;"></div>
 
     <button class="sb-btn-png xs" onclick="window.closeProfileModal()" style="margin-top:15px;">Close</button>
+  </div>
+</div>
+
+<!-- ── STORY LIMIT MODAL ── -->
+<div id="storyLimitModal" class="overlay hidden" style="z-index:10001;">
+  <div class="box story-limit-box">
+    <h3 style="color:var(--gold,#c9a84c); margin-top:0;">Story Limit Reached</h3>
+    <p id="storyLimitMsg" style="color:var(--ink,#ddd); font-family:'Lora',serif; font-size:0.9em; margin:8px 0 16px;"></p>
+    <div id="storyLimitList" style="margin-bottom:18px;"></div>
+    <div class="story-limit-purchase-row">
+      <button class="sb-btn-png sm" onclick="document.getElementById('storyLimitModal').classList.add('hidden'); window.showPaywall('unlock');">Get Storypass</button>
+      <button class="sb-btn-png sm" onclick="document.getElementById('storyLimitModal').classList.add('hidden'); window.showPaywall('sub_only');">Subscribe</button>
+    </div>
+    <button class="sb-btn-png xs" onclick="document.getElementById('storyLimitModal').classList.add('hidden');" style="margin-top:14px;">Close</button>
   </div>
 </div>
 

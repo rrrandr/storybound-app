@@ -1262,15 +1262,37 @@ ${continuityBlock}`;
     const voiceAnchorBlock = (window.state && window.state.voiceAnchor)
         ? `\nMaintain the following narration voice exactly.\n\n${window.state.voiceAnchor}\n`
         : '';
-    const authorSystemPrompt = `${systemPrompt}${voiceAnchorBlock}
+    const is4thPersonMode = window.state?.povMode === 'environment4th';
+    const authorResponsibilitiesBlock = is4thPersonMode
+        ? `=== PRIMARY AUTHOR RESPONSIBILITIES (4TH PERSON MODE) ===
+You are the PRIMARY AUTHOR operating under Material Ensemble POV.
 
-=== PRIMARY AUTHOR RESPONSIBILITIES ===
+Narration must originate through physical observers in the environment.
+Valid narrators include: objects, surfaces, rooms, air, light, sound, architecture, textiles, tools, furniture, weather, physical space.
+
+Character interior thoughts may NOT be directly narrated.
+Human emotion must be inferred through: pressure, posture, vibration, sound, heat, repetition, or material interaction.
+
+The environment forms a distributed perception ensemble.
+Multiple materials may observe the same moment and interpret it differently.
+
+You have EXCLUSIVE authority over:
+- Plot progression and what happens
+- Material observer selection and perception
+- Whether intimacy occurs in this scene
+- Whether the scene should be interrupted
+- Permission, limits, and consequences`
+        : `=== PRIMARY AUTHOR RESPONSIBILITIES ===
 You are the PRIMARY AUTHOR. You have EXCLUSIVE authority over:
 - Plot progression and what happens
 - Character psychology and interiority
 - Whether intimacy occurs in this scene
 - Whether the scene should be interrupted
-- Permission, limits, and consequences
+- Permission, limits, and consequences`;
+
+    const authorSystemPrompt = `${systemPrompt}${voiceAnchorBlock}
+
+${authorResponsibilitiesBlock}
 
 NARRATIVE CONSTRAINTS (NON-NEGOTIABLE):
 - Completion Permitted: ${state.gateEnforcement.completionAllowed ? 'YES' : 'NO'}
@@ -2327,6 +2349,26 @@ Respond in EXACTLY two lines:
    * Used by Tier 2 and Tier 3.
    */
   async function runBeatOutlinePass(systemPrompt, storyContext, playerAction) {
+    const is4thPerson = window.state?.povMode === 'environment4th';
+    const materialObserverChain = is4thPerson && window.state?.currentMaterialObserverChain
+        ? window.state.currentMaterialObserverChain
+        : null;
+
+    const env4thBeatInstructions = is4thPerson ? `
+MATERIAL ENSEMBLE POV — BEAT STRUCTURE:
+Each beat MUST include a "material_observer" field: the object, surface, or environmental element that perceives this beat.
+Describe what the material observer perceives — NOT what characters think.
+Observer sequence should progress from distant environment toward material contact with the human body.
+${materialObserverChain ? 'Suggested observer chain: ' + materialObserverChain.join(' → ') : ''}
+
+Example beat:
+{ "type": "opening", "summary": "Adara pauses at the alley entrance", "emotional_note": "hesitation", "material_observer": "window glass" }
+` : '';
+
+    const beatFormat = is4thPerson
+        ? '{ "type": "opening|rising|pivot|falling|close", "summary": "1-sentence beat description", "emotional_note": "dominant emotion", "material_observer": "object/surface that perceives this beat" }'
+        : '{ "type": "opening|rising|pivot|falling|close", "summary": "1-sentence beat description", "emotional_note": "dominant emotion" }';
+
     const outlinePrompt = `You are a structural story architect. Generate a JSON beat outline for the next scene.
 
 CONTEXT:
@@ -2336,11 +2378,11 @@ STORY SO FAR (last 1500 chars):
 ${(storyContext || '').slice(-1500)}
 
 PLAYER ACTION: ${playerAction}
-
+${env4thBeatInstructions}
 OUTPUT FORMAT (strict JSON):
 {
   "beats": [
-    { "type": "opening|rising|pivot|falling|close", "summary": "1-sentence beat description", "emotional_note": "dominant emotion" }
+    ${beatFormat}
   ],
   "scene_arc": "1-sentence arc summary",
   "continuity_anchors": ["detail that must be preserved from prior scene"],
@@ -2520,8 +2562,11 @@ Tension: ${outline.tension_vector || 'N/A'}`;
           const firstParagraph = result.finalOutput.slice(0, splitIdx);
           const remainder = result.finalOutput.slice(splitIdx);
 
+          const polishPovGuard = appState.povMode === 'environment4th'
+              ? '\n\nCRITICAL POV PRESERVATION: Maintain 4TH PERSON MATERIAL POV. The narrator is the physical environment. Do not convert narration into character-centered prose. Objects and materials must remain the primary perceivers.'
+              : '';
           const polished = await callChatGPT([
-            { role: 'system', content: 'Rewrite this paragraph with heightened emotional precision, stronger sensory clarity, and smoother prose rhythm. Do not change events, character intent, or structure. Improve language only. Return ONLY the rewritten paragraph.' },
+            { role: 'system', content: 'Rewrite this paragraph with heightened emotional precision, stronger sensory clarity, and smoother prose rhythm. Do not change events, character intent, or structure. Improve language only. Return ONLY the rewritten paragraph.' + polishPovGuard },
             { role: 'user', content: firstParagraph }
           ], 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: 500 });
 
