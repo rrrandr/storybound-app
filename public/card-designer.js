@@ -850,6 +850,22 @@
       forceStyle(el, 'bottom', 'auto');
       forceStyle(el, 'right', 'auto');
       el.__designWasStatic = true; // ensure position: absolute is recorded in output
+    } else if (isZoomOverlayChild && (pos === 'absolute' || pos === 'relative')) {
+      // Petition/Tempt zoom children: snapshot current position so drag works
+      const parent = el.offsetParent || el.parentElement;
+      if (parent) {
+          const parentRect = parent.getBoundingClientRect();
+          const elRect = el.getBoundingClientRect();
+          const scale = getAncestorScale(el);
+          if (!el.style.top || el.style.top === 'auto') {
+              forceStyle(el, 'top', px((elRect.top - parentRect.top) / scale));
+          }
+          if (!el.style.left || el.style.left === 'auto') {
+              forceStyle(el, 'left', px((elRect.left - parentRect.left) / scale));
+          }
+          forceStyle(el, 'bottom', 'auto');
+          forceStyle(el, 'right', 'auto');
+      }
     } else if (!pos || pos === 'static') {
       forceStyle(el, 'position', 'relative');
       el.__designWasStatic = true;

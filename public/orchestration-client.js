@@ -1263,6 +1263,8 @@ ${continuityBlock}`;
         ? `\nMaintain the following narration voice exactly.\n\n${window.state.voiceAnchor}\n`
         : '';
     const is4thPersonMode = window.state?.povMode === 'environment4th';
+    const is5thPersonMode = window.state?.povMode === 'author5th';
+    const isLIPovMode = window.state?.povMode === 'loveInterestPOV';
     const authorResponsibilitiesBlock = is4thPersonMode
         ? `=== PRIMARY AUTHOR RESPONSIBILITIES (4TH PERSON MODE) ===
 You are the PRIMARY AUTHOR operating under Material Ensemble POV.
@@ -1279,6 +1281,43 @@ Multiple materials may observe the same moment and interpret it differently.
 You have EXCLUSIVE authority over:
 - Plot progression and what happens
 - Material observer selection and perception
+- Whether intimacy occurs in this scene
+- Whether the scene should be interrupted
+- Permission, limits, and consequences`
+        : is5thPersonMode
+        ? `=== PRIMARY AUTHOR RESPONSIBILITIES (5TH PERSON MODE) ===
+You are the PRIMARY AUTHOR operating under Fate / Story POV.
+
+The narrator is Fate — the shaping intelligence of the story.
+
+Narration should:
+- Anticipate consequences
+- Recognize narrative patterns
+- Occasionally misjudge or hesitate
+- Frame character action as part of unfolding inevitability
+
+Direct interior monologue should be minimized.
+Emotion should usually appear through Fate's interpretation of events, not raw character thoughts.
+
+Fate may: anticipate, regret, withhold, miscalculate, observe irony.
+Fate cannot directly control characters.
+
+You have EXCLUSIVE authority over:
+- Plot progression and what happens
+- Fate's narrative perspective and presence
+- Whether intimacy occurs in this scene
+- Whether the scene should be interrupted
+- Permission, limits, and consequences`
+        : isLIPovMode
+        ? `=== PRIMARY AUTHOR RESPONSIBILITIES (LOVE INTEREST POV) ===
+You are the PRIMARY AUTHOR. The narrator is the Love Interest, narrating in first person ("I").
+
+The narrator should reveal internal uncertainty, interpret the player character's actions, and include suppressed thoughts or emotional hesitation.
+The player character's inner thoughts remain unknown — inferred only through observation.
+
+You have EXCLUSIVE authority over:
+- Plot progression and what happens
+- Love Interest's internal perspective and voice
 - Whether intimacy occurs in this scene
 - Whether the scene should be interrupted
 - Permission, limits, and consequences`
@@ -1911,7 +1950,7 @@ MAIN PAIR RESTRICTION: Do not render consummation or escalation between the prim
       }
     }
 
-    // 4TH PERSON ENVIRONMENTAL POV — upstream alignment for renderer
+    // POV-specific upstream alignment for renderer
     const env4thBlock = (appState && appState.povMode === 'environment4th') ? `
 POV ALIGNMENT:
 This scene uses 4TH PERSON ENVIRONMENTAL POV.
@@ -1920,6 +1959,17 @@ All emotional insight must be mediated through sensory interaction (pressure, he
 Do NOT use direct interior cognition (e.g., "she knew", "he realized").
 Do NOT reference destiny, inevitability, or narrative structure.
 Keep narration embodied and environmental.
+` : (appState && appState.povMode === 'author5th') ? `
+POV ALIGNMENT — 5TH PERSON:
+Maintain Fate narration. Scenes should feel as if the Story itself is aware of patterns, inevitabilities, and mistakes forming.
+Avoid converting narration into standard third-person interior POV.
+Fate should appear intermittently but meaningfully — anticipating, recognizing, or miscalculating.
+Do NOT remove Fate's narrative presence from the scene.
+` : (appState && appState.povMode === 'loveInterestPOV') ? `
+POV ALIGNMENT — LOVE INTEREST POV:
+Narration must remain first-person from the Love Interest's perspective ("I").
+Do not convert narration into third-person. The player character is externally observed.
+Player internal thoughts are never narrated. Preserve first-person structure.
 ` : '';
 
     // Voice Anchor injection for renderer — maintains tonal consistency across models
@@ -1974,13 +2024,22 @@ ${esd.physicalBounds ? `Physical context: ${esd.physicalBounds}` : ''}`
       .replace(/\[CONSTRAINTS\][\s\S]*?\[\/CONSTRAINTS\]/g, '')
       .trim();
 
-    // 4TH PERSON ENVIRONMENTAL POV — continuity alignment for integration
+    // POV-specific continuity alignment for integration
     const env4thContinuity = (window.state && window.state.povMode === 'environment4th') ? `
 POV CONTINUITY:
 Maintain 4TH PERSON ENVIRONMENTAL POV throughout merged output.
 Ensure narration remains materially grounded — physical space as narrator.
 Remove any abstract mind-reading unless physically mediated.
 No destiny or inevitability language.
+` : (window.state && window.state.povMode === 'author5th') ? `
+POV CONTINUITY — 5TH PERSON:
+Preserve Fate narration from earlier passes.
+Do not remove or rewrite lines where Fate anticipates events, the Story comments on unfolding tension, or narrative irony or inevitability is acknowledged.
+The merged result must retain Fate as narrator.
+` : (window.state && window.state.povMode === 'loveInterestPOV') ? `
+POV CONTINUITY — LOVE INTEREST POV:
+Preserve first-person Love Interest narration throughout merged output.
+Do not convert "I" narration into third-person. Player character remains externally observed.
 ` : '';
 
     // Voice Anchor injection for integration pass — final authority must preserve voice
@@ -2354,6 +2413,8 @@ Respond in EXACTLY two lines:
         ? window.state.currentMaterialObserverChain
         : null;
 
+    const is5thPerson = window.state?.povMode === 'author5th';
+
     const env4thBeatInstructions = is4thPerson ? `
 MATERIAL ENSEMBLE POV — BEAT STRUCTURE:
 Each beat MUST include a "material_observer" field: the object, surface, or environmental element that perceives this beat.
@@ -2363,6 +2424,11 @@ ${materialObserverChain ? 'Suggested observer chain: ' + materialObserverChain.j
 
 Example beat:
 { "type": "opening", "summary": "Adara pauses at the alley entrance", "emotional_note": "hesitation", "material_observer": "window glass" }
+` : is5thPerson ? `
+FATE PERSPECTIVE — BEAT STRUCTURE:
+Each beat should consider what Fate notices about the situation.
+Possible Fate actions: recognizing a familiar pattern, anticipating a mistake, sensing tension building, observing characters move toward consequence.
+Beats may include brief Fate interpretation of events.
 ` : '';
 
     const beatFormat = is4thPerson
@@ -2429,7 +2495,10 @@ THEMATIC_THREADS: [active themes to weave — e.g., "power asymmetry, surveillan
 POV_CALIBRATION: [any POV-specific notes — Fate presence level, voyeuristic distance]
 PACING_NOTES: [beat-level pacing guidance]
 CONTINUITY_ALERTS: [anything the prose pass MUST NOT contradict]
-
+${window.state?.povMode === 'author5th' ? `
+FATE PRESENCE GUIDANCE:
+The story uses 5th Person (Fate) POV. POV_CALIBRATION should include Fate presence level.
+The story may reference patterns, inevitability, misjudgment, or irony. These references should feel observational, not controlling.` : ''}
 Be concise. This is injected into the prose generation prompt.`;
 
     const messages = [
@@ -2564,6 +2633,10 @@ Tension: ${outline.tension_vector || 'N/A'}`;
 
           const polishPovGuard = appState.povMode === 'environment4th'
               ? '\n\nCRITICAL POV PRESERVATION: Maintain 4TH PERSON MATERIAL POV. The narrator is the physical environment. Do not convert narration into character-centered prose. Objects and materials must remain the primary perceivers.'
+              : appState.povMode === 'author5th'
+              ? '\n\nCRITICAL POV PRESERVATION: Maintain Fate narration. Do not rewrite Fate\'s presence into neutral narration. If the opening line references The Story, Fate, or narrative inevitability, preserve that structure.'
+              : appState.povMode === 'loveInterestPOV'
+              ? '\n\nCRITICAL POV PRESERVATION: Maintain first-person Love Interest narration. Do not convert "I" voice into third-person. The player character must remain externally observed.'
               : '';
           const polished = await callChatGPT([
             { role: 'system', content: 'Rewrite this paragraph with heightened emotional precision, stronger sensory clarity, and smoother prose rhythm. Do not change events, character intent, or structure. Improve language only. Return ONLY the rewritten paragraph.' + polishPovGuard },

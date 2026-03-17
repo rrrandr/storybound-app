@@ -8862,7 +8862,7 @@ select {
 /* ── Top Zone: suggestion columns / custom text — positioned above "What would you change?" ── */
 .petition-top-zone {
   position: absolute;
-  top: 15px; left: 13px; right: 5%;
+  top: 6%; left: 9%; right: 5%;
   height: 38%;
   display: flex;
   flex-direction: column;
@@ -8961,7 +8961,7 @@ select {
 /* ── Lower Zone: fortune tier buttons — fits inside area below "Use Fortunes" ── */
 .petition-lower-zone {
   position: absolute;
-  top: 154.5px; left: 24px; right: 6%;
+  top: 62%; left: 16.5%; right: 6%;
   bottom: 18%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -9056,25 +9056,24 @@ select {
 /* ── Petition zoom — Card Designer position overrides ── */
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay {
     right: auto; bottom: auto;
-    top: 30px; left: 13px;
+    top: 12%; left: 9%;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
     right: auto; bottom: auto;
-    top: 154.5px; left: 18px;
+    top: 62%; left: 12.5%;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-write-toggle {
     right: auto; bottom: auto;
-    top: 29.5px; left: 0.5px;
+    top: 75%; left: 0.5%;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-suggest-panel {
     right: auto; bottom: auto;
-    top: 1px; left: 7px;
-    width: 91px;
-    /* height auto — suggestion list scrolls internally */
+    top: 1%; left: 5%;
+    width: 90%;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone {
     right: auto; bottom: auto;
-    top: 15px; left: 8px;
+    top: 6%; left: 5.5%;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
