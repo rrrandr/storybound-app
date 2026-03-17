@@ -22300,6 +22300,478 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     margin: 8px 0;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIBRARY CONCIERGE — Diegetic presence in the Private Library scene
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Container — right side of shelves ── */
+.library-concierge {
+    position: absolute;
+    right: 4vw;
+    bottom: 12vh;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+#vaultLibraryScreen:not(.hidden) .library-concierge {
+    opacity: 1;
+}
+
+/* ── Mask / Figure ── */
+.lc-figure {
+    width: 80px;
+    height: 120px;
+    margin-bottom: 6px;
+    position: relative;
+}
+.lc-mask {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 10%;
+    border-radius: 4px;
+    opacity: 0.85;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
+    animation: lcMaskBreathe 12s ease-in-out infinite;
+    transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
+/* ── CONCIERGE MOTION CONSTRAINTS ──
+   ALLOWED: breathing (6-10s), one-time nod, one-time straighten, glow.
+   FORBIDDEN: loops beyond breathing, gestures, cursor tracking, repositioning. */
+
+/* Idle breathing — scale 1→1.005→1, 12s cycle, barely perceptible */
+@keyframes lcMaskBreathe {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.005); }
+}
+
+/* Activation highlight — faint mask glow, NO motion change */
+.lc-mask.lc-activated {
+    opacity: 1;
+    filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5))
+            drop-shadow(0 0 8px rgba(201, 162, 78, 0.25));
+}
+
+/* Response glow pulse — subtle gold wash while concierge "speaks" */
+@keyframes lcResponseGlow {
+    0%, 100% { filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5))
+                       drop-shadow(0 0 8px rgba(201, 162, 78, 0.25)); }
+    50%      { filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5))
+                       drop-shadow(0 0 12px rgba(201, 162, 78, 0.35)); }
+}
+.lc-mask.lc-responding {
+    animation: lcResponseGlow 2.4s ease-in-out 1;
+}
+
+/* Welcome nod — ONE-TIME, 2-3° dip, returns to neutral */
+@keyframes lcNod {
+    0%   { transform: scale(1) rotate(0deg); }
+    30%  { transform: scale(1) rotate(2.5deg); }
+    100% { transform: scale(1) rotate(0deg); }
+}
+.lc-mask.lc-nodding {
+    animation: lcNod 0.6s ease-in-out forwards;
+}
+
+/* Bell activation — ONE-TIME, 1px lift, returns to neutral */
+@keyframes lcStraighten {
+    0%   { transform: scale(1); }
+    40%  { transform: translateY(-1px) scale(1); }
+    100% { transform: scale(1); }
+}
+.lc-mask.lc-straighten {
+    animation: lcStraighten 0.5s ease-out forwards;
+}
+
+/* ── Floating text — no speech bubble ── */
+.lc-floating-text {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.82em;
+    color: rgba(218, 186, 120, 0.9);
+    letter-spacing: 0.06em;
+    text-align: center;
+    min-height: 1.4em;
+    margin-bottom: 8px;
+    opacity: 0;
+    transform: translateY(3px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    text-shadow: 0 1px 8px rgba(0,0,0,0.6);
+    pointer-events: none;
+}
+.lc-floating-text.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ── Podium ── */
+.lc-podium {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: auto;
+}
+.lc-podium-surface {
+    width: 64px;
+    height: 14px;
+    background: linear-gradient(180deg, #1a1410 0%, #0e0a07 100%);
+    border-radius: 4px 4px 0 0;
+    border-top: 1px solid rgba(201, 162, 78, 0.25);
+    border-left: 1px solid rgba(201, 162, 78, 0.12);
+    border-right: 1px solid rgba(201, 162, 78, 0.12);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 0;
+    position: relative;
+    /* Slight tilt toward viewer */
+    transform: perspective(200px) rotateX(6deg);
+}
+.lc-podium-body {
+    width: 56px;
+    height: 32px;
+    background: linear-gradient(180deg, #141010 0%, #0a0806 60%, #060504 100%);
+    border-left: 1px solid rgba(201, 162, 78, 0.1);
+    border-right: 1px solid rgba(201, 162, 78, 0.1);
+    border-bottom: 1px solid rgba(201, 162, 78, 0.18);
+    border-radius: 0 0 3px 3px;
+    position: relative;
+    overflow: hidden;
+}
+/* Art Deco inlay — thin gold geometric line */
+.lc-podium-inlay {
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 28px;
+    height: 18px;
+    border: 1px solid rgba(201, 162, 78, 0.15);
+    border-radius: 1px;
+}
+.lc-podium-inlay::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: 8px;
+    border-bottom: 1px solid rgba(201, 162, 78, 0.12);
+    border-left: 1px solid rgba(201, 162, 78, 0.08);
+    border-right: 1px solid rgba(201, 162, 78, 0.08);
+}
+
+/* ── Bell — diegetic object ── */
+.lc-bell {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    width: 48px;
+    height: 36px;
+    position: relative;
+    transform: translateY(-18px);
+    transition: transform 0.12s ease-out;
+    outline: none;
+}
+.lc-bell-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));
+    transition: filter 0.15s ease-out, transform 0.15s ease-out;
+}
+.lc-bell:hover .lc-bell-svg {
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4))
+            drop-shadow(0 0 6px rgba(201, 162, 78, 0.3));
+    transform: scale(1.02);
+}
+/* Bell depress on click */
+.lc-bell.lc-pressed {
+    transform: translateY(-15px);
+}
+
+/* Bell shimmer — every ~25s */
+.lc-bell-shimmer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 50%;
+}
+.lc-bell-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(245, 230, 163, 0.12) 40%,
+        rgba(245, 230, 163, 0.06) 60%,
+        transparent 100%
+    );
+    animation: lcBellShimmer 25s ease-in-out infinite;
+}
+@keyframes lcBellShimmer {
+    0%, 92%  { left: -100%; opacity: 0; }
+    95%      { opacity: 1; }
+    98%      { left: 200%; opacity: 0; }
+    100%     { left: -100%; opacity: 0; }
+}
+
+/* ── Summon vignette (library-local) ── */
+.lc-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.35) 100%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.lc-vignette.active {
+    opacity: 1;
+}
+
+/* ── Hide corner bell on library screen ── */
+#vaultLibraryScreen:not(.hidden) ~ #conciergeBell,
+body:has(#vaultLibraryScreen:not(.hidden)) #conciergeBell {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ── Responsive: smaller screens ── */
+@media (max-width: 768px) {
+    .library-concierge {
+        right: 2vw;
+        bottom: 10vh;
+    }
+    .lc-figure { width: 60px; height: 90px; }
+    .lc-podium-surface { width: 52px; }
+    .lc-podium-body { width: 44px; height: 26px; }
+    .lc-bell { width: 40px; height: 30px; transform: translateY(-15px); }
+    .lc-bell.lc-pressed { transform: translateY(-12px); }
+    .lc-floating-text { font-size: 0.72em; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONCIERGE BELL & PANEL (non-library screens)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Bell button ── */
+#conciergeBell {
+    position: fixed;
+    bottom: 18px;
+    left: 18px;
+    z-index: 10010;
+    width: 38px;
+    height: 38px;
+    padding: 3px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 0.3s ease, filter 0.3s ease;
+    filter: drop-shadow(0 0 0px transparent);
+}
+#conciergeBell:hover {
+    opacity: 1;
+    filter: drop-shadow(0 0 6px rgba(201, 162, 78, 0.45));
+}
+#conciergeBell .bell-icon {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Idle shimmer — every ~25s, subtle gold pulse */
+@keyframes bellShimmer {
+    0%, 92%  { filter: drop-shadow(0 0 0px transparent); opacity: 0.7; }
+    96%      { filter: drop-shadow(0 0 5px rgba(201, 162, 78, 0.35)); opacity: 0.85; }
+    100%     { filter: drop-shadow(0 0 0px transparent); opacity: 0.7; }
+}
+#conciergeBell:not(:hover) {
+    animation: bellShimmer 25s ease-in-out infinite;
+}
+
+/* ── Overlay (vignette dim) ── */
+#conciergeOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10015;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.08) 40%, rgba(0,0,0,0.40) 100%);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 6vh;
+}
+#conciergeOverlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ── Panel ── */
+#conciergePanel {
+    position: relative;
+    width: min(420px, 90vw);
+    background: rgba(18, 14, 10, 0.95);
+    border: 1px solid rgba(201, 162, 78, 0.35);
+    border-radius: 12px;
+    box-shadow: 0 0 24px rgba(201, 162, 78, 0.08), 0 8px 40px rgba(0,0,0,0.5);
+    padding: 28px 24px 18px;
+    text-align: center;
+    transform: translateY(20px);
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.4s ease;
+}
+#conciergeOverlay.visible #conciergePanel {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Close button */
+#conciergeClose {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: rgba(201, 162, 78, 0.45);
+    font-size: 1.3em;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+#conciergeClose:hover {
+    color: rgba(201, 162, 78, 0.8);
+}
+
+/* ── Floating mask ── */
+#conciergeMaskWrap {
+    width: 72px;
+    height: 108px;
+    margin: 0 auto 14px;
+    overflow: hidden;
+    border-radius: 6px;
+    position: relative;
+}
+#conciergeMask {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 15%;
+    opacity: 0;
+    transform: translateY(10px);
+    filter: none;
+    /* No continuous motion — concierge is still, not animated */
+}
+#conciergeOverlay.visible #conciergeMask {
+    opacity: 1;
+    /* 1px overshoot for physical arrival weight */
+    animation: panelMaskEntrance 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) 0.15s forwards;
+}
+@keyframes panelMaskEntrance {
+    0%   { opacity: 0; transform: translateY(10px); }
+    72%  { opacity: 1; transform: translateY(-1px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+/* Faint glow pulse while API response is pending */
+@keyframes panelMaskGlow {
+    0%, 100% { filter: none; }
+    50%      { filter: drop-shadow(0 0 10px rgba(201, 162, 78, 0.3)); }
+}
+#conciergeMask.panel-responding {
+    animation: panelMaskGlow 2.4s ease-in-out 1;
+}
+
+/* ── Response text ── */
+#conciergeResponse {
+    font-family: 'Lora', serif;
+    font-size: 0.92em;
+    font-style: italic;
+    color: rgba(218, 186, 120, 0.9);
+    letter-spacing: 0.03em;
+    line-height: 1.55;
+    min-height: 1.6em;
+    margin-bottom: 16px;
+    padding: 0 8px;
+}
+/* Thinking indicator */
+#conciergeResponse.thinking::after {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(201, 162, 78, 0.5);
+    margin-left: 4px;
+    animation: conciergeDot 1.2s ease-in-out infinite;
+}
+@keyframes conciergeDot {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 1; }
+}
+
+/* ── Input field ── */
+#conciergeInput {
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(30, 24, 16, 0.8);
+    border: 1px solid rgba(201, 162, 78, 0.2);
+    border-radius: 6px;
+    color: rgba(218, 186, 120, 0.85);
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+#conciergeInput:focus {
+    border-color: rgba(201, 162, 78, 0.45);
+}
+#conciergeInput::placeholder {
+    color: rgba(201, 162, 78, 0.3);
+    font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONCIERGE ATTENTION HIGHLIGHT — "The world reveals what he notices"
+   No pulsing. No browser-focus style. Gold glow, fade in/out, max 2 at once.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@keyframes conciergeAttention {
+    0%   { box-shadow: 0 0 0 0 rgba(201, 162, 78, 0); filter: brightness(1); }
+    15%  { box-shadow: 0 0 12px 2px rgba(201, 162, 78, 0.25); filter: brightness(1.035); }
+    85%  { box-shadow: 0 0 12px 2px rgba(201, 162, 78, 0.25); filter: brightness(1.035); }
+    100% { box-shadow: 0 0 0 0 rgba(201, 162, 78, 0); filter: brightness(1); }
+}
+.concierge-attention {
+    animation: conciergeAttention 2.5s ease forwards !important;
+    position: relative;
+    z-index: 2;
+}
+/* Subtle inner glow variant for elements where box-shadow is clipped */
+.concierge-attention-inner {
+    animation: conciergeAttentionInner 2.5s ease forwards !important;
+}
+@keyframes conciergeAttentionInner {
+    0%   { outline: 2px solid transparent; outline-offset: 2px; filter: brightness(1); }
+    15%  { outline: 2px solid rgba(201, 162, 78, 0.3); outline-offset: 2px; filter: brightness(1.035); }
+    85%  { outline: 2px solid rgba(201, 162, 78, 0.3); outline-offset: 2px; filter: brightness(1.035); }
+    100% { outline: 2px solid transparent; outline-offset: 2px; filter: brightness(1); }
+}
+
 /* Narrative Diagnostics Panel (debug only) */
 .narrative-diagnostics {
     margin: 16px 0 0;

@@ -192,6 +192,45 @@
       noise.stop(t + 0.12);
     },
 
+    // Dampened service bell — soft luxury ting with slight reverb tail
+    bell_ting: function(ctx, t) {
+      const dur = 0.38;
+
+      // Primary tone: bright but dampened sine
+      const osc1 = ctx.createOscillator();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(2637, t); // E7 — bell-like
+      osc1.frequency.exponentialRampToValueAtTime(2500, t + dur);
+
+      // Beating partial for warmth
+      const osc2 = ctx.createOscillator();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(2644, t); // slight detune
+      osc2.frequency.exponentialRampToValueAtTime(2510, t + dur);
+
+      // Envelope: quick attack, long dampened tail
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0, t);
+      gain.gain.linearRampToValueAtTime(0.12, t + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.04, t + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+      // Soft lowpass — muffled, not sharp
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(4000, t);
+      lp.frequency.exponentialRampToValueAtTime(1800, t + dur);
+      lp.Q.value = 0.5;
+
+      osc1.connect(lp);
+      osc2.connect(lp);
+      lp.connect(gain).connect(ctx.destination);
+      osc1.start(t);
+      osc1.stop(t + dur);
+      osc2.start(t);
+      osc2.stop(t + dur);
+    },
+
     // Barely audible air — hover
     hover_soft: function(ctx, t) {
       const noise = ctx.createBufferSource();

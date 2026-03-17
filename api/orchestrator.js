@@ -242,6 +242,11 @@ const ALLOWED_MODELS = {
   STRUCTURAL_CORRECTION: [
     'gpt-4o',
     'gpt-4o-mini'
+  ],
+
+  // Concierge — meta-layer UI guidance (short, in-character)
+  CONCIERGE: [
+    'gpt-4o-mini'
   ]
 };
 
@@ -256,7 +261,8 @@ const DEFAULT_MODELS = {
   FATE_STRUCTURAL: 'gpt-4o-mini',
   FATE_ELEVATION: 'gpt-4o-mini',
   STRATEGY_PASS: 'gpt-4o-mini',
-  STRUCTURAL_CORRECTION: 'gpt-4o-mini'
+  STRUCTURAL_CORRECTION: 'gpt-4o-mini',
+  CONCIERGE: 'gpt-4o-mini'
 };
 
 // =============================================================================
