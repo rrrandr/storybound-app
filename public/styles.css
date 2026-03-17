@@ -4362,6 +4362,22 @@ select:-webkit-autofill {
     font-size: 0.8em;
     color: var(--gold, #c9a84c);
     text-align: right;
+    flex: 1;
+}
+.treasury-buy-btn {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.65em;
+    padding: 2px 10px;
+    margin-left: 8px;
+    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
+    background-size: 100% 100% !important;
+    background-color: transparent !important;
+    border: none !important;
+    color: #1a1408;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
 }
 
 /* CHOICE BUTTONS - Responsive Stack */
@@ -5951,8 +5967,9 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     margin: 1.4% 5.7%;
 }
 /* Per-starter synopsis position tuning */
-[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 38.1%; }
-[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 12.2%; }
+[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 31.4%; }
+[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 2.2%; }
+[data-story-id="starter_first_sacrifice"] .back-synopsis { font-size: 3.1cqw; }
 /* Text-only back covers need padding */
 .back-content:not(.back-content-overlay) {
     padding: 10.9% 11.4%;
@@ -6440,8 +6457,23 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     left: 0;
     right: 0;
 }
+.zoom-cta {
+    flex-direction: column;
+}
 .zoom-cta .sb-btn-png {
     font-size: 0.8em;
+}
+.zoom-delete-btn {
+    background-image: none !important;
+    background: rgba(80, 20, 20, 0.7) !important;
+    border: 1px solid rgba(200, 50, 50, 0.4) !important;
+    color: rgba(255, 100, 100, 0.8) !important;
+    font-size: 0.65em !important;
+    padding: 4px 14px !important;
+}
+.zoom-delete-btn:hover {
+    background: rgba(120, 30, 30, 0.8) !important;
+    color: #ff6666 !important;
 }
 .forbidden-library-empty {
     font-family: 'Lora', serif;
@@ -8541,7 +8573,7 @@ select {
 #burgerBtn,
 #globalBackBtn {
     position: fixed;
-    z-index: 10001; /* Above tierGate (9997) and payModal (10000) */
+    z-index: 10010; /* Above all vault/modal overlays (max 10008) */
     background: none;
     border: none;
     padding: 0;
@@ -9027,6 +9059,44 @@ select {
 .petition-tier-active .petition-tier-name { color: #fff; }
 .petition-tier-active .petition-tier-cost { color: rgba(255, 235, 180, 0.9); }
 
+/* Standalone black tier buttons with 3D gold text */
+.petition-tier-standalone {
+    background: linear-gradient(180deg, #1a1510 0%, #0d0a06 100%) !important;
+    border: 1px solid rgba(201, 168, 76, 0.5) !important;
+    border-radius: calc(4px / var(--petition-scale, 1)) !important;
+    box-shadow:
+        0 2px 4px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(201, 168, 76, 0.15);
+}
+.petition-tier-standalone .petition-tier-name {
+    background: linear-gradient(180deg, #f5e6a3 0%, #d4a84a 30%, #c9a84c 50%, #b8912e 75%, #d4b44c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
+}
+.petition-tier-standalone .petition-tier-cost {
+    background: linear-gradient(180deg, #d4a84a 0%, #8b6d2c 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.petition-tier-standalone:hover:not(:disabled) {
+    background: linear-gradient(180deg, #241e14 0%, #151008 100%) !important;
+    border-color: rgba(201, 168, 76, 0.8) !important;
+    box-shadow:
+        0 2px 6px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(201, 168, 76, 0.25),
+        0 0 8px rgba(201, 168, 76, 0.15);
+}
+.petition-tier-standalone.petition-tier-active {
+    border-color: var(--gold, #c9a84c) !important;
+    box-shadow:
+        0 2px 6px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(201, 168, 76, 0.3),
+        0 0 12px rgba(201, 168, 76, 0.25);
+}
+
 /* ── Petition Result (shown after seal) ── */
 .petition-zoom-overlay .petition-result {
   font-size: calc(11px / var(--petition-scale, 1));
@@ -9056,15 +9126,15 @@ select {
 /* ── Petition zoom — Card Designer position overrides ── */
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay {
     right: auto; bottom: auto;
-    top: 12%; left: 9%;
+    top: 30px; left: 13px;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
     right: auto; bottom: auto;
     top: 62%; left: 12.5%;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-write-toggle {
-    right: auto; bottom: auto;
-    top: 75%; left: 0.5%;
+    position: relative; right: auto; bottom: auto;
+    top: -45.5px; left: 4px;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-suggest-panel {
     right: auto; bottom: auto;
@@ -9130,6 +9200,7 @@ select {
 
 .tempt-wish-col {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   position: relative;
 }
@@ -9188,12 +9259,10 @@ select {
 
 /* ── Tempt Fate Proceed button (portal sibling, below card) ── */
 .tempt-proceed-btn.flow-continue-btn.sb-btn-png {
-  position: fixed;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: static;
+  transform: none;
   font-size: 14px;
-  z-index: 10006;
+  z-index: auto;
   pointer-events: auto;
   border: none;
   padding: 0;
@@ -10814,7 +10883,7 @@ textarea.fate-field {
     transform-origin: center center;
     position: relative;
     /* Spine/depth use --book-depth CSS var set by JS (cqi would break preserve-3d) */
-    --book-depth: 15px; /* fallback; JS overrides with proportional value */
+    --book-depth: min(10vh, 50px); /* fallback until JS computes exact proportional value */
 }
 
 /* ── Front cover ── */
@@ -20300,7 +20369,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 /* ── POV — Card Designer locked positions (grid) ── */
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -17.57cqi; left: 11.49cqi; width: 83.78cqi; font-size: 8.11cqi;
+    top: 58.1cqi; left: 16.89cqi; width: 74.32cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20308,7 +20377,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -18.92cqi; left: 12.16cqi; width: 85.14cqi; font-size: 8.11cqi;
+    top: -13.51cqi; left: 10.81cqi; width: 83.77cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20316,7 +20385,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -19.59cqi; left: 10.81cqi; width: 85.14cqi; font-size: 8.11cqi;
+    top: -9.46cqi; left: 14.86cqi; width: 77.02cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20332,7 +20401,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -11.49cqi; left: 10.81cqi; width: 86.49cqi; font-size: 8.11cqi;
+    top: -4.05cqi; left: 10.81cqi; width: 83.77cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20340,7 +20409,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 48.65cqi; left: 12.84cqi; width: 78.38cqi; font-size: 8.11cqi;
+    top: -6.76cqi; left: 15.54cqi; width: 74.32cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -20771,7 +20840,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     background: var(--panel, #1a1a2e);
     border: 2px double var(--gold, #c8a84e);
     padding: 24px 20px;
-    max-width: 400px;
+    max-width: 520px;
     width: 90%;
     text-align: center;
     display: flex;
@@ -20804,6 +20873,47 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     margin: 0 0 8px 0;
 }
 .reincarnation-extract-list,
+.reincarnation-vault-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    max-height: 45vh;
+    overflow-y: auto;
+    padding: 8px 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201,168,76,0.3) transparent;
+}
+.reinc-vault-btn {
+    width: 100%;
+    height: 34px;
+    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png');
+    background-size: 100% 100%;
+    background-color: transparent;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+.reinc-vault-btn-label {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.6em;
+    color: #1a1408;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.reinc-vault-btn.reinc-vault-placeholder {
+    opacity: 0.45;
+    cursor: default;
+}
+.reinc-vault-btn.reinc-vault-placeholder:hover {
+    opacity: 0.55;
+}
 .reincarnation-vault-list,
 .reincarnation-import-list {
     width: 100%;
@@ -21059,28 +21169,129 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 6px 0 0 0;
+    padding: 8px 0 0 0;
 }
 
-.echo-reinc-explainer {
-    font-family: 'Lora', serif;
-    font-style: italic;
-    font-size: 0.65em;
-    color: var(--gold, #c8a84e);
-    opacity: 0.55;
-    text-align: center;
-    letter-spacing: 0.03em;
-    padding: 0 20px;
-}
-
-.echo-reinc-cards {
+.reinc-slots-row {
     display: flex;
     flex-direction: row;
-    gap: 8px;
+    gap: 6px;
     justify-content: center;
     align-items: flex-start;
     flex-wrap: wrap;
     padding: 2px 10px;
+}
+
+.reinc-slot {
+    position: relative;
+}
+
+.reinc-slot-btn {
+    width: 110px;
+    height: 36px;
+    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
+    background-size: 100% 100% !important;
+    background-position: center !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    border: none !important;
+    border-radius: 3px !important;
+    cursor: pointer;
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.reinc-slot-label {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.7em;
+    color: #1a1408;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.reinc-slot-btn.reinc-assigned .reinc-slot-label {
+    color: #000;
+    font-weight: 600;
+}
+
+.reinc-slot-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 160px;
+    max-height: 180px;
+    overflow-y: auto;
+    background: rgba(15, 10, 5, 0.95);
+    border: 1px solid rgba(218, 165, 32, 0.4);
+    border-radius: 4px;
+    z-index: 100;
+    padding: 4px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.reinc-slot-dropdown.hidden {
+    display: none;
+}
+
+.reinc-slot-dropdown-item {
+    font-family: 'Lora', serif;
+    font-size: 0.75em;
+    color: var(--gold, #c9a84c);
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.reinc-slot-dropdown-item:hover {
+    background: rgba(218, 165, 32, 0.15);
+}
+.reinc-slot-dropdown-item.reinc-placeholder {
+    color: rgba(150, 140, 120, 0.45);
+    font-style: italic;
+    cursor: default;
+}
+.reinc-slot-dropdown-item.reinc-placeholder:hover {
+    background: rgba(150, 140, 120, 0.08);
+    color: rgba(150, 140, 120, 0.6);
+}
+
+.reinc-slot-dropdown-clear {
+    font-family: 'Lora', serif;
+    font-size: 0.7em;
+    font-style: italic;
+    color: #999;
+    padding: 4px 10px;
+    cursor: pointer;
+    border-top: 1px solid rgba(218, 165, 32, 0.2);
+    margin-top: 2px;
+}
+
+.reinc-slot-dropdown-clear:hover {
+    color: #ccc;
+}
+
+.reinc-slot-dropdown-empty {
+    font-family: 'Lora', serif;
+    font-size: 0.7em;
+    font-style: italic;
+    color: #666;
+    padding: 8px 10px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .reinc-slot-btn {
+        width: 90px;
+        height: 28px;
+    }
+    .reinc-slot-label {
+        font-size: 0.6em;
+    }
 }
 
 .echo-reinc-card {
@@ -22087,4 +22298,19 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     color: var(--gold, #c9a24e);
     opacity: 0.6;
     margin: 8px 0;
+}
+
+/* Narrative Diagnostics Panel (debug only) */
+.narrative-diagnostics {
+    margin: 16px 0 0;
+    padding: 10px 14px;
+    background: rgba(30, 20, 10, 0.85);
+    border: 1px solid rgba(218, 165, 32, 0.3);
+    border-radius: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.7em;
+    line-height: 1.5;
+    color: rgba(218, 165, 32, 0.8);
+    white-space: pre-wrap;
+    word-break: break-word;
 }
