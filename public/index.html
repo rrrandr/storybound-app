@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260317a">
+  <link rel="stylesheet" href="/styles.css?v=20260318c">
 </head>
 
 <body class="booting">
@@ -39,6 +39,8 @@
 <div id="splashOverlay" class="splash-overlay">
   <img id="splashGala" class="splash-img" src="/assets/splash/gala.jpg" alt="">
   <img id="splashTitle" class="splash-img splash-title" src="/assets/splash/gala-title.jpg" alt="">
+  <div id="splashTagline" class="splash-tagline">Stories That Open You.</div>
+  <div id="splashSubline" class="splash-subline">Whisper—and they answer.</div>
 </div>
 
 <div id="auth-panel" class="hidden">
@@ -66,6 +68,7 @@
      ═══════════════════════════════════════════════════════════════════════ -->
 <button id="conciergeBell" aria-label="Summon Concierge">
   <img src="/assets/Concierge/gold-bell-splat.png" alt="" class="bell-icon-img" />
+  <span class="bell-gleam-layer"></span>
 </button>
 
 <!-- Concierge summon figure — materializes around bell on non-library screens -->
@@ -73,14 +76,10 @@
   <img id="conciergeSummonImg" src="" alt="" />
 </div>
 
-<!-- Concierge overlay + panel -->
-<div id="conciergeOverlay">
-  <div id="conciergePanel">
-    <button id="conciergeClose" aria-label="Dismiss">&times;</button>
-    <div id="conciergeMaskWrap">
-      <img id="conciergeMask" src="" alt="" />
-    </div>
-    <div id="conciergeResponse"></div>
+<!-- Concierge dialogue panel — anchored bottom-left, rises from bell -->
+<div id="conciergeDialogue" class="concierge-dialogue">
+  <div class="concierge-dialogue-frame">
+    <div id="conciergeDialogueScroll" class="concierge-dialogue-scroll"></div>
     <input type="text" id="conciergeInput" placeholder="What would you like to know?" autocomplete="off" />
   </div>
 </div>
@@ -1603,6 +1602,7 @@
         <!-- TITLE + SCENE — Inside page container (AUTHORITATIVE)                       -->
         <!-- Typography: Lora font, lower visual salience, printed-book elements         -->
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <div id="workingTitleLabel" class="working-title-label hidden">WORKING TITLE</div>
         <h2 id="storyTitle" class="story-page-title"></h2>
         <div id="sceneNumber" class="story-page-scene">Scene 1</div>
         <!-- Synopsis displays below title -->
@@ -1903,10 +1903,10 @@
 
 <script src="/sound.js?v=20260309a"></script>
 <script src="/fatecards.js"></script>
-<script src="/orchestration-client.js?v=20260317a"></script>
+<script src="/orchestration-client.js?v=20260318c"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260317a"></script>
-<script src="/card-designer.js?v=20260317a"></script>
+<script src="/app.js?v=20260318c"></script>
+<script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">
@@ -2018,7 +2018,7 @@
     <!-- ── Library Concierge — diegetic presence, left side ── -->
     <div id="libraryConcierge" class="library-concierge">
       <div class="lc-figure">
-        <img id="libraryConciergemask" class="lc-mask" src="" alt="" />
+        <img id="libraryConciergemask" class="lc-mask" src="/assets/Concierge/concierge-BeautifulRuin.png" alt="Concierge" />
       </div>
     </div>
     <!-- Concierge summon vignette (library-specific, no panel) -->

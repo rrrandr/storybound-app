@@ -17,6 +17,90 @@
     if (_audioCtx) return _audioCtx;
     try {
       _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      window._audioCtxRef = _audioCtx; // expose for ambient loops
+      // Preload audio samples
+      if (_audioCtx) {
+        if (!window._bellBuffer) {
+          fetch('/assets/Concierge/bell-ring.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._bellBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._cardFlipBuffer) {
+          fetch('/assets/ui/card-flip.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._cardFlipBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._cardDissipateBuffer) {
+          fetch('/assets/ui/card-dissipate.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._cardDissipateBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._petitionZoomBuffer) {
+          fetch('/assets/ui/petition-zoom.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._petitionZoomBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._temptZoomBuffer) {
+          fetch('/assets/ui/tempt-zoom.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._temptZoomBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._beginStoryBuffer) {
+          fetch('/assets/ui/begin-story.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._beginStoryBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._buttonTapBuffer) {
+          fetch('/assets/ui/button-tap.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._buttonTapBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._paperSlideBuffer) {
+          fetch('/assets/ui/paper-slide.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._paperSlideBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._sparkleUpBuffer) {
+          fetch('/assets/ui/sparkle-up.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._sparkleUpBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._zoomSparkleLoopBuffer) {
+          fetch('/assets/ui/zoom-sparkle-loop.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._zoomSparkleLoopBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._bookPullBuffers) {
+          window._bookPullBuffers = [];
+          ['/assets/ui/book-pull-1.mp3', '/assets/ui/book-pull-2.mp3', '/assets/ui/book-pull-3.mp3'].forEach(function(url) {
+            fetch(url)
+              .then(function(r) { return r.arrayBuffer(); })
+              .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+              .then(function(decoded) { window._bookPullBuffers.push(decoded); })
+              .catch(function() {});
+          });
+        }
+      }
     } catch (_) {}
     return _audioCtx;
   }
@@ -40,31 +124,101 @@
 
   const SOUNDS = {
 
-    // Card on velvet — breathy fabric brush, no tonal oscillator
+    // Card flip — real sample from card-flip.mp3
     card_flip: function(ctx, t) {
-      const dur = 0.14;
-      const noise = ctx.createBufferSource();
-      const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.22;
-      noise.buffer = buf;
+      if (window._cardFlipBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._cardFlipBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.5, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
+    },
 
-      // Low bandpass — warm fabric swoosh, no highs
-      const bp = ctx.createBiquadFilter();
-      bp.type = 'bandpass';
-      bp.frequency.setValueAtTime(400, t);
-      bp.frequency.exponentialRampToValueAtTime(180, t + dur);
-      bp.Q.value = 0.7;
+    // Paper slide — dropdown open/close
+    paper_slide: function(ctx, t) {
+      if (window._paperSlideBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._paperSlideBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.45, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
+    },
 
-      // Gentle fade-in then out (avoids click transient)
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0, t);
-      gain.gain.linearRampToValueAtTime(0.12, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    // Sparkle up — breadcrumb sparkle rise
+    sparkle_up: function(ctx, t) {
+      if (window._sparkleUpBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._sparkleUpBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.4, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
+    },
 
-      noise.connect(bp).connect(gain).connect(ctx.destination);
-      noise.start(t);
-      noise.stop(t + dur);
+    // Book pull — one of 3 random samples
+    book_pull: function(ctx, t) {
+      var bufs = window._bookPullBuffers;
+      if (!bufs || bufs.length === 0) return;
+      var buf = bufs[Math.floor(Math.random() * bufs.length)];
+      var src = ctx.createBufferSource();
+      src.buffer = buf;
+      var gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.5, t);
+      src.connect(gain).connect(ctx.destination);
+      src.start(t);
+    },
+
+    // Begin Story — chimes on story launch
+    begin_story: function(ctx, t) {
+      if (window._beginStoryBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._beginStoryBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.45, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
+    },
+
+    // Tempt Fate zoom — riser shudder on zoom-in
+    tempt_zoom: function(ctx, t) {
+      if (window._temptZoomBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._temptZoomBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.4, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
+    },
+
+    // Petition Fate zoom — spooky chimes on zoom-in
+    petition_zoom: function(ctx, t) {
+      if (window._petitionZoomBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._petitionZoomBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.4, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
+    },
+
+    // Card dissipate — mystical chime for sparkle dissolution
+    card_dissipate: function(ctx, t) {
+      if (window._cardDissipateBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._cardDissipateBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.45, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
     },
 
     // Soft shimmer — filtered noise sparkle, no tonal oscillator
@@ -91,26 +245,16 @@
       noise.stop(t + dur);
     },
 
-    // Soft tactile tap — buttons (noise-only, no oscillator)
+    // Button tap — real sample
     button_click: function(ctx, t) {
-      const dur = 0.04;
-      const noise = ctx.createBufferSource();
-      const buf = ctx.createBuffer(1, ctx.sampleRate * dur, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * 0.15;
-      noise.buffer = buf;
-
-      const filt = ctx.createBiquadFilter();
-      filt.type = 'lowpass';
-      filt.frequency.value = 500;
-
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.10, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-
-      noise.connect(filt).connect(gain).connect(ctx.destination);
-      noise.start(t);
-      noise.stop(t + dur);
+      if (window._buttonTapBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._buttonTapBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.5, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
     },
 
     // Soft page + leather creak — book opening
@@ -192,43 +336,16 @@
       noise.stop(t + 0.12);
     },
 
-    // Dampened service bell — soft luxury ting with slight reverb tail
+    // Hotel desk bell — real sample from bell-ring.mp3
     bell_ting: function(ctx, t) {
-      const dur = 0.38;
-
-      // Primary tone: bright but dampened sine
-      const osc1 = ctx.createOscillator();
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(2637, t); // E7 — bell-like
-      osc1.frequency.exponentialRampToValueAtTime(2500, t + dur);
-
-      // Beating partial for warmth
-      const osc2 = ctx.createOscillator();
-      osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(2644, t); // slight detune
-      osc2.frequency.exponentialRampToValueAtTime(2510, t + dur);
-
-      // Envelope: quick attack, long dampened tail
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0, t);
-      gain.gain.linearRampToValueAtTime(0.12, t + 0.004);
-      gain.gain.exponentialRampToValueAtTime(0.04, t + 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-
-      // Soft lowpass — muffled, not sharp
-      const lp = ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.setValueAtTime(4000, t);
-      lp.frequency.exponentialRampToValueAtTime(1800, t + dur);
-      lp.Q.value = 0.5;
-
-      osc1.connect(lp);
-      osc2.connect(lp);
-      lp.connect(gain).connect(ctx.destination);
-      osc1.start(t);
-      osc1.stop(t + dur);
-      osc2.start(t);
-      osc2.stop(t + dur);
+      if (window._bellBuffer) {
+        var src = ctx.createBufferSource();
+        src.buffer = window._bellBuffer;
+        var gain = ctx.createGain();
+        gain.gain.setValueAtTime(0.6, t);
+        src.connect(gain).connect(ctx.destination);
+        src.start(t);
+      }
     },
 
     // Barely audible air — hover
@@ -276,8 +393,10 @@
     const ctx = _ensureCtx();
     if (!ctx) return;
     if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
-      return; // will play next time after resume
+      ctx.resume().then(function() {
+        try { synth(ctx, ctx.currentTime); } catch (_) {}
+      }).catch(function() {});
+      return;
     }
 
     try {
@@ -313,5 +432,128 @@
   window.playUISound = playUISound;
   window.setUISoundEnabled = setUISoundEnabled;
   window.isUISoundEnabled = isUISoundEnabled;
+
+  // Zoom sparkle loop — koshi chimes at half volume, looping
+  var _zoomLoopSrc = null;
+  var _zoomLoopGain = null;
+  window.startZoomSparkleLoop = function() {
+    if (_zoomLoopSrc) return; // already playing
+    if (!window._zoomSparkleLoopBuffer || !_enabled) return;
+    var ctx = _ensureCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') { ctx.resume().catch(function(){}); }
+    var src = ctx.createBufferSource();
+    src.buffer = window._zoomSparkleLoopBuffer;
+    src.loop = true;
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.5);
+    src.connect(gain).connect(ctx.destination);
+    src.start(0);
+    _zoomLoopSrc = src;
+    _zoomLoopGain = gain;
+  };
+  window.stopZoomSparkleLoop = function() {
+    if (!_zoomLoopSrc) return;
+    try {
+      var ctx = _zoomLoopGain.context;
+      _zoomLoopGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+      var src = _zoomLoopSrc;
+      setTimeout(function() { try { src.stop(); } catch(_){} }, 500);
+    } catch(_) {}
+    _zoomLoopSrc = null;
+    _zoomLoopGain = null;
+  };
+
+  // Global delegated button tap — plays on any button/sb-btn-png click
+  // Skips cards and elements that play their own sounds
+  document.addEventListener('click', function(e) {
+    if (!_enabled) return;
+    // Skip if click is on a card (has its own flip sound)
+    if (e.target.closest('.sb-card, .fate-card, .library-book, .playermask-card, .mode-select-card')) return;
+    var el = e.target.closest('button, .sb-btn-png, [role="button"]');
+    if (!el) return;
+    playUISound('button_click');
+  }, false);
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CORRIDOR AMBIENCE — persistent site-wide loop (eternity chimes)
+  // Plays across all screens EXCEPT libraries, gala images, and story reader.
+  // Does NOT restart between pages. Volume halved during card zoom.
+  // ═══════════════════════════════════════════════════════════════════════════
+  var _corridorSrc = null;
+  var _corridorGain = null;
+  var _corridorNormalVol = 0.10;
+  var _corridorZoomVol = 0.05;
+  var _corridorMuted = false; // true when on excluded screen
+
+  // Screens where corridor ambience should NOT play
+  var _CORRIDOR_EXCLUDED = [
+    'vaultLibraryScreen', 'forbiddenLibraryScreen', 'libraryReaderScreen',
+    'legalGate', 'ageGate'
+  ];
+
+  function _startCorridorAmbience() {
+    if (_corridorSrc) return; // already running
+    if (!window._corridorAmbienceBuffer || !_enabled) return;
+    var ctx = _ensureCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(function(){});
+    var src = ctx.createBufferSource();
+    src.buffer = window._corridorAmbienceBuffer;
+    src.loop = true;
+    var gain = ctx.createGain();
+    var vol = _corridorMuted ? 0 : _corridorNormalVol;
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 2.0);
+    src.connect(gain).connect(ctx.destination);
+    src.start(0);
+    _corridorSrc = src;
+    _corridorGain = gain;
+  }
+
+  window._setCorridorAmbienceForScreen = function(screenId) {
+    var shouldMute = _CORRIDOR_EXCLUDED.indexOf(screenId) !== -1;
+    _corridorMuted = shouldMute;
+    if (!_corridorGain) {
+      // Try to start if not yet running and screen is allowed
+      if (!shouldMute) _startCorridorAmbience();
+      return;
+    }
+    var ctx = _corridorGain.context;
+    var targetVol = shouldMute ? 0 : _corridorNormalVol;
+    _corridorGain.gain.cancelScheduledValues(ctx.currentTime);
+    _corridorGain.gain.setValueAtTime(_corridorGain.gain.value, ctx.currentTime);
+    _corridorGain.gain.linearRampToValueAtTime(targetVol, ctx.currentTime + 1.0);
+  };
+
+  window._setCorridorAmbienceZoom = function(isZoomed) {
+    if (!_corridorGain || _corridorMuted) return;
+    var ctx = _corridorGain.context;
+    var targetVol = isZoomed ? _corridorZoomVol : _corridorNormalVol;
+    _corridorGain.gain.cancelScheduledValues(ctx.currentTime);
+    _corridorGain.gain.setValueAtTime(_corridorGain.gain.value, ctx.currentTime);
+    _corridorGain.gain.linearRampToValueAtTime(targetVol, ctx.currentTime + 0.5);
+  };
+
+  // Preload corridor ambience (deferred — not on first gesture, but after)
+  function _preloadCorridorAmbience() {
+    if (window._corridorAmbienceBuffer) return;
+    fetch('/assets/ui/corridor-ambience.mp3')
+      .then(function(r) { return r.arrayBuffer(); })
+      .then(function(buf) {
+        var ctx = _ensureCtx();
+        if (!ctx) return;
+        return ctx.decodeAudioData(buf);
+      })
+      .then(function(decoded) {
+        window._corridorAmbienceBuffer = decoded;
+        // Auto-start if we're on an allowed screen
+        if (!_corridorMuted && !_corridorSrc) _startCorridorAmbience();
+      })
+      .catch(function() {});
+  }
+  // Start preload after first user interaction
+  document.addEventListener('click', function() { setTimeout(_preloadCorridorAmbience, 500); }, { once: true, passive: true });
 
 })();

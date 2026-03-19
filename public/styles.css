@@ -39,6 +39,35 @@ body.booting .screen {
     opacity: 1;
 }
 
+/* ── Splash taglines ── */
+.splash-tagline, .splash-subline {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: #d4a020;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.7), 0 0 4px rgba(0,0,0,0.5);
+    opacity: 0;
+    transition: opacity 1s ease-in;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 2;
+}
+.splash-tagline {
+    top: calc(67% + 15px);
+    font-size: 2.3em;
+    letter-spacing: 0.35em;
+}
+.splash-subline {
+    top: calc(67% + 65px);
+    font-size: 1.72em;
+    letter-spacing: 0.35em;
+}
+.splash-tagline.visible, .splash-subline.visible {
+    opacity: 1;
+}
+
 /* GLOBAL VARS */
 :root {
     --bg1: #0a0a0a; --bg2: #121212; --pink: #ff69b4; --hot: #ff1493; --gold: #ffd700; --ink: #f0e6ff; --panel: rgba(10,10,10,.8);
@@ -2833,6 +2862,26 @@ p.vision-active-paragraph::after {
 /* TITLE + SCENE — Printed-book elements inside page (AUTHORITATIVE)          */
 /* Typography: Lora font, lower visual salience, no UI decoration             */
 /* ═══════════════════════════════════════════════════════════════════════════ */
+/* Working Title label — shown above title before Arc Title is finalized */
+.working-title-label {
+    font-family: 'Lora', serif;
+    font-size: 0.55em;
+    font-weight: 400;
+    color: rgba(180, 165, 120, 0.6);
+    text-align: center;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin: 0 0 2px 0;
+    padding: 0;
+    line-height: 1;
+    transition: opacity 0.4s ease;
+}
+.working-title-label.hidden { display: none; }
+.working-title-label.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
 h2.story-page-title,
 .story-page-title {
     font-family: 'Lora', serif !important;
@@ -7252,6 +7301,361 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     margin-bottom: 18px;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ARCHIVED MATERIAL — Physical artifact styling
+   Dual POV unlocked artifacts: parchment paper, handwriting, stacked pages
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.archived-material-block {
+    margin-top: 48px;
+    padding-top: 0;
+    position: relative;
+}
+
+/* ── Header label ── */
+.archived-material-header {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    letter-spacing: 0.25em;
+    font-size: 0.75em;
+    color: rgba(180, 155, 90, 0.55);
+    text-align: center;
+    margin-bottom: 6px;
+}
+.archived-material-divider {
+    border: none;
+    border-top: 1px solid rgba(201, 162, 78, 0.18);
+    margin: 0 auto 28px;
+    width: 50%;
+}
+
+/* ── Artifact stack container ── */
+.archived-artifact-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 0 8px;
+}
+
+/* ── Individual artifact piece — parchment paper ── */
+.archived-artifact-piece {
+    position: relative;
+    background: linear-gradient(145deg,
+        rgba(235, 222, 195, 0.92) 0%,
+        rgba(225, 210, 180, 0.88) 40%,
+        rgba(215, 200, 170, 0.90) 100%);
+    border-radius: 2px;
+    padding: 20px 22px 18px;
+    box-shadow:
+        0 1px 3px rgba(80, 60, 30, 0.15),
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        inset 0 0 30px rgba(160, 130, 70, 0.06);
+    overflow: hidden;
+    /* Slight rotation for realism */
+    transform: rotate(var(--artifact-rotation, 0deg));
+}
+.archived-artifact-piece:nth-child(1) { --artifact-rotation: -0.4deg; z-index: 3; }
+.archived-artifact-piece:nth-child(2) { --artifact-rotation: 0.6deg; z-index: 2; margin-top: -4px; }
+.archived-artifact-piece:nth-child(3) { --artifact-rotation: -0.3deg; z-index: 1; margin-top: -4px; }
+
+/* Paper texture overlay */
+.archived-artifact-piece::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 24px,
+        rgba(160, 130, 80, 0.03) 24px,
+        rgba(160, 130, 80, 0.03) 25px
+    );
+    pointer-events: none;
+    z-index: 1;
+}
+/* Darkened edges — age effect */
+.archived-artifact-piece::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(120, 90, 40, 0.08) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ── Artifact label (format description) ── */
+.artifact-label {
+    font-family: 'Lora', serif;
+    font-size: 0.65em;
+    font-style: italic;
+    color: rgba(120, 95, 55, 0.5);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+}
+
+/* ── Artifact body text — base ── */
+.artifact-body {
+    position: relative;
+    z-index: 2;
+    font-size: 0.88em;
+    line-height: 1.7;
+    white-space: pre-line;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHARACTER HANDWRITING IDENTITY — LI vs Villain visual distinction
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Love Interest — smoother, calmer handwriting */
+.artifact-li .artifact-body {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: rgba(65, 50, 30, 0.78);
+    letter-spacing: 0.01em;
+    line-height: 1.75;
+}
+.artifact-li {
+    transform: rotate(var(--artifact-rotation, -0.3deg));
+}
+
+/* Villain — sharper, heavier, more tension */
+.artifact-villain .artifact-body {
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-style: normal;
+    color: rgba(40, 28, 15, 0.85);
+    letter-spacing: -0.01em;
+    line-height: 1.55;
+}
+.artifact-villain {
+    transform: rotate(var(--artifact-rotation, 0.5deg));
+    background: linear-gradient(145deg,
+        rgba(228, 215, 188, 0.94) 0%,
+        rgba(218, 202, 172, 0.90) 40%,
+        rgba(208, 192, 162, 0.92) 100%);
+}
+
+/* Unknown / neutral — typewriter-like */
+.artifact-unknown .artifact-body {
+    font-family: 'Courier New', 'Courier', monospace;
+    font-size: 0.82em;
+    color: rgba(50, 40, 25, 0.7);
+    letter-spacing: 0.04em;
+    line-height: 1.6;
+}
+
+/* ── Redaction effect (villain only) ── */
+.artifact-redacted {
+    background: rgba(30, 20, 10, 0.85);
+    color: transparent;
+    padding: 0 4px;
+    border-radius: 1px;
+    user-select: none;
+    display: inline;
+    letter-spacing: 0.15em;
+}
+/* Strikethrough — crossed-out thought */
+.artifact-struck {
+    text-decoration: line-through;
+    opacity: 0.45;
+}
+
+/* ── Interpretive weight line — small, dim, below artifact ── */
+.artifact-weight {
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    font-style: italic;
+    color: rgba(160, 130, 70, 0.45);
+    text-align: right;
+    margin-top: 10px;
+    letter-spacing: 0.03em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCENE ANCHORS — Inline markers linking to artifact modal
+   ═══════════════════════════════════════════════════════════════════════════ */
+.artifact-scene-anchor {
+    display: block;
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    font-style: italic;
+    color: rgba(201, 162, 78, 0.4);
+    text-align: center;
+    margin: 12px 0;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    user-select: none;
+}
+.artifact-scene-anchor:hover {
+    color: rgba(201, 162, 78, 0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ARTIFACT MODAL — Single artifact viewer with navigation
+   ═══════════════════════════════════════════════════════════════════════════ */
+.artifact-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10020;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.artifact-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+}
+.artifact-modal-container {
+    position: relative;
+    z-index: 1;
+    width: min(400px, 90vw);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.artifact-modal-container .archived-artifact-piece {
+    margin: 0;
+}
+.artifact-modal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 14px;
+}
+.artifact-nav-btn {
+    background: none;
+    border: 1px solid rgba(160, 130, 70, 0.3);
+    color: rgba(160, 130, 70, 0.7);
+    font-size: 1.4em;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+.artifact-nav-btn:hover {
+    border-color: rgba(201, 162, 78, 0.6);
+    color: rgba(201, 162, 78, 0.9);
+}
+.artifact-nav-counter {
+    font-family: 'Lora', serif;
+    font-size: 0.75em;
+    color: rgba(180, 155, 90, 0.5);
+    letter-spacing: 0.1em;
+}
+.artifact-modal-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: rgba(160, 130, 70, 0.5);
+    font-size: 1.3em;
+    cursor: pointer;
+    z-index: 2;
+}
+.artifact-modal-close:hover {
+    color: rgba(201, 162, 78, 0.8);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   UNSEAL MOMENT — First-time unlock notification (non-blocking)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.unseal-moment {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10025;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+}
+.unseal-moment.unseal-visible {
+    opacity: 1;
+}
+.unseal-text {
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    font-style: italic;
+    color: rgba(201, 162, 78, 0.6);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 12px rgba(201, 162, 78, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RIBBON BOOKMARK — Signals archived material on book cover
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.ribbon-bookmark {
+    position: absolute;
+    top: -4px;
+    right: 12%;
+    width: 14px;
+    height: 38px;
+    background: linear-gradient(180deg,
+        #8b2020 0%,
+        #6b1818 60%,
+        #5a1414 100%);
+    z-index: 10;
+    pointer-events: none;
+    /* Triangular cut at bottom */
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 50% 100%, 0 85%);
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3);
+    /* Fabric texture */
+    background-image:
+        repeating-linear-gradient(90deg,
+            transparent 0px, transparent 2px,
+            rgba(255, 255, 255, 0.03) 2px, rgba(255, 255, 255, 0.03) 3px);
+}
+
+/* Shimmer pass — periodic gold glint across ribbon */
+.ribbon-bookmark::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(218, 175, 80, 0.15) 40%,
+        rgba(255, 230, 150, 0.25) 50%,
+        rgba(218, 175, 80, 0.15) 60%,
+        transparent 100%
+    );
+    animation: ribbon-shimmer 4s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes ribbon-shimmer {
+    0%, 80%  { left: -50%; opacity: 0; }
+    85%      { opacity: 1; }
+    95%      { opacity: 1; }
+    100%     { left: 150%; opacity: 0; }
+}
+
+/* Hover glow */
+.library-book:hover .ribbon-bookmark {
+    filter: brightness(1.15) drop-shadow(0 0 3px rgba(218, 175, 80, 0.3));
+}
+
+/* Tooltip on hover */
+.ribbon-bookmark[title]:hover::before {
+    content: attr(title);
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Lora', serif;
+    font-size: 9px;
+    font-style: italic;
+    color: rgba(218, 175, 80, 0.7);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
 /* ── Secret Edition books in Forbidden Library ── */
 .secret-edition-book .book-front {
     border: 1px solid rgba(201, 168, 76, 0.25);
@@ -10879,17 +11283,16 @@ textarea.fate-field {
     height: 100%;
     aspect-ratio: 5 / 7;
     transform-style: preserve-3d;
-    transform: rotateX(4deg) rotateY(-28deg);
+    transform: rotateX(7deg) rotateY(-20deg);
     transform-origin: center center;
     position: relative;
-    /* Spine/depth use --book-depth CSS var set by JS (cqi would break preserve-3d) */
-    --book-depth: min(10vh, 50px); /* fallback until JS computes exact proportional value */
+    --book-depth: 30px; /* Match library book depth */
 }
 
 /* ── Front cover ── */
 .cover-book-3d .book-front {
     background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%);
-    transform: translateZ(var(--book-depth));
+    transform: translateZ(30px);
     box-shadow:
         inset 6px 0 10px -4px rgba(0, 0, 0, 0.08),
         inset 0 -2px 6px -3px rgba(0,0,0,0.06),
@@ -10941,9 +11344,9 @@ textarea.fate-field {
 /* ── Spine ── */
 .cover-book-3d .book-spine {
     opacity: 1;
-    width: calc(var(--book-depth) * 2); /* 2/5 of cover width = 2:5 spine:cover ratio */
+    width: 60px;
     background: linear-gradient(180deg, #ede9e1 0%, #e0d9ce 100%);
-    transform: rotateY(-90deg) translateZ(var(--book-depth));
+    transform: rotateY(-90deg) translateZ(30px);
     border-radius: 6px 0 0 6px;
     box-shadow:
         inset -8px 0 10px -4px rgba(0, 0, 0, 0.12),
@@ -10974,7 +11377,7 @@ textarea.fate-field {
 /* ── Back cover ── */
 .cover-book-3d .book-back {
     background: linear-gradient(160deg, #f5f1ea 0%, #ece7dd 100%);
-    transform: rotateY(180deg) translateZ(var(--book-depth));
+    transform: rotateY(180deg) translateZ(30px);
     box-shadow:
         inset -6px 0 10px -4px rgba(0, 0, 0, 0.08),
         inset 0 -2px 6px -3px rgba(0,0,0,0.06),
@@ -11000,34 +11403,32 @@ textarea.fate-field {
     margin: 0;
 }
 
-/* ── Page edges (cream-colored, thinner depth to match 15px translateZ) ── */
+/* ── Page edges — match library book textures and proportions ── */
 .cover-book-3d .book-pages-right {
-    width: calc(var(--book-depth) * 2);
-    transform: translateZ(calc(-1 * var(--book-depth))) rotateY(90deg);
-    background: repeating-linear-gradient(
-        0deg,
-        #f8f5ef 0px,
-        #f8f5ef 1px,
-        #ede9e1 1.5px,
-        #f8f5ef 2px
-    );
+    width: 60px;
+    height: calc(100% - 14px);
+    top: 7px;
+    right: 6px;
+    left: auto;
+    transform-origin: right center;
+    transform: translateZ(-30px) rotateY(90deg);
+    background: url('/assets/Forbidde-Library-Art/2-inch-side-edge.jpg') center / cover no-repeat;
     box-shadow:
-        inset 0 4px 6px -2px rgba(0,0,0,0.12),
-        inset 0 -4px 6px -2px rgba(0,0,0,0.12),
-        inset -2px 0 4px rgba(0,0,0,0.06),
-        inset 2px 0 4px rgba(0,0,0,0.03);
-}
-.cover-book-3d .book-pages-right::after {
-    display: none; /* Suppress Library-specific fore-edge overlay */
+        inset 0 5px 8px -2px rgba(0,0,0,0.5),
+        inset 0 -5px 8px -2px rgba(0,0,0,0.5),
+        inset -3px 0 6px rgba(0,0,0,0.25),
+        inset 3px 0 5px rgba(255,255,255,0.15),
+        0 0 3px rgba(0, 0, 0, 0.15);
+    border-radius: 0 1px 1px 0;
 }
 .cover-book-3d .book-pages-top {
-    height: calc(var(--book-depth) * 2);
-    transform: translateZ(calc(-1 * var(--book-depth))) rotateX(90deg);
+    height: 60px;
+    transform: translateZ(-30px) rotateX(90deg);
     background: linear-gradient(180deg, #f0ebe3 0%, #f5f0e8 100%);
 }
 .cover-book-3d .book-pages-bottom {
-    height: calc(var(--book-depth) * 2);
-    transform: translateZ(calc(-1 * var(--book-depth))) rotateX(-90deg);
+    height: 60px;
+    transform: translateZ(-30px) rotateX(-90deg);
     background: linear-gradient(0deg, #ece7dd 0%, #f0ebe3 100%);
 }
 
@@ -13534,7 +13935,7 @@ textarea.fate-field {
 .archetype-card.zoomed .archetype-exemplars,
 .playermask-card.zoomed .archetype-exemplars {
     display: block;
-    font-size: 5.5px;
+    font-size: 11px;
     line-height: 1.15;
     top: auto;
     bottom: calc(22% - 15px);
@@ -14794,9 +15195,19 @@ body.guided-fate-autoplay .card-gleam-layer {
     display: block;
     flex: none;
 }
+#dynamicGrid .sb-card:not(.zoomed) .sb-card-front .sb-card-desc {
+    font-size: 6.58cqi;
+    padding: 0 3.95cqi;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
 /* Tone desc: small-caps for description text, extra space before italic example */
 #toneGrid .sb-card .sb-card-front .sb-card-desc {
     font-variant: small-caps;
+    font-size: 6.58cqi;
+    padding: 0 3.95cqi;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 #toneGrid .sb-card .sb-card-front .sb-card-desc br {
     display: none;
@@ -14804,7 +15215,8 @@ body.guided-fate-autoplay .card-gleam-layer {
 #toneGrid .sb-card .sb-card-front .sb-card-desc i {
     display: block;
     font-variant: normal;
-    margin-top: 1em;
+    margin-top: 0.5em;
+    font-size: 5.92cqi;
 }
 
 /* Pressure front desc: above flavor buttons, inside gold text box */
@@ -14817,6 +15229,11 @@ body.guided-fate-autoplay .card-gleam-layer {
     font-size: 2.98cqi;
     line-height: 1.25;
     flex: none;
+}
+
+/* Clip text overflow on corridor card fronts */
+:is(#toneGrid, #worldGrid, #lengthGrid, #pressureGrid, #povGrid, #dynamicGrid, #intensityGrid) .sb-card:not(.zoomed) .sb-card-front {
+    overflow: hidden;
 }
 
 /* Gold pressed desc on all black card fronts */
@@ -22304,44 +22721,46 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    LIBRARY CONCIERGE — Diegetic presence in the Private Library scene
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Container — left side of shelves ── */
+/* ── Container — left side, locked to viewport bottom, cropped at knees ── */
 .library-concierge {
     position: absolute;
-    left: 4vw;
-    bottom: 12vh;
+    left: calc(-2vw + 10px);
+    bottom: -9.5vw;
     z-index: 5;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.6s ease;
+    width: 22vw;
+    height: 100%;
 }
 #vaultLibraryScreen:not(.hidden) .library-concierge {
     opacity: 1;
 }
 
-/* ── Figure — full-body concierge ── */
+/* ── Figure — full-body concierge, bottom-anchored, knees cropped ── */
 .lc-figure {
-    width: 160px;
-    height: 240px;
-    margin-bottom: 6px;
-    position: relative;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 85%;
+    overflow: visible;
+    pointer-events: auto;
 }
 .lc-mask {
     width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: center bottom;
+    height: 120%;
+    object-fit: cover;
+    object-position: center top;
     border-radius: 0;
-    opacity: 0.9;
+    clip-path: inset(1px);
+    opacity: 1;
     filter: drop-shadow(2px 4px 18px rgba(0,0,0,0.7))
             drop-shadow(0 0 6px rgba(0,0,0,0.4));
     animation: lcPresenceAura 7s ease-in-out infinite;
     transition: opacity 0.4s ease, filter 0.4s ease;
     pointer-events: auto;
     cursor: pointer;
-    clip-path: inset(1px);
 }
 
 /* ── Presence aura — asymmetric scale + glow, 7s, organic feel ── */
@@ -22383,16 +22802,16 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     animation: lcResponseGlow 2.4s ease-in-out 1;
 }
 
-/* ── Concierge nod — full-image, head-weighted pivot ── */
+/* ── Concierge nod — controlled human nod, neck-hinge pivot ── */
 @keyframes conciergeNod {
     0%   { transform: rotate(0deg) translateY(0); }
-    25%  { transform: rotate(4deg) translateY(2px); }
-    55%  { transform: rotate(-2deg) translateY(-1px); }
+    60%  { transform: rotate(3deg) translateY(1.5px); }
+    80%  { transform: rotate(-0.5deg) translateY(-0.5px); }
     100% { transform: rotate(0deg) translateY(0); }
 }
 .concierge-nodding {
-    transform-origin: 50% 8% !important;
-    animation: conciergeNod 1.2s cubic-bezier(.25,.8,.25,1) forwards !important;
+    transform-origin: 50% 14% !important;
+    animation: conciergeNod 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
 }
 
 /* ── Summon vignette (library-local) ── */
@@ -22413,7 +22832,9 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 #vaultLibraryScreen:not(.hidden) ~ #conciergeBell,
 body:has(#vaultLibraryScreen:not(.hidden)) #conciergeBell,
 #vaultLibraryScreen:not(.hidden) ~ .concierge-summon-figure,
-body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
+body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure,
+#vaultLibraryScreen:not(.hidden) ~ .concierge-dialogue,
+body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     opacity: 0 !important;
     pointer-events: none !important;
     visibility: hidden !important;
@@ -22422,10 +22843,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
 /* ── Responsive: smaller screens ── */
 @media (max-width: 768px) {
     .library-concierge {
-        left: 2vw;
-        bottom: 10vh;
+        left: -3vw;
+        width: 28vw;
     }
-    .lc-figure { width: 110px; height: 165px; }
+    .concierge-dialogue {
+        width: min(220px, calc(100vw - 90px));
+    }
     /* Summon figure size/position computed by JS — no override needed */
 }
 
@@ -22436,23 +22859,22 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
 /* ── Bell button ── */
 #conciergeBell {
     position: fixed;
-    bottom: 18px;
-    left: 18px;
-    z-index: 10010;
-    width: 38px;
-    height: 38px;
-    padding: 3px;
+    bottom: 10px;
+    left: 12px;
+    z-index: 10012;
+    width: 56px;
+    height: 56px;
+    padding: 0;
     background: none;
     border: none;
     cursor: pointer;
     opacity: 0.7;
-    overflow: visible;
+    overflow: hidden;
     transition: opacity 0.3s ease, filter 0.3s ease;
     filter: drop-shadow(0 0 0px transparent);
 }
 #conciergeBell:hover {
     opacity: 1;
-    filter: drop-shadow(0 0 6px rgba(201, 162, 78, 0.45));
 }
 #conciergeBell .bell-icon-img {
     width: 100%;
@@ -22460,17 +22882,30 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     display: block;
     object-fit: contain;
     pointer-events: none;
-    clip-path: inset(1px);
 }
 
-/* Idle shimmer — every ~25s, subtle gold pulse */
-@keyframes bellShimmer {
-    0%, 92%  { filter: drop-shadow(0 0 0px transparent); opacity: 0.7; }
-    96%      { filter: drop-shadow(0 0 5px rgba(201, 162, 78, 0.35)); opacity: 0.85; }
-    100%     { filter: drop-shadow(0 0 0px transparent); opacity: 0.7; }
+/* ── Bell gleam sweep on hover (reuses gleam-sweep keyframe) ── */
+#conciergeBell .bell-gleam-layer {
+    position: absolute;
+    top: 0;
+    left: -30%;
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.10) 25%,
+        rgba(255, 255, 255, 0.35) 50%,
+        rgba(255, 255, 255, 0.10) 75%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
 }
-#conciergeBell:not(:hover) {
-    animation: bellShimmer 25s ease-in-out infinite;
+#conciergeBell:hover .bell-gleam-layer {
+    opacity: 1;
+    animation: gleam-sweep 0.7s ease-out forwards;
 }
 
 /* ── Bell activation flash — radial gold pulse on click ── */
@@ -22522,26 +22957,23 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     pointer-events: none;
     transition: none;
 }
-/* Entry: fade + rise */
+/* Entry: pure opacity, no motion */
 .concierge-summon-figure.csf-entering {
     opacity: 0;
     visibility: visible;
-    transform: translateY(10px);
     transition: none;
 }
 .concierge-summon-figure.csf-visible {
     opacity: 1;
     visibility: visible;
-    transform: translateY(0);
     pointer-events: auto;
     cursor: pointer;
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity 0.5s ease;
 }
 /* Exit: fade out */
 .concierge-summon-figure.csf-exiting {
     opacity: 0;
     visibility: visible;
-    transform: translateY(0);
     pointer-events: none;
     transition: opacity 0.4s ease;
 }
@@ -22555,116 +22987,98 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     clip-path: inset(1px);
 }
 
-/* ── Overlay (vignette dim) ── */
-#conciergeOverlay {
+/* ── Anchored dialogue panel — rises from bell, bottom-left ── */
+.concierge-dialogue {
     position: fixed;
-    inset: 0;
-    z-index: 10015;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.08) 40%, rgba(0,0,0,0.40) 100%);
+    bottom: 10px;
+    left: 76px;
+    z-index: 10011;
+    width: 260px;
+    max-height: calc(100vh - 20px);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.4s ease, visibility 0.4s ease;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 6vh;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease, visibility 0.4s ease,
+                transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    pointer-events: none;
 }
-#conciergeOverlay.visible {
+.concierge-dialogue.visible {
     opacity: 1;
     visibility: visible;
-}
-
-/* ── Panel ── */
-#conciergePanel {
-    position: relative;
-    width: min(420px, 90vw);
-    background: rgba(18, 14, 10, 0.95);
-    border: 1px solid rgba(201, 162, 78, 0.35);
-    border-radius: 12px;
-    box-shadow: 0 0 24px rgba(201, 162, 78, 0.08), 0 8px 40px rgba(0,0,0,0.5);
-    padding: 28px 24px 18px;
-    text-align: center;
-    transform: translateY(20px);
-    opacity: 0;
-    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.4s ease;
-}
-#conciergeOverlay.visible #conciergePanel {
     transform: translateY(0);
-    opacity: 1;
+    pointer-events: auto;
+}
+/* Fading state — inactivity pre-exit */
+.concierge-dialogue.fading {
+    opacity: 0.85;
+    transform: translateY(4px);
 }
 
-/* Close button */
-#conciergeClose {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    background: none;
-    border: none;
-    color: rgba(201, 162, 78, 0.45);
-    font-size: 1.3em;
-    cursor: pointer;
-    padding: 4px 8px;
-    line-height: 1;
-    transition: color 0.2s ease;
-}
-#conciergeClose:hover {
-    color: rgba(201, 162, 78, 0.8);
-}
-
-/* ── Floating mask ── */
-#conciergeMaskWrap {
-    width: 72px;
-    height: 108px;
-    margin: 0 auto 14px;
+/* Frame — uses Black-Gold PNG as background, rotated 90° via border-image */
+.concierge-dialogue-frame {
+    background: rgba(12, 9, 6, 0.92);
+    border: 2px solid rgba(201, 162, 78, 0.30);
+    border-image: url('/assets/ui/Black-Gold-640x176.png') 28 fill / 14px / 0 stretch;
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.6), 0 0 8px rgba(201, 162, 78, 0.06);
+    padding: 14px 12px 10px;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    border-radius: 6px;
-    position: relative;
-}
-#conciergeMask {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center 8%;
-    opacity: 0;
-    transform: translateY(10px);
-    filter: none;
-    clip-path: inset(1px);
-    /* No continuous motion — concierge is still, not animated */
-}
-#conciergeOverlay.visible #conciergeMask {
-    opacity: 1;
-    /* 1px overshoot for physical arrival weight */
-    animation: panelMaskEntrance 0.32s cubic-bezier(0.22, 0.61, 0.36, 1) 0.15s forwards;
-}
-@keyframes panelMaskEntrance {
-    0%   { opacity: 0; transform: translateY(10px); }
-    72%  { opacity: 1; transform: translateY(-1px); }
-    100% { opacity: 1; transform: translateY(0); }
-}
-/* Faint glow pulse while API response is pending */
-@keyframes panelMaskGlow {
-    0%, 100% { filter: none; }
-    50%      { filter: drop-shadow(0 0 10px rgba(201, 162, 78, 0.3)); }
-}
-#conciergeMask.panel-responding {
-    animation: panelMaskGlow 2.4s ease-in-out 1;
 }
 
-/* ── Response text ── */
-#conciergeResponse {
+/* Scrollable conversation area */
+.concierge-dialogue-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 50vh;
+    scroll-behavior: smooth;
+    margin-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 162, 78, 0.2) transparent;
+}
+.concierge-dialogue-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+.concierge-dialogue-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.concierge-dialogue-scroll::-webkit-scrollbar-thumb {
+    background: rgba(201, 162, 78, 0.25);
+    border-radius: 2px;
+}
+
+/* AI message — gold, small-caps, centered */
+.concierge-msg-ai {
     font-family: 'Lora', serif;
     font-size: 0.92em;
-    font-style: italic;
-    color: rgba(218, 186, 120, 0.9);
-    letter-spacing: 0.03em;
+    font-variant: small-caps;
+    color: #D4AF37;
+    text-align: center;
     line-height: 1.55;
-    min-height: 1.6em;
-    margin-bottom: 16px;
-    padding: 0 8px;
+    letter-spacing: 0.04em;
+    margin: 6px 0;
+    padding: 0 4px;
     white-space: pre-line;
 }
-/* Thinking indicator */
-#conciergeResponse.thinking::after {
+
+/* User message — white, left-aligned */
+.concierge-msg-user {
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    color: rgba(255, 255, 255, 0.85);
+    text-align: left;
+    line-height: 1.45;
+    margin: 6px 0;
+    padding: 0 4px;
+}
+
+/* Thinking indicator on temporary AI message */
+.concierge-msg-thinking::after {
     content: '';
     display: inline-block;
     width: 4px;
