@@ -11280,19 +11280,20 @@ textarea.fate-field {
    Front: title + author. Spine: title. Back: "Your cover will evolve..."
    ═══════════════════════════════════════════════════════════════════ */
 .cover-book-3d {
+    /* 5:7 proportions, fills parent height */
     height: 100%;
     aspect-ratio: 5 / 7;
     transform-style: preserve-3d;
     transform: rotateX(7deg) rotateY(-20deg);
     transform-origin: center center;
     position: relative;
-    --book-depth: 30px; /* Match library book depth */
+    --book-depth: 20px;    /* half spine = translateZ offset for front/back */
 }
 
-/* ── Front cover ── */
+/* ── Front cover (5:7) ── */
 .cover-book-3d .book-front {
     background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%);
-    transform: translateZ(30px);
+    transform: translateZ(var(--book-depth));
     box-shadow:
         inset 6px 0 10px -4px rgba(0, 0, 0, 0.08),
         inset 0 -2px 6px -3px rgba(0,0,0,0.06),
@@ -11300,6 +11301,16 @@ textarea.fate-field {
         3px 3px 10px -2px rgba(0,0,0,0.15),
         0 6px 20px rgba(0,0,0,0.08);
     border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* "Working Title:" label on cover and back cover (not spine) */
+.cover-working-label {
+    font-family: 'Lora', serif;
+    font-size: 0.5em;
+    color: rgba(140, 125, 105, 0.6);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
 }
 
 /* Title on white cover */
@@ -11341,12 +11352,13 @@ textarea.fate-field {
     display: none;
 }
 
-/* ── Spine ── */
+/* ── Spine (connects front to back at left edge) ── */
 .cover-book-3d .book-spine {
     opacity: 1;
-    width: 60px;
+    width: calc(var(--book-depth) * 2);
     background: linear-gradient(180deg, #ede9e1 0%, #e0d9ce 100%);
-    transform: rotateY(-90deg) translateZ(30px);
+    transform: rotateY(-90deg) translateZ(0px);
+    transform-origin: left center;
     border-radius: 6px 0 0 6px;
     box-shadow:
         inset -8px 0 10px -4px rgba(0, 0, 0, 0.12),
@@ -11374,10 +11386,10 @@ textarea.fate-field {
     font-size: 0.45em;
 }
 
-/* ── Back cover ── */
+/* ── Back cover (5:7, connects to spine at left edge) ── */
 .cover-book-3d .book-back {
     background: linear-gradient(160deg, #f5f1ea 0%, #ece7dd 100%);
-    transform: rotateY(180deg) translateZ(30px);
+    transform: translateZ(calc(-1 * var(--book-depth)));
     box-shadow:
         inset -6px 0 10px -4px rgba(0, 0, 0, 0.08),
         inset 0 -2px 6px -3px rgba(0,0,0,0.06),
@@ -11403,32 +11415,38 @@ textarea.fate-field {
     margin: 0;
 }
 
-/* ── Page edges — match library book textures and proportions ── */
+/* ── Page edges — proportional to book depth ── */
 .cover-book-3d .book-pages-right {
-    width: 60px;
-    height: calc(100% - 14px);
-    top: 7px;
-    right: 6px;
+    width: calc(var(--book-depth) * 2);
+    height: calc(100% - 10px);
+    top: 5px;
+    right: 4px;
     left: auto;
     transform-origin: right center;
-    transform: translateZ(-30px) rotateY(90deg);
+    transform: translateZ(calc(-1 * var(--book-depth))) rotateY(90deg);
     background: url('/assets/Forbidde-Library-Art/2-inch-side-edge.jpg') center / cover no-repeat;
     box-shadow:
-        inset 0 5px 8px -2px rgba(0,0,0,0.5),
-        inset 0 -5px 8px -2px rgba(0,0,0,0.5),
+        inset 0 4px 6px -2px rgba(0,0,0,0.4),
+        inset 0 -4px 6px -2px rgba(0,0,0,0.4),
         inset -3px 0 6px rgba(0,0,0,0.25),
         inset 3px 0 5px rgba(255,255,255,0.15),
         0 0 3px rgba(0, 0, 0, 0.15);
     border-radius: 0 1px 1px 0;
 }
 .cover-book-3d .book-pages-top {
-    height: 60px;
-    transform: translateZ(-30px) rotateX(90deg);
+    width: calc(100% - 5px);
+    height: calc(var(--book-depth) * 2);
+    top: 0; left: 0;
+    transform-origin: center top;
+    transform: translateZ(calc(-1 * var(--book-depth))) rotateX(90deg);
     background: linear-gradient(180deg, #f0ebe3 0%, #f5f0e8 100%);
 }
 .cover-book-3d .book-pages-bottom {
-    height: 60px;
-    transform: translateZ(-30px) rotateX(-90deg);
+    width: calc(100% - 5px);
+    height: calc(var(--book-depth) * 2);
+    bottom: 0; left: 0;
+    transform-origin: center bottom;
+    transform: translateZ(calc(-1 * var(--book-depth))) rotateX(-90deg);
     background: linear-gradient(0deg, #ece7dd 0%, #f0ebe3 100%);
 }
 
@@ -11441,6 +11459,7 @@ textarea.fate-field {
     height: 100%;
     background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
     transform: translateZ(calc(-1 * var(--book-depth))) rotateY(90deg);
+    transform-origin: right center;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.1s ease;
@@ -22883,8 +22902,23 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     object-fit: contain;
     pointer-events: none;
 }
+/* Clip gleam to bell silhouette using the bell image as a mask */
+#conciergeBell .bell-gleam-wrapper {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: url('assets/Concierge/gold-bell-splat.png');
+    mask-image: url('assets/Concierge/gold-bell-splat.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    pointer-events: none;
+    z-index: 1;
+}
 
-/* ── Bell gleam sweep on hover (reuses gleam-sweep keyframe) ── */
+/* ── Bell gleam sweep on hover (clipped to bell shape via wrapper mask) ── */
 #conciergeBell .bell-gleam-layer {
     position: absolute;
     top: 0;
@@ -22900,7 +22934,6 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
         transparent 100%
     );
     pointer-events: none;
-    z-index: 2;
     opacity: 0;
 }
 #conciergeBell:hover .bell-gleam-layer {
@@ -23052,15 +23085,15 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     border-radius: 2px;
 }
 
-/* AI message — gold, small-caps, centered */
+/* AI message — gold, sentence case, centered */
 .concierge-msg-ai {
     font-family: 'Lora', serif;
     font-size: 0.92em;
-    font-variant: small-caps;
+    font-variant: normal;
     color: #D4AF37;
     text-align: center;
     line-height: 1.55;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.02em;
     margin: 6px 0;
     padding: 0 4px;
     white-space: pre-line;

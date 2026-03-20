@@ -68,7 +68,9 @@
      ═══════════════════════════════════════════════════════════════════════ -->
 <button id="conciergeBell" aria-label="Summon Concierge">
   <img src="/assets/Concierge/gold-bell-splat.png" alt="" class="bell-icon-img" />
-  <span class="bell-gleam-layer"></span>
+  <div class="bell-gleam-wrapper">
+    <span class="bell-gleam-layer"></span>
+  </div>
 </button>
 
 <!-- Concierge summon figure — materializes around bell on non-library screens -->
@@ -1473,6 +1475,7 @@
             <img id="bookCoverImg" src="" alt="" class="cover-book-art">
             <!-- White text placeholder (shown by default) -->
             <div class="book-front-text cover-book-text" id="coverBookText">
+              <div class="cover-working-label">Working Title:</div>
               <div class="book-front-title cover-book-title" id="coverBookTitle">Your Story</div>
               <div class="book-front-author cover-book-author" id="coverBookAuthor">by S. Tory Bound</div>
             </div>
@@ -1484,6 +1487,7 @@
           <!-- Back cover -->
           <div class="book-back cover-book-back">
             <div class="cover-book-back-inner">
+              <div class="cover-working-label">Working Title:</div>
               <p class="cover-book-evolve-text">Your cover will evolve<br>as you shape the story</p>
             </div>
           </div>
