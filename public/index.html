@@ -162,6 +162,16 @@
       <span style="color:var(--ink); font-family:'Lora',serif; font-size:0.85em;">Subtle interaction sounds</span>
     </label>
 
+    <!-- Content Mode (web only — hidden on iOS) -->
+    <div id="contentModeSection" class="vault-content-mode-section">
+      <label class="vault-label">Story Content</label>
+      <div class="vault-theme-row">
+        <button id="btnCinematicMode" class="sb-btn-png sm" onclick="window.setContentMode('safe')">Cinematic</button>
+        <button id="btnFullMode" class="sb-btn-png sm" onclick="window._requestFullMode()">Immersive</button>
+      </div>
+      <p style="color:rgba(255,255,255,0.35); font-size:0.7em; margin:4px 0 0;">Cinematic: tension, longing, restraint. Immersive: intensity, embodiment.</p>
+    </div>
+
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
