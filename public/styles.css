@@ -17390,6 +17390,28 @@ body.corridor-mode .sb-grid.corridor-section {
         0 0 8px rgba(0,0,0,0.15) !important;
 }
 
+/* ── Begin Graphic Novel — subordinate corridor button ── */
+.begin-gn-btn {
+    display: block;
+    margin: 12px auto 0;
+    padding: 8px 24px;
+    background: transparent;
+    border: 1px solid rgba(201, 162, 78, 0.25);
+    border-radius: 4px;
+    color: rgba(201, 162, 78, 0.65);
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+.begin-gn-btn:hover {
+    color: rgba(201, 162, 78, 0.9);
+    border-color: rgba(201, 162, 78, 0.45);
+    background: rgba(201, 162, 78, 0.05);
+}
+
 #beginStoryRow .story-continue-hint {
     margin-top: 12px;
     font-size: 0.85em;
@@ -19515,12 +19537,15 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 .gn-page .gn-micro-text {
     font-family: 'Lora', serif;
-    font-size: 0.85em;
-    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.72em;
+    font-style: italic;
+    color: rgba(255, 255, 255, 0.35);
     text-align: center;
-    max-width: 500px;
-    line-height: 1.5;
-    padding: 4px 12px;
+    max-width: 400px;
+    margin: 6px auto 0;
+    line-height: 1.4;
+    padding: 2px 8px;
+    letter-spacing: 0.04em;
 }
 .gn-page .gn-page-actions {
     display: flex;
@@ -19666,6 +19691,333 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 .gn-style-cancel:hover {
     color: rgba(255, 255, 255, 0.6);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GRAPHIC NOVEL ENGINE — Separate screens (style selector, cover, reader)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.gn-screen {
+    background: #0a0806;
+    color: #e0d5c0;
+}
+
+/* ── GN Style Selector Screen ── */
+.gn-selector-container {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    text-align: center;
+}
+.gn-selector-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 1.3em;
+    color: #c9a84c;
+    letter-spacing: 0.15em;
+    margin-bottom: 30px;
+}
+.gn-selector-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.gn-selector-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 16px 20px;
+    background: rgba(20, 16, 10, 0.9);
+    border: 1px solid rgba(201, 162, 78, 0.2);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.25s ease, background 0.25s ease;
+    text-align: left;
+}
+.gn-selector-card:hover {
+    border-color: rgba(201, 162, 78, 0.5);
+    background: rgba(201, 162, 78, 0.06);
+}
+/* ── Artist thumbnail in selector card ── */
+.gn-selector-thumb {
+    width: 100%;
+    height: 80px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    background: rgba(20, 16, 10, 0.6);
+}
+.gn-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 4px;
+}
+.gn-thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(201, 162, 78, 0.06) 0%, rgba(201, 162, 78, 0.02) 100%);
+    animation: gnThumbPulse 2s ease-in-out infinite;
+}
+@keyframes gnThumbPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.7; }
+}
+
+.gn-selector-name {
+    font-family: 'Lora', serif;
+    font-size: 0.95em;
+    color: #ddd09a;
+    letter-spacing: 0.08em;
+}
+.gn-selector-desc {
+    font-size: 0.78em;
+    color: rgba(255, 255, 255, 0.4);
+}
+.gn-selector-back,
+.gn-nav-back {
+    background: none;
+    border: none;
+    color: rgba(201, 162, 78, 0.4);
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    cursor: pointer;
+    padding: 8px 16px;
+    transition: color 0.2s ease;
+}
+.gn-selector-back:hover,
+.gn-nav-back:hover {
+    color: rgba(201, 162, 78, 0.7);
+}
+.gn-nav-back {
+    display: block;
+    margin-bottom: 12px;
+}
+
+/* ── GN Cover View Screen ── */
+.gn-cover-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+}
+.gn-cover-loading {
+    padding: 60px 20px;
+}
+.gn-cover-status {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.95em;
+    color: rgba(201, 162, 78, 0.6);
+    letter-spacing: 0.05em;
+}
+.gn-cover-display {
+    margin: 20px auto;
+    max-width: 400px;
+}
+.gn-cover-img {
+    width: 100%;
+    height: auto;
+    border-radius: 2px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    transition: opacity 0.6s ease;
+    /* GN cover framing — subtle panel-like edge distinguishes from literary covers */
+    border: 2px solid rgba(201, 162, 78, 0.12);
+    outline: 1px solid rgba(0, 0, 0, 0.3);
+    outline-offset: 3px;
+}
+.gn-cover-actions {
+    margin-top: 24px;
+}
+
+/* ── GN Reader Screen ── */
+.gn-reader-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+}
+.gn-reader-content {
+    min-height: 60vh;
+}
+.gn-reader-controls {
+    padding: 16px 0;
+    text-align: center;
+}
+
+/* ── GN Panel-Based Rendering ── */
+.gn-page-panels {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* ── Base panel ── */
+.gn-panel {
+    position: relative;
+    border-radius: 2px;
+    overflow: hidden;
+    background: #0a0806;
+}
+.gn-panel-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* ── Dialogue bubble — positioned by dialoguePosition field ── */
+.gn-panel-dialogue {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    max-width: 70%;
+    padding: 8px 16px 10px;
+    background: rgba(255, 255, 255, 0.94);
+    border-radius: 14px;
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    color: #1a1a1a;
+    text-align: center;
+    line-height: 1.45;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    pointer-events: none;
+    z-index: 2;
+}
+.gn-dialogue-bottom { bottom: 12px; }
+.gn-dialogue-top { top: 12px; }
+
+/* Bubble tail — bottom-positioned triangle */
+.gn-dialogue-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 7px solid rgba(255, 255, 255, 0.94);
+}
+.gn-dialogue-top::after {
+    content: '';
+    position: absolute;
+    top: -7px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 7px solid rgba(255, 255, 255, 0.94);
+}
+
+/* Speaker name — bold prefix inside bubble */
+.gn-speaker {
+    font-weight: 700;
+    font-size: 0.88em;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #333;
+}
+
+/* ── Readability gradient overlay — soft darkening behind text area ── */
+.gn-panel-readability {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 35%;
+    pointer-events: none;
+    z-index: 1;
+}
+.gn-readability-bottom {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 100%);
+}
+.gn-readability-top {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 100%);
+}
+
+/* ── Importance-based panel sizing + highlight ── */
+.gn-panel[data-importance="high"] { flex: 1.4; }
+.gn-panel[data-importance="high"] .gn-panel-img { min-height: 280px; object-fit: cover; }
+.gn-panel[data-importance="high"] {
+    box-shadow: 0 0 0 1px rgba(201, 162, 78, 0.15),
+                0 0 12px rgba(201, 162, 78, 0.08);
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+.gn-panel[data-importance="low"] { flex: 0.7; }
+.gn-panel[data-importance="low"] .gn-panel-img { max-height: 180px; object-fit: cover; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GN LAYOUT SYSTEM — 5 layout types + micro-variations
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Vertical (default) — column stack ── */
+.gn-layout-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.gn-layout-vertical .gn-panel { width: 100%; }
+
+/* ── Grid — 2×2 with micro-variation (first panel slightly larger) ── */
+.gn-layout-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    grid-template-rows: 1.05fr 0.95fr;
+    gap: 6px;
+}
+.gn-layout-grid .gn-panel-img { height: 100%; object-fit: cover; }
+
+/* ── Cinematic — hero + smaller row, hero position varies ── */
+.gn-layout-cinematic {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.gn-cinematic-hero { width: 100%; }
+.gn-cinematic-hero .gn-panel { width: 100%; }
+.gn-cinematic-hero .gn-panel-img { min-height: 300px; object-fit: cover; }
+.gn-cinematic-row {
+    display: flex;
+    gap: 6px;
+}
+.gn-cinematic-row .gn-panel { flex: 1; }
+.gn-cinematic-row .gn-panel-img { height: 180px; object-fit: cover; }
+/* Alternate hero position — odd scenes put hero in middle via order */
+.gn-page-panels[data-scene]:nth-child(odd) .gn-layout-cinematic {
+    flex-direction: column-reverse;
+}
+
+/* ── Horizontal — flex row with slight stagger ── */
+.gn-layout-horizontal {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    align-items: flex-end;
+}
+.gn-layout-horizontal .gn-panel {
+    flex: 0 0 auto;
+    width: 45%;
+    min-width: 200px;
+}
+.gn-layout-horizontal .gn-panel:nth-child(even) {
+    margin-top: 12px;
+}
+.gn-layout-horizontal .gn-panel-img { height: 320px; object-fit: cover; }
+
+/* ── Full Bleed — single panel fills page ── */
+.gn-layout-fullbleed {
+    display: flex;
+}
+.gn-layout-fullbleed .gn-panel { width: 100%; }
+.gn-layout-fullbleed .gn-panel-img { min-height: 500px; object-fit: cover; }
+
+/* Backward compat — old class name */
+.gn-panels-stack { display: flex; flex-direction: column; gap: 4px; }
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* COVER FORTUNE DISPLAY                                                        */
@@ -23038,12 +23390,12 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 
 /* ── Hide corner bell + summon figure on library screen ── */
+/* Hide corner bell + summon figure on library (library has its own diegetic concierge).
+   Dialogue panel is NOT hidden — the library concierge uses it when clicked. */
 #vaultLibraryScreen:not(.hidden) ~ #conciergeBell,
 body:has(#vaultLibraryScreen:not(.hidden)) #conciergeBell,
 #vaultLibraryScreen:not(.hidden) ~ .concierge-summon-figure,
-body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure,
-#vaultLibraryScreen:not(.hidden) ~ .concierge-dialogue,
-body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
+body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     opacity: 0 !important;
     pointer-events: none !important;
     visibility: hidden !important;
@@ -23211,68 +23563,111 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 }
 
 /* ── Anchored dialogue panel — rises from bell, bottom-left ── */
+/* ── Concierge dialogue — slides up from bottom, no fade, no scale ── */
 .concierge-dialogue {
     position: fixed;
-    bottom: 10px;
+    bottom: 0;
     left: 76px;
     z-index: 10011;
     width: 260px;
-    max-height: calc(100vh - 20px);
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(6px);
-    transition: opacity 0.4s ease, visibility 0.4s ease,
-                transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: translateY(100%);
+    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+                visibility 0s linear 0.45s;  /* delay hide until slide completes */
     pointer-events: none;
+    visibility: hidden;
 }
 .concierge-dialogue.visible {
-    opacity: 1;
     visibility: visible;
     transform: translateY(0);
     pointer-events: auto;
+    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+                visibility 0s linear 0s;  /* show instantly on open */
 }
-/* Fading state — inactivity pre-exit */
-.concierge-dialogue.fading {
-    opacity: 0.85;
-    transform: translateY(4px);
+/* Dismiss — slide back down, then hide */
+.concierge-dialogue.dismissing {
+    transform: translateY(100%);
+    pointer-events: none;
+    visibility: hidden;
+    transition: transform 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+                visibility 0s linear 0.45s;
 }
 
-/* Frame — uses Black-Gold PNG as background, rotated 90° via border-image */
+/* ── Library-specific position: right of diegetic concierge, behind him ── */
+body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
+    left: calc(22vw + 10px);
+    z-index: 4; /* behind library concierge figure (z:5) */
+}
+
+/* ── Frame — Black-Gold PNG border, grows with content ── */
 .concierge-dialogue-frame {
     background: rgba(12, 9, 6, 0.92);
     border: 2px solid rgba(201, 162, 78, 0.30);
     border-image: url('/assets/ui/Black-Gold-640x176.png') 28 fill / 14px / 0 stretch;
     border-radius: 4px;
     box-shadow: 0 0 20px rgba(0,0,0,0.6), 0 0 8px rgba(201, 162, 78, 0.06);
-    padding: 14px 12px 10px;
+    padding: 8px 12px 10px;
     display: flex;
     flex-direction: column;
+    max-height: 100vh;
     overflow: hidden;
 }
 
-/* Scrollable conversation area */
+/* ── Header — title + close button ── */
+.concierge-dialogue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
+.concierge-dialogue-title {
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    color: #c9a84c;
+    opacity: 0.7;
+}
+.concierge-dialogue-close {
+    background: none;
+    border: none;
+    color: rgba(201, 162, 78, 0.45);
+    font-size: 1.15em;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 2px;
+    transition: color 0.2s ease;
+}
+.concierge-dialogue-close:hover {
+    color: rgba(201, 162, 78, 0.8);
+}
+
+/* ── Scrollable conversation area — grey scrollbar, grows until top of screen ── */
 .concierge-dialogue-scroll {
-    flex: 1;
+    flex: 1 1 auto;
     overflow-y: auto;
     overflow-x: hidden;
-    max-height: 50vh;
+    max-height: calc(100vh - 120px);
     scroll-behavior: smooth;
     margin-bottom: 8px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(201, 162, 78, 0.2) transparent;
+    scrollbar-color: rgba(160, 160, 160, 0.35) transparent;
 }
 .concierge-dialogue-scroll::-webkit-scrollbar {
-    width: 4px;
+    width: 5px;
 }
 .concierge-dialogue-scroll::-webkit-scrollbar-track {
     background: transparent;
 }
 .concierge-dialogue-scroll::-webkit-scrollbar-thumb {
-    background: rgba(201, 162, 78, 0.25);
-    border-radius: 2px;
+    background: rgba(160, 160, 160, 0.35);
+    border-radius: 3px;
+}
+.concierge-dialogue-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(160, 160, 160, 0.55);
 }
 
 /* AI message — gold, sentence case, centered */
@@ -23362,6 +23757,252 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     15%  { outline: 2px solid rgba(201, 162, 78, 0.3); outline-offset: 2px; filter: brightness(1.035); }
     85%  { outline: 2px solid rgba(201, 162, 78, 0.3); outline-offset: 2px; filter: brightness(1.035); }
     100% { outline: 2px solid transparent; outline-offset: 2px; filter: brightness(1); }
+}
+
+/* ── Concierge Tour Highlight — steady gold glow for guided tour steps ── */
+.concierge-highlight {
+    animation: conciergeTourGlow 2s ease-in-out infinite alternate !important;
+    z-index: 2;
+    position: relative;
+}
+@keyframes conciergeTourGlow {
+    0%   { box-shadow: 0 0 8px 2px rgba(201, 162, 78, 0.25); }
+    100% { box-shadow: 0 0 16px 4px rgba(201, 162, 78, 0.45); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MASK SELECTION GATE — Threshold ritual before library access
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Gate active: desaturate + blur books ── */
+.library-variant--vault.mask-gate-active .vault-book-list,
+.library-variant--vault.mask-gate-active .vault-trophy-shelf,
+.library-variant--vault.mask-gate-active .dm-shelf-row {
+    filter: saturate(0.45) blur(1.5px);
+    pointer-events: none;
+    transition: filter 0.8s ease;
+}
+.library-variant--vault.mask-gate-active .vault-exit-row {
+    pointer-events: none;
+    opacity: 0.4;
+    transition: opacity 0.6s ease;
+}
+.library-variant--vault.mask-gate-active .vault-exit-row .sb-btn-png {
+    cursor: default;
+    filter: saturate(0.5);
+}
+.library-variant--vault.mask-gate-active .vault-exit-row .sb-btn-png:hover,
+.library-variant--vault.mask-gate-active .vault-exit-row .sb-btn-png:active {
+    transform: none;
+    box-shadow: none;
+}
+/* Depth compression — world pulls away slightly during mask ceremony */
+.library-variant--vault.mask-gate-active {
+    transform: scale(1);
+    transition: transform 0.8s ease, filter 0.8s ease;
+}
+.library-variant--vault.mask-depth-compressed {
+    transform: scale(0.98);
+    transform-origin: center center;
+}
+/* Gate lift — smooth transition back */
+.library-variant--vault:not(.mask-gate-active) .vault-book-list,
+.library-variant--vault:not(.mask-gate-active) .vault-trophy-shelf,
+.library-variant--vault:not(.mask-gate-active) .dm-shelf-row {
+    filter: none;
+    pointer-events: auto;
+    transition: filter 1.2s ease;
+}
+.library-variant--vault:not(.mask-gate-active) .vault-exit-row {
+    pointer-events: auto;
+    opacity: 1;
+    transition: opacity 0.8s ease;
+}
+.library-variant--vault:not(.mask-gate-active) .vault-exit-row .sb-btn-png {
+    cursor: pointer;
+    filter: none;
+}
+
+/* ── Mask shelf — centered row of 7 masks ── */
+.mask-selection-shelf {
+    position: absolute;
+    top: 42%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    width: 80%;
+    max-width: 700px;
+    display: flex;
+    justify-content: center;
+}
+.mask-shelf-row {
+    display: flex;
+    gap: 2vw;
+    justify-content: center;
+    align-items: flex-end;
+    perspective: 900px;
+    flex-wrap: wrap;
+}
+
+/* ── Individual mask ── */
+.mask-candidate {
+    width: clamp(60px, 8vw, 90px);
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+                opacity 0.6s ease;
+    transform-origin: center bottom;
+    transform-style: preserve-3d;
+}
+.mask-candidate .mask-img {
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
+    transition: filter 0.3s ease, transform 0.35s ease;
+}
+/* Hover: lift + scale + brighten gold cracks + whisper */
+.mask-candidate:hover {
+    transform: translateY(-8px) scale(1.03);
+}
+.mask-candidate:hover .mask-img {
+    filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4))
+            drop-shadow(0 0 8px rgba(201, 162, 78, 0.25));
+}
+
+/* ── Whisper text — internal cognition, not UI decoration ── */
+.mask-whisper {
+    position: absolute;
+    bottom: -1.6em;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Lora', serif;
+    font-size: clamp(8px, 0.7vw, 11px);
+    color: rgba(180, 165, 130, 0.4);
+    white-space: nowrap;
+    opacity: 0.25;
+    transition: opacity 220ms ease-out;
+    letter-spacing: 0.1em;
+    pointer-events: none;
+    filter: blur(0.4px);
+    text-shadow: 0 0 4px rgba(180, 165, 130, 0.08);
+}
+.mask-candidate:hover .mask-whisper {
+    opacity: 0.42;
+}
+
+/* ── Selection animation states ── */
+.mask-candidate.mask-engaging .mask-img {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 14px rgba(201, 162, 78, 0.35))
+            drop-shadow(0 6px 16px rgba(0,0,0,0.5));
+}
+.mask-candidate.mask-rotating {
+    transition: transform 0.38s ease-in-out;
+    transform: rotateY(180deg) scale(1.12);
+}
+.mask-candidate.mask-centering {
+    transition: transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+    z-index: 20;
+}
+/* Approach shadow — top-down gradient occlusion as mask nears camera */
+.mask-candidate.mask-approaching::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+.mask-candidate.mask-approaching.mask-shadow-active::after {
+    opacity: 1;
+}
+/* Depth blur — proximity softening on mask image */
+.mask-candidate.mask-approaching .mask-img {
+    transition: filter 0.6s ease, transform 0.6s ease;
+}
+.mask-candidate.mask-blur-near .mask-img {
+    filter: blur(1.8px) drop-shadow(0 0 20px rgba(0,0,0,0.7));
+}
+/* Eye convergence — horizontal compression merges apertures */
+.mask-candidate.mask-converging .mask-img {
+    transition: transform 0.5s ease-in-out;
+    transform: scaleX(0.85) scaleY(1.03);
+}
+/* Full-screen occlusion overlay — passage moment */
+.mask-occlusion-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 25;
+    background: rgba(5, 3, 2, 0.90);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+}
+.mask-occlusion-overlay.occluding {
+    opacity: 1;
+}
+.mask-occlusion-overlay.revealing {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+
+.mask-candidate.mask-recognition .mask-img {
+    animation: maskRecognitionPulse 0.6s ease-in-out;
+}
+@keyframes maskRecognitionPulse {
+    0%   { filter: drop-shadow(0 0 8px rgba(201, 162, 78, 0.2)); }
+    50%  { filter: drop-shadow(0 0 24px rgba(201, 162, 78, 0.6))
+                   drop-shadow(0 0 40px rgba(201, 162, 78, 0.3)); }
+    100% { filter: drop-shadow(0 0 12px rgba(201, 162, 78, 0.3)); }
+}
+.mask-candidate.mask-dissolving {
+    transition: opacity 0.8s ease;
+    opacity: 0;
+}
+
+/* Post-ceremony: non-chosen masks dim */
+.mask-selection-shelf.masks-dimmed .mask-candidate {
+    opacity: 0.15;
+    pointer-events: none;
+    transition: opacity 1s ease;
+}
+.mask-selection-shelf.masks-dimmed .mask-candidate.mask-chosen {
+    opacity: 1;
+}
+
+/* ── Responsive: larger masks on small screens ── */
+@media (max-width: 768px) {
+    .mask-candidate {
+        width: clamp(50px, 12vw, 80px);
+    }
+    .mask-shelf-row {
+        gap: 3vw;
+    }
+    .mask-selection-shelf {
+        width: 92%;
+    }
+}
+
+/* ── Book dust dissolution — soft, atmospheric, edges-inward ── */
+/* Distinct from card sparkles: quieter, slower, warm amber dust */
+.book-dust-burst {
+    overflow: visible;
+}
+.book-dust-particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    background: rgba(170, 145, 95, 0.3);
+    box-shadow: 0 0 2px rgba(170, 145, 95, 0.08);
+    animation: bookDustDrift 0.8s ease-out forwards;
+}
+@keyframes bookDustDrift {
+    0%   { opacity: 0.35; transform: translate(0, 0) scale(1) rotate(0deg); }
+    50%  { opacity: 0.2; }
+    100% { opacity: 0; transform: translate(var(--drift-x, 1px), var(--drift-y, -6px)) scale(0.6) rotate(var(--dust-rot, 10deg)); }
 }
 
 /* Narrative Diagnostics Panel (debug only) */

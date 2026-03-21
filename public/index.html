@@ -60,7 +60,7 @@
   </div>
 </div>
 
-<button id="burgerBtn"><img src="/assets/ui/burger-keyhole-ornate.png" alt="Menu" style="width:32px; height:32px; vertical-align:middle;"></button>
+<button id="burgerBtn" data-tour-vault><img src="/assets/ui/burger-keyhole-ornate.png" alt="Menu" style="width:32px; height:32px; vertical-align:middle;"></button>
 <button id="globalBackBtn" class="hidden"><img src="/assets/ui/back-arrow.png" alt="Back" style="width:32px; height:32px;"></button>
 
 <!-- ═══════════════════════════════════════════════════════════════════════
@@ -78,9 +78,13 @@
   <img id="conciergeSummonImg" src="" alt="" />
 </div>
 
-<!-- Concierge dialogue panel — anchored bottom-left, rises from bell -->
+<!-- Concierge dialogue panel — slides up from bottom, grows with content -->
 <div id="conciergeDialogue" class="concierge-dialogue">
   <div class="concierge-dialogue-frame">
+    <div class="concierge-dialogue-header">
+      <span class="concierge-dialogue-title">Concierge</span>
+      <button class="concierge-dialogue-close" id="conciergeCloseBtn" aria-label="Close">&times;</button>
+    </div>
     <div id="conciergeDialogueScroll" class="concierge-dialogue-scroll"></div>
     <input type="text" id="conciergeInput" placeholder="What would you like to know?" autocomplete="off" />
   </div>
@@ -889,7 +893,7 @@
     <div class="shape-your-story-header">
       <div class="section-title" id="shapeYourStoryTitle">Shape Your Story</div>
       <!-- BREADCRUMB ROW - Committed selections accumulate here -->
-      <div class="breadcrumb-row" id="breadcrumbRow"></div>
+      <div class="breadcrumb-row" id="breadcrumbRow" data-tour-breadcrumbs></div>
     </div>
 
     <!-- FLOW STAGE INDICATOR — REMOVED (DSP invisible until story-shaping cards resolve) -->
@@ -898,7 +902,7 @@
     <div id="fateVignette"></div>
 
     <!-- TWO-CARD AUTHORSHIP CHOICE ROW -->
-    <div class="authorship-choice-row corridor-section" id="authorshipChoiceRow" data-corridor-stage="authorship">
+    <div class="authorship-choice-row corridor-section" id="authorshipChoiceRow" data-corridor-stage="authorship" data-tour-corridor>
       <div class="authorship-cards-container">
       <div class="authorship-card" id="chooseYourHandCard" data-choice="manual">
         <div class="authorship-card-inner">
@@ -930,7 +934,7 @@
       </div>
       </div><!-- END authorship-cards-container -->
       <!-- Continue button for authorship decision -->
-      <button class="flow-continue-btn sb-btn-png sm" id="continueFromAuthorship">Proceed</button>
+      <button class="flow-continue-btn sb-btn-png sm" id="continueFromAuthorship" data-tour-continue>Proceed</button>
     </div>
 
     <!-- Legacy fate card reference for compatibility (hidden) -->
@@ -1415,6 +1419,7 @@
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
                 <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Begin Story</button>
             </div>
+            <button class="begin-gn-btn" id="beginGraphicNovelBtn" onclick="if(window.handleBeginGraphicNovel){window.handleBeginGraphicNovel()}">Begin Graphic Novel</button>
             <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
             <button id="beginFortuneBtn" class="begin-fortune-btn" onclick="window.openFortunePurchaseModal()">
                 <span class="begin-fortune-label">Fortunes</span>
@@ -1523,7 +1528,6 @@
         <button id="btnSeeSetting" class="cover-view-btn setting-btn">See Your Story Setting</button>
         <div id="settingBtnDisabledNotice" class="setting-disabled-notice hidden">Requires subscription to access</div>
         <button id="btnBeginStory" class="cover-view-btn begin-btn">Begin Story</button>
-        <button id="btnBeginGraphicNovel" class="cover-view-btn gn-btn hidden">Begin Graphic Novel</button>
         <p id="btnBeginStoryHint" class="story-continue-hint hidden">Your story will resume where you left off.</p>
       </div>
     </div>
@@ -1999,6 +2003,67 @@
 <!-- ═══════════════════════════════════════════════════════════════════════════════
      VAULT PERSONAL LIBRARY — 3D book shelf (full-screen, reuses 3D engine)
      ═══════════════════════════════════════════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════════════════════════════════
+     GRAPHIC NOVEL MODE — Parallel storytelling engine (separate from prose)
+     ═══════════════════════════════════════════════════════════════════════ -->
+
+<!-- GN Style Selector — choose manga / western / painterly -->
+<div id="gnStyleSelector" class="screen hidden gn-screen">
+  <div class="gn-selector-container">
+    <h2 class="gn-selector-title">Choose Your Style</h2>
+    <div class="gn-selector-options">
+      <button class="gn-selector-card" data-gn-style="ryo_toro">
+        <span class="gn-selector-name">Ryo Toro</span>
+        <span class="gn-selector-desc">High contrast, expressive, dynamic</span>
+      </button>
+      <button class="gn-selector-card" data-gn-style="troy_bond">
+        <span class="gn-selector-name">Troy Bond</span>
+        <span class="gn-selector-desc">Bold inks, full color, cinematic</span>
+      </button>
+      <button class="gn-selector-card" data-gn-style="lora_venn">
+        <span class="gn-selector-name">Lora Venn</span>
+        <span class="gn-selector-desc">Soft edges, atmospheric, textured</span>
+      </button>
+      <button class="gn-selector-card" data-gn-style="doro_veyn">
+        <span class="gn-selector-name">Doro Veyn</span>
+        <span class="gn-selector-desc">Noir shadows, razor highlights, tension</span>
+      </button>
+      <button class="gn-selector-card" data-gn-style="soryn_vale">
+        <span class="gn-selector-name">Soryn Vale</span>
+        <span class="gn-selector-desc">Dreamlike, shifted palette, surreal</span>
+      </button>
+      <button class="gn-selector-card" data-gn-style="vero_dune">
+        <span class="gn-selector-name">Vero Dune</span>
+        <span class="gn-selector-desc">Minimal, precise, graphic clarity</span>
+      </button>
+    </div>
+    <button class="gn-selector-back" id="gnSelectorBack">Back</button>
+  </div>
+</div>
+
+<!-- GN Cover View — GN-specific cover generation + display -->
+<div id="gnCoverView" class="screen hidden gn-screen">
+  <div class="gn-cover-container">
+    <button class="gn-nav-back" id="gnCoverBack">Back</button>
+    <div id="gnCoverLoading" class="gn-cover-loading">
+      <p class="gn-cover-status">Composing your graphic novel...</p>
+    </div>
+    <div id="gnCoverDisplay" class="gn-cover-display" style="display:none;"></div>
+    <div id="gnCoverActions" class="gn-cover-actions" style="display:none;">
+      <button class="sb-btn-png lg" id="gnBeginReading">Open</button>
+    </div>
+  </div>
+</div>
+
+<!-- GN Reader — comic page renderer (separate from prose #storyContent) -->
+<div id="gnReader" class="screen hidden gn-screen">
+  <div class="gn-reader-container">
+    <button class="gn-nav-back" id="gnReaderBack">Back</button>
+    <div id="gnReaderContent" class="gn-reader-content"></div>
+    <div id="gnReaderControls" class="gn-reader-controls"></div>
+  </div>
+</div>
+
 <div id="vaultLibraryScreen" class="screen hidden">
   <div class="forbidden-library library-variant library-variant--vault">
     <!-- Arced "Private Library" title along the black arch -->
@@ -2021,7 +2086,45 @@
       <p class="forbidden-library-empty">Gathering volumes...</p>
     </div>
     <div id="vaultTrophyShelf" class="vault-trophy-shelf" style="display:none;"></div>
-    <div class="library-book-list vault-book-list" id="vaultLibraryList" style="display:none;"></div>
+
+    <!-- ── Mask Selection Gate — threshold ritual before library access ── -->
+    <div id="maskSelectionShelf" class="mask-selection-shelf" style="display:none;">
+      <div class="mask-shelf-row">
+        <div class="mask-candidate" data-mask-id="ARMORED_FOX">
+          <img src="/assets/Concierge/masks/ArmoredFox.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Evade</span>
+        </div>
+        <div class="mask-candidate" data-mask-id="BEAUTIFUL_RUIN">
+          <img src="/assets/Concierge/masks/BeautifulRuin.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Endure</span>
+        </div>
+        <div class="mask-candidate" data-mask-id="DARK_VICE">
+          <img src="/assets/Concierge/masks/DarkVice.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Obsession</span>
+        </div>
+        <div class="mask-candidate" data-mask-id="ETERNAL_FLAME">
+          <img src="/assets/Concierge/masks/EternalFlame.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Always</span>
+        </div>
+        <div class="mask-candidate" data-mask-id="HEART_WARDEN">
+          <img src="/assets/Concierge/masks/HeartWarden.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Closer</span>
+        </div>
+        <div class="mask-candidate" data-mask-id="OPEN_VEIN">
+          <img src="/assets/Concierge/masks/OpenVein.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Further</span>
+        </div>
+        <div class="mask-candidate" data-mask-id="SPELLBINDER">
+          <img src="/assets/Concierge/masks/Spellbinder.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Fascination</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mask occlusion overlay — full-screen darkness for passage moment -->
+    <div id="maskOcclusionOverlay" class="mask-occlusion-overlay"></div>
+
+    <div class="library-book-list vault-book-list" id="vaultLibraryList" data-tour-books style="display:none;"></div>
     <div id="vaultLibraryEmpty" class="forbidden-library-empty-state" style="display:none;">
       <p class="forbidden-library-empty">No Stories Available Yet. Start one yourself.</p>
     </div>
