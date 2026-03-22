@@ -19957,6 +19957,37 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     margin-top: 12px;
 }
 
+/* ── GN POV Edition ── */
+.gn-pov-edition {
+    text-align: center;
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid rgba(201, 162, 78, 0.2);
+    border-radius: 4px;
+    background: rgba(10, 8, 6, 0.6);
+}
+.gn-pov-edition.hidden { display: none; }
+.gn-pov-edition-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    font-size: 0.9em;
+    margin-bottom: 12px;
+}
+.gn-pov-edition-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.gn-pov-status {
+    font-family: 'Lora', serif;
+    font-size: 0.75em;
+    color: rgba(201, 162, 78, 0.5);
+    min-height: 1.2em;
+}
+
 /* ── GN Cover overlay ── */
 .gn-cover-overlay {
     position: fixed;
