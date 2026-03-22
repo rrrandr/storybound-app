@@ -4377,6 +4377,13 @@ select:-webkit-autofill {
 
 .vault-sub input[type="range"] {
     width: 100%;
+    accent-color: var(--gold);
+}
+.vault-vol-val {
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: -6px;
 }
 
 /* ── Treasury panel inside Account ── */
@@ -19756,12 +19763,16 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 .gn-thumb-placeholder {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(201, 162, 78, 0.06) 0%, rgba(201, 162, 78, 0.02) 100%);
-    animation: gnThumbPulse 2s ease-in-out infinite;
+    background: linear-gradient(90deg,
+        rgba(201, 162, 78, 0.04) 0%,
+        rgba(201, 162, 78, 0.12) 40%,
+        rgba(201, 162, 78, 0.04) 80%);
+    background-size: 200% 100%;
+    animation: gnThumbShimmer 1.8s ease-in-out infinite;
 }
-@keyframes gnThumbPulse {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.7; }
+@keyframes gnThumbShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
 }
 
 .gn-selector-name {
@@ -19837,12 +19848,210 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     padding: 20px;
     min-height: 100vh;
 }
-.gn-reader-content {
-    min-height: 60vh;
+/* ── GN_STAGE: primary visual surface ── */
+.gn-stage {
+    width: 100%;
+    min-height: 50vh;
+    position: relative;
 }
-.gn-reader-controls {
-    padding: 16px 0;
+.gn-scene-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
     text-align: center;
+}
+.gn-loading-status {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold);
+    letter-spacing: 0.3em;
+    font-size: 0.95em;
+    animation: gnLoadPulse 2s ease-in-out infinite;
+}
+@keyframes gnLoadPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+.gn-panel-display {
+    margin: 0;
+}
+.gn-panel-display:empty {
+    display: none;
+}
+
+/* ── GN_UI_OVERLAY: persistent top bar + floating controls ── */
+.gn-ui-overlay {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    pointer-events: none;
+}
+.gn-ui-overlay > * {
+    pointer-events: auto;
+}
+.gn-ui-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: linear-gradient(to bottom, rgba(10,8,6,0.85) 0%, transparent 100%);
+}
+.gn-scene-indicator {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: var(--gold);
+    letter-spacing: 0.2em;
+    font-size: 0.85em;
+}
+.gn-god-mode-indicator {
+    position: fixed;
+    bottom: 120px;
+    right: 16px;
+    z-index: 21;
+}
+
+/* ── GN_FATE_LAYER ── */
+.gn-fate-section {
+    margin: 16px 0;
+    text-align: center;
+    padding: 0 16px;
+}
+.gn-fate-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+/* ── GN Scene actions: bookmark + cover ── */
+.gn-scene-actions-row {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+/* ── Panel highlight (long-press saved moment) ── */
+.gn-panel-highlighted {
+    outline: 2px solid rgba(201, 162, 78, 0.5);
+    outline-offset: -2px;
+    box-shadow: 0 0 12px rgba(201, 162, 78, 0.15);
+}
+
+/* ── Completion cover label ── */
+.gn-cover-final {
+    text-align: center;
+}
+.gn-cover-final img {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+.gn-cover-final-label {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: rgba(201, 162, 78, 0.6);
+    letter-spacing: 0.2em;
+    font-size: 0.85em;
+    margin-top: 12px;
+}
+
+/* ── GN Cover overlay ── */
+.gn-cover-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    background: rgba(5, 3, 2, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.gn-cover-overlay.hidden {
+    display: none;
+}
+/* Interaction isolation — block all input beneath overlay */
+body.gn-cover-active {
+    overflow: hidden;
+}
+body.gn-cover-active .gn-stage,
+body.gn-cover-active .gn-input-bar,
+body.gn-cover-active .gn-fate-section,
+body.gn-cover-active .gn-fate-controls,
+body.gn-cover-active .gn-ui-overlay {
+    pointer-events: none;
+}
+.gn-cover-overlay-inner {
+    position: relative;
+    max-width: 480px;
+    width: 90%;
+    text-align: center;
+}
+.gn-cover-overlay-close {
+    position: absolute;
+    top: -12px;
+    right: -12px;
+    background: none;
+    border: none;
+    color: var(--gold);
+    font-size: 1.6em;
+    cursor: pointer;
+    opacity: 0.6;
+    z-index: 1;
+}
+.gn-cover-overlay-close:hover { opacity: 1; }
+.gn-cover-overlay-img img {
+    max-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+}
+
+/* ── Cover placeholder (instant feedback) ── */
+.gn-cover-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+.gn-cover-frame {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    background: linear-gradient(135deg, rgba(200,200,200,0.08), rgba(200,200,200,0.16));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    animation: gnCoverFramePulse 2.5s ease-in-out infinite;
+}
+@keyframes gnCoverFramePulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+.gn-cover-loading-text {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.78em;
+    color: rgba(201, 162, 78, 0.5);
+    letter-spacing: 0.15em;
+    opacity: 0.7;
+}
+
+/* ── GN_INPUT_BAR: bottom-anchored Say/Do ── */
+.gn-input-bar {
+    padding: 16px;
+    text-align: center;
+    border-top: 1px solid rgba(201, 162, 78, 0.12);
+}
+.gn-input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto 10px;
+}
+.gn-submit-row {
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
 }
 
 /* ── GN Panel-Based Rendering ── */
@@ -20018,6 +20227,141 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
 /* Backward compat — old class name */
 .gn-panels-stack { display: flex; flex-direction: column; gap: 4px; }
+
+/* ── Importance-driven layout rows ── */
+.gn-hero-row {
+    width: 100%;
+    margin-bottom: 6px;
+}
+.gn-hero-row .gn-panel {
+    width: 100%;
+}
+.gn-hero-row .gn-panel-img {
+    min-height: 300px;
+    object-fit: cover;
+}
+.gn-medium-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.gn-medium-row .gn-panel {
+    flex: 1 1 45%;
+    min-width: 200px;
+}
+.gn-medium-row .gn-panel-img {
+    height: 240px;
+    object-fit: cover;
+}
+.gn-low-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.gn-low-row .gn-panel-img {
+    height: 160px;
+    object-fit: cover;
+}
+
+/* ── Panel shell (loading state — progressive reveal) ── */
+.gn-panel-shell {
+    position: relative;
+    min-height: 160px;
+    background: rgba(10, 8, 6, 0.95);
+}
+.gn-panel-loading {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+        rgba(201, 162, 78, 0.03) 0%,
+        rgba(201, 162, 78, 0.08) 40%,
+        rgba(201, 162, 78, 0.03) 80%);
+    background-size: 200% 200%;
+    animation: gnPanelShimmer 2s ease-in-out infinite;
+}
+@keyframes gnPanelShimmer {
+    0% { background-position: 200% 200%; }
+    100% { background-position: -200% -200%; }
+}
+
+/* ── Panel fade-in (image arrived) ── */
+.gn-panel-fadein {
+    animation: gnPanelFadeIn 0.5s ease-out forwards;
+}
+@keyframes gnPanelFadeIn {
+    0% { opacity: 0; transform: scale(1.01); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* ── Placeholder panel (semantic — intentional omission) ── */
+.gn-panel-placeholder {
+    position: relative;
+    min-height: 140px;
+    background: radial-gradient(ellipse at center, rgba(20, 16, 10, 0.6) 0%, rgba(5, 3, 2, 0.95) 100%);
+    border: 1px solid rgba(201, 162, 78, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.gn-placeholder-frame {
+    padding: 24px;
+    text-align: center;
+}
+.gn-placeholder-caption {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: rgba(180, 165, 130, 0.5);
+    font-size: 0.85em;
+    letter-spacing: 0.1em;
+    opacity: 0.52;
+}
+
+/* ── Unified panel caption — POV-variant styles ── */
+.gn-panel-caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    padding: 8px 12px;
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    line-height: 1.4;
+    pointer-events: none;
+}
+
+/* Third person — neutral, bottom */
+.gn-caption-third {
+    bottom: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    color: rgba(255,255,255,0.85);
+}
+
+/* First person — internal, bottom, italic */
+.gn-caption-first {
+    bottom: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.65));
+    color: rgba(230,220,200,0.85);
+    font-style: italic;
+}
+
+/* Fate — meta-narrative, top, gold */
+.gn-caption-fate {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent);
+    color: rgba(201, 162, 78, 0.75);
+    font-style: italic;
+    letter-spacing: 0.05em;
+}
+
+/* Second person — rare, bottom, subtle emphasis */
+.gn-caption-second {
+    bottom: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    color: rgba(255,255,255,0.9);
+    font-variant: small-caps;
+    letter-spacing: 0.04em;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* COVER FORTUNE DISPLAY                                                        */
@@ -23298,23 +23642,20 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     opacity: 1;
 }
 
-/* ── Figure — full-body concierge, bottom-anchored, knees cropped ── */
+/* ── Figure — full-body concierge, bottom-anchored ── */
 .lc-figure {
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 85%;
     overflow: visible;
     pointer-events: auto;
+    cursor: pointer;
 }
 .lc-mask {
     width: 100%;
-    height: 120%;
-    object-fit: cover;
-    object-position: center top;
-    border-radius: 0;
-    clip-path: inset(1px);
+    height: auto;
+    display: block;
     opacity: 1;
     filter: drop-shadow(2px 4px 18px rgba(0,0,0,0.7))
             drop-shadow(0 0 6px rgba(0,0,0,0.4));
@@ -23408,7 +23749,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
         width: 28vw;
     }
     .concierge-dialogue {
-        width: min(220px, calc(100vw - 90px));
+        width: min(229px, calc(100vw - 90px));
     }
     /* Summon figure size/position computed by JS — no override needed */
 }
@@ -23569,7 +23910,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     bottom: 0;
     left: 76px;
     z-index: 10011;
-    width: 260px;
+    width: 229px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -23595,30 +23936,43 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
                 visibility 0s linear 0.45s;
 }
 
-/* ── Library-specific position: right of diegetic concierge, behind him ── */
+/* ── Library-specific position: partially behind concierge's elbow ── */
 body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
-    left: calc(22vw + 10px);
+    left: 12vw;
     z-index: 4; /* behind library concierge figure (z:5) */
 }
 
-/* ── Frame — Black-Gold PNG border, grows with content ── */
+/* ── Frame — Black-Gold PNG rotated 90°, scaled 1.3× ── */
 .concierge-dialogue-frame {
-    background: rgba(12, 9, 6, 0.92);
-    border: 2px solid rgba(201, 162, 78, 0.30);
-    border-image: url('/assets/ui/Black-Gold-640x176.png') 28 fill / 14px / 0 stretch;
-    border-radius: 4px;
+    position: relative;
+    isolation: isolate;
+    background: none;
+    border: none;
     box-shadow: 0 0 20px rgba(0,0,0,0.6), 0 0 8px rgba(201, 162, 78, 0.06);
-    padding: 8px 12px 10px;
+    padding: 10px 16px 13px;
     display: flex;
     flex-direction: column;
-    max-height: 100vh;
-    overflow: hidden;
+    height: 832px;  /* JS overrides to shoulder height on open */
+}
+.concierge-dialogue-frame::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 832px;
+    height: 229px;
+    background: url('/assets/ui/Black-Gold-640x176.png') no-repeat 0 0;
+    background-size: 832px 229px;
+    transform: translate(-50%, -50%) rotate(90deg);
+    z-index: -1;
+    pointer-events: none;
 }
 
-/* ── Header — title + close button ── */
+/* ── Header — title centered, close button right ── */
 .concierge-dialogue-header {
+    position: relative;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     margin-bottom: 6px;
     flex-shrink: 0;
@@ -23630,8 +23984,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     letter-spacing: 0.12em;
     color: #c9a84c;
     opacity: 0.7;
+    text-align: center;
 }
 .concierge-dialogue-close {
+    position: absolute;
+    right: 0;
+    top: 0;
     background: none;
     border: none;
     color: rgba(201, 162, 78, 0.45);
@@ -23671,6 +24029,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 }
 
 /* AI message — gold, sentence case, centered */
+.concierge-msg-sep {
+    text-align: center;
+    color: rgba(201, 162, 78, 0.35);
+    font-size: 0.7em;
+    margin: 4px 0;
+    letter-spacing: 0.3em;
+    user-select: none;
+}
 .concierge-msg-ai {
     font-family: 'Lora', serif;
     font-size: 0.92em;
@@ -23774,13 +24140,13 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
    MASK SELECTION GATE — Threshold ritual before library access
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Gate active: desaturate + blur books ── */
+/* ── Gate active: fade books to transparent (match exit row treatment) ── */
 .library-variant--vault.mask-gate-active .vault-book-list,
 .library-variant--vault.mask-gate-active .vault-trophy-shelf,
 .library-variant--vault.mask-gate-active .dm-shelf-row {
-    filter: saturate(0.45) blur(1.5px);
+    opacity: 0.4;
     pointer-events: none;
-    transition: filter 0.8s ease;
+    transition: opacity 0.8s ease;
 }
 .library-variant--vault.mask-gate-active .vault-exit-row {
     pointer-events: none;
@@ -23809,9 +24175,9 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 .library-variant--vault:not(.mask-gate-active) .vault-book-list,
 .library-variant--vault:not(.mask-gate-active) .vault-trophy-shelf,
 .library-variant--vault:not(.mask-gate-active) .dm-shelf-row {
-    filter: none;
+    opacity: 1;
     pointer-events: auto;
-    transition: filter 1.2s ease;
+    transition: opacity 1.2s ease;
 }
 .library-variant--vault:not(.mask-gate-active) .vault-exit-row {
     pointer-events: auto;
@@ -23823,30 +24189,29 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     filter: none;
 }
 
-/* ── Mask shelf — centered row of 7 masks ── */
+/* ── Mask shelf — centered row of 7 masks, cqi-locked ── */
 .mask-selection-shelf {
     position: absolute;
-    top: 42%;
+    top: 53%;
     left: 50%;
     transform: translateX(-50%);
     z-index: 6;
-    width: 80%;
-    max-width: 700px;
+    width: 51%;
     display: flex;
     justify-content: center;
+    container-type: inline-size;
 }
 .mask-shelf-row {
     display: flex;
-    gap: 2vw;
+    gap: 6.4cqi;
     justify-content: center;
     align-items: flex-end;
     perspective: 900px;
     flex-wrap: wrap;
 }
 
-/* ── Individual mask ── */
+/* ── Individual mask — base (no default width; each mask sets its own) ── */
 .mask-candidate {
-    width: clamp(60px, 8vw, 90px);
     cursor: pointer;
     position: relative;
     transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
@@ -23854,11 +24219,43 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     transform-origin: center bottom;
     transform-style: preserve-3d;
 }
+
+/* ── Per-mask positioning — cqi-locked to shelf container, 1.3× from designer values ── */
+/* Designer reference (px @ 1100px): sizes scaled 1.3×, left offsets zeroed for centering */
+.mask-candidate[data-mask-id="ARMORED_FOX"] {
+    width: 22.9cqi;
+    top: -5cqi;
+}
+.mask-candidate[data-mask-id="BEAUTIFUL_RUIN"] {
+    width: 17.4cqi;
+    top: -5cqi;
+}
+.mask-candidate[data-mask-id="DARK_VICE"] {
+    width: 17.4cqi;
+    top: -2.3cqi;
+}
+.mask-candidate[data-mask-id="ETERNAL_FLAME"] {
+    width: 19.8cqi;
+    top: -3.6cqi;
+}
+.mask-candidate[data-mask-id="HEART_WARDEN"] {
+    width: 16.0cqi;
+    top: -3.7cqi;
+}
+.mask-candidate[data-mask-id="OPEN_VEIN"] {
+    width: 17.6cqi;
+    top: -1.8cqi;
+}
+.mask-candidate[data-mask-id="SPELLBINDER"] {
+    width: 15.1cqi;
+    top: -2.1cqi;
+}
 .mask-candidate .mask-img {
     width: 100%;
     height: auto;
     filter: drop-shadow(0 4px 12px rgba(0,0,0,0.6));
     transition: filter 0.3s ease, transform 0.35s ease;
+    backface-visibility: hidden;
 }
 /* Hover: lift + scale + brighten gold cracks + whisper */
 .mask-candidate:hover {
@@ -23867,6 +24264,38 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 .mask-candidate:hover .mask-img {
     filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4))
             drop-shadow(0 0 8px rgba(201, 162, 78, 0.25));
+}
+
+/* ── Ivory back face — visible during 180° spin ── */
+.mask-back {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    transform: rotateY(180deg);
+    pointer-events: none;
+    overflow: hidden;
+    border-radius: 8%;
+}
+.mask-back-img {
+    width: 100%;
+    height: auto;
+    filter: brightness(0) invert(1) sepia(0.12) brightness(1.03);
+}
+.mask-eye-hole {
+    position: absolute;
+    width: 18%;
+    height: 11%;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(30, 25, 18, 0.85), rgba(60, 50, 35, 0.45));
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+}
+.mask-eye-hole--left {
+    top: 36%;
+    left: 22%;
+}
+.mask-eye-hole--right {
+    top: 36%;
+    right: 22%;
 }
 
 /* ── Whisper text — internal cognition, not UI decoration ── */
@@ -23897,7 +24326,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
             drop-shadow(0 6px 16px rgba(0,0,0,0.5));
 }
 .mask-candidate.mask-rotating {
-    transition: transform 0.38s ease-in-out;
+    transition: transform 0.76s ease-in-out;
     transform: rotateY(180deg) scale(1.12);
 }
 .mask-candidate.mask-centering {
@@ -23972,17 +24401,93 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     opacity: 1;
 }
 
-/* ── Responsive: larger masks on small screens ── */
+/* ── Responsive: wider shelf on small screens (cqi scales automatically) ── */
 @media (max-width: 768px) {
-    .mask-candidate {
-        width: clamp(50px, 12vw, 80px);
-    }
-    .mask-shelf-row {
-        gap: 3vw;
-    }
     .mask-selection-shelf {
         width: 92%;
     }
+    .mask-shelf-row {
+        gap: 4cqi;
+    }
+}
+
+/* ── Mask Design Mode (Ctrl+Shift+M) ── */
+.mask-design-panel {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 99999;
+    background: rgba(25, 22, 18, 0.95);
+    border: 1px solid rgba(201, 162, 78, 0.4);
+    border-radius: 8px;
+    padding: 0;
+    min-width: 260px;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    color: #d4c9b0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    backdrop-filter: blur(12px);
+}
+.mask-design-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(201, 162, 78, 0.2);
+    cursor: grab;
+}
+.mask-design-title {
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: #c9a24e;
+}
+.mask-design-close {
+    background: none;
+    border: none;
+    color: #d4c9b0;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+.mask-design-close:hover { color: #fff; }
+.mask-design-controls {
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.mask-design-controls label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #b0a48a;
+    white-space: nowrap;
+}
+.mask-design-controls input[type="range"] {
+    flex: 1;
+    accent-color: #c9a24e;
+    height: 4px;
+}
+.mask-design-controls span {
+    min-width: 42px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    color: #c9a24e;
+}
+.mask-design-section-label {
+    padding: 6px 14px 0;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(201, 162, 78, 0.5);
+    border-top: 1px solid rgba(201, 162, 78, 0.12);
+}
+.mask-candidate.mask-design-outline {
+    outline: 1px dashed rgba(201, 162, 78, 0.5);
+    outline-offset: 2px;
 }
 
 /* ── Book dust dissolution — soft, atmospheric, edges-inward ── */

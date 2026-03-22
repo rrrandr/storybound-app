@@ -12,12 +12,40 @@
   const _lastPlayed = {};        // rate-limiter: { soundName: timestamp }
   const MIN_INTERVAL_MS = 120;   // minimum gap between identical sounds
 
+  // ── Master volume nodes — independent music / SFX control ──
+  var _sfxMasterGain = null;
+  var _musicMasterGain = null;
+  var _sfxVolume = 1.0;
+  var _musicVolume = 1.0;
+
+  // Restore saved volume preferences
+  try {
+    var _savedSfx = localStorage.getItem('sb_sfx_volume');
+    var _savedMus = localStorage.getItem('sb_music_volume');
+    if (_savedSfx !== null) _sfxVolume = parseFloat(_savedSfx);
+    if (_savedMus !== null) _musicVolume = parseFloat(_savedMus);
+  } catch (_) {}
+
+  function _sfxOut(ctx) { return _sfxMasterGain || ctx.destination; }
+  function _musicOut(ctx) { return _musicMasterGain || ctx.destination; }
+
   // ── Lazy AudioContext init (requires user gesture) ──
   function _ensureCtx() {
     if (_audioCtx) return _audioCtx;
     try {
       _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       window._audioCtxRef = _audioCtx; // expose for ambient loops
+      // Create master gain nodes for independent volume control
+      if (!_sfxMasterGain) {
+        _sfxMasterGain = _audioCtx.createGain();
+        _sfxMasterGain.gain.value = _sfxVolume;
+        _sfxMasterGain.connect(_audioCtx.destination);
+      }
+      if (!_musicMasterGain) {
+        _musicMasterGain = _audioCtx.createGain();
+        _musicMasterGain.gain.value = _musicVolume;
+        _musicMasterGain.connect(_audioCtx.destination);
+      }
       // Preload audio samples
       if (_audioCtx) {
         if (!window._bellBuffer) {
@@ -131,7 +159,7 @@
         src.buffer = window._cardFlipBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.5, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -143,7 +171,7 @@
         src.buffer = window._paperSlideBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.45, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -155,7 +183,7 @@
         src.buffer = window._sparkleUpBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.4, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -169,7 +197,7 @@
       src.buffer = buf;
       var gain = ctx.createGain();
       gain.gain.setValueAtTime(0.5, t);
-      src.connect(gain).connect(ctx.destination);
+      src.connect(gain).connect(_sfxOut(ctx));
       src.start(t);
     },
 
@@ -180,7 +208,7 @@
         src.buffer = window._beginStoryBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.45, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -192,7 +220,7 @@
         src.buffer = window._temptZoomBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.4, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -204,7 +232,7 @@
         src.buffer = window._petitionZoomBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.4, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -216,7 +244,7 @@
         src.buffer = window._cardDissipateBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.45, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -240,7 +268,7 @@
       gain.gain.linearRampToValueAtTime(0.05, t + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
 
-      noise.connect(bp).connect(gain).connect(ctx.destination);
+      noise.connect(bp).connect(gain).connect(_sfxOut(ctx));
       noise.start(t);
       noise.stop(t + dur);
     },
@@ -252,7 +280,7 @@
         src.buffer = window._buttonTapBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.5, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -274,7 +302,7 @@
       gain.gain.setValueAtTime(0.13, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
 
-      noise.connect(filt).connect(gain).connect(ctx.destination);
+      noise.connect(filt).connect(gain).connect(_sfxOut(ctx));
       noise.start(t);
       noise.stop(t + 0.15);
     },
@@ -305,8 +333,8 @@
       nGain.gain.setValueAtTime(0.10, t);
       nGain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
 
-      osc.connect(gain).connect(ctx.destination);
-      noise.connect(nFilt).connect(nGain).connect(ctx.destination);
+      osc.connect(gain).connect(_sfxOut(ctx));
+      noise.connect(nFilt).connect(nGain).connect(_sfxOut(ctx));
       osc.start(t);
       osc.stop(t + 0.1);
       noise.start(t);
@@ -331,7 +359,7 @@
       gain.gain.linearRampToValueAtTime(0.10, t + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
 
-      noise.connect(filt).connect(gain).connect(ctx.destination);
+      noise.connect(filt).connect(gain).connect(_sfxOut(ctx));
       noise.start(t);
       noise.stop(t + 0.12);
     },
@@ -343,7 +371,7 @@
         src.buffer = window._bellBuffer;
         var gain = ctx.createGain();
         gain.gain.setValueAtTime(0.6, t);
-        src.connect(gain).connect(ctx.destination);
+        src.connect(gain).connect(_sfxOut(ctx));
         src.start(t);
       }
     },
@@ -365,7 +393,7 @@
       gain.gain.setValueAtTime(0.04, t);
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
 
-      noise.connect(filt).connect(gain).connect(ctx.destination);
+      noise.connect(filt).connect(gain).connect(_sfxOut(ctx));
       noise.start(t);
       noise.stop(t + 0.05);
     }
@@ -448,7 +476,7 @@
     var gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 0.5);
-    src.connect(gain).connect(ctx.destination);
+    src.connect(gain).connect(_sfxOut(ctx));
     src.start(0);
     _zoomLoopSrc = src;
     _zoomLoopGain = gain;
@@ -506,7 +534,7 @@
     var vol = _corridorMuted ? 0 : _corridorNormalVol;
     gain.gain.setValueAtTime(0, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 2.0);
-    src.connect(gain).connect(ctx.destination);
+    src.connect(gain).connect(_musicOut(ctx));
     src.start(0);
     _corridorSrc = src;
     _corridorGain = gain;
@@ -555,5 +583,26 @@
   }
   // Start preload after first user interaction
   document.addEventListener('click', function() { setTimeout(_preloadCorridorAmbience, 500); }, { once: true, passive: true });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // VOLUME CONTROL API — independent music / SFX sliders
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  window.setSFXVolume = function(v) {
+    _sfxVolume = Math.max(0, Math.min(1, +v || 0));
+    if (_sfxMasterGain) _sfxMasterGain.gain.value = _sfxVolume;
+    try { localStorage.setItem('sb_sfx_volume', _sfxVolume.toString()); } catch (_) {}
+  };
+
+  window.setMusicVolume = function(v) {
+    _musicVolume = Math.max(0, Math.min(1, +v || 0));
+    if (_musicMasterGain) _musicMasterGain.gain.value = _musicVolume;
+    try { localStorage.setItem('sb_music_volume', _musicVolume.toString()); } catch (_) {}
+    // Also update forbidden ambience in app.js if active
+    if (window._updateForbiddenAmbienceVolume) window._updateForbiddenAmbienceVolume(_musicVolume);
+  };
+
+  window.getSFXVolume = function() { return _sfxVolume; };
+  window.getMusicVolume = function() { return _musicVolume; };
 
 })();

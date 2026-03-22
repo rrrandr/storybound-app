@@ -101,6 +101,7 @@
       <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="SavedStories">Saved Stories</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Sound">Story Sound</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
     </div>
     <button id="vaultCloseBtn" class="sb-btn-png sm" style="margin-top:14px;">Close Vault</button>
@@ -175,6 +176,21 @@
       </div>
       <p style="color:rgba(255,255,255,0.35); font-size:0.7em; margin:4px 0 0;">Cinematic: tension, longing, restraint. Immersive: intensity, embodiment.</p>
     </div>
+
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── SOUND SUB-PANEL ── -->
+  <div id="vaultSound" class="vault-sub hidden">
+    <div class="vault-sub-title">Story Sound</div>
+
+    <label class="vault-label">Music</label>
+    <input type="range" id="musicVolumeSlider" min="0" max="100" value="100" oninput="window.setMusicVolume(this.value / 100); document.getElementById('musicVolVal').textContent = this.value + '%'" />
+    <span id="musicVolVal" class="vault-vol-val">100%</span>
+
+    <label class="vault-label">Sound Effects</label>
+    <input type="range" id="sfxVolumeSlider" min="0" max="100" value="100" oninput="window.setSFXVolume(this.value / 100); document.getElementById('sfxVolVal').textContent = this.value + '%'" />
+    <span id="sfxVolVal" class="vault-vol-val">100%</span>
 
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
@@ -2055,13 +2071,71 @@
   </div>
 </div>
 
-<!-- GN Reader — comic page renderer (separate from prose #storyContent) -->
+<!-- GN Reader — panel-first comic renderer (separate from prose #storyContent) -->
 <div id="gnReader" class="screen hidden gn-screen">
-  <div class="gn-reader-container">
-    <button class="gn-nav-back" id="gnReaderBack">Back</button>
-    <div id="gnReaderContent" class="gn-reader-content"></div>
-    <div id="gnReaderControls" class="gn-reader-controls"></div>
+
+  <!-- ── GN_STAGE: primary visual surface ── -->
+  <div id="gnStage" class="gn-stage">
+    <div id="gnSceneLoading" class="gn-scene-loading">
+      <p class="gn-loading-status">Composing Scene 1...</p>
+    </div>
+    <div id="gnPanelDisplay" class="gn-panel-display"></div>
   </div>
+
+  <!-- ── GN_UI_OVERLAY: persistent controls ── -->
+  <div class="gn-ui-overlay">
+    <div class="gn-ui-top">
+      <button class="gn-nav-back" id="gnReaderBack">Back</button>
+      <span id="gnSceneIndicator" class="gn-scene-indicator">Scene 1</span>
+      <button id="gnVisualizeBtn" class="small-btn">Visualize</button>
+    </div>
+    <button id="gnGodModeBtn" class="small-btn gn-god-mode-indicator" style="display:none;">God Mode</button>
+  </div>
+
+  <!-- ── GN_FATE_LAYER: cards + special fate ── -->
+  <div id="gnFateSection" class="gn-fate-section">
+    <div class="section-title">Let Fate Guide You</div>
+    <div class="fate-grid" id="gnCardMount"></div>
+    <div class="section-title fate-own-hands-label">Take Fate In Your Own Hands</div>
+    <div class="fate-special-row" id="gnFateSpecial"></div>
+    <div class="gn-fate-controls">
+      <button id="gnTemptFateBtn" class="small-btn">Tempt Fate</button>
+      <button id="gnSafeWordBtn" class="small-btn safe-word-btn" style="display:none;">Safe Word</button>
+    </div>
+  </div>
+
+  <!-- ── GN Scene Actions: Bookmark + Cover ── -->
+  <div class="gn-scene-actions-row">
+    <button id="gnBookmarkSceneBtn" class="sb-btn-png sm" onclick="window._bookmarkGNScene()">Bookmark Scene</button>
+    <button id="gnCreateCoverBtn" class="sb-btn-png sm">Create Cover</button>
+  </div>
+
+  <!-- ── GN Cover Overlay (shown when cover generates) ── -->
+  <div id="gnCoverOverlay" class="gn-cover-overlay hidden">
+    <div class="gn-cover-overlay-inner">
+      <button id="gnCoverOverlayClose" class="gn-cover-overlay-close">&times;</button>
+      <div id="gnCoverOverlayImg" class="gn-cover-overlay-img"></div>
+      <button id="gnCoverRefineBtn" class="sb-btn-png sm" style="display:none;">Refine Cover</button>
+    </div>
+  </div>
+
+  <!-- ── GN_INPUT_BAR: Say / Do + Submit ── -->
+  <div id="gnReaderControls" class="gn-input-bar">
+    <div class="gn-input-grid">
+      <div class="input-wrapper">
+        <label>What do you do?</label>
+        <textarea id="gnActionInput" rows="3" placeholder="Action..."></textarea>
+      </div>
+      <div class="input-wrapper">
+        <label>What do you say?</label>
+        <textarea id="gnDialogueInput" rows="3" placeholder="Dialogue..."></textarea>
+      </div>
+    </div>
+    <div class="gn-submit-row">
+      <button id="gnSubmitBtn" class="sb-btn-png md">Submit Turn</button>
+    </div>
+  </div>
+
 </div>
 
 <div id="vaultLibraryScreen" class="screen hidden">
@@ -2136,7 +2210,7 @@
     <!-- ── Library Concierge — diegetic presence, left side ── -->
     <div id="libraryConcierge" class="library-concierge">
       <div class="lc-figure">
-        <img id="libraryConciergemask" class="lc-mask" src="/assets/Concierge/concierge-BeautifulRuin.png" alt="Concierge" />
+        <img id="libraryConciergemask" class="lc-mask" src="/assets/Concierge/concierge-full.png" alt="Concierge" draggable="false" />
       </div>
     </div>
     <!-- Concierge summon vignette (library-specific, no panel) -->
