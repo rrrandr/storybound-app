@@ -23688,8 +23688,8 @@ body.gn-cover-active .gn-ui-overlay {
     height: auto;
     display: block;
     opacity: 1;
-    filter: drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000)
-            drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)
+    filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000)
+            drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000)
             drop-shadow(2px 4px 18px rgba(0,0,0,0.7))
             drop-shadow(0 0 6px rgba(0,0,0,0.4));
     animation: lcPresenceAura 7s ease-in-out infinite;
@@ -23774,6 +23774,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     pointer-events: none !important;
     visibility: hidden !important;
 }
+/* Design mode override — force-show summon figure for slider feedback */
+body.concierge-design-active .concierge-summon-figure {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
 
 /* ── Responsive: smaller screens ── */
 @media (max-width: 768px) {
@@ -23818,7 +23824,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     object-fit: contain;
     pointer-events: none;
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 /* Clip gleam to bell silhouette using the bell image as a mask */
 #conciergeBell .bell-gleam-wrapper {
@@ -23833,7 +23839,8 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     -webkit-mask-position: center;
     mask-position: center;
     pointer-events: none;
-    z-index: 1;
+    z-index: 2;
+    overflow: hidden;
 }
 
 /* ── Bell gleam sweep on hover (clipped to bell shape via wrapper mask) ── */
@@ -23977,7 +23984,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     z-index: 4; /* behind library concierge figure (z:5) */
 }
 
-/* ── Frame — Black-Gold PNG rotated 90°, scaled 1.3× ── */
+/* ── Frame — DSP Gold-Black PNG, no rotation ── */
 .concierge-dialogue-frame {
     position: relative;
     isolation: isolate;
@@ -23987,18 +23994,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     padding: 10px 16px 13px;
     display: flex;
     flex-direction: column;
-    height: 832px;  /* JS overrides to shoulder height on open */
+    aspect-ratio: 720 / 1040;
 }
 .concierge-dialogue-frame::before {
     content: '';
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 832px;
-    height: 229px;
-    background: url('/assets/ui/Black-Gold-640x176.png') no-repeat 0 0;
-    background-size: 832px 229px;
-    transform: translate(-50%, -50%) rotate(90deg);
+    inset: 0;
+    background: url('/assets/ui/DSP-Gold-Blk-720x1040.png') no-repeat center center;
+    background-size: 100% 100%;
     z-index: -1;
     pointer-events: none;
 }
@@ -24017,8 +24020,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     font-size: 0.78em;
     font-variant: small-caps;
     letter-spacing: 0.12em;
-    color: #c9a84c;
-    opacity: 0.7;
+    color: rgba(0, 0, 0, 0.7);
     text-align: center;
 }
 .concierge-dialogue-close {
@@ -24027,7 +24029,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     top: 0;
     background: none;
     border: none;
-    color: rgba(201, 162, 78, 0.45);
+    color: rgba(0, 0, 0, 0.45);
     font-size: 1.15em;
     line-height: 1;
     cursor: pointer;
@@ -24035,7 +24037,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     transition: color 0.2s ease;
 }
 .concierge-dialogue-close:hover {
-    color: rgba(201, 162, 78, 0.8);
+    color: rgba(0, 0, 0, 0.8);
 }
 
 /* ── Scrollable conversation area — grey scrollbar, grows until top of screen ── */
@@ -24047,7 +24049,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     scroll-behavior: smooth;
     margin-bottom: 8px;
     scrollbar-width: thin;
-    scrollbar-color: rgba(160, 160, 160, 0.35) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.6) transparent;
 }
 .concierge-dialogue-scroll::-webkit-scrollbar {
     width: 5px;
@@ -24056,17 +24058,17 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     background: transparent;
 }
 .concierge-dialogue-scroll::-webkit-scrollbar-thumb {
-    background: rgba(160, 160, 160, 0.35);
+    background: rgba(0, 0, 0, 0.6);
     border-radius: 3px;
 }
 .concierge-dialogue-scroll::-webkit-scrollbar-thumb:hover {
-    background: rgba(160, 160, 160, 0.55);
+    background: rgba(0, 0, 0, 0.8);
 }
 
 /* AI message — gold, sentence case, centered */
 .concierge-msg-sep {
     text-align: center;
-    color: rgba(201, 162, 78, 0.35);
+    color: rgba(0, 0, 0, 0.35);
     font-size: 0.7em;
     margin: 4px 0;
     letter-spacing: 0.3em;
@@ -24076,8 +24078,8 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     font-family: 'Lora', serif;
     font-size: 0.92em;
     font-variant: normal;
-    color: #D4AF37;
-    text-align: center;
+    color: #000;
+    text-align: left;
     line-height: 1.55;
     letter-spacing: 0.02em;
     margin: 6px 0;
@@ -24085,12 +24087,13 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     white-space: pre-line;
 }
 
-/* User message — white, left-aligned */
+/* User message — white, right-aligned, dark glow for contrast */
 .concierge-msg-user {
     font-family: 'Lora', serif;
     font-size: 0.82em;
-    color: rgba(255, 255, 255, 0.85);
-    text-align: left;
+    color: #fff;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.7), 0 1px 3px rgba(0, 0, 0, 0.5);
+    text-align: right;
     line-height: 1.45;
     margin: 6px 0;
     padding: 0 4px;
@@ -24103,7 +24106,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: rgba(201, 162, 78, 0.5);
+    background: rgba(0, 0, 0, 0.5);
     margin-left: 4px;
     animation: conciergeDot 1.2s ease-in-out infinite;
 }
@@ -24116,10 +24119,10 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 #conciergeInput {
     width: 100%;
     box-sizing: border-box;
-    background: rgba(30, 24, 16, 0.8);
-    border: 1px solid rgba(201, 162, 78, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(0, 0, 0, 0.2);
     border-radius: 6px;
-    color: rgba(218, 186, 120, 0.85);
+    color: rgba(0, 0, 0, 0.85);
     font-family: 'Lora', serif;
     font-size: 0.85em;
     padding: 10px 14px;
@@ -24127,10 +24130,10 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     transition: border-color 0.2s ease;
 }
 #conciergeInput:focus {
-    border-color: rgba(201, 162, 78, 0.45);
+    border-color: rgba(0, 0, 0, 0.45);
 }
 #conciergeInput::placeholder {
-    color: rgba(201, 162, 78, 0.3);
+    color: rgba(0, 0, 0, 0.3);
     font-style: italic;
 }
 
@@ -24232,13 +24235,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     transform: translateX(-50%);
     z-index: 6;
     width: 80%;
+    max-width: 530px;
     display: flex;
     justify-content: center;
     container-type: inline-size;
 }
 .mask-shelf-row {
     display: flex;
-    gap: 2.4cqi;
+    gap: 20px;
     justify-content: center;
     align-items: flex-end;
     perspective: 900px;
@@ -24255,43 +24259,41 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     transform-style: preserve-3d;
 }
 
-/* ── Per-mask positioning — cqi-locked to shelf container (80% parent width) ── */
-/* Designer reference: Evade 99/33/-49, Endure 86/14/-43, Obsession 103/0/-33,
-   Always 93/-14/-38, Closer 96/25/-62, Further 119/5/-47, Fascination 92/-9/-52 */
+/* ── Per-mask positioning — px-locked from Mask Designer ── */
 .mask-candidate[data-mask-id="ARMORED_FOX"] {
-    width: 11.8cqi;
-    left: 3.9cqi;
-    top: -5.8cqi;
+    width: 99px;
+    left: 33px;
+    top: -14px;
 }
 .mask-candidate[data-mask-id="BEAUTIFUL_RUIN"] {
-    width: 10.2cqi;
-    left: 1.7cqi;
-    top: -5.1cqi;
+    width: 86px;
+    left: 14px;
+    top: -8px;
 }
 .mask-candidate[data-mask-id="DARK_VICE"] {
-    width: 12.3cqi;
-    left: 0cqi;
-    top: -3.9cqi;
+    width: 103px;
+    left: 0px;
+    top: 2px;
 }
 .mask-candidate[data-mask-id="ETERNAL_FLAME"] {
-    width: 11.1cqi;
-    left: -1.7cqi;
-    top: -4.5cqi;
+    width: 93px;
+    left: -14px;
+    top: -3px;
 }
 .mask-candidate[data-mask-id="HEART_WARDEN"] {
-    width: 11.4cqi;
-    left: 3.0cqi;
-    top: -7.4cqi;
+    width: 96px;
+    left: 25px;
+    top: -27px;
 }
 .mask-candidate[data-mask-id="OPEN_VEIN"] {
-    width: 14.2cqi;
-    left: 0.6cqi;
-    top: -5.6cqi;
+    width: 119px;
+    left: 5px;
+    top: -12px;
 }
 .mask-candidate[data-mask-id="SPELLBINDER"] {
-    width: 11.0cqi;
-    left: -1.1cqi;
-    top: -6.2cqi;
+    width: 92px;
+    left: -9px;
+    top: -17px;
 }
 .mask-candidate .mask-img {
     width: 100%;
