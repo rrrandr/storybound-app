@@ -23660,13 +23660,13 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── Container — left side, locked to viewport bottom, cropped at knees ── */
 .library-concierge {
     position: absolute;
-    left: calc(-2vw + 10px);
-    bottom: -9.5vw;
+    left: -11vw;
+    bottom: -10vw;
     z-index: 5;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.6s ease;
-    width: 22vw;
+    width: 40vw;
     height: 100%;
 }
 #vaultLibraryScreen:not(.hidden) .library-concierge {
@@ -23688,7 +23688,9 @@ body.gn-cover-active .gn-ui-overlay {
     height: auto;
     display: block;
     opacity: 1;
-    filter: drop-shadow(2px 4px 18px rgba(0,0,0,0.7))
+    filter: drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000)
+            drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)
+            drop-shadow(2px 4px 18px rgba(0,0,0,0.7))
             drop-shadow(0 0 6px rgba(0,0,0,0.4));
     animation: lcPresenceAura 7s ease-in-out infinite;
     transition: opacity 0.4s ease, filter 0.4s ease;
@@ -23815,6 +23817,8 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     display: block;
     object-fit: contain;
     pointer-events: none;
+    position: relative;
+    z-index: 2;
 }
 /* Clip gleam to bell silhouette using the bell image as a mask */
 #conciergeBell .bell-gleam-wrapper {
@@ -24223,18 +24227,18 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 /* ── Mask shelf — centered row of 7 masks, cqi-locked ── */
 .mask-selection-shelf {
     position: absolute;
-    top: 53%;
+    top: 42%;
     left: 50%;
     transform: translateX(-50%);
     z-index: 6;
-    width: 51%;
+    width: 80%;
     display: flex;
     justify-content: center;
     container-type: inline-size;
 }
 .mask-shelf-row {
     display: flex;
-    gap: 6.4cqi;
+    gap: 2.4cqi;
     justify-content: center;
     align-items: flex-end;
     perspective: 900px;
@@ -24251,35 +24255,43 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     transform-style: preserve-3d;
 }
 
-/* ── Per-mask positioning — cqi-locked to shelf container, 1.3× from designer values ── */
-/* Designer reference (px @ 1100px): sizes scaled 1.3×, left offsets zeroed for centering */
+/* ── Per-mask positioning — cqi-locked to shelf container (80% parent width) ── */
+/* Designer reference: Evade 99/33/-49, Endure 86/14/-43, Obsession 103/0/-33,
+   Always 93/-14/-38, Closer 96/25/-62, Further 119/5/-47, Fascination 92/-9/-52 */
 .mask-candidate[data-mask-id="ARMORED_FOX"] {
-    width: 22.9cqi;
-    top: -5cqi;
+    width: 11.8cqi;
+    left: 3.9cqi;
+    top: -5.8cqi;
 }
 .mask-candidate[data-mask-id="BEAUTIFUL_RUIN"] {
-    width: 17.4cqi;
-    top: -5cqi;
+    width: 10.2cqi;
+    left: 1.7cqi;
+    top: -5.1cqi;
 }
 .mask-candidate[data-mask-id="DARK_VICE"] {
-    width: 17.4cqi;
-    top: -2.3cqi;
+    width: 12.3cqi;
+    left: 0cqi;
+    top: -3.9cqi;
 }
 .mask-candidate[data-mask-id="ETERNAL_FLAME"] {
-    width: 19.8cqi;
-    top: -3.6cqi;
+    width: 11.1cqi;
+    left: -1.7cqi;
+    top: -4.5cqi;
 }
 .mask-candidate[data-mask-id="HEART_WARDEN"] {
-    width: 16.0cqi;
-    top: -3.7cqi;
+    width: 11.4cqi;
+    left: 3.0cqi;
+    top: -7.4cqi;
 }
 .mask-candidate[data-mask-id="OPEN_VEIN"] {
-    width: 17.6cqi;
-    top: -1.8cqi;
+    width: 14.2cqi;
+    left: 0.6cqi;
+    top: -5.6cqi;
 }
 .mask-candidate[data-mask-id="SPELLBINDER"] {
-    width: 15.1cqi;
-    top: -2.1cqi;
+    width: 11.0cqi;
+    left: -1.1cqi;
+    top: -6.2cqi;
 }
 .mask-candidate .mask-img {
     width: 100%;
