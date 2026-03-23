@@ -2172,13 +2172,21 @@
     </div>
     <div id="vaultTrophyShelf" class="vault-trophy-shelf" style="display:none;"></div>
 
+    <!-- ── Mask Ceremony Curtains — three-layer theatrical reveal ── -->
+    <div id="curtainBack" class="ceremony-curtain ceremony-curtain--back" style="display:none;">
+      <img src="/assets/Concierge/full-curtain.jpg" alt="" draggable="false" />
+    </div>
+    <div id="curtainLeft" class="ceremony-curtain ceremony-curtain--left" style="display:none;">
+      <img src="/assets/Concierge/curtain-L.png" alt="" draggable="false" />
+    </div>
+    <div id="curtainRight" class="ceremony-curtain ceremony-curtain--right" style="display:none;">
+      <img src="/assets/Concierge/curatin-R.png" alt="" draggable="false" />
+    </div>
+
     <!-- ── Mask Selection Gate — threshold ritual before library access ── -->
     <div id="maskSelectionShelf" class="mask-selection-shelf" style="display:none;">
+      <p class="mask-ceremony-title">You Are Expected</p>
       <div class="mask-shelf-row">
-        <div class="mask-candidate" data-mask-id="ARMORED_FOX">
-          <img src="/assets/Concierge/masks/ArmoredFox.png" alt="" class="mask-img" draggable="false" />
-          <span class="mask-whisper">Evade</span>
-        </div>
         <div class="mask-candidate" data-mask-id="BEAUTIFUL_RUIN">
           <img src="/assets/Concierge/masks/BeautifulRuin.png" alt="" class="mask-img" draggable="false" />
           <span class="mask-whisper">Endure</span>
@@ -2187,14 +2195,22 @@
           <img src="/assets/Concierge/masks/DarkVice.png" alt="" class="mask-img" draggable="false" />
           <span class="mask-whisper">Obsession</span>
         </div>
-        <div class="mask-candidate" data-mask-id="ETERNAL_FLAME">
-          <img src="/assets/Concierge/masks/EternalFlame.png" alt="" class="mask-img" draggable="false" />
-          <span class="mask-whisper">Always</span>
-        </div>
+      </div>
+      <div class="mask-shelf-row">
         <div class="mask-candidate" data-mask-id="HEART_WARDEN">
           <img src="/assets/Concierge/masks/HeartWarden.png" alt="" class="mask-img" draggable="false" />
           <span class="mask-whisper">Closer</span>
         </div>
+        <div class="mask-candidate" data-mask-id="ARMORED_FOX">
+          <img src="/assets/Concierge/masks/ArmoredFox.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Evade</span>
+        </div>
+        <div class="mask-candidate" data-mask-id="ETERNAL_FLAME">
+          <img src="/assets/Concierge/masks/EternalFlame.png" alt="" class="mask-img" draggable="false" />
+          <span class="mask-whisper">Always</span>
+        </div>
+      </div>
+      <div class="mask-shelf-row">
         <div class="mask-candidate" data-mask-id="OPEN_VEIN">
           <img src="/assets/Concierge/masks/OpenVein.png" alt="" class="mask-img" draggable="false" />
           <span class="mask-whisper">Further</span>
@@ -2204,6 +2220,7 @@
           <span class="mask-whisper">Fascination</span>
         </div>
       </div>
+      <p class="mask-ceremony-subtitle">Which Mask Is Yours?</p>
     </div>
 
     <!-- Mask occlusion overlay — full-screen darkness for passage moment -->
@@ -2221,7 +2238,13 @@
     <!-- ── Library Concierge — diegetic presence, left side ── -->
     <div id="libraryConcierge" class="library-concierge">
       <div class="lc-figure">
-        <img id="libraryConciergemask" class="lc-mask" src="/assets/Concierge/concierge-full.png" alt="Concierge" draggable="false" />
+        <img id="libraryConciergemask" class="lc-mask" src="/assets/Concierge/concierge-bell.png" alt="Concierge" draggable="false" />
+      </div>
+    </div>
+    <!-- ── Welcome Concierge — gesturing figure in front of curtains during ceremony ── -->
+    <div id="ceremonyConcierge" class="ceremony-concierge" style="display:none;">
+      <div class="ceremony-concierge-figure">
+        <img src="/assets/Concierge/Concierge-welcome.png" alt="" draggable="false" />
       </div>
     </div>
     <!-- Concierge summon vignette (library-specific, no panel) -->

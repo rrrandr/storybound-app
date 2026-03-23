@@ -5225,7 +5225,7 @@ select:-webkit-autofill {
     background:
         radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.15) 0%, transparent 60%),
         linear-gradient(180deg, rgba(14,9,6,0.1) 0%, rgba(26,16,10,0.05) 30%, rgba(14,9,6,0.15) 100%),
-        url('/assets/Forbidde-Library-Art/Private-Library-quotes.jpg') center top / 100vw auto no-repeat;
+        url('/assets/Concierge/Private-Library-extended.jpg') center top / 100vw auto no-repeat;
 }
 
 /* OG Shelf — hidden while dummy/design shelf system is primary */
@@ -5307,6 +5307,10 @@ select:-webkit-autofill {
             drop-shadow(0 0 0.55vw rgba(201, 168, 76, 0.25))
             drop-shadow(0 0.28vw 0.2vw rgba(0, 0, 0, 0.7))
             drop-shadow(0 0.42vw 0.42vw rgba(0, 0, 0, 0.3));
+}
+/* Vault variant — extended bg image has more ceiling, arch is ~5vw lower */
+.library-variant--vault .library-arch-title {
+    top: 3.75vw;
 }
 
 /* ── Shelf inscription — carved into 2nd shelf of Forbidden Library ── */
@@ -5394,7 +5398,7 @@ select:-webkit-autofill {
     margin: 0 auto;
     padding: 0 16px;
     /* Pure vw — scales proportionally with the library background image */
-    padding-top: 20.5vw;
+    padding-top: 25.5vw;
     display: flex;
     flex-wrap: wrap;
     gap: 2.3vw 3.5vw;
@@ -5414,7 +5418,7 @@ select:-webkit-autofill {
     width: 56.1vw;
     height: calc(42 / 855 * 56.1vw);
     /* Pure vw — tracks shelf position in background image on resize */
-    top: calc(31.1vw + 0px);
+    top: calc(36.1vw + 0px);
     background: url('/assets/Forbidde-Library-Art/privat-library-top-shelf.jpg') center / 100% 100% no-repeat;
     pointer-events: none;
     z-index: 3;
@@ -5630,7 +5634,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 /* Vault library variant — buttons sit inside the arch half-circle, locked to bg */
 .library-variant--vault > .vault-exit-row {
     position: absolute;
-    top: 9.06vw;
+    top: 14.0vw;
     left: 48.6vw;
     transform: translateX(-50%);
     z-index: 3;
@@ -23657,11 +23661,11 @@ body.gn-cover-active .gn-ui-overlay {
    LIBRARY CONCIERGE — Diegetic presence in the Private Library scene
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Container — left side, locked to viewport bottom, cropped at knees ── */
+/* ── Container — left side, locked to viewport bottom ── */
 .library-concierge {
     position: absolute;
     left: -11vw;
-    bottom: -10vw;
+    bottom: -4vw;
     z-index: 5;
     pointer-events: none;
     opacity: 0;
@@ -24175,6 +24179,101 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   MASK CEREMONY CURTAINS — Three-layer theatrical reveal
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Base curtain layer — absolute fill, covers library content ── */
+.ceremony-curtain {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.ceremony-curtain img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+}
+
+/* ── Back curtain (full-curtain.jpg) — rises UP to reveal library ── */
+.ceremony-curtain--back {
+    z-index: 7;
+}
+.ceremony-curtain--back.curtain-opening {
+    transition: transform 1.0s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transform: translateY(-100%);
+}
+
+/* ── Left front curtain — slides LEFT off-screen ── */
+.ceremony-curtain--left {
+    z-index: 8;
+}
+.ceremony-curtain--left.curtain-opening {
+    transition: transform 1.0s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transform: translateX(-100%);
+}
+
+/* ── Right front curtain — slides RIGHT off-screen ── */
+.ceremony-curtain--right {
+    z-index: 8;
+}
+.ceremony-curtain--right.curtain-opening {
+    transition: transform 1.0s cubic-bezier(0.22, 0.61, 0.36, 1);
+    transform: translateX(100%);
+}
+
+/* ── Ceremony elevation — masks float above curtains ── */
+.library-variant--vault.curtain-ceremony #maskSelectionShelf {
+    z-index: 12;
+}
+
+/* ── Welcome concierge — gesturing figure in front of curtains during ceremony ── */
+.ceremony-concierge {
+    position: absolute;
+    left: calc(-11vw + 20px);
+    bottom: -4vw;
+    z-index: 9;
+    pointer-events: none;
+    width: 40vw;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+#vaultLibraryScreen:not(.hidden) .ceremony-concierge {
+    opacity: 1;
+}
+.ceremony-concierge-figure {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    overflow: visible;
+}
+.ceremony-concierge-figure img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: drop-shadow(2px 0 0 #000) drop-shadow(-2px 0 0 #000)
+            drop-shadow(0 2px 0 #000) drop-shadow(0 -2px 0 #000)
+            drop-shadow(2px 4px 18px rgba(0,0,0,0.7))
+            drop-shadow(0 0 6px rgba(0,0,0,0.4));
+    animation: lcPresenceAura 7s ease-in-out infinite;
+}
+/* Fade out after curtains clear */
+.ceremony-concierge.ceremony-concierge-fading {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+@media (max-width: 768px) {
+    .ceremony-concierge {
+        left: calc(-3vw + 20px);
+        width: 28vw;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    MASK SELECTION GATE — Threshold ritual before library access
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -24182,13 +24281,13 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 .library-variant--vault.mask-gate-active .vault-book-list,
 .library-variant--vault.mask-gate-active .vault-trophy-shelf,
 .library-variant--vault.mask-gate-active .dm-shelf-row {
-    opacity: 0.4;
+    opacity: 0;
     pointer-events: none;
     transition: opacity 0.8s ease;
 }
 .library-variant--vault.mask-gate-active .vault-exit-row {
     pointer-events: none;
-    opacity: 0.4;
+    opacity: 0;
     transition: opacity 0.6s ease;
 }
 .library-variant--vault.mask-gate-active .vault-exit-row .sb-btn-png {
@@ -24199,6 +24298,15 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 .library-variant--vault.mask-gate-active .vault-exit-row .sb-btn-png:active {
     transform: none;
     box-shadow: none;
+}
+/* Hide arch title behind curtains during ceremony */
+.library-variant--vault.mask-gate-active .library-arch-title {
+    opacity: 0;
+    transition: opacity 0.8s ease;
+}
+.library-variant--vault:not(.mask-gate-active) .library-arch-title {
+    opacity: 1;
+    transition: opacity 1.2s ease;
 }
 /* Depth compression — world pulls away slightly during mask ceremony */
 .library-variant--vault.mask-gate-active {
@@ -24227,26 +24335,61 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     filter: none;
 }
 
-/* ── Mask shelf — centered row of 7 masks, cqi-locked ── */
+/* ── Mask shelf — 3-row grid of 7 masks with golden text ── */
 .mask-selection-shelf {
     position: absolute;
-    top: 42%;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%);
+    transform: translate(-50%, -50%);
     z-index: 6;
-    width: 80%;
-    max-width: 530px;
+    width: 90%;
+    max-width: 660px;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
     container-type: inline-size;
+}
+/* Soft golden glow behind mask area */
+.mask-selection-shelf::before {
+    content: '';
+    position: absolute;
+    inset: -60px -80px;
+    background: radial-gradient(ellipse at center, rgba(201, 168, 76, 0.12) 0%, rgba(201, 168, 76, 0.04) 40%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+    border-radius: 50%;
+}
+/* ── Golden ceremony text ── */
+.mask-ceremony-title,
+.mask-ceremony-subtitle {
+    font-family: 'Lora', serif;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-align: center;
+    margin: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, #f5e6a3 0%, #c9a84c 50%, #8a6914 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.3))
+            drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+.mask-ceremony-title {
+    font-size: clamp(16px, 2.2vw, 28px);
+    margin-bottom: 4px;
+}
+.mask-ceremony-subtitle {
+    font-size: clamp(14px, 1.8vw, 22px);
+    margin-top: 8px;
 }
 .mask-shelf-row {
     display: flex;
-    gap: 20px;
+    gap: 35px;
     justify-content: center;
-    align-items: flex-end;
+    align-items: center;
     perspective: 900px;
-    flex-wrap: wrap;
 }
 
 /* ── Individual mask — base (no default width; each mask sets its own) ── */
@@ -24259,42 +24402,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     transform-style: preserve-3d;
 }
 
-/* ── Per-mask positioning — px-locked from Mask Designer ── */
-.mask-candidate[data-mask-id="ARMORED_FOX"] {
-    width: 99px;
-    left: 33px;
-    top: -14px;
-}
-.mask-candidate[data-mask-id="BEAUTIFUL_RUIN"] {
-    width: 86px;
-    left: 14px;
-    top: -8px;
-}
-.mask-candidate[data-mask-id="DARK_VICE"] {
-    width: 103px;
-    left: 0px;
-    top: 2px;
-}
-.mask-candidate[data-mask-id="ETERNAL_FLAME"] {
-    width: 93px;
-    left: -14px;
-    top: -3px;
-}
-.mask-candidate[data-mask-id="HEART_WARDEN"] {
-    width: 96px;
-    left: 25px;
-    top: -27px;
-}
-.mask-candidate[data-mask-id="OPEN_VEIN"] {
-    width: 119px;
-    left: 5px;
-    top: -12px;
-}
-.mask-candidate[data-mask-id="SPELLBINDER"] {
-    width: 92px;
-    left: -9px;
-    top: -17px;
-}
+/* ── Per-mask sizing — 25% larger than original, centered in 3-row grid ── */
+.mask-candidate[data-mask-id="ARMORED_FOX"]    { width: 124px; }
+.mask-candidate[data-mask-id="BEAUTIFUL_RUIN"] { width: 108px; }
+.mask-candidate[data-mask-id="DARK_VICE"]      { width: 129px; }
+.mask-candidate[data-mask-id="ETERNAL_FLAME"]  { width: 116px; }
+.mask-candidate[data-mask-id="HEART_WARDEN"]   { width: 120px; }
+.mask-candidate[data-mask-id="OPEN_VEIN"]      { width: 149px; }
+.mask-candidate[data-mask-id="SPELLBINDER"]    { width: 115px; }
 .mask-candidate .mask-img {
     width: 100%;
     height: auto;
@@ -24446,13 +24561,62 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     opacity: 1;
 }
 
-/* ── Responsive: wider shelf on small screens (cqi scales automatically) ── */
+/* ── Firefly sparkles around each mask ── */
+.mask-firefly {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.9), rgba(212, 175, 55, 0) 70%);
+    box-shadow: 0 0 4px rgba(212, 175, 55, 0.5);
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    animation: maskFirefly var(--ff-dur, 3s) ease-in-out infinite;
+    animation-delay: var(--ff-delay, 0s);
+}
+@keyframes maskFirefly {
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.6); }
+    15%  { opacity: 0.8; }
+    50%  { opacity: 0.3; transform: translate(var(--ff-dx, 6px), var(--ff-dy, -8px)) scale(1); }
+    85%  { opacity: 0.7; }
+    100% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+}
+
+/* ── Dissipation sparkle burst (unselected masks) ── */
+.mask-candidate.mask-dissipating {
+    animation: maskDissipate 0.7s ease-out forwards;
+    pointer-events: none;
+}
+@keyframes maskDissipate {
+    0%   { opacity: 1; transform: scale(1); filter: brightness(1); }
+    30%  { filter: brightness(1.4); }
+    100% { opacity: 0; transform: scale(0.6); filter: brightness(2) blur(4px); }
+}
+.mask-dissipate-spark {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(212, 175, 55, 0.9);
+    box-shadow: 0 0 6px rgba(212, 175, 55, 0.7), 0 0 12px rgba(212, 175, 55, 0.3);
+    pointer-events: none;
+    z-index: 20;
+    animation: sparkBurst var(--spark-dur, 0.6s) ease-out forwards;
+    animation-delay: var(--spark-delay, 0s);
+}
+@keyframes sparkBurst {
+    0%   { opacity: 1; transform: translate(0, 0) scale(1); }
+    100% { opacity: 0; transform: translate(var(--spark-dx, 30px), var(--spark-dy, -30px)) scale(0.3); }
+}
+
+/* ── Responsive: wider shelf on small screens ── */
 @media (max-width: 768px) {
     .mask-selection-shelf {
-        width: 92%;
+        width: 95%;
     }
     .mask-shelf-row {
-        gap: 4cqi;
+        gap: 20px;
     }
 }
 
