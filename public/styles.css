@@ -4553,13 +4553,14 @@ select:-webkit-autofill {
     backface-visibility: hidden;
     border-radius: 8px;
     overflow: hidden;
+    border: 1px solid rgba(201, 168, 76, 0.6);
 }
 
 .mode-card-back img,
 .mode-card-front img {
-    width: calc(100% + 2px);
-    height: calc(100% + 2px);
-    margin: -1px;
+    width: calc(100% + 6px);
+    height: calc(100% + 6px);
+    margin: -3px;
     object-fit: cover;
     display: block;
 }
@@ -5218,14 +5219,23 @@ select:-webkit-autofill {
 .forbidden-library::after {
     display: none;
 }
+/* Vault screen — clip sides when viewport is narrower than the column frame */
+#vaultLibraryScreen {
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
 /* Vault / Private Library — distinct backdrop */
 .forbidden-library.library-variant--vault {
+    container-type: inline-size;
+    min-width: 1440px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     background:
         radial-gradient(ellipse at 50% 20%, rgba(40, 25, 12, 0.15) 0%, transparent 60%),
         linear-gradient(180deg, rgba(14,9,6,0.1) 0%, rgba(26,16,10,0.05) 30%, rgba(14,9,6,0.15) 100%),
-        url('/assets/Concierge/Private-Library-extended.jpg') center top / 100vw auto no-repeat;
+        url('/assets/Concierge/Private-Library-extended.jpg') center top / 100% auto no-repeat;
 }
 
 /* OG Shelf — hidden while dummy/design shelf system is primary */
@@ -5237,6 +5247,10 @@ select:-webkit-autofill {
 .forbidden-library.library-variant--forbidden {
     display: flex;
     flex-direction: column;
+}
+/* Forbidden Library books track actual viewport (no min-width clamp) */
+.library-variant--forbidden .library-book {
+    zoom: var(--forbidden-book-zoom, 1);
 }
 /* Forbidden Library — buttons locked to bg image (1536×1024, 100vw wide, all vw units) */
 .library-variant--forbidden > .vault-exit-row {
@@ -5308,9 +5322,10 @@ select:-webkit-autofill {
             drop-shadow(0 0.28vw 0.2vw rgba(0, 0, 0, 0.7))
             drop-shadow(0 0.42vw 0.42vw rgba(0, 0, 0, 0.3));
 }
-/* Vault variant — extended bg image has more ceiling, arch is ~5vw lower */
+/* Vault variant — extended bg image, all positions locked to container via cqi */
 .library-variant--vault .library-arch-title {
-    top: calc(3.75vw - 84px);
+    top: -1.59cqi;
+    width: 52cqi;
 }
 
 /* ── Shelf inscription — carved into 2nd shelf of Forbidden Library ── */
@@ -5409,16 +5424,21 @@ select:-webkit-autofill {
     background: none;
 }
 
+/* Vault book list — cqi-locked to background image */
+.library-variant--vault .library-book-list {
+    max-width: 52cqi;
+    padding-top: 25.5cqi;
+    gap: 2.3cqi 3.5cqi;
+}
 /* Shelf lip overlay — top shelf edge from baked art, overlaps bottom of books */
 .forbidden-library.library-variant--vault > .library-book-list::before {
     content: '';
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    width: 56.1vw;
-    height: calc(42 / 855 * 56.1vw);
-    /* Pure vw — tracks shelf position in background image on resize */
-    top: calc(36.1vw + 0px);
+    width: 56.1cqi;
+    height: calc(42 / 855 * 56.1cqi);
+    top: 36.1cqi;
     background: url('/assets/Forbidde-Library-Art/privat-library-top-shelf.jpg') center / 100% 100% no-repeat;
     pointer-events: none;
     z-index: 3;
@@ -5634,32 +5654,35 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 /* Vault library variant — buttons sit inside the arch half-circle, locked to bg */
 .library-variant--vault > .vault-exit-row {
     position: absolute;
-    top: calc(14.0vw - 73px);
-    left: 48.6vw;
+    top: 7.94cqi;
+    left: 48.6cqi;
     transform: translateX(-50%);
     z-index: 3;
     margin-top: 0;
     padding: 0;
-    gap: calc(45.35vw - 80px);
+    gap: 40.14cqi;
 }
 .vault-exit-row .sb-btn-png.sm {
     font-size: 0.72em;
 }
 .library-variant--vault > .vault-exit-row .sb-btn-png.sm:nth-child(1) {
-    width: 17.1vw;
-    height: 4.3vw;
-    font-size: 1.40vw;
-    padding: 0.7vw 2.1vw;
-    box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
+    width: 17.1cqi;
+    height: 4.3cqi;
+    font-size: 1.40cqi;
+    padding: 0.7cqi 2.1cqi;
+    box-shadow: 0 0.25cqi 0.5cqi rgba(0,0,0,0.5), 0 0.1cqi 0.15cqi rgba(0,0,0,0.3);
+    position: relative;
+    top: -5px;
+    left: 30px;
 }
 .library-variant--vault > .vault-exit-row .sb-btn-png.sm:nth-child(2) {
-    width: 17.1vw;
-    height: 4.3vw;
-    font-size: 1.40vw;
-    padding: 0.7vw 2.1vw;
-    box-shadow: 0 0.25vw 0.5vw rgba(0,0,0,0.5), 0 0.1vw 0.15vw rgba(0,0,0,0.3);
+    width: 17.1cqi;
+    height: 4.3cqi;
+    font-size: 1.40cqi;
+    padding: 0.7cqi 2.1cqi;
+    box-shadow: 0 0.25cqi 0.5cqi rgba(0,0,0,0.5), 0 0.1cqi 0.15cqi rgba(0,0,0,0.3);
     position: relative;
-    left: 2.44vw;
+    left: 2.44cqi;
 }
 .trophy-hotspot {
     position: absolute;
@@ -19724,7 +19747,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     font-variant: small-caps;
     font-size: 1.3em;
     color: #c9a84c;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.6em;
     margin-bottom: 30px;
 }
 .gn-selector-options {
@@ -19858,12 +19881,22 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     min-height: 50vh;
     position: relative;
 }
+/* ── GN generating state: hide all chrome, show only loading ── */
+#gnReader.gn-generating .gn-ui-overlay,
+#gnReader.gn-generating .gn-fate-section,
+#gnReader.gn-generating .gn-scene-actions-row,
+#gnReader.gn-generating .gn-input-bar,
+#gnReader.gn-generating .gn-pov-edition {
+    display: none !important;
+}
 .gn-scene-loading {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 50vh;
+    min-height: 70vh;
     text-align: center;
+    gap: 18px;
 }
 .gn-loading-status {
     font-family: 'Lora', serif;
@@ -19872,6 +19905,24 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     letter-spacing: 0.3em;
     font-size: 0.95em;
     animation: gnLoadPulse 2s ease-in-out infinite;
+}
+.gn-loading-bar {
+    width: 120px;
+    height: 3px;
+    background: rgba(201, 168, 76, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.gn-loading-bar-fill {
+    width: 100%;
+    height: 100%;
+    background: var(--gold, #c9a84c);
+    animation: gnBarSlide 1.4s ease-in-out infinite;
+}
+@keyframes gnBarSlide {
+    0%   { transform: translateX(-100%); }
+    50%  { transform: translateX(0); }
+    100% { transform: translateX(100%); }
 }
 @keyframes gnLoadPulse {
     0%, 100% { opacity: 0.5; }
@@ -20095,17 +20146,42 @@ body.gn-cover-active .gn-ui-overlay {
     margin: 0 auto;
 }
 
-/* ── Base panel ── */
+/* ── Base panel — holds size even when image fails ── */
 .gn-panel {
     position: relative;
     border-radius: 2px;
     overflow: hidden;
     background: #0a0806;
+    min-height: 120px;
 }
 .gn-panel-img {
     width: 100%;
     height: auto;
     display: block;
+}
+/* Loading shell — holds aspect ratio before image arrives */
+.gn-panel.gn-panel-shell {
+    aspect-ratio: 4 / 3;
+}
+/* Failed image — panel retains size, shows subtle fallback */
+.gn-panel--image-failed {
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0d0b09 0%, #1a1612 50%, #0d0b09 100%);
+}
+.gn-panel--image-failed .gn-panel-img {
+    display: none;
+}
+.gn-panel-fail-label {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.75em;
+    color: rgba(201, 168, 76, 0.25);
+    letter-spacing: 0.15em;
+    pointer-events: none;
+    z-index: 1;
 }
 
 /* ── Dialogue bubble — positioned by dialoguePosition field ── */
@@ -20333,6 +20409,7 @@ body.gn-cover-active .gn-ui-overlay {
 .gn-panel-placeholder {
     position: relative;
     min-height: 140px;
+    aspect-ratio: 4 / 3;
     background: radial-gradient(ellipse at center, rgba(20, 16, 10, 0.6) 0%, rgba(5, 3, 2, 0.95) 100%);
     border: 1px solid rgba(201, 162, 78, 0.08);
     display: flex;
@@ -20955,53 +21032,75 @@ body.gn-cover-active .gn-ui-overlay {
     display: none;
 }
 
-/* ── Fate Event Loading Message ── */
-.fate-event-loading-msg {
-    text-align: center;
-    padding: 16px 12px;
-    animation: fateEventFadeIn 0.8s ease-out;
+/* ── Fate Whisper Card (loading screen — tarot-style Fate Event promo) ── */
+.fate-whisper {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+    pointer-events: auto;
 }
-.fate-event-loading-title {
-    font-family: 'Lora', serif;
-    font-variant: small-caps;
-    color: var(--gold, #c8a84e);
-    letter-spacing: 0.4em;
-    font-size: 1em;
+.fate-whisper.hidden {
+    display: none;
+}
+.fate-whisper-inner {
+    background: rgba(10, 10, 10, 0.65);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
+    padding: 14px 18px;
+    border-radius: 10px;
+    max-width: 280px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: whisperCardIn 0.8s ease-out;
+}
+.fate-whisper-inner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 18px rgba(212, 175, 55, 0.25);
+}
+.fate-whisper-title {
+    font-family: 'Cinzel', 'Lora', serif;
+    color: #d4af37;
+    font-size: 14px;
+    letter-spacing: 1px;
     margin-bottom: 6px;
 }
-.fate-event-loading-ack {
-    font-family: 'Lora', serif;
-    font-style: italic;
-    color: var(--gold, #c8a84e);
-    font-size: 0.82em;
-    opacity: 0.85;
+.fate-whisper-body {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+.fate-whisper-bonus {
+    color: #d4af37;
+    font-size: 13px;
     margin-bottom: 8px;
 }
-.fate-event-loading-body {
-    font-family: 'Lora', serif;
-    font-style: italic;
-    color: var(--ink, #e8e0d0);
-    font-size: 0.78em;
-    opacity: 0.65;
-    line-height: 1.5;
-    margin: 0 0 6px 0;
+.fate-whisper-cta {
+    font-size: 12px;
+    color: rgba(212, 175, 55, 0.85);
+    text-decoration: underline;
 }
-.fate-event-loading-bonus {
-    font-family: 'Lora', serif;
-    color: var(--gold, #c8a84e);
-    font-size: 0.82em;
-    letter-spacing: 0.08em;
-}
-.fate-event-loading-timer {
-    font-family: 'Lora', serif;
-    font-size: 0.68em;
-    color: var(--ink, #e8e0d0);
-    opacity: 0.45;
-    margin-top: 4px;
-}
-@keyframes fateEventFadeIn {
-    from { opacity: 0; transform: translateY(6px); }
+@keyframes whisperCardIn {
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
+}
+/* Whisper Card → Modal unfold animation */
+.fate-whisper-inner.opening {
+    transform: scale(1.04);
+    box-shadow: 0 0 24px rgba(212, 175, 55, 0.35);
+    transition: transform 180ms ease, box-shadow 180ms ease, opacity 180ms ease;
+}
+.fate-whisper-inner.fade-out {
+    opacity: 0;
+    transform: scale(0.96);
+}
+.enter-from-whisper {
+    animation: whisperModalIn 260ms ease forwards;
+}
+@keyframes whisperModalIn {
+    0%   { opacity: 0; transform: translateY(10px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ── Seasonal Promo Badge (user-facing, on Fortune buttons) ── */
@@ -23664,13 +23763,14 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── Container — left side, locked to viewport bottom ── */
 .library-concierge {
     position: absolute;
-    left: -3vw;
-    bottom: 3vw;
+    left: max(1cqi, calc(51cqi - 50vw));
+    bottom: 3cqi;
+    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease;
     z-index: 5;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.6s ease;
-    width: 21vw;
+    width: 21cqi;
     height: 100%;
 }
 #vaultLibraryScreen:not(.hidden) .library-concierge {
@@ -23684,8 +23784,8 @@ body.gn-cover-active .gn-ui-overlay {
     left: 0;
     width: 100%;
     overflow: visible;
-    pointer-events: auto;
-    cursor: pointer;
+    pointer-events: none;
+    cursor: default;
 }
 .lc-mask {
     width: 100%;
@@ -23698,8 +23798,8 @@ body.gn-cover-active .gn-ui-overlay {
             drop-shadow(0 0 6px rgba(0,0,0,0.4));
     animation: lcPresenceAura 7s ease-in-out infinite;
     transition: opacity 0.4s ease, filter 0.4s ease;
-    pointer-events: auto;
-    cursor: pointer;
+    pointer-events: none;
+    cursor: default;
 }
 
 /* ── Presence aura — asymmetric scale + glow, 7s, organic feel ── */
@@ -23768,12 +23868,16 @@ body.gn-cover-active .gn-ui-overlay {
 }
 
 /* ── Hide corner bell + summon figure on library screen ── */
-/* Hide corner bell + summon figure on library (library has its own diegetic concierge).
-   Dialogue panel is NOT hidden — the library concierge uses it when clicked. */
-#vaultLibraryScreen:not(.hidden) ~ #conciergeBell,
-body:has(#vaultLibraryScreen:not(.hidden)) #conciergeBell,
+/* Hide summon figure on library (library has its own diegetic concierge).
+   Bell remains visible — it is the sole re-summon trigger after ceremony. */
 #vaultLibraryScreen:not(.hidden) ~ .concierge-summon-figure,
 body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+/* Hide corner bell only during mask ceremony (bell appears after mask is chosen) */
+body:has(.mask-gate-active) #conciergeBell {
     opacity: 0 !important;
     pointer-events: none !important;
     visibility: hidden !important;
@@ -23794,7 +23898,7 @@ body.concierge-design-active .concierge-summon-figure {
 /* ── Responsive: smaller screens ── */
 @media (max-width: 768px) {
     .library-concierge {
-        width: 18vw;
+        width: 18cqi;
     }
     .concierge-dialogue {
         width: min(229px, calc(100vw - 90px));
@@ -23835,14 +23939,16 @@ body.concierge-design-active .concierge-summon-figure {
     position: relative;
     z-index: 1;
 }
-/* Clip gleam to bell silhouette using the bell image as a mask */
+/* Clip gleam to bell silhouette using the bell image as a mask.
+   mask-size 88% shrinks the mask slightly inside the anti-aliased edges
+   so no gleam leaks outside the bell outline. */
 #conciergeBell .bell-gleam-wrapper {
     position: absolute;
     inset: 0;
-    -webkit-mask-image: url('assets/Concierge/gold-bell-splat.png');
-    mask-image: url('assets/Concierge/gold-bell-splat.png');
-    -webkit-mask-size: contain;
-    mask-size: contain;
+    -webkit-mask-image: url('/assets/Concierge/gold-bell-splat.png');
+    mask-image: url('/assets/Concierge/gold-bell-splat.png');
+    -webkit-mask-size: 88%;
+    mask-size: 88%;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
     -webkit-mask-position: center;
@@ -23987,10 +24093,15 @@ body.concierge-design-active .concierge-summon-figure {
                 visibility 0s linear 0.45s;
 }
 
-/* ── Library-specific position: partially behind concierge's elbow ── */
+/* ── Library-specific: panel behind concierge ── */
 body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     left: 12vw;
-    z-index: 4; /* behind library concierge figure (z:5) */
+    z-index: 6;
+}
+/* When panel is open, concierge becomes fixed so it shares root stacking context with panel */
+.library-concierge.lc-panel-active {
+    position: fixed;
+    z-index: 7;
 }
 
 /* ── Frame — DSP Gold-Black PNG, no rotation ── */
@@ -24000,7 +24111,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     background: none;
     border: none;
     box-shadow: 0 0 20px rgba(0,0,0,0.6), 0 0 8px rgba(201, 162, 78, 0.06);
-    padding: 10px 16px 13px;
+    padding: 18px 22px 20px;
     display: flex;
     flex-direction: column;
     aspect-ratio: 720 / 1040;
@@ -24205,31 +24316,34 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 /* ── Back curtain (full-curtain.jpg) — rises UP to reveal library ── */
 .ceremony-curtain--back {
     z-index: 7;
+    transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .ceremony-curtain--back.curtain-opening {
-    transition: transform 4s cubic-bezier(0.22, 0.61, 0.36, 1);
     transform: translateY(-100%);
 }
 
 /* ── Left front curtain — slides LEFT off-screen ── */
 .ceremony-curtain--left {
     z-index: 8;
+    transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .ceremony-curtain--left.curtain-opening {
-    transition: transform 4s cubic-bezier(0.22, 0.61, 0.36, 1);
     transform: translateX(-100%);
 }
 
 /* ── Right front curtain — slides RIGHT off-screen ── */
 .ceremony-curtain--right {
     z-index: 8;
+    transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .ceremony-curtain--right.curtain-opening {
-    transition: transform 4s cubic-bezier(0.22, 0.61, 0.36, 1);
     transform: translateX(100%);
 }
 
-/* ── Ceremony elevation — masks float above curtains ── */
+/* ── Ceremony elevation — concierge + masks float above curtains ── */
+.library-variant--vault.curtain-ceremony .library-concierge {
+    z-index: 9;
+}
 .library-variant--vault.curtain-ceremony #maskSelectionShelf {
     z-index: 12;
 }
@@ -24237,11 +24351,11 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 /* ── Welcome concierge — gesturing figure in front of curtains during ceremony ── */
 .ceremony-concierge {
     position: absolute;
-    left: -3vw;
-    bottom: 3vw;
-    z-index: 9;
+    left: max(1cqi, calc(51cqi - 50vw));
+    bottom: 3cqi;
+    z-index: 10;
     pointer-events: none;
-    width: 29vw;
+    width: 29cqi;
     height: 100%;
     opacity: 0;
     transition: opacity 0.6s ease;
@@ -24273,7 +24387,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 }
 @media (max-width: 768px) {
     .ceremony-concierge {
-        width: 24vw;
+        width: 24cqi;
     }
 }
 
@@ -24338,6 +24452,34 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     cursor: pointer;
     filter: none;
 }
+/* Idle gleam — periodic gold sweep across vault exit row buttons */
+.library-variant--vault:not(.mask-gate-active) .vault-exit-row .sb-btn-png::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -35%;
+    width: 35%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.06) 25%,
+        rgba(255, 255, 255, 0.18) 50%,
+        rgba(255, 255, 255, 0.06) 75%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 1;
+    animation: vault-btn-idle-gleam 6s ease-in-out infinite;
+}
+.library-variant--vault:not(.mask-gate-active) .vault-exit-row .sb-btn-png:nth-child(2)::before {
+    animation-delay: 3s;
+}
+@keyframes vault-btn-idle-gleam {
+    0%, 70% { left: -35%; opacity: 0; }
+    75%     { opacity: 1; }
+    100%    { left: 140%; opacity: 0; }
+}
 
 /* ── Mask shelf — 3-row grid of 7 masks with golden text ── */
 .mask-selection-shelf {
@@ -24353,7 +24495,6 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     align-items: center;
     gap: 18px;
     overflow: visible;
-    container-type: inline-size;
 }
 /* Soft golden glow behind mask area — painted via box-shadow to avoid z-index stacking issues */
 .mask-selection-shelf::before {
@@ -24375,11 +24516,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 .mask-ceremony-subtitle {
     font-family: 'Lora', serif;
     font-weight: 400;
-    letter-spacing: 0.22em;
+    font-variant: small-caps;
+    letter-spacing: 0.44em;
     text-align: center;
     margin: 0;
     pointer-events: none;
-    background: linear-gradient(180deg, #f5e6a3 0%, #c9a84c 50%, #8a6914 100%);
+    background:
+        linear-gradient(90deg, transparent 0%, rgba(255,245,200,0.5) 50%, transparent 100%) no-repeat -200% 0 / 50% 100%,
+        linear-gradient(180deg, #f5e6a3 0%, #c9a84c 50%, #8a6914 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -24387,12 +24531,30 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
             drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 .mask-ceremony-title {
-    font-size: clamp(16px, 2.2vw, 28px);
+    font-size: clamp(20px, 2.75vw, 35px);
     margin-bottom: 4px;
+    opacity: 0;
+    animation: ceremonyTextFadeIn 1s ease 2s forwards, ceremonyGleam 6s ease-in-out 3.5s infinite, ceremonyBreathe 24s ease-in-out 3s infinite;
 }
 .mask-ceremony-subtitle {
-    font-size: clamp(14px, 1.8vw, 22px);
+    font-size: clamp(17.5px, 2.25vw, 27.5px);
     margin-top: 8px;
+    opacity: 0;
+    animation: ceremonyTextFadeIn 1s ease 4s forwards, ceremonyGleam 6s ease-in-out 5.5s infinite, ceremonyBreathe 24s ease-in-out 5s infinite;
+}
+@keyframes ceremonyTextFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes ceremonyGleam {
+    0%   { background-position: -200% 0, 0 0; }
+    40%  { background-position: 300% 0, 0 0; }
+    100% { background-position: 300% 0, 0 0; }
+}
+@keyframes ceremonyBreathe {
+    0%   { letter-spacing: 0.44em; }
+    50%  { letter-spacing: 0.58em; }
+    100% { letter-spacing: 0.44em; }
 }
 .mask-shelf-row {
     display: flex;
@@ -24406,10 +24568,83 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 .mask-candidate {
     cursor: pointer;
     position: relative;
-    transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
-                opacity 0.6s ease;
-    transform-origin: center bottom;
+    transform-origin: center center;
     transform-style: preserve-3d;
+    animation: maskFloat var(--mask-float-dur, 4s) ease-in-out infinite;
+    animation-delay: var(--mask-float-delay, 0s);
+}
+/* Subtle organic float — each mask gets different dur/delay via CSS custom props */
+@keyframes maskFloat {
+    0%   { transform: translateY(0); }
+    50%  { transform: translateY(var(--mask-float-y, -6px)); }
+    100% { transform: translateY(0); }
+}
+/* Per-mask float stagger — different duration, amplitude, and phase */
+.mask-candidate[data-mask-id="ARMORED_FOX"]    { --mask-float-dur: 3.8s; --mask-float-delay: 0.0s; --mask-float-y: -7px; }
+.mask-candidate[data-mask-id="BEAUTIFUL_RUIN"] { --mask-float-dur: 4.3s; --mask-float-delay: 1.2s; --mask-float-y: -5px; }
+.mask-candidate[data-mask-id="DARK_VICE"]      { --mask-float-dur: 3.5s; --mask-float-delay: 0.7s; --mask-float-y: -8px; }
+.mask-candidate[data-mask-id="ETERNAL_FLAME"]  { --mask-float-dur: 4.6s; --mask-float-delay: 2.0s; --mask-float-y: -5px; }
+.mask-candidate[data-mask-id="HEART_WARDEN"]   { --mask-float-dur: 4.1s; --mask-float-delay: 0.4s; --mask-float-y: -6px; }
+.mask-candidate[data-mask-id="OPEN_VEIN"]      { --mask-float-dur: 3.7s; --mask-float-delay: 1.6s; --mask-float-y: -7px; }
+.mask-candidate[data-mask-id="SPELLBINDER"]    { --mask-float-dur: 4.4s; --mask-float-delay: 0.9s; --mask-float-y: -6px; }
+/* ── Mask gleam — single wave sweeping left→right across all masks ──
+   Per-mask gradient with tight position-based stagger delays.
+   background-attachment:fixed doesn't work with transformed parents,
+   so each mask sweeps individually, staggered to look like one wave. */
+.mask-candidate::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    background: linear-gradient(105deg, transparent 30%, rgba(255, 245, 200, 0.45) 50%, transparent 70%);
+    background-size: 300% 100%;
+    background-position: -100% 0;
+    animation: maskGleamSweep 8s ease-in-out var(--mask-gleam-delay, 3.5s) infinite;
+    /* Clip gleam to each mask's silhouette */
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+@keyframes maskGleamSweep {
+    0%   { background-position: -100% 0; }
+    12%  { background-position: 200% 0; }
+    100% { background-position: 200% 0; }
+}
+/* Stagger by horizontal position: leftmost → rightmost (0.15s apart) */
+.mask-candidate[data-mask-id="BEAUTIFUL_RUIN"]::after  { --mask-gleam-delay: 3.50s; }
+.mask-candidate[data-mask-id="HEART_WARDEN"]::after    { --mask-gleam-delay: 3.50s; }
+.mask-candidate[data-mask-id="DARK_VICE"]::after       { --mask-gleam-delay: 3.65s; }
+.mask-candidate[data-mask-id="OPEN_VEIN"]::after       { --mask-gleam-delay: 3.65s; }
+.mask-candidate[data-mask-id="ARMORED_FOX"]::after     { --mask-gleam-delay: 3.80s; }
+.mask-candidate[data-mask-id="ETERNAL_FLAME"]::after   { --mask-gleam-delay: 3.95s; }
+.mask-candidate[data-mask-id="SPELLBINDER"]::after     { --mask-gleam-delay: 3.95s; }
+/* Per-mask silhouette clip */
+.mask-candidate[data-mask-id="ARMORED_FOX"]::after    { -webkit-mask-image: url('/assets/Concierge/masks/ArmoredFox.png');    mask-image: url('/assets/Concierge/masks/ArmoredFox.png'); }
+.mask-candidate[data-mask-id="BEAUTIFUL_RUIN"]::after  { -webkit-mask-image: url('/assets/Concierge/masks/BeautifulRuin.png');  mask-image: url('/assets/Concierge/masks/BeautifulRuin.png'); }
+.mask-candidate[data-mask-id="DARK_VICE"]::after       { -webkit-mask-image: url('/assets/Concierge/masks/DarkVice.png');       mask-image: url('/assets/Concierge/masks/DarkVice.png'); }
+.mask-candidate[data-mask-id="ETERNAL_FLAME"]::after   { -webkit-mask-image: url('/assets/Concierge/masks/EternalFlame.png');   mask-image: url('/assets/Concierge/masks/EternalFlame.png'); }
+.mask-candidate[data-mask-id="HEART_WARDEN"]::after    { -webkit-mask-image: url('/assets/Concierge/masks/HeartWarden.png');    mask-image: url('/assets/Concierge/masks/HeartWarden.png'); }
+.mask-candidate[data-mask-id="OPEN_VEIN"]::after       { -webkit-mask-image: url('/assets/Concierge/masks/OpenVein.png');       mask-image: url('/assets/Concierge/masks/OpenVein.png'); }
+.mask-candidate[data-mask-id="SPELLBINDER"]::after     { -webkit-mask-image: url('/assets/Concierge/masks/Spellbinder.png');    mask-image: url('/assets/Concierge/masks/Spellbinder.png'); }
+/* Hide gleam on chosen/dissipating masks */
+.mask-candidate.mask-chosen::after,
+.mask-candidate.mask-dissipating::after {
+    display: none;
+}
+/* Hover overrides the float */
+.mask-candidate:hover {
+    animation-play-state: paused;
+    transform: translateY(-10px) scale(1.05);
+    transition: transform 0.3s ease;
+}
+/* Stop floating once chosen or dissipating */
+.mask-candidate.mask-chosen,
+.mask-candidate.mask-dissipating {
+    animation: none;
 }
 
 /* ── Per-mask sizing — 25% larger than original, centered in 3-row grid ── */
@@ -24742,4 +24977,47 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     color: rgba(218, 165, 32, 0.8);
     white-space: pre-wrap;
     word-break: break-word;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════ */
+/* THE ANGRY ROOM — transition overlay                                       */
+/* ═══════════════════════════════════════════════════════════════════════════ */
+.angry-room-transition {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #0a0a0a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: angryRoomFadeIn 0.6s ease;
+}
+.angry-room-entry-text {
+    text-align: center;
+    max-width: 400px;
+    padding: 40px;
+}
+.angry-room-entry-text p {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    color: rgba(201, 168, 76, 0.7);
+    letter-spacing: 0.3em;
+    font-size: 0.95em;
+    margin: 0 0 16px;
+    opacity: 0;
+    animation: angryRoomTextIn 0.8s ease 0.4s forwards;
+}
+.angry-room-entry-title {
+    font-size: 1.2em !important;
+    color: rgba(201, 168, 76, 0.9) !important;
+    letter-spacing: 0.5em !important;
+    animation-delay: 1s !important;
+}
+@keyframes angryRoomFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes angryRoomTextIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }

@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260322f">
+  <link rel="stylesheet" href="/styles.css?v=20260324b">
 </head>
 
 <body class="booting">
@@ -212,6 +212,14 @@
     <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
     <div id="loadingPercent">0%</div>
     <div id="fateEventLoadingSlot"></div>
+    <div id="fateWhisperCard" class="fate-whisper hidden">
+      <div class="fate-whisper-inner">
+        <div class="fate-whisper-title">&#x2726; The Stars Align</div>
+        <div class="fate-whisper-body" id="fateWhisperBody"></div>
+        <div class="fate-whisper-bonus">+25% Fortunes</div>
+        <div class="fate-whisper-cta">&#x2727; View Fortune Reserves</div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1326,6 +1334,7 @@
         <div class="sb-card" data-grp="worldSubtype" data-val="crimson_veil" data-micro-tip="Desire is sacred. Would you risk damnation for it?"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Dogma</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Dogma</span><span class="sb-card-desc">Desire is sacred. Would you risk damnation for it?</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="quieting_event" data-micro-tip="In a world engineered for serenity, wanting someone is the most dangerous act of all."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Quieting</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Quieting</span><span class="sb-card-desc">In a world engineered for serenity, wanting someone is the most dangerous act of all.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="endless_edit" data-micro-tip="Love fades as selves are edited away."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Erasure</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Erasure</span><span class="sb-card-desc">Love fades as selves are edited away.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="angry_room" data-micro-tip="Control them. Shape them. See what that makes of you."><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">The Angry Room</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">The Angry Room</span><span class="sb-card-desc">Justice, applied without mercy.</span></div></div></div>
       </div>
     </div>
 
@@ -1940,7 +1949,7 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js?v=20260318c"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260322f"></script>
+<script src="/app.js?v=20260324b"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
@@ -2052,6 +2061,10 @@
         <span class="gn-selector-name">Vero Dune</span>
         <span class="gn-selector-desc">Minimal, precise, graphic clarity</span>
       </button>
+      <button class="gn-selector-card" data-gn-style="olen_droll">
+        <span class="gn-selector-name">Olen Droll</span>
+        <span class="gn-selector-desc">Understated, observational, wry restraint</span>
+      </button>
     </div>
     <button class="gn-selector-back" id="gnSelectorBack">Back</button>
   </div>
@@ -2078,6 +2091,7 @@
   <div id="gnStage" class="gn-stage">
     <div id="gnSceneLoading" class="gn-scene-loading">
       <p class="gn-loading-status">Composing Scene 1...</p>
+      <div class="gn-loading-bar"><div class="gn-loading-bar-fill"></div></div>
     </div>
     <div id="gnPanelDisplay" class="gn-panel-display"></div>
   </div>
