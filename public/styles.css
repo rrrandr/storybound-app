@@ -2445,26 +2445,17 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
    FLOATING VISION ORB — paragraph-anchored image generation
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Active paragraph — thin gold outline, no layout shift */
+/* Active paragraph — faint highlight only, no outline */
 p.vision-active-paragraph {
     position: relative;
-    outline: 1px solid rgba(255, 215, 0, 0.18);
-    outline-offset: 4px;
+    outline: none;
     background: rgba(255, 215, 0, 0.03);
     border-radius: 3px;
-    transition: outline-color 0.4s ease, background 0.4s ease;
+    transition: background 0.4s ease;
 }
-/* Connecting thread from paragraph outline to orb */
+/* No connecting thread */
 p.vision-active-paragraph::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    right: -4px;
-    transform: translateY(-50%);
-    width: 48px;
-    height: 1px;
-    background: linear-gradient(to right, rgba(255,215,0,0.18), rgba(255,215,0,0.06), transparent);
-    pointer-events: none;
+    display: none;
 }
 
 /* Vision orb — floating right edge */
@@ -11314,13 +11305,16 @@ textarea.fate-field {
    Front: title + author. Spine: title. Back: "Your cover will evolve..."
    ═══════════════════════════════════════════════════════════════════ */
 .cover-book-3d {
-    /* 5:7 proportions, fills parent height */
+    /* 5:7 proportions — override base .book-3d fixed dimensions */
+    position: relative;
+    left: auto;
+    bottom: auto;
+    width: auto;
     height: 100%;
     aspect-ratio: 5 / 7;
     transform-style: preserve-3d;
     transform: rotateX(7deg) rotateY(-20deg);
     transform-origin: center center;
-    position: relative;
     --book-depth: 20px;    /* half spine = translateZ offset for front/back */
 }
 
@@ -11390,8 +11384,12 @@ textarea.fate-field {
 .cover-book-3d .book-spine {
     opacity: 1;
     width: calc(var(--book-depth) * 2);
+    height: 100%;
+    left: 0;
     background: linear-gradient(180deg, #ede9e1 0%, #e0d9ce 100%);
-    transform: rotateY(-90deg) translateZ(0px);
+    /* Spine connects front (z=+depth) to back (z=-depth) at left edge.
+       translateZ puts us at front face depth, rotateY spins 90° into the page. */
+    transform: translateZ(var(--book-depth)) rotateY(-90deg);
     transform-origin: left center;
     border-radius: 6px 0 0 6px;
     box-shadow:
@@ -11423,7 +11421,7 @@ textarea.fate-field {
 /* ── Back cover (5:7, connects to spine at left edge) ── */
 .cover-book-3d .book-back {
     background: linear-gradient(160deg, #f5f1ea 0%, #ece7dd 100%);
-    transform: translateZ(calc(-1 * var(--book-depth)));
+    transform: rotateY(180deg) translateZ(var(--book-depth));
     box-shadow:
         inset -6px 0 10px -4px rgba(0, 0, 0, 0.08),
         inset 0 -2px 6px -3px rgba(0,0,0,0.06),
@@ -24119,6 +24117,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     pointer-events: none !important;
     visibility: hidden !important;
 }
+/* Hide corner bell on library screen (tray bell is the summon trigger there) */
+body:has(#vaultLibraryScreen:not(.hidden)) #conciergeBell {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
 /* Hide corner bell only during mask ceremony (bell appears after mask is chosen) */
 body:has(.mask-gate-active) #conciergeBell {
     opacity: 0 !important;
@@ -24835,22 +24839,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
    background-attachment:fixed doesn't work with transformed parents,
    so each mask sweeps individually, staggered to look like one wave. */
 .mask-candidate::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    z-index: 2;
-    background: linear-gradient(105deg, transparent 30%, rgba(255, 245, 200, 0.45) 50%, transparent 70%);
-    background-size: 300% 100%;
-    background-position: -100% 0;
-    animation: maskGleamSweep 8s ease-in-out var(--mask-gleam-delay, 3.5s) infinite;
-    /* Clip gleam to each mask's silhouette */
-    -webkit-mask-size: contain;
-    mask-size: contain;
-    -webkit-mask-repeat: no-repeat;
-    mask-repeat: no-repeat;
-    -webkit-mask-position: center;
-    mask-position: center;
+    display: none;
 }
 @keyframes maskGleamSweep {
     0%   { background-position: -100% 0; }
@@ -25361,38 +25350,66 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 .micro-expr-options .micro-expr-opt:nth-child(4) { animation-delay: 0.15s; }
 
 /* P6: GN mode micro-expression overlay */
-.gn-micro-expr-overlay {
+/* ── GN micro-expression: cinematic subtitle layer inside panel ── */
+.gn-micro-expr-layer {
     position: absolute;
     bottom: 0;
     left: 0;
-    right: 0;
+    width: 100%;
+    height: 20%;
+    min-height: 48px;
     display: flex;
+    align-items: flex-end;
+    pointer-events: none;
+    z-index: 12;
+}
+.gn-micro-expr-gradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top,
+        rgba(0, 0, 0, 0.55) 0%,
+        rgba(0, 0, 0, 0.35) 40%,
+        rgba(0, 0, 0, 0.0) 100%);
+}
+.gn-micro-expr-options {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
     gap: 6px;
-    z-index: 15;
-    padding: 8px 12px 6px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 100%);
+    padding: 8px 12px;
+    pointer-events: auto;
     opacity: 0;
-    animation: microExprReveal 0.3s ease 0.5s both;
+    transform: translateY(6px);
+}
+.gn-micro-expr-visible .gn-micro-expr-options {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 160ms ease-out, transform 160ms ease-out;
 }
 .gn-micro-expr-opt {
-    font-family: 'Lora', serif;
-    font-size: 0.72em;
+    font-family: 'Georgia', 'Lora', serif;
+    font-size: 14px;
     font-style: italic;
-    color: rgba(201, 168, 76, 0.9);
-    background: rgba(201, 168, 76, 0.08);
-    border: 1px solid rgba(201, 168, 76, 0.25);
-    border-radius: 10px;
-    padding: 2px 8px;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.92);
+    padding: 6px 10px;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: color 120ms ease, transform 100ms ease, opacity 120ms ease;
     white-space: nowrap;
     -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
-.gn-micro-expr-opt:hover,
-.gn-micro-expr-opt:active {
-    background: rgba(201, 168, 76, 0.2);
-    border-color: rgba(201, 168, 76, 0.5);
+.gn-micro-expr-opt:hover {
+    color: rgba(255, 255, 255, 1);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
