@@ -98,9 +98,14 @@ export default async function handler(req, res) {
       });
 
       if (!createRes.ok) {
-        const errData = await createRes.json().catch(() => ({}));
-        console.error('[visualize-flux] Replicate create failed:', errData);
-        return res.status(502).json({ error: 'Replicate prediction failed to start' });
+        const errText = await createRes.text().catch(() => '');
+        let errData; try { errData = JSON.parse(errText); } catch (_) { errData = { raw: errText.slice(0, 500) }; }
+        console.error('[visualize-flux] Replicate create failed:', createRes.status, errData?.detail || errData?.error || errData?.raw || errData);
+        return res.status(502).json({
+          error: 'Replicate prediction failed to start',
+          detail: errData?.detail || errData?.error || null,
+          status: createRes.status
+        });
       }
 
       const prediction = await createRes.json();

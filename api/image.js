@@ -1543,12 +1543,39 @@ export default async function handler(req, res) {
         return res.json({ url: `data:image/png;base64,${b64}`, provider: 'OpenAI', model: openaiModel, intent: imageIntent });
       }
     }
-    console.log('[IMAGE] OpenAI failed:', data?.error?.message || 'no image');
+    const _openaiErr = data?.error?.message || JSON.stringify(data?.error) || 'no image in response';
+    console.error('[IMAGE] OpenAI failed:', _openaiErr, '| status:', openaiRes.status);
+
+    // RETRY ONCE on non-moderation failures
+    if (openaiRes.status !== 400) {
+      console.log('[IMAGE] Retrying OpenAI once...');
+      try {
+        const retryRes = await fetch('https://api.openai.com/v1/images/generations', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({ model: openaiModel, prompt: finalPrompt, size: openaiSize, n: 1 })
+        });
+        const retryText = await retryRes.text();
+        let retryData; try { retryData = JSON.parse(retryText); } catch (_) { retryData = null; }
+        if (retryRes.ok && retryData) {
+          const rUrl = retryData.data?.[0]?.url;
+          const rB64 = retryData.data?.[0]?.b64_json;
+          if (rUrl) { console.log('[IMAGE] OpenAI retry success (url)'); return res.json({ url: rUrl, provider: 'OpenAI', model: openaiModel, intent: imageIntent }); }
+          if (rB64) { console.log('[IMAGE] OpenAI retry success (b64)'); return res.json({ url: `data:image/png;base64,${rB64}`, provider: 'OpenAI', model: openaiModel, intent: imageIntent }); }
+        }
+        console.error('[IMAGE] OpenAI retry also failed');
+      } catch (retryErr) {
+        console.error('[IMAGE] OpenAI retry error:', retryErr.message);
+      }
+    }
   } catch (err) {
     console.error('[IMAGE] OpenAI error:', err.message);
   }
 
-  // All providers failed
-  console.error('[IMAGE] All providers failed');
-  return res.status(502).json({ error: 'Image generation failed' });
+  // All providers failed — return structured error with details
+  console.error('[IMAGE] All providers failed for intent:', imageIntent);
+  return res.status(502).json({ error: 'Image generation failed', intent: imageIntent });
 }

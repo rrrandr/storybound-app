@@ -19787,6 +19787,27 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     object-fit: cover;
     border-radius: 4px;
 }
+/* ── Thumbnail fallback tile (when static asset is missing) ── */
+.gn-thumb--fallback {
+    background: linear-gradient(135deg, #0d0b09 0%, #1a1612 50%, #0d0b09 100%);
+}
+.gn-thumb--fallback .gn-thumb-img {
+    display: none;
+}
+.gn-thumb-fallback-tile {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.gn-thumb-initials {
+    font-family: 'Cinzel', 'Lora', serif;
+    font-size: 1.4em;
+    color: rgba(201, 168, 76, 0.3);
+    letter-spacing: 0.15em;
+    font-weight: 600;
+}
 .gn-thumb-placeholder {
     width: 100%;
     height: 100%;
@@ -20142,8 +20163,83 @@ body.gn-cover-active .gn-ui-overlay {
 
 /* ── GN Panel-Based Rendering ── */
 .gn-page-panels {
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANEL-COUNT GRID — deterministic layout based on actual panel count.
+   These override vertical stacking with a proper comic page grid.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1 panel — full width, single column */
+.gn-count-1 {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+}
+.gn-count-1 .gn-panel { min-height: 400px; }
+.gn-count-1 .gn-panel-img { min-height: 400px; object-fit: cover; }
+
+/* 2 panels — side by side */
+.gn-count-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.gn-count-2 .gn-panel { min-height: 280px; }
+.gn-count-2 .gn-panel-img { min-height: 280px; object-fit: cover; }
+
+/* 3 panels — hero spans top row, 2 below. Explicit row assignment prevents collision. */
+.gn-count-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    grid-auto-flow: row;
+    gap: 8px;
+}
+.gn-count-3 .gn-panel--hero {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-height: 320px;
+}
+.gn-count-3 .gn-panel--hero .gn-panel-img { min-height: 320px; object-fit: cover; }
+.gn-count-3 .gn-panel:not(.gn-panel--hero) {
+    grid-row: 2;
+    min-height: 220px;
+}
+.gn-count-3 .gn-panel:not(.gn-panel--hero) .gn-panel-img { min-height: 220px; object-fit: cover; }
+
+/* 4 panels — hero spans top row, remaining 3 fill row 2. Explicit rows prevent overlap. */
+.gn-count-4 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    grid-auto-flow: row;
+    gap: 8px;
+}
+.gn-count-4 .gn-panel { min-height: 200px; }
+.gn-count-4 .gn-panel-img { min-height: 200px; object-fit: cover; }
+.gn-count-4 .gn-panel--hero {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    min-height: 280px;
+}
+.gn-count-4 .gn-panel--hero .gn-panel-img { min-height: 280px; object-fit: cover; }
+.gn-count-4 .gn-panel:not(.gn-panel--hero) {
+    grid-row: 2;
+}
+
+/* Ensure panel images fill grid cells */
+.gn-panels-container .gn-panel {
+    position: relative;
+    overflow: hidden;
+}
+.gn-panels-container .gn-panel-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 /* ── Base panel — holds size even when image fails ── */
@@ -20159,6 +20255,21 @@ body.gn-cover-active .gn-ui-overlay {
     height: auto;
     display: block;
 }
+/* Camera-aware panel emphasis — close-ups get portrait aspect, wide gets landscape */
+.gn-panel[data-camera="close"],
+.gn-panel[data-camera="extreme_close"] {
+    aspect-ratio: 3 / 4;
+}
+.gn-panel[data-camera="wide"],
+.gn-panel[data-camera="establishing"] {
+    aspect-ratio: 16 / 9;
+}
+/* Hero panel — slightly larger emphasis via grid (see .gn-count-* rules) */
+.gn-panel--hero[data-camera="wide"],
+.gn-panel--hero[data-camera="establishing"] {
+    aspect-ratio: 2 / 1;
+}
+
 /* Loading shell — holds aspect ratio before image arrives */
 .gn-panel.gn-panel-shell {
     aspect-ratio: 4 / 3;
@@ -20274,13 +20385,13 @@ body.gn-cover-active .gn-ui-overlay {
    GN LAYOUT SYSTEM — 5 layout types + micro-variations
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── Vertical (default) — column stack ── */
-.gn-layout-vertical {
+/* ── Vertical (default) — column stack. Defers to .gn-count-* grid when present ── */
+.gn-layout-vertical:not([class*="gn-count-"]) {
     display: flex;
     flex-direction: column;
     gap: 8px;
 }
-.gn-layout-vertical .gn-panel { width: 100%; }
+.gn-layout-vertical:not([class*="gn-count-"]) .gn-panel { width: 100%; }
 
 /* ── Grid — 2×2 with micro-variation (first panel slightly larger) ── */
 .gn-layout-grid {
@@ -20335,6 +20446,138 @@ body.gn-cover-active .gn-ui-overlay {
 }
 .gn-layout-fullbleed .gn-panel { width: 100%; }
 .gn-layout-fullbleed .gn-panel-img { min-height: 500px; object-fit: cover; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CINEMATIC SPLIT — 2-panel continuous composition (reads as one image)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.gn-density-cinematic {
+    display: flex;
+    flex-direction: row;
+    gap: 2px; /* tight seam — feels continuous */
+}
+.gn-density-cinematic .gn-panel {
+    flex: 1;
+    min-height: 360px;
+}
+.gn-density-cinematic .gn-panel[data-cinematic-pos="left"] {
+    flex: 1.2; /* anchor panel slightly wider */
+}
+.gn-density-cinematic .gn-panel[data-cinematic-pos="right"] {
+    flex: 1;
+}
+.gn-density-cinematic .gn-panel-img {
+    min-height: 360px;
+    object-fit: cover;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LAYOUT ENGINE STYLES — density + layout-style driven geometry
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Horizontal strip (cinematic density) */
+.gn-lstyle-horizontal-strip {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+}
+.gn-lstyle-horizontal-strip .gn-panel { min-height: 340px; }
+.gn-lstyle-horizontal-strip .gn-panel-img { min-height: 340px; object-fit: cover; }
+
+/* Asymmetric (high intensity standard/dense) */
+.gn-lstyle-asymmetric {
+    display: grid;
+    grid-template-columns: 1.4fr 0.6fr;
+    grid-template-rows: auto auto;
+    gap: 6px;
+}
+.gn-lstyle-asymmetric .gn-panel--hero {
+    grid-row: 1 / -1; /* hero spans full height on left */
+    min-height: 380px;
+}
+.gn-lstyle-asymmetric .gn-panel--hero .gn-panel-img { min-height: 380px; object-fit: cover; }
+.gn-lstyle-asymmetric .gn-panel:not(.gn-panel--hero) .gn-panel-img { min-height: 160px; object-fit: cover; }
+
+/* Staggered (chaotic tone) — column stack with slight rotation */
+.gn-lstyle-staggered {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.gn-lstyle-staggered .gn-panel { transition: transform 0.3s ease; }
+.gn-lstyle-staggered .gn-panel:nth-child(even) { transform: rotate(1deg); margin-left: 8px; }
+.gn-lstyle-staggered .gn-panel:nth-child(odd):not(:first-child) { transform: rotate(-1deg); margin-right: 8px; }
+
+/* Vertical stack (minimal density, default) */
+.gn-lstyle-vertical-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.gn-lstyle-vertical-stack .gn-panel:first-child { flex: 1.8; min-height: 300px; }
+.gn-lstyle-vertical-stack .gn-panel:last-child { flex: 1; min-height: 160px; }
+.gn-lstyle-vertical-stack .gn-panel-img { height: 100%; object-fit: cover; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANEL BLEED + FRAME BREAK — controlled boundary violation
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Edge bleed — extends to container edge, slight margin removal */
+.gn-panel.gn-bleed-edge {
+    margin: -2px;
+    border-radius: 0;
+}
+.gn-panel.gn-bleed-edge .gn-panel-img {
+    transform: scale(1.02);
+    transform-origin: center center;
+}
+
+/* Full bleed — no margins, no border radius, fills container */
+.gn-panel.gn-bleed-full {
+    margin: -4px;
+    border-radius: 0;
+}
+.gn-panel.gn-bleed-full .gn-panel-img {
+    transform: scale(1.04);
+    transform-origin: center center;
+}
+
+/* Frame break — content overflows panel boundary */
+.gn-panel.gn-bleed-break-frame {
+    overflow: visible; /* override base overflow:hidden */
+    z-index: 20; /* render above adjacent panels */
+    position: relative;
+}
+.gn-panel.gn-bleed-break-frame .gn-panel-img {
+    position: relative;
+}
+/* Directional overflow */
+.gn-panel.gn-bleed-break-frame[data-break-dir="up"] .gn-panel-img {
+    transform: scaleY(1.08);
+    transform-origin: center bottom;
+}
+.gn-panel.gn-bleed-break-frame[data-break-dir="down"] .gn-panel-img {
+    transform: scaleY(1.08);
+    transform-origin: center top;
+}
+.gn-panel.gn-bleed-break-frame[data-break-dir="left"] .gn-panel-img {
+    transform: scaleX(1.08);
+    transform-origin: right center;
+}
+.gn-panel.gn-bleed-break-frame[data-break-dir="right"] .gn-panel-img {
+    transform: scaleX(1.08);
+    transform-origin: left center;
+}
+
+/* Ensure dialogue/captions stay above break content */
+.gn-bleed-break-frame .gn-panel-dialogue,
+.gn-bleed-break-frame .gn-panel-caption { z-index: 25; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RHYTHM SPACING — tempo-driven panel gap and padding
+   ═══════════════════════════════════════════════════════════════════════════ */
+.gn-rhythm-tight { gap: 2px !important; }
+.gn-rhythm-normal { gap: 6px !important; }
+.gn-rhythm-wide { gap: 14px !important; padding: 6px; }
 
 /* Backward compat — old class name */
 .gn-panels-stack { display: flex; flex-direction: column; gap: 4px; }
@@ -25020,4 +25263,169 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
 @keyframes angryRoomTextIn {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   INLINE MICRO-EXPRESSION — non-branching mid-scene interaction beats
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* P1: Interactive anchor — the sentence itself is the trigger */
+.microexpr-anchor {
+    cursor: pointer;
+    transition: color 0.2s ease;
+    border-bottom: 1px solid transparent;
+}
+.microexpr-anchor:hover,
+.microexpr-anchor:active {
+    color: rgba(201, 168, 76, 0.9);
+    border-bottom-color: rgba(201, 168, 76, 0.25);
+}
+.microexpr-anchor-resolved {
+    cursor: default;
+    border-bottom: none;
+    color: inherit;
+}
+
+/* P2: Options hidden by default, shown via .micro-expr-active (tap/click/auto-reveal) */
+.micro-expr-moment {
+    display: inline;
+    margin: 0 2px;
+    vertical-align: baseline;
+}
+.micro-expr-options {
+    display: none;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 6px 0;
+}
+.micro-expr-moment.micro-expr-active .micro-expr-options {
+    display: inline-flex;
+}
+.micro-expr-opt {
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.85);
+    background: rgba(201, 168, 76, 0.06);
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    border-radius: 12px;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    line-height: 1.4;
+    -webkit-tap-highlight-color: transparent;
+}
+.micro-expr-opt:hover {
+    background: rgba(201, 168, 76, 0.15);
+    border-color: rgba(201, 168, 76, 0.5);
+    color: rgba(201, 168, 76, 1);
+}
+.micro-expr-opt:active {
+    transform: scale(0.96);
+}
+/* Resolved state — selected option displayed inline */
+.micro-expr-resolved {
+    display: inline;
+}
+.micro-expr-resolved .micro-expr-options {
+    display: none;
+}
+.micro-expr-chosen {
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.7);
+    font-size: 0.88em;
+    letter-spacing: 0.02em;
+}
+/* P3: Micro-response line — injected consequence text */
+.micro-expr-response {
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.55);
+    font-size: 0.88em;
+    animation: microExprReveal 0.3s ease both;
+}
+/* Auto-resolved expressions: slightly muted to distinguish from deliberate choice */
+.micro-expr-auto {
+    color: rgba(201, 168, 76, 0.45);
+}
+/* Staggered reveal animation */
+@keyframes microExprReveal {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.micro-expr-moment.micro-expr-active .micro-expr-options .micro-expr-opt {
+    animation: microExprReveal 0.2s ease both;
+}
+.micro-expr-options .micro-expr-opt:nth-child(2) { animation-delay: 0.05s; }
+.micro-expr-options .micro-expr-opt:nth-child(3) { animation-delay: 0.1s; }
+.micro-expr-options .micro-expr-opt:nth-child(4) { animation-delay: 0.15s; }
+
+/* P6: GN mode micro-expression overlay */
+.gn-micro-expr-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    z-index: 15;
+    padding: 8px 12px 6px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 100%);
+    opacity: 0;
+    animation: microExprReveal 0.3s ease 0.5s both;
+}
+.gn-micro-expr-opt {
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.9);
+    background: rgba(201, 168, 76, 0.08);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 10px;
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+}
+.gn-micro-expr-opt:hover,
+.gn-micro-expr-opt:active {
+    background: rgba(201, 168, 76, 0.2);
+    border-color: rgba(201, 168, 76, 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   REACTION TOKENS — inline text placeholders resolved by micro-expressions
+   ═══════════════════════════════════════════════════════════════════════════ */
+.react-token {
+    display: inline;
+    transition: all 0.2s ease;
+}
+.react-token-pending {
+    color: rgba(201, 168, 76, 0.35);
+    font-style: italic;
+    background: linear-gradient(90deg,
+        rgba(201, 168, 76, 0.04) 0%,
+        rgba(201, 168, 76, 0.1) 50%,
+        rgba(201, 168, 76, 0.04) 100%);
+    background-size: 200% 100%;
+    animation: reactTokenShimmer 2.5s ease-in-out infinite;
+    border-radius: 2px;
+    padding: 0 2px;
+}
+@keyframes reactTokenShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.react-token-resolved {
+    color: inherit;
+    font-style: inherit;
+    background: none;
+    animation: reactTokenResolve 0.25s ease both;
+}
+@keyframes reactTokenResolve {
+    0% { color: rgba(201, 168, 76, 0.7); }
+    50% { color: rgba(201, 168, 76, 0.5); }
+    100% { color: inherit; }
 }
