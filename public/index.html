@@ -1444,6 +1444,13 @@
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
                 <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Begin Story</button>
             </div>
+            <!-- Story Mode Toggle (Literary ⟷ Participatory) -->
+            <div class="story-mode-toggle" id="storyModeToggle">
+                <button class="story-mode-opt selected" id="storyModeParticipatory" data-mode="participatory">Participatory</button>
+                <button class="story-mode-opt" id="storyModeLiterary" data-mode="literary">Literary</button>
+            </div>
+            <p class="story-mode-hint" id="storyModeHint">Fast-paced, interactive, high-stakes decisions</p>
+
             <button class="begin-gn-btn" id="beginGraphicNovelBtn" onclick="if(window.handleBeginGraphicNovel){window.handleBeginGraphicNovel()}">Begin Graphic Novel</button>
             <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
             <button id="beginFortuneBtn" class="begin-fortune-btn" onclick="window.openFortunePurchaseModal()">
