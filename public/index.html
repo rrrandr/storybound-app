@@ -211,6 +211,7 @@
     <div id="loadingText">Stoking the embers...</div>
     <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
     <div id="loadingPercent">0%</div>
+    <div id="loadingHint" class="loading-hint"></div>
     <div id="fateEventLoadingSlot"></div>
     <div id="fateWhisperCard" class="fate-whisper hidden">
       <div class="fate-whisper-inner">
@@ -1458,6 +1459,15 @@
                 <span id="beginFortuneCount" class="begin-fortune-count">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span>
             </button>
             <div id="burnRateIndicator" class="burn-rate-indicator hidden"></div>
+            <!-- Storypass counter + dropdown -->
+            <div id="storypassCounter" class="storypass-counter hidden">
+                <span class="storypass-label">Storypass</span>
+                <span id="storypassCount" class="storypass-count">0</span>
+                <div id="storypassDropdown" class="storypass-dropdown hidden">
+                    <div class="storypass-dropdown-header">Stories with Storypass</div>
+                    <div id="storypassList" class="storypass-list"></div>
+                </div>
+            </div>
         </div>
     </div>
 
