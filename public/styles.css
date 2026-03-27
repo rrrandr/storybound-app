@@ -2113,6 +2113,8 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     pointer-events: none;
     /* clip-path set dynamically in JS to match glass center position */
     transition: transform 0.9s cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: transform;
+    transform-origin: center center;
 }
 /* Focus falloff: edge blur via radial mask on a blur layer */
 .fatelands-loupe-blur-edge {
@@ -2160,6 +2162,8 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     object-fit: contain;
     pointer-events: none;
     z-index: 4;
+    will-change: transform;
+    transform-origin: center center;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
 }
 /* Settle micro-bounce */
@@ -2212,6 +2216,47 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     color: rgba(201, 162, 78, 0.45);
     font-size: clamp(9px, 1.2vw, 13px);
     transition: opacity 0.4s ease;
+}
+
+/* ── Fatelands Debug Panel (dev only) ── */
+.fatelands-debug-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999999;
+    background: rgba(0, 0, 0, 0.88);
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(201, 162, 78, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-family: monospace;
+    max-height: 80vh;
+    overflow-y: auto;
+    width: 200px;
+}
+.fatelands-debug-panel button {
+    background: #111;
+    color: #0f0;
+    border: 1px solid #333;
+    padding: 3px 6px;
+    cursor: pointer;
+    font-size: 10px;
+    font-family: monospace;
+    text-align: left;
+    border-radius: 3px;
+}
+.fatelands-debug-panel button:hover {
+    background: #222;
+    border-color: #555;
+}
+.fatelands-debug-panel input[type="range"] {
+    -webkit-appearance: none;
+    background: #222;
+    height: 4px;
+    border-radius: 2px;
+    outline: none;
 }
 
 /* Page-curl animation: simple fade out */
@@ -24390,6 +24435,26 @@ body.concierge-design-active .concierge-summon-figure {
         width: min(229px, calc(100vw - 90px));
     }
     /* Summon figure size/position computed by JS — no override needed */
+}
+/* ── Narrow screens: pop dialogue in front of concierge ── */
+@media (max-width: 600px) {
+    body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
+        left: 50%;
+        transform: translateX(-50%) translateY(0);
+        bottom: 20vh;
+        z-index: 20;
+        width: min(280px, calc(100vw - 32px));
+    }
+    body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue.visible {
+        transform: translateX(-50%) translateY(0);
+    }
+    body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue.dismissing {
+        transform: translateX(-50%) translateY(100%);
+    }
+    /* Don't slide concierge aside on narrow — panel floats above */
+    .library-concierge.lc-panel-active {
+        transform: none !important;
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
