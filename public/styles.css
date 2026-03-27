@@ -2168,13 +2168,38 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 }
 /* Settle micro-bounce */
 .fatelands-loupe-settled {
-    animation: loupe-settle 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    /* no bounce — loupe simply stops */
 }
-@keyframes loupe-settle {
-    0% { transform: translate(0, 0); }
-    40% { transform: translate(0, -3px); }
-    70% { transform: translate(0, 1px); }
-    100% { transform: translate(0, 0); }
+/* Glass gleam — diagonal shine sweeps across the lens after settle */
+.fatelands-glass-gleam {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 3;
+}
+.fatelands-glass-gleam::after {
+    content: '';
+    position: absolute;
+    top: -60%;
+    left: -80%;
+    width: 50%;
+    height: 220%;
+    background: linear-gradient(
+        105deg,
+        transparent 30%,
+        rgba(255,255,255,0.18) 42%,
+        rgba(255,255,255,0.35) 50%,
+        rgba(255,255,255,0.18) 58%,
+        transparent 70%
+    );
+    transform: rotate(25deg);
+    animation: loupe-glass-gleam 0.8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+@keyframes loupe-glass-gleam {
+    0%   { left: -80%; opacity: 0; }
+    10%  { opacity: 1; }
+    100% { left: 130%; opacity: 0; }
 }
 /* Soft glow pulse on settle */
 .fatelands-loupe-glow {
