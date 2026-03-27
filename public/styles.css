@@ -2185,15 +2185,62 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     40% { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 18px rgba(201, 162, 78, 0.3)); }
     100% { filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5)); }
 }
+/* Speed-zoom: all transitions driven by JS (transform, opacity per element).
+   The loupe-expanding class is a marker only — no CSS transitions here. */
 .fatelands-loupe-expanding {
-    transition: transform 0.9s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.7s ease 0.3s;
-    transform: scale(10);
+    /* transform + transition set by JS */
+}
+/* ── Region title reveal (3D gold text over region art) ── */
+.fatelands-region-title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 30;
+    pointer-events: none;
+    white-space: nowrap;
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-weight: 700;
+    font-size: clamp(18px, 3.5vw, 32px);
+    letter-spacing: 0.15em;
+    /* 3D shiny gold */
+    background: linear-gradient(
+        180deg,
+        #f5e6a3 0%,
+        #d4a843 25%,
+        #b8860b 50%,
+        #d4a843 75%,
+        #f5e6a3 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.8))
+            drop-shadow(0 2px 4px rgba(0,0,0,0.6))
+            drop-shadow(0 0 12px rgba(201,162,78,0.3));
     opacity: 0;
+    /* Slow start, accelerates — ease-in on growth; opacity fades in faster */
+    transition: opacity 0.8s ease,
+                font-size 4.5s cubic-bezier(0.55, 0, 1, 0.45),
+                letter-spacing 4.5s cubic-bezier(0.55, 0, 1, 0.45);
 }
-/* Parallax: map pulls inward slightly slower during expansion */
-.fatelands-loupe-expanding .fatelands-loupe-map {
-    transform: scale(0.92) translate(1%, 1%);
+.fatelands-region-title-in {
+    opacity: 1;
+    font-size: clamp(60px, 14vw, 120px);
+    letter-spacing: 0.6em;
 }
+.fatelands-region-title-out {
+    /* Growth keeps accelerating via inherited transition (still running) */
+    font-size: clamp(60px, 14vw, 120px);
+    letter-spacing: 0.6em;
+    opacity: 0;
+    /* Opacity fades independently; growth keeps its ease-in curve */
+    transition: opacity 1.2s ease,
+                font-size 4.5s cubic-bezier(0.55, 0, 1, 0.45),
+                letter-spacing 4.5s cubic-bezier(0.55, 0, 1, 0.45);
+}
+
 .fatelands-location-label {
     position: absolute;
     transform: translateX(-50%);
@@ -24649,6 +24696,11 @@ body.concierge-design-active .concierge-summon-figure {
 body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
     left: 12vw;
     z-index: 6;
+}
+/* Hover or typing brings dialogue in front of concierge */
+body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:hover,
+body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
+    z-index: 8;
 }
 /* When panel is open, concierge becomes fixed so it shares root stacking context with panel */
 .library-concierge.lc-panel-active {
