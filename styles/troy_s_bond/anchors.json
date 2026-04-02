@@ -1,0 +1,174 @@
+{
+  "style": "troy_s_bond",
+  "anchors": [
+    {
+      "file": "troy_golden_master_final_v1.png",
+      "role": "golden_master",
+      "focus": [
+        "ink_behavior",
+        "contour_quality",
+        "rendering_balance",
+        "crosshatch_sparsity",
+        "facial_construction"
+      ],
+      "weight": 1.0
+    },
+    {
+      "file": "troy_anchor_face_closeup_v1.png",
+      "role": "face_detail",
+      "focus": [
+        "facial_planes",
+        "feature_proportions",
+        "micro_crosshatching",
+        "eye_and_jaw_definition"
+      ],
+      "weight": 0.7
+    },
+    {
+      "file": "troy_anchor_fullbody_v1.png",
+      "role": "full_body_structure",
+      "focus": [
+        "proportions",
+        "anatomy",
+        "stance",
+        "clothing_behavior"
+      ],
+      "weight": 0.6
+    },
+    {
+      "file": "troy_anchor_lighting_v1.png",
+      "role": "lighting_contrast",
+      "focus": [
+        "shadow_planes",
+        "crosshatching_density",
+        "directional_lighting",
+        "contrast_separation"
+      ],
+      "weight": 0.5
+    },
+    {
+      "file": "troy_anchor_primary.png",
+      "role": "pose_composition",
+      "focus": [
+        "body_positioning",
+        "interaction_dynamics",
+        "scene_framing"
+      ],
+      "weight": 0.4
+    }
+  ],
+  "species_anchors": {
+    "first_favored": {
+      "anchors": [
+        {
+          "file": "first_favored_anchor_female_hero_veilwood_v1.jpg",
+          "role": "hero_anchor",
+          "weight": 0.9,
+          "focus": [
+            "facial_structure",
+            "eye_glow_behavior",
+            "skin_luminosity",
+            "crosshatching_style",
+            "environmental_lighting_integration"
+          ]
+        },
+        {
+          "file": "first_favored_anchor_duo_fullbody_variants_v1.jpg",
+          "role": "fullbody_variants",
+          "weight": 0.8,
+          "focus": [
+            "full_body_proportions",
+            "fabric_drape_behavior",
+            "silhouette_consistency",
+            "inter_character_scale",
+            "attribute_variation_range"
+          ]
+        },
+        {
+          "file": "first_favored_anchor_male_face_v1.png",
+          "role": "male_face_identity",
+          "weight": 0.85,
+          "focus": [
+            "facial_structure",
+            "facial_proportions",
+            "eye_shape_and_glow",
+            "facial_crosshatch_zones",
+            "skin_smoothness",
+            "hairline_and_texture"
+          ]
+        },
+        {
+          "file": "first_favored_anchor_face_female_v1.jpg",
+          "role": "female_face_identity",
+          "label": "The Luminous Witness",
+          "weight": 1.0,
+          "focus": [
+            "facial_symmetry",
+            "pupil_structure_lock",
+            "hair_silhouette_lock",
+            "skin_subdermal_light_patterns",
+            "crosshatch_shadow_density",
+            "cheekbone_jawline_definition",
+            "eye_iris_pupil_contrast"
+          ]
+        }
+      ],
+      "hard_locks": {
+        "face_anatomy": "Perfectly symmetrical, fine-featured, high cheekbones. Narrow jaw, delicate chin. Calm, neutral, unreadable expression. Unnervingly balanced proportions. Masculine faces defined but not bulky/rugged. Jawline present but not exaggerated. Nose and lip proportions locked to face anchors",
+        "eyes": "Exact shape preserved from face anchors. Iris: glowing pastel red continuous color-field. Pupil: extremely small, perfectly round, pure black sphere — clearly visible and centered. HIGH CONTRAST between iris glow and pupil black required. NO star shapes, NO geometric pupils, NO glow inside pupil. Stable shape, NOT enlarged or stylized",
+        "skin": "Smooth luminous, no pores, no noise, no mottling, faint internal glowing swirls must not obscure facial planes",
+        "fabric": "Semi-transparent gossamer drapery, natural drape, gravity-driven folds, preserved translucency",
+        "linework": "Thick black dry-brush outline on silhouette, controlled crosshatching in shadow regions only",
+        "lighting": "Warm directional glow (lantern-like), clean highlights, shadow-form via crosshatching"
+      },
+      "crosshatch_rules": {
+        "behavior": "professional comic rendering, contour-aware, follows form",
+        "density_map": "denser in occluded areas, sparse in midtones, minimal in highlights",
+        "forbidden": [
+          "uniform texture across body",
+          "sketch-style rendering",
+          "loss of painterly + ink hybrid balance",
+          "full-surface hatching wash"
+        ]
+      },
+      "facial_crosshatch_rules": {
+        "allowed_zones": "under cheekbones, sides of nose, under jaw, eye socket depth — shadow regions ONLY",
+        "forbidden_zones": "forehead, cheek tops, nose bridge — highlight areas must remain CLEAN",
+        "behavior": "must follow facial form (contour-aware), must NOT apply uniform facial texture or convert face into sketch rendering"
+      },
+      "attribute_independence": {
+        "independent_traits": ["skin_color", "hair_color", "hairstyle", "eye_color"],
+        "forbidden_bindings": [
+          "skin color must NOT associate with gender",
+          "hair color must NOT associate with gender",
+          "hairstyle must NOT associate with gender or role",
+          "eye color must NOT associate with personality or alignment"
+        ],
+        "enforcement": "Randomize traits independently. The duo anchor shows variation, not templates."
+      }
+    }
+  },
+  "rules": {
+    "must_have": [
+      "clean semi-realistic glossy skin with smooth gradients",
+      "pure black ink sitting visibly on top of color rendering",
+      "thick dry-brush outer contour on figures with slight roughness and pressure variation",
+      "sparse intentional crosshatching ONLY in shadow regions",
+      "slight ink imperfections — subtle wobble, variation, irregularity",
+      "contour lines stronger than any interior lines",
+      "attractive structured facial anatomy with strong jawlines and cheekbones"
+    ],
+    "forbidden": [
+      "smooth or vector-like contour",
+      "dense or noisy crosshatching",
+      "crosshatching in highlight areas",
+      "dirty or textured skin rendering",
+      "uniform line thickness",
+      "overly clean or mechanical ink",
+      "anime facial proportions",
+      "flat cel shading",
+      "noise or texture in highlights",
+      "ink blended into rendering instead of sitting on top"
+    ]
+  }
+}

@@ -1426,14 +1426,14 @@ export default async function handler(req, res) {
   // Gemini may ONLY be used for intent === 'setting'
 
   // ---- GEMINI PRIMARY (SETTING ONLY) ----
-  // Using generateContent API (not predict) for Gemini 2.5 Flash image generation
+  // Using generateContent API for Gemini image generation
   // CRITICAL: Gemini is ONLY allowed for setting images
   if (isSetting && (!provider || provider === 'gemini')) {
     try {
-      console.log('[IMAGE] Trying Gemini 2.5 Flash via generateContent (setting intent)...');
+      console.log('[IMAGE] Trying Gemini 2.0 Flash via generateContent (setting intent)...');
       const geminiRes = await fetch(
-        // Hardcoded model - do not allow frontend override
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        // gemini-2.5-flash-image supports responseModalities: ['IMAGE'] for image generation
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1441,13 +1441,13 @@ export default async function handler(req, res) {
             contents: [
               {
                 parts: [
+                  ...(req.body.reference_image_b64 ? [{ inlineData: { mimeType: 'image/png', data: req.body.reference_image_b64 } }] : []),
                   { text: `Generate an image: ${finalPrompt}` }
                 ]
               }
             ],
             generationConfig: {
-              responseModalities: ['image'],
-              responseMimeType: 'image/png'
+              responseModalities: ['IMAGE']
             }
           })
         }
@@ -1495,6 +1495,66 @@ export default async function handler(req, res) {
     } catch (err) {
       // Gemini error - fall through to OpenAI silently
       console.error('[IMAGE] Gemini error, falling back to OpenAI:', err.message);
+    }
+  }
+
+  // ---- GEMINI FOR GN PANELS (when provider === 'gemini') ----
+  if (provider === 'gemini' && !isSetting) {
+    try {
+      console.log('[IMAGE] Gemini requested for GN panel...');
+      const { reference_image_b64, reference_images_b64 } = req.body;
+      const geminiModel = req.body.model || 'gemini-2.5-flash-image';
+      const _textFirst = req.body.textFirst === true;
+      const _imageParts = [];
+      const _parts = [];
+
+      // Collect reference images (multi-ref array or legacy single ref)
+      if (reference_images_b64 && Array.isArray(reference_images_b64)) {
+        for (const ref of reference_images_b64) {
+          _imageParts.push({ inlineData: { mimeType: 'image/png', data: ref.b64 || ref } });
+        }
+        console.log('[IMAGE] ' + reference_images_b64.length + ' reference images attached (' + reference_images_b64.map(r => r.label || 'ref').join(', ') + ')');
+      } else if (reference_image_b64) {
+        _imageParts.push({ inlineData: { mimeType: 'image/png', data: reference_image_b64 } });
+        console.log('[IMAGE] Reference image attached (' + Math.round(reference_image_b64.length / 1024) + 'KB)');
+      }
+
+      // Part ordering: text-first establishes scene primacy before model sees reference images
+      if (_textFirst && _imageParts.length > 0) {
+        _parts.push({ text: `Generate an image: ${prompt}` });
+        _parts.push(..._imageParts);
+        console.log('[IMAGE] Text-first ordering — prompt before ' + _imageParts.length + ' reference images (scene primacy)');
+      } else {
+        _parts.push(..._imageParts);
+        _parts.push({ text: `Generate an image: ${prompt}` });
+      }
+
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: _parts }],
+            generationConfig: { responseModalities: ['IMAGE'] }
+          })
+        }
+      );
+      const gemText = await geminiRes.text();
+      let gemData;
+      try { gemData = JSON.parse(gemText); } catch (e) { gemData = null; }
+      if (geminiRes.ok && gemData) {
+        const candidate = gemData.candidates?.[0];
+        const parts = candidate?.content?.parts || [];
+        const imagePart = parts.find(p => p.inlineData?.data);
+        const b64 = imagePart?.inlineData?.data;
+        if (b64) {
+          return res.json({ url: `data:image/png;base64,${b64}`, provider: 'Gemini', model: geminiModel, intent: imageIntent });
+        }
+      }
+      console.log('[IMAGE] Gemini GN panel failed | status:', geminiRes.status, '| model:', geminiModel, '| response:', gemText.slice(0, 300));
+    } catch (gemErr) {
+      console.error('[IMAGE] Gemini GN error:', gemErr.message);
     }
   }
 
