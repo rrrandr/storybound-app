@@ -24357,7 +24357,7 @@ body.gn-cover-active .gn-ui-overlay {
 .library-concierge {
     position: absolute;
     left: max(1cqi, calc(51cqi - 50vw));
-    bottom: 3cqi;
+    bottom: 0;
     transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease;
     z-index: 5;
     pointer-events: none;
@@ -24544,12 +24544,21 @@ body.concierge-design-active .concierge-summon-figure {
     padding: 0;
     background: none;
     border: none;
-    border-radius: 50%;
+    border-radius: 0;
     cursor: pointer;
     opacity: 0.7;
     overflow: hidden;
     transition: opacity 0.3s ease, filter 0.3s ease;
     filter: drop-shadow(0 0 0px transparent);
+    /* Clip ALL children (gleam, flash ::after) to the bell silhouette */
+    -webkit-mask-image: url('/assets/Concierge/gold-bell-splat.png');
+    mask-image: url('/assets/Concierge/gold-bell-splat.png');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
 }
 #conciergeBell:hover {
     opacity: 1;
@@ -24571,8 +24580,8 @@ body.concierge-design-active .concierge-summon-figure {
     inset: 0;
     -webkit-mask-image: url('/assets/Concierge/gold-bell-splat.png');
     mask-image: url('/assets/Concierge/gold-bell-splat.png');
-    -webkit-mask-size: 88%;
-    mask-size: 88%;
+    -webkit-mask-size: contain;
+    mask-size: contain;
     -webkit-mask-repeat: no-repeat;
     mask-repeat: no-repeat;
     -webkit-mask-position: center;
@@ -24678,6 +24687,7 @@ body.concierge-design-active .concierge-summon-figure {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    object-position: center bottom;
     display: block;
     filter: drop-shadow(2px 4px 18px rgba(0,0,0,0.7))
             drop-shadow(0 0 6px rgba(0,0,0,0.4));

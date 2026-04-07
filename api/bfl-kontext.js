@@ -3,7 +3,7 @@
 // Supports: text-to-image (Kontext Pro) and image editing (Kontext Pro + input_image)
 
 export const config = {
-  maxDuration: 60
+  maxDuration: 120
 };
 
 const BFL_BASE = 'https://api.bfl.ml/v1';
@@ -40,8 +40,9 @@ export default async function handler(req, res) {
       });
 
       if (!pollRes.ok) {
-        console.error('[bfl-kontext] Poll failed:', pollRes.status);
-        return res.status(pollRes.status).json({ error: 'Failed to fetch task status' });
+        const pollErrText = await pollRes.text().catch(() => '');
+        console.error('[bfl-kontext] Poll failed:', pollRes.status, pollErrText);
+        return res.status(pollRes.status).json({ error: 'Failed to fetch task status', detail: pollErrText.slice(0, 500) });
       }
 
       const result = await pollRes.json();
@@ -105,10 +106,15 @@ export default async function handler(req, res) {
     if (seed != null) payload.seed = seed;
 
     const imageCount = inputImageKeys.filter(k => !!req.body[k]).length;
+    const payloadStr = JSON.stringify(payload);
+
+    // ── Pre-request logging ──
     console.log('[bfl] Creating task:', {
       model: modelKey,
+      endpoint,
+      promptLength: prompt.length,
       imageCount,
-      promptLength: prompt.length
+      payloadBytes: payloadStr.length
     });
 
     try {
@@ -118,23 +124,31 @@ export default async function handler(req, res) {
           'X-Key': apiKey,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: payloadStr
       });
 
       if (!createRes.ok) {
-        const errText = await createRes.text().catch(() => '');
+        // ── Full failure logging — BFL often returns useful error text even on 502 ──
+        const rawText = await createRes.text().catch(() => '');
+        console.error('[bfl-kontext] BFL error:', createRes.status, rawText);
         let errData;
-        try { errData = JSON.parse(errText); } catch (_) { errData = { raw: errText.slice(0, 500) }; }
-        console.error('[bfl-kontext] BFL create failed:', createRes.status, errData);
+        try { errData = JSON.parse(rawText); } catch (_) { errData = { raw: rawText.slice(0, 1000) }; }
+        console.error('[bfl-kontext] BFL create failed:', {
+          status: createRes.status,
+          model: modelKey,
+          imageCount,
+          promptLength: prompt.length,
+          errData
+        });
         return res.status(502).json({
           error: 'BFL task failed to start',
-          detail: errData?.detail || errData?.message || errData?.error || null,
+          detail: errData?.detail || errData?.message || errData?.error || rawText.slice(0, 500) || null,
           status: createRes.status
         });
       }
 
       const task = await createRes.json();
-      console.log('[bfl-kontext] Task created:', task.id);
+      console.log('[bfl-kontext] Task created:', task.id, '(' + modelKey + ')');
 
       return res.status(200).json({
         id: task.id,
@@ -142,8 +156,8 @@ export default async function handler(req, res) {
       });
 
     } catch (err) {
-      console.error('[bfl-kontext] Create error:', err.message);
-      return res.status(502).json({ error: 'Failed to create BFL task' });
+      console.error('[bfl-kontext] Create error:', err.message, { model: modelKey, imageCount, promptLength: prompt.length });
+      return res.status(502).json({ error: 'Failed to create BFL task', detail: err.message });
     }
   }
 
