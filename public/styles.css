@@ -57,14 +57,33 @@ body.booting .screen {
 .splash-tagline {
     top: calc(67% + 15px);
     font-size: 2.3em;
-    letter-spacing: 0.35em;
+    letter-spacing: 0.44em;
+    /* Gold gradient text — matches ceremony title */
+    background:
+        linear-gradient(90deg, transparent 0%, rgba(255,245,200,0.5) 50%, transparent 100%) no-repeat -200% 0 / 50% 100%,
+        linear-gradient(180deg, #f5e6a3 0%, #c9a84c 50%, #8a6914 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.3))
+            drop-shadow(0 0 10px rgba(0, 0, 0, 0.7))
+            drop-shadow(0 0 24px rgba(0, 0, 0, 0.5));
+}
+.splash-tagline.visible {
+    opacity: 1;
+    animation: ceremonyGleam 6s ease-in-out 1.5s infinite,
+               ceremonyBreathe 24s ease-in-out 1s infinite;
 }
 .splash-subline {
     top: calc(67% + 65px);
     font-size: 1.72em;
     letter-spacing: 0.35em;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.7))
+            drop-shadow(0 0 24px rgba(0, 0, 0, 0.5));
 }
-.splash-tagline.visible, .splash-subline.visible {
+.splash-subline.visible {
     opacity: 1;
 }
 
@@ -9283,7 +9302,11 @@ select {
     box-shadow: none;
 }
 
-#burgerBtn img { filter: none; }
+#burgerBtn img,
+#globalBackBtn img {
+    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.35));
+}
 
 /* Narrow screens: reposition corner buttons but keep full size (32×32) */
 @media (max-width: 600px) {
@@ -24376,8 +24399,8 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #vaultLibraryScreen:not(.hidden) .library-concierge {
     opacity: 1;
-    pointer-events: auto;
-    cursor: pointer;
+    pointer-events: none;  /* Container is full-height — only children receive clicks */
+    cursor: default;
 }
 
 /* ── Figure — full-body concierge, bottom-anchored ── */
@@ -24988,8 +25011,15 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 }
 
 /* ── Ceremony elevation — concierge + masks float above curtains ── */
+/* Hide bell concierge during ceremony — welcome concierge covers this spot */
 .library-variant--vault.curtain-ceremony .library-concierge {
     z-index: 9;
+    opacity: 0 !important;
+    transition: opacity 0.6s ease;
+}
+/* Crossfade: bell concierge fades in as welcome concierge fades out */
+.library-variant--vault.curtain-ceremony .library-concierge.lc-crossfade-in {
+    opacity: 1 !important;
 }
 .library-variant--vault.curtain-ceremony #maskSelectionShelf {
     z-index: 12;
@@ -24999,7 +25029,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 .ceremony-concierge {
     position: absolute;
     left: max(1cqi, calc(51cqi - 50vw));
-    bottom: 3cqi;
+    bottom: 0;
     z-index: 10;
     pointer-events: none;
     width: 29cqi;
