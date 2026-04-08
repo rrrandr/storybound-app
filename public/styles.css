@@ -24425,7 +24425,7 @@ body.gn-cover-active .gn-ui-overlay {
 .library-concierge {
     position: absolute;
     left: max(1cqi, calc(51cqi - 50vw));
-    bottom: 3cqi;
+    bottom: 0;
     transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease;
     z-index: 5;
     pointer-events: none;
@@ -25032,7 +25032,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 /* ── Left front curtain — slides LEFT off-screen ── */
 .ceremony-curtain--left {
     z-index: 8;
-    transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .ceremony-curtain--left.curtain-opening {
     transform: translateX(-100%);
@@ -25041,7 +25041,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 /* ── Right front curtain — slides RIGHT off-screen ── */
 .ceremony-curtain--right {
     z-index: 8;
-    transition: transform 6s cubic-bezier(0.25, 0.1, 0.25, 1);
+    transition: transform 3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 .ceremony-curtain--right.curtain-opening {
     transform: translateX(100%);
@@ -25063,7 +25063,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 .ceremony-concierge {
     position: absolute;
     left: max(1cqi, calc(51cqi - 50vw));
-    bottom: 3cqi;
+    bottom: 0;
     z-index: 10;
     pointer-events: none;
     width: 29cqi;
