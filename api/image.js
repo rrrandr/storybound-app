@@ -1430,10 +1430,10 @@ export default async function handler(req, res) {
   // CRITICAL: Gemini is ONLY allowed for setting images
   if (isSetting && (!provider || provider === 'gemini')) {
     try {
-      console.log('[IMAGE] Trying Gemini 2.0 Flash via generateContent (setting intent)...');
+      console.log('[IMAGE] Trying Gemini 3.1 Flash Image via generateContent (setting intent)...');
       const geminiRes = await fetch(
-        // gemini-2.0-flash-preview-image-generation supports responseModalities: ['IMAGE'] for image generation
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        // gemini-3.1-flash-image-preview supports responseModalities: ['IMAGE'] for image generation
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1503,7 +1503,7 @@ export default async function handler(req, res) {
     try {
       console.log('[IMAGE] Gemini requested for GN panel...');
       const { reference_image_b64, reference_images_b64 } = req.body;
-      const geminiModel = req.body.model || 'gemini-2.0-flash-preview-image-generation';
+      const geminiModel = req.body.model || 'gemini-3.1-flash-image-preview';
       const _textFirst = req.body.textFirst === true;
       const _imageParts = [];
       const _parts = [];
@@ -1558,7 +1558,14 @@ export default async function handler(req, res) {
     }
   }
 
-  // ---- OPENAI FALLBACK ----
+  // If a specific non-OpenAI provider was requested and failed, return error
+  // so the frontend fallback chain can try the next provider (e.g. BFL/Flux)
+  if (provider && provider !== 'openai') {
+    console.log(`[IMAGE] Provider '${provider}' failed — returning error for frontend fallback chain`);
+    return res.status(502).json({ error: `${provider} provider failed`, provider: provider, intent: imageIntent });
+  }
+
+  // ---- OPENAI FALLBACK (only when no specific provider requested, or provider === 'openai') ----
   try {
     // Intent-based model and size selection (backend enforced)
     const openaiModel = getOpenAIModel(imageIntent);

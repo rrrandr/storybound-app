@@ -8389,6 +8389,43 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     background: rgba(201, 168, 76, 0.15);
     border-color: var(--gold, #c9a84c);
 }
+/* ── Experimental Book Scene Navigation ── */
+.exp-scene-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 20px 0 10px;
+    margin-top: 32px;
+    border-top: 1px solid rgba(201, 168, 76, 0.15);
+}
+.exp-scene-nav-btn {
+    background: none;
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    color: var(--gold, #c9a84c);
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.exp-scene-nav-btn:hover:not(:disabled) {
+    border-color: var(--gold, #c9a84c);
+    background: rgba(201, 168, 76, 0.08);
+}
+.exp-scene-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+.exp-scene-exit {
+    margin-right: auto;
+}
+.exp-scene-indicator {
+    color: rgba(201, 168, 76, 0.7);
+    font-family: 'Lora', serif;
+    font-size: 0.8em;
+    letter-spacing: 0.05em;
+}
 .library-reader-content {
     max-width: 680px;
     margin: 0 auto;
@@ -24389,11 +24426,10 @@ body.gn-cover-active .gn-ui-overlay {
     position: absolute;
     left: max(1cqi, calc(51cqi - 50vw));
     bottom: 0;
-    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease;
+    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease, width 0.8s ease;
     z-index: 5;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.6s ease;
     width: 21cqi;
     height: 100%;
 }
@@ -25015,9 +25051,9 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 /* Bell concierge sits BEHIND welcome concierge during ceremony (same position, lower z) */
 /* When the mask zoom covers both, welcome concierge is hidden → bell concierge revealed seamlessly */
 .library-variant--vault.curtain-ceremony .library-concierge {
-    z-index: 9;
+    z-index: 9 !important;  /* Must beat #vaultLibraryScreen:not(.hidden) z-index:5 — concierge above curtains (z:7-8) */
     opacity: 1 !important;
-    transition: opacity 0.6s ease;
+    transition: opacity 0.6s ease, width 0.8s ease;
     width: 29cqi;  /* Match welcome concierge size for seamless swap */
 }
 /* After ceremony completes, lc-crossfade-in is removed and curtain-ceremony class drops,

@@ -83,7 +83,7 @@ export default async function handler(req, res) {
     const hasAnyImage = inputImageKeys.some(k => !!req.body[k]);
 
     // Determine endpoint: editing (has input images) vs text-to-image
-    const modelKey = model || (hasAnyImage ? 'flux-kontext-pro' : 'flux-pro-1.1-ultra');
+    const modelKey = model || (hasAnyImage ? 'flux-2-pro' : 'flux-2-pro');
     const endpoint = `${BFL_BASE}/${modelKey}`;
 
     const payload = { prompt };
