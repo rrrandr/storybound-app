@@ -24426,10 +24426,11 @@ body.gn-cover-active .gn-ui-overlay {
     position: absolute;
     left: max(1cqi, calc(51cqi - 50vw));
     bottom: 0;
-    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease, width 0.8s ease;
+    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease;
     z-index: 5;
     pointer-events: none;
     opacity: 0;
+    transition: opacity 0.6s ease;
     width: 21cqi;
     height: 100%;
 }
@@ -25051,9 +25052,9 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 /* Bell concierge sits BEHIND welcome concierge during ceremony (same position, lower z) */
 /* When the mask zoom covers both, welcome concierge is hidden → bell concierge revealed seamlessly */
 .library-variant--vault.curtain-ceremony .library-concierge {
-    z-index: 9 !important;  /* Must beat #vaultLibraryScreen:not(.hidden) z-index:5 — concierge above curtains (z:7-8) */
+    z-index: 9;
     opacity: 1 !important;
-    transition: opacity 0.6s ease, width 0.8s ease;
+    transition: opacity 0.6s ease;
     width: 29cqi;  /* Match welcome concierge size for seamless swap */
 }
 /* After ceremony completes, lc-crossfade-in is removed and curtain-ceremony class drops,
