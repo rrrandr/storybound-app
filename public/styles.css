@@ -68,13 +68,13 @@ body.booting .screen {
     color: transparent;
     text-shadow: none;
     filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.3))
-            drop-shadow(0 0 10px rgba(0, 0, 0, 0.7))
-            drop-shadow(0 0 24px rgba(0, 0, 0, 0.5));
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.9))
+            drop-shadow(0 0 32px rgba(0, 0, 0, 0.75));
 }
 .splash-tagline.visible {
     opacity: 1;
     animation: ceremonyGleam 6s ease-in-out 1.5s infinite,
-               ceremonyBreathe 24s ease-in-out 1s infinite;
+               ceremonyBreathe 12s ease-in-out 1s infinite;
 }
 .splash-subline {
     top: calc(67% + 65px);
@@ -24401,6 +24401,7 @@ body.gn-cover-active .gn-ui-overlay {
     opacity: 1;
     pointer-events: none;  /* Container is full-height — only children receive clicks */
     cursor: default;
+    z-index: 5;  /* Must stay below summon figure (z:10009) during screen transitions */
 }
 
 /* ── Figure — full-body concierge, bottom-anchored ── */
@@ -25011,16 +25012,16 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 }
 
 /* ── Ceremony elevation — concierge + masks float above curtains ── */
-/* Hide bell concierge during ceremony — welcome concierge covers this spot */
+/* Bell concierge sits BEHIND welcome concierge during ceremony (same position, lower z) */
+/* When the mask zoom covers both, welcome concierge is hidden → bell concierge revealed seamlessly */
 .library-variant--vault.curtain-ceremony .library-concierge {
     z-index: 9;
-    opacity: 0 !important;
-    transition: opacity 0.6s ease;
-}
-/* Crossfade: bell concierge fades in as welcome concierge fades out */
-.library-variant--vault.curtain-ceremony .library-concierge.lc-crossfade-in {
     opacity: 1 !important;
+    transition: opacity 0.6s ease;
+    width: 29cqi;  /* Match welcome concierge size for seamless swap */
 }
+/* After ceremony completes, lc-crossfade-in is removed and curtain-ceremony class drops,
+   returning bell concierge to normal library width (21cqi) */
 .library-variant--vault.curtain-ceremony #maskSelectionShelf {
     z-index: 12;
 }

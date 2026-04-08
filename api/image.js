@@ -1432,8 +1432,8 @@ export default async function handler(req, res) {
     try {
       console.log('[IMAGE] Trying Gemini 2.0 Flash via generateContent (setting intent)...');
       const geminiRes = await fetch(
-        // gemini-2.5-flash-image supports responseModalities: ['IMAGE'] for image generation
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${process.env.GEMINI_API_KEY}`,
+        // gemini-2.0-flash-preview-image-generation supports responseModalities: ['IMAGE'] for image generation
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1503,7 +1503,7 @@ export default async function handler(req, res) {
     try {
       console.log('[IMAGE] Gemini requested for GN panel...');
       const { reference_image_b64, reference_images_b64 } = req.body;
-      const geminiModel = req.body.model || 'gemini-2.5-flash-image';
+      const geminiModel = req.body.model || 'gemini-2.0-flash-preview-image-generation';
       const _textFirst = req.body.textFirst === true;
       const _imageParts = [];
       const _parts = [];

@@ -118,14 +118,18 @@ export default async function handler(req, res) {
     });
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for BFL create
       const createRes = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'X-Key': apiKey,
           'Content-Type': 'application/json'
         },
-        body: payloadStr
+        body: payloadStr,
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       if (!createRes.ok) {
         // ── Full failure logging — BFL often returns useful error text even on 502 ──
