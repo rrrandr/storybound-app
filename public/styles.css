@@ -24425,7 +24425,7 @@ body.gn-cover-active .gn-ui-overlay {
 .library-concierge {
     position: absolute;
     left: max(1cqi, calc(51cqi - 50vw));
-    bottom: 0;
+    bottom: 3cqi;
     transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1), opacity 0.6s ease;
     z-index: 5;
     pointer-events: none;
@@ -24436,9 +24436,8 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #vaultLibraryScreen:not(.hidden) .library-concierge {
     opacity: 1;
-    pointer-events: none;  /* Container is full-height — only children receive clicks */
-    cursor: default;
-    z-index: 5;  /* Must stay below summon figure (z:10009) during screen transitions */
+    pointer-events: auto;
+    cursor: pointer;
 }
 
 /* ── Figure — full-body concierge, bottom-anchored ── */
@@ -25053,9 +25052,6 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 /* When the mask zoom covers both, welcome concierge is hidden → bell concierge revealed seamlessly */
 .library-variant--vault.curtain-ceremony .library-concierge {
     z-index: 9;
-    opacity: 1 !important;
-    transition: opacity 0.6s ease;
-    width: 29cqi;  /* Match welcome concierge size for seamless swap */
 }
 /* After ceremony completes, lc-crossfade-in is removed and curtain-ceremony class drops,
    returning bell concierge to normal library width (21cqi) */
@@ -25067,7 +25063,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 .ceremony-concierge {
     position: absolute;
     left: max(1cqi, calc(51cqi - 50vw));
-    bottom: 0;
+    bottom: 3cqi;
     z-index: 10;
     pointer-events: none;
     width: 29cqi;
