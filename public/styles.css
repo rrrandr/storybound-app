@@ -69,7 +69,8 @@ body.booting .screen {
     text-shadow: none;
     filter: drop-shadow(0 0 8px rgba(201, 168, 76, 0.3))
             drop-shadow(0 0 14px rgba(0, 0, 0, 0.9))
-            drop-shadow(0 0 32px rgba(0, 0, 0, 0.75));
+            drop-shadow(0 0 32px rgba(0, 0, 0, 0.75))
+            drop-shadow(0 2px 40px rgba(0, 0, 0, 0.95));
 }
 .splash-tagline.visible {
     opacity: 1;
@@ -9853,11 +9854,11 @@ select {
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
     right: auto; bottom: auto;
-    top: 62%; left: 12.5%;
+    top: 4px; left: 13px;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-write-toggle {
     position: relative; right: auto; bottom: auto;
-    top: -45.5px; left: 4px;
+    top: -29.5px; left: -15.5px;
 }
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-suggest-panel {
     right: auto; bottom: auto;
@@ -9867,6 +9868,25 @@ select {
 #sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone {
     right: auto; bottom: auto;
     top: 6%; left: 5.5%;
+}
+#petitionFortuneTiers {
+    position: relative; right: auto; bottom: auto;
+    top: 148px; left: -5.5px;
+    width: 108px; height: 19px;
+}
+#petitionFortuneTiers > button.petition-tier-btn.petition-tier-standalone {
+    right: auto; bottom: auto;
+    top: 0px; left: 0px;
+}
+
+/* ── Tempt Fate — Card Designer position overrides ── */
+#sbZoomPortal > div.fate-card.tempt-fate-card.flipped.tempt-zoomed > div.inner > div.back > div.tempt-zoom-overlay > div.tempt-wish-zone > div.tempt-wish-columns > div.tempt-wish-col {
+    right: auto; bottom: auto;
+    top: 0px; left: 0px;
+}
+#sbZoomPortal > div.fate-card.tempt-fate-card.flipped.tempt-zoomed > div.inner > div.back > div.tempt-zoom-overlay > div.tempt-wish-zone > div.tempt-wish-columns {
+    position: relative; right: auto; bottom: auto;
+    width: 125.5px; font-size: 15px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -22177,6 +22197,7 @@ body.gn-cover-active .gn-ui-overlay {
     top: 152.68cqi; left: 16.67cqi; width: 66.96cqi; font-size: 7.73cqi;
 }
 
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    STORY PULL — EscapePursuit: Card Designer locked positions (grid)
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -22486,7 +22507,7 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── POV — Card Designer locked positions (grid) ── */
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 58.1cqi; left: 16.89cqi; width: 74.32cqi; font-size: 8.11cqi;
+    top: -6.76cqi; left: 13.51cqi; width: 81.07cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -22494,7 +22515,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -13.51cqi; left: 10.81cqi; width: 83.77cqi; font-size: 8.11cqi;
+    top: -6.08cqi; left: 10.81cqi; width: 85.13cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -22502,7 +22523,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -9.46cqi; left: 14.86cqi; width: 77.02cqi; font-size: 8.11cqi;
+    top: -10.81cqi; left: 14.19cqi; width: 77.02cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -22518,7 +22539,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -4.05cqi; left: 10.81cqi; width: 83.77cqi; font-size: 8.11cqi;
+    top: -4.73cqi; left: 8.11cqi; width: 85.13cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -22526,7 +22547,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -6.76cqi; left: 15.54cqi; width: 74.32cqi; font-size: 8.11cqi;
+    top: 49.32cqi; left: 14.19cqi; width: 70.26cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -22568,7 +22589,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.3cqi; left: 12.16cqi; width: 87.84cqi; font-size: 8.11cqi;
+    top: 47.3cqi; left: 10.16cqi; width: 87.84cqi; font-size: 8.11cqi;
 }
 
 /* WryConfession — grid */
@@ -22578,7 +22599,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.97cqi; left: 13.51cqi; width: 87.84cqi; font-size: 8.11cqi;
+    top: 47.97cqi; left: 11.51cqi; width: 87.84cqi; font-size: 8.11cqi;
 }
 
 /* Dark — grid */
@@ -22588,7 +22609,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.97cqi; left: 10.81cqi; width: 91.89cqi; font-size: 8.11cqi;
+    top: 47.97cqi; left: 8.81cqi; width: 91.89cqi; font-size: 8.11cqi;
 }
 
 /* Mythic — grid */
@@ -22598,7 +22619,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.3cqi; left: 14.19cqi; width: 85.14cqi; font-size: 8.11cqi;
+    top: 47.3cqi; left: 12.19cqi; width: 85.14cqi; font-size: 8.11cqi;
 }
 
 /* ── Dynamic — Back titles (cqi-locked) ── */
@@ -24436,8 +24457,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #vaultLibraryScreen:not(.hidden) .library-concierge {
     opacity: 1;
-    pointer-events: auto;
-    cursor: pointer;
+    pointer-events: none;  /* Container passes through — only .lc-figure receives clicks */
 }
 
 /* ── Figure — full-body concierge, bottom-anchored ── */

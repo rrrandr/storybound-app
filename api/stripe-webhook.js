@@ -224,17 +224,21 @@ export default async function handler(req, res) {
 
     if (isSubscription) {
       const tier = session.metadata?.subscription_tier;
-      if (!tier || (tier !== 'storied' && tier !== 'favored')) {
+      const SUB_FORTUNES = { storied: 100, favored: 200, chosen: 400 };
+      if (!tier || !SUB_FORTUNES[tier]) {
         console.error(`[stripe-webhook] Subscription session missing valid subscription_tier in metadata. Got: ${tier}. Session: ${session.id}`);
       } else {
         updates.is_subscriber = true;
         updates.subscription_tier = tier;
-        updates.subscription_fortunes = 100;
-        console.log(`[stripe-webhook] Granting ${tier} subscription + 100 subscription fortunes to ${supabaseUserId}`);
+        updates.subscription_fortunes = SUB_FORTUNES[tier];
+        updates.billing_status = 'active';
+        updates.billing_grace_until = null;
+        console.log(`[stripe-webhook] Granting ${tier} subscription + ${SUB_FORTUNES[tier]} subscription fortunes to ${supabaseUserId}`);
       }
     }
 
-    if (priceId && (priceId === process.env.STRIPE_PRICE_ID_FORTUNE_PACK || priceId === process.env.STRIPE_PRICE_ID_OFFERING)) {
+    const _fortunePriceIds = [process.env.STRIPE_PRICE_ID_FORTUNE_PACK, process.env.STRIPE_PRICE_ID_FORTUNE_60, process.env.STRIPE_PRICE_ID_FORTUNE_120, process.env.STRIPE_PRICE_ID_FORTUNE_240, process.env.STRIPE_PRICE_ID_OFFERING].filter(Boolean);
+    if (priceId && _fortunePriceIds.includes(priceId)) {
       const fortunesGranted = parseInt(session.metadata?.fortunes_granted, 10) || 10;
       const { data: currentProfile } = await supabase
         .from('profiles')
@@ -279,7 +283,7 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── invoice.paid — subscription renewal ──
+  // ── invoice.paid — subscription renewal (or retry success after payment_failed) ──
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
     const subscriptionId = invoice.subscription;
@@ -288,24 +292,44 @@ export default async function handler(req, res) {
     const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
     detectedUserId = userId || null;
     if (userId) {
+      // Resolve tier from Stripe subscription to set correct fortune amount
+      let renewalTier = null;
+      const SUB_FORTUNES_RENEWAL = { storied: 100, favored: 200, chosen: 400 };
+      if (subscriptionId) {
+        try {
+          const sub = await stripeClient.subscriptions.retrieve(subscriptionId);
+          const subPriceId = sub.items?.data?.[0]?.price?.id;
+          if (subPriceId === process.env.STRIPE_PRICE_ID_STORIED) renewalTier = 'storied';
+          else if (subPriceId === process.env.STRIPE_PRICE_ID_FAVORED) renewalTier = 'favored';
+        } catch (e) {
+          console.warn('[stripe-webhook] invoice.paid — failed to resolve tier from subscription:', e.message);
+        }
+      }
+      // Fallback: read tier from profile if Stripe lookup failed
+      if (!renewalTier) {
+        const { data: profile } = await supabase.from('profiles').select('subscription_tier').eq('id', userId).single();
+        renewalTier = profile?.subscription_tier || 'storied';
+      }
+      const renewalFortunes = SUB_FORTUNES_RENEWAL[renewalTier] || 100;
+
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: true, subscription_fortunes: 100 })
+        .update({ is_subscriber: true, subscription_tier: renewalTier, subscription_fortunes: renewalFortunes, billing_status: 'active', billing_grace_until: null })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] invoice.paid update failed:', error);
       } else {
-        console.log(`[stripe-webhook] invoice.paid — restored is_subscriber + reset 100 subscription fortunes for ${userId}`);
+        console.log(`[stripe-webhook] invoice.paid — restored ${renewalTier} subscription + ${renewalFortunes} fortunes for ${userId}`);
       }
     } else {
       console.warn(`[stripe-webhook] invoice.paid — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
     }
   }
 
-  // ── invoice.payment_failed — payment failure ──
-  // GRACE MODEL: We intentionally preserve subscription_fortunes during payment_failed.
-  // Stripe may retry payment (up to 3x) before firing customer.subscription.deleted.
-  // Fortunes are only zeroed on customer.subscription.deleted — not here.
+  // ── invoice.payment_failed — payment failure → start grace period ──
+  // GRACE MODEL: Server-authoritative. Webhook is the ONLY place grace starts.
+  // Clients read billing_status + billing_grace_until but never create grace.
+  // Fortunes preserved during grace. Zeroed only on customer.subscription.deleted.
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object;
     const subscriptionId = invoice.subscription;
@@ -314,17 +338,72 @@ export default async function handler(req, res) {
     const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
     detectedUserId = userId || null;
     if (userId) {
+      const graceUntil = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: false })
+        .update({
+          is_subscriber: false,
+          billing_status: 'grace',
+          billing_grace_until: graceUntil
+        })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] invoice.payment_failed update failed:', error);
       } else {
-        console.log(`[stripe-webhook] invoice.payment_failed — revoked is_subscriber for ${userId}`);
+        console.log(`[stripe-webhook] invoice.payment_failed — grace started for ${userId}, expires: ${graceUntil}`);
       }
     } else {
       console.warn(`[stripe-webhook] invoice.payment_failed — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
+    }
+  }
+
+  // ── customer.subscription.updated — tier change, status change, or plan modification ──
+  // Handles: Stripe dashboard edits, billing portal tier changes, proration events.
+  // Syncs subscription_tier and subscription_fortunes to match current Stripe state.
+  if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object;
+    const subscriptionId = subscription.id;
+    const customerId = subscription.customer;
+    const status = subscription.status; // 'active', 'past_due', 'canceled', 'unpaid', etc.
+
+    const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
+    detectedUserId = userId || null;
+    if (userId) {
+      const SUB_FORTUNES_UPDATE = { storied: 100, favored: 200, chosen: 400 };
+      const subPriceId = subscription.items?.data?.[0]?.price?.id;
+      let updatedTier = null;
+      if (subPriceId === process.env.STRIPE_PRICE_ID_STORIED) updatedTier = 'storied';
+      else if (subPriceId === process.env.STRIPE_PRICE_ID_FAVORED) updatedTier = 'favored';
+
+      const updates = {};
+      if (status === 'active' || status === 'trialing') {
+        // NOTE: Do NOT set is_subscriber=true here. Only invoice.paid restores is_subscriber.
+        // subscription.updated with status=active can fire during retry sequences before
+        // payment actually succeeds, which would prematurely end the grace period.
+        // This handler ONLY syncs tier/fortunes for plan changes (upgrades/downgrades).
+        if (updatedTier) {
+          updates.subscription_tier = updatedTier;
+          updates.subscription_fortunes = SUB_FORTUNES_UPDATE[updatedTier] || 100;
+        }
+      } else if (status === 'past_due' || status === 'unpaid') {
+        // Keep tier info but revoke active flag — grace model handles the rest
+        updates.is_subscriber = false;
+      } else if (status === 'canceled' || status === 'incomplete_expired') {
+        updates.is_subscriber = false;
+        updates.subscription_tier = null;
+        updates.subscription_fortunes = 0;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
+        if (error) {
+          console.error('[stripe-webhook] customer.subscription.updated failed:', error);
+        } else {
+          console.log(`[stripe-webhook] customer.subscription.updated — status: ${status}, tier: ${updatedTier || 'unchanged'}, updates:`, updates);
+        }
+      }
+    } else {
+      console.warn(`[stripe-webhook] customer.subscription.updated — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
     }
   }
 
@@ -339,7 +418,7 @@ export default async function handler(req, res) {
     if (userId) {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: false, subscription_tier: null, subscription_fortunes: 0 })
+        .update({ is_subscriber: false, subscription_tier: null, subscription_fortunes: 0, billing_status: 'canceled', billing_grace_until: null })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] customer.subscription.deleted update failed:', error);

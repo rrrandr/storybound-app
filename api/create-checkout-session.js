@@ -6,7 +6,9 @@ const TIER_CONFIG = {
   storypass: { envKey: 'STRIPE_PRICE_ID_STORYPASS', mode: 'payment', fortunesGranted: 0 },  // fortunes are story-scoped (on storypass_entitlements), not global
   storied:   { envKey: 'STRIPE_PRICE_ID_STORIED',   mode: 'subscription', fortunesGranted: 0 },
   favored:   { envKey: 'STRIPE_PRICE_ID_FAVORED',   mode: 'subscription', fortunesGranted: 0 },
-  fortune_pack: { envKey: 'STRIPE_PRICE_ID_FORTUNE_PACK', mode: 'payment', fortunesGranted: 10 },
+  fortune_60:   { envKey: 'STRIPE_PRICE_ID_FORTUNE_60',   mode: 'payment', fortunesGranted: 60 },
+  fortune_120:  { envKey: 'STRIPE_PRICE_ID_FORTUNE_120',  mode: 'payment', fortunesGranted: 120 },
+  fortune_240:  { envKey: 'STRIPE_PRICE_ID_FORTUNE_240',  mode: 'payment', fortunesGranted: 240 },
 };
 
 // Resolve the base URL for checkout return redirects.
