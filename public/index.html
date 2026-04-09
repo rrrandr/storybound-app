@@ -90,6 +90,9 @@
   </div>
 </div>
 
+<!-- Mobile dialogue scrim — dims background when concierge chat is active -->
+<div id="conciergeMobileScrim" class="concierge-mobile-scrim"></div>
+
 <div id="menuOverlay" class="overlay hidden" style="z-index:10002;">
 
   <!-- ── MAIN VAULT PANEL ── -->
@@ -117,11 +120,11 @@
     <button class="sb-btn-png sm" onclick="window.openTrophyWall()">Achievements</button>
     <button id="treasuryToggleBtn" class="sb-btn-png sm" onclick="window.toggleTreasury()">Treasury</button>
     <div id="treasuryPanel" class="treasury-panel hidden">
-      <div class="treasury-row"><span class="treasury-label">Subscription</span><span class="treasury-value" id="treasurySub">—</span><button class="treasury-buy-btn" onclick="window.showPaywall('sub_only')">Buy</button></div>
+      <div class="treasury-row"><span class="treasury-label">Subscription</span><span class="treasury-value" id="treasurySub">—</span><button class="treasury-buy-btn" onclick="window.showPaywall('sub_only')">Claim</button><button class="treasury-buy-btn" id="treasuryManageBtn" onclick="window.openBillingPortal()" style="display:none;">Manage</button></div>
       <div class="treasury-row" style="flex-wrap:wrap;">
         <span class="treasury-label" style="cursor:pointer;" id="treasuryFortunesToggle">Fortunes <span style="font-size:9px;opacity:0.6;">&#9660;</span></span>
         <span class="treasury-value" id="treasuryFortunes">—</span>
-        <button class="treasury-buy-btn" onclick="window.showPaywall('unlock')">Buy</button>
+        <button class="treasury-buy-btn" onclick="window.showPaywall('unlock')">Claim</button>
         <div id="treasuryFortuneBreakdown" class="hidden" style="width:100%;padding:4px 0 2px 12px;font-size:11px;color:#999;line-height:1.6;">
           <div>Subscription: <span id="fortuneBreakSub">0</span></div>
           <div>Fortune Reserves: <span id="fortuneBreakPurchased">0</span></div>
@@ -129,7 +132,7 @@
           <div>Drip: <span id="fortuneBreakDrip">0</span></div>
         </div>
       </div>
-      <div class="treasury-row"><span class="treasury-label">Storypass</span><span class="treasury-value" id="treasuryStorypass">—</span><button class="treasury-buy-btn" onclick="window.showPaywall('unlock')">Buy</button></div>
+      <div class="treasury-row"><span class="treasury-label">Storypass</span><span class="treasury-value" id="treasuryStorypass">—</span><button class="treasury-buy-btn" onclick="window.showPaywall('unlock')">Claim</button></div>
       <div class="treasury-row"><span class="treasury-label">Tempt Fates</span><span class="treasury-value" id="treasuryTemptFates">—</span></div>
     </div>
     <button id="menuReincarnationsBtn" class="sb-btn-png sm">Reincarnations</button>

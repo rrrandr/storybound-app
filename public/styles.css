@@ -24561,6 +24561,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
     pointer-events: none !important;
     visibility: hidden !important;
 }
+/* Hide concierge on Pact of Binding (legal gate) screen */
+body:has(#legalGate:not(.hidden)) .concierge-dialogue,
+body:has(#legalGate:not(.hidden)) #conciergeBell,
+body:has(#legalGate:not(.hidden)) .concierge-summon-figure {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
 /* Hide corner bell on library screen (tray bell is the summon trigger there) */
 body:has(#vaultLibraryScreen:not(.hidden)) #conciergeBell {
     opacity: 0 !important;
@@ -24614,6 +24622,89 @@ body.concierge-design-active .concierge-summon-figure {
     /* Don't slide concierge aside on narrow — panel floats above */
     .library-concierge.lc-panel-active {
         transform: none !important;
+    }
+}
+
+/* ── Mobile Dialogue Mode — full-screen chat takeover ── */
+@media (max-width: 768px) {
+    /* Scrim covers background when dialogue is active */
+    .concierge-mobile-scrim {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 10005;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.35s ease;
+    }
+    body.concierge-mobile-active .concierge-mobile-scrim {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* Full-screen dialogue panel — true full height, concierge floats above */
+    body.concierge-mobile-active .concierge-dialogue {
+        left: 0 !important;
+        right: 0;
+        bottom: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100vh;
+        z-index: 10006 !important;
+        transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+                    visibility 0s linear 0s;
+    }
+    body.concierge-mobile-active .concierge-dialogue.visible {
+        transform: translateY(0) !important;
+    }
+    body.concierge-mobile-active .concierge-dialogue.dismissing {
+        transform: translateY(100%) !important;
+        opacity: 0;
+        transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
+                    opacity 0.3s ease,
+                    visibility 0s linear 0.4s;
+    }
+    /* Frame fills the panel — drop aspect-ratio lock */
+    body.concierge-mobile-active .concierge-dialogue-frame {
+        aspect-ratio: unset;
+        height: 100%;
+        padding: 14px 16px 16px;
+    }
+    /* Scroll area expands to fill */
+    body.concierge-mobile-active .concierge-dialogue-scroll {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Input stays at bottom */
+    body.concierge-mobile-active #conciergeInput {
+        flex-shrink: 0;
+    }
+
+    /* Summon figure: smaller, above the panel, fades in before panel */
+    body.concierge-mobile-active .concierge-summon-figure {
+        z-index: 10008 !important;
+        bottom: auto !important;
+        top: 8px !important;
+        left: 8px !important;
+        width: 64px !important;
+        height: auto !important;
+        transition: opacity 0.2s ease !important; /* arrives 200ms before panel's 400ms slide */
+    }
+    /* Exit: concierge lingers 100ms after panel starts sliding — "conversation leaves, then he does" */
+    body:not(.concierge-mobile-active) .concierge-summon-figure {
+        transition: opacity 0.3s ease 0.1s !important; /* 100ms delay, then 300ms fade */
+    }
+    /* Library concierge: smaller, above the panel */
+    body.concierge-mobile-active .library-concierge {
+        z-index: 10008 !important;
+        width: 14cqi !important;
+    }
+    /* Corner bell above scrim */
+    body.concierge-mobile-active #conciergeBell {
+        z-index: 10009 !important;
     }
 }
 
@@ -25929,4 +26020,246 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     0% { color: rgba(201, 168, 76, 0.7); }
     50% { color: rgba(201, 168, 76, 0.5); }
     100% { color: inherit; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   MOBILE — Operational minimum (iPhone 13 Pro Max = 428px CSS width)
+   Goal: scrollable, tappable, no clipping. Desktop untouched.
+   ═══════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+    /* Restore vertical scrolling — corridor viewport lock clips content on mobile */
+    .corridor-section {
+        max-height: none !important;
+        overflow-y: auto !important;
+        overflow-x: hidden;
+        min-height: auto;
+        padding-bottom: 100px; /* clearance for fixed control plane */
+    }
+
+    /* Grid corridors already have overflow-y:auto but need max-height lifted */
+    .sb-grid.corridor-section {
+        max-height: none !important;
+    }
+
+    /* Cards: 2-up on narrow screens (each ~48% of width) */
+    .sb-grid .sb-card {
+        flex-basis: calc(50% - 8px) !important;
+        max-width: calc(50% - 8px);
+    }
+
+    /* Archetype grid: 2-column already handled at 560px, reinforce here */
+    .archetype-grid-8 {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px;
+    }
+
+    /* Dynamic grid: 2-up instead of 3 */
+    .dynamic-grouped {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 6px;
+    }
+
+    /* Story shape row (authorship cards): allow wrapping */
+    .story-shape-row {
+        flex-wrap: wrap !important;
+        min-height: auto;
+        max-height: none;
+        overflow-y: auto !important;
+        gap: 10px;
+        padding: 10px 10px 100px;
+    }
+
+    /* Control plane: pull closer to bottom edge */
+    #controlPlane {
+        bottom: 12px;
+    }
+
+    /* Splash tagline: scale down to fit */
+    .splash-tagline {
+        font-size: 1.2em !important;
+        letter-spacing: 0.2em !important;
+    }
+    .splash-subline {
+        font-size: 0.7em !important;
+    }
+
+    /* Shape Your Story header: compact */
+    .shape-your-story-header {
+        padding: 4px 8px;
+    }
+    .shape-your-story-header h2 {
+        font-size: 1em;
+        letter-spacing: 0.3em;
+    }
+
+    /* Breadcrumb row: allow horizontal scroll */
+    #breadcrumbRow {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        flex-wrap: nowrap;
+    }
+    #breadcrumbRow::-webkit-scrollbar { display: none; }
+
+    /* Concierge bell: smaller, tighter to corner */
+    #conciergeBell {
+        width: 36px !important;
+        height: 36px !important;
+        bottom: 8px !important;
+        left: 8px !important;
+    }
+
+    /* DSP: full width on mobile */
+    .synopsis-panel {
+        width: 90vw !important;
+        left: 5vw !important;
+        transform: none !important;
+    }
+
+    /* Pact of Binding cards: stay in row, shrink to fit */
+    .pact-card-row {
+        gap: 8px;
+        flex-wrap: nowrap;
+        padding: 0 8px;
+    }
+    .pact-card {
+        width: clamp(90px, 28vw, 140px) !important;
+        flex-shrink: 1;
+    }
+
+    /* Reader view: full width, no side padding */
+    #storyPagesContainer {
+        padding: 0 8px;
+    }
+
+    /* Zoom portal: fit to screen */
+    .sb-zoom-portal {
+        width: 90vw !important;
+        left: 5vw !important;
+    }
+
+    /* Fortune/paywall modal: fit mobile width */
+    #payModal .pay-modal-content,
+    #fortunePurchaseModal {
+        width: 92vw !important;
+        max-width: 92vw !important;
+    }
+
+    /* Vault/Library: allow scroll */
+    #vaultLibraryScreen {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Mask ceremony: compact for mobile (fixed px — orientation-stable) ── */
+    .mask-selection-shelf {
+        gap: 8px;
+    }
+    .mask-shelf-row {
+        gap: 10px;
+    }
+    .mask-candidate {
+        width: 55px !important;
+        height: auto;
+    }
+    .mask-candidate img {
+        width: 100% !important;
+        height: auto !important;
+    }
+    .mask-ceremony-title {
+        font-size: clamp(14px, 4.5vw, 22px) !important;
+        letter-spacing: 0.2em !important;
+    }
+    .mask-ceremony-subtitle {
+        font-size: clamp(11px, 3.5vw, 17px) !important;
+        letter-spacing: 0.15em !important;
+    }
+
+    /* ── Ceremony + library concierge: same size & position on mobile ── */
+    .ceremony-concierge,
+    .library-concierge {
+        width: 120px !important;
+        left: 0 !important;
+    }
+    .library-concierge.lc-panel-active {
+        left: 0 !important;
+    }
+
+    /* ── Concierge dialogue panel: pinned bottom-right of concierge (120px wide) ── */
+    .concierge-dialogue {
+        width: 160px !important;
+        left: 126px !important;
+        bottom: 0 !important;
+    }
+    body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
+        left: 126px !important;
+        bottom: 0 !important;
+    }
+    .concierge-dialogue-frame {
+        max-height: 40vh;
+    }
+
+    /* ── Concierge summon figure: smaller on mobile ── */
+    .concierge-summon-figure {
+        width: 60px !important;
+        height: 120px !important;
+    }
+
+    /* ── Private Library: drop min-width so background fills viewport ── */
+    .forbidden-library.library-variant--vault {
+        min-width: 100vw !important;
+        width: 100vw !important;
+        background-size: cover !important;
+        background-position: center top !important;
+    }
+    #vaultLibraryScreen {
+        overflow-x: hidden !important;
+    }
+}
+
+/* ── Mobile concierge lock — both orientations ──
+   Phones in landscape blow past 480px width but are still small screens.
+   pointer:coarse = touch device. max-height catches landscape phones. */
+@media (pointer: coarse) and (max-height: 500px) {
+    /* Concierge: same 120px as portrait */
+    .ceremony-concierge,
+    .library-concierge {
+        width: 120px !important;
+        left: 0 !important;
+    }
+    .library-concierge.lc-panel-active {
+        left: 0 !important;
+    }
+    .concierge-dialogue {
+        width: 160px !important;
+        left: 126px !important;
+        bottom: 0 !important;
+    }
+    body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
+        left: 126px !important;
+        bottom: 0 !important;
+    }
+    .concierge-dialogue-frame {
+        max-height: 40vh;
+    }
+    .concierge-summon-figure {
+        width: 60px !important;
+        height: 120px !important;
+    }
+    /* Masks: same fixed px as portrait — don't blow up in landscape */
+    .mask-candidate {
+        width: 55px !important;
+    }
+    .mask-shelf-row {
+        gap: 10px;
+    }
+    .mask-ceremony-title {
+        font-size: clamp(14px, 4.5vw, 22px) !important;
+        letter-spacing: 0.2em !important;
+    }
+    .mask-ceremony-subtitle {
+        font-size: clamp(11px, 3.5vw, 17px) !important;
+        letter-spacing: 0.15em !important;
+    }
 }
