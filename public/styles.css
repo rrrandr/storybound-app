@@ -26377,24 +26377,33 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     }
 
     /* ── Concierge dialogue panel: slides up BEHIND concierge on mobile ── */
-    .concierge-dialogue {
+    /* Must override body.concierge-mobile-active which sets z-index:10006, width:100%, height:100vh */
+    .concierge-dialogue,
+    body.concierge-mobile-active .concierge-dialogue,
+    body.concierge-mobile-active .concierge-dialogue.visible,
+    body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue,
+    body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue,
+    body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue.visible {
         width: 220px !important;
+        max-width: 220px !important;
         left: 0 !important;
         bottom: 0 !important;
-        z-index: 6 !important;
-    }
-    body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
-        left: 0 !important;
-        bottom: 0 !important;
+        height: auto !important;
         z-index: 6 !important;
     }
     /* Library concierge ALWAYS in front of dialogue panel on mobile */
-    body:has(#vaultLibraryScreen:not(.hidden)) .library-concierge {
-        z-index: 8 !important;
+    .library-concierge,
+    body:has(#vaultLibraryScreen:not(.hidden)) .library-concierge,
+    body.concierge-mobile-active .library-concierge {
+        z-index: 10020 !important;
         position: fixed !important;
     }
     .concierge-dialogue-frame {
         max-height: 40vh;
+    }
+    /* Kill mobile scrim on library (panel is compact, not full-screen) */
+    body.concierge-mobile-active .concierge-mobile-scrim {
+        display: none !important;
     }
     /* Input: whiter background for contrast */
     #conciergeInput {
@@ -26615,14 +26624,23 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         justify-content: center;
         margin-top: auto !important; /* push to bottom */
     }
-    /* Books directly under title — override JS-injected cqi positioning */
-    #vaultLibraryScreen .dm-shelf-row {
+    /* Books directly under title — override JS-injected style tag with attribute selectors */
+    #vaultLibraryScreen .dm-shelf-row,
+    #vaultLibraryScreen .dm-shelf-row[data-shelf],
+    #vaultLibraryScreen .dm-shelf-row[data-shelf="0"],
+    #vaultLibraryScreen .dm-shelf-row[data-shelf="1"],
+    #vaultLibraryScreen .dm-shelf-row[data-shelf="2"] {
         margin-top: 0 !important;
         position: relative !important;
         top: auto !important;
         max-width: 100% !important;
+        padding-top: 0 !important;
     }
-    #vaultLibraryScreen .dm-shelf-row .library-book {
+    #vaultLibraryScreen .dm-shelf-row .library-book,
+    #vaultLibraryScreen .dm-shelf-row[data-shelf] .library-book,
+    #vaultLibraryScreen .dm-shelf-row[data-shelf="0"] .library-book,
+    #vaultLibraryScreen .dm-shelf-row[data-shelf="1"] .library-book,
+    #vaultLibraryScreen .dm-shelf-row[data-shelf="2"] .library-book {
         margin-top: 0 !important;
     }
 
