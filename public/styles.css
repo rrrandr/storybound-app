@@ -22678,30 +22678,14 @@ body.gn-cover-active .gn-ui-overlay {
     top: 47.3cqi; left: 12.19cqi; width: 85.14cqi; font-size: 8.11cqi;
 }
 
-/* ── Dynamic — Back titles (cqi-locked) ── */
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 47.92cqi; left: 10.71cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 49.11cqi; left: 20.24cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 50.89cqi; left: 14.88cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 50.89cqi; left: 14.88cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 50.60cqi; left: 26.79cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 50.30cqi; left: 17.86cqi;
+/* ── Dynamic — Back titles (2-line, centered in gold area) ── */
+#dynamicGrid .sb-card .sb-card-back .sb-card-title {
+    left: 10% !important;
+    right: 10% !important;
+    width: auto !important;
+    text-align: center !important;
+    top: 42cqi !important;
+    line-height: 1.15 !important;
 }
 
 /* ── Polarity (Dynamic) — Card Designer locked text positions ── */
