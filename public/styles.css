@@ -26317,10 +26317,17 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     .mask-shelf-row {
         gap: 14px;
     }
-    .mask-candidate {
-        width: 82px !important;
-        height: auto;
-    }
+    /* Per-mask mobile sizes: normalized so eye holes are ~same scale.
+       Wider masks (Dark Vice, Armored Fox) need more width to match
+       face-area of narrower masks (Spellbinder, Open Vein). */
+    .mask-candidate { height: auto; }
+    .mask-candidate[data-mask-id="HEART_WARDEN"]   { width: 72px !important; }
+    .mask-candidate[data-mask-id="BEAUTIFUL_RUIN"] { width: 78px !important; }
+    .mask-candidate[data-mask-id="OPEN_VEIN"]      { width: 76px !important; }
+    .mask-candidate[data-mask-id="SPELLBINDER"]    { width: 68px !important; }
+    .mask-candidate[data-mask-id="DARK_VICE"]      { width: 90px !important; }
+    .mask-candidate[data-mask-id="ARMORED_FOX"]    { width: 88px !important; }
+    .mask-candidate[data-mask-id="ETERNAL_FLAME"]  { width: 80px !important; }
     .mask-candidate img {
         width: 100% !important;
         height: auto !important;
@@ -27040,9 +27047,13 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         top: 5% !important;
         transform: translateX(-50%) !important;
     }
-    .mask-candidate {
-        width: 82px !important;
-    }
+    .mask-candidate[data-mask-id="HEART_WARDEN"]   { width: 72px !important; }
+    .mask-candidate[data-mask-id="BEAUTIFUL_RUIN"] { width: 78px !important; }
+    .mask-candidate[data-mask-id="OPEN_VEIN"]      { width: 76px !important; }
+    .mask-candidate[data-mask-id="SPELLBINDER"]    { width: 68px !important; }
+    .mask-candidate[data-mask-id="DARK_VICE"]      { width: 90px !important; }
+    .mask-candidate[data-mask-id="ARMORED_FOX"]    { width: 88px !important; }
+    .mask-candidate[data-mask-id="ETERNAL_FLAME"]  { width: 80px !important; }
     .mask-shelf-row {
         gap: 14px;
     }
