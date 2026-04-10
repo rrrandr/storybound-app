@@ -26644,11 +26644,11 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         margin-top: 0 !important;
     }
 
-    /* Library concierge: fixed to bottom of screen, not floating */
+    /* Library concierge: fixed to bottom-left, shoulder at screen edge */
     body:has(#vaultLibraryScreen:not(.hidden)) .library-concierge {
         position: fixed !important;
         bottom: 0 !important;
-        left: 0 !important;
+        left: -25px !important;
         height: auto !important;
     }
     /* Forbidden library exit row same treatment */
