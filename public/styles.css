@@ -26557,7 +26557,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     }
     /* Text: centered in gold text area, larger for readability */
     .authorship-card-face {
-        padding: 17% 6% 58% 6% !important;
+        padding: 14% 6% 58% 6% !important;
         justify-content: center !important;
         align-items: center !important;
         text-align: center !important;
@@ -26573,7 +26573,8 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         text-align: center !important;
     }
     /* Sparkles: ensure visible on authorship cards */
-    .authorship-card {
+    .authorship-card,
+    .authorship-card * {
         overflow: visible !important;
     }
     .authorship-sparkle-emitter {
