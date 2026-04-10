@@ -26369,14 +26369,15 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         left: 0 !important;
     }
 
-    /* ── Concierge dialogue panel: pinned bottom-right of concierge (120px wide) ── */
+    /* ── Concierge dialogue panel: slides up BEHIND concierge on mobile ── */
     .concierge-dialogue {
-        width: 160px !important;
-        left: 126px !important;
+        width: 220px !important;
+        left: 0 !important;
         bottom: 0 !important;
+        z-index: 6 !important;
     }
     body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
-        left: 126px !important;
+        left: 0 !important;
         bottom: 0 !important;
         z-index: 6 !important;
     }
@@ -26387,6 +26388,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     }
     .concierge-dialogue-frame {
         max-height: 40vh;
+    }
+    /* Input: whiter background for contrast */
+    #conciergeInput {
+        background: rgba(255, 255, 255, 0.40) !important;
+    }
+    /* Placeholder: flush right so concierge figure doesn't obstruct it */
+    #conciergeInput::placeholder {
+        text-align: right !important;
     }
 
     /* ── Concierge summon figure: smaller on mobile ── */
@@ -27059,13 +27068,15 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         left: 0 !important;
     }
     .concierge-dialogue {
-        width: 160px !important;
-        left: 126px !important;
+        width: 220px !important;
+        left: 0 !important;
         bottom: 0 !important;
+        z-index: 6 !important;
     }
     body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
-        left: 126px !important;
+        left: 0 !important;
         bottom: 0 !important;
+        z-index: 6 !important;
     }
     .concierge-dialogue-frame {
         max-height: 40vh;
