@@ -26384,13 +26384,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue,
     body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue,
     body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue.visible {
-        width: 65vw !important;
-        max-width: 65vw !important;
-        left: auto !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
         height: auto !important;
         max-height: 50vh !important;
+        z-index: 6 !important;
     }
     .concierge-dialogue-frame {
         max-height: 45vh;
@@ -27115,15 +27116,17 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         left: 0 !important;
     }
     .concierge-dialogue {
-        width: 65vw !important;
-        left: auto !important;
+        width: 100vw !important;
+        max-width: 100vw !important;
+        left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
         height: auto !important;
         max-height: 50vh !important;
+        z-index: 6 !important;
     }
     body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
-        left: auto !important;
+        left: 0 !important;
         right: 0 !important;
         bottom: 0 !important;
     }
