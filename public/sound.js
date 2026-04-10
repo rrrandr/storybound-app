@@ -147,14 +147,15 @@
     var ctx = _audioCtx;
     if (!ctx) return;
 
-    // iOS CRITICAL: resume() MUST happen synchronously in the gesture callback.
-    // Do NOT defer or do other work first.
-    if (ctx.state === 'suspended') {
-      ctx.resume();
+    function _finishUnlock() {
+      if (!_initialized && ctx.state === 'running') {
+        _initialized = true;
+        console.log('[SOUND] AudioContext unlocked, state:', ctx.state);
+        _ensureCtx();
+      }
     }
 
-    // iOS workaround: play a silent buffer to "warm" the context.
-    // Some iOS versions require actual audio output in the gesture.
+    // iOS: play silent buffer to "warm" the context
     if (!_initialized) {
       try {
         var silent = ctx.createBuffer(1, 1, 22050);
@@ -165,14 +166,12 @@
       } catch(e) {}
     }
 
-    if (ctx.state === 'running') {
-      if (!_initialized) {
-        _initialized = true;
-        console.log('[SOUND] AudioContext unlocked, state:', ctx.state);
-        // Now that context is running, set up gain nodes + preload buffers
-        _ensureCtx();
-      }
+    if (ctx.state === 'suspended') {
+      // resume() is async — handle both sync and async resolution
+      ctx.resume().then(_finishUnlock).catch(function() {});
     }
+    // Also check synchronously (desktop often starts 'running' immediately)
+    _finishUnlock();
   }
 
   // Multiple event types — iOS Safari is picky about which gesture unlocks audio
