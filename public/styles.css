@@ -26612,15 +26612,22 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         z-index: 2;
     }
 
-    /* ── Exit row: pushed to bottom of screen ── */
+    /* ── Start New Story: centered between title and books (JS reparents on mobile) ── */
+    #startNewStoryBtn {
+        text-align: center !important;
+        margin: 6px auto 8px !important;
+        display: block !important;
+    }
+    /* ── Exit Library: centered at bottom ── */
     .library-variant--vault > .vault-exit-row {
         position: relative !important;
         top: auto !important;
         left: auto !important;
         transform: none !important;
-        gap: 12px !important;
+        gap: 0 !important;
         padding: 6px 0 16px !important;
-        justify-content: center;
+        justify-content: center !important;
+        align-items: center !important;
         margin-top: auto !important; /* push to bottom */
     }
     /* Books directly under title — override JS-injected style tag with attribute selectors */
