@@ -26483,14 +26483,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         background-size: 0 !important;
     }
 
-    /* ── Ceremony curtains: override inset so each curtain covers its half + overlap in center ── */
-    .ceremony-curtain--left {
-        inset: 0 auto 0 -15vw !important;
-        width: 65vw !important;
-    }
+    /* ── Ceremony curtains: full-screen on mobile ── */
+    .ceremony-curtain--back,
+    .ceremony-curtain--left,
     .ceremony-curtain--right {
-        inset: 0 -15vw 0 auto !important;
-        width: 65vw !important;
+        inset: 0 !important;
+        width: 100% !important;
     }
 
     /* ── Concierges: welcome stays at 66vw, bell scaled to match visually ── */
