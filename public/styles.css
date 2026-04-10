@@ -19052,6 +19052,8 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     pointer-events: none;
     z-index: 50;
     overflow: visible; /* Never clip sparkles */
+    /* Push forward in 3D context created by parent's perspective:800px */
+    transform: translateZ(2px);
 }
 /* Ensure authorship card doesn't clip sparkles from 3D transforms */
 .authorship-card {
