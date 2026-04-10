@@ -4196,7 +4196,38 @@ select:-webkit-autofill {
 }
 @media (max-width: 768px) {
     .pay-card {
-        width: clamp(110px, calc(110px + (200 - 110) * ((100vw - 360px) / (768 - 360))), 200px);
+        width: 28vw;
+        transition: transform 0.3s ease, z-index 0s;
+    }
+    .pay-card-row {
+        position: relative;
+    }
+    /* Expanded card: centered, doubled, above siblings */
+    .pay-card.pay-card-expanded {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 70vw;
+        z-index: 10001;
+    }
+    .pay-card.pay-card-expanded .pay-card-inner {
+        transform: rotateY(180deg);
+    }
+    /* Scrim behind expanded card */
+    .pay-card-mobile-scrim {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 10000;
+        display: none;
+    }
+    .pay-card-mobile-scrim.active {
+        display: block;
+    }
+    /* Non-expanded cards: don't flip on hover/tap */
+    .pay-card:not(.pay-card-expanded):hover .pay-card-inner {
+        transform: none;
     }
 }
 
@@ -23309,6 +23340,16 @@ body.gn-cover-active .gn-ui-overlay {
     gap: 6px;
     padding: 8px 0 0 0;
 }
+.echo-reinc-explainer {
+    font-family: 'Lora', serif;
+    font-size: 0.8em;
+    font-style: italic;
+    color: var(--gold, #c9a84c);
+    text-align: center;
+    opacity: 0.6;
+    margin: 0 0 2px;
+    padding: 0 16px;
+}
 
 .reinc-slots-row {
     display: flex;
@@ -24563,11 +24604,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-summon-figure {
 }
 /* Hide concierge on Pact of Binding (legal gate) screen */
 body:has(#legalGate:not(.hidden)) .concierge-dialogue,
+body:has(#legalGate:not(.hidden)) .concierge-dialogue.visible,
 body:has(#legalGate:not(.hidden)) #conciergeBell,
-body:has(#legalGate:not(.hidden)) .concierge-summon-figure {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
+body:has(#legalGate:not(.hidden)) .concierge-summon-figure,
+body:has(#legalGate:not(.hidden)) .concierge-summon-figure.csf-visible,
+body:has(#legalGate:not(.hidden)) .concierge-mobile-scrim {
+    display: none !important;
 }
 /* Hide corner bell on library screen (tray bell is the summon trigger there) */
 body:has(#vaultLibraryScreen:not(.hidden)) #conciergeBell {
@@ -24632,20 +24674,24 @@ body.concierge-design-active .concierge-summon-figure {
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
         z-index: 10005;
-        opacity: 0;
         pointer-events: none;
-        transition: opacity 0.35s ease;
+        display: none;
     }
     body.concierge-mobile-active .concierge-mobile-scrim {
-        opacity: 1;
+        display: block;
         pointer-events: auto;
+        animation: scrimFadeIn 0.35s ease forwards;
+    }
+    @keyframes scrimFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
 
     /* Full-screen dialogue panel — true full height, concierge floats above */
-    body.concierge-mobile-active .concierge-dialogue {
+    /* Must beat library-specific overrides from @media(max-width:600px) body:has(#vaultLibraryScreen) */
+    body.concierge-mobile-active .concierge-dialogue,
+    body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
         left: 0 !important;
         right: 0;
         bottom: 0 !important;
@@ -24656,10 +24702,12 @@ body.concierge-design-active .concierge-summon-figure {
         transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
                     visibility 0s linear 0s;
     }
-    body.concierge-mobile-active .concierge-dialogue.visible {
+    body.concierge-mobile-active .concierge-dialogue.visible,
+    body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue.visible {
         transform: translateY(0) !important;
     }
-    body.concierge-mobile-active .concierge-dialogue.dismissing {
+    body.concierge-mobile-active .concierge-dialogue.dismissing,
+    body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue.dismissing {
         transform: translateY(100%) !important;
         opacity: 0;
         transition: transform 0.4s cubic-bezier(0.22, 0.61, 0.36, 1),
@@ -24683,28 +24731,23 @@ body.concierge-design-active .concierge-summon-figure {
         flex-shrink: 0;
     }
 
-    /* Summon figure: smaller, above the panel, fades in before panel */
+    /* Summon figure: stays at bell position, ALWAYS in front of panel (10006) and scrim (10005) */
     body.concierge-mobile-active .concierge-summon-figure {
-        z-index: 10008 !important;
-        bottom: auto !important;
-        top: 8px !important;
-        left: 8px !important;
-        width: 64px !important;
-        height: auto !important;
-        transition: opacity 0.2s ease !important; /* arrives 200ms before panel's 400ms slide */
+        z-index: 10010 !important;
+        transition: opacity 0.2s ease !important;
     }
     /* Exit: concierge lingers 100ms after panel starts sliding — "conversation leaves, then he does" */
     body:not(.concierge-mobile-active) .concierge-summon-figure {
         transition: opacity 0.3s ease 0.1s !important; /* 100ms delay, then 300ms fade */
     }
-    /* Library concierge: smaller, above the panel */
+    /* Library concierge: above the panel, keep mobile size from 768px block */
     body.concierge-mobile-active .library-concierge {
-        z-index: 10008 !important;
-        width: 14cqi !important;
+        z-index: 10010 !important;
+        position: fixed !important;
     }
-    /* Corner bell above scrim */
+    /* Corner bell above everything */
     body.concierge-mobile-active #conciergeBell {
-        z-index: 10009 !important;
+        z-index: 10011 !important;
     }
 }
 
@@ -24938,7 +24981,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     content: '';
     position: absolute;
     inset: 0;
-    background: url('/assets/ui/DSP-Gold-Blk-720x1040.png') no-repeat center center;
+    background: url('/assets/ui/Concierge-panel.jpg') no-repeat center center;
     background-size: 100% 100%;
     z-index: -1;
     pointer-events: none;
@@ -25628,11 +25671,11 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     animation-delay: var(--ff-delay, 0s);
 }
 @keyframes maskFirefly {
-    0%   { opacity: 0; transform: translate(0, 0) scale(0.5); }
-    20%  { opacity: 1; transform: translate(calc(var(--ff-dx, 6px) * 0.3), calc(var(--ff-dy, -8px) * 0.3)) scale(1); }
-    50%  { opacity: 0.5; transform: translate(var(--ff-dx, 6px), var(--ff-dy, -8px)) scale(0.8); }
-    80%  { opacity: 0.9; transform: translate(calc(var(--ff-dx, 6px) * 0.6), calc(var(--ff-dy, -8px) * 0.6)) scale(1.1); }
-    100% { opacity: 0; transform: translate(0, 0) scale(0.5); }
+    0%   { opacity: 0; transform: translate(0, 0) scale(0.4); }
+    10%  { opacity: 0.8; transform: translate(calc(var(--ff-dx, 30px) * 0.1), calc(var(--ff-dy, -30px) * 0.1)) scale(1); }
+    40%  { opacity: 1; transform: translate(calc(var(--ff-dx, 30px) * 0.45), calc(var(--ff-dy, -30px) * 0.45)) scale(0.9); }
+    70%  { opacity: 0.6; transform: translate(calc(var(--ff-dx, 30px) * 0.8), calc(var(--ff-dy, -30px) * 0.8)) scale(0.7); }
+    100% { opacity: 0; transform: translate(var(--ff-dx, 30px), var(--ff-dy, -30px)) scale(0.3); }
 }
 
 /* ── Dissipation sparkle burst (unselected masks) ── */
@@ -26029,17 +26072,30 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 @media (max-width: 480px) {
 
     /* Restore vertical scrolling — corridor viewport lock clips content on mobile */
-    .corridor-section {
+    .corridor-section,
+    .story-shape-row,
+    .story-shape-row.corridor-section,
+    .card-flow-row,
+    .card-flow-row.corridor-section {
         max-height: none !important;
-        overflow-y: auto !important;
-        overflow-x: hidden;
-        min-height: auto;
+        overflow: visible !important;
+        min-height: auto !important;
+        height: auto !important;
         padding-bottom: 100px; /* clearance for fixed control plane */
     }
 
-    /* Grid corridors already have overflow-y:auto but need max-height lifted */
+    /* Grid corridors */
     .sb-grid.corridor-section {
         max-height: none !important;
+        overflow: visible !important;
+    }
+
+    /* Corridor section titles: ensure visible on all corridor types */
+    .card-flow-row > .section-title,
+    .corridor-section > .section-title {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
     }
 
     /* Cards: 2-up on narrow screens (each ~48% of width) */
@@ -26075,13 +26131,33 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         bottom: 12px;
     }
 
-    /* Splash tagline: scale down to fit */
+    /* Splash tagline: solid color + text-shadow (no gradient box artifact on iOS) */
     .splash-tagline {
         font-size: 1.2em !important;
         letter-spacing: 0.2em !important;
+        background: none !important;
+        -webkit-background-clip: unset !important;
+        background-clip: unset !important;
+        -webkit-text-fill-color: #c9a84c !important;
+        color: #c9a84c !important;
+        filter: none !important;
+        text-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.9),
+            0 0 12px rgba(0, 0, 0, 0.8),
+            0 0 30px rgba(0, 0, 0, 0.6) !important;
     }
     .splash-subline {
         font-size: 0.7em !important;
+        background: none !important;
+        -webkit-background-clip: unset !important;
+        background-clip: unset !important;
+        -webkit-text-fill-color: #c9a84c !important;
+        color: #c9a84c !important;
+        filter: none !important;
+        text-shadow:
+            0 2px 4px rgba(0, 0, 0, 0.9),
+            0 0 12px rgba(0, 0, 0, 0.8),
+            0 0 30px rgba(0, 0, 0, 0.6) !important;
     }
 
     /* Shape Your Story header: compact */
@@ -26117,15 +26193,47 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         transform: none !important;
     }
 
-    /* Pact of Binding cards: stay in row, shrink to fit */
+    /* Pact of Binding: scrollable, smaller cards, no concierge */
+    #legalGate {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 40px;
+    }
     .pact-card-row {
-        gap: 8px;
+        gap: 6px;
         flex-wrap: nowrap;
-        padding: 0 8px;
+        padding: 0 4px;
     }
     .pact-card {
-        width: clamp(90px, 28vw, 140px) !important;
+        width: clamp(80px, 25vw, 110px) !important;
         flex-shrink: 1;
+    }
+    .pact-title {
+        font-size: 1.2em !important;
+        margin-bottom: 8px !important;
+    }
+    .pact-hint {
+        font-size: 0.7em !important;
+    }
+
+    /* ── Mode cards (Solo/Couple/Stranger): fit 3 in one row, all same size ── */
+    .mode-card-row {
+        gap: 8px !important;
+        padding: 10px 6px !important;
+    }
+    .mode-card {
+        width: calc((100vw - 28px) / 3) !important; /* 6px pad×2 + 8px gap×2 = 28px */
+        flex-shrink: 1 !important;
+    }
+    /* Forbidden Library card: same width as mode cards */
+    .mode-card-library {
+        width: calc((100vw - 28px) / 3) !important;
+    }
+    /* Mode select screen: allow scroll, no min-height lock */
+    #modeSelect {
+        min-height: auto !important;
+        overflow-y: auto !important;
+        padding-bottom: 40px;
     }
 
     /* Reader view: full width, no side padding */
@@ -26146,21 +26254,71 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         max-width: 92vw !important;
     }
 
+    /* ── Pay cards (expanded): larger text, less whitespace ── */
+    .pay-card.pay-card-expanded {
+        width: 80vw !important;
+        font-size: 20px !important; /* Base for all em-sized children */
+    }
+    .pay-card.pay-card-expanded .pay-card-content {
+        top: 14% !important;
+        bottom: 10% !important;
+        left: 6% !important;
+        right: 6% !important;
+        gap: 2px;
+    }
+    .pay-card.pay-card-expanded .pay-card-price {
+        font-size: 1.4em !important;
+        margin-bottom: 3px !important;
+    }
+    .pay-card.pay-card-expanded .pay-card-tagline {
+        font-size: 0.65em !important;
+        margin-bottom: 3px !important;
+    }
+    .pay-card.pay-card-expanded .pay-card-features {
+        font-size: 0.6em !important;
+        line-height: 1.35 !important;
+        margin-bottom: 3px !important;
+    }
+    .pay-card.pay-card-expanded .pay-card-fortune-label {
+        font-size: 0.5em !important;
+    }
+    .pay-card.pay-card-expanded .pay-card-btn-fortune {
+        font-size: 0.65em !important;
+        padding: 6px 12px !important;
+        width: 85% !important;
+    }
+    .pay-card.pay-card-expanded .pay-card-fortune-hint {
+        font-size: 0.45em !important;
+    }
+    .pay-card.pay-card-expanded .pay-card-btn {
+        font-size: 0.65em !important;
+        padding: 7px 14px !important;
+    }
+    /* Subscription tier text */
+    .pay-card.pay-card-expanded .pay-card-tier-name {
+        font-size: 0.7em !important;
+    }
+    .pay-card.pay-card-expanded .pay-card-tier-price {
+        font-size: 0.6em !important;
+    }
+
     /* Vault/Library: allow scroll */
     #vaultLibraryScreen {
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch;
     }
 
-    /* ── Mask ceremony: compact for mobile (fixed px — orientation-stable) ── */
+    /* ── Mask ceremony: larger masks, title at top, centered on mobile ── */
     .mask-selection-shelf {
-        gap: 8px;
+        top: 5% !important;
+        transform: translateX(-50%) !important; /* horizontal center only, no vertical center */
+        gap: 6px;
     }
     .mask-shelf-row {
-        gap: 10px;
+        gap: 14px;
     }
     .mask-candidate {
-        width: 55px !important;
+        width: 82px !important;
         height: auto;
     }
     .mask-candidate img {
@@ -26168,12 +26326,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         height: auto !important;
     }
     .mask-ceremony-title {
-        font-size: clamp(14px, 4.5vw, 22px) !important;
+        font-size: clamp(16px, 5vw, 24px) !important;
         letter-spacing: 0.2em !important;
+        margin-bottom: 8px !important;
     }
     .mask-ceremony-subtitle {
-        font-size: clamp(11px, 3.5vw, 17px) !important;
+        font-size: clamp(13px, 4vw, 19px) !important;
         letter-spacing: 0.15em !important;
+        margin-top: 8px !important;
     }
 
     /* ── Ceremony + library concierge: same size & position on mobile ── */
@@ -26195,6 +26355,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
         left: 126px !important;
         bottom: 0 !important;
+        z-index: 6 !important;
+    }
+    /* Library concierge ALWAYS in front of dialogue panel on mobile */
+    body:has(#vaultLibraryScreen:not(.hidden)) .library-concierge {
+        z-index: 8 !important;
+        position: fixed !important;
     }
     .concierge-dialogue-frame {
         max-height: 40vh;
@@ -26206,15 +26372,637 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         height: 120px !important;
     }
 
-    /* ── Private Library: drop min-width so background fills viewport ── */
+}
+
+/* ── Vault library + mobile tap targets + viewport fixes (≤768px) ── */
+@media (max-width: 768px) {
+    /* Private Library: drop min-width, use solid background instead of painted shelves */
     .forbidden-library.library-variant--vault {
         min-width: 100vw !important;
         width: 100vw !important;
-        background-size: cover !important;
-        background-position: center top !important;
+        justify-content: flex-start !important; /* Books at top, not centered */
+        /* Replace painted library background with solid dark wood + archway at top only */
+        background:
+            radial-gradient(ellipse at 50% 8%, rgba(60, 40, 20, 0.25) 0%, transparent 50%),
+            linear-gradient(180deg, rgba(40, 25, 12, 0.6) 0%, rgba(14, 9, 6, 0.95) 25%, rgb(14, 9, 6) 100%) !important;
     }
     #vaultLibraryScreen {
         overflow-x: hidden !important;
+    }
+    /* Hide shelf lip pseudo-elements — calibrated for 1440px, misalign on mobile */
+    #vaultLibraryScreen .dm-shelf-row::before {
+        display: none !important;
+    }
+    /* Book rows: full width, centered, no cqi gap issues */
+    #vaultLibraryScreen .dm-shelf-row {
+        max-width: 95vw !important;
+        padding: 0 2vw !important;
+        gap: 0 3vw !important;
+    }
+
+    /* ── Book back cover: concierge panel background as centered inset panel ── */
+    .back-content,
+    .back-content-overlay {
+        padding: 10px !important;
+        background: none !important;
+    }
+    .back-synopsis-box {
+        background: url('/assets/ui/Concierge-panel.jpg') center / cover no-repeat !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+        margin: 0 !important;
+        padding: 16px 14px !important;
+        flex: 1;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 4px !important;
+    }
+    .back-synopsis {
+        font-size: 3.6vw !important;
+        line-height: 1.5 !important;
+        color: #1a1008 !important;
+        text-align: center !important;
+        word-break: break-word !important;
+    }
+    .back-title {
+        font-size: 4vw !important;
+        margin-bottom: 4px !important;
+    }
+    .back-meta {
+        font-size: 2.8vw !important;
+    }
+
+    /* ── Delete Forever button: clean override on mobile ── */
+    .zoom-delete-btn {
+        width: auto !important;
+        height: auto !important;
+        min-height: 44px;
+        padding: 8px 20px !important;
+        background-image: none !important;
+        background-size: 0 !important;
+    }
+
+    /* ── Ceremony curtains: override inset so each curtain covers its half + overlap in center ── */
+    .ceremony-curtain--left {
+        inset: 0 auto 0 -15vw !important;
+        width: 65vw !important;
+    }
+    .ceremony-curtain--right {
+        inset: 0 -15vw 0 auto !important;
+        width: 65vw !important;
+    }
+
+    /* ── Concierges: welcome stays at 66vw, bell scaled to match visually ── */
+    /* Welcome (767×989px) at 66vw is the reference size. */
+    /* Bell (551×989px) is narrower — needs a smaller container width */
+    /* so the figure renders at the same visual height. */
+    /* Same height ratio: 66vw × (551/767) ≈ 47vw */
+    .ceremony-concierge {
+        width: 66vw !important;
+        left: -14vw !important;
+    }
+    .library-concierge {
+        width: 25vw !important;
+        left: 0vw !important;
+    }
+
+    /* ── Corridor cards: 2-card grids use bigger cards on mobile ── */
+    .sb-grid-2 .sb-card {
+        flex-basis: calc((100vw - 60px) / 2) !important;
+    }
+
+    /* ── Sparkles: only on selected card, slower twinkle ── */
+    .sb-card:not(.selected):not(.flipped) .sparkle-anchor-container,
+    .sb-card:not(.selected):not(.flipped) .fate-dust-particle {
+        display: none !important;
+    }
+    .fate-dust-particle::after {
+        animation-duration: 4s !important;
+    }
+
+    /* ── Corridor card text: force fit inside gold text area ── */
+    .sb-card-back .sb-card-title {
+        overflow: hidden !important;
+        text-overflow: ellipsis;
+    }
+    .sb-card-front .sb-card-title {
+        overflow: hidden !important;
+    }
+    .sb-card-front .sb-card-desc {
+        font-size: min(10cqi, 2.8vw) !important;
+        overflow: hidden !important;
+    }
+
+    /* ── Authorship cards: fit all 3 in viewport without clipping ── */
+    /* ── Authorship cards: 2-up, 20% larger than current, text in gold zone ── */
+    .authorship-cards-container {
+        gap: 12px !important;
+        padding: 0 12px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+    }
+    .authorship-card {
+        width: calc((100vw - 36px) / 2) !important; /* 12px pad×2 + 12px gap = 36px */
+        height: auto !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+    }
+    /* Text padding: percentage-based to stay inside the gold text area at any card size */
+    .authorship-card-face {
+        padding: 18% 8% 60% 8% !important; /* gold box: ~18% to ~40% of card height */
+    }
+    .authorship-card-title {
+        font-size: 1.1em !important;
+        line-height: 1.0 !important;
+    }
+    .authorship-card-desc {
+        font-size: 0.6em !important;
+        line-height: 1.2 !important;
+    }
+
+    /* ── Ceremony text: 30% larger on mobile ── */
+    .mask-ceremony-title {
+        font-size: 26px !important;
+    }
+    .mask-ceremony-subtitle {
+        font-size: 23px !important;
+    }
+
+    /* ── Private Library title: hide SVG arch, use CSS text instead ── */
+    .library-variant--vault .library-arch-title {
+        display: none !important;
+    }
+    /* Mobile-only title injected via ::before on the vault container */
+    .library-variant--vault::before {
+        content: 'Private Library';
+        display: block;
+        font-family: 'Lora', serif;
+        font-variant: small-caps;
+        letter-spacing: 0.3em;
+        font-size: 6.3vw;
+        text-align: center;
+        padding: 8px 0 4px;
+        color: #c9a84c;
+        text-shadow:
+            0 1px 0 rgba(255, 230, 150, 0.4),
+            0 -1px 0 rgba(30, 20, 5, 0.8),
+            0 0 8px rgba(201, 168, 76, 0.25),
+            0 2px 4px rgba(0, 0, 0, 0.7);
+        position: relative;
+        z-index: 2;
+    }
+
+    /* ── Exit row: flow layout below books, no margin-top:auto push-to-bottom ── */
+    .library-variant--vault > .vault-exit-row {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        transform: none !important;
+        gap: 12px !important;
+        padding: 6px 0 8px !important;
+        justify-content: center;
+        margin-top: 12px !important;
+    }
+    /* Books directly under title */
+    #vaultLibraryScreen .dm-shelf-row {
+        margin-top: 0 !important;
+    }
+    /* Forbidden library exit row same treatment */
+    .library-variant--forbidden > .vault-exit-row {
+        margin-top: 12px !important;
+    }
+    .library-variant--vault > .vault-exit-row .sb-btn-png.sm {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        width: 130px !important;
+        height: 36px !important;
+        font-size: 0.7em !important;
+        padding: 6px 12px !important;
+    }
+
+    /* ── Forbidden Library title: hide SVG arch, use CSS text instead ── */
+    .library-variant--forbidden .library-arch-title {
+        display: none !important;
+    }
+    .library-variant--forbidden::before {
+        content: 'Forbidden Library';
+        display: block;
+        font-family: 'Lora', serif;
+        font-variant: small-caps;
+        letter-spacing: 0.25em;
+        font-size: 6vw;
+        text-align: center;
+        padding: 8px 0 4px;
+        color: #c9a84c;
+        text-shadow:
+            0 1px 0 rgba(255, 230, 150, 0.4),
+            0 -1px 0 rgba(30, 20, 5, 0.8),
+            0 0 8px rgba(201, 168, 76, 0.25),
+            0 2px 4px rgba(0, 0, 0, 0.7);
+        position: relative;
+        z-index: 2;
+    }
+
+    /* ── Forbidden Library exit row: flow layout below title ── */
+    .library-variant--forbidden > .vault-exit-row {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        transform: none !important;
+        gap: 12px !important;
+        padding: 10px 0 16px !important;
+        justify-content: center;
+    }
+    .library-variant--forbidden > .vault-exit-row .sb-btn-png.sm {
+        position: relative !important;
+        left: auto !important;
+        width: 130px !important;
+        height: 36px !important;
+        font-size: 0.7em !important;
+        padding: 6px 12px !important;
+    }
+
+    /* ── Forbidden Library background: solid dark on mobile ── */
+    .forbidden-library.library-variant--forbidden {
+        background:
+            radial-gradient(ellipse at 50% 8%, rgba(60, 40, 20, 0.25) 0%, transparent 50%),
+            linear-gradient(180deg, rgba(40, 25, 12, 0.6) 0%, rgba(14, 9, 6, 0.95) 25%, rgb(14, 9, 6) 100%) !important;
+    }
+
+    /* Tap targets: invisible padding expands hit area to ≥44px without changing visuals */
+    .sb-btn-png.xs {
+        min-height: 44px;
+        padding: 13px 0;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    .sb-btn-png.text-sm,
+    .sb-btn-png.tos {
+        min-height: 44px;
+        padding: 6px 0;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    .concierge-dialogue-close {
+        padding: 12px !important;
+        min-width: 44px;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        right: -8px;
+        top: -8px;
+    }
+
+    /* Concierge input: comfortable tap + typing height */
+    #conciergeInput {
+        min-height: 44px;
+        font-size: 1em;
+        padding: 12px 14px;
+    }
+
+    /* Corridor: use dvh for iOS dynamic viewport, allow overflow scroll as fallback */
+    body.corridor-mode #setup {
+        height: 100dvh;
+        overflow-y: auto;
+    }
+
+    /* Replace vh with dvh where iOS address bar causes issues */
+    .concierge-dialogue-scroll {
+        max-height: calc(100dvh - 120px);
+    }
+
+    /* ── Fate cards: shrink to fit 5 in single row on mobile ── */
+    .fate-grid {
+        gap: 4px !important;
+        margin: 10px auto !important;
+    }
+    .fate-card {
+        width: 70px !important;
+        min-width: 44px; /* tap target minimum */
+    }
+
+    /* ── Say/Do: full width, compact textareas ── */
+    .say-do-grid {
+        width: 95% !important;
+        gap: 6px !important;
+    }
+    .say-do-grid textarea {
+        rows: 2;
+    }
+    #actionWrapper textarea,
+    #dialogueWrapper textarea {
+        padding: 10px !important;
+        font-size: 0.85em;
+        min-height: 44px;
+    }
+    .input-wrapper label {
+        font-size: 0.75em;
+        margin-bottom: 3px;
+    }
+
+    /* ── Fate card header: compact ── */
+    #fateCardHeader {
+        font-size: 0.8em;
+        margin: 6px 0 2px;
+    }
+
+    /* ── Bottom stack compression: maximize prose, minimize chrome ── */
+    .say-do-grid {
+        margin-top: 10px !important;
+    }
+    #fateCardWhisper {
+        margin: 4px 0;
+    }
+    #actionWrapper, #dialogueWrapper {
+        margin-bottom: 4px;
+    }
+    .input-wrapper {
+        margin: 0 auto 6px !important;
+    }
+
+    /* ── GN input grid: stack to single column ── */
+    .gn-input-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* ── GN panels: stack to single column ── */
+    .gn-count-2,
+    .gn-count-3,
+    .gn-count-4 {
+        grid-template-columns: 1fr !important;
+    }
+    .gn-count-3 .gn-panel-hero,
+    .gn-count-4 .gn-panel-hero {
+        grid-column: 1 !important;
+    }
+
+    /* ── Control plane: don't scale down, just reduce padding ── */
+    #controlPlane {
+        transform: translateX(-50%) !important; /* remove scale(0.65) */
+        bottom: 12px !important;
+    }
+    #controlPlane .flow-continue-btn {
+        padding: 8px 24px;
+        font-size: 0.9em;
+    }
+
+    /* ── Header: breadcrumbs below nav row, less overlap ── */
+    .shape-your-story-header {
+        padding-top: 0 !important;
+    }
+    .breadcrumb-row {
+        margin-top: 2px;
+    }
+    /* Reverse z-index: most recent breadcrumb on TOP (overlaps the one before it) */
+    .breadcrumb-row > :nth-child(1)  { z-index: 1 !important; }
+    .breadcrumb-row > :nth-child(2)  { z-index: 2 !important; }
+    .breadcrumb-row > :nth-child(3)  { z-index: 3 !important; }
+    .breadcrumb-row > :nth-child(4)  { z-index: 4 !important; }
+    .breadcrumb-row > :nth-child(5)  { z-index: 5 !important; }
+    .breadcrumb-row > :nth-child(6)  { z-index: 6 !important; }
+    .breadcrumb-row > :nth-child(7)  { z-index: 7 !important; }
+    .breadcrumb-row > :nth-child(8)  { z-index: 8 !important; }
+    .breadcrumb-row > :nth-child(9)  { z-index: 9 !important; }
+    .breadcrumb-row > :nth-child(10) { z-index: 10 !important; }
+
+    /* ── Corridor section titles: tighter kerning to fit on one line ── */
+    .corridor-section > .section-title,
+    .card-flow-row > .section-title,
+    body.corridor-mode .section-title {
+        letter-spacing: 0.15em !important;
+        font-size: 0.85em !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 8px !important;
+    }
+
+    /* ── Archetype/mask grid: 3 columns, bigger cards, show mask face ── */
+    .archetype-grid-8 {
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 8px !important;
+        max-width: 100% !important;
+        padding: 0 8px;
+    }
+    /* Auto-flip archetype cards to show mask face on mobile */
+    .archetype-grid-8 .archetype-card .sb-card-inner,
+    .archetype-grid-8 .playermask-card .sb-card-inner {
+        transform: rotateY(180deg);
+    }
+
+    /* ── Kill card gleam on mobile — saves GPU, reduces visual noise ── */
+    .card-gleam-layer,
+    .card-gleam-clip {
+        display: none !important;
+    }
+
+    /* ── Zoomed archetype card: description + exemplars in gold zone ── */
+    /* Text sits between mask bottom (~55% from top) and card frame (~78% from top) */
+    .archetype-card.zoomed .archetype-printed-desc,
+    .playermask-card.zoomed .archetype-printed-desc {
+        font-size: 6.75px !important;
+        line-height: 1.15 !important;
+        color: rgba(10, 8, 4, 0.85) !important;
+        text-shadow: none !important;
+        top: 57% !important;
+        bottom: auto !important;
+        max-height: 10% !important;
+        overflow: hidden !important;
+        left: 10px !important;
+        right: 10px !important;
+    }
+    .archetype-card.zoomed .archetype-exemplars,
+    .playermask-card.zoomed .archetype-exemplars {
+        font-size: 6.75px !important;
+        line-height: 1.15 !important;
+        color: rgba(10, 8, 4, 0.65) !important;
+        text-shadow: none !important;
+        top: 68% !important;
+        bottom: auto !important;
+        left: 10px !important;
+        right: 10px !important;
+        padding: 1px 4px !important;
+        max-height: 9% !important;
+        overflow: hidden !important;
+    }
+
+    /* ── All zoomed corridor cards: text locked to card zones on mobile ── */
+    /* Card is in zoom portal — grid-scoped Card Designer selectors don't match.
+       Use generic .zoomed selectors with percentage positions that work at 168px. */
+
+    /* Title (white text): locked to black text area at card bottom */
+    .sb-card.zoomed .sb-card-front .sb-card-title {
+        position: absolute !important;
+        top: auto !important;
+        bottom: 4% !important;
+        left: 10% !important;
+        right: 10% !important;
+        width: auto !important;
+        color: white !important;
+        -webkit-text-fill-color: white !important;
+        text-shadow: none !important;
+        text-align: center !important;
+        font-size: 7cqi !important;
+        white-space: normal !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Description (gold text): centered in middle of card */
+    .sb-card.zoomed .sb-card-front .sb-card-desc {
+        position: absolute !important;
+        top: 28% !important;
+        bottom: auto !important;
+        left: 8% !important;
+        right: 8% !important;
+        width: auto !important;
+        color: #c9a84c !important;
+        text-shadow: none !important;
+        text-align: center !important;
+        font-size: 5.5cqi !important;
+        line-height: 1.3 !important;
+        overflow: hidden !important;
+        max-height: 40% !important;
+    }
+
+    /* Pressure front flavor buttons: stack cleanly under description */
+    .sb-card.zoomed .pressure-front-flavors {
+        top: auto !important;
+        bottom: 16% !important;
+        left: 8% !important;
+        right: 8% !important;
+    }
+
+    /* Flavor arc number: hide on zoomed mobile (not useful at this scale) */
+    .sb-card.zoomed .sb-card-arc-flavors {
+        display: none !important;
+    }
+
+    /* Zoomed card max-width override — let portal + scale handle sizing */
+    .sb-card.zoomed {
+        max-width: none !important;
+    }
+
+    /* ── Character naming: both cards side-by-side, deck centered below ── */
+    .character-cards-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        grid-template-rows: auto auto !important;
+        gap: 10px !important;
+        padding: 0 12px !important;
+        justify-items: center;
+        flex-direction: unset !important;
+        flex-wrap: unset !important;
+    }
+    /* Both naming cards: fill grid columns */
+    .character-cards-row > .character-tarot-card {
+        width: 100% !important;
+        max-width: 180px !important;
+        grid-row: 1 !important;
+    }
+    #playerCharacterCard { grid-column: 1 !important; }
+    #loveInterestCharacterCard { grid-column: 2 !important; }
+    /* Destiny deck: span both columns, centered below cards */
+    .character-cards-row > .destiny-mini-deck {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+        justify-self: center !important;
+    }
+    #characterSectionRow .destiny-mini-deck-stack {
+        transform: scale(0.4) !important;
+        margin: -50px 0 !important; /* horizontal margin 0 to stay centered */
+    }
+
+    /* ── Corridor title "Name Your Characters": stretch across screen ── */
+    #identitySectionTitle {
+        letter-spacing: 0.3em !important;
+        font-size: 0.9em !important;
+        white-space: nowrap;
+    }
+
+    /* ── Reincarnation: hide full section, show single trigger button ── */
+    .echo-reinc-section {
+        display: none !important;
+    }
+    .reinc-mobile-trigger {
+        display: block !important;
+        width: 140px !important;
+        height: 34px !important;
+        margin: 0 auto !important;
+        font-size: 0.7em !important;
+    }
+    /* Place trigger inside character grid, below deck */
+    .character-cards-row > .reinc-mobile-trigger {
+        grid-column: 1 / -1 !important;
+        grid-row: 3 !important;
+        justify-self: center !important;
+    }
+
+    /* ── Reincarnation mobile modal ── */
+    .reinc-mobile-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 10020;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .reinc-mobile-modal.hidden {
+        display: none !important;
+    }
+    .reinc-mobile-modal-content {
+        background: #0e0e0e;
+        border: 1px solid rgba(201, 168, 76, 0.4);
+        border-radius: 8px;
+        padding: 20px 16px;
+        width: 85vw;
+        max-width: 340px;
+        max-height: 80vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .reinc-mobile-modal-title {
+        font-family: 'Lora', serif;
+        font-variant: small-caps;
+        letter-spacing: 0.2em;
+        color: #c9a84c;
+        font-size: 1em;
+        margin: 0 0 4px;
+    }
+    .reinc-mobile-modal-explainer {
+        font-family: 'Lora', serif;
+        font-size: 0.75em;
+        font-style: italic;
+        color: #c9a84c;
+        opacity: 0.6;
+        text-align: center;
+        margin: 0 0 8px;
+    }
+    .reinc-mobile-slots {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+        align-items: center;
+    }
+    .reinc-mobile-slots .reinc-slot {
+        width: 100%;
+    }
+    .reinc-mobile-slots .reinc-slot-btn {
+        width: 100% !important;
+        height: 36px !important;
+        font-size: 0.75em !important;
+    }
+    .reinc-mobile-close {
+        margin-top: 12px !important;
+        width: 100px;
+        height: 32px;
+        font-size: 0.7em;
     }
 }
 
@@ -26247,19 +27035,23 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         width: 60px !important;
         height: 120px !important;
     }
-    /* Masks: same fixed px as portrait — don't blow up in landscape */
+    /* Masks: match portrait size in landscape */
+    .mask-selection-shelf {
+        top: 5% !important;
+        transform: translateX(-50%) !important;
+    }
     .mask-candidate {
-        width: 55px !important;
+        width: 82px !important;
     }
     .mask-shelf-row {
-        gap: 10px;
+        gap: 14px;
     }
     .mask-ceremony-title {
-        font-size: clamp(14px, 4.5vw, 22px) !important;
+        font-size: clamp(16px, 5vw, 24px) !important;
         letter-spacing: 0.2em !important;
     }
     .mask-ceremony-subtitle {
-        font-size: clamp(11px, 3.5vw, 17px) !important;
+        font-size: clamp(13px, 4vw, 19px) !important;
         letter-spacing: 0.15em !important;
     }
 }

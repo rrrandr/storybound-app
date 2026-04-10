@@ -133,17 +133,24 @@
     return _audioCtx;
   }
 
-  // ── User-gesture unlock ──
+  // ── User-gesture unlock (iOS requires touchend, not just touchstart) ──
   function _unlock() {
-    if (_initialized) return;
     const ctx = _ensureCtx();
     if (!ctx) return;
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-    _initialized = true;
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(function() {
+        _initialized = true;
+        console.log('[SOUND] AudioContext unlocked, state:', ctx.state);
+      }).catch(function() {});
+    } else if (ctx.state === 'running') {
+      _initialized = true;
+    }
   }
 
-  document.addEventListener('click', _unlock, { once: false, passive: true });
-  document.addEventListener('touchstart', _unlock, { once: false, passive: true });
+  // Multiple event types — iOS Safari is picky about which gesture unlocks audio
+  ['click', 'touchstart', 'touchend', 'keydown'].forEach(function(evt) {
+    document.addEventListener(evt, _unlock, { passive: true });
+  });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SOUND DEFINITIONS — synthesized micro-sounds
@@ -581,8 +588,16 @@
       })
       .catch(function() {});
   }
-  // Start preload after first user interaction
-  document.addEventListener('click', function() { setTimeout(_preloadCorridorAmbience, 500); }, { once: true, passive: true });
+  // Start preload after first user interaction (must cover touch for mobile)
+  function _initAudioOnGesture() {
+    // Resume suspended AudioContext during the gesture (iOS requirement)
+    var ctx = _ensureCtx();
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(function(){});
+    setTimeout(_preloadCorridorAmbience, 300);
+  }
+  document.addEventListener('click', _initAudioOnGesture, { once: true, passive: true });
+  document.addEventListener('touchstart', _initAudioOnGesture, { once: true, passive: true });
+  document.addEventListener('touchend', _initAudioOnGesture, { once: true, passive: true });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // VOLUME CONTROL API — independent music / SFX sliders
