@@ -26245,9 +26245,10 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     .mode-card-library {
         width: calc((100vw - 28px) / 3) !important;
     }
-    /* Mode select screen: allow scroll, no min-height lock */
+    /* Mode select screen: centered vertically, scrollable if needed */
     #modeSelect {
-        min-height: auto !important;
+        min-height: 100vh !important;
+        justify-content: center !important;
         overflow-y: auto !important;
         padding-bottom: 40px;
     }
