@@ -26403,7 +26403,9 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     .forbidden-library.library-variant--vault {
         min-width: 100vw !important;
         width: 100vw !important;
+        min-height: 100vh !important;
         justify-content: flex-start !important; /* Books at top, not centered */
+        align-items: center !important;
         /* Replace painted library background with solid dark wood + archway at top only */
         background:
             radial-gradient(ellipse at 50% 8%, rgba(60, 40, 20, 0.25) 0%, transparent 50%),
@@ -26575,16 +26577,16 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         z-index: 2;
     }
 
-    /* ── Exit row: flow layout below books, no margin-top:auto push-to-bottom ── */
+    /* ── Exit row: pushed to bottom of screen ── */
     .library-variant--vault > .vault-exit-row {
         position: relative !important;
         top: auto !important;
         left: auto !important;
         transform: none !important;
         gap: 12px !important;
-        padding: 6px 0 8px !important;
+        padding: 6px 0 16px !important;
         justify-content: center;
-        margin-top: 12px !important;
+        margin-top: auto !important; /* push to bottom */
     }
     /* Books directly under title — override JS-injected cqi positioning */
     #vaultLibraryScreen .dm-shelf-row {
