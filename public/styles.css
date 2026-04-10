@@ -26106,12 +26106,18 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         overflow: visible !important;
     }
 
-    /* Corridor section titles: ensure visible on all corridor types */
+    /* Corridor section titles: ensure visible on ALL corridor types and containers */
     .card-flow-row > .section-title,
-    .corridor-section > .section-title {
+    .card-flow-row .section-title,
+    .corridor-section > .section-title,
+    .corridor-section .section-title,
+    .story-shape-row > .section-title,
+    .story-shape-row .section-title,
+    body.corridor-mode .section-title {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
+        position: relative !important;
     }
 
     /* Cards: 2-up on narrow screens (each ~48% of width) */
