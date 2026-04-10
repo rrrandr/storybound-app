@@ -237,7 +237,7 @@ export default async function handler(req, res) {
       }
     }
 
-    const _fortunePriceIds = [process.env.STRIPE_PRICE_ID_FORTUNE_PACK, process.env.STRIPE_PRICE_ID_FORTUNE_60, process.env.STRIPE_PRICE_ID_FORTUNE_120, process.env.STRIPE_PRICE_ID_FORTUNE_240, process.env.STRIPE_PRICE_ID_OFFERING].filter(Boolean);
+    const _fortunePriceIds = [process.env.STRIPE_PRICE_ID_FORTUNE_PACK, process.env.STRIPE_PRICE_ID_FORTUNES_60, process.env.STRIPE_PRICE_ID_FORTUNES_120, process.env.STRIPE_PRICE_ID_FORTUNES_240, process.env.STRIPE_PRICE_ID_OFFERING].filter(Boolean);
     if (priceId && _fortunePriceIds.includes(priceId)) {
       const fortunesGranted = parseInt(session.metadata?.fortunes_granted, 10) || 10;
       const { data: currentProfile } = await supabase
