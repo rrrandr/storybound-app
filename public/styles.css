@@ -14347,15 +14347,15 @@ textarea.fate-field {
 .archetype-card.zoomed .archetype-exemplars,
 .playermask-card.zoomed .archetype-exemplars {
     display: block;
-    font-size: 11px;
+    font-size: 8.25px;
     line-height: 1.15;
     top: auto;
     bottom: calc(22% - 15px);
     left: 14px;
     right: 14px;
     padding: 3px 6px;
-    color: rgba(15, 12, 8, 0.5);
-    text-shadow: 0 0.5px 0 rgba(255, 235, 180, 0.35);
+    color: rgba(15, 12, 8, 0.75);
+    text-shadow: none;
     letter-spacing: 0.03em;
 }
 /* Per-archetype exemplar nudges (up 5px from default for cards with lower gold zones) */
@@ -16303,7 +16303,7 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
     inset: -8px;
     pointer-events: none;
     overflow: visible;
-    z-index: 5;
+    z-index: 50;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
