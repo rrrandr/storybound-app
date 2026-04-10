@@ -22563,7 +22563,7 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── POV — Card Designer locked positions (grid) ── */
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -10.13cqi; left: 16.21cqi; width: 75.67cqi; font-size: 8.11cqi;
+    top: 40.13cqi; left: 16.21cqi; width: 75.67cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -22571,7 +22571,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -6.08cqi; left: 12.84cqi; width: 79.72cqi; font-size: 8.11cqi;
+    top: 42.08cqi; left: 12.84cqi; width: 79.72cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -22579,7 +22579,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: -12.84cqi; left: 9.46cqi; width: 86.48cqi; font-size: 8.11cqi;
+    top: 38.84cqi; left: 9.46cqi; width: 86.48cqi; font-size: 8.11cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
