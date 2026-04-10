@@ -26841,17 +26841,22 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         padding: 0 8px !important;
     }
 
-    /* ── Archetype/mask grid: 3 columns, bigger cards, show mask face ── */
+    /* ── Archetype/mask grid: 2 columns, large cards, centered ── */
     .archetype-grid-8 {
-        grid-template-columns: repeat(3, 1fr) !important;
-        gap: 8px !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
         max-width: 100% !important;
-        padding: 0 8px;
+        padding: 0 16px;
+        align-content: center !important;
+        justify-content: center !important;
     }
-    /* Auto-flip archetype cards to show mask face on mobile */
+    /* Auto-flip archetype cards to show mask face on mobile (NOT Destiny's Choice) */
     .archetype-grid-8 .archetype-card .sb-card-inner,
     .archetype-grid-8 .playermask-card .sb-card-inner {
         transform: rotateY(180deg);
+    }
+    .archetype-grid-8 .destiny-choice-card .sb-card-inner {
+        transform: none !important;
     }
 
     /* ── Kill card gleam on mobile — saves GPU, reduces visual noise ── */
