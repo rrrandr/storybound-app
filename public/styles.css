@@ -26865,29 +26865,29 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         display: none !important;
     }
 
-    /* ── Zoomed archetype card: description + exemplars in gold zone ── */
-    /* Text sits between mask bottom (~55% from top) and card frame (~78% from top) */
+    /* ── Zoomed archetype card: description + exemplars BELOW mask chin ── */
+    /* Mask chin ends ~76%. Black frame lines start ~82%. Text in 76-82% band. */
     .archetype-card.zoomed .archetype-printed-desc,
     .playermask-card.zoomed .archetype-printed-desc {
-        font-size: 6.75px !important;
-        line-height: 1.15 !important;
+        font-size: 5px !important;
+        line-height: 1.1 !important;
         color: rgba(10, 8, 4, 0.85) !important;
         text-shadow: none !important;
-        top: 57% !important;
-        bottom: auto !important;
-        max-height: 10% !important;
+        top: auto !important;
+        bottom: 20% !important;
+        max-height: 5% !important;
         overflow: hidden !important;
         left: 10px !important;
         right: 10px !important;
     }
     .archetype-card.zoomed .archetype-exemplars,
     .playermask-card.zoomed .archetype-exemplars {
-        font-size: 6.75px !important;
-        line-height: 1.15 !important;
+        font-size: 5px !important;
+        line-height: 1.1 !important;
         color: rgba(10, 8, 4, 0.65) !important;
         text-shadow: none !important;
-        top: 68% !important;
-        bottom: auto !important;
+        top: auto !important;
+        bottom: 17% !important;
         left: 10px !important;
         right: 10px !important;
         padding: 1px 4px !important;
