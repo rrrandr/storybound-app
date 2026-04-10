@@ -38,6 +38,22 @@ body.booting .screen {
 .splash-title.visible {
     opacity: 1;
 }
+/* Mobile portrait images: hidden by default */
+.splash-mobile-portrait {
+    display: none;
+}
+.splash-mobile-type {
+    opacity: 0;
+    transition: opacity 1.2s ease-in;
+}
+.splash-mobile-type.visible {
+    opacity: 1;
+}
+/* Mobile portrait: show mobile images, hide desktop */
+@media (max-width: 480px) and (orientation: portrait) {
+    .splash-desktop { display: none !important; }
+    .splash-mobile-portrait { display: block !important; }
+}
 
 /* ── Splash taglines ── */
 .splash-tagline, .splash-subline {

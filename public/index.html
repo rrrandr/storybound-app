@@ -37,8 +37,12 @@
 <!-- SPLASH — Masked gala intro, fades to reveal app                         -->
 <!-- ════════════════════════════════════════════════════════════════════════ -->
 <div id="splashOverlay" class="splash-overlay">
-  <img id="splashGala" class="splash-img" src="/assets/splash/gala.jpg" alt="">
-  <img id="splashTitle" class="splash-img splash-title" src="/assets/splash/gala-title.jpg" alt="">
+  <!-- Desktop / landscape: existing gala sequence -->
+  <img id="splashGala" class="splash-img splash-desktop" src="/assets/splash/gala.jpg" alt="">
+  <img id="splashTitle" class="splash-img splash-title splash-desktop" src="/assets/splash/gala-title.jpg" alt="">
+  <!-- Mobile portrait: two-phase splash -->
+  <img id="splashMobileBg" class="splash-img splash-mobile-portrait" src="/assets/splash/splash-mobile-bg.jpg" alt="">
+  <img id="splashMobileType" class="splash-img splash-mobile-portrait splash-mobile-type" src="/assets/splash/splash-mobile-type.jpg" alt="">
   <div id="splashTagline" class="splash-tagline">Stories That Open You.</div>
   <div id="splashSubline" class="splash-subline">Deeply responsive books &amp; graphic novels</div>
 </div>
