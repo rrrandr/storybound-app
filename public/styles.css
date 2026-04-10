@@ -26542,17 +26542,30 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         flex-shrink: 0 !important;
         flex-grow: 0 !important;
     }
-    /* Text padding: percentage-based to stay inside the gold text area at any card size */
+    /* Text: centered in gold text area, larger for readability */
     .authorship-card-face {
-        padding: 18% 8% 60% 8% !important; /* gold box: ~18% to ~40% of card height */
+        padding: 17% 6% 58% 6% !important;
+        justify-content: center !important;
+        align-items: center !important;
+        text-align: center !important;
     }
     .authorship-card-title {
-        font-size: 1.1em !important;
-        line-height: 1.0 !important;
+        font-size: 1.4em !important;
+        line-height: 1.05 !important;
+        text-align: center !important;
     }
     .authorship-card-desc {
-        font-size: 0.6em !important;
-        line-height: 1.2 !important;
+        font-size: 0.75em !important;
+        line-height: 1.25 !important;
+        text-align: center !important;
+    }
+    /* Sparkles: ensure visible on authorship cards */
+    .authorship-card {
+        overflow: visible !important;
+    }
+    .authorship-sparkle-emitter {
+        inset: -15px !important;
+        overflow: visible !important;
     }
 
     /* ── Ceremony text: 30% larger on mobile ── */
