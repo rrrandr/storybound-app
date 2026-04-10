@@ -515,7 +515,8 @@
 </div>
 
 <div id="payModal" class="overlay hidden" style="z-index:10000;">
-  <div class="box pay-box">
+  <div class="box pay-box" style="position:relative;">
+    <button id="payModalClose" class="pay-modal-close" onclick="document.getElementById('payModal').classList.add('hidden');">&times;</button>
     <h3 id="payModalHeading">Go deeper into the story</h3>
     <p style="font-size:1.1em; color:var(--gold); font-style:italic; text-align:center; margin:0 0 18px;">The ink runs dry. Fate's quill trembles above the page.</p>
 
@@ -1807,9 +1808,17 @@
 
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
-       <button id="fortuneBalanceBtn" class="small-btn" onclick="window.openFortunePurchaseModal()">
-         <span id="fortuneBalanceDisplay">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span> <span id="fortuneBalanceLabel">Fortunes</span>
-       </button>
+       <div class="fortune-dropdown-wrap">
+         <button id="fortuneBalanceBtn" class="small-btn" onclick="window.toggleFortuneDropdown()">
+           <span id="fortuneBalanceDisplay">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span> <span id="fortuneBalanceLabel">Fortunes</span>
+         </button>
+         <div id="fortuneDropdown" class="fortune-dropdown hidden">
+           <div class="fortune-drop-row"><span class="fortune-drop-label">Subscription</span><span class="fortune-drop-val" id="fortuneDropSub">0</span><button class="fortune-drop-claim" onclick="window.showPaywall('sub_only')">Claim</button></div>
+           <div class="fortune-drop-row"><span class="fortune-drop-label">Purchased</span><span class="fortune-drop-val" id="fortuneDropPurchased">0</span><button class="fortune-drop-claim" onclick="window.openFortunePurchaseModal()">Claim</button></div>
+           <div class="fortune-drop-row"><span class="fortune-drop-label">Storypass</span><span class="fortune-drop-val" id="fortuneDropStorypass">0</span><button class="fortune-drop-claim" onclick="window.purchaseStorypass()">Claim</button></div>
+           <div class="fortune-drop-row"><span class="fortune-drop-label">Drip</span><span class="fortune-drop-val" id="fortuneDropDrip">0</span><span class="fortune-drop-hint">Free \u2022 4hr</span></div>
+         </div>
+       </div>
        <button id="safeWordBtn" class="small-btn safe-word-btn" style="display:none;" onclick="window.triggerSafeWord()">Safe Word</button>
     </div>
 
@@ -2094,29 +2103,17 @@
   <div class="gn-selector-container">
     <h2 class="gn-selector-title">Choose Your Style</h2>
     <div class="gn-selector-options">
-      <button class="gn-selector-card" data-gn-style="ryo_toro">
-        <span class="gn-selector-name">Ryo Toro</span>
-        <span class="gn-selector-desc">Romantic Manhwa</span>
-      </button>
       <button class="gn-selector-card" data-gn-style="troy_bond">
         <span class="gn-selector-name">Troy S. Bond</span>
         <span class="gn-selector-desc">Semi-Realistic Ink</span>
       </button>
+      <button class="gn-selector-card" data-gn-style="ryo_toro">
+        <span class="gn-selector-name">Ryo Toro</span>
+        <span class="gn-selector-desc">Romantic Manhwa</span>
+      </button>
       <button class="gn-selector-card" data-gn-style="lora_venn">
         <span class="gn-selector-name">Lora Venn</span>
         <span class="gn-selector-desc">Ornate Painterly</span>
-      </button>
-      <button class="gn-selector-card" data-gn-style="doro_veyn">
-        <span class="gn-selector-name">Doro Veyn</span>
-        <span class="gn-selector-desc">Graphic Noir</span>
-      </button>
-      <button class="gn-selector-card" data-gn-style="soryn_vale">
-        <span class="gn-selector-name">Soryn Vale</span>
-        <span class="gn-selector-desc">Symbolic Surreal</span>
-      </button>
-      <button class="gn-selector-card" data-gn-style="vero_dune">
-        <span class="gn-selector-name">Vero Dune</span>
-        <span class="gn-selector-desc">Minimalist Graphic</span>
       </button>
       <button class="gn-selector-card" data-gn-style="olen_droll">
         <span class="gn-selector-name">Olen Droll</span>
