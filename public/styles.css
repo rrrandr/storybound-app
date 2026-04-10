@@ -26570,9 +26570,23 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         justify-content: center;
         margin-top: 12px !important;
     }
-    /* Books directly under title */
+    /* Books directly under title — override JS-injected cqi positioning */
     #vaultLibraryScreen .dm-shelf-row {
         margin-top: 0 !important;
+        position: relative !important;
+        top: auto !important;
+        max-width: 100% !important;
+    }
+    #vaultLibraryScreen .dm-shelf-row .library-book {
+        margin-top: 0 !important;
+    }
+
+    /* Library concierge: fixed to bottom of screen, not floating */
+    body:has(#vaultLibraryScreen:not(.hidden)) .library-concierge {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        height: auto !important;
     }
     /* Forbidden library exit row same treatment */
     .library-variant--forbidden > .vault-exit-row {
