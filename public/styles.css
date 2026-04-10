@@ -26153,23 +26153,34 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         bottom: 12px;
     }
 
-    /* Splash tagline: solid color + text-shadow (no gradient box artifact on iOS) */
-    .splash-tagline {
-        font-size: 1.2em !important;
-        letter-spacing: 0.2em !important;
+    /* Splash text: 3D gold at top of screen on mobile */
+    .splash-tagline.splash-mobile-text {
+        top: 6% !important;
+        font-family: 'Lora', serif !important;
+        font-variant: small-caps !important;
+        font-size: 1.4em !important;
+        letter-spacing: 0.25em !important;
         background: none !important;
         -webkit-background-clip: unset !important;
         background-clip: unset !important;
-        -webkit-text-fill-color: #c9a84c !important;
-        color: #c9a84c !important;
+        -webkit-text-fill-color: #dab978 !important;
+        color: #dab978 !important;
         filter: none !important;
         text-shadow:
+            0 1px 0 rgba(255, 230, 150, 0.5),
+            0 -1px 0 rgba(30, 20, 5, 0.8),
             0 2px 4px rgba(0, 0, 0, 0.9),
-            0 0 12px rgba(0, 0, 0, 0.8),
-            0 0 30px rgba(0, 0, 0, 0.6) !important;
+            0 0 12px rgba(0, 0, 0, 0.7) !important;
     }
-    .splash-subline {
-        font-size: 0.7em !important;
+    .splash-subline.splash-mobile-text {
+        top: 11% !important;
+        font-family: 'Lora', serif !important;
+        font-style: italic !important;
+        font-variant: normal !important;
+        font-size: 0.85em !important;
+        letter-spacing: 0.08em !important;
+        white-space: normal !important;
+        line-height: 1.4 !important;
         background: none !important;
         -webkit-background-clip: unset !important;
         background-clip: unset !important;
@@ -26177,9 +26188,9 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         color: #c9a84c !important;
         filter: none !important;
         text-shadow:
+            0 1px 0 rgba(255, 230, 150, 0.4),
             0 2px 4px rgba(0, 0, 0, 0.9),
-            0 0 12px rgba(0, 0, 0, 0.8),
-            0 0 30px rgba(0, 0, 0, 0.6) !important;
+            0 0 10px rgba(0, 0, 0, 0.7) !important;
     }
 
     /* Shape Your Story header: compact */
