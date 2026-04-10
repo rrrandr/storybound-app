@@ -26376,30 +26376,24 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         left: 0 !important;
     }
 
-    /* ── Concierge dialogue panel: slides up BEHIND concierge on mobile ── */
-    /* Must override body.concierge-mobile-active which sets z-index:10006, width:100%, height:100vh */
+    /* ── Concierge dialogue panel: flush RIGHT so concierge is visible on left ── */
+    /* Must override body.concierge-mobile-active which sets width:100%, height:100vh */
     .concierge-dialogue,
     body.concierge-mobile-active .concierge-dialogue,
     body.concierge-mobile-active .concierge-dialogue.visible,
     body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue,
     body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue,
     body.concierge-mobile-active:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue.visible {
-        width: 220px !important;
-        max-width: 220px !important;
-        left: 0 !important;
+        width: 65vw !important;
+        max-width: 65vw !important;
+        left: auto !important;
+        right: 0 !important;
         bottom: 0 !important;
         height: auto !important;
-        z-index: 6 !important;
-    }
-    /* Library concierge ALWAYS in front of dialogue panel on mobile */
-    .library-concierge,
-    body:has(#vaultLibraryScreen:not(.hidden)) .library-concierge,
-    body.concierge-mobile-active .library-concierge {
-        z-index: 10020 !important;
-        position: fixed !important;
+        max-height: 50vh !important;
     }
     .concierge-dialogue-frame {
-        max-height: 40vh;
+        max-height: 45vh;
     }
     /* Kill mobile scrim on library (panel is compact, not full-screen) */
     body.concierge-mobile-active .concierge-mobile-scrim {
@@ -26557,7 +26551,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     }
     /* Text: centered in gold text area, larger for readability */
     .authorship-card-face {
-        padding: 14% 6% 58% 6% !important;
+        padding: 10% 6% 58% 6% !important;
         justify-content: center !important;
         align-items: center !important;
         text-align: center !important;
@@ -26573,13 +26567,17 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         text-align: center !important;
     }
     /* Sparkles: ensure visible on authorship cards */
-    .authorship-card,
-    .authorship-card * {
+    .authorship-card {
         overflow: visible !important;
     }
     .authorship-sparkle-emitter {
         inset: -15px !important;
         overflow: visible !important;
+        z-index: 100 !important;
+        pointer-events: none !important;
+    }
+    .authorship-sparkle {
+        z-index: 101 !important;
     }
 
     /* ── Ceremony text: 30% larger on mobile ── */
@@ -27110,18 +27108,20 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         left: 0 !important;
     }
     .concierge-dialogue {
-        width: 220px !important;
-        left: 0 !important;
+        width: 65vw !important;
+        left: auto !important;
+        right: 0 !important;
         bottom: 0 !important;
-        z-index: 6 !important;
+        height: auto !important;
+        max-height: 50vh !important;
     }
     body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue {
-        left: 0 !important;
+        left: auto !important;
+        right: 0 !important;
         bottom: 0 !important;
-        z-index: 6 !important;
     }
     .concierge-dialogue-frame {
-        max-height: 40vh;
+        max-height: 45vh;
     }
     .concierge-summon-figure {
         width: 60px !important;
