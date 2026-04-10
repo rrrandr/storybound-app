@@ -22688,6 +22688,11 @@ body.gn-cover-active .gn-ui-overlay {
     line-height: 1.15 !important;
 }
 
+/* ── Dynamic front desc: shift 5px left (3cqi at 168px card) ── */
+#dynamicGrid .sb-card.selected.flipped .sb-card-front .sb-card-desc {
+    margin-left: -3cqi;
+}
+
 /* ── Polarity (Dynamic) — Card Designer locked text positions ── */
 
 /* ── Proximity — grid ── */
