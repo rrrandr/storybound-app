@@ -26864,12 +26864,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         padding: 0 8px !important;
     }
 
-    /* ── Archetype/mask grid: 2 columns, large cards, centered ── */
+    /* ── Archetype/mask grid: 3 columns, cards fill width ── */
     .archetype-grid-8 {
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 10px !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
         max-width: 100% !important;
-        padding: 0 16px;
+        padding: 0 6px;
         align-content: center !important;
         justify-content: center !important;
     }
