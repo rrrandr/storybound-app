@@ -31,10 +31,12 @@
 
   // ── Lazy AudioContext init (requires user gesture) ──
   function _ensureCtx() {
-    if (_audioCtx) return _audioCtx;
-    try {
-      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      window._audioCtxRef = _audioCtx; // expose for ambient loops
+    if (!_audioCtx) {
+      try {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window._audioCtxRef = _audioCtx;
+      } catch(e) { return null; }
+    }
       // Create master gain nodes for independent volume control
       if (!_sfxMasterGain) {
         _sfxMasterGain = _audioCtx.createGain();
@@ -133,17 +135,43 @@
     return _audioCtx;
   }
 
-  // ── User-gesture unlock (iOS requires touchend, not just touchstart) ──
+  // ── User-gesture unlock (iOS requires resume + silent buffer in same gesture) ──
   function _unlock() {
-    const ctx = _ensureCtx();
+    // Create context if needed
+    if (!_audioCtx) {
+      try {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window._audioCtxRef = _audioCtx;
+      } catch(e) { return; }
+    }
+    var ctx = _audioCtx;
     if (!ctx) return;
+
+    // iOS CRITICAL: resume() MUST happen synchronously in the gesture callback.
+    // Do NOT defer or do other work first.
     if (ctx.state === 'suspended') {
-      ctx.resume().then(function() {
+      ctx.resume();
+    }
+
+    // iOS workaround: play a silent buffer to "warm" the context.
+    // Some iOS versions require actual audio output in the gesture.
+    if (!_initialized) {
+      try {
+        var silent = ctx.createBuffer(1, 1, 22050);
+        var src = ctx.createBufferSource();
+        src.buffer = silent;
+        src.connect(ctx.destination);
+        src.start(0);
+      } catch(e) {}
+    }
+
+    if (ctx.state === 'running') {
+      if (!_initialized) {
         _initialized = true;
         console.log('[SOUND] AudioContext unlocked, state:', ctx.state);
-      }).catch(function() {});
-    } else if (ctx.state === 'running') {
-      _initialized = true;
+        // Now that context is running, set up gain nodes + preload buffers
+        _ensureCtx();
+      }
     }
   }
 
