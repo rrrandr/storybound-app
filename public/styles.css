@@ -9699,6 +9699,20 @@ select {
 /* All text uses calc(Xpx / var(--petition-scale, 1)) to counteract the     */
 /* card's transform:scale() — renders at true screen px regardless of zoom. */
 /* ═══════════════════════════════════════════════════════════════════════════ */
+.petition-zoom-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  position: relative;
+}
+.petition-sparkle-wrap {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 0;
+}
 .petition-fate-card.petition-zoomed {
   max-width: none;
   z-index: 10005;
@@ -9706,11 +9720,6 @@ select {
   pointer-events: auto;
   transition: transform 0.3s ease;
   overflow: visible;
-}
-.petition-fate-card.petition-zoomed > .zoom-card-sparkles {
-  inset: -20px;
-  z-index: 100;
-  transform: translateZ(2px);
 }
 /* Remove face border when zoomed — .inner border is sufficient */
 .petition-fate-card.petition-zoomed .front,
@@ -9787,11 +9796,9 @@ select {
 }
 .petition-suggest-list {
   flex: 1; overflow-y: auto; min-height: 0;
-  scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.3) transparent;
+  scrollbar-width: none;
 }
-.petition-suggest-list::-webkit-scrollbar { width: 3px; }
-.petition-suggest-list::-webkit-scrollbar-track { background: transparent; }
-.petition-suggest-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.3); border-radius: 2px; }
+.petition-suggest-list::-webkit-scrollbar { display: none; }
 .petition-suggest-item {
   font-family: 'Lora', serif;
   font-size: calc(10px / var(--petition-scale, 1)); line-height: 1.3;
@@ -27406,3 +27413,40 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     top: 152.15cqi; left: 14.58cqi; width: 70.47cqi; font-size: 7.85cqi;
 }
 
+/* ── Petition Fate zoom — Card Designer overrides ── */
+#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay {
+    right: auto; bottom: auto;
+    top: 33px; left: 31.5px;
+    font-size: 16px; width: 122px;
+}
+#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-write-toggle {
+    position: relative; right: auto; bottom: auto;
+    top: -29.5px; left: -15.5px;
+}
+#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-caveat {
+    right: auto; bottom: auto;
+    top: 179px; left: 25px;
+}
+#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
+    right: auto; bottom: auto;
+    top: 37.5px; left: 20px; width: 84px;
+}
+#petitionFortuneTiers {
+    position: relative; right: auto; bottom: auto;
+    top: 148px; left: -25px;
+    width: 84px; height: 19px;
+}
+#petitionFortuneTiers > button.petition-tier-btn.petition-tier-standalone {
+    right: auto; bottom: auto;
+    top: 0px; left: 33px; width: 22px;
+}
+
+/* ── Tempt Fate zoom — Card Designer overrides ── */
+#sbZoomPortal > div.fate-card.tempt-fate-card.flipped.tempt-zoomed > div.inner > div.back > div.tempt-zoom-overlay > div.tempt-wish-zone > div.tempt-wish-columns > div.tempt-wish-col {
+    right: auto; bottom: auto;
+    top: 0px; left: 0px;
+}
+#sbZoomPortal > div.fate-card.tempt-fate-card.flipped.tempt-zoomed > div.inner > div.back > div.tempt-zoom-overlay > div.tempt-wish-zone > div.tempt-wish-columns {
+    position: relative; right: auto; bottom: auto;
+    width: 125.5px; font-size: 15px;
+}
