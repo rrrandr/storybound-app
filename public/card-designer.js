@@ -1098,8 +1098,9 @@
     }
   });
 
-  // Expose active state so app.js can skip DOM rebuilds during design mode
+  // Expose active state + activate so app.js can skip DOM rebuilds / trigger from shortcuts
   window.__cardDesignerActive = () => active;
+  window.__cardDesignerActivate = () => { if (!active) activate(); };
 
   console.log('%c[Card Designer] Ready — Press Ctrl+Shift+D to toggle', 'color: #d4a844');
 })();
