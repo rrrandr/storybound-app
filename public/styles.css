@@ -9705,11 +9705,18 @@ select {
   position: relative;
   pointer-events: auto;
   transition: transform 0.3s ease;
+  overflow: visible;
+}
+.petition-fate-card.petition-zoomed > .zoom-card-sparkles {
+  inset: -20px;
+  z-index: 100;
+  transform: translateZ(2px);
 }
 /* Remove face border when zoomed — .inner border is sufficient */
 .petition-fate-card.petition-zoomed .front,
 .petition-fate-card.petition-zoomed .back {
   border: none;
+  overflow: visible;
 }
 /* Gold outline: counteract scale so it stays 1px visual, inset -2px to hug card edge */
 .petition-fate-card.petition-zoomed .inner {
@@ -9746,6 +9753,7 @@ select {
   background: transparent;
   pointer-events: none;
   z-index: 2;
+  overflow: visible;
 }
 .petition-zoom-overlay > * {
   pointer-events: auto;
@@ -9907,11 +9915,12 @@ select {
   opacity: 1;
 }
 .petition-caveat {
+  position: absolute;
+  top: 58%; left: 16.5%; right: 6%;
   font-family: 'Lora', serif; font-style: italic;
   font-size: calc(9px / var(--petition-scale, 1));
-  color: rgba(218, 165, 32, 0.5);
+  color: rgba(0, 0, 0, 0.55);
   text-align: center;
-  margin-top: calc(4px / var(--petition-scale, 1));
   letter-spacing: 0.04em;
   user-select: none;
 }
@@ -9949,6 +9958,14 @@ select {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+/* Gold F-bolt icon in tier price boxes — source PNG is black, filter to gold */
+.petition-tier-icon {
+    height: 0.9em;
+    vertical-align: -0.05em;
+    margin-left: 1px;
+    opacity: 0.85;
+    filter: brightness(0) invert(1) sepia(1) saturate(3) hue-rotate(15deg) brightness(0.85);
 }
 .petition-tier-standalone:hover:not(:disabled) {
     background: linear-gradient(180deg, #241e14 0%, #151008 100%) !important;
@@ -9991,48 +10008,6 @@ select {
 
 /* ── Hide old fortune row if still present ── */
 .petition-zoom-overlay .petition-fortune-row { display: none; }
-
-/* ── Petition zoom — Card Designer position overrides ── */
-#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay {
-    right: auto; bottom: auto;
-    top: 30px; left: 13px;
-}
-#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
-    right: auto; bottom: auto;
-    top: 4px; left: 13px;
-}
-#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-write-toggle {
-    position: relative; right: auto; bottom: auto;
-    top: -29.5px; left: -15.5px;
-}
-#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-suggest-panel {
-    right: auto; bottom: auto;
-    top: 1%; left: 5%;
-    width: 90%;
-}
-#sbZoomPortal > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone {
-    right: auto; bottom: auto;
-    top: 6%; left: 5.5%;
-}
-#petitionFortuneTiers {
-    position: relative; right: auto; bottom: auto;
-    top: 148px; left: -5.5px;
-    width: 108px; height: 19px;
-}
-#petitionFortuneTiers > button.petition-tier-btn.petition-tier-standalone {
-    right: auto; bottom: auto;
-    top: 0px; left: 0px;
-}
-
-/* ── Tempt Fate — Card Designer position overrides ── */
-#sbZoomPortal > div.fate-card.tempt-fate-card.flipped.tempt-zoomed > div.inner > div.back > div.tempt-zoom-overlay > div.tempt-wish-zone > div.tempt-wish-columns > div.tempt-wish-col {
-    right: auto; bottom: auto;
-    top: 0px; left: 0px;
-}
-#sbZoomPortal > div.fate-card.tempt-fate-card.flipped.tempt-zoomed > div.inner > div.back > div.tempt-zoom-overlay > div.tempt-wish-zone > div.tempt-wish-columns {
-    position: relative; right: auto; bottom: auto;
-    width: 125.5px; font-size: 15px;
-}
 
 /* ═══════════════════════════════════════════════════════════════════
    TEMPT FATE — ZOOM CARD OVERLAY
@@ -16293,7 +16268,9 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
 .sb-zoom-portal.zoom-scrollable {
     overflow-y: auto;
     overflow-x: hidden;
+    flex-wrap: wrap;
     align-items: flex-start;
+    align-content: flex-start;
     justify-content: center;
     padding-top: 20px;
     -webkit-overflow-scrolling: touch;
@@ -18073,6 +18050,11 @@ body.corridor-mode .sb-grid.corridor-section {
     filter: brightness(1);
     pointer-events: none;
     font-size: inherit;
+}
+/* White F-bolt in Proceed buttons (dark background, white text) */
+.petition-proceed-btn .fortune-icon,
+.flow-continue-btn .fortune-icon {
+    filter: brightness(0) invert(1);
 }
 /* Match glow states when inside HUD */
 .fortune-hud .fortune-icon {
@@ -25516,6 +25498,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 .mask-ceremony-subtitle {
     font-size: clamp(17.5px, 2.25vw, 27.5px);
     margin-top: 8px;
+    white-space: nowrap;
     opacity: 0;
     animation: ceremonyTextFadeIn 1s ease 4s forwards, ceremonyGleam 6s ease-in-out 5.5s infinite, ceremonyBreathe 24s ease-in-out 5s infinite;
 }
@@ -26471,6 +26454,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         font-size: clamp(13px, 4vw, 19px) !important;
         letter-spacing: 0.15em !important;
         margin-top: 8px !important;
+        white-space: normal !important;
     }
 
     /* ── Ceremony + library concierge: same size & position on mobile ── */
@@ -27266,5 +27250,159 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     .mask-ceremony-subtitle {
         font-size: clamp(13px, 4vw, 19px) !important;
         letter-spacing: 0.15em !important;
+        white-space: normal !important;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Card Designer output — per-card positioning overrides
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.68cqi; left: 16.67cqi; width: 66.96cqi; font-size: 7.73cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.38cqi; left: 18.45cqi; width: 63.69cqi; font-size: 7.73cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.68cqi; left: 16.67cqi; width: 67.26cqi; font-size: 7.73cqi;
+}
+#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.08cqi; left: 25.6cqi; width: 49.4cqi; font-size: 7.73cqi;
+}
+
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: -8.93cqi; left: 14.29cqi; width: 66.67cqi; font-size: 7.14cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 153.57cqi; left: 21.13cqi; width: 59.52cqi; font-size: 7.73cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: -5.36cqi; left: 11.31cqi; width: 70.24cqi; font-size: 7.14cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.98cqi; left: 14.88cqi; width: 69.94cqi; font-size: 7.74cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: -11.31cqi; left: 8.33cqi; width: 76.19cqi; font-size: 7.14cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 151.79cqi; left: 17.26cqi; width: 68.75cqi; font-size: 7.74cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; position: absolute; bottom: auto;
+    top: 66.67cqi; left: 11.31cqi; width: 67.86cqi; font-size: 7.14cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 151.79cqi; left: 13.1cqi; width: 73.51cqi; font-size: 7.74cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 42.26cqi; left: 8.33cqi; width: 75cqi; font-size: 7.14cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.98cqi; left: 20.24cqi; width: 62.5cqi; font-size: 7.74cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 43.45cqi; left: 12.5cqi; width: 61.9cqi; font-size: 7.14cqi;
+}
+#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.38cqi; left: 14.88cqi; width: 70.54cqi; font-size: 7.74cqi;
+}
+
+#lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    right: auto; position: absolute; bottom: auto;
+    top: 51.19cqi; left: 13.1cqi; width: 66.67cqi; font-size: 7.14cqi;
+}
+#lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.98cqi; left: 33.93cqi; width: 36.31cqi; font-size: 7.74cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 52.98cqi; left: 12.5cqi; width: 70.24cqi; font-size: 7.14cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.38cqi; left: 35.71cqi; width: 28.57cqi; font-size: 7.74cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 45.83cqi; left: 12.5cqi; width: 70.24cqi; font-size: 7.14cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.98cqi; left: 36.9cqi; width: 25.3cqi; font-size: 7.74cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 51.19cqi; left: 11.9cqi; width: 69.05cqi; font-size: 7.14cqi;
+}
+#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.98cqi; left: 26.19cqi; width: 49.11cqi; font-size: 7.74cqi;
+}
+
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.76cqi; left: 17.56cqi; width: 64.88cqi; font-size: 7.85cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 61.01cqi; left: 5.36cqi; width: 88.1cqi; font-size: 7.24cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 61.01cqi; left: 5.95cqi; width: 88.1cqi; font-size: 7.24cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.76cqi; left: 19.35cqi; width: 61.9cqi; font-size: 7.85cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 52.68cqi; left: 5.95cqi; width: 88.1cqi; font-size: 7.14cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.46cqi; left: 15.48cqi; width: 68.45cqi; font-size: 7.85cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 57.74cqi; left: 15.18cqi; width: 72.32cqi; font-size: 7.24cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.15cqi; left: 13.1cqi; width: 70.83cqi; font-size: 7.85cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 56.85cqi; left: 13.69cqi; width: 73.81cqi; font-size: 7.24cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 153.06cqi; left: 22.02cqi; width: 54.76cqi; font-size: 7.85cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+    position: absolute; right: auto; bottom: auto;
+    top: 60.42cqi; left: 7.14cqi; width: 88.1cqi; font-size: 7.24cqi;
+}
+#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+    right: auto; position: absolute; bottom: auto;
+    top: 152.15cqi; left: 14.58cqi; width: 70.47cqi; font-size: 7.85cqi;
+}
+
