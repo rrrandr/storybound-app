@@ -9768,11 +9768,23 @@ select {
   pointer-events: auto;
 }
 
-/* ── Top Zone: suggestion columns / custom text — positioned above "What would you change?" ── */
+/* ── Suggest Headers — independent bar above the scrolling columns ── */
+.petition-suggest-headers {
+  position: absolute;
+  top: 3%; left: 9%; right: 5%;
+  display: flex;
+  justify-content: space-around;
+  pointer-events: auto;
+}
+.petition-suggest-headers .petition-suggest-header {
+  margin-bottom: 0;
+}
+
+/* ── Top Zone: scrolling suggestion columns ── */
 .petition-top-zone {
   position: absolute;
-  top: 6%; left: 9%; right: 5%;
-  height: 38%;
+  top: 9%; left: 9%; right: 5%;
+  height: 35%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
