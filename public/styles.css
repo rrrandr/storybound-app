@@ -9711,7 +9711,7 @@ select {
   inset: -20px;
   pointer-events: none;
   overflow: visible;
-  z-index: 0;
+  z-index: 10010;
 }
 .petition-fate-card.petition-zoomed {
   max-width: none;
@@ -9768,26 +9768,27 @@ select {
   pointer-events: auto;
 }
 
-/* ── Suggest Headers — independent bar above the scrolling columns ── */
-.petition-suggest-headers {
+/* ── Suggest Headers — two independent positioned labels ── */
+.petition-header-surface,
+.petition-header-plot {
   position: absolute;
-  top: 3%; left: 9%; right: 5%;
-  display: flex;
-  justify-content: space-around;
+  top: 3%;
   pointer-events: auto;
+  font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.06em;
+  color: rgba(0,0,0,0.85); text-align: center;
+  font-size: calc(11px / var(--petition-scale, 1)); line-height: 1.2; white-space: nowrap;
 }
-.petition-suggest-headers .petition-suggest-header {
-  margin-bottom: 0;
-}
+.petition-header-surface { left: 9%; width: 40%; }
+.petition-header-plot { right: 5%; width: 40%; }
 
 /* ── Top Zone: scrolling suggestion columns ── */
 .petition-top-zone {
   position: absolute;
   top: 9%; left: 9%; right: 5%;
-  height: 35%;
+  bottom: 45%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* ── Suggestion Panel (two scrolling columns) ── */
@@ -27431,26 +27432,33 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     top: 33px; left: 31.5px;
     font-size: 16px; width: 122px;
 }
-#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone > div.petition-write-toggle {
-    position: relative; right: auto; bottom: auto;
-    top: -29.5px; left: -15.5px;
+#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-header-surface {
+    right: auto; bottom: auto;
+    top: -30px; left: -7.5px;
+}
+#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-header-plot {
+    right: auto; bottom: auto;
+    top: -30px; left: 43.5px;
+}
+#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone {
+    right: auto; bottom: auto;
+    top: -14px; left: -18px; width: 115.5px; font-size: 11.5px;
 }
 #sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-caveat {
     right: auto; bottom: auto;
-    top: 179px; left: 25px;
+    top: 146.5px; left: -6.5px;
 }
 #sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
     right: auto; bottom: auto;
-    top: 37.5px; left: 20px; width: 84px;
+    top: 35.5px; left: -3px;
 }
 #petitionFortuneTiers {
-    position: relative; right: auto; bottom: auto;
-    top: 148px; left: -25px;
-    width: 84px; height: 19px;
+    right: auto; bottom: auto;
+    width: 86px; top: 116.5px; left: -8px;
 }
 #petitionFortuneTiers > button.petition-tier-btn.petition-tier-standalone {
     right: auto; bottom: auto;
-    top: 0px; left: 33px; width: 22px;
+    top: 1px; left: 17px;
 }
 
 /* ── Tempt Fate zoom — Card Designer overrides ── */

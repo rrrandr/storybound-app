@@ -120,8 +120,10 @@
 
   // Selectors for fate card elements (petition, tempt, etc.)
   const FATE_ELEMENT_SELECTORS = [
-    '.petition-zoom-overlay .petition-suggest-headers',
+    '.petition-zoom-overlay .petition-header-surface',
+    '.petition-zoom-overlay .petition-header-plot',
     '.petition-zoom-overlay .petition-top-zone',
+    '.petition-zoom-overlay .petition-suggest-col',
     '.petition-zoom-overlay .petition-write-toggle',
     '.petition-zoom-overlay .petition-caveat',
     '.petition-zoom-overlay .petition-lower-zone',
