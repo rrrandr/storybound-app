@@ -9708,10 +9708,10 @@ select {
 }
 .petition-sparkle-wrap {
   position: absolute;
-  inset: -20px;
+  inset: -1px;
   pointer-events: none;
   overflow: visible;
-  z-index: 10010;
+  z-index: 100;
 }
 .petition-fate-card.petition-zoomed {
   max-width: none;
@@ -9733,6 +9733,7 @@ select {
   outline: calc(1px / var(--petition-scale, 1)) solid rgba(218,165,32,0.6) !important;
   outline-offset: calc(-3px / var(--petition-scale, 1)) !important;
   border-radius: 12px !important;
+  overflow: visible;
 }
 
 /* ── Petition Sparkles — orbiting dots around card perimeter ── */
@@ -9772,20 +9773,20 @@ select {
 .petition-header-surface,
 .petition-header-plot {
   position: absolute;
-  top: 3%;
+  top: 1%;
   pointer-events: auto;
   font-family: 'Lora', serif; font-variant: small-caps; letter-spacing: 0.06em;
   color: rgba(0,0,0,0.85); text-align: center;
-  font-size: calc(11px / var(--petition-scale, 1)); line-height: 1.2; white-space: nowrap;
+  font-size: 3.5px; line-height: 1.2; white-space: nowrap;
 }
-.petition-header-surface { left: 9%; width: 40%; }
-.petition-header-plot { right: 5%; width: 40%; }
+.petition-header-surface { left: 16%; }
+.petition-header-plot { left: 60%; }
 
 /* ── Top Zone: scrolling suggestion columns ── */
 .petition-top-zone {
   position: absolute;
-  top: 9%; left: 9%; right: 5%;
-  bottom: 45%;
+  top: 8%; left: 8%;
+  width: 79%; height: 12%;
   display: flex;
   flex-direction: column;
   overflow: visible;
@@ -9796,7 +9797,6 @@ select {
   display: flex;
   gap: calc(4px / var(--petition-scale, 1));
   width: 100%; flex: 1; min-height: 0;
-  overflow: hidden;
 }
 .petition-suggest-col {
   flex: 1; display: flex; flex-direction: column; min-width: 0;
@@ -9881,8 +9881,8 @@ select {
 /* ── Lower Zone: fortune tier buttons — fits inside area below "Use Fortunes" ── */
 .petition-lower-zone {
   position: absolute;
-  top: 62%; left: 16.5%; right: 6%;
-  bottom: 18%;
+  top: 74%; left: 18%;
+  width: 62%; height: 9%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
 }
@@ -9936,7 +9936,7 @@ select {
 }
 .petition-caveat {
   position: absolute;
-  top: 58%; left: 16.5%; right: 6%;
+  top: 72%; left: 18%; right: 6%;
   font-family: 'Lora', serif; font-style: italic;
   font-size: calc(9px / var(--petition-scale, 1));
   color: rgba(0, 0, 0, 0.55);
@@ -16286,8 +16286,9 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
    to expand layout box. Portal switches to scroll-friendly alignment.
    pointer-events: auto enables scrolling; JS click handler on portal closes zoom. */
 .sb-zoom-portal.zoom-scrollable {
-    overflow-y: auto;
+    overflow-y: scroll;
     overflow-x: hidden;
+    scrollbar-width: none;
     flex-wrap: wrap;
     align-items: flex-start;
     align-content: flex-start;
@@ -16296,6 +16297,7 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
     -webkit-overflow-scrolling: touch;
     pointer-events: auto;
 }
+.sb-zoom-portal.zoom-scrollable::-webkit-scrollbar { display: none; }
 
 /* Zoomed card state - card is INSIDE portal, centered by flexbox */
 /* MUST override base card constraints — zoom operates on a fixed-aspect object */
@@ -16395,7 +16397,7 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
    Anchored to .sb-card (not .sb-card-front) so sparkles aren't clipped by overflow:hidden. */
 .zoom-card-sparkles {
     position: absolute;
-    inset: -8px;
+    inset: -1px;
     pointer-events: none;
     overflow: visible;
     z-index: 50;
@@ -27424,41 +27426,6 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
     top: 152.15cqi; left: 14.58cqi; width: 70.47cqi; font-size: 7.85cqi;
-}
-
-/* ── Petition Fate zoom — Card Designer overrides ── */
-#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay {
-    right: auto; bottom: auto;
-    top: 33px; left: 31.5px;
-    font-size: 16px; width: 122px;
-}
-#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-header-surface {
-    right: auto; bottom: auto;
-    top: -30px; left: -7.5px;
-}
-#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-header-plot {
-    right: auto; bottom: auto;
-    top: -30px; left: 43.5px;
-}
-#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-top-zone {
-    right: auto; bottom: auto;
-    top: -14px; left: -18px; width: 115.5px; font-size: 11.5px;
-}
-#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-caveat {
-    right: auto; bottom: auto;
-    top: 146.5px; left: -6.5px;
-}
-#sbZoomPortal > div.petition-zoom-wrapper > div.fate-card.petition-fate-card.flipped.petition-zoomed > div.inner > div.back > div.petition-zoom-overlay > div.petition-lower-zone {
-    right: auto; bottom: auto;
-    top: 35.5px; left: -3px;
-}
-#petitionFortuneTiers {
-    right: auto; bottom: auto;
-    width: 86px; top: 116.5px; left: -8px;
-}
-#petitionFortuneTiers > button.petition-tier-btn.petition-tier-standalone {
-    right: auto; bottom: auto;
-    top: 1px; left: 17px;
 }
 
 /* ── Tempt Fate zoom — Card Designer overrides ── */

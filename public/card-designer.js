@@ -123,12 +123,9 @@
     '.petition-zoom-overlay .petition-header-surface',
     '.petition-zoom-overlay .petition-header-plot',
     '.petition-zoom-overlay .petition-top-zone',
-    '.petition-zoom-overlay .petition-suggest-col',
     '.petition-zoom-overlay .petition-write-toggle',
     '.petition-zoom-overlay .petition-caveat',
     '.petition-zoom-overlay .petition-lower-zone',
-    '.petition-zoom-overlay .petition-fortune-tiers',
-    '.petition-zoom-overlay .petition-tier-btn',
     '.tempt-zoom-overlay .tempt-wish-zone',
     '.tempt-zoom-overlay .tempt-wish-columns',
     '.tempt-zoom-overlay .tempt-wish-col',
@@ -1101,5 +1098,15 @@
   window.__cardDesignerActive = () => active;
   window.__cardDesignerActivate = () => { if (!active) activate(); };
 
-  console.log('%c[Card Designer] Ready — Press Ctrl+Shift+D to toggle', 'color: #d4a844');
+  // Console shortcut: window._resetCardDesigner() clears all persisted mods
+  window._resetCardDesigner = function() {
+    localStorage.removeItem(MODS_STORAGE_KEY);
+    localStorage.removeItem(CW_STORAGE_KEY);
+    mods.clear();
+    containerWidths.clear();
+    if (active) { deactivate(); activate(); }
+    console.log('%c[Card Designer] All mods cleared. Reload to see base CSS.', 'color: #d4a844; font-weight: bold');
+  };
+
+  console.log('%c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods', 'color: #d4a844');
 })();
