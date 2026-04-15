@@ -224,7 +224,7 @@ body.theme-easy { --bg1:#fffee8; --bg2:#fffce0; --pink:#333; --hot:#000; --gold:
 body.theme-print .fate-card h3, body.theme-easy .fate-card h3 { color: #000 !important; text-shadow: none !important; font-weight: bold; }
 body.theme-print .section-title, body.theme-easy .section-title { text-shadow: none; }
 
-html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:var(--font-main); overflow-x:hidden; min-height:100vh; scrollbar-gutter: stable; }
+html, body { margin:0; padding:0; background:linear-gradient(135deg,var(--bg1),var(--bg2)); color:var(--ink); font-family:var(--font-main); min-height:100vh; }
 body { text-align:center; padding:0; transition: background 0.3s, color 0.3s; }
 
 /* Custom scrollbar — grey/charcoal to match dark theme */
@@ -1483,14 +1483,22 @@ button.is-finalized,
 h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
 .section-title { font-family: 'Lora', serif !important; font-variant: small-caps !important; color: #ffffff !important; text-shadow: none !important; font-weight: 400; font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
 /* Fate header — immutable UI typography (never inherits tone/theme) */
-#fateCardHeader {
+#fateCardHeader,
+.fate-own-hands-label {
     font-family: 'Lora', serif !important;
     font-variant: small-caps !important;
     color: #ffffff !important;
     text-shadow: none !important;
-    letter-spacing: 0.6em;
-    /* Layout (moved from inline style) */
-    font-size: 1.8em;
+    font-size: 1.1em !important;
+    margin: 5px 0 2px !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    animation: fate-header-breathe 30s ease-in-out infinite;
+}
+@keyframes fate-header-breathe {
+    0%, 100% { letter-spacing: 0.45em; }
+    50%      { letter-spacing: 0.65em; }
+}
     margin-top: 0;
     display: flex;
     justify-content: center;
@@ -8709,12 +8717,14 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
         0 -1px 0 rgba(252, 246, 186, 0.12),
         0 0 6px rgba(191, 149, 63, 0.15);
     font-weight: 600;
+    text-align: center;
 }
 #actionWrapper textarea::placeholder,
 #dialogueWrapper textarea::placeholder {
     color: rgba(212, 168, 67, 0.35);
     -webkit-text-fill-color: rgba(212, 168, 67, 0.35);
     text-shadow: none;
+    text-align: center;
 }
 .input-wrapper label, .setting-label { display:block; text-align:center; color:var(--gold); margin-bottom:5px; font-size:0.9em; font-family:var(--font-main); text-transform:uppercase; letter-spacing:1px; }
 /* ═══════════════════════════════════════════════════════════════════════════ */
@@ -9043,7 +9053,7 @@ select {
     display: flex;
     flex-wrap: nowrap;
     gap: 12px;
-    margin: 20px auto;
+    margin: 5px auto;
     max-width: 100%;
     justify-content: center;
     perspective: 1000px;
@@ -9108,24 +9118,17 @@ select {
     cursor: default;
 }
 
-/* "Take Fate In Your Own Hands" label + special cards row */
+/* "Take Fate In Your Own Hands" label — typography shared with #fateCardHeader above */
 .fate-own-hands-label {
-    font-family: 'Lora', serif !important;
-    font-variant: small-caps !important;
-    color: #ffffff !important;
-    text-shadow: none !important;
-    font-size: 1.8em;
-    letter-spacing: 0.6em;
     text-align: center;
     display: flex;
     justify-content: center;
-    margin: 15px 0 10px;
 }
 .fate-special-row {
     display: flex;
     justify-content: center;
     gap: 16px;
-    margin: 0 auto 15px;
+    margin: 0 auto 5px;
 }
 
 /* GOLDEN FLOW - continuous gentle stream from Fate Card to inputs */
@@ -9694,6 +9697,27 @@ select {
 .tempt-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 12px !important; }
 .tempt-fate-card.flipped .inner { border-color: rgba(218,165,32,0.7) !important; box-shadow: 0 0 8px rgba(218,165,32,0.3); }
 
+/* ── Golden electricity overlay on flipped Tempt Fate card ── */
+.tempt-electricity {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    overflow: visible;
+}
+.tempt-electricity svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+.tempt-bolt {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: url(#tempt-glow);
+}
+/* Electricity visible in all states including zoomed */
+
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* PETITION ZOOM — Card zooms into portal with ritual overlay on face       */
 /* All text uses calc(Xpx / var(--petition-scale, 1)) to counteract the     */
@@ -9705,6 +9729,14 @@ select {
   align-items: center;
   pointer-events: auto;
   position: relative;
+  width: 100%;
+  max-width: 100vw;
+  overflow: visible !important;
+}
+/* Prevent body/html overflow-x:hidden from clipping scaled petition card */
+body:has(.petition-fate-card.petition-zoomed),
+html:has(.petition-fate-card.petition-zoomed) {
+  overflow-x: visible !important;
 }
 .petition-sparkle-wrap {
   position: absolute;
@@ -9714,26 +9746,32 @@ select {
   z-index: 100;
 }
 .petition-fate-card.petition-zoomed {
-  max-width: none;
+  max-width: none !important;
+  min-width: 0 !important;
   z-index: 10005;
   position: relative;
   pointer-events: auto;
   transition: transform 0.3s ease;
-  overflow: visible;
+  overflow: visible !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
 }
 /* Remove face border when zoomed — .inner border is sufficient */
 .petition-fate-card.petition-zoomed .front,
 .petition-fate-card.petition-zoomed .back {
   border: none;
   overflow: visible;
+  border-radius: 0 !important;
 }
 /* Gold outline: counteract scale so it stays 1px visual, inset -2px to hug card edge */
 .petition-fate-card.petition-zoomed .inner {
   border: none !important;
   outline: calc(1px / var(--petition-scale, 1)) solid rgba(218,165,32,0.6) !important;
   outline-offset: calc(-3px / var(--petition-scale, 1)) !important;
-  border-radius: 12px !important;
-  overflow: visible;
+  border-radius: 0 !important;
+  overflow: visible !important;
 }
 
 /* ── Petition Sparkles — orbiting dots around card perimeter ── */
@@ -9779,7 +9817,7 @@ select {
   color: rgba(0,0,0,0.85); text-align: center;
   font-size: 3.5px; line-height: 1.2; white-space: nowrap;
 }
-.petition-header-surface { left: 16%; }
+.petition-header-surface { left: 31px; }
 .petition-header-plot { left: 60%; }
 
 /* ── Top Zone: scrolling suggestion columns ── */
@@ -9808,10 +9846,23 @@ select {
   font-size: calc(11px / var(--petition-scale, 1)); line-height: 1.2; white-space: nowrap;
 }
 .petition-suggest-list {
-  flex: 1; overflow-y: auto; min-height: 0;
+  flex: 1; overflow-y: hidden; min-height: 0;
   scrollbar-width: none;
+  position: relative;
 }
 .petition-suggest-list::-webkit-scrollbar { display: none; }
+/* Auto-scroll marquee — items animate upward in a continuous loop */
+.petition-suggest-list-inner {
+  display: flex; flex-direction: column;
+  animation: petition-marquee 20s linear infinite;
+}
+.petition-suggest-list-inner:hover {
+  animation-play-state: paused;
+}
+@keyframes petition-marquee {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
 .petition-suggest-item {
   font-family: 'Lora', serif;
   font-size: calc(10px / var(--petition-scale, 1)); line-height: 1.3;
@@ -9820,6 +9871,7 @@ select {
   cursor: pointer;
   border-bottom: 1px solid rgba(0,0,0,0.08); transition: color 0.15s, background 0.15s;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex-shrink: 0;
 }
 .petition-suggest-item:last-child { border-bottom: none; }
 .petition-suggest-item:hover {
@@ -9856,11 +9908,12 @@ select {
 .petition-custom-input textarea {
   flex: 1; width: 100%; resize: none;
   font-family: 'Lora', serif;
-  font-size: calc(10px / var(--petition-scale, 1)); line-height: 1.3;
+  font-size: calc(20px / var(--petition-scale, 1)); line-height: 1.3;
   color: rgba(0,0,0,0.85); background: rgba(255,255,255,0.15);
   border: 1px solid rgba(0,0,0,0.2);
   padding: calc(3px / var(--petition-scale, 1)) calc(4px / var(--petition-scale, 1));
   box-sizing: border-box;
+  text-align: center;
   scrollbar-width: thin; scrollbar-color: rgba(0,0,0,0.3) transparent;
 }
 .petition-custom-input textarea:focus {
@@ -9868,6 +9921,7 @@ select {
 }
 .petition-custom-input textarea::placeholder {
   color: rgba(0,0,0,0.35); font-style: italic;
+  text-align: center;
 }
 .petition-custom-back {
   font-family: 'Lora', serif;
@@ -9881,7 +9935,7 @@ select {
 /* ── Lower Zone: fortune tier buttons — fits inside area below "Use Fortunes" ── */
 .petition-lower-zone {
   position: absolute;
-  top: 74%; left: 18%;
+  top: 73.1%; left: 18%;
   width: 62%; height: 9%;
   display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -9936,7 +9990,17 @@ select {
 }
 .petition-caveat {
   position: absolute;
-  top: 72%; left: 18%; right: 6%;
+  top: 72.3%; left: 18%; right: 6%;
+  font-family: 'Lora', serif; font-style: italic;
+  font-size: calc(9px / var(--petition-scale, 1));
+  color: rgba(0, 0, 0, 0.55);
+  text-align: center;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+.petition-sacrifice {
+  position: absolute;
+  top: 82%; left: 36.5%;
   font-family: 'Lora', serif; font-style: italic;
   font-size: calc(9px / var(--petition-scale, 1));
   color: rgba(0, 0, 0, 0.55);
@@ -10121,13 +10185,14 @@ select {
   resize: none;
   font-family: 'Lora', serif;
   font-weight: 400;
-  font-size: calc(12px / var(--tempt-scale, 1));
+  font-size: calc(20px / var(--tempt-scale, 1));
   line-height: 1.3;
   color: rgba(0, 0, 0, 0.85);
   background: rgba(255, 255, 255, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.2);
   padding: calc(3px / var(--tempt-scale, 1)) calc(4px / var(--tempt-scale, 1));
   box-sizing: border-box;
+  text-align: center;
   scrollbar-width: thin;
   scrollbar-color: rgba(0, 0, 0, 0.3) transparent;
 }
@@ -10138,6 +10203,7 @@ select {
 .tempt-custom-input textarea::placeholder {
   color: rgba(0, 0, 0, 0.35);
   font-style: italic;
+  text-align: center;
 }
 
 /* ── Tempt Fate Proceed button (portal sibling, below card) ── */
@@ -16163,15 +16229,16 @@ body.guided-fate-autoplay .card-gleam-layer {
 
 /* Zoomed black cards: halve gleam opacity + soft blur
    Uses data-grp selectors because zoomed cards live in zoom portal (not inside grid) */
-.sb-card.zoomed[data-grp="world"] .card-gleam-layer,
-.sb-card.zoomed[data-grp="tone"] .card-gleam-layer,
-.sb-card.zoomed[data-grp="pressure"] .card-gleam-layer,
-.sb-card.zoomed[data-grp="pov"] .card-gleam-layer,
-.sb-card.zoomed[data-grp="length"] .card-gleam-layer,
-.sb-card.zoomed[data-grp="dynamic"] .card-gleam-layer,
-.sb-card.zoomed[data-grp="intensity"] .card-gleam-layer {
-    opacity: calc(var(--gleam-opacity-multiplier, 0.8) / 2);
-    filter: blur(3px);
+/* Hide gleam on ALL zoomed cards — distracting at zoom scale */
+.sb-card.zoomed .card-gleam-layer,
+.sb-card.zoomed .card-gleam-clip,
+.fate-card.fate-card-zoomed .card-gleam-layer,
+.fate-card.fate-card-zoomed .card-gleam-clip,
+.petition-fate-card.petition-zoomed .card-gleam-layer,
+.petition-fate-card.petition-zoomed .card-gleam-clip,
+.tempt-fate-card.tempt-zoomed .card-gleam-layer,
+.tempt-fate-card.tempt-zoomed .card-gleam-clip {
+    display: none !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -16272,7 +16339,7 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
 /* Zoom portal - holds zoomed card ABOVE backdrop, uses flexbox for centering */
 .sb-zoom-portal {
     position: fixed;
-    inset: 0;
+    top: 0; bottom: 0; left: 0; right: 0;
     z-index: 9999; /* ABOVE backdrop */
     pointer-events: none; /* Let clicks through to backdrop by default */
     display: flex;
@@ -16286,8 +16353,7 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
    to expand layout box. Portal switches to scroll-friendly alignment.
    pointer-events: auto enables scrolling; JS click handler on portal closes zoom. */
 .sb-zoom-portal.zoom-scrollable {
-    overflow-y: scroll;
-    overflow-x: hidden;
+    overflow: visible;
     scrollbar-width: none;
     flex-wrap: wrap;
     align-items: flex-start;
@@ -18073,6 +18139,35 @@ body.corridor-mode .sb-grid.corridor-section {
     pointer-events: none;
     font-size: inherit;
 }
+/* Reader fortune display — stacked Storypass / Reserve lines */
+.reader-fortune-stacked {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-family: 'Lora', serif;
+    font-size: 0.65em;
+    color: rgba(201,168,76,0.7);
+    line-height: 1.4;
+    vertical-align: middle;
+}
+.reader-fortune-line {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+}
+.reader-fortune-label {
+    font-size: 0.85em;
+    opacity: 0.7;
+}
+.reader-fortune-icon {
+    height: 1em;
+    width: auto;
+    vertical-align: -0.1em;
+    margin-left: 2px;
+    filter: sepia(1) saturate(2) brightness(1.8) hue-rotate(15deg);
+    opacity: 0.7;
+}
 /* White F-bolt in Proceed buttons (dark background, white text) */
 .petition-proceed-btn .fortune-icon,
 .flow-continue-btn .fortune-icon {
@@ -19335,7 +19430,7 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    Submit Button — Ornate plaque PNG
    ================================= */
 #submitBtn {
-    background: url('/assets/ui/Black-Gold-400x112.png') center/100% 100% no-repeat, #0a0a0a;
+    background: url('/assets/ui/Black-Gold-400x112.png') center/calc(100% + 2px) calc(100% + 2px) no-repeat, #0a0a0a;
     border: none;
     box-shadow: none;
     color: #d4a843;
@@ -19351,6 +19446,15 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 }
 #submitBtn:hover {
     filter: brightness(1.15);
+}
+.submit-cost-display {
+    font-size: 0.55em;
+    color: rgba(255,255,255,0.7);
+    margin-left: 6px;
+    font-weight: 400;
+    letter-spacing: 0;
+    vertical-align: middle;
+    text-shadow: none;
 }
 
 /* =================================
@@ -26376,8 +26480,8 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         padding: 0 8px;
     }
 
-    /* Zoom portal: fit to screen */
-    .sb-zoom-portal {
+    /* Zoom portal: fit to screen (except petition zoom which needs full width for scaled card) */
+    .sb-zoom-portal:not(:has(.petition-zoomed)):not(:has(.tempt-zoomed)) {
         width: 90vw !important;
         left: 5vw !important;
     }
@@ -26882,7 +26986,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         gap: 4px !important;
         margin: 10px auto !important;
     }
-    .fate-card {
+    .fate-card:not(.petition-zoomed):not(.fate-card-zoomed):not(.tempt-zoomed) {
         width: 70px !important;
         min-width: 44px; /* tap target minimum */
     }

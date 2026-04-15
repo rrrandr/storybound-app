@@ -125,6 +125,7 @@
     '.petition-zoom-overlay .petition-top-zone',
     '.petition-zoom-overlay .petition-write-toggle',
     '.petition-zoom-overlay .petition-caveat',
+    '.petition-zoom-overlay .petition-sacrifice',
     '.petition-zoom-overlay .petition-lower-zone',
     '.tempt-zoom-overlay .tempt-wish-zone',
     '.tempt-zoom-overlay .tempt-wish-columns',

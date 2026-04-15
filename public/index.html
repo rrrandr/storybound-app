@@ -530,8 +530,7 @@
     <!-- Taste Tier hint — shown only for free-tier users -->
     <div id="tasteTierHint" class="hidden" style="text-align:center; margin:0 0 16px;">
       <p style="font-size:0.82em; color:var(--ink); opacity:0.75; line-height:1.6; margin:0;">
-        Taste Tier includes two starter books and one original story.<br>
-        Buying Storypass or Fortunes unlocks further scenes and another original story.
+        Taste Tier includes just enough to whet the appetite. Indulgence comes at a price.
       </p>
     </div>
 
@@ -1647,8 +1646,8 @@
     <!-- Main story content (hidden during cover) -->
     <div id="storyContent" class="story-content hidden">
 
-    <!-- Fortune HUD — persistent during story play -->
-    <div id="fortuneHud" class="fortune-hud" title="Fortune fuels your story.&#10;One Fortune advances the narrative by one scene.">
+    <!-- Fortune HUD — hidden (balance shown next to Submit Turn + in Vault Menu) -->
+    <div id="fortuneHud" class="fortune-hud" style="display:none;">
       <span class="fortune-hud-label">Fortunes</span>
       <span id="fortuneHudCount" class="fortune-hud-count">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span>
       <span id="fortuneLowWarning" class="fortune-low-warning hidden"></span>
@@ -1737,6 +1736,9 @@
         <button class="page-nav-btn" id="nextPageBtn" disabled>
             Next <span>→</span>
         </button>
+        <button class="page-nav-btn" id="lastPageBtn" disabled>
+            Last <span>⇥</span>
+        </button>
         <!-- Scene Actions kebab -->
         <div class="scene-actions-wrap">
             <button class="scene-actions-btn" id="sceneActionsBtn" title="Scene Actions">⋯</button>
@@ -1758,9 +1760,7 @@
       </div>
     </div>
 
-    <div id="vizSceneBtnWrap" class="vision-mobile-only" style="text-align:center; margin-bottom:10px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-        <button id="vizSceneBtn" onclick="window.summonVision()" class="small-btn">✨ Summon Vision</button>
-    </div>
+    <!-- Summon Vision button removed — Vision orb available during reading -->
 
     <!-- Reader Cover Preview (shown after generation) -->
     <div id="readerCoverPreview" class="hidden" style="margin:15px auto; max-width:300px; text-align:center;">
@@ -1779,18 +1779,18 @@
     <div class="say-do-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; width:75%; margin-left:auto; margin-right:auto;">
       <div class="input-wrapper" id="actionWrapper">
           <label>What do you do?</label>
-          <textarea id="actionInput" rows="3" placeholder="Action..."></textarea>
+          <textarea id="actionInput" rows="3" placeholder="Action..." maxlength="2000"></textarea>
       </div>
       <div class="input-wrapper" id="dialogueWrapper">
           <label>What do you say?</label>
-          <textarea id="dialogueInput" rows="3" placeholder="Dialogue..."></textarea>
+          <textarea id="dialogueInput" rows="3" placeholder="Dialogue..." maxlength="2000"></textarea>
       </div>
     </div>
 
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="saveBtn" class="small-btn locked-style">Save</button>
-       <button id="submitBtn" style="font-size:1.3em;">Submit Turn</button>
-       <span id="readerFortuneDisplay" style="font-family:'Lora',serif; font-size:0.65em; color:rgba(201,168,76,0.6); white-space:nowrap;"><span id="readerStorypassF">0</span>F <span style="opacity:0.5">|</span> <span id="readerReservesF">0</span>R</span>
+       <button id="submitBtn" style="font-size:1.3em;">Submit Turn<span id="submitCostDisplay" class="submit-cost-display"></span></button>
+       <span id="readerFortuneDisplay" class="reader-fortune-stacked"><span class="reader-fortune-line"><span id="readerStorypassF">0</span> <span class="reader-fortune-label">Storypass</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="readerSubscriberF">0</span> <span class="reader-fortune-label">Subscriber</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="readerPurchasedF">0</span> <span class="reader-fortune-label">Purchased</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span></span>
     </div>
 
     <div id="fateCardWhisper" class="fate-card-whisper hidden"></div>
@@ -1807,33 +1807,16 @@
     <div class="intensity-mini" id="gameIntensity" style="display:none;"></div>
 
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
-       <button id="edgeCovenantBtn" class="small-btn" onclick="window.openEdgeCovenantModal()">Edge Covenant</button>
-       <div class="fortune-dropdown-wrap">
-         <button id="fortuneBalanceBtn" class="small-btn" onclick="window.toggleFortuneDropdown()">
-           <span id="fortuneBalanceDisplay">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span> <span id="fortuneBalanceLabel">Fortunes</span>
-         </button>
-         <div id="fortuneDropdown" class="fortune-dropdown hidden">
-           <div class="fortune-drop-row"><span class="fortune-drop-label">Subscription</span><span class="fortune-drop-val" id="fortuneDropSub">0</span><button class="fortune-drop-claim" onclick="window.showPaywall('sub_only')">Claim</button></div>
-           <div class="fortune-drop-row"><span class="fortune-drop-label">Purchased</span><span class="fortune-drop-val" id="fortuneDropPurchased">0</span><button class="fortune-drop-claim" onclick="window.openFortunePurchaseModal()">Claim</button></div>
-           <div class="fortune-drop-row"><span class="fortune-drop-label">Storypass</span><span class="fortune-drop-val" id="fortuneDropStorypass">0</span><button class="fortune-drop-claim" onclick="window.purchaseStorypass()">Claim</button></div>
-           <div class="fortune-drop-row"><span class="fortune-drop-label">Drip</span><span class="fortune-drop-val" id="fortuneDropDrip">0</span><span class="fortune-drop-hint">Free \u2022 4hr</span></div>
-         </div>
-       </div>
+       <button id="storyBookmarksBtn" class="small-btn" onclick="window.toggleBookmarksPanel()">Bookmarks</button>
        <button id="safeWordBtn" class="small-btn safe-word-btn" style="display:none;" onclick="window.triggerSafeWord()">Safe Word</button>
     </div>
-
-    <!-- Reader Cover Generation Button — REMOVED (auto-cover at milestones replaces manual trigger) -->
-    <!-- Bookmarks Button + Panel — below Generate Cover -->
-    <div id="storyBookmarksWrap" class="story-bookmarks-wrap hidden">
-      <button id="storyBookmarksBtn" class="story-bookmarks-button">&#x1F516; Bookmarks</button>
-      <div id="storyBookmarksPanel" class="story-bookmarks-panel hidden">
-        <div class="story-bookmarks-header">
-          <span>Bookmarked Lines</span>
-          <button id="storyBookmarksPanelClose" class="story-bookmarks-close">&times;</button>
-        </div>
-        <ul id="storyBookmarksList" class="story-bookmarks-list"></ul>
-        <div id="storyBookmarksEmpty" class="story-bookmarks-empty">No bookmarks yet. Highlight text in the scene to save lines.</div>
+    <div id="storyBookmarksPanel" class="story-bookmarks-panel hidden">
+      <div class="story-bookmarks-header">
+        <span>Bookmarked Scenes</span>
+        <button id="storyBookmarksPanelClose" class="story-bookmarks-close">&times;</button>
       </div>
+      <ul id="storyBookmarksList" class="story-bookmarks-list"></ul>
+      <div id="storyBookmarksEmpty" class="story-bookmarks-empty">No bookmarks yet. Highlight text in a scene to bookmark it.</div>
     </div>
 
   </div>
@@ -2163,13 +2146,26 @@
 
   <!-- ── GN_FATE_LAYER: cards + special fate (hidden until populated) ── -->
   <div id="gnFateSection" class="gn-fate-section" style="display:none;">
+    <div id="gnFateCardWhisper" class="fate-card-whisper hidden"></div>
     <div class="section-title">Let Fate Guide You</div>
-    <div class="fate-grid" id="gnCardMount"></div>
+    <div style="display:flex; align-items:flex-start; justify-content:center;">
+      <div class="fate-grid" id="gnCardMount"></div>
+    </div>
     <div class="section-title fate-own-hands-label">Take Fate In Your Own Hands</div>
     <div class="fate-special-row" id="gnFateSpecial"></div>
-    <div class="gn-fate-controls">
-      <button id="gnTemptFateBtn" class="small-btn">Tempt Fate</button>
-      <button id="gnSafeWordBtn" class="small-btn safe-word-btn" style="display:none;">Safe Word</button>
+    <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
+       <div class="fortune-dropdown-wrap">
+         <button id="gnFortuneBalanceBtn" class="small-btn" onclick="window.toggleFortuneDropdown('gnFortuneDropdown')">
+           <span id="gnFortuneBalanceDisplay">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span> <span id="gnFortuneBalanceLabel">Fortunes</span>
+         </button>
+         <div id="gnFortuneDropdown" class="fortune-dropdown hidden">
+           <div class="fortune-drop-row"><span class="fortune-drop-label">Subscription</span><span class="fortune-drop-val" id="gnFortuneDropSub">0</span><button class="fortune-drop-claim" onclick="window.showPaywall('sub_only')">Claim</button></div>
+           <div class="fortune-drop-row"><span class="fortune-drop-label">Purchased</span><span class="fortune-drop-val" id="gnFortuneDropPurchased">0</span><button class="fortune-drop-claim" onclick="window.openFortunePurchaseModal()">Claim</button></div>
+           <div class="fortune-drop-row"><span class="fortune-drop-label">Storypass</span><span class="fortune-drop-val" id="gnFortuneDropStorypass">0</span><button class="fortune-drop-claim" onclick="window.purchaseStorypass()">Claim</button></div>
+           <div class="fortune-drop-row"><span class="fortune-drop-label">Drip</span><span class="fortune-drop-val" id="gnFortuneDropDrip">0</span><span class="fortune-drop-hint">Free &#x2022; 4hr</span></div>
+         </div>
+       </div>
+       <button id="gnSafeWordBtn" class="small-btn safe-word-btn" style="display:none;">Safe Word</button>
     </div>
   </div>
 
@@ -2203,15 +2199,16 @@
     <div class="gn-input-grid">
       <div class="input-wrapper">
         <label>What do you do?</label>
-        <textarea id="gnActionInput" rows="3" placeholder="Action..."></textarea>
+        <textarea id="gnActionInput" rows="3" placeholder="Action..." maxlength="2000"></textarea>
       </div>
       <div class="input-wrapper">
         <label>What do you say?</label>
-        <textarea id="gnDialogueInput" rows="3" placeholder="Dialogue..."></textarea>
+        <textarea id="gnDialogueInput" rows="3" placeholder="Dialogue..." maxlength="2000"></textarea>
       </div>
     </div>
     <div class="gn-submit-row">
-      <button id="gnSubmitBtn" class="sb-btn-png md">Submit Turn</button>
+      <button id="gnSubmitBtn" class="sb-btn-png md">Submit Turn<span id="gnSubmitCostDisplay" class="submit-cost-display"></span></button>
+      <span id="gnReaderFortuneDisplay" class="reader-fortune-stacked"><span class="reader-fortune-line"><span id="gnReaderStorypassF">0</span> <span class="reader-fortune-label">Storypass</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="gnReaderSubscriberF">0</span> <span class="reader-fortune-label">Subscriber</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="gnReaderPurchasedF">0</span> <span class="reader-fortune-label">Purchased</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span></span>
     </div>
   </div>
 

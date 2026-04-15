@@ -1865,6 +1865,21 @@ function setSelectedState(mount, selectedCardEl){
             mount.appendChild(card);
         });
 
+        // ── Auto-flip: reveal cards 2s after they scroll into view ──
+        if ('IntersectionObserver' in window) {
+            const flipObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !_allFlipped) {
+                        setTimeout(() => {
+                            if (!_allFlipped) flipAllCards(mount);
+                        }, 2000);
+                        flipObserver.disconnect();
+                    }
+                });
+            }, { threshold: 0.3 });
+            flipObserver.observe(mount);
+        }
+
         // ── Petition & Tempt cards → separate "Take Fate In Your Own Hands" container ──
         const specialMount = document.getElementById('fateSpecialCards') || mount;
         specialMount.innerHTML = '';
@@ -1894,7 +1909,7 @@ function setSelectedState(mount, selectedCardEl){
         petitionCard.onclick = () => {
             if (document.querySelector('.design-mode-badge')) return;
             if (!petitionCard.classList.contains('flipped')) petitionCard.classList.add('flipped');
-            if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
+            if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom(petitionCard);
         };
         specialMount.appendChild(petitionCard);
 
@@ -1908,6 +1923,7 @@ function setSelectedState(mount, selectedCardEl){
             </div>
         `;
         // Tempt Fate: hover flips, mouseleave unflips, click zooms
+        // Electricity is always on (both faces)
         temptCard.addEventListener('mouseenter', () => {
             if (!temptCard.classList.contains('flipped')) {
                 temptCard.classList.add('flipped');
@@ -1925,6 +1941,8 @@ function setSelectedState(mount, selectedCardEl){
             if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
         };
         specialMount.appendChild(temptCard);
+        // Start electricity on both faces — always running
+        if (window._startTemptElectricity) window._startTemptElectricity(temptCard);
 
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);
@@ -2089,7 +2107,7 @@ function setSelectedState(mount, selectedCardEl){
             petitionCard.onclick = () => {
                 if (document.querySelector('.design-mode-badge')) return;
                 if (!petitionCard.classList.contains('flipped')) petitionCard.classList.add('flipped');
-                if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
+                if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom(petitionCard);
             };
         }
 
@@ -2115,6 +2133,8 @@ function setSelectedState(mount, selectedCardEl){
                 if (!temptCard.classList.contains('flipped')) temptCard.classList.add('flipped');
                 if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
             };
+            // Restart electricity on rebind
+            if (window._startTemptElectricity) window._startTemptElectricity(temptCard);
         }
 
         // Rebind commit hooks
