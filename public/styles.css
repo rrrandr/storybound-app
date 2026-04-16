@@ -8718,6 +8718,13 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
         0 0 6px rgba(191, 149, 63, 0.15);
     font-weight: 600;
     text-align: center;
+    /* Fixed height prevents compounding resize on focus */
+    height: 75px;
+    min-height: 75px;
+    max-height: 75px;
+    padding: 24px 12px;
+    box-sizing: border-box;
+    resize: none;
 }
 #actionWrapper textarea::placeholder,
 #dialogueWrapper textarea::placeholder {
@@ -10205,6 +10212,16 @@ html:has(.petition-fate-card.petition-zoomed) {
   font-style: italic;
   text-align: center;
 }
+.tempt-fate-caveat {
+  font-family: 'Lora', serif;
+  font-size: calc(10px / var(--tempt-scale, 1));
+  font-style: italic;
+  color: rgba(0, 0, 0, 0.55);
+  text-align: center;
+  padding-top: calc(2px / var(--tempt-scale, 1));
+  user-select: none;
+  flex-shrink: 0;
+}
 
 /* ── Tempt Fate Proceed button (portal sibling, below card) ── */
 .tempt-proceed-btn.flow-continue-btn.sb-btn-png {
@@ -10597,6 +10614,7 @@ textarea.fate-field {
     font-size: 0.9em;
     font-style: italic;
     white-space: nowrap;
+    text-align: center;
 }
 .rotating-placeholder.textarea-placeholder {
     top: 14px;

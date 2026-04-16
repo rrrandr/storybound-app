@@ -1729,6 +1729,9 @@
     </div>
 
     <div class="page-nav-controls" id="pageNavControls">
+        <button class="page-nav-btn" id="coverPageBtn" onclick="window._showBookCover()">
+            <span>←</span> Cover
+        </button>
         <button class="page-nav-btn" id="prevPageBtn" disabled>
             <span>←</span> Previous
         </button>
@@ -1739,13 +1742,6 @@
         <button class="page-nav-btn" id="lastPageBtn" disabled>
             Last <span>⇥</span>
         </button>
-        <!-- Scene Actions kebab -->
-        <div class="scene-actions-wrap">
-            <button class="scene-actions-btn" id="sceneActionsBtn" title="Scene Actions">⋯</button>
-            <div class="scene-actions-menu hidden" id="sceneActionsMenu">
-                <button class="scene-actions-item" id="btnBindReincarnation">Bind Reincarnation</button>
-            </div>
-        </div>
     </div>
 
     <!-- Fate Threads Panel — optional narrative thread tracker -->
@@ -1808,6 +1804,7 @@
 
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="storyBookmarksBtn" class="small-btn" onclick="window.toggleBookmarksPanel()">Bookmarks</button>
+       <button id="btnBindReincarnation" class="small-btn" style="display:none;">Bind Reincarnation</button>
        <button id="safeWordBtn" class="small-btn safe-word-btn" style="display:none;" onclick="window.triggerSafeWord()">Safe Word</button>
     </div>
     <div id="storyBookmarksPanel" class="story-bookmarks-panel hidden">
@@ -2154,17 +2151,8 @@
     <div class="section-title fate-own-hands-label">Take Fate In Your Own Hands</div>
     <div class="fate-special-row" id="gnFateSpecial"></div>
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
-       <div class="fortune-dropdown-wrap">
-         <button id="gnFortuneBalanceBtn" class="small-btn" onclick="window.toggleFortuneDropdown('gnFortuneDropdown')">
-           <span id="gnFortuneBalanceDisplay">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span> <span id="gnFortuneBalanceLabel">Fortunes</span>
-         </button>
-         <div id="gnFortuneDropdown" class="fortune-dropdown hidden">
-           <div class="fortune-drop-row"><span class="fortune-drop-label">Subscription</span><span class="fortune-drop-val" id="gnFortuneDropSub">0</span><button class="fortune-drop-claim" onclick="window.showPaywall('sub_only')">Claim</button></div>
-           <div class="fortune-drop-row"><span class="fortune-drop-label">Purchased</span><span class="fortune-drop-val" id="gnFortuneDropPurchased">0</span><button class="fortune-drop-claim" onclick="window.openFortunePurchaseModal()">Claim</button></div>
-           <div class="fortune-drop-row"><span class="fortune-drop-label">Storypass</span><span class="fortune-drop-val" id="gnFortuneDropStorypass">0</span><button class="fortune-drop-claim" onclick="window.purchaseStorypass()">Claim</button></div>
-           <div class="fortune-drop-row"><span class="fortune-drop-label">Drip</span><span class="fortune-drop-val" id="gnFortuneDropDrip">0</span><span class="fortune-drop-hint">Free &#x2022; 4hr</span></div>
-         </div>
-       </div>
+       <button id="gnBookmarksBtn" class="small-btn" onclick="window.toggleBookmarksPanel()">Bookmarks</button>
+       <button id="gnBindReincarnation" class="small-btn" style="display:none;">Bind Reincarnation</button>
        <button id="gnSafeWordBtn" class="small-btn safe-word-btn" style="display:none;">Safe Word</button>
     </div>
   </div>
@@ -2207,6 +2195,7 @@
       </div>
     </div>
     <div class="gn-submit-row">
+      <button id="gnSaveBtn" class="small-btn">Save</button>
       <button id="gnSubmitBtn" class="sb-btn-png md">Submit Turn<span id="gnSubmitCostDisplay" class="submit-cost-display"></span></button>
       <span id="gnReaderFortuneDisplay" class="reader-fortune-stacked"><span class="reader-fortune-line"><span id="gnReaderStorypassF">0</span> <span class="reader-fortune-label">Storypass</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="gnReaderSubscriberF">0</span> <span class="reader-fortune-label">Subscriber</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="gnReaderPurchasedF">0</span> <span class="reader-fortune-label">Purchased</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span></span>
     </div>
