@@ -601,7 +601,9 @@ body.night-mode .story-pages-container {
 /*                     DSP PANELS — Design Semantic Prosody                         */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 
-.dsp-panel {
+/* DSP hidden — code preserved, visually suppressed */
+.dsp-panel { display: none !important; }
+._dsp-panel-original {
     position: relative;
     background-repeat: no-repeat;
     background-position: center;
@@ -5958,6 +5960,59 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 
 /* ── Trophy Wall Modal ── */
+/* ── Trophy Earned Notification — slides in from top ── */
+.trophy-notification {
+    position: fixed;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #1a1508 0%, #0d0a04 100%);
+    border: 1px solid rgba(212, 175, 55, 0.6);
+    border-radius: 8px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6), 0 0 12px rgba(212,175,55,0.15);
+    cursor: pointer;
+    transition: top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease;
+    opacity: 0;
+    pointer-events: auto;
+    max-width: 90vw;
+}
+.trophy-notif-visible {
+    top: 24px;
+    opacity: 1;
+}
+.trophy-notif-out {
+    top: -100px;
+    opacity: 0;
+}
+.trophy-notif-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    animation: trophy-icon-pulse 1.5s ease-in-out 3;
+}
+@keyframes trophy-icon-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+}
+.trophy-notif-title {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    letter-spacing: 0.15em;
+    font-size: 1.05em;
+    color: rgba(212, 175, 55, 0.95);
+    text-shadow: 0 1px 0 rgba(0,0,0,0.7);
+}
+.trophy-notif-desc {
+    font-family: 'Lora', serif;
+    font-size: 0.75em;
+    font-style: italic;
+    color: rgba(212, 175, 55, 0.5);
+    margin-top: 2px;
+}
 .trophy-wall-modal {
     z-index: 9600;
     overflow-y: auto;
@@ -13769,7 +13824,9 @@ textarea.fate-field {
    - Feels like a quiet accompanying object, not page chrome
    ═══════════════════════════════════════════════════════════════════ */
 
-.synopsis-panel {
+/* DSP/Synopsis panel hidden — code preserved, visually suppressed */
+.synopsis-panel { display: none !important; }
+._synopsis-panel-original {
     position: fixed;
     bottom: 20px;
     left: 50%;
@@ -15989,7 +16046,7 @@ body.guided-fate-autoplay .card-gleam-layer {
     font-style: italic;
     color: var(--gold);
     opacity: 0.85;
-    margin-top: 4px;
+    margin-top: 12px;
     line-height: 1.3;
     text-align: center;
 }
@@ -19465,9 +19522,10 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 #submitBtn:hover {
     filter: brightness(1.15);
 }
-.submit-cost-display {
+.submit-cost-display,
+.begin-cost-display {
     font-size: 0.55em;
-    color: rgba(255,255,255,0.7);
+    color: rgba(0,0,0,0.7);
     margin-left: 6px;
     font-weight: 400;
     letter-spacing: 0;
@@ -22474,7 +22532,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.68cqi; left: 16.67cqi; width: 66.96cqi; font-size: 7.73cqi;
+    top: 174.31cqi; left: 23.31cqi; width: 66.96cqi; font-size: 7.73cqi;
 }
 
 
@@ -22491,7 +22549,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.38cqi; left: 18.45cqi; width: 63.69cqi; font-size: 7.73cqi;
+    top: 173.97cqi; left: 25.34cqi; width: 63.69cqi; font-size: 7.73cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -22507,7 +22565,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.68cqi; left: 16.67cqi; width: 67.26cqi; font-size: 7.73cqi;
+    top: 174.31cqi; left: 26.01cqi; width: 67.26cqi; font-size: 7.73cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -22523,7 +22581,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.08cqi; left: 25.6cqi; width: 49.4cqi; font-size: 7.73cqi;
+    top: 172.95cqi; left: 33.78cqi; width: 49.4cqi; font-size: 7.73cqi;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -22785,53 +22843,54 @@ body.gn-cover-active .gn-ui-overlay {
 }
 
 /* ── POV — Card Designer locked positions (grid) ── */
+/* POV card positions — Card Designer output (consolidated) */
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 40.13cqi; left: 16.21cqi; width: 75.67cqi; font-size: 8.11cqi;
+    top: 3.38cqi; left: 17.9cqi; width: 69.59cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 153.57cqi; left: 21.13cqi; width: 59.52cqi; font-size: 7.73cqi;
+    top: 173.29cqi; left: 28.04cqi; width: 59.52cqi; font-size: 7.73cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 42.08cqi; left: 12.84cqi; width: 79.72cqi; font-size: 8.11cqi;
+    top: 1.35cqi; left: 17.23cqi; width: 70.94cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 14.88cqi; width: 69.94cqi; font-size: 7.74cqi;
+    top: 173.29cqi; left: 22.29cqi; width: 69.94cqi; font-size: 7.74cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 38.84cqi; left: 9.46cqi; width: 86.48cqi; font-size: 8.11cqi;
+    top: 5.4cqi; left: 9.12cqi; width: 85.8cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 151.79cqi; left: 17.26cqi; width: 68.75cqi; font-size: 7.74cqi;
+    top: 174.64cqi; left: 21.96cqi; width: 68.75cqi; font-size: 7.74cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; position: absolute; bottom: auto;
-    top: 66.67cqi; left: 11.31cqi; width: 67.86cqi; font-size: 7.14cqi;
+    top: 78.71cqi; left: 19.25cqi; width: 67.86cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 151.79cqi; left: 13.1cqi; width: 73.51cqi; font-size: 7.74cqi;
+    top: 172.62cqi; left: 20.61cqi; width: 73.51cqi; font-size: 7.74cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.97cqi; left: 9.46cqi; width: 85.13cqi; font-size: 8.11cqi;
+    top: 5.4cqi; left: 15.2cqi; width: 74.99cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 20.24cqi; width: 62.5cqi; font-size: 7.74cqi;
+    top: 173.97cqi; left: 26.35cqi; width: 62.5cqi; font-size: 7.74cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 43.45cqi; left: 12.5cqi; width: 61.9cqi; font-size: 7.14cqi;
+    top: 21.62cqi; left: 18.92cqi; width: 67.56cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.38cqi; left: 14.88cqi; width: 70.54cqi; font-size: 7.74cqi;
+    top: 173.97cqi; left: 20.94cqi; width: 70.54cqi; font-size: 7.74cqi;
 }
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
@@ -22922,11 +22981,11 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── Proximity — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 61.01cqi; left: 5.36cqi; width: 88.1cqi; font-size: 7.24cqi;
+    top: 70.6cqi; left: 11.82cqi; width: 85.46cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.76cqi; left: 17.56cqi; width: 64.88cqi; font-size: 7.85cqi;
+    top: 168.23cqi; left: 25cqi; width: 64.88cqi; font-size: 7.85cqi;
 }
 /* ── Proximity — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -22941,11 +23000,11 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── SecretIdentity — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 61.01cqi; left: 5.95cqi; width: 88.1cqi; font-size: 7.24cqi;
+    top: 67.56cqi; left: 7.77cqi; width: 94.92cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.76cqi; left: 19.35cqi; width: 61.9cqi; font-size: 7.85cqi;
+    top: 168.23cqi; left: 25.34cqi; width: 61.9cqi; font-size: 7.85cqi;
 }
 /* ── SecretIdentity — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -22956,11 +23015,11 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── Friends — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 52.68cqi; left: 5.95cqi; width: 88.1cqi; font-size: 7.14cqi;
+    top: 81.75cqi; left: 6.42cqi; width: 94.92cqi; font-size: 7.14cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.46cqi; left: 15.48cqi; width: 68.45cqi; font-size: 7.85cqi;
+    top: 168.56cqi; left: 22.29cqi; width: 68.45cqi; font-size: 7.85cqi;
 }
 /* ── Friends — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -22974,11 +23033,11 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── Enemies — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 57.74cqi; left: 15.18cqi; width: 72.32cqi; font-size: 7.24cqi;
+    top: 74.32cqi; left: 24.66cqi; width: 59.79cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.15cqi; left: 13.1cqi; width: 70.83cqi; font-size: 7.85cqi;
+    top: 169.58cqi; left: 22.63cqi; width: 70.83cqi; font-size: 7.85cqi;
 }
 /* ── Enemies — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -22989,11 +23048,11 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── SecondChance — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 56.85cqi; left: 13.69cqi; width: 73.81cqi; font-size: 7.24cqi;
+    top: 76.01cqi; left: 19.25cqi; width: 73.3cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 153.06cqi; left: 22.02cqi; width: 54.76cqi; font-size: 7.85cqi;
+    top: 169.24cqi; left: 29.39cqi; width: 54.76cqi; font-size: 7.85cqi;
 }
 /* ── SecondChance — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -23004,11 +23063,11 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── Forbidden — grid ── */
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 60.42cqi; left: 7.14cqi; width: 88.1cqi; font-size: 7.24cqi;
+    top: 81.07cqi; left: 13.17cqi; width: 84.11cqi; font-size: 7.24cqi;
 }
 #dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.15cqi; left: 14.58cqi; width: 70.47cqi; font-size: 7.85cqi;
+    top: 169.58cqi; left: 19.25cqi; width: 70.47cqi; font-size: 7.85cqi;
 }
 /* ── Forbidden — portal ── */
 #sbZoomPortal > div.sb-card.selected.flipped.zoomed[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
@@ -23020,38 +23079,38 @@ body.gn-cover-active .gn-ui-overlay {
     bottom: auto !important;
 }
 
-/* ── Length — Card Designer locked positions (grid) ── */
+/* Length card positions — Card Designer output (consolidated) */
 #lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; position: absolute; bottom: auto;
-    top: 51.19cqi; left: 13.1cqi; width: 66.67cqi; font-size: 7.14cqi;
+    top: 58.1cqi; left: 19.25cqi; width: 66.67cqi; font-size: 7.14cqi;
 }
 #lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 33.93cqi; width: 36.31cqi; font-size: 7.74cqi;
+    top: 173.29cqi; left: 39.19cqi; width: 36.31cqi; font-size: 7.74cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 52.98cqi; left: 12.5cqi; width: 70.24cqi; font-size: 7.14cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 61.82cqi; left: 18.58cqi; width: 70.24cqi; font-size: 7.14cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.38cqi; left: 35.71cqi; width: 28.57cqi; font-size: 7.74cqi;
+    top: 173.29cqi; left: 42.56cqi; width: 28.57cqi; font-size: 7.74cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 45.83cqi; left: 12.5cqi; width: 70.24cqi; font-size: 7.14cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 59.45cqi; left: 18.58cqi; width: 70.24cqi; font-size: 7.14cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 36.9cqi; width: 25.3cqi; font-size: 7.74cqi;
+    top: 173.29cqi; left: 42.9cqi; width: 25.3cqi; font-size: 7.74cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 51.19cqi; left: 11.9cqi; width: 69.05cqi; font-size: 7.14cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 64.18cqi; left: 19.25cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
 #lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 26.19cqi; width: 49.11cqi; font-size: 7.74cqi;
+    top: 173.97cqi; left: 30.4cqi; width: 49.11cqi; font-size: 7.74cqi;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
@@ -27398,157 +27457,12 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════
-   Card Designer output — per-card positioning overrides
-   ═══════════════════════════════════════════════════════════════════════════════ */
+/* Pressure card title positions — duplicate block removed, consolidated above */
 
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.68cqi; left: 16.67cqi; width: 66.96cqi; font-size: 7.73cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.38cqi; left: 18.45cqi; width: 63.69cqi; font-size: 7.73cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.68cqi; left: 16.67cqi; width: 67.26cqi; font-size: 7.73cqi;
-}
-#pressureGrid > div.sb-card.selected.flipped[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.08cqi; left: 25.6cqi; width: 49.4cqi; font-size: 7.73cqi;
-}
+/* POV card positions — duplicate block removed, consolidated above */
+/* Length card positions — duplicate block removed, consolidated above */
 
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: -8.93cqi; left: 14.29cqi; width: 66.67cqi; font-size: 7.14cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 153.57cqi; left: 21.13cqi; width: 59.52cqi; font-size: 7.73cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: -5.36cqi; left: 11.31cqi; width: 70.24cqi; font-size: 7.14cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 14.88cqi; width: 69.94cqi; font-size: 7.74cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: -11.31cqi; left: 8.33cqi; width: 76.19cqi; font-size: 7.14cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 151.79cqi; left: 17.26cqi; width: 68.75cqi; font-size: 7.74cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; position: absolute; bottom: auto;
-    top: 66.67cqi; left: 11.31cqi; width: 67.86cqi; font-size: 7.14cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="LoveInterest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 151.79cqi; left: 13.1cqi; width: 73.51cqi; font-size: 7.74cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 42.26cqi; left: 8.33cqi; width: 75cqi; font-size: 7.14cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 20.24cqi; width: 62.5cqi; font-size: 7.74cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 43.45cqi; left: 12.5cqi; width: 61.9cqi; font-size: 7.14cqi;
-}
-#povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.38cqi; left: 14.88cqi; width: 70.54cqi; font-size: 7.74cqi;
-}
-
-#lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    right: auto; position: absolute; bottom: auto;
-    top: 51.19cqi; left: 13.1cqi; width: 66.67cqi; font-size: 7.14cqi;
-}
-#lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 33.93cqi; width: 36.31cqi; font-size: 7.74cqi;
-}
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 52.98cqi; left: 12.5cqi; width: 70.24cqi; font-size: 7.14cqi;
-}
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.38cqi; left: 35.71cqi; width: 28.57cqi; font-size: 7.74cqi;
-}
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 45.83cqi; left: 12.5cqi; width: 70.24cqi; font-size: 7.14cqi;
-}
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 36.9cqi; width: 25.3cqi; font-size: 7.74cqi;
-}
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 51.19cqi; left: 11.9cqi; width: 69.05cqi; font-size: 7.14cqi;
-}
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.98cqi; left: 26.19cqi; width: 49.11cqi; font-size: 7.74cqi;
-}
-
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.76cqi; left: 17.56cqi; width: 64.88cqi; font-size: 7.85cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Proximity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 61.01cqi; left: 5.36cqi; width: 88.1cqi; font-size: 7.24cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 61.01cqi; left: 5.95cqi; width: 88.1cqi; font-size: 7.24cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-2 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecretIdentity"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.76cqi; left: 19.35cqi; width: 61.9cqi; font-size: 7.85cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 52.68cqi; left: 5.95cqi; width: 88.1cqi; font-size: 7.14cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Friends"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.46cqi; left: 15.48cqi; width: 68.45cqi; font-size: 7.85cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 57.74cqi; left: 15.18cqi; width: 72.32cqi; font-size: 7.24cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Enemies"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.15cqi; left: 13.1cqi; width: 70.83cqi; font-size: 7.85cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 56.85cqi; left: 13.69cqi; width: 73.81cqi; font-size: 7.24cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="SecondChance"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 153.06cqi; left: 22.02cqi; width: 54.76cqi; font-size: 7.85cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 60.42cqi; left: 7.14cqi; width: 88.1cqi; font-size: 7.24cqi;
-}
-#dynamicGrid > div.dynamic-group > div.sb-grid.sb-grid-4 > div.sb-card.selected.flipped[data-grp="dynamic"][data-val="Forbidden"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; position: absolute; bottom: auto;
-    top: 152.15cqi; left: 14.58cqi; width: 70.47cqi; font-size: 7.85cqi;
-}
+/* Dynamic card positions — duplicate block removed, consolidated above */
 
 /* ── Tempt Fate zoom — Card Designer overrides ── */
 #sbZoomPortal > div.fate-card.tempt-fate-card.flipped.tempt-zoomed > div.inner > div.back > div.tempt-zoom-overlay > div.tempt-wish-zone > div.tempt-wish-columns > div.tempt-wish-col {

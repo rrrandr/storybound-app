@@ -1486,7 +1486,7 @@
             <div class="begin-story-flourish"></div>
             <div class="begin-btn-wrapper">
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
-                <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Begin Story</button>
+                <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Begin Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
             </div>
             <!-- Story Mode Toggle (Literary ⟷ Participatory) -->
             <div class="story-mode-toggle" id="storyModeToggle">
@@ -1612,7 +1612,7 @@
       <div id="coverViewButtons" class="cover-view-buttons hidden">
         <button id="btnSeeSetting" class="cover-view-btn setting-btn">See Your Story Setting</button>
         <div id="settingBtnDisabledNotice" class="setting-disabled-notice hidden">Requires subscription to access</div>
-        <button id="btnBeginStory" class="cover-view-btn begin-btn">Begin Story</button>
+        <button id="btnBeginStory" class="cover-view-btn begin-btn">Begin Story<span id="coverBeginCostDisplay" class="begin-cost-display"></span></button>
         <p id="btnBeginStoryHint" class="story-continue-hint hidden">Your story will resume where you left off.</p>
       </div>
     </div>

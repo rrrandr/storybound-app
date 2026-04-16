@@ -37,6 +37,7 @@
         window._audioCtxRef = _audioCtx;
       } catch(e) { return null; }
     }
+    try {
       // Create master gain nodes for independent volume control
       if (!_sfxMasterGain) {
         _sfxMasterGain = _audioCtx.createGain();
