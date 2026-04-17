@@ -18072,22 +18072,28 @@ body.corridor-mode .sb-grid.corridor-section {
 .begin-gn-btn {
     display: block;
     margin: 12px auto 0;
-    padding: 8px 24px;
-    background: transparent;
-    border: 1px solid rgba(201, 162, 78, 0.25);
-    border-radius: 4px;
-    color: rgba(201, 162, 78, 0.65);
+    width: 305px;
+    height: 80px;
+    padding: 16px 36px;
+    background: url('/assets/ui/Black-Gold-640x176.png') center/100% 100% no-repeat, #0a0a0a !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none;
+    color: #d4a843;
+    -webkit-text-fill-color: #d4a843;
+    text-shadow:
+        0 0 2px rgba(252, 246, 186, 0.3),
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(252, 246, 186, 0.12),
+        0 0 6px rgba(191, 149, 63, 0.15);
     font-family: 'Lora', serif;
-    font-size: 0.82em;
-    font-variant: small-caps;
-    letter-spacing: 0.12em;
+    font-size: 1.3em;
+    font-weight: 600;
     cursor: pointer;
-    transition: color 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+    transition: filter 0.2s ease;
 }
 .begin-gn-btn:hover {
-    color: rgba(201, 162, 78, 0.9);
-    border-color: rgba(201, 162, 78, 0.45);
-    background: rgba(201, 162, 78, 0.05);
+    filter: brightness(1.15);
 }
 
 #beginStoryRow .story-continue-hint {
