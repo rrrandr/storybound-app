@@ -1786,7 +1786,6 @@
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="saveBtn" class="small-btn locked-style">Save</button>
        <button id="submitBtn" style="font-size:1.3em;">Submit Turn<span id="submitCostDisplay" class="submit-cost-display"></span></button>
-       <span id="readerFortuneDisplay" class="reader-fortune-stacked"><span class="reader-fortune-line"><span id="readerStorypassF">0</span> <span class="reader-fortune-label">Storypass</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="readerSubscriberF">0</span> <span class="reader-fortune-label">Subscriber</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="readerPurchasedF">0</span> <span class="reader-fortune-label">Purchased</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span></span>
     </div>
 
     <div id="fateCardWhisper" class="fate-card-whisper hidden"></div>
@@ -1997,9 +1996,15 @@
         <span class="fw-tempt-icon">&#x2728;</span>
         <span class="fw-tempt-count" id="fwTemptCount">0</span>
     </div>
-    <div class="fw-fortune" title="Total Fortunes">
+    <div class="fw-fortune" id="fwFortuneMain" title="Total Fortunes — click to expand">
         <span class="fw-fortune-count" id="fwFortuneCount">0</span>
         <img src="/assets/ui/Fortunes-Icon.png" alt="F" class="fw-fortune-icon">
+    </div>
+    <div class="fw-breakdown" id="fwBreakdown">
+        <div class="fw-break-row"><span class="fw-break-label">Storypass</span><span class="fw-break-val" id="fwBreakStorypass">0</span></div>
+        <div class="fw-break-row"><span class="fw-break-label">Subscriber</span><span class="fw-break-val" id="fwBreakSubscriber">0</span></div>
+        <div class="fw-break-row"><span class="fw-break-label">Purchased</span><span class="fw-break-val" id="fwBreakPurchased">0</span></div>
+        <div class="fw-break-row"><span class="fw-break-label">Drip</span><span class="fw-break-val" id="fwBreakDrip">0</span></div>
     </div>
 </div>
 
@@ -2211,7 +2216,6 @@
     <div class="gn-submit-row">
       <button id="gnSaveBtn" class="small-btn">Save</button>
       <button id="gnSubmitBtn" class="sb-btn-png md">Submit Turn<span id="gnSubmitCostDisplay" class="submit-cost-display"></span></button>
-      <span id="gnReaderFortuneDisplay" class="reader-fortune-stacked"><span class="reader-fortune-line"><span id="gnReaderStorypassF">0</span> <span class="reader-fortune-label">Storypass</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="gnReaderSubscriberF">0</span> <span class="reader-fortune-label">Subscriber</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span><span class="reader-fortune-line"><span id="gnReaderPurchasedF">0</span> <span class="reader-fortune-label">Purchased</span><img src="/assets/ui/Fortunes-Icon.png" alt="F" class="reader-fortune-icon" aria-hidden="true"></span></span>
     </div>
   </div>
 
