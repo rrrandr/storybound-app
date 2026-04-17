@@ -4947,10 +4947,11 @@ select:-webkit-autofill {
 /* Sparkle container for mode cards */
 .mode-card-sparkles {
     position: absolute;
-    inset: -30px;
+    inset: -20px;
     pointer-events: none;
     z-index: 10;
     opacity: 0;
+    overflow: visible;
     transition: opacity 0.3s ease;
     overflow: visible;
 }
@@ -18221,6 +18222,7 @@ body.corridor-mode .sb-grid.corridor-section {
     align-items: flex-start;
     font-family: 'Lora', serif;
     font-size: 0.65em;
+    position: relative;
     color: rgba(201,168,76,0.7);
     line-height: 1.4;
     vertical-align: middle;
@@ -24291,20 +24293,23 @@ body.gn-cover-active .gn-ui-overlay {
 /* –1 Fortune float feedback */
 .fortune-hud-feedback {
     position: absolute;
-    right: calc(50% - 60px);
-    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    top: -5px;
     font-family: 'Lora', serif;
-    font-size: 0.78em;
-    color: var(--gold, #c8a84e);
+    font-size: 1em;
+    color: #c8a84e;
     opacity: 0;
     pointer-events: none;
     white-space: nowrap;
-    animation: fortune-float 900ms ease-out forwards;
+    z-index: 100;
+    animation: fortune-float 1.2s ease-out forwards;
 }
 @keyframes fortune-float {
-    0%   { opacity: 0; transform: translateY(0); }
+    0%   { opacity: 0; transform: translateX(-50%) translateY(0); }
     15%  { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-22px); }
+    70%  { opacity: 0.8; }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-30px); }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════ */
