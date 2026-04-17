@@ -20505,55 +20505,93 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 
 /* ── GN Style Selector Screen ── */
 .gn-selector-container {
-    max-width: 500px;
+    max-width: 800px;
     margin: 0 auto;
-    padding: 60px 20px;
+    padding: 40px 20px;
     text-align: center;
 }
 .gn-selector-title {
     font-family: 'Lora', serif;
     font-variant: small-caps;
-    font-size: 1.3em;
-    color: #c9a84c;
+    font-size: 1.6em;
     letter-spacing: 0.6em;
     margin-bottom: 30px;
+    /* 3D gold text */
+    color: #d4a843;
+    text-shadow:
+        0 1px 0 #b8912e,
+        0 2px 0 #a07a1e,
+        0 3px 4px rgba(0,0,0,0.5),
+        0 0 8px rgba(212,175,55,0.3),
+        0 -1px 0 rgba(255,235,150,0.2);
 }
 .gn-selector-options {
     display: flex;
-    flex-direction: column;
-    gap: 12px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
     margin-bottom: 24px;
+    flex-wrap: nowrap;
 }
 .gn-selector-card {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 16px 20px;
-    background: rgba(20, 16, 10, 0.9);
-    border: 1px solid rgba(201, 162, 78, 0.2);
-    border-radius: 6px;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    background: none;
+    border: none;
     cursor: pointer;
-    transition: border-color 0.25s ease, background 0.25s ease;
-    text-align: left;
+    transition: transform 0.25s ease;
+    text-align: center;
+    flex: 0 0 auto;
+    width: 140px;
 }
 .gn-selector-card:hover {
-    border-color: rgba(201, 162, 78, 0.5);
-    background: rgba(201, 162, 78, 0.06);
+    transform: scale(1.05);
 }
-/* ── Artist thumbnail in selector card ── */
+/* ── Artist thumbnail — tarot card proportions ── */
 .gn-selector-thumb {
-    width: 100%;
-    height: 120px;
-    border-radius: 4px;
+    width: 140px;
+    aspect-ratio: 2.75 / 4.75;
+    border-radius: 8px;
     overflow: hidden;
-    margin-bottom: 8px;
     background: rgba(20, 16, 10, 0.6);
+    border: 1px solid rgba(201, 162, 78, 0.3);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.gn-selector-card:hover .gn-selector-thumb {
+    border-color: rgba(201, 162, 78, 0.7);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.6), 0 0 8px rgba(201,162,78,0.15);
+}
+.gn-selector-name {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.85em;
+    color: rgba(201, 162, 78, 0.8);
+    letter-spacing: 0.15em;
+    margin-top: 8px;
+    text-align: center;
+}
+.gn-selector-desc {
+    display: none;
 }
 .gn-thumb-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 4px;
+}
+@media (max-width: 640px) {
+    .gn-selector-card { width: 100px; }
+    .gn-selector-thumb { width: 100px; }
+    .gn-selector-options { gap: 10px; }
+}
+@media (max-width: 480px) {
+    .gn-selector-card { width: 80px; }
+    .gn-selector-thumb { width: 80px; }
+    .gn-selector-options { gap: 6px; }
+    .gn-selector-name { font-size: 0.7em; }
 }
 /* ── Thumbnail fallback tile (when static asset is missing) ── */
 .gn-thumb--fallback {
@@ -20909,6 +20947,26 @@ body.gn-cover-active .gn-ui-overlay {
     letter-spacing: 0.15em;
     opacity: 0.7;
 }
+.gn-cover-loading-bar {
+    width: 60%;
+    max-width: 200px;
+    height: 3px;
+    background: rgba(201, 162, 78, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.gn-cover-loading-bar-fill {
+    width: 30%;
+    height: 100%;
+    background: rgba(201, 162, 78, 0.5);
+    border-radius: 2px;
+    animation: gnCoverBarSlide 2s ease-in-out infinite;
+}
+@keyframes gnCoverBarSlide {
+    0%   { width: 10%; margin-left: 0; }
+    50%  { width: 40%; margin-left: 30%; }
+    100% { width: 10%; margin-left: 90%; }
+}
 
 /* ── GN_INPUT_BAR: bottom-anchored Say/Do ── */
 .gn-input-bar {
@@ -20920,12 +20978,50 @@ body.gn-cover-active .gn-ui-overlay {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
-    max-width: 600px;
+    max-width: 75%;
     margin: 0 auto 10px;
+}
+/* GN inputs: same ornate plaque style as prose Say/Do */
+.gn-input-grid .input-wrapper { overflow: visible; }
+.gn-input-grid textarea {
+    position: relative;
+    overflow: visible;
+    background: url('/assets/ui/Black-Gold-640x176.png') center/calc(100% + 2px) calc(100% + 2px) no-repeat, #0a0a0a;
+    border: none;
+    box-shadow: none;
+    color: #d4a843;
+    -webkit-text-fill-color: #d4a843;
+    text-shadow:
+        0 0 2px rgba(252, 246, 186, 0.3),
+        0 1px 0 rgba(0, 0, 0, 0.7),
+        0 -1px 0 rgba(252, 246, 186, 0.12),
+        0 0 6px rgba(191, 149, 63, 0.15);
+    font-weight: 600;
+    text-align: center;
+    height: 75px;
+    min-height: 75px;
+    max-height: 75px;
+    padding: 24px 12px;
+    box-sizing: border-box;
+    resize: none;
+}
+.gn-input-grid textarea::placeholder {
+    color: rgba(212, 168, 67, 0.35);
+    -webkit-text-fill-color: rgba(212, 168, 67, 0.35);
+    text-shadow: none;
+    text-align: center;
+}
+.gn-input-grid .input-wrapper label {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold);
+    font-size: 0.9em;
 }
 .gn-submit-row {
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 10px;
     margin: 10px 0;
 }
 
