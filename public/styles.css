@@ -23232,36 +23232,37 @@ body.gn-cover-active .gn-ui-overlay {
     bottom: auto !important;
 }
 
-/* Length card positions — Card Designer output (consolidated) */
-#lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+/* Length card positions — Card Designer output (consolidated)
+   Selectors use [data-val] without .locked/.selected so positions apply in all states */
+#lengthGrid > div.sb-card[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; position: absolute; bottom: auto;
     top: 58.1cqi; left: 19.25cqi; width: 66.67cqi; font-size: 7.14cqi;
 }
-#lengthGrid > div.sb-card.selected.flipped[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#lengthGrid > div.sb-card[data-grp="length"][data-val="taste"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
     top: 173.29cqi; left: 39.19cqi; width: 36.31cqi; font-size: 7.74cqi;
 }
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#lengthGrid > div.sb-card[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; position: absolute; bottom: auto;
-    top: 61.82cqi; left: 18.58cqi; width: 70.24cqi; font-size: 7.14cqi;
+    top: 64cqi; left: 19.25cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#lengthGrid > div.sb-card[data-grp="length"][data-val="fling"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.29cqi; left: 42.56cqi; width: 28.57cqi; font-size: 7.74cqi;
+    top: 173.97cqi; left: 38cqi; width: 36cqi; font-size: 7.74cqi;
 }
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#lengthGrid > div.sb-card[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; position: absolute; bottom: auto;
-    top: 59.45cqi; left: 18.58cqi; width: 70.24cqi; font-size: 7.14cqi;
+    top: 64cqi; left: 19.25cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#lengthGrid > div.sb-card[data-grp="length"][data-val="affair"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 173.29cqi; left: 42.9cqi; width: 25.3cqi; font-size: 7.74cqi;
+    top: 173.97cqi; left: 37cqi; width: 38cqi; font-size: 7.74cqi;
 }
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
+#lengthGrid > div.sb-card[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     right: auto; position: absolute; bottom: auto;
-    top: 64.18cqi; left: 19.25cqi; width: 69.05cqi; font-size: 7.14cqi;
+    top: 64cqi; left: 19.25cqi; width: 69.05cqi; font-size: 7.14cqi;
 }
-#lengthGrid > div.sb-card.locked[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
+#lengthGrid > div.sb-card[data-grp="length"][data-val="soulmates"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
     top: 173.97cqi; left: 30.4cqi; width: 49.11cqi; font-size: 7.74cqi;
 }
@@ -24443,6 +24444,29 @@ body.gn-cover-active .gn-ui-overlay {
     .fw-fortune { padding: 4px 8px; }
     .fw-fortune-count { font-size: 0.8em; }
     .fw-tempt { padding: 3px 7px; }
+}
+
+/* ── Threshold Moment — early desire calibration (ST1-ST2) ── */
+.threshold-moment {
+    margin: 24px auto;
+    max-width: 500px;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(201, 162, 78, 0.15);
+    border-bottom: 1px solid rgba(201, 162, 78, 0.15);
+}
+.threshold-moment.threshold-visible {
+    opacity: 1;
+}
+.threshold-moment-text {
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.9em;
+    color: rgba(201, 162, 78, 0.6);
+    line-height: 1.6;
+    margin: 4px 0;
 }
 
 /* Low-Fortune warning — escalating urgency */
