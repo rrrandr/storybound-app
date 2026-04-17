@@ -24310,6 +24310,91 @@ body.gn-cover-active .gn-ui-overlay {
     text-align: center;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════════
+   PERSISTENT FORTUNE WIDGET — bottom-right corner, always visible in-story
+   Shows total Fortunes + free Tempt Fate charges
+   ═══════════════════════════════════════════════════════════════════════════════ */
+.fortune-widget {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    z-index: 9500;
+    display: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    pointer-events: auto;
+    font-family: 'Lora', serif;
+    opacity: 0.75;
+    transition: opacity 0.3s ease;
+}
+.fortune-widget.fw-visible {
+    display: flex;
+}
+.fortune-widget:hover {
+    opacity: 1;
+}
+.fw-fortune {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(10, 8, 5, 0.85);
+    border: 1px solid rgba(201, 162, 78, 0.3);
+    border-radius: 16px;
+    padding: 5px 12px;
+    cursor: default;
+}
+.fw-fortune-count {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: rgba(212, 175, 55, 0.9);
+    letter-spacing: 0.05em;
+}
+.fw-fortune-icon {
+    height: 0.9em;
+    width: auto;
+    filter: sepia(1) saturate(2) brightness(1.8) hue-rotate(15deg);
+    opacity: 0.8;
+}
+.fw-tempt {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(10, 8, 5, 0.85);
+    border: 1px solid rgba(180, 40, 40, 0.3);
+    border-radius: 16px;
+    padding: 4px 10px;
+    cursor: default;
+    transition: border-color 0.3s;
+}
+.fw-tempt:hover {
+    border-color: rgba(255, 80, 50, 0.5);
+}
+.fw-tempt-icon {
+    font-size: 0.85em;
+}
+.fw-tempt-count {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: rgba(255, 200, 100, 0.9);
+}
+.fw-tempt.fw-empty {
+    display: none;
+}
+.fw-tempt:not(.fw-empty) .fw-tempt-icon {
+    animation: fw-tempt-pulse 3s ease-in-out infinite;
+}
+@keyframes fw-tempt-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+@media (max-width: 480px) {
+    .fortune-widget { bottom: 8px; right: 8px; }
+    .fw-fortune { padding: 4px 8px; }
+    .fw-fortune-count { font-size: 0.8em; }
+    .fw-tempt { padding: 3px 7px; }
+}
+
 /* Low-Fortune warning — escalating urgency */
 .fortune-low-warning {
     font-size: 0.85em;
