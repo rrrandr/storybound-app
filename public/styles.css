@@ -22990,10 +22990,10 @@ body.gn-cover-active .gn-ui-overlay {
 }
 
 /* ── POV — Card Designer locked positions (grid) ── */
-/* POV card positions — Card Designer output (consolidated) */
+/* POV card positions — desc centered on black face, title at bottom */
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 3.38cqi; left: 17.9cqi; width: 69.59cqi; font-size: 7.14cqi;
+    top: 50cqi; left: 17.9cqi; width: 69.59cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="First"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -23001,7 +23001,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 1.35cqi; left: 17.23cqi; width: 70.94cqi; font-size: 7.14cqi;
+    top: 45cqi; left: 17.23cqi; width: 70.94cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Second"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -23009,7 +23009,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 5.4cqi; left: 9.12cqi; width: 85.8cqi; font-size: 7.14cqi;
+    top: 48cqi; left: 9.12cqi; width: 85.8cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Third"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -23025,7 +23025,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 5.4cqi; left: 15.2cqi; width: 74.99cqi; font-size: 7.14cqi;
+    top: 45cqi; left: 15.2cqi; width: 74.99cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fourth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
@@ -23033,7 +23033,7 @@ body.gn-cover-active .gn-ui-overlay {
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 21.62cqi; left: 18.92cqi; width: 67.56cqi; font-size: 7.14cqi;
+    top: 50cqi; left: 18.92cqi; width: 67.56cqi; font-size: 7.14cqi;
 }
 #povGrid > div.sb-card.selected.flipped[data-grp="pov"][data-val="Fifth"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
