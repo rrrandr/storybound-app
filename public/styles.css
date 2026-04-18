@@ -2146,6 +2146,21 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     border-radius: 6px;
 }
 
+/* Frontispiece page: cap map height so the page-nav controls below stay in-viewport
+   on wide windows. On narrow windows the width constraint binds first and behaves
+   as before. Image keeps natural aspect ratio via width:auto + height:auto. */
+#fatelandsFrontispiece .fatelands-map-img {
+    max-height: calc(100vh - 180px);
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+#fatelandsFrontispiece .sb-curl-page-front {
+    text-align: center;
+}
+
 /* ── Fatelands Loupe — cinematic region zoom ── */
 .fatelands-loupe {
     position: absolute;
@@ -2853,6 +2868,24 @@ p.vision-active-paragraph::after {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
+}
+
+/* Wry visions — compact New Yorker cartoon sizing, not full-width */
+.inline-vision-block.wry-vision {
+    max-width: 320px;
+    margin: 16px auto;
+    border: 1px solid rgba(180, 180, 180, 0.2);
+    border-radius: 4px;
+    background: rgba(245, 242, 238, 0.04);
+}
+.inline-vision-block.wry-vision .inline-vision-img {
+    border-radius: 0 0 3px 3px;
+}
+.inline-vision-block.wry-vision .inline-vision-header {
+    background: rgba(180, 180, 180, 0.06);
+}
+.inline-vision-block.wry-vision .inline-vision-label {
+    color: #999;
 }
 
 /* Mobile: hide orb, show bottom button */
@@ -11981,9 +12014,9 @@ textarea.fate-field {
     height: 100%;
     left: 0;
     background: linear-gradient(180deg, #ede9e1 0%, #e0d9ce 100%);
-    /* Spine connects front (z=+depth) to back (z=-depth) at left edge.
-       translateZ puts us at front face depth, rotateY spins 90° into the page. */
-    transform: translateZ(var(--book-depth)) rotateY(-90deg);
+    /* Spine hinge: rotateY first (fold into page), then translateZ to align with front face.
+       transform-origin: left center anchors rotation at the spine-cover junction. */
+    transform: rotateY(-90deg) translateZ(0px);
     transform-origin: left center;
     border-radius: 6px 0 0 6px;
     box-shadow:
@@ -12041,12 +12074,12 @@ textarea.fate-field {
     margin: 0;
 }
 
-/* ── Page edges — proportional to book depth ── */
+/* ── Page edges — proportional to book depth, flush corners ── */
 .cover-book-3d .book-pages-right {
     width: calc(var(--book-depth) * 2);
-    height: calc(100% - 10px);
-    top: 5px;
-    right: 4px;
+    height: 100%;
+    top: 0;
+    right: 0;
     left: auto;
     transform-origin: right center;
     transform: translateZ(calc(-1 * var(--book-depth))) rotateY(90deg);
@@ -12060,7 +12093,7 @@ textarea.fate-field {
     border-radius: 0 1px 1px 0;
 }
 .cover-book-3d .book-pages-top {
-    width: calc(100% - 5px);
+    width: 100%;
     height: calc(var(--book-depth) * 2);
     top: 0; left: 0;
     transform-origin: center top;
@@ -12068,7 +12101,7 @@ textarea.fate-field {
     background: linear-gradient(180deg, #f0ebe3 0%, #f5f0e8 100%);
 }
 .cover-book-3d .book-pages-bottom {
-    width: calc(100% - 5px);
+    width: 100%;
     height: calc(var(--book-depth) * 2);
     bottom: 0; left: 0;
     transform-origin: center bottom;
@@ -13516,6 +13549,11 @@ textarea.fate-field {
 /* ═══════════════════════════════════════════════════════════════════════════ */
 /* SYNOPSIS PAGE — 5:7 book proportions, centered, Lora typography           */
 /* ═══════════════════════════════════════════════════════════════════════════ */
+/* Synopsis page needs overflow to scroll past setting image to buttons */
+#storyText.synopsis-page-active {
+    overflow: visible;
+    overflow-y: auto;
+}
 .synopsis-page-active {
     max-width: 500px;
     margin: 0 auto;
@@ -18022,12 +18060,12 @@ body.corridor-mode .sb-grid.corridor-section {
         0 0 8px rgba(0,0,0,0.15) !important;
 }
 
-/* ── Story Mode Toggle (Literary ⟷ Participatory) ── */
+/* ── Story Mode Toggle (Active ⟷ Mindful) — inside begin-btn-wrapper ── */
 .story-mode-toggle {
     display: flex;
     justify-content: center;
     gap: 0;
-    margin: 14px auto 6px;
+    margin: 8px auto 0;
     border: 1px solid rgba(201, 162, 78, 0.3);
     border-radius: 6px;
     overflow: hidden;
@@ -18068,14 +18106,14 @@ body.corridor-mode .sb-grid.corridor-section {
     transition: opacity 0.3s ease;
 }
 
-/* ── Begin Graphic Novel — subordinate corridor button ── */
+/* ── Begin Graphic Novel — matches Enter Your Story button size ── */
 .begin-gn-btn {
     display: block;
-    margin: 12px auto 0;
-    width: 305px;
-    height: 80px;
+    margin: 18px auto 0;
+    width: 260px;
+    height: 72px;
     padding: 16px 36px;
-    background: url('/assets/ui/Black-Gold-640x176.png') center/100% 100% no-repeat, #0a0a0a !important;
+    background: url('/assets/ui/Black-Gold-520x144.png') center/100% 100% no-repeat, #0a0a0a !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none;
@@ -18103,10 +18141,10 @@ body.corridor-mode .sb-grid.corridor-section {
     opacity: 0.8;
 }
 
-/* Begin Story — Fortune counter button */
+/* Begin Story — Fortune counter button (hidden — redundant with persistent widget) */
 .begin-fortune-btn {
+    display: none !important;
     position: relative;
-    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 5px;

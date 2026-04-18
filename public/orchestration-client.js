@@ -599,11 +599,14 @@
    * Call ChatGPT (primary author).
    * ChatGPT is the ONLY model allowed to author plot, decide outcomes,
    * and generate SDs.
+   *
+   * Two call forms are supported:
+   *   callChatGPT(messages, role, options)  — explicit role
+   *   callChatGPT(messages, options)        — defaults role to 'PRIMARY_AUTHOR'
    */
   async function callChatGPT(messages, role = 'PRIMARY_AUTHOR', options = {}) {
-    // Guard: if role is not a string, caller passed (messages, options) — fix arg order
+    // Two-arg form: caller passed (messages, options). Shift into place silently.
     if (typeof role === 'object' && role !== null) {
-      console.warn('[ORCHESTRATION] callChatGPT called with object as role — treating as options. Fix call site to use (messages, role, options).');
       options = role;
       role = 'PRIMARY_AUTHOR';
     }
