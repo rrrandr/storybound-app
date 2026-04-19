@@ -1489,11 +1489,15 @@
             <div class="begin-btn-wrapper">
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
                 <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
-                <!-- Story Mode Toggle (Active ⟷ Mindful) — inside wrapper, visually attached to story button only -->
+                <!-- Story Mode Toggle (Active ⟷ Mindful) — inside wrapper, visually attached to story button only.
+                     Hidden automatically when the corridor-inference score is confident; replaced by the
+                     #storyModeInferredHint subtitle below. -->
                 <div class="story-mode-toggle" id="storyModeToggle">
                     <button class="story-mode-opt selected" id="storyModeParticipatory" data-mode="participatory">Active</button>
                     <button class="story-mode-opt" id="storyModeLiterary" data-mode="literary">Mindful</button>
                 </div>
+                <!-- Inferred-mode subtitle — shown only when the toggle is hidden (confident inference) -->
+                <p class="story-mode-inferred-hint" id="storyModeInferredHint"></p>
             </div>
 
             <button class="sb-btn-png lg begin-gn-btn" id="beginGraphicNovelBtn" onclick="if(window.handleBeginGraphicNovel){window.handleBeginGraphicNovel()}"><span class="begin-gn-label">Enter Your Graphic Novel</span><span id="beginGNCostDisplay" class="begin-cost-display"></span></button>
@@ -1787,6 +1791,31 @@
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="saveBtn" class="small-btn locked-style">Save</button>
        <button id="submitBtn" style="font-size:1.3em;">Submit Turn<span id="submitCostDisplay" class="submit-cost-display"></span></button>
+    </div>
+
+    <!-- Mode-switch offer — shown when we INFERRED Mindful and the user's
+         in-scene signals suggest boredom. Re-offer allowed once after 10
+         scenes; hard cap at 2 declines. Text is rewritten by JS on re-offer. -->
+    <div id="modeSwitchOfferOverlay" class="mode-switch-offer-overlay hidden">
+      <div class="mode-switch-offer-box">
+        <p class="mode-switch-offer-line">Would a sharper pace serve you?</p>
+        <p class="mode-switch-offer-hint">The story could pick up — faster beats, earlier choices. Or keep savoring.</p>
+        <div class="mode-switch-offer-actions">
+          <button class="mode-switch-offer-btn mode-switch-offer-accept" onclick="if(window._acceptModeSwitchToActive)window._acceptModeSwitchToActive()">Sharpen the pace</button>
+          <button class="mode-switch-offer-btn mode-switch-offer-decline" onclick="if(window._declineModeSwitch)window._declineModeSwitch()">Keep savoring</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Engagement nudge — lighter "shake things up" suggestion when the
+         reader is listless but a mode-switch offer doesn't apply or is on
+         cooldown. Cycles through real in-app mechanics (Tempt Fate,
+         Visualize, Say+Do). Dismiss-only, no commitment. -->
+    <div id="engagementNudgeOverlay" class="engagement-nudge-overlay hidden">
+      <div class="engagement-nudge-box">
+        <p class="engagement-nudge-line"></p>
+        <button class="engagement-nudge-dismiss" onclick="if(window._dismissEngagementNudge)window._dismissEngagementNudge()">Thanks</button>
+      </div>
     </div>
 
     <div id="fateCardWhisper" class="fate-card-whisper hidden"></div>
