@@ -1539,8 +1539,9 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     align-content: center;
     flex-wrap: nowrap; /* Keep cards in single row, shrink to fit */
     padding: 0 20px;
-    /* Full viewport height minus header for proper centering */
-    min-height: calc(100vh - var(--sb-header-height));
+    /* Full viewport height minus header for proper centering — max() guards
+       against a 0px header-height measurement overflowing the viewport. */
+    min-height: calc(100vh - max(var(--sb-header-height), 80px));
     overflow: hidden;
     width: 100%;
     background: var(--bg-dark, #0a0a0a);
@@ -17773,9 +17774,12 @@ body.corridor-complete .ghost-step {
    ═══════════════════════════════════════════════════════════════════ */
 
 .corridor-section {
-    /* VIEWPORT ISOLATION: Use measured header height for centering */
-    min-height: calc(100vh - var(--sb-header-height));
-    max-height: calc(100vh - var(--sb-header-height));
+    /* VIEWPORT ISOLATION: Use measured header height for centering.
+       max() guards against a 0px measurement leaking through — if the JS
+       measurement fails for any reason, 80px fallback keeps the corridor
+       from overflowing the viewport and pushing centered content downward. */
+    min-height: calc(100vh - max(var(--sb-header-height), 80px));
+    max-height: calc(100vh - max(var(--sb-header-height), 80px));
     overflow: hidden;
     position: relative;
     z-index: 1;
@@ -18037,17 +18041,18 @@ body.corridor-mode .sb-grid.corridor-section {
 #beginStoryRow #beginBtn {
     position: relative;
     z-index: 1;
-    width: 305px !important;  /* 244 × 1.25 */
-    height: 80px;
-    padding: 16px 36px;
+    width: 351px !important;  /* 305 × 1.15 — fits "Enter Your Story" on one line */
+    height: 92px;             /* 80 × 1.15 */
+    padding: 18px 41px;       /* 16/36 × 1.15 */
     min-width: 0;
     background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
     background-size: 100% 100% !important;
     background-position: center !important;
     font-family: 'Lora', serif !important;
     font-variant: small-caps;
-    font-size: 1.625em;  /* 1.3 × 1.25 */
+    font-size: 1.87em;        /* 1.625 × 1.15 */
     letter-spacing: 0.2em;
+    white-space: nowrap;      /* Belt-and-suspenders: never wrap */
     /* 3D lacquered black — glossy depth via stacked shadows */
     color: #080808 !important;
     -webkit-text-fill-color: #080808;
@@ -18106,29 +18111,46 @@ body.corridor-mode .sb-grid.corridor-section {
     transition: opacity 0.3s ease;
 }
 
-/* ── Begin Graphic Novel — matches Enter Your Story button size ── */
+/* ── Begin Graphic Novel — matches Enter Your Story button size,
+   text uses the "Shape Your Story" metallic-gold gradient treatment ── */
 .begin-gn-btn {
     display: block;
     margin: 18px auto 0;
-    width: 260px;
-    height: 72px;
-    padding: 16px 36px;
+    width: 351px;             /* Match #beginBtn */
+    height: 92px;             /* Match #beginBtn */
+    padding: 18px 41px;       /* Match #beginBtn */
     background: url('/assets/ui/Black-Gold-520x144.png') center/100% 100% no-repeat, #0a0a0a !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none;
-    color: #d4a843;
-    -webkit-text-fill-color: #d4a843;
-    text-shadow:
-        0 0 2px rgba(252, 246, 186, 0.3),
-        0 1px 0 rgba(0, 0, 0, 0.7),
-        0 -1px 0 rgba(252, 246, 186, 0.12),
-        0 0 6px rgba(191, 149, 63, 0.15);
-    font-family: 'Lora', serif;
-    font-size: 1.3em;
-    font-weight: 600;
+    font-family: 'Lora', serif !important;
+    font-variant: small-caps;
+    font-size: 1.5em;         /* Slightly smaller than Story (1.87em) so 5 words fit on one line */
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    font-weight: 400;
     cursor: pointer;
     transition: filter 0.2s ease;
+    /* Fallback text color if gradient clip is unsupported */
+    color: #d4a940;
+}
+/* Metallic gold gradient text — applied to the inner span so the PNG button
+   background still renders on the button element itself. Matches the
+   treatment used by .shape-your-story-header .section-title. */
+.begin-gn-btn .begin-gn-label {
+    background: linear-gradient(
+        180deg,
+        #bf953f 0%,
+        #fcf6ba 25%,
+        #b38728 50%,
+        #fbf5b7 75%,
+        #aa771c 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: #d4a940; /* fallback */
+    text-shadow: none;
 }
 .begin-gn-btn:hover {
     filter: brightness(1.15);
@@ -18472,18 +18494,24 @@ body.corridor-mode .card-flow-row.corridor-section {
     margin: 0;
 }
 
-/* Corridor section titles — Lora small caps, white with gold outline */
+/* Corridor section titles — Lora small caps, white, canonical corridor typography.
+   ALL !important to guarantee identical size/position/kerning across every
+   corridor stage (world, tone, pressure, dynamic, pov, length, identity,
+   playermask, storybeau) regardless of whether the title is a child of a
+   .corridor-section wrapper or is its own .corridor-section element. */
 body.corridor-mode .section-title {
     font-family: 'Lora', serif !important;
     font-variant: small-caps !important;
-    font-size: 1em;
-    margin: 0;
-    padding: 6px 0;
-    border-top: none;
+    font-size: 1em !important;
+    line-height: 1.2 !important;
+    margin: 0 0 12px 0 !important;
+    padding: 6px 0 !important;
+    border-top: none !important;
     color: white !important;
-    -webkit-text-stroke: 0;
+    -webkit-text-stroke: 0 !important;
     text-shadow: none !important;
-    letter-spacing: 0.6em;
+    letter-spacing: 0.6em !important;
+    text-align: center !important;
 }
 
 /* Corridor sections fill remaining viewport space exactly via flex —
@@ -18509,9 +18537,14 @@ body.corridor-mode #flowRowDynamic.corridor-section {
     justify-content: flex-start !important;
 }
 
-/* Archetype sub-sections share a stage — only the grid should flex-grow */
+/* Archetype sub-sections share a stage — only the grid should flex-grow.
+   #povSectionTitle is included here because pov stage also stores the title
+   as its own corridor-section (parallel to the grid) — without this override
+   the title would flex-grow to fill half the viewport, which renders as
+   huge whitespace around the text (appears as "enormous" font size). */
 body.corridor-mode #playerMaskSectionTitle.corridor-section,
-body.corridor-mode #archetypeSectionTitle.corridor-section {
+body.corridor-mode #archetypeSectionTitle.corridor-section,
+body.corridor-mode #povSectionTitle.corridor-section {
     flex: 0 0 auto !important;
     overflow-y: visible !important;
 }
@@ -23820,10 +23853,26 @@ body.gn-cover-active .gn-ui-overlay {
     width: 170px;
 }
 
-/* ── Echo Reincarnation Section — mini-cards below character cards ── */
+/* ── Echo Reincarnation Section — collapsed to dropdown trigger + modal
+   at ALL viewport widths (was previously mobile-only). The raw slot row
+   is hidden; #reincMobileTrigger opens the reincMobileModal which hosts
+   the 7 slots as a vertical stack. ── */
 .echo-reinc-section {
+    display: none !important;
+}
+.reinc-mobile-trigger {
+    display: block !important;
+    width: 160px;
+    height: 36px;
+    margin: 10px auto 0;
+    font-size: 0.72em;
+}
+
+/* Legacy full-row styles kept below so if the .echo-reinc-section is ever
+   re-enabled (e.g. feature flag), the layout still renders. */
+.echo-reinc-section.echo-reinc-section--full {
+    display: flex !important;
     width: 100%;
-    display: flex;
     flex-direction: column;
     align-items: center;
     gap: 6px;
@@ -27666,22 +27715,14 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         white-space: nowrap;
     }
 
-    /* ── Reincarnation: hide full section, show single trigger button ── */
-    .echo-reinc-section {
-        display: none !important;
-    }
+    /* ── Reincarnation: trigger sizing override for mobile (trigger lives outside
+       character-cards-row now; universal hide of .echo-reinc-section is in the
+       base stylesheet, not here) ── */
     .reinc-mobile-trigger {
-        display: block !important;
         width: 140px !important;
         height: 34px !important;
-        margin: 0 auto !important;
+        margin: 8px auto 0 !important;
         font-size: 0.7em !important;
-    }
-    /* Place trigger inside character grid, below deck */
-    .character-cards-row > .reinc-mobile-trigger {
-        grid-column: 1 / -1 !important;
-        grid-row: 3 !important;
-        justify-self: center !important;
     }
 
     /* ── Reincarnation mobile modal ── */

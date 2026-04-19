@@ -1084,9 +1084,11 @@
             </div>
         </div>
     </div>
-    <!-- Mobile: single Reincarnation trigger (inside grid, row 3) -->
-    <button class="reinc-mobile-trigger sb-btn-png sm" id="reincMobileTrigger" style="display:none;">Reincarnations</button>
     </div><!-- /.character-cards-row -->
+
+    <!-- Reincarnation trigger — single button that opens the slot modal.
+         Used at ALL viewport widths (was previously mobile-only). -->
+    <button class="reinc-mobile-trigger sb-btn-png sm" id="reincMobileTrigger">Reincarnations</button>
 
     <!-- Reincarnation Slots — 7 name-tag buttons with dropdown menus -->
     <div class="echo-reinc-section" id="echoReincSection">
@@ -1487,14 +1489,14 @@
             <div class="begin-btn-wrapper">
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
                 <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
-            </div>
-            <!-- Story Mode Toggle (Active ⟷ Mindful) -->
-            <div class="story-mode-toggle" id="storyModeToggle">
-                <button class="story-mode-opt selected" id="storyModeParticipatory" data-mode="participatory">Active</button>
-                <button class="story-mode-opt" id="storyModeLiterary" data-mode="literary">Mindful</button>
+                <!-- Story Mode Toggle (Active ⟷ Mindful) — inside wrapper, visually attached to story button only -->
+                <div class="story-mode-toggle" id="storyModeToggle">
+                    <button class="story-mode-opt selected" id="storyModeParticipatory" data-mode="participatory">Active</button>
+                    <button class="story-mode-opt" id="storyModeLiterary" data-mode="literary">Mindful</button>
+                </div>
             </div>
 
-            <button class="sb-btn-png lg begin-gn-btn" id="beginGraphicNovelBtn" onclick="if(window.handleBeginGraphicNovel){window.handleBeginGraphicNovel()}">Enter Your Graphic Novel<span id="beginGNCostDisplay" class="begin-cost-display"></span></button>
+            <button class="sb-btn-png lg begin-gn-btn" id="beginGraphicNovelBtn" onclick="if(window.handleBeginGraphicNovel){window.handleBeginGraphicNovel()}"><span class="begin-gn-label">Enter Your Graphic Novel</span><span id="beginGNCostDisplay" class="begin-cost-display"></span></button>
             <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
             <button id="beginFortuneBtn" class="begin-fortune-btn" onclick="window.openFortunePurchaseModal()">
                 <span class="begin-fortune-label">Fortunes</span>
