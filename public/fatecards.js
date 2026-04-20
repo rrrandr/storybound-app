@@ -1943,6 +1943,9 @@ function setSelectedState(mount, selectedCardEl){
         specialMount.appendChild(temptCard);
         // Start electricity on both faces — always running
         if (window._startTemptElectricity) window._startTemptElectricity(temptCard);
+        // FIX D — Fate card gating: apply locked state based on current turnCount
+        // so Petition + Tempt read as "not yet wakeable" through Scenes 1-2.
+        if (typeof window._syncFateCardLockState === 'function') window._syncFateCardLockState();
 
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);

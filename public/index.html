@@ -137,6 +137,7 @@
         </div>
       </div>
       <div class="treasury-row"><span class="treasury-label">Storypass</span><span class="treasury-value" id="treasuryStorypass">—</span><button class="treasury-buy-btn" onclick="window.showPaywall('unlock')">Claim</button></div>
+      <div class="treasury-row"><span class="treasury-label" title="Each purchase grants one free Taste-length story (all scenes free).">Free Tastes</span><span class="treasury-value" id="treasuryFreeTastes">—</span></div>
       <div class="treasury-row"><span class="treasury-label">Tempt Fates</span><span class="treasury-value" id="treasuryTemptFates">—</span></div>
     </div>
     <button id="menuReincarnationsBtn" class="sb-btn-png sm">Reincarnations</button>
@@ -1086,9 +1087,22 @@
     </div>
     </div><!-- /.character-cards-row -->
 
-    <!-- Reincarnation trigger — single button that opens the slot modal.
-         Used at ALL viewport widths (was previously mobile-only). -->
-    <button class="reinc-mobile-trigger sb-btn-png sm" id="reincMobileTrigger">Reincarnations</button>
+    <!-- Reincarnation trigger + dropdown — single gold button that toggles
+         the slot list as an attached dropdown panel. Used at ALL viewport widths. -->
+    <div class="reinc-trigger-wrap">
+        <button class="reinc-mobile-trigger sb-btn-png sm" id="reincMobileTrigger">
+            <span class="reinc-trigger-label">Reincarnations</span>
+            <span class="reinc-trigger-arrow" aria-hidden="true">&#x25BE;</span>
+        </button>
+        <div class="reinc-mobile-modal hidden" id="reincMobileModal">
+            <div class="reinc-mobile-modal-content">
+                <p class="reinc-mobile-modal-explainer" id="reincMobileExplainer"></p>
+                <div class="reinc-mobile-slots" id="reincMobileSlots">
+                    <!-- JS will move slot buttons here on open -->
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Reincarnation Slots — 7 name-tag buttons with dropdown menus -->
     <div class="echo-reinc-section" id="echoReincSection">
@@ -1101,18 +1115,6 @@
             <div class="reinc-slot" data-slot="5"><button class="reinc-slot-btn sb-btn-png"><span class="reinc-slot-label">Reincarnation 5</span></button><div class="reinc-slot-dropdown hidden"></div></div>
             <div class="reinc-slot" data-slot="6"><button class="reinc-slot-btn sb-btn-png"><span class="reinc-slot-label">Reincarnation 6</span></button><div class="reinc-slot-dropdown hidden"></div></div>
             <div class="reinc-slot" data-slot="7"><button class="reinc-slot-btn sb-btn-png"><span class="reinc-slot-label">Reincarnation 7</span></button><div class="reinc-slot-dropdown hidden"></div></div>
-        </div>
-    </div>
-
-    <!-- Mobile: Reincarnation modal -->
-    <div class="reinc-mobile-modal hidden" id="reincMobileModal">
-        <div class="reinc-mobile-modal-content">
-            <h3 class="reinc-mobile-modal-title">Reincarnations</h3>
-            <p class="reinc-mobile-modal-explainer" id="reincMobileExplainer"></p>
-            <div class="reinc-mobile-slots" id="reincMobileSlots">
-                <!-- JS will clone slot buttons here -->
-            </div>
-            <button class="sb-btn-png sm reinc-mobile-close" id="reincMobileClose">Done</button>
         </div>
     </div>
 
@@ -1425,9 +1427,9 @@
     <div class="card-flow-row" id="flowRowPressure" data-flow-stage="pressure">
       <div class="section-title">Story Pull</div>
       <div class="sb-grid sb-grid-4" id="pressureGrid">
-        <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power & Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him.<br>Except for her.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape & Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">The world hunts them.<br>They only have each other.</span></div></div></div>
-        <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire & Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">He should walk away.<br>He never can.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power<br>& Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him.<br>Except for her.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="EscapePursuit"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Escape<br>& Pursuit</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Escape & Pursuit</span><span class="sb-card-desc">The world hunts them.<br>They only have each other.</span></div></div></div>
+        <div class="sb-card" data-grp="pressure" data-val="DesireObsession"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Desire<br>& Obsession</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Desire & Obsession</span><span class="sb-card-desc">He should walk away.<br>He never can.</span></div></div></div>
         <div class="sb-card" data-grp="pressure" data-val="Survival"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Survival</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Survival</span><span class="sb-card-desc">The mountain tried to freeze them;<br>instead, they burned.</span></div></div></div>
       </div>
 

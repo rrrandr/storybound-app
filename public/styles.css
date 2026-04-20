@@ -9794,6 +9794,20 @@ select {
 .tempt-fate-card .inner { border: 1px solid rgba(218,165,32,0.5) !important; border-radius: 12px !important; }
 .tempt-fate-card.flipped .inner { border-color: rgba(218,165,32,0.7) !important; box-shadow: 0 0 8px rgba(218,165,32,0.3); }
 
+/* FIX D — Fate card locked state (Scenes 1–2). Visually dormant, cursor
+   indicates unavailability. Click handlers still fire → toast explains. */
+.petition-fate-card.fate-locked,
+.tempt-fate-card.fate-locked {
+    filter: grayscale(0.85) brightness(0.55);
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+.petition-fate-card.fate-locked:hover,
+.tempt-fate-card.fate-locked:hover {
+    filter: grayscale(0.75) brightness(0.65);
+    opacity: 0.7;
+}
+
 /* ── Golden electricity overlay on flipped Tempt Fate card ── */
 .tempt-electricity {
     position: absolute;
@@ -12015,9 +12029,14 @@ textarea.fate-field {
     height: 100%;
     left: 0;
     background: linear-gradient(180deg, #ede9e1 0%, #e0d9ce 100%);
-    /* Spine hinge: rotateY first (fold into page), then translateZ to align with front face.
-       transform-origin: left center anchors rotation at the spine-cover junction. */
-    transform: rotateY(-90deg) translateZ(0px);
+    /* Spine sits at the left edge of the book, thickness = book depth * 2 (40px).
+       Rightmost transform applies first: rotateY folds the flat 40px panel to
+       stand on its left edge. Then translateZ(-depth) shifts the rotated slab
+       back by --book-depth so its right edge lands at z = +depth (flush with
+       the front cover at translateZ(+depth)) and its left edge at z = -depth
+       (flush with the back cover). Without this translateZ, the spine's front
+       face sticks out +depth past the cover, producing a visible gap. */
+    transform: translateZ(calc(-1 * var(--book-depth))) rotateY(-90deg);
     transform-origin: left center;
     border-radius: 6px 0 0 6px;
     box-shadow:
@@ -15414,17 +15433,26 @@ body.guided-fate-autoplay .card-gleam-layer {
 }
 
 #pressureGrid .sb-card .sb-card-back .sb-card-title {
+    /* Span the full gold nameplate so single-line (Survival) and two-line
+       ("X & Y") titles both center horizontally AND vertically in the box.
+       Gold nameplate spans ~17%–40% of card height on the back PNG. */
     position: absolute;
-    top: 35.43cqi;
+    top: 17%;
+    height: 23%;
     left: 12%;
     right: 12%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     font-family: 'lust-script-display', 'lust-script', serif;
     font-size: 9.52cqi;
     font-weight: 400;
     color: #1a1612;
     text-shadow: none;
     word-spacing: normal;
-    line-height: 1.15;
+    line-height: 1.05;
     margin: 0;
 }
 
@@ -18041,16 +18069,16 @@ body.corridor-mode .sb-grid.corridor-section {
 #beginStoryRow #beginBtn {
     position: relative;
     z-index: 1;
-    width: 351px !important;  /* 305 × 1.15 — fits "Enter Your Story" on one line */
-    height: 92px;             /* 80 × 1.15 */
-    padding: 18px 41px;       /* 16/36 × 1.15 */
+    width: 386px !important;  /* 351 × 1.10 — button 10% larger, text size unchanged */
+    height: 101px;            /* 92 × 1.10 */
+    padding: 20px 45px;       /* 18/41 × 1.10 */
     min-width: 0;
     background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
     background-size: 100% 100% !important;
     background-position: center !important;
     font-family: 'Lora', serif !important;
     font-variant: small-caps;
-    font-size: 1.87em;        /* 1.625 × 1.15 */
+    font-size: 1.87em;        /* unchanged — button scales but text does not */
     letter-spacing: 0.2em;
     white-space: nowrap;      /* Belt-and-suspenders: never wrap */
     /* 3D lacquered black — glossy depth via stacked shadows */
@@ -18262,16 +18290,16 @@ body.corridor-mode .sb-grid.corridor-section {
 .begin-gn-btn {
     display: block;
     margin: 18px auto 0;
-    width: 351px;             /* Match #beginBtn */
-    height: 92px;             /* Match #beginBtn */
-    padding: 18px 41px;       /* Match #beginBtn */
+    width: 439px;             /* 351 × 1.25 — button 25% larger, text unchanged */
+    height: 115px;            /* 92 × 1.25 */
+    padding: 23px 51px;       /* 18/41 × 1.25 */
     background: url('/assets/ui/Black-Gold-520x144.png') center/100% 100% no-repeat, #0a0a0a !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none;
     font-family: 'Lora', serif !important;
     font-variant: small-caps;
-    font-size: 1.5em;         /* Slightly smaller than Story (1.87em) so 5 words fit on one line */
+    font-size: 1.5em;         /* unchanged — button scales but text does not */
     letter-spacing: 0.12em;
     white-space: nowrap;
     font-weight: 400;
@@ -23999,19 +24027,115 @@ body.gn-cover-active .gn-ui-overlay {
     width: 170px;
 }
 
-/* ── Echo Reincarnation Section — collapsed to dropdown trigger + modal
-   at ALL viewport widths (was previously mobile-only). The raw slot row
-   is hidden; #reincMobileTrigger opens the reincMobileModal which hosts
-   the 7 slots as a vertical stack. ── */
+/* ── Echo Reincarnation Section — collapsed to gold trigger + attached
+   dropdown panel at ALL viewport widths. The raw slot row is hidden;
+   #reincMobileTrigger toggles #reincMobileModal which hosts the 7 slots
+   as a vertical stack anchored directly beneath the trigger (no fullscreen
+   overlay, no separate title, no Done button). ── */
 .echo-reinc-section {
     display: none !important;
 }
-.reinc-mobile-trigger {
-    display: block !important;
-    width: 160px;
-    height: 36px;
+/* Wrap gives the dropdown panel a positioning anchor */
+.reinc-trigger-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
     margin: 10px auto 0;
+}
+/* Trigger — styled identically to .reinc-slot-btn (solid gold DSP PNG) so
+   it reads as the same family of buttons. Override .sb-btn-png defaults. */
+.reinc-mobile-trigger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 110px !important;
+    height: 36px !important;
+    margin: 0;
+    padding: 0 6px;
+    background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
+    background-size: 100% 100% !important;
+    background-position: center !important;
+    background-color: transparent !important;
+    background-repeat: no-repeat !important;
+    border: none !important;
+    border-radius: 3px !important;
+    /* Remove sb-btn-png's clip-path so the full gold plate renders */
+    clip-path: none !important;
+    /* Remove sb-btn-png's text-shadow so the dark label reads cleanly */
+    text-shadow: none !important;
+    color: #1a1408 !important;
+}
+.reinc-trigger-label {
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.7em;
+    color: #1a1408;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+.reinc-trigger-arrow {
+    font-size: 0.7em;
+    line-height: 1;
+    color: #1a1408;
+    display: inline-block;
+    transition: transform 0.2s ease;
+}
+.reinc-mobile-trigger.reinc-open .reinc-trigger-arrow {
+    transform: rotate(180deg);
+}
+/* Dropdown panel — anchored to trigger, no fullscreen overlay */
+.reinc-mobile-modal {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 6px;
+    z-index: 120;
+}
+.reinc-mobile-modal.hidden {
+    display: none !important;
+}
+.reinc-mobile-modal-content {
+    background: rgba(15, 10, 5, 0.96);
+    border: 1px solid rgba(201, 168, 76, 0.5);
+    border-radius: 4px;
+    padding: 8px;
+    min-width: 180px;
+    max-width: 240px;
+    max-height: 60vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+}
+.reinc-mobile-modal-explainer {
+    font-family: 'Lora', serif;
     font-size: 0.72em;
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.75);
+    text-align: center;
+    margin: 0 0 4px;
+    padding: 0 4px;
+}
+.reinc-mobile-modal-explainer:empty {
+    display: none;
+}
+.reinc-mobile-slots {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    align-items: center;
+}
+.reinc-mobile-slots .reinc-slot {
+    width: 100%;
+}
+.reinc-mobile-slots .reinc-slot-btn {
+    width: 100% !important;
+    height: 36px !important;
 }
 
 /* Legacy full-row styles kept below so if the .echo-reinc-section is ever
@@ -24577,24 +24701,45 @@ body.gn-cover-active .gn-ui-overlay {
 .fw-fortune {
     display: flex;
     align-items: center;
-    gap: 4px;
-    background: rgba(10, 8, 5, 0.85);
-    border: 1px solid rgba(201, 162, 78, 0.3);
+    gap: 5px;
+    /* Solid shiny gold — multi-stop gradient with highlight band */
+    background:
+        linear-gradient(180deg,
+            #fbe27a 0%,
+            #e6c04a 18%,
+            #c99a2a 48%,
+            #b0801f 72%,
+            #d9ae3e 92%,
+            #f0d36b 100%);
+    border: 1px solid #4a3608;
     border-radius: 16px;
-    padding: 5px 12px;
+    padding: 5px 14px;
     cursor: default;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 250, 210, 0.85),
+        inset 0 -1px 0 rgba(60, 40, 8, 0.55),
+        0 2px 3px rgba(0, 0, 0, 0.55);
 }
 .fw-fortune-count {
-    font-size: 0.9em;
-    font-weight: 600;
-    color: rgba(212, 175, 55, 0.9);
+    font-size: 0.95em;
+    font-weight: 800;
+    color: #0a0a0a;
     letter-spacing: 0.05em;
+    /* Black lacquered 3D — top highlight, hard bottom bevel, diffuse drop */
+    text-shadow:
+        0 -1px 0 rgba(255, 245, 200, 0.55),
+        0 1px 0 rgba(0, 0, 0, 0.9),
+        0 2px 2px rgba(0, 0, 0, 0.5);
 }
 .fw-fortune-icon {
-    height: 0.9em;
+    height: 0.95em;
     width: auto;
-    filter: sepia(1) saturate(2) brightness(1.8) hue-rotate(15deg);
-    opacity: 0.8;
+    /* Gold source PNG -> lacquered black silhouette with bevel */
+    filter:
+        brightness(0) saturate(100%)
+        drop-shadow(0 -1px 0 rgba(255, 245, 200, 0.55))
+        drop-shadow(0 1px 0 rgba(0, 0, 0, 0.9));
+    opacity: 0.95;
 }
 .fw-tempt {
     display: flex;
@@ -24618,12 +24763,16 @@ body.gn-cover-active .gn-ui-overlay {
     font-weight: 600;
     color: rgba(255, 200, 100, 0.9);
 }
-/* Low fortune warning — turns red at ≤10 */
+/* Low fortune warning — dark-lacquered red over gold at ≤10 */
 .fw-fortune.fw-low .fw-fortune-count {
-    color: rgba(220, 60, 50, 0.95);
+    color: #7a1a14;
+    text-shadow:
+        0 -1px 0 rgba(255, 245, 200, 0.5),
+        0 1px 0 rgba(0, 0, 0, 0.75),
+        0 2px 2px rgba(0, 0, 0, 0.4);
 }
 .fw-fortune.fw-low {
-    border-color: rgba(220, 60, 50, 0.4);
+    border-color: #5e2822;
 }
 /* Fortune breakdown panel */
 .fw-breakdown {
@@ -27880,81 +28029,9 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         white-space: nowrap;
     }
 
-    /* ── Reincarnation: trigger sizing override for mobile (trigger lives outside
-       character-cards-row now; universal hide of .echo-reinc-section is in the
-       base stylesheet, not here) ── */
-    .reinc-mobile-trigger {
-        width: 140px !important;
-        height: 34px !important;
-        margin: 8px auto 0 !important;
-        font-size: 0.7em !important;
-    }
-
-    /* ── Reincarnation mobile modal ── */
-    .reinc-mobile-modal {
-        position: fixed;
-        inset: 0;
-        z-index: 10020;
-        background: rgba(0, 0, 0, 0.85);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .reinc-mobile-modal.hidden {
-        display: none !important;
-    }
-    .reinc-mobile-modal-content {
-        background: #0e0e0e;
-        border: 1px solid rgba(201, 168, 76, 0.4);
-        border-radius: 8px;
-        padding: 20px 16px;
-        width: 85vw;
-        max-width: 340px;
-        max-height: 80vh;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
-    .reinc-mobile-modal-title {
-        font-family: 'Lora', serif;
-        font-variant: small-caps;
-        letter-spacing: 0.2em;
-        color: #c9a84c;
-        font-size: 1em;
-        margin: 0 0 4px;
-    }
-    .reinc-mobile-modal-explainer {
-        font-family: 'Lora', serif;
-        font-size: 0.75em;
-        font-style: italic;
-        color: #c9a84c;
-        opacity: 0.6;
-        text-align: center;
-        margin: 0 0 8px;
-    }
-    .reinc-mobile-slots {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        width: 100%;
-        align-items: center;
-    }
-    .reinc-mobile-slots .reinc-slot {
-        width: 100%;
-    }
-    .reinc-mobile-slots .reinc-slot-btn {
-        width: 100% !important;
-        height: 36px !important;
-        font-size: 0.75em !important;
-    }
-    .reinc-mobile-close {
-        margin-top: 12px !important;
-        width: 100px;
-        height: 32px;
-        font-size: 0.7em;
-    }
+    /* Reincarnation trigger + dropdown: universal styles in base stylesheet.
+       No per-breakpoint overrides needed — dropdown is attached to trigger,
+       not a fullscreen modal. */
 }
 
 /* ── Mobile concierge lock — both orientations ──
