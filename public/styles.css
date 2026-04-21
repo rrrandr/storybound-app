@@ -1576,8 +1576,8 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 /* These are identity plates, not reveal cards                                      */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .character-tarot-card {
-    width: 206px;
-    max-width: 45vw; /* Scale down on narrow viewports */
+    width: 247px;                /* 206 × 1.2 — 20% larger */
+    max-width: 54vw;             /* 45vw × 1.2 so the narrow-viewport cap scales in proportion */
     aspect-ratio: 2.75 / 4.75; /* Canonical tarot proportions */
     container-type: inline-size; /* children use cqi for linear scaling */
     /* CHARACTER CARD ART PNG — frame baked into PNG, no CSS border */
@@ -1670,24 +1670,64 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
    PNG shows through. Carries the form layout. */
 #loveInterestCharacterCard .ctc-flip-front {
     transform: rotateY(180deg);
-    /* Carry the Character-face.png frame on the front face so it rotates
-       with the card (outer background is now stripped). */
-    background-image: url('/assets/card-art/cards/Character-face.png');
+    /* Carry the Love-Interest-face.png frame on the front face so it
+       rotates with the card (outer background is stripped). Distinct from
+       the player card which uses Character-face.png. */
+    background-image: url('/assets/card-art/cards/Love-Interest-face.png');
 }
 /* Flipped state — inner rotates, exposing the front face. */
 #loveInterestCharacterCard.li-card-expanded .ctc-flip-inner {
     transform: rotateY(180deg);
 }
-/* Back-face prompt typography — black debossed Lora 12pt, positioned into
-   the blank gold plaque engraved on the PNG (~17–40% of card height). */
+/* "Love Interest" title on the back face of the LI card. Black debossed,
+   Lust script, positioned at the bottom of the card by default.
+   Card-designer-manipulable: the selector is registered in
+   public/card-designer.js so Ctrl+Shift+D → click the text lets you move,
+   resize, re-width, or adjust font-size just like other .sb-card-title
+   elements. */
+#loveInterestCharacterCard .li-back-title {
+    /* Position persisted from Card Designer (Ctrl+Shift+D → Copy CSS).
+       Designer emitted px at a 216px-wide card: top 305px, font-size 25.5px.
+       Horizontally centered via left:50% + translateX(-50%) so it scales
+       safely at any card width without overflowing the right edge. */
+    position: absolute;
+    top: 148.1cqi;            /* +5px further down (≈2.3cqi @ 216px card) */
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translateX(-50%);
+    font-family: 'lust-script-display', 'Playfair Display', serif;
+    font-size: 11.8cqi;
+    color: #0a0a0a;
+    /* 2px gold outline around each letter. Layered on top of the existing
+       debossed text-shadow so the word reads as engraved black filigree
+       with a metallic gold edge. */
+    -webkit-text-stroke: 2px #d4af37;
+            text-stroke: 2px #d4af37;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    text-align: center;
+    /* Debossed / letterpress — warm-gold highlight BELOW, dark pit ABOVE */
+    text-shadow:
+        0 1px 0 rgba(218, 165, 32, 0.28),
+        0 -1px 0 rgba(0, 0, 0, 0.20);
+    pointer-events: none;   /* click passes through to the back face (flip) */
+}
+
+/* Back-face prompt typography — black debossed Lora, positioned into the
+   blank gold plaque engraved on the PNG. Position persisted from Card
+   Designer (designer emitted px at 216px-wide card: top 75.5px, left
+   17.5px, width 171.5px, font-size 16px). Converted to cqi. */
 #loveInterestCharacterCard .li-card-cover-copy {
     position: absolute;
-    top: 24%;
-    left: 12%;
-    right: 12%;
+    top: 37.3cqi;             /* +5px further down (≈2.3cqi @ 216px card) */
+    left: 9.5cqi;             /* +3px to the right (≈1.4cqi @ 216px card) */
+    width: 79.4cqi;
+    right: auto;
+    bottom: auto;
     margin: 0;
     font-family: 'Lora', serif;
-    font-size: 12pt;
+    font-size: 7.4cqi;
     font-weight: 500;
     line-height: 1.3;
     color: #1a1200;
@@ -1695,6 +1735,10 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     text-shadow:
         0 1px 0 rgba(218, 165, 32, 0.28),
         0 -1px 0 rgba(0, 0, 0, 0.20);
+    /* Pass clicks through to the back face so tapping the prompt text
+       still triggers the flip. Card Designer flips this to auto when
+       decorating (via forceStyle in decorateEl). */
+    pointer-events: none;
 }
 
 /* Headers hidden — titles baked into PNG */
@@ -1742,6 +1786,21 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     font-family: 'Lora', serif;
     font-style: italic;
     color: rgba(30, 25, 15, 0.45);
+}
+/* "or leave blank to be surprised" — small italic hint attached beneath the
+   partner-name input. Lives outside the input because the full phrase is
+   too long to fit inside the narrow field at readable text sizes. Styled
+   to feel like a whispered instruction, not a UI label. */
+.character-tarot-card .character-field-name .li-name-hint {
+    display: block;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 9pt;
+    color: rgba(30, 25, 15, 0.55);
+    text-align: center;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
 }
 
 .character-tarot-fields {
@@ -24155,7 +24214,7 @@ body.gn-cover-active .gn-ui-overlay {
 
 /* Scale down character cards to make room for echo reincarnation row */
 .character-cards-row > .character-tarot-card {
-    width: 170px;
+    width: 204px;                /* 170 × 1.2 — 20% larger */
 }
 
 /* ── Echo Reincarnation Section — collapsed to gold trigger + attached
@@ -24363,6 +24422,25 @@ body.gn-cover-active .gn-ui-overlay {
     cursor: pointer;
     transition: background 0.15s;
     white-space: nowrap;
+}
+/* Explainer header shown at the top of an empty-state dropdown. Sets
+   context before the placeholder names. Wraps rather than nowrap so the
+   full phrase reads cleanly. Matches the dropdown's gold-on-dark
+   aesthetic with a muted italic treatment. */
+.reinc-slot-dropdown-explainer {
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.85);
+    padding: 8px 12px 6px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+    line-height: 1.4;
+    white-space: normal;
+    max-width: 260px;
+    letter-spacing: 0.02em;
+    cursor: default;
+    pointer-events: none;
 }
 
 .reinc-slot-dropdown-item:hover {
@@ -24820,14 +24898,11 @@ body.gn-cover-active .gn-ui-overlay {
     gap: 4px;
     pointer-events: auto;
     font-family: 'Lora', serif;
-    opacity: 0.75;
-    transition: opacity 0.3s ease;
+    /* Always bright — no dulled baseline. Scale + gleam on hover live on
+       .fw-fortune (the pill itself), matching #burgerBtn / #globalBackBtn. */
 }
 .fortune-widget.fw-visible {
     display: flex;
-}
-.fortune-widget:hover {
-    opacity: 1;
 }
 .fw-fortune {
     /* Gold pill — Fortunes-pill.png (native 300 × 146, aspect ~2.05:1) has
@@ -24836,6 +24911,7 @@ body.gn-cover-active .gn-ui-overlay {
        Size: height 32px locks the right-side ornament at ~32×32, matching
        the burger-keyhole and back-arrow icons. Total width ~66px follows
        from the native aspect ratio. */
+    position: relative;                  /* positioning context for ::after gleam */
     display: flex;
     align-items: center;
     justify-content: flex-end;           /* push count to the right edge of the flat-gold area */
@@ -24847,13 +24923,44 @@ body.gn-cover-active .gn-ui-overlay {
     background-size: 100% 100%;
     background-position: center;
     background-repeat: no-repeat;
-    cursor: default;
+    cursor: pointer;                     /* hoverable like the other gold icons */
+    overflow: hidden;                    /* clip the gleam sweep to the pill bounds */
+    transition: transform 0.25s ease;
     /* Dark drop-shadow behind the pill — matches #burgerBtn img and
        #globalBackBtn img so the three gold icons read with the same depth
        over bright backgrounds (curtain, gold scenes). Filter applies to
        the PNG's alpha outline rather than a rectangular box. */
     filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))
             drop-shadow(0 0 14px rgba(0, 0, 0, 0.35));
+}
+/* Gleam sweep — same pattern as #burgerBtn::after / #globalBackBtn::after.
+   A narrow white band that travels across the pill once on hover, reusing
+   the shared gleam-sweep keyframe defined globally. */
+.fw-fortune::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -30%;
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.08) 25%,
+        rgba(255, 255, 255, 0.30) 50%,
+        rgba(255, 255, 255, 0.08) 75%,
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+}
+.fw-fortune:hover {
+    transform: scale(1.1);                /* same grow as burger + back arrow */
+}
+.fw-fortune:hover::after {
+    opacity: 1;
+    animation: gleam-sweep 0.7s ease-out forwards;
 }
 .fw-fortune-count {
     /* Sits in the flat-gold left panel, vertically centered, right-justified
@@ -25768,20 +25875,22 @@ body:has(.curtain-ceremony) .concierge-dialogue {
    (pointer-events: none), auto-dismisses after ~5.5s.
    ═══════════════════════════════════════════════════════════════════════ */
 .concierge-whisper {
-    /* Positioned absolutely within the summon figure. The figure's box
-       contains a full-body character image; the head sits near the top,
-       so the whisper anchors to the top-right of the figure and floats
-       just outside it, level with where the head reads. */
+    /* Positioned absolutely within the summon figure. The figure's box is
+       217×516 containing a full-body butler image; the face occupies the
+       TOP-CENTER of the image (not the right edge, not overall center).
+       Approximate face anchor: top ~18% of figure height, right edge of
+       face ~42% of figure width. Whisper starts 10px past the face. */
     position: absolute;
-    left: 100%;
-    top: 8%;
-    margin-left: 14px;
-    max-width: 260px;
+    top: 18%;
+    left: 42%;
+    margin-left: 10px;
+    max-width: 340px;
+    min-width: 220px;
     z-index: 9100;
     color: rgba(232, 216, 168, 0.96);
     font-family: 'Lora', serif;
     font-style: italic;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.4;
     letter-spacing: 0.03em;
     white-space: normal;
@@ -28197,7 +28306,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     /* Both naming cards: fill grid columns */
     .character-cards-row > .character-tarot-card {
         width: 100% !important;
-        max-width: 180px !important;
+        max-width: 216px !important;    /* 180 × 1.2 — 20% larger */
         grid-row: 1 !important;
     }
     #playerCharacterCard { grid-column: 1 !important; }
