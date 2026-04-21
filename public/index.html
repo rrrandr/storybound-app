@@ -1050,38 +1050,51 @@
         </div>
     </div>
 
-    <!-- Love Interest Tarot Card (canonical 2.75:4.75 ratio) -->
+    <!-- Love Interest Tarot Card — 3D flip: back face shows the "Have a type?"
+         prompt by default; click rotates to front face (naming form).
+         Adding .li-card-expanded on #loveInterestCharacterCard triggers the flip
+         (transform: rotateY(180deg) on .ctc-flip-inner). Handler lives in
+         _initPhase1LIUi (app.js:19665). -->
     <div class="character-tarot-card" id="loveInterestCharacterCard">
-        <div class="character-tarot-header">Your Love Interest</div>
-        <div class="character-tarot-fields">
-            <div class="character-field character-field-name">
-                <label>Name</label>
-                <input id="partnerNameInput" type="text" class="plaque-input" placeholder="e.g. Lord Blackwood">
+        <div class="ctc-flip-inner">
+            <!-- BACK FACE — default visible. Clicking it flips to the form. -->
+            <div class="ctc-flip-face ctc-flip-back" id="liCardCover">
+                <p class="li-card-cover-copy">Have a type? Open this. Otherwise, let yourself be surprised.</p>
             </div>
-            <div class="character-field character-field-gender">
-                <label>Gender</label>
-                <select id="loveInterestGender" class="plaque-input" onchange="checkCustom(this, 'customLoveInterest')">
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-Binary">Non-Binary</option>
-                    <option value="Custom">Custom</option>
-                </select>
-                <input id="customLoveInterest" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
-            </div>
-            <div class="character-field character-field-pronouns">
-                <label>Pronouns</label>
-                <select id="lovePronouns" class="plaque-input" onchange="checkCustom(this, 'customLovePronouns')">
-                    <option value="He/Him">He/Him</option>
-                    <option value="She/Her">She/Her</option>
-                    <option value="They/Them">They/Them</option>
-                    <option value="Custom">Custom</option>
-                </select>
-                <input id="customLovePronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
-            </div>
-            <div class="character-field character-field-ancestry fate-input-wrapper">
-                <label>Ancestry</label>
-                <input id="ancestryInputLI" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. British Aristocracy">
-                <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
+            <!-- FRONT FACE — revealed after flip. Carries the naming form. -->
+            <div class="ctc-flip-face ctc-flip-front">
+                <div class="character-tarot-header">Your Love Interest</div>
+                <div class="character-tarot-fields">
+                    <div class="character-field character-field-name">
+                        <label>Name</label>
+                        <input id="partnerNameInput" type="text" class="plaque-input" placeholder="e.g. Lord Blackwood, or leave blank to be be surprised">
+                    </div>
+                    <div class="character-field character-field-gender">
+                        <label>Gender</label>
+                        <select id="loveInterestGender" class="plaque-input" onchange="checkCustom(this, 'customLoveInterest')">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Non-Binary">Non-Binary</option>
+                            <option value="Custom">Custom</option>
+                        </select>
+                        <input id="customLoveInterest" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+                    </div>
+                    <div class="character-field character-field-pronouns">
+                        <label>Pronouns</label>
+                        <select id="lovePronouns" class="plaque-input" onchange="checkCustom(this, 'customLovePronouns')">
+                            <option value="He/Him">He/Him</option>
+                            <option value="She/Her">She/Her</option>
+                            <option value="They/Them">They/Them</option>
+                            <option value="Custom">Custom</option>
+                        </select>
+                        <input id="customLovePronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+                    </div>
+                    <div class="character-field character-field-ancestry fate-input-wrapper">
+                        <label>Ancestry</label>
+                        <input id="ancestryInputLI" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. British Aristocracy">
+                        <div class="rotating-placeholder" data-for="ancestryInputLI"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1090,7 +1103,7 @@
     <!-- Reincarnation trigger + dropdown — single gold button that toggles
          the slot list as an attached dropdown panel. Used at ALL viewport widths. -->
     <div class="reinc-trigger-wrap">
-        <button class="reinc-mobile-trigger sb-btn-png sm" id="reincMobileTrigger">
+        <button class="reinc-mobile-trigger sb-btn-png" id="reincMobileTrigger">
             <span class="reinc-trigger-label">Reincarnations</span>
             <span class="reinc-trigger-arrow" aria-hidden="true">&#x25BE;</span>
         </button>

@@ -1619,9 +1619,129 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     background-image: url('/assets/card-art/cards/Love-Interest-face.png');
 }
 
+/* LI Tarot Card — 3D flip. Back face carries the "Have a type?" prompt and
+   is visible by default. Click on the back face (id="liCardCover", handler in
+   _initPhase1LIUi) adds .li-card-expanded to the card, which rotates the inner
+   to show the front face (naming form). Flip does not change LI mode — that's
+   driven by name-input changes via _recomputeLIMode().
+   Scoped class names (.ctc-flip-*) avoid collision with the general .sb-card
+   flip system which has its own base styling. */
+#loveInterestCharacterCard {
+    perspective: 1200px;
+    /* Strip outer Character-face.png for LI card only (player card keeps it).
+       The frame now lives on the front face so the entire card flips as one
+       unit instead of just the inner contents. */
+    background-image: none !important;
+}
+#loveInterestCharacterCard .ctc-flip-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#loveInterestCharacterCard .ctc-flip-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background-size: 102%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #0a0a0a;
+}
+/* BACK FACE — default visible (rotateY(0)). Uses Tarot-Gold-BLANKXL-back
+   PNG which has a blank gold plaque inset at ~17–40% of card height. The
+   prompt text is absolutely positioned into that plaque area.
+   Text is positioned (not flex-centered) so it lands precisely in the PNG's
+   engraved plaque. */
+#loveInterestCharacterCard .ctc-flip-back {
+    transform: rotateY(0deg);
+    padding: 0;
+    text-align: center;
+    cursor: pointer;
+    /* Lowercase-hyphen path (matches the app's canonical URL pattern for
+       /assets/card-art/cards/*). The server doesn't serve the capital-
+       and-space path, which is why the earlier URL rendered black. */
+    background-image: url('/assets/card-art/cards/Tarot-Gold-BLANKXL-back.png');
+}
+/* FRONT FACE — pre-rotated 180° so it's hidden by backface-visibility until
+   the inner itself rotates. Transparent so the outer card's Character-face
+   PNG shows through. Carries the form layout. */
+#loveInterestCharacterCard .ctc-flip-front {
+    transform: rotateY(180deg);
+    /* Carry the Character-face.png frame on the front face so it rotates
+       with the card (outer background is now stripped). */
+    background-image: url('/assets/card-art/cards/Character-face.png');
+}
+/* Flipped state — inner rotates, exposing the front face. */
+#loveInterestCharacterCard.li-card-expanded .ctc-flip-inner {
+    transform: rotateY(180deg);
+}
+/* Back-face prompt typography — black debossed Lora 12pt, positioned into
+   the blank gold plaque engraved on the PNG (~17–40% of card height). */
+#loveInterestCharacterCard .li-card-cover-copy {
+    position: absolute;
+    top: 24%;
+    left: 12%;
+    right: 12%;
+    margin: 0;
+    font-family: 'Lora', serif;
+    font-size: 12pt;
+    font-weight: 500;
+    line-height: 1.3;
+    color: #1a1200;
+    /* Debossed / letterpress: subtle gold highlight BELOW, dark pit ABOVE */
+    text-shadow:
+        0 1px 0 rgba(218, 165, 32, 0.28),
+        0 -1px 0 rgba(0, 0, 0, 0.20);
+}
+
 /* Headers hidden — titles baked into PNG */
 .character-tarot-header {
     display: none;
+}
+
+/* ─── Name Your Characters — screen-specific suppressions + sizing ────── */
+/* Destiny's Choice mini-deck hidden on this screen (user flow currently
+   routes destiny through the flipped LI cover, not the center deck). */
+.character-cards-row > #destinyMiniDeck,
+#characterSectionRow #destinyMiniDeck {
+    display: none !important;
+}
+
+/* Ancestry field removed from both Character and Love Interest cards.
+   Elements remain in DOM so any downstream code reading the ancestry input
+   (fate binding, prompt directives) still finds the element. */
+.character-tarot-card .character-field-ancestry {
+    display: none !important;
+}
+
+/* Double input text size (and implicitly height, since padding is em-based).
+   Base was 0.8em; doubling to 1.6em. Padding auto-scales because it is
+   declared in em units in the base rule. */
+.character-tarot-card .character-field input,
+.character-tarot-card .character-field select {
+    font-size: 1.6em !important;
+}
+
+/* LI name input — user-specified typography.
+   Entered name: 18pt Lora black (bold enough to read against the gold plaque).
+   Placeholder ("e.g. Lord Blackwood, or leave blank to be be surprised"): 12pt
+   so the full hint fits on one line without crowding the field.
+   Id selector (1,0,0) + !important beats the generic .character-tarot-card
+   .character-field input rule above (0,2,1 + !important). */
+#partnerNameInput {
+    font-family: 'Lora', serif !important;
+    font-size: 18pt !important;
+    color: #000 !important;
+    font-weight: 500;
+}
+#partnerNameInput::placeholder {
+    font-size: 12pt !important;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    color: rgba(30, 25, 15, 0.45);
 }
 
 .character-tarot-fields {
@@ -15337,6 +15457,17 @@ body.guided-fate-autoplay .card-gleam-layer {
     display: none;
 }
 
+/* Suppress ALL sparkles on breadcrumb cards. The JS path in
+   updateActiveBreadcrumbSparkles is already short-circuited; this rule
+   is a safety net so any stray sparkle container injected by other code
+   paths stays invisible. */
+.breadcrumb-card .breadcrumb-active-sparkles,
+.breadcrumb-card .sparkle-anchor-container,
+.breadcrumb-card .authorship-sparkle,
+.breadcrumb-card .fate-dust-particle {
+    display: none !important;
+}
+
 /* Tier cards (Taste/Indulge) and character tarot cards need position context
    and overflow clipping for the gleam layer */
 .character-tarot-card {
@@ -23093,19 +23224,19 @@ body.gn-cover-active .gn-ui-overlay {
 /* ── Story Pull (Pressure) — Back titles ── */
 #pressureGrid > div.sb-card[data-grp="pressure"][data-val="DesireObsession"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 48.51cqi; left: 9.52cqi; width: 82.49cqi; font-size: 8.33cqi;
+    top: 35.42cqi; left: 9.52cqi; width: 82.49cqi; font-size: 12.5cqi;
 }
 #pressureGrid > div.sb-card[data-grp="pressure"][data-val="EscapePursuit"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 49.11cqi; left: 14.88cqi; width: 73.01cqi; font-size: 8.33cqi;
+    top: 35.42cqi; left: 14.88cqi; width: 73.01cqi; font-size: 12.5cqi;
 }
 #pressureGrid > div.sb-card[data-grp="pressure"][data-val="PowerControl"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 48.81cqi; left: 14.29cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 35.71cqi; left: 21.43cqi; width: 43.46cqi; font-size: 12.5cqi;
 }
 #pressureGrid > div.sb-card[data-grp="pressure"][data-val="Survival"] > div.sb-card-inner > div.sb-card-face.sb-card-back > span.sb-card-title {
     right: auto; position: absolute; bottom: auto;
-    top: 49.11cqi; left: 32.74cqi; width: 34.02cqi; font-size: 8.33cqi;
+    top: 37.20cqi; left: 21.43cqi; width: 56.55cqi; font-size: 12.5cqi;
 }
 
 /* ── Story Pull (Pressure) — Locked text positions (portal-only) ──
@@ -24699,47 +24830,52 @@ body.gn-cover-active .gn-ui-overlay {
     opacity: 1;
 }
 .fw-fortune {
+    /* Gold pill — Fortunes-pill.png (native 300 × 146, aspect ~2.05:1) has
+       the frame + right-side ornament baked in. The black-lacquered count
+       number sits in the flat-gold area on the LEFT half.
+       Size: height 32px locks the right-side ornament at ~32×32, matching
+       the burger-keyhole and back-arrow icons. Total width ~66px follows
+       from the native aspect ratio. */
     display: flex;
     align-items: center;
-    gap: 5px;
-    /* Solid shiny gold — multi-stop gradient with highlight band */
-    background:
-        linear-gradient(180deg,
-            #fbe27a 0%,
-            #e6c04a 18%,
-            #c99a2a 48%,
-            #b0801f 72%,
-            #d9ae3e 92%,
-            #f0d36b 100%);
-    border: 1px solid #4a3608;
-    border-radius: 16px;
-    padding: 5px 14px;
+    justify-content: flex-end;           /* push count to the right edge of the flat-gold area */
+    height: 32px;
+    aspect-ratio: 300 / 146;             /* native PNG ratio — width computes to ~66px */
+    padding: 0 calc(32px + 4px) 0 4px;    /* right pad = ornament width + small gutter; count now hugs the right edge */
+    box-sizing: border-box;
+    background-image: url('/assets/ui/Fortunes-pill.png');
+    background-size: 100% 100%;
+    background-position: center;
+    background-repeat: no-repeat;
     cursor: default;
-    box-shadow:
-        inset 0 1px 0 rgba(255, 250, 210, 0.85),
-        inset 0 -1px 0 rgba(60, 40, 8, 0.55),
-        0 2px 3px rgba(0, 0, 0, 0.55);
+    /* Dark drop-shadow behind the pill — matches #burgerBtn img and
+       #globalBackBtn img so the three gold icons read with the same depth
+       over bright backgrounds (curtain, gold scenes). Filter applies to
+       the PNG's alpha outline rather than a rectangular box. */
+    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))
+            drop-shadow(0 0 14px rgba(0, 0, 0, 0.35));
 }
 .fw-fortune-count {
-    font-size: 0.95em;
+    /* Sits in the flat-gold left panel, vertically centered, right-justified
+       against the right edge of the gold area (just before the ornament).
+       Size tuned for the 32px-tall pill. */
+    font-size: 13px;
     font-weight: 800;
     color: #0a0a0a;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-align: right;
     /* Black lacquered 3D — top highlight, hard bottom bevel, diffuse drop */
     text-shadow:
         0 -1px 0 rgba(255, 245, 200, 0.55),
         0 1px 0 rgba(0, 0, 0, 0.9),
         0 2px 2px rgba(0, 0, 0, 0.5);
 }
+/* Icon element is redundant now — the PNG has the decorative element
+   baked in on the right side. Kept in DOM for backward compat, hidden
+   visually so the pill reads clean. */
 .fw-fortune-icon {
-    height: 0.95em;
-    width: auto;
-    /* Gold source PNG -> lacquered black silhouette with bevel */
-    filter:
-        brightness(0) saturate(100%)
-        drop-shadow(0 -1px 0 rgba(255, 245, 200, 0.55))
-        drop-shadow(0 1px 0 rgba(0, 0, 0, 0.9));
-    opacity: 0.95;
+    display: none;
 }
 .fw-tempt {
     display: flex;
@@ -24763,16 +24899,14 @@ body.gn-cover-active .gn-ui-overlay {
     font-weight: 600;
     color: rgba(255, 200, 100, 0.9);
 }
-/* Low fortune warning — dark-lacquered red over gold at ≤10 */
+/* Low fortune warning — dark-lacquered red over gold at ≤10.
+   Border-color override removed: the PNG supplies the frame now. */
 .fw-fortune.fw-low .fw-fortune-count {
     color: #7a1a14;
     text-shadow:
         0 -1px 0 rgba(255, 245, 200, 0.5),
         0 1px 0 rgba(0, 0, 0, 0.75),
         0 2px 2px rgba(0, 0, 0, 0.4);
-}
-.fw-fortune.fw-low {
-    border-color: #5e2822;
 }
 /* Fortune breakdown panel */
 .fw-breakdown {
@@ -25624,6 +25758,63 @@ body:has(.curtain-ceremony) .concierge-dialogue {
     transform: translateY(100%) !important;
     visibility: hidden !important;
     pointer-events: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONCIERGE WHISPER — first-time-only corridor guidance hint.
+   Mounted INSIDE #conciergeSummonFigure so it tracks the figure's position
+   automatically. No speech bubble — text floats near the figure's head with
+   a soft drop-shadow for legibility on varied backgrounds. Non-blocking
+   (pointer-events: none), auto-dismisses after ~5.5s.
+   ═══════════════════════════════════════════════════════════════════════ */
+.concierge-whisper {
+    /* Positioned absolutely within the summon figure. The figure's box
+       contains a full-body character image; the head sits near the top,
+       so the whisper anchors to the top-right of the figure and floats
+       just outside it, level with where the head reads. */
+    position: absolute;
+    left: 100%;
+    top: 8%;
+    margin-left: 14px;
+    max-width: 260px;
+    z-index: 9100;
+    color: rgba(232, 216, 168, 0.96);
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 15px;
+    line-height: 1.4;
+    letter-spacing: 0.03em;
+    white-space: normal;
+    pointer-events: none;   /* never captures input */
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 500ms ease-out, transform 500ms ease-out;
+    /* Drop shadow only — makes the floating text readable on both dark
+       and light regions without a bubble. No background, no border. */
+    text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.9),
+        0 0 10px rgba(0, 0, 0, 0.7),
+        0 0 2px rgba(0, 0, 0, 0.95);
+}
+.concierge-whisper.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+/* Hide the whisper whenever the summon figure itself is hidden (legal gate,
+   library, mask ceremony) — mirrors the figure's suppression rules. */
+body:has(#legalGate:not(.hidden)) .concierge-whisper,
+body:has(#vaultLibraryScreen:not(.hidden)) .concierge-whisper,
+body:has(.mask-gate-active) .concierge-whisper {
+    display: none !important;
+}
+/* Fallback: when the whisper is parented on body (figure not mounted), pin
+   it to the viewport corner so it's still visible and legible. */
+body > .concierge-whisper {
+    position: fixed;
+    left: 140px;
+    bottom: 160px;
+    top: auto;
+    margin-left: 0;
 }
 /* Design mode override — force-show summon figure for slider feedback */
 body.concierge-design-active .concierge-summon-figure {
