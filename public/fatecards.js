@@ -1836,6 +1836,22 @@ function setSelectedState(mount, selectedCardEl){
                     localStorage.setItem('sb_tarot_clicked_ever', '1');
                 } catch (_) {}
 
+                // STORY GRAVITY — tag the selected card's contribution to
+                // the outcome/relationship axis. Card id lives in `data`
+                // (from fateOptions selection). Mapping:
+                //   temptation, reversal, twist, break, push → outcome
+                //   boundary, confession, silence, hold, tether → relationship
+                // Cards outside this set contribute 0 (neutral). Lightweight
+                // keyword match on id/name — no new subsystem.
+                try {
+                    var _gs = window.state && window.state.gravityScore;
+                    if (_gs && data) {
+                        var _tag = String((data.id || data.name || '')).toLowerCase();
+                        if (/tempt|revers|twist|break|push|confront|strike/.test(_tag))      _gs.outcome      += 1;
+                        else if (/bound|confess|silenc|hold|tether|linger|reveal/.test(_tag)) _gs.relationship += /silenc/.test(_tag) ? 0.5 : 1;
+                    }
+                } catch (_) {}
+
                 clearPendingTimer();
 
                 // Cancel any prior sparkle cycle, then start new cycle
