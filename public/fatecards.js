@@ -1825,6 +1825,17 @@ function setSelectedState(mount, selectedCardEl){
                 // Selecting a different unlocked card wipes/replaces suggestions
                 setSelectedState(mount, card);
 
+                // Mark that the player has now used a Tarot card at least
+                // once — persisted across stories. Used by the Scene 1
+                // Tarot-decision-participant injection to stop showing
+                // the Tarot onboarding directive after first real use.
+                // Persistence via localStorage (matches the per-field
+                // pattern used elsewhere: no monolithic save-state).
+                try {
+                    if (window.state) window.state._tarotCardClickedEver = true;
+                    localStorage.setItem('sb_tarot_clicked_ever', '1');
+                } catch (_) {}
+
                 clearPendingTimer();
 
                 // Cancel any prior sparkle cycle, then start new cycle

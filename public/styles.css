@@ -1,3 +1,53 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   SCENE 1 MICRO-EXPRESSION — inline stance buttons rendered inside
+   Scene 1 prose at the hook's resolution point. On re-read (after the
+   player has already picked), buttons swap to an italic memory line.
+   ═══════════════════════════════════════════════════════════════════════ */
+.scene1-micro-expr {
+  margin: 1.2em auto;
+  max-width: 90%;
+  text-align: center;
+  font-family: 'Lora', serif;
+}
+.scene1-micro-expr .sme-prompt {
+  color: rgba(212, 169, 64, 0.88);
+  font-size: 1em;
+  margin-bottom: 0.6em;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+}
+.scene1-micro-expr .sme-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6em;
+}
+.scene1-micro-expr .sme-btn {
+  font-family: 'Lora', serif;
+  font-size: 0.92em;
+  padding: 0.45em 1.1em;
+  color: rgba(232, 216, 168, 0.94);
+  background: linear-gradient(180deg, rgba(60, 44, 22, 0.45), rgba(40, 28, 14, 0.6));
+  border: 1px solid rgba(212, 169, 64, 0.5);
+  border-radius: 2px;
+  cursor: pointer;
+  letter-spacing: 0.03em;
+  transition: border-color 0.18s ease, background 0.18s ease, transform 0.08s ease;
+}
+.scene1-micro-expr .sme-btn:hover {
+  border-color: rgba(255, 220, 120, 0.85);
+  background: linear-gradient(180deg, rgba(80, 60, 28, 0.6), rgba(52, 36, 18, 0.75));
+}
+.scene1-micro-expr .sme-btn:active {
+  transform: scale(0.97);
+}
+.scene1-micro-expr.sme-resolved .sme-memory {
+  color: rgba(200, 180, 140, 0.7);
+  font-size: 0.95em;
+  line-height: 1.5;
+  margin: 0.8em 0;
+}
+
 /* Boot render lock — screens hidden until hydration resolves */
 body.booting .screen {
   display: none !important;
@@ -1699,11 +1749,15 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     font-family: 'lust-script-display', 'Playfair Display', serif;
     font-size: 11.8cqi;
     color: #0a0a0a;
-    /* 2px gold outline around each letter. Layered on top of the existing
-       debossed text-shadow so the word reads as engraved black filigree
-       with a metallic gold edge. */
-    -webkit-text-stroke: 2px #d4af37;
-            text-stroke: 2px #d4af37;
+    /* Gold outline that sits OUTSIDE the glyphs, not inside.
+       `-webkit-text-stroke` paints centered on the letter's edge — half
+       inside, half outside — which eats the black fill. Using a 4px stroke
+       with `paint-order: stroke fill` draws the stroke first and the fill
+       on top, overpainting the inner half. The visible result is a true
+       2px gold outline OUTSIDE each letter, with the black interior intact. */
+    -webkit-text-stroke: 4px #d4af37;
+            text-stroke: 4px #d4af37;
+    paint-order: stroke fill;
     letter-spacing: 0.04em;
     white-space: nowrap;
     text-align: center;
@@ -12274,38 +12328,54 @@ textarea.fate-field {
 }
 
 /* ── Page edges — proportional to book depth, flush corners ── */
+/* Page block insets — matches the "cover boards overhang the text block"
+   pattern on the private-library 3D books (.book-pages-*). Without these
+   the paper edge runs flush to the cover edge and the book reads like a
+   cereal box. 10/12px inset scales well at this book size. */
 .cover-book-3d .book-pages-right {
     width: calc(var(--book-depth) * 2);
-    height: 100%;
-    top: 0;
-    right: 0;
+    height: calc(100% - 24px);
+    top: 12px;
+    right: 10px;
     left: auto;
     transform-origin: right center;
     transform: translateZ(calc(-1 * var(--book-depth))) rotateY(90deg);
     background: url('/assets/Forbidde-Library-Art/2-inch-side-edge.jpg') center / cover no-repeat;
     box-shadow:
-        inset 0 4px 6px -2px rgba(0,0,0,0.4),
-        inset 0 -4px 6px -2px rgba(0,0,0,0.4),
+        inset 0 5px 8px -2px rgba(0,0,0,0.5),
+        inset 0 -5px 8px -2px rgba(0,0,0,0.5),
         inset -3px 0 6px rgba(0,0,0,0.25),
         inset 3px 0 5px rgba(255,255,255,0.15),
         0 0 3px rgba(0, 0, 0, 0.15);
     border-radius: 0 1px 1px 0;
 }
 .cover-book-3d .book-pages-top {
-    width: 100%;
+    width: calc(100% - 12px);
     height: calc(var(--book-depth) * 2);
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     transform-origin: center top;
     transform: translateZ(calc(-1 * var(--book-depth))) rotateX(90deg);
     background: linear-gradient(180deg, #f0ebe3 0%, #f5f0e8 100%);
+    box-shadow:
+        inset 0 -3px 6px rgba(0,0,0,0.3),
+        inset 0 1px 3px rgba(255,255,255,0.12),
+        inset -5px 0 6px -2px rgba(0,0,0,0.3),
+        inset 5px 0 6px -2px rgba(0,0,0,0.15);
 }
 .cover-book-3d .book-pages-bottom {
-    width: 100%;
+    width: calc(100% - 12px);
     height: calc(var(--book-depth) * 2);
-    bottom: 0; left: 0;
+    bottom: 0;
+    left: 0;
     transform-origin: center bottom;
     transform: translateZ(calc(-1 * var(--book-depth))) rotateX(-90deg);
     background: linear-gradient(0deg, #ece7dd 0%, #f0ebe3 100%);
+    box-shadow:
+        inset 0 3px 6px rgba(0,0,0,0.3),
+        inset 0 -1px 3px rgba(255,255,255,0.12),
+        inset -5px 0 6px -2px rgba(0,0,0,0.3),
+        inset 5px 0 6px -2px rgba(0,0,0,0.15);
 }
 
 /* ── Page shimmer (glows on page edges during rotation) ── */
@@ -18476,21 +18546,26 @@ body.corridor-mode .sb-grid.corridor-section {
 }
 
 /* ── Begin Graphic Novel — matches Enter Your Story button size,
-   text uses the "Shape Your Story" metallic-gold gradient treatment ── */
-.begin-gn-btn {
-    display: block;
+   text uses the "Shape Your Story" metallic-gold gradient treatment.
+   NOTE: selector qualifies with #beginStoryRow so specificity beats
+   `.sb-btn-png.lg` (which would otherwise force width: 260px / height: 72px
+   and cause the label to get clipped — "Enter Your Gra…"). Font size is
+   reduced from 1.5em → 1.05em so the full 23-char label fits in the
+   shared 386px width alongside "Enter Your Story" at 1.87em (16 chars). */
+#beginStoryRow .begin-gn-btn {
+    display: block !important;
     margin: 18px auto 0;
-    width: 439px;             /* 351 × 1.25 — button 25% larger, text unchanged */
-    height: 115px;            /* 92 × 1.25 */
-    padding: 23px 51px;       /* 18/41 × 1.25 */
+    width: 386px !important;  /* matches #beginBtn */
+    height: 101px !important; /* matches #beginBtn */
+    padding: 20px 24px !important;
     background: url('/assets/ui/Black-Gold-520x144.png') center/100% 100% no-repeat, #0a0a0a !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none;
     font-family: 'Lora', serif !important;
     font-variant: small-caps;
-    font-size: 1.5em;         /* unchanged — button scales but text does not */
-    letter-spacing: 0.12em;
+    font-size: 1.05em !important; /* reduced so the full label fits */
+    letter-spacing: 0.08em !important;
     white-space: nowrap;
     font-weight: 400;
     cursor: pointer;
@@ -20953,20 +21028,25 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     padding: 40px 20px;
     text-align: center;
 }
-.gn-selector-title {
-    font-family: 'Lora', serif;
+/* !important on font-family + color overrides the global
+   `h1, h2 { font-family: 'lust-script-display' ... !important }` rule at
+   line ~1485, which would otherwise force this header into the pink
+   script style used for overlay headings. */
+h2.gn-selector-title {
+    font-family: 'Lora', serif !important;
     font-size: 1.8em;
     margin-bottom: 30px;
     /* 3D gold — rendered via JS for initial small caps + wide kerning */
-    color: #d4a843;
+    color: #d4a843 !important;
     text-shadow:
         0 1px 0 #b8912e,
         0 2px 0 #a07a1e,
         0 3px 4px rgba(0,0,0,0.5),
         0 0 8px rgba(212,175,55,0.3),
-        0 -1px 0 rgba(255,235,150,0.2);
+        0 -1px 0 rgba(255,235,150,0.2) !important;
     letter-spacing: 0.5em;
     font-variant: small-caps;
+    font-weight: 500 !important;
 }
 .gn-selector-options {
     display: flex;
@@ -21220,9 +21300,12 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     line-height: 1.4;
 }
 .gn-loading-cancel {
-    position: absolute;
-    top: 16px;
-    right: 16px;
+    /* Sit inline just below the loading bar / hint instead of pinned to
+       the viewport's top-right — that position reads as a global "close
+       screen" button (next to the keyhole menu) instead of a cancel for
+       the in-progress render. */
+    position: static;
+    margin-top: 4px;
     background: none;
     border: 1px solid rgba(201, 168, 76, 0.3);
     color: rgba(201, 168, 76, 0.5);
@@ -25875,17 +25958,23 @@ body:has(.curtain-ceremony) .concierge-dialogue {
    (pointer-events: none), auto-dismisses after ~5.5s.
    ═══════════════════════════════════════════════════════════════════════ */
 .concierge-whisper {
-    /* Positioned absolutely within the summon figure. The figure's box is
-       217×516 containing a full-body butler image; the face occupies the
-       TOP-CENTER of the image (not the right edge, not overall center).
-       Approximate face anchor: top ~18% of figure height, right edge of
-       face ~42% of figure width. Whisper starts 10px past the face. */
+    /* Positioned absolutely within the summon figure. The figure box is
+       217×516 and is CSS-positioned at `left: -110px` — so most of the
+       box sits off the viewport's left edge. The butler's face renders
+       in the TOP-RIGHT of the image (roughly 90-97% of figure width).
+       Anchor the whisper just past that right-edge so it starts at a
+       viewport x that's clearly in-bounds (around x=115-120px).
+       If it needs tuning: left: lower% = whisper closer/overlapping face,
+       higher% = whisper further right from face. */
     position: absolute;
     top: 18%;
-    left: 42%;
+    left: 95%;
     margin-left: 10px;
-    max-width: 340px;
-    min-width: 220px;
+    /* Clamp so the whisper never overflows the viewport right edge.
+       Whisper starts ~106px from viewport left (figure left -110 + 217*0.95 + 10).
+       Leave 16px breathing room on the right. */
+    max-width: min(340px, calc(100vw - 122px));
+    min-width: min(220px, calc(100vw - 122px));
     z-index: 9100;
     color: rgba(232, 216, 168, 0.96);
     font-family: 'Lora', serif;
