@@ -1980,6 +1980,45 @@ Player internal thoughts are never narrated. Preserve first-person structure.
         ? `\nMaintain the following narration voice exactly.\n\n${window.state.voiceAnchor}\n`
         : '';
 
+    // ── Intensity stance modulator (flow control, not event injection) ──
+    // Shapes pacing and experiential tone from state._intensityStance
+    // (set by the micro-decision system at app.js:130854) and
+    // state._intimacyAccumulator (density ±, pace ±, clamped). No-op
+    // when no stance is chosen. Double-gated: stance presence AND
+    // explicit-embodiment authorization. buildRendererPrompt only runs
+    // inside the Grok orchestration paths, which are themselves gated
+    // on explicitEmbodimentAuthorized, so the second check is defense
+    // in depth. Kept out of callGrokSDAuthor intentionally — the SD
+    // author is a structural planner; stance must not influence event
+    // decisions, only how embodiment is rendered.
+    let _grokIntimacyStanceBlock = '';
+    try {
+      const _stance = appState && appState._intensityStance;
+      const _intimacyActive = !!(appState && (appState._explicitEmbodimentAuthorized || appState.explicitEmbodimentAuthorized));
+      if (_stance && _intimacyActive) {
+        if (_stance === 'surrender') {
+          _grokIntimacyStanceBlock +=
+            '\nINTENSITY STANCE (surrender):\n' +
+            'Maintain a continuous sense of yielding and openness in the protagonist\'s experience. Sensory progression should feel uninterrupted, with minimal resistance or interruption. Let moments unfold fluidly rather than being checked or redirected.\n';
+        } else if (_stance === 'control') {
+          _grokIntimacyStanceBlock +=
+            '\nINTENSITY STANCE (control):\n' +
+            'Maintain a continuous sense of control and intentional pacing in the protagonist\'s experience. The protagonist regulates escalation, introducing subtle pauses, checks, or boundaries that shape how far each moment proceeds.\n';
+        }
+        const _acc = (appState && appState._intimacyAccumulator) || { density: 0, pace: 0 };
+        if ((_acc.density || 0) > 0) {
+          _grokIntimacyStanceBlock += 'Increase sensory density slightly; details accumulate rather than dissipate.\n';
+        }
+        if ((_acc.pace || 0) < 0) {
+          _grokIntimacyStanceBlock += 'Allow pacing to slow subtly, with more lingering on each beat.\n';
+        } else if ((_acc.pace || 0) > 0) {
+          _grokIntimacyStanceBlock += 'Allow pacing to move forward more decisively, with fewer lingering pauses.\n';
+        }
+        _grokIntimacyStanceBlock +=
+          'This guidance shapes pacing and experiential tone only. Do not alter plot events, character decisions, or scene outcomes beyond this modulation.\n';
+      }
+    } catch (_) {}
+
     return {
       system: `You are a SPECIALIST RENDERER for intimate scenes.
 ${env4thBlock}${rendererVoiceAnchor}
@@ -2008,7 +2047,7 @@ ${!esd.completionAllowed ? `
 CRITICAL: Completion is FORBIDDEN. The scene must remain suspended.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
-${eroticModeBlock}
+${eroticModeBlock}${_grokIntimacyStanceBlock}
 Write embodied, sensory prose (150-200 words). Focus on physical sensation and emotional presence.`,
 
       user: `Render the intimate moment.
