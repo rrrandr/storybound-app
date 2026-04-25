@@ -293,7 +293,6 @@ let _sparkleActiveCardId = null;
 let _fateSparkleContainerIds = [];
 
 function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
-    console.log('[FX:DEBUG] startSparkleCycle triggered', { cardId });
 
     // Clear any existing cycle
     stopSparkleCycle();
@@ -1232,12 +1231,31 @@ function stopContinuousSparkles() {
             return Math.max(0, Math.min(5, window.state.fateUnlockCount));
         }
 
-        // Best-effort inference from existing state fields (non-invasive defaults)
-        const access = window.state ? window.state.access : null;
-        if (access === 'free') return 2;
+        const st = window.state || {};
+        const access = st.access;
+
+        // Subscribers always get the full deck.
         if (access === 'sub') return 5;
 
-        // Default paid-but-not-sub tier
+        // StoryPass holders have paid for the story-length tier → full deck.
+        if (access === 'pass') return 5;
+
+        // Per-scene paid users: if Fortune was spent to generate THIS scene,
+        // the user earned access to the full deck. This is the authoritative
+        // rule — "since I was charged 1F, all 5 cards should be unlocked."
+        // Free-tier + Taste + under cap returns cost = 0 (truly free scene)
+        // and falls through to the partial-deck upsell below.
+        try {
+            if (typeof window.getSceneFortuneCost === 'function') {
+                const cost = window.getSceneFortuneCost();
+                if (cost > 0) return 5;
+            }
+        } catch (_) {}
+
+        // Free tier, no fortune spent this scene — partial deck as upsell.
+        if (access === 'free') return 3;
+
+        // Default fallback.
         return 3;
     }
 
@@ -1426,13 +1444,6 @@ function stopContinuousSparkles() {
 
     // Golden flow animation from card to inputs - continuous gentle stream
     function triggerGoldenFlow(fromEl, toEl) {
-        console.log('[FX:DEBUG] triggerGoldenFlow called', {
-            fromElExists: !!fromEl,
-            toElExists: !!toEl,
-            fromElVisible: fromEl ? fromEl.offsetParent !== null : false,
-            toElVisible: toEl ? toEl.offsetParent !== null : false
-        });
-
         if (!fromEl || !toEl) return;
 
         const fromRect = fromEl.getBoundingClientRect();
@@ -1441,11 +1452,6 @@ function stopContinuousSparkles() {
         // ANCHOR VALIDATION: Abort if either element has no dimensions
         if (!fromRect || fromRect.width === 0 || fromRect.height === 0) return;
         if (!toRect || toRect.width === 0 || toRect.height === 0) return;
-
-        console.log('[FX:DEBUG] Golden flow coords', {
-            fromRect: { left: fromRect.left, top: fromRect.top, width: fromRect.width, height: fromRect.height },
-            toRect: { left: toRect.left, top: toRect.top, width: toRect.width, height: toRect.height }
-        });
 
         const startX = fromRect.left + fromRect.width / 2;
         const startY = fromRect.top + fromRect.height / 2;

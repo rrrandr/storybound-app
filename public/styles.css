@@ -47,6 +47,25 @@
   line-height: 1.5;
   margin: 0.8em 0;
 }
+/* Committed line — rendered in place of the widget immediately after the
+   player clicks an option. Matches body-prose ink / size / typography so
+   the protagonist's landed interpretation reads as part of the narration,
+   not as a UI artifact. Fades in from the button state for continuity. */
+.scene1-micro-expr.sme-resolved .sme-committed {
+  color: inherit;            /* match surrounding body text ink */
+  font-family: inherit;
+  font-size: 1em;
+  line-height: 1.6;
+  margin: 0.8em 0;
+  font-style: italic;        /* internal thought → italic, matches prose convention */
+  text-align: left;
+  opacity: 0;
+  animation: smeCommittedFadeIn 0.45s ease-out forwards;
+}
+@keyframes smeCommittedFadeIn {
+  0%   { opacity: 0; transform: translateY(-2px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
 /* Boot render lock — screens hidden until hydration resolves */
 body.booting .screen {
@@ -1534,9 +1553,91 @@ button.is-finalized,
 /* TYPOGRAPHY */
 h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color:var(--pink); text-shadow:0 0 15px var(--hot); font-weight:400; }
 .section-title { font-family: 'Lora', serif !important; font-variant: small-caps !important; color: #ffffff !important; text-shadow: none !important; font-weight: 400; font-size:2.2em; margin:35px 0 15px; border-top:1px solid rgba(255,105,180,0.2); padding-top:20px; }
-/* Fate header — immutable UI typography (never inherits tone/theme) */
+/* GN reader title header — reuses literary typography (.story-page-title
+   and .story-page-scene) and sits at the top of the reader column. */
+.gn-title-header {
+    text-align: center;
+    padding: 18px 16px 6px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+.gn-title-header #gnStoryTitle:empty {
+    display: none;
+}
+
+/* Panel retry button — surfaces when the post-render blank scan (or an
+   onerror event) marks a panel failed. Positioned center-stage inside
+   the panel shell alongside the fail label. */
+.gn-panel--image-failed .gn-panel-retry-btn {
+    position: absolute;
+    left: 50%;
+    top: 58%;
+    transform: translate(-50%, 0);
+    z-index: 3;
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.72em;
+    letter-spacing: 0.14em;
+    padding: 6px 14px;
+    background: rgba(20, 14, 8, 0.75);
+    color: rgba(212, 169, 64, 0.9);
+    border: 1px solid rgba(212, 169, 64, 0.45);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 180ms ease, border-color 180ms ease;
+}
+.gn-panel--image-failed .gn-panel-retry-btn:hover {
+    background: rgba(40, 28, 14, 0.9);
+    border-color: rgba(232, 200, 120, 0.85);
+}
+.gn-panel--image-failed .gn-panel-fail-label {
+    position: absolute;
+    left: 50%;
+    top: 42%;
+    transform: translate(-50%, -50%);
+}
+
+/* Viewing a past scene (user stepped back with Back/Prev) — dim the
+   submit controls + fate cards so submitting a turn is clearly anchored
+   to the latest scene. Non-destructive: Last button re-enables everything. */
+body.gn-viewing-past #gnReaderControls,
+body.gn-viewing-past #gnFateSection,
+body.gn-viewing-past .gn-scene-actions-row {
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+/* Fate-special lock state — Petition / Tempt greyed on Scene 1 so the
+   reader sees the mechanics exist even before they unlock at Scene 2.
+   Applies in GN reader (and anywhere else the class is toggled). The
+   cards stay in layout; interactivity is suppressed. */
+.petition-fate-card.fate-locked,
+.tempt-fate-card.fate-locked {
+    opacity: 0.38;
+    filter: grayscale(0.7);
+    pointer-events: none;
+    cursor: default;
+}
+.petition-fate-card.fate-locked::after,
+.tempt-fate-card.fate-locked::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 8, 6, 0.35);
+    pointer-events: none;
+    z-index: 5;
+    border-radius: inherit;
+}
+
+/* Fate header — immutable UI typography (never inherits tone/theme).
+   GN's "Let Fate Guide You" lives inside .gn-fate-section as a plain
+   .section-title (no id, since #fateCardHeader is on the literary
+   element). Extend the selector so GN picks up the same small-caps
+   size + breathing kern instead of falling back to .section-title
+   (2.2em, no letter-spacing animation). */
 #fateCardHeader,
-.fate-own-hands-label {
+.fate-own-hands-label,
+.gn-fate-section > .section-title {
     font-family: 'Lora', serif !important;
     font-variant: small-caps !important;
     color: #ffffff !important;
@@ -1749,22 +1850,16 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     font-family: 'lust-script-display', 'Playfair Display', serif;
     font-size: 11.8cqi;
     color: #0a0a0a;
-    /* Gold outline that sits OUTSIDE the glyphs, not inside.
-       `-webkit-text-stroke` paints centered on the letter's edge — half
-       inside, half outside — which eats the black fill. Using a 4px stroke
-       with `paint-order: stroke fill` draws the stroke first and the fill
-       on top, overpainting the inner half. The visible result is a true
-       2px gold outline OUTSIDE each letter, with the black interior intact. */
-    -webkit-text-stroke: 4px #d4af37;
-            text-stroke: 4px #d4af37;
-    paint-order: stroke fill;
     letter-spacing: 0.04em;
     white-space: nowrap;
     text-align: center;
-    /* Debossed / letterpress — warm-gold highlight BELOW, dark pit ABOVE */
+    /* Gold blur halo — stacked blurred gold shadows form a soft outside
+       glow around each glyph. Replaces the former 4px gold text-stroke. */
     text-shadow:
-        0 1px 0 rgba(218, 165, 32, 0.28),
-        0 -1px 0 rgba(0, 0, 0, 0.20);
+        0 0 3px rgba(212, 175, 55, 0.95),
+        0 0 6px rgba(212, 175, 55, 0.85),
+        0 0 12px rgba(212, 175, 55, 0.65),
+        0 0 20px rgba(218, 165, 32, 0.45);
     pointer-events: none;   /* click passes through to the back face (flip) */
 }
 
@@ -1775,7 +1870,7 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
 #loveInterestCharacterCard .li-card-cover-copy {
     position: absolute;
     top: 37.3cqi;             /* +5px further down (≈2.3cqi @ 216px card) */
-    left: 9.5cqi;             /* +3px to the right (≈1.4cqi @ 216px card) */
+    left: 10.9cqi;            /* +3px further right (≈1.4cqi @ 216px card) */
     width: 79.4cqi;
     right: auto;
     bottom: auto;
@@ -2678,9 +2773,10 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
     font-weight: 700;
     color: var(--page-text, #2a1f14) !important;
     text-shadow: none !important;
-    letter-spacing: 0.22em;
+    /* Initial Caps + Small Caps + Bold (was all-small-caps via lowercase). */
+    letter-spacing: 0.06em;
     font-variant: small-caps;
-    text-transform: lowercase;
+    text-transform: capitalize;
     margin: 0 0 16px 0;
     line-height: 1.3;
 }
@@ -7248,13 +7344,23 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     background-image: none !important;
     background: rgba(80, 20, 20, 0.7) !important;
     border: 1px solid rgba(200, 50, 50, 0.4) !important;
-    color: rgba(255, 100, 100, 0.8) !important;
-    font-size: 0.65em !important;
-    padding: 4px 14px !important;
+    /* White text — red label was hard to read against the maroon ground.
+       The dark-red background still signals "destructive" via color; the
+       text itself stays cleanly legible. */
+    color: rgba(255, 255, 255, 0.92) !important;
+    /* Match the Begin Reading button width above so the two stacked CTAs
+       align as a column. The .sb-btn-png.md above is 200px wide; matching
+       that here prevents the cramped narrow pill look. */
+    width: 200px !important;
+    height: auto !important;
+    font-size: 0.7em !important;
+    padding: 8px 14px !important;
+    box-sizing: border-box !important;
 }
 .zoom-delete-btn:hover {
     background: rgba(120, 30, 30, 0.8) !important;
-    color: #ff6666 !important;
+    color: #ffffff !important;
+    border-color: rgba(220, 80, 80, 0.7) !important;
 }
 .forbidden-library-empty {
     font-family: 'Lora', serif;
@@ -9483,6 +9589,220 @@ select {
 /* Legacy fate-mini (kept for backward compat) */
 .fate-card-separator .fate-mini { width: 60px; aspect-ratio: 2.75 / 4.75; background: linear-gradient(145deg, #2a0033, #400020); border: 1px solid var(--gold); border-radius: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.5); }
 .fate-card-separator .fate-mini h4 { font-size: 0.6em; color: var(--gold); margin: 0 0 3px; text-transform: uppercase; }
+
+/* TEMPT-FATE VISION BUTTON — two-line label (title + behavioral subtitle) */
+.tempt-fate-vision-btn-title {
+  font-size: 0.92em;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  color: rgba(240,228,196,0.98);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.tempt-fate-vision-btn-sub {
+  font-size: 0.74em;
+  font-style: italic;
+  letter-spacing: 0.08em;
+  color: rgba(212,196,160,0.72);
+  margin-top: 1px;
+}
+
+/* FATE VISION ECHO — committed Vision insert at top of literary scene */
+.fate-vision-echo {
+  position: relative;
+  display: block;
+  margin: 1.4em auto 1.6em;
+  max-width: 92%;
+  line-height: 0;
+  border-radius: 6px;
+  box-shadow: 0 0 22px rgba(212,175,55,0.18), inset 0 0 0 1px rgba(212,175,55,0.25);
+  animation: fateVisionEchoReveal 1.2s ease-out;
+}
+.fate-vision-echo-img {
+  display: block;
+  width: 100%;
+  max-height: 520px;
+  object-fit: cover;
+  border-radius: 6px;
+  filter: contrast(0.96) brightness(0.92);
+}
+.fate-vision-echo-word {
+  font-family: "Lora", serif;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  font-size: 0.92em;
+  text-transform: uppercase;
+  color: rgba(240,228,196,0.82);
+  text-shadow: 0 0 6px rgba(0,0,0,0.75), 0 0 14px rgba(212,175,55,0.35);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  filter: blur(0.3px);
+  animation: fateVisionEchoWord 1.8s ease-out 0.6s both;
+}
+@keyframes fateVisionEchoReveal {
+  0%   { opacity: 0; filter: blur(14px) contrast(0.7); }
+  100% { opacity: 1; filter: blur(0) contrast(0.96); }
+}
+@keyframes fateVisionEchoWord {
+  0%   { opacity: 0; letter-spacing: 0.34em; }
+  60%  { opacity: 0.45; }
+  100% { opacity: 0.82; letter-spacing: 0.18em; }
+}
+
+/* FATE VISION BUFFER — quiet line preceding a Fracture-source Vision */
+.fate-vision-buffer {
+  color: rgba(232,217,176,0.7);
+  font-family: "Lora", serif;
+  animation: fateVisionEchoReveal 0.9s ease-out;
+}
+
+/* Source-scoped tone shifts on the literary echo */
+/* Dream — subconscious intrusion: softer diffusion, slight blur, no reveal delay */
+.fate-vision-echo[data-source="dream"]    { filter: blur(0.5px) saturate(0.9) contrast(0.92); opacity: 0.92; }
+.fate-vision-echo[data-source="dream"] .fate-vision-echo-word { opacity: 0.72; }
+.fate-vision-echo[data-source="fracture"] { filter: saturate(0.7) contrast(1.05); box-shadow: 0 0 28px rgba(160,60,60,0.18), inset 0 0 0 1px rgba(212,175,55,0.22); }
+.fate-vision-echo[data-source="fracture"] .fate-vision-echo-word { color: rgba(240,210,196,0.85); }
+/* Fracture-only: delayed reveal (~250ms) so it reads as aftershock, not system insert */
+.fate-vision-echo[data-source="fracture"]                        { animation-delay: 250ms; opacity: 0; animation-fill-mode: both; }
+.fate-vision-echo[data-source="fracture"] .fate-vision-echo-word { animation-delay: 850ms; }
+
+/* FATE VISION SECONDARY ECHO — text-only in-scene block after the primary echo */
+.fate-vision-secondary-echo {
+  max-width: 92%;
+  margin: 1.2em auto 1.8em;
+  text-align: center;
+  font-family: "Lora", serif;
+  letter-spacing: 0.03em;
+  /* 150ms gap after the primary echo's ~1.2s reveal. */
+  animation: fateVisionEchoReveal 1.4s ease-out 1.35s both;
+}
+.fate-vision-secondary-lead {
+  margin: 0 0 0.35em;
+  font-style: italic;
+  font-size: 1.02em;
+  color: rgba(240,228,196,0.82);
+  letter-spacing: 0.06em;
+}
+.fate-vision-secondary-prose {
+  margin: 0 0 0.55em;
+  font-style: italic;
+  font-size: 0.94em;
+  color: rgba(212,196,160,0.72);
+}
+.fate-vision-secondary-orb {
+  display: inline-block;
+  font-family: "Lora", serif;
+  font-style: italic;
+  font-size: 0.86em;
+  color: rgba(232,200,120,0.78);
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 2px;
+  transition: color 200ms ease, text-shadow 200ms ease, background 200ms ease;
+  text-shadow: 0 0 6px rgba(212,175,55,0.25);
+}
+.fate-vision-secondary-orb:hover {
+  color: rgba(255,220,150,0.98);
+  text-shadow: 0 0 12px rgba(232,200,120,0.55);
+  background: rgba(212,175,55,0.06);
+}
+
+/* FATE VISION LIGHTBOX — click-to-view for the secondary cached image */
+.fate-vision-lightbox {
+  position: fixed; inset: 0;
+  z-index: 10050;
+  display: flex; align-items: center; justify-content: center;
+  animation: fateVisionLightboxIn 0.28s ease-out both;
+}
+.fate-vision-lightbox.closing { animation: fateVisionLightboxOut 0.24s ease-in both; }
+.fate-vision-lightbox-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(4,2,0,0.82);
+  backdrop-filter: blur(4px);
+}
+.fate-vision-lightbox-frame {
+  position: relative;
+  max-width: 86vw; max-height: 86vh;
+  border-radius: 8px;
+  box-shadow: 0 0 44px rgba(212,175,55,0.3), inset 0 0 0 1px rgba(212,175,55,0.4);
+  overflow: hidden;
+  animation: fateVisionLightboxZoom 0.8s ease-out both;
+}
+.fate-vision-lightbox-img {
+  display: block;
+  max-width: 86vw; max-height: 86vh;
+  filter: contrast(1.05) brightness(0.88) saturate(0.85);
+}
+.fate-vision-lightbox-word {
+  position: absolute; bottom: 18px; right: 22px;
+  font-family: "Lora", serif; font-weight: 600;
+  letter-spacing: 0.18em; font-size: 1em;
+  text-transform: uppercase;
+  color: rgba(240,228,196,0.88);
+  text-shadow: 0 0 8px rgba(0,0,0,0.8), 0 0 18px rgba(212,175,55,0.4);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+.fate-vision-lightbox-close {
+  position: absolute; top: 8px; right: 10px;
+  background: transparent; border: 0;
+  font-size: 26px; line-height: 1;
+  color: rgba(232,217,176,0.75);
+  cursor: pointer; padding: 4px 10px;
+  transition: color 160ms ease;
+}
+.fate-vision-lightbox-close:hover { color: rgba(255,220,150,1); }
+@keyframes fateVisionLightboxIn  { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes fateVisionLightboxOut { 0% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes fateVisionLightboxZoom {
+  0%   { transform: scale(0.94); filter: blur(4px); }
+  100% { transform: scale(1.04); filter: blur(0); }
+}
+
+/* Tempt-modal secondary affordance */
+.tempt-fate-vision-secondary { animation: fateVisionEchoReveal 0.9s ease-out 0.35s both; }
+
+/* FATE VISION PANEL — GN mode echo panel, borderless mist frame, no dialogue */
+.gn-panel-vision {
+  position: relative;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 0 26px rgba(212,175,55,0.25), inset 0 0 0 1px rgba(212,175,55,0.3);
+  background: #0a0a0a;
+  animation: fateVisionEchoReveal 1.2s ease-out;
+}
+.gn-panel-vision--dream     .gn-panel-vision-img { filter: contrast(0.92) brightness(0.9) saturate(0.8); }
+.gn-panel-vision--fracture  .gn-panel-vision-img { filter: contrast(1.05) brightness(0.86) saturate(0.7); }
+.gn-panel-vision--secondary .gn-panel-vision-img { filter: contrast(1.08) brightness(0.84) saturate(0.78); transform: scale(1.04); }
+.gn-panel-vision--fracture  { box-shadow: 0 0 28px rgba(160,60,60,0.2), inset 0 0 0 1px rgba(212,175,55,0.28); animation-delay: 250ms; opacity: 0; animation-fill-mode: both; }
+.gn-panel-vision--fracture  .gn-panel-vision-word { animation-delay: 850ms; }
+/* 150ms gap after primary reveal (primary anim is 1.2s) so panels read as
+   sequence, not composite. Secondary frame starts ~1350ms; word ~1950ms. */
+.gn-panel-vision--secondary { box-shadow: 0 0 30px rgba(212,175,55,0.28), inset 0 0 0 1px rgba(232,200,120,0.45); animation-delay: 1350ms; opacity: 0; animation-fill-mode: both; }
+.gn-panel-vision--secondary .gn-panel-vision-word { animation-delay: 1950ms; color: rgba(255,220,150,0.88); }
+.gn-panel-vision .gn-panel-vision-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: contrast(0.96) brightness(0.92);
+}
+.gn-panel-vision .gn-panel-vision-word {
+  font-family: "Lora", serif;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  color: rgba(240,228,196,0.82);
+  text-shadow: 0 0 6px rgba(0,0,0,0.75), 0 0 14px rgba(212,175,55,0.35);
+  mix-blend-mode: screen;
+  pointer-events: none;
+  filter: blur(0.3px);
+  animation: fateVisionEchoWord 1.8s ease-out 0.6s both;
+}
 
 /* OMEN WHISPER — ambient Fate atmospheric cue */
 .omen-whisper {
@@ -12204,6 +12524,13 @@ textarea.fate-field {
         3px 3px 10px -2px rgba(0,0,0,0.15),
         0 6px 20px rgba(0,0,0,0.08);
     border: 1px solid rgba(0, 0, 0, 0.06);
+    /* Render the back side of the cover too — base .book-front uses
+       backface-visibility: hidden which makes the back read as transparent
+       (or black against the page bg) when the book rotates past the edge-on
+       zone. Visible backface = the same cream gradient shows from either
+       side, so the book reads as a solid object regardless of angle. */
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
 }
 
 /* "Working Title:" label on cover and back cover (not spine) */
@@ -12276,6 +12603,12 @@ textarea.fate-field {
         inset -8px 0 10px -4px rgba(0, 0, 0, 0.12),
         inset 8px 0 10px -4px rgba(0, 0, 0, 0.12),
         inset 0 0 16px 2px rgba(255,255,255,0.15);
+    /* Visible backface — without this, the rotated spine slab disappears
+       when viewed from the back side (book opened past 90°), making the
+       book read as a hollow TIE-fighter shape with no binding edge.
+       Mirrors the .book-front / .book-back fix. */
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
 }
 .cover-book-3d .book-spine::after {
     background:
@@ -12307,6 +12640,9 @@ textarea.fate-field {
         inset 0 -2px 6px -3px rgba(0,0,0,0.06),
         3px 3px 10px -2px rgba(0,0,0,0.12);
     border: 1px solid rgba(0, 0, 0, 0.06);
+    /* Visible backface — same rationale as .book-front above. */
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
 }
 
 .cover-book-back-inner {
@@ -12333,10 +12669,16 @@ textarea.fate-field {
    the paper edge runs flush to the cover edge and the book reads like a
    cereal box. 10/12px inset scales well at this book size. */
 .cover-book-3d .book-pages-right {
+    /* Page-edge insets harmonized to 8px on every side so the bottom and
+       right page-edge graphics actually meet at the corner instead of
+       leaving a hollow 4×4px gap. Previously: right=10, top=12, bottom=12
+       on this slab vs left=6, bottom=8, right=6 on the bottom slab — the
+       bottom-right corner came up 4px short on both axes, exposing the
+       book interior through the corner notch. 8px on all sides matches. */
     width: calc(var(--book-depth) * 2);
-    height: calc(100% - 24px);
-    top: 12px;
-    right: 10px;
+    height: calc(100% - 16px);
+    top: 8px;
+    right: 8px;
     left: auto;
     transform-origin: right center;
     transform: translateZ(calc(-1 * var(--book-depth))) rotateY(90deg);
@@ -12350,13 +12692,16 @@ textarea.fate-field {
     border-radius: 0 1px 1px 0;
 }
 .cover-book-3d .book-pages-top {
-    width: calc(100% - 12px);
+    /* Paper-edge graphic (matches library books) instead of the prior flat
+       gradient that read like a cereal box. Insets harmonized to 8px so
+       this slab's right-end aligns with .book-pages-right's left-end. */
+    width: calc(100% - 16px);
     height: calc(var(--book-depth) * 2);
-    top: 0;
-    left: 0;
+    top: 8px;
+    left: 8px;
     transform-origin: center top;
     transform: translateZ(calc(-1 * var(--book-depth))) rotateX(90deg);
-    background: linear-gradient(180deg, #f0ebe3 0%, #f5f0e8 100%);
+    background: url('/assets/Forbidde-Library-Art/2-inch-top-edge.jpg') center / cover no-repeat;
     box-shadow:
         inset 0 -3px 6px rgba(0,0,0,0.3),
         inset 0 1px 3px rgba(255,255,255,0.12),
@@ -12364,19 +12709,28 @@ textarea.fate-field {
         inset 5px 0 6px -2px rgba(0,0,0,0.15);
 }
 .cover-book-3d .book-pages-bottom {
-    width: calc(100% - 12px);
+    /* Insets harmonized to 8px on every side so this slab's right-end
+       lines up with .book-pages-right's bottom-end. Closes the corner
+       gap that exposed the book interior at the lower-right corner. */
+    width: calc(100% - 16px);
     height: calc(var(--book-depth) * 2);
-    bottom: 0;
-    left: 0;
+    bottom: 8px;
+    left: 8px;
     transform-origin: center bottom;
     transform: translateZ(calc(-1 * var(--book-depth))) rotateX(-90deg);
-    background: linear-gradient(0deg, #ece7dd 0%, #f0ebe3 100%);
+    background: url('/assets/Forbidde-Library-Art/2-inch-bottom-edge.jpg') center / cover no-repeat;
     box-shadow:
         inset 0 3px 6px rgba(0,0,0,0.3),
         inset 0 -1px 3px rgba(255,255,255,0.12),
         inset -5px 0 6px -2px rgba(0,0,0,0.3),
         inset 5px 0 6px -2px rgba(0,0,0,0.15);
 }
+
+/* Interior fill REMOVED — the slab at translateZ(0) was visible through the
+   right/left page-edge seam, reading as a dark "cover sticking out from the
+   middle of the pages." With .book-front and .book-back now using
+   backface-visibility: visible, the cover gradients render from both sides
+   and the prior fallback slab is no longer needed. */
 
 /* ── Page shimmer (glows on page edges during rotation) ── */
 .cover-book-3d .page-shimmer {
@@ -15716,6 +16070,13 @@ body.guided-fate-autoplay .card-gleam-layer {
     margin: 0;
 }
 
+/* Power & Control nameplate — 10px right nudge per UX pass. The gold
+   script renders slightly left-of-center on this specific PNG; shifting
+   only this card avoids disturbing Survival / other single-line titles. */
+#pressureGrid .sb-card[data-val="PowerControl"] .sb-card-back .sb-card-title {
+    transform: translateX(10px);
+}
+
 #pressureGrid .sb-card .sb-card-back .sb-card-desc {
     position: absolute;
     top: 56.43cqi;
@@ -16182,6 +16543,10 @@ body.guided-fate-autoplay .card-gleam-layer {
     padding: 0 3.95cqi;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    /* Nudge description 3px left per UX pass — visual alignment on the
+       black-face side when flipped. Uses transform so flow/padding are
+       untouched (preserves existing kerning + line-wrap measurements). */
+    transform: translateX(-3px);
 }
 #toneGrid .sb-card .sb-card-front .sb-card-desc br {
     display: none;
@@ -18318,6 +18683,31 @@ body.corridor-mode .sb-grid.corridor-section {
     display: inline-block;
 }
 
+/* Save This Story Shape — secondary action above Enter Your Story */
+.save-shape-btn {
+    display: inline-block;
+    margin: 0 auto 14px;
+    padding: 7px 18px;
+    background: transparent;
+    border: 1px solid rgba(201, 162, 78, 0.45);
+    border-radius: 6px;
+    color: rgba(232, 217, 176, 0.92);
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.82em;
+    letter-spacing: 0.14em;
+    cursor: pointer;
+    transition: background 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+.save-shape-btn:hover {
+    background: rgba(201, 162, 78, 0.12);
+    border-color: rgba(201, 162, 78, 0.75);
+    color: #f3e4b8;
+}
+.save-shape-btn:active {
+    background: rgba(201, 162, 78, 0.2);
+}
+
 .begin-btn-sparkle-emitter {
     position: absolute;
     inset: -10px;
@@ -18331,7 +18721,7 @@ body.corridor-mode .sb-grid.corridor-section {
     z-index: 1;
     width: 386px !important;  /* 351 × 1.10 — button 10% larger, text size unchanged */
     height: 101px;            /* 92 × 1.10 */
-    padding: 20px 45px;       /* 18/41 × 1.10 */
+    padding: 14px 45px 26px;  /* text shifted up 6px (was 20/20); cost display absolute, unaffected */
     min-width: 0;
     background-image: url('/assets/ui/DSP-Gold-Blk-1800x440.png') !important;
     background-size: 100% 100% !important;
@@ -18557,21 +18947,56 @@ body.corridor-mode .sb-grid.corridor-section {
     margin: 18px auto 0;
     width: 386px !important;  /* matches #beginBtn */
     height: 101px !important; /* matches #beginBtn */
-    padding: 20px 24px !important;
+    padding: 17px 24px 23px !important; /* label shifted up 3px (was 20/20) */
     background: url('/assets/ui/Black-Gold-520x144.png') center/100% 100% no-repeat, #0a0a0a !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none;
     font-family: 'Lora', serif !important;
     font-variant: small-caps;
-    font-size: 1.05em !important; /* reduced so the full label fits */
-    letter-spacing: 0.08em !important;
+    /* +15% larger label (1.2 → 1.38) per UX pass. */
+    font-size: 1.38em !important;
+    letter-spacing: 0.12em !important;
     white-space: nowrap;
     font-weight: 400;
     cursor: pointer;
     transition: filter 0.2s ease;
     /* Fallback text color if gradient clip is unsupported */
     color: #d4a940;
+}
+/* Cost label (#beginGNCostDisplay) — 3D lacquered gold to match the
+   metallic-gradient button label. Number "4" uses the same vertical gradient
+   as .begin-gn-label; the masked F-icon picks up currentColor (gold). */
+#beginStoryRow .begin-gn-btn .begin-cost-display {
+    color: #d4a940 !important; /* fallback + icon mask color */
+    background: linear-gradient(
+        180deg,
+        #bf953f 0%,
+        #fcf6ba 25%,
+        #b38728 50%,
+        #fbf5b7 75%,
+        #aa771c 100%
+    );
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow:
+        0 1px 0 rgba(60,40,10,0.55),
+        0 2px 0 rgba(40,28,8,0.45),
+        0 3px 2px rgba(0,0,0,0.35),
+        0 -1px 0 rgba(255,230,160,0.25),
+        0 0 4px rgba(0,0,0,0.4) !important;
+    font-weight: 600;
+}
+#beginStoryRow .begin-gn-btn .begin-cost-icon {
+    /* Icon mask is tinted by currentColor — keep gold even though
+       text-fill is transparent for the gradient on the digit. */
+    color: #d4a940;
+    -webkit-text-fill-color: initial;
+    background: none;
+    -webkit-background-clip: initial;
+            background-clip: initial;
+    filter: drop-shadow(0 1px 0 rgba(40,28,8,0.5)) drop-shadow(0 0 3px rgba(0,0,0,0.35));
 }
 /* Metallic gold gradient text — applied to the inner span so the PNG button
    background still renders on the button element itself. Matches the
@@ -18707,6 +19132,15 @@ body.corridor-mode .sb-grid.corridor-section {
 }
 
 /* Inline Fortune icon — used after numbers wherever Fortunes are referenced */
+.fortune-icon-inline {
+    display: inline-block;
+    width: 0.85em;
+    height: 0.85em;
+    vertical-align: -0.05em;
+    object-fit: contain;
+    margin: 0 0.05em;
+    pointer-events: none;
+}
 .fortune-icon {
     display: inline-block;
     width: 0.85em !important;
@@ -20051,6 +20485,56 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     text-shadow: none;
 }
 
+/* Corridor begin-buttons (prose + GN): cost pill is centered horizontally
+   directly under the button text instead of inline. The "F" suffix in the
+   cost text is replaced with an icon (.begin-cost-icon) that's masked from
+   Fortunes-Icon.png and tinted via currentColor so it always matches the
+   number's color (dark on the prose button, gold on the GN button). */
+#beginBtn,
+#beginGraphicNovelBtn {
+    position: relative;
+}
+#beginBtn .begin-cost-display,
+#beginGraphicNovelBtn .begin-cost-display {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;            /* number + icon tightened (was 4px) */
+    line-height: 1;
+    white-space: nowrap;
+    pointer-events: none;
+}
+#beginBtn .begin-cost-display          { bottom: 21px; }
+#beginGraphicNovelBtn .begin-cost-display { bottom: 24px; } /* +3px lift */
+
+/* 1F — lacquered 3D black to match the parent button text */
+#beginBtn .begin-cost-display {
+    color: #080808 !important;
+    -webkit-text-fill-color: #080808;
+    text-shadow:
+        0 1px 0 rgba(26,26,26,0.5),
+        0 2px 0 rgba(17,17,17,0.5),
+        0 3px 1px rgba(0,0,0,0.3),
+        0 -1px 0 rgba(60,60,60,0.2),
+        0 0 3px rgba(0,0,0,0.25),
+        0 0 8px rgba(0,0,0,0.15) !important;
+    font-weight: 600;
+}
+/* The masked F-icon picks up currentColor; no gradient on this button. */
+#beginBtn .begin-cost-icon { color: #080808; }
+.begin-cost-icon {
+    display: inline-block;
+    width: 0.95em;
+    height: 0.95em;
+    background-color: currentColor;
+    -webkit-mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
+            mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
+    vertical-align: middle;
+}
+
 /* =================================
    Submit Turn Feedback
    Immediate visual feedback on click
@@ -21104,6 +21588,46 @@ h2.gn-selector-title {
 }
 .gn-selector-desc {
     display: none;
+}
+
+/* Sublabel under the artist name — used by the Olen Droll card to tease
+   "Wry stories only." Hidden by default (other cards don't have one);
+   visible when a sublabel <span> is present. */
+.gn-selector-sublabel {
+    display: block;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 0.78em;
+    color: rgba(201, 162, 78, 0.55);
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+    text-align: center;
+}
+
+/* Disabled state — Olen Droll when current story tone isn't WryConfession.
+   Card stays in the lineup so the illustrator bullpen reads as full/diverse,
+   but cannot be selected; hover affordances are muted. */
+.gn-selector-card--disabled {
+    cursor: not-allowed;
+}
+.gn-selector-card--disabled .gn-selector-thumb {
+    filter: grayscale(0.85) brightness(0.55);
+    border-color: rgba(201, 162, 78, 0.2);
+    opacity: 0.7;
+}
+.gn-selector-card--disabled .gn-selector-name {
+    color: rgba(201, 162, 78, 0.4);
+}
+.gn-selector-card--disabled .gn-selector-sublabel {
+    color: rgba(232, 100, 100, 0.6);     /* faint red — signals gating */
+    font-style: italic;
+}
+.gn-selector-card--disabled:hover {
+    transform: none;                      /* no lift on hover when disabled */
+}
+.gn-selector-card--disabled:hover .gn-selector-thumb {
+    border-color: rgba(201, 162, 78, 0.2);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.5);
 }
 .gn-thumb-img {
     width: 100%;
@@ -23594,42 +24118,42 @@ body.gn-cover-active .gn-ui-overlay {
 
 /* Earnest — grid */
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 172.97cqi; left: 44.26cqi; font-size: 8.78cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 171.6cqi; left: 39.52cqi; width: 28.85cqi; font-size: 10.81cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Earnest"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
-    position: absolute; right: auto; bottom: auto;
-    top: 47.3cqi; left: 10.16cqi; width: 87.84cqi; font-size: 8.11cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 63.51cqi; left: 13.51cqi; width: 83.77cqi; font-size: 9.46cqi;
 }
 
 /* WryConfession — grid */
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 173.99cqi; left: 49.32cqi; font-size: 8.78cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 171.94cqi; left: 46.62cqi; width: 16.35cqi; font-size: 11.49cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="WryConfession"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.97cqi; left: 11.51cqi; width: 87.84cqi; font-size: 8.11cqi;
+    top: 61.14cqi; left: 12.84cqi; width: 85.13cqi; font-size: 9.46cqi;
 }
 
 /* Dark — grid */
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 171.96cqi; left: 50.34cqi; font-size: 8.78cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 171.27cqi; left: 47.63cqi; width: 18.32cqi; font-size: 10.81cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Dark"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.97cqi; left: 8.81cqi; width: 91.89cqi; font-size: 8.11cqi;
+    top: 71.28cqi; left: 12.84cqi; width: 83.77cqi; font-size: 9.46cqi;
 }
 
 /* Mythic — grid */
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-title {
-    right: auto; bottom: auto;
-    top: 172.97cqi; left: 42.91cqi; font-size: 8.78cqi;
+    right: auto; position: absolute; bottom: auto;
+    top: 172.97cqi; left: 37.5cqi; width: 26.92cqi; font-size: 10.81cqi;
 }
 #toneGrid > div.sb-card.selected.flipped[data-grp="tone"][data-val="Mythic"] > div.sb-card-inner > div.sb-card-face.sb-card-front > span.sb-card-desc {
     position: absolute; right: auto; bottom: auto;
-    top: 47.3cqi; left: 12.19cqi; width: 85.14cqi; font-size: 8.11cqi;
+    top: 68.57cqi; left: 12.84cqi; width: 83.77cqi; font-size: 9.46cqi;
 }
 
 /* ── Dynamic — Back titles (2-line, centered in gold area) ── */
@@ -25967,14 +26491,19 @@ body:has(.curtain-ceremony) .concierge-dialogue {
        If it needs tuning: left: lower% = whisper closer/overlapping face,
        higher% = whisper further right from face. */
     position: absolute;
-    top: 18%;
-    left: 95%;
-    margin-left: 10px;
+    /* Sit beside the butler's mouth (top-right of figure image, ~12% from
+       figure top, ~93% from figure left). Prior iterations: top 18%→11%,
+       margin-left 10→2px per mouth-anchor pass. This pass adds a +30px
+       vertical / -10px horizontal nudge at the user's request. */
+    top: 11%;
+    margin-top: 93px;          /* +13px additional shift downward (was 80px) */
+    left: 93%;
+    margin-left: -26px;        /* -5px additional shift left (was -21px) */
     /* Clamp so the whisper never overflows the viewport right edge.
-       Whisper starts ~106px from viewport left (figure left -110 + 217*0.95 + 10).
+       Whisper starts ~84px from viewport left (figure left -110 + 217*0.93 - 8).
        Leave 16px breathing room on the right. */
-    max-width: min(340px, calc(100vw - 122px));
-    min-width: min(220px, calc(100vw - 122px));
+    max-width: min(340px, calc(100vw - 100px));
+    min-width: min(220px, calc(100vw - 100px));
     z-index: 9100;
     color: rgba(232, 216, 168, 0.96);
     font-family: 'Lora', serif;
@@ -26009,8 +26538,8 @@ body:has(.mask-gate-active) .concierge-whisper {
    it to the viewport corner so it's still visible and legible. */
 body > .concierge-whisper {
     position: fixed;
-    left: 140px;
-    bottom: 160px;
+    left: 122px;
+    bottom: 97px;
     top: auto;
     margin-left: 0;
 }
