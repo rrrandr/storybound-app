@@ -2060,7 +2060,7 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js?v=20260318c"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260417a"></script>
+<script src="/app.js?v=20260425r"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
@@ -2212,18 +2212,38 @@
   <div class="gn-ui-overlay">
     <div class="gn-ui-top">
       <button class="gn-nav-back" id="gnReaderBack">Back</button>
-      <span id="gnSceneIndicator" class="gn-scene-indicator">Scene 1</span>
+      <!-- Scene indicator removed — redundant with #gnSceneNumber under the
+           title and #gnPageIndicator in the page-nav-controls below. -->
       <!-- Visualize is literary-mode only; GN panels ARE the visualization -->
       <!-- <button id="gnVisualizeBtn" class="small-btn">Visualize</button> -->
     </div>
     <button id="gnGodModeBtn" class="small-btn gn-god-mode-indicator" style="display:none;">God Mode</button>
   </div>
 
+  <!-- ── GN Scene Navigation — parity with literary .page-nav-controls ──
+       Sits ABOVE the say/do inputs to mirror literary reader order
+       (page-nav → inputs → fate cards → bookmarks). Cover returns to the
+       auto-evolving cover overlay; Back/Next step between scenes; Last
+       jumps to the latest rendered scene. -->
+  <div class="page-nav-controls gn-page-nav" id="gnPageNavControls">
+      <button class="page-nav-btn" id="gnCoverPageBtn" onclick="if(window._showGNCover)window._showGNCover()">
+          <span>←</span> Cover
+      </button>
+      <button class="page-nav-btn" id="gnPrevPageBtn" disabled>
+          <span>←</span> Back
+      </button>
+      <span class="page-indicator" id="gnPageIndicator">Scene 1</span>
+      <button class="page-nav-btn" id="gnNextPageBtn" disabled>
+          Next <span>→</span>
+      </button>
+      <button class="page-nav-btn" id="gnLastPageBtn" disabled>
+          Last <span>⇥</span>
+      </button>
+  </div>
+
   <!-- ── GN_INPUT_BAR: Say / Do + Submit ──
-       Mirrors the literary reader order: inputs appear directly under the
-       scene surface, BEFORE fate cards. Previously the fate layer rendered
-       above the inputs which fought the user's complaint "why isn't it
-       exactly like the literary reader view?" -->
+       Mirrors the literary reader order: page-nav above, inputs here,
+       fate cards + bookmarks below. -->
   <div id="gnReaderControls" class="gn-input-bar">
     <div class="gn-input-grid">
       <div class="input-wrapper">
@@ -2250,37 +2270,15 @@
     </div>
     <div class="section-title fate-own-hands-label">Take Fate In Your Own Hands</div>
     <div class="fate-special-row" id="gnFateSpecial"></div>
+    <!-- Single Bookmarks button — parity with literary reader (which has
+         only #storyBookmarksBtn). The standalone "Bookmark Scene" button
+         was removed; bookmarking-from-scene can be re-added inside the
+         shared panel later if needed. -->
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="gnBookmarksBtn" class="small-btn" onclick="window.toggleBookmarksPanel()">Bookmarks</button>
        <button id="gnBindReincarnation" class="small-btn" style="display:none;">Bind Reincarnation</button>
        <button id="gnSafeWordBtn" class="small-btn safe-word-btn" style="display:none;">Safe Word</button>
     </div>
-  </div>
-
-  <!-- ── GN Scene Actions: Bookmark only ──
-       Manual Create Cover removed — GN covers auto-evolve from scene art
-       the same way literary covers evolve from narrative arc. -->
-  <div class="gn-scene-actions-row">
-    <button id="gnBookmarkSceneBtn" class="sb-btn-png sm" onclick="window._bookmarkGNScene()">Bookmark Scene</button>
-  </div>
-
-  <!-- ── GN Scene Navigation — parity with literary .page-nav-controls ──
-       Cover returns to the auto-evolving cover overlay; Back/Next step
-       between scenes; Last jumps to the latest rendered scene. -->
-  <div class="page-nav-controls gn-page-nav" id="gnPageNavControls">
-      <button class="page-nav-btn" id="gnCoverPageBtn" onclick="if(window._showGNCover)window._showGNCover()">
-          <span>←</span> Cover
-      </button>
-      <button class="page-nav-btn" id="gnPrevPageBtn" disabled>
-          <span>←</span> Back
-      </button>
-      <span class="page-indicator" id="gnPageIndicator">Scene 1</span>
-      <button class="page-nav-btn" id="gnNextPageBtn" disabled>
-          Next <span>→</span>
-      </button>
-      <button class="page-nav-btn" id="gnLastPageBtn" disabled>
-          Last <span>⇥</span>
-      </button>
   </div>
 
   <!-- ── GN POV Edition (shown after story completion) ── -->

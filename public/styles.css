@@ -41,6 +41,115 @@
 .scene1-micro-expr .sme-btn:active {
   transform: scale(0.97);
 }
+/* Inline-mode parent — when the hydrator renders the prompt with
+   inline pills, drop the centered/auto-margin framing so the block
+   aligns flush-left with the surrounding prose column. The legacy
+   button fallback (no .sme-prompt-inline) keeps the centered defaults
+   inherited from .scene1-micro-expr. */
+.scene1-micro-expr:has(.sme-prompt-inline) {
+  margin: 1.2em 0;
+  max-width: none;
+  text-align: left;
+}
+/* Inline-choice rendering — when the parser locates A/B in the question
+   text, the labels render as diegetic pills inside the prose itself
+   (eliminates the duplicate button row underneath). The .sme-prompt-inline
+   variant relaxes the centered/condensed prompt styling so wrapped lines
+   read as natural prose. */
+.scene1-micro-expr .sme-prompt-inline {
+  margin-bottom: 0;
+  font-family: inherit;            /* match surrounding scene prose */
+  font-size: 1em;
+  line-height: 1.7;
+  text-align: left;                /* read in-flow with body prose */
+  letter-spacing: normal;
+  color: inherit;                  /* take the scene's body-text ink */
+}
+/* Inline pill — diegetic styling. Text color, font, and size all match
+   surrounding prose; italics distinguish the clickable phrase as the
+   protagonist's interpretive option. Background is a 15% currentColor
+   overlay (auto-darkens on light themes, auto-lightens on dark themes,
+   so it always reads as a subtle tint of the page bg).
+   Frame is a stacked TRIPLE-rule art-deco ornament:
+     • Outer:  4px DOUBLE border in currentColor — browser renders as
+       two parallel hairlines with a hairline gap (the canonical
+       art-deco linear ornament).
+     • Inner:  a third hairline drawn via ::before with 1px solid
+       border, inset 3px from the double border's inner edge —
+       creates a wider visible gap between the outer pair and the
+       inner rule (architectural rather than tight-packed).
+   Sharp 90° corners. No glow, no gradient, no shadow. */
+.scene1-micro-expr .sme-inline-choice {
+  position: relative;
+  display: inline-block;
+  font-family: inherit;
+  font-size: inherit;
+  font-style: italic;
+  color: inherit;
+  letter-spacing: 0.02em;          /* matches body --letter-spacing */
+  line-height: 1.45;
+  vertical-align: baseline;
+  background: color-mix(in srgb, currentColor 15%, transparent);
+  border: 4px double color-mix(in srgb, currentColor 60%, transparent);
+  border-radius: 0;
+  outline: 0;
+  padding: 0.22em 1em;
+  margin: 0 0.14em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.08s ease;
+}
+.scene1-micro-expr .sme-inline-choice::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  bottom: 3px;
+  left: 3px;
+  border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+  pointer-events: none;
+  transition: border-color 0.18s ease;
+}
+/* Corner ornaments — four small diamonds (squares rotated 45°) inked
+   in currentColor and centered on the pill's four corners. Drawn via
+   a ::after pseudo masked four times with the same diamond SVG, one
+   per corner. Sits OUTSIDE the double border on its outer half and
+   OVERLAPS the border on its inner half — a classic art-deco corner
+   accent. The pseudo extends -4px past the pill edge so the diamond
+   centers land exactly at the corners. */
+.scene1-micro-expr .sme-inline-choice::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  pointer-events: none;
+  background-color: currentColor;
+  opacity: 0.7;
+  -webkit-mask:
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") top left / 8px 8px no-repeat,
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") top right / 8px 8px no-repeat,
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") bottom left / 8px 8px no-repeat,
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") bottom right / 8px 8px no-repeat;
+  mask:
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") top left / 8px 8px no-repeat,
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") top right / 8px 8px no-repeat,
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") bottom left / 8px 8px no-repeat,
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") bottom right / 8px 8px no-repeat;
+  transition: opacity 0.18s ease;
+}
+.scene1-micro-expr .sme-inline-choice:hover {
+  background: color-mix(in srgb, currentColor 22%, transparent);
+  border-color: color-mix(in srgb, currentColor 85%, transparent);
+}
+.scene1-micro-expr .sme-inline-choice:hover::before {
+  border-color: color-mix(in srgb, currentColor 55%, transparent);
+}
+.scene1-micro-expr .sme-inline-choice:hover::after {
+  opacity: 0.95;
+}
+.scene1-micro-expr .sme-inline-choice:active {
+  transform: scale(0.98);
+}
+
 .scene1-micro-expr.sme-resolved .sme-memory {
   color: rgba(200, 180, 140, 0.7);
   font-size: 0.95em;
@@ -21559,6 +21668,7 @@ h2.gn-selector-title {
 }
 /* ── Artist thumbnail — tarot card proportions, doubled ── */
 .gn-selector-thumb {
+    position: relative; /* positioning context for the frame overlay */
     width: 280px;
     aspect-ratio: 2.75 / 4.75;
     border-radius: 10px;
@@ -21567,6 +21677,44 @@ h2.gn-selector-title {
     border: 1px solid rgba(201, 162, 78, 0.3);
     box-shadow: 0 6px 24px rgba(0,0,0,0.5);
     transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Artist cards — gold tarot-frame overlay with name baked in.
+   Each frame PNG is transparent through the middle so the underlying
+   .gn-thumb-img shows through; the bottom of the frame contains the
+   artist's nameplate. We hide the duplicate text label below to
+   avoid printing the name twice. The half-circle at top carries the
+   illustrator's slot number ("1" Troy / "2" Ryo / "3" Lora / "4" Olen). */
+.gn-selector-card[data-gn-style="troy_bond"] .gn-selector-thumb::after,
+.gn-selector-card[data-gn-style="ryo_toro"]  .gn-selector-thumb::after,
+.gn-selector-card[data-gn-style="lora_venn"] .gn-selector-thumb::after,
+.gn-selector-card[data-gn-style="olen_droll"] .gn-selector-thumb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    pointer-events: none;
+    z-index: 2;
+}
+.gn-selector-card[data-gn-style="troy_bond"]  .gn-selector-thumb::after {
+    background-image: url('/assets/GN-Artists/artist-gold-border-troy.png');
+}
+.gn-selector-card[data-gn-style="ryo_toro"]   .gn-selector-thumb::after {
+    background-image: url('/assets/GN-Artists/artist-gold-border-ryo.png');
+}
+.gn-selector-card[data-gn-style="lora_venn"]  .gn-selector-thumb::after {
+    background-image: url('/assets/GN-Artists/artist-gold-border-lora.png');
+}
+.gn-selector-card[data-gn-style="olen_droll"] .gn-selector-thumb::after {
+    background-image: url('/assets/GN-Artists/artist-gold-border-olen.png');
+}
+.gn-selector-card[data-gn-style="troy_bond"]  .gn-selector-name,
+.gn-selector-card[data-gn-style="ryo_toro"]   .gn-selector-name,
+.gn-selector-card[data-gn-style="lora_venn"]  .gn-selector-name,
+.gn-selector-card[data-gn-style="olen_droll"] .gn-selector-name {
+    display: none; /* name is already inside the frame's bottom plate */
 }
 /* Lora Venn: zoom image 25% larger inside the card */
 .gn-selector-card[data-gn-style="lora_venn"] .gn-thumb-img {

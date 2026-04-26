@@ -6,7 +6,7 @@ export const config = {
   maxDuration: 120
 };
 
-const BFL_BASE = 'https://api.bfl.ml/v1';
+const BFL_BASE = 'https://api.bfl.ai/v1';
 
 export default async function handler(req, res) {
   // CORS headers
@@ -28,21 +28,44 @@ export default async function handler(req, res) {
   }
 
   // Mode B: Poll task result
+  // Prefer the `polling_url` returned by BFL on task creation (BFL recommends
+  // this — they may shard polling across regions). Falls back to the legacy
+  // `?id=` form for backward compatibility with in-flight client polls that
+  // started before this change.
   if (req.method === 'GET') {
-    const { id } = req.query;
-    if (!id) {
-      return res.status(400).json({ error: 'Task ID required' });
+    const { id, polling_url } = req.query;
+    if (!id && !polling_url) {
+      return res.status(400).json({ error: 'Task ID or polling_url required' });
+    }
+
+    // Validate any provided polling_url is BFL-domain — refuse arbitrary URLs.
+    let pollEndpoint;
+    if (polling_url) {
+      try {
+        const u = new URL(polling_url);
+        if (!/(^|\.)bfl\.(ai|ml)$/.test(u.hostname)) {
+          return res.status(400).json({ error: 'Invalid polling_url host' });
+        }
+        pollEndpoint = u.toString();
+      } catch (_) {
+        return res.status(400).json({ error: 'Malformed polling_url' });
+      }
+    } else {
+      pollEndpoint = `${BFL_BASE}/get_result?id=${encodeURIComponent(id)}`;
     }
 
     try {
-      const pollRes = await fetch(`${BFL_BASE}/get_result?id=${encodeURIComponent(id)}`, {
-        headers: { 'X-Key': apiKey }
+      const pollRes = await fetch(pollEndpoint, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Key': apiKey
+        }
       });
 
       if (!pollRes.ok) {
         const pollErrText = await pollRes.text().catch(() => '');
-        console.error('[bfl-kontext] Poll failed:', pollRes.status, pollErrText);
-        return res.status(pollRes.status).json({ error: 'Failed to fetch task status', detail: pollErrText.slice(0, 500) });
+        console.error('[bfl-kontext] Poll failed:', pollRes.status, '| body:', pollErrText.slice(0, 1000));
+        return res.status(pollRes.status).json({ error: 'Failed to fetch task status', status: pollRes.status, detail: pollErrText.slice(0, 500) });
       }
 
       const result = await pollRes.json();
@@ -123,6 +146,7 @@ export default async function handler(req, res) {
       const createRes = await fetch(endpoint, {
         method: 'POST',
         headers: {
+          'Accept': 'application/json',
           'X-Key': apiKey,
           'Content-Type': 'application/json'
         },
@@ -134,7 +158,7 @@ export default async function handler(req, res) {
       if (!createRes.ok) {
         // ── Full failure logging — BFL often returns useful error text even on 502 ──
         const rawText = await createRes.text().catch(() => '');
-        console.error('[bfl-kontext] BFL error:', createRes.status, rawText);
+        console.error('[bfl-kontext] BFL create error: status=' + createRes.status + ' | body=' + rawText.slice(0, 1000));
         let errData;
         try { errData = JSON.parse(rawText); } catch (_) { errData = { raw: rawText.slice(0, 1000) }; }
         console.error('[bfl-kontext] BFL create failed:', {
@@ -152,10 +176,11 @@ export default async function handler(req, res) {
       }
 
       const task = await createRes.json();
-      console.log('[bfl-kontext] Task created:', task.id, '(' + modelKey + ')');
+      console.log('[bfl-kontext] Task created:', task.id, '(' + modelKey + ')', task.polling_url ? '(polling_url returned)' : '(no polling_url — using id fallback)');
 
       return res.status(200).json({
         id: task.id,
+        polling_url: task.polling_url || null,
         status: 'processing'
       });
 
