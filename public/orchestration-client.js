@@ -492,6 +492,30 @@
     const turnCount = appState.turnCount || 0;
     const st = appState.storyturn || '';
 
+    // ── MODE 1 OVERRIDE (HIGHEST PRIORITY) ──
+    // The Mode 1 seductive-whisper directive contains intentionally
+    // explicit dialogue that OpenAI refuses or sanitizes. Whenever the
+    // whisper directive fires (sets _mode1.routeToGrok) OR the aftermath
+    // is active, force the scene through Grok's SCENE_RENDERER_MODEL so
+    // the prose lands as written. Cleared at end of the function below.
+    const _mode1ForceGrok = !!(appState._mode1 && (
+        appState._mode1.routeToGrok === true ||
+        appState._mode1.aftermathActive ||
+        appState._mode1.rendezvous
+    ));
+    if (_mode1ForceGrok) {
+        // Clear the one-shot routeToGrok flag now that the route has been honored.
+        if (appState._mode1 && appState._mode1.routeToGrok) appState._mode1.routeToGrok = false;
+        return {
+            model: CONFIG.SCENE_RENDERER_MODEL,
+            max_tokens: 2000,
+            tier: 'A',
+            reason: appState._mode1.rendezvous
+                ? 'Mode1:Rendezvous:Grok'
+                : (appState._mode1.aftermathActive ? 'Mode1:Aftermath:Grok' : 'Mode1:Whisper:Grok')
+        };
+    }
+
     // ── TIER A DETECTION ──
     // Stories requiring continuous GPT-4 reasoning or stylistic discipline.
     const isTierA = appState.povMode === 'environment4th'               // 4th Person Environmental
