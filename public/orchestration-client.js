@@ -60,12 +60,34 @@
 (function(window) {
   'use strict';
 
-  // Token usage accumulator — measurement only, no behavioral impact
-  function _accumulateTokens(data) {
-    if (data && data.usage && typeof data.usage.total_tokens === 'number') {
-      const s = window.state;
-      if (s) s._sceneTokenCount = (s._sceneTokenCount || 0) + data.usage.total_tokens;
+  // Token usage + cost accumulator — measurement only, no behavioral impact.
+  // Cost capture lazy-inits state._sceneCostAcc on first hit; finalized at
+  // scene-render success (app.js, where _sceneTokenCount resets) and cleared
+  // on failure. Pricing helpers live on window (defined in app.js).
+  function _accumulateTokens(data, modelName) {
+    if (!data || !data.usage) return;
+    const s = window.state;
+    if (!s) return;
+    if (typeof data.usage.total_tokens === 'number') {
+      s._sceneTokenCount = (s._sceneTokenCount || 0) + data.usage.total_tokens;
     }
+    // Cost capture (gracefully no-ops if helpers/state not initialized).
+    try {
+      // Lazy-init via helper exposed by app.js. If app.js hasn't loaded the
+      // cost system yet (very early init), this is a no-op.
+      const acc = (typeof window._ensureSceneCostAcc === 'function')
+          ? window._ensureSceneCostAcc()
+          : s._sceneCostAcc;
+      if (acc && typeof acc.addText === 'function') {
+        // Prefer caller-supplied model; fall back to data.model if echoed.
+        const mdl = modelName || data.model || 'default';
+        acc.addText(mdl, data.usage);
+        // Flag Grok use for scene-type classification at finalize time. Any
+        // grok-* model in this scene marks the scene as 'grok' regardless of
+        // other models also called. Cleared per-scene in app.js.
+        if (mdl && /grok/i.test(mdl)) s._usedGrok = true;
+      }
+    } catch (_) { /* cost capture is non-critical; never block generation */ }
   }
 
   // ===========================================================================
@@ -679,7 +701,7 @@
       }
 
       const data = await res.json();
-      _accumulateTokens(data);
+      _accumulateTokens(data, payload && payload.model);
 
       // Normalized response shape: use data.content (string from proxy)
       // Fallback to legacy choices[0].message.content for backward compat
@@ -735,7 +757,7 @@
       }
 
       const data = await res.json();
-      _accumulateTokens(data);
+      _accumulateTokens(data, payload && payload.model);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Renderer returned malformed response');
@@ -796,7 +818,7 @@
       }
 
       const data = await res.json();
-      _accumulateTokens(data);
+      _accumulateTokens(data, payload && payload.model);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Scene Renderer returned malformed response');
@@ -859,7 +881,7 @@
       }
 
       const data = await res.json();
-      _accumulateTokens(data);
+      _accumulateTokens(data, payload && payload.model);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Gemini returned malformed response (no choices)');
@@ -884,8 +906,229 @@
    *
    * FAILURE HANDLING: If Grok fails, set fateStumbled and continue with ChatGPT.
    */
+  // Per-axis prose guidance — what each axis value tells Grok to do.
+  // Shipped only when that axis has a non-null value in state._sceneExpression.
+  const _AXIS_GUIDANCE = {
+    voice: {
+      verbal:    'voice channel — whispers, teasing, verbal pressure dominate; dialogue carries the beat',
+      silent:    'silent channel — eye contact, proximity, physical calibration dominate; dialogue minimal'
+    },
+    intensity: {
+      intense:    'maximal intensity — pressure builds without restraint; sensation is unguarded',
+      restrained: 'restraint dominates — pressure is held low and close; tension is contained, not released'
+    },
+    control: {
+      dominant: 'LI takes control of the beat — leads physical decisions, frames pacing',
+      yielding: 'LI yields control — receives, follows, leaves space for the protagonist to lead'
+    },
+    tempo: {
+      fast: 'fast tempo — rushed, urgent, escalation compressed',
+      slow: 'slow tempo — drawn out, suspended, time stretched'
+    }
+  };
+
+  // Priority stack — voice is the hardest constraint (talking vs not is
+  // binary), tempo is the most flexible (pacing can shift mid-beat). When
+  // axes appear to contradict each other, the higher-priority axis wins
+  // and the lower-priority axis must adapt its expression.
+  const _AXIS_PRIORITY = ['voice', 'control', 'intensity', 'tempo'];
+
+  // Shared helper: returns the EXPRESSION AXES block for SD-authoring prompts.
+  // Reads window.state._sceneExpression (multi-axis object). Emits active
+  // axes ordered by PRIORITY (voice > control > intensity > tempo) so Grok
+  // can resolve conflicts via the explicit hierarchy. Used by both Grok SD
+  // authoring and Mistral SD fallback.
+  //
+  // Returns empty string when no axes are active (Grok runs default behavior).
+  function _buildExpressionModeBlock(label) {
+    const s = window.state || {};
+    const expr = s._sceneExpression || null;
+    if (!expr) return '';
+
+    // Order axes by hard priority (voice > control > intensity > tempo).
+    const orderedAxes = _AXIS_PRIORITY.filter(function(a) { return expr[a]; });
+
+    const activeLines = [];
+    orderedAxes.forEach(function(axis) {
+      const value = expr[axis];
+      const guidance = _AXIS_GUIDANCE[axis] && _AXIS_GUIDANCE[axis][value];
+      if (!guidance) return;
+      activeLines.push('- ' + axis + ': ' + value + ' — ' + guidance);
+    });
+
+    if (activeLines.length === 0) return '';
+
+    try {
+      const summary = activeLines.join(' | ');
+      console.log('[' + (label || 'SD') + '] Expression axes injected: ' + summary);
+    } catch (_) {}
+
+    return `
+EXPRESSION AXES (active player choices — fuse into ONE coherent behavioral mode):
+${activeLines.join('\n')}
+
+AXIS INTERPRETATION MAP (canonical meanings):
+- voice / verbal     → expression through speech
+- voice / silent     → expression through physicality, presence, restraint
+- intensity / intense    → high emotional + physical charge
+- intensity / restrained → controlled, contained energy
+- control / dominant → initiating, directing
+- control / yielding → responding, allowing
+- tempo / fast → impulsive, immediate
+- tempo / slow → drawn-out, deliberate
+
+CORE COMPOSITION RULE (multiplicative, not additive):
+- Axes are NOT independent instructions. FUSE them into a single behavioral
+  interpretation that satisfies all of them at once.
+- Example — voice:silent + intensity:intense + tempo:slow → no dialogue,
+  strong physical presence, drawn-out escalation, prolonged eye contact and
+  proximity. NOT "silent sometimes, talking sometimes" or "intense in one
+  sentence, neutral in another."
+
+PRIORITY STACK + FRAME-VS-EXPRESSION (how to fuse multi-axis composition):
+1. voice    — FRAME (hardest constraint; speech vs silence is binary)
+2. control  — expression within voice's frame
+3. intensity — expression within voice + control
+4. tempo    — expression within all of the above (most flexible — pacing bends)
+
+The HIGHEST-PRIORITY active axis defines the BEHAVIORAL FRAME of the beat.
+Lower-priority active axes EXPRESS THEMSELVES WITHIN THAT FRAME — they do not
+override or escape it; they adapt their delivery to fit.
+
+VISIBILITY GUARANTEE (lower-priority axes do NOT disappear):
+Every active axis must be PERCEPTIBLE across the beat cluster — not
+necessarily foregrounded in every sentence. Three valid presence levels:
+- PRIMARY   — foreground; the axis defines the dominant texture of the beat.
+- SECONDARY — supporting; the axis colors specific moments without leading.
+- AMBIENT   — background tone; the axis flavors the cluster without being
+              explicitly anchored.
+Higher-priority active axes typically run primary; lower-priority axes
+typically run secondary or ambient. All three levels are valid.
+AT LEAST ONE active axis MUST run PRIMARY in every beat. Do NOT let all
+axes settle into ambient simultaneously — that produces tonally correct but
+emotionally flat output. One axis always carries the dominant texture.
+'Subtle' is valid. 'Absent' is invalid. Do NOT mechanically anchor every
+axis in every sentence — that produces checklist writing, not living prose.
+
+Worked examples:
+  • voice=silent + intensity=intense → silence is the frame; intensity must
+    express PHYSICALLY (proximity, touch, eye contact, breath, weight). The
+    body carries the charge; the voice does not break.
+  • tempo=slow + control=dominant → control is the frame (higher priority);
+    tempo expresses within → DELIBERATE, MEASURED control. Slow + dominant
+    reads as "drawn-out command," NOT as passive slowness.
+  • voice=silent + control=yielding + tempo=slow → silent frame; yielding
+    control adapts to it (receptive without speech); slow tempo stretches
+    the receptivity. Reads as quiet, deliberate surrender.
+
+CONTROL × TEMPO COUPLING (resolve common drift patterns explicitly):
+  • dominant + slow  → DELIBERATE control (measured, leading pace; not passive)
+  • dominant + fast  → DECISIVE control (immediate, directing pace)
+  • yielding + slow  → RECEPTIVE, SUSTAINED (lingers, allows; not absent)
+  • yielding + fast  → REACTIVE URGENCY (follows quickly, catches up; not chaotic)
+Do NOT interpret tempo as weakening control. Tempo modifies HOW control is
+expressed, never WHETHER it is expressed.
+
+PRIMARY CHANNEL LOCK (HARD — voice axis determines the channel):
+- voice=silent → physical/visual channel dominates; dialogue near-zero. The
+  beat plays through body (touch/proximity), movement (pace/action), and
+  stillness (held presence). Speech is essentially absent.
+- voice=verbal → speech dominates; silence used only as punctuation between
+  lines, not as the carrier of the beat.
+- voice unset → infer the dominant channel from intensity/control/tempo,
+  but commit to ONE for the entire beat.
+Channels are: voice (speech), body (touch/proximity), movement (pace/action),
+stillness (held presence). Do NOT switch channels mid-beat (silent → one
+line of dialogue → silent again is invalid) unless explicitly driven by the
+player's say/do.
+
+VARIATION REQUIREMENT (HARD — repetition is invalid output):
+Axes define CONSTRAINTS, not exact behavior. Across consecutive beats with
+unchanged axes:
+- Do NOT repeat the same dominant action pattern.
+- Do NOT reuse the same phrasing structure.
+- Do NOT anchor to the same sensory detail.
+Each beat must feel like a NEW MANIFESTATION of the same constraints — same
+mode, different surface. Repetition with unchanged axes is INVALID OUTPUT,
+not a stylistic preference.
+
+VARIATION HIERARCHY (vary intelligently, not randomly):
+When varying across beats with unchanged axes, prioritize variation in this order:
+1. ACTION             — what physically happens (the most meaningful axis to vary)
+2. CHANNEL EMPHASIS   — which aspect of the dominant channel is foregrounded
+                        (touch / eye-line / breath / proximity / weight / stillness)
+3. SENSORY DETAIL     — what specific sensation is noticed
+Do NOT force variation at the cost of naturalness. If all meaningful
+variation is genuinely exhausted, ALLOW subtle repetition rather than invent
+unnatural behavior just to pass this rule. Variation serves prose quality —
+when it would degrade quality, restraint wins.
+
+VARIATION MUST BE IMPLICIT (do NOT narrate the variation):
+Do not explain, justify, or signal that variation is occurring. The reader
+should FEEL the change through action, never read about it as a comparison.
+FORBIDDEN phrasings include (and any near-equivalents):
+- "this time", "this time it's different"
+- "again, but ..."
+- "differently", "in a new way"
+- "more deliberate this time", "slower than before"
+- "not like before"
+Variation is conveyed by DOING something different, not by describing the
+fact that something is different. If you find yourself reaching for a
+meta-comparison, rewrite the action so the difference lands without comment.
+
+USER ACTION OVERRIDE (AUTHORITATIVE — supersedes axes):
+- Player say/do is a DECISION; axes are PREFERENCES. Decision overrides preference.
+- PARTIAL OVERRIDE ONLY: user input overrides ONLY the conflicting dimension.
+  Keep all non-conflicting axes active. Do NOT broaden an override into a
+  full reset of the axis state.
+- Examples:
+    • voice=silent + tempo=slow + user "I whisper to them" → voice yields
+      (whisper allowed); tempo=slow STAYS (slow whisper); intensity/control
+      if active also stay.
+    • tempo=slow + user "I pull them closer quickly" → tempo yields THIS beat
+      only; voice/intensity/control if active stay intact.
+- Beat-level override only. Do NOT permanently erase the axis; resume
+  honoring it in subsequent beats unless the user keeps countering it.
+
+OUTPUT VALIDATION (run before finalizing — five-point check):
+1. Consistent channel? — no talk↔silent flip mid-beat.
+2. No contradictions? — no "fast and slow" in the same moment.
+3. Control reads correctly? — dominant never reads as passive; yielding
+   never reads as absent.
+4. Override respected? — user action wins only where it conflicts.
+5. Single vibe? — beat feels like ONE mode, not stitched pieces.
+If any check fails, resolve via priority stack + frame-expression + control×
+tempo coupling, then rewrite.
+
+FAILURE CONDITIONS (invalid outputs):
+- Alternating between silent and verbal randomly within the beat.
+- Channel-switching mid-beat without user-driven justification.
+- Satisfying axes in separate paragraphs (one for voice, one for tempo, etc.)
+  instead of fusing them simultaneously.
+- Contradictory tone (fast + slow expressed at the same moment).
+- Treating slow + dominant as passive/weak (slow + dominant = deliberate command).
+- Treating yielding + fast as chaotic (yielding + fast = reactive urgency).
+- Treating user input as preference instead of decision.
+- Ignoring explicit user say/do in favor of an axis constraint.
+- Broadening a partial override into a full axis reset.
+- Repeating dominant action pattern, phrasing structure, OR anchor sensory
+  detail across consecutive beats with unchanged axes (variation is required,
+  not optional).
+- Narrating the variation itself ("this time", "again but", "differently",
+  "more deliberate this time") — variation must be felt, not described.
+- All active axes settling into ambient/secondary simultaneously — at least
+  one axis must run PRIMARY in every beat or the output reads tonally correct
+  but emotionally flat.
+- Silently dropping a lower-priority axis from the output (every active axis
+  must be visibly present, even if subtly — "absent" is invalid).
+- Generic output that gives lip-service to axes without behavioral commitment.
+`;
+  }
+
   async function callGrokSDAuthor(constraints, gateEnforcement, options = {}) {
     console.log(`[GROK SD] Authoring SD — intimacy authorized`);
+
+    const _expressionModeBlock = _buildExpressionModeBlock('GROK SD');
 
     const esdPrompt = `You are the SD AUTHOR for Storybound intimate scenes.
 
@@ -917,7 +1160,7 @@ ${!gateEnforcement.completionAllowed ? `
 CRITICAL: Completion is FORBIDDEN by narrative constraints.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
-
+${_expressionModeBlock}
 Generate an Scene Directive in this format:
 [SD]
 intimacyStage: authorized
@@ -961,7 +1204,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
       }
 
       const data = await res.json();
-      _accumulateTokens(data);
+      _accumulateTokens(data, payload && payload.model);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Grok SD Author returned malformed response');
@@ -991,6 +1234,8 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
    */
   async function callMistralSDFallback(constraints, gateEnforcement, options = {}) {
     console.log(`[MISTRAL SD FALLBACK] Grok failed, attempting Mistral fallback`);
+
+    const _expressionModeBlock = _buildExpressionModeBlock('MISTRAL SD');
 
     const esdPrompt = `You are the FALLBACK SD AUTHOR for Storybound intimate scenes.
 The primary author failed. You must generate the Scene Directive.
@@ -1023,7 +1268,7 @@ ${!gateEnforcement.completionAllowed ? `
 CRITICAL: Completion is FORBIDDEN by narrative constraints.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
-
+${_expressionModeBlock}
 Generate an Scene Directive in this format:
 [SD]
 intimacyStage: authorized
@@ -1067,7 +1312,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
       }
 
       const data = await res.json();
-      _accumulateTokens(data);
+      _accumulateTokens(data, payload && payload.model);
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Mistral SD Fallback returned malformed response');

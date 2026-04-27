@@ -23465,6 +23465,114 @@ body.gn-cover-active .gn-ui-overlay {
     100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* ────────────────────────────────────────────────────────────────────
+   PETITION WHISPER — diegetic Petition Fate prompt at scene tail.
+   Distinct from .fate-whisper (loading-screen tarot promo above).
+   Click → opens Petition Fate. Reads as in-world narrative voice.
+   ──────────────────────────────────────────────────────────────── */
+.petition-whisper-line {
+    text-align: center;
+    margin: 1.4em auto 0.6em;
+    max-width: 38em;
+    font-style: italic;
+    opacity: 0;
+    animation: petitionWhisperIn 1.2s ease-out 0.4s forwards;
+}
+.petition-whisper {
+    color: rgba(212, 175, 55, 0.78);
+    cursor: pointer;
+    transition: color 220ms ease, text-shadow 220ms ease, opacity 220ms ease;
+    border-bottom: 1px dotted rgba(212, 175, 55, 0.35);
+    padding-bottom: 1px;
+}
+.petition-whisper:hover,
+.petition-whisper:focus {
+    color: rgba(232, 200, 90, 1);
+    text-shadow: 0 0 14px rgba(212, 175, 55, 0.45);
+    border-bottom-color: rgba(232, 200, 90, 0.7);
+    outline: none;
+}
+.petition-whisper.opening {
+    opacity: 0.4;
+    transform: scale(0.98);
+    transition: opacity 240ms ease, transform 240ms ease;
+}
+@keyframes petitionWhisperIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   TEMPT WHISPER — diegetic Tempt Fate prompt, parallel to Petition but
+   reserved for FORCE-marker scenes (external constraint). Visually more
+   ominous: deeper red/copper accent vs Petition's gold. Click → opens
+   Tempt Fate modal.
+   ──────────────────────────────────────────────────────────────── */
+.tempt-whisper-line {
+    text-align: center;
+    margin: 1.4em auto 0.6em;
+    max-width: 38em;
+    font-style: italic;
+    opacity: 0;
+    animation: temptWhisperIn 1.4s ease-out 0.5s forwards;
+}
+.tempt-whisper {
+    color: rgba(184, 78, 56, 0.82);
+    cursor: pointer;
+    transition: color 220ms ease, text-shadow 220ms ease, opacity 220ms ease;
+    border-bottom: 1px dotted rgba(184, 78, 56, 0.40);
+    padding-bottom: 1px;
+}
+.tempt-whisper:hover,
+.tempt-whisper:focus {
+    color: rgba(220, 110, 80, 1);
+    text-shadow: 0 0 14px rgba(184, 78, 56, 0.50);
+    border-bottom-color: rgba(220, 110, 80, 0.7);
+    outline: none;
+}
+.tempt-whisper.opening {
+    opacity: 0.4;
+    transform: scale(0.98);
+    transition: opacity 240ms ease, transform 240ms ease;
+}
+@keyframes temptWhisperIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Tempt Fate card highlight — set when Tempt whisper renders, cleared on
+   click. Slow pulse, deeper-red glow than the gold Petition elevation. */
+body.highlight-tempt-fate .tempt-fate-card {
+    box-shadow: 0 0 16px rgba(184, 78, 56, 0.50),
+                0 0 28px rgba(184, 78, 56, 0.20);
+    animation: temptFateCardPulse 4.0s ease-in-out infinite;
+    transform-origin: center;
+}
+@keyframes temptFateCardPulse {
+    0%   { box-shadow: 0 0 12px rgba(184, 78, 56, 0.32), 0 0 24px rgba(184, 78, 56, 0.14); transform: scale(1); }
+    50%  { box-shadow: 0 0 24px rgba(184, 78, 56, 0.62), 0 0 36px rgba(184, 78, 56, 0.28); transform: scale(1.025); }
+    100% { box-shadow: 0 0 12px rgba(184, 78, 56, 0.32), 0 0 24px rgba(184, 78, 56, 0.14); transform: scale(1); }
+}
+
+/* ────────────────────────────────────────────────────────────────────
+   ELEVATED FATE CARDS — applied when 2+ Whispers in a row went unclicked.
+   Petition Fate + Tempt Fate cards get a soft attention pulse so the
+   player notices the affordance they're missing. Cleared on next Whisper
+   click. (See FATE WHISPER SYSTEM in app.js.)
+   ──────────────────────────────────────────────────────────────── */
+body.elevated-fate-cards .petition-fate-card,
+body.elevated-fate-cards .tempt-fate-card {
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.45),
+                0 0 26px rgba(212, 175, 55, 0.18);
+    animation: elevatedFateCardPulse 3.6s ease-in-out infinite;
+    transform-origin: center;
+}
+@keyframes elevatedFateCardPulse {
+    0%   { box-shadow: 0 0 12px rgba(212, 175, 55, 0.30), 0 0 22px rgba(212, 175, 55, 0.12); transform: scale(1); }
+    50%  { box-shadow: 0 0 22px rgba(212, 175, 55, 0.55), 0 0 32px rgba(212, 175, 55, 0.25); transform: scale(1.025); }
+    100% { box-shadow: 0 0 12px rgba(212, 175, 55, 0.30), 0 0 22px rgba(212, 175, 55, 0.12); transform: scale(1); }
+}
+
 /* ── Seasonal Promo Badge (user-facing, on Fortune buttons) ── */
 .fortune-promo-badge {
     display: inline-block;
