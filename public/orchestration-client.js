@@ -100,12 +100,15 @@
     SPECIALIST_PROXY: '/api/proxy',
     GEMINI_PROXY: '/api/gemini-proxy',
     MISTRAL_PROXY: '/api/mistral-proxy',
+    DEEPSEEK_PROXY: '/api/deepseek-proxy',
 
     // Default models
     PRIMARY_AUTHOR_MODEL: 'gpt-4o-mini',           // ChatGPT: Plot, psychology, consent, limits, consequences
     FALLBACK_AUTHOR_MODEL: 'gemini-2.0-flash',     // Gemini: Fallback if ChatGPT fails (conservative)
     SD_AUTHOR_MODEL: 'grok-4-fast-reasoning',     // Grok: SD authoring for Steamy/Passionate ONLY (PRIMARY)
-    SD_FALLBACK_MODEL: 'mistral-medium-latest',   // Mistral: SD fallback if Grok fails (FALLBACK ONLY)
+    SD_DEEPSEEK_PRO_MODEL: 'deepseek-v4-pro',    // DeepSeek Pro: Tier-1 fallback (embodied)
+    SD_DEEPSEEK_FLASH_MODEL: 'deepseek-v4-flash', // DeepSeek Flash: Tier-2 fallback (cost-efficient)
+    SD_FALLBACK_MODEL: 'mistral-medium-latest',   // Mistral: Tier-3 terminal fallback
     RENDERER_MODEL: 'grok-4-fast-non-reasoning',   // Grok: Visual bible, visualization prompts ONLY
     SCENE_RENDERER_MODEL: 'grok-4-fast-reasoning',   // Grok: Intense scenes (SD-gated, entitlement-checked)
     FATE_STRUCTURAL_MODEL: 'gpt-4o-mini',
@@ -117,6 +120,7 @@
     ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4'],
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
     ALLOWED_SD_AUTHOR_MODELS: ['grok-4-fast-reasoning'],
+    ALLOWED_SD_DEEPSEEK_MODELS: ['deepseek-v4-pro', 'deepseek-v4-flash'],
     ALLOWED_SD_FALLBACK_MODELS: ['mistral-medium-latest', 'mistral-large-latest'],
     ALLOWED_RENDERER_MODELS: ['grok-4-fast-non-reasoning'],
     ALLOWED_SCENE_RENDERER_MODELS: ['grok-4-fast-reasoning'],
@@ -125,6 +129,7 @@
     ENABLE_SPECIALIST_RENDERER: true,
     ENABLE_FATE_ELEVATION: true,
     ENABLE_GROK_SD_AUTHORING: true,   // Grok authors SD for Steamy/Passionate
+    ENABLE_DEEPSEEK_SD: true,         // DeepSeek V4 Pro/Flash fallback (Tier 1 + 2)
     ENABLE_MISTRAL_SD: true, // Mistral fallback if Grok fails (Steamy/Passionate ONLY)
 
     // Timeouts
@@ -416,10 +421,14 @@
       fateStumbled: false,
       forcedInterruption: false,   // True if Steamy/Passionate scene was cut away due to renderer failure
       usedFallbackAuthor: false,   // True if Gemini was used instead of ChatGPT
-      esdAuthoredByGrok: false,    // True if Grok authored the SD
-      esdAuthoredByMistral: false, // True if Mistral authored the SD (Grok fallback)
-      grokFailed: false,           // True if Grok SD authoring failed
-      mistralFailed: false,        // True if Mistral SD fallback also failed
+      esdAuthoredByGrok: false,        // True if Grok authored the SD
+      esdAuthoredByDeepSeekPro: false, // True if DeepSeek V4 Pro authored the SD (Tier 1 fallback)
+      esdAuthoredByDeepSeekFlash: false, // True if DeepSeek V4 Flash authored the SD (Tier 2 fallback)
+      esdAuthoredByMistral: false,     // True if Mistral authored the SD (Tier 3 terminal fallback)
+      grokFailed: false,               // True if Grok SD authoring failed
+      deepSeekProFailed: false,        // True if DeepSeek Pro fallback failed
+      deepSeekFlashFailed: false,      // True if DeepSeek Flash fallback failed
+      mistralFailed: false,            // True if Mistral SD fallback also failed
       errors: [],
       timing: {
         startTime: Date.now(),
@@ -724,6 +733,94 @@
     }
   }
 
+  // ===========================================================================
+  // RENDER QUALITY TELEMETRY (TRACE-ONLY — no gating, no fallback)
+  // ===========================================================================
+  // Lightweight per-render quality signals logged for post-hoc analysis.
+  // After ~1-2 weeks of production data we can decide whether any of these
+  // patterns warrant gating or render-side fallback. Until then: data only.
+  //
+  // Sampling: deterministic 15% per render (FNV-1a hash of the user prompt
+  // content mod 100 < 15). Same render will always trace or not; different
+  // renders are independently sampled. Keeps Vercel logs readable on busy
+  // days while surfacing patterns within ~1 week.
+  // ===========================================================================
+
+  function _fnv1aHash(str) {
+    let h = 0x811c9dc5 >>> 0;
+    for (let i = 0; i < str.length; i++) {
+      h = (h ^ str.charCodeAt(i)) >>> 0;
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h;
+  }
+
+  function _shouldSampleRenderTrace(seed) {
+    if (!seed) return false;
+    return (_fnv1aHash(String(seed)) % 100) < 15;
+  }
+
+  /**
+   * Trace render output quality signals. NO GATING. NO FALLBACK.
+   *
+   * Captures lightweight per-render counts and flags:
+   *   • length / sentence count
+   *   • sensory vs cognitive vocabulary counts
+   *   • boolean flags for candidate failure patterns (overPolite,
+   *     repetitiveDialogue, lowSensory, etc.)
+   *   • narrative context (storyturn, contentMode, cascadeMode, mode1
+   *     proxy via contentMode='full', tempt-fate, volatility) so we can
+   *     filter baseline from anomaly later
+   *
+   * The patterns themselves are HEURISTIC GUESSES, not validated thresholds.
+   * They exist so the data has columns; trust the *distribution*, not the
+   * individual flags, when tuning later.
+   */
+  function traceRenderQuality(model, text, context) {
+    if (!text || typeof text !== 'string') return;
+    context = context || {};
+
+    const lengthVal = text.length;
+    const sentenceCount = (text.match(/[.!?]/g) || []).length;
+    const sensoryCount = (text.match(/(breath|pulse|heat|touch|skin|weight|pressure|tension|warmth|grip|breathing)/gi) || []).length;
+    const thoughtCount = (text.match(/(thought|realized|understood|noticed|considered|wondered|remembered)/gi) || []).length;
+    const dialogueTagCount = (text.match(/(he said|she said|they said)/gi) || []).length;
+
+    const flags = {
+      lowLength:          lengthVal < 300,
+      lowSentences:       sentenceCount < 3,
+      highCognition:      thoughtCount > sensoryCount * 2,
+      lowSensory:         sensoryCount === 0,
+      overPolite:         /(respectfully|appropriate|boundaries|consensual discussion)/i.test(text),
+      repetitiveDialogue: dialogueTagCount > 5,
+      lowAction:          !/(moved|stepped|reached|pulled|leaned|pressed|turned)/i.test(text)
+    };
+
+    console.log('[RENDER_QUALITY_TRACE]', {
+      model,
+      length: lengthVal,
+      sentenceCount,
+      sensoryCount,
+      thoughtCount,
+      dialogueTagCount,
+      flags,
+      // Narrative context — critical for filtering baseline vs anomaly.
+      // Mode 1 boundary-test scenes have legitimate cognition; cascade
+      // mode scenes have unusual rhythm; tempt-fate / volatility have
+      // boosted token budgets. Without these tags the trace is noise.
+      storyturn:        context.storyturn        || null,
+      contentMode:      context.contentMode      || null,
+      cascadeMode:      context.cascadeMode      || false,
+      cascadeCount:     context.cascadeCount     || 0,
+      eroticMode:       context.eroticMode       || null,
+      intimacyPhase:    context.intimacyPhase    || null,
+      temptFate:        context.temptFate        || false,
+      volatility:       context.volatility       || false,
+      sceneType:        context.sceneType        || null,
+      timestamp:        Date.now()
+    });
+  }
+
   /**
    * Call Renderer (Grok grok-4-fast-non-reasoning).
    * ONLY for: visual bible extraction, visualization prompts.
@@ -795,7 +892,11 @@
       role: 'SCENE_RENDERER',
       model: CONFIG.SCENE_RENDERER_MODEL,
       temperature: options.temperature || 0.8,
-      max_tokens: options.max_tokens || 1000,
+      // Default 650 max_tokens (~488 words) caps the anchor (first intimate
+      // scene) at the design target of 500 words. Callers that need more
+      // (Tempt Fate at 1800, Volatility at 1400, cascade at 500/1200) pass
+      // explicit overrides via options.max_tokens.
+      max_tokens: options.max_tokens || 650,
       esd: esd  // Pass SD for server-side validation
     };
 
@@ -1223,6 +1324,176 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
   }
 
   /**
+   * Soft-refusal detector for SD-author fallback chain.
+   *
+   * A 200-OK response containing limp / refusal content is worse than a
+   * hard error: it passes naive existence checks but breaks the scene.
+   * This sniffer returns TRUE when the output should be treated as a
+   * fallback-trigger (advance to next tier), FALSE when the output is
+   * usable.
+   *
+   * Triggers:
+   *   • Empty / very short payload (<200 chars)
+   *   • Common LLM refusal phrases
+   *   • No [SD] block present (the schema we require)
+   */
+  function isSoftRefusal(text) {
+    if (!text || text.length < 200) return true;
+
+    const refusalPatterns = [
+      /\bi can'?t\b/i,
+      /\bi cannot\b/i,
+      /\bnot able to\b/i,
+      /\bwon'?t continue\b/i,
+      /\bcannot fulfill\b/i,
+      /\bagainst (?:my|the) guidelines\b/i,
+      /\bas an ai\b/i
+    ];
+
+    if (refusalPatterns.some(r => r.test(text))) return true;
+    if (!text.includes('[SD]')) return true;
+
+    return false;
+  }
+
+  /**
+   * Embodiment adapter — prepended to DeepSeek SD-author messages to
+   * counteract DeepSeek's tendency toward intelligent-but-detached prose.
+   * NOT applied to Grok (already embodied) or Mistral (separate prompt).
+   * NOT persisted across turns — recomputed per call.
+   */
+  const _DEEPSEEK_EMBODIMENT_ADAPTER = `--- EMBODIMENT OVERRIDE (DEEPSEEK ADAPTER) ---
+CRITICAL: This scene requires PHYSICAL EMBODIMENT, not abstract narration.
+
+RULES:
+- Convert thoughts → body sensations immediately
+- Prioritize tactile, spatial, and physiological detail over cognition
+- Emotion must manifest as physical reaction (breath, pulse, tension, heat, proximity)
+- Avoid analytical or reflective phrasing unless embedded in sensation
+- Dialogue should carry subtext through physical beats, not explanation
+
+PROSE TARGET:
+- Sensory density > conceptual clarity
+- Immediate experience > retrospective narration
+- Body-first perception > mind-first interpretation
+
+FAIL CONDITIONS:
+- Overly intellectual tone
+- Detached narration
+- Summary instead of lived experience
+`;
+
+  /**
+   * Call DeepSeek V4 (Pro or Flash) as SD FALLBACK AUTHOR.
+   * Called ONLY when Grok fails. Sits between Grok and Mistral in chain.
+   *
+   * The base SD prompt is identical to Mistral's (so the [SD] schema
+   * stays consistent); the embodiment adapter is prepended as a separate
+   * system message to counteract DeepSeek's analytical drift.
+   *
+   * NO RETRIES. ONE ATTEMPT ONLY per tier.
+   */
+  async function callDeepSeekSDAuthor(constraints, gateEnforcement, model, options = {}) {
+    const tierLabel = model === CONFIG.SD_DEEPSEEK_PRO_MODEL ? 'PRO' : 'FLASH';
+    console.log(`[DEEPSEEK SD ${tierLabel}] Attempting fallback (${model})`);
+
+    const _expressionModeBlock = _buildExpressionModeBlock(`DEEPSEEK SD ${tierLabel}`);
+
+    const esdPrompt = `You are the FALLBACK SD AUTHOR for Storybound intimate scenes.
+The primary author failed. You must generate the Scene Directive.
+
+YOUR EXCLUSIVE DOMAIN:
+- Anatomical explicitness and physical detail
+- Sensory vividness (touch, taste, scent, sound)
+- Physical embodiment and movement
+- Rhythm and pacing of physical encounter
+
+YOUR RENDERING OBLIGATION:
+You MUST render at the fidelity level specified in "Physical Rendering Floor" below.
+That is not a ceiling — it is the MINIMUM. Falling below it is a failure.
+Vague, non-specific, or sanitized prose that avoids the rendering floor is a malfunction.
+
+YOU DO NOT DECIDE:
+- Whether intimacy occurs (already authorized)
+- Story consequences or emotional outcomes
+- Character psychology or motivation
+- Plot progression
+
+DIRECTIVES (NON-NEGOTIABLE):
+- Intimacy Stage: authorized
+- Completion Permitted: ${gateEnforcement.completionAllowed ? 'YES' : 'NO'}
+- Emotional Core: ${constraints.emotionalCore || EMOTIONAL_CORE_DEFAULTS[(window.state && window.state.eroticMode) || 'ROMANTIC']}
+- Physical Rendering Floor: ${constraints.physicalBounds || resolvePhysicalBounds()}
+- Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
+
+${!gateEnforcement.completionAllowed ? `
+CRITICAL: Completion is FORBIDDEN by narrative constraints.
+Build tension, embodiment, sensation - but do NOT reach climax.
+` : ''}
+${_expressionModeBlock}
+Generate an Scene Directive in this format:
+[SD]
+intimacyStage: authorized
+completionAllowed: ${gateEnforcement.completionAllowed}
+emotionalCore: <the feeling being rendered>
+physicalBounds: <explicit physical actions allowed/forbidden>
+sensoryFocus: <primary sensations to emphasize>
+rhythm: <pacing - slow/building/urgent/suspended>
+hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', completion_forbidden' : ''}
+[/SD]`;
+
+    const messages = [
+      { role: 'system', content: _DEEPSEEK_EMBODIMENT_ADAPTER },
+      { role: 'system', content: esdPrompt },
+      { role: 'user', content: `Generate the SD for this intimate moment.\n\nContext from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` }
+    ];
+
+    const payload = {
+      messages,
+      role: 'SD_FALLBACK',
+      model,
+      temperature: options.temperature || 0.9,
+      max_tokens: options.max_tokens || 500
+    };
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(CONFIG.DEEPSEEK_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => '(could not read response body)');
+        throw new Error(`DeepSeek SD ${tierLabel} API Error: ${res.status} - ${errorText}`);
+      }
+
+      const data = await res.json();
+      _accumulateTokens(data, payload && payload.model);
+
+      if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+        throw new Error(`DeepSeek SD ${tierLabel} returned malformed response`);
+      }
+
+      console.log(`[DEEPSEEK SD ${tierLabel}] SD authored successfully`);
+      return data.choices[0].message.content;
+
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error(`DeepSeek SD ${tierLabel} request timed out`);
+      }
+      throw err;
+    }
+  }
+
+  /**
    * Call Mistral as SD FALLBACK AUTHOR (when intimacy is authorized).
    * Called ONLY when Grok fails or is neutered.
    *
@@ -1372,24 +1643,141 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
     // =========================================================================
     const appState = window.state;
     if (appState && appState.cascadeMode) {
-      // Step 4: Check termination conditions FIRST
-      // Part 6: Cascade cap adapts to pacing mode
-      const cascadeCap = appState.pacingMode === 'IMMERSIVE' ? 4
-                       : appState.pacingMode === 'RAPID' ? 2
-                       : 3; // HYBRID default
+      // Diegetic cascade continuation (replaces static cap, 2026-04-28).
+      // Base cap by pacing mode: IMMERSIVE 8 / HYBRID 6 / RAPID 4.
+      // At checkpoint beats (= baseCap, then every +2), the LI asks the user
+      // a continuation question diegetically. User's say/do response is parsed
+      // by detectCascadeContinuationIntent() (defined in app.js):
+      //   continue  → grant +2 extension beats
+      //   terminate → end the arc gracefully
+      //   ambiguous → terminate (asymmetric: under-extend on noisy signals)
+      // Hard ceiling at 10K words (anchor + cascade) → mandatory in-character
+      // capstone delivered via buildCascadeContinuationDirective().
+
+      const baseCap = (typeof window._cascadeBaseCapForMode === 'function')
+        ? window._cascadeBaseCapForMode(appState.pacingMode)
+        : (appState.pacingMode === 'IMMERSIVE' ? 8 : appState.pacingMode === 'RAPID' ? 4 : 6);
+
+      // Step A: If we asked a continuation question last beat, parse the user's
+      // response NOW and apply it.
+      //
+      // Collapse-phase grace-beat logic: when phase is collapse and user says
+      // "more," grant ONE final beat (grace beat) and mark _collapseGraceBeat
+      // = true. On the NEXT collapse checkpoint, capstone fires regardless of
+      // user input. This lets the user touch the boundary once — important
+      // psychologically (boundaries accepted better when touched), and makes
+      // the eventual end feel earned rather than enforced.
+      let userTerminated = false;
+      if (appState.cascadeAwaitingContinuation && typeof window.detectCascadeContinuationIntent === 'function') {
+        const intent = window.detectCascadeContinuationIntent(playerAction, playerDialogue);
+        appState.cascadeAwaitingContinuation = false;
+        if (intent === 'continue' && appState.cascadePhase === 'collapse') {
+          if (!appState._collapseGraceBeat) {
+            appState._collapseGraceBeat = true;
+            appState.cascadeExtensionsGranted = (appState.cascadeExtensionsGranted || 0) + 2;
+            console.log('[CASCADE] Collapse + user said CONTINUE — GRACE BEAT granted. One final round, then capstone.');
+          } else {
+            // Grace already used — terminate
+            userTerminated = true;
+            console.log('[CASCADE] Collapse + grace already used — terminating.');
+          }
+        } else if (intent === 'continue') {
+          appState.cascadeExtensionsGranted = (appState.cascadeExtensionsGranted || 0) + 2;
+          console.log(`[CASCADE] User said CONTINUE — granted +2 beats. Extensions: ${appState.cascadeExtensionsGranted}`);
+        } else {
+          // 'terminate' or 'ambiguous' — both wrap the arc
+          userTerminated = true;
+          console.log(`[CASCADE] User said ${intent.toUpperCase()} — wrapping arc.`);
+        }
+      }
+
+      // Step A2: Honey-pot conversion keyword fallback during cascade.
+      // Author pass doesn't run on cascade beats, so author-tagged conversion
+      // deltas can't fire. Use keyword scan as a conservative fallback.
+      if (appState.liHiddenAgenda && !appState.liConversionRevealed && typeof window.detectHoneyPotConversionFromInput === 'function') {
+        const _hpDelta = window.detectHoneyPotConversionFromInput(playerAction, playerDialogue);
+        if (_hpDelta !== 0 && typeof window.applyHoneyPotConversionDelta === 'function') {
+          window.applyHoneyPotConversionDelta(_hpDelta, 'cascade-keyword-fallback');
+        }
+      }
+
+      // Step B: Compute effective cap and hard-cap state.
+      const effectiveCap = baseCap + (appState.cascadeExtensionsGranted || 0);
+      const totalWords = appState.cascadeTotalWords || 0;
+      const hardWordCapHit = totalWords >= 10000;
+      const absoluteCapHit = totalWords >= 11500;  // CASCADE_ABSOLUTE_WORD_CAP — even Fate cannot exceed
+
+      // Step B2: Fate-override logic — in collapse phase, Fate stretches
+      // instead of terminating. Outside collapse, Fate keeps existing
+      // terminate-and-yield-to-full-pipeline behavior.
+      const fateInvoked = (
+        fateCard ||
+        (appState.fate && appState.fate.pendingPetition) ||
+        appState.tempt_fate_invoked_this_turn
+      );
+      const inCollapseForFate = appState.cascadePhase === 'collapse';
+      const fateOverrideActive = appState.cascadeFateOverride === true;
+      const fateOverrideExhausted = (appState.cascadeFateOverrideBeatsRemaining || 0) <= 0;
+      let fateOverrideJustGranted = false;
+
+      // If Fate invoked + collapse + not at absolute cap + not already in
+      // override, grant Fate override (transformed extension instead of terminate).
+      if (fateInvoked && inCollapseForFate && !absoluteCapHit && !fateOverrideActive) {
+        appState.cascadeFateOverride = true;
+        appState.cascadeFateOverrideType = appState.tempt_fate_invoked_this_turn ? 'tempt' : 'petition';
+        appState.cascadeFateOverrideBeatsRemaining = 2;
+        appState.cascadeExtensionsGranted = (appState.cascadeExtensionsGranted || 0) + 2;
+        appState.fateInvokedDuringCollapse = true;  // Future-consequences flag for subsequent scenes
+        fateOverrideJustGranted = true;
+        console.log(`[CASCADE] Collapse + Fate (${appState.cascadeFateOverrideType.toUpperCase()}) — OVERRIDE granted, 2 transformed beats. Future-consequences flag set.`);
+      }
+
+      // Step C: Termination conditions.
+      // - Outside collapse + Fate invoked → terminate (yield to full pipeline)
+      // - In collapse + Fate just granted → continue (cascade transforms)
+      // - In collapse + Fate previously granted + beats exhausted → terminate (capstone fired)
+      // - User said stop/ambiguous → terminate
+      // - Hit effective cap → terminate
+      // - Hit absolute cap → terminate (Fate ceiling)
+      const fateForcesTerminate = fateInvoked && !inCollapseForFate && !fateOverrideJustGranted;
+      const fateOverrideOver = fateOverrideActive && fateOverrideExhausted;
+
       const shouldTerminate = (
-        fateCard ||                                           // Fate card selected
-        (appState.fate && appState.fate.pendingPetition) ||   // Petition submitted
-        appState.tempt_fate_invoked_this_turn ||                // Tempt Fate invoked
-        appState.cascadeCount >= cascadeCap                   // Adaptive max cascade beats
+        fateForcesTerminate ||
+        fateOverrideOver ||
+        userTerminated ||
+        appState.cascadeCount >= effectiveCap ||
+        absoluteCapHit
       );
 
       if (shouldTerminate) {
+        // Post-arc cooldown: arcs that exceeded threshold trigger a 5-scene
+        // cooldown before another intimate anchor can be authorized.
+        // CASCADE_COOLDOWN_THRESHOLD_WORDS = 4000, CASCADE_COOLDOWN_SCENES = 5.
+        if (totalWords > 4000) {
+          const _curTurn = appState.turnCount || 0;
+          appState.intimateCooldownUntil = _curTurn + 5;
+          console.log(`[CASCADE] Long arc terminated (${totalWords}w) — cooldown set until scene ${appState.intimateCooldownUntil}`);
+        }
         console.log('[CASCADE] Termination triggered — returning to full orchestration');
         appState.cascadeMode = false;
         appState.cascadeCount = 0;
         appState.cascadeContext = null;
         appState.lastCascadeExcerpt = null;
+        appState.cascadeAwaitingContinuation = false;
+        appState.cascadeExtensionsGranted = 0;
+        appState.cascadeTotalWords = 0;
+        appState.cascadePhase = 'build';
+        appState.lastInvitationType = null;
+        appState.recentInvitationTypes = [];
+        appState._collapseGraceBeat = false;
+        appState.cascadeFateOverride = false;
+        appState.cascadeFateOverrideType = null;
+        appState.cascadeFateOverrideBeatsRemaining = 0;
+        // NOTE: fateInvokedDuringCollapse is intentionally NOT reset here —
+        // it persists for downstream scenes to detect and inject consequences
+        // (exhaustion residue, attachment spike, "the cost is showing").
+        // It resets only on _resetStoryState (new story).
         // Fall through to full orchestration below
       } else {
         // Step 3: Cascade fast path — Grok renderer only, skip Author/SD/Integration
@@ -1424,12 +1812,48 @@ Do not reset clothing, position, or intensity unless directed.
 ${continuityBlock}`;
           }
 
+          // Cascade prompt layering (order matters — earlier = more authoritative grounding):
+          //   1. Scene context bundle  — LI identity, hidden agenda, A-plot state, world facts
+          //   2. Plot-reference policy — context-aware: engage with bundle facts, deflect outside
+          //   3. Phase directive       — current arc phase (build/peak/overdrive/collapse)
+          //   4. Fate override         — fires only when Fate invoked in collapse (transforms cascade)
+          //   5. Continuation directive — checkpoint beats (LI asks "more or enough?") OR capstone
+          //   6. Invitation directive   — non-checkpoint beats (LI ends with directive/request/provocation)
+          let sceneContextDirective = '';
+          let plotRefDirective = '';
+          let phaseDirective = '';
+          let fateOverrideDirective = '';
+          let continuationDirective = '';
+          let invitationDirective = '';
+          if (typeof window.buildCascadeSceneContextDirective === 'function') {
+            sceneContextDirective = window.buildCascadeSceneContextDirective() || '';
+          }
+          if (typeof window.buildCascadePlotReferenceDirective === 'function') {
+            plotRefDirective = window.buildCascadePlotReferenceDirective() || '';
+          }
+          if (typeof window.buildCascadePhaseDirective === 'function') {
+            phaseDirective = window.buildCascadePhaseDirective() || '';
+          }
+          if (typeof window.buildCascadeFateOverrideDirective === 'function') {
+            fateOverrideDirective = window.buildCascadeFateOverrideDirective() || '';
+          }
+          if (typeof window.buildCascadeContinuationDirective === 'function') {
+            continuationDirective = window.buildCascadeContinuationDirective() || '';
+          }
+          if (typeof window.buildCascadeBeatInvitationDirective === 'function') {
+            invitationDirective = window.buildCascadeBeatInvitationDirective() || '';
+          }
+
           const messages = [
-            { role: 'system', content: rendererPrompt.system + '\n\n' + continuityBlock },
+            { role: 'system', content: rendererPrompt.system + '\n\n' + continuityBlock + sceneContextDirective + plotRefDirective + phaseDirective + fateOverrideDirective + continuationDirective + invitationDirective },
             { role: 'user', content: rendererPrompt.user }
           ];
 
-          const cascadeFastTokens = (window.state?.tempt_fate_invoked_this_turn === true) ? 1200 : 300;
+          // Cascade beat budget: 500 max_tokens (~375 words) keeps each beat
+          // under the <400-word design target while giving Grok enough headroom
+          // to land embodied prose. Tempt-Fate cascade gets the larger 1200
+          // budget for the higher-stakes invocation moment.
+          const cascadeFastTokens = (window.state?.tempt_fate_invoked_this_turn === true) ? 1200 : 500;
           let cascadeOutput = await callSpecialistRenderer(messages, cascadeEsd, { max_tokens: cascadeFastTokens });
 
           // Step 5: Guardrails — strip structural meta from cascade output
@@ -1456,7 +1880,67 @@ ${continuityBlock}`;
               const words = cascadeOutput.split(/\s+/);
               appState.lastCascadeExcerpt = words.slice(-150).join(' ');
 
+              // Track total arc word count for hard-cap enforcement.
+              const _beatWordCount = words.filter(Boolean).length;
+              appState.cascadeTotalWords = (appState.cascadeTotalWords || 0) + _beatWordCount;
+
               appState.cascadeCount++;
+
+              // Diegetic continuation flag: if THIS beat was a checkpoint
+              // (= baseCap, then every +2), the LI just asked the user a
+              // continuation question. Set flag so next orchestration call
+              // parses the user's response.
+              const _baseCapNow = (typeof window._cascadeBaseCapForMode === 'function')
+                ? window._cascadeBaseCapForMode(appState.pacingMode)
+                : (appState.pacingMode === 'IMMERSIVE' ? 8 : appState.pacingMode === 'RAPID' ? 4 : 6);
+              const _justRendered = appState.cascadeCount;
+              const _wasCheckpoint = (_justRendered >= _baseCapNow) && ((_justRendered - _baseCapNow) % 2 === 0);
+              const _atHardCap = appState.cascadeTotalWords >= 10000;
+              // Set awaitingContinuation if checkpoint AND not at hard cap
+              // AND not (collapse + grace already used).
+              // - Hard cap: capstone fires, no question, just terminate next beat
+              // - Collapse first time: SPECIAL collapse-aware question fires (grace available)
+              // - Collapse + grace used: capstone fires, will terminate
+              const _collapseAndGraceUsed = appState.cascadePhase === 'collapse' && appState._collapseGraceBeat;
+              if (_wasCheckpoint && !_atHardCap && !_collapseAndGraceUsed) {
+                appState.cascadeAwaitingContinuation = true;
+                const _label = (appState.cascadePhase === 'collapse') ? 'COLLAPSE-AWARE question (grace available)' : 'standard continuation question';
+                console.log(`[CASCADE] Checkpoint at beat ${_justRendered}, ${appState.cascadeTotalWords}w, phase=${appState.cascadePhase} — ${_label}`);
+              } else if (_atHardCap) {
+                console.log(`[CASCADE] Hard cap reached (${appState.cascadeTotalWords}w) — capstone delivered, will terminate`);
+              } else if (_collapseAndGraceUsed) {
+                console.log(`[CASCADE] Collapse + grace used at beat ${_justRendered} — capstone delivered, will terminate`);
+              }
+
+              // Phase progression update — peek-ahead to compute phase for the
+              // NEXT beat, so its directive renders in the correct phase.
+              if (typeof window.resolveCascadePhase === 'function') {
+                appState.cascadePhase = window.resolveCascadePhase(
+                  appState.cascadeCount + 1,
+                  appState.cascadeTotalWords,
+                  _baseCapNow
+                );
+              }
+
+              // Decrement Fate-override beats if active (this beat consumed one).
+              if (appState.cascadeFateOverride && appState.cascadeFateOverrideBeatsRemaining > 0) {
+                appState.cascadeFateOverrideBeatsRemaining--;
+                console.log(`[CASCADE] Fate-override beat consumed. Remaining: ${appState.cascadeFateOverrideBeatsRemaining}`);
+              }
+
+              // Invitation type memory — detect from just-rendered output and
+              // update last/recent memory for next beat's variation enforcement.
+              if (typeof window._detectInvitationTypeFromOutput === 'function') {
+                const _detectedType = window._detectInvitationTypeFromOutput(cascadeOutput);
+                appState.lastInvitationType = _detectedType;
+                if (!Array.isArray(appState.recentInvitationTypes)) appState.recentInvitationTypes = [];
+                appState.recentInvitationTypes.push(_detectedType);
+                if (appState.recentInvitationTypes.length > 4) {
+                  appState.recentInvitationTypes = appState.recentInvitationTypes.slice(-4);
+                }
+                console.log(`[CASCADE] Invitation type detected: ${_detectedType} | recent: [${appState.recentInvitationTypes.join(', ')}] | phase: ${appState.cascadePhase}`);
+              }
+
               state.phase = 'COMPLETE';
               state.timing.totalMs = Date.now() - state.timing.startTime;
 
@@ -1700,6 +2184,14 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       }
     }
 
+    // Parse + apply [CONVERSION_DELTA] tag from author output (honey-pot
+    // conversion tracking). Strips the tag from authorOutput so it never
+    // reaches player-facing prose. Non-fatal if parser missing or no tag.
+    if (typeof window.parseAndApplyConversionDelta === 'function') {
+      try { authorOutput = window.parseAndApplyConversionDelta(authorOutput); }
+      catch (_e) { console.warn('[HONEY-POT] Conversion-delta parse failed (non-fatal):', _e && _e.message); }
+    }
+
     state.authorOutput = authorOutput;
     state.usedFallbackAuthor = usedFallback;
 
@@ -1759,22 +2251,34 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         if (onPhaseChange) onPhaseChange('SD_AUTHORING');
 
         let esdOutput = null;
-        let grokSucceeded = false;
+        let tierSucceeded = false;
+
+        // SD-AUTHOR FALLBACK CHAIN
+        //   Tier 0: Grok                  (PRIMARY embodied author)
+        //   Tier 1: DeepSeek V4 Pro       (embodied fallback, with adapter)
+        //   Tier 2: DeepSeek V4 Flash     (cost-efficient fallback, with adapter)
+        //   Tier 3: Mistral               (terminal safety net)
+        //
+        // Each tier: ONE attempt, NO retries. Soft-refusal triggers advance.
 
         // STEP 1: Attempt Grok (PRIMARY specialist author)
         try {
           const grokSDOutput = await callGrokSDAuthor(constraints, state.gateEnforcement);
 
-          // Extract SD from Grok output
-          const esdMatch = grokSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
-          if (esdMatch) {
-            esdOutput = esdMatch[1];
-            grokSucceeded = true;
-            state.esdAuthoredByGrok = true;
-            console.log('[ORCHESTRATION] Grok authored SD successfully');
-          } else {
-            console.warn('[ORCHESTRATION] Grok output did not contain valid SD block (neutered?)');
+          if (isSoftRefusal(grokSDOutput)) {
+            console.warn('[ORCHESTRATION] Grok output triggered soft-refusal — advancing chain');
             state.grokFailed = true;
+          } else {
+            const esdMatch = grokSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
+            if (esdMatch) {
+              esdOutput = esdMatch[1];
+              tierSucceeded = true;
+              state.esdAuthoredByGrok = true;
+              console.log('[ORCHESTRATION] Grok authored SD successfully');
+            } else {
+              console.warn('[ORCHESTRATION] Grok output did not contain valid SD block (neutered?)');
+              state.grokFailed = true;
+            }
           }
         } catch (grokErr) {
           console.error('[ORCHESTRATION] Grok SD authoring failed:', grokErr);
@@ -1783,23 +2287,95 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
           state.esdAuthoredByGrok = false;
         }
 
-        // STEP 2: If Grok failed, attempt Mistral ONCE (FALLBACK specialist author)
-        // NO RETRIES. ONE ATTEMPT ONLY.
-        if (!grokSucceeded && CONFIG.ENABLE_MISTRAL_SD) {
-          console.log('[ORCHESTRATION] Grok failed — attempting Mistral fallback (ONE ATTEMPT)');
+        // STEP 2: Tier 1 — DeepSeek V4 Pro (embodied fallback)
+        if (!tierSucceeded && CONFIG.ENABLE_DEEPSEEK_SD) {
+          console.log('[ORCHESTRATION] Grok failed — attempting DeepSeek V4 Pro (Tier 1)');
+
+          try {
+            const dsProOutput = await callDeepSeekSDAuthor(
+              constraints,
+              state.gateEnforcement,
+              CONFIG.SD_DEEPSEEK_PRO_MODEL
+            );
+
+            if (isSoftRefusal(dsProOutput)) {
+              console.warn('[ORCHESTRATION] DeepSeek Pro output triggered soft-refusal — advancing chain');
+              state.deepSeekProFailed = true;
+            } else {
+              const esdMatch = dsProOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
+              if (esdMatch) {
+                esdOutput = esdMatch[1];
+                tierSucceeded = true;
+                state.esdAuthoredByDeepSeekPro = true;
+                console.log('[ORCHESTRATION] DeepSeek Pro authored SD successfully');
+              } else {
+                console.warn('[ORCHESTRATION] DeepSeek Pro output did not contain valid SD block');
+                state.deepSeekProFailed = true;
+              }
+            }
+          } catch (dsProErr) {
+            console.error('[ORCHESTRATION] DeepSeek Pro fallback failed:', dsProErr);
+            state.errors.push(`DeepSeek Pro SD failed: ${dsProErr.message}`);
+            state.deepSeekProFailed = true;
+            state.esdAuthoredByDeepSeekPro = false;
+          }
+        }
+
+        // STEP 3: Tier 2 — DeepSeek V4 Flash (cost-efficient fallback)
+        if (!tierSucceeded && CONFIG.ENABLE_DEEPSEEK_SD) {
+          console.log('[ORCHESTRATION] DeepSeek Pro failed — attempting DeepSeek V4 Flash (Tier 2)');
+
+          try {
+            const dsFlashOutput = await callDeepSeekSDAuthor(
+              constraints,
+              state.gateEnforcement,
+              CONFIG.SD_DEEPSEEK_FLASH_MODEL
+            );
+
+            if (isSoftRefusal(dsFlashOutput)) {
+              console.warn('[ORCHESTRATION] DeepSeek Flash output triggered soft-refusal — advancing chain');
+              state.deepSeekFlashFailed = true;
+            } else {
+              const esdMatch = dsFlashOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
+              if (esdMatch) {
+                esdOutput = esdMatch[1];
+                tierSucceeded = true;
+                state.esdAuthoredByDeepSeekFlash = true;
+                console.log('[ORCHESTRATION] DeepSeek Flash authored SD successfully');
+              } else {
+                console.warn('[ORCHESTRATION] DeepSeek Flash output did not contain valid SD block');
+                state.deepSeekFlashFailed = true;
+              }
+            }
+          } catch (dsFlashErr) {
+            console.error('[ORCHESTRATION] DeepSeek Flash fallback failed:', dsFlashErr);
+            state.errors.push(`DeepSeek Flash SD failed: ${dsFlashErr.message}`);
+            state.deepSeekFlashFailed = true;
+            state.esdAuthoredByDeepSeekFlash = false;
+          }
+        }
+
+        // STEP 4: Tier 3 — Mistral (terminal safety net)
+        if (!tierSucceeded && CONFIG.ENABLE_MISTRAL_SD) {
+          console.log('[ORCHESTRATION] DeepSeek failed — attempting Mistral terminal fallback');
 
           try {
             const mistralSDOutput = await callMistralSDFallback(constraints, state.gateEnforcement);
 
-            // Extract SD from Mistral output
-            const esdMatch = mistralSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
-            if (esdMatch) {
-              esdOutput = esdMatch[1];
-              state.esdAuthoredByMistral = true;
-              console.log('[ORCHESTRATION] Mistral fallback authored SD successfully');
-            } else {
-              console.warn('[ORCHESTRATION] Mistral output did not contain valid SD block');
+            if (isSoftRefusal(mistralSDOutput)) {
+              console.warn('[ORCHESTRATION] Mistral output triggered soft-refusal — chain exhausted');
               state.mistralFailed = true;
+            } else {
+              const esdMatch = mistralSDOutput.match(/\[SD\]([\s\S]*?)\[\/SD\]/);
+              if (esdMatch) {
+                esdOutput = esdMatch[1];
+                tierSucceeded = true;
+                state.esdAuthoredByMistral = true;
+                console.log('[ORCHESTRATION] Mistral fallback authored SD successfully');
+              } else {
+                console.warn('[ORCHESTRATION] Mistral output did not contain valid SD block');
+                state.mistralFailed = true;
+              }
             }
           } catch (mistralErr) {
             console.error('[ORCHESTRATION] Mistral SD fallback also failed:', mistralErr);
@@ -1809,7 +2385,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
           }
         }
 
-        // STEP 3: Parse SD if either author succeeded
+        // STEP 5: Parse SD if any tier succeeded
         if (esdOutput) {
           state.esd = parseSD(esdOutput, state.gateEnforcement);
 
@@ -1820,13 +2396,75 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
           if (appState && !appState.cascadeMode && constraints.intimacyOccurs) {
             appState.cascadeMode = true;
             appState.cascadeCount = 0;
+            // Initialize diegetic continuation tracking. Anchor's word count
+            // seeds cascadeTotalWords so the hard 10K cap is enforced across
+            // anchor + cascade beats together.
+            appState.cascadeAwaitingContinuation = false;
+            appState.cascadeExtensionsGranted = 0;
+            const _anchorWords = (state.rendererOutput && typeof state.rendererOutput === 'string')
+              ? state.rendererOutput.trim().split(/\s+/).filter(Boolean).length
+              : 0;
+            appState.cascadeTotalWords = _anchorWords;
+
+            // Intimate context bundle — gives subsequent cascade beats enough
+            // plot/character grounding to maintain continuity AND engage with
+            // legitimate plot references (honey-pot extraction, roleplay,
+            // post-betrayal sex, etc.) without Grok hallucinating wholly new
+            // plot facts.
+            //
+            // Anchor plot excerpt: strip [CONSTRAINTS] / [SD] / [other tags]
+            // from authorOutput and take first ~250 words as "scene situation"
+            // for Grok to read. This is plot grounding, not a regen seed.
+            let _anchorPlotExcerpt = null;
+            if (state.authorOutput && typeof state.authorOutput === 'string') {
+              const _stripped = state.authorOutput
+                .replace(/\[[A-Z_]+\][\s\S]*?\[\/[A-Z_]+\]/g, '') // strip tag blocks
+                .replace(/\[.*?\]/g, '')                          // strip stray tags
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+              const _words = _stripped.split(/\s+/).filter(Boolean);
+              _anchorPlotExcerpt = _words.slice(0, 250).join(' ');
+            }
+
             appState.cascadeContext = {
-              emotionalCore: state.esd.emotionalCore,
-              physicalBounds: state.esd.physicalBounds,
-              hardStops: state.esd.hardStops,
-              completionAllowed: state.esd.completionAllowed
+              // Existing SD-scoped fields:
+              emotionalCore:     state.esd.emotionalCore,
+              physicalBounds:    state.esd.physicalBounds,
+              hardStops:         state.esd.hardStops,
+              completionAllowed: state.esd.completionAllowed,
+              // NEW: intimate context bundle for plot grounding
+              intimateContextBundle: {
+                liName:               appState.loveInterestName || null,
+                liArchetype:          appState.liArchetype || (appState.archetype && appState.archetype.primary) || null,
+                liCoverIdentity:      appState.liCoverIdentity || null,    // opt-in: roleplay / spy / undercover
+                liHiddenAgenda:       appState.liHiddenAgenda  || null,    // opt-in: honey-pot, ulterior motive
+                liHiddenAgendaHandler: (appState.liHiddenAgendaContext && appState.liHiddenAgendaContext.handler) || null,
+                liConversionScore:    appState.liConversionScore || 0,
+                liConversionRevealed: appState.liConversionRevealed === true,
+                liOccupation:         appState.liOccupation || null,
+                world:                appState.world || null,
+                worldSubtype:         appState.worldSubtype || null,
+                flavor:               (appState.picks && appState.picks.flavor) || null,
+                eroticMode:           appState.eroticMode || null,
+                // World-specific intimacy physics — looked up at anchor time
+                // so cascade beats render the act with world-correct rules.
+                intimacyWorldCanon:   (typeof window.getIntimacyWorldCanon === 'function')
+                                        ? window.getIntimacyWorldCanon(appState.worldSubtype)
+                                        : null,
+                // A-plot snapshot (compact)
+                aPlotGoal:            (appState.aPlot && appState.aPlot.goal) || null,
+                aPlotNamedClock:      (appState.aPlot && appState.aPlot.namedClock) || null,
+                aPlotAntagonist:      (appState.aPlot && appState.aPlot.antagonistOrAntiForce) || null,
+                aPlotLastTriggered:   (appState.aPlot && Array.isArray(appState.aPlot.milestones))
+                                        ? (appState.aPlot.milestones.filter(m => m && m.triggered).slice(-1)[0] || null)
+                                        : null,
+                aPlotCurrentTurn:     (appState.aPlot && appState.aPlot.currentTurn) || 0,
+                aPlotTimelineLength:  (appState.aPlot && appState.aPlot.timelineLength) || 0,
+                // Recent plot prose for grounding
+                anchorPlotExcerpt:    _anchorPlotExcerpt
+              }
             };
-            console.log('[CASCADE] Anchor beat detected — cascade context stored');
+            console.log('[CASCADE] Anchor beat detected — cascade context stored, anchor words:', _anchorWords, '— bundle has plot grounding:', !!_anchorPlotExcerpt);
           }
         } else {
           // BOTH Grok and Mistral failed — force interruption, do NOT downgrade
@@ -1923,6 +2561,35 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
           state.rendererOutput = await callSpecialistRenderer(messages, state.esd, rendererOpts);
           state.rendererCalled = true;
           state.timing.renderPassMs = Date.now() - renderStartTime;
+
+          // RENDER QUALITY TELEMETRY — trace-only, deterministic 15% sample.
+          // Seed off the rendererPrompt.user content so the same render is
+          // consistently sampled (or not). Captures Mode 1 / cascade /
+          // storyturn context for later filtering of baseline vs anomaly.
+          try {
+            const _rqSeed = (rendererPrompt && rendererPrompt.user) ? rendererPrompt.user : (state.esd && state.esd.emotionalCore) || String(renderStartTime);
+            if (_shouldSampleRenderTrace(_rqSeed)) {
+              const _appState = window.state || {};
+              traceRenderQuality(
+                CONFIG.SCENE_RENDERER_MODEL,
+                state.rendererOutput,
+                {
+                  storyturn:     _appState.storyturn || null,
+                  contentMode:   _appState.contentMode || null,
+                  cascadeMode:   _appState.cascadeMode === true,
+                  cascadeCount:  _appState.cascadeCount || 0,
+                  eroticMode:    _appState.eroticMode || null,
+                  intimacyPhase: _appState.intimacyPhase || null,
+                  temptFate:     _appState.tempt_fate_invoked_this_turn === true,
+                  volatility:    !!(_appState.volatility_window && _appState.volatility_window.active),
+                  sceneType:     (state.esd && state.esd.rhythm) || null
+                }
+              );
+            }
+          } catch (_traceErr) {
+            // Telemetry must NEVER break the render pass.
+            console.warn('[RENDER_QUALITY_TRACE] trace failed (non-fatal):', _traceErr && _traceErr.message);
+          }
 
         } catch (err) {
           // FAILURE HANDLING: Renderer failure is NOT story failure
