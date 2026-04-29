@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260417a">
+  <link rel="stylesheet" href="/styles.css?v=20260429e">
 </head>
 
 <body class="booting">
@@ -2052,7 +2052,7 @@
 <script src="/fatecards.js"></script>
 <script src="/orchestration-client.js?v=20260429h"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260429r"></script>
+<script src="/app.js?v=20260429w"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
@@ -2167,9 +2167,77 @@
   <div class="gn-cover-container">
     <button class="gn-nav-back" id="gnCoverBack">Back</button>
     <div id="gnCoverLoading" class="gn-cover-loading">
-      <p class="gn-cover-status">Composing your graphic novel...</p>
+      <p class="gn-cover-status">Sketching your cover...</p>
     </div>
+
+    <!-- White 3D book mount — same skeleton as the literary #bookObject so
+         the pencil-sketch cover lands on a physical-feeling book object.
+         #gnCoverDisplay still exists as a hidden compatibility surface
+         (legacy code paths read from it); the visible UI is the 3D book. -->
+    <div id="gnBookObject" class="book-object hidden">
+      <div class="book-3d cover-book-3d">
+        <div class="book-front cover-book-front" id="gnCoverBookFront">
+          <img id="gnBookCoverImg" src="" alt="" class="cover-book-art">
+          <div class="book-front-text cover-book-text" id="gnCoverBookText">
+            <div class="cover-working-label">Working Title:</div>
+            <div class="book-front-title cover-book-title" id="gnCoverBookTitle">Your Story</div>
+          </div>
+
+          <!-- Storybound GN imprint logo — keyhole outline with "S" inside.
+               Top-left corner of front cover; persists over both white-text
+               and pencil-sketch states (z-index above cover art). -->
+          <div class="gn-imprint-logo gn-imprint-logo--front" aria-label="Storybound graphic novel imprint">
+            <svg viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg" focusable="false">
+              <!-- Keyhole outline: circle on top + tapered shaft below -->
+              <path d="M16 3 a10 10 0 1 0 0 20 a10 10 0 1 0 0 -20 z M11 22 L9 44 a1 1 0 0 0 1 1 h12 a1 1 0 0 0 1 -1 L21 22 z"
+                    fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <!-- "S" inside the circle -->
+              <text x="16" y="17" text-anchor="middle" font-family="'Lora', Georgia, serif" font-size="13" font-weight="700" fill="currentColor">S</text>
+            </svg>
+          </div>
+
+          <!-- Author + artist credit on front cover bottom — graphic-novel style. -->
+          <div class="gn-cover-credit gn-cover-credit--front">
+            <span class="gn-credit-author">S. Tory Bound</span>
+            <span class="gn-credit-amp">&amp;</span>
+            <span class="gn-credit-artist" id="gnCreditArtistFront">Troy S. Bond</span>
+          </div>
+        </div>
+        <div class="book-spine cover-book-spine">
+          <span class="spine-text" id="gnSpineTitle"></span>
+          <!-- Spine credit: stacked below the spine title in vertical-running text. -->
+          <span class="spine-credit" id="gnSpineCredit">S. Tory Bound &amp; Troy S. Bond</span>
+        </div>
+        <div class="book-back cover-book-back">
+          <div class="cover-book-back-inner">
+            <div class="cover-working-label">Working Title:</div>
+            <p class="cover-book-evolve-text">Your cover will evolve<br>as you shape the story</p>
+          </div>
+          <!-- Back-cover credit + imprint logo: bottom area mirrors the
+               front but reads in plain block layout (real GN back-cover style). -->
+          <div class="gn-cover-credit gn-cover-credit--back">
+            <span class="gn-credit-author">S. Tory Bound</span>
+            <span class="gn-credit-amp">&amp;</span>
+            <span class="gn-credit-artist" id="gnCreditArtistBack">Troy S. Bond</span>
+          </div>
+          <div class="gn-imprint-logo gn-imprint-logo--back" aria-hidden="true">
+            <svg viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg" focusable="false">
+              <path d="M16 3 a10 10 0 1 0 0 20 a10 10 0 1 0 0 -20 z M11 22 L9 44 a1 1 0 0 0 1 1 h12 a1 1 0 0 0 1 -1 L21 22 z"
+                    fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+              <text x="16" y="17" text-anchor="middle" font-family="'Lora', Georgia, serif" font-size="13" font-weight="700" fill="currentColor">S</text>
+            </svg>
+          </div>
+        </div>
+        <div class="book-pages-right"></div>
+        <div class="book-pages-top"></div>
+        <div class="book-pages-bottom"></div>
+        <div class="page-shimmer"></div>
+      </div>
+    </div>
+
+    <!-- Legacy display element kept for back-compat with existing render path -->
     <div id="gnCoverDisplay" class="gn-cover-display" style="display:none;"></div>
+
     <div id="gnCoverActions" class="gn-cover-actions" style="display:none;">
       <button class="sb-btn-png lg" id="gnBeginReading">Open</button>
     </div>
@@ -2201,9 +2269,12 @@
   </div>
 
   <!-- ── GN_UI_OVERLAY: persistent controls ── -->
+  <!-- gnReaderBack removed — was redundant with page-nav Cover button below.
+       Page-nav already provides Cover/Back/Next/Last for all in-reader navigation;
+       returning to the artist selector mid-read is a rare path that can be done
+       via Cover → upstream nav. -->
   <div class="gn-ui-overlay">
     <div class="gn-ui-top">
-      <button class="gn-nav-back" id="gnReaderBack">Back</button>
       <!-- Scene indicator removed — redundant with #gnSceneNumber under the
            title and #gnPageIndicator in the page-nav-controls below. -->
       <!-- Visualize is literary-mode only; GN panels ARE the visualization -->
