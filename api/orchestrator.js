@@ -247,6 +247,20 @@ const ALLOWED_MODELS = {
   // Concierge — meta-layer UI guidance (short, in-character)
   CONCIERGE: [
     'gpt-4o-mini'
+  ],
+
+  // Working title — Fate-anchored cover working title generation. Short
+  // structured output (3-6 words, max_tokens:30); cheapest model is fine.
+  WORKING_TITLE: [
+    'gpt-4o-mini',
+    'gpt-4o'
+  ],
+
+  // Back-cover synopsis — Fate-anchored marketing blurb on the GN/literary
+  // back cover. ~120-180 words, structured opener menu.
+  BACK_COVER_SYNOPSIS: [
+    'gpt-4o-mini',
+    'gpt-4o'
   ]
 };
 
@@ -262,7 +276,9 @@ const DEFAULT_MODELS = {
   FATE_ELEVATION: 'gpt-4o-mini',
   STRATEGY_PASS: 'gpt-4o-mini',
   STRUCTURAL_CORRECTION: 'gpt-4o-mini',
-  CONCIERGE: 'gpt-4o-mini'
+  CONCIERGE: 'gpt-4o-mini',
+  WORKING_TITLE: 'gpt-4o-mini',
+  BACK_COVER_SYNOPSIS: 'gpt-4o-mini'
 };
 
 // =============================================================================

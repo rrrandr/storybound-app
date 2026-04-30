@@ -77,10 +77,53 @@ export default async function handler(req, res) {
 
       const imageUrl = result.result?.sample || null;
 
+      // ─────────────────────────────────────────────────────────────────
+      // BFL delivers via `delivery.us2.bfl.ai` which does NOT send
+      // Access-Control-Allow-Origin. The client previously received the
+      // raw URL and tried to load it with crossOrigin=anonymous (for the
+      // blank-image probe and any canvas/WebGL paths). The browser then
+      // hard-failed the load — and the blank-image probe interprets a
+      // load error as "blank", causing valid BFL renders to be discarded
+      // and the chain to fall through to a degraded Gemini fallback.
+      //
+      // Fix: when a successful image URL is returned, fetch it server-
+      // side and inline it as a base64 data URL. Same-origin → no CORS.
+      // The endpoint already authenticates — adding an outbound fetch
+      // here keeps the flow opaque to the client and removes the CORS
+      // surface entirely. Roughly 1–2 MB per image; fits in the response.
+      // ─────────────────────────────────────────────────────────────────
+      // Inline-as-base64 path. On success the client receives a self-
+      // contained data URL — no extra HTTP roundtrip, no CORS surface.
+      // On failure (oversized image, fetch timeout, transient network
+      // error from server → BFL CDN), fall through to the same-origin
+      // /api/img-proxy URL so the client can still display the image
+      // without hitting BFL directly.
+      let resolvedImage = null;
+      if (normalizedStatus === 'succeeded' && imageUrl) {
+        try {
+          const imgRes = await fetch(imageUrl);
+          if (imgRes.ok) {
+            const buf = Buffer.from(await imgRes.arrayBuffer());
+            const ct = imgRes.headers.get('content-type') || 'image/png';
+            resolvedImage = `data:${ct};base64,${buf.toString('base64')}`;
+            console.log('[bfl-kontext] Inlined as base64 (', buf.length, 'bytes,', ct, ')');
+          } else {
+            console.warn('[bfl-kontext] Image inline fetch failed:', imgRes.status, '— routing through /api/img-proxy.');
+          }
+        } catch (inlineErr) {
+          console.warn('[bfl-kontext] Image inline fetch threw:', inlineErr.message, '— routing through /api/img-proxy.');
+        }
+        // Fallback: same-origin proxy URL. Image is fetched again at
+        // display time but at least it's CORS-clean.
+        if (!resolvedImage) {
+          resolvedImage = '/api/img-proxy?url=' + encodeURIComponent(imageUrl);
+        }
+      }
+
       return res.status(200).json({
         id: result.id || id,
         status: normalizedStatus,
-        image: imageUrl,
+        image: resolvedImage,
         error: normalizedStatus === 'failed' ? (bflStatus || 'BFL task failed') : null,
         provider: 'bfl'
       });

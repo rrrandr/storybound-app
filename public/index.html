@@ -23,12 +23,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400&family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;700&family=Bungee&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260429e">
+  <link rel="stylesheet" href="/styles.css?v=20260430o">
 </head>
 
 <body class="booting">
@@ -44,7 +44,7 @@
   <img id="splashMobileBg" class="splash-img splash-mobile-portrait" src="/assets/splash/splash-mobile-bg.jpg" alt="">
   <img id="splashMobileType" class="splash-img splash-mobile-portrait splash-mobile-type" src="/assets/splash/splash-mobile-type.jpg" alt="">
   <div id="splashTagline" class="splash-tagline">Stories That Open You.</div>
-  <div id="splashSubline" class="splash-subline">Deeply responsive books &amp; graphic novels</div>
+  <div id="splashSubline" class="splash-subline">Deeply responsive literary and cinematic novels</div>
 </div>
 
 <div id="auth-panel" class="hidden">
@@ -1498,7 +1498,18 @@
             <button class="save-shape-btn" id="saveShapeBtn" type="button" onclick="if(window._triggerSaveShapeFromButton)window._triggerSaveShapeFromButton()">Save This Story Shape</button>
             <div class="begin-btn-wrapper">
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
-                <button class="sb-btn-png lg" id="beginBtn" onclick="if(window.handleBeginStory){window.handleBeginStory()}else{alert('handleBeginStory not loaded')}">Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
+                <!-- Story Modality Toggle (Literary ⟷ Cinematic) — controls
+                     whether Enter Your Story routes to the prose engine
+                     (handleBeginStory) or the staged visual-novel engine
+                     (handleBeginGraphicNovel → renderMode='staged_story_mode').
+                     Sits ABOVE the CTA. CTA is disabled until a mode is picked.
+                     NOTE: distinct from #storyModeToggle below (Active/Mindful)
+                     which controls narrative ENGAGEMENT style, not modality. -->
+                <div class="story-modality-toggle" id="storyModalityToggle">
+                    <button class="modality-btn" id="modeLiterary" type="button">Literary</button>
+                    <button class="modality-btn" id="modeCinematic" type="button">Cinematic</button>
+                </div>
+                <button class="sb-btn-png lg" id="beginBtn" disabled>Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
                 <!-- Story Mode Toggle (Active ⟷ Mindful) — inside wrapper, visually attached to story button only.
                      Hidden automatically when the corridor-inference score is confident; replaced by the
                      #storyModeInferredHint subtitle below. -->
@@ -1510,7 +1521,9 @@
                 <p class="story-mode-inferred-hint" id="storyModeInferredHint"></p>
             </div>
 
-            <button class="sb-btn-png lg begin-gn-btn" id="beginGraphicNovelBtn" onclick="if(window.handleBeginGraphicNovel){window.handleBeginGraphicNovel()}"><span class="begin-gn-label">Enter Your Graphic Novel</span><span id="beginGNCostDisplay" class="begin-cost-display"></span></button>
+            <!-- Enter Your Graphic Novel button removed — Cinematic mode is
+                 now selected via #storyModalityToggle above the unified CTA. -->
+
             <p class="story-continue-hint hidden" id="beginBtnHint">Your story will resume where you left off.</p>
             <button id="beginFortuneBtn" class="begin-fortune-btn" onclick="window.openFortunePurchaseModal()">
                 <span class="begin-fortune-label">Fortunes</span>
@@ -1602,8 +1615,12 @@
           <!-- Back cover -->
           <div class="book-back cover-book-back">
             <div class="cover-book-back-inner">
-              <div class="cover-working-label">Working Title:</div>
-              <p class="cover-book-evolve-text">Your cover will evolve<br>as you shape the story</p>
+              <!-- Synopsis populated from state.backCoverSynopsis when
+                   generateBackCoverSynopsis lands (turnCount >= 2). The
+                   :has() CSS rule below hides the evolve placeholder
+                   when this element is non-empty. -->
+              <p class="gn-back-synopsis" id="literaryBackSynopsis"></p>
+              <p class="cover-book-evolve-text" id="literaryBackEvolveText"><em>Fate has not yet spoken her name.</em><br>The cover will reveal itself as the story unfolds.</p>
             </div>
           </div>
           <!-- Page edges -->
@@ -1670,7 +1687,10 @@
 
     <div id="billingBanner" style="display:none;"></div>
 
-    <!-- Title Page: Book-jacket style title + synopsis blurb (all stories) -->
+    <!-- Title Page: Book-jacket style title + Prelude (all stories).
+         "Prelude" is the pre-story setup recap — the moment before the
+         curtain rises. This is distinct from the back-cover Synopsis
+         (marketing blurb), which lives on .back-synopsis-box. -->
     <div id="sbTitlePage" class="sb-curl-page hidden">
       <div class="sb-curl-page-inner">
         <div class="sb-curl-page-front sb-title-page-front">
@@ -1679,6 +1699,7 @@
             <h1 class="sb-title-page-title"></h1>
             <p class="sb-title-page-subhead hidden"></p>
             <div class="sb-title-page-rule"></div>
+            <div class="sb-prelude-label">Prelude</div>
             <div class="sb-title-page-blurb"></div>
           </div>
         </div>
@@ -2049,10 +2070,10 @@
 </div>
 
 <script src="/sound.js?v=20260417a"></script>
-<script src="/fatecards.js"></script>
+<script src="/fatecards.js?v=20260429ba"></script>
 <script src="/orchestration-client.js?v=20260429h"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260429w"></script>
+<script src="/app.js?v=20260430ah"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
@@ -2138,11 +2159,11 @@
 <!-- GN Style Selector — choose manga / western / painterly -->
 <div id="gnStyleSelector" class="screen hidden gn-screen">
   <div class="gn-selector-container">
-    <h2 class="gn-selector-title">Choose Your Style</h2>
+    <h2 class="gn-selector-title">Choose Your Artist</h2>
     <div class="gn-selector-options">
       <button class="gn-selector-card" data-gn-style="troy_bond">
         <div class="gn-selector-thumb"></div>
-        <span class="gn-selector-name">Troy S. Bond</span>
+        <span class="gn-selector-name">Ender Bond</span>
       </button>
       <button class="gn-selector-card" data-gn-style="ryo_toro">
         <div class="gn-selector-thumb"></div>
@@ -2165,9 +2186,11 @@
 <!-- GN Cover View — GN-specific cover generation + display -->
 <div id="gnCoverView" class="screen hidden gn-screen">
   <div class="gn-cover-container">
-    <button class="gn-nav-back" id="gnCoverBack">Back</button>
     <div id="gnCoverLoading" class="gn-cover-loading">
-      <p class="gn-cover-status">Sketching your cover...</p>
+      <p class="gn-cover-status" id="gnCoverStatus">Sketching your cover...</p>
+      <div class="gn-loading-bar"><div class="gn-loading-bar-fill" id="gnCoverLoadingBarFill"></div></div>
+      <p class="gn-loading-hint" id="gnCoverLoadingHint"></p>
+      <button class="gn-loading-cancel" id="gnCoverLoadingCancel" title="Cancel and return to setup">&times;</button>
     </div>
 
     <!-- White 3D book mount — same skeleton as the literary #bookObject so
@@ -2179,54 +2202,69 @@
         <div class="book-front cover-book-front" id="gnCoverBookFront">
           <img id="gnBookCoverImg" src="" alt="" class="cover-book-art">
           <div class="book-front-text cover-book-text" id="gnCoverBookText">
-            <div class="cover-working-label">Working Title:</div>
+            <div class="cover-working-label">Working Title</div>
             <div class="book-front-title cover-book-title" id="gnCoverBookTitle">Your Story</div>
+            <p class="cover-book-evolve-text cover-book-evolve-text--front">Your cover art and title will evolve as you shape your story.</p>
           </div>
 
-          <!-- Storybound GN imprint logo — keyhole outline with "S" inside.
-               Top-left corner of front cover; persists over both white-text
-               and pencil-sketch states (z-index above cover art). -->
-          <div class="gn-imprint-logo gn-imprint-logo--front" aria-label="Storybound graphic novel imprint">
-            <svg viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg" focusable="false">
-              <!-- Keyhole outline: circle on top + tapered shaft below -->
-              <path d="M16 3 a10 10 0 1 0 0 20 a10 10 0 1 0 0 -20 z M11 22 L9 44 a1 1 0 0 0 1 1 h12 a1 1 0 0 0 1 -1 L21 22 z"
-                    fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-              <!-- "S" inside the circle -->
-              <text x="16" y="17" text-anchor="middle" font-family="'Lora', Georgia, serif" font-size="13" font-weight="700" fill="currentColor">S</text>
-            </svg>
-          </div>
+          <!-- Working-title banner — kept in DOM but always hidden in the
+               new blank-white book flow. The .cover-working-label inside
+               #gnCoverBookText already shows "Working Title" above the
+               Fate title, so this duplicate banner would just stack a
+               second copy. Retained as a stub in case a future cover-
+               artwork mode wants to show a banner over a baked-in title. -->
+          <div class="gn-working-title-banner hidden" id="gnFrontWorkingTitleBanner">Working Title</div>
 
-          <!-- Author + artist credit on front cover bottom — graphic-novel style. -->
-          <div class="gn-cover-credit gn-cover-credit--front">
-            <span class="gn-credit-author">S. Tory Bound</span>
-            <span class="gn-credit-amp">&amp;</span>
-            <span class="gn-credit-artist" id="gnCreditArtistFront">Troy S. Bond</span>
-          </div>
+          <!-- Pre-baked credit band — single PNG per artist, contains the
+               Storybound keyhole logo + "S. Tory Bound & [Artist]" text
+               baked in. src is set by JS (_setGNCoverCreditBand) based
+               on the selected artist. Replaces the prior separate imprint-
+               logo + DOM credit-text stack so the typography is pixel-
+               perfect (no LLM smearing) and survives the cover-art swap. -->
+          <img class="gn-cover-credit-band"
+               id="gnCoverCreditBand"
+               src=""
+               alt=""
+               aria-hidden="true">
         </div>
         <div class="book-spine cover-book-spine">
+          <!-- "Working Title" indicator — small italic prefix shown while
+               the arc title hasn't yet replaced the working title.
+               Toggled by _updateWorkingTitleLabel via the .hidden class. -->
+          <span class="spine-working-label" id="gnSpineWorkingLabel">Working Title</span>
           <span class="spine-text" id="gnSpineTitle"></span>
           <!-- Spine credit: stacked below the spine title in vertical-running text. -->
-          <span class="spine-credit" id="gnSpineCredit">S. Tory Bound &amp; Troy S. Bond</span>
+          <span class="spine-credit" id="gnSpineCredit">S. Tory Bound &amp; Ender Bond</span>
+          <!-- Spine imprint — black-silhouette keyhole sized for the 48px
+               spine width, bottom-centered with a 3D-lacquered drop-shadow
+               stack so it sits as a "stamped" seal against the gold bar. -->
+          <img class="gn-imprint-logo gn-imprint-logo--spine"
+               src="/assets/ui/storybound-keyhole-black.png?v=20260429"
+               alt="" aria-hidden="true">
         </div>
         <div class="book-back cover-book-back">
+          <!-- Back-cover title — same Fate working title as the front and
+               spine, set in serif at the top of the back so the synopsis
+               reads as the blurb under it. -->
+          <div class="gn-back-title" id="gnBackTitle"></div>
           <div class="cover-book-back-inner">
-            <div class="cover-working-label">Working Title:</div>
-            <p class="cover-book-evolve-text">Your cover will evolve<br>as you shape the story</p>
+            <!-- Back-cover synopsis (marketing blurb). Falls back to evolve
+                 message when not yet generated. Both elements live in the
+                 same slot; .gn-back-synopsis is hidden via :empty selector. -->
+            <p class="gn-back-synopsis" id="gnBackSynopsis"></p>
+            <p class="cover-book-evolve-text" id="gnBackEvolveText">Your cover will evolve<br>as you shape the story</p>
           </div>
-          <!-- Back-cover credit + imprint logo: bottom area mirrors the
-               front but reads in plain block layout (real GN back-cover style). -->
-          <div class="gn-cover-credit gn-cover-credit--back">
-            <span class="gn-credit-author">S. Tory Bound</span>
-            <span class="gn-credit-amp">&amp;</span>
-            <span class="gn-credit-artist" id="gnCreditArtistBack">Troy S. Bond</span>
-          </div>
-          <div class="gn-imprint-logo gn-imprint-logo--back" aria-hidden="true">
-            <svg viewBox="0 0 32 48" xmlns="http://www.w3.org/2000/svg" focusable="false">
-              <path d="M16 3 a10 10 0 1 0 0 20 a10 10 0 1 0 0 -20 z M11 22 L9 44 a1 1 0 0 0 1 1 h12 a1 1 0 0 0 1 -1 L21 22 z"
-                    fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-              <text x="16" y="17" text-anchor="middle" font-family="'Lora', Georgia, serif" font-size="13" font-weight="700" fill="currentColor">S</text>
-            </svg>
-          </div>
+          <!-- Back-cover credit band — same baked PNG as the front so the
+               imprint + author/artist lockup is pixel-identical across both
+               faces. src is set by JS based on the selected artist. The old
+               separate gn-imprint-logo--back + gn-cover-credit--back text
+               stack was removed (the giant keyhole was overwhelming the
+               back); this single PNG carries both. -->
+          <img class="gn-cover-credit-band gn-cover-credit-band--back"
+               id="gnBackCoverCreditBand"
+               src=""
+               alt=""
+               aria-hidden="true">
         </div>
         <div class="book-pages-right"></div>
         <div class="book-pages-top"></div>

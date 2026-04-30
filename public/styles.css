@@ -2900,6 +2900,22 @@ body.gn-viewing-past .gn-scene-actions-row {
     margin: -8px 0 16px 0;
     line-height: 1.4;
 }
+/* "Prelude" label — small-caps ornament above the pre-story setup text.
+   Renames what was internally called "synopsis" for clarity: this is the
+   setup recap (the moment before the curtain rises), distinct from the
+   back-cover Synopsis (marketing blurb) shown on the book's back cover. */
+.sb-prelude-label {
+    font-family: 'Lora', 'Georgia', serif;
+    font-variant: small-caps;
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.32em;
+    color: var(--page-text, #3d2e1e);
+    opacity: 0.55;
+    text-align: center;
+    margin: 8px 0 14px 0;
+}
+
 .sb-title-page-blurb {
     font-family: var(--font-story);
     font-size: 0.92em;
@@ -6918,8 +6934,20 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     font-size: 4.4cqw;
     color: #1a1008;
     line-height: 1.6;
-    margin: 0;
+    margin: 0 0 0.6em 0;
     font-style: italic;
+}
+/* Stats line ("12 scenes · 18,420 words") shown UNDER the marketing blurb
+   when a real backCoverSynopsis is present. Smaller, lighter, ornamental. */
+.back-synopsis-stats {
+    font-family: 'Lora', serif;
+    font-size: 3.0cqw;
+    color: rgba(60, 45, 30, 0.55);
+    font-style: normal;
+    font-variant: small-caps;
+    letter-spacing: 0.12em;
+    margin: 0.4em 0 0 0;
+    text-align: center;
 }
 .back-meta {
     font-family: 'Lora', serif;
@@ -7449,24 +7477,38 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .zoom-cta .sb-btn-png {
     font-size: 0.8em;
 }
-.zoom-delete-btn {
+/* SPECIFICITY NOTE: doubled class selector (0,2,0) so this override beats
+   .sb-btn-png.sm (also 0,2,0) via source-order. The single-class .zoom-
+   delete-btn at 0,1,0 was losing the cascade — .sb-btn-png.sm's
+   background-image: url(...) !important was winning even past our
+   `background-image: none !important` because specificity > !important
+   when specificity differs. Result: gold-bordered PNG kept rendering at
+   `background-size: contain` against the now-uncontrolled height,
+   producing the "enormous frame" the user saw. */
+.zoom-delete-btn.zoom-delete-btn {
+    /* Strip the gold-bordered PNG completely. */
     background-image: none !important;
+    background-size: 0 !important;
     background: rgba(80, 20, 20, 0.7) !important;
     border: 1px solid rgba(200, 50, 50, 0.4) !important;
-    /* White text — red label was hard to read against the maroon ground.
-       The dark-red background still signals "destructive" via color; the
-       text itself stays cleanly legible. */
-    color: rgba(255, 255, 255, 0.92) !important;
-    /* Match the Begin Reading button width above so the two stacked CTAs
-       align as a column. The .sb-btn-png.md above is 200px wide; matching
-       that here prevents the cramped narrow pill look. */
-    width: 200px !important;
+    border-radius: 4px !important;
+    /* White text reads cleanly against the maroon ground. */
+    color: rgba(255, 255, 255, 0.85) !important;
+    /* Smaller, less assertive — Delete Forever is a destructive action that
+       should not visually compete with Begin Reading. */
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 160px !important;
     height: auto !important;
-    font-size: 0.7em !important;
-    padding: 8px 14px !important;
+    min-height: 0 !important;
+    font-size: 0.65em !important;
+    padding: 5px 12px !important;
     box-sizing: border-box !important;
+    /* Defeat the parent's clip-path that exists for PNG-edge cleanup */
+    clip-path: none !important;
+    overflow: visible !important;
 }
-.zoom-delete-btn:hover {
+.zoom-delete-btn.zoom-delete-btn:hover {
     background: rgba(120, 30, 30, 0.8) !important;
     color: #ffffff !important;
     border-color: rgba(220, 80, 80, 0.7) !important;
@@ -12654,12 +12696,12 @@ textarea.fate-field {
 
 /* Title on white cover */
 .cover-book-3d .cover-book-title {
-    font-family: 'lust-script-display', 'Georgia', serif;
-    font-size: clamp(1em, 3cqh, 1.8em);
+    font-family: 'lust-script-display', 'Lust Script', 'lust-script', 'Georgia', serif;
+    font-size: clamp(1.6em, 4.8cqh, 2.8em);
     font-weight: 400;
     color: #2a2520;
-    letter-spacing: 0.03em;
-    line-height: 1.25;
+    letter-spacing: 0.02em;
+    line-height: 1.18;
 }
 
 /* Author on white cover */
@@ -12759,7 +12801,31 @@ textarea.fate-field {
     align-items: center;
     justify-content: center;
     height: 100%;
-    padding: 20px;
+    /* Top padding clears the .gn-back-title; bottom padding clears the
+       14% credit-band PNG anchored at the bottom edge. */
+    padding: 14% 20px 18%;
+    box-sizing: border-box;
+}
+
+/* Back-cover title — Fate working title at the top of the back face,
+   matching the GN title typography mood. Stays inside the cover bounds
+   so the synopsis below doesn't collide with it. */
+.gn-back-title {
+    position: absolute;
+    top: 4%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 6%;
+    font-family: 'Playfair Display', 'Georgia', serif;
+    font-weight: 700;
+    font-size: clamp(0.65em, 1.95cqh, 0.95em);
+    line-height: 1.18;
+    color: #2a2118;
+    text-shadow: 0 1px 0 rgba(255, 253, 246, 0.55);
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    z-index: 5;
 }
 
 .cover-book-evolve-text {
@@ -12770,6 +12836,17 @@ textarea.fate-field {
     text-align: center;
     line-height: 1.7;
     margin: 0;
+}
+/* Front-cover variant — sits under the title (which has its own line-height
+   stack), so push it down with a small top margin and tighten the size a
+   notch so it reads as a subordinate caption, not a second title. */
+.cover-book-evolve-text--front {
+    margin-top: clamp(8px, 1.6cqh, 14px);
+    font-size: clamp(0.5em, 1.4cqh, 0.72em);
+    padding: 0 8%;
+    max-width: 88%;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* ── Page edges — proportional to book depth, flush corners ── */
@@ -12891,9 +12968,12 @@ textarea.fate-field {
      • Cleaner cover material — paperback gloss, no cream-cardboard gradient
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* Slimmer paperback depth */
+/* Paperback depth — doubled from 12px to 24px so the spine reads cleanly
+   at 48px wide (24px × 2). Paper edges (book-pages-right/top/bottom) and
+   page-shimmer all reference --book-depth via calc(*2), so doubling here
+   doubles them automatically. */
 #gnBookObject .cover-book-3d {
-    --book-depth: 12px;  /* was 20px — paperback graphic novels are thinner */
+    --book-depth: 24px;
 }
 
 /* Front cover — paperback finish: clean white, subtle satin highlight,
@@ -13007,65 +13087,173 @@ textarea.fate-field {
 .gn-imprint-logo {
     position: absolute;
     z-index: 5;
-    width: 5%;
-    aspect-ratio: 32 / 48;
     pointer-events: none;
-    color: rgba(60, 50, 38, 0.70);  /* warm graphite — works on white AND on pencil sketch */
-    filter: drop-shadow(0 0 1px rgba(255,255,255,0.35));
-    min-width: 12px;
+    /* PNG asset (storybound-keyhole-logo.png). Sized small so it reads as
+       a publisher mark, not a feature element. */
+    height: auto;
+    object-fit: contain;
+    /* Subtle paper-tone halo so the logo reads on both white book and
+       pencil-sketch substrates without competing with the artwork. */
+    filter: drop-shadow(0 0 2px rgba(255, 253, 248, 0.55))
+            drop-shadow(0 1px 1px rgba(0, 0, 0, 0.18));
+    opacity: 0.85;
 }
-.gn-imprint-logo svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-.gn-imprint-logo--front {
-    top: 6%;
-    left: 6%;
-}
+/* Front + back: bottom-center, ~1.4% width — small publisher mark sitting
+   above the author/artist credit line. */
+.gn-imprint-logo--front,
 .gn-imprint-logo--back {
+    width: 1.4%;
+    min-width: 8px;
+    left: 50%;
     bottom: 6%;
-    right: 6%;
+    transform: translateX(-50%);
+}
+/* Spine: bottom-center, sized to fit fully INSIDE the narrow spine width
+   so the keyhole doesn't blow out beyond the spine band. */
+.gn-imprint-logo--spine {
+    width: 60%;
+    min-width: 6px;
+    max-width: 14px;
+    left: 50%;
+    bottom: 4px;
+    transform: translateX(-50%);
 }
 
-/* ── GN Cover Credit (S. Tory Bound & [Artist]) ── */
+/* "Working Title" banner — persists over the front cover regardless of
+   render state (stays visible whether the white book-text is showing or
+   the pencil-sketch art is mounted). Hidden once the arc title resolves
+   via JS toggling the .hidden class — mirrors the literary
+   #workingTitleLabel lifecycle. */
+.gn-working-title-banner {
+    position: absolute;
+    top: 4%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    font-family: 'Lora', 'Georgia', serif;
+    font-variant: small-caps;
+    font-size: clamp(0.5em, 1.2cqh, 0.7em);
+    letter-spacing: 0.28em;
+    color: rgba(45, 38, 28, 0.65);
+    background: rgba(253, 250, 244, 0.78);
+    padding: 3px 14px;
+    border-radius: 1px;
+    pointer-events: none;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    white-space: nowrap;
+}
+.gn-working-title-banner.hidden {
+    display: none;
+}
+
+/* ── GN cover-credit band (PNG-baked) ──
+   Pre-baked PNG containing keyhole logo + "S. Tory Bound & [Artist]"
+   text in a triangular gold-bar at the bottom of the front cover. One
+   PNG per artist (assets/GN-Artists/gn-cover-credit-{troy|ryo|lora|olen}.png),
+   src swapped by JS based on selected artist. Replaces the prior separate
+   .gn-imprint-logo--front + .gn-cover-credit--front DOM stack so the
+   credit typography is pixel-perfect, doesn't depend on the LLM rendering
+   text correctly, and stays consistent across every render.
+
+   Positioned at the bottom of the cover, full-width. Pointer-events: none
+   so it doesn't block clicks on the book itself. */
+/* Credit-band PNGs are 1140 × 196 (5.8:1, wide-and-short). With
+   width:100% + height:auto, the natural aspect ratio gives a thin
+   horizontal strip at the bottom (~12% of cover height when the
+   cover is ~5:7 proportions). The max-height cap is a safety net
+   only — fires if the PNG is ever swapped for a taller variant
+   or if the parent computes 0 width during a transition. */
+/* Inset 4% from each cover edge — the 3D book object wraps the cover
+   face around the depth/spine, so any element pinned at left:0 / right:0
+   has its outermost pixels visually hidden in the wrap. The band's
+   leftmost ("S.") and rightmost ("...VENN") characters were getting
+   clipped behind that wrap zone. 4% × 2 sides = 8% reserved breathing
+   room — enough to fully clear the wrap on standard-aspect 5:7 books. */
+.gn-cover-credit-band {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 3%;
+    width: 84%;
+    height: auto;
+    max-height: 18%;
+    object-fit: contain;
+    object-position: bottom center;
+    z-index: 6;
+    pointer-events: none;
+    display: block;
+    filter: drop-shadow(0 -1px 2px rgba(0, 0, 0, 0.18));
+}
+/* Back-cover variant — same inset + sizing as front. */
+.gn-cover-credit-band--back {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 3%;
+    width: 84%;
+    height: auto;
+    max-height: 18%;
+    object-fit: contain;
+    object-position: bottom center;
+    z-index: 6;
+    pointer-events: none;
+    display: block;
+    filter: drop-shadow(0 -1px 2px rgba(0, 0, 0, 0.18));
+}
+/* Empty src → hide (avoids the broken-image icon while JS hasn't yet
+   set the artist-specific source). */
+.gn-cover-credit-band:not([src]),
+.gn-cover-credit-band[src=""],
+.gn-cover-credit-band--back:not([src]),
+.gn-cover-credit-band--back[src=""] {
+    display: none;
+}
+
+/* ── Legacy GN cover credit (TEXT DOM) — retained for back-cover ──
+   Bold gold sans-serif spanning the full width of the cover bottom, sitting
+   under the small Storybound keyhole logo. Sized to FIT the bottom band:
+   uses container-query width units so the type scales with the book object
+   and the amp/spacers compress instead of clipping. */
 .gn-cover-credit {
     position: absolute;
     z-index: 5;
     left: 0;
     right: 0;
+    bottom: 1.5%;
     text-align: center;
     pointer-events: none;
-    font-family: 'Lora', 'Georgia', serif;
-    font-variant: small-caps;
-    letter-spacing: 0.08em;
-    /* Size is container-query relative so it scales with book size */
-    font-size: clamp(0.45em, 1.45cqh, 0.75em);
-    color: rgba(45, 38, 28, 0.85);
-    text-shadow: 0 1px 0 rgba(255,255,255,0.4);
-    line-height: 1.2;
+    font-family: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+    font-weight: 700;
+    font-variant: normal;
+    letter-spacing: 0.06em;
+    /* Scale aggressively to fit width: cqw units so the type scales to the
+       book width, with hard min/max so it stays readable. */
+    font-size: clamp(0.42em, 2.6cqw, 1.05em);
+    line-height: 1.15;
+    color: #d4a843;
+    text-shadow:
+        0 1px 0 rgba(60, 40, 10, 0.55),
+        0 2px 0 rgba(40, 28, 8, 0.4),
+        0 0 4px rgba(0, 0, 0, 0.45);
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 0 4%;
 }
-.gn-cover-credit--front {
-    bottom: 4%;
-    padding: 0 10%;
-}
+.gn-cover-credit--front,
 .gn-cover-credit--back {
-    bottom: 6%;
-    padding: 0 14%;
-    /* Back cover mirrors via parent rotateY(180deg); the credit's text
-       reverses with that mirror — fine for back-cover authenticity. */
+    bottom: 1.5%;
+    padding: 0 4%;
 }
 .gn-credit-author,
 .gn-credit-artist {
-    font-weight: 600;
-    color: rgba(35, 28, 20, 0.92);
-    white-space: nowrap;
+    font-weight: 700;
+    color: #d4a843;
 }
 .gn-credit-amp {
-    font-style: italic;
     font-weight: 400;
-    margin: 0 0.4em;
-    opacity: 0.7;
+    margin: 0 0.45em;
+    opacity: 0.75;
 }
 
 /* When the pencil-sketch cover-book-art is loaded, soften the credit so it
@@ -13084,31 +13272,159 @@ textarea.fate-field {
     padding-bottom: 0.6em;
     bottom: 0;
 }
+/* Pencil-sketch state: deepen the halo so the gold keyhole reads cleanly
+   over graphite linework without the sketch competing with it. */
 #gnBookObject .cover-book-front:has(.cover-book-art[src]:not([src=""])) .gn-imprint-logo--front {
-    color: rgba(35, 28, 20, 0.88);
-    filter: drop-shadow(0 0 3px rgba(253,250,244,0.85))
-            drop-shadow(0 0 6px rgba(253,250,244,0.5));
+    filter: drop-shadow(0 0 4px rgba(253, 250, 244, 0.92))
+            drop-shadow(0 0 8px rgba(253, 250, 244, 0.55));
+    opacity: 1;
 }
 
-/* ── Spine credit (S. Tory Bound & Artist running vertically below title) ── */
+/* ── GN back-cover synopsis (marketing blurb) ──
+   Shown when state.backCoverSynopsis has been generated and populated.
+   Hidden via :empty pseudo-class until JS injects text. The companion
+   evolve-text below auto-hides when synopsis is non-empty (sibling rule). */
+.gn-back-synopsis {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: clamp(0.55em, 1.45cqh, 0.78em);
+    line-height: 1.55;
+    font-style: italic;
+    color: rgba(45, 38, 28, 0.92);
+    text-align: left;
+    margin: 0 0 12% 0;
+    padding: 0 6%;
+    max-height: 70%;
+    overflow: hidden;
+}
+.gn-back-synopsis:empty {
+    display: none;
+}
+/* Hide evolve placeholder when synopsis is populated */
+.cover-book-back-inner:has(.gn-back-synopsis:not(:empty)) .cover-book-evolve-text {
+    display: none;
+}
+
+/* ── GN spine — solid gold bar + 3D-black-lacquered text ──
+   Spine layout (top to bottom along the rendered spine):
+     [top]    GN title — display serif matching the cover's typography mood
+     [center] Author + artist credit — Bungee 400, 3D lacquered black
+     [bottom] Black keyhole logo — small, 3D lacquered black drop-shadow
+   All children are rotated 90deg via individual transforms so they read
+   along the vertical spine when the book is viewed from the side. */
+#gnBookObject .cover-book-3d .book-spine {
+    /* Solid gold bar — spans the entire spine width and height. Replaces
+       the prior cream-paperback gradient + concave shadow stack. */
+    background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%) !important;
+    border-radius: 0 !important;
+    box-shadow:
+        inset 1px 0 2px rgba(255, 230, 160, 0.35),
+        inset -1px 0 2px rgba(80, 50, 14, 0.4),
+        inset 0 0 1px rgba(0, 0, 0, 0.2) !important;
+}
+/* Hide the spine pseudo-element shadow used by the prior concave look. */
+#gnBookObject .cover-book-3d .book-spine::after,
+#gnBookObject .cover-book-3d .book-spine::before {
+    display: none !important;
+}
+
+/* GN title — top of spine, serif display. Rotated 90deg via transform so
+   the title reads bottom-to-top along the spine.
+   IMPORTANT: the global .spine-text rule (line 7060) sets `writing-mode:
+   vertical-rl`, which would already vertical-stack the glyphs. Combined
+   with our `transform: rotate(90deg)` it'd be rotated twice, producing
+   misaligned/sideways characters. Force `writing-mode: horizontal-tb`
+   here so only the transform handles rotation. */
+#gnBookObject .cover-book-3d .book-spine .spine-text {
+    position: absolute;
+    top: 14%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+    writing-mode: horizontal-tb;
+    text-orientation: mixed;
+    white-space: nowrap;
+    font-family: 'Playfair Display', 'Lora', 'Georgia', serif;
+    font-weight: 700;
+    font-style: italic;
+    letter-spacing: 0.04em;
+    font-size: 13px;
+    color: #1a1208;
+    text-shadow:
+        0 1px 0 rgba(60, 40, 10, 0.45),
+        0 0 2px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    max-width: 60vh;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Author + artist credit — center of spine, Bungee 400 in 3D-lacquered
+   black so the names POP against the gold bar. */
 #gnBookObject .cover-book-3d .book-spine .spine-credit {
     position: absolute;
-    bottom: 8%;
+    top: 50%;
     left: 50%;
-    transform: translateX(-50%) rotate(90deg);
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+    white-space: nowrap;
+    font-family: 'Bungee', 'Bungee Inline', 'Impact', sans-serif;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    font-size: 11px;
+    color: #080808;
+    -webkit-text-fill-color: #080808;
+    /* Lightened lacquered stack — was visually crowding the narrow spine
+       and reading as a black smudge. Softer, shallower shadow keeps the
+       3D feel without weight. */
+    text-shadow:
+        0 1px 0 rgba(26, 26, 26, 0.28),
+        0 2px 1px rgba(0, 0, 0, 0.16),
+        0 0 2px rgba(0, 0, 0, 0.12);
+    pointer-events: none;
+}
+
+/* Working-title prefix — small italic above the title at top of spine. */
+#gnBookObject .cover-book-3d .book-spine .spine-working-label {
+    position: absolute;
+    top: 7%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center;
     white-space: nowrap;
     font-family: 'Lora', serif;
-    font-variant: small-caps;
-    font-size: 0.32em;
-    letter-spacing: 0.12em;
-    color: rgba(60, 50, 38, 0.75);
+    font-style: italic;
+    font-size: 8px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(26, 18, 8, 0.7);
     pointer-events: none;
 }
-/* Adjust the existing spine title position so it doesn't overlap the credit */
-#gnBookObject .cover-book-3d .book-spine .spine-text {
-    top: 12%;
-    bottom: auto;
+#gnBookObject .cover-book-3d .book-spine .spine-working-label.hidden {
+    display: none;
+}
+
+/* Black keyhole logo — bottom of spine, sized to fit the 48px spine width
+   with a 3D-lacquered drop-shadow stack matching the credit's effect. */
+#gnBookObject .cover-book-3d .book-spine .gn-imprint-logo--spine {
+    position: absolute;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    width: 70%;
+    max-width: 32px;
+    min-width: 14px;
+    height: auto;
+    object-fit: contain;
+    /* 3D-lacquered black halo around the silhouette — drop-shadows cascade
+       like the text-shadow stack on the credit, giving the logo physical
+       depth against the gold bar. */
+    filter:
+        drop-shadow(0 1px 0 rgba(26, 26, 26, 0.55))
+        drop-shadow(0 2px 0 rgba(17, 17, 17, 0.5))
+        drop-shadow(0 3px 1px rgba(0, 0, 0, 0.32))
+        drop-shadow(0 0 3px rgba(0, 0, 0, 0.25));
+    opacity: 1;
+    pointer-events: none;
 }
 
 /* ── Responsive sizing ── */
@@ -19082,6 +19398,51 @@ body.corridor-mode .sb-grid.corridor-section {
         0 0 8px rgba(0,0,0,0.15) !important;
 }
 
+/* ── Story Modality Toggle (Literary ⟷ Cinematic) — sits ABOVE the
+   Enter Your Story CTA. Distinct from .story-mode-toggle below
+   (Active/Mindful engagement style). Picks the rendering modality
+   that the CTA routes to: literary → handleBeginStory; cinematic →
+   handleBeginGraphicNovel (staged_story_mode). CTA stays disabled
+   until the user picks a side. */
+.story-modality-toggle {
+    display: flex;
+    gap: 8px;
+    margin: 0 auto 12px;
+    max-width: 360px;
+    width: 100%;
+}
+.modality-btn {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid rgba(201, 162, 78, 0.35);
+    background: rgba(20, 16, 10, 0.55);
+    color: rgba(201, 162, 78, 0.7);
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.92em;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+.modality-btn:hover {
+    background: rgba(201, 162, 78, 0.12);
+    border-color: rgba(201, 162, 78, 0.65);
+    color: rgba(232, 200, 130, 0.95);
+}
+.modality-btn.active {
+    border-color: rgba(232, 200, 130, 0.95);
+    background: rgba(201, 162, 78, 0.18);
+    color: #f5ecd6;
+    box-shadow: 0 0 8px rgba(201, 162, 78, 0.25);
+}
+/* Disabled CTA visual — applies to #beginBtn when no modality picked yet. */
+#beginBtn:disabled,
+#beginBtn[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* ── Story Mode Toggle (Active ⟷ Mindful) — inside begin-btn-wrapper ── */
 .story-mode-toggle {
     display: flex;
@@ -19328,14 +19689,30 @@ body.corridor-mode .sb-grid.corridor-section {
     font-weight: 600;
 }
 #beginStoryRow .begin-gn-btn .begin-cost-icon {
-    /* Icon mask is tinted by currentColor — keep gold even though
-       text-fill is transparent for the gradient on the digit. */
-    color: #d4a940;
+    /* Escape the parent's background-clip:text gradient on the digit so
+       the icon's own mask geometry isn't clipped to text shapes. Paint
+       the icon with the SAME vertical gold gradient the digit uses —
+       the mask still clips it to the F-glyph silhouette, but the fill
+       now reads as 3D gradient gold instead of flat currentColor. */
+    color: #d4a940; /* fallback if gradient bg unsupported */
     -webkit-text-fill-color: initial;
-    background: none;
+    background-color: transparent;
+    background-image: linear-gradient(
+        180deg,
+        #bf953f 0%,
+        #fcf6ba 25%,
+        #b38728 50%,
+        #fbf5b7 75%,
+        #aa771c 100%
+    );
     -webkit-background-clip: initial;
             background-clip: initial;
-    filter: drop-shadow(0 1px 0 rgba(40,28,8,0.5)) drop-shadow(0 0 3px rgba(0,0,0,0.35));
+    /* 3D gold lacquered shadow stack — matches the digit's text-shadow. */
+    filter:
+        drop-shadow(0 1px 0 rgba(60, 40, 10, 0.55))
+        drop-shadow(0 2px 0 rgba(40, 28, 8, 0.45))
+        drop-shadow(0 3px 2px rgba(0, 0, 0, 0.35))
+        drop-shadow(0 0 4px rgba(0, 0, 0, 0.4));
 }
 /* Metallic gold gradient text — applied to the inner span so the PNG button
    background still renders on the button element itself. Matches the
@@ -20862,11 +21239,10 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
         0 0 8px rgba(0,0,0,0.15) !important;
     font-weight: 600;
 }
-/* The masked F-icon picks up currentColor; no gradient on this button.
-   Legacy — the entry-button family now uses text-F (.begin-cost-f) instead
-   so it shares baseline with the number and inherits the 3D lacquered effect.
-   .begin-cost-icon kept for any remaining icon-based use sites. */
-#beginBtn .begin-cost-icon { color: #080808; }
+/* Masked Fortunes icon — picks up currentColor and shape-clipped via the
+   Fortunes-Icon.png mask. We apply a drop-shadow filter (NOT text-shadow,
+   which doesn't render on masked elements) so the icon visually matches
+   the 3D lacquered treatment of the adjacent numeral. */
 .begin-cost-icon {
     display: inline-block;
     width: 0.95em;
@@ -20874,7 +21250,28 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     background-color: currentColor;
     -webkit-mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
             mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
-    vertical-align: middle;
+    /* Align with the numeral's baseline, not the text-em baseline. */
+    vertical-align: -0.06em;
+    margin-left: 0.06em;
+}
+/* Prose "Enter Your Story" button — black icon with the same lacquered
+   shadow stack the "1" numeral uses, so they read as one mark. */
+#beginBtn .begin-cost-icon {
+    color: #080808;
+    /* Nudge: down 1px, left 2px (was down 3 — moved up 2px per user). */
+    transform: translate(-2px, 1px);
+    /* Full 6-layer lacquered stack — mirrors the .begin-cost-display
+       text-shadow exactly so the F reads as the same mark as the "1".
+       Each text-shadow entry maps to a drop-shadow filter (text-shadow
+       doesn't render on mask-clipped elements, so we use the filter
+       equivalent on the icon). */
+    filter:
+        drop-shadow(0 1px 0 rgba(26, 26, 26, 0.5))
+        drop-shadow(0 2px 0 rgba(17, 17, 17, 0.5))
+        drop-shadow(0 3px 1px rgba(0, 0, 0, 0.3))
+        drop-shadow(0 -1px 0 rgba(60, 60, 60, 0.2))
+        drop-shadow(0 0 3px rgba(0, 0, 0, 0.25))
+        drop-shadow(0 0 8px rgba(0, 0, 0, 0.15));
 }
 
 /* Text-F sibling of begin-cost-num: shares baseline + inherits parent's
@@ -21896,7 +22293,7 @@ h2.gn-selector-title {
         0 -1px 0 rgba(255,235,150,0.2) !important;
     letter-spacing: 0.5em;
     font-variant: small-caps;
-    font-weight: 500 !important;
+    font-weight: 400 !important;
 }
 .gn-selector-options {
     display: flex;
@@ -21928,7 +22325,12 @@ h2.gn-selector-title {
     position: relative; /* positioning context for the frame overlay */
     width: 280px;
     aspect-ratio: 2.75 / 4.75;
-    border-radius: 10px;
+    /* Border-radius bumped to match the gold border PNG's outer rounded
+       corners — earlier 10px left a sliver of rectangular thumb visible
+       past the gold's curve, creating a "rectangle peeking out" feel
+       that read worst on the disabled (Olen) card where the dimmed
+       image made that sliver darker. */
+    border-radius: 18px;
     overflow: hidden;
     background: rgba(20, 16, 10, 0.6);
     border: 1px solid rgba(201, 162, 78, 0.3);
@@ -21978,6 +22380,14 @@ h2.gn-selector-title {
     transform: scale(1.25);
     transform-origin: center center;
 }
+/* Olen Droll: source is wide-landscape (2760×1504). With portrait-card
+   cover-fit, ~609px of horizontal overflow gets cropped (≈ 6.1px shift
+   per 1% of object-position-X). Higher X = window shifts right on the
+   source = content shifts LEFT in the container (counter-intuitive).
+   56% pulls the kiss ~100px left of where 40% put it. */
+.gn-selector-card[data-gn-style="olen_droll"] .gn-thumb-img {
+    object-position: 56% center;
+}
 .gn-selector-card:hover .gn-selector-thumb {
     border-color: rgba(201, 162, 78, 0.7);
     box-shadow: 0 6px 24px rgba(0,0,0,0.6), 0 0 8px rgba(201,162,78,0.15);
@@ -22011,20 +22421,57 @@ h2.gn-selector-title {
 
 /* Disabled state — Olen Droll when current story tone isn't WryConfession.
    Card stays in the lineup so the illustrator bullpen reads as full/diverse,
-   but cannot be selected; hover affordances are muted. */
+   but cannot be selected; hover affordances are muted.
+   The grayscale + dim treatment is applied to the inner image ONLY, not the
+   thumb container — that way the gold ornate frame (rendered via the
+   thumb's ::after) stays gold, and the desaturated grey is contained inside
+   the frame's silhouette rather than spilling into the rectangle's corners. */
 .gn-selector-card--disabled {
     cursor: not-allowed;
+    /* JS no longer sets the disabled attribute (it leaked a UA grey
+       overlay past the rounded thumb edge and into the sublabel area
+       below). Block-clicks now happen via the click-handler's class
+       check. These resets are kept defensively in case anything
+       else flips the attribute. */
+    opacity: 1 !important;
+    color: inherit !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
 }
+button.gn-selector-card--disabled,
+button.gn-selector-card[disabled] {
+    opacity: 1 !important;
+    color: inherit !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+}
+/* Image — left at full saturation/brightness. The red sublabel under
+   the card carries the "unavailable" signal on its own, so no grey
+   overlay is applied to the thumbnail. */
 .gn-selector-card--disabled .gn-selector-thumb {
-    filter: grayscale(0.85) brightness(0.55);
     border-color: rgba(201, 162, 78, 0.2);
-    opacity: 0.7;
+    /* Trim the heavy 24px-blur halo on the disabled card — the prior
+       shadow extended ~30px below the rectangle and read as the grey
+       treatment "spilling below the card" toward the sublabel. A tighter
+       2px/8px shadow keeps the card grounded without the halo. */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    /* Transparent thumb background so any region outside the gold border
+       PNG's painted area (corners, ornate cutouts) doesn't show a dark
+       fill — it reveals the page background instead. */
+    background: transparent;
 }
 .gn-selector-card--disabled .gn-selector-name {
     color: rgba(201, 162, 78, 0.4);
 }
+/* Sublabel ("Wry stories only") sits BELOW the card in the flex column.
+   It's outside the thumb's bounds entirely, so the disabled image filter
+   never touches it. Keep it at full alpha — readable, ungreyed, signaling
+   the gate cleanly. */
 .gn-selector-card--disabled .gn-selector-sublabel {
-    color: rgba(232, 100, 100, 0.6);     /* faint red — signals gating */
+    color: #e96a6a;
+    opacity: 1;
     font-style: italic;
 }
 .gn-selector-card--disabled:hover {
@@ -22032,7 +22479,9 @@ h2.gn-selector-title {
 }
 .gn-selector-card--disabled:hover .gn-selector-thumb {
     border-color: rgba(201, 162, 78, 0.2);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+    /* Match the muted disabled-default shadow so hover doesn't re-pump
+       the dark halo back below the card. */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 .gn-thumb-img {
     width: 100%;
@@ -22129,7 +22578,25 @@ h2.gn-selector-title {
     text-align: center;
 }
 .gn-cover-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
     padding: 60px 20px;
+    gap: 18px;
+    position: relative;
+    text-align: center;
+}
+
+/* Defensive guard — gnBookObject is only allowed to render once it has
+   the .gn-cover-mounted class (added by JS when the cover image arrives).
+   Before that, any stale 3D transform / mid-frame animation / race-y
+   .hidden state can leave a tall narrow strip of the book front bleeding
+   through. This positive-control rule replaces the negative .hidden
+   guard, so the default state is "invisible until explicitly mounted." */
+#gnCoverView #gnBookObject:not(.gn-cover-mounted) {
+    display: none !important;
 }
 .gn-cover-status {
     font-family: 'Lora', serif;
@@ -22137,6 +22604,8 @@ h2.gn-selector-title {
     font-size: 0.95em;
     color: rgba(201, 162, 78, 0.6);
     letter-spacing: 0.05em;
+    margin: 0;
+    animation: gnLoadPulse 2s ease-in-out infinite;
 }
 .gn-cover-display {
     margin: 20px auto;
@@ -22264,6 +22733,317 @@ h2.gn-selector-title {
 }
 .gn-panel-display:empty {
     display: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   STAGED STORY MODE — click-through reader (S4)
+   Hero image is the static visual stage; one beat at a time fades in
+   over its lower portion (vignette gradient under the text). Beat
+   reader sits inside the gnReader's panel-display area — bounded, not
+   full-viewport, so it doesn't fight the existing UI chrome (title,
+   scene nav). Replace-mode: each beat replaces the previous one.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.staged-scene {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #0a0806;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* Hero image — full-bleed inside the staged-scene box. Persistent
+   across beats; never re-renders unless visualState fingerprint changes. */
+.staged-hero {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+.staged-hero-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    /* Fade in on load — JS adds .loaded once the <img> fires its native
+       load event. Keeps the reveal feeling intentional rather than a
+       sudden swap from shimmer to image. */
+    opacity: 0;
+    transition: opacity 600ms ease-out;
+}
+.staged-hero-img.loaded {
+    opacity: 1;
+}
+/* Phase swap: incoming image starts at 0, fades to 1 (handled by .loaded
+   above). Outgoing image gets .staged-hero-img--retiring to fade to 0
+   over the same window before being removed by JS. */
+.staged-hero-img--retiring {
+    opacity: 0 !important;
+    transition: opacity 600ms ease-in;
+}
+/* Loading state when hero hasn't arrived yet — soft brown shimmer
+   matching the staged background tone. Removed when img.src lands. */
+.staged-hero--loading::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a1410 0%, #2a2018 50%, #1a1410 100%);
+    background-size: 200% 200%;
+    animation: stagedHeroShimmer 2.4s ease-in-out infinite;
+    z-index: 1;
+}
+@keyframes stagedHeroShimmer {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Vignette — darkens the lower portion of the hero so the beat text
+   reads at full contrast regardless of hero composition. */
+.staged-hero-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0) 0%,
+        rgba(0, 0, 0, 0) 45%,
+        rgba(0, 0, 0, 0.55) 70%,
+        rgba(0, 0, 0, 0.92) 100%
+    );
+}
+
+/* Beat reader — absolutely positioned over the hero's lower portion.
+   Tap-anywhere advances unless the click is inside an interactive
+   widget (next button, micro-decision options, future major gate). */
+.staged-beat-reader {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 5;
+    padding: 28px 32px 22px;
+    cursor: pointer;
+    user-select: text;
+}
+
+/* Beat text — fades in on advance. data-kind drives subtle styling
+   shifts (italic for exposition, speaker tag for dialogue). */
+.staged-beat-text {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: clamp(0.95em, 1.05vw, 1.08em);
+    line-height: 1.65;
+    color: #f0e8d8;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+    margin: 0;
+    animation: stagedBeatIn 280ms ease forwards;
+}
+.staged-beat-text p {
+    margin: 0;
+}
+.staged-beat-text[data-kind="exposition"] {
+    font-style: italic;
+    color: rgba(240, 232, 216, 0.92);
+}
+.staged-beat-text[data-kind="dialogue"] {
+    /* Slight indent + speaker tag treatment */
+}
+@keyframes stagedBeatIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Speaker tag — small-caps gold above dialogue beats. */
+.staged-speaker {
+    display: block;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.78em;
+    font-variant: small-caps;
+    letter-spacing: 0.14em;
+    color: #c9a84c;
+    margin-bottom: 6px;
+    opacity: 0.9;
+}
+
+/* Advance row — Next button + beat progress indicator. */
+.staged-advance {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+    gap: 16px;
+}
+.staged-next-btn {
+    background: rgba(20, 14, 8, 0.7);
+    border: 1px solid rgba(201, 168, 76, 0.45);
+    color: #c9a84c;
+    padding: 7px 22px;
+    border-radius: 3px;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.88em;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.staged-next-btn:hover {
+    background: rgba(201, 168, 76, 0.12);
+    border-color: rgba(201, 168, 76, 0.7);
+}
+.staged-next-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+.staged-beat-progress {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.75em;
+    font-variant: small-caps;
+    letter-spacing: 0.18em;
+    color: rgba(201, 168, 76, 0.55);
+}
+
+/* Slot for the major decision gate (Say/Do + Fate cards) — populated
+   by S6 when currentBeatIdx reaches decisionGateBeatIdx. Empty by
+   default. Lives below the beat reader, outside the staged-scene box,
+   inside #gnPanelDisplay so the existing reader chrome flows around it. */
+.staged-decision-gate {
+    margin: 24px auto 0;
+    max-width: 720px;
+    /* Slower than beat-fade (280ms) — the gate is a SCENE transition
+       moment, not a reading-pace tap. Longer ease-out reads as
+       "settling into the choice" rather than a UI swap. RAF-deferred
+       scrollIntoView in JS pairs with this so the visual + scroll
+       motion arrive together rather than competing. */
+    animation: stagedGateIn 480ms ease-out forwards;
+}
+.staged-decision-gate.hidden {
+    display: none;
+}
+@keyframes stagedGateIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.staged-gate-cue {
+    text-align: center;
+    padding: 18px 24px 22px;
+    border-top: 1px solid rgba(201, 168, 76, 0.18);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+    margin-bottom: 18px;
+}
+.staged-gate-prompt {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 1.05em;
+    font-style: italic;
+    color: rgba(232, 200, 130, 0.9);
+    letter-spacing: 0.04em;
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Composing-next-scene overlay — shown after staged submit fires while
+   the literary engine + staged analysis run (~10-30s). Lives in the
+   gate slot so it appears in the same visual region as the submit. */
+.staged-composing {
+    text-align: center;
+    padding: 32px 24px;
+    border-top: 1px solid rgba(201, 168, 76, 0.18);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+    margin-bottom: 18px;
+    animation: stagedGateIn 320ms ease-out forwards;
+}
+.staged-composing-pulse {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(232, 200, 130, 0.55) 0%, rgba(201, 168, 76, 0) 70%);
+    animation: stagedComposingPulse 1.6s ease-in-out infinite;
+}
+@keyframes stagedComposingPulse {
+    0%, 100% { transform: scale(0.85); opacity: 0.55; }
+    50%      { transform: scale(1.15); opacity: 1;    }
+}
+.staged-composing-label {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.95em;
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.75);
+    letter-spacing: 0.06em;
+    margin: 0;
+}
+
+/* Slot for the micro-decision (S5) — rendered inside the beat reader
+   when an option set is active. Replaces the Next button + progress
+   row temporarily. Per the S5 rule: micro-decisions INTERRUPT flow,
+   never coexist. The visual weight here matches: this is where MEANING
+   is introduced, so options dominate the lower frame, not just sit
+   where Next was. Larger padding, more spacing, fade-in cascade so
+   the transition reads as intentional rather than a UI swap. */
+.staged-micro-choice {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 24px;
+    animation: stagedMicroIn 320ms ease forwards;
+}
+.staged-micro-choice.hidden {
+    display: none;
+}
+@keyframes stagedMicroIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.staged-micro-prompt {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 1em;
+    font-style: italic;
+    color: rgba(232, 200, 130, 0.95);
+    letter-spacing: 0.02em;
+    margin-bottom: 6px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.staged-micro-opt {
+    background: rgba(20, 14, 8, 0.78);
+    border: 1.5px solid rgba(201, 168, 76, 0.55);
+    color: #f5ecd6;
+    padding: 14px 22px;
+    border-radius: 4px;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 1.05em;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.12s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    /* Stagger the option fade-in for a subtle cascading reveal — the
+       prompt arrives first, then the options drop in 60ms / 140ms after.
+       Reads as deliberate rather than a single UI block swap. */
+    opacity: 0;
+    animation: stagedMicroOptIn 320ms ease forwards;
+}
+.staged-micro-opt:nth-of-type(1) { animation-delay: 60ms; }
+.staged-micro-opt:nth-of-type(2) { animation-delay: 140ms; }
+@keyframes stagedMicroOptIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.staged-micro-opt:hover {
+    background: rgba(201, 168, 76, 0.18);
+    border-color: rgba(232, 200, 130, 0.85);
+    transform: translateY(-1px);
+}
+.staged-micro-opt:active {
+    transform: translateY(0);
+    background: rgba(201, 168, 76, 0.26);
 }
 
 /* ── GN_UI_OVERLAY: persistent top bar + floating controls ── */
@@ -22530,14 +23310,20 @@ body.gn-cover-active .gn-ui-overlay {
 }
 
 /* ── GN Panel-Based Rendering ── */
+/* Wider container — 700px was leaving panels reading as thumbnails on a
+   typical desktop. Bumping to 1100px gives Scene 1 panels real visual
+   weight so the artwork carries the moment instead of feeling like a
+   sidebar widget. Still capped so it doesn't sprawl on ultra-wide. */
 .gn-page-panels {
-    max-width: 700px;
+    max-width: 1100px;
     margin: 0 auto;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    PANEL-COUNT GRID — deterministic layout based on actual panel count.
    These override vertical stacking with a proper comic page grid.
+   Min-heights bumped roughly 1.5× across the board (Scene 1 was reading
+   as small thumbnails relative to the 1100px container).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* 1 panel — full width, single column */
@@ -22546,8 +23332,8 @@ body.gn-cover-active .gn-ui-overlay {
     grid-template-columns: 1fr;
     gap: 0;
 }
-.gn-count-1 .gn-panel { min-height: 400px; }
-.gn-count-1 .gn-panel-img { min-height: 400px; object-fit: cover; }
+.gn-count-1 .gn-panel { min-height: 600px; }
+.gn-count-1 .gn-panel-img { min-height: 600px; object-fit: cover; }
 
 /* 2 panels — side by side */
 .gn-count-2 {
@@ -22555,8 +23341,8 @@ body.gn-cover-active .gn-ui-overlay {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
 }
-.gn-count-2 .gn-panel { min-height: 280px; }
-.gn-count-2 .gn-panel-img { min-height: 280px; object-fit: cover; }
+.gn-count-2 .gn-panel { min-height: 460px; }
+.gn-count-2 .gn-panel-img { min-height: 460px; object-fit: cover; }
 
 /* 3 panels — hero spans top row, 2 below. Explicit row assignment prevents collision. */
 .gn-count-3 {
@@ -22569,14 +23355,14 @@ body.gn-cover-active .gn-ui-overlay {
 .gn-count-3 .gn-panel--hero {
     grid-column: 1 / -1;
     grid-row: 1;
-    min-height: 320px;
+    min-height: 480px;
 }
-.gn-count-3 .gn-panel--hero .gn-panel-img { min-height: 320px; object-fit: cover; }
+.gn-count-3 .gn-panel--hero .gn-panel-img { min-height: 480px; object-fit: cover; }
 .gn-count-3 .gn-panel:not(.gn-panel--hero) {
     grid-row: 2;
-    min-height: 220px;
+    min-height: 340px;
 }
-.gn-count-3 .gn-panel:not(.gn-panel--hero) .gn-panel-img { min-height: 220px; object-fit: cover; }
+.gn-count-3 .gn-panel:not(.gn-panel--hero) .gn-panel-img { min-height: 340px; object-fit: cover; }
 
 /* 4 panels — hero spans top row, remaining 3 fill row 2. Explicit rows prevent overlap. */
 .gn-count-4 {
@@ -22586,14 +23372,14 @@ body.gn-cover-active .gn-ui-overlay {
     grid-auto-flow: row;
     gap: 8px;
 }
-.gn-count-4 .gn-panel { min-height: 200px; }
-.gn-count-4 .gn-panel-img { min-height: 200px; object-fit: cover; }
+.gn-count-4 .gn-panel { min-height: 300px; }
+.gn-count-4 .gn-panel-img { min-height: 300px; object-fit: cover; }
 .gn-count-4 .gn-panel--hero {
     grid-column: 1 / -1;
     grid-row: 1;
-    min-height: 280px;
+    min-height: 420px;
 }
-.gn-count-4 .gn-panel--hero .gn-panel-img { min-height: 280px; object-fit: cover; }
+.gn-count-4 .gn-panel--hero .gn-panel-img { min-height: 420px; object-fit: cover; }
 .gn-count-4 .gn-panel:not(.gn-panel--hero) {
     grid-row: 2;
 }
@@ -28952,8 +29738,9 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
         font-size: 2.8vw !important;
     }
 
-    /* ── Delete Forever button: clean override on mobile ── */
-    .zoom-delete-btn {
+    /* ── Delete Forever button: clean override on mobile ──
+       Doubled class for specificity — same fix as desktop rule. */
+    .zoom-delete-btn.zoom-delete-btn {
         width: auto !important;
         height: auto !important;
         min-height: 44px;

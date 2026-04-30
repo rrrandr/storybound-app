@@ -1661,8 +1661,10 @@ function setSelectedState(mount, selectedCardEl){
             el.addEventListener('click', () => commitFateSelection(mount), { passive: true });
         };
 
-        // Common IDs across builds (safe no-op if missing)
-        ['submitBtn','sendBtn','submitTurn','turnSubmit','submit'].forEach(tryBindClick);
+        // Common IDs across builds (safe no-op if missing). GN reader's
+        // submit button is gnSubmitBtn — without it, GN turn-submission
+        // wouldn't trigger the chosen-card sparkle/disintegrate commit.
+        ['submitBtn','gnSubmitBtn','sendBtn','submitTurn','turnSubmit','submit'].forEach(tryBindClick);
 
         // If there's a form, committing on submit is also reasonable and non-invasive.
         const forms = [];
@@ -1682,8 +1684,19 @@ function setSelectedState(mount, selectedCardEl){
         if (_inputsBound) return;
         _inputsBound = true;
 
-        const actInput = document.getElementById('actionInput');
-        const diaInput = document.getElementById('dialogueInput');
+        // Bind to BOTH literary and GN textareas — whichever pair exists
+        // will fire focus/input events when the user starts editing.
+        // Previously only literary IDs were bound, so GN-mode edits never
+        // committed the fate selection (the chosen card stayed clickable
+        // and the disintegrate animation didn't fire).
+        const actInputs = [
+            document.getElementById('actionInput'),
+            document.getElementById('gnActionInput')
+        ].filter(Boolean);
+        const diaInputs = [
+            document.getElementById('dialogueInput'),
+            document.getElementById('gnDialogueInput')
+        ].filter(Boolean);
 
         const maybeCommitOnEdit = () => {
             if (!window.state) return;
@@ -1695,8 +1708,7 @@ function setSelectedState(mount, selectedCardEl){
 
         // "Once the player clicks into the populated text boxes…"
         // Focus counts as "click into". Input counts as editing.
-        [actInput, diaInput].forEach(el => {
-            if (!el) return;
+        [...actInputs, ...diaInputs].forEach(el => {
             el.addEventListener('focus', maybeCommitOnEdit);
             el.addEventListener('input', maybeCommitOnEdit);
         });
@@ -1863,9 +1875,15 @@ function setSelectedState(mount, selectedCardEl){
                 // Cancel any prior sparkle cycle, then start new cycle
                 stopSparkleCycle();
 
-                // Trigger golden flow animations to inputs
-                const actInput = document.getElementById('actionInput');
-                const diaInput = document.getElementById('dialogueInput');
+                // Trigger golden flow animations to inputs.
+                // Mode-aware lookup so GN-mode fate clicks fill the GN
+                // textareas, not the (non-existent) literary ones.
+                const _inputs = (typeof window._getActiveTurnInputs === 'function')
+                    ? window._getActiveTurnInputs()
+                    : { actInput: document.getElementById('actionInput'),
+                        diaInput: document.getElementById('dialogueInput') };
+                const actInput = _inputs.actInput;
+                const diaInput = _inputs.diaInput;
 
                 // Start sparkle cycle (3s ON, 2s OFF) on card + inputs
                 startSparkleCycle(data.id, card, actInput, diaInput);
@@ -2091,9 +2109,15 @@ function setSelectedState(mount, selectedCardEl){
                 // Cancel any prior sparkle cycle, then start new cycle
                 if (window.stopSparkleCycle) window.stopSparkleCycle();
 
-                // Trigger golden flow animations to inputs
-                const actInput = document.getElementById('actionInput');
-                const diaInput = document.getElementById('dialogueInput');
+                // Trigger golden flow animations to inputs.
+                // Mode-aware lookup so GN-mode fate clicks fill the GN
+                // textareas, not the (non-existent) literary ones.
+                const _inputs = (typeof window._getActiveTurnInputs === 'function')
+                    ? window._getActiveTurnInputs()
+                    : { actInput: document.getElementById('actionInput'),
+                        diaInput: document.getElementById('dialogueInput') };
+                const actInput = _inputs.actInput;
+                const diaInput = _inputs.diaInput;
 
                 // Start sparkle cycle (3s ON, 2s OFF) on card + inputs
                 console.log('[FATE] sparkle FX triggered');
