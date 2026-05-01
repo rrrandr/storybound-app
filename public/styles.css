@@ -22778,12 +22778,44 @@ button.gn-selector-card[disabled] {
 .staged-hero-img.loaded {
     opacity: 1;
 }
+/* Color-grading overlay — sits ABOVE the hero image but BELOW the
+   vignette (vignette adds the dark edges; grade adds the chromatic
+   wash). mix-blend-mode: soft-light layers a tint without obscuring
+   image content; opacity stays low (0.08-0.18) so the grade reads
+   as "mood color" rather than colored gel. JS sets background-color
+   per phase mood; transition handles the crossfade. */
+.staged-grade {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    mix-blend-mode: soft-light;
+    opacity: 0;
+    background-color: transparent;
+    transition: background-color 1200ms ease, opacity 1200ms ease;
+}
+
 /* Phase swap: incoming image starts at 0, fades to 1 (handled by .loaded
    above). Outgoing image gets .staged-hero-img--retiring to fade to 0
    over the same window before being removed by JS. */
 .staged-hero-img--retiring {
     opacity: 0 !important;
     transition: opacity 600ms ease-in;
+}
+
+/* Cut-to closeup — directorial cut, faster transition than phase swap.
+   The cut is meant to feel decisive (~200ms in), not a slow dissolve.
+   Returns to phase via the standard 600ms cross-fade on the next beat
+   advance — entering quickly then resolving normally is the cinematic
+   pattern (snap-in, drift-out). */
+.staged-hero-img--closeup {
+    transition: opacity 200ms ease-out;
+}
+/* Mutation swap — same as phase swap (slow cross-fade). The mutation
+   is a subtle expression shift, not a directorial moment, so it should
+   blend invisibly. */
+.staged-hero-img--mutation {
+    transition: opacity 600ms ease-out;
 }
 /* Loading state when hero hasn't arrived yet — soft brown shimmer
    matching the staged background tone. Removed when img.src lands. */
@@ -22841,14 +22873,21 @@ button.gn-selector-card[disabled] {
     color: #f0e8d8;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
     margin: 0;
-    animation: stagedBeatIn 280ms ease forwards;
+    /* Per-beat fade duration set by JS via --staged-beat-fade-ms. Heavy
+       beats (closeups, gate, non-neutral expression) get longer fades
+       so the reader's eye lingers; light narration uses the default. */
+    animation: stagedBeatIn var(--staged-beat-fade-ms, 280ms) ease forwards;
 }
 .staged-beat-text p {
     margin: 0;
 }
 .staged-beat-text[data-kind="exposition"] {
+    /* Internal thought — italic, slightly muted, slightly looser
+       letterspacing for a "different voice" register. Typewriter
+       reveal is applied via JS for this kind only. */
     font-style: italic;
     color: rgba(240, 232, 216, 0.92);
+    letter-spacing: 0.015em;
 }
 .staged-beat-text[data-kind="dialogue"] {
     /* Slight indent + speaker tag treatment */
@@ -22856,6 +22895,28 @@ button.gn-selector-card[disabled] {
 @keyframes stagedBeatIn {
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Typewriter caret for exposition beats — a soft pulsing block at
+   the current character position. Removed when typing completes. */
+.staged-beat-text--typing p::after {
+    content: '▌';
+    display: inline;
+    color: rgba(240, 232, 216, 0.55);
+    margin-left: 1px;
+    animation: stagedTypewriterCaret 700ms steps(1) infinite;
+}
+@keyframes stagedTypewriterCaret {
+    0%, 50%   { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+}
+
+/* Advance button — locked state. Visual signal that there's emotional
+   weight to absorb. Doesn't block clicks (set via JS); just dims +
+   slow-pulses the button so the reader feels the rhythm. */
+.staged-next-btn--locked {
+    opacity: 0.55;
+    transition: opacity 200ms ease;
 }
 
 /* Speaker tag — small-caps gold above dialogue beats. */
