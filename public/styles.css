@@ -22850,6 +22850,48 @@ button.gn-selector-card[disabled] {
     );
 }
 
+/* Metaphor insert — symbolic intercut image. Sits ABOVE the underlying
+   hero (z-index above .staged-hero-img but below the static vignette
+   so dark edges still apply). Briefly mounted then retired via the
+   shared --retiring class. The underlying hero img stays mounted
+   underneath, so the metaphor "fade out" reveals the original image
+   without needing a swap-back step.
+
+   Target opacity is jittered ±5% per fire (0.90-1.00) via the
+   --metaphor-target-opacity custom property set by JS. Removes the
+   "designed" feel of repeat inserts hitting identical visibility. */
+.staged-hero-img--metaphor {
+    z-index: 1;
+}
+.staged-hero-img--metaphor.loaded {
+    opacity: var(--metaphor-target-opacity, 1) !important;
+}
+/* While a metaphor flash is active, slightly intensify the persistent
+   color grade so the moment reads as elevated. Mild — soft-light tint
+   becomes a touch more present, not overpowering. */
+#gnPanelDisplay.metaphor-active .staged-grade {
+    opacity: 0.18 !important;
+    filter: saturate(1.05) contrast(1.04);
+}
+
+/* Pulse vignette — brief radial color flash on peak emotional beats.
+   Distinct from .staged-grade (atmospheric, persistent, soft-light) and
+   .staged-hero-vignette (static dark-edge darken). The pulse uses
+   mix-blend-mode: multiply so the color reads as decisive emphasis,
+   not a tint. Sits at z-index 3 — above all other overlays. JS sets
+   background to a radial gradient + fades opacity in then out
+   (~120ms in, 220-340ms hold, 300ms out). Strict caps prevent overuse. */
+#stagedPulseVignette {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: multiply;
+    /* transition is set inline by JS so fade-in / fade-out can use
+       different durations within a single pulse cycle. */
+}
+
 /* Beat reader — absolutely positioned over the hero's lower portion.
    Tap-anywhere advances unless the click is inside an interactive
    widget (next button, micro-decision options, future major gate). */
@@ -23695,7 +23737,7 @@ body.gn-cover-active .gn-ui-overlay {
 .gn-layout-fullbleed .gn-panel-img { min-height: 500px; object-fit: cover; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   CINEMATIC SPLIT — 2-panel continuous composition (reads as one image)
+   CINEGRAPHIC SPLIT — 2-panel continuous composition (reads as one image)
    ═══════════════════════════════════════════════════════════════════════════ */
 .gn-density-cinematic {
     display: flex;
@@ -30422,3 +30464,563 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     position: relative; right: auto; bottom: auto;
     width: 125.5px; font-size: 15px;
 }
+
+/* ─────────────────────────────────────────────────────────────────
+   CINESEQUENCE INTERACTIVE PLAYER
+   Generic data-driven cinematic-metaphor player. First sequence:
+   ocean_lighthouse (12-shot lighthouse-wave metaphor). Mounts as a
+   fullscreen overlay over the entire app.
+   ───────────────────────────────────────────────────────────────── */
+#cineSequencePlayer {
+    position: fixed; inset: 0;
+    z-index: 99999;
+    background: #000;
+    overflow: hidden;
+    user-select: none;
+    cursor: default;
+}
+.cine-seq-stage {
+    position: absolute; inset: 0;
+    background: #000;
+}
+/* Hero frame — fixed 1024×1024 square, centered in the viewport. All
+   images (waves AND physicalities) sit inside the same frame and fill
+   it edge-to-edge via object-fit: cover, matching the position the
+   cinematic story's hero images occupy before/after the cinesequence.
+   Mixed source aspects (waves 1402×1122, phys vary) get cropped at the
+   sides, never letterboxed — keeps a consistent square presentation. */
+.cine-seq-img {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(1024px, 100vmin);
+    height: min(1024px, 100vmin);
+    object-fit: cover;
+    object-position: center center;
+    opacity: 0;
+    pointer-events: none;
+    background: #000;
+}
+#cineSeqShotA { opacity: 1; }
+.cine-seq-img--shot { z-index: 1; }
+.cine-seq-img--insert { z-index: 2; }
+
+.cine-seq-controls {
+    position: absolute;
+    bottom: 28px;
+    left: 40px;
+    right: 40px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Play/pause toggle — small white circle above the left edge of the
+   slider track (track is at bottom: 28px; this sits ~12px above it).
+   Icon swap driven by data-state="playing" | "paused". */
+.cine-seq-playpause {
+    position: absolute;
+    bottom: 44px;
+    left: 40px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.88);
+    color: rgba(0, 0, 0, 0.85);
+    border: none;
+    cursor: pointer;
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    pointer-events: auto;
+    opacity: 0.75;
+    transition: background 180ms ease, transform 180ms ease, opacity 180ms ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.cine-seq-playpause:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.08);
+    opacity: 1;
+}
+.cine-seq-playpause svg { display: none; }
+.cine-seq-playpause[data-state="paused"] .cine-seq-icon-play {
+    display: block;
+    margin-left: 1px;  /* optical centering for the triangle */
+}
+.cine-seq-playpause[data-state="playing"] .cine-seq-icon-pause {
+    display: block;
+}
+
+/* Sound on/off toggle — sibling to the play button, sits to its right.
+   Same circle / opacity / hover behavior; icon swaps via data-state. */
+.cine-seq-soundtoggle {
+    position: absolute;
+    bottom: 44px;
+    left: 76px;     /* play button is at left:40px, width 26px → ~10px gap */
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.88);
+    color: rgba(0, 0, 0, 0.85);
+    border: none;
+    cursor: pointer;
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    pointer-events: auto;
+    opacity: 0.75;
+    transition: background 180ms ease, transform 180ms ease, opacity 180ms ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.cine-seq-soundtoggle:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: scale(1.08);
+    opacity: 1;
+}
+.cine-seq-soundtoggle svg { display: none; }
+.cine-seq-soundtoggle[data-state="on"]  .cine-seq-icon-sound-on  { display: block; }
+.cine-seq-soundtoggle[data-state="off"] .cine-seq-icon-sound-off { display: block; color: rgba(180, 70, 70, 0.85); }
+.cine-seq-slider-track {
+    position: relative;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 2px;
+    cursor: pointer;
+    touch-action: none;
+    pointer-events: auto;
+    transition: height 200ms ease, background 200ms ease;
+}
+.cine-seq-slider-track:hover {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.28);
+}
+/* Magnet-zone visual cue — slider thickens slightly while scrub is
+   inside the configured magnet zone (e.g. Ocean's Shot 7 impact
+   region, 12.0–17.0s). Toggled by JS via the .cine-seq-slider--magnet
+   class. */
+.cine-seq-slider-track.cine-seq-slider--magnet {
+    height: 7px;
+    background: rgba(220, 90, 90, 0.32);
+}
+.cine-seq-slider-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: 0;
+    background: rgba(255, 255, 255, 0.55);
+    border-radius: 2px;
+    pointer-events: none;
+}
+.cine-seq-slider-thumb {
+    position: absolute;
+    top: 50%;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    opacity: 0.45;
+    transition: opacity 200ms ease;
+}
+.cine-seq-slider-track:hover .cine-seq-slider-thumb,
+.cine-seq-slider-track:active .cine-seq-slider-thumb {
+    opacity: 1;
+}
+/* Pulse animation for first-exposure hint — runs twice via JS class. */
+.cine-seq-slider--pulse {
+    animation: cineSeqSliderPulse 600ms ease-in-out 2;
+}
+@keyframes cineSeqSliderPulse {
+    0%, 100% { background: rgba(255, 255, 255, 0.18); }
+    50%      { background: rgba(255, 255, 255, 0.65); }
+}
+
+.cine-seq-hint {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 14px;
+    letter-spacing: 0.05em;
+    font-style: italic;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 600ms ease;
+    z-index: 11;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+}
+.cine-seq-hint--show { opacity: 1; }
+
+.cine-seq-exit {
+    position: absolute;
+    top: 20px; right: 24px;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 12;
+    opacity: 0;
+    transition: opacity 200ms ease, background 200ms ease;
+}
+#cineSequencePlayer:hover .cine-seq-exit { opacity: 1; }
+.cine-seq-exit:hover { background: rgba(0, 0, 0, 0.75); }
+
+/* ─── Artist-style switcher bar (top of player) ─────────────────── */
+.cine-seq-style-bar {
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 13;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease;
+}
+#cineSequencePlayer:hover .cine-seq-style-bar,
+#cineSequencePlayer:focus-within .cine-seq-style-bar {
+    opacity: 1;
+    pointer-events: auto;
+}
+.cine-seq-style-btn {
+    padding: 7px 14px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+.cine-seq-style-btn:hover {
+    background: rgba(0, 0, 0, 0.7);
+    color: rgba(255, 215, 0, 0.9);
+}
+.cine-seq-style-btn--active {
+    border-color: rgba(255, 215, 0, 0.55);
+    color: rgba(255, 215, 0, 0.95);
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* Filter recipes — applied to .cine-seq-img (stage layers only) so the
+   controls/buttons stay un-filtered. The wave/insert PNGs are pre-
+   rendered single-style assets; these are runtime previews, not true
+   per-style gens. */
+.cine-seq-player--style-troy_bond .cine-seq-img {
+    filter: contrast(1.05) saturate(1.08);
+}
+.cine-seq-player--style-doro_veyn .cine-seq-img {
+    /* graphic noir — high contrast, near-monochrome */
+    filter: grayscale(0.85) contrast(1.45) brightness(0.92);
+}
+.cine-seq-player--style-olen_droll .cine-seq-img {
+    /* flat editorial cartoon — muted, lifted */
+    filter: saturate(0.55) contrast(0.85) brightness(1.08);
+}
+.cine-seq-player--style-lora_venn .cine-seq-img {
+    /* painterly warm — sepia warmth + saturation lift */
+    filter: sepia(0.22) saturate(1.35) contrast(1.08) hue-rotate(-8deg);
+}
+
+/* Review-toggle button gets a subtle accent so it reads as different
+   from the 4 artist style toggles. */
+.cine-seq-style-btn--review {
+    margin-left: 14px;
+    border-color: rgba(180, 220, 255, 0.32);
+    color: rgba(180, 220, 255, 0.85);
+}
+.cine-seq-style-btn--review.cine-seq-style-btn--active {
+    border-color: rgba(180, 220, 255, 0.7);
+    color: rgba(220, 240, 255, 0.98);
+    background: rgba(40, 80, 120, 0.55);
+}
+
+/* ─── Review panel (BFL gen + approve/reroll) ───────────────────── */
+.cine-seq-review-panel {
+    position: absolute;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(960px, calc(100% - 80px));
+    max-height: calc(100% - 130px);
+    background: rgba(10, 12, 18, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    z-index: 14;
+    display: flex;
+    flex-direction: column;
+    color: rgba(255, 255, 255, 0.85);
+    font-family: 'Lora', 'Georgia', serif;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+}
+.cine-seq-review-panel[hidden] { display: none; }
+
+.cine-seq-review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.3);
+}
+.cine-seq-review-label {
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    color: rgba(255, 215, 0, 0.85);
+}
+.cine-seq-review-close {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+.cine-seq-review-close:hover { background: rgba(255, 255, 255, 0.08); }
+
+.cine-seq-review-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    flex: 1 1 auto;
+    min-height: 280px;
+}
+.cine-seq-review-cell {
+    position: relative;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 240px;
+}
+.cine-seq-review-tag {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 3px 8px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 3px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: rgba(255, 215, 0, 0.85);
+    text-transform: uppercase;
+    z-index: 2;
+}
+.cine-seq-review-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.cine-seq-review-status {
+    color: rgba(255, 255, 255, 0.55);
+    font-style: italic;
+    font-size: 13px;
+}
+
+.cine-seq-review-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(0, 0, 0, 0.3);
+}
+.cine-seq-review-btn {
+    padding: 7px 14px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+.cine-seq-review-btn:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.7);
+    color: rgba(255, 215, 0, 0.95);
+    border-color: rgba(255, 215, 0, 0.5);
+}
+.cine-seq-review-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.cine-seq-review-btn--approve {
+    background: rgba(60, 120, 60, 0.55);
+    border-color: rgba(120, 200, 120, 0.55);
+    color: rgba(220, 255, 220, 0.95);
+}
+.cine-seq-review-btn--approve:hover:not(:disabled) {
+    background: rgba(80, 160, 80, 0.7);
+    border-color: rgba(160, 230, 160, 0.8);
+    color: rgba(255, 255, 255, 1);
+}
+
+/* ─── FX layer — grade, vignette, impact burst, push-in ──────────
+   All effects ride above the stage img layers, below the controls.
+   Driven by fxCues entries on the sequence config. */
+
+/* Color grade — full-stage overlay with mix-blend-mode. Phase swap
+   via .cine-seq-player--phase-* class on root. Slow ease for natural
+   tonal shifts (build → impact → aftermath). */
+.cine-seq-grade {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    opacity: 1;
+    mix-blend-mode: color;
+    background: transparent;
+    transition: background 1800ms ease;
+}
+.cine-seq-player--phase-cool-night .cine-seq-grade {
+    background: rgba(40, 60, 90, 0.35);   /* desaturated blue-cool */
+}
+.cine-seq-player--phase-warm-charged .cine-seq-grade {
+    background: rgba(180, 70, 50, 0.40);   /* saturated warm — climax */
+    transition: background 220ms ease-out; /* fast snap on impact */
+}
+.cine-seq-player--phase-dawn-cool .cine-seq-grade {
+    background: rgba(80, 100, 130, 0.28);  /* lifted dawn cool */
+    transition: background 3000ms ease;    /* slow decay */
+}
+
+/* Brightness/contrast overlay tied to phase — adds tonal punch
+   beyond the color blend. Keeps stage img readable. */
+.cine-seq-player--phase-warm-charged .cine-seq-stage {
+    filter: brightness(0.92) contrast(1.12) saturate(1.15);
+    transition: filter 220ms ease-out;
+}
+.cine-seq-player--phase-cool-night .cine-seq-stage,
+.cine-seq-player--phase-dawn-cool .cine-seq-stage {
+    transition: filter 1800ms ease;
+}
+
+/* Vignette — radial darkening from edges. Pulse animation triggered
+   by .cine-seq-vignette--pulse + intensity modifier. */
+.cine-seq-vignette {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 4;
+    opacity: 0;
+    background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.85) 100%);
+}
+.cine-seq-vignette--soft.cine-seq-vignette--pulse { animation: cineVignettePulse 1400ms ease-out; }
+.cine-seq-vignette--mid.cine-seq-vignette--pulse  { animation: cineVignettePulse 1100ms ease-out; }
+.cine-seq-vignette--hard.cine-seq-vignette--pulse { animation: cineVignettePulse 800ms  ease-out; }
+@keyframes cineVignettePulse {
+    0%   { opacity: 0; }
+    35%  { opacity: 0.55; }
+    100% { opacity: 0; }
+}
+.cine-seq-vignette--hard.cine-seq-vignette--pulse {
+    /* Harder pulse hits a higher peak. */
+    animation-name: cineVignettePulseHard;
+}
+@keyframes cineVignettePulseHard {
+    0%   { opacity: 0; }
+    25%  { opacity: 0.85; }
+    100% { opacity: 0; }
+}
+
+/* Impact burst — white flash + radial scale. Fires at the moment
+   of crash. Tight 600ms total: flash up fast, fade with brightness
+   dip + slight blur tail. */
+.cine-seq-impact-burst {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.95) 0%, rgba(255,240,210,0.4) 40%, transparent 70%);
+}
+.cine-seq-impact-burst--fire {
+    animation: cineImpactBurst 600ms cubic-bezier(0.15, 0.65, 0.3, 1) forwards;
+}
+@keyframes cineImpactBurst {
+    0%   { opacity: 0;    transform: scale(0.6); filter: blur(6px); }
+    18%  { opacity: 0.95; transform: scale(1);   filter: blur(0px); }
+    55%  { opacity: 0.5;  transform: scale(1.1); filter: blur(2px); }
+    100% { opacity: 0;    transform: scale(1.2); filter: blur(8px); }
+}
+
+/* Camera push-in — subtle scale on the stage during a beat range.
+   Duration + target scale set per-cue via CSS vars. */
+.cine-seq-stage--push {
+    transform: scale(var(--cine-push-scale, 1.06));
+    transition: transform var(--cine-push-duration, 5000ms) ease-out;
+    transform-origin: center center;
+}
+
+/* Beat-text overlay — bottom-third prose, serif, tight type.
+   Drops in 220ms, holds through beat duration, fades out 320ms.
+   Sits above stage but below controls/style-bar/exit. */
+.cine-seq-beat-text {
+    position: absolute;
+    left: 50%;
+    bottom: 92px;
+    transform: translate(-50%, 8px);
+    width: min(880px, calc(100% - 96px));
+    text-align: center;
+    color: rgba(240, 230, 215, 0.95);
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 22px;
+    line-height: 1.42;
+    letter-spacing: 0.01em;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 8;
+    transition: opacity 320ms ease, transform 320ms ease;
+}
+.cine-seq-beat-text--show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    transition: opacity 220ms ease, transform 360ms ease-out;
+}
+
+/* ─── Star of David dev launcher (bottom-right of app) ──────────── */
+#cineDevLauncher {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99998;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 215, 0, 0.85);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 200ms ease, background 200ms ease, border-color 200ms ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+#cineDevLauncher:hover {
+    transform: scale(1.08);
+    background: rgba(0, 0, 0, 0.78);
+    border-color: rgba(255, 215, 0, 0.7);
+}
+#cineDevLauncher svg { display: block; }
