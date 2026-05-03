@@ -13150,7 +13150,7 @@ textarea.fate-field {
 /* ── GN cover-credit band (PNG-baked) ──
    Pre-baked PNG containing keyhole logo + "S. Tory Bound & [Artist]"
    text in a triangular gold-bar at the bottom of the front cover. One
-   PNG per artist (assets/GN-Artists/gn-cover-credit-{troy|ryo|lora|olen}.png),
+   PNG per artist (assets/GN-Artists/gn-cover-credit-{ender|ryo|lora|olen}.png),
    src swapped by JS based on selected artist. Replaces the prior separate
    .gn-imprint-logo--front + .gn-cover-credit--front DOM stack so the
    credit typography is pixel-perfect, doesn't depend on the LLM rendering
@@ -22343,8 +22343,8 @@ h2.gn-selector-title {
    .gn-thumb-img shows through; the bottom of the frame contains the
    artist's nameplate. We hide the duplicate text label below to
    avoid printing the name twice. The half-circle at top carries the
-   illustrator's slot number ("1" Troy / "2" Ryo / "3" Lora / "4" Olen). */
-.gn-selector-card[data-gn-style="troy_bond"] .gn-selector-thumb::after,
+   illustrator's slot number ("1" Ender / "2" Ryo / "3" Lora / "4" Olen). */
+.gn-selector-card[data-gn-style="ender_bond"] .gn-selector-thumb::after,
 .gn-selector-card[data-gn-style="ryo_toro"]  .gn-selector-thumb::after,
 .gn-selector-card[data-gn-style="lora_venn"] .gn-selector-thumb::after,
 .gn-selector-card[data-gn-style="olen_droll"] .gn-selector-thumb::after {
@@ -22357,8 +22357,8 @@ h2.gn-selector-title {
     pointer-events: none;
     z-index: 2;
 }
-.gn-selector-card[data-gn-style="troy_bond"]  .gn-selector-thumb::after {
-    background-image: url('/assets/GN-Artists/artist-gold-border-troy.png?v=20260429b');
+.gn-selector-card[data-gn-style="ender_bond"]  .gn-selector-thumb::after {
+    background-image: url('/assets/GN-Artists/artist-gold-border-ender.png?v=20260429b');
 }
 .gn-selector-card[data-gn-style="ryo_toro"]   .gn-selector-thumb::after {
     background-image: url('/assets/GN-Artists/artist-gold-border-ryo.png?v=20260429b');
@@ -22369,7 +22369,7 @@ h2.gn-selector-title {
 .gn-selector-card[data-gn-style="olen_droll"] .gn-selector-thumb::after {
     background-image: url('/assets/GN-Artists/artist-gold-border-olen.png?v=20260429b');
 }
-.gn-selector-card[data-gn-style="troy_bond"]  .gn-selector-name,
+.gn-selector-card[data-gn-style="ender_bond"]  .gn-selector-name,
 .gn-selector-card[data-gn-style="ryo_toro"]   .gn-selector-name,
 .gn-selector-card[data-gn-style="lora_venn"]  .gn-selector-name,
 .gn-selector-card[data-gn-style="olen_droll"] .gn-selector-name {
@@ -30718,7 +30718,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
    controls/buttons stay un-filtered. The wave/insert PNGs are pre-
    rendered single-style assets; these are runtime previews, not true
    per-style gens. */
-.cine-seq-player--style-troy_bond .cine-seq-img {
+.cine-seq-player--style-ender_bond .cine-seq-img {
     filter: contrast(1.05) saturate(1.08);
 }
 .cine-seq-player--style-doro_veyn .cine-seq-img {
@@ -30745,6 +30745,265 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     border-color: rgba(180, 220, 255, 0.7);
     color: rgba(220, 240, 255, 0.98);
     background: rgba(40, 80, 120, 0.55);
+}
+/* Chrome-toggle — green-ish accent (different from Review's blue). */
+.cine-seq-style-btn--chrome {
+    margin-left: 4px;
+    border-color: rgba(180, 230, 180, 0.32);
+    color: rgba(180, 230, 180, 0.85);
+}
+.cine-seq-style-btn--chrome.cine-seq-style-btn--active {
+    border-color: rgba(180, 230, 180, 0.7);
+    color: rgba(220, 250, 220, 0.98);
+    background: rgba(40, 90, 60, 0.55);
+}
+
+/* ─── Mock reader chrome (Chrome toggle ON) ─────────────────────────
+   Mirrors the cinegraphic-mode reader page layout: vault keyhole top-
+   left, story header, page nav + say/do + fate cards + submit at the
+   bottom, control-plane Continue button, DSP floater. The image stage
+   shrinks to leave room for the chrome surfaces. */
+.cine-seq-mock-chrome[hidden] { display: none; }
+.cine-seq-player--chrome-on .cine-seq-img {
+    /* Shrink the image stage to leave room above (header) and below
+       (page nav, say/do, fate cards). 60vmin keeps it centered. */
+    width: min(620px, 62vmin);
+    height: min(620px, 62vmin);
+    top: calc(50% - 28px);   /* nudge up to make room for bottom group */
+}
+.cine-seq-mock-chrome {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    z-index: 9;
+    color: rgba(245, 235, 215, 0.95);
+    font-family: 'Lora', 'Georgia', serif;
+}
+.cine-seq-mock-chrome > * { pointer-events: auto; }
+
+/* Vault keyhole burger (top-left) */
+.cine-seq-mock-burger {
+    position: absolute;
+    top: 18px; left: 22px;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 215, 0, 0.85);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+}
+.cine-seq-mock-burger:hover { background: rgba(0,0,0,0.8); border-color: rgba(255,215,0,0.7); }
+
+/* Header — title block, top center */
+.cine-seq-mock-header {
+    position: absolute;
+    top: 64px; left: 50%; transform: translateX(-50%);
+    text-align: center;
+    width: min(700px, calc(100% - 160px));
+}
+.cine-seq-mock-working-title {
+    font-size: 10px; letter-spacing: 0.25em;
+    color: rgba(255, 215, 0, 0.55);
+    margin-bottom: 4px;
+}
+.cine-seq-mock-story-title {
+    font-size: 22px; letter-spacing: 0.06em;
+    color: rgba(255, 215, 0, 0.92);
+    margin: 0; font-weight: 500;
+    text-shadow: 0 1px 6px rgba(0,0,0,0.7);
+}
+.cine-seq-mock-scene-num {
+    font-size: 12px; letter-spacing: 0.18em;
+    color: rgba(245, 235, 215, 0.6);
+    margin-top: 4px;
+}
+.cine-seq-mock-breadcrumbs {
+    margin-top: 8px;
+    display: flex; gap: 6px; justify-content: center;
+}
+.cine-seq-mock-crumb {
+    width: 8px; height: 8px; border-radius: 50%;
+    border: 1px solid rgba(255, 215, 0, 0.4);
+}
+.cine-seq-mock-crumb--done { background: rgba(255, 215, 0, 0.45); }
+.cine-seq-mock-crumb--active {
+    background: rgba(255, 215, 0, 0.92);
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+}
+
+/* Bottom group — page nav, meta, say/do, submit, fate cards */
+.cine-seq-mock-bottom {
+    position: absolute;
+    bottom: 90px; left: 50%; transform: translateX(-50%);
+    width: min(820px, calc(100% - 80px));
+    display: flex; flex-direction: column; gap: 10px;
+    pointer-events: auto;
+}
+.cine-seq-mock-page-nav {
+    display: flex; gap: 8px; justify-content: center; align-items: center;
+    font-size: 11px;
+}
+.cine-seq-mock-pagebtn {
+    padding: 4px 10px;
+    background: rgba(0,0,0,0.45);
+    color: rgba(245, 235, 215, 0.55);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    border-radius: 3px;
+    font-family: inherit; font-size: 10px;
+    cursor: not-allowed; opacity: 0.55;
+}
+.cine-seq-mock-pageind {
+    color: rgba(255, 215, 0, 0.7);
+    font-size: 10px; letter-spacing: 0.1em;
+    padding: 0 6px;
+}
+.cine-seq-mock-meta {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 6px 10px;
+    border: 1px double rgba(255, 215, 0, 0.45);
+    border-radius: 0;
+    background: rgba(0,0,0,0.35);
+}
+.cine-seq-mock-meta-label {
+    font-size: 9px; letter-spacing: 0.18em;
+    color: rgba(255, 215, 0, 0.7);
+}
+.cine-seq-mock-meta-btns { display: flex; gap: 8px; }
+.cine-seq-mock-metabtn {
+    padding: 4px 10px; font-size: 11px;
+    background: rgba(0,0,0,0.5);
+    color: rgba(245, 235, 215, 0.8);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 3px; font-family: inherit;
+    cursor: pointer;
+}
+.cine-seq-mock-metabtn:hover { color: rgba(255, 215, 0, 0.95); border-color: rgba(255, 215, 0, 0.6); }
+
+.cine-seq-mock-saydo {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+}
+.cine-seq-mock-input { display: flex; flex-direction: column; gap: 3px; }
+.cine-seq-mock-input label {
+    font-size: 10px; letter-spacing: 0.1em;
+    color: rgba(255, 215, 0, 0.7);
+}
+.cine-seq-mock-input textarea {
+    background: rgba(0,0,0,0.65);
+    color: rgba(245, 235, 215, 0.95);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-family: inherit; font-size: 12px;
+    resize: vertical;
+}
+.cine-seq-mock-input textarea::placeholder { color: rgba(245, 235, 215, 0.35); }
+
+.cine-seq-mock-submit-row {
+    display: flex; gap: 10px; justify-content: center;
+}
+.cine-seq-mock-savebtn,
+.cine-seq-mock-submitbtn {
+    padding: 6px 14px;
+    background: rgba(0,0,0,0.55);
+    color: rgba(245, 235, 215, 0.85);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 3px;
+    font-family: inherit; font-size: 12px;
+    cursor: pointer;
+}
+.cine-seq-mock-submitbtn {
+    background: rgba(60, 90, 60, 0.55);
+    border-color: rgba(120, 200, 120, 0.55);
+    color: rgba(220, 255, 220, 0.95);
+    font-size: 14px; padding: 8px 18px;
+}
+
+.cine-seq-mock-fate-section { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.cine-seq-mock-fate-header {
+    font-size: 11px; letter-spacing: 0.18em;
+    color: rgba(255, 215, 0, 0.85);
+    text-transform: uppercase;
+}
+.cine-seq-mock-fate-row { display: flex; gap: 10px; justify-content: center; }
+.cine-seq-mock-fate-card {
+    width: 80px; height: 120px;
+    background: linear-gradient(135deg, rgba(50,30,10,0.85), rgba(20,12,4,0.92));
+    border: 1px solid rgba(255, 215, 0, 0.45);
+    border-radius: 4px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    color: rgba(255, 215, 0, 0.85);
+    cursor: pointer;
+    transition: transform 200ms ease, border-color 200ms ease;
+}
+.cine-seq-mock-fate-card:hover { transform: translateY(-3px); border-color: rgba(255, 215, 0, 0.85); }
+.cine-seq-mock-fate-num { font-size: 18px; letter-spacing: 0.1em; }
+.cine-seq-mock-fate-label { font-size: 9px; letter-spacing: 0.15em; opacity: 0.7; }
+
+/* Fate Threads toggle — mid-right edge */
+.cine-seq-mock-fate-threads {
+    position: absolute;
+    top: 50%; right: 18px; transform: translateY(-50%);
+    padding: 6px 12px;
+    background: rgba(0,0,0,0.55);
+    color: rgba(255, 215, 0, 0.85);
+    border: 1px solid rgba(255, 215, 0, 0.45);
+    border-radius: 3px;
+    font-family: inherit; font-size: 11px;
+    cursor: pointer; writing-mode: vertical-rl;
+    letter-spacing: 0.15em;
+}
+
+/* Control plane — bottom-right floating Continue button */
+.cine-seq-mock-control-plane {
+    position: absolute;
+    bottom: 24px; right: 24px;
+}
+.cine-seq-mock-continue {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, rgba(180,140,40,0.9), rgba(120,90,20,0.95));
+    color: rgba(255, 250, 220, 0.98);
+    border: 1px solid rgba(255, 215, 0, 0.7);
+    border-radius: 3px;
+    font-family: inherit; font-size: 13px; letter-spacing: 0.15em;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    text-transform: uppercase;
+}
+.cine-seq-mock-continue:hover { transform: translateY(-1px); }
+
+/* DSP — Dynamic Synopsis Panel (bottom center floater) */
+.cine-seq-mock-dsp {
+    position: absolute;
+    bottom: 18px; left: 50%; transform: translateX(-50%);
+    width: min(380px, calc(100% - 320px));
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    border-radius: 4px;
+    pointer-events: auto;
+    z-index: 8;
+}
+.cine-seq-mock-dsp-handle {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 10px;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.25);
+    cursor: grab;
+}
+.cine-seq-mock-dsp-title {
+    font-size: 10px; letter-spacing: 0.2em;
+    color: rgba(255, 215, 0, 0.85);
+}
+.cine-seq-mock-dsp-close {
+    width: 18px; height: 18px;
+    background: transparent; border: none;
+    color: rgba(245, 235, 215, 0.6);
+    font-size: 14px; line-height: 1;
+    cursor: pointer;
+}
+.cine-seq-mock-dsp-body {
+    padding: 8px 10px;
+    font-size: 11px; line-height: 1.4;
+    color: rgba(245, 235, 215, 0.7);
+    font-style: italic;
 }
 
 /* ─── Review panel (BFL gen + approve/reroll) ───────────────────── */
@@ -31000,11 +31259,42 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 }
 
 /* ─── Star of David dev launcher (bottom-right of app) ──────────── */
-#cineDevLauncher {
+#cineDevLauncherWrap {
     position: fixed;
     bottom: 24px;
     right: 24px;
     z-index: 99998;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#cineDevLauncherSelect {
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 215, 0, 0.85);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    transition: background 200ms ease, border-color 200ms ease;
+}
+#cineDevLauncherSelect:hover {
+    background: rgba(0, 0, 0, 0.78);
+    border-color: rgba(255, 215, 0, 0.7);
+}
+#cineDevLauncherSelect:focus {
+    outline: none;
+    border-color: rgba(255, 215, 0, 0.85);
+}
+#cineDevLauncherSelect option {
+    background: rgba(15, 12, 8, 0.98);
+    color: rgba(255, 215, 0, 0.92);
+}
+#cineDevLauncher {
+    /* No longer position:fixed — sits inside the wrapper. */
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -31017,6 +31307,7 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     cursor: pointer;
     transition: transform 200ms ease, background 200ms ease, border-color 200ms ease;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    flex-shrink: 0;
 }
 #cineDevLauncher:hover {
     transform: scale(1.08);

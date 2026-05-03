@@ -19,7 +19,7 @@ const SEQUENCE_ASSET_ROOTS = {
   }
 };
 
-const ALLOWED_ARTISTS = ['troy_bond', 'doro_veyn', 'olen_droll', 'lora_venn'];
+const ALLOWED_ARTISTS = ['ender_bond', 'doro_veyn', 'olen_droll', 'lora_venn'];
 const IMG_RE = /\.(png|jpg|jpeg|webp)$/i;
 
 export default async function handler(req, res) {
