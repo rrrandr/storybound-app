@@ -1169,8 +1169,22 @@ function stopContinuousSparkles() {
     // Generate the deck with contextual awareness
     function buildFateDeck() {
         const state = window.state || {};
-        const allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
-        const storyText = allContent.replace(/<[^>]*>/g, ' ');
+        let allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
+        let storyText = (allContent || '').replace(/<[^>]*>/g, ' ');
+        // Staged (cinegraphic) mode bypasses StoryPagination — the prose is
+        // routed into the staged renderer's beat array via
+        // _completeStagedSceneFromLiterary (app.js:103018), and pagination
+        // stays empty. Without this fallback, extractSceneContext below
+        // sees no text → confidence stays 0 → cards collapse to soft
+        // fallbacks or isSetup templates that read as scene-blind.
+        if ((!storyText || storyText.trim().length < 100) &&
+            state && state._stagedActive && state._stagedActive.plan &&
+            Array.isArray(state._stagedActive.plan.beats)) {
+            storyText = state._stagedActive.plan.beats
+                .map(function(b) { return (b && b.text) ? b.text : ''; })
+                .filter(Boolean)
+                .join(' ');
+        }
 
         // INTIMATE CONTEXT: Use erotic deck base instead of standard deck
         const deckBase = isIntimateContextActive() ? INTIMATE_DECK_BASE : fateDeckBase;

@@ -37,17 +37,14 @@ export default async function handler(req, res) {
       // Return success (idempotent) — the original operation already succeeded
       const { data: profile } = await supabase
         .from('profiles')
-        .select('subscription_fortunes, purchased_fortunes')
+        .select('fortunes')
         .eq('id', userId)
         .maybeSingle();
-      const sub = profile?.subscription_fortunes || 0;
-      const pur = profile?.purchased_fortunes || 0;
+      const fortunes = profile?.fortunes || 0;
       return res.status(200).json({
         success: true,
         duplicate: true,
-        fortunesRemaining: sub + pur,
-        subscriptionFortunes: sub,
-        purchasedFortunes: pur,
+        fortunesRemaining: fortunes,
       });
     }
 
@@ -61,7 +58,7 @@ export default async function handler(req, res) {
   }
 
   const { data: rpcResult, error: rpcErr } = await supabase
-    .rpc('consume_fortunes', { p_user_id: userId, p_amount: burnAmount });
+    .rpc('consume_fortunes_v2', { p_user_id: userId, p_amount: burnAmount });
 
   if (rpcErr) {
     console.error('[consume-fortune] RPC failed:', rpcErr);
@@ -75,15 +72,13 @@ export default async function handler(req, res) {
   }
 
   if (result.source === 'insufficient') {
-    return res.status(403).json({ error: 'insufficient_fortunes', fortunesRemaining: (result.subscription_fortunes || 0) + (result.purchased_fortunes || 0) });
+    return res.status(403).json({ error: 'insufficient_fortunes', fortunesRemaining: result.fortunes || 0 });
   }
 
-  const remaining = (result.subscription_fortunes || 0) + (result.purchased_fortunes || 0);
-  console.log(`[consume-fortune] User ${userId}: ${burnAmount} fortune(s) consumed (context: ${context || 'none'}). Sub: ${result.subscription_fortunes}, Purchased: ${result.purchased_fortunes}, Total: ${remaining}`);
+  const remaining = result.fortunes || 0;
+  console.log(`[consume-fortune] User ${userId}: ${burnAmount} fortune(s) consumed (context: ${context || 'none'}). Remaining: ${remaining}`);
   return res.status(200).json({
     success: true,
     fortunesRemaining: remaining,
-    subscriptionFortunes: result.subscription_fortunes || 0,
-    purchasedFortunes: result.purchased_fortunes || 0,
   });
 }

@@ -125,19 +125,15 @@
     <button id="treasuryToggleBtn" class="sb-btn-png sm" onclick="window.toggleTreasury()">Treasury</button>
     <div id="treasuryPanel" class="treasury-panel hidden">
       <div class="treasury-row"><span class="treasury-label">Subscription</span><span class="treasury-value" id="treasurySub">—</span><button class="treasury-buy-btn" onclick="window.showPaywall('sub_only')">Claim</button><button class="treasury-buy-btn" id="treasuryManageBtn" onclick="window.openBillingPortal()" style="display:none;">Manage</button></div>
-      <div class="treasury-row" style="flex-wrap:wrap;">
-        <span class="treasury-label" style="cursor:pointer;" id="treasuryFortunesToggle">Fortunes <span style="font-size:9px;opacity:0.6;">&#9660;</span></span>
+      <div class="treasury-row">
+        <span class="treasury-label">Fortunes</span>
         <span class="treasury-value" id="treasuryFortunes">—</span>
         <button class="treasury-buy-btn" onclick="window.showPaywall('unlock')">Claim</button>
-        <div id="treasuryFortuneBreakdown" class="hidden" style="width:100%;padding:4px 0 2px 12px;font-size:11px;color:#999;line-height:1.6;">
-          <div>Subscription: <span id="fortuneBreakSub">0</span></div>
-          <div>Fortune Reserves: <span id="fortuneBreakPurchased">0</span></div>
-          <div>StoryPass: <span id="fortuneBreakStorypass">0</span></div>
-          <div>Drip: <span id="fortuneBreakDrip">0</span></div>
-        </div>
       </div>
-      <div class="treasury-row"><span class="treasury-label">Storypass</span><span class="treasury-value" id="treasuryStorypass">—</span><button class="treasury-buy-btn" onclick="window.showPaywall('unlock')">Claim</button></div>
-      <div class="treasury-row"><span class="treasury-label" title="Each purchase grants one free Taste-length story (all scenes free).">Free Tastes</span><span class="treasury-value" id="treasuryFreeTastes">—</span></div>
+      <div class="treasury-row" id="treasuryWelcomeProgress" style="display:none;flex-wrap:wrap;">
+        <span class="treasury-label" style="font-size:11px;opacity:0.85;">Welcome bonuses</span>
+        <span class="treasury-value" id="treasuryWelcomeProgressText" style="font-size:11px;opacity:0.85;">—</span>
+      </div>
       <div class="treasury-row"><span class="treasury-label">Tempt Fates</span><span class="treasury-value" id="treasuryTemptFates">—</span></div>
     </div>
     <button id="menuReincarnationsBtn" class="sb-btn-png sm">Reincarnations</button>
@@ -507,7 +503,7 @@
   </div>
 </div>
 
-<div id="payModal" class="overlay hidden" style="z-index:10000;">
+<div id="payModal" class="overlay hidden" style="z-index:10006;">
   <div class="box pay-box" style="position:relative;">
     <button id="payModalClose" class="pay-modal-close" onclick="document.getElementById('payModal').classList.add('hidden');">&times;</button>
     <h3 id="payModalHeading">Go deeper into the story</h3>
@@ -539,30 +535,7 @@
         <div id="paywallFortuneSection" class="hidden"></div>
         <div id="payCardMobileScrim" class="pay-card-mobile-scrim"></div>
         <div class="pay-card-row">
-            <!-- ── STORYPASS CARD ── -->
-            <div class="pay-card" id="optUnlock">
-                <div class="pay-card-inner">
-                    <div class="pay-card-back">
-                        <img src="/assets/card-art/cards/White-Storypass-back.jpg" alt="Storypass">
-                    </div>
-                    <div class="pay-card-front">
-                        <img src="/assets/card-art/cards/White-Storypass-front.jpg" alt="Storypass">
-                        <div class="pay-card-content">
-                            <div class="pay-card-tagline">Undress the next chapter.</div>
-                            <ul class="pay-card-features">
-                                <li>Reveal 20 more scenes in this story</li>
-                                <li>Full Fate Card access</li>
-                                <li>Continue this story</li>
-                                <li>Unlock a new Taste story</li>
-                            </ul>
-                            <button id="payOneTime" class="pay-card-btn">$3 &mdash; Continue Story</button>
-                            <button id="payOneTimeBlocked" class="pay-card-btn hidden">Unlock Story</button>
-                            <div class="stripe-secure-note">Secure checkout on Stripe</div>
-                            <div id="storypassDisabledNotice" class="hidden" style="font-size:0.65em; color:#888; text-align:center; margin-top:6px;">Unavailable with current settings</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- (Storypass card removed — folded into Fortunes Pack as the 20F/$3 tier below.) -->
 
             <!-- ── FORTUNES CARD ── -->
             <div class="pay-card">
@@ -584,6 +557,8 @@
                             <div id="payCardPromoBadge" class="fortune-promo-badge hidden"></div>
                             <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
                             <div class="pay-card-fortune-options">
+                                <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(20, '$3');">20<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $3</button>
+                                <p class="fortune-pack-subline">Continue this story.</p>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(60, '$5');">60<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $5</button>
                                 <p class="fortune-pack-subline">Keep Fate's quill moving.</p>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(120, '$9');">120<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $9</button>
@@ -806,17 +781,6 @@
     <h3 style="color:var(--gold); margin-bottom:6px;">Your Fortunes are dwindling.</h3>
     <p style="opacity:0.7; font-size:0.88em; font-style:italic; margin-bottom:16px;">But your story is far from over.</p>
 
-    <!-- STORYPASS SECTION (hidden for subscribers) -->
-    <div id="fortuneModalStorypass" class="fortune-modal-section">
-      <div class="fortune-modal-divider"></div>
-      <p class="fortune-modal-header">Undress the next chapter.</p>
-      <p class="fortune-modal-label">Storypass</p>
-      <p class="fortune-modal-desc">Continue this story for the next <strong>20 scenes</strong>.</p>
-      <p class="fortune-modal-fine">Applies only to this story. Does not add to Fortune balance.<br>Cannot be used for Tempt Fate or Petition Fate.</p>
-      <button class="fortune-pack-btn" onclick="window.purchaseStorypass();">Continue This Story &mdash; $3</button>
-      <div class="stripe-secure-note">Secure checkout on Stripe</div>
-    </div>
-
     <!-- FORTUNE PACKS SECTION (always visible) -->
     <div id="fortuneModalPacks" class="fortune-modal-section">
       <div class="fortune-modal-divider"></div>
@@ -825,6 +789,7 @@
       <div id="fortuneModalPromoBadge" class="fortune-promo-badge hidden"></div>
       <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
       <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+        <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(20, '$3');">20<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $3</button>
         <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(60, '$5');">60<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $5</button>
         <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(120, '$9');">120<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $9</button>
         <button class="fortune-pack-btn" onclick="window.purchaseFortunePack(240, '$16');">240<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $16</button>
@@ -1509,6 +1474,7 @@
                     <button class="modality-btn" id="modeLiterary" type="button">Literary</button>
                     <button class="modality-btn" id="modeCinegraphic" type="button">Cinegraphic</button>
                 </div>
+                <p class="modality-description" id="modalityDescription"></p>
                 <button class="sb-btn-png lg" id="beginBtn" disabled>Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
                 <!-- Story Mode Toggle (Active ⟷ Mindful) — inside wrapper, visually attached to story button only.
                      Hidden automatically when the corridor-inference score is confident; replaced by the
@@ -1530,15 +1496,7 @@
                 <span id="beginFortuneCount" class="begin-fortune-count">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span>
             </button>
             <div id="burnRateIndicator" class="burn-rate-indicator hidden"></div>
-            <!-- Storypass counter + dropdown -->
-            <div id="storypassCounter" class="storypass-counter hidden">
-                <span class="storypass-label">Storypass</span>
-                <span id="storypassCount" class="storypass-count">0</span>
-                <div id="storypassDropdown" class="storypass-dropdown hidden">
-                    <div class="storypass-dropdown-header">Stories with Storypass</div>
-                    <div id="storypassList" class="storypass-list"></div>
-                </div>
-            </div>
+            <!-- (Storypass counter removed — currency unified into Fortunes.) -->
         </div>
     </div>
 
@@ -2061,19 +2019,14 @@
         <span class="fw-fortune-count" id="fwFortuneCount">0</span>
         <img src="/assets/ui/Fortunes-Icon.png" alt="F" class="fw-fortune-icon">
     </div>
-    <div class="fw-breakdown" id="fwBreakdown">
-        <div class="fw-break-row"><span class="fw-break-label">Storypass</span><span class="fw-break-val" id="fwBreakStorypass">0</span></div>
-        <div class="fw-break-row"><span class="fw-break-label">Subscriber</span><span class="fw-break-val" id="fwBreakSubscriber">0</span></div>
-        <div class="fw-break-row"><span class="fw-break-label">Purchased</span><span class="fw-break-val" id="fwBreakPurchased">0</span></div>
-        <div class="fw-break-row"><span class="fw-break-label">Drip</span><span class="fw-break-val" id="fwBreakDrip">0</span></div>
-    </div>
+    <!-- (Fortune breakdown removed — single unified balance.) -->
 </div>
 
 <script src="/sound.js?v=20260417a"></script>
 <script src="/fatecards.js?v=20260429ba"></script>
 <script src="/orchestration-client.js?v=20260429h"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260504x"></script>
+<script src="/app.js?v=20260504y"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
@@ -2110,7 +2063,7 @@
     <p id="storyLimitMsg" style="color:var(--ink,#ddd); font-family:'Lora',serif; font-size:0.9em; margin:8px 0 16px;"></p>
     <div id="storyLimitList" style="margin-bottom:18px;"></div>
     <div class="story-limit-purchase-row">
-      <button class="sb-btn-png sm" onclick="document.getElementById('storyLimitModal').classList.add('hidden'); window.showPaywall('unlock');">Get Storypass</button>
+      <button class="sb-btn-png sm" onclick="document.getElementById('storyLimitModal').classList.add('hidden'); window.showPaywall('unlock');">Buy Fortunes</button>
       <button class="sb-btn-png sm" onclick="document.getElementById('storyLimitModal').classList.add('hidden'); window.showPaywall('sub_only');">Subscribe</button>
     </div>
     <button class="sb-btn-png xs" onclick="document.getElementById('storyLimitModal').classList.add('hidden');" style="margin-top:14px;">Close</button>

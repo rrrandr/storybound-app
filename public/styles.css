@@ -13170,43 +13170,34 @@ textarea.fate-field {
    leftmost ("S.") and rightmost ("...VENN") characters were getting
    clipped behind that wrap zone. 4% × 2 sides = 8% reserved breathing
    room — enough to fully clear the wrap on standard-aspect 5:7 books. */
-.gn-cover-credit-band {
+/* Selector bumped to .book-front img.gn-cover-credit-band so it wins
+   specificity against the generic .book-front img rule (which sets
+   width/height: 100% + object-fit: cover and was stretching the band
+   to fill the entire cover, clipping the triangle's corners). */
+.book-front img.gn-cover-credit-band,
+.book-back img.gn-cover-credit-band--back {
     position: absolute;
-    left: 8%;
-    right: 8%;
-    bottom: 3%;
-    width: 84%;
+    left: 12%;
+    right: 12%;
+    bottom: 0;
+    width: 76%;
     height: auto;
     max-height: 18%;
     object-fit: contain;
     object-position: bottom center;
-    z-index: 6;
-    pointer-events: none;
-    display: block;
-    filter: drop-shadow(0 -1px 2px rgba(0, 0, 0, 0.18));
-}
-/* Back-cover variant — same inset + sizing as front. */
-.gn-cover-credit-band--back {
-    position: absolute;
-    left: 8%;
-    right: 8%;
-    bottom: 3%;
-    width: 84%;
-    height: auto;
-    max-height: 18%;
-    object-fit: contain;
-    object-position: bottom center;
+    border-radius: 0;
     z-index: 6;
     pointer-events: none;
     display: block;
     filter: drop-shadow(0 -1px 2px rgba(0, 0, 0, 0.18));
 }
 /* Empty src → hide (avoids the broken-image icon while JS hasn't yet
-   set the artist-specific source). */
-.gn-cover-credit-band:not([src]),
-.gn-cover-credit-band[src=""],
-.gn-cover-credit-band--back:not([src]),
-.gn-cover-credit-band--back[src=""] {
+   set the artist-specific source). Specificity matched to the
+   .book-front img.gn-cover-credit-band rule so the display:none wins. */
+.book-front img.gn-cover-credit-band:not([src]),
+.book-front img.gn-cover-credit-band[src=""],
+.book-back img.gn-cover-credit-band--back:not([src]),
+.book-back img.gn-cover-credit-band--back[src=""] {
     display: none;
 }
 
@@ -19435,6 +19426,24 @@ body.corridor-mode .sb-grid.corridor-section {
     color: #f5ecd6;
     box-shadow: 0 0 8px rgba(201, 162, 78, 0.25);
 }
+/* Modality description — single line that swaps with the toggle, sits
+   between the Literary/Cinegraphic toggle and the Enter Your Story CTA. */
+.modality-description {
+    margin: 0 auto 14px;
+    max-width: 420px;
+    text-align: center;
+    color: rgba(232, 200, 130, 0.78);
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.86em;
+    font-style: italic;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    min-height: 1.4em;
+}
+.modality-description:empty {
+    margin: 0;
+    min-height: 0;
+}
 /* Disabled CTA visual — applies to #beginBtn when no modality picked yet. */
 #beginBtn:disabled,
 #beginBtn[disabled] {
@@ -22787,13 +22796,116 @@ button.gn-selector-card[disabled] {
 .staged-grade {
     position: absolute;
     inset: 0;
-    z-index: 2;
+    /* z-index 3: above the rack-focus blur layers (z:2) so the color
+       grade tints the perceived image regardless of which side is
+       blurred. */
+    z-index: 3;
     pointer-events: none;
     mix-blend-mode: soft-light;
     opacity: 0;
     background-color: transparent;
     transition: background-color 1200ms ease, opacity 1200ms ease;
 }
+
+/* ── Rack-focus blur (cinematic shallow-DOF speaker shift) ──
+   Two backdrop-filter layers, each masked to one side of the frame.
+   When the protagonist speaks/thinks, the BACKGROUND blur (--blur-bg)
+   fades in — softening the LI side of the image so the PC silhouette
+   in the foreground reads as the focal subject. When the LI/another
+   character speaks, the FOREGROUND blur (--blur-fg) fades in —
+   softening the PC side so the speaker behind comes forward.
+   Toggled by JS via .staged-hero--rack-pc / .staged-hero--rack-li
+   classes on the .staged-hero parent (see _setStagedRackFocus in
+   app.js). Backdrop-filter blurs only what's BEHIND in the stacking
+   context — at z:2 we sit above the hero image (z:1, no explicit z)
+   and below the color grade (z:3) so neither the grade nor vignette
+   layers get blurred. Mask falloff is soft (linear-gradient with
+   midtone stop) so the focus pull reads as a depth-of-field shift,
+   not a hard split. */
+.staged-rack-blur {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    backdrop-filter: blur(7px) saturate(0.93);
+    -webkit-backdrop-filter: blur(7px) saturate(0.93);
+    opacity: 0;
+    transition: opacity 700ms ease;
+    /* Soft slight darken bias toward the blurred side — doubles the
+       depth-of-field cue. Subtle (0.08) so the unblurred side stays
+       photographically clean. */
+    background: rgba(0, 0, 0, 0.08);
+}
+/* Background blur — masks the RIGHT side of the frame (LI area in
+   over_shoulder_pc framing where the LI sits at ~62% horizontal per
+   the existing focal-point system at app.js:101978). Soft falloff
+   in the middle so the transition into blur reads as depth, not a
+   wipe. */
+.staged-rack-blur--blur-bg {
+    -webkit-mask-image: linear-gradient(to right,
+        transparent 0%,
+        transparent 32%,
+        rgba(0, 0, 0, 0.55) 50%,
+        black 72%,
+        black 100%);
+    mask-image: linear-gradient(to right,
+        transparent 0%,
+        transparent 32%,
+        rgba(0, 0, 0, 0.55) 50%,
+        black 72%,
+        black 100%);
+}
+/* Foreground blur — masks the LEFT side (PC silhouette area). Mirror
+   of --blur-bg. */
+.staged-rack-blur--blur-fg {
+    -webkit-mask-image: linear-gradient(to right,
+        black 0%,
+        black 28%,
+        rgba(0, 0, 0, 0.55) 50%,
+        transparent 68%,
+        transparent 100%);
+    mask-image: linear-gradient(to right,
+        black 0%,
+        black 28%,
+        rgba(0, 0, 0, 0.55) 50%,
+        transparent 68%,
+        transparent 100%);
+}
+/* Reverse-OTS framing (shot_style="ots_char") puts the speaking
+   character's back in the foreground LEFT, with the PC pushed to
+   the background RIGHT. The mask geometry flips: PC blur now masks
+   the right side, LI blur masks the left. */
+.staged-hero--rack-reverse .staged-rack-blur--blur-bg {
+    -webkit-mask-image: linear-gradient(to right,
+        black 0%,
+        black 28%,
+        rgba(0, 0, 0, 0.55) 50%,
+        transparent 68%,
+        transparent 100%);
+    mask-image: linear-gradient(to right,
+        black 0%,
+        black 28%,
+        rgba(0, 0, 0, 0.55) 50%,
+        transparent 68%,
+        transparent 100%);
+}
+.staged-hero--rack-reverse .staged-rack-blur--blur-fg {
+    -webkit-mask-image: linear-gradient(to right,
+        transparent 0%,
+        transparent 32%,
+        rgba(0, 0, 0, 0.55) 50%,
+        black 72%,
+        black 100%);
+    mask-image: linear-gradient(to right,
+        transparent 0%,
+        transparent 32%,
+        rgba(0, 0, 0, 0.55) 50%,
+        black 72%,
+        black 100%);
+}
+/* Active-state toggles — JS sets one of these on .staged-hero. */
+.staged-hero--rack-pc .staged-rack-blur--blur-bg { opacity: 1; }
+.staged-hero--rack-li .staged-rack-blur--blur-fg { opacity: 1; }
 
 /* Phase swap: incoming image starts at 0, fades to 1 (handled by .loaded
    above). Outgoing image gets .staged-hero-img--retiring to fade to 0

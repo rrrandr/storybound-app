@@ -145,22 +145,14 @@
    * No AI model may override these rules.
    */
 
-  // MONETIZATION_GATES — intensity tier removed. Gates control completion/length only.
+  // MONETIZATION_GATES — currency unification: a single balance-gated regime.
+  // Cliffhangers are designed narrative beats, not paywall walls. The (b)
+  // "approach arc close" preference (set when balance is near zero) nudges
+  // generation toward arc-natural pause points without crossing the wallet
+  // firewall — the boolean preference, not the raw balance, is what passes.
   const MONETIZATION_GATES = {
-    free: {
-      name: 'TASTE_CAP',
-      completionAllowed: false,
-      cliffhangerRequired: true,
-      maxStoryLength: 'taste'
-    },
-    pass: {
-      name: 'PASS_UNLOCKED',
-      completionAllowed: true,
-      cliffhangerRequired: false,
-      maxStoryLength: 'fling'
-    },
-    sub: {
-      name: 'SUB_UNLOCKED',
+    default: {
+      name: 'BALANCE_GATED',
       completionAllowed: true,
       cliffhangerRequired: false,
       maxStoryLength: 'soulmates'
@@ -450,20 +442,30 @@
    */
   // enforceMonetizationGates — controls ONLY completion, length, saves, fortunes.
   // Does NOT influence intimacy authorization in any way.
-  function enforceMonetizationGates(accessTier) {
-    const gate = MONETIZATION_GATES[accessTier];
-    if (!gate) {
-      console.warn(`[ORCHESTRATION] Unknown access tier: ${accessTier}, defaulting to 'free'`);
-      return enforceMonetizationGates('free');
-    }
+  function enforceMonetizationGates(accessTier, options = {}) {
+    const gate = MONETIZATION_GATES.default;
+    const narrativeBeatPreference = options.narrativeBeatPreference || 'normal';
 
     return {
-      accessTier,
+      accessTier: accessTier || 'default',
       gateCode: gate.name,
       completionAllowed: gate.completionAllowed,
       cliffhangerRequired: gate.cliffhangerRequired,
-      storyLengthLimit: gate.maxStoryLength
+      storyLengthLimit: gate.maxStoryLength,
+      narrativeBeatPreference,
     };
+  }
+
+  /**
+   * Derive the narrative beat preference from current balance + scene cost.
+   * Returns 'approach_arc_close' when within ~2 scenes of zero. The boolean
+   * crosses the wallet-data firewall via gateEnforcement; balance never does.
+   */
+  function deriveNarrativeBeatPreference(fortunes, sceneCost) {
+    if (typeof fortunes !== 'number' || typeof sceneCost !== 'number' || sceneCost <= 0) {
+      return 'normal';
+    }
+    return fortunes <= sceneCost * 2 ? 'approach_arc_close' : 'normal';
   }
 
   // ===========================================================================
@@ -2696,14 +2698,11 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         state.integrationOutput = await callChatGPT(messages, 'PRIMARY_AUTHOR');
       }
 
-      // Enforce cliffhanger if required
-      if (state.gateEnforcement.cliffhangerRequired) {
-        // Check if output already has a cliffhanger feel
-        const hasCliffhanger = /\.{3}$|…$|\?\s*$|suspended|interrupted|moment hangs/i.test(state.integrationOutput);
-        if (!hasCliffhanger) {
-          state.integrationOutput += '\n\n[The moment hangs suspended, waiting...]';
-        }
-      }
+      // Detect a cliffhanger beat in the output (used downstream for first-arc
+      // welcome grant + UI signaling). Cliffhangers are no longer forced —
+      // they emerge naturally from arc design + (b) "approach_arc_close"
+      // narrative beat preference when balance is near zero.
+      state.isCliffhangerScene = /\.{3}$|…$|\?\s*$|suspended|interrupted|moment hangs/i.test(state.integrationOutput || '');
 
       state.timing.integrationPassMs = Date.now() - integrationStartTime;
 
@@ -2756,6 +2755,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       finalOutput: state.integrationOutput,
       orchestrationState: state,
       gateEnforcement: state.gateEnforcement,
+      isCliffhangerScene: !!state.isCliffhangerScene,
       rendererUsed: state.rendererCalled && !state.rendererFailed,
       fateStumbled: state.fateStumbled,
       forcedInterruption: state.forcedInterruption,  // Steamy/Passionate cut-away due to author/renderer failure
@@ -3676,6 +3676,7 @@ Tension: ${outline.tension_vector || 'N/A'}`;
 
     // Utilities
     enforceMonetizationGates,
+    deriveNarrativeBeatPreference,
     validateSD,
     parseConstraints,
     createOrchestrationState,

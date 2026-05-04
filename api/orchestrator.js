@@ -295,30 +295,34 @@ const DEFAULT_MODELS = {
 // =============================================================================
 
 /**
- * Monetization tier enforcement.
- * These gates MUST be checked BEFORE any renderer call.
- * No AI model may override these rules.
+ * Monetization gating after currency unification: there is exactly one gate
+ * (balance > 0 to spend), enforced by api/consume-fortune. Cliffhangers are
+ * narrative beats designed into story arcs, not paywall walls. The orchestrator
+ * never forces a cliffhanger; the (b) "approach arc close" preference (set
+ * when user is within ~2 scenes of zero) nudges generation toward arc-natural
+ * pause points without crossing the wallet-data firewall.
  */
 const MONETIZATION_GATES = {
-  free: {
-    name: 'TASTE_CAP',
-    completionAllowed: false,
-    cliffhangerRequired: true,
-    maxStoryLength: 'taste'
-  },
-  pass: {
-    name: 'PASS_UNLOCKED',
-    completionAllowed: true,
-    cliffhangerRequired: false,
-    maxStoryLength: 'fling'
-  },
-  sub: {
-    name: 'SUB_UNLOCKED',
+  default: {
+    name: 'BALANCE_GATED',
     completionAllowed: true,
     cliffhangerRequired: false,
     maxStoryLength: 'soulmates'
   }
 };
+
+/**
+ * Derive the narrative beat preference from a user's spendable balance and
+ * the upcoming scene's cost. Returns 'approach_arc_close' when within ~2
+ * scenes of zero, 'normal' otherwise. This boolean signal crosses the firewall
+ * legitimately via gateEnforcement; raw balance never does.
+ */
+function deriveNarrativeBeatPreference({ fortunes, sceneCost }) {
+  if (typeof fortunes !== 'number' || typeof sceneCost !== 'number' || sceneCost <= 0) {
+    return 'normal';
+  }
+  return fortunes <= sceneCost * 2 ? 'approach_arc_close' : 'normal';
+}
 
 // =============================================================================
 // EROTIC SCENE DIRECTIVE (ESD) SCHEMA
@@ -471,23 +475,20 @@ function getDefaultModel(role) {
  * - Whether completion is permitted
  * - Whether a cliffhanger is required
  */
-function enforceMonetizationGates(accessTier, requestedEroticism) {
-  const gate = MONETIZATION_GATES[accessTier];
-  if (!gate) {
-    // Default to most restrictive
-    console.warn(`Unknown access tier: ${accessTier}, defaulting to 'free'`);
-    return enforceMonetizationGates('free', requestedEroticism);
-  }
+function enforceMonetizationGates(accessTier, requestedEroticism, options = {}) {
+  const gate = MONETIZATION_GATES.default;
+  const narrativeBeatPreference = options.narrativeBeatPreference || 'normal';
 
   return {
-    accessTier,
+    accessTier: accessTier || 'default',
     gateCode: gate.name,
     requestedEroticism,
     effectiveEroticism: requestedEroticism,
     wasDowngraded: false,
     completionAllowed: gate.completionAllowed,
     cliffhangerRequired: gate.cliffhangerRequired,
-    maxStoryLength: gate.maxStoryLength
+    maxStoryLength: gate.maxStoryLength,
+    narrativeBeatPreference,
   };
 }
 
@@ -818,12 +819,7 @@ async function orchestrateStoryGeneration({
     const integrationResult = await callChatGPT(integrationPrompt, 'PRIMARY_AUTHOR');
 
     state.integrationOutput = integrationResult.storyText;
-
-    // Apply cliffhanger if required by monetization
-    if (state.gateEnforcement.cliffhangerRequired && !integrationResult.hasCliffhanger) {
-      // Force cliffhanger ending
-      state.integrationOutput += '\n\n[Scene interrupted — the moment hangs suspended...]';
-    }
+    state.isCliffhangerScene = !!integrationResult.hasCliffhanger;
 
   } catch (err) {
     state.errors.push(`Integration Pass failed: ${err.message}`);
@@ -839,6 +835,7 @@ async function orchestrateStoryGeneration({
     finalOutput: state.integrationOutput,
     orchestrationState: state,
     gateEnforcement: state.gateEnforcement,
+    isCliffhangerScene: !!state.isCliffhangerScene,
     rendererUsed: state.rendererCalled && !state.rendererFailed,
     fateStumbled: state.fateStumbled,
     errors: state.errors
@@ -958,6 +955,7 @@ module.exports = {
   // Core orchestration
   orchestrateStoryGeneration,
   createOrchestrationState,
+  deriveNarrativeBeatPreference,
 
   // Model validation
   validateModelForRole,
