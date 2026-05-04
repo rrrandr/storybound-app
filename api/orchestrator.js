@@ -261,6 +261,14 @@ const ALLOWED_MODELS = {
   BACK_COVER_SYNOPSIS: [
     'gpt-4o-mini',
     'gpt-4o'
+  ],
+
+  // Cinesequence beat-text rewrite — view 2/4+ of a cine-sequence triggers
+  // an LLM rewrite of the canonical beats with story context (LI name,
+  // world, tone). Strict shape: same beat count, preserved atMs/durationMs.
+  CINE_BEAT_REWRITE: [
+    'gpt-4o-mini',
+    'gpt-4o'
   ]
 };
 
@@ -278,7 +286,8 @@ const DEFAULT_MODELS = {
   STRUCTURAL_CORRECTION: 'gpt-4o-mini',
   CONCIERGE: 'gpt-4o-mini',
   WORKING_TITLE: 'gpt-4o-mini',
-  BACK_COVER_SYNOPSIS: 'gpt-4o-mini'
+  BACK_COVER_SYNOPSIS: 'gpt-4o-mini',
+  CINE_BEAT_REWRITE: 'gpt-4o-mini'
 };
 
 // =============================================================================

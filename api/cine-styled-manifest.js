@@ -16,10 +16,18 @@ const SEQUENCE_ASSET_ROOTS = {
   ocean_lighthouse: {
     shot:   'public/assets/metaphors/lighthouse_wave',
     insert: 'public/assets/metaphors/lighthouse_wave/inserts'
+  },
+  studio_signal: {
+    shot:   'public/assets/metaphors/studio_signal',
+    insert: 'public/assets/metaphors/studio_signal'
+  },
+  void_collision: {
+    shot:   'public/assets/metaphors/void_collision',
+    insert: 'public/assets/metaphors/void_collision'
   }
 };
 
-const ALLOWED_ARTISTS = ['ender_bond', 'doro_veyn', 'olen_droll', 'lora_venn'];
+const ALLOWED_ARTISTS = ['ender_bond', 'ryo_toro', 'olen_droll', 'lora_venn'];
 const IMG_RE = /\.(png|jpg|jpeg|webp)$/i;
 
 export default async function handler(req, res) {

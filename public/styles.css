@@ -30483,23 +30483,40 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     position: absolute; inset: 0;
     background: #000;
 }
-/* Hero frame — fixed 1024×1024 square, centered in the viewport. All
-   images (waves AND physicalities) sit inside the same frame and fill
-   it edge-to-edge via object-fit: cover, matching the position the
-   cinematic story's hero images occupy before/after the cinesequence.
-   Mixed source aspects (waves 1402×1122, phys vary) get cropped at the
-   sides, never letterboxed — keeps a consistent square presentation. */
-.cine-seq-img {
+/* Aperture — fixed 1024×1024 square, centered in the viewport. The
+   aperture NEVER moves or scales. Per-shot camera animations (push,
+   pan, dolly_zoom, etc.) animate the IMAGES inside this aperture; the
+   overflow:hidden clips any scaled/panned image to the aperture frame
+   so the cinema-viewport metaphor holds. */
+.cine-seq-aperture {
     position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
+    inset: 0;
+    margin: auto;
     width: min(1024px, 100vmin);
     height: min(1024px, 100vmin);
+    overflow: hidden;
+    background: #000;
+}
+.cine-seq-img {
+    /* Image fills the aperture; transform property stays free for
+       per-shot camera moves. Mixed source aspects (waves 1402×1122,
+       phys vary) get cropped at the sides via object-fit, never
+       letterboxed — keeps a consistent square presentation.
+       NOTE: no transition on transform — the safety-net easing
+       between shot animations was actually being perceived as
+       motion (180ms scale-back at every cut). With odd-only ken
+       burns + even shots held still, scale changes happen instantly
+       at shot boundaries, which reads as clean cuts. */
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
     object-position: center center;
     opacity: 0;
     pointer-events: none;
     background: #000;
+    will-change: transform, opacity;
 }
 #cineSeqShotA { opacity: 1; }
 .cine-seq-img--shot { z-index: 1; }
@@ -30721,9 +30738,9 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 .cine-seq-player--style-ender_bond .cine-seq-img {
     filter: contrast(1.05) saturate(1.08);
 }
-.cine-seq-player--style-doro_veyn .cine-seq-img {
-    /* graphic noir — high contrast, near-monochrome */
-    filter: grayscale(0.85) contrast(1.45) brightness(0.92);
+.cine-seq-player--style-ryo_toro .cine-seq-img {
+    /* manga ink — high contrast, low saturation, screentone-leaning */
+    filter: grayscale(0.55) contrast(1.55) brightness(0.96) saturate(0.7);
 }
 .cine-seq-player--style-olen_droll .cine-seq-img {
     /* flat editorial cartoon — muted, lifted */
@@ -31097,14 +31114,89 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     font-size: 13px;
 }
 
+.cine-seq-review-modifier-row {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px 14px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.cine-seq-review-modifier-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    padding-top: 7px;
+    white-space: nowrap;
+}
+.cine-seq-review-modifier {
+    flex: 1;
+    resize: vertical;
+    padding: 7px 10px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.45;
+    min-height: 36px;
+    transition: border-color 180ms ease;
+}
+.cine-seq-review-modifier::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+    font-style: italic;
+}
+.cine-seq-review-modifier:focus {
+    border-color: rgba(255, 215, 0, 0.5);
+    outline: none;
+}
 .cine-seq-review-actions {
     display: flex;
+    align-items: center;
     justify-content: flex-end;
     gap: 8px;
     padding: 10px 14px;
     border-top: 1px solid rgba(255, 255, 255, 0.12);
     background: rgba(0, 0, 0, 0.3);
 }
+.cine-seq-review-model-label {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+    margin-right: -2px;
+}
+.cine-seq-review-model {
+    padding: 7px 28px 7px 10px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.45);
+    color: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><path fill='%23ffd700' d='M0 0l4 5 4-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 9px center;
+    background-size: 8px 5px;
+    transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+}
+.cine-seq-review-model:hover,
+.cine-seq-review-model:focus {
+    border-color: rgba(255, 215, 0, 0.5);
+    color: rgba(255, 215, 0, 0.95);
+    outline: none;
+}
+.cine-seq-review-model option {
+    background: #1a1410;
+    color: rgba(255, 255, 255, 0.9);
+}
+/* Group [Model][Select][Generate] on the left, push the rest right. */
+#cineSeqReviewGenerate { margin-right: auto; }
 .cine-seq-review-btn {
     padding: 7px 14px;
     border-radius: 4px;
@@ -31223,30 +31315,176 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     100% { opacity: 0;    transform: scale(1.2); filter: blur(8px); }
 }
 
-/* Camera push-in — subtle scale on the stage during a beat range.
-   Duration + target scale set per-cue via CSS vars. */
+/* (Deprecated stage-level push.) The aperture is fixed and must not
+   move. Legacy fxCues `push_in` still adds this class, but the rule
+   below is intentionally a no-op. Per-shot camera moves (data-cam on
+   stage, animation on .cine-seq-img) replaced this approach. */
 .cine-seq-stage--push {
-    transform: scale(var(--cine-push-scale, 1.06));
-    transition: transform var(--cine-push-duration, 5000ms) ease-out;
-    transform-origin: center center;
+    /* no-op — aperture invariant: frame never moves. */
 }
 
-/* Beat-text overlay — bottom-third prose, serif, tight type.
+/* ─── Per-shot camera moves (Ken Burns / pan / zoom / orbit) ─────
+   Applied via [data-cam] on the stage. Animation duration drawn from
+   --shot-duration, set by JS to (shot.outMs − shot.inMs). All moves
+   include scale > 1 so translation never reveals canvas edges.
+   Default (no data-cam, or "hold") resets transforms cleanly. */
+.cine-seq-stage[data-cam] .cine-seq-img {
+    transform-origin: center center;
+}
+.cine-seq-stage:not([data-cam]) .cine-seq-img,
+.cine-seq-stage[data-cam=""] .cine-seq-img,
+.cine-seq-stage[data-cam="hold"] .cine-seq-img {
+    animation: none;
+    transform: none;
+}
+/* Ken Burns — alternating in-out-in-out cadence across consecutive
+   shots so the scale at one shot's end matches the next shot's start
+   (no snap at cuts). Odd-idx shots breathe IN (1.00 → 1.13); even-idx
+   shots breathe OUT (1.13 → 1.00). Linear easing keeps the motion
+   subliminal. The renderer resolves cameraMove='ken_burns' to either
+   ken_burns_in or ken_burns_out based on shot.idx parity. */
+.cine-seq-stage[data-cam="ken_burns_in"] .cine-seq-img {
+    animation: cine-cam-ken-burns-in var(--shot-duration, 4000ms) linear forwards;
+}
+@keyframes cine-cam-ken-burns-in {
+    from { transform: scale(1.00); }
+    to   { transform: scale(1.13); }
+}
+/* Settle — used by even-index shots paired with odd-index ken_burns_in.
+   Starts at 1.13 (matches previous odd's end → no snap at cut), descends
+   to 1.00 in the first 18% of the shot, then holds still for the rest.
+   So most of the even shot is motionless but the entry doesn't lurch. */
+.cine-seq-stage[data-cam="ken_burns_settle"] .cine-seq-img {
+    animation: cine-cam-ken-burns-settle var(--shot-duration, 4000ms) ease-out forwards;
+}
+@keyframes cine-cam-ken-burns-settle {
+    0%   { transform: scale(1.13); }
+    18%  { transform: scale(1.00); }
+    100% { transform: scale(1.00); }
+}
+.cine-seq-stage[data-cam="push_strong"] .cine-seq-img {
+    animation: cine-cam-push-strong var(--shot-duration, 4000ms) ease-out forwards;
+}
+@keyframes cine-cam-push-strong {
+    from { transform: scale(1.0); }
+    to   { transform: scale(1.22); }
+}
+.cine-seq-stage[data-cam="push_extreme"] .cine-seq-img {
+    animation: cine-cam-push-extreme var(--shot-duration, 4000ms) ease-in forwards;
+}
+@keyframes cine-cam-push-extreme {
+    from { transform: scale(1.0); }
+    to   { transform: scale(1.50); }
+}
+.cine-seq-stage[data-cam="zoom_out"] .cine-seq-img {
+    animation: cine-cam-zoom-out var(--shot-duration, 4000ms) ease-out forwards;
+}
+@keyframes cine-cam-zoom-out {
+    from { transform: scale(1.30); }
+    to   { transform: scale(1.0); }
+}
+.cine-seq-stage[data-cam="pan_down"] .cine-seq-img {
+    animation: cine-cam-pan-down var(--shot-duration, 4000ms) ease-in-out forwards;
+}
+/* pan_down — camera tilts DOWN: start with image shifted DOWN (frame
+   shows TOP of image), end with image shifted UP (frame shows BOTTOM).
+   Scale 1.50 + ±25% translate puts the image's top edge at the frame
+   top at start, and the image's bottom edge at the frame bottom at end. */
+@keyframes cine-cam-pan-down {
+    from { transform: translateY(25%)  scale(1.50); }
+    to   { transform: translateY(-25%) scale(1.50); }
+}
+.cine-seq-stage[data-cam="pan_up"] .cine-seq-img {
+    animation: cine-cam-pan-up var(--shot-duration, 4000ms) ease-in-out forwards;
+}
+/* pan_up — camera tilts UP: start with image shifted UP (frame shows
+   BOTTOM of image), end with image shifted DOWN (frame shows TOP).
+   Mirror of pan_down. */
+@keyframes cine-cam-pan-up {
+    from { transform: translateY(-25%) scale(1.50); }
+    to   { transform: translateY(25%)  scale(1.50); }
+}
+.cine-seq-stage[data-cam="pan_left"] .cine-seq-img {
+    animation: cine-cam-pan-left var(--shot-duration, 4000ms) ease-in-out forwards;
+}
+@keyframes cine-cam-pan-left {
+    from { transform: translateX(15%) scale(1.24); }
+    to   { transform: translateX(-15%) scale(1.24); }
+}
+.cine-seq-stage[data-cam="pan_right"] .cine-seq-img {
+    animation: cine-cam-pan-right var(--shot-duration, 4000ms) ease-in-out forwards;
+}
+@keyframes cine-cam-pan-right {
+    from { transform: translateX(-15%) scale(1.24); }
+    to   { transform: translateX(15%) scale(1.24); }
+}
+.cine-seq-stage[data-cam="dolly_dive"] .cine-seq-img {
+    /* Diving INTO and DOWN simultaneously — for plunging shots */
+    animation: cine-cam-dolly-dive var(--shot-duration, 4000ms) ease-in forwards;
+}
+@keyframes cine-cam-dolly-dive {
+    from { transform: translateY(-8%) scale(1.0); }
+    to   { transform: translateY(10%) scale(1.40); }
+}
+.cine-seq-stage[data-cam="orbit_left"] .cine-seq-img {
+    animation: cine-cam-orbit-left var(--shot-duration, 4000ms) ease-in-out forwards;
+}
+@keyframes cine-cam-orbit-left {
+    from { transform: translate(8%, -3%) scale(1.20); }
+    to   { transform: translate(-8%, 3%) scale(1.20); }
+}
+.cine-seq-stage[data-cam="orbit_right"] .cine-seq-img {
+    animation: cine-cam-orbit-right var(--shot-duration, 4000ms) ease-in-out forwards;
+}
+@keyframes cine-cam-orbit-right {
+    from { transform: translate(-8%, -3%) scale(1.20); }
+    to   { transform: translate(8%, 3%) scale(1.20); }
+}
+/* Dolly-zoom (Hitchcock vertigo) — fakes independent scaling of fg/bg
+   on a flat image by shifting the transform-origin to where the
+   anchored subject sits. Scaling around that anchor makes the subject
+   stay roughly in place while everything above (or surrounding it)
+   appears to push outward — the looming illusion. Anchor is per-shot
+   via shot.cameraAnchor → --cam-origin (e.g. "center 65%"); falls
+   back to "center 72%" (lighthouse base default). */
+.cine-seq-stage[data-cam="dolly_zoom"] .cine-seq-img {
+    animation: cine-cam-dolly-zoom var(--shot-duration, 4000ms) ease-in forwards;
+    transform-origin: var(--cam-origin, center 72%);
+}
+@keyframes cine-cam-dolly-zoom {
+    from { transform: scale(1.0); }
+    to   { transform: scale(1.55); }
+}
+
+/* Beat-text overlay — comic-narration caption box.
+   Parchment-cream box with black border + offset hard shadow + soft
+   depth shadow. Yellow-cream is broadly complementary to cool ocean
+   greens / dark studio reds / void-black palettes used in sequences.
    Drops in 220ms, holds through beat duration, fades out 320ms.
    Sits above stage but below controls/style-bar/exit. */
 .cine-seq-beat-text {
     position: absolute;
     left: 50%;
     bottom: 92px;
-    transform: translate(-50%, 8px);
-    width: min(880px, calc(100% - 96px));
+    transform: translate(-50%, 8px) skewX(-7deg);
+    width: max-content;
+    max-width: min(720px, calc(100% - 96px));
+    box-sizing: border-box;
+    padding: 14px 26px 15px;
     text-align: center;
-    color: rgba(240, 230, 215, 0.95);
+    background: rgba(244, 233, 200, 0.7);
+    color: #1a1410;
+    border: 1.5px solid #2a1f15;
+    border-radius: 2px;
     font-family: 'Lora', 'Georgia', serif;
-    font-size: 22px;
-    line-height: 1.42;
-    letter-spacing: 0.01em;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85), 0 0 24px rgba(0, 0, 0, 0.55);
+    font-size: 20px;
+    line-height: 1.4;
+    letter-spacing: 0.015em;
+    white-space: pre-line;
+    box-shadow:
+        3px 3px 0 rgba(0, 0, 0, 0.6),
+        6px 7px 16px rgba(0, 0, 0, 0.4);
+    text-shadow: none;
     opacity: 0;
     pointer-events: none;
     z-index: 8;
@@ -31254,8 +31492,130 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 }
 .cine-seq-beat-text--show {
     opacity: 1;
-    transform: translate(-50%, 0);
+    transform: translate(-50%, 0) skewX(-7deg);
     transition: opacity 220ms ease, transform 360ms ease-out;
+}
+
+/* Top-center narration box — used by dual-tier sequences (e.g.
+   dopamine_receptor) for the bold sentence-case lead text. Mirrors the
+   bottom box's parchment styling but lives at the top of the stage so
+   the imagery's lower half (where most action happens) stays clear. */
+.cine-seq-beat-text-top {
+    position: absolute;
+    left: 50%;
+    top: 64px;
+    transform: translate(-50%, -8px) skewX(-7deg);
+    width: max-content;
+    max-width: min(720px, calc(100% - 96px));
+    box-sizing: border-box;
+    padding: 14px 26px 15px;
+    text-align: center;
+    background: rgba(244, 233, 200, 0.7);
+    color: #1a1410;
+    border: 1.5px solid #2a1f15;
+    border-radius: 2px;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.22;
+    letter-spacing: 0.01em;
+    white-space: pre-line;
+    box-shadow:
+        3px 3px 0 rgba(0, 0, 0, 0.6),
+        6px 7px 16px rgba(0, 0, 0, 0.4);
+    text-shadow: none;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 8;
+    transition: opacity 320ms ease, transform 320ms ease;
+}
+.cine-seq-beat-text-top--show {
+    opacity: 1;
+    transform: translate(-50%, 0) skewX(-7deg);
+    transition: opacity 220ms ease, transform 360ms ease-out;
+}
+
+/* When the bottom box is in prose-only mode (paired with a top box
+   above), shrink its font 25% so it doesn't compete with the action. */
+.cine-seq-beat-text--prose-only {
+    font-size: 15px;            /* was 20px → 25% smaller */
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    color: rgba(26, 20, 16, 0.88);
+    font-weight: 400;
+    padding: 11px 20px 12px;
+}
+
+/* ─── Rupture / Interruption FX ─────────────────────────────────
+   Halt visual treatment + urgent red overlay + post-rupture loader.
+   Used by _fireCineInterruption() in app.js. */
+.cine-seq-stage--ruptured .cine-seq-img,
+.cine-seq-stage--ruptured .cine-seq-insert {
+    filter: grayscale(0.7) brightness(0.45) saturate(1.5) sepia(0.15);
+    transition: filter 180ms ease-out;
+}
+.cine-seq-stage--blackout .cine-seq-img,
+.cine-seq-stage--blackout .cine-seq-insert {
+    opacity: 0;
+    transition: opacity 600ms ease-in;
+}
+.cine-seq-rupture-overlay {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.85);
+    background: rgba(178, 16, 16, 0.7);
+    color: #fff;
+    border: 2px solid #ff2a2a;
+    padding: 18px 32px 20px;
+    font-family: 'Helvetica Neue', 'Arial Black', sans-serif;
+    font-weight: 800;
+    font-size: 32px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-align: center;
+    box-shadow:
+        0 0 24px rgba(255, 40, 40, 0.7),
+        0 6px 18px rgba(0, 0, 0, 0.55);
+    opacity: 0;
+    z-index: 12;
+    pointer-events: none;
+    max-width: calc(100% - 64px);
+    transition:
+        opacity 140ms ease,
+        transform 220ms cubic-bezier(0.18, 1.4, 0.4, 1);
+}
+.cine-seq-rupture-overlay--show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+.cine-seq-rupture-overlay--exit {
+    opacity: 0;
+    transition: opacity 320ms ease;
+}
+.cine-seq-rupture-loader {
+    position: absolute;
+    left: 50%;
+    bottom: 90px;
+    transform: translateX(-50%);
+    width: min(320px, calc(100% - 96px));
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    opacity: 0;
+    z-index: 13;
+    transition: opacity 220ms ease;
+}
+.cine-seq-rupture-loader--show { opacity: 1; }
+.cine-seq-rupture-loader-bar {
+    width: 0;
+    height: 100%;
+    background: rgba(255, 215, 0, 0.85);
+    transition: width 1000ms ease-in-out;
+}
+.cine-seq-rupture-loader--show .cine-seq-rupture-loader-bar {
+    width: 100%;
 }
 
 /* ─── Star of David dev launcher (bottom-right of app) ──────────── */
@@ -31315,3 +31675,36 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     border-color: rgba(255, 215, 0, 0.7);
 }
 #cineDevLauncher svg { display: block; }
+#cineDevInterruptToggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 215, 0, 0.85);
+    border: 1px solid rgba(255, 215, 0, 0.35);
+    border-radius: 4px;
+    padding: 5px 9px 5px 7px;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    transition: background 200ms ease, border-color 200ms ease;
+}
+#cineDevInterruptToggle:hover {
+    background: rgba(0, 0, 0, 0.78);
+    border-color: rgba(255, 215, 0, 0.7);
+}
+#cineDevInterruptCheckbox {
+    width: 13px;
+    height: 13px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #ffd700;
+}
+#cineDevInterruptToggle:has(#cineDevInterruptCheckbox:checked) {
+    background: rgba(178, 16, 16, 0.55);
+    border-color: rgba(255, 80, 80, 0.7);
+    color: rgba(255, 220, 220, 0.95);
+}
