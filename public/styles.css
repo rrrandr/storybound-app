@@ -16619,12 +16619,14 @@ body.guided-fate-autoplay .card-gleam-layer {
     z-index: auto;
 }
 
-/* Pact cards: gleam z-index must be auto to avoid breaking backface-visibility */
-.pact-card .card-gleam-clip {
-    z-index: auto;
-}
-.pact-card .card-gleam-clip > .card-gleam-layer {
-    z-index: auto;
+/* Pact cards: gleam disabled. The legal-gate cards are intentionally
+   plain — the rotating gold sweep was distracting against the baked
+   tarot art. JS no longer applies gleam to .pact-card (see
+   initAllCardGleams in app.js), but display:none here also suppresses
+   any gleam DOM injected by a stale cached build. */
+.pact-card .card-gleam-clip,
+.pact-card .card-gleam-layer {
+    display: none !important;
 }
 
 /* Fate cards: gleam z-index must be auto to avoid breaking backface-visibility */
@@ -22778,11 +22780,23 @@ button.gn-selector-card[disabled] {
     height: 100%;
     object-fit: cover;
     display: block;
+    /* Belt-and-suspenders crop — anime/cel-shaded reference styles
+       sometimes pull the image model toward producing letterbox-style
+       matte bars at top/bottom of the frame even with explicit
+       FULL-BLEED negatives in the prompt. The 6% scale-up crops ~3%
+       off each edge (~30px on a 1024² render) which clears typical
+       letterbox bars without visibly losing scene content (object-fit:
+       cover already trims to the container's aspect ratio, so the
+       slight extra zoom only sacrifices a small ring of margin). The
+       parent .staged-scene has overflow: hidden so the overflow is
+       clipped by the rounded container, not bleeding past it. */
+    transform: scale(1.06);
+    transform-origin: center;
     /* Fade in on load — JS adds .loaded once the <img> fires its native
        load event. Keeps the reveal feeling intentional rather than a
        sudden swap from shimmer to image. */
     opacity: 0;
-    transition: opacity 600ms ease-out;
+    transition: opacity 600ms ease-out, transform 600ms ease-out;
 }
 .staged-hero-img.loaded {
     opacity: 1;
@@ -27167,6 +27181,45 @@ body.elevated-fate-cards .tempt-fate-card {
         0 -1px 0 rgba(255, 245, 200, 0.5),
         0 1px 0 rgba(0, 0, 0, 0.75),
         0 2px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* Tiered urgency — heartbeat pulse + reddish tint scaling with scenes-
+   remaining. Mirrors the .fortune-low-warning urgency tiers (styles.css
+   27280+) so the widget and inline scene-counter pulse in lockstep.
+   JS sets data-urgency on .fw-fortune-main based on floor(fortunes /
+   sceneCost). low/medium tints only; high+ adds the heartbeat; critical
+   deepens the red; depleted shakes. */
+.fw-fortune[data-urgency="low"]    .fw-fortune-count { color: #c8a045; }
+.fw-fortune[data-urgency="medium"] .fw-fortune-count { color: #d8a040; }
+.fw-fortune[data-urgency="high"]   .fw-fortune-count {
+    color: #d97c40;
+    animation: fortune-heartbeat 2s ease-in-out infinite;
+}
+.fw-fortune[data-urgency="urgent"] .fw-fortune-count {
+    color: #d96040;
+    animation: fortune-heartbeat 1.4s ease-in-out infinite;
+}
+.fw-fortune[data-urgency="critical"] .fw-fortune-count {
+    color: #d94040;
+    animation: fortune-heartbeat 1s ease-in-out infinite;
+}
+.fw-fortune[data-urgency="depleted"] .fw-fortune-count {
+    color: #b02020;
+    animation: fortune-heartbeat 0.8s ease-in-out infinite,
+               fortune-shake 0.4s ease-in-out infinite;
+}
+/* At urgent+ the whole count box gets a faint reddish glow so the
+   pulse reads as something more than "the number is colored red." Soft
+   inset + outer shadow approximates a heartbeat halo without competing
+   with the gold widget frame. */
+.fw-fortune[data-urgency="urgent"]   .fw-fortune-count,
+.fw-fortune[data-urgency="critical"] .fw-fortune-count,
+.fw-fortune[data-urgency="depleted"] .fw-fortune-count {
+    text-shadow:
+        0 -1px 0 rgba(255, 245, 200, 0.4),
+        0 1px 0 rgba(0, 0, 0, 0.75),
+        0 2px 2px rgba(0, 0, 0, 0.4),
+        0 0 8px rgba(217, 64, 64, 0.55);
 }
 /* Fortune breakdown panel */
 .fw-breakdown {
