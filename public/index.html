@@ -160,6 +160,16 @@
   <div id="vaultAppearance" class="vault-sub hidden">
     <div class="vault-sub-title">Story Appearance</div>
 
+    <!-- Character look controls — top of panel -->
+    <label class="vault-label">Your Look</label>
+    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:6px;" onclick="if(typeof window.triggerPcLookModal==='function')window.triggerPcLookModal();">Pick or revise your look</button>
+
+    <label class="vault-label">Their Face</label>
+    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:6px;" onclick="if(typeof window.triggerLiFaceReveal==='function')window.triggerLiFaceReveal();">Reveal or revise their face</button>
+
+    <label class="vault-label">Cast (Multi-LI Stories)</label>
+    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:14px;" onclick="if(typeof window.triggerCastCustomizeModal==='function')window.triggerCastCustomizeModal();">Customize cast looks</button>
+
     <label class="vault-label">Theme</label>
     <div class="vault-theme-row">
       <button class="sb-btn-png sm" onclick="setTheme('default')">Default</button>

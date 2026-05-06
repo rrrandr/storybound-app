@@ -7041,7 +7041,8 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .library-book.cine-cover .book-front .cover-book-evolve-text--front {
     display: none;
 }
-/* Cinegraphic back-face — cream cover, gold serif title at top, evolve
+/* Cinegraphic back-face — cream cover, Lust-script title at top (same
+   typography as the front so the back reads as the same book), evolve
    text or synopsis in the middle, credit-band PNG anchored at bottom.
    Mirrors #gnBookObject .cover-book-3d .book-back. */
 .library-book.cine-cover .book-back .gn-back-title {
@@ -7051,14 +7052,22 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     right: 0;
     text-align: center;
     padding: 0 6%;
-    font-family: 'Playfair Display', 'Georgia', serif;
-    font-weight: 700;
-    font-size: 0.65em;
-    line-height: 1.18;
-    color: #2a2118;
-    letter-spacing: 0.01em;
+    font-family: 'lust-script-display', 'Lust Script', 'lust-script', 'Georgia', serif;
+    font-weight: 400;
+    font-size: 0.85em;
+    line-height: 1.15;
+    color: #2a2520;
+    letter-spacing: 0.02em;
     pointer-events: none;
     z-index: 5;
+}
+/* Credit-band on the cinegraphic shelf-front — flush to cover edges so
+   no cream "frame" appears around the gold triangle (same fix as zoom). */
+.library-book.cine-cover .book-front img.gn-cover-credit-band {
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 22%;
 }
 .library-book.cine-cover .book-back .cover-book-back-inner {
     display: flex;
@@ -7718,7 +7727,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
    the in-progress CG cover. */
 #zoomBookContainer.cine-cover .book-spine .spine-text {
     position: absolute;
-    top: 22%;
+    top: 26%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center;
@@ -7732,13 +7741,13 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     font-size: 13px;
     letter-spacing: 0.04em;
     text-shadow: 0 1px 0 rgba(60, 40, 10, 0.45);
-    max-width: 60vh;
+    max-width: 44vh;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 #zoomBookContainer.cine-cover .book-spine .spine-credit {
     position: absolute;
-    top: 50%;
+    top: 60%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center;
@@ -7752,7 +7761,7 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 #zoomBookContainer.cine-cover .book-spine .gn-imprint-logo--spine {
     position: absolute;
-    bottom: 8%;
+    bottom: 2.5%;
     left: 50%;
     transform: translateX(-50%);
     width: 22px;
@@ -7804,9 +7813,21 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     text-align: center;
     width: 100%;
     height: 100%;
-    padding: 14% 10% 16%;
+    padding: 14% 10% 12%;
     gap: 14px;
     box-sizing: border-box;
+}
+/* Credit-band on the cinegraphic front — span the full cover width so
+   the gold triangle fills the bottom edge-to-edge. The base rule at
+   styles.css:13177 left-/right-insets the band 12% on each side, which
+   creates a visible cream "frame" around the triangle when rendered on
+   the cream-paperback front. Override to flush bottom for the zoomed
+   cinegraphic front face only. */
+#zoomBookContainer.cine-cover .book-front img.gn-cover-credit-band {
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 22%;
 }
 #zoomBookContainer.cine-cover .cover-working-label {
     font-family: 'Lora', serif;
@@ -7850,13 +7871,15 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     right: 0;
     text-align: center;
     padding: 0 6%;
-    font-family: 'Playfair Display', 'Georgia', serif;
-    font-weight: 700;
-    font-size: 1.2em;
-    line-height: 1.2;
-    color: #2a2118;
+    /* Match the front-cover title typography — Lust script, not Playfair —
+       so the back face reads as the same book as the front when flipped. */
+    font-family: 'lust-script-display', 'Lust Script', 'lust-script', 'Georgia', serif;
+    font-weight: 400;
+    font-size: 1.6em;
+    line-height: 1.18;
+    color: #2a2520;
     text-shadow: 0 1px 0 rgba(255, 253, 246, 0.55);
-    letter-spacing: 0.01em;
+    letter-spacing: 0.02em;
     pointer-events: none;
     z-index: 5;
 }
@@ -13767,7 +13790,10 @@ textarea.fate-field {
    here so only the transform handles rotation. */
 #gnBookObject .cover-book-3d .book-spine .spine-text {
     position: absolute;
-    top: 26%;
+    /* Pushed down from 26% to 30% so the working-label above it (at 8%)
+       has a clean ~3% buffer below its rotated extent. The credit row
+       below the title is correspondingly pushed to top: 64%. */
+    top: 30%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center;
@@ -13793,7 +13819,9 @@ textarea.fate-field {
    black so the names POP against the gold bar. */
 #gnBookObject .cover-book-3d .book-spine .spine-credit {
     position: absolute;
-    top: 60%;
+    /* Pushed from 60% to 64% to keep the gap from the title (now at
+       top: 30% with rotated extent ending around 44%) consistent. */
+    top: 64%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center;
@@ -13817,15 +13845,21 @@ textarea.fate-field {
 /* Working-title prefix — small italic above the title at top of spine. */
 #gnBookObject .cover-book-3d .book-spine .spine-working-label {
     position: absolute;
-    top: 7%;
+    /* Sits ABOVE the rotated title block. With spine-text centered at
+       top: 30% (rotated extent ~14% above and below), the working-label
+       at top: 8% with a smaller rotated extent (~6% above/below at 7px
+       font + 0.10em letter-spacing) leaves a clean 2-3% gap between
+       the label's bottom and the title's top edge — they no longer
+       touch. */
+    top: 8%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center;
     white-space: nowrap;
     font-family: 'Lora', serif;
     font-style: italic;
-    font-size: 8px;
-    letter-spacing: 0.16em;
+    font-size: 7px;
+    letter-spacing: 0.10em;
     text-transform: uppercase;
     color: rgba(26, 18, 8, 0.7);
     pointer-events: none;
@@ -32248,6 +32282,10 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 }
 
 /* ─── Star of David dev launcher (bottom-right of app) ──────────── */
+/* Single pill-shaped button containing: interrupt toggle, sequence
+   dropdown, launch icon. The pill IS the button — clicking the icon
+   (or any non-control padding) launches the sequence. The toggle and
+   dropdown are interactive children that stopPropagation. */
 #cineDevLauncherWrap {
     position: fixed;
     bottom: 24px;
@@ -32255,85 +32293,99 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     z-index: 99998;
     display: flex;
     align-items: center;
-    gap: 8px;
 }
-#cineDevLauncherSelect {
+#cineDevLauncher {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 4px 0 8px;
+    border-radius: 18px;
     background: rgba(0, 0, 0, 0.55);
     color: rgba(255, 215, 0, 0.85);
     border: 1px solid rgba(255, 215, 0, 0.35);
-    border-radius: 4px;
-    padding: 6px 10px;
-    font-family: 'Lora', 'Georgia', serif;
-    font-size: 12px;
-    letter-spacing: 0.05em;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
     transition: background 200ms ease, border-color 200ms ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    font-family: 'Lora', 'Georgia', serif;
 }
-#cineDevLauncherSelect:hover {
+#cineDevLauncher:hover {
     background: rgba(0, 0, 0, 0.78);
     border-color: rgba(255, 215, 0, 0.7);
 }
-#cineDevLauncherSelect:focus {
+.cine-dev-launcher-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 215, 0, 0.08);
+    border: 1px solid rgba(255, 215, 0, 0.25);
+    flex-shrink: 0;
+    transition: transform 200ms ease, background 200ms ease;
+}
+#cineDevLauncher:hover .cine-dev-launcher-icon {
+    transform: scale(1.08);
+    background: rgba(255, 215, 0, 0.16);
+}
+.cine-dev-launcher-icon svg { display: block; }
+
+/* Inner controls — sit inline inside the pill. Slim chrome, since the
+   pill itself already provides the visible boundary. */
+#cineDevLauncher #cineDevLauncherSelect {
+    background: transparent;
+    color: rgba(255, 215, 0, 0.85);
+    border: 1px solid rgba(255, 215, 0, 0.20);
+    border-radius: 3px;
+    padding: 2px 6px;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: background 200ms ease, border-color 200ms ease;
+    max-width: 130px;
+}
+#cineDevLauncher #cineDevLauncherSelect:hover {
+    background: rgba(255, 215, 0, 0.06);
+    border-color: rgba(255, 215, 0, 0.45);
+}
+#cineDevLauncher #cineDevLauncherSelect:focus {
     outline: none;
-    border-color: rgba(255, 215, 0, 0.85);
+    border-color: rgba(255, 215, 0, 0.7);
 }
 #cineDevLauncherSelect option {
     background: rgba(15, 12, 8, 0.98);
     color: rgba(255, 215, 0, 0.92);
 }
-#cineDevLauncher {
-    /* No longer position:fixed — sits inside the wrapper. */
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(0, 0, 0, 0.55);
-    color: rgba(255, 215, 0, 0.85);
-    border: 1px solid rgba(255, 215, 0, 0.35);
-    display: flex;
+#cineDevLauncher #cineDevInterruptToggle {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 200ms ease, background 200ms ease, border-color 200ms ease;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-    flex-shrink: 0;
-}
-#cineDevLauncher:hover {
-    transform: scale(1.08);
-    background: rgba(0, 0, 0, 0.78);
-    border-color: rgba(255, 215, 0, 0.7);
-}
-#cineDevLauncher svg { display: block; }
-#cineDevInterruptToggle {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: rgba(0, 0, 0, 0.55);
+    gap: 4px;
+    background: transparent;
     color: rgba(255, 215, 0, 0.85);
-    border: 1px solid rgba(255, 215, 0, 0.35);
-    border-radius: 4px;
-    padding: 5px 9px 5px 7px;
-    font-family: 'Lora', 'Georgia', serif;
-    font-size: 11px;
-    letter-spacing: 0.05em;
+    border: 1px solid rgba(255, 215, 0, 0.20);
+    border-radius: 3px;
+    padding: 2px 7px 2px 5px;
+    font-size: 10px;
+    letter-spacing: 0.04em;
     cursor: pointer;
     user-select: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
     transition: background 200ms ease, border-color 200ms ease;
 }
-#cineDevInterruptToggle:hover {
-    background: rgba(0, 0, 0, 0.78);
-    border-color: rgba(255, 215, 0, 0.7);
+#cineDevLauncher #cineDevInterruptToggle:hover {
+    background: rgba(255, 215, 0, 0.06);
+    border-color: rgba(255, 215, 0, 0.45);
 }
 #cineDevInterruptCheckbox {
-    width: 13px;
-    height: 13px;
+    width: 11px;
+    height: 11px;
     margin: 0;
     cursor: pointer;
     accent-color: #ffd700;
 }
-#cineDevInterruptToggle:has(#cineDevInterruptCheckbox:checked) {
-    background: rgba(178, 16, 16, 0.55);
-    border-color: rgba(255, 80, 80, 0.7);
+#cineDevLauncher #cineDevInterruptToggle:has(#cineDevInterruptCheckbox:checked) {
+    background: rgba(178, 16, 16, 0.45);
+    border-color: rgba(255, 80, 80, 0.6);
     color: rgba(255, 220, 220, 0.95);
 }
