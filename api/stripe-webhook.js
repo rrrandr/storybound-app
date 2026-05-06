@@ -102,37 +102,44 @@ export default async function handler(req, res) {
   }
   const supabase = createClient(sbUrl, sbKey);
 
-  // ── Idempotency guard — prevent duplicate event processing ──
+  // ── Idempotency guard — atomic claim via stripe_events.processed flag ──
+  // Pattern: best-effort insert, then atomically transition processed false→true
+  // with a conditional UPDATE. Whoever wins the UPDATE owns the event and
+  // proceeds; concurrent handlers and Stripe redeliveries bail with 200. On
+  // processing error we roll the flag back so Stripe's retry can re-claim.
+  // This is the single lock for ALL event types — additive grants like
+  // invoice.paid (subscription renewal) and charge.refunded reversals are
+  // race-safe under it.
   {
-    const { data: existing } = await supabase
+    const { error: insertErr } = await supabase
       .from('stripe_events')
-      .select('id, processed')
+      .insert({
+        id: event.id,
+        type: event.type,
+        payload: event,
+        processed: false,
+      });
+    if (insertErr && !/duplicate key/i.test(insertErr.message || '')) {
+      console.warn(`[stripe-webhook] Event insert failed (${event.id}):`, insertErr.message);
+    }
+
+    const { data: claimed, error: claimErr } = await supabase
+      .from('stripe_events')
+      .update({ processed: true })
       .eq('id', event.id)
-      .single();
+      .eq('processed', false)
+      .select('id');
 
-    if (existing) {
-      if (existing.processed) {
-        console.log(`[stripe-webhook] Duplicate event ${event.id} (already processed), skipping`);
-        return res.status(200).json({ received: true });
-      }
-      console.log(`[stripe-webhook] Retrying unprocessed event ${event.id}`);
+    if (claimErr) {
+      console.error(`[stripe-webhook] Claim query failed (${event.id}):`, claimErr.message);
+      return res.status(500).json({ error: 'claim_failed' });
     }
 
-    if (!existing) {
-      const { error: insertErr } = await supabase
-        .from('stripe_events')
-        .insert({
-          id: event.id,
-          type: event.type,
-          payload: event,
-          processed: false,
-        });
-
-      if (insertErr) {
-        console.warn(`[stripe-webhook] Event insert race (${event.id}):`, insertErr.message);
-        return res.status(200).json({ received: true });
-      }
+    if (!claimed || claimed.length === 0) {
+      console.log(`[stripe-webhook] Event ${event.id} already claimed/processed — skipping`);
+      return res.status(200).json({ received: true });
     }
+    console.log(`[stripe-webhook] Claimed: ${event.id} ${event.type}`);
   }
 
   let processingError = null;
@@ -202,40 +209,66 @@ export default async function handler(req, res) {
       console.log(`[stripe-webhook] Granting Fortune pack (${fortunesGranted} fortunes, additive) to ${supabaseUserId}`);
     }
 
-    if (fortunesDelta > 0) {
-      const current = await readFortunes(supabase, supabaseUserId);
-      updates.fortunes = current + fortunesDelta;
-    }
-
     if (!updates.is_subscriber && fortunesDelta === 0) {
       console.warn(`[stripe-webhook] No entitlement matched for priceId: ${priceId}`);
     }
 
-    // ── Mark purchase intent as completed ──
+    // ── Atomic credit + intent transition (single Postgres transaction) ──
+    // The grant_purchase_fortunes RPC merges the pending→completed intent
+    // transition AND the additive fortunes update into one transaction. If
+    // either fails, both roll back, and Stripe's retry (triggered by the
+    // outer try/catch flipping stripe_events.processed back) can re-attempt
+    // cleanly. The previous split-query design could leave an intent stuck
+    // 'completed' with no fortunes credited if a silent error occurred
+    // between the two writes.
     const purchaseIntentId = session.metadata?.purchase_intent_id;
+    let intentTransitioned = !purchaseIntentId; // legacy: no intent → proceed (best effort below)
+
     if (purchaseIntentId) {
-      const { error: intentErr } = await supabase
-        .from('purchase_intents')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('id', purchaseIntentId)
-        .eq('status', 'pending');
-      if (intentErr) {
-        console.warn(`[stripe-webhook] Failed to mark purchase intent ${purchaseIntentId} as completed:`, intentErr.message);
-      } else {
-        console.log(`[stripe-webhook] Purchase intent ${purchaseIntentId} marked completed`);
+      const { data: rpcResult, error: rpcErr } = await supabase.rpc('grant_purchase_fortunes', {
+        p_user_id: supabaseUserId,
+        p_intent_id: purchaseIntentId,
+        p_fortunes: fortunesDelta || 0,
+      });
+      if (rpcErr) {
+        // Throw so the outer try/catch rolls back stripe_events.processed and
+        // returns 500 — Stripe will retry, the next handler can re-claim.
+        throw new Error(`grant_purchase_fortunes RPC: ${rpcErr.message}`);
       }
+      intentTransitioned = !!(rpcResult && rpcResult.granted);
+      if (intentTransitioned) {
+        console.log(`[stripe-webhook] Granted via RPC: +${fortunesDelta}F → balance ${rpcResult.new_balance} (intent ${purchaseIntentId})`);
+      } else {
+        console.log(`[stripe-webhook] Intent ${purchaseIntentId} not pending (${rpcResult?.reason || 'unknown'}) — skipping grant`);
+      }
+    } else if (fortunesDelta > 0) {
+      // Legacy path — no intent_id. Best-effort additive credit; not race-safe,
+      // but every modern checkout has an intent_id from create-checkout-session.
+      const current = await readFortunes(supabase, supabaseUserId);
+      const { error: legacyErr } = await supabase
+        .from('profiles')
+        .update({ fortunes: current + fortunesDelta })
+        .eq('id', supabaseUserId);
+      if (legacyErr) {
+        throw new Error(`legacy fortune credit: ${legacyErr.message}`);
+      }
+      console.warn(`[stripe-webhook] Legacy credit (no intent_id) +${fortunesDelta}F to ${supabaseUserId}`);
     }
 
-    if (Object.keys(updates).length > 0) {
-      const { error: updateErr } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', supabaseUserId);
-
-      if (updateErr) {
-        console.error('[stripe-webhook] Supabase update failed:', updateErr);
-      } else {
-        console.log(`[stripe-webhook] Profile updated for ${supabaseUserId}:`, updates);
+    // Subscription / customer metadata — idempotent, safe to apply only when we
+    // owned this event (intentTransitioned). Loser handlers leave it to the
+    // winner. fortunes are NEVER in this object: the RPC owns that field.
+    if (intentTransitioned) {
+      delete updates.fortunes;
+      if (Object.keys(updates).length > 0) {
+        const { error: updateErr } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', supabaseUserId);
+        if (updateErr) {
+          throw new Error(`profile metadata update: ${updateErr.message}`);
+        }
+        console.log(`[stripe-webhook] Profile metadata updated for ${supabaseUserId}:`, updates);
       }
     }
   }
@@ -515,21 +548,23 @@ export default async function handler(req, res) {
     console.log(`[stripe-webhook] Checkout completed — event: ${event.id}, customer: ${stripeCustomerIdForEvent || 'unknown'}, checkout_session: ${checkoutSessionId || 'unknown'}`);
   }
 
-  if (!processingError) {
-    const { error: markErr } = await supabase
-      .from('stripe_events')
-      .update({ processed: true })
-      .eq('id', event.id);
-    if (markErr) {
-      console.warn(`[stripe-webhook] Failed to mark event ${event.id} as processed:`, markErr.message);
-    } else {
-      console.log(`[stripe-webhook] Processed: ${event.id} ${event.type} user=${detectedUserId || 'unknown'}`);
-    }
-  }
-
   if (processingError) {
+    // Rollback the claim so Stripe's automatic retry (or a manual resend) can
+    // re-claim the event and process it cleanly. Without this, a crash here
+    // would leave processed=true with no actual side-effects committed.
+    const { error: rollbackErr } = await supabase
+      .from('stripe_events')
+      .update({ processed: false })
+      .eq('id', event.id);
+    if (rollbackErr) {
+      console.warn(`[stripe-webhook] Failed to rollback claim on ${event.id}:`, rollbackErr.message);
+    } else {
+      console.log(`[stripe-webhook] Rolled back claim on ${event.id} for retry`);
+    }
     return res.status(500).json({ error: 'webhook_processing_failed' });
   }
+
+  console.log(`[stripe-webhook] Processed: ${event.id} ${event.type} user=${detectedUserId || 'unknown'}`);
 
   res.status(200).json({ received: true });
 }

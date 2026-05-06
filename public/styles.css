@@ -6885,6 +6885,215 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }
+
+/* Cinegraphic working-cover on a library shelf — mirrors the blank-white
+   #gnBookObject look (cream linen, Lust-script working title, gold-triangle
+   credit band) so a saved cinegraphic novel keeps the same identity it had
+   while being authored, instead of falling back to the dark generic cover. */
+.library-book.cine-cover .book-front {
+    background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%);
+}
+.library-book.cine-cover .book-front .cover-book-text {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    padding: 14% 8% 22%;
+    gap: 4px;
+    box-sizing: border-box;
+}
+.library-book.cine-cover .book-front .cover-working-label {
+    font-family: 'Lora', serif;
+    font-size: 0.42em;
+    color: rgba(140, 125, 105, 0.7);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin: 0;
+}
+.library-book.cine-cover .book-front .cover-book-title {
+    font-family: 'lust-script-display', 'Lust Script', 'lust-script', 'Georgia', serif;
+    font-size: 1.05em;
+    font-weight: 400;
+    color: #2a2520;
+    letter-spacing: 0.02em;
+    line-height: 1.18;
+    margin: 0;
+}
+
+/* Cinegraphic books are physically thin (20px total depth vs the default
+   60px leather-bound depth) and have a solid-gold spine matching the
+   working-cover identity used during authoring. We override the full 3D
+   stack — front/back/spine/pages — so the whole object is consistent at
+   the new depth; missing any face would expose a 60-vs-20 misalignment.
+   Pages are also flush with the covers (no overhang) for a paperback feel
+   instead of the leather-bound cover-board overhang. */
+.library-book.cine-cover .book-front {
+    transform: translateZ(10px);
+    background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%);
+}
+.library-book.cine-cover .book-back {
+    transform: rotateY(180deg) translateZ(10px);
+    background: linear-gradient(160deg, #f5f1ea 0%, #ece7dd 100%);
+    padding: 0;
+}
+.library-book.cine-cover.mode-spine .book-3d {
+    width: 20px;
+}
+.library-book.cine-cover .book-spine {
+    width: 20px;
+    transform: rotateY(-90deg) translateZ(10px);
+    background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%);
+    border-radius: 0;
+    box-shadow:
+        inset 1px 0 2px rgba(255, 230, 160, 0.35),
+        inset -1px 0 2px rgba(80, 50, 14, 0.4),
+        inset 0 0 1px rgba(0, 0, 0, 0.2);
+    /* Shelf spine is too narrow for the full text stack; let the rotated
+       text overflow horizontally if needed. */
+    overflow: visible;
+}
+.library-book.cine-cover .book-spine::after,
+.library-book.cine-cover .book-spine::before {
+    display: none;
+}
+/* Shelf-spine text — the cinegraphic spine HTML uses bare <span>s (no
+   wrapping <div>) so the spine-text rotates around the spine center. */
+.library-book.cine-cover .book-spine .spine-text {
+    position: absolute;
+    top: 22%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+    font-family: 'Playfair Display', 'Lora', 'Georgia', serif;
+    font-weight: 700;
+    font-style: italic;
+    color: #1a1208;
+    opacity: 1;
+    font-size: 5px;
+    letter-spacing: 0.04em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 110px;
+}
+.library-book.cine-cover .book-spine .spine-credit {
+    position: absolute;
+    top: 60%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+    font-family: 'Bungee', 'Bungee Inline', 'Impact', sans-serif;
+    font-weight: 400;
+    color: #080808;
+    font-size: 4px;
+    letter-spacing: 0.02em;
+}
+.library-book.cine-cover .book-spine .gn-imprint-logo--spine {
+    position: absolute;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 12px;
+    height: auto;
+    pointer-events: none;
+}
+.library-book.cine-cover .book-pages-right,
+.library-book.cine-cover .page-shimmer {
+    width: 20px;
+    height: 100%;
+    top: 0;
+    right: 0;
+    transform: translateZ(-10px) rotateY(90deg);
+    box-shadow: none;
+}
+.library-book.cine-cover .book-pages-top {
+    height: 20px;
+    width: 100%;
+    top: 0;
+    left: 0;
+    transform: translateZ(-10px) rotateX(90deg);
+    box-shadow: none;
+}
+.library-book.cine-cover .book-pages-bottom {
+    height: 20px;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    transform: translateZ(-10px) rotateX(-90deg);
+    box-shadow: none;
+}
+/* Tighten the front working-cover padding so the title sits near the gold
+   credit band instead of leaving a wide white gap. */
+.library-book.cine-cover .book-front .cover-book-text {
+    padding: 12% 6% 14%;
+}
+/* Shelf books are too small to read the evolve-text caption — hide it
+   here and let the zoom view show it (where the in-progress CG cover
+   composition reads naturally). */
+.library-book.cine-cover .book-front .cover-book-evolve-text--front {
+    display: none;
+}
+/* Cinegraphic back-face — cream cover, gold serif title at top, evolve
+   text or synopsis in the middle, credit-band PNG anchored at bottom.
+   Mirrors #gnBookObject .cover-book-3d .book-back. */
+.library-book.cine-cover .book-back .gn-back-title {
+    position: absolute;
+    top: 4%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 6%;
+    font-family: 'Playfair Display', 'Georgia', serif;
+    font-weight: 700;
+    font-size: 0.65em;
+    line-height: 1.18;
+    color: #2a2118;
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    z-index: 5;
+}
+.library-book.cine-cover .book-back .cover-book-back-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 22% 8% 20%;
+    box-sizing: border-box;
+}
+.library-book.cine-cover .book-back .gn-back-synopsis {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.42em;
+    line-height: 1.5;
+    font-style: italic;
+    color: rgba(45, 38, 28, 0.9);
+    text-align: left;
+    margin: 0;
+    overflow: hidden;
+}
+.library-book.cine-cover .book-back .gn-back-synopsis:empty {
+    display: none;
+}
+.library-book.cine-cover .book-back .cover-book-evolve-text {
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-size: 0.42em;
+    color: #a09585;
+    text-align: center;
+    line-height: 1.5;
+    margin: 0;
+}
+.library-book.cine-cover .book-back .cover-book-back-inner:has(.gn-back-synopsis:not(:empty)) .cover-book-evolve-text {
+    display: none;
+}
+
 .book-back {
     transform: rotateY(180deg) translateZ(30px);
     background: linear-gradient(160deg, #1a1410 0%, #0e0906 100%);
@@ -7460,6 +7669,237 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     text-align: center;
     padding-top: 2.9%;
 }
+
+/* ── Cinegraphic zoom — paperback-thin 30px total depth (vs 240px leather),
+   solid gold spine with rotated lacquered title + S.Tory Bound credit +
+   keyhole logo, cream front and back faces, no cover-board overhang on
+   the page block. Mirrors #gnBookObject .cover-book-3d. The class is
+   forwarded onto #zoomBookContainer in _openLibraryZoom because
+   .library-book stays on the shelf when only .book-3d moves into the
+   overlay. */
+#zoomBookContainer.cine-cover .book-front {
+    background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%);
+    transform: translateZ(15px);
+    box-shadow:
+        inset 6px 0 10px -4px rgba(0, 0, 0, 0.08),
+        inset 0 -2px 6px -3px rgba(0, 0, 0, 0.06),
+        inset 0 2px 6px -3px rgba(0, 0, 0, 0.04),
+        3px 3px 10px -2px rgba(0, 0, 0, 0.15),
+        0 6px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+#zoomBookContainer.cine-cover .book-back {
+    transform: rotateY(180deg) translateZ(15px);
+    background: linear-gradient(160deg, #f5f1ea 0%, #ece7dd 100%);
+    padding: 0;
+    box-shadow:
+        inset -6px 0 10px -4px rgba(0, 0, 0, 0.08),
+        inset 0 -2px 6px -3px rgba(0, 0, 0, 0.06),
+        3px 3px 10px -2px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+}
+#zoomBookContainer.cine-cover .book-spine {
+    width: 30px;
+    transform: rotateY(-90deg) translateZ(15px);
+    background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%);
+    border-radius: 0;
+    box-shadow:
+        inset 1px 0 2px rgba(255, 230, 160, 0.35),
+        inset -1px 0 2px rgba(80, 50, 14, 0.4),
+        inset 0 0 1px rgba(0, 0, 0, 0.2);
+    overflow: visible;
+}
+#zoomBookContainer.cine-cover .book-spine::after,
+#zoomBookContainer.cine-cover .book-spine::before {
+    display: none;
+}
+/* Cinegraphic spine HTML uses bare <span>s; rotate each child via transform
+   instead of the base writing-mode: vertical-rl so the typography matches
+   the in-progress CG cover. */
+#zoomBookContainer.cine-cover .book-spine .spine-text {
+    position: absolute;
+    top: 22%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+    font-family: 'Playfair Display', 'Lora', 'Georgia', serif;
+    font-weight: 700;
+    font-style: italic;
+    color: #1a1208;
+    opacity: 1;
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-shadow: 0 1px 0 rgba(60, 40, 10, 0.45);
+    max-width: 60vh;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#zoomBookContainer.cine-cover .book-spine .spine-credit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(90deg);
+    transform-origin: center;
+    writing-mode: horizontal-tb;
+    white-space: nowrap;
+    font-family: 'Bungee', 'Bungee Inline', 'Impact', sans-serif;
+    font-weight: 400;
+    color: #080808;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+}
+#zoomBookContainer.cine-cover .book-spine .gn-imprint-logo--spine {
+    position: absolute;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 22px;
+    height: auto;
+    filter: drop-shadow(0 1px 0 rgba(60, 40, 10, 0.45));
+    pointer-events: none;
+}
+/* Page block flush with cover edges — paperback feel, no cover-board
+   overhang. */
+#zoomBookContainer.cine-cover .book-pages-right,
+#zoomBookContainer.cine-cover .page-shimmer {
+    width: 30px;
+    height: 100%;
+    top: 0;
+    right: 0;
+    transform: translateZ(-15px) rotateY(90deg);
+    box-shadow: none;
+}
+#zoomBookContainer.cine-cover .book-pages-top {
+    height: 30px;
+    width: 100%;
+    top: 0;
+    left: 0;
+    transform: translateZ(-15px) rotateX(90deg);
+    box-shadow: none;
+}
+#zoomBookContainer.cine-cover .book-pages-bottom {
+    height: 30px;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    transform: translateZ(-15px) rotateX(-90deg);
+    box-shadow: none;
+}
+/* Hide the dark cover-edge thickness strips — they're tuned for the
+   leather-bound look, not the cream paperback. */
+#zoomBookContainer.cine-cover .cover-edge {
+    display: none;
+}
+/* Front working-cover typography — scaled for the zoomed face, padding
+   tightened so the title sits closer to the gold credit-band PNG. */
+#zoomBookContainer.cine-cover .cover-book-text {
+    position: relative;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    padding: 14% 10% 16%;
+    gap: 14px;
+    box-sizing: border-box;
+}
+#zoomBookContainer.cine-cover .cover-working-label {
+    font-family: 'Lora', serif;
+    font-size: 1em;
+    color: rgba(140, 125, 105, 0.7);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin: 0;
+}
+#zoomBookContainer.cine-cover .cover-book-title {
+    font-family: 'lust-script-display', 'Lust Script', 'lust-script', 'Georgia', serif;
+    font-size: 3.2em;
+    font-weight: 400;
+    color: #2a2520;
+    letter-spacing: 0.02em;
+    line-height: 1.18;
+    margin: 0;
+}
+/* Evolve-text caption — fills the middle of the cover under the title so
+   the composition matches the in-progress CG cover and there's no
+   awkward empty cream rectangle between the title and the gold band. */
+#zoomBookContainer.cine-cover .cover-book-evolve-text--front {
+    display: block;
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-size: 0.78em;
+    color: #a09585;
+    text-align: center;
+    line-height: 1.6;
+    margin: 12px auto 0;
+    padding: 0 8%;
+    max-width: 88%;
+}
+/* Back face — gold serif title pinned to the top, synopsis (or evolve
+   text) centered, gold credit-band PNG anchored at the bottom. Mirrors
+   the cover-book-3d back-face stack used in the in-progress CG view. */
+#zoomBookContainer.cine-cover .book-back .gn-back-title {
+    position: absolute;
+    top: 4%;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 0 6%;
+    font-family: 'Playfair Display', 'Georgia', serif;
+    font-weight: 700;
+    font-size: 1.2em;
+    line-height: 1.2;
+    color: #2a2118;
+    text-shadow: 0 1px 0 rgba(255, 253, 246, 0.55);
+    letter-spacing: 0.01em;
+    pointer-events: none;
+    z-index: 5;
+}
+#zoomBookContainer.cine-cover .book-back .cover-book-back-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 14% 7% 18%;
+    box-sizing: border-box;
+}
+#zoomBookContainer.cine-cover .book-back .gn-back-synopsis {
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.95em;
+    line-height: 1.55;
+    font-style: italic;
+    color: rgba(45, 38, 28, 0.92);
+    text-align: left;
+    margin: 0;
+    max-height: 72%;
+    overflow: hidden;
+}
+#zoomBookContainer.cine-cover .book-back .gn-back-synopsis:empty {
+    display: none;
+}
+#zoomBookContainer.cine-cover .book-back .cover-book-evolve-text {
+    font-family: 'Georgia', serif;
+    font-style: italic;
+    font-size: 1em;
+    color: #a09585;
+    text-align: center;
+    line-height: 1.6;
+    margin: 0;
+}
+#zoomBookContainer.cine-cover .book-back .cover-book-back-inner:has(.gn-back-synopsis:not(:empty)) .cover-book-evolve-text {
+    display: none;
+}
+/* The base #zoomBookContainer .book-back rule applies a parchment
+   gradient and #zoomBookContainer .back-title styles the gold serif title
+   for the leather book. We rely on specificity (1,2,0 vs 1,1,0) to win
+   over those rules; the cinegraphic back uses .gn-back-title (a different
+   element) so .back-title rules don't apply at all. */
+
 .zoom-cta {
     display: flex;
     gap: 12px;
@@ -13327,7 +13767,7 @@ textarea.fate-field {
    here so only the transform handles rotation. */
 #gnBookObject .cover-book-3d .book-spine .spine-text {
     position: absolute;
-    top: 14%;
+    top: 26%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center;
@@ -13344,7 +13784,7 @@ textarea.fate-field {
         0 1px 0 rgba(60, 40, 10, 0.45),
         0 0 2px rgba(0, 0, 0, 0.35);
     pointer-events: none;
-    max-width: 60vh;
+    max-width: 44vh;
     overflow: hidden;
     text-overflow: ellipsis;
 }
@@ -13353,7 +13793,7 @@ textarea.fate-field {
    black so the names POP against the gold bar. */
 #gnBookObject .cover-book-3d .book-spine .spine-credit {
     position: absolute;
-    top: 50%;
+    top: 60%;
     left: 50%;
     transform: translate(-50%, -50%) rotate(90deg);
     transform-origin: center;
@@ -23125,6 +23565,30 @@ button.gn-selector-card[disabled] {
 }
 .staged-next-btn:disabled {
     opacity: 0.4;
+    cursor: default;
+}
+/* Prev button — sibling to .staged-next-btn, slightly subordinate
+   visually since rewinding is the secondary action. Same shape and
+   register so the pair reads as a coherent navigation row. */
+.staged-prev-btn {
+    background: rgba(20, 14, 8, 0.5);
+    border: 1px solid rgba(201, 168, 76, 0.32);
+    color: rgba(201, 168, 76, 0.78);
+    padding: 7px 18px;
+    border-radius: 3px;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 0.82em;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.staged-prev-btn:hover:not(:disabled) {
+    background: rgba(201, 168, 76, 0.1);
+    border-color: rgba(201, 168, 76, 0.55);
+    color: #c9a84c;
+}
+.staged-prev-btn:disabled {
+    opacity: 0.32;
     cursor: default;
 }
 .staged-beat-progress {

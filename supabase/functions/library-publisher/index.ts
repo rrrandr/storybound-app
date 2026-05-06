@@ -303,6 +303,17 @@ Deno.serve(async (_req) => {
 
         const isNew = !existing;
 
+        // Cinegraphic-mode metadata — propagated from the snapshot JSONB
+        // so the Forbidden Library shelf can render saved cinegraphic
+        // novels with the working-cover identity (cream + Lust title +
+        // gold credit band) instead of the dark generic fallback.
+        const renderMode = snap.render_mode || stateSnap.renderMode || null;
+        const graphicStyle = snap.graphic_style || stateSnap.graphicStyle || stateSnap.gnArtist || null;
+        const backCoverSynopsis = snap.backCoverSynopsis || stateSnap.backCoverSynopsis || null;
+        // Evolving cover image — cinegraphic (gnCoverUrl) takes precedence,
+        // literary (coverImage) is the fallback.
+        const coverUrl = stateSnap.gnCoverUrl || stateSnap.coverImage || null;
+
         const { error: upsertErr } = await supabase
           .from("library_entries")
           .upsert({
@@ -313,6 +324,10 @@ Deno.serve(async (_req) => {
             snapshot_scene_count: turnCount,
             word_count: wordCount,
             sanitized_text: sanitizedText,
+            render_mode: renderMode,
+            graphic_style: graphicStyle,
+            back_cover_synopsis: backCoverSynopsis,
+            cover_url: coverUrl,
             eligible: true,
             updated_at: new Date().toISOString(),
           }, { onConflict: "story_id" });
