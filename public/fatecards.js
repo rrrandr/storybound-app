@@ -1254,6 +1254,19 @@ function stopContinuousSparkles() {
         // StoryPass holders have paid for the story-length tier → full deck.
         if (access === 'pass') return 5;
 
+        // ── PURCHASED-FORTUNES UNLOCK ──
+        // Any user who has ever bought Fortunes OR carries a positive paid
+        // balance (purchased pack OR subscription Fortunes) earns the full
+        // 5-card deck on every scene — INCLUDING free-tier Taste-mode scenes
+        // where the per-scene cost is 0. Rationale: card-locking exists as
+        // an upsell to non-payers; once the user has paid anything into the
+        // system, the upsell pressure is misplaced and feels punitive.
+        // Selecting Taste tier should not cost the user previously-earned
+        // unlock benefits.
+        if ((st.purchasedFortunes || 0) > 0) return 5;
+        if ((st.subscriptionFortunes || 0) > 0) return 5;
+        if (st.hasEverPurchased === true) return 5;
+
         // Per-scene paid users: if Fortune was spent to generate THIS scene,
         // the user earned access to the full deck. This is the authoritative
         // rule — "since I was charged 1F, all 5 cards should be unlocked."

@@ -162,22 +162,22 @@
 
     <!-- Character look controls — top of panel -->
     <label class="vault-label">Your Look</label>
-    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:6px;" onclick="if(typeof window.triggerPcLookModal==='function')window.triggerPcLookModal();">Pick or revise your look</button>
+    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:6px;" onclick="if(typeof window.triggerPcLookModal==='function')window.triggerPcLookModal();">Change Your Look</button>
 
     <label class="vault-label">Their Face</label>
-    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:6px;" onclick="if(typeof window.triggerLiFaceReveal==='function')window.triggerLiFaceReveal();">Reveal or revise their face</button>
+    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:6px;" onclick="if(typeof window.triggerLiFaceReveal==='function')window.triggerLiFaceReveal();">Change Their Look</button>
 
     <label class="vault-label">Cast (Multi-LI Stories)</label>
-    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:14px;" onclick="if(typeof window.triggerCastCustomizeModal==='function')window.triggerCastCustomizeModal();">Customize cast looks</button>
+    <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:14px;" onclick="if(typeof window.triggerCastCustomizeModal==='function')window.triggerCastCustomizeModal();">Customize cast</button>
 
     <label class="vault-label">Theme</label>
-    <div class="vault-theme-row">
-      <button class="sb-btn-png sm" onclick="setTheme('default')">Default</button>
-      <button class="sb-btn-png sm" onclick="setTheme('sepia')">Sepia</button>
-      <button class="sb-btn-png sm" onclick="setTheme('midnight')">Midnight</button>
-      <button class="sb-btn-png sm" onclick="setTheme('print')">Print</button>
-      <button class="sb-btn-png sm" onclick="setTheme('easy')">Easy</button>
-    </div>
+    <select id="themeSelect" class="vault-select" onchange="setTheme(this.value)">
+      <option value="default">Default</option>
+      <option value="sepia">Sepia</option>
+      <option value="midnight">Midnight</option>
+      <option value="print">Print</option>
+      <option value="easy">Easy</option>
+    </select>
 
     <label class="vault-label">Font</label>
     <select id="fontSelect" class="vault-select" onchange="setFont(this.value)">
@@ -659,14 +659,17 @@
                 </div>
             </div>
         </div>
-
-        <p class="pay-billing-disclosure">
-            Subscriptions renew monthly. Cancel anytime. One-time purchases are non-refundable.
-        </p>
     </div>
 
+    <!-- Billing disclosure + cancel button — direct children of pay-box so they
+         flex-anchor to the bottom of the modal (see .pay-billing-disclosure +
+         #paywallCancelDefault rules in styles.css with margin-top:auto). -->
+    <p class="pay-billing-disclosure">
+        Subscriptions renew monthly. Cancel anytime. One-time purchases are non-refundable.
+    </p>
+
     <!-- Default cancel button (non-story-blocked contexts) -->
-    <button id="paywallCancelDefault" class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();" style="margin-top:15px;">Cancel</button>
+    <button id="paywallCancelDefault" class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();">Cancel</button>
     <!-- Story-blocked cancel — navigates to Forbidden Library -->
     <button id="paywallCancelLibrary" class="hidden paywall-library-btn">Commitment-phobic? Peruse free books until you're ready.</button>
   </div>

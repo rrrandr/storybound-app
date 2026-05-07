@@ -4554,12 +4554,29 @@ select:-webkit-autofill {
 /* PAYWALL MODAL — Responsive tier card layout                                     */
 /* ═══════════════════════════════════════════════════════════════════════════════ */
 .pay-box {
-    max-width: 90vw;
-    width: 780px;
-    max-height: 90vh;
+    max-width: 95vw;
+    width: 897px;            /* 780 × 1.15 — 15% wider so cards aren't crushed */
+    max-height: 92vh;
     overflow-y: auto;
     text-align: center;
     box-sizing: border-box;
+    padding-top: 18px;       /* tighten top so heading sits higher */
+    padding-bottom: 18px;    /* tighten bottom — cancel + disclosure flush */
+    display: flex;
+    flex-direction: column;
+}
+/* Heading + tagline anchored at top of flex column with minimal gap. */
+.pay-box > h3#payModalHeading {
+    margin: 0 0 6px;
+}
+/* Push the billing disclosure + cancel button to the bottom of the modal,
+   so the cards can use the maximum vertical space in the middle. */
+.pay-box .pay-billing-disclosure {
+    margin-top: auto;
+    padding-top: 12px;
+}
+.pay-box #paywallCancelDefault {
+    margin-top: 8px !important;
 }
 .pay-tier-row {
     display: flex;
@@ -4777,7 +4794,7 @@ select:-webkit-autofill {
 }
 
 .pay-card {
-    width: 200px;
+    width: 250px;            /* 200 × 1.25 — 25% larger card area */
     aspect-ratio: 2.75 / 4.75;
     perspective: 1000px;
     cursor: pointer;
@@ -5241,6 +5258,20 @@ select:-webkit-autofill {
 .vault-sub input[type="range"] {
     width: 100%;
     accent-color: var(--gold);
+}
+/* Vault sub-panel buttons stretch to full panel width via inline
+   width:100%, but .sb-btn-png defaults to background-size:contain —
+   which preserves the PNG's aspect ratio by shrinking the visible
+   gold-bordered art to ~160px and leaving transparent space on either
+   side. The ::after gleam pseudo is sized at 30% of the BUTTON width
+   (the full stretched element), so it appears to start way left of
+   the visible PNG and end way right of it. Force background-size
+   100% 100% here so the PNG fills the entire button — visible bounds
+   match the element's bounds, gleam sweeps cleanly across the visible
+   button. Slight aspect distortion on the gold border is acceptable
+   at this scale. */
+.vault-sub .sb-btn-png {
+    background-size: 100% 100% !important;
 }
 .vault-vol-val {
     font-family: 'Lora', serif;
@@ -7817,17 +7848,42 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     gap: 14px;
     box-sizing: border-box;
 }
-/* Credit-band on the cinegraphic front — span the full cover width so
-   the gold triangle fills the bottom edge-to-edge. The base rule at
-   styles.css:13177 left-/right-insets the band 12% on each side, which
-   creates a visible cream "frame" around the triangle when rendered on
-   the cream-paperback front. Override to flush bottom for the zoomed
-   cinegraphic front face only. */
+/* Credit-band on the cinegraphic front — span the full cover width
+   PLUS a touch beyond it so the gold reaches edge-to-edge (no cream
+   "box" effect at the very edges from the front face's 1px border or
+   inset shadows). Negative offsets cover the wrap. */
 #zoomBookContainer.cine-cover .book-front img.gn-cover-credit-band {
-    left: 0;
-    right: 0;
-    width: 100%;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    width: calc(100% + 2px);
     max-height: 22%;
+}
+/* Solid gold band UNDER the triangle PNG to eliminate the cream-frame
+   effect created by the PNG's transparent corners (the triangle is a
+   triangle — its corners are transparent and the cream cover shows
+   through). The pseudo-element is a horizontal gold strip the same
+   height as the triangle PNG, sitting at the bottom of the front
+   face; the PNG paints over it. Result: visible gold rectangle with
+   the triangle silhouette ON it, no cream visible around the
+   triangle's apex sides. */
+#zoomBookContainer.cine-cover .book-front {
+    position: relative;
+}
+#zoomBookContainer.cine-cover .book-front::after {
+    content: '';
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    height: calc(22% + 1px);
+    background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%);
+    pointer-events: none;
+    z-index: 5;
+}
+/* Triangle PNG sits on top of the gold backdrop. */
+#zoomBookContainer.cine-cover .book-front img.gn-cover-credit-band {
+    z-index: 6;
 }
 #zoomBookContainer.cine-cover .cover-working-label {
     font-family: 'Lora', serif;
@@ -7925,20 +7981,44 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 
 .zoom-cta {
     display: flex;
+    flex-direction: column;
     gap: 12px;
     align-items: center;
     justify-content: center;
     z-index: 9502;
     position: fixed;
-    bottom: 56px;
+    /* Lifted from 56px → 40px from viewport bottom to claim a touch
+       more room and place the CTA cleanly below the (now slightly
+       higher) zoomed book. The book's upward shift in
+       _openLibraryZoom guarantees no overlap. */
+    bottom: 40px;
     left: 0;
     right: 0;
 }
-.zoom-cta {
-    flex-direction: column;
-}
 .zoom-cta .sb-btn-png {
     font-size: 0.8em;
+}
+/* Primary CTA button — auto-widens to fit "Continue Your Story" (the
+   longest label) without truncation. white-space:nowrap on the button
+   text + generous horizontal padding overrides the base .sb-btn-png.md
+   default sizing. min-width keeps the "Begin Reading" / "Enter Your
+   Story" labels reading as a substantial primary affordance even at
+   their shorter lengths. */
+#zoomReadBtn {
+    white-space: nowrap;
+    padding-left: 36px;
+    padding-right: 36px;
+    min-width: 220px;
+    /* Stretch the gold-button PNG to fill the entire button box. The
+       base .sb-btn-png uses `background-size: contain`, which keeps
+       the PNG at native aspect — so when the button widens past that
+       aspect (min-width 220px / "Continue Your Story"), the PNG sits
+       centered with empty button area on both sides. The gleam ::after
+       runs across the BUTTON box, not the PNG, so it appeared to
+       start to the left of the visible button art and end to the
+       right. Filling 100% × 100% pins the PNG to the button bounds so
+       the gleam stays on the visible art. */
+    background-size: 100% 100% !important;
 }
 /* SPECIFICITY NOTE: doubled class selector (0,2,0) so this override beats
    .sb-btn-png.sm (also 0,2,0) via source-order. The single-class .zoom-
@@ -31994,9 +32074,11 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 .cine-seq-stage[data-cam] .cine-seq-img {
     transform-origin: center center;
 }
-.cine-seq-stage:not([data-cam]) .cine-seq-img,
-.cine-seq-stage[data-cam=""] .cine-seq-img,
-.cine-seq-stage[data-cam="hold"] .cine-seq-img {
+.cine-seq-stage:not([data-cam]) .cine-seq-img:not([data-cam]),
+.cine-seq-stage[data-cam=""] .cine-seq-img:not([data-cam]),
+.cine-seq-stage[data-cam="hold"] .cine-seq-img:not([data-cam]),
+.cine-seq-img[data-cam="hold"],
+.cine-seq-img[data-cam=""] {
     animation: none;
     transform: none;
 }
@@ -32006,7 +32088,8 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
    shots breathe OUT (1.13 → 1.00). Linear easing keeps the motion
    subliminal. The renderer resolves cameraMove='ken_burns' to either
    ken_burns_in or ken_burns_out based on shot.idx parity. */
-.cine-seq-stage[data-cam="ken_burns_in"] .cine-seq-img {
+.cine-seq-stage[data-cam="ken_burns_in"] .cine-seq-img,
+.cine-seq-img[data-cam="ken_burns_in"] {
     animation: cine-cam-ken-burns-in var(--shot-duration, 4000ms) linear forwards;
 }
 @keyframes cine-cam-ken-burns-in {
@@ -32017,7 +32100,8 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
    Starts at 1.13 (matches previous odd's end → no snap at cut), descends
    to 1.00 in the first 18% of the shot, then holds still for the rest.
    So most of the even shot is motionless but the entry doesn't lurch. */
-.cine-seq-stage[data-cam="ken_burns_settle"] .cine-seq-img {
+.cine-seq-stage[data-cam="ken_burns_settle"] .cine-seq-img,
+.cine-seq-img[data-cam="ken_burns_settle"] {
     animation: cine-cam-ken-burns-settle var(--shot-duration, 4000ms) ease-out forwards;
 }
 @keyframes cine-cam-ken-burns-settle {
@@ -32039,7 +32123,8 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     from { transform: scale(1.0); }
     to   { transform: scale(1.50); }
 }
-.cine-seq-stage[data-cam="zoom_out"] .cine-seq-img {
+.cine-seq-stage[data-cam="zoom_out"] .cine-seq-img,
+.cine-seq-img[data-cam="zoom_out"] {
     animation: cine-cam-zoom-out var(--shot-duration, 4000ms) ease-out forwards;
 }
 @keyframes cine-cam-zoom-out {
@@ -32286,96 +32371,142 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
    dropdown, launch icon. The pill IS the button — clicking the icon
    (or any non-control padding) launches the sequence. The toggle and
    dropdown are interactive children that stopPropagation. */
+/* Dev launcher — Star-of-David is the ONLY always-visible affordance.
+   Interrupt toggle + sequence dropdown are hidden by default and
+   slide out to the LEFT of the star on hover (or when the wrap has
+   focus-within, so the dropdown stays open while the user is
+   interacting with it). Positioned ABOVE the Fortunes widget
+   (bottom: 16px, ~32px tall) so it doesn't block that pill. */
 #cineDevLauncherWrap {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
+    bottom: 64px;             /* clear of Fortunes widget (16+32+16 buffer) */
+    right: 16px;
     z-index: 99998;
     display: flex;
     align-items: center;
+    gap: 0;
+    /* Reveal drawer when hovering anywhere over the wrap, or when a
+       child has focus (dropdown is open and being clicked). */
+    pointer-events: auto;
+}
+/* Drawer that holds Interrupt + dropdown — slides out from the star.
+   `width: 0` collapses it visually; `overflow: hidden` clips the
+   children so the page never shows them. On reveal, expands to its
+   natural width. The negative margin glues it flush against the
+   star button so it reads as one extending pill, not a sibling. */
+#cineDevLauncherDrawer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 36px;
+    /* Collapsed state — invisible AND non-interactive AND zero-width
+       so the page sees nothing where it used to be. */
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.78);
+    border-radius: 18px 0 0 18px;
+    border: 1.5px solid rgba(255, 215, 0, 0.65);
+    border-right: none;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    color: rgba(255, 215, 0, 0.85);
+    font-family: 'Lora', 'Georgia', serif;
+    transition: max-width 220ms ease, opacity 180ms ease, padding 220ms ease;
+    margin-right: -1px;       /* glue to star pill (overlaps right border) */
+}
+/* Reveal — hover OR focus-within keeps the drawer open. */
+#cineDevLauncherWrap:hover #cineDevLauncherDrawer,
+#cineDevLauncherWrap:focus-within #cineDevLauncherDrawer {
+    max-width: 240px;
+    opacity: 1;
+    padding: 0 12px 0 14px;
+    pointer-events: auto;
 }
 #cineDevLauncher {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    width: 36px;
     height: 36px;
-    padding: 0 4px 0 8px;
+    padding: 0;
     border-radius: 18px;
-    background: rgba(0, 0, 0, 0.55);
-    color: rgba(255, 215, 0, 0.85);
-    border: 1px solid rgba(255, 215, 0, 0.35);
+    background: rgba(0, 0, 0, 0.78);
+    color: rgba(255, 215, 0, 0.9);
+    border: 1.5px solid rgba(255, 215, 0, 0.65);
     cursor: pointer;
-    transition: background 200ms ease, border-color 200ms ease;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
-    font-family: 'Lora', 'Georgia', serif;
+    transition: background 200ms ease, border-color 200ms ease, transform 200ms ease;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+}
+/* When drawer is open, the star joins it as a single pill — flatten
+   the left edge so the two halves read as one continuous shape. */
+#cineDevLauncherWrap:hover #cineDevLauncher,
+#cineDevLauncherWrap:focus-within #cineDevLauncher {
+    border-radius: 0 18px 18px 0;
+    border-left: none;
+    background: rgba(0, 0, 0, 0.78);
+    border-color: rgba(255, 215, 0, 0.65);
 }
 #cineDevLauncher:hover {
-    background: rgba(0, 0, 0, 0.78);
-    border-color: rgba(255, 215, 0, 0.7);
+    background: rgba(0, 0, 0, 0.92);
+    border-color: rgba(255, 215, 0, 0.9);
+    transform: scale(1.05);
 }
 .cine-dev-launcher-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: rgba(255, 215, 0, 0.08);
-    border: 1px solid rgba(255, 215, 0, 0.25);
+    width: 24px;
+    height: 24px;
+    background: transparent;
+    border: none;
     flex-shrink: 0;
-    transition: transform 200ms ease, background 200ms ease;
-}
-#cineDevLauncher:hover .cine-dev-launcher-icon {
-    transform: scale(1.08);
-    background: rgba(255, 215, 0, 0.16);
+    transition: transform 200ms ease;
 }
 .cine-dev-launcher-icon svg { display: block; }
 
-/* Inner controls — sit inline inside the pill. Slim chrome, since the
-   pill itself already provides the visible boundary. */
-#cineDevLauncher #cineDevLauncherSelect {
-    background: transparent;
-    color: rgba(255, 215, 0, 0.85);
-    border: 1px solid rgba(255, 215, 0, 0.20);
-    border-radius: 3px;
-    padding: 2px 6px;
-    font-family: 'Lora', 'Georgia', serif;
-    font-size: 11px;
-    letter-spacing: 0.03em;
-    cursor: pointer;
-    transition: background 200ms ease, border-color 200ms ease;
-    max-width: 130px;
+/* Drawer inner controls — pure-text affordances, no own chrome. */
+#cineDevLauncherDrawer #cineDevLauncherSelect {
+    background: transparent !important;
+    color: rgba(255, 215, 0, 0.85) !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 4px 0 2px !important;
+    font-family: 'Lora', 'Georgia', serif !important;
+    font-size: 11px !important;
+    letter-spacing: 0.03em !important;
+    cursor: pointer !important;
+    max-width: 140px;
+    appearance: none;
+    -webkit-appearance: none;
 }
-#cineDevLauncher #cineDevLauncherSelect:hover {
-    background: rgba(255, 215, 0, 0.06);
-    border-color: rgba(255, 215, 0, 0.45);
-}
-#cineDevLauncher #cineDevLauncherSelect:focus {
+#cineDevLauncherDrawer #cineDevLauncherSelect:hover,
+#cineDevLauncherDrawer #cineDevLauncherSelect:focus {
     outline: none;
-    border-color: rgba(255, 215, 0, 0.7);
+    color: #ffd700 !important;
 }
 #cineDevLauncherSelect option {
     background: rgba(15, 12, 8, 0.98);
     color: rgba(255, 215, 0, 0.92);
 }
-#cineDevLauncher #cineDevInterruptToggle {
-    display: inline-flex;
+#cineDevLauncherDrawer #cineDevInterruptToggle {
+    display: inline-flex !important;
     align-items: center;
     gap: 4px;
-    background: transparent;
-    color: rgba(255, 215, 0, 0.85);
-    border: 1px solid rgba(255, 215, 0, 0.20);
-    border-radius: 3px;
-    padding: 2px 7px 2px 5px;
-    font-size: 10px;
+    background: transparent !important;
+    color: rgba(255, 215, 0, 0.78) !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 2px !important;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 10px !important;
     letter-spacing: 0.04em;
     cursor: pointer;
     user-select: none;
-    transition: background 200ms ease, border-color 200ms ease;
 }
-#cineDevLauncher #cineDevInterruptToggle:hover {
-    background: rgba(255, 215, 0, 0.06);
-    border-color: rgba(255, 215, 0, 0.45);
+#cineDevLauncherDrawer #cineDevInterruptToggle:hover {
+    color: #ffd700 !important;
 }
 #cineDevInterruptCheckbox {
     width: 11px;
@@ -32384,8 +32515,16 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     cursor: pointer;
     accent-color: #ffd700;
 }
-#cineDevLauncher #cineDevInterruptToggle:has(#cineDevInterruptCheckbox:checked) {
-    background: rgba(178, 16, 16, 0.45);
-    border-color: rgba(255, 80, 80, 0.6);
+/* Interrupt-armed: tint the star (the one persistently visible piece)
+   warm-red so the user sees that interrupt is on without needing the
+   drawer open. */
+#cineDevLauncherWrap:has(#cineDevInterruptCheckbox:checked) #cineDevLauncher {
+    background: rgba(80, 16, 16, 0.85);
+    border-color: rgba(255, 80, 80, 0.75);
+    color: rgba(255, 220, 220, 0.95);
+}
+#cineDevLauncherWrap:has(#cineDevInterruptCheckbox:checked) #cineDevLauncherDrawer {
+    background: rgba(80, 16, 16, 0.85);
+    border-color: rgba(255, 80, 80, 0.75);
     color: rgba(255, 220, 220, 0.95);
 }
