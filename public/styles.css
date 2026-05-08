@@ -7720,9 +7720,16 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 #zoomBookContainer.cine-cover .book-front {
     background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%);
     transform: translateZ(15px);
+    /* BOTTOM inset shadow (`inset 0 -2px 6px -3px ...`) deliberately
+       removed — it cast a faint dark band UP from the bottom edge into
+       the cover, and the triangle PNG (transparent above its gold
+       silhouette) let that band show through, producing the "line
+       above the triangle" the user kept seeing. The back cover has no
+       such shadow, which is why its triangle reads clean. The other
+       insets (left hinge crease, top, drop, ambient) are kept for the
+       3D book look. */
     box-shadow:
         inset 6px 0 10px -4px rgba(0, 0, 0, 0.08),
-        inset 0 -2px 6px -3px rgba(0, 0, 0, 0.06),
         inset 0 2px 6px -3px rgba(0, 0, 0, 0.04),
         3px 3px 10px -2px rgba(0, 0, 0, 0.15),
         0 6px 20px rgba(0, 0, 0, 0.08);
@@ -7848,42 +7855,18 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     gap: 14px;
     box-sizing: border-box;
 }
-/* Credit-band on the cinegraphic front — span the full cover width
-   PLUS a touch beyond it so the gold reaches edge-to-edge (no cream
-   "box" effect at the very edges from the front face's 1px border or
-   inset shadows). Negative offsets cover the wrap. */
+/* Credit-band on the cinegraphic front — match the back-cover look:
+   triangle silhouette sitting on the cream cover, transparent corners
+   showing the natural cream beneath (no gold backdrop, no rectangular
+   frame). Negative inset extends the band slightly past the front
+   face's 1px border so the gold base of the triangle reaches the very
+   bottom edge cleanly. */
 #zoomBookContainer.cine-cover .book-front img.gn-cover-credit-band {
     left: -1px;
     right: -1px;
     bottom: -1px;
     width: calc(100% + 2px);
     max-height: 22%;
-}
-/* Solid gold band UNDER the triangle PNG to eliminate the cream-frame
-   effect created by the PNG's transparent corners (the triangle is a
-   triangle — its corners are transparent and the cream cover shows
-   through). The pseudo-element is a horizontal gold strip the same
-   height as the triangle PNG, sitting at the bottom of the front
-   face; the PNG paints over it. Result: visible gold rectangle with
-   the triangle silhouette ON it, no cream visible around the
-   triangle's apex sides. */
-#zoomBookContainer.cine-cover .book-front {
-    position: relative;
-}
-#zoomBookContainer.cine-cover .book-front::after {
-    content: '';
-    position: absolute;
-    left: -1px;
-    right: -1px;
-    bottom: -1px;
-    height: calc(22% + 1px);
-    background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%);
-    pointer-events: none;
-    z-index: 5;
-}
-/* Triangle PNG sits on top of the gold backdrop. */
-#zoomBookContainer.cine-cover .book-front img.gn-cover-credit-band {
-    z-index: 6;
 }
 #zoomBookContainer.cine-cover .cover-working-label {
     font-family: 'Lora', serif;
@@ -32187,6 +32170,19 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 @keyframes cine-cam-orbit-right {
     from { transform: translate(-8%, -3%) scale(1.20); }
     to   { transform: translate(8%, 3%) scale(1.20); }
+}
+/* vertical_stretch — anchored at top, scaleY grows over the shot's duration
+   so the image's bottom edge appears to extend downward. Used by splatter's
+   final frame (drips elongating) — combined with bottom-anchored origin
+   the visual reads as paint dripping down past the original frame. */
+.cine-seq-stage[data-cam="vertical_stretch"] .cine-seq-img,
+.cine-seq-img[data-cam="vertical_stretch"] {
+    transform-origin: center top;
+    animation: cine-cam-vertical-stretch var(--shot-duration, 3000ms) ease-out forwards;
+}
+@keyframes cine-cam-vertical-stretch {
+    from { transform: scaleY(1.00); }
+    to   { transform: scaleY(1.18); }
 }
 /* Dolly-zoom (Hitchcock vertigo) — fakes independent scaling of fg/bg
    on a flat image by shifting the transform-origin to where the
