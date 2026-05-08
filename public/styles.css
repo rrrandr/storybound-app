@@ -32171,6 +32171,71 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     from { transform: translate(-8%, -3%) scale(1.20); }
     to   { transform: translate(8%, 3%) scale(1.20); }
 }
+/* ─── Intimacy dialogue mode — interactive PG-13 sex-scene UI ───
+   When state.intimacyDialogue.active === true, the staged scene's
+   gnPanelDisplay is replaced with this layout: mouth-frame top,
+   animated LI directive below, status line below that. Say/Do +
+   fate cards live in the existing scene UI underneath. */
+.intimacy-dialogue-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+    color: var(--story-text-color, #f0e9d6);
+}
+.intimacy-mouth-wrap {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    max-width: 540px;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #0a0907;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55);
+}
+.intimacy-mouth-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    opacity: 1;
+    transition: opacity 0.35s ease;
+}
+.intimacy-mouth-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.35) 100%);
+}
+.intimacy-directive {
+    margin: 24px 0 8px;
+    padding: 14px 20px;
+    width: 100%;
+    max-width: 540px;
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-style: italic;
+    font-size: 1.2em;
+    line-height: 1.5;
+    color: #e8d8b8;
+    border-top: 1px solid rgba(200, 170, 110, 0.25);
+    border-bottom: 1px solid rgba(200, 170, 110, 0.25);
+    transition: opacity 0.25s ease;
+    min-height: 1.5em;
+}
+.intimacy-status {
+    margin: 8px 0;
+    font-size: 0.9em;
+    opacity: 0.55;
+    color: #c8b890;
+    min-height: 1.2em;
+    text-align: center;
+}
+
 /* vertical_stretch — anchored at top, scaleY grows over the shot's duration
    so the image's bottom edge appears to extend downward. Used by splatter's
    final frame (drips elongating) — combined with bottom-anchored origin
@@ -32523,4 +32588,123 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     background: rgba(80, 16, 16, 0.85);
     border-color: rgba(255, 80, 80, 0.75);
     color: rgba(255, 220, 220, 0.95);
+}
+
+/* ── Intimacy dialogue dev launcher (red lips) ──────────────────────
+   Mirrors the Star of David launcher pattern but sits ABOVE it.
+   Red-lips icon launches the intimacy dialogue mode for testing
+   without a real story. Drawer holds a Dirty/Clean toggle and an
+   optional LI-name input. */
+#intimacyDevLauncherWrap {
+    position: fixed;
+    bottom: 116px;             /* 64 (Star of David top) + 36 (button) + 16 (gap) */
+    right: 16px;
+    z-index: 99998;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    pointer-events: auto;
+}
+#intimacyDevLauncherDrawer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 36px;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0;
+    pointer-events: none;
+    background: rgba(0, 0, 0, 0.78);
+    border-radius: 18px 0 0 18px;
+    border: 1.5px solid rgba(220, 60, 80, 0.65);  /* red border to match lips */
+    border-right: none;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    color: rgba(255, 200, 200, 0.85);
+    transition: max-width 0.22s ease, opacity 0.22s ease, padding 0.22s ease;
+    white-space: nowrap;
+}
+#intimacyDevLauncherWrap:hover #intimacyDevLauncherDrawer,
+#intimacyDevLauncherWrap:focus-within #intimacyDevLauncherDrawer {
+    max-width: 280px;
+    opacity: 1;
+    padding: 0 12px;
+    pointer-events: auto;
+}
+#intimacyDevLauncher {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.78);
+    border: 1.5px solid rgba(220, 60, 80, 0.65);
+    color: rgba(220, 60, 80, 0.95);  /* red lips color */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    transition: background 0.18s ease, border-radius 0.22s ease, color 0.18s ease;
+}
+#intimacyDevLauncherWrap:hover #intimacyDevLauncher,
+#intimacyDevLauncherWrap:focus-within #intimacyDevLauncher {
+    border-radius: 0 18px 18px 0;
+    color: rgba(255, 100, 120, 1);
+}
+#intimacyDevLauncher:hover {
+    background: rgba(40, 0, 4, 0.92);
+}
+.intimacy-dev-launcher-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#intimacyDevLauncherDrawer #intimacyDevModeToggle {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    background: transparent !important;
+    color: rgba(255, 200, 200, 0.85) !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 2px !important;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 10px !important;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    user-select: none;
+}
+#intimacyDevLauncherDrawer #intimacyDevModeToggle:hover {
+    color: rgba(255, 230, 230, 1) !important;
+}
+#intimacyDevModeCheckbox {
+    width: 11px;
+    height: 11px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: rgba(220, 60, 80, 0.95);
+}
+#intimacyDevLauncherDrawer #intimacyDevNameInput {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(220, 60, 80, 0.45);
+    color: rgba(255, 220, 220, 0.95);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-family: 'Lora', 'Georgia', serif;
+    font-size: 11px;
+    height: 22px;
+    width: 130px;
+    outline: none;
+}
+#intimacyDevLauncherDrawer #intimacyDevNameInput:focus {
+    border-color: rgba(255, 100, 120, 0.95);
+}
+#intimacyDevLauncherDrawer #intimacyDevNameInput::placeholder {
+    color: rgba(220, 180, 180, 0.5);
+    font-style: italic;
+}
+/* Dirty mode armed: deepen the lips color so the dev sees mode at a glance */
+#intimacyDevLauncherWrap:has(#intimacyDevModeCheckbox:checked) #intimacyDevLauncher {
+    color: rgba(255, 60, 90, 1);
+    border-color: rgba(255, 60, 90, 0.85);
 }
