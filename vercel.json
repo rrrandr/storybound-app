@@ -1,4 +1,12 @@
 {
+  "functions": {
+    "api/cine-approve.js": {
+      "excludeFiles": "public/**"
+    },
+    "api/cine-styled-manifest.js": {
+      "excludeFiles": "public/**"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)\\.js",
