@@ -23836,6 +23836,28 @@ button.gn-selector-card[disabled] {
     background: rgba(201, 168, 76, 0.26);
 }
 
+/* Resolved-state annotation — shown after the user picks an option.
+   Mirrors literary mode's "This is X, not Y." resolution so on re-read
+   the player can see which way they went. Non-interactive, italic,
+   slightly faded so it reads as commentary rather than a fresh prompt. */
+.staged-micro-resolved {
+    font-family: 'Lora', Georgia, serif;
+    font-style: italic;
+    font-size: 0.95em;
+    text-align: center;
+    color: rgba(232, 200, 130, 0.78);
+    padding: 8px 14px;
+    margin: 8px auto;
+    max-width: 540px;
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+    border-top: 1px solid rgba(201, 168, 76, 0.18);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+}
+.staged-micro-resolved-arrow { opacity: 0.6; margin-right: 2px; }
+.staged-micro-resolved-chosen { color: rgba(255, 215, 130, 0.95); font-style: italic; }
+.staged-micro-resolved-not { opacity: 0.55; }
+
 /* ── GN_UI_OVERLAY: persistent top bar + floating controls ── */
 .gn-ui-overlay {
     position: sticky;
