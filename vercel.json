@@ -28,6 +28,7 @@
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/checkout-success", "destination": "/index.html" },
-    { "source": "/checkout-cancel", "destination": "/index.html" }
+    { "source": "/checkout-cancel", "destination": "/index.html" },
+    { "source": "/admin/bug-reports", "destination": "/admin/bug-reports.html" }
   ]
 }
