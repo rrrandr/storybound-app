@@ -31,10 +31,13 @@
 
   // ── Lazy AudioContext init (requires user gesture) ──
   function _ensureCtx() {
-    if (_audioCtx) return _audioCtx;
+    if (!_audioCtx) {
+      try {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window._audioCtxRef = _audioCtx;
+      } catch(e) { return null; }
+    }
     try {
-      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      window._audioCtxRef = _audioCtx; // expose for ambient loops
       // Create master gain nodes for independent volume control
       if (!_sfxMasterGain) {
         _sfxMasterGain = _audioCtx.createGain();
@@ -133,17 +136,49 @@
     return _audioCtx;
   }
 
-  // ── User-gesture unlock ──
+  // ── User-gesture unlock (iOS requires resume + silent buffer in same gesture) ──
   function _unlock() {
-    if (_initialized) return;
-    const ctx = _ensureCtx();
+    // Create context if needed
+    if (!_audioCtx) {
+      try {
+        _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window._audioCtxRef = _audioCtx;
+      } catch(e) { return; }
+    }
+    var ctx = _audioCtx;
     if (!ctx) return;
-    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-    _initialized = true;
+
+    function _finishUnlock() {
+      if (!_initialized && ctx.state === 'running') {
+        _initialized = true;
+        console.log('[SOUND] AudioContext unlocked, state:', ctx.state);
+        _ensureCtx();
+      }
+    }
+
+    // iOS: play silent buffer to "warm" the context
+    if (!_initialized) {
+      try {
+        var silent = ctx.createBuffer(1, 1, 22050);
+        var src = ctx.createBufferSource();
+        src.buffer = silent;
+        src.connect(ctx.destination);
+        src.start(0);
+      } catch(e) {}
+    }
+
+    if (ctx.state === 'suspended') {
+      // resume() is async — handle both sync and async resolution
+      ctx.resume().then(_finishUnlock).catch(function() {});
+    }
+    // Also check synchronously (desktop often starts 'running' immediately)
+    _finishUnlock();
   }
 
-  document.addEventListener('click', _unlock, { once: false, passive: true });
-  document.addEventListener('touchstart', _unlock, { once: false, passive: true });
+  // Multiple event types — iOS Safari is picky about which gesture unlocks audio
+  ['click', 'touchstart', 'touchend', 'keydown'].forEach(function(evt) {
+    document.addEventListener(evt, _unlock, { passive: true });
+  });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SOUND DEFINITIONS — synthesized micro-sounds
@@ -581,8 +616,16 @@
       })
       .catch(function() {});
   }
-  // Start preload after first user interaction
-  document.addEventListener('click', function() { setTimeout(_preloadCorridorAmbience, 500); }, { once: true, passive: true });
+  // Start preload after first user interaction (must cover touch for mobile)
+  function _initAudioOnGesture() {
+    // Resume suspended AudioContext during the gesture (iOS requirement)
+    var ctx = _ensureCtx();
+    if (ctx && ctx.state === 'suspended') ctx.resume().catch(function(){});
+    setTimeout(_preloadCorridorAmbience, 300);
+  }
+  document.addEventListener('click', _initAudioOnGesture, { once: true, passive: true });
+  document.addEventListener('touchstart', _initAudioOnGesture, { once: true, passive: true });
+  document.addEventListener('touchend', _initAudioOnGesture, { once: true, passive: true });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // VOLUME CONTROL API — independent music / SFX sliders

@@ -103,7 +103,7 @@
   // Apply persisted styles immediately so cards render correctly
   applyPersistedStyles();
 
-  // Which elements inside cards are designable
+  // Which elements inside cards are designable (scoped to .sb-card)
   const ELEMENT_SELECTORS = [
     '.sb-card-back .sb-card-title',
     '.sb-card-back .sb-card-desc',
@@ -118,18 +118,24 @@
     '.sb-zoom-flavor-arc',
   ];
 
+  // Designable elements scoped to the LI tarot card (Name Your Characters
+  // stage). The LI card uses the .character-tarot-card class family which
+  // is outside the .sb-card scope that ELEMENT_SELECTORS walks, so it
+  // needs its own decoration loop inside decorateElements().
+  const LI_TAROT_SELECTORS = [
+    '.li-back-title',        // "Love Interest" — black debossed Lust
+    '.li-card-cover-copy',   // "Have a type?" prompt text
+  ];
+
   // Selectors for fate card elements (petition, tempt, etc.)
   const FATE_ELEMENT_SELECTORS = [
+    '.petition-zoom-overlay .petition-header-surface',
+    '.petition-zoom-overlay .petition-header-plot',
     '.petition-zoom-overlay .petition-top-zone',
-    '.petition-zoom-overlay .petition-suggest-header',
-    '.petition-zoom-overlay .petition-suggest-list',
     '.petition-zoom-overlay .petition-write-toggle',
+    '.petition-zoom-overlay .petition-caveat',
+    '.petition-zoom-overlay .petition-sacrifice',
     '.petition-zoom-overlay .petition-lower-zone',
-    '.petition-zoom-overlay .petition-fortune-tiers',
-    '.petition-zoom-overlay .petition-tier-btn',
-    '.petition-zoom-overlay .petition-suggest-panel',
-    '.petition-zoom-overlay .petition-suggest-col',
-    '.petition-zoom-overlay',
     '.tempt-zoom-overlay .tempt-wish-zone',
     '.tempt-zoom-overlay .tempt-wish-columns',
     '.tempt-zoom-overlay .tempt-wish-col',
@@ -956,6 +962,19 @@
       }
     });
 
+    // LI tarot card (Name Your Characters stage) — scoped to the actual
+    // element since it lives outside the .sb-card / .fate-card families.
+    // Only scanned in the grid context (not when a card is zoomed into the
+    // portal) — the portal never holds character-tarot-cards.
+    if (!portalHasCard) {
+      const liCard = document.getElementById('loveInterestCharacterCard');
+      if (liCard) {
+        LI_TAROT_SELECTORS.forEach(sel => {
+          liCard.querySelectorAll(sel).forEach(decorateEl);
+        });
+      }
+    }
+
     // Fate cards (petition, tempt, etc.)
     const fateCards = cardScope.querySelectorAll('.fate-card');
     fateCards.forEach(card => {
@@ -1031,6 +1050,11 @@
 
   function activate() {
     active = true;
+    // NOTE: window.__cardDesignerActive is exposed at module bottom as
+    // `() => active` (a function). All external callers (including the LI
+    // flip handler) invoke it as a function. Do NOT stomp it with a
+    // boolean here — doing so breaks every other call site that expects
+    // the function shape.
     createBadge();
     createPanel();
     decorateElements();
@@ -1069,6 +1093,9 @@
 
   function deactivate() {
     active = false;
+    // See note in activate(): the exported `window.__cardDesignerActive`
+    // is an arrow function closed over `active`, so flipping `active`
+    // automatically updates what callers see — no manual assignment here.
     deselectDesignEl();
     unDecorateElements();
     if (badge) { badge.remove(); badge = null; }
@@ -1098,8 +1125,19 @@
     }
   });
 
-  // Expose active state so app.js can skip DOM rebuilds during design mode
+  // Expose active state + activate so app.js can skip DOM rebuilds / trigger from shortcuts
   window.__cardDesignerActive = () => active;
+  window.__cardDesignerActivate = () => { if (!active) activate(); };
 
-  console.log('%c[Card Designer] Ready — Press Ctrl+Shift+D to toggle', 'color: #d4a844');
+  // Console shortcut: window._resetCardDesigner() clears all persisted mods
+  window._resetCardDesigner = function() {
+    localStorage.removeItem(MODS_STORAGE_KEY);
+    localStorage.removeItem(CW_STORAGE_KEY);
+    mods.clear();
+    containerWidths.clear();
+    if (active) { deactivate(); activate(); }
+    console.log('%c[Card Designer] All mods cleared. Reload to see base CSS.', 'color: #d4a844; font-weight: bold');
+  };
+
+  console.log('%c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods', 'color: #d4a844');
 })();

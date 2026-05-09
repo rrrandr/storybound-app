@@ -5,6 +5,9 @@ import { stripe as stripeClient } from '../lib/stripe.js';
 // Vercel: disable automatic body parsing so we can read the raw buffer
 export const config = { api: { bodyParser: false } };
 
+// Subscription tier → fortune grant amounts (granted additively on first purchase + every renewal)
+const SUB_FORTUNES = { storied: 100, favored: 200, chosen: 400 };
+
 /**
  * Look up a profile by stripe_subscription_id first, fall back to stripe_customer_id.
  */
@@ -26,6 +29,19 @@ async function resolveProfileBySubscription(supabase, subscriptionId, customerId
     if (data) return data.id;
   }
   return null;
+}
+
+/**
+ * Read the current fortunes balance for a user.
+ * Used before additive grants and refund deductions.
+ */
+async function readFortunes(supabase, userId) {
+  const { data } = await supabase
+    .from('profiles')
+    .select('fortunes')
+    .eq('id', userId)
+    .single();
+  return data?.fortunes || 0;
 }
 
 export default async function handler(req, res) {
@@ -56,7 +72,6 @@ export default async function handler(req, res) {
     req.headers.host?.includes('localhost') ||
     process.env.VERCEL_ENV === 'development'
   ) {
-    // Local development: skip signature verification
     try {
       event = JSON.parse(rawBody.toString());
       console.log('[stripe-webhook] Local dev — skipped signature verification');
@@ -65,7 +80,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Invalid JSON' });
     }
   } else {
-    // Production: verify Stripe signature
     try {
       event = stripeClient.webhooks.constructEvent(
         rawBody,
@@ -80,7 +94,6 @@ export default async function handler(req, res) {
 
   console.log(`[stripe-webhook] Received: ${event.id} ${event.type}`);
 
-  // ── Shared Supabase client (after signature verification) ──
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!sbUrl || !sbKey) {
@@ -89,57 +102,50 @@ export default async function handler(req, res) {
   }
   const supabase = createClient(sbUrl, sbKey);
 
-  // ── Idempotency guard — prevent duplicate event processing ──
-  // Requires table: stripe_events
-  //   id TEXT PRIMARY KEY,
-  //   type TEXT,
-  //   created_at TIMESTAMPTZ DEFAULT NOW(),
-  //   payload JSONB,
-  //   processed BOOLEAN DEFAULT FALSE
+  // ── Idempotency guard — atomic claim via stripe_events.processed flag ──
+  // Pattern: best-effort insert, then atomically transition processed false→true
+  // with a conditional UPDATE. Whoever wins the UPDATE owns the event and
+  // proceeds; concurrent handlers and Stripe redeliveries bail with 200. On
+  // processing error we roll the flag back so Stripe's retry can re-claim.
+  // This is the single lock for ALL event types — additive grants like
+  // invoice.paid (subscription renewal) and charge.refunded reversals are
+  // race-safe under it.
   {
-    const { data: existing } = await supabase
+    const { error: insertErr } = await supabase
       .from('stripe_events')
-      .select('id, processed')
+      .insert({
+        id: event.id,
+        type: event.type,
+        payload: event,
+        processed: false,
+      });
+    if (insertErr && !/duplicate key/i.test(insertErr.message || '')) {
+      console.warn(`[stripe-webhook] Event insert failed (${event.id}):`, insertErr.message);
+    }
+
+    const { data: claimed, error: claimErr } = await supabase
+      .from('stripe_events')
+      .update({ processed: true })
       .eq('id', event.id)
-      .single();
+      .eq('processed', false)
+      .select('id');
 
-    if (existing) {
-      if (existing.processed) {
-        // Already successfully processed — skip
-        console.log(`[stripe-webhook] Duplicate event ${event.id} (already processed), skipping`);
-        return res.status(200).json({ received: true });
-      }
-      // Event exists but processing failed previously — allow retry
-      console.log(`[stripe-webhook] Retrying unprocessed event ${event.id}`);
+    if (claimErr) {
+      console.error(`[stripe-webhook] Claim query failed (${event.id}):`, claimErr.message);
+      return res.status(500).json({ error: 'claim_failed' });
     }
 
-    // Store event with full payload BEFORE processing — ensures audit trail
-    // even if processing fails (Stripe will retry, and processed=false signals incomplete).
-    // Uses upsert so retries of failed events don't conflict on the existing row.
-    if (!existing) {
-      const { error: insertErr } = await supabase
-        .from('stripe_events')
-        .insert({
-          id: event.id,
-          type: event.type,
-          payload: event,
-          processed: false,
-        });
-
-      if (insertErr) {
-        // Race: another instance already inserted — safe to skip
-        console.warn(`[stripe-webhook] Event insert race (${event.id}):`, insertErr.message);
-        return res.status(200).json({ received: true });
-      }
+    if (!claimed || claimed.length === 0) {
+      console.log(`[stripe-webhook] Event ${event.id} already claimed/processed — skipping`);
+      return res.status(200).json({ received: true });
     }
+    console.log(`[stripe-webhook] Claimed: ${event.id} ${event.type}`);
   }
 
-  // ── Process event — all handlers below; mark processed at the end ──
   let processingError = null;
   let detectedUserId = null;
   let checkoutSessionId = null;
   let stripeCustomerIdForEvent = null;
-  let checkoutStoryId = null;
 
   try {
 
@@ -147,7 +153,6 @@ export default async function handler(req, res) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object;
 
-    // Metadata is authoritative — client_reference_id is a fallback
     const supabaseUserId = session.metadata?.supabase_user_id || session.client_reference_id;
     detectedUserId = supabaseUserId || null;
     checkoutSessionId = session.id || null;
@@ -155,8 +160,6 @@ export default async function handler(req, res) {
     stripeCustomerIdForEvent = stripeCustomerId || null;
     const stripeSubscriptionId = session.subscription;
     const priceId = session.metadata?.price_id;
-    const storyId = session.metadata?.story_id || null;
-    checkoutStoryId = storyId;
     const purchaseType = session.metadata?.purchase_type || null;
     if (!priceId) console.warn('[stripe-webhook] No price_id found in session metadata');
 
@@ -165,121 +168,113 @@ export default async function handler(req, res) {
       return res.status(200).json({ received: true, error: 'no_user_id' });
     }
 
-    console.log(`[stripe-webhook] checkout.session.completed — user: ${supabaseUserId}, price: ${priceId}, customer: ${stripeCustomerId}, subscription: ${stripeSubscriptionId}, story: ${storyId || 'none'}, type: ${purchaseType || 'unknown'}`);
+    console.log(`[stripe-webhook] checkout.session.completed — user: ${supabaseUserId}, price: ${priceId}, customer: ${stripeCustomerId}, subscription: ${stripeSubscriptionId}, type: ${purchaseType || 'unknown'}`);
 
     const updates = {};
     if (stripeCustomerId) updates.stripe_customer_id = stripeCustomerId;
     if (stripeSubscriptionId) updates.stripe_subscription_id = stripeSubscriptionId;
-
-    if (priceId && priceId === process.env.STRIPE_PRICE_ID_STORYPASS) {
-      updates.has_storypass = true;
-      console.log(`[stripe-webhook] Granting StoryPass to ${supabaseUserId}`);
-
-      // NOTE: Storypass fortunes are story-scoped (stored on storypass_entitlements),
-      // NOT added to the global profiles.purchased_fortunes balance.
-
-      // ── Arc-based entitlement — check then insert into storypass_entitlements ──
-      const arcNumber = parseInt(session.metadata?.arc_number, 10) || null;
-      if (storyId && arcNumber) {
-        // Check for existing entitlement before inserting
-        const { data: existingArc } = await supabase
-          .from('storypass_entitlements')
-          .select('id')
-          .eq('user_id', supabaseUserId)
-          .eq('story_id', storyId)
-          .eq('arc_number', arcNumber)
-          .single();
-
-        if (existingArc) {
-          console.log(`[stripe-webhook] Duplicate Storypass purchase ignored — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}`);
-        } else {
-          const { error: arcErr } = await supabase
-            .from('storypass_entitlements')
-            .insert({
-              user_id: supabaseUserId,
-              story_id: storyId,
-              arc_number: arcNumber,
-              storypass_fortunes_remaining: 20,
-            });
-          if (arcErr) {
-            // Unique constraint catch — race condition between check and insert
-            if (arcErr.code === '23505') {
-              console.log(`[stripe-webhook] Duplicate Storypass purchase ignored (constraint) — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}`);
-            } else {
-              console.error(`[stripe-webhook] Failed to create arc entitlement (arc ${arcNumber}, story ${storyId}):`, arcErr.message);
-            }
-          } else {
-            console.log(`[stripe-webhook] Arc entitlement created with 20 story-scoped fortunes — user: ${supabaseUserId}, story: ${storyId}, arc: ${arcNumber}`);
-          }
-        }
-      } else {
-        console.warn(`[stripe-webhook] Storypass purchased without arc metadata — story: ${storyId || 'none'}, arc: ${arcNumber || 'none'}`);
-      }
-    }
 
     const isSubscription = priceId && (
       priceId === process.env.STRIPE_PRICE_ID_STORIED ||
       priceId === process.env.STRIPE_PRICE_ID_FAVORED
     );
 
+    const fortunePriceIds = [
+      process.env.STRIPE_PRICE_ID_FORTUNES_20,
+      process.env.STRIPE_PRICE_ID_FORTUNES_60,
+      process.env.STRIPE_PRICE_ID_FORTUNES_120,
+      process.env.STRIPE_PRICE_ID_FORTUNES_240,
+    ].filter(Boolean);
+    const isFortunePack = priceId && fortunePriceIds.includes(priceId);
+
+    // Compute the fortunes delta for this purchase (additive in all cases)
+    let fortunesDelta = 0;
     if (isSubscription) {
       const tier = session.metadata?.subscription_tier;
-      if (!tier || (tier !== 'storied' && tier !== 'favored')) {
+      if (!tier || !SUB_FORTUNES[tier]) {
         console.error(`[stripe-webhook] Subscription session missing valid subscription_tier in metadata. Got: ${tier}. Session: ${session.id}`);
       } else {
         updates.is_subscriber = true;
         updates.subscription_tier = tier;
-        updates.subscription_fortunes = 100;
-        console.log(`[stripe-webhook] Granting ${tier} subscription + 100 subscription fortunes to ${supabaseUserId}`);
+        updates.billing_status = 'active';
+        updates.billing_grace_until = null;
+        fortunesDelta += SUB_FORTUNES[tier];
+        console.log(`[stripe-webhook] Granting ${tier} subscription + ${SUB_FORTUNES[tier]} fortunes (additive) to ${supabaseUserId}`);
       }
     }
 
-    if (priceId && (priceId === process.env.STRIPE_PRICE_ID_FORTUNE_PACK || priceId === process.env.STRIPE_PRICE_ID_OFFERING)) {
-      const fortunesGranted = parseInt(session.metadata?.fortunes_granted, 10) || 10;
-      const { data: currentProfile } = await supabase
-        .from('profiles')
-        .select('purchased_fortunes')
-        .eq('id', supabaseUserId)
-        .single();
-      updates.purchased_fortunes = (currentProfile?.purchased_fortunes || 0) + fortunesGranted;
-      updates.free_story_consumed = false;
-      console.log(`[stripe-webhook] Granting Fortune pack (${fortunesGranted} fortunes) + tease reset to ${supabaseUserId}`);
+    if (isFortunePack) {
+      const fortunesGranted = parseInt(session.metadata?.fortunes_granted, 10) || 0;
+      fortunesDelta += fortunesGranted;
+      console.log(`[stripe-webhook] Granting Fortune pack (${fortunesGranted} fortunes, additive) to ${supabaseUserId}`);
     }
 
-    if (!updates.has_storypass && !updates.is_subscriber && !updates.purchased_fortunes && !updates.subscription_fortunes) {
+    if (!updates.is_subscriber && fortunesDelta === 0) {
       console.warn(`[stripe-webhook] No entitlement matched for priceId: ${priceId}`);
     }
 
-    // ── Mark purchase intent as completed ──
+    // ── Atomic credit + intent transition (single Postgres transaction) ──
+    // The grant_purchase_fortunes RPC merges the pending→completed intent
+    // transition AND the additive fortunes update into one transaction. If
+    // either fails, both roll back, and Stripe's retry (triggered by the
+    // outer try/catch flipping stripe_events.processed back) can re-attempt
+    // cleanly. The previous split-query design could leave an intent stuck
+    // 'completed' with no fortunes credited if a silent error occurred
+    // between the two writes.
     const purchaseIntentId = session.metadata?.purchase_intent_id;
+    let intentTransitioned = !purchaseIntentId; // legacy: no intent → proceed (best effort below)
+
     if (purchaseIntentId) {
-      const { error: intentErr } = await supabase
-        .from('purchase_intents')
-        .update({ status: 'completed', completed_at: new Date().toISOString() })
-        .eq('id', purchaseIntentId)
-        .eq('status', 'pending');
-      if (intentErr) {
-        console.warn(`[stripe-webhook] Failed to mark purchase intent ${purchaseIntentId} as completed:`, intentErr.message);
-      } else {
-        console.log(`[stripe-webhook] Purchase intent ${purchaseIntentId} marked completed`);
+      const { data: rpcResult, error: rpcErr } = await supabase.rpc('grant_purchase_fortunes', {
+        p_user_id: supabaseUserId,
+        p_intent_id: purchaseIntentId,
+        p_fortunes: fortunesDelta || 0,
+      });
+      if (rpcErr) {
+        // Throw so the outer try/catch rolls back stripe_events.processed and
+        // returns 500 — Stripe will retry, the next handler can re-claim.
+        throw new Error(`grant_purchase_fortunes RPC: ${rpcErr.message}`);
       }
+      intentTransitioned = !!(rpcResult && rpcResult.granted);
+      if (intentTransitioned) {
+        console.log(`[stripe-webhook] Granted via RPC: +${fortunesDelta}F → balance ${rpcResult.new_balance} (intent ${purchaseIntentId})`);
+      } else {
+        console.log(`[stripe-webhook] Intent ${purchaseIntentId} not pending (${rpcResult?.reason || 'unknown'}) — skipping grant`);
+      }
+    } else if (fortunesDelta > 0) {
+      // Legacy path — no intent_id. Best-effort additive credit; not race-safe,
+      // but every modern checkout has an intent_id from create-checkout-session.
+      const current = await readFortunes(supabase, supabaseUserId);
+      const { error: legacyErr } = await supabase
+        .from('profiles')
+        .update({ fortunes: current + fortunesDelta })
+        .eq('id', supabaseUserId);
+      if (legacyErr) {
+        throw new Error(`legacy fortune credit: ${legacyErr.message}`);
+      }
+      console.warn(`[stripe-webhook] Legacy credit (no intent_id) +${fortunesDelta}F to ${supabaseUserId}`);
     }
 
-    if (Object.keys(updates).length > 0) {
-      const { error: updateErr } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', supabaseUserId);
-
-      if (updateErr) {
-        console.error('[stripe-webhook] Supabase update failed:', updateErr);
-      } else {
-        console.log(`[stripe-webhook] Profile updated for ${supabaseUserId}:`, updates);
+    // Subscription / customer metadata — idempotent, safe to apply only when we
+    // owned this event (intentTransitioned). Loser handlers leave it to the
+    // winner. fortunes are NEVER in this object: the RPC owns that field.
+    if (intentTransitioned) {
+      delete updates.fortunes;
+      if (Object.keys(updates).length > 0) {
+        const { error: updateErr } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', supabaseUserId);
+        if (updateErr) {
+          throw new Error(`profile metadata update: ${updateErr.message}`);
+        }
+        console.log(`[stripe-webhook] Profile metadata updated for ${supabaseUserId}:`, updates);
       }
     }
   }
 
-  // ── invoice.paid — subscription renewal ──
+  // ── invoice.paid — subscription renewal (or retry success after payment_failed) ──
+  // Renewal is ADDITIVE: each cycle deposits SUB_FORTUNES[tier] on top of existing balance.
   if (event.type === 'invoice.paid') {
     const invoice = event.data.object;
     const subscriptionId = invoice.subscription;
@@ -288,24 +283,45 @@ export default async function handler(req, res) {
     const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
     detectedUserId = userId || null;
     if (userId) {
+      let renewalTier = null;
+      if (subscriptionId) {
+        try {
+          const sub = await stripeClient.subscriptions.retrieve(subscriptionId);
+          const subPriceId = sub.items?.data?.[0]?.price?.id;
+          if (subPriceId === process.env.STRIPE_PRICE_ID_STORIED) renewalTier = 'storied';
+          else if (subPriceId === process.env.STRIPE_PRICE_ID_FAVORED) renewalTier = 'favored';
+        } catch (e) {
+          console.warn('[stripe-webhook] invoice.paid — failed to resolve tier from subscription:', e.message);
+        }
+      }
+      if (!renewalTier) {
+        const { data: profile } = await supabase.from('profiles').select('subscription_tier').eq('id', userId).single();
+        renewalTier = profile?.subscription_tier || 'storied';
+      }
+      const renewalFortunes = SUB_FORTUNES[renewalTier] || 100;
+      const current = await readFortunes(supabase, userId);
+
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: true, subscription_fortunes: 100 })
+        .update({
+          is_subscriber: true,
+          subscription_tier: renewalTier,
+          fortunes: current + renewalFortunes,
+          billing_status: 'active',
+          billing_grace_until: null,
+        })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] invoice.paid update failed:', error);
       } else {
-        console.log(`[stripe-webhook] invoice.paid — restored is_subscriber + reset 100 subscription fortunes for ${userId}`);
+        console.log(`[stripe-webhook] invoice.paid — restored ${renewalTier} sub + ${renewalFortunes}F (additive) for ${userId}, total ${current + renewalFortunes}F`);
       }
     } else {
       console.warn(`[stripe-webhook] invoice.paid — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
     }
   }
 
-  // ── invoice.payment_failed — payment failure ──
-  // GRACE MODEL: We intentionally preserve subscription_fortunes during payment_failed.
-  // Stripe may retry payment (up to 3x) before firing customer.subscription.deleted.
-  // Fortunes are only zeroed on customer.subscription.deleted — not here.
+  // ── invoice.payment_failed — start grace period ──
   if (event.type === 'invoice.payment_failed') {
     const invoice = event.data.object;
     const subscriptionId = invoice.subscription;
@@ -314,21 +330,66 @@ export default async function handler(req, res) {
     const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
     detectedUserId = userId || null;
     if (userId) {
+      const graceUntil = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: false })
+        .update({
+          is_subscriber: false,
+          billing_status: 'grace',
+          billing_grace_until: graceUntil,
+        })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] invoice.payment_failed update failed:', error);
       } else {
-        console.log(`[stripe-webhook] invoice.payment_failed — revoked is_subscriber for ${userId}`);
+        console.log(`[stripe-webhook] invoice.payment_failed — grace started for ${userId}, expires: ${graceUntil}`);
       }
     } else {
       console.warn(`[stripe-webhook] invoice.payment_failed — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
     }
   }
 
+  // ── customer.subscription.updated — tier change, status change, or plan modification ──
+  // Tracks tier metadata; does NOT touch the unified fortunes balance (renewals handle that).
+  if (event.type === 'customer.subscription.updated') {
+    const subscription = event.data.object;
+    const subscriptionId = subscription.id;
+    const customerId = subscription.customer;
+    const status = subscription.status;
+
+    const userId = await resolveProfileBySubscription(supabase, subscriptionId, customerId);
+    detectedUserId = userId || null;
+    if (userId) {
+      const subPriceId = subscription.items?.data?.[0]?.price?.id;
+      let updatedTier = null;
+      if (subPriceId === process.env.STRIPE_PRICE_ID_STORIED) updatedTier = 'storied';
+      else if (subPriceId === process.env.STRIPE_PRICE_ID_FAVORED) updatedTier = 'favored';
+
+      const updates = {};
+      if (status === 'active' || status === 'trialing') {
+        if (updatedTier) updates.subscription_tier = updatedTier;
+      } else if (status === 'past_due' || status === 'unpaid') {
+        updates.is_subscriber = false;
+      } else if (status === 'canceled' || status === 'incomplete_expired') {
+        updates.is_subscriber = false;
+        updates.subscription_tier = null;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
+        if (error) {
+          console.error('[stripe-webhook] customer.subscription.updated failed:', error);
+        } else {
+          console.log(`[stripe-webhook] customer.subscription.updated — status: ${status}, tier: ${updatedTier || 'unchanged'}, updates:`, updates);
+        }
+      }
+    } else {
+      console.warn(`[stripe-webhook] customer.subscription.updated — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
+    }
+  }
+
   // ── customer.subscription.deleted — subscription cancelled ──
+  // User keeps their unified fortunes balance; only subscription metadata clears.
   if (event.type === 'customer.subscription.deleted') {
     const subscription = event.data.object;
     const subscriptionId = subscription.id;
@@ -339,21 +400,24 @@ export default async function handler(req, res) {
     if (userId) {
       const { error } = await supabase
         .from('profiles')
-        .update({ is_subscriber: false, subscription_tier: null, subscription_fortunes: 0 })
+        .update({
+          is_subscriber: false,
+          subscription_tier: null,
+          billing_status: 'canceled',
+          billing_grace_until: null,
+        })
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] customer.subscription.deleted update failed:', error);
       } else {
-        console.log(`[stripe-webhook] customer.subscription.deleted — revoked subscription for ${userId}`);
+        console.log(`[stripe-webhook] customer.subscription.deleted — revoked subscription metadata for ${userId} (fortunes balance preserved)`);
       }
     } else {
       console.warn(`[stripe-webhook] customer.subscription.deleted — no profile found for subscription: ${subscriptionId}, customer: ${customerId}`);
     }
   }
 
-  // ── charge.refunded — revoke entitlements for refunded charges ──
-  // Resolves what was purchased via Stripe API → metadata.price_id → targeted revocation.
-  // Falls back to full revocation if resolution fails.
+  // ── charge.refunded — deduct refunded fortunes from the unified balance ──
   if (event.type === 'charge.refunded') {
     const charge = event.data.object;
     const customerId = charge.customer;
@@ -361,13 +425,12 @@ export default async function handler(req, res) {
     if (customerId) {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, purchased_fortunes')
+        .select('id, fortunes')
         .eq('stripe_customer_id', customerId)
         .single();
 
       if (profile) {
         detectedUserId = profile.id;
-        // Try to resolve what was purchased via checkout session metadata
         let priceId = null;
         let fortunesGranted = 0;
         try {
@@ -384,31 +447,22 @@ export default async function handler(req, res) {
           console.warn('[stripe-webhook] charge.refunded — Stripe lookup failed, full revocation:', err.message);
         }
 
-        // Targeted revocation based on price_id
         const updates = {};
-        if (priceId === process.env.STRIPE_PRICE_ID_STORYPASS) {
-          updates.has_storypass = false;
-          // Storypass fortunes are story-scoped (on storypass_entitlements), not global.
-          // Zero out any entitlements for this user.
-          await supabase
-            .from('storypass_entitlements')
-            .update({ storypass_fortunes_remaining: 0 })
-            .eq('user_id', profile.id);
-          console.log(`[stripe-webhook] Zeroed storypass entitlement fortunes for ${profile.id}`);
-        } else if (priceId === process.env.STRIPE_PRICE_ID_STORIED || priceId === process.env.STRIPE_PRICE_ID_FAVORED) {
+        if (priceId === process.env.STRIPE_PRICE_ID_STORIED || priceId === process.env.STRIPE_PRICE_ID_FAVORED) {
+          // Subscription refund — revoke sub status, deduct the granted fortunes
           updates.is_subscriber = false;
           updates.subscription_tier = null;
-          updates.subscription_fortunes = 0;
+          if (fortunesGranted > 0) {
+            updates.fortunes = Math.max(0, (profile.fortunes || 0) - fortunesGranted);
+          }
         } else if (fortunesGranted > 0) {
           // Fortune pack refund — deduct granted fortunes, prevent negative
-          updates.purchased_fortunes = Math.max(0, (profile.purchased_fortunes || 0) - fortunesGranted);
+          updates.fortunes = Math.max(0, (profile.fortunes || 0) - fortunesGranted);
         } else {
           // Unknown product or lookup failed — full revocation (safe over-revoke)
-          updates.has_storypass = false;
           updates.is_subscriber = false;
           updates.subscription_tier = null;
-          updates.subscription_fortunes = 0;
-          updates.purchased_fortunes = 0;
+          updates.fortunes = 0;
         }
 
         const { error } = await supabase
@@ -426,12 +480,11 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── charge.dispute.created — revoke entitlements on chargeback ──
+  // ── charge.dispute.created — chargeback nukes balance ──
   if (event.type === 'charge.dispute.created') {
     const dispute = event.data.object;
     const chargeId = dispute.charge;
 
-    // Resolve customer from the disputed charge
     let customerId = null;
     try {
       const charge = await stripeClient.charges.retrieve(chargeId);
@@ -452,11 +505,9 @@ export default async function handler(req, res) {
         const { error } = await supabase
           .from('profiles')
           .update({
-            has_storypass: false,
             is_subscriber: false,
             subscription_tier: null,
-            subscription_fortunes: 0,
-            purchased_fortunes: 0,
+            fortunes: 0,
           })
           .eq('id', profile.id);
         if (error) {
@@ -481,7 +532,6 @@ export default async function handler(req, res) {
     if (detectedUserId) eventUpdates.user_id = detectedUserId;
     if (checkoutSessionId) eventUpdates.checkout_session_id = checkoutSessionId;
     if (stripeCustomerIdForEvent) eventUpdates.stripe_customer_id = stripeCustomerIdForEvent;
-    if (checkoutStoryId) eventUpdates.story_id = checkoutStoryId;
 
     if (Object.keys(eventUpdates).length > 0) {
       const { error: traceErr } = await supabase
@@ -494,29 +544,27 @@ export default async function handler(req, res) {
     }
   }
 
-  // ── Debug log for checkout completions ──
   if (checkoutSessionId || stripeCustomerIdForEvent) {
-    console.log(`[stripe-webhook] Checkout completed — event: ${event.id}, customer: ${stripeCustomerIdForEvent || 'unknown'}, checkout_session: ${checkoutSessionId || 'unknown'}, story: ${checkoutStoryId || 'none'}`);
+    console.log(`[stripe-webhook] Checkout completed — event: ${event.id}, customer: ${stripeCustomerIdForEvent || 'unknown'}, checkout_session: ${checkoutSessionId || 'unknown'}`);
   }
 
-  // ── Mark event as processed (or leave false on failure for Stripe retry) ──
-  if (!processingError) {
-    const { error: markErr } = await supabase
-      .from('stripe_events')
-      .update({ processed: true })
-      .eq('id', event.id);
-    if (markErr) {
-      console.warn(`[stripe-webhook] Failed to mark event ${event.id} as processed:`, markErr.message);
-    } else {
-      console.log(`[stripe-webhook] Processed: ${event.id} ${event.type} user=${detectedUserId || 'unknown'}`);
-    }
-  }
-
-  // Processing failure → 500 so Stripe retries. Guard allows retry (processed=false).
-  // Processing success → 200.
   if (processingError) {
+    // Rollback the claim so Stripe's automatic retry (or a manual resend) can
+    // re-claim the event and process it cleanly. Without this, a crash here
+    // would leave processed=true with no actual side-effects committed.
+    const { error: rollbackErr } = await supabase
+      .from('stripe_events')
+      .update({ processed: false })
+      .eq('id', event.id);
+    if (rollbackErr) {
+      console.warn(`[stripe-webhook] Failed to rollback claim on ${event.id}:`, rollbackErr.message);
+    } else {
+      console.log(`[stripe-webhook] Rolled back claim on ${event.id} for retry`);
+    }
     return res.status(500).json({ error: 'webhook_processing_failed' });
   }
+
+  console.log(`[stripe-webhook] Processed: ${event.id} ${event.type} user=${detectedUserId || 'unknown'}`);
 
   res.status(200).json({ received: true });
 }

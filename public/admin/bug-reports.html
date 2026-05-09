@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storybound — Bug Reports Admin</title>
+<style>
+  body {
+    font-family: 'Lora', Georgia, serif;
+    background: #0e0c08;
+    color: #e8d8b8;
+    margin: 0;
+    padding: 24px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: 'Cinzel', 'Lora', serif;
+    color: #ffd700;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .topbar input, .topbar select {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 215, 0, 0.4);
+    color: #e8d8b8;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: 'Lora', serif;
+    font-size: 13px;
+  }
+  .topbar button {
+    background: rgba(255, 215, 0, 0.18);
+    border: 1px solid rgba(255, 215, 0, 0.55);
+    color: #ffd700;
+    padding: 7px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Lora', serif;
+    font-size: 13px;
+  }
+  .topbar button:hover { background: rgba(255, 215, 0, 0.32); }
+  .report-card {
+    background: rgba(0, 0, 0, 0.42);
+    border: 1px solid rgba(255, 215, 0, 0.22);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .report-card.severity-breaking { border-left: 4px solid #e96a6a; }
+  .report-card.severity-minor    { border-left: 4px solid #d8bb55; }
+  .report-card.severity-typo     { border-left: 4px solid #6ab38f; }
+  .report-card.awarded { opacity: 0.55; }
+  .report-card.rejected { opacity: 0.4; }
+  .report-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    opacity: 0.7;
+    margin-bottom: 10px;
+  }
+  .report-meta span { white-space: nowrap; }
+  .report-description {
+    font-size: 14px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    margin-bottom: 12px;
+  }
+  details {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+  details summary {
+    cursor: pointer;
+    color: #c8b890;
+    margin-bottom: 4px;
+  }
+  pre {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 8px 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 11px;
+    line-height: 1.4;
+    color: #c8b890;
+    max-height: 280px;
+  }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .actions input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    color: #e8d8b8;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: 'Lora', serif;
+    font-size: 12px;
+  }
+  .btn-approve {
+    background: rgba(106, 179, 143, 0.25);
+    border: 1px solid #6ab38f;
+    color: #6ab38f;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-approve:hover { background: rgba(106, 179, 143, 0.4); }
+  .btn-reject {
+    background: rgba(233, 106, 106, 0.18);
+    border: 1px solid #e96a6a;
+    color: #e96a6a;
+    padding: 6px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-reject:hover { background: rgba(233, 106, 106, 0.32); }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 6px;
+  }
+  .badge-awarded { background: rgba(106, 179, 143, 0.25); color: #6ab38f; }
+  .badge-rejected { background: rgba(233, 106, 106, 0.18); color: #e96a6a; }
+  .empty { opacity: 0.55; text-align: center; padding: 40px 0; font-style: italic; }
+</style>
+</head>
+<body>
+<h1>Bug Reports</h1>
+
+<div class="topbar">
+  <label>Admin key: <input id="adminKey" type="password" placeholder="paste ADMIN_BUG_KEY"></label>
+  <label>Filter:
+    <select id="filter">
+      <option value="pending" selected>Pending</option>
+      <option value="awarded">Awarded</option>
+      <option value="rejected">Rejected</option>
+      <option value="all">All</option>
+    </select>
+  </label>
+  <button id="refresh">Refresh</button>
+  <span id="status" style="opacity: 0.7; font-size: 12px;"></span>
+</div>
+
+<div id="reports"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const reportsEl = $('reports');
+
+// Persist admin key in sessionStorage so refresh doesn't lose it during a sitting,
+// but it's gone when the tab closes.
+$('adminKey').value = sessionStorage.getItem('sb_admin_key') || '';
+$('adminKey').addEventListener('change', () => {
+  sessionStorage.setItem('sb_admin_key', $('adminKey').value);
+});
+
+function escapeHtml(s) {
+  if (typeof s !== 'string') return '';
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString();
+}
+
+function renderCard(r) {
+  const isAwarded = !!r.awarded_at;
+  const isRejected = !!r.rejected_at;
+  const isPending = !isAwarded && !isRejected;
+  const statusBadge = isAwarded ? '<span class="badge badge-awarded">Awarded</span>'
+                    : isRejected ? '<span class="badge badge-rejected">Rejected</span>'
+                    : '';
+  return `
+    <div class="report-card severity-${r.severity || 'minor'} ${isAwarded ? 'awarded' : ''} ${isRejected ? 'rejected' : ''}" data-id="${r.id}">
+      <div class="report-meta">
+        <span><strong>#${r.id.slice(0, 8)}</strong>${statusBadge}</span>
+        <span>Severity: <strong>${r.severity || '—'}</strong></span>
+        <span>User: ${escapeHtml(r.user_email || r.user_id || '—')}</span>
+        <span>Submitted: ${fmtDate(r.submitted_at)}</span>
+        ${isAwarded ? '<span>Awarded: ' + fmtDate(r.awarded_at) + '</span>' : ''}
+        ${isRejected ? '<span>Rejected: ' + fmtDate(r.rejected_at) + '</span>' : ''}
+        ${r.story_id ? '<span>Story: ' + escapeHtml(r.story_id.slice(0, 12)) + '…</span>' : ''}
+        ${r.scene_idx != null ? '<span>Scene: ' + r.scene_idx + '</span>' : ''}
+        ${r.render_mode ? '<span>Mode: ' + escapeHtml(r.render_mode) + '</span>' : ''}
+      </div>
+      <div class="report-description">${escapeHtml(r.description || '')}</div>
+      ${r.state_snapshot ? `<details><summary>State snapshot</summary><pre>${escapeHtml(JSON.stringify(r.state_snapshot, null, 2))}</pre></details>` : ''}
+      ${r.console_buffer && r.console_buffer.length ? `<details><summary>Console (${r.console_buffer.length} lines)</summary><pre>${escapeHtml(r.console_buffer.join('\n'))}</pre></details>` : ''}
+      ${r.user_agent ? `<details><summary>User agent</summary><pre>${escapeHtml(r.user_agent)}</pre></details>` : ''}
+      ${r.admin_notes ? `<details open><summary>Admin notes</summary><pre>${escapeHtml(r.admin_notes)}</pre></details>` : ''}
+      ${isPending ? `
+        <div class="actions">
+          <input type="text" placeholder="Notes (optional)" id="notes-${r.id}">
+          <button class="btn-approve" onclick="approveReport('${r.id}')">Approve → +1F</button>
+          <button class="btn-reject" onclick="rejectReport('${r.id}')">Reject</button>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+async function load() {
+  const key = $('adminKey').value.trim();
+  if (!key) { $('status').textContent = 'Enter admin key.'; return; }
+  $('status').textContent = 'Loading…';
+  const filter = $('filter').value;
+  const url = '/api/bug-report?adminKey=' + encodeURIComponent(key) + '&filter=' + encodeURIComponent(filter);
+  try {
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (resp.status === 403) { $('status').textContent = 'Forbidden — wrong key.'; return; }
+    if (!resp.ok) { $('status').textContent = 'Error: ' + (data.error || resp.status); return; }
+    const reports = data.reports || [];
+    if (reports.length === 0) {
+      reportsEl.innerHTML = '<div class="empty">No reports in this filter.</div>';
+    } else {
+      reportsEl.innerHTML = reports.map(renderCard).join('');
+    }
+    $('status').textContent = reports.length + ' report' + (reports.length === 1 ? '' : 's');
+  } catch (e) {
+    $('status').textContent = 'Network error: ' + e.message;
+  }
+}
+
+async function approveReport(id) {
+  const key = $('adminKey').value.trim();
+  const notes = ($('notes-' + id) || {}).value || null;
+  if (!confirm('Approve this report and grant +1 Fortune?')) return;
+  const resp = await fetch('/api/bug-report', {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ adminKey: key, reportId: id, action: 'approve', notes })
+  });
+  const data = await resp.json();
+  if (resp.ok) {
+    alert('Approved: ' + data.source + (data.fortunes != null ? ' (user now has ' + data.fortunes + 'F)' : ''));
+    load();
+  } else {
+    alert('Failed: ' + (data.error || resp.status));
+  }
+}
+
+async function rejectReport(id) {
+  const key = $('adminKey').value.trim();
+  const notes = ($('notes-' + id) || {}).value || null;
+  if (!notes && !confirm('Reject without notes?')) return;
+  const resp = await fetch('/api/bug-report', {
+    method: 'PATCH',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ adminKey: key, reportId: id, action: 'reject', notes })
+  });
+  const data = await resp.json();
+  if (resp.ok) {
+    alert('Rejected.');
+    load();
+  } else {
+    alert('Failed: ' + (data.error || resp.status));
+  }
+}
+window.approveReport = approveReport;
+window.rejectReport = rejectReport;
+
+$('refresh').addEventListener('click', load);
+$('filter').addEventListener('change', load);
+$('adminKey').addEventListener('keydown', e => { if (e.key === 'Enter') load(); });
+
+if ($('adminKey').value) load();
+</script>
+</body>
+</html>

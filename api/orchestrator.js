@@ -247,6 +247,28 @@ const ALLOWED_MODELS = {
   // Concierge — meta-layer UI guidance (short, in-character)
   CONCIERGE: [
     'gpt-4o-mini'
+  ],
+
+  // Working title — Fate-anchored cover working title generation. Short
+  // structured output (3-6 words, max_tokens:30); cheapest model is fine.
+  WORKING_TITLE: [
+    'gpt-4o-mini',
+    'gpt-4o'
+  ],
+
+  // Back-cover synopsis — Fate-anchored marketing blurb on the GN/literary
+  // back cover. ~120-180 words, structured opener menu.
+  BACK_COVER_SYNOPSIS: [
+    'gpt-4o-mini',
+    'gpt-4o'
+  ],
+
+  // Cinesequence beat-text rewrite — view 2/4+ of a cine-sequence triggers
+  // an LLM rewrite of the canonical beats with story context (LI name,
+  // world, tone). Strict shape: same beat count, preserved atMs/durationMs.
+  CINE_BEAT_REWRITE: [
+    'gpt-4o-mini',
+    'gpt-4o'
   ]
 };
 
@@ -262,7 +284,10 @@ const DEFAULT_MODELS = {
   FATE_ELEVATION: 'gpt-4o-mini',
   STRATEGY_PASS: 'gpt-4o-mini',
   STRUCTURAL_CORRECTION: 'gpt-4o-mini',
-  CONCIERGE: 'gpt-4o-mini'
+  CONCIERGE: 'gpt-4o-mini',
+  WORKING_TITLE: 'gpt-4o-mini',
+  BACK_COVER_SYNOPSIS: 'gpt-4o-mini',
+  CINE_BEAT_REWRITE: 'gpt-4o-mini'
 };
 
 // =============================================================================
@@ -270,30 +295,34 @@ const DEFAULT_MODELS = {
 // =============================================================================
 
 /**
- * Monetization tier enforcement.
- * These gates MUST be checked BEFORE any renderer call.
- * No AI model may override these rules.
+ * Monetization gating after currency unification: there is exactly one gate
+ * (balance > 0 to spend), enforced by api/consume-fortune. Cliffhangers are
+ * narrative beats designed into story arcs, not paywall walls. The orchestrator
+ * never forces a cliffhanger; the (b) "approach arc close" preference (set
+ * when user is within ~2 scenes of zero) nudges generation toward arc-natural
+ * pause points without crossing the wallet-data firewall.
  */
 const MONETIZATION_GATES = {
-  free: {
-    name: 'TASTE_CAP',
-    completionAllowed: false,
-    cliffhangerRequired: true,
-    maxStoryLength: 'taste'
-  },
-  pass: {
-    name: 'PASS_UNLOCKED',
-    completionAllowed: true,
-    cliffhangerRequired: false,
-    maxStoryLength: 'fling'
-  },
-  sub: {
-    name: 'SUB_UNLOCKED',
+  default: {
+    name: 'BALANCE_GATED',
     completionAllowed: true,
     cliffhangerRequired: false,
     maxStoryLength: 'soulmates'
   }
 };
+
+/**
+ * Derive the narrative beat preference from a user's spendable balance and
+ * the upcoming scene's cost. Returns 'approach_arc_close' when within ~2
+ * scenes of zero, 'normal' otherwise. This boolean signal crosses the firewall
+ * legitimately via gateEnforcement; raw balance never does.
+ */
+function deriveNarrativeBeatPreference({ fortunes, sceneCost }) {
+  if (typeof fortunes !== 'number' || typeof sceneCost !== 'number' || sceneCost <= 0) {
+    return 'normal';
+  }
+  return fortunes <= sceneCost * 2 ? 'approach_arc_close' : 'normal';
+}
 
 // =============================================================================
 // EROTIC SCENE DIRECTIVE (ESD) SCHEMA
@@ -446,23 +475,20 @@ function getDefaultModel(role) {
  * - Whether completion is permitted
  * - Whether a cliffhanger is required
  */
-function enforceMonetizationGates(accessTier, requestedEroticism) {
-  const gate = MONETIZATION_GATES[accessTier];
-  if (!gate) {
-    // Default to most restrictive
-    console.warn(`Unknown access tier: ${accessTier}, defaulting to 'free'`);
-    return enforceMonetizationGates('free', requestedEroticism);
-  }
+function enforceMonetizationGates(accessTier, requestedEroticism, options = {}) {
+  const gate = MONETIZATION_GATES.default;
+  const narrativeBeatPreference = options.narrativeBeatPreference || 'normal';
 
   return {
-    accessTier,
+    accessTier: accessTier || 'default',
     gateCode: gate.name,
     requestedEroticism,
     effectiveEroticism: requestedEroticism,
     wasDowngraded: false,
     completionAllowed: gate.completionAllowed,
     cliffhangerRequired: gate.cliffhangerRequired,
-    maxStoryLength: gate.maxStoryLength
+    maxStoryLength: gate.maxStoryLength,
+    narrativeBeatPreference,
   };
 }
 
@@ -793,12 +819,7 @@ async function orchestrateStoryGeneration({
     const integrationResult = await callChatGPT(integrationPrompt, 'PRIMARY_AUTHOR');
 
     state.integrationOutput = integrationResult.storyText;
-
-    // Apply cliffhanger if required by monetization
-    if (state.gateEnforcement.cliffhangerRequired && !integrationResult.hasCliffhanger) {
-      // Force cliffhanger ending
-      state.integrationOutput += '\n\n[Scene interrupted — the moment hangs suspended...]';
-    }
+    state.isCliffhangerScene = !!integrationResult.hasCliffhanger;
 
   } catch (err) {
     state.errors.push(`Integration Pass failed: ${err.message}`);
@@ -814,6 +835,7 @@ async function orchestrateStoryGeneration({
     finalOutput: state.integrationOutput,
     orchestrationState: state,
     gateEnforcement: state.gateEnforcement,
+    isCliffhangerScene: !!state.isCliffhangerScene,
     rendererUsed: state.rendererCalled && !state.rendererFailed,
     fateStumbled: state.fateStumbled,
     errors: state.errors
@@ -933,6 +955,7 @@ module.exports = {
   // Core orchestration
   orchestrateStoryGeneration,
   createOrchestrationState,
+  deriveNarrativeBeatPreference,
 
   // Model validation
   validateModelForRole,

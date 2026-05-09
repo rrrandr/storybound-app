@@ -293,7 +293,6 @@ let _sparkleActiveCardId = null;
 let _fateSparkleContainerIds = [];
 
 function startSparkleCycle(cardId, cardEl, actInput, diaInput) {
-    console.log('[FX:DEBUG] startSparkleCycle triggered', { cardId });
 
     // Clear any existing cycle
     stopSparkleCycle();
@@ -1170,8 +1169,22 @@ function stopContinuousSparkles() {
     // Generate the deck with contextual awareness
     function buildFateDeck() {
         const state = window.state || {};
-        const allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
-        const storyText = allContent.replace(/<[^>]*>/g, ' ');
+        let allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
+        let storyText = (allContent || '').replace(/<[^>]*>/g, ' ');
+        // Staged (cinegraphic) mode bypasses StoryPagination — the prose is
+        // routed into the staged renderer's beat array via
+        // _completeStagedSceneFromLiterary (app.js:103018), and pagination
+        // stays empty. Without this fallback, extractSceneContext below
+        // sees no text → confidence stays 0 → cards collapse to soft
+        // fallbacks or isSetup templates that read as scene-blind.
+        if ((!storyText || storyText.trim().length < 100) &&
+            state && state._stagedActive && state._stagedActive.plan &&
+            Array.isArray(state._stagedActive.plan.beats)) {
+            storyText = state._stagedActive.plan.beats
+                .map(function(b) { return (b && b.text) ? b.text : ''; })
+                .filter(Boolean)
+                .join(' ');
+        }
 
         // INTIMATE CONTEXT: Use erotic deck base instead of standard deck
         const deckBase = isIntimateContextActive() ? INTIMATE_DECK_BASE : fateDeckBase;
@@ -1232,12 +1245,44 @@ function stopContinuousSparkles() {
             return Math.max(0, Math.min(5, window.state.fateUnlockCount));
         }
 
-        // Best-effort inference from existing state fields (non-invasive defaults)
-        const access = window.state ? window.state.access : null;
-        if (access === 'free') return 2;
+        const st = window.state || {};
+        const access = st.access;
+
+        // Subscribers always get the full deck.
         if (access === 'sub') return 5;
 
-        // Default paid-but-not-sub tier
+        // StoryPass holders have paid for the story-length tier → full deck.
+        if (access === 'pass') return 5;
+
+        // ── PURCHASED-FORTUNES UNLOCK ──
+        // Any user who has ever bought Fortunes OR carries a positive paid
+        // balance (purchased pack OR subscription Fortunes) earns the full
+        // 5-card deck on every scene — INCLUDING free-tier Taste-mode scenes
+        // where the per-scene cost is 0. Rationale: card-locking exists as
+        // an upsell to non-payers; once the user has paid anything into the
+        // system, the upsell pressure is misplaced and feels punitive.
+        // Selecting Taste tier should not cost the user previously-earned
+        // unlock benefits.
+        if ((st.purchasedFortunes || 0) > 0) return 5;
+        if ((st.subscriptionFortunes || 0) > 0) return 5;
+        if (st.hasEverPurchased === true) return 5;
+
+        // Per-scene paid users: if Fortune was spent to generate THIS scene,
+        // the user earned access to the full deck. This is the authoritative
+        // rule — "since I was charged 1F, all 5 cards should be unlocked."
+        // Free-tier + Taste + under cap returns cost = 0 (truly free scene)
+        // and falls through to the partial-deck upsell below.
+        try {
+            if (typeof window.getSceneFortuneCost === 'function') {
+                const cost = window.getSceneFortuneCost();
+                if (cost > 0) return 5;
+            }
+        } catch (_) {}
+
+        // Free tier, no fortune spent this scene — partial deck as upsell.
+        if (access === 'free') return 3;
+
+        // Default fallback.
         return 3;
     }
 
@@ -1426,13 +1471,6 @@ function stopContinuousSparkles() {
 
     // Golden flow animation from card to inputs - continuous gentle stream
     function triggerGoldenFlow(fromEl, toEl) {
-        console.log('[FX:DEBUG] triggerGoldenFlow called', {
-            fromElExists: !!fromEl,
-            toElExists: !!toEl,
-            fromElVisible: fromEl ? fromEl.offsetParent !== null : false,
-            toElVisible: toEl ? toEl.offsetParent !== null : false
-        });
-
         if (!fromEl || !toEl) return;
 
         const fromRect = fromEl.getBoundingClientRect();
@@ -1441,11 +1479,6 @@ function stopContinuousSparkles() {
         // ANCHOR VALIDATION: Abort if either element has no dimensions
         if (!fromRect || fromRect.width === 0 || fromRect.height === 0) return;
         if (!toRect || toRect.width === 0 || toRect.height === 0) return;
-
-        console.log('[FX:DEBUG] Golden flow coords', {
-            fromRect: { left: fromRect.left, top: fromRect.top, width: fromRect.width, height: fromRect.height },
-            toRect: { left: toRect.left, top: toRect.top, width: toRect.width, height: toRect.height }
-        });
 
         const startX = fromRect.left + fromRect.width / 2;
         const startY = fromRect.top + fromRect.height / 2;
@@ -1655,8 +1688,10 @@ function setSelectedState(mount, selectedCardEl){
             el.addEventListener('click', () => commitFateSelection(mount), { passive: true });
         };
 
-        // Common IDs across builds (safe no-op if missing)
-        ['submitBtn','sendBtn','submitTurn','turnSubmit','submit'].forEach(tryBindClick);
+        // Common IDs across builds (safe no-op if missing). GN reader's
+        // submit button is gnSubmitBtn — without it, GN turn-submission
+        // wouldn't trigger the chosen-card sparkle/disintegrate commit.
+        ['submitBtn','gnSubmitBtn','sendBtn','submitTurn','turnSubmit','submit'].forEach(tryBindClick);
 
         // If there's a form, committing on submit is also reasonable and non-invasive.
         const forms = [];
@@ -1676,8 +1711,19 @@ function setSelectedState(mount, selectedCardEl){
         if (_inputsBound) return;
         _inputsBound = true;
 
-        const actInput = document.getElementById('actionInput');
-        const diaInput = document.getElementById('dialogueInput');
+        // Bind to BOTH literary and GN textareas — whichever pair exists
+        // will fire focus/input events when the user starts editing.
+        // Previously only literary IDs were bound, so GN-mode edits never
+        // committed the fate selection (the chosen card stayed clickable
+        // and the disintegrate animation didn't fire).
+        const actInputs = [
+            document.getElementById('actionInput'),
+            document.getElementById('gnActionInput')
+        ].filter(Boolean);
+        const diaInputs = [
+            document.getElementById('dialogueInput'),
+            document.getElementById('gnDialogueInput')
+        ].filter(Boolean);
 
         const maybeCommitOnEdit = () => {
             if (!window.state) return;
@@ -1689,8 +1735,7 @@ function setSelectedState(mount, selectedCardEl){
 
         // "Once the player clicks into the populated text boxes…"
         // Focus counts as "click into". Input counts as editing.
-        [actInput, diaInput].forEach(el => {
-            if (!el) return;
+        [...actInputs, ...diaInputs].forEach(el => {
             el.addEventListener('focus', maybeCommitOnEdit);
             el.addEventListener('input', maybeCommitOnEdit);
         });
@@ -1825,14 +1870,47 @@ function setSelectedState(mount, selectedCardEl){
                 // Selecting a different unlocked card wipes/replaces suggestions
                 setSelectedState(mount, card);
 
+                // Mark that the player has now used a Tarot card at least
+                // once — persisted across stories. Used by the Scene 1
+                // Tarot-decision-participant injection to stop showing
+                // the Tarot onboarding directive after first real use.
+                // Persistence via localStorage (matches the per-field
+                // pattern used elsewhere: no monolithic save-state).
+                try {
+                    if (window.state) window.state._tarotCardClickedEver = true;
+                    localStorage.setItem('sb_tarot_clicked_ever', '1');
+                } catch (_) {}
+
+                // STORY GRAVITY — tag the selected card's contribution to
+                // the outcome/relationship axis. Card id lives in `data`
+                // (from fateOptions selection). Mapping:
+                //   temptation, reversal, twist, break, push → outcome
+                //   boundary, confession, silence, hold, tether → relationship
+                // Cards outside this set contribute 0 (neutral). Lightweight
+                // keyword match on id/name — no new subsystem.
+                try {
+                    var _gs = window.state && window.state.gravityScore;
+                    if (_gs && data) {
+                        var _tag = String((data.id || data.name || '')).toLowerCase();
+                        if (/tempt|revers|twist|break|push|confront|strike/.test(_tag))      _gs.outcome      += 1;
+                        else if (/bound|confess|silenc|hold|tether|linger|reveal/.test(_tag)) _gs.relationship += /silenc/.test(_tag) ? 0.5 : 1;
+                    }
+                } catch (_) {}
+
                 clearPendingTimer();
 
                 // Cancel any prior sparkle cycle, then start new cycle
                 stopSparkleCycle();
 
-                // Trigger golden flow animations to inputs
-                const actInput = document.getElementById('actionInput');
-                const diaInput = document.getElementById('dialogueInput');
+                // Trigger golden flow animations to inputs.
+                // Mode-aware lookup so GN-mode fate clicks fill the GN
+                // textareas, not the (non-existent) literary ones.
+                const _inputs = (typeof window._getActiveTurnInputs === 'function')
+                    ? window._getActiveTurnInputs()
+                    : { actInput: document.getElementById('actionInput'),
+                        diaInput: document.getElementById('dialogueInput') };
+                const actInput = _inputs.actInput;
+                const diaInput = _inputs.diaInput;
 
                 // Start sparkle cycle (3s ON, 2s OFF) on card + inputs
                 startSparkleCycle(data.id, card, actInput, diaInput);
@@ -1865,6 +1943,21 @@ function setSelectedState(mount, selectedCardEl){
             mount.appendChild(card);
         });
 
+        // ── Auto-flip: reveal cards 2s after they scroll into view ──
+        if ('IntersectionObserver' in window) {
+            const flipObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !_allFlipped) {
+                        setTimeout(() => {
+                            if (!_allFlipped) flipAllCards(mount);
+                        }, 2000);
+                        flipObserver.disconnect();
+                    }
+                });
+            }, { threshold: 0.3 });
+            flipObserver.observe(mount);
+        }
+
         // ── Petition & Tempt cards → separate "Take Fate In Your Own Hands" container ──
         const specialMount = document.getElementById('fateSpecialCards') || mount;
         specialMount.innerHTML = '';
@@ -1894,7 +1987,7 @@ function setSelectedState(mount, selectedCardEl){
         petitionCard.onclick = () => {
             if (document.querySelector('.design-mode-badge')) return;
             if (!petitionCard.classList.contains('flipped')) petitionCard.classList.add('flipped');
-            if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
+            if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom(petitionCard);
         };
         specialMount.appendChild(petitionCard);
 
@@ -1908,6 +2001,7 @@ function setSelectedState(mount, selectedCardEl){
             </div>
         `;
         // Tempt Fate: hover flips, mouseleave unflips, click zooms
+        // Electricity is always on (both faces)
         temptCard.addEventListener('mouseenter', () => {
             if (!temptCard.classList.contains('flipped')) {
                 temptCard.classList.add('flipped');
@@ -1925,6 +2019,11 @@ function setSelectedState(mount, selectedCardEl){
             if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
         };
         specialMount.appendChild(temptCard);
+        // Start electricity on both faces — always running
+        if (window._startTemptElectricity) window._startTemptElectricity(temptCard);
+        // FIX D — Fate card gating: apply locked state based on current turnCount
+        // so Petition + Tempt read as "not yet wakeable" through Scenes 1-2.
+        if (typeof window._syncFateCardLockState === 'function') window._syncFateCardLockState();
 
         // Bind commitment triggers once (safe no-op if elements missing)
         bindCommitHooks(mount);
@@ -2037,9 +2136,15 @@ function setSelectedState(mount, selectedCardEl){
                 // Cancel any prior sparkle cycle, then start new cycle
                 if (window.stopSparkleCycle) window.stopSparkleCycle();
 
-                // Trigger golden flow animations to inputs
-                const actInput = document.getElementById('actionInput');
-                const diaInput = document.getElementById('dialogueInput');
+                // Trigger golden flow animations to inputs.
+                // Mode-aware lookup so GN-mode fate clicks fill the GN
+                // textareas, not the (non-existent) literary ones.
+                const _inputs = (typeof window._getActiveTurnInputs === 'function')
+                    ? window._getActiveTurnInputs()
+                    : { actInput: document.getElementById('actionInput'),
+                        diaInput: document.getElementById('dialogueInput') };
+                const actInput = _inputs.actInput;
+                const diaInput = _inputs.diaInput;
 
                 // Start sparkle cycle (3s ON, 2s OFF) on card + inputs
                 console.log('[FATE] sparkle FX triggered');
@@ -2089,7 +2194,7 @@ function setSelectedState(mount, selectedCardEl){
             petitionCard.onclick = () => {
                 if (document.querySelector('.design-mode-badge')) return;
                 if (!petitionCard.classList.contains('flipped')) petitionCard.classList.add('flipped');
-                if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom();
+                if (typeof window.openPetitionZoom === 'function') window.openPetitionZoom(petitionCard);
             };
         }
 
@@ -2115,6 +2220,8 @@ function setSelectedState(mount, selectedCardEl){
                 if (!temptCard.classList.contains('flipped')) temptCard.classList.add('flipped');
                 if (typeof window.openTemptZoom === 'function') window.openTemptZoom();
             };
+            // Restart electricity on rebind
+            if (window._startTemptElectricity) window._startTemptElectricity(temptCard);
         }
 
         // Rebind commit hooks
