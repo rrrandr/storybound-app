@@ -111,8 +111,53 @@
       <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Sound">Story Sound</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="ReportIssue">Report an Issue</button>
     </div>
     <button id="vaultCloseBtn" class="sb-btn-png sm" style="margin-top:14px;">Close Vault</button>
+  </div>
+
+  <!-- ── REPORT AN ISSUE SUB-PANEL ── -->
+  <div id="vaultReportIssue" class="vault-sub hidden">
+    <div class="vault-sub-title">Report an Issue</div>
+    <p class="vault-blurb" style="font-size:13px; line-height:1.45; max-width:520px; margin:0 auto 12px; opacity:0.85;">
+      Spotted a bug, typo, broken render, or weird behavior? Tell us. If we confirm it's a real bug, you get +1 Fortune. Up to 3 reports per day.
+    </p>
+    <div style="display:flex; flex-direction:column; gap:10px; max-width:520px; margin:0 auto;">
+      <label style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:12px; opacity:0.85;">
+        <span>Severity</span>
+        <select id="bugReportSeverity" class="sb-input">
+          <option value="typo">Typo / wording</option>
+          <option value="minor" selected>Minor (cosmetic / non-blocking)</option>
+          <option value="breaking">Breaking (can't continue / wrong behavior)</option>
+        </select>
+      </label>
+      <label style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:12px; opacity:0.85;">
+        <span>What happened? (min 30 characters)</span>
+        <textarea id="bugReportDescription" class="sb-input" rows="6" maxlength="4000"
+          placeholder="What did you see? What did you expect? Any steps to reproduce?"></textarea>
+        <span id="bugReportCharCount" style="font-size:11px; opacity:0.6; align-self:flex-end;">0 / 4000</span>
+      </label>
+      <p style="font-size:11px; opacity:0.65; margin:4px 0;">
+        We'll attach your current scene / story context automatically — no need to describe where you are.
+      </p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
+        <button id="bugReportSubmitBtn" class="sb-btn-png md">Send Report</button>
+      </div>
+      <p id="bugReportStatus" style="font-size:12px; text-align:center; min-height:1.2em; margin:0;"></p>
+    </div>
+    <button class="vault-back sb-btn-png sm" style="margin-top:18px;">Back</button>
+  </div>
+
+  <!-- ── BUG REPORT THANK-YOU MODAL ── -->
+  <div id="bugReportThankYouModal" class="overlay hidden" style="z-index:10010;">
+    <div style="max-width:440px; margin:auto; background:rgba(0,0,0,0.92); border:1.5px solid rgba(255,215,0,0.55); border-radius:8px; padding:28px 32px; text-align:center; color:#f0e9d6;">
+      <div style="font-family:'Cinzel', 'Lora', serif; font-size:18px; letter-spacing:0.06em; margin-bottom:14px; color:#ffd700;">Report Sent</div>
+      <p style="font-family:'Lora', serif; font-size:14px; line-height:1.55; margin:0 0 18px;">
+        You get <strong style="color:#ffd700;">+1 Fortune</strong> once we confirm the issue.<br>
+        Thanks for helping make Storybound better.
+      </p>
+      <button class="sb-btn-png sm" onclick="document.getElementById('bugReportThankYouModal').classList.add('hidden');">Close</button>
+    </div>
   </div>
 
   <!-- ── ACCOUNT SUB-PANEL ── -->
@@ -2039,7 +2084,7 @@
 <script src="/fatecards.js?v=20260507a"></script>
 <script src="/orchestration-client.js?v=20260429h"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260508m"></script>
+<script src="/app.js?v=20260508n"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
