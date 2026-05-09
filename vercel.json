@@ -5,6 +5,9 @@
     },
     "api/cine-styled-manifest.js": {
       "excludeFiles": "public/**"
+    },
+    "api/mouth-approve.js": {
+      "excludeFiles": "public/**"
     }
   },
   "headers": [
