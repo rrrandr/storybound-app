@@ -32225,13 +32225,108 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     object-fit: cover;
     display: block;
     opacity: 1;
-    transition: opacity 0.35s ease;
+    transition: opacity 0.35s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform-origin: center center;
 }
+/* Peak-tier escalating zoom — consecutive peak states (ahh / big_o /
+   no / intense / tense_bite / smile_snarl / blowing_smirk) tighten the
+   crop progressively. Streak resets on any non-peak state. Cubic
+   easing matches the cinesequence's high-impact zoom feel. */
+.intimacy-mouth-img.peak-zoom-1 { transform: scale(1.06); }
+.intimacy-mouth-img.peak-zoom-2 { transform: scale(1.13); }
+.intimacy-mouth-img.peak-zoom-3 { transform: scale(1.20); }
 .intimacy-mouth-overlay {
     position: absolute;
     inset: 0;
     pointer-events: none;
     background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.35) 100%);
+}
+
+/* ── PEAK-TIER VISUAL LAYER ──────────────────────────────────────────
+   Triggered when the mouth state is on the peaking tier (ahh, big_o,
+   no, intense, tense_bite, smile_snarl, blowing_smirk). Two combined
+   effects:
+     1. Light burst (::before)  — radial overlay flash, brief
+     2. Speed lines (::after)   — anime-style radial wedges going
+                                  inward, indicate intensity
+   Streak levels (peak-burst-1 / -2 / -3) intensify both effects on
+   consecutive peak frames. Class is added on render, auto-removed
+   after 700ms so the animation can re-trigger cleanly on the next
+   peak. Pointer-events stay none on both pseudo-elements. */
+.intimacy-mouth-wrap.peak-burst::before,
+.intimacy-mouth-wrap.peak-burst::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    will-change: opacity, transform;
+}
+.intimacy-mouth-wrap.peak-burst::before {
+    /* Light burst — radial gold flash centered on mouth */
+    background: radial-gradient(circle at center,
+        rgba(255, 240, 200, 0.85) 0%,
+        rgba(255, 220, 160, 0.45) 25%,
+        transparent 65%);
+    mix-blend-mode: overlay;
+    animation: intimacy-peak-flash 0.45s ease-out forwards;
+}
+.intimacy-mouth-wrap.peak-burst::after {
+    /* Anime speed lines — repeating radial wedges + radial mask so the
+       lines fade IN from the edges (center mouth stays unobstructed).
+       conic-gradient creates the wedge pattern; radial mask makes
+       only the outer ring of wedges visible. */
+    background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 7deg,
+        rgba(255, 245, 220, 0.85) 7deg 8deg
+    );
+    -webkit-mask: radial-gradient(ellipse at center, transparent 38%, black 75%);
+    mask: radial-gradient(ellipse at center, transparent 38%, black 75%);
+    mix-blend-mode: screen;
+    animation: intimacy-peak-speedlines 0.6s ease-out forwards;
+    opacity: 0;
+}
+/* Streak intensification — flash brighter, lines denser/longer on
+   subsequent consecutive peaks. Replaces ::after on streak-2/3. */
+.intimacy-mouth-wrap.peak-burst-2::before {
+    background: radial-gradient(circle at center,
+        rgba(255, 245, 210, 0.95) 0%,
+        rgba(255, 220, 160, 0.6) 30%,
+        transparent 70%);
+}
+.intimacy-mouth-wrap.peak-burst-2::after {
+    background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 5deg,
+        rgba(255, 250, 230, 0.92) 5deg 7deg
+    );
+    -webkit-mask: radial-gradient(ellipse at center, transparent 32%, black 75%);
+    mask: radial-gradient(ellipse at center, transparent 32%, black 75%);
+}
+.intimacy-mouth-wrap.peak-burst-3::before {
+    background: radial-gradient(circle at center,
+        rgba(255, 250, 220, 1) 0%,
+        rgba(255, 220, 170, 0.75) 35%,
+        transparent 75%);
+}
+.intimacy-mouth-wrap.peak-burst-3::after {
+    background: repeating-conic-gradient(
+        from 0deg,
+        transparent 0deg 3.5deg,
+        rgba(255, 255, 240, 1) 3.5deg 6deg
+    );
+    -webkit-mask: radial-gradient(ellipse at center, transparent 26%, black 72%);
+    mask: radial-gradient(ellipse at center, transparent 26%, black 72%);
+}
+@keyframes intimacy-peak-flash {
+    0%   { opacity: 0; }
+    20%  { opacity: 1; }
+    100% { opacity: 0; }
+}
+@keyframes intimacy-peak-speedlines {
+    0%   { opacity: 0; transform: scale(1.5); }
+    35%  { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 0; transform: scale(0.92); }
 }
 .intimacy-directive {
     margin: 24px 0 8px;
