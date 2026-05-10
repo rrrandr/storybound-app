@@ -17,11 +17,11 @@ export const config = {
 // All 16 mouth states the dev launcher exposes. New states added to
 // the placeholder map must be allowlisted here too.
 const ALLOWED_STATES = new Set([
-  '5oclock-1', 'closed-smile', 'smirk',
+  '5oclock-1', 'closed-smile', 'smirk', 'BIGsmirk', 'KNOWINGsmirk',
   'lip-bite', 'lip-bite2', 'whistle',
   'ohno', 'what', 'you',
   'hard-exhale', 'ahh',
-  'big-O', 'NO', 'INTENSE', 'tense-bite', 'smile-snarl'
+  'big-O', 'NO', 'INTENSE', 'tense-bite', 'smile-snarl', 'BLOWINGsmirk'
 ]);
 
 const ALLOWED_ARTISTS = new Set([
