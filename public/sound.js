@@ -131,6 +131,24 @@
               .catch(function() {});
           });
         }
+        // ── OAS audio bus — fire crackle (ambient bed), heartbeat
+        //    (temperature-reactive), hold-beat (rhythmic momentum), and
+        //    male sigh (one-shot on scene resolve). All four preload here.
+        var _oasAssets = {
+          _oasFireBuffer:      '/assets/intimacy/oas-fire-crackle.mp3',
+          _oasHeartbeatBuffer: '/assets/intimacy/oas-heartbeat.mp3',
+          _oasHoldBeatBuffer:  '/assets/intimacy/oas-hold-beat.mp3',
+          _oasBreathBuffer:    '/assets/intimacy/oas-male-breath.mp3',
+          _oasSighBuffer:      '/assets/intimacy/oas-male-sigh.mp3'
+        };
+        Object.keys(_oasAssets).forEach(function(key) {
+          if (window[key]) return;
+          fetch(_oasAssets[key])
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window[key] = decoded; })
+            .catch(function() {});
+        });
       }
     } catch (_) {}
     return _audioCtx;
@@ -626,6 +644,255 @@
   document.addEventListener('click', _initAudioOnGesture, { once: true, passive: true });
   document.addEventListener('touchstart', _initAudioOnGesture, { once: true, passive: true });
   document.addEventListener('touchend', _initAudioOnGesture, { once: true, passive: true });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OAS AUDIO BUS — fire crackle + heartbeat + hold-beat layered loops,
+  // with temperature-reactive heartbeat (curious → peaking scales volume
+  // and playback rate). Male sigh is a one-shot fired on scene resolve.
+  // ───────────────────────────────────────────────────────────────────────────
+  // Layer routing: all three loops + sigh feed the SFX master bus (not
+  // music). Reasoning: these are diegetic/atmospheric rather than score —
+  // they should duck if SFX is muted, independent of background music.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  var _oasState = {
+    fireSrc: null,   fireGain: null,
+    hbSrc: null,     hbGain: null,
+    holdSrc: null,   holdGain: null,
+    breathSrc: null, breathGain: null,
+    active: false,
+    currentTemperature: 'curious'
+  };
+
+  // Per-temperature heartbeat params. Volume + playbackRate scale together
+  // so urgent/peaking moments feel physically louder AND faster, not just
+  // louder. Hold-beat fades in slightly as temperature climbs.
+  // breathVol is 0 at curious/warming (track doesn't start until urgent)
+  // and rises through urgent → peaking. The breath track plays non-loop
+  // so its tail (slow recovery breaths) lands naturally on scene resolve.
+  var _OAS_TEMP_PROFILES = {
+    curious:  { hbVol: 0.18, hbRate: 0.90, holdVol: 0.06, breathVol: 0.00 },
+    warming:  { hbVol: 0.26, hbRate: 1.05, holdVol: 0.10, breathVol: 0.00 },
+    urgent:   { hbVol: 0.36, hbRate: 1.22, holdVol: 0.16, breathVol: 0.28 },
+    peaking:  { hbVol: 0.50, hbRate: 1.45, holdVol: 0.22, breathVol: 0.45 }
+  };
+  var _OAS_FIRE_VOL = 0.10;  // constant — room atmosphere bed
+
+  function _oasLoopFromBuffer(buf, vol, rate) {
+    var ctx = _ensureCtx();
+    if (!ctx || !buf) return null;
+    if (ctx.state === 'suspended') ctx.resume().catch(function(){});
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    if (typeof rate === 'number' && src.playbackRate) {
+      try { src.playbackRate.value = rate; } catch (_) {}
+    }
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 1.2);
+    src.connect(gain).connect(_sfxOut(ctx));
+    src.start(0);
+    return { src: src, gain: gain };
+  }
+
+  // Breath track is non-looping by design — the file's tail contains
+  // slow recovery breaths that must be allowed to play through on scene
+  // resolve. While OAS is active and temperature is urgent/peaking, we
+  // restart the track via onended so the breathing feels continuous; once
+  // the user starts resolving, we stop restarting and let the current
+  // playback (including the recovery tail) land naturally.
+  //
+  // _oasState.breathAllowRestart gates the onended restart loop. Set to
+  // true when starting the breath layer, false when stopping OAS.
+  function _oasStartBreathTrack(initialVol) {
+    var ctx = _ensureCtx();
+    if (!ctx || !window._oasBreathBuffer) return null;
+    if (ctx.state === 'suspended') ctx.resume().catch(function(){});
+    var src = ctx.createBufferSource();
+    src.buffer = window._oasBreathBuffer;
+    src.loop = false;
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(initialVol, ctx.currentTime + 1.5);
+    src.connect(gain).connect(_sfxOut(ctx));
+    src.onended = function() {
+      // If OAS is still active and the temperature is still hot enough
+      // for breathing, restart the track. Otherwise let it stay ended —
+      // the natural tail (slow recovery breaths) has just played out.
+      if (!_oasState.active || !_oasState.breathAllowRestart) return;
+      var prof = _OAS_TEMP_PROFILES[_oasState.currentTemperature];
+      if (!prof || prof.breathVol <= 0) return;
+      // Reach via state in case the user dropped intensity to a cooler
+      // tier mid-playback — start the new instance at the current target
+      // volume rather than the previous one.
+      var next = _oasStartBreathTrack(prof.breathVol);
+      if (next) {
+        _oasState.breathSrc = next.src;
+        _oasState.breathGain = next.gain;
+      }
+    };
+    src.start(0);
+    return { src: src, gain: gain };
+  }
+
+  function _oasFadeOut(node, fadeSec) {
+    if (!node || !node.src || !node.gain) return;
+    try {
+      var ctx = node.gain.context;
+      var dur = (typeof fadeSec === 'number') ? fadeSec : 0.8;
+      node.gain.gain.cancelScheduledValues(ctx.currentTime);
+      node.gain.gain.setValueAtTime(node.gain.gain.value, ctx.currentTime);
+      node.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
+      var srcRef = node.src;
+      setTimeout(function() { try { srcRef.stop(); } catch (_) {} }, dur * 1000 + 50);
+    } catch (_) {}
+  }
+
+  // ── PUBLIC: start the OAS audio bed ──
+  // Safe to call multiple times — re-entry is guarded by _oasState.active.
+  // Loops can take a few hundred ms to start because buffers may still be
+  // decoding when OAS launches; if a buffer isn't ready, that loop is
+  // skipped gracefully (no error).
+  window.startOASAudio = function(initialTemperature) {
+    if (_oasState.active) return;
+    if (!_enabled) return;
+    var ctx = _ensureCtx();
+    if (!ctx) return;
+    _oasState.active = true;
+    _oasState.currentTemperature = (initialTemperature && _OAS_TEMP_PROFILES[initialTemperature]) ? initialTemperature : 'curious';
+    var prof = _OAS_TEMP_PROFILES[_oasState.currentTemperature];
+
+    // Fire crackle — always at the same bed volume regardless of temperature.
+    if (window._oasFireBuffer && !_oasState.fireSrc) {
+      var fire = _oasLoopFromBuffer(window._oasFireBuffer, _OAS_FIRE_VOL, 1.0);
+      if (fire) { _oasState.fireSrc = fire.src; _oasState.fireGain = fire.gain; }
+    }
+    // Heartbeat — temperature-reactive volume + rate.
+    if (window._oasHeartbeatBuffer && !_oasState.hbSrc) {
+      var hb = _oasLoopFromBuffer(window._oasHeartbeatBuffer, prof.hbVol, prof.hbRate);
+      if (hb) { _oasState.hbSrc = hb.src; _oasState.hbGain = hb.gain; }
+    }
+    // Hold-beat — rhythmic momentum, fades up with temperature.
+    if (window._oasHoldBeatBuffer && !_oasState.holdSrc) {
+      var hold = _oasLoopFromBuffer(window._oasHoldBeatBuffer, prof.holdVol, 1.0);
+      if (hold) { _oasState.holdSrc = hold.src; _oasState.holdGain = hold.gain; }
+    }
+    // Breath layer — only kicks in at urgent/peaking (breathVol > 0).
+    // Allow restart while OAS is active so the breathing feels continuous.
+    _oasState.breathAllowRestart = true;
+    if (prof.breathVol > 0 && window._oasBreathBuffer && !_oasState.breathSrc) {
+      var breath = _oasStartBreathTrack(prof.breathVol);
+      if (breath) { _oasState.breathSrc = breath.src; _oasState.breathGain = breath.gain; }
+    }
+    try { console.log('[OAS-AUDIO] started @ ' + _oasState.currentTemperature); } catch (_) {}
+  };
+
+  // ── PUBLIC: update heartbeat + hold-beat for new temperature ──
+  // Called from the OAS turn handler when state.intimacyDialogue.temperature
+  // changes ('curious' → 'warming' → 'urgent' → 'peaking').
+  window.setOASTemperature = function(temperature) {
+    if (!_oasState.active) return;
+    var prof = _OAS_TEMP_PROFILES[temperature];
+    if (!prof) return;
+    if (temperature === _oasState.currentTemperature) return;
+    _oasState.currentTemperature = temperature;
+    var fadeSec = 1.5;
+    try {
+      if (_oasState.hbGain) {
+        var ctxA = _oasState.hbGain.context;
+        _oasState.hbGain.gain.cancelScheduledValues(ctxA.currentTime);
+        _oasState.hbGain.gain.setValueAtTime(_oasState.hbGain.gain.value, ctxA.currentTime);
+        _oasState.hbGain.gain.linearRampToValueAtTime(prof.hbVol, ctxA.currentTime + fadeSec);
+      }
+      if (_oasState.hbSrc && _oasState.hbSrc.playbackRate) {
+        var ctxB = _oasState.hbSrc.context;
+        _oasState.hbSrc.playbackRate.cancelScheduledValues(ctxB.currentTime);
+        _oasState.hbSrc.playbackRate.setValueAtTime(_oasState.hbSrc.playbackRate.value, ctxB.currentTime);
+        _oasState.hbSrc.playbackRate.linearRampToValueAtTime(prof.hbRate, ctxB.currentTime + fadeSec);
+      }
+      if (_oasState.holdGain) {
+        var ctxC = _oasState.holdGain.context;
+        _oasState.holdGain.gain.cancelScheduledValues(ctxC.currentTime);
+        _oasState.holdGain.gain.setValueAtTime(_oasState.holdGain.gain.value, ctxC.currentTime);
+        _oasState.holdGain.gain.linearRampToValueAtTime(prof.holdVol, ctxC.currentTime + fadeSec);
+      }
+      // Breath layer — start it if we just crossed into urgent/peaking
+      // (and it isn't already playing), or ramp its volume if it is.
+      if (prof.breathVol > 0) {
+        if (!_oasState.breathSrc && window._oasBreathBuffer) {
+          _oasState.breathAllowRestart = true;
+          var breath = _oasStartBreathTrack(prof.breathVol);
+          if (breath) { _oasState.breathSrc = breath.src; _oasState.breathGain = breath.gain; }
+        } else if (_oasState.breathGain) {
+          var ctxD = _oasState.breathGain.context;
+          _oasState.breathGain.gain.cancelScheduledValues(ctxD.currentTime);
+          _oasState.breathGain.gain.setValueAtTime(_oasState.breathGain.gain.value, ctxD.currentTime);
+          _oasState.breathGain.gain.linearRampToValueAtTime(prof.breathVol, ctxD.currentTime + fadeSec);
+        }
+      } else if (_oasState.breathGain) {
+        // Cooled back down below urgent — taper breath to silence, but
+        // leave the source playing so its tail still rides out.
+        var ctxE = _oasState.breathGain.context;
+        _oasState.breathGain.gain.cancelScheduledValues(ctxE.currentTime);
+        _oasState.breathGain.gain.setValueAtTime(_oasState.breathGain.gain.value, ctxE.currentTime);
+        _oasState.breathGain.gain.linearRampToValueAtTime(0, ctxE.currentTime + 3.0);
+      }
+    } catch (_) {}
+    try { console.log('[OAS-AUDIO] temperature → ' + temperature); } catch (_) {}
+  };
+
+  // ── PUBLIC: one-shot male sigh for scene resolution ──
+  window.playOASSigh = function() {
+    if (!_enabled || !window._oasSighBuffer) return;
+    var ctx = _ensureCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume().catch(function(){});
+    var src = ctx.createBufferSource();
+    src.buffer = window._oasSighBuffer;
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.55, ctx.currentTime);
+    src.connect(gain).connect(_sfxOut(ctx));
+    src.start(0);
+  };
+
+  // ── PUBLIC: stop OAS audio bed with smooth fade-out ──
+  // The fire / heartbeat / hold-beat loops fade out over `fadeSec`. The
+  // BREATH track gets special handling: instead of fading, we disable
+  // restart and leave the current playback alone so its natural tail
+  // (slow recovery breaths) lands post-peak. If the user's tearing OAS
+  // down mid-track (unusual — usually resolve fires after a closing
+  // beat), we apply a long gentle fade so the breaths sound like they're
+  // settling rather than being cut.
+  window.stopOASAudio = function(fadeSec) {
+    if (!_oasState.active) return;
+    var dur = (typeof fadeSec === 'number') ? fadeSec : 1.0;
+    _oasFadeOut({ src: _oasState.fireSrc,  gain: _oasState.fireGain  }, dur);
+    _oasFadeOut({ src: _oasState.hbSrc,    gain: _oasState.hbGain    }, dur);
+    _oasFadeOut({ src: _oasState.holdSrc,  gain: _oasState.holdGain  }, dur);
+    // Breath: stop the restart loop. Let the currently-playing instance
+    // ride to its natural end so the recovery breaths land.
+    _oasState.breathAllowRestart = false;
+    if (_oasState.breathGain) {
+      try {
+        // Long gentle taper as a safety net — if the track is at peak
+        // intensity when resolve fires, this softens the volume without
+        // cutting the natural breath cadence. Track's onended will fire
+        // when playback finishes naturally.
+        var ctx = _oasState.breathGain.context;
+        var breathFade = Math.max(dur * 2, 4.0);
+        _oasState.breathGain.gain.cancelScheduledValues(ctx.currentTime);
+        _oasState.breathGain.gain.setValueAtTime(_oasState.breathGain.gain.value, ctx.currentTime);
+        _oasState.breathGain.gain.linearRampToValueAtTime(0, ctx.currentTime + breathFade);
+      } catch (_) {}
+    }
+    _oasState.fireSrc = null;   _oasState.fireGain = null;
+    _oasState.hbSrc = null;     _oasState.hbGain = null;
+    _oasState.holdSrc = null;   _oasState.holdGain = null;
+    _oasState.breathSrc = null; _oasState.breathGain = null;
+    _oasState.active = false;
+    try { console.log('[OAS-AUDIO] stopped'); } catch (_) {}
+  };
 
   // ═══════════════════════════════════════════════════════════════════════════
   // VOLUME CONTROL API — independent music / SFX sliders
