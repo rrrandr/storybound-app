@@ -3782,6 +3782,118 @@ Respond in EXACTLY two lines:
     return null;
   }
 
+  // ── BATCH INTIMATE FATE PREVIEWS — single LLM call for all 5 cards ──
+  // Returns { temptation: {action,dialogue}, silence: {...}, ... } in one
+  // round-trip instead of fanning 5 separate Grok calls. ~80% cost cut
+  // on the fate-card panel. Cache the result per-scene and re-use on
+  // every card click; never re-roll within the same scene.
+  async function generateIntimateFatePreviewsBatch() {
+    const st = window.state || {};
+    const mode = st.eroticMode || 'ROMANTIC';
+    const effectiveMode = mode === 'INTENSITY_REDIRECT' ? 'ROMANTIC' : mode;
+    const physicalBounds = resolvePhysicalBounds();
+    const liName = (st.storybeau && st.storybeau.name) || st.loveInterestName || 'the love interest';
+    const allContent = window.StoryPagination?.getAllContent?.()?.replace(/<[^>]*>/g, ' ') || '';
+    const recentScene = allContent.slice(-500);
+    const emotionalCore = st.esd?.emotionalCore || st.esd?.dominant_emotion || 'desire';
+    const sceneContext = _buildSceneAndPlotContext(st);
+    const modeInstructions = {
+      ROMANTIC: 'Tender but present. Bodies in contact, sensory detail, undressing, kissing with intention. Implication allowed but body NOT absent.',
+      VISCERAL: 'Explicit physical detail. Anatomy referenced directly. Rhythm, friction, contact narrated without euphemism.',
+      CARNAL:   'Full sensory saturation. Power dynamics, anatomical specificity, graphic intimacy. Nothing implied — everything rendered.'
+    };
+
+    const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema.';
+
+    const userMsg = `Generate 5 fate-card Say/Do previews for THIS specific moment of an intimate scene, one per archetype. Each preview is the protagonist's NEXT move + line.
+
+EROTIC MODE: ${effectiveMode}
+MODE INSTRUCTIONS: ${modeInstructions[effectiveMode] || modeInstructions.ROMANTIC}
+RENDERING FLOOR: ${physicalBounds}
+EMOTIONAL CORE: ${emotionalCore}
+LOVE INTEREST NAME: ${liName}
+
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}
+RECENT SCENE:
+${recentScene.slice(-300)}
+
+ARCHETYPE MEANINGS:
+- temptation: Escalate. New act, new territory, new threshold.
+- silence:    No words. Teeth, nails, breath, movement.
+- reversal:   Power changes hands. Take or yield.
+- boundary:   State your need. Demand, not refusal.
+- confession: Admit what you want. Mid-act, no armor.
+
+OUTPUT — return ONLY this JSON, no prose around it:
+{
+  "temptation": { "action": "<max 12 words, specific physical act>", "dialogue": "<max 15 words, in quotes or parens for sounds>" },
+  "silence":    { "action": "<...>", "dialogue": "<...>" },
+  "reversal":   { "action": "<...>", "dialogue": "<...>" },
+  "boundary":   { "action": "<...>", "dialogue": "<...>" },
+  "confession": { "action": "<...>", "dialogue": "<...>" }
+}
+
+RULES:
+- Each action: a specific physical act the protagonist takes RIGHT NOW. Never vague. Never de-escalating. Must match ${effectiveMode} intensity.
+- Each dialogue: what the protagonist says or sounds like (use quotes or parens for sounds).
+- If scene context names a character/threat/location relevant to an archetype, reference it (e.g., "Pull him closer before Triton can hear"). Use the actual story, not generic.
+- Each preview is INDEPENDENT — they are 5 different roads the user can take, not a sequence.`;
+
+    const messages = [
+      { role: 'system', content: systemMsg },
+      { role: 'user',   content: userMsg }
+    ];
+
+    // Reuse the existing fate-preview chain (Grok → Mistral)
+    console.log('[FATE:INTIMATE] Requesting BATCH preview for all 5 archetypes');
+    let raw = await callGrokIntimateFate(messages, { max_tokens: 700 });
+    let parsed = _parseBatchFatePreview(raw);
+    if (parsed) {
+      console.log('[FATE:INTIMATE] Grok batch preview success');
+      return parsed;
+    }
+    console.log('[FATE:INTIMATE] Grok batch failed, trying Mistral');
+    raw = await callMistralIntimateFate(messages, { max_tokens: 700 });
+    parsed = _parseBatchFatePreview(raw);
+    if (parsed) {
+      console.log('[FATE:INTIMATE] Mistral batch preview success');
+      return parsed;
+    }
+    console.log('[FATE:INTIMATE] Batch failed on both models');
+    return null;
+  }
+
+  function _parseBatchFatePreview(raw) {
+    if (!raw || typeof raw !== 'string') return null;
+    const js = raw.indexOf('{');
+    const je = raw.lastIndexOf('}');
+    if (js === -1 || je === -1) return null;
+    try {
+      // Reuse the OAS JSON normalizer when present (handles +1 / trailing
+      // commas in LLM-emitted JSON). Otherwise parse strict.
+      const slice = raw.slice(js, je + 1);
+      const normalized = (typeof window._normalizeLLMJson === 'function')
+        ? window._normalizeLLMJson(slice) : slice;
+      const obj = JSON.parse(normalized);
+      const keys = ['temptation', 'silence', 'reversal', 'boundary', 'confession'];
+      const out = {};
+      for (const k of keys) {
+        if (obj[k] && typeof obj[k] === 'object') {
+          out[k] = {
+            action:   String(obj[k].action || '').slice(0, 120).trim(),
+            dialogue: String(obj[k].dialogue || '').slice(0, 150).trim()
+          };
+        }
+      }
+      // Need at least one parsed entry to be useful.
+      if (Object.keys(out).length === 0) return null;
+      return out;
+    } catch (e) {
+      console.warn('[FATE:INTIMATE] batch parse failed:', e && e.message);
+      return null;
+    }
+  }
+
   function parseStructuralOutput(text) {
     const result = { action: null, dialogue: null, beat: null };
     const lines = text.split('\n');
@@ -4120,7 +4232,8 @@ Tension: ${outline.tension_vector || 'N/A'}`;
 
     // Fate Card processing
     processFateCard,
-    generateIntimateFatePreview,  // Grok/Mistral intimate fate preview (never ChatGPT)
+    generateIntimateFatePreview,        // Grok/Mistral intimate fate preview (single card)
+    generateIntimateFatePreviewsBatch,  // Grok/Mistral BATCH — all 5 archetypes in 1 call
 
     // OAS dialogue turn — multi-tier Grok → Mistral → gpt-4o-mini router.
     // The chatgpt-proxy blocks Grok for PRIMARY_AUTHOR; this helper hits
