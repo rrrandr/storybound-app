@@ -54,15 +54,51 @@
 // =============================================================================
 /**
  * Allowlisted Grok models for specialist rendering.
- * RENDERER: grok-4-fast-non-reasoning (visual bible, visualization prompts ONLY)
- * INTIMACY_SPECIALIST: grok-4-fast-reasoning (explicit scenes, ESD-gated)
+ * RENDERER: grok-4-1-fast-non-reasoning (visual bible, visualization prompts ONLY)
+ * INTIMACY_SPECIALIST: grok-4-1-fast-reasoning (explicit scenes, ESD-gated)
  *
  * HARD RULE: Grok must NEVER be called for DSP, normalization, veto, or story logic.
  */
 const ALLOWED_GROK_MODELS = [
-  'grok-4-fast-non-reasoning',  // RENDERER: Visual extraction only
-  'grok-4-fast-reasoning'       // INTIMACY_SPECIALIST: Explicit scenes (ESD required)
+  'grok-4-1-fast-non-reasoning',  // RENDERER primary + INTIMACY_SPECIALIST fallback
+  'grok-4-1-fast-reasoning',      // INTIMACY_SPECIALIST primary
+  'grok-4.3'                      // Universal fallback if 4-1 names get renamed/deprecated
 ];
+
+/**
+ * Per-role MODEL FALLBACK CHAIN — server-side resilience for xAI model
+ * renames or temporary unavailability. The proxy tries each model in
+ * order; if xAI returns a model-related error (400 / 404 — typically
+ * "model not found"), it falls through to the next. Auth (401/403),
+ * quota (429), and 5xx responses fail fast — no retry, they're not
+ * model-name issues.
+ *
+ * Primary models are the cheapest/best fit for the role. Fallbacks are
+ * progressively more general so we still get a response if xAI changes
+ * its public model list under us.
+ */
+const ROLE_MODEL_CHAIN = {
+  INTIMACY_SPECIALIST: [
+    'grok-4-1-fast-reasoning',       // primary — reasoning model for charged dialogue
+    'grok-4-1-fast-non-reasoning',   // fallback 1 — cheaper, still permissive
+    'grok-4.3'                        // fallback 2 — if 4-1 is deprecated
+  ],
+  SPECIALIST_RENDERER: [
+    'grok-4-1-fast-reasoning',
+    'grok-4-1-fast-non-reasoning',
+    'grok-4.3'
+  ],
+  RENDERER: [
+    'grok-4-1-fast-non-reasoning',   // primary — non-reasoning is cheaper for visual extraction
+    'grok-4-1-fast-reasoning',       // fallback 1
+    'grok-4.3'                        // fallback 2
+  ]
+};
+
+// xAI status codes that indicate "try the next model in the chain".
+// 400 = "model not found" / "invalid model". 404 = same in some routes.
+// Everything else (401/403/429/5xx) fails fast.
+const RETRY_NEXT_MODEL_STATUSES = new Set([400, 404]);
 
 /**
  * Validate that the requested model is allowed.
@@ -131,8 +167,8 @@ export default async function handler(req, res) {
     // ==========================================================================
     /**
      * Model selection based on role:
-     * - RENDERER: grok-4-fast-non-reasoning (visual bible, visualization ONLY)
-     * - INTIMACY_SPECIALIST: grok-4-fast-reasoning (explicit scenes, ESD required)
+     * - RENDERER: grok-4-1-fast-non-reasoning (visual bible, visualization ONLY)
+     * - INTIMACY_SPECIALIST: grok-4-1-fast-reasoning (explicit scenes, ESD required)
      *
      * HARD RULE: Grok must NEVER be called for DSP, normalization, veto, or story logic.
      */
@@ -151,27 +187,35 @@ export default async function handler(req, res) {
       });
     }
 
-    // Role-based model selection for Grok-allowed roles
-    let selectedModel;
-    if (role === 'RENDERER') {
-      selectedModel = 'grok-4-fast-non-reasoning';
-    } else if (role === 'INTIMACY_SPECIALIST' || role === 'SPECIALIST_RENDERER') {
-      selectedModel = 'grok-4-fast-reasoning';
-    } else {
-      // Reject unknown roles
+    // Role → model fallback chain.
+    let modelChain = ROLE_MODEL_CHAIN[role];
+    if (!Array.isArray(modelChain) || modelChain.length === 0) {
       return res.status(400).json({
         error: 'INVALID_ROLE',
-        detail: `Unknown role: "${role}". Valid Grok roles: RENDERER, INTIMACY_SPECIALIST. AUTHOR roles use /api/chatgpt-proxy.`
+        detail: `Unknown role: "${role}". Valid Grok roles: RENDERER, INTIMACY_SPECIALIST, SPECIALIST_RENDERER. AUTHOR roles use /api/chatgpt-proxy.`
       });
     }
-
-    // Enforce model allowlist
-    if (!ALLOWED_GROK_MODELS.includes(selectedModel)) {
-      console.error(`[SPECIALIST-PROXY] Model "${selectedModel}" not in allowlist.`);
-      return res.status(400).json({ error: `Model "${selectedModel}" not allowed` });
+    // Optional client override — if preferredModel is in the allowlist
+    // AND in the role's chain, reorder the chain to start with it. Lets
+    // the client (e.g., OAS turn router) request reasoning vs non-
+    // reasoning Grok per-turn while still keeping the full fallback
+    // chain behind it.
+    const preferredModel = req.body && req.body.preferredModel;
+    if (preferredModel && modelChain.includes(preferredModel)) {
+      modelChain = [preferredModel].concat(modelChain.filter(m => m !== preferredModel));
+      console.log(`[SPECIALIST-PROXY] Client preferredModel: ${preferredModel} → chain reordered.`);
     }
 
-    console.log(`[SPECIALIST-PROXY] Role: ${role}, Model: ${selectedModel}`);
+    // Enforce model allowlist on every chain entry (paranoia — if someone
+    // edits ROLE_MODEL_CHAIN without updating ALLOWED_GROK_MODELS, fail loud).
+    for (const m of modelChain) {
+      if (!ALLOWED_GROK_MODELS.includes(m)) {
+        console.error(`[SPECIALIST-PROXY] Chain model "${m}" not in allowlist.`);
+        return res.status(500).json({ error: `Chain misconfigured: "${m}" not in allowlist` });
+      }
+    }
+
+    console.log(`[SPECIALIST-PROXY] Role: ${role}, Model chain: ${modelChain.join(' → ')}`);
 
     // ==========================================================================
     // ESD VALIDATION (required for INTIMACY_SPECIALIST)
@@ -197,42 +241,73 @@ export default async function handler(req, res) {
     }
 
     // ==========================================================================
-    // CALL XAI API
+    // CALL XAI API — with per-role model fallback chain.
+    // Walk the chain: try each model in order. On model-related 4xx
+    // (400/404 — typically "model not found"), fall through to next.
+    // On any other error (auth, quota, 5xx), fail fast — those aren't
+    // model-name issues and retrying the next model won't help.
     // ==========================================================================
 
-    const xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${XAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: selectedModel,
-        messages: messages,
-        temperature: temperature,
-        max_tokens: max_tokens
-      })
-    });
+    let xaiResponse = null;
+    let responseText = '';
+    let data = null;
+    let selectedModel = null;
+    let lastErrorStatus = 0;
+    let lastErrorData = null;
 
-    const responseText = await xaiResponse.text();
-
-    // Try to parse as JSON
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      console.error('[SPECIALIST-PROXY] Non-JSON response from xAI:', responseText.slice(0, 500));
-      return res.status(502).json({
-        error: 'Invalid response from xAI API',
-        details: responseText.slice(0, 200)
+    for (let i = 0; i < modelChain.length; i++) {
+      const tryModel = modelChain[i];
+      console.log(`[SPECIALIST-PROXY] Trying model ${i + 1}/${modelChain.length}: ${tryModel}`);
+      xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${XAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: tryModel,
+          messages: messages,
+          temperature: temperature,
+          max_tokens: max_tokens
+        })
       });
+      responseText = await xaiResponse.text();
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error(`[SPECIALIST-PROXY] Non-JSON response from xAI for model ${tryModel}:`, responseText.slice(0, 500));
+        return res.status(502).json({
+          error: 'Invalid response from xAI API',
+          details: responseText.slice(0, 200)
+        });
+      }
+      if (xaiResponse.ok) {
+        selectedModel = tryModel;
+        console.log(`[SPECIALIST-PROXY] ✓ Model ${tryModel} succeeded`);
+        break;
+      }
+      // Non-OK — decide whether to try next model in chain.
+      lastErrorStatus = xaiResponse.status;
+      lastErrorData = data;
+      console.warn(`[SPECIALIST-PROXY] Model ${tryModel} returned ${xaiResponse.status}: ${data && data.error ? (data.error.message || JSON.stringify(data.error)) : '(no error message)'}`);
+      if (!RETRY_NEXT_MODEL_STATUSES.has(xaiResponse.status)) {
+        // Auth (401/403), quota (429), or server error (5xx) — not a
+        // model-availability issue. Fail fast.
+        console.error('[SPECIALIST-PROXY] Non-retryable status — failing fast.');
+        return res.status(xaiResponse.status).json({
+          error: (data && data.error && data.error.message) || 'xAI API request failed',
+          details: data
+        });
+      }
+      // Otherwise: retryable. Continue to next model in chain.
     }
 
-    if (!xaiResponse.ok) {
-      console.error('[SPECIALIST-PROXY] xAI API error:', data);
-      return res.status(xaiResponse.status).json({
-        error: data.error?.message || 'xAI API request failed',
-        details: data
+    if (!selectedModel) {
+      console.error('[SPECIALIST-PROXY] Entire model chain exhausted. Last error:', lastErrorData);
+      return res.status(lastErrorStatus || 502).json({
+        error: 'All Grok models in fallback chain failed',
+        details: lastErrorData,
+        chainTried: modelChain
       });
     }
 

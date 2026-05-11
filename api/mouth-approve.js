@@ -21,7 +21,13 @@ const ALLOWED_STATES = new Set([
   'lip-bite', 'lip-bite2', 'whistle',
   'ohno', 'what', 'you',
   'hard-exhale', 'ahh',
-  'big-O', 'NO', 'INTENSE', 'tense-bite', 'smile-snarl', 'BLOWINGsmirk'
+  'big-O', 'NO', 'INTENSE', 'tense-bite', 'smile-snarl', 'BLOWINGsmirk',
+  // Negative-reaction states (LoraVenn) — LI pulling back from user
+  'shocked', 'disgusting', 'blank', 'out',
+  // Thoughtful "Hmm" states (LoraVenn) — LI deliberating
+  'hmmm-1', 'hmmm-2', 'hmmm-3',
+  // Vulnerable states (LoraVenn) — LI opening emotionally (or masking)
+  'sorry', 'crying', 'guilt'
 ]);
 
 const ALLOWED_ARTISTS = new Set([

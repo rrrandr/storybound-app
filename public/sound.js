@@ -670,13 +670,18 @@
   // breathVol is 0 at curious/warming (track doesn't start until urgent)
   // and rises through urgent → peaking. The breath track plays non-loop
   // so its tail (slow recovery breaths) lands naturally on scene resolve.
+  // Volume tuning notes:
+  //  • Fire crackle and hold-beat halved per smoke-test feedback —
+  //    they were sitting on top of voice and pulling focus.
+  //  • Heartbeat + breath kept as-is (heartbeat IS the felt-pulse the
+  //    user is meant to ride; breath is the diegetic body cue).
   var _OAS_TEMP_PROFILES = {
-    curious:  { hbVol: 0.18, hbRate: 0.90, holdVol: 0.06, breathVol: 0.00 },
-    warming:  { hbVol: 0.26, hbRate: 1.05, holdVol: 0.10, breathVol: 0.00 },
-    urgent:   { hbVol: 0.36, hbRate: 1.22, holdVol: 0.16, breathVol: 0.28 },
-    peaking:  { hbVol: 0.50, hbRate: 1.45, holdVol: 0.22, breathVol: 0.45 }
+    curious:  { hbVol: 0.18, hbRate: 0.90, holdVol: 0.03, breathVol: 0.00 },
+    warming:  { hbVol: 0.26, hbRate: 1.05, holdVol: 0.05, breathVol: 0.00 },
+    urgent:   { hbVol: 0.36, hbRate: 1.22, holdVol: 0.08, breathVol: 0.28 },
+    peaking:  { hbVol: 0.50, hbRate: 1.45, holdVol: 0.11, breathVol: 0.45 }
   };
-  var _OAS_FIRE_VOL = 0.10;  // constant — room atmosphere bed
+  var _OAS_FIRE_VOL = 0.025;  // constant — room atmosphere bed (-75% from initial)
 
   function _oasLoopFromBuffer(buf, vol, rate) {
     var ctx = _ensureCtx();

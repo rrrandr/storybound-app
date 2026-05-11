@@ -105,12 +105,12 @@
     // Default models
     PRIMARY_AUTHOR_MODEL: 'gpt-4o-mini',           // ChatGPT: Plot, psychology, consent, limits, consequences
     FALLBACK_AUTHOR_MODEL: 'gemini-2.0-flash',     // Gemini: Fallback if ChatGPT fails (conservative)
-    SD_AUTHOR_MODEL: 'grok-4-fast-reasoning',     // Grok: SD authoring for Steamy/Passionate ONLY (PRIMARY)
+    SD_AUTHOR_MODEL: 'grok-4-1-fast-reasoning',     // Grok: SD authoring for Steamy/Passionate ONLY (PRIMARY)
     SD_DEEPSEEK_PRO_MODEL: 'deepseek-v4-pro',    // DeepSeek Pro: Tier-1 fallback (embodied)
     SD_DEEPSEEK_FLASH_MODEL: 'deepseek-v4-flash', // DeepSeek Flash: Tier-2 fallback (cost-efficient)
     SD_FALLBACK_MODEL: 'mistral-medium-latest',   // Mistral: Tier-3 terminal fallback
-    RENDERER_MODEL: 'grok-4-fast-non-reasoning',   // Grok: Visual bible, visualization prompts ONLY
-    SCENE_RENDERER_MODEL: 'grok-4-fast-reasoning',   // Grok: Intense scenes (SD-gated, entitlement-checked)
+    RENDERER_MODEL: 'grok-4-1-fast-non-reasoning',   // Grok: Visual bible, visualization prompts ONLY
+    SCENE_RENDERER_MODEL: 'grok-4-1-fast-reasoning',   // Grok: Intense scenes (SD-gated, entitlement-checked)
     FATE_STRUCTURAL_MODEL: 'gpt-4o-mini',
     FATE_ELEVATION_MODEL: 'gpt-4o-mini',
     STRATEGY_PASS_MODEL: 'gpt-4o-mini',          // Strategy pre-pass: structural decisions (low temp)
@@ -119,11 +119,11 @@
     // Model allowlists (must match server-side)
     ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4'],
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
-    ALLOWED_SD_AUTHOR_MODELS: ['grok-4-fast-reasoning'],
+    ALLOWED_SD_AUTHOR_MODELS: ['grok-4-1-fast-reasoning'],
     ALLOWED_SD_DEEPSEEK_MODELS: ['deepseek-v4-pro', 'deepseek-v4-flash'],
     ALLOWED_SD_FALLBACK_MODELS: ['mistral-medium-latest', 'mistral-large-latest'],
-    ALLOWED_RENDERER_MODELS: ['grok-4-fast-non-reasoning'],
-    ALLOWED_SCENE_RENDERER_MODELS: ['grok-4-fast-reasoning'],
+    ALLOWED_RENDERER_MODELS: ['grok-4-1-fast-non-reasoning'],
+    ALLOWED_SCENE_RENDERER_MODELS: ['grok-4-1-fast-reasoning'],
 
     // Feature flags
     ENABLE_SPECIALIST_RENDERER: true,
@@ -824,7 +824,7 @@
   }
 
   /**
-   * Call Renderer (Grok grok-4-fast-non-reasoning).
+   * Call Renderer (Grok grok-4-1-fast-non-reasoning).
    * ONLY for: visual bible extraction, visualization prompts.
    * NEVER for: DSP, normalization, veto, story logic.
    */
@@ -874,7 +874,7 @@
   }
 
   /**
-   * Call Scene Renderer (Grok grok-4-fast-reasoning).
+   * Call Scene Renderer (Grok grok-4-1-fast-reasoning).
    * ONLY called when:
    * 1. SD is present AND valid
    * 2. Orchestration was invoked (intimacy pre-authorized by caller)
@@ -1228,6 +1228,262 @@ FAILURE CONDITIONS (invalid outputs):
 `;
   }
 
+  // ─── SHARED SCENE/PLOT CONTEXT BUILDER ─────────────────────────────
+  // Used by callGrokSDAuthor (literary Grok scene rendering), callMistral
+  // SDFallback, generateIntimateFatePreview (literary Grok fate cards),
+  // and _buildIntimacySceneContext in app.js (OAS turn prompt). Pulls
+  // character roster, LI archetype, relationship dynamic, setting, world
+  // flavor, and recent scene prose into a compact block so Grok can
+  // resolve user-input references like "Dathriel" or "my father" against
+  // the actual story instead of generic stand-ins.
+  //
+  // ── V2 ACTIVE SCENE ENTITIES (salience + role + emotional charge) ──
+  // Replaces v1's binary recency filter. Each known character gets scored
+  // every context-build with: (1) salience [0..1] from mention count +
+  // recency bonus + role base + scene-decay; (2) role from the bucket
+  // they live in; (3) emotional charge from emotion-word proximity in
+  // recent prose. Output is sorted by salience, capped to the top N, so
+  // Grok sees the right characters with the right weights instead of an
+  // undifferentiated roster dump.
+  //
+  // Persistence: state._sceneEntityState[name] = { lastSeenTurn, salience,
+  // role, emotionalCharge }. Updated on each build; decays for entities
+  // not present in recent prose so old characters fade out naturally.
+  //
+  // Cheap: 5-15 regex tests per entity, 5 emotion-pool scans per entity.
+  // Runs on demand.
+  const SCENE_RECENCY_WINDOW = 3;     // scenes — soft window (used by decay/floor logic only)
+  const RECENT_PROSE_SCAN_LEN = 3000; // chars to scan against (≈ last 2-3 scenes)
+  const SALIENCE_FLOOR = 0.15;        // entities below this are dropped from context
+  const SALIENCE_DECAY_PER_SCENE = 0.65;  // multiplicative — 1.0 → 0.65 → 0.42 → 0.27 → 0.18
+  const MAX_ACTIVE_ENTITIES = 6;      // cap on top-N entities shipped in context
+
+  // Static base salience per role — captures "always somewhat important
+  // if they exist", before prose evidence is layered on.
+  const _ROLE_BASE_SALIENCE = {
+    'antagonist':  0.35,
+    'rival':       0.25,
+    'observer':    0.15,
+    'li-candidate':0.30
+  };
+
+  // Emotion-charge pools. Per-entity charge is whichever pool has the most
+  // hits in a ±60-char window around the entity's name. Empty if no signal.
+  const _EMOTION_POOLS = {
+    fear:    ['afraid', 'fear', 'dread', 'terror', 'panic', 'scared', 'shudder', 'tremble', 'flinch'],
+    longing: ['want', 'ache', 'yearn', 'miss', 'crave', 'hunger', 'starve', 'desire', 'pull toward'],
+    guilt:   ['sorry', 'shouldn\'t', 'regret', 'guilty', 'shame', 'blame', 'wrong of'],
+    anger:   ['rage', 'fury', 'hate', 'wrath', 'snarl', 'spit', 'seethe', 'venom'],
+    love:    ['love', 'adore', 'devote', 'tender', 'cherish', 'gentle', 'home'],
+    tension: ['careful', 'still', 'hush', 'whisper', 'watch', 'wait', 'hold', 'tense']
+  };
+
+  function _escapeRegex(s) {
+    return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // Find all match indices of a regex in text. Used for salience scoring
+  // (count + recency-within-prose).
+  function _findAllMatchIndices(text, name) {
+    const indices = [];
+    if (!text || !name) return indices;
+    try {
+      const re = new RegExp('\\b' + _escapeRegex(name) + '\\b', 'gi');
+      let m;
+      while ((m = re.exec(text)) !== null) {
+        indices.push(m.index);
+        if (m.index === re.lastIndex) re.lastIndex++;  // zero-width safety
+      }
+    } catch (_) {}
+    return indices;
+  }
+
+  function _scoreEmotionalCharge(text, name) {
+    if (!text || !name) return '';
+    const indices = _findAllMatchIndices(text, name);
+    if (!indices.length) return '';
+    const WINDOW = 60;  // chars on each side of the name
+    const lower = text.toLowerCase();
+    const counts = {};
+    indices.forEach(idx => {
+      const lo = Math.max(0, idx - WINDOW);
+      const hi = Math.min(text.length, idx + name.length + WINDOW);
+      const slice = lower.slice(lo, hi);
+      Object.keys(_EMOTION_POOLS).forEach(emo => {
+        const pool = _EMOTION_POOLS[emo];
+        for (let i = 0; i < pool.length; i++) {
+          if (slice.indexOf(pool[i]) !== -1) {
+            counts[emo] = (counts[emo] || 0) + 1;
+            break;  // one hit per emotion per window — prevents skew
+          }
+        }
+      });
+    });
+    // Pick the highest-count emotion. Tie-break: pool defined-order (fear first).
+    let bestEmo = '';
+    let bestCount = 0;
+    Object.keys(counts).forEach(emo => {
+      if (counts[emo] > bestCount) { bestCount = counts[emo]; bestEmo = emo; }
+    });
+    return bestEmo;
+  }
+
+  // Build active-scene-entities ranking. Returns array of
+  //   { name, role, salience, emotionalCharge, lastSeenTurn }
+  // sorted by salience descending, filtered to salience >= SALIENCE_FLOOR,
+  // capped to MAX_ACTIVE_ENTITIES.
+  function _buildActiveSceneEntities(st, proseScanText, recentProseSlice) {
+    const currentTurn = (st.turnCount | 0);
+    st._sceneEntityState = st._sceneEntityState || {};
+    const entState = st._sceneEntityState;
+
+    // Collect all candidate entities with their static role.
+    const candidates = [];
+    const sc = st.secondaryCharacters || {};
+    (Array.isArray(sc.antagonists) ? sc.antagonists : []).forEach(n => n && candidates.push({ name: n, role: 'antagonist' }));
+    (Array.isArray(sc.rivals)      ? sc.rivals      : []).forEach(n => n && candidates.push({ name: n, role: 'rival' }));
+    (Array.isArray(sc.observers)   ? sc.observers   : []).forEach(n => n && candidates.push({ name: n, role: 'observer' }));
+    if (Array.isArray(st.liCandidates)) {
+      st.liCandidates.forEach(c => { if (c && c.name) candidates.push({ name: c.name, role: 'li-candidate' }); });
+    }
+    if (!candidates.length) return [];
+
+    // De-dup by name (a character can technically be in multiple buckets).
+    // Keep the highest-role-base entry.
+    const byName = {};
+    candidates.forEach(c => {
+      const prev = byName[c.name];
+      if (!prev || (_ROLE_BASE_SALIENCE[c.role] || 0) > (_ROLE_BASE_SALIENCE[prev.role] || 0)) {
+        byName[c.name] = c;
+      }
+    });
+
+    const ranked = [];
+    Object.values(byName).forEach(cand => {
+      const prior = entState[cand.name] || { lastSeenTurn: null, salience: 0, role: cand.role, emotionalCharge: '' };
+      const indices = _findAllMatchIndices(proseScanText, cand.name);
+      const mentionCount = indices.length;
+
+      let salience;
+      let emotionalCharge = prior.emotionalCharge;
+
+      if (mentionCount > 0) {
+        // Present in recent prose — recompute salience from evidence.
+        // Mentions contribute (capped to avoid runaway from one paragraph).
+        const mentionScore = Math.min(0.45, mentionCount * 0.12);
+        // Recency-within-prose bonus: was the most recent mention in the
+        // LAST ~900 chars (what we actually ship to Grok)? If yes, +0.20.
+        const recentSliceStart = (proseScanText.length - (recentProseSlice ? recentProseSlice.length : 900));
+        const recentMention = indices[indices.length - 1] >= recentSliceStart;
+        const recencyBoost = recentMention ? 0.20 : 0.05;
+        const roleBase = _ROLE_BASE_SALIENCE[cand.role] || 0;
+        salience = Math.min(1.0, roleBase + mentionScore + recencyBoost);
+        // Refresh emotional charge from current prose window.
+        const detected = _scoreEmotionalCharge(proseScanText, cand.name);
+        if (detected) emotionalCharge = detected;
+        entState[cand.name] = {
+          lastSeenTurn: currentTurn,
+          salience: salience,
+          role: cand.role,
+          emotionalCharge: emotionalCharge
+        };
+      } else {
+        // Not in recent prose — decay from prior, scaled by scenes elapsed.
+        const lastTurn = (typeof prior.lastSeenTurn === 'number') ? prior.lastSeenTurn : currentTurn;
+        const scenesElapsed = Math.max(0, currentTurn - lastTurn);
+        // First-time candidates with no prior get the role base as their
+        // starting salience (treat as "freshly named — give them a chance").
+        const startingSalience = (prior.salience > 0) ? prior.salience : (_ROLE_BASE_SALIENCE[cand.role] || 0);
+        salience = startingSalience * Math.pow(SALIENCE_DECAY_PER_SCENE, scenesElapsed);
+        entState[cand.name] = {
+          lastSeenTurn: prior.lastSeenTurn,
+          salience: salience,
+          role: cand.role,
+          emotionalCharge: emotionalCharge
+        };
+      }
+
+      if (salience >= SALIENCE_FLOOR) {
+        ranked.push({
+          name: cand.name,
+          role: cand.role,
+          salience: salience,
+          emotionalCharge: emotionalCharge,
+          lastSeenTurn: entState[cand.name].lastSeenTurn
+        });
+      }
+    });
+
+    ranked.sort((a, b) => b.salience - a.salience);
+    return ranked.slice(0, MAX_ACTIVE_ENTITIES);
+  }
+
+  function _buildSceneAndPlotContext(st) {
+    st = st || window.state || {};
+    const ctxLines = [];
+
+    // Recent story prose (last ~900 chars, HTML stripped) — what Grok actually
+    // reads for momentum, geography, current threat. Higher value than the
+    // metadata fields below. Also used as the scan substrate for the
+    // entity recency filter.
+    let prose = '';
+    try {
+      if (window.StoryPagination && typeof window.StoryPagination.getAllContent === 'function') {
+        const raw = window.StoryPagination.getAllContent() || '';
+        prose = String(raw).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+    } catch (_) {}
+    if (prose) {
+      const promptSlice = prose.length > 900 ? prose.slice(-900) : prose;
+      ctxLines.push('Recent story prose: ' + promptSlice);
+    }
+    // Scan substrate is longer than what we ship — covers ~2-3 scenes worth
+    // so an entity named in the prior scene still counts as recent.
+    const scanSlice = prose.length > RECENT_PROSE_SCAN_LEN
+      ? prose.slice(-RECENT_PROSE_SCAN_LEN)
+      : prose;
+
+    if (st.archetype && st.archetype.primary)             ctxLines.push(`LI archetype: ${st.archetype.primary}`);
+    if (st.liCoverIdentity)                                ctxLines.push(`LI cover identity: ${st.liCoverIdentity}`);
+    if (st.liHiddenAgenda)                                 ctxLines.push(`LI hidden agenda: ${st.liHiddenAgenda}`);
+    if (typeof st.liConversionScore === 'number' && st.liConversionScore !== 0) {
+      ctxLines.push(`Player conversion toward LI: ${st.liConversionScore > 0 ? '+' : ''}${st.liConversionScore}`);
+    }
+    if (st.picks?.dynamic)                                 ctxLines.push(`Relationship dynamic: ${st.picks.dynamic}`);
+
+    // Active scene entities — ranked by salience [0..1], capped to top N.
+    // Each entry shows role + salience + emotional charge so Grok knows
+    // which character is most pressing and why. Stale characters (salience
+    // < floor after scene-decay) are dropped from context entirely.
+    const promptSlice = prose.length > 900 ? prose.slice(-900) : prose;
+    const activeEntities = _buildActiveSceneEntities(st, scanSlice, promptSlice);
+    if (activeEntities.length) {
+      const entityLines = activeEntities.map(e => {
+        const parts = [e.role];
+        parts.push('salience ' + e.salience.toFixed(2));
+        if (e.emotionalCharge) parts.push('charge: ' + e.emotionalCharge);
+        return e.name + ' [' + parts.join(' · ') + ']';
+      });
+      ctxLines.push('Active scene entities (ranked by salience, most pressing first): ' + entityLines.join('; '));
+    }
+
+    if (st.settingLocationAnchor) {
+      const loc = st.settingLocationAnchor;
+      const locChunks = [loc.city, loc.region, loc.environment_type].filter(Boolean);
+      if (locChunks.length) ctxLines.push(`Setting: ${locChunks.join(', ')}`);
+    }
+    const worldFlavor = st.worldSubtype || st.picks?.worldSubtype;
+    if (worldFlavor)                                       ctxLines.push(`World flavor: ${worldFlavor}`);
+    if (st.worldCustomText)                                ctxLines.push(`World notes: ${st.worldCustomText}`);
+    if (st.fantasyRegion)                                  ctxLines.push(`Fantasy region: ${st.fantasyRegion}`);
+    if (st._lastScenePlan?.early_decision_hook)            ctxLines.push(`Scene hook: ${st._lastScenePlan.early_decision_hook}`);
+    if (Array.isArray(st.reasonLedger) && st.reasonLedger.length > 0) {
+      ctxLines.push(`Recent moral friction: ${st.reasonLedger.slice(-3).join(' · ')}`);
+    }
+
+    return ctxLines.length ? ctxLines.join('\n') : '';
+  }
+
   async function callGrokSDAuthor(constraints, gateEnforcement, options = {}) {
     console.log(`[GROK SD] Authoring SD — intimacy authorized`);
 
@@ -1275,9 +1531,20 @@ rhythm: <pacing - slow/building/urgent/suspended>
 hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', completion_forbidden' : ''}
 [/SD]`;
 
+    // Scene/plot context — character roster, LI archetype, relationship
+    // dynamic, setting, recent story prose. Lets the SD author render
+    // with awareness of named characters (so "do it before Triton sees"
+    // resolves cleanly), the LI's hidden agenda, etc.
+    const _sdSceneContext = _buildSceneAndPlotContext(window.state);
     const messages = [
       { role: 'system', content: esdPrompt },
-      { role: 'user', content: `Generate the SD for this intimate moment.\n\nContext from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` }
+      { role: 'user', content:
+        `Generate the SD for this intimate moment.\n\n` +
+        `Context from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` +
+        (_sdSceneContext
+          ? `\n\nSCENE & PLOT CONTEXT (resolve named characters / threats / locations against this; never invent unrelated names — use what's here. The "Active scene entities" line is RANKED BY SALIENCE — when invoking a named character, prefer the highest-salience one matching the moment; do not pull in lower-salience entities unless the moment specifically demands them):\n${_sdSceneContext}`
+          : '')
+      }
     ];
 
     const payload = {
@@ -1553,9 +1820,20 @@ rhythm: <pacing - slow/building/urgent/suspended>
 hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowed ? ', completion_forbidden' : ''}
 [/SD]`;
 
+    // Scene/plot context — character roster, LI archetype, relationship
+    // dynamic, setting, recent story prose. Lets the SD author render
+    // with awareness of named characters (so "do it before Triton sees"
+    // resolves cleanly), the LI's hidden agenda, etc.
+    const _sdSceneContext = _buildSceneAndPlotContext(window.state);
     const messages = [
       { role: 'system', content: esdPrompt },
-      { role: 'user', content: `Generate the SD for this intimate moment.\n\nContext from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` }
+      { role: 'user', content:
+        `Generate the SD for this intimate moment.\n\n` +
+        `Context from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` +
+        (_sdSceneContext
+          ? `\n\nSCENE & PLOT CONTEXT (resolve named characters / threats / locations against this; never invent unrelated names — use what's here. The "Active scene entities" line is RANKED BY SALIENCE — when invoking a named character, prefer the highest-salience one matching the moment; do not pull in lower-salience entities unless the moment specifically demands them):\n${_sdSceneContext}`
+          : '')
+      }
     ];
 
     const payload = {
@@ -3182,6 +3460,182 @@ dialogue: <elevated dialogue>`;
   // INTIMATE FATE CARD AUTHORING — Grok/Mistral (never ChatGPT)
   // ═══════════════════════════════════════════════════════════════════
 
+  // ─── OAS TURN LLM ───────────────────────────────────────────────────
+  // Multi-tier intimate-dialogue router for the OAS turn handler.
+  //
+  // Two routing modes based on options.preferReasoning:
+  //
+  //   REASONING (Beat 1 + sniffer-detected plot/character context):
+  //     • Slow but rich. Used for opening-scene establishment and any
+  //       turn where the user invokes named characters / surveillance /
+  //       contingencies / plot threads.
+  //     • Chain: Grok-reasoning → Grok-non-reasoning → DeepSeek-Pro →
+  //              Mistral → gpt-4o-mini.
+  //
+  //   FAST (default — pure dirty-talk turns):
+  //     • Sub-5s typical. Grok non-reasoning has the same training corpus
+  //       as reasoning — the depth lives in the corpus, not the
+  //       deliberation step.
+  //     • Chain: Grok-non-reasoning → DeepSeek-Flash → Mistral →
+  //              gpt-4o-mini. NO reasoning models in this path.
+  //
+  // Returns the model's text content, or null on full failure. Caller
+  // (e.g., _handleIntimacyTurn) handles null with its soft-deflect line.
+  async function callOASTurnLLM(messages, options = {}) {
+    var maxTokens = options.max_tokens || 400;
+    var temperature = options.temperature || 0.75;
+    var preferReasoning = !!options.preferReasoning;
+
+    // ── Grok via specialist proxy ──
+    // For REASONING: ask the proxy to start with reasoning model.
+    // For FAST: ask it to start with non-reasoning. Either way the proxy
+    // has its own server-side fallback chain behind whichever we picked.
+    async function _callGrokWithPreferred(preferredModel, timeoutMs) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        const resp = await fetch(CONFIG.SPECIALIST_PROXY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            role: 'INTIMACY_SPECIALIST',
+            preferredModel: preferredModel,
+            messages: messages,
+            max_tokens: maxTokens,
+            temperature: temperature
+          })
+        });
+        clearTimeout(timeoutId);
+        if (resp.ok) {
+          const data = await resp.json();
+          const text = data.choices?.[0]?.message?.content || data.content || null;
+          if (text) {
+            console.log('[OAS-LLM] Grok (' + preferredModel + ') ok');
+            return text;
+          }
+        } else {
+          console.warn('[OAS-LLM] Grok (' + preferredModel + ') HTTP ' + resp.status);
+        }
+      } catch (e) {
+        console.warn('[OAS-LLM] Grok (' + preferredModel + ') threw:', e && e.message);
+      }
+      return null;
+    }
+
+    async function _callDeepSeek(model, timeoutMs) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+        const resp = await fetch(CONFIG.DEEPSEEK_PROXY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            role: 'INTIMACY_SPECIALIST',
+            model: model,
+            messages: messages,
+            max_tokens: maxTokens,
+            temperature: temperature
+          })
+        });
+        clearTimeout(timeoutId);
+        if (resp.ok) {
+          const data = await resp.json();
+          const text = data.choices?.[0]?.message?.content || data.content || null;
+          if (text) {
+            console.log('[OAS-LLM] DeepSeek (' + model + ') ok');
+            return text;
+          }
+        } else {
+          console.warn('[OAS-LLM] DeepSeek (' + model + ') HTTP ' + resp.status);
+        }
+      } catch (e) {
+        console.warn('[OAS-LLM] DeepSeek (' + model + ') threw:', e && e.message);
+      }
+      return null;
+    }
+
+    async function _callMistral() {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+        const resp = await fetch(CONFIG.MISTRAL_PROXY, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            messages: messages,
+            max_tokens: maxTokens,
+            temperature: temperature
+          })
+        });
+        clearTimeout(timeoutId);
+        if (resp.ok) {
+          const data = await resp.json();
+          const text = data.choices?.[0]?.message?.content || data.content || null;
+          if (text) {
+            console.log('[OAS-LLM] Mistral ok');
+            return text;
+          }
+        } else {
+          console.warn('[OAS-LLM] Mistral HTTP ' + resp.status);
+        }
+      } catch (e) {
+        console.warn('[OAS-LLM] Mistral threw:', e && e.message);
+      }
+      return null;
+    }
+
+    async function _callGPTFallback() {
+      try {
+        const text = await callChatGPT(messages, 'PRIMARY_AUTHOR', {
+          model: 'gpt-4o-mini',
+          max_tokens: maxTokens,
+          temperature: temperature
+        });
+        if (text) {
+          console.log('[OAS-LLM] gpt-4o-mini ok');
+          return text;
+        }
+      } catch (e) {
+        console.warn('[OAS-LLM] gpt-4o-mini threw:', e && e.message);
+      }
+      return null;
+    }
+
+    let text;
+    if (preferReasoning) {
+      // Depth-first chain. Reasoning timeout 40s — in a real story the
+      // SCENE & PLOT CONTEXT block gives Grok genuine material to reason
+      // about (character roster, recent prose, hidden agendas), and that
+      // depth IS worth the wait. The 7s thinking overlay buys back the
+      // perceived dead time. In dev shortcut mode (no story), reasoning
+      // improvises but its improv tends to be plausible enough.
+      console.log('[OAS-LLM] Mode: REASONING (depth chain)');
+      text = await _callGrokWithPreferred('grok-4-1-fast-reasoning', 40000);
+      if (text) return text;
+      text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', 15000);
+      if (text) return text;
+      text = await _callDeepSeek('deepseek-v4-pro', 30000);
+      if (text) return text;
+      text = await _callMistral();
+      if (text) return text;
+      text = await _callGPTFallback();
+      return text;
+    }
+    // Speed-first chain (default).
+    console.log('[OAS-LLM] Mode: FAST (speed chain)');
+    text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', 12000);
+    if (text) return text;
+    text = await _callDeepSeek('deepseek-v4-flash', 15000);
+    if (text) return text;
+    text = await _callMistral();
+    if (text) return text;
+    text = await _callGPTFallback();
+    return text;
+  }
+
   async function callGrokIntimateFate(messages, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -3248,7 +3702,7 @@ dialogue: <elevated dialogue>`;
     const mode = st.eroticMode || 'ROMANTIC';
     const effectiveMode = mode === 'INTENSITY_REDIRECT' ? 'ROMANTIC' : mode;
     const physicalBounds = resolvePhysicalBounds();
-    const liName = st.loveInterestName || 'the love interest';
+    const liName = (st.storybeau && st.storybeau.name) || st.loveInterestName || 'the love interest';
 
     // Recent scene text
     const allContent = window.StoryPagination?.getAllContent?.()?.replace(/<[^>]*>/g, ' ') || '';
@@ -3256,6 +3710,10 @@ dialogue: <elevated dialogue>`;
 
     // Emotional core from ESD if available
     const emotionalCore = st.esd?.emotionalCore || st.esd?.dominant_emotion || 'desire';
+
+    // Scene/plot context — uses the shared builder so OAS, SD authoring,
+    // and fate-card previews all see the same character roster + plot.
+    const sceneContext = _buildSceneAndPlotContext(st);
 
     const archMeaning = {
       temptation: 'Escalate. New act, new territory, new threshold.',
@@ -3286,12 +3744,13 @@ RENDERING FLOOR: ${physicalBounds}
 EMOTIONAL CORE: ${emotionalCore}
 LOVE INTEREST NAME: ${liName}
 
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically in the preview — named characters, the LI archetype, the relationship dynamic, the setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing a named character, prefer the highest-salience entity matching the fate-card archetype; ignore low-salience entities unless the card archetype specifically calls for them):\n${sceneContext}\n` : ''}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 
 TASK: Generate a Say/Do preview for this intimate fate card.
-1. Action — A specific physical act the protagonist takes RIGHT NOW. Max 12 words. Never vague. Never de-escalating. Must match ${effectiveMode} intensity.
-2. Dialogue — What the protagonist says or sounds like during the act. Max 15 words. In quotes or parentheses for sounds.
+1. Action — A specific physical act the protagonist takes RIGHT NOW. Max 12 words. Never vague. Never de-escalating. Must match ${effectiveMode} intensity. If the scene/plot context names a specific character, threat, or location relevant to this fate-card archetype, you SHOULD reference it (e.g., "Pull him closer before Triton can hear" — leverage the actual story, don't write generic suggestions).
+2. Dialogue — What the protagonist says or sounds like during the act. Max 15 words. In quotes or parentheses for sounds. Same rule — use the story's specifics when they fit.
 
 Respond in EXACTLY two lines:
 [action on first line]
@@ -3662,6 +4121,17 @@ Tension: ${outline.tension_vector || 'N/A'}`;
     // Fate Card processing
     processFateCard,
     generateIntimateFatePreview,  // Grok/Mistral intimate fate preview (never ChatGPT)
+
+    // OAS dialogue turn — multi-tier Grok → Mistral → gpt-4o-mini router.
+    // The chatgpt-proxy blocks Grok for PRIMARY_AUTHOR; this helper hits
+    // the specialist proxy for Grok and degrades gracefully.
+    callOASTurnLLM,
+
+    // Shared scene/plot context builder (used by OAS turn prompt,
+    // generateIntimateFatePreview, callGrokSDAuthor, callMistralSDFallback,
+    // and any future Grok call that needs to resolve user references to
+    // named story characters / plot threads).
+    buildSceneAndPlotContext: _buildSceneAndPlotContext,
 
     // Reader preference adaptation (session-scoped, deterministic)
     recordPreferenceSignal,     // Record user behavior signals
