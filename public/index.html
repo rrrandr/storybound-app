@@ -450,6 +450,124 @@
   </div>
 </div>
 
+<!-- ─────────────────────────────────────────────────────────────────────
+     CANON CREDIT MODAL — opt-in playthrough credit selector on book completion.
+     Fires when state.book_complete = true. User chooses Anonymous Canon Edition
+     (default) or Claim Canon Credit (with a self-chosen display string).
+     Choice is IMMUTABLE once confirmed — locks via story_library_versions
+     trigger at DB layer.
+     ───────────────────────────────────────────────────────────────────── -->
+<div id="canonCreditModal" class="overlay hidden" style="z-index:10085;">
+  <div class="box" style="max-width:560px; padding: 28px 24px;">
+    <h3 style="color:var(--gold); text-align:center; margin: 0 0 8px;">Your Canon Awaits</h3>
+    <p style="text-align:center; font-size:0.9em; color:var(--ink); opacity:0.85; margin: 0 0 4px;">
+      You completed <strong id="canonCreditBookTitle">your story</strong>.
+    </p>
+    <p style="text-align:center; font-size:0.85em; color:var(--ink); opacity:0.7; margin: 0 0 20px;">
+      It will be added to the Forbidden Library as a Storybound canon work.
+      Will your playthrough be credited?
+    </p>
+    <div id="canonCreditChoices" style="display:flex; flex-direction:column; gap:10px; margin: 0 0 16px;">
+      <label class="canon-credit-option" style="display:flex; gap:10px; padding:14px; border:1px solid rgba(201,168,76,0.25); border-radius:6px; cursor:pointer; background:rgba(20,18,14,0.5);">
+        <input type="radio" name="canonCreditMode" value="anonymous" checked style="margin-top:3px;">
+        <div>
+          <div style="font-weight:600; color:var(--gold); margin-bottom:2px;">Anonymous Canon Edition</div>
+          <div style="font-size:0.82em; color:var(--ink); opacity:0.75;">Published with no playthrough credit. Your participation is invisible to readers.</div>
+        </div>
+      </label>
+      <label class="canon-credit-option" style="display:flex; gap:10px; padding:14px; border:1px solid rgba(201,168,76,0.25); border-radius:6px; cursor:pointer; background:rgba(20,18,14,0.5);">
+        <input type="radio" name="canonCreditMode" value="credited" style="margin-top:3px;">
+        <div style="flex:1;">
+          <div style="font-weight:600; color:var(--gold); margin-bottom:2px;">Claim Canon Credit</div>
+          <div style="font-size:0.82em; color:var(--ink); opacity:0.75; margin-bottom:8px;">Cover shows "as played by [your name]". You're not the author — you're the canonical reader incarnation.</div>
+          <input id="canonCreditText" type="text" class="plaque-input" maxlength="24" placeholder="@YourHandle / R. Tsukerman / NyxMarauder" disabled style="width:100%; opacity:0.6;">
+          <div id="canonCreditPreview" style="font-size:0.78em; color:var(--gold); opacity:0.8; margin-top:6px; min-height:1em; font-style:italic;"></div>
+          <div id="canonCreditError" style="font-size:0.78em; color:#e89090; margin-top:4px; min-height:1em;"></div>
+          <div style="font-size:0.72em; color:var(--ink); opacity:0.55; margin-top:6px;">Up to 24 characters. Examples: <em>@yourname</em>, <em>R. Last</em>, <em>FirstName</em>, <em>NyxMarauder</em>.</div>
+        </div>
+      </label>
+    </div>
+    <p style="text-align:center; font-size:0.75em; color:var(--ink); opacity:0.55; font-style:italic; margin: 12px 0 16px;">
+      ⚠ This choice is permanent. It cannot be changed after confirmation.
+    </p>
+    <div style="display:flex; gap:12px; justify-content:center; align-items:center;">
+      <button id="canonCreditConfirm" class="sb-btn-png consent-primary">Publish to Canon</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+     TASTE CHARACTER MODAL — name/gender/pronouns selector for starter books.
+     Fires on every Taste book open. Per-book persistence (state._tasteCharacterPrefs[bookId])
+     so each book can have different character setup. Everything else
+     (world, tone, archetype, etc.) is pre-selected by the seed.
+     ───────────────────────────────────────────────────────────────────── -->
+<div id="tasteCharacterModal" class="overlay hidden" style="z-index:10080;">
+  <div class="box" style="max-width:780px; padding: 28px 24px;">
+    <h3 style="color:var(--gold); text-align:center; margin: 0 0 6px;" id="tasteCharacterModalTitle">Your Character</h3>
+    <p style="text-align:center; font-size: 0.85em; color: var(--ink); opacity: 0.75; margin: 0 0 22px;">
+      Name yourself and your love interest for this story.
+    </p>
+    <div class="character-cards-row" style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+      <!-- Player Character Card — mirrors corridor card; modal-scoped IDs -->
+      <div class="character-tarot-card">
+        <div class="character-tarot-header">Your Character</div>
+        <div class="character-tarot-fields">
+          <div class="character-field character-field-name">
+            <label>Name</label>
+            <input id="tasteModalPlayerName" type="text" class="plaque-input" placeholder="Your name">
+          </div>
+          <div class="character-field character-field-gender">
+            <label>Gender</label>
+            <select id="tasteModalPlayerGender" class="plaque-input">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Non-Binary">Non-Binary</option>
+            </select>
+          </div>
+          <div class="character-field character-field-pronouns">
+            <label>Pronouns</label>
+            <select id="tasteModalPlayerPronouns" class="plaque-input">
+              <option value="She/Her">She/Her</option>
+              <option value="He/Him">He/Him</option>
+              <option value="They/Them">They/Them</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- Love Interest Card — mirrors corridor card; modal-scoped IDs -->
+      <div class="character-tarot-card">
+        <div class="character-tarot-header">Your Love Interest</div>
+        <div class="character-tarot-fields">
+          <div class="character-field character-field-name">
+            <label>Name</label>
+            <input id="tasteModalPartnerName" type="text" class="plaque-input" placeholder="Their name">
+            <span class="li-name-hint">Leave blank to be surprised</span>
+          </div>
+          <div class="character-field character-field-gender">
+            <label>Gender</label>
+            <select id="tasteModalPartnerGender" class="plaque-input">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div class="character-field character-field-pronouns">
+            <label>Pronouns</label>
+            <select id="tasteModalPartnerPronouns" class="plaque-input">
+              <option value="He/Him">He/Him</option>
+              <option value="She/Her">She/Her</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; gap:12px; justify-content:center; align-items:center; margin-top:24px;">
+      <button id="tasteCharacterModalCancel" class="sb-btn-png consent-secondary">Back to Library</button>
+      <button id="tasteCharacterModalConfirm" class="sb-btn-png consent-primary">Begin Story</button>
+    </div>
+  </div>
+</div>
+
 <div id="ageGate" class="screen overlay hidden" style="background:#000; z-index:9999;">
   <div style="text-align:center;">
       <h2>Storybound</h2>
@@ -1617,6 +1735,14 @@
           <div class="book-front cover-book-front" id="coverBookFront">
             <!-- Cover art image (hidden until generated) -->
             <img id="bookCoverImg" src="" alt="" class="cover-book-art">
+            <!-- Comic-book-style issue badge — upper right corner.
+                 Populated by renderIssueBadge() in app.js once the
+                 story's issue number is claimed (first F spend on
+                 scene context). Hidden until claimed. -->
+            <div id="issueBadge" class="issue-badge hidden" aria-hidden="true">
+              <span class="issue-badge-flavor"></span>
+              <span class="issue-badge-number"></span>
+            </div>
             <!-- White text placeholder (shown by default) -->
             <div class="book-front-text cover-book-text" id="coverBookText">
               <div class="cover-working-label">Working Title:</div>
@@ -2080,11 +2206,11 @@
     <!-- (Fortune breakdown removed — single unified balance.) -->
 </div>
 
-<script src="/sound.js?v=20260510-oas-mix3"></script>
+<script src="/sound.js?v=20260511-relief-after-breath"></script>
 <script src="/fatecards.js?v=20260507a"></script>
-<script src="/orchestration-client.js?v=20260511-fate-batch"></script>
+<script src="/orchestration-client.js?v=20260511-anthropic-routing"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260511-explicit-sniffer-local"></script>
+<script src="/app.js?v=20260512-canon-credit-unique-handle"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">

@@ -27,7 +27,10 @@ const ALLOWED_STATES = new Set([
   // Thoughtful "Hmm" states (LoraVenn) — LI deliberating
   'hmmm-1', 'hmmm-2', 'hmmm-3',
   // Vulnerable states (LoraVenn) — LI opening emotionally (or masking)
-  'sorry', 'crying', 'guilt'
+  'sorry', 'crying', 'guilt',
+  // Loose-smile states (LoraVenn) — pre-peak flirt / mid-scene release (relief)
+  // and post-peak satisfied afterglow (after)
+  'relief', 'after'
 ]);
 
 const ALLOWED_ARTISTS = new Set([

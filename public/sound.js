@@ -661,26 +661,63 @@
     holdSrc: null,   holdGain: null,
     breathSrc: null, breathGain: null,
     active: false,
-    currentTemperature: 'curious'
+    currentTemperature: 'curious',
+    currentMouth: 'closed_smile'  // tracks the LI mouth state for breath modulation
   };
 
-  // Per-temperature heartbeat params. Volume + playbackRate scale together
-  // so urgent/peaking moments feel physically louder AND faster, not just
-  // louder. Hold-beat fades in slightly as temperature climbs.
-  // breathVol is 0 at curious/warming (track doesn't start until urgent)
-  // and rises through urgent → peaking. The breath track plays non-loop
-  // so its tail (slow recovery breaths) lands naturally on scene resolve.
-  // Volume tuning notes:
-  //  • Fire crackle and hold-beat halved per smoke-test feedback —
-  //    they were sitting on top of voice and pulling focus.
-  //  • Heartbeat + breath kept as-is (heartbeat IS the felt-pulse the
-  //    user is meant to ride; breath is the diegetic body cue).
+  // Per-temperature heartbeat + hold-beat params. Breath is NOT in this
+  // map anymore — breath volume is now driven by the LI's current mouth
+  // state (see _MOUTH_STATE_BREATH_FACTOR below), not temperature.
+  // Rationale: temperature can be "urgent" or "peaking" while the LI
+  // visually has a closed mouth (smirk, lip-bite, pursed, etc.) — and
+  // hearing him breath heavily over a closed-mouth crop was breaking
+  // immersion. Breath now fires only when the visual matches: mouth
+  // open below peak = 50%, mouth open AT peak = full.
   var _OAS_TEMP_PROFILES = {
-    curious:  { hbVol: 0.18, hbRate: 0.90, holdVol: 0.03, breathVol: 0.00 },
-    warming:  { hbVol: 0.26, hbRate: 1.05, holdVol: 0.05, breathVol: 0.00 },
-    urgent:   { hbVol: 0.36, hbRate: 1.22, holdVol: 0.08, breathVol: 0.28 },
-    peaking:  { hbVol: 0.50, hbRate: 1.45, holdVol: 0.11, breathVol: 0.45 }
+    curious:  { hbVol: 0.18, hbRate: 0.90, holdVol: 0.03 },
+    warming:  { hbVol: 0.26, hbRate: 1.05, holdVol: 0.05 },
+    urgent:   { hbVol: 0.36, hbRate: 1.22, holdVol: 0.08 },
+    peaking:  { hbVol: 0.50, hbRate: 1.45, holdVol: 0.11 }
   };
+  // Breath volume factor per mouth state:
+  //   0   — closed mouth / contained (no breath, regardless of temperature)
+  //   0.5 — mouth open below peak (parted speech, hard_exhale, etc.) → half breath
+  //   1.0 — mouth open at peak (ahh, big_o, no, intense, crying, etc.) → full breath
+  // Note: blowing_smirk is "peak tier" temperature-wise but PURSED (closed
+  // mouth), so its factor is 0. Affronted/apologetic/disgusted are mildly
+  // parted (0.5). Smile_snarl is asymmetric peak (1.0).
+  var _BREATH_PEAK_VOL = 0.45;
+  var _MOUTH_STATE_BREATH_FACTOR = {
+    // Closed-mouth states → no breath
+    resting: 0, closed_smile: 0, smirk: 0, big_smirk: 0, knowing_smirk: 0,
+    lip_bite: 0, lip_bite_held: 0, whistle: 0,
+    withdrawn: 0, cold_dismissal: 0, guilty: 0,
+    thinking_hand: 0, thinking_pursed: 0, thinking_intrigued: 0,
+    blowing_smirk: 0,  // peak-TIER but pursed/closed mouth — no breath
+    soft: 0, still: 0,  // legacy aliases
+    // Open below peak → 50% breath
+    ohno: 0.5, what: 0.5, you: 0.5,
+    hard_exhale: 0.5,
+    affronted: 0.5, apologetic: 0.5, disgusted: 0.5,
+    parted: 0.5,  // legacy alias
+    // Loose-smile states — soft open but not exerting. Quarter breath
+    // (same tier as settled). relief = pre-intensity flirt / post-intensity
+    // contented release; after = very satisfied afterglow.
+    relief: 0.25, after: 0.25,
+    // Open at peak → full breath
+    ahh: 1.0, big_o: 1.0, no: 1.0,
+    intense: 1.0, tense_bite: 1.0, smile_snarl: 1.0,
+    crying: 1.0,
+    gasping: 1.0,  // legacy alias
+    // Settled — post-orgasm / afterglow recovery. Quarter breath. Not a
+    // mouth state in the picker; set explicitly during _resolveIntimacyScene.
+    settled: 0.25
+  };
+  function _breathVolForMouth(state) {
+    var factor = _MOUTH_STATE_BREATH_FACTOR[state];
+    if (typeof factor !== 'number') factor = 0;  // unknown state = silent (safe default)
+    return _BREATH_PEAK_VOL * factor;
+  }
   var _OAS_FIRE_VOL = 0.025;  // constant — room atmosphere bed (-75% from initial)
 
   function _oasLoopFromBuffer(buf, vol, rate) {
@@ -722,16 +759,14 @@
     gain.gain.linearRampToValueAtTime(initialVol, ctx.currentTime + 1.5);
     src.connect(gain).connect(_sfxOut(ctx));
     src.onended = function() {
-      // If OAS is still active and the temperature is still hot enough
-      // for breathing, restart the track. Otherwise let it stay ended —
-      // the natural tail (slow recovery breaths) has just played out.
+      // If OAS is still active and the current mouth state is mouth-open,
+      // restart the track. Otherwise let it stay ended — closed-mouth
+      // means we shouldn't be breathing anyway, and the natural recovery
+      // tail has just played out.
       if (!_oasState.active || !_oasState.breathAllowRestart) return;
-      var prof = _OAS_TEMP_PROFILES[_oasState.currentTemperature];
-      if (!prof || prof.breathVol <= 0) return;
-      // Reach via state in case the user dropped intensity to a cooler
-      // tier mid-playback — start the new instance at the current target
-      // volume rather than the previous one.
-      var next = _oasStartBreathTrack(prof.breathVol);
+      var targetVol = _breathVolForMouth(_oasState.currentMouth);
+      if (targetVol <= 0) return;  // mouth is closed, don't restart
+      var next = _oasStartBreathTrack(targetVol);
       if (next) {
         _oasState.breathSrc = next.src;
         _oasState.breathGain = next.gain;
@@ -783,14 +818,42 @@
       var hold = _oasLoopFromBuffer(window._oasHoldBeatBuffer, prof.holdVol, 1.0);
       if (hold) { _oasState.holdSrc = hold.src; _oasState.holdGain = hold.gain; }
     }
-    // Breath layer — only kicks in at urgent/peaking (breathVol > 0).
-    // Allow restart while OAS is active so the breathing feels continuous.
+    // Breath layer is mouth-state-driven now. Start NOT firing — the
+    // breath track stays silent until the LI's mouth opens (which calls
+    // window.setOASBreathForMouth). Initial mouth state is 'soft' /
+    // 'closed_smile' (factor 0) so no breath until something opens.
     _oasState.breathAllowRestart = true;
-    if (prof.breathVol > 0 && window._oasBreathBuffer && !_oasState.breathSrc) {
-      var breath = _oasStartBreathTrack(prof.breathVol);
-      if (breath) { _oasState.breathSrc = breath.src; _oasState.breathGain = breath.gain; }
-    }
-    try { console.log('[OAS-AUDIO] started @ ' + _oasState.currentTemperature); } catch (_) {}
+    _oasState.currentMouth = 'closed_smile';
+    try { console.log('[OAS-AUDIO] started @ ' + _oasState.currentTemperature + ' — breath silent until mouth opens'); } catch (_) {}
+  };
+
+  // ── PUBLIC: update breath volume based on the LI's current mouth state ──
+  // Called from app.js _crossfadeMouth whenever the mouth crop changes.
+  // Three-tier factor (0 / 0.5 / 1.0) lookup determines target volume.
+  // If breath track isn't running and target > 0 → start it. If running
+  // → ramp gain. If target = 0 → ramp to silence but keep source alive
+  // so a re-open doesn't trigger a restart click.
+  window.setOASBreathForMouth = function(mouthState) {
+    if (!_oasState.active) return;
+    _oasState.currentMouth = mouthState;
+    var target = _breathVolForMouth(mouthState);
+    var fadeSec = 1.2;
+    try {
+      if (target > 0 && !_oasState.breathSrc && window._oasBreathBuffer) {
+        // First mouth-open of the scene — start the track.
+        _oasState.breathAllowRestart = true;
+        var breath = _oasStartBreathTrack(target);
+        if (breath) { _oasState.breathSrc = breath.src; _oasState.breathGain = breath.gain; }
+        try { console.log('[OAS-AUDIO] breath start @ mouth=' + mouthState + ' vol=' + target.toFixed(2)); } catch (_) {}
+      } else if (_oasState.breathGain) {
+        // Already running — ramp to new target (could be 0 if mouth closed).
+        var ctx = _oasState.breathGain.context;
+        _oasState.breathGain.gain.cancelScheduledValues(ctx.currentTime);
+        _oasState.breathGain.gain.setValueAtTime(_oasState.breathGain.gain.value, ctx.currentTime);
+        _oasState.breathGain.gain.linearRampToValueAtTime(target, ctx.currentTime + fadeSec);
+        try { console.log('[OAS-AUDIO] breath → ' + target.toFixed(2) + ' (mouth=' + mouthState + ')'); } catch (_) {}
+      }
+    } catch (_) {}
   };
 
   // ── PUBLIC: update heartbeat + hold-beat for new temperature ──
@@ -822,27 +885,8 @@
         _oasState.holdGain.gain.setValueAtTime(_oasState.holdGain.gain.value, ctxC.currentTime);
         _oasState.holdGain.gain.linearRampToValueAtTime(prof.holdVol, ctxC.currentTime + fadeSec);
       }
-      // Breath layer — start it if we just crossed into urgent/peaking
-      // (and it isn't already playing), or ramp its volume if it is.
-      if (prof.breathVol > 0) {
-        if (!_oasState.breathSrc && window._oasBreathBuffer) {
-          _oasState.breathAllowRestart = true;
-          var breath = _oasStartBreathTrack(prof.breathVol);
-          if (breath) { _oasState.breathSrc = breath.src; _oasState.breathGain = breath.gain; }
-        } else if (_oasState.breathGain) {
-          var ctxD = _oasState.breathGain.context;
-          _oasState.breathGain.gain.cancelScheduledValues(ctxD.currentTime);
-          _oasState.breathGain.gain.setValueAtTime(_oasState.breathGain.gain.value, ctxD.currentTime);
-          _oasState.breathGain.gain.linearRampToValueAtTime(prof.breathVol, ctxD.currentTime + fadeSec);
-        }
-      } else if (_oasState.breathGain) {
-        // Cooled back down below urgent — taper breath to silence, but
-        // leave the source playing so its tail still rides out.
-        var ctxE = _oasState.breathGain.context;
-        _oasState.breathGain.gain.cancelScheduledValues(ctxE.currentTime);
-        _oasState.breathGain.gain.setValueAtTime(_oasState.breathGain.gain.value, ctxE.currentTime);
-        _oasState.breathGain.gain.linearRampToValueAtTime(0, ctxE.currentTime + 3.0);
-      }
+      // Breath is mouth-state-driven — temperature changes do not touch
+      // it. See window.setOASBreathForMouth (called from _crossfadeMouth).
     } catch (_) {}
     try { console.log('[OAS-AUDIO] temperature → ' + temperature); } catch (_) {}
   };

@@ -97,6 +97,7 @@
   const CONFIG = {
     // API endpoints
     CHATGPT_PROXY: '/api/chatgpt-proxy',
+    ANTHROPIC_PROXY: '/api/anthropic-proxy',
     SPECIALIST_PROXY: '/api/proxy',
     GEMINI_PROXY: '/api/gemini-proxy',
     MISTRAL_PROXY: '/api/mistral-proxy',
@@ -116,8 +117,14 @@
     STRATEGY_PASS_MODEL: 'gpt-4o-mini',          // Strategy pre-pass: structural decisions (low temp)
     STRUCTURAL_CORRECTION_MODEL: 'gpt-4o-mini',  // Post-render additive correction (Pass 4)
 
+    // Anthropic prose-tier models (require /api/anthropic-proxy endpoint —
+    // not yet wired; resolveRenderTier returns these slugs but the proxy
+    // dispatcher will need to route them once the endpoint exists).
+    OPUS_MODEL:   'claude-opus-4-1',     // Opus 4.x — top-quality prose, $15/$75 per M tokens. Reserved for Tier A major scenes.
+    SONNET_MODEL: 'claude-sonnet-4-5',   // Sonnet 4.x — strong prose, $3/$15 per M tokens. Tier A in-between + Tier B Scene 1.
+
     // Model allowlists (must match server-side)
-    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4'],
+    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'claude-opus-4-1', 'claude-sonnet-4-5'],
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
     ALLOWED_SD_AUTHOR_MODELS: ['grok-4-1-fast-reasoning'],
     ALLOWED_SD_DEEPSEEK_MODELS: ['deepseek-v4-pro', 'deepseek-v4-flash'],
@@ -504,19 +511,94 @@
    * whether Grok orchestration is active (Grok handles rendering, but the
    * author pass benefits from the stronger model at narrative pivot points).
    */
+  // ── INTRICATE-WORLD / DELICATE-POV CATALOG ──
+  // Worlds and POV modes that demand top-tier prose: heavy lore, delicate
+  // craft requirements, or aggressively-prompted directive stacks where
+  // the model still has to fill significant interstitial work. These
+  // promote a story to the OPUS-major / SONNET-in-between tier (formerly
+  // Tier A → gpt-4o). Standard worlds stay on SONNET-Scene-1 /
+  // GPT-4o-key-scenes / GPT-4o-mini-connective.
+  //
+  // CRITERIA for inclusion:
+  //   • Aggressively-prompted by the team (billionaire_modern, glass_house)
+  //   • Delicate metaphysics that punish off-key prose (fated_blood, cursed)
+  //   • Strong ontological premise that requires consistent restraint
+  //     (post_human, simulation, prehistoric, endless_edit, quieting_event)
+  //   • POVs where one mannered sentence breaks the spell
+  //     (author5th, environment4th)
+  //   • Tones requiring sustained ironic control (WryConfession)
+  //
+  // Add a new world to the intricate tier by appending to _INTRICATE_FLAVORS.
+  const _INTRICATE_FLAVORS = new Set([
+    // Modern — heavy author-side prompting
+    'billionaire_modern',
+    // Fantasy — delicate metaphysics, oath/blood/curse mechanics
+    'fated_blood', 'arcane_binding', 'the_beyond', 'cursed',
+    // Dystopia — strong ontological premises (perception, erasure, silence)
+    'glass_house', 'endless_edit', 'quieting_event', 'angry_room', 'dogma',
+    // Sci-fi — philosophy worlds requiring sustained tone
+    'post_human', 'simulation',
+    // Historical — pre-language and pre-modern restraint
+    'prehistoric'
+  ]);
+
+  function _isIntricateContext(appState) {
+    if (!appState) return false;
+    // POV-driven: the whole story is delicate regardless of world.
+    if (appState.povMode === 'environment4th') return true;
+    if (appState.povMode === 'author5th') return true;
+    // Tone-driven: WryConfession needs sustained ironic control.
+    if (appState.picks && appState.picks.tone === 'WryConfession') return true;
+    // Future experimental modes — covered by an existing flag.
+    if (appState._experimentalNarrativeMode === true) return true;
+    // World-flavor-driven.
+    const flavor = appState.picks && appState.picks.worldSubtype;
+    if (flavor && _INTRICATE_FLAVORS.has(flavor)) return true;
+    return false;
+  }
+
+  // Scenes that warrant Opus-tier prose within an intricate context, OR
+  // gpt-4o-tier prose within a standard context. Detected via existing
+  // signals: Scene 1, apex importance, Tempt Fate, late-arc storyturns
+  // (ST3 intimacy / ST4 consequence / ST5 betrayal / ST6 climax/ending),
+  // and the ending-convergence window.
+  function _isMajorScene(appState) {
+    if (!appState) return false;
+    const turnCount = appState.turnCount || 0;
+    if (turnCount === 1) return true;  // Scene 1 always major
+    const importance = appState._currentSceneImportance || 'medium';
+    if (importance === 'apex') return true;
+    if (appState.tempt_fate_invoked_this_turn === true) return true;
+    const st = appState.storyturn || '';
+    if (st === 'ST3' || st === 'ST4' || st === 'ST5' || st === 'ST6') return true;
+    const endingStart = _getEndingWindowStart(appState.storyLength);
+    if (endingStart && turnCount >= endingStart) return true;
+    return false;
+  }
+
   /**
    * Resolve Render Tier (A or B) for the current scene.
    *
-   * TIER A — FULL GPT-4 RENDERING (every scene)
-   *   Triggers: Glass House, 4th Person, 5th Person, Prehistoric+Wry, experimental modes.
-   *   All scenes use gpt-4o. Mini models never generate primary scenes.
+   * TIER A — INTRICATE WORLDS / DELICATE POVS
+   *   Major scene (Scene 1, apex, betrayal, ST3+, ending)  → OPUS
+   *   In-between scene                                      → SONNET
+   *   Triggers: 5th Person, 4th Person, WryConfession, billionaire_modern,
+   *   glass_house, fated_blood, arcane_binding, the_beyond, cursed,
+   *   endless_edit, quieting_event, angry_room, dogma, post_human,
+   *   simulation, prehistoric, experimental modes.
    *
-   * TIER B — HYBRID RENDERING (default)
-   *   GPT-4 on key scenes: Scene 1, ST3 intimacy, turning points, Tempt Fate,
-   *   Voice Anchor calibration (every 4 scenes), ending window.
-   *   Mini models may generate connective scenes but integration pass always runs.
+   * TIER B — STANDARD WORLDS
+   *   Scene 1–3 (opening window)  → SONNET (tone-set with strong writer)
+   *   Apex/Tempt/ST3/ST4/Ending   → GPT-4o
+   *   Connective                  → GPT-4o-mini
    *
-   * NO STORY may run entirely on mini models. Tier B guarantees periodic GPT-4.
+   * MODE 1 OVERRIDE — explicit content routes to Grok regardless of tier.
+   *
+   * Fallback chain (handled per-call or via the proxy):
+   *   Opus   → Sonnet → GPT-4o → GPT-4o-mini → DeepSeek-v4-pro
+   *   Sonnet → GPT-4o → GPT-4o-mini → DeepSeek-v4-pro → Grok-fast
+   *   GPT-4o → GPT-4o-mini → DeepSeek-v4-pro → Grok-fast
+   *   Mini   → DeepSeek-v4-flash → Grok-fast-non-reasoning → Mistral
    */
   function resolveRenderTier() {
     const appState = window.state;
@@ -549,25 +631,26 @@
         };
     }
 
-    // ── TIER A DETECTION ──
-    // Stories requiring continuous GPT-4 reasoning or stylistic discipline.
-    const isTierA = appState.povMode === 'environment4th'               // 4th Person Environmental
-        || appState.povMode === 'author5th'                              // 5th Person Fate
-        || appState.picks?.worldSubtype === 'glass_house'                // Glass House (Chorus perception)
-        || (appState.picks?.world === 'Prehistoric' && appState.picks?.tone === 'WryConfession')  // Prehistoric + Wry
-        || appState._experimentalNarrativeMode === true;                 // Future experimental modes
-
-    if (isTierA) {
-      // Tier A: gpt-4o for EVERY scene. Vary tokens by scene importance.
-      const tierATokens = (appState.tempt_fate_invoked_this_turn === true || appState._currentSceneImportance === 'apex')
-          ? 2200 : 1800;
-      const tierAReason = appState.tempt_fate_invoked_this_turn ? 'TierA:Tempt'
-          : appState._currentSceneImportance === 'apex' ? 'TierA:Apex'
-          : appState.povMode === 'author5th' ? 'TierA:5thPerson'
-          : appState.povMode === 'environment4th' ? 'TierA:4thPerson'
-          : appState.picks?.worldSubtype === 'glass_house' ? 'TierA:GlassHouse'
-          : 'TierA:Complex';
-      return { model: 'gpt-4o', max_tokens: tierATokens, tier: 'A', reason: tierAReason };
+    // ── TIER A: INTRICATE WORLDS / DELICATE POVS ──
+    // Major scene → Opus. In-between → Sonnet. See _INTRICATE_FLAVORS
+    // and _isIntricateContext for the full inclusion criteria.
+    if (_isIntricateContext(appState)) {
+      if (_isMajorScene(appState)) {
+        // Opus for the moments readers screenshot: Scene 1, apex,
+        // Tempt Fate, ST3-ST6 (intimacy / consequence / betrayal /
+        // climax-ending), ending convergence window.
+        const reason = appState.turnCount === 1 ? 'TierA:Scene1:Opus'
+          : appState.tempt_fate_invoked_this_turn ? 'TierA:Tempt:Opus'
+          : appState._currentSceneImportance === 'apex' ? 'TierA:Apex:Opus'
+          : (appState.storyturn === 'ST5' || appState.storyturn === 'ST6') ? 'TierA:Betrayal:Opus'
+          : appState.storyturn === 'ST3' ? 'TierA:ST3:Opus'
+          : appState.storyturn === 'ST4' ? 'TierA:ST4:Opus'
+          : 'TierA:Major:Opus';
+        return { model: CONFIG.OPUS_MODEL, max_tokens: 2400, tier: 'A', reason: reason };
+      }
+      // In-between scene in an intricate world — Sonnet handles the
+      // connective tissue with strong voice, no need for Opus spend.
+      return { model: CONFIG.SONNET_MODEL, max_tokens: 2000, tier: 'A', reason: 'TierA:InBetween:Sonnet' };
     }
 
     // Scene importance ranking (used by momentum, Wry discipline, and other Tier B rules)
@@ -581,13 +664,16 @@
       return { model: 'gpt-4o', max_tokens: 1800, tier: 'B', reason: 'TierB:Momentum' };
     }
 
-    // ── TIER B: KEY SCENE DETECTION ──
-    // The following scenes MUST use gpt-4o even in Tier B.
-    // Priority order: Opening → Tempt Fate → Apex → ST3/ST4 → InputComplexity → Wry → Calibration → Ending → Connective
+    // ── TIER B: STANDARD WORLDS ──
+    // Scene 1–3 use Sonnet (strong writer to set tone); subsequent key
+    // scenes use gpt-4o; connective scenes use gpt-4o-mini.
+    // Priority: OpeningWindow → Tempt → Apex → ST3/ST4 → InputComplexity → Wry → Calibration → Ending → Connective
 
-    // B1) Opening window — Scenes 1–3 always GPT-4 to establish tone and narrator inertia
+    // B1) Opening window — Scenes 1–3 use Sonnet for tone establishment.
+    // Setting voice early with the strongest realistic writer pays back
+    // across the rest of the story (momentum carries the voice).
     if (turnCount <= 3) {
-      return { model: 'gpt-4o', max_tokens: turnCount === 1 ? 2000 : 1800, tier: 'B', reason: 'TierB:OpeningWindow' };
+      return { model: CONFIG.SONNET_MODEL, max_tokens: turnCount === 1 ? 2000 : 1800, tier: 'B', reason: 'TierB:OpeningWindow:Sonnet' };
     }
 
     // B2) Tempt Fate — highest priority key scene
@@ -696,8 +782,14 @@
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT_MS);
 
+    // Route Anthropic models to the Anthropic proxy. The proxy shape is
+    // identical (same payload + same normalized response) so the rest of
+    // the callsite is unchanged. Claude slugs start with 'claude-'.
+    const _isClaudeModel = typeof payload.model === 'string' && payload.model.indexOf('claude-') === 0;
+    const _proxyUrl = _isClaudeModel ? CONFIG.ANTHROPIC_PROXY : CONFIG.CHATGPT_PROXY;
+
     try {
-      const res = await fetch(CONFIG.CHATGPT_PROXY, {
+      const res = await fetch(_proxyUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
