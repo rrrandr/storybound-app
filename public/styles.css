@@ -7494,6 +7494,180 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
+   MODEL COMPARE PANEL — side panel that replays the captured scene
+   prompt against alternative LLMs on demand. Floats over the reader at
+   z-index just below modals so the user can read alt-model outputs
+   side-by-side with the rendered scene below.
+   ───────────────────────────────────────────────────────────────────── */
+#modelCompareToggle {
+    position: fixed;
+    top: 12px;
+    right: 60px;
+    z-index: 10005;
+    width: 36px;
+    height: 32px;
+    border-radius: 4px;
+    border: 1px solid rgba(201, 168, 76, 0.5);
+    background: rgba(10, 8, 4, 0.85);
+    color: #c9a84e;
+    font-family: 'Lora', Georgia, serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    display: none;       /* shown via body class once gnReader is mounted */
+    align-items: center;
+    justify-content: center;
+    transition: background 160ms ease, color 160ms ease;
+}
+body:has(#gnReader:not(.hidden)) #modelCompareToggle {
+    display: flex;
+}
+#modelCompareToggle:hover {
+    background: rgba(40, 28, 12, 0.95);
+    color: #f3e6c8;
+}
+
+#modelComparePanel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 520px;
+    max-width: 92vw;
+    height: 100vh;
+    z-index: 10004;
+    background: rgba(12, 10, 6, 0.98);
+    border-left: 1.5px solid rgba(201, 168, 76, 0.45);
+    box-shadow: -8px 0 30px rgba(0, 0, 0, 0.6);
+    display: none;
+    flex-direction: column;
+    color: #f0e9d6;
+    font-family: 'Lora', Georgia, serif;
+    transform: translateX(20px);
+    opacity: 0;
+    transition: transform 220ms ease, opacity 220ms ease;
+}
+#modelComparePanel.active {
+    display: flex;
+    transform: translateX(0);
+    opacity: 1;
+}
+.model-compare-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid rgba(201, 168, 76, 0.25);
+}
+.model-compare-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: #c9a84e;
+    letter-spacing: 0.04em;
+}
+#modelCompareClose {
+    background: transparent;
+    border: none;
+    color: rgba(240, 233, 214, 0.6);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+#modelCompareClose:hover { color: #f3e6c8; }
+.model-compare-lead {
+    margin: 0;
+    padding: 10px 20px 14px;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: rgba(240, 233, 214, 0.62);
+}
+#modelCompareList {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 4px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.model-compare-row {
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 4px;
+    background: rgba(20, 14, 8, 0.6);
+    overflow: hidden;
+}
+.model-compare-row-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    gap: 12px;
+}
+.model-compare-row-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.model-compare-row-label {
+    font-weight: 600;
+    color: #f3e6c8;
+    font-size: 0.95rem;
+}
+.mcr-original {
+    font-style: italic;
+    color: #c9a84e;
+    font-size: 0.78rem;
+    margin-left: 4px;
+}
+.model-compare-row-tier {
+    font-size: 0.74rem;
+    color: rgba(240, 233, 214, 0.5);
+    letter-spacing: 0.04em;
+}
+.model-compare-render,
+.model-compare-toggle {
+    flex: 0 0 auto;
+    background: rgba(40, 28, 12, 0.85);
+    border: 1px solid rgba(201, 168, 76, 0.5);
+    color: #c9a84e;
+    padding: 6px 12px;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 160ms ease;
+}
+.model-compare-render:hover,
+.model-compare-toggle:hover {
+    background: rgba(56, 38, 16, 0.95);
+}
+.model-compare-render[disabled] {
+    opacity: 0.6;
+    cursor: wait;
+}
+.model-compare-output {
+    padding: 10px 14px 14px;
+    border-top: 1px dashed rgba(201, 168, 76, 0.2);
+    background: rgba(0, 0, 0, 0.35);
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: rgba(240, 233, 214, 0.9);
+    white-space: pre-wrap;
+    max-height: 360px;
+    overflow-y: auto;
+}
+.model-compare-output.hidden {
+    display: none;
+}
+.model-compare-empty {
+    padding: 18px 12px;
+    color: rgba(240, 233, 214, 0.55);
+    font-style: italic;
+    text-align: center;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
    INTIMACY EXIT MODAL — graceful exit from intimate scenes
    Triggered by "stop"/"skip"/"enough"/"fade to black" inputs or 3x
    Boundary fate-card presses. Two grouped sections (Right now / Going
@@ -23575,13 +23749,42 @@ button.gn-selector-card[disabled] {
     min-height: 50vh;
     position: relative;
 }
-/* ── GN generating state: hide all chrome, show only loading ── */
+/* ── GN generating state: hide GN-internal chrome only, NOT global chrome.
+   The four persistent corner elements (keyhole burger, global back arrow,
+   concierge bell, Fortunes widget) must remain visible and accessible
+   throughout both the generating state AND the rendered scene state. ── */
 #gnReader.gn-generating .gn-ui-overlay,
 #gnReader.gn-generating .gn-fate-section,
 #gnReader.gn-generating .gn-scene-actions-row,
 #gnReader.gn-generating .gn-input-bar,
 #gnReader.gn-generating .gn-pov-edition {
     display: none !important;
+}
+
+/* ── Render-view chrome guarantee ──
+   When the gnReader is showing (either generating or rendered), force the
+   four corner chrome elements to be visible and clickable. Defensive
+   override against any future hide rule, missed JS toggle, or stale state
+   that would leave the player stranded without a way to back out, open
+   the vault, summon the concierge, or check their Fortunes balance.
+
+   Carve-outs (in order): vault open, legal gate, mask gate — these have
+   their own legitimate hide rules that must continue to apply. The :not()
+   chain here doesn't interfere with them since this rule only activates
+   when #gnReader is the visible screen, which is mutually exclusive with
+   those gates. */
+body:has(#gnReader:not(.hidden)) #burgerBtn,
+body:has(#gnReader:not(.hidden)) #globalBackBtn,
+body:has(#gnReader:not(.hidden)) #conciergeBell,
+body:has(#gnReader:not(.hidden)) #fortuneWidget {
+    visibility: visible !important;
+    pointer-events: auto !important;
+}
+/* Fortune widget toggles between display:none and display:flex via
+   .fw-visible. Force flex inside the render view so a stale JS toggle
+   doesn't leave the player without a Fortunes balance read. */
+body:has(#gnReader:not(.hidden)) #fortuneWidget {
+    display: flex !important;
 }
 .gn-scene-loading {
     display: flex;
@@ -24543,6 +24746,34 @@ body.gn-cover-active .gn-ui-overlay {
 }
 .gn-count-2 .gn-panel { min-height: 460px; }
 .gn-count-2 .gn-panel-img { min-height: 460px; object-fit: cover; }
+
+/* Cinematic diptych — when the 2-panel scene is a paired top+bottom
+   diptych (panels carry data-cinematic-group), stack them vertically so
+   the wide-aspect 1024×512 halves display in their native orientation:
+   top half above, bottom half below. Honors the slice's wide aspect
+   instead of cramming each half into a narrow square via object-fit.
+   The .gn-panels-container is matched via :has() so we don't need a
+   body class — the layout reshapes itself when any panel is tagged. */
+.gn-panels-container.gn-count-2:has(.gn-panel[data-cinematic-group]) {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+}
+.gn-panels-container.gn-count-2:has(.gn-panel[data-cinematic-group]) .gn-panel {
+    min-height: 0;
+    aspect-ratio: 1024 / 512;
+}
+.gn-panels-container.gn-count-2:has(.gn-panel[data-cinematic-group]) .gn-panel-img {
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.gn-panels-container.gn-count-2 .gn-panel[data-cinematic-pos="top"] {
+    grid-row: 1;
+}
+.gn-panels-container.gn-count-2 .gn-panel[data-cinematic-pos="bottom"] {
+    grid-row: 2;
+}
 
 /* 3 panels — hero spans top row, 2 below. Explicit row assignment prevents collision. */
 .gn-count-3 {
@@ -28135,13 +28366,17 @@ body.elevated-fate-cards .tempt-fate-card {
     /* Sits in the flat-gold left panel, vertically and horizontally
        centered. Container's justify-content: center owns the horizontal
        centering; text-align: center handles multi-digit balances cleanly.
-       Size tuned for the 32px-tall pill. */
+       Size tuned for the 32px-tall pill.
+       translateX(5px) shifts the number 5px right within the flat-gold
+       area — the PNG's flat-gold zone isn't perfectly centered relative
+       to the box, so this nudge optically aligns the count. */
     font-size: 13px;
     font-weight: 800;
     color: #0a0a0a;
     letter-spacing: 0.04em;
     line-height: 1;
     text-align: center;
+    transform: translateX(5px);
     /* Black lacquered 3D — top highlight, hard bottom bevel, diffuse drop */
     text-shadow:
         0 -1px 0 rgba(255, 245, 200, 0.55),
