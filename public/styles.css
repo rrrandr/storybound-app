@@ -3077,8 +3077,8 @@ body.gn-viewing-past .gn-scene-actions-row {
     justify-content: center;
     align-items: center;
     gap: 20px;
-    margin: 15px 0;
-    padding: 10px;
+    margin: 4px 0 2px;
+    padding: 2px;
 }
 
 /* DSP MATERIAL: Page nav button — Ceremonial Metal Plaque */
@@ -20416,9 +20416,54 @@ body.corridor-mode .sb-grid.corridor-section {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 200px;
+    min-height: calc(100vh - var(--sb-header-height, 220px));
     padding: 40px 20px;
     text-align: center;
+}
+
+/* Corridor-mode override — the global rule at body.corridor-mode
+   .corridor-section sets justify-content: flex-start !important,
+   which top-aligns the Enter Your Story group instead of centering it.
+   For the begin stage specifically we want vertical centering, so
+   override back. The container needs to fill its parent's height
+   (the corridor-section grows via flex:1 in corridor mode) so the
+   center alignment has space to work in. */
+body.corridor-mode #beginStoryRow {
+    justify-content: center !important;
+}
+body.corridor-mode #beginStoryRow .begin-story-container {
+    flex: 1 1 auto;
+    align-self: stretch;
+    width: 100%;
+    min-height: 0;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+/* Pin the Enter Your Story group to the GEOMETRIC CENTER of the viewport.
+   The corridor row has transform: translateY(0) (from .corridor-section
+   base + corridorRowEnter animation forwards fill) which makes it a
+   containing block for fixed descendants. CSS overrides of that transform
+   did not reliably hold, so an inline script in index.html re-parents
+   .begin-btn-wrapper to <body> and tags it .begin-btn-portaled. With
+   <body> as the parent there is no transformed ancestor, so position:
+   fixed truly resolves against the viewport. */
+.begin-btn-portaled {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    z-index: 5 !important;
+    /* Hidden by default; the inline script in index.html adds
+       .begin-btn-show only while #beginStoryRow is the active corridor row.
+       !important is necessary because the base .begin-btn-wrapper rule
+       sets display:flex with regular specificity. */
+    display: none !important;
+}
+.begin-btn-portaled.begin-btn-show {
+    display: flex !important;
 }
 
 .begin-story-flourish {
@@ -20427,10 +20472,75 @@ body.corridor-mode .sb-grid.corridor-section {
 
 .begin-btn-wrapper {
     position: relative;
-    display: inline-block;
+    /* Stack Enter Your Story + modality toggle vertically as a single
+       centered group so the wrapper's height = the actual visual block,
+       and .begin-story-container's vertical centering puts the whole
+       group at the page's vertical midpoint. */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
 }
 
-/* Save This Story Shape — secondary action above Enter Your Story */
+/* ── Save This Story Shape — bracket + label group ──
+   Sits under the breadcrumb row in .shape-your-story-header. The SVG
+   bracket spans the breadcrumb width, curves down, and points at the
+   "Save This Story Shape" label below it. The label is a button (still
+   clickable) but styled as a plain text link by default (no border)
+   so the bracket reads as visual punctuation, not chrome. */
+.shape-save-bracket-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Width is set by _alignSaveBracketToBreadcrumbs() in JS to match
+       the actual breadcrumb-card cluster width. Default to a narrow
+       no-content state so an unmeasured render doesn't span the page. */
+    width: 0;
+    margin: 6px auto 0;
+    color: rgba(201, 162, 78, 0.7);  /* stroke color via currentColor */
+    pointer-events: auto;
+    overflow: visible;
+}
+/* Hide when the row is empty (no breadcrumbs yet — bracket has nothing
+   to scope). The JS sizer also flips display:none when kids.length===0,
+   but this CSS rule covers the initial-paint window before JS runs. */
+#breadcrumbRow:empty + .shape-save-bracket-wrap,
+.shape-your-story-header:has(#breadcrumbRow:empty) .shape-save-bracket-wrap {
+    display: none;
+}
+.shape-save-bracket {
+    width: 100%;
+    height: 22px;
+    display: block;
+    color: inherit;  /* SVG stroke uses currentColor */
+}
+.shape-save-bracket-wrap .save-shape-btn {
+    /* In this position the button reads as a label below the bracket,
+       not a primary CTA. Remove the bordered-button styling. */
+    display: inline-block;
+    margin: 4px auto 0;
+    padding: 4px 14px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    color: rgba(232, 217, 176, 0.88);
+    font-family: 'Lora', serif;
+    font-variant: small-caps;
+    font-size: 0.86em;
+    letter-spacing: 0.18em;
+    cursor: pointer;
+    transition: color 0.2s ease, text-shadow 0.2s ease;
+}
+.shape-save-bracket-wrap .save-shape-btn:hover {
+    color: #f5ecd6;
+    text-shadow: 0 0 10px rgba(232, 200, 130, 0.4);
+}
+.shape-save-bracket-wrap .save-shape-btn:active {
+    color: rgba(232, 200, 130, 0.7);
+}
+/* Legacy save-shape-btn rule kept for any unstyled fallback rendering
+   if the wrapper isn't present (defensive — should be unreachable now
+   that the button lives only in the header wrapper). */
 .save-shape-btn {
     display: inline-block;
     margin: 0 auto 14px;
@@ -20463,7 +20573,11 @@ body.corridor-mode .sb-grid.corridor-section {
     overflow: visible;
 }
 
-#beginStoryRow #beginBtn {
+/* Scoped to bare #beginBtn (not #beginStoryRow #beginBtn) because the
+   wrapper is portaled to <body> at load (see index.html inline script),
+   so the button is no longer a descendant of #beginStoryRow. ID-only
+   specificity (1,0,0) still beats the base .sb-btn-png.lg (0,2,0). */
+#beginBtn {
     position: relative;
     z-index: 1;
     width: 386px !important;  /* 351 × 1.10 — button 10% larger, text size unchanged */
@@ -20498,52 +20612,116 @@ body.corridor-mode .sb-grid.corridor-section {
    until the user picks a side. */
 .story-modality-toggle {
     display: flex;
-    gap: 8px;
-    margin: 0 auto 12px;
-    max-width: 360px;
-    width: 100%;
+    gap: 10px;
+    margin: 0 auto;
+    /* Width is locked to the Enter Your Story button (386px) so the
+       outer edges of the two modality panels align with the button's
+       outer edges. Each panel = (386 - 10)/2 = 188px wide. */
+    width: 386px;
+    max-width: 94vw;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 .modality-btn {
-    flex: 1;
-    padding: 10px 16px;
-    border: 1px solid rgba(201, 162, 78, 0.35);
-    background: rgba(20, 16, 10, 0.55);
-    color: rgba(201, 162, 78, 0.7);
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 10px 10px;
+    background: rgba(20, 14, 8, 0.32);
+    border: none;
+    border-radius: 6px;
+    color: rgba(232, 217, 176, 0.9);
     font-family: 'Lora', 'Georgia', serif;
-    font-size: 0.92em;
-    letter-spacing: 0.06em;
     cursor: pointer;
-    border-radius: 3px;
-    transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+    /* Grid: row 1 = [icon] [name], row 2 = description spanning both. */
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 8px;
+    row-gap: 8px;
+    transition: color 0.18s ease, transform 0.18s ease, background-color 0.18s ease;
 }
+/* Mirror the right side: name first, icon second on the header row. */
+.modality-btn--cinegraphic { grid-template-columns: 1fr auto; }
+.modality-btn--literary    .modality-icon { grid-column: 1; grid-row: 1; }
+.modality-btn--literary    .modality-name { grid-column: 2; grid-row: 1; }
+.modality-btn--literary    .modality-desc { grid-column: 1 / -1; grid-row: 2; text-align: left; }
+.modality-btn--cinegraphic .modality-name { grid-column: 1; grid-row: 1; }
+.modality-btn--cinegraphic .modality-icon { grid-column: 2; grid-row: 1; }
+.modality-btn--cinegraphic .modality-desc { grid-column: 1 / -1; grid-row: 2; text-align: right; }
 .modality-btn:hover {
-    background: rgba(201, 162, 78, 0.12);
-    border-color: rgba(201, 162, 78, 0.65);
-    color: rgba(232, 200, 130, 0.95);
+    color: #f5ecd6;
+    background: rgba(30, 22, 12, 0.42);
+    transform: translateY(-1px);
 }
 .modality-btn.active {
-    border-color: rgba(232, 200, 130, 0.95);
-    background: rgba(201, 162, 78, 0.18);
+    background: rgba(40, 28, 14, 0.5);
+}
+.modality-btn.active .modality-name {
     color: #f5ecd6;
-    box-shadow: 0 0 8px rgba(201, 162, 78, 0.25);
+    text-shadow: 0 0 10px rgba(232, 200, 130, 0.45);
 }
-/* Modality description — single line that swaps with the toggle, sits
-   between the Literary/Cinegraphic toggle and the Enter Your Story CTA. */
-.modality-description {
-    margin: 0 auto 14px;
-    max-width: 420px;
-    text-align: center;
-    color: rgba(232, 200, 130, 0.78);
-    font-family: 'Lora', 'Georgia', serif;
-    font-size: 0.86em;
+.modality-name {
+    align-self: center;
+    font-size: 1.0em;
+    letter-spacing: 0.14em;
+    color: rgba(232, 200, 130, 0.92);
+    font-variant: small-caps;
+    white-space: nowrap;
+    transition: color 0.18s ease, text-shadow 0.18s ease;
+}
+.modality-btn--literary    .modality-name { justify-self: start; }
+.modality-btn--cinegraphic .modality-name { justify-self: end; letter-spacing: 0.1em; }
+.modality-desc {
+    font-size: 0.74em;
     font-style: italic;
-    letter-spacing: 0.04em;
     line-height: 1.4;
-    min-height: 1.4em;
+    color: rgba(220, 200, 160, 0.78);
+    letter-spacing: 0.02em;
+    white-space: normal;
 }
-.modality-description:empty {
-    margin: 0;
-    min-height: 0;
+/* Square gold icon flanking each modality button. Unselected art is the
+   "no x" tarot-back square; selected art swaps in the "x" variant. The
+   icon sits LEFT of Literary and RIGHT of Cinegraphic per the mockup. */
+.modality-icon {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    /* The JPG icons have a baked-in black background (no alpha channel).
+       Use them as a LUMINANCE MASK instead of a background image — the
+       gold pattern shows through as solid color (gold-on-transparent),
+       the black drops out completely. Cross-browser via webkit prefix. */
+    background-color: rgba(201, 162, 78, 0.95);
+    -webkit-mask-image: url('/assets/ui/Square-Radio-Button-no-x-200x200.jpg');
+            mask-image: url('/assets/ui/Square-Radio-Button-no-x-200x200.jpg');
+    -webkit-mask-size: contain;
+            mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+            mask-position: center;
+    -webkit-mask-mode: luminance;
+            mask-mode: luminance;
+    transition: background-color 0.18s ease, transform 0.18s ease, filter 0.18s ease;
+}
+.modality-btn:hover .modality-icon {
+    background-color: rgba(232, 200, 130, 1);
+}
+.modality-btn.active .modality-icon {
+    -webkit-mask-image: url('/assets/ui/Square-Radio-Button-x-200x200.jpg');
+            mask-image: url('/assets/ui/Square-Radio-Button-x-200x200.jpg');
+    /* Brighter gold for the active state — was #f5ecd6 (pale cream)
+       which read as silver-grey. Use a richer gold that stays in the
+       same color family as the unselected state, just amped. */
+    background-color: #e8c878;
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 10px rgba(232, 200, 130, 0.6));
+}
+@media (max-width: 560px) {
+    .story-modality-toggle { gap: 14px; width: 100%; }
+    .modality-btn { padding: 10px 12px; column-gap: 10px; row-gap: 6px; }
+    .modality-icon { width: 44px; height: 44px; }
+    .modality-name { font-size: 1.05em; letter-spacing: 0.12em; }
+    .modality-desc { font-size: 0.78em; }
 }
 /* Disabled CTA visual — applies to #beginBtn when no modality picked yet. */
 #beginBtn:disabled,
@@ -23425,15 +23603,19 @@ h2.gn-selector-title {
     transition: transform 0.25s ease;
     text-align: center;
     flex: 0 0 auto;
-    width: 280px;
+    /* Scale to fit the viewport: smaller of 280px, ~1/4 of viewport width
+       (minus gaps), or width derived from a target ~65vh card height via
+       the 2.75/4.75 tarot aspect. Whichever constraint is tightest wins,
+       so the four cards always fit both horizontally and vertically. */
+    width: min(280px, calc((100vw - 120px) / 4), calc(65vh * 2.75 / 4.75));
 }
 .gn-selector-card:hover {
     transform: scale(1.05);
 }
-/* ── Artist thumbnail — tarot card proportions, doubled ── */
+/* ── Artist thumbnail — tarot card proportions, fills parent card ── */
 .gn-selector-thumb {
     position: relative; /* positioning context for the frame overlay */
-    width: 280px;
+    width: 100%;
     aspect-ratio: 2.75 / 4.75;
     /* Border-radius bumped to match the gold border PNG's outer rounded
        corners — earlier 10px left a sliver of rectangular thumb visible
@@ -23599,13 +23781,9 @@ button.gn-selector-card[disabled] {
     object-fit: cover;
 }
 @media (max-width: 960px) {
-    .gn-selector-card { width: 200px; }
-    .gn-selector-thumb { width: 200px; }
     .gn-selector-options { gap: 14px; }
 }
 @media (max-width: 700px) {
-    .gn-selector-card { width: 140px; }
-    .gn-selector-thumb { width: 140px; }
     .gn-selector-options { gap: 10px; }
 }
 @media (max-width: 480px) {
@@ -24482,7 +24660,7 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
 
 /* ── GN_FATE_LAYER ── */
 .gn-fate-section {
-    margin: 16px 0;
+    margin: 6px 0;
     text-align: center;
     padding: 0 16px;
 }
@@ -24655,18 +24833,22 @@ body.gn-cover-active .gn-ui-overlay {
     100% { width: 10%; margin-left: 90%; }
 }
 
-/* ── GN_INPUT_BAR: bottom-anchored Say/Do ── */
+/* ── GN_INPUT_BAR: bottom-anchored Say/Do ──
+   Width halved (75% → 50%) per user request — pulls the Action / Dialogue
+   plaques toward the center of the reader so they don't sprawl. Vertical
+   padding tightened so the fate-card row below sits within easy reach
+   without scrolling. */
 .gn-input-bar {
-    padding: 16px;
+    padding: 8px 16px;
     text-align: center;
     border-top: 1px solid rgba(201, 162, 78, 0.12);
 }
 .gn-input-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    max-width: 75%;
-    margin: 0 auto 10px;
+    gap: 8px;
+    max-width: 50%;
+    margin: 0 auto 6px;
 }
 /* GN inputs: same ornate plaque style as prose Say/Do */
 .gn-input-grid .input-wrapper { overflow: visible; }
@@ -24692,24 +24874,25 @@ body.gn-cover-active .gn-ui-overlay {
     box-sizing: border-box;
     resize: none;
 }
+/* Placeholder is now load-bearing: it IS the prompt the user reads
+   ("What do you do?" / "What do you say?") with no separate <label>
+   above the textarea. Brighter + bolder so it reads as a clear cue,
+   not a faint hint. Disappears automatically when the user focuses
+   the box and starts typing, per default browser behavior. */
 .gn-input-grid textarea::placeholder {
-    color: rgba(212, 168, 67, 0.35);
-    -webkit-text-fill-color: rgba(212, 168, 67, 0.35);
-    text-shadow: none;
+    color: rgba(212, 168, 67, 0.72);
+    -webkit-text-fill-color: rgba(212, 168, 67, 0.72);
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
     text-align: center;
-}
-.gn-input-grid .input-wrapper label {
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--gold);
-    font-size: 0.9em;
+    font-weight: 600;
+    letter-spacing: 0.04em;
 }
 .gn-submit-row {
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 10px;
-    margin: 10px 0;
+    margin: 6px 0 0 0;
 }
 
 /* ── GN Panel-Based Rendering ── */
@@ -27282,6 +27465,40 @@ body.elevated-fate-cards .tempt-fate-card {
     position: relative;
 }
 
+/* ── GN page-nav (above the image): plain-text links, no plaque ──
+   Literary reader keeps the ceremonial Black-Gold plaque background on
+   .page-nav-btn (defined at ~line 3085). The GN reader's nav above the
+   image is a quieter affair — bare text in gold, just clickable, no
+   box, no chrome. Scoped to .gn-page-nav so the literary plaques are
+   untouched. */
+.gn-page-nav.page-nav-controls {
+    gap: 14px;
+}
+.gn-page-nav .page-nav-btn {
+    background: none !important;
+    padding: 2px 4px;
+    font-size: 0.78em;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: rgba(212, 168, 67, 0.78);
+    -webkit-text-fill-color: rgba(212, 168, 67, 0.78);
+    text-shadow: none;
+    gap: 3px;
+}
+.gn-page-nav .page-nav-btn:hover:not(:disabled) {
+    color: #f3e6c8;
+    -webkit-text-fill-color: #f3e6c8;
+    filter: none;
+}
+.gn-page-nav .page-nav-btn:disabled {
+    opacity: 0.35;
+}
+.gn-page-nav .page-indicator {
+    font-size: 0.78em;
+    letter-spacing: 0.06em;
+    color: rgba(232, 217, 176, 0.78);
+}
+
 /* ════════════════════════════════════════════════════════════════
    REINCARNATION SYSTEM — Extraction, Vault, Import, Capture modals
    ════════════════════════════════════════════════════════════════ */
@@ -28367,16 +28584,16 @@ body.elevated-fate-cards .tempt-fate-card {
        centered. Container's justify-content: center owns the horizontal
        centering; text-align: center handles multi-digit balances cleanly.
        Size tuned for the 32px-tall pill.
-       translateX(5px) shifts the number 5px right within the flat-gold
-       area — the PNG's flat-gold zone isn't perfectly centered relative
-       to the box, so this nudge optically aligns the count. */
+       translateX nudges the number right within the flat-gold area —
+       the PNG's flat-gold zone isn't perfectly centered relative to the
+       box, so this offset optically aligns the count. */
     font-size: 13px;
     font-weight: 800;
     color: #0a0a0a;
     letter-spacing: 0.04em;
     line-height: 1;
     text-align: center;
-    transform: translateX(5px);
+    transform: translateX(10px);
     /* Black lacquered 3D — top highlight, hard bottom bevel, diffuse drop */
     text-shadow:
         0 -1px 0 rgba(255, 245, 200, 0.55),

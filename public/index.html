@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260513-model-compare">
+  <link rel="stylesheet" href="/styles.css?v=20260513-cg-nav-textonly">
 </head>
 
 <body class="booting">
@@ -1176,6 +1176,18 @@
       <div class="section-title" id="shapeYourStoryTitle">Shape Your Story</div>
       <!-- BREADCRUMB ROW - Committed selections accumulate here -->
       <div class="breadcrumb-row" id="breadcrumbRow" data-tour-breadcrumbs></div>
+      <!-- Bracket-and-label tying the breadcrumb collection to the
+           Save This Story Shape action. The SVG draws a thin gold curly
+           bracket pointing down at the label below. The button is a
+           plain text-style action (no border) by default; the bracket
+           visually scopes the breadcrumbs as the thing being saved. -->
+      <div class="shape-save-bracket-wrap" id="shapeSaveBracketWrap">
+        <svg class="shape-save-bracket" viewBox="0 0 1000 28" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M 0 0 C 0 18, 12 22, 30 22 L 480 22 C 495 22, 495 28, 500 28 C 505 28, 505 22, 520 22 L 970 22 C 988 22, 1000 18, 1000 0"
+                fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke" />
+        </svg>
+        <button class="save-shape-btn" id="saveShapeBtn" type="button" onclick="if(window._triggerSaveShapeFromButton)window._triggerSaveShapeFromButton()">Save This Story Shape</button>
+      </div>
     </div>
 
     <!-- FLOW STAGE INDICATOR — REMOVED (DSP invisible until story-shaping cards resolve) -->
@@ -1731,22 +1743,34 @@
     <div id="beginStoryRow" class="corridor-section" data-corridor-stage="beginstory">
         <div class="begin-story-container">
             <div class="begin-story-flourish"></div>
-            <button class="save-shape-btn" id="saveShapeBtn" type="button" onclick="if(window._triggerSaveShapeFromButton)window._triggerSaveShapeFromButton()">Save This Story Shape</button>
             <div class="begin-btn-wrapper">
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
+                <!-- Enter Your Story CTA — sits ABOVE the modality toggle.
+                     Disabled until a modality is picked. -->
+                <button class="sb-btn-png lg" id="beginBtn" disabled>Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
                 <!-- Story Modality Toggle (Literary ⟷ Cinegraphic) — controls
                      whether Enter Your Story routes to the prose engine
                      (handleBeginStory) or the staged visual-novel engine
                      (handleBeginGraphicNovel → renderMode='staged_story_mode').
-                     Sits ABOVE the CTA. CTA is disabled until a mode is picked.
-                     NOTE: distinct from #storyModeToggle below (Active/Mindful)
-                     which controls narrative ENGAGEMENT style, not modality. -->
+                     Sits BELOW the CTA. Each side has an always-visible
+                     descriptor under the button label so the user can
+                     compare before choosing. The square gold icon on
+                     each side swaps between the "no x" art (unselected)
+                     and the "x" art (selected). NOTE: distinct from
+                     #storyModeToggle below (Active/Mindful) which
+                     controls narrative ENGAGEMENT style, not modality. -->
                 <div class="story-modality-toggle" id="storyModalityToggle">
-                    <button class="modality-btn" id="modeLiterary" type="button">Literary</button>
-                    <button class="modality-btn" id="modeCinegraphic" type="button">Cinegraphic</button>
+                    <button class="modality-btn modality-btn--literary" id="modeLiterary" type="button">
+                        <span class="modality-icon modality-icon--left" aria-hidden="true"></span>
+                        <span class="modality-name">Literary</span>
+                        <span class="modality-desc">Elegant writing that reads<br>like a best-selling novel<br>which responds to you.</span>
+                    </button>
+                    <button class="modality-btn modality-btn--cinegraphic" id="modeCinegraphic" type="button">
+                        <span class="modality-name">Cinegraphic</span>
+                        <span class="modality-icon modality-icon--right" aria-hidden="true"></span>
+                        <span class="modality-desc">Responsive cinematic scenes<br>illustrated with layered<br>visual and audio rhythm</span>
+                    </button>
                 </div>
-                <p class="modality-description" id="modalityDescription"></p>
-                <button class="sb-btn-png lg" id="beginBtn" disabled>Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
                 <!-- Story Mode Toggle (Active ⟷ Mindful) — inside wrapper, visually attached to story button only.
                      Hidden automatically when the corridor-inference score is confident; replaced by the
                      #storyModeInferredHint subtitle below. -->
@@ -2305,8 +2329,48 @@
 <script src="/fatecards.js?v=20260507a"></script>
 <script src="/orchestration-client.js?v=20260511-anthropic-routing"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260513-mouth-snarl-grin"></script>
+<script src="/app.js?v=20260513-cg-screenplay-mini-plus-ab">
 <script src="/card-designer.js?v=20260318c"></script>
+<script>
+  /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
+     ------------------------------------------
+     The corridor row #beginStoryRow has transform: translateY(0) (set by
+     both .corridor-section base and .corridor-active animation forwards
+     fill). A transformed ancestor establishes a containing block for
+     position:fixed descendants, which prevented .begin-btn-wrapper from
+     centering against the viewport. CSS overrides of the transform did
+     not stick reliably. So: move the wrapper to be a direct child of
+     <body> at load time. There it has the viewport itself as its
+     containing block and `position: fixed; top:50%; left:50%;
+     translate(-50%,-50%)` lands it at the geometric window center.
+     Visibility is toggled based on whether #beginStoryRow is the active
+     corridor row. */
+  (function() {
+    function sync() {
+      const wrapper = document.querySelector('.begin-btn-wrapper');
+      if (!wrapper) return;
+      if (wrapper.parentElement !== document.body) {
+        wrapper.classList.add('begin-btn-portaled');
+        document.body.appendChild(wrapper);
+      }
+      const row = document.getElementById('beginStoryRow');
+      const active = !!(row && row.classList.contains('corridor-active'));
+      wrapper.classList.toggle('begin-btn-show', active);
+    }
+    function init() {
+      sync();
+      new MutationObserver(sync).observe(document.body, {
+        childList: true, subtree: true,
+        attributes: true, attributeFilter: ['class']
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">
@@ -2535,37 +2599,10 @@
     <div id="gnSceneNumber" class="story-page-scene">Scene 1</div>
   </div>
 
-  <!-- ── GN_STAGE: primary visual surface ── -->
-  <div id="gnStage" class="gn-stage">
-    <div id="gnSceneLoading" class="gn-scene-loading">
-      <p class="gn-loading-status">Composing Scene 1...</p>
-      <div class="gn-loading-bar"><div class="gn-loading-bar-fill" id="gnLoadingBarFill"></div></div>
-      <p class="gn-loading-hint" id="gnLoadingHint"></p>
-      <button class="gn-loading-cancel" id="gnLoadingCancel" title="Cancel">&times;</button>
-    </div>
-    <div id="gnPanelDisplay" class="gn-panel-display"></div>
-  </div>
-
-  <!-- ── GN_UI_OVERLAY: persistent controls ── -->
-  <!-- gnReaderBack removed — was redundant with page-nav Cover button below.
-       Page-nav already provides Cover/Back/Next/Last for all in-reader navigation;
-       returning to the artist selector mid-read is a rare path that can be done
-       via Cover → upstream nav. -->
-  <div class="gn-ui-overlay">
-    <div class="gn-ui-top">
-      <!-- Scene indicator removed — redundant with #gnSceneNumber under the
-           title and #gnPageIndicator in the page-nav-controls below. -->
-      <!-- Visualize is literary-mode only; GN panels ARE the visualization -->
-      <!-- <button id="gnVisualizeBtn" class="small-btn">Visualize</button> -->
-    </div>
-    <button id="gnGodModeBtn" class="small-btn gn-god-mode-indicator" style="display:none;">God Mode</button>
-  </div>
-
-  <!-- ── GN Scene Navigation — parity with literary .page-nav-controls ──
-       Sits ABOVE the say/do inputs to mirror literary reader order
-       (page-nav → inputs → fate cards → bookmarks). Cover returns to the
-       auto-evolving cover overlay; Back/Next step between scenes; Last
-       jumps to the latest rendered scene. -->
+  <!-- ── GN Scene Navigation — moved ABOVE the image (was below).
+       Cover returns to the auto-evolving cover overlay; Back/Next step
+       between scenes; Last jumps to the latest rendered scene. Placed
+       here so the user can see scene context before the panel art. -->
   <div class="page-nav-controls gn-page-nav" id="gnPageNavControls">
       <button class="page-nav-btn" id="gnCoverPageBtn" onclick="if(window._showGNCover)window._showGNCover()">
           <span>←</span> Cover
@@ -2582,18 +2619,36 @@
       </button>
   </div>
 
+  <!-- ── GN_STAGE: primary visual surface ── -->
+  <div id="gnStage" class="gn-stage">
+    <div id="gnSceneLoading" class="gn-scene-loading">
+      <p class="gn-loading-status">Composing Scene 1...</p>
+      <div class="gn-loading-bar"><div class="gn-loading-bar-fill" id="gnLoadingBarFill"></div></div>
+      <p class="gn-loading-hint" id="gnLoadingHint"></p>
+      <button class="gn-loading-cancel" id="gnLoadingCancel" title="Cancel">&times;</button>
+    </div>
+    <div id="gnPanelDisplay" class="gn-panel-display"></div>
+  </div>
+
+  <!-- ── GN_UI_OVERLAY: persistent controls ── -->
+  <div class="gn-ui-overlay">
+    <div class="gn-ui-top">
+      <!-- Scene indicator removed — redundant with #gnSceneNumber and the
+           #gnPageIndicator in the page-nav-controls above. -->
+    </div>
+    <button id="gnGodModeBtn" class="small-btn gn-god-mode-indicator" style="display:none;">God Mode</button>
+  </div>
+
   <!-- ── GN_INPUT_BAR: Say / Do + Submit ──
        Mirrors the literary reader order: page-nav above, inputs here,
        fate cards + bookmarks below. -->
   <div id="gnReaderControls" class="gn-input-bar">
     <div class="gn-input-grid">
       <div class="input-wrapper">
-        <label>What do you do?</label>
-        <textarea id="gnActionInput" rows="3" placeholder="Action..." maxlength="2000"></textarea>
+        <textarea id="gnActionInput" rows="3" placeholder="What do you do?" maxlength="2000"></textarea>
       </div>
       <div class="input-wrapper">
-        <label>What do you say?</label>
-        <textarea id="gnDialogueInput" rows="3" placeholder="Dialogue..." maxlength="2000"></textarea>
+        <textarea id="gnDialogueInput" rows="3" placeholder="What do you say?" maxlength="2000"></textarea>
       </div>
     </div>
     <div class="gn-submit-row">
