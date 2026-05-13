@@ -5,6 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 const TIER_CONFIG = {
   storied:   { envKey: 'STRIPE_PRICE_ID_STORIED',   mode: 'subscription', fortunesGranted: 0 },
   favored:   { envKey: 'STRIPE_PRICE_ID_FAVORED',   mode: 'subscription', fortunesGranted: 0 },
+  chosen:    { envKey: 'STRIPE_PRICE_ID_CHOSEN',    mode: 'subscription', fortunesGranted: 0 },
   fortune_20:   { envKey: 'STRIPE_PRICE_ID_FORTUNES_20',    mode: 'payment', fortunesGranted: 20 },
   fortune_60:   { envKey: 'STRIPE_PRICE_ID_FORTUNES_60',    mode: 'payment', fortunesGranted: 60 },
   fortune_120:  { envKey: 'STRIPE_PRICE_ID_FORTUNES_120',   mode: 'payment', fortunesGranted: 120 },

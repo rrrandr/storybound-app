@@ -290,6 +290,7 @@ export default async function handler(req, res) {
           const subPriceId = sub.items?.data?.[0]?.price?.id;
           if (subPriceId === process.env.STRIPE_PRICE_ID_STORIED) renewalTier = 'storied';
           else if (subPriceId === process.env.STRIPE_PRICE_ID_FAVORED) renewalTier = 'favored';
+          else if (subPriceId === process.env.STRIPE_PRICE_ID_CHOSEN) renewalTier = 'chosen';
         } catch (e) {
           console.warn('[stripe-webhook] invoice.paid — failed to resolve tier from subscription:', e.message);
         }
@@ -364,6 +365,7 @@ export default async function handler(req, res) {
       let updatedTier = null;
       if (subPriceId === process.env.STRIPE_PRICE_ID_STORIED) updatedTier = 'storied';
       else if (subPriceId === process.env.STRIPE_PRICE_ID_FAVORED) updatedTier = 'favored';
+      else if (subPriceId === process.env.STRIPE_PRICE_ID_CHOSEN) updatedTier = 'chosen';
 
       const updates = {};
       if (status === 'active' || status === 'trialing') {

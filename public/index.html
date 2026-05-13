@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260511-oas-schema-split">
+  <link rel="stylesheet" href="/styles.css?v=20260513-intimacy-exit">
 </head>
 
 <body class="booting">
@@ -110,7 +110,7 @@
       <button class="vault-tab sb-btn-png md" data-vault-section="StoryShapes">Saved Story Shapes</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Sound">Story Sound</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
+      <button id="faqVaultTab" class="vault-tab sb-btn-png md" data-vault-modal="faq">FAQ</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="ReportIssue">Report an Issue</button>
     </div>
     <button id="vaultCloseBtn" class="sb-btn-png sm" style="margin-top:14px;">Close Vault</button>
@@ -119,11 +119,20 @@
   <!-- ── REPORT AN ISSUE SUB-PANEL ── -->
   <div id="vaultReportIssue" class="vault-sub hidden">
     <div class="vault-sub-title">Report an Issue</div>
-    <p class="vault-blurb" style="font-size:13px; line-height:1.45; max-width:520px; margin:0 auto 12px; opacity:0.85;">
+    <p id="bugReportBlurb" class="vault-blurb" style="font-size:13px; line-height:1.45; max-width:520px; margin:0 auto 12px; opacity:0.85;">
       Spotted a bug, typo, broken render, or weird behavior? Tell us. If we confirm it's a real bug, you get +1 Fortune. Up to 3 reports per day.
     </p>
     <div style="display:flex; flex-direction:column; gap:10px; max-width:520px; margin:0 auto;">
       <label style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:12px; opacity:0.85;">
+        <span>Type</span>
+        <select id="bugReportType" class="sb-input">
+          <option value="bug" selected>Bug / Issue</option>
+          <option value="account">Account / Billing</option>
+          <option value="feature">Feature Request</option>
+          <option value="general">General Question / Feedback</option>
+        </select>
+      </label>
+      <label id="bugReportSeverityRow" style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:12px; opacity:0.85;">
         <span>Severity</span>
         <select id="bugReportSeverity" class="sb-input">
           <option value="typo">Typo / wording</option>
@@ -132,12 +141,12 @@
         </select>
       </label>
       <label style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:12px; opacity:0.85;">
-        <span>What happened? (min 30 characters)</span>
+        <span id="bugReportDescLabel">What happened? (min 30 characters)</span>
         <textarea id="bugReportDescription" class="sb-input" rows="6" maxlength="4000"
           placeholder="What did you see? What did you expect? Any steps to reproduce?"></textarea>
         <span id="bugReportCharCount" style="font-size:11px; opacity:0.6; align-self:flex-end;">0 / 4000</span>
       </label>
-      <p style="font-size:11px; opacity:0.65; margin:4px 0;">
+      <p id="bugReportContextNote" style="font-size:11px; opacity:0.65; margin:4px 0;">
         We'll attach your current scene / story context automatically — no need to describe where you are.
       </p>
       <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
@@ -146,6 +155,78 @@
       <p id="bugReportStatus" style="font-size:12px; text-align:center; min-height:1.2em; margin:0;"></p>
     </div>
     <button class="vault-back sb-btn-png sm" style="margin-top:18px;">Back</button>
+  </div>
+
+  <!-- ── FAQ MODAL — opens from Vault > FAQ tab ── -->
+  <!-- Graceful exit modal for intimate scenes. Triggered by full-line
+       "stop"/"skip"/"enough"/"fade to black" inputs during OAS, or by
+       3 consecutive Boundary fate-card presses. Two grouped sections:
+       "right now" (Abrupt / Fade) and "going forward" (Metaphorical /
+       Fade-to-Black for the rest of this story). Story-scoped only —
+       not persisted across stories per design choice. -->
+  <div id="intimacyExitModal" class="intimacy-exit-overlay" role="dialog" aria-modal="true" aria-labelledby="intimacyExitTitle">
+    <div class="intimacy-exit-box">
+      <h2 id="intimacyExitTitle" class="intimacy-exit-title">How would you like to step out?</h2>
+      <p class="intimacy-exit-lead">
+        You can end this intimate scene right now, or change how intimacy plays
+        out for the rest of this story.
+      </p>
+
+      <div class="intimacy-exit-group">
+        <div class="intimacy-exit-group-label">Right now</div>
+        <div class="intimacy-exit-row">
+          <button id="intimacyExitFade" class="intimacy-exit-btn intimacy-exit-btn-primary" type="button">
+            <span class="intimacy-exit-btn-title">Fade to Black</span>
+            <span class="intimacy-exit-btn-sub">A successful encounter, left to the imagination.</span>
+          </button>
+          <button id="intimacyExitAbrupt" class="intimacy-exit-btn intimacy-exit-btn-danger" type="button">
+            <span class="intimacy-exit-btn-title">End Abruptly</span>
+            <span class="intimacy-exit-btn-sub">Walk out cold. Your love interest may be hurt or angry.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="intimacy-exit-divider"></div>
+
+      <div class="intimacy-exit-group">
+        <div class="intimacy-exit-group-label">Going forward (this story)</div>
+        <div class="intimacy-exit-row">
+          <button id="intimacyExitMetaphorical" class="intimacy-exit-btn" type="button">
+            <span class="intimacy-exit-btn-title">All Intimacy → Metaphorical</span>
+            <span class="intimacy-exit-btn-sub">Future intimate moments render through metaphor only.</span>
+          </button>
+          <button id="intimacyExitFadeAll" class="intimacy-exit-btn" type="button">
+            <span class="intimacy-exit-btn-title">All Intimacy → Fade to Black</span>
+            <span class="intimacy-exit-btn-sub">Future intimate moments skip past the bedroom door.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="intimacy-exit-cancel-row">
+        <button id="intimacyExitCancel" class="intimacy-exit-cancel" type="button">Never mind — keep going</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="faqModal" class="overlay hidden" style="z-index:10090;">
+    <div class="faq-modal-box">
+      <div class="faq-modal-header">
+        <h2 class="faq-modal-title">Storybound FAQ</h2>
+        <button class="faq-modal-close" id="faqModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="faq-search-wrap">
+        <input id="faqSearchInput" type="text" class="faq-search-input" placeholder="Search questions…" autocomplete="off">
+        <span id="faqResultCount" class="faq-result-count"></span>
+      </div>
+      <div id="faqList" class="faq-list">
+        <!-- Populated by renderFAQList() in app.js. Each item is a
+             <details><summary>question</summary><p>answer</p></details>
+             grouped under category headings. -->
+      </div>
+      <div class="faq-modal-footer">
+        <p>Can't find what you're looking for? Use <strong>Report an Issue</strong> in the Vault to send us a message.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ── BUG REPORT THANK-YOU MODAL ── -->
@@ -2210,7 +2291,7 @@
 <script src="/fatecards.js?v=20260507a"></script>
 <script src="/orchestration-client.js?v=20260511-anthropic-routing"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260512-canon-credit-unique-handle"></script>
+<script src="/app.js?v=20260513-faq-modes-v2"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
