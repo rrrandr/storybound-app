@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260514-unified-axis-tally">
+  <link rel="stylesheet" href="/styles.css?v=20260514-tier-upgrade-recadence">
 </head>
 
 <body class="booting">
@@ -1401,14 +1401,12 @@
 
     <div id="lengthSection">
         <div class="section-title">Story Length</div>
-        <div class="sb-grid sb-grid-4" id="lengthGrid">
-          <div class="sb-card selected flipped" data-grp="length" data-val="taste">
-            <div class="sb-card-inner">
-              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Taste</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Taste</span><span class="sb-card-desc">A quick glimpse. The story hooks you, then leaves you wanting more.</span></div>
-            </div>
-          </div>
-          <div class="sb-card locked" data-grp="length" data-val="fling" data-locked="pass">
+        <!-- Taste tier removed from corridor 2026-05-14. Taste is now
+             internal starter-runtime that powers curated starter books
+             (TASTE_BOOK_GRANTS); it is no longer a user-customizable tier.
+             Fling is the new default paid experience and selected by default. -->
+        <div class="sb-grid sb-grid-3" id="lengthGrid">
+          <div class="sb-card selected flipped" data-grp="length" data-val="fling" data-locked="pass">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Fling</span></div>
               <div class="sb-card-face sb-card-front"><span class="sb-card-title">Fling</span><span class="sb-card-desc">A story that burns bright and moves fast — but still leaves room to grow.</span></div>
@@ -2329,7 +2327,7 @@
 <script src="/fatecards.js?v=20260507a"></script>
 <script src="/orchestration-client.js?v=20260511-anthropic-routing"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260514-unified-axis-tally">
+<script src="/app.js?v=20260514-tier-upgrade-recadence">
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
