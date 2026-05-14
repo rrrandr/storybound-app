@@ -212,6 +212,15 @@ body.booting .screen {
 .splash-title {
     opacity: 0;
     transition: opacity 1s ease-in;
+    /* Override the .splash-img `object-fit: cover` for the title image
+       specifically. The background gala photo should COVER the window
+       (crop OK — it's just atmosphere). The title is the word
+       "Storybound" on a transparent background — it MUST always fit
+       fully in the viewport, never crop. `contain` keeps the entire
+       word visible by scaling to the tighter axis, leaving any leftover
+       space on the looser axis as transparent margin (which is invisible
+       against the gala behind it). Works at any aspect ratio. */
+    object-fit: contain !important;
 }
 .splash-title.visible {
     opacity: 1;
@@ -223,6 +232,8 @@ body.booting .screen {
 .splash-mobile-type {
     opacity: 0;
     transition: opacity 1.2s ease-in;
+    /* Same rationale as .splash-title — never crop the word. */
+    object-fit: contain !important;
 }
 .splash-mobile-type.visible {
     opacity: 1;
@@ -1666,7 +1677,7 @@ h1, h2 { font-family:'lust-script-display','lust-script',serif !important; color
    and .story-page-scene) and sits at the top of the reader column. */
 .gn-title-header {
     text-align: center;
-    padding: 18px 16px 6px;
+    padding: 4px 16px 0;
     max-width: 900px;
     margin: 0 auto;
 }
