@@ -24710,6 +24710,73 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
 .staged-micro-resolved-chosen { color: rgba(255, 215, 130, 0.95); font-style: italic; }
 .staged-micro-resolved-not { opacity: 0.55; }
 
+/* ── Inline-prose microDecision (template-based, preferred format) ──
+   The whole choice reads as a single italic sentence with two clickable
+   phrases standing in for the {A} / {B} placeholders. After click the
+   sentence resolves to its grammatical form and stays in the page as
+   prose — readers can re-read past choices in their narrative voice. */
+.staged-micro-inline {
+    font-family: 'Lora', Georgia, serif;
+    font-style: italic;
+    font-size: 1.02em;
+    text-align: center;
+    color: rgba(232, 200, 130, 0.92);
+    padding: 10px 16px;
+    margin: 8px auto;
+    max-width: 540px;
+    letter-spacing: 0.02em;
+    line-height: 1.55;
+    border-top: 1px solid rgba(201, 168, 76, 0.22);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.22);
+}
+.staged-micro-opt-inline {
+    display: inline;
+    cursor: pointer;
+    color: rgba(255, 215, 130, 0.95);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.45);
+    padding: 0 1px 1px;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+.staged-micro-opt-inline::before { content: '('; color: rgba(201, 168, 76, 0.7); }
+.staged-micro-opt-inline::after  { content: ')'; color: rgba(201, 168, 76, 0.7); }
+.staged-micro-opt-inline:hover {
+    color: #fff3d4;
+    border-bottom-color: #c9a84c;
+    background: rgba(201, 168, 76, 0.10);
+}
+.staged-micro-opt-inline:active {
+    background: rgba(201, 168, 76, 0.18);
+}
+
+/* Resolved-inline — same prose body, no parens, chosen highlighted,
+   rejected shown with strike-through so the path-not-taken is visible
+   without dominating the line. */
+.staged-micro-inline-resolved {
+    font-family: 'Lora', Georgia, serif;
+    font-style: italic;
+    font-size: 0.98em;
+    text-align: center;
+    color: rgba(232, 200, 130, 0.82);
+    padding: 8px 14px;
+    margin: 8px auto;
+    max-width: 540px;
+    letter-spacing: 0.02em;
+    line-height: 1.55;
+    border-top: 1px solid rgba(201, 168, 76, 0.18);
+    border-bottom: 1px solid rgba(201, 168, 76, 0.18);
+}
+.staged-micro-inline-resolved .staged-micro-resolved-chosen {
+    color: rgba(255, 215, 130, 0.98);
+    font-weight: 500;
+}
+.staged-micro-inline-resolved .staged-micro-resolved-not {
+    color: rgba(180, 160, 120, 0.55);
+    text-decoration: line-through;
+    text-decoration-color: rgba(180, 160, 120, 0.40);
+    text-decoration-thickness: 1px;
+    opacity: 1;
+}
+
 /* ── GN_UI_OVERLAY: persistent top bar + floating controls ── */
 .gn-ui-overlay {
     position: sticky;
