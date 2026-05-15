@@ -30,7 +30,10 @@ const ALLOWED_STATES = new Set([
   'sorry', 'crying', 'guilt',
   // Loose-smile states (LoraVenn) — pre-peak flirt / mid-scene release (relief)
   // and post-peak satisfied afterglow (after)
-  'relief', 'after'
+  'relief', 'after',
+  // Peek progression base — shared across the 3 peek stages
+  // (clean/clear/white). Overlays composite on top of this at render time.
+  'tonsils'
 ]);
 
 const ALLOWED_ARTISTS = new Set([
@@ -50,7 +53,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { state, artistKey, imageDataUrl } = req.body || {};
+  const { state, artistKey, imageDataUrl, gender } = req.body || {};
 
   if (!state || typeof state !== 'string' || !STATE_RE.test(state) || !ALLOWED_STATES.has(state)) {
     return res.status(400).json({ error: 'Invalid or unknown state' });
@@ -61,6 +64,10 @@ export default async function handler(req, res) {
   if (!imageDataUrl || typeof imageDataUrl !== 'string' || !imageDataUrl.startsWith('data:image/')) {
     return res.status(400).json({ error: 'Invalid imageDataUrl' });
   }
+  // Gender prefix selects FEM-mouth-* vs MM-mouth-*. Default 'male' for
+  // backward compat with the existing batch grid caller.
+  const normalizedGender = (typeof gender === 'string' && gender.toLowerCase() === 'female') ? 'female' : 'male';
+  const filenamePrefix = normalizedGender === 'female' ? 'FEM-mouth-' : 'MM-mouth-';
 
   const m = /^data:image\/[a-zA-Z0-9+.-]+;base64,(.+)$/.exec(imageDataUrl);
   if (!m) return res.status(400).json({ error: 'Malformed data URL' });
@@ -73,7 +80,7 @@ export default async function handler(req, res) {
 
   const repoRoot = process.cwd();
   const baseDir = path.resolve(repoRoot, 'public/assets/test-mouths', artistKey);
-  const targetPath = path.resolve(baseDir, 'MM-mouth-' + state + '.png');
+  const targetPath = path.resolve(baseDir, filenamePrefix + state + '.png');
 
   if (!targetPath.startsWith(baseDir + path.sep)) {
     return res.status(400).json({ error: 'Path escape detected' });
@@ -88,6 +95,7 @@ export default async function handler(req, res) {
       ok: true,
       state,
       artistKey,
+      gender: normalizedGender,
       publicPath: relPath.replace(/\\/g, '/'),
       bytes: buf.length
     });

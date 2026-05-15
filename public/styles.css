@@ -33311,6 +33311,23 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.35) 100%);
 }
 
+/* ── PEEK OVERLAY LAYER ─────────────────────────────────────────────
+   Sits ABOVE the Kontext-transformed mouth base and BELOW the vignette
+   overlay + LI text overlay. The overlay PNG is sized/positioned to
+   align with the tonsils base (same canvas dimensions), so inset:0 is
+   the correct alignment by construction. Pointer-events disabled so
+   clicks pass through to controls beneath. */
+.intimacy-mouth-peek-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    z-index: 2;
+    transition: opacity 0.35s ease;
+}
+
 /* ── PEAK-TIER VISUAL LAYER ──────────────────────────────────────────
    Triggered when the mouth state is on the peaking tier (ahh, big_o,
    no, intense, tense_bite, smile_snarl, blowing_smirk). Two combined
