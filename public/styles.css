@@ -34033,3 +34033,99 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     color: rgba(255, 60, 90, 1);
     border-color: rgba(255, 60, 90, 0.85);
 }
+
+/* ── Saved Looks — embedded list inside the Pick Your Look modal ──
+   Mounted in two slots:
+     • describe step (#pcLookSavedMount)       — load BEFORE generating
+     • locked-view step (#pcLookLockedSavedMount) — swap to a saved look
+   The list is hidden when empty (no .saved-looks-wrap rendered).
+   Each row is a thumb + name/desc + Use/Rename/× actions. */
+.pc-look-saved-mount:empty {
+    display: none;
+}
+.saved-looks-wrap {
+    margin: 14px 0 6px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.32);
+    border: 1px solid rgba(201, 168, 76, 0.22);
+    border-radius: 6px;
+}
+.saved-looks-header {
+    font-size: 0.78em;
+    color: rgba(201, 168, 76, 0.85);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin: 0 0 8px;
+    font-family: 'Lora', Georgia, serif;
+}
+.saved-looks-count {
+    color: rgba(220, 200, 160, 0.55);
+    text-transform: none;
+    letter-spacing: 0.04em;
+    font-size: 0.9em;
+}
+.saved-looks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 260px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(201, 168, 76, 0.4) transparent;
+}
+.saved-look-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 8px;
+    background: rgba(20, 14, 8, 0.6);
+    border: 1px solid rgba(201, 168, 76, 0.12);
+    border-radius: 4px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+.saved-look-row:hover {
+    background: rgba(40, 28, 16, 0.7);
+    border-color: rgba(201, 168, 76, 0.32);
+}
+.saved-look-thumb {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(201, 168, 76, 0.25);
+}
+.saved-look-thumb--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(201, 168, 76, 0.4);
+    font-size: 16px;
+    background: rgba(0, 0, 0, 0.4);
+}
+.saved-look-meta {
+    flex: 1;
+    min-width: 0;
+}
+.saved-look-name {
+    font-size: 0.92em;
+    color: #e8d9b0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'Lora', Georgia, serif;
+}
+.saved-look-desc {
+    font-size: 0.78em;
+    color: rgba(180, 160, 130, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-top: 2px;
+    font-style: italic;
+}
+.saved-look-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
