@@ -33951,7 +33951,10 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 }
 #intimacyDevLauncherWrap:hover #intimacyDevLauncherDrawer,
 #intimacyDevLauncherWrap:focus-within #intimacyDevLauncherDrawer {
-    max-width: 280px;
+    /* 280px → 560px (2026-05-15) — added PC × LI pair toggle, Batch
+       and Review buttons since the original sizing; the rightmost
+       control (LI F) was clipping behind the lips button. */
+    max-width: 560px;
     opacity: 1;
     padding: 0 12px;
     pointer-events: auto;
