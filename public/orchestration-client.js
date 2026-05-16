@@ -3754,6 +3754,99 @@ dialogue: <elevated dialogue>`;
     }
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // Scene ambient classifier — Grok-backed, fixed-enum, very short response.
+  // Returns one tag from window._SCENE_AMBIENT_TAGS, or null on failure.
+  // priorTag is used to nudge stability when location hasn't actually changed.
+  // ───────────────────────────────────────────────────────────────────────────
+  async function callGrokSceneAmbientClassifier(sceneText, worldHint, priorTag) {
+    const enum_ = (window._SCENE_AMBIENT_TAGS && window._SCENE_AMBIENT_TAGS.length)
+      ? window._SCENE_AMBIENT_TAGS
+      : ['neutral_quiet'];
+    const enumList = enum_.join(', ');
+    const trimmed = (sceneText || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1800);
+    const messages = [
+      {
+        role: 'system',
+        content:
+`You classify the ambient soundscape of a romance/fiction scene. Return EXACTLY one tag from this fixed enum, with no explanation, punctuation, or extra text:
+
+${enumList}
+
+Tag meanings (high-confidence matches only — when in doubt, return neutral_quiet):
+- neutral_quiet: indoor scene with no specific location signal; quiet room tone
+- urban_room: apartment/office near a city, light urban hum bleeds through
+- urban_traffic: outdoor city street, sidewalk, near traffic
+- crowd_formal: restaurant, gala, formal indoor gathering
+- crowd_casual: cafe, bar, casual indoor gathering
+- crowd_uneasy: tense room, interrogation, confrontation indoors
+- crowd_outdoor: market, festival, outdoor gathering
+- fireplace: hearth, cabin, fireside intimate setting
+- forest_day: woods in daylight, hike, daytime exterior nature
+- forest_dark: woods at night, threatening forest
+- forest_mystic: fae woods, dreamlike forest, otherworldly grove
+- ocean: beach, coast, dock, sea
+- rain_storm: storm, heavy rain
+- wind_cold: tundra, snow exterior, exposed cold
+- night_summer: warm night exterior, balcony, garden after dark
+- summer_crickets: rural night, countryside, porch at night
+- nightclub: bar/club with music, sensual nightlife
+- edm_pulse: electronic club, rave, dance floor
+- suspense: tense scene, no clear location, danger building
+- melancholy: quiet melancholy interior, grief, solitude
+- anxious: nervous tension, curious dread
+- tense_build: building tension, no clear location
+- battlefield: active combat, war zone (rare)
+
+STABILITY RULE: If the prior tag was "${priorTag || 'none'}" and the new scene's location has NOT clearly changed, return the prior tag. Only swap when the scene is plainly in a new environment.
+
+Output: ONE tag from the enum. Nothing else.`
+      },
+      {
+        role: 'user',
+        content:
+`WORLD: ${worldHint || 'unspecified'}
+PRIOR TAG: ${priorTag || 'none'}
+
+SCENE TEXT:
+${trimmed}
+
+Classify.`
+      }
+    ];
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    try {
+      const resp = await fetch(CONFIG.SPECIALIST_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          role: 'INTIMACY_SPECIALIST',
+          messages,
+          max_tokens: 12,
+          temperature: 0.2
+        })
+      });
+      clearTimeout(timeoutId);
+      if (!resp.ok) throw new Error(`Grok scene-ambient: ${resp.status}`);
+      const data = await resp.json();
+      const raw = (data.choices?.[0]?.message?.content || data.content || '').trim().toLowerCase();
+      // Strip quotes/punctuation/whitespace around the tag.
+      const cleaned = raw.replace(/[^a-z_]/g, '').trim();
+      if (enum_.indexOf(cleaned) === -1) {
+        console.warn('[SCENE-AMB] classifier returned unknown tag:', raw, '→ neutral_quiet');
+        return 'neutral_quiet';
+      }
+      return cleaned;
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.warn('[SCENE-AMB] Grok call failed:', err.message);
+      return null;
+    }
+  }
+
   async function callMistralIntimateFate(messages, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -4331,6 +4424,9 @@ Tension: ${outline.tension_vector || 'N/A'}`;
     // The chatgpt-proxy blocks Grok for PRIMARY_AUTHOR; this helper hits
     // the specialist proxy for Grok and degrades gracefully.
     callOASTurnLLM,
+
+    // Scene ambient classifier — single Grok call, fixed enum, ~12 tokens.
+    callGrokSceneAmbientClassifier,
 
     // Shared scene/plot context builder (used by OAS turn prompt,
     // generateIntimateFatePreview, callGrokSDAuthor, callMistralSDFallback,

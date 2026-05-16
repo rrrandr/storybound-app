@@ -139,6 +139,7 @@
           _oasHeartbeatBuffer: '/assets/intimacy/oas-heartbeat.mp3',
           _oasHoldBeatBuffer:  '/assets/intimacy/oas-hold-beat.mp3',
           _oasBreathBuffer:    '/assets/intimacy/oas-male-breath.mp3',
+          _oasBreathFBuffer:   '/assets/audio/ambient/heavy_girl_breathing.mp3',
           _oasSighBuffer:      '/assets/intimacy/oas-male-sigh.mp3'
         };
         Object.keys(_oasAssets).forEach(function(key) {
@@ -656,10 +657,11 @@
   // ═══════════════════════════════════════════════════════════════════════════
 
   var _oasState = {
-    fireSrc: null,   fireGain: null,
-    hbSrc: null,     hbGain: null,
-    holdSrc: null,   holdGain: null,
-    breathSrc: null, breathGain: null,
+    fireSrc: null,    fireGain: null,
+    hbSrc: null,      hbGain: null,
+    holdSrc: null,    holdGain: null,
+    breathSrc: null,  breathGain: null,    // male breath layer
+    breathFSrc: null, breathFGain: null,   // female breath layer (2026-05-15)
     active: false,
     currentTemperature: 'curious',
     currentMouth: 'closed_smile'  // tracks the LI mouth state for breath modulation
@@ -686,7 +688,13 @@
   // Note: blowing_smirk is "peak tier" temperature-wise but PURSED (closed
   // mouth), so its factor is 0. Affronted/apologetic/disgusted are mildly
   // parted (0.5). Smile_snarl is asymmetric peak (1.0).
-  var _BREATH_PEAK_VOL = 0.45;
+  // Two breath layers (2026-05-15): male + female panted simultaneously,
+  // both modulated by the LI's current mouth state. Volumes tuned for
+  // subtle layering — combined peak (~0.45) matches the prior single-
+  // track loudness, but split across two voices reads as "both
+  // characters breathing together" rather than one dominant voice.
+  var _BREATH_PEAK_VOL   = 0.25;  // male layer peak (was 0.45 solo)
+  var _BREATH_F_PEAK_VOL = 0.20;  // female layer peak (new)
   var _MOUTH_STATE_BREATH_FACTOR = {
     // Closed-mouth states → no breath
     resting: 0, closed_smile: 0, smirk: 0, big_smirk: 0, knowing_smirk: 0,
@@ -717,6 +725,11 @@
     var factor = _MOUTH_STATE_BREATH_FACTOR[state];
     if (typeof factor !== 'number') factor = 0;  // unknown state = silent (safe default)
     return _BREATH_PEAK_VOL * factor;
+  }
+  function _breathFVolForMouth(state) {
+    var factor = _MOUTH_STATE_BREATH_FACTOR[state];
+    if (typeof factor !== 'number') factor = 0;
+    return _BREATH_F_PEAK_VOL * factor;
   }
   var _OAS_FIRE_VOL = 0.025;  // constant — room atmosphere bed (-75% from initial)
 
@@ -776,6 +789,36 @@
     return { src: src, gain: gain };
   }
 
+  // Female breath layer — mirrors the male track architecture so both
+  // run in parallel, both modulated by mouth state. Reads its own
+  // buffer (heavy_girl_breathing.mp3) and per-state volume. Restart
+  // loop fires independently so the two voices don't lock in phase —
+  // they breathe at their own natural cycles, layered.
+  function _oasStartBreathTrackF(initialVol) {
+    var ctx = _ensureCtx();
+    if (!ctx || !window._oasBreathFBuffer) return null;
+    if (ctx.state === 'suspended') ctx.resume().catch(function(){});
+    var src = ctx.createBufferSource();
+    src.buffer = window._oasBreathFBuffer;
+    src.loop = false;
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(initialVol, ctx.currentTime + 1.5);
+    src.connect(gain).connect(_sfxOut(ctx));
+    src.onended = function() {
+      if (!_oasState.active || !_oasState.breathAllowRestart) return;
+      var targetVol = _breathFVolForMouth(_oasState.currentMouth);
+      if (targetVol <= 0) return;
+      var next = _oasStartBreathTrackF(targetVol);
+      if (next) {
+        _oasState.breathFSrc = next.src;
+        _oasState.breathFGain = next.gain;
+      }
+    };
+    src.start(0);
+    return { src: src, gain: gain };
+  }
+
   function _oasFadeOut(node, fadeSec) {
     if (!node || !node.src || !node.gain) return;
     try {
@@ -824,6 +867,10 @@
     // 'closed_smile' (factor 0) so no breath until something opens.
     _oasState.breathAllowRestart = true;
     _oasState.currentMouth = 'closed_smile';
+    // Duck the per-scene location bed so OAS textures sit in front.
+    if (typeof window.setSceneAmbientDuck === 'function') {
+      try { window.setSceneAmbientDuck(true); } catch (_) {}
+    }
     try { console.log('[OAS-AUDIO] started @ ' + _oasState.currentTemperature + ' — breath silent until mouth opens'); } catch (_) {}
   };
 
@@ -836,22 +883,39 @@
   window.setOASBreathForMouth = function(mouthState) {
     if (!_oasState.active) return;
     _oasState.currentMouth = mouthState;
-    var target = _breathVolForMouth(mouthState);
+    var target  = _breathVolForMouth(mouthState);
+    var targetF = _breathFVolForMouth(mouthState);
     var fadeSec = 1.2;
     try {
+      // ── MALE BREATH LAYER ──
       if (target > 0 && !_oasState.breathSrc && window._oasBreathBuffer) {
-        // First mouth-open of the scene — start the track.
         _oasState.breathAllowRestart = true;
         var breath = _oasStartBreathTrack(target);
         if (breath) { _oasState.breathSrc = breath.src; _oasState.breathGain = breath.gain; }
-        try { console.log('[OAS-AUDIO] breath start @ mouth=' + mouthState + ' vol=' + target.toFixed(2)); } catch (_) {}
+        try { console.log('[OAS-AUDIO] breath(M) start @ mouth=' + mouthState + ' vol=' + target.toFixed(2)); } catch (_) {}
       } else if (_oasState.breathGain) {
-        // Already running — ramp to new target (could be 0 if mouth closed).
         var ctx = _oasState.breathGain.context;
         _oasState.breathGain.gain.cancelScheduledValues(ctx.currentTime);
         _oasState.breathGain.gain.setValueAtTime(_oasState.breathGain.gain.value, ctx.currentTime);
         _oasState.breathGain.gain.linearRampToValueAtTime(target, ctx.currentTime + fadeSec);
-        try { console.log('[OAS-AUDIO] breath → ' + target.toFixed(2) + ' (mouth=' + mouthState + ')'); } catch (_) {}
+        try { console.log('[OAS-AUDIO] breath(M) → ' + target.toFixed(2) + ' (mouth=' + mouthState + ')'); } catch (_) {}
+      }
+
+      // ── FEMALE BREATH LAYER (2026-05-15) ──
+      // Parallel track — both characters panting together. Same
+      // mouth-state factor drives both so the layers swell + recede
+      // in unison with the on-screen intensity.
+      if (targetF > 0 && !_oasState.breathFSrc && window._oasBreathFBuffer) {
+        _oasState.breathAllowRestart = true;
+        var breathF = _oasStartBreathTrackF(targetF);
+        if (breathF) { _oasState.breathFSrc = breathF.src; _oasState.breathFGain = breathF.gain; }
+        try { console.log('[OAS-AUDIO] breath(F) start @ mouth=' + mouthState + ' vol=' + targetF.toFixed(2)); } catch (_) {}
+      } else if (_oasState.breathFGain) {
+        var ctxF = _oasState.breathFGain.context;
+        _oasState.breathFGain.gain.cancelScheduledValues(ctxF.currentTime);
+        _oasState.breathFGain.gain.setValueAtTime(_oasState.breathFGain.gain.value, ctxF.currentTime);
+        _oasState.breathFGain.gain.linearRampToValueAtTime(targetF, ctxF.currentTime + fadeSec);
+        try { console.log('[OAS-AUDIO] breath(F) → ' + targetF.toFixed(2) + ' (mouth=' + mouthState + ')'); } catch (_) {}
       }
     } catch (_) {}
   };
@@ -935,12 +999,225 @@
         _oasState.breathGain.gain.linearRampToValueAtTime(0, ctx.currentTime + breathFade);
       } catch (_) {}
     }
-    _oasState.fireSrc = null;   _oasState.fireGain = null;
-    _oasState.hbSrc = null;     _oasState.hbGain = null;
-    _oasState.holdSrc = null;   _oasState.holdGain = null;
-    _oasState.breathSrc = null; _oasState.breathGain = null;
+    if (_oasState.breathFGain) {
+      // Same gentle taper for the female breath layer (2026-05-15).
+      try {
+        var ctxF = _oasState.breathFGain.context;
+        var breathFadeF = Math.max(dur * 2, 4.0);
+        _oasState.breathFGain.gain.cancelScheduledValues(ctxF.currentTime);
+        _oasState.breathFGain.gain.setValueAtTime(_oasState.breathFGain.gain.value, ctxF.currentTime);
+        _oasState.breathFGain.gain.linearRampToValueAtTime(0, ctxF.currentTime + breathFadeF);
+      } catch (_) {}
+    }
+    _oasState.fireSrc = null;    _oasState.fireGain = null;
+    _oasState.hbSrc = null;      _oasState.hbGain = null;
+    _oasState.holdSrc = null;    _oasState.holdGain = null;
+    _oasState.breathSrc = null;  _oasState.breathGain = null;
+    _oasState.breathFSrc = null; _oasState.breathFGain = null;
     _oasState.active = false;
+    // Restore per-scene location bed to normal volume.
+    if (typeof window.setSceneAmbientDuck === 'function') {
+      try { window.setSceneAmbientDuck(false); } catch (_) {}
+    }
     try { console.log('[OAS-AUDIO] stopped'); } catch (_) {}
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SCENE AMBIENT BUS — per-scene location bed, classified by LLM each scene.
+  // Crossfades between beds when the tag changes. Very low base gain so the
+  // bed sits under the prose. Ducks to 30% while OAS is active.
+  // Routing: SFX bus (diegetic location track, not score).
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // Tag → asset path. neutral_quiet is the fallback bed.
+  var _SCENE_AMBIENT_FILES = {
+    neutral_quiet:   '/assets/audio/ambient/room_tone_quiet.mp3',
+    urban_room:      '/assets/audio/ambient/room_tone_urban.mp3',
+    urban_traffic:   '/assets/audio/ambient/traffic.mp3',
+    crowd_formal:    '/assets/audio/ambient/crowd_indoor_formal.mp3',
+    crowd_casual:    '/assets/audio/ambient/crowd_indoor.mp3',
+    crowd_uneasy:    '/assets/audio/ambient/crowd_indoor_uneasy.mp3',
+    crowd_outdoor:   '/assets/audio/ambient/crowd_outdoor.mp3',
+    fireplace:       '/assets/audio/ambient/fireplace.mp3',
+    forest_day:      '/assets/audio/ambient/nature_forest.mp3',
+    forest_dark:     '/assets/audio/ambient/nature_forest_dark.mp3',
+    forest_mystic:   '/assets/audio/ambient/nature_forest_mystic.mp3',
+    ocean:           '/assets/audio/ambient/ocean_waves.mp3',
+    rain_storm:      '/assets/audio/ambient/rain_thunder.mp3',
+    wind_cold:       '/assets/audio/ambient/wind_winter.mp3',
+    night_summer:    '/assets/audio/ambient/night_summer.mp3',
+    summer_crickets: '/assets/audio/ambient/summer_crickets.mp3',
+    nightclub:       '/assets/audio/ambient/nightclub_sensual.mp3',
+    edm_pulse:       '/assets/audio/ambient/edm_pulse.mp3',
+    suspense:        '/assets/audio/ambient/suspense_build.mp3',
+    melancholy:      '/assets/audio/ambient/melancholy_quiet_loop.mp3',
+    anxious:         '/assets/audio/ambient/anxious_curious_loop.mp3',
+    tense_build:     '/assets/audio/ambient/tense_buildup_loop.mp3',
+    battlefield:     '/assets/audio/ambient/battlefield_combat.mp3'
+  };
+  // Public so the classifier prompt can read the canonical enum.
+  window._SCENE_AMBIENT_TAGS = Object.keys(_SCENE_AMBIENT_FILES);
+
+  // Base gain per tag. Most beds sit at 0.08; neutral_quiet is even lower so
+  // "no clear ambient" defaults to barely-there room tone, not silence.
+  // Combat / nightclub-style beds get a touch less because the source is busier.
+  var _SCENE_AMBIENT_GAIN = {
+    neutral_quiet:   0.04,
+    urban_room:      0.07,
+    urban_traffic:   0.06,
+    crowd_formal:    0.08,
+    crowd_casual:    0.08,
+    crowd_uneasy:    0.07,
+    crowd_outdoor:   0.07,
+    fireplace:       0.08,
+    forest_day:      0.08,
+    forest_dark:     0.08,
+    forest_mystic:   0.08,
+    ocean:           0.08,
+    rain_storm:      0.08,
+    wind_cold:       0.08,
+    night_summer:    0.07,
+    summer_crickets: 0.07,
+    nightclub:       0.05,
+    edm_pulse:       0.05,
+    suspense:        0.06,
+    melancholy:      0.07,
+    anxious:         0.07,
+    tense_build:     0.06,
+    battlefield:     0.05
+  };
+
+  var _sceneAmbientBuffers = {};   // tag → AudioBuffer (lazy-loaded)
+  var _sceneAmbientState = {
+    src: null,
+    gain: null,
+    currentTag: null,
+    duckFactor: 1.0  // 1.0 normal, 0.3 when OAS active
+  };
+
+  function _loadSceneAmbientBuffer(tag) {
+    if (_sceneAmbientBuffers[tag]) return Promise.resolve(_sceneAmbientBuffers[tag]);
+    var url = _SCENE_AMBIENT_FILES[tag];
+    if (!url) return Promise.resolve(null);
+    var ctx = _ensureCtx();
+    if (!ctx) return Promise.resolve(null);
+    return fetch(url)
+      .then(function(r) { return r.arrayBuffer(); })
+      .then(function(buf) { return ctx.decodeAudioData(buf); })
+      .then(function(decoded) { _sceneAmbientBuffers[tag] = decoded; return decoded; })
+      .catch(function() { return null; });
+  }
+
+  function _sceneTargetVol(tag) {
+    var base = _SCENE_AMBIENT_GAIN[tag];
+    if (typeof base !== 'number') base = 0.06;
+    return base * (_sceneAmbientState.duckFactor || 1.0);
+  }
+
+  function _startSceneAmbientFromBuffer(tag, buf) {
+    var ctx = _ensureCtx();
+    if (!ctx || !buf || !_enabled) return null;
+    if (ctx.state === 'suspended') ctx.resume().catch(function(){});
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(_sceneTargetVol(tag), ctx.currentTime + 1.5);
+    src.connect(gain).connect(_sfxOut(ctx));
+    src.start(0);
+    return { src: src, gain: gain };
+  }
+
+  // ── PUBLIC: switch to (or start) a scene ambient bed by tag. ──
+  // No-op if tag is already playing. Crossfades over ~1.5s otherwise.
+  // Unknown tag falls back to neutral_quiet.
+  window.setSceneAmbient = function(tag) {
+    if (!_enabled) return;
+    if (!_SCENE_AMBIENT_FILES[tag]) tag = 'neutral_quiet';
+    if (_sceneAmbientState.currentTag === tag && _sceneAmbientState.src) return;
+    var prev = { src: _sceneAmbientState.src, gain: _sceneAmbientState.gain };
+    _sceneAmbientState.currentTag = tag;
+    _sceneAmbientState.src = null;
+    _sceneAmbientState.gain = null;
+    _loadSceneAmbientBuffer(tag).then(function(buf) {
+      if (!buf || _sceneAmbientState.currentTag !== tag) return;
+      var node = _startSceneAmbientFromBuffer(tag, buf);
+      if (!node) return;
+      _sceneAmbientState.src = node.src;
+      _sceneAmbientState.gain = node.gain;
+      try { console.log('[SCENE-AMB] → ' + tag); } catch (_) {}
+    });
+    // Synchronous crossfade-out of previous bed (so it begins fading even
+    // before the new buffer finishes loading).
+    if (prev.src && prev.gain) {
+      try {
+        var ctx3 = prev.gain.context;
+        prev.gain.gain.cancelScheduledValues(ctx3.currentTime);
+        prev.gain.gain.setValueAtTime(prev.gain.gain.value, ctx3.currentTime);
+        prev.gain.gain.linearRampToValueAtTime(0, ctx3.currentTime + 1.5);
+        var prevSrcRef = prev.src;
+        setTimeout(function() { try { prevSrcRef.stop(); } catch (_) {} }, 1600);
+      } catch (_) {}
+    }
+  };
+
+  // ── PUBLIC: stop scene ambient with a smooth fade. ──
+  window.stopSceneAmbient = function(fadeSec) {
+    _sceneAmbientState.currentTag = null;
+    if (!_sceneAmbientState.src || !_sceneAmbientState.gain) {
+      _sceneAmbientState.src = null;
+      _sceneAmbientState.gain = null;
+      return;
+    }
+    var srcRef = _sceneAmbientState.src;
+    var gainRef = _sceneAmbientState.gain;
+    _sceneAmbientState.src = null;
+    _sceneAmbientState.gain = null;
+    var dur = (typeof fadeSec === 'number') ? fadeSec : 1.5;
+    try {
+      var ctx = gainRef.context;
+      gainRef.gain.cancelScheduledValues(ctx.currentTime);
+      gainRef.gain.setValueAtTime(gainRef.gain.value, ctx.currentTime);
+      gainRef.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
+      setTimeout(function() { try { srcRef.stop(); } catch (_) {} }, dur * 1000 + 50);
+    } catch (_) {}
+    try { console.log('[SCENE-AMB] stopped'); } catch (_) {}
+  };
+
+  // ── PUBLIC: duck scene ambient for OAS coexistence. ──
+  // active=true → 30% gain; active=false → back to 100%.
+  window.setSceneAmbientDuck = function(active) {
+    _sceneAmbientState.duckFactor = active ? 0.3 : 1.0;
+    if (!_sceneAmbientState.gain || !_sceneAmbientState.currentTag) return;
+    try {
+      var ctx = _sceneAmbientState.gain.context;
+      var target = _sceneTargetVol(_sceneAmbientState.currentTag);
+      _sceneAmbientState.gain.gain.cancelScheduledValues(ctx.currentTime);
+      _sceneAmbientState.gain.gain.setValueAtTime(_sceneAmbientState.gain.gain.value, ctx.currentTime);
+      _sceneAmbientState.gain.gain.linearRampToValueAtTime(target, ctx.currentTime + 0.8);
+    } catch (_) {}
+  };
+
+  // ── PUBLIC: corridor reader-mode fade. ──
+  // Independent of screen-based mute. When active, corridor ambience fades to
+  // silence so the scene ambient can take over. Restored on showScreen('setup').
+  var _corridorReaderMode = false;
+  window._setCorridorAmbienceForReader = function(active) {
+    _corridorReaderMode = !!active;
+    if (!_corridorGain) return;
+    try {
+      var ctx = _corridorGain.context;
+      var targetVol;
+      if (_corridorReaderMode) {
+        targetVol = 0;
+      } else {
+        targetVol = _corridorMuted ? 0 : _corridorNormalVol;
+      }
+      _corridorGain.gain.cancelScheduledValues(ctx.currentTime);
+      _corridorGain.gain.setValueAtTime(_corridorGain.gain.value, ctx.currentTime);
+      _corridorGain.gain.linearRampToValueAtTime(targetVol, ctx.currentTime + 1.5);
+    } catch (_) {}
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
