@@ -3325,6 +3325,107 @@ Player internal thoughts are never narrated. Preserve first-person structure.
       }
     } catch (_) {}
 
+    // ── JIT wound eligibility roll ─────────────────────────────────
+    // The ST3-entry hook in app.js rolls eligibility on the first
+    // ST3 transition. But intimate scenes can occur at any later
+    // storyturn (ST6 climax, ST7 epilogue callbacks, etc.), and the
+    // ST5+ exit explicitly `delete`s the flag so post-resolution sex
+    // scenes can re-roll fresh. This block re-rolls whenever the
+    // flag is undefined — covering ALL paths into the renderer, not
+    // just ST3 entry. Same cooldown × probability gate as the OAS
+    // path so cross-mode encounters share rate-limiting.
+    try {
+      if (appState && typeof appState._literaryWoundEligibleThisPhase === 'undefined') {
+        if (typeof appState._oasEncounterCount !== 'number') appState._oasEncounterCount = 0;
+        appState._oasEncounterCount += 1;
+        const _lastWoundEnc = appState._lastOASWoundEncounter;
+        const _cooldownClear = (_lastWoundEnc == null) || (appState._oasEncounterCount - _lastWoundEnc >= 2);
+        if (_cooldownClear && Math.random() < 0.35) {
+          appState._literaryWoundEligibleThisPhase = true;
+          appState._lastOASWoundEncounter = appState._oasEncounterCount;
+          try { console.log('[RENDERER:WOUND] JIT roll eligible (encounter #' + appState._oasEncounterCount + ', last fire: ' + (_lastWoundEnc == null ? 'never' : '#' + _lastWoundEnc) + ')'); } catch (_) {}
+        } else {
+          appState._literaryWoundEligibleThisPhase = false;
+          try { console.log('[RENDERER:WOUND] JIT roll not eligible (encounter #' + appState._oasEncounterCount + ', cooldown_clear=' + _cooldownClear + ')'); } catch (_) {}
+        }
+      }
+    } catch (_) {}
+
+    // ── LI character texture (archetype / kink / wound / compliance) ──
+    // Mirrors the OAS Grok directives (compliance-twist, responsive
+    // reactions, archetype texture, wound, kink) reframed for the
+    // 150-200 word literary render. Same Grok model (grok-4-1-fast-
+    // reasoning), so the embodied-language behavior carries across.
+    // Wound is gated by state._literaryWoundEligibleThisPhase, rolled
+    // either at ST3 entry in app.js OR JIT just above. Either way,
+    // any sex scene at any storyturn gets the texture treatment.
+    const _liTextureBlock = (() => {
+      const s = appState || {};
+      const liName = (s.storybeau && s.storybeau.name) || s.loveInterestName || 'the LI';
+      const pcName = s.playerName || 'the protagonist';
+      const archSlug = String((s.liArchetype || (s.archetype && s.archetype.primary) || '')).toLowerCase().replace(/[\s-]/g, '_');
+      const ARCH_TEXTURE = {
+        heart_warden:   { display: 'Heart Warden',   reactionTexture: 'protective / claiming hunger ("Mine. You\'re — mine.")', kinkLine: 'protective dominance + praise — "good girl" / "that\'s my girl" / claiming bites / marking', woundLine: 'control / protective-fear leak — "You won\'t leave me, will you?" / "Stay. Just — stay."' },
+        open_vein:      { display: 'Open Vein',      reactionTexture: 'bleeding honesty, no filter ("I love you, I — I know — I love you.")',                                                       kinkLine: 'eye-contact mandate + emotional surrender — "look at me, don\'t look away" / "tell me where you are right now"',                       woundLine: 'too-much / overflow-shame leak — "I know this is too much. I know." / "You don\'t have to say it back."' },
+        spellbinder:    { display: 'Spellbinder',    reactionTexture: 'deliberate, half-smiled, holds the frame even while undone',                                                                 kinkLine: 'naming game + choreographed control — demands "Sir" / "say it back" / "ask permission" / orchestrated positioning',                  woundLine: 'manipulation-suspicion leak — "Tell me this isn\'t just the moment." / "Don\'t lie to me right now."' },
+        armored_fox:    { display: 'Armored Fox',    reactionTexture: 'guard slips, then immediately snaps back ("Don\'t tell anyone I said that.")',                                              kinkLine: 'physical play + biting / scratching — never-fully-serious roughness, pinning and reversal, marks-as-jokes',                          woundLine: 'guard-slip / exposure-fear leak — "Don\'t — don\'t tell anyone I said that." / "If you use this against me — "' },
+        dark_vice:      { display: 'Dark Vice',      reactionTexture: 'revels openly, makes the mess part of the prize',                                                                            kinkLine: 'edge play + degradation-and-praise woven — "filthy little —" + "perfect" / light choking / bondage / taboo register',                woundLine: 'corruption / scarcity-of-good leak — "You should run before I ruin you." / "Why are you still here."' },
+        beautiful_ruin: { display: 'Beautiful Ruin', reactionTexture: 'testing-in-the-middle-of-it, half-suspicious of the goodness',                                                              kinkLine: 'mirror work + visual fixation OR blindfold-as-test ("do you still want me when you can\'t see my beauty?" — climaxes harder from feeling chosen-despite-not-being-seen)', woundLine: 'devotion-distrust / trial leak — "You\'d say this to anyone in this bed, wouldn\'t you?" / "Tell me this is real."' },
+        eternal_flame:  { display: 'Eternal Flame',  reactionTexture: 'slow, devotional, time-soaked',                                                                                              kinkLine: 'ritual slow worship — focus on ONE body part as sacred (her wrists, his throat) / repeated returning / "this. always this."',     woundLine: 'echo-of-past leak — "Have we — have we done this before? It feels like — " / "I keep thinking I\'ve loved you before."' }
+      };
+      const arch = ARCH_TEXTURE[archSlug] || null;
+      const woundEligible = !!s._literaryWoundEligibleThisPhase;
+      const lines = [];
+      lines.push('');
+      lines.push('LI CHARACTER TEXTURE (apply WITHIN your 150-200 word render — do NOT make the prose longer; make the texture richer):');
+      if (arch) {
+        lines.push(`- ARCHETYPE: ${liName} reads as ${arch.display}. Reactions filter through that register: ${arch.reactionTexture}.`);
+        lines.push(`- KINK SIGNATURE (show at least once when this scene allows it): ${arch.kinkLine}. The LI is not a generic sex partner — give them a specific sexual fingerprint. Across multiple renders in this phase, VARY the kink expression; do not repeat the same one every render.`);
+      } else {
+        lines.push(`- KINK SIGNATURE: give ${liName} a SPECIFIC sexual fingerprint (praise / control / restraint / body-part fixation / taboo / mirror / ritual). Pick one register and show it at least once. Vary across renders.`);
+      }
+      lines.push(`- COMMAND COMPLIANCE: when ${pcName} issues a performance command (moan my name / beg / get on your knees / say my name), ${liName} either PERFORMS the act (actually moan, actually say it, actually beg) OR narrates with a twist (preference / belonging / vulnerability — "I love being on my knees for you"). NEVER bare "Yes, I'm [verb-from-his-command]" echo. That phrasing is the AI tell.`);
+      lines.push(`- RESPONSIVE REACTIONS (sparingly — once per render, sometimes zero): ${liName} may volunteer physical appreciation ("Holy shit, look at you.") / awe-of-first-times ("No one's ever done that to me.") / dependence confessions ("I'm ruined.") / specific-to-this-moment asides. These make ${liName} feel ALIVE, not reactive-only.`);
+      if (woundEligible && arch) {
+        lines.push(`- WOUND APPEARANCE (ELIGIBLE THIS PHASE — at most ONE surface across the ENTIRE ST3 phase): ${liName}'s archetypal wound MAY surface as a single vulnerable moment in this render OR a later one. Wound register for ${arch.display}: ${arch.woundLine} If a prior render in this phase already surfaced the wound (check the prior prose history in your context), DO NOT repeat — wound is one-per-phase. TWO valid surfaces:`);
+        lines.push(`   (1) DIP / SETTLE (preferred): on a temperature lull or post-peak settle. Line lands SAID, half-aware, returns to the scene.`);
+        lines.push(`   (2) PEAK MISFIRE (valid IF you commit): on peak/climax. Human to say the wrong thing. MUST carry consequence — either ${liName} brushes it off and continues ("...fuck it. Where were we.") OR retreats in shame (act stops, gets up, leaves — set scene to resolve). NEVER drop the wound at peak without consequence.`);
+        lines.push(`   Use this opportunity ONCE in the whole phase, on the right beat — or not at all if no right beat lands.`);
+      } else if (woundEligible) {
+        lines.push(`- WOUND APPEARANCE (ELIGIBLE THIS PHASE — at most ONE surface): ${liName}'s deepest fear about being loved may surface as one vulnerable aside this phase. Preferred timing: dip / post-peak. Peak misfire allowed IF consequence follows (brush-off + continue, OR shame retreat that ends the scene).`);
+      }
+
+      // ── KINK MEMORY (cross-scene continuity) ──
+      // Reads state.liKinkHistory[liId] populated by the OAS / CG / literary
+      // parsers. Literary renderer is free prose so it can't easily emit a
+      // classification field — but it DOES read prior history so it knows
+      // what's liked / rejected / retired. Updates flow primarily through
+      // OAS and CG; literary just consumes.
+      try {
+        const _liIdK = (s.currentPrimaryLiId || (s.archetype && s.archetype.canonicalLIId) || 'default');
+        if (typeof window._buildKinkMemoryDirective === 'function') {
+          const _km = window._buildKinkMemoryDirective(_liIdK, liName);
+          if (_km) lines.push(_km);
+        }
+      } catch (_) {}
+
+      // ── PRIMARY ENGINE (scene-level emotional gravity) ──
+      // Literary renderer outputs free prose, not JSON, so it cannot
+      // declare primaryEngine as a field — but it CAN commit internally
+      // and bend its prose around the chosen engine. OAS and CG record
+      // engine state for persistence; literary just consumes the bias
+      // hints and applies the modulation table.
+      try {
+        if (typeof window._buildEngineSelectionDirective === 'function') {
+          lines.push('');
+          lines.push(window._buildEngineSelectionDirective(liName, pcName));
+          lines.push('- Literary renderer caveat: you output free prose, not JSON, so you cannot declare primaryEngine as a field. Commit to one INTERNALLY before writing and let it bend the 150-200 word render. Persistence inertia from prior scenes is in the BIAS HINTS above.');
+        }
+      } catch (_) {}
+
+      return lines.join('\n');
+    })();
+
     return {
       system: `You are a SPECIALIST RENDERER for intimate scenes.
 ${env4thBlock}${rendererVoiceAnchor}
@@ -3353,7 +3454,7 @@ ${!esd.completionAllowed ? `
 CRITICAL: Completion is FORBIDDEN. The scene must remain suspended.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
-${eroticModeBlock}${_grokIntimacyStanceBlock}
+${eroticModeBlock}${_grokIntimacyStanceBlock}${_liTextureBlock}
 Write embodied, sensory prose (150-200 words). Focus on physical sensation and emotional presence.`,
 
       user: `Render the intimate moment.
