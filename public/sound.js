@@ -1102,7 +1102,10 @@
     melancholy:      '/assets/audio/ambient/melancholy_quiet_loop.mp3',
     anxious:         '/assets/audio/ambient/anxious_curious_loop.mp3',
     tense_build:     '/assets/audio/ambient/tense_buildup_loop.mp3',
-    battlefield:     '/assets/audio/ambient/battlefield_combat.mp3'
+    battlefield:     '/assets/audio/ambient/battlefield_combat.mp3',
+    basketball_gym:  '/assets/audio/ambient/basketball_gym.mp3',
+    hockey_arena:    '/assets/audio/ambient/hockey_arena.mp3',
+    cafeteria:       '/assets/audio/ambient/cafeteria.mp3'
   };
   // Public so the classifier prompt can read the canonical enum.
   window._SCENE_AMBIENT_TAGS = Object.keys(_SCENE_AMBIENT_FILES);
@@ -1143,7 +1146,10 @@
     melancholy:      0.07,
     anxious:         0.07,
     tense_build:     0.06,
-    battlefield:     0.05
+    battlefield:     0.05,
+    basketball_gym:  0.06,
+    hockey_arena:    0.05,
+    cafeteria:       0.07
   };
 
   var _sceneAmbientBuffers = {};   // tag → AudioBuffer (lazy-loaded)
