@@ -3426,6 +3426,76 @@ Player internal thoughts are never narrated. Preserve first-person structure.
       return lines.join('\n');
     })();
 
+    // ── WORLD-PHYSICS DIRECTIVES (added 2026-05-17) ────────────────────
+    // The Grok scene renderer was a leaner pipeline than the main literary
+    // chain or the CG screenplay generator: it received LI texture + engine
+    // + wound + kink directives (from earlier work) but NOT the world-physics
+    // carry-forward stack (A-plot, axis gravity, scene-1 mode, billionaire
+    // attraction, voice texture, narrative gravity, relationship gravity,
+    // momentum, residue, callbacks, choice memory, motif echoes).
+    //
+    // Result: when Grok rendered an intimate scene, the named A-plot
+    // deadline disappeared from the model's frame, the protagonist's
+    // axis-pattern was invisible, the LI's regional voice / occupation
+    // didn't shape dialogue, and the scene happened in a vacuum of
+    // world-physics. This block restores parity with the other two
+    // pipelines. All builders are self-gated — they return '' when
+    // prerequisites aren't met (early scene, no LI bound, no anchor seeded,
+    // non-billionaire genre), so the prompt budget stays sane for cold
+    // contexts and only inflates when there's real signal to inject.
+    let _worldPhysicsBlock = '';
+    try {
+      const w = (typeof window !== 'undefined') ? window : {};
+      const _safeCall = (fn) => {
+        try { return (typeof fn === 'function' ? (fn() || '') : ''); } catch (_) { return ''; }
+      };
+      const parts = [];
+      // World-level pressure (the A-plot — named goal / clock / stakes)
+      parts.push(_safeCall(w.buildAPlotPressureDirective));
+      // Pattern naming from accumulated microDecision picks
+      parts.push(_safeCall(w.buildAxisGravityDirective));
+      // Billionaire-eligible Scene 1 framing (grounded/orbit/collision)
+      parts.push(_safeCall(w._buildScene1OpeningModeBlock));
+      // Single-fire attraction model (only on collision_entry Scene 1)
+      parts.push(_safeCall(w._buildBillionaireAttractionBlock));
+      // Voice texture — regional vocabulary, occupation register, human anchor
+      parts.push(_safeCall(w.buildLIRegionalVoiceDirective));
+      parts.push(_safeCall(w.buildLIOccupationRegisterDirective));
+      parts.push(_safeCall(w.buildHumanAnchorDirective));
+      // Carry-forward — narrative arc, relationship trajectory, momentum,
+      // emotional residue, cross-scene memory
+      parts.push(_safeCall(w.buildNarrativeGravityDirective));
+      parts.push(_safeCall(w.buildRelationshipGravityDirective));
+      parts.push(_safeCall(w.buildMomentumDirective));
+      parts.push(_safeCall(w.buildEmotionalResidueDirective));
+      parts.push(_safeCall(w.buildCallbackEchoDirective));
+      parts.push(_safeCall(w.buildChoiceMemoryDirective));
+      parts.push(_safeCall(w.buildMotifEchoDirective));
+      // Committed truth (slice 1 promise architecture) — empty outside the
+      // climax window; when it fires the directive tells the renderer what
+      // truth to surface using evidence already accumulated from prior scenes.
+      parts.push(_safeCall(w.buildCommittedTruthRevealDirective));
+      // Narrative scars (slice 1) — formation instruction always present
+      // + active-scar list when any are live. Honored as background avoidance
+      // behavior, never exposited. Strong bias toward physical scars.
+      parts.push(_safeCall(w.buildNarrativeScarDirective));
+      // Expectation inversion (parity restoration — added 2026-05-17) — was
+      // literary-only. Consume-once; empty when no inversion queued. When
+      // present, diverges scene's emotional resolution from the obvious
+      // trajectory (no plot twists).
+      parts.push(_safeCall(w.buildExpectationInversionDirective));
+      // Near-miss destiny (slice 1) — unresolved alternate timelines.
+      // Formation + occasional ambient surfacing of prior near-misses.
+      parts.push(_safeCall(w.buildNearMissDirective));
+      // Invisible escalation — atmospheric pressure tightening around the
+      // protagonist, never named. Probabilistic, gated on aPlot stakes.
+      parts.push(_safeCall(w.buildInvisibleEscalationDirective));
+      // Echo scenes — late-arc inverted-valence mirror of an earlier beat.
+      // Self-gates on turnCount + ledger depth + probability.
+      parts.push(_safeCall(w.buildSceneMirrorDirective));
+      _worldPhysicsBlock = parts.filter(p => p && p.trim()).join('\n');
+    } catch (_) {}
+
     return {
       system: `You are a SPECIALIST RENDERER for intimate scenes.
 ${env4thBlock}${rendererVoiceAnchor}
@@ -3454,7 +3524,7 @@ ${!esd.completionAllowed ? `
 CRITICAL: Completion is FORBIDDEN. The scene must remain suspended.
 Build tension, embodiment, sensation - but do NOT reach climax.
 ` : ''}
-${eroticModeBlock}${_grokIntimacyStanceBlock}${_liTextureBlock}
+${eroticModeBlock}${_grokIntimacyStanceBlock}${_worldPhysicsBlock ? '\n' + _worldPhysicsBlock + '\n' : ''}${_liTextureBlock}
 Write embodied, sensory prose (150-200 words). Focus on physical sensation and emotional presence.`,
 
       user: `Render the intimate moment.
