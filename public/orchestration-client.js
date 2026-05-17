@@ -3876,17 +3876,27 @@ ${enumList}
 
 Tag meanings (high-confidence matches only — when in doubt, return neutral_quiet):
 - neutral_quiet: indoor scene with no specific location signal; quiet room tone
-- urban_room: apartment/office near a city, light urban hum bleeds through
+- urban_room: residential apartment, hotel room near a city, hotel lobby — soft urban hum bleeds through walls. Prefer "office" for workplace scenes.
 - urban_traffic: outdoor city street, sidewalk, near traffic
+- office: WORKPLACE INTERIOR — newsroom, open-plan office, cubicle floor, agency, law firm, finance trading floor, advertising creative bay, editorial bullpen, gallery back-office, anywhere with keyboards / printers / phone clicks / colleagues at desks. WIN over urban_room when the scene\'s location is clearly someone\'s workplace and people are working around the protagonist.
 - crowd_formal: restaurant, gala, formal indoor gathering
 - crowd_casual: cafe, bar, casual indoor gathering
 - crowd_uneasy: tense room, interrogation, confrontation indoors
-- crowd_outdoor: market, festival, outdoor gathering
+- crowd_outdoor: market, festival, outdoor gathering (MODERN — fairs, street festivals, contemporary gatherings)
+- medieval_village: PRE-INDUSTRIAL VILLAGE / SMALL TOWN ambient — medieval/Fatelands villages, farming hamlets, market days at a stone-and-thatch town square, peasant gatherings, blacksmith hammer + distant voices + chickens + cart wheels. Use for any Historical (Medieval, Renaissance, Bronze Age, Classical), Fatelands village/farm/small-town setting, or any fantasy world that reads as pre-industrial settlement. Wins over crowd_outdoor when the era is pre-industrial.
+- courtyard: ENCLOSED OUTDOOR SPACE with birds + water fountain — courtyards, cloister gardens, palazzo inner courts, embassy patios, monastery yards, garden squares, college quads, urban hotel courtyards. Soft birdsong + trickling fountain water + light enclosed-space reverb. Works for BOTH modern (luxury hotel patio, museum courtyard, embassy yard) AND pre-industrial (medieval cloister, Renaissance palazzo, Fatelands keep courtyard) settings. Prefer over neutral_quiet / forest_day when the scene is specifically in an enclosed courtyard with fountain or birdsong named.
+- casual_sports: CASUAL RECREATIONAL BALL GAME in the background — pickup basketball, schoolyard ball, park soccer, weekend volleyball, kids playing in a yard, beach pickup, family backyard sports. Bouncing balls, scattered shouts, no crowd, no stadium register. Use when the scene is set NEAR a casual ball game (a park bench overlooking a court, a backyard barbecue, a college campus quad with students playing, a beach with a volleyball net). NOT for professional sports (no stadium / cheering / commentary). NOT when the ball game IS the scene; only when it provides ambient texture in the background.
+- court_intrigue: SHORT, PERCUSSIVE ORCHESTRAL TENSION — pre-industrial COURT scene where INTRIGUE is in play (whispered alliances, veiled threats, throne-room maneuvering, a royal audience that turns adversarial, a council where someone is being set up, a noble dinner where the real game is under the table). Use specifically for Fatelands High Court (Vaelryn Reach), other Fatelands courts, AND historical-world courts (Medieval, Renaissance, Victorian aristocracy when the room is political). REQUIRES political tension or intrigue in the scene — not for casual court visits, royal banquets without subtext, or simple audience scenes. The orchestral percussion presses the politics.
+- bell_tolling: SLOW, RESONANT CHURCH / CASTLE / CLOCK-TOWER BELLS — 8 deep chimes echoing in cold air. Use when bells are diegetically present: a cathedral or castle bell marking the hour, a funeral toll, a death-knell, a summoning peal, the chapel bells of a Fatelands abbey, a watchman's alarm. Also valid when the scene IS specifically about bells (a bell tower scene, a death-knell sounding over the village, midnight chimes from a clocktower). Do NOT pick for generic cathedral / church scenes — those go to cathedral_steps unless the bells are explicitly named.
+- cathedral_steps: ECHOING STONE INTERIOR with the protagonist or another single figure walking — library reading room, cathedral nave, courthouse marble corridor, archive vault, mausoleum, abbey cloister, museum gallery after hours. Reverberant footsteps in a high-ceilinged stone or wood-panelled space. Pick when the scene foregrounds the SOUND of a person walking through quiet authority/sanctity.
+- monster_steps: HEAVY PREDATOR FOOTFALLS — something large, threatening, or non-human approaching in an echoing space. Use when a monster/creature/dangerous figure approaches and the prose emphasizes their footsteps closing in. Wins over "suspense" when the threat is specifically embodied as approaching steps. NOT for general dread.
+- swordfight: ACTIVE SWORD COMBAT — blades clashing, sparring or duel in progress, melee fight with edged weapons. Use ONLY when a sword/blade fight is actively happening in the scene, not for tense pre-fight or post-fight aftermath.
 - fireplace: hearth, cabin, fireside intimate setting
 - forest_day: woods in daylight, hike, daytime exterior nature
 - forest_dark: woods at night, threatening forest
 - forest_mystic: fae woods, dreamlike forest, otherworldly grove
-- ocean: beach, coast, dock, sea
+- ocean: beach, coast, dock, sea (surface — sound is waves, gulls, shore)
+- underwater: SUBMERGED scenes — diving, swimming below the surface, undersea grottos, drowning sequences, tidal caves filled with water, sunken ruins, undersea kingdoms. Sound is the muffled deep-sea press, distant whale-song, the absence of air. PREFER over "ocean" when the character is BELOW water, not on the shore.
 - rain_storm: storm, heavy rain
 - wind_cold: tundra, snow exterior, exposed cold
 - night_summer: warm night exterior, balcony, garden after dark

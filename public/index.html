@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260516-engine-saturation">
+  <link rel="stylesheet" href="/styles.css?v=20260517-tuning-telemetry">
 </head>
 
 <body class="booting">
@@ -109,7 +109,7 @@
       <button class="vault-tab sb-btn-png md" data-vault-section="SavedStories">Saved Stories</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="StoryShapes">Saved Story Shapes</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Sound">Story Sound</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Sound">Sound &amp; Music</button>
       <button id="faqVaultTab" class="vault-tab sb-btn-png md" data-vault-modal="faq">FAQ</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="ReportIssue">Report an Issue</button>
     </div>
@@ -346,9 +346,11 @@
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
-  <!-- ── SOUND SUB-PANEL ── -->
+  <!-- ── SOUND & MUSIC SUB-PANEL ── -->
   <div id="vaultSound" class="vault-sub hidden">
-    <div class="vault-sub-title">Story Sound</div>
+    <div class="vault-sub-title">Sound &amp; Music</div>
+
+    <div class="vault-sub-section-title" style="color:var(--gold); font-family:'Lora',serif; font-size:0.75em; letter-spacing:0.18em; text-transform:uppercase; margin:6px 0 4px;">Site</div>
 
     <label class="vault-label">Music</label>
     <input type="range" id="musicVolumeSlider" min="0" max="100" value="100" oninput="window.setMusicVolume(this.value / 100); document.getElementById('musicVolVal').textContent = this.value + '%'" />
@@ -357,6 +359,16 @@
     <label class="vault-label">Sound Effects</label>
     <input type="range" id="sfxVolumeSlider" min="0" max="100" value="100" oninput="window.setSFXVolume(this.value / 100); document.getElementById('sfxVolVal').textContent = this.value + '%'" />
     <span id="sfxVolVal" class="vault-vol-val">100%</span>
+
+    <div class="vault-sub-section-title" style="color:var(--gold); font-family:'Lora',serif; font-size:0.75em; letter-spacing:0.18em; text-transform:uppercase; margin:14px 0 4px;">Story</div>
+
+    <label class="vault-label">Music</label>
+    <input type="range" id="storyMusicVolumeSlider" min="0" max="100" value="100" oninput="window.setStoryMusicVolume(this.value / 100); document.getElementById('storyMusicVolVal').textContent = this.value + '%'" />
+    <span id="storyMusicVolVal" class="vault-vol-val">100%</span>
+
+    <label class="vault-label">Sound Effects</label>
+    <input type="range" id="storySfxVolumeSlider" min="0" max="100" value="100" oninput="window.setStorySfxVolume(this.value / 100); document.getElementById('storySfxVolVal').textContent = this.value + '%'" />
+    <span id="storySfxVolVal" class="vault-vol-val">100%</span>
 
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
@@ -2323,11 +2335,11 @@
     <!-- (Fortune breakdown removed — single unified balance.) -->
 </div>
 
-<script src="/sound.js?v=20260516-engine-saturation-layer"></script>
+<script src="/sound.js?v=20260517-tuning-telemetry-layer"></script>
 <script src="/fatecards.js?v=20260507a"></script>
-<script src="/orchestration-client.js?v=20260516-engine-saturation"></script>
+<script src="/orchestration-client.js?v=20260517-tuning-telemetry"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260516-engine-saturation">
+<script src="/app.js?v=20260517-tuning-telemetry">
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL

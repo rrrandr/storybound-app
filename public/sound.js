@@ -12,22 +12,42 @@
   const _lastPlayed = {};        // rate-limiter: { soundName: timestamp }
   const MIN_INTERVAL_MS = 120;   // minimum gap between identical sounds
 
-  // ── Master volume nodes — independent music / SFX control ──
-  var _sfxMasterGain = null;
-  var _musicMasterGain = null;
+  // ── Master volume nodes — 4-bus split: Site/Story × Music/SFX ──
+  // SITE buses control UI-layer audio: corridor ambience, button clicks,
+  // typing sounds, hover sounds — anything that fires outside an active
+  // story. STORY buses control in-story audio: scene ambient bed (rain,
+  // traffic, fireplace, room tones), OAS dialogue audio (heartbeat,
+  // breathing, splatter stings, sighs), and any sound mounted during a
+  // reading session.
+  var _sfxMasterGain = null;        // SITE SFX (legacy var name kept)
+  var _musicMasterGain = null;      // SITE Music (legacy var name kept)
+  var _storySfxGain = null;
+  var _storyMusicGain = null;
   var _sfxVolume = 1.0;
   var _musicVolume = 1.0;
+  var _storySfxVolume = 1.0;
+  var _storyMusicVolume = 1.0;
 
-  // Restore saved volume preferences
+  // Restore saved volume preferences (4 keys; legacy 2 keys retained
+  // for backward compat — they map to the SITE masters).
   try {
-    var _savedSfx = localStorage.getItem('sb_sfx_volume');
-    var _savedMus = localStorage.getItem('sb_music_volume');
-    if (_savedSfx !== null) _sfxVolume = parseFloat(_savedSfx);
-    if (_savedMus !== null) _musicVolume = parseFloat(_savedMus);
+    var _savedSfx       = localStorage.getItem('sb_sfx_volume');
+    var _savedMus       = localStorage.getItem('sb_music_volume');
+    var _savedStorySfx  = localStorage.getItem('sb_story_sfx_volume');
+    var _savedStoryMus  = localStorage.getItem('sb_story_music_volume');
+    if (_savedSfx      !== null) _sfxVolume        = parseFloat(_savedSfx);
+    if (_savedMus      !== null) _musicVolume      = parseFloat(_savedMus);
+    if (_savedStorySfx !== null) _storySfxVolume   = parseFloat(_savedStorySfx);
+    if (_savedStoryMus !== null) _storyMusicVolume = parseFloat(_savedStoryMus);
   } catch (_) {}
 
-  function _sfxOut(ctx) { return _sfxMasterGain || ctx.destination; }
-  function _musicOut(ctx) { return _musicMasterGain || ctx.destination; }
+  // Output helpers. The story buses fall back to ctx.destination IF they
+  // weren't created (defensive — shouldn't happen post-init). The legacy
+  // _sfxOut / _musicOut helpers still exist for SITE-bus audio.
+  function _sfxOut(ctx)        { return _sfxMasterGain   || ctx.destination; }
+  function _musicOut(ctx)      { return _musicMasterGain || ctx.destination; }
+  function _storySfxOut(ctx)   { return _storySfxGain    || ctx.destination; }
+  function _storyMusicOut(ctx) { return _storyMusicGain  || ctx.destination; }
 
   // ── Lazy AudioContext init (requires user gesture) ──
   function _ensureCtx() {
@@ -49,6 +69,25 @@
         _musicMasterGain.gain.value = _musicVolume;
         _musicMasterGain.connect(_audioCtx.destination);
       }
+      if (!_storySfxGain) {
+        _storySfxGain = _audioCtx.createGain();
+        _storySfxGain.gain.value = _storySfxVolume;
+        _storySfxGain.connect(_audioCtx.destination);
+      }
+      if (!_storyMusicGain) {
+        _storyMusicGain = _audioCtx.createGain();
+        _storyMusicGain.gain.value = _storyMusicVolume;
+        _storyMusicGain.connect(_audioCtx.destination);
+      }
+      // Expose master gains as window globals so app.js's legacy ambient
+      // system (mood underscore / diegetic background / vocals / stings)
+      // can route through them instead of connecting straight to ctx
+      // .destination. Without this, those audio paths bypass the Vault
+      // sliders entirely.
+      window._siteMusicGainRef  = _musicMasterGain;
+      window._siteSfxGainRef    = _sfxMasterGain;
+      window._storyMusicGainRef = _storyMusicGain;
+      window._storySfxGainRef   = _storySfxGain;
       // Preload audio samples
       if (_audioCtx) {
         if (!window._bellBuffer) {
@@ -746,7 +785,7 @@
     var gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 1.2);
-    src.connect(gain).connect(_sfxOut(ctx));
+    src.connect(gain).connect(_storySfxOut(ctx));   // OAS bed → STORY SFX
     src.start(0);
     return { src: src, gain: gain };
   }
@@ -770,7 +809,7 @@
     var gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(initialVol, ctx.currentTime + 1.5);
-    src.connect(gain).connect(_sfxOut(ctx));
+    src.connect(gain).connect(_storySfxOut(ctx));   // OAS breath (male) → STORY SFX
     src.onended = function() {
       // If OAS is still active and the current mouth state is mouth-open,
       // restart the track. Otherwise let it stay ended — closed-mouth
@@ -804,7 +843,7 @@
     var gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(initialVol, ctx.currentTime + 1.5);
-    src.connect(gain).connect(_sfxOut(ctx));
+    src.connect(gain).connect(_storySfxOut(ctx));   // OAS breath (female) → STORY SFX
     src.onended = function() {
       if (!_oasState.active || !_oasState.breathAllowRestart) return;
       var targetVol = _breathFVolForMouth(_oasState.currentMouth);
@@ -965,7 +1004,7 @@
     src.buffer = window._oasSighBuffer;
     var gain = ctx.createGain();
     gain.gain.setValueAtTime(0.55, ctx.currentTime);
-    src.connect(gain).connect(_sfxOut(ctx));
+    src.connect(gain).connect(_storySfxOut(ctx));   // OAS sigh → STORY SFX
     src.start(0);
   };
 
@@ -1034,15 +1073,25 @@
     neutral_quiet:   '/assets/audio/ambient/room_tone_quiet.mp3',
     urban_room:      '/assets/audio/ambient/room_tone_urban.mp3',
     urban_traffic:   '/assets/audio/ambient/traffic.mp3',
+    office:          '/assets/audio/ambient/office.mp3',
     crowd_formal:    '/assets/audio/ambient/crowd_indoor_formal.mp3',
     crowd_casual:    '/assets/audio/ambient/crowd_indoor.mp3',
     crowd_uneasy:    '/assets/audio/ambient/crowd_indoor_uneasy.mp3',
     crowd_outdoor:   '/assets/audio/ambient/crowd_outdoor.mp3',
+    medieval_village:'/assets/audio/ambient/medieval_village.mp3',
+    courtyard:       '/assets/audio/ambient/courtyard.mp3',
+    casual_sports:   '/assets/audio/ambient/casual_sports.mp3',
+    court_intrigue:  '/assets/audio/ambient/court_intrigue.mp3',
+    bell_tolling:    '/assets/audio/ambient/bell_tolling.mp3',
+    cathedral_steps: '/assets/audio/ambient/footsteps_reverent.mp3',
+    monster_steps:   '/assets/audio/ambient/footsteps_monster.mp3',
+    swordfight:      '/assets/audio/ambient/swordfight.mp3',
     fireplace:       '/assets/audio/ambient/fireplace.mp3',
     forest_day:      '/assets/audio/ambient/nature_forest.mp3',
     forest_dark:     '/assets/audio/ambient/nature_forest_dark.mp3',
     forest_mystic:   '/assets/audio/ambient/nature_forest_mystic.mp3',
     ocean:           '/assets/audio/ambient/ocean_waves.mp3',
+    underwater:      '/assets/audio/ambient/underwater.mp3',
     rain_storm:      '/assets/audio/ambient/rain_thunder.mp3',
     wind_cold:       '/assets/audio/ambient/wind_winter.mp3',
     night_summer:    '/assets/audio/ambient/night_summer.mp3',
@@ -1065,15 +1114,25 @@
     neutral_quiet:   0.04,
     urban_room:      0.07,
     urban_traffic:   0.06,
+    office:          0.07,
     crowd_formal:    0.08,
     crowd_casual:    0.08,
     crowd_uneasy:    0.07,
     crowd_outdoor:   0.07,
+    medieval_village:0.07,
+    courtyard:       0.07,
+    casual_sports:   0.07,
+    court_intrigue:  0.06,
+    bell_tolling:    0.09,
+    cathedral_steps: 0.07,
+    monster_steps:   0.09,
+    swordfight:      0.08,
     fireplace:       0.08,
     forest_day:      0.08,
     forest_dark:     0.08,
     forest_mystic:   0.08,
     ocean:           0.08,
+    underwater:      0.09,
     rain_storm:      0.08,
     wind_cold:       0.08,
     night_summer:    0.07,
@@ -1094,6 +1153,28 @@
     currentTag: null,
     duckFactor: 1.0  // 1.0 normal, 0.3 when OAS active
   };
+  // Layer-2 ambient — a quieter secondary bed that plays UNDER the primary
+  // scene ambient. Use case: interior city scene where rain (primary) and
+  // distant traffic (secondary) should both be audible. Primary at full
+  // _sceneTargetVol(tag), secondary at 35% of its tag's target.
+  var _sceneAmbient2State = {
+    src: null,
+    gain: null,
+    currentTag: null,
+    duckFactor: 1.0
+  };
+  var _SCENE_AMBIENT_LAYER2_RATIO = 0.35;
+  // Layer-3 ambient — third bed, even quieter, for triple-stacking. Use
+  // case: urban office during rain — primary=office, layer2=urban_room
+  // (distant traffic), layer3=rain_storm (rain through the window).
+  // Or any other "interior + outdoor context + weather" composition.
+  var _sceneAmbient3State = {
+    src: null,
+    gain: null,
+    currentTag: null,
+    duckFactor: 1.0
+  };
+  var _SCENE_AMBIENT_LAYER3_RATIO = 0.25;
 
   function _loadSceneAmbientBuffer(tag) {
     if (_sceneAmbientBuffers[tag]) return Promise.resolve(_sceneAmbientBuffers[tag]);
@@ -1124,7 +1205,7 @@
     var gain = ctx.createGain();
     gain.gain.setValueAtTime(0, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(_sceneTargetVol(tag), ctx.currentTime + 1.5);
-    src.connect(gain).connect(_sfxOut(ctx));
+    src.connect(gain).connect(_storyMusicOut(ctx));   // Scene ambient primary → STORY Music
     src.start(0);
     return { src: src, gain: gain };
   }
@@ -1168,21 +1249,162 @@
     if (!_sceneAmbientState.src || !_sceneAmbientState.gain) {
       _sceneAmbientState.src = null;
       _sceneAmbientState.gain = null;
+    } else {
+      var srcRef = _sceneAmbientState.src;
+      var gainRef = _sceneAmbientState.gain;
+      _sceneAmbientState.src = null;
+      _sceneAmbientState.gain = null;
+      var dur = (typeof fadeSec === 'number') ? fadeSec : 1.5;
+      try {
+        var ctx = gainRef.context;
+        gainRef.gain.cancelScheduledValues(ctx.currentTime);
+        gainRef.gain.setValueAtTime(gainRef.gain.value, ctx.currentTime);
+        gainRef.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
+        setTimeout(function() { try { srcRef.stop(); } catch (_) {} }, dur * 1000 + 50);
+      } catch (_) {}
+      try { console.log('[SCENE-AMB] stopped'); } catch (_) {}
+    }
+    // Also stop layer 2 + layer 3 — symmetric tear-down.
+    if (typeof window.stopSceneAmbientLayer2 === 'function') {
+      try { window.stopSceneAmbientLayer2(fadeSec); } catch (_) {}
+    }
+    if (typeof window.stopSceneAmbientLayer3 === 'function') {
+      try { window.stopSceneAmbientLayer3(fadeSec); } catch (_) {}
+    }
+  };
+
+  // ── PUBLIC: set / switch the LAYER-2 (secondary) scene ambient. ──
+  // Plays at 35% of the tag's normal target gain so it sits under the
+  // primary layer. Use for interior-urban scenes where rain or another
+  // weather is primary but distant city sounds should still bleed in.
+  // No-op if already playing same tag. Crossfades over ~1.5s on swap.
+  window.setSceneAmbientLayer2 = function(tag) {
+    if (!_enabled) return;
+    if (!_SCENE_AMBIENT_FILES[tag]) return;  // unknown tag — silently skip
+    if (_sceneAmbient2State.currentTag === tag && _sceneAmbient2State.src) return;
+    var prev = { src: _sceneAmbient2State.src, gain: _sceneAmbient2State.gain };
+    _sceneAmbient2State.currentTag = tag;
+    _sceneAmbient2State.src = null;
+    _sceneAmbient2State.gain = null;
+    _loadSceneAmbientBuffer(tag).then(function(buf) {
+      if (!buf || _sceneAmbient2State.currentTag !== tag) return;
+      var ctx = _ensureCtx();
+      if (!ctx) return;
+      if (ctx.state === 'suspended') ctx.resume().catch(function(){});
+      var src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      var gain = ctx.createGain();
+      var baseVol = _SCENE_AMBIENT_GAIN[tag];
+      if (typeof baseVol !== 'number') baseVol = 0.06;
+      var targetVol = baseVol * _SCENE_AMBIENT_LAYER2_RATIO * (_sceneAmbient2State.duckFactor || 1.0);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(targetVol, ctx.currentTime + 1.5);
+      src.connect(gain).connect(_storyMusicOut(ctx));   // Scene ambient layer 2 → STORY Music
+      src.start(0);
+      _sceneAmbient2State.src = src;
+      _sceneAmbient2State.gain = gain;
+      try { console.log('[SCENE-AMB-L2] → ' + tag + ' @ ' + targetVol.toFixed(3)); } catch (_) {}
+    });
+    // Crossfade-out previous layer-2 bed.
+    if (prev.src && prev.gain) {
+      try {
+        var ctx2 = prev.gain.context;
+        prev.gain.gain.cancelScheduledValues(ctx2.currentTime);
+        prev.gain.gain.setValueAtTime(prev.gain.gain.value, ctx2.currentTime);
+        prev.gain.gain.linearRampToValueAtTime(0, ctx2.currentTime + 1.5);
+        var prevSrcRef = prev.src;
+        setTimeout(function() { try { prevSrcRef.stop(); } catch (_) {} }, 1600);
+      } catch (_) {}
+    }
+  };
+
+  // ── PUBLIC: set / switch the LAYER-3 (tertiary) scene ambient. ──
+  // Plays at 25% of the tag's normal target gain — even quieter than
+  // layer 2. Use for triple-stacked compositions like office (primary)
+  // + urban_room (layer 2 traffic) + rain_storm (layer 3 rain).
+  window.setSceneAmbientLayer3 = function(tag) {
+    if (!_enabled) return;
+    if (!_SCENE_AMBIENT_FILES[tag]) return;
+    if (_sceneAmbient3State.currentTag === tag && _sceneAmbient3State.src) return;
+    var prev = { src: _sceneAmbient3State.src, gain: _sceneAmbient3State.gain };
+    _sceneAmbient3State.currentTag = tag;
+    _sceneAmbient3State.src = null;
+    _sceneAmbient3State.gain = null;
+    _loadSceneAmbientBuffer(tag).then(function(buf) {
+      if (!buf || _sceneAmbient3State.currentTag !== tag) return;
+      var ctx = _ensureCtx();
+      if (!ctx) return;
+      if (ctx.state === 'suspended') ctx.resume().catch(function(){});
+      var src = ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      var gain = ctx.createGain();
+      var baseVol = _SCENE_AMBIENT_GAIN[tag];
+      if (typeof baseVol !== 'number') baseVol = 0.06;
+      var targetVol = baseVol * _SCENE_AMBIENT_LAYER3_RATIO * (_sceneAmbient3State.duckFactor || 1.0);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(targetVol, ctx.currentTime + 1.5);
+      src.connect(gain).connect(_storyMusicOut(ctx));   // Layer 3 → STORY Music
+      src.start(0);
+      _sceneAmbient3State.src = src;
+      _sceneAmbient3State.gain = gain;
+      try { console.log('[SCENE-AMB-L3] → ' + tag + ' @ ' + targetVol.toFixed(3)); } catch (_) {}
+    });
+    if (prev.src && prev.gain) {
+      try {
+        var ctx2 = prev.gain.context;
+        prev.gain.gain.cancelScheduledValues(ctx2.currentTime);
+        prev.gain.gain.setValueAtTime(prev.gain.gain.value, ctx2.currentTime);
+        prev.gain.gain.linearRampToValueAtTime(0, ctx2.currentTime + 1.5);
+        var prevSrcRef = prev.src;
+        setTimeout(function() { try { prevSrcRef.stop(); } catch (_) {} }, 1600);
+      } catch (_) {}
+    }
+  };
+
+  window.stopSceneAmbientLayer3 = function(fadeSec) {
+    _sceneAmbient3State.currentTag = null;
+    if (!_sceneAmbient3State.src || !_sceneAmbient3State.gain) {
+      _sceneAmbient3State.src = null;
+      _sceneAmbient3State.gain = null;
       return;
     }
-    var srcRef = _sceneAmbientState.src;
-    var gainRef = _sceneAmbientState.gain;
-    _sceneAmbientState.src = null;
-    _sceneAmbientState.gain = null;
-    var dur = (typeof fadeSec === 'number') ? fadeSec : 1.5;
+    var srcRef3 = _sceneAmbient3State.src;
+    var gainRef3 = _sceneAmbient3State.gain;
+    _sceneAmbient3State.src = null;
+    _sceneAmbient3State.gain = null;
+    var dur3 = (typeof fadeSec === 'number') ? fadeSec : 1.5;
     try {
-      var ctx = gainRef.context;
-      gainRef.gain.cancelScheduledValues(ctx.currentTime);
-      gainRef.gain.setValueAtTime(gainRef.gain.value, ctx.currentTime);
-      gainRef.gain.linearRampToValueAtTime(0, ctx.currentTime + dur);
-      setTimeout(function() { try { srcRef.stop(); } catch (_) {} }, dur * 1000 + 50);
+      var ctx4 = gainRef3.context;
+      gainRef3.gain.cancelScheduledValues(ctx4.currentTime);
+      gainRef3.gain.setValueAtTime(gainRef3.gain.value, ctx4.currentTime);
+      gainRef3.gain.linearRampToValueAtTime(0, ctx4.currentTime + dur3);
+      setTimeout(function() { try { srcRef3.stop(); } catch (_) {} }, dur3 * 1000 + 50);
     } catch (_) {}
-    try { console.log('[SCENE-AMB] stopped'); } catch (_) {}
+    try { console.log('[SCENE-AMB-L3] stopped'); } catch (_) {}
+  };
+
+  window.stopSceneAmbientLayer2 = function(fadeSec) {
+    _sceneAmbient2State.currentTag = null;
+    if (!_sceneAmbient2State.src || !_sceneAmbient2State.gain) {
+      _sceneAmbient2State.src = null;
+      _sceneAmbient2State.gain = null;
+      return;
+    }
+    var srcRef2 = _sceneAmbient2State.src;
+    var gainRef2 = _sceneAmbient2State.gain;
+    _sceneAmbient2State.src = null;
+    _sceneAmbient2State.gain = null;
+    var dur2 = (typeof fadeSec === 'number') ? fadeSec : 1.5;
+    try {
+      var ctx3 = gainRef2.context;
+      gainRef2.gain.cancelScheduledValues(ctx3.currentTime);
+      gainRef2.gain.setValueAtTime(gainRef2.gain.value, ctx3.currentTime);
+      gainRef2.gain.linearRampToValueAtTime(0, ctx3.currentTime + dur2);
+      setTimeout(function() { try { srcRef2.stop(); } catch (_) {} }, dur2 * 1000 + 50);
+    } catch (_) {}
+    try { console.log('[SCENE-AMB-L2] stopped'); } catch (_) {}
   };
 
   // ── PUBLIC: duck scene ambient for OAS coexistence. ──
@@ -1224,21 +1446,57 @@
   // VOLUME CONTROL API — independent music / SFX sliders
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // ── Helper: robust master-gain set ─────────────────────────────────
+  // Web Audio caveat: setting AudioParam.value directly only inserts an
+  // event at currentTime — any future scheduled ramps still play out
+  // toward THEIR target. To make sliders authoritative ("0% means silent
+  // RIGHT NOW and stays silent"), we cancel scheduled values + set both
+  // the .value AND a setValueAtTime at currentTime. After this call,
+  // any future ramps still work but start from the new value.
+  function _setMasterGainSafely(gainNode, vol) {
+    if (!gainNode) return;
+    try {
+      var ctx = gainNode.context;
+      var now = ctx.currentTime;
+      gainNode.gain.cancelScheduledValues(now);
+      gainNode.gain.setValueAtTime(vol, now);
+      gainNode.gain.value = vol;
+    } catch (_) {
+      try { gainNode.gain.value = vol; } catch (__) {}
+    }
+  }
+
+  // SITE buses — corridor ambience (music) + UI sounds (sfx).
   window.setSFXVolume = function(v) {
     _sfxVolume = Math.max(0, Math.min(1, +v || 0));
-    if (_sfxMasterGain) _sfxMasterGain.gain.value = _sfxVolume;
+    _setMasterGainSafely(_sfxMasterGain, _sfxVolume);
     try { localStorage.setItem('sb_sfx_volume', _sfxVolume.toString()); } catch (_) {}
   };
 
   window.setMusicVolume = function(v) {
     _musicVolume = Math.max(0, Math.min(1, +v || 0));
-    if (_musicMasterGain) _musicMasterGain.gain.value = _musicVolume;
+    _setMasterGainSafely(_musicMasterGain, _musicVolume);
     try { localStorage.setItem('sb_music_volume', _musicVolume.toString()); } catch (_) {}
     // Also update forbidden ambience in app.js if active
     if (window._updateForbiddenAmbienceVolume) window._updateForbiddenAmbienceVolume(_musicVolume);
   };
 
-  window.getSFXVolume = function() { return _sfxVolume; };
-  window.getMusicVolume = function() { return _musicVolume; };
+  // STORY buses — scene ambient (music) + OAS / in-story SFX.
+  window.setStorySfxVolume = function(v) {
+    _storySfxVolume = Math.max(0, Math.min(1, +v || 0));
+    _setMasterGainSafely(_storySfxGain, _storySfxVolume);
+    try { localStorage.setItem('sb_story_sfx_volume', _storySfxVolume.toString()); } catch (_) {}
+  };
+
+  window.setStoryMusicVolume = function(v) {
+    _storyMusicVolume = Math.max(0, Math.min(1, +v || 0));
+    _setMasterGainSafely(_storyMusicGain, _storyMusicVolume);
+    try { localStorage.setItem('sb_story_music_volume', _storyMusicVolume.toString()); } catch (_) {}
+  };
+
+  window.getSFXVolume        = function() { return _sfxVolume; };
+  window.getMusicVolume      = function() { return _musicVolume; };
+  window.getStorySfxVolume   = function() { return _storySfxVolume; };
+  window.getStoryMusicVolume = function() { return _storyMusicVolume; };
 
 })();
