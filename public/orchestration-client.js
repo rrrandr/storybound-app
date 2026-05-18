@@ -4187,7 +4187,45 @@ Respond in EXACTLY two lines:
       CARNAL:   'Full sensory saturation. Power dynamics, anatomical specificity, graphic intimacy. Nothing implied — everything rendered.'
     };
 
-    const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema.';
+    // Slice 1 plot context (added 2026-05-17). extractPlotContext is exposed
+    // via window in fatecards.js — read the rich plot state so previews can
+    // reference A-plot pressure, archetype, committed truth, grievances,
+    // callbacks, scars, gravity direction, etc.
+    let _plotCtx = null;
+    try { _plotCtx = (typeof window.extractPlotContext === 'function') ? window.extractPlotContext(st) : null; } catch (_) {}
+    const _plotLines = [];
+    if (_plotCtx) {
+      if (_plotCtx.aPlotGoal) _plotLines.push(`A-plot goal: ${_plotCtx.aPlotGoal}`);
+      if (_plotCtx.aPlotStakes) _plotLines.push(`A-plot stakes: ${_plotCtx.aPlotStakes}`);
+      if (_plotCtx.aPlotClock) _plotLines.push(`A-plot clock: ${_plotCtx.aPlotClock}`);
+      if (_plotCtx.storyturn) _plotLines.push(`Story turn: ${_plotCtx.storyturn}${_plotCtx.intimacyPhase ? ' (intimacy phase active)' : ''}`);
+      if (_plotCtx.archetypePrimary) _plotLines.push(`LI archetype core: ${_plotCtx.archetypePrimary}${_plotCtx.archetypeModifier ? ' / ' + _plotCtx.archetypeModifier : ''}`);
+      if (_plotCtx.committedTruth) {
+        _plotLines.push(`Committed truth (${_plotCtx.committedTruth.family || 'unclassified'}${_plotCtx.committedTruth.inClimaxWindow ? ', CLIMAX WINDOW' : ''}): ${_plotCtx.committedTruth.summary}`);
+      }
+      if (_plotCtx.activeGrievances && _plotCtx.activeGrievances.length) {
+        _plotLines.push('Active grievance contracts: ' + _plotCtx.activeGrievances.map(g =>
+          `${g.sourceCharacter} (${g.vector}, ${g.visibility}, scene ${g.originatingScene})`
+        ).join('; '));
+      }
+      if (_plotCtx.recentCallbacks && _plotCtx.recentCallbacks.length) {
+        _plotLines.push('Unresolved beats: ' + _plotCtx.recentCallbacks.map(c => `"${c.text}"`).join(' | '));
+      }
+      if (_plotCtx.recentScars && _plotCtx.recentScars.length) {
+        _plotLines.push('Narrative scars (avoidance behaviors): ' + _plotCtx.recentScars.map(s => `${s.target} (${s.expression})`).join(' | '));
+      }
+      if (_plotCtx.recentNearMiss) {
+        _plotLines.push(`Recent near-miss (dramatic irony — PC unaware): "${_plotCtx.recentNearMiss.what}" (${_plotCtx.recentNearMiss.distance})`);
+      }
+      if (_plotCtx.gravityDirection) _plotLines.push(`Relationship gravity: ${_plotCtx.gravityDirection}${_plotCtx.gravityStrength ? ' (' + _plotCtx.gravityStrength + ')' : ''}`);
+      if (_plotCtx.axisLean && Math.abs(_plotCtx.axisLean.lead) >= 2) {
+        _plotLines.push(`Axis lean: ${_plotCtx.axisLean.lead > 0 ? 'objective+' : 'relationship+'} (${Math.abs(_plotCtx.axisLean.lead)})`);
+      }
+      if (_plotCtx.fateOASBudget) _plotLines.push(`Fate-OAS distortion active: ${_plotCtx.fateOASBudget.type.toUpperCase()} (${_plotCtx.fateOASBudget.turnsRemaining}/${_plotCtx.fateOASBudget.totalTurns} exchanges left)`);
+    }
+    const _plotBlock = _plotLines.length ? '\nPLOT STATE (use these to ground card variants in the actual story):\n' + _plotLines.map(l => '  • ' + l).join('\n') + '\n' : '';
+
+    const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema. Each card may take one of three VARIANT shapes — amplify (deepen the act), ruin (plot-level sabotage of the moment), or redirect (turn intimacy into vulnerability discovery) — distributed roughly 70/20/10 across the 5 cards per draw.';
 
     const userMsg = `Generate 5 fate-card Say/Do previews for THIS specific moment of an intimate scene, one per archetype. Each preview is the protagonist's NEXT move + line.
 
@@ -4197,7 +4235,7 @@ RENDERING FLOOR: ${physicalBounds}
 EMOTIONAL CORE: ${emotionalCore}
 LOVE INTEREST NAME: ${liName}
 
-${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 
@@ -4208,20 +4246,28 @@ ARCHETYPE MEANINGS:
 - boundary:   State your need. Demand, not refusal.
 - confession: Admit what you want. Mid-act, no armor.
 
-OUTPUT — return ONLY this JSON, no prose around it:
+VARIANT SHAPES (each card picks ONE — distribute ~70% amplify / ~20% redirect / ~10% ruin across the 5 cards; pick variant based on plot signal):
+- AMPLIFY (default ~70%): deepen the act. Raise the heat. Push the moment forward in its current direction. This is the "more, harder, closer" mode that fits most beats.
+- RUIN (~10%): plot-level sabotage of the moment. Whisper a name that's wrong (grievance source character? committed-truth "about" topic? a callback ledger figure?). Mention something that doesn't belong. Let the world bleed into the bed. The act doesn't stop — but something cracks. Fires when there's a juicy plot tension that could intrude.
+- REDIRECT (~20%): turn intimacy into vulnerability discovery. Pull back. Ask the question that matters. Honor a narrative scar by AVOIDING something. Change the subject to what's actually heavy. The body slows; the emotion deepens. Fires when there's vulnerability/scar/wound material on the page.
+
+OUTPUT — return ONLY this JSON, no prose around it. Include "variant" on each card so the system can log distribution:
 {
-  "temptation": { "action": "<max 12 words, specific physical act>", "dialogue": "<max 15 words, in quotes or parens for sounds>" },
-  "silence":    { "action": "<...>", "dialogue": "<...>" },
-  "reversal":   { "action": "<...>", "dialogue": "<...>" },
-  "boundary":   { "action": "<...>", "dialogue": "<...>" },
-  "confession": { "action": "<...>", "dialogue": "<...>" }
+  "temptation": { "action": "<max 12 words, specific physical act>", "dialogue": "<max 15 words, in quotes or parens for sounds>", "variant": "amplify|ruin|redirect" },
+  "silence":    { "action": "<...>", "dialogue": "<...>", "variant": "..." },
+  "reversal":   { "action": "<...>", "dialogue": "<...>", "variant": "..." },
+  "boundary":   { "action": "<...>", "dialogue": "<...>", "variant": "..." },
+  "confession": { "action": "<...>", "dialogue": "<...>", "variant": "..." }
 }
 
 RULES:
-- Each action: a specific physical act the protagonist takes RIGHT NOW. Never vague. Never de-escalating. Must match ${effectiveMode} intensity.
+- Each action: a specific physical act the protagonist takes RIGHT NOW. Specific. Match ${effectiveMode} intensity for amplify variants.
 - Each dialogue: what the protagonist says or sounds like (use quotes or parens for sounds).
 - If scene context names a character/threat/location relevant to an archetype, reference it (e.g., "Pull him closer before Triton can hear"). Use the actual story, not generic.
-- Each preview is INDEPENDENT — they are 5 different roads the user can take, not a sequence.`;
+- RUIN cards may name plot figures from grievances/callbacks/committed truth — but stay character-grounded (a whispered wrong name, not a plot dump).
+- REDIRECT cards honor scars/wounds — they may PULL BACK from an act, ask a heavy question, or change the subject. The body slows; never goes cold.
+- Each preview is INDEPENDENT — they are 5 different roads the user can take, not a sequence.
+- Distribute variants across the 5 — don't make all 5 amplify (boring) and don't make all 5 ruin/redirect (cards become anti-erotic). Target rough 70/20/10 within the 5.`;
 
     const messages = [
       { role: 'system', content: systemMsg },
@@ -4260,17 +4306,27 @@ RULES:
         ? window._normalizeLLMJson(slice) : slice;
       const obj = JSON.parse(normalized);
       const keys = ['temptation', 'silence', 'reversal', 'boundary', 'confession'];
+      const validVariants = { amplify: 1, ruin: 1, redirect: 1 };
       const out = {};
       for (const k of keys) {
         if (obj[k] && typeof obj[k] === 'object') {
+          var v = String(obj[k].variant || 'amplify').toLowerCase().trim();
+          if (!validVariants[v]) v = 'amplify';
           out[k] = {
             action:   String(obj[k].action || '').slice(0, 120).trim(),
-            dialogue: String(obj[k].dialogue || '').slice(0, 150).trim()
+            dialogue: String(obj[k].dialogue || '').slice(0, 150).trim(),
+            variant:  v
           };
         }
       }
       // Need at least one parsed entry to be useful.
       if (Object.keys(out).length === 0) return null;
+      // Telemetry — log variant distribution so we can see if Grok respects the 70/20/10.
+      try {
+        var dist = { amplify: 0, ruin: 0, redirect: 0 };
+        Object.keys(out).forEach(function(k) { dist[out[k].variant || 'amplify'] += 1; });
+        console.log('[FATE:INTIMATE:VARIANT-DIST] ' + JSON.stringify(dist));
+      } catch (_) {}
       return out;
     } catch (e) {
       console.warn('[FATE:INTIMATE] batch parse failed:', e && e.message);

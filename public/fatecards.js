@@ -398,6 +398,163 @@ function stopContinuousSparkles() {
         { id: 'silence', title: 'Silence', desc: 'Words fail. Actions speak.', actionTemplate: 'You let the moment breathe without words.', dialogueTemplate: '(Silence speaks louder)' }
     ];
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // PLOT CONTEXT EXTRACTOR — Slice 1 (added 2026-05-17)
+    // ═══════════════════════════════════════════════════════════════════════
+    // Reads the 8+ load-bearing state slots the existing scene-context
+    // extractor was ignoring: A-plot pressure, archetype, intimacy phase,
+    // committed truth, active grievance contracts, recent callback ledger
+    // entries, recent narrative scars, relationship gravity direction,
+    // narrative gravity arcs, and microDecision axis lean.
+    //
+    // Slice 1 (this one) ONLY surfaces the data. Template generators may
+    // start reading it, but most existing templates will continue to ignore
+    // it until Slice 3 wires per-card use. Slice 2 will route the intimate
+    // deck through Grok with this context as the prompt payload.
+    //
+    // Defensive throughout — every slot may be absent. Returns null/empty
+    // for missing data; never throws.
+    // ═══════════════════════════════════════════════════════════════════════
+    function extractPlotContext(state) {
+        const s = state || {};
+
+        // A-plot pressure
+        const aPlot = s.aPlot || {};
+        const aPlotGoal = aPlot.goal || null;
+        const aPlotStakes = aPlot.stakes || null;
+        const aPlotClock = aPlot.clock || null;
+        const aPlotTimelineLength = aPlot.timelineLength || 0;
+        const turnCount = s.turnCount || 0;
+        const arcPct = (aPlotTimelineLength > 0) ? (turnCount / aPlotTimelineLength) : null;
+
+        // Archetype + structural state
+        const archetypePrimary = (s.archetype && s.archetype.primary) || null;
+        const archetypeModifier = (s.archetype && s.archetype.modifier) || null;
+        const storyturn = s.storyturn || 'ST1';
+        const intimacyPhase = !!s.intimacyPhase;
+
+        // Committed truth (slice 1 promise architecture)
+        let committedTruth = null;
+        if (s.committedTruth && s.committedTruth.decidedTruth) {
+            committedTruth = {
+                about: s.committedTruth.about || null,
+                family: s.committedTruth.family || null,
+                subFamily: s.committedTruth.subFamily || null,
+                summary: String(s.committedTruth.decidedTruth).slice(0, 160),
+                seedScene: s.committedTruth.seedScene || 0,
+                revealFired: !!(s.committedTruth.reveal && s.committedTruth.reveal.fired),
+                inClimaxWindow: (arcPct !== null) && arcPct >= 0.85
+            };
+        }
+
+        // Active grievance contracts (escalating / surfacing / converged
+        // are interesting for card flavor; dormant + abandoned are not)
+        const activeGrievances = (s.grievanceContracts || [])
+            .filter(c => c && (c.visibility === 'escalating_offscreen' || c.visibility === 'surfacing' || c.visibility === 'converged'))
+            .slice(0, 2)
+            .map(c => ({
+                sourceCharacter: c.sourceCharacter,
+                vector: c.grievanceVector,
+                visibility: c.visibility,
+                weight: c.weight,
+                originatingScene: c.originatingScene,
+                aftermathPhase: c.aftermathPhase || null
+            }));
+
+        // Recent unresolved callback ledger entries (max 2)
+        // Handle both array and {entries, used} shape per the dual-shape pattern
+        const ledgerArr = Array.isArray(s.callbackLedger)
+            ? s.callbackLedger
+            : (s.callbackLedger && Array.isArray(s.callbackLedger.entries) ? s.callbackLedger.entries : []);
+        const recentCallbacks = ledgerArr
+            .filter(e => e && !e.resolved && e.text)
+            .slice(-2)
+            .map(e => ({
+                type: e.type || 'promise',
+                text: String(e.text).slice(0, 140),
+                sceneAdded: e.scene_added || 0
+            }));
+
+        // Recent narrative scars (slice 1 emotional illusion) — most recent 2
+        const recentScars = (s.narrativeScars || [])
+            .slice(-2)
+            .map(sc => ({
+                type: sc.type,
+                target: sc.target,
+                expression: sc.expression,
+                sourceScene: sc.sourceScene,
+                physical: !!sc.physical
+            }));
+
+        // Recent near-misses (max 1, for card-side "echo" flavor)
+        const recentNearMiss = (s.nearMisses || []).slice(-1).map(nm => ({
+            what: nm.what,
+            distance: nm.distance,
+            scene: nm.scene
+        }))[0] || null;
+
+        // Relationship gravity (trajectory)
+        const gravityDirection = (s.relationshipGravity && s.relationshipGravity.direction) || null;
+        const gravityStrength = (s.relationshipGravity && s.relationshipGravity.strength) || null;
+
+        // Narrative gravity (arc carry-forward)
+        let narrativeGravity = null;
+        if (s.narrativeGravity) {
+            narrativeGravity = {
+                primary: s.narrativeGravity.primary || null,
+                secondary: s.narrativeGravity.secondary || null,
+                emotional: s.narrativeGravity.emotional || null
+            };
+        }
+
+        // microDecision axis lean (objective ↔ relationship)
+        const axis = s._stagedPreferenceAxis;
+        let axisLean = null;
+        if (axis && ((axis.objective || 0) + (axis.relationship || 0) > 0)) {
+            const lead = (axis.objective || 0) - (axis.relationship || 0);
+            axisLean = {
+                objective: axis.objective || 0,
+                relationship: axis.relationship || 0,
+                lead
+            };
+        }
+
+        // Charge gravity (avoidance ↔ dwell)
+        const cg = s.chargeGravity || null;
+        let chargeLean = null;
+        if (cg && ((cg.avoidance || 0) + (cg.dwell || 0) > 0)) {
+            chargeLean = {
+                avoidance: cg.avoidance || 0,
+                dwell: cg.dwell || 0,
+                lead: (cg.dwell || 0) - (cg.avoidance || 0)
+            };
+        }
+
+        // Active Fate-OAS budget (informs cards during in-OAS Fate distortion)
+        let fateOASBudget = null;
+        if (s._fateOASBudget && s._fateOASBudget.turnsRemaining > 0) {
+            fateOASBudget = {
+                type: s._fateOASBudget.type,
+                turnsRemaining: s._fateOASBudget.turnsRemaining,
+                totalTurns: s._fateOASBudget.totalTurns
+            };
+        }
+
+        return {
+            // A-plot
+            aPlotGoal, aPlotStakes, aPlotClock, aPlotTimelineLength, arcPct, turnCount,
+            // structural
+            archetypePrimary, archetypeModifier, storyturn, intimacyPhase,
+            // promise / consequence systems
+            committedTruth, activeGrievances, recentCallbacks, recentScars, recentNearMiss,
+            // gravity readouts
+            gravityDirection, gravityStrength, narrativeGravity, axisLean, chargeLean,
+            // Fate-OAS distortion (during invocation)
+            fateOASBudget
+        };
+    }
+    window.extractPlotContext = extractPlotContext;
+
     // SCENE AWARENESS: Extract critical context from story
     function extractSceneContext(storyText, state) {
         const recentText = storyText.slice(-800).toLowerCase();
@@ -470,6 +627,27 @@ function stopContinuousSparkles() {
         if (currentLocation) confidence += 0.15;
         if (sceneObjects.length > 0) confidence += 0.1;
 
+        // Slice 1 (added 2026-05-17): plot context merged in as `plot` key.
+        // Existing destructures pull specific scene-context fields, ignoring
+        // extras — safe to add. Slices 2-3 will read `plot.*` for richer
+        // card flavor; Slice 1 only surfaces the data so it's available.
+        const plot = extractPlotContext(state);
+        try {
+            console.log('[FATE-CARDS:PLOT-CTX]',
+                'archetype=' + (plot.archetypePrimary || '–'),
+                '· ST=' + plot.storyturn,
+                '· intimacy=' + plot.intimacyPhase,
+                '· aplot=' + (plot.aPlotGoal ? '"' + String(plot.aPlotGoal).slice(0, 40) + '"' : '–'),
+                '· truth=' + (plot.committedTruth ? plot.committedTruth.about + (plot.committedTruth.inClimaxWindow ? '[climax]' : '') : '–'),
+                '· grievances=' + plot.activeGrievances.length,
+                '· callbacks=' + plot.recentCallbacks.length,
+                '· scars=' + plot.recentScars.length,
+                '· gravity=' + (plot.gravityDirection || '–'),
+                '· axis-lead=' + (plot.axisLean ? plot.axisLean.lead : '–'),
+                '· fateOAS=' + (plot.fateOASBudget ? plot.fateOASBudget.type + '(' + plot.fateOASBudget.turnsRemaining + 'left)' : '–')
+            );
+        } catch (_) {}
+
         return {
             presentCharacters,
             lastEmotionalBeat,
@@ -478,7 +656,8 @@ function stopContinuousSparkles() {
             sceneObjects,
             liName,
             liIntroduced: liName && recentText.includes(liName.toLowerCase()),
-            confidence
+            confidence,
+            plot
         };
     }
 
@@ -762,6 +941,22 @@ function stopContinuousSparkles() {
         // INTIMATE CONTEXT: Route through erotic generators, skip ChatGPT
         // ═══════════════════════════════════════════════════════════════════
         if (isIntimateContextActive()) {
+            // Slice 2 (added 2026-05-17): check speculative Grok cache first.
+            // _speculativeGrokIntimateFateCards fires at scene-finalize for the
+            // NEXT turn; by deal time the cache should usually be populated.
+            // Cards include `variant` (amplify | ruin | redirect) for telemetry.
+            const tc = state.turnCount || 0;
+            const grokCache = state._grokIntimateFateCards;
+            if (grokCache && grokCache.turnCount === tc && grokCache.cards && grokCache.cards[baseCard.id]) {
+                const g = grokCache.cards[baseCard.id];
+                try { console.log('[FATE-CARDS:GROK-HIT] card=' + baseCard.id + ' variant=' + (g.variant || 'amplify')); } catch (_) {}
+                return { ...baseCard, action: g.action, dialogue: g.dialogue, _intimate: true, _variant: g.variant || 'amplify', _grokSourced: true };
+            }
+
+            // Cache miss → fall back to template generator. Either speculative
+            // call didn't fire (no orchestration client), it's still in flight,
+            // or it failed (Grok down). Templates always work as a floor.
+            try { console.log('[FATE-CARDS:GROK-MISS] card=' + baseCard.id + ' — template fallback'); } catch (_) {}
             const intimateMode = resolveIntimateMode();
             const intimateCtx = { intimateMode, liName: resolvedTargetName };
             const options = generateIntimateCardOptions(baseCard.id, intimateCtx);
@@ -807,6 +1002,10 @@ function stopContinuousSparkles() {
 
         // Generate options based on card type with scene awareness
         // STORYBEAU AUTHORITY: Use resolved target, not raw liName
+        // Slice 3 (added 2026-05-17): pass `plot` through so card generators
+        // can branch on A-plot pressure, committed truth, grievances, scars,
+        // callbacks, gravity, axis lean. Existing branches still fire if no
+        // plot signal matches.
         const options = generateCardOptions(baseCard.id, {
             isSetup,
             isEarlyStory,
@@ -819,7 +1018,9 @@ function stopContinuousSparkles() {
             sceneObjects,
             presentCharacters,
             // Pass resolution metadata for triangle-aware generation
-            targetResolution
+            targetResolution,
+            // Slice 3: plot context (Slice 1 extracted, Slice 3 reads)
+            plot: sceneContext.plot || null
         });
 
         // Filter out repetitive or generic options
@@ -845,7 +1046,7 @@ function stopContinuousSparkles() {
 
     // ACTIONABLE OPTIONS: Each should change the next beat differently
     function generateCardOptions(cardId, ctx) {
-        const { isSetup, isEarlyStory, liIntroduced, liName, intensity, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, presentCharacters } = ctx;
+        const { isSetup, isEarlyStory, liIntroduced, liName, intensity, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, presentCharacters, plot } = ctx;
 
         const locationPhrase = currentLocation ? `in the ${currentLocation}` : '';
         const objectPhrase = sceneObjects.length > 0 ? sceneObjects[0] : '';
@@ -868,7 +1069,59 @@ function stopContinuousSparkles() {
     }
 
     function getTemptationOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Committed truth in climax window — temptation = take the reveal
+            if (plot.committedTruth && !plot.committedTruth.revealFired && plot.committedTruth.inClimaxWindow) {
+                return {
+                    action: `The thing you've been circling — it's right there. Reach for it.`,
+                    dialogue: `"I think I finally see it."`,
+                    altAction: `The pattern is about to name itself. Don't look away.`,
+                    altDialogue: `"Tell me I'm wrong."`
+                };
+            }
+            // Active grievance (escalating / surfacing) — temptation toward confrontation
+            if (plot.activeGrievances && plot.activeGrievances.length) {
+                const g = plot.activeGrievances[0];
+                return {
+                    action: `Bring up ${g.sourceCharacter}. You've been steering around the name for too long.`,
+                    dialogue: `"What happened with ${g.sourceCharacter} — it never settled, did it?"`,
+                    altAction: `The pull to close the loop with ${g.sourceCharacter} sharpens.`,
+                    altDialogue: `"I keep almost saying ${g.sourceCharacter}'s name."`
+                };
+            }
+            // Recent near-miss — temptation to circle back to the alternate timeline
+            if (plot.recentNearMiss) {
+                return {
+                    action: `Something pulls you back toward what almost happened. Follow it.`,
+                    dialogue: `"I keep thinking about the day I didn't pick up."`,
+                    altAction: `The almost-thing won't stop almosting. Test it again.`,
+                    altDialogue: `"What if I'd answered?"`
+                };
+            }
+            // Heavy axis lean — temptation toward the OPPOSITE pole
+            if (plot.axisLean && Math.abs(plot.axisLean.lead) >= 4) {
+                if (plot.axisLean.lead > 0) {
+                    // objective-heavy → temptation to drop the goal for ${liName}
+                    return {
+                        action: `Set the work down. Let ${liName} be the only thing in the room.`,
+                        dialogue: `"None of it matters tonight."`,
+                        altAction: `The goal can wait. Choose the person.`,
+                        altDialogue: `"I want this more than I want to be right."`
+                    };
+                } else {
+                    // relationship-heavy → temptation to seize the objective alone
+                    return {
+                        action: `Step away from ${liName}. Do the thing nobody can do with you.`,
+                        dialogue: `"I have to handle this myself."`,
+                        altAction: `Walk past ${liName}. The work is its own pull.`,
+                        altDialogue: `"Don't follow me."`
+                    };
+                }
+            }
+        }
 
         if (isSetup) {
             return {
@@ -925,7 +1178,53 @@ function stopContinuousSparkles() {
     }
 
     function getConfessionOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, unresolvedTension } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, unresolvedTension, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Committed truth — confession can surface the seed (not in climax yet)
+            if (plot.committedTruth && !plot.committedTruth.revealFired) {
+                const t = plot.committedTruth;
+                const scenesSinceSeed = (plot.turnCount || 0) - (t.seedScene || 0);
+                if (scenesSinceSeed >= 3 && !t.inClimaxWindow) {
+                    return {
+                        action: `The thing you've kept folded inside finally needs air. Say it to ${liName}.`,
+                        dialogue: `"There's something I should have told you weeks ago."`,
+                        altAction: `What you noticed but haven't named is starting to weigh too much.`,
+                        altDialogue: `"I've been turning it over. I think you should know."`
+                    };
+                }
+            }
+            // Recent narrative scar — confession can name the avoidance
+            if (plot.recentScars && plot.recentScars.length) {
+                const sc = plot.recentScars[plot.recentScars.length - 1];
+                return {
+                    action: `Acknowledge what you've been walking around. Name "${sc.target}" out loud.`,
+                    dialogue: `"I haven't been able to talk about it. Until now."`,
+                    altAction: `The thing you've been steering past — admit it.`,
+                    altDialogue: `"You've noticed me avoiding it, haven't you?"`
+                };
+            }
+            // Active grievance — confession about the source character
+            if (plot.activeGrievances && plot.activeGrievances.length) {
+                const g = plot.activeGrievances[0];
+                return {
+                    action: `Tell ${liName} what really happened with ${g.sourceCharacter}.`,
+                    dialogue: `"I haven't been honest about ${g.sourceCharacter}."`,
+                    altAction: `${g.sourceCharacter}'s name needs saying. Say it.`,
+                    altDialogue: `"I owe ${g.sourceCharacter} an account. Maybe you too."`
+                };
+            }
+            // Unresolved callback — confession about what was left hanging
+            if (plot.recentCallbacks && plot.recentCallbacks.length) {
+                return {
+                    action: `Reopen the thing you both let drop. Don't soften it this time.`,
+                    dialogue: `"That conversation we didn't finish — I want to finish it."`,
+                    altAction: `Bring the unanswered question back into the room.`,
+                    altDialogue: `"You asked me something I didn't answer. I'm answering now."`
+                };
+            }
+        }
 
         if (isSetup) {
             return {
@@ -980,7 +1279,49 @@ function stopContinuousSparkles() {
     }
 
     function getBoundaryOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, currentLocation } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, currentLocation, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Grievance aftermath firing — boundary about the convergence
+            if (plot.activeGrievances && plot.activeGrievances.some(function(g) { return g.aftermathPhase === 'firing'; })) {
+                var gAft = plot.activeGrievances.find(function(g) { return g.aftermathPhase === 'firing'; });
+                return {
+                    action: `Decide right now how much you owe ${gAft.sourceCharacter}. The room is waiting.`,
+                    dialogue: `"I have to choose what to give them."`,
+                    altAction: `Hold the line — or don't — between yourself and ${gAft.sourceCharacter}.`,
+                    altDialogue: `"This is where I either make it right or don't."`
+                };
+            }
+            // Recent narrative scar — boundary that honors the scar
+            if (plot.recentScars && plot.recentScars.length) {
+                var scB = plot.recentScars[plot.recentScars.length - 1];
+                return {
+                    action: `You know where the line is now. Don't let ${liName} talk you past "${scB.target}".`,
+                    dialogue: `"I can't do that anymore. Not after last time."`,
+                    altAction: `The scar is the boundary. Honor it without explaining it.`,
+                    altDialogue: `"Some things I just don't do now."`
+                };
+            }
+            // A-plot pressure — boundary against sacrificing the goal
+            if (plot.aPlotGoal && plot.aPlotStakes) {
+                return {
+                    action: `${liName} is here, but so is the deadline. Make a choice that doesn't apologize for either.`,
+                    dialogue: `"I can give you tonight, but I can't give you tomorrow."`,
+                    altAction: `Name the cost out loud. ${liName} either accepts it or doesn't.`,
+                    altDialogue: `"If I stay, I lose the thing I came for."`
+                };
+            }
+            // Heavy charge avoidance — boundary that protects the avoidance
+            if (plot.chargeLean && plot.chargeLean.lead <= -4) {
+                return {
+                    action: `Step back before this becomes more than you can hold. ${liName} can wait.`,
+                    dialogue: `"Not tonight. I need to think."`,
+                    altAction: `The pull is real and the answer is still no.`,
+                    altDialogue: `"I want this. That's why I'm leaving."`
+                };
+            }
+        }
 
         if (isSetup) {
             return {
@@ -1046,7 +1387,58 @@ function stopContinuousSparkles() {
     }
 
     function getReversalOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, presentCharacters } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, presentCharacters, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Heavy axis lean — reversal pulls toward the OPPOSITE pole
+            if (plot.axisLean && Math.abs(plot.axisLean.lead) >= 4) {
+                if (plot.axisLean.lead > 0) {
+                    // objective-heavy → reversal toward connection
+                    return {
+                        action: `Set down the agenda you've been carrying. Look at ${liName} like the agenda was never the point.`,
+                        dialogue: `"None of this works without you."`,
+                        altAction: `Stop strategizing. Choose ${liName} mid-sentence.`,
+                        altDialogue: `"I've been managing you. I'm done."`
+                    };
+                } else {
+                    // relationship-heavy → reversal toward objective
+                    return {
+                        action: `Pull back from ${liName} just enough to act. The work was always going to need you eventually.`,
+                        dialogue: `"I love this. But it can't be the only thing."`,
+                        altAction: `Step out of the soft place. Take the move you've been postponing.`,
+                        altDialogue: `"I need to be the person who does this."`
+                    };
+                }
+            }
+            // Grievance surfacing — reversal hands the power to the absent figure
+            if (plot.activeGrievances && plot.activeGrievances.some(function(g) { return g.visibility === 'surfacing'; })) {
+                var gSurf = plot.activeGrievances.find(function(g) { return g.visibility === 'surfacing'; });
+                return {
+                    action: `Acknowledge ${gSurf.sourceCharacter} out loud. Give the absent the room they've been earning.`,
+                    dialogue: `"${gSurf.sourceCharacter} has been part of this without being here."`,
+                    altAction: `Let the dynamic between you and ${liName} reshape around someone neither of you is looking at.`,
+                    altDialogue: `"We've been having the wrong conversation."`
+                };
+            }
+            // Relationship gravity drift — reversal corrects the trajectory
+            if (plot.gravityDirection === 'away') {
+                return {
+                    action: `Close the distance you've let open with ${liName}. Don't ask permission.`,
+                    dialogue: `"I've been letting this slip. I'm not anymore."`,
+                    altAction: `Reach for ${liName} before you decide if you should.`,
+                    altDialogue: `"Come here."`
+                };
+            }
+            if (plot.gravityDirection === 'toward') {
+                return {
+                    action: `Step back from ${liName}. The pull is real; that's not the same as right.`,
+                    dialogue: `"I want this. I'm not sure I should."`,
+                    altAction: `Cool the orbit on purpose. ${liName} will feel it.`,
+                    altDialogue: `"Let me think."`
+                };
+            }
+        }
 
         if (isSetup || !liIntroduced) {
             return {
@@ -1103,7 +1495,48 @@ function stopContinuousSparkles() {
     }
 
     function getSilenceOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, currentLocation, sceneObjects } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, currentLocation, sceneObjects, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Recent near-miss — silence honors the alternate timeline the PC doesn't know
+            if (plot.recentNearMiss) {
+                return {
+                    action: `Hold the silence in the spot where the other path almost forked.`,
+                    dialogue: `(You don't say it. You don't know why.)`,
+                    altAction: `Don't fill the pause. Whatever didn't happen is still in the air.`,
+                    altDialogue: `(Something in you decides not to speak.)`
+                };
+            }
+            // Committed truth NOT in climax window — silence holds the truth
+            if (plot.committedTruth && !plot.committedTruth.revealFired && !plot.committedTruth.inClimaxWindow) {
+                return {
+                    action: `Let the silence carry what your words won't. ${liName} can feel the absence.`,
+                    dialogue: `(The thing you almost said folds back into your chest.)`,
+                    altAction: `Hold the truth in. Not forever — just not now.`,
+                    altDialogue: `(You decide to say nothing. ${liName} notices anyway.)`
+                };
+            }
+            // Recent narrative scar — silence around the scar topic
+            if (plot.recentScars && plot.recentScars.length) {
+                var scS = plot.recentScars[plot.recentScars.length - 1];
+                return {
+                    action: `${liName} drifts close to "${scS.target}". Don't take the bait. Let the silence steer them off.`,
+                    dialogue: `(You change the subject without speaking.)`,
+                    altAction: `Refuse to be drawn into the thing you've stopped touching.`,
+                    altDialogue: `(Your stillness is the answer.)`
+                };
+            }
+            // Heavy charge avoidance — silence as protective distance
+            if (plot.chargeLean && plot.chargeLean.lead <= -4) {
+                return {
+                    action: `Hold the space empty. Don't let ${liName} fill the silence for you.`,
+                    dialogue: `(You don't help. You don't soften it.)`,
+                    altAction: `Let ${liName} stay uncertain. Your quiet is intentional.`,
+                    altDialogue: `(The silence stretches because you keep it stretching.)`
+                };
+            }
+        }
 
         if (isSetup || !liIntroduced) {
             return {
@@ -1771,13 +2204,31 @@ function setSelectedState(mount, selectedCardEl){
     window.startFireflyEmanation = startFireflyEmanation;
     window.triggerGoldenFlow = triggerGoldenFlow;
 
-    window.dealFateCards = function() {
+    window.dealFateCards = function(opts) {
+        opts = opts || {};
         const mount = document.getElementById('cardMount');
         if(!mount) return;
 
         // Safety: Ensure state exists before trying to write to it
         if (!window.state) {
             console.warn("State not ready for dealing cards.");
+            return;
+        }
+
+        // ── PER-SCENE RE-ROLL GUARD (added 2026-05-17) ──────────────────
+        // If cards have already been dealt for this turnCount AND the call
+        // didn't explicitly opt into a redeal (opts.force === true), reuse
+        // the existing state.fateOptions. Prevents re-clicks / re-mounts
+        // from accidentally re-rolling card suggestions mid-scene.
+        // Resets that bypass this: explicit force flag, OR new turn (different
+        // turnCount), OR explicit reset via resetFateBindFlags-adjacent paths.
+        const currentTurn = window.state.turnCount || 0;
+        if (!opts.force
+            && window.state.fateOptions
+            && Array.isArray(window.state.fateOptions)
+            && window.state.fateOptions.length
+            && window.state._fateOptionsTurnCount === currentTurn) {
+            try { console.log('[FATE] dealFateCards no-op — already dealt for turn ' + currentTurn + ' (use opts.force=true to redeal)'); } catch (_) {}
             return;
         }
 
@@ -1790,6 +2241,7 @@ function setSelectedState(mount, selectedCardEl){
         window.state.fateOptions = null;
         window.state.fateSelectedIndex = -1;
         window.state.fateCommitted = false;
+        window.state._fateOptionsTurnCount = currentTurn;
 
         // SPECULATIVE PRELOAD: Invalidate when new cards dealt
         if (typeof window.invalidateSpeculativeScene === 'function') {

@@ -1105,7 +1105,10 @@
     battlefield:     '/assets/audio/ambient/battlefield_combat.mp3',
     basketball_gym:  '/assets/audio/ambient/basketball_gym.mp3',
     hockey_arena:    '/assets/audio/ambient/hockey_arena.mp3',
-    cafeteria:       '/assets/audio/ambient/cafeteria.mp3'
+    cafeteria:       '/assets/audio/ambient/cafeteria.mp3',
+    boxing_gym:      '/assets/audio/ambient/boxing_gym.mp3',
+    weight_room:     '/assets/audio/ambient/weight_room.mp3',
+    action_drums:    '/assets/audio/ambient/action_drums.mp3'
   };
   // Public so the classifier prompt can read the canonical enum.
   window._SCENE_AMBIENT_TAGS = Object.keys(_SCENE_AMBIENT_FILES);
@@ -1149,7 +1152,10 @@
     battlefield:     0.05,
     basketball_gym:  0.06,
     hockey_arena:    0.05,
-    cafeteria:       0.07
+    cafeteria:       0.07,
+    boxing_gym:      0.06,
+    weight_room:     0.06,
+    action_drums:    0.05
   };
 
   var _sceneAmbientBuffers = {};   // tag → AudioBuffer (lazy-loaded)
@@ -1170,6 +1176,10 @@
     duckFactor: 1.0
   };
   var _SCENE_AMBIENT_LAYER2_RATIO = 0.35;
+  // Expose state refs for the debug panel (added 2026-05-17). Read-only;
+  // panel queries `.currentTag` per layer to surface what's playing.
+  window._sceneAmbientStateRef  = _sceneAmbientState;
+  window._sceneAmbient2StateRef = _sceneAmbient2State;
   // Layer-3 ambient — third bed, even quieter, for triple-stacking. Use
   // case: urban office during rain — primary=office, layer2=urban_room
   // (distant traffic), layer3=rain_storm (rain through the window).
@@ -1180,6 +1190,7 @@
     currentTag: null,
     duckFactor: 1.0
   };
+  window._sceneAmbient3StateRef = _sceneAmbient3State;
   var _SCENE_AMBIENT_LAYER3_RATIO = 0.25;
 
   function _loadSceneAmbientBuffer(tag) {
