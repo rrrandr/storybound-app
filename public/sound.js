@@ -742,11 +742,13 @@
     thinking_hand: 0, thinking_pursed: 0, thinking_intrigued: 0,
     blowing_smirk: 0,  // peak-TIER but pursed/closed mouth — no breath
     soft: 0, still: 0,  // legacy aliases
-    // Open below peak → 50% breath
-    ohno: 0.5, what: 0.5, you: 0.5,
-    hard_exhale: 0.5,
-    affronted: 0.5, apologetic: 0.5, disgusted: 0.5,
-    parted: 0.5,  // legacy alias
+    // Open below peak → 25% breath. (Was 0.5 — cut 2026-05-18 so peak
+    // has clear 4× headroom to grow into. Pre-peak should be PRESENT
+    // but quiet; the climb to peak should land as a real audio swell.)
+    ohno: 0.25, what: 0.25, you: 0.25,
+    hard_exhale: 0.25,
+    affronted: 0.25, apologetic: 0.25, disgusted: 0.25,
+    parted: 0.25,  // legacy alias
     // Loose-smile states — soft open but not exerting. Quarter breath
     // (same tier as settled). relief = pre-intensity flirt / post-intensity
     // contented release; after = very satisfied afterglow.

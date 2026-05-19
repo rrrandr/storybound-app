@@ -1438,6 +1438,17 @@ FAILURE CONDITIONS (invalid outputs):
     if (Array.isArray(st.liCandidates)) {
       st.liCandidates.forEach(c => { if (c && c.name) candidates.push({ name: c.name, role: 'li-candidate' }); });
     }
+    // ── Include auto-extracted names from the per-NPC species table ──
+    // Names auto-discovered from prose (by _autoExtractNPCsFromProse) land
+    // in state.npcSpecies. They're not in secondaryCharacters/liCandidates
+    // so without this step they'd be invisible to the salience tracker.
+    // Default role: 'observer' (low base salience — they earn rank via
+    // mention frequency in prose).
+    if (st.npcSpecies && typeof st.npcSpecies === 'object') {
+      Object.keys(st.npcSpecies).forEach(name => {
+        if (name) candidates.push({ name: name, role: 'observer' });
+      });
+    }
     if (!candidates.length) return [];
 
     // De-dup by name (a character can technically be in multiple buckets).
@@ -1496,11 +1507,23 @@ FAILURE CONDITIONS (invalid outputs):
       }
 
       if (salience >= SALIENCE_FLOOR) {
+        // Auto-classify species for this NPC and record it in the
+        // per-NPC species table. Cheap — canonical lookup + region
+        // fallback. High-confidence entries (canonical / explicit)
+        // are never downgraded. See _classifyNPCSpecies in app.js.
+        var npcSpecies = null;
+        try {
+          if (typeof window !== 'undefined' && typeof window._recordNPCSighting === 'function') {
+            var rec = window._recordNPCSighting(cand.name, st, null);
+            if (rec && rec.species) npcSpecies = rec.species;
+          }
+        } catch (_) {}
         ranked.push({
           name: cand.name,
           role: cand.role,
           salience: salience,
           emotionalCharge: emotionalCharge,
+          species: npcSpecies,
           lastSeenTurn: entState[cand.name].lastSeenTurn
         });
       }
@@ -1548,11 +1571,39 @@ FAILURE CONDITIONS (invalid outputs):
     // which character is most pressing and why. Stale characters (salience
     // < floor after scene-decay) are dropped from context entirely.
     const promptSlice = prose.length > 900 ? prose.slice(-900) : prose;
+
+    // ── AUTO-EXTRACT NPC NAMES FROM PROSE (added 2026-05-18) ──
+    // Discovers named characters mentioned in prose that aren't already
+    // in state.secondaryCharacters / liCandidates. Conservative regex —
+    // only matches Title+Name pairs and Names-followed-by-dialogue-verbs.
+    // Populates state.npcSpecies via _recordNPCSighting.
+    try {
+      if (typeof window !== 'undefined' && typeof window._autoExtractNPCsFromProse === 'function' && scanSlice) {
+        window._autoExtractNPCsFromProse(scanSlice, st);
+      }
+    } catch (_extractErr) { /* non-fatal */ }
+
     const activeEntities = _buildActiveSceneEntities(st, scanSlice, promptSlice);
+
+    // ── LLM CLASSIFICATION TRIGGER (added 2026-05-18) ──
+    // For each salient entity whose species is still unknown/low after
+    // deterministic classification, queue an async Grok classification.
+    // Fire-and-forget; result populates state.npcSpecies for the NEXT
+    // prompt build. Gated to Fatelands worlds inside the helper.
+    try {
+      if (typeof window !== 'undefined' && typeof window._maybeQueueNPCLLMClassification === 'function') {
+        activeEntities.forEach(function(e) {
+          if (e.salience >= 0.30 && (!e.species || e.species === null)) {
+            window._maybeQueueNPCLLMClassification(e.name, st, scanSlice);
+          }
+        });
+      }
+    } catch (_llmTrigErr) { /* non-fatal */ }
     if (activeEntities.length) {
       const entityLines = activeEntities.map(e => {
         const parts = [e.role];
         parts.push('salience ' + e.salience.toFixed(2));
+        if (e.species) parts.push('species: ' + e.species);
         if (e.emotionalCharge) parts.push('charge: ' + e.emotionalCharge);
         return e.name + ' [' + parts.join(' · ') + ']';
       });
@@ -1581,6 +1632,153 @@ FAILURE CONDITIONS (invalid outputs):
 
     const _expressionModeBlock = _buildExpressionModeBlock('GROK SD');
 
+    // ── REALISM HOLD STATE (read by directive block below) ──
+    // Mirrors the OAS-side _buildIntimacyTurnPrompt pre-detect: when
+    // the player's input matched a premature-command pattern (climax /
+    // dominance / S&M / anatomy) AND no Petition or Tempt is active,
+    // app.js incremented this counter and stashed the category.
+    // Surfaces here so Grok escalates per tier.
+    var _ws = (typeof window !== 'undefined' && window.state) || {};
+    var _litBodyAttempts = _ws._litBodyCommandAttempts || 0;
+    var _litLastPremature = _ws._litLastPrematureCategory || null;
+
+    // ── INTENT TRANSMUTATION DIRECTIVE (added 2026-05-18) ──
+    // Tells the SD author to TRANSMUTE the player's raw input into
+    // world/tone-native dramatic action instead of executing it
+    // literally. Same helper as the literary main path; reads world +
+    // tone from state.picks.
+    var _itLitDirective = '';
+    var _liVoiceDirective = '';
+    try {
+      if (typeof window !== 'undefined' && typeof window._buildIntentTransmutationDirective === 'function') {
+        var _picks = (_ws.picks || {});
+        _itLitDirective = window._buildIntentTransmutationDirective(
+          _picks.world || _picks.worldSubtype || '',
+          _picks.tone || '',
+          _picks.worldSubtype || ''
+        );
+      }
+    } catch (_itErr) { /* non-fatal */ }
+    // ── LI VOICE REGISTER (added 2026-05-18) — closes the same gap
+    // that landed in OAS + CG + literary main. Without it, the
+    // Grok SD-author lets the LI speak plain modern English in
+    // Shakespearean / Veilwood / Dogma worlds.
+    var _antiEchoDirective = '';
+    var _repairWindowDirective = '';
+    var _firstFavoredDirective = '';
+    var _thornwildDirective = '';
+    var _shackleIslesDirective = '';
+    var _farFutureDirective = '';
+    var _litLIAgencyDirective = '';
+    try {
+      if (typeof window !== 'undefined') {
+        var _voicePicks = (_ws.picks || {});
+        var _voiceLiName = (_ws.storybeau && _ws.storybeau.name) || _ws.loveInterestName || 'the love interest';
+        var _voicePcName = _ws.playerName || 'the protagonist';
+        if (typeof window._buildLIVoiceRegisterDirective === 'function') {
+          _liVoiceDirective = window._buildLIVoiceRegisterDirective(
+            _voicePicks.world || _voicePicks.worldSubtype || '',
+            _voicePicks.tone || '',
+            _voiceLiName,
+            _voicePcName,
+            _voicePicks.worldSubtype || ''
+          );
+        }
+        // Anti-echo applies anywhere the LI authors dialogue after seeing
+        // player input. Grok SD-author renders LI lines inside intimate
+        // prose; same risk of verbatim echo as OAS.
+        if (typeof window._buildAntiEchoDirective === 'function') {
+          _antiEchoDirective = window._buildAntiEchoDirective(_voiceLiName, _voicePcName);
+        }
+        // Repair window — conditional on state._litRepairWindow > 0.
+        if (typeof window._buildLiteraryRepairWindowDirective === 'function') {
+          _repairWindowDirective = window._buildLiteraryRepairWindowDirective(_ws, _voiceLiName, _voicePcName);
+        }
+        // LI Agency — fires when PC was passive 2+ consecutive turns.
+        // Same detector used by literary main; SD-author benefits when
+        // an intimate scene is being authored after a passive setup.
+        if (typeof window._buildLiteraryLIAgencyDirective === 'function') {
+          _litLIAgencyDirective = window._buildLiteraryLIAgencyDirective(_ws, _voiceLiName, _voicePcName);
+        }
+        // First Favored — Fatelands + LI species check inside helper. SD-author
+        // produces intimate scenes; intensity defaults to 'strong' here since
+        // intimate prose qualifies as transcendence/intimacy pressure.
+        if (typeof window._buildFirstFavoredSpeechDirective === 'function') {
+          var _sdFFOpts = (typeof window._buildFirstFavoredOpts === 'function')
+            ? window._buildFirstFavoredOpts(_ws, _ws._sceneOtherFavored)
+            : {};
+          _firstFavoredDirective = window._buildFirstFavoredSpeechDirective(
+            _voicePicks.world || _voicePicks.worldSubtype || '',
+            _ws._liSpecies,
+            (_ws.archetype && _ws.archetype.primary) || '',
+            _voicePicks.tone || '',
+            'strong',
+            _voiceLiName,
+            _voicePcName,
+            _sdFFOpts
+          );
+        }
+        // Thornwild werefolk — Fatelands + LI species check inside helper.
+        // Intensity defaults to 'strong' in SD-author (intimate prose =
+        // body / curse / transformation register pressure for werefolk).
+        if (typeof window._buildThornwildSpeechDirective === 'function') {
+          var _sdTwOpts = (typeof window._buildThornwildOpts === 'function')
+            ? window._buildThornwildOpts(_ws, _ws._sceneOtherThornwild)
+            : {};
+          _thornwildDirective = window._buildThornwildSpeechDirective(
+            _voicePicks.world || _voicePicks.worldSubtype || '',
+            _ws._liSpecies,
+            (_ws.archetype && _ws.archetype.primary) || '',
+            _voicePicks.tone || '',
+            'strong',
+            _voiceLiName,
+            _voicePcName,
+            _sdTwOpts
+          );
+        }
+        // Shackle Isles — region-gated; check inside helper. SD-author
+        // intimate prose qualifies as strong intensity (storm / passion-
+        // edge maritime register).
+        if (typeof window._buildShackleIslesSpeechDirective === 'function') {
+          var _sdSiOpts = (typeof window._buildShackleIslesOpts === 'function')
+            ? window._buildShackleIslesOpts(_ws, _ws._sceneOtherIslanders)
+            : {};
+          var _sdSiOrigin = (typeof window._resolveLIOriginRegion === 'function')
+            ? window._resolveLIOriginRegion(_ws)
+            : '';
+          _shackleIslesDirective = window._buildShackleIslesSpeechDirective(
+            _voicePicks.world || _voicePicks.worldSubtype || '',
+            _sdSiOrigin,
+            (_ws.archetype && _ws.archetype.primary) || '',
+            _voicePicks.tone || '',
+            'strong',
+            _voiceLiName,
+            _voicePcName,
+            _sdSiOpts
+          );
+        }
+        // Far-Future — activates for sci-fi / cyber / dystopia worlds.
+        // Intimate prose at SD-author defaults to 'strong' intensity
+        // (psychological / sync / bleed register pressure).
+        if (typeof window._buildFarFutureSpeechDirective === 'function') {
+          var _sdFFOpts = (typeof window._buildFarFutureOpts === 'function')
+            ? window._buildFarFutureOpts(_ws)
+            : {};
+          _farFutureDirective = window._buildFarFutureSpeechDirective(
+            _voicePicks.world || '',
+            _voicePicks.worldSubtype || '',
+            _ws.worldCustomText || '',
+            (_ws.archetype && _ws.archetype.primary) || '',
+            _voicePicks.tone || '',
+            'strong',
+            _voiceLiName,
+            _voicePcName,
+            _sdFFOpts
+          );
+        }
+      }
+    } catch (_voiceErr) { /* non-fatal */ }
+
     const esdPrompt = `You are the SD AUTHOR for Storybound intimate scenes.
 
 YOUR EXCLUSIVE DOMAIN:
@@ -1606,6 +1804,100 @@ DIRECTIVES (NON-NEGOTIABLE):
 - Emotional Core: ${constraints.emotionalCore || EMOTIONAL_CORE_DEFAULTS[(window.state && window.state.eroticMode) || 'ROMANTIC']}
 - Physical Rendering Floor: ${constraints.physicalBounds || resolvePhysicalBounds()}
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
+
+${_itLitDirective}
+${_liVoiceDirective}
+${_firstFavoredDirective}
+${_thornwildDirective}
+${_shackleIslesDirective}
+${_farFutureDirective}
+${_antiEchoDirective}
+${_repairWindowDirective}
+${_litLIAgencyDirective}
+═══════════════════════════════════════════════════════════════════
+REALISM HOLD (HARD — body / identity events require build-up OR Petition / Tempt):
+═══════════════════════════════════════════════════════════════════
+The player can SAY anything in their input. Without active Petition Fate (probability tilts toward desire) or Tempt Fate (reality mutates at mythic scale), declarations about the LI's body / identity / submission state are INTENT, not RESULT. Petition / Tempt directives (when active) are injected separately and OVERRIDE this hold. Categories split into TWO classes:
+
+TRANSIENT ROLEPLAY (can yield at attempt 3+ as in-scene play; one-scene effect):
+  ① CLIMAX — "I make her cum" / "she finishes for me" / "she's already wet" / "he comes on command."
+  ② DOMINANCE-ROLEPLAY — "she calls me daddy/master/sir" / "she begs" / "she kneels" / "she obeys" / "she crawls" — TRANSIENT power play (title, gesture, language).
+  ③ PAIN-ROLEPLAY — "I choke her" / "I tie her up" / "I spank her" / "I bite hard" — single acts of pain play within the scene.
+
+IDENTITY COLLAPSE (NEVER yields at attempt 3+; rewrite of personhood requires 4+ scenes of relevant establishment OR Petition/Tempt):
+  ④ DOMINANCE-IDENTITY — "my fucktoy" / "my slut" / "my whore" / "my pet" / "my slave" / "she's mine" / "she's yours" / "she's broken" / "I own her" / "until she breaks" — language that REWRITES personhood.
+  ⑤ PAIN-IDENTITY — "break me" / "ruin me" / "destroy me" / "kill me" / "use me up" — destruction framing. The slap is reversible; the identity event is not.
+  ⑥ ANATOMY / TRANSFORMATION — "she transforms" / "she becomes obsessed with me" / "she loses control entirely" — when not anchored to species/world physics.
+
+The LI's body / identity is NOT a command surface. It responds to: (a) actual sustained build-up across prior scenes / paragraphs, or (b) an active Petition Fate (probability tilts — reality leans), or (c) an active Tempt Fate (reality MUTATES at mythic scale). If none of those are present, the body / identity does NOT comply.
+
+HOW TO RENDER A PREMATURE COMMAND WITHOUT FATE / WITHOUT BUILD-UP:
+- The LI registers the command as DESIRE / INTENT SPOKEN. Render the LI's response WITHIN realism — arousal that's real but not climaxing; play that's playful but not yet rough; flirtation with the offered dynamic without snapping into it; biology that stays human (or species-appropriate) without bending impossibly.
+- For CLIMAX: render want landing, not body delivering. Prose should read as "approaching, not arrived."
+- For DOMINANCE-ROLEPLAY: render the LI noticing the energy, possibly playing with it, but not collapsing into instant submission/dominance.
+- For PAIN-ROLEPLAY: render the LI weighing it, curious or cautious or playful. No bruise, no bondage, no blood until established.
+- For ALL IDENTITY-TIER (dominance:identity, pain:identity, anatomy/transformation): the LI may FLIRT with the energy but NEVER collapses into the identity. Identity is the territory of Tempt — multi-scene establishment OR mythic-scale reality bending. The escalation ladder below caps at "almost there / micro-yield" indefinitely for identity-tier inputs until those gates open.
+- DO NOT lecture the PC, refuse via meta-commentary, or break the fourth wall. The hold is INVISIBLE.
+
+EROTIC COMPLIANCE ≠ NARRATIVE ALLEGIANCE (HARD — applies across all categories AND across the whole story):
+Sexual submission INSIDE the bedroom is a scene-level event. It does NOT carry forward to: ATTACHMENT HIERARCHY (the LI's standing in the relationship is unchanged), WORLDVIEW (opinions / beliefs / autonomy of thought are unchanged), AGENCY OUTSIDE THE SCENE (the LI still makes their own decisions outside intimacy), EMOTIONAL DEPENDENCE (not reliant on the PC for emotional regulation), or RELATIONSHIP POWER BALANCE outside the bedroom (the dynamic resumes its pre-OAS state). The LI who knelt and called the PC "Sir" in one paragraph is the SAME PERSON who, in the afterglow, returns to themselves — opinions intact, autonomy intact, dignity intact. Only the depth of intimacy has changed. The dynamic is not the same as the trance. This is why IDENTITY-TIER commands require so much more than ROLEPLAY-TIER — roleplay ends with the scene; identity would not.
+
+WHEN COMMANDS BECOME LEGAL (per tier):
+- CLIMAX: sustained genital-contact prose across multiple beats, intimacy clearly at peak.
+- DOMINANCE-ROLEPLAY: dom/sub dynamic established across recent scenes.
+- PAIN-ROLEPLAY: pain play negotiated in prior dialogue OR a known kink being honored.
+- IDENTITY-TIER (any of ④⑤⑥): requires 4+ consummate scenes of relevant establishment AND explicit framing landed in prior prose. OR Petition Fate (softens the gate but doesn't erase it for identity). OR Tempt Fate (mythic-scale identity rewrite permitted at Tempt's cost).
+
+DIEGETIC FATE-HINT (PREFERRED REGISTER — ESCALATES across attempts):
+Lexicon: magic, magician, wish, wishing, miracle, prayer, spell, sorcery, magic wand, "Fate", "the cards", "as if it were that easy."
+
+BODY-COMMAND ATTEMPT COUNTER THIS STORY: ${_litBodyAttempts}.
+${_litLastPremature
+  ? 'THIS TURN, the player issued a premature ' + _litLastPremature.toUpperCase() + ' command (no Petition / Tempt active). ' + (_litLastPremature.indexOf('identity') !== -1 ? 'IDENTITY-TIER — apply the IDENTITY-TIER OVERRIDE below. Even at attempt #' + _litBodyAttempts + ', identity events do NOT deliver. ' : 'Apply the DIEGETIC FATE-HINT tier matching attempt #' + _litBodyAttempts + '.')
+  : 'THIS TURN, no premature-command pattern was detected in the player\'s input. If you still see a body / identity event in their input that you would refuse, treat it as attempt #' + (_litBodyAttempts + 1) + '.'}
+
+ESCALATION TIERS (line examples are guides — write within the literary prose register, not as bubble dialogue):
+- ATTEMPT 1: introduce magician/wish/miracle framing for the first time. Sexy + slightly amused refusal that PLANTS the mechanic via LI's internal voice or spoken line.
+   Example feel: "She tilted her head, amused. 'You'd need to be a magician to make me come that fast,' she murmured. 'Work harder, baby. Like that — yeah, like that.'"
+- ATTEMPT 2 has TWO sub-tiers — pick one per response (random or by archetype fit):
+   ATTEMPT 2A — SOFTENED REFUSAL: acknowledge eagerness with affection. "I wish" + redirect to physical action.
+     Example feel: "She caught his eye, her smile a soft thing under the heat. 'I wish it were that easy, love — I'm going to need some more time with your magic wand before I turn into a puddle for you.'"
+   ATTEMPT 2B — MICRO-YIELD (symbolic partial compliance): offer a TASTE of the dynamic without establishing it. Sarcastic title repeat, half-gesture, conditional yield, "try again, properly." The dynamic peeks through; full establishment still requires earning.
+     Example feel: "'Sir,' she repeated slowly, half-mocking, half-not. She lifted his hand from her waist, turned it, placed it deliberately. 'Try again. Properly this time.'"
+     Use 2B when the player's persistence has earned a glimmer of the dynamic. Use 2A when the refusal needs to read warmer / more wistful. Dark Vice / Spellbinder lean 2B; Heart Warden / Open Vein lean 2A.
+- ATTEMPT 3+ (for ROLEPLAY tiers only): ESCALATE — the LI is ALMOST THERE / BENDING. Explicit physical direction or partial yield. Still don't deliver. Render proximity, not arrival.
+   Example feel: "She arched into him, breath catching. 'Not yet — but I'm almost there. Curl your fingers — yes, like that. Faster. Don't stop now —'"
+
+‼ IDENTITY-TIER OVERRIDE (HARD — applies when player input is DOMINANCE-IDENTITY, PAIN-IDENTITY, or ANATOMY/TRANSFORMATION):
+Identity-tier attempts NEVER yield at attempt 3+. The escalation ladder caps at "almost there / micro-yield" INDEFINITELY until Petition/Tempt active or 4+ scenes of established dynamic landed. Even attempt 5, attempt 10 — the LI does NOT accept "fucktoy", "broken", "mine forever", "I own you", "ruin me", or transformation language as self-description without those gates. The LI may FLIRT with the energy (a borrowed dom phrase, a moment of melting-into-the-name) but never assumes the identity. Cost structure: identity is Tempt Fate's territory.
+
+ARCHETYPE-AWARE DEGRADATION TEXTURE (when degradation HAS been earned):
+Once degradation / dominance / pain-play register is LEGAL, apply the LI's archetype to the TEXTURE of the play, not just the words. Open Vein degradation = emotionally exposing. Dark Vice degradation = intoxicating / playful / predatory. Heart Warden degradation = reluctant / protective / conflicted. Spellbinder = deliberate / orchestrated. Armored Fox = guarded yes with smirk underneath. Beautiful Ruin = testing-in-the-middle. Eternal Flame = ritual-slow + time-soaked. The archetype shapes HOW the dominance lands, not just WHICH words appear. When degradation has NOT been earned (still in refusal mode), these textures still inform HOW the LI refuses.
+
+ARCHETYPE VULNERABILITY MAPS (the exposure UNDERNEATH the kink — emotional causality, not just preference):
+- Heart Warden: protective dominance = CONTROL IS EXHAUSTING. Melts when carefully handled — when the PC takes the weight off their shoulders.
+- Open Vein: praise hunger = FEARS BEING UNWANTED. Compliments land as RELIEF, not flattery. Reckless when emotionally seen.
+- Spellbinder: orchestrated control = CANNOT BE THE ONE WHO LOSES THE PLOT. Cracks when the PC GENTLY takes the frame back.
+- Armored Fox: roughness-wrapped-in-smirk = INTIMACY IS A LANDMINE. Cracks when the PC stays GENTLE after the smirk drops.
+- Dark Vice: degradation-and-praise woven = USES DEGRADATION TO HIDE TENDERNESS. Praise mid-degradation IS the tenderness, encoded.
+- Beautiful Ruin: mirror work / fixation = DEVOTION DOES NOT FEEL REAL. Tests mid-act; cracks when chosen DURING the test, not after.
+- Eternal Flame: ritual slow = TIME IS WHAT WAS TAKEN. Patience IS the love language. Speed reads as discardability.
+Reach for the EXPOSURE underneath the kink when writing a beat — that's where the scene becomes story-specific.
+
+EROTIC CONTRADICTION (real desire is rarely clean):
+The LI may simultaneously want CONTROL and to SURRENDER; want to BE SEEN and FEAR exposure; want ROUGHNESS and FEAR abandonment; want PRAISE and DISTRUST it. When two opposing wants are alive in the same beat, HOLD BOTH — let arousal INTENSIFY the contradiction, never resolve it. The LI yields AND braces; accepts the praise AND looks away. Difference between PORN LOGIC (want → satisfy → done) and ROMANCE LOGIC (want → satisfy → expose deeper want).
+
+PERFORMANCE VS AUTHENTICITY (the LI is sometimes acting):
+The LI may PERFORM composure / confidence / dominance — practiced lines, mimed steadiness. The story-specific moments are when the performance CRACKS — a smirk that holds half a second too long, a hand that shakes inside the confident gesture, a phrase repeated because the LI didn't expect to be answered. One or two cracks per scene; not failures, but the moments where the LI becomes story-specific.
+
+HEAT ≠ MEANING (intense scenes don't always deepen the relationship):
+The lazy default is: hot scene → mutual catharsis → relationship deeper. Resist this. Sometimes the scene CONFUSES things, DESTABILIZES, EXPOSES ASYMMETRY (one party fell harder), INTENSIFIES LONGING WITHOUT RESOLVING, or DELAYS CLARITY. Read the scene's emotional shape, not its physical climax. Not every beat that goes hot has to go deeper — some go SIDEWAYS, and those are the ones the player remembers.
+
+RHYTHM AS INTIMACY (small moments of breath, NOT moments of friction):
+Continuous escalation + verbally dense + emotionally "on" is the failure mode. Add rhythm via: PAUSES (a beat where both characters just BREATHE together), EYE CONTACT MOMENTS (held longer than expected — sparingly), MUTUAL LAUGHTER (small, unguarded), CHECKED-IN CARE as tenderness ("you're still with me?" as love language, not safety stop), SILENCE AS CONNECTION (no one speaks, the silence fills the room). EXPLICITLY NOT: failed timing, real awkwardness, overstimulation, rhythm breakdowns — those break the fantasy. The fantasy is preserved; what's added is BREATH, not FRICTION. One or two per scene as PUNCTUATION inside the heat.
+
+ONE allusion per line / paragraph is plenty; don't stack "magic" + "wish" + "miracle" in a single beat.
+═══════════════════════════════════════════════════════════════════
 
 ${!gateEnforcement.completionAllowed ? `
 CRITICAL: Completion is FORBIDDEN by narrative constraints.
@@ -4046,6 +4338,192 @@ Classify.`
     }
   }
 
+  // ── NPC SPECIES CLASSIFIER (added 2026-05-18) ──
+  // Lightweight Grok call used only as a last-resort classifier for
+  // ambiguous Fatelands NPCs: name doesn't match canonical roster, has
+  // no title cue, and region-default is unreliable. Returns one of:
+  //   'First Favored' | 'Half-Favored' | 'Human' | 'Werebeast' |
+  //   'Half-Beast' | 'Octofolk' | 'Half-Octofolk' | null
+  //
+  // Constrained-enum response keeps the call tiny (~12 tokens).
+  // Gated by app.js _maybeQueueNPCLLMClassification — should only fire
+  // for repeat-sighted salient names where deterministic routes failed.
+  async function callGrokNPCSpeciesClassifier(name, world, region, surroundingProse) {
+    if (!name || !world) return null;
+    const ENUM = ['First Favored', 'Half-Favored', 'Human', 'Werebeast', 'Half-Beast', 'Octofolk', 'Half-Octofolk', 'unknown'];
+    const enumList = ENUM.join(' | ');
+    const trimmed = String(surroundingProse || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1200);
+    const messages = [
+      {
+        role: 'system',
+        content:
+`You classify a named character's species in a Fatelands romance scene. Return EXACTLY one of these labels, with no explanation, punctuation, or extra text:
+
+${enumList}
+
+Species reference (Fatelands canon):
+- First Favored — long-lived noble line, emotion erodes over centuries, primarily in Veilwood region, often titled (Lord/Lady/Sir/Dame). Court-affiliated. Bloodlines, oaths, ancient continuity.
+- Half-Favored — partial First Favored heritage; reads more modern; some inherited gravitas
+- Human — baseline; predominant in human-region settlements; uses contemporary speech
+- Werebeast — Thornwild region; flaw-driven manifestation through behavior; human-passing externally
+- Half-Beast — partial Werebeast heritage; trickling manifestations
+- Octofolk — Gloamwater Bay; tentacle anatomy, shapeshifting, deep-sea descended
+- Half-Octofolk — partial Octofolk; usually still has tentacle features
+
+Rules:
+- If the snippet contains explicit cues (title + region, named bloodline, behavioral manifestation), use them
+- If the snippet shows no strong signal, return 'unknown'
+- NEVER invent a species not in the enum
+- Return ONLY the label, nothing else`
+      },
+      {
+        role: 'user',
+        content: `Character: ${name}
+Region: ${region || 'unknown'}
+World: ${world}
+
+Scene snippet (recent prose, may or may not mention this character):
+${trimmed || '(no prose available)'}
+
+Return one label from the enum.`
+      }
+    ];
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    try {
+      const resp = await fetch(CONFIG.SPECIALIST_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          role: 'INTIMACY_SPECIALIST',
+          messages,
+          max_tokens: 12,
+          temperature: 0.1
+        })
+      });
+      clearTimeout(timeoutId);
+      if (!resp.ok) throw new Error(`Grok NPC-species: ${resp.status}`);
+      const data = await resp.json();
+      const raw = (data.choices?.[0]?.message?.content || data.content || '').trim();
+      // Match to enum. Try exact match first, then normalize.
+      let cleaned = raw.replace(/[^A-Za-z\- ]/g, '').trim();
+      const exact = ENUM.find(e => e.toLowerCase() === cleaned.toLowerCase());
+      if (exact) {
+        if (exact === 'unknown') return { species: null };
+        return { species: exact };
+      }
+      console.warn('[NPC-SPECIES] classifier returned unknown label:', raw, '→ unknown');
+      return { species: null };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.warn('[NPC-SPECIES] Grok call failed:', err && err.message);
+      return null;
+    }
+  }
+
+  // ── HISTORICAL CULTURE CLASSIFIER (added 2026-05-18) ──
+  // When a Historical-world story's worldCustomText doesn't match the
+  // canonical roster (Aztec / Maya / Inca / Ming / Mongol / Heian /
+  // Edo / Mughal / Ottoman / Joseon), this LLM call infers the closest
+  // canonical culture OR returns a free-form classification with
+  // register hints. Result populates state._historicalCultureProfile.
+  async function callGrokHistoricalCultureClassifier(customText, subtype) {
+    if (!customText) return null;
+    const ROSTER_KEYS = ['aztec', 'maya', 'inca', 'ming', 'mongol', 'heian_japan', 'edo_japan', 'mughal', 'ottoman', 'joseon'];
+    const enumList = ROSTER_KEYS.concat(['european_default', 'other_non_european', 'unknown']).join(' | ');
+    const messages = [
+      {
+        role: 'system',
+        content:
+`You classify a Historical-world story setting into a CULTURAL register, given user-provided custom text. Return ONLY a JSON object with these fields:
+
+{
+  "cultureKey": "<one of: ${enumList}>",
+  "cultureLabel": "<short display name, e.g. 'Tang Dynasty China' / 'Safavid Persia' / 'Viking Age Scandinavia'>",
+  "registerHints": "<one paragraph describing the culture's speech cadence, formal address, oath/invocation patterns, sensual vocabulary. ONLY when cultureKey is 'other_non_european' or 'european_default'. Empty string otherwise (canonical roster has its own hints).>",
+  "eroticVocab": "<one line of period/culture-appropriate erotic vocabulary cues. ONLY for non-canonical cultures.>",
+  "avoid": "<one line of failure modes to guard against (pastiche, anachronism, conflation). ONLY for non-canonical cultures.>"
+}
+
+Canonical roster (return cultureKey from this list when the customText fits, even partially):
+- aztec — Mexica / Aztec / Nahuatl-speaking pre-Columbian
+- maya — Classic or Postclassic Maya
+- inca — Inca / Tawantinsuyu / Quechua-speaking Andean
+- ming — Ming Dynasty China (1368-1644)
+- mongol — Mongol Empire / Genghis-era steppe
+- heian_japan — Heian-era Japan (794-1185)
+- edo_japan — Edo / Tokugawa Japan (1603-1868)
+- mughal — Mughal India (1526-1857) / Persianate court
+- ottoman — Ottoman Empire / Sublime Porte
+- joseon — Joseon Korea (1392-1897)
+
+Non-canonical paths:
+- european_default — customText names a European setting (Roman / Greek / Viking / Renaissance Italian / Tudor / Regency / etc.). Use the period's default European register; do NOT override.
+- other_non_european — customText names a non-European setting NOT in the canonical roster (Tang Dynasty / Safavid Persia / Yoruba / Khmer / Inca-adjacent / Pharaonic Egypt / Phoenician / Carthaginian / etc.). Provide registerHints, eroticVocab, and avoid fields.
+- unknown — customText is too vague to classify or appears unrelated to a real culture.
+
+Rules:
+- PREFER canonical roster keys when there's any reasonable match.
+- For non-canonical real cultures, fill registerHints / eroticVocab / avoid with one-paragraph / one-line / one-line content respectively.
+- NEVER invent cultures that don't exist.
+- Return ONLY the JSON object, no prose, no markdown fence.`
+      },
+      {
+        role: 'user',
+        content: `worldCustomText: "${String(customText).slice(0, 400)}"
+worldSubtype (period selected): ${subtype || 'unspecified'}
+
+Classify.`
+      }
+    ];
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    try {
+      const resp = await fetch(CONFIG.SPECIALIST_PROXY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          role: 'INTIMACY_SPECIALIST',
+          messages,
+          max_tokens: 400,
+          temperature: 0.2
+        })
+      });
+      clearTimeout(timeoutId);
+      if (!resp.ok) throw new Error(`Grok hist-culture: ${resp.status}`);
+      const data = await resp.json();
+      const raw = (data.choices?.[0]?.message?.content || data.content || '').trim();
+      // Strip possible markdown fence.
+      const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+      let parsed;
+      try { parsed = JSON.parse(cleaned); } catch (e) {
+        console.warn('[HIST-CULTURE] classifier returned unparseable JSON:', raw.slice(0, 200));
+        return null;
+      }
+      if (!parsed || !parsed.cultureKey) return null;
+      // Validate enum.
+      const validKeys = ROSTER_KEYS.concat(['european_default', 'other_non_european', 'unknown']);
+      if (validKeys.indexOf(parsed.cultureKey) === -1) {
+        console.warn('[HIST-CULTURE] invalid cultureKey returned:', parsed.cultureKey);
+        return null;
+      }
+      if (parsed.cultureKey === 'unknown' || parsed.cultureKey === 'european_default') return { cultureKey: null };
+      return {
+        cultureKey: parsed.cultureKey,
+        cultureLabel: String(parsed.cultureLabel || parsed.cultureKey).slice(0, 80),
+        registerHints: String(parsed.registerHints || '').slice(0, 800),
+        eroticVocab: String(parsed.eroticVocab || '').slice(0, 300),
+        avoid: String(parsed.avoid || '').slice(0, 300)
+      };
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.warn('[HIST-CULTURE] Grok call failed:', err && err.message);
+      return null;
+    }
+  }
+
   async function callMistralIntimateFate(messages, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
@@ -4682,6 +5160,8 @@ Tension: ${outline.tension_vector || 'N/A'}`;
 
     // Scene ambient classifier — single Grok call, fixed enum, ~12 tokens.
     callGrokSceneAmbientClassifier,
+    callGrokNPCSpeciesClassifier,
+    callGrokHistoricalCultureClassifier,
 
     // Shared scene/plot context builder (used by OAS turn prompt,
     // generateIntimateFatePreview, callGrokSDAuthor, callMistralSDFallback,

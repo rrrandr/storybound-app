@@ -33652,6 +33652,235 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     padding: 16px;
     box-sizing: border-box;
     color: var(--story-text-color, #f0e9d6);
+    position: relative;  /* anchor for .oas-quick-mute-btn */
+}
+
+/* ── OAS QUICK MUTE BUTTON ──
+   Small, persistent corner control to silence the OAS audio stack
+   (heartbeat, breath, fire crackle, scene ambient) in one tap — for
+   the user who suddenly needs to stop heavy breathing from playing
+   in a shared space. Mutes both story SFX and story music buses;
+   does NOT touch UI sounds, so the button itself still clicks.
+   Click handler at app.js _toggleOasQuickMute. */
+/* ── OAS MOUTH-CHROME STACK (2026-05-19) ──
+   Container for the lips + speaker buttons. Stacks them vertically
+   in the bottom-right corner of the mouth-wrap. White SVG outlines
+   replace the prior emoji icons. */
+.oas-mouth-chrome {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    pointer-events: none;  /* re-enable on children */
+}
+.oas-mouth-chrome > button {
+    pointer-events: auto;
+}
+.oas-quick-mute-btn {
+    /* Position handled by .oas-mouth-chrome parent flex now. */
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(240, 233, 214, 0.45);
+    background: rgba(20, 16, 14, 0.62);
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.oas-quick-mute-btn:hover {
+    background: rgba(34, 26, 22, 0.85);
+    border-color: rgba(240, 233, 214, 0.55);
+}
+.oas-quick-mute-btn:active {
+    transform: scale(0.94);
+}
+.oas-quick-mute-btn.is-muted {
+    background: rgba(60, 22, 22, 0.78);
+    border-color: rgba(220, 100, 100, 0.55);
+    color: #f3c0c0;
+}
+.oas-quick-mute-btn.is-muted:hover {
+    background: rgba(80, 28, 28, 0.88);
+    border-color: rgba(220, 100, 100, 0.75);
+}
+.oas-quick-mute-icon {
+    display: inline-block;
+    line-height: 1;
+    transform: translateY(-1px);
+}
+
+/* ── OAS TEXT-MESSAGE MODE TOGGLE ──
+   Sits to the LEFT of the quick-mute button (same top-right cluster).
+   Hides the LI mouth visual + expands the chat log to fill the freed
+   space — turns OAS into a "looks like a normal text chat" view for
+   users who don't want a sexy mouth visible to anyone glancing over.
+   Persists via sb_oas_text_mode localStorage. Pairs naturally with
+   the quick-mute for full phone-safe-in-public coverage. */
+.oas-text-mode-btn {
+    /* Position handled by .oas-mouth-chrome parent flex (stacked above
+       the mute button). Sizing mirrors the mute button. */
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(240, 233, 214, 0.45);
+    background: rgba(20, 16, 14, 0.62);
+    color: #ffffff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.oas-text-mode-btn:hover {
+    background: rgba(34, 26, 22, 0.85);
+    border-color: rgba(240, 233, 214, 0.55);
+}
+.oas-text-mode-btn:active {
+    transform: scale(0.94);
+}
+/* Active state — text mode is ON. Slightly cooler tint than the mute
+   button's red so the two buttons stay visually distinct. */
+.oas-text-mode-btn.is-active {
+    background: rgba(22, 38, 60, 0.85);
+    border-color: rgba(120, 180, 220, 0.6);
+    color: #cce0f3;
+}
+.oas-text-mode-btn.is-active:hover {
+    background: rgba(28, 48, 78, 0.92);
+    border-color: rgba(140, 200, 240, 0.78);
+}
+.oas-text-mode-icon {
+    display: inline-block;
+    line-height: 1;
+    transform: translateY(-1px);
+}
+
+/* ── TEXT-MODE BODY OVERRIDES ──
+   When body.oas-text-mode is active, hide the mouth visual entirely
+   and expand the chat scrollback to fill the OAS stage. The button
+   row stays in place (still positioned relative to .intimacy-dialogue-stage). */
+/* Text-mode: darken the face IMAGE but keep the mouth wrap in place
+   so the chrome stack (lips + speaker icons) stays visible and
+   anchored. The wrap's near-black background shows through; the
+   image + overlays are hidden behind it. */
+body.oas-active.oas-text-mode .intimacy-mouth-wrap .intimacy-mouth-img,
+body.oas-active.oas-text-mode .intimacy-mouth-wrap .intimacy-mouth-peek-overlay,
+body.oas-active.oas-text-mode .intimacy-mouth-wrap .intimacy-mouth-overlay,
+body.oas-active.oas-text-mode .intimacy-mouth-wrap .intimacy-li-overlay {
+    visibility: hidden !important;
+}
+body.oas-active.oas-text-mode .intimacy-mouth-wrap {
+    /* Wrap stays visible (chrome stack lives inside). Background is
+       already #0a0907 so the panel reads as a dark rectangle. */
+    background: #050402 !important;
+}
+body.oas-active.oas-text-mode #oasHistoryLog {
+    /* Slight elevation so the heartbeat tint reads against the page bg. */
+    box-shadow: 0 6px 28px rgba(0, 0, 0, 0.45);
+    position: relative;
+}
+
+/* ── HEARTBEAT PEAK FX ON THE CHAT LOG ──
+   Mirrors the .intimacy-mouth-wrap heartbeat pulse but scoped to the
+   chat log surface so peak-moment FX surface when the mouth is hidden.
+   Same CSS variables (--oas-hb-period + --oas-hb-amp) drive both
+   surfaces; JS sets them in _updateOASHeartbeatPulse simultaneously.
+
+   POSITIONING — why the wrap exists:
+   #oasHistoryLog is a scroll container (overflow-y: auto). An
+   absolutely-positioned tint INSIDE a scroll container positions
+   relative to the scrolling content box, so it slides up with the
+   bubbles instead of pinning to the visible bounds. Solution: wrap
+   the log in .oas-history-log-wrap and place the tint as the wrap's
+   sibling of the log. The wrap is position: relative; the tint is
+   position: absolute; inset: 0 — overlays the log's visible area
+   without participating in scroll. */
+.oas-history-log-wrap {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    --oas-hb-period: 0ms;
+    --oas-hb-amp: 0;
+}
+body.oas-active.oas-text-mode .oas-history-log-wrap {
+    max-width: 480px;
+}
+.oas-history-log-tint {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;  /* above the log (and the bubbles inside it) — the
+                    tint is a transparent vignette so bubbles read
+                    through it; the pulse is the soft red edge glow. */
+    border-radius: 6px;  /* match the log's inline border-radius */
+    /* Radial vignette — transparent center, deepening crimson at edges.
+       Amplitude-scaled via --oas-hb-amp so curious is barely there,
+       peaking is unmistakable. */
+    background: radial-gradient(ellipse at center,
+        rgba(180, 30, 30, 0) 30%,
+        rgba(190, 35, 35, calc(0.05 * var(--oas-hb-amp, 1))) 60%,
+        rgba(210, 45, 45, calc(0.20 * var(--oas-hb-amp, 1))) 100%);
+    opacity: 0;
+    animation: oasHeartbeatTint var(--oas-hb-period, 800ms) ease-out infinite;
+    animation-play-state: paused;
+}
+.oas-history-log-wrap.oas-hb-active .oas-history-log-tint {
+    animation-play-state: running;
+}
+
+/* ── TYPING INDICATOR — animated dots in the LI bubble ──
+   Appended to #oasHistoryLog while waiting for Grok. Three dots that
+   pulse in sequence — classic "X is typing" affordance. Removed when
+   the real LI response lands. Identical visual register to a normal LI
+   bubble (orange/cream palette) so the eye reads it as "the LI is
+   composing" rather than as a system spinner. */
+.oas-chat-typing-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 18px;
+    padding: 0 2px;
+}
+.oas-chat-typing-dots > span {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(255, 220, 195, 0.85);
+    opacity: 0.35;
+    animation: oasTypingDot 1.2s ease-in-out infinite;
+}
+.oas-chat-typing-dots > span:nth-child(2) { animation-delay: 0.18s; }
+.oas-chat-typing-dots > span:nth-child(3) { animation-delay: 0.36s; }
+@keyframes oasTypingDot {
+    0%, 80%, 100% { opacity: 0.30; transform: translateY(0); }
+    40%           { opacity: 1.0;  transform: translateY(-2px); }
+}
+/* Subtle entry animation so the bubble doesn't pop in jarringly. */
+.oas-chat-typing {
+    animation: oasTypingBubbleIn 280ms ease-out;
+}
+@keyframes oasTypingBubbleIn {
+    0%   { opacity: 0; transform: translateX(-6px); }
+    100% { opacity: 1; transform: translateX(0); }
 }
 
 /* ── LI RESPONSE OVER-IMAGE OVERLAY ──
@@ -33738,20 +33967,176 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     100% { left: 100%; }
 }
 .intimacy-mouth-wrap {
+    /* Flexible mouth-image window (2026-05-19) — aspect-ratio + vertical
+       focal point are tunable via CSS custom props. Default 16:9 +
+       focus-y 55% crops the nose + neck, keeps the lips/chin centered.
+       Tune per-artist by overriding --oas-mouth-aspect / --oas-mouth-focus-y. */
+    --oas-mouth-aspect: 16 / 9;
+    --oas-mouth-focus-y: 55%;
     width: 100%;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: var(--oas-mouth-aspect);
     max-width: 540px;
     position: relative;
     border-radius: 6px;
     overflow: hidden;
     background: #0a0907;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55);
+    margin-bottom: 6px;
     /* Heartbeat pulse defaults — JS sets per-temperature values via
        CSS custom props. Period maps from the audio's hbRate; amp
        scales the zoom + tint intensity so curious is subliminal,
        peaking is unmistakable. */
     --oas-hb-period: 0ms;
     --oas-hb-amp: 0;
+}
+
+/* ── OAS CHAT PANEL — header + log container (2026-05-19) ───────────
+   Wraps the scrollable history log with a sticky header that shows
+   LI name (left) and PC name (right). Individual bubbles no longer
+   carry speaker labels — the header is canonical.
+
+   Layout: on narrow screens, mouth wrap and chat panel stack
+   vertically (existing flow). On wide screens (>= 900px), they sit
+   side-by-side so the Submit Turn button + fate cards peek above
+   the fold without scrolling. */
+.oas-chat-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 540px;
+    margin: 0 auto;
+    min-height: 220px;
+}
+.oas-chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 12px;
+    background: rgba(20, 16, 14, 0.85);
+    border: 1px solid rgba(201,162,78,0.28);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    font: 11px/1 "Inter",-apple-system,sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.oas-chat-header-li {
+    color: rgba(255, 200, 140, 0.95);
+}
+.oas-chat-header-pc {
+    color: rgba(255, 180, 205, 0.95);
+}
+
+/* ── WIDE-SCREEN SIDE-BY-SIDE (>= 900px) ──
+   On laptops/tablets in landscape, place the face on the left and
+   the chat panel on the right. This compresses vertical footprint
+   so Submit Turn + fate cards stay above the fold.
+   gnPanelDisplay is the OAS host; flex it row-wise at width. */
+@media (min-width: 900px) {
+    body.oas-active #gnPanelDisplay {
+        display: flex !important;
+        /* Chat panel on LEFT, face on RIGHT — DOM order is mouth-then-
+           panel, so reverse for the visual swap. */
+        flex-direction: row-reverse !important;
+        /* Stretch makes chat panel match face image height naturally. */
+        align-items: stretch !important;
+        justify-content: center !important;
+        gap: 14px !important;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+    body.oas-active #gnPanelDisplay .intimacy-mouth-wrap {
+        flex: 0 0 auto;
+        width: 420px;
+        max-width: 420px;
+        margin-bottom: 0;  /* gap handled by parent flex */
+    }
+    body.oas-active #gnPanelDisplay .oas-chat-panel {
+        flex: 1 1 auto;
+        max-width: 520px;
+        /* Explicit height matches the mouth wrap (420 × 9/16 = 236.25px).
+           align-items: stretch on the parent doesn't reliably propagate
+           a calc'd aspect-ratio height into a column-flex sibling, so
+           we pin it here. */
+        height: calc(420px * 9 / 16);
+        min-height: 200px;
+    }
+    body.oas-active #gnPanelDisplay #oasHistoryLog {
+        height: auto !important;
+        flex: 1 1 auto;
+    }
+
+    /* Input bar — flatten Say + Do + Save + Submit into a single row.
+       Done via CSS grid on #gnReaderControls with display:contents on
+       the two child wrappers so all four grandchildren flow into the
+       parent's column tracks.
+
+       Column widths: Say + Do each take 3fr (~doubled from previous
+       1fr ratio against the auto buttons). Save is compact (its small-
+       btn natural width). Submit retains its plaque sizing.
+
+       align-items center (was stretch) so Save doesn't get vertically
+       stretched to textarea height. */
+    /* Single flat row of four controls in this order:
+         Do | Say | Submit Turn | Save
+       Achieved via display:contents on the two wrappers so all four
+       grandchildren flow into the parent grid. CSS order property
+       repositions Save AFTER Submit (DOM has Save first in submit-row). */
+    body.oas-active #gnReaderControls {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr auto auto;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 4px 16px 4px 16px;
+    }
+    body.oas-active #gnReaderControls .gn-input-grid {
+        display: contents !important;
+    }
+    body.oas-active #gnReaderControls .gn-submit-row {
+        display: contents !important;
+    }
+    body.oas-active #gnReaderControls .gn-input-grid .input-wrapper {
+        min-width: 0;
+        align-self: stretch;
+    }
+    body.oas-active #gnReaderControls .gn-input-grid textarea {
+        height: 60px !important;
+        min-height: 60px !important;
+        max-height: 60px !important;
+        padding: 14px 12px !important;
+        width: 100%;
+    }
+    /* Reorder: Submit Turn comes BEFORE Save in visual flow.
+       DOM order is Save → Submit. Bumping Save's order to 1 puts it
+       last; Submit stays at default 0 (after the textareas). */
+    body.oas-active #gnReaderControls #gnSaveBtn {
+        order: 1;
+        align-self: center;
+        height: auto;
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+    body.oas-active #gnReaderControls #gnSubmitBtn {
+        order: 0;
+        align-self: center;
+    }
+
+    /* Crush the space above "Let Fate Guide You". */
+    body.oas-active #gnFateSection {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+    body.oas-active #gnFateSection .section-title {
+        margin: 2px 0 2px !important;
+        padding-top: 0 !important;
+    }
+    body.oas-active .gn-input-bar {
+        padding: 4px 16px !important;
+        border-top: none !important;
+    }
 }
 
 /* ── OAS HEARTBEAT VISUAL PULSE (2026-05-15) ────────────────────────
@@ -33820,6 +34205,10 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* Vertical focal point — paired with the wrap's narrowed aspect-
+       ratio, this crops top (nose) and bottom (neck) while keeping
+       the lips/chin region centered. Tunable via the wrap's CSS prop. */
+    object-position: center var(--oas-mouth-focus-y, 55%);
     display: block;
     opacity: 1;
     transition: opacity 0.35s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -34419,8 +34808,13 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
 #intimacyDevLauncherWrap:focus-within #intimacyDevLauncherDrawer {
     /* 280px → 560px (2026-05-15) — added PC × LI pair toggle, Batch
        and Review buttons since the original sizing; the rightmost
-       control (LI F) was clipping behind the lips button. */
-    max-width: 560px;
+       control (LI F) was clipping behind the lips button.
+       560px → 640px (2026-05-18) — added World selector (4 buttons:
+       Mod / Shak / Veil / Pre) which pushed Prehistoric off-screen.
+       640px → 580px (2026-05-18) — replaced abbreviated button row
+       with a dropdown (full labels + Sci-Fi flavors), which is more
+       compact than the 4-button row. */
+    max-width: 580px;
     opacity: 1;
     padding: 0 12px;
     pointer-events: auto;
