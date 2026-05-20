@@ -1649,6 +1649,7 @@ FAILURE CONDITIONS (invalid outputs):
     var _pcPovDirective = '';
     var _mythicCoupleDir = '';
     var _mythicForgettingDir = '';
+    var _temptCallbackDir = '';
     try {
       var _sdPcGender = String((_ws && (_ws.gender || _ws.protagonistGender)) || '').toLowerCase();
       var _sdPcName = (_ws && _ws.playerName) || 'the protagonist';
@@ -1667,6 +1668,11 @@ FAILURE CONDITIONS (invalid outputs):
       // forget us" Tempt. Auto-clears.
       if (typeof window !== 'undefined' && typeof window.buildMythicCoupleForgettingDirective === 'function') {
         _mythicForgettingDir = window.buildMythicCoupleForgettingDirective() || '';
+      }
+      // Tempt Fate callback — historical Tempt events the LI remembers
+      // and may surface during intimate beats.
+      if (typeof window !== 'undefined' && typeof window.buildTemptFateCallbackDirective === 'function') {
+        _temptCallbackDir = window.buildTemptFateCallbackDirective() || '';
       }
     } catch (_sdPovErr) { /* non-fatal */ }
 
@@ -1836,6 +1842,7 @@ DIRECTIVES (NON-NEGOTIABLE):
 ${_pcPovDirective}
 ${_mythicCoupleDir}
 ${_mythicForgettingDir}
+${_temptCallbackDir}
 ${_itLitDirective}
 ${_liVoiceDirective}
 ${_firstFavoredDirective}
@@ -3798,6 +3805,10 @@ Player internal thoughts are never narrated. Preserve first-person structure.
       // Mythic forgetting — one-scene transition after a "make them forget"
       // Tempt. Auto-clears.
       parts.push(_safeCall(w.buildMythicCoupleForgettingDirective));
+      // Tempt Fate callback — historical Tempt events surface as LI
+      // memory / debate / repeat-request at intimate moments. Self-gated
+      // (empty while a Tempt window is still live in OAS).
+      parts.push(_safeCall(w.buildTemptFateCallbackDirective));
       // Pattern naming from accumulated microDecision picks
       parts.push(_safeCall(w.buildAxisGravityDirective));
       // Billionaire-eligible Scene 1 framing (grounded/orbit/collision)

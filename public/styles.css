@@ -12115,6 +12115,34 @@ html:has(.petition-fate-card.petition-zoomed) {
   text-overflow: ellipsis;
 }
 
+/* Random-item red glow (added 2026-05-20): every 4s the JS picks a
+   random wish item and applies this class. The animation runs once
+   (pulse in → hold → fade out) and the JS clears it before the next
+   tick. Counter-scaled glow radii so the effect reads the same at any
+   zoom scale. The pop is small but unmistakable — same red-enamel
+   register as the Tempt card itself. */
+.tempt-wish-item.tempt-wish-item-glow {
+  animation: temptWishItemGlow 3.4s ease-in-out;
+}
+@keyframes temptWishItemGlow {
+  0%   { color: rgba(0, 0, 0, 0.7); text-shadow: none; }
+  15%  {
+    color: rgba(210, 30, 30, 1);
+    text-shadow:
+      0 0 calc(6px / var(--tempt-scale, 1)) rgba(220, 50, 50, 0.95),
+      0 0 calc(14px / var(--tempt-scale, 1)) rgba(220, 50, 50, 0.6),
+      0 0 calc(24px / var(--tempt-scale, 1)) rgba(220, 50, 50, 0.3);
+  }
+  50%  {
+    color: rgba(210, 30, 30, 1);
+    text-shadow:
+      0 0 calc(6px / var(--tempt-scale, 1)) rgba(220, 50, 50, 0.95),
+      0 0 calc(14px / var(--tempt-scale, 1)) rgba(220, 50, 50, 0.6),
+      0 0 calc(24px / var(--tempt-scale, 1)) rgba(220, 50, 50, 0.3);
+  }
+  100% { color: rgba(0, 0, 0, 0.7); text-shadow: none; }
+}
+
 /* ── Custom text input (replaces columns on click) ── */
 .tempt-custom-input {
   width: 100%;
@@ -33716,9 +33744,24 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     gap: 14px;
     align-items: center;
     pointer-events: none;
+    /* Smooth slide when the fate chip arrives/departs — the gap below
+       expands to make space for the chip, and contracts back to 14px
+       when the chip is dismissed. */
+    transition: gap 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .oas-mouth-chrome > button {
     pointer-events: auto;
+}
+/* When the OAS fate chip is visible (body class set by
+   `_updateOASFateChip`), spread the lips + speaker icons apart so the
+   chip can sit between them. Width chosen to clear the longest chip
+   label ("Tempt invoked — reality bends" / "Petition sealed — Fate is
+   listening" at ~9.5px / 0.16em letter-spacing ≈ ~170px). Gap slides
+   smoothly via the transition above. The chrome stack stays centered
+   on left: 50%; widening the gap pushes children symmetrically out
+   from center while keeping them on the same baseline as the chip. */
+body.oas-fate-chip-active .oas-mouth-chrome {
+    gap: 180px;
 }
 .oas-quick-mute-btn {
     /* Background + circle frame removed — icon-only. */
@@ -35886,6 +35929,19 @@ body.oas-active .gn-fate-section * {
 /* Restore the badge + curly-quote pseudo-elements as click-transparent
    so they don't intercept clicks on the textarea underneath. */
 body.oas-active .oas-input-label {
+    pointer-events: none !important;
+}
+/* Sparkle overlay carve-out (added 2026-05-20): the universal-descendant
+   rule above promotes the sparkle container's inline `pointer-events: none`
+   to `auto`. Combined with the container's `z-index: 10` + textarea's
+   `z-index: 1` (line ~35903), the sparkle layer eats every click on the
+   say/do textareas immediately after a fate-card click. Carve it back out
+   explicitly. Same for individual sparkle particles in case they spawn
+   inside .gn-input-bar / .gn-fate-section children. */
+body.oas-active .gn-input-bar .authorship-sparkle-container,
+body.oas-active .gn-input-bar .authorship-sparkle,
+body.oas-active .gn-fate-section .authorship-sparkle-container,
+body.oas-active .gn-fate-section .authorship-sparkle {
     pointer-events: none !important;
 }
 /* TEXTAREA FOCUS GUARD — Say/Do specifically. Force every attribute
