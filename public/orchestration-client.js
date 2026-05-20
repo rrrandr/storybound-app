@@ -4613,6 +4613,26 @@ MODE INSTRUCTIONS: ${modeInstructions[effectiveMode] || modeInstructions.ROMANTI
 RENDERING FLOOR: ${physicalBounds}
 EMOTIONAL CORE: ${emotionalCore}
 LOVE INTEREST NAME: ${liName}
+${(function() {
+    // Inline gender awareness for the single-card path (mirrors the
+    // batch path above). PC anatomy in self-references AND LI anatomy
+    // in other-references must both match actual genders.
+    const _pcG = String(st.gender || st.playerGender || 'Female');
+    const _pcGUp = _pcG.charAt(0).toUpperCase() + _pcG.slice(1).toLowerCase();
+    const _liG = String((st.storybeau && st.storybeau.gender) || st.loveInterestGender || 'Female');
+    const _liGUp = _liG.charAt(0).toUpperCase() + _liG.slice(1).toLowerCase();
+    const _pcGuide = _pcGUp === 'Male'
+      ? 'PC is MALE — self-references: male anatomy ("I\'m hard", "stroking myself", "my cock"). NEVER female anatomy ("dripping", "wet pussy", "fingers inside me").'
+      : _pcGUp === 'Female'
+      ? 'PC is FEMALE — self-references: female anatomy ("I\'m wet", "I\'ve been dripping", "touching myself", "my pussy"). NEVER male anatomy ("I\'m hard", "my cock").'
+      : 'PC is non-binary — anatomy-agnostic self-references only ("I\'m aching", "worked up", "touching myself"). NEVER assume PC genitalia.';
+    const _liGuide = _liGUp === 'Male'
+      ? 'LI is MALE — references to LI\'s body: male anatomy ("your cock", "your hard length"). NEVER female anatomy about the LI ("your pussy", "you\'re wet", "fingers inside you").'
+      : _liGUp === 'Female'
+      ? 'LI is FEMALE — references to LI\'s body: female anatomy ("your pussy", "you\'re wet", "your tits", "your nipples"). NEVER male anatomy about the LI ("your cock", "stroking you off"). A male PC does NOT ask a female LI to put her cock in his mouth.'
+      : 'LI is non-binary — references to LI\'s body: anatomy-agnostic ("your body", "your skin", "your hands", "your mouth"). NEVER assume LI genitalia.';
+    return 'PC GENDER: ' + _pcGUp + '. LI GENDER: ' + _liGUp + '.\n' + _pcGuide + '\n' + _liGuide;
+})()}
 
 ${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically in the preview — named characters, the LI archetype, the relationship dynamic, the setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing a named character, prefer the highest-salience entity matching the fate-card archetype; ignore low-salience entities unless the card archetype specifically calls for them):\n${sceneContext}\n` : ''}${_registerBlockSingle}
 RECENT SCENE:
@@ -4625,7 +4645,8 @@ TASK: Generate a Say/Do preview for this intimate fate card.
 ANTI-TECHNOBABBLE / ANTI-NONSENSE (HARD):
 - Action must describe a REAL physical thing the PC can do. "I take the lead" / "I push her against the wall" / "I close the distance between us" — picture-able.
 - BANNED phrasings: "unspool [anything] from your ribs" / "adjust the frequency" / "tune the signal" / any sentence that treats the body as audio equipment or stenography.
-- World register (Glass House: The Chorus / The Field / aperture / Solo) is COLOR, not body-puppetry. "Let the resonance build." is fine; "let her unspool the Chorus from your ribs" is gibberish anatomy.
+- GLASS HOUSE IS CONTEMPORARY MODERN SPEECH — NOT SCI-FI. Glass House is near-present-day humans; people talk like 2024 New Yorkers. "The Chorus" and "The Field" are sprinkled proper-noun references (like a modern person says "the 'Gram"), NOT vocabulary for sex. BANNED in Glass House fate previews: aperture, resonance, signal, frequency, channel, WiHi, calibrate, map (as a verb on a person), sync, tune, "set the resonance", "open your aperture", "the field is humming", "my signal", "your frequency". Also BANNED: any sentence using "glass" (fourth-wall break — characters never say the meta-name of their world). When in Glass House, write erotic lines as plain contemporary American English: "Don't make me wait." / "I take the lead." / "Stay there." — same language any other modern-world story would use.
+- For OTHER worlds with their own register (Cyberpunk: chrome, sync, feed; Fantasy: archaic cadence): vocabulary may shift but the SHAPE of the sentence stays grounded. The body is never audio equipment.
 - Asterisks for stage directions inside dialogue (e.g. "*Adjust the frequency.*") are BANNED. Dialogue is spoken words only.
 - Dialogue must be a complete spoken line. No trailing em-dash with nothing after.
 
@@ -4731,6 +4752,30 @@ Respond in EXACTLY two lines:
 
     const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema. Each card may take one of three VARIANT shapes — amplify (deepen the act), ruin (plot-level sabotage of the moment), or redirect (turn intimacy into vulnerability discovery) — distributed roughly 70/20/10 across the 5 cards per draw.';
 
+    // Gender awareness (2026-05-20) — read PC + LI genders so anatomy
+    // references match BOTH bodies. Two separate guides:
+    //   pcAnatomyGuide governs SELF-references ("I'm hard" vs "I'm wet")
+    //   liAnatomyGuide governs OTHER-references ("your cock" vs "your
+    //     pussy", "ride my face" works for either, "I want him in my
+    //     mouth" gendered, etc.)
+    // Was generating female-anatomy lines for male PCs, AND would have
+    // told a male PC he wanted a female LI's "cock" in his mouth — both
+    // sides need explicit guidance.
+    const pcGenderRaw = String(st.gender || st.playerGender || 'Female');
+    const pcGender = pcGenderRaw.charAt(0).toUpperCase() + pcGenderRaw.slice(1).toLowerCase();
+    const liGenderRaw = String((st.storybeau && st.storybeau.gender) || st.loveInterestGender || 'Female');
+    const liGender = liGenderRaw.charAt(0).toUpperCase() + liGenderRaw.slice(1).toLowerCase();
+    const pcAnatomyGuide = pcGender === 'Male'
+      ? 'PC is MALE — self-references: use male anatomy ("I\'m hard", "I\'ve been hard since you texted", "my cock", "stroking myself"). NEVER female-anatomy self-references ("I\'m wet", "I\'ve been dripping", "my pussy", "fingers inside me").'
+      : pcGender === 'Female'
+      ? 'PC is FEMALE — self-references: use female anatomy ("I\'m wet", "I\'ve been dripping", "my pussy", "fingers inside me", "touching myself"). NEVER male-anatomy self-references ("I\'m hard", "my cock").'
+      : 'PC is non-binary — self-references: anatomy-agnostic only ("I\'m aching", "I\'ve been worked up since you texted", "touching myself"). NEVER assume PC genitalia.';
+    const liAnatomyGuide = liGender === 'Male'
+      ? 'LI is MALE — when the PC references the LI\'s body, use male anatomy ("your cock", "his cock", "your hard length", "your hand around me"). NEVER female-anatomy references ("your pussy", "you\'re so wet", "fingers inside you" describing the LI). The PC does not put the LI\'s "dick in their mouth" if the LI is female; check the LI gender before writing oral / penetration direction.'
+      : liGender === 'Female'
+      ? 'LI is FEMALE — when the PC references the LI\'s body, use female anatomy ("your pussy", "you\'re so wet", "fingers inside you", "your tits", "your nipples"). NEVER male-anatomy references about the LI ("your cock", "your hard-on", "stroking you off"). A male PC does not ask a female LI to put her cock in his mouth.'
+      : 'LI is non-binary — when the PC references the LI\'s body, stay anatomy-agnostic ("your body", "your skin", "your hands", "your mouth", "your weight on me"). NEVER assume LI genitalia.';
+
     const userMsg = `Generate 5 fate-card Say/Do previews for THIS specific moment of an intimate scene, one per archetype. Each preview is the protagonist's NEXT move + line.
 
 EROTIC MODE: ${effectiveMode}
@@ -4738,6 +4783,9 @@ MODE INSTRUCTIONS: ${modeInstructions[effectiveMode] || modeInstructions.ROMANTI
 RENDERING FLOOR: ${physicalBounds}
 EMOTIONAL CORE: ${emotionalCore}
 LOVE INTEREST NAME: ${liName}
+PC GENDER: ${pcGender}. LI GENDER: ${liGender}.
+${pcAnatomyGuide}
+${liAnatomyGuide}
 
 ${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${_registerBlock}
 RECENT SCENE:
@@ -4784,8 +4832,8 @@ RULES:
 ANTI-TECHNOBABBLE / ANTI-NONSENSE (HARD):
 - Actions describe REAL physical things the PC can actually do. "I take the lead" / "I push her against the wall" / "I close the distance between us" / "I take her hand and place it on me." These are sentences a reader can picture.
 - BANNED phrasing patterns (every one of these has shipped and broken immersion): "unspool [anything] from your ribs" / "adjust the frequency" / "tune the signal" / "let her have the receiver" / "let the field harvest us" / any sentence that treats the body as a piece of audio equipment or a stenographic instrument.
-- World register (Glass House: The Chorus / The Field / aperture / Solo / WiHi; Cyberpunk: chrome, sync, feed) is for COLOR not body-puppetry. You may say "Let the resonance build." You may NOT say "let her unspool the Chorus from your ribs" — that is gibberish anatomy.
-- If the world has a non-modern register, the SHAPE of the sentence stays grounded; only the VOCABULARY of mood-words shifts. "I take the lead" in Glass House becomes "I take the lead before The Chorus does" — same physical action, just one Chorus-flavored aside.
+- GLASS HOUSE IS CONTEMPORARY MODERN SPEECH — NOT SCI-FI. Glass House is near-present-day humans (current decade, current cultural register); people talk the way 2024 New Yorkers talk. "The Chorus" and "The Field" exist as sprinkled proper-noun references (like a modern person says "the 'Gram" or "the algorithm"), NOT as vocabulary for sex. BANNED in Glass House fate previews: aperture, resonance, signal, frequency, channel, WiHi, calibrate, sync, tune, map (as verb on a person), "set the resonance", "open your aperture", "the field is humming", "my signal", "your frequency", "test your aperture". Also BANNED: any use of "glass" (no character in Glass House ever says "glass" — fourth-wall break, like saying "1984" inside 1984). In Glass House write erotic lines as plain contemporary American English: "Don't make me wait." / "I take the lead." / "Stay there." / "I haven't stopped thinking about your mouth." — exactly what any other modern-day world story would say.
+- For OTHER worlds with their own register (Cyberpunk: chrome, sync, feed; Fantasy: archaic cadence; Historical: period-appropriate cadence): vocabulary may shift but the SHAPE of the sentence stays grounded. The body is never audio equipment.
 - Asterisks for stage directions inside dialogue (e.g. "*Adjust the frequency.*") are BANNED. Dialogue is spoken words only. Physical actions belong in the action field.
 - Each card's dialogue must STAND ALONE as a complete spoken line. No trailing em-dash with nothing after. No "I want you to know —" without the rest of the sentence. If you have nothing to put after the dash, write a different line.`;
 
