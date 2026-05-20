@@ -34378,6 +34378,18 @@ body.oas-active #oasHistoryLog .oas-chat-you .oas-chat-bubble {
 body.oas-active .fate-card {
     width: 115px !important;
 }
+/* Petition/Tempt zoom carve-out (2026-05-20): the OAS shrink rule above
+   uses !important, which overrides the inline 144px width that
+   openPetitionZoom / openTemptZoom set on the card. The zoom scale is
+   computed against the canonical 144px width, so when !important wins,
+   the card actually renders at 115px while every absolute-positioned
+   child (suggestion columns, header tabs, tier buttons) was tuned for
+   144px — content visibly clips against the inner edges. Restore the
+   canonical width when zoomed so the scaled layout matches the design. */
+body.oas-active .petition-fate-card.petition-zoomed,
+body.oas-active .tempt-fate-card.tempt-zoomed {
+    width: 144px !important;
+}
 /* Rolling-wave refresh (2026-05-19, user spec): on Submit, cards
    sequentially un-flip then re-flip via JS setTimeout cascade. The
    underlying `.fate-card .inner { transition: transform 0.6s }` does
@@ -34482,6 +34494,120 @@ body.oas-active #gnSubmitBtn .submit-cost-display {
     margin: 0;
     font-size: 0.55em;
     pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FATE MEDALLIONS — Submit Turn pending indicator (added 2026-05-20)
+   Gold prayer-hands (Petition) / red enamel lightning (Tempt) inside the
+   Submit Turn button when the corresponding Fate has been sealed but the
+   distortion has not yet started — i.e. the player has paid + composed
+   the wish, and clicking Submit is what releases it into the scene.
+   The medallion sits absolutely positioned at the LEFT edge of the plaque,
+   mirroring the .submit-cost-display badge that lives at the top-right.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.oas-fate-medallion {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    pointer-events: none;
+    display: none;
+    z-index: 2;
+}
+.oas-fate-medallion svg {
+    position: absolute;
+    width: 64%;
+    height: 64%;
+    top: 18%;
+    left: 18%;
+    fill: currentColor;
+}
+body.oas-active #gnSubmitBtn.has-petition-pending .oas-fate-medallion-petition,
+body.oas-active #gnSubmitBtn.has-tempt-pending .oas-fate-medallion-tempt {
+    display: block;
+    animation: oas-fate-medallion-pulse 2.4s ease-in-out infinite;
+}
+.oas-fate-medallion-petition {
+    background:
+        radial-gradient(circle at 32% 28%,
+            #fff0c4 0%,
+            #e6c068 30%,
+            #c69132 65%,
+            #8a6020 100%);
+    border: 1px solid rgba(60, 30, 5, 0.7);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 240, 196, 0.7),
+        inset 0 -1px 1px rgba(100, 60, 10, 0.55),
+        0 1px 2px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(255, 220, 130, 0.3);
+    color: rgba(0, 0, 0, 0.88);
+}
+.oas-fate-medallion-tempt {
+    background:
+        radial-gradient(circle at 32% 28%,
+            #ff5050 0%,
+            #c01818 50%,
+            #7a0a0a 100%);
+    border: 1px solid #3a0808;
+    box-shadow:
+        inset 0 1px 1px rgba(255, 120, 120, 0.55),
+        inset 0 -1px 1px rgba(40, 5, 5, 0.7),
+        0 1px 2px rgba(0, 0, 0, 0.6),
+        0 0 8px rgba(220, 40, 40, 0.45);
+    color: #f5d780;
+}
+@keyframes oas-fate-medallion-pulse {
+    0%, 100% { transform: translateY(-50%) scale(1); }
+    50%      { transform: translateY(-50%) scale(1.08); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FATE OUTCOME CHIP — in OAS chat header (added 2026-05-20)
+   Lives between the LI name pill (left) and PC name pill (right). Surfaces
+   the Fate budget state to the player so they know their wish is active and
+   how many exchanges remain before reality reasserts.
+   States:
+     • "Petition sealed — Fate is listening" (sealed, before first submit)
+     • "Fate leans your way · N left"        (during distortion)
+     • "Tempt invoked — reality bends"       (tempt sealed)
+     • "Reality bending · N left"            (tempt during)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.oas-fate-chip {
+    display: none;
+    align-self: center;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font: 9.5px/1 "Inter", -apple-system, sans-serif;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    flex: 0 0 auto;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.oas-fate-chip.is-visible {
+    display: inline-block;
+}
+.oas-fate-chip.oas-fate-chip-petition {
+    background: linear-gradient(180deg, #f5d780 0%, #c69132 100%);
+    color: rgba(0, 0, 0, 0.88);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 240, 196, 0.6),
+        inset 0 -1px 1px rgba(100, 60, 10, 0.4),
+        0 1px 2px rgba(0, 0, 0, 0.45);
+}
+.oas-fate-chip.oas-fate-chip-tempt {
+    background: linear-gradient(180deg, #c81818 0%, #7a0a0a 100%);
+    color: #f5d780;
+    box-shadow:
+        inset 0 1px 1px rgba(255, 120, 120, 0.4),
+        inset 0 -1px 1px rgba(40, 5, 5, 0.5),
+        0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 @media (min-width: 900px) {
@@ -34645,14 +34771,17 @@ body.oas-active #gnSubmitBtn .submit-cost-display {
         box-sizing: border-box;
     }
 
-    /* 15px gap from input row bottom to "Let Fate Guide You" (user
-       spec — same as the gap above the input row). */
+    /* Tight gap from input row bottom to "Let Fate Guide You" (user
+       spec 2026-05-20 — was 15px, still felt too loose). The fate
+       header has its own letter-spacing breathe animation that wants
+       a sliver of room above; ~4px keeps it from kissing the input
+       row while sitting close enough to read as one composed group. */
     body.oas-active #gnFateSection {
-        margin-top: 15px !important;
+        margin-top: 4px !important;
         padding-top: 0 !important;
     }
     body.oas-active #gnFateSection .section-title {
-        margin: 2px 0 2px !important;
+        margin: 0 0 2px !important;
         padding-top: 0 !important;
     }
     body.oas-active .gn-input-bar {

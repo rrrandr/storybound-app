@@ -1647,12 +1647,26 @@ FAILURE CONDITIONS (invalid outputs):
     // default to 3rd. Source of truth: window._buildPOVPronounPromptBlock
     // (defined in app.js near _buildLiteraryRepairWindowDirective).
     var _pcPovDirective = '';
+    var _mythicCoupleDir = '';
+    var _mythicForgettingDir = '';
     try {
       var _sdPcGender = String((_ws && (_ws.gender || _ws.protagonistGender)) || '').toLowerCase();
       var _sdPcName = (_ws && _ws.playerName) || 'the protagonist';
       var _sdLiName = (_ws && ((_ws.storybeau && _ws.storybeau.name) || _ws.loveInterestName)) || 'the love interest';
       if (typeof window !== 'undefined' && typeof window._buildPOVPronounPromptBlock === 'function') {
         _pcPovDirective = window._buildPOVPronounPromptBlock(_ws, _sdPcName, _sdPcGender, _sdLiName);
+      }
+      // Mythic Couple recognition — story-wide flag. SD-author renders
+      // intimate scenes where the LI may reference the fame ("I keep
+      // forgetting people know who we are"); same directive shape as
+      // every other scene path.
+      if (typeof window !== 'undefined' && typeof window.buildMythicCoupleDirective === 'function') {
+        _mythicCoupleDir = window.buildMythicCoupleDirective() || '';
+      }
+      // Mythic forgetting — one-scene transition after a "make them
+      // forget us" Tempt. Auto-clears.
+      if (typeof window !== 'undefined' && typeof window.buildMythicCoupleForgettingDirective === 'function') {
+        _mythicForgettingDir = window.buildMythicCoupleForgettingDirective() || '';
       }
     } catch (_sdPovErr) { /* non-fatal */ }
 
@@ -1820,6 +1834,8 @@ DIRECTIVES (NON-NEGOTIABLE):
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
 
 ${_pcPovDirective}
+${_mythicCoupleDir}
+${_mythicForgettingDir}
 ${_itLitDirective}
 ${_liVoiceDirective}
 ${_firstFavoredDirective}
@@ -3775,6 +3791,13 @@ Player internal thoughts are never narrated. Preserve first-person structure.
       const parts = [];
       // World-level pressure (the A-plot — named goal / clock / stakes)
       parts.push(_safeCall(w.buildAPlotPressureDirective));
+      // Mythic Couple recognition — story-wide flag from "Make us Mythic"
+      // Tempt wish. Empty when off. When on, every NPC reacts with
+      // Romeo-and-Juliet recognition pattern across all scenes.
+      parts.push(_safeCall(w.buildMythicCoupleDirective));
+      // Mythic forgetting — one-scene transition after a "make them forget"
+      // Tempt. Auto-clears.
+      parts.push(_safeCall(w.buildMythicCoupleForgettingDirective));
       // Pattern naming from accumulated microDecision picks
       parts.push(_safeCall(w.buildAxisGravityDirective));
       // Billionaire-eligible Scene 1 framing (grounded/orbit/collision)
@@ -4767,6 +4790,15 @@ Respond in EXACTLY two lines:
         _plotLines.push(`Axis lean: ${_plotCtx.axisLean.lead > 0 ? 'objective+' : 'relationship+'} (${Math.abs(_plotCtx.axisLean.lead)})`);
       }
       if (_plotCtx.fateOASBudget) _plotLines.push(`Fate-OAS distortion active: ${_plotCtx.fateOASBudget.type.toUpperCase()} (${_plotCtx.fateOASBudget.turnsRemaining}/${_plotCtx.fateOASBudget.totalTurns} exchanges left)`);
+      // Mythic Couple recognition — story-wide. Cards may reference the
+      // fame ("I keep forgetting people know who we are now") at the
+      // CONFESSION variant in particular.
+      try {
+        var _myStMythic = window.state && window.state._mythicCoupleStatus;
+        if (_myStMythic && _myStMythic.active) {
+          _plotLines.push('Mythic Couple flag ACTIVE (story-wide) — ' + _myStMythic.pcName + ' + ' + _myStMythic.liName + ' are now legend; NPCs everywhere recognize their names. Confession-shape cards may surface the strangeness of being known. Set since scene ' + _myStMythic.sealedAtScene + '.');
+        }
+      } catch (_) {}
     }
     const _plotBlock = _plotLines.length ? '\nPLOT STATE (use these to ground card variants in the actual story):\n' + _plotLines.map(l => '  • ' + l).join('\n') + '\n' : '';
 
