@@ -33882,9 +33882,12 @@ body.oas-active.oas-text-mode #oasHistoryLog {
     --oas-hb-period: 0ms;
     --oas-hb-amp: 0;
 }
-body.oas-active.oas-text-mode .oas-history-log-wrap {
-    max-width: 480px;
-}
+/* text-mode override removed 2026-05-20: the prior `max-width: 480px`
+   narrowed the log wrap when the face was hidden (Messages-app feel),
+   but it caused PC bubbles to visibly slide inward + scrollbar to
+   shift when the user toggled the lips icon mid-scene. Now both modes
+   keep the wrap at the full chat-panel width so bubbles stay flush
+   to their respective edges across the toggle. */
 .oas-history-log-tint {
     position: absolute;
     inset: 0;
