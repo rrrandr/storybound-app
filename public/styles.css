@@ -1726,6 +1726,15 @@ body.gn-viewing-past .gn-scene-actions-row {
     opacity: 0.55;
     pointer-events: none;
 }
+/* OAS exception: while an intimacy scene is live the user IS the active
+   turn (not passively viewing past), so Say/Do + fate cards must stay
+   interactive even if gn-viewing-past is set by stale scene index. */
+body.oas-active.gn-viewing-past #gnReaderControls,
+body.oas-active.gn-viewing-past #gnFateSection,
+body.oas-active.gn-viewing-past .gn-scene-actions-row {
+    opacity: 1;
+    pointer-events: auto;
+}
 
 /* Fate-special lock state — Petition / Tempt greyed on Scene 1 so the
    reader sees the mechanics exist even before they unlock at Scene 2.
@@ -12078,6 +12087,20 @@ html:has(.petition-fate-card.petition-zoomed) {
   display: flex;
   flex-direction: column;
   will-change: transform;
+}
+
+/* Tempt wish rejected (embodied-scope guard, 2026-05-19): brief red
+   flash on the textarea when the user submits an out-of-scope wish
+   (plot-level / cosmic / power-fantasy) in OAS or literary intimacy
+   phase. The LI line + zoom-stays-open is the primary feedback; this
+   is the visual companion so the user immediately sees WHERE to edit. */
+.tempt-wish-rejected {
+  animation: temptWishReject 1.2s ease-out;
+}
+@keyframes temptWishReject {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 50, 50, 0); }
+  20%      { box-shadow: 0 0 0 2px rgba(220, 50, 50, 0.7), 0 0 14px rgba(220, 50, 50, 0.5); }
+  60%      { box-shadow: 0 0 0 2px rgba(220, 50, 50, 0.45), 0 0 10px rgba(220, 50, 50, 0.3); }
 }
 
 .tempt-wish-item {
@@ -25301,6 +25324,16 @@ body.gn-cover-active .gn-fate-controls,
 body.gn-cover-active .gn-ui-overlay {
     pointer-events: none;
 }
+/* OAS exception: cover-overlay's blanket pointer-events lockout must
+   not apply while OAS is live — the intimacy scene needs Say/Do +
+   fate cards interactive even if gn-cover-active is set by stale state. */
+body.oas-active.gn-cover-active .gn-stage,
+body.oas-active.gn-cover-active .gn-input-bar,
+body.oas-active.gn-cover-active .gn-fate-section,
+body.oas-active.gn-cover-active .gn-fate-controls,
+body.oas-active.gn-cover-active .gn-ui-overlay {
+    pointer-events: auto;
+}
 .gn-cover-overlay-inner {
     position: relative;
     max-width: 480px;
@@ -33667,25 +33700,33 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
    in the bottom-right corner of the mouth-wrap. White SVG outlines
    replace the prior emoji icons. */
 .oas-mouth-chrome {
+    /* Sits at top-CENTER of the face panel between the KARLA / YOU
+       header labels in the chat header bar. Buttons are now pure
+       icon-only (no circle background, no border, no blur) so they
+       read as part of the header strip rather than as floating UI.
+       top: 1px vertically centers the 22px icons against the header
+       row (padding 6px + ~11px text = ~23px total). */
     position: absolute;
-    bottom: 8px;
-    right: 8px;
+    top: 1px;
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 60;
     display: flex;
-    flex-direction: column;
-    gap: 6px;
-    pointer-events: none;  /* re-enable on children */
+    flex-direction: row;
+    gap: 14px;
+    align-items: center;
+    pointer-events: none;
 }
 .oas-mouth-chrome > button {
     pointer-events: auto;
 }
 .oas-quick-mute-btn {
-    /* Position handled by .oas-mouth-chrome parent flex now. */
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid rgba(240, 233, 214, 0.45);
-    background: rgba(20, 16, 14, 0.62);
+    /* Background + circle frame removed — icon-only. */
+    width: 22px;
+    height: 22px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
     color: #ffffff;
     cursor: pointer;
     display: inline-flex;
@@ -33693,25 +33734,29 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     justify-content: center;
     padding: 0;
     line-height: 1;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: opacity 0.15s ease, transform 0.12s ease, color 0.15s ease;
     -webkit-tap-highlight-color: transparent;
+    opacity: 0.78;
 }
 .oas-quick-mute-btn:hover {
-    background: rgba(34, 26, 22, 0.85);
-    border-color: rgba(240, 233, 214, 0.55);
+    background: transparent;
+    border: none;
+    opacity: 1;
 }
 .oas-quick-mute-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.92);
 }
 .oas-quick-mute-btn.is-muted {
-    background: rgba(60, 22, 22, 0.78);
-    border-color: rgba(220, 100, 100, 0.55);
+    background: transparent;
+    border: none;
     color: #f3c0c0;
+    opacity: 1;
 }
 .oas-quick-mute-btn.is-muted:hover {
-    background: rgba(80, 28, 28, 0.88);
+    background: transparent;
+    border: none;
     border-color: rgba(220, 100, 100, 0.75);
 }
 .oas-quick-mute-icon {
@@ -33728,13 +33773,17 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
    Persists via sb_oas_text_mode localStorage. Pairs naturally with
    the quick-mute for full phone-safe-in-public coverage. */
 .oas-text-mode-btn {
-    /* Position handled by .oas-mouth-chrome parent flex (stacked above
-       the mute button). Sizing mirrors the mute button. */
+    /* Icon-only — matches the icon-only quick-mute styling. Sits in
+       the top-center chrome stack between KARLA and YOU.
+       Width bumped to 32 (was 22) to hold the 50%-larger lips SVG —
+       per user 2026-05-20: "lips icon could get 50% larger to be more
+       equal weight to the speaker icon". Height stays 22 to keep
+       baseline alignment with the speaker. */
     width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid rgba(240, 233, 214, 0.45);
-    background: rgba(20, 16, 14, 0.62);
+    height: 22px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
     color: #ffffff;
     cursor: pointer;
     display: inline-flex;
@@ -33742,28 +33791,34 @@ body:has(#vaultLibraryScreen:not(.hidden)) .concierge-dialogue:focus-within {
     justify-content: center;
     padding: 0;
     line-height: 1;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: opacity 0.15s ease, transform 0.12s ease, color 0.15s ease;
     -webkit-tap-highlight-color: transparent;
+    opacity: 0.78;
 }
 .oas-text-mode-btn:hover {
-    background: rgba(34, 26, 22, 0.85);
-    border-color: rgba(240, 233, 214, 0.55);
+    background: transparent;
+    border: none;
+    opacity: 1;
 }
 .oas-text-mode-btn:active {
-    transform: scale(0.94);
+    transform: scale(0.92);
 }
-/* Active state — text mode is ON. Slightly cooler tint than the mute
-   button's red so the two buttons stay visually distinct. */
+/* Active state — text mode is ON. NO color/fill change on the lips
+   themselves (per user 2026-05-20: "leave them looking the same, just
+   add a little x next to them"). The SVG itself ships with the X
+   appended; the active class just lifts opacity to 1 to signal "this
+   is the current state". */
 .oas-text-mode-btn.is-active {
-    background: rgba(22, 38, 60, 0.85);
-    border-color: rgba(120, 180, 220, 0.6);
-    color: #cce0f3;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    opacity: 1;
 }
 .oas-text-mode-btn.is-active:hover {
-    background: rgba(28, 48, 78, 0.92);
-    border-color: rgba(140, 200, 240, 0.78);
+    background: transparent;
+    border: none;
 }
 .oas-text-mode-icon {
     display: inline-block;
@@ -33995,17 +34050,20 @@ body.oas-active.oas-text-mode .oas-history-log-wrap {
    LI name (left) and PC name (right). Individual bubbles no longer
    carry speaker labels — the header is canonical.
 
-   Layout: on narrow screens, mouth wrap and chat panel stack
-   vertically (existing flow). On wide screens (>= 900px), they sit
-   side-by-side so the Submit Turn button + fate cards peek above
-   the fold without scrolling. */
+   The chat panel is layered ON TOP of the face wrap at ALL screen
+   sizes (narrow + wide). On narrow screens, the layered layout is the
+   whole point — saving space by combining the two. Face scales down
+   responsively via aspect-ratio.
+
+   See body.oas-active rules below for absolute positioning over face. */
 .oas-chat-panel {
     display: flex;
     flex-direction: column;
     width: 100%;
-    max-width: 540px;
-    margin: 0 auto;
-    min-height: 220px;
+    /* No min-height — chat panel is sized by the face wrap (via
+       inset:0 in the layered layout). A min-height would force the
+       panel taller than the face on narrow screens, overflowing
+       below the face and breaking the scroll-inside contract. */
 }
 .oas-chat-header {
     display: flex;
@@ -34027,43 +34085,385 @@ body.oas-active.oas-text-mode .oas-history-log-wrap {
     color: rgba(255, 180, 205, 0.95);
 }
 
-/* ── WIDE-SCREEN SIDE-BY-SIDE (>= 900px) ──
-   On laptops/tablets in landscape, place the face on the left and
-   the chat panel on the right. This compresses vertical footprint
-   so Submit Turn + fate cards stay above the fold.
-   gnPanelDisplay is the OAS host; flex it row-wise at width. */
+/* ── LAYERED FACE + CHAT PANEL (applies at ALL screen sizes) ──
+   Face is the BACKGROUND; chat panel overlays directly on top, no
+   inset — chat panel width === face width. Header at top of chat
+   panel spans the full face width. Combined visual saves vertical
+   space; the whole point of the layered approach. */
+body.oas-active #gnPanelDisplay {
+    /* Default (narrow / mobile): face panel = 95% viewport width.
+       Wide-screen rule below overrides this to 50vw. */
+    --oas-panel-w: 95vw;
+    --oas-row-gap: 14px;
+    /* Non-face chrome reserved when computing the face panel's max
+       height — see .intimacy-mouth-wrap for the breakdown. Lives on
+       #gnPanelDisplay so both the face wrap AND the absolute-
+       positioned chat panel can read it via cascade.
+       Narrow viewports (<900px) stack the Say/Do grid (2 textareas
+       side-by-side, ~90px) ABOVE the Submit/Save row (~50px), so they
+       need 320px reserved vs the 230px wide-mode layout. Wide-mode
+       override below resets to 230px. */
+    --oas-fold-reserve: 320px;
+    position: relative !important;
+    display: block !important;
+    width: 100%;
+    max-width: var(--oas-panel-w);
+    margin: 0 auto;
+    padding-bottom: 0;
+}
+/* Release the dialogue-stage's 720px cap when OAS is active — it was
+   keeping the face tiny. The face wraps and chat panel must size by
+   #gnPanelDisplay's --oas-panel-w (up to 1100px), not 720. */
+body.oas-active #gnPanelDisplay .intimacy-dialogue-stage {
+    max-width: none !important;
+    padding: 0 !important;
+    width: 100% !important;
+}
+body.oas-active #gnPanelDisplay .intimacy-mouth-wrap {
+    position: relative;
+    width: 100%;
+    /* Tightened to 7/5 (was 7/6) — shorter wrap = less dark hair/neck
+       visible below the chin in the cropped face image. Combined with
+       a slightly higher object-position (45% focal point — see
+       .intimacy-mouth-img override below), the lips sit higher in the
+       frame and the chin lands near the wrap's bottom edge, eliminating
+       the apparent "black space" between face and Say/Do row that was
+       actually the dark portion of the image itself. */
+    aspect-ratio: 7 / 5;
+    --oas-mouth-focus-y: 45%;
+    /* Dynamic clamp — keep Say/Do + top 10% of fate cards above the
+       fold. When viewport is short, max-height shrinks the face panel;
+       aspect-ratio surrenders (CSS spec: max-height wins over
+       aspect-ratio), wrap becomes shorter than 7/6 would dictate, and
+       image inside crops tighter top/bottom via object-fit: cover.
+       --oas-fold-reserve is defined on #gnPanelDisplay and accounts
+       for the non-face chrome below (header + gap + input row + gap +
+       fate title + ~10% of fate cards + buffer ≈ 230px). */
+    max-height: calc(100vh - var(--oas-fold-reserve, 230px));
+    height: auto !important;
+    margin: 0;
+    z-index: 1;
+    /* CRITICAL: clip the heartbeat vignette + any other absolute child
+       (peek overlays, drip layers) to the wrap's bounds. Without this,
+       the red radial-gradient tint at inset:0 paints outside the
+       rounded bottom edge whenever a parent's transform creates a new
+       containing block and the default overflow=visible lets the
+       absolute child escape. */
+    overflow: hidden !important;
+}
+/* Chat panel overlays the face via matching aspect-ratio (same
+   width + same aspect = same height = perfect overlay).
+   pointer-events:none on the panel itself + auto on children means
+   clicks fall through the transparent backdrop to Say/Do/Submit/cards
+   below — only header + bubbles intercept clicks. */
+body.oas-active #gnPanelDisplay .oas-chat-panel {
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: auto !important;
+    max-width: none !important;
+    /* Match face wrap aspect-ratio so chat panel + face panel share
+       identical width AND height — perfect overlay. Updated to 7/5
+       per face-wrap change (2026-05-20). */
+    aspect-ratio: 7 / 5;
+    height: auto !important;
+    /* Aperture clip — applies in BOTH narrow AND wide-screen modes
+       (previously this lived only in the wide-screen override, so on
+       narrow viewports bubbles broke through the chat panel bottom
+       and overlapped the input row). overflow:hidden gives the chat
+       panel a hard clipping aperture against its computed height. */
+    max-height: calc(100vh - var(--oas-fold-reserve, 230px)) !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    z-index: 10;
+    /* Chat panel needs pointer-events: auto so the LOG inside (a
+       scroll container with overflow-y: auto) receives trackpad wheel
+       + scrollbar drag events reliably. Browsers can fail to deliver
+       wheel events to a scrolling child when the parent is
+       pointer-events: none. Clicks on transparent-background areas
+       just get absorbed by the panel as a no-op (no click handler);
+       face wrap below doesn't need clicks anyway. */
+    pointer-events: auto !important;
+}
+/* Header catches its own clicks (LI name area). Log itself does NOT —
+   only bubbles inside it do. Otherwise the log's empty space (when
+   the chat panel is taller than its content) catches text-selection
+   click+drag that the user intended for the Say/Do textarea below. */
+body.oas-active #gnPanelDisplay .oas-chat-header {
+    pointer-events: auto;
+}
+body.oas-active #gnPanelDisplay #oasHistoryLog {
+    /* Log MUST allow pointer events for trackpad scroll + scrollbar
+       drag to work. The "cursor appears in bubble" bug from earlier was
+       caused by text-selection landing in bubble content during click-
+       and-drag — fixed by user-select: none below, not by killing
+       pointer-events on the whole log. */
+    pointer-events: auto !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+body.oas-active #gnPanelDisplay #oasHistoryLog .oas-chat-row {
+    /* Row is transparent to clicks so the chat panel's pointer-events
+       contract still works (only bubbles capture). Scroll still works
+       because the LOG is the scroll container, not the rows. */
+    pointer-events: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+body.oas-active #gnPanelDisplay #oasHistoryLog .oas-chat-bubble {
+    pointer-events: auto !important;
+    /* Bubble text is read-only display; no selection (which is what
+       was creating the "cursor in speech bubble" effect when the user
+       clicked anywhere outside the textarea). */
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    /* Pin bubbles tight to their side: LI flush left, PC flush right.
+       The chat row is flex; margin-auto pushes the bubble to its
+       respective edge regardless of justify-content. Cap width so
+       neither bubble can reach the visual center of the face panel —
+       center stays clear and the lips read through it. */
+    max-width: 42% !important;
+}
+/* Chat rows span full log width with flex layout. CSS spec quirk: if
+   ANY of the flex item's auto margins resolve to a non-zero value,
+   justify-content on the parent has NO EFFECT on that item. So we
+   keep bubble margins at 0 and rely purely on the row's
+   justify-content + the bubble's own max-width. */
+body.oas-active #gnPanelDisplay #oasHistoryLog .oas-chat-row {
+    width: 100% !important;
+    display: flex !important;
+    box-sizing: border-box !important;
+    padding: 0 !important;
+    margin: 6px 0 !important;
+}
+body.oas-active #gnPanelDisplay #oasHistoryLog .oas-chat-li {
+    justify-content: flex-start !important;
+}
+body.oas-active #gnPanelDisplay #oasHistoryLog .oas-chat-li .oas-chat-bubble {
+    margin: 0 !important;
+}
+body.oas-active #gnPanelDisplay #oasHistoryLog .oas-chat-you {
+    justify-content: flex-end !important;
+}
+body.oas-active #gnPanelDisplay #oasHistoryLog .oas-chat-you .oas-chat-bubble {
+    margin: 0 !important;
+}
+/* History log itself: zero horizontal padding so bubbles can reach
+   chat panel edges (log inherits 12px from inline style which we
+   strip with !important). */
+body.oas-active #gnPanelDisplay #oasHistoryLog {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+body.oas-active #gnPanelDisplay .oas-chat-header {
+    background: rgba(20, 16, 14, 0.55) !important;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-color: rgba(201,162,78,0.5) !important;
+    /* Match face panel width — header spans full chat panel width
+       which is now identical to the face. */
+    border-radius: 6px 6px 0 0;
+}
+body.oas-active #gnPanelDisplay #oasHistoryLog {
+    background: transparent !important;
+    border: none !important;
+    /* flex-basis MUST be 0 (not auto) for the log to actually obey its
+       parent's height. With flex-basis:auto the log starts at content
+       height and never shrinks, so it overflows the chat panel and
+       bleeds bubbles down into the input row. flex:1 1 0 + min-height:0
+       gives the log a constrained box that scrolls when content
+       exceeds it — which is the actual contract. */
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    height: auto;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    /* The chat panel may be narrower than 50vw on tall viewports because
+       the .oas-chat-panel has max-height that clamps it; the log's
+       max-height belt-and-suspenders ensures it never exceeds the chat
+       panel's bottom even if the flex parent miscomputes. */
+    max-height: calc(100% - 30px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    /* CRITICAL FIX (2026-05-20): reserve scrollbar gutter ALWAYS, so the
+       log's content area is identical width whether or not the scrollbar
+       is currently visible. Without this, the bubbles visibly "narrow"
+       toward the center when a new turn pushes content past the visible
+       height and the scrollbar pops in mid-session — which is exactly
+       the "bubbles collapse to center after Submit" symptom. */
+    scrollbar-gutter: stable !important;
+}
+/* 35% opacity bubbles (was 50% — user wants 15% more transparent),
+   opaque text. Overrides the inline-style backgrounds set by the JS
+   templates. Backdrop blur keeps text legible against busy face. */
+body.oas-active #oasHistoryLog .oas-chat-li .oas-chat-bubble {
+    background: rgba(180, 75, 25, 0.35) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+body.oas-active #oasHistoryLog .oas-chat-you .oas-chat-bubble {
+    background: rgba(248, 200, 216, 0.35) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+/* Fate cards 20% smaller in OAS (144 × 0.8 = 115px wide). */
+body.oas-active .fate-card {
+    width: 115px !important;
+}
+/* Rolling-wave refresh (2026-05-19, user spec): on Submit, cards
+   sequentially un-flip then re-flip via JS setTimeout cascade. The
+   underlying `.fate-card .inner { transition: transform 0.6s }` does
+   the work — no extra @keyframes needed, just class-toggle timing.
+   See `_handleIntimacyTurn` → "ROLLING WAVE REFRESH" block in app.js.
+   2026-05-20: wave is 50% faster than a single-card click via the
+   `.rolling-wave` class JS toggles during the cascade. Single clicks
+   keep the 0.6s feel; the multi-card refresh feels snappier. */
+.fate-card.rolling-wave .inner {
+    transition: transform 0.3s ease-in-out !important;
+}
+/* Visual quote-mark decoration on the Say input — signals that
+   typed content is treated as dialogue and will be quoted in the
+   rendered bubble. Decorative only; doesn't change input value. */
+/* Both input wrappers act as positioning context for the badge +
+   curly-quote pseudo-elements. NO container-type — `container-type:
+   inline-size` adds CSS containment which (per spec) establishes a
+   new stacking context AND a containing block for fixed-position
+   descendants, both of which interfere with click-to-focus on the
+   textarea inside. Badge now uses static px sizing instead of cqi. */
+body.oas-active .input-wrapper:has(#gnDialogueInput),
+body.oas-active .input-wrapper:has(#gnActionInput) {
+    position: relative;
+}
+
+/* ── Decorative corner curly quotes on the SAY wrapper ──
+   Visual reminder that Say content is dialogue. Live-quote handler in
+   JS also wraps the input value as the user types — these are the
+   ambient decorations at the corners. */
+body.oas-active .input-wrapper:has(#gnDialogueInput)::before,
+body.oas-active .input-wrapper:has(#gnDialogueInput)::after {
+    position: absolute;
+    color: rgba(212, 168, 67, 0.7);
+    font: italic 22px/1 'Lora', serif;
+    pointer-events: none;
+    z-index: 2;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+body.oas-active .input-wrapper:has(#gnDialogueInput)::before {
+    content: '\201C';  /* curly open quote, top-left */
+    left: 4px;
+    top: 2px;
+}
+body.oas-active .input-wrapper:has(#gnDialogueInput)::after {
+    content: '\201D';  /* curly close quote, bottom-right */
+    right: 4px;
+    bottom: 0;
+}
+
+/* ── Gold SAY / DO badge — JS injects a real <span> element ──
+   Real DOM element (not pseudo) so the wrapper's ::before / ::after
+   stay free for the curly quotes above. Sits flush to the top edge
+   of each input box, top-center. Scales proportionally with the
+   wrapper via cqi units. */
+.oas-input-label {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    /* Fixed-size badge — px instead of cqi so the wrapper doesn't
+       need container-type containment (which was blocking textarea
+       clicks per CSS Containment spec). */
+    width: 70px;
+    height: 14px;
+    background:
+        linear-gradient(180deg,
+            #fff0c4 0%,
+            #e6c068 35%,
+            #c69132 70%,
+            #a8771f 100%);
+    border-radius: 0 0 2px 2px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 240, 196, 0.9),
+        inset 0 -1px 0 rgba(120, 80, 20, 0.7),
+        0 1px 2px rgba(0, 0, 0, 0.5);
+    color: #1a0e02;
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-size: 9px;
+    line-height: 14px;
+    text-align: center;
+    letter-spacing: 0.12em;
+    text-shadow:
+        0 1px 0 rgba(255, 230, 150, 0.55),
+        0 -1px 0 rgba(0, 0, 0, 0.4);
+    z-index: 5;
+    pointer-events: none;
+    user-select: none;
+}
+/* Submit Turn text always centered. Cost-display becomes an absolute
+   badge in the top-right corner instead of pushing the text inline.
+   We only set position:relative (no display override) so the button's
+   existing background-image plaque + click handling stay intact. */
+body.oas-active #gnSubmitBtn {
+    position: relative;
+    text-align: center;
+}
+body.oas-active #gnSubmitBtn .submit-cost-display {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    margin: 0;
+    font-size: 0.55em;
+    pointer-events: none;
+}
+
 @media (min-width: 900px) {
+    /* Wide-screen: face at full 1100×629 (computed via aspect-ratio).
+       Bubble break-out kept MODEST (60px each side) so bubbles overlap
+       the face more than they extend past it. */
     body.oas-active #gnPanelDisplay {
-        display: flex !important;
-        /* Chat panel on LEFT, face on RIGHT — DOM order is mouth-then-
-           panel, so reverse for the visual swap. */
-        flex-direction: row-reverse !important;
-        /* Stretch makes chat panel match face image height naturally. */
-        align-items: stretch !important;
-        justify-content: center !important;
-        gap: 14px !important;
-        max-width: 1100px;
-        margin: 0 auto;
+        /* Wide screens (>=900px): face panel = exactly 50% viewport width.
+           !important ensures it wins against any inline-injected runtime
+           cosmetic style and against the base 95vw default. */
+        --oas-panel-w: 50vw !important;
+        max-width: 50vw !important;
+        width: 50vw !important;
+        /* Wide mode flattens Say/Do + Submit/Save into ONE row (~90px
+           total), so fold-reserve can be tighter than narrow's 320px. */
+        --oas-fold-reserve: 230px;
     }
-    body.oas-active #gnPanelDisplay .intimacy-mouth-wrap {
-        flex: 0 0 auto;
-        width: 420px;
-        max-width: 420px;
-        margin-bottom: 0;  /* gap handled by parent flex */
-    }
+    /* Wide-screen: chat panel = 125% of face panel width. Face panel is
+       50vw centered, so 125% = 62.5vw centered. That means the chat
+       panel extends 6.25vw past the face on each side.
+       CRITICAL: width must be `auto` here — the base `.oas-chat-panel`
+       rule has `width: 100%` which would otherwise lock width to
+       #gnPanelDisplay's 50vw and IGNORE the left/right break-out,
+       making the chat panel collapse back to face-panel-width on
+       subsequent renders. Was the cause of "bubbles collapse inward
+       after Submit" — first paint used the inferred-from-positions
+       width briefly, subsequent paints settled on width:100%. */
     body.oas-active #gnPanelDisplay .oas-chat-panel {
-        flex: 1 1 auto;
-        max-width: 520px;
-        /* Explicit height matches the mouth wrap (420 × 9/16 = 236.25px).
-           align-items: stretch on the parent doesn't reliably propagate
-           a calc'd aspect-ratio height into a column-flex sibling, so
-           we pin it here. */
-        height: calc(420px * 9 / 16);
-        min-height: 200px;
+        /* Explicit 125% width via vw — left position computed to keep
+           it centered on the face. `width: auto` + `left/right: -12.5%`
+           was supposed to do this but kept losing to width:100% somewhere
+           in the cascade; using an explicit width derived from
+           --oas-panel-w (50vw on wide) is unambiguous. */
+        left: calc(-0.125 * var(--oas-panel-w, 50vw)) !important;
+        right: auto !important;
+        width: calc(var(--oas-panel-w, 50vw) * 1.25) !important;
+        max-width: none !important;
+        aspect-ratio: auto !important;
+        /* Tracks the face wrap's 7/5 aspect. Height formula: panel-w
+           * 5/7. */
+        height: calc(var(--oas-panel-w) * 5 / 7) !important;
+        max-height: calc(100vh - var(--oas-fold-reserve, 230px)) !important;
+        /* Aperture clip — bubbles MUST stay inside the chat panel's
+           visible bounds (user spec: "bounded by the speech bubble
+           panel like an aperture, scrolling inside it"). */
+        overflow: hidden !important;
     }
-    body.oas-active #gnPanelDisplay #oasHistoryLog {
-        height: auto !important;
-        flex: 1 1 auto;
+    body.oas-active #oasHistoryLog .oas-chat-bubble {
+        max-width: 80%;
     }
 
     /* Input bar — flatten Say + Do + Save + Submit into a single row.
@@ -34077,20 +34477,23 @@ body.oas-active.oas-text-mode .oas-history-log-wrap {
 
        align-items center (was stretch) so Save doesn't get vertically
        stretched to textarea height. */
-    /* Single flat row of four controls in this order:
-         Do | Say | Submit Turn | Save
-       Achieved via display:contents on the two wrappers so all four
-       grandchildren flow into the parent grid. CSS order property
-       repositions Save AFTER Submit (DOM has Save first in submit-row). */
+    /* Single flat row aligned under the layered face+chat panel:
+       [Say] [Do] [Submit] [Save] with equal gaps. Total = panel width
+       (840px). Submit + Save take their natural widths; Say + Do
+       flex-grow to fill the remaining space. */
     body.oas-active #gnReaderControls {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr auto auto;
+        display: flex !important;
+        flex-direction: row !important;
         justify-content: center;
         align-items: center;
-        gap: 8px;
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 4px 16px 4px 16px;
+        gap: var(--oas-row-gap, 14px);
+        width: 100%;
+        max-width: var(--oas-panel-w, 840px);
+        /* 15px gap from face panel bottom (user spec — was 0 which
+           ran ACTION/SPEECH into the chin; was 95px previously which
+           was the runaway). */
+        margin: 15px auto 0 auto !important;
+        padding: 0 !important;
     }
     body.oas-active #gnReaderControls .gn-input-grid {
         display: contents !important;
@@ -34099,21 +34502,48 @@ body.oas-active.oas-text-mode .oas-history-log-wrap {
         display: contents !important;
     }
     body.oas-active #gnReaderControls .gn-input-grid .input-wrapper {
+        flex: 1 1 0;
         min-width: 0;
-        align-self: stretch;
+        align-self: center;
     }
     body.oas-active #gnReaderControls .gn-input-grid textarea {
-        height: 60px !important;
-        min-height: 60px !important;
-        max-height: 60px !important;
-        padding: 14px 12px !important;
+        /* 50% taller (60 → 90px) per user spec. Padding now sized so
+           the gold engraved frame at top + bottom is FULLY outside the
+           text-content box: 22px top clears the SPEECH/ACTION badge
+           (14px) + the top gold frame (~11px at 90px height) with a
+           small buffer; 18px bottom clears the bottom gold frame with
+           the same margin. overflow-y: auto means longer text scrolls
+           inside this clean inner box — letters never cross the gold. */
+        height: 90px !important;
+        min-height: 90px !important;
+        max-height: 90px !important;
+        padding: 22px 16px 18px 16px !important;
         width: 100%;
+        overflow-y: auto !important;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(201, 162, 78, 0.45) transparent;
+        /* Constrain scrollbar TRACK so it sits inside the gold frame
+           too — without this the scrollbar paints flush to the edges
+           and crosses the gold border on the right. */
+        scroll-padding: 4px 0;
     }
-    /* Reorder: Submit Turn comes BEFORE Save in visual flow.
-       DOM order is Save → Submit. Bumping Save's order to 1 puts it
-       last; Submit stays at default 0 (after the textareas). */
+    /* WebKit scrollbar styling — match the gold/parchment palette so the
+       slim scrollbar reads as part of the plaque, not a default OS bar. */
+    body.oas-active #gnReaderControls .gn-input-grid textarea::-webkit-scrollbar {
+        width: 6px;
+    }
+    body.oas-active #gnReaderControls .gn-input-grid textarea::-webkit-scrollbar-thumb {
+        background: rgba(201, 162, 78, 0.45);
+        border-radius: 3px;
+    }
+    body.oas-active #gnReaderControls .gn-input-grid textarea::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    /* CSS order: Submit (0) comes after the two textareas, Save (1)
+       comes last. DOM is Save→Submit; order property flips them. */
     body.oas-active #gnReaderControls #gnSaveBtn {
         order: 1;
+        flex: 0 0 auto;
         align-self: center;
         height: auto;
         padding: 4px 10px;
@@ -34121,12 +34551,23 @@ body.oas-active.oas-text-mode .oas-history-log-wrap {
     }
     body.oas-active #gnReaderControls #gnSubmitBtn {
         order: 0;
+        flex: 0 0 auto;
         align-self: center;
+        /* Match the textareas' new 90px height so all three input-row
+           plaques (ACTION, SPEECH, Submit Turn) sit on the same baseline.
+           background-size scales the plaque art to whatever box we set. */
+        height: 90px !important;
+        min-height: 90px !important;
+        max-height: 90px !important;
+        line-height: 90px !important;
+        padding: 0 28px !important;
+        box-sizing: border-box;
     }
 
-    /* Crush the space above "Let Fate Guide You". */
+    /* 15px gap from input row bottom to "Let Fate Guide You" (user
+       spec — same as the gap above the input row). */
     body.oas-active #gnFateSection {
-        margin-top: 0 !important;
+        margin-top: 15px !important;
         padding-top: 0 !important;
     }
     body.oas-active #gnFateSection .section-title {
@@ -34134,7 +34575,7 @@ body.oas-active.oas-text-mode .oas-history-log-wrap {
         padding-top: 0 !important;
     }
     body.oas-active .gn-input-bar {
-        padding: 4px 16px !important;
+        padding: 0 16px !important;
         border-top: none !important;
     }
 }
@@ -34991,4 +35432,97 @@ body.oas-active.oas-text-mode .oas-history-log-wrap {
     display: flex;
     gap: 4px;
     flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   OAS INTERACTIVITY GUARD — appended at end so it wins source order.
+   While body.oas-active, force Say/Do row + fate card row + their
+   descendants to receive pointer events, no matter what other body
+   class (gn-cover-active, gn-viewing-past, etc.) is sitting on body.
+   The user IS the active turn in OAS; nothing should lock the inputs.
+   ─────────────────────────────────────────────────────────────────── */
+body.oas-active #gnReaderControls,
+body.oas-active #gnReaderControls *,
+body.oas-active #gnFateSection,
+body.oas-active #gnFateSection *,
+body.oas-active .gn-input-bar,
+body.oas-active .gn-input-bar *,
+body.oas-active .gn-fate-section,
+body.oas-active .gn-fate-section * {
+    pointer-events: auto !important;
+}
+/* Restore the badge + curly-quote pseudo-elements as click-transparent
+   so they don't intercept clicks on the textarea underneath. */
+body.oas-active .oas-input-label {
+    pointer-events: none !important;
+}
+/* TEXTAREA FOCUS GUARD — Say/Do specifically. Force every attribute
+   that could conceivably block click→focus on the textarea itself.
+   Z-index: 1 lifts the textarea above the wrapper's other in-flow
+   children. cursor: text restores the I-beam. user-select: text +
+   webkit-user-select: text restore caret entry on touch/click. */
+body.oas-active #gnActionInput,
+body.oas-active #gnDialogueInput {
+    pointer-events: auto !important;
+    cursor: text !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    -webkit-touch-callout: default !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+/* Belt + suspenders: also force the wrappers (which now establish
+   their own stacking context via `container-type: inline-size`) to
+   not capture clicks themselves; let clicks fall through to the
+   textarea inside. */
+body.oas-active .input-wrapper:has(#gnDialogueInput),
+body.oas-active .input-wrapper:has(#gnActionInput) {
+    pointer-events: auto !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CONCIERGE GUARDS WHILE OAS IS LIVE
+   ─────────────────────────────────────────────────────────────────── */
+/* 1) Bell stays visible + clickable at ALL TIMES — never hidden by
+   OAS chrome, never click-blocked by any other lockout class. */
+body.oas-active #conciergeBell {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 0.7 !important;
+    pointer-events: auto !important;
+    z-index: 10012 !important;
+}
+body.oas-active #conciergeBell:hover {
+    opacity: 1 !important;
+}
+/* 2) Concierge dialogue panel — when visible, force input + scroll
+   area to accept clicks and text entry. The chat panel above sits at
+   z-index 10, the concierge dialogue at 10011 — but several OAS
+   wide-z-index sinks (heartbeat tint, dev launchers, exit overlays)
+   can sit above without the dialogue noticing. Explicit guard. */
+body.oas-active .concierge-dialogue.visible,
+body.oas-active .concierge-dialogue.visible * {
+    pointer-events: auto !important;
+}
+body.oas-active #conciergeInput {
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    cursor: text !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+body.oas-active #conciergeDialogueScroll {
+    pointer-events: auto !important;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+/* 3) OAS dev launchers must NEVER paint above the concierge dialogue.
+   They were sitting at z-index 99998 — clipping any concierge UI that
+   reached their footprint. Push them BELOW concierge (z-index < 10011)
+   while OAS is active. They stay above story chrome (which is < 100)
+   but yield to the bell + dialogue. */
+body.oas-active #intimacyDevLauncherWrap,
+body.oas-active #cineDevLauncherWrap {
+    z-index: 9999 !important;
 }

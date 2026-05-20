@@ -4577,12 +4577,20 @@ Classify.`
     // and fate-card previews all see the same character roster + plot.
     const sceneContext = _buildSceneAndPlotContext(st);
 
+    // World-register block — same helper used by the batch preview path.
+    let _registerBlockSingle = '';
+    try {
+      if (typeof window._buildFatePreviewRegisterBlock === 'function') {
+        _registerBlockSingle = window._buildFatePreviewRegisterBlock(st) || '';
+      }
+    } catch (_regErr) { /* non-fatal */ }
+
     const archMeaning = {
-      temptation: 'Escalate. New act, new territory, new threshold.',
-      confession: 'Admit what you want. Mid-act, no armor.',
-      boundary: 'State your need. Demand, not refusal.',
-      reversal: 'Power changes hands. Take or yield.',
-      silence: 'No words. Teeth, nails, breath, movement.'
+      temptation: 'PC ESCALATES. New act, new territory, new threshold. PC moves the scene forward, claims a next step.',
+      confession: 'PC ADMITS A REAL SUBSTANTIVE THING — never an opener ("I want you to know —" / "I haven\'t told anyone this."). In intimate scenes (OAS / sex), the default Confession is LUST/BODY-anchored — what the PC has been thinking about the LI\'s body, a fantasy, a kink, a long-held physical obsession that ESCALATES the heat: "I haven\'t been able to stop thinking about those magnificent legs wrapped around my head." / "Every night this week I came thinking about your mouth." / "I touched myself in the car on the way over here." The RARE alternative (~15%, deliberate cliffhanger): a plot-truth that screeches sex to a HALT — "I lied about Marcus." / "Your sister knows." Plot-grounded mode is preserved as a deliberate scene-rupture device, especially valuable as a CG-Taste-tier cliffhanger.',
+      boundary:   'PC STATES THEIR NEED. Demand, not refusal — "I want X" / "do Y to me" / "this, not that". Clarity, not negotiation.',
+      reversal:   'PC FLIPS THE POWER DIRECTION OF THE SCENE. Bidirectional — Reversal goes whichever way the current dynamic isn\'t. Read the PC posture hint in the WORLD REGISTER block: if PC has been COMMANDING, Reversal offers the chance to YIELD ("I let my hands drop", "your turn", "take it from here"); if PC has been YIELDING, Reversal offers the chance to TAKE CONTROL ("I pin her wrist", "my turn", "stay where I put you"). The principle is INVERSION of the current beat, not a fixed direction.',
+      silence:    'PC SHIFTS to wordlessness. Action only — teeth, nails, breath, movement — and dialogue is empty/parenthetical (e.g. "(no words)").'
     };
 
     const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate.';
@@ -4606,13 +4614,20 @@ RENDERING FLOOR: ${physicalBounds}
 EMOTIONAL CORE: ${emotionalCore}
 LOVE INTEREST NAME: ${liName}
 
-${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically in the preview — named characters, the LI archetype, the relationship dynamic, the setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing a named character, prefer the highest-salience entity matching the fate-card archetype; ignore low-salience entities unless the card archetype specifically calls for them):\n${sceneContext}\n` : ''}
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically in the preview — named characters, the LI archetype, the relationship dynamic, the setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing a named character, prefer the highest-salience entity matching the fate-card archetype; ignore low-salience entities unless the card archetype specifically calls for them):\n${sceneContext}\n` : ''}${_registerBlockSingle}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 
 TASK: Generate a Say/Do preview for this intimate fate card.
 1. Action — A specific physical act the protagonist takes RIGHT NOW. Max 12 words. Never vague. Never de-escalating. Must match ${effectiveMode} intensity. If the scene/plot context names a specific character, threat, or location relevant to this fate-card archetype, you SHOULD reference it (e.g., "Pull him closer before Triton can hear" — leverage the actual story, don't write generic suggestions).
 2. Dialogue — What the protagonist says or sounds like during the act. Max 15 words. In quotes or parentheses for sounds. Same rule — use the story's specifics when they fit.
+
+ANTI-TECHNOBABBLE / ANTI-NONSENSE (HARD):
+- Action must describe a REAL physical thing the PC can do. "I take the lead" / "I push her against the wall" / "I close the distance between us" — picture-able.
+- BANNED phrasings: "unspool [anything] from your ribs" / "adjust the frequency" / "tune the signal" / any sentence that treats the body as audio equipment or stenography.
+- World register (Glass House: The Chorus / The Field / aperture / Solo) is COLOR, not body-puppetry. "Let the resonance build." is fine; "let her unspool the Chorus from your ribs" is gibberish anatomy.
+- Asterisks for stage directions inside dialogue (e.g. "*Adjust the frequency.*") are BANNED. Dialogue is spoken words only.
+- Dialogue must be a complete spoken line. No trailing em-dash with nothing after.
 
 Respond in EXACTLY two lines:
 [action on first line]
@@ -4703,6 +4718,17 @@ Respond in EXACTLY two lines:
     }
     const _plotBlock = _plotLines.length ? '\nPLOT STATE (use these to ground card variants in the actual story):\n' + _plotLines.map(l => '  • ' + l).join('\n') + '\n' : '';
 
+    // World-register block (added 2026-05-19) — tells Grok the
+    // protagonist's action + dialogue must be in the active world's
+    // register, not modern English. Pulls lexicon hint + sample line +
+    // historical-culture profile (when active) from app.js helper.
+    let _registerBlock = '';
+    try {
+      if (typeof window._buildFatePreviewRegisterBlock === 'function') {
+        _registerBlock = window._buildFatePreviewRegisterBlock(st) || '';
+      }
+    } catch (_regErr) { /* non-fatal */ }
+
     const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema. Each card may take one of three VARIANT shapes — amplify (deepen the act), ruin (plot-level sabotage of the moment), or redirect (turn intimacy into vulnerability discovery) — distributed roughly 70/20/10 across the 5 cards per draw.';
 
     const userMsg = `Generate 5 fate-card Say/Do previews for THIS specific moment of an intimate scene, one per archetype. Each preview is the protagonist's NEXT move + line.
@@ -4713,16 +4739,24 @@ RENDERING FLOOR: ${physicalBounds}
 EMOTIONAL CORE: ${emotionalCore}
 LOVE INTEREST NAME: ${liName}
 
-${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${_registerBlock}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 
-ARCHETYPE MEANINGS:
-- temptation: Escalate. New act, new territory, new threshold.
-- silence:    No words. Teeth, nails, breath, movement.
-- reversal:   Power changes hands. Take or yield.
-- boundary:   State your need. Demand, not refusal.
-- confession: Admit what you want. Mid-act, no armor.
+ARCHETYPE MEANINGS (strict — these are NOT interchangeable; pick the right one):
+- temptation: PC ESCALATES. New act, new territory, new threshold. PC moves the scene forward, claims a next step.
+- silence:    PC SHIFTS to wordlessness. Action only — teeth, nails, breath, movement — and dialogue is empty/parenthetical (e.g. "(no words)").
+- reversal:   PC FLIPS THE POWER DIRECTION OF THE SCENE. Bidirectional — Reversal goes whichever way the current dynamic isn't. READ THE PC POSTURE HINT in the WORLD REGISTER block:
+    • If posture = COMMANDING (PC has been driving with imperatives / dom-register / commands): Reversal offers the PC the chance to YIELD — pass the lead to the LI, ask to be taken, give up control on purpose. Example: "I let my hands drop to my sides." / "Your turn — show me what you do when I stop." / "I want you to take it from here."
+    • If posture = YIELDING (PC has been passive / asking / receiving): Reversal offers the PC the chance to TAKE CONTROL — flip the dynamic, claim the lead, redirect. Example: "I pin her wrist to the headboard." / "My turn. Stay where I put you." / "I'm done waiting — come here."
+    • If posture = BALANCED / undetermined: pick whichever direction creates the bigger scene-shift versus the current beat.
+   The principle is INVERSION of the current scene state, not a fixed direction. NEVER write a Reversal that maintains the existing power dynamic.
+- boundary:   PC STATES THEIR NEED. Demand, not refusal — "I want X" / "do Y to me" / "this, not that". Clarity, not negotiation.
+- confession: PC ADMITS A REAL SUBSTANTIVE THING — mid-act, no armor. CRITICAL: the dialogue must contain ACTUAL CONTENT, not just an opener. NEVER write "I want you to know — " with no completion. NEVER write a confession that ends in a dash and nothing follows. NEVER write generic openers like "I haven't told anyone this." / "There's something I should say." / "I need to admit something." — these are SETUP, not confession.
+   IN INTIMATE SCENES (during OAS / sex / in-progress intimacy — THE DEFAULT MODE for Confession in these cards): the confession is almost always LUST-anchored, BODY-anchored, DESIRE-anchored. The PC reveals what they've been thinking ABOUT the LI's body, what they want done, a kink they haven't named, a fantasy from earlier today, a long-held physical obsession. The confession ESCALATES heat without breaking the scene. Examples: "I haven't been able to stop thinking about those magnificent legs wrapped around my head." / "Every night this week I came thinking about your mouth." / "I want you to ride my face until I can't breathe." / "I touched myself in the car on the way over here." / "I've thought about your hands on my throat since the first time you held a door open for me." / "I'm dripping. I've been dripping since you texted." This is the ~85% mode in intimate contexts.
+   RARE — A-PLOT/CLIFFHANGER CONFESSION (the ~15% mode in intimacy, used DELIBERATELY when narrative context warrants): the PC reveals something that brings the sex to a SCREECHING HALT. A plot-truth that re-contextualizes everything, a betrayal admission, a relationship-rupture truth. This MODE IS A FEATURE — perfect cliffhanger for end-of-tier scenes (especially CG Taste users hitting their scene cap). Apply ONLY when PLOT STATE has loaded grievances/committed-truth/scars AND the variant signal is "ruin" (sabotage-the-moment shape). Examples: "I lied about Marcus. He didn't text me — I texted him first." / "Your sister knows. She's known for weeks." / "I came here to use you. I didn't expect to fall." / "This was supposed to be a job." Plot-grounded; scene-rupturing by design.
+   PRE-INTIMATE / NON-SEXUAL SCENE confessions (when this card fires outside OAS — early relationship scenes, conversations, etc.): use a specific anchor — number, time marker, named reference, concrete object. Examples: "I've wanted this since the night we met." / "I almost called your name three times this week." / "I told my therapist about you in March."
+   ALL MODES: the dialogue must BE the confession with a specific anchor — NEVER substitute a vague "haven't told anyone this" placeholder.
 
 VARIANT SHAPES (each card picks ONE — distribute ~70% amplify / ~20% redirect / ~10% ruin across the 5 cards; pick variant based on plot signal):
 - AMPLIFY (default ~70%): deepen the act. Raise the heat. Push the moment forward in its current direction. This is the "more, harder, closer" mode that fits most beats.
@@ -4745,7 +4779,15 @@ RULES:
 - RUIN cards may name plot figures from grievances/callbacks/committed truth — but stay character-grounded (a whispered wrong name, not a plot dump).
 - REDIRECT cards honor scars/wounds — they may PULL BACK from an act, ask a heavy question, or change the subject. The body slows; never goes cold.
 - Each preview is INDEPENDENT — they are 5 different roads the user can take, not a sequence.
-- Distribute variants across the 5 — don't make all 5 amplify (boring) and don't make all 5 ruin/redirect (cards become anti-erotic). Target rough 70/20/10 within the 5.`;
+- Distribute variants across the 5 — don't make all 5 amplify (boring) and don't make all 5 ruin/redirect (cards become anti-erotic). Target rough 70/20/10 within the 5.
+
+ANTI-TECHNOBABBLE / ANTI-NONSENSE (HARD):
+- Actions describe REAL physical things the PC can actually do. "I take the lead" / "I push her against the wall" / "I close the distance between us" / "I take her hand and place it on me." These are sentences a reader can picture.
+- BANNED phrasing patterns (every one of these has shipped and broken immersion): "unspool [anything] from your ribs" / "adjust the frequency" / "tune the signal" / "let her have the receiver" / "let the field harvest us" / any sentence that treats the body as a piece of audio equipment or a stenographic instrument.
+- World register (Glass House: The Chorus / The Field / aperture / Solo / WiHi; Cyberpunk: chrome, sync, feed) is for COLOR not body-puppetry. You may say "Let the resonance build." You may NOT say "let her unspool the Chorus from your ribs" — that is gibberish anatomy.
+- If the world has a non-modern register, the SHAPE of the sentence stays grounded; only the VOCABULARY of mood-words shifts. "I take the lead" in Glass House becomes "I take the lead before The Chorus does" — same physical action, just one Chorus-flavored aside.
+- Asterisks for stage directions inside dialogue (e.g. "*Adjust the frequency.*") are BANNED. Dialogue is spoken words only. Physical actions belong in the action field.
+- Each card's dialogue must STAND ALONE as a complete spoken line. No trailing em-dash with nothing after. No "I want you to know —" without the rest of the sentence. If you have nothing to put after the dash, write a different line.`;
 
     const messages = [
       { role: 'system', content: systemMsg },
