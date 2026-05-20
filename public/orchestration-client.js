@@ -1642,6 +1642,20 @@ FAILURE CONDITIONS (invalid outputs):
     var _litBodyAttempts = _ws._litBodyCommandAttempts || 0;
     var _litLastPremature = _ws._litLastPrematureCategory || null;
 
+    // ── PC POV PRONOUN DISCIPLINE (added 2026-05-20) ──
+    // Same rule set as OAS — 1st/2nd/3rd PC pronouns; 4th/5th/LI POV
+    // default to 3rd. Source of truth: window._buildPOVPronounPromptBlock
+    // (defined in app.js near _buildLiteraryRepairWindowDirective).
+    var _pcPovDirective = '';
+    try {
+      var _sdPcGender = String((_ws && (_ws.gender || _ws.protagonistGender)) || '').toLowerCase();
+      var _sdPcName = (_ws && _ws.playerName) || 'the protagonist';
+      var _sdLiName = (_ws && ((_ws.storybeau && _ws.storybeau.name) || _ws.loveInterestName)) || 'the love interest';
+      if (typeof window !== 'undefined' && typeof window._buildPOVPronounPromptBlock === 'function') {
+        _pcPovDirective = window._buildPOVPronounPromptBlock(_ws, _sdPcName, _sdPcGender, _sdLiName);
+      }
+    } catch (_sdPovErr) { /* non-fatal */ }
+
     // ── INTENT TRANSMUTATION DIRECTIVE (added 2026-05-18) ──
     // Tells the SD author to TRANSMUTE the player's raw input into
     // world/tone-native dramatic action instead of executing it
@@ -1805,6 +1819,7 @@ DIRECTIVES (NON-NEGOTIABLE):
 - Physical Rendering Floor: ${constraints.physicalBounds || resolvePhysicalBounds()}
 - Hard Stops: ${(constraints.hardStops || ['consent_withdrawal']).join(', ')}
 
+${_pcPovDirective}
 ${_itLitDirective}
 ${_liVoiceDirective}
 ${_firstFavoredDirective}
@@ -3551,6 +3566,22 @@ MAIN PAIR RESTRICTION: Do not render consummation or escalation between the prim
       }
     }
 
+    // PC pronoun discipline (added 2026-05-20) — same rule set as OAS:
+    //   1st  → PC = me/my/mine
+    //   2nd  → PC = you/your/yours
+    //   3rd  → PC = matching gender (he/him/his or she/her/hers)
+    //   4th (environment) / 5th (author) / loveInterestPOV → default to 3rd
+    // Source of truth: window._buildPOVPronounPromptBlock in app.js.
+    let pcPovBlock = '';
+    try {
+      const _pcGenderForBlock = String((appState && (appState.gender || appState.protagonistGender)) || '').toLowerCase();
+      const _pcNameForBlock = (appState && appState.playerName) || 'the protagonist';
+      const _liNameForBlock = (appState && ((appState.storybeau && appState.storybeau.name) || appState.loveInterestName)) || 'the love interest';
+      if (typeof window !== 'undefined' && typeof window._buildPOVPronounPromptBlock === 'function') {
+        pcPovBlock = window._buildPOVPronounPromptBlock(appState, _pcNameForBlock, _pcGenderForBlock, _liNameForBlock);
+      }
+    } catch (_) { /* non-fatal */ }
+
     // POV-specific upstream alignment for renderer
     const env4thBlock = (appState && appState.povMode === 'environment4th') ? `
 POV ALIGNMENT:
@@ -3802,7 +3833,7 @@ Player internal thoughts are never narrated. Preserve first-person structure.
 
     return {
       system: `You are a SPECIALIST RENDERER for intimate scenes.
-${env4thBlock}${rendererVoiceAnchor}
+${env4thBlock}${pcPovBlock}${rendererVoiceAnchor}
 YOUR CONSTRAINTS (NON-NEGOTIABLE):
 - You render SENSORY EMBODIMENT only
 - You do NOT decide plot or outcomes
