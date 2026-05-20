@@ -1650,6 +1650,7 @@ FAILURE CONDITIONS (invalid outputs):
     var _mythicCoupleDir = '';
     var _mythicForgettingDir = '';
     var _temptCallbackDir = '';
+    var _temptReactionDir = '';
     try {
       var _sdPcGender = String((_ws && (_ws.gender || _ws.protagonistGender)) || '').toLowerCase();
       var _sdPcName = (_ws && _ws.playerName) || 'the protagonist';
@@ -1673,6 +1674,12 @@ FAILURE CONDITIONS (invalid outputs):
       // and may surface during intimate beats.
       if (typeof window !== 'undefined' && typeof window.buildTemptFateCallbackDirective === 'function') {
         _temptCallbackDir = window.buildTemptFateCallbackDirective() || '';
+      }
+      // Tempt Fate IN-SCENE Holy-Shit reaction — for SD-author renders
+      // during an active Tempt window. Scale-aware. Self-gates to ''
+      // when no Tempt is in play this turn.
+      if (typeof window !== 'undefined' && typeof window.buildTemptInSceneReactionDirective === 'function') {
+        _temptReactionDir = window.buildTemptInSceneReactionDirective() || '';
       }
     } catch (_sdPovErr) { /* non-fatal */ }
 
@@ -1842,6 +1849,7 @@ DIRECTIVES (NON-NEGOTIABLE):
 ${_pcPovDirective}
 ${_mythicCoupleDir}
 ${_mythicForgettingDir}
+${_temptReactionDir}
 ${_temptCallbackDir}
 ${_itLitDirective}
 ${_liVoiceDirective}
@@ -3805,6 +3813,11 @@ Player internal thoughts are never narrated. Preserve first-person structure.
       // Mythic forgetting — one-scene transition after a "make them forget"
       // Tempt. Auto-clears.
       parts.push(_safeCall(w.buildMythicCoupleForgettingDirective));
+      // Tempt Fate IN-SCENE Holy-Shit reaction — fires when a Tempt is
+      // currently active (literary tempt_fate_invoked_this_turn or
+      // volatility_window source=tempt). Scale-aware: mass/social/
+      // intimate reactions tuned to the wish.
+      parts.push(_safeCall(w.buildTemptInSceneReactionDirective));
       // Tempt Fate callback — historical Tempt events surface as LI
       // memory / debate / repeat-request at intimate moments. Self-gated
       // (empty while a Tempt window is still live in OAS).

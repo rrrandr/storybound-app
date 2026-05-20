@@ -34550,7 +34550,9 @@ body.oas-active #gnSubmitBtn .submit-cost-display {
    ═══════════════════════════════════════════════════════════════════════════ */
 .oas-fate-medallion {
     position: absolute;
-    left: 8px;
+    /* Base: edge positioning moved to per-variant rules so both
+       medallions can show simultaneously (Petition LEFT, Tempt RIGHT)
+       when the player stacks both seals into a single turn. */
     top: 50%;
     transform: translateY(-50%);
     width: 26px;
@@ -34560,6 +34562,8 @@ body.oas-active #gnSubmitBtn .submit-cost-display {
     display: none;
     z-index: 2;
 }
+.oas-fate-medallion-petition { left: 8px; }
+.oas-fate-medallion-tempt    { right: 8px; }
 .oas-fate-medallion svg {
     position: absolute;
     width: 64%;
@@ -34568,10 +34572,40 @@ body.oas-active #gnSubmitBtn .submit-cost-display {
     left: 18%;
     fill: currentColor;
 }
-body.oas-active #gnSubmitBtn.has-petition-pending .oas-fate-medallion-petition,
-body.oas-active #gnSubmitBtn.has-tempt-pending .oas-fate-medallion-tempt {
+/* Petition medallion (prayer hands) is OUTLINED, not filled — the
+   solid silhouette at this size read as parallel bars / a pause icon.
+   Outline reveals the V-shape (palms meeting) and the wrist curve. */
+.oas-fate-medallion-petition svg {
+    fill: none !important;
+}
+.oas-fate-medallion-petition svg path,
+.oas-fate-medallion-petition svg line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+/* Display rules — broadened 2026-05-20 from OAS-only (was `body.oas-active
+   #gnSubmitBtn...`) to cover ALL Submit Turn surfaces: literary #submitBtn,
+   CG / OAS #gnSubmitBtn. The medallion appears whenever the corresponding
+   Fate is pending submit, regardless of mode. Anchor (position: relative)
+   is set on each parent button below. */
+#submitBtn.has-petition-pending .oas-fate-medallion-petition,
+#submitBtn.has-tempt-pending    .oas-fate-medallion-tempt,
+#gnSubmitBtn.has-petition-pending .oas-fate-medallion-petition,
+#gnSubmitBtn.has-tempt-pending    .oas-fate-medallion-tempt {
     display: block;
     animation: oas-fate-medallion-pulse 2.4s ease-in-out infinite;
+}
+/* Anchor for the absolutely-positioned medallion. Both Submit Turn
+   surfaces need position:relative so the medallion span anchors INSIDE
+   the button rather than escaping to the nearest positioned ancestor.
+   The body.oas-active #gnSubmitBtn rule already provides this in OAS;
+   the rules here cover the literary path AND CG-without-OAS. */
+#submitBtn,
+#gnSubmitBtn {
+    position: relative;
 }
 .oas-fate-medallion-petition {
     background:
@@ -34815,17 +34849,18 @@ body.oas-active #gnSubmitBtn.has-tempt-pending .oas-fate-medallion-tempt {
     }
 
     /* Tight gap from input row bottom to "Let Fate Guide You" (user
-       spec 2026-05-20 — was 15px, still felt too loose). The fate
-       header has its own letter-spacing breathe animation that wants
-       a sliver of room above; ~4px keeps it from kissing the input
-       row while sitting close enough to read as one composed group. */
+       spec 2026-05-20 iterations — 15px → 4px → still too loose →
+       now zeroed). All vertical chrome between the input plaque
+       bottom and the fate header has been collapsed: the only
+       remaining slack is the title's own line metrics. */
     body.oas-active #gnFateSection {
-        margin-top: 4px !important;
+        margin-top: 0 !important;
         padding-top: 0 !important;
     }
     body.oas-active #gnFateSection .section-title {
-        margin: 0 0 2px !important;
-        padding-top: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 1 !important;
     }
     body.oas-active .gn-input-bar {
         padding: 0 16px !important;
@@ -34902,6 +34937,123 @@ body.oas-active #gnSubmitBtn.has-tempt-pending .oas-fate-medallion-tempt {
     /* Cap height so the face stays visible during scroll. ~ face_height
        gives a balanced split between cinematic and transcript. */
     max-height: 60vh;
+}
+/* ── PANELED ARCHIVE LAYOUT (added 2026-05-20) ──
+   Replaces the scrolling transcript with a single-beat panel view.
+   Each beat renders as one "comic panel" — large mouth image + the
+   exchange's PC + LI bubbles below. Prev/Next walks beats one at a
+   time. The opener beat (synthetic Beat 0) shows the LI face + a
+   stage-direction line. The closing beat (if archive.closingLine
+   exists) renders the afterglow line. */
+.oas-archive-panel {
+    flex: 1 1 auto;
+    padding: 18px 22px 12px 22px;
+    background: rgba(8, 6, 4, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 120px;
+}
+.oas-archive-panel .oas-chat-row {
+    display: flex;
+    width: 100%;
+    margin: 0;
+}
+.oas-archive-panel .oas-chat-li { justify-content: flex-start; }
+.oas-archive-panel .oas-chat-you { justify-content: flex-end; }
+.oas-archive-panel .oas-chat-bubble {
+    position: relative;  /* anchor for bubble medallion */
+    max-width: 78%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    box-shadow: 0 0 0 1px rgba(212, 168, 67, 0.45);
+}
+.oas-archive-panel .oas-chat-li .oas-chat-bubble {
+    background: rgba(212, 168, 67, 0.12);
+    color: rgba(255, 220, 160, 0.92);
+}
+.oas-archive-panel .oas-chat-you .oas-chat-bubble {
+    background: rgba(255, 200, 220, 0.08);
+    color: rgba(255, 220, 220, 0.92);
+}
+.oas-archive-panel .oas-chat-dialogue {
+    font: italic 15px/1.45 'Lora', serif;
+    margin: 0;
+}
+.oas-archive-panel .oas-chat-narration {
+    font: 13px/1.4 'Lora', serif;
+    margin-top: 4px;
+    color: rgba(243, 230, 200, 0.7);
+    font-style: italic;
+}
+.oas-archive-panel .oas-archive-opener .oas-chat-bubble,
+.oas-archive-panel .oas-archive-closing-row .oas-chat-bubble {
+    background: rgba(8, 6, 4, 0.5);
+    color: rgba(243, 230, 200, 0.78);
+    box-shadow: 0 0 0 1px rgba(201, 162, 78, 0.3);
+    font-style: italic;
+}
+.oas-archive-panel .oas-archive-opener .oas-chat-narration,
+.oas-archive-panel .oas-archive-closing-row .oas-chat-narration {
+    color: rgba(243, 230, 200, 0.78);
+}
+
+/* ── BUBBLE-LEVEL FATE MEDALLIONS (added 2026-05-20) ──
+   Petition / Tempt seal that landed on this beat's LI response gets a
+   small medallion in the bubble's top-right corner. Mini variant of
+   the Submit-button medallion — same shapes, same color register
+   (gold prayer hands for Petition, red enamel lightning for Tempt). */
+.oas-archive-bubble-medallion {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 3;
+}
+.oas-archive-bubble-medallion svg {
+    position: absolute;
+    width: 64%;
+    height: 64%;
+    top: 18%;
+    left: 18%;
+    fill: currentColor;
+}
+.oas-archive-bubble-medallion-petition {
+    background: radial-gradient(circle at 32% 28%,
+        #fff0c4 0%, #e6c068 30%, #c69132 65%, #8a6020 100%);
+    border: 1px solid rgba(60, 30, 5, 0.7);
+    box-shadow:
+        inset 0 1px 1px rgba(255, 240, 196, 0.7),
+        inset 0 -1px 1px rgba(100, 60, 10, 0.55),
+        0 1px 2px rgba(0, 0, 0, 0.55);
+    color: rgba(0, 0, 0, 0.88);
+}
+.oas-archive-bubble-medallion-petition svg {
+    fill: none;
+}
+.oas-archive-bubble-medallion-petition svg path,
+.oas-archive-bubble-medallion-petition svg line {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.oas-archive-bubble-medallion-tempt {
+    background: radial-gradient(circle at 32% 28%,
+        #ff5050 0%, #c01818 50%, #7a0a0a 100%);
+    border: 1px solid #3a0808;
+    box-shadow:
+        inset 0 1px 1px rgba(255, 120, 120, 0.55),
+        inset 0 -1px 1px rgba(40, 5, 5, 0.7),
+        0 1px 2px rgba(0, 0, 0, 0.6),
+        0 0 6px rgba(220, 40, 40, 0.4);
+    color: #f5d780;
 }
 .oas-archive-transcript::-webkit-scrollbar { width: 6px; }
 .oas-archive-transcript::-webkit-scrollbar-thumb {
@@ -35931,17 +36083,26 @@ body.oas-active .gn-fate-section * {
 body.oas-active .oas-input-label {
     pointer-events: none !important;
 }
-/* Sparkle overlay carve-out (added 2026-05-20): the universal-descendant
-   rule above promotes the sparkle container's inline `pointer-events: none`
-   to `auto`. Combined with the container's `z-index: 10` + textarea's
-   `z-index: 1` (line ~35903), the sparkle layer eats every click on the
-   say/do textareas immediately after a fate-card click. Carve it back out
-   explicitly. Same for individual sparkle particles in case they spawn
-   inside .gn-input-bar / .gn-fate-section children. */
-body.oas-active .gn-input-bar .authorship-sparkle-container,
-body.oas-active .gn-input-bar .authorship-sparkle,
-body.oas-active .gn-fate-section .authorship-sparkle-container,
-body.oas-active .gn-fate-section .authorship-sparkle {
+/* Sparkle overlay carve-out (added 2026-05-20, iterated): the universal-
+   descendant rules above promote the sparkle container's inline
+   `pointer-events: none` to `auto`. Combined with the container's
+   `z-index: 10` + textarea's `z-index: 1`, the sparkle layer eats every
+   click on the say/do textareas immediately after a fate-card click.
+   Carve it back out explicitly. INCLUDES the ID-based parent selectors
+   (#gnReaderControls / #gnFateSection) because those have higher
+   specificity than the class-based parents (.gn-input-bar / .gn-fate-
+   section) — without matching the ID specificity, the universal rule
+   wins per CSS spec (1-1-2 > 0-3-1) and our carve-out never applies.
+   First attempt covered only the .gn-input-bar / .gn-fate-section class
+   selectors — silently overridden by the #gn-prefixed rules above. */
+body.oas-active #gnReaderControls .authorship-sparkle-container,
+body.oas-active #gnReaderControls .authorship-sparkle,
+body.oas-active #gnFateSection    .authorship-sparkle-container,
+body.oas-active #gnFateSection    .authorship-sparkle,
+body.oas-active .gn-input-bar     .authorship-sparkle-container,
+body.oas-active .gn-input-bar     .authorship-sparkle,
+body.oas-active .gn-fate-section  .authorship-sparkle-container,
+body.oas-active .gn-fate-section  .authorship-sparkle {
     pointer-events: none !important;
 }
 /* TEXTAREA FOCUS GUARD — Say/Do specifically. Force every attribute
