@@ -92,6 +92,18 @@ const ROLE_MODEL_CHAIN = {
     'grok-4-1-fast-non-reasoning',   // primary — non-reasoning is cheaper for visual extraction
     'grok-4-1-fast-reasoning',       // fallback 1
     'grok-4.3'                        // fallback 2
+  ],
+  // STRUCTURE_GENERATOR — structured JSON output for plot scaffolds when
+  // OpenAI + Anthropic both fail. Added 2026-05-21 in response to a real
+  // outage where gpt-4o-mini returned empty content twice in a row and
+  // the user's story shipped without an A-plot. Grok is a different
+  // provider entirely (xAI), so an OpenAI/Anthropic dual-outage doesn't
+  // affect it. No ESD validation required for this role (structured
+  // JSON, not erotic narrative).
+  STRUCTURE_GENERATOR: [
+    'grok-4-1-fast-reasoning',
+    'grok-4-1-fast-non-reasoning',
+    'grok-4.3'
   ]
 };
 
