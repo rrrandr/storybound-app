@@ -25012,6 +25012,31 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
     border-bottom: 1px solid rgba(201, 168, 76, 0.18);
     margin-bottom: 18px;
     animation: stagedGateIn 320ms ease-out forwards;
+    /* Sits above the dimmed surrounding scene at full brightness so
+       the user's attention lands on the loading state, not the
+       ghost of the previous scene behind it. */
+    position: relative;
+    z-index: 2;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* While composing the next scene, dim the rest of the staged surface
+   so it's visually clear that the scene is regenerating. Applied via
+   body class set by _showStagedComposingIndicator / removed by
+   _hideStagedComposingIndicator. Targets every visual + interactive
+   element OUTSIDE the composing slot. */
+body.staged-composing-active #stagedHero,
+body.staged-composing-active #gnPanelDisplay,
+body.staged-composing-active #gnReaderControls,
+body.staged-composing-active #gnFateSection,
+body.staged-composing-active #gnPageNavControls,
+body.staged-composing-active .say-do-grid,
+body.staged-composing-active .story-pages-container {
+    opacity: 0.25;
+    pointer-events: none;
+    transition: opacity 250ms ease;
+    filter: saturate(0.6);
 }
 
 /* ── Staged composing — 7 fate-card loading row ──
