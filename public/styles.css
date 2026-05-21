@@ -29258,13 +29258,20 @@ body.elevated-fate-cards .tempt-fate-card {
     pointer-events: none;
     border-radius: inherit;
 }
-/* Count stays BLACK regardless of low/urgency state — lifted above
-   the red overlay so the multiply blend doesn't tint the text. */
+/* When the widget turns red (low / urgency tier active), the count
+   flips from black-lacquered-on-gold to GOLD-on-red. Lifted above the
+   red overlay (z-index:3) so the multiply blend doesn't tint the
+   number, and re-styled with a dark outline + soft drop so gold reads
+   crisp against the pulsing red pill. */
 .fw-fortune.fw-low .fw-fortune-count,
 .fw-fortune[data-urgency] .fw-fortune-count {
-    color: #0a0a0a;
+    color: var(--gold, #ffd700);
     position: relative;
     z-index: 3;
+    text-shadow:
+        0 -1px 0 rgba(0, 0, 0, 0.7),
+        0 1px 0 rgba(0, 0, 0, 0.85),
+        0 0 4px rgba(0, 0, 0, 0.55);
 }
 
 /* Heartbeat tempo scales with urgency. Whole pill pulses (scale +
@@ -29296,18 +29303,17 @@ body.elevated-fate-cards .tempt-fate-card {
         #6e0808 45%,
         #3a0404 100%);
 }
-/* At urgent+ the whole count box gets a faint reddish glow so the
-   pulse reads as something more than "the number is colored red." Soft
-   inset + outer shadow approximates a heartbeat halo without competing
-   with the gold widget frame. */
+/* At urgent+ the gold count gets a heartbeat halo — keep the dark
+   outline for legibility against the deeper red, add a soft reddish
+   bloom so the pulse reads as more than "the number is gold." */
 .fw-fortune[data-urgency="urgent"]   .fw-fortune-count,
 .fw-fortune[data-urgency="critical"] .fw-fortune-count,
 .fw-fortune[data-urgency="depleted"] .fw-fortune-count {
     text-shadow:
-        0 -1px 0 rgba(255, 245, 200, 0.4),
-        0 1px 0 rgba(0, 0, 0, 0.75),
-        0 2px 2px rgba(0, 0, 0, 0.4),
-        0 0 8px rgba(217, 64, 64, 0.55);
+        0 -1px 0 rgba(0, 0, 0, 0.8),
+        0 1px 0 rgba(0, 0, 0, 0.9),
+        0 2px 2px rgba(0, 0, 0, 0.5),
+        0 0 10px rgba(255, 80, 60, 0.55);
 }
 /* Fortune breakdown panel */
 .fw-breakdown {
