@@ -3638,8 +3638,14 @@ p.vision-active-paragraph::after {
 /* TITLE + SCENE — Printed-book elements inside page (AUTHORITATIVE)          */
 /* Typography: Lora font, lower visual salience, no UI decoration             */
 /* ═══════════════════════════════════════════════════════════════════════════ */
-/* Working Title label — shown above title before Arc Title is finalized */
+/* Working Title label — formerly shown above title before Arc Title resolved.
+   Suppressed 2026-05-21 by user request — the title reads cleaner without the
+   "WORKING TITLE" prefix even when it's still provisional. JS still runs
+   _updateWorkingTitleLabel; CSS just makes the element invisible. */
 .working-title-label {
+    display: none !important;
+    /* Legacy typographic rules kept for reference in case the label is
+       ever re-enabled — they don't affect rendering while display:none. */
     font-family: 'Lora', serif;
     font-size: 0.55em;
     font-weight: 400;
