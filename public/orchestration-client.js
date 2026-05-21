@@ -4837,6 +4837,35 @@ Respond in EXACTLY two lines:
       }
     } catch (_regErr) { /* non-fatal */ }
 
+    // ── 10-TURN NON-REPEAT AVOID-LIST (added 2026-05-20) ──
+    // Build a per-slot list of recent suggestions the player has
+    // already seen. Grok must avoid generating these (or near-paraphrases).
+    // Driven by state.intimacyDialogue._fateRecentByTurn (rolling 10
+    // per slot) populated by _recordFatePreviewShown at display time.
+    let _avoidBlock = '';
+    try {
+      const _recentByTurn = (st.intimacyDialogue && st.intimacyDialogue._fateRecentByTurn) || {};
+      const _slots = ['temptation', 'silence', 'reversal', 'boundary', 'confession'];
+      const _avoidLines = [];
+      _slots.forEach(function(slot) {
+        const recent = _recentByTurn[slot] || [];
+        if (!recent.length) return;
+        // Cap each slot at the most recent 8 for token budget.
+        const trimmed = recent.slice(-8);
+        _avoidLines.push('  ' + slot + ':');
+        trimmed.forEach(function(canon) {
+          // canon format is "action||dialogue"
+          const parts = String(canon).split('||');
+          const a = (parts[0] || '').slice(0, 100);
+          const d = (parts[1] || '').slice(0, 100);
+          _avoidLines.push('    - "' + a + '" + ' + d);
+        });
+      });
+      if (_avoidLines.length) {
+        _avoidBlock = '\n10-TURN NON-REPEAT GUARD (HARD): The player has SEEN these suggestions in recent turns. DO NOT repeat or paraphrase them — produce fundamentally different action / dialogue lines for each slot. Variety is the point: same archetype, fresh angle.\n' + _avoidLines.join('\n') + '\n';
+      }
+    } catch (_avoidErr) { /* non-fatal */ }
+
     const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema. Each card may take one of three VARIANT shapes — amplify (deepen the act), ruin (plot-level sabotage of the moment), or redirect (turn intimacy into vulnerability discovery) — distributed roughly 70/20/10 across the 5 cards per draw.';
 
     // Gender awareness (2026-05-20) — read PC + LI genders so anatomy
@@ -4874,7 +4903,7 @@ PC GENDER: ${pcGender}. LI GENDER: ${liGender}.
 ${pcAnatomyGuide}
 ${liAnatomyGuide}
 
-${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${_registerBlock}
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${_registerBlock}${_avoidBlock}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 
