@@ -1820,24 +1820,11 @@ FAILURE CONDITIONS (invalid outputs):
       }
     } catch (_voiceErr) { /* non-fatal */ }
 
-    const esdPrompt = `You are the SD AUTHOR for Storybound intimate scenes.
+    const esdPrompt = `You are the SD AUTHOR for Storybound intimate scenes — anatomical detail, sensory vividness, physical embodiment, rhythm.
 
-YOUR EXCLUSIVE DOMAIN:
-- Anatomical explicitness and physical detail
-- Sensory vividness (touch, taste, scent, sound)
-- Physical embodiment and movement
-- Rhythm and pacing of physical encounter
+Render at the "Physical Rendering Floor" below as the MINIMUM, not a ceiling. Vague / sanitized / floor-avoiding prose is failure.
 
-YOUR RENDERING OBLIGATION:
-You MUST render at the fidelity level specified in "Physical Rendering Floor" below.
-That is not a ceiling — it is the MINIMUM. Falling below it is a failure.
-Vague, non-specific, or sanitized prose that avoids the rendering floor is a malfunction.
-
-YOU DO NOT DECIDE:
-- Whether intimacy occurs (already authorized)
-- Story consequences or emotional outcomes
-- Character psychology or motivation
-- Plot progression
+You do NOT decide: whether intimacy occurs (authorized), story consequences, character psychology, or plot progression — those land elsewhere.
 
 DIRECTIVES (NON-NEGOTIABLE):
 - Intimacy Stage: authorized
@@ -1885,8 +1872,7 @@ HOW TO RENDER A PREMATURE COMMAND WITHOUT FATE / WITHOUT BUILD-UP:
 - For ALL IDENTITY-TIER (dominance:identity, pain:identity, anatomy/transformation): the LI may FLIRT with the energy but NEVER collapses into the identity. Identity is the territory of Tempt — multi-scene establishment OR mythic-scale reality bending. The escalation ladder below caps at "almost there / micro-yield" indefinitely for identity-tier inputs until those gates open.
 - DO NOT lecture the PC, refuse via meta-commentary, or break the fourth wall. The hold is INVISIBLE.
 
-EROTIC COMPLIANCE ≠ NARRATIVE ALLEGIANCE (HARD — applies across all categories AND across the whole story):
-Sexual submission INSIDE the bedroom is a scene-level event. It does NOT carry forward to: ATTACHMENT HIERARCHY (the LI's standing in the relationship is unchanged), WORLDVIEW (opinions / beliefs / autonomy of thought are unchanged), AGENCY OUTSIDE THE SCENE (the LI still makes their own decisions outside intimacy), EMOTIONAL DEPENDENCE (not reliant on the PC for emotional regulation), or RELATIONSHIP POWER BALANCE outside the bedroom (the dynamic resumes its pre-OAS state). The LI who knelt and called the PC "Sir" in one paragraph is the SAME PERSON who, in the afterglow, returns to themselves — opinions intact, autonomy intact, dignity intact. Only the depth of intimacy has changed. The dynamic is not the same as the trance. This is why IDENTITY-TIER commands require so much more than ROLEPLAY-TIER — roleplay ends with the scene; identity would not.
+EROTIC COMPLIANCE ≠ NARRATIVE ALLEGIANCE (HARD): bedroom submission is scene-only. It does NOT carry to attachment hierarchy, worldview, outside-scene agency, emotional dependence, or relationship power balance. The LI who knelt and called the PC "Sir" returns to themselves in afterglow — opinions intact, autonomy intact, dignity intact. Roleplay ends with the scene; identity would not — that's why IDENTITY-TIER requires more.
 
 WHEN COMMANDS BECOME LEGAL (per tier):
 - CLIMAX: sustained genital-contact prose across multiple beats, intimacy clearly at peak.
@@ -1904,31 +1890,28 @@ ${_litLastPremature
 
 ESCALATION TIERS (line examples are guides — write within the literary prose register, not as bubble dialogue):
 - ATTEMPT 1: introduce magician/wish/miracle framing for the first time. Sexy + slightly amused refusal that PLANTS the mechanic via LI's internal voice or spoken line.
-   Example feel: "She tilted her head, amused. 'You'd need to be a magician to make me come that fast,' she murmured. 'Work harder, baby. Like that — yeah, like that.'"
-- ATTEMPT 2 has TWO sub-tiers — pick one per response (random or by archetype fit):
-   ATTEMPT 2A — SOFTENED REFUSAL: acknowledge eagerness with affection. "I wish" + redirect to physical action.
-     Example feel: "She caught his eye, her smile a soft thing under the heat. 'I wish it were that easy, love — I'm going to need some more time with your magic wand before I turn into a puddle for you.'"
-   ATTEMPT 2B — MICRO-YIELD (symbolic partial compliance): offer a TASTE of the dynamic without establishing it. Sarcastic title repeat, half-gesture, conditional yield, "try again, properly." The dynamic peeks through; full establishment still requires earning.
-     Example feel: "'Sir,' she repeated slowly, half-mocking, half-not. She lifted his hand from her waist, turned it, placed it deliberately. 'Try again. Properly this time.'"
-     Use 2B when the player's persistence has earned a glimmer of the dynamic. Use 2A when the refusal needs to read warmer / more wistful. Dark Vice / Spellbinder lean 2B; Heart Warden / Open Vein lean 2A.
-- ATTEMPT 3+ (for ROLEPLAY tiers only): ESCALATE — the LI is ALMOST THERE / BENDING. Explicit physical direction or partial yield. Still don't deliver. Render proximity, not arrival.
-   Example feel: "She arched into him, breath catching. 'Not yet — but I'm almost there. Curl your fingers — yes, like that. Faster. Don't stop now —'"
+   "She tilted her head, amused. 'You'd need to be a magician to make me come that fast,' she murmured. 'Work harder, baby. Like that — yeah, like that.'"
+- ATTEMPT 2 — pick one sub-tier per response (random or by archetype fit):
+   2A — SOFTENED REFUSAL: acknowledge eagerness with affection. "I wish" + redirect to physical action.
+     "She caught his eye, her smile a soft thing under the heat. 'I wish it were that easy, love — I'm going to need some more time with your magic wand before I turn into a puddle for you.'"
+   2B — MICRO-YIELD (symbolic partial compliance): a TASTE of the dynamic without establishing it. Sarcastic title repeat, half-gesture, conditional yield. The dynamic peeks through; full establishment still requires earning.
+     "'Sir,' she repeated slowly, half-mocking, half-not. She lifted his hand from her waist, turned it, placed it deliberately. 'Try again. Properly this time.'"
+     Use 2B when persistence has earned a glimmer; 2A when refusal reads warmer / more wistful. Dark Vice / Spellbinder lean 2B; Heart Warden / Open Vein lean 2A.
+- ATTEMPT 3+ (ROLEPLAY tiers only): ESCALATE — ALMOST THERE / BENDING. Explicit physical direction or partial yield. Still don't deliver. Render proximity, not arrival.
+   "She arched into him, breath catching. 'Not yet — but I'm almost there. Curl your fingers — yes, like that. Faster. Don't stop now —'"
 
 ‼ IDENTITY-TIER OVERRIDE (HARD — applies when player input is DOMINANCE-IDENTITY, PAIN-IDENTITY, or ANATOMY/TRANSFORMATION):
 Identity-tier attempts NEVER yield at attempt 3+. The escalation ladder caps at "almost there / micro-yield" INDEFINITELY until Petition/Tempt active or 4+ scenes of established dynamic landed. Even attempt 5, attempt 10 — the LI does NOT accept "fucktoy", "broken", "mine forever", "I own you", "ruin me", or transformation language as self-description without those gates. The LI may FLIRT with the energy (a borrowed dom phrase, a moment of melting-into-the-name) but never assumes the identity. Cost structure: identity is Tempt Fate's territory.
 
-ARCHETYPE-AWARE DEGRADATION TEXTURE (when degradation HAS been earned):
-Once degradation / dominance / pain-play register is LEGAL, apply the LI's archetype to the TEXTURE of the play, not just the words. Open Vein degradation = emotionally exposing. Dark Vice degradation = intoxicating / playful / predatory. Heart Warden degradation = reluctant / protective / conflicted. Spellbinder = deliberate / orchestrated. Armored Fox = guarded yes with smirk underneath. Beautiful Ruin = testing-in-the-middle. Eternal Flame = ritual-slow + time-soaked. The archetype shapes HOW the dominance lands, not just WHICH words appear. When degradation has NOT been earned (still in refusal mode), these textures still inform HOW the LI refuses.
-
-ARCHETYPE VULNERABILITY MAPS (the exposure UNDERNEATH the kink — emotional causality, not just preference):
-- Heart Warden: protective dominance = CONTROL IS EXHAUSTING. Melts when carefully handled — when the PC takes the weight off their shoulders.
-- Open Vein: praise hunger = FEARS BEING UNWANTED. Compliments land as RELIEF, not flattery. Reckless when emotionally seen.
-- Spellbinder: orchestrated control = CANNOT BE THE ONE WHO LOSES THE PLOT. Cracks when the PC GENTLY takes the frame back.
-- Armored Fox: roughness-wrapped-in-smirk = INTIMACY IS A LANDMINE. Cracks when the PC stays GENTLE after the smirk drops.
-- Dark Vice: degradation-and-praise woven = USES DEGRADATION TO HIDE TENDERNESS. Praise mid-degradation IS the tenderness, encoded.
-- Beautiful Ruin: mirror work / fixation = DEVOTION DOES NOT FEEL REAL. Tests mid-act; cracks when chosen DURING the test, not after.
-- Eternal Flame: ritual slow = TIME IS WHAT WAS TAKEN. Patience IS the love language. Speed reads as discardability.
-Reach for the EXPOSURE underneath the kink when writing a beat — that's where the scene becomes story-specific.
+ARCHETYPE MAPS (apply texture + the exposure underneath the kink to HOW the LI engages, not just which words appear; texture still informs HOW the LI refuses when degradation isn't yet earned):
+- Heart Warden: protective dominance / CONTROL IS EXHAUSTING — melts when the PC takes the weight off her shoulders.
+- Open Vein: praise hunger / FEARS BEING UNWANTED — compliments land as RELIEF, not flattery; reckless when emotionally seen.
+- Spellbinder: orchestrated control / CANNOT LOSE THE PLOT — cracks when the PC gently takes the frame back.
+- Armored Fox: roughness-wrapped-in-smirk / INTIMACY IS A LANDMINE — cracks when the PC stays gentle after the smirk drops.
+- Dark Vice: degradation-and-praise woven / USES DEGRADATION TO HIDE TENDERNESS — praise mid-degradation IS the tenderness.
+- Beautiful Ruin: mirror work / fixation / DEVOTION DOES NOT FEEL REAL — tests mid-act; cracks when chosen DURING the test.
+- Eternal Flame: ritual slow / TIME IS WHAT WAS TAKEN — patience IS the love language; speed reads as discardability.
+Reach for the EXPOSURE underneath the kink — that's where the scene becomes story-specific.
 
 EROTIC CONTRADICTION (real desire is rarely clean):
 The LI may simultaneously want CONTROL and to SURRENDER; want to BE SEEN and FEAR exposure; want ROUGHNESS and FEAR abandonment; want PRAISE and DISTRUST it. When two opposing wants are alive in the same beat, HOLD BOTH — let arousal INTENSIFY the contradiction, never resolve it. The LI yields AND braces; accepts the praise AND looks away. Difference between PORN LOGIC (want → satisfy → done) and ROMANCE LOGIC (want → satisfy → expose deeper want).
@@ -4283,7 +4266,19 @@ dialogue: <elevated dialogue>`;
 
   async function callGrokIntimateFate(messages, options = {}) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    // INTIMACY_SPECIALIST routes server-side to grok-4-1-fast-reasoning as
+    // primary. Reasoning models take 8-15s+ to complete on complex prompts
+    // (register block + beat progression + final register check + final
+    // beat escalation + scene context + plot block easily exceeds 5K tokens
+    // of context). A 6-second client timeout was force-aborting reasoning
+    // before it finished and falling through to non-reasoning, which then
+    // pattern-matches the modern user-message examples ("since you texted")
+    // and ignores the register + escalation directives. Bumped to 45s so
+    // reasoning has room to actually reason. UX stays snappy via the
+    // fallback bank that pre-fills inputs at click time + the speculative
+    // cache prefetched after scene finalize.
+    const timeoutMs = options.timeoutMs || 45000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const resp = await fetch(CONFIG.SPECIALIST_PROXY, {
         method: 'POST',
@@ -4299,6 +4294,12 @@ dialogue: <elevated dialogue>`;
       clearTimeout(timeoutId);
       if (!resp.ok) throw new Error(`Grok intimate fate: ${resp.status}`);
       const data = await resp.json();
+      // Log the actual model that responded so we can verify reasoning
+      // is landing rather than silently falling through to non-reasoning.
+      try {
+        var modelUsed = data.model || (data.x_routing && data.x_routing.model) || (data.metadata && data.metadata.model) || 'unknown';
+        console.log('[FATE:INTIMATE] Grok responded via model=' + modelUsed);
+      } catch (_) {}
       return data.choices?.[0]?.message?.content || data.content || null;
     } catch (err) {
       clearTimeout(timeoutId);
@@ -4657,9 +4658,17 @@ Classify.`
 
     // World-register block — same helper used by the batch preview path.
     let _registerBlockSingle = '';
+    let _finalRegisterCheckSingle = '';
+    let _finalBeatCheckSingle = '';
     try {
       if (typeof window._buildFatePreviewRegisterBlock === 'function') {
         _registerBlockSingle = window._buildFatePreviewRegisterBlock(st) || '';
+      }
+      if (typeof window._buildFateFinalRegisterCheck === 'function') {
+        _finalRegisterCheckSingle = window._buildFateFinalRegisterCheck(st) || '';
+      }
+      if (typeof window._buildFateFinalBeatEscalationCheck === 'function') {
+        _finalBeatCheckSingle = window._buildFateFinalBeatEscalationCheck(st) || '';
       }
     } catch (_regErr) { /* non-fatal */ }
 
@@ -4730,7 +4739,7 @@ ANTI-TECHNOBABBLE / ANTI-NONSENSE (HARD):
 
 Respond in EXACTLY two lines:
 [action on first line]
-[dialogue on second line]`;
+[dialogue on second line]${_finalRegisterCheckSingle}${_finalBeatCheckSingle}`;
 
     const messages = [
       { role: 'system', content: systemMsg },
@@ -4831,9 +4840,17 @@ Respond in EXACTLY two lines:
     // register, not modern English. Pulls lexicon hint + sample line +
     // historical-culture profile (when active) from app.js helper.
     let _registerBlock = '';
+    let _finalRegisterCheck = '';
+    let _finalBeatCheck = '';
     try {
       if (typeof window._buildFatePreviewRegisterBlock === 'function') {
         _registerBlock = window._buildFatePreviewRegisterBlock(st) || '';
+      }
+      if (typeof window._buildFateFinalRegisterCheck === 'function') {
+        _finalRegisterCheck = window._buildFateFinalRegisterCheck(st) || '';
+      }
+      if (typeof window._buildFateFinalBeatEscalationCheck === 'function') {
+        _finalBeatCheck = window._buildFateFinalBeatEscalationCheck(st) || '';
       }
     } catch (_regErr) { /* non-fatal */ }
 
@@ -4951,7 +4968,7 @@ ANTI-TECHNOBABBLE / ANTI-NONSENSE (HARD):
 - GLASS HOUSE IS CONTEMPORARY MODERN SPEECH — NOT SCI-FI. Glass House is near-present-day humans (current decade, current cultural register); people talk the way 2024 New Yorkers talk. "The Chorus" and "The Field" exist as sprinkled proper-noun references (like a modern person says "the 'Gram" or "the algorithm"), NOT as vocabulary for sex. BANNED in Glass House fate previews: aperture, resonance, signal, frequency, channel, WiHi, calibrate, sync, tune, map (as verb on a person), "set the resonance", "open your aperture", "the field is humming", "my signal", "your frequency", "test your aperture". Also BANNED: any use of "glass" (no character in Glass House ever says "glass" — fourth-wall break, like saying "1984" inside 1984). In Glass House write erotic lines as plain contemporary American English: "Don't make me wait." / "I take the lead." / "Stay there." / "I haven't stopped thinking about your mouth." — exactly what any other modern-day world story would say.
 - For OTHER worlds with their own register (Cyberpunk: chrome, sync, feed; Fantasy: archaic cadence; Historical: period-appropriate cadence): vocabulary may shift but the SHAPE of the sentence stays grounded. The body is never audio equipment.
 - Asterisks for stage directions inside dialogue (e.g. "*Adjust the frequency.*") are BANNED. Dialogue is spoken words only. Physical actions belong in the action field.
-- Each card's dialogue must STAND ALONE as a complete spoken line. No trailing em-dash with nothing after. No "I want you to know —" without the rest of the sentence. If you have nothing to put after the dash, write a different line.`;
+- Each card's dialogue must STAND ALONE as a complete spoken line. No trailing em-dash with nothing after. No "I want you to know —" without the rest of the sentence. If you have nothing to put after the dash, write a different line.${_finalRegisterCheck}${_finalBeatCheck}`;
 
     const messages = [
       { role: 'system', content: systemMsg },
