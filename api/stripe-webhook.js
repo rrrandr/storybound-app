@@ -174,9 +174,17 @@ export default async function handler(req, res) {
     if (stripeCustomerId) updates.stripe_customer_id = stripeCustomerId;
     if (stripeSubscriptionId) updates.stripe_subscription_id = stripeSubscriptionId;
 
+    // CHOSEN was missing from this list (bug fixed 2026-05-21): a Chosen
+    // checkout would fall through both the subscription block AND the
+    // fortune-pack block, leaving fortunesDelta=0 — the grant_purchase_fortunes
+    // RPC then transitioned the intent to 'completed' with 0F added, and
+    // the optimistic-client-side balance silently expired on the next reload.
+    // The renewal branch (line ~291) already covered all three tiers, but
+    // the initial-purchase branch did not. Now all three are recognized.
     const isSubscription = priceId && (
       priceId === process.env.STRIPE_PRICE_ID_STORIED ||
-      priceId === process.env.STRIPE_PRICE_ID_FAVORED
+      priceId === process.env.STRIPE_PRICE_ID_FAVORED ||
+      priceId === process.env.STRIPE_PRICE_ID_CHOSEN
     );
 
     const fortunePriceIds = [
