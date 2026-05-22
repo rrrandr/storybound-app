@@ -25341,8 +25341,17 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
 /* Visual elements (hero image, panel display, story pages) dim to
    25% so the user can still see the prior scene behind the composing
    overlay — context for what they're transitioning from. */
+/* The :not(:has(.staged-composing)) guard skips dimming the panel
+   display when the composing HTML is rendered INSIDE it (Scene 1
+   path at app.js:103847). CSS opacity on a parent multiplies down
+   to descendants, so dimming the panel makes the loading row + flavor
+   phrase + tip ALL dim too even though .staged-composing tries to
+   override with opacity:1. The :has guard keeps the panel at full
+   brightness while the composing UI is its content. For scenes 2+
+   the composing overlay lives in #stagedDecisionGate so the panel
+   below still dims as designed. */
 body.staged-composing-active #stagedHero,
-body.staged-composing-active #gnPanelDisplay,
+body.staged-composing-active #gnPanelDisplay:not(:has(.staged-composing)),
 body.staged-composing-active .story-pages-container {
     opacity: 0.25;
     pointer-events: none;
