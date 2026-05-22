@@ -24811,6 +24811,97 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
     0%, 100% { opacity: calc(0.45 * var(--spk-intensity)); transform: translate(-50%, -50%) scale(0.92); }
     50%      { opacity: calc(0.75 * var(--spk-intensity)); transform: translate(-50%, -50%) scale(1.10); }
 }
+
+/* ── FOREGROUND SILHOUETTES (added 2026-05-22) ──────────────────────
+   Soft-focus human shapes transiting horizontally across the frame —
+   "people walking past in the foreground." The shape is a vertical
+   elliptical radial gradient (suggests head + shoulders + torso); the
+   heavy blur is what sells it as out-of-focus foreground. Direction
+   handled by .spk-dir-ltr / .spk-dir-rtl modifier classes set by the
+   renderer based on the anchor's x coord. Animation-duration is also
+   set inline per-anchor for speed variance. */
+.spk-silhouette {
+    /* Tall enough to read as upper-body; wide enough to read as
+       shoulders. The blur makes exact dimensions forgiving. */
+    width: 70px;
+    height: 130px;
+    border-radius: 35px 35px 20px 20px;  /* slight head-bulge top */
+    filter: blur(7px);
+    pointer-events: none;
+    /* Each anchor's top% is the VERTICAL anchor in frame; the animation
+       only modulates horizontal transit. translate Y in the keyframes
+       is a slight bob, not the main vertical position. */
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    will-change: transform, opacity;
+}
+.spk-silhouette-dark {
+    background: radial-gradient(
+        ellipse at 50% 35%,
+        rgba(12, 10, 14, calc(0.92 * var(--spk-intensity))) 0%,
+        rgba(12, 10, 14, calc(0.65 * var(--spk-intensity))) 45%,
+        rgba(12, 10, 14, 0) 80%
+    );
+}
+.spk-silhouette-warm {
+    /* Backlit-by-warm-light variant — silhouette edge picks up warm
+       glow. The shape stays dark but the periphery is amber. */
+    background: radial-gradient(
+        ellipse at 50% 35%,
+        rgba(30, 25, 22, calc(0.85 * var(--spk-intensity))) 0%,
+        rgba(60, 40, 25, calc(0.55 * var(--spk-intensity))) 55%,
+        rgba(255, 195, 120, calc(0.25 * var(--spk-intensity))) 80%,
+        rgba(255, 195, 120, 0) 100%
+    );
+}
+.spk-silhouette-cool {
+    /* Moonlight / dusk variant — cool blue edge halo around dark core. */
+    background: radial-gradient(
+        ellipse at 50% 35%,
+        rgba(15, 18, 25, calc(0.88 * var(--spk-intensity))) 0%,
+        rgba(40, 55, 80, calc(0.55 * var(--spk-intensity))) 55%,
+        rgba(140, 180, 230, calc(0.20 * var(--spk-intensity))) 80%,
+        rgba(140, 180, 230, 0) 100%
+    );
+}
+.spk-silhouette-neon {
+    /* Nightclub / cyberpunk variant — magenta-cyan periphery. */
+    background: radial-gradient(
+        ellipse at 50% 35%,
+        rgba(20, 12, 25, calc(0.85 * var(--spk-intensity))) 0%,
+        rgba(80, 30, 100, calc(0.55 * var(--spk-intensity))) 50%,
+        rgba(255, 80, 200, calc(0.30 * var(--spk-intensity))) 75%,
+        rgba(120, 220, 255, calc(0.20 * var(--spk-intensity))) 90%,
+        rgba(120, 220, 255, 0) 100%
+    );
+}
+/* Direction modifiers — applied by renderer based on anchor x coord.
+   Default duration ~16s with per-anchor random variance (set inline);
+   the keyframes themselves are direction-specific so we don't have
+   to deal with animation-direction:reverse breaking the opacity
+   curve. */
+.spk-silhouette.spk-dir-ltr {
+    animation: spkSilhouetteLTR 16s linear infinite;
+    left: -10%;  /* start position; transit handles the rest */
+}
+.spk-silhouette.spk-dir-rtl {
+    animation: spkSilhouetteRTL 16s linear infinite;
+    left: 110%;  /* start position from right side */
+}
+@keyframes spkSilhouetteLTR {
+    0%   { transform: translate(-50%, -50%) translateX(0) translateY(0); opacity: 0; }
+    10%  { opacity: calc(0.85 * var(--spk-intensity)); }
+    50%  { transform: translate(-50%, -50%) translateX(60vw) translateY(-1.5px); opacity: calc(0.85 * var(--spk-intensity)); }
+    90%  { opacity: calc(0.85 * var(--spk-intensity)); }
+    100% { transform: translate(-50%, -50%) translateX(120vw) translateY(0); opacity: 0; }
+}
+@keyframes spkSilhouetteRTL {
+    0%   { transform: translate(-50%, -50%) translateX(0) translateY(0); opacity: 0; }
+    10%  { opacity: calc(0.85 * var(--spk-intensity)); }
+    50%  { transform: translate(-50%, -50%) translateX(-60vw) translateY(1.5px); opacity: calc(0.85 * var(--spk-intensity)); }
+    90%  { opacity: calc(0.85 * var(--spk-intensity)); }
+    100% { transform: translate(-50%, -50%) translateX(-120vw) translateY(0); opacity: 0; }
+}
 /* Color-grading overlay — sits ABOVE the hero image but BELOW the
    vignette (vignette adds the dark edges; grade adds the chromatic
    wash). mix-blend-mode: soft-light layers a tint without obscuring
