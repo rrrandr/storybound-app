@@ -24598,6 +24598,21 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
     z-index: 4;
     overflow: hidden;
 }
+/* During a closeup beat, suppress the DEPTH effects (bokeh, foreground
+   silhouettes) — they're framed for medium/wide shots where depth-of-
+   field makes sense. In a tight closeup of a hand or a face, a bokeh
+   orb floating in the corner reads as a UI bug, and a silhouette
+   walking past a mouth-only shot is nonsense.
+   Point-source effects (chandelier, jewelry catch, candle, etc.) are
+   left alone — they can plausibly still be in a closeup's reflected
+   light, and selectively suppressing them risks more bugs than it
+   solves. */
+.staged-sparkles.staged-sparkles--closeup .spk-bokeh-warm,
+.staged-sparkles.staged-sparkles--closeup .spk-bokeh-cool,
+.staged-sparkles.staged-sparkles--closeup .spk-silhouette,
+.staged-sparkles.staged-sparkles--closeup .spk-dust {
+    display: none;
+}
 .staged-sparkle {
     position: absolute;
     /* Anchor point is the CENTER of the sparkle — left/top from JS
