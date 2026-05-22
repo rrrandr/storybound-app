@@ -821,7 +821,15 @@
     } catch (err) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        throw new Error('ChatGPT request timed out');
+        // Misleading "ChatGPT request timed out" replaced 2026-05-21
+        // after a user reported confusion: the CG screenplay path was
+        // calling Sonnet via anthropic-proxy and timing out, but the
+        // error said "ChatGPT" — making it look like OpenAI failed
+        // when in fact Anthropic did. Now names the actual model and
+        // proxy so the failure can be diagnosed at a glance.
+        var _model = (payload && payload.model) || 'unknown-model';
+        var _proxy = _isClaudeModel ? 'anthropic-proxy' : 'chatgpt-proxy';
+        throw new Error('LLM request timed out (' + _model + ' via ' + _proxy + ')');
       }
       throw err;
     }
