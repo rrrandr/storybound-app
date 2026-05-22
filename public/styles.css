@@ -25338,17 +25338,28 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
    body class set by _showStagedComposingIndicator / removed by
    _hideStagedComposingIndicator. Targets every visual + interactive
    element OUTSIDE the composing slot. */
+/* Visual elements (hero image, panel display, page nav, story pages)
+   dim to 25% so the user can still see the prior scene behind the
+   composing overlay — context for what they're transitioning from. */
 body.staged-composing-active #stagedHero,
 body.staged-composing-active #gnPanelDisplay,
-body.staged-composing-active #gnReaderControls,
-body.staged-composing-active #gnFateSection,
 body.staged-composing-active #gnPageNavControls,
-body.staged-composing-active .say-do-grid,
 body.staged-composing-active .story-pages-container {
     opacity: 0.25;
     pointer-events: none;
     transition: opacity 250ms ease;
     filter: saturate(0.6);
+}
+/* INTERACTIVE bars (say/do textareas, Save/Submit buttons, fate cards)
+   FULLY hidden during composing — there's no reason to show them
+   when the user can't submit input. Dimming at 25% still left them
+   visible as faint ghosts at the bottom of the screen during
+   "Casting shadows…" load, which the user correctly flagged as
+   pointless visual noise. */
+body.staged-composing-active #gnReaderControls,
+body.staged-composing-active #gnFateSection,
+body.staged-composing-active .say-do-grid {
+    display: none !important;
 }
 
 /* ── Staged composing — 7 fate-card loading row ──
