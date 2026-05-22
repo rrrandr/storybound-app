@@ -25338,12 +25338,11 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
    body class set by _showStagedComposingIndicator / removed by
    _hideStagedComposingIndicator. Targets every visual + interactive
    element OUTSIDE the composing slot. */
-/* Visual elements (hero image, panel display, page nav, story pages)
-   dim to 25% so the user can still see the prior scene behind the
-   composing overlay — context for what they're transitioning from. */
+/* Visual elements (hero image, panel display, story pages) dim to
+   25% so the user can still see the prior scene behind the composing
+   overlay — context for what they're transitioning from. */
 body.staged-composing-active #stagedHero,
 body.staged-composing-active #gnPanelDisplay,
-body.staged-composing-active #gnPageNavControls,
 body.staged-composing-active .story-pages-container {
     opacity: 0.25;
     pointer-events: none;
@@ -25351,14 +25350,16 @@ body.staged-composing-active .story-pages-container {
     filter: saturate(0.6);
 }
 /* INTERACTIVE bars (say/do textareas, Save/Submit buttons, fate cards)
-   FULLY hidden during composing — there's no reason to show them
-   when the user can't submit input. Dimming at 25% still left them
-   visible as faint ghosts at the bottom of the screen during
-   "Casting shadows…" load, which the user correctly flagged as
-   pointless visual noise. */
+   AND the page-nav header (Cover/Back/Scene/Next/Last) — FULLY hidden
+   during composing. Dimming at 25% still left them visible as faint
+   ghosts which the user flagged as pointless visual noise. Page nav
+   was originally in the dim tier (a189966) but the user pushed back
+   on 2026-05-22: when the user can't navigate or submit, hide both
+   the nav AND the input UI, not just one. */
 body.staged-composing-active #gnReaderControls,
 body.staged-composing-active #gnFateSection,
-body.staged-composing-active .say-do-grid {
+body.staged-composing-active .say-do-grid,
+body.staged-composing-active #gnPageNavControls {
     display: none !important;
 }
 
