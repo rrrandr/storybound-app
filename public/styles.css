@@ -24576,35 +24576,10 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
     mix-blend-mode: screen;  /* warm glow lifts, doesn't darken */
 }
 
-/* ── EXPRESSION-DECAY OVERLAY (2026-05-15) ─────────────────────────
-   Holds the most recent mutation image at a decaying opacity over
-   3-4 beats after its peak so the emotional moment lingers instead
-   of snapping back to baseline. The CSS transition handles the
-   smooth fade between per-beat opacity assignments; the JS just
-   sets opacity values at beat-advance moments and the transition
-   tweens between them. Same scale/crop as the base hero img so the
-   overlay registers pixel-perfect with the layer underneath. */
-.staged-hero-decay-overlay {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    pointer-events: none;
-    /* Above the main img (z:1 inside .staged-hero), below the rack
-       blur (z:2), grade, and vignette. */
-    z-index: 1;
-    opacity: 0;
-    /* Match the base hero crop scale so the overlay aligns with the
-       layer underneath — without this the mutation overlay drifts
-       a few pixels at the edges relative to the base image. */
-    transform: scale(1.06);
-    transform-origin: center;
-    /* Slow ease-out so the fade reads as emotion lingering rather
-       than a UI animation. Faster on rapid sequential peaks would
-       feel mechanical; 900ms is the sweet spot found empirically. */
-    transition: opacity 900ms cubic-bezier(0.22, 0.61, 0.36, 1);
-}
+/* Expression-decay overlay removed 2026-05-22 (user: "delete it,
+   useless and distracting"). The mutation image itself carries the
+   emotional weight; layering a fading ghost of the previous peak on
+   top read as image doubling / double exposure. */
 /* Color-grading overlay — sits ABOVE the hero image but BELOW the
    vignette (vignette adds the dark edges; grade adds the chromatic
    wash). mix-blend-mode: soft-light layers a tint without obscuring
