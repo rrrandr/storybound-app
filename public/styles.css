@@ -3732,6 +3732,22 @@ h2.story-page-title,
     display: none;
 }
 
+/* Claim-resolution flash — fires when ? settles into the real anthology
+   number after _claimIssueNumberOnCompletion succeeds. Brief golden bloom
+   marks the conferral moment. Honors prefers-reduced-motion via the
+   keyframes still firing but at the user-agent default (the animation
+   itself is short and small; the meaningful work is the tick-up counter,
+   which is skipped in reduced-motion via JS). */
+@keyframes story-issue-claim-flash {
+    0%   { color: rgba(218, 165, 32, 0.55); text-shadow: none; transform: scale(1); }
+    18%  { color: rgba(255, 220, 110, 1); text-shadow: 0 0 10px rgba(255, 220, 110, 0.85); transform: scale(1.16); }
+    100% { color: rgba(218, 165, 32, 0.55); text-shadow: none; transform: scale(1); }
+}
+.story-page-issue-id.claim-flash {
+    animation: story-issue-claim-flash 800ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transform-origin: center center;
+}
+
 .story-page-scene {
     font-family: 'Lora', serif;
     font-size: 0.9em;
