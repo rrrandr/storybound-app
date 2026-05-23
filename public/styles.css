@@ -30414,6 +30414,15 @@ body.elevated-fate-cards .tempt-fate-card {
     font-size: 0.72em;
     margin-top: 2px;
 }
+.vault-saved-story-issue {
+    color: rgba(218, 165, 32, 0.55);
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+}
 
 /* Inline echo indicator in story prose */
 .fate-echo-indicator {
