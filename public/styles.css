@@ -30440,6 +30440,21 @@ body.elevated-fate-cards .tempt-fate-card {
     margin-left: 4px;
 }
 
+/* Inline issue-id appendage on continuation-fork CTA buttons — sits in
+   the same button as the label, smaller and softer to read as a
+   secondary identifier (e.g. "Begin Next Issue #?.2"). */
+.continuation-fork-id {
+    font-size: 0.85em;
+    font-weight: 400;
+    opacity: 0.7;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+    margin-left: 4px;
+}
+.continuation-fork-id:empty {
+    display: none;
+}
+
 /* Inline echo indicator in story prose */
 .fate-echo-indicator {
     display: block;

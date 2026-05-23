@@ -778,9 +778,9 @@
 <!-- ── ARC COMPLETION INTERSTITIAL ── -->
 <div id="arcCompleteOverlay" class="overlay hidden" style="z-index:9999;">
   <div class="box arc-complete-box">
-    <h3 class="arc-complete-headline">Chapter Complete</h3>
+    <h3 class="arc-complete-headline">Issue Complete</h3>
     <p class="arc-complete-subtext">The page turns.<br>Fate awaits your decision.</p>
-    <button id="arcCompleteContinueBtn" class="arc-complete-btn">Continue the Story</button>
+    <button id="arcCompleteContinueBtn" class="arc-complete-btn">Begin Next Issue</button>
   </div>
 </div>
 
@@ -2278,13 +2278,13 @@
     <h3 style="color:var(--gold); margin-bottom:20px;">What comes next?</h3>
     <div style="display:flex; flex-direction:column; gap:12px;">
       <button id="btnContinueStory" onclick="window.selectContinuationPath('continue')" style="padding:15px;">
-        Continue this story
+        Begin Next Issue<span class="continuation-fork-id" data-cta-issue="next"></span>
       </button>
       <button id="btnSameWorld" onclick="window.selectContinuationPath('same_world')" style="padding:15px;">
-        Start a new story in this world
+        Start a New Run in This World
       </button>
       <button id="btnNewStory" onclick="window.selectContinuationPath('new_story')" style="padding:15px;">
-        Start a completely new story
+        Start a Completely New Story
       </button>
     </div>
     <p style="font-size:0.75em; opacity:0.5; margin-top:15px;">
