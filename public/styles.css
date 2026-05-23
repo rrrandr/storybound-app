@@ -3710,6 +3710,28 @@ h2.story-page-title,
     margin-bottom: 2px;
 }
 
+/* Issue-numbering tag — sits between #storyTitle and #sceneNumber.
+   Renders as "#256.1" (claimed) or "#?.1" (WIP, pre-publication).
+   Visually restrained; designed to read like a comic-issue stamp,
+   not compete with the title. Empty when title is empty. */
+.story-page-issue-id {
+    font-family: 'Lora', serif;
+    font-size: 0.62em;
+    font-weight: 500;
+    color: rgba(218, 165, 32, 0.55);
+    text-align: center;
+    letter-spacing: 0.18em;
+    line-height: 1;
+    margin: -2px 0 4px 0;
+    padding: 0;
+    font-variant-numeric: tabular-nums;
+    /* Hide collapse when empty — avoids stray margin space pre-title. */
+    min-height: 0;
+}
+.story-page-issue-id:empty {
+    display: none;
+}
+
 .story-page-scene {
     font-family: 'Lora', serif;
     font-size: 0.9em;
