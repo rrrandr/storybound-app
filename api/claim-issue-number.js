@@ -145,7 +145,23 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { user_id, story_id, flavor_key, world, completed_at, playthrough_credit } = req.body || {};
+    const {
+      user_id,
+      story_id,
+      flavor_key,
+      world,
+      completed_at,
+      playthrough_credit,
+      // ── Alt POV / Companion Edition fields (all optional) ──
+      // Present only when this is a companion-edition claim. Persisted to
+      // library_entries; story_library_versions stamping is unchanged.
+      // Treated as no-ops when absent so original-issue claims behave
+      // identically to before.
+      edition_suffix,
+      parent_story_id,
+      parent_entry_id,
+      inherits_visuals_from
+    } = req.body || {};
 
     // ── Validate ──
     if (!user_id || typeof user_id !== 'string') {
@@ -156,6 +172,32 @@ module.exports = async function handler(req, res) {
     }
     if (!flavor_key || typeof flavor_key !== 'string' || !/^[a-z0-9_]+$/.test(flavor_key)) {
       return res.status(400).json({ error: 'Invalid flavor_key (must be lowercase alphanumeric+underscore)', code: 'INVALID_FLAVOR_KEY' });
+    }
+
+    // ── Validate alt POV fields (input shape only — server-side
+    //    existence checks happen below, after story_library_versions
+    //    stamping). Reject malformed values up front so we don't waste
+    //    a counter increment on a doomed claim.
+    const ALT_POV_KINDS = ['LI', 'VIL', 'ALT', 'HIDDEN'];
+    const UUID_RX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    let validatedEditionSuffix = null;
+    if (edition_suffix !== undefined && edition_suffix !== null && edition_suffix !== '') {
+      if (typeof edition_suffix !== 'string' || ALT_POV_KINDS.indexOf(edition_suffix) === -1) {
+        return res.status(400).json({
+          error: 'Invalid edition_suffix (must be one of LI | VIL | ALT | HIDDEN)',
+          code: 'INVALID_EDITION_SUFFIX'
+        });
+      }
+      validatedEditionSuffix = edition_suffix;
+    }
+    if (parent_entry_id !== undefined && parent_entry_id !== null && parent_entry_id !== '' && !UUID_RX.test(String(parent_entry_id))) {
+      return res.status(400).json({ error: 'parent_entry_id must be a UUID or omitted', code: 'INVALID_PARENT_ENTRY_ID' });
+    }
+    if (inherits_visuals_from !== undefined && inherits_visuals_from !== null && inherits_visuals_from !== '' && !UUID_RX.test(String(inherits_visuals_from))) {
+      return res.status(400).json({ error: 'inherits_visuals_from must be a UUID or omitted', code: 'INVALID_INHERITS_VISUALS_FROM' });
+    }
+    if (parent_story_id !== undefined && parent_story_id !== null && parent_story_id !== '' && typeof parent_story_id !== 'string') {
+      return res.status(400).json({ error: 'parent_story_id must be a string or omitted', code: 'INVALID_PARENT_STORY_ID' });
     }
     // Completion timestamp REQUIRED — claim is gated on book completion.
     // If the client doesn't send one, default to now (server time).
@@ -220,13 +262,35 @@ module.exports = async function handler(req, res) {
       // (idempotent). The DB trigger blocks any attempt to mutate
       // playthrough_credit once non-null, so retrying with a different
       // credit value here is a no-op — we just return the canonical value.
+      // Companion-edition fields are looked up from library_entries to
+      // give the client the canonical values it stored at first claim.
+      let priorEditionSuffix = null;
+      let priorParentEntryId = null;
+      let priorInheritsVisualsFrom = null;
+      try {
+        const leResp = await fetch(
+          `${SUPABASE_URL}/rest/v1/library_entries?story_id=eq.${encodeURIComponent(story_id)}&select=edition_suffix,parent_entry_id,inherits_visuals_from&limit=1`,
+          { headers: sbHeaders }
+        );
+        const leRows = await leResp.json();
+        if (Array.isArray(leRows) && leRows.length > 0) {
+          priorEditionSuffix = leRows[0].edition_suffix || null;
+          priorParentEntryId = leRows[0].parent_entry_id || null;
+          priorInheritsVisualsFrom = leRows[0].inherits_visuals_from || null;
+        }
+      } catch (e) {
+        // Library entry lookup is non-fatal; idempotent return still works.
+      }
       return res.status(200).json({
         ok: true,
         already_claimed: true,
         issue_number: story.issue_number,
         flavor_key: story.issue_flavor,
         claimed_at: story.issue_claimed_at,
-        playthrough_credit: story.playthrough_credit
+        playthrough_credit: story.playthrough_credit,
+        edition_suffix: priorEditionSuffix,
+        parent_entry_id: priorParentEntryId,
+        inherits_visuals_from: priorInheritsVisualsFrom
       });
     }
 
@@ -307,11 +371,119 @@ module.exports = async function handler(req, res) {
         flavor_key,
         claimed_at: claimedAt,
         playthrough_credit: validatedCredit,
+        // Companion-edition fields are unresolved at this point — the
+        // library_entries write only runs after the story_library_versions
+        // stamp succeeds.
+        edition_suffix: validatedEditionSuffix,
+        parent_entry_id: null,
+        inherits_visuals_from: null,
         warning: 'Counter incremented but story stamp failed; client should retry stamp.'
       });
     }
 
     console.log('[CLAIM-ISSUE] Claimed', flavor_key, '#' + newNumber, 'for user', user_id, 'story', story_id, validatedCredit ? '(as played by ' + validatedCredit + ')' : '(Anonymous Canon Edition)');
+
+    // ── ALT POV / COMPANION EDITION METADATA PATCH ──
+    // Only fires when edition_suffix is present. Resolves parent_entry_id
+    // (preferring client-provided, falling back to lookup-by-story_id),
+    // validates inherits_visuals_from exists, then PATCHes library_entries
+    // for this story with the alt POV columns. All resolution failures are
+    // logged but NON-FATAL — the issue number claim has already succeeded,
+    // and a parent-resolution failure should not undo it. Leftover unset
+    // columns just stay null in library_entries.
+    let resolvedParentEntryId = null;
+    let resolvedInheritsVisualsFrom = null;
+    if (validatedEditionSuffix) {
+      // (1) Resolve parent_entry_id — client-provided takes precedence,
+      // but we still validate existence to prevent dangling references.
+      if (parent_entry_id) {
+        try {
+          const peResp = await fetch(
+            `${SUPABASE_URL}/rest/v1/library_entries?id=eq.${encodeURIComponent(parent_entry_id)}&select=id`,
+            { headers: sbHeaders }
+          );
+          const peRows = await peResp.json();
+          if (Array.isArray(peRows) && peRows.length > 0) {
+            resolvedParentEntryId = peRows[0].id;
+            console.log('[CLAIM-ISSUE] companion: parent_entry_id validated', resolvedParentEntryId);
+          } else {
+            console.warn('[CLAIM-ISSUE] companion: provided parent_entry_id not found in library_entries; falling back to story_id lookup');
+          }
+        } catch (e) {
+          console.warn('[CLAIM-ISSUE] companion: parent_entry_id lookup threw:', e && e.message);
+        }
+      }
+      // (2) Fallback: resolve by parent_story_id if we still have no parent.
+      if (!resolvedParentEntryId && parent_story_id) {
+        try {
+          const psResp = await fetch(
+            `${SUPABASE_URL}/rest/v1/library_entries?story_id=eq.${encodeURIComponent(parent_story_id)}&select=id&limit=1`,
+            { headers: sbHeaders }
+          );
+          const psRows = await psResp.json();
+          if (Array.isArray(psRows) && psRows.length > 0) {
+            resolvedParentEntryId = psRows[0].id;
+            console.log('[CLAIM-ISSUE] companion: parent_entry_id resolved from parent_story_id', parent_story_id, '→', resolvedParentEntryId);
+          } else {
+            console.warn('[CLAIM-ISSUE] companion: no library_entries row for parent_story_id', parent_story_id, '— parent_entry_id will be null');
+          }
+        } catch (e) {
+          console.warn('[CLAIM-ISSUE] companion: parent_story_id lookup threw:', e && e.message);
+        }
+      }
+      // (3) Validate inherits_visuals_from if provided. If invalid, leave
+      // null rather than blocking the claim.
+      if (inherits_visuals_from) {
+        try {
+          const ivResp = await fetch(
+            `${SUPABASE_URL}/rest/v1/library_entries?id=eq.${encodeURIComponent(inherits_visuals_from)}&select=id`,
+            { headers: sbHeaders }
+          );
+          const ivRows = await ivResp.json();
+          if (Array.isArray(ivRows) && ivRows.length > 0) {
+            resolvedInheritsVisualsFrom = ivRows[0].id;
+            console.log('[CLAIM-ISSUE] companion: inherits_visuals_from validated', resolvedInheritsVisualsFrom);
+          } else {
+            console.warn('[CLAIM-ISSUE] companion: inherits_visuals_from not found in library_entries; leaving null');
+          }
+        } catch (e) {
+          console.warn('[CLAIM-ISSUE] companion: inherits_visuals_from lookup threw:', e && e.message);
+        }
+      }
+      // (4) Patch library_entries with whatever we resolved. Targets by
+      // story_id (the alt POV claim sends its own story_id, which should
+      // exist in library_entries once the publisher path creates the row).
+      // If no library_entries row exists yet for this story_id, log + skip;
+      // the publisher can write the alt POV metadata when it creates the
+      // row. Non-fatal either way — claim already succeeded.
+      const lePatchBody = { edition_suffix: validatedEditionSuffix };
+      if (resolvedParentEntryId) lePatchBody.parent_entry_id = resolvedParentEntryId;
+      if (resolvedInheritsVisualsFrom) lePatchBody.inherits_visuals_from = resolvedInheritsVisualsFrom;
+      try {
+        const lePatchResp = await fetch(
+          `${SUPABASE_URL}/rest/v1/library_entries?story_id=eq.${encodeURIComponent(story_id)}`,
+          {
+            method: 'PATCH',
+            headers: { ...sbHeaders, 'Prefer': 'return=representation' },
+            body: JSON.stringify(lePatchBody)
+          }
+        );
+        if (!lePatchResp.ok) {
+          const leErr = await lePatchResp.text().catch(() => '');
+          console.warn('[CLAIM-ISSUE] companion: library_entries PATCH non-OK', lePatchResp.status, leErr.slice(0, 200), '— claim succeeded but alt POV metadata not persisted');
+        } else {
+          const leRows = await lePatchResp.json().catch(() => []);
+          if (Array.isArray(leRows) && leRows.length > 0) {
+            console.log('[CLAIM-ISSUE] companion: library_entries patched for story', story_id, 'edition=' + validatedEditionSuffix, 'parent=' + (resolvedParentEntryId || 'null'), 'inherits=' + (resolvedInheritsVisualsFrom || 'null'));
+          } else {
+            console.warn('[CLAIM-ISSUE] companion: library_entries has no row for story', story_id, '— alt POV metadata deferred (publisher must stamp when row is created)');
+          }
+        }
+      } catch (e) {
+        console.warn('[CLAIM-ISSUE] companion: library_entries PATCH threw:', e && e.message, '— claim succeeded but alt POV metadata not persisted');
+      }
+    }
+
     return res.status(200).json({
       ok: true,
       already_claimed: false,
@@ -319,7 +491,11 @@ module.exports = async function handler(req, res) {
       flavor_key,
       world: world || null,
       claimed_at: claimedAt,
-      playthrough_credit: validatedCredit
+      playthrough_credit: validatedCredit,
+      // Companion-edition fields (null on original-issue claims).
+      edition_suffix: validatedEditionSuffix,
+      parent_entry_id: resolvedParentEntryId,
+      inherits_visuals_from: resolvedInheritsVisualsFrom
     });
 
   } catch (err) {
