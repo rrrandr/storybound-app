@@ -280,7 +280,7 @@
     activationFlags: {
       prebakeMode: true,
       modelOverrides: {
-        scene1: 'claude-opus-4-1'      // bake Scene 1 in Opus (Tier A major + Scene 1)
+        scene1: 'claude-opus-4-7'      // bake Scene 1 in Opus (Tier A major + Scene 1)
         // No scene2 entry — demo is Scene 1 only
       },
       personalizationPass: {

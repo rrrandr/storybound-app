@@ -120,11 +120,11 @@
     // Anthropic prose-tier models (require /api/anthropic-proxy endpoint —
     // not yet wired; resolveRenderTier returns these slugs but the proxy
     // dispatcher will need to route them once the endpoint exists).
-    OPUS_MODEL:   'claude-opus-4-1',     // Opus 4.x — top-quality prose, $15/$75 per M tokens. Reserved for Tier A major scenes.
+    OPUS_MODEL:   'claude-opus-4-7',     // Opus 4.7 — top-quality prose, $15/$75 per M tokens. Reserved for Tier A major scenes.
     SONNET_MODEL: 'claude-sonnet-4-5',   // Sonnet 4.x — strong prose, $3/$15 per M tokens. Tier A in-between + Tier B Scene 1.
 
     // Model allowlists (must match server-side)
-    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'claude-opus-4-1', 'claude-sonnet-4-5'],
+    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'claude-opus-4-7', 'claude-opus-4-1', 'claude-sonnet-4-5'],
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
     ALLOWED_SD_AUTHOR_MODELS: ['grok-4-1-fast-reasoning'],
     ALLOWED_SD_DEEPSEEK_MODELS: ['deepseek-v4-pro', 'deepseek-v4-flash'],
@@ -557,6 +557,247 @@
     return false;
   }
 
+  // ===========================================================================
+  // COHERENCE TELEMETRY — SHADOW LAYER (log-only, except init-hazard router)
+  // ===========================================================================
+  // Measurement-before-crystallization: we compute a tentative coherence
+  // vector on every scene to build a real-world distribution, but we do NOT
+  // route on the vector yet. The only routing impact today is the narrow
+  // _isInitializationHazard rule (Scene 1 + Glass House 4th/5th POV or
+  // simulation-layer worlds → Opus). Everything else is data collection.
+  //
+  // Axes are tentative — they overlap and may collapse:
+  //   pov_instability     POV geometry difficulty for the model
+  //   ontology_instability How unstable is the reader's epistemic ground?
+  //   ambiguity_load       Count of held-open narrative questions
+  //   world_law_stress     Active rule-bending: Tempt, rupture, paradox
+  //   reveal_density       Reveals about to / currently landing
+  //   thematic_convergence Motifs / scars / echoes firing concurrently
+  //
+  // Each axis returns 0-3. We do NOT sum to a routing score yet — distribution
+  // analysis comes first, ontology consolidation next, thresholds last.
+  //
+  // EVERY axis read is try/wrapped — missing state slot returns 0, never
+  // throws. Telemetry must never break generation.
+  // ===========================================================================
+
+  function _safeRead(fn, dflt) {
+    try { const v = fn(); return (v === undefined || v === null) ? dflt : v; }
+    catch (_) { return dflt; }
+  }
+
+  function _computeCoherenceVector(appState) {
+    if (!appState) return null;
+    const s = appState;
+
+    // POV instability: standard 1st/3rd → 0; LI POV → 1; Fate (author5th) → 2;
+    // Material (environment4th) → 3.
+    const _pov = _safeRead(() => {
+      const m = s.povMode;
+      if (m === 'environment4th') return 3;
+      if (m === 'author5th') return 2;
+      if (m === 'loveInterestPOV') return 1;
+      return 0;
+    }, 0);
+
+    // Ontology instability: how unstable is the epistemic ground?
+    //   simulation / the_beyond → 3 (reality may be unreal)
+    //   glass_house → 2 (Chorus / Field epistemics, hive cognition)
+    //   dystopia subtypes (dogma, human_capital) → 1 (social unreality)
+    //   else → 0
+    const _ont = _safeRead(() => {
+      const w = s.worldSubtype || (s.picks && s.picks.worldSubtype) || '';
+      if (w === 'simulation' || w === 'the_beyond') return 3;
+      if (w === 'glass_house') return 2;
+      if (w === 'dogma' || w === 'human_capital') return 1;
+      return 0;
+    }, 0);
+
+    // Ambiguity load: held-open questions the scene must keep aloft.
+    //   +1 hiddenTruth.active
+    //   +1 committedTruth seeded but not in reveal window
+    //   +1 pendingPetition (fate-petition unresolved)
+    //   +1 structural-ambiguity world (fated_blood / glass_house / the_beyond)
+    //   cap 3
+    const _amb = _safeRead(() => {
+      let n = 0;
+      if (s.hiddenTruth && s.hiddenTruth.active) n++;
+      if (s.committedTruth && s.committedTruth.decidedTruth && s.committedTruth.phase !== 'reveal') n++;
+      if (s.fate && s.fate.pendingPetition) n++;
+      const w = s.worldSubtype || (s.picks && s.picks.worldSubtype) || '';
+      if (w === 'fated_blood' || w === 'glass_house' || w === 'the_beyond') n++;
+      return Math.min(3, n);
+    }, 0);
+
+    // World-law stress: active rule-bending pressure on the world.
+    //   +1 tempt_fate this turn (mythic distortion authorized)
+    //   +1 greater fate move used this scene
+    //   +1 any NIL rupture vector pressure > 1
+    //   cap 3
+    const _wls = _safeRead(() => {
+      let n = 0;
+      if (s.tempt_fate_invoked_this_turn === true) n++;
+      if (s.fate && s.fate.greaterUsedThisScene) n++;
+      const r = s._nilRuptureVectorPressure || {};
+      if (Object.keys(r).some(k => (r[k] || 0) > 1)) n++;
+      return Math.min(3, n);
+    }, 0);
+
+    // Reveal density: reveals currently landing.
+    //   +1 hiddenTruth in reveal phase
+    //   +1 committedTruth in reveal phase
+    //   +1 grievance convergence active
+    //   cap 3
+    const _rev = _safeRead(() => {
+      let n = 0;
+      if (s.hiddenTruth && s.hiddenTruth.phase === 'reveal') n++;
+      if (s.committedTruth && (s.committedTruth.phase === 'reveal' || s.committedTruth.phase === 'aftermath')) n++;
+      const grv = s.grievanceContracts || [];
+      if (grv.some(g => g && (g.phase === 'convergence' || g.phase === 'reveal'))) n++;
+      return Math.min(3, n);
+    }, 0);
+
+    // Thematic convergence: how many motif/scar/echo systems are firing concurrently?
+    // Heuristic — true convergence detection requires deeper instrumentation
+    // we haven't wired. Use rough proxies:
+    //   +1 active grievance contracts ≥ 2
+    //   +1 echo scene or motif echo active this scene
+    //   +1 active scar surfacing this scene
+    //   cap 3
+    const _thc = _safeRead(() => {
+      let n = 0;
+      const grv = s.grievanceContracts || [];
+      if (grv.length >= 2) n++;
+      if (s._echoSceneActive || s._motifEchoActive) n++;
+      if (s._scarSurfacingThisScene) n++;
+      return Math.min(3, n);
+    }, 0);
+
+    const total = _pov + _ont + _amb + _wls + _rev + _thc;
+    return {
+      pov_instability: _pov,
+      ontology_instability: _ont,
+      ambiguity_load: _amb,
+      world_law_stress: _wls,
+      reveal_density: _rev,
+      thematic_convergence: _thc,
+      total: total
+    };
+  }
+
+  // Narrow initialization-hazard predicate. Only fires Opus when Scene 1 has
+  // structural collapse risk that Sonnet historically struggles with. NOT a
+  // proxy for "important opening" — it's a proxy for "Sonnet may sludge."
+  //
+  // Returns a reason string when triggered; falsy otherwise.
+  function _isInitializationHazard(appState, vector) {
+    if (!appState || appState.turnCount !== 1) return null;
+    const s = appState;
+    const world = s.worldSubtype || (s.picks && s.picks.worldSubtype) || '';
+    const pov = s.povMode || '';
+
+    // Glass House + non-standard POV: empathic-field normalization +
+    // POV discipline + Chorus exposition restraint all at once. Sonnet
+    // historically produces exposition sludge here.
+    if (world === 'glass_house' && (pov === 'environment4th' || pov === 'author5th')) {
+      return 'GlassHouse' + (pov === 'environment4th' ? 'Material' : 'Fate') + 'Opening';
+    }
+
+    // Simulation-layer / the_beyond openings: reality-layer normalization
+    // alone is enough hazard regardless of POV.
+    if (world === 'simulation' || world === 'the_beyond') {
+      return 'OntologyUnstableOpening';
+    }
+
+    // Generalized escape hatch: if telemetry score concentrates extreme
+    // hazard at scene 1 (ontology ≥ 3 AND pov ≥ 2), fire Opus.
+    if (vector && vector.ontology_instability >= 3 && vector.pov_instability >= 2) {
+      return 'ExtremeHazardOpening';
+    }
+
+    return null;
+  }
+
+  // Rolling Opus fire-rate tracker. Target: ≤ 10% of literary scenes weekly.
+  // If we drift past that, the thresholds are wrong, not the doctrine.
+  const _COHERENCE_TELEMETRY = {
+    window: 100,
+    samples: [],  // [{ isOpus, world, pov, reason, t }]
+    warnedAt: 0,
+    warnCooldownMs: 5 * 60 * 1000  // re-warn at most once per 5 min
+  };
+
+  function _trackOpusFireRate(appState, decision) {
+    if (!decision || !decision.model) return;
+    const isOpus = String(decision.model).indexOf('claude-opus') === 0;
+    _COHERENCE_TELEMETRY.samples.push({
+      isOpus: isOpus,
+      world: (appState && (appState.worldSubtype || (appState.picks && appState.picks.worldSubtype))) || 'unknown',
+      pov: (appState && appState.povMode) || 'default',
+      reason: decision.reason || '',
+      t: Date.now()
+    });
+    if (_COHERENCE_TELEMETRY.samples.length > _COHERENCE_TELEMETRY.window) {
+      _COHERENCE_TELEMETRY.samples.shift();
+    }
+    const total = _COHERENCE_TELEMETRY.samples.length;
+    if (total < 20) return;
+    const opusCount = _COHERENCE_TELEMETRY.samples.filter(s => s.isOpus).length;
+    const rate = opusCount / total;
+    const now = Date.now();
+    if (rate > 0.10 && (now - _COHERENCE_TELEMETRY.warnedAt) > _COHERENCE_TELEMETRY.warnCooldownMs) {
+      console.warn('[COHERENCE] Opus fire rate ' + (rate * 100).toFixed(1) + '% over last ' + total + ' scenes — exceeds 10% scarcity target.');
+      _COHERENCE_TELEMETRY.warnedAt = now;
+    }
+  }
+
+  function _emitCoherenceTelemetry(appState, vector, decision) {
+    if (!appState || !vector || !decision) return;
+    try {
+      const v = vector;
+      const world = appState.worldSubtype || (appState.picks && appState.picks.worldSubtype) || 'unknown';
+      const pov = appState.povMode || 'default';
+      const tc = appState.turnCount || 0;
+      console.log(
+        '[COHERENCE] turn=' + tc +
+        ' world=' + world +
+        ' pov=' + pov +
+        ' vec={pov:' + v.pov_instability +
+        ',ont:' + v.ontology_instability +
+        ',amb:' + v.ambiguity_load +
+        ',wls:' + v.world_law_stress +
+        ',rev:' + v.reveal_density +
+        ',thc:' + v.thematic_convergence +
+        ',sum:' + v.total + '}' +
+        ' model=' + (decision.model || 'unknown') +
+        ' reason=' + (decision.reason || 'none')
+      );
+    } catch (_) {}
+  }
+
+  // On-demand summary — call from devtools: window._coherenceSummary()
+  function _coherenceSummary() {
+    const samples = _COHERENCE_TELEMETRY.samples;
+    if (samples.length === 0) return { total: 0 };
+    const overallOpus = samples.filter(s => s.isOpus).length;
+    const byWorld = {}, byPov = {};
+    for (const s of samples) {
+      if (!byWorld[s.world]) byWorld[s.world] = { total: 0, opus: 0 };
+      if (!byPov[s.pov]) byPov[s.pov] = { total: 0, opus: 0 };
+      byWorld[s.world].total++;
+      byPov[s.pov].total++;
+      if (s.isOpus) { byWorld[s.world].opus++; byPov[s.pov].opus++; }
+    }
+    return {
+      total: samples.length,
+      opusOverall: overallOpus,
+      opusRate: (overallOpus / samples.length).toFixed(3),
+      byWorld: byWorld,
+      byPov: byPov
+    };
+  }
+  if (typeof window !== 'undefined') window._coherenceSummary = _coherenceSummary;
+
   // Scenes that warrant Opus-tier prose within an intricate context, OR
   // gpt-4o-tier prose within a standard context. Detected via existing
   // signals: Scene 1, apex importance, Tempt Fate, late-arc storyturns
@@ -580,12 +821,19 @@
    * Resolve Render Tier (A or B) for the current scene.
    *
    * TIER A — INTRICATE WORLDS / DELICATE POVS
-   *   Major scene (Scene 1, apex, betrayal, ST3+, ending)  → OPUS
-   *   In-between scene                                      → SONNET
-   *   Triggers: 5th Person, 4th Person, WryConfession, billionaire_modern,
-   *   glass_house, fated_blood, arcane_binding, the_beyond, cursed,
-   *   endless_edit, quieting_event, angry_room, dogma, post_human,
-   *   simulation, prehistoric, experimental modes.
+   *   Initialization hazard (Scene 1 + Glass House 4th/5th POV
+   *   OR simulation-layer opening)                          → OPUS
+   *   All other intricate scenes (incl. Scene 1, apex, ST3-6,
+   *   ending window)                                        → SONNET
+   *   Triggers (for intricate-context detection): 5th Person, 4th Person,
+   *   WryConfession, billionaire_modern, glass_house, fated_blood,
+   *   arcane_binding, the_beyond, cursed, endless_edit, quieting_event,
+   *   angry_room, dogma, post_human, simulation, prehistoric.
+   *
+   *   Doctrine: Opus is for CONCEPTUAL COHERENCE HAZARD, not emotional
+   *   importance. "Difficult, not important." See _isInitializationHazard.
+   *   Full coherence-routing layer is forthcoming; shadow telemetry
+   *   (_computeCoherenceVector) is gathering data in the meantime.
    *
    * TIER B — STANDARD WORLDS
    *   Scene 1–3 (opening window)  → SONNET (tone-set with strong writer)
@@ -602,6 +850,22 @@
    */
   function resolveRenderTier() {
     const appState = window.state;
+    // Compute coherence vector early (log-only; only routes via
+    // _isInitializationHazard for the narrow Scene-1 case).
+    const _coherenceVector = appState ? _computeCoherenceVector(appState) : null;
+    const decision = _resolveRenderTierInner(appState, _coherenceVector);
+    // Emit telemetry + track scarcity AFTER the routing decision is made.
+    // Wrapped in try so a telemetry hiccup never breaks generation.
+    try {
+      if (appState && _coherenceVector) {
+        _emitCoherenceTelemetry(appState, _coherenceVector, decision);
+        _trackOpusFireRate(appState, decision);
+      }
+    } catch (_) { /* telemetry must not throw */ }
+    return decision;
+  }
+
+  function _resolveRenderTierInner(appState, coherenceVector) {
     if (!appState) return { model: CONFIG.PRIMARY_AUTHOR_MODEL, max_tokens: 1500, tier: 'B', reason: 'Default' };
 
     const turnCount = appState.turnCount || 0;
@@ -632,21 +896,34 @@
     }
 
     // ── TIER A: INTRICATE WORLDS / DELICATE POVS ──
-    // Major scene → Opus. In-between → Sonnet. See _INTRICATE_FLAVORS
-    // and _isIntricateContext for the full inclusion criteria.
+    // Opus is narrowly reserved for INITIALIZATION HAZARDS — Scene 1
+    // configurations that historically cause Sonnet to sludge / over-
+    // explain / drift into pseudo-profundity (Glass House + 4th/5th POV;
+    // simulation-layer opening). Every other intricate scene — including
+    // ordinary intricate Scene 1s (billionaire, fantasy intricate) and
+    // every apex / ST3-6 / ending scene — routes to Sonnet.
+    //
+    // Scarcity principle: most great scenes still run on Sonnet. Opus
+    // fires when conceptual collapse is the failure mode, not when the
+    // scene is emotionally important. Target fire rate ≤ 10% weekly;
+    // _trackOpusFireRate logs a warning if we drift above that.
     if (_isIntricateContext(appState)) {
+      const _initHazard = _isInitializationHazard(appState, coherenceVector);
+      if (_initHazard) {
+        return { model: CONFIG.OPUS_MODEL, max_tokens: 2400, tier: 'A', reason: 'CoherenceInit:' + _initHazard };
+      }
       if (_isMajorScene(appState)) {
-        // Opus for the moments readers screenshot: Scene 1, apex,
-        // Tempt Fate, ST3-ST6 (intimacy / consequence / betrayal /
-        // climax-ending), ending convergence window.
-        const reason = appState.turnCount === 1 ? 'TierA:Scene1:Opus'
-          : appState.tempt_fate_invoked_this_turn ? 'TierA:Tempt:Opus'
-          : appState._currentSceneImportance === 'apex' ? 'TierA:Apex:Opus'
-          : (appState.storyturn === 'ST5' || appState.storyturn === 'ST6') ? 'TierA:Betrayal:Opus'
-          : appState.storyturn === 'ST3' ? 'TierA:ST3:Opus'
-          : appState.storyturn === 'ST4' ? 'TierA:ST4:Opus'
-          : 'TierA:Major:Opus';
-        return { model: CONFIG.OPUS_MODEL, max_tokens: 2400, tier: 'A', reason: reason };
+        // Major scenes within intricate context — all Sonnet now. Reason
+        // string preserves which kind of major it was for telemetry
+        // correlation later.
+        const reason = appState.turnCount === 1 ? 'TierA:Scene1:Sonnet'
+          : appState._currentSceneImportance === 'apex' ? 'TierA:Apex:Sonnet'
+          : appState.tempt_fate_invoked_this_turn ? 'TierA:Tempt:Sonnet'
+          : (appState.storyturn === 'ST5' || appState.storyturn === 'ST6') ? 'TierA:Betrayal:Sonnet'
+          : appState.storyturn === 'ST3' ? 'TierA:ST3:Sonnet'
+          : appState.storyturn === 'ST4' ? 'TierA:ST4:Sonnet'
+          : 'TierA:Major:Sonnet';
+        return { model: CONFIG.SONNET_MODEL, max_tokens: 2200, tier: 'A', reason: reason };
       }
       // In-between scene in an intricate world — Sonnet handles the
       // connective tissue with strong voice, no need for Opus spend.
@@ -747,6 +1024,16 @@
    *   callChatGPT(messages, role, options)  — explicit role
    *   callChatGPT(messages, options)        — defaults role to 'PRIMARY_AUTHOR'
    */
+  // Sentinel marker prompt builders can embed in a system prompt to mark
+  // the static/dynamic seam. When the request routes to Anthropic and the
+  // marker is present, callChatGPT splits the system message into a
+  // [{text: prefix, cache_control: ephemeral}, {text: tail}] block array
+  // so Anthropic caches the prefix. For non-Anthropic providers the
+  // marker is stripped silently (OpenAI ignores cache_control + the
+  // proxy's automatic prefix caching does its own thing). Builders that
+  // don't embed the marker pay normal price — fully backwards-compatible.
+  const CACHE_BOUNDARY = '<<<STORYBOUND_CACHE_BOUNDARY>>>';
+
   async function callChatGPT(messages, role = 'PRIMARY_AUTHOR', options = {}) {
     // Two-arg form: caller passed (messages, options). Shift into place silently.
     if (typeof role === 'object' && role !== null) {
@@ -766,10 +1053,38 @@
       FATE_STRUCTURAL: CONFIG.FATE_STRUCTURAL_MODEL,
       FATE_ELEVATION: CONFIG.FATE_ELEVATION_MODEL
     };
+    const modelResolved = options.model || roleModelMap[role] || CONFIG.PRIMARY_AUTHOR_MODEL;
+
+    // Route Anthropic models to the Anthropic proxy. The proxy shape is
+    // identical (same payload + same normalized response) so the rest of
+    // the callsite is unchanged. Claude slugs start with 'claude-'.
+    const _isClaudeModel = typeof modelResolved === 'string' && modelResolved.indexOf('claude-') === 0;
+
+    // ── Cache-boundary processing ──
+    // Strip the sentinel from every system message. For Anthropic, convert
+    // the prefix half into a cached block. For OpenAI / others, silently
+    // collapse to plain text (no harm — the marker would just confuse the
+    // model). Only the system role is affected; user/assistant turns are
+    // passed through untouched.
+    const processedMessages = messages.map(m => {
+      if (!m || m.role !== 'system' || typeof m.content !== 'string') return m;
+      const sentinelIdx = m.content.indexOf(CACHE_BOUNDARY);
+      if (sentinelIdx === -1) return m;
+      const prefix = m.content.slice(0, sentinelIdx);
+      const tail = m.content.slice(sentinelIdx + CACHE_BOUNDARY.length);
+      if (_isClaudeModel && prefix.length > 0) {
+        const blocks = [{ type: 'text', text: prefix, cache_control: { type: 'ephemeral' } }];
+        if (tail.length > 0) blocks.push({ type: 'text', text: tail });
+        return { role: 'system', content: blocks };
+      }
+      // Non-Anthropic: just drop the sentinel and rejoin.
+      return { role: 'system', content: prefix + tail };
+    });
+
     const payload = {
-      messages,
+      messages: processedMessages,
       role,
-      model: options.model || roleModelMap[role] || CONFIG.PRIMARY_AUTHOR_MODEL,
+      model: modelResolved,
       temperature: options.temperature || 0.7,
       max_tokens: options.max_tokens || 1500
     };
@@ -782,10 +1097,6 @@
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT_MS);
 
-    // Route Anthropic models to the Anthropic proxy. The proxy shape is
-    // identical (same payload + same normalized response) so the rest of
-    // the callsite is unchanged. Claude slugs start with 'claude-'.
-    const _isClaudeModel = typeof payload.model === 'string' && payload.model.indexOf('claude-') === 0;
     const _proxyUrl = _isClaudeModel ? CONFIG.ANTHROPIC_PROXY : CONFIG.CHATGPT_PROXY;
 
     try {
@@ -5368,6 +5679,11 @@ Tension: ${outline.tension_vector || 'N/A'}`;
   window.StoryboundOrchestration = {
     // Main orchestration
     orchestrateStoryGeneration,
+
+    // Anthropic prompt-cache seam marker. Prompt builders embed this once
+    // between their static prefix and dynamic tail; callChatGPT splits on
+    // it (only for Claude routes) into a cached block + uncached tail.
+    CACHE_BOUNDARY,
 
     // Model callers
     callChatGPT,              // Primary author (plot, psychology, limits, consequences)

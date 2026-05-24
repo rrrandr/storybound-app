@@ -23,16 +23,36 @@
  *   • max_tokens is REQUIRED
  *   • anthropic-version header is REQUIRED
  *   • No native JSON mode (prompt-driven JSON if needed)
+ *
+ * Prompt caching:
+ *   • Clients may send a system message whose `content` is an ARRAY of
+ *     {type:'text', text, cache_control?} blocks instead of a string.
+ *     Blocks are forwarded as the top-level `system` array so Anthropic
+ *     caches anything marked with cache_control. The legacy string form
+ *     still works — when ALL system messages are strings, they are
+ *     joined and sent as a plain string (no cache).
+ *   • Same array form is honored on user/assistant `content` if the
+ *     caller wants to mark a long user-side block as cacheable.
+ *   • Extended (1-hour) cache TTL is requested via the
+ *     extended-cache-ttl-2025-04-11 beta header so caches survive longer
+ *     reader pauses between scenes. Standard ephemeral cache_control
+ *     still produces 5-min entries — beta header just unlocks the
+ *     `{type:'ephemeral', ttl:'1h'}` variant when callers ask for it.
+ *   • Usage response surfaces `cache_creation_input_tokens` and
+ *     `cache_read_input_tokens` so the client cost accumulator can
+ *     price cached/written tokens correctly.
  * =============================================================================
  */
 
 const ALLOWED_CLAUDE_MODELS = new Set([
+  'claude-opus-4-7',
   'claude-opus-4-1',
   'claude-sonnet-4-5',
   'claude-haiku-4-5'
 ]);
 
 const ANTHROPIC_VERSION = '2023-06-01';
+const ANTHROPIC_BETA_HEADERS = 'extended-cache-ttl-2025-04-11';
 
 module.exports = async function handler(req, res) {
   // CORS — same allowlist as chatgpt-proxy
@@ -83,23 +103,57 @@ module.exports = async function handler(req, res) {
 
     // ── Reshape messages for Anthropic ──
     // Anthropic requires:
-    //   • system as a top-level string (concatenation of any role:'system' messages)
+    //   • system as a top-level string OR array of text blocks (not in messages)
     //   • messages array contains only role:'user' and role:'assistant'
     //   • messages must alternate user/assistant (we'll trust the caller; if
     //     consecutive same-role messages arrive we concatenate their content)
-    const systemParts = [];
+    //
+    // Each message.content may be a string (legacy) or an array of
+    // {type:'text', text, cache_control?} blocks (caching path). Both shapes
+    // are accepted on system + user + assistant.
+    const systemBlocks = [];
+    let systemHasCache = false;
     const turnMessages = [];
+
+    const _normalizeBlocks = (content) => {
+      if (typeof content === 'string') return [{ type: 'text', text: content }];
+      if (!Array.isArray(content)) return null;
+      const out = [];
+      for (const b of content) {
+        if (!b || typeof b !== 'object') continue;
+        if (b.type !== 'text' || typeof b.text !== 'string') continue;
+        const block = { type: 'text', text: b.text };
+        if (b.cache_control && typeof b.cache_control === 'object') {
+          block.cache_control = b.cache_control;
+        }
+        out.push(block);
+      }
+      return out.length > 0 ? out : null;
+    };
+
     for (const m of messages) {
-      if (!m || typeof m.content !== 'string') continue;
+      if (!m) continue;
+      const blocks = _normalizeBlocks(m.content);
+      if (!blocks) continue;
       if (m.role === 'system') {
-        systemParts.push(m.content);
+        for (const b of blocks) {
+          if (b.cache_control) systemHasCache = true;
+          systemBlocks.push(b);
+        }
       } else if (m.role === 'user' || m.role === 'assistant') {
         const last = turnMessages[turnMessages.length - 1];
-        if (last && last.role === m.role) {
-          // Merge same-role consecutive messages (Anthropic rejects them)
-          last.content += '\n\n' + m.content;
+        // Only merge if BOTH neighbors are plain-string single blocks
+        // with no cache_control — preserving cache breakpoints matters.
+        const isPlainSingle = (msg) =>
+          Array.isArray(msg.content)
+          && msg.content.length === 1
+          && msg.content[0].type === 'text'
+          && !msg.content[0].cache_control;
+        const incomingIsPlainSingle = blocks.length === 1 && !blocks[0].cache_control;
+        if (last && last.role === m.role && isPlainSingle(last) && incomingIsPlainSingle) {
+          last.content[0].text += '\n\n' + blocks[0].text;
         } else {
-          turnMessages.push({ role: m.role, content: m.content });
+          turnMessages.push({ role: m.role, content: blocks });
         }
       }
     }
@@ -109,12 +163,26 @@ module.exports = async function handler(req, res) {
     // Anthropic requires first turn to be 'user' — if it's 'assistant',
     // prepend a placeholder user turn carrying any system content tail.
     if (turnMessages[0].role !== 'user') {
-      turnMessages.unshift({ role: 'user', content: '(continue)' });
+      turnMessages.unshift({ role: 'user', content: [{ type: 'text', text: '(continue)' }] });
     }
 
-    const system = systemParts.length > 0 ? systemParts.join('\n\n') : undefined;
+    // If no system message was sent, leave system undefined.
+    // If system has cache_control anywhere, send as array (preserves cache breakpoints).
+    // Otherwise collapse to string for log-friendliness and to match legacy proxy shape.
+    let system;
+    if (systemBlocks.length === 0) {
+      system = undefined;
+    } else if (systemHasCache) {
+      system = systemBlocks;
+    } else {
+      system = systemBlocks.map(b => b.text).join('\n\n');
+    }
 
-    console.log(`[ANTHROPIC-PROXY] Model: ${model}, turns: ${turnMessages.length}, system: ${system ? system.length + ' chars' : 'none'}, max_tokens: ${max_tokens}`);
+    const systemChars = typeof system === 'string'
+      ? system.length
+      : Array.isArray(system) ? system.reduce((n, b) => n + (b.text ? b.text.length : 0), 0) : 0;
+    const cacheBreakpoints = Array.isArray(system) ? system.filter(b => b.cache_control).length : 0;
+    console.log(`[ANTHROPIC-PROXY] Model: ${model}, turns: ${turnMessages.length}, system: ${systemChars ? systemChars + ' chars' : 'none'}${cacheBreakpoints ? `, cache_breakpoints: ${cacheBreakpoints}` : ''}, max_tokens: ${max_tokens}`);
     if (response_format) {
       console.log(`[ANTHROPIC-PROXY] response_format requested (${JSON.stringify(response_format).slice(0, 60)}) — Anthropic has no native JSON mode; relying on prompt-driven JSON.`);
     }
@@ -128,13 +196,20 @@ module.exports = async function handler(req, res) {
     };
     if (system) anthropicBody.system = system;
 
+    const requestHeaders = {
+      'Content-Type': 'application/json',
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': ANTHROPIC_VERSION
+    };
+    // Only request the extended-cache-ttl beta when the request actually
+    // uses cache_control — keeps non-caching calls on plain stable API.
+    if (cacheBreakpoints > 0) {
+      requestHeaders['anthropic-beta'] = ANTHROPIC_BETA_HEADERS;
+    }
+
     const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': ANTHROPIC_VERSION
-      },
+      headers: requestHeaders,
       body: JSON.stringify(anthropicBody)
     });
 
@@ -185,15 +260,22 @@ module.exports = async function handler(req, res) {
         model: model,
         timestamp: new Date().toISOString()
       },
-      // Anthropic usage shape: { input_tokens, output_tokens }
-      // Normalize to OpenAI-ish shape so accumulators don't break.
+      // Anthropic usage shape: { input_tokens, output_tokens,
+      //                          cache_creation_input_tokens?,
+      //                          cache_read_input_tokens? }
+      // Normalize to OpenAI-ish shape so accumulators don't break, and
+      // surface the cache fields so the client cost tracker can price
+      // them correctly (writes are 1.25x input, reads are 0.1x input).
       usage: data.usage ? {
         prompt_tokens: data.usage.input_tokens,
         completion_tokens: data.usage.output_tokens,
         total_tokens: (data.usage.input_tokens || 0) + (data.usage.output_tokens || 0),
         // Preserve original for cost calc
         input_tokens: data.usage.input_tokens,
-        output_tokens: data.usage.output_tokens
+        output_tokens: data.usage.output_tokens,
+        // Cache telemetry — only present when cache_control was used
+        cache_creation_input_tokens: data.usage.cache_creation_input_tokens || 0,
+        cache_read_input_tokens: data.usage.cache_read_input_tokens || 0
       } : null
     };
 
