@@ -54,6 +54,16 @@ const ALLOWED_CLAUDE_MODELS = new Set([
 const ANTHROPIC_VERSION = '2023-06-01';
 const ANTHROPIC_BETA_HEADERS = 'extended-cache-ttl-2025-04-11';
 
+// Models that DEPRECATE the `temperature` sampling param — sending it returns
+// HTTP 400 ("`temperature` is deprecated for this model."). Opus 4.7 is the
+// first; newer reasoning-tuned models are expected to follow. For these we
+// omit temperature entirely (the model self-manages sampling). Without this,
+// EVERY call to such a model 400s and silently falls back to a lesser model —
+// so the scaffolder/prose layer never actually runs on Opus.
+const TEMPERATURE_DEPRECATED_MODELS = new Set([
+  'claude-opus-4-7'
+]);
+
 module.exports = async function handler(req, res) {
   // CORS — same allowlist as chatgpt-proxy
   const origin = req.headers.origin || '';
@@ -191,9 +201,13 @@ module.exports = async function handler(req, res) {
     const anthropicBody = {
       model: model,
       messages: turnMessages,
-      max_tokens: max_tokens,
-      temperature: temperature
+      max_tokens: max_tokens
     };
+    // Omit temperature for models that deprecate it (Opus 4.7+) — including
+    // it returns HTTP 400. All other models keep the caller's temperature.
+    if (!TEMPERATURE_DEPRECATED_MODELS.has(model)) {
+      anthropicBody.temperature = temperature;
+    }
     if (system) anthropicBody.system = system;
 
     const requestHeaders = {
