@@ -22716,8 +22716,25 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     display: block;
     margin-top: 6px;
     font-size: 1.24em;
-    opacity: 0.9;
+    opacity: 1;            /* was 0.9 — the dimming muted the lacquer + gloss */
     letter-spacing: 0.08em;
+    /* Lacquered black set EXPLICITLY. This element (#beginCostDisplay /
+       #coverBeginCostDisplay) is NOT a descendant of #beginBtn, so the
+       "inherit from #beginBtn's text-fill" plan never fired — it fell back to
+       the generic .begin-cost-display rule (color: rgba(0,0,0,0.7);
+       text-shadow:none), i.e. the reported flat-grey/no-highlight look. Mirror
+       #beginBtn's 6-layer lacquer here, INCLUDING the warm top-edge gloss.
+       Children (.begin-issue-cost text + the icon's currentColor) inherit it. */
+    color: #080808 !important;
+    -webkit-text-fill-color: #080808;
+    font-weight: 600;
+    text-shadow:
+        0 -1px 1px rgba(255, 240, 205, 0.6),   /* warm gloss highlight (top edge) */
+        0 1px 0   rgba(26, 26, 26, 0.55),
+        0 2px 0   rgba(17, 17, 17, 0.5),
+        0 3px 1px rgba(0, 0, 0, 0.35),
+        0 0 3px   rgba(0, 0, 0, 0.25),
+        0 0 8px   rgba(0, 0, 0, 0.15);
 }
 .begin-issue-cost {
     font-size: 0.75em;
@@ -22730,18 +22747,22 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    not a flat grey sticker. */
 .begin-issue-fortune-icon {
     display: inline-block;
-    width: 0.95em;
-    height: 0.95em;
-    background-color: currentColor;
+    /* Sized to the DIGITS' cap-height, not the em box — at 0.95em the icon
+       stood taller than the "100" numerals. ~0.72em matches the numeral caps. */
+    width: 0.72em;
+    height: 0.72em;
+    background-color: currentColor;   /* now resolves to solid #080808 from the parent */
     -webkit-mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
             mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
-    vertical-align: -0.12em;
-    margin-left: 0.06em;
+    vertical-align: -0.01em;          /* sit on the numeral baseline */
+    margin-left: 0.08em;
+    /* Drop-shadow stack mirrors the text-shadow (text-shadow doesn't render on
+       mask-clipped elements). With the parent now solid black, these read. */
     filter:
-        drop-shadow(0 -1px 1px rgba(255, 240, 205, 0.45))
-        drop-shadow(0 1px 0 rgba(26, 26, 26, 0.5))
+        drop-shadow(0 -1px 1px rgba(255, 240, 205, 0.6))
+        drop-shadow(0 1px 0 rgba(26, 26, 26, 0.55))
         drop-shadow(0 2px 0 rgba(17, 17, 17, 0.5))
-        drop-shadow(0 3px 1px rgba(0, 0, 0, 0.3))
+        drop-shadow(0 3px 1px rgba(0, 0, 0, 0.35))
         drop-shadow(0 0 3px rgba(0, 0, 0, 0.25))
         drop-shadow(0 0 8px rgba(0, 0, 0, 0.15));
 }
