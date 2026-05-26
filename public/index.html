@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260521-fortunes-red-gold-count">
+  <link rel="stylesheet" href="/styles.css?v=20260526-lit-nav-text">
 </head>
 
 <body class="booting">
@@ -786,7 +786,7 @@
 
 <div id="payModal" class="overlay hidden" style="z-index:10006;">
   <div class="box pay-box" style="position:relative;">
-    <button id="payModalClose" class="pay-modal-close" onclick="document.getElementById('payModal').classList.add('hidden');">&times;</button>
+    <button id="payModalClose" class="pay-modal-close" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();">&times;</button>
     <h3 id="payModalHeading">Go deeper into the story</h3>
     <p style="font-size:1.1em; color:var(--gold); font-style:italic; text-align:center; margin:0 0 18px;">The ink runs dry. Fate's quill trembles above the page.</p>
 
@@ -1865,10 +1865,11 @@
           <div class="book-front cover-book-front" id="coverBookFront">
             <!-- Cover art image (hidden until generated) -->
             <img id="bookCoverImg" src="" alt="" class="cover-book-art">
-            <!-- Comic-book-style issue badge — upper right corner.
-                 Populated by renderIssueBadge() in app.js once the
-                 story's issue number is claimed (first F spend on
-                 scene context). Hidden until claimed. -->
+            <!-- Comic-book-style issue badge — upper LEFT corner.
+                 Populated by renderIssueBadge() in app.js. Shows a
+                 "No. X.{M}" placeholder pre-claim and the real
+                 "No. {N}" once the issue number is claimed (first F
+                 spend on scene context). -->
             <div id="issueBadge" class="issue-badge hidden" aria-hidden="true">
               <span class="issue-badge-flavor"></span>
               <span class="issue-badge-number"></span>
@@ -2083,12 +2084,12 @@
 
     <div class="say-do-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; width:75%; margin-left:auto; margin-right:auto;">
       <div class="input-wrapper" id="actionWrapper">
-          <label>What do you do?</label>
-          <textarea id="actionInput" rows="3" placeholder="Action..." maxlength="2000"></textarea>
+          <span class="oas-input-label">ACTION</span>
+          <textarea id="actionInput" rows="3" placeholder="What do you do?" maxlength="2000"></textarea>
       </div>
       <div class="input-wrapper" id="dialogueWrapper">
-          <label>What do you say?</label>
-          <textarea id="dialogueInput" rows="3" placeholder="Dialogue..." maxlength="2000"></textarea>
+          <span class="oas-input-label">SPEECH</span>
+          <textarea id="dialogueInput" rows="3" placeholder="What do you say?" maxlength="2000"></textarea>
       </div>
     </div>
 
@@ -2338,10 +2339,11 @@
 </div>
 
 <script src="/sound.js?v=20260518-prepeak-breath-cut"></script>
-<script src="/fatecards.js?v=20260517-fate-locked"></script>
+<script src="/fatecards.js?v=20260526-cards-allaround"></script>
 <script src="/orchestration-client.js?v=20260521-literary-prompt-trim"></script>
 <script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260523-regime-scaffolding"></script>
+<script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
+<script src="/app.js?v=20260526-cg-beat-density"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
@@ -2669,9 +2671,11 @@
   <div id="gnReaderControls" class="gn-input-bar">
     <div class="gn-input-grid">
       <div class="input-wrapper">
+        <span class="oas-input-label">ACTION</span>
         <textarea id="gnActionInput" rows="3" placeholder="What do you do?" maxlength="2000"></textarea>
       </div>
       <div class="input-wrapper">
+        <span class="oas-input-label">SPEECH</span>
         <textarea id="gnDialogueInput" rows="3" placeholder="What do you say?" maxlength="2000"></textarea>
       </div>
     </div>

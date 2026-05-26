@@ -161,6 +161,36 @@ function resolveFateCardTarget(cardId, sceneContext, options = {}) {
         }
 
         // ═══════════════════════════════════════════════════════════════
+        // ALL-AROUND RETARGET: when the LI is KNOWN to be offstage, a
+        // "romantic" card becomes a GENERAL interaction stance toward whoever
+        // IS present — in a NON-ROMANTIC register (Triangle Guard intent: do
+        // NOT imply romance with the present non-LI character). The cards are
+        // suggestions for any situation, not LI-only. Fires only on a POSITIVE
+        // absence signal; unknown presence still defaults to the Storybeau
+        // (the click-time LLM preview refines from the actual prose).
+        // ═══════════════════════════════════════════════════════════════
+        const _present = Array.isArray(sceneContext.presentCharacters) ? sceneContext.presentCharacters : [];
+        const _liKnownAbsent =
+            (_present.length > 0 && !_present.some(c => c === storybeau.name)) ||
+            (typeof state._scene1LIOnStage === 'boolean' && state._scene1LIOnStage === false && (state.turnCount || 0) === 0);
+        if (_liKnownAbsent) {
+            let _interlocutor = null;
+            for (let _i = 0; _i < _present.length; _i++) {
+                if (_present[_i] !== storybeau.name) { _interlocutor = _present[_i]; break; }
+            }
+            console.log('[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic)', {
+                cardId, interlocutor: _interlocutor, presentCharacters: _present
+            });
+            return {
+                target: _interlocutor,   // may be null → self-directed
+                isStorybeau: false,
+                romantic: false,
+                liAbsent: true,
+                overrideApplied: false
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
         // TRIANGLE GUARD: Block accidental triangle formation
         // ═══════════════════════════════════════════════════════════════
         if (sceneContext.presentCharacters && sceneContext.presentCharacters.length > 1) {
@@ -1011,6 +1041,7 @@ function stopContinuousSparkles() {
             isEarlyStory,
             liIntroduced: targetResolution.target ? true : liIntroduced,
             liName: resolvedTargetName, // AUTHORITATIVE: Storybeau-resolved target
+            liAbsent: !!targetResolution.liAbsent, // LI offstage → non-LI generic fallback
             intensity,
             lastEmotionalBeat,
             unresolvedTension,
@@ -1044,13 +1075,35 @@ function stopContinuousSparkles() {
         };
     }
 
+    // LI-ABSENT generic defaults — used when the love interest is offstage so
+    // the (normally romance-coded) cards read as all-around interaction
+    // suggestions toward the present situation, NON-romantically. These are
+    // deal-time placeholders; the click-time LLM preview refines them from the
+    // actual prose. Silence has no LI dependency, so it uses its normal path.
+    const _LI_ABSENT_FALLBACKS = {
+        temptation: { action: "There's an opening right in front of you. Take it before the moment closes.", dialogue: '"Why not. Who\'s going to stop me."',
+                      altAction: 'Do the reckless thing the room is daring you not to do.', altDialogue: '"Let\'s see what happens."' },
+        confession: { action: 'Stop hedging and put the real thing on the table — out loud.', dialogue: '"Here\'s the truth, since no one else will say it."',
+                      altAction: 'Own the thing you\'ve been dancing around.', altDialogue: '"I\'m done pretending otherwise."' },
+        boundary:   { action: "Hold the line. Don't give an inch you didn't mean to.", dialogue: '"That\'s as far as this goes."',
+                      altAction: 'Plant your feet and refuse to be moved.', altDialogue: '"No. Not this."' },
+        reversal:   { action: 'Take the reins of this exchange. Let them follow your lead for once.', dialogue: '"We\'re doing this my way now."',
+                      altAction: 'Flip who\'s running the room.', altDialogue: '"I\'ll decide how this goes."' }
+    };
+
     // ACTIONABLE OPTIONS: Each should change the next beat differently
     function generateCardOptions(cardId, ctx) {
-        const { isSetup, isEarlyStory, liIntroduced, liName, intensity, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, presentCharacters, plot } = ctx;
+        const { isSetup, isEarlyStory, liIntroduced, liName, intensity, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, presentCharacters, plot, liAbsent } = ctx;
 
         const locationPhrase = currentLocation ? `in the ${currentLocation}` : '';
         const objectPhrase = sceneObjects.length > 0 ? sceneObjects[0] : '';
         const tensionPhrase = unresolvedTension.length > 0 ? unresolvedTension[0] : '';
+
+        // LI offstage → romance-coded cards use the non-LI generic default
+        // instead of LI-templated text. (Silence falls through — no LI dep.)
+        if (liAbsent && _LI_ABSENT_FALLBACKS[cardId]) {
+            return _LI_ABSENT_FALLBACKS[cardId];
+        }
 
         switch(cardId) {
             case 'temptation':
@@ -1712,11 +1765,15 @@ function stopContinuousSparkles() {
             }
         } catch (_) {}
 
-        // Free tier, no fortune spent this scene — partial deck as upsell.
-        if (access === 'free') return 3;
-
-        // Default fallback.
-        return 3;
+        // User spec 2026-05-25: the 5 archetype Fate cards are NEVER locked
+        // or paywalled — they are free to preview/select in every tier and
+        // mode (literary / CG / Taste / OAS). The previous free-tier "partial
+        // deck" upsell (3 of 5, with locked cards opening the paywall on click)
+        // is removed. Monetization gating lives ONLY on Petition + Tempt Fate
+        // (the premium deck-summon cards), handled separately. Every path
+        // returns the full deck of 5 so no archetype card is ever `.locked`
+        // and the locked-card→paywall branch never fires for these cards.
+        return 5;
     }
 
     function flipAllCards(mount){

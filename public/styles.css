@@ -3711,10 +3711,12 @@ h2.story-page-title,
 }
 
 /* Issue-numbering tag — sits between #storyTitle and #sceneNumber.
-   Renders as "#256.1" (claimed) or "#?.1" (WIP, pre-publication).
-   Visually restrained; designed to read like a comic-issue stamp,
-   not compete with the title. Empty when title is empty. */
+   HIDDEN in the reading view (per user 2026-05-25): once you're in the
+   scene, the issue serialization is noise. The issue number now lives only
+   on the 3D book cover badge (#issueBadge). Kept in the DOM (renderers
+   still populate it) but never shown in the reader. */
 .story-page-issue-id {
+    display: none !important;
     font-family: 'Lora', serif;
     font-size: 0.62em;
     font-weight: 500;
@@ -8073,13 +8075,14 @@ body:has(#gnReader:not(.hidden)) #modelCompareToggle {
 
 /* ─────────────────────────────────────────────────────────────────────
    ISSUE BADGE — comic-book-style per-flavor numbering plaque
-   Upper-right corner of book covers. Populated by renderIssueBadge().
-   Per-story-cover; visible once issue number is claimed (first F spend).
+   Upper-left corner of book covers. Populated by renderIssueBadge().
+   Per-story-cover; shows a "No. X.{M}" placeholder pre-claim and the
+   real "No. {N}" once the issue number is claimed (first F spend).
    ───────────────────────────────────────────────────────────────────── */
 .issue-badge {
     position: absolute;
     top: 8px;
-    right: 8px;
+    left: 8px;
     z-index: 3;                                 /* above cover art, below modal overlays */
     min-width: 56px;
     padding: 6px 10px 7px;
@@ -20731,14 +20734,18 @@ body.corridor-mode #beginStoryRow .begin-story-container {
     font-size: 1.87em;        /* unchanged — button scales but text does not */
     letter-spacing: 0.2em;
     white-space: nowrap;      /* Belt-and-suspenders: never wrap */
-    /* 3D lacquered black — glossy depth via stacked shadows */
+    /* 3D lacquered black — glossy depth via stacked shadows. The first
+       layer is a warm light highlight on the top edge: lacquered black
+       catches the gold light above it, so the letters read glossy/raised
+       rather than flat-printed. The remaining layers are the dark drop
+       shadow below. */
     color: #080808 !important;
     -webkit-text-fill-color: #080808;
     text-shadow:
+        0 -1px 1px rgba(255,240,205,0.45),
         0 1px 0 rgba(26,26,26,0.5),
         0 2px 0 rgba(17,17,17,0.5),
         0 3px 1px rgba(0,0,0,0.3),
-        0 -1px 0 rgba(60,60,60,0.2),
         0 0 3px rgba(0,0,0,0.25),
         0 0 8px rgba(0,0,0,0.15) !important;
 }
@@ -22658,10 +22665,10 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     color: #080808 !important;
     -webkit-text-fill-color: #080808;
     text-shadow:
+        0 -1px 1px rgba(255,240,205,0.45),
         0 1px 0 rgba(26,26,26,0.5),
         0 2px 0 rgba(17,17,17,0.5),
         0 3px 1px rgba(0,0,0,0.3),
-        0 -1px 0 rgba(60,60,60,0.2),
         0 0 3px rgba(0,0,0,0.25),
         0 0 8px rgba(0,0,0,0.15) !important;
     font-weight: 600;
@@ -22693,10 +22700,48 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
        doesn't render on mask-clipped elements, so we use the filter
        equivalent on the icon). */
     filter:
+        drop-shadow(0 -1px 1px rgba(255, 240, 205, 0.45))
         drop-shadow(0 1px 0 rgba(26, 26, 26, 0.5))
         drop-shadow(0 2px 0 rgba(17, 17, 17, 0.5))
         drop-shadow(0 3px 1px rgba(0, 0, 0, 0.3))
-        drop-shadow(0 -1px 0 rgba(60, 60, 60, 0.2))
+        drop-shadow(0 0 3px rgba(0, 0, 0, 0.25))
+        drop-shadow(0 0 8px rgba(0, 0, 0, 0.15));
+}
+
+/* Per-issue subtitle ("Issue X.1 (100F)") under the Enter Your Story plaque.
+   Layout was previously inline-styled in app.js; lifted to CSS so the icon
+   can share the lacquer treatment cleanly. Inherits the lacquered black
+   color from #beginBtn's text-fill. */
+.begin-issue-sub {
+    display: block;
+    margin-top: 6px;
+    font-size: 1.24em;
+    opacity: 0.9;
+    letter-spacing: 0.08em;
+}
+.begin-issue-cost {
+    font-size: 0.75em;
+}
+/* Fortunes "F" in the subtitle — mask-clipped from Fortunes-Icon.png (so it's
+   still the Fortunes icon, never a text letter) and tinted via currentColor
+   so it picks up the lacquered black of the plaque text. The drop-shadow
+   stack mirrors #beginBtn's 6-layer text-shadow — including the warm gloss
+   highlight on the top edge — so the icon reads as a lacquered engraving,
+   not a flat grey sticker. */
+.begin-issue-fortune-icon {
+    display: inline-block;
+    width: 0.95em;
+    height: 0.95em;
+    background-color: currentColor;
+    -webkit-mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
+            mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
+    vertical-align: -0.12em;
+    margin-left: 0.06em;
+    filter:
+        drop-shadow(0 -1px 1px rgba(255, 240, 205, 0.45))
+        drop-shadow(0 1px 0 rgba(26, 26, 26, 0.5))
+        drop-shadow(0 2px 0 rgba(17, 17, 17, 0.5))
+        drop-shadow(0 3px 1px rgba(0, 0, 0, 0.3))
         drop-shadow(0 0 3px rgba(0, 0, 0, 0.25))
         drop-shadow(0 0 8px rgba(0, 0, 0, 0.15));
 }
@@ -25599,23 +25644,72 @@ body.staged-composing-active #gnPageNavControls {
     border-top: 1px solid rgba(201, 168, 76, 0.22);
     border-bottom: 1px solid rgba(201, 168, 76, 0.22);
 }
+/* CG option pills — gold-plaque art matched to the literary micro-decision
+   (.scene1-micro-expr .sme-inline-choice): double border + inset frame line
+   + four art-deco corner diamonds. currentColor-based, so it inks gold in the
+   CG container's gold text context. (Replaces the prior parens/underline.) */
 .staged-micro-opt-inline {
-    display: inline;
+    position: relative;
+    display: inline-block;
+    font-family: inherit;
+    font-size: inherit;
+    font-style: italic;
+    color: inherit;
+    letter-spacing: 0.02em;
+    line-height: 1.45;
+    vertical-align: baseline;
+    background: color-mix(in srgb, currentColor 15%, transparent);
+    border: 4px double color-mix(in srgb, currentColor 60%, transparent);
+    border-radius: 0;
+    outline: 0;
+    padding: 0.22em 1em;
+    margin: 0 0.14em;
     cursor: pointer;
-    color: rgba(255, 215, 130, 0.95);
-    border-bottom: 1px solid rgba(201, 168, 76, 0.45);
-    padding: 0 1px 1px;
-    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    white-space: nowrap;
+    transition: background 0.18s ease, border-color 0.18s ease, transform 0.08s ease;
 }
-.staged-micro-opt-inline::before { content: '('; color: rgba(201, 168, 76, 0.7); }
-.staged-micro-opt-inline::after  { content: ')'; color: rgba(201, 168, 76, 0.7); }
+.staged-micro-opt-inline::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    bottom: 3px;
+    left: 3px;
+    border: 1px solid color-mix(in srgb, currentColor 32%, transparent);
+    pointer-events: none;
+    transition: border-color 0.18s ease;
+}
+.staged-micro-opt-inline::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    pointer-events: none;
+    background-color: currentColor;
+    opacity: 0.7;
+    -webkit-mask:
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") top left / 8px 8px no-repeat,
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") top right / 8px 8px no-repeat,
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") bottom left / 8px 8px no-repeat,
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") bottom right / 8px 8px no-repeat;
+    mask:
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") top left / 8px 8px no-repeat,
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") top right / 8px 8px no-repeat,
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") bottom left / 8px 8px no-repeat,
+        url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpolygon points='4,0 8,4 4,8 0,4' fill='black'/%3E%3C/svg%3E") bottom right / 8px 8px no-repeat;
+    transition: opacity 0.18s ease;
+}
 .staged-micro-opt-inline:hover {
-    color: #fff3d4;
-    border-bottom-color: #c9a84c;
-    background: rgba(201, 168, 76, 0.10);
+    background: color-mix(in srgb, currentColor 22%, transparent);
+    border-color: color-mix(in srgb, currentColor 85%, transparent);
+}
+.staged-micro-opt-inline:hover::before {
+    border-color: color-mix(in srgb, currentColor 55%, transparent);
+}
+.staged-micro-opt-inline:hover::after {
+    opacity: 0.95;
 }
 .staged-micro-opt-inline:active {
-    background: rgba(201, 168, 76, 0.18);
+    transform: scale(0.98);
 }
 
 /* Resolved-inline — same prose body, no parens, chosen highlighted,
@@ -28496,15 +28590,18 @@ body.elevated-fate-cards .tempt-fate-card {
 }
 
 /* ── GN page-nav (above the image): plain-text links, no plaque ──
-   Literary reader keeps the ceremonial Black-Gold plaque background on
-   .page-nav-btn (defined at ~line 3085). The GN reader's nav above the
-   image is a quieter affair — bare text in gold, just clickable, no
-   box, no chrome. Scoped to .gn-page-nav so the literary plaques are
-   untouched. */
-.gn-page-nav.page-nav-controls {
+   Both the GN reader's nav AND the literary reader's nav (per user
+   2026-05-26) use the quiet treatment — bare gold text, just clickable,
+   no box, no chrome — instead of the ceremonial Black-Gold plaque. The
+   literary nav (#pageNavControls) stays in its current spot BELOW the
+   scene; only its chrome is removed. #pageNavControls.page-nav-btn beats
+   the base .page-nav-btn plaque rule (~line 3105) on specificity. */
+.gn-page-nav.page-nav-controls,
+#pageNavControls.page-nav-controls {
     gap: 14px;
 }
-.gn-page-nav .page-nav-btn {
+.gn-page-nav .page-nav-btn,
+#pageNavControls .page-nav-btn {
     background: none !important;
     padding: 2px 4px;
     font-size: 0.78em;
@@ -28515,15 +28612,18 @@ body.elevated-fate-cards .tempt-fate-card {
     text-shadow: none;
     gap: 3px;
 }
-.gn-page-nav .page-nav-btn:hover:not(:disabled) {
+.gn-page-nav .page-nav-btn:hover:not(:disabled),
+#pageNavControls .page-nav-btn:hover:not(:disabled) {
     color: #f3e6c8;
     -webkit-text-fill-color: #f3e6c8;
     filter: none;
 }
-.gn-page-nav .page-nav-btn:disabled {
+.gn-page-nav .page-nav-btn:disabled,
+#pageNavControls .page-nav-btn:disabled {
     opacity: 0.35;
 }
-.gn-page-nav .page-indicator {
+.gn-page-nav .page-indicator,
+#pageNavControls .page-indicator {
     font-size: 0.78em;
     letter-spacing: 0.06em;
     color: rgba(232, 217, 176, 0.78);
