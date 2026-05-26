@@ -18993,6 +18993,19 @@ body:has(.design-mode-badge) .sb-zoom-backdrop.active {
     pointer-events: none;
 }
 
+/* When a card is zoomed (backdrop active), keep the Fortunes widget + the
+   concierge bell ABOVE the backdrop (z 9998) so they stay visible AND
+   clickable. The Fortunes widget normally sits at 9500 — below the backdrop —
+   so it was dimmed + dead during a card zoom. Higher z-index also wins click
+   hit-testing over the backdrop's click-to-close. Scoped to the zoom state so
+   it doesn't disturb other modals' layering. */
+body:has(.sb-zoom-backdrop.active) #fortuneWidget {
+    z-index: 10010 !important;
+}
+body:has(.sb-zoom-backdrop.active) #conciergeBell {
+    z-index: 10013 !important;
+}
+
 /* Zoom portal - holds zoomed card ABOVE backdrop, uses flexbox for centering */
 .sb-zoom-portal {
     position: fixed;
