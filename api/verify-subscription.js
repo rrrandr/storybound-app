@@ -23,6 +23,10 @@ import { createClient } from '@supabase/supabase-js';
 import { stripe } from '../lib/stripe.js';
 
 const SUB_FORTUNES = { storied: 100, favored: 200, chosen: 400 };
+// Monthly free Tempt Fate charges per tier (Favored 1, Chosen 3). Idempotent
+// per calendar month via profiles.tempt_grant_month.
+const TEMPT_GRANT = { storied: 0, favored: 1, chosen: 3 };
+const _temptMonthKey = () => new Date().toISOString().slice(0, 7);
 
 function priceIdToTier(priceId) {
   if (!priceId) return null;
@@ -74,7 +78,7 @@ export default async function handler(req, res) {
   // 1. Load the profile.
   const { data: profile, error: pErr } = await supabase
     .from('profiles')
-    .select('id, fortunes, stripe_customer_id, stripe_subscription_id, is_subscriber, subscription_tier, billing_status')
+    .select('id, fortunes, stripe_customer_id, stripe_subscription_id, is_subscriber, subscription_tier, billing_status, bonus_tempt_charges, tempt_grant_month')
     .eq('id', userId)
     .maybeSingle();
   if (pErr) {
@@ -120,6 +124,35 @@ export default async function handler(req, res) {
     const subPriceId = activeSub.items?.data?.[0]?.price?.id;
     const expectedTier = priceIdToTier(subPriceId);
     if (expectedTier) {
+      // ── Monthly Tempt Fate reconcile (independent of the one-time fortune
+      // grant) ── The free Tempt Fate grant (Favored 1, Chosen 3) must fire for
+      // ANY active subscriber who hasn't been granted this calendar month —
+      // whether or not the subscription is newly bound. (The fortune grant
+      // below only fires when the sub was never bound; an already-bound
+      // subscriber would otherwise never get their monthly Tempt Fates here.)
+      // Idempotent via profiles.tempt_grant_month.
+      const _tMonth = _temptMonthKey();
+      if (TEMPT_GRANT[expectedTier] && profile.tempt_grant_month !== _tMonth) {
+        const _newTempt = (profile.bonus_tempt_charges || 0) + TEMPT_GRANT[expectedTier];
+        const { error: _tErr } = await supabase
+          .from('profiles')
+          .update({ bonus_tempt_charges: _newTempt, tempt_grant_month: _tMonth })
+          .eq('id', userId);
+        if (_tErr) {
+          console.warn('[verify-subscription] monthly tempt grant failed:', _tErr.message);
+        } else {
+          console.log(`[verify-subscription] user ${userId} monthly Tempt Fate grant: +${TEMPT_GRANT[expectedTier]} (${expectedTier}, month ${_tMonth}) → ${_newTempt}`);
+          summary.repairs.push({
+            kind: 'monthly_tempt_grant',
+            tier: expectedTier,
+            tempt_charges_granted: TEMPT_GRANT[expectedTier],
+            bonus_tempt_charges: _newTempt,
+            month: _tMonth,
+          });
+          profile.bonus_tempt_charges = _newTempt;
+          profile.tempt_grant_month = _tMonth;
+        }
+      }
       const alreadyBound = profile.stripe_subscription_id === activeSub.id;
       if (!alreadyBound) {
         const grantAmount = SUB_FORTUNES[expectedTier];
@@ -198,14 +231,13 @@ export default async function handler(req, res) {
     });
   }
 
-  // 4. Pending purchase_intents — recover missed fortune-pack grants
-  //    (and any subscription grants whose intent never transitioned).
-  //    Only intents in 'pending' status are eligible: 'completed'/'resumed'
-  //    means we've already finalized them (even if the grant amount was
-  //    wrong, that's a separate class handled by the subscription
-  //    reconciliation above for subs; for fortune packs we'd need a
-  //    different signal which we don't have today, so 'completed' is
-  //    treated as authoritative).
+  // 4. UNGRANTED purchase_intents — recover missed fortune-pack grants (and any
+  //    subscription grant whose intent never credited). Eligibility is now the
+  //    MONEY-PATH marker `fortunes_granted_at IS NULL`, NOT status — so an
+  //    intent the client marked 'resumed' before the webhook ran (the race
+  //    this whole change fixes) is still recoverable here. grant_purchase_fortunes
+  //    is idempotent on the same marker, so calling it for an already-granted
+  //    intent is a safe no-op.
   let recentSessions = [];
   try {
     const s = await stripe.checkout.sessions.list({
@@ -224,14 +256,17 @@ export default async function handler(req, res) {
 
     const { data: intent, error: iErr } = await supabase
       .from('purchase_intents')
-      .select('id, status, type')
+      .select('id, status, type, fortunes_granted_at')
       .eq('id', intentId)
       .maybeSingle();
     if (iErr) {
       console.warn('[verify-subscription] intent load failed:', iErr.message);
       continue;
     }
-    if (!intent || intent.status !== 'pending') continue;
+    // Skip only if the money-path marker says it was already credited —
+    // NOT based on status (a 'resumed'/'completed' status no longer implies
+    // the fortunes actually landed).
+    if (!intent || intent.fortunes_granted_at) continue;
 
     // Determine fortunes to grant.
     let fortunesToGrant = 0;

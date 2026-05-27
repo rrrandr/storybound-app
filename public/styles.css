@@ -22752,37 +22752,42 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 .begin-issue-cost {
     font-size: 0.75em;
 }
-/* The parentheses ride up 5px so they bracket the larger, lowered Fortunes
-   icon cleanly (the icon sits 5px down; the parens sit 5px up). */
+/* The parentheses ride up so they bracket the larger Fortunes icon cleanly. */
 .begin-issue-paren {
     position: relative;
-    top: -5px;
+    top: -3px;
     display: inline-block;
 }
 /* Fortunes "F" in the subtitle — mask-clipped from Fortunes-Icon.png (so it's
-   still the Fortunes icon, never a text letter) and tinted via currentColor
-   so it picks up the lacquered black of the plaque text. The drop-shadow
-   stack mirrors #beginBtn's 6-layer text-shadow — including the warm gloss
-   highlight on the top edge — so the icon reads as a lacquered engraving,
-   not a flat grey sticker. */
+   still the Fortunes icon, never a text letter). Why this kept reading FLAT
+   despite the matching drop-shadow stack: the plaque TEXT is solid #080808 but
+   its thin glyph strokes catch the warm top-edge gloss and read as engraved,
+   whereas this icon is a CHUNKY solid silhouette — outer drop-shadows alone
+   can't give it internal 3D. Fix: fill the masked glyph with a vertical LACQUER
+   GRADIENT (warm-lit top bevel → deep lacquer black at the base) so the shape
+   itself has tonality, like an engraved object catching the gold light. The
+   drop-shadow stack (mirroring #beginBtn's 6-layer text-shadow — incl. the warm
+   top gloss) then adds the cast depth around it. */
 .begin-issue-fortune-icon {
     display: inline-block;
-    /* Sized ~15% larger than the prior 0.72em (which read too small next to the
-       "100") so the icon holds its own beside the numerals and the gloss/shadow
-       below actually reads. */
+    /* ~15% larger than the prior 0.72em so it holds its own next to "100". */
     width: 0.83em;
     height: 0.83em;
-    background-color: currentColor;   /* now resolves to solid #080808 from the parent */
+    /* Internal lacquer bevel: warm sheen on the top edge, deep black body. */
+    background: linear-gradient(180deg,
+        #4a4234 0%,    /* warm top bevel — reads as the gold gloss catching the edge */
+        #1a1a1a 32%,
+        #060606 100%); /* deep lacquer black at the base */
     -webkit-mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
             mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
     vertical-align: -0.01em;          /* sit on the numeral baseline */
     position: relative;
-    top: 5px;                         /* nudged down 5px per design */
+    top: 2px;                         /* nudged up 3px from the prior 5px */
     margin-left: 0.08em;
     /* Drop-shadow stack mirrors the text-shadow (text-shadow doesn't render on
-       mask-clipped elements). With the parent now solid black, these read. */
+       mask-clipped elements) — warm gloss highlight on top + dark cast below. */
     filter:
-        drop-shadow(0 -1px 1px rgba(255, 240, 205, 0.6))
+        drop-shadow(0 -1px 1px rgba(255, 240, 205, 0.65))
         drop-shadow(0 1px 0 rgba(26, 26, 26, 0.55))
         drop-shadow(0 2px 0 rgba(17, 17, 17, 0.5))
         drop-shadow(0 3px 1px rgba(0, 0, 0, 0.35))
