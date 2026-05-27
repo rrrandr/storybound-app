@@ -2029,6 +2029,7 @@ FAILURE CONDITIONS (invalid outputs):
     var _thornwildDirective = '';
     var _shackleIslesDirective = '';
     var _farFutureDirective = '';
+    var _lytharynDirective = '';
     var _litLIAgencyDirective = '';
     try {
       if (typeof window !== 'undefined') {
@@ -2078,9 +2079,9 @@ FAILURE CONDITIONS (invalid outputs):
             _sdFFOpts
           );
         }
-        // Thornwild werefolk — Fatelands + LI species check inside helper.
+        // Thornwild wildfolk — Fatelands + LI species check inside helper.
         // Intensity defaults to 'strong' in SD-author (intimate prose =
-        // body / curse / transformation register pressure for werefolk).
+        // body / curse / transformation register pressure for wildfolk).
         if (typeof window._buildThornwildSpeechDirective === 'function') {
           var _sdTwOpts = (typeof window._buildThornwildOpts === 'function')
             ? window._buildThornwildOpts(_ws, _ws._sceneOtherThornwild)
@@ -2137,6 +2138,11 @@ FAILURE CONDITIONS (invalid outputs):
           );
         }
       }
+        // Lytharyn scholarly register (added 2026-05-27) — Fatelands-gated faux-Latin
+        // institutional language + the Kwish/Kwisheen/Noth chain. Self-gates on world.
+        if (typeof window._buildLytharynScholarlyRegisterDirective === 'function') {
+          _lytharynDirective = window._buildLytharynScholarlyRegisterDirective() || '';
+        }
     } catch (_voiceErr) { /* non-fatal */ }
 
     const esdPrompt = `You are the SD AUTHOR for Storybound intimate scenes — anatomical detail, sensory vividness, physical embodiment, rhythm.
@@ -2163,6 +2169,7 @@ ${_firstFavoredDirective}
 ${_thornwildDirective}
 ${_shackleIslesDirective}
 ${_farFutureDirective}
+${_lytharynDirective}
 ${_antiEchoDirective}
 ${_repairWindowDirective}
 ${_litLIAgencyDirective}
@@ -4760,15 +4767,15 @@ Classify.`
   // Lightweight Grok call used only as a last-resort classifier for
   // ambiguous Fatelands NPCs: name doesn't match canonical roster, has
   // no title cue, and region-default is unreliable. Returns one of:
-  //   'First Favored' | 'Half-Favored' | 'Human' | 'Werebeast' |
-  //   'Half-Beast' | 'Octofolk' | 'Half-Octofolk' | null
+  //   'First Favored' | 'Half-Favored' | 'Human' | 'Wilder' |
+  //   'Half-Wild' | 'Kwisheen' | 'Half-Kwisheen' | null
   //
   // Constrained-enum response keeps the call tiny (~12 tokens).
   // Gated by app.js _maybeQueueNPCLLMClassification — should only fire
   // for repeat-sighted salient names where deterministic routes failed.
   async function callGrokNPCSpeciesClassifier(name, world, region, surroundingProse) {
     if (!name || !world) return null;
-    const ENUM = ['First Favored', 'Half-Favored', 'Human', 'Werebeast', 'Half-Beast', 'Octofolk', 'Half-Octofolk', 'unknown'];
+    const ENUM = ['First Favored', 'Half-Favored', 'Human', 'Wilder', 'Half-Wild', 'Kwisheen', 'Half-Kwisheen', 'unknown'];
     const enumList = ENUM.join(' | ');
     const trimmed = String(surroundingProse || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 1200);
     const messages = [
@@ -4783,10 +4790,10 @@ Species reference (Fatelands canon):
 - First Favored — long-lived noble line, emotion erodes over centuries, primarily in Veilwood region, often titled (Lord/Lady/Sir/Dame). Court-affiliated. Bloodlines, oaths, ancient continuity.
 - Half-Favored — partial First Favored heritage; reads more modern; some inherited gravitas
 - Human — baseline; predominant in human-region settlements; uses contemporary speech
-- Werebeast — Thornwild region; flaw-driven manifestation through behavior; human-passing externally
-- Half-Beast — partial Werebeast heritage; trickling manifestations
-- Octofolk — Gloamwater Bay; tentacle anatomy, shapeshifting, deep-sea descended
-- Half-Octofolk — partial Octofolk; usually still has tentacle features
+- Wilder — Thornwild region; flaw-driven manifestation through behavior; human-passing externally
+- Half-Wild — partial Wilder heritage; trickling manifestations
+- Kwisheen — Gloamwater Bay; tentacle anatomy, shapeshifting, deep-sea descended
+- Half-Kwisheen — partial Kwisheen; usually still has tentacle features
 
 Rules:
 - If the snippet contains explicit cues (title + region, named bloodline, behavioral manifestation), use them
@@ -4831,6 +4838,11 @@ Return one label from the enum.`
         if (exact === 'unknown') return { species: null };
         return { species: exact };
       }
+      // Legacy 'Were-' labels the model may still emit from its own prior →
+      // normalize forward to the renamed enum (Thornwild rename, 2026-05-27).
+      const _legacy = { 'werebeast': 'Wilder', 'werebeasts': 'Wilder', 'half-beast': 'Half-Wild', 'werefolk': 'Wilder', 'octofolk': 'Kwisheen', 'half-octofolk': 'Half-Kwisheen', 'octo-favored': 'Kwisheen-Favored' };
+      const _lk = _legacy[cleaned.toLowerCase()];
+      if (_lk) return { species: _lk };
       console.warn('[NPC-SPECIES] classifier returned unknown label:', raw, '→ unknown');
       return { species: null };
     } catch (err) {
