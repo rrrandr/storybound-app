@@ -22752,6 +22752,13 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
 .begin-issue-cost {
     font-size: 0.75em;
 }
+/* The parentheses ride up 5px so they bracket the larger, lowered Fortunes
+   icon cleanly (the icon sits 5px down; the parens sit 5px up). */
+.begin-issue-paren {
+    position: relative;
+    top: -5px;
+    display: inline-block;
+}
 /* Fortunes "F" in the subtitle — mask-clipped from Fortunes-Icon.png (so it's
    still the Fortunes icon, never a text letter) and tinted via currentColor
    so it picks up the lacquered black of the plaque text. The drop-shadow
@@ -22760,14 +22767,17 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
    not a flat grey sticker. */
 .begin-issue-fortune-icon {
     display: inline-block;
-    /* Sized to the DIGITS' cap-height, not the em box — at 0.95em the icon
-       stood taller than the "100" numerals. ~0.72em matches the numeral caps. */
-    width: 0.72em;
-    height: 0.72em;
+    /* Sized ~15% larger than the prior 0.72em (which read too small next to the
+       "100") so the icon holds its own beside the numerals and the gloss/shadow
+       below actually reads. */
+    width: 0.83em;
+    height: 0.83em;
     background-color: currentColor;   /* now resolves to solid #080808 from the parent */
     -webkit-mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
             mask: url('/assets/ui/Fortunes-Icon.png') center / contain no-repeat;
     vertical-align: -0.01em;          /* sit on the numeral baseline */
+    position: relative;
+    top: 5px;                         /* nudged down 5px per design */
     margin-left: 0.08em;
     /* Drop-shadow stack mirrors the text-shadow (text-shadow doesn't render on
        mask-clipped elements). With the parent now solid black, these read. */
