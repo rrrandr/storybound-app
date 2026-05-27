@@ -2275,7 +2275,17 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
         `Context from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` +
         (_sdSceneContext
           ? `\n\nSCENE & PLOT CONTEXT (resolve named characters / threats / locations against this; never invent unrelated names — use what's here. The "Active scene entities" line is RANKED BY SALIENCE — when invoking a named character, prefer the highest-salience one matching the moment; do not pull in lower-salience entities unless the moment specifically demands them):\n${_sdSceneContext}`
-          : '')
+          : '') +
+        // Issue-spine coupling (added 2026-05-27) — the pre-authored arc: plot
+        // direction for this issue, the LI's next iceberg layer (an embodied
+        // peak is the prime place to crack it), the intensity curve, and (when
+        // a budget cut looms) the cliff shape. Structural; Grok renders the heat.
+        ((function(){ try { return (typeof window.buildOASSpineDirective === 'function') ? (window.buildOASSpineDirective({ cliff: true }) || '') : ''; } catch (_) { return ''; } })()) +
+        // Embodied texture (added 2026-05-27) — world/physical grounding
+        // (setting, clothing, light, tells) at reduced density: one exact
+        // material stroke grounds the beat (the "Manolos" principle), never a
+        // catalog. Same world palette the prose stack uses, dialed down.
+        ((function(){ try { return (typeof window.buildEmbodiedTextureDirective === 'function') ? (window.buildEmbodiedTextureDirective({ surface: 'embodied' }) || '') : ''; } catch (_) { return ''; } })())
       }
     ];
 
@@ -2564,7 +2574,17 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
         `Context from Primary Author:\n${constraints.sceneSetup || 'An intimate encounter unfolds.'}` +
         (_sdSceneContext
           ? `\n\nSCENE & PLOT CONTEXT (resolve named characters / threats / locations against this; never invent unrelated names — use what's here. The "Active scene entities" line is RANKED BY SALIENCE — when invoking a named character, prefer the highest-salience one matching the moment; do not pull in lower-salience entities unless the moment specifically demands them):\n${_sdSceneContext}`
-          : '')
+          : '') +
+        // Issue-spine coupling (added 2026-05-27) — the pre-authored arc: plot
+        // direction for this issue, the LI's next iceberg layer (an embodied
+        // peak is the prime place to crack it), the intensity curve, and (when
+        // a budget cut looms) the cliff shape. Structural; Grok renders the heat.
+        ((function(){ try { return (typeof window.buildOASSpineDirective === 'function') ? (window.buildOASSpineDirective({ cliff: true }) || '') : ''; } catch (_) { return ''; } })()) +
+        // Embodied texture (added 2026-05-27) — world/physical grounding
+        // (setting, clothing, light, tells) at reduced density: one exact
+        // material stroke grounds the beat (the "Manolos" principle), never a
+        // catalog. Same world palette the prose stack uses, dialed down.
+        ((function(){ try { return (typeof window.buildEmbodiedTextureDirective === 'function') ? (window.buildEmbodiedTextureDirective({ surface: 'embodied' }) || '') : ''; } catch (_) { return ''; } })())
       }
     ];
 
@@ -5040,7 +5060,7 @@ ${(function() {
     return 'PC GENDER: ' + _pcGUp + '. LI GENDER: ' + _liGUp + '.\n' + _pcGuide + '\n' + _liGuide;
 })()}
 
-${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically in the preview — named characters, the LI archetype, the relationship dynamic, the setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing a named character, prefer the highest-salience entity matching the fate-card archetype; ignore low-salience entities unless the card archetype specifically calls for them):\n${sceneContext}\n` : ''}${_registerBlockSingle}
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically in the preview — named characters, the LI archetype, the relationship dynamic, the setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing a named character, prefer the highest-salience entity matching the fate-card archetype; ignore low-salience entities unless the card archetype specifically calls for them):\n${sceneContext}\n` : ''}${(function(){ try { return (typeof window.buildOASSpineDirective === 'function') ? (window.buildOASSpineDirective({ cliff: false }) || '') : ''; } catch (_) { return ''; } })()}${(function(){ try { return (typeof window.buildEmbodiedTextureDirective === 'function') ? (window.buildEmbodiedTextureDirective({ surface: 'fate' }) || '') : ''; } catch (_) { return ''; } })()}${_registerBlockSingle}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 
@@ -5239,7 +5259,7 @@ PC GENDER: ${pcGender}. LI GENDER: ${liGender}.
 ${pcAnatomyGuide}
 ${liAnatomyGuide}
 
-${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${_registerBlock}${_avoidBlock}
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${(function(){ try { return (typeof window.buildOASSpineDirective === 'function') ? (window.buildOASSpineDirective({ cliff: false }) || '') : ''; } catch (_) { return ''; } })()}${(function(){ try { return (typeof window.buildEmbodiedTextureDirective === 'function') ? (window.buildEmbodiedTextureDirective({ surface: 'fate' }) || '') : ''; } catch (_) { return ''; } })()}${_registerBlock}${_avoidBlock}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 
