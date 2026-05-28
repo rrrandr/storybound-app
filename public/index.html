@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260527-numero-mark">
+  <link rel="stylesheet" href="/styles.css?v=20260527-reader-fate-stack-up">
 </head>
 
 <body class="booting">
@@ -106,9 +106,7 @@
     <div id="vaultAuthRow" class="vault-auth-row" style="text-align:center; margin-bottom:8px;"></div>
     <div class="vault-tabs">
       <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="SavedStories">Saved Stories</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="StoryShapes">Saved Story Shapes</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Stories">Stories</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="Sound">Sound &amp; Music</button>
       <button id="faqVaultTab" class="vault-tab sb-btn-png md" data-vault-modal="faq">FAQ</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="ReportIssue">Report an Issue</button>
@@ -276,12 +274,30 @@
       </div>
       <div class="treasury-row"><span class="treasury-label">Tempt Fates</span><span class="treasury-value" id="treasuryTemptFates">—</span></div>
     </div>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── STORIES SUB-PANEL (bundles Saved Stories, Story Shapes, Appearance, Reincarnations, Characters) ── -->
+  <div id="vaultStories" class="vault-sub hidden">
+    <div class="vault-sub-title">Stories</div>
+    <button class="vault-nav sb-btn-png sm" data-vault-section="SavedStories">Saved Stories</button>
+    <button class="vault-nav sb-btn-png sm" data-vault-section="StoryShapes">Saved Story Shapes</button>
+    <button class="vault-nav sb-btn-png sm" data-vault-section="Appearance">Story Appearance</button>
+    <button class="vault-nav sb-btn-png sm" data-vault-section="Characters">Characters</button>
     <button id="menuReincarnationsBtn" class="sb-btn-png sm">Reincarnations</button>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
+  <!-- ── CHARACTERS SUB-PANEL (saved PC + LI looks: use / rename / delete) ── -->
+  <div id="vaultCharacters" class="vault-sub hidden" data-vault-parent="Stories">
+    <div class="vault-sub-title">Characters</div>
+    <p class="vault-blurb" style="font-size:12px;opacity:0.82;max-width:480px;margin:0 auto 12px;">Your saved looks. Use one in the current story, rename it, or delete it.</p>
+    <div id="vaultCharactersMount"></div>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
   <!-- ── SAVED STORIES SUB-PANEL ── -->
-  <div id="vaultSavedStories" class="vault-sub hidden">
+  <div id="vaultSavedStories" class="vault-sub hidden" data-vault-parent="Stories">
     <div class="vault-sub-title">Saved Stories</div>
     <div id="vaultSavedStoriesList"></div>
     <a href="#" id="vaultSavedStoriesLibraryLink" class="vault-sub-link">Your Private Library →</a>
@@ -289,7 +305,7 @@
   </div>
 
   <!-- ── STORY SHAPES SUB-PANEL ── -->
-  <div id="vaultStoryShapes" class="vault-sub hidden">
+  <div id="vaultStoryShapes" class="vault-sub hidden" data-vault-parent="Stories">
     <div class="vault-sub-title">Story Shapes</div>
     <div style="text-align:center;color:#a89768;font-size:12px;font-style:italic;padding:0 12px 10px;line-height:1.5;">A Story Shape remembers your world, tone, archetype, and every choice you made in the corridor — so you can return to a favorite configuration without rebuilding it.</div>
     <div id="vaultStoryShapesList" style="max-height:240px;overflow-y:auto;margin-bottom:8px;"></div>
@@ -298,7 +314,7 @@
   </div>
 
   <!-- ── APPEARANCE SUB-PANEL ── -->
-  <div id="vaultAppearance" class="vault-sub hidden">
+  <div id="vaultAppearance" class="vault-sub hidden" data-vault-parent="Stories">
     <div class="vault-sub-title">Story Appearance</div>
 
     <!-- Character look controls — top of panel -->
@@ -310,6 +326,16 @@
 
     <label class="vault-label">Cast (Multi-LI Stories)</label>
     <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:14px;" onclick="if(typeof window.triggerCastCustomizeModal==='function')window.triggerCastCustomizeModal();">Customize cast</button>
+
+    <label class="vault-label">Casting Credit</label>
+    <input id="castingNameInput" class="vault-select" type="text" maxlength="24" placeholder="Your name or alias (for your own covers)" style="display:block;width:100%;margin-bottom:6px;" oninput="if(window._onCastingIdentityChange)window._onCastingIdentityChange();">
+    <select id="castingFormatSelect" class="vault-select" onchange="if(window._onCastingIdentityChange)window._onCastingIdentityChange();">
+      <option value="full">Show full name</option>
+      <option value="initials">Show initials (J.D.)</option>
+      <option value="reader">Show &ldquo;The Reader&rdquo;</option>
+      <option value="hidden">Hide casting credit</option>
+    </select>
+    <div id="castingPreview" style="font-size:0.78em; opacity:0.7; font-style:italic; margin:6px 0 14px; text-align:center; color:var(--ink);"></div>
 
     <label class="vault-label">Theme</label>
     <select id="themeSelect" class="vault-select" onchange="setTheme(this.value)">
@@ -388,8 +414,7 @@
   <div id="loadingOverlayInner">
     <button id="loadingCancelBtn" class="loading-cancel-btn" title="Cancel">&times;</button>
     <div id="loadingText">Stoking the embers...</div>
-    <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
-    <div id="loadingPercent">0%</div>
+    <div class="fate-loading-row" id="loadingOverlayFlipRow"></div>
     <div id="loadingHint" class="loading-hint"></div>
     <div id="fateEventLoadingSlot"></div>
     <div id="fateWhisperCard" class="fate-whisper hidden">
@@ -587,7 +612,7 @@
         <input type="radio" name="canonCreditMode" value="credited" style="margin-top:3px;">
         <div style="flex:1;">
           <div style="font-weight:600; color:var(--gold); margin-bottom:2px;">Claim Canon Credit</div>
-          <div style="font-size:0.82em; color:var(--ink); opacity:0.75; margin-bottom:8px;">Cover shows "as played by [your name]". You're not the author — you're the canonical reader incarnation.</div>
+          <div style="font-size:0.82em; color:var(--ink); opacity:0.75; margin-bottom:8px;">Cover shows a casting credit — "Starring [your name] as [your character]". You're not the author — you're cast as the canonical protagonist, the role made yours.</div>
           <input id="canonCreditText" type="text" class="plaque-input" maxlength="24" placeholder="@YourHandle / R. Tsukerman / NyxMarauder" disabled style="width:100%; opacity:0.6;">
           <div id="canonCreditPreview" style="font-size:0.78em; color:var(--gold); opacity:0.8; margin-top:6px; min-height:1em; font-style:italic;"></div>
           <div id="canonCreditError" style="font-size:0.78em; color:#e89090; margin-top:4px; min-height:1em;"></div>
@@ -839,7 +864,7 @@
                             <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
                             <div class="pay-card-fortune-options">
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(20, '$3');">20<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $3</button>
-                                <p class="fortune-pack-subline">Continue this story.</p>
+                                <p class="fortune-pack-subline">Top up toward your next Issue.</p>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(60, '$5');">60<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $5</button>
                                 <p class="fortune-pack-subline">Keep Fate's quill moving.</p>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(120, '$9');">120<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $9</button>
@@ -1882,6 +1907,7 @@
               <div class="cover-working-label">Working Title:</div>
               <div class="book-front-title cover-book-title" id="coverBookTitle">Your Story</div>
               <div class="book-front-author cover-book-author" id="coverBookAuthor">by S. Tory Bound</div>
+              <div class="book-front-casting cover-book-casting" id="coverBookCasting" style="display:none;"></div>
             </div>
           </div>
           <!-- Spine -->
@@ -2085,7 +2111,7 @@
       </div>
     </div>
 
-    <div class="say-do-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; width:75%; margin-left:auto; margin-right:auto;">
+    <div class="say-do-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; width:75%; margin-left:auto; margin-right:auto;">
       <div class="input-wrapper" id="actionWrapper">
           <span class="oas-input-label">ACTION</span>
           <textarea id="actionInput" rows="3" placeholder="What do you do?" maxlength="2000"></textarea>
@@ -2342,11 +2368,11 @@
 </div>
 
 <script src="/sound.js?v=20260518-prepeak-breath-cut"></script>
-<script src="/fatecards.js?v=20260526-cards-allaround"></script>
+<script src="/fatecards.js?v=20260527-perscene-scenekey"></script>
 <script src="/orchestration-client.js?v=20260527-lytharyn-register"></script>
 <script src="/badgeEngine.js"></script>
 <script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
-<script src="/app.js?v=20260527-lytharyn-lexicon"></script>
+<script src="/app.js?v=20260527-petition-frame-causality"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
@@ -2534,6 +2560,7 @@
           <div class="book-front-text cover-book-text" id="gnCoverBookText">
             <div class="cover-working-label">Working Title</div>
             <div class="book-front-title cover-book-title" id="gnCoverBookTitle">Your Story</div>
+            <div class="book-front-casting cover-book-casting" id="gnCoverBookCasting" style="display:none;"></div>
             <p class="cover-book-evolve-text cover-book-evolve-text--front">Your cover art and title will evolve as you shape your story.</p>
           </div>
 

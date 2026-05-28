@@ -3097,8 +3097,13 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
     justify-content: center;
     align-items: center;
     gap: 20px;
-    margin: 4px 0 2px;
+    /* Lift the nav up onto the bottom of the story page (was 4px 0 2px). */
+    margin: -42px 0 2px;
     padding: 2px;
+    position: relative;
+    z-index: 6;
+    /* Soft drop shadow so the nav reads as chrome, not a line of prose. */
+    filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.55));
 }
 
 /* DSP MATERIAL: Page nav button — Ceremonial Metal Plaque */
@@ -3174,6 +3179,21 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
     font-family: var(--font-main);
     min-width: 80px;
     text-align: center;
+}
+
+/* Reader bottom-stack: pull Say/Do + Fate cards up closer to the page now
+   that the nav floats over the page bottom, and give the Say/Do boxes ~10px
+   more height so a 3rd line of a Fate-card suggestion no longer clips.
+   (Mobile keeps its own compact min-height inside the narrow media query.) */
+#actionInput, #dialogueInput {
+    min-height: 104px;
+}
+#fateCardHeader {
+    margin-top: 14px;
+    /* Drop the inherited .section-title padding-top:20px so the whole Fate
+       block (cards + "Take Fate" + special row, already tight to each other)
+       rides up close to Save/Submit. */
+    padding-top: 6px;
 }
 
 /* Reduced Motion - Accessibility */
@@ -5082,6 +5102,11 @@ select:-webkit-autofill {
     justify-content: flex-start;
     overflow-y: auto;
     overflow-x: hidden;
+    /* Lower the cutoff line: the base 16% bottom inset left a too-generous band
+       of blank card art below the scroll viewport and clipped the Subscribe
+       button. Reclaim that space so the expanded tier's button shows fully
+       (still clears the card's bottom decorative flourish). Membership card only. */
+    bottom: 9%;
     scrollbar-color: #c9a84c rgba(0,0,0,0.2);
     scrollbar-width: thin;
 }
@@ -7014,6 +7039,24 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     color: rgba(201, 168, 76, 0.4);
     letter-spacing: 0.1em;
     text-transform: uppercase;
+}
+
+/* Casting credit — "Starring X as Y". Prestige caption: SUBORDINATE to the
+   author line (smaller, lightly italic, not uppercase), spaced to feel
+   intentional. Hierarchy is Title → Author → Casting. Hidden by default
+   (display:none on the element) until JS populates a valid casting line. */
+.book-front-casting,
+.cover-book-casting {
+    font-family: 'Lora', serif;
+    font-size: 0.5em;                  /* clearly smaller than the 0.6em author */
+    font-style: italic;
+    color: rgba(201, 168, 76, 0.52);   /* same gold family; a touch more present so the italic reads */
+    letter-spacing: 0.05em;
+    line-height: 1.3;
+    margin: 0.5em auto 0;
+    max-width: 90%;
+    text-align: center;
+    text-transform: none;
 }
 
 /* Cinegraphic working-cover on a library shelf — mirrors the blank-white
@@ -22804,13 +22847,16 @@ body:has(#modeSelect:not(.hidden)) #controlPlane {
     position: relative;
     top: 0px;                         /* moved up 2px (with the number) */
     margin-left: 0.08em;
-    /* text-shadow doesn't render on mask-clipped elements, so the highlight +
-       drop shadow are drop-shadow filters: a defined warm gloss above and a
-       clear dark cast below (stronger/cleaner than the old 6-layer wash). */
+    /* text-shadow doesn't render on mask-clipped elements, so we MIRROR the
+       engraved plaque text's text-shadow (the .begin-issue-sub stack) as
+       drop-shadow filters: a warm gloss highlight ABOVE, then a hard-stepped
+       extruded shadow BELOW (1px → 2px → 3px), same as the "40" numerals. The
+       earlier single soft shadow read flat next to the stepped text emboss. */
     filter:
-        drop-shadow(0 -1px 0.5px rgba(255, 244, 214, 0.9))
-        drop-shadow(0 1.5px 1px rgba(0, 0, 0, 0.7))
-        drop-shadow(0 0 2px rgba(0, 0, 0, 0.4));
+        drop-shadow(0 -1px 1px rgba(255, 240, 205, 0.75))   /* warm gloss highlight (top edge) */
+        drop-shadow(0 1px 0 rgba(26, 26, 26, 0.6))          /* extruded shadow — step 1 */
+        drop-shadow(0 2px 0 rgba(17, 17, 17, 0.55))         /* step 2 */
+        drop-shadow(0 3px 1px rgba(0, 0, 0, 0.45));         /* step 3 + soft cast */
 }
 /* The cost number (e.g. "40") — raised 2px so the "40F" group sits up a touch. */
 .begin-issue-num {
@@ -36662,6 +36708,19 @@ body.oas-archive-viewing #oasQuickMuteBtn {
     color: rgba(201, 168, 76, 0.4);
     font-size: 16px;
     background: rgba(0, 0, 0, 0.4);
+}
+.saved-look-versions {
+    flex-shrink: 0;
+    align-self: center;
+    font-size: 9px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(201, 168, 76, 0.85);
+    background: rgba(201, 168, 76, 0.12);
+    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 999px;
+    padding: 2px 7px;
+    white-space: nowrap;
 }
 .saved-look-meta {
     flex: 1;

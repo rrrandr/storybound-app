@@ -2280,12 +2280,24 @@ function setSelectedState(mount, selectedCardEl){
         // Resets that bypass this: explicit force flag, OR new turn (different
         // turnCount), OR explicit reset via resetFateBindFlags-adjacent paths.
         const currentTurn = window.state.turnCount || 0;
+        // SCENE FINGERPRINT: turnCount alone is NOT a reliable per-scene key —
+        // it can repeat across consecutive scenes in some flows (Scene 1 vs the
+        // first turn share a value), which made this guard no-op and re-serve the
+        // PRIOR scene's EXACT cards (the "Scene 2 shows Scene 1's options" bug).
+        // Add the reader PAGE INDEX: each scene adds exactly one page, while
+        // mid-scene whispers/omens append to the CURRENT page — so the page index
+        // is stable within a scene (re-clicks/re-mounts still no-op) but always
+        // advances on a real scene change (forcing a fresh deal). CG/staged mode
+        // bypasses pagination (count 0) → falls back to turnCount-only behavior.
+        var _pageIdx = 0;
+        try { _pageIdx = (window.StoryPagination && window.StoryPagination.getPageCount) ? window.StoryPagination.getPageCount() : 0; } catch (_) {}
+        const _sceneKey = currentTurn + ':' + _pageIdx;
         if (!opts.force
             && window.state.fateOptions
             && Array.isArray(window.state.fateOptions)
             && window.state.fateOptions.length
-            && window.state._fateOptionsTurnCount === currentTurn) {
-            try { console.log('[FATE] dealFateCards no-op — already dealt for turn ' + currentTurn + ' (use opts.force=true to redeal)'); } catch (_) {}
+            && window.state._fateOptionsSceneKey === _sceneKey) {
+            try { console.log('[FATE] dealFateCards no-op — already dealt for scene ' + _sceneKey + ' (use opts.force=true to redeal)'); } catch (_) {}
             return;
         }
 
@@ -2299,6 +2311,7 @@ function setSelectedState(mount, selectedCardEl){
         window.state.fateSelectedIndex = -1;
         window.state.fateCommitted = false;
         window.state._fateOptionsTurnCount = currentTurn;
+        window.state._fateOptionsSceneKey = _sceneKey;
 
         // SPECULATIVE PRELOAD: Invalidate when new cards dealt
         if (typeof window.invalidateSpeculativeScene === 'function') {
