@@ -5396,6 +5396,11 @@ select:-webkit-autofill {
    at this scale. */
 .vault-sub .sb-btn-png {
     background-size: 100% 100% !important;
+    /* Widen so three-word labels ("Saved Story Shapes") fit on one line */
+    width: 220px;
+    white-space: nowrap;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 .vault-vol-val {
     font-family: 'Lora', serif;

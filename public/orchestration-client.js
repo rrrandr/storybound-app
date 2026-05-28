@@ -1066,19 +1066,39 @@
     // collapse to plain text (no harm — the marker would just confuse the
     // model). Only the system role is affected; user/assistant turns are
     // passed through untouched.
+    // Supports MULTIPLE sentinels → multiple cache breakpoints. Each
+    // non-final, non-empty segment ends at an ephemeral breakpoint; the
+    // final segment (after the last sentinel) is the fresh, uncached tail.
+    // Anthropic caps breakpoints at 4 — if more sentinels are present, the
+    // extra ones collapse into surrounding text (no breakpoint). Two-sentinel
+    // use: [world bible] | [per-turn static directives + turn instructions] |
+    // [per-attempt enforcement delta]. Within a turn the first two segments
+    // are byte-identical across all regeneration calls, so attempts 2..N read
+    // the entire static prompt from cache instead of re-sending it fresh.
+    const MAX_CACHE_BREAKPOINTS = 4;
     const processedMessages = messages.map(m => {
       if (!m || m.role !== 'system' || typeof m.content !== 'string') return m;
-      const sentinelIdx = m.content.indexOf(CACHE_BOUNDARY);
-      if (sentinelIdx === -1) return m;
-      const prefix = m.content.slice(0, sentinelIdx);
-      const tail = m.content.slice(sentinelIdx + CACHE_BOUNDARY.length);
-      if (_isClaudeModel && prefix.length > 0) {
-        const blocks = [{ type: 'text', text: prefix, cache_control: { type: 'ephemeral' } }];
-        if (tail.length > 0) blocks.push({ type: 'text', text: tail });
+      if (m.content.indexOf(CACHE_BOUNDARY) === -1) return m;
+      const parts = m.content.split(CACHE_BOUNDARY);
+      if (_isClaudeModel) {
+        const blocks = [];
+        let breakpoints = 0;
+        for (let i = 0; i < parts.length; i++) {
+          const text = parts[i];
+          if (!text) continue; // skip empty segments (e.g. trailing sentinel)
+          const canCache = (i < parts.length - 1) && (breakpoints < MAX_CACHE_BREAKPOINTS);
+          if (canCache) {
+            blocks.push({ type: 'text', text, cache_control: { type: 'ephemeral' } });
+            breakpoints++;
+          } else {
+            blocks.push({ type: 'text', text });
+          }
+        }
+        if (blocks.length === 0) return { role: 'system', content: '' };
         return { role: 'system', content: blocks };
       }
-      // Non-Anthropic: just drop the sentinel and rejoin.
-      return { role: 'system', content: prefix + tail };
+      // Non-Anthropic: drop all sentinels and rejoin to plain text.
+      return { role: 'system', content: parts.join('') };
     });
 
     const payload = {
