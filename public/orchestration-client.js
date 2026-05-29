@@ -1088,7 +1088,20 @@
           if (!text) continue; // skip empty segments (e.g. trailing sentinel)
           const canCache = (i < parts.length - 1) && (breakpoints < MAX_CACHE_BREAKPOINTS);
           if (canCache) {
-            blocks.push({ type: 'text', text, cache_control: { type: 'ephemeral' } });
+            // CROSS-TURN CACHING (2026-05-28): the FIRST breakpoint is the
+            // cross-turn-STABLE prefix (the world bible / sysPrompt — ~11k tok,
+            // identical across every turn of a story). Put it on a 1-HOUR cache
+            // so it survives the reader's pauses between scenes; the 5-min
+            // default expires between most human-paced turns, forcing a full
+            // re-write of the bible every turn. Later breakpoints change per
+            // turn (directive tail, turn instructions) → keep them on the 5-min
+            // default. Proxy already sends the extended-cache-ttl beta header
+            // whenever any cache_control is present. 1h write is 2× (vs 1.25×)
+            // but amortizes after ~2 reads, and a story has many turns.
+            const _cc = (breakpoints === 0)
+              ? { type: 'ephemeral', ttl: '1h' }
+              : { type: 'ephemeral' };
+            blocks.push({ type: 'text', text, cache_control: _cc });
             breakpoints++;
           } else {
             blocks.push({ type: 'text', text });
@@ -4752,7 +4765,10 @@ Classify.`
     ];
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    // 12s (was 6s): this is a non-blocking background classifier whose result
+    // applies-when-ready, so a longer cap just lets a momentarily-slow Grok land
+    // its tag instead of falling back to neutral_quiet. No user-facing wait.
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
     try {
       const resp = await fetch(CONFIG.SPECIALIST_PROXY, {
         method: 'POST',
@@ -5018,7 +5034,7 @@ Classify.`
 
     // Recent scene text
     const allContent = window.StoryPagination?.getAllContent?.()?.replace(/<[^>]*>/g, ' ') || '';
-    const recentScene = allContent.slice(-500);
+    const recentScene = (typeof window !== 'undefined' && typeof window._stripDeckFromFateContext === 'function') ? window._stripDeckFromFateContext(allContent.slice(-500)) : allContent.slice(-500);
 
     // Emotional core from ESD if available
     const emotionalCore = st.esd?.emotionalCore || st.esd?.dominant_emotion || 'desire';
@@ -5150,7 +5166,7 @@ Respond in EXACTLY two lines:
     const physicalBounds = resolvePhysicalBounds();
     const liName = (st.storybeau && st.storybeau.name) || st.loveInterestName || 'the love interest';
     const allContent = window.StoryPagination?.getAllContent?.()?.replace(/<[^>]*>/g, ' ') || '';
-    const recentScene = allContent.slice(-500);
+    const recentScene = (typeof window !== 'undefined' && typeof window._stripDeckFromFateContext === 'function') ? window._stripDeckFromFateContext(allContent.slice(-500)) : allContent.slice(-500);
     const emotionalCore = st.esd?.emotionalCore || st.esd?.dominant_emotion || 'desire';
     const sceneContext = _buildSceneAndPlotContext(st);
     const modeInstructions = {
@@ -5315,18 +5331,18 @@ VARIANT SHAPES (each card picks ONE — distribute ~70% amplify / ~20% redirect 
 - RUIN (~10%): plot-level sabotage of the moment. Whisper a name that's wrong (grievance source character? committed-truth "about" topic? a callback ledger figure?). Mention something that doesn't belong. Let the world bleed into the bed. The act doesn't stop — but something cracks. Fires when there's a juicy plot tension that could intrude.
 - REDIRECT (~20%): turn intimacy into vulnerability discovery. Pull back. Ask the question that matters. Honor a narrative scar by AVOIDING something. Change the subject to what's actually heavy. The body slows; the emotion deepens. Fires when there's vulnerability/scar/wound material on the page.
 
-OUTPUT — return ONLY this JSON, no prose around it. Include "variant" on each card so the system can log distribution:
-{
-  "temptation": { "action": "<max 12 words, specific physical act>", "dialogue": "<max 15 words, in quotes or parens for sounds>", "variant": "amplify|ruin|redirect" },
-  "silence":    { "action": "<...>", "dialogue": "<...>", "variant": "..." },
-  "reversal":   { "action": "<...>", "dialogue": "<...>", "variant": "..." },
-  "boundary":   { "action": "<...>", "dialogue": "<...>", "variant": "..." },
-  "confession": { "action": "<...>", "dialogue": "<...>", "variant": "..." }
-}
+OUTPUT FORMAT (CRITICAL — follow EXACTLY): return EXACTLY 5 lines, one per archetype, and NOTHING else — no JSON, no braces, no preamble, no markdown, no quotation marks around the fields. Each line is the archetype name, the variant, the action, then the dialogue, separated by ||| (three pipes):
+TEMPTATION ||| <amplify|ruin|redirect> ||| <action: max 12 words, specific physical act> ||| <dialogue: max 15 words; parentheses ok for sounds>
+SILENCE ||| <variant> ||| <action> ||| <dialogue>
+REVERSAL ||| <variant> ||| <action> ||| <dialogue>
+BOUNDARY ||| <variant> ||| <action> ||| <dialogue>
+CONFESSION ||| <variant> ||| <action> ||| <dialogue>
+Use ||| ONLY as the field separator — never inside an action or dialogue. Quotes, apostrophes, parentheses, and commas in the dialogue are FINE and need NO escaping.
 
 RULES:
 - Each action: a specific physical act the protagonist takes RIGHT NOW. Specific. Match ${effectiveMode} intensity for amplify variants.
 - Each dialogue: what the protagonist says or sounds like (use quotes or parens for sounds).
+- NEVER reference the protagonist's tarot deck, the cards, the Marseille deck, or "let the cards decide / draw a card" in any action or dialogue — the deck is a SEPARATE player mechanic (its own draw button), never a Say/Do option. Keep it entirely out of the suggestions.
 - If scene context names a character/threat/location relevant to an archetype, reference it (e.g., "Pull him closer before Triton can hear"). Use the actual story, not generic.
 - RUIN cards may name plot figures from grievances/callbacks/committed truth — but stay character-grounded (a whispered wrong name, not a plot dump).
 - REDIRECT cards honor scars/wounds — they may PULL BACK from an act, ask a heavy question, or change the subject. The body slows; never goes cold.
@@ -5367,43 +5383,43 @@ ANTI-TECHNOBABBLE / ANTI-NONSENSE (HARD):
 
   function _parseBatchFatePreview(raw) {
     if (!raw || typeof raw !== 'string') return null;
-    const js = raw.indexOf('{');
-    const je = raw.lastIndexOf('}');
-    if (js === -1 || je === -1) return null;
-    try {
-      // Reuse the OAS JSON normalizer when present (handles +1 / trailing
-      // commas in LLM-emitted JSON). Otherwise parse strict.
-      const slice = raw.slice(js, je + 1);
-      const normalized = (typeof window._normalizeLLMJson === 'function')
-        ? window._normalizeLLMJson(slice) : slice;
-      const obj = JSON.parse(normalized);
-      const keys = ['temptation', 'silence', 'reversal', 'boundary', 'confession'];
-      const validVariants = { amplify: 1, ruin: 1, redirect: 1 };
-      const out = {};
-      for (const k of keys) {
-        if (obj[k] && typeof obj[k] === 'object') {
-          var v = String(obj[k].variant || 'amplify').toLowerCase().trim();
-          if (!validVariants[v]) v = 'amplify';
-          out[k] = {
-            action:   String(obj[k].action || '').slice(0, 120).trim(),
-            dialogue: String(obj[k].dialogue || '').slice(0, 150).trim(),
-            variant:  v
-          };
-        }
+    // Delimiter format ("CARD ||| variant ||| action ||| dialogue") instead of
+    // JSON. Grok/Mistral get no jsonMode here and intimate dialogue is quote /
+    // paren / apostrophe-heavy, so nested JSON routinely broke JSON.parse →
+    // null → BOTH models fail → OAS cache never filled → every fate-card click
+    // re-fired both models (Roman, 2026-05-28). Splitting on newlines + ||| is
+    // immune to quote/escape breakage; mirrors the literary batch fix.
+    const cardNames = ['temptation', 'silence', 'reversal', 'boundary', 'confession'];
+    const validVariants = { amplify: 1, ruin: 1, redirect: 1 };
+    const out = {};
+    String(raw).split(/\r?\n/).forEach(function (line) {
+      if (line.indexOf('|||') === -1) return;
+      const parts = line.split('|||');
+      const head = (parts[0] || '').toLowerCase();
+      let key = null;
+      for (let i = 0; i < cardNames.length; i++) {
+        if (head.indexOf(cardNames[i]) !== -1) { key = cardNames[i]; break; }
       }
-      // Need at least one parsed entry to be useful.
-      if (Object.keys(out).length === 0) return null;
-      // Telemetry — log variant distribution so we can see if Grok respects the 70/20/10.
-      try {
-        var dist = { amplify: 0, ruin: 0, redirect: 0 };
-        Object.keys(out).forEach(function(k) { dist[out[k].variant || 'amplify'] += 1; });
-        console.log('[FATE:INTIMATE:VARIANT-DIST] ' + JSON.stringify(dist));
-      } catch (_) {}
-      return out;
-    } catch (e) {
-      console.warn('[FATE:INTIMATE] batch parse failed:', e && e.message);
+      if (!key || out[key]) return;   // unknown label or already filled
+      let v = String(parts[1] || 'amplify').toLowerCase().replace(/[^a-z]/g, '');
+      if (!validVariants[v]) v = 'amplify';
+      out[key] = {
+        action:   String(parts[2] || '').trim().replace(/^["“]|["”]$/g, '').slice(0, 120),
+        dialogue: String(parts[3] || '').trim().replace(/^["“]|["”]$/g, '').slice(0, 150),
+        variant:  v
+      };
+    });
+    if (Object.keys(out).length === 0) {
+      try { console.warn('[FATE:INTIMATE] batch delimiter parse found 0 cards — raw head: ' + String(raw).slice(0, 140)); } catch (_) {}
       return null;
     }
+    // Telemetry — log variant distribution so we can see if the model respects 70/20/10.
+    try {
+      var dist = { amplify: 0, ruin: 0, redirect: 0 };
+      Object.keys(out).forEach(function (k) { dist[out[k].variant || 'amplify'] += 1; });
+      console.log('[FATE:INTIMATE:VARIANT-DIST] ' + JSON.stringify(dist) + ' (delimiter)');
+    } catch (_) {}
+    return out;
   }
 
   function parseStructuralOutput(text) {

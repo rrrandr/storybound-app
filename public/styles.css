@@ -361,7 +361,9 @@ body.booting .screen {
     background: var(--page-bg);
     color: var(--page-text);
     border-radius: 4px;
-    padding: 20px 30px;
+    /* Extra bottom padding = a cream "footer" band the lifted page-nav sits on
+       (see .page-nav-controls margin) so the nav reads as part of the page. */
+    padding: 20px 30px 56px;
     margin: 10px auto;
     max-width: 860px;
     box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
@@ -464,6 +466,13 @@ body.night-mode .story-pages-container {
 /* UTILITY CLASSES */
 .hidden { display:none !important; }
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+/* Pick Your Look modal: cap height + scroll so the Generate/Skip buttons and
+   lower fields stay reachable when the body overflows the viewport. */
+#pcLookModal > .box {
+    max-height: 90vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
 
 /* ███████████████████████████████████████████████████████████████████████████████ */
 /* ███████████████████████████████████████████████████████████████████████████████ */
@@ -3097,8 +3106,10 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
     justify-content: center;
     align-items: center;
     gap: 20px;
-    /* Lift the nav up onto the bottom of the story page (was 4px 0 2px). */
-    margin: -42px 0 2px;
+    /* Lift the nav up so it sits FULLY on the cream page bottom (not straddling
+       the page/background edge). Paired with extra bottom padding on
+       .story-pages-container so there's empty cream beneath it. */
+    margin: -64px 0 2px;
     padding: 2px;
     position: relative;
     z-index: 6;
@@ -5317,7 +5328,14 @@ select:-webkit-autofill {
     flex-direction: column;
     align-items: center;
     gap: 10px;
+    /* Tall panels (e.g. Story Appearance) overflow the vertically-centered
+       overlay, clipping the title and Back button. Cap height + scroll. */
+    max-height: 88vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
+/* Keep controls at natural height so the panel scrolls instead of squishing. */
+.vault-sub > * { flex-shrink: 0; }
 
 .vault-sub-title {
     font-family: 'Lora', serif;
@@ -5396,7 +5414,12 @@ select:-webkit-autofill {
    at this scale. */
 .vault-sub .sb-btn-png {
     background-size: 100% 100% !important;
-    /* Widen so three-word labels ("Saved Story Shapes") fit on one line */
+}
+/* Widen ONLY the full-width .sm menu buttons so three-word labels ("Saved
+   Story Shapes") fit on one line. Scoped to .sm so it never touches the small
+   .xs row-action buttons (Use / Rename / ×), which would otherwise overflow
+   the modal in the Story Shapes and Characters lists. */
+.vault-sub .sb-btn-png.sm {
     width: 220px;
     white-space: nowrap;
     padding-left: 8px;
@@ -10550,11 +10573,13 @@ body:has(#gnReader:not(.hidden)) #modelCompareToggle {
         0 0 6px rgba(191, 149, 63, 0.15);
     font-weight: 600;
     text-align: center;
-    /* Fixed height prevents compounding resize on focus */
-    height: 75px;
-    min-height: 75px;
-    max-height: 75px;
-    padding: 24px 12px;
+    /* Fixed height prevents compounding resize on focus. Tall enough for 3
+       lines of a Fate-card suggestion (this rule wins the cascade over the
+       #actionInput min-height via the extra element selector). */
+    height: 110px;
+    min-height: 110px;
+    max-height: 110px;
+    padding: 16px 12px;
     box-sizing: border-box;
     resize: none;
 }
@@ -11534,7 +11559,10 @@ select {
 
 #burgerBtn img,
 #globalBackBtn img {
-    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))
+    /* Tight near-opaque shadow first = a dark edge outline so the gold icon
+       reads on light backgrounds (cream story page); then the soft depth glows. */
+    filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.95))
+            drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))
             drop-shadow(0 0 14px rgba(0, 0, 0, 0.35));
 }
 
@@ -28752,6 +28780,22 @@ body.elevated-fate-cards .tempt-fate-card {
     color: rgba(232, 217, 176, 0.78);
 }
 
+/* Literary reader nav (per user 2026-05-28): current-page label ("Scene N")
+   in black so it stands out on the cream page; the rest of the nav links muted
+   grey. Scoped to #pageNavControls only — the GN reader keeps its gold links. */
+#pageNavControls .page-nav-btn {
+    color: #6b6b6b;
+    -webkit-text-fill-color: #6b6b6b;
+}
+#pageNavControls .page-nav-btn:hover:not(:disabled) {
+    color: #1a1a1a;
+    -webkit-text-fill-color: #1a1a1a;
+}
+#pageNavControls .page-indicator {
+    color: #000;
+    font-weight: 600;
+}
+
 /* ════════════════════════════════════════════════════════════════
    REINCARNATION SYSTEM — Extraction, Vault, Import, Capture modals
    ════════════════════════════════════════════════════════════════ */
@@ -29859,6 +29903,29 @@ body.elevated-fate-cards .tempt-fate-card {
 .fw-fortune-icon {
     display: none;
 }
+/* Low-fortune red state: the baked-in gold F ornament gets tinted red by the
+   ::before overlay below. Reveal the standalone F glyph (same icon, pre-baking)
+   on top of it with a bright YELLOW OUTLINE so the "F" stays legible against
+   the red pill. Positioned over the right-side ornament zone; z-index above the
+   red overlay. (Offsets/size may want a small live nudge to sit dead-center.) */
+.fw-fortune.fw-low .fw-fortune-icon,
+.fw-fortune[data-urgency] .fw-fortune-icon {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 5px;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    z-index: 3;
+    pointer-events: none;
+    filter:
+        drop-shadow(1px 0 0 #ffe14d)
+        drop-shadow(-1px 0 0 #ffe14d)
+        drop-shadow(0 1px 0 #ffe14d)
+        drop-shadow(0 -1px 0 #ffe14d)
+        drop-shadow(0 0 3px #ffd700);
+}
 .fw-tempt {
     display: flex;
     align-items: center;
@@ -29898,6 +29965,8 @@ body.elevated-fate-cards .tempt-fate-card {
 .fw-fortune[data-urgency]::before {
     content: '';
     position: absolute;
+    /* Whole pill turns red (including the F ornament). The F is kept legible by
+       the yellow-outlined .fw-fortune-icon overlaid on top in the red state. */
     inset: 0;
     background: linear-gradient(180deg,
         #d92828 0%,
@@ -31049,10 +31118,15 @@ body.concierge-design-active .concierge-summon-figure {
     border: none;
     border-radius: 0;
     cursor: pointer;
-    opacity: 0.7;
+    /* Was 0.7 — too see-through over light backgrounds (cream story page). */
+    opacity: 0.92;
     overflow: hidden;
     transition: opacity 0.3s ease, filter 0.3s ease;
-    filter: drop-shadow(0 0 0px transparent);
+    /* NO filter here — a drop-shadow on this MASKED element rendered as a grey
+       rectangle on light backgrounds (the mask/filter order doesn't clip the
+       shadow to the bell). The bell's depth shadow lives on .bell-icon-img
+       below, where it follows the PNG alpha (bound to the bell shape). */
+    filter: none;
     /* Clip ALL children (gleam, flash ::after) to the bell silhouette */
     -webkit-mask-image: url('/assets/Concierge/gold-bell-splat.png');
     mask-image: url('/assets/Concierge/gold-bell-splat.png');
@@ -31074,6 +31148,9 @@ body.concierge-design-active .concierge-summon-figure {
     pointer-events: none;
     position: relative;
     z-index: 1;
+    /* Shadow on the bell PNG itself follows its alpha (bell-shaped, never a
+       box) so the gold bell reads over light backgrounds without a grey rect. */
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
 }
 /* Clip gleam to bell silhouette using the bell image as a mask.
    mask-size 88% shrinks the mask slightly inside the anti-aliased edges
@@ -36868,3 +36945,36 @@ body.oas-active #intimacyDevLauncherWrap,
 body.oas-active #cineDevLauncherWrap {
     z-index: 9999 !important;
 }
+
+/* ── Prose-page sound toggle (bottom-left speaker) ──────────────────────────
+   Small mute/unmute control on the reading view. Reuses the shared quick-mute
+   (Story SFX + ambient + Story Music). Hidden until a scene page is shown
+   (showReaderPage adds .is-visible at page >= 2). Nested in #storyContent, which
+   has no transform, so position:fixed pins it to the viewport and .hidden on
+   the container also hides it. */
+.prose-sound-toggle {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 8000;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 16, 12, 0.6);
+    border: 1px solid rgba(201, 162, 78, 0.45);
+    color: var(--gold, #c9a24e);
+    cursor: pointer;
+    opacity: 0.5;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    transition: opacity 0.2s ease, background 0.2s ease, transform 0.15s ease;
+}
+.prose-sound-toggle.is-visible { display: flex; }
+.prose-sound-toggle:hover { opacity: 1; transform: scale(1.06); }
+.prose-sound-toggle.is-muted { opacity: 0.42; color: rgba(201, 162, 78, 0.55); }
+.prose-sound-toggle.is-muted:hover { opacity: 0.85; }
+.prose-sound-toggle .prose-sound-icon { display: flex; align-items: center; justify-content: center; pointer-events: none; }
