@@ -172,7 +172,14 @@ function resolveFateCardTarget(cardId, sceneContext, options = {}) {
         const _present = Array.isArray(sceneContext.presentCharacters) ? sceneContext.presentCharacters : [];
         const _liKnownAbsent =
             (_present.length > 0 && !_present.some(c => c === storybeau.name)) ||
-            (typeof state._scene1LIOnStage === 'boolean' && state._scene1LIOnStage === false && (state.turnCount || 0) === 0);
+            (typeof state._scene1LIOnStage === 'boolean' && state._scene1LIOnStage === false && (state.turnCount || 0) === 0) ||
+            // EMPTY STAGE past the opening (2026-05-29): no character was detected
+            // bodily present this scene (incl. the LI, now gated on physical
+            // presence). The PC is effectively alone, so a "romantic" card becomes
+            // a self-directed / situational stance — never an address to an absent
+            // partner. Scene 0 keeps its own _scene1LIOnStage gate above; the
+            // click-time LLM preview still refines from the actual prose.
+            (_present.length === 0 && (state.turnCount || 0) > 0 && !!storybeau.name);
         if (_liKnownAbsent) {
             let _interlocutor = null;
             for (let _i = 0; _i < _present.length; _i++) {
@@ -585,6 +592,29 @@ function stopContinuousSparkles() {
     }
     window.extractPlotContext = extractPlotContext;
 
+    // LI PHYSICAL PRESENCE (2026-05-29): the LI counts as "present" only when
+    // they SPEAK / ACT / are touched on-page — NOT when merely referenced. A
+    // scene about an unreachable LI (a name dropped, a memory, an offer recalled)
+    // must not mark them present, or the romantic Fate cards address an absent
+    // partner as if face-to-face (Roman's bug). Mirrors the Scene-1 gate's
+    // li_physical_presence detector; scoped to the recent tail where the deal
+    // reads. Falls back to false on any error (→ treated as absent, refined by
+    // the click-time LLM preview which reads the actual prose).
+    function _liPhysicallyPresent(storyText, liName) {
+        try {
+            if (!storyText || !liName || liName.length < 2) return false;
+            const _esc = liName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const _first = _esc.split(/\s+/)[0] || _esc;
+            const _scope = String(storyText).slice(-1200);
+            const _rx = new RegExp(
+                '\\b(?:' + _esc + '|' + _first + ')\\s+(?:said|asked|replied|answered|whispered|murmured|muttered|added|continued|repeated|spoke|called|laughed|chuckled|smiled|grinned|smirked|nodded|shrugged|sighed|leaned|stepped|walked|strode|entered|approached|crossed|moved|reached|stood|sat|rose|turned|grabbed|took|pulled|pressed|touched|brushed|watched|stared|studied|gazed|tilted|raised|lowered|closed|opened|stopped|paused|waited|stayed)\\b'
+                + '|\\b(?:' + _esc + '|' + _first + ')[’\']s\\s+(?:hand|hands|fingers|fingertips|eyes|gaze|voice|mouth|lips|breath|arm|arms|chest|jaw|shoulder|shoulders|knuckles|palm|thumb|wrist|throat|face|body)\\b',
+                'i'
+            );
+            return _rx.test(_scope);
+        } catch (_) { return false; }
+    }
+
     // SCENE AWARENESS: Extract critical context from story
     function extractSceneContext(storyText, state) {
         const recentText = storyText.slice(-800).toLowerCase();
@@ -594,7 +624,8 @@ function stopContinuousSparkles() {
         const presentCharacters = [];
         const liName = state.loveInterestName || '';
         const playerName = state.playerName || 'you';
-        if (liName && recentText.includes(liName.toLowerCase())) {
+        // PRESENCE, not reference: the LI is "present" only if bodily on-page.
+        if (liName && _liPhysicallyPresent(storyText, liName)) {
             presentCharacters.push(liName);
         }
         // Check for other named characters mentioned recently

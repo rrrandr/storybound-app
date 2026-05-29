@@ -124,7 +124,7 @@
     SONNET_MODEL: 'claude-sonnet-4-5',   // Sonnet 4.x — strong prose, $3/$15 per M tokens. Tier A in-between + Tier B Scene 1.
 
     // Model allowlists (must match server-side)
-    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'claude-opus-4-7', 'claude-opus-4-1', 'claude-sonnet-4-5'],
+    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'claude-opus-4-7', 'claude-opus-4-1', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
     ALLOWED_SD_AUTHOR_MODELS: ['grok-4-1-fast-reasoning'],
     ALLOWED_SD_DEEPSEEK_MODELS: ['deepseek-v4-pro', 'deepseek-v4-flash'],
@@ -1144,7 +1144,13 @@
 
       if (!res.ok) {
         const errorText = await res.text().catch(() => '(could not read response body)');
-        throw new Error(`ChatGPT API Error: ${res.status} - ${errorText}`);
+        // Name the ACTUAL model + proxy (not "ChatGPT") — Claude routes through
+        // anthropic-proxy, so a 529 here means ANTHROPIC was overloaded, not OpenAI.
+        // Mirrors the timeout-label fix above (2026-05-21). A leading status keeps
+        // the app.js 429/529 detectors working on err.message.
+        const _errModel = (payload && payload.model) || 'unknown-model';
+        const _errProxy = _isClaudeModel ? 'anthropic-proxy' : 'chatgpt-proxy';
+        throw new Error(`LLM API error: ${res.status} (${_errModel} via ${_errProxy}) - ${errorText}`);
       }
 
       const data = await res.json();
@@ -1157,7 +1163,7 @@
       if (!text && text !== '') {
         const receivedKeys = Object.keys(data);
         console.error('[ORCHESTRATION] Proxy returned 200 but no content field. Keys:', receivedKeys);
-        throw new Error(`ChatGPT returned 200 but payload missing content field. Received keys: [${receivedKeys.join(', ')}]`);
+        throw new Error(`LLM proxy returned 200 but payload missing content field (${(payload && payload.model) || 'unknown-model'} via ${_isClaudeModel ? 'anthropic-proxy' : 'chatgpt-proxy'}). Received keys: [${receivedKeys.join(', ')}]`);
       }
 
       return text;

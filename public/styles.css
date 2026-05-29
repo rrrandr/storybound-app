@@ -29913,10 +29913,10 @@ body.elevated-fate-cards .tempt-fate-card {
     display: block;
     position: absolute;
     top: 50%;
-    right: 5px;
+    right: 8px;
     transform: translateY(-50%);
-    width: 24px;
-    height: 24px;
+    width: 18px;
+    height: 18px;
     z-index: 3;
     pointer-events: none;
     filter:
@@ -36954,7 +36954,11 @@ body.oas-active #cineDevLauncherWrap {
    the container also hides it. */
 .prose-sound-toggle {
     position: fixed;
-    left: 16px;
+    /* Lock to the bottom-left of the CENTERED prose page (.story-pages-container
+       is max-width 860px, margin auto, so its left edge is calc(50vw - 430px)).
+       NOT the viewport corner — that belongs to the concierge bell. Falls back
+       to 16px on narrow viewports where the page is near-full-width. */
+    left: max(16px, calc(50vw - 424px));
     bottom: 16px;
     z-index: 8000;
     width: 40px;
