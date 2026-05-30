@@ -690,7 +690,14 @@ Deno.serve(async (_req) => {
         if (!stateSnap) continue;
 
         const turnCount = Number(stateSnap.turnCount || 0);
-        if (turnCount < MIN_TURN_COUNT) continue;
+        // Completed books bypass the turn-count floor — a finished story is
+        // publishable regardless of length. Unfinished/abandoned books still
+        // respect MIN_TURN_COUNT (batch behavior for those is unchanged).
+        // state.book_complete is set + snapshot-saved at completion
+        // (app.js:50236, saveStorySnapshot() right after book_complete = true),
+        // so it rides into stateSnapshot via the {...state} spread.
+        const isCompletedBook = stateSnap.book_complete === true;
+        if (turnCount < MIN_TURN_COUNT && !isCompletedBook) continue;
 
         const storyHTML = snap.storyHTML || "";
         if (!storyHTML) continue;

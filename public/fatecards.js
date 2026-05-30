@@ -617,25 +617,141 @@ function stopContinuousSparkles() {
 
     // SCENE AWARENESS: Extract critical context from story
     function extractSceneContext(storyText, state) {
-        const recentText = storyText.slice(-800).toLowerCase();
+        // Case-preserved slice for NAME MATCHING; lowercased for everything else
+        // (emotional-beat patterns are written in lowercase).
+        // FIX 2026-05-30: the prior code lowercased the recent slice and THEN
+        // ran /\b[A-Z][a-z]{2,12}\b/g against it. The regex requires uppercase
+        // but the input was lowercase → ZERO matches every call. Combined with
+        // the 2+ mentions threshold (line 635), presentCharacters was always
+        // empty for off-stage-LI scenes, so every romantic fate card silently
+        // retargeted back to the LI by default. Both bugs fixed here.
+        const recentTextCased = storyText.slice(-1500);
+        const recentText = recentTextCased.toLowerCase();
         const veryRecentText = storyText.slice(-300).toLowerCase();
 
         // Extract named characters present in scene
         const presentCharacters = [];
         const liName = state.loveInterestName || '';
         const playerName = state.playerName || 'you';
-        // PRESENCE, not reference: the LI is "present" only if bodily on-page.
-        if (liName && _liPhysicallyPresent(storyText, liName)) {
-            presentCharacters.push(liName);
+
+        // 2026-05-30: stage-presence manifest (Roman). TWO authoritative
+        // sources cover the whole story:
+        //   • Scene 1 — the pre-prose Haiku scaffold (_buildScene1Scaffold)
+        //     returns state._scene1StagedCharacters with presence_mode.
+        //   • Scene 2+ — the post-prose continuity probe (_extractStoryMemory's
+        //     continuityProbe.present_characters) returns the same shape; we
+        //     stash split lists onto state._lastProbeOnStagePhysical and
+        //     state._lastProbeOnPhone every time the probe runs.
+        // Both are immune to the regex extractor's failure modes (sentence-
+        // start common nouns like "Leverage", interrogatives like "What",
+        // pronouns like "She" — and the bigger problem: distinguishing
+        // physically on-stage from voice-on-phone). Prefer Scene 1 manifest
+        // while still inside Scene 1, then prefer the freshest probe.
+        const _scene1Physical = Array.isArray(state._scene1OnStagePhysical) ? state._scene1OnStagePhysical : null;
+        const _scene1Phone    = Array.isArray(state._scene1OnPhone) ? state._scene1OnPhone : null;
+        const _scene1Active = _scene1Physical
+            && ((state.turnCount || 0) <= 1)
+            && !(Array.isArray(state.scenes) && state.scenes.length > 1);
+
+        const _probePhysical = Array.isArray(state._lastProbeOnStagePhysical) ? state._lastProbeOnStagePhysical : null;
+        const _probePhone    = Array.isArray(state._lastProbeOnPhone) ? state._lastProbeOnPhone : null;
+        // Probe is fresh enough to act on if it ran for this scene or the
+        // immediately prior one (presence usually carries to the next scene
+        // unless the prose shows a hard transition the probe will have caught).
+        const _probeFresh = _probePhysical
+            && typeof state._lastProbeStagedAtTurn === 'number'
+            && (state._lastProbeStagedAtTurn >= (state.turnCount || 0) - 1);
+
+        let _manifestUsed = false;
+        let _manifestSource = '';
+        let _manifestPhonelist = null;
+        if (_scene1Active) {
+            _scene1Physical.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            _manifestUsed = true;
+            _manifestSource = 'scene1-scaffold';
+            _manifestPhonelist = _scene1Phone;
+        } else if (_probeFresh) {
+            _probePhysical.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            _manifestUsed = true;
+            _manifestSource = 'probe@turn' + state._lastProbeStagedAtTurn;
+            _manifestPhonelist = _probePhone;
         }
-        // Check for other named characters mentioned recently
-        const nameMatches = recentText.match(/\b[A-Z][a-z]{2,12}\b/g) || [];
-        nameMatches.forEach(name => {
-            if (name !== liName && name !== playerName && !presentCharacters.includes(name)) {
-                if (recentText.split(name.toLowerCase()).length > 2) {
-                    presentCharacters.push(name);
-                }
+        if (_manifestUsed) {
+            try {
+                console.log('[FATE:STAGE-MANIFEST] using ' + _manifestSource + ': physical=[' + presentCharacters.join(', ') + ']'
+                    + (_manifestPhonelist && _manifestPhonelist.length ? ' · on-phone (NOT targetable for physical actions)=[' + _manifestPhonelist.join(', ') + ']' : '')
+                    + ' — regex extraction skipped');
+            } catch (_) {}
+        } else {
+            // PRESENCE, not reference: the LI is "present" only if bodily on-page.
+            if (liName && _liPhysicallyPresent(storyText, liName)) {
+                presentCharacters.push(liName);
             }
+        }
+        // Local alias for downstream guard (renamed from _scene1OnlyManifest).
+        const _scene1OnlyManifest = _manifestUsed;
+        // Pre-split LI / PC names for token-level exclusion so possessive or
+        // first-name-only forms ("Dani" for "Dani McBrayn") are also filtered.
+        const _liTokens = liName ? String(liName).split(/\s+/).filter(Boolean) : [];
+        const _pcTokens = playerName ? String(playerName).split(/\s+/).filter(Boolean) : [];
+        // Quick blacklist of common capitalized words that are NOT character
+        // names. The "preceded by article/preposition" check below catches
+        // most place names; this list catches the remainder (sentence-start
+        // function words, pronouns, interrogatives, day/month names,
+        // number-words, and common sentence-start nouns observed live).
+        const _NON_NAMES = new Set([
+            // articles + conjunctions + connectives
+            'The','And','But','Or','If','When','Where','While','Then','Now',
+            // spatial / directional adverbs
+            'Here','There','Around','Behind','Inside','Outside','Above','Below',
+            'Across','Through',
+            // pronouns + interrogatives (observed live 2026-05-30: "What",
+            // "You", "She", "That", "Why" leaked into presentCharacters,
+            // crowding out the real interlocutor name)
+            'You','She','He','It','We','They','Yours','Hers','His','Theirs','Ours',
+            'What','Why','How','Who','Whom','Whose','Which','That','This','These','Those',
+            // affirmatives + qualifiers
+            'Yes','No','Maybe','Okay','Both','Either','Neither','Some','Most','Many','Few','None',
+            // day / month names
+            'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday',
+            'January','February','March','April','June','July','August','September',
+            'October','November','December',
+            // number words
+            'One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+            'Eleven','Twelve','Twenty','Thirty','Forty','Fifty','Sixty','Hundred',
+            'Thousand','Million','Billion',
+            // common sentence-start nouns / verbs observed leaking (capitalize-
+            // any-noun-at-sentence-start failure mode — these aren't names)
+            'Leverage','Told','Said','Asked','Called','Tried','Looked','Stood','Walked','Came','Went',
+            'Money','Power','Time','Truth','Light','Dark','Silence','Sound','Voice','Eyes','Hand','Hands',
+            'Coffee','Phone','Door','Window','Room','Air','Sky','Night','Day','Morning','Evening'
+        ]);
+        // Match candidates against the case-PRESERVED text (the original bug).
+        // SKIP this entire regex pass when Scene 1's scaffold manifest is the
+        // authoritative source — the manifest already lists who's on stage
+        // and we'd just be adding extractor false-positives back into the mix.
+        const nameMatches = _scene1OnlyManifest ? [] : (recentTextCased.match(/\b[A-Z][a-z]{2,12}\b/g) || []);
+        const _seen = new Set();
+        nameMatches.forEach(name => {
+            if (_seen.has(name)) return; _seen.add(name);
+            if (presentCharacters.includes(name)) return;
+            if (name === liName || name === playerName) return;
+            if (_liTokens.indexOf(name) >= 0 || _pcTokens.indexOf(name) >= 0) return;
+            if (_NON_NAMES.has(name)) return;
+            // "the X" / "to X" / "in X" / etc. → almost always a common noun or
+            // place name, not a person. Look at the 6 chars before the FIRST
+            // occurrence of this name in the recent text and exclude if it's
+            // preceded by a definite article or a preposition.
+            const _idx = recentTextCased.indexOf(name);
+            if (_idx > 0) {
+                const _before = recentTextCased.slice(Math.max(0, _idx - 6), _idx).toLowerCase();
+                if (/\b(?:the|a|an|to|in|at|on|of|from|near|past|toward|towards|into|onto)\s$/.test(_before)) return;
+            }
+            // Threshold lowered from 2+ mentions to 1+ mention (was: too strict
+            // for short scenes where the interlocutor is named ONCE and then
+            // referred to as "she"/"her" for the rest of the scene — exactly
+            // the failure observed live with "Iris" on 2026-05-30).
+            presentCharacters.push(name);
         });
 
         // Detect last emotional beat

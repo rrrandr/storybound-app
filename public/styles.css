@@ -36982,3 +36982,66 @@ body.oas-active #cineDevLauncherWrap {
 .prose-sound-toggle.is-muted { opacity: 0.42; color: rgba(201, 162, 78, 0.55); }
 .prose-sound-toggle.is-muted:hover { opacity: 0.85; }
 .prose-sound-toggle .prose-sound-icon { display: flex; align-items: center; justify-content: center; pointer-events: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   EXAMINE THE CARD GATE — Scene 2/3 deck onboarding
+   The button is injected as the LAST child of #storyText so it sits just
+   below the last line of prose — in normal flow, no fixed overlay. When the
+   gate is active, body.examine-card-gate-active blurs + disables every
+   sibling of #storyText that comes after it (the say/do area, fate cards,
+   submit, etc.) but leaves the story above untouched.
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Blur ONLY the UI below #storyText — sibling combinator targets every
+   following sibling within #storyContent. The story (everything in
+   #storyText and earlier) reads normally. */
+body.examine-card-gate-active #storyText ~ * {
+    filter: blur(3px);
+    -webkit-filter: blur(3px);
+    pointer-events: none;
+    user-select: none;
+    transition: filter 0.3s ease;
+}
+.examine-card-btn {
+    display: block;
+    margin: 18px auto 24px;
+    padding: 14px 36px;
+    font-family: 'Lora', serif;
+    font-size: 1.08em;
+    font-weight: 500;
+    font-variant: small-caps;
+    letter-spacing: 0.18em;
+    color: var(--gold, #c9a24e);
+    background: rgba(20, 16, 12, 0.94);
+    border: 2px double var(--gold, #c9a24e);
+    border-radius: 0;
+    cursor: pointer;
+    box-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.55),
+        0 0 28px rgba(201, 162, 78, 0.25),
+        inset 0 0 16px rgba(201, 162, 78, 0.08);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+    animation: examine-card-btn-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
+}
+@keyframes examine-card-btn-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.examine-card-btn:hover {
+    color: #f3e6c8;
+    transform: translateY(-2px) scale(1.03);
+    box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.6),
+        0 0 36px rgba(201, 162, 78, 0.42),
+        inset 0 0 16px rgba(201, 162, 78, 0.14);
+}
+.examine-card-btn:active {
+    transform: translateY(0) scale(0.99);
+}
+.examine-card-btn:focus,
+.examine-card-btn:focus-visible {
+    outline: none;
+    box-shadow:
+        0 4px 18px rgba(0, 0, 0, 0.55),
+        0 0 36px rgba(201, 162, 78, 0.5),
+        inset 0 0 16px rgba(201, 162, 78, 0.16);
+}
