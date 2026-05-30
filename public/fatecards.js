@@ -652,6 +652,20 @@ function stopContinuousSparkles() {
         const _scene1Active = _scene1Physical
             && ((state.turnCount || 0) <= 1)
             && !(Array.isArray(state.scenes) && state.scenes.length > 1);
+        // 2026-05-30 diagnostic: observed live the manifest skip didn't
+        // fire even though staging captured Margot=ON_PHONE correctly. Log
+        // the state's view at the moment extractSceneContext reads it so we
+        // can tell whether the issue is missing state, scene-1-active check
+        // failure, or something else entirely.
+        try {
+            console.log('[FATE:STAGE-DIAG]',
+                'turnCount=' + (state.turnCount || 0),
+                '· scenes.length=' + (Array.isArray(state.scenes) ? state.scenes.length : 'n/a'),
+                '· _scene1OnStagePhysical=' + (_scene1Physical ? '[' + _scene1Physical.join(',') + '] (' + _scene1Physical.length + ')' : 'null/undefined'),
+                '· _scene1OnPhone=' + (_scene1Phone ? '[' + _scene1Phone.join(',') + ']' : 'null/undefined'),
+                '· _lastProbeOnStagePhysical=' + (Array.isArray(state._lastProbeOnStagePhysical) ? '[' + state._lastProbeOnStagePhysical.join(',') + ']' : 'null/undefined'),
+                '· _scene1Active=' + !!_scene1Active);
+        } catch (_) {}
 
         const _probePhysical = Array.isArray(state._lastProbeOnStagePhysical) ? state._lastProbeOnStagePhysical : null;
         const _probePhone    = Array.isArray(state._lastProbeOnPhone) ? state._lastProbeOnPhone : null;
@@ -665,21 +679,37 @@ function stopContinuousSparkles() {
         let _manifestUsed = false;
         let _manifestSource = '';
         let _manifestPhonelist = null;
+        // 2026-05-30 (Roman correction): on-phone characters ARE scene-
+        // active and SHOULD be eligible fate-card targets. The earlier
+        // exclusion was over-correction. fate-card authority's job is to
+        // retarget romantic cards to whoever the PC is engaging with when
+        // the LI is off-stage — and a phone interlocutor exerting pressure
+        // is exactly that. Push BOTH the physical and on-phone lists into
+        // presentCharacters. Keep the on-phone list separately on the
+        // sceneContext so downstream card-text generators that want to
+        // constrain action shape (voice/dialogue rather than physical
+        // handoff) can read it.
         if (_scene1Active) {
             _scene1Physical.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            if (Array.isArray(_scene1Phone)) {
+                _scene1Phone.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            }
             _manifestUsed = true;
             _manifestSource = 'scene1-scaffold';
             _manifestPhonelist = _scene1Phone;
         } else if (_probeFresh) {
             _probePhysical.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            if (Array.isArray(_probePhone)) {
+                _probePhone.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            }
             _manifestUsed = true;
             _manifestSource = 'probe@turn' + state._lastProbeStagedAtTurn;
             _manifestPhonelist = _probePhone;
         }
         if (_manifestUsed) {
             try {
-                console.log('[FATE:STAGE-MANIFEST] using ' + _manifestSource + ': physical=[' + presentCharacters.join(', ') + ']'
-                    + (_manifestPhonelist && _manifestPhonelist.length ? ' · on-phone (NOT targetable for physical actions)=[' + _manifestPhonelist.join(', ') + ']' : '')
+                console.log('[FATE:STAGE-MANIFEST] using ' + _manifestSource + ': present=[' + presentCharacters.join(', ') + ']'
+                    + (_manifestPhonelist && _manifestPhonelist.length ? ' · of which on-phone (voice/dialogue actions only, not physical handoff)=[' + _manifestPhonelist.join(', ') + ']' : '')
                     + ' — regex extraction skipped');
             } catch (_) {}
         } else {
@@ -690,6 +720,9 @@ function stopContinuousSparkles() {
         }
         // Local alias for downstream guard (renamed from _scene1OnlyManifest).
         const _scene1OnlyManifest = _manifestUsed;
+        // Stash the on-phone list on a side-channel so it can ride out on
+        // sceneContext for any consumer that wants action-shape constraints.
+        const _onPhoneCharacters = _manifestPhonelist && _manifestPhonelist.length ? _manifestPhonelist.slice() : [];
         // Pre-split LI / PC names for token-level exclusion so possessive or
         // first-name-only forms ("Dani" for "Dani McBrayn") are also filtered.
         const _liTokens = liName ? String(liName).split(/\s+/).filter(Boolean) : [];
@@ -827,6 +860,11 @@ function stopContinuousSparkles() {
 
         return {
             presentCharacters,
+            // 2026-05-30: on-phone characters are scene-active (eligible
+            // fate-card targets) but cannot receive PHYSICAL handoffs.
+            // Downstream card-text generators should constrain action shape
+            // to voice/dialogue when a target appears in this list.
+            onPhoneCharacters: _onPhoneCharacters,
             lastEmotionalBeat,
             unresolvedTension,
             currentLocation,
