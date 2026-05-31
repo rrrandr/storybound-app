@@ -284,6 +284,16 @@ export default async function handler(req, res) {
       fortunesToGrant = SUB_FORTUNES[tier];
     } else if (packAmount) {
       fortunesToGrant = packAmount;
+      // SUBSCRIBER BONUS (Roman 2026-05-30): +10% on Fortune pack purchases
+      // for active subscribers (matches stripe-webhook.js). The profile was
+      // loaded above; use is_subscriber as the gate.
+      if (profile && profile.is_subscriber) {
+        const _packBonus = Math.round(packAmount * 0.10);
+        if (_packBonus > 0) {
+          fortunesToGrant += _packBonus;
+          console.log(`[verify-subscription] Subscriber bonus on missed pack: +${_packBonus}F on ${packAmount}F`);
+        }
+      }
     } else {
       continue;
     }

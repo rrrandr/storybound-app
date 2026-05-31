@@ -233,8 +233,25 @@ export default async function handler(req, res) {
 
     if (isFortunePack) {
       const fortunesGranted = parseInt(session.metadata?.fortunes_granted, 10) || 0;
-      fortunesDelta += fortunesGranted;
-      console.log(`[stripe-webhook] Granting Fortune pack (${fortunesGranted} fortunes, additive) to ${supabaseUserId}`);
+      // SUBSCRIBER BONUS (Roman 2026-05-30): every active subscriber
+      // (Storied/Favored/Chosen) gets +10% on Fortune pack purchases,
+      // rounded to nearest whole F. Bonus is added on top of the
+      // metadata-declared pack size.
+      let _subBonus = 0;
+      try {
+        const { data: _pf } = await supabase.from('profiles')
+          .select('is_subscriber, subscription_tier')
+          .eq('id', supabaseUserId)
+          .maybeSingle();
+        if (_pf && _pf.is_subscriber && fortunesGranted > 0) {
+          _subBonus = Math.round(fortunesGranted * 0.10);
+          console.log(`[stripe-webhook] Subscriber bonus (${_pf.subscription_tier || 'sub'}): +${_subBonus}F on ${fortunesGranted}F pack`);
+        }
+      } catch (e) {
+        console.warn('[stripe-webhook] Subscriber bonus lookup failed:', e.message);
+      }
+      fortunesDelta += fortunesGranted + _subBonus;
+      console.log(`[stripe-webhook] Granting Fortune pack (${fortunesGranted} + ${_subBonus} bonus = ${fortunesGranted + _subBonus} fortunes, additive) to ${supabaseUserId}`);
     }
 
     if (!updates.is_subscriber && fortunesDelta === 0) {

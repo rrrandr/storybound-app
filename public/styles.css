@@ -11559,11 +11559,16 @@ select {
 
 #burgerBtn img,
 #globalBackBtn img {
-    /* Tight near-opaque shadow first = a dark edge outline so the gold icon
-       reads on light backgrounds (cream story page); then the soft depth glows. */
-    filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.95))
-            drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))
-            drop-shadow(0 0 14px rgba(0, 0, 0, 0.35));
+    /* Tight 4-direction 1px outlines (radius 0) trace the icon's alpha exactly
+       without producing a halo box, then a small bottom drop-shadow for depth.
+       The earlier 3-stacked diffuse shadows boxed on light bg because their
+       radius bled past the icon edge into the PNG's rectangular alpha. */
+    filter:
+        drop-shadow(1px 0 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(-1px 0 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
 }
 
 /* Narrow screens: reposition corner buttons but keep full size (32×32) */
@@ -24286,12 +24291,31 @@ button.gn-selector-card[disabled] {
    chain here doesn't interfere with them since this rule only activates
    when #gnReader is the visible screen, which is mutually exclusive with
    those gates. */
+/* Two reader screens: #gnReader (staged / CG / cinematic) and #game (literary).
+   Both must keep the global chrome (back, vault, bell, F-widget) visible —
+   any stale JS toggle that hid them would strand the player. */
 body:has(#gnReader:not(.hidden)) #burgerBtn,
 body:has(#gnReader:not(.hidden)) #globalBackBtn,
 body:has(#gnReader:not(.hidden)) #conciergeBell,
-body:has(#gnReader:not(.hidden)) #fortuneWidget {
+body:has(#gnReader:not(.hidden)) #fortuneWidget,
+body:has(#game:not(.hidden)) #burgerBtn,
+body:has(#game:not(.hidden)) #globalBackBtn,
+body:has(#game:not(.hidden)) #conciergeBell,
+body:has(#game:not(.hidden)) #fortuneWidget {
     visibility: visible !important;
     pointer-events: auto !important;
+}
+/* Bell specifically: also reset opacity. The vault-library hide path sets
+   inline opacity:0; if the user navigates back to a reader through a path
+   that skips showScreen's reset branch, the inline 0 sticks and the bell
+   becomes invisible mid-session. Force the CSS default back in either reader. */
+body:has(#gnReader:not(.hidden)) #conciergeBell,
+body:has(#game:not(.hidden)) #conciergeBell {
+    opacity: 0.92 !important;
+}
+body:has(#gnReader:not(.hidden)) #conciergeBell:hover,
+body:has(#game:not(.hidden)) #conciergeBell:hover {
+    opacity: 1 !important;
 }
 /* Fortune widget toggles between display:none and display:flex via
    .fw-visible. Force flex inside the render view so a stale JS toggle
@@ -29840,12 +29864,23 @@ body.elevated-fate-cards .tempt-fate-card {
     cursor: pointer;                     /* hoverable like the other gold icons */
     overflow: hidden;                    /* clip the gleam sweep to the pill bounds */
     transition: transform 0.25s ease;
-    /* Dark drop-shadow behind the pill — matches #burgerBtn img and
-       #globalBackBtn img so the three gold icons read with the same depth
-       over bright backgrounds (curtain, gold scenes). Filter applies to
-       the PNG's alpha outline rather than a rectangular box. */
-    filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.6))
-            drop-shadow(0 0 14px rgba(0, 0, 0, 0.35));
+    /* Filter chain for cream/white prose-page backgrounds:
+       1. saturate + contrast deepens the gold and the embossed F glyph so
+          neither washes out against bright pages.
+       2. tight 1px 4-direction drop-shadows trace the pill alpha exactly,
+          producing a dark outline that survives any background.
+       3. diffuse outer glow keeps the depth on dark scenes too.
+       Matches #burgerBtn / #globalBackBtn so all three gold icons read
+       consistently. */
+    filter:
+        saturate(1.15)
+        contrast(1.25)
+        drop-shadow(1px 0 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(-1px 0 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(0 1px 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.55))
+        drop-shadow(0 0 6px rgba(0, 0, 0, 0.55))
+        drop-shadow(0 0 14px rgba(0, 0, 0, 0.3));
 }
 /* Gleam sweep — same pattern as #burgerBtn::after / #globalBackBtn::after.
    A narrow white band that travels across the pill once on hover, reusing
@@ -29891,9 +29926,12 @@ body.elevated-fate-cards .tempt-fate-card {
     line-height: 1;
     text-align: center;
     transform: translateX(10px);
-    /* Black lacquered 3D — top highlight, hard bottom bevel, diffuse drop */
+    /* Black lacquered 3D — hard bottom bevel + diffuse drop. Removed the
+       0 -1px cream HIGHLIGHT (was rgba(255,245,200,0.55)) — on a 3-digit count
+       with the +10px translate, that bright cream halo bled rightward into
+       the F glyph baked into the pill and read as a white haze that washed
+       out the F cutout. The dark bottom shadows alone keep the count legible. */
     text-shadow:
-        0 -1px 0 rgba(255, 245, 200, 0.55),
         0 1px 0 rgba(0, 0, 0, 0.9),
         0 2px 2px rgba(0, 0, 0, 0.5);
 }
@@ -36956,8 +36994,9 @@ body.oas-active #cineDevLauncherWrap {
     position: fixed;
     /* Lock to the bottom-left of the CENTERED prose page (.story-pages-container
        is max-width 860px, margin auto, so its left edge is calc(50vw - 430px)).
-       NOT the viewport corner — that belongs to the concierge bell. Falls back
-       to 16px on narrow viewports where the page is near-full-width. */
+       NOT the viewport corner — that belongs to the concierge bell. On narrow
+       viewports the calc collapses to ~16px (bell territory) so the @media
+       below moves the speaker ABOVE the bell instead of on top of it. */
     left: max(16px, calc(50vw - 424px));
     bottom: 16px;
     z-index: 8000;
@@ -36982,6 +37021,22 @@ body.oas-active #cineDevLauncherWrap {
 .prose-sound-toggle.is-muted { opacity: 0.42; color: rgba(201, 162, 78, 0.55); }
 .prose-sound-toggle.is-muted:hover { opacity: 0.85; }
 .prose-sound-toggle .prose-sound-icon { display: flex; align-items: center; justify-content: center; pointer-events: none; }
+
+/* Narrow viewports: calc(50vw - 424px) collapses to 16px (bell territory).
+   Lift the speaker ABOVE the bell so both remain visible without overlap. */
+@media (max-width: 880px) {
+    .prose-sound-toggle {
+        left: 12px;
+        bottom: 78px;
+    }
+}
+
+/* Defensive: bell must dominate the bottom-left z-index war (speaker is 8000).
+   Only z-index — don't touch visibility/display, those have legitimate hide
+   rules higher up (zoom backdrop, legal gate, vault library, mask gate). */
+#conciergeBell {
+    z-index: 10020 !important;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    EXAMINE THE CARD GATE — Scene 2/3 deck onboarding
