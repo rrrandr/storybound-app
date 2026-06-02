@@ -284,8 +284,17 @@ body.booting .screen {
 }
 .splash-subline {
     top: calc(67% + 65px);
-    font-size: 1.72em;
-    letter-spacing: 0.35em;
+    /* clamp() lets the line scale down with viewport. At full width it keeps
+       the 1.72em / 0.35em design; at narrow widths it shrinks gracefully. */
+    font-size: clamp(0.85em, 2.4vw, 1.72em);
+    letter-spacing: clamp(0.12em, 0.6vw, 0.35em);
+    /* Override the shared nowrap so the line can wrap when even the scaled
+       font + spacing exceeds the viewport. Centered + max-width 92vw keeps
+       the wrap visually balanced inside the absolutely-positioned element. */
+    white-space: normal;
+    text-align: center;
+    max-width: 92vw;
+    line-height: 1.3;
     filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.7))
             drop-shadow(0 0 24px rgba(0, 0, 0, 0.5));
 }

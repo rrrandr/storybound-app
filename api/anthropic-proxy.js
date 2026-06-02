@@ -272,7 +272,12 @@ module.exports = async function handler(req, res) {
       _orchestration: {
         provider: 'anthropic',
         model: model,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        // Surface stop_reason so client diagnostics can distinguish
+        // max_tokens truncation from refusals from clean end_turn.
+        // Anthropic values: 'end_turn' | 'max_tokens' | 'stop_sequence' | 'tool_use' | 'refusal'
+        stop_reason: data.stop_reason || null,
+        stop_sequence: data.stop_sequence || null
       },
       // Anthropic usage shape: { input_tokens, output_tokens,
       //                          cache_creation_input_tokens?,
