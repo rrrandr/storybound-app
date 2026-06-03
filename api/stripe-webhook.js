@@ -441,11 +441,35 @@ export default async function handler(req, res) {
       const updates = {};
       if (status === 'active' || status === 'trialing') {
         if (updatedTier) updates.subscription_tier = updatedTier;
+        // Detect portal-cancellation: subscription stays active until
+        // period_end but cancel_at_period_end flips to true. Surface this
+        // to the client via billing_status='canceling' + the end timestamp
+        // stashed in billing_grace_until (column already exists; semantics
+        // extend cleanly — for 'grace' it's "benefits guaranteed until X";
+        // for 'canceling' it's "subscription ends at X"). Re-activation
+        // through the portal sets cancel_at_period_end back to false; we
+        // clear the canceling flag in that branch.
+        if (subscription.cancel_at_period_end === true) {
+          updates.billing_status = 'canceling';
+          // cancel_at is the canonical "when does this end" timestamp on
+          // the new Stripe API; current_period_end is the older fallback.
+          const _endTsSec = subscription.cancel_at || subscription.current_period_end || null;
+          updates.billing_grace_until = _endTsSec ? new Date(_endTsSec * 1000).toISOString() : null;
+        } else if (subscription.cancel_at_period_end === false) {
+          // Portal re-activation OR a freshly-created sub that's not
+          // cancelling. Clear stale canceling flag if present; leave
+          // 'active' for the normal case.
+          updates.billing_status = 'active';
+          updates.billing_grace_until = null;
+        }
       } else if (status === 'past_due' || status === 'unpaid') {
         updates.is_subscriber = false;
       } else if (status === 'canceled' || status === 'incomplete_expired') {
         updates.is_subscriber = false;
         updates.subscription_tier = null;
+        // Clear canceling metadata once Stripe actually ends the sub.
+        updates.billing_status = 'canceled';
+        updates.billing_grace_until = null;
       }
 
       if (Object.keys(updates).length > 0) {

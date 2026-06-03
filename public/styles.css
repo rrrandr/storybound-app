@@ -238,7 +238,9 @@ body.booting .screen {
 .splash-mobile-type.visible {
     opacity: 1;
 }
-/* Mobile portrait: show mobile images, hide desktop */
+/* Mobile portrait: show mobile images, hide desktop. Roman 2026-06-03:
+   reverted from `max-aspect-ratio: 4/3` (and from `orientation: portrait`
+   earlier the same day) back to the original phone-portrait-only gate. */
 @media (max-width: 480px) and (orientation: portrait) {
     .splash-desktop { display: none !important; }
     .splash-mobile-portrait { display: block !important; }
