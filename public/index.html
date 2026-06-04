@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260603-splash-revert-to-phone-only">
+  <link rel="stylesheet" href="/styles.css?v=20260604-splash-gala-bg-fade-black">
 </head>
 
 <body class="booting">
@@ -1718,7 +1718,10 @@
          2. User flips, zooms, selects
          3. Continue → Pressure becomes breadcrumb, World cards appear
          ═══════════════════════════════════════════════════════════════════ -->
-    <div class="card-flow-row" id="flowRowPressure" data-flow-stage="pressure">
+    <!-- Story Pull is now engine-inferred (not a user choice). This row is never
+         mounted by the corridor; flow-hidden keeps it hidden in any non-corridor
+         render of #setup. See _ensureInferredStoryPull. -->
+    <div class="card-flow-row flow-hidden" id="flowRowPressure" data-flow-stage="pressure">
       <div class="section-title">Story Pull</div>
       <div class="sb-grid sb-grid-4" id="pressureGrid">
         <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power<br>&amp;&nbsp;Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him.<br>Except for her.</span></div></div></div>
@@ -2375,7 +2378,7 @@
 <script src="/orchestration-client.js?v=20260529-llm-error-labels"></script>
 <script src="/badgeEngine.js"></script>
 <script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
-<script src="/app.js?v=20260603-library-delete-sweep"></script>
+<script src="/app.js?v=20260604-petition-twist-inverse-strength-scale"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL

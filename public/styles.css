@@ -225,6 +225,21 @@ body.booting .screen {
 .splash-title.visible {
     opacity: 1;
 }
+/* On narrow / letterboxed desktop windows the framed title image
+   (`object-fit: contain` — the full landscape gala WITH "Storybound")
+   scales to fit the window, leaving margins. The cover-fit background gala
+   (`#splashGala`) otherwise fills those margins as a larger, cropped copy
+   of the same scene. Once the framed title resolves, fade that background
+   out so the framed composition sits on the overlay's black, instead of on
+   the cropped gala. `:has()` reacts to the later-sibling title without JS;
+   on wide windows where the contained title already fills the viewport this
+   fade is occluded and invisible, so it only shows where margins exist. */
+#splashGala {
+    transition: opacity 1.4s ease-in 0.4s;
+}
+.splash-overlay:has(.splash-title.visible) #splashGala {
+    opacity: 0;
+}
 /* Mobile portrait images: hidden by default */
 .splash-mobile-portrait {
     display: none;
