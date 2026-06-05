@@ -40,7 +40,7 @@
   const GLASS_HOUSE_DEMO_SEED = {
     // ── Identification ──
     seedId: 'glass-house-demo-v1',
-    title: 'Glass House: The Bliss You Trade',
+    title: 'The First Stone in a Glass House',
     bookType: 'cgn_demo',         // marks as the third Taste book
     libraryShelf: 'taste_starter', // alongside First Taste (billionaire literary) + First Sacrifice (fantasy literary)
     placement: 3,                   // shelf order: 1=billionaire literary, 2=fantasy literary, 3=this
