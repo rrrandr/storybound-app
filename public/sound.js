@@ -160,6 +160,28 @@
             .then(function(decoded) { window._zoomSparkleLoopBuffer = decoded; })
             .catch(function() {});
         }
+        // Tempt Fate zoom audio (Roman 2026-06-06): dry-thunder background loop while the
+        // Tempt card is zoomed; electric crackle layered on the card's electric-arc effect.
+        if (!window._temptThunderLoopBuffer) {
+          fetch('/assets/ui/tempt-dry-thunder.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) { window._temptThunderLoopBuffer = decoded; })
+            .catch(function() {});
+        }
+        if (!window._temptCrackleBuffer) {
+          fetch('/assets/ui/tempt-electric-crackle.mp3')
+            .then(function(r) { return r.arrayBuffer(); })
+            .then(function(buf) { return _audioCtx.decodeAudioData(buf); })
+            .then(function(decoded) {
+              window._temptCrackleBuffer = decoded;
+              // The clip is a STRING of discrete crackles separated by silence (Roman 2026-06-06).
+              // Detect each crackle's natural [start,end] so playback pulls WHOLE crackles, not
+              // random mid-pop slices. Stored once; playTemptCrackle picks a random whole segment.
+              try { window._temptCrackleSegments = _analyzeCrackleSegments(decoded); } catch (_) { window._temptCrackleSegments = null; }
+            })
+            .catch(function() {});
+        }
         if (!window._bookPullBuffers) {
           window._bookPullBuffers = [];
           ['/assets/ui/book-pull-1.mp3', '/assets/ui/book-pull-2.mp3', '/assets/ui/book-pull-3.mp3'].forEach(function(url) {
@@ -584,6 +606,131 @@
     } catch(_) {}
     _zoomLoopSrc = null;
     _zoomLoopGain = null;
+  };
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TEMPT FATE ZOOM AUDIO (Roman 2026-06-06)
+  //  • Dry-thunder background loop — plays ONLY while the Tempt Fate card is
+  //    zoomed (started in openTemptZoom, stopped in closeTemptZoom). Atmospheric
+  //    bed under the koshi zoom-sparkle loop; low gain so it doesn't dominate.
+  //  • Electric crackle — a one-shot, layered ONLY when the card's electric-arc
+  //    effect fires. Throttled so rapid arcs don't stack into noise. A random
+  //    start offset + short window keeps each crackle a fresh "portion" of the clip.
+  // ───────────────────────────────────────────────────────────────────────────
+  var _temptThunderSrc = null;
+  var _temptThunderGain = null;
+  window.startTemptThunderLoop = function() {
+    if (_temptThunderSrc) return; // already playing
+    if (!window._temptThunderLoopBuffer || !_enabled) return;
+    var ctx = _ensureCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') { ctx.resume().catch(function(){}); }
+    var src = ctx.createBufferSource();
+    src.buffer = window._temptThunderLoopBuffer;
+    src.loop = true;
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.20, ctx.currentTime + 1.5); // gentle fade-in, atmospheric
+    src.connect(gain).connect(_sfxOut(ctx));
+    src.start(0);
+    _temptThunderSrc = src;
+    _temptThunderGain = gain;
+  };
+  window.stopTemptThunderLoop = function() {
+    if (!_temptThunderSrc) return;
+    try {
+      var ctx = _temptThunderGain.context;
+      _temptThunderGain.gain.cancelScheduledValues(ctx.currentTime);
+      _temptThunderGain.gain.setValueAtTime(_temptThunderGain.gain.value, ctx.currentTime);
+      _temptThunderGain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8);
+      var src = _temptThunderSrc;
+      setTimeout(function() { try { src.stop(); } catch(_){} }, 900);
+    } catch(_) {}
+    _temptThunderSrc = null;
+    _temptThunderGain = null;
+  };
+
+  // Segment a crackle buffer into its discrete pops (Roman 2026-06-06). The clip is a string of
+  // crackles separated by near-silence; this finds each one's [start, dur] via an RMS envelope so
+  // playback uses WHOLE crackles (natural attack + decay) instead of random mid-pop slices.
+  function _analyzeCrackleSegments(buf) {
+    try {
+      var sr = buf.sampleRate, ch = buf.getChannelData(0), n = ch.length;
+      var win = Math.max(64, Math.floor(sr * 0.005)); // ~5ms RMS windows
+      var winSec = win / sr;
+      var env = [], peak = 0;
+      for (var i = 0; i < n; i += win) {
+        var end = Math.min(i + win, n), sum = 0;
+        for (var j = i; j < end; j++) { var v = ch[j]; sum += v * v; }
+        var rms = Math.sqrt(sum / Math.max(1, end - i));
+        env.push(rms); if (rms > peak) peak = rms;
+      }
+      if (peak <= 0) return null;
+      var thresh = peak * 0.06;                       // 6% of peak = "a crackle is sounding"
+      var mergeGap = Math.ceil(0.07 / winSec);        // <70ms of quiet = still inside one crackle
+      var minDur = Math.ceil(0.04 / winSec);          // ignore <40ms blips
+      var segs = [], inSeg = false, segStart = 0, quiet = 0;
+      for (var w = 0; w < env.length; w++) {
+        if (env[w] >= thresh) {
+          if (!inSeg) { inSeg = true; segStart = w; }
+          quiet = 0;
+        } else if (inSeg && ++quiet >= mergeGap) {
+          var segEnd = w - quiet + 1;
+          if (segEnd - segStart >= minDur) segs.push([segStart, segEnd]);
+          inSeg = false;
+        }
+      }
+      if (inSeg) segs.push([segStart, env.length]);
+      var pad = 0.010, tail = 0.05; // small pre-roll + decay tail so edges aren't clipped
+      var out = segs.map(function(s) {
+        var start = Math.max(0, s[0] * winSec - pad);
+        var dur = Math.min(buf.duration - start, (s[1] - s[0]) * winSec + pad + tail);
+        return { start: start, dur: Math.max(0.08, dur) };
+      });
+      try { console.log('[TEMPT:CRACKLE] segmented into ' + out.length + ' discrete crackles'); } catch (_) {}
+      return out.length ? out : null;
+    } catch (_) { return null; }
+  }
+
+  // Electric crackle one-shot — call on each arc strike. Plays ONE WHOLE crackle (a random
+  // detected segment) so it has a natural beginning and end; falls back to a random slice only
+  // if segmentation failed. opts.gain (default 0.35), opts.throttleMs (default 220).
+  var _lastCrackleAt = 0;
+  window.playTemptCrackle = function(opts) {
+    opts = opts || {};
+    if (!window._temptCrackleBuffer || !_enabled) return;
+    var nowMs = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (nowMs - _lastCrackleAt < (opts.throttleMs || 220)) return; // don't stack rapid arcs into mush
+    _lastCrackleAt = nowMs;
+    var ctx = _ensureCtx();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') { ctx.resume().catch(function(){}); }
+    var buf = window._temptCrackleBuffer;
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    var gain = ctx.createGain();
+    var vol = (typeof opts.gain === 'number') ? opts.gain : 0.35;
+    var startOff, durSec;
+    var segs = window._temptCrackleSegments;
+    if (segs && segs.length) {
+      var seg = segs[Math.floor(Math.random() * segs.length)]; // a WHOLE crackle, beginning to end
+      startOff = seg.start; durSec = seg.dur;
+    } else {
+      // Fallback: random slice (segmentation unavailable).
+      durSec = Math.max(0.12, (opts.durationMs || 600) / 1000);
+      var maxStart = Math.max(0, buf.duration - durSec);
+      startOff = maxStart > 0 ? Math.random() * maxStart : 0;
+    }
+    // Gentle edge fades only (the segment already carries the crackle's own attack/decay) —
+    // just enough to kill any boundary click.
+    var t = ctx.currentTime;
+    var fade = Math.min(0.012, durSec / 4);
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(vol, t + fade);
+    gain.gain.setValueAtTime(vol, t + durSec - fade);
+    gain.gain.linearRampToValueAtTime(0, t + durSec);
+    src.connect(gain).connect(_sfxOut(ctx));
+    try { src.start(t, startOff, durSec); } catch(_) { try { src.start(0); } catch(__){} }
   };
 
   // Global delegated button tap — plays on any button/sb-btn-png click
