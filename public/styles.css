@@ -21191,6 +21191,9 @@ body.corridor-mode #beginStoryRow .begin-story-container {
 /* Lit-Lite experimental engine toggle — small, subtle, under the Literary button. */
 .lit-lite-toggle {
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
     justify-content: flex-start;
     margin: 6px auto 0;
     max-width: 520px;
