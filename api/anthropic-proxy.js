@@ -284,7 +284,7 @@ module.exports = async function handler(req, res) {
       //                          cache_read_input_tokens? }
       // Normalize to OpenAI-ish shape so accumulators don't break, and
       // surface the cache fields so the client cost tracker can price
-      // them correctly (writes are 1.25x input, reads are 0.1x input).
+      // them correctly (5-min writes 1.25x input, 1-hour writes 2x, reads 0.1x).
       usage: data.usage ? {
         prompt_tokens: data.usage.input_tokens,
         completion_tokens: data.usage.output_tokens,
@@ -292,8 +292,14 @@ module.exports = async function handler(req, res) {
         // Preserve original for cost calc
         input_tokens: data.usage.input_tokens,
         output_tokens: data.usage.output_tokens,
-        // Cache telemetry — only present when cache_control was used
+        // Cache telemetry — only present when cache_control was used.
+        // cache_creation_input_tokens is the FLAT write total; data.usage.cache_creation
+        // breaks it down by TTL (ephemeral_1h = 2x input, ephemeral_5m = 1.25x) when
+        // extended-cache-ttl is in play. Surface both so the client prices each
+        // TTL correctly instead of assuming the 5-min rate (Roman 2026-06-06).
         cache_creation_input_tokens: data.usage.cache_creation_input_tokens || 0,
+        cache_creation_1h_input_tokens: (data.usage.cache_creation && data.usage.cache_creation.ephemeral_1h_input_tokens) || 0,
+        cache_creation_5m_input_tokens: (data.usage.cache_creation && data.usage.cache_creation.ephemeral_5m_input_tokens) || 0,
         cache_read_input_tokens: data.usage.cache_read_input_tokens || 0
       } : null
     };
