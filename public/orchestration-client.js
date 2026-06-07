@@ -1098,7 +1098,15 @@
             // default. Proxy already sends the extended-cache-ttl beta header
             // whenever any cache_control is present. 1h write is 2× (vs 1.25×)
             // but amortizes after ~2 reads, and a story has many turns.
-            const _cc = (breakpoints === 0)
+            // Roman 2026-06-07: 1-HOUR ttl on the first TWO breakpoints, not just one.
+            // The literary turn-path is [sysPrompt][stableTail][tail]: BOTH sysPrompt AND
+            // stableTail are cross-turn-stable (the varying blocks — intentTransmutation,
+            // billionaireAttraction — were pulled OUT of stableTail into the tail), so both
+            // deserve the 1h TTL that survives human-paced reader pauses. The LAST segment
+            // (the per-turn directive tail) stays 5-min default — it varies every scene and
+            // never cache-hits, so the cheaper 1.25× write is correct. Single-segment callers
+            // (Scene-1 opening path, OAS) are unaffected (only breakpoint 0 exists → still 1h).
+            const _cc = (breakpoints <= 1)
               ? { type: 'ephemeral', ttl: '1h' }
               : { type: 'ephemeral' };
             blocks.push({ type: 'text', text, cache_control: _cc });
