@@ -27659,6 +27659,14 @@ body.oas-active.gn-cover-active .gn-ui-overlay {
 .fate-whisper.hidden {
     display: none;
 }
+/* The latency-mask whisper line (<p class="fate-whisper">, e.g. "Between scenes,
+   the world holds its breath…") is removed (Roman 2026-06-08 — useless, and it
+   persisted into saved snapshots and reappeared at scene bottom on Previous).
+   removeFateWhisper() runs BEFORE the saved page HTML re-mounts, so it can't catch
+   the persisted copy; hiding the PARAGRAPH form guarantees it never shows on any
+   navigation. Element-qualified so it never touches the structured .fate-whisper
+   discovery UI (a div with -inner/-title/-cta). injectFateWhisper() is also no-op'd. */
+p.fate-whisper { display: none !important; }
 .fate-whisper-inner {
     background: rgba(10, 10, 10, 0.65);
     border: 1px solid rgba(212, 175, 55, 0.4);
