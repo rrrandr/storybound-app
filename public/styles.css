@@ -30992,13 +30992,19 @@ body.elevated-fate-cards .tempt-fate-card {
    size:100% 100% stretch were inflating these into panel-spanning bars. Equal
    specificity, declared later → wins. Aspect-correct (110×30 ≈ native 3.64:1)
    so the gold PNG isn't distorted; flex:0 0 auto so the row never stretches them. */
+/* Widen the Saved Stories panel +50% (320 → 480) so [title · Continue · Delete]
+   has room on one row. ID beats the .vault-sub class cap. */
+#vaultSavedStories { max-width: 480px; }
+/* Row-action buttons fit their LABEL ("Continue" / "Delete"), not a fixed slab —
+   width:auto + padding sizes each to its text (the prior fixed 110px was ~2× what
+   "Delete" needs). flex:0 0 auto so the flex row never stretches them. */
 .vault-saved-story-row .sb-btn-png.sm {
-    width: 110px;
+    width: auto;
+    min-width: 70px;
     height: 30px;
     flex: 0 0 auto;
     white-space: nowrap;
-    padding-left: 6px;
-    padding-right: 6px;
+    padding: 4px 16px;
     font-size: 0.82em;
 }
 .vault-saved-story-title {
