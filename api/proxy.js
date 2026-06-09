@@ -278,15 +278,20 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${XAI_API_KEY}`
       };
       if (convId) _xaiHeaders['x-grok-conv-id'] = String(convId);
+      const _xaiBody = {
+        model: tryModel,
+        messages: messages,
+        temperature: temperature,
+        max_tokens: max_tokens
+      };
+      // Belt-and-suspenders cache hint: OpenAI-compatible APIs (xAI included) route
+      // prompt-cache lookups by this stable key. Harmless if the upstream ignores it;
+      // pairs with x-grok-conv-id to maximize prefix-cache hits across a story's scenes.
+      if (convId) _xaiBody.prompt_cache_key = String(convId);
       xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
         headers: _xaiHeaders,
-        body: JSON.stringify({
-          model: tryModel,
-          messages: messages,
-          temperature: temperature,
-          max_tokens: max_tokens
-        })
+        body: JSON.stringify(_xaiBody)
       });
       responseText = await xaiResponse.text();
       try {
