@@ -577,6 +577,28 @@ function stopContinuousSparkles() {
             };
         }
 
+        // PairBond (Roman 2026-06-09) — psychological + erotic locks the cards
+        // should press. Lock-tag identifiers are also surfaced so downstream
+        // template selection (if any) can branch on them; the rendered prose
+        // directive (state._pairBondDirectiveCache) is the single source of
+        // truth for prompt insertion.
+        let pairBond = null;
+        if (s.pairBond && s.pairBond.psychologicalLock_li) {
+            pairBond = {
+                psychologicalLock_li: s.pairBond.psychologicalLock_li,
+                psychologicalLock_pc: s.pairBond.psychologicalLock_pc,
+                psychologicalLock_li_secondary: s.pairBond.psychologicalLock_li_secondary || null,
+                psychologicalLock_pc_secondary: s.pairBond.psychologicalLock_pc_secondary || null,
+                eroticLock_li: s.pairBond.eroticLock_li || null,
+                eroticLock_pc: s.pairBond.eroticLock_pc || null,
+                whyHer: s.pairBond.whyHer || null,
+                whyHim: s.pairBond.whyHim || null,
+                attractionEngine: s.pairBond.attractionEngine || null,
+                directive: s._pairBondDirectiveCache ||
+                    (typeof window._buildPairBondDirective === 'function' ? window._buildPairBondDirective(s) : '')
+            };
+        }
+
         return {
             // A-plot
             aPlotGoal, aPlotStakes, aPlotClock, aPlotTimelineLength, arcPct, turnCount,
@@ -587,7 +609,9 @@ function stopContinuousSparkles() {
             // gravity readouts
             gravityDirection, gravityStrength, narrativeGravity, axisLean, chargeLean,
             // Fate-OAS distortion (during invocation)
-            fateOASBudget
+            fateOASBudget,
+            // Pair-level lock-and-key (Roman 2026-06-09)
+            pairBond
         };
     }
     window.extractPlotContext = extractPlotContext;

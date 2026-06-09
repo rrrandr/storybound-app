@@ -5236,6 +5236,32 @@ Respond in EXACTLY two lines:
     }
     const _plotBlock = _plotLines.length ? '\nPLOT STATE (use these to ground card variants in the actual story):\n' + _plotLines.map(l => '  • ' + l).join('\n') + '\n' : '';
 
+    // ── PAIRBOND DIRECTIVE (Roman 2026-06-09) ──────────────────────────────
+    // Cards become lock-pressure events, not generic dramatic options. The
+    // directive names the locks every card should press AND a substitutability
+    // test the model should apply. Prefers the cached rendered text so the
+    // OAS path sees byte-identical text to other surfaces. Empty string when
+    // pairBond is missing — silent no-op.
+    let _pairBondBlock = '';
+    try {
+      _pairBondBlock = (st && st._pairBondDirectiveCache) ||
+        (typeof window._buildPairBondDirective === 'function' ? window._buildPairBondDirective(st) : '') || '';
+    } catch (_) { _pairBondBlock = ''; }
+
+    // ── OAS REGISTER MIX DIRECTIVE (Roman 2026-06-09) ─────────────────────
+    // Time-varying ratio of raw/physical to lock-pressing pillow-talk across
+    // the 5 archetypes. Mirrors the body-bible 90/10 → 10/90 curve: raw
+    // dominates at ST1-2 (accessibility, "Pin his wrist"), lock-pressing
+    // takes over by ST5-6 (specificity, "Stop performing — let him see you
+    // watching"). Per-call (not cached) because storyturn changes scene-to-
+    // scene. Empty string when pairBond is missing — register-mix requires
+    // a lock list to mean anything.
+    let _registerMixBlock = '';
+    try {
+      _registerMixBlock = (typeof window._buildOASRegisterMixDirective === 'function')
+        ? (window._buildOASRegisterMixDirective(st) || '') : '';
+    } catch (_) { _registerMixBlock = ''; }
+
     // World-register block (added 2026-05-19) — tells Grok the
     // protagonist's action + dialogue must be in the active world's
     // register, not modern English. Pulls lexicon hint + sample line +
@@ -5321,7 +5347,7 @@ PC GENDER: ${pcGender}. LI GENDER: ${liGender}.
 ${pcAnatomyGuide}
 ${liAnatomyGuide}
 
-${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${(function(){ try { return (typeof window.buildOASSpineDirective === 'function') ? (window.buildOASSpineDirective({ cliff: false }) || '') : ''; } catch (_) { return ''; } })()}${(function(){ try { return (typeof window.buildEmbodiedTextureDirective === 'function') ? (window.buildEmbodiedTextureDirective({ surface: 'fate' }) || '') : ''; } catch (_) { return ''; } })()}${_registerBlock}${_avoidBlock}
+${sceneContext ? `SCENE & PLOT CONTEXT (you may reference these specifically — named characters, archetype, dynamic, setting. The "Active scene entities" line is RANKED BY SALIENCE — when referencing named characters, prefer the highest-salience entity matching the archetype):\n${sceneContext}\n` : ''}${_plotBlock}${_pairBondBlock}${_registerMixBlock}${(function(){ try { return (typeof window.buildOASSpineDirective === 'function') ? (window.buildOASSpineDirective({ cliff: false }) || '') : ''; } catch (_) { return ''; } })()}${(function(){ try { return (typeof window.buildEmbodiedTextureDirective === 'function') ? (window.buildEmbodiedTextureDirective({ surface: 'fate' }) || '') : ''; } catch (_) { return ''; } })()}${_registerBlock}${_avoidBlock}
 RECENT SCENE:
 ${recentScene.slice(-300)}
 

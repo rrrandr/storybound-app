@@ -163,7 +163,8 @@ export default async function handler(req, res) {
       temperature = 0.7,
       max_tokens = 1000,
       role = 'SPECIALIST_RENDERER',  // Orchestration role
-      esd = null  // Erotic Scene Directive (required for specialist rendering)
+      esd = null,  // Erotic Scene Directive (required for specialist rendering)
+      convId = null  // xAI conversation id → x-grok-conv-id header, maximizes prompt-cache hits across requests
     } = req.body;
 
     // ==========================================================================
@@ -270,12 +271,16 @@ export default async function handler(req, res) {
     for (let i = 0; i < modelChain.length; i++) {
       const tryModel = modelChain[i];
       console.log(`[SPECIALIST-PROXY] Trying model ${i + 1}/${modelChain.length}: ${tryModel}`);
+      // xAI prompt caching is automatic; a STABLE x-grok-conv-id across requests
+      // maximizes cache hits on the shared prompt prefix (xAI-recommended).
+      const _xaiHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${XAI_API_KEY}`
+      };
+      if (convId) _xaiHeaders['x-grok-conv-id'] = String(convId);
       xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${XAI_API_KEY}`
-        },
+        headers: _xaiHeaders,
         body: JSON.stringify({
           model: tryModel,
           messages: messages,
