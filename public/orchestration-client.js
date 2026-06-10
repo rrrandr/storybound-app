@@ -1135,62 +1135,80 @@
       payload.response_format = { type: 'json_object' };
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT_MS);
-
     const _proxyUrl = _isClaudeModel ? CONFIG.ANTHROPIC_PROXY : CONFIG.CHATGPT_PROXY;
+    const _model = (payload && payload.model) || 'unknown-model';
+    const _proxy = _isClaudeModel ? 'anthropic-proxy' : 'chatgpt-proxy';
+    // Per-call timeout override (heavy Scene-1 author calls need >60s headroom);
+    // defaults to the global. retryOnTimeout=true → one extra attempt on a
+    // TRANSIENT failure (client-abort timeout, or 502/503/529 overloaded). The
+    // most important call in the app — story authoring — should survive a single
+    // momentary Anthropic slowdown instead of "Fate stumbled" on the first scene.
+    const _timeoutMs = (typeof options.timeoutMs === 'number' && options.timeoutMs > 0) ? options.timeoutMs : CONFIG.API_TIMEOUT_MS;
+    const _maxAttempts = options.retryOnTimeout ? 2 : 1;
+    let _lastErr = null;
 
-    try {
-      const res = await fetch(_proxyUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        signal: controller.signal
-      });
+    for (let _attempt = 1; _attempt <= _maxAttempts; _attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), _timeoutMs);
+      try {
+        const res = await fetch(_proxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
 
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-      if (!res.ok) {
-        const errorText = await res.text().catch(() => '(could not read response body)');
-        // Name the ACTUAL model + proxy (not "ChatGPT") — Claude routes through
-        // anthropic-proxy, so a 529 here means ANTHROPIC was overloaded, not OpenAI.
-        // Mirrors the timeout-label fix above (2026-05-21). A leading status keeps
-        // the app.js 429/529 detectors working on err.message.
-        const _errModel = (payload && payload.model) || 'unknown-model';
-        const _errProxy = _isClaudeModel ? 'anthropic-proxy' : 'chatgpt-proxy';
-        throw new Error(`LLM API error: ${res.status} (${_errModel} via ${_errProxy}) - ${errorText}`);
+        if (!res.ok) {
+          const errorText = await res.text().catch(() => '(could not read response body)');
+          // Name the ACTUAL model + proxy (not "ChatGPT") — Claude routes through
+          // anthropic-proxy, so a 529 here means ANTHROPIC was overloaded, not OpenAI.
+          // A leading status keeps the app.js 429/529 detectors working on err.message.
+          const _e = new Error(`LLM API error: ${res.status} (${_model} via ${_proxy}) - ${errorText}`);
+          _e._status = res.status;
+          throw _e;
+        }
+
+        const data = await res.json();
+        _accumulateTokens(data, payload && payload.model);
+
+        // Normalized response shape: use data.content (string from proxy)
+        // Fallback to legacy choices[0].message.content for backward compat
+        const text = data.content ?? data.choices?.[0]?.message?.content ?? null;
+
+        if (!text && text !== '') {
+          const receivedKeys = Object.keys(data);
+          console.error('[ORCHESTRATION] Proxy returned 200 but no content field. Keys:', receivedKeys);
+          throw new Error(`LLM proxy returned 200 but payload missing content field (${_model} via ${_proxy}). Received keys: [${receivedKeys.join(', ')}]`);
+        }
+
+        return text;
+
+      } catch (err) {
+        clearTimeout(timeoutId);
+        let _norm = err;
+        if (err && err.name === 'AbortError') {
+          // Name the actual model + proxy so a timeout can be diagnosed at a glance
+          // (a Sonnet-via-anthropic-proxy timeout used to mislabel as "ChatGPT").
+          _norm = new Error('LLM request timed out (' + _model + ' via ' + _proxy + ')');
+          _norm._timeout = true;
+        }
+        _lastErr = _norm;
+        // Retry ONLY transient classes (timeout / 502 / 503 / 529 overloaded), and
+        // only if attempts remain. 429 rate-limits are NOT retried here (terminal —
+        // app.js converts them to RateLimitError). Brief backoff lets a blip clear.
+        const _status = (err && err._status) || 0;
+        const _transient = !!_norm._timeout || _status === 502 || _status === 503 || _status === 529;
+        if (_attempt < _maxAttempts && _transient) {
+          try { console.warn('[ORCHESTRATION] transient author failure (attempt ' + _attempt + '/' + _maxAttempts + '): ' + _norm.message + ' — retrying once'); } catch (_) {}
+          await new Promise(function (r) { setTimeout(r, 1200); });
+          continue;
+        }
+        throw _norm;
       }
-
-      const data = await res.json();
-      _accumulateTokens(data, payload && payload.model);
-
-      // Normalized response shape: use data.content (string from proxy)
-      // Fallback to legacy choices[0].message.content for backward compat
-      const text = data.content ?? data.choices?.[0]?.message?.content ?? null;
-
-      if (!text && text !== '') {
-        const receivedKeys = Object.keys(data);
-        console.error('[ORCHESTRATION] Proxy returned 200 but no content field. Keys:', receivedKeys);
-        throw new Error(`LLM proxy returned 200 but payload missing content field (${(payload && payload.model) || 'unknown-model'} via ${_isClaudeModel ? 'anthropic-proxy' : 'chatgpt-proxy'}). Received keys: [${receivedKeys.join(', ')}]`);
-      }
-
-      return text;
-
-    } catch (err) {
-      clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
-        // Misleading "ChatGPT request timed out" replaced 2026-05-21
-        // after a user reported confusion: the CG screenplay path was
-        // calling Sonnet via anthropic-proxy and timing out, but the
-        // error said "ChatGPT" — making it look like OpenAI failed
-        // when in fact Anthropic did. Now names the actual model and
-        // proxy so the failure can be diagnosed at a glance.
-        var _model = (payload && payload.model) || 'unknown-model';
-        var _proxy = _isClaudeModel ? 'anthropic-proxy' : 'chatgpt-proxy';
-        throw new Error('LLM request timed out (' + _model + ' via ' + _proxy + ')');
-      }
-      throw err;
     }
+    throw _lastErr || new Error('LLM request failed (' + _model + ' via ' + _proxy + ')');
   }
 
   // ===========================================================================
