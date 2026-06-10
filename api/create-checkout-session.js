@@ -100,14 +100,30 @@ export default async function handler(req, res) {
     const successUrl = `${baseUrl}/?${successParams.toString()}`;
     const cancelUrl = `${baseUrl}/checkout-cancel`;
 
-    const session = await stripe.checkout.sessions.create({
+    // Link the pack checkout to the user's EXISTING Stripe customer (Roman 2026-06-10).
+    // Without this, a payment-mode pack Checkout spawns a fresh guest customer, so the
+    // session is never attached to profile.stripe_customer_id — and the
+    // verify-subscription fallback (which lists sessions BY customer) can't recover a
+    // missed grant when the webhook doesn't land. Scoped to payment mode to avoid any
+    // subscription-checkout edge cases. Best-effort: omit if we have no customer id.
+    let _stripeCustomerId = null;
+    if (supabase && config.mode === 'payment') {
+      try {
+        const { data: _prof } = await supabase.from('profiles').select('stripe_customer_id').eq('id', supabaseUserId).maybeSingle();
+        _stripeCustomerId = (_prof && _prof.stripe_customer_id) || null;
+      } catch (_) {}
+    }
+
+    const _sessionParams = {
       mode: config.mode,
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: supabaseUserId,
       metadata,
-    });
+    };
+    if (_stripeCustomerId) _sessionParams.customer = _stripeCustomerId;
+    const session = await stripe.checkout.sessions.create(_sessionParams);
 
     if (purchaseIntentId && supabase) {
       await supabase

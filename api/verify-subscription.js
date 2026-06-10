@@ -45,6 +45,19 @@ function priceIdToFortunePackAmount(priceId) {
   return null;
 }
 
+// Fortune-pack amount from the purchase_intents.type ('fortune_240' → 240).
+// Used by the intent-keyed recovery (which has the intent type even when the
+// session's price_id metadata is absent). Roman 2026-06-10.
+function typeToFortunePackAmount(type) {
+  switch (type) {
+    case 'fortune_20':  return 20;
+    case 'fortune_60':  return 60;
+    case 'fortune_120': return 120;
+    case 'fortune_240': return 240;
+    default: return null;
+  }
+}
+
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
   const allowedOrigin = origin === 'https://storybound.love' ||
@@ -320,6 +333,94 @@ export default async function handler(req, res) {
       });
       summary.fortunes_after = rpcResult.new_balance || summary.fortunes_after;
     }
+  }
+
+  // 4b. INTENT-KEYED recovery (Roman 2026-06-10) — the customer-list pass above
+  //     queries Stripe BY customer, which MISSES pack sessions created without a
+  //     `customer` link (payment-mode Checkout spawns a guest customer, so the
+  //     session is never attached to profile.stripe_customer_id). That left
+  //     genuinely-paid fortune packs un-granted with NO recovery path whenever the
+  //     webhook didn't land (localhost; webhook outage). Recover directly from the
+  //     user's OWN ungranted purchase_intents — each stores its stripe_session_id —
+  //     retrieving + confirming the session was actually PAID before granting.
+  //     Independent of customer linkage. grant_purchase_fortunes is idempotent.
+  //
+  //     HARD TIME BOUND (Roman 2026-06-10): only recover sessions paid in the last
+  //     RECOVERY_WINDOW. This pass queries by user_id (not customer + last-20 like the
+  //     pass above), so WITHOUT this bound it sweeps the user's ENTIRE history — and
+  //     historical intents in the 'resumed' race-state carry a NULL fortunes_granted_at
+  //     even though they were already credited (the idempotency backfill only stamped
+  //     status='completed'), so they get RE-GRANTED. That over-credits (observed: a
+  //     reconcile jumped to 912F / repairs:4 by re-granting old packs). The legitimate
+  //     job here is recovering the checkout the user JUST returned from, so bound it to
+  //     recently-paid sessions via Stripe's own session.created timestamp.
+  const _RECOVERY_WINDOW_S = 6 * 3600; // 6h — generous for return latency, excludes history
+  const _nowS = Math.floor(Date.now() / 1000);
+  try {
+    const { data: pendingIntents, error: piErr } = await supabase
+      .from('purchase_intents')
+      .select('id, type, stripe_session_id, fortunes_granted_at')
+      .eq('user_id', userId)
+      .is('fortunes_granted_at', null)
+      .not('stripe_session_id', 'is', null)
+      .limit(25);
+    if (piErr) console.warn('[verify-subscription] pending-intent query failed:', piErr.message);
+    for (const intent of (pendingIntents || [])) {
+      if (summary.repairs.some(r => r.intent_id === intent.id)) continue; // already handled by the customer-list pass
+      let session;
+      try { session = await stripe.checkout.sessions.retrieve(intent.stripe_session_id); }
+      catch (e) { console.warn(`[verify-subscription] session ${intent.stripe_session_id} retrieve failed:`, e.message); continue; }
+      // Grant ONLY on a genuinely complete + PAID session (never trust the intent row alone).
+      if (!session || session.status !== 'complete' || session.payment_status !== 'paid') continue;
+      // Time bound: never re-grant an old purchase whose marker is spuriously NULL.
+      if (session.created && (_nowS - session.created) > _RECOVERY_WINDOW_S) {
+        console.log(`[verify-subscription] intent ${intent.id} skipped — session ${(_nowS - session.created)}s old (> ${_RECOVERY_WINDOW_S}s recovery window); not a just-completed checkout.`);
+        continue;
+      }
+      const priceId = session.metadata?.price_id;
+      const tier = priceIdToTier(priceId);
+      let fortunesToGrant = 0;
+      const packAmount = priceIdToFortunePackAmount(priceId) || typeToFortunePackAmount(intent.type);
+      if (tier) {
+        if (summary.repairs.some(r => r.kind === 'missed_subscription_grant' && r.tier === tier)) continue;
+        fortunesToGrant = SUB_FORTUNES[tier];
+      } else if (packAmount) {
+        fortunesToGrant = packAmount;
+        if (profile && profile.is_subscriber) {
+          const _packBonus = Math.round(packAmount * 0.10);
+          if (_packBonus > 0) {
+            fortunesToGrant += _packBonus;
+            console.log(`[verify-subscription] Subscriber bonus on intent-keyed pack: +${_packBonus}F on ${packAmount}F`);
+          }
+        }
+      } else {
+        continue;
+      }
+      const { data: rpcResult, error: rpcErr } = await supabase.rpc('grant_purchase_fortunes', {
+        p_user_id: userId,
+        p_intent_id: intent.id,
+        p_fortunes: fortunesToGrant,
+      });
+      if (rpcErr) {
+        console.warn(`[verify-subscription] intent-keyed grant RPC failed (intent ${intent.id}):`, rpcErr.message);
+        continue;
+      }
+      if (rpcResult && rpcResult.granted) {
+        console.log(`[verify-subscription] user ${userId} intent-keyed grant applied: intent=${intent.id} +${fortunesToGrant}F → balance ${rpcResult.new_balance}`);
+        summary.repairs.push({
+          kind: 'intent_keyed_grant_applied',
+          intent_id: intent.id,
+          session_id: intent.stripe_session_id,
+          price_id: priceId || null,
+          tier: tier || null,
+          fortunes_granted: fortunesToGrant,
+          new_balance: rpcResult.new_balance,
+        });
+        summary.fortunes_after = rpcResult.new_balance || summary.fortunes_after;
+      }
+    }
+  } catch (e) {
+    console.warn('[verify-subscription] intent-keyed recovery threw:', e.message);
   }
 
   if (summary.repairs.length === 0) {
