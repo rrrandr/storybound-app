@@ -38,6 +38,8 @@
  */
 
 const { validateModelForRole, getDefaultModel, ALLOWED_MODELS, getPassTier, buildPassTierPrompt, stripWalletData } = require('./orchestrator');
+// SECURITY: server-side prompt-injection scrub on user-role messages.
+const { sanitizeUserMessages } = require('./_sanitize-injection.js');
 
 module.exports = async function handler(req, res) {
   // CORS headers
@@ -67,7 +69,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const {
-      messages,
+      messages: _rawMessages,
       model,
       role = 'PRIMARY_AUTHOR',  // Which orchestration role is calling
       mode = 'solo',            // Story mode: solo, couple, stranger
@@ -81,6 +83,8 @@ module.exports = async function handler(req, res) {
       structuredState,
       user_id
     } = req.body;
+    // SECURITY: scrub user-role messages before any downstream code touches them.
+    const messages = sanitizeUserMessages(_rawMessages, 'chatgpt');
 
     // ==========================================================================
     // VALIDATE REQUEST

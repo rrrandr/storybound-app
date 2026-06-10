@@ -4,6 +4,11 @@ export const config = {
   maxDuration: 60
 };
 
+// SECURITY: server-side prompt-injection scrub. CJS module imported via the
+// default-then-destructure ESM/CJS interop pattern (works across Node versions).
+import _sanitizeInjectionMod from './_sanitize-injection.js';
+const { stripInjectionFromText } = _sanitizeInjectionMod;
+
 // ============================================================
 // SIZE MAPPING - Normalize to OpenAI-supported dimensions
 // ============================================================
@@ -1182,7 +1187,7 @@ export default async function handler(req, res) {
   // Phase 2b: archetype, arousal, world, era — structural scaffolding (not yet used)
   // tone: Story tone for Wry Confessional bypass
   const {
-    prompt,
+    prompt: _rawPrompt,
     provider,
     size = '1024x1024',
     imageIntent,
@@ -1208,6 +1213,9 @@ export default async function handler(req, res) {
     styleAuthority,
     styleExpectedTags
   } = req.body;
+  // SECURITY: scrub role-marker / separator / external-network patterns from
+  // the user-controlled prompt before any downstream code touches it.
+  const prompt = typeof _rawPrompt === 'string' ? stripInjectionFromText(_rawPrompt) : _rawPrompt;
 
   if (!prompt) {
     return res.status(400).json({ error: 'Prompt required' });

@@ -130,6 +130,12 @@ function validateGrokModel(model) {
 // MAIN HANDLER
 // =============================================================================
 
+// SECURITY: server-side prompt-injection scrub on user-role messages.
+// The sanitizer file is CommonJS; in ESM we default-import then destructure
+// so it works across Node versions without relying on named-import interop.
+import _sanitizeInjectionMod from './_sanitize-injection.js';
+const { sanitizeUserMessages } = _sanitizeInjectionMod;
+
 export default async function handler(req, res) {
   // CORS headers
   const origin = req.headers.origin || '';
@@ -158,7 +164,7 @@ export default async function handler(req, res) {
 
   try {
     const {
-      messages,
+      messages: _rawMessages,
       model,
       temperature = 0.7,
       max_tokens = 1000,
@@ -166,6 +172,8 @@ export default async function handler(req, res) {
       esd = null,  // Erotic Scene Directive (required for specialist rendering)
       convId = null  // xAI conversation id → x-grok-conv-id header, maximizes prompt-cache hits across requests
     } = req.body;
+    // SECURITY: scrub user-role messages before any downstream code touches them.
+    const messages = sanitizeUserMessages(_rawMessages, 'grok');
 
     // ==========================================================================
     // VALIDATE REQUEST

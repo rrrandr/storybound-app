@@ -24,6 +24,9 @@ const ALLOWED_MISTRAL_MODELS = [
   'mistral-small-latest'
 ];
 
+// SECURITY: server-side prompt-injection scrub on user-role messages.
+const { sanitizeUserMessages } = require('./_sanitize-injection.js');
+
 module.exports = async function handler(req, res) {
   // CORS headers
   const origin = req.headers.origin || '';
@@ -52,12 +55,14 @@ module.exports = async function handler(req, res) {
 
   try {
     const {
-      messages,
+      messages: _rawMessages,
       model = 'mistral-medium-latest',
       role = 'SD_FALLBACK',
       temperature = 0.7,
       max_tokens = 500
     } = req.body;
+    // SECURITY: scrub user-role messages before any downstream code touches them.
+    const messages = sanitizeUserMessages(_rawMessages, 'mistral');
 
     // ==========================================================================
     // VALIDATE REQUEST

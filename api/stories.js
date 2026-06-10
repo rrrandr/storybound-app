@@ -1,5 +1,33 @@
 import { createClient } from '@supabase/supabase-js';
 
+// ────────────────────────────────────────────────────────────────────
+// SECURITY: short-field hygiene for stored story fields.
+//
+// SCOPE intentionally LIMITED to: length cap + invisible-character strip.
+//
+// We do NOT run prompt-injection regex on persisted titles / author names
+// because they are legitimate user content, displayed verbatim to other
+// users, and a title like "Ignore Previous Instructions" or "Human: A
+// Memoir" must round-trip unmangled. Prompt-injection sanitation belongs
+// on prompt-bound fields at the point they enter an LLM prompt, not on
+// the storage layer. Cross-user XSS is handled by escapeHTML on render
+// (verified in app.js + admin/bug-reports.html).
+// ────────────────────────────────────────────────────────────────────
+function sanitizeStoryShortField(value, maxLen) {
+  if (value === undefined || value === null) return value;
+  if (typeof value !== 'string') return null; // refuse non-strings rather than coerce
+  let t = value
+    // C0 controls except \t (0x09) and \n (0x0A), plus DEL (0x7F)
+    .replace(/[ --]/g, '')
+    // Zero-width / RTL-override / BOM / interlinear unicode (prompt-padding,
+    // invisible-character bidi attacks)
+    .replace(/[​-‏ - ⁠-⁯﻿￹-￻]/g, '')
+    .trim();
+  if (!t) return null;
+  if (t.length > maxLen) t = t.slice(0, maxLen);
+  return t;
+}
+
 export default async function handler(req, res) {
   // CORS
   const origin = req.headers.origin || '';
@@ -48,6 +76,11 @@ export default async function handler(req, res) {
 
   const body = req.body || {};
 
+  // SECURITY (cap + invisible-char strip only — see sanitizeStoryShortField above).
+  // Computed once, used by both PUT and POST below.
+  const safeTitle = sanitizeStoryShortField(body.title, 200);
+  const safeAuthorName = sanitizeStoryShortField(body.author_name, 100);
+
   // ============================================================
   // UPDATE STORY
   // ============================================================
@@ -60,7 +93,7 @@ export default async function handler(req, res) {
       .from('stories')
       .update({
         updated_at: new Date().toISOString(),
-        title: body.title,
+        title: safeTitle,
         cover_url: body.cover_url,
         content_json: body.content_json,
         scene_count: body.scene_count,
@@ -69,7 +102,7 @@ export default async function handler(req, res) {
         visibility: body.visibility,
         library_opt_in: body.library_opt_in,
         author_opt_in: body.author_opt_in,
-        author_name: body.author_name
+        author_name: safeAuthorName
       })
       .eq('id', body.id)
       .select()
@@ -90,7 +123,7 @@ export default async function handler(req, res) {
       .from('stories')
       .insert({
         author_user_id: user.id,
-        title: body.title || 'Untitled',
+        title: safeTitle || 'Untitled',
         cover_url: body.cover_url || null,
         content_json: body.content_json || {},
         scene_count: body.scene_count || 0,
@@ -99,7 +132,7 @@ export default async function handler(req, res) {
         visibility: body.visibility || 'private',
         library_opt_in: body.library_opt_in !== false,
         author_opt_in: body.author_opt_in || false,
-        author_name: body.author_name || null
+        author_name: safeAuthorName || null
       })
       .select()
       .single();
@@ -111,4 +144,3 @@ export default async function handler(req, res) {
     return res.status(201).json({ story: data });
   }
 }
-

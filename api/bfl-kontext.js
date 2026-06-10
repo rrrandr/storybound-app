@@ -8,6 +8,10 @@ export const config = {
 
 const BFL_BASE = 'https://api.bfl.ai/v1';
 
+// SECURITY: server-side prompt-injection scrub (CJS via default-import interop).
+import _sanitizeInjectionMod from './_sanitize-injection.js';
+const { stripInjectionFromText } = _sanitizeInjectionMod;
+
 export default async function handler(req, res) {
   // CORS headers
   const origin = req.headers.origin || '';
@@ -136,7 +140,9 @@ export default async function handler(req, res) {
 
   // Mode A: Create task
   if (req.method === 'POST') {
-    const { prompt, model, width, height, steps, guidance, output_format, seed } = req.body;
+    const { prompt: _rawPrompt, model, width, height, steps, guidance, output_format, seed } = req.body;
+    // SECURITY: scrub the user-typed prompt before forwarding to BFL.
+    const prompt = typeof _rawPrompt === 'string' ? stripInjectionFromText(_rawPrompt) : _rawPrompt;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt required' });

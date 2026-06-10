@@ -21,6 +21,9 @@ const ALLOWED_GEMINI_MODELS = [
   'gemini-1.5-flash'
 ];
 
+// SECURITY: server-side prompt-injection scrub on user-role messages.
+const { sanitizeUserMessages } = require('./_sanitize-injection.js');
+
 module.exports = async function handler(req, res) {
   // CORS headers
   const origin = req.headers.origin || '';
@@ -49,13 +52,15 @@ module.exports = async function handler(req, res) {
 
   try {
     const {
-      messages,
+      messages: _rawMessages,
       model = 'gemini-2.0-flash',
       role = 'FALLBACK_AUTHOR',
       temperature = 0.5,
       max_tokens = 1500,
       response_format
     } = req.body;
+    // SECURITY: scrub user-role messages before any downstream code touches them.
+    const messages = sanitizeUserMessages(_rawMessages, 'gemini');
 
     // ==========================================================================
     // VALIDATE REQUEST
