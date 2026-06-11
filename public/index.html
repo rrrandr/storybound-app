@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260608-kill-latency-whisper">
+  <link rel="stylesheet" href="/styles.css?v=20260611-age-ancestry-restore">
 </head>
 
 <body class="booting">
@@ -1309,6 +1309,10 @@
                 </select>
                 <input id="customPlayerPronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
             </div>
+            <div class="character-field character-field-age">
+                <label>Age</label>
+                <input id="playerAgeInput" type="text" inputmode="numeric" pattern="[2-9][0-9]" maxlength="2" class="plaque-input sb-age-input" placeholder="32" autocomplete="off">
+            </div>
             <div class="character-field character-field-ancestry fate-input-wrapper">
                 <label>Ancestry</label>
                 <input id="ancestryInputPlayer" type="text" class="fate-field ancestry-field plaque-input" data-fate-type="ancestry" placeholder="e.g. Irish-American">
@@ -1371,6 +1375,10 @@
                             <option value="Custom">Custom</option>
                         </select>
                         <input id="customLovePronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+                    </div>
+                    <div class="character-field character-field-age">
+                        <label>Age</label>
+                        <input id="loveInterestAgeInput" type="text" inputmode="numeric" pattern="[2-9][0-9]" maxlength="2" class="plaque-input sb-age-input" placeholder="38" autocomplete="off">
                     </div>
                     <div class="character-field character-field-ancestry fate-input-wrapper">
                         <label>Ancestry</label>
@@ -2389,7 +2397,7 @@
 <script src="/orchestration-client.js?v=20260610-li-architecture-context"></script>
 <script src="/badgeEngine.js?v=20260609-badge-error-surface"></script>
 <script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
-<script src="/app.js?v=20260610-oas-state-parity"></script>
+<script src="/app.js?v=20260611-phase1-age-ancestry-consumers"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL

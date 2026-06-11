@@ -2067,11 +2067,19 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
     display: none !important;
 }
 
-/* Ancestry field removed from both Character and Love Interest cards.
-   Elements remain in DOM so any downstream code reading the ancestry input
-   (fate binding, prompt directives) still finds the element. */
-.character-tarot-card .character-field-ancestry {
-    display: none !important;
+/* Ancestry field RESTORED 2026-06-11 (Roman) — the prior removal was leading
+   to default-white protagonists since the body bible has no other cultural
+   input lever. Brought back alongside the new Age field. The historical
+   culture profile system (_HISTORICAL_CULTURE_ROSTER) can still misclassify
+   uncommon entries — separate work — but the explicit player signal is the
+   single clearest input either way. */
+
+/* Age field — narrow (2-char content), sits between Pronouns and Ancestry. */
+.character-tarot-card .character-field-age {
+    /* Inherits the standard .character-field grid placement; only width tunes. */
+}
+.character-tarot-card .character-field-age input {
+    text-align: center;
 }
 
 /* Double input text size (and implicitly height, since padding is em-based).
