@@ -2192,6 +2192,7 @@
 
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="storyBookmarksBtn" class="small-btn" onclick="window.toggleBookmarksPanel()">Bookmarks</button>
+       <button id="storySaveExitBtn" class="small-btn" onclick="window.saveAndExitStory()">Save &amp; Exit</button>
        <button id="btnBindReincarnation" class="small-btn" style="display:none;">Bind Reincarnation</button>
        <button id="safeWordBtn" class="small-btn safe-word-btn" style="display:none;" onclick="window.triggerSafeWord()">Safe Word</button>
     </div>
@@ -2397,7 +2398,7 @@
 <script src="/orchestration-client.js?v=20260610-li-architecture-context"></script>
 <script src="/badgeEngine.js?v=20260609-badge-error-surface"></script>
 <script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
-<script src="/app.js?v=20260611-species-compat-resolver"></script>
+<script src="/app.js?v=20260611-save-and-exit"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
@@ -2755,6 +2756,7 @@
          shared panel later if needed. -->
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="gnBookmarksBtn" class="small-btn" onclick="window.toggleBookmarksPanel()">Bookmarks</button>
+       <button id="gnSaveExitBtn" class="small-btn" onclick="window.saveAndExitStory()">Save &amp; Exit</button>
        <button id="gnBindReincarnation" class="small-btn" style="display:none;">Bind Reincarnation</button>
        <button id="gnSafeWordBtn" class="small-btn safe-word-btn" style="display:none;">Safe Word</button>
     </div>
