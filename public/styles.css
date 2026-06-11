@@ -2127,7 +2127,7 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
 .character-tarot-fields {
     display: flex;
     flex-direction: column;
-    gap: 1.9cqi;
+    gap: 1.0cqi; /* Roman 2026-06-11: halved from 1.9cqi to fit 5 fields cleanly inside card art */
     flex: 0 0 auto; /* Don't stretch - natural height */
     overflow: hidden;
     /* Padding to keep content inside black border lines of PNG — cqi locks to card width */
@@ -2154,10 +2154,11 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
 }
 
 .character-tarot-card .character-field label {
-    font-size: 0.65em;
-    margin-bottom: 0.15em;
+    font-size: 0.55em; /* Roman 2026-06-11: 0.65em → 0.55em — tighter to fit 5 fields */
+    margin-bottom: 0.05em; /* Roman 2026-06-11: 0.15em → 0.05em — half the label-to-input gap */
     width: 100%;
-    text-align: center;
+    text-align: left; /* Roman 2026-06-11: center → left per spec */
+    padding-left: 0.15em; /* Small inset so the label doesn't kiss the input's left edge */
     /* Engraved label: deep charcoal with subtle highlight */
     color: #1a1612;
     text-shadow: 0 1px 0 rgba(218, 165, 32, 0.2);
@@ -2168,8 +2169,8 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
 
 .character-tarot-card .character-field input,
 .character-tarot-card .character-field select {
-    font-size: 0.8em;
-    padding: 0.3em 0.45em;
+    font-size: 0.7em; /* Roman 2026-06-11: 0.8em → 0.7em — scale text down to fit shorter input */
+    padding: 0.15em 0.45em; /* Roman 2026-06-11: 0.3em → 0.15em vertical — halve field height */
     width: 100%; /* Full width of container */
     box-sizing: border-box;
     /* Pressed/embossed input field */
@@ -2223,11 +2224,15 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
 
 .character-tarot-card .character-field-ancestry .rotating-placeholder {
     position: absolute;
-    top: 6.8cqi;  /* Align with input top — scales with card */
+    /* Roman 2026-06-11: placeholder geometry re-tuned for the halved input height
+       (input padding 0.3em → 0.15em + label margin 0.15em → 0.05em). Old top:6.8cqi
+       / height:10.7cqi sat against the taller input. Halve both so the rotating
+       hint lines up with the new field top edge instead of overshooting it. */
+    top: 4.4cqi;
     left: 2.9cqi;
     right: 2.9cqi;
-    height: 10.7cqi;
-    font-size: 0.65em;
+    height: 6.4cqi;
+    font-size: 0.55em;
     color: rgba(30, 25, 15, 0.4);
     pointer-events: none;
     z-index: 1;
@@ -2235,7 +2240,7 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
 
 /* Override global 10px padding-top that pushes text out of small container */
 .character-tarot-card .character-field-ancestry .rotating-placeholder-inner {
-    padding-top: 1.9cqi;
+    padding-top: 0.9cqi; /* Roman 2026-06-11: halved from 1.9cqi to match the new placeholder height */
 }
 
 /* Hide native placeholder when rotating suggestions are present */
