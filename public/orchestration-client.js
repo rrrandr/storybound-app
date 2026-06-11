@@ -5251,6 +5251,51 @@ Respond in EXACTLY two lines:
           _plotLines.push('Mythic Couple flag ACTIVE (story-wide) — ' + _myStMythic.pcName + ' + ' + _myStMythic.liName + ' are now legend; NPCs everywhere recognize their names. Confession-shape cards may surface the strangeness of being known. Set since scene ' + _myStMythic.sealedAtScene + '.');
         }
       } catch (_) {}
+
+      // ── LI ARCHITECTURE STATE (Roman 2026-06-10) ───────────────────────
+      // Surface the relationship architecture stack so the OAS intimate
+      // batcher previews are as smart as literary-intimacy fate resolution.
+      // Symmetric with the literary-side buildFateRelationshipAwarenessDirective
+      // wiring (~app.js:233446) — both consume the same state, just via
+      // different prompt construction.
+      try {
+        var _arch = _plotCtx.liArchitecture || {};
+        if (_arch.socialProofPrimary) {
+          _plotLines.push('LI social proof PRIMARY=' + _arch.socialProofPrimary.toUpperCase()
+            + (_arch.socialProofSecondary ? ', SECONDARY=' + _arch.socialProofSecondary.toUpperCase() : '')
+            + ' — cards may flavor moves through this (scarcity = access; competence = trust/challenge; myth = curiosity; status = visibility/deference; sexual = chemistry).');
+        }
+        if (_arch.relationalValuePrimary) {
+          var _attLine = _arch.relationalValuePrimary === 'attention' && _arch.attentionEscalationStage
+            ? ' Attention escalation stage ' + _arch.attentionEscalationStage + '/5 — cards may push toward stage ' + Math.min(5, _arch.attentionEscalationStage + 1) + '.'
+            : '';
+          _plotLines.push('LI relational value PRIMARY=' + _arch.relationalValuePrimary.toUpperCase()
+            + (_arch.relationalValueSecondary ? ', SECONDARY=' + _arch.relationalValueSecondary.toUpperCase() : '')
+            + ' — cards may build on the "why is she choosing him" vector (attention/character/competence/scarcity/mystery).'
+            + _attLine);
+        }
+        if (_arch.interestSignalLast && _arch.interestSignalLast.type) {
+          _plotLines.push('Most recent interest signal: ' + _arch.interestSignalLast.type.toUpperCase()
+            + ' (scene ' + (_arch.interestSignalLast.sceneIdx || '?') + ') — confession/temptation cards land hardest after vulnerability/attention/physical signals; reversal after prioritization/investment. Build on the signal, do NOT contradict it.');
+        }
+        if (_arch.privateExplanationSource && _arch.privateExplanationStage && _arch.privateExplanationStage !== 'revealed') {
+          _plotLines.push('LI long-arc mystery — source=' + _arch.privateExplanationSource
+            + ', stage=' + _arch.privateExplanationStage + ' — cards may create opportunities to NOTICE / TEST / EARN ACCESS (but do NOT resolve the mystery here).');
+        }
+        if (_arch.hiddenBurdenCategory && _arch.hiddenBurdenStage) {
+          var _bShare;
+          var _bc = _arch.hiddenBurdenCategory;
+          if (_bc === 'misbelief_held')         _bShare = 'opportunity to challenge a false belief she has about herself';
+          else if (_bc === 'burden_carried')    _bShare = 'opportunity to share the load';
+          else if (_bc === 'shame_hidden')      _bShare = 'opportunity to know the truth and stay';
+          else if (_bc === 'identity_concealed')_bShare = 'opportunity to honor who she really is';
+          else if (_bc === 'sacrifice_made')    _bShare = 'opportunity to help her reclaim what she gave up';
+          else if (_bc === 'rescue_needed')     _bShare = 'opportunity to act on the threat';
+          else _bShare = 'opportunity to matter to what she carries';
+          _plotLines.push('LI hidden burden — category=' + _bc + ', stage=' + _arch.hiddenBurdenStage + '/5 — cards may create an ' + _bShare
+            + (_arch.hiddenBurdenStage >= 5 ? ' (stage 5 PARTICIPATION REACHED — the PC ALREADY matters; cards should DEMONSTRATE that, not re-earn it.)' : (_arch.hiddenBurdenStage >= 3 ? ' (trust earned; the move is welcome.)' : ' (trust still being earned; the move must be invited.)')));
+        }
+      } catch (_) {}
     }
     const _plotBlock = _plotLines.length ? '\nPLOT STATE (use these to ground card variants in the actual story):\n' + _plotLines.map(l => '  • ' + l).join('\n') + '\n' : '';
 

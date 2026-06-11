@@ -599,6 +599,31 @@ function stopContinuousSparkles() {
             };
         }
 
+        // LI ARCHITECTURE STATE (Roman 2026-06-10) — relationship locks the
+        // OAS Grok preview batcher was missing. Single source of truth so
+        // both fatecards.js consumers and the orchestration batcher get the
+        // same architecture context that literary scene generation gets via
+        // buildFateRelationshipAwarenessDirective. Nulls are expected on
+        // pre-Scene-1 stories; harmless to surface.
+        const liArchitecture = {
+            // Male-LI
+            socialProofPrimary:        s._liSocialProofPrimary || null,
+            socialProofSecondary:      s._liSocialProofSecondary || null,
+            socialProofLockedScene:    s._liSocialProofLockedScene || null,
+            // Female-LI (relational value + attention escalation)
+            relationalValuePrimary:    s._liRelationalValuePrimary || null,
+            relationalValueSecondary:  s._liRelationalValueSecondary || null,
+            attentionEscalationStage:  s._liAttentionEscalationStage || 0,
+            // Both — long-arc mystery
+            privateExplanationSource:  s._liPrivateExplanationSource || null,
+            privateExplanationStage:   s._liPrivateExplanationStage || null,
+            // Female-LI — hidden burden + stage
+            hiddenBurdenCategory:      s._liHiddenBurdenCategory || null,
+            hiddenBurdenStage:         s._liHiddenBurdenStage || 0,
+            // Tactical — the freshest observation Fate should consume
+            interestSignalLast:        s._liInterestSignalLast || null
+        };
+
         return {
             // A-plot
             aPlotGoal, aPlotStakes, aPlotClock, aPlotTimelineLength, arcPct, turnCount,
@@ -611,7 +636,9 @@ function stopContinuousSparkles() {
             // Fate-OAS distortion (during invocation)
             fateOASBudget,
             // Pair-level lock-and-key (Roman 2026-06-09)
-            pairBond
+            pairBond,
+            // Relationship architecture (Roman 2026-06-10) — bundled
+            liArchitecture
         };
     }
     window.extractPlotContext = extractPlotContext;
