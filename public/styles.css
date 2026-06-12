@@ -11721,6 +11721,10 @@ select {
 #globalBackBtn {
     position: fixed;
     z-index: 10010; /* Above all vault/modal overlays (max 10008) */
+    /* Roman 2026-06-12 v2: black plaque is now an INSET pseudo-element (::before)
+       smaller than the button so the ornate gold icon overflows it instead of
+       being framed by it. Button stays at the icon's natural 32×32 size with no
+       padding; the black sits behind only the central ~24×24 of the icon. */
     background: none;
     border: none;
     padding: 0;
@@ -11733,6 +11737,28 @@ select {
 }
 #burgerBtn { top: 10px; right: 10px; }
 #globalBackBtn { top: 15px; left: 15px; }
+
+/* The shrunken black plaque — sits BEHIND the icon, inset 5px on each side so
+   the gold icon's outer ornament overflows the black against the page. */
+#burgerBtn::before,
+#globalBackBtn::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    bottom: 5px;
+    left: 5px;
+    background: rgba(0, 0, 0, 0.78);
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 0;
+}
+/* Lift the img above the ::before plaque so the gold icon paints on top. */
+#burgerBtn img,
+#globalBackBtn img {
+    position: relative;
+    z-index: 1;
+}
 
 #burgerBtn::after,
 #globalBackBtn::after {
@@ -37272,13 +37298,13 @@ body.oas-active #cineDevLauncherWrap {
    the container also hides it. */
 .prose-sound-toggle {
     position: fixed;
-    /* Lock to the bottom-left of the CENTERED prose page (.story-pages-container
-       is max-width 860px, margin auto, so its left edge is calc(50vw - 430px)).
-       NOT the viewport corner — that belongs to the concierge bell. On narrow
-       viewports the calc collapses to ~16px (bell territory) so the @media
-       below moves the speaker ABOVE the bell instead of on top of it. */
-    left: max(16px, calc(50vw - 424px));
-    bottom: 16px;
+    /* Roman 2026-06-12: pin the speaker BELOW the back arrow at the top-left.
+       Back arrow is at top:15px with a 44×44 black plaque (15+44 = bottom edge
+       at 59px); speaker sits at top:64px for a 5px gap. Same left as back
+       arrow so they read as a single icon column. Previously this floated at
+       bottom-left of the centered prose page and "wandered" on viewport changes. */
+    top: 64px;
+    left: 15px;
     z-index: 8000;
     width: 40px;
     height: 40px;
@@ -37302,12 +37328,13 @@ body.oas-active #cineDevLauncherWrap {
 .prose-sound-toggle.is-muted:hover { opacity: 0.85; }
 .prose-sound-toggle .prose-sound-icon { display: flex; align-items: center; justify-content: center; pointer-events: none; }
 
-/* Narrow viewports: calc(50vw - 424px) collapses to 16px (bell territory).
-   Lift the speaker ABOVE the bell so both remain visible without overlap. */
+/* Narrow viewports: back arrow shifts to top:4 left:4 (44×44 plaque → bottom
+   edge at 48px); speaker tracks to top:53 left:4 with a 5px gap. */
 @media (max-width: 880px) {
     .prose-sound-toggle {
-        left: 12px;
-        bottom: 78px;
+        top: 53px;
+        left: 4px;
+        bottom: auto;
     }
 }
 
@@ -37347,13 +37374,35 @@ body.examine-card-gate-active #storyText ~ * {
     letter-spacing: 0.18em;
     color: var(--gold, #c9a24e);
     background: rgba(20, 16, 12, 0.94);
-    border: 2px double var(--gold, #c9a24e);
+    /* Roman 2026-06-12: the previous 2px double rendered as a hairline against
+       the dark background. Switched to 3px solid gold + a 1px outer accent ring
+       so the frame reads cleanly as a gold box even on glare. */
+    border: 3px solid var(--gold, #c9a24e);
     border-radius: 0;
-    cursor: pointer;
+    /* Roman 2026-06-12 v2: switched outline → box-shadow for the outer accent
+       ring. outline + outline-offset put the ring 2px OUTSIDE the button, where
+       it overlapped the compositing layer of the blurred siblings below
+       (filter: blur(3px) on #storyText ~ *) and the gold ring blurred with them.
+       box-shadow renders within the same paint layer as the button and respects
+       the isolation below — so the ring stays sharp regardless of neighbor blur. */
     box-shadow:
+        0 0 0 2px rgba(20, 16, 12, 0.94),
+        0 0 0 3px rgba(201, 162, 78, 0.55),
         0 4px 18px rgba(0, 0, 0, 0.55),
-        0 0 28px rgba(201, 162, 78, 0.25),
-        inset 0 0 16px rgba(201, 162, 78, 0.08);
+        0 0 28px rgba(201, 162, 78, 0.32),
+        inset 0 0 16px rgba(201, 162, 78, 0.10);
+    cursor: pointer;
+    /* Roman 2026-06-12 v2: ISOLATE the button from the blurred neighbors. The
+       blur applied to body.examine-card-gate-active #storyText ~ * creates a
+       compositing layer whose edges bled into the gold ring at the button
+       boundary. isolation + relative + z-index put the button into its own
+       stacking context above that layer; filter: none is an extra belt to
+       counter any inherited blur from an ancestor we have not predicted. */
+    isolation: isolate;
+    position: relative;
+    z-index: 10;
+    filter: none;
+    -webkit-filter: none;
     transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
     animation: examine-card-btn-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s both;
 }
@@ -37364,7 +37413,11 @@ body.examine-card-gate-active #storyText ~ * {
 .examine-card-btn:hover {
     color: #f3e6c8;
     transform: translateY(-2px) scale(1.03);
+    /* Preserve the outer accent ring (first two box-shadow values) on hover,
+       and brighten the gold glow. Roman 2026-06-12 v2. */
     box-shadow:
+        0 0 0 2px rgba(20, 16, 12, 0.94),
+        0 0 0 3px rgba(201, 162, 78, 0.75),
         0 6px 24px rgba(0, 0, 0, 0.6),
         0 0 36px rgba(201, 162, 78, 0.42),
         inset 0 0 16px rgba(201, 162, 78, 0.14);
@@ -37376,6 +37429,8 @@ body.examine-card-gate-active #storyText ~ * {
 .examine-card-btn:focus-visible {
     outline: none;
     box-shadow:
+        0 0 0 2px rgba(20, 16, 12, 0.94),
+        0 0 0 3px rgba(201, 162, 78, 0.85),
         0 4px 18px rgba(0, 0, 0, 0.55),
         0 0 36px rgba(201, 162, 78, 0.5),
         inset 0 0 16px rgba(201, 162, 78, 0.16);
