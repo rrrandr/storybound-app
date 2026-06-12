@@ -1,0 +1,34 @@
+#!/bin/sh
+# Storybound pre-commit gate.
+#
+# Runs the Scene-1 source-contamination + restless_hands harness whenever a
+# commit touches public/app.js (or the harness itself), so a calcified
+# literal/tic re-priming a pool fails the commit instead of shipping silently.
+#
+# Activated repo-wide via: git config core.hooksPath .githooks
+# (run that once per clone; CONTRIBUTING / README should mention it).
+#
+# Bypass for an intentional WIP commit: git commit --no-verify
+
+set -e
+
+# Only gate when relevant files are staged.
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+echo "$staged" | grep -Eq '^(public/app\.js|scripts/verify-scene1-decontam\.mjs)$' || exit 0
+
+HARNESS="scripts/verify-scene1-decontam.mjs"
+[ -f "$HARNESS" ] || exit 0   # harness absent (old checkout) → don't block
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "pre-commit: node not found — skipping verify:scene1 (install node to enable the gate)." >&2
+  exit 0
+fi
+
+echo "pre-commit: running verify:scene1 (app.js changed)…"
+if ! node "$HARNESS"; then
+  echo "" >&2
+  echo "pre-commit: ✗ verify:scene1 FAILED — a de-primed literal/tic leaked back into a pool." >&2
+  echo "            Fix the flagged pool entry, or bypass with: git commit --no-verify" >&2
+  exit 1
+fi
+echo "pre-commit: ✓ verify:scene1 passed."
