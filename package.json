@@ -1,8 +1,11 @@
 {
+  "scripts": {
+    "verify:scene1": "node scripts/verify-scene1-decontam.mjs"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
     "micro": "^10.0.1",
     "stripe": "^20.3.1",
-    "vercel": "^54.11.1"
+    "vercel": "^54.12.2"
   }
 }
