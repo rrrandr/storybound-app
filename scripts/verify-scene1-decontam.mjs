@@ -132,7 +132,11 @@ console.log('=== restless_hands: PC body-tell pools clean ===');
     const rh1 = /\b(hands?|fingers?|knuckles?|thumb|thumbnail|tongue|teeth|tooth|jaw|lips?|mouth)\b[^.?!\n]{0,45}\b(restless|fidget(?:ed|ing|y)?|tighten(?:ed|ing)?|gripp?(?:ed|ing)?|drumm(?:ed|ing)|tapp(?:ed|ing)|click(?:ed|ing)|press(?:ed|ing)|trembl(?:ed|ing)|curl(?:ed|ing)|clench(?:ed|ing)|twitch(?:ed|ing)|worried|ran (?:my|her|his) tongue|stilled|went still|found the edge|searching for (?:texture|grip))\b/i;
     const rh2 = /\b(restless|fidget(?:ed|ing|y)?)\b[^.?!\n]{0,25}\b(hands?|fingers?|tongue|jaw)\b/i;
     const rhHit = (t) => rh1.test(t) || rh2.test(t);
-    const TELL_POOLS = ['_PC_STRESS_TIC_POOL', '_PC_SIGFEAT_POOL', '_SHAPE_PC_GESTURE_POOL', '_PC_DESIRE_LEAK', '_PC_BODY_TELL_POOL_FEMALE', '_PC_BODY_TELL_POOL_MALE'];
+    // _LI_DESIRE_FEATURE_POOL added 2026-06-12 — a live-prose run caught one of
+    // its entries ("…set her hand against just to feel it tighten") tripping
+    // restless_hands and getting echoed into output. Desire-feature exemplars
+    // are body-anchored, so they need the same guard as the tell pools.
+    const TELL_POOLS = ['_PC_STRESS_TIC_POOL', '_PC_SIGFEAT_POOL', '_SHAPE_PC_GESTURE_POOL', '_PC_DESIRE_LEAK', '_PC_BODY_TELL_POOL_FEMALE', '_PC_BODY_TELL_POOL_MALE', '_LI_DESIRE_FEATURE_POOL'];
     for (const name of TELL_POOLS) {
       const arr = extractPool(name);
       const hits = arr.filter(rhHit);
