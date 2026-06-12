@@ -3,6 +3,8 @@
 // Verifies the picturability / connector / heroine-occupation DE-PRIME holds:
 // the calcified literals must never appear in any rotating exemplar POOL, and
 // the per-story exemplar windows must actually rotate across fresh storyIds.
+// ALSO guards the restless_hands body-tell de-prime: the PC body-tell pools
+// must score zero matches against the canonical restless_hands matcher.
 //
 // This is a SOURCE test, not a prose test — it proves the prompt no longer
 // SEEDS the calcified phrases. (Prose-output checks — [PROSE:CANONICAL],
@@ -114,6 +116,32 @@ for (const key in POOLS) {
   Object.entries(freq).filter(([, c]) => c >= 3).forEach(([e, c]) => fail(`${key}: "${e}" in ${c}/4 windows`));
 }
 
+// ── 8. CHECK: PC body-tell pools stay clean of the restless_hands tic ──
+// The two regexes below MIRROR the canonical matcher at the `restless_hands`
+// entry in app.js (search: key: 'restless_hands'). A drift guard asserts the
+// source matcher still contains distinctive fragments — if it was edited,
+// this harness fails loudly so the mirror gets updated rather than silently
+// going stale.
+console.log('=== restless_hands: PC body-tell pools clean ===');
+{
+  const DRIFT_ANCHORS = ['searching for (?:texture|grip)', 'restless|fidget'];
+  const missing = DRIFT_ANCHORS.filter((a) => !src.includes(a));
+  if (missing.length) {
+    fail(`restless_hands matcher DRIFTED in app.js (missing: ${missing.join(', ')}) — update the regex mirror in this harness.`);
+  } else {
+    const rh1 = /\b(hands?|fingers?|knuckles?|thumb|thumbnail|tongue|teeth|tooth|jaw|lips?|mouth)\b[^.?!\n]{0,45}\b(restless|fidget(?:ed|ing|y)?|tighten(?:ed|ing)?|gripp?(?:ed|ing)?|drumm(?:ed|ing)|tapp(?:ed|ing)|click(?:ed|ing)|press(?:ed|ing)|trembl(?:ed|ing)|curl(?:ed|ing)|clench(?:ed|ing)|twitch(?:ed|ing)|worried|ran (?:my|her|his) tongue|stilled|went still|found the edge|searching for (?:texture|grip))\b/i;
+    const rh2 = /\b(restless|fidget(?:ed|ing|y)?)\b[^.?!\n]{0,25}\b(hands?|fingers?|tongue|jaw)\b/i;
+    const rhHit = (t) => rh1.test(t) || rh2.test(t);
+    const TELL_POOLS = ['_PC_STRESS_TIC_POOL', '_PC_SIGFEAT_POOL', '_SHAPE_PC_GESTURE_POOL', '_PC_DESIRE_LEAK', '_PC_BODY_TELL_POOL_FEMALE', '_PC_BODY_TELL_POOL_MALE'];
+    for (const name of TELL_POOLS) {
+      const arr = extractPool(name);
+      const hits = arr.filter(rhHit);
+      if (hits.length) { hits.forEach((e) => fail(`${name}: restless_hands seed → "${e}"`)); }
+      else console.log(`  ✓ ${name} — 0/${arr.length} restless_hands`);
+    }
+  }
+}
+
 console.log('');
-if (failed) { console.log('RESULT: ✗ FAIL — a de-primed literal leaked back or rotation collapsed.'); process.exit(1); }
-console.log('RESULT: ✓ PASS — pools clean, windows rotate, no over-exposure.');
+if (failed) { console.log('RESULT: ✗ FAIL — a de-primed literal/tic leaked back or rotation collapsed.'); process.exit(1); }
+console.log('RESULT: ✓ PASS — pools clean, windows rotate, no over-exposure, body-tells clean.');
