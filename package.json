@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks || exit 0",
     "verify:scene1": "node scripts/verify-scene1-decontam.mjs"
   },
   "dependencies": {
