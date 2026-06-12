@@ -142,6 +142,30 @@ console.log('=== restless_hands: PC body-tell pools clean ===');
   }
 }
 
+// ── 9. CHECK: CG body-language proxy pool not a hand monoculture ──
+// _CG_BODY_LANGUAGE_PROXY_POOL feeds FACE-HIDDEN CG scenes ("the body says
+// what the face cannot"). Its calcification mode is the CG-native analog of
+// restless_hands: collapsing to hand/finger/thumb/wrist gestures. Guard the
+// hand-based ratio so it stays a body-register MIX, not a hand monoculture.
+console.log('=== CG body-language proxy: hand-monoculture guard ===');
+{
+  const HAND_RE = /\b(hand|finger|thumb|wrist|knuckle|palm)/i;
+  const RH = /\b(hands?|fingers?|knuckles?|thumb|thumbnail|tongue|teeth|tooth|jaw|lips?|mouth)\b[^.?!\n]{0,45}\b(restless|fidget(?:ed|ing|y)?|tighten(?:ed|ing)?|gripp?(?:ed|ing)?|drumm(?:ed|ing)|tapp(?:ed|ing)|click(?:ed|ing)|press(?:ed|ing)|trembl(?:ed|ing)|curl(?:ed|ing)|clench(?:ed|ing)|twitch(?:ed|ing)|worried|ran (?:my|her|his) tongue|stilled|went still|found the edge|searching for (?:texture|grip))\b/i;
+  const HAND_MAX = 0.40; // hand-based entries must stay a minority
+  const cg = extractPool('_CG_BODY_LANGUAGE_PROXY_POOL');
+  const hands = cg.filter((e) => HAND_RE.test(e));
+  const ratio = hands.length / cg.length;
+  if (ratio > HAND_MAX) {
+    fail(`_CG_BODY_LANGUAGE_PROXY_POOL: ${hands.length}/${cg.length} (${Math.round(ratio * 100)}%) hand-based — exceeds ${HAND_MAX * 100}% (hand monoculture).`);
+    hands.forEach((e) => console.log(`      hand: "${e}"`));
+  } else {
+    console.log(`  ✓ hand-based ${hands.length}/${cg.length} (${Math.round(ratio * 100)}%) ≤ ${HAND_MAX * 100}%`);
+  }
+  const rhHits = cg.filter((e) => RH.test(e));
+  if (rhHits.length) rhHits.forEach((e) => fail(`_CG_BODY_LANGUAGE_PROXY_POOL: restless_hands seed → "${e}"`));
+  else console.log(`  ✓ 0/${cg.length} restless_hands matches`);
+}
+
 console.log('');
 if (failed) { console.log('RESULT: ✗ FAIL — a de-primed literal/tic leaked back or rotation collapsed.'); process.exit(1); }
-console.log('RESULT: ✓ PASS — pools clean, windows rotate, no over-exposure, body-tells clean.');
+console.log('RESULT: ✓ PASS — pools clean, windows rotate, no over-exposure, body-tells clean, CG proxy diverse.');
