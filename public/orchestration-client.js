@@ -1122,6 +1122,42 @@
       return { role: 'system', content: parts.join('') };
     });
 
+    // ── CACHE OBSERVABILITY (Roman 2026-06-13, steps 1+3) ────────────────────
+    // Fingerprint the ACTUALLY-SENT system segments (len + cheap FNV-1a hash +
+    // cache TTL) so a same-story multi-turn run reveals whether seg0/seg1 are
+    // byte-identical across turns — the precondition for a provider cache READ.
+    // Pure logging. Gated to substantial (literary-sized) Claude calls so the
+    // ~20 small Haiku audit calls per scene don't spam. _cacheSegSysChars is
+    // reused by the per-call [CACHE:USAGE] log below.
+    let _cacheSegSysChars = 0;
+    try {
+      if (_isClaudeModel) {
+        let _csSysMsg = null;
+        for (let _csi = 0; _csi < processedMessages.length; _csi++) {
+          if (processedMessages[_csi] && processedMessages[_csi].role === 'system') { _csSysMsg = processedMessages[_csi]; break; }
+        }
+        if (_csSysMsg) {
+          const _csBlocks = Array.isArray(_csSysMsg.content)
+            ? _csSysMsg.content
+            : [{ type: 'text', text: String(_csSysMsg.content || ''), cache_control: undefined }];
+          const _csHash = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = (h * 0x01000193) >>> 0; } return ('0000000' + h.toString(16)).slice(-8); };
+          const _csDesc = [];
+          for (let _csb = 0; _csb < _csBlocks.length; _csb++) {
+            const _csTxt = (_csBlocks[_csb] && typeof _csBlocks[_csb].text === 'string') ? _csBlocks[_csb].text : '';
+            _cacheSegSysChars += _csTxt.length;
+            const _csTtl = (_csBlocks[_csb] && _csBlocks[_csb].cache_control) ? (_csBlocks[_csb].cache_control.ttl || '5m') : 'none';
+            _csDesc.push('seg' + _csb + '=' + _csTxt.length + '#' + _csHash(_csTxt) + ' ttl=' + _csTtl);
+          }
+          if (_cacheSegSysChars >= 12000) {
+            const _csState = (typeof window !== 'undefined' && window.state) ? window.state : {};
+            console.log('[CACHE:SEGMENTS] story=' + (_csState.storyId || '?') + ' turn=' + (_csState.turnCount != null ? _csState.turnCount : '?')
+              + ' model=' + modelResolved + ' role=' + role + ' purpose=' + (options.purpose || role || '?')
+              + ' sentChars=' + _cacheSegSysChars + ' segs=' + _csBlocks.length + ' | ' + _csDesc.join(' '));
+          }
+        }
+      }
+    } catch (_csErr) {}
+
     const payload = {
       messages: processedMessages,
       role,
@@ -1172,6 +1208,25 @@
 
         const data = await res.json();
         _accumulateTokens(data, payload && payload.model);
+        // CACHE OBSERVABILITY (Roman 2026-06-13, step 2): per-call cache read/write,
+        // tagged with story/turn/purpose — so cache health is never inferred from the
+        // scene aggregate alone. Gated to the same literary-sized calls as [CACHE:SEGMENTS].
+        try {
+          if (_isClaudeModel && data && data.usage && _cacheSegSysChars >= 12000) {
+            const _cuState = (typeof window !== 'undefined' && window.state) ? window.state : {};
+            const _cuRead = data.usage.cache_read_input_tokens || 0;
+            const _cuWrite = data.usage.cache_creation_input_tokens || 0;
+            const _cuW1h = data.usage.cache_creation_1h_input_tokens || 0;
+            const _cuW5m = data.usage.cache_creation_5m_input_tokens || 0;
+            const _cuIn = data.usage.input_tokens || data.usage.prompt_tokens || 0;
+            const _cuDen = _cuRead + _cuWrite + _cuIn;
+            const _cuPct = _cuDen > 0 ? Math.round(100 * _cuRead / _cuDen) : 0;
+            console.log('[CACHE:USAGE] story=' + (_cuState.storyId || '?') + ' turn=' + (_cuState.turnCount != null ? _cuState.turnCount : '?')
+              + ' purpose=' + (options.purpose || role || '?') + ' model=' + (payload && payload.model)
+              + ' readTokens=' + _cuRead + ' writeTokens=' + _cuWrite + ' (1h=' + _cuW1h + ' 5m=' + _cuW5m + ')'
+              + ' freshInput=' + _cuIn + ' readShare=' + _cuPct + '%');
+          }
+        } catch (_cuErr) {}
 
         // Normalized response shape: use data.content (string from proxy)
         // Fallback to legacy choices[0].message.content for backward compat
