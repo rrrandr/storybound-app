@@ -77,6 +77,40 @@ function _conciergeIpRateLimited(ip) {
   return false;
 }
 
+// ── Durable cross-instance layer (Supabase). The in-memory limiter above is a
+// fast per-instance fast-path; this is the authoritative aggregate across all
+// serverless instances (it catches a distributed burst the in-memory layer
+// cannot). FAILS OPEN on any DB/config error — a database hiccup must never
+// block legitimate help traffic. Migration: 20260616_concierge_ip_rate_limit.sql.
+let _conciergeSb; // undefined = not tried; null = unavailable; object = client
+function _getConciergeSupabase() {
+  if (_conciergeSb !== undefined) return _conciergeSb;
+  try {
+    const url = process.env.SUPABASE_URL, key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) { _conciergeSb = null; return null; }
+    const { createClient } = require('@supabase/supabase-js');
+    _conciergeSb = createClient(url, key, { auth: { persistSession: false } });
+  } catch (_) { _conciergeSb = null; }
+  return _conciergeSb;
+}
+async function _conciergeIpRateLimitedDB(ip) {
+  if (!ip || ip === 'unknown') return false;
+  const sb = _getConciergeSupabase();
+  if (!sb) return false; // no DB configured → rely on the in-memory layer
+  try {
+    const now = Date.now();
+    const { data, error } = await sb.rpc('concierge_ip_bump', {
+      p_ip: ip,
+      p_min_bucket: 'm:' + Math.floor(now / 60000),
+      p_hr_bucket:  'h:' + Math.floor(now / 3600000),
+      p_min_cap: CONCIERGE_IP_LIMITS.perMinute,
+      p_hr_cap:  CONCIERGE_IP_LIMITS.perHour
+    });
+    if (error) { console.warn('[CHATGPT-PROXY] concierge rate RPC error (failing open):', error.message); return false; }
+    return data || false; // 'minute' | 'hour' | null
+  } catch (e) { console.warn('[CHATGPT-PROXY] concierge rate DB error (failing open):', e && e.message); return false; }
+}
+
 module.exports = async function handler(req, res) {
   // CORS headers
   const origin = req.headers.origin || '';
@@ -134,7 +168,10 @@ module.exports = async function handler(req, res) {
     // story-generation roles are never throttled). Returns a diegetic 429.
     if (role === 'CONCIERGE') {
       const _cip = _conciergeClientIp(req);
-      const _limited = _conciergeIpRateLimited(_cip);
+      // 1) Fast per-instance check (no DB call when this instance is already over).
+      let _limited = _conciergeIpRateLimited(_cip);
+      // 2) Durable cross-instance check (Supabase; fails open). Skip if already blocked.
+      if (!_limited) _limited = await _conciergeIpRateLimitedDB(_cip);
       if (_limited) {
         console.warn(`[CHATGPT-PROXY] concierge per-IP rate-limit hit (window=${_limited}) ip=${_cip}`);
         return res.status(429).json({
