@@ -41,6 +41,42 @@ const { validateModelForRole, getDefaultModel, ALLOWED_MODELS, getPassTier, buil
 // SECURITY: server-side prompt-injection scrub on user-role messages.
 const { sanitizeUserMessages } = require('./_sanitize-injection.js');
 
+// ============================================================================
+// CONCIERGE PER-IP RATE LIMIT (Roman 2026-06-16) — server-side mirror of the
+// client limiter; the durable backstop a bot cannot clear by wiping localStorage.
+// Applies ONLY to role==='CONCIERGE' requests — story-generation calls are never
+// throttled. Limits are abuse-level (above the client's 20/min, 100/hr) and
+// env-configurable. NOTE: in-memory is PER-INSTANCE and resets on cold start; for
+// cross-instance durability, back this with Vercel KV / Upstash / Supabase.
+// ============================================================================
+const CONCIERGE_IP_LIMITS = {
+  perMinute: Number(process.env.CONCIERGE_IP_PER_MINUTE) || 30,
+  perHour:   Number(process.env.CONCIERGE_IP_PER_HOUR)   || 150
+};
+const _conciergeIpHits = new Map(); // ip -> number[] (request timestamps, last hour)
+function _conciergeClientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) return String(xff).split(',')[0].trim();
+  return req.headers['x-real-ip'] || (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+// Returns false if allowed (and records the hit), or 'minute'|'hour' if limited.
+function _conciergeIpRateLimited(ip) {
+  if (!ip || ip === 'unknown') return false;
+  const now = Date.now();
+  const hrAgo = now - 3600000, minAgo = now - 60000;
+  let arr = (_conciergeIpHits.get(ip) || []).filter(t => t >= hrAgo);
+  let inMin = 0; for (let i = 0; i < arr.length; i++) if (arr[i] >= minAgo) inMin++;
+  if (inMin >= CONCIERGE_IP_LIMITS.perMinute) { _conciergeIpHits.set(ip, arr); return 'minute'; }
+  if (arr.length >= CONCIERGE_IP_LIMITS.perHour) { _conciergeIpHits.set(ip, arr); return 'hour'; }
+  arr.push(now);
+  _conciergeIpHits.set(ip, arr);
+  // Bound memory: occasionally evict IPs with no recent activity.
+  if (_conciergeIpHits.size > 5000) {
+    for (const [k, v] of _conciergeIpHits) { if (!v.some(t => t >= hrAgo)) _conciergeIpHits.delete(k); }
+  }
+  return false;
+}
+
 module.exports = async function handler(req, res) {
   // CORS headers
   const origin = req.headers.origin || '';
@@ -93,6 +129,21 @@ module.exports = async function handler(req, res) {
     // Log request body keys for debugging (never log full message content)
     const bodyKeys = Object.keys(req.body || {});
     console.log(`[CHATGPT-PROXY] Request body keys: [${bodyKeys.join(', ')}], role: ${typeof role === 'string' ? role : typeof role}, model: ${model || '(default)'}`);
+
+    // Concierge per-IP rate limit — server-side backstop (CONCIERGE role only;
+    // story-generation roles are never throttled). Returns a diegetic 429.
+    if (role === 'CONCIERGE') {
+      const _cip = _conciergeClientIp(req);
+      const _limited = _conciergeIpRateLimited(_cip);
+      if (_limited) {
+        console.warn(`[CHATGPT-PROXY] concierge per-IP rate-limit hit (window=${_limited}) ip=${_cip}`);
+        return res.status(429).json({
+          error: 'concierge_rate_limited',
+          window: _limited,
+          content: 'The Library has grown quiet. Return in a little while.'
+        });
+      }
+    }
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       console.error('[CHATGPT-PROXY] Validation failed: messages missing or empty. Body keys:', bodyKeys);
