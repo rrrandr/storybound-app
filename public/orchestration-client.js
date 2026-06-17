@@ -1060,6 +1060,34 @@
     // the callsite is unchanged. Claude slugs start with 'claude-'.
     const _isClaudeModel = typeof modelResolved === 'string' && modelResolved.indexOf('claude-') === 0;
 
+    // ── EROTIC-CONTENT MODERATION GATE (Roman 2026-06-16) ──────────────────────
+    // Anthropic moderation can REFUSE or silently SOFTEN sexually-explicit prose.
+    // Our explicit prose is Grok-authored; the user paid to generate exactly that
+    // content, so a Sonnet polish/repair/dedup pass must never touch it. When the
+    // scene is explicit (CARNAL eroticMode or an active intimacy/OAS dialogue —
+    // see window._proseModerationHot, the single source of truth) we DECLINE the
+    // Claude call rather than risk censorship. Every prose-polish wrapper
+    // normalizes a null-content result back to its INPUT text (|| text / || raw),
+    // so Grok's prose ships UNPOLISHED instead of softened. Scoped to PRIMARY_AUTHOR
+    // (the prose role) so planning / structural Claude calls are unaffected; the
+    // A-plot Claude fallback posts to anthropic-proxy directly and bypasses this.
+    // jsonMode calls are STRUCTURAL (the issue spine / planning JSON), never prose —
+    // Anthropic does not moderate structural JSON, and the spine itself runs on Opus
+    // via PRIMARY_AUTHOR, so exempting jsonMode keeps the gate from ever blocking a
+    // mid-CARNAL spine regeneration. The gate is PROSE-only by construction.
+    if (_isClaudeModel && role === 'PRIMARY_AUTHOR' && !options.jsonMode
+        && typeof window !== 'undefined' && typeof window._proseModerationHot === 'function'
+        && window._proseModerationHot()) {
+      try {
+        const _st = window.state || {};
+        console.warn('[PROSE:MODERATION-GATE] declined ' + modelResolved
+          + ' on explicit prose (eroticMode=' + (_st.eroticMode || '?')
+          + ', oas=' + !!(_st.intimacyDialogue && _st.intimacyDialogue.active)
+          + ') — Grok prose ships unpolished, not censored.');
+      } catch (_mgErr) {}
+      return { content: null, _moderationBlocked: true };
+    }
+
     // ── Cache-boundary processing ──
     // Strip the sentinel from every system message. For Anthropic, convert
     // the prefix half into a cached block. For OpenAI / others, silently
