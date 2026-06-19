@@ -6919,6 +6919,51 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .trophy-hotspot.trophy-revealing {
     animation: trophyRevealGlow 600ms ease-out forwards;
 }
+
+/* ── CSS PLACEHOLDER TROPHIES (Roman 2026-06-19) — gold star (All Night Long) +
+   silver triangle (Silver Tongue). Placeholders until custom trophy art is rendered;
+   they sit on the vitrine "floor" and reuse the .trophy-hotspot earned/locked JS. ── */
+.trophy-placeholder {
+    position: absolute;
+    bottom: 3%;
+    width: 17%;
+    aspect-ratio: 1 / 1;
+    z-index: 9;
+    cursor: pointer;
+    transition: filter 0.5s ease, opacity 0.5s ease, transform 0.35s ease;
+}
+.trophy-placeholder.placeholder-star     { right: 4%; }   /* All Night Long — bottom-right floor */
+.trophy-placeholder.placeholder-triangle { left: 4%; }    /* Silver Tongue — bottom-left floor  */
+.trophy-placeholder::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.55));
+}
+/* gold five-point star */
+.placeholder-star::before {
+    background: radial-gradient(circle at 40% 33%, #fff6c0 0%, #ffd84d 34%, #e6b422 64%, #9c7b1d 100%);
+    clip-path: polygon(50% 1%, 61% 35%, 98% 35%, 68% 57%, 79% 99%, 50% 73%, 21% 99%, 32% 57%, 2% 35%, 39% 35%);
+}
+/* silver triangle */
+.placeholder-triangle::before {
+    background: linear-gradient(158deg, #fcfcff 0%, #dcdce4 38%, #aeaeb8 68%, #7b7b86 100%);
+    clip-path: polygon(50% 5%, 96% 93%, 4% 93%);
+}
+/* Locked: dim grey ghost (matches the greyed vitrine register); suppress the hotspot gold glow */
+.trophy-placeholder.locked         { filter: grayscale(1) brightness(0.4); opacity: 0.45; box-shadow: none; }
+/* Earned: full colour + a glow tuned per metal (override the generic hotspot gold box-shadow) */
+.trophy-placeholder.earned             { filter: none; opacity: 1; box-shadow: none; }
+.placeholder-star.earned::before       { filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.75)); }
+.placeholder-triangle.earned::before   { filter: drop-shadow(0 0 14px rgba(222, 226, 235, 0.85)); }
+/* Reveal pop when newly earned (reuses the JS .trophy-revealing class) */
+.trophy-placeholder.trophy-revealing   { animation: placeholderRevealPop 700ms cubic-bezier(.2, 1.3, .4, 1) forwards; box-shadow: none; }
+@keyframes placeholderRevealPop {
+    0%   { transform: scale(0.4) rotate(-12deg); opacity: 0; }
+    60%  { transform: scale(1.18) rotate(4deg);  opacity: 1; }
+    100% { transform: scale(1) rotate(0);        opacity: 1; }
+}
+
 .trophy-tooltip {
     position: absolute;
     z-index: 20;
