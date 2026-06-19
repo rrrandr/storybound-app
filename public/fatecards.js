@@ -1889,6 +1889,60 @@ function stopContinuousSparkles() {
     }
 
     // Generate the deck with contextual awareness
+    // ── CONTENT-BASED axis self-tag (2026-06-18) ───────────────────────────────
+    // Replaces the old ARCHETYPE→axis proxy (confession=relationship, boundary=
+    // objective, …) which measured card grammar, not what the player endorsed.
+    // A "Boundary: Hold the line, don't give an inch" in a negotiation is an
+    // OBJECTIVE move; the archetype map scored it relationship. We now classify
+    // the actual generated CONTENT (action+dialogue). Conservative: clear goal/
+    // strategy/control language → 'objective'; clear attraction/closeness/emotional
+    // language → 'relationship'; ambiguous or BOTH → 'neutral' (contributes 0,
+    // rather than confidently guessing). Single source of truth read by BOTH
+    // consumers (gravityScore here + _stagedPreferenceAxis in app.js), which also
+    // retires the prior bug where those two maps scored the same click oppositely.
+    var _FATE_OBJ_RE = /\b(secure|protect|defend|seiz(?:e|ing)|acquir|win\b|won\b|leverage|negotiat|the deal|the contract|the plan|the case|the mission|the files?|evidence|expos(?:e|ing)|sabotag|outmaneuver|take control|take charge|take the reins|run the room|hold the line|hold (?:your|the) ground|don'?t give an inch|that'?s as far|stand (?:your|my) ground|the opening|take it before|do(?:ing)? this my way|my way now|i'?ll decide|decide how this goes|figure (?:this|it) out|find out|the truth,? since|the advantage|the upper hand|stop (?:him|her|them|this)\b|lock (?:it|this|the)|hunt|track (?:down|him|her|them))\b/i;
+    var _FATE_REL_RE = /\b(kiss|touch|hold me|stay (?:with|here|close)|don'?t (?:leave|go)|come closer|closer to (?:him|her|you)|want you|need you|miss you|love you|how (?:i|you) feel|between us|your (?:hand|mouth|eyes|skin|lips)|lean in|reach for (?:him|her|you)|i shouldn'?t.{0,15}\bwant\b|want to (?:kiss|touch|stay|hold|be (?:close|near))|can'?t stop (?:thinking|wanting)|thinking about (?:him|her|you)|afraid to (?:say|tell|admit|feel)|ache|yearn|crav(?:e|ing)|long(?:ing)? for|let (?:him|her) in|let yourself feel|tell (?:him|her) (?:how|the truth about us)|what (?:this|we) (?:is|means)|the way (?:he|she) look|pull (?:him|her) close)\b/i;
+    function _classifyFateCardAxis(action, dialogue) {
+        var t = ((action || '') + ' ' + (dialogue || '')).toLowerCase();
+        if (!t.trim()) return 'neutral';
+        var isObj = _FATE_OBJ_RE.test(t), isRel = _FATE_REL_RE.test(t);
+        if (isObj && !isRel) return 'objective';
+        if (isRel && !isObj) return 'relationship';
+        return 'neutral';
+    }
+    window._classifyFateCardAxis = _classifyFateCardAxis;
+
+    // ── DESIRE / CHARGE classifier (Slice 1, 2026-06-18) ────────────────────────
+    // chargeGravity = "appetite for EMBODIED ATTRACTION" — when the story presents
+    // attraction/tension/longing/chemistry/flirtation/physical awareness, does the
+    // player LEAN TOWARD it (dwell) or DEFUSE it (avoidance)? This is a SEPARATE
+    // dimension from the objective↔relationship axis: a player can be relationship-high
+    // / desire-low (wants romance + companionship without much charge). DELIBERATELY
+    // EXCLUDES confession (= relationship, not charge) and kiss/advance (= plot
+    // willingness, not appetite) — those contaminate the signal, so they classify
+    // neutral even alongside dwell language. Validated 0-failure against the spec
+    // examples. SLICE 1 = LOGGING ONLY: stamped on cards + counted on click; does NOT
+    // write chargeGravity yet (its consumers stay unchanged). Slice 2 finalizes at ST3;
+    // Slice 3 wires it to attraction-density first, then pacing/ceiling.
+    var _FATE_DESIRE_EXCLUDE_RE = /\bkiss(?:es|ed|ing)?\b|\bconfess\b|\b(?:tell|admit)\s+(?:him|her|them|you)\b[^.]*\b(?:love|feel(?:ings)?)\b|\byour feelings\b|\bi love you\b|\bmake love\b|\btake (?:him|her) to bed\b|\bsleep with\b|\bin love\b/i;
+    // NOTE both regexes include the OPPOSITE pole of a temptation framing (dwell has
+    // act-on-it/give-in; avoid has resist/deny/fight) so a card that PRESENTS the
+    // choice ("Act on it, or resist") trips BOTH → classifies neutral (it's the
+    // question, not a committed direction). Clean single-direction authored cards
+    // still resolve. Validated 0-failure incl. the ambiguous-template trap.
+    var _FATE_DWELL_RE = /\b(?:move|come|step|inch)\s+closer\b|\bclose the distance\b|\blean in\b|\btouch (?:his|her|their|your|the)\b|\bstay (?:in (?:the|this) moment|close|with (?:him|her|it))\b|\blet (?:the|this|it|that)?\s*(?:silence|moment|tension|look|charge|it|air)\b[^.]*\b(?:linger|stretch|hang|build|land|hold)\b|\blinger\b|\bhold (?:his|her|their|the) (?:look|gaze|eyes|stare)\b|\bhold the (?:silence|look|moment)\b|\bnotice (?:his|her|their|the|how|what|the way)\b|\bask (?:him|her|them|what)\b[^.]*\bmean|\bmeet (?:his|her|their) (?:eyes|gaze)\b|\bsavor\b|\bdraw it out\b|\bsit (?:in|with) (?:the|it)\b|\bact on (?:it|this|the)\b|\bgive in(?: to)?\b|\bgive yourself over\b|\bpull toward\b/i;
+    var _FATE_AVOID_RE = /\bchange the subject\b|\bkeep it (?:professional|light|casual|business)\b|\bstep back\b|\bpull back\b|\bback away\b|\bfocus on (?:the )?(?:mission|work|task|case|job|plan|facts|problem|deal|numbers)\b|\bignore (?:the|his|her|it|that|him|them)\b|\bbreak eye contact\b|\blook away\b|\bstay (?:composed|professional|focused|detached)\b|\bkeep (?:your|my) distance\b|\bdeflect\b|\bbrush (?:it|him|her|that) (?:off|aside)\b|\bget back to (?:work|business|the)\b|\bredirect\b|\bresist(?:\s+(?:it|the|him|her|them|this))?\b|\bdeny (?:it|the|yourself|him|her)\b|\bfight (?:it|the|off)\b|\bshut it down\b/i;
+    function _classifyFateCardDesire(action, dialogue) {
+        var t = ((action || '') + ' ' + (dialogue || '')).toLowerCase();
+        if (!t.trim()) return 'neutral';
+        if (_FATE_DESIRE_EXCLUDE_RE.test(t)) return 'neutral';   // confession/kiss → relationship/plot, not charge
+        var d = _FATE_DWELL_RE.test(t), a = _FATE_AVOID_RE.test(t);
+        if (d && !a) return 'dwell';
+        if (a && !d) return 'avoidance';
+        return 'neutral';
+    }
+    window._classifyFateCardDesire = _classifyFateCardDesire;
+
     function buildFateDeck() {
         const state = window.state || {};
         let allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
@@ -1919,6 +1973,12 @@ function stopContinuousSparkles() {
 
         return deckBase.map(baseCard => {
             const card = generateContextualCard(baseCard, sceneContext, usedInThisDraw);
+            // Self-tag the axis from the ACTUAL generated content (not the archetype).
+            // Single stamp point → covers standard, Grok-intimate, and template-fallback
+            // generation paths, since all return through generateContextualCard.
+            card.axis = _classifyFateCardAxis(card.action, card.dialogue);
+            // Slice 1 desire/charge tag (logging-only consumer; see _classifyFateCardDesire).
+            card.desire = _classifyFateCardDesire(card.action, card.dialogue);
             // Track what we generated to avoid repetition in same draw
             usedInThisDraw.push(card.action);
             usedInThisDraw.push(card.dialogue);
@@ -2649,10 +2709,24 @@ function setSelectedState(mount, selectedCardEl){
                 try {
                     var _gs = window.state && window.state.gravityScore;
                     if (_gs && data) {
-                        var _tag = String((data.id || data.name || '')).toLowerCase();
-                        if (/tempt|revers|twist|break|push|confront|strike/.test(_tag))      _gs.outcome      += 1;
-                        else if (/bound|confess|silenc|hold|tether|linger|reveal/.test(_tag)) _gs.relationship += /silenc/.test(_tag) ? 0.5 : 1;
+                        // CONTENT axis (self-tagged at deal time), not the archetype id.
+                        // Falls back to a fresh classify if an older card lacks .axis.
+                        var _ax = data.axis || _classifyFateCardAxis(data.action, data.dialogue);
+                        if (_ax === 'objective')         _gs.outcome      += 1;
+                        else if (_ax === 'relationship') _gs.relationship += 1;
+                        // 'neutral' → no contribution (was confidently mis-scoring before)
                     }
+                } catch (_) {}
+
+                // ── DESIRE/CHARGE harvest (Slice 1, LOGGING-ONLY 2026-06-18) ──
+                // Counts the desire observation this fate click contributes (dwell /
+                // avoidance) WITHOUT writing chargeGravity — so we can measure whether
+                // harvested Fate choices lift pre-ST3 desire observations from ~2-3 to
+                // ~5-8 before wiring it to any consumer (Slices 2/3). _desireObs is a
+                // telemetry-only slot read by NOTHING in prod.
+                try {
+                    var _des = (data && data.desire) || (window._classifyFateCardDesire ? window._classifyFateCardDesire(data && data.action, data && data.dialogue) : 'neutral');
+                    if (window._recordDesireObs) window._recordDesireObs(_des, 'fate:' + String((data && data.id) || ''));
                 } catch (_) {}
 
                 clearPendingTimer();
@@ -2858,6 +2932,20 @@ function setSelectedState(mount, selectedCardEl){
             const data = fateOptions[i];
             if (!data) return;
 
+            // RESTORE CARD-FACE ART (Roman 2026-06-17): a rebind (resume / reload)
+            // does NOT re-run dealFateCards, so a `.back` div that lost its inline
+            // background-image renders as the CSS purple fallback instead of the
+            // card face. Re-apply it from fateOptions[i].id — the exact URL
+            // dealFateCards uses (~fatecards.js:2586). Guarded so a good face is
+            // never overwritten.
+            try {
+                const _backDiv = card.querySelector('.back');
+                if (_backDiv && data.id && !_backDiv.style.backgroundImage) {
+                    const _artName = data.id.charAt(0).toUpperCase() + data.id.slice(1);
+                    _backDiv.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-front-" + _artName + ".png')";
+                }
+            } catch (_) {}
+
             // Remove old handler and add new one
             card.onclick = () => {
                 console.log('[FATE] card clicked:', data.id);
@@ -2931,6 +3019,28 @@ function setSelectedState(mount, selectedCardEl){
             };
         });
 
+        // RECREATE Petition / Tempt if missing (Roman 2026-06-17): on resume / reload
+        // #fateSpecialCards can return EMPTY (the special cards live in a separate
+        // container that isn't always restored with the scene), so the "if (petitionCard)"
+        // / "if (temptCard)" guards below silently skip — and Petition (the FREE
+        // onboarding use, must be present) + Tempt vanish. Recreate the DOM here; the
+        // blocks below bind handlers + electricity, and _syncFateCardLockState (added
+        // at the end) restores Tempt's greyed-until-ST3 state. Markup mirrors
+        // dealFateCards (~fatecards.js:2725-2760).
+        const _special = document.getElementById('fateSpecialCards') || mount;
+        if (_special && !_special.querySelector('.petition-fate-card')) {
+            const _pc = document.createElement('div');
+            _pc.className = 'fate-card petition-fate-card';
+            _pc.innerHTML = `<div class="inner"><div class="front" style="background:url('/assets/card-art/cards/Tarot-Gold-PetitionFate-back.png') center/cover no-repeat, #111;"></div><div class="back" style="background-image:url('/assets/card-art/cards/Tarot-Gold-PetitionFate-front.png');"></div></div>`;
+            _special.appendChild(_pc);
+        }
+        if (_special && !_special.querySelector('.tempt-fate-card')) {
+            const _tc = document.createElement('div');
+            _tc.className = 'fate-card tempt-fate-card';
+            _tc.innerHTML = `<div class="inner"><div class="front" style="background:url('/assets/card-art/cards/Tarot-RED-back-TemptFate.png') center/cover no-repeat, #111;"></div><div class="back" style="background-image:url('/assets/card-art/cards/Tarot-RED-front-TemptFate.png?v=2');"></div></div>`;
+            _special.appendChild(_tc);
+        }
+
         // Rebind Petition Fate card (now in #fateSpecialCards, not in mount)
         const specialMount = document.getElementById('fateSpecialCards');
         const petitionCard = (specialMount || mount).querySelector('.petition-fate-card');
@@ -2981,6 +3091,12 @@ function setSelectedState(mount, selectedCardEl){
             // Restart electricity on rebind
             if (window._startTemptElectricity) window._startTemptElectricity(temptCard);
         }
+
+        // Restore Tempt's greyed-until-ST3 lock state + gleam on the (possibly
+        // recreated) special cards — the rebind path didn't do either, so a
+        // recreated Tempt would read as unlocked and a recreated card artless.
+        if (typeof window._syncFateCardLockState === 'function') window._syncFateCardLockState();
+        if (window.applyCardGleam && _special) _special.querySelectorAll('.fate-card').forEach(window.applyCardGleam);
 
         // Rebind commit hooks
         bindCommitHooks(mount);

@@ -64,7 +64,7 @@
   // Cost capture lazy-inits state._sceneCostAcc on first hit; finalized at
   // scene-render success (app.js, where _sceneTokenCount resets) and cleared
   // on failure. Pricing helpers live on window (defined in app.js).
-  function _accumulateTokens(data, modelName) {
+  function _accumulateTokens(data, modelName, profileLabel) {
     if (!data || !data.usage) return;
     const s = window.state;
     if (!s) return;
@@ -88,7 +88,74 @@
         if (mdl && /grok/i.test(mdl)) s._usedGrok = true;
       }
     } catch (_) { /* cost capture is non-critical; never block generation */ }
+    _logPromptProfile(profileLabel, modelName || data.model, data.usage);
   }
+
+  // ── [PROMPT-PROFILE] — dev instrumentation (2026-06-17) ────────────────────
+  // Pure observation (never alters generation). Logs prompt / reasoning / visible
+  // tokens per model call, keyed by PASS LABEL, so a single debug session yields
+  // the real per-pass cost breakdown (author vs SD vs renderer vs integration vs
+  // audits). reasoning_tokens (xAI: separate, output-priced, ~invisible to the
+  // existing cost log) is the specifically-missing dimension. Summarize with
+  // window._promptProfileSummary().
+  function _logPromptProfile(label, model, usage) {
+    try {
+      if (!usage || typeof window === 'undefined' || !window.state) return;
+      const cd = usage.completion_tokens_details || {};
+      const rec = {
+        label: label || 'PRIMARY_AUTHOR',
+        model: model || usage.model || 'default',
+        prompt: usage.prompt_tokens || usage.input_tokens || 0,
+        reasoning: cd.reasoning_tokens || 0,
+        visible: usage.completion_tokens || usage.output_tokens || 0,
+        turn: window.state.turnCount || 0
+      };
+      (window.state._promptProfile = window.state._promptProfile || []).push(rec);
+      console.log('[PROMPT-PROFILE] ' + rec.label + ' · ' + rec.model
+        + ' · prompt=' + rec.prompt + ' reasoning=' + rec.reasoning
+        + ' visible=' + rec.visible + ' · turn ' + rec.turn);
+    } catch (_) { /* never block generation */ }
+  }
+
+  // Per-pass cost breakdown table. Run window._promptProfileSummary() in the
+  // console after a debug session. $ uses the same list rates + 1.4x overhead as
+  // the cost system; reasoning_tokens billed as output (xAI).
+  if (typeof window !== 'undefined') window._promptProfileSummary = function () {
+    const RATE = { // [in, out] $/token; prefix-matched against model name
+      'grok-4-1-fast-reasoning': [0.0000005, 0.0000015],
+      'grok-4-1-fast-non-reasoning': [0.0000002, 0.0000005],
+      'grok-4.3': [0.00000125, 0.0000025],
+      'gpt-4o-mini': [0.00000015, 0.0000006],
+      'gpt-4o': [0.0000025, 0.00001],
+      'claude-opus': [0.000015, 0.000075],
+      'claude-sonnet': [0.000003, 0.000015],
+      'claude-haiku': [0.000001, 0.000005]
+    };
+    const rate = (m) => { for (const k in RATE) if ((m || '').indexOf(k) === 0) return RATE[k]; return [0.0000005, 0.0000015]; };
+    const recs = (window.state && window.state._promptProfile) || [];
+    if (!recs.length) { console.log('[PROMPT-PROFILE] no calls captured yet'); return; }
+    const by = {};
+    recs.forEach((r) => {
+      const b = (by[r.label + ' · ' + r.model] = by[r.label + ' · ' + r.model] || { n: 0, prompt: 0, reasoning: 0, visible: 0, cost: 0, model: r.model });
+      const rr = rate(r.model);
+      b.n++; b.prompt += r.prompt; b.reasoning += r.reasoning; b.visible += r.visible;
+      b.cost += (r.prompt * rr[0] + (r.visible + r.reasoning) * rr[1]) * 1.4;
+    });
+    let total = 0;
+    const rows = Object.keys(by).sort((a, c) => by[c].cost - by[a].cost).map((k) => {
+      const b = by[k]; total += b.cost;
+      return {
+        pass: k, model: b.model, calls: b.n,
+        avgPrompt: Math.round(b.prompt / b.n), avgReason: Math.round(b.reasoning / b.n),
+        avgVisible: Math.round(b.visible / b.n),
+        reasonPerVis: b.visible ? +(b.reasoning / b.visible).toFixed(2) : '-',
+        '$total': +b.cost.toFixed(4)
+      };
+    });
+    console.table(rows);
+    console.log('TOTAL $' + total.toFixed(4) + ' across ' + recs.length + ' calls / ' + Object.keys(by).length + ' passes');
+    return rows;
+  };
 
   // ===========================================================================
   // CONFIGURATION
@@ -138,6 +205,25 @@
     ENABLE_GROK_SD_AUTHORING: true,   // Grok authors SD for Steamy/Passionate
     ENABLE_DEEPSEEK_SD: true,         // DeepSeek V4 Pro/Flash fallback (Tier 1 + 2)
     ENABLE_MISTRAL_SD: true, // Mistral fallback if Grok fails (Steamy/Passionate ONLY)
+    // A1: route NON-INTIMATE scene prose to Grok (NARRATIVE_AUTHOR role) with a
+    // gpt-4o-mini consent/control pre-pass + tight Sonnet polish + Haiku repair.
+    // LOCALHOST-GATED (2026-06-17): true ONLY on dev hosts so the pipeline runs
+    // for local measurement/verification but CANNOT ship by deploy until
+    // explicitly promoted to literal `true`. In production this is false → the
+    // selector keeps the legacy gpt-4o/Sonnet author routing (zero behavior
+    // change). Intimacy/OAS prose is unaffected either way (already Grok).
+    // RE-ENABLED (localhost-gated) 2026-06-18 at Roman's request: Grok reasoning
+    // ("thinking") authors NON-INTIMATE scene prose, with the cheap Haiku/gpt-4o-mini
+    // mechanical repair pass + targeted Sonnet/gpt-4o romance-span polish (see
+    // _grokLiteraryAuthor). Was DISABLED 2026-06-17 after a localhost playthrough
+    // showed adherence regressions (off-premise drift, calcified phrases,
+    // A-plot-over-romance, low LI desire). Kept LOCALHOST-GATED — production users
+    // stay on the legacy GPT/Sonnet author until the lean-Grok-prompt + 50-seed
+    // quality A/B confirm the regressions are gone, then promote to literal `true`.
+    ENABLE_GROK_NARRATIVE_AUTHOR: (typeof window !== 'undefined' && !!window.location && (
+        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ||
+        window.location.hostname === '0.0.0.0' || (window.location.hostname || '').endsWith('.local') ||
+        window.__DEV__ === true)),
 
     // Timeouts
     API_TIMEOUT_MS: 60000
@@ -862,7 +948,33 @@
         _trackOpusFireRate(appState, decision);
       }
     } catch (_) { /* telemetry must not throw */ }
-    return decision;
+    return _maybeRemapAuthorToGrok(decision, appState);
+  }
+
+  // A1 (2026-06-16): when ENABLE_GROK_NARRATIVE_AUTHOR is on, remap a paid
+  // GPT/Claude author decision to a Grok model for NON-INTIMATE scenes. Intimacy
+  // keeps its proven SD/renderer pipeline (consent + explicit prose already run
+  // on Grok there), so we skip the remap on any hot/explicit beat. ALL author
+  // tiers use REASONING Grok — the non-reasoning "fast" model is a garbage prose
+  // author (verified 2026-06-17: token-salad + leaked control tokens) and is
+  // NEVER used to author scene prose, even connective beats.
+  function _maybeRemapAuthorToGrok(decision, appState) {
+    try {
+      if (!CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR) return decision;
+      if (!decision || !decision.model) return decision;
+      if (/grok/i.test(decision.model)) return decision; // already Grok (e.g. Mode 1)
+      const s = appState || {};
+      const _hot = s.intimacyPhase === true
+        || s.eroticMode === 'CARNAL'
+        || !!(s.intimacyDialogue && s.intimacyDialogue.active)
+        || !!(s._mode1 && (s._mode1.aftermathActive || s._mode1.rendezvous || s._mode1.routeToGrok));
+      if (_hot) return decision; // intimacy keeps the existing pipeline
+      return Object.assign({}, decision, {
+        model: CONFIG.SCENE_RENDERER_MODEL, // reasoning Grok for ALL author tiers
+        _origModel: decision.model,
+        reason: (decision.reason || '') + ':GrokAuthor'
+      });
+    } catch (_) { return decision; }
   }
 
   function _resolveRenderTierInner(appState, coherenceVector) {
@@ -1235,7 +1347,7 @@
         }
 
         const data = await res.json();
-        _accumulateTokens(data, payload && payload.model);
+        _accumulateTokens(data, payload && payload.model, (options && options.profileLabel) || role);
         // CACHE OBSERVABILITY (Roman 2026-06-13, step 2): per-call cache read/write,
         // tagged with story/turn/purpose — so cache health is never inferred from the
         // scene aggregate alone. Gated to the same literary-sized calls as [CACHE:SEGMENTS].
@@ -1415,7 +1527,7 @@
       }
 
       const data = await res.json();
-      _accumulateTokens(data, payload && payload.model);
+      _accumulateTokens(data, payload && payload.model, "renderer_visual");
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Renderer returned malformed response');
@@ -1480,7 +1592,7 @@
       }
 
       const data = await res.json();
-      _accumulateTokens(data, payload && payload.model);
+      _accumulateTokens(data, payload && payload.model, "scene_renderer");
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Scene Renderer returned malformed response');
@@ -1543,7 +1655,7 @@
       }
 
       const data = await res.json();
-      _accumulateTokens(data, payload && payload.model);
+      _accumulateTokens(data, payload && payload.model, "gemini_fallback");
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Gemini returned malformed response (no choices)');
@@ -2094,6 +2206,184 @@ FAILURE CONDITIONS (invalid outputs):
     return ctxLines.length ? ctxLines.join('\n') : '';
   }
 
+  // ── GROK NARRATIVE AUTHOR (A1 architecture, 2026-06-16) ────────────────────
+  // Authors NON-INTIMATE scene prose on Grok via the specialist proxy's
+  // NARRATIVE_AUTHOR role. Consent / [CONSTRAINTS] / [SD] / [CONVERSION_DELTA]
+  // are adjudicated UPSTREAM by a gpt-4o-mini control pass (see
+  // orchestrateStoryGeneration → A1 SPLIT) and prepended to `messages`, so Grok
+  // never holds consent authority. Returns the prose STRING — same shape
+  // callChatGPT returns for the author — so all downstream tag parsing is
+  // unchanged. Throws on transport/empty so the caller's Gemini fallback fires.
+  async function callGrokNarrativeAuthor(messages, options = {}) {
+    const _preferred = options.preferredModel || CONFIG.SCENE_RENDERER_MODEL;
+    const _maxTokens = options.max_tokens || 1500;
+    const _convId = (typeof window !== 'undefined' && window.state && window.state.storyId) || null;
+    const res = await fetch(CONFIG.SPECIALIST_PROXY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages,
+        role: 'NARRATIVE_AUTHOR',
+        preferredModel: _preferred,
+        temperature: 0.8,
+        max_tokens: _maxTokens,
+        convId: _convId
+      })
+    });
+    if (!res.ok) {
+      const _t = await res.text().catch(() => '');
+      throw new Error(`Grok narrative author error: ${res.status} - ${_t.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    // Cost capture flips the per-scene 'grok' cost bucket (model name has 'grok').
+    try { _accumulateTokens(data, (data._orchestration && data._orchestration.model) || _preferred, 'narrative_author'); } catch (_) {}
+    const content = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
+    if (!content || !content.trim()) throw new Error('Grok narrative author returned empty content');
+    return content;
+  }
+
+  // Pull ONLY the control/consent tag blocks out of a control-pass output,
+  // discarding its prose. Lets a checked model (gpt-4o-mini) own consent while
+  // Grok authors the prose. Best-effort: a missing CONVERSION_DELTA is a minor
+  // telemetry gap, never a safety one.
+  function _extractControlTags(text) {
+    if (!text || typeof text !== 'string') return '';
+    const _blocks = [];
+    const _grab = (re) => { const m = text.match(re); if (m) _blocks.push(m[0].trim()); };
+    _grab(/\[CONSTRAINTS\][\s\S]*?\[\/CONSTRAINTS\]/);
+    _grab(/\[SD\][\s\S]*?\[\/SD\]/);
+    _grab(/\[CONVERSION_DELTA\][^\[]*/);
+    return _blocks.join('\n');
+  }
+
+  // Locate the ROMANCE-FORWARD span of a finished scene — the contiguous run of
+  // desire / heat / proximity sentences — so the Sonnet pass can TIGHTLY polish
+  // just that passage (~<500 tokens) instead of rewriting the whole scene.
+  // Returns {text, start, end} (exact string offsets into `prose`, so the splice
+  // is deterministic and preserves original whitespace/markers) or null when the
+  // scene has no romance-forward beat (→ skip the polish entirely).
+  function _extractRomanceSpan(prose) {
+    if (!prose || typeof prose !== 'string') return null;
+    const HEAT = /\b(?:want(?:ed|ing)?|need(?:ed|ing)?|ache|aching|desire|crave|hunger|breath|breathing|mouth|lips|kiss(?:ed|ing)?|touch(?:ed|ing)?|skin|warmth|closer|leaned?|pull(?:ed)?|gaze|stare|pulse|shiver|tremb|heartbeat|too close|inches|whisper|murmur)\b/i;
+    const sentences = prose.split(/(?<=[.!?])\s+/);
+    let firstC = -1, lastC = -1;
+    for (let i = 0; i < sentences.length; i++) {
+      if (HEAT.test(sentences[i])) { if (firstC === -1) firstC = i; lastC = i; }
+    }
+    if (firstC === -1) return null;
+    const startOff = prose.indexOf(sentences[firstC]);
+    if (startOff < 0) return null;
+    let endOff = prose.indexOf(sentences[lastC], startOff);
+    if (endOff < 0) return null;
+    endOff += sentences[lastC].length;
+    // Cap the span to ~1500 chars (~375 tokens) — keep it a TIGHT polish, not a
+    // full rewrite. Trim from the tail, sentence by sentence, on a hard cap.
+    const MAX = 1500;
+    if (endOff - startOff > MAX) {
+      let e = startOff, cur = startOff;
+      for (let i = firstC; i <= lastC; i++) {
+        const p = prose.indexOf(sentences[i], cur);
+        if (p < 0) break;
+        const ne = p + sentences[i].length;
+        if (ne - startOff > MAX && e > startOff) break;
+        e = ne; cur = ne;
+      }
+      endOff = e;
+    }
+    const text = prose.slice(startOff, endOff);
+    if (!text.trim() || text.length < 30) return null;
+    return { text, start: startOff, end: endOff };
+  }
+
+  // ── LITERARY PROSE: GROK AUTHOR + HAIKU REPAIR + SONNET ROMANCE POLISH ──────
+  // Roman 2026-06-17 ("Grok or bust"). The reusable pipeline behind app.js
+  // callChat's literary author when its Grok gate is on. Returns the prose
+  // STRING (same shape callChat expects from callChatGPT). Hot/intimate prose:
+  // the Haiku/Sonnet passes self-skip via the PROSE moderation gate (a claude-*
+  // PRIMARY_AUTHOR call on hot prose returns null → we keep Grok's raw text), so
+  // explicit prose ships unpolished, never censored.
+  // Resilient claude polish/repair (Roman 2026-06-18): try the primary claude model; on API
+  // failure (e.g. anthropic-proxy 502, observed live) OR an empty/short response, fall back to
+  // the GPT equivalent so the pass DEGRADES to a working model instead of being skipped entirely.
+  // Sonnet polish → gpt-4o · Haiku repair → gpt-4o-mini. Returns trimmed text or null.
+  async function _claudePassWithFallback(messages, primaryModel, fallbackModel, opts, label) {
+    const _extract = (r) => String((typeof r === 'string') ? r : (r && r.content) || '').trim();
+    let _why = null;
+    try {
+      const r = await callChatGPT(messages, 'PRIMARY_AUTHOR', Object.assign({ model: primaryModel }, opts));
+      const t = _extract(r);
+      if (t.length > 20) return t;
+      _why = 'empty/short response';
+    } catch (_e) { _why = (_e && _e.message) || String(_e); }
+    console.warn('[GROK-LIT] ' + label + ' via ' + primaryModel + ' failed (' + _why + ') — falling back to ' + fallbackModel);
+    try {
+      const r2 = await callChatGPT(messages, 'PRIMARY_AUTHOR', Object.assign({ model: fallbackModel }, opts));
+      const t2 = _extract(r2);
+      if (t2.length > 20) { console.log('[GROK-LIT] ' + label + ' recovered via ' + fallbackModel); return t2; }
+    } catch (_e2) { console.warn('[GROK-LIT] ' + label + ' ' + fallbackModel + ' fallback also failed: ' + ((_e2 && _e2.message) || _e2)); }
+    return null;
+  }
+
+  async function _grokLiteraryAuthor(messages, options = {}) {
+    const _maxTokens = options.max_tokens || 3000;
+    // 1. Grok authors the scene prose (reasoning / "thinking" model). AUTHOR FALLBACK
+    // (Roman 2026-06-18): callGrokNarrativeAuthor THROWS on empty content, and during a
+    // degraded proxy window (empty/502 observed live) that failed the ENTIRE scene with no
+    // recovery. Fall back across INDEPENDENT infra paths — Grok (x.ai) → gpt-4o (chatgpt-proxy)
+    // → Sonnet (anthropic-proxy) — so one provider's bad window doesn't kill the scene.
+    let prose = '';
+    const _extract = (r) => String((typeof r === 'string') ? r : ((r && r.content) || '')).trim();
+    try {
+      prose = await callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
+      if (!String(prose || '').trim()) throw new Error('Grok author returned empty');
+    } catch (_grokAuthErr) {
+      console.warn('[GROK-LIT] Grok author failed/empty (' + (_grokAuthErr && _grokAuthErr.message) + ') — falling back to gpt-4o');
+      try {
+        prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: _maxTokens, temperature: 0.8 }));
+        if (!prose) throw new Error('gpt-4o author empty');
+        console.log('[GROK-LIT] author recovered via gpt-4o');
+      } catch (_gptAuthErr) {
+        console.warn('[GROK-LIT] gpt-4o author also failed/empty (' + (_gptAuthErr && _gptAuthErr.message) + ') — falling back to claude-sonnet-4-5');
+        prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'claude-sonnet-4-5', max_tokens: _maxTokens, temperature: 0.7 }));
+        if (!prose) throw new Error('all scene authors (grok/gpt-4o/sonnet) returned empty');
+        console.log('[GROK-LIT] author recovered via claude-sonnet-4-5');
+      }
+    }
+    // 2. Haiku mechanical repair + micro-expression marker pairing (gpt-4o-mini fallback on 502).
+    try {
+      const _repairSys = 'Fix ONLY mechanical defects in this scene: broken or incomplete sentences, fused-speaker quotations, and any stat-block / character-dossier line (recast it as lived in-scene prose). MARKER REPAIR: if the scene has a <<MICRO_EXPRESSION>> line followed by an "Is this X or Y?" question but NO <<CONTINUE>>, insert <<CONTINUE>> on its own line IMMEDIATELY AFTER that question and BEFORE the scene resumes (never at the very end). Do NOT otherwise change events, structure, length, markers, or names. Return ONLY the corrected scene.';
+      const _t = await _claudePassWithFallback(
+        [{ role: 'system', content: _repairSys }, { role: 'user', content: prose }],
+        'claude-haiku-4-5', 'gpt-4o-mini',
+        { temperature: 0.2, max_tokens: _maxTokens, profileLabel: 'haiku_repair' }, 'Haiku repair'
+      );
+      if (_t && _t.length > 40) prose = _t;
+    } catch (_e) { console.warn('[GROK-LIT] Haiku repair skipped:', _e && _e.message); }
+    // 3. Deterministic <<CONTINUE>> pairing net (LLM marker compliance is unreliable;
+    //    an unpaired <<MICRO_EXPRESSION>> gets stripped downstream → micro-choice lost).
+    try {
+      if (/<<\s*MICRO_EXPRESSION\s*>>/i.test(prose) && !/<<\s*CONTINUE\s*>>/i.test(prose)) {
+        prose = /<<\s*MICRO_EXPRESSION\s*>>\s*[^?]*\?/i.test(prose)
+          ? prose.replace(/(<<\s*MICRO_EXPRESSION\s*>>\s*[^?]*\?)/i, '$1\n<<CONTINUE>>')
+          : prose.replace(/\s*$/, '') + '\n<<CONTINUE>>';
+      }
+    } catch (_e) {}
+    // 4. Tight Sonnet polish of the romance-forward span only (~<500 tok; gpt-4o fallback on 502).
+    try {
+      const _span = _extractRomanceSpan(prose);
+      if (_span) {
+        const _polishSys = 'You are S. Tory Bound. Tightly POLISH ONLY this romance-forward passage — sharpen desire, voice, and sensory precision on the weakest lines and replace any flat or clichéd phrasing — WITHOUT changing events, length, character names, or any <<MARKER>> tokens, and WITHOUT adding or removing sentences. Return ONLY the rewritten passage, nothing else.';
+        const _pt = await _claudePassWithFallback(
+          [{ role: 'system', content: _polishSys }, { role: 'user', content: _span.text }],
+          'claude-sonnet-4-5', 'gpt-4o',
+          { temperature: 0.5, max_tokens: 500, profileLabel: 'sonnet_polish' }, 'Sonnet polish'
+        );
+        if (_pt && _pt.length > 20) prose = prose.slice(0, _span.start) + _pt + prose.slice(_span.end);
+      }
+    } catch (_e) { console.warn('[GROK-LIT] Sonnet polish skipped:', _e && _e.message); }
+    return prose;
+  }
+
   async function callGrokSDAuthor(constraints, gateEnforcement, options = {}) {
     console.log(`[GROK SD] Authoring SD — intimacy authorized`);
 
@@ -2471,7 +2761,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
       }
 
       const data = await res.json();
-      _accumulateTokens(data, payload && payload.model);
+      _accumulateTokens(data, payload && payload.model, "sd");
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Grok SD Author returned malformed response');
@@ -2641,7 +2931,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
       }
 
       const data = await res.json();
-      _accumulateTokens(data, payload && payload.model);
+      _accumulateTokens(data, payload && payload.model, "sd_deepseek");
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error(`DeepSeek SD ${tierLabel} returned malformed response`);
@@ -2770,7 +3060,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
       }
 
       const data = await res.json();
-      _accumulateTokens(data, payload && payload.model);
+      _accumulateTokens(data, payload && payload.model, "sd_mistral");
 
       if (!data.choices || !data.choices[0] || !data.choices[0].message) {
         throw new Error('Mistral SD Fallback returned malformed response');
@@ -3343,6 +3633,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     // Attempt ChatGPT, fallback to Gemini on failure (NO RETRIES)
     let authorOutput;
     let usedFallback = false;
+    let _grokAuthored = false;   // A1: true when Grok authored this scene's prose
 
     // Premium render tier — dynamic model + token selection
     const renderTier = resolveRenderTier();
@@ -3350,11 +3641,45 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     if (window.state) window.state._lastRenderModel = renderTier.model;
     console.log(`[RENDER] Tier: ${renderTier.tier} | Model: ${renderTier.model} | max_tokens: ${renderTier.max_tokens} | reason: ${renderTier.reason}`);
 
+    // A1: route prose to Grok only when the flag is on AND the selector handed us
+    // a Grok model (non-intimate scenes; the remap skips hot beats). Flag OFF →
+    // a Grok model here (e.g. Mode 1) still takes the legacy callChatGPT path, so
+    // flag-off behavior is byte-identical to before.
+    const _useGrokAuthor = CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR && /grok/i.test(renderTier.model || '');
+
     try {
-      authorOutput = await callChatGPT(messages, 'PRIMARY_AUTHOR', {
-        model: renderTier.model,
-        max_tokens: renderTier.max_tokens
-      });
+      if (_useGrokAuthor) {
+        _grokAuthored = true;
+        // A1 SPLIT — a cheap gpt-4o-mini CONTROL pass owns consent / [CONSTRAINTS]
+        // / [SD] / [CONVERSION_DELTA]; Grok authors only the PROSE under that
+        // decision. Consent authority stays on a checked model even though Grok
+        // now sees global story context.
+        let _controlTags = '';
+        try {
+          const _ctrlRaw = await callChatGPT(messages, 'PRIMARY_AUTHOR', {
+            model: CONFIG.PRIMARY_AUTHOR_MODEL, max_tokens: 700, profileLabel: 'control'
+          });
+          const _ctrlText = (typeof _ctrlRaw === 'string') ? _ctrlRaw : (_ctrlRaw && _ctrlRaw.content) || '';
+          _controlTags = _extractControlTags(_ctrlText);
+        } catch (_ctrlErr) {
+          console.warn('[GROK-AUTHOR] control pass failed — GUARD-A synthetic consent will apply:', _ctrlErr && _ctrlErr.message);
+        }
+        const _grokMessages = _controlTags
+          ? messages.concat([{ role: 'system', content: '[UPSTREAM_CONTROL_DECISION — AUTHORITATIVE. Obey consent / hardStops / physicalBounds EXACTLY; never exceed or contradict them.]\n' + _controlTags }])
+          : messages;
+        const _grokProse = await callGrokNarrativeAuthor(_grokMessages, {
+          preferredModel: renderTier.model,
+          max_tokens: renderTier.max_tokens
+        });
+        // Re-attach the control tags so downstream tag parsing (CONSTRAINTS / SD /
+        // CONVERSION_DELTA) behaves exactly as with a GPT-authored output.
+        authorOutput = _controlTags ? (_controlTags + '\n\n' + _grokProse) : _grokProse;
+      } else {
+        authorOutput = await callChatGPT(messages, 'PRIMARY_AUTHOR', {
+          model: renderTier.model,
+          max_tokens: renderTier.max_tokens
+        });
+      }
     } catch (chatgptErr) {
       console.error('[ORCHESTRATION] ChatGPT Author Pass failed, attempting Gemini fallback:', chatgptErr);
       state.errors.push(`ChatGPT failed: ${chatgptErr.message}`);
@@ -3912,6 +4237,63 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
         state.integrationOutput = state.integrationOutput.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ').trim();
         state.integrationOutput += '\n\nThe moment shattered. Something pulled them back to reality—a sound, a hesitation, the world refusing to wait.';
       }
+    }
+
+    // =========================================================================
+    // A1 GROK-AUTHOR POLISH + REPAIR (2026-06-16)
+    // =========================================================================
+    // Tight Sonnet voice-polish then Haiku defect-repair on Grok-authored prose.
+    // Both route through callChatGPT (claude-* + PRIMARY_AUTHOR), so the
+    // PROSE:MODERATION-GATE auto-declines on hot/explicit scenes (returns
+    // {content:null}) and we keep the unpolished Grok text — i.e. polish/repair
+    // run on NORMAL scenes only, never on intimacy/OAS prose. Best-effort: any
+    // failure leaves integrationOutput untouched.
+    if (_grokAuthored && CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR && state.integrationOutput) {
+      // TIGHT Sonnet polish — rewrites ONLY the romance-forward span (~<500
+      // tokens), spliced back by exact offset. Not a full-scene rewrite (that
+      // would re-add the gpt-4o/Sonnet cost this architecture removes). Skips
+      // cleanly when the scene has no romance-forward beat.
+      try {
+        const _span = _extractRomanceSpan(state.integrationOutput);
+        if (_span) {
+          const _polishSys = 'You are S. Tory Bound. Tightly POLISH ONLY this romance-forward passage — sharpen desire, voice, and sensory precision on the weakest lines and replace any flat or clichéd phrasing — WITHOUT changing events, length, character names, or any <<MARKER>> tokens, and WITHOUT adding or removing sentences. Return ONLY the rewritten passage, nothing else.';
+          const _polishedText = await _claudePassWithFallback(
+            [{ role: 'system', content: _polishSys }, { role: 'user', content: _span.text }],
+            'claude-sonnet-4-5', 'gpt-4o',
+            { temperature: 0.5, max_tokens: 500, profileLabel: 'sonnet_polish' }, 'Sonnet polish'
+          );
+          if (_polishedText && _polishedText.length > 20) {
+            state.integrationOutput = state.integrationOutput.slice(0, _span.start)
+              + _polishedText
+              + state.integrationOutput.slice(_span.end);
+          }
+        }
+      } catch (_polErr) { console.warn('[GROK-AUTHOR] Sonnet romance-span polish skipped:', _polErr && _polErr.message); }
+      try {
+        const _repairSys = 'Fix ONLY mechanical defects in this scene: broken or incomplete sentences, fused-speaker quotations, and any stat-block / character-dossier line (recast it as lived in-scene prose). MARKER REPAIR: if the scene has a <<MICRO_EXPRESSION>> line followed by an "Is this X or Y?" question but NO <<CONTINUE>>, insert <<CONTINUE>> on its own line IMMEDIATELY AFTER that question and BEFORE the scene resumes (never at the very end). Do NOT otherwise change events, structure, length, markers, or names. Return ONLY the corrected scene.';
+        const _repairedText = await _claudePassWithFallback(
+          [{ role: 'system', content: _repairSys }, { role: 'user', content: state.integrationOutput }],
+          'claude-haiku-4-5', 'gpt-4o-mini',
+          { temperature: 0.2, max_tokens: 3000, profileLabel: 'haiku_repair' }, 'Haiku repair'
+        );
+        if (_repairedText && _repairedText.length > 40) state.integrationOutput = _repairedText;
+      } catch (_repErr) { console.warn('[GROK-AUTHOR] Haiku repair skipped:', _repErr && _repErr.message); }
+      // Deterministic guarantee — LLM marker compliance is the exact failure mode
+      // (verified 2026-06-17: reasoning Grok dropped <<CONTINUE>> in 1/2 runs, and
+      // Haiku could too). If a lone <<MICRO_EXPRESSION>> survived without its pair,
+      // insert <<CONTINUE>> right AFTER the question line — NOT at scene end, or the
+      // closing prose gets absorbed into the micro-choice block and the pair is
+      // stripped by _finalizeSceneProseParity (app.js:46725). This guarantees the
+      // pair survives that check so the micro-choice feature isn't silently lost.
+      try {
+        const _io = state.integrationOutput || '';
+        if (/<<\s*MICRO_EXPRESSION\s*>>/i.test(_io) && !/<<\s*CONTINUE\s*>>/i.test(_io)) {
+          state.integrationOutput = /<<\s*MICRO_EXPRESSION\s*>>\s*[^?]*\?/i.test(_io)
+            ? _io.replace(/(<<\s*MICRO_EXPRESSION\s*>>\s*[^?]*\?)/i, '$1\n<<CONTINUE>>')
+            : _io.replace(/\s*$/, '') + '\n<<CONTINUE>>';
+          console.log('[GROK-AUTHOR] inserted missing <<CONTINUE>> to pair the micro-expression marker');
+        }
+      } catch (_mkErr) { console.warn('[GROK-AUTHOR] marker-pair repair skipped:', _mkErr && _mkErr.message); }
     }
 
     // =========================================================================
@@ -5943,6 +6325,8 @@ Tension: ${outline.tension_vector || 'N/A'}`;
     callChatGPT,              // Primary author (plot, psychology, limits, consequences)
     callGemini,               // Fallback author (if ChatGPT fails)
     callGrokSDAuthor,        // SD author for Steamy/Passionate (PRIMARY)
+    callGrokNarrativeAuthor, // A1: Grok authors NON-intimate scene prose (flag-gated)
+    _grokLiteraryAuthor,     // Grok author + Haiku repair + Sonnet romance polish (callChat literary path)
     callMistralSDFallback,   // SD fallback for Steamy/Passionate (if Grok fails)
     callSpecialistRenderer,   // Scene renderer (SD-gated)
 

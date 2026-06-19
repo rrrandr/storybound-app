@@ -104,6 +104,21 @@ const ROLE_MODEL_CHAIN = {
     'grok-4-1-fast-reasoning',
     'grok-4-1-fast-non-reasoning',
     'grok-4.3'
+  ],
+  // NARRATIVE_AUTHOR — Grok authors NON-INTIMATE scene PROSE (A1 architecture,
+  // 2026-06-16). This is the one Grok role that DOES receive global story
+  // context. The author/renderer firewall is preserved IN SPIRIT: consent,
+  // limits, [CONSTRAINTS] and [SD] are adjudicated UPSTREAM by a gpt-4o-mini
+  // control pass on /api/chatgpt-proxy (see orchestrateStoryGeneration → A1
+  // SPLIT) BEFORE Grok is called, so Grok never holds consent authority — it
+  // only renders prose under a decision a checked model already made. No ESD
+  // required (this is prose, not ESD-gated explicit rendering; explicit beats
+  // still route through INTIMACY_SPECIALIST/SPECIALIST_RENDERER). Gated
+  // client-side by CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR (default OFF).
+  NARRATIVE_AUTHOR: [
+    'grok-4-1-fast-reasoning',       // primary — reasoning model for scene prose
+    'grok-4-1-fast-non-reasoning',   // fallback 1 / connective-tier primary
+    'grok-4.3'                        // fallback 2
   ]
 };
 
