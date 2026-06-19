@@ -2349,9 +2349,48 @@ FAILURE CONDITIONS (invalid outputs):
         console.log('[GROK-LIT] author recovered via claude-sonnet-4-5');
       }
     }
-    // 2. Haiku mechanical repair + micro-expression marker pairing (gpt-4o-mini fallback on 502).
+    // 2. Grok-thinking SURGICAL de-calc editor (Roman 2026-06-19; gpt-4o-mini fallback).
+    //    NOT a second author — a red-pen editor. Grok's regressions are repetition/
+    //    calcification (reused descriptors, body-tell tics like rotating a wrist / crease
+    //    between the brows / palm on glass, chiseled-jaw / piercing-eyes / "he was gorgeous"
+    //    clichés) — LOCAL MINIMA it fell into while generating. A second Grok-reasoning pass
+    //    can SEE those patterns it couldn't AVOID mid-generation. It returns ≤5 EXACT-quote→
+    //    replacement fixes; we apply them DETERMINISTICALLY (rewrites ~50-200 tokens, not the
+    //    whole 3000-tok scene — keeps cost near the prior polish, NOT a Sonnet-as-2nd-author
+    //    rewrite that would gut Grok's economic advantage). Complements the regex motif
+    //    scanner downstream (app.js _repairCalcifiedMoves): catalog + cross-scene frequency
+    //    there; SEMANTIC intra-scene repetition here.
     try {
-      const _repairSys = 'Fix ONLY mechanical defects in this scene: broken or incomplete sentences, fused-speaker quotations, and any stat-block / character-dossier line (recast it as lived in-scene prose). MARKER REPAIR: if the scene has a <<MICRO_EXPRESSION>> line followed by an "Is this X or Y?" question but NO <<CONTINUE>>, insert <<CONTINUE>> on its own line IMMEDIATELY AFTER that question and BEFORE the scene resumes (never at the very end). Do NOT otherwise change events, structure, length, markers, or names. Return ONLY the corrected scene.';
+      const _auditSys = 'You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by priority: (1) HIGHEST — a physical descriptor / gesture / body-tell / observation / image REPEATED within the scene (the same eyes/jaw/hands re-described; a tic like rotating a wrist, a crease between the brows, a palm on glass used twice). Fix repetition BEFORE clichés. (2) calcified physical cliché ("chiseled jaw", "piercing eyes", "rangy"/"wiry"/"lean" build, "ruggedly handsome", "he was gorgeous"); (3) flat emotional cliché ("her heart raced", "electricity between them", "sparks flew", "time stood still"). Return ONLY a JSON array, at most 5 items, no prose: [{"quote":"<EXACT verbatim substring copied from the scene>","replacement":"<...>"}]. RULES FOR EACH replacement: it must be a CONCRETE, GROUNDED, SPECIFIC physical / sensory / behavioral observation — NOT a synonym swap (trading "chiseled jaw" for "strong jawline", or "piercing eyes" for "intense gaze", is NOT a fix and is forbidden). NEVER introduce another generic descriptor (rangy/wiry/lean/chiseled/sculpted/piercing/penetrating/intense/ruggedly/gorgeous). For a REPEATED feature, the replacement must notice something ENTIRELY DIFFERENT (a sound, a gait, a habit, a texture, a smell), not the same feature reworded. GRAMMATICAL FIT (critical — the replacement is spliced in verbatim): the replacement must slot into the quote\'s exact grammatical position and read cleanly. If the quoted span is a COMPLETE SENTENCE (capitalized start, ends in a period), the replacement must ALSO be a complete sentence with a subject and a FINITE verb — never a participle fragment ("my heel bouncing once" is WRONG; "my heel bounced once against the floorboard" is right). If the quote is a phrase or clause, match that shape. Keep similar length; keep names/events/dialogue/markers intact. The quote MUST be an exact verbatim substring or the fix is discarded. If clean, return [].';
+      const _BANNED_REPL = /\b(rangy|wiry|lean|chiseled|sculpted|piercing|penetrating|intense(ly)?|ruggedly|gorgeous|heart (raced|pounded|hammered|skipped)|electricity between|sparks (flew|flying)|time stood still)\b/i;
+      let _auditRaw = '';
+      try {
+        _auditRaw = _extract(await callGrokNarrativeAuthor([{ role: 'system', content: _auditSys }, { role: 'user', content: prose }], { preferredModel: CONFIG.SCENE_RENDERER_MODEL, max_tokens: 900 }));
+      } catch (_gErr) {
+        try { _auditRaw = _extract(await callChatGPT([{ role: 'system', content: _auditSys }, { role: 'user', content: prose }], 'PRIMARY_AUTHOR', { model: 'gpt-4o-mini', max_tokens: 900, temperature: 0.3 })); } catch (_) { _auditRaw = ''; }
+      }
+      let _fixes = [];
+      try { _fixes = JSON.parse((String(_auditRaw).match(/\[[\s\S]*\]/) || ['[]'])[0]); } catch (_) { _fixes = []; }
+      let _applied = 0;
+      if (Array.isArray(_fixes)) {
+        for (const f of _fixes.slice(0, 5)) {
+          if (f && typeof f.quote === 'string' && typeof f.replacement === 'string'
+              && f.quote.length > 8 && f.quote !== f.replacement
+              && prose.indexOf(f.quote) !== -1
+              && !/<<\s*(MICRO_EXPRESSION|CONTINUE)\s*>>/i.test(f.quote)
+              && !_BANNED_REPL.test(f.replacement)) {   // don't let a "fix" re-introduce calcification
+            prose = prose.replace(f.quote, f.replacement); _applied++;
+          }
+        }
+      }
+      console.log('[GROK-LIT] Grok de-calc editor: ' + _applied + '/' + (Array.isArray(_fixes) ? _fixes.length : 0) + ' surgical fixes applied (~' + (_applied * 30) + ' tok rewritten, not whole-scene)');
+    } catch (_e) { console.warn('[GROK-LIT] Grok de-calc editor skipped:', _e && _e.message); }
+    // 3. Haiku mechanical repair — runs AFTER the de-calc splice so it ALSO cleans up the
+    //    grammar a surgical replacement can introduce (lowercase fragments, tense breaks like
+    //    "watched ... ticked", double periods), plus the usual Grok-author mechanical defects
+    //    + micro-expression marker pairing. (gpt-4o-mini fallback on 502.)
+    try {
+      const _repairSys = 'Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragments or tense breaks left by an edit, e.g. a participle with no finite verb, or "watched X ticked"), fused-speaker quotations, doubled punctuation, a lowercase word starting a sentence, and any stat-block / character-dossier line (recast it as lived in-scene prose). MARKER REPAIR: if the scene has a <<MICRO_EXPRESSION>> line followed by an "Is this X or Y?" question but NO <<CONTINUE>>, insert <<CONTINUE>> on its own line IMMEDIATELY AFTER that question and BEFORE the scene resumes (never at the very end). Do NOT otherwise change events, structure, length, markers, or names. Return ONLY the corrected scene.';
       const _t = await _claudePassWithFallback(
         [{ role: 'system', content: _repairSys }, { role: 'user', content: prose }],
         'claude-haiku-4-5', 'gpt-4o-mini',
@@ -2359,8 +2398,9 @@ FAILURE CONDITIONS (invalid outputs):
       );
       if (_t && _t.length > 40) prose = _t;
     } catch (_e) { console.warn('[GROK-LIT] Haiku repair skipped:', _e && _e.message); }
-    // 3. Deterministic <<CONTINUE>> pairing net (LLM marker compliance is unreliable;
-    //    an unpaired <<MICRO_EXPRESSION>> gets stripped downstream → micro-choice lost).
+    // 4. Deterministic <<CONTINUE>> pairing net — LAST, so it re-pairs any micro-expression
+    //    marker the de-calc/repair passes disturbed (LLM marker compliance is unreliable; an
+    //    unpaired <<MICRO_EXPRESSION>> gets stripped downstream → micro-choice lost).
     try {
       if (/<<\s*MICRO_EXPRESSION\s*>>/i.test(prose) && !/<<\s*CONTINUE\s*>>/i.test(prose)) {
         prose = /<<\s*MICRO_EXPRESSION\s*>>\s*[^?]*\?/i.test(prose)
@@ -2368,19 +2408,6 @@ FAILURE CONDITIONS (invalid outputs):
           : prose.replace(/\s*$/, '') + '\n<<CONTINUE>>';
       }
     } catch (_e) {}
-    // 4. Tight Sonnet polish of the romance-forward span only (~<500 tok; gpt-4o fallback on 502).
-    try {
-      const _span = _extractRomanceSpan(prose);
-      if (_span) {
-        const _polishSys = 'You are S. Tory Bound. Tightly POLISH ONLY this romance-forward passage — sharpen desire, voice, and sensory precision on the weakest lines and replace any flat or clichéd phrasing — WITHOUT changing events, length, character names, or any <<MARKER>> tokens, and WITHOUT adding or removing sentences. Return ONLY the rewritten passage, nothing else.';
-        const _pt = await _claudePassWithFallback(
-          [{ role: 'system', content: _polishSys }, { role: 'user', content: _span.text }],
-          'claude-sonnet-4-5', 'gpt-4o',
-          { temperature: 0.5, max_tokens: 500, profileLabel: 'sonnet_polish' }, 'Sonnet polish'
-        );
-        if (_pt && _pt.length > 20) prose = prose.slice(0, _span.start) + _pt + prose.slice(_span.end);
-      }
-    } catch (_e) { console.warn('[GROK-LIT] Sonnet polish skipped:', _e && _e.message); }
     return prose;
   }
 
