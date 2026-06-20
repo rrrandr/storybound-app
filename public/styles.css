@@ -12269,6 +12269,56 @@ html:has(.petition-fate-card.petition-zoomed) {
 }
 .shape-choice-dismiss:hover { color: rgba(232,196,120,0.95); }
 
+/* ── SHAPE THIS ENCOUNTER — OAS affordance (Phase 2) ──
+   OAS has no scroll-gate; this is a deliberate gold button mounted over the
+   intimacy stage. Reuses the examine-card-btn gold-box look, viewport-anchored
+   near the bottom (above the say/do input), with a gentle pulse to draw the eye. */
+.shape-encounter-oas-btn {
+  position: fixed;
+  left: 50%;
+  bottom: 132px;
+  transform: translateX(-50%);
+  z-index: 9500;
+  padding: 12px 30px;
+  font-family: 'Lora', serif;
+  font-size: 1em;
+  font-weight: 500;
+  font-variant: small-caps;
+  letter-spacing: 0.18em;
+  color: var(--gold, #c9a24e);
+  background: rgba(20, 16, 12, 0.95);
+  border: 3px solid var(--gold, #c9a24e);
+  border-radius: 0;
+  box-shadow:
+    0 0 0 2px rgba(20, 16, 12, 0.95),
+    0 0 0 3px rgba(201, 162, 78, 0.55),
+    0 4px 18px rgba(0, 0, 0, 0.55),
+    0 0 28px rgba(201, 162, 78, 0.32),
+    inset 0 0 16px rgba(201, 162, 78, 0.10);
+  cursor: pointer;
+  isolation: isolate;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+  animation: shape-oas-btn-in 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both, shape-oas-pulse 2600ms ease-in-out 0.6s infinite;
+}
+.shape-encounter-oas-btn:hover {
+  transform: translateX(-50%) translateY(-1px);
+  color: #e8c478;
+  box-shadow:
+    0 0 0 2px rgba(20, 16, 12, 0.95),
+    0 0 0 3px rgba(232, 196, 120, 0.85),
+    0 6px 22px rgba(0, 0, 0, 0.6),
+    0 0 36px rgba(232, 196, 120, 0.45),
+    inset 0 0 18px rgba(232, 196, 120, 0.16);
+}
+@keyframes shape-oas-btn-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes shape-oas-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(20,16,12,0.95), 0 0 0 3px rgba(201,162,78,0.55), 0 4px 18px rgba(0,0,0,0.55), 0 0 24px rgba(201,162,78,0.28), inset 0 0 16px rgba(201,162,78,0.10); }
+  50%      { box-shadow: 0 0 0 2px rgba(20,16,12,0.95), 0 0 0 3px rgba(232,196,120,0.8),  0 4px 18px rgba(0,0,0,0.55), 0 0 40px rgba(232,196,120,0.5),  inset 0 0 20px rgba(232,196,120,0.18); }
+}
+
 /* ── Suggest Headers — two independent positioned labels ── */
 .petition-header-surface,
 .petition-header-plot {
