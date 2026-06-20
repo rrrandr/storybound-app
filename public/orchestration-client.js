@@ -3944,6 +3944,7 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
             // New intimacy encounter (anchor beat) → clear any prior SHAPE bias
             // so the adjustment is strictly per-encounter (never bleeds forward).
             appState.intimacyAdjustment = null;
+            appState.shapeEncounterChoice = null;
             // Initialize diegetic continuation tracking. Anchor's word count
             // seeds cascadeTotalWords so the hard 10K cap is enforced across
             // anchor + cascade beats together.
