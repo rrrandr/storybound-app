@@ -3329,6 +3329,7 @@ ${continuityBlock}`;
           let fateOverrideDirective = '';
           let continuationDirective = '';
           let invitationDirective = '';
+          let intimacyAdjustmentDirective = '';
           if (typeof window.buildCascadeSceneContextDirective === 'function') {
             sceneContextDirective = window.buildCascadeSceneContextDirective() || '';
           }
@@ -3347,9 +3348,14 @@ ${continuityBlock}`;
           if (typeof window.buildCascadeBeatInvitationDirective === 'function') {
             invitationDirective = window.buildCascadeBeatInvitationDirective() || '';
           }
+          // SHAPE THIS ENCOUNTER — gentle, encounter-only texture bias (returns
+          // '' unless the player picked one this intimate arc). Lean, not override.
+          if (typeof window.buildIntimacyAdjustmentDirective === 'function') {
+            intimacyAdjustmentDirective = window.buildIntimacyAdjustmentDirective() || '';
+          }
 
           const messages = [
-            { role: 'system', content: rendererPrompt.system + '\n\n' + continuityBlock + sceneContextDirective + plotRefDirective + phaseDirective + fateOverrideDirective + continuationDirective + invitationDirective },
+            { role: 'system', content: rendererPrompt.system + '\n\n' + continuityBlock + sceneContextDirective + plotRefDirective + phaseDirective + fateOverrideDirective + continuationDirective + invitationDirective + intimacyAdjustmentDirective },
             { role: 'user', content: rendererPrompt.user }
           ];
 
@@ -3935,6 +3941,9 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
           if (appState && !appState.cascadeMode && constraints.intimacyOccurs) {
             appState.cascadeMode = true;
             appState.cascadeCount = 0;
+            // New intimacy encounter (anchor beat) → clear any prior SHAPE bias
+            // so the adjustment is strictly per-encounter (never bleeds forward).
+            appState.intimacyAdjustment = null;
             // Initialize diegetic continuation tracking. Anchor's word count
             // seeds cascadeTotalWords so the hard 10K cap is enforced across
             // anchor + cascade beats together.

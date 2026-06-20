@@ -12188,6 +12188,87 @@ html:has(.petition-fate-card.petition-zoomed) {
   pointer-events: auto;
 }
 
+/* ── SHAPE THIS ENCOUNTER — one-time first-intimacy onboarding overlay ──
+   Reuses the petition-zoom-overlay frame; fills the card face with a 4-choice
+   list + dismiss. Gold text over a soft scrim so it reads on the dark card art.
+   Coordinates are in the unscaled 144px card space (the zoom transform scales). */
+.shape-encounter-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5px;
+  padding: 13% 9% 12%;
+  background: radial-gradient(ellipse at center, rgba(8,5,2,0.74) 45%, rgba(8,5,2,0.58) 100%);
+  pointer-events: auto;
+}
+.shape-encounter-header {
+  font-family: 'Cinzel', 'Lora', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.16em;
+  color: rgba(232,196,120,0.96);
+  font-size: 6px;
+  line-height: 1.1;
+  text-align: center;
+  margin-bottom: 2.5px;
+  text-shadow: 0 0.4px 1px rgba(0,0,0,0.6);
+}
+.shape-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  align-items: stretch;
+}
+.shape-choice-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4px;
+  padding: 2px 3px;
+  background: rgba(24,15,5,0.32);
+  border: 0.4px solid rgba(150,110,45,0.6);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 140ms ease, border-color 140ms ease, transform 120ms ease;
+}
+.shape-choice-btn:hover {
+  background: rgba(150,108,40,0.34);
+  border-color: rgba(232,196,120,0.95);
+  transform: translateY(-0.4px);
+}
+.shape-choice-title {
+  font-family: 'Cinzel', 'Lora', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.13em;
+  font-size: 5px;
+  line-height: 1.1;
+  color: rgba(243,230,200,0.97);
+}
+.shape-choice-line {
+  font-family: 'Lora', serif;
+  font-style: italic;
+  font-size: 3.4px;
+  line-height: 1.15;
+  color: rgba(243,230,200,0.74);
+  text-align: center;
+}
+.shape-choice-dismiss {
+  margin-top: 2.5px;
+  background: transparent;
+  border: none;
+  font-family: 'Lora', serif;
+  font-variant: small-caps;
+  letter-spacing: 0.09em;
+  font-size: 3.6px;
+  color: rgba(232,196,120,0.62);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 1px;
+  transition: color 140ms ease;
+}
+.shape-choice-dismiss:hover { color: rgba(232,196,120,0.95); }
+
 /* ── Suggest Headers — two independent positioned labels ── */
 .petition-header-surface,
 .petition-header-plot {
