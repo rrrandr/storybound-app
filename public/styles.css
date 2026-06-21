@@ -12269,6 +12269,24 @@ html:has(.petition-fate-card.petition-zoomed) {
 }
 .shape-choice-dismiss:hover { color: rgba(232,196,120,0.95); }
 
+/* ── LOOK SEED STRIP — "From your story" removable chips (PC + LI render modals) ── */
+.look-seed-strip { margin: 4px 0 10px; }
+.look-seed-title { font-size: 0.78em; color: #9a8c66; margin-bottom: 6px; letter-spacing: 0.02em; }
+.look-seed-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.look-seed-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.8em; padding: 4px 6px 4px 10px; border-radius: 12px;
+  border: 1px solid rgba(212,175,55,0.45); background: rgba(212,175,55,0.10);
+  color: #e6d29a; font-family: inherit; line-height: 1.2;
+}
+.look-seed-chip--mark { border-color: rgba(232,196,120,0.7); background: rgba(232,196,120,0.16); color: #f3e6c8; }
+.look-seed-chip--id { border-color: rgba(150,180,220,0.45); background: rgba(150,180,220,0.10); color: #cfe0f0; }
+.look-seed-x {
+  border: none; background: transparent; color: inherit; opacity: 0.6;
+  font-size: 1.15em; line-height: 1; cursor: pointer; padding: 0 2px; font-family: inherit;
+}
+.look-seed-x:hover { opacity: 1; }
+
 /* ── SHAPE THIS ENCOUNTER — OAS affordance (Phase 2) ──
    OAS has no scroll-gate; this is a deliberate gold button mounted over the
    intimacy stage. Reuses the examine-card-btn gold-box look, viewport-anchored
