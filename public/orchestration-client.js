@@ -3332,6 +3332,7 @@ ${continuityBlock}`;
           let continuationDirective = '';
           let invitationDirective = '';
           let intimacyAdjustmentDirective = '';
+          let literaryIntimacyArcDirective = '';
           if (typeof window.buildCascadeSceneContextDirective === 'function') {
             sceneContextDirective = window.buildCascadeSceneContextDirective() || '';
           }
@@ -3355,9 +3356,14 @@ ${continuityBlock}`;
           if (typeof window.buildIntimacyAdjustmentDirective === 'function') {
             intimacyAdjustmentDirective = window.buildIntimacyAdjustmentDirective() || '';
           }
+          // Literary intimacy ARC (how the scene MOVES) — layered ON TOP of the
+          // texture bias above (how it FEELS). Literary-only; OAS has its own engine.
+          if (typeof window.buildLiteraryIntimacyArcDirective === 'function') {
+            literaryIntimacyArcDirective = window.buildLiteraryIntimacyArcDirective() || '';
+          }
 
           const messages = [
-            { role: 'system', content: rendererPrompt.system + '\n\n' + continuityBlock + sceneContextDirective + plotRefDirective + phaseDirective + fateOverrideDirective + continuationDirective + invitationDirective + intimacyAdjustmentDirective },
+            { role: 'system', content: rendererPrompt.system + '\n\n' + continuityBlock + sceneContextDirective + plotRefDirective + phaseDirective + fateOverrideDirective + continuationDirective + invitationDirective + intimacyAdjustmentDirective + literaryIntimacyArcDirective },
             { role: 'user', content: rendererPrompt.user }
           ];
 
@@ -3947,6 +3953,8 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
             // so the adjustment is strictly per-encounter (never bleeds forward).
             appState.intimacyAdjustment = null;
             appState.shapeEncounterChoice = null;
+            appState._litArcRegisterLanding = null; // new encounter → re-derive the arc's register baseline
+            appState._litArcRegister = null;
             // Initialize diegetic continuation tracking. Anchor's word count
             // seeds cascadeTotalWords so the hard 10K cap is enforced across
             // anchor + cascade beats together.
