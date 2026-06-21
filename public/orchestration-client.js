@@ -179,6 +179,7 @@
     SD_FALLBACK_MODEL: 'mistral-medium-latest',   // Mistral: Tier-3 terminal fallback
     RENDERER_MODEL: 'grok-4-1-fast-non-reasoning',   // Grok: Visual bible, visualization prompts ONLY
     SCENE_RENDERER_MODEL: 'grok-4-1-fast-reasoning',   // Grok: Intense scenes (SD-gated, entitlement-checked)
+    NARRATIVE_AUTHOR_MODEL: 'grok-4.3',                 // Grok 4.3: the SCENE AUTHOR (literary + CG prose). Roman 2026-06-20 editorial-budget reframe — same author everywhere; editorial effort scales with scene tier. Proxy auto-falls-back to grok-4-1-fast-reasoning on 400/404.
     FATE_STRUCTURAL_MODEL: 'gpt-4o-mini',
     FATE_ELEVATION_MODEL: 'gpt-4o-mini',
     STRATEGY_PASS_MODEL: 'gpt-4o-mini',          // Strategy pre-pass: structural decisions (low temp)
@@ -198,6 +199,7 @@
     ALLOWED_SD_FALLBACK_MODELS: ['mistral-medium-latest', 'mistral-large-latest'],
     ALLOWED_RENDERER_MODELS: ['grok-4-1-fast-non-reasoning'],
     ALLOWED_SCENE_RENDERER_MODELS: ['grok-4-1-fast-reasoning'],
+    ALLOWED_NARRATIVE_AUTHOR_MODELS: ['grok-4.3', 'grok-4-1-fast-reasoning'],
 
     // Feature flags
     ENABLE_SPECIALIST_RENDERER: true,
@@ -970,9 +972,9 @@
         || !!(s._mode1 && (s._mode1.aftermathActive || s._mode1.rendezvous || s._mode1.routeToGrok));
       if (_hot) return decision; // intimacy keeps the existing pipeline
       return Object.assign({}, decision, {
-        model: CONFIG.SCENE_RENDERER_MODEL, // reasoning Grok for ALL author tiers
+        model: CONFIG.NARRATIVE_AUTHOR_MODEL, // Grok 4.3 — the non-intimate SCENE AUTHOR (intimacy early-returns at _hot above; SD/explicit force-paths + the SD-gated renderer stay on SCENE_RENDERER_MODEL). Roman 2026-06-20. Proxy auto-falls-back to 4-1-fast-reasoning.
         _origModel: decision.model,
-        reason: (decision.reason || '') + ':GrokAuthor'
+        reason: (decision.reason || '') + ':GrokAuthor4.3'
       });
     } catch (_) { return decision; }
   }
@@ -2215,7 +2217,7 @@ FAILURE CONDITIONS (invalid outputs):
   // callChatGPT returns for the author — so all downstream tag parsing is
   // unchanged. Throws on transport/empty so the caller's Gemini fallback fires.
   async function callGrokNarrativeAuthor(messages, options = {}) {
-    const _preferred = options.preferredModel || CONFIG.SCENE_RENDERER_MODEL;
+    const _preferred = options.preferredModel || CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL;
     const _maxTokens = options.max_tokens || 1500;
     const _convId = (typeof window !== 'undefined' && window.state && window.state.storyId) || null;
     const res = await fetch(CONFIG.SPECIALIST_PROXY, {
@@ -2334,7 +2336,7 @@ FAILURE CONDITIONS (invalid outputs):
     let prose = '';
     const _extract = (r) => String((typeof r === 'string') ? r : ((r && r.content) || '')).trim();
     try {
-      prose = await callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
+      prose = await callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
       if (!String(prose || '').trim()) throw new Error('Grok author returned empty');
     } catch (_grokAuthErr) {
       console.warn('[GROK-LIT] Grok author failed/empty (' + (_grokAuthErr && _grokAuthErr.message) + ') — falling back to gpt-4o');
