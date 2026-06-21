@@ -60,6 +60,7 @@
  * HARD RULE: Grok must NEVER be called for DSP, normalization, veto, or story logic.
  */
 const ALLOWED_GROK_MODELS = [
+  'grok-4.20-0309-non-reasoning', // OAS author primary (fast, no reasoning-token tax; cleaned by gpt-4o-mini)
   'grok-4-1-fast-non-reasoning',  // RENDERER primary + INTIMACY_SPECIALIST fallback
   'grok-4-1-fast-reasoning',      // INTIMACY_SPECIALIST primary
   'grok-4.3'                      // Universal fallback if 4-1 names get renamed/deprecated
@@ -79,11 +80,13 @@ const ALLOWED_GROK_MODELS = [
  */
 const ROLE_MODEL_CHAIN = {
   INTIMACY_SPECIALIST: [
-    'grok-4-1-fast-reasoning',       // primary — reasoning model for charged dialogue
-    'grok-4-1-fast-non-reasoning',   // fallback 1 — cheaper, still permissive
-    'grok-4.3'                        // fallback 2 — if 4-1 is deprecated
+    'grok-4.20-0309-non-reasoning',  // primary — fast OAS author (de-repeated downstream by gpt-4o-mini)
+    'grok-4-1-fast-reasoning',       // fallback 1 — reasoning model (opt-in depth turns; aliases to 4.3)
+    'grok-4-1-fast-non-reasoning',   // fallback 2
+    'grok-4.3'                        // fallback 3 — universal
   ],
   SPECIALIST_RENDERER: [
+    'grok-4.20-0309-non-reasoning',
     'grok-4-1-fast-reasoning',
     'grok-4-1-fast-non-reasoning',
     'grok-4.3'

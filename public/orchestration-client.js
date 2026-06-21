@@ -5167,8 +5167,12 @@ dialogue: <elevated dialogue>`;
       text = await _callGPTFallback();
       return text;
     }
-    // Speed-first chain (default).
+    // Speed-first chain (default). grok-4.20 non-reasoning: ~0.6s/turn, no
+    // reasoning-token tax. Its repetition tendency is cleaned by a downstream
+    // gpt-4o-mini de-calc pass in _handleIntimacyTurn (FAST turns only).
     console.log('[OAS-LLM] Mode: FAST (speed chain)');
+    text = await _callGrokWithPreferred('grok-4.20-0309-non-reasoning', 12000);
+    if (text) return text;
     text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', 12000);
     if (text) return text;
     text = await _callDeepSeek('deepseek-v4-flash', 15000);
