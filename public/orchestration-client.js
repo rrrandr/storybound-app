@@ -2239,6 +2239,16 @@ FAILURE CONDITIONS (invalid outputs):
     const data = await res.json();
     // Cost capture flips the per-scene 'grok' cost bucket (model name has 'grok').
     try { _accumulateTokens(data, (data._orchestration && data._orchestration.model) || _preferred, 'narrative_author'); } catch (_) {}
+    // TELEMETRY HONESTY (Roman 2026-06-22): the REQUESTED name (e.g. grok-4-1-fast-reasoning)
+    // is aliased by xAI to a SERVED model (verified: grok-4.3). Log BOTH so bakeoff/cost
+    // analysis reads the real model — not a version string that implies a migration that
+    // never happened. reasoning flag from the actual usage (reasoning_tokens), authoritative
+    // over the requested suffix.
+    try {
+      var _served = (data && data.model) || (data._orchestration && data._orchestration.model) || _preferred;
+      var _rtok = (data && data.usage && data.usage.completion_tokens_details && data.usage.completion_tokens_details.reasoning_tokens) || 0;
+      console.log('[MODEL:SERVED] role=NARRATIVE_AUTHOR requestedModel=' + _preferred + ' servedModel=' + _served + ' reasoning=' + (_rtok > 0) + ' reasoningTokens=' + _rtok);
+    } catch (_) {}
     const content = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || '';
     if (!content || !content.trim()) throw new Error('Grok narrative author returned empty content');
     return content;
