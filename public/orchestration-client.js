@@ -5712,6 +5712,40 @@ Respond in EXACTLY two lines:
     return null;
   }
 
+  // ── PC-ARCHETYPE FATE INFLECTION (Roman 2026-06-23) ──────────────────────
+  // Fate cards previously consumed the LI archetype + world register but NEVER
+  // the PC's own chosen archetype (playermask). RULE (Roman): "Option type owns
+  // the CHOICE; PC archetype owns how NATURAL or COSTLY the choice FEELS." This
+  // is INFLECTION, not a global voice filter — the 5 cards MUST stay 5 distinct
+  // choices (anti-collapse guardrail). Per PC archetype: a per-card friction
+  // (NATURAL = her instinct / COSTLY = against her nature / NEUTRAL = light voice
+  // only) + a voice texture. Injected ONLY at the per-card block level (never the
+  // system/register block, which would homogenize all 5). NEUTRAL gets light PC
+  // diction but NO friction drama.
+  var _FATE_PC_FRICTION = {
+    OPEN_VEIN:      { desc: 'leaks feeling, un-armored — the truth arrives before she can manage it', voice: 'raw and unguarded; the feeling is in the words before she can hide it, no armor', natural: { TEMPTATION: 'she reaches without hiding it', CONFESSION: 'the truth spills easily, undefended' }, costly: { SILENCE: 'holding back fights her whole nature', BOUNDARY: 'self-protection cuts against her openness' } },
+    ARMORED_FOX:    { desc: 'deflects sideways — wit and evasion, never a clean read', voice: 'wry, sideways, deflecting; a joke riding under the line, truth told at an angle', natural: { REVERSAL: 'redirect and wit are her reflex', SILENCE: 'deflect by giving nothing away' }, costly: { CONFESSION: 'the joke fails; saying it straight strips the armor' } },
+    HEART_WARDEN:   { desc: 'builds shelter — care and protection are her grammar', voice: 'steady, protective; even desire is phrased as tending, safety in the wording', natural: { BOUNDARY: 'stating a need reads as protecting' }, costly: { TEMPTATION: 'pure selfish wanting is hard for a protector' } },
+    SPELLBINDER:    { desc: 'gravity and control — reveals on her own terms', voice: 'controlled, unhurried; she discloses on her own timing, stillness in the words', natural: { SILENCE: 'control by withholding', REVERSAL: 'revelation on her own terms' }, costly: { CONFESSION: 'uncontrolled need exposes the thing she manages' } },
+    DARK_VICE:      { desc: 'steps toward the line — tests, tempts, controls the danger', voice: 'edged, testing; she presses and dares, finds the pressure point, control in the phrasing', natural: { TEMPTATION: 'stepping to the edge is instinct', REVERSAL: 'taking control / issuing the challenge' }, costly: { CONFESSION: 'sincere vulnerability hands someone leverage' } },
+    BEAUTIFUL_RUIN: { desc: 'frays under the glamour — charm with a crack in it', voice: 'glittering and a little unstable; charm not quite holding, the damage showing through', natural: { REVERSAL: 'self-sabotage and testing are the reflex' }, costly: { BOUNDARY: 'steadiness is hard-won, not natural', SILENCE: 'restraint feels unstable to hold' } },
+    ETERNAL_FLAME:  { desc: 'surges and interrupts — acts before she can hide it', voice: 'fast, surging, ahead of her guard; the words out before she can stop them', natural: { TEMPTATION: 'escalation is instinct', CONFESSION: 'it surges out before the guard catches it' }, costly: { SILENCE: 'restraint fights the surge', BOUNDARY: 'holding a limit fights the surge' } }
+  };
+  function _buildFatePcFrictionBlock(archRaw) {
+    try {
+      var arch = String(archRaw || '').toUpperCase().replace(/[^A-Z_]/g, '');
+      var m = _FATE_PC_FRICTION[arch]; if (!m) return '';
+      var CARDS = ['TEMPTATION', 'SILENCE', 'REVERSAL', 'BOUNDARY', 'CONFESSION'];
+      var lines = CARDS.map(function (c) {
+        if (m.natural && m.natural[c]) return '  • ' + c + ' — NATURAL (her instinct): ' + m.natural[c] + '. Render it as coming EASILY, in her grain.';
+        if (m.costly && m.costly[c]) return '  • ' + c + ' — COSTLY (against her nature): ' + m.costly[c] + '. Render the FRICTION — she strains against herself; that cost is the drama.';
+        return '  • ' + c + ' — neutral: light ' + arch + ' diction only; do NOT flag it as natural or costly.';
+      }).join('\n');
+      return '\nPC ARCHETYPE — CHOICE FRICTION & VOICE (the PROTAGONIST\'s chosen nature is ' + arch + ': ' + m.desc + '). This does NOT change which 5 cards appear or what each card MEANS — it colors HOW THIS PC phrases each, and whether the choice comes EASILY or COSTS her:\n' + lines + '\nPC VOICE TEXTURE: ' + m.voice + '.\nCRITICAL ANTI-COLLAPSE: do NOT make all 5 sound like one archetype voice. Each card stays its OWN distinct move (an escalation is still an escalation, a boundary still a boundary, silence still wordless); friction + voice only color the DELIVERY. The 5 must remain 5 genuinely different CHOICES — if they read as five versions of the same impulse, you have failed. Against-the-grain (COSTLY) cards should feel especially charged; do NOT smooth them into the natural ones.\n';
+    } catch (_) { return ''; }
+  }
+  try { if (typeof window !== 'undefined') window._buildFatePcFrictionBlock = _buildFatePcFrictionBlock; } catch (_) {}
+
   // ── BATCH INTIMATE FATE PREVIEWS — single LLM call for all 5 cards ──
   // Returns { temptation: {action,dialogue}, silence: {...}, ... } in one
   // round-trip instead of fanning 5 separate Grok calls. ~80% cost cut
@@ -5910,6 +5944,9 @@ Respond in EXACTLY two lines:
     // Was generating female-anatomy lines for male PCs, AND would have
     // told a male PC he wanted a female LI's "cock" in his mouth — both
     // sides need explicit guidance.
+    // PC archetype (playermask) drives fate CHOICE-FRICTION + voice texture (per-card, anti-collapse).
+    const _pcArch = st.playerMask || st.playermask || (st.picks && st.picks.playermask) || '';
+    const _pcFrictionBlock = (typeof _buildFatePcFrictionBlock === 'function') ? _buildFatePcFrictionBlock(_pcArch) : '';
     const pcGenderRaw = String(st.gender || st.playerGender || 'Female');
     const pcGender = pcGenderRaw.charAt(0).toUpperCase() + pcGenderRaw.slice(1).toLowerCase();
     const liGenderRaw = String((st.storybeau && st.storybeau.gender) || st.loveInterestGender || 'Female');
@@ -5960,6 +5997,7 @@ VARIANT SHAPES (each card picks ONE — distribute ~70% amplify / ~20% redirect 
 - RUIN (~10%): plot-level sabotage of the moment. Whisper a name that's wrong (grievance source character? committed-truth "about" topic? a callback ledger figure?). Mention something that doesn't belong. Let the world bleed into the bed. The act doesn't stop — but something cracks. Fires when there's a juicy plot tension that could intrude.
 - REDIRECT (~20%): turn intimacy into vulnerability discovery. Pull back. Ask the question that matters. Honor a narrative scar by AVOIDING something. Change the subject to what's actually heavy. The body slows; the emotion deepens. Fires when there's vulnerability/scar/wound material on the page.
 
+${_pcFrictionBlock}
 OUTPUT FORMAT (CRITICAL — follow EXACTLY): return EXACTLY 5 lines, one per archetype, and NOTHING else — no JSON, no braces, no preamble, no markdown, no quotation marks around the fields. Each line is the archetype name, the variant, the action, then the dialogue, separated by ||| (three pipes):
 TEMPTATION ||| <amplify|ruin|redirect> ||| <action: max 12 words, specific physical act> ||| <dialogue: max 15 words; parentheses ok for sounds>
 SILENCE ||| <variant> ||| <action> ||| <dialogue>
