@@ -2410,6 +2410,41 @@ FAILURE CONDITIONS (invalid outputs):
     return null; // caller keeps the original prose
   }
 
+  // ── TIERED AUTHOR ROUTING (Roman 2026-06-25) ────────────────────────────────
+  // Non-premium scenes → Mistral Small authors (cheap) under a RESTRAINT GUARD that
+  // suppresses its simile-drunk tell at write time; the purple-mode lens then transmutes
+  // residual purple → grounded signature, and Mistral-small repair cleans mechanics.
+  // Premium/tentpole scenes (Scene 1, climax, cliffhanger, tempt-fate, betrayal/revelation,
+  // high-importance, LI entrance) stay on Grok 4.3. Kill-switch: window._smallAuthorEnabled=false.
+  const _SMALL_RESTRAINT_GUARD = '\n\nRESTRAINT GUARD (write restrained literary prose, NOT ornate): MAXIMUM one simile or metaphor per paragraph — most paragraphs should have ZERO. Prefer concrete, grounded, specific physical/sensory observation over comparison ("like / as if / as though"). Do NOT reach for ornate intensifiers (achingly, molten, electric, searing, primal, feral, velvet, liquid). Ground every physical description in plain, specific detail a person would actually notice. Vivid through precision, never through ornament. Do not invent biographical specifics (birthdays, place names, backstory) the brief did not give you.';
+  function _isPremiumAuthorScene() {
+    try {
+      var st = (typeof window !== 'undefined' && window.state) || {};
+      if (typeof window !== 'undefined' && typeof window._sceneEditorialTier === 'function' && window._sceneEditorialTier(st) === 'premium') return true; // Scene 1 / climax / cliffhanger / tempt-fate
+      var imp = st._currentSceneImportance;
+      if (imp === 'apex' || imp === 'high') return true;                                   // climax / high-stakes / revelation
+      if (/ST\s*0*[56]\b/i.test(String(st.storyturn || ''))) return true;                  // ST5/ST6 = betrayal turns
+      if (st._isBetrayalScene || st._isRevelationScene || st._isFirstMeet || st._liFirstAppearance || st._liEntranceScene) return true; // explicit flags if present
+      return false;
+    } catch (_) { return true; } // on any error, default to Grok (premium) — never silently downgrade
+  }
+  function _smallAuthorEnabled() { try { return (typeof window !== 'undefined') && window._smallAuthorEnabled !== false; } catch (_) { return false; } }
+  // Mistral Small author: flatten cache sentinels (mistral has no Anthropic caching), inject the
+  // restraint guard into the system message, post to the mistral proxy. Returns prose or ''.
+  async function _mistralAuthor(messages, opts) {
+    opts = opts || {};
+    var _flat = function (c) { if (typeof c === 'string') return c.split(CACHE_BOUNDARY).join(''); if (Array.isArray(c)) return c.map(function (b) { return (b && b.text) || ''; }).join(''); return String(c || ''); };
+    var msgs = (messages || []).map(function (m) { return m ? { role: m.role, content: _flat(m.content) } : m; });
+    var injected = false;
+    for (var i = 0; i < msgs.length; i++) { if (msgs[i] && msgs[i].role === 'system') { msgs[i].content += _SMALL_RESTRAINT_GUARD; injected = true; break; } }
+    if (!injected) msgs.unshift({ role: 'system', content: _SMALL_RESTRAINT_GUARD.trim() });
+    var r = await fetch(CONFIG.MISTRAL_PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mistral-small-latest', messages: msgs, temperature: 0.7, max_tokens: opts.max_tokens || 3000 }) });
+    if (!r.ok) throw new Error('mistral-small author HTTP ' + r.status);
+    var d = await r.json();
+    try { if (typeof _accumulateTokens === 'function') _accumulateTokens(d, 'mistral-small-latest', 'author'); } catch (_) {}
+    return (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || (d && d.content) || '';
+  }
+
   async function _grokLiteraryAuthor(messages, options = {}) {
     const _maxTokens = options.max_tokens || 3000;
     // 1. Grok authors the scene prose (reasoning / "thinking" model). AUTHOR FALLBACK
@@ -2423,14 +2458,31 @@ FAILURE CONDITIONS (invalid outputs):
     // for a Sonnet rescue.
     let prose = '';
     const _extract = (r) => String((typeof r === 'string') ? r : ((r && r.content) || '')).trim();
+    const _premium = _isPremiumAuthorScene();
+    const _smallAuthor = _smallAuthorEnabled() && !_premium;
+    const _grokAuthor = () => callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
     try {
-      prose = await callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
-      if (!String(prose || '').trim()) throw new Error('Grok author returned empty');
-    } catch (_grokAuthErr) {
-      console.warn('[GROK-LIT] Grok author failed/empty (' + (_grokAuthErr && _grokAuthErr.message) + ') — falling back to gpt-4o');
-      prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: _maxTokens, temperature: 0.8 }));
-      if (!prose) throw new Error('scene authors (grok/gpt-4o) returned empty — Sonnet/Opus rescue is cost-deprecated; retry / wait for Grok');
-      console.log('[GROK-LIT] author recovered via gpt-4o');
+      if (_smallAuthor) {
+        try { console.log('[GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)'); } catch (_) {}
+        prose = _extract(await _mistralAuthor(messages, { max_tokens: _maxTokens }));
+        if (!prose) throw new Error('mistral-small author empty');
+      } else {
+        try { console.log('[GROK-LIT] author = Grok 4.3 (premium/tentpole)'); } catch (_) {}
+        prose = _extract(await _grokAuthor());
+        if (!prose) throw new Error('Grok author returned empty');
+      }
+    } catch (_authErr) {
+      // Fallback chain across INDEPENDENT infra. Small fails → Grok (the premium author) →
+      // gpt-4o. Grok fails → gpt-4o. No Sonnet/Opus rescue (cost-deprecated).
+      console.warn('[GROK-LIT] ' + (_smallAuthor ? 'Mistral-small' : 'Grok') + ' author failed/empty (' + (_authErr && _authErr.message) + ') — falling back');
+      try {
+        if (_smallAuthor) { prose = _extract(await _grokAuthor()); if (prose) { console.log('[GROK-LIT] author recovered via Grok'); } }
+      } catch (_g) { /* fall through to gpt-4o */ }
+      if (!prose) {
+        prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: _maxTokens, temperature: 0.8 }));
+        if (!prose) throw new Error('scene authors (small/grok/gpt-4o) returned empty — Sonnet/Opus rescue is cost-deprecated; retry / wait for provider');
+        console.log('[GROK-LIT] author recovered via gpt-4o');
+      }
     }
     // 2. Grok-thinking SURGICAL de-calc editor (Roman 2026-06-19; gpt-4o-mini fallback).
     //    NOT a second author — a red-pen editor. Grok's regressions are repetition/
