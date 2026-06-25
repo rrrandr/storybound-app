@@ -2428,7 +2428,12 @@ FAILURE CONDITIONS (invalid outputs):
       return false;
     } catch (_) { return true; } // on any error, default to Grok (premium) — never silently downgrade
   }
-  function _smallAuthorEnabled() { try { return (typeof window !== 'undefined') && window._smallAuthorEnabled !== false; } catch (_) { return false; } }
+  // OPT-IN (Roman 2026-06-25): default OFF after the validation playthrough exposed two
+  // blockers — (1) purple-mode lens didn't engage on the live non-premium path (works
+  // standalone + flat-mode fires on premium, so it's a wiring gap), (2) Small shipped a
+  // coherence/referent error the lens can't fix. Re-enable with window._smallAuthorEnabled=true
+  // once both are addressed. Until then: Grok authors everywhere (repair/audits/lens unchanged).
+  function _smallAuthorEnabled() { try { return (typeof window !== 'undefined') && window._smallAuthorEnabled === true; } catch (_) { return false; } }
   // Mistral Small author: flatten cache sentinels (mistral has no Anthropic caching), inject the
   // restraint guard into the system message, post to the mistral proxy. Returns prose or ''.
   async function _mistralAuthor(messages, opts) {
