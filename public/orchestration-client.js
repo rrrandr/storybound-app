@@ -192,7 +192,7 @@
     SONNET_MODEL: 'claude-sonnet-4-5',   // Sonnet 4.x — strong prose, $3/$15 per M tokens. Tier A in-between + Tier B Scene 1.
 
     // Model allowlists (must match server-side)
-    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'claude-opus-4-7', 'claude-opus-4-1', 'claude-sonnet-4-5', 'claude-haiku-4-5'],
+    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'claude-haiku-4-5'], // Sonnet/Opus removed 2026-06-24 — cost-deprecated as authors (Haiku repair only)
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
     ALLOWED_SD_AUTHOR_MODELS: ['grok-4-1-fast-reasoning'],
     ALLOWED_SD_DEEPSEEK_MODELS: ['deepseek-v4-pro', 'deepseek-v4-flash'],
@@ -222,10 +222,14 @@
     // A-plot-over-romance, low LI desire). Kept LOCALHOST-GATED — production users
     // stay on the legacy GPT/Sonnet author until the lean-Grok-prompt + 50-seed
     // quality A/B confirm the regressions are gone, then promote to literal `true`.
-    ENABLE_GROK_NARRATIVE_AUTHOR: (typeof window !== 'undefined' && !!window.location && (
-        window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ||
-        window.location.hostname === '0.0.0.0' || (window.location.hostname || '').endsWith('.local') ||
-        window.__DEV__ === true)),
+    // PROMOTED TO PRODUCTION (Roman 2026-06-24): Grok authors non-intimate scene
+    // prose EVERYWHERE now (was localhost-gated). This is the documented promotion
+    // path — flipping to literal `true` makes resolveRenderTier remap paid Anthropic
+    // author decisions (Sonnet/Opus) to Grok and routes the renderTier path through
+    // callGrokNarrativeAuthor instead of callChatGPT. Sonnet/Opus are cost-deprecated;
+    // their selector tiers still exist for telemetry but _maybeRemapAuthorToGrok now
+    // always overrides them with Grok. Intimacy/OAS prose was already Grok.
+    ENABLE_GROK_NARRATIVE_AUTHOR: true,
 
     // Timeouts
     API_TIMEOUT_MS: 60000
@@ -962,7 +966,6 @@
   // NEVER used to author scene prose, even connective beats.
   function _maybeRemapAuthorToGrok(decision, appState) {
     try {
-      if (!CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR) return decision;
       if (!decision || !decision.model) return decision;
       if (/grok/i.test(decision.model)) return decision; // already Grok (e.g. Mode 1)
       const s = appState || {};
@@ -970,9 +973,21 @@
         || s.eroticMode === 'CARNAL'
         || !!(s.intimacyDialogue && s.intimacyDialogue.active)
         || !!(s._mode1 && (s._mode1.aftermathActive || s._mode1.rendezvous || s._mode1.routeToGrok));
-      if (_hot) return decision; // intimacy keeps the existing pipeline
+      // COST DEPRECATION (Roman 2026-06-24): paid Anthropic authors (Sonnet/Opus) are
+      // forbidden. A Sonnet/Opus decision that reached here would otherwise fall to
+      // callChatGPT and get cost-guard-downgraded to HAIKU for a FULL scene — bad. So
+      // remap to a Grok author UNCONDITIONALLY: hot/intimate → the intimate SCENE
+      // RENDERER, everything else → the narrative author. Non-Anthropic decisions
+      // (gpt-4o etc.) are left as-is unless ENABLE_GROK_NARRATIVE_AUTHOR routes them.
+      const _isPaidClaude = /^claude-(sonnet|opus)/.test(decision.model);
+      if (_hot) {
+        return _isPaidClaude
+          ? Object.assign({}, decision, { model: CONFIG.SCENE_RENDERER_MODEL, _origModel: decision.model, reason: (decision.reason || '') + ':GrokRenderer(hot,Sonnet-deprecated)' })
+          : decision; // hot non-Anthropic (e.g. already grok renderer) keeps its pipeline
+      }
+      if (!CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR && !_isPaidClaude) return decision; // flag off: only force-remap the deprecated paid models
       return Object.assign({}, decision, {
-        model: CONFIG.NARRATIVE_AUTHOR_MODEL, // Grok 4.3 — the non-intimate SCENE AUTHOR (intimacy early-returns at _hot above; SD/explicit force-paths + the SD-gated renderer stay on SCENE_RENDERER_MODEL). Roman 2026-06-20. Proxy auto-falls-back to 4-1-fast-reasoning.
+        model: CONFIG.NARRATIVE_AUTHOR_MODEL, // Grok 4.3 — the non-intimate SCENE AUTHOR. Proxy auto-falls-back to 4-1-fast-reasoning.
         _origModel: decision.model,
         reason: (decision.reason || '') + ':GrokAuthor4.3'
       });
@@ -1167,7 +1182,24 @@
       FATE_STRUCTURAL: CONFIG.FATE_STRUCTURAL_MODEL,
       FATE_ELEVATION: CONFIG.FATE_ELEVATION_MODEL
     };
-    const modelResolved = options.model || roleModelMap[role] || CONFIG.PRIMARY_AUTHOR_MODEL;
+    let modelResolved = options.model || roleModelMap[role] || CONFIG.PRIMARY_AUTHOR_MODEL;
+
+    // ── COST GUARD (Roman 2026-06-24): Sonnet/Opus are deprecated as authors ──
+    // Every paid-Anthropic author/polish call funnels through here. Sonnet & Opus
+    // are too expensive; scene authoring is Grok, and the only sanctioned Anthropic
+    // spend is the cheap Haiku mechanical-repair pass. So any sonnet/opus slug is
+    // DOWNGRADED to claude-haiku-4-5 (repair-class, allowed by the server firewall).
+    // This catches polish/expand passes AND every manual A/B harness arm without
+    // per-callsite edits. A dev who genuinely wants a paid-Anthropic baseline
+    // comparison sets window.__ALLOW_PAID_ANTHROPIC_AUTHOR__ = true to opt back in
+    // (the server allowlist must also be widened for it to actually go through).
+    if (typeof modelResolved === 'string' && /^claude-(sonnet|opus)/.test(modelResolved)) {
+      const _allowPaid = (typeof window !== 'undefined' && window.__ALLOW_PAID_ANTHROPIC_AUTHOR__ === true);
+      if (!_allowPaid) {
+        try { console.warn('[COST-GUARD] ' + modelResolved + ' is cost-deprecated — downgrading to claude-haiku-4-5. Set window.__ALLOW_PAID_ANTHROPIC_AUTHOR__=true (and widen the server allowlist) to A/B against it.'); } catch (_) {}
+        modelResolved = 'claude-haiku-4-5';
+      }
+    }
 
     // Route Anthropic models to the Anthropic proxy. The proxy shape is
     // identical (same payload + same normalized response) so the rest of
@@ -2341,8 +2373,12 @@ FAILURE CONDITIONS (invalid outputs):
     // 1. Grok authors the scene prose (reasoning / "thinking" model). AUTHOR FALLBACK
     // (Roman 2026-06-18): callGrokNarrativeAuthor THROWS on empty content, and during a
     // degraded proxy window (empty/502 observed live) that failed the ENTIRE scene with no
-    // recovery. Fall back across INDEPENDENT infra paths — Grok (x.ai) → gpt-4o (chatgpt-proxy)
-    // → Sonnet (anthropic-proxy) — so one provider's bad window doesn't kill the scene.
+    // recovery. Fall back across INDEPENDENT infra paths — Grok (x.ai) → gpt-4o
+    // (chatgpt-proxy) — so one provider's bad window doesn't kill the scene.
+    // COST DEPRECATION (Roman 2026-06-24): the old Sonnet (anthropic-proxy) terminal
+    // fallback is REMOVED — Sonnet/Opus are too expensive. If both Grok and gpt-4o are
+    // down we THROW so the caller retries / the user waits for Grok, rather than paying
+    // for a Sonnet rescue.
     let prose = '';
     const _extract = (r) => String((typeof r === 'string') ? r : ((r && r.content) || '')).trim();
     try {
@@ -2350,16 +2386,9 @@ FAILURE CONDITIONS (invalid outputs):
       if (!String(prose || '').trim()) throw new Error('Grok author returned empty');
     } catch (_grokAuthErr) {
       console.warn('[GROK-LIT] Grok author failed/empty (' + (_grokAuthErr && _grokAuthErr.message) + ') — falling back to gpt-4o');
-      try {
-        prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: _maxTokens, temperature: 0.8 }));
-        if (!prose) throw new Error('gpt-4o author empty');
-        console.log('[GROK-LIT] author recovered via gpt-4o');
-      } catch (_gptAuthErr) {
-        console.warn('[GROK-LIT] gpt-4o author also failed/empty (' + (_gptAuthErr && _gptAuthErr.message) + ') — falling back to claude-sonnet-4-5');
-        prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'claude-sonnet-4-5', max_tokens: _maxTokens, temperature: 0.7 }));
-        if (!prose) throw new Error('all scene authors (grok/gpt-4o/sonnet) returned empty');
-        console.log('[GROK-LIT] author recovered via claude-sonnet-4-5');
-      }
+      prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: _maxTokens, temperature: 0.8 }));
+      if (!prose) throw new Error('scene authors (grok/gpt-4o) returned empty — Sonnet/Opus rescue is cost-deprecated; retry / wait for Grok');
+      console.log('[GROK-LIT] author recovered via gpt-4o');
     }
     // 2. Grok-thinking SURGICAL de-calc editor (Roman 2026-06-19; gpt-4o-mini fallback).
     //    NOT a second author — a red-pen editor. Grok's regressions are repetition/

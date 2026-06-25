@@ -44,10 +44,14 @@
  * =============================================================================
  */
 
+// COST FIREWALL (Roman 2026-06-24): Sonnet and Opus are DEPRECATED as authors —
+// too expensive. Scene authoring is Grok; the only sanctioned Anthropic spend is
+// the cheap Haiku mechanical-repair pass. This allowlist is the hard guarantee:
+// any sonnet/opus request 400s here regardless of which client path emitted it,
+// so no Sonnet/Opus tokens can ever be billed even if a client path regresses.
+// To temporarily re-enable for a deliberate A/B, add the slug back here AND set
+// window.__ALLOW_PAID_ANTHROPIC_AUTHOR__ = true client-side.
 const ALLOWED_CLAUDE_MODELS = new Set([
-  'claude-opus-4-7',
-  'claude-opus-4-1',
-  'claude-sonnet-4-5',
   'claude-haiku-4-5'
 ]);
 
@@ -109,9 +113,15 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'Messages array is required', code: 'MISSING_MESSAGES' });
     }
     if (!model || !ALLOWED_CLAUDE_MODELS.has(model)) {
+      const _deprecated = typeof model === 'string' && /claude-(sonnet|opus)/.test(model);
+      if (_deprecated) {
+        console.warn('[ANTHROPIC-PROXY] BLOCKED deprecated paid author model: ' + model + ' — Sonnet/Opus are cost-deprecated; author on Grok, repair on Haiku.');
+      }
       return res.status(400).json({
-        error: 'Model not allowed',
-        code: 'MODEL_NOT_ALLOWED',
+        error: _deprecated
+          ? 'Model deprecated for cost — Sonnet/Opus are no longer permitted as authors. Author on Grok; repair on Haiku.'
+          : 'Model not allowed',
+        code: _deprecated ? 'MODEL_DEPRECATED_COST' : 'MODEL_NOT_ALLOWED',
         requestedModel: model,
         allowedModels: Array.from(ALLOWED_CLAUDE_MODELS)
       });
