@@ -2463,7 +2463,10 @@ FAILURE CONDITIONS (invalid outputs):
     // for a Sonnet rescue.
     let prose = '';
     const _extract = (r) => String((typeof r === 'string') ? r : ((r && r.content) || '')).trim();
-    const _premium = _isPremiumAuthorScene();
+    // window._smallAuthorForceAll (test-only, default off): route EVERY scene to Small,
+    // including premium ones — lets a short harness run exercise the Small author + purple-lens
+    // path without depending on the harness reaching a non-premium turn. No prod effect (off).
+    const _premium = _isPremiumAuthorScene() && !(typeof window !== 'undefined' && window._smallAuthorForceAll === true);
     const _smallAuthor = _smallAuthorEnabled() && !_premium;
     const _grokAuthor = () => callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
     try {
@@ -2538,6 +2541,20 @@ FAILURE CONDITIONS (invalid outputs):
       );
       if (_t && _t.length > 40) prose = _t;
     } catch (_e) { console.warn('[GROK-LIT] Mistral-small repair skipped:', _e && _e.message); }
+    // 3.5 PURPLE LENS for Small-authored prose (Roman 2026-06-25 — wiring fix). The finalization
+    //     lens (_applyPerceptionLens) is density-gated AND fires AFTER the harness/telemetry
+    //     capture point, so it was an unreliable home for Small's purple cleanup. Couple the
+    //     purple→signature transmute to the Small author DIRECTLY, here, right after authoring +
+    //     repair — so it ALWAYS runs on Small's output before downstream finalize/capture.
+    //     Forced ({purple:true}), drift+banned-word guarded inside _applyPurpleLens; keeps the
+    //     original on any failure. Grok-authored (premium) prose skips this (the flat finalization
+    //     lens handles it). No-op if _applyPurpleLens isn't loaded yet.
+    if (_smallAuthor && typeof window !== 'undefined' && typeof window._applyPurpleLens === 'function') {
+      try {
+        const _purpled = await window._applyPurpleLens(prose, { purple: true });
+        if (_purpled && _purpled.length > 40) { prose = _purpled; try { console.log('[GROK-LIT] purple-lens applied to Small-authored prose'); } catch (_) {} }
+      } catch (_ple) { try { console.warn('[GROK-LIT] purple-lens skipped: ' + (_ple && _ple.message)); } catch (_) {} }
+    }
     // 4. Deterministic <<CONTINUE>> pairing net — LAST, so it re-pairs any micro-expression
     //    marker the de-calc/repair passes disturbed (LLM marker compliance is unreliable; an
     //    unpaired <<MICRO_EXPRESSION>> gets stripped downstream → micro-choice lost).
