@@ -2349,7 +2349,8 @@ FAILURE CONDITIONS (invalid outputs):
   // Resilient claude polish/repair (Roman 2026-06-18): try the primary claude model; on API
   // failure (e.g. anthropic-proxy 502, observed live) OR an empty/short response, fall back to
   // the GPT equivalent so the pass DEGRADES to a working model instead of being skipped entirely.
-  // Sonnet polish → gpt-4o · Haiku repair → gpt-4o-mini. Returns trimmed text or null.
+  // Generic Claude-or-OpenAI pass with one fallback (used by the romance-span polish).
+  // Mechanical repair now uses _mistralRepairPass instead. Returns trimmed text or null.
   async function _claudePassWithFallback(messages, primaryModel, fallbackModel, opts, label) {
     const _extract = (r) => String((typeof r === 'string') ? r : (r && r.content) || '').trim();
     let _why = null;
@@ -2366,6 +2367,47 @@ FAILURE CONDITIONS (invalid outputs):
       if (t2.length > 20) { console.log('[GROK-LIT] ' + label + ' recovered via ' + fallbackModel); return t2; }
     } catch (_e2) { console.warn('[GROK-LIT] ' + label + ' ' + fallbackModel + ' fallback also failed: ' + ((_e2 && _e2.message) || _e2)); }
     return null;
+  }
+
+  // MISTRAL-SMALL REPAIR (Roman 2026-06-25): the per-scene mechanical-repair pass moved
+  // OFF Haiku to Mistral Small (bakeoff: Small matches Haiku on mechanical fixes — punctuation,
+  // fragments, fused quotes, markers — at ~8x less cost; its only miss is the rare dossier/
+  // stat-block recast, which the author-side anti-dump directive already keeps rare). Posts to
+  // /api/mistral-proxy directly (callChatGPT only knows Anthropic/OpenAI). GUARDS against
+  // Small's meta-leakage tell ("I'm ready to help!"/task-lists) via window._validateRepairOutput,
+  // falls back to gpt-4o-mini, then to KEEPING THE ORIGINAL PROSE (returns null). No Haiku.
+  async function _mistralRepairPass(messages, opts, label) {
+    opts = opts || {};
+    label = label || 'Mistral-small repair';
+    const _orig = (function () { for (let i = messages.length - 1; i >= 0; i--) { if (messages[i] && messages[i].role === 'user') return String(messages[i].content || ''); } return ''; })();
+    const _valid = (txt) => {
+      if (!txt || txt.length < 40) return false;
+      try { if (typeof window !== 'undefined' && typeof window._validateRepairOutput === 'function') return !!window._validateRepairOutput(txt, _orig, label, {}).ok; } catch (_) {}
+      return true;
+    };
+    // 1) Mistral Small via the mistral proxy
+    try {
+      const r = await fetch(CONFIG.MISTRAL_PROXY, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'mistral-small-latest', messages: messages, temperature: opts.temperature != null ? opts.temperature : 0.2, max_tokens: opts.max_tokens || 3000 })
+      });
+      if (r.ok) {
+        const d = await r.json();
+        try { if (typeof _accumulateTokens === 'function') _accumulateTokens(d, 'mistral-small-latest', 'repair'); } catch (_) {}
+        const t = String((d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || (d && d.content) || '').trim();
+        if (_valid(t)) return t;
+        console.warn('[REPAIR] ' + label + ' via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini');
+      } else {
+        console.warn('[REPAIR] ' + label + ' mistral-small HTTP ' + r.status + ' — falling back to gpt-4o-mini');
+      }
+    } catch (_e) { console.warn('[REPAIR] ' + label + ' mistral-small failed (' + ((_e && _e.message) || _e) + ') — falling back to gpt-4o-mini'); }
+    // 2) gpt-4o-mini fallback (via callChatGPT). NOT Haiku — repair is deprecated off Haiku.
+    try {
+      const r2 = await callChatGPT(messages, 'PRIMARY_AUTHOR', Object.assign({ model: 'gpt-4o-mini' }, opts));
+      const t2 = String((typeof r2 === 'string') ? r2 : (r2 && r2.content) || '').trim();
+      if (_valid(t2)) { console.log('[REPAIR] ' + label + ' recovered via gpt-4o-mini'); return t2; }
+    } catch (_e2) { console.warn('[REPAIR] ' + label + ' gpt-4o-mini fallback also failed: ' + ((_e2 && _e2.message) || _e2)); }
+    return null; // caller keeps the original prose
   }
 
   async function _grokLiteraryAuthor(messages, options = {}) {
@@ -2426,19 +2468,19 @@ FAILURE CONDITIONS (invalid outputs):
       }
       console.log('[GROK-LIT] Grok de-calc editor: ' + _applied + '/' + (Array.isArray(_fixes) ? _fixes.length : 0) + ' surgical fixes applied (~' + (_applied * 30) + ' tok rewritten, not whole-scene)');
     } catch (_e) { console.warn('[GROK-LIT] Grok de-calc editor skipped:', _e && _e.message); }
-    // 3. Haiku mechanical repair — runs AFTER the de-calc splice so it ALSO cleans up the
-    //    grammar a surgical replacement can introduce (lowercase fragments, tense breaks like
-    //    "watched ... ticked", double periods), plus the usual Grok-author mechanical defects
-    //    + micro-expression marker pairing. (gpt-4o-mini fallback on 502.)
+    // 3. Mistral-small mechanical repair (Roman 2026-06-25: moved off Haiku for cost) —
+    //    runs AFTER the de-calc splice so it ALSO cleans up the grammar a surgical replacement
+    //    can introduce (lowercase fragments, tense breaks like "watched ... ticked", double
+    //    periods), plus the usual Grok-author mechanical defects + micro-expression marker
+    //    pairing. (gpt-4o-mini fallback, then keep-original; meta-leak guarded.)
     try {
       const _repairSys = 'Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragments or tense breaks left by an edit, e.g. a participle with no finite verb, or "watched X ticked"), fused-speaker quotations, doubled punctuation, a lowercase word starting a sentence, and any stat-block / character-dossier line (recast it as lived in-scene prose). MARKER REPAIR: if the scene has a <<MICRO_EXPRESSION>> line followed by an "Is this X or Y?" question but NO <<CONTINUE>>, insert <<CONTINUE>> on its own line IMMEDIATELY AFTER that question and BEFORE the scene resumes (never at the very end). Do NOT otherwise change events, structure, length, markers, or names. Return ONLY the corrected scene.';
-      const _t = await _claudePassWithFallback(
+      const _t = await _mistralRepairPass(
         [{ role: 'system', content: _repairSys }, { role: 'user', content: prose }],
-        'claude-haiku-4-5', 'gpt-4o-mini',
-        { temperature: 0.2, max_tokens: _maxTokens, profileLabel: 'haiku_repair' }, 'Haiku repair'
+        { temperature: 0.2, max_tokens: _maxTokens, profileLabel: 'mistral_small_repair' }, 'Mistral-small repair'
       );
       if (_t && _t.length > 40) prose = _t;
-    } catch (_e) { console.warn('[GROK-LIT] Haiku repair skipped:', _e && _e.message); }
+    } catch (_e) { console.warn('[GROK-LIT] Mistral-small repair skipped:', _e && _e.message); }
     // 4. Deterministic <<CONTINUE>> pairing net — LAST, so it re-pairs any micro-expression
     //    marker the de-calc/repair passes disturbed (LLM marker compliance is unreliable; an
     //    unpaired <<MICRO_EXPRESSION>> gets stripped downstream → micro-choice lost).
@@ -4359,13 +4401,12 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
       } catch (_polErr) { console.warn('[GROK-AUTHOR] Haiku romance-span polish skipped:', _polErr && _polErr.message); }
       try {
         const _repairSys = 'Fix ONLY mechanical defects in this scene: broken or incomplete sentences, fused-speaker quotations, and any stat-block / character-dossier line (recast it as lived in-scene prose). MARKER REPAIR: if the scene has a <<MICRO_EXPRESSION>> line followed by an "Is this X or Y?" question but NO <<CONTINUE>>, insert <<CONTINUE>> on its own line IMMEDIATELY AFTER that question and BEFORE the scene resumes (never at the very end). Do NOT otherwise change events, structure, length, markers, or names. Return ONLY the corrected scene.';
-        const _repairedText = await _claudePassWithFallback(
+        const _repairedText = await _mistralRepairPass(
           [{ role: 'system', content: _repairSys }, { role: 'user', content: state.integrationOutput }],
-          'claude-haiku-4-5', 'gpt-4o-mini',
-          { temperature: 0.2, max_tokens: 3000, profileLabel: 'haiku_repair' }, 'Haiku repair'
+          { temperature: 0.2, max_tokens: 3000, profileLabel: 'mistral_small_repair' }, 'Mistral-small repair'
         );
         if (_repairedText && _repairedText.length > 40) state.integrationOutput = _repairedText;
-      } catch (_repErr) { console.warn('[GROK-AUTHOR] Haiku repair skipped:', _repErr && _repErr.message); }
+      } catch (_repErr) { console.warn('[GROK-AUTHOR] Mistral-small repair skipped:', _repErr && _repErr.message); }
       // Deterministic guarantee — LLM marker compliance is the exact failure mode
       // (verified 2026-06-17: reasoning Grok dropped <<CONTINUE>> in 1/2 runs, and
       // Haiku could too). If a lone <<MICRO_EXPRESSION>> survived without its pair,
@@ -6456,7 +6497,7 @@ Tension: ${outline.tension_vector || 'N/A'}`;
     callGemini,               // Fallback author (if ChatGPT fails)
     callGrokSDAuthor,        // SD author for Steamy/Passionate (PRIMARY)
     callGrokNarrativeAuthor, // A1: Grok authors NON-intimate scene prose (flag-gated)
-    _grokLiteraryAuthor,     // Grok author + Haiku repair + Sonnet romance polish (callChat literary path)
+    _grokLiteraryAuthor,     // Grok author + Mistral-small repair + romance-span polish (callChat literary path)
     callMistralSDFallback,   // SD fallback for Steamy/Passionate (if Grok fails)
     callSpecialistRenderer,   // Scene renderer (SD-gated)
 
