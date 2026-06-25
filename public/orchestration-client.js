@@ -2428,12 +2428,12 @@ FAILURE CONDITIONS (invalid outputs):
       return false;
     } catch (_) { return true; } // on any error, default to Grok (premium) — never silently downgrade
   }
-  // OPT-IN (Roman 2026-06-25): default OFF after the validation playthrough exposed two
-  // blockers — (1) purple-mode lens didn't engage on the live non-premium path (works
-  // standalone + flat-mode fires on premium, so it's a wiring gap), (2) Small shipped a
-  // coherence/referent error the lens can't fix. Re-enable with window._smallAuthorEnabled=true
-  // once both are addressed. Until then: Grok authors everywhere (repair/audits/lens unchanged).
-  function _smallAuthorEnabled() { try { return (typeof window !== 'undefined') && window._smallAuthorEnabled === true; } catch (_) { return false; } }
+  // DEFAULT-ON (Roman 2026-06-25): non-premium (quiet) scenes author on Mistral-Small — Grok
+  // was wasting tentpole-grade spend on scenes where nothing happens. The two earlier blockers
+  // were since addressed (purple-mode lens coupled to the Small author af59dcb; coherence/
+  // referent restraint guard 6bab7c6). Premium/tentpole scenes still route to Grok 4.3 via
+  // _isPremiumAuthorScene. Kill-switch: set window._smallAuthorEnabled=false to force Grok everywhere.
+  function _smallAuthorEnabled() { try { return (typeof window !== 'undefined') && window._smallAuthorEnabled !== false; } catch (_) { return false; } }
   // CONTINUITY BRIDGE (Roman 2026-06-25): appended to the Small author prompt ONLY when this
   // non-premium scene immediately follows a Grok TENTPOLE — the strong-author→weak-author seam,
   // the one place a reader feels the voice change. Carries the prior scene's temperature/diction,
@@ -2510,6 +2510,18 @@ FAILURE CONDITIONS (invalid outputs):
       var _stripped = 0;
       while (_metaRe.test(prose) && _stripped < 8) { prose = prose.replace(_metaRe, ''); _stripped++; }
       if (_stripped) { prose = prose.trim(); try { console.log('[GROK-LIT] stripped ' + _stripped + ' leaked metadata tag(s) from Small-authored prose'); } catch (_) {} }
+    }
+    // 1.6 Strip stray LENS / angle-bracket markers (Roman 2026-06-25): the perception/purple lens
+    //     wraps rewritten sentences in ⟦LENS:KEY⟧…⟦/LENS⟧; a weak author or repair can ECHO a marker
+    //     — sometimes MALFORMED (⟦/LENS⟩ with the wrong closing bracket) — that the lens's own exact-⟧
+    //     strip misses, leaking into shipped prose. Belt-and-suspenders on EVERY author path.
+    if (typeof prose === 'string' && /[⟦⟧⟨⟩]/.test(prose)) {
+      prose = prose
+        .replace(/⟦\s*\/?\s*LENS[^\n]{0,30}?[⟧⟩>\]]/gi, '')   // ⟦LENS:KEY⟧ / ⟦/LENS⟧ / ⟦/LENS⟩
+        .replace(/⟦[^\n]{0,40}?[⟧⟩>]/g, '')                    // any other ⟦…⟧/⟩ marker
+        .replace(/[⟦⟧⟨⟩]/g, '')                                // residual lone math brackets
+        .replace(/[ \t]{2,}/g, ' ').trim();
+      try { console.log('[GROK-LIT] stripped stray lens/angle-bracket marker(s) from prose'); } catch (_) {}
     }
     // 2. Grok-thinking SURGICAL de-calc editor (Roman 2026-06-19; gpt-4o-mini fallback).
     //    NOT a second author — a red-pen editor. Grok's regressions are repetition/
