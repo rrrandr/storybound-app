@@ -2416,7 +2416,7 @@ FAILURE CONDITIONS (invalid outputs):
   // residual purple → grounded signature, and Mistral-small repair cleans mechanics.
   // Premium/tentpole scenes (Scene 1, climax, cliffhanger, tempt-fate, betrayal/revelation,
   // high-importance, LI entrance) stay on Grok 4.3. Kill-switch: window._smallAuthorEnabled=false.
-  const _SMALL_RESTRAINT_GUARD = '\n\nRESTRAINT GUARD (write restrained literary prose, NOT ornate): MAXIMUM one simile or metaphor per paragraph — most paragraphs should have ZERO. Prefer concrete, grounded, specific physical/sensory observation over comparison ("like / as if / as though"). Do NOT reach for ornate intensifiers (achingly, molten, electric, searing, primal, feral, velvet, liquid). Ground every physical description in plain, specific detail a person would actually notice. Vivid through precision, never through ornament. Do not invent biographical specifics (birthdays, place names, backstory) the brief did not give you. COHERENCE (critical): every action, gesture, and body belongs to ONE unambiguous subject — never attribute one character\'s action, movement, or body to another (e.g. do NOT write "they smoothed my dress" when only I could be smoothing my own dress); keep who-does-what to whom unmistakable, and give every pronoun a single clear antecedent.';
+  const _SMALL_RESTRAINT_GUARD = '\n\nRESTRAINT GUARD (write restrained literary prose, NOT ornate): MAXIMUM one simile or metaphor per paragraph — most paragraphs should have ZERO. Prefer concrete, grounded, specific physical/sensory observation over comparison ("like / as if / as though"). Do NOT reach for ornate intensifiers (achingly, molten, electric, searing, primal, feral, velvet, liquid). Ground every physical description in plain, specific detail a person would actually notice. Vivid through precision, never through ornament. Do not invent biographical specifics (birthdays, place names, backstory) the brief did not give you. COHERENCE (critical): every action, gesture, and body belongs to ONE unambiguous subject — never attribute one character\'s action, movement, or body to another (e.g. do NOT write "they smoothed my dress" when only I could be smoothing my own dress); keep who-does-what to whom unmistakable, and give every pronoun a single clear antecedent. OUTPUT: return ONLY the scene prose — never a title, synopsis, character list, scene/section header, or any [BRACKETED] metadata tag.';
   function _isPremiumAuthorScene() {
     try {
       var st = (typeof window !== 'undefined' && window.state) || {};
@@ -2491,6 +2491,15 @@ FAILURE CONDITIONS (invalid outputs):
         if (!prose) throw new Error('scene authors (small/grok/gpt-4o) returned empty — Sonnet/Opus rescue is cost-deprecated; retry / wait for provider');
         console.log('[GROK-LIT] author recovered via gpt-4o');
       }
+    }
+    // 1.5 Strip leaked metadata tags (Roman 2026-06-25): Small sometimes prefixes the prose with
+    //     [TITLE: …][SYNOPSIS: …][CHARACTERS: …] scaffolding. Deterministically remove any leading
+    //     [ALLCAPS-KEY: …] block (Small-authored only; Grok never emits them). Cheap, no LLM.
+    if (_smallAuthor && typeof prose === 'string') {
+      var _metaRe = /^\s*\[[A-Z][A-Z0-9 _\/]*:[\s\S]*?\]\s*/;
+      var _stripped = 0;
+      while (_metaRe.test(prose) && _stripped < 8) { prose = prose.replace(_metaRe, ''); _stripped++; }
+      if (_stripped) { prose = prose.trim(); try { console.log('[GROK-LIT] stripped ' + _stripped + ' leaked metadata tag(s) from Small-authored prose'); } catch (_) {} }
     }
     // 2. Grok-thinking SURGICAL de-calc editor (Roman 2026-06-19; gpt-4o-mini fallback).
     //    NOT a second author — a red-pen editor. Grok's regressions are repetition/
