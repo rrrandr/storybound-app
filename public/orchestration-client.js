@@ -2416,7 +2416,7 @@ FAILURE CONDITIONS (invalid outputs):
   // residual purple → grounded signature, and Mistral-small repair cleans mechanics.
   // Premium/tentpole scenes (Scene 1, climax, cliffhanger, tempt-fate, betrayal/revelation,
   // high-importance, LI entrance) stay on Grok 4.3. Kill-switch: window._smallAuthorEnabled=false.
-  const _SMALL_RESTRAINT_GUARD = '\n\nRESTRAINT GUARD (write restrained literary prose, NOT ornate): MAXIMUM one simile or metaphor per paragraph — most paragraphs should have ZERO. Prefer concrete, grounded, specific physical/sensory observation over comparison ("like / as if / as though"). Do NOT reach for ornate intensifiers (achingly, molten, electric, searing, primal, feral, velvet, liquid). Ground every physical description in plain, specific detail a person would actually notice. Vivid through precision, never through ornament. Do not invent biographical specifics (birthdays, place names, backstory) the brief did not give you. COHERENCE (critical): every action, gesture, and body belongs to ONE unambiguous subject — never attribute one character\'s action, movement, or body to another (e.g. do NOT write "they smoothed my dress" when only I could be smoothing my own dress); keep who-does-what to whom unmistakable, and give every pronoun a single clear antecedent. OUTPUT: return ONLY the scene prose — never a title, synopsis, character list, scene/section header, or any [BRACKETED] metadata tag.';
+  const _SMALL_RESTRAINT_GUARD = '\n\nRESTRAINT GUARD (write restrained literary prose, NOT ornate): MAXIMUM one simile or metaphor per paragraph — most paragraphs should have ZERO. Prefer concrete, grounded, specific physical/sensory observation over comparison ("like / as if / as though"). Do NOT reach for ornate intensifiers (achingly, molten, electric, searing, primal, feral, velvet, liquid). Ground every physical description in plain, specific detail a person would actually notice. Vivid through precision, never through ornament. Do not invent biographical specifics (birthdays, place names, backstory) the brief did not give you. COHERENCE (critical): every action, gesture, and body belongs to ONE unambiguous subject — never attribute one character\'s action, movement, or body to another (e.g. do NOT write "they smoothed my dress" when only I could be smoothing my own dress); keep who-does-what to whom unmistakable, and give every pronoun a single clear antecedent. NAME THE NOUN: a pronoun (they/it/them/he/she/his/her) must refer to a noun actually NAMED in the same or prior sentence — do NOT describe one feature then attach a pronoun to a different, unnamed one (e.g. describing his NOSE, then "the way they dropped to my mouth" when his EYES were never named — write "his eyes"). OUTPUT: return ONLY the scene prose — never a title, synopsis, character list, scene/section header, or any [BRACKETED] metadata tag.';
   function _isPremiumAuthorScene() {
     try {
       var st = (typeof window !== 'undefined' && window.state) || {};
@@ -2434,15 +2434,22 @@ FAILURE CONDITIONS (invalid outputs):
   // coherence/referent error the lens can't fix. Re-enable with window._smallAuthorEnabled=true
   // once both are addressed. Until then: Grok authors everywhere (repair/audits/lens unchanged).
   function _smallAuthorEnabled() { try { return (typeof window !== 'undefined') && window._smallAuthorEnabled === true; } catch (_) { return false; } }
+  // CONTINUITY BRIDGE (Roman 2026-06-25): appended to the Small author prompt ONLY when this
+  // non-premium scene immediately follows a Grok TENTPOLE — the strong-author→weak-author seam,
+  // the one place a reader feels the voice change. Carries the prior scene's temperature/diction,
+  // goes quieter after the high-emotion beat (good cooldown pacing), and doubles as restraint.
+  // Relies on the literary author prompt already carrying recent prior-scene prose in context.
+  const _SMALL_BRIDGE_GUARD = '\n\nCONTINUITY BRIDGE (this scene immediately follows a high-emotion tentpole scene written by a different, stronger hand — match it seamlessly so the reader never feels the handoff): CONTINUE the previous scene\'s prose temperature and the narrator\'s established diction; do NOT become more ornate than the previous scene. After a high-emotion beat, go QUIETER — plain declaratives and subtext, not heightened language. Carry forward AT MOST ONE image or motif from the previous scene; introduce NO new metaphor style. Do NOT summarize or restate the prior emotional beat — let its consequences surface through action and dialogue.';
   // Mistral Small author: flatten cache sentinels (mistral has no Anthropic caching), inject the
   // restraint guard into the system message, post to the mistral proxy. Returns prose or ''.
   async function _mistralAuthor(messages, opts) {
     opts = opts || {};
     var _flat = function (c) { if (typeof c === 'string') return c.split(CACHE_BOUNDARY).join(''); if (Array.isArray(c)) return c.map(function (b) { return (b && b.text) || ''; }).join(''); return String(c || ''); };
     var msgs = (messages || []).map(function (m) { return m ? { role: m.role, content: _flat(m.content) } : m; });
+    var _guard = _SMALL_RESTRAINT_GUARD + (opts.bridge ? _SMALL_BRIDGE_GUARD : '');
     var injected = false;
-    for (var i = 0; i < msgs.length; i++) { if (msgs[i] && msgs[i].role === 'system') { msgs[i].content += _SMALL_RESTRAINT_GUARD; injected = true; break; } }
-    if (!injected) msgs.unshift({ role: 'system', content: _SMALL_RESTRAINT_GUARD.trim() });
+    for (var i = 0; i < msgs.length; i++) { if (msgs[i] && msgs[i].role === 'system') { msgs[i].content += _guard; injected = true; break; } }
+    if (!injected) msgs.unshift({ role: 'system', content: _guard.trim() });
     var r = await fetch(CONFIG.MISTRAL_PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mistral-small-latest', messages: msgs, temperature: 0.7, max_tokens: opts.max_tokens || 3000 }) });
     if (!r.ok) throw new Error('mistral-small author HTTP ' + r.status);
     var d = await r.json();
@@ -2466,13 +2473,16 @@ FAILURE CONDITIONS (invalid outputs):
     // window._smallAuthorForceAll (test-only, default off): route EVERY scene to Small,
     // including premium ones — lets a short harness run exercise the Small author + purple-lens
     // path without depending on the harness reaching a non-premium turn. No prod effect (off).
+    const _prevWasPremium = (typeof window !== 'undefined' && window.state) ? window.state._authorPrevWasPremium === true : false;
     const _premium = _isPremiumAuthorScene() && !(typeof window !== 'undefined' && window._smallAuthorForceAll === true);
     const _smallAuthor = _smallAuthorEnabled() && !_premium;
+    const _bridge = _smallAuthor && _prevWasPremium; // Grok-tentpole → Mistral seam → continuity-style bridge
+    try { if (typeof window !== 'undefined' && window.state) window.state._authorPrevWasPremium = _premium; } catch (_) {} // record THIS scene's tier for the next scene's seam check
     const _grokAuthor = () => callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
     try {
       if (_smallAuthor) {
-        try { console.log('[GROK-LIT] author = Mistral-small (non-premium, restraint-guarded)'); } catch (_) {}
-        prose = _extract(await _mistralAuthor(messages, { max_tokens: _maxTokens }));
+        try { console.log('[GROK-LIT] author = Mistral-small (non-premium' + (_bridge ? ', continuity-bridge after tentpole' : '') + ', restraint-guarded)'); } catch (_) {}
+        prose = _extract(await _mistralAuthor(messages, { max_tokens: _maxTokens, bridge: _bridge }));
         if (!prose) throw new Error('mistral-small author empty');
       } else {
         try { console.log('[GROK-LIT] author = Grok 4.3 (premium/tentpole)'); } catch (_) {}
