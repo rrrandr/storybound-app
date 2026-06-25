@@ -5281,8 +5281,12 @@ dialogue: <elevated dialogue>`;
           headers: { 'Content-Type': 'application/json' },
           signal: controller.signal,
           body: JSON.stringify({
+            model: 'mistral-small-latest',
             messages: messages,
-            max_tokens: maxTokens,
+            // OAS-small cap (Roman + other-tab bakeoff 2026-06-25): 180 fixes Small's
+            // over-writing → ~74 words/turn (dead-center the 55-110 target), best content,
+            // ~9x cheaper than mistral-medium. Overrides the caller's max_tokens for OAS.
+            max_tokens: 180,
             temperature: temperature
           })
         });
@@ -5291,11 +5295,11 @@ dialogue: <elevated dialogue>`;
           const data = await resp.json();
           const text = data.choices?.[0]?.message?.content || data.content || null;
           if (text) {
-            console.log('[OAS-LLM] Mistral ok');
+            console.log('[OAS-LLM] mistral-small@180 ok');
             return text;
           }
         } else {
-          console.warn('[OAS-LLM] Mistral HTTP ' + resp.status);
+          console.warn('[OAS-LLM] mistral-small HTTP ' + resp.status);
         }
       } catch (e) {
         console.warn('[OAS-LLM] Mistral threw:', e && e.message);
@@ -5344,6 +5348,15 @@ dialogue: <elevated dialogue>`;
     // reasoning-token tax. Its repetition tendency is cleaned by a downstream
     // gpt-4o-mini de-calc pass in _handleIntimacyTurn (FAST turns only).
     console.log('[OAS-LLM] Mode: FAST (speed chain)');
+    // OAS PRIMARY = Mistral-Small @180 (validated 2026-06-25: best content + ~9x cheaper than
+    // Medium; the 180 cap fixed over-writing). Grok stays the FALLBACK — critical for explicit
+    // content if Mistral ever moderates/refuses a turn (returns null → chain continues to Grok).
+    // FAST turns only; the REASONING chain (opening/escalation) keeps Grok-reasoning primary for
+    // scene-aware richness, with small@180 still in its fallback line. Kill-switch: window._oasSmallEnabled=false.
+    if ((typeof window === 'undefined') || window._oasSmallEnabled !== false) {
+      text = await _callMistral();
+      if (text) return text;
+    }
     text = await _callGrokWithPreferred('grok-4.20-0309-non-reasoning', 12000);
     if (text) return text;
     text = await _callGrokWithPreferred('grok-4-1-fast-non-reasoning', 12000);
