@@ -4482,20 +4482,22 @@ Player Dialogue: "${playerDialogue}"${fateCardContext}`
     // run on NORMAL scenes only, never on intimacy/OAS prose. Best-effort: any
     // failure leaves integrationOutput untouched.
     if (_grokAuthored && CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR && state.integrationOutput) {
-      // TIGHT Haiku polish — rewrites ONLY the romance-forward span (~<500
+      // TIGHT romance-span polish — rewrites ONLY the romance-forward span (~<500
       // tokens), spliced back by exact offset. Not a full-scene rewrite. Runs on
-      // Haiku (Roman 2026-06-25: was labeled "sonnet_polish" and requested
-      // claude-sonnet-4-5, which the cost-guard silently downgraded to Haiku —
-      // now requests Haiku EXPLICITLY so the routing reads honestly). Skips
-      // cleanly when the scene has no romance-forward beat.
+      // MISTRAL-SMALL (Roman 2026-06-26: was Haiku, a prose-mutation routing-rule
+      // violation — Haiku is banned from prose; now Mistral-Small → gpt-4o-mini
+      // fallback). Skips cleanly when the scene has no romance-forward beat.
       try {
         const _span = _extractRomanceSpan(state.integrationOutput);
         if (_span) {
           const _polishSys = 'You are S. Tory Bound. Tightly POLISH ONLY this romance-forward passage — sharpen desire, voice, and sensory precision on the weakest lines and replace any flat or clichéd phrasing — WITHOUT changing events, length, character names, or any <<MARKER>> tokens, and WITHOUT adding or removing sentences. Return ONLY the rewritten passage, nothing else.';
-          const _polishedText = await _claudePassWithFallback(
+          // PROSE-MUTATION ROUTING (Roman 2026-06-26): romance-span polish on Mistral-Small
+          // (→ gpt-4o-mini fallback inside _mistralRepairPass). Haiku is BANNED from prose polish
+          // (it was the PRIMARY here — a routing-rule violation).
+          try { if (typeof window !== 'undefined' && typeof window._assertModelRoute === 'function') window._assertModelRoute('mistral-small-latest', 'polish', 'romance-span-polish'); } catch (_) {}
+          const _polishedText = await _mistralRepairPass(
             [{ role: 'system', content: _polishSys }, { role: 'user', content: _span.text }],
-            'claude-haiku-4-5', 'gpt-4o',
-            { temperature: 0.5, max_tokens: 500, profileLabel: 'haiku_polish' }, 'Haiku polish'
+            { temperature: 0.5, max_tokens: 500, profileLabel: 'mistral_romance_polish' }, 'Mistral romance-span polish'
           );
           if (_polishedText && _polishedText.length > 20) {
             state.integrationOutput = state.integrationOutput.slice(0, _span.start)
