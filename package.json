@@ -1,7 +1,8 @@
 {
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || exit 0",
-    "verify:scene1": "node scripts/verify-scene1-decontam.mjs"
+    "verify:scene1": "node scripts/verify-scene1-decontam.mjs",
+    "verify:content-register": "node scripts/verify-content-register.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
