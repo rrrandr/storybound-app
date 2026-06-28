@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260621-look-seed-strip">
+  <link rel="stylesheet" href="/styles.css?v=20260628-ff-card-center">
 </head>
 
 <body class="booting">
@@ -1267,9 +1267,134 @@
           <div class="authorship-sparkle-emitter" id="guidedFateSparkles"></div>
         </div>
       </div>
+      <!-- Famous Fate — sibling test card next to Guided Fate. Reveals a custom-entry
+           form on click (does NOT flip to baked art like the two cards above). -->
+      <div class="authorship-card famous-fate-card" id="famousFateCard">
+        <div class="authorship-card-inner">
+          <div class="authorship-card-face authorship-card-back">
+            <span class="authorship-card-title">Famous<br>Fate</span>
+          </div>
+          <div class="authorship-card-face authorship-card-front">
+            <span class="authorship-card-title">Famous<br>Fate</span>
+          </div>
+          <div class="authorship-sparkle-emitter" id="famousFateSparkles"></div>
+        </div>
+      </div>
       </div><!-- END authorship-cards-container -->
       <!-- Continue button for authorship decision -->
       <button class="flow-continue-btn sb-btn-png sm" id="continueFromAuthorship" data-tour-continue>Proceed</button>
+    </div>
+
+    <!-- FAMOUS FATE — custom-entry reveal form (private test path; not a public
+         publishing path). Revealed when #famousFateCard is clicked. -->
+    <div class="famous-fate-overlay hidden" id="famousFateForm" role="dialog" aria-modal="true" aria-labelledby="famousFateFormTitle">
+      <div class="famous-fate-panel">
+        <button type="button" class="famous-fate-close" id="famousFateClose" aria-label="Close">&times;</button>
+        <h2 class="famous-fate-title" id="famousFateFormTitle">Famous Fate</h2>
+        <p class="famous-fate-subtitle">Enter a world, role, and era.</p>
+
+        <label class="famous-fate-field">
+          <span class="famous-fate-label">World</span>
+          <input type="text" id="famousFateWorld" class="famous-fate-input" autocomplete="off"
+                 placeholder="World, genre, fandom, or original setting">
+        </label>
+
+        <label class="famous-fate-field">
+          <span class="famous-fate-label">Character to embody</span>
+          <input type="text" id="famousFateEmbody" class="famous-fate-input" autocomplete="off"
+                 placeholder="Who do you want to be?">
+        </label>
+
+        <div class="famous-fate-field">
+          <span class="famous-fate-label">Story period</span>
+          <div class="famous-fate-period" id="famousFatePeriod" role="radiogroup" aria-label="Story period">
+            <button type="button" class="famous-fate-period-btn" data-period="pre" role="radio" aria-checked="false">Pre-era</button>
+            <button type="button" class="famous-fate-period-btn" data-period="canon" role="radio" aria-checked="false">Canon</button>
+            <button type="button" class="famous-fate-period-btn" data-period="post" role="radio" aria-checked="false">Post-era</button>
+            <button type="button" class="famous-fate-period-btn" data-period="alternate" role="radio" aria-checked="false">Alternate</button>
+          </div>
+        </div>
+
+        <label class="famous-fate-field">
+          <span class="famous-fate-label">What kind of story do you want?</span>
+          <input type="text" id="famousFateStoryWish" class="famous-fate-input" autocomplete="off"
+                 placeholder="Romance, revenge, survival, court intrigue, forbidden love, etc.">
+        </label>
+
+        <div class="famous-fate-field">
+          <span class="famous-fate-label">Love interest</span>
+          <div class="famous-fate-partner" id="famousFatePartnerMode" role="radiogroup" aria-label="Love interest">
+            <label class="famous-fate-radio">
+              <input type="radio" name="ffPartnerMode" value="original" checked>
+              <span>Create someone new for this world <em>(recommended)</em></span>
+            </label>
+            <label class="famous-fate-radio">
+              <input type="radio" name="ffPartnerMode" value="canonical">
+              <span>Romance an existing character</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="famous-fate-error hidden" id="famousFateError" role="alert"></div>
+        <button type="button" class="flow-continue-btn sb-btn-png sm famous-fate-begin" id="famousFateBegin">Begin Famous Fate</button>
+      </div>
+    </div>
+
+    <!-- FAMOUS FATE BETA — bug report modal (opened by the repurposed Vision Orb 🐞).
+         Auto-attaches reading position + full story telemetry on submit. -->
+    <div class="ff-report-overlay hidden" id="ffReportModal" role="dialog" aria-modal="true" aria-labelledby="ffReportTitle">
+      <div class="ff-report-panel">
+        <button type="button" class="ff-report-close" id="ffReportClose" aria-label="Close">&times;</button>
+        <div id="ffReportFormBody">
+          <h2 class="ff-report-title" id="ffReportTitle">🐞 Thanks for helping us improve Famous Fate</h2>
+          <p class="ff-report-sub">Your feedback helps us make Famous Fate better. If your report helps us reproduce or fix a real issue, we'll add Fortune Credits to your account.</p>
+
+          <div class="ff-report-field">
+            <span class="ff-report-label">Category</span>
+            <div class="ff-report-cats" id="ffReportCats">
+              <label><input type="radio" name="ffReportCategory" value="technical_bug"> Technical bug</label>
+              <label><input type="radio" name="ffReportCategory" value="canon_lore"> Canon / lore issue</label>
+              <label><input type="radio" name="ffReportCategory" value="out_of_character"> Character acted out of character</label>
+              <label><input type="radio" name="ffReportCategory" value="romance_relationship"> Romance / relationship issue</label>
+              <label><input type="radio" name="ffReportCategory" value="story_continuity"> Story continuity</label>
+              <label><input type="radio" name="ffReportCategory" value="writing_quality"> Writing quality</label>
+              <label><input type="radio" name="ffReportCategory" value="suggestion"> Suggestion</label>
+              <label><input type="radio" name="ffReportCategory" value="other"> Other</label>
+            </div>
+          </div>
+
+          <label class="ff-report-field">
+            <span class="ff-report-label">What happened?</span>
+            <textarea id="ffReportWhat" class="ff-report-textarea" maxlength="500" rows="3" placeholder="Describe the issue…"></textarea>
+            <span class="ff-report-count" id="ffReportWhatCount">0 / 500</span>
+          </label>
+
+          <label class="ff-report-field">
+            <span class="ff-report-label">What did you expect instead? <em>(optional)</em></span>
+            <textarea id="ffReportExpected" class="ff-report-textarea" maxlength="500" rows="2" placeholder="e.g. I expected Luke to recognize R2."></textarea>
+            <span class="ff-report-count" id="ffReportExpectedCount">0 / 500</span>
+          </label>
+
+          <div class="ff-report-field">
+            <span class="ff-report-label">Attach current screenshot <em>(recommended)</em></span>
+            <div class="ff-report-shot-row">
+              <button type="button" class="ff-report-shot-btn" id="ffReportCapture">Capture screen</button>
+              <label class="ff-report-shot-btn ff-report-shot-file">Choose file<input type="file" id="ffReportShot" accept="image/*" hidden></label>
+              <span class="ff-report-shot-name" id="ffReportShotName"></span>
+            </div>
+          </div>
+
+          <p class="ff-report-context-hint" id="ffReportContextHint"></p>
+          <div class="ff-report-error hidden" id="ffReportError" role="alert"></div>
+          <button type="button" class="flow-continue-btn sb-btn-png sm ff-report-submit" id="ffReportSubmit">Submit report</button>
+        </div>
+        <div id="ffReportSuccess" class="ff-report-success" style="display:none;">
+          <div class="ff-report-success-check">✅</div>
+          <p class="ff-report-success-main">Thanks for helping improve Famous Fate.</p>
+          <p class="ff-report-success-sub">If your report helps us reproduce or fix a real issue, we'll add Fortune Credits to your account.</p>
+          <button type="button" class="flow-continue-btn sb-btn-png sm" id="ffReportDone">Done</button>
+        </div>
+      </div>
     </div>
 
     <!-- Legacy fate card reference for compatibility (hidden) -->
@@ -1828,10 +1953,8 @@
                         <input type="checkbox" id="hotFastCheckbox">
                         <span class="lit-lite-toggle-text">Hot&amp;Fast <em>short, immediate hot-crisis opening</em></span>
                     </label>
-                    <label class="lit-lite-toggle-label">
-                        <input type="checkbox" id="litDualCheckbox">
-                        <span class="lit-lite-toggle-text">Compare Grok <em>also generate a Grok shadow each scene, same prompt (⇄ in reader)</em></span>
-                    </label>
+                    <!-- Compare Grok toggle removed 2026-06-28 (decision settled). The
+                         dev compare path (window._dualCompare / GROK ⇄) remains in app.js. -->
                 </div>
                 <!-- Story Mode Toggle (Active ⟷ Mindful) — inside wrapper, visually attached to story button only.
                      Hidden automatically when the corridor-inference score is confident; replaced by the
@@ -1852,7 +1975,7 @@
                 <span class="begin-fortune-label">Fortunes</span>
                 <span id="beginFortuneCount" class="begin-fortune-count">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span>
             </button>
-            <div id="burnRateIndicator" class="burn-rate-indicator hidden"></div>
+            <!-- Burn-rate "Advanced Narrative" star indicator removed 2026-06-28. -->
             <!-- (Storypass counter removed — currency unified into Fortunes.) -->
         </div>
     </div>
@@ -2397,10 +2520,10 @@
 <script src="/haiku-fire-counter.js?v=20260625-haiku-counter"></script>
 <script src="/sound.js?v=20260606-tempt-crackle-segmented"></script>
 <script src="/fatecards.js?v=20260618-fatecard-desire-slice1"></script>
-<script src="/orchestration-client.js?v=20260626-opening-temp-v2"></script>
+<script src="/orchestration-client.js?v=20260628-opening-temp-tighten"></script>
 <script src="/badgeEngine.js?v=20260609-badge-error-surface"></script>
 <script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
-<script src="/app.js?v=20260627-plotcontract-beatids"></script>
+<script src="/app.js?v=20260628-ff-4env"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
