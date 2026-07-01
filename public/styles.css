@@ -1,4 +1,86 @@
 /* ═══════════════════════════════════════════════════════════════════════
+   REVERIE EXPANSION (Roman 2026-06-29) — when the reader chooses "Linger"
+   on the reverie axis, the brink-of-explicit fantasy paragraph is revealed
+   in its OWN art-deco aside box, visually distinct from the prose body so
+   the reveal reads as an inset aside, never a re-flow ("did I lose my place?").
+   ═══════════════════════════════════════════════════════════════════════ */
+.reverie-expansion {
+  margin: 1.4em auto;
+  max-width: 86%;
+  padding: 1.05em 1.35em;
+  border: 1px solid rgba(201, 162, 78, 0.5);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(42, 31, 18, 0.55), rgba(24, 18, 10, 0.42));
+  box-shadow: inset 0 0 26px rgba(201, 162, 78, 0.09), 0 2px 12px rgba(0, 0, 0, 0.32);
+  position: relative;
+  font-family: 'Lora', serif;
+  font-style: italic;
+  animation: reverieBoxIn 0.5s ease both;
+}
+.reverie-expansion::before,
+.reverie-expansion::after {
+  content: '\2767';            /* rotated floral heart — art-deco aside marker */
+  position: absolute;
+  color: rgba(201, 162, 78, 0.6);
+  font-size: 0.85em;
+  font-style: normal;
+}
+.reverie-expansion::before { top: 5px; left: 10px; }
+.reverie-expansion::after  { bottom: 3px; right: 10px; transform: rotate(180deg); }
+.reverie-expansion p {
+  margin: 0;
+  color: #ecdfc2;
+  line-height: 1.62;
+  letter-spacing: 0.01em;
+}
+.reverie-expansion-loading { text-align: center; }
+.reverie-expansion-shimmer {
+  color: rgba(201, 162, 78, 0.75);
+  letter-spacing: 0.5em;
+  font-style: normal;
+  animation: reverieShimmer 1.15s ease-in-out infinite;
+}
+@keyframes reverieShimmer { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.95; } }
+@keyframes reverieBoxIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   VOW-BREAK RELEASE BEAT (Roman 2026-06-30) — the first break of a sworn
+   vow is the story's climax. Heavier and more momentous than the reverie
+   aside: full border with a blood-red accent edge, darker forged ground,
+   slightly larger upright prose. This must read as the heaviest beat on
+   the page, not a soft aside. Renders inside .reverie-threshold-wrap.
+   ═══════════════════════════════════════════════════════════════════════ */
+.vow-break-beat {
+  margin: 1.7em auto 1.5em;
+  max-width: 90%;
+  padding: 1.3em 1.5em 1.35em;
+  border: 1px solid rgba(201, 162, 78, 0.65);
+  border-left: 3px solid rgba(168, 36, 30, 0.92);
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(30, 14, 12, 0.66), rgba(14, 9, 7, 0.6));
+  box-shadow: inset 0 0 34px rgba(168, 36, 30, 0.12), inset 0 0 22px rgba(201, 162, 78, 0.07), 0 3px 18px rgba(0, 0, 0, 0.5);
+  position: relative;
+  font-family: 'Lora', serif;
+  animation: vowBreakIn 0.7s cubic-bezier(0.16, 0.84, 0.3, 1) both;
+}
+.vow-break-beat p {
+  margin: 0;
+  color: #f1e6cf;
+  font-size: 1.06em;
+  line-height: 1.66;
+  letter-spacing: 0.012em;
+  text-shadow: 0 1px 10px rgba(168, 36, 30, 0.18);
+}
+.vow-break-beat-loading { text-align: center; }
+.vow-break-shimmer {
+  color: rgba(201, 162, 78, 0.72) !important;
+  letter-spacing: 0.42em;
+  font-size: 0.95em !important;
+  animation: reverieShimmer 1.15s ease-in-out infinite;
+}
+@keyframes vowBreakIn { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* ═══════════════════════════════════════════════════════════════════════
    SCENE 1 MICRO-EXPRESSION — inline stance buttons rendered inside
    Scene 1 prose at the hook's resolution point. On re-read (after the
    player has already picked), buttons swap to an italic memory line.
@@ -37744,3 +37826,475 @@ body.examine-card-gate-active #storyText ~ * {
     transform: none;
     box-shadow: none;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* FAMOUS FATE — sibling test card + custom-entry reveal form                       */
+/* Private test path only: no public publishing, no IP examples.                    */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Famous Fate card inherits all .authorship-card sizing/flip context AND the
+   default .authorship-card-back padding, so its title centers in the gold window
+   exactly like Guided Fate. (No desc line — removed 2026-06-28.) */
+
+/* Reveal form overlay — centered modal, restrained gold-on-dark to match app. */
+.famous-fate-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    background: rgba(6, 5, 4, 0.78);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.famous-fate-overlay.hidden {
+    display: none;
+}
+
+.famous-fate-panel {
+    position: relative;
+    width: 100%;
+    max-width: 420px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 28px 26px 26px;
+    background: linear-gradient(180deg, #14110c 0%, #0c0a07 100%);
+    border: 1px solid rgba(201, 168, 92, 0.45);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
+.famous-fate-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: rgba(201, 168, 92, 0.75);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+.famous-fate-close:hover { color: #e8cd84; }
+
+.famous-fate-title {
+    margin: 0 0 2px;
+    font-family: 'lust-script-display', 'lust-script', serif;
+    font-weight: 400;
+    font-size: 2em;
+    color: #e8cd84;
+    text-align: center;
+}
+.famous-fate-subtitle {
+    margin: 0 0 20px;
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    color: #b8a982;
+    text-align: center;
+}
+
+.famous-fate-field {
+    display: block;
+    margin-bottom: 16px;
+}
+.famous-fate-label {
+    display: block;
+    margin-bottom: 6px;
+    font-family: 'Lora', serif;
+    font-size: 0.8em;
+    letter-spacing: 0.04em;
+    color: #cdbb8c;
+}
+.famous-fate-input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 13px;
+    font-family: 'Lora', serif;
+    font-size: 0.95em;
+    color: #f2ead6;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(201, 168, 92, 0.35);
+    border-radius: 7px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+.famous-fate-input::placeholder { color: rgba(180, 169, 130, 0.5); }
+.famous-fate-input:focus { border-color: rgba(201, 168, 92, 0.8); }
+
+/* Story period — segmented controlled choice */
+.famous-fate-period {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+.famous-fate-period-btn {
+    padding: 10px 8px;
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    color: #cdbb8c;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(201, 168, 92, 0.35);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+.famous-fate-period-btn:hover { border-color: rgba(201, 168, 92, 0.65); }
+.famous-fate-period-btn.selected {
+    color: #14110c;
+    background: linear-gradient(180deg, #e8cd84 0%, #c9a85c 100%);
+    border-color: #e8cd84;
+    font-weight: 600;
+}
+
+.famous-fate-begin {
+    display: block;
+    margin: 22px auto 4px;
+}
+
+/* Famous Fate makes the authorship row a THREE-card row. On mobile the base
+   rule sizes cards for two-across, which would overflow/clip the third card.
+   Re-fit all three across one row (higher specificity + later source wins). */
+@media (max-width: 768px) {
+    .authorship-cards-container {
+        gap: 10px !important;
+    }
+    .authorship-cards-container .authorship-card {
+        width: calc((100vw - 44px) / 3) !important; /* 12px pad×2 + 10px gap×2 = 44px */
+    }
+}
+
+/* Famous Fate is literary-only — hide the Cinegraphic modality option and
+   center the lone Literary button. Belt to the JS lock in _setStoryModality. */
+body.famous-fate-active #modeCinegraphic { display: none !important; }
+body.famous-fate-active #storyModalityToggle { justify-content: center; }
+body.famous-fate-active .modality-btn--literary { margin: 0 auto; }
+
+/* Famous Fate inline error (e.g. real-person block) */
+.famous-fate-error {
+    margin: 4px 0 12px;
+    padding: 10px 12px;
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    line-height: 1.35;
+    color: #f0d9b5;
+    background: rgba(120, 40, 30, 0.32);
+    border: 1px solid rgba(201, 120, 92, 0.5);
+    border-radius: 7px;
+}
+.famous-fate-error.hidden { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* FAMOUS FATE BETA — repurposed Vision Orb (🐞) + report modal                     */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Bug-mode orb: same slot/size as the Vision orb; warmer tint + no vision glow. */
+.vision-orb.ff-bug-orb {
+    background: radial-gradient(circle at 50% 38%, rgba(60, 48, 30, 0.95), rgba(20, 16, 10, 0.95));
+    border-color: rgba(201, 168, 92, 0.6);
+    box-shadow: 0 0 14px rgba(201, 168, 92, 0.35);
+}
+.vision-orb.ff-bug-orb .vision-orb-icon { filter: none; }
+
+.ff-report-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    background: rgba(6, 5, 4, 0.8);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.ff-report-overlay.hidden { display: none; }
+
+.ff-report-panel {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 26px 24px 24px;
+    background: linear-gradient(180deg, #14110c 0%, #0c0a07 100%);
+    border: 1px solid rgba(201, 168, 92, 0.45);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+.ff-report-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: rgba(201, 168, 92, 0.75);
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+.ff-report-close:hover { color: #e8cd84; }
+
+.ff-report-title {
+    margin: 0 0 6px;
+    font-family: 'Lora', serif;
+    font-weight: 600;
+    font-size: 1.25em;
+    color: #e8cd84;
+    line-height: 1.25;
+}
+.ff-report-sub {
+    margin: 0 0 18px;
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    line-height: 1.4;
+    color: #b8a982;
+}
+
+.ff-report-field { display: block; margin-bottom: 16px; }
+.ff-report-label {
+    display: block;
+    margin-bottom: 6px;
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    letter-spacing: 0.03em;
+    color: #cdbb8c;
+}
+.ff-report-label em { color: #9c8f6e; font-style: italic; }
+
+.ff-report-cats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; }
+.ff-report-cats label {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    color: #e3d6b6;
+    cursor: pointer;
+}
+.ff-report-cats input { accent-color: #c9a85c; }
+
+.ff-report-textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px 12px;
+    font-family: 'Lora', serif;
+    font-size: 0.9em;
+    color: #f2ead6;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(201, 168, 92, 0.35);
+    border-radius: 7px;
+    outline: none;
+    resize: vertical;
+    transition: border-color 0.2s ease;
+}
+.ff-report-textarea:focus { border-color: rgba(201, 168, 92, 0.8); }
+.ff-report-textarea::placeholder { color: rgba(180, 169, 130, 0.5); }
+.ff-report-count {
+    display: block;
+    text-align: right;
+    margin-top: 3px;
+    font-family: 'Lora', serif;
+    font-size: 0.7em;
+    color: #8c8068;
+}
+
+.ff-report-shot-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ff-report-shot-btn {
+    display: inline-block;
+    padding: 7px 12px;
+    font-family: 'Lora', serif;
+    font-size: 0.78em;
+    color: #cdbb8c;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(201, 168, 92, 0.35);
+    border-radius: 6px;
+    cursor: pointer;
+}
+.ff-report-shot-btn:hover { border-color: rgba(201, 168, 92, 0.65); }
+.ff-report-shot-name { font-family: 'Lora', serif; font-size: 0.74em; color: #9c8f6e; }
+
+.ff-report-context-hint {
+    margin: 4px 0 12px;
+    font-family: 'Lora', serif;
+    font-size: 0.72em;
+    line-height: 1.35;
+    color: #8c8068;
+    font-style: italic;
+}
+.ff-report-error {
+    margin: 0 0 12px;
+    padding: 9px 12px;
+    font-family: 'Lora', serif;
+    font-size: 0.8em;
+    color: #f0d9b5;
+    background: rgba(120, 40, 30, 0.32);
+    border: 1px solid rgba(201, 120, 92, 0.5);
+    border-radius: 7px;
+}
+.ff-report-error.hidden { display: none; }
+.ff-report-submit { display: block; margin: 6px auto 2px; }
+
+.ff-report-success { text-align: center; padding: 18px 8px 8px; }
+.ff-report-success-check { font-size: 2.2em; margin-bottom: 10px; }
+.ff-report-success-main {
+    font-family: 'Lora', serif; font-size: 1.05em; color: #e8cd84; margin: 0 0 8px;
+}
+.ff-report-success-sub {
+    font-family: 'Lora', serif; font-size: 0.82em; line-height: 1.4; color: #b8a982; margin: 0 0 18px;
+}
+
+@media (max-width: 520px) {
+    .ff-report-cats { grid-template-columns: 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* VERSIONED ACKNOWLEDGEMENT MODAL (reusable) — Famous Fate welcome, etc.           */
+/* Matches the Pact page: white tarot card emblem + Lora gold-gradient title.       */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+.ack-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    box-sizing: border-box;
+    background: rgba(6, 5, 4, 0.82);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+.ack-overlay.hidden { display: none; }
+
+.ack-panel {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 24px 26px 26px;
+    text-align: center;
+    background: linear-gradient(180deg, #14110c 0%, #0c0a07 100%);
+    border: 1px solid rgba(201, 168, 92, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 12px 44px rgba(0, 0, 0, 0.75);
+}
+
+/* White tarot-card emblem (same art as the Pact cards) */
+.ack-emblem {
+    display: block;
+    width: 96px;
+    height: auto;
+    margin: 2px auto 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.55);
+}
+
+/* .ack-title also carries .pact-title (gold gradient, Lora small-caps) */
+.ack-title {
+    margin-bottom: 14px !important;
+    font-size: 1.5em !important;
+}
+
+.ack-body {
+    text-align: left;
+    margin: 0 auto 16px;
+    max-width: 380px;
+}
+.ack-lead {
+    font-family: 'Lora', serif;
+    font-size: 0.92em;
+    line-height: 1.45;
+    color: #e7dcc2;
+    margin: 0 0 12px;
+}
+.ack-lead strong { color: #f0e2bf; }
+.ack-bullets-intro {
+    font-family: 'Lora', serif;
+    font-size: 0.85em;
+    color: #cdbb8c;
+    margin: 0 0 6px;
+}
+.ack-bullets {
+    margin: 0;
+    padding-left: 18px;
+    list-style: none;
+}
+.ack-bullets li {
+    position: relative;
+    font-family: 'Lora', serif;
+    font-size: 0.84em;
+    line-height: 1.4;
+    color: #d7caa9;
+    margin-bottom: 7px;
+    padding-left: 4px;
+}
+.ack-bullets li::before {
+    content: '✦';
+    position: absolute;
+    left: -16px;
+    color: #c9a85c;
+    font-size: 0.8em;
+}
+
+.ack-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    margin: 4px auto 18px;
+    font-family: 'Lora', serif;
+    font-size: 0.9em;
+    color: #f0e2bf;
+    cursor: pointer;
+}
+.ack-checkbox input { accent-color: #c9a85c; width: 16px; height: 16px; flex-shrink: 0; }
+
+.ack-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.ack-buttons .ack-continue:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.4); }
+
+/* Famous Fate — Love Interest radio choice */
+.famous-fate-partner { display: flex; flex-direction: column; gap: 6px; }
+.famous-fate-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    width: 100%;
+    font-family: 'Lora', serif;
+    font-size: 0.82em;
+    line-height: 1.3;
+    color: #e3d6b6;
+    cursor: pointer;
+    padding: 7px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(201, 168, 92, 0.28);
+    border-radius: 6px;
+    transition: border-color 0.18s ease;
+}
+.famous-fate-radio:hover { border-color: rgba(201, 168, 92, 0.55); }
+/* Let the label fill the remaining width and WRAP inside the box instead of
+   pushing the text off to the side. */
+.famous-fate-radio span { flex: 1 1 auto; min-width: 0; }
+.famous-fate-radio input { accent-color: #c9a85c; flex: 0 0 auto; width: 15px; height: 15px; margin: 0; }
+.famous-fate-radio em { color: #c9a85c; font-style: italic; }
