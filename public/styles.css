@@ -44,6 +44,41 @@
 @keyframes reverieBoxIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ═══════════════════════════════════════════════════════════════════════
+   AXIS PAYOFF ASIDE (Roman 2026-07-03) — the prewritten Demand/Hint click
+   payoff, revealed the instant the reader picks a side. A QUIET hidden-nugget
+   reveal, deliberately LIGHTER than the reverie inset: a single gold left-accent
+   margin reveal (not a full box), UPRIGHT roman (this is a real continuation of
+   the story, not the italic reverie daydream), and THEME-ADAPTIVE — the prose
+   colour is inherited so it reads in a light OR dark reader theme. It must feel
+   intentional and premium, never a system message / tooltip / quiz result / debug
+   block, and stay subtle enough that repeated axis payoffs never feel gamified.
+   Part of the reverie/vow art-deco aside family (shared gold #c9a24e), distinct
+   silhouette. Does NOT touch .reverie-expansion styling.
+   ═══════════════════════════════════════════════════════════════════════ */
+.axis-expansion {
+  margin: 1.15em auto 1.25em;
+  max-width: 85%;
+  padding: 0.72em 1.2em 0.74em 1.3em;
+  border-left: 2px solid rgba(201, 162, 78, 0.55);
+  border-top: 1px solid rgba(201, 162, 78, 0.12);
+  border-bottom: 1px solid rgba(201, 162, 78, 0.12);
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(90deg, rgba(201, 162, 78, 0.085), rgba(201, 162, 78, 0.02) 55%, transparent);
+  position: relative;
+  font-family: 'Lora', serif;
+  animation: axisPayoffIn 0.5s cubic-bezier(0.16, 0.84, 0.3, 1) both;
+}
+.axis-expansion p {
+  margin: 0;
+  color: inherit;              /* theme-adaptive: reads on light OR dark reader ground */
+  opacity: 0.9;
+  line-height: 1.6;
+  letter-spacing: 0.006em;
+}
+@keyframes axisPayoffIn { from { opacity: 0; transform: translateX(-5px); } to { opacity: 1; transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) { .axis-expansion { animation: none; } }
+
+/* ═══════════════════════════════════════════════════════════════════════
    VOW-BREAK RELEASE BEAT (Roman 2026-06-30) — the first break of a sworn
    vow is the story's climax. Heavier and more momentous than the reverie
    aside: full border with a blood-red accent edge, darker forged ground,
