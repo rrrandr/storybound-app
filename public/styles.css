@@ -7268,6 +7268,28 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 #zoomBookContainer.cover-pending .book-front-subtitle {
     color: #3a2f1a !important;
 }
+
+/* Placeholder title — a dedicated element (NOT .book-front-text, so it never triggers the
+   :has(.book-front-text) working-cover white background on a real cover). Hidden until the
+   book is .cover-pending (missing art), then centered on the white placeholder cover. */
+.cover-pending-title { display: none; }
+.library-book.cover-pending .cover-pending-title,
+#zoomBookContainer.cover-pending .cover-pending-title {
+    display: flex;
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12% 12% 20%;
+    box-sizing: border-box;
+    color: #2a2520;
+    font-family: 'lust-script-display', 'Lust Script', 'Georgia', serif;
+    font-size: clamp(11px, 15cqi, 26px);
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+}
 /* Text-based front cover (when no cover image) */
 .book-front-text {
     text-align: center;
