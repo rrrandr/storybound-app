@@ -15140,7 +15140,10 @@ textarea.fate-field {
     z-index: 6;
     pointer-events: none;
     display: block;
-    filter: drop-shadow(0 -1px 2px rgba(0, 0, 0, 0.18));
+    /* No shadow/glow on the gold triangle (Roman 2026-07-05) — the drop-shadow
+       was removed so the triangle reads as a clean flat gold silhouette in front
+       of the cover art. */
+    filter: none;
 }
 /* Empty src → hide (avoids the broken-image icon while JS hasn't yet
    set the artist-specific source). Specificity matched to the
@@ -15149,6 +15152,17 @@ textarea.fate-field {
 .book-front img.gn-cover-credit-band[src=""],
 .book-back img.gn-cover-credit-band--back:not([src]),
 .book-back img.gn-cover-credit-band--back[src=""] {
+    display: none;
+}
+
+/* Authored cine cover present → hide the working-cover fallback text (working
+   label / title / evolve caption) so it never paints OVER the baked artwork
+   (e.g. Glass House's "GLASS HOUSE" is already in the JPG). Roman 2026-07-05.
+   The master hide at ~14680 only covered #gnBookObject's .cover-book-art, not
+   the shelf/zoom .book-cover-authored img — this closes that gap. Scoped OFF on
+   .cover-pending so a missing/errored cover still degrades to the fallback text. */
+.library-book.cine-cover:not(.cover-pending) .book-front:has(.book-cover-authored[src]:not([src=""])) .cover-book-text,
+#zoomBookContainer.cine-cover:not(.cover-pending) .book-front:has(.book-cover-authored[src]:not([src=""])) .cover-book-text {
     display: none;
 }
 
