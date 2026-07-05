@@ -7245,6 +7245,13 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 .library-book.cover-pending .book-spine {
     background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%) !important;
+    /* Override the base spine's heavy dark inset troughs (inset ±12px rgba(0,0,0,0.7))
+       that were bleeding black edges through the gold — use the cine spine's light,
+       gold-toned insets instead. */
+    box-shadow:
+        inset 2px 0 3px rgba(255, 230, 160, 0.30),
+        inset -2px 0 3px rgba(120, 80, 20, 0.35),
+        inset 0 0 2px rgba(0, 0, 0, 0.15) !important;
 }
 .library-book.cover-pending .book-front-text,
 .library-book.cover-pending .book-front-title,
@@ -7261,6 +7268,10 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 }
 #zoomBookContainer.cover-pending .book-spine {
     background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%) !important;
+    box-shadow:
+        inset 2px 0 3px rgba(255, 230, 160, 0.30),
+        inset -2px 0 3px rgba(120, 80, 20, 0.35),
+        inset 0 0 2px rgba(0, 0, 0, 0.15) !important;
 }
 #zoomBookContainer.cover-pending .book-front-text,
 #zoomBookContainer.cover-pending .book-front-title,
