@@ -5,6 +5,10 @@ export const config = {
   maxDuration: 60 // 60 seconds for Replicate inference
 };
 
+// SECURITY: server-side prompt-injection scrub (CJS via default-import interop).
+import _sanitizeInjectionMod from './_sanitize-injection.js';
+const { stripInjectionFromText } = _sanitizeInjectionMod;
+
 export default async function handler(req, res) {
   // CORS headers (MANDATORY for all responses)
   const origin = req.headers.origin || '';
@@ -61,7 +65,9 @@ export default async function handler(req, res) {
 
   // Mode A: Create prediction
   if (req.method === 'POST') {
-    const { prompt, input = {} } = req.body;
+    const { prompt: _rawPrompt, input = {} } = req.body;
+    // SECURITY: scrub the user-typed prompt before forwarding to FLUX.
+    const prompt = typeof _rawPrompt === 'string' ? stripInjectionFromText(_rawPrompt) : _rawPrompt;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt required' });

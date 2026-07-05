@@ -161,6 +161,43 @@ function resolveFateCardTarget(cardId, sceneContext, options = {}) {
         }
 
         // ═══════════════════════════════════════════════════════════════
+        // ALL-AROUND RETARGET: when the LI is KNOWN to be offstage, a
+        // "romantic" card becomes a GENERAL interaction stance toward whoever
+        // IS present — in a NON-ROMANTIC register (Triangle Guard intent: do
+        // NOT imply romance with the present non-LI character). The cards are
+        // suggestions for any situation, not LI-only. Fires only on a POSITIVE
+        // absence signal; unknown presence still defaults to the Storybeau
+        // (the click-time LLM preview refines from the actual prose).
+        // ═══════════════════════════════════════════════════════════════
+        const _present = Array.isArray(sceneContext.presentCharacters) ? sceneContext.presentCharacters : [];
+        const _liKnownAbsent =
+            (_present.length > 0 && !_present.some(c => c === storybeau.name)) ||
+            (typeof state._scene1LIOnStage === 'boolean' && state._scene1LIOnStage === false && (state.turnCount || 0) === 0) ||
+            // EMPTY STAGE past the opening (2026-05-29): no character was detected
+            // bodily present this scene (incl. the LI, now gated on physical
+            // presence). The PC is effectively alone, so a "romantic" card becomes
+            // a self-directed / situational stance — never an address to an absent
+            // partner. Scene 0 keeps its own _scene1LIOnStage gate above; the
+            // click-time LLM preview still refines from the actual prose.
+            (_present.length === 0 && (state.turnCount || 0) > 0 && !!storybeau.name);
+        if (_liKnownAbsent) {
+            let _interlocutor = null;
+            for (let _i = 0; _i < _present.length; _i++) {
+                if (_present[_i] !== storybeau.name) { _interlocutor = _present[_i]; break; }
+            }
+            console.log('[FATE:AUTHORITY] LI offstage — romantic card retargeted to present interlocutor (non-romantic)', {
+                cardId, interlocutor: _interlocutor, presentCharacters: _present
+            });
+            return {
+                target: _interlocutor,   // may be null → self-directed
+                isStorybeau: false,
+                romantic: false,
+                liAbsent: true,
+                overrideApplied: false
+            };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
         // TRIANGLE GUARD: Block accidental triangle formation
         // ═══════════════════════════════════════════════════════════════
         if (sceneContext.presentCharacters && sceneContext.presentCharacters.length > 1) {
@@ -398,26 +435,407 @@ function stopContinuousSparkles() {
         { id: 'silence', title: 'Silence', desc: 'Words fail. Actions speak.', actionTemplate: 'You let the moment breathe without words.', dialogueTemplate: '(Silence speaks louder)' }
     ];
 
+    // ═══════════════════════════════════════════════════════════════════════
+    // PLOT CONTEXT EXTRACTOR — Slice 1 (added 2026-05-17)
+    // ═══════════════════════════════════════════════════════════════════════
+    // Reads the 8+ load-bearing state slots the existing scene-context
+    // extractor was ignoring: A-plot pressure, archetype, intimacy phase,
+    // committed truth, active grievance contracts, recent callback ledger
+    // entries, recent narrative scars, relationship gravity direction,
+    // narrative gravity arcs, and microDecision axis lean.
+    //
+    // Slice 1 (this one) ONLY surfaces the data. Template generators may
+    // start reading it, but most existing templates will continue to ignore
+    // it until Slice 3 wires per-card use. Slice 2 will route the intimate
+    // deck through Grok with this context as the prompt payload.
+    //
+    // Defensive throughout — every slot may be absent. Returns null/empty
+    // for missing data; never throws.
+    // ═══════════════════════════════════════════════════════════════════════
+    function extractPlotContext(state) {
+        const s = state || {};
+
+        // A-plot pressure
+        const aPlot = s.aPlot || {};
+        const aPlotGoal = aPlot.goal || null;
+        const aPlotStakes = aPlot.stakes || null;
+        const aPlotClock = aPlot.clock || null;
+        const aPlotTimelineLength = aPlot.timelineLength || 0;
+        const turnCount = s.turnCount || 0;
+        const arcPct = (aPlotTimelineLength > 0) ? (turnCount / aPlotTimelineLength) : null;
+
+        // Archetype + structural state
+        const archetypePrimary = (s.archetype && s.archetype.primary) || null;
+        const archetypeModifier = (s.archetype && s.archetype.modifier) || null;
+        const storyturn = s.storyturn || 'ST1';
+        const intimacyPhase = !!s.intimacyPhase;
+
+        // Committed truth (slice 1 promise architecture)
+        let committedTruth = null;
+        if (s.committedTruth && s.committedTruth.decidedTruth) {
+            committedTruth = {
+                about: s.committedTruth.about || null,
+                family: s.committedTruth.family || null,
+                subFamily: s.committedTruth.subFamily || null,
+                summary: String(s.committedTruth.decidedTruth).slice(0, 160),
+                seedScene: s.committedTruth.seedScene || 0,
+                revealFired: !!(s.committedTruth.reveal && s.committedTruth.reveal.fired),
+                inClimaxWindow: (arcPct !== null) && arcPct >= 0.85
+            };
+        }
+
+        // Active grievance contracts (escalating / surfacing / converged
+        // are interesting for card flavor; dormant + abandoned are not)
+        const activeGrievances = (s.grievanceContracts || [])
+            .filter(c => c && (c.visibility === 'escalating_offscreen' || c.visibility === 'surfacing' || c.visibility === 'converged'))
+            .slice(0, 2)
+            .map(c => ({
+                sourceCharacter: c.sourceCharacter,
+                vector: c.grievanceVector,
+                visibility: c.visibility,
+                weight: c.weight,
+                originatingScene: c.originatingScene,
+                aftermathPhase: c.aftermathPhase || null
+            }));
+
+        // Recent unresolved callback ledger entries (max 2)
+        // Handle both array and {entries, used} shape per the dual-shape pattern
+        const ledgerArr = Array.isArray(s.callbackLedger)
+            ? s.callbackLedger
+            : (s.callbackLedger && Array.isArray(s.callbackLedger.entries) ? s.callbackLedger.entries : []);
+        const recentCallbacks = ledgerArr
+            .filter(e => e && !e.resolved && e.text)
+            .slice(-2)
+            .map(e => ({
+                type: e.type || 'promise',
+                text: String(e.text).slice(0, 140),
+                sceneAdded: e.scene_added || 0
+            }));
+
+        // Recent narrative scars (slice 1 emotional illusion) — most recent 2
+        const recentScars = (s.narrativeScars || [])
+            .slice(-2)
+            .map(sc => ({
+                type: sc.type,
+                target: sc.target,
+                expression: sc.expression,
+                sourceScene: sc.sourceScene,
+                physical: !!sc.physical
+            }));
+
+        // Recent near-misses (max 1, for card-side "echo" flavor)
+        const recentNearMiss = (s.nearMisses || []).slice(-1).map(nm => ({
+            what: nm.what,
+            distance: nm.distance,
+            scene: nm.scene
+        }))[0] || null;
+
+        // Relationship gravity (trajectory)
+        const gravityDirection = (s.relationshipGravity && s.relationshipGravity.direction) || null;
+        const gravityStrength = (s.relationshipGravity && s.relationshipGravity.strength) || null;
+
+        // Narrative gravity (arc carry-forward)
+        let narrativeGravity = null;
+        if (s.narrativeGravity) {
+            narrativeGravity = {
+                primary: s.narrativeGravity.primary || null,
+                secondary: s.narrativeGravity.secondary || null,
+                emotional: s.narrativeGravity.emotional || null
+            };
+        }
+
+        // microDecision axis lean (objective ↔ relationship)
+        const axis = s._stagedPreferenceAxis;
+        let axisLean = null;
+        if (axis && ((axis.objective || 0) + (axis.relationship || 0) > 0)) {
+            const lead = (axis.objective || 0) - (axis.relationship || 0);
+            axisLean = {
+                objective: axis.objective || 0,
+                relationship: axis.relationship || 0,
+                lead
+            };
+        }
+
+        // Charge gravity (avoidance ↔ dwell)
+        const cg = s.chargeGravity || null;
+        let chargeLean = null;
+        if (cg && ((cg.avoidance || 0) + (cg.dwell || 0) > 0)) {
+            chargeLean = {
+                avoidance: cg.avoidance || 0,
+                dwell: cg.dwell || 0,
+                lead: (cg.dwell || 0) - (cg.avoidance || 0)
+            };
+        }
+
+        // Active Fate-OAS budget (informs cards during in-OAS Fate distortion)
+        let fateOASBudget = null;
+        if (s._fateOASBudget && s._fateOASBudget.turnsRemaining > 0) {
+            fateOASBudget = {
+                type: s._fateOASBudget.type,
+                turnsRemaining: s._fateOASBudget.turnsRemaining,
+                totalTurns: s._fateOASBudget.totalTurns
+            };
+        }
+
+        // PairBond (Roman 2026-06-09) — psychological + erotic locks the cards
+        // should press. Lock-tag identifiers are also surfaced so downstream
+        // template selection (if any) can branch on them; the rendered prose
+        // directive (state._pairBondDirectiveCache) is the single source of
+        // truth for prompt insertion.
+        let pairBond = null;
+        if (s.pairBond && s.pairBond.psychologicalLock_li) {
+            pairBond = {
+                psychologicalLock_li: s.pairBond.psychologicalLock_li,
+                psychologicalLock_pc: s.pairBond.psychologicalLock_pc,
+                psychologicalLock_li_secondary: s.pairBond.psychologicalLock_li_secondary || null,
+                psychologicalLock_pc_secondary: s.pairBond.psychologicalLock_pc_secondary || null,
+                eroticLock_li: s.pairBond.eroticLock_li || null,
+                eroticLock_pc: s.pairBond.eroticLock_pc || null,
+                whyHer: s.pairBond.whyHer || null,
+                whyHim: s.pairBond.whyHim || null,
+                attractionEngine: s.pairBond.attractionEngine || null,
+                directive: s._pairBondDirectiveCache ||
+                    (typeof window._buildPairBondDirective === 'function' ? window._buildPairBondDirective(s) : '')
+            };
+        }
+
+        // LI ARCHITECTURE STATE (Roman 2026-06-10) — relationship locks the
+        // OAS Grok preview batcher was missing. Single source of truth so
+        // both fatecards.js consumers and the orchestration batcher get the
+        // same architecture context that literary scene generation gets via
+        // buildFateRelationshipAwarenessDirective. Nulls are expected on
+        // pre-Scene-1 stories; harmless to surface.
+        const liArchitecture = {
+            // Male-LI
+            socialProofPrimary:        s._liSocialProofPrimary || null,
+            socialProofSecondary:      s._liSocialProofSecondary || null,
+            socialProofLockedScene:    s._liSocialProofLockedScene || null,
+            // Female-LI (relational value + attention escalation)
+            relationalValuePrimary:    s._liRelationalValuePrimary || null,
+            relationalValueSecondary:  s._liRelationalValueSecondary || null,
+            attentionEscalationStage:  s._liAttentionEscalationStage || 0,
+            // Both — long-arc mystery
+            privateExplanationSource:  s._liPrivateExplanationSource || null,
+            privateExplanationStage:   s._liPrivateExplanationStage || null,
+            // Female-LI — hidden burden + stage
+            hiddenBurdenCategory:      s._liHiddenBurdenCategory || null,
+            hiddenBurdenStage:         s._liHiddenBurdenStage || 0,
+            // Tactical — the freshest observation Fate should consume
+            interestSignalLast:        s._liInterestSignalLast || null
+        };
+
+        return {
+            // A-plot
+            aPlotGoal, aPlotStakes, aPlotClock, aPlotTimelineLength, arcPct, turnCount,
+            // structural
+            archetypePrimary, archetypeModifier, storyturn, intimacyPhase,
+            // promise / consequence systems
+            committedTruth, activeGrievances, recentCallbacks, recentScars, recentNearMiss,
+            // gravity readouts
+            gravityDirection, gravityStrength, narrativeGravity, axisLean, chargeLean,
+            // Fate-OAS distortion (during invocation)
+            fateOASBudget,
+            // Pair-level lock-and-key (Roman 2026-06-09)
+            pairBond,
+            // Relationship architecture (Roman 2026-06-10) — bundled
+            liArchitecture
+        };
+    }
+    window.extractPlotContext = extractPlotContext;
+
+    // LI PHYSICAL PRESENCE (2026-05-29): the LI counts as "present" only when
+    // they SPEAK / ACT / are touched on-page — NOT when merely referenced. A
+    // scene about an unreachable LI (a name dropped, a memory, an offer recalled)
+    // must not mark them present, or the romantic Fate cards address an absent
+    // partner as if face-to-face (Roman's bug). Mirrors the Scene-1 gate's
+    // li_physical_presence detector; scoped to the recent tail where the deal
+    // reads. Falls back to false on any error (→ treated as absent, refined by
+    // the click-time LLM preview which reads the actual prose).
+    function _liPhysicallyPresent(storyText, liName) {
+        try {
+            if (!storyText || !liName || liName.length < 2) return false;
+            const _esc = liName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const _first = _esc.split(/\s+/)[0] || _esc;
+            const _scope = String(storyText).slice(-1200);
+            const _rx = new RegExp(
+                '\\b(?:' + _esc + '|' + _first + ')\\s+(?:said|asked|replied|answered|whispered|murmured|muttered|added|continued|repeated|spoke|called|laughed|chuckled|smiled|grinned|smirked|nodded|shrugged|sighed|leaned|stepped|walked|strode|entered|approached|crossed|moved|reached|stood|sat|rose|turned|grabbed|took|pulled|pressed|touched|brushed|watched|stared|studied|gazed|tilted|raised|lowered|closed|opened|stopped|paused|waited|stayed)\\b'
+                + '|\\b(?:' + _esc + '|' + _first + ')[’\']s\\s+(?:hand|hands|fingers|fingertips|eyes|gaze|voice|mouth|lips|breath|arm|arms|chest|jaw|shoulder|shoulders|knuckles|palm|thumb|wrist|throat|face|body)\\b',
+                'i'
+            );
+            return _rx.test(_scope);
+        } catch (_) { return false; }
+    }
+
     // SCENE AWARENESS: Extract critical context from story
     function extractSceneContext(storyText, state) {
-        const recentText = storyText.slice(-800).toLowerCase();
+        // Case-preserved slice for NAME MATCHING; lowercased for everything else
+        // (emotional-beat patterns are written in lowercase).
+        // FIX 2026-05-30: the prior code lowercased the recent slice and THEN
+        // ran /\b[A-Z][a-z]{2,12}\b/g against it. The regex requires uppercase
+        // but the input was lowercase → ZERO matches every call. Combined with
+        // the 2+ mentions threshold (line 635), presentCharacters was always
+        // empty for off-stage-LI scenes, so every romantic fate card silently
+        // retargeted back to the LI by default. Both bugs fixed here.
+        const recentTextCased = storyText.slice(-1500);
+        const recentText = recentTextCased.toLowerCase();
         const veryRecentText = storyText.slice(-300).toLowerCase();
 
         // Extract named characters present in scene
         const presentCharacters = [];
         const liName = state.loveInterestName || '';
         const playerName = state.playerName || 'you';
-        if (liName && recentText.includes(liName.toLowerCase())) {
-            presentCharacters.push(liName);
-        }
-        // Check for other named characters mentioned recently
-        const nameMatches = recentText.match(/\b[A-Z][a-z]{2,12}\b/g) || [];
-        nameMatches.forEach(name => {
-            if (name !== liName && name !== playerName && !presentCharacters.includes(name)) {
-                if (recentText.split(name.toLowerCase()).length > 2) {
-                    presentCharacters.push(name);
-                }
+
+        // 2026-05-30: stage-presence manifest (Roman). TWO authoritative
+        // sources cover the whole story:
+        //   • Scene 1 — the pre-prose Haiku scaffold (_buildScene1Scaffold)
+        //     returns state._scene1StagedCharacters with presence_mode.
+        //   • Scene 2+ — the post-prose continuity probe (_extractStoryMemory's
+        //     continuityProbe.present_characters) returns the same shape; we
+        //     stash split lists onto state._lastProbeOnStagePhysical and
+        //     state._lastProbeOnPhone every time the probe runs.
+        // Both are immune to the regex extractor's failure modes (sentence-
+        // start common nouns like "Leverage", interrogatives like "What",
+        // pronouns like "She" — and the bigger problem: distinguishing
+        // physically on-stage from voice-on-phone). Prefer Scene 1 manifest
+        // while still inside Scene 1, then prefer the freshest probe.
+        const _scene1Physical = Array.isArray(state._scene1OnStagePhysical) ? state._scene1OnStagePhysical : null;
+        const _scene1Phone    = Array.isArray(state._scene1OnPhone) ? state._scene1OnPhone : null;
+        const _scene1Active = _scene1Physical
+            && ((state.turnCount || 0) <= 1)
+            && !(Array.isArray(state.scenes) && state.scenes.length > 1);
+        // 2026-05-30 diagnostic: observed live the manifest skip didn't
+        // fire even though staging captured Margot=ON_PHONE correctly. Log
+        // the state's view at the moment extractSceneContext reads it so we
+        // can tell whether the issue is missing state, scene-1-active check
+        // failure, or something else entirely.
+        try {
+            console.log('[FATE:STAGE-DIAG]',
+                'turnCount=' + (state.turnCount || 0),
+                '· scenes.length=' + (Array.isArray(state.scenes) ? state.scenes.length : 'n/a'),
+                '· _scene1OnStagePhysical=' + (_scene1Physical ? '[' + _scene1Physical.join(',') + '] (' + _scene1Physical.length + ')' : 'null/undefined'),
+                '· _scene1OnPhone=' + (_scene1Phone ? '[' + _scene1Phone.join(',') + ']' : 'null/undefined'),
+                '· _lastProbeOnStagePhysical=' + (Array.isArray(state._lastProbeOnStagePhysical) ? '[' + state._lastProbeOnStagePhysical.join(',') + ']' : 'null/undefined'),
+                '· _scene1Active=' + !!_scene1Active);
+        } catch (_) {}
+
+        const _probePhysical = Array.isArray(state._lastProbeOnStagePhysical) ? state._lastProbeOnStagePhysical : null;
+        const _probePhone    = Array.isArray(state._lastProbeOnPhone) ? state._lastProbeOnPhone : null;
+        // Probe is fresh enough to act on if it ran for this scene or the
+        // immediately prior one (presence usually carries to the next scene
+        // unless the prose shows a hard transition the probe will have caught).
+        const _probeFresh = _probePhysical
+            && typeof state._lastProbeStagedAtTurn === 'number'
+            && (state._lastProbeStagedAtTurn >= (state.turnCount || 0) - 1);
+
+        let _manifestUsed = false;
+        let _manifestSource = '';
+        let _manifestPhonelist = null;
+        // 2026-05-30 (Roman correction): on-phone characters ARE scene-
+        // active and SHOULD be eligible fate-card targets. The earlier
+        // exclusion was over-correction. fate-card authority's job is to
+        // retarget romantic cards to whoever the PC is engaging with when
+        // the LI is off-stage — and a phone interlocutor exerting pressure
+        // is exactly that. Push BOTH the physical and on-phone lists into
+        // presentCharacters. Keep the on-phone list separately on the
+        // sceneContext so downstream card-text generators that want to
+        // constrain action shape (voice/dialogue rather than physical
+        // handoff) can read it.
+        if (_scene1Active) {
+            _scene1Physical.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            if (Array.isArray(_scene1Phone)) {
+                _scene1Phone.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
             }
+            _manifestUsed = true;
+            _manifestSource = 'scene1-scaffold';
+            _manifestPhonelist = _scene1Phone;
+        } else if (_probeFresh) {
+            _probePhysical.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            if (Array.isArray(_probePhone)) {
+                _probePhone.forEach(n => { if (n && !presentCharacters.includes(n)) presentCharacters.push(n); });
+            }
+            _manifestUsed = true;
+            _manifestSource = 'probe@turn' + state._lastProbeStagedAtTurn;
+            _manifestPhonelist = _probePhone;
+        }
+        if (_manifestUsed) {
+            try {
+                console.log('[FATE:STAGE-MANIFEST] using ' + _manifestSource + ': present=[' + presentCharacters.join(', ') + ']'
+                    + (_manifestPhonelist && _manifestPhonelist.length ? ' · of which on-phone (voice/dialogue actions only, not physical handoff)=[' + _manifestPhonelist.join(', ') + ']' : '')
+                    + ' — regex extraction skipped');
+            } catch (_) {}
+        } else {
+            // PRESENCE, not reference: the LI is "present" only if bodily on-page.
+            if (liName && _liPhysicallyPresent(storyText, liName)) {
+                presentCharacters.push(liName);
+            }
+        }
+        // Local alias for downstream guard (renamed from _scene1OnlyManifest).
+        const _scene1OnlyManifest = _manifestUsed;
+        // Stash the on-phone list on a side-channel so it can ride out on
+        // sceneContext for any consumer that wants action-shape constraints.
+        const _onPhoneCharacters = _manifestPhonelist && _manifestPhonelist.length ? _manifestPhonelist.slice() : [];
+        // Pre-split LI / PC names for token-level exclusion so possessive or
+        // first-name-only forms ("Dani" for "Dani McBrayn") are also filtered.
+        const _liTokens = liName ? String(liName).split(/\s+/).filter(Boolean) : [];
+        const _pcTokens = playerName ? String(playerName).split(/\s+/).filter(Boolean) : [];
+        // Quick blacklist of common capitalized words that are NOT character
+        // names. The "preceded by article/preposition" check below catches
+        // most place names; this list catches the remainder (sentence-start
+        // function words, pronouns, interrogatives, day/month names,
+        // number-words, and common sentence-start nouns observed live).
+        const _NON_NAMES = new Set([
+            // articles + conjunctions + connectives
+            'The','And','But','Or','If','When','Where','While','Then','Now',
+            // spatial / directional adverbs
+            'Here','There','Around','Behind','Inside','Outside','Above','Below',
+            'Across','Through',
+            // pronouns + interrogatives (observed live 2026-05-30: "What",
+            // "You", "She", "That", "Why" leaked into presentCharacters,
+            // crowding out the real interlocutor name)
+            'You','She','He','It','We','They','Yours','Hers','His','Theirs','Ours',
+            'What','Why','How','Who','Whom','Whose','Which','That','This','These','Those',
+            // affirmatives + qualifiers
+            'Yes','No','Maybe','Okay','Both','Either','Neither','Some','Most','Many','Few','None',
+            // day / month names
+            'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday',
+            'January','February','March','April','June','July','August','September',
+            'October','November','December',
+            // number words
+            'One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
+            'Eleven','Twelve','Twenty','Thirty','Forty','Fifty','Sixty','Hundred',
+            'Thousand','Million','Billion',
+            // common sentence-start nouns / verbs observed leaking (capitalize-
+            // any-noun-at-sentence-start failure mode — these aren't names)
+            'Leverage','Told','Said','Asked','Called','Tried','Looked','Stood','Walked','Came','Went',
+            'Money','Power','Time','Truth','Light','Dark','Silence','Sound','Voice','Eyes','Hand','Hands',
+            'Coffee','Phone','Door','Window','Room','Air','Sky','Night','Day','Morning','Evening'
+        ]);
+        // Match candidates against the case-PRESERVED text (the original bug).
+        // SKIP this entire regex pass when Scene 1's scaffold manifest is the
+        // authoritative source — the manifest already lists who's on stage
+        // and we'd just be adding extractor false-positives back into the mix.
+        const nameMatches = _scene1OnlyManifest ? [] : (recentTextCased.match(/\b[A-Z][a-z]{2,12}\b/g) || []);
+        const _seen = new Set();
+        nameMatches.forEach(name => {
+            if (_seen.has(name)) return; _seen.add(name);
+            if (presentCharacters.includes(name)) return;
+            if (name === liName || name === playerName) return;
+            if (_liTokens.indexOf(name) >= 0 || _pcTokens.indexOf(name) >= 0) return;
+            if (_NON_NAMES.has(name)) return;
+            // "the X" / "to X" / "in X" / etc. → almost always a common noun or
+            // place name, not a person. Look at the 6 chars before the FIRST
+            // occurrence of this name in the recent text and exclude if it's
+            // preceded by a definite article or a preposition.
+            const _idx = recentTextCased.indexOf(name);
+            if (_idx > 0) {
+                const _before = recentTextCased.slice(Math.max(0, _idx - 6), _idx).toLowerCase();
+                if (/\b(?:the|a|an|to|in|at|on|of|from|near|past|toward|towards|into|onto)\s$/.test(_before)) return;
+            }
+            // Threshold lowered from 2+ mentions to 1+ mention (was: too strict
+            // for short scenes where the interlocutor is named ONCE and then
+            // referred to as "she"/"her" for the rest of the scene — exactly
+            // the failure observed live with "Iris" on 2026-05-30).
+            presentCharacters.push(name);
         });
 
         // Detect last emotional beat
@@ -470,15 +888,42 @@ function stopContinuousSparkles() {
         if (currentLocation) confidence += 0.15;
         if (sceneObjects.length > 0) confidence += 0.1;
 
+        // Slice 1 (added 2026-05-17): plot context merged in as `plot` key.
+        // Existing destructures pull specific scene-context fields, ignoring
+        // extras — safe to add. Slices 2-3 will read `plot.*` for richer
+        // card flavor; Slice 1 only surfaces the data so it's available.
+        const plot = extractPlotContext(state);
+        try {
+            console.log('[FATE-CARDS:PLOT-CTX]',
+                'archetype=' + (plot.archetypePrimary || '–'),
+                '· ST=' + plot.storyturn,
+                '· intimacy=' + plot.intimacyPhase,
+                '· aplot=' + (plot.aPlotGoal ? '"' + String(plot.aPlotGoal).slice(0, 40) + '"' : '–'),
+                '· truth=' + (plot.committedTruth ? plot.committedTruth.about + (plot.committedTruth.inClimaxWindow ? '[climax]' : '') : '–'),
+                '· grievances=' + plot.activeGrievances.length,
+                '· callbacks=' + plot.recentCallbacks.length,
+                '· scars=' + plot.recentScars.length,
+                '· gravity=' + (plot.gravityDirection || '–'),
+                '· axis-lead=' + (plot.axisLean ? plot.axisLean.lead : '–'),
+                '· fateOAS=' + (plot.fateOASBudget ? plot.fateOASBudget.type + '(' + plot.fateOASBudget.turnsRemaining + 'left)' : '–')
+            );
+        } catch (_) {}
+
         return {
             presentCharacters,
+            // 2026-05-30: on-phone characters are scene-active (eligible
+            // fate-card targets) but cannot receive PHYSICAL handoffs.
+            // Downstream card-text generators should constrain action shape
+            // to voice/dialogue when a target appears in this list.
+            onPhoneCharacters: _onPhoneCharacters,
             lastEmotionalBeat,
             unresolvedTension,
             currentLocation,
             sceneObjects,
             liName,
             liIntroduced: liName && recentText.includes(liName.toLowerCase()),
-            confidence
+            confidence,
+            plot
         };
     }
 
@@ -762,6 +1207,22 @@ function stopContinuousSparkles() {
         // INTIMATE CONTEXT: Route through erotic generators, skip ChatGPT
         // ═══════════════════════════════════════════════════════════════════
         if (isIntimateContextActive()) {
+            // Slice 2 (added 2026-05-17): check speculative Grok cache first.
+            // _speculativeGrokIntimateFateCards fires at scene-finalize for the
+            // NEXT turn; by deal time the cache should usually be populated.
+            // Cards include `variant` (amplify | ruin | redirect) for telemetry.
+            const tc = state.turnCount || 0;
+            const grokCache = state._grokIntimateFateCards;
+            if (grokCache && grokCache.turnCount === tc && grokCache.cards && grokCache.cards[baseCard.id]) {
+                const g = grokCache.cards[baseCard.id];
+                try { console.log('[FATE-CARDS:GROK-HIT] card=' + baseCard.id + ' variant=' + (g.variant || 'amplify')); } catch (_) {}
+                return { ...baseCard, action: g.action, dialogue: g.dialogue, _intimate: true, _variant: g.variant || 'amplify', _grokSourced: true };
+            }
+
+            // Cache miss → fall back to template generator. Either speculative
+            // call didn't fire (no orchestration client), it's still in flight,
+            // or it failed (Grok down). Templates always work as a floor.
+            try { console.log('[FATE-CARDS:GROK-MISS] card=' + baseCard.id + ' — template fallback'); } catch (_) {}
             const intimateMode = resolveIntimateMode();
             const intimateCtx = { intimateMode, liName: resolvedTargetName };
             const options = generateIntimateCardOptions(baseCard.id, intimateCtx);
@@ -807,11 +1268,16 @@ function stopContinuousSparkles() {
 
         // Generate options based on card type with scene awareness
         // STORYBEAU AUTHORITY: Use resolved target, not raw liName
+        // Slice 3 (added 2026-05-17): pass `plot` through so card generators
+        // can branch on A-plot pressure, committed truth, grievances, scars,
+        // callbacks, gravity, axis lean. Existing branches still fire if no
+        // plot signal matches.
         const options = generateCardOptions(baseCard.id, {
             isSetup,
             isEarlyStory,
             liIntroduced: targetResolution.target ? true : liIntroduced,
             liName: resolvedTargetName, // AUTHORITATIVE: Storybeau-resolved target
+            liAbsent: !!targetResolution.liAbsent, // LI offstage → non-LI generic fallback
             intensity,
             lastEmotionalBeat,
             unresolvedTension,
@@ -819,7 +1285,9 @@ function stopContinuousSparkles() {
             sceneObjects,
             presentCharacters,
             // Pass resolution metadata for triangle-aware generation
-            targetResolution
+            targetResolution,
+            // Slice 3: plot context (Slice 1 extracted, Slice 3 reads)
+            plot: sceneContext.plot || null
         });
 
         // Filter out repetitive or generic options
@@ -843,13 +1311,35 @@ function stopContinuousSparkles() {
         };
     }
 
+    // LI-ABSENT generic defaults — used when the love interest is offstage so
+    // the (normally romance-coded) cards read as all-around interaction
+    // suggestions toward the present situation, NON-romantically. These are
+    // deal-time placeholders; the click-time LLM preview refines them from the
+    // actual prose. Silence has no LI dependency, so it uses its normal path.
+    const _LI_ABSENT_FALLBACKS = {
+        temptation: { action: "There's an opening right in front of you. Take it before the moment closes.", dialogue: '"Why not. Who\'s going to stop me."',
+                      altAction: 'Do the reckless thing the room is daring you not to do.', altDialogue: '"Let\'s see what happens."' },
+        confession: { action: 'Stop hedging and put the real thing on the table — out loud.', dialogue: '"Here\'s the truth, since no one else will say it."',
+                      altAction: 'Own the thing you\'ve been dancing around.', altDialogue: '"I\'m done pretending otherwise."' },
+        boundary:   { action: "Hold the line. Don't give an inch you didn't mean to.", dialogue: '"That\'s as far as this goes."',
+                      altAction: 'Plant your feet and refuse to be moved.', altDialogue: '"No. Not this."' },
+        reversal:   { action: 'Take the reins of this exchange. Let them follow your lead for once.', dialogue: '"We\'re doing this my way now."',
+                      altAction: 'Flip who\'s running the room.', altDialogue: '"I\'ll decide how this goes."' }
+    };
+
     // ACTIONABLE OPTIONS: Each should change the next beat differently
     function generateCardOptions(cardId, ctx) {
-        const { isSetup, isEarlyStory, liIntroduced, liName, intensity, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, presentCharacters } = ctx;
+        const { isSetup, isEarlyStory, liIntroduced, liName, intensity, lastEmotionalBeat, unresolvedTension, currentLocation, sceneObjects, presentCharacters, plot, liAbsent } = ctx;
 
         const locationPhrase = currentLocation ? `in the ${currentLocation}` : '';
         const objectPhrase = sceneObjects.length > 0 ? sceneObjects[0] : '';
         const tensionPhrase = unresolvedTension.length > 0 ? unresolvedTension[0] : '';
+
+        // LI offstage → romance-coded cards use the non-LI generic default
+        // instead of LI-templated text. (Silence falls through — no LI dep.)
+        if (liAbsent && _LI_ABSENT_FALLBACKS[cardId]) {
+            return _LI_ABSENT_FALLBACKS[cardId];
+        }
 
         switch(cardId) {
             case 'temptation':
@@ -868,7 +1358,59 @@ function stopContinuousSparkles() {
     }
 
     function getTemptationOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Committed truth in climax window — temptation = take the reveal
+            if (plot.committedTruth && !plot.committedTruth.revealFired && plot.committedTruth.inClimaxWindow) {
+                return {
+                    action: `The thing you've been circling — it's right there. Reach for it.`,
+                    dialogue: `"I think I finally see it."`,
+                    altAction: `The pattern is about to name itself. Don't look away.`,
+                    altDialogue: `"Tell me I'm wrong."`
+                };
+            }
+            // Active grievance (escalating / surfacing) — temptation toward confrontation
+            if (plot.activeGrievances && plot.activeGrievances.length) {
+                const g = plot.activeGrievances[0];
+                return {
+                    action: `Bring up ${g.sourceCharacter}. You've been steering around the name for too long.`,
+                    dialogue: `"What happened with ${g.sourceCharacter} — it never settled, did it?"`,
+                    altAction: `The pull to close the loop with ${g.sourceCharacter} sharpens.`,
+                    altDialogue: `"I keep almost saying ${g.sourceCharacter}'s name."`
+                };
+            }
+            // Recent near-miss — temptation to circle back to the alternate timeline
+            if (plot.recentNearMiss) {
+                return {
+                    action: `Something pulls you back toward what almost happened. Follow it.`,
+                    dialogue: `"I keep thinking about the day I didn't pick up."`,
+                    altAction: `The almost-thing won't stop almosting. Test it again.`,
+                    altDialogue: `"What if I'd answered?"`
+                };
+            }
+            // Heavy axis lean — temptation toward the OPPOSITE pole
+            if (plot.axisLean && Math.abs(plot.axisLean.lead) >= 4) {
+                if (plot.axisLean.lead > 0) {
+                    // objective-heavy → temptation to drop the goal for ${liName}
+                    return {
+                        action: `Set the work down. Let ${liName} be the only thing in the room.`,
+                        dialogue: `"None of it matters tonight."`,
+                        altAction: `The goal can wait. Choose the person.`,
+                        altDialogue: `"I want this more than I want to be right."`
+                    };
+                } else {
+                    // relationship-heavy → temptation to seize the objective alone
+                    return {
+                        action: `Step away from ${liName}. Do the thing nobody can do with you.`,
+                        dialogue: `"I have to handle this myself."`,
+                        altAction: `Walk past ${liName}. The work is its own pull.`,
+                        altDialogue: `"Don't follow me."`
+                    };
+                }
+            }
+        }
 
         if (isSetup) {
             return {
@@ -925,7 +1467,53 @@ function stopContinuousSparkles() {
     }
 
     function getConfessionOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, unresolvedTension } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, unresolvedTension, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Committed truth — confession can surface the seed (not in climax yet)
+            if (plot.committedTruth && !plot.committedTruth.revealFired) {
+                const t = plot.committedTruth;
+                const scenesSinceSeed = (plot.turnCount || 0) - (t.seedScene || 0);
+                if (scenesSinceSeed >= 3 && !t.inClimaxWindow) {
+                    return {
+                        action: `The thing you've kept folded inside finally needs air. Say it to ${liName}.`,
+                        dialogue: `"There's something I should have told you weeks ago."`,
+                        altAction: `What you noticed but haven't named is starting to weigh too much.`,
+                        altDialogue: `"I've been turning it over. I think you should know."`
+                    };
+                }
+            }
+            // Recent narrative scar — confession can name the avoidance
+            if (plot.recentScars && plot.recentScars.length) {
+                const sc = plot.recentScars[plot.recentScars.length - 1];
+                return {
+                    action: `Acknowledge what you've been walking around. Name "${sc.target}" out loud.`,
+                    dialogue: `"I haven't been able to talk about it. Until now."`,
+                    altAction: `The thing you've been steering past — admit it.`,
+                    altDialogue: `"You've noticed me avoiding it, haven't you?"`
+                };
+            }
+            // Active grievance — confession about the source character
+            if (plot.activeGrievances && plot.activeGrievances.length) {
+                const g = plot.activeGrievances[0];
+                return {
+                    action: `Tell ${liName} what really happened with ${g.sourceCharacter}.`,
+                    dialogue: `"I haven't been honest about ${g.sourceCharacter}."`,
+                    altAction: `${g.sourceCharacter}'s name needs saying. Say it.`,
+                    altDialogue: `"I owe ${g.sourceCharacter} an account. Maybe you too."`
+                };
+            }
+            // Unresolved callback — confession about what was left hanging
+            if (plot.recentCallbacks && plot.recentCallbacks.length) {
+                return {
+                    action: `Reopen the thing you both let drop. Don't soften it this time.`,
+                    dialogue: `"That conversation we didn't finish — I want to finish it."`,
+                    altAction: `Bring the unanswered question back into the room.`,
+                    altDialogue: `"You asked me something I didn't answer. I'm answering now."`
+                };
+            }
+        }
 
         if (isSetup) {
             return {
@@ -980,7 +1568,49 @@ function stopContinuousSparkles() {
     }
 
     function getBoundaryOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, currentLocation } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, intensity, currentLocation, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Grievance aftermath firing — boundary about the convergence
+            if (plot.activeGrievances && plot.activeGrievances.some(function(g) { return g.aftermathPhase === 'firing'; })) {
+                var gAft = plot.activeGrievances.find(function(g) { return g.aftermathPhase === 'firing'; });
+                return {
+                    action: `Decide right now how much you owe ${gAft.sourceCharacter}. The room is waiting.`,
+                    dialogue: `"I have to choose what to give them."`,
+                    altAction: `Hold the line — or don't — between yourself and ${gAft.sourceCharacter}.`,
+                    altDialogue: `"This is where I either make it right or don't."`
+                };
+            }
+            // Recent narrative scar — boundary that honors the scar
+            if (plot.recentScars && plot.recentScars.length) {
+                var scB = plot.recentScars[plot.recentScars.length - 1];
+                return {
+                    action: `You know where the line is now. Don't let ${liName} talk you past "${scB.target}".`,
+                    dialogue: `"I can't do that anymore. Not after last time."`,
+                    altAction: `The scar is the boundary. Honor it without explaining it.`,
+                    altDialogue: `"Some things I just don't do now."`
+                };
+            }
+            // A-plot pressure — boundary against sacrificing the goal
+            if (plot.aPlotGoal && plot.aPlotStakes) {
+                return {
+                    action: `${liName} is here, but so is the deadline. Make a choice that doesn't apologize for either.`,
+                    dialogue: `"I can give you tonight, but I can't give you tomorrow."`,
+                    altAction: `Name the cost out loud. ${liName} either accepts it or doesn't.`,
+                    altDialogue: `"If I stay, I lose the thing I came for."`
+                };
+            }
+            // Heavy charge avoidance — boundary that protects the avoidance
+            if (plot.chargeLean && plot.chargeLean.lead <= -4) {
+                return {
+                    action: `Step back before this becomes more than you can hold. ${liName} can wait.`,
+                    dialogue: `"Not tonight. I need to think."`,
+                    altAction: `The pull is real and the answer is still no.`,
+                    altDialogue: `"I want this. That's why I'm leaving."`
+                };
+            }
+        }
 
         if (isSetup) {
             return {
@@ -1046,7 +1676,58 @@ function stopContinuousSparkles() {
     }
 
     function getReversalOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, presentCharacters } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, presentCharacters, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Heavy axis lean — reversal pulls toward the OPPOSITE pole
+            if (plot.axisLean && Math.abs(plot.axisLean.lead) >= 4) {
+                if (plot.axisLean.lead > 0) {
+                    // objective-heavy → reversal toward connection
+                    return {
+                        action: `Set down the agenda you've been carrying. Look at ${liName} like the agenda was never the point.`,
+                        dialogue: `"None of this works without you."`,
+                        altAction: `Stop strategizing. Choose ${liName} mid-sentence.`,
+                        altDialogue: `"I've been managing you. I'm done."`
+                    };
+                } else {
+                    // relationship-heavy → reversal toward objective
+                    return {
+                        action: `Pull back from ${liName} just enough to act. The work was always going to need you eventually.`,
+                        dialogue: `"I love this. But it can't be the only thing."`,
+                        altAction: `Step out of the soft place. Take the move you've been postponing.`,
+                        altDialogue: `"I need to be the person who does this."`
+                    };
+                }
+            }
+            // Grievance surfacing — reversal hands the power to the absent figure
+            if (plot.activeGrievances && plot.activeGrievances.some(function(g) { return g.visibility === 'surfacing'; })) {
+                var gSurf = plot.activeGrievances.find(function(g) { return g.visibility === 'surfacing'; });
+                return {
+                    action: `Acknowledge ${gSurf.sourceCharacter} out loud. Give the absent the room they've been earning.`,
+                    dialogue: `"${gSurf.sourceCharacter} has been part of this without being here."`,
+                    altAction: `Let the dynamic between you and ${liName} reshape around someone neither of you is looking at.`,
+                    altDialogue: `"We've been having the wrong conversation."`
+                };
+            }
+            // Relationship gravity drift — reversal corrects the trajectory
+            if (plot.gravityDirection === 'away') {
+                return {
+                    action: `Close the distance you've let open with ${liName}. Don't ask permission.`,
+                    dialogue: `"I've been letting this slip. I'm not anymore."`,
+                    altAction: `Reach for ${liName} before you decide if you should.`,
+                    altDialogue: `"Come here."`
+                };
+            }
+            if (plot.gravityDirection === 'toward') {
+                return {
+                    action: `Step back from ${liName}. The pull is real; that's not the same as right.`,
+                    dialogue: `"I want this. I'm not sure I should."`,
+                    altAction: `Cool the orbit on purpose. ${liName} will feel it.`,
+                    altDialogue: `"Let me think."`
+                };
+            }
+        }
 
         if (isSetup || !liIntroduced) {
             return {
@@ -1103,7 +1784,48 @@ function stopContinuousSparkles() {
     }
 
     function getSilenceOptions(ctx, locationPhrase, objectPhrase, tensionPhrase) {
-        const { isSetup, liIntroduced, liName, lastEmotionalBeat, currentLocation, sceneObjects } = ctx;
+        const { isSetup, liIntroduced, liName, lastEmotionalBeat, currentLocation, sceneObjects, plot } = ctx;
+
+        // ── Slice 3: plot-driven branches (fire BEFORE generic emotional-beat) ──
+        if (plot) {
+            // Recent near-miss — silence honors the alternate timeline the PC doesn't know
+            if (plot.recentNearMiss) {
+                return {
+                    action: `Hold the silence in the spot where the other path almost forked.`,
+                    dialogue: `(You don't say it. You don't know why.)`,
+                    altAction: `Don't fill the pause. Whatever didn't happen is still in the air.`,
+                    altDialogue: `(Something in you decides not to speak.)`
+                };
+            }
+            // Committed truth NOT in climax window — silence holds the truth
+            if (plot.committedTruth && !plot.committedTruth.revealFired && !plot.committedTruth.inClimaxWindow) {
+                return {
+                    action: `Let the silence carry what your words won't. ${liName} can feel the absence.`,
+                    dialogue: `(The thing you almost said folds back into your chest.)`,
+                    altAction: `Hold the truth in. Not forever — just not now.`,
+                    altDialogue: `(You decide to say nothing. ${liName} notices anyway.)`
+                };
+            }
+            // Recent narrative scar — silence around the scar topic
+            if (plot.recentScars && plot.recentScars.length) {
+                var scS = plot.recentScars[plot.recentScars.length - 1];
+                return {
+                    action: `${liName} drifts close to "${scS.target}". Don't take the bait. Let the silence steer them off.`,
+                    dialogue: `(You change the subject without speaking.)`,
+                    altAction: `Refuse to be drawn into the thing you've stopped touching.`,
+                    altDialogue: `(Your stillness is the answer.)`
+                };
+            }
+            // Heavy charge avoidance — silence as protective distance
+            if (plot.chargeLean && plot.chargeLean.lead <= -4) {
+                return {
+                    action: `Hold the space empty. Don't let ${liName} fill the silence for you.`,
+                    dialogue: `(You don't help. You don't soften it.)`,
+                    altAction: `Let ${liName} stay uncertain. Your quiet is intentional.`,
+                    altDialogue: `(The silence stretches because you keep it stretching.)`
+                };
+            }
+        }
 
         if (isSetup || !liIntroduced) {
             return {
@@ -1167,6 +1889,60 @@ function stopContinuousSparkles() {
     }
 
     // Generate the deck with contextual awareness
+    // ── CONTENT-BASED axis self-tag (2026-06-18) ───────────────────────────────
+    // Replaces the old ARCHETYPE→axis proxy (confession=relationship, boundary=
+    // objective, …) which measured card grammar, not what the player endorsed.
+    // A "Boundary: Hold the line, don't give an inch" in a negotiation is an
+    // OBJECTIVE move; the archetype map scored it relationship. We now classify
+    // the actual generated CONTENT (action+dialogue). Conservative: clear goal/
+    // strategy/control language → 'objective'; clear attraction/closeness/emotional
+    // language → 'relationship'; ambiguous or BOTH → 'neutral' (contributes 0,
+    // rather than confidently guessing). Single source of truth read by BOTH
+    // consumers (gravityScore here + _stagedPreferenceAxis in app.js), which also
+    // retires the prior bug where those two maps scored the same click oppositely.
+    var _FATE_OBJ_RE = /\b(secure|protect|defend|seiz(?:e|ing)|acquir|win\b|won\b|leverage|negotiat|the deal|the contract|the plan|the case|the mission|the files?|evidence|expos(?:e|ing)|sabotag|outmaneuver|take control|take charge|take the reins|run the room|hold the line|hold (?:your|the) ground|don'?t give an inch|that'?s as far|stand (?:your|my) ground|the opening|take it before|do(?:ing)? this my way|my way now|i'?ll decide|decide how this goes|figure (?:this|it) out|find out|the truth,? since|the advantage|the upper hand|stop (?:him|her|them|this)\b|lock (?:it|this|the)|hunt|track (?:down|him|her|them))\b/i;
+    var _FATE_REL_RE = /\b(kiss|touch|hold me|stay (?:with|here|close)|don'?t (?:leave|go)|come closer|closer to (?:him|her|you)|want you|need you|miss you|love you|how (?:i|you) feel|between us|your (?:hand|mouth|eyes|skin|lips)|lean in|reach for (?:him|her|you)|i shouldn'?t.{0,15}\bwant\b|want to (?:kiss|touch|stay|hold|be (?:close|near))|can'?t stop (?:thinking|wanting)|thinking about (?:him|her|you)|afraid to (?:say|tell|admit|feel)|ache|yearn|crav(?:e|ing)|long(?:ing)? for|let (?:him|her) in|let yourself feel|tell (?:him|her) (?:how|the truth about us)|what (?:this|we) (?:is|means)|the way (?:he|she) look|pull (?:him|her) close)\b/i;
+    function _classifyFateCardAxis(action, dialogue) {
+        var t = ((action || '') + ' ' + (dialogue || '')).toLowerCase();
+        if (!t.trim()) return 'neutral';
+        var isObj = _FATE_OBJ_RE.test(t), isRel = _FATE_REL_RE.test(t);
+        if (isObj && !isRel) return 'objective';
+        if (isRel && !isObj) return 'relationship';
+        return 'neutral';
+    }
+    window._classifyFateCardAxis = _classifyFateCardAxis;
+
+    // ── DESIRE / CHARGE classifier (Slice 1, 2026-06-18) ────────────────────────
+    // chargeGravity = "appetite for EMBODIED ATTRACTION" — when the story presents
+    // attraction/tension/longing/chemistry/flirtation/physical awareness, does the
+    // player LEAN TOWARD it (dwell) or DEFUSE it (avoidance)? This is a SEPARATE
+    // dimension from the objective↔relationship axis: a player can be relationship-high
+    // / desire-low (wants romance + companionship without much charge). DELIBERATELY
+    // EXCLUDES confession (= relationship, not charge) and kiss/advance (= plot
+    // willingness, not appetite) — those contaminate the signal, so they classify
+    // neutral even alongside dwell language. Validated 0-failure against the spec
+    // examples. SLICE 1 = LOGGING ONLY: stamped on cards + counted on click; does NOT
+    // write chargeGravity yet (its consumers stay unchanged). Slice 2 finalizes at ST3;
+    // Slice 3 wires it to attraction-density first, then pacing/ceiling.
+    var _FATE_DESIRE_EXCLUDE_RE = /\bkiss(?:es|ed|ing)?\b|\bconfess\b|\b(?:tell|admit)\s+(?:him|her|them|you)\b[^.]*\b(?:love|feel(?:ings)?)\b|\byour feelings\b|\bi love you\b|\bmake love\b|\btake (?:him|her) to bed\b|\bsleep with\b|\bin love\b/i;
+    // NOTE both regexes include the OPPOSITE pole of a temptation framing (dwell has
+    // act-on-it/give-in; avoid has resist/deny/fight) so a card that PRESENTS the
+    // choice ("Act on it, or resist") trips BOTH → classifies neutral (it's the
+    // question, not a committed direction). Clean single-direction authored cards
+    // still resolve. Validated 0-failure incl. the ambiguous-template trap.
+    var _FATE_DWELL_RE = /\b(?:move|come|step|inch)\s+closer\b|\bclose the distance\b|\blean in\b|\btouch (?:his|her|their|your|the)\b|\bstay (?:in (?:the|this) moment|close|with (?:him|her|it))\b|\blet (?:the|this|it|that)?\s*(?:silence|moment|tension|look|charge|it|air)\b[^.]*\b(?:linger|stretch|hang|build|land|hold)\b|\blinger\b|\bhold (?:his|her|their|the) (?:look|gaze|eyes|stare)\b|\bhold the (?:silence|look|moment)\b|\bnotice (?:his|her|their|the|how|what|the way)\b|\bask (?:him|her|them|what)\b[^.]*\bmean|\bmeet (?:his|her|their) (?:eyes|gaze)\b|\bsavor\b|\bdraw it out\b|\bsit (?:in|with) (?:the|it)\b|\bact on (?:it|this|the)\b|\bgive in(?: to)?\b|\bgive yourself over\b|\bpull toward\b/i;
+    var _FATE_AVOID_RE = /\bchange the subject\b|\bkeep it (?:professional|light|casual|business)\b|\bstep back\b|\bpull back\b|\bback away\b|\bfocus on (?:the )?(?:mission|work|task|case|job|plan|facts|problem|deal|numbers)\b|\bignore (?:the|his|her|it|that|him|them)\b|\bbreak eye contact\b|\blook away\b|\bstay (?:composed|professional|focused|detached)\b|\bkeep (?:your|my) distance\b|\bdeflect\b|\bbrush (?:it|him|her|that) (?:off|aside)\b|\bget back to (?:work|business|the)\b|\bredirect\b|\bresist(?:\s+(?:it|the|him|her|them|this))?\b|\bdeny (?:it|the|yourself|him|her)\b|\bfight (?:it|the|off)\b|\bshut it down\b/i;
+    function _classifyFateCardDesire(action, dialogue) {
+        var t = ((action || '') + ' ' + (dialogue || '')).toLowerCase();
+        if (!t.trim()) return 'neutral';
+        if (_FATE_DESIRE_EXCLUDE_RE.test(t)) return 'neutral';   // confession/kiss → relationship/plot, not charge
+        var d = _FATE_DWELL_RE.test(t), a = _FATE_AVOID_RE.test(t);
+        if (d && !a) return 'dwell';
+        if (a && !d) return 'avoidance';
+        return 'neutral';
+    }
+    window._classifyFateCardDesire = _classifyFateCardDesire;
+
     function buildFateDeck() {
         const state = window.state || {};
         let allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
@@ -1197,6 +1973,12 @@ function stopContinuousSparkles() {
 
         return deckBase.map(baseCard => {
             const card = generateContextualCard(baseCard, sceneContext, usedInThisDraw);
+            // Self-tag the axis from the ACTUAL generated content (not the archetype).
+            // Single stamp point → covers standard, Grok-intimate, and template-fallback
+            // generation paths, since all return through generateContextualCard.
+            card.axis = _classifyFateCardAxis(card.action, card.dialogue);
+            // Slice 1 desire/charge tag (logging-only consumer; see _classifyFateCardDesire).
+            card.desire = _classifyFateCardDesire(card.action, card.dialogue);
             // Track what we generated to avoid repetition in same draw
             usedInThisDraw.push(card.action);
             usedInThisDraw.push(card.dialogue);
@@ -1279,11 +2061,15 @@ function stopContinuousSparkles() {
             }
         } catch (_) {}
 
-        // Free tier, no fortune spent this scene — partial deck as upsell.
-        if (access === 'free') return 3;
-
-        // Default fallback.
-        return 3;
+        // User spec 2026-05-25: the 5 archetype Fate cards are NEVER locked
+        // or paywalled — they are free to preview/select in every tier and
+        // mode (literary / CG / Taste / OAS). The previous free-tier "partial
+        // deck" upsell (3 of 5, with locked cards opening the paywall on click)
+        // is removed. Monetization gating lives ONLY on Petition + Tempt Fate
+        // (the premium deck-summon cards), handled separately. Every path
+        // returns the full deck of 5 so no archetype card is ever `.locked`
+        // and the locked-card→paywall branch never fires for these cards.
+        return 5;
     }
 
     function flipAllCards(mount){
@@ -1771,13 +2557,43 @@ function setSelectedState(mount, selectedCardEl){
     window.startFireflyEmanation = startFireflyEmanation;
     window.triggerGoldenFlow = triggerGoldenFlow;
 
-    window.dealFateCards = function() {
+    window.dealFateCards = function(opts) {
+        opts = opts || {};
         const mount = document.getElementById('cardMount');
         if(!mount) return;
 
         // Safety: Ensure state exists before trying to write to it
         if (!window.state) {
             console.warn("State not ready for dealing cards.");
+            return;
+        }
+
+        // ── PER-SCENE RE-ROLL GUARD (added 2026-05-17) ──────────────────
+        // If cards have already been dealt for this turnCount AND the call
+        // didn't explicitly opt into a redeal (opts.force === true), reuse
+        // the existing state.fateOptions. Prevents re-clicks / re-mounts
+        // from accidentally re-rolling card suggestions mid-scene.
+        // Resets that bypass this: explicit force flag, OR new turn (different
+        // turnCount), OR explicit reset via resetFateBindFlags-adjacent paths.
+        const currentTurn = window.state.turnCount || 0;
+        // SCENE FINGERPRINT: turnCount alone is NOT a reliable per-scene key —
+        // it can repeat across consecutive scenes in some flows (Scene 1 vs the
+        // first turn share a value), which made this guard no-op and re-serve the
+        // PRIOR scene's EXACT cards (the "Scene 2 shows Scene 1's options" bug).
+        // Add the reader PAGE INDEX: each scene adds exactly one page, while
+        // mid-scene whispers/omens append to the CURRENT page — so the page index
+        // is stable within a scene (re-clicks/re-mounts still no-op) but always
+        // advances on a real scene change (forcing a fresh deal). CG/staged mode
+        // bypasses pagination (count 0) → falls back to turnCount-only behavior.
+        var _pageIdx = 0;
+        try { _pageIdx = (window.StoryPagination && window.StoryPagination.getPageCount) ? window.StoryPagination.getPageCount() : 0; } catch (_) {}
+        const _sceneKey = currentTurn + ':' + _pageIdx;
+        if (!opts.force
+            && window.state.fateOptions
+            && Array.isArray(window.state.fateOptions)
+            && window.state.fateOptions.length
+            && window.state._fateOptionsSceneKey === _sceneKey) {
+            try { console.log('[FATE] dealFateCards no-op — already dealt for scene ' + _sceneKey + ' (use opts.force=true to redeal)'); } catch (_) {}
             return;
         }
 
@@ -1790,6 +2606,8 @@ function setSelectedState(mount, selectedCardEl){
         window.state.fateOptions = null;
         window.state.fateSelectedIndex = -1;
         window.state.fateCommitted = false;
+        window.state._fateOptionsTurnCount = currentTurn;
+        window.state._fateOptionsSceneKey = _sceneKey;
 
         // SPECULATIVE PRELOAD: Invalidate when new cards dealt
         if (typeof window.invalidateSpeculativeScene === 'function') {
@@ -1891,10 +2709,24 @@ function setSelectedState(mount, selectedCardEl){
                 try {
                     var _gs = window.state && window.state.gravityScore;
                     if (_gs && data) {
-                        var _tag = String((data.id || data.name || '')).toLowerCase();
-                        if (/tempt|revers|twist|break|push|confront|strike/.test(_tag))      _gs.outcome      += 1;
-                        else if (/bound|confess|silenc|hold|tether|linger|reveal/.test(_tag)) _gs.relationship += /silenc/.test(_tag) ? 0.5 : 1;
+                        // CONTENT axis (self-tagged at deal time), not the archetype id.
+                        // Falls back to a fresh classify if an older card lacks .axis.
+                        var _ax = data.axis || _classifyFateCardAxis(data.action, data.dialogue);
+                        if (_ax === 'objective')         _gs.outcome      += 1;
+                        else if (_ax === 'relationship') _gs.relationship += 1;
+                        // 'neutral' → no contribution (was confidently mis-scoring before)
                     }
+                } catch (_) {}
+
+                // ── DESIRE/CHARGE harvest (Slice 1, LOGGING-ONLY 2026-06-18) ──
+                // Counts the desire observation this fate click contributes (dwell /
+                // avoidance) WITHOUT writing chargeGravity — so we can measure whether
+                // harvested Fate choices lift pre-ST3 desire observations from ~2-3 to
+                // ~5-8 before wiring it to any consumer (Slices 2/3). _desireObs is a
+                // telemetry-only slot read by NOTHING in prod.
+                try {
+                    var _des = (data && data.desire) || (window._classifyFateCardDesire ? window._classifyFateCardDesire(data && data.action, data && data.dialogue) : 'neutral');
+                    if (window._recordDesireObs) window._recordDesireObs(_des, 'fate:' + String((data && data.id) || ''));
                 } catch (_) {}
 
                 clearPendingTimer();
@@ -2100,6 +2932,20 @@ function setSelectedState(mount, selectedCardEl){
             const data = fateOptions[i];
             if (!data) return;
 
+            // RESTORE CARD-FACE ART (Roman 2026-06-17): a rebind (resume / reload)
+            // does NOT re-run dealFateCards, so a `.back` div that lost its inline
+            // background-image renders as the CSS purple fallback instead of the
+            // card face. Re-apply it from fateOptions[i].id — the exact URL
+            // dealFateCards uses (~fatecards.js:2586). Guarded so a good face is
+            // never overwritten.
+            try {
+                const _backDiv = card.querySelector('.back');
+                if (_backDiv && data.id && !_backDiv.style.backgroundImage) {
+                    const _artName = data.id.charAt(0).toUpperCase() + data.id.slice(1);
+                    _backDiv.style.backgroundImage = "url('/assets/card-art/cards/Tarot-Gold-front-" + _artName + ".png')";
+                }
+            } catch (_) {}
+
             // Remove old handler and add new one
             card.onclick = () => {
                 console.log('[FATE] card clicked:', data.id);
@@ -2173,6 +3019,28 @@ function setSelectedState(mount, selectedCardEl){
             };
         });
 
+        // RECREATE Petition / Tempt if missing (Roman 2026-06-17): on resume / reload
+        // #fateSpecialCards can return EMPTY (the special cards live in a separate
+        // container that isn't always restored with the scene), so the "if (petitionCard)"
+        // / "if (temptCard)" guards below silently skip — and Petition (the FREE
+        // onboarding use, must be present) + Tempt vanish. Recreate the DOM here; the
+        // blocks below bind handlers + electricity, and _syncFateCardLockState (added
+        // at the end) restores Tempt's greyed-until-ST3 state. Markup mirrors
+        // dealFateCards (~fatecards.js:2725-2760).
+        const _special = document.getElementById('fateSpecialCards') || mount;
+        if (_special && !_special.querySelector('.petition-fate-card')) {
+            const _pc = document.createElement('div');
+            _pc.className = 'fate-card petition-fate-card';
+            _pc.innerHTML = `<div class="inner"><div class="front" style="background:url('/assets/card-art/cards/Tarot-Gold-PetitionFate-back.png') center/cover no-repeat, #111;"></div><div class="back" style="background-image:url('/assets/card-art/cards/Tarot-Gold-PetitionFate-front.png');"></div></div>`;
+            _special.appendChild(_pc);
+        }
+        if (_special && !_special.querySelector('.tempt-fate-card')) {
+            const _tc = document.createElement('div');
+            _tc.className = 'fate-card tempt-fate-card';
+            _tc.innerHTML = `<div class="inner"><div class="front" style="background:url('/assets/card-art/cards/Tarot-RED-back-TemptFate.png') center/cover no-repeat, #111;"></div><div class="back" style="background-image:url('/assets/card-art/cards/Tarot-RED-front-TemptFate.png?v=2');"></div></div>`;
+            _special.appendChild(_tc);
+        }
+
         // Rebind Petition Fate card (now in #fateSpecialCards, not in mount)
         const specialMount = document.getElementById('fateSpecialCards');
         const petitionCard = (specialMount || mount).querySelector('.petition-fate-card');
@@ -2223,6 +3091,12 @@ function setSelectedState(mount, selectedCardEl){
             // Restart electricity on rebind
             if (window._startTemptElectricity) window._startTemptElectricity(temptCard);
         }
+
+        // Restore Tempt's greyed-until-ST3 lock state + gleam on the (possibly
+        // recreated) special cards — the rebind path didn't do either, so a
+        // recreated Tempt would read as unlocked and a recreated card artless.
+        if (typeof window._syncFateCardLockState === 'function') window._syncFateCardLockState();
+        if (window.applyCardGleam && _special) _special.querySelectorAll('.fate-card').forEach(window.applyCardGleam);
 
         // Rebind commit hooks
         bindCommitHooks(mount);

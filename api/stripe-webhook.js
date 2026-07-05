@@ -7,6 +7,10 @@ export const config = { api: { bodyParser: false } };
 
 // Subscription tier → fortune grant amounts (granted additively on first purchase + every renewal)
 const SUB_FORTUNES = { storied: 100, favored: 200, chosen: 400 };
+// Monthly free Tempt Fate charges per tier (advertised: Favored 1, Chosen 3).
+// Granted once per calendar month, idempotent via profiles.tempt_grant_month.
+const TEMPT_GRANT = { storied: 0, favored: 1, chosen: 3 };
+const _temptMonthKey = () => new Date().toISOString().slice(0, 7); // YYYY-MM (UTC)
 
 /**
  * Look up a profile by stripe_subscription_id first, fall back to stripe_customer_id.
@@ -174,9 +178,17 @@ export default async function handler(req, res) {
     if (stripeCustomerId) updates.stripe_customer_id = stripeCustomerId;
     if (stripeSubscriptionId) updates.stripe_subscription_id = stripeSubscriptionId;
 
+    // CHOSEN was missing from this list (bug fixed 2026-05-21): a Chosen
+    // checkout would fall through both the subscription block AND the
+    // fortune-pack block, leaving fortunesDelta=0 — the grant_purchase_fortunes
+    // RPC then transitioned the intent to 'completed' with 0F added, and
+    // the optimistic-client-side balance silently expired on the next reload.
+    // The renewal branch (line ~291) already covered all three tiers, but
+    // the initial-purchase branch did not. Now all three are recognized.
     const isSubscription = priceId && (
       priceId === process.env.STRIPE_PRICE_ID_STORIED ||
-      priceId === process.env.STRIPE_PRICE_ID_FAVORED
+      priceId === process.env.STRIPE_PRICE_ID_FAVORED ||
+      priceId === process.env.STRIPE_PRICE_ID_CHOSEN
     );
 
     const fortunePriceIds = [
@@ -200,13 +212,46 @@ export default async function handler(req, res) {
         updates.billing_grace_until = null;
         fortunesDelta += SUB_FORTUNES[tier];
         console.log(`[stripe-webhook] Granting ${tier} subscription + ${SUB_FORTUNES[tier]} fortunes (additive) to ${supabaseUserId}`);
+
+        // Monthly free Tempt Fate grant (Favored 1, Chosen 3). Idempotent per
+        // calendar month via profiles.tempt_grant_month so re-subscribe /
+        // multiple events in the same month don't stack. Written into `updates`
+        // (applied at the metadata update below; bonus_tempt_charges is its own
+        // column, not owned by the grant_purchase_fortunes RPC).
+        if (TEMPT_GRANT[tier]) {
+          const monthKey = _temptMonthKey();
+          const { data: tp } = await supabase.from('profiles')
+            .select('bonus_tempt_charges, tempt_grant_month').eq('id', supabaseUserId).maybeSingle();
+          if (!tp || tp.tempt_grant_month !== monthKey) {
+            updates.bonus_tempt_charges = (tp?.bonus_tempt_charges || 0) + TEMPT_GRANT[tier];
+            updates.tempt_grant_month = monthKey;
+            console.log(`[stripe-webhook] Granting ${TEMPT_GRANT[tier]} monthly Tempt Fate(s) (${tier}) → ${updates.bonus_tempt_charges} (month ${monthKey})`);
+          }
+        }
       }
     }
 
     if (isFortunePack) {
       const fortunesGranted = parseInt(session.metadata?.fortunes_granted, 10) || 0;
-      fortunesDelta += fortunesGranted;
-      console.log(`[stripe-webhook] Granting Fortune pack (${fortunesGranted} fortunes, additive) to ${supabaseUserId}`);
+      // SUBSCRIBER BONUS (Roman 2026-05-30): every active subscriber
+      // (Storied/Favored/Chosen) gets +10% on Fortune pack purchases,
+      // rounded to nearest whole F. Bonus is added on top of the
+      // metadata-declared pack size.
+      let _subBonus = 0;
+      try {
+        const { data: _pf } = await supabase.from('profiles')
+          .select('is_subscriber, subscription_tier')
+          .eq('id', supabaseUserId)
+          .maybeSingle();
+        if (_pf && _pf.is_subscriber && fortunesGranted > 0) {
+          _subBonus = Math.round(fortunesGranted * 0.10);
+          console.log(`[stripe-webhook] Subscriber bonus (${_pf.subscription_tier || 'sub'}): +${_subBonus}F on ${fortunesGranted}F pack`);
+        }
+      } catch (e) {
+        console.warn('[stripe-webhook] Subscriber bonus lookup failed:', e.message);
+      }
+      fortunesDelta += fortunesGranted + _subBonus;
+      console.log(`[stripe-webhook] Granting Fortune pack (${fortunesGranted} + ${_subBonus} bonus = ${fortunesGranted + _subBonus} fortunes, additive) to ${supabaseUserId}`);
     }
 
     if (!updates.is_subscriber && fortunesDelta === 0) {
@@ -235,11 +280,17 @@ export default async function handler(req, res) {
         // returns 500 — Stripe will retry, the next handler can re-claim.
         throw new Error(`grant_purchase_fortunes RPC: ${rpcErr.message}`);
       }
-      intentTransitioned = !!(rpcResult && rpcResult.granted);
-      if (intentTransitioned) {
+      // The grant is now gated on the money-path marker (fortunes_granted_at),
+      // NOT on the client-controlled intent status — so a client 'resumed'
+      // write can no longer skip the credit. granted=true → first credit;
+      // already_granted=true → idempotent no-op (still a success, not a miss).
+      intentTransitioned = !!(rpcResult && (rpcResult.granted || rpcResult.already_granted));
+      if (rpcResult && rpcResult.granted) {
         console.log(`[stripe-webhook] Granted via RPC: +${fortunesDelta}F → balance ${rpcResult.new_balance} (intent ${purchaseIntentId})`);
+      } else if (rpcResult && rpcResult.already_granted) {
+        console.log(`[stripe-webhook] Intent ${purchaseIntentId} already granted — balance ${rpcResult.new_balance} (idempotent no-op)`);
       } else {
-        console.log(`[stripe-webhook] Intent ${purchaseIntentId} not pending (${rpcResult?.reason || 'unknown'}) — skipping grant`);
+        console.log(`[stripe-webhook] Intent ${purchaseIntentId} grant not applied (${rpcResult?.reason || 'unknown'})`);
       }
     } else if (fortunesDelta > 0) {
       // Legacy path — no intent_id. Best-effort additive credit; not race-safe,
@@ -255,21 +306,27 @@ export default async function handler(req, res) {
       console.warn(`[stripe-webhook] Legacy credit (no intent_id) +${fortunesDelta}F to ${supabaseUserId}`);
     }
 
-    // Subscription / customer metadata — idempotent, safe to apply only when we
-    // owned this event (intentTransitioned). Loser handlers leave it to the
-    // winner. fortunes are NEVER in this object: the RPC owns that field.
-    if (intentTransitioned) {
-      delete updates.fortunes;
-      if (Object.keys(updates).length > 0) {
-        const { error: updateErr } = await supabase
-          .from('profiles')
-          .update(updates)
-          .eq('id', supabaseUserId);
-        if (updateErr) {
-          throw new Error(`profile metadata update: ${updateErr.message}`);
-        }
-        console.log(`[stripe-webhook] Profile metadata updated for ${supabaseUserId}:`, updates);
+    // Subscription / customer metadata — applied UNCONDITIONALLY (not gated on
+    // intentTransitioned). These are idempotent IDENTITY fields (is_subscriber,
+    // subscription_tier, stripe_customer_id, stripe_subscription_id,
+    // billing_status) plus the monthly-idempotent tempt grant. The event-level
+    // stripe_events claim already guarantees this event is processed once, so
+    // there's no double-apply risk. Previously this was gated on the FORTUNE
+    // grant succeeding — so a non-pending / duplicate intent ("intent not
+    // pending — skipping grant") left the profile NEVER BOUND to the
+    // subscription, which broke renewal resolution AND verify-subscription
+    // (they look the profile up by stripe_subscription_id / stripe_customer_id).
+    // fortunes are NEVER in this object — the RPC owns that field.
+    delete updates.fortunes;
+    if (Object.keys(updates).length > 0) {
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', supabaseUserId);
+      if (updateErr) {
+        throw new Error(`profile metadata update: ${updateErr.message}`);
       }
+      console.log(`[stripe-webhook] Profile metadata bound for ${supabaseUserId}:`, updates);
     }
   }
 
@@ -290,6 +347,7 @@ export default async function handler(req, res) {
           const subPriceId = sub.items?.data?.[0]?.price?.id;
           if (subPriceId === process.env.STRIPE_PRICE_ID_STORIED) renewalTier = 'storied';
           else if (subPriceId === process.env.STRIPE_PRICE_ID_FAVORED) renewalTier = 'favored';
+          else if (subPriceId === process.env.STRIPE_PRICE_ID_CHOSEN) renewalTier = 'chosen';
         } catch (e) {
           console.warn('[stripe-webhook] invoice.paid — failed to resolve tier from subscription:', e.message);
         }
@@ -301,15 +359,29 @@ export default async function handler(req, res) {
       const renewalFortunes = SUB_FORTUNES[renewalTier] || 100;
       const current = await readFortunes(supabase, userId);
 
+      const renewalUpdate = {
+        is_subscriber: true,
+        subscription_tier: renewalTier,
+        fortunes: current + renewalFortunes,
+        billing_status: 'active',
+        billing_grace_until: null,
+      };
+      // Monthly Tempt Fate grant on renewal — idempotent per calendar month so
+      // a renewal in a month already granted (e.g. a payment retry) won't stack.
+      if (TEMPT_GRANT[renewalTier]) {
+        const monthKey = _temptMonthKey();
+        const { data: tp } = await supabase.from('profiles')
+          .select('bonus_tempt_charges, tempt_grant_month').eq('id', userId).maybeSingle();
+        if (!tp || tp.tempt_grant_month !== monthKey) {
+          renewalUpdate.bonus_tempt_charges = (tp?.bonus_tempt_charges || 0) + TEMPT_GRANT[renewalTier];
+          renewalUpdate.tempt_grant_month = monthKey;
+          console.log(`[stripe-webhook] invoice.paid — +${TEMPT_GRANT[renewalTier]} monthly Tempt Fate(s) (${renewalTier}, month ${monthKey})`);
+        }
+      }
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          is_subscriber: true,
-          subscription_tier: renewalTier,
-          fortunes: current + renewalFortunes,
-          billing_status: 'active',
-          billing_grace_until: null,
-        })
+        .update(renewalUpdate)
         .eq('id', userId);
       if (error) {
         console.error('[stripe-webhook] invoice.paid update failed:', error);
@@ -364,15 +436,40 @@ export default async function handler(req, res) {
       let updatedTier = null;
       if (subPriceId === process.env.STRIPE_PRICE_ID_STORIED) updatedTier = 'storied';
       else if (subPriceId === process.env.STRIPE_PRICE_ID_FAVORED) updatedTier = 'favored';
+      else if (subPriceId === process.env.STRIPE_PRICE_ID_CHOSEN) updatedTier = 'chosen';
 
       const updates = {};
       if (status === 'active' || status === 'trialing') {
         if (updatedTier) updates.subscription_tier = updatedTier;
+        // Detect portal-cancellation: subscription stays active until
+        // period_end but cancel_at_period_end flips to true. Surface this
+        // to the client via billing_status='canceling' + the end timestamp
+        // stashed in billing_grace_until (column already exists; semantics
+        // extend cleanly — for 'grace' it's "benefits guaranteed until X";
+        // for 'canceling' it's "subscription ends at X"). Re-activation
+        // through the portal sets cancel_at_period_end back to false; we
+        // clear the canceling flag in that branch.
+        if (subscription.cancel_at_period_end === true) {
+          updates.billing_status = 'canceling';
+          // cancel_at is the canonical "when does this end" timestamp on
+          // the new Stripe API; current_period_end is the older fallback.
+          const _endTsSec = subscription.cancel_at || subscription.current_period_end || null;
+          updates.billing_grace_until = _endTsSec ? new Date(_endTsSec * 1000).toISOString() : null;
+        } else if (subscription.cancel_at_period_end === false) {
+          // Portal re-activation OR a freshly-created sub that's not
+          // cancelling. Clear stale canceling flag if present; leave
+          // 'active' for the normal case.
+          updates.billing_status = 'active';
+          updates.billing_grace_until = null;
+        }
       } else if (status === 'past_due' || status === 'unpaid') {
         updates.is_subscriber = false;
       } else if (status === 'canceled' || status === 'incomplete_expired') {
         updates.is_subscriber = false;
         updates.subscription_tier = null;
+        // Clear canceling metadata once Stripe actually ends the sub.
+        updates.billing_status = 'canceled';
+        updates.billing_grace_until = null;
       }
 
       if (Object.keys(updates).length > 0) {

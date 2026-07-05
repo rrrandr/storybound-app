@@ -70,7 +70,7 @@
 
       const newProgress = ((existing && existing.progress) || 0) + amount;
 
-      const { data: result } = await supabase
+      const { data: result, error: upErr } = await supabase
         .from('user_badges')
         .upsert({
           profile_id: profileId,
@@ -79,6 +79,15 @@
         }, { onConflict: 'profile_id,badge_id' })
         .select('earned')
         .maybeSingle();
+
+      // Surface the real Postgres cause (2026-06-09): supabase-js returns the
+      // error in-band (no throw), so the old silent catch hid the 409's code.
+      // 23503 = FK (badge_id not seeded in the badges table / bad profile_id);
+      // 23505 = unique violation (missing UNIQUE(profile_id,badge_id) to merge on).
+      if (upErr) {
+        console.warn('[BADGE] increment upsert failed for "' + badgeId + '" — ' + (upErr.code || '?') + ' ' + (upErr.message || '') + (upErr.details ? ' | ' + upErr.details : ''));
+        return;
+      }
 
       // Check if the DB trigger set earned=true (threshold met)
       if (result && result.earned) {
@@ -103,7 +112,7 @@
 
       if (existing && existing.earned) return;
 
-      await supabase
+      const { error: awErr } = await supabase
         .from('user_badges')
         .upsert({
           profile_id: profileId,
@@ -111,6 +120,11 @@
           earned: true,
           earned_at: new Date().toISOString()
         }, { onConflict: 'profile_id,badge_id' });
+
+      if (awErr) {
+        console.warn('[BADGE] award upsert failed for "' + badgeId + '" — ' + (awErr.code || '?') + ' ' + (awErr.message || '') + (awErr.details ? ' | ' + awErr.details : ''));
+        return;
+      }
 
       // Newly earned — show notification
       _showTrophyNotification(badgeId);

@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260508c">
+  <link rel="stylesheet" href="/styles.css?v=20260705-cover-net6">
 </head>
 
 <body class="booting">
@@ -106,11 +106,9 @@
     <div id="vaultAuthRow" class="vault-auth-row" style="text-align:center; margin-bottom:8px;"></div>
     <div class="vault-tabs">
       <button class="vault-tab sb-btn-png md" data-vault-section="Account">Account</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="SavedStories">Saved Stories</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="StoryShapes">Saved Story Shapes</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Appearance">Story Appearance</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Sound">Story Sound</button>
-      <button class="vault-tab sb-btn-png md" data-vault-section="Help">Help</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Stories">Stories</button>
+      <button class="vault-tab sb-btn-png md" data-vault-section="Sound">Sound &amp; Music</button>
+      <button id="faqVaultTab" class="vault-tab sb-btn-png md" data-vault-modal="faq">FAQ</button>
       <button class="vault-tab sb-btn-png md" data-vault-section="ReportIssue">Report an Issue</button>
     </div>
     <button id="vaultCloseBtn" class="sb-btn-png sm" style="margin-top:14px;">Close Vault</button>
@@ -119,11 +117,20 @@
   <!-- ── REPORT AN ISSUE SUB-PANEL ── -->
   <div id="vaultReportIssue" class="vault-sub hidden">
     <div class="vault-sub-title">Report an Issue</div>
-    <p class="vault-blurb" style="font-size:13px; line-height:1.45; max-width:520px; margin:0 auto 12px; opacity:0.85;">
+    <p id="bugReportBlurb" class="vault-blurb" style="font-size:13px; line-height:1.45; max-width:520px; margin:0 auto 12px; opacity:0.85;">
       Spotted a bug, typo, broken render, or weird behavior? Tell us. If we confirm it's a real bug, you get +1 Fortune. Up to 3 reports per day.
     </p>
     <div style="display:flex; flex-direction:column; gap:10px; max-width:520px; margin:0 auto;">
       <label style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:12px; opacity:0.85;">
+        <span>Type</span>
+        <select id="bugReportType" class="sb-input">
+          <option value="bug" selected>Bug / Issue</option>
+          <option value="account">Account / Billing</option>
+          <option value="feature">Feature Request</option>
+          <option value="general">General Question / Feedback</option>
+        </select>
+      </label>
+      <label id="bugReportSeverityRow" style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:12px; opacity:0.85;">
         <span>Severity</span>
         <select id="bugReportSeverity" class="sb-input">
           <option value="typo">Typo / wording</option>
@@ -132,12 +139,12 @@
         </select>
       </label>
       <label style="display:flex; flex-direction:column; gap:4px; text-align:left; font-size:12px; opacity:0.85;">
-        <span>What happened? (min 30 characters)</span>
+        <span id="bugReportDescLabel">What happened? (min 30 characters)</span>
         <textarea id="bugReportDescription" class="sb-input" rows="6" maxlength="4000"
           placeholder="What did you see? What did you expect? Any steps to reproduce?"></textarea>
         <span id="bugReportCharCount" style="font-size:11px; opacity:0.6; align-self:flex-end;">0 / 4000</span>
       </label>
-      <p style="font-size:11px; opacity:0.65; margin:4px 0;">
+      <p id="bugReportContextNote" style="font-size:11px; opacity:0.65; margin:4px 0;">
         We'll attach your current scene / story context automatically — no need to describe where you are.
       </p>
       <div style="display:flex; gap:10px; justify-content:center; margin-top:6px;">
@@ -146,6 +153,92 @@
       <p id="bugReportStatus" style="font-size:12px; text-align:center; min-height:1.2em; margin:0;"></p>
     </div>
     <button class="vault-back sb-btn-png sm" style="margin-top:18px;">Back</button>
+  </div>
+
+  <!-- ── FAQ MODAL — opens from Vault > FAQ tab ── -->
+  <!-- Graceful exit modal for intimate scenes. Triggered by full-line
+       "stop"/"skip"/"enough"/"fade to black" inputs during OAS, or by
+       3 consecutive Boundary fate-card presses. Two grouped sections:
+       "right now" (Abrupt / Fade) and "going forward" (Metaphorical /
+       Fade-to-Black for the rest of this story). Story-scoped only —
+       not persisted across stories per design choice. -->
+  <!-- Model Compare side panel — replays the captured Scene 1 prompt
+       against alternative LLMs on demand. Toggle via the corner button;
+       each model's render is a paid one-shot, cached per-scene so the
+       panel can be reopened without re-charging. -->
+  <button id="modelCompareToggle" type="button" title="Compare model output" aria-label="Compare model output">A/B</button>
+  <div id="modelComparePanel" role="dialog" aria-modal="false" aria-labelledby="modelComparePanelTitle">
+    <div class="model-compare-header">
+      <h3 id="modelComparePanelTitle">Model A/B — Scene 1</h3>
+      <button id="modelCompareClose" type="button" aria-label="Close A/B panel">&times;</button>
+    </div>
+    <p class="model-compare-lead">Each model renders the SAME captured prompt. Original (Opus, Sonnet, etc.) is shown for free; alternatives only fire when you click Render.</p>
+    <div id="modelCompareList"></div>
+  </div>
+
+  <div id="intimacyExitModal" class="intimacy-exit-overlay" role="dialog" aria-modal="true" aria-labelledby="intimacyExitTitle">
+    <div class="intimacy-exit-box">
+      <h2 id="intimacyExitTitle" class="intimacy-exit-title">How would you like to step out?</h2>
+      <p class="intimacy-exit-lead">
+        You can end this intimate scene right now, or change how intimacy plays
+        out for the rest of this story.
+      </p>
+
+      <div class="intimacy-exit-group">
+        <div class="intimacy-exit-group-label">Right now</div>
+        <div class="intimacy-exit-row">
+          <button id="intimacyExitFade" class="intimacy-exit-btn intimacy-exit-btn-primary" type="button">
+            <span class="intimacy-exit-btn-title">Fade to Black</span>
+            <span class="intimacy-exit-btn-sub">A successful encounter, left to the imagination.</span>
+          </button>
+          <button id="intimacyExitAbrupt" class="intimacy-exit-btn intimacy-exit-btn-danger" type="button">
+            <span class="intimacy-exit-btn-title">End Abruptly</span>
+            <span class="intimacy-exit-btn-sub">Walk out cold. Your love interest may be hurt or angry.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="intimacy-exit-divider"></div>
+
+      <div class="intimacy-exit-group">
+        <div class="intimacy-exit-group-label">Going forward (this story)</div>
+        <div class="intimacy-exit-row">
+          <button id="intimacyExitMetaphorical" class="intimacy-exit-btn" type="button">
+            <span class="intimacy-exit-btn-title">All Intimacy → Metaphorical</span>
+            <span class="intimacy-exit-btn-sub">Future intimate moments render through metaphor only.</span>
+          </button>
+          <button id="intimacyExitFadeAll" class="intimacy-exit-btn" type="button">
+            <span class="intimacy-exit-btn-title">All Intimacy → Fade to Black</span>
+            <span class="intimacy-exit-btn-sub">Future intimate moments skip past the bedroom door.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="intimacy-exit-cancel-row">
+        <button id="intimacyExitCancel" class="intimacy-exit-cancel" type="button">Never mind — keep going</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="faqModal" class="overlay hidden" style="z-index:10090;">
+    <div class="faq-modal-box">
+      <div class="faq-modal-header">
+        <h2 class="faq-modal-title">Storybound FAQ</h2>
+        <button class="faq-modal-close" id="faqModalCloseBtn" aria-label="Close">✕</button>
+      </div>
+      <div class="faq-search-wrap">
+        <input id="faqSearchInput" type="text" class="faq-search-input" placeholder="Search questions…" autocomplete="off">
+        <span id="faqResultCount" class="faq-result-count"></span>
+      </div>
+      <div id="faqList" class="faq-list">
+        <!-- Populated by renderFAQList() in app.js. Each item is a
+             <details><summary>question</summary><p>answer</p></details>
+             grouped under category headings. -->
+      </div>
+      <div class="faq-modal-footer">
+        <p>Can't find what you're looking for? Use <strong>Report an Issue</strong> in the Vault to send us a message.</p>
+      </div>
+    </div>
   </div>
 
   <!-- ── BUG REPORT THANK-YOU MODAL ── -->
@@ -173,7 +266,7 @@
       <div class="treasury-row">
         <span class="treasury-label">Fortunes</span>
         <span class="treasury-value" id="treasuryFortunes">—</span>
-        <button class="treasury-buy-btn" onclick="window.showPaywall('unlock')">Claim</button>
+        <button class="treasury-buy-btn" onclick="if(window.openFortunePurchaseModal)window.openFortunePurchaseModal();else if(window.showPaywall)window.showPaywall('unlock');">Claim</button>
       </div>
       <div class="treasury-row" id="treasuryWelcomeProgress" style="display:none;flex-wrap:wrap;">
         <span class="treasury-label" style="font-size:11px;opacity:0.85;">Welcome bonuses</span>
@@ -181,19 +274,38 @@
       </div>
       <div class="treasury-row"><span class="treasury-label">Tempt Fates</span><span class="treasury-value" id="treasuryTemptFates">—</span></div>
     </div>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
+  <!-- ── STORIES SUB-PANEL (bundles Saved Stories, Story Shapes, Appearance, Reincarnations, Characters) ── -->
+  <div id="vaultStories" class="vault-sub hidden">
+    <div class="vault-sub-title">Stories</div>
+    <button class="vault-nav sb-btn-png sm" data-vault-section="SavedStories">Saved Stories</button>
+    <button class="vault-nav sb-btn-png sm" data-vault-section="StoryShapes">Saved Story Shapes</button>
+    <button class="vault-nav sb-btn-png sm" data-vault-section="Appearance">Story Appearance</button>
+    <button class="vault-nav sb-btn-png sm" data-vault-section="Characters">Characters</button>
     <button id="menuReincarnationsBtn" class="sb-btn-png sm">Reincarnations</button>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
+  <!-- ── CHARACTERS SUB-PANEL (saved PC + LI looks: use / rename / delete) ── -->
+  <div id="vaultCharacters" class="vault-sub hidden" data-vault-parent="Stories">
+    <div class="vault-sub-title">Characters</div>
+    <p class="vault-blurb" style="font-size:12px;opacity:0.82;max-width:480px;margin:0 auto 12px;">Your saved looks. Use one in the current story, rename it, or delete it.</p>
+    <div id="vaultCharactersMount"></div>
+    <button class="vault-back sb-btn-png sm">Back</button>
+  </div>
+
   <!-- ── SAVED STORIES SUB-PANEL ── -->
-  <div id="vaultSavedStories" class="vault-sub hidden">
+  <div id="vaultSavedStories" class="vault-sub hidden" data-vault-parent="Stories">
     <div class="vault-sub-title">Saved Stories</div>
     <div id="vaultSavedStoriesList"></div>
+    <a href="#" id="vaultSavedStoriesLibraryLink" class="vault-sub-link">Your Private Library →</a>
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
   <!-- ── STORY SHAPES SUB-PANEL ── -->
-  <div id="vaultStoryShapes" class="vault-sub hidden">
+  <div id="vaultStoryShapes" class="vault-sub hidden" data-vault-parent="Stories">
     <div class="vault-sub-title">Story Shapes</div>
     <div style="text-align:center;color:#a89768;font-size:12px;font-style:italic;padding:0 12px 10px;line-height:1.5;">A Story Shape remembers your world, tone, archetype, and every choice you made in the corridor — so you can return to a favorite configuration without rebuilding it.</div>
     <div id="vaultStoryShapesList" style="max-height:240px;overflow-y:auto;margin-bottom:8px;"></div>
@@ -202,7 +314,7 @@
   </div>
 
   <!-- ── APPEARANCE SUB-PANEL ── -->
-  <div id="vaultAppearance" class="vault-sub hidden">
+  <div id="vaultAppearance" class="vault-sub hidden" data-vault-parent="Stories">
     <div class="vault-sub-title">Story Appearance</div>
 
     <!-- Character look controls — top of panel -->
@@ -214,6 +326,16 @@
 
     <label class="vault-label">Cast (Multi-LI Stories)</label>
     <button class="sb-btn-png sm" style="display:block;width:100%;margin-bottom:14px;" onclick="if(typeof window.triggerCastCustomizeModal==='function')window.triggerCastCustomizeModal();">Customize cast</button>
+
+    <label class="vault-label">Casting Credit</label>
+    <input id="castingNameInput" class="vault-select" type="text" maxlength="24" placeholder="Your name or alias (for your own covers)" style="display:block;width:100%;margin-bottom:6px;" oninput="if(window._onCastingIdentityChange)window._onCastingIdentityChange();">
+    <select id="castingFormatSelect" class="vault-select" onchange="if(window._onCastingIdentityChange)window._onCastingIdentityChange();">
+      <option value="full">Show full name</option>
+      <option value="initials">Show initials (J.D.)</option>
+      <option value="reader">Show &ldquo;The Reader&rdquo;</option>
+      <option value="hidden">Hide casting credit</option>
+    </select>
+    <div id="castingPreview" style="font-size:0.78em; opacity:0.7; font-style:italic; margin:6px 0 14px; text-align:center; color:var(--ink);"></div>
 
     <label class="vault-label">Theme</label>
     <select id="themeSelect" class="vault-select" onchange="setTheme(this.value)">
@@ -251,9 +373,11 @@
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
 
-  <!-- ── SOUND SUB-PANEL ── -->
+  <!-- ── SOUND & MUSIC SUB-PANEL ── -->
   <div id="vaultSound" class="vault-sub hidden">
-    <div class="vault-sub-title">Story Sound</div>
+    <div class="vault-sub-title">Sound &amp; Music</div>
+
+    <div class="vault-sub-section-title" style="color:var(--gold); font-family:'Lora',serif; font-size:0.75em; letter-spacing:0.18em; text-transform:uppercase; margin:6px 0 4px;">Site</div>
 
     <label class="vault-label">Music</label>
     <input type="range" id="musicVolumeSlider" min="0" max="100" value="100" oninput="window.setMusicVolume(this.value / 100); document.getElementById('musicVolVal').textContent = this.value + '%'" />
@@ -262,6 +386,16 @@
     <label class="vault-label">Sound Effects</label>
     <input type="range" id="sfxVolumeSlider" min="0" max="100" value="100" oninput="window.setSFXVolume(this.value / 100); document.getElementById('sfxVolVal').textContent = this.value + '%'" />
     <span id="sfxVolVal" class="vault-vol-val">100%</span>
+
+    <div class="vault-sub-section-title" style="color:var(--gold); font-family:'Lora',serif; font-size:0.75em; letter-spacing:0.18em; text-transform:uppercase; margin:14px 0 4px;">Story</div>
+
+    <label class="vault-label">Music</label>
+    <input type="range" id="storyMusicVolumeSlider" min="0" max="100" value="100" oninput="window.setStoryMusicVolume(this.value / 100); document.getElementById('storyMusicVolVal').textContent = this.value + '%'" />
+    <span id="storyMusicVolVal" class="vault-vol-val">100%</span>
+
+    <label class="vault-label">Sound Effects</label>
+    <input type="range" id="storySfxVolumeSlider" min="0" max="100" value="100" oninput="window.setStorySfxVolume(this.value / 100); document.getElementById('storySfxVolVal').textContent = this.value + '%'" />
+    <span id="storySfxVolVal" class="vault-vol-val">100%</span>
 
     <button class="vault-back sb-btn-png sm">Back</button>
   </div>
@@ -280,8 +414,7 @@
   <div id="loadingOverlayInner">
     <button id="loadingCancelBtn" class="loading-cancel-btn" title="Cancel">&times;</button>
     <div id="loadingText">Stoking the embers...</div>
-    <div id="loadingOverlayBar"><div id="loadingOverlayFill"></div></div>
-    <div id="loadingPercent">0%</div>
+    <div class="fate-loading-row" id="loadingOverlayFlipRow"></div>
     <div id="loadingHint" class="loading-hint"></div>
     <div id="fateEventLoadingSlot"></div>
     <div id="fateWhisperCard" class="fate-whisper hidden">
@@ -450,6 +583,124 @@
   </div>
 </div>
 
+<!-- ─────────────────────────────────────────────────────────────────────
+     CANON CREDIT MODAL — opt-in playthrough credit selector on book completion.
+     Fires when state.book_complete = true. User chooses Anonymous Canon Edition
+     (default) or Claim Canon Credit (with a self-chosen display string).
+     Choice is IMMUTABLE once confirmed — locks via story_library_versions
+     trigger at DB layer.
+     ───────────────────────────────────────────────────────────────────── -->
+<div id="canonCreditModal" class="overlay hidden" style="z-index:10085;">
+  <div class="box" style="max-width:560px; padding: 28px 24px;">
+    <h3 style="color:var(--gold); text-align:center; margin: 0 0 8px;">Your Canon Awaits</h3>
+    <p style="text-align:center; font-size:0.9em; color:var(--ink); opacity:0.85; margin: 0 0 4px;">
+      You completed <strong id="canonCreditBookTitle">your story</strong>.
+    </p>
+    <p style="text-align:center; font-size:0.85em; color:var(--ink); opacity:0.7; margin: 0 0 20px;">
+      It will be added to the Forbidden Library as a Storybound canon work.
+      Will your playthrough be credited?
+    </p>
+    <div id="canonCreditChoices" style="display:flex; flex-direction:column; gap:10px; margin: 0 0 16px;">
+      <label class="canon-credit-option" style="display:flex; gap:10px; padding:14px; border:1px solid rgba(201,168,76,0.25); border-radius:6px; cursor:pointer; background:rgba(20,18,14,0.5);">
+        <input type="radio" name="canonCreditMode" value="anonymous" checked style="margin-top:3px;">
+        <div>
+          <div style="font-weight:600; color:var(--gold); margin-bottom:2px;">Anonymous Canon Edition</div>
+          <div style="font-size:0.82em; color:var(--ink); opacity:0.75;">Published with no playthrough credit. Your participation is invisible to readers.</div>
+        </div>
+      </label>
+      <label class="canon-credit-option" style="display:flex; gap:10px; padding:14px; border:1px solid rgba(201,168,76,0.25); border-radius:6px; cursor:pointer; background:rgba(20,18,14,0.5);">
+        <input type="radio" name="canonCreditMode" value="credited" style="margin-top:3px;">
+        <div style="flex:1;">
+          <div style="font-weight:600; color:var(--gold); margin-bottom:2px;">Claim Canon Credit</div>
+          <div style="font-size:0.82em; color:var(--ink); opacity:0.75; margin-bottom:8px;">Cover shows a casting credit — "Starring [your name] as [your character]". You're not the author — you're cast as the canonical protagonist, the role made yours.</div>
+          <input id="canonCreditText" type="text" class="plaque-input" maxlength="24" placeholder="@YourHandle / R. Tsukerman / NyxMarauder" disabled style="width:100%; opacity:0.6;">
+          <div id="canonCreditPreview" style="font-size:0.78em; color:var(--gold); opacity:0.8; margin-top:6px; min-height:1em; font-style:italic;"></div>
+          <div id="canonCreditError" style="font-size:0.78em; color:#e89090; margin-top:4px; min-height:1em;"></div>
+          <div style="font-size:0.72em; color:var(--ink); opacity:0.55; margin-top:6px;">Up to 24 characters. Examples: <em>@yourname</em>, <em>R. Last</em>, <em>FirstName</em>, <em>NyxMarauder</em>.</div>
+        </div>
+      </label>
+    </div>
+    <p style="text-align:center; font-size:0.75em; color:var(--ink); opacity:0.55; font-style:italic; margin: 12px 0 16px;">
+      ⚠ This choice is permanent. It cannot be changed after confirmation.
+    </p>
+    <div style="display:flex; gap:12px; justify-content:center; align-items:center;">
+      <button id="canonCreditConfirm" class="sb-btn-png consent-primary">Publish to Canon</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────────────────
+     TASTE CHARACTER MODAL — name/gender/pronouns selector for starter books.
+     Fires on every Taste book open. Per-book persistence (state._tasteCharacterPrefs[bookId])
+     so each book can have different character setup. Everything else
+     (world, tone, archetype, etc.) is pre-selected by the seed.
+     ───────────────────────────────────────────────────────────────────── -->
+<div id="tasteCharacterModal" class="overlay hidden" style="z-index:10080;">
+  <div class="box" style="max-width:780px; padding: 28px 24px;">
+    <h3 style="color:var(--gold); text-align:center; margin: 0 0 6px;" id="tasteCharacterModalTitle">Your Character</h3>
+    <p style="text-align:center; font-size: 0.85em; color: var(--ink); opacity: 0.75; margin: 0 0 22px;">
+      Name yourself and your love interest for this story.
+    </p>
+    <div class="character-cards-row" style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+      <!-- Player Character Card — mirrors corridor card; modal-scoped IDs -->
+      <div class="character-tarot-card">
+        <div class="character-tarot-header">Your Character</div>
+        <div class="character-tarot-fields">
+          <div class="character-field character-field-name">
+            <label>Name</label>
+            <input id="tasteModalPlayerName" type="text" class="plaque-input" placeholder="Your name">
+          </div>
+          <div class="character-field character-field-gender">
+            <label>Gender</label>
+            <select id="tasteModalPlayerGender" class="plaque-input">
+              <option value="Female">Female</option>
+              <option value="Male">Male</option>
+              <option value="Non-Binary">Non-Binary</option>
+            </select>
+          </div>
+          <div class="character-field character-field-pronouns">
+            <label>Pronouns</label>
+            <select id="tasteModalPlayerPronouns" class="plaque-input">
+              <option value="She/Her">She/Her</option>
+              <option value="He/Him">He/Him</option>
+              <option value="They/Them">They/Them</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- Love Interest Card — mirrors corridor card; modal-scoped IDs -->
+      <div class="character-tarot-card">
+        <div class="character-tarot-header">Your Love Interest</div>
+        <div class="character-tarot-fields">
+          <div class="character-field character-field-name">
+            <label>Name</label>
+            <input id="tasteModalPartnerName" type="text" class="plaque-input" placeholder="Their name">
+            <span class="li-name-hint">Leave blank to be surprised</span>
+          </div>
+          <div class="character-field character-field-gender">
+            <label>Gender</label>
+            <select id="tasteModalPartnerGender" class="plaque-input">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </div>
+          <div class="character-field character-field-pronouns">
+            <label>Pronouns</label>
+            <select id="tasteModalPartnerPronouns" class="plaque-input">
+              <option value="He/Him">He/Him</option>
+              <option value="She/Her">She/Her</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; gap:12px; justify-content:center; align-items:center; margin-top:24px;">
+      <button id="tasteCharacterModalCancel" class="sb-btn-png consent-secondary">Back to Library</button>
+      <button id="tasteCharacterModalConfirm" class="sb-btn-png consent-primary">Begin Story</button>
+    </div>
+  </div>
+</div>
+
 <div id="ageGate" class="screen overlay hidden" style="background:#000; z-index:9999;">
   <div style="text-align:center;">
       <h2>Storybound</h2>
@@ -552,15 +803,15 @@
 <!-- ── ARC COMPLETION INTERSTITIAL ── -->
 <div id="arcCompleteOverlay" class="overlay hidden" style="z-index:9999;">
   <div class="box arc-complete-box">
-    <h3 class="arc-complete-headline">Chapter Complete</h3>
+    <h3 class="arc-complete-headline">Issue Complete</h3>
     <p class="arc-complete-subtext">The page turns.<br>Fate awaits your decision.</p>
-    <button id="arcCompleteContinueBtn" class="arc-complete-btn">Continue the Story</button>
+    <button id="arcCompleteContinueBtn" class="arc-complete-btn">Begin Next Issue</button>
   </div>
 </div>
 
 <div id="payModal" class="overlay hidden" style="z-index:10006;">
   <div class="box pay-box" style="position:relative;">
-    <button id="payModalClose" class="pay-modal-close" onclick="document.getElementById('payModal').classList.add('hidden');">&times;</button>
+    <button id="payModalClose" class="pay-modal-close" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();">&times;</button>
     <h3 id="payModalHeading">Go deeper into the story</h3>
     <p style="font-size:1.1em; color:var(--gold); font-style:italic; text-align:center; margin:0 0 18px;">The ink runs dry. Fate's quill trembles above the page.</p>
 
@@ -574,7 +825,7 @@
     <!-- Taste Tier hint — shown only for free-tier users -->
     <div id="tasteTierHint" class="hidden" style="text-align:center; margin:0 0 16px;">
       <p style="font-size:0.82em; color:var(--ink); opacity:0.75; line-height:1.6; margin:0;">
-        Taste Tier includes just enough to whet the appetite. Indulgence comes at a price.
+        Just a taste to whet the appetite — the full story comes at a price.
       </p>
     </div>
 
@@ -613,7 +864,7 @@
                             <div class="fate-event-badge hidden">✦ Fate Event Active &mdash; +25% Fortunes</div>
                             <div class="pay-card-fortune-options">
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(20, '$3');">20<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $3</button>
-                                <p class="fortune-pack-subline">Continue this story.</p>
+                                <p class="fortune-pack-subline">Top up toward your next Issue.</p>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(60, '$5');">60<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $5</button>
                                 <p class="fortune-pack-subline">Keep Fate's quill moving.</p>
                                 <button class="pay-card-btn pay-card-btn-fortune" onclick="window.purchaseFortunePack(120, '$9');">120<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"> &mdash; $9</button>
@@ -710,13 +961,13 @@
          flex-anchor to the bottom of the modal (see .pay-billing-disclosure +
          #paywallCancelDefault rules in styles.css with margin-top:auto). -->
     <p class="pay-billing-disclosure">
-        Subscriptions renew monthly. Cancel anytime. One-time purchases are non-refundable.
+        Subscriptions renew monthly. Cancel anytime. By purchasing you get immediate access and agree that all sales are final &mdash; waiving any 14-day withdrawal/refund right &mdash; per <a href="/tos.html" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">The Binding</a>.
     </p>
 
     <!-- Default cancel button (non-story-blocked contexts) -->
     <button id="paywallCancelDefault" class="sb-btn-png sm" onclick="document.getElementById('payModal').classList.add('hidden'); if(window.onPaywallDismiss) window.onPaywallDismiss();">Cancel</button>
     <!-- Story-blocked cancel — navigates to Forbidden Library -->
-    <button id="paywallCancelLibrary" class="hidden paywall-library-btn">Commitment-phobic? Peruse free books until you're ready.</button>
+    <button id="paywallCancelLibrary" class="hidden paywall-library-btn">Not ready to commit? The Forbidden Library is open to read.</button>
   </div>
 </div>
 
@@ -883,7 +1134,10 @@
       <div class="stripe-secure-note">Secure checkout on Stripe</div>
     </div>
 
-    <p style="opacity:0.35; font-size:0.78em; font-style:italic; margin-top:16px; margin-bottom:12px;">Fortune keeps the story moving.</p>
+    <p style="opacity:0.35; font-size:0.78em; font-style:italic; margin-top:16px; margin-bottom:6px;">Fortune keeps the story moving.</p>
+    <p style="opacity:0.5; font-size:0.72em; margin-top:0; margin-bottom:12px;">
+      Subscriptions renew monthly; cancel anytime. By purchasing you get immediate access and agree all sales are final &mdash; waiving any 14-day withdrawal/refund right &mdash; per <a href="/tos.html" target="_blank" rel="noopener" style="color:inherit; text-decoration:underline;">The Binding</a>.
+    </p>
 
     <button class="fortune-dismiss-btn" onclick="window.closeFortunePurchaseModal();">
       Delay Gratification
@@ -963,6 +1217,18 @@
       <div class="section-title" id="shapeYourStoryTitle">Shape Your Story</div>
       <!-- BREADCRUMB ROW - Committed selections accumulate here -->
       <div class="breadcrumb-row" id="breadcrumbRow" data-tour-breadcrumbs></div>
+      <!-- Bracket-and-label tying the breadcrumb collection to the
+           Save This Story Shape action. The SVG draws a thin gold curly
+           bracket pointing down at the label below. The button is a
+           plain text-style action (no border) by default; the bracket
+           visually scopes the breadcrumbs as the thing being saved. -->
+      <div class="shape-save-bracket-wrap" id="shapeSaveBracketWrap" style="display:none">
+        <svg class="shape-save-bracket" viewBox="0 0 1000 28" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M 0 0 C 0 18, 12 22, 30 22 L 480 22 C 495 22, 495 28, 500 28 C 505 28, 505 22, 520 22 L 970 22 C 988 22, 1000 18, 1000 0"
+                fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke" />
+        </svg>
+        <button class="save-shape-btn" id="saveShapeBtn" type="button" onclick="if(window._triggerSaveShapeFromButton)window._triggerSaveShapeFromButton()">Save This Story Shape</button>
+      </div>
     </div>
 
     <!-- FLOW STAGE INDICATOR — REMOVED (DSP invisible until story-shaping cards resolve) -->
@@ -1001,9 +1267,138 @@
           <div class="authorship-sparkle-emitter" id="guidedFateSparkles"></div>
         </div>
       </div>
+      <!-- Famous Fate — sibling test card next to Guided Fate. Reveals a custom-entry
+           form on click (does NOT flip to baked art like the two cards above). -->
+      <div class="authorship-card famous-fate-card" id="famousFateCard">
+        <div class="authorship-card-inner">
+          <div class="authorship-card-face authorship-card-back">
+            <span class="authorship-card-title">Famous<br>Fate</span>
+          </div>
+          <div class="authorship-card-face authorship-card-front">
+            <span class="authorship-card-title">Famous<br>Fate</span>
+          </div>
+          <div class="authorship-sparkle-emitter" id="famousFateSparkles"></div>
+        </div>
+      </div>
       </div><!-- END authorship-cards-container -->
       <!-- Continue button for authorship decision -->
       <button class="flow-continue-btn sb-btn-png sm" id="continueFromAuthorship" data-tour-continue>Proceed</button>
+    </div>
+
+    <!-- FAMOUS FATE — custom-entry reveal form (private test path; not a public
+         publishing path). Revealed when #famousFateCard is clicked. -->
+    <div class="famous-fate-overlay hidden" id="famousFateForm" role="dialog" aria-modal="true" aria-labelledby="famousFateFormTitle">
+      <div class="famous-fate-panel">
+        <button type="button" class="famous-fate-close" id="famousFateClose" aria-label="Close">&times;</button>
+        <h2 class="famous-fate-title" id="famousFateFormTitle">Famous Fate</h2>
+        <p class="famous-fate-subtitle">Enter any world, role, or universe that you've ever seen in books or movies, or your own imagination.</p>
+
+        <label class="famous-fate-field">
+          <span class="famous-fate-label">World</span>
+          <input type="text" id="famousFateWorld" class="famous-fate-input" autocomplete="off"
+                 placeholder="World, genre, fandom, or original setting">
+        </label>
+
+        <label class="famous-fate-field">
+          <span class="famous-fate-label">Character to embody</span>
+          <input type="text" id="famousFateEmbody" class="famous-fate-input" autocomplete="off"
+                 placeholder="Who do you want to be?">
+        </label>
+
+        <div class="famous-fate-field">
+          <span class="famous-fate-label">Story period</span>
+          <div class="famous-fate-period" id="famousFatePeriod" role="radiogroup" aria-label="Story period">
+            <button type="button" class="famous-fate-period-btn" data-period="pre" role="radio" aria-checked="false">Pre-era</button>
+            <button type="button" class="famous-fate-period-btn" data-period="canon" role="radio" aria-checked="false">Canon</button>
+            <button type="button" class="famous-fate-period-btn" data-period="post" role="radio" aria-checked="false">Post-era</button>
+            <button type="button" class="famous-fate-period-btn" data-period="alternate" role="radio" aria-checked="false">Alternate</button>
+          </div>
+        </div>
+
+        <label class="famous-fate-field">
+          <span class="famous-fate-label">What kind of story do you want?</span>
+          <input type="text" id="famousFateStoryWish" class="famous-fate-input" autocomplete="off"
+                 placeholder="Romance, revenge, survival, court intrigue, forbidden love, etc.">
+        </label>
+
+        <div class="famous-fate-field">
+          <span class="famous-fate-label">Love interest</span>
+          <div class="famous-fate-partner" id="famousFatePartnerMode" role="radiogroup" aria-label="Love interest">
+            <label class="famous-fate-radio">
+              <input type="radio" name="ffPartnerMode" value="original" checked>
+              <span>Create someone new for this world <em>(recommended)</em></span>
+            </label>
+            <label class="famous-fate-radio">
+              <input type="radio" name="ffPartnerMode" value="canonical">
+              <span>Romance an existing character</span>
+            </label>
+            <label class="famous-fate-radio">
+              <input type="radio" name="ffPartnerMode" value="none">
+              <span>No love interest &mdash; a pure adventure</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="famous-fate-error hidden" id="famousFateError" role="alert"></div>
+        <button type="button" class="flow-continue-btn sb-btn-png sm famous-fate-begin" id="famousFateBegin">Begin Famous Fate</button>
+      </div>
+    </div>
+
+    <!-- FAMOUS FATE BETA — bug report modal (opened by the repurposed Vision Orb 🐞).
+         Auto-attaches reading position + full story telemetry on submit. -->
+    <div class="ff-report-overlay hidden" id="ffReportModal" role="dialog" aria-modal="true" aria-labelledby="ffReportTitle">
+      <div class="ff-report-panel">
+        <button type="button" class="ff-report-close" id="ffReportClose" aria-label="Close">&times;</button>
+        <div id="ffReportFormBody">
+          <h2 class="ff-report-title" id="ffReportTitle">🐞 Thanks for helping us improve Famous Fate</h2>
+          <p class="ff-report-sub">Your feedback helps us make Famous Fate better. If your report helps us reproduce or fix a real issue, we'll add Fortune Credits to your account.</p>
+
+          <div class="ff-report-field">
+            <span class="ff-report-label">Category</span>
+            <div class="ff-report-cats" id="ffReportCats">
+              <label><input type="radio" name="ffReportCategory" value="technical_bug"> Technical bug</label>
+              <label><input type="radio" name="ffReportCategory" value="canon_lore"> Canon / lore issue</label>
+              <label><input type="radio" name="ffReportCategory" value="out_of_character"> Character acted out of character</label>
+              <label><input type="radio" name="ffReportCategory" value="romance_relationship"> Romance / relationship issue</label>
+              <label><input type="radio" name="ffReportCategory" value="story_continuity"> Story continuity</label>
+              <label><input type="radio" name="ffReportCategory" value="writing_quality"> Writing quality</label>
+              <label><input type="radio" name="ffReportCategory" value="suggestion"> Suggestion</label>
+              <label><input type="radio" name="ffReportCategory" value="other"> Other</label>
+            </div>
+          </div>
+
+          <label class="ff-report-field">
+            <span class="ff-report-label">What happened?</span>
+            <textarea id="ffReportWhat" class="ff-report-textarea" maxlength="500" rows="3" placeholder="Describe the issue…"></textarea>
+            <span class="ff-report-count" id="ffReportWhatCount">0 / 500</span>
+          </label>
+
+          <label class="ff-report-field">
+            <span class="ff-report-label">What did you expect instead? <em>(optional)</em></span>
+            <textarea id="ffReportExpected" class="ff-report-textarea" maxlength="500" rows="2" placeholder="e.g. I expected Luke to recognize R2."></textarea>
+            <span class="ff-report-count" id="ffReportExpectedCount">0 / 500</span>
+          </label>
+
+          <div class="ff-report-field">
+            <span class="ff-report-label">Attach current screenshot <em>(recommended)</em></span>
+            <div class="ff-report-shot-row">
+              <button type="button" class="ff-report-shot-btn" id="ffReportCapture">Capture screen</button>
+              <label class="ff-report-shot-btn ff-report-shot-file">Choose file<input type="file" id="ffReportShot" accept="image/*" hidden></label>
+              <span class="ff-report-shot-name" id="ffReportShotName"></span>
+            </div>
+          </div>
+
+          <p class="ff-report-context-hint" id="ffReportContextHint"></p>
+          <div class="ff-report-error hidden" id="ffReportError" role="alert"></div>
+          <button type="button" class="flow-continue-btn sb-btn-png sm ff-report-submit" id="ffReportSubmit">Submit report</button>
+        </div>
+        <div id="ffReportSuccess" class="ff-report-success" style="display:none;">
+          <div class="ff-report-success-check">✅</div>
+          <p class="ff-report-success-main">Thanks for helping improve Famous Fate.</p>
+          <p class="ff-report-success-sub">If your report helps us reproduce or fix a real issue, we'll add Fortune Credits to your account.</p>
+          <button type="button" class="flow-continue-btn sb-btn-png sm" id="ffReportDone">Done</button>
+        </div>
+      </div>
     </div>
 
     <!-- Legacy fate card reference for compatibility (hidden) -->
@@ -1042,6 +1437,10 @@
                     <option value="Custom">Custom</option>
                 </select>
                 <input id="customPlayerPronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+            </div>
+            <div class="character-field character-field-age">
+                <label>Age</label>
+                <input id="playerAgeInput" type="text" inputmode="numeric" pattern="[2-9][0-9]" maxlength="2" class="plaque-input sb-age-input" placeholder="32" autocomplete="off">
             </div>
             <div class="character-field character-field-ancestry fate-input-wrapper">
                 <label>Ancestry</label>
@@ -1105,6 +1504,10 @@
                             <option value="Custom">Custom</option>
                         </select>
                         <input id="customLovePronouns" type="text" placeholder="Custom..." class="hidden custom-gender-input plaque-input">
+                    </div>
+                    <div class="character-field character-field-age">
+                        <label>Age</label>
+                        <input id="loveInterestAgeInput" type="text" inputmode="numeric" pattern="[2-9][0-9]" maxlength="2" class="plaque-input sb-age-input" placeholder="38" autocomplete="off">
                     </div>
                     <div class="character-field character-field-ancestry fate-input-wrapper">
                         <label>Ancestry</label>
@@ -1176,14 +1579,12 @@
 
     <div id="lengthSection">
         <div class="section-title">Story Length</div>
-        <div class="sb-grid sb-grid-4" id="lengthGrid">
-          <div class="sb-card selected flipped" data-grp="length" data-val="taste">
-            <div class="sb-card-inner">
-              <div class="sb-card-face sb-card-back"><span class="sb-card-title">Taste</span></div>
-              <div class="sb-card-face sb-card-front"><span class="sb-card-title">Taste</span><span class="sb-card-desc">A quick glimpse. The story hooks you, then leaves you wanting more.</span></div>
-            </div>
-          </div>
-          <div class="sb-card locked" data-grp="length" data-val="fling" data-locked="pass">
+        <!-- Taste tier removed from corridor 2026-05-14. Taste is now
+             internal starter-runtime that powers curated starter books
+             (TASTE_BOOK_GRANTS); it is no longer a user-customizable tier.
+             Fling is the new default paid experience and selected by default. -->
+        <div class="sb-grid sb-grid-3" id="lengthGrid">
+          <div class="sb-card selected flipped" data-grp="length" data-val="fling" data-locked="pass">
             <div class="sb-card-inner">
               <div class="sb-card-face sb-card-back"><span class="sb-card-title">Fling</span></div>
               <div class="sb-card-face sb-card-front"><span class="sb-card-title">Fling</span><span class="sb-card-desc">A story that burns bright and moves fast — but still leaves room to grow.</span></div>
@@ -1374,7 +1775,7 @@
         <div class="sb-card" data-grp="worldSubtype" data-val="cyberpunk"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Cyberpunk</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Cyberpunk</span><span class="sb-card-desc">Love survives beneath power, tech, and exploitation.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="post_human"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Post-Human</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Post-Human</span><span class="sb-card-desc">Desire outpaces bodies, identity, and human limits.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="first_contact"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">First Contact</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">First Contact</span><span class="sb-card-desc">Desire collides with the truly unknown.</span></div></div></div>
-        <div class="sb-card" data-grp="worldSubtype" data-val="simulation"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Simulation</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Simulation</span><span class="sb-card-desc">Intimacy questions what's real, chosen, or programmed.</span></div></div></div>
+        <div class="sb-card" data-grp="worldSubtype" data-val="simulation"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Enigma-S</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Enigma-S</span><span class="sb-card-desc">Reality feels subtly wrong in ways no one can explain.</span></div></div></div>
         <div class="sb-card" data-grp="worldSubtype" data-val="final_frontier"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Final Frontier</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Final Frontier</span><span class="sb-card-desc">Love tested by distance, discovery, and leaving everything behind.</span></div></div></div>
       </div>
     </div>
@@ -1454,7 +1855,10 @@
          2. User flips, zooms, selects
          3. Continue → Pressure becomes breadcrumb, World cards appear
          ═══════════════════════════════════════════════════════════════════ -->
-    <div class="card-flow-row" id="flowRowPressure" data-flow-stage="pressure">
+    <!-- Story Pull is now engine-inferred (not a user choice). This row is never
+         mounted by the corridor; flow-hidden keeps it hidden in any non-corridor
+         render of #setup. See _ensureInferredStoryPull. -->
+    <div class="card-flow-row flow-hidden" id="flowRowPressure" data-flow-stage="pressure">
       <div class="section-title">Story Pull</div>
       <div class="sb-grid sb-grid-4" id="pressureGrid">
         <div class="sb-card" data-grp="pressure" data-val="PowerControl"><div class="sb-card-inner"><div class="sb-card-face sb-card-back"><span class="sb-card-title">Power<br>&amp;&nbsp;Control</span></div><div class="sb-card-face sb-card-front"><span class="sb-card-title">Power & Control</span><span class="sb-card-desc">The entire city answers to him.<br>Except for her.</span></div></div></div>
@@ -1518,22 +1922,44 @@
     <div id="beginStoryRow" class="corridor-section" data-corridor-stage="beginstory">
         <div class="begin-story-container">
             <div class="begin-story-flourish"></div>
-            <button class="save-shape-btn" id="saveShapeBtn" type="button" onclick="if(window._triggerSaveShapeFromButton)window._triggerSaveShapeFromButton()">Save This Story Shape</button>
             <div class="begin-btn-wrapper">
                 <div class="begin-btn-sparkle-emitter" id="beginBtnSparkles"></div>
+                <!-- Enter Your Story CTA — sits ABOVE the modality toggle.
+                     Disabled until a modality is picked. -->
+                <button class="sb-btn-png lg" id="beginBtn" disabled>Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
                 <!-- Story Modality Toggle (Literary ⟷ Cinegraphic) — controls
                      whether Enter Your Story routes to the prose engine
                      (handleBeginStory) or the staged visual-novel engine
                      (handleBeginGraphicNovel → renderMode='staged_story_mode').
-                     Sits ABOVE the CTA. CTA is disabled until a mode is picked.
-                     NOTE: distinct from #storyModeToggle below (Active/Mindful)
-                     which controls narrative ENGAGEMENT style, not modality. -->
+                     Sits BELOW the CTA. Each side has an always-visible
+                     descriptor under the button label so the user can
+                     compare before choosing. The square gold icon on
+                     each side swaps between the "no x" art (unselected)
+                     and the "x" art (selected). NOTE: distinct from
+                     #storyModeToggle below (Active/Mindful) which
+                     controls narrative ENGAGEMENT style, not modality. -->
                 <div class="story-modality-toggle" id="storyModalityToggle">
-                    <button class="modality-btn" id="modeLiterary" type="button">Literary</button>
-                    <button class="modality-btn" id="modeCinegraphic" type="button">Cinegraphic</button>
+                    <button class="modality-btn modality-btn--literary" id="modeLiterary" type="button">
+                        <span class="modality-icon modality-icon--left" aria-hidden="true"></span>
+                        <span class="modality-name">Literary</span>
+                        <span class="modality-desc">Elegant writing that reads<br>like a best-selling novel<br>which responds to you.</span>
+                    </button>
+                    <button class="modality-btn modality-btn--cinegraphic" id="modeCinegraphic" type="button">
+                        <span class="modality-name">Cinegraphic</span>
+                        <span class="modality-icon modality-icon--right" aria-hidden="true"></span>
+                        <span class="modality-desc">Responsive cinematic scenes<br>illustrated with layered<br>visual and audio rhythm</span>
+                    </button>
                 </div>
-                <p class="modality-description" id="modalityDescription"></p>
-                <button class="sb-btn-png lg" id="beginBtn" disabled>Enter Your Story<span id="beginCostDisplay" class="begin-cost-display"></span></button>
+                <!-- Literary sub-options — only meaningful for Literary; shown when Literary is selected.
+                     Hot&Fast (replaced the old Lit-Lite slot 2026-06-26): a short, immediate hot-crisis Scene 1. -->
+                <div class="lit-lite-toggle" id="litLiteToggle" hidden>
+                    <label class="lit-lite-toggle-label">
+                        <input type="checkbox" id="hotFastCheckbox">
+                        <span class="lit-lite-toggle-text">Hot&amp;Fast <em>short, immediate hot-crisis opening</em></span>
+                    </label>
+                    <!-- Compare Grok toggle removed 2026-06-28 (decision settled). The
+                         dev compare path (window._dualCompare / GROK ⇄) remains in app.js. -->
+                </div>
                 <!-- Story Mode Toggle (Active ⟷ Mindful) — inside wrapper, visually attached to story button only.
                      Hidden automatically when the corridor-inference score is confident; replaced by the
                      #storyModeInferredHint subtitle below. -->
@@ -1553,7 +1979,7 @@
                 <span class="begin-fortune-label">Fortunes</span>
                 <span id="beginFortuneCount" class="begin-fortune-count">0<img src="/assets/ui/Fortunes-Icon.png" alt="" class="fortune-icon" aria-hidden="true"></span>
             </button>
-            <div id="burnRateIndicator" class="burn-rate-indicator hidden"></div>
+            <!-- Burn-rate "Advanced Narrative" star indicator removed 2026-06-28. -->
             <!-- (Storypass counter removed — currency unified into Fortunes.) -->
         </div>
     </div>
@@ -1617,11 +2043,21 @@
           <div class="book-front cover-book-front" id="coverBookFront">
             <!-- Cover art image (hidden until generated) -->
             <img id="bookCoverImg" src="" alt="" class="cover-book-art">
+            <!-- Comic-book-style issue badge — upper LEFT corner.
+                 Populated by renderIssueBadge() in app.js. Shows a
+                 "No. X.{M}" placeholder pre-claim and the real
+                 "No. {N}" once the issue number is claimed (first F
+                 spend on scene context). -->
+            <div id="issueBadge" class="issue-badge hidden" aria-hidden="true">
+              <span class="issue-badge-flavor"></span>
+              <span class="issue-badge-number"></span>
+            </div>
             <!-- White text placeholder (shown by default) -->
             <div class="book-front-text cover-book-text" id="coverBookText">
               <div class="cover-working-label">Working Title:</div>
               <div class="book-front-title cover-book-title" id="coverBookTitle">Your Story</div>
               <div class="book-front-author cover-book-author" id="coverBookAuthor">by S. Tory Bound</div>
+              <div class="book-front-casting cover-book-casting" id="coverBookCasting" style="display:none;"></div>
             </div>
           </div>
           <!-- Spine -->
@@ -1694,6 +2130,9 @@
     <!-- Main story content (hidden during cover) -->
     <div id="storyContent" class="story-content hidden">
 
+    <!-- Prose-page sound toggle (bottom-left): mute/unmute ambient + music via the shared quick-mute. Child of #storyContent so it auto-hides off the reader; shown on scene pages only (showReaderPage adds .is-visible at page >= 2). -->
+    <button id="proseSoundToggle" class="prose-sound-toggle" type="button" aria-label="Mute audio" title="Mute audio"><span class="prose-sound-icon"></span></button>
+
     <!-- Fortune HUD — hidden (balance shown next to Submit Turn + in Vault Menu) -->
     <div id="fortuneHud" class="fortune-hud" style="display:none;">
       <span class="fortune-hud-label">Fortunes</span>
@@ -1760,6 +2199,7 @@
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <div id="workingTitleLabel" class="working-title-label hidden">WORKING TITLE</div>
         <h2 id="storyTitle" class="story-page-title"></h2>
+        <div id="storyIssueId" class="story-page-issue-id" aria-hidden="true"></div>
         <div id="sceneNumber" class="story-page-scene">Scene 1</div>
         <!-- Synopsis displays below title -->
         <p id="sceneSynopsis" class="scene-synopsis hidden"></p>
@@ -1824,14 +2264,14 @@
       </div>
     </div>
 
-    <div class="say-do-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px; width:75%; margin-left:auto; margin-right:auto;">
+    <div class="say-do-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; width:75%; margin-left:auto; margin-right:auto;">
       <div class="input-wrapper" id="actionWrapper">
-          <label>What do you do?</label>
-          <textarea id="actionInput" rows="3" placeholder="Action..." maxlength="2000"></textarea>
+          <span class="oas-input-label">ACTION</span>
+          <textarea id="actionInput" rows="3" placeholder="What do you do?" maxlength="2000"></textarea>
       </div>
       <div class="input-wrapper" id="dialogueWrapper">
-          <label>What do you say?</label>
-          <textarea id="dialogueInput" rows="3" placeholder="Dialogue..." maxlength="2000"></textarea>
+          <span class="oas-input-label">SPEECH</span>
+          <textarea id="dialogueInput" rows="3" placeholder="What do you say?" maxlength="2000"></textarea>
       </div>
     </div>
 
@@ -1880,6 +2320,7 @@
 
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="storyBookmarksBtn" class="small-btn" onclick="window.toggleBookmarksPanel()">Bookmarks</button>
+       <button id="storySaveExitBtn" class="small-btn" onclick="window.saveAndExitStory()">Save &amp; Exit</button>
        <button id="btnBindReincarnation" class="small-btn" style="display:none;">Bind Reincarnation</button>
        <button id="safeWordBtn" class="small-btn safe-word-btn" style="display:none;" onclick="window.triggerSafeWord()">Safe Word</button>
     </div>
@@ -2021,13 +2462,13 @@
     <h3 style="color:var(--gold); margin-bottom:20px;">What comes next?</h3>
     <div style="display:flex; flex-direction:column; gap:12px;">
       <button id="btnContinueStory" onclick="window.selectContinuationPath('continue')" style="padding:15px;">
-        Continue this story
+        Begin Next Issue<span class="continuation-fork-id" data-cta-issue="next"></span>
       </button>
       <button id="btnSameWorld" onclick="window.selectContinuationPath('same_world')" style="padding:15px;">
-        Start a new story in this world
+        Start a New Run in This World
       </button>
       <button id="btnNewStory" onclick="window.selectContinuationPath('new_story')" style="padding:15px;">
-        Start a completely new story
+        Start a Completely New Story
       </button>
     </div>
     <p style="font-size:0.75em; opacity:0.5; margin-top:15px;">
@@ -2070,7 +2511,7 @@
 <!-- ── Persistent Fortune & Tempt Fate Widget — bottom-right corner ── -->
 <div id="fortuneWidget" class="fortune-widget">
     <div class="fw-tempt" id="fwTemptRow" title="Free Tempt Fate charges">
-        <span class="fw-tempt-icon">&#x2728;</span>
+        <span class="fw-tempt-icon">&#x26A1;</span>
         <span class="fw-tempt-count" id="fwTemptCount">0</span>
     </div>
     <div class="fw-fortune" id="fwFortuneMain" title="Total Fortunes — click to expand">
@@ -2080,12 +2521,63 @@
     <!-- (Fortune breakdown removed — single unified balance.) -->
 </div>
 
-<script src="/sound.js?v=20260417a"></script>
-<script src="/fatecards.js?v=20260507a"></script>
-<script src="/orchestration-client.js?v=20260429h"></script>
-<script src="/badgeEngine.js"></script>
-<script src="/app.js?v=20260508u"></script>
+<script src="/haiku-fire-counter.js?v=20260625-haiku-counter"></script>
+<script src="/sound.js?v=20260606-tempt-crackle-segmented"></script>
+<script src="/fatecards.js?v=20260618-fatecard-desire-slice1"></script>
+<script src="/orchestration-client.js?v=20260628-opening-temp-tighten"></script>
+<script src="/badgeEngine.js?v=20260609-badge-error-surface"></script>
+<script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
+<script src="/app.js?v=20260705-cover-net6"></script>
 <script src="/card-designer.js?v=20260318c"></script>
+<script>
+  /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
+     ------------------------------------------
+     The corridor row #beginStoryRow has transform: translateY(0) (set by
+     both .corridor-section base and .corridor-active animation forwards
+     fill). A transformed ancestor establishes a containing block for
+     position:fixed descendants, which prevented .begin-btn-wrapper from
+     centering against the viewport. CSS overrides of the transform did
+     not stick reliably. So: move the wrapper to be a direct child of
+     <body> at load time. There it has the viewport itself as its
+     containing block and `position: fixed; top:50%; left:50%;
+     translate(-50%,-50%)` lands it at the geometric window center.
+     Visibility is toggled based on whether #beginStoryRow is the active
+     corridor row. */
+  (function() {
+    function sync() {
+      const wrapper = document.querySelector('.begin-btn-wrapper');
+      if (!wrapper) return;
+      if (wrapper.parentElement !== document.body) {
+        wrapper.classList.add('begin-btn-portaled');
+        document.body.appendChild(wrapper);
+      }
+      const row = document.getElementById('beginStoryRow');
+      // Also gate on the setup screen being visible. After the user clicks
+      // Enter Your Story, the CG reader (or any other screen) takes over;
+      // #beginStoryRow may still have .corridor-active and remain in DOM,
+      // but #setup is hidden. Without this guard the portaled wrapper
+      // floats over the CG reader, the Choose Your Artist screen, etc.
+      const setupEl = document.getElementById('setup');
+      const setupVisible = !!(setupEl
+        && !setupEl.classList.contains('hidden')
+        && getComputedStyle(setupEl).display !== 'none');
+      const active = !!(row && row.classList.contains('corridor-active') && setupVisible);
+      wrapper.classList.toggle('begin-btn-show', active);
+    }
+    function init() {
+      sync();
+      new MutationObserver(sync).observe(document.body, {
+        childList: true, subtree: true,
+        attributes: true, attributeFilter: ['class']
+      });
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
 
 <div id="profileModal" class="overlay hidden" style="z-index:5001;">
   <div class="box" style="max-width:450px;">
@@ -2163,7 +2655,7 @@
     </div>
     <div class="vault-exit-row">
       <button class="sb-btn-png sm" id="startNewStoryForbiddenBtn">Start New Story</button>
-      <button class="sb-btn-png sm" id="exitForbiddenLibraryBtn">Exit Library</button>
+      <button class="sb-btn-png sm" id="exitForbiddenLibraryBtn">Private Library</button>
     </div>
   </div>
 </div>
@@ -2223,6 +2715,7 @@
           <div class="book-front-text cover-book-text" id="gnCoverBookText">
             <div class="cover-working-label">Working Title</div>
             <div class="book-front-title cover-book-title" id="gnCoverBookTitle">Your Story</div>
+            <div class="book-front-casting cover-book-casting" id="gnCoverBookCasting" style="display:none;"></div>
             <p class="cover-book-evolve-text cover-book-evolve-text--front">Your cover art and title will evolve as you shape your story.</p>
           </div>
 
@@ -2311,40 +2804,16 @@
   <div class="gn-title-header">
     <div id="gnWorkingTitleLabel" class="working-title-label hidden">WORKING TITLE</div>
     <h2 id="gnStoryTitle" class="story-page-title"></h2>
-    <div id="gnSceneNumber" class="story-page-scene">Scene 1</div>
+    <div id="gnStoryIssueId" class="story-page-issue-id" aria-hidden="true"></div>
+    <!-- #gnSceneNumber removed — duplicate of #gnPageIndicator in the nav row.
+         Kept hidden in case downstream JS still references the element. -->
+    <div id="gnSceneNumber" class="story-page-scene" style="display:none;">Scene 1</div>
   </div>
 
-  <!-- ── GN_STAGE: primary visual surface ── -->
-  <div id="gnStage" class="gn-stage">
-    <div id="gnSceneLoading" class="gn-scene-loading">
-      <p class="gn-loading-status">Composing Scene 1...</p>
-      <div class="gn-loading-bar"><div class="gn-loading-bar-fill" id="gnLoadingBarFill"></div></div>
-      <p class="gn-loading-hint" id="gnLoadingHint"></p>
-      <button class="gn-loading-cancel" id="gnLoadingCancel" title="Cancel">&times;</button>
-    </div>
-    <div id="gnPanelDisplay" class="gn-panel-display"></div>
-  </div>
-
-  <!-- ── GN_UI_OVERLAY: persistent controls ── -->
-  <!-- gnReaderBack removed — was redundant with page-nav Cover button below.
-       Page-nav already provides Cover/Back/Next/Last for all in-reader navigation;
-       returning to the artist selector mid-read is a rare path that can be done
-       via Cover → upstream nav. -->
-  <div class="gn-ui-overlay">
-    <div class="gn-ui-top">
-      <!-- Scene indicator removed — redundant with #gnSceneNumber under the
-           title and #gnPageIndicator in the page-nav-controls below. -->
-      <!-- Visualize is literary-mode only; GN panels ARE the visualization -->
-      <!-- <button id="gnVisualizeBtn" class="small-btn">Visualize</button> -->
-    </div>
-    <button id="gnGodModeBtn" class="small-btn gn-god-mode-indicator" style="display:none;">God Mode</button>
-  </div>
-
-  <!-- ── GN Scene Navigation — parity with literary .page-nav-controls ──
-       Sits ABOVE the say/do inputs to mirror literary reader order
-       (page-nav → inputs → fate cards → bookmarks). Cover returns to the
-       auto-evolving cover overlay; Back/Next step between scenes; Last
-       jumps to the latest rendered scene. -->
+  <!-- ── GN Scene Navigation — moved ABOVE the image (was below).
+       Cover returns to the auto-evolving cover overlay; Back/Next step
+       between scenes; Last jumps to the latest rendered scene. Placed
+       here so the user can see scene context before the panel art. -->
   <div class="page-nav-controls gn-page-nav" id="gnPageNavControls">
       <button class="page-nav-btn" id="gnCoverPageBtn" onclick="if(window._showGNCover)window._showGNCover()">
           <span>←</span> Cover
@@ -2361,18 +2830,38 @@
       </button>
   </div>
 
+  <!-- ── GN_STAGE: primary visual surface ── -->
+  <div id="gnStage" class="gn-stage">
+    <div id="gnSceneLoading" class="gn-scene-loading">
+      <p class="gn-loading-status">Composing Scene 1...</p>
+      <div class="gn-loading-bar"><div class="gn-loading-bar-fill" id="gnLoadingBarFill"></div></div>
+      <p class="gn-loading-hint" id="gnLoadingHint"></p>
+      <button class="gn-loading-cancel" id="gnLoadingCancel" title="Cancel">&times;</button>
+    </div>
+    <div id="gnPanelDisplay" class="gn-panel-display"></div>
+  </div>
+
+  <!-- ── GN_UI_OVERLAY: persistent controls ── -->
+  <div class="gn-ui-overlay">
+    <div class="gn-ui-top">
+      <!-- Scene indicator removed — redundant with #gnSceneNumber and the
+           #gnPageIndicator in the page-nav-controls above. -->
+    </div>
+    <button id="gnGodModeBtn" class="small-btn gn-god-mode-indicator" style="display:none;">God Mode</button>
+  </div>
+
   <!-- ── GN_INPUT_BAR: Say / Do + Submit ──
        Mirrors the literary reader order: page-nav above, inputs here,
        fate cards + bookmarks below. -->
   <div id="gnReaderControls" class="gn-input-bar">
     <div class="gn-input-grid">
       <div class="input-wrapper">
-        <label>What do you do?</label>
-        <textarea id="gnActionInput" rows="3" placeholder="Action..." maxlength="2000"></textarea>
+        <span class="oas-input-label">ACTION</span>
+        <textarea id="gnActionInput" rows="3" placeholder="What do you do?" maxlength="2000"></textarea>
       </div>
       <div class="input-wrapper">
-        <label>What do you say?</label>
-        <textarea id="gnDialogueInput" rows="3" placeholder="Dialogue..." maxlength="2000"></textarea>
+        <span class="oas-input-label">SPEECH</span>
+        <textarea id="gnDialogueInput" rows="3" placeholder="What do you say?" maxlength="2000"></textarea>
       </div>
     </div>
     <div class="gn-submit-row">
@@ -2396,6 +2885,7 @@
          shared panel later if needed. -->
     <div style="margin-top:10px; display:flex; gap:10px; justify-content:center; align-items:center;">
        <button id="gnBookmarksBtn" class="small-btn" onclick="window.toggleBookmarksPanel()">Bookmarks</button>
+       <button id="gnSaveExitBtn" class="small-btn" onclick="window.saveAndExitStory()">Save &amp; Exit</button>
        <button id="gnBindReincarnation" class="small-btn" style="display:none;">Bind Reincarnation</button>
        <button id="gnSafeWordBtn" class="small-btn safe-word-btn" style="display:none;">Safe Word</button>
     </div>
@@ -2505,7 +2995,7 @@
     </div>
     <div class="vault-exit-row">
       <button class="sb-btn-png sm" id="startNewStoryBtn" style="display:none;">Start New Story</button>
-      <button class="sb-btn-png sm" id="exitLibraryBtn">Exit Library</button>
+      <button class="sb-btn-png sm" id="exitLibraryBtn">Forbidden Library</button>
     </div>
 
     <!-- ── Library Concierge — diegetic presence, left side ── -->
@@ -2558,6 +3048,11 @@
       <div class="trophy-hotspot" data-badge="mastery_sci_fi"></div>
       <div class="trophy-hotspot" data-badge="mastery_dystopia"></div>
       <div class="trophy-hotspot" data-badge="mastery_post_apocalyptic"></div>
+      <!-- CSS PLACEHOLDER trophies (Roman 2026-06-19) — gold star + silver triangle, until custom
+           art is rendered. They reuse the .trophy-hotspot earned/locked JS; .trophy-placeholder
+           draws the shape and sits them on the vitrine "floor". -->
+      <div class="trophy-hotspot trophy-placeholder placeholder-star" data-badge="all_night_long"></div>
+      <div class="trophy-hotspot trophy-placeholder placeholder-triangle" data-badge="silver_tongue"></div>
       <div id="trophyTooltip" class="trophy-tooltip hidden"></div>
     </div>
     <div class="vault-exit-row">

@@ -211,12 +211,12 @@ const ALLOWED_MODELS = {
 
   // Renderer model for visual bible extraction and visualization prompts ONLY
   RENDERER: [
-    'grok-4-fast-non-reasoning'
+    'grok-4-1-fast-non-reasoning'
   ],
 
   // Intimacy specialist model for explicit scenes (ESD-gated, entitlement-checked)
   INTIMACY_SPECIALIST: [
-    'grok-4-fast-reasoning'
+    'grok-4-1-fast-reasoning'
   ],
 
   // Fate Card structural authority
@@ -278,8 +278,8 @@ const DEFAULT_MODELS = {
   NORMALIZATION: 'gpt-4o-mini',
   VETO_NORMALIZATION: 'gpt-4o-mini',
   DSP_NORMALIZATION: 'gpt-4o-mini',
-  RENDERER: 'grok-4-fast-non-reasoning',        // Visual bible, visualization prompts ONLY
-  INTIMACY_SPECIALIST: 'grok-4-fast-reasoning',        // Explicit scenes (ESD-gated)
+  RENDERER: 'grok-4-1-fast-non-reasoning',        // Visual bible, visualization prompts ONLY
+  INTIMACY_SPECIALIST: 'grok-4-1-fast-reasoning',        // Explicit scenes (ESD-gated)
   FATE_STRUCTURAL: 'gpt-4o-mini',
   FATE_ELEVATION: 'gpt-4o-mini',
   STRATEGY_PASS: 'gpt-4o-mini',

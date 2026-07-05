@@ -10,3 +10,8 @@ index.html.backup
 .env*.local
 
 node_modules/
+
+# Supabase CLI runtime metadata — regenerated on every CLI command,
+# should never be committed (project-ref leaks the project ID, others
+# are just CLI version pins that drift across machines).
+supabase/.temp/

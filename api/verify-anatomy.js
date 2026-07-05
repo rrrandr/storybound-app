@@ -36,7 +36,7 @@ SPECIES IN SCENE: ${species || 'unknown'}
 
 VERIFICATION CHECKLIST:
 1. LIMB COUNT: Count all visible tentacles/limbs. Does the count match the identity tokens exactly?
-2. FORBIDDEN FEATURES: Are any forbidden features present (human legs on Octofolk, pointed ears on First Favored, etc.)?
+2. FORBIDDEN FEATURES: Are any forbidden features present (human legs on Kwisheen, pointed ears on First Favored, etc.)?
 3. SILHOUETTE: Does the overall body silhouette match the species description?
 4. EYES: If eyes are visible, do pupils match the species description?
 5. HANDS: If hands are visible, do they match the species description?

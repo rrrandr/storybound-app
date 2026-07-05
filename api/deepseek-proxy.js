@@ -28,6 +28,9 @@ const ALLOWED_DEEPSEEK_MODELS = [
   'deepseek-v4-flash'
 ];
 
+// SECURITY: server-side prompt-injection scrub on user-role messages.
+const { sanitizeUserMessages } = require('./_sanitize-injection.js');
+
 module.exports = async function handler(req, res) {
   const origin = req.headers.origin || '';
   const allowedOrigin = origin === 'https://storybound.love' || origin === 'https://www.storybound.love' || origin.startsWith('http://localhost') ? origin : 'https://storybound.love';
@@ -55,12 +58,14 @@ module.exports = async function handler(req, res) {
 
   try {
     const {
-      messages,
+      messages: _rawMessages,
       model = 'deepseek-v4-pro',
       role = 'SD_FALLBACK',
       temperature = 0.9,
       max_tokens = 500
     } = req.body;
+    // SECURITY: scrub user-role messages before any downstream code touches them.
+    const messages = sanitizeUserMessages(_rawMessages, 'deepseek');
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({
