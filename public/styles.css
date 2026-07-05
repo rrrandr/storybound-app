@@ -7242,6 +7242,14 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
    CG already gets the cine white-cover + gold triangle from its own .cine-cover rules. */
 .library-book.cover-pending .book-front {
     background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%) !important;
+    /* The base .book-front has heavy dark INSET shadows (inset 8px 0 10px rgba(0,0,0,0.6)
+       hinge + edge insets) that vanish into a dark leather cover but read as heavy black
+       edges on the white placeholder. Replace with soft warm insets; keep only a light
+       outer drop shadow for shelf depth. */
+    box-shadow:
+        inset 5px 0 8px -5px rgba(120, 95, 50, 0.22),
+        3px 3px 4px -1px rgba(0, 0, 0, 0.22),
+        0 2px 8px rgba(0, 0, 0, 0.16) !important;
 }
 .library-book.cover-pending .book-spine {
     background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%) !important;
