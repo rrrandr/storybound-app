@@ -15157,14 +15157,18 @@ textarea.fate-field {
     z-index: 6;
     pointer-events: none;
     display: block;
-    /* No shadow/glow on the gold triangle (Roman 2026-07-05) — drop-shadow AND
-       box-shadow removed so the triangle reads as a clean flat gold silhouette in
-       front of the cover art. box-shadow matters because the zoom applies a
-       rectangular 0 8px 40px shadow to every .book-front img (styles.css ~8841);
-       on the transparent triangle PNG that rectangle cast a hard horizontal
-       shadow line right above the triangle's apex. */
-    filter: none;
-    box-shadow: none;
+    /* No shadow/glow on the gold triangle — EVER, on EVERY CGN cover surface
+       (shelf, zoom, in-app #gnBookObject, and any future container), past /
+       present / future. Roman 2026-07-05. !important is deliberate: the shadow
+       came from a GENERIC per-container img rule (e.g. `#zoomBookContainer
+       .book-front img { box-shadow: 0 8px 40px }`, styles.css ~8841) whose #id
+       specificity outweighs this class rule. On the transparent triangle PNG
+       that rectangular box-shadow cast a hard horizontal shadow line above the
+       apex (and drop-shadow filters glowed its edges). !important guarantees no
+       such generic rule — including ones added later — can re-introduce either.
+       The triangle must always read as a clean flat gold silhouette. */
+    filter: none !important;
+    box-shadow: none !important;
 }
 /* Empty src → hide (avoids the broken-image icon while JS hasn't yet
    set the artist-specific source). Specificity matched to the
