@@ -9062,6 +9062,23 @@ body:has(#gnReader:not(.hidden)) #modelCompareToggle {
     bottom: -1px;
     width: calc(100% + 2px);
     max-height: 22%;
+    /* Kill the generic zoom-img rectangular box-shadow (#zoomBookContainer
+       .book-front img, ~8841) on the transparent triangle PNG — it cast a hard
+       horizontal shadow line above the triangle. This selector's #id outweighs
+       that rule. Roman 2026-07-05. */
+    box-shadow: none;
+}
+/* Authored cine cover fills the whole face — overlap the 1px cream border so no
+   thin white/cream outline rings the artwork (the img normally sits at inset:0
+   INSIDE .book-front's 1px border; .book-front's overflow:hidden + border-radius
+   still clip the corners cleanly). !important overrides the inline inset:0/100%.
+   Roman 2026-07-05. */
+#zoomBookContainer.cine-cover .book-front .book-cover-authored,
+.library-book.cine-cover .book-front .book-cover-authored {
+    inset: -1px !important;
+    width: calc(100% + 2px) !important;
+    height: calc(100% + 2px) !important;
+    border-radius: 0 !important;
 }
 #zoomBookContainer.cine-cover .cover-working-label {
     font-family: 'Lora', serif;
@@ -15140,10 +15157,14 @@ textarea.fate-field {
     z-index: 6;
     pointer-events: none;
     display: block;
-    /* No shadow/glow on the gold triangle (Roman 2026-07-05) — the drop-shadow
-       was removed so the triangle reads as a clean flat gold silhouette in front
-       of the cover art. */
+    /* No shadow/glow on the gold triangle (Roman 2026-07-05) — drop-shadow AND
+       box-shadow removed so the triangle reads as a clean flat gold silhouette in
+       front of the cover art. box-shadow matters because the zoom applies a
+       rectangular 0 8px 40px shadow to every .book-front img (styles.css ~8841);
+       on the transparent triangle PNG that rectangle cast a hard horizontal
+       shadow line right above the triangle's apex. */
     filter: none;
+    box-shadow: none;
 }
 /* Empty src → hide (avoids the broken-image icon while JS hasn't yet
    set the artist-specific source). Specificity matched to the
