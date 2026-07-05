@@ -7235,6 +7235,23 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
     border-radius: 4px 2px 2px 4px;
     display: block;
 }
+
+/* Cover-pending: an authored cover file is missing/renamed — the JS onerror handler
+   (_onCoverImgError) hides the broken <img> and adds this class so the book shows a clean
+   GENERIC PLACEHOLDER instead of a broken-image icon. Literary → white cover + gold spine;
+   CG already gets the cine white-cover + gold triangle from its own .cine-cover rules. */
+.library-book.cover-pending .book-front {
+    background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%) !important;
+}
+.library-book.cover-pending .book-spine {
+    background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%) !important;
+}
+.library-book.cover-pending .book-front-text,
+.library-book.cover-pending .book-front-title,
+.library-book.cover-pending .book-front-author,
+.library-book.cover-pending .book-front-subtitle {
+    color: #3a2f1a !important; /* dark ink — readable on the white cover */
+}
 /* Text-based front cover (when no cover image) */
 .book-front-text {
     text-align: center;
