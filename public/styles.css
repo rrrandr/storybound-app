@@ -7252,6 +7252,22 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .library-book.cover-pending .book-front-subtitle {
     color: #3a2f1a !important; /* dark ink — readable on the white cover */
 }
+
+/* Zoomed view: the .book-3d is MOVED out of its .library-book into #zoomBookContainer,
+   so the placeholder class is forwarded onto the container (see _openLibraryZoom). Mirror
+   the same white-cover + gold-spine + dark-ink placeholder here. */
+#zoomBookContainer.cover-pending .book-front {
+    background: linear-gradient(170deg, #faf8f3 0%, #f2ede5 50%, #ece7dd 100%) !important;
+}
+#zoomBookContainer.cover-pending .book-spine {
+    background: linear-gradient(180deg, #c89a3e 0%, #d4a843 35%, #e2bf5e 50%, #d4a843 65%, #b8862a 100%) !important;
+}
+#zoomBookContainer.cover-pending .book-front-text,
+#zoomBookContainer.cover-pending .book-front-title,
+#zoomBookContainer.cover-pending .book-front-author,
+#zoomBookContainer.cover-pending .book-front-subtitle {
+    color: #3a2f1a !important;
+}
 /* Text-based front cover (when no cover image) */
 .book-front-text {
     text-align: center;
