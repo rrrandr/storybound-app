@@ -38536,3 +38536,15 @@ body.sb-reader-mode .sb-reader-banner { display: block; }
 body.sb-reader-mode .sb-reader-controls {
   display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin: 10px auto 4px;
 }
+
+/* INTERACTION CANON — story-wide LAWS (Roman 2026-07-06). cardsDisabled + previousDisabled. */
+body.ic-cards-disabled #metaControls,
+body.ic-cards-disabled #fateCardWhisper,
+body.ic-cards-disabled #fateCardHeader,
+body.ic-cards-disabled #cardMount,
+body.ic-cards-disabled #fateOwnHandsLabel,
+body.ic-cards-disabled #fateSpecialCards { display: none !important; }
+body.ic-no-previous #prevPageBtn,
+body.ic-no-previous #gnPrevPageBtn,
+body.ic-no-previous #coverPageBtn,
+body.ic-no-previous #gnCoverPageBtn { display: none !important; }
