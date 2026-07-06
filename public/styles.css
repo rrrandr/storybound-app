@@ -9118,6 +9118,23 @@ body:has(#gnReader:not(.hidden)) #modelCompareToggle {
     height: 100% !important;
     border-radius: 0 !important;
 }
+/* Authored cine BACK cover — same white-outline fix as the front. The back has
+   the identical 1px border (cream .book-back background showing through) that
+   ringed the art. Drop it when the back carries an image overlay so the art runs
+   edge-to-edge. Roman 2026-07-05. */
+#zoomBookContainer.cine-cover .book-back:has(.back-content-overlay),
+.library-book.cine-cover .book-back:has(.back-content-overlay) {
+    border: 0 !important;
+    background: transparent !important;
+}
+/* Glass House back — nudge the synopsis up ~100px (14.6cqh of the back's height,
+   which is a size container) so it sits above the crowd, clear of the gold
+   triangle at the bottom. Scoped to Glass House (shelf + the story-id-stamped
+   zoom container). Roman 2026-07-05. */
+.library-book[data-story-id="starter_glass_house"] .back-content-overlay .back-synopsis-box,
+#zoomBookContainer[data-story-id="starter_glass_house"] .back-content-overlay .back-synopsis-box {
+    transform: translateY(-14.6cqh);
+}
 #zoomBookContainer.cine-cover .cover-working-label {
     font-family: 'Lora', serif;
     font-size: 1em;
