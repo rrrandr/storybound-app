@@ -7832,23 +7832,36 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .back-content-overlay {
     position: absolute;
     inset: 0;
-    padding: 19% 7.6% 0;
+    padding: 12% 9%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;   /* centered over the artwork — no baked plaque to hug */
 }
-/* Baked art backs: synopsis floats over the PNG's gold rectangle */
+/* Synopsis over back-cover ARTWORK — NO gold panel. Roman 2026-07-05. The gold
+   plaque used to be baked into the back JPG and the text had to be crammed into
+   it; the plaque-free art lets the synopsis float directly over the scene. The
+   box is fully transparent (no panel) and the text carries its OWN legibility: a
+   warm off-white fill + a layered dark halo that hugs each letter so it stands
+   out whether the art behind it is dark or light — no per-image tuning needed. */
 .back-content-overlay .back-synopsis-box {
     background: none;
     box-shadow: none;
     flex: 0 0 auto;
-    margin: 1.4% 5.7%;
+    margin: 0;
+    max-width: 100%;
 }
-/* Per-starter synopsis position tuning */
-[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 31.4%; }
-[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 2.2%; }
-[data-story-id="starter_first_sacrifice"] .back-synopsis { font-size: 3.1cqw; }
+.back-content-overlay .back-synopsis,
+#zoomBookContainer .back-content-overlay .back-synopsis {
+    color: #f7f0e2 !important;
+    font-weight: 600;
+    font-style: italic;
+    text-shadow:
+        0 1px 2px rgba(0,0,0,0.95),
+        0 0 5px rgba(0,0,0,0.9),
+        0 0 12px rgba(0,0,0,0.8),
+        0 0 24px rgba(0,0,0,0.6);
+}
 /* Text-only back covers need padding */
 .back-content:not(.back-content-overlay) {
     padding: 10.9% 11.4%;
