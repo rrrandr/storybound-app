@@ -196,6 +196,21 @@ export default async function handler(req, res) {
               ? 'stripe_subscription_id_mismatch'
               : 'stripe_subscription_id_unset',
           });
+          // Best-effort ledger credit row (audit only — NEVER block the repair on this).
+          try {
+            const { error: ledErr } = await supabase.from('fortune_ledger').insert({
+              user_id: userId,
+              amount: grantAmount,
+              direction: 'credit',
+              context: 'subscription',
+              balance_after: newBalance,
+              source_endpoint: 'verify-subscription',
+              metadata: { repair: 'missed_subscription_grant', subscription_id: activeSub.id, tier: expectedTier },
+            });
+            if (ledErr) console.warn('[verify-subscription] repair credit ledger insert failed (non-fatal):', ledErr.message);
+          } catch (e) {
+            console.warn('[verify-subscription] repair credit ledger insert threw (non-fatal):', e.message);
+          }
           // Reflect the post-update state on the profile object for
           // downstream pending-intent checks.
           profile.fortunes = newBalance;

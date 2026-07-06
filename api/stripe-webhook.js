@@ -304,6 +304,23 @@ export default async function handler(req, res) {
         throw new Error(`legacy fortune credit: ${legacyErr.message}`);
       }
       console.warn(`[stripe-webhook] Legacy credit (no intent_id) +${fortunesDelta}F to ${supabaseUserId}`);
+      // Best-effort ledger credit row (audit only — NEVER block fulfillment on this).
+      // The modern intent path already ledgers via grant_purchase_fortunes; this closes
+      // the rare no-intent gap so every credit is recorded.
+      try {
+        const { error: ledErr } = await supabase.from('fortune_ledger').insert({
+          user_id: supabaseUserId,
+          amount: fortunesDelta,
+          direction: 'credit',
+          context: updates.is_subscriber ? 'subscription' : 'fortune_pack',
+          balance_after: current + fortunesDelta,
+          source_endpoint: 'stripe-webhook',
+          metadata: { legacy_no_intent: true, tier: updates.subscription_tier || null },
+        });
+        if (ledErr) console.warn('[stripe-webhook] legacy credit ledger insert failed (non-fatal):', ledErr.message);
+      } catch (e) {
+        console.warn('[stripe-webhook] legacy credit ledger insert threw (non-fatal):', e.message);
+      }
     }
 
     // Subscription / customer metadata — applied UNCONDITIONALLY (not gated on
