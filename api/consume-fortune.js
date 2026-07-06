@@ -10,10 +10,17 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { userId, amount, context, operationId } = req.body || {};
+  const { userId, amount, context, operationId, storyId, sceneIdx, metadata } = req.body || {};
   if (!userId) return res.status(400).json({ error: 'userId required' });
-  const burnAmount = parseInt(amount, 10) || 1;
-  if (burnAmount < 1) return res.status(400).json({ error: 'amount must be >= 1' });
+
+  // FAIL LOUD — never silently default a bad price to 1F. The old `parseInt(amount,10) || 1`
+  // turned every missing/NaN/0 amount into an invisible 1-Fortune charge (untraceable, no audit).
+  // Reject instead: an invalid amount is a caller bug, not a charge.
+  const burnAmount = Number(amount);
+  if (!Number.isInteger(burnAmount) || burnAmount <= 0) {
+    console.warn(`[consume-fortune] REJECTED invalid amount=${JSON.stringify(amount)} user=${userId} context=${context || 'none'} story=${storyId || 'none'} scene=${sceneIdx ?? 'none'}`);
+    return res.status(400).json({ error: 'invalid_amount', detail: 'amount must be a positive integer' });
+  }
 
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -58,7 +65,15 @@ export default async function handler(req, res) {
   }
 
   const { data: rpcResult, error: rpcErr } = await supabase
-    .rpc('consume_fortunes_v2', { p_user_id: userId, p_amount: burnAmount });
+    .rpc('consume_fortunes_v2', {
+      p_user_id: userId,
+      p_amount: burnAmount,
+      p_context: context || null,
+      p_story_id: storyId || null,
+      p_scene_idx: Number.isInteger(sceneIdx) ? sceneIdx : null,
+      p_source_endpoint: 'consume-fortune',
+      p_metadata: (metadata && typeof metadata === 'object') ? metadata : {},
+    });
 
   if (rpcErr) {
     console.error('[consume-fortune] RPC failed:', rpcErr);
