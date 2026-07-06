@@ -16,12 +16,12 @@
       "text": "Hawkeye travels with Logan as guide and road-partner",
       "unique": false,
       "preserve": ["the one who pulls Logan back into the world", "road partner / logistics", "comic-relief foil"],
-      "successors": ["another traveler who needs escort", "a dying messenger carrying the same errand", "one of Hawkeye's own people"] },
+      "successors": ["Ashley Barton / Spider (Hawkeye's daughter — canon, same road-guide function)", "a surviving old-world hero who knows the wasteland roads", "a dying messenger carrying the same errand"] },
     { "id": "final_antagonist", "kind": "role", "lifespan": "long_arc", "initiallyTrue": true, "confidence": 0.88,
       "text": "Red Skull rules the American wasteland — the endgame antagonist Logan is driven toward",
       "unique": "maybe",
       "preserve": ["fascist inheritor of the American myth", "old sins ruling the present"],
-      "successors": ["a surviving lieutenant (Baron Zemo)", "the Skull's chief enforcer", "an heir or clone", "a warlord who seizes New Babylon", "an ideological successor finishing the Skull's vision"] }
+      "successors": ["Baron Zemo (surviving lieutenant — canon)", "the Skull's chief enforcer", "an heir or clone raised to the throne", "a warlord who seizes New Babylon"] }
   ],
   "beats": [
     { "beatIndex": 1, "act": 1, "produces": ["rent_deadline_active"], "obligations": { "must": ["Logan refuses to fight", "the Hulk Gang sets a rent deadline"], "should": ["the gang mocks him", "Maureen present and afraid"] },
