@@ -38501,3 +38501,38 @@ body.famous-fate-active .modality-btn--literary { margin: 0 auto; }
 .famous-fate-radio span { flex: 1 1 auto; min-width: 0; }
 .famous-fate-radio input { accent-color: #c9a85c; flex: 0 0 auto; width: 15px; height: 15px; margin: 0; }
 .famous-fate-radio em { color: #c9a85c; font-style: italic; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   READER MODE (Roman 2026-07-06) — a flashback is READ, not PLAYED. A MODE
+   SWITCH (not a grey-out): hide every affordance that would change what's
+   happening; show a "Memory" banner + witness-only nav. Toggle: body.sb-reader-mode.
+   ───────────────────────────────────────────────────────────────────────── */
+body.sb-reader-mode #metaControls,
+body.sb-reader-mode .say-do-grid,
+body.sb-reader-mode #saveBtn,
+body.sb-reader-mode #submitBtn,
+body.sb-reader-mode #fateCardWhisper,
+body.sb-reader-mode #fateCardHeader,
+body.sb-reader-mode #cardMount,
+body.sb-reader-mode #fateOwnHandsLabel,
+body.sb-reader-mode #fateSpecialCards,
+body.sb-reader-mode #gameIntensity,
+body.sb-reader-mode #gameGodModeBtn,
+body.sb-reader-mode #godModeToggle,
+body.sb-reader-mode #controlPlane { display: none !important; }
+
+.sb-reader-banner {
+  display: none;
+  max-width: 600px; margin: 14px auto 6px; padding: 12px 18px; text-align: center;
+  border: 1px solid rgba(212,175,110,.45); border-radius: 10px;
+  background: linear-gradient(180deg, rgba(24,20,30,.9), rgba(14,12,18,.9));
+  box-shadow: 0 8px 28px rgba(0,0,0,.45);
+}
+body.sb-reader-mode .sb-reader-banner { display: block; }
+.sb-reader-banner .srb-kicker { font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: #d4af6e; }
+.sb-reader-banner .srb-sub { margin-top: 4px; font-size: 13px; font-style: italic; color: #b9ad97; opacity: .85; }
+
+.sb-reader-controls { display: none; }
+body.sb-reader-mode .sb-reader-controls {
+  display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin: 10px auto 4px;
+}
