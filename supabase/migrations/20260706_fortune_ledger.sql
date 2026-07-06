@@ -95,8 +95,11 @@ BEGIN
 
   v_after := v_fortunes - p_amount;
 
+  -- Assign the pre-computed value (not `fortunes - p_amount`): the RETURNS TABLE output
+  -- column is also named `fortunes`, so the bare RHS is ambiguous (42702). Safe under the
+  -- FOR UPDATE lock held above.
   UPDATE public.profiles
-     SET fortunes = fortunes - p_amount
+     SET fortunes = v_after
      WHERE id = p_user_id;
 
   -- Atomic audit: same transaction as the decrement. If this insert fails, the
