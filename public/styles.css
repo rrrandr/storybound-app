@@ -38407,3 +38407,42 @@ body.famous-fate-active .modality-btn--literary { margin: 0 auto; }
 .famous-fate-radio span { flex: 1 1 auto; min-width: 0; }
 .famous-fate-radio input { accent-color: #c9a85c; flex: 0 0 auto; width: 15px; height: 15px; margin: 0; }
 .famous-fate-radio em { color: #c9a85c; font-style: italic; }
+
+/* ═══ EDITOR MODE — internal editorial notebook (Roman 2026-07-06). All scoped under body.editor-mode
+   or .em-* so normal readers (who never get the class / injected nodes) see nothing. ═══ */
+body.editor-mode #storyPagesContainer p[data-paragraph-id] { position: relative; }
+body.editor-mode #storyPagesContainer p[data-em-tags]::before {
+  content: attr(data-em-tags); position: absolute; left: -2.3em; top: 0.15em;
+  font-size: 0.78em; line-height: 1.4; white-space: nowrap; letter-spacing: -1px; opacity: 0.92; pointer-events: none;
+}
+body.editor-mode #storyPagesContainer p.em-has { box-shadow: inset 2px 0 0 rgba(201, 162, 78, 0.85); }
+body.editor-mode #storyPagesContainer p.em-noted { box-shadow: inset 3px 0 0 #c9a24e; }
+body.editor-mode #storyPagesContainer p.em-flash { background: rgba(201, 162, 78, 0.18); transition: background 0.15s ease; border-radius: 2px; }
+@media (prefers-reduced-motion: reduce) { body.editor-mode #storyPagesContainer p.em-flash { transition: none; } }
+
+.em-bar { position: fixed; bottom: 14px; left: 14px; z-index: 99998; display: flex; align-items: center; gap: 8px;
+  padding: 6px 10px; background: rgba(20, 21, 26, 0.92); color: #EAE7DF; border: 1px solid rgba(201, 162, 78, 0.4);
+  border-radius: 20px; font: 600 12px/1 -apple-system, system-ui, sans-serif; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35); }
+.em-bar.hidden, .em-sheet.hidden { display: none; }
+.em-bar .em-dot { width: 7px; height: 7px; border-radius: 50%; background: #c9a24e; box-shadow: 0 0 6px #c9a24e; }
+.em-bar .em-label { letter-spacing: 0.08em; text-transform: uppercase; font-size: 10px; color: #c9a24e; }
+.em-bar .em-export { background: none; border: 1px solid rgba(234, 231, 223, 0.25); color: #EAE7DF; border-radius: 12px; padding: 3px 10px; font: inherit; cursor: pointer; }
+.em-bar .em-export:hover, .em-bar .em-export:focus-visible { border-color: #c9a24e; color: #c9a24e; outline: none; }
+
+.em-sheet { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 99999;
+  width: min(520px, calc(100vw - 28px)); background: #16171c; color: #EAE7DF; border: 1px solid rgba(201, 162, 78, 0.45);
+  border-radius: 14px; padding: 14px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); font: 14px/1.4 -apple-system, system-ui, sans-serif; }
+.em-sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.em-sheet-loc { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #c9a24e; }
+.em-x { background: none; border: none; color: #9a968c; font-size: 22px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.em-x:hover, .em-x:focus-visible { color: #EAE7DF; outline: none; }
+.em-snip { font-style: italic; color: #a4a096; font-size: 13px; margin-bottom: 10px; max-height: 3.2em; overflow: hidden; }
+.em-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.em-chip { display: inline-flex; align-items: center; gap: 5px; background: rgba(234, 231, 223, 0.06);
+  border: 1px solid rgba(234, 231, 223, 0.14); color: #EAE7DF; border-radius: 16px; padding: 5px 10px; font: 12.5px/1 -apple-system, system-ui, sans-serif; cursor: pointer; transition: border-color 0.12s, background 0.12s; }
+.em-chip:hover, .em-chip:focus-visible { border-color: rgba(201, 162, 78, 0.6); outline: none; }
+.em-chip.on { background: rgba(201, 162, 78, 0.16); border-color: #c9a24e; color: #f0e6cf; }
+.em-chip .em-k { display: inline-flex; width: 16px; height: 16px; align-items: center; justify-content: center; background: rgba(201, 162, 78, 0.25); border-radius: 4px; font-size: 10px; font-weight: 700; color: #c9a24e; }
+.em-note { width: 100%; box-sizing: border-box; min-height: 54px; resize: vertical; background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(234, 231, 223, 0.14); border-radius: 8px; color: #EAE7DF; padding: 8px 10px; font: 13.5px/1.4 -apple-system, system-ui, sans-serif; }
+.em-note:focus { outline: none; border-color: #c9a24e; }
