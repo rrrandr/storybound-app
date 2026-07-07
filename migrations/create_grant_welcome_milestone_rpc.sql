@@ -10,6 +10,13 @@
 -- replays from the orchestrator (multi-tab, retried requests, etc).
 --
 -- Run in the Supabase SQL editor AFTER 20260504_unify_fortunes.sql.
+--
+-- 2026-07-07 FIX (42702 "column reference \"fortunes\" is ambiguous"): the OUT column
+-- `fortunes` declared by RETURNS TABLE collides with the profiles.fortunes column, so the
+-- RHS `fortunes + v_grant_amount` was ambiguous at runtime and EVERY grant 500'd (welcome
+-- fortunes silently failing in prod). Fix: use the local v_fortunes (the FOR UPDATE-locked
+-- pre-grant balance) on the RHS. This file is CREATE OR REPLACE — re-run it in the Supabase
+-- SQL editor to repair the deployed function.
 
 CREATE OR REPLACE FUNCTION public.grant_welcome_milestone(p_user_id uuid, p_milestone text)
 RETURNS TABLE(source text, fortunes int)
@@ -42,13 +49,13 @@ BEGIN
 
   IF p_milestone = 'first_arc' THEN
     UPDATE public.profiles
-       SET fortunes = fortunes + v_grant_amount,
+       SET fortunes = v_fortunes + v_grant_amount,   -- v_fortunes (local), not the ambiguous bare `fortunes`
            welcome_first_arc_granted = true
        WHERE id = p_user_id
          AND welcome_first_arc_granted = false;
   ELSIF p_milestone = 'day2' THEN
     UPDATE public.profiles
-       SET fortunes = fortunes + v_grant_amount,
+       SET fortunes = v_fortunes + v_grant_amount,   -- v_fortunes (local), not the ambiguous bare `fortunes`
            welcome_day2_granted = true
        WHERE id = p_user_id
          AND welcome_day2_granted = false;
