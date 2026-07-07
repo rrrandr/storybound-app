@@ -7832,23 +7832,36 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .back-content-overlay {
     position: absolute;
     inset: 0;
-    padding: 19% 7.6% 0;
+    padding: 12% 9%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;   /* centered over the artwork — no baked plaque to hug */
 }
-/* Baked art backs: synopsis floats over the PNG's gold rectangle */
+/* Synopsis over back-cover ARTWORK — NO gold panel. Roman 2026-07-05. The gold
+   plaque used to be baked into the back JPG and the text had to be crammed into
+   it; the plaque-free art lets the synopsis float directly over the scene. The
+   box is fully transparent (no panel) and the text carries its OWN legibility: a
+   warm off-white fill + a layered dark halo that hugs each letter so it stands
+   out whether the art behind it is dark or light — no per-image tuning needed. */
 .back-content-overlay .back-synopsis-box {
     background: none;
     box-shadow: none;
     flex: 0 0 auto;
-    margin: 1.4% 5.7%;
+    margin: 0;
+    max-width: 100%;
 }
-/* Per-starter synopsis position tuning */
-[data-story-id="starter_the_first_taste"] .back-content-overlay { padding-top: 31.4%; }
-[data-story-id="starter_first_sacrifice"] .back-content-overlay { padding-top: 2.2%; }
-[data-story-id="starter_first_sacrifice"] .back-synopsis { font-size: 3.1cqw; }
+.back-content-overlay .back-synopsis,
+#zoomBookContainer .back-content-overlay .back-synopsis {
+    color: #f7f0e2 !important;
+    font-weight: 600;
+    font-style: italic;
+    text-shadow:
+        0 1px 2px rgba(0,0,0,0.95),
+        0 0 5px rgba(0,0,0,0.9),
+        0 0 12px rgba(0,0,0,0.8),
+        0 0 24px rgba(0,0,0,0.6);
+}
 /* Text-only back covers need padding */
 .back-content:not(.back-content-overlay) {
     padding: 10.9% 11.4%;
@@ -8093,6 +8106,24 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 [data-world="post-apocalyptic"] .book-spine {
     background: linear-gradient(180deg, #1a1a16, #2a2518);
     border-left: 1px solid rgba(140, 120, 60, 0.25);
+}
+
+/* ── Famous Fate — GOLD spine (not the default brown leather). Roman 2026-07-05.
+   Fires on the shelf (.library-book carries data-story-id) AND in the zoom
+   (#zoomBookContainer is stamped with the story-id in _openLibraryZoom, since
+   only .book-3d — which has no id — moves into the overlay). !important beats the
+   base brown .book-spine + any [data-world] spine. Dark spine text for contrast
+   on gold (the default spine-text is gold = unreadable on a gold spine). ── */
+.library-book[data-story-id="starter_famous_fate"] .book-spine,
+#zoomBookContainer[data-story-id="starter_famous_fate"] .book-spine {
+    background: linear-gradient(180deg, #f6e5a0 0%, #d8b154 46%, #b58a30 100%) !important;
+    border-left: 1px solid rgba(201, 168, 76, 0.45);
+}
+.library-book[data-story-id="starter_famous_fate"] .book-spine .spine-text,
+.library-book[data-story-id="starter_famous_fate"] .book-spine .spine-author,
+#zoomBookContainer[data-story-id="starter_famous_fate"] .book-spine .spine-text,
+#zoomBookContainer[data-story-id="starter_famous_fate"] .book-spine .spine-author {
+    color: #2a1d0e !important;
 }
 
 /* ── Collector's Edition spine (rare, long-form stories) ── */
@@ -9062,6 +9093,47 @@ body:has(#gnReader:not(.hidden)) #modelCompareToggle {
     bottom: -1px;
     width: calc(100% + 2px);
     max-height: 22%;
+    /* Kill the generic zoom-img rectangular box-shadow (#zoomBookContainer
+       .book-front img, ~8841) on the transparent triangle PNG — it cast a hard
+       horizontal shadow line above the triangle. This selector's #id outweighs
+       that rule. Roman 2026-07-05. */
+    box-shadow: none;
+}
+/* Authored cine cover fills the whole face with NO thin white/cream outline.
+   Roman 2026-07-05 (v2). The ring is .book-front's 1px border: it's
+   rgba(0,0,0,0.06) over the CREAM cover background, so it reads as a near-white
+   line, and .book-front's overflow:hidden clips the cover <img> to INSIDE that
+   border — so extending the img can't cover it. Fix: drop the border entirely
+   when an authored cover is present (the img is the whole face anyway), and keep
+   the img flush to the edges. overflow:hidden + border-radius still round the
+   corners cleanly. !important overrides the inline inset:0/100% + the base border. */
+#zoomBookContainer.cine-cover .book-front:has(.book-cover-authored[src]:not([src=""])),
+.library-book.cine-cover .book-front:has(.book-cover-authored[src]:not([src=""])) {
+    border: 0 !important;
+}
+#zoomBookContainer.cine-cover .book-front .book-cover-authored,
+.library-book.cine-cover .book-front .book-cover-authored {
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 0 !important;
+}
+/* Authored cine BACK cover — same white-outline fix as the front. The back has
+   the identical 1px border (cream .book-back background showing through) that
+   ringed the art. Drop it when the back carries an image overlay so the art runs
+   edge-to-edge. Roman 2026-07-05. */
+#zoomBookContainer.cine-cover .book-back:has(.back-content-overlay),
+.library-book.cine-cover .book-back:has(.back-content-overlay) {
+    border: 0 !important;
+    background: transparent !important;
+}
+/* Glass House back — nudge the synopsis up ~100px (14.6cqh of the back's height,
+   which is a size container) so it sits above the crowd, clear of the gold
+   triangle at the bottom. Scoped to Glass House (shelf + the story-id-stamped
+   zoom container). Roman 2026-07-05. */
+.library-book[data-story-id="starter_glass_house"] .back-content-overlay .back-synopsis-box,
+#zoomBookContainer[data-story-id="starter_glass_house"] .back-content-overlay .back-synopsis-box {
+    transform: translateY(-14.6cqh);
 }
 #zoomBookContainer.cine-cover .cover-working-label {
     font-family: 'Lora', serif;
@@ -15140,7 +15212,18 @@ textarea.fate-field {
     z-index: 6;
     pointer-events: none;
     display: block;
-    filter: drop-shadow(0 -1px 2px rgba(0, 0, 0, 0.18));
+    /* No shadow/glow on the gold triangle — EVER, on EVERY CGN cover surface
+       (shelf, zoom, in-app #gnBookObject, and any future container), past /
+       present / future. Roman 2026-07-05. !important is deliberate: the shadow
+       came from a GENERIC per-container img rule (e.g. `#zoomBookContainer
+       .book-front img { box-shadow: 0 8px 40px }`, styles.css ~8841) whose #id
+       specificity outweighs this class rule. On the transparent triangle PNG
+       that rectangular box-shadow cast a hard horizontal shadow line above the
+       apex (and drop-shadow filters glowed its edges). !important guarantees no
+       such generic rule — including ones added later — can re-introduce either.
+       The triangle must always read as a clean flat gold silhouette. */
+    filter: none !important;
+    box-shadow: none !important;
 }
 /* Empty src → hide (avoids the broken-image icon while JS hasn't yet
    set the artist-specific source). Specificity matched to the
@@ -15149,6 +15232,17 @@ textarea.fate-field {
 .book-front img.gn-cover-credit-band[src=""],
 .book-back img.gn-cover-credit-band--back:not([src]),
 .book-back img.gn-cover-credit-band--back[src=""] {
+    display: none;
+}
+
+/* Authored cine cover present → hide the working-cover fallback text (working
+   label / title / evolve caption) so it never paints OVER the baked artwork
+   (e.g. Glass House's "GLASS HOUSE" is already in the JPG). Roman 2026-07-05.
+   The master hide at ~14680 only covered #gnBookObject's .cover-book-art, not
+   the shelf/zoom .book-cover-authored img — this closes that gap. Scoped OFF on
+   .cover-pending so a missing/errored cover still degrades to the fallback text. */
+.library-book.cine-cover:not(.cover-pending) .book-front:has(.book-cover-authored[src]:not([src=""])) .cover-book-text,
+#zoomBookContainer.cine-cover:not(.cover-pending) .book-front:has(.book-cover-authored[src]:not([src=""])) .cover-book-text {
     display: none;
 }
 
@@ -38446,3 +38540,50 @@ body.editor-mode #storyPagesContainer p.em-flash { background: rgba(201, 162, 78
 .em-note { width: 100%; box-sizing: border-box; min-height: 54px; resize: vertical; background: rgba(0, 0, 0, 0.25);
   border: 1px solid rgba(234, 231, 223, 0.14); border-radius: 8px; color: #EAE7DF; padding: 8px 10px; font: 13.5px/1.4 -apple-system, system-ui, sans-serif; }
 .em-note:focus { outline: none; border-color: #c9a24e; }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   READER MODE (Roman 2026-07-06) — a flashback is READ, not PLAYED. A MODE
+   SWITCH (not a grey-out): hide every affordance that would change what's
+   happening; show a "Memory" banner + witness-only nav. Toggle: body.sb-reader-mode.
+   ───────────────────────────────────────────────────────────────────────── */
+body.sb-reader-mode #metaControls,
+body.sb-reader-mode .say-do-grid,
+body.sb-reader-mode #saveBtn,
+body.sb-reader-mode #submitBtn,
+body.sb-reader-mode #fateCardWhisper,
+body.sb-reader-mode #fateCardHeader,
+body.sb-reader-mode #cardMount,
+body.sb-reader-mode #fateOwnHandsLabel,
+body.sb-reader-mode #fateSpecialCards,
+body.sb-reader-mode #gameIntensity,
+body.sb-reader-mode #gameGodModeBtn,
+body.sb-reader-mode #godModeToggle,
+body.sb-reader-mode #controlPlane { display: none !important; }
+
+.sb-reader-banner {
+  display: none;
+  max-width: 600px; margin: 14px auto 6px; padding: 12px 18px; text-align: center;
+  border: 1px solid rgba(212,175,110,.45); border-radius: 10px;
+  background: linear-gradient(180deg, rgba(24,20,30,.9), rgba(14,12,18,.9));
+  box-shadow: 0 8px 28px rgba(0,0,0,.45);
+}
+body.sb-reader-mode .sb-reader-banner { display: block; }
+.sb-reader-banner .srb-kicker { font-size: 12px; letter-spacing: .3em; text-transform: uppercase; color: #d4af6e; }
+.sb-reader-banner .srb-sub { margin-top: 4px; font-size: 13px; font-style: italic; color: #b9ad97; opacity: .85; }
+
+.sb-reader-controls { display: none; }
+body.sb-reader-mode .sb-reader-controls {
+  display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin: 10px auto 4px;
+}
+
+/* INTERACTION CANON — story-wide LAWS (Roman 2026-07-06). cardsDisabled + previousDisabled. */
+body.ic-cards-disabled #metaControls,
+body.ic-cards-disabled #fateCardWhisper,
+body.ic-cards-disabled #fateCardHeader,
+body.ic-cards-disabled #cardMount,
+body.ic-cards-disabled #fateOwnHandsLabel,
+body.ic-cards-disabled #fateSpecialCards { display: none !important; }
+body.ic-no-previous #prevPageBtn,
+body.ic-no-previous #gnPrevPageBtn,
+body.ic-no-previous #coverPageBtn,
+body.ic-no-previous #gnCoverPageBtn { display: none !important; }
