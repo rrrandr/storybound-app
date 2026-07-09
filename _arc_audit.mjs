@@ -2,6 +2,9 @@
 const SOURCE = process.argv[2] || 'Old Man Logan (2008)';
 const EMBODY = process.argv[3] || 'Logan';
 const CTX = 'READER EMBODIES: ' + EMBODY;
+let FLAGS = {};
+function docLane(){let l='';if(FLAGS.isMyth)l+=" SOURCE IS MYTH/LEGEND with multiple VARIANT traditions and NO single canonical text: give the COMMON-CORE narrative as the spine, and where famous traditions DIVERGE (Ovid vs Virgil) NAME the tradition for that beat rather than blending. Do NOT invent connective tissue and present it as canon. Prefer the common core.";if(FLAGS.isSacred)l+=" SOURCE IS RELIGIOUS/SACRED NARRATIVE: describe strictly what happens IN THE NARRATIVE as a story. Do NOT assert theological truth, adjudicate doctrine, or use 'this proves / God means / the true message is' language; use 'in the narrative' framing. If canonical/denominational versions differ, note it neutrally. Narrative source, never doctrinal.";if(FLAGS.interiorityHeavy)l+=" SOURCE IS INTERIORITY-DRIVEN: its spine is INTERNAL. Include load-bearing INTERNAL beats — hesitations, self-deceptions, moral reckonings, recognitions, decisions NOT to act, perception revised — not only external plot. The internal turns ARE the canon.";return l;}
+function beatLane(){let l='';if(FLAGS.interiorityHeavy)l+='\n• INCLUDE INTERNAL BEATS: alongside external events, list load-bearing hesitations, soliloquies/monologues, recognitions, reversals, moral/psychological turns, and any DECISION-NOT-TO-ACT that is canonically load-bearing. An internal turn can BE the beat.';if(FLAGS.isMyth)l+='\n• MYTH/VARIANT: give COMMON-CORE beats; where versions diverge NAME the tradition on that beat rather than blending; do NOT invent connective tissue as canon.';if(FLAGS.isSacred)l+='\n• SACRED: describe what happens IN THE NARRATIVE; no theological assertion, no doctrine, in-the-text framing.';return l;}
 const BASE = 'http://localhost:3000';
 
 async function grokJSON(sys, usr, { reasoning = false, maxTokens = 2000 } = {}) {
@@ -22,17 +25,18 @@ async function grokJSON(sys, usr, { reasoning = false, maxTokens = 2000 } = {}) 
 }
 
 async function scope() {
-  const sys = 'You are a canon SCOPE auditor. For the work "' + SOURCE + '", measure HOW MUCH STORY EXISTS — SIZE, kept SEPARATE from dramatic structure (a 3-act film, an 8-chapter comic, and a 900-page novel can share identical structure at wildly different sizes). Report the REAL published work; do NOT collapse a long serialized saga to fit "3 acts". Output ONLY {"medium":..., "serialization":{...}, "scopeSignals":{...}} — no prose, no fences.\n'
-    + '• medium: "comic" | "graphic_novel" | "film" | "tv_series" | "novel" | "novella" | "short_story" | "game" | "other".\n'
-    + '• serialization: { "isNative": true ONLY if the SOURCE was published in discrete installments readers experienced as UNITS (comic issues/chapters, TV episodes, novel volumes/parts) — false for a single film or a single unchaptered manuscript; "unit": "comic_issue"|"chapter"|"episode"|"volume"|"part"|"book"|"none"; "count": how many such installments in the WHOLE work (integer, e.g. Old Man Logan = 8 issues); "unitLabel": the reader-facing word ("Chapter"|"Issue"|"Episode"|"Part") }.\n'
+  const sys = 'You are a canon SCOPE auditor. For the work "' + SOURCE + '", measure HOW MUCH STORY EXISTS — SIZE, kept SEPARATE from dramatic structure (a 3-act film, an 8-chapter comic, and a 900-page novel can share identical structure at wildly different sizes). Report the REAL published work; do NOT collapse a long serialized saga to fit "3 acts". Output ONLY {"medium":..., "serialization":{...}, "scopeSignals":{...}, "sourceClass":{...}} — no prose, no fences.\n'
+    + '• medium: "comic" | "graphic_novel" | "film" | "tv_series" | "novel" | "novella" | "short_story" | "game" | "play" | "myth" | "scripture" | "other". Use "play" for stage drama; "myth" for myth/legend/folklore with no single authored text; "scripture" for religious/sacred narrative.\n'
+    + '• serialization: { "isNative": true ONLY if the SOURCE was published in discrete installments readers experienced as UNITS (comic issues/chapters, TV episodes, novel volumes/parts, AND a PLAY\'s ACTS — a 5-act play is native, count 5, unit "act") — false for a single film or a single unchaptered manuscript; "unit": "comic_issue"|"chapter"|"episode"|"volume"|"part"|"book"|"act"|"none"; "count": how many such installments in the WHOLE work (integer, e.g. Old Man Logan = 8 issues); "unitLabel": the reader-facing word ("Chapter"|"Issue"|"Episode"|"Part") }.\n'
     + '• scopeSignals: { "totalPages": comic/prose page count or null; "pagesPerUnit": pages per installment or null; "runtimeMinutes": film/TV total runtime or null; "wordCount": approx or null; "majorEvents": count of MAJOR narrative events across the WHOLE work; "sequences": distinct set-pieces or null; "povShifts": null unless multi-POV novel; "locationShifts": major location changes or null; "confidence": 0..1 }.\n'
+    + '• sourceClass: { "interiorityHeavy": true if the SPINE is internal (hesitation, self-deception, moral reckoning, perception revised) more than external action (Hamlet, Pride & Prejudice); "isMyth": true for myth/legend in multiple VARIANT traditions with no single text; "isSacred": true for religious/scriptural narrative }.\n'
     + '• For NOVELS page count is a WEAK predictor — put your real signal in majorEvents/sequences/povShifts.';
   const usr = CTX + '\nSOURCE WORK: ' + SOURCE + '\n\nOutput the canon scope object now.';
   return grokJSON(sys, usr, { reasoning: false, maxTokens: 900 });
 }
 
 async function canonDocument() {
-  const sys = 'You have deep knowledge of the work "' + SOURCE + '". Write a THOROUGH, CONCRETE plot summary of the ENTIRE work, in order, installment by installment. Include the SPECIFIC load-bearing canon events — the key reveals, the personal/tragic beats, deaths, betrayals, the TRIGGER that sets up the climax, and the ACTUAL resolution — naming names and places. Do NOT give a vague overview or a generic "they travel and face dangers"; a faithful adaptation will be built from this, so the specific irreversible beats matter most. 400-700 words. PROSE, not JSON, no fences.';
+  const sys = 'You have deep knowledge of the work "' + SOURCE + '". Write a THOROUGH, CONCRETE plot summary of the ENTIRE work, in order, installment by installment. Include the SPECIFIC load-bearing canon events — the key reveals, the personal/tragic beats, deaths, betrayals, the TRIGGER that sets up the climax, and the ACTUAL resolution — naming names and places. Do NOT give a vague overview or a generic "they travel and face dangers"; a faithful adaptation will be built from this, so the specific irreversible beats matter most. 400-700 words. PROSE, not JSON, no fences.' + docLane();
   const usr = CTX + '\nSOURCE: ' + SOURCE + '\n\nWrite the canon plot document now.';
   const res = await fetch(BASE + '/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }], role: 'SPECIALIST_RENDERER', preferredModel: 'grok-4-1-fast-reasoning', temperature: 0.2, max_tokens: 1400, convId: 'sb-ff-canondoc' }) });
   if (!res.ok) return null;
@@ -63,7 +67,7 @@ async function unitBeats(idx, label, synopsis, doc) {
     + '• Stay STRICTLY inside THIS installment — do NOT include events from earlier or later chapters. If you do not know this specific installment\'s content, return the best-known beats for roughly this position and set "known":false.\n'
     + '• Do NOT converge on a generic road-trip template ("drive → stop at a diner → recognized → refuse to fight → companion questions the pacifism → continue") — that filler is the failure mode. Each installment has DISTINCT canonical content; if this reads like a neighbouring installment you have defaulted to filler. The final installment must be the REAL climax/resolution.\n'
     + '• Each event: {"event":"one clause","weight":"major|minor"}. The LAST event should be the installment\'s turn/cliff.';
-  const usr = CTX + '\nSOURCE: ' + SOURCE + '\n' + L + ': ' + idx + syn + '\n\nOutput EXACTLY: {"events":[{"event":"","weight":"major|minor"}],"known":true}';
+  const usr = CTX + '\nSOURCE: ' + SOURCE + '\n' + L + ': ' + idx + syn + beatLane() + '\n\nOutput EXACTLY: {"events":[{"event":"","weight":"major|minor"}],"known":true}';
   const out = await grokJSON(sys, usr, { reasoning: true, maxTokens: 1600 });
   return (out && Array.isArray(out.events)) ? out.events.filter(e => e && e.event) : [];
 }
@@ -74,7 +78,7 @@ async function movementBeats(m, idx, doc) {
     + '• 4-8 events, each ONE clause; cover the movement\'s own setup→build→turn; do NOT pull earlier/later movements.\n'
     + '• If you lack fine detail, give the best-known load-bearing beats for this stretch and set "known":false.\n'
     + '• Each event: {"event":"one clause","weight":"major|minor"}. LAST = the movement\'s turn/cliff.';
-  const usr = CTX + '\nSOURCE: ' + SOURCE + '\nARC-MOVEMENT ' + idx + ': "' + m.label + '" — ' + m.gist + (doc ? '\n\nCANON PLOT DOCUMENT:\n"""\n' + doc.slice(0, 6000) + '\n"""' : '') + '\n\nOutput EXACTLY: {"events":[{"event":"","weight":"major|minor"}],"known":true}';
+  const usr = CTX + '\nSOURCE: ' + SOURCE + '\nARC-MOVEMENT ' + idx + ': "' + m.label + '" — ' + m.gist + beatLane() + (doc ? '\n\nCANON PLOT DOCUMENT:\n"""\n' + doc.slice(0, 6000) + '\n"""' : '') + '\n\nOutput EXACTLY: {"events":[{"event":"","weight":"major|minor"}],"known":true}';
   const out = await grokJSON(sys, usr, { reasoning: true, maxTokens: 1600 });
   return (out && Array.isArray(out.events)) ? out.events.filter(e => e && e.event) : [];
 }
@@ -83,6 +87,9 @@ async function movementBeats(m, idx, doc) {
   console.log('[ARC-AUDIT] source="' + SOURCE + '" embody="' + EMBODY + '" — plan-only, no scene prose\n');
   const sc = await scope();
   const ser = (sc && sc.serialization) || {};
+  const _sc=(sc&&sc.sourceClass)||{};
+  FLAGS={isPlay:sc.medium==='play',interiorityHeavy:!!_sc.interiorityHeavy||sc.medium==='play',isMyth:!!_sc.isMyth||sc.medium==='myth',isSacred:!!_sc.isSacred||sc.medium==='scripture'};
+  console.log('[SOURCE-CLASS] medium='+sc.medium+' · '+Object.keys(FLAGS).filter(k=>FLAGS[k]).join(', ')+(Object.keys(FLAGS).filter(k=>FLAGS[k]).length?'':'(standard)'));
   let label = ser.unitLabel || 'Chapter';
   let n = Number(ser.count) || 0;
   let synthetic = false;
