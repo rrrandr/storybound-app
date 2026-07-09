@@ -71,6 +71,28 @@ const freshRT = () => W._ffCrossoverRuntimeInit(CX, 24);
   const g = await W._ffCrossoverLongPlayAudit({ crossover: CX, scenes: 10, totalScenes: 24 });
   Object.keys(g.checks).forEach(k => ok('G:' + k, g.checks[k]));
 
+
+  console.log('\n═══ H. CLASSIFIER-GATED BEAT ADVANCE + STALL CAP ═══');
+  // addressed=true → advance immediately, even before the schedule would.
+  const rtH1 = freshRT();
+  W._ffCrossoverTick(rtH1, { sceneIdx: 0, addressed: true });
+  ok('addressed=true advances immediately (idx 1 at scene 0)', rtH1.insertedArc.idx === 1);
+  // addressed=false → HOLD past the schedule, until the stall cap.
+  const rtH2 = freshRT();
+  let heldIdx = 0;
+  for (let sc = 0; sc < rtH2.perBeat + 1; sc++) { W._ffCrossoverTick(rtH2, { sceneIdx: sc, addressed: false }); if (sc === rtH2.perBeat) heldIdx = rtH2.insertedArc.idx; }
+  ok('addressed=false HOLDS past the schedule (still beat 1 at scene perBeat)', heldIdx === 0);
+  ok('addressed=false accrues stalledScenes', rtH2.insertedArc.stalledScenes > 0);
+  // ...but the stall cap eventually FORCE-advances (can never hang).
+  const rtH3 = freshRT();
+  const cap = 2 * rtH3.perBeat + Math.ceil(rtH3.perBeat / 2);
+  for (let sc = 0; sc <= cap + 1; sc++) W._ffCrossoverTick(rtH3, { sceneIdx: sc, addressed: false });
+  ok('stall cap FORCE-advances (idx > 0 even with addressed=false throughout)', rtH3.insertedArc.idx > 0 && rtH3.audit.stallCapForced === true);
+  // undefined addressed → schedule fallback (backward-compatible, keeps A-G semantics).
+  const rtH4 = freshRT();
+  for (let sc = 0; sc < rtH4.perBeat + 1; sc++) W._ffCrossoverTick(rtH4, { sceneIdx: sc });
+  ok('no signal → schedule advance (idx 1 after perBeat scenes)', rtH4.insertedArc.idx === 1);
+
   console.log('\n─────── SUMMARY ───────');
   console.log('PASS ' + pass + '/' + (pass + fail) + (fail ? '  ✗ ' + fails.join(' · ') : '  — ALL GREEN'));
   console.log('API scene generations: 0 · proxy calls: 0 (mocked)');
