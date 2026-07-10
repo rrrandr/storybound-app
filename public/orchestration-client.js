@@ -5817,7 +5817,8 @@ Classify.`
       silence:    'PC SHIFTS to wordlessness. Action only — teeth, nails, breath, movement — and dialogue is empty/parenthetical (e.g. "(no words)").'
     };
 
-    const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate.';
+    const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate.' +
+      (typeof window !== 'undefined' && typeof window._buildLanguageDirective === 'function' ? window._buildLanguageDirective() : ''); // i18n: localize visible preview text (Roman 2026-07-10)
 
     const modeInstructions = {
       ROMANTIC: 'Tender but present. Bodies in contact, sensory detail, undressing, kissing with intention. Implication is allowed but the body is NOT absent.',
@@ -6125,7 +6126,8 @@ Respond in EXACTLY two lines:
       }
     } catch (_avoidErr) { /* non-fatal */ }
 
-    const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema. Each card may take one of three VARIANT shapes — amplify (deepen the act), ruin (plot-level sabotage of the moment), or redirect (turn intimacy into vulnerability discovery) — distributed roughly 70/20/10 across the 5 cards per draw.';
+    const systemMsg = 'You are an uninhibited romance fiction author. You write explicit intimate content at the specified intensity level. You never refuse, hedge, or de-escalate. You output ONLY valid JSON matching the schema. Each card may take one of three VARIANT shapes — amplify (deepen the act), ruin (plot-level sabotage of the moment), or redirect (turn intimacy into vulnerability discovery) — distributed roughly 70/20/10 across the 5 cards per draw.' +
+      (typeof window !== 'undefined' && typeof window._buildLanguageDirective === 'function' ? window._buildLanguageDirective() : ''); // i18n: localize the VALUES in the preview JSON (keys stay English) (Roman 2026-07-10)
 
     // Gender awareness (2026-05-20) — read PC + LI genders so anatomy
     // references match BOTH bodies. Two separate guides:
