@@ -22,7 +22,9 @@ const ALLOWED = new Set([
   // reader-behavior (Phase 2 — accepted if clients emit them)
   'scene_mounted','scene_timing','fate_card_opened','fate_card_closed','fate_card_selected','fate_card_cancelled',
   'petition_fate_opened','petition_fate_submitted','tempt_fate_opened','tempt_fate_submitted',
-  'concierge_opened','concierge_message_submitted','concierge_response_generated','concierge_closed'
+  'concierge_opened','concierge_message_submitted','concierge_response_generated','concierge_closed',
+  // language / multilingual
+  'language_changed'
 ]);
 
 function sb() {

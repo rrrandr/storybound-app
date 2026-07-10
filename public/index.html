@@ -28,7 +28,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/bzl3zth.css">
 
-  <link rel="stylesheet" href="/styles.css?v=20260710-i18n-rtl">
+  <link rel="stylesheet" href="/styles.css?v=20260710-lang-picker">
 </head>
 
 <body class="booting">
@@ -258,7 +258,7 @@
     <div class="vault-sub-title">Account</div>
     <div id="menuAuthSection"></div>
     <button id="menuProfileBtn" class="sb-btn-png sm">Profile</button>
-    <button id="menuLibraryBtn" class="sb-btn-png sm">Library</button>
+    <button id="menuLibraryBtn" class="sb-btn-png sm" data-i18n="library">Library</button>
     <button class="sb-btn-png sm" onclick="window.openTrophyWall()">Achievements</button>
     <button id="treasuryToggleBtn" class="sb-btn-png sm" onclick="window.toggleTreasury()">Treasury</button>
     <div id="treasuryPanel" class="treasury-panel hidden">
@@ -713,6 +713,10 @@
 <div id="legalGate" class="screen hidden">
   <h2 class="pact-title">The Pact of Binding</h2>
   <p class="pact-subtitle hidden" id="pact-subtitle"></p>
+  <div class="pact-language-row" style="text-align:center; margin:2px auto 20px;">
+    <label for="pactLangSelect" data-i18n="language" style="display:block; font-size:0.8em; letter-spacing:0.1em; text-transform:uppercase; opacity:0.75; margin-bottom:6px;">Language</label>
+    <select id="pactLangSelect" class="sb-lang-select" aria-label="Language" style="min-width:220px; max-width:90vw; padding:8px 12px; background:#1a1a1a; color:#eee; border:1px solid var(--gold,#c9a84c); border-radius:6px; font-size:0.95em;"></select>
+  </div>
   <div class="pact-card-row">
     <!-- Card 1: Terms of Service -->
     <div class="pact-card pact-card-tos" data-pact="tos">
@@ -2533,7 +2537,7 @@
 <script src="/orchestration-client.js?v=20260628-opening-temp-tighten"></script>
 <script src="/badgeEngine.js?v=20260609-badge-error-surface"></script>
 <script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
-<script src="/app.js?v=20260710-i18n-rtl"></script>
+<script src="/app.js?v=20260710-lang-picker"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
@@ -2589,6 +2593,11 @@
   <div class="box" style="max-width:450px;">
     <h3>Account Status</h3>
     <div id="profileStatusContent"></div>
+
+    <div class="profile-language-row" style="margin:14px 0 4px;">
+      <label for="profileLangSelect" data-i18n="language" style="display:block; color:var(--gold,#c9a84c); font-size:0.9em; margin-bottom:5px;">Language</label>
+      <select id="profileLangSelect" class="sb-lang-select" aria-label="Language" style="width:100%; box-sizing:border-box; padding:7px 9px; background:#1a1a1a; color:#eee; border:1px solid #555; border-radius:4px; font-size:0.9em;"></select>
+    </div>
 
     <hr style="border-color:var(--gold,#c9a84c); opacity:0.3; margin:18px 0 12px;">
     <h4 style="color:var(--gold,#c9a84c); margin:0 0 4px;">What are you yearning for?</h4>
