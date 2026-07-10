@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Storybound — Beta Observatory (admin)</title>
+<style>
+  :root{ color-scheme:dark; }
+  body{ background:#0e0b07; color:#e8e0d4; font:14px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; margin:0; padding:20px; }
+  h1{ font-size:20px; margin:0 0 4px; color:#e8dcc0; } h2{ font-size:14px; letter-spacing:.08em; text-transform:uppercase; color:#9a8f7d; margin:26px 0 8px; border-bottom:1px solid #2a241b; padding-bottom:4px; }
+  .bar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+  input,select,button{ background:#1a1612; color:#e8e0d4; border:1px solid #3a3228; border-radius:8px; padding:7px 10px; font:inherit; }
+  button{ cursor:pointer; background:#c9a24e; color:#1a1612; font-weight:600; border-color:transparent; }
+  .verdict{ font-size:26px; font-weight:800; padding:14px 20px; border-radius:12px; display:inline-block; margin:6px 0; }
+  .GREEN{ background:#123d1a; color:#7ee08a; } .YELLOW{ background:#3d3312; color:#e8cf6e; } .RED{ background:#3d1212; color:#ff8a8a; } .NEUTRAL{ background:#1a1612; color:#9a8f7d; }
+  .reasons{ color:#c3b8a4; font-size:13px; margin-left:10px; }
+  table{ border-collapse:collapse; width:100%; font-size:13px; }
+  td,th{ text-align:left; padding:5px 10px; border-bottom:1px solid #211c15; vertical-align:top; }
+  th{ color:#9a8f7d; font-weight:600; }
+  .m{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:6px 18px; }
+  .m div{ display:flex; justify-content:space-between; border-bottom:1px dotted #241f17; padding:3px 0; }
+  .m b{ color:#e8dcc0; font-variant-numeric:tabular-nums; }
+  .warn{ color:#e8cf6e; } .fail{ color:#ff8a8a; } .mono{ font-family:ui-monospace,monospace; font-size:12px; color:#b8ad99; }
+  .muted{ color:#6f6555; font-size:12px; } .pill{ background:#211c15; border:1px solid #3a3228; border-radius:20px; padding:2px 9px; font-size:12px; }
+  #err{ color:#ff8a8a; margin:8px 0; } textarea{ width:100%; height:90px; background:#120e0a; color:#b8ad99; border:1px solid #3a3228; border-radius:8px; font-family:ui-monospace,monospace; font-size:11px; }
+</style>
+</head>
+<body>
+<h1>Beta Observatory <span class="muted">— read-only</span></h1>
+<div class="bar">
+  <label>Admin key: <input id="adminKey" type="password" placeholder="ADMIN_BUG_KEY" style="width:220px"></label>
+  <label>Window: <select id="hours"><option value="24">24h</option><option value="48">48h</option><option value="168">7d</option></select></label>
+  <button id="load">Load</button>
+  <span class="muted" id="auto"></span>
+</div>
+<div id="err"></div>
+<div id="report" style="display:none">
+  <div><span id="verdict" class="verdict NEUTRAL">—</span><span id="reasons" class="reasons"></span></div>
+
+  <h2>Last window · metrics</h2>
+  <div class="m" id="metrics"></div>
+
+  <h2>Scene funnel</h2>
+  <table id="funnel"></table>
+
+  <h2>Manual-review queue</h2>
+  <table id="mrq"><thead><tr><th>session</th><th>user</th><th>story</th><th>mode</th><th>maxScene</th><th>reasons</th><th>when</th></tr></thead><tbody></tbody></table>
+
+  <h2>Last 20 warning / error events</h2>
+  <table id="events"><thead><tr><th>when</th><th>event</th><th>mode</th><th>story</th><th>scene</th><th>summary</th></tr></thead><tbody></tbody></table>
+
+  <p class="muted" id="src"></p>
+</div>
+<div id="empty" style="display:none" class="muted">
+  <p>No telemetry in this window — <span class="pill GREEN">GREEN (neutral)</span>. The beta is quiet or events haven't uploaded yet.</p>
+</div>
+<details style="margin-top:24px"><summary class="muted">Local sample (paste _sbBetaExport() JSON to render without the backend)</summary>
+  <textarea id="sample" placeholder='{"events":[...]}'></textarea><button id="loadSample" style="margin-top:6px">Render sample</button>
+</details>
+
+<script>
+const $=id=>document.getElementById(id);
+$('adminKey').value = sessionStorage.getItem('sb_admin_key')||'';
+$('adminKey').addEventListener('change',()=>sessionStorage.setItem('sb_admin_key',$('adminKey').value));
+
+// ── report engine (ported from _beta_report.cjs) ──
+function summarize(sid, evs){
+  const by=n=>evs.filter(e=>e.ev===n);
+  const sorted=evs.slice().sort((a,b)=>a.ts-b.ts);
+  let inferDebit=0;
+  by('fortune_debit_succeeded').filter(e=>(e.p&&e.p.context)==='scene').forEach(d=>{ if(!sorted.some(e=>e.ts>=d.ts&&e.ev==='scene_generation_completed')) inferDebit++; });
+  const s={ sessionId:sid, userIdHash:(evs[0]&&evs[0].uh)||'?', startedAt:evs[0].ts, endedAt:evs[evs.length-1].ts,
+    storyId:(evs.find(e=>e.p&&e.p.storyId)||{p:{}}).p.storyId||null,
+    mode:(evs.find(e=>e.p&&e.p.fateMode)||{p:{}}).p.fateMode||'original',
+    scenesGenerated:by('scene_generation_completed').length,
+    maxSceneReached:Math.max(0,...evs.map(e=>(e.p&&(e.p.sceneIndex||e.p.turnCount))||0)),
+    generationFailures:by('scene_generation_failed').length, stuckSpinnerCount:by('spinner_timeout').length,
+    duplicateSubmitBlocked:by('duplicate_submit_blocked').length,
+    refreshed:by('library_resume_clicked').length>0||by('page_refreshed_resume_attempted').length>0,
+    resumedSuccessfully:by('story_resumed').length>0, resumeFailed:by('page_refreshed_resume_attempted').length>0,
+    previewStopReached:by('preview_stop_shown').length>0, continuationShown:by('continuation_prompt_shown').length>0,
+    continuationAccepted:by('continuation_accepted').length>0, subscriptionLockShown:by('subscription_lock_shown').length>0,
+    fortuneDebits:by('fortune_debit_succeeded').length,
+    debitAnomalies:by('debit_without_scene_detected').length+by('scene_without_expected_debit_detected').length+inferDebit,
+    modeLeakGuard:by('mode_leak_guard_triggered').length+by('stale_flag_suppressed').length,
+    qualityWarnings:by('scene_quality_scan_warn').length, qualityFailures:by('scene_quality_scan_fail').length,
+    inventedProperNouns:evs.filter(e=>/scene_quality_scan/.test(e.ev)).reduce((a,e)=>a.concat((e.p&&e.p.inventedProperNouns)||[]),[]),
+    conciergeQ:by('concierge_message_submitted').length, cardOpens:by('fate_card_opened').length,
+    petitionUses:by('petition_fate_submitted').length, temptUses:by('tempt_fate_submitted').length,
+    abandonedAt:evs[evs.length-1].ev, requiresManualReview:false, manualReviewReasons:[] };
+  const R=s.manualReviewReasons;
+  if(s.generationFailures)R.push('gen_failed'); if(s.stuckSpinnerCount)R.push('stuck_spinner');
+  if(s.debitAnomalies)R.push('debit_anomaly'); if(s.duplicateSubmitBlocked>1)R.push('dup_submit_multiple');
+  if(s.resumeFailed)R.push('resume_failed'); if(s.qualityFailures)R.push('scanner_fail');
+  if(s.inventedProperNouns.length)R.push('invented_nouns'); if(s.conciergeQ>=2)R.push('repeat_concierge');
+  s.requiresManualReview=R.length>0; return s;
+}
+function compute(events){
+  const bySession={}; events.forEach(e=>{ (bySession[e.sid]=bySession[e.sid]||[]).push(e); });
+  const sessions=Object.entries(bySession).map(([sid,evs])=>summarize(sid,evs));
+  const sum=(f)=>sessions.reduce((a,s)=>a+f(s),0);
+  const scenes=sum(s=>s.scenesGenerated), genFail=sum(s=>s.generationFailures), genTot=scenes+genFail;
+  const A={ sessions:sessions.length, users:new Set(sessions.map(s=>s.userIdHash)).size,
+    stories:sessions.filter(s=>s.scenesGenerated>0||s.storyId).length, scenes, genFail,
+    failRate:genTot?genFail/genTot:0, resumeAttempts:sessions.filter(s=>s.refreshed).length,
+    resumeOk:sessions.filter(s=>s.resumedSuccessfully).length, resumeFail:sessions.filter(s=>s.resumeFailed).length,
+    dupBlocked:sum(s=>s.duplicateSubmitBlocked), stuck:sum(s=>s.stuckSpinnerCount), debitAnom:sum(s=>s.debitAnomalies),
+    previewStops:sessions.filter(s=>s.previewStopReached).length, contShown:sessions.filter(s=>s.continuationShown).length,
+    contAccept:sessions.filter(s=>s.continuationAccepted).length, qWarn:sum(s=>s.qualityWarnings), qFail:sum(s=>s.qualityFailures),
+    modeLeak:sum(s=>s.modeLeakGuard), conciergeQ:sum(s=>s.conciergeQ), cardOpens:sum(s=>s.cardOpens),
+    petition:sum(s=>s.petitionUses), tempt:sum(s=>s.temptUses), manual:sessions.filter(s=>s.requiresManualReview) };
+  let verdict='GREEN', reasons=[];
+  if(A.debitAnom>0){verdict='RED';reasons.push(A.debitAnom+' debit anomaly');}
+  if(A.resumeFail>0){verdict='RED';reasons.push(A.resumeFail+' resume failure');}
+  if(A.stuck>0){verdict='RED';reasons.push(A.stuck+' stuck spinner');}
+  if(A.genFail>=2||A.failRate>0.15){verdict='RED';reasons.push('scene fail '+(A.failRate*100).toFixed(1)+'%');}
+  if(verdict!=='RED'&&(A.qWarn||A.qFail||A.genFail||A.dupBlocked||A.manual.length)){ verdict='YELLOW';
+    if(A.qFail)reasons.push(A.qFail+' scanner fail'); if(A.qWarn)reasons.push(A.qWarn+' scanner warn');
+    if(A.genFail)reasons.push(A.genFail+' recoverable gen fail'); if(A.dupBlocked)reasons.push(A.dupBlocked+' dup-submit blocked');
+    if(A.manual.length)reasons.push(A.manual.length+' need review'); }
+  if(!events.length) verdict='NEUTRAL';
+  // scene funnel
+  const reached={}, submitted={};
+  events.forEach(e=>{ const i=e.p&&(e.p.sceneIndex); if(e.ev==='scene_generation_completed'&&i)reached[i]=(reached[i]||0)+1; if(e.ev==='scene_generation_started'&&i)submitted[i]=(submitted[i]||0)+1; });
+  return {A, sessions, verdict, reasons, reached, submitted, events};
+}
+
+// ── render ──
+function render(events, src){
+  const r=compute(events);
+  $('report').style.display = events.length?'block':'none';
+  $('empty').style.display = events.length?'none':'block';
+  if(!events.length){ $('src').textContent=''; return; }
+  const v=$('verdict'); v.className='verdict '+r.verdict; v.textContent=r.verdict;
+  $('reasons').textContent = r.reasons.join(' · ');
+  const A=r.A, row=(k,val)=>`<div><span>${k}</span><b>${val}</b></div>`;
+  $('metrics').innerHTML = [
+    row('Sessions',A.sessions), row('Unique users',A.users), row('Stories started',A.stories),
+    row('Scenes generated',A.scenes), row('Scene gen failures',A.genFail), row('Scene failure rate',(A.failRate*100).toFixed(1)+'%'),
+    row('Refresh/resume attempts',A.resumeAttempts), row('Resume success',A.resumeAttempts?((A.resumeOk/A.resumeAttempts*100).toFixed(0)+'%'):'—'),
+    row('Duplicate submits blocked',A.dupBlocked), row('Stuck spinners',A.stuck),
+    row('Debit anomalies', (A.debitAnom?'<span class=fail>'+A.debitAnom+'</span>':'0')),
+    row('Preview stops shown',A.previewStops), row('Continuation prompts',A.contShown), row('Continuation accepts',A.contAccept),
+    row('Mode-leak guard fired',A.modeLeak+' (suppressed)'), row('Quality warnings',(A.qWarn?'<span class=warn>'+A.qWarn+'</span>':'0')),
+    row('Quality failures',(A.qFail?'<span class=fail>'+A.qFail+'</span>':'0')), row('Manual-review sessions',A.manual.length),
+    row('Concierge questions',A.conciergeQ), row('Fate-card opens',A.cardOpens), row('Petition uses',A.petition), row('Tempt uses',A.tempt)
+  ].join('');
+  // funnel
+  const maxSc=Math.max(1,...Object.keys(r.reached).map(Number),...Object.keys(r.submitted).map(Number));
+  let f='<tr><th>step</th><th>count</th></tr>';
+  for(let i=1;i<=Math.min(maxSc,6);i++){ f+=`<tr><td>Scene ${i} reached</td><td>${r.reached[i]||0}</td></tr>`; }
+  f+=`<tr><td>Preview stop reached</td><td>${A.previewStops}</td></tr><tr><td>Continuation clicked/shown</td><td>${A.contShown}</td></tr><tr><td>Continuation accepted</td><td>${A.contAccept}</td></tr>`;
+  $('funnel').innerHTML=f;
+  // manual review
+  $('mrq').querySelector('tbody').innerHTML = r.A.manual.length ? r.A.manual.map(s=>
+    `<tr><td class=mono>${s.sessionId.slice(0,16)}</td><td class=mono>${s.userIdHash}</td><td class=mono>${(s.storyId||'—')}</td><td>${s.mode}</td><td>${s.maxSceneReached}</td><td class=fail>${s.manualReviewReasons.join(', ')}</td><td class=muted>${new Date(s.endedAt).toLocaleString()}</td></tr>`
+  ).join('') : '<tr><td colspan=7 class=muted>none</td></tr>';
+  // last 20 warn/error
+  const bad=events.filter(e=>/fail|anomaly|blocked|timeout|scan_(warn|fail)|leak|resume_attempted|substitution_modal|ambiguous_modal/.test(e.ev)).slice(-20).reverse();
+  $('events').querySelector('tbody').innerHTML = bad.length ? bad.map(e=>{
+    const cls=/fail|anomaly|timeout/.test(e.ev)?'fail':(/warn|blocked/.test(e.ev)?'warn':'');
+    const sm=JSON.stringify(e.p||{}).slice(0,90);
+    return `<tr><td class=muted>${new Date(e.ts).toLocaleTimeString()}</td><td class="${cls}">${e.ev}</td><td>${(e.p&&e.p.fateMode)||''}</td><td class=mono>${(e.p&&e.p.storyId)||''}</td><td>${(e.p&&e.p.sceneIndex)||''}</td><td class=mono>${sm}</td></tr>`;
+  }).join('') : '<tr><td colspan=6 class=muted>none</td></tr>';
+  $('src').textContent = `Source: ${src} · window ${$('hours').value}h · ${events.length} events · generated ${new Date().toLocaleString()}`;
+}
+
+async function load(){
+  $('err').textContent='';
+  const key=$('adminKey').value.trim(); if(!key){ $('err').textContent='Enter the admin key.'; return; }
+  try{
+    const resp=await fetch('/api/beta-events?adminKey='+encodeURIComponent(key)+'&hours='+$('hours').value);
+    if(resp.status===403){ $('err').textContent='Forbidden — wrong admin key.'; return; }
+    if(!resp.ok){ $('err').textContent='Load failed ('+resp.status+'). If the backend/table isn\'t deployed yet, use the local-sample box below.'; return; }
+    const d=await resp.json();
+    render(d.events||[], d.source||'beta_events');
+  }catch(e){ $('err').textContent='Network error: '+e.message+' — use the local-sample box below.'; }
+}
+$('load').addEventListener('click',load);
+$('adminKey').addEventListener('keydown',e=>{ if(e.key==='Enter')load(); });
+$('loadSample').addEventListener('click',()=>{ try{ const j=JSON.parse($('sample').value); render(Array.isArray(j)?j:(j.events||[]),'local-sample'); $('err').textContent=''; }catch(e){ $('err').textContent='Bad sample JSON: '+e.message; } });
+if($('adminKey').value){ $('auto').textContent='(auto-loading…)'; load(); }
+</script>
+</body>
+</html>
