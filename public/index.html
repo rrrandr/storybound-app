@@ -716,6 +716,7 @@
   <div class="pact-language-row" style="text-align:center; margin:2px auto 20px;">
     <label for="pactLangSelect" data-i18n="language" style="display:block; font-size:0.8em; letter-spacing:0.1em; text-transform:uppercase; opacity:0.75; margin-bottom:6px;">Language</label>
     <select id="pactLangSelect" class="sb-lang-select" aria-label="Language" style="min-width:220px; max-width:90vw; padding:8px 12px; background:#1a1a1a; color:#eee; border:1px solid var(--gold,#c9a84c); border-radius:6px; font-size:0.95em;"></select>
+    <button id="pactLangSet" data-i18n="set_language" style="display:block; margin:8px auto 0; padding:6px 16px; background:var(--gold,#c9a84c); color:#1a1a1a; border:none; border-radius:6px; font-size:0.85em; font-weight:600; cursor:pointer;">Set Language</button>
   </div>
   <div class="pact-card-row">
     <!-- Card 1: Terms of Service -->
@@ -2537,7 +2538,7 @@
 <script src="/orchestration-client.js?v=20260710-i18n-followups"></script>
 <script src="/badgeEngine.js?v=20260609-badge-error-surface"></script>
 <script src="/relational-shape-classifier.js?v=20260525-shared-authority"></script>
-<script src="/app.js?v=20260710-mouth-roleprompt"></script>
+<script src="/app.js?v=20260710-setlang-btn"></script>
 <script src="/card-designer.js?v=20260318c"></script>
 <script>
   /* BEGIN-STORY WRAPPER VIEWPORT-CENTER PORTAL
@@ -2597,6 +2598,7 @@
     <div class="profile-language-row" style="margin:14px 0 4px;">
       <label for="profileLangSelect" data-i18n="language" style="display:block; color:var(--gold,#c9a84c); font-size:0.9em; margin-bottom:5px;">Language</label>
       <select id="profileLangSelect" class="sb-lang-select" aria-label="Language" style="width:100%; box-sizing:border-box; padding:7px 9px; background:#1a1a1a; color:#eee; border:1px solid #555; border-radius:4px; font-size:0.9em;"></select>
+      <button id="profileLangSet" data-i18n="set_language" style="margin-top:6px; padding:5px 14px; background:var(--gold,#c9a84c); color:#1a1a1a; border:none; border-radius:4px; font-size:0.85em; font-weight:600; cursor:pointer;">Set Language</button>
     </div>
 
     <hr style="border-color:var(--gold,#c9a84c); opacity:0.3; margin:18px 0 12px;">
