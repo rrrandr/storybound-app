@@ -2221,7 +2221,7 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
    declared in em units in the base rule. */
 .character-tarot-card .character-field input,
 .character-tarot-card .character-field select {
-    font-size: 0.8em !important; /* Roman 2026-07-10: halved from 1.6em — field values (Name/Gender/Pronouns/Age/Ancestry) were oversized */
+    font-size: 1.12em !important; /* Roman 2026-07-10: 0.8em +40% — field values (Name/Gender/Pronouns/Age/Ancestry) */
 }
 
 /* LI name input — user-specified typography.
@@ -2232,12 +2232,12 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
    .character-field input rule above (0,2,1 + !important). */
 #partnerNameInput {
     font-family: 'Lora', serif !important;
-    font-size: 9pt !important; /* Roman 2026-07-10: halved from 18pt to match the other card fields */
+    font-size: 12.6pt !important; /* Roman 2026-07-10: 9pt +40% to match the other card fields */
     color: #000 !important;
     font-weight: 500;
 }
 #partnerNameInput::placeholder {
-    font-size: 8pt !important;
+    font-size: 11.2pt !important;
     font-family: 'Lora', serif;
     font-style: italic;
     color: rgba(30, 25, 15, 0.45);
