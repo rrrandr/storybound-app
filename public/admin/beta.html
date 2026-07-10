@@ -44,6 +44,9 @@
   <h2>Scene funnel</h2>
   <table id="funnel"></table>
 
+  <h2>By language</h2>
+  <table id="bylang"><thead><tr><th>language</th><th>sessions</th><th>scenes</th><th>continuation rate</th></tr></thead><tbody></tbody></table>
+
   <h2>Manual-review queue</h2>
   <table id="mrq"><thead><tr><th>session</th><th>user</th><th>story</th><th>mode</th><th>maxScene</th><th>reasons</th><th>when</th></tr></thead><tbody></tbody></table>
 
@@ -123,7 +126,10 @@ function compute(events){
   // scene funnel
   const reached={}, submitted={};
   events.forEach(e=>{ const i=e.p&&(e.p.sceneIndex); if(e.ev==='scene_generation_completed'&&i)reached[i]=(reached[i]||0)+1; if(e.ev==='scene_generation_started'&&i)submitted[i]=(submitted[i]||0)+1; });
-  return {A, sessions, verdict, reasons, reached, submitted, events};
+  // by language (Phase 6)
+  const byLang={};
+  sessions.forEach(s=>{ const ss=bySession[s.sessionId]; const l=(ss.find(e=>e.p&&e.p.userLanguage)||{p:{}}).p.userLanguage||'en'; byLang[l]=byLang[l]||{sessions:0,scenes:0,cont:0,prevStop:0}; byLang[l].sessions++; byLang[l].scenes+=s.scenesGenerated; if(s.continuationShown)byLang[l].cont++; if(s.previewStopReached)byLang[l].prevStop++; });
+  return {A, sessions, verdict, reasons, reached, submitted, byLang, events};
 }
 
 // ── render ──
@@ -152,6 +158,11 @@ function render(events, src){
   for(let i=1;i<=Math.min(maxSc,6);i++){ f+=`<tr><td>Scene ${i} reached</td><td>${r.reached[i]||0}</td></tr>`; }
   f+=`<tr><td>Preview stop reached</td><td>${A.previewStops}</td></tr><tr><td>Continuation clicked/shown</td><td>${A.contShown}</td></tr><tr><td>Continuation accepted</td><td>${A.contAccept}</td></tr>`;
   $('funnel').innerHTML=f;
+  // by language
+  const langs=Object.entries(r.byLang).sort((a,b)=>b[1].sessions-a[1].sessions);
+  $('bylang').querySelector('tbody').innerHTML = langs.length ? langs.map(([l,v])=>
+    `<tr><td>${l}</td><td>${v.sessions}</td><td>${v.scenes}</td><td>${v.prevStop?((v.cont/v.prevStop*100).toFixed(0)+'%'):'—'}</td></tr>`
+  ).join('') : '<tr><td colspan=4 class=muted>—</td></tr>';
   // manual review
   $('mrq').querySelector('tbody').innerHTML = r.A.manual.length ? r.A.manual.map(s=>
     `<tr><td class=mono>${s.sessionId.slice(0,16)}</td><td class=mono>${s.userIdHash}</td><td class=mono>${(s.storyId||'—')}</td><td>${s.mode}</td><td>${s.maxSceneReached}</td><td class=fail>${s.manualReviewReasons.join(', ')}</td><td class=muted>${new Date(s.endedAt).toLocaleString()}</td></tr>`
