@@ -526,6 +526,23 @@ body.booting .screen {
     padding: 0 !important;
 }
 
+/* RTL story content (Hebrew + any future rtl:true language). dir="rtl" is set on these
+   story-content surfaces by _applyStoryTextDirection() from the story language — the app
+   chrome (not yet localized) stays LTR. dir already resolves text-align:start to the right,
+   but these explicit rules defend against any inherited left-alignment; the Unicode bidi
+   algorithm renders the embedded LTR names/numbers correctly inside the rtl block. */
+#storyText[dir="rtl"],
+#storyText[dir="rtl"] .story-page,
+#storyText[dir="rtl"] .story-page-title,
+#storyText[dir="rtl"] p,
+.sb-title-page-content[dir="rtl"],
+.sb-title-page-content[dir="rtl"] .sb-title-page-title,
+.sb-title-page-content[dir="rtl"] .sb-title-page-blurb,
+#synopsisText[dir="rtl"],
+#gnStoryTitle[dir="rtl"] {
+    text-align: right;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    READER THEMES — Scoped to story content ONLY (does not affect UI)
    ═══════════════════════════════════════════════════════════════════ */
