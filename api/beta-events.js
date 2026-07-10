@@ -24,7 +24,7 @@ const ALLOWED = new Set([
   'petition_fate_opened','petition_fate_submitted','tempt_fate_opened','tempt_fate_submitted',
   'concierge_opened','concierge_message_submitted','concierge_response_generated','concierge_closed',
   // language / multilingual
-  'language_changed'
+  'language_changed','concierge_foreign_language_detected'
 ]);
 
 function sb() {
