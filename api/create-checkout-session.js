@@ -1,5 +1,7 @@
 import { stripe } from '../lib/stripe.js';
 import { createClient } from '@supabase/supabase-js';
+import geoPolicy from '../config/geo-policy.js';
+const { evaluateGeo, readRequestCountry, isDevEnv, geoLog } = geoPolicy;
 
 // Map tier names to env var keys, Stripe checkout modes, and fortunes granted (for refund reversal)
 const TIER_CONFIG = {
@@ -51,6 +53,21 @@ export default async function handler(req, res) {
 
   const config = TIER_CONFIG[tier];
   if (!config) return res.status(400).json({ error: 'Unknown tier' });
+
+  // ── GEO-GATE (server hard-gate) ──────────────────────────────────────────────
+  // Reasonable-effort country compliance on the MONEY path. IP country is the
+  // first signal here; the Stripe webhook re-checks the (stronger) billing country
+  // before provisioning. Default mode is 'log' (observe, never block) until
+  // GEO_GATE_MODE=enforce + GEO_BLOCK_COUNTRIES are set. NOT a language gate.
+  const _geo = evaluateGeo(readRequestCountry(req), { isDev: isDevEnv() });
+  geoLog('geo_gate_checkout', _geo, { path: 'create-checkout-session', tier });
+  if (_geo.blocked) {
+    geoLog('geo_gate_checkout_blocked', _geo, { path: 'create-checkout-session', tier });
+    return res.status(403).json({
+      error: 'region_unavailable',
+      message: 'Storybound purchases are not available in your region.',
+    });
+  }
 
   const sbUrl = process.env.SUPABASE_URL;
   const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -120,6 +137,9 @@ export default async function handler(req, res) {
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: supabaseUserId,
+      // Collect billing address so the webhook can verify the (authoritative) billing
+      // country before provisioning — a VPN can spoof IP, not the card's billing country.
+      billing_address_collection: 'required',
       metadata,
     };
     if (_stripeCustomerId) _sessionParams.customer = _stripeCustomerId;

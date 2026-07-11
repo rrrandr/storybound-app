@@ -1,6 +1,8 @@
 import { buffer } from 'micro';
 import { createClient } from '@supabase/supabase-js';
 import { stripe as stripeClient } from '../lib/stripe.js';
+import geoPolicy from '../config/geo-policy.js';
+const { evaluateGeo, isDevEnv, geoLog } = geoPolicy;
 
 // Vercel: disable automatic body parsing so we can read the raw buffer
 export const config = { api: { bodyParser: false } };
@@ -173,6 +175,34 @@ export default async function handler(req, res) {
     }
 
     console.log(`[stripe-webhook] checkout.session.completed — user: ${supabaseUserId}, price: ${priceId}, customer: ${stripeCustomerId}, subscription: ${stripeSubscriptionId}, type: ${purchaseType || 'unknown'}`);
+
+    // ── GEO-GATE (billing-country verification) ────────────────────────────────
+    // The BILLING country is the authoritative signal — a VPN spoofs IP, not the
+    // card's billing address. Default mode is 'log' (provision + record would-block);
+    // in 'enforce' a blocked billing country is NOT provisioned and the charge is
+    // unwound (refund / cancel subscription). Missing country → allow + log.
+    const _billingCountry = (session.customer_details && session.customer_details.address && session.customer_details.address.country) || null;
+    const _geo = evaluateGeo(_billingCountry, { isDev: isDevEnv() });
+    geoLog(_billingCountry ? 'geo_gate_payment' : 'geo_gate_billing_country_unknown', _geo,
+      { path: 'stripe-webhook', event: 'checkout.session.completed', checkoutSessionId, purchaseType });
+    if (_geo.blocked) {
+      geoLog('geo_gate_payment_blocked', _geo, { path: 'stripe-webhook', checkoutSessionId, purchaseType });
+      // Do NOT provision. Best-effort unwind so a blocked region can't buy through.
+      try {
+        if (session.payment_intent) {
+          await stripeClient.refunds.create({ payment_intent: session.payment_intent });
+          console.log(`[stripe-webhook] GEO: refunded blocked billing country ${_geo.country} (session ${session.id})`);
+        }
+        if (session.subscription) {
+          await stripeClient.subscriptions.cancel(session.subscription);
+          console.log(`[stripe-webhook] GEO: cancelled subscription for blocked billing country ${_geo.country} (${session.subscription})`);
+        }
+      } catch (e) {
+        console.warn('[stripe-webhook] GEO unwind (refund/cancel) failed (non-fatal):', e.message);
+      }
+      // Return 200 so Stripe does not retry. The event stays claimed → no double-unwind.
+      return res.status(200).json({ received: true, geo_blocked: true, country: _geo.country });
+    }
 
     const updates = {};
     if (stripeCustomerId) updates.stripe_customer_id = stripeCustomerId;
