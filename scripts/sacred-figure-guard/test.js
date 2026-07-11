@@ -47,16 +47,32 @@ ok(G.detectSacredFigure('a boy named Jesús from Madrid') === null, 'ordinary Je
 ok(G.detectSacredFigure('Moses the accountant filed taxes') === null, 'ordinary Moses not flagged');
 ok(G.detectSacredFigure('a normal romance with no figures') === null, 'no figure → null');
 
-// ── detectMuhammadName: bare-name block (character-name field) ──
-['Muhammad','Mohammed','Mohamed','Mohammad','Muhammed','Mohamad','Muhamad','Mahammad','Muhammad Ali','the boy Mohammed']
-  .forEach((s) => ok(G.detectMuhammadName(s) === true, `name SHOULD block: "${s}"`));
-// Other Muslim names + lookalikes must NOT be caught (Roman: only the one name).
-['Ahmed','Ahmad','Nassim','Mahmoud','Muhannad','Hamid','Mohsen','Ali','Omar','Yusuf','Amir','Mamad','']
-  .forEach((s) => ok(G.detectMuhammadName(s) === false, `name should ALLOW: "${s}"`));
+// ── Name-INDEPENDENT identity: the Prophet under "Mo" / any alias / no name → BLOCK ──
+[
+  'the Prophet Mo founded Islam',
+  'Mo, the final prophet, split the moon',
+  'the Prophet Mo received his revelation in the cave',
+  'Mo, the Prophet of Islam',
+  'Mo received the Quran as the Messenger of Allah',
+  'Bob, the prophet who founded Islam and revealed the Quran',
+  'the prophet recited the Quran in Mecca',
+  'the messenger of Allah ascended on the Buraq during the Night Journey',
+  'he received his first revelation from the angel Gabriel in the cave',
+].forEach((s) => ok(G.detectProphetMuhammad(s) === true, `identity SHOULD block: "${s}"`));
 
-// ── refusal messages present ──
+// ── Name-independent must NOT over-block other prophets / fictional prophets / Muslim characters ──
+[
+  'The prophet Elijah spoke to the people of Israel',
+  'the prophet Isaiah foretold the coming messiah',
+  'a Muslim woman consulted the village prophet about the harvest',
+  'the messenger delivered the letter to Mecca by nightfall',
+  'the prophet of doom loomed over the ruined city',
+  'Mo, an ordinary detective, lit a cigarette in the rain',
+].forEach((s) => ok(G.detectProphetMuhammad(s) === false, `identity should ALLOW: "${s}"`));
+
+// ── refusal message present (name-block dropped: relying on context) ──
 ok(typeof G.PROPHET_MUHAMMAD_REFUSAL === 'string' && G.PROPHET_MUHAMMAD_REFUSAL.length > 20, 'prophet refusal exported');
-ok(typeof G.MUHAMMAD_NAME_REFUSAL === 'string' && G.MUHAMMAD_NAME_REFUSAL.length > 10, 'name refusal exported');
+ok(typeof G.detectMuhammadName === 'undefined', 'bare-name block removed');
 
 console.log(`\nSACRED-FIGURE-GUARD: ${pass} passed, ${fail} failed`);
 if (fail) { console.error('RESULT: ✗ FAIL'); process.exit(1); }
