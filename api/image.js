@@ -9,6 +9,12 @@ export const config = {
 import _sanitizeInjectionMod from './_sanitize-injection.js';
 const { stripInjectionFromText } = _sanitizeInjectionMod;
 
+// SAFETY: never render a depiction of the Prophet Muhammad (figure/context, not the bare
+// name — an ordinary character named Mohammed is allowed). This is the hard, non-bypassable
+// chokepoint; it also protects the image-provider API account (Flux/Gemini ToS prohibit it).
+import _sacredGuardMod from '../config/sacred-figure-guard.js';
+const { detectProphetMuhammad } = _sacredGuardMod;
+
 // ============================================================
 // SIZE MAPPING - Normalize to OpenAI-supported dimensions
 // ============================================================
@@ -1219,6 +1225,15 @@ export default async function handler(req, res) {
 
   if (!prompt) {
     return res.status(400).json({ error: 'Prompt required' });
+  }
+
+  // 🔒 SACRED-FIGURE GUARD — refuse any image that would depict the Prophet Muhammad.
+  // Checked across the prompt + cover fields; figure/context based, so a character merely
+  // named Mohammed still renders. Refuse loudly so the client can skip the image gracefully.
+  const _sacredText = [prompt, title, modeLine].filter((s) => typeof s === 'string').join(' — ');
+  if (detectProphetMuhammad(_sacredText)) {
+    console.warn('[IMAGE] Refused: Prophet-Muhammad depiction blocked by sacred-figure guard');
+    return res.status(422).json({ error: 'sacred_figure_blocked', message: 'This image can’t be generated.' });
   }
 
   // ═══════════════════════════════════════════════════════════════════
