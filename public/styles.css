@@ -2362,11 +2362,11 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
        (input padding 0.3em → 0.15em + label margin 0.15em → 0.05em). Old top:6.8cqi
        / height:10.7cqi sat against the taller input. Halve both so the rotating
        hint lines up with the new field top edge instead of overshooting it. */
-    top: 4.4cqi;
+    top: calc(4.4cqi + 5px); /* Roman 2026-07-10: lowered 5px in the field */
     left: 2.9cqi;
     right: 2.9cqi;
     height: 6.4cqi;
-    font-size: 0.55em;
+    font-size: 0.825em; /* Roman 2026-07-10: +50% from 0.55em */
     color: rgba(30, 25, 15, 0.4);
     pointer-events: none;
     z-index: 1;
