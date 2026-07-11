@@ -137,9 +137,10 @@ export default async function handler(req, res) {
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: supabaseUserId,
-      // Collect billing address so the webhook can verify the (authoritative) billing
-      // country before provisioning — a VPN can spoof IP, not the card's billing country.
-      billing_address_collection: 'required',
+      // NOTE: billing-address collection is intentionally OFF (no extra checkout friction).
+      // The geo-gate's billing-country verification in stripe-webhook.js therefore sees no
+      // address and degrades to unknown→allow+log. To activate that layer later, re-add
+      // `billing_address_collection: 'required'` here.
       metadata,
     };
     if (_stripeCustomerId) _sessionParams.customer = _stripeCustomerId;
