@@ -72,8 +72,23 @@ function detectSacredFigure(text) {
   return null;
 }
 
+// BARE-NAME block (Roman 2026-07-10, revised): block the NAME "Muhammad/Mohammed/…" as a
+// character name outright — the one name people are murderously sensitive about. Roman's call,
+// as a personal-safety measure; the false-positive (a real person named Muhammad can't use it as
+// a character name) is accepted. Tuned to the Prophet's name spellings ONLY — Ahmed, Mahmoud,
+// Muhannad, and other Muslim names are deliberately NOT matched. Also catches loose misspellings
+// ("Mahammad") that a bare spelling-list would miss.
+const MUHAMMAD_NAME_RE = /\bm[oua]h?a+m+[aeiou]+d\b/i;
+
+function detectMuhammadName(text) {
+  return MUHAMMAD_NAME_RE.test(String(text == null ? '' : text));
+}
+
 const PROPHET_MUHAMMAD_REFUSAL =
   'For safety and respect, Storybound can’t create or depict the Prophet Muhammad. ' +
   'You’re welcome to write any other character — including a character simply named Mohammed.';
 
-module.exports = { detectProphetMuhammad, detectSacredFigure, PROPHET_MUHAMMAD_REFUSAL };
+const MUHAMMAD_NAME_REFUSAL =
+  'That name can’t be used for a character in Storybound. Please choose a different name.';
+
+module.exports = { detectProphetMuhammad, detectSacredFigure, detectMuhammadName, PROPHET_MUHAMMAD_REFUSAL, MUHAMMAD_NAME_REFUSAL };

@@ -47,8 +47,16 @@ ok(G.detectSacredFigure('a boy named Jesús from Madrid') === null, 'ordinary Je
 ok(G.detectSacredFigure('Moses the accountant filed taxes') === null, 'ordinary Moses not flagged');
 ok(G.detectSacredFigure('a normal romance with no figures') === null, 'no figure → null');
 
-// ── refusal message present ──
-ok(typeof G.PROPHET_MUHAMMAD_REFUSAL === 'string' && G.PROPHET_MUHAMMAD_REFUSAL.length > 20, 'refusal message exported');
+// ── detectMuhammadName: bare-name block (character-name field) ──
+['Muhammad','Mohammed','Mohamed','Mohammad','Muhammed','Mohamad','Muhamad','Mahammad','Muhammad Ali','the boy Mohammed']
+  .forEach((s) => ok(G.detectMuhammadName(s) === true, `name SHOULD block: "${s}"`));
+// Other Muslim names + lookalikes must NOT be caught (Roman: only the one name).
+['Ahmed','Ahmad','Nassim','Mahmoud','Muhannad','Hamid','Mohsen','Ali','Omar','Yusuf','Amir','Mamad','']
+  .forEach((s) => ok(G.detectMuhammadName(s) === false, `name should ALLOW: "${s}"`));
+
+// ── refusal messages present ──
+ok(typeof G.PROPHET_MUHAMMAD_REFUSAL === 'string' && G.PROPHET_MUHAMMAD_REFUSAL.length > 20, 'prophet refusal exported');
+ok(typeof G.MUHAMMAD_NAME_REFUSAL === 'string' && G.MUHAMMAD_NAME_REFUSAL.length > 10, 'name refusal exported');
 
 console.log(`\nSACRED-FIGURE-GUARD: ${pass} passed, ${fail} failed`);
 if (fail) { console.error('RESULT: ✗ FAIL'); process.exit(1); }
