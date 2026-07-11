@@ -33,8 +33,14 @@ const NAMED_PROPHET_RE = /\bprophet\s+(?:mohamed|mohammed|mohammad|muhamed|muham
 // ── Name-INDEPENDENT Islamic-Prophet identity (the load-bearing safety layer — catches him
 // under "Mo", any alias, or no name at all). ──
 
-// Tier 1 — acts/titles that are ONLY the Prophet Muhammad (very low false-positive).
-const ISLAM_ACT_RE = /\b(founded islam|founder of islam|(?:founder|founded) of the muslim (?:faith|religion)|founded the muslim (?:faith|religion)|(?:revealed|received|dictated|recited) the (?:qur'?an|koran)|the (?:qur'?an|koran) was revealed|cave of hira|mount hira|jabal al[-\s]?nour|split the moon|the night journey|al[-\s]?isra|isra(?:'|\s)?(?:and|wal)?[-\s]?mi'?raj|the mi'?raj|the buraq|prophet of islam|the muslim prophet|prophet of the muslims|(?:final|last) prophet of islam)\b/i;
+// Tier 1 — acts/titles that are ONLY the Prophet Muhammad (very low false-positive). Deliberately
+// scoped to the REVELATION event (not ordinary "recited/received the Quran", which any Muslim does)
+// and to unambiguous proper nouns (Hira / Isra / Mi'raj / Buraq — NOT bare "the night journey").
+const ISLAM_ACT_RE = /\b(founded islam|founder of islam|(?:founder|founded) of the muslim (?:faith|religion)|founded the muslim (?:faith|religion)|(?:revealed|dictated) the (?:qur'?an|koran)|the (?:qur'?an|koran) was revealed|cave of hira|mount hira|jabal al[-\s]?nour|al[-\s]?isra\b|isra(?:'|\s)?(?:and|wal)?[-\s]?mi'?raj|the mi'?raj|the buraq|prophet of islam|the muslim prophet|prophet of the muslims|(?:final|last) prophet of islam)\b/i;
+// The moon-splitting miracle — a common poetic image on its own ("his kiss could split the moon"),
+// so it only counts when it sits in an Islamic-Prophet context.
+const MOON_RE = /split the moon/i;
+const ISLAM_CTX_RE = /\b(prophet|messenger|islam|muslim|allah|mecca|makkah|qur'?an|koran)\b/i;
 
 // Tier 2 — a prophet TITLE (definite/role framing) within ~64 chars of a STRONG Islam marker
 // ("the Prophet Mo … Islam/Quran/Allah"). Strong markers only (NOT bare "Muslim", an innocent
@@ -73,6 +79,7 @@ function detectProphetMuhammad(text) {
   if (_proximity(t, NAME_RE, PROPHET_ROLE_RE, 48)) return true;   // the NAME cast as the Prophet
   // Name-independent identity:
   if (ISLAM_ACT_RE.test(t)) return true;                          // Tier 1
+  if (MOON_RE.test(t) && ISLAM_CTX_RE.test(t)) return true;       // Tier 1b — moon-split, in-context only
   if (_proximity(t, TITLE_RE, ISLAM_STRONG_RE, 64)) return true;  // Tier 2
   if (_hiraNarrative(t)) return true;                             // Tier 3
   return false;

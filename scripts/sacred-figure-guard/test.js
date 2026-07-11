@@ -70,6 +70,26 @@ ok(G.detectSacredFigure('a normal romance with no figures') === null, 'no figure
   'Mo, an ordinary detective, lit a cigarette in the rain',
 ].forEach((s) => ok(G.detectProphetMuhammad(s) === false, `identity should ALLOW: "${s}"`));
 
+// ── NO BROAD RELIGION CENSORING — ordinary Islamic setting / Muslim characters must pass (Roman's caveat) ──
+[
+  'the imam recited the Quran at the mosque',                 // recitation is a normal devotional act
+  'she received a Quran as a gift from her grandmother',
+  'his kiss could split the moon, she thought',              // poetic image, no Islamic context
+  'they made the night journey across the desert to the oasis',
+  'the muezzin called the faithful to prayer from the minaret',
+  'a Muslim family broke their Ramadan fast together',
+  'he studied hadith and Islamic law at university',
+  'the Quran teaches compassion and mercy',
+  'pilgrims circled the Kaaba in Mecca during the hajj',
+  'Mohammed prayed toward Mecca at dawn',
+].forEach((s) => ok(G.detectProphetMuhammad(s) === false, `no over-censor, should ALLOW: "${s}"`));
+
+// ── But the in-context miracle + revelation phrasing still BLOCK ──
+[
+  'the final prophet split the moon before the crowd',        // moon-split + prophet context
+  'the prophet recited the Quran in Mecca',                   // title + Islam marker (Tier 2)
+].forEach((s) => ok(G.detectProphetMuhammad(s) === true, `in-context SHOULD block: "${s}"`));
+
 // ── refusal message present (name-block dropped: relying on context) ──
 ok(typeof G.PROPHET_MUHAMMAD_REFUSAL === 'string' && G.PROPHET_MUHAMMAD_REFUSAL.length > 20, 'prophet refusal exported');
 ok(typeof G.detectMuhammadName === 'undefined', 'bare-name block removed');
