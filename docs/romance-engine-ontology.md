@@ -1,6 +1,6 @@
 # Romance Engine Ontology
 
-**Status:** 1.1 — envelope + layers + litmus tests + Magic/Sacrifice first-principles locked. FOUR cells + emit split BUILT and **prose-VALIDATED** across two gen diffs (2026-07-12): (1) Vaelryn+Arcane-Binding moved OLD 50% oath / 50% bloodline → NEW 94% oath; (2) cross-pressure — `arcane_binding×the_veilwood` and `fated_blood×the_shackle_isles` both held flavor identity in the region's register (OLD arms ate/blurred the flavor). Pattern validated, not just Vaelryn. Remaining ~16 cells: cleared to populate.
+**Status:** 1.1 — envelope + layers + litmus tests + Magic/Sacrifice first-principles locked. FOUR cells + emit split BUILT and **prose-VALIDATED** across two gen diffs (2026-07-12): (1) Vaelryn+Arcane-Binding moved OLD 50% oath / 50% bloodline → NEW 94% oath; (2) cross-pressure — `arcane_binding×the_veilwood` and `fated_blood×the_shackle_isles` both held flavor identity in the region's register (OLD arms ate/blurred the flavor). Pattern validated, not just Vaelryn. FULL MATRIX POPULATED (2026-07-12): all 19 affine region×flavor pairs now have cells (21 total incl. 2 adversarial). Outstanding: Grok-author confirmation.
 **Purpose:** define the contract between the Romance Engine and the world model, so region and flavor stop being concatenated peers and become a hierarchy. This is the ontology; individual region×flavor cells are downstream of it.
 
 ---
@@ -335,4 +335,15 @@ mechanic the blood, or the pact?* — don't trust the tally. (Verified in the 20
    the flavor. Pattern validated, not just Vaelryn. (Lexical classifier proved unreliable for Shackle×FB
    — the pact-instrument shares "contract" vocab; the pass was confirmed by reading the obstacle.)
 
-Now cleared to populate the full region×flavor matrix (~18 cells) on the same pattern.
+6. **Full matrix populated** — DONE (2026-07-12). All 19 affine region×flavor pairs from
+   `FANTASY_REGION_FLAVOR_AFFINITY` now have expression-only cells under
+   `FANTASY_FLAVOR_REGIONALIZATION.<flavor>.byRegion.<region>` (21 cells total incl. the 2
+   adversarial cross-pressure cells). Every flavor has a `byRegion` block; the emit path
+   (`buildFantasyWorldBlock`) is generic, so all 5 contextual flavors fire.
+   Caveat: the two `fates_favor_basin` cells (the_inhuman, the_beyond) are dormant unless the
+   selector can set `state.fantasyRegion = 'fates_favor_basin'` (not among the canonical 8 governed
+   regions) — harmless if never selected.
+
+Outstanding: Grok-author fidelity confirmation (validation used gpt-4o); optional per-cell prose
+spot-checks (the mechanism is validated on the two hardest cases, so remaining cells are content
+under a proven contract).
