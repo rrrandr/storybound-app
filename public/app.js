@@ -265822,6 +265822,18 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               try { _recordSpeculationEvent('speculation_discarded_user_input', { estCostUsd: speculativeScene.estCostUsd, mode: 'custom' }); } catch (_) {}
           }
       }
+      // SIMILARITY MEASUREMENT (telemetry-only, behavior-neutral): if a speculation was discarded this
+      // turn because the player TYPED, compare the pre-built intent to their FINAL entry now that it's
+      // known. Free token-set Jaccard, no LLM / no network. Answers "how often is a custom entry ~the
+      // same as the card it replaced?" → whether a compare-and-cheaply-repair path is worth building.
+      // Consumed once (turn-scoped so a stale stash from an earlier discard can't mismatch a later turn).
+      try {
+          var _ds = state._lastDiscardedSpecIntent;
+          if (_ds && Math.abs((state.turnCount || 0) - (_ds.turn || 0)) <= 1) {
+              _recordSpeculationTypedSimilarity(_specTextSim((_ds.action || '') + ' ' + (_ds.dialogue || ''), (act || '') + ' ' + (dia || '')));
+          }
+      } catch (_) {}
+      state._lastDiscardedSpecIntent = null;
 
       try {
           // Inject fate whisper while scene generates (non-speculative path only)
@@ -269494,17 +269506,53 @@ ABSOLUTE RULES:
   function _estSpecCostUsd(sysLen, outLen) {
       try { return ((sysLen || 0) / 4) * 0.0000005 + ((outLen || 0) / 4) * 0.0000015; } catch (_) { return 0; }
   }
+  // Free token-set Jaccard similarity 0..1 — order-independent, NO LLM / no round-trip / no network.
+  // Measures how close a player's FINAL typed entry was to the fate-card/default intent the discarded
+  // speculation was built for → the "addressable fraction" for a future compare-and-cheaply-repair path.
+  function _specTextSim(a, b) {
+      try {
+          var _tok = function (s) { return String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean); };
+          var ta = _tok(a), tb = _tok(b);
+          if (!ta.length && !tb.length) return 1;
+          if (!ta.length || !tb.length) return 0;
+          var setB = {}; tb.forEach(function (w) { setB[w] = 1; });
+          var seen = {}, inter = 0;
+          ta.forEach(function (w) { if (setB[w] && !seen[w]) { inter++; seen[w] = 1; } });
+          var uni = {}; ta.forEach(function (w) { uni[w] = 1; }); tb.forEach(function (w) { uni[w] = 1; });
+          var u = Object.keys(uni).length;
+          return u ? inter / u : 0;
+      } catch (_) { return 0; }
+  }
+  // Accumulate one typed-discard similarity into the ledger (n + sum for the average, plus coarse buckets).
+  function _recordSpeculationTypedSimilarity(sim) {
+      try {
+          if (typeof sim !== 'number' || !isFinite(sim)) return;
+          var L = _specLedgerRead();
+          var s = L.typedDiscardSim = L.typedDiscardSim || { n: 0, sum: 0, ge90: 0, ge60: 0, ge30: 0, lt30: 0 };
+          s.n++; s.sum += sim;
+          if (sim >= 0.9) s.ge90++; else if (sim >= 0.6) s.ge60++; else if (sim >= 0.3) s.ge30++; else s.lt30++;
+          L.updatedAt = Date.now();
+          localStorage.setItem('sb_spec_ledger', JSON.stringify(L));
+      } catch (_) { /* telemetry must never break generation */ }
+  }
   // Console inspector: window._specLedger() → { counts, cost, byMode, derived }
   window._specLedger = function () {
       var L = _specLedgerRead(), cts = L.counts || {};
       var started = cts.speculation_started || 0, committed = cts.speculation_committed || 0;
       var discarded = Object.keys(cts).filter(function (k) { return k.indexOf('speculation_discarded') === 0; }).reduce(function (a, k) { return a + cts[k]; }, 0);
       var failed = cts.speculation_timed_out_or_failed || 0, cost = L.cost || { committed_usd: 0, wasted_usd: 0 };
+      var tds = L.typedDiscardSim || { n: 0, sum: 0, ge90: 0, ge60: 0, ge30: 0, lt30: 0 };
       var derived = {
           commit_rate: started ? +(committed / started).toFixed(3) : null,
           waste_rate: started ? +((discarded + failed) / started).toFixed(3) : null,
           committed_usd: +(cost.committed_usd || 0).toFixed(4),
-          wasted_usd: +(cost.wasted_usd || 0).toFixed(4)
+          wasted_usd: +(cost.wasted_usd || 0).toFixed(4),
+          // typed-entry vs pre-built intent — the compare-and-repair opportunity signal:
+          typed_discards_measured: tds.n,
+          avg_typed_similarity: tds.n ? +(tds.sum / tds.n).toFixed(3) : null,
+          recoverable_pct: tds.n ? +(100 * tds.ge90 / tds.n).toFixed(1) : null, // >=0.90 → could COMMIT as-is
+          repairable_pct: tds.n ? +(100 * tds.ge60 / tds.n).toFixed(1) : null,  // 0.60-0.90 → cheap re-anchor
+          typed_sim_buckets: { ge90: tds.ge90, ge60_90: tds.ge60, ge30_60: tds.ge30, lt30: tds.lt30 }
       };
       try { console.log('[SPEC-LEDGER] derived', derived, '| counts', cts, '| byMode', L.byMode || {}); } catch (_) {}
       return { counts: cts, cost: cost, byMode: L.byMode || {}, derived: derived };
@@ -269519,6 +269567,13 @@ ABSOLUTE RULES:
       if (state.speculativeNextScene) {
           console.log('[SPECULATIVE] Invalidated — ' + (reason || 'other'));
           try { _recordSpeculationEvent('speculation_discarded_' + (reason || 'other'), { estCostUsd: state.speculativeNextScene.estCostUsd, mode: mode }); } catch (_) {}
+          // SIMILARITY STASH (telemetry-only): on a TYPED discard, remember the pre-built intent so we
+          // can compare it to the player's FINAL entry once it's known at commit. Cheap: two short
+          // strings + a turn tag. The keystroke listener nulls the spec on the FIRST character, so the
+          // pre-built intent captured here is the only record of what the discarded scene was built for.
+          if (reason === 'user_input') {
+              try { state._lastDiscardedSpecIntent = { action: state.speculativeNextScene.normalizedAction || '', dialogue: state.speculativeNextScene.normalizedDialogue || '', turn: (state.turnCount || 0) }; } catch (_) {}
+          }
       }
       state.speculativeNextScene = null;
   }
