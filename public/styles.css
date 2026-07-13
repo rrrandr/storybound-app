@@ -8622,6 +8622,7 @@ body:has(#gnReader:not(.hidden)) #modelCompareToggle {
     font-size: 13.5px;
     line-height: 1.55;
     color: rgba(240, 233, 214, 0.88);
+    white-space: pre-line; /* preserve \n\n paragraph breaks in multi-paragraph answers */
 }
 .faq-empty {
     padding: 30px 14px;
