@@ -95430,7 +95430,12 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       console.log('[FATE:INTIMATE:SPEC] firing speculative batch for turn ' + tc);
       var result = await orch.generateIntimateFatePreviewsBatch();
       if (result && Object.keys(result).length) {
-        s._grokIntimateFateCards = { turnCount: tc, cards: result, generatedAt: Date.now() };
+        // A1-F4 (Fable CG audit 2026-07-13): stamp the CANONICAL fate-context hash (same one the literary
+        // speculative path validates, getFateContextHash → fateCard|action|dialogue|tone|world|intensity|
+        // petition) so the consumer can discard the cache if card / character-input / world-flavor /
+        // obligation changed between finalize and deal. turnCount alone (below) only catches scene
+        // progression. A mismatch safely falls back to the same on-demand generateIntimateFatePreviewsBatch().
+        s._grokIntimateFateCards = { turnCount: tc, fateContextHash: (typeof getFateContextHash === 'function' ? getFateContextHash() : null), cards: result, generatedAt: Date.now() };
         console.log('[FATE:INTIMATE:SPEC] cached ' + Object.keys(result).length + ' card previews for turn ' + tc);
       } else {
         console.log('[FATE:INTIMATE:SPEC] empty result — template fallback will apply');
@@ -174637,7 +174642,11 @@ No text, no watermark, no UI elements, share-ready.`;
     // user isn't staring at empty boxes; replace when Grok lands.
     var specCache = state._grokIntimateFateCards;
     var tc = state.turnCount || 0;
-    if (specCache && specCache.turnCount === tc && specCache.cards && Object.keys(specCache.cards).length) {
+    // A1-F4: validate the CANONICAL fate-context hash, not just turnCount — discard the speculative
+    // cache if the fate card / character input / world/flavor / intensity / obligation changed since it
+    // was generated (a mismatch drops to the on-demand batch fetch below, the same shipping request).
+    var _curFateHash = (typeof getFateContextHash === 'function' ? getFateContextHash() : null);
+    if (specCache && specCache.turnCount === tc && specCache.fateContextHash === _curFateHash && specCache.cards && Object.keys(specCache.cards).length) {
       d._fateCardPreviews = specCache.cards;
       try { console.log('[INTIMACY-DIALOGUE] Reused speculative fate-card cache for turn ' + tc); } catch (_) {}
       _fillFromCache();
