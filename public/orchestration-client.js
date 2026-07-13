@@ -2427,9 +2427,16 @@ FAILURE CONDITIONS (invalid outputs):
   function _isComplexAuthorMode() {
     try {
       var st = (typeof window !== 'undefined' && window.state) || {};
-      if (st.metaWorld === 'simulation') return true;                                      // Enigma-S
+      if (st.metaWorld === 'simulation') return true;                                      // Enigma-S (recursive meta-world)
       var ws = String(st.worldSubtype || (st.picks && st.picks.worldSubtype) || '').toLowerCase();
-      return ws === 'glass_house';                                                          // Glass House
+      if (ws === 'glass_house') return true;                                                // Glass House (the Chorus system)
+      if (ws.indexOf('curse') !== -1) return true;                                          // Cursed (worldSubtype form)
+      // Cursed is a Fantasy CONTEXTUAL flavor — canonically detected via resolvedWorldFlavors
+      // (see app.js _isCursed). Its 5-phase Becoming + zero-unease concealment is a per-scene
+      // load-bearing discipline (a lighter author springs the trap early), so it authors all-Grok.
+      var rf = st.resolvedWorldFlavors;
+      if (Array.isArray(rf) && rf.some(function (f) { return f && f.val === 'cursed'; })) return true;
+      return false;
     } catch (_) { return false; }
   }
   window._isComplexAuthorMode = _isComplexAuthorMode;
@@ -2457,6 +2464,8 @@ FAILURE CONDITIONS (invalid outputs):
   // goes quieter after the high-emotion beat (good cooldown pacing), and doubles as restraint.
   // Relies on the literary author prompt already carrying recent prior-scene prose in context.
   const _SMALL_BRIDGE_GUARD = '\n\nCONTINUITY BRIDGE (this scene immediately follows a high-emotion tentpole scene written by a different, stronger hand — match it seamlessly so the reader never feels the handoff): CONTINUE the previous scene\'s prose temperature and the narrator\'s established diction; do NOT become more ornate than the previous scene. After a high-emotion beat, go QUIETER — plain declaratives and subtext, not heightened language. Carry forward AT MOST ONE image or motif from the previous scene; introduce NO new metaphor style. Do NOT summarize or restate the prior emotional beat — let its consequences surface through action and dialogue.';
+  // Structure-agnostic (applies to caption prose too) → reused by the CG screenplay Mistral author.
+  window._SMALL_BRIDGE_GUARD = _SMALL_BRIDGE_GUARD;
   // Mistral Small author: flatten cache sentinels (mistral has no Anthropic caching), inject the
   // restraint guard into the system message, post to the mistral proxy. Returns prose or ''.
   async function _mistralAuthor(messages, opts) {
