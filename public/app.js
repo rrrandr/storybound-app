@@ -187742,6 +187742,34 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window.buildCGRelationshipAwarenessDirective = buildCGRelationshipAwarenessDirective;
 
+  // A2-F2 (Fable CG audit 2026-07-13): CG-native scene-continuation directive. The literary
+  // buildSceneContinuationDirective() is a permanent NO-OP in CG — it gates on StoryPagination, which
+  // staged mode never populates — so causal linkage, deferred-arrival continuity, and the story-spine
+  // stage directive silently vanished from every CG scene >=2. This compact version restores them,
+  // RECONCILED with the CG user prompt's SCENE PROGRESSION anti-redux rule ("the prior scene is OVER;
+  // time has passed"): it governs the CAUSAL + EMOTIONAL thread ONLY — carry unresolved pressure forward
+  // — and explicitly does NOT resume the prior scene's frozen physical beat or repeat its ending. It
+  // deliberately OMITS the literary LIVE-PICKUP rule ("continue the exact moment, still in it"), which
+  // is the one part that would contradict anti-redux.
+  function _buildCGSceneContinuationDirective() {
+    try {
+      var s = window.state || {};
+      if (!(((s.turnCount) || 0) > 0)) return '';   // Scene 1 has no prior scene
+      var d = '\n\nSCENE CONTINUATION — CAUSAL + EMOTIONAL THREAD (HARD; complements SCENE PROGRESSION anti-redux, does not override it):\n';
+      d += '  1. CAUSAL LINK (THEREFORE / BUT, never "and then"): this scene must follow the prior one as a CONSEQUENCE (the prior ending + the protagonist\'s choice FORCED this) or a COMPLICATION (a reversal / obstacle / cost the prior moment created) — not a beat that could have followed any scene.\n';
+      d += '  2. CARRY THE CHARGE: never contradict or silently undo what the prior scene established — who was present, what was said or decided, and the emotional state all persist. Do NOT open on a neutral establishing shot that ignores the prior scene\'s charge.\n';
+      d += '  3. THREAD, NOT REPLAY: this governs the unresolved PRESSURE, not the physical moment. Time may have passed and the staging may be new (per SCENE PROGRESSION). Do NOT literally resume the prior scene\'s final beat or repeat its ending — carry its pressure INTO the new moment.\n';
+      try {
+        if ((typeof _liArrival === 'function') && _liArrival(s) === 'DEFERRED') {
+          d += '  4. DEFERRED-ARRIVAL CONTINUITY (this story opened on a PC-OWNED crisis with the love interest absent): that crisis is STILL ACTIVE and unresolved. The love interest\'s arrival must INTERTWINE with it — complicate, collide with, or press on it — never erase or replace it. FORBIDDEN: the crisis quietly disappears the moment romance begins. REQUIRED: crisis and romance escalate TOGETHER.\n';
+        }
+      } catch (_) {}
+      try { d += (_buildIssueRelationshipStageDirective(s) || ''); } catch (_) {}
+      return d;
+    } catch (_) { return ''; }
+  }
+  window._buildCGSceneContinuationDirective = _buildCGSceneContinuationDirective;
+
   function _buildCGScreenplaySystemPrompt() {
     // ── LI character texture block (only meaningful when is_consummate
     // _scene=true). Mirrors the OAS / literary directives — archetype
@@ -189046,13 +189074,14 @@ No text, no watermark, no UI elements, share-ready.`;
           return _r.text ? '\n\n' + _r.text + '\n' : '';
         } catch (_) { return ''; }
       })()) +
-      // ── SCENE CONTINUITY (Roman 2026-06-10 parity audit) ────────────────
-      // Literary-side prevents the "reset-to-establishing-shot" anti-pattern
-      // where scene N opens on waking / checking phone / arriving when scene
-      // N-1 ended mid-conversation. CG can violate the same way (Phase 0
-      // resets to a wide establishing shot ignoring the prior scene's
-      // momentum). Same directive, same single source of truth.
-      ((typeof buildSceneContinuationDirective === 'function') ? buildSceneContinuationDirective() : '') +
+      // ── SCENE CONTINUITY (Roman 2026-06-10 parity audit; CG-native since A2-F2, 2026-07-13) ──
+      // Prevents the "reset-to-establishing-shot" anti-pattern where scene N opens on waking /
+      // checking phone / arriving when scene N-1 ended mid-thread. The literary
+      // buildSceneContinuationDirective() NO-OPS in CG (it reads StoryPagination, unpopulated in
+      // staged mode), so we use the CG-native _buildCGSceneContinuationDirective() — the causal +
+      // emotional thread (carry unresolved pressure), reconciled with the user-prompt anti-redux
+      // rule (it does NOT resume the frozen prior beat), plus deferred-arrival + story-spine.
+      _buildCGSceneContinuationDirective() +
       // ── CROSS-STORY PHRASE BAN + MARKER (Roman 2026-06-10 parity audit) ──
       // Literary stores signature phrases in sb_phrase_ledger so they get
       // suppressed in later stories. CG beat text is prose too; without
