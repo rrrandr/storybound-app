@@ -2430,12 +2430,12 @@ FAILURE CONDITIONS (invalid outputs):
       if (st.metaWorld === 'simulation') return true;                                      // Enigma-S (recursive meta-world)
       var ws = String(st.worldSubtype || (st.picks && st.picks.worldSubtype) || '').toLowerCase();
       if (ws === 'glass_house') return true;                                                // Glass House (the Chorus system)
-      if (ws.indexOf('curse') !== -1) return true;                                          // Cursed (worldSubtype form)
-      // Cursed is a Fantasy CONTEXTUAL flavor — canonically detected via resolvedWorldFlavors
-      // (see app.js _isCursed). Its 5-phase Becoming + zero-unease concealment is a per-scene
-      // load-bearing discipline (a lighter author springs the trap early), so it authors all-Grok.
+      if (ws.indexOf('curse') !== -1) return true;                                          // Cursed (5-phase Becoming + zero-unease concealment)
+      if (ws.indexOf('thirst') !== -1) return true;                                         // Thirst = the "Elizabeth I" 5-LI reverse-harem + water-sovereignty distribution politics — 5 distinct power-loci + geopolitical subtext EVERY scene (app.js:67984/37154/13946); a lighter author conflates warlords + flattens the distribution calculus
+      // Cursed/Thirst may also arrive as resolved contextual flavors — canonical detection matches
+      // app.js _isCursed (same array + predicate; active-only, nulled on reset).
       var rf = st.resolvedWorldFlavors;
-      if (Array.isArray(rf) && rf.some(function (f) { return f && f.val === 'cursed'; })) return true;
+      if (Array.isArray(rf) && rf.some(function (f) { return f && (f.val === 'cursed' || f.val === 'thirst'); })) return true;
       return false;
     } catch (_) { return false; }
   }
