@@ -148083,7 +148083,14 @@ No text, no watermark, no UI elements, share-ready.`;
   // - decisionGateBeatIdx is typically the LAST beat.
   // ─────────────────────────────────────────────────────────────────────────
 
-  var _STAGED_SYSTEM_PROMPT = 'You are a cinematic visual-novel director for adult romance fiction.\n' +
+  // A1-F3 (Fable CG audit 2026-07-13): built PER CALL (was a module-load `var`, frozen for the whole
+  // session) so the embedded window._rotatingExemplars(...) seeded subsets + buildSceneEndingDilemmaDirective()
+  // actually vary per scene — the prompt text itself promises "a fresh seeded subset shows each scene".
+  // Building per call is cheap (string concat + 2 seeded picks) and only runs on the literary-fallback
+  // analysis path. Also removes the latent module-load ordering risk (the dynamic calls now resolve at
+  // generation time, when _rotatingExemplars / the pools / the directive builder are all defined).
+  function _buildStagedSystemPrompt() {
+    return 'You are a cinematic visual-novel director for adult romance fiction.\n' +
     'You DO NOT write prose. You analyze prose someone else wrote, segment\n' +
     'it into click-through beats, and add visual + interaction metadata.\n' +
     'Respond ONLY with valid JSON. No markdown. No explanation.\n\n' +
@@ -148678,6 +148685,7 @@ No text, no watermark, no UI elements, share-ready.`;
     '    BREATH beats (5-10% of scene): single-line silences, weather, off-stage sound, a held look, an unanswered question that hangs. The space BETWEEN moments. Without these, the loaded beats stack on top of each other and lose contrast.\n' +
     '  CONTRAST IS WHAT MAKES THE LOADED MOMENTS LAND. A scene of 25 beats where every beat is "loaded" reads as relentlessly important — exhausting, melodramatic, over-authored. A scene with proper rhythm (15-18 loaded + 5-8 texture + 2-3 breath) gives the reader a register to RETURN TO between collisions, making the collisions feel earned. Do NOT over-pack. Texture and breath beats can be short — they don\'t need their own peak / closeup / camera change. Let them be quiet.\n' +
     '- WHEN UNCERTAIN: pick the MORE DRAMATIC interpretation. Soft conversations are the default failure mode of this analyzer; we are actively counter-weighting that bias. If the prose is genuinely calm (a quiet morning, an unrushed greeting), the calm reading is correct — but if there\'s ANY hint of conflict, lean INTO it.';
+  }
 
   // Build the user prompt for the staged analysis call.
   // Inputs: the raw literary scene prose + scene metadata. Outputs the
@@ -150776,7 +150784,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // parse nor _repairJSON can recover, and the user gets stuck on
       // "Composing scene 1…" forever.
       var llmCall = window.StoryboundOrchestration.callChatGPT([
-        { role: 'system', content: _STAGED_SYSTEM_PROMPT },
+        { role: 'system', content: _buildStagedSystemPrompt() },
         { role: 'user',   content: userPrompt }
       ], 'PRIMARY_AUTHOR', { model: 'gpt-4o-mini', max_tokens: maxTokens, temperature: 0.4 });
       var timeout = new Promise(function(_, reject) {
