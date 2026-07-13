@@ -2424,6 +2424,12 @@ FAILURE CONDITIONS (invalid outputs):
   // Author-only: editorial tier stays INDEPENDENT — a complex-mode connecting scene is Grok-authored
   // but keeps normal editorial spend. Current set: Glass House (the Chorus system) + Enigma-S
   // (recursive meta-world). Extend here as the "complex enough for all-Grok" set grows.
+  // ADMISSION TEST for the complex-mode (all-Grok every scene) set: a flavor qualifies ONLY if it
+  // owns a STANDING PER-SCENE SYSTEM whose coherence failure breaks the STORY PREMISE — not merely
+  // the prose quality. (Multiple simultaneous entities/threads, OR a concealment/recursion/phased trap.)
+  // This is a real gate, not a subjective "hard stories" list. Keep the set EXPLICIT + hand-curated;
+  // do NOT derive it from SYSTEMIC_FLAVORS — that classification is a useful audit signal but may be
+  // edited for unrelated reasons, and coupling would silently shift author cost. Audit: 2026-07-12.
   function _isComplexAuthorMode() {
     try {
       var st = (typeof window !== 'undefined' && window.state) || {};
@@ -2432,10 +2438,18 @@ FAILURE CONDITIONS (invalid outputs):
       if (ws === 'glass_house') return true;                                                // Glass House (the Chorus system)
       if (ws.indexOf('curse') !== -1) return true;                                          // Cursed (5-phase Becoming + zero-unease concealment)
       if (ws.indexOf('thirst') !== -1) return true;                                         // Thirst = the "Elizabeth I" 5-LI reverse-harem + water-sovereignty distribution politics — 5 distinct power-loci + geopolitical subtext EVERY scene (app.js:67984/37154/13946); a lighter author conflates warlords + flattens the distribution calculus
-      // Cursed/Thirst may also arrive as resolved contextual flavors — canonical detection matches
-      // app.js _isCursed (same array + predicate; active-only, nulled on reset).
+      // Complex flavors arrive as resolved flavor objects — canonical detection matches app.js _isCursed
+      // (same array + predicate; ACTIVE-ONLY, nulled on reset → no false positives from historical entries).
       var rf = st.resolvedWorldFlavors;
-      if (Array.isArray(rf) && rf.some(function (f) { return f && (f.val === 'cursed' || f.val === 'thirst'); })) return true;
+      if (Array.isArray(rf) && rf.some(function (f) {
+        if (!f) return false;
+        var v = f.val;
+        return v === 'cursed'                  // Cursed — multi-form Becoming + zero-unease concealment
+            || v === 'thirst'                  // Thirst — 5-LI roster + distribution politics every scene
+            || v === 'galactic_civilizations'  // simultaneous faction / alliance / hostage-marriage / cross-faction relationship continuity (app.js:13926/13851/14085)
+            || v === 'quieting_event'          // all surveillance + tell-evasion threads must stay live; one accidental leak collapses the concealment premise (app.js:13944/98055)
+            || v === 'endless_edit';           // identity-version + memory-state + continuity-anchor recursion must stay exact across scenes (app.js:13948/98023)
+      })) return true;
       return false;
     } catch (_) { return false; }
   }
