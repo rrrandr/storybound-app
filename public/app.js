@@ -73850,6 +73850,11 @@ Return ONLY valid JSON:
       // shape new story doesn't pick up the previous story's plan.
       state._cgScreenplayPrecomputed = null;
       state._cgScreenplayPrecomputeInFlight = false;
+      // Scene-1 opening mode (grounded/orbit/collision) is a per-STORY selection cached on state
+      // and read directly by downstream consumers (no eligibility re-check on cache hit). Clear it
+      // so a new story re-selects — otherwise a non-billionaire story started after a billionaire
+      // one inherits a stale "LI must not appear" mode. (Fable CG audit 2026-07-13)
+      state._scene1OpeningMode = null;
       // Reset reveal panel state (canonical species intro panels fire once per story)
       if (typeof _resetRevealState === 'function') _resetRevealState();
       state.storypassFortunes = 0; // Story-locked fortunes expire on story change
@@ -187902,9 +187907,16 @@ No text, no watermark, no UI elements, share-ready.`;
     var _scene1ModeBlock = '';
     try {
       if (typeof window._resolveScene1OpeningMode === 'function') {
-        window._resolveScene1OpeningMode();  // ensure mode is selected + cached
+        window._resolveScene1OpeningMode();  // ensure mode is selected + cached (per-story)
       }
-      if (typeof window._buildScene1OpeningModeBlock === 'function') {
+      // SCENE-1 ONLY (Fable CG audit 2026-07-13): this is the Scene-1 opening CONTRACT (LI presence/
+      // absence). It was emitted into EVERY CG scene's system prompt — the block has no turn check
+      // despite its own doc comment ("returns '' … post-Scene 1"), so an "LI must not appear" order
+      // bled into scene 3+. Gate to Scene 1 (matches the user-prompt LI-visibility block, which is
+      // already `sceneIndex === 0`, and the literary side, which injects it only inside SCENE 1
+      // OPENING CONTRACT). We still RESOLVE above so the cached mode reaches the Scene-1 user prompt.
+      var _isScene1CG = !state.turnCount || state.turnCount === 0;
+      if (_isScene1CG && typeof window._buildScene1OpeningModeBlock === 'function') {
         _scene1ModeBlock = window._buildScene1OpeningModeBlock() || '';
       }
     } catch (_) {}
@@ -194463,6 +194475,19 @@ No text, no watermark, no UI elements, share-ready.`;
           // Apply aggregated marker passes (advances state machines).
           try { if (typeof _applyLIMysteryPass === 'function' && (_mAgg.plants.length || _mAgg.clues || _mAgg.emergings || _mAgg.reveals)) _applyLIMysteryPass(_mAgg); } catch (_) {}
           try { if (typeof _applyLIBurdenPass === 'function'  && (_bAgg.plants.length || _bAgg.contradictions || _bAgg.trusts || _bAgg.reveals || _bAgg.participations)) _applyLIBurdenPass(_bAgg); } catch (_) {}
+
+          // ── RE-SYNC PERSISTED PROSE (Fable CG audit 2026-07-13) ──────────
+          // The scene push (~line 194180) snapshotted beat text BEFORE the in-place placeholder-name
+          // scrub and the marker strip above ran, so state.scenes[last].text carried raw
+          // <<+phrase+>> / <<LI-MYSTERY:…>> / <<LI-BURDEN:…>> markers and any confabulated placeholder
+          // name into save/resume AND into the NEXT scene's "PRIOR SCENE TAIL" (which slices that
+          // very text, ~line 190229) — teaching the next-scene author that marker syntax is house
+          // style and surfacing plant markers as literal continuity text. Re-derive from cleaned beats.
+          try {
+            if (state.scenes && state.scenes.length) {
+              state.scenes[state.scenes.length - 1].text = plan.beats.map(function (b) { return (b && b.text) || ''; }).join('\n\n');
+            }
+          } catch (_) {}
 
           // ── post-strip rebuild of concatenated prose for the regex-based
           // detectors that follow. Use the now-stripped beat text so
@@ -269616,6 +269641,12 @@ ABSOLUTE RULES:
       // Famous Fate story could ship canon-blind prose. Gate FF off until the shared
       // per-turn steer composer lands (broader Site-C parity fix tracked separately).
       if (state.fateMode === 'famous_fate') return;
+      // CG/STAGED CONTAINMENT (Fable CG audit 2026-07-13): this is the LITERARY speculative
+      // preload. In CG/staged mode the advance path (_completeStagedSceneFromScreenplay) has its
+      // own screenplay pipeline and NEVER calls tryCommitSpeculativeScene — so a literary scene
+      // generated here can never be committed (100% discard, real API spend) AND its discard/timeout
+      // is recorded into sb_spec_ledger, polluting the literary speculation win-rate. Gate it off.
+      if (typeof _isCGRenderMode === 'function' && _isCGRenderMode()) return;
       if (state.isPreloadingNextScene) return;
       if (isSpeculativeSceneValid()) return;
       // TEASE TIER: No background generation beyond scene cap
@@ -269990,6 +270021,11 @@ REMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, D
       if (_preloadDebounceTimer) {
           clearTimeout(_preloadDebounceTimer);
       }
+
+      // CG/STAGED CONTAINMENT (Fable CG audit 2026-07-13): the whole speculative-preload funnel
+      // (scene + components + dialogue predictions) is literary-only. CG has its own screenplay
+      // pipeline that can't commit these, so firing them in CG is pure waste + ledger pollution.
+      if (typeof _isCGRenderMode === 'function' && _isCGRenderMode()) return;
 
       // Wait 2 seconds after scene renders before preloading
       // This gives user time to start reading and select fate card
