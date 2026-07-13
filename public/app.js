@@ -193537,6 +193537,11 @@ No text, no watermark, no UI elements, share-ready.`;
       var _cgAuthorPremium = _complexMode || _premiumScene;
       var _cgBridge = !_cgAuthorPremium && !!(state && state._authorPrevWasPremium);
       try { if (state) state._authorPrevWasPremium = _cgAuthorPremium; } catch (_) {}
+      // A1-F7 (Fable CG audit 2026-07-13): compute the continuity-bridge guard ONCE here and apply it at
+      // the SHARED author-request layer (below) so it reaches EVERY provider that authors this connecting
+      // scene — previously it was appended only inside the Mistral branch, so a Mistral timeout falling
+      // through to Grok/DeepSeek/GPT-4o dropped the strong→light seam smoother.
+      var _cgBridgeGuard = (_cgBridge && typeof window._SMALL_BRIDGE_GUARD === 'string') ? window._SMALL_BRIDGE_GUARD : '';
       // NOTE: the literary post-gen PURPLE LENS is intentionally NOT applied to CG. CG output is a
       // JSON screenplay (plan.panels[].captionText) whose caption fields sit well below the lens's
       // ~400-char prose threshold (it no-ops on short text, and running it on the raw JSON would
@@ -193553,8 +193558,11 @@ No text, no watermark, no UI elements, share-ready.`;
       // callChatGPT (which picks proxy by model slug prefix), and
       // Grok/Deepseek through their dedicated proxies directly.
       var _callScreenplayProvider = async function(prov) {
+        // Shared system message — carries the continuity-bridge guard (A1-F7) so it reaches every
+        // provider. The Mistral branch layers its own (Mistral-specific) restraint guard on top.
+        var _sharedSys = sysPrompt + _cgBridgeGuard;
         var msgs = [
-          { role: 'system', content: sysPrompt },
+          { role: 'system', content: _sharedSys },
           { role: 'user',   content: userPrompt }
         ];
         if (prov.endpoint === '/api/proxy') {
@@ -193581,9 +193589,10 @@ No text, no watermark, no UI elements, share-ready.`;
           // dropped — it would forbid the JSON CG requires). The shared continuity-bridge guard is
           // appended when this connecting scene follows a Grok tentpole.
           var _cgRestraint = '\n\nRESTRAINT GUARD (write restrained screenplay prose within the panels, NOT ornate): MAXIMUM one simile/metaphor per beat — prefer ZERO; concrete grounded specific observation over comparison ("like / as if / as though"); NO ornate intensifiers (achingly, molten, electric, searing, primal, feral, velvet, liquid); do not invent biographical specifics (birthdays, place names, backstory) the brief did not give. COHERENCE: every action, gesture and body belongs to ONE unambiguous subject — never attribute one character\'s action or body to another; give every pronoun a single clear antecedent NAMED in the same or prior sentence (do not describe one feature then attach a pronoun to a different, unnamed one). Keep the JSON structure exactly as specified.';
-          if (_cgBridge && typeof window._SMALL_BRIDGE_GUARD === 'string') _cgRestraint += window._SMALL_BRIDGE_GUARD;
+          // The continuity-bridge guard is applied at the shared layer (A1-F7) — _sharedSys already
+          // carries it when active. Here we add ONLY the Mistral-specific restraint guard on top.
           var _mMsgs = [
-            { role: 'system', content: sysPrompt + _cgRestraint },
+            { role: 'system', content: _sharedSys + _cgRestraint },
             { role: 'user',   content: userPrompt }
           ];
           var mResp = await fetch('/api/mistral-proxy', {
