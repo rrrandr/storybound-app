@@ -193922,9 +193922,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // ungrammatical, or too short, DROP the beat text (omit caption — the panel is
   // preserved, plan not desynced) — or, if dropping would leave too few text-
   // bearing beats, REPLACE it with a neutral non-tic beat. Synchronous; no LLM.
-  var _CG_NEUTRAL_BEAT = 'She looks away before the moment can settle.';
   var _CG_MIN_BEAT_LEN = 25;
-  var _CG_MIN_TEXT_BEATS = 3;
   function _cgBeatTextBad(t) {
     if (!t) return true;
     var s = String(t).trim();
@@ -193976,9 +193974,6 @@ No text, no watermark, no UI elements, share-ready.`;
       if (!plan || !Array.isArray(plan.beats) || !plan.beats.length) return;
       if (typeof _scanCalcifiedMoves !== 'function') return;
       var beats = plan.beats;
-      var textBearing = function (excludeIdx) {
-        return beats.filter(function (b, ix) { return ix !== excludeIdx && b && typeof b.text === 'string' && b.text.trim().length >= _CG_MIN_BEAT_LEN; }).length;
-      };
       for (var bi = 0; bi < beats.length; bi++) {
         var beat = beats[bi];
         if (!beat || typeof beat.text !== 'string' || !beat.text.trim()) continue;
@@ -193993,15 +193988,17 @@ No text, no watermark, no UI elements, share-ready.`;
           try { console.warn('[CALCIFIED-MOVE:FALLBACK] mode=cg action=strip beat=' + bi + ' — removed offending sentence(s) deterministically (no regen).'); } catch (_) {}
           continue;
         }
-        // strip left it empty / mangled / still dirty → never ship broken text.
-        if (textBearing(bi) >= _CG_MIN_TEXT_BEATS) {
-          beat.text = '';
-          beat._omitted = true;
-          try { console.warn('[CALCIFIED-MOVE:FALLBACK] mode=cg action=drop_beat beat=' + bi + ' — stripped text empty/mangled; caption omitted (panel preserved).'); } catch (_) {}
-        } else {
-          beat.text = _CG_NEUTRAL_BEAT;
-          try { console.warn('[CALCIFIED-MOVE:FALLBACK] mode=cg action=replace_beat beat=' + bi + ' — dropping would leave too few beats; replaced with neutral non-tic beat.'); } catch (_) {}
-        }
+        // strip left it empty / mangled / still dirty. Per Fable CG audit A2-F4, do NOT "repair" by
+        // blanking or inventing narration:
+        //   • blanking (beat.text='') empties a DIALOGUE beat's speech bubble and desyncs the declared
+        //     beat indices (sceneCharge.concrete_specific/subtext/almost_said_beat_idx, expression_arc
+        //     peak_a/peak_b_beat, microDecision.afterBeat, decisionGateBeatIdx) that may point at it;
+        //   • the old hardcoded 'She looks away…' line placed a 3rd-person-FEMALE NARRATION sentence
+        //     under a beat whose kind may be 'dialogue' (a 'li'/'protagonist' speaker "saying" narration,
+        //     violating TEXT RULES) and whose POV/gender may be 1st/2nd person or male/non-binary.
+        // A safe deterministic strip isn't possible here, so LEAVE THE ORIGINAL BEAT UNCHANGED — shipping
+        // a soft calcified phrase is less harmful than corrupting speaker/POV/kind or desyncing indices.
+        try { console.warn('[CALCIFIED-MOVE:FALLBACK] mode=cg action=leave_unchanged beat=' + bi + ' kind=' + (beat.kind || '?') + ' — no safe deterministic strip; original preserved (never blanks, invents narration, or desyncs indices).'); } catch (_) {}
       }
     } catch (_) {}
   }
