@@ -38652,8 +38652,8 @@ body.ic-no-previous #gnCoverPageBtn { display: none !important; }
 /* the world-anchor map — a MEDIUM weight by default (500), tuned so it registers in
    peripheral vision without the eye landing on it first. Tunable live via
    window._loreBoldWeight(500|550|600) for A/B; never a color/underline/link. */
-:root { --lore-bold-weight: 500; }
-.lore-bold { font-weight: var(--lore-bold-weight, 500); letter-spacing: 0.003em; }
+:root { --lore-bold-weight: 700; }
+.lore-bold { font-weight: var(--lore-bold-weight, 700); letter-spacing: 0.003em; }
 
 #loreTip {
   position: absolute; z-index: 9000; display: none;
