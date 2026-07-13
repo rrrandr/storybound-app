@@ -2417,6 +2417,22 @@ FAILURE CONDITIONS (invalid outputs):
   // Premium/tentpole scenes (Scene 1, climax, cliffhanger, tempt-fate, betrayal/revelation,
   // high-importance, LI entrance) stay on Grok 4.3. Kill-switch: window._smallAuthorEnabled=false.
   const _SMALL_RESTRAINT_GUARD = '\n\nRESTRAINT GUARD (write restrained literary prose, NOT ornate): MAXIMUM one simile or metaphor per paragraph — most paragraphs should have ZERO. Prefer concrete, grounded, specific physical/sensory observation over comparison ("like / as if / as though"). Do NOT reach for ornate intensifiers (achingly, molten, electric, searing, primal, feral, velvet, liquid). Ground every physical description in plain, specific detail a person would actually notice. Vivid through precision, never through ornament. Do not invent biographical specifics (birthdays, place names, backstory) the brief did not give you. COHERENCE (critical): every action, gesture, and body belongs to ONE unambiguous subject — never attribute one character\'s action, movement, or body to another (e.g. do NOT write "they smoothed my dress" when only I could be smoothing my own dress); keep who-does-what to whom unmistakable, and give every pronoun a single clear antecedent. NAME THE NOUN: a pronoun (they/it/them/he/she/his/her) must refer to a noun actually NAMED in the same or prior sentence — do NOT describe one feature then attach a pronoun to a different, unnamed one (e.g. describing his NOSE, then "the way they dropped to my mouth" when his EYES were never named — write "his eyes"). OUTPUT: return ONLY the scene prose — never a title, synopsis, character list, scene/section header, or any [BRACKETED] metadata tag.';
+  // COMPLEX AUTHOR MODE (Roman 2026-07-12): world flavors/modes whose load-bearing conceptual or
+  // structural system must stay coherent scene-to-scene author on Grok for EVERY scene (not just
+  // tentpoles) — a lighter author drifts the system. Consulted by BOTH the literary author
+  // (_grokLiteraryAuthor) and the CG screenplay selector (app.js) so CG author routing === Literary.
+  // Author-only: editorial tier stays INDEPENDENT — a complex-mode connecting scene is Grok-authored
+  // but keeps normal editorial spend. Current set: Glass House (the Chorus system) + Enigma-S
+  // (recursive meta-world). Extend here as the "complex enough for all-Grok" set grows.
+  function _isComplexAuthorMode() {
+    try {
+      var st = (typeof window !== 'undefined' && window.state) || {};
+      if (st.metaWorld === 'simulation') return true;                                      // Enigma-S
+      var ws = String(st.worldSubtype || (st.picks && st.picks.worldSubtype) || '').toLowerCase();
+      return ws === 'glass_house';                                                          // Glass House
+    } catch (_) { return false; }
+  }
+  window._isComplexAuthorMode = _isComplexAuthorMode;
   function _isPremiumAuthorScene() {
     try {
       var st = (typeof window !== 'undefined' && window.state) || {};
@@ -2428,6 +2444,7 @@ FAILURE CONDITIONS (invalid outputs):
       return false;
     } catch (_) { return true; } // on any error, default to Grok (premium) — never silently downgrade
   }
+  window._isPremiumAuthorScene = _isPremiumAuthorScene;
   // DEFAULT-ON (Roman 2026-06-25): non-premium (quiet) scenes author on Mistral-Small — Grok
   // was wasting tentpole-grade spend on scenes where nothing happens. The two earlier blockers
   // were since addressed (purple-mode lens coupled to the Small author af59dcb; coherence/
@@ -2474,7 +2491,7 @@ FAILURE CONDITIONS (invalid outputs):
     // including premium ones — lets a short harness run exercise the Small author + purple-lens
     // path without depending on the harness reaching a non-premium turn. No prod effect (off).
     const _prevWasPremium = (typeof window !== 'undefined' && window.state) ? window.state._authorPrevWasPremium === true : false;
-    const _premium = _isPremiumAuthorScene() && !(typeof window !== 'undefined' && window._smallAuthorForceAll === true);
+    const _premium = (_isPremiumAuthorScene() || _isComplexAuthorMode()) && !(typeof window !== 'undefined' && window._smallAuthorForceAll === true); // complex modes → Grok every scene (CG matches this)
     const _smallAuthor = _smallAuthorEnabled() && !_premium;
     const _bridge = _smallAuthor && _prevWasPremium; // Grok-tentpole → Mistral seam → continuity-style bridge
     try { if (typeof window !== 'undefined' && window.state) window.state._authorPrevWasPremium = _premium; } catch (_) {} // record THIS scene's tier for the next scene's seam check
