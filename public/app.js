@@ -194720,6 +194720,34 @@ No text, no watermark, no UI elements, share-ready.`;
         return;
       }
 
+      // ── PARITY VALIDATOR (Fable CG audit A1-F1, 2026-07-13) ──────────────
+      // The literary-FALLBACK plan (produced by _runStagedAnalysis when all screenplay providers fail)
+      // previously mounted WITHOUT the plan-level validation the primary screenplay path gets from
+      // _validateAndNormalizeCGPlan (193655). The safety-critical gap is the INTIMACY LEGALITY gate:
+      // the analyzer re-derives is_consummate_scene from prose content with NO phase/canon awareness
+      // (schema field at ~148192), so a build-up scene could ship declared-consummate; the validator's
+      // phase check (192234) forces is_consummate_scene=false + nulls kink fields when intimacyPhase!==true.
+      // It also applies structural normalization (sparkle sanitize, deck opener/closer mandate, expression-
+      // arc synthesis, beat cleanup). Prose-level parity (phrase bans, placeholder scrub, fate-card + world/
+      // flavor directives) is ALREADY applied upstream by the literary author that produced rawProse
+      // (237640-237657 scrub/strip; fate+world reach the full literary turn), so the PLAN validator is the
+      // remaining gap. NEVER MOUNT UNVALIDATED: a null/throwing validator drops to the same stay-on-prior-
+      // scene + Submit-again path as a null analysis.
+      var _validatedFallbackPlan = null;
+      try {
+        _validatedFallbackPlan = _validateAndNormalizeCGPlan(plan, sceneIndex);
+      } catch (_valErr) {
+        console.warn('[STAGED:COMPLETE] _validateAndNormalizeCGPlan threw on fallback plan:', _valErr && _valErr.message);
+      }
+      if (!_validatedFallbackPlan) {
+        console.warn('[STAGED:COMPLETE] fallback plan failed validation — staying on prior scene (never mount unvalidated)');
+        _hideStagedComposingIndicator();
+        state._stagedSubmitting = false;
+        if (typeof showToast === 'function') showToast('Staged analysis failed — try Submit again');
+        return;
+      }
+      plan = _validatedFallbackPlan;
+
       // World contract — sticky region/species identity for this scene.
       // Computed BEFORE phase image gen fires so every phase prompt and
       // every BFL ref-image preload reads the same contract. Stored on
