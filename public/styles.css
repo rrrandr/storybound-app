@@ -2778,6 +2778,12 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
     opacity: 1;
 }
 
+/* Fatelands frontispiece (Roman 2026-07-13): while the map is up, ONLY the frontispiece shows.
+   Revealing #storyContent (so the map lays out) also exposed the scene chrome — say/do inputs,
+   fate cards, Submit, fortunes — which share #storyContent. Hide every sibling of the frontispiece
+   while it's active. Loupe + map live INSIDE #fatelandsFrontispiece, so they're unaffected. */
+#storyContent.frontispiece-active > *:not(#fatelandsFrontispiece) { display: none !important; }
+
 /* Fatelands map image (specific to frontispiece) */
 .fatelands-map-img {
     width: 100%;
