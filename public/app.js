@@ -193535,49 +193535,9 @@ No text, no watermark, no UI elements, share-ready.`;
       // ladders — too expensive. Grok authors; gpt-4o / DeepSeek are the non-Anthropic
       // backstops. If every provider is down the scene fails and the user retries /
       // waits for Grok rather than falling to a paid Anthropic model.
-      var _SCREENPLAY_GPT_FIRST = [
-        { name: 'GPT-4o',            model: 'gpt-4o',              timeoutMs: 60000 },
-        { name: 'Grok-4.1-reasoning', endpoint: '/api/proxy',       grokModel: 'grok-4-1-fast-reasoning', timeoutMs: 75000 },
-        { name: 'DeepSeek-V4-Pro',    endpoint: '/api/deepseek-proxy', dsModel: 'deepseek-v4-pro',         timeoutMs: 75000 }
-      ];
-      // REVERTED 2026-05-22 PM (per user correction): "Grok is only
-      // supposed to author XXX embodied scenes. Sonnet was the main
-      // author with Opus and GPT-4o as the backup."
-      // The earlier flip (Grok-first for all "risky" flavors including
-      // billionaire_modern) was conflating ADULT-THEMED-FLAVOR with
-      // EXPLICIT-CONTENT-SCENE. billionaire_modern Scene 1 is not
-      // intimate — it's plot setup, dialogue, character interaction.
-      // Sonnet generates richer prose with stronger peaks for these;
-      // Grok produces flatter scenes (avg intensity 0.28-0.32 vs
-      // Sonnet's typical 0.40+).
-      // Now: Sonnet-first for adult-themed flavors. Grok stays as #2
-      // backstop in case Sonnet times out (which was the original
-      // motivation for the flip — that timeout issue was likely
-      // bloated prompts I was building, not Sonnet itself).
-      // GROK-FIRST chain still exists for runtime-detected intimate
-      // scenes (is_consummate_scene=true, OAS active, ST3+ heated
-      // content) where Grok's filter-bypass is the actual reason
-      // you want it primary.
-      // Adult/dark-themed chain order rationale (per user direction
-      // 2026-05-22): narrative-quality first (Sonnet, Opus), then
-      // filter-resilient providers (Grok, DeepSeek), then GPT-4o LAST
-      // because its safety layer is the most aggressive on dark
-      // content — likely to refuse, soften, or reframe to "less
-      // concerning" register. Grok ahead of DeepSeek because DeepSeek
-      // is reasoning-biased and tends toward clinical prose voice on
-      // emotional beats; Grok preserves narrative voice better when
-      // the scene needs to land emotionally. (Flip if observation
-      // suggests otherwise — both are roughly comparable for non-
-      // intimate adult-themed prose.)
-      // Adult-themed flavors: was Sonnet-first/Opus-second. Now Grok-first (it's the
-      // sanctioned author for adult/explicit register anyway); DeepSeek then GPT-4o as
-      // non-Anthropic backstops (GPT-4o last — its safety layer is most likely to soften
-      // dark content). No paid Anthropic anywhere in the chain.
-      var _SCREENPLAY_SONNET_FIRST_ADULT = [
-        { name: 'Grok-4.1-reasoning', endpoint: '/api/proxy',       grokModel: 'grok-4-1-fast-reasoning', timeoutMs: 75000 },
-        { name: 'DeepSeek-V4-Pro',    endpoint: '/api/deepseek-proxy', dsModel: 'deepseek-v4-pro',         timeoutMs: 75000 },
-        { name: 'GPT-4o',            model: 'gpt-4o',              timeoutMs: 60000 }
-      ];
+      // (Dead-code cleanup 2026-07-13, A3-F6): the _SCREENPLAY_GPT_FIRST and _SCREENPLAY_SONNET_FIRST_ADULT
+      // chains + their stale Sonnet-first rationale were defined but NEVER referenced by the routing.
+      // The live chains are _SCREENPLAY_GROK_FIRST and _SCREENPLAY_MISTRAL_SMALL_FIRST below.
       var _SCREENPLAY_GROK_FIRST = [
         { name: 'Grok-4.1-reasoning', endpoint: '/api/proxy',       grokModel: 'grok-4-1-fast-reasoning', timeoutMs: 75000 },
         { name: 'DeepSeek-V4-Pro',    endpoint: '/api/deepseek-proxy', dsModel: 'deepseek-v4-pro',         timeoutMs: 75000 },
@@ -193595,61 +193555,20 @@ No text, no watermark, no UI elements, share-ready.`;
       var _sceneFlavorKey = (state && state.worldSubtype) ||
                             (state && state.picks && state.picks.flavor) || '';
       _sceneFlavorKey = String(_sceneFlavorKey).toLowerCase();
-      var _SCREENPLAY_RISKY = {
-        billionaire_modern: 1, glass_house: 1, human_capital: 1, dogma: 1,
-        thirst: 1, angry_room: 1, endless_edit: 1, quieting_event: 1,
-        predation: 1, hunger: 1, dystimulation: 1, ashfall: 1, year_zero: 1,
-        cursed: 1, the_inhuman: 1, post_human: 1, simulation: 1
-      };
-      // RUNTIME intimate-scene detection — these are the scenes where
-      // Grok's filter-bypass is actually the reason to put it first.
-      // Also fires on MODE 1 situations: the SEDUCTIVE MODE infrastructure
-      // (broader-scope seductive register, whisper directives, explicit-
-      // user-input sniffer) sets state._mode1.routeToGrok to flag that
-      // the next scene-render needs Grok. Existing Mode 1 routing
-      // infrastructure was bypassed by my prior Sonnet-first change;
-      // now restored alongside the explicit-intimacy flags.
-      var _mode1RouteFlag = !!(state && state._mode1 && state._mode1.routeToGrok === true);
-      var _mode1HasFired = !!(state && state._mode1 && state._mode1.firedFor &&
-                              Object.keys(state._mode1.firedFor).length > 0);
-      // 2026-05-22 additions (per user audit "Anywhere else that might
-      // require Grok to take over?"):
-      //   • Dogma flavor — heretical / anti-religious language register;
-      //     Sonnet sanitizes sustained religious-profanity beats
-      //   • Sustained profanity (Charlotte case) — recurrent explicit
-      //     vocabulary in NON-intimate context (artistic, clinical,
-      //     comedic). Detected by _sniffAndRouteExplicit's rolling
-      //     3-turn window
-      //   • Comedian template active — raunchy stand-up character voice
-      //     (Dice / Burr / Silverman register); explicit vocab is
-      //     comic material, not intimate signal
-      var _isDogmaFlavor = String(_sceneFlavorKey).indexOf('dogma') >= 0;
-      var _sustainedProfanityActive = !!(state && state._sustainedProfanityActive);
-      var _isComedianLI = !!(state && (
-        state._mode1CharacterTemplate === 'comedian' ||
-        (state.liArchetype && String(state.liArchetype).toLowerCase().indexOf('comedian') >= 0)
-      ));
-      var _isRuntimeIntimate = !!(state && (
-        state.intimacyPhase ||
-        state.intimacyDialogue && state.intimacyDialogue.active ||
-        (state.storyturn && parseInt(String(state.storyturn).replace(/[^\d]/g, ''), 10) >= 3) ||
-        _mode1RouteFlag ||
-        _mode1HasFired ||
-        _isDogmaFlavor ||
-        _sustainedProfanityActive ||
-        _isComedianLI
-      ));
-      var _isRiskyForScreenplay = !!_SCREENPLAY_RISKY[_sceneFlavorKey];
+      // (Dead-code cleanup 2026-07-13, A3-F6): _SCREENPLAY_RISKY + the runtime-intimacy / content-risk
+      // detection (_isRuntimeIntimate / _isRiskyForScreenplay and their _mode1* / _isDogmaFlavor /
+      // _sustainedProfanityActive / _isComedianLI inputs) were computed but NEVER read. Author routing is
+      // decided below by _isComplexAuthorMode / _isPremiumAuthorScene, matching the literary path.
       // ── AUTHOR POLICY (Roman 2026-07-12) — CG author routing MATCHES Literary ──────────────
       // complex mode → Grok every scene; Scene 1 / tentpole → Grok; connecting scene → Mistral
       // Small. GPT-4o / Sonnet appear ONLY as a labeled fallback inside a chain, never as an
       // ordinary primary author. Uses the SAME canonical author-tier fns the literary path uses
       // (window._isComplexAuthorMode / window._isPremiumAuthorScene) so the two routings can't
       // drift. Editorial tier stays INDEPENDENT of author (a complex/connecting scene keeps its own
-      // editorial budget). Runtime intimacy / content-risk (_isRuntimeIntimate / _isRiskyForScreenplay
-      // above) NO LONGER pick the primary author — they still shape the separate specialist render
-      // pass, safety handling, and the fallback tail (the connecting chain falls to Grok, not GPT,
-      // so explicit content Mistral would soften/refuse recovers on Grok).
+      // editorial budget). Runtime intimacy / content-risk do NOT pick the primary author (the old
+      // _isRuntimeIntimate / _isRiskyForScreenplay flags were dead and were removed above); the
+      // connecting chain falls to Grok (not GPT) so explicit content Mistral would soften/refuse
+      // recovers on Grok.
       var _complexMode  = (typeof window._isComplexAuthorMode === 'function') && window._isComplexAuthorMode();
       var _premiumScene = (typeof window._isPremiumAuthorScene === 'function')
         ? window._isPremiumAuthorScene()
