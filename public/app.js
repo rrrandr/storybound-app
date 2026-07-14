@@ -28138,8 +28138,30 @@ It does NOT change Player actions, relationship progression, or pacing.
     return out;
   }
 
+  // HOT-FIRST-DRAFT OVERRIDE (Roman 2026-07-14, meta-audit a phase 3 / audit option ii). Gating the
+  // NEGATIVE cold pulls (phase 1/2) did NOT flip Grok's first draft (rendered COLD 2/2; band-aid repaired
+  // it). This is the POSITIVE counter-voice, placed FIRST in the cached SYSTEM prose-stack so it holds the
+  // same (system) authority as the establish-place pulls and is read BEFORE them. Scene-1 HOT only. Logs
+  // [COLD-GATE] so the console confirms the gate actually fired in the sent prompt (rules out a silent
+  // no-op before blaming the model).
+  function _buildHotFirstDraftOverride() {
+    try {
+      if (state.turnCount) return '';
+      var _hot = String((typeof _pickOpeningTemperature === 'function' ? _pickOpeningTemperature(state) : state._openingTemperature) || '').toUpperCase() === 'HOT_CRISIS';
+      try { console.log('[COLD-GATE] hot-first-draft override: _hot=' + _hot + ' · temp=' + (state._openingTemperature || '?') + ' · turn=' + (state.turnCount || 0) + ' → ' + (_hot ? 'INJECTED (system, top of prose-stack)' : 'skipped')); } catch (_) {}
+      if (!_hot) return '';
+      return '\nOPENING IN MOTION (HARD — TOP PRIORITY, overrides any establish-the-place / ground-in-the-body / atmosphere instruction below for the FIRST beat only):\n'
+        + '  This scene opens HOT — a crisis ALREADY in progress. The FIRST SENTENCE\'S SUBJECT is a PERSON doing something, or a force acting ON the protagonist (someone speaks, seizes, blocks, accuses, arrives, demands) — NOT a place, weather, light, an abstraction, or the protagonist reflecting / remembering / noticing / feeling. By the SECOND sentence the pressure is escalating in real time. NO atmospheric or scene-setting warm-up precedes the action; NO "she woke / she stood / the room was / the light fell / I had always" establishing or reflective beat.\n'
+        + '  Setting, world-strangeness, and description still arrive — but WOVEN INTO the live action (a place shown by the person moving through it, the strange felt mid-crisis), never as a standalone beat before the action starts.\n'
+        + '  ✗ COLD (forbidden here): "The morning light fell across the woven walls, and I felt the old ache of the oath settle in my chest." (reflective, static — in-motion=0)\n'
+        + '  ✓ HOT (required): "The uncle shouldered through the bead curtain before I could speak, his relic blade already loose in his fist. \'Step aside.\'" (person acting, crisis in progress, sentence one)\n';
+    } catch (_) { return ''; }
+  }
+  window._buildHotFirstDraftOverride = _buildHotFirstDraftOverride;
+
   function buildProseStackDirectives(opts) {
     var out = '';
+    try { if (typeof _buildHotFirstDraftOverride === 'function') out += _buildHotFirstDraftOverride(); } catch (_) {}
     try { if (typeof _buildCharacterizingFirstLineDirective === 'function') out += _buildCharacterizingFirstLineDirective(); } catch (_) {}
     try { if (typeof buildProseDensityConductorDirective === 'function') out += buildProseDensityConductorDirective(); } catch (_) {}
     try { if (typeof buildWorldSensoryTextureDirective === 'function')   out += buildWorldSensoryTextureDirective(); } catch (_) {}
