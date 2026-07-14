@@ -5459,6 +5459,18 @@ ${_pcInteriorLock}`;
                   const delta = c * COST_OVERHEAD_MULTIPLIER;
                   window.state._lastSceneAPICost = (window.state._lastSceneAPICost || 0) + delta;
                   window.state._cumulativeAPICost = (window.state._cumulativeAPICost || 0) + delta;
+                  // Keep the per-scene breakdown (window._cgSceneCosts / _sceneCostsThisStory) accurate:
+                  // the sealed acc IS the last-finalized scene, so bump that entry's image + total by the
+                  // same delta (image raw / total overhead-multiplied, matching the finalize push). Without
+                  // this, CG's async phase/cut images (which land after finalize) undercount in the table.
+                  try {
+                      const _arr = window.state._sceneCostsThisStory;
+                      if (_arr && _arr.length) {
+                          const _last = _arr[_arr.length - 1];
+                          _last.image = (_last.image || 0) + c;
+                          _last.total = (_last.total || 0) + delta;
+                      }
+                  } catch (_) {}
                   try { console.log('[SCENE-COST] DELAYED image charge: +$' + delta.toFixed(4) + ' (' + provider + ') → last-scene now $' + window.state._lastSceneAPICost.toFixed(4)); } catch (_) {}
               }
           },
@@ -5698,6 +5710,10 @@ ${_pcInteriorLock}`;
                   text: acc.textCost,
                   image: acc.imageCost,
                   type: sceneType,
+                  // Per-scene author for window._cgSceneCosts() (A3-F8). _lastCGAuthor is set during
+                  // this scene's _runCGScreenplayGen, so it IS this scene's author at finalize — but only
+                  // for CG scenes; null on literary/GN scenes so a stale CG author can't mislabel them.
+                  author: (typeof _isCGRenderMode === 'function' && _isCGRenderMode() && window.state._lastCGAuthor) ? window.state._lastCGAuthor : null,
                   cat: _catCost,   // { setup, audit, main, scene, wasted } in $ (overheaded)
                   ts: Date.now()
               });
@@ -5827,6 +5843,47 @@ ${_pcInteriorLock}`;
       try { _finalizeSceneAudit(); } catch (_) {}
   }
   window._finalizeSceneCost = _finalizeSceneCost;
+
+  // ── PER-SCENE COST BREAKDOWN (Roman 2026-07-13) ──────────────────────────────
+  // window._cgSceneCosts() → a Scene | Author | Text $ | Images $ | Total table for
+  // the CURRENT story, from state._sceneCostsThisStory (sealed per scene by
+  // _finalizeSceneCost, images kept current via the delayed-charge entry bump) + the
+  // per-scene CG author. Surfaces author-route + image-heavy cost patterns that the
+  // running [SCENE-COST] logs don't make comparable at a glance. All $ are
+  // overhead-multiplied to match the [SCENE-COST] / cumulative totals.
+  window._cgSceneCosts = function () {
+      var s = window.state || {};
+      var mult = (typeof COST_OVERHEAD_MULTIPLIER === 'number') ? COST_OVERHEAD_MULTIPLIER : 1;
+      var rows = (Array.isArray(s._sceneCostsThisStory) ? s._sceneCostsThisStory : []).map(function (e, i) {
+          return {
+              scene:     (typeof e.turn === 'number' ? e.turn + 1 : i + 1),
+              author:    e.author || e.type || '?',
+              text_usd:  +(((e.text || 0) * mult)).toFixed(4),
+              image_usd: +(((e.image || 0) * mult)).toFixed(4),
+              total_usd: +((e.total || 0)).toFixed(4)
+          };
+      });
+      var sum = rows.reduce(function (a, r) { a.text += r.text_usd; a.image += r.image_usd; a.total += r.total_usd; return a; }, { text: 0, image: 0, total: 0 });
+      var byAuthor = {};
+      rows.forEach(function (r) { var x = byAuthor[r.author] = byAuthor[r.author] || { scenes: 0, total_usd: 0 }; x.scenes++; x.total_usd = +(x.total_usd + r.total_usd).toFixed(4); });
+      var summary = {
+          scenes: rows.length,
+          text_usd:  +sum.text.toFixed(4),
+          image_usd: +sum.image.toFixed(4),
+          total_usd: +sum.total.toFixed(4),
+          avg_per_scene_usd: rows.length ? +(sum.total / rows.length).toFixed(4) : 0,
+          image_share_pct: sum.total ? +(100 * sum.image / sum.total).toFixed(1) : null,
+          by_author: byAuthor
+      };
+      try {
+          if (typeof console.table === 'function') console.table(rows);
+          console.log('[CG-SCENE-COSTS] ' + summary.scenes + ' scene(s) · text $' + summary.text_usd +
+              ' · images $' + summary.image_usd + (summary.image_share_pct != null ? ' (' + summary.image_share_pct + '% of total)' : '') +
+              ' · total $' + summary.total_usd + ' · avg/scene $' + summary.avg_per_scene_usd);
+          Object.keys(byAuthor).forEach(function (a) { console.log('  · author ' + a + ': ' + byAuthor[a].scenes + ' scene(s), $' + byAuthor[a].total_usd); });
+      } catch (_) {}
+      return { rows: rows, summary: summary };
+  };
 
   // Clear on failure — don't persist, don't increment cumulative. Also clears
   // the per-scene Grok flag so it doesn't leak into the next attempt.
