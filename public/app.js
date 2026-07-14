@@ -188419,7 +188419,7 @@ No text, no watermark, no UI elements, share-ready.`;
         _povRoleLines.push('═══ ' + _povLabel.toUpperCase() + ' — RE-NARRATION MANDATE ═══');
         _povRoleLines.push('You are NOT writing the original story. You are writing a COMPANION EDITION — re-narrating the SAME events from a different POV character\'s interior.');
         _povRoleLines.push('');
-        _povRoleLines.push('VISUAL CANON (HARD): The illustrations from the original run are CANONICAL. Do NOT contradict them. Do NOT invent new locations, wardrobe, or staging that contradict what was shown. Most phase images will be REUSED from the original; only 1-3 INSERT images per issue are budgeted for POV-specific moments.');
+        _povRoleLines.push('VISUAL CANON (HARD): The illustrations from the original run are CANONICAL. Do NOT contradict them. Do NOT invent new locations, wardrobe, or staging that contradict what was shown. For scenes the POV character SHARED with the protagonist, most phase images are REUSED from the original (only 1-3 INSERT images per issue for POV-specific moments). EXCEPTION — for a scene the POV character was OFFSTAGE for (see OFFSTAGE OVERRIDE), his parallel-location panels are FRESH renders of HIS own setting, not reuses; those are the budgeted POV-specific inserts.');
         _povRoleLines.push('');
         _povRoleLines.push('PROSE REGEN MANDATE:');
         _povRoleLines.push('- Original prose narrated the protagonist\'s experience. Your prose narrates what the new POV character was experiencing INTERIOR — motives, suppressed reactions, observations, calculations, hidden context.');
@@ -188440,7 +188440,7 @@ No text, no watermark, no UI elements, share-ready.`;
         }
         _povRoleLines.push('');
         _povRoleLines.push('FORBIDDEN:');
-        _povRoleLines.push('- Inventing events that did not occur in the original');
+        _povRoleLines.push('- Inventing new plot FACTS or EVENTS that did not occur in the original, or that change / contradict what happened. (NOT this: showing the POV character\'s OWN parallel location / activity / state during a scene they were offstage for — per the OFFSTAGE OVERRIDE — is a new OBSERVATION of established time, allowed as long as it introduces no new plot event and contradicts nothing.)');
         _povRoleLines.push('- Contradicting visual canon (locations, wardrobe, staging shown in original images)');
         _povRoleLines.push('- Granting the POV character impossible omniscience (no knowing what happened in scenes they weren\'t in)');
         _povRoleLines.push('- Treating this as a sequel — there is NO chronological advancement, only re-interpretation');
@@ -191078,7 +191078,7 @@ No text, no watermark, no UI elements, share-ready.`;
           // he can't narrate a scene he wasn't in. Render where HE was during these events instead
           // (his parallel thread), and the panels show HIM in his own setting (fresh art, NOT a reuse).
           if (_kind === 'LI' && typeof _liOnPageInParentScene === 'function' && !_liOnPageInParentScene(sceneIndex)) {
-            lines.push('OFFSTAGE OVERRIDE (HARD — the love interest was NOT present in this original scene; it happened without him): do NOT re-narrate the protagonist\'s scene as if he witnessed it. Instead render WHERE HE WAS during these same moments — his parallel location, what he was doing / thinking / learning while this unfolded elsewhere. The PANELS must show HIM in his own setting, NOT the protagonist\'s scene (this is a FRESH visual scene, not a re-illustration). The original\'s events still happened, offstage to him; his thread runs in parallel and may intersect later. Do NOT invent that he was secretly present.');
+            lines.push('OFFSTAGE OVERRIDE (HARD — the love interest was NOT present in this original scene; it happened without him): do NOT re-narrate the protagonist\'s scene as if he witnessed it. Instead render WHERE HE WAS during these same moments — his parallel location, what he was doing / thinking / learning while this unfolded elsewhere. The PANELS must show HIM in his own setting, NOT the protagonist\'s scene (this is a FRESH visual scene, not a re-illustration). The original\'s events still happened, offstage to him; his thread runs in parallel and may intersect later. Do NOT invent that he was secretly present. BOUND (HARD): show his PARALLEL PRESENCE and STATE (where he was, what he was doing / thinking / feeling) — a new OBSERVATION of established time — but do NOT invent new PLOT facts or offscreen EVENTS in his thread that advance, change, or contradict the original (no new confrontation, decision, or reveal that alters canon). His parallel thread is consistent with and subordinate to the original\'s established events.');
           } else {
             lines.push('Re-narrate the SAME EVENTS from the new POV. Same blocking, same dialogue beats happen, but the interpretive lens shifts — interior monologue, suppressed reactions, hidden motives, and what the new POV character was REALLY thinking/feeling/calculating during these moments. Do NOT invent events that did not occur. Do NOT contradict the visual canon implied by the original.');
           }
