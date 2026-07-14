@@ -193459,19 +193459,10 @@ No text, no watermark, no UI elements, share-ready.`;
       return null;
     }
 
-    // Model selection for the screenplay generator. SWAP HERE when you want
-    // to evaluate prose quality — slug values match _COMPARE_MODELS:
-    //   'gpt-4o-mini'      — cheapest, fast JSON. Reliable but flat prose;
-    //                        was timing out on 8000-token scenes on the
-    //                        orchestrator's internal timeout.
-    //   'gpt-4o'           — solid voice, mid cost. Was emitting peak-
-    //                        flooded scenes (25/25 beats as peaks, ignoring
-    //                        expression_arc's 2-peak declaration → 23 of
-    //                        25 demoted to neutral by cost cap = flat).
-    //   'claude-sonnet-4-5'— strong prose, low cost. Better at honoring
-    //                        structured-JSON arc constraints. Current default.
-    //   'claude-opus-4-7'  — top prose quality, highest cost.
-    var _MODEL_SLUG = 'claude-sonnet-4-5';
+    // A/B MODEL-COMPARE capture. The scene's `originalModel` is backfilled post-gen with the ACTUAL
+    // winning author (see _winningModelSlug) — NOT a hardcoded slug. It used to be pinned to
+    // 'claude-sonnet-4-5', which mislabeled every capture's "(original)" row as Sonnet even though the
+    // live author is Grok / Mistral / DeepSeek (A3-F6, Fable CG audit 2026-07-13).
 
     // ── MODEL-COMPARE CAPTURE ──
     // Stash the prompt bundle BEFORE the call so the A/B side panel
@@ -193484,7 +193475,7 @@ No text, no watermark, no UI elements, share-ready.`;
       sysPrompt: sysPrompt,
       userPrompt: userPrompt,
       capturedAt: Date.now(),
-      originalModel: _MODEL_SLUG,
+      originalModel: null,   // backfilled post-gen with the actual winning model (A3-F6)
       originalOutput: null,
       comparisons: {},
       // Flag for the A/B re-render: this capture expects structured JSON
@@ -193695,7 +193686,7 @@ No text, no watermark, no UI elements, share-ready.`;
         console.log('[CG:SCREENPLAY] flavor "' + _sceneFlavorKey + '" → chain leads with ' + _SCREENPLAY_PROVIDERS[0].name + _routingReason);
       } catch (_) {}
       var response = null;
-      var _winningProvider = null;
+      var _winningProvider = null, _winningModelSlug = null;
       var _lastErr = null;
 
       // Per-provider call helper. Routes Anthropic/OpenAI through
@@ -193790,6 +193781,7 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_resp && typeof _resp === 'string') {
             response = _resp;
             _winningProvider = _prov.name;
+            _winningModelSlug = _prov.grokModel || _prov.mistralModel || _prov.dsModel || _prov.model || _prov.name;
             // AUTHOR ATTRIBUTION (A3-F8): persist which provider actually authored this scene so
             // author-mix COGS (Grok premium vs Mistral connective vs fallback) is auditable from state.
             try { if (window.state) { window.state._lastCGAuthor = _prov.name; window.state._lastCGAuthorAtTurn = (window.state.turnCount || 0); } } catch (_) {}
@@ -193813,6 +193805,7 @@ No text, no watermark, no UI elements, share-ready.`;
       try {
         if (state._sceneCaptures && state._sceneCaptures[sceneIndex]) {
           state._sceneCaptures[sceneIndex].originalOutput = response;
+          state._sceneCaptures[sceneIndex].originalModel = _winningModelSlug; // A3-F6: label with the ACTUAL author, not a stale Sonnet slug
         }
       } catch (_) {}
       var plan = null;
