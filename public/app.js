@@ -4782,6 +4782,11 @@ ${_pcInteriorLock}`;
       'grok-4-1-fast-reasoning':     { in: 0.0000005,  out: 0.0000015,  cacheRead: 0.00000008 },
       'grok-4-1-fast-non-reasoning': { in: 0.0000002,  out: 0.0000005,  cacheRead: 0.000000032 },
       'grok-4.3':                    { in: 0.00000125, out: 0.0000025,  cacheRead: 0.0000002 },
+      // Mistral Small / DeepSeek — the CG screenplay connecting-scene + fallback authors (Fable CG
+      // audit A3-F3, 2026-07-13). APPROXIMATE published list rates (verify against invoices); before
+      // this they fell through to 'default' (gpt-4o-mini) and mispriced those author legs.
+      'mistral-small-latest':        { in: 0.0000001,  out: 0.0000003  },  // ~$0.10 in / $0.30 out per MTok (approx)
+      'deepseek-v4-pro':             { in: 0.00000028, out: 0.0000011  },  // ~$0.28 in / $1.10 out per MTok (approx)
       // Anthropic — supports prompt caching. cacheWrite = 5-min TTL write (1.25x
       // input); cacheWrite1h = 1-HOUR TTL write (2x input); cacheRead = 0.1x input.
       // Roman 2026-06-06: the FIRST cache breakpoint (the ~11k-tok stable prefix)
@@ -4835,6 +4840,9 @@ ${_pcInteriorLock}`;
       if (m.indexOf('gpt-4o-mini') !== -1) return 'gpt-4o-mini';
       if (m.indexOf('gpt-4o') !== -1) return 'gpt-4o';
       if (m.indexOf('gpt-4') !== -1) return 'gpt-4-turbo';
+      // Mistral / DeepSeek — CG screenplay authors (A3-F3). Priced explicitly, no longer 'default'.
+      if (m.indexOf('mistral') !== -1) return 'mistral-small-latest';
+      if (m.indexOf('deepseek') !== -1) return 'deepseek-v4-pro';
       return 'default';
   }
 
@@ -193621,6 +193629,9 @@ No text, no watermark, no UI elements, share-ready.`;
           });
           if (!gResp.ok) throw new Error(prov.name + ' proxy ' + gResp.status);
           var gData = await gResp.json();
+          // COST TELEMETRY (A3-F3): this raw fetch bypasses orchestration's _accumulateTokens, so record
+          // the author leg's token usage into the scene cost accumulator here.
+          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(gData, prov.grokModel, 'scene'); } catch (_) {}
           return (gData && gData.choices && gData.choices[0] && gData.choices[0].message && gData.choices[0].message.content) || (gData && gData.content) || null;
         }
         if (prov.endpoint === '/api/mistral-proxy') {
@@ -193643,6 +193654,7 @@ No text, no watermark, no UI elements, share-ready.`;
           });
           if (!mResp.ok) throw new Error(prov.name + ' proxy ' + mResp.status);
           var mData = await mResp.json();
+          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(mData, prov.mistralModel, 'scene'); } catch (_) {} // A3-F3 cost telemetry
           return (mData && mData.choices && mData.choices[0] && mData.choices[0].message && mData.choices[0].message.content) || (mData && mData.content) || null;
         }
         if (prov.endpoint === '/api/deepseek-proxy') {
@@ -193660,6 +193672,7 @@ No text, no watermark, no UI elements, share-ready.`;
           });
           if (!dResp.ok) throw new Error(prov.name + ' proxy ' + dResp.status);
           var dData = await dResp.json();
+          try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(dData, prov.dsModel, 'scene'); } catch (_) {} // A3-F3 cost telemetry
           return (dData && dData.choices && dData.choices[0] && dData.choices[0].message && dData.choices[0].message.content) || null;
         }
         // Default: route through callChatGPT (Anthropic or OpenAI).
@@ -193682,6 +193695,9 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_resp && typeof _resp === 'string') {
             response = _resp;
             _winningProvider = _prov.name;
+            // AUTHOR ATTRIBUTION (A3-F8): persist which provider actually authored this scene so
+            // author-mix COGS (Grok premium vs Mistral connective vs fallback) is auditable from state.
+            try { if (window.state) { window.state._lastCGAuthor = _prov.name; window.state._lastCGAuthorAtTurn = (window.state.turnCount || 0); } } catch (_) {}
             console.log('[CG:SCREENPLAY] generated via ' + _prov.name + ' in ' + (Date.now() - _pT0) + 'ms');
           } else {
             console.warn('[CG:SCREENPLAY] ' + _prov.name + ' returned empty response after ' + (Date.now() - _pT0) + 'ms' + (_pIdx < _SCREENPLAY_PROVIDERS.length - 1 ? ' — trying next provider' : ''));
@@ -194473,6 +194489,14 @@ No text, no watermark, no UI elements, share-ready.`;
         }
       } catch (_) {}
       _renderStagedScene(plan, phaseImagesPromise);
+      // COST TELEMETRY (Fable CG audit A3-F3, 2026-07-13): seal this CG scene's accumulated cost.
+      // Text is now recorded per author leg via _recordProxyTextCost (the raw Grok/Mistral/DeepSeek
+      // fetches bypass orchestration's _accumulateTokens); images accumulate via addImage. Previously
+      // _finalizeSceneCost was NEVER called on the CG screenplay path, so per-scene CG cost and
+      // _cumulativeAPICost were blind. This seals text + any sync images into _lastSceneAPICost; late
+      // async phase/cut/metaphor renders attribute to the sealed acc via the existing delayed
+      // image-charge path (image gen routes to _sealedSceneCostAcc when the live acc has no text yet).
+      try { if (typeof _finalizeSceneCost === 'function') _finalizeSceneCost(); } catch (_) {}
       // Committed-truth seed-reference accumulator (CG screenplay path).
       // Same purpose as the literary hook: scan generated prose for keyword
       // matches and accumulate evidence for the climax-window reveal.
