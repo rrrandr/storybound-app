@@ -173087,9 +173087,12 @@ No text, no watermark, no UI elements, share-ready.`;
   // captured at scene generation (state._sceneCaptures[sceneIndex]).
   // Each alt-model call is on-demand and per-scene-per-model cached,
   // so a model rendered once doesn't re-charge on panel re-open.
+  // A3-F7 (Fable CG audit 2026-07-13): the Anthropic comparison rows (Claude Opus 4.7 / Sonnet 4.5) were
+  // REMOVED. Production routing no longer evaluates Anthropic author models (Grok primary / Mistral
+  // connective / GPT-4o fallback), AND the central cost-guard silently downgrades any Opus/Sonnet request
+  // to Haiku — so those rows rendered Haiku output under an Opus/Sonnet label + price, a meaningless
+  // comparison. Restore ONLY if Anthropic returns as a supported author route.
   var _COMPARE_MODELS = [
-    { slug: 'claude-opus-4-7',   label: 'Claude Opus 4.7',   estCostCents: 15, tier: 'A',  notes: 'Top quality. Tier-A major scenes.' },
-    { slug: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5', estCostCents:  3, tier: 'A',  notes: 'Strong prose. Tier-A in-between.' },
     { slug: 'gpt-4o',            label: 'GPT-4o',            estCostCents: 10, tier: 'B+', notes: 'Old default. Solid voice.' },
     { slug: 'gpt-4o-mini',       label: 'GPT-4o-mini',       estCostCents:  1, tier: 'B',  notes: 'Cheapest. Tier-B default.' }
   ];
@@ -185729,8 +185732,9 @@ No text, no watermark, no UI elements, share-ready.`;
   // the framing `label`, the genre `physics` block, and the `model` to route
   // the one-shot scaffold call to. P0 seeds EXACTLY two, to run a clean
   // high-contrast A/B (simple emotional realism vs layered systemic pressure):
-  //   billionaire_modern → GPT-4o   (status/access/power; surface dynamics)
-  //   glass_house        → Opus 4.7 (ambient social-field rules; hidden pressure)
+  //   billionaire_modern → gpt-4o-mini (status/access/power; surface dynamics)
+  //   glass_house        → gpt-4o-mini (ambient social-field rules; hidden pressure)
+  //   (both were gpt-4o / opus-4.7 originally; the 2026-06-21 bake-off moved both to gpt-4o-mini — A3-F7)
   // Other flavors intentionally get NO scaffold yet (no global world→model map)
   // until routing/schema/quality/latency/portability are validated on this pair.
   var CG_SCAFFOLD_GENRE = {
@@ -185803,8 +185807,8 @@ No text, no watermark, no UI elements, share-ready.`;
     // The issue-spine scaffold (runThesis / issueArcs / motifs / forbiddenDefaults)
     // is render-mode-AGNOSTIC narrative structure — it serves LITERARY just as
     // well as CG. Originally gated to staged/CG only (so Lit never got a spine);
-    // now runs for BOTH. The genre map (billionaire_modern → gpt-4o, glass_house
-    // → claude-opus-4-7) still decides the scaffolder model.
+    // now runs for BOTH. The genre map still decides the scaffolder model — both hand-authored genres
+    // are gpt-4o-mini as of the 2026-06-21 bake-off (A3-F7 comment fix; was gpt-4o / opus-4.7).
     var _stagedOK = (typeof _isStagedMode === 'function' && _isStagedMode());
     var _literaryOK = !(typeof _isCGRenderMode === 'function' && _isCGRenderMode());
     if (!_stagedOK && !_literaryOK) return false;
@@ -186306,7 +186310,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // window.state.rPlot ONLY while judging). Usage:
   //   await window._spineModelBakeoff()                       // all seeds, 3 models, blind read, no $judge
   //   await window._spineModelBakeoff({limit:6})              // quick smoke
-  //   await window._spineModelBakeoff({models:['gpt-4o','claude-opus-4-7']})  // the real question
+  //   await window._spineModelBakeoff({models:['gpt-4o-mini','gpt-4o']})     // compare the live scaffolder models
   //   await window._spineModelBakeoff({judge:true})           // + Haiku R-plot/drift scoring
   // ════════════════════════════════════════════════════════════════════════
   var _SPINE_BAKEOFF_SEEDS = [
@@ -186372,7 +186376,7 @@ No text, no watermark, no UI elements, share-ready.`;
 
   window._spineModelBakeoff = async function (opts) {
     opts = opts || {};
-    var MODELS = opts.models || ['gpt-4o-mini', 'gpt-4o', 'claude-opus-4-7'];
+    var MODELS = opts.models || ['gpt-4o-mini', 'gpt-4o'];   // A3-F7: dropped 'claude-opus-4-7' — the cost-guard downgrades it to Haiku, so it was a meaningless bake-off arm
     var specs = opts.seeds || _SPINE_BAKEOFF_SEEDS;
     if (typeof opts.limit === 'number') specs = specs.slice(0, opts.limit);
     var seeds = specs.map(_expandSpineSeed);
@@ -193383,8 +193387,8 @@ No text, no watermark, no UI elements, share-ready.`;
     try { if (typeof _resolveBreathScene === 'function') _resolveBreathScene(); } catch (_) {}
     // ── SCAFFOLD ENSURE ──
     // One-shot per story (gated by storyId match). Builds the
-    // gravitational scaffold via the genre-routed model (GPT-4o for
-    // billionaire_modern, Opus 4.7 for glass_house); stored on
+    // gravitational scaffold via the genre-routed model (gpt-4o-mini for both
+    // billionaire_modern and glass_house as of the 2026-06-21 bake-off; A3-F7); stored on
     // state.cgScaffold; injected into the system prompt below. Non-blocking
     // failure: if the call errors, scene generation proceeds without scaffold.
     // Seeded to those two flavors (see _shouldGenerateCGScaffold /
