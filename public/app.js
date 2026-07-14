@@ -188845,7 +188845,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // before the deck closer fires. The PENULTIMATE beat MUST be a
       // concrete named dilemma the protagonist faces — not a goodbye, not
       // a "she watched the door close," not workshop filler.
-      'SCENE ENDING — PENULTIMATE BEAT (HARD — non-negotiable, applies to ALL scenes):\n' +
+      'SCENE ENDING — PENULTIMATE BEAT (HARD — applies to every scene EXCEPT an issue-final DETONATION scene: if the user prompt carries the ISSUE CLIFFHANGER — DETONATION override, THAT governs the ending and this penultimate-dilemma / decision-gate rule is SUSPENDED):\n' +
       '- The PENULTIMATE beat (the beat IMMEDIATELY BEFORE the final beat / decisionGateBeatIdx) MUST be the protagonist\'s CONCRETE DECISION MOMENT — a specific named dilemma drawn from THIS scene\'s actual situation.\n' +
       '- CORRECT EXAMPLES of penultimate beats (note: they NAME the dilemma): "Tell Devorah about the email, or wait until morning?" / "Push for the byline, or hand it back?" / "Take the call, or let it ring?" / "Cross the room to him, or hold here?" / "Confess what she did, or let the silence hold?"\n' +
       '- FORBIDDEN at penultimate position — these waste the most important beat of the scene:\n' +
@@ -188855,6 +188855,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '   ✗ Anything that does not NAME the specific decision the protagonist faces THIS turn.\n' +
       '- ONBOARDING WINDOW (Story 1 + Story 3 only): the FINAL beat carries the mandated deck closer ("[She/I/You] toyed with the idea of letting the cards decide.") — the penultimate beat MUST be the concrete dilemma immediately preceding it. The reader needs to know WHAT the cards would be deciding about before the closer.\n' +
       '- OUTSIDE the onboarding window (Story 2, Story 4+): the FINAL beat itself is the concrete dilemma in the same form. No deck closer; the dilemma IS the closer.\n' +
+      '- EXCEPTION — ISSUE-FINAL DETONATION (HARD): if this is the FINAL scene of an issue and the user prompt carries the ISSUE CLIFFHANGER — DETONATION override, this entire penultimate-dilemma / decision-gate structure is SUSPENDED. The final beat is the DETONATION (an event that HAS happened), not a player-decidable dilemma; the penultimate beat is the reversal LANDING. Follow the DETONATION override, not the rule above.\n' +
       '- THE TEST: read your penultimate beat aloud. Does it name a specific binary choice the protagonist could make in the next 5 seconds? If yes, ship it. If it could be replaced with "And then it ended," rewrite — that\'s placeholder.\n\n' +
       // ── NO-COOLDOWN GATE BEFORE THE FATE CLOSER (HARD — added 2026-05-16) ──
       // CG scenes were observed to de-escalate before the deck-weighing
@@ -188894,7 +188895,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // Between them, the second half of the scene needs ONE peak moment
       // that physically/narratively ESCALATES toward the decision —
       // the body proxy for the dilemma being named.
-      'DECISION-TIED PEAK MOMENT (HARD — applies to every consummate+non-consummate scene):\n' +
+      'DECISION-TIED PEAK MOMENT (HARD — applies to every consummate+non-consummate scene; on an issue-final DETONATION scene there is no penultimate decision, so the peak ties to the DETONATION itself instead):\n' +
       '- In the SECOND HALF of the scene (after microDecision.afterBeat, before decisionGateBeatIdx), EXACTLY ONE beat MUST have impact_burst:true. This is the OAS-style push-zoom-burst — a brief scale push-pull on the hero image (~360ms) that punctuates a shock / revelation / turn / threshold-crossing moment.\n' +
       '- THE PEAK MOMENT MUST BE THEMATICALLY TIED to the penultimate-beat decision. The decision asks "X or Y?"; the peak is the IN-SCENE EVENT that forces X-or-Y to land. Examples (peak ↔ decision pairing):\n' +
       '   • Decision: "Confess about the article, or keep silent?" → Peak: phone buzzes with editor\'s name on screen / printer suddenly spits the front page / coworker tosses the early-edition on her desk\n' +
@@ -189150,7 +189151,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '3. NON-PEAK tension states (RHYTHM): include 2-4 beats of [held_breath, delayed, distant] at moments where SILENCE / HESITATION / WITHDRAWAL carry meaning. Zero non-peak tension states across 26 beats = flatlined perceptual rhythm. The rest state is "composed" (~70%+ of beats); the 2-4 silence beats punctuate.\n' +
       '4. pc_proxy_action count: EXACTLY 3-5 beats carry a proxy action; ALL other beats are null. Not 14. Not 10. THREE TO FIVE.\n' +
       '5. expression_target on beats[]: the validator keeps up to 5 non-neutral beats (strongest, spaced ≥3 apart, one family) and SYNTHESIZES expression_arc from them — peak_a_beat / peak_b_beat are just your anchor declarations, so beats[] may carry 3-5 non-neutral targets. Don\'t over-mark beyond 5; extras get demoted to neutral.\n' +
-      '6. Penultimate beat = the DILEMMA. The second-to-last beat must NAME the specific decision the protagonist faces in this scene ("Tell Devorah about the email, or wait until morning?" / "Take the call, or let it ring?"). The final beat then weighs the deck as the resolution path. Without the dilemma form, the scene closer reads as workshop filler.\n' +
+      '6. Penultimate beat = the DILEMMA — UNLESS the ISSUE CLIFFHANGER — DETONATION override is active, in which case the final beat is the detonation (an event that HAS happened), NOT a dilemma or a deck-weighing. Otherwise the second-to-last beat must NAME the specific decision the protagonist faces in this scene ("Tell Devorah about the email, or wait until morning?" / "Take the call, or let it ring?"); the final beat then weighs the deck ONLY in the onboarding window (Story 1 + Story 3) — outside it, the dilemma IS the closer. Without the dilemma form (detonation scenes excepted), the scene closer reads as workshop filler.\n' +
       '7. ARCHITECTURE PARITY: scan the active architecture state listed in the CG ROMANCE ARCHITECTURE PARITY block above. If ANY architecture is active for this story, at least ONE block must register in this scene\'s visualState / beats / expression_arc. ANTI-TALKING-HEADS TEST: would the scene look identical if all architecture state were removed? If YES, FIX IT — the staging is failing its parity duty. Particular hard rule: Hidden Burden stage=5 (participation) requires a STAGED PC contribution (blocking change, not a confession beat).\n' +
       '\n' +
       'If any check fails when you reread your emitted JSON, FIX IT BEFORE RETURNING. The validator silently demotes over-count peaks (beyond the strongest 5, cross-family, or too close together) to neutral and the scene visually flatlines.\n' +
