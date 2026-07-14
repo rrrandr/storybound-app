@@ -227208,6 +227208,47 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
     }
     window._pcDescriptionCheck = _pcDescriptionCheck;
 
+    // SETTING-DESCRIPTION CHECK (Roman 2026-07-14, meta-audit c/④). People had detectors
+    // (_li/_pcDescriptionCheck); the PLACE had NONE — so ④'s setting-establishment floor (the Conductor
+    // carve-out) was prompt-only, unmeasured. Mirror _pcDescriptionCheck: scan the FIRST ~2 paragraphs
+    // (where the directive requires the place to be established) for a concrete MATERIAL/surface noun AND
+    // a LIGHT-quality token. hasPlace = both present = the floor. Conservative fail = NEITHER present (the
+    // scene grounds the reader in no physical place at all), mirroring the people detectors' clear-absence
+    // bar to avoid false positives. Validate-only, batch-tracked (sb_setting_desc_failrate: fail + floor).
+    function _settingDescriptionCheck(prose, stage) {
+      try {
+        if (!prose || typeof prose !== 'string') return null;
+        var st = window.state || {};
+        var paras = prose.split(/\n\s*\n/).filter(function (p) { return p && p.trim().length; });
+        var head = paras.slice(0, 2).join(' ');
+        if (!head) head = prose.slice(0, 700);
+        var MATERIAL = /\b(?:marble|granite|stone|brick|concrete|wood(?:en)?|oak|pine|timber|plank|glass|mirror|metal|iron|steel|brass|bronze|copper|leather|velvet|silk|linen|cotton|wool|canvas|parchment|paper|carpet|rug|tile|slate|plaster|clay|sand|ash|mud|moss|bark|thornwild|veilwood|spiralgrass|snow|ice|dust|smoke|straw|rope|chain|blade|wax|fur|hide|scale|bone)\b/i;
+        var LIGHT = /\b(?:light|lit|sunlight|moonlight|moon(?:s)?|candle(?:light)?|lantern|lamp|firelight|glow|gloom|shadow(?:s|ed)?|dark(?:ness)?|dim(?:ly)?|bright|golden|amber|silver(?:ed)?|dusk|dawn|twilight|noon|midnight|shade|shaft|flicker|guttering|blaze|glint|gleam)\b/i;
+        var hasMaterial = MATERIAL.test(head);
+        var hasLight = LIGHT.test(head);
+        var hasPlace = hasMaterial && hasLight;   // the ④ floor: a named surface/material + the quality of light
+        var fail = !hasMaterial && !hasLight;     // conservative: no physical grounding at all in the first ~2¶
+        if (stage === 'final') {
+          try {
+            var key = 'sb_setting_desc_failrate';
+            var arr = JSON.parse(localStorage.getItem(key) || '[]') || []; if (!Array.isArray(arr)) arr = [];
+            var sid = String(st.storyId || '');
+            if (arr.length && arr[arr.length - 1] && arr[arr.length - 1].id === sid) { arr[arr.length - 1].fail = fail ? 1 : 0; arr[arr.length - 1].floor = hasPlace ? 1 : 0; }
+            else arr.push({ id: sid, fail: fail ? 1 : 0, floor: hasPlace ? 1 : 0 });
+            while (arr.length > 20) arr.shift();
+            localStorage.setItem(key, JSON.stringify(arr));
+            var fails = arr.reduce(function (a, b) { return a + (b && b.fail ? 1 : 0); }, 0);
+            var floorMet = arr.reduce(function (a, b) { return a + (b && b.floor ? 1 : 0); }, 0);
+            if (fail) console.warn('[GEN-FAIL:SETTING:FINAL] first ~2¶ establish NO physical place — no material/surface noun AND no light-quality token. The reader cannot SEE where this happens. BATCH RATE: ' + fails + '/' + arr.length + ' setting-unestablished; FLOOR MET ' + floorMet + '/' + arr.length + '. [tracked, NOT repaired]');
+            else if (!hasPlace) console.log('[GEN-FAIL:SETTING:FINAL] ~ partial: ' + (hasMaterial ? 'material present, LIGHT-quality missing' : 'light present, MATERIAL missing') + ' — below the {material + light} floor. FLOOR MET ' + floorMet + '/' + arr.length + '.');
+            else console.log('[GEN-FAIL:SETTING:FINAL] ✓ place established (material + light) in first ~2¶. FLOOR MET ' + floorMet + '/' + arr.length + '.');
+          } catch (_) {}
+        }
+        return { hasMaterial: hasMaterial, hasLight: hasLight, hasPlace: hasPlace, fail: fail };
+      } catch (_) { return null; }
+    }
+    window._settingDescriptionCheck = _settingDescriptionCheck;
+
     // LI-EMBODIMENT — LONGING-THROUGH-ABSTRACTION detector (Roman 2026-06-06). THE MEASUREMENT GAP:
     // `[SCENE1:DESIRE]` scored "I wanted him to have written it" as 104% desire while the reader saw
     // 0 — because that is wanting an OUTCOME / an IDEA of him, not a MAN. Roman's distinction (proven
@@ -235951,6 +235992,12 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           // PC-DESCRIPTION check on the FINAL prose (Roman 2026-06-06 — the PC was audited by nothing).
           if ((!state || !state.turnCount) && typeof window._pcDescriptionCheck === 'function') {
             window._pcDescriptionCheck(text, 'final');
+          }
+          // SETTING-DESCRIPTION check on the FINAL prose (Roman 2026-07-14, meta-audit c/④ — the PLACE was
+          // audited by nothing). Scene-1-gated here to mirror the PC/LI checks; extending to continuations
+          // (setting must persist every scene) is a follow-up.
+          if ((!state || !state.turnCount) && typeof window._settingDescriptionCheck === 'function') {
+            try { window._settingDescriptionCheck(text, 'final'); } catch (_se) {}
           }
           // LI-EMBODIMENT — longing-through-personhood vs abstraction (Roman 2026-06-06; the desire
           // detector's blind spot — it scored 104% on a Roman made entirely of handwriting + a board seat).
