@@ -224837,7 +224837,20 @@ LOVE INTEREST POV — MANDATORY OPENER:
         { tag: 'CONFRONTATION',      directive: 'Tension is already present — argument, physical proximity, territorial claim, or unresolved grievance. The scene opens hot. No warm-up.' },
         { tag: 'SILENCE',            directive: 'The scene opens in absence, waiting, or suspended expectation. Stillness is the dominant texture. Something is conspicuously not happening, and the protagonist exists inside that pause.' }
     ];
-    const selectedSkeleton = macroSkeletons[Math.floor(Math.random() * macroSkeletons.length)];
+    // COLD-OPEN FIX (2026-07-14 meta-audit a): the Scene-1 structural-variance layers below were
+    // temperature-BLIND — a random SILENCE/DOCUMENT_REPORT/PRIVATE_RITUAL skeleton (or an Object-first
+    // micro mode, or the soft LITERARY-OPENING license) handed the author a concrete order to open COLD
+    // even when _openingTemperature=HOT_CRISIS, which the trailing HOT directive could not reliably
+    // overturn (measured HOT→COLD 8/8). _pickOpeningTemperature memoizes (53465), so this reads the SAME
+    // canonical value the HOT-directive gate (54803) uses — no re-roll, no mismatch. On HOT we pin the
+    // skeleton to CONFRONTATION ("opens hot, no warm-up") and the micro mode to Disruption-first; on COLD
+    // the full random variance is preserved untouched.
+    const _hotOpen = (function () { try {
+        return String((typeof _pickOpeningTemperature === 'function') ? _pickOpeningTemperature(state) : ((state && state._openingTemperature) || '')).toUpperCase() === 'HOT_CRISIS';
+    } catch (_) { return false; } })();
+    const selectedSkeleton = _hotOpen
+        ? (macroSkeletons.find(function (m) { return m.tag === 'CONFRONTATION'; }) || macroSkeletons[Math.floor(Math.random() * macroSkeletons.length)])
+        : macroSkeletons[Math.floor(Math.random() * macroSkeletons.length)];
 
     // Layer A.5 — Opening Environment Type (flavor dominance pressure)
     const OPENING_ENVIRONMENT_TYPES = [
@@ -224860,7 +224873,9 @@ LOVE INTEREST POV — MANDATORY OPENER:
         { mode: 'Disruption-first', directive: 'First beat: instability. Something is already wrong, charged, or off-kilter from sentence one.' },
         { mode: 'Object-first', directive: 'First beat: a world-specific object anchors the opening. No explanation. Meaning through use.' }
     ];
-    const selectedOpening = openingModes[Math.floor(Math.random() * openingModes.length)];
+    const selectedOpening = _hotOpen
+        ? (openingModes.find(function (m) { return m.mode === 'Disruption-first'; }) || openingModes[Math.floor(Math.random() * openingModes.length)])
+        : openingModes[Math.floor(Math.random() * openingModes.length)];
 
     // Part III — Tempo Band (weighted random scene length)
     const tempoRoll = Math.random();
@@ -224960,9 +224975,11 @@ Descriptive weight should lean toward ${selectedEnvDominance.toLowerCase()} deta
 ═══════════════════════════════════════════════════════
 OPENING RULE
 ═══════════════════════════════════════════════════════
-${_isLiterary
+${(_isLiterary && !_hotOpen)
   ? `LITERARY OPENING: You may begin with a grounded sensory or material detail, but tension or character presence must emerge within the first 2–3 paragraphs. Atmosphere supports tension — it does not replace it.`
-  : `PARTICIPATORY OPENING: Begin with a character-driven moment grounded in a physical or sensory detail. A material element may be present, but the opening MUST include a character in motion, interaction, or tension. Do NOT begin with detached environment description. Do NOT delay character involvement.`}
+  : (_hotOpen
+      ? `HOT OPENING: Open on the crisis already in motion — a PERSON acting on the protagonist by sentence 1–2. No sensory or atmospheric warm-up; tension is present from the first line, not deferred to a later paragraph. A material or sensory detail may appear only INSIDE the live pressure, never as a standalone establishing beat.`
+      : `PARTICIPATORY OPENING: Begin with a character-driven moment grounded in a physical or sensory detail. A material element may be present, but the opening MUST include a character in motion, interaction, or tension. Do NOT begin with detached environment description. Do NOT delay character involvement.`)}
 
 Character presence should be immediate or quickly introduced. Material grounding supports the scene — it must not delay interaction or tension.
 ${storyWorld === 'Fantasy' ? `FATELANDS ANCHORS (weave naturally): the Ascendant Run, chain links of the Shackle Isles, relic blades, scars from sacrifice, moonlight from Ithralis, meteor glass near Fate's Favor.` : ''}
