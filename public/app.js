@@ -265591,6 +265591,21 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               });
               state._promptTierGenThisTurn = { turn: (state.turnCount || 0), info: _genTier };
               _useLite = (_genTier.route !== 'HEAVY' && _genTier.route !== 'GROK');
+              // Option A (2026-07-14, A/B-validated): force literary CONNECTING scenes onto HEAVY.
+              // The literary author is Grok everywhere and Grok warm-caches the ~77k prose-stack prefix
+              // (measured: 16,640/16,680 tok cached, 2.1¢→0.37¢ = 5.7× drop), so a cached-HEAVY connecting
+              // scene costs ~0.5¢ vs LITE's ~0.2¢ — a ~0.3¢/scene gap that does NOT justify LITE dropping
+              // the entire craft/axis/char-memory/canon directive stack. Applies to literary AND Famous-Fate
+              // (same gate, same Grok author; FF canon steers now land on HEAVY). CG never reaches this gate
+              // (own Mistral-authored screenplay path) so it is untouched. Kill-switch mirrors
+              // __tierRouting/__forceHeavyBuild: window.__forceLiteraryConnectingHeavy=false restores LITE.
+              try {
+                  var _isLiteraryEngineTier = (typeof _isCGRenderMode === 'function') ? !_isCGRenderMode()
+                                            : (state.storyModality === 'literary' || state.renderMode === 'literary');
+                  if (window.__forceLiteraryConnectingHeavy !== false && _useLite && _isLiteraryEngineTier) {
+                      _useLite = false;
+                  }
+              } catch (_hOvr) {}
               try { console.log('[TIER-ROUTE] scene ' + ((state.turnCount||0)+1) + ' → ' + String(_genTier.route).toUpperCase() + ' (tier ' + _genTier.tier + ') → ' + (_useLite ? 'LITE prompt' : 'HEAVY prompt')); } catch (_) {}
           }
       } catch (_routeErr) { _useLite = _litLiteActive(); }
