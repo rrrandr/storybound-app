@@ -73625,6 +73625,16 @@ Return ONLY valid JSON:
       // Called by startBook2 and startNewInWorld.
       // Does NOT touch Epoch State (Layer 2) or Region Physics (Layer 1).
 
+      // A3-F1: CG Scene-1 cover pre-fire ABANDON — a story reset fired while a cover pre-fire was still
+      // pending (the user left the cover WITHOUT entering the reader). That text+image spend was wasted.
+      // Record it (with the sealed Scene-1 cost) + clear. Runs FIRST, before any downstream reset touches
+      // _lastSceneAPICost, so the wasted amount is accurate.
+      try {
+        if (state && state._cgScene1PrefirePending) {
+          state._cgScene1PrefirePending = false;
+          if (typeof _recordSpeculationEvent === 'function') _recordSpeculationEvent('cg_scene1_prefire_abandoned', { estCostUsd: (state._lastSceneAPICost || 0), mode: 'cg_cover' });
+        }
+      } catch (_) {}
       // APPEARANCE ESTABLISHMENT GATING (Roman 2026-06-19): per-story, so each new story
       // re-establishes its PC/LI appearance once on first appearance, then locks.
       try { state._apprEstablished = {}; state._apprModeCache = null; } catch (_) {}
@@ -118297,6 +118307,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     // rehydrate the UI. The 80ms defer lets gnReader finish becoming
     // visible (so #gnPanelDisplay's offsetParent reads non-null).
     if (id === 'gnReader' && state) {
+      // A3-F1: CG Scene-1 cover pre-fire COMMIT — the user entered the reader, so the pre-generated
+      // Scene 1 was USED, not wasted. The pending flag self-gates this to the first entry; clear it.
+      try {
+        if (state._cgScene1PrefirePending) {
+          state._cgScene1PrefirePending = false;
+          if (typeof _recordSpeculationEvent === 'function') _recordSpeculationEvent('cg_scene1_prefire_committed', { estCostUsd: (state._lastSceneAPICost || 0), mode: 'cg_cover' });
+        }
+      } catch (_) {}
       var _hasActiveOAS = state.intimacyDialogue && state.intimacyDialogue.active;
       // Reload-path: state.intimacyDialogue is null in fresh memory,
       // but localStorage may hold an active session for this story.
@@ -145236,9 +145254,15 @@ No text, no watermark, no UI elements, share-ready.`;
                !state._stagedScene1Initiated) {
         console.log('[STAGED] Cover view ready — pre-firing scene 1 generation in background');
         state._stagedScene1Started = true;
+        // A3-F1 (Fable CG audit): the FULL Scene-1 pipeline (text + all images) runs NOW, at cover view,
+        // BEFORE the user commits. If they leave the cover without opening the reader, that spend is
+        // WASTED (invisible until now). Mark it pending; the gnReader-entry records a COMMIT and a story
+        // reset records an ABANDON → window._specLedger().derived.cg_prefire.
+        try { state._cgScene1PrefirePending = true; if (typeof _recordSpeculationEvent === 'function') _recordSpeculationEvent('cg_scene1_prefire_started', { estCostUsd: 0, mode: 'cg_cover' }); } catch (_) {}
         _startStagedScene1().catch(function(e) {
             console.warn('[STAGED:SCENE1] Background pre-fire failed:', e && e.message);
             state._stagedScene1Started = false;
+            try { state._cgScene1PrefirePending = false; } catch (_) {} // failed pre-fire → not a clean commit/abandon
         });
     }
   }
@@ -269634,6 +269658,10 @@ ABSOLUTE RULES:
           var c = (typeof meta.estCostUsd === 'number' && isFinite(meta.estCostUsd)) ? meta.estCostUsd : 0;
           if (type === 'speculation_committed') L.cost.committed_usd += c;
           else if (type.indexOf('speculation_discarded') === 0 || type === 'speculation_timed_out_or_failed') L.cost.wasted_usd += c;
+          // A3-F1: CG Scene-1 cover pre-fire spend — SEPARATE bucket (not mixed with the literary
+          // speculation cost) so cover-abandonment waste is legible on its own.
+          else if (type === 'cg_scene1_prefire_committed') { L.cgPrefire = L.cgPrefire || { committed_usd: 0, wasted_usd: 0 }; L.cgPrefire.committed_usd += c; }
+          else if (type === 'cg_scene1_prefire_abandoned') { L.cgPrefire = L.cgPrefire || { committed_usd: 0, wasted_usd: 0 }; L.cgPrefire.wasted_usd += c; }
           if (meta.mode) {
               L.byMode = (L.byMode || {});
               var m = (L.byMode[meta.mode] = L.byMode[meta.mode] || { started: 0, committed: 0, discarded: 0 });
@@ -269685,11 +269713,21 @@ ABSOLUTE RULES:
       var discarded = Object.keys(cts).filter(function (k) { return k.indexOf('speculation_discarded') === 0; }).reduce(function (a, k) { return a + cts[k]; }, 0);
       var failed = cts.speculation_timed_out_or_failed || 0, cost = L.cost || { committed_usd: 0, wasted_usd: 0 };
       var tds = L.typedDiscardSim || { n: 0, sum: 0, ge90: 0, ge60: 0, ge30: 0, lt30: 0 };
+      var cgp = L.cgPrefire || { committed_usd: 0, wasted_usd: 0 };
+      var cgpStarted = cts.cg_scene1_prefire_started || 0, cgpCommitted = cts.cg_scene1_prefire_committed || 0, cgpAbandoned = cts.cg_scene1_prefire_abandoned || 0;
       var derived = {
           commit_rate: started ? +(committed / started).toFixed(3) : null,
           waste_rate: started ? +((discarded + failed) / started).toFixed(3) : null,
           committed_usd: +(cost.committed_usd || 0).toFixed(4),
           wasted_usd: +(cost.wasted_usd || 0).toFixed(4),
+          // CG Scene-1 cover pre-fire (A3-F1) — spend that happens BEFORE the user commits to the story.
+          // abandon_rate/wasted_usd = the cover-abandonment money the user couldn't see before.
+          cg_prefire: {
+              started: cgpStarted, committed: cgpCommitted, abandoned: cgpAbandoned,
+              abandon_rate: cgpStarted ? +(cgpAbandoned / cgpStarted).toFixed(3) : null,
+              committed_usd: +(cgp.committed_usd || 0).toFixed(4),
+              wasted_usd: +(cgp.wasted_usd || 0).toFixed(4)
+          },
           // typed-entry vs pre-built intent — the compare-and-repair opportunity signal:
           typed_discards_measured: tds.n,
           avg_typed_similarity: tds.n ? +(tds.sum / tds.n).toFixed(3) : null,
