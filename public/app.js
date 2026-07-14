@@ -139438,6 +139438,12 @@ ${_buildSettingImageOverrideSuffix()}`,
   /**
    * Plan comic page panels from scene text.
    * Includes intimacy detection, camera assignment, and layout selection.
+   *
+   * ⚠️ LEGACY / RESUME-ONLY (Fable CG audit A3-F5, 2026-07-13): this and the whole graphic_novel panel
+   * pipeline are gated on renderMode==='graphic_novel', which is NEVER assigned for new stories (the
+   * live CG path is renderMode==='staged_story_mode' → the screenplay generator). It is reachable ONLY
+   * by rehydrating an OLD save, so it is kept for save-compat, NOT dead — do not build new CG work here;
+   * the live path is _runCGScreenplayGen / _buildCGScreenplaySystemPrompt.
    */
   async function planGraphicNovelPanels(sceneText) {
       if (!window.StoryboundOrchestration?.callChatGPT) {
@@ -190172,7 +190178,9 @@ No text, no watermark, no UI elements, share-ready.`;
     // The opening was piling up 2 catastrophe families + 5 named actors (brother /
     // ex-girlfriend / lawsuit / board-vote / donor overload). Reduce the payload
     // BEFORE prose: name the ONE crisis the scene opens inside, ban a 2nd catastrophe,
-    // cap named cast at one. Guaranteed by the mount-stage enforcement (repair) too.
+    // cap named cast at one. (NOTE — A2-F10, 2026-07-13: the mount-stage compression repair is
+    // _isScene1Lit-gated and does NOT run in CG staged mode, so this pre-prose reduction is the ONLY
+    // enforcement on the CG path — it is not "also guaranteed" downstream the way the literary path is.)
     try {
       if (_currentST === 'ST1') {
         var _ap1 = (window.state && window.state.aPlot) || {};
@@ -194183,6 +194191,10 @@ No text, no watermark, no UI elements, share-ready.`;
       // CG SIGNATURE LENS — caption-only perception pass, AFTER screenplay gen, BEFORE
       // final cleanup/render. ≤1 caption/scene, scarce by default, shared anti-calc/CDS.
       // Non-fatal: returns the plan unchanged on any failure. (Roman 2026-06-20)
+      // ⚠️ DEAD ON THIS PATH (Fable CG audit A2-F7, 2026-07-13): this hook AND _applyCGSignatureLens both
+      // gate on `plan.panels`, but a SCREENPLAY plan carries `beats`, never `panels` (only the legacy GN
+      // panel path has panels). So the lens NEVER fires on the live CG path. Left as-is (harmless). To
+      // REVIVE the caption lens for CG, retarget it at plan.beats (narration beats) — do not assume it runs.
       try { if (plan && plan.panels && typeof window._applyCGSignatureLens === 'function') plan = await window._applyCGSignatureLens(plan); } catch (_cglx) {}
       // CG PREFERENCE CHAIN — latch the FIRST scene where the LI is on-stage AND desire-coded; that is
       // where Goal/Relationship enters the chain (Scene 1 stays Demand/Hint). Roman's rule: on-stage AND
