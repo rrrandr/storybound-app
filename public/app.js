@@ -88654,16 +88654,19 @@ There exists a simple action that could reduce the current tension. However, cir
   // The rich Kwisheen sex canon used to live nested inside INTIMACY_WORLD_CANON.cursed,
   // but a Kwisheen story resolves to worldSubtype 'the_inhuman' (or a fixed-species), never
   // 'cursed' — so getIntimacyWorldCanon (worldSubtype-keyed) never surfaced it. And the LI's
-  // Kwisheen anatomy was a one-liner vs the PC's rich buildPlayerSpeciesDirective, which
-  // itself only reaches the Scene-1 pre-gen sysPrompt (not literary continuations). These
+  // Kwisheen anatomy was a one-liner vs the PC's rich buildPlayerSpeciesDirective, which itself
+  // reaches ONLY the orphaned startBackgroundStoryGeneration limb (DEAD — see 224391) and never a
+  // live Scene-1 or continuation (2026-07-14 meta-audit correction; wire-live is a separate TODO). These
   // helpers fix both: species-keyed (fires whenever a Kwisheen PC/LI is present, ANY Fantasy
   // subtype), and wired into BOTH the literary/CG author bundle (fullSys, per-turn) AND the
   // OAS cascade payload (getIntimacyWorldCanon).
   // ══════════════════════════════════════════════════════════════════════
   function _isKwisheenSpecies(s) { return s === 'Kwisheen' || s === 'Half-Kwisheen'; }
 
-  // Compact, per-turn anatomy line — single source of truth for both the LI block in
-  // buildPlayerSpeciesDirective (Scene-1 pre-gen) and the fullSys continuation directive.
+  // Compact, per-turn anatomy line — the LIVE Kwisheen-anatomy source, injected via
+  // _buildFantasySpeciesIntimacyDirective on Scene-1 (224959) and the fullSys continuation. NOTE:
+  // buildPlayerSpeciesDirective also embeds it, but that helper is reachable only via the dead
+  // background-gen limb, so its copy never ships (2026-07-14 meta-audit).
   function _kwisheenAnatomyLine(label) {
     return label + ' ANATOMY (structurally non-human — render consistently, NEVER human-with-tentacles): eight limbs — SIX lower tentacles (locomotion; a continuous unfurling glide, never joint-snapping) and TWO arms that are continuous tentacles splitting terminally into five smooth finger-tentacles (no knuckles); suckers on the underside only. Hair = fine cranial sensory feelers. Chromatophore skin: full colour/pattern/texture control when WET (true form), muted flush when DRY. Camouflage can hold human skin, round pupils and ears indefinitely on land; deeper texture degrades under motion. WATER-DISRUPTION TELL: a splash briefly (1-3s) reverts the pupils to horizontally-elongated solid-black capsules with a central vertical slit, then camouflage reasserts (the primary species tell). Sex/gender biology is FLUID when wet. NEVER fish-tails, NEVER merfolk.';
   }
@@ -223051,6 +223054,30 @@ Generate the synopsis now.` }
     if (typeof window.ensureFantasyCoreEntropy === 'function') {
       window.ensureFantasyCoreEntropy();
     }
+
+    // ── (e) SCENE-1 SPECIES-TIMING FIX (2026-07-14 meta-audit) ──
+    // LI species is otherwise resolved ONLY in _runFatelandsLoupe (247406), which fires during reader
+    // navigation AFTER Scene 1 is generated. The Scene-1 species injection (_buildFantasySpeciesIntimacy-
+    // Directive @224959) already fires but reads state._liSpecies, which is still undefined at build time —
+    // so a non-human LI ships Scene 1 with no species grounding (the reported Half-Kwisheen-LI hole). Resolve
+    // it here, mirroring the loupe's own pre-resolve setup (region-forced PC cast @247392-247403 + LI resolve
+    // @247405-247408). The loupe's calls are guarded (!_playerSpecies / !_identityLock / !_liSpecies) so they
+    // no-op after this — no double-resolution, no clobber. Gated to fire only when the region is already
+    // FINAL (entropy-bound with no pending ancestry override the loupe would re-route @247355) so we never
+    // cast off a region that later changes. Ancestry-pending PCs fall through to the loupe unchanged.
+    try {
+      if (state.picks && state.picks.world === 'Fantasy' && !state._liSpecies) {
+        var _regionFinalPreGen = state._fantasyRegionOverrideApplied || !state._cachedAncestryPlayer;
+        if (_regionFinalPreGen) {
+          if (!state._playerSpecies && !state._identityLock && typeof _resolveRegionalSpecies === 'function') {
+            var _fk = _resolveRegionKey(state.fantasyRegion || '');
+            var _fsp = _resolveRegionalSpecies(_fk);
+            if (_fsp) { state._playerSpecies = _fsp; state._identityLock = true; state._speciesSource = 'region_forced'; try { console.log('[SPECIES:PREGEN] regional PC species forced pre-Scene-1:', _fsp); } catch (_) {} }
+          }
+          if (typeof _resolveLISpecies === 'function') { _resolveLISpecies(); try { console.log('[SPECIES:PREGEN] LI species resolved pre-Scene-1:', state._liSpecies, '· source=' + state._liSpeciesSource); } catch (_) {} }
+        }
+      }
+    } catch (_espec) {}
 
     // ========================================
     // PHASE 1: SYNC VALIDATION (no async!)
