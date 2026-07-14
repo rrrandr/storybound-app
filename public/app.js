@@ -65734,6 +65734,70 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
   };
 
   // ════════════════════════════════════════════════════════════════════════════
+  // window._authorModelABTest()  → the real cost+quality A/B (Roman 2026-07-14):
+  //   Grok-HEAVY (cold) · Grok-HEAVY (warm, 2nd pass → shows prompt-cache benefit) ·
+  //   Mistral-HEAVY (the "cheap model, full directives" idea) · Grok-LITE (current).
+  // Fires each config against the LIVE proxies on the SAME real prompts and reports
+  // MEASURED token usage + $ (per the pricing table) + the prose to judge by eye.
+  // PREREQS: (1) a HEAVY prompt captured — Scene 1 captures it, or set
+  //   window.__forceHeavyBuild=true and generate one scene; (2) a LITE prompt captured
+  //   — advance into an ordinary connecting scene (Scene 2+, not a kiss/climax). Then
+  //   run window._authorModelABTest(). Read-only; makes 3–4 paid model calls.
+  // ════════════════════════════════════════════════════════════════════════════
+  window._authorModelABTest = async function (opts) {
+    opts = opts || {};
+    var s = window.state || {};
+    var H = s._lastHeavyAuditPrompt, L = s._lastContinuationAuditPrompt;
+    if (!H || !H.system) console.warn('[AB] No captured HEAVY prompt. Set window.__forceHeavyBuild=true and generate ONE scene (or use Scene 1), then re-run.');
+    if (!L || !L.system) console.warn('[AB] No captured LITE prompt. Advance into an ordinary connecting scene (Scene 2+, NOT a kiss/climax), then re-run. Grok-LITE will be skipped without it.');
+    if ((!H || !H.system) && (!L || !L.system)) return null;
+    var user = (H && H.system && ('Action: ' + (H.act || '') + '\nDialogue: "' + (H.dia || '') + '"'))
+            || (L && L.system && ('Action: ' + (L.act || '') + '\nDialogue: "' + (L.dia || '') + '"'))
+            || 'Action: continue the scene\nDialogue: ""';
+    var PRICE = {
+      'grok-4.3':                    { in: 1.25e-6, out: 2.5e-6, cr: 0.2e-6 },
+      'grok-4-1-fast-reasoning':     { in: 0.5e-6,  out: 1.5e-6, cr: 0.08e-6 },
+      'mistral-small-latest':        { in: 1e-7,    out: 3e-7,   cr: 1e-7 }
+    };
+    function priceFor(m) { m = String(m || '').toLowerCase(); if (m.indexOf('mistral') >= 0) return PRICE['mistral-small-latest']; if (m.indexOf('fast-reasoning') >= 0) return PRICE['grok-4-1-fast-reasoning']; return PRICE['grok-4.3']; }
+    function summarize(d, label, ms) {
+      var u = (d && d.usage) || {};
+      var served = (d && (d.model || (d._orchestration && d._orchestration.model))) || '?';
+      var pt = u.prompt_tokens || u.input_tokens || 0, ct = u.completion_tokens || u.output_tokens || 0;
+      var cached = (u.prompt_tokens_details && u.prompt_tokens_details.cached_tokens) || u.cache_read_input_tokens || u.cached_tokens || 0;
+      var fresh = Math.max(0, pt - cached), p = priceFor(served);
+      var cost = fresh * p.in + cached * (p.cr || p.in) + ct * p.out;
+      var text = (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || (d && d.content) || '';
+      return { label: label, served: served, promptTok: pt, cachedTok: cached, outTok: ct, costUsd: +cost.toFixed(5), ms: Math.round(ms), chars: text.length, text: text };
+    }
+    async function fire(endpoint, body, label) {
+      var t0 = (window.performance && performance.now) ? performance.now() : Date.now();
+      try {
+        var r = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var d = await r.json();
+        var ms = ((window.performance && performance.now) ? performance.now() : Date.now()) - t0;
+        if (!r.ok) console.warn('[AB] ' + label + ' HTTP ' + r.status);
+        return summarize(d, label, ms);
+      } catch (e) { console.warn('[AB] ' + label + ' threw: ' + (e && e.message)); return { label: label, error: (e && e.message) || 'err' }; }
+    }
+    var grokBody = function (sys) { return { role: 'NARRATIVE_AUTHOR', preferredModel: 'grok-4.3', messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], max_tokens: 3000, temperature: 0.7 }; };
+    var mistralBody = function (sys) { return { model: 'mistral-small-latest', messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], max_tokens: 3000, temperature: 0.7 }; };
+    console.log('[AB] firing (HEAVY ' + (H && H.system ? H.system.length : '—') + 'c, LITE ' + (L && L.system ? L.system.length : '—') + 'c)…');
+    var rows = [];
+    if (H && H.system) {
+      rows.push(await fire('/api/proxy', grokBody(H.system), 'Grok-HEAVY (cold)'));
+      rows.push(await fire('/api/proxy', grokBody(H.system), 'Grok-HEAVY (warm)'));
+      if (opts.mistral !== false) rows.push(await fire('/api/mistral-proxy', mistralBody(H.system), 'Mistral-HEAVY'));
+    }
+    if (L && L.system) rows.push(await fire('/api/proxy', grokBody(L.system), 'Grok-LITE'));
+    var live = rows.filter(function (r) { return !r.error; });
+    try { console.table(live.map(function (r) { return { config: r.label, served: r.served, prompt_tok: r.promptTok, cached_tok: r.cachedTok, out_tok: r.outTok, cost: '$' + r.costUsd, ms: r.ms, prose_chars: r.chars }; })); } catch (_) { console.log(live); }
+    console.log('%c[AB] PROSE — cost is measured; QUALITY is yours to judge by eye:', 'font-weight:bold;color:#c9a24e');
+    live.forEach(function (r) { console.log('\n════════ ' + r.label + '  ($' + r.costUsd + ' · ' + r.chars + 'c · ' + r.ms + 'ms) ════════\n' + r.text); });
+    return { rows: rows };
+  };
+
+  // ════════════════════════════════════════════════════════════════════════════
   // window._continuationModelCompare({pairs})  → Sonnet-LITE vs Grok-LITE on the
   // SAME continuation prompt. Continuations dominate per-story cost (~$0.10 each ×
   // 19 ≈ $1.90/story) and currently run on Sonnet; Grok-4-1-fast-reasoning is ~6×
@@ -266069,6 +266133,10 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               + ' builtHeavyFullSys=' + (_buildHeavy ? ((typeof fullSys === 'string' ? fullSys.length : 0) + 'c') : 'SKIPPED(lite — not built, not sent)')
               + ' sentSystem=' + (_useLite ? '(LITE _ll.system — see [CACHE:SEGMENTS] sentChars)' : ((typeof fullSys === 'string' ? fullSys.length : 0) + 'c (HEAVY fullSys)')));
           } catch (_crErr) {}
+          // AUTHOR-MODEL A/B CAPTURE (2026-07-14): stash the last HEAVY fullSys so window._authorModelABTest()
+          // can fire Grok-HEAVY vs Grok-LITE vs Mistral-HEAVY on the SAME real prompt. Mirrors the LITE
+          // capture (_lastContinuationAuditPrompt) below. Dev-only; no behavior change.
+          try { if (_buildHeavy && typeof fullSys === 'string' && fullSys.length > 1000) { window.state._lastHeavyAuditPrompt = { system: fullSys, act: act, dia: dia, turn: (state.turnCount || 0) }; } } catch (_) {}
 
           // Use speculative scene if available, otherwise generate fresh
           if (_useLite) {
