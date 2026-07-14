@@ -266154,7 +266154,13 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
           try { if (_buildHeavy && typeof fullSys === 'string' && fullSys.length > 1000) { window.state._lastHeavyAuditPrompt = { system: fullSys, act: act, dia: dia, turn: (state.turnCount || 0) }; } } catch (_) {}
 
           // Use speculative scene if available, otherwise generate fresh
-          if (_useLite) {
+          // DOUBLE-PAY FIX (2026-07-14 meta-audit): a committed speculative scene is ALREADY PAID and
+          // was recorded speculation_committed (266064). It MUST win over a LITE regen. Without this guard
+          // `if (_useLite)` took the chain first and regenerated fresh via LITE — discarding the pre-paid
+          // scene (double-pay) AND leaving speculation_committed/committed_usd inflated for a commit that
+          // was silently thrown away. Skipping LITE here falls through to `else if (useSpeculative && …)`
+          // (266192) which uses the paid scene, so the recorded commit is now truthful and no cost repeats.
+          if (_useLite && !(useSpeculative && speculativeScene)) {
               // ── LIT-LITE PATH (router-selected or global toggle) ──
               // Single minimal model call. No speculative reuse, no skeleton /
               // beat sub-passes, no orchestration. #1: the heavy `fullSys` is NOT built
