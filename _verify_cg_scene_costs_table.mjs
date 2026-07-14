@@ -10,7 +10,7 @@ const A = (c, m) => { if (!c) { console.error('FAIL: ' + m); fail = true; } };
 // (1) The function exists and returns { rows, summary }.
 A(src.includes('window._cgSceneCosts = function ()'), '_cgSceneCosts() not defined');
 const fnStart = src.indexOf('window._cgSceneCosts = function ()');
-const fn = fnStart >= 0 ? src.slice(fnStart, fnStart + 2600) : '';
+const fn = fnStart >= 0 ? src.slice(fnStart, fnStart + 4200) : '';
 A(fn.includes('return { rows: rows, summary: summary };'), '_cgSceneCosts does not return rows + summary');
 
 // (2) Per-scene rows carry Author + overhead-multiplied text/image + total.
@@ -20,6 +20,14 @@ A(fn.includes('text_usd:  +(((e.text || 0) * mult))') && fn.includes('image_usd:
 // (3) Summary computes by_author + image_share_pct (the patterns this table exists to reveal).
 A(fn.includes('by_author: byAuthor'), 'by_author breakdown missing');
 A(fn.includes('image_share_pct: sum.total ? +(100 * sum.image / sum.total).toFixed(1) : null'), 'image_share_pct missing');
+
+// (3b) NO CONFLATION: Grok/Mistral/DeepSeek author only TEXT — images are BFL/Gemini, a separate
+//      pipeline. by_author must sum TEXT cost only; image cost is attributed to its actual provider.
+A(fn.includes('x.text_usd = +(x.text_usd + r.text_usd)'), 'by_author still folds image cost in (must sum text only)');
+A(!fn.includes('x.total_usd = +(x.total_usd + r.total_usd)'), 'by_author still aggregates total (conflates BFL image cost under the text author)');
+A(fn.includes('by_image_provider: byImgProv'), 'by_image_provider (BFL/Gemini) breakdown missing');
+A(src.includes('imageByProvider: (function ()'), 'finalize push does not capture image cost by provider');
+A(src.includes('_last.imageByProvider[provider] = (_last.imageByProvider[provider] || 0) + c;'), 'delayed image-charge does not attribute to the image provider');
 
 // (4) The finalize push stamps the per-scene author (CG-only, so literary/GN scenes are not mislabeled).
 A(src.includes("author: (typeof _isCGRenderMode === 'function' && _isCGRenderMode() && window.state._lastCGAuthor) ? window.state._lastCGAuthor : null,"), 'finalize push does not stamp per-scene author');

@@ -5469,6 +5469,8 @@ ${_pcInteriorLock}`;
                           const _last = _arr[_arr.length - 1];
                           _last.image = (_last.image || 0) + c;
                           _last.total = (_last.total || 0) + delta;
+                          _last.imageByProvider = _last.imageByProvider || {};
+                          _last.imageByProvider[provider] = (_last.imageByProvider[provider] || 0) + c;
                       }
                   } catch (_) {}
                   try { console.log('[SCENE-COST] DELAYED image charge: +$' + delta.toFixed(4) + ' (' + provider + ') → last-scene now $' + window.state._lastSceneAPICost.toFixed(4)); } catch (_) {}
@@ -5709,6 +5711,9 @@ ${_pcInteriorLock}`;
                   total: total,
                   text: acc.textCost,
                   image: acc.imageCost,
+                  // Image cost by its ACTUAL provider (BFL / Gemini fallback) — NOT the text author.
+                  // Grok/Mistral/DeepSeek only write the screenplay; images are a separate pipeline.
+                  imageByProvider: (function () { var _m = {}; ((acc.breakdown && acc.breakdown.image) || []).forEach(function (e) { if (e && e.provider) _m[e.provider] = (_m[e.provider] || 0) + (e.cost || 0); }); return _m; })(),
                   type: sceneType,
                   // Per-scene author for window._cgSceneCosts() (A3-F8). _lastCGAuthor is set during
                   // this scene's _runCGScreenplayGen, so it IS this scene's author at finalize — but only
@@ -5864,23 +5869,32 @@ ${_pcInteriorLock}`;
           };
       });
       var sum = rows.reduce(function (a, r) { a.text += r.text_usd; a.image += r.image_usd; a.total += r.total_usd; return a; }, { text: 0, image: 0, total: 0 });
+      // by_author = TEXT cost only (Grok/Mistral/DeepSeek author the screenplay; they do NOT make images).
       var byAuthor = {};
-      rows.forEach(function (r) { var x = byAuthor[r.author] = byAuthor[r.author] || { scenes: 0, total_usd: 0 }; x.scenes++; x.total_usd = +(x.total_usd + r.total_usd).toFixed(4); });
+      rows.forEach(function (r) { var x = byAuthor[r.author] = byAuthor[r.author] || { scenes: 0, text_usd: 0 }; x.scenes++; x.text_usd = +(x.text_usd + r.text_usd).toFixed(4); });
+      // by_image_provider = image cost by its ACTUAL provider (BFL / Gemini), summed across scenes (overheaded).
+      var byImgProv = {};
+      (Array.isArray(s._sceneCostsThisStory) ? s._sceneCostsThisStory : []).forEach(function (e) {
+          var ibp = e && e.imageByProvider; if (!ibp) return;
+          Object.keys(ibp).forEach(function (p) { byImgProv[p] = +(((byImgProv[p] || 0) + (ibp[p] || 0) * mult)).toFixed(4); });
+      });
       var summary = {
           scenes: rows.length,
-          text_usd:  +sum.text.toFixed(4),
-          image_usd: +sum.image.toFixed(4),
+          text_usd:  +sum.text.toFixed(4),        // Grok/Mistral/DeepSeek screenplay authorship
+          image_usd: +sum.image.toFixed(4),       // BFL/Gemini image pipeline (separate from authors)
           total_usd: +sum.total.toFixed(4),
           avg_per_scene_usd: rows.length ? +(sum.total / rows.length).toFixed(4) : 0,
           image_share_pct: sum.total ? +(100 * sum.image / sum.total).toFixed(1) : null,
-          by_author: byAuthor
+          by_author: byAuthor,               // TEXT cost per screenplay author
+          by_image_provider: byImgProv       // IMAGE cost per image provider (BFL / Gemini)
       };
       try {
           if (typeof console.table === 'function') console.table(rows);
           console.log('[CG-SCENE-COSTS] ' + summary.scenes + ' scene(s) · text $' + summary.text_usd +
-              ' · images $' + summary.image_usd + (summary.image_share_pct != null ? ' (' + summary.image_share_pct + '% of total)' : '') +
-              ' · total $' + summary.total_usd + ' · avg/scene $' + summary.avg_per_scene_usd);
-          Object.keys(byAuthor).forEach(function (a) { console.log('  · author ' + a + ': ' + byAuthor[a].scenes + ' scene(s), $' + byAuthor[a].total_usd); });
+              ' (authors) · images $' + summary.image_usd + (summary.image_share_pct != null ? ' (' + summary.image_share_pct + '% of total)' : '') +
+              ' (BFL/Gemini) · total $' + summary.total_usd + ' · avg/scene $' + summary.avg_per_scene_usd);
+          Object.keys(byAuthor).forEach(function (a) { console.log('  · text author ' + a + ': ' + byAuthor[a].scenes + ' scene(s), $' + byAuthor[a].text_usd); });
+          Object.keys(byImgProv).forEach(function (p) { console.log('  · image provider ' + p + ': $' + byImgProv[p]); });
       } catch (_) {}
       return { rows: rows, summary: summary };
   };
