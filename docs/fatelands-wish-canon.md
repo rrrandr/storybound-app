@@ -99,6 +99,59 @@ hangnail; a parlor trick that costs your firstborn) means a world with no rules.
 - **Fortune / Fate:** a run of small luck → a future windfall → your child's luck → an open debt
   Fate collects at the worst possible time
 
+### The Three Laws of Sacrifice (what Fate will and won't accept)
+
+Metaphysics does the work here — no ban-list. An offering must pass all three:
+
+1. **It must still be yours.** A *living, attached* part of you — hair on the scalp, blood in the
+   vein. Once your body has discarded it, it is no longer yours in Fate's eyes: hair clippings, nail
+   clippings, shed skin, voided waste, a baby tooth, an amputated limb are all just matter.
+2. **It must be truly yours to lose.** Not what disease has already taken from you (a tumor, an
+   infection, a parasite, necrotic tissue — those are injuries, not possessions) and not what the
+   body is actively ejecting (earwax, sweat, pus, stool). The universe doesn't recognize those as
+   sacrifices.
+3. **It must diminish you.** Sacrifice isn't about removing *mass* — it's about *reducing your
+   life*. A finger, an eye, a year, your singing voice, your mother's face, your fertility each make
+   you permanently *less than you were*. One skin cell, one eyelash, one freckle do not; they're
+   beneath the threshold. **Qualitative, never quantitative** — Fate isn't counting atoms, it's
+   asking *"has this permanently changed who you are?"*
+
+> **The rule, in one line:** *Fate accepts only living, meaningful sacrifices — the offering must
+> still belong to the giver, be truly theirs to lose, and permanently diminish them in some
+> significant way. It refuses what the body has already discarded, what disease has already taken,
+> what nature is already removing, or what is too trivial to matter.*
+
+Borderline cases the rule resolves cleanly: a **scar** — no (already a loss; you don't get paid
+twice). A **mole** — no (beneath significance). A **tattoo** — *maybe* (you chose it; it's part of
+your identity, so a *meaningful* one can be spent). **One beard hair** — no; **the ability to ever
+grow a beard again** — yes, where that's culturally significant. **Singing voice only** (you can
+still speak, never sing) — a beautiful T2.
+
+### Hair — the everyday coin (this is what makes Fatelands feel unique)
+
+Tiny wishing is woven into daily life, and it runs on hair. Two rules make it work:
+
+- **The unit is the FOLLICLE, not the strand — and a spent follicle never regrows.** This is the
+  anti-exploit: you can't shave, wait a month, and harvest 20,000 fresh wishes. What's spent is gone.
+- **A lifetime of casual wishing is written on the body.** A human has ~100,000 follicles spread
+  across the body; spend them freely and by fifty you're visibly sparse, by eighty nearly hairless.
+  You can *read* a person's wish-history in their thinning hair — which makes a **barber** half
+  accountant, half confessor ("you've lost a lot around the temples lately"). Different cultures
+  spend different hair: a noble sheds leg-hair first, a dwarf never touches the beard, a monk shaves
+  anyway.
+
+The scale (Roman's ruling):
+
+- **A single follicle → a tiny favor:** keep the tea hot, perfect makeup for an evening, breathe
+  water for a few minutes, keep ink from smudging, seal a tamper-tell on a contract, a lucky coin
+  toss.
+- **A thumb-sized patch → a bigger one:** land a good catch, hold a seam perfectly straight all day.
+- **Your whole head of hair → something real:** luck carried through a battle.
+
+Hair buys the *ephemeral / cosmetic / precise / convenient* — **never meaningful transformation**
+(that costs blood, years, memory, a name). It's the electricity of Fatelands: small miracles
+everywhere, cumulative cost etched into the body.
+
 **Rules:**
 
 1. A paid price never returns, and deferred/unpaid debts **compound**.

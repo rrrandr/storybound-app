@@ -178364,6 +178364,22 @@ No text, no watermark, no UI elements, share-ready.`;
         return { error: 'gen_empty', phaseIdx: phase.phaseIdx };
       }
 
+      // ── ANATOMY SPOT-REPAIR (Klein) — BEFORE caching, paint out a phantom duplicate figure
+      // or an extra hand/limb with a cheap masked Klein inpaint instead of a full re-render.
+      // Blocking (we need the fixed image before it caches/mounts). Behind _stagedAnatomyRepair.
+      try {
+        if (imageUrl && window._stagedAnatomyRepair !== false && typeof _repairStagedAnatomyKlein === 'function') {
+          var _expectPeople = (typeof _expectedFigureCount === 'function') ? _expectedFigureCount(visualState, phase) : null;
+          if (_expectPeople != null) {
+            var _repairedUrl = await _repairStagedAnatomyKlein(imageUrl, {
+              camera: (phase && phase.camera_override) || (visualState && visualState.camera) || '',
+              expectedPeople: _expectPeople
+            });
+            if (_repairedUrl) { imageUrl = _repairedUrl; try { console.log('[STAGED:HERO:PHASE] phase ' + phase.phaseIdx + ' anatomy spot-repaired (Klein)'); } catch (_) {} }
+          }
+        }
+      } catch (_arErr) { try { console.warn('[ANATOMY-REPAIR] wiring threw: ' + (_arErr && _arErr.message)); } catch (_) {} }
+
       state._stagedHeroCache[fingerprint] = {
         imageUrl: imageUrl,
         generatedAt: Date.now(),
@@ -189367,7 +189383,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '- An exposition beat\'s "text" is the PC\'s internal thought / reflection (1–2 sentences, no quotes — interior monologue, not spoken).\n' +
       '- 1–2 sentences per beat — HARD, no exceptions. NEVER 3+. A beat is ONE sustained moment (a glance, a line, a noticed detail, a breath), never a paragraph. If a beat wants a third sentence, SPLIT it into a new beat instead of letting it swell.\n' +
       '- The FINAL beat (idx === decisionGateBeatIdx) is EXACTLY ONE SENTENCE — the closing line that delivers the scene\'s decision moment. Never bury it in a wall.\n' +
-      '- BEAT COUNT (TARGET, not a rigid quota — it YIELDS to the two priority bounds below): beats are PROSE, not panels. Only ~3–4 phase IMAGES render per scene; beats ride beneath them at ZERO extra render cost. So use beats to PAINT the scene far beyond what 3–4 panels could show — give every world-texture stroke, every character tell, every noticed detail, every hesitation its OWN tight beat rather than cramming them into fewer fat ones. Split freely: a glance is a beat, a noticed detail is a beat, a held breath is a beat, one line of dialogue is a beat. Richness comes from MANY SMALL TIGHT beats, never from fat 3-sentence beats. TARGET ~28–45 tight beats for a standard scene (a thin <22-beat scene is a FAILURE unless a bound below forces fewer). PRIORITY 1 — if a LENGTH CEILING is active (see the user prompt), the CEILING WINS: fit as many tight beats as fit UNDER it; do NOT blow the ceiling to reach a beat count. PRIORITY 2 — on an INTIMACY-PACE scene (ST3/ST4, see SCENE DENSITY), run FEWER beats that breathe (~22–30); felt time between charged beats matters more than raw count there. These are not simultaneous rigid quotas — when they conflict, the active bound governs and the beat-count target flexes.\n' +
+      '- BEAT COUNT (TARGET, not a rigid quota — it YIELDS to the two priority bounds below): beats are PROSE, not panels. Only ~5 phase IMAGES render per scene (see PHASE COUNT); beats ride beneath them at ZERO extra render cost. So use beats to PAINT the scene far beyond what the panels could show — give every world-texture stroke, every character tell, every noticed detail, every hesitation its OWN tight beat rather than cramming them into fewer fat ones. Split freely: a glance is a beat, a noticed detail is a beat, a held breath is a beat, one line of dialogue is a beat. Richness comes from MANY SMALL TIGHT beats, never from fat 3-sentence beats. TARGET ~28–45 tight beats for a standard scene (a thin <22-beat scene is a FAILURE unless a bound below forces fewer). PRIORITY 1 — if a LENGTH CEILING is active (see the user prompt), the CEILING WINS: fit as many tight beats as fit UNDER it; do NOT blow the ceiling to reach a beat count. PRIORITY 2 — on an INTIMACY-PACE scene (ST3/ST4, see SCENE DENSITY), run FEWER beats that breathe (~22–30); felt time between charged beats matters more than raw count there. These are not simultaneous rigid quotas — when they conflict, the active bound governs and the beat-count target flexes.\n' +
       '- Alternate dialogue and narration freely; do not bunch dialogue.\n\n' +
       (typeof buildProseDensityConductorDirective === 'function' ? buildProseDensityConductorDirective() +
         '  CG: the charge budget governs how richly NARRATION/EXPOSITION beats interpret; DIALOGUE and procedural beats stay plain regardless. The lyrical spike maps to the scene\'s peak beat(s) only, never the whole plan.\n\n' : '') +
@@ -189393,7 +189409,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '- speaker is null ONLY for narration and exposition beats (which have no spoken line).\n' +
       '- EVERY non-PC/non-LI speaker name you put on a dialogue beat MUST also appear in visualState.other_characters_present[].name AND in that beat\'s phase\'s characters_present. Same spelling. If "Ella" speaks, "Ella" goes in both lists. Failure mode: dialogue beat reads `speaker: "Ella"` but Ella appears nowhere in the visualState/phase metadata → the image renders without Ella + the reader sees an unattributed dialogue line. The renderer\'s safety nets can recover when speaker is set; they CANNOT recover when speaker is null AND the character is missing from metadata.\n\n' +
       'PHASE RULES (HARD):\n' +
-      '- 1–3 phases per scene. Each phase covers ≥2 consecutive beats. startBeat for phase 0 is always 0.\n' +
+      '- PHASE COUNT (HARD FLOOR): a full scene renders 5–6 phase images — aim for FIVE, and a scene with fewer than 4 is a FAILURE (a near-static page that wastes the render budget). Each phase covers ≥2 consecutive beats and is a MATERIALLY DIFFERENT STAGE within the one location (per SCENE GEOGRAPHY — no relocation): a new character enters, a prop/truth is revealed, posture/proximity shifts, a decision lands, someone leaves. The interlocutor-driven scene supplies these naturally — e.g. protagonist alone in the space → the interlocutor arrives → the confrontation tightens → the hidden thing surfaces → the decision lands → the beat after. Do NOT under-emit: 1–2 phases for a 20+-beat scene is the #1 way to squander the visual budget. startBeat for phase 0 is always 0.\n' +
       // ── PHASE 0 SEMANTICS (REVISED 2026-05-16) ────────────────────────
       // Phase 0 was previously described as "the establishing shot,"
       // which read to the model as "spend the opening beats on visual /
@@ -189439,7 +189455,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '- background is concrete and named (not "a room" — "the late-shift newsroom, half-empty, rain on the glass, low fluorescent buzz").\n' +
       '- BACKGROUND ↔ PROSE CONSISTENCY (HARD — non-negotiable): visualState.background MUST describe the SAME physical location your beat prose puts the characters in. If any beat\'s text mentions "the café" / "coffee shop" / "diner" / "newsroom" / "gallery" / "garage" / "kitchen" / "bedroom" / "rooftop" / etc., visualState.background MUST name that same location. Mismatch is a HARD FAILURE: image renderer paints the visualState location while text describes a different one, and the reader sees a woman alone in an empty office while the prose has her at a coffee shop with a friend. Pick ONE location, set background to it, write all beats inside it.\n' +
       '- pc_wardrobe / li_wardrobe must be CONCRETE — infer from setting + occupation if not specified.\n' +
-      '- WARDROBE = STATION + CIRCUMSTANCES (HARD — pc_wardrobe, li_wardrobe, AND every other_characters_present[].wardrobe): each character\'s clothing must read their STATION (rank, wealth, class, profession, role in this world) AND their CIRCUMSTANCES (what they are doing right now, where they are, the temperature/weather, how long they have been there, whether they came prepared). A monarch and a scullion do not dress alike; the same person dresses differently for a funeral, a swim, and a march to war. PEER-REGISTER GUARD (fixes the "one in fine robes, one in rags" drift): two characters of SIMILAR station in the SAME setting read at a SIMILAR register — do NOT dress one in finery and the other in rags unless the prose ESTABLISHES a difference (servant vs noble, prisoner vs guard, someone caught mid-flight vs someone at home). A rags-vs-robes contrast must be a STORY choice you can point to in the prose — NEVER a default reached for to tell two figures apart, and NEVER left blank for a visible main character (blank = the renderer dresses them from the artist reference, which is where the rags came from). Dress for station-in-setting, not for drama.\n' +
+      '- WARDROBE = STATION + CIRCUMSTANCES (HARD — pc_wardrobe, li_wardrobe, AND every other_characters_present[].wardrobe): each character\'s clothing must read their STATION (rank, wealth, class, profession, role in this world) AND their CIRCUMSTANCES (what they are doing right now, where they are, the temperature/weather, how long they have been there, whether they came prepared). A monarch and a scullion do not dress alike; the same person dresses differently for a funeral, a swim, and a march to war. PEER-REGISTER GUARD (fixes the "one in fine robes, one in rags" drift): two characters of SIMILAR station in the SAME setting read at a SIMILAR register — do NOT dress one in finery and the other in rags unless the prose ESTABLISHES a difference (servant vs noble, prisoner vs guard, someone caught mid-flight vs someone at home). A rags-vs-robes contrast must be a STORY choice you can point to in the prose — NEVER a default reached for to tell two figures apart, and NEVER left blank for a visible main character (blank = the renderer dresses them from the artist reference, which is where the rags came from). Dress for station-in-setting, not for drama. OBJECT-PLACEMENT CONSISTENCY (HARD): when the prose names WHERE a worn item or artifact sits — "the talisman at her throat," "the ring on his wrist," "the charm at her belt" — the wardrobe field MUST place it in the SAME spot, because the image renders from the wardrobe field: a throat-talisman in the prose plus a belt-talisman in pc_wardrobe renders it in the wrong place. Pick ONE location for each named object and use it in BOTH the prose and the wardrobe field.\n' +
       '- NPC DIFFERENTIATION (HARD): every named non-LI character in other_characters_present MUST be visually DISTINCT from the protagonist. Different hair color, different hairstyle, different body type, different wardrobe palette, different accessories. If the protagonist has blonde hair in pigtails, the side character is NOT blonde and NOT in pigtails. The image renderer pulls visual cues from the same prompt, and if the side character\'s wardrobe is described in PC-adjacent terms, the renderer will paint both characters as the same person. Each NPC\'s wardrobe field is its OWN description — not a variation on the PC\'s.\n' +
       '- other_characters_present[].gender (HARD): each named side character entry MUST declare its own gender field ("female" | "male" | "non-binary"). The image renderer reads this for gender-accurate rendering. Without it, the renderer gender-rolls and Sophie comes out as a man. This is a per-entry FIELD on the side-character objects — it does NOT affect the per-beat speaker field (speaker rules above still apply: "protagonist"/"li"/verbatim name for side chars).\n' +
       '- BEAT EXPRESSION_TARGET (HARD): emit expression_target = "neutral" on most beats, but mark 3-5 KEY beats per scene with a NON-NEUTRAL value from the allowed list. The non-neutral targets set the scene\'s emotional rhythm (they shape the expression_arc + vignette emphasis). Reserve them for the beats where the character\'s feeling LANDS — a confession, a refusal, a held breath, a sudden tightening. Do NOT mark every dialogue beat as non-neutral; rotation defeats the cinematic punctuation.\n' +
@@ -190619,6 +190635,8 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • SENSE / FACULTY: one color → the taste of your favorite food → music → your dreams → the capacity to feel joy or to love\n' +
       '  • BOND: a stranger\'s goodwill → your good name → being forgotten by ONE person you love → a whole relationship → being unknown to everyone\n' +
       '  • FORTUNE / FATE: a run of small luck → a future windfall → your child\'s luck → an open DEBT Fate collects at the worst possible time\n' +
+      'THREE LAWS OF SACRIFICE (what Fate will accept — resolves every "can I pay with X?"): a sacrifice must (1) STILL BE YOURS — a living, attached part of you (hair on the scalp, blood in the vein), NEVER what the body has discarded (clippings, shed skin, voided waste, a baby tooth, an amputated limb = just matter); (2) BE TRULY YOURS TO LOSE — NOT what disease already stole (a tumor, an infection, a parasite) nor what the body is ejecting (earwax, sweat, pus, stool); (3) DIMINISH YOU — permanently and MEANINGFULLY change who you are (a finger, an eye, a year, your singing voice, your mother\'s face) — never something beneath the threshold (one skin cell, one eyelash, one freckle). Qualitative, never a count: not "how much matter" but "has this permanently changed who you are?"\n' +
+      'HAIR — THE EVERYDAY COIN (tiny magic is woven into daily Fatelands life): the unit is the FOLLICLE, not the strand, and a spent follicle NEVER regrows (no shave-and-harvest exploit). A SINGLE FOLLICLE buys a tiny favor (keep the tea hot, perfect makeup for an evening, breathe water for minutes, seal a tamper-tell on a contract, a lucky toss); a thumb-sized PATCH buys a bigger one (a good catch, a straight seam all day); your whole HEAD of hair buys something real (luck through a battle). Hair buys the ephemeral/cosmetic/precise/convenient — NEVER meaningful transformation (that costs blood, years, memory, a name). Cumulative cost is WRITTEN ON THE BODY: heavy wishers go visibly sparse then bald, and you can read a wish-history in thinning hair (a barber is half accountant, half confessor); cultures spend different hair (a noble sheds leg-hair first, a dwarf never the beard).\n' +
       'TIERS (boon → cost band):\n' +
       '  • T1 TRIVIAL (a parlor trick; breathe water for MINUTES; a lucky toss): a fingernail, a lock of hair, an hour of life, a trivial memory. Often pay-per-use.\n' +
       '  • T2 USEFUL (breathe water for a season or indefinitely via a talisman; heal a bad wound; always land on your feet; one night of borrowed beauty): a YEAR of life, a cherished-but-survivable memory, a finger, one color from your sight, a run of your luck. ← a water-breathing talisman lives HERE.\n' +
@@ -190864,7 +190882,7 @@ No text, no watermark, no UI elements, share-ready.`;
       var _cgDeferred = (typeof _liDeferred === 'function') && _liDeferred(state);
       var _cgMode = (window.state && window.state._scene1OpeningMode) || null;
       if (_cgDeferred || _cgMode === 'grounded_entry' || !_cgMode) {
-        lines.push('LI VISIBILITY (Scene 1 contract — HARD): ABSENT. The love interest does NOT appear in this scene — not physically, not via dialogue, not on a screen, not in voicemail, not referenced by name in the prose. Phase 0 is "absent". The scene establishes the PROTAGONIST + world + a non-LI side character or two (a friend / coworker / family member). That side character is a SIDE CHARACTER — they are NEVER the LI. If a side character\'s name appears in this scene\'s prose, treat them as a side character in all future scenes; never promote them to the LI role even if they have the most dialogue.');
+        lines.push('LI VISIBILITY (Scene 1 contract — HARD): ABSENT. The love interest does NOT appear in this scene — not physically, not via dialogue, not on a screen, not in voicemail, not referenced by name in the prose. Phase 0 is "absent". INTERLOCUTOR REQUIRED (HARD — this scene FAILS without it): the scene MUST stage at least ONE non-LI interlocutor who is PHYSICALLY PRESENT and in actual back-and-forth DIALOGUE with the protagonist — a friend, rival, family member, official, or the stranger the crisis throws at her. A fully solo scene of the protagonist alone with her interior monologue is a FAILURE mode: (a) it starves the scene of dialogue and defaults to backstory rumination instead of present action; (b) it leaves the Scene-1 expression axis (below) with NO ONE for her to be direct-or-subtle WITH, making the probe meaningless; (c) it gives the renderer no second character, which it then fills by CLONING the protagonist (identical twin). The protagonist must be DOING something in the world WITH someone right now — not narrating her past to an empty room. Establish, in the present tense, WHY she is in this place and WHAT she is doing here, not only what happened to her before. That interlocutor is a SIDE CHARACTER — they are NEVER the LI. If a side character\'s name appears in this scene\'s prose, treat them as a side character in all future scenes; never promote them to the LI role even if they have the most dialogue.');
         if (_cgDeferred) {
           lines.push('SCENE 1 VISUAL ENGINE — LI-ARRIVAL DEFERRED (HARD): the opening is driven NOT by romance but by the PROTAGONIST\'S CRISIS — agency, danger, urgency, survival, mystery, obligation, consequence. Compose STRONG, high-tension establishing panels with HER as the visual center, caught mid-action / mid-collapse / mid-decision. This must NOT be a weak single-figure placeholder page — every panel earns the turn. Replace LI gravity with CRISIS gravity. The love interest enters visually in a later scene.');
         }
@@ -191315,6 +191333,7 @@ No text, no watermark, no UI elements, share-ready.`;
       lines.push(
         'MICRODECISION FOR THIS SCENE: DEMAND/HINT (directness↔subtlety) — emit a microDecision. This is the reader\'s FIRST preference probe, BEFORE the LI is a figure of desire.\n' +
         '  · Signals: one "direct+", one "subtle+". This is NOT objective↔relationship and NOT charge-handling — it reads the PROTAGONIST\'S EXPRESSION STYLE: does she say the charged thing plainly, or let it stay implied?\n' +
+        '  · ADDRESSEE REQUIRED: the direct/subtle choice is HOW she meets the INTERLOCUTOR present in this scene — what she says to their face vs. what she holds back and lets show. It only means something because someone is THERE to say it to (or withhold it from). NEVER frame it as her deciding whether to speak aloud to an empty room; if the scene has staged no interlocutor, the scene itself is broken (see the Scene-1 interlocutor requirement).\n' +
         (_cgBespokeAxis
           ? '  · USE THIS EXACT FORK (embodied for this scene — the FIRST pole is direct+, the SECOND is subtle+; set microDecision.prompt to it verbatim or lightly split into the two options): "' + _cgBespokeAxis + '"\n'
           : '  · microDecision.prompt is diegetic, about HOW she meets a charged beat this scene. Examples: "Say it plainly, or let it show?" / "Ask outright, or let the question sit in a look?" / "Name it, or leave it unspoken?"\n') +
@@ -253070,12 +253089,15 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
   // strictMode: true for critical panels (reveal-adjacent, first appearance, close-ups with anatomy)
   // In strict mode: lower temperature, reject medium-confidence passes
-  async function _verifyPanelAnatomy(imageUrl, panelCamera, strictMode) {
+  async function _verifyPanelAnatomy(imageUrl, panelCamera, strictMode, opts) {
     if (!_verifyEnabled) { _verifyStats.skipped++; return { pass: true, skipped: true }; }
-    // Only verify when non-human species are active
+    // FIGURE-SANITY MODE (opts.expectedPeople provided): also run for HUMAN-only scenes to
+    // count people/hands (catches a phantom duplicate or an extra hand). Otherwise keep the
+    // original gate — species anatomy only.
+    var _figureMode = !!(opts && typeof opts.expectedPeople === 'number');
     var hasNonHuman = (state._playerSpecies && state._playerSpecies !== 'Human') ||
                       (state._liSpecies && state._liSpecies !== 'Human');
-    if (!hasNonHuman) { _verifyStats.skipped++; return { pass: true, skipped: true }; }
+    if (!hasNonHuman && !_figureMode) { _verifyStats.skipped++; return { pass: true, skipped: true }; }
 
     // Skip verification for extreme close-ups (not enough anatomy visible)
     var cam = (panelCamera || '').toLowerCase();
@@ -253086,7 +253108,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
     // Build identity tokens for verification
     var tokens = _buildIdentityTokens();
-    if (!tokens) { _verifyStats.skipped++; return { pass: true, skipped: true }; }
+    if (!tokens && !_figureMode) { _verifyStats.skipped++; return { pass: true, skipped: true }; }
 
     // Get species list
     var speciesList = [];
@@ -253120,7 +253142,8 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
           image_b64: b64,
           identity_tokens: tokens,
           species: speciesList.join(', '),
-          strict: !!strictMode
+          strict: !!strictMode,
+          expected_people: _figureMode ? opts.expectedPeople : undefined
         })
       });
       if (!res.ok) {
@@ -253151,6 +253174,109 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
 
   window._verifyStats = _verifyStats;
   window._verifyEnabled = function(v) { if (v !== undefined) _verifyEnabled = v; return _verifyEnabled; };
+  window._verifyPanelAnatomy = _verifyPanelAnatomy;
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // ANATOMY SPOT-REPAIR (Klein) — paint out a phantom DUPLICATE figure or an
+  // extra hand/limb with a cheap masked Klein inpaint, instead of a full
+  // re-render (~half the cost, and it keeps the render you already liked).
+  // The vision verifier (figure-sanity mode) localizes the defect to a bbox;
+  // we mask it and ask Klein to remove-and-fill. Klein is weak at expression
+  // nuance but strong at occlusion/removal — exactly this job. Flag:
+  // window._stagedAnatomyRepair (default ON; set false to disable).
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // Expected # of distinct figures in a staged phase (protagonist + present LI + named others).
+  function _expectedFigureCount(visualState, phase) {
+    try {
+      var n = 1; // protagonist is (almost) always in frame on the staged path
+      var liAbsent = (phase && phase.li_visibility_phase === 'absent') ||
+                     (visualState && (visualState._phaseLIAbsent === true || visualState.li_visibility === 'absent'));
+      if (!liAbsent) n += 1;
+      var others = (visualState && visualState.other_characters_present) || [];
+      var tokens = (phase && (phase.characters_present || phase.characters)) || null;
+      if (Array.isArray(others)) {
+        others.forEach(function (o) {
+          if (!o || !o.name) return;
+          if (Array.isArray(tokens) && tokens.length && tokens.indexOf(o.name) === -1) return; // not staged in this phase
+          n += 1;
+        });
+      }
+      return n;
+    } catch (_) { return 1; }
+  }
+  window._expectedFigureCount = _expectedFigureCount;
+
+  // Build a Klein inpaint MASK (black bg, white feathered ellipse) over a normalized bbox [x,y,w,h].
+  function _buildKleinMaskFromBbox(bbox) {
+    try {
+      if (!Array.isArray(bbox) || bbox.length < 4) return null;
+      var W = 1024, H = 1024, PAD = 1.35; // pad so the removal fully covers the defect + a feather
+      var x = Math.max(0, Math.min(1, +bbox[0] || 0)), y = Math.max(0, Math.min(1, +bbox[1] || 0));
+      var w = Math.max(0.02, Math.min(1, +bbox[2] || 0)), h = Math.max(0.02, Math.min(1, +bbox[3] || 0));
+      var cx = (x + w / 2) * W, cy = (y + h / 2) * H;
+      var rx = (w / 2) * PAD * W, ry = (h / 2) * PAD * H;
+      var canvas = document.createElement('canvas'); canvas.width = W; canvas.height = H;
+      var ctx = canvas.getContext('2d'); if (!ctx) return null;
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+      var rAvg = (rx + ry) / 2;
+      var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rAvg);
+      grad.addColorStop(0, 'rgba(255,255,255,1)');
+      grad.addColorStop(0.72, 'rgba(255,255,255,1)');
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(rx / rAvg, ry / rAvg); ctx.translate(-cx, -cy);
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H); ctx.restore();
+      return canvas.toDataURL('image/png');
+    } catch (_) { return null; }
+  }
+  window._buildKleinMaskFromBbox = _buildKleinMaskFromBbox;
+
+  // Verify figure sanity + Klein-repair a localizable removal-class defect. Returns a repaired
+  // image URL, or null if nothing to fix / not fixable this way (caller keeps the original).
+  async function _repairStagedAnatomyKlein(imageUrl, opts) {
+    opts = opts || {};
+    if (window._stagedAnatomyRepair === false) return null;
+    if (!imageUrl || typeof _verifyPanelAnatomy !== 'function' || typeof callBFLKontext !== 'function') return null;
+    // 1) VERIFY in figure-sanity mode (runs for human scenes too).
+    var v;
+    try { v = await _verifyPanelAnatomy(imageUrl, opts.camera || '', false, { expectedPeople: opts.expectedPeople }); }
+    catch (_) { return null; }
+    if (!v || v.skipped || v.pass !== false) return null; // clean or unverifiable → pay nothing
+    // 2) Only REMOVAL-class defects are Klein-repairable with a bbox mask. Species-anatomy
+    //    corrections need a canonical reference (that is _inpaintFailedRegions, GN path).
+    var type = String(v.defect_type || '');
+    var bbox = v.defect_bbox;
+    if (!/extra_person|extra_hand|extra_limb/.test(type) || !Array.isArray(bbox)) {
+      try { console.log('[ANATOMY-REPAIR] fail but not Klein-repairable (type=' + (type || 'none') + ', bbox=' + (bbox ? 'y' : 'n') + ') — keeping original'); } catch (_) {}
+      return null;
+    }
+    var mask = _buildKleinMaskFromBbox(bbox);
+    if (!mask) return null;
+    var _people = (typeof opts.expectedPeople === 'number') ? opts.expectedPeople : null;
+    var removePrompt = 'Remove the ' +
+      (type === 'extra_person' ? 'DUPLICATE / phantom extra person' : 'extra hand/limb') +
+      ' inside the masked region and fill it seamlessly with the correct background and body so the anatomy is normal' +
+      (_people != null ? (' and exactly ' + _people + ' figure' + (_people === 1 ? '' : 's') + ' remain' + (_people === 1 ? 's' : '')) : '') +
+      '. Keep EVERYTHING outside the mask pixel-identical — same character, pose, wardrobe, lighting, framing, and art style. Do NOT add anyone or anything new. Seamless edges, no visible boundary.';
+    try {
+      console.log('[ANATOMY-REPAIR] Klein spot-repair: type=' + type + ' bbox=' + JSON.stringify(bbox) + ' (people ' + (v.person_count == null ? '?' : v.person_count) + '→' + (_people == null ? '?' : _people) + ')');
+      var repaired = await callBFLKontext(removePrompt, '1024x1024', 60000, null, null, null, [imageUrl], _BFL_KLEIN, mask);
+      if (!repaired) { console.warn('[ANATOMY-REPAIR] Klein returned empty — keeping original'); return null; }
+      var url = (repaired.startsWith('http') || repaired.startsWith('data:')) ? repaired : 'data:image/png;base64,' + repaired;
+      // 3) Optional re-verify (once) — off by default to save a call; keep the repaired regardless.
+      if (window._stagedAnatomyRepairReverify === true) {
+        try {
+          var v2 = await _verifyPanelAnatomy(url, opts.camera || '', false, { expectedPeople: opts.expectedPeople });
+          console.log('[ANATOMY-REPAIR] re-verify after Klein: ' + (v2 && v2.pass === false ? 'STILL FAILS (' + (v2.defect_type || '?') + ') — keeping repaired anyway' : 'PASS'));
+        } catch (_) {}
+      }
+      return url;
+    } catch (e) {
+      console.warn('[ANATOMY-REPAIR] Klein threw: ' + (e && e.message) + ' — keeping original');
+      return null;
+    }
+  }
+  window._repairStagedAnatomyKlein = _repairStagedAnatomyKlein;
 
   // ═══════════════════════════════════════════════════════════════════════
   // REGION INPAINTING — surgical fix for anatomy-failed panels
