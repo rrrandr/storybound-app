@@ -90439,6 +90439,7 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       state.previousTitleMode = null;
       state.continuationPath = null;
       state.ffAppearance = {}; // First Favored color lock — fresh per new story (L2); survives issues (L3-only resets)
+      state.kwisheenAppearance = {}; // Named-Kwisheen color/pattern lock — same lifetime as ffAppearance (L2 reset, survives issues)
 
       // Clear all entropy axis objects
       const entropyKeys = [
@@ -152603,6 +152604,31 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._resolveFFAppearance = _resolveFFAppearance;
 
+  // ── NAMED KWISHEEN APPEARANCE LOCK (Roman 2026-07-15) ────────────────────
+  // Kwisheen skin is canonically mood-shifting, so a NAMED Kwisheen (esp. a side
+  // character like a Vow Arbiter) re-rolls colour/pattern every render and drifts
+  // panel-to-panel. Deterministically pin skin colour + pattern + eye colour by
+  // name (same hash approach as FF), so a named Kwisheen looks identical every
+  // panel — camouflage becomes a deliberate STORY beat, never per-panel drift.
+  var _KW_SKIN_PALETTE = ['deep crimson red', 'burnished gold', 'royal violet', 'deep ocean blue', 'burnt orange', 'jade green', 'warm copper', 'plum purple', 'teal', 'ember red-orange'];
+  var _KW_PATTERN_PALETTE = ['electric-blue ringed spots', 'gold marbled veining', 'pale rosette blooms', 'dark banded stripes', 'iridescent speckle', 'a fine reticulated lattice', 'ivory chevron banding'];
+  var _KW_IRIS_PALETTE = ['amber-gold', 'pale jade', 'molten orange', 'silver-grey', 'deep amber', 'copper'];
+  function _resolveKwisheenAppearance(name) {
+    var key = String(name || '').trim().toLowerCase();
+    if (!key) return null;
+    state.kwisheenAppearance = state.kwisheenAppearance || {};
+    if (state.kwisheenAppearance[key]) return state.kwisheenAppearance[key];
+    var seed = _ffColorHash(key + '|kw|' + (state.worldInstanceId || state.storyId || 'seed'));
+    var a = {
+      skin: _KW_SKIN_PALETTE[seed % _KW_SKIN_PALETTE.length],
+      pattern: _KW_PATTERN_PALETTE[Math.floor(seed / 13) % _KW_PATTERN_PALETTE.length],
+      iris: _KW_IRIS_PALETTE[Math.floor(seed / 131) % _KW_IRIS_PALETTE.length]
+    };
+    state.kwisheenAppearance[key] = a;
+    return a;
+  }
+  window._resolveKwisheenAppearance = _resolveKwisheenAppearance;
+
   // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
   // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can
   // briefly SHIFT. When a render DRIFTS into a wrong feature (pointed ears, a forehead gem,
@@ -152746,7 +152772,7 @@ No text, no watermark, no UI elements, share-ready.`;
       ],
       identityBlock:
         'SPECIES: KWISHEEN (canonical anatomy — a cephalopod-humanoid; match the Kwisheen species reference image):\n' +
-        '- BODY: humanoid torso above; the LOWER BODY is fully tentacled — six locomotion tentacles that replace the legs entirely. Two tentacle-arms above, each ending in five fine finger-tentacles (no joints, smooth taper).\n' +
+        '- BODY — EXACT LIMB COUNTS (the #1 thing to get right; the render keeps growing extra arms): a humanoid TORSO with EXACTLY TWO upper ARMS — two tentacle-arms, no more, each ending in ONE hand of five fine finger-tentacles. TWO arms only — never three, four, or five. Below the waist the legs are replaced ENTIRELY by SIX locomotion tentacles: a lower-body mass for MOVEMENT, with no hands and no arms among them. There are THREE DISTINCT tentacle systems and they must not merge into a swarm of arms: (1) the TWO tentacle-ARMS (upper, with hands — the only manipulating limbs), (2) the SIX locomotion tentacles (lower body, no hands), (3) the hair-tentacles (sensory, on the scalp). Count the manipulating arms in the frame: there must be exactly TWO.\n' +
         '- HAIR: a full mane of thick living TENTACLE-DREADLOCKS from the scalp — sinuous, sucker-lined, in motion. This mane is the primary silhouette tell (an octopus\'s arms worn as hair), NOT fine wispy feelers.\n' +
         '- SKIN: SCALED / pebbled cephalopod hide — a fine hexagonal scale-and-sucker texture across face and body (this species HAS textured, patterned skin, not smooth human skin), in a vivid exotic color (deep red, gold, violet, blue, orange) with contrasting pattern-bloom that shifts with mood.\n' +
         '- EYES: large, a vivid non-human iris (gold / amber) with a HORIZONTAL CAPSULE PUPIL — a rounded rectangle with a fine central slit; not round in true form.\n' +
@@ -176875,6 +176901,24 @@ No text, no watermark, no UI elements, share-ready.`;
         prompt += 'FIRST FAVORED COLORS (LOCKED — these EXACT colors for these named characters, identical in every scene and every issue; do not re-roll):\n' + _ffLockLines.join('\n') + '\n\n';
       }
     }
+    // ── NAMED KWISHEEN APPEARANCE LOCK (Roman 2026-07-15; SEPARATE gate — fires on Kwisheen
+    // present, NOT first_favored). Their skin is mood-shifting, so without a lock a named Kwisheen
+    // (e.g. a Vow Arbiter) drifts colour/pattern panel-to-panel. Pin it; camouflage is a story beat.
+    if (typeof _resolveKwisheenAppearance === 'function') {
+      var _kwLockNames = [];
+      if (/kwisheen|octo/.test(String(state._playerSpecies || '').toLowerCase())) _kwLockNames.push((state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'the protagonist');
+      if (!liAbsent && /kwisheen|octo/.test(String(state._liSpecies || '').toLowerCase())) _kwLockNames.push((state.picks && state.picks.identity && state.picks.identity.partnerName) || state.loveInterestName || 'the love interest');
+      (visualState.other_characters_present || []).forEach(function (o) { if (o && o.name && /kwisheen|octo/i.test(String(o.species || ''))) _kwLockNames.push(o.name); });
+      var _kwLockLines = [], _kwSeen = {};
+      _kwLockNames.forEach(function (nm) {
+        var k = String(nm).trim().toLowerCase(); if (!k || _kwSeen[k]) return; _kwSeen[k] = true;
+        var a = _resolveKwisheenAppearance(nm);
+        if (a) _kwLockLines.push('- ' + nm + ': ' + a.skin + ' skin with ' + a.pattern + ', ' + a.iris + ' eyes — IDENTICAL in every panel (exactly two arms, six lower tentacles, tentacle-hair; same adornment).');
+      });
+      if (_kwLockLines.length) {
+        prompt += 'KWISHEEN APPEARANCE (LOCKED — these named Kwisheen keep these EXACT colours/patterns in every panel and issue; skin shifts ONLY as a deliberate camouflage beat, never as per-panel drift):\n' + _kwLockLines.join('\n') + '\n\n';
+      }
+    }
     // SPECIES-BY-CHARACTER GUARD (Roman 2026-07-14): the species contract above is scene-level,
     // so the model tends to smear the non-human anatomy onto EVERY figure (e.g. a human PC in a
     // Kwisheen scene sprouting tentacle-hair). Scope species per character so a human stays human.
@@ -190774,6 +190818,7 @@ No text, no watermark, no UI elements, share-ready.`;
         var _threadsPre = (Array.isArray(_ap1.subplots) ? _ap1.subplots.length : 0) + (_ap1.li_complication ? 1 : 0);
         console.log('[SCENE1:PAYLOAD-REDUCE] before={crises:' + _famPre.length + ', names:' + _namePre.length + ', plotThreads:' + _threadsPre + '} after={crises:1, names:≤1, plotThreads:minimal} (directive injected; mount-stage enforce backstops)');
         lines.push('SCENE-1 LOAD CONTROL (HARD — Roman 2026-06-13): this scene has ONE load-bearing crisis — the one the protagonist is INSIDE as the scene opens. Do NOT introduce a SECOND catastrophe family: if the opener is a scandal/leak, NO lawsuit / bankruptcy / legal thread; if the opener is financial, NO scandal. A minor background pressure is allowed ONLY if it directly intensifies the primary crisis. CAST CAP: give a PROPER NAME to AT MOST ONE person besides the protagonist and the love interest. Everyone else is UNNAMED — "a friend," "the clip," "a board member," "an unnamed guest," "the host" — or deferred to a later scene. FORBIDDEN in Scene 1: naming the love interest\'s brother, a brother\'s ex-girlfriend, a lawyer AND a friend AND an ex AND a board member; explaining a lawsuit / legal history / a family tree / a plot-truth mystery thread. The reader must summarize this scene in ONE sentence without a family tree. When in doubt, CUT the second thread and stay in the one fire.');
+        lines.push('BACKSTORY-FOR-CONTEXT (bounded exception to the load-control above — Roman 2026-07-15): the ban is on plot-DUMPS, not on ORIENTATION. You MAY spend UP TO ~50 words grounding the ONE piece of backstory the reader needs to understand THIS scene\'s live stakes — especially when the scene names a person or place that is central but not fully on the page: why the protagonist is HERE, who a named figure IS to her, what a referenced past event COST her. A sentence or two, tied DIRECTLY to the present issue, then straight back to the scene. This is NOT a family tree, a mystery-box, or a second plot thread. An unexplained LOAD-BEARING name (a mentor, a rival, an absent LI, a loaded place the scene turns on) is its OWN failure — orient the reader rather than leaving the name floating. (Such an orienting beat is also a natural FLASHBACK-INSERT opportunity: a SINGLE past-moment panel that earns an extra image, never a played-out flashback scene.)');
       }
     } catch (_) {}
     // ── SCENE-1 TRUTH-MYSTERY DEFER (Roman 2026-06-13) — romance engine, not "what happened" ──
@@ -191894,6 +191939,20 @@ No text, no watermark, no UI elements, share-ready.`;
     // as warning. v1 is detection-only — telemetry-driven, doesn't reject
     // the plan. If the pattern proves common, slice 2 could regenerate.
     try {
+      // AFTERBEAT PLACEMENT (2026-07-15) — the microDecision axis must fire MIDWAY (first ~40% of
+      // beats), never merged into the final beat. The screenplay author often set afterBeat late (or
+      // equal to the deck-mandate's penultimate dilemma), so the axis probe appeared right before the
+      // deck. Snap it into the first-40% window and keep it clear of the final dilemma / decision gate
+      // (the analyzer path already does this at ~150749; the live path did not).
+      if (plan.microDecision && typeof plan.microDecision.afterBeat === 'number' && Array.isArray(plan.beats) && plan.beats.length) {
+        var _mdCap = Math.max(1, Math.floor(plan.beats.length * 0.4));
+        var _mdGate = (typeof plan.decisionGateBeatIdx === 'number') ? plan.decisionGateBeatIdx : (plan.beats.length - 1);
+        if (plan.microDecision.afterBeat > _mdCap || plan.microDecision.afterBeat >= _mdGate - 1) {
+          var _mdSnapped = Math.max(1, Math.min(_mdCap, Math.floor(plan.beats.length * 0.3)));
+          try { console.log('[STAGED:MICRO] afterBeat=' + plan.microDecision.afterBeat + ' too late (cap ' + _mdCap + ', gate ' + _mdGate + ') → snapped to ' + _mdSnapped + ' (axis fires MIDWAY, not before the deck)'); } catch (_) {}
+          plan.microDecision.afterBeat = _mdSnapped;
+        }
+      }
       if (plan.microDecision && Array.isArray(plan.microDecision.options) && plan.microDecision.options.length === 2) {
         var optA = String((plan.microDecision.options[0] && plan.microDecision.options[0].text) || '').toLowerCase().trim();
         var optB = String((plan.microDecision.options[1] && plan.microDecision.options[1].text) || '').toLowerCase().trim();
@@ -193433,6 +193492,32 @@ No text, no watermark, no UI elements, share-ready.`;
       // 2-phase scenes are now LEFT ALONE regardless of beat count.
       // Per STILLNESS OVERRIDE: trust the LLM's emotional reading.
 
+      // ── PHASE CAMERA AUTO-VARIETY (2026-07-15) — the dedup fix ──────
+      // Phases that left camera_override null all inherit the scene camera,
+      // so their _phaseFingerprint is identical and the hero cache DEDUPES
+      // them into one image — a 3-phase confrontation rendered only 2. Give
+      // each phase a DISTINCT camera so N phases render N distinct panels
+      // (legitimate cinematic coverage of the ONE location, not relocation).
+      // Flag: window._stagedPhaseCameraVariety !== false.
+      try {
+        if (window._stagedPhaseCameraVariety !== false && Array.isArray(plan.phases) && plan.phases.length > 1) {
+          var _CAMV = ['wide_establishing', 'over_shoulder_pc', 'medium_two_shot', 'push_in_on_object', 'close_pc', 'profile_pc', 'low_angle_pc'];
+          var _sceneCamV = String((plan.visualState && plan.visualState.camera) || 'medium_two_shot');
+          var _usedV = {}; var _rotV = 0; var _changedV = 0;
+          plan.phases.forEach(function (_ph, _i) {
+            var _explicit = _ph.camera_override && _ph.camera_override !== 'null' && _ph.camera_override !== null;
+            var _eff = _explicit ? String(_ph.camera_override) : (_i === 0 ? _sceneCamV : '');
+            if (!_eff || _usedV[_eff]) {
+              while (_rotV < _CAMV.length && _usedV[_CAMV[_rotV]]) _rotV++;
+              _eff = (_rotV < _CAMV.length) ? _CAMV[_rotV++] : _CAMV[_i % _CAMV.length];
+            }
+            if (_ph.camera_override !== _eff) { _ph.camera_override = _eff; _changedV++; } // set EXPLICITLY on every phase (incl. phase 0) so the fingerprint can't collide via scene-cam inherit
+            _usedV[_eff] = true;
+          });
+          if (_changedV) { try { console.log('[STAGED:PHASE:VARIETY] auto-varied ' + _changedV + ' camera(s) → ' + plan.phases.map(function (p) { return p.camera_override; }).join(' → ') + ' (prevents cache-dedup of same-camera phases → distinct panels)'); } catch (_) {} }
+        }
+      } catch (_pcvErr) {}
+
       // ── CLOSEUP TARGET + SHOT_TYPE COERCION (2026-05-22, expanded) ─
       // Architectural decision (2026-05-22): Klein mutations gated off;
       // closeups are now full Flux2 Pro dramatic INSERT shots, not
@@ -193546,13 +193631,20 @@ No text, no watermark, no UI elements, share-ready.`;
       // PM restructure — closeup is the SINGULAR dramatic reveal moment;
       // additional visual variety comes from phase image framings (3-4
       // phases per scene at varied cameras), not extra closeups.
-      if (plan.beats.length >= 15 && _closeups < 1) {
-        var _needed = 1 - _closeups;
-        var _spreadTargets = [
-          Math.floor(plan.beats.length * 0.30),
-          Math.floor(plan.beats.length * 0.60),
-          Math.floor(plan.beats.length * 0.85)
-        ];
+      // CLOSEUP FLOOR (Roman 2026-07-15): was 1 ("singular reveal"), which left obvious
+      // insert moments on the table — her refusal face, the contract, a charged object.
+      // Now scale to ~1 per 7 beats (2–4), spread across the scene at charged landmarks, so a
+      // full scene gets several cinematic cut-ins. Flag: window._stagedCloseupTarget overrides.
+      var _closeupTarget = (typeof window._stagedCloseupTarget === 'number')
+        ? window._stagedCloseupTarget
+        : Math.min(4, Math.max(2, Math.round(plan.beats.length / 7)));
+      if (plan.beats.length >= 12 && _closeups < _closeupTarget) {
+        var _needed = _closeupTarget - _closeups;
+        var _nSpread = Math.max(_needed, 3);
+        var _spreadTargets = [];
+        for (var _stI = 0; _stI < _nSpread; _stI++) {
+          _spreadTargets.push(Math.floor(plan.beats.length * (0.22 + (0.68 * _stI / Math.max(1, _nSpread - 1)))));
+        }
 
         // ── STAKE-OBJECT EXTRACTION ─────────────────────────────────
         // Try to pull a tangible object name from sceneCharge.stake or
