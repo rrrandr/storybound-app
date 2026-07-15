@@ -148628,6 +148628,7 @@ No text, no watermark, no UI elements, share-ready.`;
     '- camera serves the emotional center: close_li for intimate moments, wide_establishing only when scale matters.\n' +
     '- WARDROBE: pc_wardrobe and li_wardrobe MUST be pulled verbatim from the prose if the prose describes clothing. If the prose says "silk gown" do NOT output "blazer".\n' +
     '- WARDROBE INFERENCE (when prose does NOT name clothing): infer from CONTEXTUAL SIGNALS in the scene. The prose tells you the protagonist is a journalist in a newsroom — output something like "blouse, blazer, dark jeans, sensible boots" rather than leaving it blank. The setting + occupation + social register imply clothing even when no garment is named. Examples: courtroom scene → "tailored suit, polished shoes"; gala → "evening dress, heels"; battlefield → "fatigues, body armor"; coffee shop → "casual sweater, jeans"; hospital → "scrubs". Only leave blank ("") when the scene is genuinely setting-ambiguous AND no occupation/role is implied. The image generator NEEDS this signal — empty pc_wardrobe causes it to default to whatever the artist\'s reference image happens to wear (often leather/anime-urban for Ryo Toro, gowns for Lora Venn), which produces a journalist-rendered-as-motorcycle-goth-chick.\n' +
+    '- WARDROBE = STATION + CIRCUMSTANCES (HARD — applies to pc_wardrobe, li_wardrobe, AND every other_characters_present[].wardrobe): every character\'s clothing must read their STATION (rank, wealth, class, profession, role in this world) AND their CIRCUMSTANCES (what they are doing right now, where they are, the temperature/weather, how long they have been there, whether they came prepared). A monarch and a scullion do not dress alike; the same person dresses differently for a funeral, a swim, and a march to war. PEER-REGISTER GUARD (fixes the "one in fine robes, one in rags" drift): two characters of SIMILAR station in the SAME setting read at a SIMILAR register — do NOT dress one in finery and the other in rags unless the prose ESTABLISHES a difference (servant vs noble, prisoner vs guard, someone caught mid-flight vs someone at home). A rags-vs-robes contrast must be a STORY choice you can point to in the prose — NEVER a default reached for to tell two figures apart. When you cannot ground a specific garment, dress the character for their station in this setting, not for drama, and never leave a visible main character blank.\n' +
     '- other_characters_present: list every non-PC, non-LI named character who is physically present in the scene at ANY phase. Include their wardrobe and position from the prose. Empty array [] if none.\n' +
     '- key_props: list named diegetic objects that play any role in the scene (a tarot deck mentioned in dialogue, a glass that breaks, a letter passed between characters). These will appear in the staging WHEN their phase begins — not before.\n\n' +
     'PHASE RULES (HARD):\n' +
@@ -152301,9 +152302,11 @@ No text, no watermark, no UI elements, share-ready.`;
     },
     gloamwater_bay: {
       label: 'Gloamwater Bay',
+      // Environment plate ONLY. The Kwisheen character reference lives in the kwisheen
+      // SPECIES contract so it is presence-gated per phase — a region anchor attaches to
+      // EVERY render in the region, which bled Kwisheen anatomy onto a lone human PC.
       anchorImages: [
-        '/assets/Fatelands/GloamwaterBay.png',
-        '/assets/Fatelands/Kwisheen_Pair_Anchor.jpg?v=20260404'
+        '/assets/Fatelands/GloamwaterBay.png'
       ],
       identityBlock:
         'WORLD: GLOAMWATER BAY (Fatelands, fixed-form Kwisheen aquatic enclave). Environment is canonical:\n' +
@@ -152841,7 +152844,16 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/favored|first.?favored/.test(pc)) keys.first_favored = true;
     if (/kwisheen|octo.?folk/.test(pc)) keys.kwisheen = true;
     if (/wilder|were.?folk|half.?beast|cursed/.test(pc)) keys.wildfolk = true;
-    // Background prose tokens (covers LI species when not in state)
+    // LI species (from state) — the LI's species is known for the whole story even when a
+    // given phase's background prose never names it. Without this, a Kwisheen LI in a scene
+    // whose prose said "torch-lit square" left the species contract EMPTY, so a region-level
+    // character anchor bled its anatomy ungated onto a lone human PC (observed 2026-07-14).
+    // The per-phase anchor gate + species-by-character text guard scope WHERE it applies.
+    var li = String(state._liSpecies || '').toLowerCase();
+    if (/favored|first.?favored/.test(li)) keys.first_favored = true;
+    if (/kwisheen|octo.?folk/.test(li)) keys.kwisheen = true;
+    if (/wilder|were.?folk|half.?beast|cursed/.test(li)) keys.wildfolk = true;
+    // Background prose tokens (covers named side-character species not in state)
     var bg = String(plan && plan.visualState && plan.visualState.background || '').toLowerCase();
     if (/\bfirst[\s-]?favored\b/.test(bg)) keys.first_favored = true;
     if (/\bkwisheen\b|\bocto.?folk\b/.test(bg)) keys.kwisheen = true;
@@ -152895,10 +152907,14 @@ No text, no watermark, no UI elements, share-ready.`;
     // Region anchors first (most load-bearing for environment consistency).
     (region.anchorImages || []).forEach(addAnchor);
     // Species anchors second — limit to 2 per species so multi-species scenes don't explode.
+    // Record which anchor paths are species anchors (keyed by species) so the per-phase
+    // renderer can drop a species' reference image when NO character of that species is
+    // on-stage (else e.g. the Kwisheen octofolk ref bleeds tentacles onto a lone human PC).
+    var speciesAnchorByPath = {};
     speciesKeys.forEach(function(sk) {
       var sp = _STAGED_SPECIES_CONTRACTS[sk];
       if (!sp) return;
-      (sp.anchorImages || []).slice(0, 2).forEach(addAnchor);
+      (sp.anchorImages || []).slice(0, 2).forEach(function(p) { if (p) { speciesAnchorByPath[p] = sk; addAnchor(p); } });
     });
     // Celestial anchors last — add only if budget remains (they
     // primarily contribute via text directives, not visual reference).
@@ -152941,6 +152957,7 @@ No text, no watermark, no UI elements, share-ready.`;
       speciesKeys: speciesKeys,
       celestialKeys: celestialKeys,
       anchorImages: anchors,
+      speciesAnchorPaths: speciesAnchorByPath,
       textBlock: textBlocks.join('\n'),
       // Cache fingerprint helper — splits image cache per region+species+celestial
       // so two scenes with same staging but different cosmological states don't collide.
@@ -176895,8 +176912,14 @@ No text, no watermark, no UI elements, share-ready.`;
       var _allSps = [_pcSp].concat(liAbsent ? [] : [_liSp]).concat(_otherSps);
       var _hasHuman = _allSps.some(function (x) { return /human/i.test(x); });
       var _hasNonHuman = _allSps.some(function (x) { return !/human/i.test(x); });
+      var _regionHasNonHumanSpecies = _sk.some(function (k) { return k === 'kwisheen' || k === 'first_favored'; });
       if (_hasHuman && _hasNonHuman) {
         prompt += 'SPECIES BY CHARACTER (HARD — render each character in their OWN species only; one character\'s species traits do NOT appear on another):\n' + _rows.join('\n') + '\n\n';
+      } else if (_hasHuman && !_hasNonHuman && _regionHasNonHumanSpecies) {
+        // Only humans on-stage in a region whose world-contract describes a non-human species
+        // (e.g. a solo human PC opening a Kwisheen-region scene before the LI walks in). The
+        // scene-level anatomy text would otherwise smear onto the human figure — counter it.
+        prompt += 'SPECIES BY CHARACTER (HARD): every figure in this frame is FULLY HUMAN — ordinary human skin, flowing human hair, small rounded human ears, two human arms with five-fingered hands, and two human legs ending in bare human feet. Render each figure as an entirely ordinary human person. The species anatomy in the world contract above belongs to characters who are NOT present in this frame.\n\n';
       }
     })();
     // UNDERWATER PHYSICS GUARD (Roman 2026-07-14): submerged scenes must obey WATER physics,
@@ -178079,8 +178102,38 @@ No text, no watermark, no UI elements, share-ready.`;
       combinedAnchors.push({ path: p, label: artistKey + ' style anchor', species: artistKey + ' style' });
     });
     if (state._stagedRegionContract && state._stagedRegionContract.anchorImages.length > 0) {
-      // Take top 2 region/species anchors so total stays at ≤4.
-      var regionAnchors = state._stagedRegionContract.anchorImages.slice(0, 2);
+      // ── SPECIES-ANCHOR PRESENCE GATE (Roman 2026-07-14) ──────────────
+      // A species reference image (e.g. the Kwisheen octofolk ref) must
+      // only attach to a phase where a character of that species is on-
+      // stage; otherwise it bleeds its anatomy (tentacles/scales) onto
+      // whoever IS in frame — e.g. a lone human PC in a Kwisheen region
+      // rendered with tentacle legs (observed via e2e probe 2026-07-14).
+      // Presence is per-phase: the LI's species counts only when in-frame.
+      var _spAnchorMap = state._stagedRegionContract.speciesAnchorPaths || {};
+      var _phaseLIAbsentForSp = phase && (phase.li_visibility_phase === 'absent');
+      var _normSp = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+      var _presentSp = {};
+      var _pcSpN = _normSp(state._playerSpecies); if (_pcSpN && _pcSpN !== 'human') _presentSp[_pcSpN] = true;
+      if (!_phaseLIAbsentForSp) { var _liSpN = _normSp(state._liSpecies); if (_liSpN && _liSpN !== 'human') _presentSp[_liSpN] = true; }
+      // Named side characters live on visualState.other_characters_present (same place the
+      // species-by-character text guard reads them). If the phase declares an explicit
+      // character-token list, only count side chars actually on-stage in THIS phase.
+      var _phaseOthers = (visualState && visualState.other_characters_present) || [];
+      var _phaseTokens = (phase && (phase.characters_present || phase.characters)) || null;
+      if (Array.isArray(_phaseOthers)) _phaseOthers.forEach(function (o) {
+        if (!o) return;
+        if (Array.isArray(_phaseTokens) && _phaseTokens.length && o.name && _phaseTokens.indexOf(o.name) === -1) return;
+        var _oN = _normSp(o.species); if (_oN && _oN !== 'human') _presentSp[_oN] = true;
+      });
+      var _gatedAnchors = state._stagedRegionContract.anchorImages.filter(function (p) {
+        var sk = _spAnchorMap[p];
+        if (!sk) return true; // region background / non-species anchor — always keep
+        if (_presentSp[sk]) return true; // that species IS on-stage — keep its ref
+        try { console.log('[STAGED:STYLE] species-anchor GATED — ' + String(p).split('/').pop() + ' (' + sk + ' not present in phase ' + phase.phaseIdx + ')'); } catch (_) {}
+        return false;
+      });
+      // Take top 2 remaining region/species anchors so total stays at ≤4.
+      var regionAnchors = _gatedAnchors.slice(0, 2);
       regionAnchors.forEach(function(p) {
         combinedAnchors.push({ path: p, label: state._stagedRegionContract.regionLabel + ' anchor', species: state._stagedRegionContract.regionLabel });
       });
@@ -189295,7 +189348,9 @@ No text, no watermark, no UI elements, share-ready.`;
       '- peak_b_beat must be at least 4 beats after peak_a_beat. Adjacent peaks read as one held state and waste the second mutation.\n' +
       '- Both peaks must escalate in the same direction within the family — e.g. lips_tighten → jaw_clench (escalating suppression) is GOOD; lips_tighten → jaw_clench → lips_tighten (oscillating) is BAD. Pick the arc shape first, then place the beats.\n' +
       '- decay_window controls how long each peak lingers visually. After peak_a_beat fires, the renderer holds the peak frame at full opacity through (peak_a_beat + 1), then eases the mutation overlay to 0 across (decay_window − 1) more beats. So decay_window=3 means: peak holds for 2 beats, fades over the 3rd. Use 3 as the default; use 4 for scenes where the emotional weight should linger longer (a confession, a betrayal landing); use 2 for snappier pivots.\n' +
-      '- ARC-FIRST CONTRACT: visualize the emotional curve of the scene before assigning beats. WHERE does the suppression peak? WHERE does it crack? Mark those beats. Then write the surrounding 20+ beats to serve those two moments.\n' +
+      '- ARC-FIRST CONTRACT: visualize the emotional curve of the scene before assigning beats. WHERE does the suppression peak? WHERE does it crack? Mark those beats. Then write the surrounding beats to serve those two moments.\n' +
+      '- BEAT COUNT (HARD FLOOR): a full CG scene is 20–30 beats — NOT a sketch. Each beat is SHORT (one image-able moment, often a single line), so 20–30 tight beats fit comfortably under the word ceiling. "Restraint" (below) means each beat is LEAN — no padding WITHIN a beat — it does NOT mean fewer beats. A scene under ~18 beats is a FAILURE: it collapses the scene into a handful of stacked ultimatums with no room to ground them. Undershooting the beat count is the #1 CG miss — do not do it.\n' +
+      '- CAUSAL SPINE (HARD — THEREFORE / BUT, never "and then"): the beats form a CHAIN where each beat is CAUSED by the prior one. Between any two consecutive beats you must be able to say THEREFORE (this beat is the consequence of the last) or BUT (this beat reverses / complicates / costs what the last established) — NEVER "and then" (a new line unconnected to the one before it). GROUND before you escalate: a charged line ("This changes everything") must be PRECEDED by the concrete beat that makes it true (what she just read / saw / realized), and FOLLOWED by its consequence (what it forces her to do). Test: if you could reorder or delete a beat without breaking the logic, the spine is broken — the reader is watching "and then, and then." FORBIDDEN: stacking climactic ultimatums ("Choose before the thread dies." / "The sigil cannot lie." / "This changes everything.") back-to-back with no grounding between them — that is the #2 CG miss. Each escalation must be EARNED by the beat that caused it.\n' +
       '- COMMON FAILURE the model has produced: marking a dozen+ beats non-neutral expecting them all to land — the validator keeps only the strongest 5 (spaced ≥3 beats apart, one emotional family) and demotes the rest to neutral, so the arc you intended is destroyed. Author 3-5 peaks placed where they MATTER; do NOT smear non-neutral across most beats.\n\n' +
       'SCENE CHARGE — TOP-PRIORITY CONTRACT (HARD, BEFORE YOU WRITE ONE BEAT):\n' +
       '- Before generating beats, FILL IN the sceneCharge block in your output. This is the structural backbone of the scene; the beats serve it.\n' +
@@ -189384,6 +189439,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '- background is concrete and named (not "a room" — "the late-shift newsroom, half-empty, rain on the glass, low fluorescent buzz").\n' +
       '- BACKGROUND ↔ PROSE CONSISTENCY (HARD — non-negotiable): visualState.background MUST describe the SAME physical location your beat prose puts the characters in. If any beat\'s text mentions "the café" / "coffee shop" / "diner" / "newsroom" / "gallery" / "garage" / "kitchen" / "bedroom" / "rooftop" / etc., visualState.background MUST name that same location. Mismatch is a HARD FAILURE: image renderer paints the visualState location while text describes a different one, and the reader sees a woman alone in an empty office while the prose has her at a coffee shop with a friend. Pick ONE location, set background to it, write all beats inside it.\n' +
       '- pc_wardrobe / li_wardrobe must be CONCRETE — infer from setting + occupation if not specified.\n' +
+      '- WARDROBE = STATION + CIRCUMSTANCES (HARD — pc_wardrobe, li_wardrobe, AND every other_characters_present[].wardrobe): each character\'s clothing must read their STATION (rank, wealth, class, profession, role in this world) AND their CIRCUMSTANCES (what they are doing right now, where they are, the temperature/weather, how long they have been there, whether they came prepared). A monarch and a scullion do not dress alike; the same person dresses differently for a funeral, a swim, and a march to war. PEER-REGISTER GUARD (fixes the "one in fine robes, one in rags" drift): two characters of SIMILAR station in the SAME setting read at a SIMILAR register — do NOT dress one in finery and the other in rags unless the prose ESTABLISHES a difference (servant vs noble, prisoner vs guard, someone caught mid-flight vs someone at home). A rags-vs-robes contrast must be a STORY choice you can point to in the prose — NEVER a default reached for to tell two figures apart, and NEVER left blank for a visible main character (blank = the renderer dresses them from the artist reference, which is where the rags came from). Dress for station-in-setting, not for drama.\n' +
       '- NPC DIFFERENTIATION (HARD): every named non-LI character in other_characters_present MUST be visually DISTINCT from the protagonist. Different hair color, different hairstyle, different body type, different wardrobe palette, different accessories. If the protagonist has blonde hair in pigtails, the side character is NOT blonde and NOT in pigtails. The image renderer pulls visual cues from the same prompt, and if the side character\'s wardrobe is described in PC-adjacent terms, the renderer will paint both characters as the same person. Each NPC\'s wardrobe field is its OWN description — not a variation on the PC\'s.\n' +
       '- other_characters_present[].gender (HARD): each named side character entry MUST declare its own gender field ("female" | "male" | "non-binary"). The image renderer reads this for gender-accurate rendering. Without it, the renderer gender-rolls and Sophie comes out as a man. This is a per-entry FIELD on the side-character objects — it does NOT affect the per-beat speaker field (speaker rules above still apply: "protagonist"/"li"/verbatim name for side chars).\n' +
       '- BEAT EXPRESSION_TARGET (HARD): emit expression_target = "neutral" on most beats, but mark 3-5 KEY beats per scene with a NON-NEUTRAL value from the allowed list. The non-neutral targets set the scene\'s emotional rhythm (they shape the expression_arc + vignette emphasis). Reserve them for the beats where the character\'s feeling LANDS — a confession, a refusal, a held breath, a sudden tightening. Do NOT mark every dialogue beat as non-neutral; rotation defeats the cinematic punctuation.\n' +
@@ -190548,6 +190604,46 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderWoundVortexAsCGDirective = _renderWoundVortexAsCGDirective;
 
+  // ── FATELANDS WISH/SACRIFICE PRICE LADDER (Roman 2026-07-15) ──────────────────
+  // Canon cost-ladder so the model prices boons CONSISTENTLY — the same wish costs the
+  // same tier every scene, instead of "a year of your life" here and "a few fingernails"
+  // there for the same magnitude. Injected only when a wish is actually in play this scene
+  // (a human surviving the depths, or an active Petition/Tempt Fate act). Shared literary+CG.
+  function _buildFatelandsWishPriceDirective() {
+    return 'FATELANDS — THE PRICE OF A WISH (HARD canon; keep costs CONSISTENT across the whole story):\n' +
+      'Fate keeps exact accounts. Every boon is BOUGHT, and its price scales with POWER × PERMANENCE × how much it serves ONLY the wisher. The SAME boon always costs the SAME tier — a water-breathing talisman that cost a year of life NEVER later costs a fingernail. A mismatch (a life-saving miracle bought for a hangnail, or a parlor trick that costs your firstborn) reads as a world with no rules.\n' +
+      'CURRENCIES OF SACRIFICE (cheapest → dearest within each kind):\n' +
+      '  • BODY: a lock of hair / fingernails → blood → a finger → an eye, your voice, your fertility → a hand, your own face\n' +
+      '  • TIME: an hour → a day → a YEAR → a decade → most of the years you had left\n' +
+      '  • MEMORY: last week\'s supper → a learned skill → a cherished memory (a first kiss) → a formative one (your mother\'s face, a whole childhood) → who you are\n' +
+      '  • SENSE / FACULTY: one color → the taste of your favorite food → music → your dreams → the capacity to feel joy or to love\n' +
+      '  • BOND: a stranger\'s goodwill → your good name → being forgotten by ONE person you love → a whole relationship → being unknown to everyone\n' +
+      '  • FORTUNE / FATE: a run of small luck → a future windfall → your child\'s luck → an open DEBT Fate collects at the worst possible time\n' +
+      'TIERS (boon → cost band):\n' +
+      '  • T1 TRIVIAL (a parlor trick; breathe water for MINUTES; a lucky toss): a fingernail, a lock of hair, an hour of life, a trivial memory. Often pay-per-use.\n' +
+      '  • T2 USEFUL (breathe water for a season or indefinitely via a talisman; heal a bad wound; always land on your feet; one night of borrowed beauty): a YEAR of life, a cherished-but-survivable memory, a finger, one color from your sight, a run of your luck. ← a water-breathing talisman lives HERE.\n' +
+      '  • T3 GRAVE (survive certain death; be truly beloved by a chosen person; undo a real mistake; speak with the drowned): a DECADE of life, a formative memory (your mother\'s face), your fertility, your voice or an eye, your true name, being forgotten by one you love.\n' +
+      '  • T4 WORLD-BENDING (cheat death for good; rewrite who someone IS; become other than human; unmake an event): the capacity to love or feel joy, your whole childhood, your reflection or shadow, your firstborn, most of your remaining years — or an open debt Fate names later.\n' +
+      'RULES: (1) a paid price does NOT come back, and deferred/unpaid debts COMPOUND; (2) WHAT a character agrees to pay CHARACTERIZES them — the payment is a beat, never bookkeeping; (3) a wish spent to help ANOTHER may be discounted one tier or paid in a gentler currency; a purely selfish or reality-cheating wish pays at the TOP of its band; (4) once you set a boon\'s price this story, keep it.';
+  }
+  window._buildFatelandsWishPriceDirective = _buildFatelandsWishPriceDirective;
+
+  // ── FATELANDS LAWS OF WISHING (Roman 2026-07-15) ─────────────────────────────
+  // HOW wishes behave (the price ladder is what they COST). Alignment-to-truth,
+  // collective stacking, the non-human discount, wish-guarding, and the social/war
+  // consequences that fall out of a world where anyone can wish for anything.
+  function _buildFatelandsWishLawDirective() {
+    return 'FATELANDS — THE LAWS OF WISHING (HARD canon; this world RUNS on sacrifice magic — EVERY resident uses it when they must; it is ordinary, not exotic. Governs HOW wishes behave, alongside THE PRICE OF A WISH):\n' +
+      '  • ALIGNMENT TO TRUTH (first law): a wish lands cleanly ONLY when it is aligned to what the wisher truthfully wants and believes. DOUBT, a divided heart, self-deception, or a lie in the wording WARPS the result — sometimes comically (a wish for "respect" from someone who secretly despises themselves returns as mocking, hollow deference), sometimes catastrophically (a half-hearted wish for safety opens the very door it meant to bar). Wishing against your own truth is the most dangerous thing a person can do.\n' +
+      '  • STACKING (wishes combine and MULTIPLY): two or more wishers aligned to the SAME truth pool their wishes and the power MULTIPLIES, not merely adds — a couple\'s shared wish outstrips either alone; a whole city of mages, wishing as one, once split and warped a moon-sized void out of the sky. Numbers + alignment beat raw individual sacrifice.\n' +
+      '  • THE ANOMALOUS PAY LESS → A WISH MARKET (non-humans): First Favored, Kwisheen, and other non-human peoples pay a LOWER tier and get a STRONGER result — their anomalous nature bends Fate more cheaply (a boon costing a human a year of life might cost a First Favored a night\'s sleep). So a TRADE exists: rather than lose a finger or a year of their own, most people PAY a First Favored (in Fortunes — coin) to grant a larger boon at that cheaper anomalous rate. A modest weight of Fortunes buys what would cost a human dearly in flesh, memory, or time — professional wish-granting is a respected, lucrative craft, and a First Favored granter is a fixture of any real town.\n' +
+      '  • GUARDING (wishes are attackable): where anyone can wish for anything, an unguarded wish can be WISHED AWAY. Important wishes — a contract, a bond, a life — are guarded with OTHER wishes (warded personally, or by a paid professional wish-guard). A guard can also be set to TATTLE: to reveal, unmistakably, if anyone tampered with the wish beneath it. Assume anything valuable and unguarded is vulnerable.\n' +
+      '  • REGIONAL VARIATION (the ONLY thing that changes by place): the system is universal, but WHICH sacrifices are ACCEPTABLE is local — one court abhors paying in memory, another in blood; the tidal Kwisheen of Gloamwater reckon in tides and salt. Honor the accepted currencies of THIS region.\n' +
+      '  • THE ANTI-WISH CULT (secret faction, available as antagonist / uneasy ally / dread): a hidden order holds that wishes are destabilizing SHORTCUTS that keep Fate\'s Favor from ever HEALING the world. They swear NEVER to use the power, and work — quietly, sometimes violently — to stop others from using it. To them a wish-granter is a poison and a warded marriage is a wound.\n' +
+      '  • THE SOCIETY RUNS ON THIS: a MARRIAGE / naming / coronation is not only a celebration — it is the community gathering to GIFT wishes of protection onto the couple/child/ruler, warding off evil eyes and the wishes of enemies (more guests, truer and more powerful, = a stronger ward). WAR is half bloodshed and half a war of WISHES, decided by how much each side will sacrifice and how many TRUE, ALIGNED allies they can muster. So the quiet art of war, business, AND love alike is SOWING DOUBT — unsettle an enemy\'s certainty and their own wishes warp and fail from within.';
+  }
+  window._buildFatelandsWishLawDirective = _buildFatelandsWishLawDirective;
+
   function _buildCGScreenplayUserPrompt(sceneIndex, playerAction, playerDialogue) {
     // Gather the context the model needs to write the scene. Uses the
     // canonical name resolvers (_resolveStagedPlayerName /
@@ -190634,7 +190730,7 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var _lcTier = String((window.state && window.state.storyLength) || 'fling').toLowerCase();
       if ((_currentST === 'ST1' || _currentST === 'ST2') && ['fling', 'taste', 'starter', 'default', ''].indexOf(_lcTier) !== -1) {
-        lines.push('LENGTH CEILING (HARD — Roman 2026-06-13; PRIORITY BOUND — this takes PRECEDENCE over the system prompt\'s beat-count target: fit as many tight beats as fit UNDER it, never exceed it to reach a beat count): keep this scene UNDER ~1000 words / ~6000 characters. One charged scene, not an exhaustive one. Do NOT pad with stacked interiority, enumerated desire ("the way X… the way Y… the way Z"), "Because… Because… Because" ladders, or machine-gun Q&A dialogue. When the scene wants more, CUT — restraint is the craft. The reader should leave wanting, not exhausted.');
+        lines.push('LENGTH CEILING (HARD — Roman 2026-06-13): keep this scene UNDER ~1000 words / ~6000 characters. This is a WORD ceiling, NOT a beat ceiling — it coexists with the 20–30 beat FLOOR: 20–30 SHORT beats (~20–30 words each) land well under 1000 words, so hit BOTH. "Restraint" means each beat is LEAN, not that the scene is short on beats: do NOT pad WITHIN a beat with stacked interiority, enumerated desire ("the way X… the way Y… the way Z"), "Because… Because… Because" ladders, or machine-gun Q&A dialogue — but DO give the scene its full 20–30 beats of real, causally-linked movement. When a single beat wants more words, CUT the words; NEVER cut the beat count. A thin sub-18-beat scene reads as stacked ultimatums and is a FAILURE. The reader should leave wanting, not exhausted — and not shortchanged.');
       }
     } catch (_) {}
     // ── SCENE-1 LOAD CONTROL (Roman 2026-06-13) — one crisis, tiny cast ──────
@@ -190681,6 +190777,25 @@ No text, no watermark, no UI elements, share-ready.`;
       lines.push('WORLD: ' + world + (worldSubtype ? ' / ' + worldSubtype : ''));
       if (worldDirective) lines.push('WORLD DIRECTIVE (HARD — overrides any drift toward other genres): ' + worldDirective);
     }
+    // ── UNDERWATER SURVIVAL DIRECTIVE (Roman 2026-07-15) ──────────────
+    // A submerged Fatelands scene (Gloamwater Bay) with a HUMAN present is
+    // physically impossible unless the world explains it. Fatelands runs on
+    // wish-cost and magic artifacts, so the survival mechanism is itself a
+    // characterizing beat — surface it in the opening as pointed dialogue,
+    // never a dry lore aside. (A Kwisheen is native to the water and needs
+    // no explanation; this fires only when a HUMAN PC or human LI is present.)
+    try {
+      var _uwRegion = (typeof _resolveRegionKey === 'function')
+        ? _resolveRegionKey(state.fantasyRegion || '')
+        : String(state.fantasyRegion || '').toLowerCase();
+      var _uwIsUnderwater = (_uwRegion === 'gloamwater_bay');
+      var _uwIsHuman = function (x) { var v = String(x || '').toLowerCase(); return !/kwisheen|octo|favor|wild|were|cursed|beast/.test(v); };
+      var _uwHumanPresent = _uwIsHuman(state._playerSpecies) || _uwIsHuman(state._liSpecies);
+      if (_uwIsUnderwater && _uwHumanPresent) {
+        lines.push('UNDERWATER SURVIVAL (HARD — Fatelands physics): this scene is DEEP UNDERWATER in Gloamwater Bay and a HUMAN is present. A human cannot breathe, speak, or move at depth by nature — in Fatelands this is ALWAYS purchased: a WISH paid in sacrifice or a MAGIC ARTIFACT (a water-breathing talisman, a gilled charm, a bargain-token). Sustained water-breathing is a T2 boon on THE PRICE OF A WISH ladder — price it consistently (a year of life, or an equivalent T2 cost); a brief single dip may be T1 (an hour, a fingernail, a lock of hair). ' + (sceneIndex === 0 ? 'Within the FIRST FEW SENTENCES' : 'Early in the scene, unless it is already established earlier in this story') + ', make HOW the human survives the water unmistakable — as a CHARACTERIZING beat (pointed dialogue or a sensory tell), NEVER a dry lore aside. GOOD (reveals the mechanism AND the relationship in one line): "You sacrificed a YEAR of your life to breathe water — for him." / "I\'ll tear that water-breathing talisman off your neck myself." Do NOT let a human simply float and talk underwater with no in-world reason — with no cause on the page it reads as a rendering error, not a world.');
+        lines.push('UNDERWATER HUMAN WARDROBE (HARD — Gloamwater canon; set pc_wardrobe / any human\'s wardrobe accordingly, per STATION + CIRCUMSTANCES): what a human wears at depth depends on HOW LONG they stay. BRIEFLY VISITING the depths (a diver, a guest, a first descent) → they wear their NORMAL SURFACE CLOTHING — whatever their station and the surface scene would give them — and it simply drifts and billows in the current. LIVING here / SPENDING A GREAT DEAL OF TIME below (a resident, a captive, a long embed, someone who has made a life among the Kwisheen) → the Kwisheen have made them a MANTA-PONCHO: a triangular robe reaching to both wrists and both ankles, so the human swims like a manta ray by UNDULATING THE ARMS in slow waves instead of kicking, stroking, and flailing the way humans do underwater. On land the same garment simply reads as a triangle-cut robe. (LATENT CANON — do NOT force it into this scene: the manta cut also works as a glider / wingsuit, so if a wearer ever falls from a great height it catches the air and they can plane down. Deploy this ONLY if a fall actually happens on the page.) Choose brief-visitor vs long-resident from THIS story\'s premise and set the human\'s wardrobe to match — never leave it to the model to guess.');
+      }
+    } catch (_) {}
     // TONE — promote from a flat string to the resolved tone profile so
     // the model gets the actual register (Earnest vs Wry vs Mythic etc).
     // resolveToneProfile() is the literary engine's tone resolver
@@ -191137,6 +191252,24 @@ No text, no watermark, no UI elements, share-ready.`;
         : '';
       if (_cgPetitionDirective) lines.push(_cgPetitionDirective);
       if (_cgTemptDirective) lines.push(_cgTemptDirective);
+      // FATELANDS WISH SYSTEM injection:
+      //  • LAWS OF WISHING = foundational world-physics → EVERY Fatelands scene (sacrifice magic is
+      //    ordinary here; the author needs the laws whether or not a wish is priced on-page).
+      //  • THE PRICE OF A WISH = the detailed cost table → only when a wish is actually being priced
+      //    this scene (a human surviving the depths, or an active Petition/Tempt) so it isn't bloat.
+      try {
+        var _wplFatelands = /fantasy|fatelands/i.test(String(world || ''));
+        // "wish in play" = a wish/cost is actually LIVE this scene — water-breathing at depth,
+        // a resolved Petition act, or an active Tempt volatility window. NOT the standing
+        // world-law framing (which is present in every Fatelands scene) — that would defeat the gate.
+        var _wplUnderwaterWish = (typeof _uwIsUnderwater !== 'undefined' && _uwIsUnderwater && typeof _uwHumanPresent !== 'undefined' && _uwHumanPresent);
+        var _wplVolatile = !!(window.state && window.state.volatility_window && window.state.volatility_window.active);
+        var _wplWishInPlay = _wplUnderwaterWish || !!_cgPetitionResolved || _wplVolatile;
+        if (_wplFatelands) {
+          if (typeof _buildFatelandsWishLawDirective === 'function') lines.push(_buildFatelandsWishLawDirective());
+          if (_wplWishInPlay && typeof _buildFatelandsWishPriceDirective === 'function') lines.push(_buildFatelandsWishPriceDirective());
+        }
+      } catch (_wplErr) {}
       // Free-form scenario weave (Petition/Tempt by meaning) — mode-agnostic,
       // gated on the active volatility window. Same directive as literary.
       var _cgScenarioWeave = (typeof buildFateScenarioWeaveDirective === 'function')
@@ -191168,10 +191301,18 @@ No text, no watermark, no UI elements, share-ready.`;
         : ((typeof _probeKindForScene === 'function') ? _probeKindForScene(sceneIndex) : (sceneIndex === 0 ? 'axis' : 'none'));
     if (sceneIndex === 0) { try { console.log('[CG-PREF-CHAIN] scene1=demand_hint first_li=goal_relationship (probeKind=' + _probeKind + ')'); } catch (_) {} }
     if (_probeKind === 'demand_hint') {
+      // Match literary: reuse the SAME bespoke, scene-embodied Direct-vs-Subtle fork the
+      // literary engine builds (_genBespokeScene1Axis → state._bespokeScene1Axis). Falls back
+      // to generic examples only if embodiment hasn't landed. This makes the CG Scene-1 probe
+      // identical to the literary Scene-1 probe (same axis, same embodiment), not a loose improv.
+      var _cgBespokeAxis = '';
+      try { _cgBespokeAxis = String((window.state && window.state._bespokeScene1Axis) || '').trim(); } catch (_) {}
       lines.push(
         'MICRODECISION FOR THIS SCENE: DEMAND/HINT (directness↔subtlety) — emit a microDecision. This is the reader\'s FIRST preference probe, BEFORE the LI is a figure of desire.\n' +
         '  · Signals: one "direct+", one "subtle+". This is NOT objective↔relationship and NOT charge-handling — it reads the PROTAGONIST\'S EXPRESSION STYLE: does she say the charged thing plainly, or let it stay implied?\n' +
-        '  · microDecision.prompt is diegetic, about HOW she meets a charged beat this scene. Examples: "Say it plainly, or let it show?" / "Ask outright, or let the question sit in a look?" / "Name it, or leave it unspoken?"\n' +
+        (_cgBespokeAxis
+          ? '  · USE THIS EXACT FORK (embodied for this scene — the FIRST pole is direct+, the SECOND is subtle+; set microDecision.prompt to it verbatim or lightly split into the two options): "' + _cgBespokeAxis + '"\n'
+          : '  · microDecision.prompt is diegetic, about HOW she meets a charged beat this scene. Examples: "Say it plainly, or let it show?" / "Ask outright, or let the question sit in a look?" / "Name it, or leave it unspoken?"\n') +
         '  · Example signal pair (WITH prewritten payoffs):\n' +
         '      options: [\n' +
         '        { "text": "say it plainly", "signal": "direct+", "hiddenExpansion": "She said it — the thing she had circled all night — and the plain words changed the air between them." },\n' +
@@ -193896,6 +194037,13 @@ No text, no watermark, no UI elements, share-ready.`;
     // state._scenePlotContract so the fulfillment audit + carryover operate on CG too). No-op when
     // killed (window._plotContractKill) — _generateLiteraryPlotContract self-gates on _plotContractActive().
     try { if (typeof _generateLiteraryPlotContract === 'function') await _generateLiteraryPlotContract(playerAction, playerDialogue); } catch (_pcCgErr) {}
+    // SCENE-1 DIRECT-vs-SUBTLE AXIS EMBODIMENT (Roman 2026-07-15) — match literary.
+    // The literary scene-1 scaffold calls _genBespokeScene1Axis to embody the fixed
+    // Direct-vs-Subtle probe in THIS scene's real stakes; CG never did, so its demand_hint
+    // microDecision fell back to generic examples. Call it here (idempotent, Scene-1 only,
+    // needs aPlot which is ready above) so _buildCGScreenplayUserPrompt can inject the SAME
+    // embodied fork the literary engine uses.
+    if (sceneIndex === 0) { try { if (typeof _genBespokeScene1Axis === 'function') await _genBespokeScene1Axis(); } catch (_axErr) {} }
     var sysPrompt = _buildCGScreenplaySystemPrompt();
     // PLAYER IMPACT (Roman 2026-06-06): CG writer must react to off-script/fate
     // moves too. Local no-persist read (works whether or not CG shares the main

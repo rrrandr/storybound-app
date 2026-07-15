@@ -26284,6 +26284,11 @@ body:has(#gnReader:not(.hidden)) #fortuneWidget {
     margin-bottom: 6px;
     opacity: 0.9;
 }
+/* Screenplay-style attribution: name reads "MIRA:" above its quote (Roman 2026-07-15). */
+.staged-speaker::after {
+    content: ':';
+    margin-left: 1px;
+}
 
 /* Advance row — Next button + beat progress indicator. */
 .staged-advance {
