@@ -35384,7 +35384,9 @@ If the main title does not include a strong marker, you MAY append a subtitle:
                   liFaceDescription: state.liFaceDescription,
                   liFaceMasterUrl: state.liFaceMasterUrl,
                   liRevealStatus: state.liRevealStatus || {},
-                  liMysteryLock: state.liMysteryLock || {}
+                  liMysteryLock: state.liMysteryLock || {},
+                  ffAppearance: state.ffAppearance || {},
+                  _shiftCaptionRecent: state._shiftCaptionRecent || []
               };
               localStorage.setItem(key, JSON.stringify(payload));
           }
@@ -43638,6 +43640,8 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
         state.liFaceMasterUrl   = parsed.liFaceMasterUrl   || {};
         state.liRevealStatus    = parsed.liRevealStatus    || {};
         state.liMysteryLock     = parsed.liMysteryLock     || {};
+        state.ffAppearance      = parsed.ffAppearance      || state.ffAppearance || {};
+        state._shiftCaptionRecent = parsed._shiftCaptionRecent || state._shiftCaptionRecent || [];
         try { console.log('[LI:REVEAL] rehydrated from localStorage for storyId=', state.storyId, '— statuses:', Object.keys(state.liRevealStatus), '— mysteryLocks:', Object.keys(state.liMysteryLock)); } catch (_) {}
       }
     } catch (_) {}
@@ -45707,7 +45711,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       // brief. Applied only when state._playerSpecies is set and not Human
       // (which is the default and needs no override).
       var _SPECIES_DESCRIPTOR = {
-        'First Favored': 'SPECIES: First Favored — humanoid with uncanny symmetry and deliberate, graceful posture. Smooth luminous skin showing subtle subdermal light patterns that pulse with emotion. Large luminous eyes with concave diamond-shaped pupils (four inward-curving sides, solid black). Small rounded human-shaped ears close to the head. The figure looks beautiful in a slightly-too-perfect way.',
+        'First Favored': 'SPECIES: First Favored — humanoid with uncanny symmetry and deliberate, graceful posture. Smooth luminous skin showing subtle subdermal light patterns that pulse with emotion. Large luminous eyes with concave diamond-shaped pupils (four inward-curving sides) in a vivid luminous color distinct from the iris. Small rounded human-shaped ears close to the head. The figure looks beautiful in a slightly-too-perfect way.',
         'Half-Favored': 'SPECIES: Half-Favored — humanoid with subtle non-human tells. Slightly enlarged or unnaturally colored eyes that briefly glow under strong emotion. Faint luminous skin patterns visible in certain lighting. Symmetry that reads slightly too perfect. Otherwise reads as mostly human.',
         'Kwisheen': 'SPECIES: Kwisheen — tentacle-bodied non-bipedal being. Six full tentacles in place of legs providing fluid six-point ground contact. Two tentacle-arms ending in five-fingered tentacles (smooth taper, no joints, no knuckles). Cranial tentacles in place of hair, often grouped to read as a hairstyle. Chromatophore skin capable of color and pattern shifts. Eyes have horizontal capsule-shaped pupils — rounded rectangles with a central vertical slit, solid black. The lower body is tentacles, not legs.',
         'Half-Kwisheen': 'SPECIES: Half-Kwisheen — humanoid hybrid. Human-shaped legs but with subtle tentacle textures along the skin and a faint moisture sheen. Elongated flexible fingers with hints of suction texture on the pads. Fluid, slightly serpentine posture. Eyes that turn subtly non-human under emotion. Reads as mostly human at a glance, with non-human tells on closer look.',
@@ -88755,6 +88759,7 @@ There exists a simple action that could reduce the current tension. However, cir
         if (halfK) {
           out += '• HALF-KWISHEEN (Salt-Skin): muted expression — subtle suction-pad fingertips, moisture sheen, faint gill seams, a boneless fluidity to hands and hips rather than full free tentacles; mimicry is limited and effortful.\n';
         }
+        out += '• KWISHEEN SEED (canon afterglow — the Kwisheen analog of being "Flavored"): Kwisheen milt carries their shape-memory. When a human takes Kwisheen ejaculate INTO the body — inseminated during sex, or swallowed — they briefly borrow the change: for the next few HOURS the human surfaces a FEW RANDOM Kwisheen features that come and go on their own — a patch of iridescent scales, a suction-pad fingertip, a colour-bloom flush across the skin, a lock of hair gone briefly tentacular, capsule-slit pupils, faint gill seams at the throat. It is temporary and involuntary, fading by degrees — the sea leaving its mark. Those who know the sign read it (and gossip about it) the way they read a First Favored\'s Flavored glow.\n';
         out += '• REGISTER: sensual, coastal, tactile, uncanny — the GIVE of a body not shaped like yours, skin that shimmers and yields. NOT comedic-octopus, NOT creature-feature horror, NOT hard-taxonomy exposition.\n';
       }
 
@@ -90433,6 +90438,7 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       state.previousTitle = null;
       state.previousTitleMode = null;
       state.continuationPath = null;
+      state.ffAppearance = {}; // First Favored color lock — fresh per new story (L2); survives issues (L3-only resets)
 
       // Clear all entropy axis objects
       const entropyKeys = [
@@ -122653,7 +122659,7 @@ FIRST FAVORED — VISUAL & BEHAVIORAL CANON (AUTHORITATIVE):
 The First Favored must always read as: DESIRABLE → COMPOSED → SLIGHTLY WRONG. Never monstrous, never grotesque, never alien-coded.
 
 THE GAZE (primary identifier):
-• Eyes slightly enlarged (~10–15% beyond human proportion). Pupils are four-pointed concave diamonds (smooth inward-curving sides, no rays, no spikes), solid black — a unique non-human geometry. NOT round. Use pupil anchor as absolute source.
+• Eyes slightly enlarged (~10–15% beyond human proportion). Pupils are four-pointed concave diamonds (smooth inward-curving sides, no rays, no spikes), a vivid luminous color distinct from the iris — a unique non-human geometry. NOT round. Use pupil anchor as absolute source.
 • Sclera variation MUST exist across characters: some have muted non-human-toned sclera, others have no sclera at all (full-eye color field). Never uniform across all First Favored.
 • Entire eye is a continuous field of color with internal motion: slow swirling, gradient drift, density variation. MUST have depth, internal texture, light response. MUST NOT appear flat, opaque, or lens-like.
 • Color rule: NO human-standard eye colors (no brown, blue, green, black). Allowed: gold, violet, silver, rose, ember, opalescent, unnamed hues.
@@ -136071,7 +136077,7 @@ ${(typeof _ffBuildRevealWithholdDirective === 'function') ? _ffBuildRevealWithho
           var playerSpecies = state._playerSpecies || '';
           var liSpecies = state._liSpecies || '';
           if (/first.?favored/i.test(playerSpecies) || /first.?favored/i.test(liSpecies)) {
-              lines.push('FIRST FAVORED VISUAL RULES: Eyes 10-15% larger than human. Pupils are four-pointed CONCAVE DIAMONDS (smooth inward-curving sides, solid black). NO human eye colors — use gold, violet, silver, rose, ember, opalescent. Lithe, narrow, fine-featured, NEVER bulky. Skin may be metallic (gold, silver, copper, pearl). Subtle luminescent dermal patterns (Weave-Script) visible in dim light. Ears ~50% human size, rounded, flush to skull. Hands NEVER fully still — continuous subtle non-repeating motion. Attire: gossamer, translucent, weightless garments.');
+              lines.push('FIRST FAVORED VISUAL RULES: Eyes 10-15% larger than human. Pupils are four-pointed CONCAVE DIAMONDS (straight sides curving gently inward), in a vivid luminous color. Both pupil and iris carry luminous color (gold, violet, silver, rose, ember, aqua, jade, opalescent, etc.) and read as two distinct colors — the eye always holds visible color and light. Athletic Olympic-supermodel build, fine-featured with a strong jawline and full lips, NEVER bulky. Skin and hair are EXOTIC, contrasting non-standard colors ~95% of the time (skin green/purple/orange/pearl/aqua/jade/obsidian/grey; hair an exotic color, contrasting/complementary/similar shade all fine — thick, lush, glossy) — ordinary human coloring is rare. Subtle luminescent dermal patterns (Weave-Script) visible in dim light. Ears ~50% human size, rounded, flush to skull. Hands NEVER fully still — continuous subtle non-repeating motion. Attire: gossamer, translucent, weightless garments.');
           }
           if (/kwisheen|octo.?folk/i.test(playerSpecies) || /kwisheen|octo.?folk/i.test(liSpecies)) {
               lines.push('KWISHEEN VISUAL RULES: Human upper body, 8 tentacles below (6 locomotion, 2 arms) in TRUE FORM. Each arm splits into EXACTLY 5 finger-tentacles (no joints, smooth taper, suckers underside). Hair is fine cranial tentacles (sensory). Default rendering is tentacular — fish-tail or merfolk silhouette ONLY as intentional mimicry (performance, teasing, misdirection), with subtle cues preserving underlying tentacular reality. Movement: always fluid, continuous, unfurling — NEVER joint-snapping. Skin shows chromatophore color+pattern control (vivid when wet, muted when dry). ERROR ABSORPTION: if an accidental fish tail or human legs appear, reinterpret as deliberate mimicry rather than correcting — never retroactively overwrite the output.');
@@ -136494,7 +136500,7 @@ ${_buildSettingImageOverrideSuffix()}`,
   function buildSafeIllustratorPrompt(artistKey) {
     var _SAFE_PROMPTS = {
       ender_bond: 'cinematic graphic novel illustration, grounded realism, strong perspective, clear focal subject, dynamic but controlled pose, natural proportions, environmental depth, balanced lighting, readable composition, no text',
-      ryo_toro: 'stylized graphic novel illustration, expressive characters, dynamic motion, strong color storytelling, gradient lighting, clear emotional focus, readable composition, no text',
+      ryo_toro: 'stylized graphic novel illustration, expressive characters, dynamic motion, strong color storytelling, hard-edged rim lighting, faceted shading, clear emotional focus, readable composition, no text',
       lora_venn: 'ornate graphic novel illustration, highly detailed fantasy environment, layered composition with intricate decorative elements, flowing fabrics, carved patterns, organic motifs, elegant character integrated into environment, warm ambient lighting, rich harmonious colors with depth and texture, clear focal hierarchy, readable at small size, no text',
       olen_droll: 'editorial graphic novel illustration, understated flat tones, medium-distance framing, slightly awkward character spacing, environmental context, muted palette, clean minimal linework, no text'
     };
@@ -136620,7 +136626,7 @@ ${_buildSettingImageOverrideSuffix()}`,
           // HARD LOCKS — extracted from anchor images, NON-NEGOTIABLE
           hard_locks: {
             face_anatomy: 'Perfectly symmetrical, fine-featured, high cheekbones. Narrow jaw, delicate chin. Calm, neutral, unreadable expression. Unnervingly balanced proportions. Masculine faces: refined, angular jawline, lean structure. Nose and lip proportions locked to face anchors. Semi-realistic rendering style.',
-            eyes: 'Exact shape preserved from face and pupil anchors. Iris: luminous non-human color (gold, violet, silver, rose, ember, opalescent) with radial energy patterns emanating from pupil. Pupil: FOUR-POINTED CONCAVE DIAMOND (smooth inward-curving sides), solid black, centered. HIGH CONTRAST between iris glow and pupil black required. This is a unique non-human geometry — a clean, controlled concave diamond. Four smooth concave sides meeting at four points. SILHOUETTE CRITICAL: pupil shape must remain readable at small panel scale. Use pupil anchor as absolute geometry source. Stable shape, proportional to iris.',
+            eyes: 'Exact shape preserved from face and pupil anchors. Iris: luminous non-human color (gold, violet, silver, rose, ember, opalescent) with radial energy patterns emanating from pupil. Pupil: FOUR-POINTED CONCAVE DIAMOND (smooth inward-curving sides), a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. The iris and pupil are two DISTINCT luminous colors that read clearly against each other. This is a unique non-human geometry — a clean, controlled concave diamond. Four smooth concave sides meeting at four points. SILHOUETTE CRITICAL: pupil shape must remain readable at small panel scale. Use pupil anchor as absolute geometry source. Stable shape, proportional to iris.',
             skin: 'Smooth, luminous, poreless, even-toned. Faint internal glowing swirls visible beneath surface, preserving facial plane clarity. Clean gradients. Skin colors: warm, neutral, or metallic tones only — deep purple, green, gold, copper, pearl, brown, grey.',
             fabric: 'Semi-transparent gossamer drapery. Natural drape, gravity-driven folds. Translucent, soft fold behavior. Period-appropriate Fatelands materials: gossamer, draped cloth, organic fibers, flowing wraps.',
             linework: 'Thick black dry-brush outline on silhouette. Interior shading uses CONTROLLED crosshatching. Crosshatching ONLY in shadow regions, sparse and form-following.',
@@ -137599,20 +137605,26 @@ ${_buildSettingImageOverrideSuffix()}`,
       block += '- REQUIRE: crossing directions, irregular density pockets, mixed curvature and tension states\n';
       block += '- PROHIBIT: directional alignment, wave-like motion patterns, parallel blade groupings, evenly spaced clusters\n\n';
 
-      // Render style lock — luminous painterly fantasy
-      block += 'RENDER STYLE LOCK (POST-CONDITION — NOT OPTIONAL):\n';
-      block += 'All Veilwood scenes must resolve into: luminous painterly fantasy illustration.\n';
-      block += '- ENFORCE: soft brush transitions, atmospheric diffusion, warm amber + ivory + deep crimson palette\n';
-      block += '- PROHIBIT: photorealism, 3D render look, plastic or glossy materials\n\n';
+      // Render style lock — Veilwood ATMOSPHERE (palette + light); TECHNIQUE follows the artist.
+      // Roman 2026-07-14 (ARTIST WINS): was a hard "luminous painterly / soft brush" lock that
+      // contradicted non-painterly artists (Ryo Toro: angular, faceted, no gradients) — one prompt,
+      // two opposite style locks → the model averaged to generic. Now Veilwood contributes palette,
+      // luminous atmosphere, and the anti-photoreal rule ONLY; rendering technique is the artist's.
+      block += 'RENDER STYLE LOCK (Veilwood ATMOSPHERE — POST-CONDITION):\n';
+      block += 'All Veilwood scenes resolve into a luminous, otherworldly fantasy register:\n';
+      block += '- PALETTE: warm amber + ivory + deep crimson.\n';
+      block += '- ATMOSPHERE: luminous, softly diffuse light, otherworldly depth.\n';
+      block += '- PROHIBIT: photorealism, 3D render look, plastic or glossy materials.\n';
+      block += '- TECHNIQUE: render in the ACTIVE ARTIST\'S signature rendering style — linework, edge handling, hatching, and finish are the artist\'s. Do NOT force a painterly or soft-brush finish; an angular / hard-edged artist stays angular here (the palette + light color the artist\'s technique, they do not replace it).\n\n';
 
       // Failsafe priority stack
       block += 'FAILSAFE PRIORITY STACK:\n';
-      block += '1. Canonical Anchor Image (absolute authority)\n';
+      block += '1. Canonical Anchor Image (STRUCTURE + spatial-layout authority — not rendering medium)\n';
       block += '2. Structural Rules (trees, canopy, grass)\n';
       block += '3. Composition Rules (camera, depth, embedding)\n';
-      block += '4. Style References (subordinate — may influence brushwork, texture, color grading only)\n';
-      block += '5. Rendering Style (painterly finish)\n';
-      block += 'Style enhances the world. The anchor defines the world. No style reference may alter composition, structure, or spatial relationships.\n';
+      block += '4. Rendering Technique = the ACTIVE ARTIST\'S style (linework, edges, hatching, finish)\n';
+      block += '5. Veilwood atmosphere (palette + luminous light) — colors and moods the artist\'s technique, never overrides it\n';
+      block += 'The anchor defines the world\'s STRUCTURE; the artist defines the RENDERING; Veilwood defines the PALETTE + light. No layer may alter composition, structure, or spatial relationships.\n';
       block += 'If conflict occurs: resolve in this order.\n\n';
     }
 
@@ -137636,7 +137648,7 @@ ${_buildSettingImageOverrideSuffix()}`,
       // The five extraction targets remain (camera, spatial, structural,
       // material, density) — they're now comma-separated instead of
       // individually labeled. Saves ~600 chars without losing constraints.
-      block += '\nCANONICAL ANCHOR (MANDATORY): Match the canonical anchor image exactly in structural logic, material behavior, and rendering style. The anchor is absolute visual truth — if text and image disagree, follow the image. Extract and preserve: camera/perspective (viewpoint height, foreground dominance, depth layering); spatial relationships (relative scale, spacing, vertical reach); structural language (trunk twist, foliage hang, grass bend); material behavior (softness, organic continuity, light diffusion); density/complexity (per-layer crowding, depth-based detail falloff). Copying objects without spatial relationships or perspective is FAILURE — regenerate.\n';
+      block += '\nCANONICAL ANCHOR (MANDATORY — STRUCTURE, NOT MEDIUM): Match the canonical anchor image exactly in structural logic and material behavior. For STRUCTURE and SPATIAL LAYOUT the anchor is authoritative — if text and image disagree on structure, follow the image. But the anchor governs ONLY structure, space, and material — NEVER the rendering medium: re-render its forms ENTIRELY in the active artist\'s rendering style (linework, palette, edge handling). The anchor may itself be a photograph; do NOT reproduce its photographic finish, and NEVER photo-trace or output a photoreal frame. Extract and preserve: camera/perspective (viewpoint height, foreground dominance, depth layering); spatial relationships (relative scale, spacing, vertical reach); structural language (trunk twist, foliage hang, grass bend); material behavior (softness, organic continuity, light diffusion); density/complexity (per-layer crowding, depth-based detail falloff). Copying objects without spatial relationships or perspective is FAILURE — regenerate.\n';
     }
 
     // (Removed: trailing WORLD CONSISTENCY RULE + ANTI-COPY block — both
@@ -137685,9 +137697,13 @@ ${_buildSettingImageOverrideSuffix()}`,
     // stronger language). "Render with editorial cinematic framing and
     // platform-safe visual standards" is also covered by composition rules.
     // Keeping only the style-specific directives that aren't said elsewhere.
+    // Hatching guidance only for ink/hatch artists (Ender, Ryo) — it fought painterly
+    // (Lora Venn) and flat-editorial (Olen Droll). "Consistent shading" stays universal.
+    var _usesHatching = /hatch|cross-?hatch|inked|\bink\b|dry-?brush/i.test(String(styleObj.style_anchor || '') + ' ' + String(styleObj.line_control || ''));
     var s = '\n--- STYLE ---\nStyle defines rendering only. Do NOT alter anatomy, structure, or species features.\n' +
       styleObj.style_anchor +
-      '. Hatching traces scene lighting only. Sparse on faces. Consistent shading across panels.';
+      (_usesHatching ? '. Hatching traces scene lighting only. Sparse on faces.' : '.') +
+      ' Consistent shading across panels.';
     console.log('[STYLE-SUFFIX] Length:', s.length, 'chars');
     return s;
   }
@@ -138448,7 +138464,7 @@ ${_buildSettingImageOverrideSuffix()}`,
 
     // First Favored physical traits (critical: NOT elves)
     if (/first\s*favored/i.test(lower)) {
-      ctx.push('SPECIES NOTE: First Favored — match species anchor images exactly. Ears: half human size, rounded, close to head. Athletic, perfectly proportioned build (an Olympic athlete\'s proportion, taller than human, not bulky, not thin), ethereal beauty. Eyes ~15% larger, match pupil anchor: four-pointed concave diamond, solid black, centered. Iris: luminous non-human color (gold, violet, silver, rose, ember, opalescent). Skin: low-level luminescent patterns (Weave-Script) — slow-moving calligraphy encoding emotion. Attire: minimal gossamer, translucent, allowing dermal expression. Skin renders with soft luminous quality — in areas of full visibility, luminescence intensifies to radiant overexposure.');
+      ctx.push('SPECIES NOTE: First Favored — match species anchor images exactly. Ears: half human size, rounded, close to head. Athletic, perfectly proportioned build (an Olympic athlete\'s proportion, taller than human, not bulky, not thin), ethereal beauty. Eyes ~15% larger, match pupil anchor: four-pointed concave diamond, a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. Iris: luminous non-human color (gold, violet, silver, rose, ember, opalescent). Coloring: skin and hair are EXOTIC, contrasting non-standard colors ~95% of the time (skin green/purple/orange/pearl/aqua/jade/obsidian/grey; hair an exotic color, contrasting/complementary/similar shade all fine, thick and glossy) — ordinary human coloring is rare. Skin: low-level luminescent patterns (Weave-Script) — slow-moving calligraphy encoding emotion. Attire: minimal gossamer, translucent, allowing dermal expression. Skin renders with soft luminous quality — in areas of full visibility, luminescence intensifies to radiant overexposure.');
     }
 
     // Kwisheen physical traits (critical: NOT merfolk)
@@ -144020,7 +144036,7 @@ No text, no watermark, no UI elements, share-ready.`;
     'First Favored': {
       species: 'First Favored',
       body: 'humanoid with uncanny symmetry and deliberate grace',
-      eyes: 'luminous, color-shifting, concave_diamond_pupil (4 inward-curving sides, solid black)',
+      eyes: 'luminous, color-shifting, concave_diamond_pupil (4 inward-curving sides, a vivid luminous color distinct from the iris)',
       skin: 'smooth luminous, subdermal light patterns (involuntary emotional broadcast)',
       ears: 'small, rounded, human-shaped, close to head, half human size',
       silhouette: 'humanoid_uncanny, too_symmetrical, faintly luminous outline',
@@ -148339,7 +148355,7 @@ No text, no watermark, no UI elements, share-ready.`;
     '    "pc_wardrobe": "concrete description from the prose — e.g., \'emerald silk gown, gold drop earrings, hair in a low chignon\'. Pull verbatim if the prose names it; otherwise leave blank \'\'.",\n' +
     '    "li_wardrobe": "same — concrete description of LI clothing from the prose, or \'\' if not described.",\n' +
     '    "other_characters_present": [\n' +
-    '      { "name": "Kira", "gender": "female | male | nonbinary — REQUIRED. The image renderer will gender-roll the character if this field is missing; pick from the character\'s name + role + the prose\'s pronouns. NEVER omit.", "wardrobe": "navy cocktail dress", "position": "facing PC across the high-top table", "expression": "warm | neutral | concerned | amused | guarded | tender | wary | curious | tired | sympathetic — picked to MATCH this character\'s spoken lines + role in the scene, NOT to amplify drama. A friend offering support during a supportive line is \\"warm\\" or \\"sympathetic\\", NOT \\"concerned\\". Use \\"concerned\\" ONLY when the prose actually establishes worry." }\n' +
+    '      { "name": "Kira", "gender": "female | male | nonbinary — REQUIRED. The image renderer will gender-roll the character if this field is missing; pick from the character\'s name + role + the prose\'s pronouns. NEVER omit.", "wardrobe": "navy cocktail dress", "position": "facing PC across the high-top table", "species": "human | first_favored | kwisheen | wildfolk — set from the prose; \\"human\\" for ordinary humans; REQUIRED when the scene has any non-human species so a human bystander is not given the species anatomy", "expression": "warm | neutral | concerned | amused | guarded | tender | wary | curious | tired | sympathetic — picked to MATCH this character\'s spoken lines + role in the scene, NOT to amplify drama. A friend offering support during a supportive line is \\"warm\\" or \\"sympathetic\\", NOT \\"concerned\\". Use \\"concerned\\" ONLY when the prose actually establishes worry." }\n' +
     '      /* Every named non-PC, non-LI character physically PRESENT in the scene at any phase. Empty array [] if none. */\n' +
     '    ],\n' +
     '    "key_props": [ "diegetic tarot deck", "champagne flute" ],\n' +
@@ -149316,37 +149332,23 @@ No text, no watermark, no UI elements, share-ready.`;
         }
         var nameLower = c.name.toLowerCase();
         var firstName = nameLower.split(/[\s\-']/)[0] || nameLower;
-        // ALWAYS run the heuristic before trusting the LLM — when the
-        // LLM hallucinates a gender that violates the name's linguistic
-        // pattern (e.g., "Elena" assigned male, "Marco" assigned female),
-        // we override. User-reported: Elena rendered as a man despite
-        // -a ending; root cause was `if (c.gender) return` short-
-        // circuiting BEFORE the heuristic. Now: heuristic runs first
-        // when name has a confident pattern signal, and overrides the
-        // LLM's claim. If heuristic returns null (ambiguous), defer
-        // to whatever the LLM provided.
+        // Gender resolution order (Roman 2026-07-14): PROSE PRONOUNS are ground truth
+        // and may override the analyzer's claim (fixes a hallucinated gender — the "Elena
+        // rendered male" case, caught when the prose clearly says "she"). The anglocentric
+        // NAME-HEURISTIC, by contrast, only FILLS A BLANK — it must NOT override a declared
+        // gender, or it mis-genders non-English names (a prose-female "Kenji", a male "Andrea").
         var _hg = (typeof _guessGenderFromName === 'function') ? _guessGenderFromName(firstName) : null;
-        if (_hg && c.gender && c.gender !== _hg) {
-          try { console.log('[CG:GENDER-OVERRIDE] LLM said ' + c.gender + ' for "' + c.name + '" but heuristic says ' + _hg + ' (strong pattern) — overriding'); } catch (_) {}
-          c.gender = _hg;
-          return;
-        }
-        if (c.gender) return;
-        // (1) Pronoun scan in beat prose — look for "Name … she/he/they"
-        // proximity within ~80 chars. Loose but useful.
+        // (1) Pronoun scan in beat prose — authoritative when clear.
         var nameIdx = _beatProse.indexOf(firstName);
         if (nameIdx !== -1) {
           var window = _beatProse.slice(Math.max(0, nameIdx - 40), Math.min(_beatProse.length, nameIdx + 120));
           var sheCount = (window.match(/\b(she|her|hers|herself)\b/g) || []).length;
           var heCount = (window.match(/\b(he|him|his|himself)\b/g) || []).length;
-          // Need a clear margin; tie or low-count falls through to heuristic.
           if (sheCount >= 2 && sheCount > heCount + 1) { c.gender = 'female'; return; }
           if (heCount >= 2 && heCount > sheCount + 1) { c.gender = 'male'; return; }
         }
-        // (2) Naming-convention heuristic (already attempted above; if
-        // result was non-null we'd have returned. Re-run for the case
-        // where LLM left c.gender blank — heuristic now picks).
-        if (_hg) { c.gender = _hg; return; }
+        if (c.gender) return;               // (2) trust the analyzer's declared gender
+        if (_hg) { c.gender = _hg; return; } // (3) heuristic fills BLANKS only — never overrides
         // (3) No inference possible — leave blank. The identity-lock builder
         // will surface a "do NOT default to opposite-sex" directive, which
         // is the best signal we can give the renderer without a confident
@@ -151668,7 +151670,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // given explicit body-language signals. This block tells the model
     // WHICH register of charge applies so the staging carries the
     // dynamic's chemistry rather than reading as neutral.
-    eff._phaseChargeDirective = _buildPhaseChargeDirective(eff._phaseLIAbsent);
+    eff._phaseChargeDirective = _buildPhaseChargeDirective(eff._phaseLIAbsent, visualState.social_staging_mode, visualState.attractionPresence);
 
     return eff;
   }
@@ -151681,8 +151683,21 @@ No text, no watermark, no UI elements, share-ready.`;
   // rather than emotional abstractions (longing, hunger) which models
   // tend to ignore. Tone modifies the FORM of the charge — wry tones
   // soften the expression while keeping the underlying tension.
-  function _buildPhaseChargeDirective(liAbsent) {
+  function _buildPhaseChargeDirective(liAbsent, ssm, attraction) {
     if (liAbsent) return '';
+    // Fix #4 (Roman 2026-07-14): the CHEMISTRY/CHARGE block is the ROMANTIC layer.
+    // Firing it on LI-presence alone posed coworkers / friends / early-hostile pairs
+    // as lovers (it collided with the professional/adversarial staging grammar and
+    // diffusion resolved toward romance). Gate it on romance actually being active
+    // for THIS frame: staging mode is romance_eligible, OR attraction is at least
+    // leaking/foreground — which still lets the enemies-to-lovers charge fire under
+    // an 'adversarial' staging once the pull surfaces. Otherwise suppress and let the
+    // scene's own social-staging grammar govern (professional / platonic / stranger /
+    // crowded / familial / not-yet-charged hostility).
+    var _cssm = String(ssm || '').toLowerCase().trim();
+    var _cap = String(attraction || 'none').toLowerCase().trim();
+    var _romanceOn = (_cssm === 'romance_eligible') || (_cap === 'leaking') || (_cap === 'foreground');
+    if (!_romanceOn) return '';
     var dynRaw = String((state.picks && state.picks.dynamic) || '').toLowerCase();
     var intRaw = String(state.intensity || (state.picks && state.picks.intensity) || 'Steamy').toLowerCase();
     var toneRaw = String((state.picks && state.picks.tone) || '').toLowerCase();
@@ -152552,6 +152567,141 @@ No text, no watermark, no UI elements, share-ready.`;
     }
   };
 
+  // ── FIRST FAVORED PER-CHARACTER COLOR LOCK (Roman 2026-07-14) ──────────
+  // A named First Favored keeps the SAME exotic skin / hair / iris across every
+  // scene AND across issues. The colors are a STABLE HASH of (character name +
+  // worldInstanceId) — worldInstanceId survives issue resets (startBook2 /
+  // startNewInWorld are L3-only) but is cleared on a new story (L2 reset) — so
+  // the colors are deterministic (reproducible even if the cache is lost) and
+  // also cached in state.ffAppearance (persisted with the LI face data). No re-roll.
+  var _FF_SKIN_PALETTE = ['jade green', 'deep amethyst purple', 'burnt orange', 'pearl white', 'pale aqua', 'emerald', 'warm copper', 'obsidian black', 'slate grey', 'rose gold', 'deep teal', 'soft violet'];
+  var _FF_HAIR_PALETTE = ['silver-white', 'rose', 'deep violet', 'aqua', 'pale gold', 'copper', 'ink black', 'seafoam green', 'lilac', 'platinum', 'crimson', 'moonlit blue'];
+  var _FF_IRIS_PALETTE = ['gold', 'violet', 'silver', 'rose', 'ember', 'opalescent', 'aqua', 'jade'];
+  var _FF_PUPIL_PALETTE = ['gold', 'aqua', 'rose', 'ember', 'violet', 'silver', 'jade', 'opal-white'];
+  function _ffColorHash(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0); }
+  function _resolveFFAppearance(name) {
+    var key = String(name || '').trim().toLowerCase();
+    if (!key) return null;
+    state.ffAppearance = state.ffAppearance || {};
+    if (state.ffAppearance[key]) return state.ffAppearance[key];
+    var seed = _ffColorHash(key + '|' + (state.worldInstanceId || state.storyId || 'seed'));
+    var iris = _FF_IRIS_PALETTE[Math.floor(seed / 61) % _FF_IRIS_PALETTE.length];
+    var _pi = Math.floor(seed / 211) % _FF_PUPIL_PALETTE.length;
+    var pupil = _FF_PUPIL_PALETTE[_pi];
+    if (pupil === iris) pupil = _FF_PUPIL_PALETTE[(_pi + 1) % _FF_PUPIL_PALETTE.length]; // pupil ≠ iris (never black-on-black / flat)
+    var a = {
+      skin: _FF_SKIN_PALETTE[seed % _FF_SKIN_PALETTE.length],
+      hair: _FF_HAIR_PALETTE[Math.floor(seed / 7) % _FF_HAIR_PALETTE.length],
+      iris: iris,
+      pupil: pupil
+    };
+    state.ffAppearance[key] = a;
+    return a;
+  }
+  window._resolveFFAppearance = _resolveFFAppearance;
+
+  // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
+  // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can
+  // briefly SHIFT. When a render DRIFTS into a wrong feature (pointed ears, a forehead gem,
+  // etc.) the anatomy verifier flags it; rather than only fighting the drift, the NARRATOR
+  // acknowledges it in-world on the 1st occurrence and every 5th after. Lore: First Favored
+  // regard the shift as SPECIAL / a mark of their nature; Kwisheen find it EMBARRASSING; it
+  // is impolite to point out; a human may privately read it as untrustworthy ("shifters").
+  // Short diegetic narration-box captions, PER RACE (First Favored = the shift is special /
+  // borne with pride; Kwisheen = embarrassed, politely-unremarked, humans mutter "shifters").
+  // Large pools + a recency window (no phrase reused within the last 20 uses) so the model
+  // never latches onto one line. Shown on the SAME scene's image.
+  var _FAVORED_SHIFT_CAPTIONS = {
+    first_favored: [
+      'His features slid, just for a breath — the mark of the Favored — and he wore it like he had chosen it.',
+      'Something in her face shifted and resettled. The Favored never seem to mind; she only looked more herself.',
+      'For a moment his edges were not the edges I knew. He caught me noticing and only tilted his head, unbothered.',
+      'A ripple went through her, ear to jaw and gone. Among the Favored it is a kind of grace; I looked away out of manners, not fear.',
+      'His outline wavered like heat off stone, then settled somewhere new. He did not so much as blink.',
+      'Her bones seemed to reconsider themselves and agree to something finer. The Favored call that a good omen.',
+      'The line of his jaw ran and reformed. He met my stare with the ease of one who has never once been ashamed of what he is.',
+      'A shimmer crossed her, rearranging a detail I could not name. It suited her, and she knew it.',
+      'His face was briefly a stranger\'s, then his own again — better, if anything. No one at the table remarked; one does not.',
+      'Something under her skin turned over and lay back down. The Favored wear their changing the way others wear jewelry.',
+      'For a heartbeat his features belonged to a different, stranger beauty. He let me see it, then let it pass.',
+      'Her silhouette blurred and firmed. It is impolite to name it aloud, so I only held my tongue and my breath.',
+      'A change moved through her too quick to follow. The Favored do not apologize for such things, and she did not.',
+      'His face reassembled around some new grace-note. I pretended, politely, to have seen nothing; he pretended, kindly, to believe me.',
+      'Something ancient surfaced in her features and sank again. It is their nature; only a fool would call it a flaw.',
+      'His edges went uncertain, then decided. He carried it like a man who has never doubted he was meant to be looked at.',
+      'Her look shifted the way light shifts on water, and was gone. Among the Favored that is simply an afternoon.',
+      'A tremor of change crossed his face and left it lovelier. He held my eye, daring me, gently, to mention it.',
+      'The planes of her face rearranged toward something not-quite-human and wholly beautiful. No one spoke of it. No one ever does.',
+      'For an instant he was more than he had been. He settled back, unbothered, a little proud.',
+      'His face ran like wax at the edge of a flame, then held. He looked, if anything, glad to be seen and not remarked upon.',
+      'A shift passed over her, quiet as a turned page. It is their gift, and she wore it without a flicker of shame.'
+    ],
+    kwisheen: [
+      'We all pretended not to see his anatomy shift. I could almost feel his relief that we did.',
+      'Her form wavered where it should not have, then hurried back. Her colour darkened; no one, kindly, said a thing.',
+      'Something rearranged along his arm and thought better of it. He glanced away — and so, politely, did the rest of us.',
+      'For a breath the disguise slipped and the truth of him showed through. He tugged it back into place, mortified, and we let him.',
+      'Her features stuttered, half-Kwisheen and half-not. She flushed to the roots of her hair; I found something fascinating on the floor.',
+      'His skin flickered toward scales and away again. Nobody mentioned it. That is simply the courtesy one extends.',
+      'A shape that was not quite his own surfaced and dove. He smoothed his sleeve over it, quick and embarrassed, and I gave him my inattention.',
+      'The seam of the disguise showed for a moment. She caught it, cheeks burning, and the whole room found a sudden interest in the middle distance.',
+      'Something under his collar shifted that should have stayed still. He went rigid; we went, all of us, tactfully blind.',
+      'Her outline rippled toward the truth and back. She looked stricken. I pretended I had been watching the candles.',
+      'For an instant the mask thinned and something tentacular pressed against it. He forced it down, and no one was unkind enough to notice.',
+      'His borrowed face slipped a fraction. He recovered it fast, ears gone dark with shame, and I let the moment drown quietly.',
+      'A wrongness moved through her hand — too many joints, then the right number. She hid it in her lap. We all found other things to admire.',
+      'The disguise guttered like a low flame. He steadied it, mortified past speaking, and we granted him the small grace of pretending.',
+      'Something shifted in his jaw that jaws do not do. He winced. A human down the table muttered "shifters" into his cup, and I wished he had not.',
+      'Her true skin showed through for half a heartbeat, iridescent and wrong. She paled, mended it, and I looked kindly elsewhere.',
+      'His shape lost its argument with itself and briefly told the truth. He was scarlet with it. No one, thank the moons, remarked.',
+      'A ripple of the real ran up her arm. She clamped it down, humiliated; the rest of us practiced our excellent manners.',
+      'Something surfaced beneath his human face and he wrestled it back under. The shame of it sat on him. I offered the only kindness available and saw nothing.',
+      'Her disguise slipped its stitches for a moment. She hurried it closed, and the human across from me went quiet and wary — "shifter," his silence said.',
+      'His features ran toward the sea and caught themselves at the shore of looking human. He was miserable about it. We let it pass unspoken.',
+      'For a moment he forgot to be a man and remembered to be Kwisheen. He remembered again, mortified. I gave him the gift of my blindness.'
+    ]
+  };
+  // Pick a caption for the race, never repeating any phrase used in the last 20.
+  function _pickShiftCaption(species) {
+    var pool = /kwisheen/i.test(species || '') ? _FAVORED_SHIFT_CAPTIONS.kwisheen : _FAVORED_SHIFT_CAPTIONS.first_favored;
+    state._shiftCaptionRecent = state._shiftCaptionRecent || [];
+    var recent = state._shiftCaptionRecent;
+    var eligible = pool.filter(function (l) { return recent.indexOf(l) === -1; });
+    if (!eligible.length) eligible = pool; // safety if a pool ever shrinks below the window
+    var line = eligible[Math.floor(Math.random() * eligible.length)];
+    recent.push(line);
+    while (recent.length > 20) recent.shift(); // no phrase repeats within the last 20 uses
+    return line;
+  }
+  window._pickShiftCaption = _pickShiftCaption;
+  window._FAVORED_SHIFT_CAPTIONS = _FAVORED_SHIFT_CAPTIONS;
+  function _recordFavoredShift(feature, species) {
+    state.favoredShiftCount = (state.favoredShiftCount || 0) + 1;
+    var n = state.favoredShiftCount;
+    var fire = (n === 1 || (n % 5 === 0)); // acknowledge the 1st occurrence + every 5th
+    try { console.log('[FAVORED-SHIFT] #' + n + ' feature="' + feature + '" species=' + species + ' → caption=' + fire); } catch (_) {}
+    if (!fire) return;
+    _showFavoredShiftCaption(_pickShiftCaption(species));
+  }
+  window._recordFavoredShift = _recordFavoredShift;
+  // Overlay a rectangular narration box on the current staged scene's image. The drift is
+  // detected AFTER the render, so this attaches to the already-mounted #stagedHero (retrying
+  // briefly if the mount is still landing). One caption per scene.
+  function _showFavoredShiftCaption(line, attempt) {
+    attempt = attempt || 0;
+    try {
+      var hero = document.getElementById('stagedHero');
+      if (!hero) { if (attempt < 10) setTimeout(function () { _showFavoredShiftCaption(line, attempt + 1); }, 500); return; }
+      if (hero.querySelector('.staged-shift-caption')) return; // one per scene
+      var box = document.createElement('div');
+      box.className = 'staged-shift-caption';
+      box.textContent = line;
+      hero.appendChild(box);
+      try { console.log('[FAVORED-SHIFT] caption shown: "' + String(line).slice(0, 56) + '…"'); } catch (_) {}
+    } catch (_) {}
+  }
+  window._showFavoredShiftCaption = _showFavoredShiftCaption;
+
   // Species contracts — anatomy + identity rules per species. Selected
   // separately from region; multiple may stack (Veilwood + First Favored).
   var _STAGED_SPECIES_CONTRACTS = {
@@ -152563,38 +152713,48 @@ No text, no watermark, no UI elements, share-ready.`;
         '/assets/GN-Artists/EnderSBond/first_favored_anchor_duo_fullbody_variants_v1.jpg'
       ],
       identityBlock:
-        'SPECIES: FIRST FAVORED (canonical anatomy — match anchor proportions exactly):\n' +
-        '- EYES: pupils are FOUR-POINTED CONCAVE DIAMONDS (smooth inward-curving sides), solid black, centered. ' +
-        'Iris luminous non-human color (gold primary; also violet, silver, rose, ember, opalescent).\n' +
-        '- EARS: HALF human size, rounded, human-shaped, flush to skull. Visible lobes, smooth curved helix, ' +
-        'ZERO TAPER (NOT pointed elven ears).\n' +
-        '- SKIN: smooth, luminous, with faint internal Weave-Script glow (slow-moving calligraphy patterns).\n' +
-        '- FABRIC: semi-transparent gossamer drapery with natural gravity-driven folds.\n' +
-        '- BUILD: high cheekbones (fine-boned FACE), athletic perfectly-proportioned body — an Olympic athlete\'s build, taller than human, not bulky, not thin; ethereal proportions.\n' +
-        '- ATTRIBUTE INDEPENDENCE: skin color, hair color, hairstyle, eye color vary FREELY. Randomize independently.',
+        'SPECIES: FIRST FAVORED (canonical anatomy — match the Ender Bond reference proportions + palette exactly):\n' +
+        '- COLORING (HARD — the #1 species tell): skin and hair are EXOTIC and NON-STANDARD ~95% of the time. SKIN is an otherworldly hue — green, purple, orange, pearl, aqua, jade, obsidian, or grey (rich and luminous, never a flat wash). HAIR is also an exotic color — contrasting, complementary, OR a similar exotic shade are all fine (e.g. jade skin with rose, silver, or deeper-jade hair); just never muddy. Ordinary human coloring (pink / white / brown / beige skin; brown / blonde / red hair) appears AT MOST ~1 in 20 First Favored. Default to exotic.\n' +
+        '- EYES: slightly larger than human (~10-15%). Pupils are FOUR-POINTED CONCAVE DIAMONDS (smooth inward-curving sides), a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. Iris a luminous non-human color (gold, violet, silver, rose, ember, opalescent) distinct from the hair.\n' +
+        '- EARS: HALF human size, rounded, human-shaped, flush to skull. Visible earlobes, smooth curved helix, softly rounded tips.\n' +
+        '- HAIR: thick, lush, glossy — abundant, full-bodied, and beautifully kept, with a visible sheen. Never thin, flat, or lank.\n' +
+        '- FACE: sculpted and striking — strong clean jawline, full lips, high fine-boned cheekbones. Ethereal supermodel beauty.\n' +
+        '- SKIN SURFACE: smooth and luminous beneath the exotic hue, with faint internal Weave-Script glow (slow-moving calligraphy patterns).\n' +
+        '- FORM (state only what IS — the silhouette stays clean): skin is a continuous, soft, unbroken surface across face and body. Foreheads, brows, and temples are bare, smooth skin. The head keeps an ordinary human silhouette with a normal hairline. The single diamond shape belongs ONLY to the pupil inside each eye; every other surface is plain smooth skin.\n' +
+        '- FABRIC: gossamer, translucent, weightless drapery with natural gravity-driven folds — sheer and light-catching, NEVER opaque white or heavy cloth.\n' +
+        '- BUILD: Olympic-supermodel physique — tall, athletic, flawlessly proportioned (not bulky, not thin). Idealized attractive sexual proportions, exaggerated toward desirability but always within the bounds of real attractiveness: firm, full breasts and glutes on female figures (up to ~DD, never larger or grotesque); toned musculature with a porn-star-plausible endowment on male figures (never horse-like).\n' +
+        '- HANDS: never fully still — continuous subtle non-repeating motion.',
+      // Positive-only reinforcement. Image models ignore "NOT/NEVER" and fixate on the
+      // named object, so an "anti" list that says "elven ears" RENDERS elven ears. State
+      // only what the anatomy IS. (Field name kept for its consumers.)
       antiDefault:
-        'NEVER round pupils. NEVER pointed long elven ears. NEVER Tolkien-style elf design. NEVER opaque skin ' +
-        '(luminescence is mandatory). Crosshatching ONLY in shadow zones — NEVER in midtones or highlights.'
+        'Skin and hair are EXOTIC colors by default (~95%; contrasting, complementary, or similar exotic shades all fine) — ordinary human coloring is rare. ' +
+        'Hair is thick and glossy; tunics are sheer gossamer, never opaque. Pupils are four-pointed concave ' +
+        'diamonds in a vivid luminous color distinct from the iris. Ears are small, rounded, human-shaped, close to the skull. Skin stays ' +
+        'luminous with Weave-Script glow. Keep crosshatching within shadow zones.'
     },
     kwisheen: {
       label: 'Kwisheen',
       anchorImages: [
+        '/assets/Fatelands/Kwisheen_Octofolk_Ref_v1.jpg',
         '/assets/Fatelands/Kwisheen_Pair_Anchor.jpg?v=20260404',
         '/assets/Fatelands/Kwisheen_Species_Sheet.jpg',
         '/assets/Fatelands/Kwisheen_Arm_Articulation.png'
       ],
       identityBlock:
-        'SPECIES: KWISHEEN (canonical anatomy — structurally non-human):\n' +
-        '- BODY: 8 tentacles total — 6 LOCOMOTION tentacles below, 2 TENTACLE-ARMS above each splitting ' +
-        'into 5 FINE FINGER-TENTACLES (no joints, smooth taper).\n' +
-        '- HEAD: humanoid skull with FINE CRANIAL FEELERS (sensory tentacle-hair).\n' +
+        'SPECIES: KWISHEEN (canonical anatomy — a cephalopod-humanoid; match the Kwisheen species reference image):\n' +
+        '- BODY: humanoid torso above; the LOWER BODY is fully tentacled — six locomotion tentacles that replace the legs entirely. Two tentacle-arms above, each ending in five fine finger-tentacles (no joints, smooth taper).\n' +
+        '- HAIR: a full mane of thick living TENTACLE-DREADLOCKS from the scalp — sinuous, sucker-lined, in motion. This mane is the primary silhouette tell (an octopus\'s arms worn as hair), NOT fine wispy feelers.\n' +
+        '- SKIN: SCALED / pebbled cephalopod hide — a fine hexagonal scale-and-sucker texture across face and body (this species HAS textured, patterned skin, not smooth human skin), in a vivid exotic color (deep red, gold, violet, blue, orange) with contrasting pattern-bloom that shifts with mood.\n' +
+        '- EYES: large, a vivid non-human iris (gold / amber) with a HORIZONTAL CAPSULE PUPIL — a rounded rectangle with a fine central slit; not round in true form.\n' +
+        '- EARS: small, close to the skull, largely hidden under the tentacle-hair.\n' +
+        '- ADORNMENT (HARD — Kwisheen are NOT nude): they wear loincloths and wraps STUDDED with gems and shells, scaled or shell armor, and layered jewelry — beaded necklaces, gem pendants (amethyst, pearl), fine chains. Ornament is cultural and expected.\n' +
         '- MOVEMENT: fluid unfurling, full-body engagement.\n' +
-        '- SKIN: PATTERN BLOOM under arousal; mimicry/camouflage ability (skin color, texture, partial form).\n' +
-        '- The Disguised variant may pass for human via mimicry; default is fully tentacled body.',
+        '- CAMOUFLAGE (octopus-like, a deliberate choice): a Kwisheen can change skin colour, texture, and even shape to pass as HUMAN or FIRST FAVORED for a while, then drop the disguise. Their DEFAULT true form (in water / unconcealed) is the tentacled, scaled, tentacle-haired, adorned being above.',
       antiDefault:
-        'NEVER humans-with-tentacles-painted-on. NEVER cephalopod heads on human bodies. The body is ' +
-        'STRUCTURALLY DIFFERENT — locomotion tentacles replace legs entirely. NEVER show legs + tentacles ' +
-        'simultaneously (that would be a hybrid; canonical Kwisheen are tentacle-locomoted).'
+        'The lower body is fully tentacled — tentacles replace the legs. The hair is a mane of thick tentacles. ' +
+        'The skin is a scaled, sucker-textured cephalopod hide in vivid colour. The eyes carry a horizontal capsule pupil. ' +
+        'The figure wears gem-and-shell adornment and reads as one coherent cephalopod-humanoid being.'
     },
     wildfolk: {
       label: 'Wildfolk',
@@ -152683,8 +152843,8 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/wilder|were.?folk|half.?beast|cursed/.test(pc)) keys.wildfolk = true;
     // Background prose tokens (covers LI species when not in state)
     var bg = String(plan && plan.visualState && plan.visualState.background || '').toLowerCase();
-    if (/\bfirst.?favored|favored\b/.test(bg)) keys.first_favored = true;
-    if (/\bkwisheen|octo.?folk|tentacled?\b/.test(bg)) keys.kwisheen = true;
+    if (/\bfirst[\s-]?favored\b/.test(bg)) keys.first_favored = true;
+    if (/\bkwisheen\b|\bocto.?folk\b/.test(bg)) keys.kwisheen = true;
     if (/\bwildfolk|were.?beast|becoming field\b/.test(bg)) keys.wildfolk = true;
     return Object.keys(keys);
   }
@@ -157300,7 +157460,7 @@ No text, no watermark, no UI elements, share-ready.`;
 
     // 5. Universal preservation rules (framing, texture, background).
     lines.push('ALSO PRESERVE:');
-    lines.push('- Camera framing, crop, depth-of-field, scale');
+    lines.push('- Camera framing, crop, depth-of-field, scale — NOSE-TO-CHIN CROP ONLY (HARD): the frame ends at or below the nose and shows only the mouth, lips, chin, and jaw. NEVER include the eyes, forehead, or the full face; do NOT zoom out, pan up, or extend the frame upward. Apply all character features to this lower-face region only.');
     lines.push('- Photo-real skin texture quality (NOT stylized, NOT illustrated)');
     lines.push('- Neutral dark studio backdrop');
 
@@ -176454,6 +176614,23 @@ No text, no watermark, no UI elements, share-ready.`;
       effectiveCamera = 'over_shoulder_pc';
     }
 
+    // MYSTERY MAN CONCEALMENT CAMERA GUARD (Roman 2026-07-14). close_li fills the
+    // frame with the LI's face — incompatible with a concealed LI. Whenever the LI
+    // is shadowed/partial (the Mystery Man state: female-PC + male-LI, face withheld
+    // until the ST3/4 player reveal), coerce a face-revealing close-up back to
+    // over_shoulder_pc so the reverse-OTS / occlusion concealment below governs and
+    // the full face is never shown. close_li on the LI becomes legal only once
+    // li_visibility is 'revealed'. This is the hard backstop to the live prompt's
+    // CAMERA VARIETY caveat (the plan shouldn't request it; this guarantees it).
+    // It does NOT touch PC-focused framings (close_pc, etc.) — in a Mystery Man
+    // story her face IS the visible subject.
+    if (!visualState._phaseLIAbsent &&
+        (visualState.li_visibility === 'shadowed' || visualState.li_visibility === 'partial') &&
+        effectiveCamera === 'close_li') {
+      try { console.log('[STAGED:MM] close_li requested on a concealed LI (li_visibility=' + visualState.li_visibility + ') — coercing camera to over_shoulder_pc to preserve concealment'); } catch (_) {}
+      effectiveCamera = 'over_shoulder_pc';
+    }
+
     var camera   = _STAGED_CAMERA_DIRECTIVES[effectiveCamera] || _STAGED_CAMERA_DIRECTIVES.over_shoulder_pc;
     var pcVis    = _STAGED_PC_DIRECTIVES[visualState.pc_visibility] || _STAGED_PC_DIRECTIVES.back_only;
     // ── PC VISIBILITY POLICY ──
@@ -176653,6 +176830,91 @@ No text, no watermark, no UI elements, share-ready.`;
     if (state._stagedRegionContract && state._stagedRegionContract.textBlock) {
       prompt += state._stagedRegionContract.textBlock + '\n\n';
     }
+    // FIRST FAVORED per-character color lock — inject each named First Favored's
+    // pinned exotic colors so they read identically scene-to-scene and across
+    // issues. Fires only on First Favored scenes. LI included unless explicitly a
+    // non-Favored species; named others default to Favored (Veilwood-native canon).
+    if (state._stagedRegionContract && Array.isArray(state._stagedRegionContract.speciesKeys) &&
+        state._stagedRegionContract.speciesKeys.indexOf('first_favored') !== -1 &&
+        typeof _resolveFFAppearance === 'function') {
+      var _ffLockNames = [];
+      // Protagonist, if First Favored (her visible skin/hands stay color-consistent;
+      // the face-concealment rules elsewhere still govern whether her face shows).
+      if (/favor/.test(String(state._playerSpecies || '').toLowerCase())) {
+        _ffLockNames.push((state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'the protagonist');
+      }
+      var _ffLiSp = String(state._liSpecies || '').toLowerCase();
+      if (!liAbsent && (!_ffLiSp || /favor/.test(_ffLiSp))) {
+        _ffLockNames.push((state.picks && state.picks.identity && state.picks.identity.partnerName) || state.loveInterestName || 'the love interest');
+      }
+      (visualState.other_characters_present || []).forEach(function (o) { if (o && o.name && (!o.species || /favor/i.test(String(o.species)))) _ffLockNames.push(o.name); });
+      var _ffLockLines = [], _ffSeen = {};
+      _ffLockNames.forEach(function (nm) {
+        var k = String(nm).trim().toLowerCase(); if (!k || _ffSeen[k]) return; _ffSeen[k] = true;
+        var a = _resolveFFAppearance(nm);
+        if (a) _ffLockLines.push('- ' + nm + ': skin ' + a.skin + ', hair ' + a.hair + ', iris ' + a.iris + ', diamond pupil ' + a.pupil + '.');
+      });
+      if (_ffLockLines.length) {
+        prompt += 'FIRST FAVORED COLORS (LOCKED — these EXACT colors for these named characters, identical in every scene and every issue; do not re-roll):\n' + _ffLockLines.join('\n') + '\n\n';
+      }
+    }
+    // SPECIES-BY-CHARACTER GUARD (Roman 2026-07-14): the species contract above is scene-level,
+    // so the model tends to smear the non-human anatomy onto EVERY figure (e.g. a human PC in a
+    // Kwisheen scene sprouting tentacle-hair). Scope species per character so a human stays human.
+    (function () {
+      var _sk = (state._stagedRegionContract && state._stagedRegionContract.speciesKeys) || [];
+      if (!_sk.length) return;
+      function _resolveSp(raw, fallbackToScene) {
+        var v = String(raw || '').toLowerCase();
+        if (/kwisheen/.test(v)) return 'Kwisheen';
+        if (/favor/.test(v)) return 'First Favored';
+        if (/wildfolk/.test(v)) return 'Wildfolk';
+        if (v && !/human|modern/.test(v)) return raw;
+        if (!v && fallbackToScene) return _sk.indexOf('kwisheen') !== -1 ? 'Kwisheen' : (_sk.indexOf('first_favored') !== -1 ? 'First Favored' : 'Human');
+        return 'Human';
+      }
+      function _descSp(sp) {
+        if (sp === 'Kwisheen') return 'KWISHEEN — the cephalopod anatomy above (scaled skin, tentacle-dreadlock hair, tentacle lower body, capsule pupils, gem-and-shell adornment)';
+        if (sp === 'First Favored') return 'FIRST FAVORED — the First Favored anatomy above (four-pointed diamond pupils, small rounded ears, luminous skin, gossamer)';
+        if (sp === 'Wildfolk' || /human/i.test(sp)) return 'FULLY HUMAN — ordinary human skin, hair, ears, and limbs; an entirely human person carrying none of the non-human traits above';
+        return sp;
+      }
+      var _pcNm = (state.picks && state.picks.identity && state.picks.identity.playerName) || 'the protagonist';
+      var _liNm = (state.picks && state.picks.identity && state.picks.identity.partnerName) || 'the love interest';
+      var _pcSp = _resolveSp(state._playerSpecies, false);
+      var _liSp = _resolveSp(state._liSpecies, true);
+      var _rows = ['- ' + _pcNm + ' (protagonist): ' + _descSp(_pcSp)];
+      if (!liAbsent) _rows.push('- ' + _liNm + ' (love interest): ' + _descSp(_liSp));
+      var _otherSps = [];
+      (visualState.other_characters_present || []).forEach(function (o) {
+        if (!o || !o.name) return;
+        var _osp = _resolveSp(o.species, true); // blank species → scene default (Veilwood-native); explicit "human" → human
+        _otherSps.push(_osp);
+        _rows.push('- ' + o.name + ': ' + _descSp(_osp));
+      });
+      var _allSps = [_pcSp].concat(liAbsent ? [] : [_liSp]).concat(_otherSps);
+      var _hasHuman = _allSps.some(function (x) { return /human/i.test(x); });
+      var _hasNonHuman = _allSps.some(function (x) { return !/human/i.test(x); });
+      if (_hasHuman && _hasNonHuman) {
+        prompt += 'SPECIES BY CHARACTER (HARD — render each character in their OWN species only; one character\'s species traits do NOT appear on another):\n' + _rows.join('\n') + '\n\n';
+      }
+    })();
+    // UNDERWATER PHYSICS GUARD (Roman 2026-07-14): submerged scenes must obey WATER physics,
+    // not land physics — no figure standing on the seabed with hair/robes hanging straight down.
+    (function () {
+      var _bg = String((visualState && visualState.background) || '').toLowerCase();
+      var _regionLbl = String((state._stagedRegionContract && state._stagedRegionContract.regionLabel) || '').toLowerCase();
+      var _isUnderwater = /gloamwater/.test(_regionLbl)
+        || /underwater|submerged|undersea|under the (sea|water|waves)|ocean floor|sea ?floor|sea ?bed|seabed|reef|coral|grotto|abyss|abyssal|sunken|kelp|beneath the (waves|sea|surface|water)|deep water|drowned (vein|city|hall)/.test(_bg);
+      if (!_isUnderwater) return;
+      prompt += 'UNDERWATER PHYSICS (HARD — this scene is SUBMERGED; render WATER physics, not land physics):\n' +
+        '- Figures are BUOYANT and weightless — they FLOAT and drift, poised off the seabed, feet not planted; never standing, walking, or posed as if on solid ground under gravity.\n' +
+        '- Hair FLOATS and fans out, suspended and drifting in the current — never hanging straight down.\n' +
+        '- Robes, loincloths, wraps, and every loose element BILLOW and undulate, lifting and streaming AWAY from the body and outward — never draping straight down as they would in air.\n' +
+        '- Tentacles, chains, jewelry, and stray strands drift and sway with the current.\n' +
+        '- Ambient water: fine bubbles rise, motes and particulate drift, light falls in refracted shafts, motion reads as slow suspension.\n' +
+        '- The whole frame reads as underwater — nothing rests or hangs as if in a dry, air-filled room.\n\n';
+    })();
     if (visualState._phaseLabel) {
       prompt += 'PHASE: ' + visualState._phaseLabel + '\n\n';
     }
@@ -176751,6 +177013,7 @@ No text, no watermark, no UI elements, share-ready.`;
     prompt += 'UNIVERSAL ANTI-DRIFT (HARD — applies to every staged render):\n' +
       '  • PROP DISCIPLINE: do NOT add props the prose hasn\'t named. SPECIFICALLY BANNED unless prose explicitly stages them: stacks of cash / wads of bills / piles of money / loose currency on tables, scattered photos, decorative bowls, abandoned glasses, pieces of fruit, vases, decorative books, candles. Money/cash imagery is a recurring leak from billionaire-flavor scenes — it appears EVEN when prose makes no reference to wealth. SUPPRESS it unless the prose names it.\n' +
       '  • NO COMIC ARTIFACTS: NO speech bubbles, NO speech-bubble tails, NO floating exclamation marks, NO comic shout balloons, NO panel borders, NO captions or text overlays, NO sound-effect lettering ("BAM" / "POW" / "!"). The canvas is a single illustration; ALL comic-page graphic conventions are forbidden. If a small comma-shaped or balloon-tail artifact appears in any corner, the image is broken — the model has slipped into "manga page" mode.\n' +
+      '  • ILLUSTRATED, NEVER A PHOTOGRAPH (HARD — TERMINAL): the ENTIRE image is a drawn / inked ILLUSTRATION in the active artist\'s signature style (Ender Bond, Ryo Toro, Lora Venn, or Olen Droll). It is NEVER a photograph, NEVER photorealistic, NEVER a 3D / CGI render, NEVER a cinematic live-action still. If the output could be mistaken for a photo or film frame, it is BROKEN — render it as illustration. This holds for EVERY setting, ESPECIALLY gritty modern / noir / rain / neon scenes, where the model is most tempted to default to photoreal.\n' +
       '  • ENTIRE IMAGE IN ARTIST STYLE (HARD): every pixel — face, hands, body, clothing, fabric, environment, props, background, lighting — is rendered in the active artist\'s signature register. Linework, hatching, ink behavior, color palette must apply UNIFORMLY across the frame. NEVER render the face in artist-style while leaving the body/clothing/setting in photorealistic or generic-illustration style. "Photo-traced body with stylized face" is a FAIL — the entire image must be a coherent single artist-style illustration.\n';
     prompt += pcVis + '\n\n';
     if (liVis) {
@@ -176771,7 +177034,8 @@ No text, no watermark, no UI elements, share-ready.`;
     prompt += 'SPATIAL CONTINUITY (HARD — every phase of this scene is the SAME location): this image is one phase of a scene that stays in the ENVIRONMENT above the entire time. Render THAT location. IGNORE any relocation implied by a beat or stage description — if the prose mentions a contract, a deal, an office, an ex, or another city, those are DISCUSSED here, not VISITED: do NOT render an office, a boardroom, a contract-signing, or any other place. If this is an insert/object shot, the object or detail is one PHYSICALLY PRESENT in this same location (a mug on this table, the notice on this counter, rain on this window) — never an elsewhere. The camera never leaves this room unless the prose physically moved the characters out of it.\n';
     if (!liAbsent) {
       if (liPos)  prompt += 'LOVE INTEREST POSITION: ' + liPos + '\n';
-      prompt += 'LOVE INTEREST EXPRESSION: ' + liExpr + '\n';
+      prompt += 'LOVE INTEREST EXPRESSION: ' + liExpr +
+        (_LI_EXPRESSION_ACTING[liExpr] ? ' — ' + _LI_EXPRESSION_ACTING[liExpr] : '') + '\n';
       // Per-phase peak beat expression — surfaces the most-charged
       // mouth/jaw beat in this phase's range so the staging stages at
       // its emotional weight, not the LI's resting baseline. The LI's
@@ -176779,7 +177043,8 @@ No text, no watermark, no UI elements, share-ready.`;
       // the mouth/jaw should READ AS in the rendered image.
       if (visualState._phasePeakExpression) {
         prompt += 'LOVE INTEREST EXPRESSION PEAK (this phase reaches): ' + visualState._phasePeakExpression +
-          ' — render the mouth/jaw at this state, not at neutral baseline. The peak is what the prose reaches in this phase\'s range; the staging must carry that weight in the still frame.\n';
+          (_MOUTH_EXPRESSION_DIRECTIVES[visualState._phasePeakExpression] ? ' — ' + _MOUTH_EXPRESSION_DIRECTIVES[visualState._phasePeakExpression] : '') +
+          '. Render the mouth/jaw at this state, not at neutral baseline. The peak is what the prose reaches in this phase\'s range; the staging must carry that weight in the still frame.\n';
       }
     }
     prompt += 'LIGHTING: ' + lighting + '\n\n';
@@ -176825,10 +177090,18 @@ No text, no watermark, no UI elements, share-ready.`;
       romance_eligible: 1
     };
     if (!_SSM_VALID[_ssm]) {
-      // Best-guess fallback from the relational register signal.
+      // Best-guess fallback from the relational register signal. Do NOT default an
+      // unlabeled LI-present frame to romance_eligible — "defaulting to romance_eligible
+      // the moment the LI appears" is the analyzer's #1 documented SSM error, and it
+      // poses non-romantic pairs as lovers. Romance earns the default staging only at
+      // ST3+; pre-ST3 an unlabeled LI-present frame is professional (restrained). Pairs
+      // with the CHEMISTRY/CHARGE gate, which likewise suppresses on a missing SSM.
+      var _stForSsm = String((state && state.storyturn) || '').toUpperCase();
+      var _st3plusSsm = (_stForSsm === 'ST3' || _stForSsm === 'ST4');
       _ssm = (liAbsent && !_hasSideChar) ? 'solo'
            : (liAbsent && _hasSideChar) ? 'platonic_warm'
-           : 'romance_eligible';
+           : _st3plusSsm ? 'romance_eligible'
+           : 'professional';
     }
     var _SSM_GRAMMAR = {
       solo: 'SOCIAL STAGING (HARD): SOLO. The protagonist occupies the frame alone. Environmental composition dominates — the space frames their introspection. Negative space, environmental texture, a single silhouette against the world. No invented companions.',
@@ -177355,6 +177628,17 @@ No text, no watermark, no UI elements, share-ready.`;
     // insert_env replace the entire composition with a focal-object/
     // environmental shot (the focus_target identifies what's framed).
     var shotStyle = visualState._phaseShotStyle || 'default';
+    // MYSTERY MAN CONCEALMENT SHOT GUARD (Roman 2026-07-14). The reverse-OTS (ots_char)
+    // is the reliable face-hider, but it only fires when shot_style is a concealment
+    // style; a plan that leaves shot_style 'default' on a concealed LI leaks his face
+    // (the camera still frames him — the earlier close_li→over_shoulder_pc coercion is
+    // not enough on its own). Force ots_char whenever the LI is concealed and no
+    // concealment style was chosen, so the reverse-OTS always governs and the face stays hidden.
+    if (!liAbsent && (visualState.li_visibility === 'shadowed' || visualState.li_visibility === 'partial') &&
+        shotStyle !== 'ots_char' && shotStyle !== 'ots_pc') {
+      try { console.log('[STAGED:MM] concealed LI with shot_style=' + shotStyle + ' — forcing ots_char (reverse-OTS) so his face stays hidden'); } catch (_) {}
+      shotStyle = 'ots_char';
+    }
     var cameraMove = visualState._phaseCameraMove || 'none';
     var focusTarget = visualState._phaseFocusTarget || null;
     if (shotStyle === 'ots_pc') {
@@ -177665,7 +177949,13 @@ No text, no watermark, no UI elements, share-ready.`;
     // the most recent rendered phase. Cached results live in
     // state._stagedExpressionCache keyed by (phase0Fingerprint +
     // expressionKey) so backtrack / re-render is free.
-    if (phase.phaseIdx > 0) {
+    // RIPPED OUT (Roman 2026-07-14): the Kontext phase-edit froze phase-0's
+    // composition (same camera + pose, only expression/position swapped) and
+    // did a poor job at even that — it is the "same framing every image" root
+    // cause. Phases 1+ now render FRESH through _buildStagedHeroPrompt below so
+    // each phase's own camera_override actually takes effect. The block is kept
+    // intact and revivable via window._stagedKontextEdits = true.
+    if (phase.phaseIdx > 0 && window._stagedKontextEdits === true) {
       state._stagedPhaseZeroByScene = state._stagedPhaseZeroByScene || {};
       state._stagedExpressionCache = state._stagedExpressionCache || {};
       state._stagedKontextSwapCount = state._stagedKontextSwapCount || {};
@@ -178007,7 +178297,8 @@ No text, no watermark, no UI elements, share-ready.`;
         shape: 'square',
         context: 'visualize',
         intent: 'scene',
-        sizeOverride: _sizeOverride
+        sizeOverride: _sizeOverride,
+        preAssembled: true // _buildStagedHeroPrompt already ordered the full authority stack — opt out of the 4o funnel when window._stagedFunnelBypass=true
       });
       var dur = Date.now() - t0;
 
@@ -178026,6 +178317,21 @@ No text, no watermark, no UI elements, share-ready.`;
         sceneIndices: [sceneIndex],
         quality: costTier
       };
+      // FAVORED SHIFT detection (fire-and-forget): flag anomalous drift (pointed ears /
+      // forehead gem / etc.) on First Favored / Kwisheen renders so the narrator can
+      // acknowledge it in-world. Reuses the anatomy verifier; disable via _verifyEnabled(false).
+      try {
+        var _favSp = (String(state._playerSpecies || '') + ' ' + String(state._liSpecies || '')).toLowerCase();
+        if (imageUrl && typeof _verifyPanelAnatomy === 'function' && /favor|kwisheen/.test(_favSp)) {
+          _verifyPanelAnatomy(imageUrl, (phase && phase.camera_override) || (visualState && visualState.camera) || '').then(function (v) {
+            if (v && v.pass === false && Array.isArray(v.violations) && v.violations.length) {
+              var _driftRx = /point|elf|elven|forehead|gem|jewel|horn|antler|scale|third eye/i;
+              var _drift = v.violations.find(function (s) { return _driftRx.test(String(s)); });
+              if (_drift) _recordFavoredShift(_drift, /kwisheen/.test(_favSp) ? 'Kwisheen' : 'First Favored');
+            }
+          }).catch(function () {});
+        }
+      } catch (_) {}
       // Stash phase 0's URL per-scene so subsequent phases can find it
       // as the Kontext edit source. Keyed by sceneIndex so cross-scene
       // renders don't interfere; the cache also doubles as the input
@@ -178234,6 +178540,31 @@ No text, no watermark, no UI elements, share-ready.`;
     jaw_set:        'jaw set firmly, mouth straight, the look of resolve',
     half_smile:     'a small one-sided half-smile, controlled, the corner of the mouth barely lifted',
     lips_pressed:   'lips pressed together hard, suppressing emotion that\'s about to show'
+  };
+
+  // Physical-acting translation for the scene-level li_expression enum. The hero
+  // prompt used to pass the bare token ("LOVE INTEREST EXPRESSION: cold_withdrawn"),
+  // which image models render as a flat label. Each entry describes the expression
+  // as PHYSICAL ACTING (eyes / brow / jaw / mouth / carriage), which models render
+  // far better. Covers the union of the live + fallback enums.
+  var _LI_EXPRESSION_ACTING = {
+    neutral:          'composed and unforced — eyes steady, brow smooth, mouth relaxed, no performed emotion',
+    amused_soft:      'warmth at the eyes, the mouth just short of a smile, brow relaxed — quiet private amusement, not a grin',
+    amused_sharp:     'a quick knowing glint in the eyes, one brow fractionally raised, the mouth tilted at a corner — amusement with an edge',
+    amused_predatory: 'eyes fixed and bright with interest, a slow half-smile that never reaches warmth, chin slightly lowered — enjoyment with a hunter\'s stillness under it',
+    cold_formal:      'eyes level and unhurried, jaw still, mouth a neutral line, shoulders squared — controlled distance, nothing offered',
+    cold_cruel:       'eyes flat and unmoved, a faint downward set to the mouth — the stillness of someone who has already decided and feels nothing about it',
+    cold_withdrawn:   'gaze angled slightly through the other person, mouth closed and slack, shoulders turned a few degrees off — present but shut, the warmth pulled back behind the eyes',
+    predatory:        'gaze locked and unblinking, weight carried forward, jaw loose but set, the mouth still — attention with intent underneath it',
+    guarded:          'eyes watchful and faintly narrowed, jaw held, mouth even, chin fractionally tucked — reading the room before giving anything away',
+    wounded:          'a tightness at the eyes fighting to stay flat, the throat working once, mouth pressed to hold its line — hurt held under control, not shown openly',
+    curious:          'head tilted a few degrees, brows lifted a touch, eyes bright and moving over the other person, mouth parted just short of a question',
+    hungry:           'eyes dark and steady on the other, breath a fraction deep, lips parted, the whole face angled in — want held on a short leash',
+    tender:           'eyes gone soft and open, brow smoothed, mouth relaxed into unguarded warmth, the head inclined toward the other',
+    defiant:          'chin up, eyes hard and level, jaw set, mouth firm — holding ground, refusing to look away',
+    intense_focused:  'eyes narrowed to a fixed point, brow drawn faintly in, jaw tight, the whole face gathered on one thing',
+    intense_furious:  'jaw clenched with muscle standing at the temple, nostrils flared, eyes burning and locked, mouth a hard flat line barely holding',
+    intense_lustful:  'eyes half-lidded and dark, fixed on the other, lips parted, breath visible in the chest, the face heavy with want'
   };
 
   // Layer 2 — Kontext mutation. Takes the phase hero URL as input_image
@@ -188067,14 +188398,14 @@ No text, no watermark, no UI elements, share-ready.`;
       '{\n' +
       '  "visualState": {\n' +
       '    "background": "<concrete named location + time of day + atmosphere>",\n' +
-      '    "camera": "over_shoulder_pc | medium_two_shot | wide_establishing | close_li",\n' +
+      '    "camera": "over_shoulder_pc | medium_two_shot | wide_establishing | close_li | close_pc | low_angle_pc | high_angle_pc | profile_pc | silhouette_pc | over_object_high_angle | push_in_on_object | dutch_tilt — the scene DEFAULT framing (a phase camera_override wins when set). Match the opening dramatic register; do NOT reflexively default to over_shoulder_pc.",\n' +
       '    "pc_visibility": "back_only | partial_cheekbone | side_profile | hidden",\n' +
       '    "li_position": "doorway | desk | window | seated | standing_close | standing_apart | table | bedside | street | threshold | offstage",\n' +
       '    "li_expression": "neutral | amused_soft | amused_sharp | cold_formal | predatory | guarded | wounded | curious | hungry | tender | defiant | intense_focused | intense_furious | intense_lustful",\n' +
       '    "lighting": "rim_backlit | low_warm | low_cool | bright_warm | bright_cool | harsh_overhead | golden_hour | streetlamp | flicker | neutral_daylight",\n' +
       '    "pc_wardrobe": "<concrete clothing — pull from context or infer from setting/occupation>",\n' +
       '    "li_wardrobe": "<same — concrete clothing for the LI; empty string if LI is structurally absent in this scene>",\n' +
-      '    "other_characters_present": [ { "name": "<verbatim name>", "gender": "female | male | non-binary", "wardrobe": "<…>", "position": "<…>" } ],\n' +
+      '    "other_characters_present": [ { "name": "<verbatim name>", "gender": "female | male | non-binary", "species": "human | first_favored | kwisheen | wildfolk — set from the prose; \\"human\\" for ordinary humans; REQUIRED when the scene has any non-human species so a human bystander is not rendered with the species anatomy", "wardrobe": "<…>", "position": "<…>" } ],\n' +
       '    "key_props": [ "<named diegetic objects in this scene>" ],\n' +
       '    "social_staging_mode": "solo | platonic_warm | platonic_tense | professional | adversarial | familial | stranger_awkward | crowded_public | romance_eligible",\n' +
       '    "sceneDuty": "external_pressure | investigation | survival | political_alignment | professional_competence | social_navigation | world_revelation | romantic_progression | emotional_repair | interwoven — what THIS scene is TRYING TO ACCOMPLISH (its narrative OBLIGATION). NOT a genre label. Romance is ONE duty among many, NOT the default. Pick the PRIMARY obligation the prose serves. For a non-romance duty, WRITE the scene toward that obligation — the romance is a pressure, a leak, or absent, not the point.",\n' +
@@ -188093,10 +188424,14 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "li_visibility_phase": "absent | shadowed | partial | revealed",\n' +
       '    "characters_present": [ "protagonist" /*, "li", "<other_name>" */ ],\n' +
       '    "props_present": [],\n' +
-      '    "camera_override": null, "li_position_override": null, "li_expression_override": null,\n' +
+      '    "camera_override": "null | over_shoulder_pc | medium_two_shot | wide_establishing | close_li | close_pc | low_angle_pc | high_angle_pc | profile_pc | silhouette_pc | over_object_high_angle | push_in_on_object | dutch_tilt — THIS phase\'s framing; null inherits the scene camera. Set it per phase (see CAMERA VARIETY).", "li_position_override": null, "li_expression_override": null,\n' +
       '    "camera_move": "none | ken_burns | push_in | hold | parallax",\n' +
       '    "shot_style": "default | ots_pc | ots_char | insert_object | insert_env",\n' +
-      '    "focus_target": null\n' +
+      '    "focus_target": null,\n' +
+      '    "pc_posture": "<≤14 words — the protagonist\'s BODY geometry this phase. Lead with body, not adjectives: \\"shoulders forward, hands flat on the desk\\" / \\"weight back, arms loose at her sides\\" / \\"one hand gripping the doorframe\\". Posture IS the emotional content of the frame — populate on EVERY phase, not just emotional ones.>",\n' +
+      '    "pc_emotional_state": "<≤6 words — the register the lighting + expression align to: \\"braced\\" / \\"unraveling but holding\\" / \\"quiet dread\\" / \\"defiant\\".>",\n' +
+      '    "other_postures": { "<CharName>": "<≤10 words — that character\'s body cue: the friend leaning in, the antagonist blocking the door>" },\n' +
+      '    "proximity": "intimate | personal | social | public — physical distance between the figures; pick for the DRAMA (a confrontation is personal/intimate, NOT social-distance across a wide table)"\n' +
       '  } ],\n' +
       '  "beats": [ {\n' +
       '    "idx": 0, "kind": "narration | exposition | dialogue",\n' +
@@ -189038,6 +189373,11 @@ No text, no watermark, no UI elements, share-ready.`;
       '- PRACTICAL APPLICATION: a Phase-0 establishing shot of the PC alone (LI absent, side character absent or off-screen) is fine for the opener. But when the side character speaks dialogue beats starting at beat N, START A NEW PHASE at beat N with that character in characters_present + visualState reflecting them on stage. Their arrival IS a stage change — the prior phase ends, the new one begins with them visible. Do not let them speak from off-screen for the whole scene.\n' +
       '- SOLO-PC SCENES: if the scene is genuinely solo (no named characters speak, no LI present), a single phase with the PC alone is correct. The rule above applies only when at least one named character is speaking lines.\n' +
       '- LOCATION COHERENCE (HARD — TOP CONSTRAINT): The ENTIRE SCENE happens in the SINGLE PHYSICAL LOCATION named in visualState.background. EVERY beat — narration, exposition, and dialogue — must be set in or refer to THAT location. The schema currently exposes only ONE visualState.background per scene; you cannot represent a mid-scene location change. Therefore: if the scene requires a second location, that is a NEW SCENE, not a new phase. Do NOT have the protagonist walk outside, step into a different room, transition to a different street, approach a different building, or otherwise move to a place the visualState.background does not name. Do NOT include narrative beats that take place at a different location than the named background ("Elliot approaches her outside wearing a hoodie" when the background is an office is FORBIDDEN — the model has done this and it produces a hard visual-vs-prose contradiction the reader experiences as broken). If a character ARRIVES into the named location from elsewhere, the beat describes their arrival INTO this location (they enter, they cross the threshold, they walk in), not their journey to it. A single phase is ONE physical location. NEVER describe transitions across locations inside a beat. Mid-beat or mid-phase location jumps are the #1 cause of prose-vs-image desync; the reader sees an office and reads about a courtyard at the same time. INVIOLABLE.\n\n' +
+      'CAMERA VARIETY (HARD — each phase is a distinct SHOT, not one static frame with tweaks):\n' +
+      '- Phases 1+ SHOULD set camera_override explicitly; the full enum is available on EVERY phase — over_shoulder_pc (behind PC toward the subject), medium_two_shot (both figures, waist-up), wide_establishing (environmental scale), close_li (LI face fills frame), close_pc (tight on PC body / hands / partial face), low_angle_pc (looking UP — stakes-heavy), high_angle_pc (looking DOWN — vulnerable), profile_pc (pure side profile — contemplative), silhouette_pc (dark outline vs a bright backdrop — mystery), over_object_high_angle (down past a desk/object at the PC\'s hands), push_in_on_object (a key object fills the frame), dutch_tilt (off-axis 5-15° — unease).\n' +
+      '- DO NOT inherit phase 0\'s camera. A phase boundary exists because the visual stage changed — the camera changes with it. NO TWO CONSECUTIVE phases use the SAME camera_override unless the prose holds one continuous unmoved moment. Match the camera to the MOMENT: LI arrival → medium_two_shot / close_li; a confrontation building → low_angle_pc; a discovery landing on an object → push_in_on_object / over_object_high_angle; a tense beat → dutch_tilt; a quiet interior → profile_pc / close_pc.\n' +
+      '- Example arc: phase 0 over_shoulder_pc (PC alone, LI absent) → phase 1 medium_two_shot (LI arrives) → phase 2 close_li (the reveal lands). Variety across phases is what makes the scene read as CINEMATIC EDITING rather than one static image with subtle changes.\n' +
+      '- MYSTERY MAN / CONCEALED LI (female-PC + male-LI stories, his face withheld until the ST3/4 reveal): while li_visibility_phase is "shadowed" or "partial", his face stays HIDDEN — do NOT use close_li on him and do NOT frame his face. Use over_shoulder_pc (the PC is the lit subject, his back-of-head/shoulder in the foreground), silhouette_pc, over_object_high_angle, push_in_on_object, or dutch_tilt. close_li on the LI is legal ONLY once li_visibility_phase is "revealed" (after the player chooses to reveal him at ST3/4). This does NOT restrict PC-focused framings (close_pc, profile_pc) — in a Mystery Man story HER face is the visible subject.\n\n' +
       'VISUAL STATE RULES:\n' +
       '- pc_visibility is NEVER "revealed" / "full_face". The protagonist\'s face is never fully shown to the reader. Default "back_only" for over_shoulder cameras.\n' +
       '- li_position is "offstage" for Scene 1 (LI absent).\n' +
@@ -189450,7 +189790,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // eyes" every scene. Modeled on the crisis-history system: REMEMBER recent, DISCOURAGE
   // repeats, ALLOW dramatic overrides — NOT a rigid wide→medium→close cycle (readers feel
   // that pattern too). Persistent (non-disposable) LS so it survives the headroom sweep.
-  var _CG_CAMERA_VALUES = ['over_shoulder_pc', 'medium_two_shot', 'wide_establishing', 'close_li'];
+  var _CG_CAMERA_VALUES = ['over_shoulder_pc', 'medium_two_shot', 'wide_establishing', 'close_li', 'close_pc', 'low_angle_pc', 'high_angle_pc', 'profile_pc', 'silhouette_pc', 'over_object_high_angle', 'push_in_on_object', 'dutch_tilt'];
   var _CG_LIGHTING_VALUES = ['rim_backlit', 'low_warm', 'low_cool', 'bright_warm', 'bright_cool', 'harsh_overhead', 'golden_hour', 'streetlamp', 'flicker', 'neutral_daylight'];
   function _cgVisualHistory() { try { return JSON.parse(localStorage.getItem('sb_cg_visual_history') || '[]') || []; } catch (_) { return []; } }
   function _recordCGVisualGrammar(plan) {
@@ -193565,6 +193905,8 @@ No text, no watermark, no UI elements, share-ready.`;
         ? _computePlayerImpactRead(playerAction, playerDialogue, playerAction, playerDialogue, { noPersist: true }) : null;
       if (_cgImpact) sysPrompt += buildPlayerImpactDirective(_cgImpact);
     } catch (_) {}
+    // (Favored-shift acknowledgment is now a SAME-SCENE narration-box caption on the image —
+    // see _showFavoredShiftCaption — not a next-scene prose directive.)
     // CONTINUITY OBLIGATION LEDGER (Roman 2026-06-27) — CG carryover root: the CG system prompt
     // does NOT include _literarySceneMandate, so inject the plot-contract + carried debts HERE
     // (mirrors the literary roots). Both no-op when killed or when there are no beats/debts.
@@ -221052,7 +221394,7 @@ Generate the synopsis now.` }
           var _FF_PC_PALETTE = '\n\nPHYSICAL PALETTE — FIRST FAVORED WORLD (HARD — the Veilwood is the First Favored heartland; render the SPECIES vividly in the opening beats, do NOT hand-wave it into ordinary human features. Vary the specifics so no two First Favored read alike):\n' +
             '  BLOODLINE (grade THIS character): full First Favored → the complete canon below. Part-Favored / Favorborn → a subtler touch (one or two traits, muted). Human visitor → ordinary human (the Favored do not discriminate; humans from across the Fatelands live among them freely). Default a Veilwood native to First Favored unless the story frames her otherwise.\n' +
             '  SKIN & WEAVE-SCRIPT: luminous skin of a metallic or iridescent cast — pick ONE dominant undertone (gold, silver, copper, pearl, faint violet), never plain human tone. Across it move low-glow WEAVE-SCRIPT: swirling subdermal light-lines that brighten, pulse, or dim with what she feels. The light is not ornament — it is COST: the Favored are long-lived and emotion erodes them, so strong feeling visibly spends the glow.\n' +
-            '  EYES: pupils are four-pointed concave diamonds, solid black — an unmistakably non-human geometry set in a luminous iris.\n' +
+            '  EYES: pupils are four-pointed concave diamonds in a vivid luminous color — an unmistakably non-human geometry, set off from a differently-colored luminous iris (never black-on-black).\n' +
             '  BUILD & GRACE: perfectly proportioned and athletic — an Olympic athlete\'s build, taller than human and more generously endowed (NOT bulky, NOT thin, NOT lithe/waifish), moving with an uncanny grace that is subtly, deliberately WRONG for a human. The wrongness is in the eyes/skin/light, never a frail build.\n' +
             '  DRESS: gossamer, translucent layers that do not conceal the body — the First Favored norm, worn as plain cultural fact.\n' +
             '  ALIGNMENT-SENSE (show it, do NOT state it): the First Favored FEEL alignment — the match or mismatch between what a person says, means, and is. Deceivers, manipulators, and the self-divided make their skin crawl; but someone wholly aligned with their own aims — even a monster — reads as clean. Surface it as perception and reflex (how she watches, trusts, or recoils), never as a narrated power.\n';
@@ -221764,7 +222106,7 @@ Generate the synopsis now.` }
           var _FF_LI_PALETTE = '\n\nPHYSICAL PALETTE — FIRST FAVORED WORLD (HARD — the Veilwood is the First Favored heartland; render the SPECIES vividly when he first appears, do NOT hand-wave it into a stock human romance-hero. Vary the specifics so no two First Favored read alike):\n' +
             '  BLOODLINE (grade THIS character): full First Favored → the complete canon below. Part-Favored / Favorborn → a subtler touch (one or two traits, muted). Human visitor → ordinary human (the Favored do not discriminate; humans from across the Fatelands live among them freely). Default a Veilwood-native romantic lead to First Favored unless the story frames him otherwise.\n' +
             '  SKIN & WEAVE-SCRIPT: luminous skin of a metallic or iridescent cast — pick ONE dominant undertone (gold, silver, copper, pearl, deep bronze), never plain human tone. Across it move low-glow WEAVE-SCRIPT: subdermal light-lines that brighten or bank with what he feels — the light is COST, not ornament (the Favored are long-lived and emotion erodes them).\n' +
-            '  EYES: pupils are four-pointed concave diamonds, solid black — a non-human geometry in a luminous iris.\n' +
+            '  EYES: pupils are four-pointed concave diamonds in a vivid luminous color — a non-human geometry, distinct from a differently-colored luminous iris.\n' +
             '  BUILD & GRACE: tall and gracefully powerful — perfectly proportioned, an Olympic athlete\'s build (taller and better endowed than any human), commanding in an uncanny, non-human way. Athletic and strong WITHOUT stock human bulk (never chiselled-jaw / broad-brawler defaults), and never thin/lithe/waifish.\n' +
             '  DRESS: gossamer, translucent layers that do not conceal the body — the First Favored norm, worn as plain cultural fact.\n' +
             '  ALIGNMENT-SENSE (show it, do NOT state it): the First Favored FEEL alignment — the match or mismatch between what a person says, means, and is. Deceivers, manipulators, and the self-divided make his skin crawl; but someone wholly aligned with their own aims — even a monster — reads as clean. Surface it as perception and reflex (how he watches, trusts, or recoils), never as a narrated power.\n';
@@ -251987,7 +252329,13 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
               // ── CASE 3: SPECIAL SPECIES — species anchor MANDATORY, highest authority ──
               if (_sceneCase === 'special_species') {
                 // Load species anchors FIRST (mandatory, highest authority)
-                var _panelCam = (panelMeta && panelMeta.camera) || '';
+                // FIX (Roman 2026-07-14): was `panelMeta`, which is undefined in this
+                // function (the param is _visualMeta) — so this line threw a ReferenceError
+                // on EVERY special-species scene, silently dropping it off Gemini onto BFL
+                // (losing Gemini's labeled species refs + the SPECIAL_SPECIES prefix). Guarded
+                // read of _visualMeta; _panelCam only ranks the species-anchor variant, so ''
+                // is a safe default. Reproduced + now guarded by _phase0_headless.js P0.2.
+                var _panelCam = (_visualMeta && (_visualMeta.camera || (_visualMeta.panelMeta && _visualMeta.panelMeta.camera))) || '';
                 var _sceneVis = state._lastSceneVisual || '';
                 var _selectedArr = _selectSpeciesAnchors(_speciesAnchorEntries, _panelCam, _sceneVis);
                 for (var _ssi = 0; _ssi < _selectedArr.length && _allRefs.length < 2; _ssi++) {
@@ -253343,7 +253691,7 @@ Rules:
 - Match world/tone (modern = contemporary fashion, fantasy = period-appropriate)
 - Archetype should influence demeanor/posture, not dominate appearance
 - Distinctive feature should be subtle and memorable (scar, freckle pattern, jewelry)${world === 'Fantasy' ? `
-- FIRST FAVORED CANON: If this character is First Favored or Part-Favored, their eye_color MUST be non-human (gold, violet, silver, rose, ember, opalescent — NEVER brown, blue, green, black). Body type MUST be ATHLETIC and PERFECTLY PROPORTIONED (an Olympic athlete's build, taller than human) — NOT bulky/muscle-bound and NOT thin/lithe/waifish; fine-featured in the FACE only. Ears are ~50% human size (note in distinctive_features). Eyes are slightly enlarged with four-pointed concave diamond pupils (solid black, smooth inward-curving sides — note in distinctive_features if First Favored). clothing_style MUST be "minimal translucent gossamer, near-nude" (their culture considers concealment a form of dishonesty). Skin shows luminescent patterns (Weave-Script) — note in distinctive_features.` : ''}` }
+- FIRST FAVORED CANON: If this character is First Favored or Part-Favored, their eye_color MUST be a vivid luminous non-human color (gold, violet, silver, rose, ember, aqua, jade, opalescent, etc.); the pupil AND the iris are each a vivid color and read as distinct — the eye always holds visible color and light. Body type MUST be ATHLETIC and PERFECTLY PROPORTIONED (an Olympic athlete's build, taller than human) — NOT bulky/muscle-bound and NOT thin/lithe/waifish; fine-featured in the FACE only. Ears are ~50% human size (note in distinctive_features). Eyes are slightly enlarged with four-pointed concave diamond pupils (a vivid luminous color, straight sides curving inward — note in distinctive_features if First Favored). clothing_style MUST be "minimal translucent gossamer, near-nude" (their culture considers concealment a form of dishonesty). Skin shows luminescent patterns (Weave-Script) — note in distinctive_features.` : ''}` }
           ], { max_tokens: 300, temperature: 0.6 });
 
           const parsed = JSON.parse(result);
@@ -253648,7 +253996,7 @@ Do NOT describe Veilwood environments as static architecture or inert forests.`;
 
   // Default to 16:9 landscape for cinematic presentation
   // Optional signal parameter for external abort control
-  async function generateImageWithFallback({ prompt, tier, costTier = 'hero', shape = 'landscape', context = 'visualize', intent = 'scene', signal = null, tone = null, settingSynopsis = null, panelMeta = null, excludeLI = false, excludeMC = false, excludeAnchor = false, sizeOverride = null }) {
+  async function generateImageWithFallback({ prompt, tier, costTier = 'hero', shape = 'landscape', context = 'visualize', intent = 'scene', signal = null, tone = null, settingSynopsis = null, panelMeta = null, excludeLI = false, excludeMC = false, excludeAnchor = false, sizeOverride = null, preAssembled = false }) {
       // costTier semantics (separate from `tier` which is content-rating
       // Naughty / Erotic / Dirty / Clean):
       //   'hero'    — full-quality chain (BFL FLUX-2 Pro primary, refs).
@@ -253743,15 +254091,19 @@ Do NOT describe Veilwood environments as static architecture or inert forests.`;
           }
       }
 
-      // ── First Favored illustrator constraints (Fantasy only — compact for GN, full for other contexts) ──
-      if (state.picks?.world === 'Fantasy') {
+      // ── First Favored illustrator constraints (only when a First Favored is ACTUALLY present —
+      //    a bare "Fantasy" gate injected the full canon into every Fantasy scene, and image models
+      //    treat the "if any FF appears…" conditional as an attractor → luminous-skinned humans) ──
+      if (state.picks?.world === 'Fantasy' &&
+          (/favor/i.test(String(state._playerSpecies || '')) || /favor/i.test(String(state._liSpecies || '')) ||
+           (state._stagedRegionContract && Array.isArray(state._stagedRegionContract.speciesKeys) && state._stagedRegionContract.speciesKeys.indexOf('first_favored') !== -1))) {
         if (context === 'graphic-novel-panel') {
-          _imagePrompt += '\nFIRST FAVORED (MATCH SPECIES ANCHORS): If present — PUPILS: four-pointed concave diamonds (smooth inward-curving sides), solid black, centered. Clean controlled diamond readable at panel scale. Use pupil anchor as geometry source. Iris: luminous non-human color (gold primary, also violet/silver/rose/ember/opalescent). Build: high cheekbones, symmetrical (fine-boned FACE); athletic perfectly-proportioned body — Olympic-athlete build, taller than human, NOT bulky, NOT thin/lithe. Ears: small rounded human-shaped ears, half human size, flush to skull, visible lobes, smooth curved helix, zero taper. Hands: subtly in motion, relaxed natural gesture. Eyes: match anchor proportions, realistic rendering. Skin: smooth luminous, faint internal glowing swirls. Fabric: semi-transparent gossamer, natural drape gravity-driven folds. Linework: thick dry-brush silhouette, crosshatching in shadows only (contour-aware, sparse). Lighting: warm directional glow, clean highlights. ATTRIBUTE INDEPENDENCE: skin/hair/eye color and hairstyle are independent of gender/role. Skin renders with soft luminous quality. In areas of full visibility, luminescence intensifies to radiant overexposure / prismatic bloom.';
+          _imagePrompt += '\nFIRST FAVORED (MATCH SPECIES ANCHORS): If present — PUPILS: four-pointed concave diamonds (smooth inward-curving sides), a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. Clean controlled diamond readable at panel scale. Use pupil anchor as geometry source. Iris: luminous non-human color (gold primary, also violet/silver/rose/ember/opalescent). Build: high cheekbones, symmetrical (fine-boned FACE); athletic perfectly-proportioned body — Olympic-athlete build, taller than human, NOT bulky, NOT thin/lithe. Ears: small rounded human-shaped ears, half human size, flush to skull, visible lobes, smooth curved helix, zero taper. Hands: subtly in motion, relaxed natural gesture. Eyes: match anchor proportions, realistic rendering. Skin: smooth luminous, faint internal glowing swirls. Fabric: semi-transparent gossamer, natural drape gravity-driven folds. Linework: thick dry-brush silhouette, crosshatching in shadows only (contour-aware, sparse). Lighting: warm directional glow, clean highlights. ATTRIBUTE INDEPENDENCE: skin/hair/eye color and hairstyle are independent of gender/role. Skin renders with soft luminous quality. In areas of full visibility, luminescence intensifies to radiant overexposure / prismatic bloom.';
         } else {
           _imagePrompt += `\n\nFIRST FAVORED VISUAL CANON (NON-NEGOTIABLE — overrides all illustrator styles):
 ANCHOR REFERENCES: Species anchor images (hero + male face + duo fullbody, if provided) are the PRIMARY references for all First Favored renders. Hero anchor = female face, lighting, material. Male face anchor = male facial identity lock (proportions, eye shape, crosshatch zones). Duo fullbody = proportions, fabric behavior, silhouette, variation range. All are AUTHORITATIVE and must not drift.
 If any First Favored character appears in this image:
-EYES: PUPIL is a four-pointed concave diamond (smooth inward-curving sides), solid black, centered. Clean controlled diamond shape readable at any panel scale. Use pupil anchor as absolute geometry source. Iris: luminous non-human color. Glow intensity controlled. Glowing gold as primary. Also allowed: violet, silver, rose, ember, opalescent. Sclera optional. Eyes must have depth, internal texture, light response. Match anchor proportions exactly.
+EYES: PUPIL is a four-pointed concave diamond (smooth inward-curving sides), a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. Clean controlled diamond shape readable at any panel scale. Use pupil anchor as absolute geometry source. Iris: luminous non-human color. Glow intensity controlled. Glowing gold as primary. Also allowed: violet, silver, rose, ember, opalescent. Sclera optional. Eyes must have depth, internal texture, light response. Match anchor proportions exactly.
 FACE & BODY: High cheekbones, fine-boned, symmetrical. Masculine faces: defined jawline, proportions locked to male face anchor. Lithe structure. Ethereal proportions matching duo fullbody anchor. Human-adjacent realism. Match anchor rendering style.
 FACIAL CROSSHATCH (LOCKED TO FACE ANCHORS): Crosshatching on faces ONLY in shadow zones: under cheekbones, sides of nose, under jaw, eye socket depth. MUST follow facial form. Forehead, cheek tops, and nose bridge remain clean and smooth. Faces retain realistic rendering quality.
 SKIN: Smooth, luminous. Faint internal glowing swirls (subtle). Warm/neutral tones including metallics (gold, silver, copper, pearl) and saturated hues (green, deep purple). Exhibits low-level luminescent patterns (Weave-Script) — slow-moving calligraphy forming and dissolving. Subdued internal glow. Organic, living texture.
@@ -253821,7 +254173,7 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
         .replace(/CRITICAL COUNTDOWN:.*?\n/g, '')
         .replace(/SUSPICION LEVEL:.*?\n/g, '')
         .replace(/RELATIONSHIP RISK:.*?\n/g, '')
-        .replace(/FAIL CONDITIONS.*?(?=\n[A-Z]|\n$)/gs, '')
+        .replace(/SPECIES SYSTEM FAIL CONDITIONS.*?(?=\n[A-Z]|\n$)/gs, '')
         .replace(/\(Species source:.*?\)/g, '')
         .replace(/\n{3,}/g, '\n\n');
       _sanitized = purgeBannedTokens(_sanitized);
@@ -253935,7 +254287,18 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
       // Adult disambiguation + romance intensity (before 4o)
       // Dev panel: skip modifiers — raw scene only, no dilution
       var _isDevPanel = panelMeta && panelMeta._devPanel;
-      var _sceneDesc = _isDevPanel ? _cleanSceneVisual : _applyRomanceIntensity(_enforceAdultSubjects(_cleanSceneVisual));
+      // Staged hero/phase prompts arrive fully assembled (~9k chars of ordered
+      // identity / gender / wardrobe / staging authority). BOTH the _cleanSceneVisual
+      // block-strip above AND the 4o 120-word rewrite below gut that authority — the
+      // effective hierarchy ends up refs > style > world, with character text last or
+      // gone. Opt-in bypass (default OFF pending a render A/B) passes the assembled
+      // prompt through intact. Enable/kill: window._stagedFunnelBypass = true/false.
+      var _preAssembledBypass = preAssembled && window._stagedFunnelBypass === true;
+      var _sceneDesc = _isDevPanel
+        ? _cleanSceneVisual
+        : _preAssembledBypass
+          ? _applyRomanceIntensity(_enforceAdultSubjects(_sanitized))
+          : _applyRomanceIntensity(_enforceAdultSubjects(_cleanSceneVisual));
       var _refDriven = false;
       var _isGNPanel = (context === 'graphic-novel-panel');
       // Portrait contexts (PC Look / LI Reveal / Cast Customize) MUST skip
@@ -253950,7 +254313,7 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
       // Output: deck appears on the portrait every time.
       // This was THE leak the user kept seeing on PC Look / LI Render.
       var _isPortraitCtx = (context === 'pc-look' || context === 'li-face-reveal' || context === 'cast-customize');
-      if (!window._gnDevFastMode && !_isGNPanel && !_isPortraitCtx && !_literarySetting) {
+      if (!window._gnDevFastMode && !_isGNPanel && !_isPortraitCtx && !_literarySetting && !_preAssembledBypass) {
         try {
           var _rewritten = await rewritePromptWith4o(_style, _sceneDesc);
           if (_rewritten) {
@@ -253967,6 +254330,8 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
         console.log('[4O] Skipped for GN panel — raw scene passed through (' + _sceneDesc.length + ' chars)');
       } else if (_isPortraitCtx) {
         console.log('[4O] Skipped for portrait context (' + context + ') — preventing artist-ref visual cues (leather accessories, fantasy props) from being written into the prose prompt');
+      } else if (_preAssembledBypass) {
+        console.log('[4O] Skipped — staged pre-assembled prompt passed through intact (window._stagedFunnelBypass=true); identity/gender/wardrobe/staging authority preserved (' + _sceneDesc.length + ' chars)');
       }
 
       // ── GOLDEN MASTER DETECTION ──
@@ -254377,7 +254742,11 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
       // period, props, or composition.
       if (_hasRefs && !_goldenMasterMode) {
         _scenePriority += '\nREFERENCE-IMAGE POLICY (HARD CONSTRAINT):\n' +
-          'Any reference images attached are STYLE references ONLY. Borrow their LINEWORK, RENDERING, ANATOMY treatment, lighting logic, color temperament, and texture sensibility. DO NOT borrow the subject matter, setting, costume period, props, or composition from them. The SUBJECT MATTER block above is authoritative. If a reference image shows a medieval scene but the subject matter is modern, the output must be a modern scene rendered in the reference\'s linework style — never a medieval scene.\n';
+          'Reference images serve different ROLES — read each for its role, not as one single kind:\n' +
+          '• STYLE / artist reference: borrow ONLY its linework, rendering, anatomy treatment, lighting logic, color temperament, and texture sensibility.\n' +
+          '• CHARACTER IDENTITY reference (a specific person\'s face / hair / build): MATCH that identity — the face, hairline, and build ARE that character. That is why it is attached; do NOT demote it to "style only".\n' +
+          '• SPECIES / ANATOMY reference: match the anatomical structure it shows.\n' +
+          'FOR EVERY REFERENCE, whatever its role: do NOT borrow the subject matter, setting, time period, CLOTHING / wardrobe, props, or composition. Wardrobe comes from the scene description, NEVER from a reference — if a reference shows a leather jacket and the scene says a blazer, render a blazer. The SUBJECT MATTER block above is authoritative: a reference showing a medieval scene under a modern subject renders as a modern scene in that reference\'s linework — never a medieval scene, and never that reference\'s clothing.\n';
       }
 
       if (_isFantasyWorld) {
@@ -254906,7 +255275,7 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
 
         var styleLock = 'PRIMARY DIRECTIVE: Match the established graphic novel rendering style exactly. ' +
           'This scene must visually match prior panels in linework style, shading behavior, color rendering, and anatomical proportions. ' +
-          'Do NOT reinterpret style. Do NOT simplify. Do NOT switch to painterly, anime, or photorealistic rendering. ' +
+          'Do NOT reinterpret or simplify the style, and do NOT render photorealistically — match the ACTIVE ARTIST\'s illustration register exactly (see STYLE LOCK below). ' +
           'The output must appear as if drawn by the same artist as previous panels.\n\n';
 
         var structureBlock = '';
@@ -254917,16 +255286,16 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
 
         var continuity = 'CONTINUITY: Maintain continuity with previous panels — same character proportions, same facial structure, same anatomical layout. Do not redesign the character.\n\n';
 
-        var enderStyleLock = '--- STYLE LOCK ---\n' +
-          'Glossy semi-realistic graphic novel rendering. Match the visual style of a modern Western graphic novel with inked linework and controlled crosshatching, similar in discipline to high-end comic illustration.\n' +
-          'LINEWORK: thick black contour lines with varied weight, tapered strokes with slightly rough edges (inked, not vector clean), minimal but deliberate internal detail lines.\n' +
-          'SHADING: crosshatching ONLY in shadow planes (not highlights), hatching follows form and wraps anatomy, no soft airbrush gradients.\n' +
-          'LIGHTING: soft luminous highlights on skin, controlled specular accents on cheekbones and shoulders, structured shadows (not muddy).\n' +
-          'COLOR: rich slightly saturated palette, luminous skin tones (not flat), avoid washed-out or overly cinematic grading.\n' +
-          'CONSTRAINTS: Semi-realistic inked graphic novel style only. Western comic illustration tradition. Clean composition and readable forms.\n' +
-          'This style is mandatory.\n';
+        // Build the style lock from the ACTIVE artist (was hardcoded to Ender Bond — a
+        // Ryo Toro / Lora Venn / Olen Droll story falling to OpenAI rendered in the wrong
+        // style). Roman 2026-07-14. _artistKey/_style are in scope (closure).
+        var artistStyleLock = '--- STYLE LOCK (ARTIST: ' + _artistKey + ') ---\n' +
+          'STYLE REGISTER: ' + (_style.style_anchor || '') + '\n' +
+          (_style.line_control ? 'LINEWORK: ' + _style.line_control + '\n' : '') +
+          (_style.color_control ? 'COLOR: ' + _style.color_control + '\n' : '') +
+          'Render the ENTIRE image in this artist\'s signature illustration style. This style is mandatory.\n';
 
-        return styleLock + structureBlock + continuity + scene + (cam ? '\n' + cam.trim() : '') + '\n\n' + enderStyleLock;
+        return styleLock + structureBlock + continuity + scene + (cam ? '\n' + cam.trim() : '') + '\n\n' + artistStyleLock;
       }
 
       // OpenAI style-locked fallback entry (shared across all chains)
