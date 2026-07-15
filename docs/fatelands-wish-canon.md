@@ -212,6 +212,41 @@ commodities market):
   the crying stops, the hunger doesn't. The tragedy is her misunderstanding, never Fate's malice, and
   the wisdom she needed had to be *hers*.)
 
+- **Personal Sacrifice — the one who wishes is always the one who pays.** A wish can *never* be
+  fueled by another person's body, memories, life, relationships, or sacrifice. Fate recognizes only
+  one account: **who truly wished** and **who was permanently diminished** — and those must be the
+  *same person*. No substitutions, no proxies, no magical batteries, no sacrificial slaves. No king,
+  master, or god can spend another's years, fingers, fertility, memories, or life to power their own
+  wish. This is an immutable law of Fate itself, not a social custom — as foundational as Alignment,
+  Stacking, Guarding, and Conservation. (Conservation says *you must spend something real to you*;
+  Personal Sacrifice says *and it must be **you**, never anyone else.*)
+  - **Coercion doesn't vanish — it changes form.** You cannot *take* a wish from someone, but you
+    can threaten, blackmail, indoctrinate, torture, extort, or break a person until **they** choose
+    to wish for your benefit. If they become genuinely **aligned** with that wish — even through
+    fear, desperation, or love — it functions normally. But the sacrifice is still taken **from
+    them**; the beneficiary pays nothing. And Alignment still governs: simply forcing words from a
+    mouth is not enough, and a half-hearted, divided wish **warps**. So coercion is psychologically
+    hard, unreliable, and dramatically interesting — never mechanically trivial. Societies that run
+    on coerced wishing therefore build institutions for manufacturing *genuine alignment*: hostages
+    and threats against loved ones, ideological and religious conditioning, torture meant to reshape
+    *desire* rather than merely inflict pain, and bargains where the victim concludes that wishing is
+    their least terrible option. Success always hinges on Alignment, never on ownership.
+  - **How do you imprison a wisher? Never just chains.** Because you cannot confiscate the *power*,
+    jailers attack the *conditions for Alignment*: **wish-lock manacles**, alignment-disrupting
+    restraints, deliberate interruption of concentration, isolation from allies (to deny Stacking),
+    sedation or engineered exhaustion, heavy warding, and architecture built to frustrate wishing. A
+    wish-lock does **not** "turn magic off" — the prisoner's power still exists; it floods them with
+    intrusive doubt, fractured concentration, emotional static, an inability to hold a singular
+    intent, so they can never form a clean, aligned wish. None of this violates Personal Sacrifice —
+    it just makes alignment impossible to reach.
+  - **The philosophical core:** Fate recognizes neither ownership nor authority — only **truth and
+    sacrifice**. Kings, masters, governments, contracts, slavery, and law may decide who *controls*
+    another person; they never decide who *pays*. Only the true wisher is ever diminished. (For the
+    page: villains never "spend" other people's sacrifices directly; coercive wish magic is always
+    *psychological*, never mechanical; prison and slavery stories are about suppressing or bending
+    Alignment, not merely restraining bodies; and a hero is marked by willingly paying their *own*
+    price instead of compelling someone else to pay it.)
+
 - **Stacking (wishes multiply):** two or more wishers aligned to the *same* truth pool their
   wishes and the power **multiplies, not adds** — a couple's shared wish outstrips either alone; a
   whole city of mages, wishing as one, once split and warped a **moon-sized void** out of the sky.
