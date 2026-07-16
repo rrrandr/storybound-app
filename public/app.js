@@ -163352,6 +163352,40 @@ No text, no watermark, no UI elements, share-ready.`;
     hair: 'other', tooth: 'other', blood: 'other', flesh: 'other',
     memory: 'memory_lost', name: 'identity_altered', life: 'years_taken'
   };
+  // TRULY-SINGULAR permanent losses — can be taken ONCE and never again (you have
+  // one name/self, one voice, one specific eye, one fertility). Once its durable
+  // type is on the books, Fate may not claim that same currency a second time.
+  // REPEATABLE currencies (blood/hair/tooth/flesh, a spent YEAR, a GENERIC memory,
+  // luck) stay available — you regrow neither a follicle nor a year, but you HAVE
+  // more of them, so Fate can keep taking. Keyed to the actual SACRIFICE_DOMAINS
+  // pool; extra keys (voice/fertility/eye…) are here so the de-dup stays correct
+  // if the pool ever widens. Singular-ness is a CURRENCY property (a *specific*
+  // memory would be singular; the generic "memory" currency is repeatable).
+  var _WISH_CURRENCY_SINGULAR = {
+    hair: false, tooth: false, blood: false, flesh: false, memory: false,
+    name: true, life: false,
+    voice: true, fertility: true, eye: true, hand: true, finger: true
+  };
+
+  // Disposition SLUG → natural author-facing PHRASE. The slug is a machine label
+  // ("nearly-impossible", "strongly-resists") and must NEVER be interpolated as a
+  // verb ("Fate nearly impossible this kind of ask"). Use this everywhere the
+  // disposition appears in author-facing text.
+  var _WISH_DISPOSITION_PHRASE = {
+    'welcomes':          'Fate welcomes this kind of ask',
+    'usually-welcomes':  'Fate usually welcomes this kind of ask',
+    'cautious':          'Fate is cautious with this kind of ask',
+    'risky':             'this kind of ask is risky before Fate',
+    'resists':           'Fate resists this kind of ask',
+    'strongly-resists':  'Fate strongly resists this kind of ask',
+    'nearly-impossible': 'Fate almost never grants this kind of ask'
+  };
+  function _wishDispositionPhrase(disposition) {
+    var slug = String(disposition == null ? '' : disposition).toLowerCase();
+    return _WISH_DISPOSITION_PHRASE[slug]
+      || ('Fate ' + slug.replace(/-/g, ' ') + ' this kind of ask');
+  }
+  window._wishDispositionPhrase = _wishDispositionPhrase;
 
   // _detectOrdinaryWishInvocation(act, dia) → null OR {invoked, signals, targetKey, offering}.
   // NEW INVOCATION FLOOR (Roman, 2026-07-16 — reversal): in Fatelands an explicit
@@ -163521,6 +163555,21 @@ No text, no watermark, no UI elements, share-ready.`;
         return idx >= floorIdx && idx <= ceilIdx;
       });
       if (!inBand.length) inBand = pool.slice();
+      // ── DE-DUP: Fate cannot take an ALREADY-LOST singular permanent thing twice.
+      //    Exclude any TRULY-SINGULAR currency whose durable type is already on the
+      //    books (name→identity_altered already recorded ⇒ name off the table).
+      //    REPEATABLE currencies (blood/hair/tooth/flesh, a year, a generic memory)
+      //    stay available. If the band's meaningful currencies are all exhausted,
+      //    return null so the caller DEEPENS THE OPEN DEBT instead of double-taking.
+      var _dc = (window.state && Array.isArray(window.state._durableFateConsequences)) ? window.state._durableFateConsequences : [];
+      var _spent = {};
+      for (var _di = 0; _di < _dc.length; _di++) { if (_dc[_di] && _dc[_di].type) _spent[_dc[_di].type] = true; }
+      var _avail = inBand.filter(function (c) {
+        if (!_WISH_CURRENCY_SINGULAR[c]) return true;              // repeatable → always available
+        return !_spent[_WISH_CURRENCY_DURABLE[c] || 'other'];      // singular → only if not already spent
+      });
+      if (!_avail.length) return null;                            // exhausted → caller records/extends Open Debt
+      inBand = _avail;
       var region = (window.state && String(window.state.fantasyRegion || '').toLowerCase()) || '';
       var regionCur = _WISH_REGION_CURRENCY[region] || null;
       var affinity = _WISH_ORDER_AFFINITY[order] || null;
@@ -163599,13 +163648,18 @@ No text, no watermark, no UI elements, share-ready.`;
       var outLabel = { landed: 'LANDS CLEAN', distorted: 'LANDS DISTORTED', warped: 'SEMANTIC WARP', refused: 'REFUSED (vanishingly rare)' }[o.outcome] || o.outcome;
       var d = '\n═══ ORDINARY FATE-WISH (the PC bargained with Fate directly, in Say/Do) ═══\n';
       d += 'GOVERNING DESIRE: ' + (o.cls.governingDesire || '(unspoken)') + '\n';
-      d += 'ORDER OF BARGAIN: ' + o.order + ' — Fate ' + String(o.disposition).replace(/-/g, ' ') + ' this kind of ask';
+      d += 'ORDER OF BARGAIN: ' + o.order + ' — ' + _wishDispositionPhrase(o.disposition);
       if (o.cls.secondaryOrders && o.cls.secondaryOrders.length) d += ' (also touches ' + o.cls.secondaryOrders.join(', ') + ')';
       d += '.\n';
-      d += 'THE OFFER vs THE PRICE: the PC OFFERED ' + offerTxt + '. FATE TAKES the PC’s ' + o.taken + ' (' + o.takenMag + ', within the ' + o.bandLabel + ' band). ';
-      d += o.offerHonored
-        ? 'Fate accepts the offered price this time.\n'
-        : 'FATE DOES NOT TAKE WHAT WAS OFFERED — it claims the ' + o.taken + ' instead (same band). The wisher offers; FATE chooses. Show the PC discover what Fate actually takes.\n';
+      if (o.exhausted) {
+        // Band's singular prices are all already spent — Fate takes nothing new.
+        d += 'THE OFFER vs THE PRICE: the PC OFFERED ' + offerTxt + '. But Fate has ALREADY claimed every singular price this bargain could take within the ' + o.bandLabel + ' band — a name, a self, a given faculty cannot be taken twice. FATE TAKES NOTHING NEW here; instead it DEEPENS the Open Debt it already carries. Show the PC feel the price go on the tab, not the body.\n';
+      } else {
+        d += 'THE OFFER vs THE PRICE: the PC OFFERED ' + offerTxt + '. FATE TAKES the PC’s ' + o.taken + ' (' + o.takenMag + ', within the ' + o.bandLabel + ' band). ';
+        d += o.offerHonored
+          ? 'Fate accepts the offered price this time.\n'
+          : 'FATE DOES NOT TAKE WHAT WAS OFFERED — it claims the ' + o.taken + ' instead (same band). The wisher offers; FATE chooses. Show the PC discover what Fate actually takes.\n';
+      }
       d += 'OUTCOME: ' + outLabel + '. ';
       if (o.outcome === 'landed') d += 'The desire is met plainly; the loss is real and permanent.\n';
       else if (o.outcome === 'distorted') d += 'The desire arrives, but wrong — incomplete, rippling past its target, or missing a critical piece. Legible cause: the loss reshapes the result.\n';
@@ -163659,10 +163713,13 @@ No text, no watermark, no UI elements, share-ready.`;
       var bandLabel = _WISH_MAG_ORDER[floorIdx] + (ceilIdx !== floorIdx ? '–' + _WISH_MAG_ORDER[ceilIdx] : '');
       if (bargain && !bargain.band) bargain.band = bandLabel;
 
-      // 4) FATE CHOOSES THE SACRIFICE within the band (offer only biases)
+      // 4) FATE CHOOSES THE SACRIFICE within the band (offer only biases). null =
+      //    every meaningful in-band currency is an already-spent singular loss →
+      //    Fate takes NOTHING new and DEEPENS the Open Debt (see step 6).
       var takenCurrency = _fateChooseSacrifice(order, floorIdx, ceilIdx, targetIdx, inv.offering);
-      var takenMag = _WISH_CURRENCY_MAG[takenCurrency] || _WISH_MAG_ORDER[targetIdx];
-      var offerHonored = !!(inv.offering && inv.offering === takenCurrency);
+      var sacrificeExhausted = (takenCurrency == null);
+      var takenMag = sacrificeExhausted ? null : (_WISH_CURRENCY_MAG[takenCurrency] || _WISH_MAG_ORDER[targetIdx]);
+      var offerHonored = !!(inv.offering && !sacrificeExhausted && inv.offering === takenCurrency);
 
       // 5) OUTCOME by disposition + alignment + escalation
       var alignment = _wishAlignment(text);
@@ -163670,8 +163727,8 @@ No text, no watermark, no UI elements, share-ready.`;
       var translation = (outcome === 'warped') ? _wishWarpTranslation(cls) : null;
 
       // 6) record durable state (the Fate-taken sacrifice + any Open Debt), ledger, bargain status
-      var durableType = _WISH_CURRENCY_DURABLE[takenCurrency] || 'other';
-      if (typeof _recordDurableConsequence === 'function') {
+      var durableType = sacrificeExhausted ? null : (_WISH_CURRENCY_DURABLE[takenCurrency] || 'other');
+      if (!sacrificeExhausted && typeof _recordDurableConsequence === 'function') {
         _recordDurableConsequence({
           type: durableType,
           detail: 'Fate took the PC’s ' + takenCurrency + ' (' + takenMag + ') for the bargain: ' + (cls.governingDesire || 'a wish'),
@@ -163679,11 +163736,15 @@ No text, no watermark, no UI elements, share-ready.`;
           bargainId: bargain && bargain.id
         });
       }
-      var openDebt = (escalation >= 2) || (outcome === 'warped' && escalation >= 1);
+      // Open Debt on: deepening escalation, a warp that already deepened once, OR
+      // an EXHAUSTED band (nothing left to take singularly → the price goes on the tab).
+      var openDebt = sacrificeExhausted || (escalation >= 2) || (outcome === 'warped' && escalation >= 1);
       if (openDebt && typeof _recordDurableConsequence === 'function') {
         _recordDurableConsequence({
           type: 'open_debt',
-          detail: 'Unpaid remainder of the ' + String(order).toLowerCase() + ' bargain "' + (cls.governingDesire || 'a wish') + '" — Fate carries the balance forward.',
+          detail: sacrificeExhausted
+            ? 'Fate has already claimed every singular price the ' + String(order).toLowerCase() + ' bargain "' + (cls.governingDesire || 'a wish') + '" could take — it takes nothing new and DEEPENS the balance carried forward.'
+            : 'Unpaid remainder of the ' + String(order).toLowerCase() + ' bargain "' + (cls.governingDesire || 'a wish') + '" — Fate carries the balance forward.',
           sceneIdx: sceneIdx,
           bargainId: bargain && bargain.id
         });
@@ -163710,7 +163771,7 @@ No text, no watermark, no UI elements, share-ready.`;
       return _buildOrdinaryWishDirective({
         cls: cls, order: order, disposition: disposition,
         offering: inv.offering, taken: takenCurrency, takenMag: takenMag,
-        offerHonored: offerHonored, bandLabel: bandLabel,
+        offerHonored: offerHonored, bandLabel: bandLabel, exhausted: sacrificeExhausted,
         outcome: outcome, translation: translation,
         escalation: escalation, attemptCount: attemptCount, openDebt: openDebt,
         bargain: bargain
