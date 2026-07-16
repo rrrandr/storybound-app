@@ -74424,6 +74424,18 @@ Return ONLY valid JSON:
       // starts with no Tempt history.
       state._temptFateLedger = null;
       state._fateTollLedger = null; // Fate Toll Phase 0 — embodied/world price per Fate bend (L3)
+      // Fatelands three-rail wish STATE (Roman 2026-07-16, step C). THREE
+      // SEPARATE L3 layers (per-story; survive intra-story SCENE resets because
+      // _resetStoryState fires only on a NEW story, NOT on scene resets — a
+      // permanent wish-cost must outlive every scene reset but clear on a fresh
+      // story). Deliberately NOT collapsed into one object:
+      //   L1 _openFateBargains        — ARRAY of active/unresolved desires; a
+      //        later rail (Petition/Tempt/Ordinary) can act on an 'open' one.
+      //   L2 _durableFateConsequences — canonical PERMANENT PC/world changes,
+      //        read DIRECTLY by generation (not dug out of the receipt book).
+      // (L3 receipt book = _fateTollLedger above, promoted to append-only history.)
+      state._openFateBargains = [];
+      state._durableFateConsequences = [];
       // Wry Distortion — Tempt Fate tone override (resets per story)
       state._wryDistortion = { active: false, scenesRemaining: 0, originalArtist: null, originalTone: null, hangoverScene: false };
       state._temptUsageCount = 0;
@@ -162976,6 +162988,264 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (_) { console.log(led); }
     return led;
   };
+
+  // ════════════════════════════════════════════════════════════════════════
+  // FATELANDS THREE-RAIL WISH — STEP C: 3-layer STATE foundation
+  // (Roman 2026-07-16, project_fatelands_wish_philosophy). Builds ONLY state +
+  // deterministic helpers + reset (above) + the durable-consequence directive
+  // builder. NOT wired into the turn pipeline / resolveSacrifice / cards yet
+  // (steps D–F). Reuses step-B classifyWishDisposition / normalizeGoverningDesire
+  // and the existing _obligationLedger / _recordObligationDebt for Open Debts.
+  //   L1 state._openFateBargains        — ARRAY of active/unresolved desires.
+  //   L2 state._durableFateConsequences — canonical PERMANENT PC/world changes.
+  //   L3 state._fateTollLedger          — append-only RECEIPT BOOK / history.
+  // ANTI-SPAM LAW: repeated attempts at the SAME governing desire = CONTINUATIONS
+  // of ONE bargain (deepen via escalation), NEVER fresh rolls.
+  // ════════════════════════════════════════════════════════════════════════
+  var _FATE_BARGAIN_STATUS = { open: true, resolved: true, warped: true, refused: true };
+  var _DURABLE_CONSEQUENCE_TYPES = { voice_lost: true, memory_lost: true, years_taken: true, identity_altered: true, sense_lost: true, bond_lost: true, luck_spent: true, boon_gained: true, open_debt: true, other: true };
+  var _DURABLE_CONSEQUENCE_LABEL = {
+    voice_lost:       'a voice / a sound the PC could make is gone',
+    memory_lost:      'a memory is gone',
+    years_taken:      'years of the PC\'s life were taken',
+    identity_altered: 'part of who the PC IS was permanently altered',
+    sense_lost:       'a sense is gone',
+    bond_lost:        'a bond / relationship was severed',
+    luck_spent:       'the PC\'s luck was spent down',
+    boon_gained:      'a permanent boon was gained',
+    open_debt:        'an unpaid Open Debt to Fate stands',
+    other:            'a permanent change'
+  };
+  // Fold a wish TARGET ("her", "my wife", "the king") to a stable key so the same
+  // subject collapses across rephrasings (mirrors the pronoun folding B uses).
+  var _FATE_TARGET_PRONOUN = { she: 'her', her: 'her', hers: 'her', herself: 'her', he: 'him', him: 'him', his: 'him', himself: 'him', they: 'them', them: 'them', their: 'them', theirs: 'them', themselves: 'them' };
+  function _normalizeTargetKey(t) {
+    try {
+      var s = String(t == null ? '' : t).toLowerCase().replace(/[^a-z0-9\s'-]/g, ' ').replace(/['-]/g, ' ');
+      var DROP = { the: 1, a: 1, an: 1, my: 1, your: 1, our: 1, of: 1, for: 1, to: 1 };
+      var toks = s.split(/\s+/).filter(Boolean).map(function (tok) { return _FATE_TARGET_PRONOUN[tok] || tok; });
+      var seen = {}, uniq = [];
+      toks.forEach(function (x) { if (x && !DROP[x] && !seen[x]) { seen[x] = true; uniq.push(x); } });
+      uniq.sort();
+      return uniq.join('|');
+    } catch (_) { return String(t == null ? '' : t).toLowerCase().trim(); }
+  }
+  // Two target keys are COMPATIBLE when they match, OR when either is unspecified
+  // (an unspecified target is a wildcard — "heal her wound" then "close the wound").
+  function _targetKeysCompatible(a, b) { return (!a || !b) ? true : (a === b); }
+
+  // ── LAYER 1: ACTIVE BARGAINS ────────────────────────────────────────────
+  // _findOrCreateFateBargain(classification, { rail, sceneIdx, offering, targetKey, text, band })
+  //   MATCH an OPEN bargain with the same desireKey (+ compatible targetKey).
+  //   Found  → CONTINUATION: attemptCount++, escalation = attemptCount-1 (monotonic,
+  //            never resets), lastInvokedScene updated. DEEPENS, never re-rolls.
+  //   None   → CREATE a fresh 'open' bargain (attemptCount 1, escalation 0), push.
+  function _findOrCreateFateBargain(classification, opts) {
+    try {
+      classification = classification || {};
+      opts = opts || {};
+      var st = window.state || {};
+      if (!Array.isArray(st._openFateBargains)) st._openFateBargains = [];
+      var sceneIdx = (opts.sceneIdx != null) ? opts.sceneIdx : (st.turnCount || 0);
+      var rail = opts.rail || 'ordinary';
+      var offering = (opts.offering != null) ? opts.offering : (classification.offering != null ? classification.offering : null);
+      var targetKey = _normalizeTargetKey(opts.targetKey != null ? opts.targetKey : (classification.targetKey || ''));
+
+      // desireKey = the anti-spam matching key. Prefer raw text to normalize;
+      // else normalize the classification's governingDesire (human-readable text).
+      var rawForKey = (opts.text != null && String(opts.text).trim())
+        ? opts.text
+        : (classification.governingDesire || '');
+      var desireKey = '';
+      try { if (typeof normalizeGoverningDesire === 'function') desireKey = normalizeGoverningDesire(rawForKey); } catch (_) {}
+      if (!desireKey) desireKey = String(rawForKey || '').toLowerCase().trim();
+
+      // MATCH: same desireKey + compatible targetKey, still open.
+      var found = null;
+      for (var i = 0; i < st._openFateBargains.length; i++) {
+        var b = st._openFateBargains[i];
+        if (!b || b.status !== 'open') continue;
+        if (b.desireKey !== desireKey) continue;
+        if (!_targetKeysCompatible(b.targetKey, targetKey)) continue;
+        found = b; break;
+      }
+
+      if (found) {
+        // CONTINUATION — deepen, never reset (anti-spam law).
+        found.attemptCount = (found.attemptCount || 1) + 1;
+        found.escalation   = found.attemptCount - 1;   // monotonic step
+        found.lastInvokedScene = sceneIdx;
+        if (rail) found.rail = rail;                    // record the latest rail used
+        if (offering != null) found.offering = offering;
+        if (!found.targetKey && targetKey) found.targetKey = targetKey; // pin a target once known
+        try { console.log('[FATE-BARGAIN] CONTINUATION desireKey="' + desireKey + '" attempt#' + found.attemptCount + ' escalation=' + found.escalation + ' rail=' + rail); } catch (_) {}
+        return found;
+      }
+
+      // CREATE — fresh bargain.
+      var entry = {
+        id: 'fb_' + sceneIdx + '_' + (st._openFateBargains.length + 1) + '_' + String(desireKey).replace(/[^a-z0-9]/gi, '').slice(0, 10),
+        desireKey: desireKey,
+        targetKey: targetKey,
+        governingDesire: classification.governingDesire || String(rawForKey || '').slice(0, 160),
+        dominantOrder: classification.dominantOrder || 'RESTORATION',
+        secondaryOrders: Array.isArray(classification.secondaryOrders) ? classification.secondaryOrders.slice() : [],
+        resistedOperation: classification.resistedOperation || null,
+        rail: rail,
+        band: (opts.band != null) ? opts.band : (classification.band != null ? classification.band : null),
+        offering: offering,
+        attemptCount: 1,
+        escalation: 0,
+        status: 'open',
+        createdScene: sceneIdx,
+        lastInvokedScene: sceneIdx
+      };
+      st._openFateBargains.push(entry);
+      try { console.log('[FATE-BARGAIN] NEW desireKey="' + desireKey + '" order=' + entry.dominantOrder + ' rail=' + rail + ' scene ' + (sceneIdx + 1)); } catch (_) {}
+      return entry;
+    } catch (e) {
+      try { console.warn('[FATE-BARGAIN] _findOrCreateFateBargain failed:', e && e.message); } catch (_) {}
+      return null;
+    }
+  }
+  window._findOrCreateFateBargain = _findOrCreateFateBargain;
+
+  // _fateBargainEscalationNote(bargain) → author-facing string describing what
+  // this bargain's ACCUMULATED escalation should DO. Per-desire (not global);
+  // shape modeled on the global petitionPressure ramp (~app.js:190586) but scoped
+  // to ONE governing desire. Escalation DEEPENS: raise the price toward top-of-band,
+  // push toward warp/distortion, expose an Open Debt, surface desperation.
+  function _fateBargainEscalationNote(bargain) {
+    try {
+      if (!bargain) return '';
+      var esc = +(bargain.escalation || 0);
+      var n = +(bargain.attemptCount || 1);
+      if (esc <= 0) {
+        return 'First invocation of this desire — the price sits at the FLOOR of its band; Fate answers plainly.';
+      }
+      // 0.25 per step toward top-of-band (parity with the global 0.1/step ramp but
+      // steeper, because these are DELIBERATE repeats of the SAME desire).
+      var pct = Math.round(Math.min(1, 0.25 * esc) * 100);
+      var pressure = (esc >= 3) ? 'SEVERE' : (esc >= 2 ? 'high' : 'rising');
+      return 'CONTINUATION of ONE ongoing bargain — attempt #' + n + ' at the SAME governing desire (escalation ' + esc + ', ' + pressure + '). Fate does NOT re-roll; it DEEPENS: '
+        + 'raise the price ~' + pct + '% toward the TOP of its band; '
+        + 'bias the outcome toward a WARP / DISTORTION over a clean grant; '
+        + 'if the wisher keeps pressing, exact an OPEN DEBT that carries forward; '
+        + 'let the prose show the wisher\'s deepening desperation.';
+    } catch (e) {
+      try { console.warn('[FATE-BARGAIN] _fateBargainEscalationNote failed:', e && e.message); } catch (_) {}
+      return '';
+    }
+  }
+  window._fateBargainEscalationNote = _fateBargainEscalationNote;
+
+  // ── LAYER 2: DURABLE CONSEQUENCES ───────────────────────────────────────
+  // _recordDurableConsequence({ type, detail, sceneIdx, bargainId }) — append a
+  // canonical PERMANENT change. An 'open_debt' ALSO records against the existing
+  // _obligationLedger (via _recordObligationDebt) rather than a parallel store.
+  function _recordDurableConsequence(spec) {
+    try {
+      spec = spec || {};
+      var st = window.state || {};
+      if (!Array.isArray(st._durableFateConsequences)) st._durableFateConsequences = [];
+      var type = _DURABLE_CONSEQUENCE_TYPES[spec.type] ? spec.type : 'other';
+      var sceneIdx = (spec.sceneIdx != null) ? spec.sceneIdx : (st.turnCount || 0);
+      var entry = {
+        id: 'fc_' + sceneIdx + '_' + (st._durableFateConsequences.length + 1) + '_' + type,
+        type: type,
+        detail: String(spec.detail == null ? '' : spec.detail).slice(0, 240),
+        sceneIdx: sceneIdx,
+        bargainId: spec.bargainId || null,
+        permanent: true
+      };
+      st._durableFateConsequences.push(entry);
+      try { console.log('[FATE-CONSEQUENCE] +' + type + ' @ scene ' + (sceneIdx + 1) + ': ' + entry.detail.slice(0, 80)); } catch (_) {}
+      // An OPEN DEBT is also an obligation — REUSE the existing ledger (spec).
+      // _recordObligationDebt requires {id}; reads {description, importance,
+      // paid, bornScene}. Do NOT invent a parallel debt store.
+      if (type === 'open_debt') {
+        try {
+          if (typeof _recordObligationDebt === 'function') {
+            _recordObligationDebt({
+              id: 'fatedebt_' + entry.id,
+              description: 'Open Debt to Fate: ' + (entry.detail || 'an unpaid price for a bargain'),
+              importance: 'hard',
+              bornScene: sceneIdx,
+              source: 'fate_bargain',
+              bargainId: entry.bargainId
+            });
+          }
+        } catch (_) {}
+      }
+      return entry;
+    } catch (e) {
+      try { console.warn('[FATE-CONSEQUENCE] _recordDurableConsequence failed:', e && e.message); } catch (_) {}
+      return null;
+    }
+  }
+  window._recordDurableConsequence = _recordDurableConsequence;
+
+  // _buildDurableFateConsequenceDirective() → SHORT author-facing directive
+  // listing the PC's still-active permanent wish-costs so the prose never forgets
+  // them. '' when none. (Builder only — NOT wired into any prompt yet; step D–F.)
+  function _buildDurableFateConsequenceDirective() {
+    try {
+      var st = window.state || {};
+      var list = Array.isArray(st._durableFateConsequences) ? st._durableFateConsequences : [];
+      if (!list.length) return '';
+      var parts = list.map(function (c) {
+        var d = String(c && c.detail || '').trim();
+        var label = _DURABLE_CONSEQUENCE_LABEL[c && c.type] || 'a permanent change';
+        var scene = (c && c.sceneIdx != null) ? (' (scene ' + (c.sceneIdx + 1) + ')') : '';
+        return (d || label) + scene;
+      });
+      return '\n  PERMANENT WISH-COSTS ALREADY PAID (Fate took these for earlier bargains; they are TRUE and NEVER restored — do not undo, heal, or forget them; keep them shaping the PC): '
+        + parts.join('; ') + '.\n';
+    } catch (e) {
+      try { console.warn('[FATE-CONSEQUENCE] _buildDurableFateConsequenceDirective failed:', e && e.message); } catch (_) {}
+      return '';
+    }
+  }
+  window._buildDurableFateConsequenceDirective = _buildDurableFateConsequenceDirective;
+
+  // ── LAYER 3: FATE LEDGER (receipt book) ─────────────────────────────────
+  // Promote _fateTollLedger from inert Phase-0 telemetry to a durable append-only
+  // HISTORY. _recordFateBargainToLedger(receipt) appends a FULL receipt per
+  // resolved bargain. HISTORY ONLY — NOT source of truth for the body (L2) or the
+  // open contract (L1). Coexists with the Phase-0 toll records already in the
+  // array; receipts carry kind:'bargain_receipt' + severity:0 so the existing
+  // toll readers (_projectFateToll landed-count, _fateTollAudit) ignore them.
+  function _recordFateBargainToLedger(receipt) {
+    try {
+      receipt = receipt || {};
+      var st = window.state || {};
+      if (!Array.isArray(st._fateTollLedger)) st._fateTollLedger = [];
+      var sceneIdx = (receipt.sceneIdx != null) ? receipt.sceneIdx : (st.turnCount || 0);
+      var rec = {
+        kind: 'bargain_receipt',
+        severity: 0,                 // keep Phase-0 toll readers' landed-count intact
+        scene: sceneIdx,             // mirror the toll records' field name
+        sceneIdx: sceneIdx,
+        rail: receipt.rail || 'ordinary',
+        wish: _FATE_TOLL_CLIP(receipt.wish),
+        governingDesire: String(receipt.governingDesire == null ? '' : receipt.governingDesire).slice(0, 160),
+        dominantOrder: receipt.dominantOrder || null,
+        offering: (receipt.offering != null) ? receipt.offering : null,
+        sacrificeTaken: (receipt.sacrificeTaken != null) ? receipt.sacrificeTaken : null,
+        outcome: receipt.outcome || null,           // 'landed' | 'warped' | 'distorted' | 'refused' | …
+        translation: receipt.translation || null,   // semantic-warp note, if any
+        bargainId: receipt.bargainId || null,
+        recordedAt: Date.now()
+      };
+      st._fateTollLedger.push(rec);
+      try { console.log('[FATE-LEDGER] receipt @ scene ' + (sceneIdx + 1) + ' rail=' + rec.rail + ' outcome=' + (rec.outcome || '?') + ' — entries on the books: ' + st._fateTollLedger.length); } catch (_) {}
+      return rec;
+    } catch (e) {
+      try { console.warn('[FATE-LEDGER] _recordFateBargainToLedger failed:', e && e.message); } catch (_) {}
+      return null;
+    }
+  }
+  window._recordFateBargainToLedger = _recordFateBargainToLedger;
 
   function _recordTemptFateEvent(wishText) {
     var s = window.state || {};
