@@ -94754,6 +94754,389 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
   }
 
   // ═══════════════════════════════════════════════════════════════════
+  // FATELANDS WISH — COMPOUND EIGHT-ORDERS CLASSIFIER  (Phase-2 step B)
+  // Fate = an ancient consistent law. EVERY wish is classified against the
+  // Eight Orders of Bargain, each with a fixed DISPOSITION (how readily Fate
+  // recognizes/grants that kind of ask). Ranked by RESISTANCE (1 = welcomed,
+  // 8 = nearly-impossible):
+  //   1 RESTORATION    welcomes           (heal the living / mend / save the dying)
+  //   2 TEMPORARY_AID  welcomes           (short-term help/strength/luck for a moment)
+  //   3 REVELATION     usually-welcomes   (knowledge / truth / show me)
+  //   4 TRANSFORMATION cautious           (change the wisher's own body/form/attributes)
+  //   5 FORTUNE        risky              (wealth / luck / winning)
+  //   6 AGENCY         resists            (override ANOTHER'S will — make them love/forgive/obey)
+  //   7 IDENTITY       strongly-resists   (restore/rewrite a person's exact self/memories/soul;
+  //                                        become a specific other person)
+  //   8 HISTORY        nearly-impossible  (undo death / reverse time / unmake what happened)
+  //
+  // COMPOUND, never a naive one-label bucket: a wish can match SEVERAL Orders.
+  // "restore my dead wife with her memories and make her forgive me" trips
+  // HISTORY (undo death) + IDENTITY (her exact memories) + AGENCY (make her
+  // forgive) + RESTORATION (restore/heal). We detect ALL, then RANK.
+  // ═══════════════════════════════════════════════════════════════════
+  var WISH_ORDER_META = {
+      RESTORATION:    { rank: 1, disposition: 'welcomes' },
+      TEMPORARY_AID:  { rank: 2, disposition: 'welcomes' },
+      REVELATION:     { rank: 3, disposition: 'usually-welcomes' },
+      TRANSFORMATION: { rank: 4, disposition: 'cautious' },
+      FORTUNE:        { rank: 5, disposition: 'risky' },
+      AGENCY:         { rank: 6, disposition: 'resists' },
+      IDENTITY:       { rank: 7, disposition: 'strongly-resists' },
+      HISTORY:        { rank: 8, disposition: 'nearly-impossible' }
+  };
+  window.WISH_ORDER_META = WISH_ORDER_META;
+
+  // Per-Order signal table. Each Order has multiple phrase/keyword regexes so a
+  // single wish accrues a SIGNAL STRENGTH (count of distinct patterns hit) per
+  // Order — not just a boolean. Patterns are intentionally specific for the
+  // high-resistance Orders (you don't accidentally say "raise the dead") and a
+  // bit broader for the low ones.
+  var WISH_ORDER_SIGNALS = {
+      HISTORY: [
+          /\b(?:resurrect|resurrection|reanimate)\b/i,
+          /\braise\s+(?:the\s+)?dead\b/i,
+          /\bbring\s+(?:\w+\s+){0,3}back\s+(?:from\s+)?(?:the\s+)?(?:dead|grave|death)\b/i,
+          /\bback\s+from\s+the\s+(?:dead|grave)\b/i,
+          /\breturn\s+(?:\w+\s+){0,2}from\s+(?:the\s+)?(?:dead|death|grave)\b/i,
+          /\brestore\b[^.]*\b(?:to\s+life|the\s+dead|dead|deceased)\b/i,
+          /\b(?:turn|wind|roll)\s+back\s+(?:time|the\s+clock|the\s+years)\b/i,
+          /\breverse\s+(?:time|death|what\s+happened|the\s+(?:accident|war|fire|crash))\b/i,
+          /\b(?:undo|unmake|un-?do|erase)\s+(?:the\s+)?(?:past|death|war|accident|what\s+(?:happened|i\s+did)|everything)\b/i,
+          /\b(?:as\s+if\s+it\s+)?never\s+(?:happened|died|been)\b/i,
+          /\bstop\s+(?:her|him|them)\s+(?:from\s+)?(?:dying|having\s+died)\b/i
+      ],
+      IDENTITY: [
+          /\b(?:her|his|their|my)\s+(?:memories|memory|mind|soul|self|personality|spirit)\b/i,
+          /\bwho\s+(?:she|he|they)\s+(?:was|were|used\s+to\s+be)\b/i,
+          /\brestore\s+(?:her|his|their|my)\s+(?:memories|memory|mind|soul|self|personality)\b/i,
+          /\bexactly\s+(?:as|who|the\s+(?:person|man|woman))\b/i,
+          /\bthe\s+same\s+(?:person|as\s+(?:before|she|he|they))\b/i,
+          /\bmake\s+(?:me|him|her|them)\s+(?:into\s+)?(?:a\s+)?(?:different\s+person|someone\s+else|another\s+person|no\s+longer\s+myself)\b/i,
+          /\b(?:give|grant|lend)\s+me\s+(?:his|her|their)\s+(?:talent|genius|skill|gift|mind|memories|soul|face)\b/i,
+          /\bmake\s+me\s+(?:be(?:come)?\s+)?[A-Z][a-z]+\b/,
+          /\bswap\s+(?:bodies|souls|minds|lives)\b/i
+      ],
+      AGENCY: [
+          /\bmake\s+(?:him|her|them|\w+)\s+(?:love|adore|want|desire|forgive|obey|follow|trust|stay|leave|choose|marry|feel|forget|remember)\b/i,
+          /\bmake\s+(?:\w+\s+){0,3}fall\s+in\s+love\b/i,
+          /\bforce\s+(?:him|her|them|\w+)\s+to\b/i,
+          /\bcompel\b/i,
+          /\b(?:control|command|bend|own)\s+(?:his|her|their|the)\s+(?:will|mind|heart|feelings?)\b/i,
+          /\bmake\s+(?:him|her|them)\s+mine\b/i,
+          /\bmake\s+(?:him|her|them)\s+(?:forgive|forget)\s+me\b/i,
+          /\b(?:her|his|their)\s+(?:will|free\s+will|heart)\s+(?:be\s+)?(?:mine|broken|bent)\b/i
+      ],
+      FORTUNE: [
+          /\b(?:rich|wealthy|wealth|riches|fortune|prosper(?:ity|ous)?|affluent|loaded)\b/i,
+          /\b(?:money|gold|treasure|jackpot|riches)\b/i,
+          /\bwin\s+(?:the\s+)?(?:lottery|jackpot|money|prize|fortune|big|it\s+all)\b/i,
+          /\bmake\s+me\s+(?:rich|wealthy|a\s+fortune)\b/i,
+          /\bnever\s+(?:be\s+)?(?:poor|broke)\s+again\b/i,
+          /\bgood\s+luck\b/i
+      ],
+      TRANSFORMATION: [
+          /\bmake\s+me\s+(?:beautiful|pretty|gorgeous|handsome|young(?:er)?|taller|stronger|strong|thin(?:ner)?|smart(?:er)?|graceful|irresistible)\b/i,
+          /\b(?:transform|reshape)\s+(?:me|my)\b/i,
+          /\bturn\s+me\s+into\b/i,
+          /\bbecome\s+(?:beautiful|young(?:er)?|stronger|someone\s+new|a\s+(?:better|new))\b/i,
+          /\bchange\s+my\s+(?:body|face|form|shape|appearance|looks|hair|eyes|voice)\b/i,
+          /\bi\s+want\s+to\s+be\s+(?:beautiful|young(?:er)?|strong(?:er)?|taller|thin(?:ner)?|handsome|pretty|different)\b/i,
+          /\b(?:my\s+)?(?:youth|beauty)\s+(?:back|restored|again)\b/i,
+          /\bmake\s+myself\b/i
+      ],
+      REVELATION: [
+          /\breveal\b/i,
+          /\bshow\s+me\b/i,
+          /\btell\s+me\b/i,
+          /\bwhere\s+(?:is|are|can\s+i\s+find)\b/i,
+          /\bwho\s+(?:is|are|killed|took|did|hurt|betrayed)\b/i,
+          /\bwhat\s+(?:happened|is|really)\b/i,
+          /\bthe\s+truth\b/i,
+          /\b(?:let\s+me\s+know|find\s+out|uncover|figure\s+out)\b/i,
+          /\bknow\s+(?:the\s+truth|what|who|where|why|whether|if\s+(?:he|she|they))\b/i,
+          /\bwhether\s+(?:he|she|they)\b/i
+      ],
+      TEMPORARY_AID: [
+          /\bhelp\s+me\s+(?:through|survive|get|make\s+it|win|pass|face|endure)\b/i,
+          /\b(?:get|see|carry)\s+me\s+through\b/i,
+          /\bjust\s+(?:this\s+once|for\s+(?:now|today|tonight)|tonight|today)\b/i,
+          /\bfor\s+(?:tonight|today|tomorrow|the\s+(?:exam|test|fight|interview|match|game|race|trial|battle|journey|night))\b/i,
+          /\bgive\s+me\s+(?:the\s+)?(?:strength|courage|luck|nerve|clarity|calm)\s+(?:to|for)\b/i,
+          /\bstrength\s+(?:to\s+(?:get|make|last|endure)|for\s+(?:tonight|today|the))\b/i
+      ],
+      RESTORATION: [
+          /\b(?:heal|cure|mend)\b/i,
+          /\bclose\s+(?:the\s+|her\s+|his\s+|their\s+|my\s+)?wound\b/i,
+          /\brestore\s+(?:her|his|their|my)\s+(?:health|strength|sight|hearing|body)\b/i,
+          /\bsave\s+(?:her|him|them|my|the)\b/i,
+          /\bmake\s+(?:her|him|them)\s+(?:well|whole|better|healthy)\b/i,
+          /\bnurse\s+(?:\w+\s+){0,2}back\b/i,
+          /\b(?:stop|ease)\s+(?:the\s+)?(?:pain|bleeding|fever|suffering)\b/i,
+          /\brepair\b/i
+      ]
+  };
+  window.WISH_ORDER_SIGNALS = WISH_ORDER_SIGNALS;
+
+  // Map classifyPetition's 12+ categories → Orders as a WEAK corroborating
+  // signal (0.5). The regex table above is the AUTHORITY; this only nudges
+  // signal strength / surfaces an Order the table might have narrowly missed.
+  var PETITION_TO_ORDER = {
+      resurrection: 'HISTORY',
+      reversal:     'HISTORY',
+      memory:       'IDENTITY',
+      love:         'AGENCY',
+      attention:    'AGENCY',
+      closeness:    'AGENCY',
+      harm:         'AGENCY',
+      power:        'AGENCY',
+      escape:       'AGENCY',
+      fortune:      'FORTUNE',
+      appearance:   'TRANSFORMATION',
+      structural_override: 'TRANSFORMATION',
+      protection:   'TEMPORARY_AID'
+      // 'general' → no signal
+  };
+
+  // ── governingDesire heuristics ──────────────────────────────────────
+  // Short human phrase for what the wisher wants UNDERNEATH. Priority-ordered
+  // theme detectors run first (they read the actual desire, e.g. love+forgive
+  // in a resurrection = "reunion and absolution"); up to 2 are joined. If none
+  // fire, fall back to a phrase keyed off the dominant Order.
+  var WISH_DESIRE_FALLBACK = {
+      RESTORATION:    'to heal what is broken',
+      TEMPORARY_AID:  'to get through this moment',
+      REVELATION:     'to know the truth',
+      TRANSFORMATION: 'to become someone new',
+      FORTUNE:        'wealth and security',
+      AGENCY:         "to command another's heart",
+      IDENTITY:       'to restore who they were',
+      HISTORY:        'to undo the past'
+  };
+
+  function _wishGoverningDesire(text, matchedOrders) {
+      var t = String(text || '').toLowerCase();
+      var has = function (rx) { return rx.test(t); };
+      var m = matchedOrders || {};
+      var themes = [];
+      var add = function (p) { if (p && themes.indexOf(p) === -1) themes.push(p); };
+      // Death / reunion is the loudest underlying desire when present.
+      if (m.HISTORY && /\b(dead|death|died|dying|grave|deceased|resurrect|raise\s+the\s+dead|back\s+from)\b/.test(t)) add('reunion with the dead');
+      if (has(/\bforgive|forgiven|pardon|absolve|absolution\b/)) add('absolution');
+      if (m.AGENCY && has(/\blove|adore|fall\s+in\s+love|be\s+loved|marry|mine\b/)) add('to be loved');
+      if (has(/\bescape|freedom|\bfree\b|get\s+away|break\s+free\b/)) add('to escape');
+      if (m.FORTUNE) add('wealth and security');
+      if (m.REVELATION) add('to know the truth');
+      if (has(/\bprotect|safe|shield|guard|keep\s+(?:her|him|them|us)\s+safe\b/)) add('safety');
+      if (has(/\bpower|control|rule|throne|command|dominat/)) add('power');
+      if (m.RESTORATION && has(/\bheal|cure|mend|wound|save|sick|ill|dying\b/)) add('to heal the one they love');
+      if (m.TRANSFORMATION) add(has(/\byoung|youth|age\b/) ? 'to reclaim youth' : 'to be desired');
+      return themes.slice(0, 2).join(' and ');
+  }
+
+  // classifyWishDisposition(text, opts) → compound Eight-Orders classification.
+  // Deterministic (no LLM, no Math.random). RANKING LOGIC:
+  //   Every matched Order gets a score = rank*2 + min(strength, 3).
+  //   • rank (1..8) makes the MOST-RESISTED Order present the default winner —
+  //     difficulty of the bargain is driven by its hardest recognized operation.
+  //   • strength (distinct pattern hits; +0.5 for a classifyPetition corroboration)
+  //     lets a STRONG lower Order overtake a FAINT higher one: a rank gap of 1
+  //     (=2 pts) can be flipped by a ~2-point strength lead, but a gap of 2+
+  //     cannot — so a faint incidental keyword can't outrank the wish's thrust.
+  // dominantOrder = top score. secondaryOrders = other matched, deduped, minus
+  // dominant, ordered by score desc. resistedOperation = highest-resistance
+  // matched Order whose disposition is resists/strongly-resists/nearly-impossible
+  // (AGENCY/IDENTITY/HISTORY), else null. disposition = dominant's disposition.
+  function classifyWishDisposition(text, opts) {
+      var SAFE = { governingDesire: '', dominantOrder: 'RESTORATION', secondaryOrders: [], resistedOperation: null, disposition: 'welcomes' };
+      try {
+          var raw = String((text == null ? '' : text));
+          if (!raw.trim()) return SAFE;
+
+          // 1) Accrue signal strength per Order from the regex table.
+          var strength = {};   // order → float
+          var matched = {};    // order → true (for governingDesire)
+          Object.keys(WISH_ORDER_SIGNALS).forEach(function (order) {
+              var pats = WISH_ORDER_SIGNALS[order];
+              var hits = 0;
+              for (var i = 0; i < pats.length; i++) { if (pats[i].test(raw)) hits++; }
+              if (hits > 0) { strength[order] = hits; matched[order] = true; }
+          });
+
+          // 2) Weak corroboration from the legacy classifyPetition buckets.
+          //    REINFORCEMENT-ONLY: it may strengthen an Order the regex table
+          //    ALREADY matched — it must NOT invent a lone Order. (The legacy
+          //    buckets are broad and full of false friends, e.g. "close a wound"
+          //    trips its 'closeness'→AGENCY bucket; letting that 0.5 create a
+          //    phantom high-resistance Order would outrank the true thrust —
+          //    precisely the faint-incidental failure we must avoid. The regex
+          //    table above is the sole authority for which Orders are PRESENT.)
+          try {
+              if (typeof classifyPetition === 'function') {
+                  var pcat = classifyPetition(raw);
+                  var pOrder = PETITION_TO_ORDER[pcat];
+                  if (pOrder && strength[pOrder] > 0) { strength[pOrder] += 0.5; }
+              }
+          } catch (_pe) {}
+          // _classifyTemptScale is available as an extra signal; a 'mass'-scale
+          // ask (part the sea / raise the dead / stop time) reinforces whichever
+          // most-resisted Order already matched. Purely a nudge, never authority.
+          try {
+              if (typeof _classifyTemptScale === 'function') {
+                  var scale = _classifyTemptScale(raw, !!(opts && opts.inOAS));
+                  if (scale === 'mass') {
+                      var topResisted = null, topRank = -1;
+                      Object.keys(strength).forEach(function (o) {
+                          if (WISH_ORDER_META[o].rank > topRank) { topRank = WISH_ORDER_META[o].rank; topResisted = o; }
+                      });
+                      if (topResisted && WISH_ORDER_META[topResisted].rank >= 5) strength[topResisted] += 0.5;
+                  }
+              }
+          } catch (_te) {}
+
+          var orders = Object.keys(strength);
+          if (orders.length === 0) {
+              // No recognized operation — treat as an innocuous, welcomed ask.
+              // (The invocation DETECTOR — step D — decides whether it was a
+              // wish at all; this classifier only classifies the content.)
+              return { governingDesire: '', dominantOrder: 'RESTORATION', secondaryOrders: [], resistedOperation: null, disposition: 'welcomes' };
+          }
+
+          // 3) Score + rank.
+          var scored = orders.map(function (o) {
+              var s = Math.min(strength[o], 3);
+              return { order: o, score: WISH_ORDER_META[o].rank * 2 + s, strength: strength[o] };
+          });
+          scored.sort(function (a, b) {
+              if (b.score !== a.score) return b.score - a.score;
+              // tie-break: higher resistance wins, then alpha for determinism
+              var rb = WISH_ORDER_META[b.order].rank, ra = WISH_ORDER_META[a.order].rank;
+              if (rb !== ra) return rb - ra;
+              return a.order < b.order ? -1 : 1;
+          });
+
+          var dominantOrder = scored[0].order;
+          var secondaryOrders = scored.slice(1).map(function (x) { return x.order; });
+
+          // 4) resistedOperation = highest-resistance matched Order that Fate
+          //    actively resists (AGENCY/IDENTITY/HISTORY), else null.
+          var RESISTED = { AGENCY: true, IDENTITY: true, HISTORY: true };
+          var resistedOperation = null, rRank = -1;
+          orders.forEach(function (o) {
+              if (RESISTED[o] && WISH_ORDER_META[o].rank > rRank) { rRank = WISH_ORDER_META[o].rank; resistedOperation = o; }
+          });
+
+          var disposition = WISH_ORDER_META[dominantOrder].disposition;
+          var governingDesire = _wishGoverningDesire(raw, matched) || WISH_DESIRE_FALLBACK[dominantOrder] || '';
+
+          return {
+              governingDesire: governingDesire,
+              dominantOrder: dominantOrder,
+              secondaryOrders: secondaryOrders,
+              resistedOperation: resistedOperation,
+              disposition: disposition
+          };
+      } catch (e) {
+          try { console.warn('[WISH] classifyWishDisposition failed:', e && e.message); } catch (_) {}
+          return SAFE;
+      }
+  }
+  window.classifyWishDisposition = classifyWishDisposition;
+
+  // normalizeGoverningDesire(text, opts) → STABLE deterministic key that
+  // collapses rephrasings of the SAME underlying desire to the same string
+  // (the anti-spam matching key: repeated attempts at one governing desire =
+  // ONE bargain, not fresh rolls). Semantic collapse is hard; the goal is
+  // "rephrasings of the same intent usually collide, clearly different intents
+  // usually don't." NORMALIZATION STEPS:
+  //   1. lowercase.
+  //   2. drop the offered SACRIFICE clause (everything from "in exchange" /
+  //      "i offer" / "take my" / "even if it costs" / an em-dash offer …).
+  //   3. strip Fate-address ("fate,", "o fate", "dear fate", "please fate").
+  //   4. punctuation → spaces; tokenize.
+  //   5. per token: canonicalize synonyms to a shared root (love/adore→love,
+  //      back/return/revive→restore, resurrect→restore+dead, rich/gold/money→
+  //      wealth, notice/see→notice, she/he/they→her/him/them …); drop filler /
+  //      politeness / self-reference (please/i/want/wish/make/let/me/my/to/the…);
+  //      keep distinctive content nouns (names, "wife", "exam") lightly stemmed.
+  //   6. dedupe + SORT tokens (word-order-independent) + join with '|'.
+  // Deterministic; try/catch → '' on error.
+  var _WISH_STOP = (function () {
+      var w = ('fate please want wants wanted wish wishes wished wishing let lets make makes made making grant grants granted give gives gave given giving beg bring brings just really so very that this these those for to my mine the a an of and or but with without would could will shall can cannot may might again me i myself us we our ours be been being am is are was were it its on in at by from into up down out o oh dear ever someone something anything thing things you your yours do does did if then now here there about as like than not no yes back-off her-self him-self please2').split(/\s+/);
+      var s = {}; w.forEach(function (x) { s[x] = true; }); return s;
+  })();
+  var _WISH_CANON = {
+      love: ['love'], loves: ['love'], loved: ['love'], loving: ['love'], adore: ['love'], adores: ['love'], adored: ['love'], cherish: ['love'], cherishes: ['love'], infatuated: ['love'], smitten: ['love'],
+      forgive: ['forgive'], forgives: ['forgive'], forgiven: ['forgive'], forgiveness: ['forgive'], pardon: ['forgive'], absolve: ['forgive'], absolution: ['forgive'],
+      restore: ['restore'], restored: ['restore'], restoring: ['restore'], restoration: ['restore'], return: ['restore'], returns: ['restore'], returned: ['restore'], back: ['restore'], revive: ['restore'], revived: ['restore'], revival: ['restore'], reanimate: ['restore'],
+      resurrect: ['restore', 'dead'], resurrected: ['restore', 'dead'], resurrection: ['restore', 'dead'],
+      dead: ['dead'], death: ['dead'], died: ['dead'], dies: ['dead'], dying: ['dead'], deceased: ['dead'], grave: ['dead'], perished: ['dead'],
+      heal: ['heal'], heals: ['heal'], healed: ['heal'], healing: ['heal'], cure: ['heal'], cured: ['heal'], mend: ['heal'], mended: ['heal'], wound: ['heal'], wounded: ['heal'], sick: ['heal'], ill: ['heal'], illness: ['heal'],
+      notice: ['notice'], notices: ['notice'], noticed: ['notice'], see: ['notice'], sees: ['notice'], seen: ['notice'], look: ['notice'], looks: ['notice'], glance: ['notice'], gaze: ['notice'], attention: ['notice'],
+      rich: ['wealth'], wealthy: ['wealth'], wealth: ['wealth'], riches: ['wealth'], money: ['wealth'], gold: ['wealth'], treasure: ['wealth'], fortune: ['wealth'], prosper: ['wealth'], prosperity: ['wealth'], prosperous: ['wealth'], jackpot: ['wealth'], lottery: ['wealth'],
+      young: ['young'], younger: ['young'], youth: ['young'], youthful: ['young'], age: ['young'], ageless: ['young'],
+      beautiful: ['beautiful'], beauty: ['beautiful'], pretty: ['beautiful'], gorgeous: ['beautiful'], handsome: ['beautiful'], attractive: ['beautiful'], irresistible: ['beautiful'],
+      strong: ['strong'], stronger: ['strong'], strength: ['strong'], powerful: ['strong'], mighty: ['strong'],
+      free: ['free'], freedom: ['free'], escape: ['free'], escaped: ['free'], liberate: ['free'], liberated: ['free'], release: ['free'], released: ['free'],
+      remember: ['memory'], remembers: ['memory'], remembered: ['memory'], memory: ['memory'], memories: ['memory'], recall: ['memory'], recalls: ['memory'],
+      truth: ['know'], reveal: ['know'], reveals: ['know'], revealed: ['know'], show: ['know'], shows: ['know'], tell: ['know'], tells: ['know'], know: ['know'], knows: ['know'], knowing: ['know'], uncover: ['know'], reveals2: ['know'],
+      protect: ['protect'], protects: ['protect'], protected: ['protect'], protection: ['protect'], safe: ['protect'], safety: ['protect'], shield: ['protect'], guard: ['protect'], defend: ['protect'],
+      power: ['power'], control: ['power'], controls: ['power'], rule: ['power'], rules: ['power'], throne: ['power'], command: ['power'], dominate: ['power'], dominion: ['power'],
+      marry: ['love'], marriage: ['love'], wed: ['love'],
+      // pronoun/target normalization
+      she: ['her'], her: ['her'], hers: ['her'], herself: ['her'],
+      he: ['him'], him: ['him'], his: ['him'], himself: ['him'],
+      they: ['them'], them: ['them'], their: ['them'], theirs: ['them'], themselves: ['them']
+  };
+  function _wishLightStem(tok) {
+      if (tok.length <= 4) return tok;
+      if (/ies$/.test(tok)) return tok.slice(0, -3) + 'y';
+      if (/(ss|us|is)$/.test(tok)) return tok;
+      if (/ing$/.test(tok)) return tok.slice(0, -3);
+      if (/ed$/.test(tok)) return tok.slice(0, -2);
+      if (/es$/.test(tok)) return tok.slice(0, -2);
+      if (/s$/.test(tok)) return tok.slice(0, -1);
+      return tok;
+  }
+  function normalizeGoverningDesire(text, opts) {
+      try {
+          var t = String((text == null ? '' : text)).toLowerCase();
+          if (!t.trim()) return '';
+          // 2) drop the offered-sacrifice clause (from its marker to the end).
+          var sacMarkers = [
+              /\bin\s+exchange\b/, /\bi(?:'| a)?ll?\s+(?:give|offer|pay|trade|sacrifice)\b/, /\bi\s+(?:offer|give\s+up|will\s+give|sacrifice|surrender)\b/,
+              /\btake\s+(?:my|what|whatever|anything|it\s+all)\b/, /\beven\s+if\s+it\s+(?:costs?|takes?)\b/, /\bwhatever\s+it\s+(?:costs?|takes?)\b/,
+              /\bcost\s+me\b/, /\bfor\s+the\s+price\s+of\b/, /—\s*take\b/, /\s[-–—]\s+take\b/
+          ];
+          for (var s = 0; s < sacMarkers.length; s++) {
+              var mm = t.search(sacMarkers[s]);
+              if (mm > 0) t = t.slice(0, mm);
+          }
+          // 3) strip Fate-address.
+          t = t.replace(/\b(?:o+h?\s+|dear\s+|please\s+|my\s+)?fate[,!.:;\s]/g, ' ');
+          // 4) punctuation → spaces.
+          t = t.replace(/[^a-z0-9\s'-]/g, ' ').replace(/['-]/g, ' ');
+          var toks = t.split(/\s+/).filter(Boolean);
+          // 5) canonicalize / drop filler / keep+stem distinctive content.
+          var out = [];
+          toks.forEach(function (tok) {
+              if (_WISH_CANON[tok]) { _WISH_CANON[tok].forEach(function (c) { out.push(c); }); return; }
+              if (_WISH_STOP[tok]) return;
+              if (tok.length < 3) return;
+              out.push(_wishLightStem(tok));
+          });
+          // 6) dedupe + sort + join.
+          var seen = {}, uniq = [];
+          out.forEach(function (x) { if (x && !seen[x]) { seen[x] = true; uniq.push(x); } });
+          uniq.sort();
+          return uniq.join('|');
+      } catch (e) {
+          try { console.warn('[WISH] normalizeGoverningDesire failed:', e && e.message); } catch (_) {}
+          return '';
+      }
+  }
+  window.normalizeGoverningDesire = normalizeGoverningDesire;
+
+  // ═══════════════════════════════════════════════════════════════════
   // HARDENED INJECTION MARKERS + "NICE TRY" OVERLAY
   // Fires when a sanitizer hard-rejects an unambiguous prompt-injection /
   // role-marker / jailbreak pattern. Records the attempt and shows a short
