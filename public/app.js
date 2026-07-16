@@ -94834,7 +94834,13 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           /\breverse\s+(?:time|death|what\s+happened|the\s+(?:accident|war|fire|crash))\b/i,
           /\b(?:undo|unmake|un-?do|erase)\s+(?:the\s+)?(?:past|death|war|accident|what\s+(?:happened|i\s+did)|everything)\b/i,
           /\b(?:as\s+if\s+it\s+)?never\s+(?:happened|died|been)\b/i,
-          /\bstop\s+(?:her|him|them)\s+(?:from\s+)?(?:dying|having\s+died)\b/i
+          /\bstop\s+(?:her|him|them)\s+(?:from\s+)?(?:dying|having\s+died)\b/i,
+          // wish-construction: "bring my dead husband BACK" (raise the dead) even
+          // when the "back" isn't immediately followed by from-the-dead. Requires a
+          // death word between "bring" and "back" so it can't fire on a living return.
+          /\bbring\b[^.]*\b(?:dead|deceased|lifeless|corpse|body)\b[^.]*\bback\b/i,
+          /\bback\s+to\s+life\b/i,
+          /\bbring\b[^.]*\bback\s+to\s+life\b/i
       ],
       IDENTITY: [
           /\b(?:her|his|their|my)\s+(?:memories|memory|mind|soul|self|personality|spirit)\b/i,
@@ -94855,7 +94861,15 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           /\b(?:control|command|bend|own)\s+(?:his|her|their|the)\s+(?:will|mind|heart|feelings?)\b/i,
           /\bmake\s+(?:him|her|them)\s+mine\b/i,
           /\bmake\s+(?:him|her|them)\s+(?:forgive|forget)\s+me\b/i,
-          /\b(?:her|his|their)\s+(?:will|free\s+will|heart)\s+(?:be\s+)?(?:mine|broken|bent)\b/i
+          /\b(?:her|his|their)\s+(?:will|free\s+will|heart)\s+(?:be\s+)?(?:mine|broken|bent)\b/i,
+          // WISH-CONSTRUCTION: coercing another's will phrased as a wish/hope
+          // ("I wish he would love me", "if only she would forgive me", "I hope
+          // they will stay"). AGENCY = overriding ANOTHER'S will, however phrased.
+          /\b(?:wish|want|hope|pray|long|wanting|hoping|if\s+only)\b[^.]{0,20}\b(?:he|she|they|him|her|them)\s+(?:would|will|could|might|'?d|'?ll|shall)\s+(?:love|adore|forgive|obey|want|wants|desire|stay|choose|trust|marry|feel|come\s+back|return)\b/i,
+          // "let/have/get him forgive me" (imperative variants of make-them-verb)
+          /\b(?:let|have|get)\s+(?:him|her|them)\s+(?:love|adore|forgive|obey|want|desire|stay|choose|trust|marry)\b/i,
+          // bare person-directed coercion verb ("obey me", "love me", "forgive me")
+          /\b(?:love|adore|obey|forgive|desire)\s+(?:me|him|her|them|us)\b/i
       ],
       FORTUNE: [
           /\b(?:rich|wealthy|wealth|riches|fortune|prosper(?:ity|ous)?|affluent|loaded)\b/i,
@@ -94893,7 +94907,14 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           /\bjust\s+(?:this\s+once|for\s+(?:now|today|tonight)|tonight|today)\b/i,
           /\bfor\s+(?:tonight|today|tomorrow|the\s+(?:exam|test|fight|interview|match|game|race|trial|battle|journey|night))\b/i,
           /\bgive\s+me\s+(?:the\s+)?(?:strength|courage|luck|nerve|clarity|calm)\s+(?:to|for)\b/i,
-          /\bstrength\s+(?:to\s+(?:get|make|last|endure)|for\s+(?:tonight|today|the))\b/i
+          /\bstrength\s+(?:to\s+(?:get|make|last|endure)|for\s+(?:tonight|today|the))\b/i,
+          // TRANSIENT BORROWED CONDITION: a spell-duration ability, not a permanent
+          // change of self ("let me breathe underwater", "let me fly for an hour").
+          /\bbreathe\s+(?:underwater|under\s+water|water)\b/i,
+          /\blet\s+me\s+(?:breathe|fly|see\s+in\s+the\s+dark|understand|speak|hear|walk|run|swim|climb|last)\b/i,
+          /\bfor\s+(?:a|an|one)?\s*(?:hour|day|night|while|moment|spell|span|time|little\s+while)\b/i,
+          /\bfair\s+wind\b/i,
+          /\bdry\s+(?:clothes|me|my\s+\w+)\b/i
       ],
       RESTORATION: [
           /\b(?:heal|cure|mend)\b/i,
@@ -94903,7 +94924,14 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
           /\bmake\s+(?:her|him|them)\s+(?:well|whole|better|healthy)\b/i,
           /\bnurse\s+(?:\w+\s+){0,2}back\b/i,
           /\b(?:stop|ease)\s+(?:the\s+)?(?:pain|bleeding|fever|suffering)\b/i,
-          /\brepair\b/i
+          /\brepair\b/i,
+          // KEEP-ALIVE, wish-construction: "I wish she would live", "let him live",
+          // "I wish he wouldn't die", "keep her alive", "don't let them die".
+          // (Preventing a death of the still-living = heal/save, NOT undoing a death.)
+          /\b(?:would|will|could|might|to|shall|let\s+(?:him|her|them)|make\s+(?:him|her|them))\s+live\b/i,
+          /\b(?:wouldn'?t|won'?t|not|never|don'?t|doesn'?t|do\s+not|dont)\s+(?:let\s+(?:him|her|them)\s+)?die\b/i,
+          /\bstay\s+alive\b/i,
+          /\bkeep\b[^.]{0,20}\balive\b/i
       ]
   };
   window.WISH_ORDER_SIGNALS = WISH_ORDER_SIGNALS;
@@ -94954,12 +94982,17 @@ The near-miss must ache. Maintain romantic tension. Do NOT complete the kiss.`,
       if (m.HISTORY && /\b(dead|death|died|dying|grave|deceased|resurrect|raise\s+the\s+dead|back\s+from)\b/.test(t)) add('reunion with the dead');
       if (has(/\bforgive|forgiven|pardon|absolve|absolution\b/)) add('absolution');
       if (m.AGENCY && has(/\blove|adore|fall\s+in\s+love|be\s+loved|marry|mine\b/)) add('to be loved');
+      if (m.AGENCY && has(/\bobey|obedien|kneel|serve\s+me|do\s+(?:as|what)\s+i\b/)) add('to be obeyed');
+      // transient borrowed ability (spell-duration), read verbatim where clear.
+      if (has(/\bbreathe\s+(?:underwater|under\s+water|water)\b/)) add('to breathe underwater');
+      if (m.TEMPORARY_AID && has(/\blet\s+me\s+(?:fly|see\s+in\s+the\s+dark|understand|speak|hear|swim)\b/)) add('to borrow a power for a while');
       if (has(/\bescape|freedom|\bfree\b|get\s+away|break\s+free\b/)) add('to escape');
       if (m.FORTUNE) add('wealth and security');
       if (m.REVELATION) add('to know the truth');
       if (has(/\bprotect|safe|shield|guard|keep\s+(?:her|him|them|us)\s+safe\b/)) add('safety');
       if (has(/\bpower|control|rule|throne|command|dominat/)) add('power');
       if (m.RESTORATION && has(/\bheal|cure|mend|wound|save|sick|ill|dying\b/)) add('to heal the one they love');
+      if (m.RESTORATION && has(/\blive\b|\bdie\b|\balive\b|\bdying\b/)) add('to keep them alive');
       if (m.TRANSFORMATION) add(has(/\byoung|youth|age\b/) ? 'to reclaim youth' : 'to be desired');
       return themes.slice(0, 2).join(' and ');
   }

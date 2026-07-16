@@ -46,6 +46,12 @@ if (win && typeof win.classifyWishDisposition === 'function' && typeof win.norma
     '"close her wound" mis-ranked (want RESTORATION, false-friend AGENCY regression)');
   // (4) single-Order sanity
   A(C('make her love me').dominantOrder === 'AGENCY' && C('make her love me').resistedOperation === 'AGENCY', 'agency wish misclassified');
+  // WISH-CONSTRUCTION phrasings (what players type now that "I wish …" is a valid invocation) — the live
+  // run caught these defaulting to RESTORATION/empty-desire. Guard them so they classify like the imperative.
+  A(C('I wish he would love me').dominantOrder === 'AGENCY' && C('I wish he would love me').governingDesire, 'wish-construction "I wish he would love me" not AGENCY / empty desire');
+  A(C('I wish he would forgive me').dominantOrder === 'AGENCY', 'wish-construction "I wish he would forgive me" not AGENCY');
+  A(C('Take my hair and let me breathe underwater').dominantOrder === 'TEMPORARY_AID' && C('Take my hair and let me breathe underwater').governingDesire, '"breathe underwater" not TEMPORARY_AID / empty desire');
+  A(C('I wish I could bring my dead husband back exactly as he was and make him forgive me').dominantOrder === 'HISTORY', 'compound wish-construction missed HISTORY as dominant');
   A(C('show me who killed my father').dominantOrder === 'REVELATION', 'revelation wish misclassified');
   A(C('make me rich beyond measure').dominantOrder === 'FORTUNE', 'fortune wish misclassified');
   // (5) safe default on junk / casual non-wish
