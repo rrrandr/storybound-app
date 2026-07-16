@@ -180240,7 +180240,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // — falling through to `mouth`. This static directive covers the
     // PC case. The renderer's gesture path still wins for LI signature
     // gestures; this fires when target='protagonist' + shot='gesture'.
-    gesture: 'extreme close-up of a HAND PHYSICAL REACTION — the protagonist\'s hand performing a small, unconscious self-soothing gesture: twisting a ring on a finger, scratching the side of the nose, fingers fidgeting with the edge of a glass / a napkin / a pendant chain, knuckles tightening on a steering wheel, thumb pressing hard into a fingertip, fingers worrying a loose thread on a sleeve. NO face in frame. NO eyes, NO mouth. The hand and the immediate surface or object it contacts fill the composition. The gesture\'s TEMPO and PRESSURE carry the emotional weight — a slower drag, a tighter pinch, a longer pause. Shallow depth of field; background blurred.'
+    gesture: 'extreme close-up of a HAND PHYSICAL REACTION — the protagonist\'s hand performing a small, unconscious self-soothing gesture: fingers curling and uncurling, knuckles tightening, a thumb pressing hard into a fingertip, fingers interlacing or worrying against each other, a hand pressed flat then releasing. If the hand touches an object or surface, it MUST be one that belongs to THIS scene\'s setting (see SCENE SETTING) — never a default glass, mug, napkin, steering wheel, or pen. NO face in frame. NO eyes, NO mouth. The hand and the immediate surface it contacts fill the composition. The gesture\'s TEMPO and PRESSURE carry the emotional weight — a slower drag, a tighter pinch, a longer pause. Atmospheric falloff behind the hand.'
   };
   // PC-specific eyes directive — same framing focus but with mandatory
   // obscuration so identity stays ambiguous. Substituted at prompt-build
@@ -180260,7 +180260,7 @@ No text, no watermark, no UI elements, share-ready.`;
     return 'other_character';
   }
 
-  async function _renderCutCloseup(expressionTarget, lighting, closeupTarget, shotType) {
+  async function _renderCutCloseup(expressionTarget, lighting, closeupTarget, shotType, sceneCtx) {
     var shot = shotType || 'mouth';
     // Gesture closeups are an exception to the "expression_target required"
     // rule — they fire on beats where the gesture itself carries the
@@ -180273,6 +180273,18 @@ No text, no watermark, no UI elements, share-ready.`;
     var target = closeupTarget || 'li';
     var archetype = _archetypeForTarget(target);
     var moodBand = _moodBandFromLighting(lighting);
+    var isPC = (archetype === 'pc');
+    // Scene grounding for closeups (Roman 2026-07-15): closeups previously got NO
+    // scene / wardrobe / species context, so PC gesture inserts rendered land/bar
+    // props (a glass of water underwater), leaked leather bracers from the artist
+    // style refs, and blended the human hand into the scene's non-human anatomy.
+    // Pull the active scene's setting + PC wardrobe + PC species so the insert stays
+    // in-world. sceneCtx passed from the render loop; state fallback keeps it robust.
+    var _cuVS = (state._stagedActive && state._stagedActive.plan && state._stagedActive.plan.visualState) || {};
+    var _cuBg = String((sceneCtx && sceneCtx.background) || _cuVS.background || '').trim();
+    var _cuWard = String((sceneCtx && sceneCtx.pcWardrobe) || _cuVS.pc_wardrobe || '').trim();
+    var _cuSpecies = String((sceneCtx && sceneCtx.pcSpecies) || state._playerSpecies || 'human').trim();
+    var _cuHumanPC = /^human$/i.test(_cuSpecies) || !_cuSpecies;
 
     // ── PHASE 3 — OAS MOUTH CACHE REUSE ──
     // For LI mouth cuts, try the OAS mouth DB first. The DB stores 4
@@ -180369,12 +180381,23 @@ No text, no watermark, no UI elements, share-ready.`;
     var gestureKey = '';
     var _selectedGesture = null;
     if (shot === 'gesture') {
-      _selectedGesture = (typeof _pickLiSignatureGesture === 'function')
-        ? _pickLiSignatureGesture({})
-        : _ensureLiSignatureGesture();
-      gestureKey = '|' + (_selectedGesture && _selectedGesture.key ? _selectedGesture.key : 'fallback');
+      if (isPC) {
+        // PC gesture closeups are GENERIC hand reactions — never an LI signature
+        // gesture. Picking from the LI pool here is what stamped "glass_rim" (a
+        // drinker's gesture) onto a PC insert and rendered a glass underwater.
+        gestureKey = '|pc_reaction';
+      } else {
+        _selectedGesture = (typeof _pickLiSignatureGesture === 'function')
+          ? _pickLiSignatureGesture({})
+          : _ensureLiSignatureGesture();
+        gestureKey = '|' + (_selectedGesture && _selectedGesture.key ? _selectedGesture.key : 'fallback');
+      }
     }
-    var cacheKey = 'closeup|' + archetype + '|' + shot + gestureKey + '|' + (expressionTarget || 'gesture') + '|' + moodBand;
+    // Scene-context token so a grounded PC insert (setting + species) doesn't get
+    // reused across scenes with a different setting (an underwater insert served
+    // into a rooftop scene, etc.).
+    var _cuCtxTok = isPC ? '|' + ((_cuBg.split(/[\s,]+/)[0] || 'scene').toLowerCase().slice(0, 8)) + '_' + _cuSpecies.toLowerCase().slice(0, 5) : '';
+    var cacheKey = 'closeup|' + archetype + '|' + shot + gestureKey + _cuCtxTok + '|' + (expressionTarget || 'gesture') + '|' + moodBand;
     var cached = state._stagedCloseupCache[cacheKey];
     if (cached && cached.imageUrl) {
       // Diagnostic added 2026-05-22 to chase the "Lora-Venn embrace
@@ -180389,7 +180412,6 @@ No text, no watermark, no UI elements, share-ready.`;
       return { imageUrl: cached.imageUrl, fromCache: true };
     }
 
-    var isPC = (archetype === 'pc');
     var directive = _MOUTH_EXPRESSION_DIRECTIVES[expressionTarget] || _MOUTH_EXPRESSION_DIRECTIVES.neutral;
     // Shot directive — PC eyes substitutes the obscured variant; gesture
     // is built dynamically from the per-LI signature gesture.
@@ -180449,7 +180471,7 @@ No text, no watermark, no UI elements, share-ready.`;
         } else {
           _pcGenderLock = 'protagonist\'s actual hand (gender-matched to the protagonist established earlier in the story).';
         }
-        subjectDesc = 'the protagonist\'s HAND performing the described physical reaction gesture. ' + _pcGenderLock + ' Identity-loose (no rings or wristwear that haven\'t been established in the prose, no defining marks). The hand and the immediate surface or object it contacts (a glass edge, a ring on her finger, the curve of her own knuckles, a strand of hair, a pendant chain) fill the composition. NO face, NO eyes, NO mouth in frame. NO full figure, NO torso, NO shoulders — the frame is the HAND ONLY (and the small object it touches). The gesture is small, unconscious, self-soothing — the kind of movement someone makes without knowing they\'re making it.';
+        subjectDesc = 'the protagonist\'s HAND performing the described physical reaction gesture. ' + _pcGenderLock + ' Identity-loose (no rings or wristwear that haven\'t been established in the prose, no defining marks). The hand and the immediate surface it contacts (the curve of her own knuckles, her fingers interlacing, a fold of her own clothing, or a small object that plausibly belongs to THIS scene\'s setting) fill the composition. NO face, NO eyes, NO mouth in frame. NO full figure, NO torso, NO shoulders — the frame is the HAND ONLY (and the small in-world surface it touches). The gesture is small, unconscious, self-soothing — the kind of movement someone makes without knowing they\'re making it.';
       } else {
         subjectDesc = 'the love interest\'s HAND — masculine adult hand, identity-consistent with prior renders (same skin tone, same ring(s) on the same finger(s), same wristwear / sleeve cuff fitting his archetype). NO face in frame. The hand and lower forearm fill the composition.';
       }
@@ -180500,14 +180522,37 @@ No text, no watermark, no UI elements, share-ready.`;
     // stock photography. Now: lead with ILLUSTRATED INSERT, defer
     // photographic terms to artist-register equivalents (atmospheric
     // falloff vs DoF blur; soft-edged shapes vs defocus).
+    // ── SCENE / WARDROBE / SPECIES GROUNDING (Roman 2026-07-15) ──
+    // Keeps the insert in-world: the setting bans out-of-scene props (the
+    // underwater "glass of water"), the wardrobe bans the leather-bracer leak
+    // from the artist refs, and the species bans the human-hand→tentacle blend.
+    // POSITIVE-ONLY framing (negation-attractor lesson from this session's species
+    // work): naming the unwanted nouns (glass, leather, tentacles) tends to summon
+    // them. Instead assert what the insert IS and redirect the ref-leak at category
+    // level (refs are linework-only, never a source of clothing/anatomy).
+    var _cuGrounding = '';
+    if (_cuBg) {
+      _cuGrounding += 'SCENE SETTING (HARD — this insert lives INSIDE this exact setting): ' + _cuBg + '. Any surface, prop, or object the hand touches belongs entirely to THIS setting and reads as in-world — keep the frame consistent with where the scene actually takes place.\n\n';
+    }
+    if (isPC && _cuWard) {
+      _cuGrounding += 'PROTAGONIST WARDROBE (HARD — the wrist / forearm emerges from the protagonist\'s OWN clothing): ' + _cuWard + '. Render the sleeve and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
+    }
+    if (isPC && _cuHumanPC) {
+      _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is HUMAN — render an ordinary human hand with five fingers, human skin, and human proportions, the fully human hand of the human protagonist in the surrounding panels.\n\n';
+    } else if (isPC && !_cuHumanPC) {
+      _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is ' + _cuSpecies + ' — render the hand with that species\' established anatomy, consistent with the protagonist in the surrounding panels.\n\n';
+    }
+
     var prompt = 'ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / inked / painterly / linework per the active artist). NOT a photograph. NOT a 3D render. NOT photorealistic. A FULL-QUALITY illustrated frame composed with intention: dramatic angle, mood-aware lighting, single dominant subject filling the canvas, visible artist linework / brushwork / ink behavior on every rendered surface.\n\n' +
       'FRAMING: ' + shotDirective + '\n\n' +
       'SUBJECT: ' + subjectDesc + '\n\n' +
+      _cuGrounding +
       expressionLine + '\n\n' +
       'LIGHTING + PALETTE: ' + moodPalette + '. The lighting is INTENTIONAL — single key light source with directional shadow, never bright flat overhead. The palette is moody and consistent with the scene\'s emotional register; avoid washed-out neutrals. Lighting rendered in the artist\'s register (segmented rim-light / cross-hatched shadow / painterly value falloff), NOT photographic exposure.\n\n' +
       'COMPOSITION DISCIPLINE: ATMOSPHERIC FALLOFF in the artist\'s register (soft-edged shapes / controlled linework on background elements / painted gradients) — NOT photographic depth-of-field blur. The focal element is rendered with the most density of artist signature (sharpest linework, densest hatching, most saturated color); everything beyond arm\'s reach is softer-edged / lower-detail / atmospheric. The frame is ASYMMETRIC and DYNAMIC — never centered/symmetric/posed. Use diagonal energy, off-center weight, dutch tilt where it fits. This is an ILLUSTRATED CUT-IN, not a product-photography shot.\n\n' +
       'IDENTITY: do NOT add characters / faces / mouths / eyes that aren\'t named in the SUBJECT line above. If SUBJECT names an object, the frame shows ONLY that object (plus at most one hand touching it). If SUBJECT names a hand, the frame shows ONLY that hand. Never auto-populate the frame with extra figures.\n\n' +
       'NO speech bubbles. NO captions. NO panel borders. NO text overlays. NO photographic textures (no JPEG artifacts, no lens flare, no chromatic aberration). Single composition, square frame, full-bleed to 1024x1024 canvas edge-to-edge. NO letterbox bars, NO matte bars, NO inner frame inset.';
+    try { window._lastCloseupPrompt = prompt; } catch (_) {} // diagnostic hook (also drives the $0 closeup-grounding test)
 
     // ── COST TIER: HERO for all inserts (2026-05-22) ──────────────
     // Post-Klein restructure: closeups are now real dramatic moments,
@@ -195179,7 +195224,7 @@ No text, no watermark, no UI elements, share-ready.`;
         var lighting = plan.visualState && plan.visualState.lighting;
         plan.beats.forEach(function(beat) {
           if (beat.cut_to_closeup) {
-            _renderCutCloseup(beat.expression_target, lighting, beat.closeup_target, beat.shot_type).then(function(res) {
+            _renderCutCloseup(beat.expression_target, lighting, beat.closeup_target, beat.shot_type, { background: plan.visualState && plan.visualState.background, pcWardrobe: plan.visualState && plan.visualState.pc_wardrobe, pcSpecies: state._playerSpecies }).then(function(res) {
               if (res && res.imageUrl) {
                 state._stagedActive.beatCloseupUrls = state._stagedActive.beatCloseupUrls || {};
                 state._stagedActive.beatCloseupUrls[beat.idx] = res.imageUrl;
@@ -195690,7 +195735,7 @@ No text, no watermark, no UI elements, share-ready.`;
         plan.beats.forEach(function(beat) {
           if (beat.cut_to_closeup) {
             // Layer 3 — cut-to closeup. Independent gen, target/shot-aware.
-            _renderCutCloseup(beat.expression_target, lighting, beat.closeup_target, beat.shot_type).then(function(res) {
+            _renderCutCloseup(beat.expression_target, lighting, beat.closeup_target, beat.shot_type, { background: plan.visualState && plan.visualState.background, pcWardrobe: plan.visualState && plan.visualState.pc_wardrobe, pcSpecies: state._playerSpecies }).then(function(res) {
               if (!state._stagedActive) return;
               if (res && res.imageUrl) {
                 state._stagedActive.beatCloseupUrls = state._stagedActive.beatCloseupUrls || {};
