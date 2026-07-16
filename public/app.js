@@ -90440,6 +90440,7 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       state.continuationPath = null;
       state.ffAppearance = {}; // First Favored color lock — fresh per new story (L2); survives issues (L3-only resets)
       state.kwisheenAppearance = {}; // Named-Kwisheen color/pattern lock — same lifetime as ffAppearance (L2 reset, survives issues)
+      state.pcAppearance = {}; // Deterministic human-PC look fallback (unlocked look) — same lifetime as ffAppearance (L2 reset, survives issues)
 
       // Clear all entropy axis objects
       const entropyKeys = [
@@ -136580,14 +136581,14 @@ ${_buildSettingImageOverrideSuffix()}`,
             'clean semi-realistic glossy skin with smooth gradients',
             'pure black ink sitting visibly on top of color rendering',
             'thick dry-brush outer contour on figures with slight roughness and pressure variation',
-            'sparse intentional crosshatching ONLY in shadow regions',
-            'slight ink imperfections — subtle wobble, variation, irregularity',
+            'PROMINENT, deliberate hand-inked crosshatching in the shadow regions ONLY (dense enough to carve volume — real cross-hatched shading, not a token few strokes — never bleeding into lit midtones or highlights)',
+            'slight ink imperfections — subtle wobble, variation, irregularity, ink-blot pooling',
             'contour lines stronger than any interior lines',
             'attractive structured facial anatomy with strong jawlines and cheekbones'
           ],
           forbidden: [
             'smooth or vector-like contour',
-            'dense or noisy crosshatching',
+            'noisy, mechanical, or evenly-spaced crosshatching',
             'crosshatching in highlight areas',
             'dirty or textured skin rendering',
             'uniform line thickness',
@@ -136630,7 +136631,7 @@ ${_buildSettingImageOverrideSuffix()}`,
             eyes: 'Exact shape preserved from face and pupil anchors. Iris: luminous non-human color (gold, violet, silver, rose, ember, opalescent) with radial energy patterns emanating from pupil. Pupil: FOUR-POINTED CONCAVE DIAMOND (smooth inward-curving sides), a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. The iris and pupil are two DISTINCT luminous colors that read clearly against each other. This is a unique non-human geometry — a clean, controlled concave diamond. Four smooth concave sides meeting at four points. SILHOUETTE CRITICAL: pupil shape must remain readable at small panel scale. Use pupil anchor as absolute geometry source. Stable shape, proportional to iris.',
             skin: 'Smooth, luminous, poreless, even-toned. Faint internal glowing swirls visible beneath surface, preserving facial plane clarity. Clean gradients. Skin colors: warm, neutral, or metallic tones only — deep purple, green, gold, copper, pearl, brown, grey.',
             fabric: 'Semi-transparent gossamer drapery. Natural drape, gravity-driven folds. Translucent, soft fold behavior. Period-appropriate Fatelands materials: gossamer, draped cloth, organic fibers, flowing wraps.',
-            linework: 'Thick black dry-brush outline on silhouette. Interior shading uses CONTROLLED crosshatching. Crosshatching ONLY in shadow regions, sparse and form-following.',
+            linework: 'THICK, blotty black dry-brush outline on silhouette (bolder than any interior line). Interior shading uses CONTROLLED crosshatching. Crosshatching ONLY in shadow regions, PROMINENT and dense within those shadow planes, form-following (kept out of lit midtones/highlights).',
             lighting: 'Warm directional glow (lantern-like). Highlights remain clean (minimal hatching). Shadows carry form via crosshatching.'
           },
           // CROSSHATCH BEHAVIORAL RULES — from anchors
@@ -137691,7 +137692,7 @@ ${_buildSettingImageOverrideSuffix()}`,
 
   // ── Hard Style Block — placed at END of prompt for maximum influence ──
   // Built once per render from RENDER_STYLE_SYSTEM, includes anti-leakage rules.
-  function _buildStyleSuffix(styleObj) {
+  function _buildStyleSuffix(styleObj, artistKey) {
     if (!styleObj) return '';
     // Trimmed: "Do not copy composition or characters from references" was
     // duplicated by _compositionOverride (which says the same thing in
@@ -137704,9 +137705,22 @@ ${_buildSettingImageOverrideSuffix()}`,
     var s = '\n--- STYLE ---\nStyle defines rendering only. Do NOT alter anatomy, structure, or species features.\n' +
       styleObj.style_anchor +
       (_usesHatching ? '. Hatching traces scene lighting only. Sparse on faces.' : '.') +
+      // LINEWORK survival (Roman 2026-07-15): Ender delivers line_control via its own
+      // adaptive anchor rules + GM-strict path, but Ryo Toro / Lora Venn / Olen Droll
+      // carry it ONLY in the trimmable anchor-rules zone — under clamp pressure their
+      // signature linework (Lora's "no ink outlines", Ryo's "angular, no anime smoothing")
+      // could be dropped while only style_anchor survived. Ride it in the protected STYLE
+      // suffix for those three so every artist's linework reaches the page.
+      (styleObj.line_control && artistKey && artistKey !== 'ender_bond'
+        ? ' LINEWORK (signature — preserve, do NOT smooth or restyle away): ' + styleObj.line_control + '.'
+        : '') +
       ' Consistent shading across panels.';
-    console.log('[STYLE-SUFFIX] Length:', s.length, 'chars');
+    console.log('[STYLE-SUFFIX] Length:', s.length, 'chars' + (artistKey ? ' | artist=' + artistKey : ''));
     return s;
+  }
+  window._buildStyleSuffix = _buildStyleSuffix;
+  { // keep the closure's RENDER_STYLE_SYSTEM reachable for $0 style-survival tests
+    try { if (typeof RENDER_STYLE_SYSTEM !== 'undefined' && !window.RENDER_STYLE_SYSTEM) window.RENDER_STYLE_SYSTEM = RENDER_STYLE_SYSTEM; } catch (_) {}
   }
 
   // ── Smart clamp — zone-aware prompt compression ──
@@ -137872,7 +137886,7 @@ ${_buildSettingImageOverrideSuffix()}`,
       } else if (artistKey === 'ryo_toro') {
         _renderTechnique = 'RENDERING: Match Golden Master image for all rendering technique. Clean confident angular linework with tapered ends. Secondary micro-contours on anatomical edges. Rim light as fractured segmented streaks, never smooth gradients. Fabric as angular faceted shapes. Manga-structured faces with bedroom eyes (lowered lids, occluded iris, controlled intimate gaze). No crosshatching. No painterly blending. No soft edges. No ink-heavy Ender-style rendering.\n';
       } else {
-        _renderTechnique = 'RENDERING: Match Golden Master image for all rendering technique. Glossy semi-realistic skin, smooth gradients, no highlight noise. Ink: pure black, on top of rendering. Contour: thick dry-brush, irregular, pressure variation. Crosshatch: shadow-only, sparse, form-describing. Imperfect ink required (wobble, variation). No digital-clean linework.\n';
+        _renderTechnique = 'RENDERING: Match Golden Master image for all rendering technique. Glossy semi-realistic skin in LIT areas, smooth gradients, no highlight noise. Ink: pure black, on top of rendering. Contour: THICK, blotty dry-brush, irregular, pressure variation — bolder than any interior line. Crosshatch: shadow-only but PROMINENT and dense within the shadow planes, form-describing (kept out of lit midtones/highlights — never a token few strokes). Imperfect ink required (wobble, variation, ink-blot pooling). No digital-clean linework.\n';
       }
 
       // ── CANON HIERARCHY (Roman 2026-06-11) — non-negotiable precedence ─────
@@ -138143,9 +138157,9 @@ ${_buildSettingImageOverrideSuffix()}`,
     return '\nGOLDEN MASTER STYLE ENFORCEMENT MODE:\n\n' +
       'Strictly enforce:\n' +
       '- ink on top of rendering (pure black, clearly visible, not blended)\n' +
-      '- thick dry-brush contour with irregularity and pressure variation\n' +
-      '- sparse shadow-only crosshatching (few strokes, form-describing)\n' +
-      '- glossy smooth skin rendering (smooth gradients, no highlight noise)\n' +
+      '- THICK, blotty dry-brush contour with irregularity and pressure variation (bolder than any interior line)\n' +
+      '- PROMINENT shadow-only crosshatching (dense form-following hand-inked strokes in the shadow planes, kept out of lit midtones/highlights — never a token few strokes)\n' +
+      '- glossy smooth skin rendering in LIT areas (smooth gradients, no highlight noise)\n' +
       '- visible ink imperfections (subtle wobble, organic quality)\n' +
       '- contour stronger than any interior linework\n\n' +
       'Remove any:\n' +
@@ -152629,6 +152643,33 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._resolveKwisheenAppearance = _resolveKwisheenAppearance;
 
+  // ── HUMAN PROTAGONIST APPEARANCE FALLBACK (Roman 2026-07-15) ──────────────
+  // When the user has NOT locked a PC look (skipped the modal, or a headless
+  // path), a visible-PC (Mystery-Man) render has NO reference image AND no
+  // concrete descriptor — so each independent phase render freelances the hair
+  // colour and the PC drifts panel-to-panel (brown in one panel, black the next).
+  // Pin a deterministic look (hair colour + length + skin tone) by player name +
+  // world so every panel matches. This is a STABLE default for "I didn't specify",
+  // never overrides an actual locked look (pcLookLocked wins upstream).
+  var _PC_HAIR_COLOR = ['dark brown', 'black', 'chestnut brown', 'auburn', 'dark blonde', 'ash brown', 'deep red-brown', 'warm brown'];
+  var _PC_HAIR_LENGTH = ['long', 'shoulder-length', 'shoulder-length', 'a low bun', 'a single braid', 'a short crop', 'a ponytail'];
+  var _PC_SKIN_TONE = ['fair', 'light olive', 'olive', 'tan', 'warm brown', 'deep brown'];
+  function _resolvePcAppearance() {
+    var nm = (state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'protagonist';
+    var key = String(nm).trim().toLowerCase();
+    state.pcAppearance = state.pcAppearance || {};
+    if (state.pcAppearance[key]) return state.pcAppearance[key];
+    var seed = _ffColorHash(key + '|pc|' + (state.worldInstanceId || state.storyId || 'seed'));
+    var a = {
+      hairColor: _PC_HAIR_COLOR[seed % _PC_HAIR_COLOR.length],
+      hairLength: _PC_HAIR_LENGTH[Math.floor(seed / 11) % _PC_HAIR_LENGTH.length],
+      skinTone: _PC_SKIN_TONE[Math.floor(seed / 101) % _PC_SKIN_TONE.length]
+    };
+    state.pcAppearance[key] = a;
+    return a;
+  }
+  window._resolvePcAppearance = _resolvePcAppearance;
+
   // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
   // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can
   // briefly SHIFT. When a render DRIFTS into a wrong feature (pointed ears, a forehead gem,
@@ -152776,6 +152817,7 @@ No text, no watermark, no UI elements, share-ready.`;
         '- HAIR: a full mane of thick living TENTACLE-DREADLOCKS from the scalp — sinuous, sucker-lined, in motion. This mane is the primary silhouette tell (an octopus\'s arms worn as hair), NOT fine wispy feelers.\n' +
         '- SKIN: SCALED / pebbled cephalopod hide — a fine hexagonal scale-and-sucker texture across face and body (this species HAS textured, patterned skin, not smooth human skin), in a vivid exotic color (deep red, gold, violet, blue, orange) with contrasting pattern-bloom that shifts with mood.\n' +
         '- EYES: large, a vivid non-human iris (gold / amber) with a HORIZONTAL CAPSULE PUPIL — a rounded rectangle with a fine central slit; not round in true form.\n' +
+        '- FACE (HARD — same humanoid structure in every panel; fixes the face drifting to a "Cthulhu" head): the FACE itself is HUMANOID — a clear brow, a nose, and a MOUTH WITH LIPS set on a defined jaw, two capsule-pupil eyes, all sheathed in the scaled hide. The ONLY tentacles are the HAIR (scalp) and the LOWER BODY; the face is NOT a mass of tentacles, has NO octopus-beak, and NO feelers/barbels/tentacles sprouting around the mouth or cheeks. A scaled humanoid visage under a tentacle mane — never a face made of tentacles.\n' +
         '- EARS: small, close to the skull, largely hidden under the tentacle-hair.\n' +
         '- ADORNMENT (HARD — Kwisheen are NOT nude): they wear loincloths and wraps STUDDED with gems and shells, scaled or shell armor, and layered jewelry — beaded necklaces, gem pendants (amethyst, pearl), fine chains. Ornament is cultural and expected.\n' +
         '- MOVEMENT: fluid unfurling, full-body engagement.\n' +
@@ -176760,9 +176802,17 @@ No text, no watermark, no UI elements, share-ready.`;
           '  • Maintain consistent appearance across all scenes per the description above.\n' +
           '  • Gender (' + (state.gender || 'Female') + ') is FIXED. NEVER render the protagonist as a different gender mid-story regardless of composition pressure or wardrobe ambiguity.\n';
       } else {
+        // No locked PC look — inject a DETERMINISTIC appearance so the visible PC
+        // does not drift hair colour panel-to-panel across independent phase renders.
+        var _pcApp = null;
+        try { if (typeof _resolvePcAppearance === 'function') _pcApp = _resolvePcAppearance(); } catch (_) {}
+        var _pcAppLine = _pcApp
+          ? '  • DEFAULT APPEARANCE (LOCKED — no custom look was set; keep IDENTICAL in every panel): ' + _pcApp.hairLength + ' ' + _pcApp.hairColor + ' hair, ' + _pcApp.skinTone + ' skin. This is the canonical look for this story — do NOT re-roll hair colour or length between panels.\n'
+          : '';
         pcVis = 'PROTAGONIST RENDERING (VISIBLE SUBJECT — MM STORY):\n' +
           '  • The protagonist\'s face IS visible in this story. She is the lit focal subject; the LI\'s face is concealed via camera angle (reverse-OTS).\n' +
           '  • Render her face naturally — three-quarter or near-frontal view, gaze directed at the LI past the camera, not into the lens.\n' +
+          _pcAppLine +
           '  • Maintain consistent appearance across scenes (hair color, face shape, distinguishing features should remain stable).\n';
       }
     }
@@ -176913,7 +176963,7 @@ No text, no watermark, no UI elements, share-ready.`;
       _kwLockNames.forEach(function (nm) {
         var k = String(nm).trim().toLowerCase(); if (!k || _kwSeen[k]) return; _kwSeen[k] = true;
         var a = _resolveKwisheenAppearance(nm);
-        if (a) _kwLockLines.push('- ' + nm + ': ' + a.skin + ' skin with ' + a.pattern + ', ' + a.iris + ' eyes — IDENTICAL in every panel (exactly two arms, six lower tentacles, tentacle-hair; same adornment).');
+        if (a) _kwLockLines.push('- ' + nm + ': ' + a.skin + ' skin with ' + a.pattern + ', ' + a.iris + ' eyes — IDENTICAL in every panel (exactly two arms, six lower tentacles, tentacle-hair; same scaled HUMANOID face with a lipped mouth and defined jaw — NEVER a tentacle-mouthed / octopus-beaked face; same adornment).');
       });
       if (_kwLockLines.length) {
         prompt += 'KWISHEEN APPEARANCE (LOCKED — these named Kwisheen keep these EXACT colours/patterns in every panel and issue; skin shifts ONLY as a deliberate camouflage beat, never as per-panel drift):\n' + _kwLockLines.join('\n') + '\n\n';
@@ -189426,6 +189476,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '- A narration beat\'s "text" is descriptive action / staging / sensory detail (1–2 sentences). No quoted dialogue inside narration beats.\n' +
       '- An exposition beat\'s "text" is the PC\'s internal thought / reflection (1–2 sentences, no quotes — interior monologue, not spoken).\n' +
       '- 1–2 sentences per beat — HARD, no exceptions. NEVER 3+. A beat is ONE sustained moment (a glance, a line, a noticed detail, a breath), never a paragraph. If a beat wants a third sentence, SPLIT it into a new beat instead of letting it swell.\n' +
+      '- GRAMMATICAL CAPTIONS (HARD): every beat is a COMPLETE, readable sentence with its articles ("the"/"a") and verbs intact. Terse is good; telegram/headline-ese that drops articles and the connecting verb is NOT — it reads as broken. BAD (article- and verb-dropped, reads as garbled): "Lines inside name Vael and me in secret exchange three years ago." GOOD (same beat, grammatical and still tight): "The lines inside name Vael and me — a secret exchange, three years ago." Read each beat back to yourself; if it does not parse as English, repair it before emitting.\n' +
       '- The FINAL beat (idx === decisionGateBeatIdx) is EXACTLY ONE SENTENCE — the closing line that delivers the scene\'s decision moment. Never bury it in a wall.\n' +
       '- BEAT COUNT (TARGET, not a rigid quota — it YIELDS to the two priority bounds below): beats are PROSE, not panels. Only ~5 phase IMAGES render per scene (see PHASE COUNT); beats ride beneath them at ZERO extra render cost. So use beats to PAINT the scene far beyond what the panels could show — give every world-texture stroke, every character tell, every noticed detail, every hesitation its OWN tight beat rather than cramming them into fewer fat ones. Split freely: a glance is a beat, a noticed detail is a beat, a held breath is a beat, one line of dialogue is a beat. Richness comes from MANY SMALL TIGHT beats, never from fat 3-sentence beats. TARGET ~28–45 tight beats for a standard scene (a thin <22-beat scene is a FAILURE unless a bound below forces fewer). PRIORITY 1 — if a LENGTH CEILING is active (see the user prompt), the CEILING WINS: fit as many tight beats as fit UNDER it; do NOT blow the ceiling to reach a beat count. PRIORITY 2 — on an INTIMACY-PACE scene (ST3/ST4, see SCENE DENSITY), run FEWER beats that breathe (~22–30); felt time between charged beats matters more than raw count there. These are not simultaneous rigid quotas — when they conflict, the active bound governs and the beat-count target flexes.\n' +
       '- Alternate dialogue and narration freely; do not bunch dialogue.\n\n' +
@@ -190862,7 +190913,7 @@ No text, no watermark, no UI elements, share-ready.`;
       var _uwHumanPresent = _uwIsHuman(state._playerSpecies) || _uwIsHuman(state._liSpecies);
       if (_uwIsUnderwater && _uwHumanPresent) {
         lines.push('UNDERWATER SURVIVAL (HARD — Fatelands physics): this scene is DEEP UNDERWATER in Gloamwater Bay and a HUMAN is present. A human cannot breathe, speak, or move at depth by nature — in Fatelands this is ALWAYS purchased: a WISH paid in sacrifice or a MAGIC ARTIFACT (a water-breathing talisman, a gilled charm, a bargain-token). Sustained water-breathing is a T2 boon on THE PRICE OF A WISH ladder — price it consistently (a year of life, or an equivalent T2 cost); a brief single dip may be T1 (an hour, a fingernail, a lock of hair). ' + (sceneIndex === 0 ? 'Within the FIRST FEW SENTENCES' : 'Early in the scene, unless it is already established earlier in this story') + ', make HOW the human survives the water unmistakable — as a CHARACTERIZING beat (pointed dialogue or a sensory tell), NEVER a dry lore aside. GOOD (reveals the mechanism AND the relationship in one line): "You sacrificed a YEAR of your life to breathe water — for him." / "I\'ll tear that water-breathing talisman off your neck myself." Do NOT let a human simply float and talk underwater with no in-world reason — with no cause on the page it reads as a rendering error, not a world.');
-        lines.push('UNDERWATER HUMAN WARDROBE (HARD — Gloamwater canon; set pc_wardrobe / any human\'s wardrobe accordingly, per STATION + CIRCUMSTANCES): what a human wears at depth depends on HOW LONG they stay. BRIEFLY VISITING the depths (a diver, a guest, a first descent) → they wear their NORMAL SURFACE CLOTHING — whatever their station and the surface scene would give them — and it simply drifts and billows in the current. LIVING here / SPENDING A GREAT DEAL OF TIME below (a resident, a captive, a long embed, someone who has made a life among the Kwisheen) → the Kwisheen have made them a MANTA-PONCHO: a triangular robe reaching to both wrists and both ankles, so the human swims like a manta ray by UNDULATING THE ARMS in slow waves instead of kicking, stroking, and flailing the way humans do underwater. On land the same garment simply reads as a triangle-cut robe. (LATENT CANON — do NOT force it into this scene: the manta cut also works as a glider / wingsuit, so if a wearer ever falls from a great height it catches the air and they can plane down. Deploy this ONLY if a fall actually happens on the page.) Choose brief-visitor vs long-resident from THIS story\'s premise and set the human\'s wardrobe to match — never leave it to the model to guess.');
+        lines.push('UNDERWATER HUMAN WARDROBE (HARD — Gloamwater canon; set pc_wardrobe / any human\'s wardrobe accordingly, per STATION + CIRCUMSTANCES): what a human wears at depth depends on HOW LONG they stay. BRIEFLY VISITING the depths (a diver, a guest, a first descent) → they wear their NORMAL SURFACE CLOTHING — whatever their station and the surface scene would give them — and it simply drifts and billows in the current. LIVING here / SPENDING A GREAT DEAL OF TIME below (a resident, a captive, a long embed, someone who has made a life among the Kwisheen) → the Kwisheen have made them a MANTA-PONCHO: a triangular robe reaching to both wrists and both ankles, so the human swims like a manta ray by UNDULATING THE ARMS in slow waves instead of kicking, stroking, and flailing the way humans do underwater. On land the same garment simply reads as a triangle-cut robe. (LATENT CANON — do NOT force it into this scene: the manta cut also works as a glider / wingsuit, so if a wearer ever falls from a great height it catches the air and they can plane down. Deploy this ONLY if a fall actually happens on the page.) Choose brief-visitor vs long-resident from THIS story\'s premise and set the human\'s wardrobe to match — never leave it to the model to guess. SPECIES GUARD (HARD — the manta-poncho is a HUMAN survival garment, a Kwisheen-made prosthetic for a body that cannot swim on its own): it is worn ONLY by HUMANS (and other air-breathing land species) living below. A native KWISHEEN NEVER wears a manta-poncho — they swim on their own six tentacles and need no such aid. Dress Kwisheen (and any native water-dweller) in their OWN canon attire: loincloths and wraps studded with gems and shells, scaled or shell armor, layered beaded jewelry and gem pendants. Do NOT put a manta-poncho, gills-charm, or water-breathing talisman on a Kwisheen.');
       }
     } catch (_) {}
     // TONE — promote from a flat string to the resolved tone profile so
@@ -254471,7 +254522,7 @@ Do NOT describe Veilwood environments as static architecture or inert forests.`;
           (/favor/i.test(String(state._playerSpecies || '')) || /favor/i.test(String(state._liSpecies || '')) ||
            (state._stagedRegionContract && Array.isArray(state._stagedRegionContract.speciesKeys) && state._stagedRegionContract.speciesKeys.indexOf('first_favored') !== -1))) {
         if (context === 'graphic-novel-panel') {
-          _imagePrompt += '\nFIRST FAVORED (MATCH SPECIES ANCHORS): If present — PUPILS: four-pointed concave diamonds (smooth inward-curving sides), a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. Clean controlled diamond readable at panel scale. Use pupil anchor as geometry source. Iris: luminous non-human color (gold primary, also violet/silver/rose/ember/opalescent). Build: high cheekbones, symmetrical (fine-boned FACE); athletic perfectly-proportioned body — Olympic-athlete build, taller than human, NOT bulky, NOT thin/lithe. Ears: small rounded human-shaped ears, half human size, flush to skull, visible lobes, smooth curved helix, zero taper. Hands: subtly in motion, relaxed natural gesture. Eyes: match anchor proportions, realistic rendering. Skin: smooth luminous, faint internal glowing swirls. Fabric: semi-transparent gossamer, natural drape gravity-driven folds. Linework: thick dry-brush silhouette, crosshatching in shadows only (contour-aware, sparse). Lighting: warm directional glow, clean highlights. ATTRIBUTE INDEPENDENCE: skin/hair/eye color and hairstyle are independent of gender/role. Skin renders with soft luminous quality. In areas of full visibility, luminescence intensifies to radiant overexposure / prismatic bloom.';
+          _imagePrompt += '\nFIRST FAVORED (MATCH SPECIES ANCHORS): If present — PUPILS: four-pointed concave diamonds (smooth inward-curving sides), a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. Clean controlled diamond readable at panel scale. Use pupil anchor as geometry source. Iris: luminous non-human color (gold primary, also violet/silver/rose/ember/opalescent). Build: high cheekbones, symmetrical (fine-boned FACE); athletic perfectly-proportioned body — Olympic-athlete build, taller than human, NOT bulky, NOT thin/lithe. Ears: small rounded human-shaped ears, half human size, flush to skull, visible lobes, smooth curved helix, zero taper. Hands: subtly in motion, relaxed natural gesture. Eyes: match anchor proportions, realistic rendering. Skin: smooth luminous, faint internal glowing swirls. Fabric: semi-transparent gossamer, natural drape gravity-driven folds. Linework: THICK, blotty dry-brush silhouette, crosshatching in shadows only (contour-aware, PROMINENT/dense within the shadow planes, kept out of lit areas). Lighting: warm directional glow, clean highlights. ATTRIBUTE INDEPENDENCE: skin/hair/eye color and hairstyle are independent of gender/role. Skin renders with soft luminous quality. In areas of full visibility, luminescence intensifies to radiant overexposure / prismatic bloom.';
         } else {
           _imagePrompt += `\n\nFIRST FAVORED VISUAL CANON (NON-NEGOTIABLE — overrides all illustrator styles):
 ANCHOR REFERENCES: Species anchor images (hero + male face + duo fullbody, if provided) are the PRIMARY references for all First Favored renders. Hero anchor = female face, lighting, material. Male face anchor = male facial identity lock (proportions, eye shape, crosshatch zones). Duo fullbody = proportions, fabric behavior, silhouette, variation range. All are AUTHORITATIVE and must not drift.
@@ -255047,7 +255098,7 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
       }
 
       // ── Style suffix: built once, appended to all providers identically ──
-      var _styleSuffix = (_goldenMasterMode || _literarySetting) ? '' : _buildStyleSuffix(_style);
+      var _styleSuffix = (_goldenMasterMode || _literarySetting) ? '' : _buildStyleSuffix(_style, _artistKey);
 
       // ── Action type detection — reinforces combat/action scenes against posing/stillness ──
       var _actionType = '';
@@ -255369,7 +255420,7 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
           _style.style_anchor + '. ' +
           _compositionOverride +
           // Duplicate Golden Master authority (verbatim reinforcement)
-          '\nGOLDEN MASTER AUTHORITY (REINFORCEMENT): The FIRST reference image defines the COMPLETE rendering identity. LOCKED properties: ink behavior (pure black, on top of color), contour quality (thick dry-brush, irregular), rendering balance (glossy, smooth), crosshatching (shadow-only, sparse). These MUST be preserved. If any supporting reference contradicts, IGNORE it.\n' +
+          '\nGOLDEN MASTER AUTHORITY (REINFORCEMENT): The FIRST reference image defines the COMPLETE rendering identity. LOCKED properties: ink behavior (pure black, on top of color), contour quality (THICK, blotty dry-brush, irregular — bolder than any interior line), rendering balance (glossy skin in LIT areas only), crosshatching (shadow-only but PROMINENT and dense WITHIN the shadow planes — real hand-inked hatching that carves volume, never a token few strokes, and never bleeding into lit midtones/highlights). These MUST be preserved. If any supporting reference contradicts, IGNORE it.\n' +
           _enderCorrectionBlock +
           _STYLE_OVERRIDE_SENTINEL + ' ' +
           _compressedScene +
