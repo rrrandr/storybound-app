@@ -53516,9 +53516,36 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   }
   window._isBillionaireOnboarding = _isBillionaireOnboarding;
 
+  // FATELANDS WISH-DEMO (Roman 2026-07-16): on the user's FIRST-EVER Fatelands story
+  // (or ALWAYS on localhost/dev), Scene 1 teaches the whole wish system through drama —
+  // a HOT crisis containing a complete NPC-invoked wish cycle. Gate = Fatelands world +
+  // Scene 1 only + (milestone unset OR dev). Fail-soft → false.
+  function _fatelandsWishDemoActive(state) {
+    try {
+      var s = state || window.state || {};
+      if (!(s.picks && s.picks.world === 'Fantasy')) return false;
+      if (s.turnCount) return false;   // Scene 1 only (turnCount 0/undefined)
+      var witnessed = false;
+      try { witnessed = (localStorage.getItem('sb_witnessed_fatelands_wish_ritual') === '1'); } catch (_) {}
+      var dev = (typeof isDevMode === 'function' && isDevMode());
+      return (!witnessed || dev);
+    } catch (_) { return false; }
+  }
+  window._fatelandsWishDemoActive = _fatelandsWishDemoActive;
+
   function _pickOpeningTemperature(state) {
     var s = state || window.state || {};
     if (s._openingTemperature) return s._openingTemperature;
+    // FATELANDS WISH-DEMO (Roman 2026-07-16): the first-ever Fatelands story (or any dev
+    // run) opens on a HOT crisis so the NPC wish cycle detonates as drama. Wins for the
+    // demo case (placed ahead of the other force branches).
+    try {
+      if (typeof _fatelandsWishDemoActive === 'function' && _fatelandsWishDemoActive(s)) {
+        try { s._openingTemperature = 'HOT_CRISIS'; } catch (_) {}
+        try { console.log('[OPENING:TEMP] selected=HOT_CRISIS · FATELANDS-WISH-DEMO (first-ever Fatelands / dev)'); } catch (_) {}
+        return 'HOT_CRISIS';
+      }
+    } catch (_) {}
     // BILLIONAIRE ONBOARDING (Roman 2026-06-08): force the first two billionaire stories HOT.
     try {
       if (_isBillionaireOnboarding(s)) {
@@ -54918,6 +54945,51 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       + '• THE LOVE INTEREST IS OFFSTAGE — REPUTATION, NOT FACE (HARD — Roman 2026-07-04): in Scene 1 he is not on the page, so do NOT describe his body / face / eyes / scar / hair / grey temples. He appears ONLY through his NAME, signature, company, reputation, the room\'s reaction to him, rumor, or ONE iconic power-trace — never a remembered-face inventory as his primary function. ✗ "I remembered his deep blue eyes, the scar at his mouth, the premature grey at his temples." ✓ "Roman\'s name did not need a face in that room — it made people lower their voices all by itself." Save his face / body / texture for the FIRST TRUE ENCOUNTER (Scene 2+).\n';
   }
   window._buildHotCrisisOpenerProseDirective = _buildHotCrisisOpenerProseDirective;
+
+  // ── FATELANDS WISH-DEMO OPENER (Roman 2026-07-16) ────────────────────────────
+  // The first-ever Fatelands Scene-1 (or any dev run) must TEACH the whole wish
+  // system through drama: a HOT crisis containing a complete NPC-invoked wish
+  // cycle — spoken wish → offered price → OMEN → Fate's answer → the ACTUAL
+  // (adjacent, warped) sacrifice → witnesses reacting. Self-gates via
+  // _fatelandsWishDemoActive (empty on any non-first / non-dev / non-Fatelands /
+  // continuation turn) AND is HOT-only (returns '' unless _openingTemperature is
+  // HOT_CRISIS). Reuses the 5-beat OMEN shape from _buildOrdinaryWishDirective.
+  function _buildFatelandsWishDemoOpenerDirective() {
+    try {
+      var s = window.state || {};
+      if (typeof _fatelandsWishDemoActive !== 'function' || !_fatelandsWishDemoActive(s)) return '';
+      if ((s._openingTemperature || '') !== 'HOT_CRISIS') return '';
+      // Is an LI present? (romance-led → the wish becomes the inciting wound.)
+      var _liPresent = false;
+      try {
+        _liPresent = !!((s.li && (s.li.name || s.li.Name))
+          || (s.characters && s.characters.li)
+          || (s.pairDynamic && s.pairDynamic.romanceEngine)
+          || (s.romanceEnginePlan && s.romanceEnginePlan.engine));
+      } catch (_) {}
+
+      var d = '\n═══ FATELANDS FIRST-STORY WISH DEMONSTRATION (HARD — this Scene-1 TEACHES the whole system through drama) ═══\n';
+      d += 'This is the reader’s FIRST encounter with how Fate works in the Fatelands. Scene 1 must contain ONE COMPLETE, LEGIBLE NPC-invoked wish cycle, dramatized — not explained. The reader learns the law by WATCHING it happen with real stakes. This is a HOT crisis, not a tutorial: it must do real story work (reveal who these people are, what they value and will lose, their bond, the region’s beliefs about Fate, and the story’s central emotional pressure). Follow this BEAT ORDER exactly:\n';
+      d += '① HOT CRISIS FIRST (~50–150 words, BEFORE any bargain). Open INSIDE a live, physical danger already detonating — someone is bleeding out / the ice is cracking / the fire is closing / the guards are at the door. Establish the stakes and the danger through action, in motion. Ordinary escape or solution is visibly FAILING — mundane means are not enough, which is WHY a bargain becomes thinkable. Do NOT make the wish the first line; the crisis earns it.\n';
+      d += '② AN NPC (NOT the PC) STATES A WISH ALOUD. A character who is NOT the protagonist — the PC witnesses it or is directly its object — voices the wish out loud, in operative language: an "I wish …" / "If only …" or a direct address to Fate. It MUST be EXPRESSED, given form as audible speech (Fate does not read the mind — the externalization law). Pair it with an OFFERING or an open price: a named thing they lay down, or "Take what it costs." Let the wish REVEAL them — what they will trade shows who they are and what they value.\n';
+      d += '③ THE OMEN — a recognizable diegetic foreshadow, BEFORE Fate answers (disposition-keyed; a HINT, not a traffic light). Because this is the reader’s FIRST omen, make it clearly READABLE AS AN OMEN — a sign anyone in this world would notice and read (not obscure symbolism, not a status label). Draw from the ACQUIESCENCE family — CONVERGENCE / OPENING / WARMTH / RHYTHM / RELEASE (a flame bending toward the wisher, birds falling silent then resuming as one, a door easing open, the air warming, a knot loosening). Since the price will be heavy, THREAD a bodily premonition into the sign (a remembered sensation already going quiet, warmth leaving the hands) so the reader feels the cost coming.\n';
+      d += '④ FATE ANSWERS — concrete and prompt. Show what Fate actually does: the wished-for effect arrives (the wound closes, the door opens, the fire gutters). Do not stall; let the answer LAND so the relief is real before the cost is understood.\n';
+      d += '⑤ THE ACTUAL SACRIFICE — ADJACENT, NOT THE LITERAL OFFER (the teaching moment; the WARP/adjacency law). Fate takes something ADJACENT to — not necessarily — the thing offered. AN OFFER IS NOT THE PAYMENT: the wisher only offers; FATE chooses what it claims, within the same band. Make the taken price land as a discovery, and make it hurt in a way the offer did not. (Convey the SHAPE, do not copy it: a character offers their left hand to open a door, and Fate instead makes them unable to remember the PC’s name. Invent your own adjacent price fitting THIS wish.)\n';
+      d += '⑥ THE CRISIS CHANGES, IT DOES NOT CLEAN-ERASE. The wish RESHAPES the situation rather than tidily deleting it — the danger transforms, a new pressure is born from the answer, the ground the characters stand on is different now. Do not resolve the scene to safety.\n';
+      d += '⑦ WITNESSES REACT — TEACH THE SOCIAL MEANING. Everyone present understands a dangerous bargain just occurred. Show it: horror, recognition of the omen, a stranger flinching from the wish-word, fear of the debt now owed, someone who will not meet the wisher’s eyes. The reader must infer, from the room, that this world KNOWS what Fate is and fears its price. The wish alters the SOCIAL scene, not just one body.\n';
+      d += '\nLEGIBLE ORDER ONLY (HARD). For this FIRST demonstration, the wish MUST be of a legible, inferable Order — RESTORATION (undo a hurt / heal / mend / return to whole), TEMPORARY_AID (a power or reprieve for the moment’s need), or TRANSFORMATION (change a thing or person). NEVER a History / Identity / Agency compound and never a tangled multi-Order ask. The reader, watching once, must be able to reconstruct the rule: spoken wish → offered price → omen → effect → the ACTUAL (adjacent) price → the room’s reaction. Keep the cycle clean enough to reverse-engineer.\n';
+      if (_liPresent) {
+        d += '\nROMANCE-LED (an LI is present) — STRONGLY PREFER: let the LOVE INTEREST be the one who makes the wish, to SAVE the PC. What the LI offers should reveal an ATTACHMENT to the PC they have not admitted (and would not say plainly). Fate takes something ADJACENT but MORE PAINFUL than the offer — so this tutorial is ALSO the romantic inciting wound: the PC now carries what the LI’s love cost, and the LI carries a loss that reshapes how they can be near the PC. The lesson and the love-wound are the same beat.\n';
+      }
+      d += '\nEND POISED ON A GENUINE CHOICE — but do NOT resolve it here. Close the scene on the PC standing at the threshold of the bargain economy: they have just SEEN what wishing to Fate costs, and the changed crisis now presses a decision on them about whether they, too, step into that economy. Set up that fork; do NOT state or list the options (the choice is authored separately). End on the pressure, not the menu.\n';
+      d += 'Make every beat feel LAWFUL, not arbitrary — an ancient, consistent rule the whole world already knows, never a magic vending machine. Dramatize; do not lecture.\n';
+      return d;
+    } catch (e) {
+      try { console.warn('[FATELANDS-WISH-DEMO] _buildFatelandsWishDemoOpenerDirective failed:', e && e.message); } catch (_) {}
+      return '';
+    }
+  }
+  window._buildFatelandsWishDemoOpenerDirective = _buildFatelandsWishDemoOpenerDirective;
 
   // HOT&FAST final reminder (Roman 2026-06-26): a short recency-anchored reinforcement of
   // the short-hot contract (the HARD CONTRACT already carries the full version upstream).
@@ -130835,7 +130907,8 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
           // path uses — picturability, then hot-crisis. Not reimplemented; sourced from the builders.
           var _bgUserPrompt = introPrompt
               + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '')
-              + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '');
+              + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '')
+              + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '');
 
           // ── MODEL-COMPARE CAPTURE ──
           // Save the exact prompt bundle so the Model A/B side panel can
@@ -192589,6 +192662,8 @@ No text, no watermark, no UI elements, share-ready.`;
       if (sceneIndex === 0) {
         var _hotCG = (typeof _buildHotCrisisOpenerProseDirective === 'function') ? _buildHotCrisisOpenerProseDirective('cg') : '';
         if (_hotCG) { lines.push(''); lines.push(_hotCG); }
+        var _fwdCG = (typeof _buildFatelandsWishDemoOpenerDirective === 'function') ? _buildFatelandsWishDemoOpenerDirective() : '';
+        if (_fwdCG) { lines.push(''); lines.push(_fwdCG); }
       }
     } catch (_) {}
     // 2026-05-31 (Roman, CG Slice E): wound vortex 5 forms → shot grammar.
@@ -236748,12 +236823,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             try { console.log('[HOTFAST:ENABLED] short hot-crisis Scene-1 path'); } catch (_) {}
             text = await callChat([
                 {role:'system', content: state.sysPrompt},
-                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildHotFastDirective === 'function' ? _buildHotFastDirective() : '') + _buildPerTurnCharMemory()}
+                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + (typeof _buildHotFastDirective === 'function' ? _buildHotFastDirective() : '') + _buildPerTurnCharMemory()}
             ], 0.7, { max_tokens: 700 });
         } else if (typeof text === 'undefined') {
             text = await callChat([
                 {role:'system', content: state.sysPrompt},
-                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + _buildPerTurnCharMemory()}
+                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + _buildPerTurnCharMemory()}
             ], 0.7, { max_tokens: 2400 });
         }
         // Paragraph-ownership map (both modes) — see the 99/1 romance:plot ratio per ¶.
