@@ -163060,11 +163060,14 @@ No text, no watermark, no UI elements, share-ready.`;
       try { if (typeof normalizeGoverningDesire === 'function') desireKey = normalizeGoverningDesire(rawForKey); } catch (_) {}
       if (!desireKey) desireKey = String(rawForKey || '').toLowerCase().trim();
 
-      // MATCH: same desireKey + compatible targetKey, still open.
+      // MATCH: same desireKey + compatible targetKey, NOT cleanly resolved. Per the anti-spam law,
+      // re-attempting the same desire is a CONTINUATION regardless of the prior outcome — a warped,
+      // distorted, or refused bargain stays matchable so re-pressing "alters the translation" / deepens
+      // rather than granting a FRESH roll. Only a cleanly-landed ('resolved') wish closes the bargain.
       var found = null;
       for (var i = 0; i < st._openFateBargains.length; i++) {
         var b = st._openFateBargains[i];
-        if (!b || b.status !== 'open') continue;
+        if (!b || b.status === 'resolved') continue;
         if (b.desireKey !== desireKey) continue;
         if (!_targetKeysCompatible(b.targetKey, targetKey)) continue;
         found = b; break;
@@ -163246,6 +163249,365 @@ No text, no watermark, no UI elements, share-ready.`;
     }
   }
   window._recordFateBargainToLedger = _recordFateBargainToLedger;
+
+  // ════════════════════════════════════════════════════════════════════════
+  // FATELANDS THREE-RAIL WISH — STEP D: ORDINARY SAY/DO WISH RAIL
+  // (Roman 2026-07-16, project_fatelands_wish_philosophy). The FIRST-CLASS PC
+  // rail: a DELIBERATE Fate invocation typed in Say/Do (no Fortunes) →
+  //   detect → classify (B) → find/create bargain (C, anti-spam) → cost BAND →
+  //   FATE CHOOSES THE SACRIFICE within the band (NEW) → resolve outcome →
+  //   mutate durable state (C) → append ledger (C) → author-facing directive.
+  // Reuses step-B classifyWishDisposition, step-C bargain/consequence/ledger
+  // helpers, and the existing sacrifice machinery (SACRIFICE_DOMAINS /
+  // SACRIFICE_MAGNITUDE / detectSacrifice). Wired at the scene-directive seam
+  // (next to detectSacrifice/resolveSacrifice), FATELANDS-only, ordinary-turn
+  // only (never on a Petition/Tempt act — those card rails resolve themselves).
+  // ════════════════════════════════════════════════════════════════════════
+  var _WISH_MAG_ORDER = ['minor', 'moderate', 'severe', 'irreversible'];
+  // Intrinsic magnitude of each SACRIFICE_DOMAINS currency (mirrors the per-
+  // offering magnitudes detectSacrifice already assigns). A "band" is a
+  // [floorMagIdx, ceilMagIdx] window into _WISH_MAG_ORDER; a currency is
+  // in-band when its magnitude sits inside the window.
+  var _WISH_CURRENCY_MAG = { hair: 'minor', tooth: 'moderate', blood: 'moderate', flesh: 'moderate', memory: 'severe', name: 'severe', life: 'irreversible' };
+  // Cost BAND per Order — the EXISTING tiers (no new prices): band widens with
+  // the Order's difficulty/scope. Escalation on a repeated desire pushes the
+  // taken magnitude toward the TOP of the band.
+  var _WISH_ORDER_BAND = {
+    RESTORATION:    [0, 1],
+    TEMPORARY_AID:  [0, 0],
+    REVELATION:     [0, 1],
+    TRANSFORMATION: [1, 2],
+    FORTUNE:        [1, 2],
+    AGENCY:         [2, 2],
+    IDENTITY:       [2, 3],
+    HISTORY:        [3, 3]
+  };
+  // Which in-band currency each Order thematically pulls toward (Fate's own lean).
+  var _WISH_ORDER_AFFINITY = {
+    RESTORATION: 'blood', TEMPORARY_AID: 'hair', REVELATION: 'blood',
+    TRANSFORMATION: 'flesh', FORTUNE: 'memory', AGENCY: 'name',
+    IDENTITY: 'name', HISTORY: 'life'
+  };
+  // REGIONAL VARIATION — the accepted-currency lean of each Fatelands region
+  // (keys mirror FATELANDS_SACRIFICE_CULTURE @122920). A weak bias, never binding.
+  var _WISH_REGION_CURRENCY = {
+    the_veilwood: 'memory', the_ashen_verge: 'flesh', lytharyn: 'hair',
+    vaelryn_reach: 'flesh', the_shackle_isles: 'name', gloamwater_bay: 'hair',
+    pulse_point: 'memory', the_thornwild: null
+  };
+  // Currency Fate TAKES → durable consequence type (L2).
+  var _WISH_CURRENCY_DURABLE = {
+    hair: 'other', tooth: 'other', blood: 'other', flesh: 'other',
+    memory: 'memory_lost', name: 'identity_altered', life: 'years_taken'
+  };
+
+  // _detectOrdinaryWishInvocation(act, dia) → null OR {invoked, signals, targetKey, offering}.
+  // HARD FLOOR: at least ONE UNAMBIGUOUS signal (direct ADDRESS to Fate / explicit
+  // INTENT TO BARGAIN with Fate / a deliberate WISHING RITUAL / an explicit OFFER
+  // made to Fate) or it returns null. Supporting signals (named sacrifice,
+  // imperative outcome, clarity/hesitation) raise confidence but CANNOT fire alone.
+  // Deterministic; try/catch → null. MUST NOT fire on generic "I wish" / "god I
+  // wish he'd shut up" / exclamations / hesitation alone.
+  function _detectOrdinaryWishInvocation(act, dia) {
+    try {
+      var text = String((act == null ? '' : act) + ' ' + (dia == null ? '' : dia)).trim();
+      if (!text) return null;
+      var hasFate = /\bfate\b/i.test(text);
+
+      // ── UNAMBIGUOUS SIGNAL 1: direct ADDRESS to Fate (vocative) ──
+      // Fate is the ADDRESSEE, not "god I wish". Requires "O/dear Fate", a Fate
+      // vocative immediately followed by an imperative, or "I ask/beseech Fate".
+      var _addrPats = [
+        /(?:^|[\s"'(—-])(?:o+h?|dear)\s+fate\b/i,
+        /(?:^|[\s"'(.,;:—-])fate\s*[,:!—-]+\s*(?:hear|grant|give|return|send|take|save|heal|show|make|let|bring|end|silence|spare|help|bind|free|undo|restore|deliver|answer|be|please|listen|come|hold|keep|guide|watch|carry|open|i\b)/i,
+        /\bi\s+(?:ask|beseech|call\s+(?:on|upon)|pray\s+to|petition|invoke|implore|entreat|beg)\s+(?:you,?\s+)?(?:o+h?\s+)?fate\b/i,
+        /\bfate,?\s+hear\s+me\b/i,
+        /\bhear\s+me,?\s+(?:o+h?\s+)?fate\b/i
+      ];
+      var address = _addrPats.some(function (rx) { return rx.test(text); });
+
+      // ── UNAMBIGUOUS SIGNAL 2: explicit INTENT TO BARGAIN with Fate ──
+      var bargainIntent = hasFate && (
+        /\b(?:bargain|barter|covenant|a\s+pact|make\s+a\s+deal|strike\s+a\s+(?:deal|pact|bargain)|i\s+bargain)\b/i.test(text) ||
+        /\bin\s+exchange\b/i.test(text)
+      );
+
+      // ── UNAMBIGUOUS SIGNAL 3: a deliberate WISHING RITUAL ──
+      // Fate-shrine offering + the ritual verbs, performed at/before Fate.
+      var _ritualPats = [
+        /\b(?:at|before|to|upon)\s+(?:the\s+)?(?:fate[\s'-]?shrine|shrine\s+of\s+fate|fate['’]?s\s+(?:favor|altar|shrine|basin))\b/i,
+        /\b(?:kneel|kneels|knelt|light\s+a\s+candle|lit\s+a\s+candle|burn\s+an?\s+offering|lay\s+(?:an?\s+)?offering|leave\s+an?\s+offering|make\s+an?\s+offering|cast\s+the\s+bones|spill\s+(?:my\s+)?blood|open\s+(?:my|a)\s+(?:palm|vein))\b[^.?!]{0,40}\b(?:fate|shrine|favor|altar|basin)\b/i,
+        /\b(?:fate|shrine|favor|altar|basin)\b[^.?!]{0,40}\b(?:kneel|candle|an?\s+offering|cast\s+the\s+bones)\b/i
+      ];
+      var ritual = _ritualPats.some(function (rx) { return rx.test(text); });
+
+      // ── UNAMBIGUOUS SIGNAL 4: explicit OFFER made to Fate ──
+      // "take my <thing>" / "I offer my <thing>", DIRECTED at Fate. detectSacrifice
+      // is reused as a corroborating typed-offer signal.
+      var _offerPhrase = /\b(?:take|here,?\s+take|i(?:'ll|\s+will)?\s+(?:offer|give(?:\s+up)?|trade|surrender|sacrifice|pay)|i\s+offer)\s+(?:you\s+)?(?:my|the|what|whatever|anything|it\s+all)\b/i;
+      var typedSacrifice = (typeof detectSacrifice === 'function') ? detectSacrifice(text) : null;
+      var offerToFate = (_offerPhrase.test(text) || !!typedSacrifice) && (hasFate || /\bto\s+fate\b/i.test(text));
+
+      var unambiguous = [address, bargainIntent, ritual, offerToFate].filter(Boolean).length;
+      if (unambiguous < 1) return null;
+
+      // ── SUPPORTING signals (confidence only; never gate) ──
+      var clarity = /\b(?:i\s+will|i\s+must|no\s+choice|the\s+only\s+way|i\s+have\s+to|nothing\s+else|whatever\s+it\s+takes|i\s+swear|i\s+demand)\b/i.test(text);
+      var hesitation = /\b(?:maybe|i\s+think|not\s+sure|i\s+guess|perhaps|might|i\s+wonder|if\s+only|i\s+don'?t\s+know)\b/i.test(text);
+      var imperativeOutcome = /\b(?:return|silence|save|heal|close|bring|give|make|send|end|free|undo|restore|show|tell|reveal|grant|spare|deliver|bind|open|stop)\b/i.test(text);
+
+      // ── extract targetKey (who/what the wish concerns) ──
+      var targetKey = null;
+      var _tk = text.match(/\b(him|her|them|his|hers|their|theirs)\b/i);
+      if (_tk) targetKey = _tk[1].toLowerCase();
+      else {
+        var _tm = text.match(/\b(?:my|the)\s+([a-z]{3,})\b/i);
+        if (_tm && !/^(?:voice|life|name|hair|tooth|teeth|blood|flesh|memory|memories|soul|hand|hands|eye|eyes|years?|breath|sight|shadow|reflection)$/i.test(_tm[1])) targetKey = _tm[1].toLowerCase();
+        else {
+          var _cap = text.match(/\b([A-Z][a-z]{2,})\b/);
+          if (_cap && _cap[1].toLowerCase() !== 'fate') targetKey = _cap[1];
+        }
+      }
+
+      // ── extract offering (the named sacrifice, if any) ──
+      var offering = null;
+      if (typedSacrifice && typedSacrifice.offeringType) offering = typedSacrifice.offeringType;
+      else {
+        var _om = text.match(/\b(?:take|offer|give(?:\s+up)?|trade|surrender|sacrifice|pay)\s+(?:you\s+)?(?:my|the)\s+([a-z]{3,})\b/i);
+        if (_om) offering = _om[1].toLowerCase();
+      }
+
+      return {
+        invoked: true,
+        signals: {
+          address: address, bargainIntent: bargainIntent, ritual: ritual, offerToFate: offerToFate,
+          namedSacrifice: !!typedSacrifice, imperativeOutcome: imperativeOutcome,
+          clarity: clarity, hesitation: hesitation, unambiguousCount: unambiguous
+        },
+        targetKey: targetKey,
+        offering: offering
+      };
+    } catch (e) {
+      try { console.warn('[ORDINARY-WISH] _detectOrdinaryWishInvocation failed:', e && e.message); } catch (_) {}
+      return null;
+    }
+  }
+  window._detectOrdinaryWishInvocation = _detectOrdinaryWishInvocation;
+
+  // FATE CHOOSES THE SACRIFICE within the band (the NEW step). The player's
+  // offer is an OFFER, not binding: Fate picks a currency from the pool
+  // (SACRIFICE_DOMAINS) whose magnitude sits in-band, biased by (a) the offer,
+  // (b) the region's accepted currency, (c) the dominant Order's lean — and
+  // may take something OTHER than the offer. Escalation biases toward the
+  // magnitude TARGET (top-of-band). Deterministic argmax.
+  function _fateChooseSacrifice(order, floorIdx, ceilIdx, targetIdx, offer) {
+    try {
+      var pool = Object.keys(SACRIFICE_DOMAINS); // hair,tooth,blood,flesh,memory,name,life
+      var inBand = pool.filter(function (c) {
+        var idx = _WISH_MAG_ORDER.indexOf(_WISH_CURRENCY_MAG[c]);
+        return idx >= floorIdx && idx <= ceilIdx;
+      });
+      if (!inBand.length) inBand = pool.slice();
+      var region = (window.state && String(window.state.fantasyRegion || '').toLowerCase()) || '';
+      var regionCur = _WISH_REGION_CURRENCY[region] || null;
+      var affinity = _WISH_ORDER_AFFINITY[order] || null;
+      var best = null, bestW = -Infinity, bestIdx = -1;
+      for (var i = 0; i < inBand.length; i++) {
+        var c = inBand[i];
+        var idx = _WISH_MAG_ORDER.indexOf(_WISH_CURRENCY_MAG[c]);
+        var w = 3 - Math.abs(idx - targetIdx);      // proximity to the escalation target
+        if (offer && c === offer) w += 2;           // (a) the offer biases, does NOT bind
+        if (regionCur && c === regionCur) w += 2;   // (b) regional accepted currency
+        if (affinity && c === affinity) w += 3;     // (c) the Order's own lean (strongest)
+        // deterministic tie-break: heavier magnitude first, then pool order
+        if (w > bestW || (w === bestW && idx > bestIdx)) { best = c; bestW = w; bestIdx = idx; }
+      }
+      return best || inBand[0];
+    } catch (_) { return 'blood'; }
+  }
+  window._fateChooseSacrifice = _fateChooseSacrifice;
+
+  // Light alignment read (doubt / self-deception → warp). 0..1.
+  function _wishAlignment(text) {
+    try {
+      var t = String(text || '').toLowerCase();
+      var a = 0.5;
+      if (/\b(?:i\s+will|i\s+must|no\s+choice|the\s+only\s+way|i\s+have\s+to|nothing\s+else|whatever\s+it\s+takes|i\s+swear)\b/.test(t)) a += 0.25;
+      if (/\b(?:maybe|i\s+think|not\s+sure|i\s+guess|perhaps|might|if\s+only|i\s+wonder|i\s+don'?t\s+know)\b/.test(t)) a -= 0.25;
+      if (/\b(?:but|however|even\s+though|although|afraid|scared|regret|doubt|shouldn'?t)\b/.test(t)) a -= 0.15;
+      return Math.max(0, Math.min(1, a));
+    } catch (_) { return 0.5; }
+  }
+  window._wishAlignment = _wishAlignment;
+
+  // Outcome by disposition, folding Alignment + per-desire escalation.
+  //   welcomes/usually-welcomes → landed ; cautious → may distort ;
+  //   risky → usually distorts ; resists/strongly-resists → SEMANTIC WARP ;
+  //   nearly-impossible → warp (rare refuse only for the vanishingly-rare
+  //   non-bargain: max doubt + nothing offered + first attempt).
+  function _wishOutcome(disposition, order, alignment, escalation, offer) {
+    var outcome;
+    switch (disposition) {
+      case 'welcomes':
+      case 'usually-welcomes': outcome = 'landed'; break;
+      case 'cautious':         outcome = (alignment < 0.5 || escalation >= 1) ? 'distorted' : 'landed'; break;
+      case 'risky':            outcome = (alignment >= 0.7 && escalation === 0) ? 'landed' : 'distorted'; break;
+      case 'resists':
+      case 'strongly-resists': outcome = 'warped'; break;
+      case 'nearly-impossible': outcome = (alignment <= 0.1 && !offer && escalation === 0) ? 'refused' : 'warped'; break;
+      default:                 outcome = 'landed';
+    }
+    if (outcome === 'landed' && alignment < 0.4) outcome = 'distorted';       // doubt drags toward distortion
+    if (outcome === 'landed' && escalation >= 2) outcome = 'distorted';       // deepening → distortion
+    if (outcome === 'distorted' && escalation >= 3) outcome = 'warped';       // relentless pressing → warp
+    return outcome;
+  }
+  window._wishOutcome = _wishOutcome;
+
+  // WARP = SEMANTIC: preserve the governing desire, translate the requested
+  // MEANS into the nearest bargain Fate recognizes. Keyed on the resisted
+  // operation (else the dominant Order).
+  function _wishWarpTranslation(cls) {
+    var desire = (cls && cls.governingDesire) || 'what they long for';
+    var op = (cls && cls.resistedOperation) || (cls && cls.dominantOrder) || null;
+    if (op === 'AGENCY') return 'Fate will not bend another’s will. PRESERVE the desire (' + desire + '); TRANSLATE the means into OPPORTUNITY, not compulsion — clear an obstacle, engineer the meeting, open the door the PC could not. The other still chooses freely; the wish buys the CHANCE, never the outcome.';
+    if (op === 'IDENTITY') return 'Fate will not rewrite a self. PRESERVE the desire (' + desire + '); TRANSLATE the means into a FACULTY or ECHO — the skill, the eloquence, the vivid recall, the resemblance — not the wholesale exchange of who someone IS.';
+    if (op === 'HISTORY') return 'Fate cannot unmake what is done. PRESERVE the desire (' + desire + '); TRANSLATE the means into a lawful RESTORATION-shaped answer — a word across the veil, a vision, a presence carried in the living, one last passage — never the literal undoing of death or the past.';
+    return 'PRESERVE the governing desire (' + desire + '); TRANSLATE the requested MEANS into the nearest bargain Fate recognizes — the reader must see BOTH what the PC wanted AND why Fate’s answer is its closest lawful shape.';
+  }
+  window._wishWarpTranslation = _wishWarpTranslation;
+
+  // Author-facing DIRECTIVE — legible: governing desire, Order+disposition, the
+  // PC OFFERED X but FATE TAKES Y (same band, offer may not be honored), the
+  // outcome type, and (on warp) the preserve-desire/translate-means instruction.
+  function _buildOrdinaryWishDirective(o) {
+    try {
+      var offerTxt = o.offering ? ('the PC’s ' + o.offering) : 'no specific price (an open offer — "take what it costs")';
+      var outLabel = { landed: 'LANDS CLEAN', distorted: 'LANDS DISTORTED', warped: 'SEMANTIC WARP', refused: 'REFUSED (vanishingly rare)' }[o.outcome] || o.outcome;
+      var d = '\n═══ ORDINARY FATE-WISH (the PC bargained with Fate directly, in Say/Do) ═══\n';
+      d += 'GOVERNING DESIRE: ' + (o.cls.governingDesire || '(unspoken)') + '\n';
+      d += 'ORDER OF BARGAIN: ' + o.order + ' — Fate ' + String(o.disposition).replace(/-/g, ' ') + ' this kind of ask';
+      if (o.cls.secondaryOrders && o.cls.secondaryOrders.length) d += ' (also touches ' + o.cls.secondaryOrders.join(', ') + ')';
+      d += '.\n';
+      d += 'THE OFFER vs THE PRICE: the PC OFFERED ' + offerTxt + '. FATE TAKES the PC’s ' + o.taken + ' (' + o.takenMag + ', within the ' + o.bandLabel + ' band). ';
+      d += o.offerHonored
+        ? 'Fate accepts the offered price this time.\n'
+        : 'FATE DOES NOT TAKE WHAT WAS OFFERED — it claims the ' + o.taken + ' instead (same band). The wisher offers; FATE chooses. Show the PC discover what Fate actually takes.\n';
+      d += 'OUTCOME: ' + outLabel + '. ';
+      if (o.outcome === 'landed') d += 'The desire is met plainly; the loss is real and permanent.\n';
+      else if (o.outcome === 'distorted') d += 'The desire arrives, but wrong — incomplete, rippling past its target, or missing a critical piece. Legible cause: the loss reshapes the result.\n';
+      else if (o.outcome === 'warped') d += (o.translation || '') + '\n';
+      else if (o.outcome === 'refused') d += 'Fate does not recognize this as a bargain at all. Nothing taken, nothing granted — only the silence of a law that will not bend here.\n';
+      if (o.escalation > 0) {
+        var note = (typeof _fateBargainEscalationNote === 'function') ? _fateBargainEscalationNote(o.bargain) : '';
+        d += 'CONTINUATION (attempt #' + o.attemptCount + ' at this same desire): ' + (note || 'Fate DEEPENS the price; it does not re-roll.') + '\n';
+      }
+      if (o.openDebt) d += 'OPEN DEBT: Fate carries an unpaid balance forward from this bargain — it will come due in a later scene.\n';
+      d += 'Make the outcome feel LAWFUL, not arbitrary: an ancient consistent rule, never a magic vending machine.\n';
+      return d;
+    } catch (e) {
+      try { console.warn('[ORDINARY-WISH] _buildOrdinaryWishDirective failed:', e && e.message); } catch (_) {}
+      return '';
+    }
+  }
+  window._buildOrdinaryWishDirective = _buildOrdinaryWishDirective;
+
+  // _resolveOrdinaryWish(act, dia, sceneIdx) → author-facing DIRECTIVE string
+  // (and mutates durable state). '' if not an ordinary wish. Full pipeline:
+  // classify → find/create bargain (anti-spam) → cost band → Fate-chooses-
+  // sacrifice → outcome → durable consequence + Open Debt + ledger receipt →
+  // bargain status → directive.
+  function _resolveOrdinaryWish(act, dia, sceneIdx) {
+    try {
+      var text = String((act == null ? '' : act) + ' ' + (dia == null ? '' : dia)).trim();
+      var inv = _detectOrdinaryWishInvocation(act, dia);
+      if (!inv || !inv.invoked) return '';
+      if (sceneIdx == null) sceneIdx = (window.state && window.state.turnCount) || 0;
+
+      // 1) classify (compound Eight-Orders)
+      var cls = (typeof classifyWishDisposition === 'function')
+        ? classifyWishDisposition(text)
+        : { governingDesire: '', dominantOrder: 'RESTORATION', secondaryOrders: [], resistedOperation: null, disposition: 'welcomes' };
+      var order = cls.dominantOrder || 'RESTORATION';
+      var disposition = cls.disposition || 'welcomes';
+
+      // 2) find/create bargain — continuation if the same desire is already open
+      var bargain = (typeof _findOrCreateFateBargain === 'function')
+        ? _findOrCreateFateBargain(cls, { rail: 'ordinary', sceneIdx: sceneIdx, offering: inv.offering, targetKey: inv.targetKey, text: text })
+        : null;
+      var escalation = bargain ? (+bargain.escalation || 0) : 0;
+      var attemptCount = bargain ? (+bargain.attemptCount || 1) : 1;
+
+      // 3) cost BAND (existing tiers; escalation raises the target toward top-of-band)
+      var band = _WISH_ORDER_BAND[order] || [0, 1];
+      var floorIdx = band[0], ceilIdx = band[1];
+      var escFrac = Math.min(1, 0.25 * escalation);
+      var targetIdx = Math.min(ceilIdx, Math.round(floorIdx + escFrac * (ceilIdx - floorIdx)));
+      var bandLabel = _WISH_MAG_ORDER[floorIdx] + (ceilIdx !== floorIdx ? '–' + _WISH_MAG_ORDER[ceilIdx] : '');
+      if (bargain && !bargain.band) bargain.band = bandLabel;
+
+      // 4) FATE CHOOSES THE SACRIFICE within the band (offer only biases)
+      var takenCurrency = _fateChooseSacrifice(order, floorIdx, ceilIdx, targetIdx, inv.offering);
+      var takenMag = _WISH_CURRENCY_MAG[takenCurrency] || _WISH_MAG_ORDER[targetIdx];
+      var offerHonored = !!(inv.offering && inv.offering === takenCurrency);
+
+      // 5) OUTCOME by disposition + alignment + escalation
+      var alignment = _wishAlignment(text);
+      var outcome = _wishOutcome(disposition, order, alignment, escalation, inv.offering);
+      var translation = (outcome === 'warped') ? _wishWarpTranslation(cls) : null;
+
+      // 6) record durable state (the Fate-taken sacrifice + any Open Debt), ledger, bargain status
+      var durableType = _WISH_CURRENCY_DURABLE[takenCurrency] || 'other';
+      if (typeof _recordDurableConsequence === 'function') {
+        _recordDurableConsequence({
+          type: durableType,
+          detail: 'Fate took the PC’s ' + takenCurrency + ' (' + takenMag + ') for the bargain: ' + (cls.governingDesire || 'a wish'),
+          sceneIdx: sceneIdx,
+          bargainId: bargain && bargain.id
+        });
+      }
+      var openDebt = (escalation >= 2) || (outcome === 'warped' && escalation >= 1);
+      if (openDebt && typeof _recordDurableConsequence === 'function') {
+        _recordDurableConsequence({
+          type: 'open_debt',
+          detail: 'Unpaid remainder of the ' + String(order).toLowerCase() + ' bargain "' + (cls.governingDesire || 'a wish') + '" — Fate carries the balance forward.',
+          sceneIdx: sceneIdx,
+          bargainId: bargain && bargain.id
+        });
+      }
+      if (typeof _recordFateBargainToLedger === 'function') {
+        _recordFateBargainToLedger({
+          rail: 'ordinary', sceneIdx: sceneIdx, wish: text,
+          governingDesire: cls.governingDesire, dominantOrder: order,
+          offering: inv.offering, sacrificeTaken: takenCurrency,
+          outcome: outcome, translation: translation,
+          bargainId: bargain && bargain.id
+        });
+      }
+      if (bargain) {
+        if (outcome === 'landed') bargain.status = 'resolved';
+        else if (outcome === 'warped') bargain.status = 'warped';
+        else if (outcome === 'refused') bargain.status = 'refused';
+        else bargain.status = 'open';   // distorted / incomplete → still open, deepens on re-press
+        bargain.lastOutcome = outcome;
+        bargain.sacrificeTaken = takenCurrency;
+      }
+
+      // 7) author-facing DIRECTIVE
+      return _buildOrdinaryWishDirective({
+        cls: cls, order: order, disposition: disposition,
+        offering: inv.offering, taken: takenCurrency, takenMag: takenMag,
+        offerHonored: offerHonored, bandLabel: bandLabel,
+        outcome: outcome, translation: translation,
+        escalation: escalation, attemptCount: attemptCount, openDebt: openDebt,
+        bargain: bargain
+      });
+    } catch (e) {
+      try { console.warn('[ORDINARY-WISH] _resolveOrdinaryWish failed:', e && e.message); } catch (_) {}
+      return '';
+    }
+  }
+  window._resolveOrdinaryWish = _resolveOrdinaryWish;
 
   function _recordTemptFateEvent(wishText) {
     var s = window.state || {};
@@ -264047,7 +264409,29 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
 
       // Sacrifice detection + directive
       var _sacrificeDirective = '';
-      if (typeof detectSacrifice === 'function' && typeof resolveSacrifice === 'function') {
+      // ── ORDINARY FATE-WISH RAIL (step D) ──
+      // A deliberate Fate invocation typed in Say/Do resolves under the Eight
+      // Orders (Fate chooses the sacrifice within the band). GATES:
+      //   • FATELANDS ONLY — never fire ordinary Fate-wishing in other worlds.
+      //   • ORDINARY TURN ONLY — never on a Petition/Tempt act (their card rails
+      //     resolve themselves; the ordinary rail must not double-fire or
+      //     contaminate their guarantees).
+      // When it fires and NAMES a sacrifice, it SUPERSEDES the legacy
+      // detectSacrifice/resolveSacrifice path so the sacrifice is not double-counted.
+      var _ordinaryWishDirective = '';
+      var _ordinaryWishFired = false;
+      var _isFatelandsWorld = !!(state.picks && state.picks.world === 'Fantasy');
+      var _isPetitionOrTemptTurn = !!(state.tempt_fate_invoked_this_turn || (state.fate && state.fate.pendingPetition));
+      if (_isFatelandsWorld && !_isPetitionOrTemptTurn) {
+        try {
+          var _owInv = (typeof _detectOrdinaryWishInvocation === 'function') ? _detectOrdinaryWishInvocation(act, dia) : null;
+          if (_owInv && _owInv.invoked && typeof _resolveOrdinaryWish === 'function') {
+            _ordinaryWishDirective = _resolveOrdinaryWish(act, dia, (state.turnCount || 0)) || '';
+            _ordinaryWishFired = !!_ordinaryWishDirective;
+          }
+        } catch (_owErr) { try { console.warn('[ORDINARY-WISH] wiring failed:', _owErr && _owErr.message); } catch (_) {} }
+      }
+      if (!_ordinaryWishFired && typeof detectSacrifice === 'function' && typeof resolveSacrifice === 'function') {
         var _sacOffering = detectSacrifice(act + ' ' + dia);
         if (_sacOffering) resolveSacrifice(_sacOffering, act + ' ' + dia);
       }
@@ -264497,7 +264881,7 @@ Prioritize natural variation over strict consistency if rules conflict.` : '';
       // at most once per prompt build instead of twice.
       const narrativeSignatureDirective = buildNarrativeSignatureDirective();
 
-      let sceneDirectives = `\n${/* intentTransmutation hoisted into _persistentStableTail (cached region) — Roman 2026-06-02 */''}${_liVoiceRegisterDirective}${_firstFavoredDirective}${_thornwildDirective}${_shackleIslesDirective}${_farFutureDirective}${_antiEchoDirective}${_litRepairWindowDirective}${_litLIAgencyDirective}${_familyDeckDirective}${_sacrificeDirective}${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${_explicitCarryForwardDirective}${_afterglowToneDirective}${_aftercareRecenterDirective}${eroticGatingDirective}${lensEnforcement}${materialEnsembleDirective}${intimacyDirective}${buildIntimacyProgressionDirective()}${buildCliffPrepDirective()}${typeof buildSceneEndingDilemmaDirective === 'function' ? buildSceneEndingDilemmaDirective() : ''}\n${safetyRewriteDirective ? '\n' + safetyRewriteDirective + '\n' : ''}${intentAnchorDirective}${squashDirective}\n${metaReminder}\n${petitionDirective}${typeof buildMetaEggDirective === 'function' ? buildMetaEggDirective() : ''}${buildFateScenarioWeaveDirective()}${buildSecretDirective()}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${_tempoBlock}${strategyDirective}\n${gooseBlock}${_thresholdBias}\n${romanceVectorBlock}${avoidanceBlock}${teaseCliffhangerDirective}${worldLawDirective}${buildHistoricalReferenceDirective()}${_thornwildIncursionDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${narrativeSignatureDirective}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildAttractionGroundingDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildDialogueStrategyDirective(act, dia)}${buildVoiceLockDirective()}${buildAppearanceAnchorDirective()}${buildCharacterCoreAnchor()}${buildExplicitContinuityDirective()}${buildPsychologicalGradientDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildPreviewEchoDirective()}${buildWorldFateCardFlavorDirective(selectedFateCard)}${buildGravityResonanceDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}${buildAxisGravityDirective()}${buildWoundSignalDirective()}${buildWoundArchetypeDirective()}${buildGhostNoveltyDirective()}${buildControlledMisreadDirective()}${buildMicroRegretDirective()}${buildMicroRegretOverflowDirective()}${buildNoveltyEchoDirective()}${buildPostAlignmentResonanceDirective()}${buildShadowExpressionDirective()}${buildShadowObservationDirective()}${buildShadowMirrorDirective()}${buildShadowCounterforceDirective()}${buildLIStrategyDirective()}${buildDirectivePressurePyramid({
+      let sceneDirectives = `\n${/* intentTransmutation hoisted into _persistentStableTail (cached region) — Roman 2026-06-02 */''}${_liVoiceRegisterDirective}${_firstFavoredDirective}${_thornwildDirective}${_shackleIslesDirective}${_farFutureDirective}${_antiEchoDirective}${_litRepairWindowDirective}${_litLIAgencyDirective}${_familyDeckDirective}${_sacrificeDirective}${_ordinaryWishDirective}${fateCardResolutionDirective}${freeTextStoryturnDirective}${prematureRomanceDirective}${intentConsequenceDirective}\n${_explicitCarryForwardDirective}${_afterglowToneDirective}${_aftercareRecenterDirective}${eroticGatingDirective}${lensEnforcement}${materialEnsembleDirective}${intimacyDirective}${buildIntimacyProgressionDirective()}${buildCliffPrepDirective()}${typeof buildSceneEndingDilemmaDirective === 'function' ? buildSceneEndingDilemmaDirective() : ''}\n${safetyRewriteDirective ? '\n' + safetyRewriteDirective + '\n' : ''}${intentAnchorDirective}${squashDirective}\n${metaReminder}\n${petitionDirective}${typeof buildMetaEggDirective === 'function' ? buildMetaEggDirective() : ''}${buildFateScenarioWeaveDirective()}${buildSecretDirective()}${fateRecalibrationDirective}\n${bbDirective}\n${edgeDirective}\n${pacingDirective}${_tempoBlock}${strategyDirective}\n${gooseBlock}${_thresholdBias}\n${romanceVectorBlock}${avoidanceBlock}${teaseCliffhangerDirective}${worldLawDirective}${buildHistoricalReferenceDirective()}${_thornwildIncursionDirective}${fateResonanceDirective}${buildLiteraryIllusionDirective()}${craftRhythmLayer}${buildEmotionalResidueDirective()}${componentBlock}${buildCallbackEchoDirective()}${buildChoiceMemoryDirective()}${buildMotifEchoDirective()}${buildThemeResonanceDirective()}${narrativeSignatureDirective}${buildEmotionalForeshadowDirective()}${buildEmotionalVectorDirective()}${buildMomentumDirective()}${buildNarrativeGravityDirective()}${buildRelationshipGravityDirective()}${buildNarrativeDriftDirective()}${buildAttractionGroundingDirective()}${buildRomanceProgressionDirective()}${buildProximityTensionDirective()}${buildReversalDirective()}${buildEntropyPulseDirective()}${buildExpectationInversionDirective()}${buildPerspectiveReframeDirective()}${buildArcSaturationDirective()}${buildDialogueDriftDirective()}${buildBeatDiversityDirective()}${buildCadenceDirective()}${buildDialogueStrategyDirective(act, dia)}${buildVoiceLockDirective()}${buildAppearanceAnchorDirective()}${buildCharacterCoreAnchor()}${buildExplicitContinuityDirective()}${buildPsychologicalGradientDirective()}${buildEmotionalChoiceEchoDirective(act, dia, selectedFateCard)}${buildMicroCliffhangerDirective()}${buildFateSeedDirective(selectedFateCard)}${buildPreviewEchoDirective()}${buildWorldFateCardFlavorDirective(selectedFateCard)}${buildGravityResonanceDirective(selectedFateCard)}${buildMilestoneDirective()}${buildPhraseEntropyDirective()}${buildDesireVectorDirective()}${buildAxisGravityDirective()}${buildWoundSignalDirective()}${buildWoundArchetypeDirective()}${buildGhostNoveltyDirective()}${buildControlledMisreadDirective()}${buildMicroRegretDirective()}${buildMicroRegretOverflowDirective()}${buildNoveltyEchoDirective()}${buildPostAlignmentResonanceDirective()}${buildShadowExpressionDirective()}${buildShadowObservationDirective()}${buildShadowMirrorDirective()}${buildShadowCounterforceDirective()}${buildLIStrategyDirective()}${buildDirectivePressurePyramid({
           echoGravity: buildEmotionalEchoGravityDirective(),
           thresholds: buildRelationshipThresholdDirective(),
           emotionalMemory: EMOTIONAL_MEMORY_REINFORCEMENT,
