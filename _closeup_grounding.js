@@ -41,7 +41,7 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['closeup prompt was built', R.completed && p.length > 0],
     ['SCENE SETTING grounding present (names the underwater setting)', /SCENE SETTING \(HARD/.test(p) && /Gloamwater Bay depths/.test(p) && /belongs entirely to THIS setting/.test(p)],
     ['WARDROBE grounding present (PC linen + talisman, refs=linework-only)', /PROTAGONIST WARDROBE \(HARD/.test(p) && /water-breathing talisman/.test(p) && /inform LINEWORK and shading ONLY — never clothing/.test(p)],
-    ['SPECIES lock present (positive HUMAN hand, five fingers)', /PROTAGONIST SPECIES \(HARD\): the protagonist is HUMAN/.test(p) && /five fingers, human skin/.test(p)],
+    ['SPECIES lock present (positive fully-HUMAN, five-fingered hands)', /PROTAGONIST SPECIES \(HARD\): the protagonist is fully HUMAN/.test(p) && /five-fingered human hands/.test(p)],
     ['grounding is POSITIVE-ONLY (no negation-attractor nouns: glass/leather/tentacle/steering)', !/glass|leather|tentacle|steering wheel/i.test(p.split('SCENE SETTING')[1] || '')],
     ['old hardcoded "a glass edge" prop REMOVED from subjectDesc', !/a glass edge/.test(p)],
     ['cacheKey uses pc_reaction (NOT an LI signature gesture like glass_rim)', /pc_reaction/.test(cacheLog) && !/glass_rim/.test(cacheLog)],

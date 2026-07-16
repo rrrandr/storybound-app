@@ -38,6 +38,7 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
     s._pcLookSkipped = true; // dodge the PC-Look modal await (no user in headless)
     window._devBypass = true;
     window._stagedFunnelBypass = true; // fixes reach the model
+    window.__cgAuthorTimeoutMs = 180000; // give slow reasoning-model gen more time (providers degraded)
 
     // ── INSTRUMENT: record per-render anchor decision + prompt markers, in call order ──
     window.__probeRenders = [];
@@ -63,7 +64,7 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
     try {
       // Full commit+render path (prose→state.scenes, phase images→_stagedHeroCache).
       var gen = window._completeStagedSceneFromScreenplay(0, '', '');
-      await Promise.race([gen, new Promise(function (_, rej) { setTimeout(function () { rej(new Error('gen timeout 360s')); }, 360000); })]);
+      await Promise.race([gen, new Promise(function (_, rej) { setTimeout(function () { rej(new Error('gen timeout 540s')); }, 540000); })]);
     } catch (e) { err = e && e.message; }
     // Closeups render INSIDE phaseImagesPromise.then(...) — they only START once ALL phase images
     // finish, and gen resolves after just firstReady. A fixed wait races the phase renders and
