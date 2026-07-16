@@ -30,6 +30,8 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     t('contract exposes speciesAnchorPaths map', () => [contract && contract.speciesAnchorPaths && typeof contract.speciesAnchorPaths === 'object', Object.keys(contract.speciesAnchorPaths || {}).join(',') || '(empty)']);
     t('Kwisheen contract pins EXACTLY TWO arms (fixes the extra-arm render)', () => [/EXACTLY TWO upper ARMS/.test(contract.textBlock || '') && /never three, four, or five/.test(contract.textBlock || '') && /THREE DISTINCT tentacle systems/.test(contract.textBlock || ''), '']);
     t('Kwisheen contract locks a HUMANOID face (kills the octopus-mouth / Cthulhu-head drift)', () => [/FACE \(HARD/.test(contract.textBlock || '') && /MOUTH WITH LIPS/.test(contract.textBlock || '') && /NO octopus-beak/.test(contract.textBlock || '') && /never a face made of tentacles/.test(contract.textBlock || ''), '']);
+    t('Kwisheen eyes = WIDE HORIZONTAL PILL pupil, not a vertical slit', () => [/WIDE HORIZONTAL PILL PUPIL/.test(contract.textBlock || '') && /never a thin vertical line/.test(contract.textBlock || ''), '']);
+    t('Kwisheen torso is COVERED by a garment (not bare-chested with only jewelry)', () => [/the CHEST\/TORSO is always COVERED/.test(contract.textBlock || '') && /never left bare|not left bare|never bare/.test(contract.textBlock || '') && /worn ON TOP of clothing/.test(contract.textBlock || ''), '']);
     const kwAnchorPaths = Object.keys(contract.speciesAnchorPaths || {}).filter(p => contract.speciesAnchorPaths[p] === 'kwisheen');
     t('at least one kwisheen species anchor path recorded', () => [kwAnchorPaths.length >= 1, kwAnchorPaths.map(p => p.split('/').pop()).join(',')]);
     // ROOT FIX: the region-level anchorImages must be ENVIRONMENT ONLY (no character ref),
@@ -96,6 +98,13 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     const pcA = window._resolvePcAppearance(), pcA2 = window._resolvePcAppearance();
     t('PC appearance resolver deterministic (same story → same hair/skin)', () => [pcA && pcA2 && pcA.hairColor === pcA2.hairColor && pcA.hairLength === pcA2.hairLength && pcA.skinTone === pcA2.skinTone, pcA ? pcA.hairLength + ' ' + pcA.hairColor + ' hair, ' + pcA.skinTone + ' skin' : 'null']);
     t('PC appearance has all three locked fields', () => [pcA && !!pcA.hairColor && !!pcA.hairLength && !!pcA.skinTone, '']);
+    t('PC gets a deterministic named HERITAGE (strong consistency anchor vs skin drift)', () => [pcA && !!pcA.heritage && pcA.heritage === pcA2.heritage && pcA.heritageSource === 'default', pcA ? pcA.heritage : 'null']);
+    t('a user-set ancestry field is HONORED over the default heritage', () => {
+      s.pcAppearance = {}; s.picks = { world: 'Fantasy', identity: { playerName: 'Mira', partnerName: 'Vael', ancestry: 'Nigerian' } };
+      const u = window._resolvePcAppearance();
+      s.pcAppearance = {}; s.picks = { world: 'Fantasy', identity: { playerName: 'Mira', partnerName: 'Vael' } }; // restore
+      return [u && u.heritage === 'Nigerian' && u.heritageSource === 'user', u ? u.heritage + '/' + u.heritageSource : 'null'];
+    });
     t('lock fires even in a NON-First-Favored scene (separate gate)', () => [/KWISHEEN APPEARANCE \(LOCKED/.test(pKwLock) && !/FIRST FAVORED COLORS/.test(pKwLock), '']);
     // #5 — Ender Bond signature linework (thick ink-blot outlines + PROMINENT crosshatch) in the style contract.
     t('Ender Bond LINEWORK: thick ink-blot outlines + PROMINENT crosshatch (not sparse)', () => [/ink-BLOTTY/.test(pKwLock) && /PROMINENT crosshatching in EVERY shadow plane/.test(pKwLock) && /#1 Ender Bond tell/.test(pKwLock), '']);

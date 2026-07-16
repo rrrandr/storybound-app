@@ -17,12 +17,11 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     // Synthetic 25-beat LI-absent plan mirroring the Kwisheen Scene 1 (all narrator/PC beats).
     const beats = [];
     for (let i = 0; i < 25; i++) beats.push({ idx: i, kind: 'narration', speaker: i % 3 === 0 ? 'protagonist' : 'narrator', text: 'beat ' + i, cut_to_closeup: false, expression_target: 'neutral' });
+    // 3 phases → ~5-image budget leaves room for up to 2 cut-ins.
     const phases = [
       { phaseIdx: 0, startBeat: 0, label: 'Discovery', characters_present: ['protagonist', 'Thal'], li_visibility_phase: 'absent' },
-      { phaseIdx: 1, startBeat: 6, label: 'Thal enters', characters_present: ['protagonist', 'Thal'], li_visibility_phase: 'absent' },
-      { phaseIdx: 2, startBeat: 12, label: 'Pressure', characters_present: ['protagonist', 'Thal'], li_visibility_phase: 'absent' },
-      { phaseIdx: 3, startBeat: 18, label: 'Reveal', characters_present: ['protagonist', 'Thal'], li_visibility_phase: 'absent' },
-      { phaseIdx: 4, startBeat: 23, label: 'Dilemma', characters_present: ['protagonist'], li_visibility_phase: 'absent' }
+      { phaseIdx: 1, startBeat: 9, label: 'Thal enters', characters_present: ['protagonist', 'Thal'], li_visibility_phase: 'absent' },
+      { phaseIdx: 2, startBeat: 18, label: 'Pressure', characters_present: ['protagonist', 'Thal'], li_visibility_phase: 'absent' }
     ];
     const plan = {
       beats, phases,
@@ -54,7 +53,7 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
   console.log('  promoted beat idxs: [' + R.cutIdxs.join(',') + ']');
   console.log('  all promoted beats carry numeric .idx (render key): ' + R.allHaveIdx);
   R.sample.forEach(b => console.log('    idx=' + b.idx + ' target=' + b.target + ' shot=' + b.shot + ' expr=' + b.expr));
-  const ok = !R.threw && R.cutsAfter >= 2 && R.allHaveIdx;
+  const ok = !R.threw && R.cutsAfter >= 1 && R.cutsAfter <= 2 && R.allHaveIdx;
   console.log('  ' + '─'.repeat(56) + '\n  VERDICT: ' + (ok ? 'FLOOR WORKS — closeups are queued; 0-rendered is a render/timing issue' : 'FLOOR BROKEN — closeups never promoted') + '\n');
   process.exit(ok ? 0 : 1);
 })().catch(e => { console.error('HARNESS ERROR:', e); process.exit(2); });

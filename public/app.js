@@ -152654,13 +152654,30 @@ No text, no watermark, no UI elements, share-ready.`;
   var _PC_HAIR_COLOR = ['dark brown', 'black', 'chestnut brown', 'auburn', 'dark blonde', 'ash brown', 'deep red-brown', 'warm brown'];
   var _PC_HAIR_LENGTH = ['long', 'shoulder-length', 'shoulder-length', 'a low bun', 'a single braid', 'a short crop', 'a ponytail'];
   var _PC_SKIN_TONE = ['fair', 'light olive', 'olive', 'tan', 'warm brown', 'deep brown'];
+  // A named real-world HERITAGE is a far stronger consistency anchor than an
+  // abstract skin tone — it pins skin AND facial features together, and image
+  // models render it stably across independent renders (fixes the PC drifting
+  // brown→white between panels/cut-ins). A diverse, respectful default pool;
+  // the user's ancestry field (real-world heritage) is honored first when set.
+  var _PC_HERITAGE = ['Korean', 'Japanese', 'Han Chinese', 'Vietnamese', 'Filipino', 'Thai', 'Yoruba', 'Igbo', 'Ethiopian', 'Somali', 'Zulu', 'Ghanaian', 'Persian', 'Lebanese', 'Egyptian', 'Turkish', 'Tamil', 'Punjabi', 'Bengali', 'Mexican', 'Brazilian', 'Colombian', 'Quechua', 'Irish', 'Norwegian', 'Greek', 'Italian', 'Polish', 'Maori', 'Samoan'];
+  function _pcUserAncestry() {
+    try {
+      var p = state.picks || {};
+      var cands = [p.identity && p.identity.ancestry, p.pcAncestry, p.ancestry, state.pcAncestry, (p.pc && p.pc.ancestry)];
+      for (var i = 0; i < cands.length; i++) { var c = cands[i]; if (c && typeof c === 'string' && c.trim() && !/^(none|any|unspecified)$/i.test(c.trim())) return c.trim(); }
+    } catch (_) {}
+    return '';
+  }
   function _resolvePcAppearance() {
     var nm = (state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'protagonist';
     var key = String(nm).trim().toLowerCase();
     state.pcAppearance = state.pcAppearance || {};
     if (state.pcAppearance[key]) return state.pcAppearance[key];
     var seed = _ffColorHash(key + '|pc|' + (state.worldInstanceId || state.storyId || 'seed'));
+    var _userAnc = _pcUserAncestry();
     var a = {
+      heritage: _userAnc || _PC_HERITAGE[Math.floor(seed / 7) % _PC_HERITAGE.length],
+      heritageSource: _userAnc ? 'user' : 'default',
       hairColor: _PC_HAIR_COLOR[seed % _PC_HAIR_COLOR.length],
       hairLength: _PC_HAIR_LENGTH[Math.floor(seed / 11) % _PC_HAIR_LENGTH.length],
       skinTone: _PC_SKIN_TONE[Math.floor(seed / 101) % _PC_SKIN_TONE.length]
@@ -152816,10 +152833,10 @@ No text, no watermark, no UI elements, share-ready.`;
         '- BODY — EXACT LIMB COUNTS (the #1 thing to get right; the render keeps growing extra arms): a humanoid TORSO with EXACTLY TWO upper ARMS — two tentacle-arms, no more, each ending in ONE hand of five fine finger-tentacles. TWO arms only — never three, four, or five. Below the waist the legs are replaced ENTIRELY by SIX locomotion tentacles: a lower-body mass for MOVEMENT, with no hands and no arms among them. There are THREE DISTINCT tentacle systems and they must not merge into a swarm of arms: (1) the TWO tentacle-ARMS (upper, with hands — the only manipulating limbs), (2) the SIX locomotion tentacles (lower body, no hands), (3) the hair-tentacles (sensory, on the scalp). Count the manipulating arms in the frame: there must be exactly TWO.\n' +
         '- HAIR: a full mane of thick living TENTACLE-DREADLOCKS from the scalp — sinuous, sucker-lined, in motion. This mane is the primary silhouette tell (an octopus\'s arms worn as hair), NOT fine wispy feelers.\n' +
         '- SKIN: SCALED / pebbled cephalopod hide — a fine hexagonal scale-and-sucker texture across face and body (this species HAS textured, patterned skin, not smooth human skin), in a vivid exotic color (deep red, gold, violet, blue, orange) with contrasting pattern-bloom that shifts with mood.\n' +
-        '- EYES: large, a vivid non-human iris (gold / amber) with a HORIZONTAL CAPSULE PUPIL — a rounded rectangle with a fine central slit; not round in true form.\n' +
+        '- EYES: large, a vivid non-human iris (gold / amber) with a WIDE HORIZONTAL PILL PUPIL — a broad horizontal bar / rounded-capsule shape lying flat across the eye, blunt-rounded at both ends, spanning much of the iris width (like a cuttlefish or a goat\'s sideways rectangular pupil). It is HORIZONTAL and BROAD, never a thin vertical line and never a round dot.\n' +
         '- FACE (HARD — same humanoid structure in every panel; fixes the face drifting to a "Cthulhu" head): the FACE itself is HUMANOID — a clear brow, a nose, and a MOUTH WITH LIPS set on a defined jaw, two capsule-pupil eyes, all sheathed in the scaled hide. The ONLY tentacles are the HAIR (scalp) and the LOWER BODY; the face is NOT a mass of tentacles, has NO octopus-beak, and NO feelers/barbels/tentacles sprouting around the mouth or cheeks. A scaled humanoid visage under a tentacle mane — never a face made of tentacles.\n' +
         '- EARS: small, close to the skull, largely hidden under the tentacle-hair.\n' +
-        '- ADORNMENT (HARD — Kwisheen are NOT nude): they wear loincloths and wraps STUDDED with gems and shells, scaled or shell armor, and layered jewelry — beaded necklaces, gem pendants (amethyst, pearl), fine chains. Ornament is cultural and expected.\n' +
+        '- ATTIRE (HARD — Kwisheen are fully CLOTHED, and the CHEST/TORSO is always COVERED by a GARMENT, never bare and never covered by jewelry alone — this holds for BOTH sexes and stays consistent across every panel): the torso wears a fitted shell-scale bodice, a woven kelp-fibre wrap bound across the chest, or a layered shell-and-bead breastplate; below, a loincloth or skirt of studded wraps. Over the garment sits layered jewelry — beaded necklaces, gem pendants (amethyst, pearl), fine chains. A female Kwisheen\'s breasts are covered by the bodice/wrap, not left bare with only a necklace. Ornament is cultural and expected, but it is worn ON TOP of clothing, never INSTEAD of it.\n' +
         '- MOVEMENT: fluid unfurling, full-body engagement.\n' +
         '- CAMOUFLAGE (octopus-like, a deliberate choice): a Kwisheen can change skin colour, texture, and even shape to pass as HUMAN or FIRST FAVORED for a while, then drop the disguise. Their DEFAULT true form (in water / unconcealed) is the tentacled, scaled, tentacle-haired, adorned being above.',
       antiDefault:
@@ -176806,8 +176823,9 @@ No text, no watermark, no UI elements, share-ready.`;
         // does not drift hair colour panel-to-panel across independent phase renders.
         var _pcApp = null;
         try { if (typeof _resolvePcAppearance === 'function') _pcApp = _resolvePcAppearance(); } catch (_) {}
+        var _pcGW = (String(state.gender || 'Female').toLowerCase().indexOf('m') === 0 && String(state.gender).toLowerCase().indexOf('f') !== 0) ? 'man' : 'woman';
         var _pcAppLine = _pcApp
-          ? '  • DEFAULT APPEARANCE (LOCKED — no custom look was set; keep IDENTICAL in every panel): ' + _pcApp.hairLength + ' ' + _pcApp.hairColor + ' hair, ' + _pcApp.skinTone + ' skin. This is the canonical look for this story — do NOT re-roll hair colour or length between panels.\n'
+          ? '  • DEFAULT APPEARANCE (LOCKED — no custom look was set; keep IDENTICAL in every panel): the protagonist is a ' + (_pcApp.heritage || '') + ' ' + _pcGW + ' — render her with consistent ' + (_pcApp.heritage || '') + ' features and skin tone — with ' + _pcApp.hairLength + ' ' + _pcApp.hairColor + ' hair. This heritage, skin tone, and hair are the canonical look for the WHOLE story; do NOT re-roll her race, skin tone, or hair between panels (she must not drift lighter or darker).\n'
           : '';
         pcVis = 'PROTAGONIST RENDERING (VISIBLE SUBJECT — MM STORY):\n' +
           '  • The protagonist\'s face IS visible in this story. She is the lit focal subject; the LI\'s face is concealed via camera angle (reverse-OTS).\n' +
@@ -180216,7 +180234,8 @@ No text, no watermark, no UI elements, share-ready.`;
   // PC variants are identity-safe by construction: mouth and mouth_hands
   // never show eyes; eyes for PC requires partial obscuration.
   var _CLOSEUP_SHOT_DIRECTIVES = {
-    mouth: 'extreme close-up on MOUTH and LOWER JAW ONLY. NO eyes visible. NO upper face. NO forehead. The frame is filled by the mouth, jaw, and a sliver of cheek/chin. Identity-safe — face above the upper lip is cropped out of frame.',
+    mouth: 'close-up on the NOSE, MOUTH, and JAW — the lower and middle face. NO eyes visible: the upper face (eyes, brow, forehead) is cropped out of the top of frame, dropped into deep shadow, or covered (by a hand, by hair, by an object). The emotion reads through the mouth, jaw tension, nose, and nostril flare — never the eyes. Mystery-Man identity-safe (used for the concealed male love interest).',
+    face:  'EXTREME TIGHT FACE close-up — the frame is FILLED by the character\'s FACE (forehead to chin, cheek to cheek), plus at most a sliver of neck or shoulder. NO standing figure, NO torso, NO half-body, NO wide shot — the camera is pushed right up to the face. The EMOTION (see EXPRESSION) is carried by the WHOLE face working together — brow drawn or raised, eyes narrowed/widened/averted, mouth shaped — SPECIFIC and legible at a glance, NEVER a blank neutral stare or a calm posed portrait. Render the face consistent with this character\'s established appearance in the surrounding panels.',
     mouth_hands: 'extreme close-up on MOUTH and HANDS interacting with the lower face. The frame holds the mouth, jaw, and hand(s) — fingers across the lips, knuckles at the chin, palm cupping the jaw, hand wiping. NO eyes visible. NO upper face. The hand gesture carries the reaction.',
     eyes:  'extreme close-up on EYES and UPPER FACE. The frame is dominated by the eyes — brow, lashes, cheekbone edge. Lower face cropped out below the eye-line. Identity is REVEALED here; gaze and micro-expression carry the moment.',
     half:  'tight HALF-FACE shot — one eye, the bridge of the nose, the cheekbone, and the corner of the mouth. Asymmetric crop, the other half of the face out of frame. Identity is REVEALED through the visible side.',
@@ -180285,6 +180304,15 @@ No text, no watermark, no UI elements, share-ready.`;
     var _cuWard = String((sceneCtx && sceneCtx.pcWardrobe) || _cuVS.pc_wardrobe || '').trim();
     var _cuSpecies = String((sceneCtx && sceneCtx.pcSpecies) || state._playerSpecies || 'human').trim();
     var _cuHumanPC = /^human$/i.test(_cuSpecies) || !_cuSpecies;
+    // Mystery-Man safety: a concealed male LI never gets an eyes-revealing shot,
+    // even if the author (or a caller) asked for face/eyes/half. Coerce to the
+    // nose+mouth/jaw 'mouth' shot. The PC and side chars are unaffected.
+    var _targLI = (target === 'li' || target === 'love interest' || target === 'love_interest');
+    if (_targLI && (shot === 'face' || shot === 'eyes' || shot === 'half')) {
+      var _liIsMM = false;
+      try { _liIsMM = (typeof _isMysteryManEligibleLI === 'function') && _isMysteryManEligibleLI(state.currentPrimaryLiId); } catch (_) { _liIsMM = false; }
+      if (_liIsMM) shot = 'mouth';
+    }
 
     // ── PHASE 3 — OAS MOUTH CACHE REUSE ──
     // For LI mouth cuts, try the OAS mouth DB first. The DB stores 4
@@ -180475,6 +180503,17 @@ No text, no watermark, no UI elements, share-ready.`;
       } else {
         subjectDesc = 'the love interest\'s HAND — masculine adult hand, identity-consistent with prior renders (same skin tone, same ring(s) on the same finger(s), same wristwear / sleeve cuff fitting his archetype). NO face in frame. The hand and lower forearm fill the composition.';
       }
+    } else if (shot === 'face') {
+      // FACE reaction closeup — the character's face carries the beat's emotion.
+      // The PC is NOT concealed (Mystery-Man applies only to the male LI, who uses
+      // the nose+mouth 'mouth' shot instead), so render the PC's real face.
+      if (isPC) {
+        var _pcFaceDesc = (typeof state.pcFaceDescription === 'string' && state.pcFaceDescription) ? state.pcFaceDescription : '';
+        if (!_pcFaceDesc && typeof _resolvePcAppearance === 'function') { try { var _pa = _resolvePcAppearance(); if (_pa) _pcFaceDesc = 'a ' + (_pa.heritage || '') + ' ' + ((String(state.gender || 'Female').toLowerCase().indexOf('m') === 0 && String(state.gender).toLowerCase().indexOf('f') !== 0) ? 'man' : 'woman') + ' (' + (_pa.heritage || '') + ' features and skin tone), ' + _pa.hairLength + ' ' + _pa.hairColor + ' hair'; } catch (_) {} }
+        subjectDesc = 'the PROTAGONIST\'s FACE, filling the frame — the POV character\'s own face, shown clearly and expressively (the protagonist is NOT concealed). ' + (_pcFaceDesc ? 'Appearance (keep IDENTICAL to the surrounding panels): ' + _pcFaceDesc + '. ' : '') + 'Three-quarter or near-frontal; eyes, brow, mouth, and jaw all visible and carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
+      } else {
+        subjectDesc = target.replace(/_/g, ' ') + '\'s FACE, filling the frame — this specific character from the scene, rendered consistent with their established appearance in the surrounding panels (same coloring, features, and species anatomy). Eyes, brow, mouth, and jaw all visible, carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
+      }
     } else if (target === 'villain' || archetype === 'villain') {
       subjectDesc = 'a villain character — features carry coldness, control, and threat. Adult, well-groomed, the implication of held menace.';
     } else if (isPC) {
@@ -180532,13 +180571,13 @@ No text, no watermark, no UI elements, share-ready.`;
     // level (refs are linework-only, never a source of clothing/anatomy).
     var _cuGrounding = '';
     if (_cuBg) {
-      _cuGrounding += 'SCENE SETTING (HARD — this insert lives INSIDE this exact setting): ' + _cuBg + '. Any surface, prop, or object the hand touches belongs entirely to THIS setting and reads as in-world — keep the frame consistent with where the scene actually takes place.\n\n';
+      _cuGrounding += 'SCENE SETTING (HARD — this insert lives INSIDE this exact setting): ' + _cuBg + '. Any surface, prop, or object in the frame belongs entirely to THIS setting and reads as in-world — keep the frame consistent with where the scene actually takes place.\n\n';
     }
     if (isPC && _cuWard) {
-      _cuGrounding += 'PROTAGONIST WARDROBE (HARD — the wrist / forearm emerges from the protagonist\'s OWN clothing): ' + _cuWard + '. Render the sleeve and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
+      _cuGrounding += 'PROTAGONIST WARDROBE (HARD — any of the protagonist\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + _cuWard + '. Render the clothing and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
     }
     if (isPC && _cuHumanPC) {
-      _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is HUMAN — render an ordinary human hand with five fingers, human skin, and human proportions, the fully human hand of the human protagonist in the surrounding panels.\n\n';
+      _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is fully HUMAN — human skin, human features, a human face and five-fingered human hands, consistent with the human protagonist in the surrounding panels.\n\n';
     } else if (isPC && !_cuHumanPC) {
       _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is ' + _cuSpecies + ' — render the hand with that species\' established anatomy, consistent with the protagonist in the surrounding panels.\n\n';
     }
@@ -188649,7 +188688,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "echo_profile": "<null | hollow | impact | simmer | rupture | afterglow | suppressed — OPTIONAL override of the channel-variance profile for this beat\'s echo. Default is derived from tension_state. See ECHO PROFILE RULES.>",\n' +
       '    "expression_target": "neutral | lips_tighten | mouth_parted | smirk | jaw_clench | lip_curl | mouth_soft | jaw_set | half_smile | lips_pressed",\n' +
       '    "expression_intensity": <float 0.0-1.0 | null — AMPLITUDE of the expression. Most film acting lives at 0.20-0.40 (subtle). 1.0 is soap-opera grimace. See EXPRESSION INTENSITY RULES.>,\n' +
-      '    "cut_to_closeup": false, "closeup_target": null, "shot_type": null,\n' +
+      '    "cut_to_closeup": false, "closeup_target": null, "shot_type": null,  /* when cut_to_closeup: closeup_target = WHO reacts (protagonist / li / a present character name) or the object name; shot_type = "face" (protagonist or a present named character — their face carries the emotion), "mouth" (male Mystery-Man LI — nose+mouth/jaw, no eyes), or "object" (physical reveal). See CLOSEUP = A REACTION FACE. */\n' +
       '    "impact_burst": false, "metaphor_hint": null, "metaphor_peak": false,\n' +
       '    "pc_proxy_action": "<see PC PROXY ACTION RULES below — externalizes PC reaction when her face is hidden. Set on 3-5 beats per scene; null otherwise.>",\n' +
       '    "hand_gesture": "<null | to_face | to_cup | to_neck | to_hair | to_collar | on_table | rest_on_table | in_lap | on_chest | fidget — OPTIONAL focal-character hand movement for THIS beat. Set on 1-2 beats per scene at moments where a hand shift would add life (reaching for the cup as tension breaks, hand to face during a hard line, fidget during a pause). The Klein inpaint compositor maps the value to a hand-region mask + gesture prompt. Leave null on most beats.>",\n' +
@@ -189541,6 +189580,7 @@ No text, no watermark, no UI elements, share-ready.`;
       'CHARACTER CONTEXT (CG — social / relational facts THROUGH the beat, never standing bio): match the beat type to the rotating delivery VEHICLE — the protagonist\'s read of a character, or how OTHERS treat them, rides a NARRATION/EXPOSITION beat; another character\'s line, or the character\'s OWN status line, rides a DIALOGUE beat (the spoken line carries the fact, and that speaker MUST appear in visualState.other_characters_present + the phase per SPEAKER RULES). ROTATE the vehicle scene to scene (don\'t use the same one twice running) and DEEPEN the iceberg — prefer a RECONTEXTUALIZING reveal (a fact that re-reads an earlier beat) over a flat new bio fact. Early scenes establish; mid/late recontextualize. Always fuse the fact to a live beat; honor the 1–2-sentence cap. Verbal / relational only — it does NOT change visualState or what renders.\n\n' +
       (typeof buildCharacterDisclosureDirective === 'function' ? buildCharacterDisclosureDirective() + '\n' : '') +
       'TACTILE DETAIL CUTAWAY (HARD — exactly ONE per scene): one INSERT cuts the camera to a single world-specific TACTILE detail drawn from the WORLD SENSORY TEXTURE vocabulary above — spittle flecking a velvet collar, a sensor implant scanning an alien petal, gossamer pulled taut in his grip, a gold-enamel cufflink working loose. Use the insert mechanism: a phase with shot_style="insert_object" and focus_target naming that tactile element, OR a single narration beat with cut_to_closeup=true + closeup_target naming it + shot_type="insert_object". The beat text renders the detail IN MOTION (the cufflink loosening, the sensor reading, the threads straining) and lets it CARRY the moment\'s emotional charge — not a static prop label. The element MUST be physically present in this location (see SCENE GEOGRAPHY). Place it on a CHARGED beat, never the opener. Exactly one — do not litter the scene with inserts.\n\n' +
+      'CLOSEUP = A REACTION FACE (HARD — whenever you set cut_to_closeup=true): a closeup cuts to the FACE of whoever REACTS in that beat, carrying that beat\'s expression_target as a readable emotion tied to WHAT IS HAPPENING — never a decorative or idle crop. Set closeup_target to who reacts and shot_type to match: "face" for the protagonist or a present named character (eyes + mouth carry the emotion — the protagonist is NOT concealed), "mouth" for the male Mystery-Man love interest (nose + mouth/jaw only, eyes cropped/shadowed), or "object" ONLY for a genuine physical reveal (closeup_target = the object). A face closeup REQUIRES a NON-NEUTRAL expression_target on that beat — give the face a specific emotion to show. Prefer face reactions on the scene\'s most charged beats over generic prop or hand crops.\n\n' +
       'SPEAKER RULES (HARD — the entire point of this generator):\n' +
       '- Every dialogue beat MUST have an explicit speaker. NEVER leave speaker null on a dialogue beat.\n' +
       '- "protagonist" — the PC (the viewpoint character). Use this literal token, NEVER the PC\'s actual name.\n' +
@@ -189549,7 +189589,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '- speaker is null ONLY for narration and exposition beats (which have no spoken line).\n' +
       '- EVERY non-PC/non-LI speaker name you put on a dialogue beat MUST also appear in visualState.other_characters_present[].name AND in that beat\'s phase\'s characters_present. Same spelling. If "Ella" speaks, "Ella" goes in both lists. Failure mode: dialogue beat reads `speaker: "Ella"` but Ella appears nowhere in the visualState/phase metadata → the image renders without Ella + the reader sees an unattributed dialogue line. The renderer\'s safety nets can recover when speaker is set; they CANNOT recover when speaker is null AND the character is missing from metadata.\n\n' +
       'PHASE RULES (HARD):\n' +
-      '- PHASE COUNT (HARD FLOOR): a full scene renders 5–6 phase images — aim for FIVE, and a scene with fewer than 4 is a FAILURE (a near-static page that wastes the render budget). Each phase covers ≥2 consecutive beats and is a MATERIALLY DIFFERENT STAGE within the one location (per SCENE GEOGRAPHY — no relocation): a new character enters, a prop/truth is revealed, posture/proximity shifts, a decision lands, someone leaves. The interlocutor-driven scene supplies these naturally — e.g. protagonist alone in the space → the interlocutor arrives → the confrontation tightens → the hidden thing surfaces → the decision lands → the beat after. Do NOT under-emit: 1–2 phases for a 20+-beat scene is the #1 way to squander the visual budget. startBeat for phase 0 is always 0.\n' +
+      '- IMAGE BUDGET (HARD — ~5 IMAGES TOTAL per scene, panels + cut-ins COMBINED): a scene renders about FIVE images total — roughly 3–4 phase PANELS plus 1–2 cut-in inserts. Emit 3–4 phase panels (fewer than 3 is a near-static failure); do NOT pad to 5–6 panels — the cut-ins carry the rest of the visual budget, and total images should not exceed ~6. Each phase covers ≥2 consecutive beats and is a MATERIALLY DIFFERENT STAGE within the one location (per SCENE GEOGRAPHY — no relocation): a new character enters, a prop/truth is revealed, posture/proximity shifts, a decision lands, someone leaves. The interlocutor-driven scene supplies these naturally — e.g. protagonist alone in the space → the interlocutor arrives → the confrontation tightens → the hidden thing surfaces → the decision lands. startBeat for phase 0 is always 0.\n' +
       // ── PHASE 0 SEMANTICS (REVISED 2026-05-16) ────────────────────────
       // Phase 0 was previously described as "the establishing shot,"
       // which read to the model as "spend the opening beats on visual /
@@ -190781,8 +190821,8 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • T1 TRIVIAL (a parlor trick; breathe water for MINUTES; a lucky toss): a fingernail, a lock of hair, an hour of life, a trivial memory. Often pay-per-use.\n' +
       '  • T2 USEFUL (breathe water for a season or indefinitely via a talisman; heal a bad wound; always land on your feet; one night of borrowed beauty): a YEAR of life, a cherished-but-survivable memory, a finger, one color from your sight, a run of your luck. ← a water-breathing talisman lives HERE.\n' +
       '  • T3 GRAVE (survive certain death; CLEAR THE BARRIERS so someone can genuinely see you; undo a real mistake; speak with the drowned): a DECADE of life, a formative memory (your mother\'s face), your fertility, your voice or an eye, your true name, being forgotten by one you love. FREE WILL IS LOAD-BEARING: you can NEVER manufacture love or loyalty — that rewrites another\'s agency and is a T4 effect. T3 only removes obstacles (clears noise, undoes a misunderstanding, buys the moment or the courage); the other person still chooses. Bought devotion is a puppet, and a wish against another\'s truth WARPS.\n' +
-      '  • T4 WORLD-BENDING (cheat death for good; rewrite who someone IS; become other than human; unmake an event): the capacity to love or feel joy, your whole childhood, your reflection or shadow, your firstborn, most of your remaining years — or an open debt Fate names later. REWRITING A PERSON has hard limits (this is why the world is not ruled by identity-thieves): it works ONLY on an UNGUARDED self — a warded self resists in proportion to its wards (so rulers/spouses/anyone of consequence go warded; a beloved ruler warded by their people\'s stacked wishes is near-untouchable); the cost is top-of-band; a First Favored granter must CONSENT (and refuses to help overwrite a rival); and a rewrite fighting the target\'s deep truth WARPS.\n' +
-      'RULES: (1) a paid price does NOT come back; (2) WHAT a character agrees to pay CHARACTERIZES them — the payment is a beat, never bookkeeping; (3) a wish spent to help ANOTHER may be discounted one tier or paid in a gentler currency; a purely selfish or reality-cheating wish pays at the TOP of its band; (4) once you set a boon\'s price this story, keep it.\n' +
+      '  • T4 WORLD-BENDING (cheat death for good; rewrite who someone IS; become other than human; unmake an event): the capacity to love or feel joy, your whole childhood, your reflection or shadow, your firstborn, most of your remaining years — or an open debt Fate names later. REWRITING A PERSON has hard limits (this is why the world is not ruled by identity-thieves): FATE ITSELF strongly resists it — Identity is a resisted Order, so the clean REQUESTED rewrite rarely lands and instead WARPS toward the target\'s own deep truth rather than the wisher\'s design; the cost is top-of-band; and a First Favored granter must CONSENT (and refuses to help overwrite a rival).\n' +
+      'RULES: (1) a paid price does NOT come back; (2) WHAT a character OFFERS to pay CHARACTERIZES them — the offering is a beat, never bookkeeping; (3) FATE, NOT THE WISHER, CHOOSES THE ACTUAL SACRIFICE: the wisher OFFERS ("take my voice," "take my years") and the offer is genuine and revealing, but it is NOT binding — Fate takes something of comparable weight from WITHIN the same cost band (it may accept the offer, or quietly reach elsewhere). Motive matters CAUSALLY, never morally: a selfless or selfish aim can change what the bargain actually IS, which Order dominates, whether the offer is sincere, and which payment fits — but Fate NEVER charges less for virtue or more for vice; it does not judge. (4) once you set a boon\'s price BAND this story, keep it.\n' +
       'OPEN DEBTS (deferred price — a loaded gun the reader knows will fire; only the timing is hidden): a boon too large to pay now can be taken on CREDIT, governed by FOUR immutable rules (keep the terror simple — the danger is "they took an open debt," not a commodities market): (1) FATE chooses the moment of collection — never scheduled, always the moment of MAXIMUM dramatic weight (the wedding, the child\'s first breath, the eve of victory); (2) a debt is INHERITABLE — unpaid at death it passes down the bloodline (most "family curses" are an ancestor\'s deferred wish; a protagonist can inherit one they never made); (3) a debt may be voluntarily ASSUMED by another (a parent for a child, a lover for a lover — a great sacrificial beat); (4) a debt cannot be ESCAPED except by PAYMENT — no ward, no trade, no clever exit clears it.';
   }
   window._buildFatelandsWishPriceDirective = _buildFatelandsWishPriceDirective;
@@ -190792,19 +190832,23 @@ No text, no watermark, no UI elements, share-ready.`;
   // collective stacking, the non-human discount, wish-guarding, and the social/war
   // consequences that fall out of a world where anyone can wish for anything.
   function _buildFatelandsWishLawDirective() {
-    return 'FATELANDS — THE LAWS OF WISHING (HARD canon; this world RUNS on sacrifice magic — EVERY resident uses it when they must; it is ordinary, not exotic. Governs HOW wishes behave, alongside THE PRICE OF A WISH):\n' +
+    return 'FATELANDS — THE LAWS OF WISHING (HARD canon; this world RUNS on sacrifice magic — EVERY resident uses it when they must; it is ordinary, not exotic. Governs HOW wishes behave, alongside THE PRICE OF A WISH). Fate is an ANCIENT, CONSISTENT law that mortals only PARTIALLY understand — not a shop that sells any miracle you can afford, not a genie, not benevolent, not vindictive, not arbitrary. When Fate warps or (rarely) refuses a wish, the wisher has crossed a law they do not yet fully grasp — Fate did not change its mind. The first question is never "what does this cost?" but "is this the kind of bargain Fate recognizes?":\n' +
+      '  • THE EIGHT ORDERS OF BARGAIN (what Fate recognizes — classify EVERY wish here FIRST, before cost): Fate answers according to what KIND of bargain a wish is, and each Order has a CONSISTENT disposition (a law, never Fate\'s mood): ① RESTORATION — return something toward a prior or natural state (heal a wound, restore breath, mend what broke): Fate WELCOMES. ② TEMPORARY AID — borrow a transient condition without permanently changing the subject (breathe water an hour, a fair wind, dry clothes, keep the tea hot): WELCOMES. ③ REVELATION — uncover what is already true (reveal a truth, find the path, read a trail): usually WELCOMES. ④ TRANSFORMATION — permanently remake a body or thing (grow gills, become a wolf): CAUTIOUS. ⑤ FORTUNE — bend probability and coincidence (luck, an impossible meeting): RISKY. ⑥ AGENCY — override another\'s will (make her love me, make him obey, make them forgive): Fate RESISTS. ⑦ IDENTITY — rewrite who someone fundamentally IS (become Achilles, remake a personality, trade a self): STRONGLY RESISTS. ⑧ HISTORY — unmake what has happened (undo yesterday, restore the dead exactly as they were): NEARLY IMPOSSIBLE. A resisted Order is NOT a refusal — it means the clean REQUESTED outcome rarely lands; the harder Fate resists, the more the wish WARPS toward the nearest lawful answer (see WARP below).\n' +
+      '  • CLASSIFY THE WHOLE BARGAIN, NOT ONE KEYWORD (wishes are compound; every wish is classifiable even when resisted — never treat a hard wish as "unclassifiable"): read each wish for its GOVERNING DESIRE (what the person truly wants underneath), its DOMINANT Order (the ruling operation), any SECONDARY Orders, and the RESISTED operation if present. "Restore my dead wife exactly as she was, with all her memories, and make her forgive me" is not merely History — History dominates, while Identity, Agency, and Restoration shape what a lawful answer could be; governing desire = reunion and absolution. That reading is what makes the warp legible.\n' +
       '  • LAW OF CONSERVATION (why payment exists): a wish cannot CREATE, only TRADE — to bend reality you must spend something REAL TO YOU (a piece of your life, body, memory, bond, or fortune), permanently removed from the world. That is why the price is always personal and must be truly yours to give; a miracle is literally made of something that was yours. Sacrifice feels inevitable, not punitive.\n' +
       '  • NORTH STAR — REVEAL CHARACTER BEFORE POWER (how magic goes on the page): a sacrifice says who you are; a ward says what you fear; a wish says what you truly desire; a talisman says what you have already paid; a granter\'s refusal says what they believe. Deploy every wish, price, guard, and artifact so it discloses a CHARACTER first and a capability second. If a magical moment is not telling us about someone, it is decoration — cut it or recast it.\n' +
       '  • ALIGNMENT TO TRUTH (first law): a wish lands cleanly ONLY when it is aligned to what the wisher truthfully wants and believes. DOUBT, a divided heart, self-deception, or a lie in the wording WARPS the result — sometimes comically (a wish for "respect" from someone who secretly despises themselves returns as mocking, hollow deference), sometimes catastrophically (a half-hearted wish for safety opens the very door it meant to bar). Wishing against your own truth is the most dangerous thing a person can do. THE LAW EXTENDS TO EVERYONE THE WISH CHANGES: a wish lands cleanest when it serves the deepest truth of everyone it touches; the more it must fight another\'s truth, the more EXPENSIVE, UNSTABLE, or WARPED it becomes. So agency is protected with NO special shield — HELP lands clean (heal her, let him breathe, give him courage) because it serves the target\'s truth; CONTROL corrodes (make him obey, make her love me) because control is a rewrite and a rewrite fights another\'s truth — you get terror not loyalty, a hollow obsessive simulacrum not love. Parents must RAISE, lovers must EARN, kings must DESERVE; the coercive wish does not redirect, it WARPS.\n' +
+      '  • WARP — FATE ANSWERS THE NEAREST LAWFUL BARGAIN (the DEFINING move, far more common than refusal): when a wish reaches for a resisted or impossible Order, Fate rarely says no — it answers the NEAREST bargain it recognizes by PRESERVING THE GOVERNING DESIRE and TRANSLATING the requested MEANS into something Fate does exchange. The translation must be LEGIBLE: the reader can see BOTH what the person truly wanted AND why Fate\'s answer is the nearest lawful version of it. This is SEMANTIC adjacency (nearest to the DESIRE), NEVER a random substitution or a free author pivot, and NOT taxonomic ("the next Order over"). ✗ FORBIDDEN: "she wished for Shakespeare\'s genius and woke with wings" (unconnected). ✓ "Make me Shakespeare" preserves the hunger for artistic greatness → Fate cannot trade genius, but grants eloquence, or relentless inspiration, or perfect recall for a night, or renown bought through another gift. ✓ "Make her love me" preserves the desire for closeness → not compelled love (a puppet), but her true feelings revealed, the barrier between them cleared, or the wisher remade into someone she could choose. ✓ "Undo yesterday" preserves the need to escape a consequence → not rewritten history, but one broken thing restored, the way to repair it revealed, or a second chance that does not erase what happened. Outright refusal is reserved for the vanishingly rare wish that is not a bargain Fate exchanges AT ALL — nearly every "impossible" wish WARPS toward the desire, it does not bounce.\n' +
       '  • FATE PERCEIVES BUT NEVER JUDGES OR IMPROVES — the deepest law: WISH MAGIC HAS NO WISDOM; ONLY PEOPLE DO. Fate PERCEIVES what Alignment requires (self-deception, whether two people align, whether you fight another\'s truth) but never JUDGES — it does not decide "you actually wanted this," offer a healthier version, or fix the underlying problem. FATE NEVER IMPROVES A WISH: a wish against truth is not reinterpreted, repaired, or rescued — it is granted by the laws and the contradiction resolves through DISTORTION, not correction. Fate is not benevolent, malicious, a lawyer, or a therapist — it is INDIFFERENT: gravity, not a physician. (Wish "stop my baby crying" over a starving child and the crying stops, the hunger does not — the tragedy is the parent\'s misunderstanding, never Fate\'s malice; the wisdom had to be theirs.) NEVER write a wish that is smarter or kinder than its wording.\n' +
       '  • PERSONAL SACRIFICE (the wisher is ALWAYS the one who pays — foundational + inviolable in every region and story): a wish can NEVER be fueled by another person\'s body, memory, life, bond, or sacrifice. Fate keeps ONE account — who truly wished AND who was permanently diminished must be the SAME person. No substitutions, proxies, magical batteries, or sacrificial slaves; no king/master/god spends a captive\'s years, fingers, fertility, memory, or life to power their OWN wish. COERCION still exists but changes form: you can threaten, break, extort, or indoctrinate someone until THEY genuinely wish for your benefit — Alignment still governs (forced words alone fail; a divided/half-hearted wish WARPS) — and the sacrifice is taken from THEM, the beneficiary pays nothing. So: villains NEVER spend other people\'s sacrifices directly; coercive wish-magic is PSYCHOLOGICAL, never mechanical (institutions manufacture genuine alignment — hostages, conditioning, torture-to-reshape-desire, least-terrible-option bargains). Imprisoning a wisher is never just chains: WISH-LOCKS do not turn magic off — they flood the mind with intrusive doubt, fractured concentration, and emotional static so a clean ALIGNED wish cannot form (the power remains; alignment is denied); isolation from allies denies Stacking. Fate recognizes neither ownership nor authority — only truth and sacrifice; a hero is marked by willingly paying their OWN price, never compelling another to pay it.\n' +
       '  • THE HOOK (why wishing is dangerous — it is an ADDICTION, psychological not chemical): EVERY WISH WORKS, and once you have learned to solve a problem by sacrificing, it becomes very hard to solve one any other way. Watch the escalation in a single life: a FINGER to save a child, an EYE to save a marriage, then ten YEARS, then MEMORIES — until they no longer remember solving problems any other way. Write heavy wishers not as villains but as people who can no longer stop; the most frightening granter is the quiet one who fixes everything with one more sacrifice because it has always worked before. Every wish works — THAT is why it is dangerous. AND IT FEEDS ON ITSELF (addiction × alignment): the more someone wishes, the less honestly they face reality → their own ALIGNMENT decays (more self-deceptive, desperate, divided, afraid) → their wishes WARP → they wish again to fix the last. So experienced wishers are NOT unstoppable — they are often spiritually UNSTABLE; the disciplined who wish rarely are the formidable ones, and those who have solved everything this way for years are the doomed ones.\n' +
-      '  • STACKING (wishes combine and MULTIPLY): two or more wishers aligned to the SAME truth pool their wishes and the power MULTIPLIES, not merely adds — a couple\'s shared wish outstrips either alone; a whole city of mages, wishing as one, once split and warped a moon-sized void out of the sky. Numbers + alignment beat raw individual sacrifice.\n' +
-      '  • THE ANOMALOUS PAY LESS → A WISH MARKET (non-humans): First Favored, Kwisheen, and other non-human peoples pay a LOWER tier and get a STRONGER result — their anomalous nature bends Fate more cheaply (a boon costing a human a year of life might cost a First Favored a night\'s sleep). So a TRADE exists: rather than lose a finger or a year of their own, most people PAY a First Favored (in Fortunes — coin) to grant a larger boon at that cheaper anomalous rate. A modest weight of Fortunes buys what would cost a human dearly in flesh, memory, or time — professional wish-granting is a respected, lucrative craft, and a First Favored granter is a fixture of any real town. WHO PAYS WHAT: the human pays only Fortunes; the First Favored pays the actual sacrifice out of their own cheaper nature (the human\'s flesh/years/memory stay intact — the whole appeal). BUT THE GRANTOR\'S CONSENT IS A GATE: a First Favored grants ONLY a wish they WANT you to have — judge it undeserved, petty, or cruel ("that\'s a shitty wish," "you don\'t deserve that") and they simply REFUSE. So the granter is a moral filter with taste and opinions, and a natural source of conflict: the boon you need may hinge on convincing someone who finds you wanting. GRANTERS ARE ARTISANS, NOT SHOPS — famous for their PHILOSOPHY, not their power (all First Favored are efficient): reputations precede them ("she never grants revenge wishes," "he\'ll save any child even if you can\'t pay," "she always asks for the truth first," "don\'t go to Old Brine — he\'ll grant anything if the coin is good"). So WHICH granter you seek matters as much as the coin you bring — a protagonist with the payment may still be turned away, or must travel to the one granter whose principles fit the wish.\n' +
-      '  • GUARDING (wishes are attackable): where anyone can wish for anything, an unguarded wish can be WISHED AWAY. Important wishes — a contract, a bond, a life — are guarded with OTHER wishes (warded personally, or by a paid professional wish-guard). A guard can also be set to TATTLE: to reveal, unmistakably, if anyone tampered with the wish beneath it. Assume anything valuable and unguarded is vulnerable.\n' +
+      '  • STACKING (wishes combine and MULTIPLY): two or more wishers aligned to the SAME truth pool their wishes and the power MULTIPLIES, not merely adds — a couple\'s shared wish outstrips either alone; a whole city of mages, wishing as one, once split and warped a moon-sized void out of the sky. Shared, truthful alignment moves Fate further than lone sacrifice — pooled truth, not a contest of wills.\n' +
+      '  • THE ANOMALOUS PAY LESS → A WISH MARKET (non-humans): First Favored, Kwisheen, and other non-human peoples pay a LOWER tier and get a STRONGER result — their anomalous nature bends Fate more cheaply (a boon costing a human a year of life might cost a First Favored a night\'s sleep). So a TRADE exists: rather than lose a finger or a year of their own, most people PAY a First Favored (in Fortunes — coin) to grant a larger boon at that cheaper anomalous rate. A modest weight of Fortunes buys what would cost a human dearly in flesh, memory, or time — but a granter is NOT a vending machine: they too are bound by the Eight Orders (no granter hands you a clean Identity or History wish), they ESTIMATE the risk of a warp rather than guarantee an outcome, and FATE still chooses the sacrifice taken. WHO PAYS WHAT: the human pays only Fortunes; the First Favored pays the actual sacrifice out of their own cheaper nature (the human\'s flesh/years/memory stay intact — the whole appeal). BUT THE GRANTOR\'S CONSENT IS A GATE: a First Favored grants ONLY a wish they WANT you to have — judge it undeserved, petty, or cruel ("that\'s a shitty wish," "you don\'t deserve that") and they simply REFUSE. So the granter is a moral filter with taste and opinions, and a natural source of conflict: the boon you need may hinge on convincing someone who finds you wanting. GRANTERS ARE ARTISANS, NOT SHOPS — famous for their PHILOSOPHY, not their power (all First Favored are efficient): reputations precede them ("she never grants revenge wishes," "he\'ll save any child even if you can\'t pay," "she always asks for the truth first," "don\'t go to Old Brine — he\'ll grant anything if the coin is good"). So WHICH granter you seek matters as much as the coin you bring — a protagonist with the payment may still be turned away, or must travel to the one granter whose principles fit the wish.\n' +
+      '  • WISHING SUPPLEMENTS CIVILIZATION — IT DOES NOT REPLACE IT: society uses wishes constantly, but ordinary institutions run PRIMARILY on ORDINARY means — banks keep locks, guards, walls, and ledgers; prisons use architecture, discipline, and law; contracts rest on witnesses, reputation, and enforcement. People wish at the MOMENT a real need arises, not by blanketing the future in permanent enchantment. A PERMANENT magical effect is EXCEPTIONAL — legendary, or extraordinarily costly — never the routine way problems get solved. (A wish CAN be warded, but warding is rare and expensive, not a standing infrastructure; assume the world is mostly mundane, with wishes the exceptional recourse.)\n' +
       '  • REGIONAL VARIATION (the ONLY thing that changes by place): the system is universal, but WHICH sacrifices are ACCEPTABLE is local — one court abhors paying in memory, another in blood; the tidal Kwisheen of Gloamwater reckon in tides and salt. Honor the accepted currencies of THIS region.\n' +
+      '  • SCHOLARS OF PRECEDENT + FOLK WISDOM (how mortals cope with a law they cannot fully know): no one holds a complete theory of Fate. Great centers of learning (Lytharyn foremost) keep whole disciplines devoted to WISH-PRECEDENT — not spellcasters but natural philosophers, statisticians, historians, jurists, and theologians who collect thousands of documented wishes, classify how they landed or warped, and publish COMPETING theories (some credit Alignment, some proportional sacrifice, some the wording, some the intent, some which Order was offended). Before a costly wish, rulers, merchants, and commoners alike consult them — the question is never "can this be done?" but "what does two thousand years of precedent suggest Fate is likely to do?" They speak in precedent and probability, NEVER certainty: "there are only three recorded clean successes of this class," "the Fifth Lytharyn Survey places this among the Second Divergences," "I would not risk this if your voice matters to you." Common folk carry generations of SAYINGS — some true, some superstition, no one always sure which — such as "never wish angry," "a hungry wish eats twice," "Fate hears haste louder than truth," "measure the wish before the knife," "every miracle leaves a receipt." Use these as ROTATING flavor (vary them; never let one harden into a stated law). Reserve certainty for only the simplest, best-understood wishes; every significant wish is still, to some degree, a leap into the unknown.\n' +
       '  • THE ANTI-WISH CULT (secret faction, available as antagonist / uneasy ally / dread): a hidden order that sees wishing as an ADDICTION (see THE HOOK) that hollows out people one sacrifice at a time and, at scale, the world. They swear NEVER to use the power and work — quietly, sometimes violently — to stop others. To them a wish-granter is a dealer and a warded marriage is a relapse. They may be RIGHT: their scripture points to a WISHING AGE when a civilization unable to stop wished at a scale that tore something real out of the world — the wound Fate\'s Favor still heals. The live question is not "are they villains?" but "are they the only ones who remember how this ends?"\n' +
-      '  • THE SOCIETY RUNS ON THIS: a MARRIAGE / naming / coronation is not only a celebration — it is the community gathering to GIFT wishes of protection onto the couple/child/ruler, warding off evil eyes and the wishes of enemies (more guests, truer and more powerful, = a stronger ward). WAR is half bloodshed and half a war of WISHES, decided by how much each side will sacrifice and how many TRUE, ALIGNED allies they can muster. So the quiet art of war, business, AND love alike is SOWING DOUBT — unsettle an enemy\'s certainty and their own wishes warp and fail from within.';
+      '  • NO WISH-WARS (Fate is not a battlefield): opposing wishes do NOT clash in magical combat — no beam-struggles, no rebound duels, no "whose wish is stronger." Fate adjudicates each bargain by its own consistent, imperfectly-understood law; two people wishing against each other simply each meet that law separately, and the results fall out as luck and coincidence, never as visible sorcery fighting sorcery. Nor does Fate decide by who DESERVES it. A wedding or coronation may still draw sincere wishes of goodwill onto a couple or ruler — as blessing and hope, not as a stacked magical fortress.';
   }
   window._buildFatelandsWishLawDirective = _buildFatelandsWishLawDirective;
 
@@ -190914,7 +190958,9 @@ No text, no watermark, no UI elements, share-ready.`;
         var _threadsPre = (Array.isArray(_ap1.subplots) ? _ap1.subplots.length : 0) + (_ap1.li_complication ? 1 : 0);
         console.log('[SCENE1:PAYLOAD-REDUCE] before={crises:' + _famPre.length + ', names:' + _namePre.length + ', plotThreads:' + _threadsPre + '} after={crises:1, names:≤1, plotThreads:minimal} (directive injected; mount-stage enforce backstops)');
         lines.push('SCENE-1 LOAD CONTROL (HARD — Roman 2026-06-13): this scene has ONE load-bearing crisis — the one the protagonist is INSIDE as the scene opens. Do NOT introduce a SECOND catastrophe family: if the opener is a scandal/leak, NO lawsuit / bankruptcy / legal thread; if the opener is financial, NO scandal. A minor background pressure is allowed ONLY if it directly intensifies the primary crisis. CAST CAP: give a PROPER NAME to AT MOST ONE person besides the protagonist and the love interest. Everyone else is UNNAMED — "a friend," "the clip," "a board member," "an unnamed guest," "the host" — or deferred to a later scene. FORBIDDEN in Scene 1: naming the love interest\'s brother, a brother\'s ex-girlfriend, a lawyer AND a friend AND an ex AND a board member; explaining a lawsuit / legal history / a family tree / a plot-truth mystery thread. The reader must summarize this scene in ONE sentence without a family tree. When in doubt, CUT the second thread and stay in the one fire.');
-        lines.push('BACKSTORY-FOR-CONTEXT (bounded exception to the load-control above — Roman 2026-07-15): the ban is on plot-DUMPS, not on ORIENTATION. You MAY spend UP TO ~50 words grounding the ONE piece of backstory the reader needs to understand THIS scene\'s live stakes — especially when the scene names a person or place that is central but not fully on the page: why the protagonist is HERE, who a named figure IS to her, what a referenced past event COST her. A sentence or two, tied DIRECTLY to the present issue, then straight back to the scene. This is NOT a family tree, a mystery-box, or a second plot thread. An unexplained LOAD-BEARING name (a mentor, a rival, an absent LI, a loaded place the scene turns on) is its OWN failure — orient the reader rather than leaving the name floating. (Such an orienting beat is also a natural FLASHBACK-INSERT opportunity: a SINGLE past-moment panel that earns an extra image, never a played-out flashback scene.)');
+        lines.push('BACKSTORY-FOR-CONTEXT (HARD — bounded exception to the load-control; Roman 2026-07-15, strengthened 2026-07-16): the ban is on plot-DUMPS, not on ORIENTATION — and an unexplained LOAD-BEARING name/place/past-event is its OWN failure. When the scene turns on something the reader CANNOT understand from the scene alone (an absent partner, a rival, a broken vow, a ceremony that failed, a debt owed), you MUST spend ~30–50 words EXPLAINING it CONCRETELY — who they are to the protagonist, what happened, what it COST — not merely HINT at it. Hinting at a load-bearing thing without ever saying WHAT it is is the failure this fixes. BAD (hint-only, reader left guessing): "The vow you witnessed. The thread still glows empty. My mother left before the final word." GOOD (oriented in one concrete pass): "Vael and I swore the tide-vow a year ago — the Kwisheen bond that ties two lives to one current. My mother walked out before the priestess sealed it, and the thread at my wrist has glowed empty since: a half-made promise anyone can read." Orient ONCE, concretely, then straight back to the scene. Still NOT a family tree, a mystery-box, or a second plot thread. (A natural FLASHBACK-INSERT opportunity — a SINGLE past-moment panel — never a played-out flashback scene.)');
+        lines.push('PRESSURE IS LIVE, NOT A DELIVERED MESSAGE (HARD — Roman 2026-07-16): the scene\'s ENGINE is a PERSON or EVENT acting on the protagonist IN REAL TIME — a confrontation, a demand, an arrival, a reckoning between the characters present — NOT the protagonist receiving / reading / processing an information CONTAINER (a message, letter, note, scroll, kelp-slip, dossier, token) whose CONTENTS drive the scene. Information may exist in the world, but do NOT build the scene around "a message arrives and she reacts to what it says." If a document exists at all, it is at most a prop the LIVE confrontation turns on — the pressure comes from the person across from her, what they want, and what goes unsaid between them, never from the page she is reading.');
+        lines.push('NO RESTATEMENT (HARD — Roman 2026-07-16): (a) ONE closing choice — the scene has exactly ONE decision moment (the final decision-gate beat); do NOT restate the same either/or across multiple beats or echo the axis-probe wording again in the closer — the reader meets the choice ONCE, fresh. (b) ONE pass per motif — a backstory fact or recurring image (an empty thread, a mother who left, a talisman) is established ONCE and then the scene MOVES; do not re-litigate the same fact in three separate beats. Repetition reads as the scene spinning in place.');
       }
     } catch (_) {}
     // ── SCENE-1 TRUTH-MYSTERY DEFER (Roman 2026-06-13) — romance engine, not "what happened" ──
@@ -193631,71 +193677,81 @@ No text, no watermark, no UI elements, share-ready.`;
       // Side-char and absent-LI targets coerce to PC gesture.
       try {
         var _liAbsentScene = !!(plan.visualState && (plan.visualState._phaseLIAbsent || plan.visualState.li_visibility === 'absent'));
+        // Shared helpers (the density floor below re-declares identical copies).
+        var _sideCharFaceOK = function (nm) {
+          try {
+            var k = String(nm || '').trim().toLowerCase();
+            if (!k) return false;
+            if (state.kwisheenAppearance && state.kwisheenAppearance[k]) return true;
+            if (state.ffAppearance && state.ffAppearance[k]) return true;
+            var _others = (plan.visualState && plan.visualState.other_characters_present) || [];
+            for (var _oi = 0; _oi < _others.length; _oi++) {
+              var _o = _others[_oi];
+              if (_o && String(_o.name || '').trim().toLowerCase() === k && _o.species && !/^human$/i.test(String(_o.species))) return true;
+            }
+            return false;
+          } catch (_) { return false; }
+        };
+        var _deriveCloseupEmotion = function (b) {
+          var ts = String((b && b.tension_state) || '').toLowerCase();
+          if (/warm|tender|soft|amus|fond|open/.test(ts)) return 'mouth_soft';
+          if (/sharp|anger|cold|contempt|scorn/.test(ts)) return 'jaw_clench';
+          return 'lips_pressed';
+        };
+        var _ensureCuEmotion = function (b) { // a face/mouth reaction needs an emotion to carry
+          if (!b.expression_target || b.expression_target === 'neutral') {
+            b.expression_target = _deriveCloseupEmotion(b);
+            b.expression_intensity = b.expression_intensity || 0.35;
+          }
+        };
         var _coercedTargets = 0;
         var _coercedShots = 0;
         plan.beats.forEach(function(_b, _bi) {
           if (!_b || !_b.cut_to_closeup) return;
           var _t = String(_b.closeup_target || '').toLowerCase();
-          var _s = String(_b.shot_type || '').toLowerCase();
 
-          // ── TARGET coercion ──
-          var _targetCoerced = false;
-          if (!_t || _t === 'pc' || _t === 'protagonist') {
-            // Valid PC target.
-          } else if (_t === 'object') {
-            // Valid object target.
-          } else if (_t === 'villain') {
-            // Valid villain target.
-          } else if ((_t === 'li' || _t === 'love interest' || _t === 'love_interest') && _liAbsentScene) {
-            _b.closeup_target = 'protagonist';
-            _b.shot_type = 'gesture';
-            _coercedTargets++;
-            try { console.log('[CG:CLOSEUP-COERCE] beat ' + _bi + ' closeup_target=li → protagonist gesture (LI absent in scene)'); } catch (_) {}
-            _targetCoerced = true;
-          } else if (_t === 'li' || _t === 'love interest' || _t === 'love_interest') {
-            // LI on stage — fine.
-          } else {
-            // Side-char name — coerce to PC gesture (no identity ref).
-            _b.closeup_target = 'protagonist';
-            _b.shot_type = 'gesture';
-            _coercedTargets++;
-            try { console.log('[CG:CLOSEUP-COERCE] beat ' + _bi + ' closeup_target="' + _t + '" → protagonist gesture (no identity ref for side char)'); } catch (_) {}
-            _targetCoerced = true;
-          }
-          if (_targetCoerced) return;  // shot_type already set above
-
-          // ── SHOT_TYPE coercion ──
-          // mouth / mouth_hands / eyes / half are deprecated — coerce
-          // to gesture (when target=pc/protagonist) or object (when
-          // target=object). Leave gesture and object as-is.
-          var _validShots = { gesture: 1, object: 1 };
-          if (!_validShots[_s]) {
-            var _liveTarget = String(_b.closeup_target || '').toLowerCase();
-            if (_liveTarget === 'protagonist' || _liveTarget === 'pc') {
-              _b.shot_type = 'gesture';
-              _coercedShots++;
-              try { console.log('[CG:CLOSEUP-COERCE] beat ' + _bi + ' shot_type="' + _s + '" → gesture (deprecated face-crop on PC target)'); } catch (_) {}
-            } else if (_liveTarget === 'object') {
-              _b.shot_type = 'object';
-              _coercedShots++;
-              try { console.log('[CG:CLOSEUP-COERCE] beat ' + _bi + ' shot_type="' + _s + '" → object (deprecated face-crop on object target)'); } catch (_) {}
-            } else if (_liveTarget === 'li' || _liveTarget === 'love interest' || _liveTarget === 'love_interest') {
-              // LI on stage with deprecated mouth shot — convert to
-              // gesture (LI hand) rather than mouth crop. The OAS mouth
-              // cache reuse is what produced the "random manga guy"
-              // earlier; gesture shots avoid that path entirely.
-              _b.shot_type = 'gesture';
-              _coercedShots++;
-              try { console.log('[CG:CLOSEUP-COERCE] beat ' + _bi + ' shot_type="' + _s + '" → gesture (LI on stage, but mouth-crop deprecated; gesture avoids OAS cache leak)'); } catch (_) {}
-            } else {
-              // villain or unknown — default to gesture.
-              _b.shot_type = 'gesture';
-              _coercedShots++;
+          // Face-first: the PC is NOT concealed → PC reactions are FACE closeups.
+          // The male Mystery-Man LI uses the nose+mouth 'mouth' shot (the render
+          // enforces no eyes). Appearance-locked / non-human side chars show their
+          // own face; generic (ref-less) side chars route to the PC's face. A bare
+          // physical-reveal object stays an object. This is what kills the faceless
+          // gesture closeup that kept rendering an out-of-scene glass.
+          if (_t === 'object') { _b.shot_type = 'object'; return; }
+          if (_t === 'li' || _t === 'love interest' || _t === 'love_interest') {
+            if (_liAbsentScene) {
+              _b.closeup_target = 'protagonist'; _b.shot_type = 'face'; _coercedTargets++;
+              try { console.log('[CG:CLOSEUP-COERCE] beat ' + _bi + ' li → PC face (LI absent)'); } catch (_) {}
+            } else if (String(_b.shot_type || '').toLowerCase() !== 'gesture') {
+              // Keep a deliberate LI signature-gesture (his grounded hand mannerism);
+              // any face/eyes/half/mouth request → the Mystery-Man nose+mouth shot.
+              _b.shot_type = 'mouth';
             }
+            _ensureCuEmotion(_b); return;
           }
+          if (_t && _t !== 'pc' && _t !== 'protagonist' && _t !== 'villain') {
+            // Named side character.
+            if (_sideCharFaceOK(_b.closeup_target)) {
+              _b.shot_type = 'face'; // locked / non-human → their own emotional face
+            } else {
+              _b.closeup_target = 'protagonist'; _b.shot_type = 'face'; _coercedTargets++;
+              try { console.log('[CG:CLOSEUP-COERCE] beat ' + _bi + ' side-char "' + _t + '" → PC face (no identity ref)'); } catch (_) {}
+            }
+            _ensureCuEmotion(_b); return;
+          }
+          // PC / villain / empty target → a FACE reaction. gesture / mouth / eyes /
+          // half all become 'face' (the PC is not concealed, and the user wants
+          // emotional faces, not hand or prop crops).
+          var _s = String(_b.shot_type || '').toLowerCase();
+          if (_s !== 'face') {
+            _b.shot_type = 'face';
+            if (_s === 'gesture' || _s === 'mouth' || _s === 'mouth_hands' || _s === 'eyes' || _s === 'half') _coercedShots++;
+            try { console.log('[CG:CLOSEUP-COERCE] beat ' + _bi + ' shot_type="' + _s + '" → face (PC reactions are emotional faces, not hand/prop crops)'); } catch (_) {}
+          }
+          if (!_b.closeup_target) _b.closeup_target = 'protagonist';
+          _ensureCuEmotion(_b);
         });
         if (_coercedTargets > 0 || _coercedShots > 0) {
-          _variationRecoveries.push('coerced ' + _coercedTargets + ' bad closeup target(s) + ' + _coercedShots + ' deprecated shot_type(s) to gesture/object');
+          _variationRecoveries.push('coerced ' + _coercedTargets + ' closeup target(s) + ' + _coercedShots + ' shot_type(s) to face/mouth reactions');
         }
       } catch (_) {}
 
@@ -193732,16 +193788,13 @@ No text, no watermark, no UI elements, share-ready.`;
       // insert moments on the table — her refusal face, the contract, a charged object.
       // Now scale to ~1 per 7 beats (2–4), spread across the scene at charged landmarks, so a
       // full scene gets several cinematic cut-ins. Flag: window._stagedCloseupTarget overrides.
+      // ~5 IMAGES TOTAL per scene: cut-ins fill the gap after the phase panels,
+      // capped at 2 (5 - phaseCount, clamped 0..2). Flag override still honored.
       var _closeupTarget = (typeof window._stagedCloseupTarget === 'number')
         ? window._stagedCloseupTarget
-        : Math.min(4, Math.max(2, Math.round(plan.beats.length / 7)));
+        : Math.max(0, Math.min(2, 5 - (_phaseCount || 3)));
       if (plan.beats.length >= 12 && _closeups < _closeupTarget) {
         var _needed = _closeupTarget - _closeups;
-        var _nSpread = Math.max(_needed, 3);
-        var _spreadTargets = [];
-        for (var _stI = 0; _stI < _nSpread; _stI++) {
-          _spreadTargets.push(Math.floor(plan.beats.length * (0.22 + (0.68 * _stI / Math.max(1, _nSpread - 1)))));
-        }
 
         // ── STAKE-OBJECT EXTRACTION ─────────────────────────────────
         // Try to pull a tangible object name from sceneCharge.stake or
@@ -193793,72 +193846,97 @@ No text, no watermark, no UI elements, share-ready.`;
         // reveal beat). Additional narrator-beat closeups go to gesture.
         var _stakeObjectUsed = false;
 
-        for (var _ci = 0; _ci < _needed && _ci < _spreadTargets.length; _ci++) {
-          var _target = _spreadTargets[_ci];
-          var _picked = -1;
-          for (var _w = 0; _w < 4 && _picked === -1; _w++) {
-            var _try = _target - _w;
-            if (_try >= 0 && plan.beats[_try] && !plan.beats[_try].cut_to_closeup && _promotedIdxs.indexOf(_try) === -1) _picked = _try;
-            else {
-              _try = _target + _w;
-              if (_try < plan.beats.length && plan.beats[_try] && !plan.beats[_try].cut_to_closeup && _promotedIdxs.indexOf(_try) === -1) _picked = _try;
+        // Can we render this named side character's FACE consistently? Yes when
+        // they're appearance-locked / a non-human species (species anchor keeps
+        // them on-model). A generic human side char is NOT face-safe (no identity
+        // ref → freelanced face) → route the reaction to the PC's face instead.
+        var _sideCharFaceOK = function (nm) {
+          try {
+            var k = String(nm || '').trim().toLowerCase();
+            if (!k) return false;
+            if (state.kwisheenAppearance && state.kwisheenAppearance[k]) return true;
+            if (state.ffAppearance && state.ffAppearance[k]) return true;
+            var _others = (plan.visualState && plan.visualState.other_characters_present) || [];
+            for (var _oi = 0; _oi < _others.length; _oi++) {
+              var _o = _others[_oi];
+              if (_o && String(_o.name || '').trim().toLowerCase() === k && _o.species && !/^human$/i.test(String(_o.species))) return true;
             }
+            return false;
+          } catch (_) { return false; }
+        };
+        // Derive a non-neutral emotion for a truly-neutral promoted beat so the
+        // face has SOMETHING to carry (from tension_state when present).
+        var _deriveCloseupEmotion = function (b) {
+          var ts = String((b && b.tension_state) || '').toLowerCase();
+          if (/warm|tender|soft|amus|fond|open/.test(ts)) return 'mouth_soft';
+          if (/sharp|anger|cold|contempt|scorn/.test(ts)) return 'jaw_clench';
+          return 'lips_pressed'; // a held reaction — sensible non-neutral default
+        };
+        // ── VARIED CUT-IN SELECTION (Roman 2026-07-16) — the 1–2 budgeted cut-ins
+        // must be DISTINCT in subject and meaning, never N identical PC faces. Rotate
+        // three modalities and pick _needed of DIFFERENT types:
+        //   (1) a TIGHT reacting FACE on the SINGLE strongest emotional beat,
+        //   (2) a meaningful ARTIFACT (object cut-in — a hand may grip it with tension),
+        //   (3) the locked non-human interlocutor's OWN face (a different concerned party).
+        var _liAbsentForCu = !!(plan.visualState && (plan.visualState._phaseLIAbsent || plan.visualState.li_visibility === 'absent'));
+        var _gateIdx = (typeof plan.decisionGateBeatIdx === 'number') ? plan.decisionGateBeatIdx : -1;
+        var _lockedOther = null;
+        try {
+          var _others2 = (plan.visualState && plan.visualState.other_characters_present) || [];
+          for (var _o2 = 0; _o2 < _others2.length; _o2++) { if (_others2[_o2] && _sideCharFaceOK(_others2[_o2].name)) { _lockedOther = _others2[_o2].name; break; } }
+        } catch (_) {}
+        var _freeBeat = function (pred, preferLate) {
+          var _hit = -1;
+          for (var _i = 0; _i < plan.beats.length; _i++) {
+            var _bx = plan.beats[_i];
+            if (!_bx || _bx.cut_to_closeup || _i === _gateIdx || _promotedIdxs.indexOf(_i) !== -1) continue;
+            if (!pred(_bx, _i)) continue;
+            _hit = _i; if (!preferLate) break;
           }
-          if (_picked === -1) continue;
-          var _b = plan.beats[_picked];
-          var _sp = (_b.speaker || '').toString();
-          var _spLow = _sp.toLowerCase();
-
-          if (!_sp || _spLow === 'narrator') {
-            // Narrator beat — use stake object for the FIRST narrator
-            // closeup (the reveal); use PC gesture for subsequent ones.
-            if (_stakeObject && !_stakeObjectUsed) {
-              _b.closeup_target = _stakeObject;
-              _b.shot_type = 'object';
-              _b.impact_burst = true;  // physical reveal earns the burst
-              _stakeObjectUsed = true;
-              try { console.log('[STAGED:VARIATION] Promoted beat ' + _picked + ' to OBJECT closeup of "' + _stakeObject + '" + impact_burst (physical reveal)'); } catch (_) {}
-            } else {
-              // No stake object available, OR already used — PC physical
-              // reaction gesture. Never falls back to generic "object".
-              _b.closeup_target = 'protagonist';
-              _b.shot_type = 'gesture';
-              try { console.log('[STAGED:VARIATION] Promoted beat ' + _picked + ' to PC GESTURE closeup (no stake object available' + (_stakeObjectUsed ? ' — already used' : '') + ', falling back to physical reaction)'); } catch (_) {}
-            }
-          } else if (_spLow === 'protagonist') {
-            _b.closeup_target = 'protagonist';
-            _b.shot_type = 'gesture';
-          } else if (_spLow === 'li' || _spLow === 'love interest' || _spLow === 'love_interest') {
-            // LI mouth closeup ONLY if LI is on-stage. If li_absent, demote
-            // to PC gesture — closeup_target='li' with li_absent fires the
-            // OAS mouth cache and pulls a stale cached frame in an
-            // unrelated style (user-reported 2026-05-22: "random crappy
-            // manga style guy with watch").
-            var _liAbsentForCu = !!(plan.visualState && (plan.visualState._phaseLIAbsent || plan.visualState.li_visibility === 'absent'));
-            if (_liAbsentForCu) {
-              _b.closeup_target = 'protagonist';
-              _b.shot_type = 'gesture';
-              try { console.log('[STAGED:VARIATION] LI closeup target requested on LI-ABSENT scene — coerced to PC gesture'); } catch (_) {}
-            } else {
-              _b.closeup_target = 'li';
-              _b.shot_type = 'mouth';
-            }
-          } else {
-            // Side-character speaker (named non-PC, non-LI). DO NOT do a
-            // mouth closeup of them — there's no identity reference for
-            // side chars, so BFL freelances a generic anime face that
-            // looks NOTHING like the artist's style or the character's
-            // implied appearance. Fall back to PC gesture instead.
-            _b.closeup_target = 'protagonist';
-            _b.shot_type = 'gesture';
-            try { console.log('[STAGED:VARIATION] Side-char (' + _sp + ') closeup target requested — coerced to PC gesture (no identity ref → would freelance generic face)'); } catch (_) {}
-          }
+          return _hit;
+        };
+        var _emoRank = { jaw_clench:5, lip_curl:5, lips_pressed:4, mouth_parted:4, jaw_set:3, lips_tighten:3, smirk:3, mouth_soft:3, half_smile:2, neutral:0 };
+        var _specs = [];
+        // (1) FACE — the single most-charged beat, by expression rank + intensity.
+        var _faceIdx = -1, _faceScore = -1;
+        for (var _fi = 0; _fi < plan.beats.length; _fi++) {
+          var _fb = plan.beats[_fi];
+          if (!_fb || _fb.cut_to_closeup || _fi === _gateIdx) continue;
+          var _et = String(_fb.expression_target || 'neutral');
+          if (_et === 'neutral') continue;
+          var _score = (_emoRank[_et] || 1) + (_fb.expression_intensity ? _fb.expression_intensity * 2 : 0);
+          if (_score > _faceScore) { _faceScore = _score; _faceIdx = _fi; }
+        }
+        if (_faceIdx !== -1) _specs.push({ type:'face', idx:_faceIdx, apply:function(){
+          var _b = plan.beats[_faceIdx], _sp = String(_b.speaker || '').toLowerCase();
+          if (_sp && _sp !== 'narrator' && _sp !== 'protagonist' && _sp !== 'li' && _sp !== 'love interest' && _sp !== 'love_interest' && _sideCharFaceOK(_b.speaker)) { _b.closeup_target = _b.speaker; _b.shot_type = 'face'; return _b.speaker + ' face'; }
+          if ((_sp === 'li' || _sp === 'love interest' || _sp === 'love_interest') && !_liAbsentForCu) { _b.closeup_target = 'li'; _b.shot_type = 'mouth'; return 'LI nose/mouth (no eyes)'; }
+          _b.closeup_target = 'protagonist'; _b.shot_type = 'face'; return 'PC face';
+        }});
+        // (2) OBJECT — a meaningful artifact (a tense hand may grip it).
+        if (_stakeObject) {
+          var _objIdx = _freeBeat(function(b){ var s=String(b.speaker||'').toLowerCase(); return (!s || s==='narrator'); }, true);
+          if (_objIdx !== -1) _specs.push({ type:'object', idx:_objIdx, apply:function(){ var _b = plan.beats[_objIdx]; _b.closeup_target = _stakeObject; _b.shot_type = 'object'; _b.impact_burst = true; return 'OBJECT "' + _stakeObject + '"'; }});
+        }
+        // (3) LOCKED INTERLOCUTOR face — a different concerned party (e.g. the Kwisheen).
+        if (_lockedOther) {
+          var _koIdx = _freeBeat(function(b){ return String(b.speaker||'').toLowerCase() === String(_lockedOther).toLowerCase(); }, false);
+          if (_koIdx === -1) _koIdx = _freeBeat(function(b){ var s=String(b.speaker||'').toLowerCase(); return (!s || s==='narrator'); }, true);
+          if (_koIdx !== -1) _specs.push({ type:'other-face', idx:_koIdx, apply:function(){ var _b = plan.beats[_koIdx]; _b.closeup_target = _lockedOther; _b.shot_type = 'face'; return _lockedOther + ' face'; }});
+        }
+        // Pick _needed specs of DISTINCT types + DISTINCT beats.
+        var _usedTypes = {};
+        for (var _s2 = 0; _s2 < _specs.length && _promotedIdxs.length < _needed; _s2++) {
+          var _spec = _specs[_s2];
+          if (_usedTypes[_spec.type] || _promotedIdxs.indexOf(_spec.idx) !== -1) continue;
+          var _b = plan.beats[_spec.idx];
+          var _kind = _spec.apply();
           _b.cut_to_closeup = true;
-          if (!_b.expression_target || _b.expression_target === 'neutral') {
-            _b.expression_target = 'lips_tighten';
-            _b.expression_intensity = 0.30;
+          if (_b.shot_type !== 'object' && (!_b.expression_target || _b.expression_target === 'neutral')) {
+            _b.expression_target = _deriveCloseupEmotion(_b); _b.expression_intensity = _b.expression_intensity || 0.35;
           }
-          _promotedIdxs.push(_picked);
+          _usedTypes[_spec.type] = 1; _promotedIdxs.push(_spec.idx);
+          try { console.log('[STAGED:VARIATION] Promoted beat ' + _spec.idx + ' to ' + _kind + ' cut-in (' + _spec.type + ', expr=' + (_b.expression_target || '-') + ')'); } catch (_) {}
         }
         if (_promotedIdxs.length > 0) {
           _closeups += _promotedIdxs.length;
@@ -194528,8 +194606,13 @@ No text, no watermark, no UI elements, share-ready.`;
         var _pT0 = Date.now();
         try {
           var llmCall = _callScreenplayProvider(_prov);
+          // Optional override (default unset → production timeouts unchanged): a
+          // harness/probe can grant slow reasoning generation more time via
+          // window.__cgAuthorTimeoutMs without changing what real users wait.
+          var _effTimeoutMs = _prov.timeoutMs;
+          try { if (typeof window !== 'undefined' && window.__cgAuthorTimeoutMs) _effTimeoutMs = Math.max(_effTimeoutMs, window.__cgAuthorTimeoutMs); } catch (_) {}
           var timeout = new Promise(function(_, reject) {
-            setTimeout(function() { reject(new Error('CG:SCREENPLAY timeout (' + (_prov.timeoutMs/1000) + 's, ' + _prov.name + ')')); }, _prov.timeoutMs);
+            setTimeout(function() { reject(new Error('CG:SCREENPLAY timeout (' + (_effTimeoutMs/1000) + 's, ' + _prov.name + ')')); }, _effTimeoutMs);
           });
           var _resp = await Promise.race([llmCall, timeout]);
           if (_resp && typeof _resp === 'string') {
