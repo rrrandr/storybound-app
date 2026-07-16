@@ -192927,6 +192927,54 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_wplWishInPlay && typeof _buildFatelandsWishPriceDirective === 'function') lines.push(_buildFatelandsWishPriceDirective());
         }
       } catch (_wplErr) {}
+      // ── ORDINARY FATE-WISH RAIL (step D) — CG PATH ──
+      // Mirror of the literary wiring (~app.js:264898). A deliberate Fate
+      // invocation typed in Say/Do (an "I wish …" / "If only …" / a Fate-
+      // address) resolves under the Eight Orders (Fate chooses the sacrifice
+      // within the band, records the durable consequence + ledger + open
+      // bargain) and returns the omen scene-opening directive, injected here
+      // beside the wish CANON so it sits with the wish context.
+      //   GATES:
+      //   • FATELANDS ONLY (picks.world === 'Fantasy') — never elsewhere.
+      //   • ORDINARY TURN ONLY — never on a Petition/Tempt act; those card
+      //     rails resolve themselves and carry their own Fortune guarantees.
+      // NOTE: CG's _buildCGScreenplayUserPrompt does NOT call detectSacrifice,
+      // so there is no legacy sacrifice path to double-charge here (unlike the
+      // literary seam, which gates detectSacrifice behind _ordinaryWishFired).
+      //   IDEMPOTENCY (critical): this builder can run MORE THAN ONCE per turn
+      // (retries / speculative preview) and _resolveOrdinaryWish MUTATES state,
+      // so it must resolve AT MOST ONCE per turn. We key on a per-turn token
+      // (sceneIndex + turnCount); a repeat call for the same token REUSES the
+      // stashed directive (state._cgOrdinaryWishDirective) rather than re-
+      // resolving — no double durable/ledger write, no double sacrifice.
+      // The omen contract text is prose-oriented ("open the next SCENE …"); for
+      // CG those beats map to PANELS. Acceptable for this step — the wish→omen→
+      // answer→sacrifice→witnesses→new-pressure sequence is mode-agnostic; a
+      // CG-idiomatic omen variant is a later polish.
+      try {
+        var _cgWishFatelands = !!(picks && picks.world === 'Fantasy');
+        var _cgWishPetitionOrTempt = !!(state.tempt_fate_invoked_this_turn || (state.fate && state.fate.pendingPetition));
+        if (_cgWishFatelands && !_cgWishPetitionOrTempt) {
+          var _cgWishTurnKey = String(sceneIndex) + '|' + String(state.turnCount || 0);
+          if (state._cgOrdinaryWishTurn === _cgWishTurnKey) {
+            // Already resolved for this turn — REUSE, never re-mutate state.
+            if (state._cgOrdinaryWishDirective) lines.push(state._cgOrdinaryWishDirective);
+          } else {
+            var _cgOwInv = (typeof _detectOrdinaryWishInvocation === 'function')
+              ? _detectOrdinaryWishInvocation(playerAction, playerDialogue) : null;
+            if (_cgOwInv && _cgOwInv.invoked && typeof _resolveOrdinaryWish === 'function') {
+              var _cgOwDir = _resolveOrdinaryWish(playerAction, playerDialogue, (state.turnCount || 0)) || '';
+              // Mark fired REGARDLESS of directive text — a fired-but-empty
+              // resolve still mutated state, so a second call must not re-run.
+              state._cgOrdinaryWishTurn = _cgWishTurnKey;
+              state._cgOrdinaryWishDirective = _cgOwDir;
+              if (_cgOwDir) lines.push(_cgOwDir);
+            }
+          }
+        }
+      } catch (_cgOwErr) {
+        try { console.warn('[CG:ORDINARY-WISH] wiring failed:', _cgOwErr && _cgOwErr.message); } catch (_) {}
+      }
       // Free-form scenario weave (Petition/Tempt by meaning) — mode-agnostic,
       // gated on the active volatility window. Same directive as literary.
       var _cgScenarioWeave = (typeof buildFateScenarioWeaveDirective === 'function')
