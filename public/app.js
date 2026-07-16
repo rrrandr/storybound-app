@@ -192557,6 +192557,36 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildFatelandsWishLawDirective = _buildFatelandsWishLawDirective;
 
+  // ── FATELANDS SPECIES-NATIVE COMBAT (Roman 2026-07-16, Bible addendum) ──────
+  // Kwisheen and First Favored fight from their nature, not generic swordplay. Self-gates
+  // on a Kwisheen/First-Favored being present AND a combat signal in the scene's crisis, so
+  // it only fires for fights (no bloat on quiet scenes). Both species reusable (CG + literary).
+  var _KWISHEEN_COMBAT =
+    'KWISHEEN COMBAT — THE MANY-TIDE METHOD (Fatelands canon): a Kwisheen fights with MANY limbs at once — asymmetrical, layered, hard for a human to read. In the same instant one tentacle threatens, one redirects, one anchors, one hides the real attack, and others guard the center or control the terrain. Iconic kit: a long SPEAR or TRIDENT (reach, pinning, controlling space), a curved CUTLASS (close cutting, hooking limbs and weapons), and a long DAGGER (the concealed killing thrust once the enemy is entangled) — optionally a shell-plate buckler on a fourth limb, or a weighted net/line for hunters. They hook ankles / wrists / weapon-guards, anchor against impact, change height without losing balance, shield organs with folded tentacles, attack around shields, and turn a grapple into multi-directional restraint. The visible spear thrust is usually a FEINT — the true attack is the dagger under the ribs while another limb drags the shield aside. NO RANGED WEAPONS: a Kwisheen NEVER uses a bow or a sling — little travels far through water, so their whole art is reach, control, and entanglement, never distance. PASSING AS HUMAN: while disguised, a Kwisheen SUPPRESSES all of this and mimics the local human style (fencing, sword-and-buckler, spear drill, street-fighting) — competent but slightly TOO studied; a sharp eye catches the tells (balance too stable, an arm recovering too fast after a miss, a reluctance to bare the torso, footwork that assumes more contact points than a human has). BREAKING THE MASK (the death-break): only when death becomes likely may a trained Kwisheen DROP the human act instantly — suddenly striking from behind its own body, parrying and thrusting at once, drawing weapons from impossible concealment, grappling ankle and throat, its balance no longer a biped\'s. It is terrifying because the opponent believed they understood the fight; it is the ABANDONMENT OF CONCEALMENT, not a berserker rage — and doing it to win a MINOR fight is shameful and politically reckless (revealing one\'s nature carries real cost).';
+  var _FIRST_FAVORED_COMBAT =
+    'FIRST FAVORED COMBAT — THE UNVEILED HAND (Fatelands canon): a First Favored becomes dangerous when DESIRE, DECLARATION, and ACTION are perfectly ALIGNED. They do NOT hide their aim — they NAME it ("I am going to take the sword from your hand" / "I will not let you pass" / "I mean to scar you, not kill you") and then commit their whole body to it, wasting no motion on contradictory goals. Declared intent SHARPENS their precision; deception or divided motive makes them WORSE. Signature weapons: the VOWSTAFF (a long flexible staff — a hooked crescent blade at one end for lethal work, a weighted cap at the other for restraint, the grip carved with the wielder\'s vows; the two ends embody the choice between CONTROLLING and KILLING, and a First Favored always knows which end they use and why) and the OPEN BLADE (a broad forward-curved single edge with a visible cutting line and NO hidden edges — "the edge should not lie about where it intends to go" — with a small basal hook for trapping / disarming). Unlike the Kwisheen, they ALSO use SLINGS and BOWS for distance. A fight moves through NAMING (state the want, the limit, what would end it) → ALIGNMENT (stance and technique MATCH the declaration — a guard holds ground, a captor attacks hands/knees/breath, a killer performs no false mercy) → REVELATION (the fight exposes whether the declared desire was TRUE; a fighter may discover they want vengeance not justice, or cannot actually kill, and must either REDECLARE honestly — "I lied. I do want you dead." — or become misaligned and technically compromised). They favor direct lines, distance control, deliberate targeting, weapon-trapping, disarming, and FORCING CHOICES over flurries; they are poor at feigned cowardice, disguised weapons, prolonged deception, and causes whose true purpose is concealed. A FEINT is fine when it openly serves the declared aim (tactical misdirection ≠ self-deception): a high strike to open the leg is honest; "I mean no harm" while seeking to maim is not. In a witnessed duel, both may formally declare outcome / limits / what ends it — and breaking a declared limit carries enormous cultural weight even in victory. (First Favored vs Kwisheen are natural opposites: one tells you what it wants and becomes it; the other shows you only the limbs it permits.)';
+  function _buildFatelandsCombatDirective() {
+    try {
+      var s = window.state || {};
+      var _liSp = String(s._liSpecies || '').toLowerCase();
+      var _pcSp = String(s._playerSpecies || '').toLowerCase();
+      var _others = '';
+      try { _others = ((s._stagedActive && s._stagedActive.plan && s._stagedActive.plan.visualState && s._stagedActive.plan.visualState.other_characters_present) || []).map(function (o) { return String((o && o.species) || ''); }).join(' ').toLowerCase(); } catch (_) {}
+      var _sp = _liSp + ' ' + _pcSp + ' ' + _others;
+      var _kw = /kwisheen|octo/.test(_sp);
+      var _ff = /first.?favor|favored/.test(_sp);
+      if (!_kw && !_ff) return '';
+      var _blob = [(s.aPlot && s.aPlot.goal) || '', (s.aPlot && s.aPlot.antagonistOrAntiForce) || '', s._sceneWant || '', (s.aPlot && s.aPlot.namedClock) || '', (s.ffContract && s.ffContract.canonOpening && s.ffContract.canonOpening.premise) || '', (s.cgScaffold && s.cgScaffold.runThesis) || '', s.currentCrisis || ''].join(' ').toLowerCase();
+      var _combat = /\b(fight|fought|fighting|duel|battle|blade|sword|spear|trident|dagger|cutlass|strike|strikes|parry|clash|combat|weapon|ambush|attack|attacks|raid|siege|\bwar\b|kill|kills|slay|slain|bloodshed|wound|wounds|slash|thrust|grapple|brawl|guardsman|soldier|assassin|hunter|foe|blow)\b/.test(_blob);
+      if (!_combat) return '';
+      var out = [];
+      if (_kw) out.push(_KWISHEEN_COMBAT);
+      if (_ff) out.push(_FIRST_FAVORED_COMBAT);
+      return out.length ? '\n' + out.join('\n') : '';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsCombatDirective = _buildFatelandsCombatDirective;
+
   function _buildCGScreenplayUserPrompt(sceneIndex, playerAction, playerDialogue) {
     // Gather the context the model needs to write the scene. Uses the
     // canonical name resolvers (_resolveStagedPlayerName /
@@ -193134,6 +193164,15 @@ No text, no watermark, no UI elements, share-ready.`;
         if (_lyDirCG) lines.push(_lyDirCG);
       }
     } catch (_cgLyErr) { console.warn('[LYTHARYN:CG] build threw:', _cgLyErr && _cgLyErr.message); }
+
+    // Fatelands species-native combat (Kwisheen Many-Tide / First Favored Unveiled Hand).
+    // Self-gates on species present + a combat signal in the crisis.
+    try {
+      if (typeof _buildFatelandsCombatDirective === 'function') {
+        var _fcDir = _buildFatelandsCombatDirective();
+        if (_fcDir) lines.push(_fcDir);
+      }
+    } catch (_cgFcErr) { console.warn('[FATELANDS-COMBAT:CG] build threw:', _cgFcErr && _cgFcErr.message); }
 
     // Far-Future speech — activates for sci-fi / cyber / post-human / dystopia worlds.
     try {
