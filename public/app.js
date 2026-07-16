@@ -178815,7 +178815,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // other" (adversarial eye-line) as intimate closeness and poses a colleague/rival an inch
     // from the PC's face. Reinforce relational DISTANCE for every non-romantic mode.
     if (_ssm !== 'romance_eligible' && _ssm !== 'familial' && _ssm !== 'solo' && _ssm !== 'crowded_public') {
-      prompt += 'RELATIONAL DISTANCE (HARD — the two figures are NOT a romantic pairing in this frame): compose them at conversational-or-confrontational distance with a CLEAR PHYSICAL GAP between them, NEVER in lovers\' proximity. The blocking reads ' + (_ssm === 'adversarial' ? 'a hostile face-off' : _ssm === 'professional' ? 'a working / formal relation' : _ssm === 'platonic_tense' ? 'estrangement and tension' : 'non-intimate') + ' — not courtship, not faces-almost-touching, not a near-embrace. Their eyes may meet across the gap, but the bodies do not close it.\n\n';
+      prompt += 'RELATIONAL DISTANCE (HARD — the two figures are NOT a romantic pairing in this frame): compose them at conversational-or-confrontational distance with a CLEAR PHYSICAL GAP between them, NEVER in lovers\' proximity. The blocking reads ' + (_ssm === 'adversarial' ? 'a hostile face-off' : _ssm === 'professional' ? 'a working / formal relation' : _ssm === 'platonic_tense' ? 'estrangement and tension' : 'non-intimate') + ' — not courtship, not faces-almost-touching, not a near-embrace. Their eyes may meet across the gap, but the bodies do not close it. Even if a beat says one of them "moves closer" or "leans in," render that as a single step or a slight lean that STILL leaves clear air between their faces — never nose-to-nose, never a near-kiss. A tight or close camera may CROP the framing in, but it must NOT collapse the space between the two figures into intimacy.\n\n';
     }
     try { console.log('[STAGED:STAGING-MODE] ' + _ssm + ' (liAbsent=' + liAbsent + ', sideChars=' + _otherCharsForRegister.length + ')'); } catch (_) {}
 
@@ -182079,7 +182079,17 @@ No text, no watermark, no UI elements, share-ready.`;
         if (!_pcFaceDesc && typeof _resolvePcAppearance === 'function') { try { var _pa = _resolvePcAppearance(); if (_pa) _pcFaceDesc = 'a ' + (_pa.heritage || '') + ' ' + ((String(state.gender || 'Female').toLowerCase().indexOf('m') === 0 && String(state.gender).toLowerCase().indexOf('f') !== 0) ? 'man' : 'woman') + ' (' + (_pa.heritage || '') + ' features and skin tone), ' + _pa.hairLength + ' ' + _pa.hairColor + ' hair'; } catch (_) {} }
         subjectDesc = 'the PROTAGONIST\'s FACE, filling the frame — the POV character\'s own face, shown clearly and expressively (the protagonist is NOT concealed). ' + (_pcFaceDesc ? 'Appearance (keep IDENTICAL to the surrounding panels): ' + _pcFaceDesc + '. ' : '') + 'Three-quarter or near-frontal; eyes, brow, mouth, and jaw all visible and carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
       } else {
-        subjectDesc = target.replace(/_/g, ' ') + '\'s FACE, filling the frame — this specific character from the scene, rendered consistent with their established appearance in the surrounding panels (same coloring, features, and species anatomy). Eyes, brow, mouth, and jaw all visible, carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
+        // A named side character. If they're a locked KWISHEEN, inject the species
+        // anatomy + colour lock so the face cut-in renders as the Kwisheen and NOT a
+        // freelanced human (the cut-in gets no species anchor image on its own).
+        var _tgKey = String(target || '').trim().toLowerCase();
+        var _kwA = null;
+        try { if (state.kwisheenAppearance && state.kwisheenAppearance[_tgKey]) _kwA = state.kwisheenAppearance[_tgKey]; } catch (_) {}
+        if (_kwA) {
+          subjectDesc = target.replace(/_/g, ' ') + '\'s FACE — a KWISHEEN (cephalopod-humanoid) face filling the frame: a HUMANOID scaled face (clear brow, nose, a lipped mouth on a defined jaw) sheathed in fine hexagonal SCALED cephalopod hide, framed by a mane of thick living TENTACLE-DREADLOCKS from the scalp (NOT human hair). LOCKED colours, identical to the surrounding panels: ' + _kwA.skin + ' skin with ' + _kwA.pattern + ', ' + _kwA.iris + ' eyes whose pupil is a WIDE HORIZONTAL PILL (a flat horizontal bar, never a vertical slit or a round dot). This is NOT a human face — do NOT render a human. Brow, eyes, mouth and jaw carry a single readable emotion per the EXPRESSION line. NO other figures in frame.';
+        } else {
+          subjectDesc = target.replace(/_/g, ' ') + '\'s FACE, filling the frame — this specific character from the scene, rendered consistent with their established appearance in the surrounding panels (same coloring, features, and species anatomy). Eyes, brow, mouth, and jaw all visible, carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
+        }
       }
     } else if (target === 'villain' || archetype === 'villain') {
       subjectDesc = 'a villain character — features carry coldness, control, and threat. Adult, well-groomed, the implication of held menace.';

@@ -67,8 +67,9 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     const ctx = { background: 'a tidal chamber', pcWardrobe: 'linen shift', pcSpecies: 'Human' };
     window._lastCloseupPrompt = ''; await window._renderCutCloseup('jaw_clench', 'cool', 'protagonist', 'face', ctx).catch(() => {}); const pcFace = window._lastCloseupPrompt || '';
     window._lastCloseupPrompt = ''; await window._renderCutCloseup('jaw_clench', 'cool', 'li', 'mouth', ctx).catch(() => {}); const liMouth = window._lastCloseupPrompt || '';
+    window._lastCloseupPrompt = ''; await window._renderCutCloseup('lips_pressed', 'cool', 'Sylas', 'face', ctx).catch(() => {}); const kwFace = window._lastCloseupPrompt || '';
 
-    return { floor, authorGestureCoerced, pcFace, liMouth };
+    return { floor, authorGestureCoerced, pcFace, liMouth, kwFace };
   });
 
   await browser.close();
@@ -81,7 +82,8 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['every face/reaction cut-in carries a non-neutral emotion', f.faceHasEmotion],
     ['author-emitted PC gesture coerced to FACE + emotion (kills the glass)', R.authorGestureCoerced],
     ['PC face render is a TIGHT face (no standing body)', /EXTREME TIGHT FACE/.test(R.pcFace) && /NO standing figure/.test(R.pcFace) && /PROTAGONIST\'s FACE/.test(R.pcFace)],
-    ['LI mouth render: nose+mouth/jaw with NO eyes', /NOSE, MOUTH, and JAW/.test(R.liMouth) && /NO eyes/.test(R.liMouth)]
+    ['LI mouth render: nose+mouth/jaw with NO eyes', /NOSE, MOUTH, and JAW/.test(R.liMouth) && /NO eyes/.test(R.liMouth)],
+    ['Kwisheen side-char face cut-in injects species + colour lock (renders Kwisheen, not human)', /KWISHEEN \(cephalopod-humanoid\) face/.test(R.kwFace) && /TENTACLE-DREADLOCKS/.test(R.kwFace) && /NOT a human face/.test(R.kwFace) && /royal violet/.test(R.kwFace)]
   ];
   let pass = 0, fail = 0;
   console.log('\n  CUT-IN VARIETY + EMOTION + BUDGET  ($0)\n  ' + '─'.repeat(58));
