@@ -54983,6 +54983,10 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       }
       d += '\nEND POISED ON A GENUINE CHOICE — but do NOT resolve it here. Close the scene on the PC standing at the threshold of the bargain economy: they have just SEEN what wishing to Fate costs, and the changed crisis now presses a decision on them about whether they, too, step into that economy. Set up that fork; do NOT state or list the options (the choice is authored separately). End on the pressure, not the menu.\n';
       d += 'Make every beat feel LAWFUL, not arbitrary — an ancient, consistent rule the whole world already knows, never a magic vending machine. Dramatize; do not lecture.\n';
+      // STEP 4a (Roman 2026-07-16): per-story flag — THIS story's Scene 1 is getting the demo opener.
+      // Decoupled from the localStorage milestone (which finalize sets at the SAME turnCount 0, so the
+      // deck can't rely on it). Only set on the NON-EMPTY return path (never when inactive → '').
+      try { if (window.state) window.state._fatelandsWishDemoOpenerFired = true; } catch (_) {}
       return d;
     } catch (e) {
       try { console.warn('[FATELANDS-WISH-DEMO] _buildFatelandsWishDemoOpenerDirective failed:', e && e.message); } catch (_) {}
@@ -54990,6 +54994,56 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     }
   }
   window._buildFatelandsWishDemoOpenerDirective = _buildFatelandsWishDemoOpenerDirective;
+
+  // STEP 4b (Roman 2026-07-16): detect whether the RENDERED Scene-1 prose actually
+  // dramatized a COMPLETE wish cycle — all THREE beats co-present: (a) a spoken/
+  // externalized WISH, (b) an OMEN, (c) a SACRIFICE TAKEN (a currency lost, with loss).
+  // Best-effort / fuzzy. ERRS TOWARD NOT MARKING: if any beat is uncertain we return
+  // rendered:false so the demo re-shows (re-teaching is safer than silently skipping).
+  // Only consulted in finalize when THIS story ran the demo opener (_fatelandsWishDemoOpenerFired).
+  function _detectWishCycleRendered(prose) {
+    var out = { rendered: false, signals: { wish: false, omen: false, sacrifice: false }, count: 0 };
+    try {
+      var t = String(prose || '');
+      if (!t) return out;
+
+      // (a) SPOKEN / EXTERNALIZED WISH — a quoted first/second-person wish or offer to Fate,
+      // OR a Fate-address paired with bargain/wish vocab.
+      var wishVocab = /\b(bargain|barter|pact|covenant|offering|sacrific|shrine|altar|oracle|omen|the price|a price|bind(?:ing)?|favor|debt|vow|wish(?:ed|es)?)\b/i;
+      var quotedWish = false;
+      try {
+        var spans = t.match(/"[^"]{1,400}"|“[^”]{1,400}”/g) || [];
+        var quotedWishRe = /\b(i wish|if only|take (my|what)|fate[, ]|let (her|him|them|me))/i;
+        for (var i = 0; i < spans.length; i++) {
+          if (quotedWishRe.test(spans[i])) { quotedWish = true; break; }
+        }
+      } catch (_qw) {}
+      // Fate addressed directly anywhere, alongside wish/bargain vocab.
+      var fateAddress = /\bfate\b/i.test(t) && wishVocab.test(t);
+      out.signals.wish = !!(quotedWish || fateAddress);
+
+      // (b) OMEN — a diegetic foreshadow beat; require at least one omen-marker.
+      var omenRe = /\b(candle|flame|bird|birds|coin|iron|taste|shadow|thread|bell|reflection|omen|the air (?:warm|cold|still)|went (?:still|silent)|for a heartbeat|as if the world)\b/i;
+      out.signals.omen = omenRe.test(t);
+
+      // (c) SACRIFICE TAKEN — a currency actually lost, near a loss verb, with a sense of loss.
+      var currencyRe = /\b(voice|name|memory|memories|years|eye|eyes|blood|breath|the taste|forgot|forgotten|could no longer|gone from (?:her|him|them)|no longer (?:remember|knew|could))\b/i;
+      var lossVerbRe = /\b(took|taken|lost|gone|vanished|slipped|drained|paid)\b/i;
+      // Require a currency AND a loss verb somewhere; the "could no longer / forgot / no longer knew"
+      // forms are self-contained loss and count on their own.
+      var selfLoss = /\b(forgot|forgotten|could no longer|no longer (?:remember|knew|could))\b/i.test(t);
+      out.signals.sacrifice = !!((currencyRe.test(t) && lossVerbRe.test(t)) || selfLoss);
+
+      out.count = (out.signals.wish ? 1 : 0) + (out.signals.omen ? 1 : 0) + (out.signals.sacrifice ? 1 : 0);
+      // ALL THREE required (a AND b AND c). Err toward NOT marking otherwise.
+      out.rendered = !!(out.signals.wish && out.signals.omen && out.signals.sacrifice);
+    } catch (_e) {
+      // Fail-soft: on any error, do NOT mark (re-demo is safe).
+      return { rendered: false, signals: { wish: false, omen: false, sacrifice: false }, count: 0 };
+    }
+    return out;
+  }
+  window._detectWishCycleRendered = _detectWishCycleRendered;
 
   // HOT&FAST final reminder (Roman 2026-06-26): a short recency-anchored reinforcement of
   // the short-hot contract (the HARD CONTRACT already carries the full version upstream).
@@ -238425,6 +238479,31 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           if ((!state || !state.turnCount) && typeof window._settingDescriptionCheck === 'function') {
             try { window._settingDescriptionCheck(text, 'final'); } catch (_se) {}
           }
+          // WISH-DEMO CYCLE detector (Roman 2026-07-16, STEP 4b). Only when THIS story's Scene 1
+          // actually ran the Fatelands wish-demonstration opener (_fatelandsWishDemoOpenerFired). If the
+          // rendered prose dramatized all 3 cycle beats (wish + omen + sacrifice), set the localStorage
+          // milestone so future stories stop re-demoing — EXCEPT under dev, where we always re-demo.
+          // Best-effort / err-toward-not-marking. Fail-soft (never breaks finalize).
+          try {
+            if ((!state || !state.turnCount) && state && state._fatelandsWishDemoOpenerFired
+                && typeof window._detectWishCycleRendered === 'function') {
+              var _wc = window._detectWishCycleRendered(text);
+              if (_wc && _wc.rendered) {
+                var _wcDev = (typeof isDevMode === 'function' && isDevMode());
+                if (!_wcDev) {
+                  try { localStorage.setItem('sb_witnessed_fatelands_wish_ritual', '1'); } catch (_) {}
+                  console.log('[WISH-DEMO] cycle rendered (3/3 signals) → milestone set');
+                } else {
+                  console.log('[WISH-DEMO] cycle rendered (3/3 signals) → dev, milestone NOT set (always re-demos)');
+                }
+              } else {
+                var _sg = (_wc && _wc.signals) || {};
+                console.log('[WISH-DEMO] cycle incomplete (' + ((_wc && _wc.count) || 0) + '/3 signals: wish='
+                  + (!!_sg.wish) + ' omen=' + (!!_sg.omen) + ' sacrifice=' + (!!_sg.sacrifice)
+                  + ') → milestone NOT set (will re-demo)');
+              }
+            }
+          } catch (_wcErr) { try { console.warn('[WISH-DEMO] detector failed (fail-soft): ' + (_wcErr && _wcErr.message)); } catch (_) {} }
           // LI-EMBODIMENT — longing-through-personhood vs abstraction (Roman 2026-06-06; the desire
           // detector's blind spot — it scored 104% on a Roman made entirely of handwriting + a board seat).
           if ((!state || !state.turnCount) && typeof window._auditLIEmbodiment === 'function') {
