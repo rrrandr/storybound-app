@@ -67326,6 +67326,13 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
       lines.push('- HONOR / TWIST / IGNORE: deliver it, deliver-but-subvert it, or let the world resist it — consistent with Fate’s stance this scene. A twist still recognizably engages the request; an “ignore” still acknowledges it was asked.');
     }
     lines.push('- TEMPORARY DETOUR (~' + remaining + ' ' + sceneWord + ' left): do NOT permanently rewrite the story’s premise, genre, world, or the central relationship. As the window closes, resolve the scenario and let the story return to the main thread already in motion.');
+    // STEP E — Petition continuity: when this petition CONTINUES an already-
+    // established bargain (same governing desire the PC has been circling), the
+    // resolution site stashes an author-facing continuity note here. Fortunes =
+    // leverage: the Petition buys Fate's charitable interpretation of that
+    // established desire. Empty for a first-touch/non-matching wish. Petition-
+    // only (Tempt continuity rides its own directive block).
+    if (!isTempt && vw._bargainContinuityDirective) lines.push(vw._bargainContinuityDirective);
     return lines.join('\n') + '\n';
   }
 
@@ -68139,6 +68146,18 @@ TEMPT FATE NARRATIVE STRUCTURE (MANDATORY — this scene must open with all thre
 - The tone of the invocation and omen must match the magnitude of the wish. Small wishes feel uncanny; large wishes feel dangerous.
 - This structure must be readable without UI context (Forbidden Library readers must understand what happened).
 - After delivery, clear: this wish applies to this invocation only.\n`;
+
+      // STEP E — Tempt continuity: when this Tempt CONTINUES an already-
+      // established bargain (same governing desire the PC has been circling via
+      // an ordinary wish or a prior card), invokeTemptFate stashes an author-
+      // facing continuity note. Fortunes = leverage: the Tempt COMPELS the
+      // genuine win on that established desire (Type-2 TRANSLATE preserves it if
+      // a means hits a resisted Order). Empty for a first-touch/non-matching
+      // wish. Appended AFTER the never-downgraded contract above — it enriches,
+      // never weakens it.
+      if (state._temptBargainContinuityDirective) {
+        directive += state._temptBargainContinuityDirective;
+      }
 
       // Append premise-protection directive after the base Tempt Fate block
       // when a premise-breaking wish was detected. This REPLACES the normal
@@ -163609,6 +163628,129 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._resolveOrdinaryWish = _resolveOrdinaryWish;
 
+  // ════════════════════════════════════════════════════════════════════════
+  // FATELANDS THREE-RAIL WISH — STEP E: PETITION & TEMPT ACT ON A BARGAIN
+  // (Roman 2026-07-16, project_fatelands_wish_philosophy). The two PAID rails
+  // (Fortunes = LEVERAGE over Fate, NOT exemption and NOT a fresh roll) now
+  // DISCOVER a matching unresolved ordinary/prior-card bargain by governing
+  // desire (step C matches any non-'resolved' bargain by desireKey) and
+  // CONTINUE it — the anti-spam continuation SPANS rails — instead of behaving
+  // like an unrelated reroll. The card's stronger Fortune-backed contract then
+  // ACTS ON that established desire:
+  //   • PETITION — the Fortunes buy Fate's CHARITABLE INTERPRETATION of the
+  //     established governing desire (lean toward what the PC truly means),
+  //     still Orders-bound. Acceptance/strength mechanics are UNCHANGED.
+  //   • TEMPT — the Fortunes COMPEL the genuine, never-downgraded win on that
+  //     governing desire; a literal means that hits a resisted Order uses the
+  //     existing Type-2 TRANSLATE / semantic warp (preserve the desire). The
+  //     never-downgraded guarantee is UNCHANGED.
+  // GUARD against false connection: linking is by desireKey (step C) — a
+  // genuinely DIFFERENT desire creates a SEPARATE bargain, it never hijacks an
+  // unrelated one; no card use is auto-connected. NO native sacrifice is added
+  // to either card rail (their toll is the Fortune cost — Fortunes stay
+  // leverage). All fail-soft: a bargain-link error must NEVER break a paid card.
+  // ════════════════════════════════════════════════════════════════════════
+
+  // _linkFateCardBargain(rail, wishText, sceneIdx) → the matched/continued or
+  // newly-created bargain for a Petition/Tempt wish (or null). Classifies the
+  // wish (step B) then find/creates by desireKey (step C): a Petition/Tempt on
+  // the SAME governing desire as an OPEN ordinary/card bargain CONTINUES it
+  // (attemptCount++/escalation, rail updated); a genuinely different desire
+  // spawns a new bargain. Does NOT resolve status — see _resolveFateCardBargain.
+  function _linkFateCardBargain(rail, wishText, sceneIdx) {
+    try {
+      var text = String(wishText == null ? '' : wishText).trim();
+      if (!text) return null;
+      if (sceneIdx == null) sceneIdx = (window.state && window.state.turnCount) || 0;
+      var cls = (typeof classifyWishDisposition === 'function') ? classifyWishDisposition(text) : null;
+      if (!cls) return null;
+      var bargain = (typeof _findOrCreateFateBargain === 'function')
+        ? _findOrCreateFateBargain(cls, { rail: rail, sceneIdx: sceneIdx, text: text })
+        : null;
+      return bargain;
+    } catch (e) {
+      try { console.warn('[FATE-CARD] _linkFateCardBargain failed:', e && e.message); } catch (_) {}
+      return null;
+    }
+  }
+  window._linkFateCardBargain = _linkFateCardBargain;
+
+  // _buildFateCardBargainDirective(bargain, rail) → author-facing CONTINUITY
+  // directive, non-empty ONLY when this Petition/Tempt is a CONTINUATION
+  // (attemptCount > 1) of an already-established governing desire the PC has
+  // been circling. '' for a first-touch bargain (nothing to thread) or on any
+  // error. ENRICHES ONLY — it never states or alters acceptance/strength
+  // (petition) or the never-downgraded win (tempt); it tells the author "this
+  // is the SAME desire, render continuity" and how the paid rail leans on it.
+  function _buildFateCardBargainDirective(bargain, rail) {
+    try {
+      if (!bargain) return '';
+      var attempts = +(bargain.attemptCount || 1);
+      if (attempts <= 1) return '';   // first touch of this desire → no continuity to render
+      var note = (typeof _fateBargainEscalationNote === 'function') ? _fateBargainEscalationNote(bargain) : '';
+      var desire = String(bargain.governingDesire || '').trim();
+      var priorMap = { landed: 'landed', resolved: 'landed', warped: 'warped', distorted: 'came out distorted', refused: 'was refused', open: 'went unanswered', not_granted: 'was not granted' };
+      var prior = bargain.lastOutcome ? (' The PC’s prior attempt on this desire ' + (priorMap[bargain.lastOutcome] || ('ended: ' + bargain.lastOutcome)) + '.') : '';
+      var d = '\nESTABLISHED BARGAIN — CONTINUITY (this is NOT a fresh, unrelated ask):\n';
+      d += '- The PC has been circling the SAME governing desire' + (desire ? ' — “' + desire.slice(0, 160) + '”' : '') + ' — across ' + attempts + ' attempts. Render this as the CONTINUATION of that ONE ongoing bargain with Fate, not a new coincidence.' + prior + '\n';
+      if (note) d += '- ' + note + '\n';
+      if (rail === 'tempt') {
+        d += '- The Fortunes spent here COMPEL the genuine win on THIS established desire. If the literal means hit an Order Fate resists, TRANSLATE the means to the nearest lawful version while PRESERVING the governing desire (semantic warp) — the win on what the PC truly wants stays real, permanent, and never downgraded.\n';
+      } else {
+        d += '- The Fortunes spent here buy Fate’s CHARITABLE INTERPRETATION of THIS established desire — lean toward what the PC TRULY means by it, still within the Orders. Read the deepened intent behind the repetition, not merely the literal words.\n';
+      }
+      return d;
+    } catch (e) {
+      try { console.warn('[FATE-CARD] _buildFateCardBargainDirective failed:', e && e.message); } catch (_) {}
+      return '';
+    }
+  }
+  window._buildFateCardBargainDirective = _buildFateCardBargainDirective;
+
+  // _resolveFateCardBargain(bargain, { rail, wishText, sceneIdx, outcome }) —
+  // advance a Petition/Tempt bargain's STATUS on resolution + append a ledger
+  // receipt (the receipt book spans rails). Status logic ONLY — it does NOT
+  // touch Fortune acceptance/strength (petition) or the never-downgraded win
+  // (tempt); those are decided by their own untouched mechanics.
+  //   TEMPT win → 'resolved' (the desire is MET, possibly via a semantic
+  //     TRANSLATE; a met desire stops being continuable).
+  //   PETITION → 'resolved' when fully granted (outcome 'landed'); else left
+  //     'warped'/'open' so the desire stays continuable — a withheld/partial
+  //     grant DEEPENS on re-press (leverage), it does NOT re-roll.
+  function _resolveFateCardBargain(bargain, opts) {
+    try {
+      opts = opts || {};
+      var rail = opts.rail || 'petition';
+      var sceneIdx = (opts.sceneIdx != null) ? opts.sceneIdx : ((window.state && window.state.turnCount) || 0);
+      var outcome = opts.outcome || null;   // 'landed' | 'warped' | 'not_granted' | ...
+      if (bargain) {
+        if (rail === 'tempt') {
+          bargain.status = 'resolved';                 // guaranteed genuine win → desire met
+          bargain.lastOutcome = outcome || 'landed';
+        } else {
+          if (outcome === 'landed') bargain.status = 'resolved';
+          else if (outcome === 'warped') bargain.status = 'warped';
+          else bargain.status = 'open';                // not-granted / partial → still continuable
+          bargain.lastOutcome = outcome || bargain.lastOutcome || 'open';
+        }
+        bargain.lastInvokedScene = sceneIdx;
+      }
+      if (typeof _recordFateBargainToLedger === 'function') {
+        _recordFateBargainToLedger({
+          rail: rail, sceneIdx: sceneIdx, wish: opts.wishText,
+          governingDesire: bargain && bargain.governingDesire,
+          dominantOrder: bargain && bargain.dominantOrder,
+          outcome: outcome, bargainId: bargain && bargain.id
+        });
+      }
+      return bargain;
+    } catch (e) {
+      try { console.warn('[FATE-CARD] _resolveFateCardBargain failed:', e && e.message); } catch (_) {}
+      return bargain || null;
+    }
+  }
+  window._resolveFateCardBargain = _resolveFateCardBargain;
+
   function _recordTemptFateEvent(wishText) {
     var s = window.state || {};
     if (!s._temptFateLedger || !Array.isArray(s._temptFateLedger)) {
@@ -191243,6 +191385,24 @@ No text, no watermark, no UI elements, share-ready.`;
         if (!_accepted) state.volatility_window.remaining_scenes = 1;
     }
 
+    // STEP E — link this Petition to an established bargain (anti-spam
+    // continuation SPANS rails) and thread its continuity into the weave
+    // directive. Fortunes = LEVERAGE: a Petition on a desire the PC already
+    // circles CONTINUES that ordinary/card bargain; the Fortunes buy Fate's
+    // CHARITABLE INTERPRETATION of it. Acceptance (_accepted, computed above)
+    // is UNCHANGED — enrich + record only. Fail-soft.
+    try {
+      var _peBargainCG = (typeof _linkFateCardBargain === 'function') ? _linkFateCardBargain('petition', _p.text, _currentScene) : null;
+      if (_peBargainCG) {
+        if (state.volatility_window && state.volatility_window.source === 'petition' && typeof _buildFateCardBargainDirective === 'function') {
+          state.volatility_window._bargainContinuityDirective = _buildFateCardBargainDirective(_peBargainCG, 'petition');
+        }
+        if (typeof _resolveFateCardBargain === 'function') {
+          _resolveFateCardBargain(_peBargainCG, { rail: 'petition', wishText: _p.text, sceneIdx: _currentScene, outcome: _accepted ? 'landed' : 'not_granted' });
+        }
+      }
+    } catch (_peErrCG) {}
+
     // Coincidence bias scalar — consumed this turn only
     state.coincidenceBias = _accepted ? petitionStrength * 0.6 : 0;
 
@@ -215442,6 +215602,33 @@ Generate the synopsis now.` }
 
       // Fate Resonance — account-level mythic aura increment (narrative only)
       incrementFateResonance();
+
+      // STEP E — link this Tempt to an established bargain (anti-spam
+      // continuation SPANS rails). Fortunes = LEVERAGE: a Tempt on a desire the
+      // PC already circles (via an ordinary wish or a prior card) CONTINUES that
+      // bargain and COMPELS the genuine win on it; a Tempt win RESOLVES the
+      // desire. The continuity note is stashed for the Tempt directive block to
+      // thread (Type-2 TRANSLATE preserves the desire if a means hits a resisted
+      // Order). The never-downgraded / empowerment mechanics are UNCHANGED —
+      // enrich + record only. Only fires when a wish was typed (stance-toggle
+      // invocations carry no wish text). Fail-soft.
+      try {
+        if (state.temptFateWish && String(state.temptFateWish).trim()) {
+          var _tSceneE = (state.turnCount != null) ? state.turnCount : 0;
+          var _tBargainE = (typeof _linkFateCardBargain === 'function') ? _linkFateCardBargain('tempt', state.temptFateWish, _tSceneE) : null;
+          if (_tBargainE) {
+            // Build BEFORE resolving so the continuity note reflects the PRIOR attempt's outcome.
+            state._temptBargainContinuityDirective = (typeof _buildFateCardBargainDirective === 'function') ? _buildFateCardBargainDirective(_tBargainE, 'tempt') : '';
+            if (typeof _resolveFateCardBargain === 'function') {
+              _resolveFateCardBargain(_tBargainE, { rail: 'tempt', wishText: state.temptFateWish, sceneIdx: _tSceneE, outcome: 'landed' });
+            }
+          } else {
+            state._temptBargainContinuityDirective = '';
+          }
+        } else {
+          state._temptBargainContinuityDirective = '';
+        }
+      } catch (_tErrE) {}
 
       // Activate stance for narrative directives
       state.stance = 'seduce';
@@ -263581,6 +263768,25 @@ FATE CARD ADAPTATION (CRITICAL):
               if (_isGuaranteedFirst) state.volatility_window.guaranteedFirst = true; // weave directive applies silent down-scope
               if (!_effectiveAccepted) state.volatility_window.remaining_scenes = 1;
           }
+
+          // STEP E — link this Petition to an established bargain (anti-spam
+          // continuation SPANS rails) and thread its continuity into the weave
+          // directive. Fortunes = LEVERAGE: a Petition on a desire the PC
+          // already circles CONTINUES that ordinary/card bargain; the Fortunes
+          // buy Fate's CHARITABLE INTERPRETATION of it. Acceptance
+          // (_effectiveAccepted, computed above) is UNCHANGED — enrich + record
+          // only. Fail-soft.
+          try {
+            var _peBargain = (typeof _linkFateCardBargain === 'function') ? _linkFateCardBargain('petition', _p.text, (state.turnCount || 0)) : null;
+            if (_peBargain) {
+              if (state.volatility_window && state.volatility_window.source === 'petition' && typeof _buildFateCardBargainDirective === 'function') {
+                state.volatility_window._bargainContinuityDirective = _buildFateCardBargainDirective(_peBargain, 'petition');
+              }
+              if (typeof _resolveFateCardBargain === 'function') {
+                _resolveFateCardBargain(_peBargain, { rail: 'petition', wishText: _p.text, sceneIdx: (state.turnCount || 0), outcome: _effectiveAccepted ? 'landed' : 'not_granted' });
+              }
+            }
+          } catch (_peErr) {}
 
           // Coincidence bias scalar — consumed this turn only
           state.coincidenceBias = accepted ? petitionStrength * 0.6 : 0;
