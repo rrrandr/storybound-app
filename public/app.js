@@ -163388,7 +163388,13 @@ No text, no watermark, no UI elements, share-ready.`;
   window._wishDispositionPhrase = _wishDispositionPhrase;
 
   // _detectOrdinaryWishInvocation(act, dia) → null OR {invoked, signals, targetKey, offering}.
-  // NEW INVOCATION FLOOR (Roman, 2026-07-16 — reversal): in Fatelands an explicit
+  // FIELD-AWARE (Roman, 2026-07-16): the two inputs are NOT concatenated blindly.
+  // DIA ("Say") is speech → a wish there is EXPRESSED by construction and fires on
+  // grammar alone. ACT ("Do") is action → a wish there fires ONLY when the act
+  // EXTERNALIZES it (a first-person expression/manifestation verb, OR a Fate-address/
+  // offer/ritual). A bare or thought-framed "I wish X" in the Do field does NOT fire.
+  // See the FIELD-AWARE EXTERNALIZATION LAW block inside for the full rule.
+  // INVOCATION FLOOR (Roman, 2026-07-16 — reversal): in Fatelands an explicit
   // first-person "I wish …" construction IS itself a valid invocation of Fate.
   // Casual wishing is core Fatelands DANGER, not immunity. Fire when EITHER:
   //   (a) an explicit FIRST-PERSON "I wish …" with an INTELLIGIBLE desired outcome
@@ -163407,45 +163413,86 @@ No text, no watermark, no UI elements, share-ready.`;
   // "wishful thinking" (no bare "wish"), "make a wish" (no first-person "I wish").
   function _detectOrdinaryWishInvocation(act, dia) {
     try {
-      var text = String((act == null ? '' : act) + ' ' + (dia == null ? '' : dia)).trim();
+      var actText = String(act == null ? '' : act);
+      var diaText = String(dia == null ? '' : dia);
+      var text = (actText + ' ' + diaText).trim();
       if (!text) return null;
       var hasFate = /\bfate\b/i.test(text);
 
-      // ── UNAMBIGUOUS SIGNAL 0: explicit FIRST-PERSON "I wish …" (the reversal) ──
-      // A genuine first-person wish = "I" immediately followed by "wish" (adjacency
-      // auto-excludes negation: "I do not wish", "I don't wish", "I never wish"),
-      // NOT sitting inside a quote attributed to someone else (recounting), and with
-      // an intelligible outcome after it. Any ONE genuine occurrence fires, so a
-      // compound like  I wish I hadn't said "I wish"  fires on the leading clause
-      // while the trailing quoted echo is (correctly) treated as recounting.
-      var iWish = false, _wishClause = null;
-      try {
-        var _wre = /\bi\s+wish\b/gi, _wm;
-        var _attribBefore = /(?:\b(?:said|says|say|saying|told|tells|telling|asked|asks|whispered|whispers|shouted|shouts|murmured|muttered|mutters|replied|replies|cried|cries|screamed|screams|answered|answers|remarked|added|noted|begged|pleaded|hissed|sighed|breathed|called|calls)\b[^"'“”‘’]{0,12})["'“”‘’]\s*$/i;
-        while ((_wm = _wre.exec(text)) !== null) {
-          var _prefix = text.slice(0, _wm.index);
-          if (_attribBefore.test(_prefix)) continue;               // recounting → skip this one
-          var _rest = text.slice(_wm.index + _wm[0].length).replace(/^\s*(?:for\s+)?/i, '');
-          if (!/[a-z]{2,}/i.test(_rest)) continue;                 // no intelligible outcome → skip
-          iWish = true; _wishClause = _rest.trim(); break;         // one genuine wish is enough
-        }
-      } catch (_wErr) { iWish = false; _wishClause = null; }
+      // ══ FIELD-AWARE EXTERNALIZATION LAW (Roman, 2026-07-16) ══════════════════
+      // "Fate does not read wishes from the privacy of the mind. A bargain must be
+      // given FORM — spoken, signed, written, or enacted — before Fate can answer
+      // it. A whisper is enough; a thought is not." The distinction is EXPRESSED vs
+      // UNEXPRESSED (no audience/volume needed), and the two input fields carry
+      // different default status:
+      //   • DIA (the "Say" field) is SPEECH by construction → a wish/If-only there
+      //     is EXPRESSED already and fires on the grammar alone.
+      //   • ACT (the "Do" field) is action → a wish there fires ONLY when the act
+      //     EXTERNALIZES it: a first-person EXPRESSION/manifestation verb carries it
+      //     out of the mind (say/whisper/write/carve/trace/mouth/sign/sing/pray/…),
+      //     OR the act IS a Fate-address / explicit offer / recognized ritual (those
+      //     are external by nature — handled by the signals further below). A BARE
+      //     "I wish X" in the Do field — or one framed as thought ("I think…", "in
+      //     my head", "to myself", "inwardly", "silently wish") with no manifestation
+      //     verb — stays UNEXPRESSED and does NOT fire. Manifestation beats silence:
+      //     "silently wish" (no verb) → NO; "silently mouth/trace the wish" → FIRE.
+      var _EXPR_VERBS = 'say|says|said|speak|speaks|spoke|whisper|whispers|whispered|mutter|mutters|muttered|murmur|murmurs|murmured|breathe|breathes|breathed|hiss|hisses|hissed|cry|cries|cried|shout|shouts|shouted|call|calls|called|utter|utters|uttered|mouth|mouths|mouthed|write|writes|wrote|scrawl|scrawls|scrawled|scratch|scratches|scratched|carve|carves|carved|etch|etches|etched|inscribe|inscribes|inscribed|trace|traces|traced|draw|draws|drew|sign|signs|signed|gesture|gestures|gestured|sing|sings|sang|hum|hums|hummed|chant|chants|chanted|intone|intones|intoned|pray|prays|prayed|recite|recites|recited';
+      // First-person self-expression in the ACT: "I <verb>", allowing one adverb
+      // ("I silently mouth …"). Third-person attribution ("she whispered") is NOT
+      // matched here — that is recounting, excluded by _attribBefore below.
+      var _actSelfExpr = new RegExp('\\bi(?:\'ll)?\\s+(?:will\\s+|would\\s+|then\\s+|just\\s+|barely\\s+|(?:silent|quiet|slow|soft|swift|careful|bare|faint)ly\\s+)?(?:' + _EXPR_VERBS + ')\\b', 'i');
+      var actExpresses = _actSelfExpr.test(actText);
+      // A "wish" WORD carried by such a verb externalizes the bargain even without a
+      // literal "I wish" ("mouth my wish", "carve the wish", "trace the wishing-sign").
+      var actWishWord = /\bwish(?:es|ing|ed)?\b/i.test(actText) || /\bwishing[\s-]?(?:sign|stone|knot|mark|well)\b/i.test(actText);
 
-      // ── UNAMBIGUOUS SIGNAL 0b: explicit "If only …" (second operative construction) ──
-      // "If only" is a wish construction — the speaker's longing — and is operative Fatelands
-      // language exactly like "I wish" (see the LAWS OF WISHING: neither phrase is said lightly).
-      // Same recounting exclusion; requires an intelligible outcome after it.
-      // ("If only the door were open." / "If only she could breathe.")
-      var _ifOnly = false;
-      try {
-        var _ire = /\bif\s+only\b/gi, _im;
-        while ((_im = _ire.exec(text)) !== null) {
-          if (_attribBefore.test(text.slice(0, _im.index))) continue;   // recounting → skip
-          var _irest = text.slice(_im.index + _im[0].length).trim();
-          if (!/[a-z]{2,}/i.test(_irest)) continue;                     // no intelligible outcome → skip
-          _ifOnly = true; if (!_wishClause) _wishClause = _irest; break;
-        }
-      } catch (_iErr) { _ifOnly = false; }
+      // ── RECOUNTING = THIRD-PERSON ATTRIBUTION ONLY (fixed heuristic) ──
+      // Skip a wish sitting inside a quote attributed to SOMEONE ELSE
+      // (She said, "I wish…" / he told me, "…"). A FIRST-PERSON attribution
+      // (I whisper, "I wish…" / I say, "…") is the PC externalizing — do NOT skip;
+      // that is exactly the case that must FIRE. Keyed on a 3rd-person subject
+      // (he/she/they/a Name) + attribution verb + opening quote, at the prefix end.
+      var _attribBefore = /\b(?:he|she|they|him|her|them|[A-Z][a-z]+)\s+(?:said|says|say|saying|told|tells|telling|asked|asks|whispered|whispers|shouted|shouts|murmured|muttered|mutters|replied|replies|cried|cries|screamed|screams|answered|answers|remarked|added|noted|begged|pleaded|hissed|sighed|breathed|called|calls)\b[^"'“”‘’]{0,20}["'“”‘’]\s*$/i;
+
+      // Scan ONE field for the two operative wish constructions. Excludes 3rd-person
+      // recounting (_attribBefore), negation (adjacency: "I do not wish" never matches
+      // "\bi\s+wish\b"), and no-outcome fragments. Returns {iWish, ifOnly, clause}.
+      function _scanWishConstructions(s) {
+        var out = { iWish: false, ifOnly: false, clause: null };
+        if (!s) return out;
+        try {
+          var _wre = /\bi\s+wish\b/gi, _wm;
+          while ((_wm = _wre.exec(s)) !== null) {
+            if (_attribBefore.test(s.slice(0, _wm.index))) continue;          // 3rd-person recounting → skip
+            var _rest = s.slice(_wm.index + _wm[0].length).replace(/^\s*(?:for\s+)?/i, '');
+            if (!/[a-z]{2,}/i.test(_rest)) continue;                          // no intelligible outcome → skip
+            out.iWish = true; out.clause = _rest.trim(); break;              // one genuine wish is enough
+          }
+        } catch (_e1) {}
+        try {
+          var _ire = /\bif\s+only\b/gi, _im;
+          while ((_im = _ire.exec(s)) !== null) {
+            if (_attribBefore.test(s.slice(0, _im.index))) continue;          // recounting → skip
+            var _irest = s.slice(_im.index + _im[0].length).trim();
+            if (!/[a-z]{2,}/i.test(_irest)) continue;                         // no intelligible outcome → skip
+            out.ifOnly = true; if (!out.clause) out.clause = _irest; break;
+          }
+        } catch (_e2) {}
+        return out;
+      }
+
+      var _diaScan = _scanWishConstructions(diaText);
+      var _actScan = _scanWishConstructions(actText);
+
+      // DIA wish = spoken → fires on grammar alone. ACT wish = fires ONLY if the act
+      // externalizes it (a first-person expression/manifestation verb carries it out,
+      // OR a manifested "wish" word). A bare/thought-framed Do wish stays unexpressed.
+      var _diaWish = _diaScan.iWish, _diaIfOnly = _diaScan.ifOnly;
+      var _actWishExternal = actExpresses && (_actScan.iWish || _actScan.ifOnly || actWishWord);
+      var iWish = _diaWish || (actExpresses && _actScan.iWish);
+      var _ifOnly = _diaIfOnly || (actExpresses && _actScan.ifOnly);
+      var _wishClause = _diaScan.clause || (_actWishExternal ? _actScan.clause : null);
+      var wishConstruction = _diaWish || _diaIfOnly || _actWishExternal;
 
       // ── UNAMBIGUOUS SIGNAL 1: direct ADDRESS to Fate (vocative) ──
       // Fate is the ADDRESSEE, not "god I wish". Requires "O/dear Fate", a Fate
@@ -163484,8 +163531,19 @@ No text, no watermark, no UI elements, share-ready.`;
       var typedSacrifice = (typeof detectSacrifice === 'function') ? detectSacrifice(text) : null;
       var offerToFate = ((_offerPhrase.test(text) || !!typedSacrifice) && (hasFate || /\bto\s+fate\b/i.test(text))) || _imperativeOffer;
 
-      var unambiguous = [iWish, _ifOnly, address, bargainIntent, ritual, offerToFate].filter(Boolean).length;
+      var unambiguous = [wishConstruction, address, bargainIntent, ritual, offerToFate].filter(Boolean).length;
       if (unambiguous < 1) return null;
+
+      // ── FORM hint (which recognized external form gave the bargain shape) ──
+      // Every firing path is external by law; this labels HOW it was expressed.
+      var _form = null;
+      if (_diaWish || _diaIfOnly) _form = 'spoken';
+      else if (_actWishExternal) {
+        if (/\bi(?:'ll)?\s+(?:\w+\s+)?(?:write|writes|wrote|scrawl\w*|scratch\w*|carve\w*|carved|etch\w*|inscrib\w*|inscribed)\b/i.test(actText)) _form = 'written';
+        else if (/\bi(?:'ll)?\s+(?:\w+\s+)?(?:mouth\w*|mouthed|trace\w*|traced|sign\w*|signed|gesture\w*|gestured|draw\w*|drew)\b/i.test(actText)) _form = 'enacted';
+        else _form = 'whispered';
+      }
+      else if (address || ritual || bargainIntent || offerToFate) _form = 'invocation';
 
       // ── SUPPORTING signals (confidence only; never gate) ──
       var clarity = /\b(?:i\s+will|i\s+must|no\s+choice|the\s+only\s+way|i\s+have\s+to|nothing\s+else|whatever\s+it\s+takes|i\s+swear|i\s+demand)\b/i.test(text);
@@ -163529,7 +163587,8 @@ No text, no watermark, no UI elements, share-ready.`;
         signals: {
           iWish: iWish, ifOnly: _ifOnly, address: address, bargainIntent: bargainIntent, ritual: ritual, offerToFate: offerToFate,
           namedSacrifice: !!typedSacrifice, imperativeOutcome: imperativeOutcome,
-          clarity: clarity, hesitation: hesitation, unambiguousCount: unambiguous
+          clarity: clarity, hesitation: hesitation, unambiguousCount: unambiguous,
+          externalized: true, form: _form
         },
         targetKey: targetKey,
         offering: offering
@@ -192173,6 +192232,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • PERSONAL SACRIFICE (the wisher is ALWAYS the one who pays — foundational + inviolable in every region and story): a wish can NEVER be fueled by another person\'s body, memory, life, bond, or sacrifice. Fate keeps ONE account — who truly wished AND who was permanently diminished must be the SAME person. No substitutions, proxies, magical batteries, or sacrificial slaves; no king/master/god spends a captive\'s years, fingers, fertility, memory, or life to power their OWN wish. COERCION still exists but changes form: you can threaten, break, extort, or indoctrinate someone until THEY genuinely wish for your benefit — Alignment still governs (forced words alone fail; a divided/half-hearted wish WARPS) — and the sacrifice is taken from THEM, the beneficiary pays nothing. So: villains NEVER spend other people\'s sacrifices directly; coercive wish-magic is PSYCHOLOGICAL, never mechanical (institutions manufacture genuine alignment — hostages, conditioning, torture-to-reshape-desire, least-terrible-option bargains). Imprisoning a wisher is never just chains: WISH-LOCKS do not turn magic off — they flood the mind with intrusive doubt, fractured concentration, and emotional static so a clean ALIGNED wish cannot form (the power remains; alignment is denied); isolation from allies denies Stacking. Fate recognizes neither ownership nor authority — only truth and sacrifice; a hero is marked by willingly paying their OWN price, never compelling another to pay it.\n' +
       '  • THE HOOK (why wishing is dangerous — it is an ADDICTION, psychological not chemical): EVERY WISH WORKS, and once you have learned to solve a problem by sacrificing, it becomes very hard to solve one any other way. Watch the escalation in a single life: a FINGER to save a child, an EYE to save a marriage, then ten YEARS, then MEMORIES — until they no longer remember solving problems any other way. Write heavy wishers not as villains but as people who can no longer stop; the most frightening granter is the quiet one who fixes everything with one more sacrifice because it has always worked before. Every wish works — THAT is why it is dangerous. AND IT FEEDS ON ITSELF (addiction × alignment): the more someone wishes, the less honestly they face reality → their own ALIGNMENT decays (more self-deceptive, desperate, divided, afraid) → their wishes WARP → they wish again to fix the last. So experienced wishers are NOT unstoppable — they are often spiritually UNSTABLE; the disciplined who wish rarely are the formidable ones, and those who have solved everything this way for years are the doomed ones.\n' +
       '  • OPERATIVE LANGUAGE — "I WISH" AND "IF ONLY" (how ordinary Fatelanders invoke, and why the words are dangerous): in the Fatelands, saying "I wish …" or "If only …" with a real desire IS itself an invocation of Fate — the plain words are the operative form; no shrine, address, or ritual is required (those only sharpen it). So NO ONE says them lightly. Like a careless promise or a spoken taboo, the phrases carry weight: people catch themselves and substitute ("I would like…", "I hope…", "would that it were otherwise"), and an elder will cut off a child or a heedless outsider mid-sentence — "Don\'t say \'wish\' unless you mean to bargain." A character who says "I wish" and MEANS it has, in that world, reached for Fate. Render NPCs reacting to the WORDS themselves (a flinch, a warning, a sudden hush), and let outsiders learn the danger by accident — a casual "I wish" that Fate quietly answers.\n' +
+      '  • A BARGAIN MUST BE GIVEN FORM — Fate does not read the mind (HARD law): Fate answers only a wish that has been EXTERNALIZED — spoken, whispered, signed, written, sung, carved, traced, or made through a culturally recognized nonverbal invocation. A bargain is heard when its conditions are INTENTIONAL (aimed at Fate, not idle), EXTERNALIZED (given some outward form), and COMPLETE ENOUGH for Fate to recognize what is being asked. The rule is EXPRESSED vs UNEXPRESSED, NOT public vs private: no audience, no volume, no witness is required — "A WHISPER IS ENOUGH; A THOUGHT IS NOT." A silent, purely mental wish reaches nothing. This gives silence real tactical weight WITHOUT making it absolute immunity: a GAG stops spoken wishing; BOUND HANDS stop signing, tracing, or writing; someone who has already sacrificed their VOICE must find another recognized form (write it, sign it, carve it) — so captors, curses, and self-costs can deny SOME forms of wishing but rarely all of them at once, and a determined wisher reaches for whatever form remains. Crucially, this is NOT an exclusion of the wordless: MUTE, SILENCED, UNDERWATER, and TELEPATHIC characters are FULLY inside the law — they simply invoke through another form (a mute wisher signs or writes; an underwater wisher traces or mouths against the current). TELEPATHY IS NOT A LOOPHOLE: a transmitted thought does NOT count merely because it was transmitted mind-to-mind; it counts ONLY when the telepath INTENTIONALLY addresses Fate through an established external metaphysical channel (a deliberate, formed petition sent as an act of invocation), never as ambient stray thinking Fate happens to overhear. Fate is not a mind-reader waiting to punish a passing wish — it answers a bargain a person chose to GIVE FORM.\n' +
       '  • STACKING (wishes combine and MULTIPLY): two or more wishers aligned to the SAME truth pool their wishes and the power MULTIPLIES, not merely adds — a couple\'s shared wish outstrips either alone; a whole city of mages, wishing as one, once split and warped a moon-sized void out of the sky. Shared, truthful alignment moves Fate further than lone sacrifice — pooled truth, not a contest of wills.\n' +
       '  • THE ANOMALOUS PAY LESS → PAID GRANTERS (non-humans): First Favored, Kwisheen, and other non-human peoples pay a LOWER tier and get a STRONGER result — their anomalous nature bends Fate more cheaply (a boon costing a human a year of life might cost a First Favored a night\'s sleep). So a TRADE exists: rather than lose a finger or a year of their own, most people PAY a First Favored (in Fortunes — coin) to grant a larger boon at that cheaper anomalous rate. A modest weight of Fortunes buys what would cost a human dearly in flesh, memory, or time — but a granter is NOT a vending machine: they too are bound by the Eight Orders (no granter hands you a clean Identity or History wish), they ESTIMATE the risk of a warp rather than guarantee an outcome, and FATE still chooses the sacrifice taken. WHO PAYS WHAT: the human pays only Fortunes; the First Favored pays the actual sacrifice out of their own cheaper nature (the human\'s flesh/years/memory stay intact — the whole appeal). BUT THE GRANTOR\'S CONSENT IS A GATE: a First Favored grants ONLY a wish they WANT you to have — judge it undeserved, petty, or cruel ("that\'s a shitty wish," "you don\'t deserve that") and they simply REFUSE. So the granter is a moral filter with taste and opinions, and a natural source of conflict: the boon you need may hinge on convincing someone who finds you wanting. GRANTERS ARE ARTISANS, NOT SHOPS — famous for their PHILOSOPHY, not their power (all First Favored are efficient): reputations precede them ("she never grants revenge wishes," "he\'ll save any child even if you can\'t pay," "she always asks for the truth first," "don\'t go to Old Brine — he\'ll grant anything if the coin is good"). So WHICH granter you seek matters as much as the coin you bring — a protagonist with the payment may still be turned away, or must travel to the one granter whose principles fit the wish.\n' +
       '  • WISHING SUPPLEMENTS CIVILIZATION — IT DOES NOT REPLACE IT: society uses wishes constantly, but ordinary institutions run PRIMARILY on ORDINARY means — banks keep locks, guards, walls, and ledgers; prisons use architecture, discipline, and law; contracts rest on witnesses, reputation, and enforcement. People wish at the MOMENT a real need arises, not by blanketing the future in permanent enchantment. A PERMANENT magical effect is EXCEPTIONAL — legendary, or extraordinarily costly — never the routine way problems get solved. (A wish CAN be warded, but warding is rare and expensive, not a standing infrastructure; assume the world is mostly mundane, with wishes the exceptional recourse.)\n' +
