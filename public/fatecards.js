@@ -2138,6 +2138,98 @@ function stopContinuousSparkles() {
                 .join(' ');
         }
 
+        // ── DEMO FIRST-CHOICE SPREAD (step 5 of the wish-demonstration opener) ──
+        // After the Scene-1 opener rendered a complete NPC wish cycle
+        // (state._fatelandsWishDemoOpenerFired), the FIRST choice (turnCount 0)
+        // deliberately teaches that wishing is AVAILABLE, not MANDATORY: four
+        // authored NON-wish responses (ordinary action / social / witness / object)
+        // + EXACTLY ONE ordinary-wish card. This prevents following the tutorial
+        // wish with five more wishes (which would contradict the "wishing
+        // SUPPLEMENTS civilization; ordinary means are primary" law). Bypasses the
+        // archetype build + STEP-F ranked injection. Fail-soft: any error falls
+        // through to the normal deck below.
+        try {
+            if (state && state._fatelandsWishDemoOpenerFired === true &&
+                !state.turnCount && _fateWishIsFatelands(state)) {
+                // Card 5: reuse the step-F ordinary-wish candidate builder so the
+                // invocation is a proven, externalized offer-to-Fate that clears the
+                // _detectOrdinaryWishInvocation hard floor (address + offer). Take
+                // ONLY the bargain variant → the single wish card (cap ≤1).
+                let _wishCard = null;
+                try {
+                    const _cands = _fateWishBuildCandidates(null, state, storyText, 0.9);
+                    if (Array.isArray(_cands)) {
+                        _wishCard = _cands.filter(function (c) { return c && c._ordinaryWish === true; })[0] || null;
+                    }
+                } catch (_) { _wishCard = null; }
+                if (!_wishCard) {
+                    // Authored fallback — same "address Fate + offer (not a binding
+                    // trade)" shape, externalized/spoken so it clears the D detector.
+                    _wishCard = {
+                        id: 'choose',
+                        title: 'A Wish of Your Own',
+                        desc: 'Ask Fate to spare them. Offer the years you have not yet lived.',
+                        action: 'Fate, hear me — spare them what is coming. I offer the years I have not yet lived; take them if that is your price.',
+                        dialogue: '"If the old bargains are real, then I make one now — take what it costs."',
+                        _ordinaryWish: true,
+                        _fateWishCandidate: true,
+                        _wishVariant: 'bargain',
+                        _wishScore: 0.9
+                    };
+                    _wishCard.axis = _classifyFateCardAxis(_wishCard.action, _wishCard.dialogue);
+                    _wishCard.desire = _classifyFateCardDesire(_wishCard.action, _wishCard.dialogue);
+                } else {
+                    // Present it as the ONE optional wish, not "The Bargain".
+                    _wishCard.title = 'A Wish of Your Own';
+                }
+
+                // Four hand-authored NON-wish responses. Neutral tarot art ids
+                // (NOT PetitionFate/TemptFate → render in the normal grid, not the
+                // Petition/Tempt special row). None address/offer to Fate, so none
+                // fires the ordinary-wish detector.
+                const _demoCards = [
+                    {   // 1. Solve it with your own hands — ordinary physical action (Do-led)
+                        id: 'boundary', title: 'Your Own Hands',
+                        desc: 'Trust no bargain. Meet the danger with your own strength.',
+                        action: "I stop waiting for a miracle and throw my shoulder into the door, dragging us both clear.",
+                        dialogue: '"Move — now, while we still can."'
+                    },
+                    {   // 2. Turn to the one who paid — social/emotional (Say-led)
+                        id: 'confession', title: 'The One Who Paid',
+                        desc: 'Answer the one who just bargained with Fate on your behalf.',
+                        action: 'I reach for them, catching their arm before they can turn away.',
+                        dialogue: '"What did you just do? Look at me — what did you just do?"'
+                    },
+                    {   // 3. See what Fate took — inspect/witness the sacrifice (Do-led)
+                        id: 'silence', title: 'What Fate Took',
+                        desc: "Witness the price. Read their face for what the bargain cost.",
+                        action: "I search their face for what's missing — I have to know what Fate took.",
+                        dialogue: ''
+                    },
+                    {   // 4. Name what they risked — object to / question the wish (Say-led)
+                        id: 'reversal', title: 'What They Risked',
+                        desc: 'Name the danger of what they just did — and what it may have cost.',
+                        action: 'I put myself between them and the altar, my voice low and level.',
+                        dialogue: '"You should never have bargained. Do you even know what you\'ve lost?"'
+                    }
+                ];
+                _demoCards.forEach(function (c) {
+                    c.axis = _classifyFateCardAxis(c.action, c.dialogue);
+                    c.desire = _classifyFateCardDesire(c.action, c.dialogue);
+                });
+
+                const _demoDeck = _demoCards.concat([_wishCard]);
+                try {
+                    console.log('[FATE-WISH] demo first-choice spread: 5 cards, wishCards=' +
+                        _demoDeck.filter(function (c) { return c && c._ordinaryWish; }).length +
+                        ' (cap 1), authored non-wish=' + _demoCards.length);
+                } catch (_) {}
+                return _demoDeck;
+            }
+        } catch (e) {
+            try { console.warn('[FATE-WISH] demo first-choice spread failed (fail-soft, using normal deck):', e && e.message); } catch (_) {}
+        }
+
         // INTIMATE CONTEXT: Use erotic deck base instead of standard deck
         const deckBase = isIntimateContextActive() ? INTIMATE_DECK_BASE : fateDeckBase;
 
