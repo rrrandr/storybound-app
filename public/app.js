@@ -163705,7 +163705,61 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var offerTxt = o.offering ? ('the PC’s ' + o.offering) : 'no specific price (an open offer — "take what it costs")';
       var outLabel = { landed: 'LANDS CLEAN', distorted: 'LANDS DISTORTED', warped: 'SEMANTIC WARP', refused: 'REFUSED (vanishingly rare)' }[o.outcome] || o.outcome;
-      var d = '\n═══ ORDINARY FATE-WISH (the PC bargained with Fate directly, in Say/Do) ═══\n';
+
+      // ── SCENE-OPENING CONTRACT (Roman's law, 2026-07-16) ──────────────────────
+      // A HARD, per-wish template the author MUST follow so the NEXT scene renders
+      // this ordinary wish LEGIBLY. Interpolates the actual wish text, the
+      // externalized form, a disposition/outcome-keyed OMEN family, the outcome
+      // type, the sacrifice currency, and (on warp) the preserve-desire translation.
+      // NOTE: never emit the substring "lands clean" here — the D-guard asserts a
+      // HISTORY warp directive does NOT contain it. Use "LANDED CLEAN" instead.
+      var _wishEcho = (o.wishText != null && String(o.wishText).trim())
+        ? String(o.wishText).trim()
+        : (o.cls && o.cls.governingDesire) || 'the wish the PC just made';
+      var _form = String(o.form == null ? 'spoken' : o.form).toLowerCase();
+      var _formEcho = {
+        spoken:     'The PC SPOKE it aloud — render it as audible speech, heard by anyone present.',
+        whispered:  'The PC WHISPERED it — render it whispered, barely voiced, yet still uttered into the world.',
+        written:    'The PC set it down in WRITING (wrote / carved / scratched / etched) — show the mark COMPLETED: the line finished, the ash disturbed, the letters burned or stained in, visible where they were made.',
+        enacted:    'The PC ENACTED it (mouthed / traced / signed the wishing-sign) — show the gesture COMPLETED and legible to any witness who knows the sign.',
+        invocation: 'The PC ADDRESSED Fate directly (an address / offering / ritual) — show the invocation uttered or the offering laid down, out in the open.'
+      }[_form] || 'Render the wish in the exact form the PC gave it, uttered into the world.';
+
+      // OMEN family keyed to what Fate actually does with THIS ask (a hint, never a label).
+      var _omen;
+      if (o.outcome === 'refused') {
+        _omen = 'REFUSAL family — STILLNESS / ABSENCE / EXTINGUISHING / FAILURE-TO-COMPLETE (a candle that gutters out, a sound that will not come, a gesture that will not finish, a held breath that gets no answer)';
+      } else if (o.outcome === 'warped' || o.outcome === 'distorted') {
+        _omen = 'RESISTANCE family — DOUBLING / MISALIGNMENT / INVERSION / ECHO / WRONGNESS (a reflection that lags, a shadow pointing the wrong way, a doubled echo, a coin landing on its edge, iron on the tongue)';
+      } else {
+        _omen = 'ACQUIESCENCE family — CONVERGENCE / OPENING / WARMTH / RHYTHM / RELEASE (a flame bending toward the wisher, birds falling silent then resuming as one, a door easing, the air warming, a knot loosening)';
+      }
+      var _severeCost = (o.takenMag === 'severe' || o.takenMag === 'irreversible'
+        || (o.taken && _WISH_CURRENCY_SINGULAR[o.taken]) || o.exhausted);
+      if (_severeCost) {
+        _omen += '. The price here is HEAVY, so THREAD a BODILY PREMONITION into the sign (a sudden absence, a remembered sensation already going quiet, warmth leaving the hands) — the reader should feel the cost coming before it lands';
+      }
+      _omen += '. Rotate the palette; do not list it, and do not make the omen a reliable traffic light — it HINTS, it does not confirm.';
+
+      var c = '\n═══ SCENE-OPENING CONTRACT (HARD — how the NEXT scene MUST open) ═══\n';
+      c += 'The PC just bargained with Fate in Say/Do. The scene that follows MUST OPEN by rendering THIS wish in-world, preserving its meaning and any offered price. Do NOT skip, summarize, postpone, or silently resolve it offstage. Follow this BEAT ORDER exactly:\n';
+      c += '① VERBALIZE THE WISH. Echo the PC’s actual wish in the prose, preserving its substance and, where you can, its exact wording: “' + _wishEcho + '”. You may weave in the physical delivery ("…barely louder than the river"), but do NOT flatten it into vague narration ("he appealed to Fate for help") and do NOT embellish it into a materially different ask. ' + _formEcho + ' Make it perceptible to any witness who could catch it.\n';
+      c += '② THE OMEN — BEFORE the answer. Insert ONE brief diegetic sign (sensory or circumstantial) that HINTS how Fate receives the bargain, WITHOUT announcing a status. For THIS wish, draw from the ' + _omen + ' Let the sign do the work; do not name the outcome yet.\n';
+      c += '③ THE ANSWER — concrete and prompt. Then show what Fate actually does (see OUTCOME below: LANDED CLEAN / SEMANTIC WARP / DISTORTED / REFUSED). Do not stall for paragraphs unless the wish itself demands a delayed result. ';
+      if (o.outcome === 'warped') c += 'On this WARP, make the link to the governing desire LEGIBLE — the reader must see WHY this is Fate’s nearest lawful answer even though the PC did not ask for it (' + (o.translation ? 'see the WARP translation below' : 'preserve the desire, translate only the means') + '). ';
+      else if (o.outcome === 'refused') c += 'On this REFUSAL (rare), still deliver the omen and a clear dramatic consequence — the offering may lie untouched, the Order’s resistance exposed; it is NEVER silently ignored. ';
+      else if (o.outcome === 'distorted') c += 'On this DISTORTION, the desire arrives WRONG — incomplete, over-reaching, or missing a piece — and the loss visibly reshapes the result. ';
+      else c += 'It LANDED CLEAN — the desire is met plainly, and the loss is just as real and permanent. ';
+      c += '\n';
+      c += '④ THE SACRIFICE + WITNESS REACTIONS. Show the price ACTUALLY taken in-scene ';
+      c += o.exhausted
+        ? '(here Fate takes nothing NEW — show the balance go onto the tab, felt in the body but not paid from it). '
+        : ('(Fate takes the PC’s ' + (o.taken || 'chosen price') + ' — let the PC DISCOVER it, or its first observable SYMPTOM if not yet fully knowable). ');
+      c += 'Do NOT imply Fate accepted the OFFER until the effect reveals the ACTUAL payment (Fate may take the offer, or something else in the same band). Then let WITNESSES REACT to what they perceived — horror at the invocation, recognition of the omen, relief or terror at the result, anger the PC risked the price, a scholar naming the bargain, fear that an Open Debt remains. The wish ALTERS THE SOCIAL SCENE, not just the PC.\n';
+      c += '⑤ CONTINUE FROM THE CHANGED REALITY — carry the new pressure or decision straight out of the wish. Do NOT open on unrelated business and resolve the wish later; the wish is the causal bridge into what happens next.\n';
+      c += 'The specifics Fate has already decided for THIS wish follow — render THESE, do not invent different ones:\n';
+
+      var d = c + '\n═══ ORDINARY FATE-WISH (the PC bargained with Fate directly, in Say/Do) ═══\n';
       d += 'GOVERNING DESIRE: ' + (o.cls.governingDesire || '(unspoken)') + '\n';
       d += 'ORDER OF BARGAIN: ' + o.order + ' — ' + _wishDispositionPhrase(o.disposition);
       if (o.cls.secondaryOrders && o.cls.secondaryOrders.length) d += ' (also touches ' + o.cls.secondaryOrders.join(', ') + ')';
@@ -163829,6 +163883,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // 7) author-facing DIRECTIVE
       return _buildOrdinaryWishDirective({
         cls: cls, order: order, disposition: disposition,
+        wishText: text, form: (inv.signals && inv.signals.form) || null,
         offering: inv.offering, taken: takenCurrency, takenMag: takenMag,
         offerHonored: offerHonored, bandLabel: bandLabel, exhausted: sacrificeExhausted,
         outcome: outcome, translation: translation,
