@@ -54947,6 +54947,72 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   }
   window._buildHotCrisisOpenerProseDirective = _buildHotCrisisOpenerProseDirective;
 
+  // ── REGIONAL FORMAL PUBLIC-WISH FORMULAS (Roman 2026-07-16, Bible addendum) ──
+  // A private wish may be a plain musing ("I wish the door were open"). A PUBLIC wish —
+  // before a crowd, court, congregation, ship's company, family, or ritual witness — uses
+  // a formal regional declaration built from five elements: INVOCATION (addressed to Fate),
+  // STANDING (the identity/truth one wishes from), PETITION (the outcome), OFFERING (what is
+  // surrendered), SUBMISSION (Fate chooses the answer and the true price). The forms do NOT
+  // compel Fate; they make the bargain publicly legible. Each region fears a different failure.
+  var _REGIONAL_WISH_FORMULAS = {
+    gloamwater_bay:   { name: 'The Tidal Asking', fear: 'mistaking return for restoration without change',
+      formal: '“Fate beneath the turning tide, hear what I release and what I ask to return. I wish that [WISH]. I offer [SACRIFICE], not as a purchase but as that which I am willing to let the water carry from me. If the wish cannot return in the form I name, return the nearest truth of it. Take no more than its lawful depth, and leave the mark where the tide may show it.”',
+      short: '“As the tide takes and returns: I wish [WISH]. I release [SACRIFICE]. Fate, return what the bargain allows.”',
+      witness: '“What leaves is named. What returns is Fate’s answer.”' },
+    vaelryn_reach:    { name: 'The Witnessed Declaration', fear: 'false standing and unwitnessed identity',
+      formal: '“Before Fate and those who witness me, I stand in my true name. Let no borrowed desire speak through me, and let no other soul pay in my place. If this bargain lies within Fate’s Favor, I wish that [WISH]. I offer [SACRIFICE], freely and as my own to lose. Let Fate take what the bargain lawfully requires, and let every witness remember what was asked.”',
+      short: '“In my true name, before Fate and witness, I wish that [WISH]. I offer [SACRIFICE]. Let the price be mine, and the judgment Fate’s.”',
+      witness: '“The name is heard. The wish is witnessed. The price is not ours to choose.”' },
+    the_ashen_verge:  { name: 'The Anchored Wish', fear: 'returning as a self your oath-bound witness can no longer recognize (NOT a martial society — this is about the Fold and paired selves)',
+      formal: '“Before Fate, the Fold, and the one who holds my oath, I name the self from which I speak. I wish that [WISH]. I offer [SACRIFICE], knowing that what I ask may return me altered. Let no possible self replace me without witness. Let my anchor know me, and let me know my anchor. The wish is spoken by this self; the answer must be borne by the self who returns.”',
+      short: '“Fate, I wish [WISH]. I offer [SACRIFICE]. Let the Fold strip away what is false without taking the one my oath-bound witness came to find.”',
+      witness: '“Your wish is heard. Your oath is the anchor. The Fold will not honor what you merely pretend to be.”' },
+    lytharyn:         { name: 'The Stated Proposition', fear: 'confusing desire with method',
+      formal: '“Let the record distinguish desire from method. My governing desire is [DESIRE]. The means I request are these: [WISH]. According to the precedents known to me, I offer [SACRIFICE], recognizing that the offer does not bind Fate. If the requested means are resisted, let the nearest lawful answer preserve the desire. I submit the classification, the payment, and the result to Fate, whose law exceeds this record.”',
+      short: '“For the record: I desire [DESIRE]. I wish [WISH]. I offer [SACRIFICE], without presuming acceptance. Let Fate answer the nearest bargain it recognizes.”',
+      witness: '“The desire is entered. The means are provisional. The precedent is incomplete.”' },
+    the_thornwild:    { name: 'The Cursed Asking', fear: 'pretending the monster is separate from the self (a wish CANNOT lift a curse — only bound, dampened, delayed)',
+      formal: '“Fate knows the deed, though I will name it before witnesses: [ACKNOWLEDGED CAUSE]. I do not ask to be made innocent. I do not ask the curse to forget me. I wish only that [LIMITED WISH]. I offer [SACRIFICE]. Let the hunger sleep, not vanish. Let the shape hold, not become pure. Let the mercy end when its lawful measure is spent. If the beast must wake, let every witness remember that I named it mine.”',
+      short: '“I come cursed and knowing why. I wish that until [LIMIT], my curse shall [DAMPENED CONDITION]. I offer [SACRIFICE]. Fate may bind the symptom. Fate cannot declare me clean.”',
+      witness: '“The curse is named. The cure is not claimed.”' },
+    the_veilwood:     { name: 'The First Favored Declaration', fear: 'Fate answering the desire you concealed beneath the wish you declared (First Favored are DIRECT and unsubtle — ornate but never evasive)',
+      formal: '“Fate, hear me without veil or courtesy. Before these witnesses, I name the desire I would otherwise be tempted to disguise: [GOVERNING DESIRE]. From that desire, I make this wish: [WISH]. I offer [SACRIFICE], freely and as mine to lose. If my words beautify what is base, strip them bare. If I seek love, do not grant possession; if I seek protection, do not mistake it for control. Let the bargain be judged by the desire I have dared to name.”',
+      short: '“This is what I want: [DESIRE]. This is what I wish: [WISH]. This is what I offer: [SACRIFICE]. Fate, take the truth whole.”',
+      witness: '“The desire stands unveiled.” (or, when it does not: “Your mouth has named one wish. Your heart has entered another.”)' },
+    pulse_point:      { name: 'The Open Ledger', fear: 'hidden liability and unrecorded Debt',
+      formal: '“Let this bargain be entered openly. I, [NAME OR STATION], wish that [WISH], for the stated purpose of [PURPOSE]. I offer [SACRIFICE], knowing Fate may accept another payment within the lawful band. No partner, crew, creditor, heir, or passenger is named as payer. Should an Open Debt arise, let it be marked and recorded. Fate may choose the price; all present may witness the account.”',
+      short: '“Before crew, tide, and Fate: I wish [WISH]. I offer [SACRIFICE]. Let no soul aboard be charged in my place. Mark any Debt, and let the ledger remain open until it is paid.”',
+      witness: '“Entered before tide and company. The offer is recorded. The account belongs to Fate.”' },
+    the_shackle_isles:{ name: 'The Unbound Claim', fear: 'transferred identity and involuntary payment by another',
+      formal: '“No chain speaks for me. No master names my desire. No blood, bond, title, debt, or inherited claim may place this price upon another. I wish that [WISH]. I offer [SACRIFICE], which is mine alone to lose. If Fate refuses the shape I ask, let it alter the wish before it transfers the self. Let no name be taken for mine, no memory exchanged as mine, and no soul bound in payment for me.”',
+      short: '“My wish is mine. My price is mine. I ask [WISH], and I offer [SACRIFICE]. Fate may change the answer. Fate may not make another person me.”',
+      witness: '“No chain accepted. No second payer named. The self stands separate.”' },
+    unmoored_isles:   { name: 'The Provisional Wish', fear: 'loss of continuity when place and memory shift',
+      formal: '“Fate, while this shore remains beneath me, hear the bargain I give it. I wish that [WISH]. I offer [SACRIFICE]. If this place vanishes, let the price remain mine and the answer remain true. If memory of this island changes, preserve the governing desire across every version. Let no shifting shore make the bargain belong to someone else.”',
+      short: '“While this land is here: I wish [WISH]. I offer [SACRIFICE]. Let the island move, but not the payer.”',
+      witness: '“The shore may move. The account does not.”' },
+    _interregional:   { name: 'The Open Form of Fate', fear: 'the shared minimum: an unwitnessed, transferable, or Fate-compelling wish',
+      formal: '“If Fate’s Favor is with this bargain, may the truth of my wish be heard. I wish that [WISH]. I offer [SACRIFICE], freely and as mine alone to lose. The offering does not bind Fate. Let the answer preserve my governing desire, let the price remain within its lawful band, and let no other person pay in my place. The wish is mine. The judgment is Fate’s.”',
+      short: '“If Fate’s Favor is with me, may the truth of my wish be heard. I wish [WISH]. I offer [SACRIFICE]. The price is mine; the judgment is Fate’s.”',
+      witness: '“The wish is witnessed. The judgment is Fate’s.”' }
+  };
+  window._REGIONAL_WISH_FORMULAS = _REGIONAL_WISH_FORMULAS;
+  // Build the formal-public-wish directive for a given region. Used to make a PUBLIC wish
+  // (before witnesses) land as a weighty, structured declaration — especially the FIRST wish
+  // in a user's first Fatelands story, so a new reader senses at once it is not a throwaway musing.
+  function _buildFormalPublicWishDirective(regionKey) {
+    try {
+      var _norm = String(regionKey || '').toLowerCase().replace(/[\s-]+/g, '_').replace(/^the_the_/, 'the_');
+      var f = _REGIONAL_WISH_FORMULAS[_norm] || _REGIONAL_WISH_FORMULAS[('the_' + _norm)] || _REGIONAL_WISH_FORMULAS._interregional;
+      return '\nFORMAL PUBLIC-WISH FORM — ' + f.name + ' (HARD when the wish is spoken before witnesses): a public wish is NOT a throwaway musing; it is a formal, ceremonial DECLARATION with five felt parts — INVOCATION (addressed to Fate), STANDING (the identity/truth one wishes FROM), PETITION (the desired outcome), OFFERING (what is surrendered), and SUBMISSION (Fate chooses the answer and the true price). Use THIS region\'s form as the cultural structure — its recognizable phrases and priorities — not necessarily word-for-word:\n' +
+        '  • FORM: ' + f.formal + '\n' +
+        '  • SHORT FORM (if the moment is urgent): ' + f.short + '\n' +
+        '  • A WITNESS may answer: ' + f.witness + '\n' +
+        'Fill [WISH] / [SACRIFICE] (and [DESIRE]/[PURPOSE] where the form asks) with THIS scene\'s real terms, stated clearly. NEVER phrase the offer as a completed trade, and NEVER imply the formula compels Fate. Let the ceremony carry this region\'s deepest anxiety about wishing (' + f.fear + '), and keep the governing desire legible beneath it. A character MAY shorten, corrupt, modernize, or mock the form when that reveals character — but the FIRST public wish a new reader sees should be spoken in the full, weighty form.\n';
+    } catch (_) { return ''; }
+  }
+  window._buildFormalPublicWishDirective = _buildFormalPublicWishDirective;
+
   // ── FATELANDS WISH-DEMO OPENER (Roman 2026-07-16) ────────────────────────────
   // The first-ever Fatelands Scene-1 (or any dev run) must TEACH the whole wish
   // system through drama: a HOT crisis containing a complete NPC-invoked wish
@@ -54972,7 +55038,9 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       var d = '\n═══ FATELANDS FIRST-STORY WISH DEMONSTRATION (HARD — this Scene-1 TEACHES the whole system through drama) ═══\n';
       d += 'This is the reader’s FIRST encounter with how Fate works in the Fatelands. Scene 1 must contain ONE COMPLETE, LEGIBLE NPC-invoked wish cycle, dramatized — not explained. The reader learns the law by WATCHING it happen with real stakes. This is a HOT crisis, not a tutorial: it must do real story work (reveal who these people are, what they value and will lose, their bond, the region’s beliefs about Fate, and the story’s central emotional pressure). Follow this BEAT ORDER exactly:\n';
       d += '① HOT CRISIS FIRST (~50–150 words, BEFORE any bargain). Open INSIDE a live, physical danger already detonating — someone is bleeding out / the ice is cracking / the fire is closing / the guards are at the door. Establish the stakes and the danger through action, in motion. Ordinary escape or solution is visibly FAILING — mundane means are not enough, which is WHY a bargain becomes thinkable. Do NOT make the wish the first line; the crisis earns it.\n';
-      d += '② AN NPC (NOT the PC) STATES A WISH ALOUD. A character who is NOT the protagonist — the PC witnesses it or is directly its object — voices the wish out loud, in operative language: an "I wish …" / "If only …" or a direct address to Fate. It MUST be EXPRESSED, given form as audible speech (Fate does not read the mind — the externalization law). Pair it with an OFFERING or an open price: a named thing they lay down, or "Take what it costs." Let the wish REVEAL them — what they will trade shows who they are and what they value.\n';
+      d += '② AN NPC (NOT the PC) STATES A WISH ALOUD, IN THE FORMAL PUBLIC-WISH FORM. A character who is NOT the protagonist — the PC witnesses it or is directly its object — voices the wish out loud. Because this is the reader\'s FIRST wish in the Fatelands, it is spoken in the WEIGHTY, ceremonial regional form below (invocation → standing → petition → offering → submission), NOT a throwaway "I wish …" musing — the reader must sense at once that wishing here is a lawful, costly act. It MUST be EXPRESSED as audible speech (Fate does not read the mind — the externalization law), and it names an OFFERING or an open price ("Take what it costs"). Let the wish REVEAL them — what they will trade shows who they are.\n';
+      // FIRST wish → spoken in the full regional formal form (weighty, not a musing).
+      try { d += (typeof _buildFormalPublicWishDirective === 'function' ? _buildFormalPublicWishDirective((window.state && window.state.fantasyRegion) || '') : ''); } catch (_) {}
       d += '③ THE OMEN — a recognizable diegetic foreshadow, BEFORE Fate answers (disposition-keyed; a HINT, not a traffic light). Because this is the reader’s FIRST omen, make it clearly READABLE AS AN OMEN — a sign anyone in this world would notice and read (not obscure symbolism, not a status label). Draw from the ACQUIESCENCE family — CONVERGENCE / OPENING / WARMTH / RHYTHM / RELEASE (a flame bending toward the wisher, birds falling silent then resuming as one, a door easing open, the air warming, a knot loosening). Since the price will be heavy, THREAD a bodily premonition into the sign (a remembered sensation already going quiet, warmth leaving the hands) so the reader feels the cost coming.\n';
       d += '④ FATE ANSWERS — concrete and prompt. Show what Fate actually does: the wished-for effect arrives (the wound closes, the door opens, the fire gutters). Do not stall; let the answer LAND so the relief is real before the cost is understood.\n';
       d += '⑤ THE ACTUAL SACRIFICE — ADJACENT, NOT THE LITERAL OFFER (the teaching moment; the WARP/adjacency law). Fate takes something ADJACENT to — not necessarily — the thing offered. AN OFFER IS NOT THE PAYMENT: the wisher only offers; FATE chooses what it claims, within the same band. Make the taken price land as a discovery, and make it hurt in a way the offer did not. (Convey the SHAPE, do not copy it: a character offers their left hand to open a door, and Fate instead makes them unable to remember the PC’s name. Invent your own adjacent price fitting THIS wish.)\n';
