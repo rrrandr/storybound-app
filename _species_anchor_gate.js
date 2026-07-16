@@ -32,6 +32,14 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     t('Kwisheen contract locks a HUMANOID face (kills the octopus-mouth / Cthulhu-head drift)', () => [/FACE \(HARD/.test(contract.textBlock || '') && /MOUTH WITH LIPS/.test(contract.textBlock || '') && /NO octopus-beak/.test(contract.textBlock || '') && /never a face made of tentacles/.test(contract.textBlock || ''), '']);
     t('Kwisheen eyes = WIDE HORIZONTAL PILL pupil, not a vertical slit', () => [/WIDE HORIZONTAL PILL PUPIL/.test(contract.textBlock || '') && /never a thin vertical line/.test(contract.textBlock || ''), '']);
     t('Kwisheen torso is COVERED by a garment (not bare-chested with only jewelry)', () => [/the CHEST\/TORSO is always COVERED/.test(contract.textBlock || '') && /never left bare|not left bare|never bare/.test(contract.textBlock || '') && /worn ON TOP of clothing/.test(contract.textBlock || ''), '']);
+    // ── KWISHEEN DISGUISE STATE MACHINE ──
+    const cUW = window._buildStagedRegionContract({ visualState: { background: 'the submerged ruins of Gloamwater Bay, deep underwater' }, phases: [] });
+    t('underwater Kwisheen → TRUE FORM (full tentacle anatomy asserted)', () => [/EXACTLY TWO upper ARMS/.test(cUW.textBlock || '') && cUW.kwisheenState === 'true_form', cUW.kwisheenState]);
+    const cDis = window._buildStagedRegionContract({ visualState: { background: 'a crowded market street at noon in a human port town' }, phases: [] });
+    t('disguised Kwisheen (on land) → RIGID HUMAN contract, tentacle anatomy DROPPED', () => [/DISGUISED AS HUMAN/.test(cDis.textBlock || '') && /render RIGIDLY HUMAN/.test(cDis.textBlock || '') && !/EXACTLY TWO upper ARMS/.test(cDis.textBlock || '') && cDis.kwisheenState === 'disguised', cDis.kwisheenState]);
+    t('disguised Kwisheen → tentacled octofolk ANCHOR suppressed', () => { const kw = (cDis.anchorImages || []).filter(p => /Kwisheen/i.test(p)); return [kw.length === 0, 'kw anchors=' + kw.length]; });
+    const cRev = window._buildStagedRegionContract({ visualState: { background: 'a rain-soaked dock in the port town' }, beats: [{ text: 'the rain splashes across her and the disguise slips for a heartbeat' }], phases: [] });
+    t('land + water trigger → WET-REVEAL glitch tell (pill pupils break through)', () => [/DISGUISE DISRUPTED BY WATER/.test(cRev.textBlock || '') && cRev.kwisheenState === 'wet_reveal', cRev.kwisheenState]);
     const kwAnchorPaths = Object.keys(contract.speciesAnchorPaths || {}).filter(p => contract.speciesAnchorPaths[p] === 'kwisheen');
     t('at least one kwisheen species anchor path recorded', () => [kwAnchorPaths.length >= 1, kwAnchorPaths.map(p => p.split('/').pop()).join(',')]);
     // ROOT FIX: the region-level anchorImages must be ENVIRONMENT ONLY (no character ref),

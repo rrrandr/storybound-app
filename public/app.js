@@ -153553,6 +153553,33 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._resolveStagedCelestial = _resolveStagedCelestial;
 
+  // ── KWISHEEN DISGUISE STATE MACHINE (Roman 2026-07-16) ──────────────────────
+  // A Kwisheen underwater is in TRUE FORM (full tentacle/chromatophore anatomy). On
+  // LAND with camouflage UP they hold a COMPLETE human disguise — and the staged
+  // contract must then render them RIGIDLY HUMAN (no tentacle/colour slips), while the
+  // writer still KNOWS they are Kwisheen. True form returns only when the scene drops
+  // the act or water disrupts it (the canonical 1-3s wet-reveal tell). Replaces the
+  // old always-full-anatomy contract (which contradicted any disguise scene → slips).
+  var _STAGED_KWISHEEN_DISGUISE =
+    'SPECIES: KWISHEEN — CURRENTLY DISGUISED AS HUMAN (HARD — render RIGIDLY HUMAN this scene): this character is secretly a Kwisheen, but on land with their camouflage UP they hold a COMPLETE, seamless human disguise. Render them as an ORDINARY HUMAN: normal human skin (a plain human skin tone — NO chromatophore colour, NO scales, NO pattern-bloom), ordinary HUMAN HAIR (real hair, NOT tentacle-dreadlocks), ROUND human pupils, small rounded human ears, TWO human arms ending in ordinary five-fingered hands, and human LEGS — NO tentacles anywhere, no suckers, no cranial feelers. The disguise does NOT flicker: do not slip in a single tentacle, sucker, scale, feeler, or a shift of colour — they pass completely as human. You KNOW they are Kwisheen (that is continuity, not something to draw). Their true nature surfaces ONLY when the scene explicitly drops the act, or water disrupts the camouflage.';
+  var _STAGED_KWISHEEN_WETREVEAL =
+    'SPECIES: KWISHEEN — DISGUISE DISRUPTED BY WATER (HARD): water has just touched this disguised Kwisheen, so for THIS beat the camouflage GLITCHES — render them still mostly human BUT with the true-form tell breaking through: the pupils flatten into WIDE HORIZONTAL PILL / CAPSULE pupils (solid, blunt-ended, not human-round), and a brief ripple of scale-texture or shifting colour crosses the skin. Everything else still reads human. This is a 1-3 second glitch, NOT a full transformation — the disguise reasserts the moment after.';
+  function _stagedKwisheenState(plan) {
+    try {
+      var vs = (plan && plan.visualState) || {};
+      var bg = String(vs.background || '').toLowerCase();
+      var scene = (bg + ' ' + String(vs.setting || '') + ' ' + (Array.isArray(plan.beats) ? plan.beats.map(function (b) { return (b && b.text) || ''; }).join(' ') : '')).toLowerCase();
+      var _wet = /underwater|underwild|gloamwater|submerg|abyss|reef|tidal|the current|silt|the depths|beneath the (waves|surface|sea)/.test(bg);
+      var _land = /\b(tavern|market|street|inn|city|town|port|dock|shore|on land|dry land|surface|road|plaza|hall|rooftop|above the (waves|water|surface))\b/.test(bg);
+      var _revealTrigger = /\b(rain|splash|drench|soak|dripping|spray|storm|spill|doused|dunked|shoved under|thrown into the water)\b/.test(scene) || /drops? the (disguise|act|mask|glamour)|reveals? (her|his|its|their) true (form|self|nature)|lets? the disguise (fall|slip|drop)|the disguise (falls|slips|fails)/.test(scene);
+      if (_wet && !_land) return 'true_form';
+      if (_land && _revealTrigger) return 'wet_reveal';
+      if (_land) return 'disguised';
+      return 'true_form'; // default: Fatelands Kwisheen scenes are underwater true-form
+    } catch (_) { return 'true_form'; }
+  }
+  window._stagedKwisheenState = _stagedKwisheenState;
+
   function _buildStagedRegionContract(plan) {
     if (!plan) return null;
     var regionKey = _resolveStagedRegion(plan);
@@ -153561,6 +153588,7 @@ No text, no watermark, no UI elements, share-ready.`;
     if (!region) return null;
     var speciesKeys = _resolveStagedSpecies(plan, regionKey);
     var celestialKeys = _resolveStagedCelestial(plan, regionKey);
+    var _kwState = _stagedKwisheenState(plan); // true_form | disguised | wet_reveal
 
     // Compose anchor list (max 4 — leaves room for golden-master / style ref).
     var anchors = [];
@@ -153578,6 +153606,9 @@ No text, no watermark, no UI elements, share-ready.`;
     // on-stage (else e.g. the Kwisheen octofolk ref bleeds tentacles onto a lone human PC).
     var speciesAnchorByPath = {};
     speciesKeys.forEach(function(sk) {
+      // A DISGUISED Kwisheen must render human — do NOT attach the tentacled octofolk
+      // reference image (it bleeds tentacles/colour straight through the disguise).
+      if (sk === 'kwisheen' && _kwState === 'disguised') return;
       var sp = _STAGED_SPECIES_CONTRACTS[sk];
       if (!sp) return;
       (sp.anchorImages || []).slice(0, 2).forEach(function(p) { if (p) { speciesAnchorByPath[p] = sk; addAnchor(p); } });
@@ -153601,8 +153632,16 @@ No text, no watermark, no UI elements, share-ready.`;
       var sp = _STAGED_SPECIES_CONTRACTS[sk];
       if (!sp) return;
       textBlocks.push('');
-      textBlocks.push(sp.identityBlock);
-      textBlocks.push('SPECIES ANTI-DEFAULTS (HARD): ' + sp.antiDefault);
+      // Kwisheen state machine: disguised → rigid human; wet_reveal → glitch tell;
+      // true_form (default, underwater) → full species anatomy.
+      if (sk === 'kwisheen' && _kwState === 'disguised') {
+        textBlocks.push(_STAGED_KWISHEEN_DISGUISE);
+      } else if (sk === 'kwisheen' && _kwState === 'wet_reveal') {
+        textBlocks.push(_STAGED_KWISHEEN_WETREVEAL);
+      } else {
+        textBlocks.push(sp.identityBlock);
+        textBlocks.push('SPECIES ANTI-DEFAULTS (HARD): ' + sp.antiDefault);
+      }
     });
     celestialKeys.forEach(function(ck) {
       var cel = _STAGED_CELESTIAL_ADDENDUMS[ck];
@@ -153627,7 +153666,8 @@ No text, no watermark, no UI elements, share-ready.`;
       textBlock: textBlocks.join('\n'),
       // Cache fingerprint helper — splits image cache per region+species+celestial
       // so two scenes with same staging but different cosmological states don't collide.
-      fingerprintTag: regionKey + '|' + speciesKeys.sort().join(',') + '|' + celestialKeys.sort().join(',')
+      kwisheenState: _kwState,
+      fingerprintTag: regionKey + '|' + speciesKeys.sort().join(',') + '|' + celestialKeys.sort().join(',') + '|kw:' + _kwState
     };
   }
   window._buildStagedRegionContract = _buildStagedRegionContract;
