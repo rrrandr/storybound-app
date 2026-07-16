@@ -1943,6 +1943,182 @@ function stopContinuousSparkles() {
     }
     window._classifyFateCardDesire = _classifyFateCardDesire;
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // STEP F — ORDINARY-WISH RANKED CANDIDATE (Fatelands wish rail, 2026-07-16)
+    // ═══════════════════════════════════════════════════════════════════════════
+    // The five Say/Do suggestion cards SOMETIMES offer an ordinary sacrificial
+    // wish — a RANKED CANDIDATE that competes against the archetype suggestions,
+    // NOT a mandatory injected slot. The final five may hold 0 (Fate not salient),
+    // usually 1 (Fate salient), occasionally 2 (highly salient) — and when 2, they
+    // are meaningfully different: a BARGAIN (fires the step-D ordinary-wish rail)
+    // vs a REFUSAL-to-risk (an ordinary Say/Do that does NOT invoke Fate).
+    //
+    // Wording is OFFER + DESIRE without promising acceptance ("Ask Fate to close
+    // her wound. Offer the memory of your first kiss.") — NOT "Trade X to close Y"
+    // (which falsely promises the payment is accepted AND the literal result). When
+    // selected, the prefilled ACTION flows into _detectOrdinaryWishInvocation /
+    // _resolveOrdinaryWish (app.js), where FATE — not the player — chooses the
+    // actual sacrifice within the band. The action is therefore a deliberate
+    // Fate-invocation (direct address + desire + offer) that satisfies the
+    // detector's HARD FLOOR; the dialogue is a vernacular "if only…" line.
+    //
+    // These are ORDINARY suggestions: they PREFILL the normal Say/Do inputs (like
+    // every fate card) and are NOT Petition/Tempt zoom cards — no success guarantee
+    // by construction. Fatelands-gated (never suggest ordinary Fate-wishing in
+    // modern/sci-fi). Fail-soft: any error here must never break the deck.
+
+    // Fatelands (Fantasy world or its registered subtypes) — the ONLY world where
+    // an ordinary Fate-wish is offered. Mirrors app.js _resolveWorldKey normalize.
+    function _fateWishIsFatelands(state) {
+        try {
+            var raw = String((state && ((state.picks && state.picks.worldSubtype) || state.worldSubtype || state.world || state.setting)) || '')
+                .toLowerCase().replace(/[\s\-_]/g, '');
+            if (!raw) return false;
+            return raw === 'fatelands' || raw === 'fantasy' ||
+                /(fatelands|fantasy|arcanebinding|fatedblood|theinhuman|thebeyond|cursed)/.test(raw);
+        } catch (_) { return false; }
+    }
+
+    // Peril / high-stakes cues — "ordinary means look inadequate to the stakes"
+    // AND the trigger for offering a REFUSAL-to-risk counter-option.
+    var _FATE_WISH_PERIL_RE = /\b(dying|die|dies|dead|death|wound(?:ed|s)?|bleed(?:ing)?|blood|injur|gash|stab|broken|fever|sick|ill|plague|poison|curse[ds]?|hex|blight|doom|blade|sword|soldiers?|hunt(?:ed|ers?)?|pursu|drown|burning|hang(?:ed|ing)?|failing|fading|taken|stolen|lost|too late|no time|save (?:her|him)|losing (?:her|him))\b/i;
+    // Fate is salient in the scene when Fate is named alongside bargain-vocabulary
+    // (an NPC just invoked / discussed / offered to Fate).
+    var _FATE_WISH_CHATTER_RE = /\b(bargain|barter|pact|covenant|offering|sacrific|shrine|altar|oracle|omen|the price|a price|bind(?:ing)?|favor|debt|vow|wish(?:ed|es)?)\b/i;
+
+    function _fateWishPronoun(state) {
+        try {
+            var g = String((state && (state.loveInterestGender || state.liGender || state.loveInterest || state.storybeauGender)) || '').toLowerCase();
+            if (/\b(male|man|masc|he|him|his)\b/.test(g)) return { obj: 'him', poss: 'his' };
+        } catch (_) {}
+        return { obj: 'her', poss: 'her' };
+    }
+
+    // Salience score in [0, 0.95]. Non-Fatelands is gated OUT before this runs.
+    // Base (0.15) + weighted contributors; small jitter so threshold behavior is
+    // stochastic ("sometimes / usually / occasionally"). Each contributor is
+    // recorded in signals for logging + guardability.
+    function _fateWishScoreSalience(storyText, sc, state) {
+        var sig = { fatelands: true, npcFate: false, stakes: false, sacrifice: false, openDebt: false };
+        var score = 0.15; // Fatelands base — alone, this LOSES to ordinary suggestions
+        try {
+            var recent = String(storyText || '').slice(-1800);
+            // NPC just invoked / discussed Fate in the scene
+            if (/\bfate\b/i.test(recent) && _FATE_WISH_CHATTER_RE.test(recent)) { sig.npcFate = true; score += 0.30; }
+            // Ordinary means look inadequate to the stakes
+            var peril = _FATE_WISH_PERIL_RE.test(recent);
+            var tension = sc && Array.isArray(sc.unresolvedTension) && sc.unresolvedTension.length > 0;
+            var hotBeat = sc && (sc.lastEmotionalBeat === 'conflict' || sc.lastEmotionalBeat === 'vulnerability' || sc.lastEmotionalBeat === 'tension');
+            var aStakes = sc && sc.plot && sc.plot.aPlotStakes;
+            if (peril || tension || hotBeat || aStakes) { sig.stakes = true; score += 0.20; }
+            // The PC has a thematically meaningful sacrifice available (a target to
+            // save + something genuinely at stake).
+            var hasTarget = sc && ((Array.isArray(sc.presentCharacters) && sc.presentCharacters.length > 0) || sc.liName);
+            if (hasTarget && (peril || aStakes)) { sig.sacrifice = true; score += 0.20; }
+            // An unresolved bargain / Open Debt / durable consequence is active
+            var ob = state && Array.isArray(state._openFateBargains) &&
+                state._openFateBargains.some(function (b) { return b && b.status !== 'resolved'; });
+            var dc = state && Array.isArray(state._durableFateConsequences) && state._durableFateConsequences.length > 0;
+            var od = state && Array.isArray(state._obligationLedger) &&
+                state._obligationLedger.some(function (d) { return d && !d.paid; });
+            if (ob || dc || od) { sig.openDebt = true; score += 0.25; }
+        } catch (_) {}
+        score += (Math.random() * 0.08 - 0.04);
+        if (score < 0) score = 0;
+        if (score > 0.95) score = 0.95;
+        return { score: score, signals: sig };
+    }
+
+    // Build 1–2 ordinary-wish candidate cards. The BARGAIN is always built; the
+    // REFUSAL-to-risk is built only when a physical peril makes "carry her to the
+    // healer" sensible. Each carries a _wishScore used by the ranked competition
+    // in buildFateDeck (a candidate only appears if it OUT-RANKS an archetype).
+    function _fateWishBuildCandidates(sc, state, storyText, salience) {
+        var out = [];
+        try {
+            var recent = String(storyText || '').slice(-1800);
+            var P = _fateWishPronoun(state);
+            var peril = _FATE_WISH_PERIL_RE.test(recent);
+
+            // Desire keyed on the scene cue → { ask (desc verb), verb (SIGNAL-1
+            // vocative verb — MUST be in the detector's imperative list), obj }.
+            var desires = [
+                { cue: /wound|bleed|blood|gash|stab|injur|broken/i,                              ask: 'close',    verb: 'heal',   obj: P.poss + ' wound' },
+                { cue: /fever|sick|ill|plague|poison|dying|dead|die\b|death|fading|failing/i,      ask: 'save',     verb: 'save',   obj: P.poss + ' life' },
+                { cue: /blade|sword|soldiers?|hunt|pursu|kill|attack|siege|raid|drown|burning/i,   ask: 'call off', verb: 'end',    obj: 'the hunt' },
+                { cue: /taken|stolen|gone|vanish|disappear|lost/i,                                 ask: 'return',   verb: 'return', obj: 'what was taken' },
+                { cue: /curse[ds]?|hex|blight|doom/i,                                              ask: 'lift',     verb: 'undo',   obj: 'the curse' },
+                { cue: /secret|hidden|conceal|truth|lie|lying/i,                                   ask: 'reveal',   verb: 'show',   obj: 'me the truth' }
+            ];
+            var d = null;
+            for (var i = 0; i < desires.length; i++) { if (desires[i].cue.test(recent)) { d = desires[i]; break; } }
+            if (!d) d = { ask: 'make', verb: 'make', obj: P.obj + ' whole again' };
+
+            // Thematically meaningful sacrifices — first-person (for the OFFER in the
+            // action) paired with second-person (for the card face). Fatelands
+            // currencies: a memory, years, a name, a mother's songs, a season's warmth.
+            var sacs = [
+                ['the memory of my first kiss', 'the memory of your first kiss'],
+                ['seven years of my life', 'seven years of your life'],
+                ['the sound of my own name', 'the sound of your own name'],
+                ['every song my mother taught me', 'every song your mother taught you'],
+                ['the warmth of the winters I have left', 'the warmth of the winters you have left']
+            ];
+            var si = Math.abs(((state && state.turnCount) || 0) + recent.length) % sacs.length;
+            var sac = sacs[si];
+
+            // ── BARGAIN (fires the step-D ordinary-wish rail) ──
+            // ACTION = direct ADDRESS to Fate ("Fate, <verb> ...") + an OFFER
+            // ("I offer ...") → satisfies _detectOrdinaryWishInvocation's HARD FLOOR
+            // (unambiguous signals: address + offerToFate). Worded as an offer, NOT
+            // a binding trade — Fate chooses the actual sacrifice.
+            var action = 'Fate, ' + d.verb + ' ' + d.obj + '. I offer ' + sac[0] + ' — take it, if that is your price.';
+            var desc = 'Ask Fate to ' + d.ask + ' ' + d.obj + '. Offer ' + sac[1] + '.';
+            var dialogue = '"If only the old bargains were more than story — I would give it, and gladly."';
+            var bargain = {
+                id: 'choose',                 // reuses existing neutral tarot art (Tarot-Gold-front-Choose.png); NOT Petition/Tempt
+                title: 'The Bargain',
+                desc: desc,
+                action: action,
+                dialogue: dialogue,
+                _ordinaryWish: true,
+                _fateWishCandidate: true,
+                _wishVariant: 'bargain',
+                _wishScore: Math.max(0, (salience || 0) + (Math.random() * 0.08 - 0.04))
+            };
+            bargain.axis = _classifyFateCardAxis(action, dialogue);
+            bargain.desire = _classifyFateCardDesire(action, dialogue);
+            out.push(bargain);
+
+            // ── REFUSAL-to-risk (ordinary Say/Do; does NOT invoke Fate) ──
+            // Deliberately contains NO Fate-address / bargain / offer-to-Fate
+            // grammar, so _detectOrdinaryWishInvocation returns null → it stays an
+            // ordinary suggestion (the meaningfully-DIFFERENT second option).
+            if (peril) {
+                var rAction = 'Turn from the old temptation and gather ' + P.obj + ' up. Run for the healer — your own two hands will have to be enough.';
+                var rDesc = 'Refuse the grave price. Carry ' + P.obj + ' to the healer and trust ordinary hands.';
+                var rDialogue = '"No. Not like this. I\'ll carry ' + P.obj + ' myself."';
+                out.push({
+                    id: 'guided',            // neutral tarot art (Tarot-Gold-front-Guided.png); distinct from the bargain
+                    title: 'The Refusal',
+                    desc: rDesc,
+                    action: rAction,
+                    dialogue: rDialogue,
+                    _ordinaryWish: false,
+                    _fateWishCandidate: true,
+                    _wishVariant: 'refusal',
+                    axis: 'objective',
+                    desire: 'avoidance',
+                    // Lower score → only enters when Fate is HIGHLY salient ("occasionally 2")
+                    _wishScore: Math.max(0, (salience || 0) * 0.68 + (Math.random() * 0.08 - 0.04))
+                });
+            }
+        } catch (e) {
+            try { console.warn('[FATE-WISH] candidate build failed (fail-soft):', e && e.message); } catch (_) {}
+        }
+        return out;
+    }
+
     function buildFateDeck() {
         const state = window.state || {};
         let allContent = window.StoryPagination ? window.StoryPagination.getAllContent() : '';
@@ -1971,7 +2147,7 @@ function stopContinuousSparkles() {
         // Track used phrases in this draw to prevent repetition
         const usedInThisDraw = [];
 
-        return deckBase.map(baseCard => {
+        const cards = deckBase.map(baseCard => {
             const card = generateContextualCard(baseCard, sceneContext, usedInThisDraw);
             // Self-tag the axis from the ACTUAL generated content (not the archetype).
             // Single stamp point → covers standard, Grok-intimate, and template-fallback
@@ -1984,6 +2160,41 @@ function stopContinuousSparkles() {
             usedInThisDraw.push(card.dialogue);
             return card;
         });
+
+        // ── STEP F: ordinary-wish RANKED CANDIDATE (Fatelands-gated, fail-soft) ──
+        // Score the wish candidate(s) against the archetype suggestions and keep the
+        // top 5. A wish card appears ONLY if it out-ranks an archetype — so a bare
+        // Fatelands scene shows 0, a Fate-salient scene usually 1, a highly-salient
+        // scene occasionally 2 (bargain + refusal). Skipped in intimate context (the
+        // OAS deck is a separate flow). Any failure returns the untouched 5.
+        try {
+            if (!isIntimateContextActive() && _fateWishIsFatelands(state)) {
+                const _sal = _fateWishScoreSalience(storyText, sceneContext, state);
+                const _cands = _fateWishBuildCandidates(sceneContext, state, storyText, _sal.score);
+                if (_cands && _cands.length) {
+                    const _conf = (sceneContext && typeof sceneContext.confidence === 'number') ? sceneContext.confidence : 0;
+                    // Archetype "ordinary suggestion strength": a confident scene makes
+                    // the ordinary suggestions stronger, so the wish must be MORE salient
+                    // to displace them. Jitter keeps ranking near the threshold stochastic.
+                    const _pool = cards.map(c => ({ card: c, score: 0.46 + _conf * 0.14 + (Math.random() * 0.14 - 0.04) }));
+                    _cands.forEach(wc => _pool.push({ card: wc, score: (typeof wc._wishScore === 'number' ? wc._wishScore : 0) }));
+                    _pool.sort((a, b) => b.score - a.score);
+                    const _top = _pool.slice(0, 5).map(p => p.card);
+                    const _incl = _top.filter(c => c && c._fateWishCandidate).length;
+                    try {
+                        console.log('[FATE-WISH] salience=' + _sal.score.toFixed(2) +
+                            ' signals=' + JSON.stringify(_sal.signals) +
+                            ' candidates=' + _cands.length + ' included=' + _incl +
+                            (_incl ? ' [' + _top.filter(c => c && c._fateWishCandidate).map(c => c._wishVariant).join('+') + ']' : ''));
+                    } catch (_) {}
+                    return _top;
+                }
+            }
+        } catch (e) {
+            try { console.warn('[FATE-WISH] ranked-candidate injection failed (fail-soft):', e && e.message); } catch (_) {}
+        }
+
+        return cards;
     }
 
     // Store phrases from last turn for non-repetition
@@ -2760,8 +2971,15 @@ function setSelectedState(mount, selectedCardEl){
                     window.cancelFatePreview();
                 }
                 _pendingApplyTimer = setTimeout(() => {
-                    // Use contextual preview if available, fallback to card defaults
-                    if (typeof window.generateFatePreview === 'function') {
+                    // STEP F: ordinary-wish candidates ship their invocation VERBATIM.
+                    // The scene-aware preview regenerator (app.js) only knows the 5
+                    // archetypes and would rewrite the Fate-invocation out of the
+                    // step-D detector's range — so prefill the crafted text directly.
+                    if (data && data._fateWishCandidate) {
+                        if (actInput) actInput.value = data.action;
+                        if (diaInput) diaInput.value = data.dialogue;
+                    } else if (typeof window.generateFatePreview === 'function') {
+                        // Use contextual preview if available, fallback to card defaults
                         window.generateFatePreview(data);
                     } else {
                         if(actInput) actInput.value = data.action;
@@ -3007,7 +3225,12 @@ function setSelectedState(mount, selectedCardEl){
                     window.cancelFatePreview();
                 }
                 _pendingApplyTimer = setTimeout(() => {
-                    if (typeof window.generateFatePreview === 'function') {
+                    // STEP F: ordinary-wish candidates ship their invocation VERBATIM
+                    // (skip the archetype-only regenerator — see the sibling handler).
+                    if (data && data._fateWishCandidate) {
+                        if (actInput) actInput.value = data.action;
+                        if (diaInput) diaInput.value = data.dialogue;
+                    } else if (typeof window.generateFatePreview === 'function') {
                         window.generateFatePreview(data);
                     } else {
                         if (actInput) actInput.value = data.action;
