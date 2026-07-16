@@ -16,15 +16,30 @@ const { chromium } = require('playwright-core');
     const reset = () => { const s = window.state; Object.assign(s, { world: 'Fantasy', turnCount: 0, fantasyRegion: 'the_shackle_isles' }); s.picks = Object.assign(s.picks || {}, { world: 'Fantasy' }); s._openFateBargains = []; s._durableFateConsequences = []; s._fateTollLedger = []; s._obligationLedger = []; s.tempt_fate_invoked_this_turn = false; s.fate = { pendingPetition: null }; };
     const D = window._detectOrdinaryWishInvocation, RES = window._resolveOrdinaryWish;
 
-    // (1) detector HARD FLOOR — 6 verdicts
+    // (1) detector INVOCATION FLOOR — REVERSED rule: first-person "I wish …"+outcome FIRES.
     reset();
     const fires = t => { const r = D(t, ''); return !!(r && r.invoked); };
-    A(!fires("God, I wish he'd shut up"), 'floor: casual God-I-wish fired (should NOT)');
-    A(!fires("I wish he were here"), 'floor: "I wish he were here" fired (should NOT)');
-    A(!fires("she wished for rain"), 'floor: narration "she wished for rain" fired (should NOT)');
+    // FLIPPED — casual first-person "I wish" is now a valid invocation (Fatelands danger)
+    A(fires("God, I wish he'd shut up"), 'floor: first-person "I wish he\'d shut up" did NOT fire (should, reversed rule)');
+    A(fires("I wish he were here"), 'floor: first-person "I wish he were here" did NOT fire (should, reversed rule)');
+    A(fires("I wish he would stop talking"), 'floor: agency "I wish he would stop talking" did NOT fire (should, reversed rule)');
+    A(fires('I wish I hadn\'t said "I wish"'), 'floor: compound "I wish I hadn\'t said..." did NOT fire (leading clause is genuine)');
+    // "If only …" is the SECOND operative construction — fires like "I wish"
+    A(fires("If only the door were open"), 'floor: "If only the door were open" did NOT fire (second operative construction)');
+    A(fires("If only she could breathe"), 'floor: "If only she could breathe" did NOT fire (If only construction)');
+    // STILL EXCLUDED — third-person narration, negation, non-request, command-to-another
+    A(!fires("she wished for rain"), 'floor: third-person "she wished for rain" fired (should NOT)');
+    A(!fires("he wished he had stayed home"), 'floor: third-person "he wished he had stayed home" fired (should NOT)');
+    A(!fires("I do not wish him harm"), 'floor: negated "I do not wish him harm" fired (should NOT)');
+    A(!fires("I don't wish him harm"), 'floor: negated "I don\'t wish him harm" fired (should NOT)');
+    A(!fires("this is wishful thinking"), 'floor: "wishful thinking" fired (should NOT — no request)');
+    A(!fires("make a wish"), 'floor: command "make a wish" fired (should NOT — not first-person)');
+    A(!fires('She said, "I wish you were dead"'), 'floor: recounted quoted wish fired (should NOT — attributed to another)');
+    // Existing (b) invocation paths still fire
     A(fires("Fate, silence him — take my voice"), 'floor: address+offer did NOT fire (should)');
     A(fires("Fate, return him to me"), 'floor: bare Fate-address (no offer) did NOT fire (should)');
     A(fires("I'll offer my voice to Fate to save her"), 'floor: explicit offer-to-Fate did NOT fire (should)');
+    A(fires("Take my voice and let her live"), 'floor: imperative offer "take my voice" did NOT fire (should)');
 
     // (2) Fate OVERRIDES the offer on a resisted Order (AGENCY: love → Fate takes elsewhere, warp)
     reset();
@@ -66,6 +81,6 @@ const { chromium } = require('playwright-core');
 
   R.notes.forEach(n => console.log('  note:', n));
   if (R.fails.length) { console.error('FAIL:\n - ' + R.fails.join('\n - ')); await browser.close(); process.exit(1); }
-  console.log('PASS: detector hard-floor holds (casual "I wish" never fires; deliberate Fate-address/offer does); resolver warps resisted Orders, lands welcomed ones, Fate chooses the sacrifice, anti-spam continues-not-rerolls, ledger receipt written.');
+  console.log('PASS: invocation floor holds (first-person "I wish"+outcome FIRES; third-person/negated/recounted/non-request excluded; deliberate Fate-address/offer still fires); resolver warps resisted Orders, lands welcomed ones, Fate chooses the sacrifice, anti-spam continues-not-rerolls, ledger receipt written.');
   await browser.close();
 })().catch(e => { console.error('GUARD FATAL', e && e.message); process.exit(1); });

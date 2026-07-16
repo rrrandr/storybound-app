@@ -163321,17 +163321,64 @@ No text, no watermark, no UI elements, share-ready.`;
   };
 
   // _detectOrdinaryWishInvocation(act, dia) → null OR {invoked, signals, targetKey, offering}.
-  // HARD FLOOR: at least ONE UNAMBIGUOUS signal (direct ADDRESS to Fate / explicit
-  // INTENT TO BARGAIN with Fate / a deliberate WISHING RITUAL / an explicit OFFER
-  // made to Fate) or it returns null. Supporting signals (named sacrifice,
-  // imperative outcome, clarity/hesitation) raise confidence but CANNOT fire alone.
-  // Deterministic; try/catch → null. MUST NOT fire on generic "I wish" / "god I
-  // wish he'd shut up" / exclamations / hesitation alone.
+  // NEW INVOCATION FLOOR (Roman, 2026-07-16 — reversal): in Fatelands an explicit
+  // first-person "I wish …" construction IS itself a valid invocation of Fate.
+  // Casual wishing is core Fatelands DANGER, not immunity. Fire when EITHER:
+  //   (a) an explicit FIRST-PERSON "I wish …" with an INTELLIGIBLE desired outcome
+  //       (a clause/word after "wish"), OR
+  //   (b) any EXISTING unambiguous invocation — direct ADDRESS to Fate / explicit
+  //       INTENT TO BARGAIN / a deliberate WISHING RITUAL / an explicit OFFER to Fate.
+  // Supporting signals (named sacrifice, imperative outcome, clarity/hesitation)
+  // raise confidence but never gate. Deterministic; try/catch → null.
+  // The "I wish" path is REVERSED from the old code: it now fires. It still EXCLUDES
+  // three grammatical false-positive classes: (1) THIRD-PERSON wishing ("he wished…",
+  // "she wished for rain") — the subject is not "I", so the adjacent "I wish" never
+  // matches; (2) a RECOUNTED wish inside an attributed quote ('She said, "I wish…"')
+  // — an attribution verb + quote directly before the wish marks it as reported, not
+  // invoked; (3) NEGATED wishes ("I do not wish…", "I don't wish…") — the negator sits
+  // between "I" and "wish", so the adjacency requirement excludes them. Also inert:
+  // "wishful thinking" (no bare "wish"), "make a wish" (no first-person "I wish").
   function _detectOrdinaryWishInvocation(act, dia) {
     try {
       var text = String((act == null ? '' : act) + ' ' + (dia == null ? '' : dia)).trim();
       if (!text) return null;
       var hasFate = /\bfate\b/i.test(text);
+
+      // ── UNAMBIGUOUS SIGNAL 0: explicit FIRST-PERSON "I wish …" (the reversal) ──
+      // A genuine first-person wish = "I" immediately followed by "wish" (adjacency
+      // auto-excludes negation: "I do not wish", "I don't wish", "I never wish"),
+      // NOT sitting inside a quote attributed to someone else (recounting), and with
+      // an intelligible outcome after it. Any ONE genuine occurrence fires, so a
+      // compound like  I wish I hadn't said "I wish"  fires on the leading clause
+      // while the trailing quoted echo is (correctly) treated as recounting.
+      var iWish = false, _wishClause = null;
+      try {
+        var _wre = /\bi\s+wish\b/gi, _wm;
+        var _attribBefore = /(?:\b(?:said|says|say|saying|told|tells|telling|asked|asks|whispered|whispers|shouted|shouts|murmured|muttered|mutters|replied|replies|cried|cries|screamed|screams|answered|answers|remarked|added|noted|begged|pleaded|hissed|sighed|breathed|called|calls)\b[^"'“”‘’]{0,12})["'“”‘’]\s*$/i;
+        while ((_wm = _wre.exec(text)) !== null) {
+          var _prefix = text.slice(0, _wm.index);
+          if (_attribBefore.test(_prefix)) continue;               // recounting → skip this one
+          var _rest = text.slice(_wm.index + _wm[0].length).replace(/^\s*(?:for\s+)?/i, '');
+          if (!/[a-z]{2,}/i.test(_rest)) continue;                 // no intelligible outcome → skip
+          iWish = true; _wishClause = _rest.trim(); break;         // one genuine wish is enough
+        }
+      } catch (_wErr) { iWish = false; _wishClause = null; }
+
+      // ── UNAMBIGUOUS SIGNAL 0b: explicit "If only …" (second operative construction) ──
+      // "If only" is a wish construction — the speaker's longing — and is operative Fatelands
+      // language exactly like "I wish" (see the LAWS OF WISHING: neither phrase is said lightly).
+      // Same recounting exclusion; requires an intelligible outcome after it.
+      // ("If only the door were open." / "If only she could breathe.")
+      var _ifOnly = false;
+      try {
+        var _ire = /\bif\s+only\b/gi, _im;
+        while ((_im = _ire.exec(text)) !== null) {
+          if (_attribBefore.test(text.slice(0, _im.index))) continue;   // recounting → skip
+          var _irest = text.slice(_im.index + _im[0].length).trim();
+          if (!/[a-z]{2,}/i.test(_irest)) continue;                     // no intelligible outcome → skip
+          _ifOnly = true; if (!_wishClause) _wishClause = _irest; break;
+        }
+      } catch (_iErr) { _ifOnly = false; }
 
       // ── UNAMBIGUOUS SIGNAL 1: direct ADDRESS to Fate (vocative) ──
       // Fate is the ADDRESSEE, not "god I wish". Requires "O/dear Fate", a Fate
@@ -163362,12 +163409,15 @@ No text, no watermark, no UI elements, share-ready.`;
 
       // ── UNAMBIGUOUS SIGNAL 4: explicit OFFER made to Fate ──
       // "take my <thing>" / "I offer my <thing>", DIRECTED at Fate. detectSacrifice
-      // is reused as a corroborating typed-offer signal.
+      // is reused as a corroborating typed-offer signal. An imperative "take my
+      // <currency>" (voice/blood/name/years/…) is itself a directed offer to Fate
+      // even without the word "fate" — nobody but Fate takes your voice.
       var _offerPhrase = /\b(?:take|here,?\s+take|i(?:'ll|\s+will)?\s+(?:offer|give(?:\s+up)?|trade|surrender|sacrifice|pay)|i\s+offer)\s+(?:you\s+)?(?:my|the|what|whatever|anything|it\s+all)\b/i;
+      var _imperativeOffer = /(?:^|[\s"'(—-])take\s+my\s+(?:voice|life|name|hair|tooth|teeth|blood|flesh|memory|memories|soul|sight|years?|breath|tongue)\b/i.test(text);
       var typedSacrifice = (typeof detectSacrifice === 'function') ? detectSacrifice(text) : null;
-      var offerToFate = (_offerPhrase.test(text) || !!typedSacrifice) && (hasFate || /\bto\s+fate\b/i.test(text));
+      var offerToFate = ((_offerPhrase.test(text) || !!typedSacrifice) && (hasFate || /\bto\s+fate\b/i.test(text))) || _imperativeOffer;
 
-      var unambiguous = [address, bargainIntent, ritual, offerToFate].filter(Boolean).length;
+      var unambiguous = [iWish, _ifOnly, address, bargainIntent, ritual, offerToFate].filter(Boolean).length;
       if (unambiguous < 1) return null;
 
       // ── SUPPORTING signals (confidence only; never gate) ──
@@ -163387,6 +163437,17 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_cap && _cap[1].toLowerCase() !== 'fate') targetKey = _cap[1];
         }
       }
+      // "I wish …" path: pull the target/outcome out of the wish CLAUSE when the
+      // generic pass found nothing (e.g. "I wish he loved me" → he).
+      if (!targetKey && _wishClause) {
+        var _wp = _wishClause.match(/\b(he|she|him|her|they|them|it)\b/i);
+        if (_wp) targetKey = _wp[1].toLowerCase();
+        else {
+          var _wn = _wishClause.match(/\b(?:the|a|an|my|enough|more)\s+([a-z]{2,})\b/i);
+          if (_wn) targetKey = _wn[1].toLowerCase();
+          else { var _w2 = _wishClause.match(/\b([a-z]{2,})\b/i); if (_w2) targetKey = _w2[1].toLowerCase(); }
+        }
+      }
 
       // ── extract offering (the named sacrifice, if any) ──
       var offering = null;
@@ -163399,7 +163460,7 @@ No text, no watermark, no UI elements, share-ready.`;
       return {
         invoked: true,
         signals: {
-          address: address, bargainIntent: bargainIntent, ritual: ritual, offerToFate: offerToFate,
+          iWish: iWish, ifOnly: _ifOnly, address: address, bargainIntent: bargainIntent, ritual: ritual, offerToFate: offerToFate,
           namedSacrifice: !!typedSacrifice, imperativeOutcome: imperativeOutcome,
           clarity: clarity, hesitation: hesitation, unambiguousCount: unambiguous
         },
@@ -192017,6 +192078,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • FATE PERCEIVES BUT NEVER JUDGES OR IMPROVES — the deepest law: WISH MAGIC HAS NO WISDOM; ONLY PEOPLE DO. Fate PERCEIVES what Alignment requires (self-deception, whether two people align, whether you fight another\'s truth) but never JUDGES — it does not decide "you actually wanted this," offer a healthier version, or fix the underlying problem. FATE NEVER IMPROVES A WISH: a wish against truth is not reinterpreted, repaired, or rescued — it is granted by the laws and the contradiction resolves through DISTORTION, not correction. Fate is not benevolent, malicious, a lawyer, or a therapist — it is INDIFFERENT: gravity, not a physician. (Wish "stop my baby crying" over a starving child and the crying stops, the hunger does not — the tragedy is the parent\'s misunderstanding, never Fate\'s malice; the wisdom had to be theirs.) NEVER write a wish that is smarter or kinder than its wording.\n' +
       '  • PERSONAL SACRIFICE (the wisher is ALWAYS the one who pays — foundational + inviolable in every region and story): a wish can NEVER be fueled by another person\'s body, memory, life, bond, or sacrifice. Fate keeps ONE account — who truly wished AND who was permanently diminished must be the SAME person. No substitutions, proxies, magical batteries, or sacrificial slaves; no king/master/god spends a captive\'s years, fingers, fertility, memory, or life to power their OWN wish. COERCION still exists but changes form: you can threaten, break, extort, or indoctrinate someone until THEY genuinely wish for your benefit — Alignment still governs (forced words alone fail; a divided/half-hearted wish WARPS) — and the sacrifice is taken from THEM, the beneficiary pays nothing. So: villains NEVER spend other people\'s sacrifices directly; coercive wish-magic is PSYCHOLOGICAL, never mechanical (institutions manufacture genuine alignment — hostages, conditioning, torture-to-reshape-desire, least-terrible-option bargains). Imprisoning a wisher is never just chains: WISH-LOCKS do not turn magic off — they flood the mind with intrusive doubt, fractured concentration, and emotional static so a clean ALIGNED wish cannot form (the power remains; alignment is denied); isolation from allies denies Stacking. Fate recognizes neither ownership nor authority — only truth and sacrifice; a hero is marked by willingly paying their OWN price, never compelling another to pay it.\n' +
       '  • THE HOOK (why wishing is dangerous — it is an ADDICTION, psychological not chemical): EVERY WISH WORKS, and once you have learned to solve a problem by sacrificing, it becomes very hard to solve one any other way. Watch the escalation in a single life: a FINGER to save a child, an EYE to save a marriage, then ten YEARS, then MEMORIES — until they no longer remember solving problems any other way. Write heavy wishers not as villains but as people who can no longer stop; the most frightening granter is the quiet one who fixes everything with one more sacrifice because it has always worked before. Every wish works — THAT is why it is dangerous. AND IT FEEDS ON ITSELF (addiction × alignment): the more someone wishes, the less honestly they face reality → their own ALIGNMENT decays (more self-deceptive, desperate, divided, afraid) → their wishes WARP → they wish again to fix the last. So experienced wishers are NOT unstoppable — they are often spiritually UNSTABLE; the disciplined who wish rarely are the formidable ones, and those who have solved everything this way for years are the doomed ones.\n' +
+      '  • OPERATIVE LANGUAGE — "I WISH" AND "IF ONLY" (how ordinary Fatelanders invoke, and why the words are dangerous): in the Fatelands, saying "I wish …" or "If only …" with a real desire IS itself an invocation of Fate — the plain words are the operative form; no shrine, address, or ritual is required (those only sharpen it). So NO ONE says them lightly. Like a careless promise or a spoken taboo, the phrases carry weight: people catch themselves and substitute ("I would like…", "I hope…", "would that it were otherwise"), and an elder will cut off a child or a heedless outsider mid-sentence — "Don\'t say \'wish\' unless you mean to bargain." A character who says "I wish" and MEANS it has, in that world, reached for Fate. Render NPCs reacting to the WORDS themselves (a flinch, a warning, a sudden hush), and let outsiders learn the danger by accident — a casual "I wish" that Fate quietly answers.\n' +
       '  • STACKING (wishes combine and MULTIPLY): two or more wishers aligned to the SAME truth pool their wishes and the power MULTIPLIES, not merely adds — a couple\'s shared wish outstrips either alone; a whole city of mages, wishing as one, once split and warped a moon-sized void out of the sky. Shared, truthful alignment moves Fate further than lone sacrifice — pooled truth, not a contest of wills.\n' +
       '  • THE ANOMALOUS PAY LESS → PAID GRANTERS (non-humans): First Favored, Kwisheen, and other non-human peoples pay a LOWER tier and get a STRONGER result — their anomalous nature bends Fate more cheaply (a boon costing a human a year of life might cost a First Favored a night\'s sleep). So a TRADE exists: rather than lose a finger or a year of their own, most people PAY a First Favored (in Fortunes — coin) to grant a larger boon at that cheaper anomalous rate. A modest weight of Fortunes buys what would cost a human dearly in flesh, memory, or time — but a granter is NOT a vending machine: they too are bound by the Eight Orders (no granter hands you a clean Identity or History wish), they ESTIMATE the risk of a warp rather than guarantee an outcome, and FATE still chooses the sacrifice taken. WHO PAYS WHAT: the human pays only Fortunes; the First Favored pays the actual sacrifice out of their own cheaper nature (the human\'s flesh/years/memory stay intact — the whole appeal). BUT THE GRANTOR\'S CONSENT IS A GATE: a First Favored grants ONLY a wish they WANT you to have — judge it undeserved, petty, or cruel ("that\'s a shitty wish," "you don\'t deserve that") and they simply REFUSE. So the granter is a moral filter with taste and opinions, and a natural source of conflict: the boon you need may hinge on convincing someone who finds you wanting. GRANTERS ARE ARTISANS, NOT SHOPS — famous for their PHILOSOPHY, not their power (all First Favored are efficient): reputations precede them ("she never grants revenge wishes," "he\'ll save any child even if you can\'t pay," "she always asks for the truth first," "don\'t go to Old Brine — he\'ll grant anything if the coin is good"). So WHICH granter you seek matters as much as the coin you bring — a protagonist with the payment may still be turned away, or must travel to the one granter whose principles fit the wish.\n' +
       '  • WISHING SUPPLEMENTS CIVILIZATION — IT DOES NOT REPLACE IT: society uses wishes constantly, but ordinary institutions run PRIMARILY on ORDINARY means — banks keep locks, guards, walls, and ledgers; prisons use architecture, discipline, and law; contracts rest on witnesses, reputation, and enforcement. People wish at the MOMENT a real need arises, not by blanketing the future in permanent enchantment. A PERMANENT magical effect is EXCEPTIONAL — legendary, or extraordinarily costly — never the routine way problems get solved. (A wish CAN be warded, but warding is rare and expensive, not a standing infrastructure; assume the world is mostly mundane, with wishes the exceptional recourse.)\n' +
