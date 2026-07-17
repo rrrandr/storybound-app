@@ -153313,7 +153313,11 @@ No text, no watermark, no UI elements, share-ready.`;
   // world so every panel matches. This is a STABLE default for "I didn't specify",
   // never overrides an actual locked look (pcLookLocked wins upstream).
   var _PC_HAIR_COLOR = ['dark brown', 'black', 'chestnut brown', 'auburn', 'dark blonde', 'ash brown', 'deep red-brown', 'warm brown'];
-  var _PC_HAIR_LENGTH = ['long', 'shoulder-length', 'shoulder-length', 'a low bun', 'a single braid', 'a short crop', 'a ponytail'];
+  // Length and STYLE are separate locks so the render can't re-pick a style each frame
+  // (Roman 2026-07-16: PC hairstyle drifted panel to panel). Length = pure length;
+  // style = pure arrangement. The two combine into one unambiguous locked descriptor.
+  var _PC_HAIR_LENGTH = ['long', 'shoulder-length', 'shoulder-length', 'short', 'cropped short', 'waist-length'];
+  var _PC_HAIR_STYLE = ['worn loose', 'worn loose in soft waves', 'pulled back in a low bun', 'gathered in a single braid', 'tied in a ponytail', 'half pulled-up', 'twisted up off the neck'];
   var _PC_SKIN_TONE = ['fair', 'light olive', 'olive', 'tan', 'warm brown', 'deep brown'];
   // A named real-world HERITAGE is a far stronger consistency anchor than an
   // abstract skin tone — it pins skin AND facial features together, and image
@@ -153341,12 +153345,24 @@ No text, no watermark, no UI elements, share-ready.`;
       heritageSource: _userAnc ? 'user' : 'default',
       hairColor: _PC_HAIR_COLOR[seed % _PC_HAIR_COLOR.length],
       hairLength: _PC_HAIR_LENGTH[Math.floor(seed / 11) % _PC_HAIR_LENGTH.length],
+      hairStyle: _PC_HAIR_STYLE[Math.floor(seed / 23) % _PC_HAIR_STYLE.length],
       skinTone: _PC_SKIN_TONE[Math.floor(seed / 101) % _PC_SKIN_TONE.length]
     };
     state.pcAppearance[key] = a;
     return a;
   }
   window._resolvePcAppearance = _resolvePcAppearance;
+
+  // Render-side manta-cloak expansion (Roman 2026-07-16): the author's pc_wardrobe may name
+  // the garment tersely ("manta-cloak"), which lets the renderer drift it to seaweed / ragged
+  // cloth / a plain cape frame to frame. When a wardrobe references the manta garment, append
+  // the precise, unambiguous canon so EVERY panel renders the identical manta-hide cape.
+  function _expandMantaWardrobe(wardrobe) {
+    var w = String(wardrobe || '');
+    if (!/manta|poncho/i.test(w)) return w;
+    return w.replace(/\s*$/, '') + ' — MANTA-CLOAK (HARD, render EXACTLY this in every panel): a cape of a single giant MANTA-RAY HIDE, smooth yet tough like fine oiled leather, deep sea-grey / charcoal / slate, CLASPED AT BOTH SHOULDERS and hooked to both wrists and both ankles (trailing edges tethered to the limbs, Storm-style), spreading into a broad webbed manta-wing when the arms open; adorned only with PEARLS or SHELLS at its edges and shoulder-clasps. It is a SMOOTH HIDE CAPE — never seaweed, never kelp, never a ragged / tattered / frayed wrap, never ordinary woven cloth.';
+  }
+  window._expandMantaWardrobe = _expandMantaWardrobe;
 
   // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
   // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can
@@ -178505,7 +178521,7 @@ No text, no watermark, no UI elements, share-ready.`;
         try { if (typeof _resolvePcAppearance === 'function') _pcApp = _resolvePcAppearance(); } catch (_) {}
         var _pcGW = (String(state.gender || 'Female').toLowerCase().indexOf('m') === 0 && String(state.gender).toLowerCase().indexOf('f') !== 0) ? 'man' : 'woman';
         var _pcAppLine = _pcApp
-          ? '  • DEFAULT APPEARANCE (LOCKED — no custom look was set; keep IDENTICAL in every panel): the protagonist is a ' + (_pcApp.heritage || '') + ' ' + _pcGW + ' — render her with consistent ' + (_pcApp.heritage || '') + ' features and skin tone — with ' + _pcApp.hairLength + ' ' + _pcApp.hairColor + ' hair. This heritage, skin tone, and hair are the canonical look for the WHOLE story; do NOT re-roll her race, skin tone, or hair between panels (she must not drift lighter or darker).\n'
+          ? '  • DEFAULT APPEARANCE (LOCKED — no custom look was set; keep IDENTICAL in every panel): the protagonist is a ' + (_pcApp.heritage || '') + ' ' + _pcGW + ' — render her with consistent ' + (_pcApp.heritage || '') + ' features and skin tone — with ' + _pcApp.hairLength + ' ' + _pcApp.hairColor + ' hair, ' + (_pcApp.hairStyle || 'worn loose') + '. This heritage, skin tone, hair colour, hair LENGTH, and hair STYLE are the canonical look for the WHOLE story; do NOT re-roll her race, skin tone, hair, or hairstyle between panels (she must not drift lighter or darker, and the same hairstyle — ' + (_pcApp.hairStyle || 'worn loose') + ' — appears in every panel, though loose strands may billow underwater).\n'
           : '';
         pcVis = 'PROTAGONIST RENDERING (VISIBLE SUBJECT — MM STORY):\n' +
           '  • The protagonist\'s face IS visible in this story. She is the lit focal subject; the LI\'s face is concealed via camera angle (reverse-OTS).\n' +
@@ -178961,7 +178977,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // Wardrobe — these are pulled verbatim from the prose by the analysis
     // pass and are CRITICAL for matching what the reader is reading.
     if (visualState.pc_wardrobe) {
-      prompt += 'PROTAGONIST WARDROBE (HARD MATCH — pull from this exact description, do NOT substitute): ' + visualState.pc_wardrobe + '\n';
+      prompt += 'PROTAGONIST WARDROBE (HARD MATCH — pull from this exact description, do NOT substitute): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(visualState.pc_wardrobe) : visualState.pc_wardrobe) + '\n';
     } else {
       // PC WARDROBE FALLBACK — when prose doesn't specify, inject a world/
       // setting-appropriate default. Without this, the model anchors to
@@ -182196,7 +182212,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // the nose+mouth 'mouth' shot instead), so render the PC's real face.
       if (isPC) {
         var _pcFaceDesc = (typeof state.pcFaceDescription === 'string' && state.pcFaceDescription) ? state.pcFaceDescription : '';
-        if (!_pcFaceDesc && typeof _resolvePcAppearance === 'function') { try { var _pa = _resolvePcAppearance(); if (_pa) _pcFaceDesc = 'a ' + (_pa.heritage || '') + ' ' + ((String(state.gender || 'Female').toLowerCase().indexOf('m') === 0 && String(state.gender).toLowerCase().indexOf('f') !== 0) ? 'man' : 'woman') + ' (' + (_pa.heritage || '') + ' features and skin tone), ' + _pa.hairLength + ' ' + _pa.hairColor + ' hair'; } catch (_) {} }
+        if (!_pcFaceDesc && typeof _resolvePcAppearance === 'function') { try { var _pa = _resolvePcAppearance(); if (_pa) _pcFaceDesc = 'a ' + (_pa.heritage || '') + ' ' + ((String(state.gender || 'Female').toLowerCase().indexOf('m') === 0 && String(state.gender).toLowerCase().indexOf('f') !== 0) ? 'man' : 'woman') + ' (' + (_pa.heritage || '') + ' features and skin tone), ' + _pa.hairLength + ' ' + _pa.hairColor + ' hair, ' + (_pa.hairStyle || 'worn loose'); } catch (_) {} }
         subjectDesc = 'the PROTAGONIST\'s FACE, filling the frame — the POV character\'s own face, shown clearly and expressively (the protagonist is NOT concealed). ' + (_pcFaceDesc ? 'Appearance (keep IDENTICAL to the surrounding panels): ' + _pcFaceDesc + '. ' : '') + 'Three-quarter or near-frontal; eyes, brow, mouth, and jaw all visible and carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
       } else {
         // A named side character. If they're a locked KWISHEEN, inject the species
@@ -182271,13 +182287,22 @@ No text, no watermark, no UI elements, share-ready.`;
       _cuGrounding += 'SCENE SETTING (HARD — this insert lives INSIDE this exact setting): ' + _cuBg + '. Any surface, prop, or object in the frame belongs entirely to THIS setting and reads as in-world — keep the frame consistent with where the scene actually takes place.\n\n';
     }
     if (isPC && _cuWard) {
-      _cuGrounding += 'PROTAGONIST WARDROBE (HARD — any of the protagonist\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + _cuWard + '. Render the clothing and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
+      _cuGrounding += 'PROTAGONIST WARDROBE (HARD — any of the protagonist\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(_cuWard) : _cuWard) + '. Render the clothing and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
     }
     if (isPC && _cuHumanPC) {
       _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is fully HUMAN — human skin, human features, a human face and five-fingered human hands, consistent with the human protagonist in the surrounding panels.\n\n';
     } else if (isPC && !_cuHumanPC) {
       _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is ' + _cuSpecies + ' — render the hand with that species\' established anatomy, consistent with the protagonist in the surrounding panels.\n\n';
     }
+    // UNDERWATER PHYSICS for the insert (Roman 2026-07-16): cut-ins previously forgot the
+    // scene was submerged and drew hair/fabric obeying gravity as if on dry land. Mirror the
+    // hero's water physics into the closeup so any hair strand, sleeve edge, or loose element
+    // in the tight frame BILLOWS in the current instead of hanging straight down.
+    (function () {
+      var _cuWet = /gloamwater|underwater|submerged|undersea|under the (sea|water|waves)|ocean floor|sea ?floor|sea ?bed|seabed|reef|coral|grotto|abyss|abyssal|sunken|kelp|drowned|beneath the (waves|sea|surface|water)|deep water|the depths|the current/i.test(_cuBg);
+      if (!_cuWet) return;
+      _cuGrounding += 'UNDERWATER PHYSICS (HARD — this insert is SUBMERGED, render WATER physics not land physics): any hair, strand, sleeve, hem, clasp, jewelry, or loose element in the frame FLOATS, lifts, and BILLOWS outward in the current — suspended and drifting, NEVER hanging straight down or resting as it would in air. Fine bubbles rise, particulate motes drift, and light falls in soft refracted shafts. The whole frame reads as underwater, nothing under gravity.\n\n';
+    })();
 
     var prompt = 'ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / inked / painterly / linework per the active artist). NOT a photograph. NOT a 3D render. NOT photorealistic. A FULL-QUALITY illustrated frame composed with intention: dramatic angle, mood-aware lighting, single dominant subject filling the canvas, visible artist linework / brushwork / ink behavior on every rendered surface.\n\n' +
       'FRAMING: ' + shotDirective + '\n\n' +
@@ -192751,7 +192776,7 @@ No text, no watermark, no UI elements, share-ready.`;
       var _uwHumanPresent = _uwIsHuman(state._playerSpecies) || _uwIsHuman(state._liSpecies);
       if (_uwIsUnderwater && _uwHumanPresent) {
         lines.push('UNDERWATER SURVIVAL (HARD — Fatelands physics): this scene is DEEP UNDERWATER in Gloamwater Bay and a HUMAN is present. A human cannot breathe, speak, or move at depth by nature — in Fatelands this is ALWAYS purchased: a WISH paid in sacrifice or a MAGIC ARTIFACT (a water-breathing talisman, a gilled charm, a bargain-token). Sustained water-breathing is a T2 boon on THE PRICE OF A WISH ladder — price it consistently (a year of life, or an equivalent T2 cost); a brief single dip may be T1 (an hour, a fingernail, a lock of hair). ' + (sceneIndex === 0 ? 'Within the FIRST FEW SENTENCES' : 'Early in the scene, unless it is already established earlier in this story') + ', make HOW the human survives the water unmistakable — as a CHARACTERIZING beat (pointed dialogue or a sensory tell), NEVER a dry lore aside. GOOD (reveals the mechanism AND the relationship in one line): "You sacrificed a YEAR of your life to breathe water — for him." / "I\'ll tear that water-breathing talisman off your neck myself." Do NOT let a human simply float and talk underwater with no in-world reason — with no cause on the page it reads as a rendering error, not a world.');
-        lines.push('UNDERWATER HUMAN WARDROBE (HARD — Gloamwater canon; set pc_wardrobe / any human\'s wardrobe accordingly, per STATION + CIRCUMSTANCES): what a human wears at depth depends on HOW LONG they stay. BRIEFLY VISITING the depths (a diver, a guest, a first descent) → they wear their NORMAL SURFACE CLOTHING — whatever their station and the surface scene would give them — and it simply drifts and billows in the current. LIVING here / SPENDING A GREAT DEAL OF TIME below (a resident, a captive, a long embed, someone who has made a life among the Kwisheen) → the Kwisheen have made them a MANTA-PONCHO: a triangular robe reaching to both wrists and both ankles, so the human swims like a manta ray by UNDULATING THE ARMS in slow waves instead of kicking, stroking, and flailing the way humans do underwater. On land the same garment simply reads as a triangle-cut robe. (LATENT CANON — do NOT force it into this scene: the manta cut also works as a glider / wingsuit, so if a wearer ever falls from a great height it catches the air and they can plane down. Deploy this ONLY if a fall actually happens on the page.) Choose brief-visitor vs long-resident from THIS story\'s premise and set the human\'s wardrobe to match — never leave it to the model to guess. SPECIES GUARD (HARD — the manta-poncho is a HUMAN survival garment, a Kwisheen-made prosthetic for a body that cannot swim on its own): it is worn ONLY by HUMANS (and other air-breathing land species) living below. A native KWISHEEN NEVER wears a manta-poncho — they swim on their own six tentacles and need no such aid. Dress Kwisheen (and any native water-dweller) in their OWN canon attire: loincloths and wraps studded with gems and shells, scaled or shell armor, layered beaded jewelry and gem pendants. Do NOT put a manta-poncho, gills-charm, or water-breathing talisman on a Kwisheen.');
+        lines.push('UNDERWATER HUMAN WARDROBE (HARD — Gloamwater canon; set pc_wardrobe / any human\'s wardrobe accordingly, per STATION + CIRCUMSTANCES): what a human wears at depth depends on HOW LONG they stay. BRIEFLY VISITING the depths (a diver, a guest, a first descent) → they wear their NORMAL SURFACE CLOTHING — whatever their station and the surface scene would give them — and it simply drifts and billows in the current. LIVING here / SPENDING A GREAT DEAL OF TIME below (a resident, a captive, a long embed, someone who has made a life among the Kwisheen) → the Kwisheen have made them a MANTA-CLOAK (a.k.a. manta-poncho): a cape cut from a single giant MANTA-RAY HIDE — SMOOTH YET TOUGH, like fine oiled leather — CLASPED AT BOTH SHOULDERS and HOOKED to both WRISTS and both ANKLES (a cape whose trailing edges tether to the limbs, akin to Storm\'s wrist-and-ankle cape in X-Men), so that spreading the arms opens a broad webbed manta-wing of hide and the human swims like a manta ray by UNDULATING THE ARMS in slow waves instead of kicking, stroking, and flailing the way humans do underwater. The hide is a deep sea-grey / charcoal / slate, and may be ADORNED WITH PEARLS OR SHELLS along its edges and shoulder-clasps. HARD MATERIAL LOCK: the manta-cloak is ALWAYS this smooth manta-hide cape — NEVER seaweed, NEVER kelp, NEVER a ragged/tattered/frayed wrap, NEVER an ordinary woven-cloth cape or poncho; its adornment is pearls and shells, never seaweed. On land the same garment reads as a smooth manta-hide cape clasped at the shoulders. (LATENT CANON — do NOT force it into this scene: the manta cut also works as a glider / wingsuit, so if a wearer ever falls from a great height it catches the air and they can plane down. Deploy this ONLY if a fall actually happens on the page.) Choose brief-visitor vs long-resident from THIS story\'s premise and set the human\'s wardrobe to match — never leave it to the model to guess. SPECIES GUARD (HARD — the manta-poncho is a HUMAN survival garment, a Kwisheen-made prosthetic for a body that cannot swim on its own): it is worn ONLY by HUMANS (and other air-breathing land species) living below. A native KWISHEEN NEVER wears a manta-poncho — they swim on their own six tentacles and need no such aid. Dress Kwisheen (and any native water-dweller) in their OWN canon attire: loincloths and wraps studded with gems and shells, scaled or shell armor, layered beaded jewelry and gem pendants. Do NOT put a manta-poncho, gills-charm, or water-breathing talisman on a Kwisheen.');
       }
       // KWISHEEN FLUID-FORM REMINDER (Roman 2026-07-16): underwater and in their TRUE FORM,
       // Kwisheen are comfortably shape-fluid (chromatophore skin + innate shape-shifting), so
