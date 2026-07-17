@@ -90,11 +90,20 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     };
     const twinPrompt = window._buildStagedHeroPrompt(twinVS, 0, {}) || '';
 
-    return { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt, scA, scA2, scB, kwHand, humanHand, liGesturePrompt, twinPrompt };
+    // (10) adversarial staging → hostile-expression lock + held-object grip
+    const advVS = {
+      background: 'the drowned coral ruins', camera: 'medium_two_shot', pc_visibility: 'full',
+      li_visibility: 'present', social_staging_mode: 'adversarial', lighting: 'dark',
+      other_characters_present: [{ name: 'Thal', gender: 'male', species: 'kwisheen', wardrobe: 'shell wraps, a dagger in one tentacle' }],
+      _phaseCharacters: ['protagonist', 'Thal'], _phaseIdx: 0
+    };
+    const advPrompt = window._buildStagedHeroPrompt(advVS, 0, {}) || '';
+
+    return { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt, scA, scA2, scB, kwHand, humanHand, liGesturePrompt, twinPrompt, advPrompt };
   });
 
   await browser.close();
-  const { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt, scA, scA2, scB, kwHand, humanHand, liGesturePrompt, twinPrompt } = R;
+  const { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt, scA, scA2, scB, kwHand, humanHand, liGesturePrompt, twinPrompt, advPrompt } = R;
   const twinGuardCount = (twinPrompt.match(/DISTINCT-PERSON GUARD/g) || []).length;
   const bothLocked = /Bram's canonical appearance/.test(twinPrompt) && /Doran's canonical appearance/.test(twinPrompt);
   const scStable = scA && scA2 && scA.faceShape === scA2.faceShape && scA.eyeColor === scA2.eyeColor && scA.build === scA2.build;
@@ -119,7 +128,10 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['_cuHandDescriptor: human → null (keeps existing human descriptor)', humanHand === null],
     ['Kwisheen-LI gesture cut-in renders a tentacle limb + species lock', /TENTACLE/.test(liGesturePrompt) && /LOVE INTEREST SPECIES \(HARD/.test(liGesturePrompt) && !/masculine adult hand/.test(liGesturePrompt)],
     ['twins guard fires for TWO same-gender side chars (different-gender PC)', twinGuardCount >= 2],
-    ['both same-gender side chars get a LOCKED LOOK in the hero prompt', bothLocked]
+    ['both same-gender side chars get a LOCKED LOOK in the hero prompt', bothLocked],
+    ['adversarial staging locks HOSTILE faces (no smile/blank = lovers)', /HOSTILE EXPRESSION \(HARD/.test(advPrompt) && /NO smile/.test(advPrompt) && /read as attraction and are WRONG/.test(advPrompt)],
+    ['held-object GRIP staging present (firmly grasped, no clip-through)', /HELD OBJECTS \(HARD\)/.test(advPrompt) && /FIRMLY GRASPED/.test(advPrompt) && /clip THROUGH/.test(advPrompt)],
+    ['cloth cut-in gets a positive SOFT-CLOTH fabric lock (silk gown)', /SOFT WOVEN CLOTH/.test(dryPrompt)]
   ];
 
   let pass = 0, fail = 0;

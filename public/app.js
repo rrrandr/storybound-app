@@ -179010,7 +179010,20 @@ No text, no watermark, no UI elements, share-ready.`;
     if (_ssm !== 'romance_eligible' && _ssm !== 'familial' && _ssm !== 'solo' && _ssm !== 'crowded_public') {
       prompt += 'RELATIONAL DISTANCE (HARD — the two figures are NOT a romantic pairing in this frame): compose them at conversational-or-confrontational distance with a CLEAR PHYSICAL GAP between them, NEVER in lovers\' proximity. The blocking reads ' + (_ssm === 'adversarial' ? 'a hostile face-off' : _ssm === 'professional' ? 'a working / formal relation' : _ssm === 'platonic_tense' ? 'estrangement and tension' : 'non-intimate') + ' — not courtship, not faces-almost-touching, not a near-embrace. Their eyes may meet across the gap, but the bodies do not close it. Even if a beat says one of them "moves closer" or "leans in," render that as a single step or a slight lean that STILL leaves clear air between their faces — never nose-to-nose, never a near-kiss. A tight or close camera may CROP the framing in, but it must NOT collapse the space between the two figures into intimacy.\n\n';
     }
+    // ADVERSARIAL EXPRESSION LOCK (Roman 2026-07-17): when the mode is hostile, the FACES must
+    // carry the hostility — because if a beat legitimately puts two faces close (a fight, a
+    // stand-off) and the expressions are blank, soft, pleasant, or smiling, the frame reads as
+    // LOVERS regardless of the distance rule. Proximity + expression together decide the read;
+    // lock the expressions so close-quarters conflict cannot be mistaken for intimacy.
+    if (_ssm === 'adversarial' || _ssm === 'platonic_tense') {
+      prompt += 'HOSTILE EXPRESSION (HARD — this is ' + (_ssm === 'adversarial' ? 'a confrontation, NOT a romantic moment' : 'estrangement / tension, NOT a romantic moment') + '): BOTH figures\' FACES carry the conflict — ' + (_ssm === 'adversarial' ? 'narrowed or hard eyes, a set jaw, tight or pressed lips, a glare, a snarl, bared teeth, or cold fury as fits the beat' : 'guarded or cold eyes, a tight mouth, a wary or wounded set to the face') + '. NO soft gaze, NO parted lips, NO tender or lovestruck look, NO smile, NO blank/neutral face — any of those read as attraction and are WRONG here. Even at close range the faces must broadcast ' + (_ssm === 'adversarial' ? 'threat and antagonism' : 'distance and unease') + ', never desire.\n\n';
+    }
     try { console.log('[STAGED:STAGING-MODE] ' + _ssm + ' (liAbsent=' + liAbsent + ', sideChars=' + _otherCharsForRegister.length + ')'); } catch (_) {}
+
+    // HELD-OBJECT GRIP (Roman 2026-07-17): a weapon/tool/object a character is holding or using
+    // must be FIRMLY GRASPED, not floating near an open hand. The dagger "in his tentacle" must
+    // be gripped by the tentacle, not hovering beside it.
+    prompt += 'HELD OBJECTS (HARD): any weapon, tool, or object a character is holding, wielding, or using is FIRMLY GRASPED — the hand\'s fingers (or, for a Kwisheen, a tentacle) visibly CURL/WRAP AROUND the grip, handle, or haft in secure contact, in a pose that reads as actually holding or using it. An object a character holds must NEVER float free, hover beside a slack/open hand, or rest ungripped near them. If a weapon is raised, thrust, or swung, the grip is tight and the limb committed to the motion. Objects also stay clear of solid geometry — a limb or weapon does not clip THROUGH a pillar, wall, or another body; it passes in front of or behind it.\n\n';
 
     // ── PROTAGONIST GENDER LOCK (2026-05-14) ──
     // Despite the user locking a Female PC face master and the
@@ -182415,7 +182428,14 @@ No text, no watermark, no UI elements, share-ready.`;
       _cuWardLabel = String(target).replace(/_/g, ' ').toUpperCase();
     }
     if (_cuTgtWard) {
-      _cuGrounding += _cuWardLabel + ' WARDROBE (HARD — any of this character\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(_cuTgtWard) : _cuTgtWard) + '. Render the clothing and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
+      // Positive fabric lock (Roman 2026-07-17): the Ender style refs show leather/armored
+      // figures whose material bleeds onto a cloth-clad PC. Naming "leather" would summon it
+      // (negation-attractor), so instead assert the ACTUAL soft-textile look strongly.
+      var _cuFabric = '';
+      if (/\b(linen|cotton|silk|satin|wool|muslin|chiffon|gauze|tunic|shift|dress|gown|robe|blouse|shirt|skirt|wrap|sari|kimono|kaftan|sundress|frock|nightgown|chemise)\b/i.test(_cuTgtWard)) {
+        _cuFabric = ' MATERIAL (HARD): this garment is SOFT WOVEN CLOTH — a light, pliable textile with a natural matte drape and visible fabric folds/wrinkles, the way linen or cotton hangs. Render every visible edge as that soft cloth.';
+      }
+      _cuGrounding += _cuWardLabel + ' WARDROBE (HARD — any of this character\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(_cuTgtWard) : _cuTgtWard) + '.' + _cuFabric + ' Render the clothing and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
     }
     if (isPC && _cuHumanPC) {
       _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is fully HUMAN — human skin, human features, a human face and five-fingered human hands, consistent with the human protagonist in the surrounding panels.\n\n';
