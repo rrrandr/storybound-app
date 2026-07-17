@@ -59,11 +59,46 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     await window._renderCutCloseup('worry', 'cool', 'Tess', 'face', { background: vsLi.background }).catch(function () {});
     const sidePrompt = window._lastCloseupPrompt || '';
 
-    return { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt };
+    // (6) side-char appearance lock — stable per name, DISTINCT across names (no twins by construction)
+    const scA = window._resolveSideCharAppearance('Tess');
+    const scA2 = window._resolveSideCharAppearance('Tess');
+    const scB = window._resolveSideCharAppearance('Bram');
+
+    // (7) species-aware hand descriptor
+    const kwHand = window._cuHandDescriptor('Kwisheen', { skin: 'deep teal', pattern: 'hex mottling' });
+    const humanHand = window._cuHandDescriptor('Human', null);
+
+    // (8) LI gesture cut-in for a KWISHEEN LI → a tentacle limb, never a human hand
+    s._liSpecies = 'Kwisheen';
+    s.kwisheenAppearance = { vael: { skin: 'deep teal', pattern: 'hex mottling', iris: 'amber-gold' } };
+    s._stagedActive.plan = { visualState: { background: 'the drowned coral colonnade at depth' } };
+    window._lastCloseupPrompt = '';
+    await window._renderCutCloseup('neutral', 'cool', 'li', 'gesture', { background: 'the drowned coral colonnade at depth' }).catch(function () {});
+    const liGesturePrompt = window._lastCloseupPrompt || '';
+
+    // (9) TWINS GUARD in the hero prompt — two same-gender SIDE chars with a DIFFERENT-gender
+    //     PC (the case the old PC-only guard missed entirely).
+    s.playerGender = 'female'; s.gender = 'female';
+    const twinVS = {
+      background: 'a torch-lit tavern', camera: 'wide_establishing', pc_visibility: 'full',
+      li_visibility: 'absent', _phaseLIAbsent: true, lighting: 'warm', social_staging_mode: 'group',
+      other_characters_present: [
+        { name: 'Bram', gender: 'male', wardrobe: 'leather jerkin', position: 'at the bar' },
+        { name: 'Doran', gender: 'male', wardrobe: 'a guard tabard', position: 'by the door' }
+      ],
+      _phaseCharacters: ['protagonist', 'Bram', 'Doran'], _phaseIdx: 0
+    };
+    const twinPrompt = window._buildStagedHeroPrompt(twinVS, 0, {}) || '';
+
+    return { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt, scA, scA2, scB, kwHand, humanHand, liGesturePrompt, twinPrompt };
   });
 
   await browser.close();
-  const { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt } = R;
+  const { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt, scA, scA2, scB, kwHand, humanHand, liGesturePrompt, twinPrompt } = R;
+  const twinGuardCount = (twinPrompt.match(/DISTINCT-PERSON GUARD/g) || []).length;
+  const bothLocked = /Bram's canonical appearance/.test(twinPrompt) && /Doran's canonical appearance/.test(twinPrompt);
+  const scStable = scA && scA2 && scA.faceShape === scA2.faceShape && scA.eyeColor === scA2.eyeColor && scA.build === scA2.build;
+  const scDistinct = scA && scB && (scA.faceShape !== scB.faceShape || scA.eyeColor !== scB.eyeColor || scA.build !== scB.build || scA.hairColor !== scB.hairColor);
   const checks = [
     ['PC appearance lock includes a hairStyle field', !!(a1 && a1.hairStyle && a1.hairStyle.length)],
     ['hairStyle is STABLE across resolves (locked, no drift)', a1 && a2 && a1.hairStyle === a2.hairStyle && a1.hairColor === a2.hairColor && a1.hairLength === a2.hairLength],
@@ -76,7 +111,15 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['LI face cut-in carries the LI\'s OWN wardrobe (not PC\'s, not blank)', /LOVE INTEREST WARDROBE \(HARD/.test(liPrompt) && /shell cuirass/.test(liPrompt)],
     ['LI face cut-in carries the LI\'s concrete locked face descriptor', /Established look/.test(liPrompt) && /scar through one brow/.test(liPrompt)],
     ['named side-char cut-in carries THAT character\'s wardrobe', /TESS WARDROBE \(HARD/.test(sidePrompt) && /kelp-dyed diving wrap/.test(sidePrompt)],
-    ['LI/side cut-ins still get underwater physics (universal, not PC-gated)', /UNDERWATER PHYSICS/.test(liPrompt) && /UNDERWATER PHYSICS/.test(sidePrompt)]
+    ['LI/side cut-ins still get underwater physics (universal, not PC-gated)', /UNDERWATER PHYSICS/.test(liPrompt) && /UNDERWATER PHYSICS/.test(sidePrompt)],
+    ['side-char appearance lock is STABLE per name', scStable],
+    ['side-char looks are DISTINCT across names (no twins by construction)', scDistinct],
+    ['side-char face cut-in carries the locked look (face shape/eyes/build)', /Established look/.test(sidePrompt) && /face/.test(sidePrompt) && /eyes/.test(sidePrompt)],
+    ['_cuHandDescriptor: Kwisheen → TENTACLE, not a human hand', /TENTACLE/.test(kwHand || '') && /NOT a human hand/.test(kwHand || '')],
+    ['_cuHandDescriptor: human → null (keeps existing human descriptor)', humanHand === null],
+    ['Kwisheen-LI gesture cut-in renders a tentacle limb + species lock', /TENTACLE/.test(liGesturePrompt) && /LOVE INTEREST SPECIES \(HARD/.test(liGesturePrompt) && !/masculine adult hand/.test(liGesturePrompt)],
+    ['twins guard fires for TWO same-gender side chars (different-gender PC)', twinGuardCount >= 2],
+    ['both same-gender side chars get a LOCKED LOOK in the hero prompt', bothLocked]
   ];
 
   let pass = 0, fail = 0;

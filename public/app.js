@@ -90667,6 +90667,7 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       state.ffAppearance = {}; // First Favored color lock — fresh per new story (L2); survives issues (L3-only resets)
       state.kwisheenAppearance = {}; // Named-Kwisheen color/pattern lock — same lifetime as ffAppearance (L2 reset, survives issues)
       state.pcAppearance = {}; // Deterministic human-PC look fallback (unlocked look) — same lifetime as ffAppearance (L2 reset, survives issues)
+      state.sideCharAppearance = {}; // Named side-character look lock (prevents twins + cross-scene drift) — same lifetime as pcAppearance
 
       // Clear all entropy axis objects
       const entropyKeys = [
@@ -153364,6 +153365,62 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._expandMantaWardrobe = _expandMantaWardrobe;
 
+  // ── NAMED SIDE-CHARACTER APPEARANCE LOCK (Roman 2026-07-16) ──
+  // Named side characters had NO persistent look, so they (a) drifted scene to scene and
+  // (b) rendered as twins of the PC / LI / each other when same-gender in a panel. Assign
+  // each a DETERMINISTIC look-signature keyed on name + world; different names → different
+  // seeds → different picks, so distinctness among the cast is guaranteed BY CONSTRUCTION
+  // (not just by a plea). The author's prose still owns wardrobe + any hair the prose names;
+  // this lock pins the identity anchors that rarely appear in prose and that drift/clone:
+  // face shape, eye colour, build, skin/heritage, and a fallback hairstyle.
+  var _SIDE_FACE_SHAPE = ['an oval', 'a round', 'a square-jawed', 'a heart-shaped', 'a long angular', 'a diamond-shaped', 'a broad', 'a narrow'];
+  var _SIDE_EYE_COLOR = ['dark brown', 'hazel', 'grey', 'green', 'amber', 'deep brown', 'blue-grey', 'near-black'];
+  var _SIDE_BUILD = ['lean and wiry', 'broad and heavyset', 'tall and rangy', 'short and compact', 'stocky and solid', 'willowy', 'athletic and square-shouldered', 'slight'];
+  function _resolveSideCharAppearance(name) {
+    var key = String(name || '').trim().toLowerCase();
+    if (!key) return null;
+    state.sideCharAppearance = state.sideCharAppearance || {};
+    if (state.sideCharAppearance[key]) return state.sideCharAppearance[key];
+    var seed = _ffColorHash(key + '|side|' + (state.worldInstanceId || state.storyId || 'seed'));
+    var a = {
+      faceShape: _SIDE_FACE_SHAPE[seed % _SIDE_FACE_SHAPE.length],
+      eyeColor: _SIDE_EYE_COLOR[Math.floor(seed / 5) % _SIDE_EYE_COLOR.length],
+      build: _SIDE_BUILD[Math.floor(seed / 7) % _SIDE_BUILD.length],
+      hairColor: _PC_HAIR_COLOR[Math.floor(seed / 11) % _PC_HAIR_COLOR.length],
+      hairLength: _PC_HAIR_LENGTH[Math.floor(seed / 13) % _PC_HAIR_LENGTH.length],
+      hairStyle: _PC_HAIR_STYLE[Math.floor(seed / 17) % _PC_HAIR_STYLE.length],
+      heritage: _PC_HERITAGE[Math.floor(seed / 19) % _PC_HERITAGE.length]
+    };
+    state.sideCharAppearance[key] = a;
+    return a;
+  }
+  window._resolveSideCharAppearance = _resolveSideCharAppearance;
+  // Format a locked side-char look into a compact renderer line. `hairFromProse` = true when
+  // the author already named this character's hair, so we don't assert a conflicting colour.
+  function _sideCharLookLine(a, hairFromProse) {
+    if (!a) return '';
+    var parts = ['a ' + a.heritage + ' ' + a.build + ' build', a.faceShape + ' face', a.eyeColor + ' eyes'];
+    if (!hairFromProse) parts.push(a.hairLength + ' ' + a.hairColor + ' hair ' + a.hairStyle);
+    return parts.join(', ');
+  }
+  window._sideCharLookLine = _sideCharLookLine;
+
+  // Species-aware hand/limb descriptor for gesture cut-ins (Roman 2026-07-16): a non-human
+  // LI/PC gesture insert must NOT render a human hand (a Kwisheen "hand" cut-in should be a
+  // tentacle). Returns null for humans, so the caller keeps its existing human descriptor.
+  function _cuHandDescriptor(species, kwLock) {
+    var sp = String(species || '').toLowerCase();
+    if (/kwisheen/.test(sp)) {
+      var col = kwLock ? (kwLock.skin + ' skin with ' + kwLock.pattern) : 'the established Kwisheen colouring';
+      return 'a KWISHEEN limb — NOT a human hand: a supple, muscular TENTACLE tapering to a dexterous curling tip, performing the described motion, sheathed in fine hexagonal SCALED cephalopod hide in ' + col + ', identity-consistent with the surrounding panels. NO human fingers, NO five-fingered hand.';
+    }
+    if (/favor/.test(sp)) {
+      return 'a FIRST FAVORED hand — a fine-boned, elegant hand, subtle luminescent dermal patterns (Weave-Script) faintly tracing the skin, identity-consistent with prior renders.';
+    }
+    return null;
+  }
+  window._cuHandDescriptor = _cuHandDescriptor;
+
   // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
   // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can
   // briefly SHIFT. When a render DRIFTS into a wrong feature (pointed ears, a forehead gem,
@@ -179061,6 +179118,24 @@ No text, no watermark, no UI elements, share-ready.`;
       var _pcGenderShort = '';
       if (_pcGenderForSideChars.indexOf('fem') === 0 || _pcGenderForSideChars === 'female' || _pcGenderForSideChars === 'woman' || _pcGenderForSideChars === 'f') _pcGenderShort = 'female';
       else if (_pcGenderForSideChars.indexOf('mas') === 0 || _pcGenderForSideChars === 'male' || _pcGenderForSideChars === 'man' || _pcGenderForSideChars === 'm') _pcGenderShort = 'male';
+      // FULL-CAST gender tally (Roman 2026-07-16): the twins guard must fire whenever a
+      // character shares a gender with ANYONE else in the frame — not just the PC. Two
+      // same-gender SIDE characters (with a different-gender PC) previously got no
+      // differentiation and rendered as twins. Count PC + LI-if-present + every side char.
+      var _liGenderShort = '';
+      try {
+        var _lgRaw = String(state.loveInterest || state.loveInterestGender || (typeof _defaultLIGenderForPC === 'function' ? _defaultLIGenderForPC(state) : '') || '').toLowerCase();
+        if (_lgRaw.indexOf('fem') === 0 || _lgRaw === 'female' || _lgRaw === 'woman' || _lgRaw === 'f') _liGenderShort = 'female';
+        else if (_lgRaw.indexOf('mas') === 0 || _lgRaw === 'male' || _lgRaw === 'man' || _lgRaw === 'm') _liGenderShort = 'male';
+      } catch (_) {}
+      var _genderTally = {};
+      if (_pcGenderShort) _genderTally[_pcGenderShort] = (_genderTally[_pcGenderShort] || 0) + 1;
+      if (!liAbsent && _liGenderShort) _genderTally[_liGenderShort] = (_genderTally[_liGenderShort] || 0) + 1;
+      phaseOthers.forEach(function(c) {
+        var _g = String((c && c.gender) || '').trim().toLowerCase();
+        var _gs = (_g.indexOf('f') === 0) ? 'female' : (_g.indexOf('m') === 0 ? 'male' : '');
+        if (_gs) _genderTally[_gs] = (_genderTally[_gs] || 0) + 1;
+      });
       phaseOthers.forEach(function(c) {
         // Per-character gender (added 2026-05-15) — without this the image
         // renderer gender-rolls NPCs based on artist-style defaults +
@@ -179093,11 +179168,23 @@ No text, no watermark, no UI elements, share-ready.`;
         // for sister/sibling/mother/daughter/twin/family in wardrobe
         // or position fields; if present, skip the directive (sisters
         // CAN look alike).
-        var _isSameGender = !!(_pcGenderShort && _charGender && _pcGenderShort === _charGender);
+        // LOCKED LOOK — inject this side char's persistent, deterministic appearance so it
+        // stays IDENTICAL across scenes and differs from the rest of the cast by construction.
+        // Don't assert a hair colour the prose already named (avoid contradicting the author).
+        var _hairInProse = /\b(hair|braid|ponytail|bun|curls?|bald|shaved|dreadlocks?|afro|bob|blonde?|brunette|redhead|ginger|silver-haired|grey-haired|locs)\b/i.test(String(c.wardrobe || ''));
+        var _scLook = (typeof _resolveSideCharAppearance === 'function') ? _resolveSideCharAppearance(c.name) : null;
+        if (_scLook && typeof _sideCharLookLine === 'function') {
+          charLine += '\n    LOCKED LOOK (HARD — ' + c.name + '\'s canonical appearance; keep IDENTICAL in every panel of the whole story, do NOT re-roll between scenes): ' + _sideCharLookLine(_scLook, _hairInProse) + '.';
+        }
+        // TWINS GUARD — fire whenever this character shares a gender with ANYONE else in the
+        // frame (PC, LI, or another side char), not just the PC. Skip when the prose marks a
+        // family relationship (relatives CAN resemble each other).
+        var _charGS = (_charGender.indexOf('f') === 0) ? 'female' : (_charGender.indexOf('m') === 0 ? 'male' : '');
+        var _sharesGenderInFrame = !!(_charGS && _genderTally[_charGS] > 1);
         var _relationshipText = String((c.wardrobe || '') + ' ' + (c.position || '') + ' ' + (c.relationship || '')).toLowerCase();
         var _isRelated = /\b(sister|sibling|mother|daughter|twin|cousin|aunt|family|related)\b/.test(_relationshipText);
-        if (_isSameGender && !_isRelated) {
-          charLine += '\n    FACIAL DIFFERENTIATION (HARD — do NOT copy the protagonist\'s face): ' + c.name + ' must have DISTINCT facial structure from the protagonist. Different face shape (if PC is oval, give ' + c.name + ' heart-shaped or square or round; if PC is heart-shaped, give ' + c.name + ' oval or square), different eye shape and color, different nose shape, different lip shape and fullness, different age range or jawline definition, different ethnicity/skin tone where appropriate (use the name "' + c.name + '" as a cultural/ethnic origin cue — Priya = South Asian features, Mei = East Asian features, Aisha = North African / Middle Eastern features, Sofia = Mediterranean / Latina features, etc.). Hair color alone is NOT enough differentiation — the BONE STRUCTURE must visibly differ. Two ' + _pcGenderShort + ' characters in the same frame must read as TWO DIFFERENT PEOPLE, not as the same face with different hair.';
+        if (_sharesGenderInFrame && !_isRelated) {
+          charLine += '\n    DISTINCT-PERSON GUARD (HARD — no twins): ' + c.name + ' must read as a DIFFERENT PERSON from EVERY other ' + _charGS + ' in the frame — the protagonist, the love interest, and any other ' + _charGS + ' side character (each has their own LOCKED LOOK). No two same-gender characters may share the same face shape, eye colour, hair colour/style, body build, OR skin tone/ethnicity at once — vary at least the FACE SHAPE and BONE STRUCTURE plus one of {eye colour, skin tone, build}. Hair colour alone is NOT enough. Use the name "' + c.name + '" as a cultural/ethnic origin cue where it reads as one (Priya = South Asian, Mei = East Asian, Aisha = North African / Middle Eastern, Sofia = Mediterranean / Latina, etc.). Two ' + _charGS + ' characters in one frame must never be the same face with different hair.';
         }
         prompt += charLine + '\n';
       });
@@ -182202,9 +182289,19 @@ No text, no watermark, no UI elements, share-ready.`;
         } else {
           _pcGenderLock = 'protagonist\'s actual hand (gender-matched to the protagonist established earlier in the story).';
         }
-        subjectDesc = 'the protagonist\'s HAND performing the described physical reaction gesture. ' + _pcGenderLock + ' Identity-loose (no rings or wristwear that haven\'t been established in the prose, no defining marks). The hand and the immediate surface it contacts (the curve of her own knuckles, her fingers interlacing, a fold of her own clothing, or a small object that plausibly belongs to THIS scene\'s setting) fill the composition. NO face, NO eyes, NO mouth in frame. NO full figure, NO torso, NO shoulders — the frame is the HAND ONLY (and the small in-world surface it touches). The gesture is small, unconscious, self-soothing — the kind of movement someone makes without knowing they\'re making it.';
+        var _pcKwLock = null;
+        try { var _kaP = state.kwisheenAppearance || {}; var _kkP = Object.keys(_kaP); if (_kkP.length) _pcKwLock = _kaP[_kkP[0]]; } catch (_) {}
+        var _pcHand = (!_cuHumanPC && typeof _cuHandDescriptor === 'function') ? _cuHandDescriptor(_cuSpecies, _pcKwLock) : null;
+        subjectDesc = _pcHand
+          ? 'the protagonist\'s limb performing the described reaction gesture — ' + _pcHand + ' NO face, NO torso, NO shoulders in frame — the limb ONLY (and any small in-world surface it touches). The gesture is small and unconscious.'
+          : 'the protagonist\'s HAND performing the described physical reaction gesture. ' + _pcGenderLock + ' Identity-loose (no rings or wristwear that haven\'t been established in the prose, no defining marks). The hand and the immediate surface it contacts (the curve of her own knuckles, her fingers interlacing, a fold of her own clothing, or a small object that plausibly belongs to THIS scene\'s setting) fill the composition. NO face, NO eyes, NO mouth in frame. NO full figure, NO torso, NO shoulders — the frame is the HAND ONLY (and the small in-world surface it touches). The gesture is small, unconscious, self-soothing — the kind of movement someone makes without knowing they\'re making it.';
       } else {
-        subjectDesc = 'the love interest\'s HAND — masculine adult hand, identity-consistent with prior renders (same skin tone, same ring(s) on the same finger(s), same wristwear / sleeve cuff fitting his archetype). NO face in frame. The hand and lower forearm fill the composition.';
+        var _liKwLock = null;
+        try { var _kaL = state.kwisheenAppearance || {}; var _kkL = Object.keys(_kaL); if (_kkL.length) _liKwLock = _kaL[_kkL[0]]; } catch (_) {}
+        var _liHand = (typeof _cuHandDescriptor === 'function') ? _cuHandDescriptor(state._liSpecies, _liKwLock) : null;
+        subjectDesc = _liHand
+          ? 'the love interest\'s limb in EXTREME CLOSE-UP — ' + _liHand + ' NO face in frame. The limb fills the composition; the background is shallow depth-of-field but recognizably this scene\'s setting.'
+          : 'the love interest\'s HAND — masculine adult hand, identity-consistent with prior renders (same skin tone, same ring(s) on the same finger(s), same wristwear / sleeve cuff fitting his archetype). NO face in frame. The hand and lower forearm fill the composition.';
       }
     } else if (shot === 'face') {
       // FACE reaction closeup — the character's face carries the beat's emotion.
@@ -182231,12 +182328,12 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_targLI) {
             try { var _lfd = state.liFaceDescription || {}; var _lk = Object.keys(_lfd); if (_lk.length) _npDesc = String(_lfd[_lk[0]] || '').trim(); } catch (_) {}
           }
-          if (!_npDesc) {
+          if (!_npDesc && target && typeof _resolveSideCharAppearance === 'function') {
+            // A named side char has a persistent LOCKED LOOK — use it so the face cut-in
+            // matches their panels (concrete features beat the wardrobe-only fallback).
             try {
-              var _ocpF = (state._stagedActive && state._stagedActive.plan && state._stagedActive.plan.visualState && state._stagedActive.plan.visualState.other_characters_present) || [];
-              var _tnmF = String(target).replace(/_/g, ' ').trim().toLowerCase();
-              var _hitF = _ocpF.filter(function (c) { return String((c && c.name) || '').trim().toLowerCase() === _tnmF; })[0];
-              if (_hitF && _hitF.wardrobe) _npDesc = String(_hitF.wardrobe).trim();
+              var _scF = _resolveSideCharAppearance(String(target).replace(/_/g, ' '));
+              if (_scF && typeof _sideCharLookLine === 'function') _npDesc = _sideCharLookLine(_scF, false);
             } catch (_) {}
           }
           subjectDesc = target.replace(/_/g, ' ') + '\'s FACE, filling the frame — this specific character from the scene' + (_npDesc ? '. Established look (keep IDENTICAL to the surrounding panels — same hair colour, hairstyle, skin tone / ethnicity, and features): ' + _npDesc : '') + '. Rendered consistent with their established appearance in the surrounding panels (same coloring, features, hairstyle, and species anatomy). Eyes, brow, mouth, and jaw all visible, carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
@@ -182324,6 +182421,8 @@ No text, no watermark, no UI elements, share-ready.`;
       _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is fully HUMAN — human skin, human features, a human face and five-fingered human hands, consistent with the human protagonist in the surrounding panels.\n\n';
     } else if (isPC && !_cuHumanPC) {
       _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is ' + _cuSpecies + ' — render the hand with that species\' established anatomy, consistent with the protagonist in the surrounding panels.\n\n';
+    } else if (_targLI && !/^human$/i.test(String(state._liSpecies || 'human')) && String(state._liSpecies || '')) {
+      _cuGrounding += 'LOVE INTEREST SPECIES (HARD): the love interest is ' + state._liSpecies + ' — render any visible limb, hand, or face with that species\' established anatomy and locked colouring, consistent with the surrounding panels; never a plain human hand.\n\n';
     }
     // UNDERWATER PHYSICS for the insert (Roman 2026-07-16): cut-ins previously forgot the
     // scene was submerged and drew hair/fabric obeying gravity as if on dry land. Mirror the
