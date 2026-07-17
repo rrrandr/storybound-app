@@ -152309,6 +152309,7 @@ No text, no watermark, no UI elements, share-ready.`;
     eff._phasePcEmotionalState = phase.pc_emotional_state || null;
     eff._phaseOtherPostures = phase.other_postures || null;
     eff._phaseProximity = phase.proximity || null;
+    eff._phaseState = phase._state || null; // STORY DIRECTOR continuity snapshot (physical + relational)
 
     // Per-phase peak expression — scan the beats covered by this phase
     // for the most-charged expression_target, surface it so the phase
@@ -153421,6 +153422,172 @@ No text, no watermark, no UI elements, share-ready.`;
     return null;
   }
   window._cuHandDescriptor = _cuHandDescriptor;
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // STORY DIRECTOR (Roman 2026-07-17) — the canonical STAGING ENGINE. Renderer-
+  // agnostic: it produces a renderer-independent artifact on the plan; CG image-gen
+  // is the first renderer to consume it. INVARIANTS: renderers illustrate, they do
+  // not direct; no downstream stage may REINTERPRET an upstream decision (only
+  // validate / enrich / expand / reject). v1 dictionaries; extend, don't rewrite.
+  // Phase 1 here = CANON sheets (immutable identity) + CONTINUITY ledger (physical +
+  // relational state carried forward). Panels/Bible land in phase 2.
+  // ═══════════════════════════════════════════════════════════════════════
+  var _STORY_DIRECTOR_VER = 1;
+  function _sdNormSpecies(x) {
+    var v = String(x || '').toLowerCase();
+    if (/kwisheen|octo/.test(v)) return 'kwisheen';
+    if (/favor/.test(v)) return 'first_favored';
+    if (/wild|cursed|were|beast/.test(v)) return 'wildfolk';
+    return 'human';
+  }
+  var _SD_WEAPON_RX = /\b(spear|trident|cutlass|dagger|blade|sword|knife|bow|sling|staff|axe|mace|net|harpoon|vowstaff)\b/i;
+  function _sdParseWeapon(s) { var m = _SD_WEAPON_RX.exec(String(s || '')); return m ? m[1].toLowerCase() : ''; }
+  // Recognition Traits v1 — the 3–5 markers a reader must INSTANTLY identify a figure by.
+  // Derived from the character's canon; distinguishability, not exhaustive description.
+  function _sdRecognitionTraits(species, look, garment, weapon) {
+    var t = [];
+    if (species === 'kwisheen') {
+      if (look) t.push((look.skin || 'deep') + ' scaled hide with ' + (look.pattern || 'mottling'));
+      t.push('a mane of tentacle-dreadlocks');
+      t.push('a six-tentacle lower body');
+      if (look && look.iris) t.push(look.iris + ' horizontal-pupil eyes');
+    } else if (species === 'first_favored') {
+      if (look) t.push((look.skin || 'exotic') + ' skin, ' + (look.hair || 'lush') + ' hair');
+      t.push('four-point diamond pupils');
+      t.push('faint Weave-Script glow');
+    } else { // human / other
+      if (look && look.heritage) t.push(look.heritage + ' features');
+      if (look && look.hairColor) t.push((look.hairLength || '') + ' ' + look.hairColor + ' hair' + (look.hairStyle ? ', ' + look.hairStyle : ''));
+      else if (look && look.hair) t.push(look.hair + ' hair');
+    }
+    if (/manta/i.test(String(garment || ''))) t.push('a manta-cloak');
+    if (weapon) t.push('a ' + weapon);
+    // ensure 3–5, non-empty, de-duped
+    t = t.filter(function (x) { return x && String(x).trim(); });
+    var seen = {}, out = [];
+    t.forEach(function (x) { var k = x.toLowerCase(); if (!seen[k]) { seen[k] = 1; out.push(x); } });
+    return out.slice(0, 5);
+  }
+  function _sdResolveLook(species, name) {
+    try {
+      if (species === 'kwisheen' && typeof _resolveKwisheenAppearance === 'function') return _resolveKwisheenAppearance(name);
+      if (species === 'first_favored' && typeof _resolveFFAppearance === 'function') return _resolveFFAppearance(name);
+      if (typeof _resolveSideCharAppearance === 'function') return _resolveSideCharAppearance(name);
+    } catch (_) {}
+    return null;
+  }
+  // Build immutable CANON sheets for every character in the scene. plan._canon[key] = {...}.
+  function _buildDirectorCanon(plan) {
+    var canon = {};
+    var vs = (plan && plan.visualState) || {};
+    var pcName = (state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'protagonist';
+    var liName = (state.picks && state.picks.identity && state.picks.identity.partnerName) || state.loveInterestName || state.partnerName || '';
+    var antag = String((state.aPlot && state.aPlot.antagonistOrAntiForce) || '').toLowerCase();
+    function add(key, displayName, role, species, garment, extraSrc) {
+      key = String(key || '').toLowerCase();
+      if (!key || canon[key]) return;
+      var look = (role === 'protagonist' && typeof _resolvePcAppearance === 'function') ? _resolvePcAppearance() : _sdResolveLook(species, displayName || key);
+      var weapon = _sdParseWeapon(String(garment || '') + ' ' + String(extraSrc || ''));
+      canon[key] = {
+        key: key, displayName: displayName || key, role: role, species: species,
+        humanNoTentacles: (species === 'human' || species === 'wildfolk'),
+        look: look || null, garment: String(garment || '').trim(), weapon: weapon,
+        recognitionTraits: _sdRecognitionTraits(species, look, garment, weapon)
+      };
+    }
+    add('protagonist', pcName, 'protagonist', _sdNormSpecies(state._playerSpecies), vs.pc_wardrobe, '');
+    if (liName) add(liName, liName, 'love_interest', _sdNormSpecies(state._liSpecies), vs.li_wardrobe, vs.li_position);
+    (vs.other_characters_present || []).forEach(function (c) {
+      if (!c || !c.name) return;
+      var nm = String(c.name);
+      var role = 'bystander';
+      var hay = (nm + ' ' + (c.position || '') + ' ' + (c.wardrobe || '')).toLowerCase();
+      if (antag && (antag.indexOf(nm.toLowerCase()) !== -1)) role = 'antagonist';
+      else if (/\braider|enemy|attacker|assassin|hunter|soldier|guard\b/.test(hay)) role = 'antagonist';
+      else if (/\ban? ally|companion|friend|wounded|pinned\b/.test(hay)) role = 'ally';
+      add(nm, nm, role, _sdNormSpecies(c.species), c.wardrobe, c.position);
+    });
+    // Unnamed-Kwisheen safety: if a kwisheen is present without a canon entry, give it a stable
+    // lock so its anatomy is OWNED and cannot leak onto a human ally.
+    (vs.other_characters_present || []).forEach(function (c, i) {
+      if (c && _sdNormSpecies(c.species) === 'kwisheen' && (!c.name || !canon[String(c.name).toLowerCase()])) {
+        var k = 'kwisheen_raider_' + i;
+        if (!canon[k]) add(k, 'the Kwisheen raider', 'antagonist', 'kwisheen', (c && c.wardrobe) || '', (c && c.position) || '');
+      }
+    });
+    plan._canon = canon;
+    return canon;
+  }
+  window._buildDirectorCanon = _buildDirectorCanon;
+
+  // CONTINUITY ledger v1 — walk phases in order; each character's PHYSICAL + RELATIONAL state
+  // carries forward until a beat explicitly changes it. Writes phase._state[key] per phase.
+  var _SD_INJURY_RX = /\b(wound|wounded|bleed|bleeding|blood|gash|cut|slash|stab|gore|injur|broken|burn)\b/i;
+  var _SD_HEAL_RX = /\b(heal|healed|knit|knits|closed|closes|mended|whole again|restored|stanch|staunch)\b/i;
+  var _SD_PIN_RX = /\b(pinned|trapped|bound|held down|caught|restrained|impaled|snared)\b/i;
+  var _SD_FREE_RX = /\b(freed|free|breaks? (?:loose|free)|tears? (?:loose|free)|stood|stands|rose|rises|escapes?|pulls? (?:him|her|them) (?:free|loose))\b/i;
+  function _phaseBeatText(plan, phase, allPhases, pi) {
+    try {
+      var beats = plan.beats || [];
+      var start = (typeof phase.startBeat === 'number') ? phase.startBeat : 0;
+      var next = allPhases[pi + 1];
+      var end = (next && typeof next.startBeat === 'number') ? next.startBeat : beats.length;
+      return beats.slice(start, end).map(function (b) { return (b && b.text) || ''; }).join(' ');
+    } catch (_) { return ''; }
+  }
+  function _buildContinuityLedger(plan) {
+    var phases = (plan && plan.phases) || [];
+    var canon = plan._canon || {};
+    var carried = {}; // key → {status, injuries[], position, holding, attitudeToward{}, looking_at, speaking}
+    // seed relational defaults from role
+    Object.keys(canon).forEach(function (k) {
+      var c = canon[k];
+      var att = {};
+      if (c.role === 'antagonist') att['protagonist'] = 'trying_to_kill';
+      else if (c.role === 'ally') att['protagonist'] = 'protective';
+      carried[k] = { status: 'active', injuries: [], position: '', holding: c.weapon || '', attitudeToward: att, looking_at: '', speaking: false };
+    });
+    phases.forEach(function (phase, pi) {
+      var present = (phase.characters_present || []).map(function (t) { return String(t).toLowerCase(); });
+      var txt = _phaseBeatText(plan, phase, phases, pi);
+      // apply this phase's beat-declared changes to carried state (only ways state may change)
+      Object.keys(carried).forEach(function (k) {
+        var st = carried[k];
+        var disp = (canon[k] && canon[k].displayName) || k;
+        var nameRx = new RegExp('\\b(' + disp.split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '|' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')\\b', 'i');
+        // injuries: a wound near this name persists until an explicit heal near this name
+        if (nameRx.test(txt) && _SD_INJURY_RX.test(txt) && !st.injuries.length) st.injuries.push('wounded/bleeding');
+        if (nameRx.test(txt) && _SD_HEAL_RX.test(txt)) st.injuries = [];
+        // pinned/free status
+        if (nameRx.test(txt) && _SD_PIN_RX.test(txt)) st.status = 'pinned';
+        if (nameRx.test(txt) && _SD_FREE_RX.test(txt)) st.status = 'active';
+      });
+      // snapshot the carried state for the present cast onto the phase
+      var snap = {};
+      present.concat(['protagonist']).forEach(function (k) {
+        // map 'li' token to the LI canon key
+        var key = k;
+        if (k === 'li') { var liK = Object.keys(canon).filter(function (x) { return canon[x].role === 'love_interest'; })[0]; if (liK) key = liK; }
+        if (carried[key]) snap[key] = { status: carried[key].status, injuries: carried[key].injuries.slice(), position: carried[key].position, holding: carried[key].holding, attitudeToward: carried[key].attitudeToward, looking_at: carried[key].looking_at, speaking: carried[key].speaking };
+      });
+      phase._state = snap;
+    });
+    return plan;
+  }
+  window._buildContinuityLedger = _buildContinuityLedger;
+
+  // Story Director orchestrator (phase 1: canon → continuity). Phase 2 adds panel validate/enrich/expand.
+  function _buildStoryDirector(plan, sceneIndex) {
+    try {
+      if (!plan) return plan;
+      _buildDirectorCanon(plan);
+      _buildContinuityLedger(plan);
+      plan._storyDirectorVer = _STORY_DIRECTOR_VER;
+      try { console.log('[STORY-DIRECTOR] v' + _STORY_DIRECTOR_VER + ' canon=[' + Object.keys(plan._canon || {}).join(',') + '] phases=' + ((plan.phases || []).length)); } catch (_) {}
+    } catch (e) { try { console.warn('[STORY-DIRECTOR] threw: ' + (e && e.message)); } catch (_) {} }
+    return plan;
+  }
+  window._buildStoryDirector = _buildStoryDirector;
 
   // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
   // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can
@@ -178854,6 +179021,44 @@ No text, no watermark, no UI elements, share-ready.`;
     // BFL honor them. Without these in the prompt, the diffusion model
     // defaults to "two people facing each other, neutral posture, social
     // distance" — exactly the failure mode the user flagged.
+    // STORY DIRECTOR — CAST IDENTITY + CONTINUITY LOCK (Roman 2026-07-17, phase 1): stamp each
+    // PRESENT character's immutable identity (species, recognition traits, human-no-tentacles) +
+    // carried continuity (injuries persist, relationships fixed) so figures can't drift, merge, or
+    // swap panel-to-panel. The renderer illustrates these decisions; it does not make them.
+    (function () {
+      try {
+        var _canon = (planMeta && planMeta._canon) || (state._stagedActive && state._stagedActive.plan && state._stagedActive.plan._canon) || null;
+        if (!_canon) return;
+        var _roster = (visualState._phaseCharacters || []).map(function (t) { return String(t).toLowerCase(); });
+        var _stateSnap = visualState._phaseState || {};
+        var _liKey = Object.keys(_canon).filter(function (k) { return _canon[k].role === 'love_interest'; })[0];
+        var _keys = [];
+        _roster.forEach(function (t) { var k = (t === 'li' && _liKey) ? _liKey : t; if (_canon[k] && _keys.indexOf(k) === -1) _keys.push(k); });
+        if (_keys.indexOf('protagonist') === -1 && _canon['protagonist']) _keys.unshift('protagonist');
+        // include any present kwisheen raider lock even if not tokenized in the roster
+        Object.keys(_canon).forEach(function (k) { if (/kwisheen_raider_/.test(k) && _keys.indexOf(k) === -1) _keys.push(k); });
+        if (!_keys.length) return;
+        var _cidLines = ['CAST IDENTITY (HARD — each figure below is a DISTINCT, named person; keep IDENTICAL across every panel; NEVER merge, swap, restyle, or copy features/injuries between figures):'];
+        _keys.forEach(function (k) {
+          var c = _canon[k]; if (!c) return;
+          var idBits = [String(c.species || 'human').toUpperCase()];
+          if (c.recognitionTraits && c.recognitionTraits.length) idBits.push('RECOGNITION: ' + c.recognitionTraits.join(', '));
+          if (c.humanNoTentacles) idBits.push('fully HUMAN — NO tentacles, scales, or cephalopod features');
+          var line = '- ' + c.displayName + ' [' + idBits.join('; ') + ']';
+          var st = _stateSnap[k];
+          if (st) {
+            var cont = [];
+            if (st.status && st.status !== 'active') cont.push('STATUS: ' + st.status);
+            if (st.injuries && st.injuries.length) cont.push('INJURY (persists until healed): ' + st.injuries.join(', '));
+            var at = st.attitudeToward || {}, atK = Object.keys(at)[0];
+            if (atK) cont.push('toward ' + ((_canon[atK] && _canon[atK].displayName) || atK) + ': ' + String(at[atK]).replace(/_/g, ' '));
+            if (cont.length) line += ' — CONTINUITY: ' + cont.join('; ');
+          }
+          _cidLines.push(line);
+        });
+        if (_cidLines.length > 1) prompt += _cidLines.join('\n') + '\n\n';
+      } catch (_) {}
+    })();
     var _posture = visualState._phasePcPosture || '';
     var _emo = visualState._phasePcEmotionalState || '';
     var _focus = visualState._phaseFocusTarget || '';
@@ -196312,6 +196517,10 @@ No text, no watermark, no UI elements, share-ready.`;
         console.warn('[CG:HELPERS] _classifyCGSceneEngine MISSING at CG Scene-' + sceneIndex + ' validate — romance-continuity measurement skipped. (helper-scope regression?)');
       }
     } catch (_cgvErr) { try { console.warn('[CG:ROMANCE-CONTINUITY] validation guard threw: ' + (_cgvErr && _cgvErr.message)); } catch (_) {} }
+
+    // STORY DIRECTOR (Roman 2026-07-17) — last, after all phase/presence normalization: build the
+    // renderer-independent Canon + Continuity artifacts the hero prompt (and future renderers) consume.
+    try { if (typeof _buildStoryDirector === 'function') _buildStoryDirector(plan, sceneIndex); } catch (_sdErr) { try { console.warn('[STORY-DIRECTOR] wiring threw: ' + (_sdErr && _sdErr.message)); } catch (_) {} }
 
     return plan;
   }
