@@ -55008,7 +55008,8 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
         '  • FORM: ' + f.formal + '\n' +
         '  • SHORT FORM (if the moment is urgent): ' + f.short + '\n' +
         '  • A WITNESS may answer: ' + f.witness + '\n' +
-        'Fill [WISH] / [SACRIFICE] (and [DESIRE]/[PURPOSE] where the form asks) with THIS scene\'s real terms, stated clearly. NEVER phrase the offer as a completed trade, and NEVER imply the formula compels Fate. Let the ceremony carry this region\'s deepest anxiety about wishing (' + f.fear + '), and keep the governing desire legible beneath it. A character MAY shorten, corrupt, modernize, or mock the form when that reveals character — but the FIRST public wish a new reader sees should be spoken in the full, weighty form.\n';
+        'Fill [WISH] / [SACRIFICE] (and [DESIRE]/[PURPOSE] where the form asks) with THIS scene\'s real terms, stated clearly. NEVER phrase the offer as a completed trade, and NEVER imply the formula compels Fate. Let the ceremony carry this region\'s deepest anxiety about wishing (' + f.fear + '), and keep the governing desire legible beneath it. A character MAY shorten, corrupt, modernize, or mock the form when that reveals character — but the FIRST public wish a new reader sees should be spoken in the full, weighty form.\n' +
+        'PRICE vs CONSEQUENCE (HARD canon — do NOT confuse them): the PRICE is ALWAYS paid by the WISHER, and by no one else — Fate takes the cost (strength, years, memory, a limb, the voice) from the one who made the bargain, never from a bystander. Fulfilling the wish MAY separately HARM or benefit OTHER people as a CONSEQUENCE of the outcome the wish creates (if a wisher wishes an ambush to succeed, people may die in that ambush) — but that harm is the RESULT of the wish, never the PRICE for it. Keep the two legible on the page: show the wisher paying their own cost AND, distinctly, the outcome rippling onto others. Never let Fate bill a third party.\n';
     } catch (_) { return ''; }
   }
   window._buildFormalPublicWishDirective = _buildFormalPublicWishDirective;
@@ -153524,6 +153525,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // CONTINUITY ledger v1 — walk phases in order; each character's PHYSICAL + RELATIONAL state
   // carries forward until a beat explicitly changes it. Writes phase._state[key] per phase.
   var _SD_INJURY_RX = /\b(wound|wounded|bleed|bleeding|blood|gash|cut|slash|stab|gore|injur|broken|burn)\b/i;
+  var _SD_BODYPART_RX = /\b(tentacle|arm|shoulder|side|ribs?|chest|leg|thigh|hand|neck|back|brow|eye)\b/i;
   var _SD_HEAL_RX = /\b(heal|healed|knit|knits|closed|closes|mended|whole again|restored|stanch|staunch)\b/i;
   var _SD_PIN_RX = /\b(pinned|trapped|bound|held down|caught|restrained|impaled|snared)\b/i;
   var _SD_FREE_RX = /\b(freed|free|breaks? (?:loose|free)|tears? (?:loose|free)|stood|stands|rose|rises|escapes?|pulls? (?:him|her|them) (?:free|loose))\b/i;
@@ -153546,7 +153548,12 @@ No text, no watermark, no UI elements, share-ready.`;
       var att = {};
       if (c.role === 'antagonist') att['protagonist'] = 'trying_to_kill';
       else if (c.role === 'ally') att['protagonist'] = 'protective';
-      carried[k] = { status: 'active', injuries: [], position: '', holding: c.weapon || '', attitudeToward: att, looking_at: '', speaking: false };
+      // Seed an injury from the character's initial wardrobe/description (e.g. "one tentacle
+      // bleeding") so its LOCATION is locked from panel 0 and can't drift.
+      var _seedInj = [];
+      var _gtxt = String((c && c.garment) || '');
+      if (_SD_INJURY_RX.test(_gtxt)) { var _gl = (_SD_BODYPART_RX.exec(_gtxt) || [])[1]; _seedInj.push(_gl ? ('bleeding wound on the ' + _gl.toLowerCase()) : 'a bleeding wound'); }
+      carried[k] = { status: 'active', injuries: _seedInj, position: '', holding: c.weapon || '', attitudeToward: att, looking_at: '', speaking: false };
     });
     phases.forEach(function (phase, pi) {
       var present = (phase.characters_present || []).map(function (t) { return String(t).toLowerCase(); });
@@ -153556,8 +153563,12 @@ No text, no watermark, no UI elements, share-ready.`;
         var st = carried[k];
         var disp = (canon[k] && canon[k].displayName) || k;
         var nameRx = new RegExp('\\b(' + disp.split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '|' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')\\b', 'i');
-        // injuries: a wound near this name persists until an explicit heal near this name
-        if (nameRx.test(txt) && _SD_INJURY_RX.test(txt) && !st.injuries.length) st.injuries.push('wounded/bleeding');
+        // injuries: a wound near this name persists until an explicit heal — LOCK the LOCATION
+        // (a bleeding tentacle must not drift to a bleeding arm between panels).
+        if (nameRx.test(txt) && _SD_INJURY_RX.test(txt) && !st.injuries.length) {
+          var _loc = (_SD_BODYPART_RX.exec(txt) || [])[1];
+          st.injuries.push(_loc ? ('bleeding wound on the ' + _loc.toLowerCase()) : 'a bleeding wound');
+        }
         if (nameRx.test(txt) && _SD_HEAL_RX.test(txt)) st.injuries = [];
         // pinned/free status
         if (nameRx.test(txt) && _SD_PIN_RX.test(txt)) st.status = 'pinned';
