@@ -178802,6 +178802,8 @@ No text, no watermark, no UI elements, share-ready.`;
         '- Robes, loincloths, wraps, and every loose element BILLOW and undulate, lifting and streaming AWAY from the body and outward — never draping straight down as they would in air.\n' +
         '- Tentacles, chains, jewelry, and stray strands drift and sway with the current.\n' +
         '- Ambient water: fine bubbles rise, motes and particulate drift, light falls in refracted shafts, motion reads as slow suspension.\n' +
+        '- BUBBLES AT THE MOUTH: any figure whose mouth is open (a shout, a snarl, a gasp, effort, a short cry) releases a stream or cluster of BUBBLES from the mouth — mouths stay open and expressive underwater, and the bubbles show it. Do not draw a wide-open mouth with no bubbles at depth.\n' +
+        '- SIGNING: underwater, characters communicate mostly by SIGN — a Kwisheen weaves meaning with its TENTACLES, a human shapes cruder signs with the HANDS. When a beat is a communication moment, stage the speaker mid-SIGN (limbs/hands weaving a deliberate gesture toward the other) rather than simply talking, while the mouth still opens for the emotion of it.\n' +
         '- The whole frame reads as underwater — nothing rests or hangs as if in a dry, air-filled room.\n\n';
     })();
     if (visualState._phaseLabel) {
@@ -180026,6 +180028,15 @@ No text, no watermark, no UI elements, share-ready.`;
     styleAnchorPaths.forEach(function(p) {
       combinedAnchors.push({ path: p, label: artistKey + ' style anchor', species: artistKey + ' style' });
     });
+    // MANTA-CLOAK GARMENT REFERENCE (Roman 2026-07-17): when a human on-stage wears a
+    // manta-cloak, attach a cropped canon reference of the garment (smooth manta-hide cape,
+    // pearl strands, woven braid trim, shoulder clasp) so the cloak renders consistently.
+    try {
+      var _mcW = String((visualState && (visualState.pc_wardrobe || '')) + ' ' + (visualState && (visualState.li_wardrobe || ''))).toLowerCase();
+      if (/manta|manta-cloak|manta cloak|manta-poncho/.test(_mcW)) {
+        combinedAnchors.push({ path: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', label: 'manta-cloak garment reference (match the cape hide, pearl strands, and braid trim ONLY — not the wearer)', species: 'manta cloak garment' });
+      }
+    } catch (_) {}
     if (state._stagedRegionContract && state._stagedRegionContract.anchorImages.length > 0) {
       // ── SPECIES-ANCHOR PRESENCE GATE (Roman 2026-07-14) ──────────────
       // A species reference image (e.g. the Kwisheen octofolk ref) must
@@ -182445,7 +182456,7 @@ No text, no watermark, no UI elements, share-ready.`;
       if (/\b(linen|cotton|silk|satin|wool|muslin|chiffon|gauze|tunic|shift|dress|gown|robe|blouse|shirt|skirt|wrap|sari|kimono|kaftan|sundress|frock|nightgown|chemise)\b/i.test(_cuTgtWard)) {
         _cuFabric = ' MATERIAL (HARD): this garment is SOFT WOVEN CLOTH — a light, pliable textile with a natural matte drape and visible fabric folds/wrinkles, the way linen or cotton hangs. Render every visible edge as that soft cloth.';
       }
-      _cuGrounding += _cuWardLabel + ' WARDROBE (HARD — any of this character\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(_cuTgtWard) : _cuTgtWard) + '.' + _cuFabric + ' Render the clothing and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
+      _cuGrounding += _cuWardLabel + ' WARDROBE (HARD — any of this character\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(_cuTgtWard) : _cuTgtWard) + '.' + _cuFabric + ' Render the clothing and skin to match this wardrobe exactly, INCLUDING any named ornament, trim, beading, embroidery, clasp, talisman, or accessory — those decorations are part of the garment and must appear, not be dropped for a plain surface. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
     }
     if (isPC && _cuHumanPC) {
       _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is fully HUMAN — human skin, human features, a human face and five-fingered human hands, consistent with the human protagonist in the surrounding panels.\n\n';
@@ -182461,7 +182472,7 @@ No text, no watermark, no UI elements, share-ready.`;
     (function () {
       var _cuWet = /gloamwater|underwater|submerged|undersea|under the (sea|water|waves)|ocean floor|sea ?floor|sea ?bed|seabed|reef|coral|grotto|abyss|abyssal|sunken|kelp|drowned|beneath the (waves|sea|surface|water)|deep water|the depths|the current/i.test(_cuBg);
       if (!_cuWet) return;
-      _cuGrounding += 'UNDERWATER PHYSICS (HARD — this insert is SUBMERGED, render WATER physics not land physics): any hair, strand, sleeve, hem, clasp, jewelry, or loose element in the frame FLOATS, lifts, and BILLOWS outward in the current — suspended and drifting, NEVER hanging straight down or resting as it would in air. Fine bubbles rise, particulate motes drift, and light falls in soft refracted shafts. The whole frame reads as underwater, nothing under gravity.\n\n';
+      _cuGrounding += 'UNDERWATER PHYSICS (HARD — this insert is SUBMERGED, render WATER physics not land physics): any hair, strand, sleeve, hem, clasp, jewelry, or loose element in the frame FLOATS, lifts, and BILLOWS outward in the current — suspended and drifting, NEVER hanging straight down or resting as it would in air. The current changes the SHAPE of the hair (lifting, fanning, drifting) but NOT its LENGTH — the hair stays the exact length established in the surrounding panels; it does not grow longer. Fine bubbles rise, particulate motes drift, and light falls in soft refracted shafts. The whole frame reads as underwater, nothing under gravity.\n\n';
     })();
 
     var prompt = 'ILLUSTRATED INSERT — a drawn cut-in from the surrounding scene, rendered in the SAME artistic style as every other panel in this story (manga / inked / painterly / linework per the active artist). NOT a photograph. NOT a 3D render. NOT photorealistic. A FULL-QUALITY illustrated frame composed with intention: dramatic angle, mood-aware lighting, single dominant subject filling the canvas, visible artist linework / brushwork / ink behavior on every rendered surface.\n\n' +
@@ -192955,6 +192966,11 @@ No text, no watermark, no UI elements, share-ready.`;
       if (_uwIsUnderwater && _uwHumanPresent) {
         lines.push('UNDERWATER SURVIVAL (HARD — Fatelands physics): this scene is DEEP UNDERWATER in Gloamwater Bay and a HUMAN is present. A human cannot breathe, speak, or move at depth by nature — in Fatelands this is ALWAYS purchased: a WISH paid in sacrifice or a MAGIC ARTIFACT (a water-breathing talisman, a gilled charm, a bargain-token). Sustained water-breathing is a T2 boon on THE PRICE OF A WISH ladder — price it consistently (a year of life, or an equivalent T2 cost); a brief single dip may be T1 (an hour, a fingernail, a lock of hair). ' + (sceneIndex === 0 ? 'Within the FIRST FEW SENTENCES' : 'Early in the scene, unless it is already established earlier in this story') + ', make HOW the human survives the water unmistakable — as a CHARACTERIZING beat (pointed dialogue or a sensory tell), NEVER a dry lore aside. GOOD (reveals the mechanism AND the relationship in one line): "You sacrificed a YEAR of your life to breathe water — for him." / "I\'ll tear that water-breathing talisman off your neck myself." Do NOT let a human simply float and talk underwater with no in-world reason — with no cause on the page it reads as a rendering error, not a world.');
         lines.push('UNDERWATER HUMAN WARDROBE (HARD — Gloamwater canon; set pc_wardrobe / any human\'s wardrobe accordingly, per STATION + CIRCUMSTANCES): what a human wears at depth depends on HOW LONG they stay. BRIEFLY VISITING the depths (a diver, a guest, a first descent) → they wear their NORMAL SURFACE CLOTHING — whatever their station and the surface scene would give them — and it simply drifts and billows in the current. LIVING here / SPENDING A GREAT DEAL OF TIME below (a resident, a captive, a long embed, someone who has made a life among the Kwisheen) → the Kwisheen have made them a MANTA-CLOAK (a.k.a. manta-poncho): a cape cut from a single giant MANTA-RAY HIDE — SMOOTH YET TOUGH, like fine oiled leather — CLASPED AT BOTH SHOULDERS and HOOKED to both WRISTS and both ANKLES (a cape whose trailing edges tether to the limbs, akin to Storm\'s wrist-and-ankle cape in X-Men), so that spreading the arms opens a broad webbed manta-wing of hide and the human swims like a manta ray by UNDULATING THE ARMS in slow waves instead of kicking, stroking, and flailing the way humans do underwater. The hide is a deep sea-grey / charcoal / slate, and may be ADORNED WITH PEARLS OR SHELLS along its edges and shoulder-clasps. HARD MATERIAL LOCK: the manta-cloak is ALWAYS this smooth manta-hide cape — NEVER seaweed, NEVER kelp, NEVER a ragged/tattered/frayed wrap, NEVER an ordinary woven-cloth cape or poncho; its adornment is pearls and shells, never seaweed. On land the same garment reads as a smooth manta-hide cape clasped at the shoulders. (LATENT CANON — do NOT force it into this scene: the manta cut also works as a glider / wingsuit, so if a wearer ever falls from a great height it catches the air and they can plane down. Deploy this ONLY if a fall actually happens on the page.) Choose brief-visitor vs long-resident from THIS story\'s premise and set the human\'s wardrobe to match — never leave it to the model to guess. SPECIES GUARD (HARD — the manta-poncho is a HUMAN survival garment, a Kwisheen-made prosthetic for a body that cannot swim on its own): it is worn ONLY by HUMANS (and other air-breathing land species) living below. A native KWISHEEN NEVER wears a manta-poncho — they swim on their own six tentacles and need no such aid. Dress Kwisheen (and any native water-dweller) in their OWN canon attire: loincloths and wraps studded with gems and shells, scaled or shell armor, layered beaded jewelry and gem pendants. Do NOT put a manta-poncho, gills-charm, or water-breathing talisman on a Kwisheen.');
+        lines.push('MANTA-CLOAK — HONOR + RANK (HARD lore, fires when a human wears or is offered a manta-cloak): a manta-cloak is not mere gear — it is a Kwisheen HONOR, a "you are one of us" mark. The Kwisheen bestow it, or a human WINS it through a recognized trial or contest, and EVERY Kwisheen knows only a RARE, proven human is ever permitted one. So a Kwisheen who meets a manta-cloaked human reacts to the CLOAK before the person: if they respect the mark they PAUSE — awe, deference, even an apology for the offense (a raider may break off mid-raid); if they suspect it STOLEN or UNDESERVED they move to STRIP IT — an insult and a challenge, an attempt to take the cloak by force. Never let a Kwisheen simply ignore a manta-cloak on a human; it always registers. SPEED CANON: the manta-cloak lets a human swim about HALF as fast as an ordinary Kwisheen; WITHOUT it a human is hopelessly outpaced — a Kwisheen in water is roughly TEN TIMES faster than even an Olympic-level human swimmer. Stage chases, escapes, and fights around this gap: a cloaked human can keep some pace, an uncloaked human cannot outswim a Kwisheen and must use terrain, wit, or a wish.');
+      }
+      if (_uwIsUnderwater) {
+        var _uwSignReminder = (sceneIndex === 0) || ((sceneIndex % 6) === 0);
+        lines.push('UNDERWATER COMMUNICATION (HARD — Gloamwater canon): at depth, spoken language mostly does NOT carry, so complex meaning is conveyed in KWISHEEN SIGN LANGUAGE — a fast, fluid tentacle-script woven with the limbs. A Kwisheen signs with all EIGHT limbs at once, which makes the language dense and hard for a two-armed human to fully master; humans manage only a crude, partial version and often struggle to read a Kwisheen signing at speed. BUT THE MOUTH IS STILL PART OF IT: short, forceful words DO carry a little underwater — a barked "No," a clipped "Yes," and intonations / non-verbal sounds ("Ugh," a snarl, a gasp, a cry of protest / anger / joy / confusion, a grunt of effort) are heard and understood, and bubbles escape with them. So render underwater exchanges as a BLEND: the detailed content is SIGNED and INTERPRETED by the POV character (tentacles or hands weaving, the reader shown the meaning as the POV pieces it together — e.g. "Her tentacles wove together and pointed toward me like a serpent\'s tongue, flickering too fast to follow; when I pieced it together, my blood ran cold: \'GONE.\'"), while short carrying words and emotional sounds are VOICED aloud with the mouth open and bubbling. Mouths stay expressive; they are simply not forming full spoken sentences. ' + (_uwSignReminder ? 'REMIND THE READER THIS SCENE that underwater speech is signed — carry at least one clearly-signed, interpreted line so a new reader learns the world.' : 'Weave signed interpretation and short voiced words together naturally.'));
       }
       // KWISHEEN FLUID-FORM REMINDER (Roman 2026-07-16): underwater and in their TRUE FORM,
       // Kwisheen are comfortably shape-fluid (chromatophore skin + innate shape-shifting), so
@@ -197227,7 +197243,21 @@ No text, no watermark, no UI elements, share-ready.`;
       // Persist the scene's prose so save/resume and other downstream
       // consumers (scene tail context, etc.) keep working.
       try {
-        var proseAssembled = plan.beats.map(function(b) { return b.text; }).join('\n\n');
+        // Screenplay-style speaker labels (Roman 2026-07-17 — they had vanished): a dialogue
+        // beat's parsed speaker is prepended as an ALL-CAPS label so the reader knows who is
+        // talking (KAELITH: "..."). 'protagonist'/'li' resolve to the actual names.
+        var _sbSpeakerLabel = function (b) {
+          if (!b || b.kind !== 'dialogue' || !b.speaker || typeof b.speaker !== 'string') return '';
+          var sp = b.speaker.trim(), name = sp;
+          if (sp === 'protagonist') name = (state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'I';
+          else if (sp === 'li') name = (state.picks && state.picks.identity && state.picks.identity.partnerName) || state.loveInterestName || state.partnerName || 'LOVE INTEREST';
+          name = String(name).trim();
+          if (!name) return '';
+          // Avoid a double label if the beat text already opens with one.
+          if (new RegExp('^' + name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*:', 'i').test(String(b.text || '').trim())) return '';
+          return name.toUpperCase() + ': ';
+        };
+        var proseAssembled = plan.beats.map(function(b) { return _sbSpeakerLabel(b) + (b.text || ''); }).join('\n\n');
         state.scenes = state.scenes || [];
         state.scenes.push({ title: '', synopsis: '', text: proseAssembled, fateCard: null });
         try { if (typeof window._sbBetaSceneDone === 'function') window._sbBetaSceneDone(proseAssembled); } catch (_) {}

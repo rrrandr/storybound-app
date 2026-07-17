@@ -136,7 +136,14 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['cloth cut-in gets a positive SOFT-CLOTH fabric lock (silk gown)', /SOFT WOVEN CLOTH/.test(dryPrompt)],
     ['hero panels get DRAMATIC ACTION (enact the beat, mouths open, wish-as-act)', /DRAMATIC ACTION \(HARD/.test(advPrompt) && /MOUTH OPEN/.test(advPrompt) && /INVOCATION \/ WISH/.test(advPrompt)],
     ['cut-in gets a STAKES directive (react to threat, spear-tip at margin)', /STAKES \(HARD/.test(liPrompt) && /TIP or EDGE intrude/.test(liPrompt)],
-    ['CG attribution has a POV VOICE GUARD (wish must name its wisher)', /POV VOICE GUARD/.test(appSrc) && /another character\\?'s wish as a bare first-person/.test(appSrc)]
+    ['CG attribution has a POV VOICE GUARD (wish must name its wisher)', /POV VOICE GUARD/.test(appSrc) && /another character\\?'s wish as a bare first-person/.test(appSrc)],
+    ['underwater cut-in preserves hair LENGTH (billow = shape not length)', /changes the SHAPE of the hair/.test(cuPrompt) && /NOT its LENGTH/.test(cuPrompt)],
+    ['cut-in wardrobe preserves named ornament/decoration', /INCLUDING any named ornament/.test(cuPrompt)],
+    ['reader prose restores speaker labels (KAELITH:) via _sbSpeakerLabel', /_sbSpeakerLabel/.test(appSrc) && /name\.toUpperCase\(\) \+ ': '/.test(appSrc)],
+    ['manta-cloak HONOR + speed canon present (10x / half-speed / strip it)', /HONOR \+ RANK/.test(appSrc) && /TEN TIMES faster/.test(appSrc) && /HALF as fast/.test(appSrc)],
+    ['underwater SIGNING canon (sign language, No/Yes carry, mouth stays)', /UNDERWATER COMMUNICATION/.test(appSrc) && /KWISHEEN SIGN LANGUAGE/.test(appSrc) && /barked "No,"/.test(appSrc)],
+    ['underwater image dir: bubbles at mouth + signing gesture', /BUBBLES AT THE MOUTH/.test(appSrc) && /stage the speaker mid-SIGN/.test(appSrc)],
+    ['manta-cloak reference asset wired as an anchor', /Manta_Cloak_Ref_v1\.png/.test(appSrc)]
   ];
 
   let pass = 0, fail = 0;
