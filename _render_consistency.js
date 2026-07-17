@@ -3,7 +3,9 @@
 //   2. Manta-cloak render-side expansion → terse "manta-cloak" wardrobe becomes the
 //      full manta-hide / Storm-cape / pearls-or-shells canon (never seaweed/cloth/ragged).
 //   3. Cut-in closeups inject UNDERWATER PHYSICS so hair/fabric billow, not gravity.
+const fs = require('fs');
 const { chromium } = require('playwright-core');
+const appSrc = fs.readFileSync(__dirname + '/public/app.js', 'utf8');
 const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**', '**/api/chatgpt-proxy**', '**/api/anthropic-proxy**', '**/api/mistral-proxy**', '**/api/grok-image**', '**/api/visualize-flux**'];
 
 (async () => {
@@ -131,7 +133,10 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['both same-gender side chars get a LOCKED LOOK in the hero prompt', bothLocked],
     ['adversarial staging locks HOSTILE faces (no smile/blank = lovers)', /HOSTILE EXPRESSION \(HARD/.test(advPrompt) && /NO smile/.test(advPrompt) && /read as attraction and are WRONG/.test(advPrompt)],
     ['held-object GRIP staging present (firmly grasped, no clip-through)', /HELD OBJECTS \(HARD\)/.test(advPrompt) && /FIRMLY GRASPED/.test(advPrompt) && /clip THROUGH/.test(advPrompt)],
-    ['cloth cut-in gets a positive SOFT-CLOTH fabric lock (silk gown)', /SOFT WOVEN CLOTH/.test(dryPrompt)]
+    ['cloth cut-in gets a positive SOFT-CLOTH fabric lock (silk gown)', /SOFT WOVEN CLOTH/.test(dryPrompt)],
+    ['hero panels get DRAMATIC ACTION (enact the beat, mouths open, wish-as-act)', /DRAMATIC ACTION \(HARD/.test(advPrompt) && /MOUTH OPEN/.test(advPrompt) && /INVOCATION \/ WISH/.test(advPrompt)],
+    ['cut-in gets a STAKES directive (react to threat, spear-tip at margin)', /STAKES \(HARD/.test(liPrompt) && /TIP or EDGE intrude/.test(liPrompt)],
+    ['CG attribution has a POV VOICE GUARD (wish must name its wisher)', /POV VOICE GUARD/.test(appSrc) && /another character\\?'s wish as a bare first-person/.test(appSrc)]
   ];
 
   let pass = 0, fail = 0;
