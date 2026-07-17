@@ -152310,6 +152310,7 @@ No text, no watermark, no UI elements, share-ready.`;
     eff._phaseOtherPostures = phase.other_postures || null;
     eff._phaseProximity = phase.proximity || null;
     eff._phaseState = phase._state || null; // STORY DIRECTOR continuity snapshot (physical + relational)
+    eff._phasePanel = phase._panel || null; // STORY DIRECTOR resolved panel spec (shot + hierarchy + grammar + performance)
 
     // Per-phase peak expression — scan the beats covered by this phase
     // for the most-charged expression_target, surface it so the phase
@@ -153576,14 +153577,120 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildContinuityLedger = _buildContinuityLedger;
 
-  // Story Director orchestrator (phase 1: canon → continuity). Phase 2 adds panel validate/enrich/expand.
+  // ── DIRECTOR'S BIBLE (scene-INDEPENDENT, renderer-agnostic, v1 — extend, don't rewrite) ──
+  // Visual Grammar: a textless cinematic language (a reader knows a wish / sacrifice / Fate
+  // answering the way they know Superman flying). Fired by panel grammar flags.
+  var _VISUAL_GRAMMAR_V1 = {
+    wish: 'WISH (visual grammar — make it UNMISTAKABLE as prayer, like a hero taking flight): the wisher\'s eyes are CLOSED or LIFTED toward the surface above, HANDS clasped together or open and rising in supplication, the whole body in a posture of committed, vulnerable petition; a gathering GLOW of tide-light coils at the hands/chest with rising motes/threads spiralling toward them; the wisher is the elevated, reverent focal point; other figures REACT (recoil, brace, watch). This is prayer, never two people talking.',
+    sacrifice: 'SACRIFICE (visual grammar): the price is visibly GIVEN UP — a hand pressed to the cost (an eye, a lock of hair, the chest), a flinch or held stillness of loss, and a thread of pale light drawn OUT of the wisher into the water; a cold, draining light at the point where the price is paid.',
+    fateAnswer: 'FATE ANSWERING (visual grammar): the WORLD responds — a warm current and a bloom of tide-colour, drifting answering light, and the environment visibly changing (a passage opening, a wound knitting shut, silt clearing); Fate\'s reply is shown in the scene itself, not narrated.'
+  };
+  // Shot Language: per dramatic type, the preferred camera / lens / angle / framing / movement /
+  // composition. The author picks a shotType; the Director EXPANDS it. Author never sets cameras.
+  var _SHOT_LANGUAGE_V1 = {
+    combat: 'COMBAT SHOT: medium-tight, a low or slightly dutch angle; dynamic diagonal, off-balance framing; bodies and weapons crossing the frame with strong foreground→midground depth; a sense of motion mid-strike. Never a flat, centred, static two-shot.',
+    conversation: 'CONVERSATION SHOT: medium, eye-level or a gentle over-shoulder; a balanced two-shot with a clear physical gap; still, faces reading clearly on the rule-of-thirds.',
+    discovery: 'DISCOVERY SHOT: wide establishing, the subject small against the reveal; negative space with the discovered thing as the focal point; a slow implied push-in.',
+    romance: 'ROMANCE SHOT: close and warm, shallow depth; an intimate two-shot, softly centred with warm rim-light.',
+    terror: 'TERROR SHOT: tight or extreme, canted; the threat looming large in the foreground while the subject reads small or cornered; cramped, unstable framing.',
+    wonder: 'WONDER SHOT: wide and low, the marvel dominant; the subject dwarfed by scale in a light-filled frame; a slow drift.'
+  };
+  window._VISUAL_GRAMMAR_V1 = _VISUAL_GRAMMAR_V1;
+  window._SHOT_LANGUAGE_V1 = _SHOT_LANGUAGE_V1;
+  var _SD_SHOTTYPE_KEYS = Object.keys(_SHOT_LANGUAGE_V1);
+  function _sdInferShotType(txt) {
+    var t = String(txt || '').toLowerCase();
+    if (/\b(spear|blade|sword|dagger|cutlass|strike|lunge|attack|ambush|fight|swung|thrust|parry|blood|wound|clash)\b/.test(t)) return 'combat';
+    if (/\b(loom|menace|dread|terror|stalk|creeping|nightmare|horror|shadow closes)\b/.test(t)) return 'terror';
+    if (/\b(reveal|revealed|hidden|discover|found|passage|seam|opening|glimpsed)\b/.test(t)) return 'discovery';
+    if (/\b(kiss|embrace|caress|tender|lips|breath against|pull.*close)\b/.test(t)) return 'romance';
+    if (/\b(vast|immense|marvel|glowing city|towering|shimmer|wondrous|breathtaking)\b/.test(t)) return 'wonder';
+    return 'conversation';
+  }
+  function _sdDetectGrammar(txt) {
+    var t = String(txt || '').toLowerCase(), g = {};
+    if (/\bwish\b|fate beneath the turning tide|i (?:release|offer|ask to return)|invoke|the formal words/.test(t)) g.wish = true;
+    if (/\bi offer\b|the (?:true )?price|sacrifice|a year of (?:my|his|her) life|what i release/.test(t)) g.sacrifice = true;
+    if (/the water warm|fate’?s answer|the passage (?:open|shudder|widen)|wound knit|silt (?:clear|drift)|an omen/.test(t)) g.fateAnswer = true;
+    return g;
+  }
+  // Build a resolved PANEL SPEC per phase. Honors authored plan.panels[] when present (validate,
+  // fail-LOUD on missing fields); otherwise derives from the phase (rollout fallback, logged).
+  // Binds Canon, expands shotType via Shot Language + grammar flags via Visual Grammar.
+  function _buildPanelSpecs(plan) {
+    var phases = (plan && plan.phases) || [];
+    var canon = plan._canon || {};
+    var authored = Array.isArray(plan.panels) ? plan.panels : null;
+    var _liKey = Object.keys(canon).filter(function (k) { return canon[k].role === 'love_interest'; })[0];
+    function keyFor(tok) { tok = String(tok || '').toLowerCase(); if (tok === 'li' && _liKey) return _liKey; return canon[tok] ? tok : (canon[tok] ? tok : tok); }
+    phases.forEach(function (phase, pi) {
+      var txt = _phaseBeatText(plan, phase, phases, pi);
+      var present = (phase.characters_present || []).map(function (t) { return String(t).toLowerCase(); });
+      if (present.indexOf('protagonist') === -1) present.unshift('protagonist');
+      var ap = authored && authored[pi] ? authored[pi] : null;
+      var invalid = [];
+      // shotType
+      var shotType = (ap && ap.shotType && _SHOT_LANGUAGE_V1[ap.shotType]) ? ap.shotType : _sdInferShotType(txt);
+      if (ap && (!ap.shotType || !_SHOT_LANGUAGE_V1[ap.shotType])) invalid.push('shotType');
+      // dramatic question
+      var dq = (ap && ap.dramaticQuestion) ? String(ap.dramaticQuestion) : (phase.label ? ('What happens as ' + phase.label + '?') : '');
+      if (ap && !ap.dramaticQuestion) invalid.push('dramaticQuestion');
+      // hierarchy
+      var primary, secondary = '', background = [];
+      if (ap && ap.subjects && ap.subjects.primary) { primary = ap.subjects.primary; secondary = ap.subjects.secondary || ''; background = ap.subjects.background || []; }
+      else {
+        // derive: focus char = the one the beat text names most / the non-PC actor; else PC
+        var others = present.filter(function (t) { return t !== 'protagonist'; }).map(function (t) { return keyFor(t); });
+        primary = others[0] ? ((canon[others[0]] && canon[others[0]].displayName) || others[0]) : ((canon['protagonist'] && canon['protagonist'].displayName) || 'protagonist');
+        secondary = (canon['protagonist'] && canon['protagonist'].displayName) || 'protagonist';
+        background = others.slice(1).map(function (k) { return (canon[k] && canon[k].displayName) || k; });
+      }
+      if (ap && (!ap.subjects || !ap.subjects.primary)) invalid.push('primary subject');
+      // grammar
+      var grammar = {};
+      if (ap && (ap.wish || ap.sacrifice || ap.fateAnswer)) { grammar.wish = !!ap.wish; grammar.sacrifice = !!ap.sacrifice; grammar.fateAnswer = !!ap.fateAnswer; }
+      else grammar = _sdDetectGrammar(txt);
+      // cast performance
+      var castRoster = ap && Array.isArray(ap.cast) ? ap.cast.map(function (c) { return String(c.name || '').toLowerCase(); }) : present.map(keyFor);
+      var cast = castRoster.map(function (tok) {
+        var k = keyFor(tok);
+        var perf = null;
+        if (ap && Array.isArray(ap.cast)) { var m = ap.cast.filter(function (c) { return String(c.name || '').toLowerCase() === tok; })[0]; if (m) perf = m.performance || null; }
+        if (ap && Array.isArray(ap.cast) && !perf) invalid.push('performance:' + tok);
+        // derived performance from phase fields when not authored
+        if (!perf) {
+          var other = (phase.other_postures && canon[k]) ? phase.other_postures[canon[k].displayName] : null;
+          perf = {
+            pose: (k === 'protagonist') ? (phase.pc_posture || '') : (other || ''),
+            expression: (k === 'protagonist') ? (phase.pc_emotional_state || phase._phasePeakExpression || '') : (phase._phasePeakExpression || ''),
+            looking_at: '', action_tags: []
+          };
+        }
+        return { key: k, name: (canon[k] && canon[k].displayName) || tok, performance: perf };
+      });
+      phase._panel = {
+        panelIdx: pi, dramaticQuestion: dq, shotType: shotType,
+        shotExpansion: _SHOT_LANGUAGE_V1[shotType] || '',
+        hierarchy: { primary: primary, secondary: secondary, background: background },
+        grammarCues: Object.keys(grammar).filter(function (g) { return grammar[g] && _VISUAL_GRAMMAR_V1[g]; }).map(function (g) { return _VISUAL_GRAMMAR_V1[g]; }),
+        cast: cast, authored: !!ap, invalidFields: invalid
+      };
+      if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
+    });
+    plan._panels = phases.map(function (p) { return p._panel; });
+    return plan;
+  }
+  window._buildPanelSpecs = _buildPanelSpecs;
+
+  // Story Director orchestrator: canon → continuity → panels (validate/enrich/expand). Never reinterprets.
   function _buildStoryDirector(plan, sceneIndex) {
     try {
       if (!plan) return plan;
       _buildDirectorCanon(plan);
       _buildContinuityLedger(plan);
+      _buildPanelSpecs(plan);
       plan._storyDirectorVer = _STORY_DIRECTOR_VER;
-      try { console.log('[STORY-DIRECTOR] v' + _STORY_DIRECTOR_VER + ' canon=[' + Object.keys(plan._canon || {}).join(',') + '] phases=' + ((plan.phases || []).length)); } catch (_) {}
+      try { console.log('[STORY-DIRECTOR] v' + _STORY_DIRECTOR_VER + ' canon=[' + Object.keys(plan._canon || {}).join(',') + '] panels=' + ((plan._panels || []).length) + (plan._panelInvalid ? ' (INVALID authored panels — degraded)' : '')); } catch (_) {}
     } catch (e) { try { console.warn('[STORY-DIRECTOR] threw: ' + (e && e.message)); } catch (_) {} }
     return plan;
   }
@@ -179039,7 +179146,19 @@ No text, no watermark, no UI elements, share-ready.`;
         // include any present kwisheen raider lock even if not tokenized in the roster
         Object.keys(_canon).forEach(function (k) { if (/kwisheen_raider_/.test(k) && _keys.indexOf(k) === -1) _keys.push(k); });
         if (!_keys.length) return;
-        var _cidLines = ['CAST IDENTITY (HARD — each figure below is a DISTINCT, named person; keep IDENTICAL across every panel; NEVER merge, swap, restyle, or copy features/injuries between figures):'];
+        var _panel = visualState._phasePanel || null;
+        var _perfByKey = {};
+        if (_panel && Array.isArray(_panel.cast)) _panel.cast.forEach(function (c) { _perfByKey[c.key] = c.performance || null; });
+        var _cidLines = [];
+        // Panel header — the authoritative shot the renderer must execute.
+        _cidLines.push('STORY DIRECTOR — PANEL (HARD; render EXACTLY this shot; figures are DISTINCT named people; you ILLUSTRATE these decisions, you do NOT change them):');
+        if (_panel) {
+          if (_panel.dramaticQuestion) _cidLines.push('DRAMATIC QUESTION (every choice reinforces it): ' + _panel.dramaticQuestion);
+          if (_panel.shotExpansion) _cidLines.push('SHOT (' + _panel.shotType + '): ' + _panel.shotExpansion);
+          var h = _panel.hierarchy || {};
+          if (h.primary) _cidLines.push('HIERARCHY: primary=' + h.primary + (h.secondary ? '  secondary=' + h.secondary : '') + (h.background && h.background.length ? '  background=' + h.background.join(', ') : '') + ' — never three co-equal, randomly-placed figures.');
+        }
+        _cidLines.push('CAST (each figure keeps its identity IDENTICAL across every panel; NEVER merge, swap, restyle, or copy features/injuries between figures):');
         _keys.forEach(function (k) {
           var c = _canon[k]; if (!c) return;
           var idBits = [String(c.species || 'human').toUpperCase()];
@@ -179055,9 +179174,21 @@ No text, no watermark, no UI elements, share-ready.`;
             if (atK) cont.push('toward ' + ((_canon[atK] && _canon[atK].displayName) || atK) + ': ' + String(at[atK]).replace(/_/g, ' '));
             if (cont.length) line += ' — CONTINUITY: ' + cont.join('; ');
           }
+          var perf = _perfByKey[k];
+          if (perf) {
+            var pf = [];
+            if (perf.pose) pf.push('DOING: ' + perf.pose);
+            if (perf.expression) pf.push('EMOTION: ' + perf.expression);
+            if (perf.looking_at) pf.push('looking at ' + perf.looking_at);
+            if (pf.length) line += ' — ' + pf.join(', ');
+          }
           _cidLines.push(line);
         });
-        if (_cidLines.length > 1) prompt += _cidLines.join('\n') + '\n\n';
+        if (_panel && _panel.grammarCues && _panel.grammarCues.length) {
+          _panel.grammarCues.forEach(function (g) { _cidLines.push(g); });
+        }
+        _cidLines.push('Every identity, injury, relationship, and who-does-what above is FIXED — do not infer, invent, merge, swap, romance-frame, restyle, or reinterpret. Render this shot beautifully.');
+        if (_cidLines.length > 2) prompt += _cidLines.join('\n') + '\n\n';
       } catch (_) {}
     })();
     var _posture = visualState._phasePcPosture || '';
@@ -190796,6 +190927,14 @@ No text, no watermark, no UI elements, share-ready.`;
       '    "pc_emotional_state": "<≤6 words — the register the lighting + expression align to: \\"braced\\" / \\"unraveling but holding\\" / \\"quiet dread\\" / \\"defiant\\".>",\n' +
       '    "other_postures": { "<CharName>": "<≤10 words — that character\'s body cue: the friend leaning in, the antagonist blocking the door>" },\n' +
       '    "proximity": "intimate | personal | social | public — physical distance between the figures; pick for the DRAMA (a confrontation is personal/intimate, NOT social-distance across a wide table)"\n' +
+      '  } ],\n' +
+      '  "panels": [ {\n' +
+      '    "panelIdx": 0,\n' +
+      '    "dramaticQuestion": "<the ONE question this image asks the reader — \\"Can the PC reach Soren before the raider kills him?\\" / \\"Will the wish work?\\". Every compositional choice reinforces it.>",\n' +
+      '    "shotType": "conversation | combat | discovery | romance | terror | wonder — the DRAMATIC TYPE of the moment. Do NOT set cameras; the shot-type expands to camera/angle/framing automatically.",\n' +
+      '    "subjects": { "primary": "<the ONE figure this image is ABOUT>", "secondary": "<supporting figure or null>", "background": ["<other present figures>"] },\n' +
+      '    "cast": [ { "name": "<protagonist | li | CharName>", "performance": { "pose": "<what they are physically DOING this panel>", "expression": "<their emotion this panel>", "looking_at": "<who/what they look at>", "action_tags": ["speaking|fighting|bleeding|holding|reaching|recoiling"] } } ],\n' +
+      '    "wish": false, "sacrifice": false, "fateAnswer": false\n' +
       '  } ],\n' +
       '  "beats": [ {\n' +
       '    "idx": 0, "kind": "narration | exposition | dialogue",\n' +

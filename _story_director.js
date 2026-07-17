@@ -43,10 +43,26 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
       ]
     };
 
+    // mark phase 1 as the wish phase (beat text has the invocation) and give a bleed beat to detect grammar
+    plan.beats[2].text = 'Soren lifted his hands and spoke the formal words: Fate beneath the turning tide, I offer a year of my life.';
+    plan.beats[3].text = 'The water warmed and the passage shuddered open — Fate’s answer.';
+
     window._buildStoryDirector(plan, 0);
     s._stagedActive = { plan: plan };
     const canon = plan._canon || {};
     const p2State = (plan.phases[2] && plan.phases[2]._state) || {};
+    const panel0 = plan.phases[0]._panel, panel1 = plan.phases[1]._panel, panel2 = plan.phases[2]._panel;
+
+    // hero prompt for phase 1 (the wish panel)
+    const phaseVS1 = window._resolvePhaseVisualState(plan.visualState, plan.phases[1], plan.phases, plan.beats);
+    s._stagedRegionContract = window._buildStagedRegionContract({ visualState: plan.visualState, phases: [] });
+    const wishHeroPrompt = window._buildStagedHeroPrompt(phaseVS1, 0, plan) || '';
+
+    // authored-panel validation: a panel missing dramaticQuestion/shotType/primary must be flagged INVALID
+    const plan2 = JSON.parse(JSON.stringify({ visualState: plan.visualState, phases: plan.phases.map(p => ({ phaseIdx: p.phaseIdx, startBeat: p.startBeat, label: p.label, characters_present: p.characters_present, props_present: [], li_visibility_phase: 'absent' })), beats: plan.beats }));
+    plan2.panels = [{ panelIdx: 0 /* missing dramaticQuestion, shotType, subjects, cast */ }, { panelIdx: 1 }, { panelIdx: 2 }];
+    window._buildStoryDirector(plan2, 0);
+    const failLoud = plan2._panelInvalid === true;
 
     // hero prompt for phase 2 (all three present)
     const phaseVS = window._resolvePhaseVisualState(plan.visualState, plan.phases[2], plan.phases, plan.beats);
@@ -59,11 +75,16 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
       kael: canon['kael'] || null,
       p2SorenState: p2State['soren'] || null,
       p2KaelState: p2State['kael'] || null,
-      heroPrompt
+      heroPrompt,
+      panel2ShotType: panel2 && panel2.shotType,
+      panel2HierPrimary: panel2 && panel2.hierarchy && panel2.hierarchy.primary,
+      panel1Grammar: (panel1 && panel1.grammarCues || []).join(' | '),
+      panel0HasPerf: !!(panel0 && panel0.cast && panel0.cast.length && panel0.cast[0].performance),
+      wishHeroPrompt, failLoud
     };
   });
   await browser.close();
-  const { canonKeys, soren, kael, p2SorenState, p2KaelState, heroPrompt } = R;
+  const { canonKeys, soren, kael, p2SorenState, p2KaelState, heroPrompt, panel2ShotType, panel2HierPrimary, panel1Grammar, panel0HasPerf, wishHeroPrompt, failLoud } = R;
 
   const checks = [
     ['Canon built for PC + Soren + Kael', canonKeys.includes('protagonist') && canonKeys.includes('soren') && canonKeys.includes('kael')],
@@ -74,8 +95,15 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['Continuity: Soren still PINNED in phase 2 (carried from P0)', p2SorenState && p2SorenState.status === 'pinned'],
     ['Continuity: Soren injury persists into phase 2 (no heal happened)', p2SorenState && (p2SorenState.injuries || []).length > 0],
     ['Relationship: Kael is trying_to_kill the protagonist', p2KaelState && p2KaelState.attitudeToward && p2KaelState.attitudeToward.protagonist === 'trying_to_kill'],
-    ['Hero prompt stamps CAST IDENTITY with all three distinct figures', /CAST IDENTITY \(HARD/.test(heroPrompt) && /Soren \[HUMAN/.test(heroPrompt) && /Kael \[KWISHEEN/.test(heroPrompt)],
-    ['Hero prompt: Soren fully-HUMAN-no-tentacles + injury persists', /Soren[\s\S]{0,180}fully HUMAN — NO tentacles/.test(heroPrompt) && /INJURY \(persists until healed\)/.test(heroPrompt)]
+    ['Hero prompt stamps the CAST with all three distinct figures', /STORY DIRECTOR — PANEL \(HARD/.test(heroPrompt) && /Soren \[HUMAN/.test(heroPrompt) && /Kael \[KWISHEEN/.test(heroPrompt)],
+    ['Hero prompt: Soren fully-HUMAN-no-tentacles + injury persists', /Soren[\s\S]{0,180}fully HUMAN — NO tentacles/.test(heroPrompt) && /INJURY \(persists until healed\)/.test(heroPrompt)],
+    ['Panel spec: attack phase inferred shotType=combat', panel2ShotType === 'combat'],
+    ['Panel spec: hierarchy assigns a primary subject', !!panel2HierPrimary],
+    ['Panel spec: derived cast carries a performance object', panel0HasPerf === true],
+    ['Wish grammar detected + expanded to PRAYER cue on the wish panel', /WISH \(visual grammar/.test(panel1Grammar) && /prayer/i.test(panel1Grammar)],
+    ['Hero prompt (wish panel): STORY DIRECTOR — PANEL + DRAMATIC QUESTION + prayer', /STORY DIRECTOR — PANEL \(HARD/.test(wishHeroPrompt) && /DRAMATIC QUESTION/.test(wishHeroPrompt) && /clasped together or open and rising in supplication/.test(wishHeroPrompt)],
+    ['Hero prompt: SHOT + HIERARCHY lines present', /SHOT \(/.test(wishHeroPrompt) && /HIERARCHY: primary=/.test(wishHeroPrompt)],
+    ['FAIL-LOUD: authored panels missing required fields are flagged invalid', failLoud === true]
   ];
 
   let pass = 0, fail = 0;
