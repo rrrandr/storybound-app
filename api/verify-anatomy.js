@@ -49,7 +49,7 @@ FIGURE SANITY (applies to ALL figures, human or not):
 7. PERSON COUNT: Count the distinct people/figures in the frame (include figures seen from behind or partially cropped). If EXPECTED PEOPLE is a number and the count is HIGHER, that is a VIOLATION — in particular a DUPLICATED / CLONED figure (two near-identical people when fewer were expected, or a phantom extra person) is a serious violation. If EXPECTED PEOPLE is "unknown", skip this specific check.
 8. HAND / LIMB SANITY: Does any single figure have too many hands or limbs for its kind (a human with 3+ hands, a stray extra arm, a hand growing from the wrong place)? That is a VIOLATION.
 
-For the SINGLE most damaging localizable defect (prefer a phantom/duplicate person, else an extra hand/limb), return a normalized bounding box so it can be painted out by a spot-repair. Coordinates are 0..1 with x,y = top-left corner. If there is no such localizable defect, set defect_bbox to null.
+For the SINGLE most damaging localizable defect, return a normalized bounding box so it can be spot-repaired. Priority for which defect to box: (1) a phantom/duplicate person, else (2) an extra hand/limb, else (3) a figure rendered as the WRONG SPECIES — e.g. a Kwisheen (a cephalopod-humanoid: scaled hide, tentacle-dreadlock hair, tentacle limbs, pill-pupil eyes) drawn as a plain ordinary human with normal hair and legs — in which case set defect_type to "species_anatomy" and box the WHOLE mis-rendered figure (head to foot) so it can be repainted as the correct species. Coordinates are 0..1 with x,y = top-left corner. If there is no such localizable defect, set defect_bbox to null.
 
 RESPOND IN EXACTLY THIS JSON FORMAT (no markdown, no explanation):
 {

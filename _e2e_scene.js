@@ -40,6 +40,13 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
     window._stagedFunnelBypass = true; // fixes reach the model
     window.__cgAuthorTimeoutMs = 180000; // give slow reasoning-model gen more time (providers degraded)
 
+    // ── COMBAT SCENARIO — a KWISHEEN combatant on-stage so the Many-Tide Method is
+    //    actually depicted (prior run drew a human raider; no Kwisheen combat shown).
+    //    Also exercises the Klein species-repaint fallback if the raider mis-renders as human.
+    s._sceneWant = "survive the Kwisheen raider's Many-Tide assault and keep Vael alive";
+    s.currentCrisis = 'a hostile KWISHEEN raider ambushes Mira and Vael in the drowned coral ruins and fights the Many-Tide way: a spear-tentacle threatening high, a cutlass-tentacle hooking low, a long dagger held back for the killing thrust, other tentacles anchoring against the current and controlling terrain — the visible spear is the feint. Vael, herself Kwisheen, answers in kind, tentacle against tentacle in the drift.';
+    s.aPlot = { goal: "survive the Kwisheen raider's Many-Tide ambush in the drowned ruins", antagonistOrAntiForce: 'a hostile Kwisheen raider fighting the Many-Tide way (spear-tentacle high, cutlass-tentacle low, a hidden dagger for the killing thrust — no ranged weapons)', namedClock: "before the raider's hidden dagger finds Mira" };
+
     // ── INSTRUMENT: record per-render anchor decision + prompt markers, in call order ──
     window.__probeRenders = [];
     var _origGen = window.generateImageWithFallback;
