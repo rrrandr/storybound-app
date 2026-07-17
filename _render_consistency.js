@@ -113,8 +113,9 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
   const checks = [
     ['PC appearance lock includes a hairStyle field', !!(a1 && a1.hairStyle && a1.hairStyle.length)],
     ['hairStyle is STABLE across resolves (locked, no drift)', a1 && a2 && a1.hairStyle === a2.hairStyle && a1.hairColor === a2.hairColor && a1.hairLength === a2.hairLength],
-    ['manta expansion adds the manta-HIDE material + Storm-cape form', /MANTA-RAY HIDE/.test(mantaExp) && /CLASPED AT BOTH SHOULDERS/.test(mantaExp) && /both wrists and both ankles/.test(mantaExp)],
-    ['manta expansion adds pearls/shells + forbids seaweed/cloth/ragged', /PEARLS or SHELLS/.test(mantaExp) && /never seaweed/.test(mantaExp) && /never ordinary woven cloth/.test(mantaExp)],
+    ['manta expansion adds the manta-HIDE material + wrist-to-side wing geometry', /MANTA-RAY HIDE/.test(mantaExp) && /WRISTS/.test(mantaExp) && /wing-membrane|wing-membranes/.test(mantaExp)],
+    ['manta expansion adds pearls/shells + forbids seaweed/cloth/ragged', /PEARLS or SHELLS/.test(mantaExp) && /never seaweed/i.test(mantaExp)],
+    ['manta = BEHAVIOUR not cape (living ray: unfurls, trails, manta silhouette)', /BEHAVES LIKE A LIVING MANTA/.test(mantaExp) && /UNFURLS/.test(mantaExp) && /TRAILS/.test(mantaExp) && /a plain fantasy cape/i.test(mantaExp)],
     ['manta expansion is a NO-OP for a non-manta wardrobe', plainExp === 'emerald silk gown, gold drop earrings'],
     ['underwater cut-in injects UNDERWATER PHYSICS + BILLOW', /UNDERWATER PHYSICS \(HARD/.test(cuPrompt) && /BILLOW/.test(cuPrompt) && /NEVER hanging straight down/.test(cuPrompt)],
     ['underwater cut-in wardrobe carries the expanded manta canon', /MANTA-RAY HIDE/.test(cuPrompt)],
