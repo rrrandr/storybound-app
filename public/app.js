@@ -153567,7 +153567,7 @@ No text, no watermark, no UI elements, share-ready.`;
         '- BODY — EXACT LIMB COUNTS (the #1 thing to get right; the render keeps growing extra arms): a humanoid TORSO with EXACTLY TWO upper ARMS — two tentacle-arms, no more, each ending in ONE hand of five fine finger-tentacles. TWO arms only — never three, four, or five. Below the waist the legs are replaced ENTIRELY by SIX locomotion tentacles: a lower-body mass for MOVEMENT, with no hands and no arms among them. There are THREE DISTINCT tentacle systems and they must not merge into a swarm of arms: (1) the TWO tentacle-ARMS (upper, with hands — the only manipulating limbs), (2) the SIX locomotion tentacles (lower body, no hands), (3) the hair-tentacles (sensory, on the scalp). Count the manipulating arms in the frame: there must be exactly TWO.\n' +
         '- HAIR: a full mane of thick living TENTACLE-DREADLOCKS from the scalp — sinuous, sucker-lined, in motion. This mane is the primary silhouette tell (an octopus\'s arms worn as hair), NOT fine wispy feelers.\n' +
         '- SKIN: SCALED / pebbled cephalopod hide — a fine hexagonal scale-and-sucker texture across face and body (this species HAS textured, patterned skin, not smooth human skin), in a vivid exotic color (deep red, gold, violet, blue, orange) with contrasting pattern-bloom that shifts with mood.\n' +
-        '- EYES: large, a vivid non-human iris (gold / amber) with a WIDE HORIZONTAL PILL PUPIL — a broad horizontal bar / rounded-capsule shape lying flat across the eye, blunt-rounded at both ends, spanning much of the iris width (like a cuttlefish or a goat\'s sideways rectangular pupil). It is HORIZONTAL and BROAD, never a thin vertical line and never a round dot.\n' +
+        '- EYES: large, a vivid non-human iris (gold / amber) with a HORIZONTAL pupil — a broad bar / rounded-capsule shape lying flat SIDEWAYS across the eye, spanning much of the iris width (like a cuttlefish or a goat\'s sideways pupil). THE KEY RULE IS ORIENTATION: the pupil runs HORIZONTALLY (left-to-right). A broad rounded capsule is ideal; but if the render insists on a SLIT, make it a HORIZONTAL slit (lying flat, sideways, like a goat\'s) — a horizontal slit is acceptable and correct, a VERTICAL slit is WRONG, and a small round dot is wrong.\n' +
         '- FACE (HARD — same humanoid structure in every panel; fixes the face drifting to a "Cthulhu" head): the FACE itself is HUMANOID — a clear brow, a nose, and a MOUTH WITH LIPS set on a defined jaw, two capsule-pupil eyes, all sheathed in the scaled hide. The ONLY tentacles are the HAIR (scalp) and the LOWER BODY; the face is NOT a mass of tentacles, has NO octopus-beak, and NO feelers/barbels/tentacles sprouting around the mouth or cheeks. A scaled humanoid visage under a tentacle mane — never a face made of tentacles.\n' +
         '- EARS: small, close to the skull, largely hidden under the tentacle-hair.\n' +
         '- ATTIRE (HARD — Kwisheen are fully CLOTHED, and the CHEST/TORSO is always COVERED by a GARMENT, never bare and never covered by jewelry alone — this holds for BOTH sexes and stays consistent across every panel): the torso wears a fitted shell-scale bodice, a woven kelp-fibre wrap bound across the chest, or a layered shell-and-bead breastplate; below, a loincloth or skirt of studded wraps. Over the garment sits layered jewelry — beaded necklaces, gem pendants (amethyst, pearl), fine chains. A female Kwisheen\'s breasts are covered by the bodice/wrap, not left bare with only a necklace. Ornament is cultural and expected, but it is worn ON TOP of clothing, never INSTEAD of it.\n' +
@@ -178734,7 +178734,7 @@ No text, no watermark, no UI elements, share-ready.`;
       _kwLockNames.forEach(function (nm) {
         var k = String(nm).trim().toLowerCase(); if (!k || _kwSeen[k]) return; _kwSeen[k] = true;
         var a = _resolveKwisheenAppearance(nm);
-        if (a) _kwLockLines.push('- ' + nm + ': ' + a.skin + ' skin with ' + a.pattern + ', ' + a.iris + ' eyes whose pupil is a WIDE HORIZONTAL PILL (a flat horizontal bar spanning the iris, blunt-rounded ends — never a vertical slit, never a round dot) — IDENTICAL in every panel (exactly two arms, six lower tentacles, tentacle-hair; same scaled HUMANOID face with a lipped mouth and defined jaw — NEVER a tentacle-mouthed / octopus-beaked face; the torso COVERED by a bodice/wrap, not bare; same adornment).');
+        if (a) _kwLockLines.push('- ' + nm + ': ' + a.skin + ' skin with ' + a.pattern + ', ' + a.iris + ' eyes whose pupil runs HORIZONTALLY across the iris (a flat sideways bar/capsule; or if a slit, a HORIZONTAL slit like a goat\'s — never a VERTICAL slit, never a round dot) — IDENTICAL in every panel (exactly two arms, six lower tentacles, tentacle-hair; same scaled HUMANOID face with a lipped mouth and defined jaw — NEVER a tentacle-mouthed / octopus-beaked face; the torso COVERED by a bodice/wrap, not bare; same adornment).');
       });
       if (_kwLockLines.length) {
         prompt += 'KWISHEEN APPEARANCE (LOCKED — these named Kwisheen keep these EXACT colours/patterns in every panel and issue; skin shifts ONLY as a deliberate camouflage beat, never as per-panel drift):\n' + _kwLockLines.join('\n') + '\n\n';
@@ -182319,7 +182319,7 @@ No text, no watermark, no UI elements, share-ready.`;
         var _kwA = null;
         try { if (state.kwisheenAppearance && state.kwisheenAppearance[_tgKey]) _kwA = state.kwisheenAppearance[_tgKey]; } catch (_) {}
         if (_kwA) {
-          subjectDesc = target.replace(/_/g, ' ') + '\'s FACE — a KWISHEEN (cephalopod-humanoid) face filling the frame: a HUMANOID scaled face (clear brow, nose, a lipped mouth on a defined jaw) sheathed in fine hexagonal SCALED cephalopod hide, framed by a mane of thick living TENTACLE-DREADLOCKS from the scalp (NOT human hair). LOCKED colours, identical to the surrounding panels: ' + _kwA.skin + ' skin with ' + _kwA.pattern + ', ' + _kwA.iris + ' eyes whose pupil is a WIDE HORIZONTAL PILL (a flat horizontal bar, never a vertical slit or a round dot). This is NOT a human face — do NOT render a human. Brow, eyes, mouth and jaw carry a single readable emotion per the EXPRESSION line. NO other figures in frame.';
+          subjectDesc = target.replace(/_/g, ' ') + '\'s FACE — a KWISHEEN (cephalopod-humanoid) face filling the frame: a HUMANOID scaled face (clear brow, nose, a lipped mouth on a defined jaw) sheathed in fine hexagonal SCALED cephalopod hide, framed by a mane of thick living TENTACLE-DREADLOCKS from the scalp (NOT human hair). LOCKED colours, identical to the surrounding panels: ' + _kwA.skin + ' skin with ' + _kwA.pattern + ', ' + _kwA.iris + ' eyes whose pupil runs HORIZONTALLY across the iris (a flat sideways bar/capsule; or, if the render insists on a slit, a HORIZONTAL slit like a goat\'s — a VERTICAL slit and a round dot are both wrong). This is NOT a human face — do NOT render a human. Brow, eyes, mouth and jaw carry a single readable emotion per the EXPRESSION line. NO other figures in frame.';
         } else {
           // Pull a CONCRETE locked descriptor when we have one, so a non-PC face cut-in
           // (which gets NO reference image of its own) matches the surrounding panels
@@ -182478,6 +182478,23 @@ No text, no watermark, no UI elements, share-ready.`;
       });
       var dur = Date.now() - t0;
       if (!imageUrl) return { error: 'gen_empty' };
+      // KWISHEEN FACE spot-repair (Roman 2026-07-17): a Kwisheen face/mouth cut-in that drifted
+      // (octopus-mouth, bald scalp missing the tentacle-hair, wrong pupils) is repainted BEFORE
+      // caching. Gated on a Kwisheen target + a face-carrying shot so human closeups never pay.
+      try {
+        var _cuIsKwFace = (shot === 'face' || shot === 'mouth' || shot === 'half') && !isPC && (function () {
+          try {
+            var _t = String(target || '').trim().toLowerCase();
+            if (state.kwisheenAppearance && state.kwisheenAppearance[_t]) return true;
+            if (_targLI && /kwisheen/i.test(String(state._liSpecies || ''))) return true;
+          } catch (_) {}
+          return false;
+        })();
+        if (_cuIsKwFace && window._stagedAnatomyRepair !== false && typeof _repairStagedAnatomyKlein === 'function') {
+          var _cuRepaired = await _repairStagedAnatomyKlein(imageUrl, { camera: 'close', expectedPeople: 1 });
+          if (_cuRepaired) { imageUrl = _cuRepaired; try { console.log('[STAGED:CUT] kwisheen-face spot-repaired (Klein) for ' + target); } catch (_) {} }
+        }
+      } catch (_cre) { try { console.warn('[STAGED:CUT] kwisheen-face repair wiring threw: ' + (_cre && _cre.message)); } catch (_) {} }
       state._stagedCloseupCache[cacheKey] = { imageUrl: imageUrl, generatedAt: Date.now() };
       console.log('[STAGED:CUT] ' + cacheKey + ' generated in ' + dur + 'ms');
       console.log('[STAGED:CUT:SOURCE] beat closeup just-generated | cacheKey=' + cacheKey + ' | url=' + imageUrl);
@@ -255574,7 +255591,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       var _iris = (_kw && _kw.iris) || 'amber-gold';
       var _spMask = _buildKleinMaskFromBbox(bbox);
       if (!_spMask) return null;
-      var speciesPrompt = 'The figure inside the masked region is a KWISHEEN (a cephalopod-humanoid) that has been wrongly drawn as an ordinary human. Repaint ONLY the masked figure as a Kwisheen, keeping the EXACT same pose, gesture, framing, scale, wardrobe silhouette, lighting and art style: give them a HUMANOID scaled face (clear brow, nose, a lipped mouth on a defined jaw) sheathed in fine hexagonal SCALED cephalopod hide, a mane of thick living TENTACLE-DREADLOCKS from the scalp instead of human hair, and eyes whose pupil is a WIDE HORIZONTAL PILL (a flat horizontal bar, never a vertical slit or a round dot). LOCKED colours: ' + _skin + ' skin with ' + _patt + ', ' + _iris + ' eyes. Keep EVERYTHING outside the mask pixel-identical. Seamless edges, no visible boundary. Do NOT add any new figures.';
+      var speciesPrompt = 'The figure inside the masked region is a KWISHEEN (a cephalopod-humanoid) that has been wrongly drawn as an ordinary human. Repaint ONLY the masked figure as a Kwisheen, keeping the EXACT same pose, gesture, framing, scale, wardrobe silhouette, lighting and art style: give them a HUMANOID scaled face (clear brow, nose, a lipped mouth on a defined jaw) sheathed in fine hexagonal SCALED cephalopod hide, a mane of thick living TENTACLE-DREADLOCKS from the scalp instead of human hair, and eyes whose pupil runs HORIZONTALLY across the iris (a flat sideways bar/capsule; or, if a slit, a HORIZONTAL slit like a goat\'s — never a VERTICAL slit, never a round dot). LOCKED colours: ' + _skin + ' skin with ' + _patt + ', ' + _iris + ' eyes. Keep EVERYTHING outside the mask pixel-identical. Seamless edges, no visible boundary. Do NOT add any new figures.';
       try {
         console.log('[ANATOMY-REPAIR] Klein SPECIES-repaint (Kwisheen): bbox=' + JSON.stringify(bbox) + ' colours=' + _skin + '/' + _iris);
         var _repSp = await callBFLKontext(speciesPrompt, '1024x1024', 60000, null, null, null, [imageUrl], _BFL_KLEIN, _spMask);
@@ -255582,6 +255599,33 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
         return (_repSp.startsWith('http') || _repSp.startsWith('data:')) ? _repSp : 'data:image/png;base64,' + _repSp;
       } catch (_spe) {
         console.warn('[ANATOMY-REPAIR] Klein species threw: ' + (_spe && _spe.message) + ' — keeping original');
+        return null;
+      }
+    }
+    // 2a2) KWISHEEN FACE REPAIR — the Kwisheen is the right species but the FACE/HEAD is
+    //     drawn wrong (octopus-mouth / tentacle-face, bald scalp missing the tentacle-hair,
+    //     or vertical/round pupils). verify-anatomy boxes the head-and-face region. Repaint
+    //     ONLY that region with the canonical humanoid Kwisheen face + locked colours.
+    if (/kwisheen_face/.test(type) && Array.isArray(bbox)) {
+      var _fspStr = (String(state._playerSpecies || '') + ' ' + String(state._liSpecies || '')).toLowerCase();
+      var _fHasKw = /kwisheen/.test(_fspStr);
+      try { if (!_fHasKw && state.kwisheenAppearance && Object.keys(state.kwisheenAppearance).length) _fHasKw = true; } catch (_) {}
+      if (!_fHasKw) { try { console.log('[ANATOMY-REPAIR] kwisheen_face defect but no Kwisheen on-stage — keeping original'); } catch (_) {} return null; }
+      var _fkw = null;
+      try { var _fka = state.kwisheenAppearance || {}; var _fkk = Object.keys(_fka); if (_fkk.length) _fkw = _fka[_fkk[0]]; } catch (_) {}
+      var _fskin = (_fkw && _fkw.skin) || 'deep teal-and-slate';
+      var _fpatt = (_fkw && _fkw.pattern) || 'faint hexagonal scale-mottling';
+      var _firis = (_fkw && _fkw.iris) || 'amber-gold';
+      var _fMask = _buildKleinMaskFromBbox(bbox);
+      if (!_fMask) return null;
+      var facePrompt = 'The masked region is the HEAD and FACE of a KWISHEEN (a cephalopod-humanoid) that has been drawn WRONG. Repaint ONLY the masked head so it is the canonical Kwisheen face, keeping the same head position, size, angle, lighting and art style: a HUMANOID FACE — a clear brow, a nose, and a MOUTH WITH LIPS on a defined jaw — sheathed in fine hexagonal SCALED cephalopod hide; a full mane of thick living TENTACLE-DREADLOCKS growing from the SCALP (the scalp is NOT bald — restore the tentacle-hair mane); and eyes with a HORIZONTAL pupil running sideways across the iris (a flat capsule, or a horizontal goat-like slit — never a vertical slit, never a round dot). The face is a scaled HUMANOID visage under a tentacle mane — it is NOT a mass of tentacles, has NO octopus-beak, and NO tentacles / barbels / feelers sprouting around the mouth, chin, or cheeks. LOCKED colours, matching the body outside the mask: ' + _fskin + ' skin with ' + _fpatt + ', ' + _firis + ' eyes. Keep EVERYTHING outside the mask pixel-identical (body, tentacle-arms, wardrobe, background). Seamless edges, no visible boundary. Do NOT add any new figures.';
+      try {
+        console.log('[ANATOMY-REPAIR] Klein KWISHEEN-FACE repaint: bbox=' + JSON.stringify(bbox) + ' colours=' + _fskin + '/' + _firis);
+        var _repFace = await callBFLKontext(facePrompt, '1024x1024', 60000, null, null, null, [imageUrl], _BFL_KLEIN, _fMask);
+        if (!_repFace) { console.warn('[ANATOMY-REPAIR] Klein kwisheen-face returned empty — keeping original'); return null; }
+        return (_repFace.startsWith('http') || _repFace.startsWith('data:')) ? _repFace : 'data:image/png;base64,' + _repFace;
+      } catch (_fpe) {
+        console.warn('[ANATOMY-REPAIR] Klein kwisheen-face threw: ' + (_fpe && _fpe.message) + ' — keeping original');
         return null;
       }
     }

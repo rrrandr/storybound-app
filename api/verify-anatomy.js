@@ -48,8 +48,9 @@ VERIFICATION CHECKLIST:
 FIGURE SANITY (applies to ALL figures, human or not):
 7. PERSON COUNT: Count the distinct people/figures in the frame (include figures seen from behind or partially cropped). If EXPECTED PEOPLE is a number and the count is HIGHER, that is a VIOLATION — in particular a DUPLICATED / CLONED figure (two near-identical people when fewer were expected, or a phantom extra person) is a serious violation. If EXPECTED PEOPLE is "unknown", skip this specific check.
 8. HAND / LIMB SANITY: Does any single figure have too many hands or limbs for its kind (a human with 3+ hands, a stray extra arm, a hand growing from the wrong place)? That is a VIOLATION.
+9. KWISHEEN FACE (ONLY when a Kwisheen is in the scene): a correct Kwisheen has a HUMANOID face — a clear brow, a nose, and a MOUTH WITH LIPS on a defined jaw (sheathed in scaled hide), a mane of thick TENTACLE-DREADLOCKS from the scalp, and HORIZONTAL (sideways) pupils. It is a VIOLATION (a "kwisheen_face" defect) when the Kwisheen's FACE/head is drawn wrong: (a) the face is a MASS OF TENTACLES / an octopus-head / a Cthulhu-face, or has tentacles / barbels / a beak sprouting around the MOUTH or CHIN instead of a lipped humanoid mouth; (b) the scalp is BALD / bare with NO tentacle-dreadlock hair (the mane is missing); or (c) the pupils are VERTICAL slits or plain round human dots instead of horizontal. Report which of a/b/c applies in the violations list.
 
-For the SINGLE most damaging localizable defect, return a normalized bounding box so it can be spot-repaired. Priority for which defect to box: (1) a phantom/duplicate person, else (2) an extra hand/limb, else (3) a figure rendered as the WRONG SPECIES — e.g. a Kwisheen (a cephalopod-humanoid: scaled hide, tentacle-dreadlock hair, tentacle limbs, pill-pupil eyes) drawn as a plain ordinary human with normal hair and legs — in which case set defect_type to "species_anatomy" and box the WHOLE mis-rendered figure (head to foot) so it can be repainted as the correct species. Coordinates are 0..1 with x,y = top-left corner. If there is no such localizable defect, set defect_bbox to null.
+For the SINGLE most damaging localizable defect, return a normalized bounding box so it can be spot-repaired. Priority for which defect to box: (1) a phantom/duplicate person, else (2) an extra hand/limb, else (3) a figure rendered as the WRONG SPECIES — e.g. a Kwisheen (a cephalopod-humanoid: scaled hide, tentacle-dreadlock hair, tentacle limbs, sideways pupils) drawn as a plain ordinary human with normal hair and legs — in which case set defect_type to "species_anatomy" and box the WHOLE mis-rendered figure (head to foot); else (4) a Kwisheen with a WRONG FACE/HEAD per check 9 (octopus-mouth/tentacle-face, bald missing hair, or wrong pupils) — set defect_type to "kwisheen_face" and box the Kwisheen's HEAD-AND-FACE region (from just above the scalp to just below the chin, framing the full head) so the face can be repainted. Coordinates are 0..1 with x,y = top-left corner. If there is no such localizable defect, set defect_bbox to null.
 
 RESPOND IN EXACTLY THIS JSON FORMAT (no markdown, no explanation):
 {
@@ -60,7 +61,7 @@ RESPOND IN EXACTLY THIS JSON FORMAT (no markdown, no explanation):
   "tentacle_count": number or null,
   "has_human_legs": true or false or null,
   "person_count": number or null,
-  "defect_type": "extra_person" or "extra_hand" or "extra_limb" or "species_anatomy" or null,
+  "defect_type": "extra_person" or "extra_hand" or "extra_limb" or "species_anatomy" or "kwisheen_face" or null,
   "defect_bbox": [x, y, w, h] or null
 }
 
