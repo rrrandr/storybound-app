@@ -179005,7 +179005,7 @@ No text, no watermark, no UI elements, share-ready.`;
     }
     if (!liAbsent) {
       if (visualState.li_wardrobe) {
-        prompt += 'LOVE INTEREST WARDROBE (HARD MATCH): ' + visualState.li_wardrobe + '\n';
+        prompt += 'LOVE INTEREST WARDROBE (HARD MATCH): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(visualState.li_wardrobe) : visualState.li_wardrobe) + '\n';
       } else {
         // WARDROBE-EMPTY FALLBACK — when the analyzer returned no explicit
         // li_wardrobe (the prose didn't describe LI clothing), the image
@@ -179074,7 +179074,7 @@ No text, no watermark, no UI elements, share-ready.`;
           genderTag = ' [' + c.gender.trim().toUpperCase() + ' — HARD, do NOT gender-roll]';
         }
         var charLine = '- ' + c.name + genderTag +
-            (c.wardrobe ? ' — wearing ' + c.wardrobe : '') +
+            (c.wardrobe ? ' — wearing ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(c.wardrobe) : c.wardrobe) : '') +
             (c.position ? ', ' + c.position : '');
         // Per-character expression (added 2026-05-15) — counters the
         // artist-style default of painting female NPCs with dramatic
@@ -182224,7 +182224,22 @@ No text, no watermark, no UI elements, share-ready.`;
         if (_kwA) {
           subjectDesc = target.replace(/_/g, ' ') + '\'s FACE — a KWISHEEN (cephalopod-humanoid) face filling the frame: a HUMANOID scaled face (clear brow, nose, a lipped mouth on a defined jaw) sheathed in fine hexagonal SCALED cephalopod hide, framed by a mane of thick living TENTACLE-DREADLOCKS from the scalp (NOT human hair). LOCKED colours, identical to the surrounding panels: ' + _kwA.skin + ' skin with ' + _kwA.pattern + ', ' + _kwA.iris + ' eyes whose pupil is a WIDE HORIZONTAL PILL (a flat horizontal bar, never a vertical slit or a round dot). This is NOT a human face — do NOT render a human. Brow, eyes, mouth and jaw carry a single readable emotion per the EXPRESSION line. NO other figures in frame.';
         } else {
-          subjectDesc = target.replace(/_/g, ' ') + '\'s FACE, filling the frame — this specific character from the scene, rendered consistent with their established appearance in the surrounding panels (same coloring, features, and species anatomy). Eyes, brow, mouth, and jaw all visible, carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
+          // Pull a CONCRETE locked descriptor when we have one, so a non-PC face cut-in
+          // (which gets NO reference image of its own) matches the surrounding panels
+          // instead of freelancing hair/skin/ethnicity. (Roman 2026-07-16)
+          var _npDesc = '';
+          if (_targLI) {
+            try { var _lfd = state.liFaceDescription || {}; var _lk = Object.keys(_lfd); if (_lk.length) _npDesc = String(_lfd[_lk[0]] || '').trim(); } catch (_) {}
+          }
+          if (!_npDesc) {
+            try {
+              var _ocpF = (state._stagedActive && state._stagedActive.plan && state._stagedActive.plan.visualState && state._stagedActive.plan.visualState.other_characters_present) || [];
+              var _tnmF = String(target).replace(/_/g, ' ').trim().toLowerCase();
+              var _hitF = _ocpF.filter(function (c) { return String((c && c.name) || '').trim().toLowerCase() === _tnmF; })[0];
+              if (_hitF && _hitF.wardrobe) _npDesc = String(_hitF.wardrobe).trim();
+            } catch (_) {}
+          }
+          subjectDesc = target.replace(/_/g, ' ') + '\'s FACE, filling the frame — this specific character from the scene' + (_npDesc ? '. Established look (keep IDENTICAL to the surrounding panels — same hair colour, hairstyle, skin tone / ethnicity, and features): ' + _npDesc : '') + '. Rendered consistent with their established appearance in the surrounding panels (same coloring, features, hairstyle, and species anatomy). Eyes, brow, mouth, and jaw all visible, carrying a single readable emotion per the EXPRESSION line. NO other figures in frame.';
         }
       }
     } else if (target === 'villain' || archetype === 'villain') {
@@ -182286,8 +182301,24 @@ No text, no watermark, no UI elements, share-ready.`;
     if (_cuBg) {
       _cuGrounding += 'SCENE SETTING (HARD — this insert lives INSIDE this exact setting): ' + _cuBg + '. Any surface, prop, or object in the frame belongs entirely to THIS setting and reads as in-world — keep the frame consistent with where the scene actually takes place.\n\n';
     }
-    if (isPC && _cuWard) {
-      _cuGrounding += 'PROTAGONIST WARDROBE (HARD — any of the protagonist\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(_cuWard) : _cuWard) + '. Render the clothing and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
+    // Wardrobe grounding for WHICHEVER character the insert features — PC, LI, or a
+    // named side character (Roman 2026-07-16: previously PC-only, so an LI / side-char
+    // closeup got no wardrobe lock and drifted frame to frame). Pull the target's own
+    // wardrobe from visualState; manta-expand it so the garment stays identical.
+    var _cuTgtWard = '', _cuWardLabel = '';
+    if (isPC) { _cuTgtWard = _cuWard; _cuWardLabel = 'PROTAGONIST'; }
+    else if (_targLI) { _cuTgtWard = String(_cuVS.li_wardrobe || '').trim(); _cuWardLabel = 'LOVE INTEREST'; }
+    else if (target) {
+      try {
+        var _ocpW = _cuVS.other_characters_present || [];
+        var _tnmW = String(target).replace(/_/g, ' ').trim().toLowerCase();
+        var _hitW = _ocpW.filter(function (c) { return String((c && c.name) || '').trim().toLowerCase() === _tnmW; })[0];
+        if (_hitW) _cuTgtWard = String(_hitW.wardrobe || '').trim();
+      } catch (_) {}
+      _cuWardLabel = String(target).replace(/_/g, ' ').toUpperCase();
+    }
+    if (_cuTgtWard) {
+      _cuGrounding += _cuWardLabel + ' WARDROBE (HARD — any of this character\'s clothing visible in frame, whether a sleeve, collar, or neckline): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(_cuTgtWard) : _cuTgtWard) + '. Render the clothing and skin to match this wardrobe exactly. The style reference images inform LINEWORK and shading ONLY — never clothing; take the garment from this description alone.\n\n';
     }
     if (isPC && _cuHumanPC) {
       _cuGrounding += 'PROTAGONIST SPECIES (HARD): the protagonist is fully HUMAN — human skin, human features, a human face and five-fingered human hands, consistent with the human protagonist in the surrounding panels.\n\n';

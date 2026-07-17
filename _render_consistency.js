@@ -42,11 +42,28 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     await window._renderCutCloseup('neutral', 'warm', 'protagonist', 'gesture', { background: vs2.background, pcWardrobe: vs2.pc_wardrobe, pcSpecies: 'Human' }).catch(function () {});
     const dryPrompt = window._lastCloseupPrompt || '';
 
-    return { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt };
+    // (4) LI cut-in carries the LI's OWN wardrobe + face descriptor. Use an LI-POV edition
+    //     so the LI's face is NOT concealed (a male LI is otherwise a coerced Mystery-Man
+    //     mouth shot by design — his face is intentionally hidden).
+    s.altPOVEdition = 'LI';
+    s.liFaceDescription = { li1: 'weathered dark-bronze skin, close-cropped black hair, a scar through one brow' };
+    const vsLi = { background: 'the drowned coral colonnade at depth', pc_wardrobe: 'a manta-cloak', li_wardrobe: 'a pearl-studded shell cuirass over a slate loincloth', lighting: 'cool',
+                   other_characters_present: [{ name: 'Tess', wardrobe: 'a worn kelp-dyed diving wrap, tight braid' }] };
+    s._stagedActive.plan = { visualState: vsLi };
+    window._lastCloseupPrompt = '';
+    await window._renderCutCloseup('jaw_clench', 'cool', 'li', 'face', { background: vsLi.background }).catch(function () {});
+    const liPrompt = window._lastCloseupPrompt || '';
+
+    // (5) named side character cut-in carries THAT character's wardrobe
+    window._lastCloseupPrompt = '';
+    await window._renderCutCloseup('worry', 'cool', 'Tess', 'face', { background: vsLi.background }).catch(function () {});
+    const sidePrompt = window._lastCloseupPrompt || '';
+
+    return { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt };
   });
 
   await browser.close();
-  const { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt } = R;
+  const { a1, a2, mantaExp, plainExp, cuPrompt, dryPrompt, liPrompt, sidePrompt } = R;
   const checks = [
     ['PC appearance lock includes a hairStyle field', !!(a1 && a1.hairStyle && a1.hairStyle.length)],
     ['hairStyle is STABLE across resolves (locked, no drift)', a1 && a2 && a1.hairStyle === a2.hairStyle && a1.hairColor === a2.hairColor && a1.hairLength === a2.hairLength],
@@ -55,7 +72,11 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['manta expansion is a NO-OP for a non-manta wardrobe', plainExp === 'emerald silk gown, gold drop earrings'],
     ['underwater cut-in injects UNDERWATER PHYSICS + BILLOW', /UNDERWATER PHYSICS \(HARD/.test(cuPrompt) && /BILLOW/.test(cuPrompt) && /NEVER hanging straight down/.test(cuPrompt)],
     ['underwater cut-in wardrobe carries the expanded manta canon', /MANTA-RAY HIDE/.test(cuPrompt)],
-    ['dry-land cut-in does NOT inject water physics (no false-positive)', !/UNDERWATER PHYSICS/.test(dryPrompt)]
+    ['dry-land cut-in does NOT inject water physics (no false-positive)', !/UNDERWATER PHYSICS/.test(dryPrompt)],
+    ['LI face cut-in carries the LI\'s OWN wardrobe (not PC\'s, not blank)', /LOVE INTEREST WARDROBE \(HARD/.test(liPrompt) && /shell cuirass/.test(liPrompt)],
+    ['LI face cut-in carries the LI\'s concrete locked face descriptor', /Established look/.test(liPrompt) && /scar through one brow/.test(liPrompt)],
+    ['named side-char cut-in carries THAT character\'s wardrobe', /TESS WARDROBE \(HARD/.test(sidePrompt) && /kelp-dyed diving wrap/.test(sidePrompt)],
+    ['LI/side cut-ins still get underwater physics (universal, not PC-gated)', /UNDERWATER PHYSICS/.test(liPrompt) && /UNDERWATER PHYSICS/.test(sidePrompt)]
   ];
 
   let pass = 0, fail = 0;
