@@ -153925,11 +153925,22 @@ No text, no watermark, no UI elements, share-ready.`;
       var primary, secondary = '', background = [];
       if (ap && ap.subjects && ap.subjects.primary) { primary = ap.subjects.primary; secondary = ap.subjects.secondary || ''; background = ap.subjects.background || []; }
       else {
-        // derive: focus char = the one the beat text names most / the non-PC actor; else PC
+        // STORYBOARD v2 — the PRIMARY SUBJECT is a VISUAL subject, not always "the other character".
+        var dn = function (k) { return (canon[k] && canon[k].displayName) || k; };
         var others = present.filter(function (t) { return t !== 'protagonist'; }).map(function (t) { return keyFor(t); });
-        primary = others[0] ? ((canon[others[0]] && canon[others[0]].displayName) || others[0]) : ((canon['protagonist'] && canon['protagonist'].displayName) || 'protagonist');
-        secondary = (canon['protagonist'] && canon['protagonist'].displayName) || 'protagonist';
-        background = others.slice(1).map(function (k) { return (canon[k] && canon[k].displayName) || k; });
+        var charPrimary = others[0] ? dn(others[0]) : dn('protagonist');
+        var _sbd = phase._storyboardDoc || {};
+        if (phase._establishing) {
+          // ESTABLISHING SHOT — the recurring named character ALONE and dominant (reader recognition + a
+          // clean casting frame). Not a portrait: a dramatic introduction. No second figure competing.
+          primary = dn(keyFor(phase._establishing)); secondary = ''; background = [];
+        } else if (/Revelation|Consequence|Transformation/.test(phase._readerLearning || '') && _sbd.eyeMagnet && !/charact|two (?:women|men|people|figures)|face|talking/i.test(_sbd.eyeMagnet)) {
+          // EVENT DOMINANCE — on an event beat the EVENT is the primary visual subject; characters support.
+          primary = _sbd.eyeMagnet; secondary = charPrimary;
+          background = others.slice(1).map(dn); if (charPrimary !== dn('protagonist')) background.push(dn('protagonist'));
+        } else {
+          primary = charPrimary; secondary = dn('protagonist'); background = others.slice(1).map(dn);
+        }
       }
       if (ap && (!ap.subjects || !ap.subjects.primary)) invalid.push('primary subject');
       // grammar
@@ -153992,6 +154003,9 @@ No text, no watermark, no UI elements, share-ready.`;
         grammarCues: Object.keys(grammar).filter(function (g) { return grammar[g] && _VISUAL_GRAMMAR_V1[g]; }).map(function (g) { return (g === 'sacrifice') ? _sacrificeHandGrammar(txt) : _VISUAL_GRAMMAR_V1[g]; }),
         perspectiveContract: _perspective, // reader / characters / physical-world — the three-way split
         wishAnchor: _wishAnchor,            // the concrete thing Fate judges — where the burst attaches
+        eventLed: (primary === (phase._storyboardDoc && phase._storyboardDoc.eyeMagnet)), // the EVENT is the subject
+        establishing: !!phase._establishing,      // a dramatic solo introduction of a recurring character
+        castingEligible: !!phase._establishing,   // only establishing shots are clean identity sources
         cast: cast, authored: !!ap, invalidFields: invalid
       };
       if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
@@ -154735,6 +154749,9 @@ No text, no watermark, no UI elements, share-ready.`;
     var prim = _castingToken(panel.hierarchy.primary || '');
     // (1) the NPC must BE the primary subject (not co-equal, not background)
     if (!prim || (prim !== n && prim.indexOf(n) === -1 && n.indexOf(prim) === -1)) return false;
+    // an ESTABLISHING shot is a clean source BY DESIGN (solo, close, non-adversarial) — the reason the
+    // Storyboard reserves it. Trust the flag rather than re-deriving from the beat's wide/adversarial defaults.
+    if (panel.establishing) return true;
     // (2) medium-close or closer — a wide/medium two-shot crops the wrong region
     var doc = (phase && phase._storyboardDoc) || {};
     var closeness = _castingShotCloseness([doc.composition, panel.shotType, panel.shotExpansion, (phase && phase.camera_override)].join(' '));
@@ -155007,10 +155024,62 @@ No text, no watermark, no UI elements, share-ready.`;
         _storyboardDoc: _buildStoryboardDoc(s.type, s.text, null)
       };
     });
+    // ── NAMED-CHARACTER ESTABLISHING SHOT (Storyboard v2, Roman 2026-07-18) ──────────────────────────
+    // A recurring named antagonist must get ONE early hero panel where THEY are the primary subject —
+    // a dramatic introduction ("Kresh emerges from the coral"), for reader recognition AND a clean
+    // casting frame. Reserve the earliest NON-event-led panel where the antagonist is present. Without
+    // this, every panel is a face-off, the reader never learns who they are, and casting has no clean source.
+    try {
+      var _vs = (plan && plan.visualState) || {};
+      var _antag = ((_vs.other_characters_present || []).filter(function (o) { return o && o.name && /raider|enemy|attacker|assassin|hunter|antagonist|villain/i.test((o.role || '') + ' ' + (o.position || '')); })[0]
+                 || (_vs.other_characters_present || []).filter(function (o) { return o && o.name; })[0]) || null;
+      if (_antag && _antag.name) {
+        var _phs = plan._storyboardPhases;
+        var _alreadySolo = _phs.some(function (p) { return p._establishing; });
+        if (!_alreadySolo) {
+          // the EARLIEST character-led panel (Orientation/Threat/Decision) — never an event-led beat
+          // (Revelation/Consequence/Transformation, where the EVENT must dominate).
+          var _cand = _phs.filter(function (p) { return !/Revelation|Consequence|Transformation/.test(p._readerLearning); })[0];
+          if (_cand) { _cand._establishing = String(_antag.name); try { console.log('[STORYBOARD] establishing shot reserved for "' + _antag.name + '" @ panel ' + _cand.phaseIdx); } catch (_) {} }
+        }
+      }
+    } catch (_) {}
+    // STORYBOARD CONVERGENCE LINT — the comic must show EVENTS, not repeat face-offs.
+    try {
+      plan._storyboardConvergenceLint = _storyboardConvergenceLint(plan._storyboardPhases, !!(plan.visualState && (plan.visualState.other_characters_present || []).length));
+      var _cvl = plan._storyboardConvergenceLint;
+      if (_cvl.warnings.length) { try { console.log('[STORYBOARD-CONVERGENCE] ' + _cvl.warnings.length + ' — ' + _cvl.warnings.join(' | ')); } catch (_) {} }
+    } catch (_) {}
     try { console.log('[STORYBOARD] ' + plan._storyboard.map(function (s) { return s.type + (s.isPageTurn ? '*' : ''); }).join(' → ')); } catch (_) {}
     return plan._storyboard;
   }
   window._buildStoryboard = _buildStoryboard;
+  // STORYBOARD CONVERGENCE LINT (Storyboard v2) — flags the failures the regen13 review named: an event
+  // beat rendered as a character face-off, repeated confrontations, a recurring character with no
+  // establishing shot, and the environment absent across the hero panels.
+  function _storyboardConvergenceLint(phases, hasNamedNpc) {
+    var warnings = [], d = phases || [];
+    var eventLedTypes = { Revelation: 1, Consequence: 1, Transformation: 1 };
+    var charLedRun = 0, hasEstablishing = false, envPanels = 0;
+    for (var i = 0; i < d.length; i++) {
+      var p = d[i], doc = p._storyboardDoc || {};
+      if (p._establishing) hasEstablishing = true;
+      var eventLed = eventLedTypes[p._readerLearning] && doc.eyeMagnet && !/charact|two (?:women|men|people|figures)|face|talking/i.test(doc.eyeMagnet);
+      if (eventLed) { charLedRun = 0; envPanels++; }
+      else {
+        charLedRun++;
+        if (charLedRun >= 3) warnings.push('PANEL ' + i + ': REPETITIVE CONFRONTATION — ' + charLedRun + ' consecutive character-led panels; shift the primary subject to an EVENT or the environment.');
+      }
+      // an event beat whose eye-magnet is people = the event is being described, not shown
+      if (eventLedTypes[p._readerLearning] && (!doc.eyeMagnet || /charact|two (?:women|men|people|figures)|face|talking/i.test(doc.eyeMagnet))) {
+        warnings.push('PANEL ' + i + ' (' + p._readerLearning + '): the EVENT is not the visual subject — it will render as a face-off, not the event.');
+      }
+    }
+    if (hasNamedNpc && !hasEstablishing) warnings.push('CASTING/READER: a recurring named character has NO establishing shot — reserve one early solo panel (reader recognition + a clean identity frame).');
+    if (d.length >= 4 && envPanels === 0) warnings.push('ENVIRONMENT: no event/environment-led panel across the scene — readers will remember faces, not the place or what happened.');
+    return { warnings: warnings };
+  }
+  window._storyboardConvergenceLint = _storyboardConvergenceLint;
 
   // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
   // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can
@@ -180510,11 +180579,22 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_panel.perspectiveContract) { var _pc2 = _panel.perspectiveContract; _cidLines.push('PERSPECTIVE CONTRACT (three separate truths — keep them separate): READER learns → ' + _pc2.readerLearns + '  CHARACTERS learn → ' + _pc2.charactersLearn + '  PHYSICAL world → ' + _pc2.observableReality + '  (Render the READER\'s truth via Fate\'s non-diegetic symbol; the characters must NOT react to it.)'); }
           if (_panel.shotExpansion) _cidLines.push('SHOT (' + _panel.shotType + '): ' + _panel.shotExpansion);
           var h = _panel.hierarchy || {};
-          if (h.primary) _cidLines.push('HIERARCHY: primary=' + h.primary + (h.secondary ? '  secondary=' + h.secondary : '') + (h.background && h.background.length ? '  background=' + h.background.join(', ') : '') + ' — never three co-equal, randomly-placed figures.');
+          // STORYBOARD v2 — the PRIMARY SUBJECT is a VISUAL subject. An establishing shot = the character
+          // ALONE and dominant; an event-led panel = the EVENT dominant, characters supporting.
+          if (_panel.establishing) {
+            _cidLines.push('ESTABLISHING SHOT (HARD — this panel INTRODUCES ' + h.primary + '): ' + h.primary + ' ALONE and dominant, filling the frame in a dramatic entrance (emerging / blocking the way / descending) — a medium-close hero shot that teaches the reader who this is. NO second figure competing for attention; the protagonist is absent or a small silhouette. This is NOT a face-off.');
+          } else if (_panel.eventLed) {
+            _cidLines.push('PRIMARY VISUAL SUBJECT (HARD — the EVENT is the subject, not the people): ' + h.primary + ' DOMINATES the frame and is seen FIRST; ' + (h.secondary ? h.secondary + ' is a SMALLER supporting figure reacting to it' : 'any figures are small and supporting') + '. Do NOT compose this as two faces confronting each other — SHOW THE EVENT.');
+          } else if (h.primary) {
+            _cidLines.push('HIERARCHY: primary=' + h.primary + (h.secondary ? '  secondary=' + h.secondary : '') + (h.background && h.background.length ? '  background=' + h.background.join(', ') : '') + ' — never three co-equal, randomly-placed figures.');
+          }
+          if (_panel.visualQuestion) { /* visualQuestion already emitted from the storyboard doc above */ }
           // BLOCKING (composition, NOT anti-romance text): when two figures are adversarial, the
           // model must be told the SPATIAL relationship — distance, what is BETWEEN them, who
           // advances, camera — because neutral bodies standing close read as intimacy. (2026-07-17)
+          // SKIP on establishing / event-led panels — those are NOT face-offs (Storyboard v2).
           (function () {
+            if (_panel.establishing || _panel.eventLed) return;
             var aggressor = null, target = null, weapon = '';
             _keys.forEach(function (k) {
               var st = _stateSnap[k]; if (!st || !st.attitudeToward) return;
