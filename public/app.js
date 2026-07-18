@@ -153889,6 +153889,53 @@ No text, no watermark, no UI elements, share-ready.`;
     return { warnings: warnings };
   }
   window._visualPolishLint = _visualPolishLint;
+  // QUALITY SCORECARD (Roman 2026-07-18) — the shift from "add another role" to "measure each role".
+  // NOT a new production stage: it aggregates the DETERMINISTIC lints every stage already emits into a
+  // per-dimension score + overall, so regressions are visible per regen. This is the PRE-RENDER
+  // ("is the plan well-DIRECTED?") half; the POST-RENDER dimensions (did identity actually stay locked,
+  // did emotion LAND on the faces, is the SFX typography good) require the blind/vision eval (paid) and
+  // are left null here — never faked from a lint.
+  function _scoreFromLint(lint, errWeight, warnWeight) {
+    var e = (lint && lint.errors && lint.errors.length) || 0;
+    var w = (lint && lint.warnings && lint.warnings.length) || 0;
+    return Math.max(0, 100 - e * errWeight - w * warnWeight);
+  }
+  function _buildQualityScorecard(plan) {
+    var docs = ((plan && (plan._storyboardPhases || plan.phases)) || []).map(function (p) { return p && p._storyboardDoc; }).filter(Boolean);
+    // EMOTION (directed arc): intensity spread + expression diversity + a crest
+    var ints = docs.map(function (d) { return d.pcEmotion && d.pcEmotion.intensity; }).filter(function (n) { return typeof n === 'number'; });
+    var spread = ints.length ? (Math.max.apply(null, ints) - Math.min.apply(null, ints)) : 0;
+    var exprs = docs.map(function (d) { return d.pcEmotion && d.pcEmotion.expression; }).filter(Boolean);
+    var exprDiverse = (new Set(exprs)).size >= Math.min(4, exprs.length || 1);
+    var hasCrest = docs.some(function (d) { return d.emotionalApex === 'MAXIMUM' || d.emotionalApex === 'HIGH'; });
+    var emotion = docs.length ? Math.max(0, Math.min(100, 58 + spread * 8 + (exprDiverse ? 12 : 0) + (hasCrest ? 8 : 0))) : null;
+    // COVERAGE (reader can reconstruct the story): the key understanding types present
+    var have = {}; docs.forEach(function (d) { have[d.purpose] = 1; });
+    var need = ['Orientation', 'Threat', 'Transformation', 'Revelation', 'Decision'];
+    var coverage = docs.length ? Math.round(100 * need.filter(function (n) { return have[n]; }).length / need.length) : null;
+    // IDENTITY (directive level): morphology pinned for every canon character (rendered identity = blind eval)
+    var canon = (plan && plan._canon) || {}, ck = Object.keys(canon);
+    var identityDirective = ck.length ? (ck.every(function (k) { return canon[k].morphology && canon[k].morphology.genderPresentation; }) ? 100 : 60) : null;
+    var dims = {
+      storyboard: _scoreFromLint(plan && plan._storyboardLint, 20, 5),
+      emotion: emotion === null ? null : Math.round(emotion),
+      graphicLanguage: _scoreFromLint(plan && plan._graphicLanguageLint, 15, 6),
+      visualPolish: _scoreFromLint(plan && plan._visualPolishLint, 15, 8),
+      continuity: _scoreFromLint(plan && plan._continuityLint, 25, 8),
+      coverage: coverage,
+      identityDirective: identityDirective
+    };
+    var vals = Object.keys(dims).map(function (k) { return dims[k]; }).filter(function (v) { return typeof v === 'number'; });
+    var overall = vals.length ? Math.round(vals.reduce(function (a, b) { return a + b; }, 0) / vals.length) : null;
+    return {
+      dimensions: dims,
+      overall: overall,
+      // require the blind/vision eval — NEVER inferred from a lint
+      postRender: { identity: null, emotionLanding: null, typographyQuality: null },
+      note: 'PRE-RENDER directive quality (deterministic). Post-render dims (identity/emotion-landing/typography) require the blind eval.'
+    };
+  }
+  window._buildQualityScorecard = _buildQualityScorecard;
   // VISUAL LINT = staging (everyone facing camera? romance blocking in combat? identical
   //   compositions? no establishing shot? a figure hidden? recognition traits visible? injuries kept?).
   function _visualLint(panel) { return { errors: [], warnings: [] }; }
@@ -153923,6 +153970,12 @@ No text, no watermark, no UI elements, share-ready.`;
         if (_cl.errors.length || _cl.warnings.length) { try { console.log('[CONTINUITY-LINT] ' + _cl.errors.length + ' error(s), ' + _cl.warnings.length + ' warning(s)' + (_cl.errors.length ? ' — ' + _cl.errors.join(' | ') : '')); } catch (_) {} }
       } catch (_) {}
       try { (plan._panels || []).forEach(function (p) { _visualLint(p); }); } catch (_) {} // reserved — staging pass
+      // QUALITY SCORECARD — aggregate the deterministic lints into a per-regen number to watch regressions.
+      try {
+        plan._qualityScorecard = _buildQualityScorecard(plan);
+        var _sc = plan._qualityScorecard;
+        console.log('[SCORECARD] overall ' + _sc.overall + ' · ' + Object.keys(_sc.dimensions).map(function (k) { return k + ' ' + (_sc.dimensions[k] === null ? 'n/a' : _sc.dimensions[k]); }).join('  '));
+      } catch (_) {}
       plan._storyDirectorVer = _STORY_DIRECTOR_VER;
       try { console.log('[STORY-DIRECTOR] v' + _STORY_DIRECTOR_VER + ' canon=[' + Object.keys(plan._canon || {}).join(',') + '] panels=' + ((plan._panels || []).length) + (plan._panelInvalid ? ' (INVALID authored panels — degraded)' : '')); } catch (_) {}
     } catch (e) { try { console.warn('[STORY-DIRECTOR] threw: ' + (e && e.message)); } catch (_) {} }
