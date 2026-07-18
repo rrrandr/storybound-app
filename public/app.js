@@ -154119,7 +154119,10 @@ No text, no watermark, no UI elements, share-ready.`;
       //   narrativeProgression — does each panel show a NEW event, not another angle on the same moment?
       //   visualProseAlignment — are the key actions described in the prose actually DEPICTED?
       //   + the earlier three: identity / emotionLanding / typographyQuality.
-      postRender: { identity: null, emotionLanding: null, typographyQuality: null, characterFidelity: null, narrativeProgression: null, visualProseAlignment: null },
+      //   speciesFidelity     — does this unmistakably read as the right SPECIES (Kwisheen)? (Canon anatomy)
+      //   characterFidelity   — does this unmistakably read as the SAME individual (Kresh)? (harvested identity)
+      //   — independent: passing one does not imply the other.
+      postRender: { identity: null, speciesFidelity: null, characterFidelity: null, emotionLanding: null, typographyQuality: null, narrativeProgression: null, visualProseAlignment: null },
       note: 'PRE-RENDER directive quality (deterministic). The postRender rubric (character fidelity / narrative progression / visual-prose alignment / identity / emotion-landing / typography) grades the COMIC and requires the blind eval — never faked from a lint.'
     };
   }
@@ -154719,6 +154722,33 @@ No text, no watermark, no UI elements, share-ready.`;
     return Math.max(0, Math.min(100, Math.round(conf)));
   }
   window._castingIdentityConfidence = _castingIdentityConfidence;
+  // AUTHORITATIVE SUBJECT ACQUISITION (Roman 2026-07-18) — regen13 root cause: casting harvested from
+  // a two-character face-off with a FIXED CENTER crop, so the "NPC reference" was the water between the
+  // figures, not the NPC. A center crop is only right when the NPC IS centered — i.e. a close, NPC-
+  // PRIMARY, NON-confrontation panel. So GATE the harvest to a clean identity source; otherwise DO NOT
+  // update the reference (no reference beats a bad one). The Storyboard's solo-antagonist establishing
+  // shot is what provides such a frame. Phase 1 (cheap) — no detection/vision needed.
+  function _castingCleanIdentitySource(phase, npcName) {
+    var panel = phase && phase._panel;
+    if (!panel || !panel.hierarchy) return false;
+    var n = _castingToken(npcName);
+    var prim = _castingToken(panel.hierarchy.primary || '');
+    // (1) the NPC must BE the primary subject (not co-equal, not background)
+    if (!prim || (prim !== n && prim.indexOf(n) === -1 && n.indexOf(prim) === -1)) return false;
+    // (2) medium-close or closer — a wide/medium two-shot crops the wrong region
+    var doc = (phase && phase._storyboardDoc) || {};
+    var closeness = _castingShotCloseness([doc.composition, panel.shotType, panel.shotExpansion, (phase && phase.camera_override)].join(' '));
+    if (closeness < 75) return false;
+    // (3) NOT an adversarial confrontation — a face-off stages the NPC to one side (bad crop). The
+    //     Storyboard's dedicated establishing shot is non-adversarial and IS a clean source.
+    var st = (phase && phase._state) || {}, adversarial = false;
+    Object.keys(st).forEach(function (k) {
+      var a = st[k] && st[k].attitudeToward; if (!a) return;
+      Object.keys(a).forEach(function (t) { if (/kill|hostile|hunt|threat/.test(String(a[t]))) adversarial = true; });
+    });
+    return !adversarial;
+  }
+  window._castingCleanIdentitySource = _castingCleanIdentitySource;
   // Tier from how often the character recurs across the storyboard (drives retention).
   function _castingTierFor(appearances) {
     if (appearances >= 3) return 'WORLD';    // recurring pillar — persist indefinitely
@@ -154762,7 +154792,10 @@ No text, no watermark, no UI elements, share-ready.`;
     rec.timesUsed = (rec.timesUsed || 0) + 1;
     return {
       url: rec.url,
-      label: 'CASTING identity anchor for ' + rec.displayName + ' — match ONLY their face / skull / jaw / eye-spacing / species / tentacle-topology and recognition traits. Do NOT copy the reference\'s expression, gaze, pose, framing, or lighting — this panel sets those. Same actor, new performance.'
+      // LAYER 2 — CHARACTER IDENTITY (positive framing; the SPECIES ANATOMY anchor governs the body).
+      // States what this reference is FOR (this individual), and that expression/pose come from the
+      // panel — a scoping statement, not a forbidden-mutation list (models read negatives as targets).
+      label: 'CHARACTER IDENTITY reference for ' + rec.displayName + ' — keep ' + rec.displayName + ' looking like THIS specific individual: same costume and ornaments, same colouring, same hair / mane styling, same weapon, same recognition traits and scars. This reference defines WHO the character is; the species anatomy reference defines the body; the panel’s acting notes define expression, pose, and emotion.'
     };
   }
   window._castingResolveAnchor = _castingResolveAnchor;
@@ -181775,26 +181808,21 @@ No text, no watermark, no UI elements, share-ready.`;
       var _gatedAnchors = state._stagedRegionContract.anchorImages.filter(function (p) {
         var sk = _spAnchorMap[p];
         if (!sk) return true; // region background / non-species anchor — always keep
-        if (_presentSp[sk]) {
-          // AUTHORITATIVE CASTING ANCHOR (Casting v2, Roman 2026-07-18): if a cast actor owns the
-          // identity of EVERY present character of this species (a cast NPC, and neither PC nor LI
-          // is of this species), DROP the generic species template — the specific actor's harvested
-          // reference is authoritative. regen8: the generic species anchor outcompeted casting and
-          // the reinject didn't hold; this lets the per-character identity win.
-          var _pcIsSp = (_pcSpN === sk), _liIsSp = (!_phaseLIAbsentForSp && _liSpN === sk);
-          if (!_pcIsSp && !_liIsSp && _castOwnedSp[sk] && _castOwnedSp[sk] >= (_presentNpcSp[sk] || 1)) {
-            try { console.log('[CASTING] authoritative — dropping generic ' + sk + ' species anchor (cast actor owns identity in phase ' + phase.phaseIdx + ')'); } catch (_) {}
-            return false;
-          }
-          return true; // that species IS on-stage and not casting-owned — keep its ref
-        }
+        // TWO-LAYER SEPARATION (Roman 2026-07-18): the SPECIES anchor is the ANATOMY layer and is
+        // ALWAYS-ON when that species is on-stage — it does a DIFFERENT job (body plan / proportions /
+        // tentacle topology) than the per-character CASTING anchor (this individual's costume / colour /
+        // identity). They coexist. (Reverted the v2 "drop when cast" — regen13 showed that removed the
+        // good anatomy reference and kept only a mis-cropped casting frame → Kwisheen anatomy drift.)
+        if (_presentSp[sk]) return true;
         try { console.log('[STAGED:STYLE] species-anchor GATED — ' + String(p).split('/').pop() + ' (' + sk + ' not present in phase ' + phase.phaseIdx + ')'); } catch (_) {}
         return false;
       });
       // Take top 2 remaining region/species anchors so total stays at ≤4.
       var regionAnchors = _gatedAnchors.slice(0, 2);
       regionAnchors.forEach(function(p) {
-        combinedAnchors.push({ path: p, label: state._stagedRegionContract.regionLabel + ' anchor', species: state._stagedRegionContract.regionLabel });
+        var _sk = _spAnchorMap[p];
+        var _lbl = _sk ? ('SPECIES ANATOMY reference (' + _sk.replace(/_/g, ' ') + ') — the authoritative body plan, proportions, silhouette, and facial + tentacle topology for this species, and how clothing sits on that body; every ' + _sk.replace(/_/g, ' ') + ' matches this anatomy (expression, pose, and costume come from the panel and the character reference)') : (state._stagedRegionContract.regionLabel + ' anchor');
+        combinedAnchors.push({ path: p, label: _lbl, species: state._stagedRegionContract.regionLabel });
       });
     }
     if (combinedAnchors.length > 0) {
@@ -182071,6 +182099,10 @@ No text, no watermark, no UI elements, share-ready.`;
           var _cPanelId = 'scene' + sceneIndex + '_phase' + phase.phaseIdx;
           visualState.other_characters_present.forEach(function (o) {
             if (!_castingIsSignificantNPC(o)) return;
+            // AUTHORITATIVE SUBJECT GATE — only harvest from a clean single-character source (NPC-primary,
+            // close, non-confrontation) so the center-crop actually contains the NPC. No source is better
+            // than a mis-cropped one. A face-off panel is refused; the establishing shot is accepted.
+            if (!_castingCleanIdentitySource(phase, o.name)) { try { console.log('[CASTING] skip harvest "' + o.name + '" (not a clean identity source: not NPC-primary/close/solo)'); } catch (_) {} return; }
             var _cConf = _castingIdentityConfidence(phase, visualState, o.name);
             if (_cConf < 55) return; // poor identity source (wide / non-primary) — wait for a better panel
             var _cTier = _castingTierFor((o && o._appearances) || 2); // present recurring char → SESSION+ by default

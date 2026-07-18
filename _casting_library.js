@@ -72,9 +72,25 @@ const { chromium } = require('playwright-core');
     const anchor = window._castingResolveAnchor('Kesh');
     const reuseCounts = lib['kesh'].timesUsed === 1;
     const anchorHasUrl = !!(anchor && anchor.url === 'data:img/strong');
-    const labelIdentityOnly = !!(anchor && /face|skull|jaw|eye-spacing|species|tentacle-topology|recognition traits/i.test(anchor.label));
-    const labelForbidsExpression = !!(anchor && /do not copy[^.]*expression|not[^.]*expression|expression[^.]*pose/i.test(anchor.label.toLowerCase()) && /pose/i.test(anchor.label));
+    // LAYER 2 — character identity: label is POSITIVE (costume/colour/recognition) and defers acting to the panel;
+    // it does NOT use a negative "do NOT" forbidden-mutation list (models read negatives as targets).
+    const labelIsCharacterIdentity = !!(anchor && /CHARACTER IDENTITY reference/i.test(anchor.label) && /costume|colouring|recognition traits/i.test(anchor.label));
+    const labelDefersActingToPanel = !!(anchor && /acting notes define expression/i.test(anchor.label) && !/do not|don’t|never/i.test(anchor.label));
+    const labelSeparatesAnatomy = !!(anchor && /species anatomy reference defines the body/i.test(anchor.label));
     const unknownResolvesNull = window._castingResolveAnchor('Nobody') === null;
+
+    // ── AUTHORITATIVE SUBJECT GATE (regen13): only a clean solo source qualifies for harvest ──
+    const cleanPhase = { _panel: { hierarchy: { primary: 'kresh' }, shotType: 'discovery', shotExpansion: 'tight close-up on Kresh alone' }, _storyboardDoc: { composition: 'close-up on Kresh, emerging from the coral' }, _state: { kresh: { attitudeToward: {} } } };
+    const cleanSourceOk = window._castingCleanIdentitySource(cleanPhase, 'Kresh') === true;
+    // a face-off (adversarial) panel is refused — Kresh is side-positioned, the center-crop would miss her
+    const faceOff = { _panel: { hierarchy: { primary: 'kresh' }, shotType: 'combat', shotExpansion: 'tight close-up' }, _storyboardDoc: { composition: 'close-up' }, _state: { kresh: { attitudeToward: { protagonist: 'trying_to_kill' } } } };
+    const faceOffRejected = window._castingCleanIdentitySource(faceOff, 'Kresh') === false;
+    // a WIDE shot is refused (crops badly)
+    const widePhase = { _panel: { hierarchy: { primary: 'kresh' }, shotType: 'discovery', shotExpansion: 'wide establishing shot' }, _storyboardDoc: { composition: 'wide establishing, Kresh small' }, _state: {} };
+    const wideRejected2 = window._castingCleanIdentitySource(widePhase, 'Kresh') === false;
+    // a panel where Kresh is NOT the primary subject is refused
+    const notPrimary = { _panel: { hierarchy: { primary: 'the passage' }, shotType: 'discovery', shotExpansion: 'close on the passage' }, _storyboardDoc: { composition: 'close-up on the passage' }, _state: {} };
+    const nonPrimaryRejected = window._castingCleanIdentitySource(notPrimary, 'Kresh') === false;
 
     // TIER — recurrence drives retention.
     const tierWorld = window._castingTierFor(4) === 'WORLD';
@@ -103,7 +119,8 @@ const { chromium } = require('playwright-core');
       confWish, confNeutralClose, wishIsPoorSource, marginKeepsStable, clearWinnerPromotes,
       castNow: r1.action === 'cast' && !!castNow && castNow.url === 'data:img/close1',
       wideRejected, promoted, noDemote, lockRespected,
-      reuseCounts, anchorHasUrl, labelIdentityOnly, labelForbidsExpression, unknownResolvesNull,
+      reuseCounts, anchorHasUrl, labelIsCharacterIdentity, labelDefersActingToPanel, labelSeparatesAnatomy, unknownResolvesNull,
+      cleanSourceOk, faceOffRejected, wideRejected2, nonPrimaryRejected,
       tierWorld, tierSession, tierTransient,
       npcYes, npcNoPC, npcNoLI, npcNoUnnamed,
       catchesNoRef, catchesLowConf, catchesNeverReused
@@ -123,8 +140,13 @@ const { chromium } = require('playwright-core');
     ['never demote: a subsequent weaker panel does not replace a stronger reference', R.noDemote],
     ['a locked reference is never auto-promoted', R.lockRespected],
     ['REUSE: resolve returns the harvested URL and counts the reuse', R.reuseCounts && R.anchorHasUrl],
-    ['identity-only anchor: label conditions morphology + recognition traits', R.labelIdentityOnly],
-    ['identity-not-expression: label explicitly forbids copying expression/pose', R.labelForbidsExpression],
+    ['LAYER 2: casting label is CHARACTER IDENTITY (costume/colour/recognition), positive framing', R.labelIsCharacterIdentity],
+    ['LAYER 2: label defers acting to the panel WITHOUT a negative "do NOT" list', R.labelDefersActingToPanel],
+    ['LAYER separation: casting label points body/anatomy to the SPECIES reference', R.labelSeparatesAnatomy],
+    ['GATE: a clean solo NPC-primary close panel qualifies as an identity source', R.cleanSourceOk],
+    ['GATE: an adversarial face-off is REFUSED (NPC side-positioned → bad crop)', R.faceOffRejected],
+    ['GATE: a wide shot is REFUSED', R.wideRejected2],
+    ['GATE: a panel where the NPC is NOT primary is REFUSED', R.nonPrimaryRejected],
     ['unknown character resolves to null (falls back to Canon text)', R.unknownResolvesNull],
     ['tiers: 3+ appearances=WORLD, 2=SESSION, 1=TRANSIENT', R.tierWorld && R.tierSession && R.tierTransient],
     ['significant-NPC filter admits named NPC, rejects PC/LI/unnamed', R.npcYes && R.npcNoPC && R.npcNoLI && R.npcNoUnnamed],
