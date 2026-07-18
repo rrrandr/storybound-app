@@ -74,6 +74,31 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     s._stagedRegionContract = window._buildStagedRegionContract({ visualState: plan.visualState, phases: [] });
     const phaseVSrev = window._resolvePhaseVisualState(plan.visualState, revPhase, plan.phases, plan.beats);
     const revHeroPrompt = window._buildStagedHeroPrompt(phaseVSrev, 0, plan) || '';
+
+    // v3: Storyboard Lint + Repair + eye-magnet / composition diversity
+    const eyeMagnets = sbPhases.map(p => p._storyboardDoc && p._storyboardDoc.eyeMagnet);
+    const compositions = sbPhases.map(p => p._storyboardDoc && p._storyboardDoc.composition);
+    const understandings = sbPhases.map(p => p._storyboardDoc && p._storyboardDoc.understandingGain);
+    const eyeDiverse = new Set(eyeMagnets).size >= Math.min(4, eyeMagnets.length);
+    const compDiverse = new Set(compositions).size >= Math.min(4, compositions.length);
+    const revEyeIsPassage = !!(revDoc && /passage|opening|gap|arch|seam|tunnel|revealed/i.test(revDoc.eyeMagnet || '') && !/charact|talking|women|people/i.test(revDoc.eyeMagnet || ''));
+    const noAdjacentUnderstandingDup = understandings.every((u, i) => i === 0 || u !== understandings[i - 1]);
+    const postLint = plan._storyboardLint || { errors: [], warnings: [] };
+    const postLintClean = postLint.errors.length === 0;
+    const dupLint = window._storyboardLint([
+      { purpose: 'Threat', understandingGain: 'x', composition: 'A', primarySubject: 'p', eyeMagnet: 'q', forbiddenFocus: '' },
+      { purpose: 'Threat', understandingGain: 'x', composition: 'A', primarySubject: 'p', eyeMagnet: 'q', forbiddenFocus: '' }
+    ]);
+    const lintCatchesDup = dupLint.errors.some(e => /duplicate visual beat/i.test(e));
+    const peopleEyeLint = window._storyboardLint([{ purpose: 'Revelation', understandingGain: 'y', composition: 'B', primarySubject: 'z', eyeMagnet: 'the two women talking', forbiddenFocus: '' }]);
+    const lintCatchesPeopleEye = peopleEyeLint.errors.some(e => /wrong thing/i.test(e));
+    const rep = window._storyboardRepair([
+      { beatIdx: 1, type: 'Consequence', text: 'the pillar shifts upward' },
+      { beatIdx: 5, type: 'Consequence', text: 'the pillar shifts upward' }
+    ]);
+    const repairDropsDup = rep.length === 1;
+    const heroEmitsEyeMagnet = /EYE MAGNET \(what the reader's eye lands on FIRST/.test(revHeroPrompt);
+    const heroEmitsComposition = /COMPOSITION \(beat-driven/.test(revHeroPrompt);
     return {
       sb, types,
       hasTransformation: types.includes('Transformation'),
@@ -93,7 +118,10 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
       revFrozenIsBeat: !!(revDoc && revDoc.frozenMoment && revDoc.frozenMoment.length > 10),
       heroEmitsFrozenMoment: /FROZEN MOMENT \(illustrate THIS exact instant/.test(revHeroPrompt),
       heroEmitsForbiddenFocus: /FORBIDDEN FOCUS \(must NOT dominate/.test(revHeroPrompt) && /standing and talking|a conversation/i.test(revHeroPrompt),
-      heroEmitsCompositionPriority: /COMPOSITION PRIORITY \(must DOMINATE/.test(revHeroPrompt)
+      heroEmitsCompositionPriority: /COMPOSITION PRIORITY \(must DOMINATE/.test(revHeroPrompt),
+      eyeDiverse, compDiverse, revEyeIsPassage, noAdjacentUnderstandingDup, postLintClean,
+      lintCatchesDup, lintCatchesPeopleEye, repairDropsDup, heroEmitsEyeMagnet, heroEmitsComposition,
+      docsHaveV3: sbPhases.every(p => p._storyboardDoc && p._storyboardDoc.eyeMagnet && p._storyboardDoc.composition && p._storyboardDoc.understandingGain)
     };
   });
   await browser.close();
@@ -115,7 +143,17 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['v2: Revelation panel FORBIDS "standing and talking" (anti-drift)', R.revForbidsTalking],
     ['v2: Revelation composition priority = the REVEALED thing', R.revCompositionIsReveal],
     ['v2: Revelation frozen moment carries the beat instant', R.revFrozenIsBeat],
-    ['v2: hero prompt emits FROZEN MOMENT + COMPOSITION PRIORITY + FORBIDDEN FOCUS', R.heroEmitsFrozenMoment && R.heroEmitsCompositionPriority && R.heroEmitsForbiddenFocus]
+    ['v2: hero prompt emits FROZEN MOMENT + COMPOSITION PRIORITY + FORBIDDEN FOCUS', R.heroEmitsFrozenMoment && R.heroEmitsCompositionPriority && R.heroEmitsForbiddenFocus],
+    ['v3: every panel has eye-magnet + composition + understanding-gain', R.docsHaveV3],
+    ['v3: eye-magnets are DIVERSE (not all the same object)', R.eyeDiverse],
+    ['v3: compositions are DIVERSE (beat-driven, not repeated)', R.compDiverse],
+    ['v3: Revelation eye-magnet is the PASSAGE (event, not the people)', R.revEyeIsPassage],
+    ['v3: no two adjacent panels share the same understanding', R.noAdjacentUnderstandingDup],
+    ['v3: post-repair storyboard LINT has no errors (this scene)', R.postLintClean],
+    ['v3: LINT catches an adjacent duplicate visual beat', R.lintCatchesDup],
+    ['v3: LINT catches a people-focused eye-magnet on a Revelation', R.lintCatchesPeopleEye],
+    ['v3: REPAIR drops a duplicate visual beat', R.repairDropsDup],
+    ['v3: hero prompt emits EYE MAGNET + COMPOSITION', R.heroEmitsEyeMagnet && R.heroEmitsComposition]
   ];
 
   let pass = 0, fail = 0;

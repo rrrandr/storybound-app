@@ -153878,26 +153878,107 @@ No text, no watermark, no UI elements, share-ready.`;
   // what must DOMINATE the frame and what must NOT (the Forbidden Focus that stops the renderer
   // drifting back to "two people standing and talking"). The FROZEN MOMENT (the beat's exact
   // instant) carries the specifics.
+  // Per reader-learning type: what must DOMINATE, what must NOT (Forbidden Focus), the beat-driven
+  // COMPOSITION (never randomized — it emerges from the beat), and the one-line UNDERSTANDING it adds.
   var _RL_COMP = {
-    Orientation: { priority: 'the SITUATION at a glance — WHERE they are, WHO they are, and the danger they are in, all readable in one frame', forbidden: '' },
-    Threat: { priority: 'the THREAT itself — the attacker / weapon / danger bearing down on the subject, dominating the frame', forbidden: 'a calm conversation; the characters merely standing and talking' },
-    Transformation: { priority: 'the MAGICAL EVENT in the act — the invoker mid-supplication AND its manifesting effect (gathering light, the thing visibly changing)', forbidden: 'a calm face-off; two people merely talking; a frame with NO visible magic or light' },
-    Consequence: { priority: 'the CHANGE the event just caused — the world or a body visibly DIFFERENT now (the price paid, the thing moved / opened / sealed / withered)', forbidden: 'a static standoff; a frame where nothing has visibly changed' },
-    Revelation: { priority: 'the REVEALED thing — the newly-visible opening / object DOMINATING the composition and drawing the eye first', forbidden: 'the two characters merely standing and talking; a conversation; the revealed thing shrunk into the background' },
-    Decision: { priority: 'the CHOICE — the protagonist caught at the fork with the stakes/paths of the decision visible around her', forbidden: 'a resolved or calm moment; an action already taken' },
-    Resolution: { priority: 'the AFTERMATH — the settled new state', forbidden: '' }
+    Orientation:    { priority: 'the SITUATION at a glance — WHERE they are, WHO they are, and the danger they are in, all readable in one frame', forbidden: '', composition: 'Wide Establishing', understanding: 'where they are, who they are, and the danger they are in', eyeDefault: 'the whole precarious situation' },
+    Threat:         { priority: 'the THREAT itself — the attacker / weapon / danger bearing down on the subject, dominating the frame', forbidden: 'a calm conversation; the characters merely standing and talking', composition: 'Predator framing — compressed space, the threat close and looming', understanding: 'what is hunting / threatening them', eyeDefault: 'the attacker bearing down' },
+    Transformation: { priority: 'the MAGICAL EVENT in the act — the invoker mid-supplication AND its manifesting effect (gathering light, the thing visibly changing)', forbidden: 'a calm face-off; two people merely talking; a frame with NO visible magic or light', composition: 'Close on the invoker mid-transformation, light erupting', understanding: 'a wish is being made and what it costs', eyeDefault: 'the gathering fate-light at the invoker\'s hands' },
+    Consequence:    { priority: 'the CHANGE the event just caused — the world or a body visibly DIFFERENT now (the price paid, the thing moved / opened / sealed / withered)', forbidden: 'a static standoff; a frame where nothing has visibly changed', composition: 'Show the CHANGED world / body', understanding: 'what the wish changed and the price it took', eyeDefault: 'the visibly changed thing (moved / withered / sealed)' },
+    Revelation:     { priority: 'the REVEALED thing — the newly-visible opening / object DOMINATING the composition and drawing the eye first', forbidden: 'the two characters merely standing and talking; a conversation; the revealed thing shrunk into the background', composition: 'Frame DOMINATED by the discovered object', understanding: 'a way out / a new truth has appeared', eyeDefault: 'the newly-revealed opening' },
+    Decision:       { priority: 'the CHOICE — the protagonist caught at the fork with the stakes/paths of the decision visible around her', forbidden: 'a resolved or calm moment; an action already taken', composition: 'Readable internal conflict — close on the deciding face, the two paths / stakes visible', understanding: 'the choice she now faces and its stakes', eyeDefault: 'the protagonist torn between two paths' },
+    Resolution:     { priority: 'the AFTERMATH — the settled new state', forbidden: '', composition: 'Environmental — the settled new state', understanding: 'how it settled and what remains', eyeDefault: 'the aftermath' }
   };
+  // Extract the EVENT object the eye should land on from the frozen moment — the wound / opening /
+  // pillar / light / weapon, NOT the people. This is the anti-fixation core: the panel illustrates
+  // the visual idea (the event), not two figures.
+  function _sbEventNoun(text) {
+    var t = String(text || ''); var m;
+    if ((m = /\b(passage|opening|gap|arch|seam|tunnel|doorway|crack)\b/i.exec(t))) return 'the ' + m[1].toLowerCase();
+    if ((m = /\b(pillar|column|slab|stone|boulder)\b/i.exec(t))) return 'the ' + m[1].toLowerCase();
+    if (/\b(light|glow|radiance|fate.?light|omen|warm)\b/i.test(t)) return 'the gathering fate-light';
+    if (/\b(wound|blood|gash|bleed|slack|wither)\b/i.test(t)) return 'the wound / the price on the body';
+    if ((m = /\b(spear|trident|cutlass|blade|dagger|knife|sword|net)\b/i.exec(t))) return 'the ' + m[1].toLowerCase();
+    if (/\btentacle/i.test(t)) return 'the raider\'s tentacle';
+    return null;
+  }
   function _buildStoryboardDoc(type, beatText, primary) {
     var c = _RL_COMP[type] || _RL_COMP.Orientation;
+    var eventNoun = _sbEventNoun(beatText);
     return {
       purpose: type,
       frozenMoment: String(beatText || '').trim(),
-      primarySubject: primary || '',
+      primarySubject: primary || eventNoun || c.eyeDefault,
       compositionPriority: c.priority,
-      forbiddenFocus: c.forbidden
+      forbiddenFocus: c.forbidden,
+      composition: c.composition,                 // beat-driven, never randomized
+      understandingGain: c.understanding,          // what the reader learns after this panel
+      eyeMagnet: eventNoun || c.eyeDefault         // what the eye lands on FIRST (the event, not the people)
     };
   }
   window._buildStoryboardDoc = _buildStoryboardDoc;
+
+  // STORYBOARD LINT (v3, Roman 2026-07-18) — treat visual repetition as a COMPILER ERROR, exactly
+  // like the prose anti-repetition pipeline. Runs on the storyboard docs BEFORE rendering. These
+  // are STORYTELLING errors, not renderer errors. Never fixed with prompts.
+  function _storyboardLint(docs) {
+    var errors = [], warnings = [];
+    var d = docs || [];
+    for (var i = 0; i < d.length; i++) {
+      var p = d[i];
+      // 4/5. EYE MAGNET must not be the people for a Revelation/Transformation, and must not be the
+      //      panel's own Forbidden Focus (the frozen moment / composition would be illustrating the wrong thing).
+      if ((p.purpose === 'Revelation' || p.purpose === 'Transformation') && /charact|talking|two (?:women|men|people|figures)|face.?off|conversation/i.test(String(p.eyeMagnet || ''))) {
+        errors.push('PANEL ' + i + ' (' + p.purpose + '): eye-magnet is the characters — illustrating the WRONG thing (should be ' + (p.purpose === 'Revelation' ? 'the reveal' : 'the magic') + ').');
+      }
+      if (p.forbiddenFocus && String(p.forbiddenFocus).toLowerCase().indexOf(String(p.eyeMagnet || 'zzz').toLowerCase()) !== -1) {
+        errors.push('PANEL ' + i + ': eye-magnet is inside its own Forbidden Focus.');
+      }
+      // 1. adjacent understanding duplicate
+      if (i > 0 && p.understandingGain && p.understandingGain === d[i - 1].understandingGain) {
+        errors.push('PANEL ' + i + ': duplicate visual beat — same understanding as PANEL ' + (i - 1) + ' ("' + p.understandingGain + '").');
+      }
+      // 3. adjacent composition repeat
+      if (i > 0 && p.composition && p.composition === d[i - 1].composition) {
+        warnings.push('PANEL ' + i + ': composition repeats "' + p.composition + '" from the previous panel.');
+      }
+    }
+    // 2. 3+ consecutive same primary subject
+    for (var j = 2; j < d.length; j++) {
+      if (d[j].primarySubject && d[j].primarySubject === d[j - 1].primarySubject && d[j].primarySubject === d[j - 2].primarySubject) {
+        warnings.push('PANEL ' + j + ': 3+ consecutive panels share primary subject "' + d[j].primarySubject + '".');
+      }
+    }
+    // 6. reconstruction coverage — the reader must be able to answer the key questions
+    var have = {}; d.forEach(function (p) { have[p.purpose] = true; });
+    ['Orientation', 'Revelation', 'Decision'].forEach(function (need) { if (!have[need]) warnings.push('RECONSTRUCTION: no ' + need + ' beat — the reader cannot answer ' + (need === 'Orientation' ? 'where/why' : need === 'Revelation' ? 'what changed' : 'what choice') + '.'); });
+    if (!have.Transformation && !have.Consequence) warnings.push('RECONSTRUCTION: no Transformation/Consequence beat — the reader cannot see what caused the change.');
+    return { errors: errors, warnings: warnings };
+  }
+  window._storyboardLint = _storyboardLint;
+  // STORYBOARD REPAIR (v3) — repair the STORYBOARD, never the prompts. Drops duplicate visual beats
+  // (same understanding + same eye-magnet), re-points a people-focused eye-magnet to the event, and
+  // breaks an adjacent-composition tie. Returns the repaired storyboard (list of {beatIdx,type,text}).
+  function _sbEyeDefault(type) { return (_RL_COMP[type] || _RL_COMP.Orientation).eyeDefault; }
+  function _storyboardRepair(sb) {
+    if (!Array.isArray(sb) || !sb.length) return sb;
+    var out = [], seen = {};
+    for (var i = 0; i < sb.length; i++) {
+      var s = sb[i];
+      var doc = _buildStoryboardDoc(s.type, s.text, null);
+      // re-point a people-focused eye-magnet on a Revelation/Transformation to the event default
+      if ((s.type === 'Revelation' || s.type === 'Transformation') && /charact|talking|two (?:women|men|people|figures)|face.?off|conversation/i.test(String(doc.eyeMagnet || ''))) {
+        doc.eyeMagnet = _sbEyeDefault(s.type);
+      }
+      // drop a duplicate visual beat — same understanding AND same eye-magnet as one already kept
+      var key = doc.understandingGain + '||' + doc.eyeMagnet;
+      if (seen[key]) { try { console.log('[STORYBOARD-REPAIR] dropped duplicate visual beat ' + s.type + '@' + s.beatIdx + ' (same understanding+eye-magnet as an earlier panel)'); } catch (_) {} continue; }
+      seen[key] = true;
+      out.push(s);
+    }
+    return out;
+  }
+  window._storyboardRepair = _storyboardRepair;
   // Build the storyboard: an ordered set of understanding-CHANGES (not prose phases).
   function _buildStoryboard(plan) {
     var beats = (plan && plan.beats) || [];
@@ -153927,6 +154008,19 @@ No text, no watermark, no UI elements, share-ready.`;
     sb.sort(function (a, b) { return a.beatIdx - b.beatIdx; });
     var rev = sb.filter(function (s) { return s.type === 'Revelation'; });
     if (rev.length) rev[rev.length - 1].isPageTurn = true; // page-turn = the reveal that recontextualizes
+    // STORYBOARD LINT + REPAIR (v3): repetition is a compiler error. Lint the docs, then repair the
+    // STORYBOARD (drop duplicate visual beats, re-point people-focused eye-magnets) — never prompts.
+    try {
+      var _preDocs = sb.map(function (s) { return _buildStoryboardDoc(s.type, s.text, null); });
+      var _lint0 = _storyboardLint(_preDocs);
+      if (_lint0.errors.length || _lint0.warnings.length) { try { console.log('[STORYBOARD-LINT] pre-repair: ' + _lint0.errors.length + ' error(s), ' + _lint0.warnings.length + ' warning(s)' + (_lint0.errors.length ? ' — ' + _lint0.errors.join(' | ') : '')); } catch (_) {} }
+      sb = _storyboardRepair(sb);
+      var _postLint = _storyboardLint(sb.map(function (s) { return _buildStoryboardDoc(s.type, s.text, null); }));
+      plan._storyboardLint = _postLint;
+      if (_postLint.errors.length) { try { console.warn('[STORYBOARD-LINT] post-repair STILL has ' + _postLint.errors.length + ' error(s): ' + _postLint.errors.join(' | ')); } catch (_) {} }
+    } catch (_lerr) { try { console.warn('[STORYBOARD-LINT] threw: ' + (_lerr && _lerr.message)); } catch (_) {} }
+    // re-mark the page-turn on the (possibly repaired) list
+    sb.forEach(function (s) { delete s.isPageTurn; }); var _rev2 = sb.filter(function (s) { return s.type === 'Revelation'; }); if (_rev2.length) _rev2[_rev2.length - 1].isPageTurn = true;
     var proseForBeat = function (bi) { var f = prose[0]; prose.forEach(function (p, pi) { var st = (typeof p.startBeat === 'number') ? p.startBeat : 0; var nx = prose[pi + 1]; var en = (nx && typeof nx.startBeat === 'number') ? nx.startBeat : Infinity; if (bi >= st && bi < en) f = p; }); return f || prose[0] || {}; };
     plan._storyboard = sb.map(function (s, i) { return { panelIdx: i, beatIdx: s.beatIdx, type: s.type, isPageTurn: !!s.isPageTurn }; });
     plan._storyboardPhases = sb.map(function (s, i) {
@@ -179408,6 +179502,8 @@ No text, no watermark, no UI elements, share-ready.`;
         var _sbDoc = visualState._phaseStoryboardDoc || null;
         if (_sbDoc) {
           if (_sbDoc.frozenMoment) _cidLines.push('FROZEN MOMENT (illustrate THIS exact instant — the specific event, NOT the ambient scene around it): ' + _sbDoc.frozenMoment);
+          if (_sbDoc.eyeMagnet) _cidLines.push('EYE MAGNET (what the reader\'s eye lands on FIRST — build the whole composition around it): ' + _sbDoc.eyeMagnet + '.');
+          if (_sbDoc.composition) _cidLines.push('COMPOSITION (beat-driven — NOT a random angle): ' + _sbDoc.composition + '.');
           if (_sbDoc.compositionPriority) _cidLines.push('COMPOSITION PRIORITY (must DOMINATE the frame and be seen FIRST): ' + _sbDoc.compositionPriority + '.');
           if (_sbDoc.forbiddenFocus) _cidLines.push('FORBIDDEN FOCUS (must NOT dominate — if this is what you are drawing, the panel is WRONG): ' + _sbDoc.forbiddenFocus + '.');
         }
