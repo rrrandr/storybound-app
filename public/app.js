@@ -153765,9 +153765,63 @@ No text, no watermark, no UI elements, share-ready.`;
   // STORY LINT = narrative coherence (visible threat? decision follows? conflict present? every
   //   revelation illustrated? a character ally+enemy at once? wish motivated?).
   function _storyLint(plan) { return { errors: [], warnings: [] }; }
-  // CONTINUITY DIFF = "what CHANGED vs the previous panel?" (hair/clothes/weapon/injury/position/
-  //   relationship/expression/buoyancy); an unauthorized change is an ERROR.
-  function _continuityDiff(prevPanel, panel) { return { changes: [], errors: [] }; }
+  // CONTINUITY DIFF (Visual Continuity Director v1, Roman 2026-07-18) — "what CHANGED vs the previous
+  //   panel?" Compares two phases' continuity snapshots (phase._state) for the characters present in
+  //   BOTH. A wound that vanished, a weapon that changed hands, a pinned→free flip, or a left↔right
+  //   screen-direction swap is a continuity break. Renderers PERFORM continuity; they never invent it.
+  function _continuityDiff(prevState, currState) {
+    var changes = [], errors = [];
+    var prev = prevState || {}, curr = currState || {};
+    Object.keys(curr).forEach(function (k) {
+      var a = prev[k], b = curr[k];
+      if (!a || !b) return; // character not in both panels — nothing to diff
+      // a wound present last panel must not silently disappear (it persists until an explicit heal)
+      var aInj = (a.injuries || []).length, bInj = (b.injuries || []).length;
+      if (aInj > 0 && bInj === 0) errors.push({ key: k, field: 'injury', from: (a.injuries || []).join(', '), to: 'none', kind: 'wound-disappeared' });
+      // a held weapon/object should not change or vanish without a beat cause
+      if (a.holding && b.holding && a.holding !== b.holding) changes.push({ key: k, field: 'holding', from: a.holding, to: b.holding, kind: 'weapon-changed' });
+      // pinned/free is a real state change — flag it so a reversal is intentional, not accidental
+      if (a.status && b.status && a.status !== b.status) changes.push({ key: k, field: 'status', from: a.status, to: b.status, kind: 'status-changed' });
+      // screen-side flip (left↔right) without a motivated camera reversal
+      var side = function (p) { var s = String((p && p.position) || '').toLowerCase(); return /\bleft\b/.test(s) ? 'left' : /\bright\b/.test(s) ? 'right' : ''; };
+      var sa = side(a), sb = side(b);
+      if (sa && sb && sa !== sb) changes.push({ key: k, field: 'screen-side', from: sa, to: sb, kind: 'screen-direction-flip' });
+    });
+    return { changes: changes, errors: errors };
+  }
+  // CONTINUITY LINT — walk adjacent phases, diff their states, surface breaks as warnings/errors.
+  function _continuityLint(plan) {
+    var phases = (plan && plan.phases) || [], errors = [], warnings = [];
+    var canon = (plan && plan._canon) || {};
+    var nm = function (k) { return (canon[k] && canon[k].displayName) || k; };
+    for (var i = 1; i < phases.length; i++) {
+      var d = _continuityDiff(phases[i - 1] && phases[i - 1]._state, phases[i] && phases[i]._state);
+      d.errors.forEach(function (e) { errors.push('PANEL ' + i + ': ' + nm(e.key) + ' — ' + e.kind.replace(/-/g, ' ') + ' (' + e.from + ' → ' + e.to + '); a wound persists until an explicit heal.'); });
+      d.changes.forEach(function (c) { warnings.push('PANEL ' + i + ': ' + nm(c.key) + ' — ' + c.kind.replace(/-/g, ' ') + ' (' + c.from + ' → ' + c.to + '); confirm this is a motivated change, not drift.'); });
+    }
+    return { errors: errors, warnings: warnings };
+  }
+  window._continuityLint = _continuityLint;
+  // VISUAL POLISH LINT — doc-level readability: a missing visual question (reads static), an unclear
+  // eye path, a color direction that fights the emotional direction, or an event-led panel whose eye
+  // path starts on a person instead of the event. (Composition/graphic-language repetition are already
+  // policed by the storyboard + graphic-language lints.)
+  function _visualPolishLint(docs) {
+    var warnings = [], d = docs || [];
+    for (var i = 0; i < d.length; i++) {
+      var p = d[i];
+      if (!p.visualQuestion) warnings.push('PANEL ' + i + ' (' + p.purpose + '): no visual question — the panel may read as static.');
+      if (!p.eyePath || p.eyePath.length < 2) warnings.push('PANEL ' + i + ': eye path unclear (needs ≥2 ordered stops).');
+      if (p.colorDirection && /warm|amber|ember|firelight/.test(p.colorDirection.palette + ' ' + p.colorDirection.accent) && /dread|grief|terror/.test(String(p.emotionalPurpose || '') + ' ' + String(p.colorDirection.mood || ''))) {
+        warnings.push('PANEL ' + i + ': warm palette contradicts the ' + (p.colorDirection.mood || 'somber') + ' emotional direction.');
+      }
+      if (/Threat|Transformation|Revelation|Consequence/.test(p.purpose) && p.eyePath && p.eyePath[0] && /the protagonist|the other figure/.test(p.eyePath[0])) {
+        warnings.push('PANEL ' + i + ' (' + p.purpose + '): eye path starts on a person, not the event (' + p.eyeMagnet + ').');
+      }
+    }
+    return { warnings: warnings };
+  }
+  window._visualPolishLint = _visualPolishLint;
   // VISUAL LINT = staging (everyone facing camera? romance blocking in combat? identical
   //   compositions? no establishing shot? a figure hidden? recognition traits visible? injuries kept?).
   function _visualLint(panel) { return { errors: [], warnings: [] }; }
@@ -153795,7 +153849,13 @@ No text, no watermark, no UI elements, share-ready.`;
       }
       _buildContinuityLedger(plan);
       _buildPanelSpecs(plan);
-      try { (plan._panels || []).forEach(function (p, i) { if (i > 0) _continuityDiff(plan._panels[i - 1], p); _visualLint(p); }); } catch (_) {} // reserved — diff + staging passes
+      // VISUAL CONTINUITY DIRECTOR (Production Polish v1) — diff adjacent panels for continuity breaks.
+      try {
+        var _cl = _continuityLint(plan);
+        plan._continuityLint = _cl;
+        if (_cl.errors.length || _cl.warnings.length) { try { console.log('[CONTINUITY-LINT] ' + _cl.errors.length + ' error(s), ' + _cl.warnings.length + ' warning(s)' + (_cl.errors.length ? ' — ' + _cl.errors.join(' | ') : '')); } catch (_) {} }
+      } catch (_) {}
+      try { (plan._panels || []).forEach(function (p) { _visualLint(p); }); } catch (_) {} // reserved — staging pass
       plan._storyDirectorVer = _STORY_DIRECTOR_VER;
       try { console.log('[STORY-DIRECTOR] v' + _STORY_DIRECTOR_VER + ' canon=[' + Object.keys(plan._canon || {}).join(',') + '] panels=' + ((plan._panels || []).length) + (plan._panelInvalid ? ' (INVALID authored panels — degraded)' : '')); } catch (_) {}
     } catch (e) { try { console.warn('[STORY-DIRECTOR] threw: ' + (e && e.message)); } catch (_) {} }
@@ -154092,6 +154152,65 @@ No text, no watermark, no UI elements, share-ready.`;
     return { warnings: warnings };
   }
   window._graphicLanguageLint = _graphicLanguageLint;
+
+  // ── PRODUCTION POLISH v1 (Roman 2026-07-18) — refinement, NOT new pipelines. Three lightweight
+  //    doc-level fields that make a panel read as "the next page of the same comic": the VISUAL
+  //    QUESTION it makes the reader want answered, the EYE PATH the composition should lead the eye
+  //    along, and lightweight COLOR DIRECTION. All deterministic, beat-driven, emitted to the renderer.
+  // VISUAL QUESTION — the one thing the image should make the reader want answered (per type).
+  var _RL_VISUAL_Q = {
+    Orientation:    'What is this place, and why is she in danger here?',
+    Threat:         'Will the attack land?',
+    Transformation: 'What is happening — and what will it cost?',
+    Consequence:    'What did it cost?',
+    Revelation:     'Is this a way out?',
+    Decision:       'Which will she choose?',
+    Resolution:     'What happens now?'
+  };
+  var _RL_MOOD = {
+    Orientation: 'wary unease', Threat: 'sharp danger', Transformation: 'uncanny awe',
+    Consequence: 'cold dread', Revelation: 'urgent hope', Decision: 'taut gravity', Resolution: 'spent quiet'
+  };
+  function _buildVisualQuestion(type, eyeMagnet) {
+    var q = _RL_VISUAL_Q[type] || _RL_VISUAL_Q.Orientation;
+    if ((type === 'Revelation' || type === 'Transformation') && eyeMagnet && !/charact|figure|people/.test(eyeMagnet)) {
+      return q.replace(/a way out\?/, 'what ' + eyeMagnet + ' means?').replace(/happening —/, 'happening to ' + eyeMagnet + ' —');
+    }
+    return q;
+  }
+  // EYE PATH — the ordered sequence the composition should lead the reader's eye along. Event-led for
+  // action/reveal beats (the event first), character-led for internal beats (the face first).
+  function _buildEyePath(type, eyeMagnet, primarySubject) {
+    var eye = eyeMagnet || primarySubject || 'the focal action';
+    var pc = 'the protagonist', other = 'the other figure';
+    var path;
+    if (type === 'Decision') path = [pc + "'s face", 'the choice before her (' + eye + ')'];
+    else if (type === 'Resolution') path = [pc, eye];
+    else if (type === 'Orientation') path = [eye, pc, other];
+    else path = [eye, other, pc]; // event-led: the event → who acts → who receives
+    var seen = {}, out = [];
+    path.forEach(function (s) { var k = String(s).toLowerCase(); if (s && !seen[k]) { seen[k] = 1; out.push(s); } });
+    return out;
+  }
+  window._buildEyePath = _buildEyePath;
+  window._buildVisualQuestion = _buildVisualQuestion;
+  // COLOR DIRECTION (lightweight) — dominant palette + accent + lighting motivation + contrast + mood.
+  // Beat- and apex-driven. Underwater is the default ground; a warm-event beat overrides it. Not a
+  // separate subsystem — staging fields the renderer honours.
+  function _buildColorDirection(type, emotionalApex, beatText) {
+    var t = String(beatText || '').toLowerCase();
+    var warm = /\b(fire|flame|blaz|ember|sun|torch|lava|desert|forge)\b/.test(t);
+    var palette = warm ? 'warm amber and ember' : 'cold blue-green (deep water)';
+    var accent, lighting;
+    if (/\b(glyph|tide-light|spell|magic|wish|fate)\b/.test(t)) { accent = 'gold-cyan glyph-light'; lighting = 'tide-light glow from the magic'; }
+    else if (/\b(blood|wound|bleed|gash)\b/.test(t)) { accent = 'crimson (blood in the water)'; lighting = 'diffuse light from above'; }
+    else if (/\b(passage|seam|portal|fissure|opening|gate)\b/.test(t)) { accent = 'cold cyan from the opening'; lighting = 'cold backlight from the passage'; }
+    else { accent = warm ? 'firelight orange' : 'pale shell-white'; lighting = 'diffuse underwater light from above'; }
+    var contrast = (emotionalApex === 'MAXIMUM' || emotionalApex === 'HIGH') ? 'high' : 'moderate';
+    return { palette: palette, accent: accent, lighting: lighting, contrast: contrast, mood: _RL_MOOD[type] || 'wary unease' };
+  }
+  window._buildColorDirection = _buildColorDirection;
+
   function _buildStoryboardDoc(type, beatText, primary) {
     var c = _RL_COMP[type] || _RL_COMP.Orientation;
     var e = _RL_EMOTION[type] || _RL_EMOTION.Orientation;
@@ -154112,7 +154231,11 @@ No text, no watermark, no UI elements, share-ready.`;
       pcEmotion: e.pc,                             // { emotion, intensity 1-10, expression } for the protagonist
       otherEmotion: e.other,                       // { emotion, intensity, expression } for the other present figure
       // COMIC GRAPHIC LANGUAGE (v1) — renderer-agnostic semantic intent for the comic's visual vocabulary.
-      graphicLanguage: _buildGraphicLanguage(type, e.apex, beatText, eyeMagnet)
+      graphicLanguage: _buildGraphicLanguage(type, e.apex, beatText, eyeMagnet),
+      // PRODUCTION POLISH (v1) — the "next page of the same comic" fields.
+      visualQuestion: _buildVisualQuestion(type, eyeMagnet),   // the question the image makes the reader want answered
+      eyePath: _buildEyePath(type, eyeMagnet, primary || eventNoun),  // the order the composition leads the eye
+      colorDirection: _buildColorDirection(type, e.apex, beatText)    // palette / accent / lighting / contrast / mood
     };
   }
   window._buildStoryboardDoc = _buildStoryboardDoc;
@@ -154512,6 +154635,12 @@ No text, no watermark, no UI elements, share-ready.`;
         plan._graphicLanguageLint = _glLint;
         if (_glLint.warnings.length) { try { console.log('[GRAPHIC-LANG-LINT] ' + _glLint.warnings.length + ' warning(s) — ' + _glLint.warnings.join(' | ')); } catch (_) {} }
       } catch (_gle) { try { console.warn('[GRAPHIC-LANG-LINT] threw: ' + (_gle && _gle.message)); } catch (_) {} }
+      // VISUAL POLISH LINT (Production Polish v1) — visual question present, eye path clear, colour ≠ emotion.
+      try {
+        var _vpLint = _visualPolishLint(_postDocs);
+        plan._visualPolishLint = _vpLint;
+        if (_vpLint.warnings.length) { try { console.log('[VISUAL-POLISH-LINT] ' + _vpLint.warnings.length + ' warning(s) — ' + _vpLint.warnings.join(' | ')); } catch (_) {} }
+      } catch (_vpe) { try { console.warn('[VISUAL-POLISH-LINT] threw: ' + (_vpe && _vpe.message)); } catch (_) {} }
     } catch (_lerr) { try { console.warn('[STORYBOARD-LINT] threw: ' + (_lerr && _lerr.message)); } catch (_) {} }
     // re-mark the page-turn on the (possibly repaired) list
     sb.forEach(function (s) { delete s.isPageTurn; }); var _rev2 = sb.filter(function (s) { return s.type === 'Revelation'; }); if (_rev2.length) _rev2[_rev2.length - 1].isPageTurn = true;
@@ -180023,6 +180152,10 @@ No text, no watermark, no UI elements, share-ready.`;
               _cidLines.push(_graphicTypographyContract(_gt));
             }
           } catch (_) {}
+          // PRODUCTION POLISH (v1) — the "next page of the same comic" direction.
+          if (_sbDoc.visualQuestion) _cidLines.push('VISUAL QUESTION (the image must make the reader WANT this answered — do not let the panel read as static): ' + _sbDoc.visualQuestion);
+          if (Array.isArray(_sbDoc.eyePath) && _sbDoc.eyePath.length) _cidLines.push('EYE PATH (compose so the reader\'s eye travels in THIS order, not competing equally): ' + _sbDoc.eyePath.join(' → ') + '.');
+          if (_sbDoc.colorDirection) { var _cd = _sbDoc.colorDirection; _cidLines.push('COLOR DIRECTION: dominant palette ' + _cd.palette + '; accent ' + _cd.accent + '; lighting ' + _cd.lighting + '; ' + _cd.contrast + ' contrast; mood ' + _cd.mood + '.'); }
         }
         if (_panel) {
           if (_panel.dramaticQuestion) _cidLines.push('DRAMATIC QUESTION (every choice reinforces it): ' + _panel.dramaticQuestion);
