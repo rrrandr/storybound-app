@@ -179168,6 +179168,23 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_panel.shotExpansion) _cidLines.push('SHOT (' + _panel.shotType + '): ' + _panel.shotExpansion);
           var h = _panel.hierarchy || {};
           if (h.primary) _cidLines.push('HIERARCHY: primary=' + h.primary + (h.secondary ? '  secondary=' + h.secondary : '') + (h.background && h.background.length ? '  background=' + h.background.join(', ') : '') + ' — never three co-equal, randomly-placed figures.');
+          // BLOCKING (composition, NOT anti-romance text): when two figures are adversarial, the
+          // model must be told the SPATIAL relationship — distance, what is BETWEEN them, who
+          // advances, camera — because neutral bodies standing close read as intimacy. (2026-07-17)
+          (function () {
+            var aggressor = null, target = null, weapon = '';
+            _keys.forEach(function (k) {
+              var st = _stateSnap[k]; if (!st || !st.attitudeToward) return;
+              Object.keys(st.attitudeToward).forEach(function (tgt) {
+                if (/kill|hostile|hunt|threat/.test(String(st.attitudeToward[tgt])) && _keys.indexOf(tgt) !== -1) { aggressor = k; target = tgt; weapon = (_canon[k] && _canon[k].weapon) || ''; }
+              });
+            });
+            if (aggressor && target) {
+              var aN = (_canon[aggressor] && _canon[aggressor].displayName) || aggressor;
+              var tN = (_canon[target] && _canon[target].displayName) || target;
+              _cidLines.push('BLOCKING (HARD — a CONFRONTATION; stage it SPATIALLY so it can never read as intimacy): keep a CLEAR fighting distance — several feet apart, NOT face-to-face; ' + aN + ' ADVANCES on ' + tN + (weapon ? ', the ' + weapon + ' held BETWEEN them and levelled at ' + tN : ', menace levelled between them') + '; frame from over ' + tN + '\'s shoulder or at a low / dutch angle with strong foreground→background depth. Both bodies are braced and angled for conflict — never two figures standing close with soft, neutral posture.');
+            }
+          })();
         }
         _cidLines.push('CAST (each figure keeps its identity IDENTICAL across every panel; NEVER merge, swap, restyle, or copy features/injuries between figures):');
         _keys.forEach(function (k) {

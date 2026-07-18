@@ -104,6 +104,7 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['Wish grammar detected + expanded to PRAYER cue on the wish panel', /WISH \(visual grammar/.test(panel1Grammar) && /prayer/i.test(panel1Grammar)],
     ['Hero prompt (wish panel): STORY DIRECTOR — PANEL + DRAMATIC QUESTION + prayer', /STORY DIRECTOR — PANEL \(HARD/.test(wishHeroPrompt) && /DRAMATIC QUESTION/.test(wishHeroPrompt) && /clasped together or open and rising in supplication/.test(wishHeroPrompt)],
     ['Hero prompt: SHOT + HIERARCHY lines present', /SHOT \(/.test(wishHeroPrompt) && /HIERARCHY: primary=/.test(wishHeroPrompt)],
+    ['BLOCKING: adversarial panel gets spatial blocking (distance, weapon-between, advancing)', /BLOCKING \(HARD/.test(heroPrompt) && /CLEAR fighting distance/.test(heroPrompt) && /ADVANCES on/.test(heroPrompt)],
     ['FAIL-LOUD: authored panels missing required fields are flagged invalid', failLoud === true]
   ];
 
