@@ -153705,7 +153705,12 @@ No text, no watermark, no UI elements, share-ready.`;
   // VISUAL LINT = staging (everyone facing camera? romance blocking in combat? identical
   //   compositions? no establishing shot? a figure hidden? recognition traits visible? injuries kept?).
   function _visualLint(panel) { return { errors: [], warnings: [] }; }
-  window._storyLint = _storyLint; window._continuityDiff = _continuityDiff; window._visualLint = _visualLint;
+  // POSTMORTEM = intent-vs-result on the FINISHED image (runs post-render, not in the pre-render
+  //   orchestrator): recognition trait visible? wish grammar recognized? identity preserved?
+  //   primary subject unobstructed? emotion achieved? injuries present? Turns "the model was bad"
+  //   into localized, objective feedback for tuning/comparing renderers. No-op v1.
+  function _postmortem(panel, rendered) { return { checks: [], failures: [] }; }
+  window._storyLint = _storyLint; window._continuityDiff = _continuityDiff; window._visualLint = _visualLint; window._postmortem = _postmortem;
 
   // Story Director orchestrator: [story-lint] → canon → continuity → panels → [continuity-diff] →
   // [visual-lint] (validate/enrich/expand, never reinterpret). Lint stages are reserved no-ops.
