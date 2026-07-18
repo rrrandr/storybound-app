@@ -40,6 +40,13 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
     window._stagedFunnelBypass = true; // fixes reach the model
     window.__cgAuthorTimeoutMs = 180000; // give slow reasoning-model gen more time (providers degraded)
 
+    // ── TWISTING-WISH VALIDATION (Roman 2026-07-18): force the scene's wish to WARP so the regen
+    //    validates the RED twisted burst + the non-diegetic composition (characters must NOT react to
+    //    it) + the sacrifice shadow-hand. NOTE: _resetStoryState wipes _openFateBargains on a fresh
+    //    story, so a bargain injection does NOT survive — the _wishTwisted flag is only ever READ,
+    //    never reset, so it DOES survive. Set the flag (precedence-2 override → _sdWishOutcome='twisted').
+    s._wishTwisted = true; // precedence-2 override → _sdWishOutcome='twisted'; survives _resetStoryState (never reset)
+
     // ── COMBAT SCENARIO — a KWISHEEN combatant on-stage so the Many-Tide Method is
     //    actually depicted (prior run drew a human raider; no Kwisheen combat shown).
     //    Also exercises the Klein species-repaint fallback if the raider mis-renders as human.
