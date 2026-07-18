@@ -154345,17 +154345,20 @@ No text, no watermark, no UI elements, share-ready.`;
   window._castingLint = _castingLint;
 
   // ============================================================================
-  // COMIC LETTERER v1 (Roman 2026-07-18) — the final production discipline. Image models are
-  // unreliable at readable text (misspelled SFX, warped glyphs, melted balloons), so Storybound
-  // stops asking them to render typography. Lettering is VECTOR DATA — structured objects overlaid
-  // on the finished art — not pixels: dialogue is editable without re-rendering, translatable,
-  // screen-reader-accessible, and SFX are toggleable. Illustration creates space; lettering fills it.
-  //   Author writes dialogue · Storyboard Artist decides balloon vs caption vs silence · Story
-  //   Director places intent · Comic Graphic Language sets emphasis · Comic Letterer renders type.
-  // v1: speech / caption / narration / whisper / scream / emphasis / SFX + a controlled SFX
-  // vocabulary + reading order + Lettering Lint. Not a DTP app — it proves the separation.
-  // CONTROLLED SFX VOCABULARY — semantic event → onomatopoeia (deterministic pick; never random per
-  // issue). Underwater world keeps bubble/glursh variants. Worlds may extend this later.
+  // GRAPHIC TYPOGRAPHY v1 (Roman 2026-07-18) — the ONLY text that belongs INSIDE a Storybound panel.
+  // Storybound CG is a HYBRID medium, not a printed comic page: the prose + dialogue live BELOW the
+  // image, so speech balloons would just duplicate what the reader is about to read. So this layer
+  // does NOT do balloons / captions / narration / thought / ordinary dialogue. It renders only the
+  // text that BECOMES PART OF THE VISUAL ACTION — sound effects and emotional outbursts. The decision
+  // is semantic: "does the text become part of the visual action?" not "does the character speak?"
+  //   "We have to go." → nothing (it's in the prose below).   NOOOO!! → in the artwork.   KRRRAK → yes.
+  // RESTRAINT is the whole point (modern comics are not POW!/BAM!/WHOOSH everywhere): typography fires
+  // ONLY when it adds information the artwork alone cannot. A spear thrust's MOTION lines already say
+  // "fast"; a portal's GLYPHS already say "magic" — so an SFX is SUPPRESSED when the Comic Graphic
+  // Language already covers that channel. The rare NOOO!/KRRRAK lands harder for being exceptional.
+  //   Storyboard sets intent (SFX none|light|strong · Burst none|optional|required) · this layer
+  //   resolves it deterministically · the Renderer draws it integrated into the art (no balloon).
+  // CONTROLLED SFX VOCABULARY — semantic event → onomatopoeia (deterministic; never random per issue).
   var _LETTER_SFX_VOCAB = {
     blade_draw:  ['SHNKT', 'SHING', 'SLNK'],
     blade_clash: ['KLANG', 'CLASH', 'SHRNK'],
@@ -154370,13 +154373,18 @@ No text, no watermark, no UI elements, share-ready.`;
     bubble:      ['BLURB', 'GLUB', 'BLUP']
   };
   window._LETTER_SFX_VOCAB = _LETTER_SFX_VOCAB;
+  // Categories whose sound is REDUNDANT with an active Comic Graphic Language channel → suppress them
+  // (the artwork already communicates it): magic/portal are covered by ENERGY (glyphs/particles).
+  var _TYPO_SFX_SUPPRESS_IF = { magic: 'energy', portal: 'energy' };
+  // Discrete, forceful material events read STRONG; ambient/soft events read LIGHT.
+  var _TYPO_SFX_STRONG = { explosion: 1, stone_crack: 1, impact: 1, blade_clash: 1, lightning: 1 };
   function _letterSfxCategory(beatText) {
     var t = String(beatText || '').toLowerCase();
     if (/\b(draws?|drawn|unsheath\w*|bares?)\b[^.]*\b(blade|sword|cutlass|dagger|spear|knife)\b/.test(t)) return 'blade_draw';
     if (/\b(clash|parr\w+|blades? (?:meet|lock)|steel (?:rings|meets))\b/.test(t)) return 'blade_clash';
     if (/\b(crack\w*|shatter\w*|splinter\w*|stone[^.]*(?:break|give))\b/.test(t)) return 'stone_crack';
     if (/\b(lightning|thunderbolt|electric\w*)\b/.test(t)) return 'lightning';
-    if (/\b(portal|rift|gate[^.]*(?:open|widen)|seam[^.]*(?:split|open)|passage[^.]*(?:split|breath))\b/.test(t)) return 'portal';
+    if (/\b(portal|rift|gate[^.]*(?:open\w*|widen\w*)|seam[^.]*(?:split\w*|open\w*)|passage[^.]*(?:split\w*|breath\w*))\b/.test(t)) return 'portal';
     if (/\b(explo\w+|blast\w*|erupt\w*)\b/.test(t)) return 'explosion';
     if (/\b(slam\w*|crash\w*|smash\w*|impact|rams?|strikes?[^.]*(?:land|connect)|drives? (?:it|the))\b/.test(t)) return 'impact';
     if (/\b(splash\w*|wave[^.]*crash|water[^.]*(?:surge|rush))\b/.test(t)) return 'water';
@@ -154384,105 +154392,79 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/\b(magic\w*|spell|glyph\w*|tide-light|surge of[^.]*(?:power|light|strength))\b/.test(t)) return 'magic';
     return null;
   }
-  // Dialogue that BECOMES a visual event (drawn into the art, not inside a balloon).
-  var _LETTER_BURST_RX = /^(no+|run+|stop+|help+|wait+|die+|never+|now+|go+|down+|behind you|look out)[!.\s]*$/i;
-  function _letterClassifyDialogue(text, meta) {
-    meta = meta || {};
+  window._letterSfxCategory = _letterSfxCategory;
+  // An EMOTIONAL OUTBURST — a short shout that is itself a visual event (drawn into the art, never a
+  // balloon). Ordinary dialogue, however loud, is NOT this — it lives in the prose below the panel.
+  var _TYPO_OUTBURST_RX = /\b(n+o+|r+u+n+|s+t+o+p+|h+e+l+p+|w+a+i+t+|d+i+e+|n+e+v+e+r+|behind you|look out|get back|go+)\b\s*[!]+/i;
+  function _letterOutburst(text) {
     var t = String(text || '').trim();
-    if (meta.thought) return 'thought_balloon';
-    if (meta.internal) return 'internal_monologue';
-    if (meta.whisper || /\b(whisper\w*|murmur\w*|under (?:my|her|his) breath)\b/.test(String(meta.cue || ''))) return 'whisper';
-    if (_LETTER_BURST_RX.test(t)) return 'dialogue_burst';
-    if (meta.scream || /!!\s*$/.test(t) || (t.length <= 24 && /[A-Z]{3,}/.test(t) && t === t.toUpperCase() && /!/.test(t))) return 'scream';
-    return 'speech_balloon';
+    var m = _TYPO_OUTBURST_RX.exec(t);
+    if (m) return m[0].toUpperCase().replace(/\s+/g, ' ').trim();
+    // an all-caps short shout ending in !! is also an outburst (e.g. "AAAAH!!")
+    if (t.length <= 16 && /!!\s*$/.test(t) && /[A-Z]{2,}/.test(t) && t === t.toUpperCase()) return t;
+    return null;
   }
-  window._letterClassifyDialogue = _letterClassifyDialogue;
-  // Per type: font family + relative size + weight + balloon shape + outline. Vector, not pixels.
-  var _LETTER_STYLE = {
-    speech_balloon:     { font: 'comic', size: 'normal', weight: 'regular', balloon: 'rounded', outline: 'thin' },
-    thought_balloon:    { font: 'comic', size: 'normal', weight: 'regular', balloon: 'cloud', outline: 'thin' },
-    caption:            { font: 'sans', size: 'small', weight: 'regular', balloon: 'box', outline: 'none' },
-    narration:          { font: 'sans', size: 'small', weight: 'regular', balloon: 'box', outline: 'none' },
-    internal_monologue: { font: 'italic', size: 'normal', weight: 'italic', balloon: 'borderless', outline: 'none' },
-    whisper:            { font: 'comic', size: 'small', weight: 'light', balloon: 'dashed', outline: 'hairline' },
-    scream:             { font: 'comic', size: 'xlarge', weight: 'heavy', balloon: 'jagged', outline: 'bold' },
-    emphasis:           { font: 'comic', size: 'normal', weight: 'bold', balloon: 'rounded', outline: 'thin' },
-    dialogue_burst:     { font: 'display', size: 'xlarge', weight: 'heavy', balloon: 'none', outline: 'stroke' },
-    sfx:                { font: 'display', size: 'large', weight: 'heavy', balloon: 'none', outline: 'stroke' }
-  };
-  window._LETTER_STYLE = _LETTER_STYLE;
-  function _letterAnchorForSpeaker(idx, panel) {
-    // Alternate speakers across the top third; keep balloons clear of the focal centre.
-    var slots = [{ x: 0.22, y: 0.16 }, { x: 0.78, y: 0.18 }, { x: 0.30, y: 0.30 }, { x: 0.72, y: 0.34 }];
-    return slots[idx % slots.length];
-  }
-  // Build the vector lettering for one panel. panel = { dialogue:[{speaker,text,mode}], narration:[str],
-  // beatText, hierarchy:{primary}, eyeMagnet, graphicLanguage }. Returns ordered lettering objects.
-  function _buildLettering(panel) {
-    panel = panel || {};
-    var out = [];
-    (panel.narration || []).forEach(function (n, i) {
-      if (!n) return;
-      out.push({ type: 'narration', text: String(n), style: _LETTER_STYLE.narration, anchor: { x: 0.04, y: 0.06 + i * 0.10 }, priority: 1 });
-    });
-    (panel.dialogue || []).forEach(function (d, i) {
-      if (!d || !d.text) return;
-      var type = _letterClassifyDialogue(d.text, d.mode || d.meta || {});
-      var isBurst = type === 'dialogue_burst';
-      out.push({
-        type: type, text: String(d.text), speaker: d.speaker || null,
-        style: _LETTER_STYLE[type] || _LETTER_STYLE.speech_balloon,
-        anchor: isBurst ? { x: 0.5, y: 0.42 } : _letterAnchorForSpeaker(i, panel),
-        tailTo: (type === 'speech_balloon' || type === 'whisper' || type === 'scream') ? (d.speaker || null) : null,
-        priority: 2 + i
-      });
-    });
-    // SFX — semantic event → controlled vocab, anchored to the action (eye-magnet), integrated into art.
-    var cat = _letterSfxCategory(panel.beatText);
+  window._letterOutburst = _letterOutburst;
+  // Build the graphic typography for ONE panel — the SFX and/or emotional outburst, or NOTHING.
+  // opts.dialogue = the panel's dialogue lines (outbursts are pulled from here, else from beatText).
+  // graphicLanguage = the panel's Comic Graphic Language (for the redundancy-suppression restraint).
+  // Returns { sfx: {text,category,strength,anchor,suppressed?} | null, burst: {text,anchor} | null }.
+  function _buildGraphicTypography(beatText, graphicLanguage, opts) {
+    opts = opts || {};
+    var gl = graphicLanguage || {};
+    var out = { sfx: null, burst: null };
+    // ── SFX (with the restraint rule) ──
+    var cat = _letterSfxCategory(beatText);
     if (cat && _LETTER_SFX_VOCAB[cat]) {
-      var pick = _LETTER_SFX_VOCAB[cat][_ffColorHash(String(panel.beatText || '') + '|sfx') % _LETTER_SFX_VOCAB[cat].length];
-      out.push({ type: 'sfx', text: pick, sfxCategory: cat, style: _LETTER_STYLE.sfx, anchor: { x: 0.62, y: 0.6 }, integrated: true, priority: 9 });
+      var coveredBy = _TYPO_SFX_SUPPRESS_IF[cat];
+      if (coveredBy && gl[coveredBy] && gl[coveredBy].level && gl[coveredBy].level !== 'none') {
+        // the graphic language already communicates this — adding text would weaken the image
+        out.sfx = { text: null, category: cat, suppressed: true, suppressedBy: coveredBy };
+      } else if (opts.sfxIntent === 'none') {
+        out.sfx = { text: null, category: cat, suppressed: true, suppressedBy: 'storyboard:none' };
+      } else {
+        var pick = _LETTER_SFX_VOCAB[cat][_ffColorHash(String(beatText || '') + '|sfx') % _LETTER_SFX_VOCAB[cat].length];
+        out.sfx = { text: pick, category: cat, strength: _TYPO_SFX_STRONG[cat] ? 'strong' : 'light', anchor: { x: 0.62, y: 0.6 }, integrated: true };
+      }
     }
-    return _letteringReadingOrder(out);
+    // ── EMOTIONAL OUTBURST (from dialogue, else the beat text) ──
+    if (opts.burstIntent !== 'none') {
+      var burst = null;
+      var pool = Array.isArray(opts.dialogue) ? opts.dialogue.slice() : [];
+      pool.push(String(beatText || ''));
+      for (var i = 0; i < pool.length && !burst; i++) burst = _letterOutburst(pool[i]);
+      if (burst) out.burst = { text: burst, anchor: { x: 0.5, y: 0.4 }, integrated: true };
+    }
+    return out;
   }
-  window._buildLettering = _buildLettering;
-  // READING ORDER — comics read top→left→right→down. Sort by (row band, then x), stamp readIndex.
-  function _letteringReadingOrder(objs) {
-    var a = (objs || []).slice();
-    a.sort(function (p, q) {
-      var pr = Math.round((p.anchor ? p.anchor.y : 0) * 3), qr = Math.round((q.anchor ? q.anchor.y : 0) * 3);
-      if (pr !== qr) return pr - qr;                                  // higher rows first
-      return (p.anchor ? p.anchor.x : 0) - (q.anchor ? q.anchor.x : 0); // then left→right
-    });
-    a.forEach(function (o, i) { o.readIndex = i; });
-    return a;
-  }
-  window._letteringReadingOrder = _letteringReadingOrder;
-  // LETTERING LINT — warnings only. Overlap with the focal action, an SFX over the eye-magnet, a
-  // balloon whose tail points at an absent speaker, too many balloons, or type out of panel bounds.
-  function _letteringLint(objs, panel) {
-    var warnings = [], a = objs || [], p = panel || {};
-    var speakers = {};
-    (p.dialogue || []).forEach(function (d) { if (d && d.speaker) speakers[String(d.speaker).toLowerCase()] = true; });
-    var balloonCount = a.filter(function (o) { return /balloon|scream|whisper|emphasis/.test(o.type); }).length;
-    if (balloonCount > 4) warnings.push('LETTERING: ' + balloonCount + ' balloons in one panel — over the comfortable reading limit (4).');
-    a.forEach(function (o, i) {
-      if (o.anchor && (o.anchor.x < 0 || o.anchor.x > 1 || o.anchor.y < 0 || o.anchor.y > 1)) warnings.push('LETTERING: "' + String(o.text).slice(0, 18) + '" exits the panel bounds.');
-      if (o.tailTo && !speakers[String(o.tailTo).toLowerCase()]) warnings.push('LETTERING: a balloon tail points to "' + o.tailTo + '" who is not a speaker in this panel.');
-      // an SFX or big burst sitting on the eye-magnet obscures the focal story element
-      if ((o.type === 'sfx' || o.type === 'dialogue_burst') && o.anchor && Math.abs(o.anchor.x - 0.5) < 0.25 && Math.abs(o.anchor.y - 0.5) < 0.25 && p.eyeMagnet) {
-        warnings.push('LETTERING: the ' + o.type + ' "' + o.text + '" sits over the focal centre — it may obscure the eye-magnet (' + p.eyeMagnet + ').');
+  window._buildGraphicTypography = _buildGraphicTypography;
+  // GRAPHIC TYPOGRAPHY LINT — warnings only. An SFX that the graphic language already covers (should
+  // be suppressed), an SFX/burst sitting on the eye-magnet (obscures the focal element), or an SFX
+  // fired on a pure-motion beat where the motion lines already carry it.
+  function _graphicTypographyLint(gt, panel) {
+    var warnings = [], p = panel || {};
+    if (!gt) return { warnings: warnings };
+    if (gt.sfx && gt.sfx.suppressed && gt.sfx.suppressedBy && gt.sfx.suppressedBy.indexOf('storyboard') !== 0) {
+      warnings.push('GRAPHIC-TYPO: SFX for "' + gt.sfx.category + '" suppressed — the ' + gt.sfx.suppressedBy + ' graphic language already communicates it (restraint).');
+    }
+    [gt.sfx, gt.burst].forEach(function (o) {
+      if (o && o.text && o.anchor && Math.abs(o.anchor.x - 0.5) < 0.22 && Math.abs(o.anchor.y - 0.5) < 0.22 && p.eyeMagnet) {
+        warnings.push('GRAPHIC-TYPO: "' + o.text + '" sits over the focal centre — it may obscure the eye-magnet (' + p.eyeMagnet + ').');
       }
     });
     return { warnings: warnings };
   }
-  window._letteringLint = _letteringLint;
-  // RENDERER CONTRACT — the renderer must reserve space and NOT draw readable English; lettering is
-  // applied afterward as vector overlay. Incidental environmental signage may remain.
-  function _letteringRendererContract() {
-    return 'LETTERING CONTRACT (HARD): do NOT render any readable English dialogue, caption, or sound-effect text — leave clean negative space in the upper third and near the focal action for balloons and SFX to be placed afterward as a separate vector lettering layer. Incidental non-English environmental signage may remain. Never draw speech balloons with text inside them.';
+  window._graphicTypographyLint = _graphicTypographyLint;
+  // RENDERER CONTRACT (LIVE) — the hybrid-medium rule: no balloons/captions/dialogue in the image
+  // (the prose below carries them); render ONLY the specified SFX / outburst, integrated into the art.
+  function _graphicTypographyContract(gt) {
+    var lines = ['GRAPHIC TYPOGRAPHY (HARD): this is a hybrid medium — all dialogue, narration, and captions appear as PROSE BELOW the panel. Do NOT draw any speech balloons, thought balloons, caption boxes, or readable dialogue/narration text in the image. Render ONLY the sound-effect / emotional-outburst typography specified below (if any), hand-lettered and integrated INTO the artwork (perspective-aligned, wrapping the action), never inside a balloon. Incidental non-English environmental signage may remain.'];
+    if (gt && gt.sfx && gt.sfx.text) lines.push('SOUND EFFECT (integrated into the art, ' + (gt.sfx.strength || 'light') + '): ' + gt.sfx.text + ' — at the point of action, NOT over the focal subject.');
+    if (gt && gt.burst && gt.burst.text) lines.push('EMOTIONAL OUTBURST (large, hand-lettered, part of the composition): ' + gt.burst.text);
+    if (!(gt && ((gt.sfx && gt.sfx.text) || (gt.burst && gt.burst.text)))) lines.push('(No SFX or outburst for this panel — it carries NO text at all.)');
+    return lines.join('\n');
   }
-  window._letteringRendererContract = _letteringRendererContract;
+  window._graphicTypographyContract = _graphicTypographyContract;
 
   // Build the storyboard: an ordered set of understanding-CHANGES (not prose phases).
   function _buildStoryboard(plan) {
@@ -180031,6 +180013,16 @@ No text, no watermark, no UI elements, share-ready.`;
           // COMIC GRAPHIC LANGUAGE (v1) — the comic's visual vocabulary (speed / force / focus /
           // tension / energy), translated from the storyboard's renderer-agnostic intent.
           try { var _glTxt = _graphicLanguageToPrompt(_sbDoc.graphicLanguage); if (_glTxt) _cidLines.push(_glTxt); } catch (_) {}
+          // GRAPHIC TYPOGRAPHY (v1, LIVE) — hybrid medium: dialogue/narration live in the prose below
+          // the panel, so the image carries NO balloons/captions — only an SFX or emotional outburst
+          // when the text itself becomes part of the visual action, and only when the graphic language
+          // doesn't already say it (restraint). Kill switch: window._graphicTypography === false.
+          try {
+            if (window._graphicTypography !== false) {
+              var _gt = _buildGraphicTypography(_sbDoc.frozenMoment, _sbDoc.graphicLanguage, {});
+              _cidLines.push(_graphicTypographyContract(_gt));
+            }
+          } catch (_) {}
         }
         if (_panel) {
           if (_panel.dramaticQuestion) _cidLines.push('DRAMATIC QUESTION (every choice reinforces it): ' + _panel.dramaticQuestion);
