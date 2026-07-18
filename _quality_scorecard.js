@@ -36,6 +36,11 @@ const { chromium } = require('playwright-core');
     const wellDirectedScoresHigh = sc && sc.overall >= 80; // a clean, well-directed plan
     // POST-RENDER dims are null — NOT faked from a lint
     const postRenderNull = sc && sc.postRender && sc.postRender.identity === null && sc.postRender.emotionLanding === null && sc.postRender.typographyQuality === null;
+    // the storytelling rubric (regen13 blind-review gap) exists as post-render dims, all null
+    const storytellingRubric = sc && sc.postRender && ('characterFidelity' in sc.postRender) && ('narrativeProgression' in sc.postRender) && ('visualProseAlignment' in sc.postRender)
+      && sc.postRender.characterFidelity === null && sc.postRender.narrativeProgression === null && sc.postRender.visualProseAlignment === null;
+    // narrative-progression PROXY is a deterministic plan-level dimension
+    const progressionProxy = sc && typeof sc.dimensions.narrativeProgression === 'number';
     // identity directive = 100 because morphology is pinned (Kesh gender pinned male)
     const identityDirective100 = sc && sc.dimensions.identityDirective === 100;
     // emotion reflects a real arc (intensity spread across the storyboard)
@@ -59,6 +64,7 @@ const { chromium } = require('playwright-core');
     return {
       scorecardExists, hasAllDims, overallIsNumber, wellDirectedScoresHigh, postRenderNull,
       identityDirective100, emotionScored, coverageScored, continuityPenalized, warnLighter, emptyEmotionNull,
+      storytellingRubric, progressionProxy,
       overall: sc && sc.overall, dims: sc && sc.dimensions
     };
   });
@@ -76,7 +82,9 @@ const { chromium } = require('playwright-core');
     ['coverage dimension reflects the understanding types', R.coverageScored],
     ['a continuity ERROR penalizes the continuity dimension', R.continuityPenalized],
     ['warnings weigh less than errors', R.warnLighter],
-    ['an empty plan yields null dims, never fake numbers', R.emptyEmotionNull]
+    ['an empty plan yields null dims, never fake numbers', R.emptyEmotionNull],
+    ['STORYTELLING RUBRIC: character-fidelity / narrative-progression / visual-prose-alignment exist (post-render, null)', R.storytellingRubric],
+    ['narrative-progression PROXY is a deterministic plan-level dimension', R.progressionProxy]
   ];
 
   let pass = 0, fail = 0;

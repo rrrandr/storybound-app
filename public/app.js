@@ -154091,6 +154091,12 @@ No text, no watermark, no UI elements, share-ready.`;
     // IDENTITY (directive level): morphology pinned for every canon character (rendered identity = blind eval)
     var canon = (plan && plan._canon) || {}, ck = Object.keys(canon);
     var identityDirective = ck.length ? (ck.every(function (k) { return canon[k].morphology && canon[k].morphology.genderPresentation; }) ? 100 : 60) : null;
+    // NARRATIVE PROGRESSION (deterministic PROXY — Roman 2026-07-18): does the PLAN give each panel a
+    // DISTINCT event to show, or does it repeat the same subject? (The render can still converge to a
+    // face-off — that's the post-render metric — but a repetitive PLAN is measurable here and flags early.)
+    var eyes = docs.map(function (d) { return d.eyeMagnet; }).filter(Boolean);
+    var subs = docs.map(function (d) { return d.primarySubject; }).filter(Boolean);
+    var progression = docs.length >= 2 ? Math.round(100 * Math.max((new Set(eyes)).size, (new Set(subs)).size) / docs.length) : null;
     var dims = {
       storyboard: _scoreFromLint(plan && plan._storyboardLint, 20, 5),
       emotion: emotion === null ? null : Math.round(emotion),
@@ -154098,6 +154104,7 @@ No text, no watermark, no UI elements, share-ready.`;
       visualPolish: _scoreFromLint(plan && plan._visualPolishLint, 15, 8),
       continuity: _scoreFromLint(plan && plan._continuityLint, 25, 8),
       coverage: coverage,
+      narrativeProgression: progression,   // distinct events per panel (plan-level proxy)
       identityDirective: identityDirective
     };
     var vals = Object.keys(dims).map(function (k) { return dims[k]; }).filter(function (v) { return typeof v === 'number'; });
@@ -154105,9 +154112,15 @@ No text, no watermark, no UI elements, share-ready.`;
     return {
       dimensions: dims,
       overall: overall,
-      // require the blind/vision eval — NEVER inferred from a lint
-      postRender: { identity: null, emotionLanding: null, typographyQuality: null },
-      note: 'PRE-RENDER directive quality (deterministic). Post-render dims (identity/emotion-landing/typography) require the blind eval.'
+      // POST-RENDER STORYTELLING RUBRIC (Roman 2026-07-18) — these grade the COMIC, not the features, and
+      // require the blind/vision eval; NEVER inferred from a lint. They are what regen13's blind review
+      // showed the deterministic scorecard was missing.
+      //   characterFidelity   — would a reader think it is UNQUESTIONABLY the same character in every panel?
+      //   narrativeProgression — does each panel show a NEW event, not another angle on the same moment?
+      //   visualProseAlignment — are the key actions described in the prose actually DEPICTED?
+      //   + the earlier three: identity / emotionLanding / typographyQuality.
+      postRender: { identity: null, emotionLanding: null, typographyQuality: null, characterFidelity: null, narrativeProgression: null, visualProseAlignment: null },
+      note: 'PRE-RENDER directive quality (deterministic). The postRender rubric (character fidelity / narrative progression / visual-prose alignment / identity / emotion-landing / typography) grades the COMIC and requires the blind eval — never faked from a lint.'
     };
   }
   window._buildQualityScorecard = _buildQualityScorecard;
