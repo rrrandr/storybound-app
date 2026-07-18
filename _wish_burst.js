@@ -2,6 +2,11 @@
 // straight-lined SPARKLE-STAR burst (made → manifests → fulfilled); a TWISTED wish curdles the same
 // burst to red, jagged, X-scribbled/broken stars. Runs against localhost:3000, no paid calls.
 const { chromium } = require('playwright-core');
+const fs = require('fs');
+// #ref: the cropped burst emblems must exist on disk (fed to the render model as style references)
+const ASSET_DIR = '/Users/romantsukerman/storybound-app/public/assets/Fatelands/';
+const cleanAssetExists = fs.existsSync(ASSET_DIR + 'Wish_Burst_Clean_v1.png');
+const twistedAssetExists = fs.existsSync(ASSET_DIR + 'Wish_Burst_Twisted_v1.png');
 
 (async () => {
   const browser = await chromium.launch();
@@ -73,6 +78,14 @@ const { chromium } = require('playwright-core');
     // #16 aesthetic: the burst is FLAT SYMBOLIC LINEWORK (engraved/inked/2D overlay), not energy/glow
     const burstIsSymbolic = /SYMBOLIC LINEWORK|INKED, ENGRAVED|2D graphic|woodcut|printed-comic sound-effect/i.test(G.wish) && /NOT a soft volumetric glow|not a soft volumetric glow|anime energy explosion/i.test(G.wish);
     const twistedIsSymbolic = /SYMBOLIC LINEWORK|INKED, ENGRAVED/i.test(G.wishTwisted);
+    // #ref: the burst STYLE REFERENCE helper — feed the model the emblem, not just prose
+    const refClean = window._wishBurstStyleRef('clean');
+    const refTwisted = window._wishBurstStyleRef('twisted');
+    const refRejected = window._wishBurstStyleRef('rejected');
+    const refHelperOk = !!(refClean && /Wish_Burst_Clean_v1\.png/.test(refClean.path) && /GOLDEN/.test(refClean.label)
+      && refTwisted && /Wish_Burst_Twisted_v1\.png/.test(refTwisted.path) && /RED, JAGGED/.test(refTwisted.label)
+      && refRejected === null);
+    const refLabelStyleOnly = !!(refTwisted && /STYLE ONLY|not the figure/i.test(refTwisted.label));
     // integration: the wish panel carries a wishAnchor and the hero prompt emits the WISH ANCHOR line
     const anchorPanel = (() => {
       s._openFateBargains = [];
@@ -114,7 +127,7 @@ const { chromium } = require('playwright-core');
       mechMaps, mostRecentWins, mechOverridesCleanText, mechRefusedOverridesHopeText, fallsThroughNoMechanic,
       rejectGrammarOk, detectsRefusedHeuristic, rejectedPanelNoBurst,
       anchorPassage, anchorWeapon, anchorWound, anchorInvocation, anchorRift, manyTideNotWater, noPrayerInGrammar, burstWrapsAnchor, panelHasAnchor,
-      burstIsSymbolic, twistedIsSymbolic,
+      burstIsSymbolic, twistedIsSymbolic, refHelperOk, refLabelStyleOnly,
       hasWishCue: !!clean.wishCues
     };
   });
@@ -155,7 +168,11 @@ const { chromium } = require('playwright-core');
     ['ANCHOR: the burst wraps THE WISH ANCHOR (not a "point of power")', R.burstWrapsAnchor],
     ['ANCHOR: the wish panel carries a wishAnchor (the passage)', R.panelHasAnchor],
     ['#16 AESTHETIC: the burst is FLAT SYMBOLIC LINEWORK, not an energy blast', R.burstIsSymbolic],
-    ['#16 AESTHETIC: the twisted burst carries the symbolic-linework style too', R.twistedIsSymbolic]
+    ['#16 AESTHETIC: the twisted burst carries the symbolic-linework style too', R.twistedIsSymbolic],
+    ['REF IMAGE: burst style-reference helper maps clean→gold emblem, twisted→red emblem, rejected→none', R.refHelperOk],
+    ['REF IMAGE: the label says match the STYLE ONLY (not the figure/scene)', R.refLabelStyleOnly],
+    ['REF IMAGE: the cropped clean burst emblem asset exists on disk', cleanAssetExists],
+    ['REF IMAGE: the cropped twisted burst emblem asset exists on disk', twistedAssetExists]
   ];
 
   let pass = 0, fail = 0;

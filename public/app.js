@@ -153727,6 +153727,16 @@ No text, no watermark, no UI elements, share-ready.`;
     fateAnswerRejected: 'FATE UNANSWERING (visual grammar): the world does NOT change — the passage stays sealed, the wound stays open, the current stays cold; a held, indifferent stillness where a miracle was asked. ' + _WISH_BURST_REJECTED
   };
   window._WISH_BURST_CLEAN = _WISH_BURST_CLEAN; window._WISH_BURST_TWISTED = _WISH_BURST_TWISTED; window._WISH_BURST_REJECTED = _WISH_BURST_REJECTED;
+  // FEED THE MODEL THE EMBLEM, not just prose (Roman 2026-07-18): a specific graphic mark is far more
+  // reliable as a REFERENCE IMAGE than any text. The burst chart is cropped to a clean + a twisted
+  // emblem; the matching one is attached as a style anchor when a wish outcome is set. (A refused wish
+  // has no burst → no reference.) Mirrors the manta-cloak garment-reference pattern.
+  function _wishBurstStyleRef(outcome) {
+    if (outcome === 'clean') return { path: '/assets/Fatelands/Wish_Burst_Clean_v1.png', label: 'FATE BURST STYLE reference — match the GRAPHIC STYLE of this emblem: a GOLDEN burst of straight radial lines and discrete sparkle stars, a flat inked comic mark. Match the burst STYLE ONLY — not the figure, header text, or scene in the reference.' };
+    if (outcome === 'twisted') return { path: '/assets/Fatelands/Wish_Burst_Twisted_v1.png', label: 'FATE BURST STYLE reference — match the GRAPHIC STYLE of this emblem: a RED, JAGGED, forked burst with scribbled red X’s and broken/splintered stars, a flat inked comic mark. Match the burst STYLE ONLY — not the figure, header text, or scene in the reference.' };
+    return null; // rejected / none → no burst reference
+  }
+  window._wishBurstStyleRef = _wishBurstStyleRef;
   // SACRIFICE = THE SHADOWY HAND OF FATE (Roman 2026-07-18) — the price is TAKEN by a hand-shaped
   // shadow, Fate's own reaching hand, closing over the thing sacrificed: a tangible cost (eye, limb,
   // voice, memory) → the hand over that part; an INNER cost (years of life, courage, love) → the hand
@@ -181871,6 +181881,17 @@ No text, no watermark, no UI elements, share-ready.`;
       var _mcW = String((visualState && (visualState.pc_wardrobe || '')) + ' ' + (visualState && (visualState.li_wardrobe || ''))).toLowerCase();
       if (/manta|manta-cloak|manta cloak|manta-poncho/.test(_mcW)) {
         combinedAnchors.push({ path: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', label: 'manta-cloak garment reference (match the cape hide, pearl strands, and braid trim ONLY — not the wearer)', species: 'manta cloak garment' });
+      }
+    } catch (_) {}
+    // ── FATE WISH-BURST STYLE REFERENCE (Roman 2026-07-18) — feed the model the actual emblem ──
+    // When this panel carries a wish outcome, attach the cropped clean/twisted burst emblem so the
+    // model MATCHES the symbolic graphic style instead of inventing an anime energy blast from prose.
+    try {
+      var _wpo = phase && phase._panel && phase._panel.wishOutcome;
+      var _bref = (typeof _wishBurstStyleRef === 'function') ? _wishBurstStyleRef(_wpo) : null;
+      if (_bref && combinedAnchors.length < 8) {
+        combinedAnchors.push({ path: _bref.path, label: _bref.label, species: 'fate burst style' });
+        try { console.log('[STAGED:STYLE] wish-burst ' + _wpo + ' style reference attached (phase ' + phase.phaseIdx + ')'); } catch (_) {}
       }
     } catch (_) {}
     // ── CASTING LIBRARY REINJECT (Roman 2026-07-18) ──────────────────
