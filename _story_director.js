@@ -10,7 +10,7 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForFunction(() => typeof window._buildStoryDirector === 'function' && typeof window._buildStagedHeroPrompt === 'function' && typeof window._resolvePhaseVisualState === 'function' && typeof window._buildStagedRegionContract === 'function', { timeout: 40000 });
 
-  const R = await page.evaluate(() => {
+  const R = await page.evaluate(async () => {
     const s = window.state;
     s.gender = 'Female'; s.loveInterest = 'Male'; s.gnArtist = 'ender_bond'; s.renderMode = 'staged_story_mode';
     s.picks = { world: 'Fantasy', identity: { playerName: 'Mira', partnerName: '' } };
@@ -64,6 +64,17 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     window._buildStoryDirector(plan2, 0);
     const failLoud = plan2._panelInvalid === true;
 
+    // UNIFIED PIPELINE: a cut-in of the PC in the combat phase (beat 4) with a NEUTRAL beat
+    // expression must still consume Canon + the tense scene register (no smiling in a crisis).
+    const cutBeat = { idx: 4, closeup_target: 'protagonist', shot_type: 'face', expression_target: 'neutral' };
+    const cutPanel = window._buildCutInPanel(plan, cutBeat, 'dark');
+    window._lastCloseupPrompt = '';
+    await window._renderPanel(cutPanel).catch(function () {});
+    const cutPrompt = window._lastCloseupPrompt || '';
+    const cutPanelType = cutPanel && cutPanel.type;
+    const cutTense = !!(cutPanel && cutPanel.sceneCtx && cutPanel.sceneCtx.sceneTense);
+    const cutHasCanon = !!(cutPanel && cutPanel.sceneCtx && cutPanel.sceneCtx.canon);
+
     // hero prompt for phase 2 (all three present)
     const phaseVS = window._resolvePhaseVisualState(plan.visualState, plan.phases[2], plan.phases, plan.beats);
     s._stagedRegionContract = window._buildStagedRegionContract({ visualState: plan.visualState, phases: [] });
@@ -80,11 +91,12 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
       panel2HierPrimary: panel2 && panel2.hierarchy && panel2.hierarchy.primary,
       panel1Grammar: (panel1 && panel1.grammarCues || []).join(' | '),
       panel0HasPerf: !!(panel0 && panel0.cast && panel0.cast.length && panel0.cast[0].performance),
-      wishHeroPrompt, failLoud
+      wishHeroPrompt, failLoud,
+      cutPrompt, cutPanelType, cutTense, cutHasCanon
     };
   });
   await browser.close();
-  const { canonKeys, soren, kael, p2SorenState, p2KaelState, heroPrompt, panel2ShotType, panel2HierPrimary, panel1Grammar, panel0HasPerf, wishHeroPrompt, failLoud } = R;
+  const { canonKeys, soren, kael, p2SorenState, p2KaelState, heroPrompt, panel2ShotType, panel2HierPrimary, panel1Grammar, panel0HasPerf, wishHeroPrompt, failLoud, cutPrompt, cutPanelType, cutTense, cutHasCanon } = R;
 
   const checks = [
     ['Canon built for PC + Soren + Kael', canonKeys.includes('protagonist') && canonKeys.includes('soren') && canonKeys.includes('kael')],
@@ -105,7 +117,10 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['Hero prompt (wish panel): STORY DIRECTOR — PANEL + DRAMATIC QUESTION + prayer', /STORY DIRECTOR — PANEL \(HARD/.test(wishHeroPrompt) && /DRAMATIC QUESTION/.test(wishHeroPrompt) && /clasped together or open and rising in supplication/.test(wishHeroPrompt)],
     ['Hero prompt: SHOT + HIERARCHY lines present', /SHOT \(/.test(wishHeroPrompt) && /HIERARCHY: primary=/.test(wishHeroPrompt)],
     ['BLOCKING: adversarial panel gets spatial blocking (distance, weapon-between, advancing)', /BLOCKING \(HARD/.test(heroPrompt) && /CLEAR fighting distance/.test(heroPrompt) && /ADVANCES on/.test(heroPrompt)],
-    ['FAIL-LOUD: authored panels missing required fields are flagged invalid', failLoud === true]
+    ['FAIL-LOUD: authored panels missing required fields are flagged invalid', failLoud === true],
+    ['Unified pipeline: cut-in is a panel.type=cut_in', cutPanelType === 'cut_in'],
+    ['Unified pipeline: cut-in carries Canon + detects the tense scene register', cutHasCanon === true && cutTense === true],
+    ['Unified pipeline: cut-in renders through _renderPanel with identity + no-smile-in-crisis', /CHARACTER IDENTITY \(HARD/.test(cutPrompt) && /EMOTIONAL REGISTER \(HARD/.test(cutPrompt) && /NEVER be pleasant/.test(cutPrompt)]
   ];
 
   let pass = 0, fail = 0;

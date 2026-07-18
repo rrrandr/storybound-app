@@ -153680,6 +153680,7 @@ No text, no watermark, no UI elements, share-ready.`;
         return { key: k, name: (canon[k] && canon[k].displayName) || tok, performance: perf };
       });
       phase._panel = {
+        type: (ap && ap.panelType) || (pi === 0 ? 'establishing' : 'hero'),
         panelIdx: pi, dramaticQuestion: dq, shotType: shotType,
         shotExpansion: _SHOT_LANGUAGE_V1[shotType] || '',
         hierarchy: { primary: primary, secondary: secondary, background: background },
@@ -153728,6 +153729,82 @@ No text, no watermark, no UI elements, share-ready.`;
     return plan;
   }
   window._buildStoryDirector = _buildStoryDirector;
+
+  // ── UNIFIED RENDER PIPELINE (Roman 2026-07-17, roadmap #1): there is ONE pipeline; a panel's
+  // TYPE (hero | establishing | cut_in | detail | splash) is a PROPERTY, and the renderer keys on
+  // it. A cut-in is no longer a special path — it consumes the SAME Canon / Continuity / emotional
+  // register the hero panels do (this is what fixes the smiling-in-a-crisis cut-in).
+  function _sdTargetKey(target, canon) {
+    var t = String(target || 'protagonist').trim().toLowerCase();
+    if (t === 'protagonist' || t === 'pc') return 'protagonist';
+    if (t === 'li' || t === 'love interest' || t === 'love_interest') {
+      var lk = Object.keys(canon || {}).filter(function (k) { return canon[k].role === 'love_interest'; })[0];
+      return lk || 'li';
+    }
+    return t;
+  }
+  function _phaseForBeat(plan, beatIdx) {
+    var phases = (plan && plan.phases) || [];
+    var found = null;
+    phases.forEach(function (p, i) {
+      var start = (typeof p.startBeat === 'number') ? p.startBeat : 0;
+      var next = phases[i + 1];
+      var end = (next && typeof next.startBeat === 'number') ? next.startBeat : Infinity;
+      if (beatIdx >= start && beatIdx < end) found = p;
+    });
+    return found || phases[0] || null;
+  }
+  var _SD_TENSE_RX = /clench|tighten|press|cutting|sharpen|hard|fear|afraid|anger|angry|alarm|pain|dread|desperat|grief|rage|tense|guarded|panic|terror|wary|shaken|grim|combat/i;
+  function _sdSceneRegister(plan, phase, targetKey) {
+    var bits = [];
+    if (phase) {
+      if (phase.pc_emotional_state && targetKey === 'protagonist') bits.push(phase.pc_emotional_state);
+      if (phase._phasePeakExpression) bits.push(phase._phasePeakExpression);
+      if (phase._panel && phase._panel.cast) { var m = phase._panel.cast.filter(function (c) { return c.key === targetKey; })[0]; if (m && m.performance && m.performance.expression) bits.push(m.performance.expression); }
+      if (phase._panel && phase._panel.shotType) bits.push(phase._panel.shotType);
+    }
+    var reg = bits.filter(Boolean).join(' ');
+    return { text: reg, tense: _SD_TENSE_RX.test(reg) };
+  }
+  // Build a first-class CUT-IN panel (type:'cut_in') from a cut-to-closeup beat, carrying the
+  // Story Director's Canon + Continuity + emotional register for the target.
+  function _buildCutInPanel(plan, beat, lighting) {
+    var canon = (plan && plan._canon) || {};
+    var target = (beat && beat.closeup_target) || 'protagonist';
+    var targetKey = _sdTargetKey(target, canon);
+    var phase = _phaseForBeat(plan, beat && beat.idx);
+    var reg = _sdSceneRegister(plan, phase, targetKey);
+    var cont = (phase && phase._state && phase._state[targetKey]) || null;
+    // Floor a soft / neutral beat-expression to a TENSE read when the scene register is high-
+    // tension — so a crisis cut-in is neither dropped (neutral is otherwise rejected) nor rendered
+    // pleasant. This is the emotional continuity the cut-in used to lack.
+    var _expr = (beat && beat.expression_target) || '';
+    if (reg.tense && /^(neutral|mouth_soft|half_smile|smirk|mouth_parted)?$/i.test(String(_expr))) _expr = 'lips_pressed';
+    return {
+      type: 'cut_in', target: target, targetKey: targetKey, shotType: beat && beat.shot_type,
+      expressionTarget: _expr, lighting: lighting,
+      sceneCtx: {
+        background: plan.visualState && plan.visualState.background,
+        pcWardrobe: plan.visualState && plan.visualState.pc_wardrobe,
+        pcSpecies: state._playerSpecies,
+        canon: canon[targetKey] || null, continuity: cont,
+        sceneRegister: reg.text, sceneTense: reg.tense
+      }
+    };
+  }
+  window._buildCutInPanel = _buildCutInPanel;
+  // THE single panel-consuming renderer. Keys on panel.type. The Director never knows what a
+  // "cut-in renderer" is; the renderer never knows what a "hero panel" is — both consume a panel.
+  async function _renderPanel(panel) {
+    if (!panel) return { error: 'no_panel' };
+    if (panel.type === 'cut_in') {
+      return _renderCutCloseup(panel.expressionTarget, panel.lighting, panel.target, panel.shotType, panel.sceneCtx);
+    }
+    // hero / establishing panels still render through the phase loop (_renderStagedPhaseImage);
+    // they migrate to this dispatcher next (roadmap #1 continues). Reserved.
+    return { error: 'unhandled_panel_type', type: panel.type };
+  }
+  window._renderPanel = _renderPanel;
 
   // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
   // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can
@@ -182816,6 +182893,23 @@ No text, no watermark, no UI elements, share-ready.`;
     // them. Instead assert what the insert IS and redirect the ref-leak at category
     // level (refs are linework-only, never a source of clothing/anatomy).
     var _cuGrounding = '';
+    // STORY DIRECTOR — this cut-in is a PANEL and consumes the same Canon / Continuity / emotional
+    // register the hero panels do (Roman 2026-07-17, unified pipeline). sceneCtx.canon = the
+    // target's immutable identity; sceneCtx.continuity = carried injuries; sceneTense = the scene
+    // register, so a cut-in never renders a pleasant/smiling face during a high-stress moment.
+    var _sdCanon = (sceneCtx && sceneCtx.canon) || null;
+    var _sdCont = (sceneCtx && sceneCtx.continuity) || null;
+    if (_sdCanon) {
+      var _rt = (_sdCanon.recognitionTraits && _sdCanon.recognitionTraits.length) ? (' RECOGNITION TRAITS (must be visible, identical to the panels): ' + _sdCanon.recognitionTraits.join(', ') + '.') : '';
+      var _hn = _sdCanon.humanNoTentacles ? ' Fully HUMAN — NO tentacles, scales, or cephalopod features.' : '';
+      _cuGrounding += 'CHARACTER IDENTITY (HARD — same person as in the surrounding panels): ' + (_sdCanon.displayName || 'the subject') + ' — ' + String(_sdCanon.species || 'human').toUpperCase() + '.' + _rt + _hn + '\n\n';
+    }
+    if (_sdCont && _sdCont.injuries && _sdCont.injuries.length) {
+      _cuGrounding += 'CONTINUITY (HARD — carried from the surrounding panels): ' + _sdCont.injuries.join('; ') + ' — if that body part is in frame, the wound is present, in the SAME location.\n\n';
+    }
+    if (sceneCtx && sceneCtx.sceneTense) {
+      _cuGrounding += 'EMOTIONAL REGISTER (HARD — this is a HIGH-TENSION moment' + (sceneCtx.sceneRegister ? ' (' + sceneCtx.sceneRegister + ')' : '') + '): the face reads TENSE, ALERT, and stressed — fear, anger, pain, or grim focus as the beat demands. It must NEVER be pleasant, soft, relaxed, faintly smiling, or blankly neutral; a calm or smiling face in this moment is WRONG.\n\n';
+    }
     if (_cuBg) {
       _cuGrounding += 'SCENE SETTING (HARD — this insert lives INSIDE this exact setting): ' + _cuBg + '. Any surface, prop, or object in the frame belongs entirely to THIS setting and reads as in-world — keep the frame consistent with where the scene actually takes place.\n\n';
     }
@@ -197767,7 +197861,7 @@ No text, no watermark, no UI elements, share-ready.`;
         var lighting = plan.visualState && plan.visualState.lighting;
         plan.beats.forEach(function(beat) {
           if (beat.cut_to_closeup) {
-            _renderCutCloseup(beat.expression_target, lighting, beat.closeup_target, beat.shot_type, { background: plan.visualState && plan.visualState.background, pcWardrobe: plan.visualState && plan.visualState.pc_wardrobe, pcSpecies: state._playerSpecies }).then(function(res) {
+            _renderPanel(_buildCutInPanel(plan, beat, lighting)).then(function(res) {
               if (res && res.imageUrl) {
                 state._stagedActive.beatCloseupUrls = state._stagedActive.beatCloseupUrls || {};
                 state._stagedActive.beatCloseupUrls[beat.idx] = res.imageUrl;
@@ -198278,7 +198372,7 @@ No text, no watermark, no UI elements, share-ready.`;
         plan.beats.forEach(function(beat) {
           if (beat.cut_to_closeup) {
             // Layer 3 — cut-to closeup. Independent gen, target/shot-aware.
-            _renderCutCloseup(beat.expression_target, lighting, beat.closeup_target, beat.shot_type, { background: plan.visualState && plan.visualState.background, pcWardrobe: plan.visualState && plan.visualState.pc_wardrobe, pcSpecies: state._playerSpecies }).then(function(res) {
+            _renderPanel(_buildCutInPanel(plan, beat, lighting)).then(function(res) {
               if (!state._stagedActive) return;
               if (res && res.imageUrl) {
                 state._stagedActive.beatCloseupUrls = state._stagedActive.beatCloseupUrls || {};
