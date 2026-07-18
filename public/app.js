@@ -154344,6 +154344,146 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._castingLint = _castingLint;
 
+  // ============================================================================
+  // COMIC LETTERER v1 (Roman 2026-07-18) — the final production discipline. Image models are
+  // unreliable at readable text (misspelled SFX, warped glyphs, melted balloons), so Storybound
+  // stops asking them to render typography. Lettering is VECTOR DATA — structured objects overlaid
+  // on the finished art — not pixels: dialogue is editable without re-rendering, translatable,
+  // screen-reader-accessible, and SFX are toggleable. Illustration creates space; lettering fills it.
+  //   Author writes dialogue · Storyboard Artist decides balloon vs caption vs silence · Story
+  //   Director places intent · Comic Graphic Language sets emphasis · Comic Letterer renders type.
+  // v1: speech / caption / narration / whisper / scream / emphasis / SFX + a controlled SFX
+  // vocabulary + reading order + Lettering Lint. Not a DTP app — it proves the separation.
+  // CONTROLLED SFX VOCABULARY — semantic event → onomatopoeia (deterministic pick; never random per
+  // issue). Underwater world keeps bubble/glursh variants. Worlds may extend this later.
+  var _LETTER_SFX_VOCAB = {
+    blade_draw:  ['SHNKT', 'SHING', 'SLNK'],
+    blade_clash: ['KLANG', 'CLASH', 'SHRNK'],
+    stone_crack: ['KRRRK', 'CRACK', 'KRRSH'],
+    lightning:   ['ZZZT', 'KRAK', 'FZZAK'],
+    portal:      ['WHUMMM', 'KRRRRR', 'VWOOM'],
+    explosion:   ['BOOM', 'THOOM', 'WHUMP'],
+    impact:      ['WHAM', 'THUD', 'KRUNCH'],
+    water:       ['SPLASH', 'SPLOOSH', 'GLURSH'],
+    fire:        ['FWOOSH', 'WHOOM', 'FWMP'],
+    magic:       ['SHIMMER', 'FWOOM', 'VRRR'],
+    bubble:      ['BLURB', 'GLUB', 'BLUP']
+  };
+  window._LETTER_SFX_VOCAB = _LETTER_SFX_VOCAB;
+  function _letterSfxCategory(beatText) {
+    var t = String(beatText || '').toLowerCase();
+    if (/\b(draws?|drawn|unsheath\w*|bares?)\b[^.]*\b(blade|sword|cutlass|dagger|spear|knife)\b/.test(t)) return 'blade_draw';
+    if (/\b(clash|parr\w+|blades? (?:meet|lock)|steel (?:rings|meets))\b/.test(t)) return 'blade_clash';
+    if (/\b(crack\w*|shatter\w*|splinter\w*|stone[^.]*(?:break|give))\b/.test(t)) return 'stone_crack';
+    if (/\b(lightning|thunderbolt|electric\w*)\b/.test(t)) return 'lightning';
+    if (/\b(portal|rift|gate[^.]*(?:open|widen)|seam[^.]*(?:split|open)|passage[^.]*(?:split|breath))\b/.test(t)) return 'portal';
+    if (/\b(explo\w+|blast\w*|erupt\w*)\b/.test(t)) return 'explosion';
+    if (/\b(slam\w*|crash\w*|smash\w*|impact|rams?|strikes?[^.]*(?:land|connect)|drives? (?:it|the))\b/.test(t)) return 'impact';
+    if (/\b(splash\w*|wave[^.]*crash|water[^.]*(?:surge|rush))\b/.test(t)) return 'water';
+    if (/\b(fire|flame\w*|blaz\w+|ignit\w+)\b/.test(t)) return 'fire';
+    if (/\b(magic\w*|spell|glyph\w*|tide-light|surge of[^.]*(?:power|light|strength))\b/.test(t)) return 'magic';
+    return null;
+  }
+  // Dialogue that BECOMES a visual event (drawn into the art, not inside a balloon).
+  var _LETTER_BURST_RX = /^(no+|run+|stop+|help+|wait+|die+|never+|now+|go+|down+|behind you|look out)[!.\s]*$/i;
+  function _letterClassifyDialogue(text, meta) {
+    meta = meta || {};
+    var t = String(text || '').trim();
+    if (meta.thought) return 'thought_balloon';
+    if (meta.internal) return 'internal_monologue';
+    if (meta.whisper || /\b(whisper\w*|murmur\w*|under (?:my|her|his) breath)\b/.test(String(meta.cue || ''))) return 'whisper';
+    if (_LETTER_BURST_RX.test(t)) return 'dialogue_burst';
+    if (meta.scream || /!!\s*$/.test(t) || (t.length <= 24 && /[A-Z]{3,}/.test(t) && t === t.toUpperCase() && /!/.test(t))) return 'scream';
+    return 'speech_balloon';
+  }
+  window._letterClassifyDialogue = _letterClassifyDialogue;
+  // Per type: font family + relative size + weight + balloon shape + outline. Vector, not pixels.
+  var _LETTER_STYLE = {
+    speech_balloon:     { font: 'comic', size: 'normal', weight: 'regular', balloon: 'rounded', outline: 'thin' },
+    thought_balloon:    { font: 'comic', size: 'normal', weight: 'regular', balloon: 'cloud', outline: 'thin' },
+    caption:            { font: 'sans', size: 'small', weight: 'regular', balloon: 'box', outline: 'none' },
+    narration:          { font: 'sans', size: 'small', weight: 'regular', balloon: 'box', outline: 'none' },
+    internal_monologue: { font: 'italic', size: 'normal', weight: 'italic', balloon: 'borderless', outline: 'none' },
+    whisper:            { font: 'comic', size: 'small', weight: 'light', balloon: 'dashed', outline: 'hairline' },
+    scream:             { font: 'comic', size: 'xlarge', weight: 'heavy', balloon: 'jagged', outline: 'bold' },
+    emphasis:           { font: 'comic', size: 'normal', weight: 'bold', balloon: 'rounded', outline: 'thin' },
+    dialogue_burst:     { font: 'display', size: 'xlarge', weight: 'heavy', balloon: 'none', outline: 'stroke' },
+    sfx:                { font: 'display', size: 'large', weight: 'heavy', balloon: 'none', outline: 'stroke' }
+  };
+  window._LETTER_STYLE = _LETTER_STYLE;
+  function _letterAnchorForSpeaker(idx, panel) {
+    // Alternate speakers across the top third; keep balloons clear of the focal centre.
+    var slots = [{ x: 0.22, y: 0.16 }, { x: 0.78, y: 0.18 }, { x: 0.30, y: 0.30 }, { x: 0.72, y: 0.34 }];
+    return slots[idx % slots.length];
+  }
+  // Build the vector lettering for one panel. panel = { dialogue:[{speaker,text,mode}], narration:[str],
+  // beatText, hierarchy:{primary}, eyeMagnet, graphicLanguage }. Returns ordered lettering objects.
+  function _buildLettering(panel) {
+    panel = panel || {};
+    var out = [];
+    (panel.narration || []).forEach(function (n, i) {
+      if (!n) return;
+      out.push({ type: 'narration', text: String(n), style: _LETTER_STYLE.narration, anchor: { x: 0.04, y: 0.06 + i * 0.10 }, priority: 1 });
+    });
+    (panel.dialogue || []).forEach(function (d, i) {
+      if (!d || !d.text) return;
+      var type = _letterClassifyDialogue(d.text, d.mode || d.meta || {});
+      var isBurst = type === 'dialogue_burst';
+      out.push({
+        type: type, text: String(d.text), speaker: d.speaker || null,
+        style: _LETTER_STYLE[type] || _LETTER_STYLE.speech_balloon,
+        anchor: isBurst ? { x: 0.5, y: 0.42 } : _letterAnchorForSpeaker(i, panel),
+        tailTo: (type === 'speech_balloon' || type === 'whisper' || type === 'scream') ? (d.speaker || null) : null,
+        priority: 2 + i
+      });
+    });
+    // SFX — semantic event → controlled vocab, anchored to the action (eye-magnet), integrated into art.
+    var cat = _letterSfxCategory(panel.beatText);
+    if (cat && _LETTER_SFX_VOCAB[cat]) {
+      var pick = _LETTER_SFX_VOCAB[cat][_ffColorHash(String(panel.beatText || '') + '|sfx') % _LETTER_SFX_VOCAB[cat].length];
+      out.push({ type: 'sfx', text: pick, sfxCategory: cat, style: _LETTER_STYLE.sfx, anchor: { x: 0.62, y: 0.6 }, integrated: true, priority: 9 });
+    }
+    return _letteringReadingOrder(out);
+  }
+  window._buildLettering = _buildLettering;
+  // READING ORDER — comics read top→left→right→down. Sort by (row band, then x), stamp readIndex.
+  function _letteringReadingOrder(objs) {
+    var a = (objs || []).slice();
+    a.sort(function (p, q) {
+      var pr = Math.round((p.anchor ? p.anchor.y : 0) * 3), qr = Math.round((q.anchor ? q.anchor.y : 0) * 3);
+      if (pr !== qr) return pr - qr;                                  // higher rows first
+      return (p.anchor ? p.anchor.x : 0) - (q.anchor ? q.anchor.x : 0); // then left→right
+    });
+    a.forEach(function (o, i) { o.readIndex = i; });
+    return a;
+  }
+  window._letteringReadingOrder = _letteringReadingOrder;
+  // LETTERING LINT — warnings only. Overlap with the focal action, an SFX over the eye-magnet, a
+  // balloon whose tail points at an absent speaker, too many balloons, or type out of panel bounds.
+  function _letteringLint(objs, panel) {
+    var warnings = [], a = objs || [], p = panel || {};
+    var speakers = {};
+    (p.dialogue || []).forEach(function (d) { if (d && d.speaker) speakers[String(d.speaker).toLowerCase()] = true; });
+    var balloonCount = a.filter(function (o) { return /balloon|scream|whisper|emphasis/.test(o.type); }).length;
+    if (balloonCount > 4) warnings.push('LETTERING: ' + balloonCount + ' balloons in one panel — over the comfortable reading limit (4).');
+    a.forEach(function (o, i) {
+      if (o.anchor && (o.anchor.x < 0 || o.anchor.x > 1 || o.anchor.y < 0 || o.anchor.y > 1)) warnings.push('LETTERING: "' + String(o.text).slice(0, 18) + '" exits the panel bounds.');
+      if (o.tailTo && !speakers[String(o.tailTo).toLowerCase()]) warnings.push('LETTERING: a balloon tail points to "' + o.tailTo + '" who is not a speaker in this panel.');
+      // an SFX or big burst sitting on the eye-magnet obscures the focal story element
+      if ((o.type === 'sfx' || o.type === 'dialogue_burst') && o.anchor && Math.abs(o.anchor.x - 0.5) < 0.25 && Math.abs(o.anchor.y - 0.5) < 0.25 && p.eyeMagnet) {
+        warnings.push('LETTERING: the ' + o.type + ' "' + o.text + '" sits over the focal centre — it may obscure the eye-magnet (' + p.eyeMagnet + ').');
+      }
+    });
+    return { warnings: warnings };
+  }
+  window._letteringLint = _letteringLint;
+  // RENDERER CONTRACT — the renderer must reserve space and NOT draw readable English; lettering is
+  // applied afterward as vector overlay. Incidental environmental signage may remain.
+  function _letteringRendererContract() {
+    return 'LETTERING CONTRACT (HARD): do NOT render any readable English dialogue, caption, or sound-effect text — leave clean negative space in the upper third and near the focal action for balloons and SFX to be placed afterward as a separate vector lettering layer. Incidental non-English environmental signage may remain. Never draw speech balloons with text inside them.';
+  }
+  window._letteringRendererContract = _letteringRendererContract;
+
   // Build the storyboard: an ordered set of understanding-CHANGES (not prose phases).
   function _buildStoryboard(plan) {
     var beats = (plan && plan.beats) || [];
