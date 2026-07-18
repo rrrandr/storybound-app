@@ -154032,6 +154032,130 @@ No text, no watermark, no UI elements, share-ready.`;
     return out;
   }
   window._storyboardRepair = _storyboardRepair;
+
+  // ============================================================================
+  // CASTING LIBRARY v1 (Roman 2026-07-18) — PERSISTENT VISUAL MEMORY for recurring
+  // characters. Canon already "casts" PC + LI (state.pcFaceMasterUrl / liFaceMasterUrl,
+  // re-injected as identity anchors by _resolveStagedStyleAnchors). This generalizes
+  // that PROVEN loop to recurring NPCs (the ruler, the antagonist, the merchant) — WITHOUT
+  // any extra render. Principle: do not RENDER identity, HARVEST it. Every panel already
+  // paid for is a chance to establish or IMPROVE a character's casting.
+  //
+  // Two governing rules:
+  //   1. PROMOTE BY CONFIDENCE, not first appearance. Every panel where a character is the
+  //      primary subject is a candidate identity source; the highest-scoring one wins. A
+  //      close-up scores higher than a wide establishing silhouette, so the best identity
+  //      panel supersedes an earlier weaker one automatically — no special cases.
+  //   2. IDENTITY, NEVER EXPRESSION. The harvested reference conditions morphology (face /
+  //      skull / jaw / eye-spacing / species / tentacle-topology / recognition traits) and
+  //      is passed as ONE identity anchor among several — NEVER a full-frame i2i copy — so
+  //      it can't drag pose/expression along and undo the Storyboard Artist's emotional arc.
+  // v1 stays small: cache + harvest + opportunistic promotion + reinject + lint. Tiers/
+  // cross-issue persistence/detection-crop/vision-refined confidence are v2 extension points.
+  // Kill switch: window._castingLibrary === false.
+  function _castingLib() { if (!state._castingLibrary) state._castingLibrary = {}; return state._castingLibrary; }
+  window._castingLib = _castingLib; // accessor for the store (the store lives on state; window._castingLibrary is the on/off flag)
+  function _castingToken(x) { return String(x || '').trim().toLowerCase().replace(/^(the|a|an)\s+/, ''); }
+  window._castingToken = _castingToken;
+  // A significant recurring NPC = named, on-stage, and NOT the PC or LI (those are Canon-cast already).
+  function _castingIsSignificantNPC(o) {
+    if (!o || !o.name) return false;
+    var n = _castingToken(o.name);
+    if (!n || n === 'protagonist' || n === 'pc' || n === 'you') return false;
+    if (o.isPC || o.isLI || o.role === 'protagonist' || o.role === 'li' || o.role === 'love_interest') return false;
+    return true;
+  }
+  window._castingIsSignificantNPC = _castingIsSignificantNPC;
+  // Deterministic confidence that a panel is a GOOD identity source. Closeness dominates
+  // (a wide silhouette is a poor face reference no matter what), primary-subject adjusts.
+  // The paid vision QA (_verifyPanelAnatomy) can REFINE this later (v2) — v1 is text-only.
+  function _castingShotCloseness(text) {
+    var t = String(text || '').toLowerCase();
+    if (/extreme[\s_-]?close|ecu\b|eye[\s_-]?level macro/.test(t)) return 98;
+    if (/close[\s_-]?up|close on|tight on|tight[\s_-]|portrait|face[\s_-]?fill|facial|head[\s_-]?and[\s_-]?shoulder/.test(t)) return 90;
+    if (/medium[\s_-]?close|med[\s_-]?close|mcu\b/.test(t)) return 75;
+    if (/medium|mid[\s_-]?shot|waist[\s_-]?up|bust/.test(t)) return 60;
+    if (/wide|establish|aerial|long[\s_-]?shot|full[\s_-]?shot|silhouette|distant|tiny|panoram/.test(t)) return 30;
+    return 50;
+  }
+  function _castingIsPrimarySubject(phase, token) {
+    var n = _castingToken(token);
+    var doc = (phase && phase._storyboardDoc) || {};
+    var panel = (phase && phase._panel) || {};
+    var prim = _castingToken((panel.hierarchy && panel.hierarchy.primary) || doc.primarySubject || '');
+    if (!prim || !n) return false;
+    return prim === n || prim.indexOf(n) !== -1 || n.indexOf(prim) !== -1;
+  }
+  function _castingIdentityConfidence(phase, visualState, token) {
+    var doc = (phase && phase._storyboardDoc) || {};
+    var panel = (phase && phase._panel) || {};
+    var shotText = [doc.composition, doc.compositionPriority, (phase && phase.camera_override), (visualState && visualState.camera), panel.shotType, (panel.shotExpansion || '')].join(' ');
+    var closeness = _castingShotCloseness(shotText);
+    var primary = _castingIsPrimarySubject(phase, token);
+    // non-primary → the character may be small, side-on, or occluded: a weak identity source.
+    var conf = closeness + (primary ? 6 : -22);
+    return Math.max(0, Math.min(100, Math.round(conf)));
+  }
+  window._castingIdentityConfidence = _castingIdentityConfidence;
+  // Tier from how often the character recurs across the storyboard (drives retention).
+  function _castingTierFor(appearances) {
+    if (appearances >= 3) return 'WORLD';    // recurring pillar — persist indefinitely
+    if (appearances >= 2) return 'SESSION';  // recurs locally — persist while useful
+    return 'TRANSIENT';                       // one panel — do not store
+  }
+  window._castingTierFor = _castingTierFor;
+  // Consider a completed panel as an identity source. Casts a new record, PROMOTES an existing
+  // one if this panel scores higher (never demotes; a locked record is left alone), or keeps.
+  function _castingConsiderPanel(token, url, confidence, sourcePanel, opts) {
+    opts = opts || {};
+    if (!token || !url) return { action: 'skip', reason: 'missing-token-or-url' };
+    var THRESH = (typeof opts.threshold === 'number') ? opts.threshold : 55; // below this = not an acceptable identity source
+    if (confidence < THRESH) return { action: 'reject', reason: 'below-threshold', confidence: confidence };
+    var lib = _castingLib();
+    var n = _castingToken(token);
+    var rec = lib[n];
+    if (!rec) {
+      lib[n] = { token: n, displayName: String(token), url: url, confidence: confidence, sourcePanel: sourcePanel, firstAppearance: sourcePanel, lastAppearance: sourcePanel, timesUsed: 0, tier: opts.tier || 'SESSION', locked: false };
+      return { action: 'cast', confidence: confidence };
+    }
+    rec.lastAppearance = sourcePanel;
+    if (opts.tier && rec.tier !== 'WORLD') rec.tier = opts.tier; // tier can only rise toward WORLD
+    if (!rec.locked && confidence > rec.confidence) {
+      var prev = rec.confidence;
+      rec.url = url; rec.confidence = confidence; rec.sourcePanel = sourcePanel;
+      return { action: 'promote', from: prev, to: confidence }; // a better panel supersedes the weaker reference
+    }
+    return { action: 'keep', confidence: rec.confidence };
+  }
+  window._castingConsiderPanel = _castingConsiderPanel;
+  // Resolve a character to its identity anchor for the renderer. Identity-ONLY label so the
+  // renderer matches morphology, not the reference's expression/pose/lighting. Counts the reuse.
+  function _castingResolveAnchor(token) {
+    var rec = _castingLib()[_castingToken(token)];
+    if (!rec || !rec.url) return null;
+    rec.timesUsed = (rec.timesUsed || 0) + 1;
+    return {
+      url: rec.url,
+      label: 'CASTING identity anchor for ' + rec.displayName + ' — match ONLY their face / skull / jaw / eye-spacing / species / tentacle-topology and recognition traits. Do NOT copy the reference\'s expression, gaze, pose, framing, or lighting — this panel sets those. Same actor, new performance.'
+    };
+  }
+  window._castingResolveAnchor = _castingResolveAnchor;
+  // CASTING LINT — warnings only. A recurring character with no reference (reinvented each
+  // panel), a low-confidence reference that should be superseded, or a reference never reused.
+  function _castingLint(appearancesByToken) {
+    var warnings = [], lib = _castingLib(), appr = appearancesByToken || {};
+    Object.keys(appr).forEach(function (raw) {
+      var n = _castingToken(raw), count = appr[raw], rec = lib[n];
+      if (count >= 2 && !rec) warnings.push('CASTING: "' + raw + '" appears in ' + count + ' panels but has NO identity reference — it will be reinvented every panel.');
+      if (rec && rec.confidence < 70) warnings.push('CASTING: "' + raw + '" reference confidence is low (' + rec.confidence + '/100) — a closer panel should supersede it.');
+    });
+    Object.keys(lib).forEach(function (n) {
+      if ((lib[n].timesUsed || 0) === 0) warnings.push('CASTING: "' + lib[n].displayName + '" was harvested but its reference was never reused — casting produced no benefit.');
+    });
+    return { warnings: warnings };
+  }
+  window._castingLint = _castingLint;
+
   // Build the storyboard: an ordered set of understanding-CHANGES (not prose phases).
   function _buildStoryboard(plan) {
     var beats = (plan && plan.beats) || [];
@@ -180810,6 +180934,27 @@ No text, no watermark, no UI elements, share-ready.`;
         combinedAnchors.push({ path: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', label: 'manta-cloak garment reference (match the cape hide, pearl strands, and braid trim ONLY — not the wearer)', species: 'manta cloak garment' });
       }
     } catch (_) {}
+    // ── CASTING LIBRARY REINJECT (Roman 2026-07-18) ──────────────────
+    // For each recurring NPC on-stage in THIS phase that the Casting Library has already
+    // established from an earlier paid render, attach its harvested identity reference —
+    // as an IDENTITY-ONLY anchor (match morphology + recognition traits, never expression/
+    // pose). This is the generalization of the PC/LI face-master reinject to the wider cast:
+    // once we've seen the antagonist, stop letting the renderer reinvent him each panel.
+    try {
+      if (window._castingLibrary !== false && visualState && Array.isArray(visualState.other_characters_present)) {
+        var _castSeen = {};
+        visualState.other_characters_present.forEach(function (o) {
+          if (!_castingIsSignificantNPC(o)) return;
+          var _tok = _castingToken(o.name);
+          if (_castSeen[_tok]) return; _castSeen[_tok] = true;
+          var _anchor = _castingResolveAnchor(o.name);
+          if (_anchor && _anchor.url && combinedAnchors.length < 8) {
+            combinedAnchors.push({ path: _anchor.url, label: _anchor.label, species: 'casting:' + _tok });
+            try { console.log('[CASTING] reinject identity anchor for "' + o.name + '" (phase ' + phase.phaseIdx + ')'); } catch (_) {}
+          }
+        });
+      }
+    } catch (_) {}
     if (state._stagedRegionContract && state._stagedRegionContract.anchorImages.length > 0) {
       // ── SPECIES-ANCHOR PRESENCE GATE (Roman 2026-07-14) ──────────────
       // A species reference image (e.g. the Kwisheen octofolk ref) must
@@ -181108,6 +181253,27 @@ No text, no watermark, no UI elements, share-ready.`;
               if (_drift) _recordFavoredShift(_drift, /kwisheen/.test(_favSp) ? 'Kwisheen' : 'First Favored');
             }
           }).catch(function () {});
+        }
+      } catch (_) {}
+      // ── CASTING LIBRARY HARVEST (Roman 2026-07-18, fire-and-forget) ──
+      // A completed render is a free chance to CAST recurring NPCs. For each significant NPC
+      // on-stage, score this panel as an identity source (closeness + primary-subject); if it
+      // beats the current reference, crop the character and promote it. No extra render, no
+      // blocking. Only above-threshold (close / primary) panels qualify, so a wide silhouette
+      // never poisons the library — a later close-up supersedes it automatically. Flag: _castingLibrary=false.
+      try {
+        if (imageUrl && window._castingLibrary !== false && visualState && Array.isArray(visualState.other_characters_present) && typeof _deriveFromFrame === 'function') {
+          var _cPanelId = 'scene' + sceneIndex + '_phase' + phase.phaseIdx;
+          visualState.other_characters_present.forEach(function (o) {
+            if (!_castingIsSignificantNPC(o)) return;
+            var _cConf = _castingIdentityConfidence(phase, visualState, o.name);
+            if (_cConf < 55) return; // poor identity source (wide / non-primary) — wait for a better panel
+            var _cTier = _castingTierFor((o && o._appearances) || 2); // present recurring char → SESSION+ by default
+            _deriveFromFrame(imageUrl, 'close').then(function (_crop) {
+              var _r = _castingConsiderPanel(o.name, _crop || imageUrl, _cConf, _cPanelId, { tier: _cTier });
+              if (_r.action === 'cast' || _r.action === 'promote') { try { console.log('[CASTING] ' + _r.action + ' "' + o.name + '" from ' + _cPanelId + ' @ confidence ' + _cConf + (_r.from != null ? ' (was ' + _r.from + ')' : '')); } catch (_) {} }
+            }).catch(function () {});
+          });
         }
       } catch (_) {}
       // Stash phase 0's URL per-scene so subsequent phases can find it
