@@ -153737,6 +153737,34 @@ No text, no watermark, no UI elements, share-ready.`;
     return null; // rejected / none → no burst reference
   }
   window._wishBurstStyleRef = _wishBurstStyleRef;
+  // ═══ CANONICAL VISUAL ASSET RULE (Roman 2026-07-18) ══════════════════════════════════════════════
+  // If a visual element has a CANONICAL appearance readers should RECOGNIZE across issues, feed the
+  // renderer that appearance as a REFERENCE IMAGE — the reference defines WHAT it looks like; text
+  // describes HOW / WHEN to use it. Encode visually first, textually second. This is how human art
+  // direction works, and it prevents re-prompt-engineering what already exists visually. Tell the model
+  // "borrow the graphic language" (match the STYLE), NOT "recreate this image".
+  //   TIER 1 — ALWAYS reference: species anatomy · canonical symbols (wish burst) · signature garments ·
+  //            recurring artifacts · major recurring characters.
+  //   TIER 2 — reference WHEN AVAILABLE: buildings · cities · vehicles · creatures · magic implements.
+  //   TIER 3 — TEXT ONLY: lighting · emotion · camera · composition · weather · acting.
+  // Create a reference asset ONLY when it (a) recurs, (b) is instantly recognizable, (c) is part of the
+  // world's identity. Resist a PNG-per-effect — a bloated asset library is worse than prompts.
+  var _CANONICAL_VISUAL_ASSETS = {
+    kwisheen_anatomy:  { tier: 1, kind: 'species anatomy',           asset: '/assets/Fatelands/Kwisheen_Octofolk_Ref_v1.jpg', governs: 'body plan / proportions / tentacle topology', plumbing: 'species-anchor presence gate (always-on when a Kwisheen is on-stage)' },
+    wish_burst:        { tier: 1, kind: 'canonical symbol',          assetByOutcome: { clean: '/assets/Fatelands/Wish_Burst_Clean_v1.png', twisted: '/assets/Fatelands/Wish_Burst_Twisted_v1.png' }, governs: 'the Fate burst graphic style', plumbing: '_resolveCanonicalAssets, by wish outcome' },
+    manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
+    character_casting: { tier: 1, kind: 'major recurring character', asset: null, governs: 'this individual\'s costume / colour / recognition traits', plumbing: 'per-character harvested crop — Casting Library reinject (establishing-shot sourced)' }
+  };
+  window._CANONICAL_VISUAL_ASSETS = _CANONICAL_VISUAL_ASSETS;
+  // Resolve which canonical reference images to attach for a panel's context. Returns [{id,tier,path,label}].
+  // (Species anatomy + character casting have their own dedicated gates; this covers the symbol + garment.)
+  function _resolveCanonicalAssets(ctx) {
+    ctx = ctx || {}; var out = [];
+    if (ctx.wishOutcome) { var _br = _wishBurstStyleRef(ctx.wishOutcome); if (_br) out.push({ id: 'wish_burst', tier: 1, path: _br.path, label: _br.label }); }
+    if (ctx.wardrobe && /manta/i.test(ctx.wardrobe)) out.push({ id: 'manta_cloak', tier: 1, path: _CANONICAL_VISUAL_ASSETS.manta_cloak.asset, label: 'manta-cloak garment reference — match the cape hide, pearl strands, and braid trim STYLE ONLY, not the wearer.' });
+    return out;
+  }
+  window._resolveCanonicalAssets = _resolveCanonicalAssets;
   // SACRIFICE = THE SHADOWY HAND OF FATE (Roman 2026-07-18) — the price is TAKEN by a hand-shaped
   // shadow, Fate's own reaching hand, closing over the thing sacrificed: a tangible cost (eye, limb,
   // voice, memory) → the hand over that part; an INNER cost (years of life, courage, love) → the hand
@@ -181877,21 +181905,21 @@ No text, no watermark, no UI elements, share-ready.`;
     // MANTA-CLOAK GARMENT REFERENCE (Roman 2026-07-17): when a human on-stage wears a
     // manta-cloak, attach a cropped canon reference of the garment (smooth manta-hide cape,
     // pearl strands, woven braid trim, shoulder clasp) so the cloak renders consistently.
+    // ── CANONICAL VISUAL ASSETS (Roman 2026-07-18) — feed the model the actual canonical emblems/garments
+    //    as reference images (Tier-1 symbol + garment), resolved from one registry. Species anatomy and
+    //    per-character casting have their own dedicated gates below/above; this covers the wish burst + manta.
     try {
-      var _mcW = String((visualState && (visualState.pc_wardrobe || '')) + ' ' + (visualState && (visualState.li_wardrobe || ''))).toLowerCase();
-      if (/manta|manta-cloak|manta cloak|manta-poncho/.test(_mcW)) {
-        combinedAnchors.push({ path: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', label: 'manta-cloak garment reference (match the cape hide, pearl strands, and braid trim ONLY — not the wearer)', species: 'manta cloak garment' });
-      }
-    } catch (_) {}
-    // ── FATE WISH-BURST STYLE REFERENCE (Roman 2026-07-18) — feed the model the actual emblem ──
-    // When this panel carries a wish outcome, attach the cropped clean/twisted burst emblem so the
-    // model MATCHES the symbolic graphic style instead of inventing an anime energy blast from prose.
-    try {
-      var _wpo = phase && phase._panel && phase._panel.wishOutcome;
-      var _bref = (typeof _wishBurstStyleRef === 'function') ? _wishBurstStyleRef(_wpo) : null;
-      if (_bref && combinedAnchors.length < 8) {
-        combinedAnchors.push({ path: _bref.path, label: _bref.label, species: 'fate burst style' });
-        try { console.log('[STAGED:STYLE] wish-burst ' + _wpo + ' style reference attached (phase ' + phase.phaseIdx + ')'); } catch (_) {}
+      if (typeof _resolveCanonicalAssets === 'function') {
+        var _cvaCtx = {
+          wardrobe: String((visualState && (visualState.pc_wardrobe || '')) + ' ' + (visualState && (visualState.li_wardrobe || ''))),
+          wishOutcome: phase && phase._panel && phase._panel.wishOutcome
+        };
+        _resolveCanonicalAssets(_cvaCtx).forEach(function (a) {
+          if (a && a.path && combinedAnchors.length < 8) {
+            combinedAnchors.push({ path: a.path, label: a.label, species: a.id });
+            try { console.log('[STAGED:STYLE] canonical asset "' + a.id + '" (tier ' + a.tier + ') attached (phase ' + phase.phaseIdx + ')'); } catch (_) {}
+          }
+        });
       }
     } catch (_) {}
     // ── CASTING LIBRARY REINJECT (Roman 2026-07-18) ──────────────────
