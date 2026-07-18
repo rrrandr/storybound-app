@@ -153650,13 +153650,68 @@ No text, no watermark, no UI elements, share-ready.`;
   // ── DIRECTOR'S BIBLE (scene-INDEPENDENT, renderer-agnostic, v1 — extend, don't rewrite) ──
   // Visual Grammar: a textless cinematic language (a reader knows a wish / sacrifice / Fate
   // answering the way they know Superman flying). Fired by panel grammar flags.
+  // ═══ FATELANDS LAW — FATE'S VISUAL LANGUAGE IS NON-DIEGETIC (Roman 2026-07-18) ═══════════════════
+  // A WORLD LAW, not a renderer rule. Fate's symbols (burst, stars, corruption marks, shadow-hand,
+  // rings/threads) exist ONLY for the READER — authorial notation, not a light-show inside the world.
+  // Characters NEVER perceive them; they react only to observable reality (the person invoking, then
+  // the CONSEQUENCE, revealed later). This asymmetry is deliberate dramatic irony: the reader can read
+  // Fate's judgment while the characters remain uncertain until the price lands. Only PHYSICAL
+  // consequences are diegetic. Default for every Fate visual-vocabulary element: NON-DIEGETIC.
+  var _FATE_NONDIEGETIC_CLAUSE = 'NON-DIEGETIC (HARD — reader-facing notation, NOT a light-source in the world): NO character sees, looks toward, points at, reacts to, or is lit by this Fate symbol. Compose so NO eyeline lands on it and it casts NO light on any face or surface. Characters react ONLY to the person invoking and, later, to the physical consequence — never to this mark. It is drawn OVER the scene for the reader, never witnessed within it.';
+  var _FATE_NONDIEGETIC_LAW = 'FATELANDS LAW — FATE’S VISUAL LANGUAGE IS NON-DIEGETIC. The wish-burst, corruption marks, the shadow-hand of sacrifice, and every Fate symbol exist ONLY for the reader — storytelling notation, not a phenomenon inside the world. Characters NEVER perceive them: no one says "the golden burst", "the rays turned red", "the stars became crosses", "the shadow reached for him", or "the burst faded"; no one looks at the light. Characters perceive only observable reality — a wish is spoken, NOTHING visibly happens, and reality changes LATER; they infer Fate’s judgment from CONSEQUENCES alone. Do NOT confirm Fate’s judgment in prose or dialogue before the consequence reveals it ("the wish twisted", "Fate accepted/rejected you") unless there is an independent OBSERVABLE reason — preserve the dramatic irony. Only physical consequences are diegetic.';
+  window._FATE_NONDIEGETIC_CLAUSE = _FATE_NONDIEGETIC_CLAUSE; window._FATE_NONDIEGETIC_LAW = _FATE_NONDIEGETIC_LAW;
+  function _fateNonDiegeticDirective() { return _FATE_NONDIEGETIC_LAW; }
+  window._fateNonDiegeticDirective = _fateNonDiegeticDirective;
+  // ═══ FATE VISUAL LEXICON — the primitive symbolic ALPHABET ═══════════════════════════════════════
+  // Every Fate phenomenon (wish / tempt / petition / contract / sacrifice / alignment …) is a SENTENCE
+  // composed from these PRIMITIVES, not a bespoke effect — so readers learn to READ Fate itself across
+  // stories (a warped Tempt = binding + corruption; a broken Contract = frayed threads + broken rings).
+  // All primitives are NON-DIEGETIC. This is worldbuilding-through-imagery: a limited alphabet, recombined.
+  var _FATE_VISUAL_LEXICON = {
+    acceptance:     { motifs: 'four- and five-point sparkle stars, straight radiant lines, ordered balanced geometry, warm gold-white', means: 'Fate accepts', diegesis: 'non-diegetic' },
+    corruption:     { motifs: 'jagged forked rays, broken and splintered stars, scribbled red X’s, asymmetry, angry crimson', means: 'Fate destabilises / warps', diegesis: 'non-diegetic' },
+    binding:        { motifs: 'rings, chains, threads, closing circles, knots — encircling and drawing tight', means: 'Fate binds', diegesis: 'non-diegetic' },
+    taking:         { motifs: 'a hand-shaped shadow, black veining, inward-draining particles, cold light pulled OUT', means: 'Fate takes the price', diegesis: 'non-diegetic' },
+    revelation:     { motifs: 'a single cold shaft/aperture of light, converging lines, one disclosed edge', means: 'Fate reveals', diegesis: 'non-diegetic' },
+    transformation: { motifs: 'coiling distortion, motes spiralling inward, a threshold of changing light', means: 'Fate remakes', diegesis: 'non-diegetic' },
+    protection:     { motifs: 'a closed ward-ring, a steady contained glow, symmetric enclosure', means: 'Fate shelters', diegesis: 'non-diegetic' },
+    severing:       { motifs: 'a clean break-line, frayed and cut threads, a snapped ring', means: 'Fate cuts / ends', diegesis: 'non-diegetic' },
+    refusal:        { motifs: 'gathering light that GUTTERS and DIES before blooming — no rays, no stars; the ABSENCE of a mark', means: 'Fate refuses', diegesis: 'non-diegetic' }
+  };
+  window._FATE_VISUAL_LEXICON = _FATE_VISUAL_LEXICON;
+  // Compose a Fate "sentence" from primitives — the engine for future vocab (Tempt/Petition/Contract).
+  function _fateVisualSentence(primitiveKeys) {
+    var keys = (primitiveKeys || []).filter(function (k) { return _FATE_VISUAL_LEXICON[k]; });
+    if (!keys.length) return '';
+    var parts = keys.map(function (k) { return _FATE_VISUAL_LEXICON[k].motifs; });
+    return 'FATE SYMBOL (composed from the Fate lexicon — ' + keys.join(' + ') + '): ' + parts.join('; ') + '. ' + _FATE_NONDIEGETIC_CLAUSE;
+  }
+  window._fateVisualSentence = _fateVisualSentence;
+  // FATE PERSPECTIVE LINT — enforce the Non-Diegetic Law on generated prose: a character must never
+  // perceive/react to a Fate symbol, dialogue must never name Fate's hidden judgment, the symbols must
+  // not light the world, and prose must not confirm the judgment before the consequence reveals it.
+  function _fatePerspectiveLint(text) {
+    var t = String(text || ''), errors = [], warnings = [];
+    var SYM = '(?:burst|starburst|rays?|sparkle stars?|golden (?:burst|light|glow)|red (?:light|glow)|corruption|scribbl\\w*|broken stars?|shadow[- ]?hand|hand of fate|the mark of fate)';
+    var perceiveRx = new RegExp('\\b(saw|sees|see|watch\\w*|stares? at|stared at|look\\w* (?:at|toward|up at)|gaz\\w+ (?:at|upon)|point\\w* (?:at|to|toward)|recoil\\w* from|flinch\\w* from|shield\\w* [a-z]+ eyes from)\\b[^."]{0,40}\\b' + SYM + '\\b', 'i');
+    if (perceiveRx.test(t)) errors.push('FATE-PERSPECTIVE: a character perceives/reacts to a NON-DIEGETIC Fate symbol — the burst/stars/shadow-hand do not exist inside the world.');
+    var illumRx = new RegExp('\\b' + SYM + '\\b[^."]{0,30}\\b(lit|lights? up|illuminat\\w+|cast\\w* (?:light|a glow|shadows)|bathed?|washed? over|fell (?:across|on|over))\\b', 'i');
+    if (illumRx.test(t)) warnings.push('FATE-PERSPECTIVE: a Fate symbol is lighting the environment — it is reader-only notation and casts no light in the world.');
+    var dialogueRx = /"[^"]*\b(the (?:golden |red )?burst|the rays\b|the stars\b|Fate (?:accepted|rejected|refused|judged|answered)|the wish (?:was )?(?:accepted|rejected|refused|twisted|warped|granted))[^"]*"/i;
+    if (dialogueRx.test(t)) errors.push('FATE-PERSPECTIVE: dialogue names Fate’s hidden judgment or a reader-only symbol — characters infer from consequences, they cannot see the mark.');
+    var confirmRx = /(^|[.!?]\s|\n)\s*(the wish (?:twisted|warped|was accepted|was refused|was granted|succeeded|failed)|Fate (?:accepted|rejected|refused) (?:it|the wish|him|her|them))\b/i;
+    if (confirmRx.test(t)) warnings.push('FATE-PERSPECTIVE: prose confirms Fate’s judgment before the consequence reveals it — let the physical result disclose it (preserve the irony).');
+    return { errors: errors, warnings: warnings };
+  }
+  window._fatePerspectiveLint = _fatePerspectiveLint;
   // FATELANDS WISH BURST (Roman 2026-07-18) — Fate's signature is a STAR-BURST, part of Fate itself,
   // not just light: it tells the reader what happened. It appears at all three wish moments — MADE
   // (radiating from the wisher's hand/chest), MANIFESTS (surrounding the result), FULFILLED (confirming
   // completion). CLEAN wish = golden, orderly. TWISTED wish (Fate warped it) = red, jagged, X-scribbled.
-  var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, integrated INTO the art, radiating from the point of power): a GOLDEN-WHITE STAR-BURST — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, orderly, luminous. This burst reads as a TRUE wish acting on the world.';
-  var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — the SAME burst, but Fate has CORRUPTED the wish): the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes; an angry crimson glow. It radiates from the same point but reads unmistakably WRONG — the story telling you the wish has curdled.';
-  var _WISH_BURST_REJECTED = 'FATE’S BURST — REFUSED (HARD — Fate did NOT answer): the gathering light GUTTERS and DIES before any star-burst can form — a few faint sparks scatter outward and wink out, the radiance collapsing back into darkness; NO rays, NO stars, NO glow. An ABORTED burst — the ABSENCE of Fate’s signature is the point; the wisher’s petition falters and the face falls as the offered light drains to nothing.';
+  // Every burst string carries the NON-DIEGETIC clause so the render never lets a character witness it.
+  var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, integrated INTO the art, radiating from the point of power): a GOLDEN-WHITE STAR-BURST — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, orderly, luminous. This burst reads as a TRUE wish acting on the world. ' + _FATE_NONDIEGETIC_CLAUSE;
+  var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — the SAME burst, but Fate has CORRUPTED the wish): the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes; an angry crimson glow. It radiates from the same point but reads unmistakably WRONG — the story telling you the wish has curdled. ' + _FATE_NONDIEGETIC_CLAUSE;
+  var _WISH_BURST_REJECTED = 'FATE’S BURST — REFUSED (HARD — Fate did NOT answer): the gathering light GUTTERS and DIES before any star-burst can form — a few faint sparks scatter outward and wink out, the radiance collapsing back into darkness; NO rays, NO stars, NO glow. An ABORTED burst — the ABSENCE of Fate’s signature is the point; the wisher’s petition falters and the face falls as the offered light drains to nothing. ' + _FATE_NONDIEGETIC_CLAUSE;
   var _VISUAL_GRAMMAR_V1 = {
     wish: 'WISH (visual grammar — make it UNMISTAKABLE as prayer, like a hero taking flight): the wisher\'s eyes are CLOSED or LIFTED toward the surface above, HANDS clasped together or open and rising in supplication, the whole body in a posture of committed, vulnerable petition; a gathering GLOW of tide-light coils at the hands/chest with rising motes/threads spiralling toward them; the wisher is the elevated, reverent focal point; other figures REACT (recoil, brace, watch). This is prayer, never two people talking. ' + _WISH_BURST_CLEAN,
     wishTwisted: 'WISH — TWISTING (visual grammar): the wisher is still in the posture of petition (eyes lifted, hands rising), but the invocation has gone wrong — the reverence curdles into alarm or dawning horror on the face, the body flinching from what it has unleashed. ' + _WISH_BURST_TWISTED,
@@ -153689,7 +153744,7 @@ No text, no watermark, no UI elements, share-ready.`;
   window._sacrificeHandTarget = _sacrificeHandTarget;
   function _sacrificeHandGrammar(txt) {
     var tgt = _sacrificeHandTarget(txt);
-    return _SACRIFICE_HAND_BASE + tgt.where + ', drawing a thread of cold pale light OUT where it touches; the wisher stills or flinches at the loss. The shadow-hand is the focal event.' + (tgt.inner ? ' Because this is an INNER sacrifice, the hand rests OVER THE HEART, not over any body part.' : '');
+    return _SACRIFICE_HAND_BASE + tgt.where + ', drawing a thread of cold pale light OUT where it touches; the wisher stills or flinches at the loss. The shadow-hand is the focal event.' + (tgt.inner ? ' Because this is an INNER sacrifice, the hand rests OVER THE HEART, not over any body part.' : '') + ' ' + _FATE_NONDIEGETIC_CLAUSE;
   }
   window._sacrificeHandGrammar = _sacrificeHandGrammar;
   // Which paid Fate rail (if any) is the player using this turn? Petition/Tempt are wishes too, so
@@ -154400,7 +154455,12 @@ No text, no watermark, no UI elements, share-ready.`;
       // PRODUCTION POLISH (v1) — the "next page of the same comic" fields.
       visualQuestion: _buildVisualQuestion(type, eyeMagnet),   // the question the image makes the reader want answered
       eyePath: _buildEyePath(type, eyeMagnet, primary || eventNoun),  // the order the composition leads the eye
-      colorDirection: _buildColorDirection(type, e.apex, beatText)    // palette / accent / lighting / contrast / mood
+      colorDirection: _buildColorDirection(type, e.apex, beatText),   // palette / accent / lighting / contrast / mood
+      // DRAMATIC IRONY (Non-Diegetic Law) — on a Fate beat the reader reads Fate's judgment (the
+      // reader-only burst); the characters do NOT — they see only the invocation, then the later
+      // consequence. The Storyboard Artist exposes the asymmetry so no panel makes a character "witness" Fate.
+      readerKnowledge: (type === 'Transformation') ? 'Fate’s judgment on the wish (the reader-only burst — accepted / warped / refused)' : (type === 'Consequence') ? 'the price Fate took and what has now changed' : null,
+      characterKnowledge: (type === 'Transformation') ? 'only that a wish was spoken — NO visible sign of Fate’s answer' : (type === 'Consequence') ? 'the observable result begins to register; they still cannot perceive Fate itself' : null
     };
   }
   window._buildStoryboardDoc = _buildStoryboardDoc;
@@ -194396,7 +194456,8 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • REGIONAL VARIATION (the ONLY thing that changes by place): the system is universal, but WHICH sacrifices are ACCEPTABLE is local — one court abhors paying in memory, another in blood; the tidal Kwisheen of Gloamwater reckon in tides and salt. Honor the accepted currencies of THIS region.\n' +
       '  • SCHOLARS OF PRECEDENT + FOLK WISDOM (how mortals cope with a law they cannot fully know): no one holds a complete theory of Fate. Great centers of learning (Lytharyn foremost) keep whole disciplines devoted to WISH-PRECEDENT — not spellcasters but natural philosophers, statisticians, historians, jurists, and theologians who collect thousands of documented wishes, classify how they landed or warped, and publish COMPETING theories (some credit Alignment, some proportional sacrifice, some the wording, some the intent, some which Order was offended). Before a costly wish, rulers, merchants, and commoners alike consult them — the question is never "can this be done?" but "what does two thousand years of precedent suggest Fate is likely to do?" They speak in precedent and probability, NEVER certainty: "there are only three recorded clean successes of this class," "the Fifth Lytharyn Survey places this among the Second Divergences," "I would not risk this if your voice matters to you." Common folk carry generations of SAYINGS — some true, some superstition, no one always sure which — such as "never wish angry," "a hungry wish eats twice," "Fate hears haste louder than truth," "measure the wish before the knife," "every miracle leaves a receipt." Use these as ROTATING flavor (vary them; never let one harden into a stated law). Reserve certainty for only the simplest, best-understood wishes; every significant wish is still, to some degree, a leap into the unknown.\n' +
       '  • THE ANTI-WISH CULT (secret faction, available as antagonist / uneasy ally / dread): a hidden order that sees wishing as an ADDICTION (see THE HOOK) that hollows out people one sacrifice at a time and, at scale, the world. They swear NEVER to use the power and work — quietly, sometimes violently — to stop others. To them a wish-granter is a dealer and a warded marriage is a relapse. They may be RIGHT: their scripture points to a WISHING AGE when a civilization unable to stop wished at a scale that tore something real out of the world — the wound Fate\'s Favor still heals. The live question is not "are they villains?" but "are they the only ones who remember how this ends?"\n' +
-      '  • NO WISH-WARS (Fate is not a battlefield): opposing wishes do NOT clash in magical combat — no beam-struggles, no rebound duels, no "whose wish is stronger." Fate adjudicates each bargain by its own consistent, imperfectly-understood law; two people wishing against each other simply each meet that law separately, and the results fall out as luck and coincidence, never as visible sorcery fighting sorcery. Nor does Fate decide by who DESERVES it. A wedding or coronation may still draw sincere wishes of goodwill onto a couple or ruler — as blessing and hope, not as a stacked magical fortress.';
+      '  • NO WISH-WARS (Fate is not a battlefield): opposing wishes do NOT clash in magical combat — no beam-struggles, no rebound duels, no "whose wish is stronger." Fate adjudicates each bargain by its own consistent, imperfectly-understood law; two people wishing against each other simply each meet that law separately, and the results fall out as luck and coincidence, never as visible sorcery fighting sorcery. Nor does Fate decide by who DESERVES it. A wedding or coronation may still draw sincere wishes of goodwill onto a couple or ruler — as blessing and hope, not as a stacked magical fortress.\n' +
+      '  • ' + _FATE_NONDIEGETIC_LAW + ' (This governs PROSE: a wish is spoken and NOTHING visibly happens — no light, no sign, no felt surge; the wisher and witnesses cannot tell from looking whether Fate accepted, warped, or refused. They learn ONLY when the physical consequence lands, which may be moments or scenes later. Write that uncertainty — "Did anything happen?" "I don\'t know." — and let the CONSEQUENCE, not a narrator or a character, disclose Fate\'s answer.)';
   }
   window._buildFatelandsWishLawDirective = _buildFatelandsWishLawDirective;
 
