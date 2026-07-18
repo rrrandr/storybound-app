@@ -70,12 +70,45 @@ const { chromium } = require('playwright-core');
     const panelHasNonDiegetic = /NON-DIEGETIC/i.test(tCues) && /NO character sees/i.test(tCues);
     const doc = tPhase && tPhase._storyboardDoc;
     const ironyExposed = !!(doc && doc.readerKnowledge && doc.characterKnowledge && /NO visible sign/i.test(doc.characterKnowledge));
+    s._stagedRegionContract = window._buildStagedRegionContract({ visualState: plan.visualState, phases: [] });
+    const pvs = window._resolvePhaseVisualState(plan.visualState, tPhase, plan.phases, plan.beats);
+    const hero = window._buildStagedHeroPrompt(pvs, 0, plan) || '';
+
+    // ── PERSPECTIVE CONTRACT: the three-way split (reader / characters / physical), outcome-aware ──
+    const pcClean = window._buildPerspectiveContract('Transformation', 'clean', 'he voices the wish');
+    const pcTwisted = window._buildPerspectiveContract('Transformation', 'twisted', 'he voices the wish');
+    const pcRejected = window._buildPerspectiveContract('Transformation', 'rejected', 'he voices the wish');
+    const contractThreeWay = !!(pcClean.readerLearns && pcClean.charactersLearn && pcClean.observableReality);
+    const contractOutcomeAware = /ACCEPTED/i.test(pcClean.readerLearns) && /WARPED/i.test(pcTwisted.readerLearns) && /REFUSED/i.test(pcRejected.readerLearns);
+    const charactersLearnNothing = /Nothing/i.test(pcClean.charactersLearn) && /NO visible sign/i.test(pcClean.charactersLearn);
+    const physicalDelayed = /Nothing yet|lands later/i.test(pcClean.observableReality);
+    const pcConsequence = window._buildPerspectiveContract('Consequence', null, 'the coral seam splits into a passage');
+    const consequenceObservable = /observable change|passage/i.test(pcConsequence.observableReality) && /INFER Fate/i.test(pcConsequence.charactersLearn);
+    const nonFateBeatNoContract = window._buildPerspectiveContract('Threat', null, 'the raider lunges') === null;
+    // attached to the panel + emitted in the hero prompt
+    const panelHasContract = !!(tPhase && tPhase._panel && tPhase._panel.perspectiveContract && tPhase._panel.perspectiveContract.readerLearns);
+    const heroEmitsContract = /PERSPECTIVE CONTRACT \(three separate truths/.test(hero) && /READER learns →/.test(hero);
+
+    // ── KNOWLEDGE-LEAK LINT (softer): a character forebodes right after a wish with no observable cue ──
+    const leak = window._fateKnowledgeLeakLint('"I wish for rain." ... Bob narrowed his eyes. "I have a bad feeling about this."');
+    const catchesLeak = leak.warnings.some(w => /KNOWLEDGE-LEAK/i.test(w));
+    // an OBSERVABLE cue between the wish and the reaction defuses it (intuition after a real sign is fine)
+    const noLeak = window._fateKnowledgeLeakLint('"I wish for rain." The sky darkened and the wind rose. "I have a bad feeling about this."');
+    const observableDefusesLeak = noLeak.warnings.length === 0;
+    // no wish → no leak flag
+    const noWishNoLeak = window._fateKnowledgeLeakLint('Bob narrowed his eyes. "I have a bad feeling about this."').warnings.length === 0;
+
+    // ── LEXICON SPARSENESS GUARD (Roman's caution): a constrained alphabet stays learnable ──
+    const lexiconStaysSparse = Object.keys(LX).length <= 12;
 
     // ── the world-law directive carries the rule into PROSE generation ──
     const proseLaw = window._buildFatelandsWishLawDirective();
     const proseLawHasRule = /NON-DIEGETIC/i.test(proseLaw) && /NOTHING visibly happens/i.test(proseLaw);
 
     return {
+      contractThreeWay, contractOutcomeAware, charactersLearnNothing, physicalDelayed,
+      consequenceObservable, nonFateBeatNoContract, panelHasContract, heroEmitsContract,
+      catchesLeak, observableDefusesLeak, noWishNoLeak, lexiconStaysSparse,
       clauseInClean, clauseInTwisted, clauseInRejected, clauseInSacrifice, lawExists,
       hasCorePrimitives, allNonDiegetic, acceptanceIsStars, bindingIsRings, takingIsShadow,
       composes, composesBroken, emptyComposeSafe,
@@ -106,7 +139,18 @@ const { chromium } = require('playwright-core');
     ['LINT: a character naming an OBSERVABLE consequence is allowed', R.observableOk],
     ['INTEGRATION: the wish panel carries the non-diegetic clause', R.panelHasNonDiegetic],
     ['INTEGRATION: the storyboard doc exposes reader-vs-character knowledge (irony)', R.ironyExposed],
-    ['INTEGRATION: the Fatelands wish-law directive carries the rule into prose', R.proseLawHasRule]
+    ['INTEGRATION: the Fatelands wish-law directive carries the rule into prose', R.proseLawHasRule],
+    ['CONTRACT: every Fate beat carries the three-way split (reader/characters/physical)', R.contractThreeWay],
+    ['CONTRACT: "reader learns" is outcome-aware (accepted/warped/refused)', R.contractOutcomeAware],
+    ['CONTRACT: characters learn NOTHING (no visible sign of Fate)', R.charactersLearnNothing],
+    ['CONTRACT: the physical world change is DELAYED on the wish beat', R.physicalDelayed],
+    ['CONTRACT: a Consequence beat names the observable change + "infer, don\'t see" Fate', R.consequenceObservable],
+    ['CONTRACT: a non-Fate beat carries no perspective contract', R.nonFateBeatNoContract],
+    ['CONTRACT: the wish panel carries it, and the hero prompt emits it', R.panelHasContract && R.heroEmitsContract],
+    ['KNOWLEDGE-LEAK: catches foreboding right after a wish with no observable cue', R.catchesLeak],
+    ['KNOWLEDGE-LEAK: an observable cue between wish and reaction defuses the flag', R.observableDefusesLeak],
+    ['KNOWLEDGE-LEAK: no wish → no leak flag (plain suspicion is fine)', R.noWishNoLeak],
+    ['LEXICON stays deliberately SPARSE (≤12 primitives — learnable alphabet)', R.lexiconStaysSparse]
   ];
 
   let pass = 0, fail = 0;

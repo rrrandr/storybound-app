@@ -153832,6 +153832,56 @@ No text, no watermark, no UI elements, share-ready.`;
   // Back-compat shim (the burst grammar's older boolean caller/tests).
   function _sdWishTwisted(txt, plan, ap) { return _sdWishOutcome(txt, plan, ap) === 'twisted'; }
   window._sdWishTwisted = _sdWishTwisted;
+  // PERSPECTIVE CONTRACT (Roman 2026-07-18) — the explicit THREE-WAY split every Fate beat carries, so
+  // every authoring stage answers three separate questions: what does the AUDIENCE know now, what do
+  // the CHARACTERS know now, and what has actually happened in the PHYSICAL world. These are usually
+  // different (the reader knows Fate warped the wish; the characters know nothing; the bridge collapses
+  // three pages later). Outcome-aware: reads the resolved wish outcome so "reader learns" is truthful.
+  function _buildPerspectiveContract(type, wishOutcome, beatText) {
+    if (type === 'Transformation') {
+      return {
+        readerLearns: wishOutcome === 'twisted' ? 'Fate WARPED the wish (the corrupted red burst).'
+                    : wishOutcome === 'rejected' ? 'Fate REFUSED the wish (the aborted burst — the light dies before it blooms).'
+                    : 'Fate ACCEPTED the wish (the clean golden burst).',
+        charactersLearn: 'Nothing — only that a wish was spoken; NO visible sign of Fate’s answer.',
+        observableReality: 'Nothing yet — reality has not visibly changed; the consequence lands later.'
+      };
+    }
+    if (type === 'Consequence') {
+      var noun = (typeof _sbEventNoun === 'function') ? _sbEventNoun(beatText) : null;
+      return {
+        readerLearns: 'the price Fate took and what has now changed.',
+        charactersLearn: 'they perceive the physical RESULT and can only INFER Fate — they never see it.',
+        observableReality: noun ? ('the observable change: ' + noun + '.') : 'the physical consequence now lands (the change is visible; Fate is not).'
+      };
+    }
+    return null;
+  }
+  window._buildPerspectiveContract = _buildPerspectiveContract;
+  // KNOWLEDGE-LEAK LINT (softer than the perspective lint) — a character behaving as though they
+  // perceived Fate's HIDDEN verdict without any observable cue: foreboding/suspicion that follows a
+  // wish with NO physical consequence between them. It does NOT prohibit intuition — it flags the case
+  // where a reaction can only be sourced from the reader-only symbol. Warnings only.
+  function _fateKnowledgeLeakLint(text) {
+    var t = String(text || ''), warnings = [];
+    var wishRx = /\b(i wish\b|if only\b|voices? the wish|speaks? the wish|the wish (?:is|was) (?:spoken|made))/i;
+    var m = wishRx.exec(t);
+    if (m) {
+      var after = t.slice(m.index + m[0].length);
+      // an observable consequence between the wish and the reaction defuses the flag
+      // an OBSERVABLE consequence = a CHANGE the characters can see (a verb/event), not a bare noun that
+      // might just be the wish's own content ("for rain" is the wish, not an observed sign).
+      var consequenceRx = /\b(warm\w*|open\w*|widen\w*|heal\w*|knit\w*|collapse\w*|crumbl\w*|shatter\w*|darken\w*|the (?:water|current|wind|ground|bridge|gate|wound|sky|sea|storm)\b|began to|starts? to)\b/i;
+      var cIdx = (consequenceRx.exec(after) || { index: Infinity }).index;
+      var forebodeRx = /\b(bad feeling|something(?:’s| is| feels) wrong|i don’?t like this|this is wrong|narrow\w+ (?:her|his|their|my) eyes|a chill (?:ran|went)|sudden(?:ly)? (?:dread|unease|cold)|knew (?:it|something) (?:had )?(?:gone|went) wrong|senses? (?:it|that) (?:had )?twisted)\b/i;
+      var fMatch = forebodeRx.exec(after);
+      if (fMatch && fMatch.index < cIdx) {
+        warnings.push('KNOWLEDGE-LEAK: a character reads as foreboding/suspicious right after the wish with no observable cue between — they may be reacting to Fate’s reader-only verdict. Give them an OBSERVABLE reason or remove the tell.');
+      }
+    }
+    return { warnings: warnings };
+  }
+  window._fateKnowledgeLeakLint = _fateKnowledgeLeakLint;
   // Build a resolved PANEL SPEC per phase. Honors authored plan.panels[] when present (validate,
   // fail-LOUD on missing fields); otherwise derives from the phase (rollout fallback, logged).
   // Binds Canon, expands shotType via Shot Language + grammar flags via Visual Grammar.
@@ -153883,8 +153933,9 @@ No text, no watermark, no UI elements, share-ready.`;
       // WISH BURST STATE — driven by the ACTUAL Fate outcome (truthfulness): landed→golden burst,
       // warped/distorted→red twisted burst, refused→aborted burst (no starburst). The grammar can
       // never contradict the mechanic once the game state exists.
+      var _wo = null;
       if (grammar.wish || grammar.fateAnswer) {
-        var _wo = _sdWishOutcome(txt, plan, ap);
+        _wo = _sdWishOutcome(txt, plan, ap);
         if (_wo === 'twisted') {
           if (grammar.wish) { grammar.wish = false; grammar.wishTwisted = true; }
           if (grammar.fateAnswer) { grammar.fateAnswer = false; grammar.fateAnswerTwisted = true; }
@@ -153893,6 +153944,9 @@ No text, no watermark, no UI elements, share-ready.`;
           if (grammar.fateAnswer) { grammar.fateAnswer = false; grammar.fateAnswerRejected = true; }
         } // 'clean' → keep the golden wish/fateAnswer grammar
       }
+      // PERSPECTIVE CONTRACT — the outcome-aware three-way split for this Fate beat (reader / characters
+      // / physical). Computed here (outcome is now known); attached to the panel + used by the prompt.
+      var _perspective = _buildPerspectiveContract(phase._readerLearning, _wo, txt);
       // cast performance
       var castRoster = ap && Array.isArray(ap.cast) ? ap.cast.map(function (c) { return String(c.name || '').toLowerCase(); }) : present.map(keyFor);
       var cast = castRoster.map(function (tok) {
@@ -153917,6 +153971,7 @@ No text, no watermark, no UI elements, share-ready.`;
         shotExpansion: _SHOT_LANGUAGE_V1[shotType] || '',
         hierarchy: { primary: primary, secondary: secondary, background: background },
         grammarCues: Object.keys(grammar).filter(function (g) { return grammar[g] && _VISUAL_GRAMMAR_V1[g]; }).map(function (g) { return (g === 'sacrifice') ? _sacrificeHandGrammar(txt) : _VISUAL_GRAMMAR_V1[g]; }),
+        perspectiveContract: _perspective, // reader / characters / physical-world — the three-way split
         cast: cast, authored: !!ap, invalidFields: invalid
       };
       if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
@@ -180384,6 +180439,7 @@ No text, no watermark, no UI elements, share-ready.`;
         }
         if (_panel) {
           if (_panel.dramaticQuestion) _cidLines.push('DRAMATIC QUESTION (every choice reinforces it): ' + _panel.dramaticQuestion);
+          if (_panel.perspectiveContract) { var _pc2 = _panel.perspectiveContract; _cidLines.push('PERSPECTIVE CONTRACT (three separate truths — keep them separate): READER learns → ' + _pc2.readerLearns + '  CHARACTERS learn → ' + _pc2.charactersLearn + '  PHYSICAL world → ' + _pc2.observableReality + '  (Render the READER\'s truth via Fate\'s non-diegetic symbol; the characters must NOT react to it.)'); }
           if (_panel.shotExpansion) _cidLines.push('SHOT (' + _panel.shotType + '): ' + _panel.shotExpansion);
           var h = _panel.hierarchy || {};
           if (h.primary) _cidLines.push('HIERARCHY: primary=' + h.primary + (h.secondary ? '  secondary=' + h.secondary : '') + (h.background && h.background.length ? '  background=' + h.background.join(', ') : '') + ' — never three co-equal, randomly-placed figures.');
