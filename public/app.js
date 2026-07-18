@@ -153902,8 +153902,28 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/\btentacle/i.test(t)) return 'the raider\'s tentacle';
     return null;
   }
+  // EMOTIONAL DIRECTION (v4, Roman 2026-07-18) — emotion is ANOTHER dimension of storyboarding, owned by
+  // the Storyboard Artist, not the renderer. The prose engine once averaged every scene to the same
+  // register; the image engine does the same thing to FACES — everyone reads "determined," intensity ~4/10,
+  // no screaming / panic / awe / grief, and the emotional graph is flat across the whole comic. Comics move
+  // on an EMOTIONAL arc as much as a plot arc (manga swings from terror to laughter to despair in three
+  // panels). So each reader-learning type carries an emotional PROGRAM: what the reader should FEEL
+  // (emotionalPurpose), how loud the panel is (emotionalApex LOW/MEDIUM/HIGH/MAXIMUM), and the protagonist +
+  // the-other-figure's discrete emotional state (emotion, intensity 1-10, dominant expression). Deterministic
+  // and beat-driven — never randomized; the variation comes from the STORY, exactly like the visual fields.
+  var _RL_EMOTION = {
+    Orientation:    { purpose: 'creeping dread — they are already in danger',         apex: 'MEDIUM',  pc: { emotion: 'wary fear',           intensity: 5,  expression: 'tense, alert, eyes scanning, breath held' },                other: { emotion: 'coiled menace',       intensity: 5,  expression: 'watchful, unhurried, sure of the kill' } },
+    Threat:         { purpose: 'sharp alarm — sudden, immediate danger',              apex: 'HIGH',    pc: { emotion: 'alarm / fear',       intensity: 8,  expression: 'eyes blown wide, sharp recoil, mouth open, breath caught' }, other: { emotion: 'predatory aggression', intensity: 8,  expression: 'feral focus, teeth bared, wholly committed to the strike' } },
+    Transformation: { purpose: 'awe AND desperation — the world bends',               apex: 'MAXIMUM', pc: { emotion: 'shock / awe',        intensity: 8,  expression: 'eyes wide, mouth parted, transfixed by the magic' },        other: { emotion: 'desperate resolve',   intensity: 10, expression: 'straining, crying out or teeth gritted through the invocation' } },
+    Consequence:    { purpose: 'shock at the cost — dawning horror or grief',         apex: 'HIGH',    pc: { emotion: 'shock',              intensity: 8,  expression: 'stunned, wide-eyed, hand half-raised at what just happened' }, other: { emotion: 'pain / loss',         intensity: 9,  expression: 'face contorted with the cost, gasping, buckling' } },
+    Revelation:     { purpose: 'sudden hope / urgency — a way out appears',           apex: 'HIGH',    pc: { emotion: 'hope / urgency',     intensity: 7,  expression: 'head snapping toward it, eyes widening, breath quickening' }, other: { emotion: 'urgent realization',  intensity: 7,  expression: 'gaze breaking toward the reveal' } },
+    Decision:       { purpose: 'a wrenching choice — dread and resolve at war',       apex: 'HIGH',    pc: { emotion: 'anguished resolve',  intensity: 8,  expression: 'jaw clenched, brow furrowed, torn, on the edge of the choice' }, other: { emotion: 'desperate appeal',   intensity: 8,  expression: 'pleading, reaching, willing the answer' } },
+    Resolution:     { purpose: 'relief / exhaustion — the storm passes',              apex: 'LOW',     pc: { emotion: 'spent relief',       intensity: 4,  expression: 'shoulders dropping, breath released, eyes softening' },       other: { emotion: 'quiet exhaustion',    intensity: 4,  expression: 'sagging, spent' } }
+  };
+  window._RL_EMOTION = _RL_EMOTION;
   function _buildStoryboardDoc(type, beatText, primary) {
     var c = _RL_COMP[type] || _RL_COMP.Orientation;
+    var e = _RL_EMOTION[type] || _RL_EMOTION.Orientation;
     var eventNoun = _sbEventNoun(beatText);
     return {
       purpose: type,
@@ -153913,7 +153933,12 @@ No text, no watermark, no UI elements, share-ready.`;
       forbiddenFocus: c.forbidden,
       composition: c.composition,                 // beat-driven, never randomized
       understandingGain: c.understanding,          // what the reader learns after this panel
-      eyeMagnet: eventNoun || c.eyeDefault         // what the eye lands on FIRST (the event, not the people)
+      eyeMagnet: eventNoun || c.eyeDefault,        // what the eye lands on FIRST (the event, not the people)
+      // EMOTIONAL DIRECTION (v4) — the emotional arc is the Storyboard Artist's job, same as the visual arc.
+      emotionalPurpose: e.purpose,                 // what the READER should feel at this panel
+      emotionalApex: e.apex,                       // LOW / MEDIUM / HIGH / MAXIMUM — the panel's loudness
+      pcEmotion: e.pc,                             // { emotion, intensity 1-10, expression } for the protagonist
+      otherEmotion: e.other                        // { emotion, intensity, expression } for the other present figure
     };
   }
   window._buildStoryboardDoc = _buildStoryboardDoc;
@@ -153953,6 +153978,34 @@ No text, no watermark, no UI elements, share-ready.`;
     var have = {}; d.forEach(function (p) { have[p.purpose] = true; });
     ['Orientation', 'Revelation', 'Decision'].forEach(function (need) { if (!have[need]) warnings.push('RECONSTRUCTION: no ' + need + ' beat — the reader cannot answer ' + (need === 'Orientation' ? 'where/why' : need === 'Revelation' ? 'what changed' : 'what choice') + '.'); });
     if (!have.Transformation && !have.Consequence) warnings.push('RECONSTRUCTION: no Transformation/Consequence beat — the reader cannot see what caused the change.');
+    // ── EMOTIONAL LINT (v4) — the exact anti-repetition discipline, applied to the EMOTIONAL arc. A comic
+    //    whose faces all read "determined, ~4/10" has failed even if every panel is visually distinct.
+    for (var k = 1; k < d.length; k++) {
+      var cur = d[k], prev = d[k - 1];
+      var ce = cur.pcEmotion || {}, pe = prev.pcEmotion || {};
+      // 7. EMOTIONAL PROGRESSION — adjacent panels with an identical protagonist state (nothing evolved).
+      if (ce.emotion && ce.emotion === pe.emotion && ce.intensity === pe.intensity) {
+        warnings.push('PANEL ' + k + ': emotional progression stalled — same protagonist state as PANEL ' + (k - 1) + ' ("' + ce.emotion + '" @ ' + ce.intensity + '/10). The reader should feel the emotion MOVE.');
+      }
+      // 8. EXPRESSION DIVERSITY — the same dominant expression twice in a row reads as a mannequin.
+      if (ce.expression && ce.expression === pe.expression) {
+        warnings.push('PANEL ' + k + ': dominant expression repeats "' + ce.expression + '" — vary the face beat-to-beat.');
+      }
+    }
+    // 9. EMOTIONAL MONOTONY — a flat intensity graph across the whole comic (the "everything is 4/10" failure).
+    var ints = d.map(function (p) { return (p.pcEmotion && typeof p.pcEmotion.intensity === 'number') ? p.pcEmotion.intensity : null; }).filter(function (v) { return v !== null; });
+    if (ints.length >= 3) {
+      var lo = Math.min.apply(null, ints), hi = Math.max.apply(null, ints);
+      if (hi - lo < 3) warnings.push('EMOTIONAL MONOTONY: intensity is flat across the comic (' + lo + '–' + hi + '/10) — no peak, no valley. The emotional graph must have an apex.');
+      if (!d.some(function (p) { return p.emotionalApex === 'MAXIMUM' || p.emotionalApex === 'HIGH'; })) warnings.push('EMOTIONAL MONOTONY: no HIGH/MAXIMUM apex panel — the comic never crests.');
+    }
+    // 10. APEX ↔ INTENSITY agreement — a MAXIMUM-apex panel with a low-intensity protagonist is a contradiction.
+    for (var a = 0; a < d.length; a++) {
+      var ap = d[a]; var ai = (ap.pcEmotion && ap.pcEmotion.intensity) || 0;
+      if (ap.emotionalApex === 'MAXIMUM' && ai < 8 && (ap.otherEmotion && ap.otherEmotion.intensity || 0) < 8) {
+        errors.push('PANEL ' + a + ' (' + ap.purpose + '): emotional apex is MAXIMUM but no figure is above 8/10 — the panel is labelled loud but staged quiet.');
+      }
+    }
     return { errors: errors, warnings: warnings };
   }
   window._storyboardLint = _storyboardLint;
@@ -179506,6 +179559,16 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_sbDoc.composition) _cidLines.push('COMPOSITION (beat-driven — NOT a random angle): ' + _sbDoc.composition + '.');
           if (_sbDoc.compositionPriority) _cidLines.push('COMPOSITION PRIORITY (must DOMINATE the frame and be seen FIRST): ' + _sbDoc.compositionPriority + '.');
           if (_sbDoc.forbiddenFocus) _cidLines.push('FORBIDDEN FOCUS (must NOT dominate — if this is what you are drawing, the panel is WRONG): ' + _sbDoc.forbiddenFocus + '.');
+          // EMOTIONAL DIRECTION (v4) — the Storyboard Artist owns the emotional arc, not just the visual one.
+          // The single biggest reason comic faces read as posed mannequins is that nothing SPECIFIES the
+          // emotional intent, so the model averages every face to "determined." State it as hard direction.
+          if (_sbDoc.emotionalPurpose) _cidLines.push('EMOTIONAL PURPOSE (what the READER must FEEL here — the panel FAILS if it feels neutral): ' + _sbDoc.emotionalPurpose + '.' + (_sbDoc.emotionalApex ? '  EMOTIONAL APEX: ' + _sbDoc.emotionalApex + ' — pitch the faces/bodies to this loudness.' : ''));
+          (function () {
+            var em = [];
+            if (_sbDoc.pcEmotion && _sbDoc.pcEmotion.emotion) em.push('the protagonist reads ' + _sbDoc.pcEmotion.emotion + ' (' + _sbDoc.pcEmotion.intensity + '/10) — ' + _sbDoc.pcEmotion.expression);
+            if (_sbDoc.otherEmotion && _sbDoc.otherEmotion.emotion) em.push('the other figure reads ' + _sbDoc.otherEmotion.emotion + ' (' + _sbDoc.otherEmotion.intensity + '/10) — ' + _sbDoc.otherEmotion.expression);
+            if (em.length) _cidLines.push('CHARACTER EMOTION (HARD — push each face/body to the STATED intensity; do NOT flatten to neutral, calm, or generically "determined"): ' + em.join('; ') + '.');
+          })();
         }
         if (_panel) {
           if (_panel.dramaticQuestion) _cidLines.push('DRAMATIC QUESTION (every choice reinforces it): ' + _panel.dramaticQuestion);

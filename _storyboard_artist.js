@@ -99,7 +99,43 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     const repairDropsDup = rep.length === 1;
     const heroEmitsEyeMagnet = /EYE MAGNET \(what the reader's eye lands on FIRST/.test(revHeroPrompt);
     const heroEmitsComposition = /COMPOSITION \(beat-driven/.test(revHeroPrompt);
+
+    // ── v4: EMOTIONAL DIRECTION — the emotional arc is another storyboarding dimension
+    const emoDocsPresent = sbPhases.every(p => { const d = p._storyboardDoc; return d && d.emotionalPurpose && d.emotionalApex && d.pcEmotion && d.pcEmotion.emotion && typeof d.pcEmotion.intensity === 'number' && d.pcEmotion.expression && d.otherEmotion && d.otherEmotion.emotion; });
+    const intensities = sbPhases.map(p => p._storyboardDoc && p._storyboardDoc.pcEmotion && p._storyboardDoc.pcEmotion.intensity).filter(v => typeof v === 'number');
+    const emoNotFlat = (Math.max(...intensities) - Math.min(...intensities)) >= 3; // the graph rises and falls
+    const apexes = sbPhases.map(p => p._storyboardDoc && p._storyboardDoc.emotionalApex);
+    const hasCrest = apexes.includes('MAXIMUM') || apexes.includes('HIGH'); // the comic crests somewhere
+    const transDocPhase = sbPhases.find(p => p._readerLearning === 'Transformation');
+    const transEmoMaxed = !!(transDocPhase && transDocPhase._storyboardDoc && transDocPhase._storyboardDoc.emotionalApex === 'MAXIMUM' && (transDocPhase._storyboardDoc.otherEmotion.intensity >= 8 || transDocPhase._storyboardDoc.pcEmotion.intensity >= 8));
+    const expressions = sbPhases.map(p => p._storyboardDoc && p._storyboardDoc.pcEmotion && p._storyboardDoc.pcEmotion.expression);
+    const expressionsVary = new Set(expressions).size >= Math.min(4, expressions.length); // faces are not one mannequin
+    const heroEmitsEmotionalPurpose = /EMOTIONAL PURPOSE \(what the READER must FEEL/.test(revHeroPrompt) && /EMOTIONAL APEX:/.test(revHeroPrompt);
+    const heroEmitsCharacterEmotion = /CHARACTER EMOTION \(HARD/.test(revHeroPrompt) && /\/10\)/.test(revHeroPrompt);
+    // emotional lint: flat-intensity monotony
+    const monoLint = window._storyboardLint([
+      { purpose: 'Threat', understandingGain: 'a', composition: 'A', primarySubject: 'p', eyeMagnet: 'q1', forbiddenFocus: '', emotionalApex: 'LOW', pcEmotion: { emotion: 'x', intensity: 4, expression: 'e1' }, otherEmotion: { emotion: 'y', intensity: 4 } },
+      { purpose: 'Decision', understandingGain: 'b', composition: 'B', primarySubject: 'p', eyeMagnet: 'q2', forbiddenFocus: '', emotionalApex: 'LOW', pcEmotion: { emotion: 'x2', intensity: 4, expression: 'e2' }, otherEmotion: { emotion: 'y', intensity: 4 } },
+      { purpose: 'Resolution', understandingGain: 'c', composition: 'C', primarySubject: 'p', eyeMagnet: 'q3', forbiddenFocus: '', emotionalApex: 'LOW', pcEmotion: { emotion: 'x3', intensity: 5, expression: 'e3' }, otherEmotion: { emotion: 'y', intensity: 4 } }
+    ]);
+    const lintCatchesMonotony = monoLint.warnings.some(w => /EMOTIONAL MONOTONY/i.test(w));
+    // emotional lint: adjacent stall (identical protagonist state) + repeated expression
+    const stallLint = window._storyboardLint([
+      { purpose: 'Threat', understandingGain: 'a', composition: 'A', primarySubject: 'p', eyeMagnet: 'q1', forbiddenFocus: '', emotionalApex: 'HIGH', pcEmotion: { emotion: 'fear', intensity: 8, expression: 'wide eyes' }, otherEmotion: { emotion: 'y', intensity: 8 } },
+      { purpose: 'Consequence', understandingGain: 'b', composition: 'B', primarySubject: 'p', eyeMagnet: 'q2', forbiddenFocus: '', emotionalApex: 'HIGH', pcEmotion: { emotion: 'fear', intensity: 8, expression: 'wide eyes' }, otherEmotion: { emotion: 'y', intensity: 8 } }
+    ]);
+    const lintCatchesStall = stallLint.warnings.some(w => /emotional progression stalled/i.test(w));
+    const lintCatchesExpressionRepeat = stallLint.warnings.some(w => /dominant expression repeats/i.test(w));
+    // emotional lint: apex says MAXIMUM but everyone is quiet → contradiction ERROR
+    const apexLint = window._storyboardLint([
+      { purpose: 'Transformation', understandingGain: 'a', composition: 'A', primarySubject: 'p', eyeMagnet: 'q1', forbiddenFocus: '', emotionalApex: 'MAXIMUM', pcEmotion: { emotion: 'calm', intensity: 3, expression: 'e' }, otherEmotion: { emotion: 'y', intensity: 3 } }
+    ]);
+    const lintCatchesApexContradiction = apexLint.errors.some(e => /labelled loud but staged quiet/i.test(e));
+
     return {
+      emoDocsPresent, emoNotFlat, hasCrest, transEmoMaxed, expressionsVary,
+      heroEmitsEmotionalPurpose, heroEmitsCharacterEmotion,
+      lintCatchesMonotony, lintCatchesStall, lintCatchesExpressionRepeat, lintCatchesApexContradiction,
       sb, types,
       hasTransformation: types.includes('Transformation'),
       hasRevelation: types.includes('Revelation'),
@@ -153,7 +189,18 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['v3: LINT catches an adjacent duplicate visual beat', R.lintCatchesDup],
     ['v3: LINT catches a people-focused eye-magnet on a Revelation', R.lintCatchesPeopleEye],
     ['v3: REPAIR drops a duplicate visual beat', R.repairDropsDup],
-    ['v3: hero prompt emits EYE MAGNET + COMPOSITION', R.heroEmitsEyeMagnet && R.heroEmitsComposition]
+    ['v3: hero prompt emits EYE MAGNET + COMPOSITION', R.heroEmitsEyeMagnet && R.heroEmitsComposition],
+    ['v4: every panel carries EMOTIONAL DIRECTION (purpose + apex + pc/other state)', R.emoDocsPresent],
+    ['v4: the emotional intensity graph RISES AND FALLS (not flat 4/10 everywhere)', R.emoNotFlat],
+    ['v4: the comic CRESTS (a HIGH/MAXIMUM apex panel exists)', R.hasCrest],
+    ['v4: the Transformation panel is the emotional MAXIMUM (a figure ≥8/10)', R.transEmoMaxed],
+    ['v4: dominant expressions VARY panel-to-panel (not one mannequin face)', R.expressionsVary],
+    ['v4: hero prompt emits EMOTIONAL PURPOSE + EMOTIONAL APEX', R.heroEmitsEmotionalPurpose],
+    ['v4: hero prompt emits CHARACTER EMOTION with intensities', R.heroEmitsCharacterEmotion],
+    ['v4: LINT catches a flat emotional graph (monotony)', R.lintCatchesMonotony],
+    ['v4: LINT catches an adjacent emotional STALL (unchanged state)', R.lintCatchesStall],
+    ['v4: LINT catches a repeated dominant expression', R.lintCatchesExpressionRepeat],
+    ['v4: LINT errors when apex=MAXIMUM but every figure is <8/10 (loud label, quiet stage)', R.lintCatchesApexContradiction]
   ];
 
   let pass = 0, fail = 0;
