@@ -153659,11 +153659,47 @@ No text, no watermark, no UI elements, share-ready.`;
   var _VISUAL_GRAMMAR_V1 = {
     wish: 'WISH (visual grammar — make it UNMISTAKABLE as prayer, like a hero taking flight): the wisher\'s eyes are CLOSED or LIFTED toward the surface above, HANDS clasped together or open and rising in supplication, the whole body in a posture of committed, vulnerable petition; a gathering GLOW of tide-light coils at the hands/chest with rising motes/threads spiralling toward them; the wisher is the elevated, reverent focal point; other figures REACT (recoil, brace, watch). This is prayer, never two people talking. ' + _WISH_BURST_CLEAN,
     wishTwisted: 'WISH — TWISTING (visual grammar): the wisher is still in the posture of petition (eyes lifted, hands rising), but the invocation has gone wrong — the reverence curdles into alarm or dawning horror on the face, the body flinching from what it has unleashed. ' + _WISH_BURST_TWISTED,
-    sacrifice: 'SACRIFICE (visual grammar): the price is visibly GIVEN UP — a hand pressed to the cost (an eye, a lock of hair, the chest), a flinch or held stillness of loss, and a thread of pale light drawn OUT of the wisher into the water; a cold, draining light at the point where the price is paid.',
+    sacrifice: 'SACRIFICE (visual grammar — THE SHADOWY HAND OF FATE): a large, dark, semi-transparent HAND-SHAPED SHADOW (Fate\'s reaching hand — clearly fingers and palm, not ambient darkness) closes over the price being taken, drawing a thread of cold pale light OUT; the wisher flinches at the loss.',
     fateAnswer: 'FATE ANSWERING (visual grammar): the WORLD responds — a warm current and a bloom of tide-colour, drifting answering light, and the environment visibly changing (a passage opening, a wound knitting shut, silt clearing); Fate\'s reply is shown in the scene itself, not narrated. ' + _WISH_BURST_CLEAN,
     fateAnswerTwisted: 'FATE ANSWERING — TWISTED (visual grammar): the world responds but WRONG — the change is malformed or cruel (the passage opens onto a dead end, the healing knits crooked, the current turns cold), the environment recoiling. ' + _WISH_BURST_TWISTED
   };
   window._WISH_BURST_CLEAN = _WISH_BURST_CLEAN; window._WISH_BURST_TWISTED = _WISH_BURST_TWISTED;
+  // SACRIFICE = THE SHADOWY HAND OF FATE (Roman 2026-07-18) — the price is TAKEN by a hand-shaped
+  // shadow, Fate's own reaching hand, closing over the thing sacrificed: a tangible cost (eye, limb,
+  // voice, memory) → the hand over that part; an INNER cost (years of life, courage, love) → the hand
+  // over the HEART. Applies to every rail (ordinary / Petition / Tempt) — it's how Fate takes, period.
+  var _SACRIFICE_HAND_BASE = 'SACRIFICE (visual grammar — THE SHADOWY HAND OF FATE): a large, dark, semi-transparent HAND-SHAPED SHADOW — Fate\'s own reaching hand, unmistakably fingers and palm (NOT ambient darkness, smoke, or a cloud) — extends into the frame and closes ';
+  function _sacrificeHandTarget(txt) {
+    var t = String(txt || '').toLowerCase();
+    if (/\b(eyes?|sight|vision|gaze)\b/.test(t)) return { where: 'over the wisher\'s EYE', inner: false };
+    if (/\b(tongue|voice|speech|words?|songs?|silenc\w*|breath)\b/.test(t)) return { where: 'over the wisher\'s MOUTH and throat', inner: false };
+    var limb = (/\b(hand|arm|finger|thumb|leg|foot|limb)\b/.exec(t) || [])[1];
+    if (limb) return { where: 'over the wisher\'s ' + limb.toUpperCase(), inner: false };
+    if (/\b(memory|memories|recollection|mind|the face of|remember\w*)\b/.test(t)) return { where: 'at the wisher\'s TEMPLE and brow (drawing out a memory)', inner: false };
+    if (/\b(name|who (?:she|he|they) (?:is|are))\b/.test(t)) return { where: 'over the wisher\'s brow (taking the name/identity)', inner: false };
+    if (/\b(hair|lock)\b/.test(t)) return { where: 'over the wisher\'s hair', inner: false };
+    if (/\b(tooth|teeth)\b/.test(t)) return { where: 'over the wisher\'s jaw', inner: false };
+    if (/\b(blood)\b/.test(t)) return { where: 'over the wound where blood is drawn', inner: false };
+    // INNER / intangible costs — years of life, courage, love, warmth, joy, fertility, future, hope
+    return { where: 'over the wisher\'s HEART (an INNER price — years, courage, love, warmth — never a body part)', inner: true };
+  }
+  window._sacrificeHandTarget = _sacrificeHandTarget;
+  function _sacrificeHandGrammar(txt) {
+    var tgt = _sacrificeHandTarget(txt);
+    return _SACRIFICE_HAND_BASE + tgt.where + ', drawing a thread of cold pale light OUT where it touches; the wisher stills or flinches at the loss. The shadow-hand is the focal event.' + (tgt.inner ? ' Because this is an INNER sacrifice, the hand rests OVER THE HEART, not over any body part.' : '');
+  }
+  window._sacrificeHandGrammar = _sacrificeHandGrammar;
+  // Which paid Fate rail (if any) is the player using this turn? Petition/Tempt are wishes too, so
+  // they inherit Fate's burst + shadow-hand. Read the live mechanic state; null = ordinary/none.
+  function _sdWishRailActive() {
+    try {
+      if (typeof state === 'undefined' || !state) return null;
+      if (state.temptFateWish) return 'tempt';
+      if (state._activePetition || state._petitionEmergenceArmed || state._petitionEmergenceFired || state._petitionFrameLandedAwaitingArm) return 'petition';
+    } catch (_) {}
+    return null;
+  }
+  window._sdWishRailActive = _sdWishRailActive;
   // Shot Language: per dramatic type, the preferred camera / lens / angle / framing / movement /
   // composition. The author picks a shotType; the Director EXPANDS it. Author never sets cameras.
   var _SHOT_LANGUAGE_V1 = {
@@ -153745,6 +153781,12 @@ No text, no watermark, no UI elements, share-ready.`;
       // panel gets the Fate-answering grammar — so the magical event is never rendered as a stare.
       if (phase._readerLearning === 'Transformation') grammar.wish = true;
       if (phase._readerLearning === 'Consequence') grammar.fateAnswer = true;
+      // PETITION / TEMPT are wishes too — the player's paid rails inherit Fate's burst + shadow-hand.
+      // If a rail is active this turn, force the wish grammar on the wish moment and the sacrifice
+      // grammar when the beat pays a price, so a player's Petition/Tempt reads with the same language.
+      var _rail = _sdWishRailActive();
+      if (_rail && phase._readerLearning === 'Transformation') grammar.wish = true;
+      if (_rail && /\b(price|offer|sacrific|take what|cost|give up)\b/i.test(txt)) grammar.sacrifice = true;
       // WISH BURST STATE: if Fate has TWISTED this wish, swap the golden burst grammar for the red,
       // jagged, X-scribbled corrupted burst (same signature, curdled). Default stays clean/golden.
       if ((grammar.wish || grammar.fateAnswer) && _sdWishTwisted(txt, plan, ap)) {
@@ -153774,7 +153816,7 @@ No text, no watermark, no UI elements, share-ready.`;
         panelIdx: pi, dramaticQuestion: dq, shotType: shotType,
         shotExpansion: _SHOT_LANGUAGE_V1[shotType] || '',
         hierarchy: { primary: primary, secondary: secondary, background: background },
-        grammarCues: Object.keys(grammar).filter(function (g) { return grammar[g] && _VISUAL_GRAMMAR_V1[g]; }).map(function (g) { return _VISUAL_GRAMMAR_V1[g]; }),
+        grammarCues: Object.keys(grammar).filter(function (g) { return grammar[g] && _VISUAL_GRAMMAR_V1[g]; }).map(function (g) { return (g === 'sacrifice') ? _sacrificeHandGrammar(txt) : _VISUAL_GRAMMAR_V1[g]; }),
         cast: cast, authored: !!ap, invalidFields: invalid
       };
       if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
