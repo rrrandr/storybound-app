@@ -65,6 +65,9 @@ const { chromium } = require('playwright-core');
     const anchorWeapon = /weapon|gripping HAND/i.test(window._sdWishAnchor('I wish this blade would never break'));
     const anchorWound = /wound/i.test(window._sdWishAnchor('I wish these wounds were enough to reach the surface'));
     const anchorInvocation = /open mouth and nearest\/outstretched HAND/i.test(window._sdWishAnchor('Fate, hear me'));
+    // regen13 anchor-selection fixes: "rift" → passage anchor; "Many-Tide" (proper noun) must NOT be the tide anchor
+    const anchorRift = /passage\/opening/i.test(window._sdWishAnchor('I wish that the rift seals until the Many-Tide claims its due'));
+    const manyTideNotWater = !/water\/tide/i.test(window._sdWishAnchor('I wish the Many-Tide spares us')) ;
     const noPrayerInGrammar = /SPEECH \+ INTENT|NOT a posture/i.test(G.wish) && !/clasped together or open and rising in supplication/i.test(G.wish);
     const burstWrapsAnchor = /WRAPPING THE WISH ANCHOR|AROUND THE ANCHOR/i.test(G.wish);
     // integration: the wish panel carries a wishAnchor and the hero prompt emits the WISH ANCHOR line
@@ -107,7 +110,7 @@ const { chromium } = require('playwright-core');
       cleanPanelGolden, twistedPanelRed,
       mechMaps, mostRecentWins, mechOverridesCleanText, mechRefusedOverridesHopeText, fallsThroughNoMechanic,
       rejectGrammarOk, detectsRefusedHeuristic, rejectedPanelNoBurst,
-      anchorPassage, anchorWeapon, anchorWound, anchorInvocation, noPrayerInGrammar, burstWrapsAnchor, panelHasAnchor,
+      anchorPassage, anchorWeapon, anchorWound, anchorInvocation, anchorRift, manyTideNotWater, noPrayerInGrammar, burstWrapsAnchor, panelHasAnchor,
       hasWishCue: !!clean.wishCues
     };
   });
@@ -142,6 +145,8 @@ const { chromium } = require('playwright-core');
     ['ANCHOR: a "blade never breaks" wish anchors to the weapon/hand', R.anchorWeapon],
     ['ANCHOR: a "wounds" wish anchors to the wound', R.anchorWound],
     ['ANCHOR: a bare invocation anchors to the mouth + outstretched hand (no pose)', R.anchorInvocation],
+    ['ANCHOR (regen13 fix): "the rift seals" → the passage anchor (not the tide)', R.anchorRift],
+    ['ANCHOR (regen13 fix): "Many-Tide" (proper noun) does NOT trigger the water anchor', R.manyTideNotWater],
     ['ANCHOR: the wish grammar is SPEECH+INTENT — the enforced prayer pose is GONE', R.noPrayerInGrammar],
     ['ANCHOR: the burst wraps THE WISH ANCHOR (not a "point of power")', R.burstWrapsAnchor],
     ['ANCHOR: the wish panel carries a wishAnchor (the passage)', R.panelHasAnchor]

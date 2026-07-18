@@ -153839,11 +153839,12 @@ No text, no watermark, no UI elements, share-ready.`;
   // prayer pose. This also enriches the language: the reader learns WHAT Fate is looking at.
   function _sdWishAnchor(beatText) {
     var t = String(beatText || '').toLowerCase();
-    if (/\b(passage|seam|gate|door|arch|fissure|opening|the way out)\b/.test(t)) return 'the passage/opening the wish concerns — the burst frames and wraps IT';
+    if (/\b(passage|seam|gate|door|arch|fissure|opening|rift|breach|chasm|crack|the way out)\b/.test(t)) return 'the passage/opening the wish concerns — the burst frames and wraps IT';
     if (/\b(wounds?|gash\w*|cuts?|bleeding|injur\w*|broken (?:arm|leg|bone|rib))\b/.test(t)) return 'the wound the wish would mend — the burst wraps IT';
     if (/\b(blade|sword|spear|cutlass|trident|dagger|weapon|net)\b/.test(t)) return 'the weapon the wish concerns — the burst wraps the gripping HAND and the weapon';
     if (/\b(child|baby|infant|the dying|beloved|her body|his body)\b/.test(t)) return 'the person the wish is for — the burst haloes THEM';
-    if (/\b(tide|current|the water|storm|wind|rain|sky|sea)\b/.test(t)) return 'the water/tide the wish would bend — the burst charges IT';
+    // "the tide" (generic), NOT "Many-Tide"/"First-Tide" (proper-noun Kwisheen combat methods).
+    if (/\b(the tide|tidewater|the current|the water|the storm|the wind|the rain|the sky|the sea)\b/.test(t)) return 'the water/tide the wish would bend — the burst charges IT';
     return 'the wisher’s open mouth and nearest/outstretched HAND — the act of speaking the wish; the burst gathers THERE while their physical action (fighting, bracing, bleeding) continues';
   }
   window._sdWishAnchor = _sdWishAnchor;
