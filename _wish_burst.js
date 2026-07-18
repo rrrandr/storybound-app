@@ -60,6 +60,25 @@ const { chromium } = require('playwright-core');
     const cleanPanelGolden = /golden/i.test(clean.wishCues) && /sparkle stars/i.test(clean.wishCues) && !/red and jagged/i.test(clean.wishCues);
     const twistedPanelRed = /red/i.test(twisted.wishCues) && /jagged/i.test(twisted.wishCues) && /X’S|X'S/i.test(twisted.wishCues);
 
+    // ── WISH ANCHOR (D): the burst attaches to the concrete thing Fate judges — NO enforced prayer pose ──
+    const anchorPassage = /passage\/opening/i.test(window._sdWishAnchor('I wish that the passage opens'));
+    const anchorWeapon = /weapon|gripping HAND/i.test(window._sdWishAnchor('I wish this blade would never break'));
+    const anchorWound = /wound/i.test(window._sdWishAnchor('I wish these wounds were enough to reach the surface'));
+    const anchorInvocation = /open mouth and nearest\/outstretched HAND/i.test(window._sdWishAnchor('Fate, hear me'));
+    const noPrayerInGrammar = /SPEECH \+ INTENT|NOT a posture/i.test(G.wish) && !/clasped together or open and rising in supplication/i.test(G.wish);
+    const burstWrapsAnchor = /WRAPPING THE WISH ANCHOR|AROUND THE ANCHOR/i.test(G.wish);
+    // integration: the wish panel carries a wishAnchor and the hero prompt emits the WISH ANCHOR line
+    const anchorPanel = (() => {
+      s._openFateBargains = [];
+      const p = { visualState: { background: 'coral ruins', other_characters_present: [{ name: 'Kesh', species: 'kwisheen', position: 'a raider' }] },
+        phases: [{ phaseIdx: 0, startBeat: 0, label: 'x', characters_present: ['protagonist', 'Kesh'], props_present: [], li_visibility_phase: 'absent' }],
+        beats: [{ idx: 0, kind: 'narration', text: 'The raider corners me.' }, { idx: 1, kind: 'narration', text: '"Fate beneath the turning tide." I wish the passage opens, blade still raised.' }, { idx: 2, kind: 'narration', text: 'The water warms.' }] };
+      window._buildStoryDirector(p, 0);
+      const tp = (p.phases || []).find(x => x._readerLearning === 'Transformation');
+      return tp && tp._panel && tp._panel.wishAnchor;
+    })();
+    const panelHasAnchor = !!(anchorPanel && /passage/i.test(anchorPanel));
+
     // ── MECHANIC-FIRST (TRUTHFULNESS): the burst reads the ACTUAL Fate-bargain outcome, not keywords ──
     const mo = (lo) => { s._openFateBargains = [{ id: 'b', lastOutcome: lo, lastInvokedScene: 0 }]; return window._sdWishMechanicOutcome(); };
     const mechMaps = mo('landed') === 'clean' && mo('warped') === 'twisted' && mo('distorted') === 'twisted' && mo('refused') === 'rejected';
@@ -88,6 +107,7 @@ const { chromium } = require('playwright-core');
       cleanPanelGolden, twistedPanelRed,
       mechMaps, mostRecentWins, mechOverridesCleanText, mechRefusedOverridesHopeText, fallsThroughNoMechanic,
       rejectGrammarOk, detectsRefusedHeuristic, rejectedPanelNoBurst,
+      anchorPassage, anchorWeapon, anchorWound, anchorInvocation, noPrayerInGrammar, burstWrapsAnchor, panelHasAnchor,
       hasWishCue: !!clean.wishCues
     };
   });
@@ -117,7 +137,14 @@ const { chromium } = require('playwright-core');
     ['no mechanic state → falls through to the beat-text heuristic', R.fallsThroughNoMechanic],
     ['REJECTED: third-state grammar is an aborted burst (no rays, no stars)', R.rejectGrammarOk],
     ['REJECTED: heuristic fires on "Fate did not answer / the wish fails"', R.detectsRefusedHeuristic],
-    ['INTEGRATION: a refused outcome gives the panel the aborted no-burst grammar (not golden)', R.rejectedPanelNoBurst]
+    ['INTEGRATION: a refused outcome gives the panel the aborted no-burst grammar (not golden)', R.rejectedPanelNoBurst],
+    ['ANCHOR: a "passage opens" wish anchors the burst to the passage', R.anchorPassage],
+    ['ANCHOR: a "blade never breaks" wish anchors to the weapon/hand', R.anchorWeapon],
+    ['ANCHOR: a "wounds" wish anchors to the wound', R.anchorWound],
+    ['ANCHOR: a bare invocation anchors to the mouth + outstretched hand (no pose)', R.anchorInvocation],
+    ['ANCHOR: the wish grammar is SPEECH+INTENT — the enforced prayer pose is GONE', R.noPrayerInGrammar],
+    ['ANCHOR: the burst wraps THE WISH ANCHOR (not a "point of power")', R.burstWrapsAnchor],
+    ['ANCHOR: the wish panel carries a wishAnchor (the passage)', R.panelHasAnchor]
   ];
 
   let pass = 0, fail = 0;

@@ -153709,16 +153709,16 @@ No text, no watermark, no UI elements, share-ready.`;
   // (radiating from the wisher's hand/chest), MANIFESTS (surrounding the result), FULFILLED (confirming
   // completion). CLEAN wish = golden, orderly. TWISTED wish (Fate warped it) = red, jagged, X-scribbled.
   // Every burst string carries the NON-DIEGETIC clause so the render never lets a character witness it.
-  var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, GRAPHICALLY DOMINANT, integrated INTO the art, radiating from the point of power): a big, BOLD GOLDEN-WHITE STAR-BURST filling much of the frame around the hands/chest — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, high-contrast, unmistakable. NEVER a faint glow or a few tiny sparkles — it is the loudest graphic element in the panel and reads instantly as a TRUE wish acting on the world. ' + _FATE_NONDIEGETIC_CLAUSE;
-  var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — GRAPHICALLY DOMINANT; the SAME bold burst, but Fate has CORRUPTED the wish): a big, high-contrast RED burst filling much of the frame — the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes; an angry crimson glow. NEVER faint — it is the loudest graphic element in the panel, radiating from the same point but reading unmistakably WRONG — the wish has curdled. ' + _FATE_NONDIEGETIC_CLAUSE;
+  var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, GRAPHICALLY DOMINANT, integrated INTO the art, radiating from and WRAPPING THE WISH ANCHOR — the concrete thing Fate is judging, named in the WISH ANCHOR line): a big, BOLD GOLDEN-WHITE STAR-BURST filling much of the frame AROUND THE ANCHOR — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, high-contrast, unmistakable. NEVER a faint glow or a few tiny sparkles — it is the loudest graphic element in the panel and reads instantly as a TRUE wish acting on the world. ' + _FATE_NONDIEGETIC_CLAUSE;
+  var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — GRAPHICALLY DOMINANT; the SAME bold burst wrapping THE WISH ANCHOR, but Fate has CORRUPTED the wish): a big, high-contrast RED burst filling much of the frame AROUND THE ANCHOR — the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes; an angry crimson glow. NEVER faint — it is the loudest graphic element in the panel, radiating from the anchor but reading unmistakably WRONG — the wish has curdled. ' + _FATE_NONDIEGETIC_CLAUSE;
   var _WISH_BURST_REJECTED = 'FATE’S BURST — REFUSED (HARD — Fate did NOT answer): the gathering light GUTTERS and DIES before any star-burst can form — a few faint sparks scatter outward and wink out, the radiance collapsing back into darkness; NO rays, NO stars, NO glow. An ABORTED burst — the ABSENCE of Fate’s signature is the point; the wisher’s petition falters and the face falls as the offered light drains to nothing. ' + _FATE_NONDIEGETIC_CLAUSE;
   var _VISUAL_GRAMMAR_V1 = {
-    wish: 'WISH (visual grammar — make it UNMISTAKABLE as prayer, like a hero taking flight): the wisher\'s eyes are CLOSED or LIFTED toward the surface above, HANDS clasped together or open and rising in supplication, the whole body in a posture of committed, vulnerable petition; a gathering GLOW of tide-light coils at the hands/chest with rising motes/threads spiralling toward them; the wisher is the elevated, reverent focal point; other figures REACT (recoil, brace, watch). This is prayer, never two people talking. ' + _WISH_BURST_CLEAN,
-    wishTwisted: 'WISH — TWISTING (visual grammar): the wisher is still in the posture of petition (eyes lifted, hands rising), but the invocation has gone wrong — the reverence curdles into alarm or dawning horror on the face, the body flinching from what it has unleashed. ' + _WISH_BURST_TWISTED,
+    wish: 'WISH (visual grammar — a wish is SPEECH + INTENT, NOT a posture: do NOT force a prayer, kneeling, or hands-clasped-in-supplication pose): the wisher KEEPS whatever they are physically doing (fighting, crawling, bleeding, bracing, clutching someone) and their EMOTION drives the body — begging, whispering, screaming, gritting through it, defiant, weeping. What marks the moment as a wish is Fate\'s BURST attached to the WISH ANCHOR, NOT the wisher\'s posture. ' + _WISH_BURST_CLEAN,
+    wishTwisted: 'WISH — TWISTING (visual grammar): the wisher keeps their physical action and their emotion (NO prayer pose); the corrupted burst attaches to the WISH ANCHOR. ' + _WISH_BURST_TWISTED,
     sacrifice: 'SACRIFICE (visual grammar — THE SHADOWY HAND OF FATE): a large, dark, semi-transparent HAND-SHAPED SHADOW (Fate\'s reaching hand — clearly fingers and palm, not ambient darkness) closes over the price being taken, drawing a thread of cold pale light OUT; the wisher flinches at the loss.',
     fateAnswer: 'FATE ANSWERING (visual grammar): the WORLD responds — a warm current and a bloom of tide-colour, drifting answering light, and the environment visibly changing (a passage opening, a wound knitting shut, silt clearing); Fate\'s reply is shown in the scene itself, not narrated. ' + _WISH_BURST_CLEAN,
     fateAnswerTwisted: 'FATE ANSWERING — TWISTED (visual grammar): the world responds but WRONG — the change is malformed or cruel (the passage opens onto a dead end, the healing knits crooked, the current turns cold), the environment recoiling. ' + _WISH_BURST_TWISTED,
-    wishRejected: 'WISH — REFUSED (visual grammar): the wisher is in the posture of petition (eyes lifted, hands rising) but the invocation is DENIED — no power gathers; the face falls from hope to dismay. ' + _WISH_BURST_REJECTED,
+    wishRejected: 'WISH — REFUSED (visual grammar): the wisher keeps their physical action (NO prayer pose) but the invocation is DENIED — at the WISH ANCHOR no power gathers; the face falls from hope to dismay. ' + _WISH_BURST_REJECTED,
     fateAnswerRejected: 'FATE UNANSWERING (visual grammar): the world does NOT change — the passage stays sealed, the wound stays open, the current stays cold; a held, indifferent stillness where a miracle was asked. ' + _WISH_BURST_REJECTED
   };
   window._WISH_BURST_CLEAN = _WISH_BURST_CLEAN; window._WISH_BURST_TWISTED = _WISH_BURST_TWISTED; window._WISH_BURST_REJECTED = _WISH_BURST_REJECTED;
@@ -153832,6 +153832,21 @@ No text, no watermark, no UI elements, share-ready.`;
   // Back-compat shim (the burst grammar's older boolean caller/tests).
   function _sdWishTwisted(txt, plan, ap) { return _sdWishOutcome(txt, plan, ap) === 'twisted'; }
   window._sdWishTwisted = _sdWishTwisted;
+  // WISH ANCHOR (Roman 2026-07-18) — the burst fails to render when the prompt says "draw a person
+  // fighting AND overlay a burst" (image models are bad at "also"). It needs a SEMANTIC ANCHOR: the
+  // concrete thing Fate is JUDGING, to attach the mark to. A wish is SPEECH + INTENT, never a posture —
+  // so the anchor is the object of invocation (the wished-for thing / the invoking hand+mouth), NOT a
+  // prayer pose. This also enriches the language: the reader learns WHAT Fate is looking at.
+  function _sdWishAnchor(beatText) {
+    var t = String(beatText || '').toLowerCase();
+    if (/\b(passage|seam|gate|door|arch|fissure|opening|the way out)\b/.test(t)) return 'the passage/opening the wish concerns — the burst frames and wraps IT';
+    if (/\b(wounds?|gash\w*|cuts?|bleeding|injur\w*|broken (?:arm|leg|bone|rib))\b/.test(t)) return 'the wound the wish would mend — the burst wraps IT';
+    if (/\b(blade|sword|spear|cutlass|trident|dagger|weapon|net)\b/.test(t)) return 'the weapon the wish concerns — the burst wraps the gripping HAND and the weapon';
+    if (/\b(child|baby|infant|the dying|beloved|her body|his body)\b/.test(t)) return 'the person the wish is for — the burst haloes THEM';
+    if (/\b(tide|current|the water|storm|wind|rain|sky|sea)\b/.test(t)) return 'the water/tide the wish would bend — the burst charges IT';
+    return 'the wisher’s open mouth and nearest/outstretched HAND — the act of speaking the wish; the burst gathers THERE while their physical action (fighting, bracing, bleeding) continues';
+  }
+  window._sdWishAnchor = _sdWishAnchor;
   // PERSPECTIVE CONTRACT (Roman 2026-07-18) — the explicit THREE-WAY split every Fate beat carries, so
   // every authoring stage answers three separate questions: what does the AUDIENCE know now, what do
   // the CHARACTERS know now, and what has actually happened in the PHYSICAL world. These are usually
@@ -153947,6 +153962,9 @@ No text, no watermark, no UI elements, share-ready.`;
       // PERSPECTIVE CONTRACT — the outcome-aware three-way split for this Fate beat (reader / characters
       // / physical). Computed here (outcome is now known); attached to the panel + used by the prompt.
       var _perspective = _buildPerspectiveContract(phase._readerLearning, _wo, txt);
+      // WISH ANCHOR — the concrete thing Fate is judging, to attach the burst to (no prayer pose).
+      var _isWishPanel = !!(grammar.wish || grammar.wishTwisted || grammar.wishRejected || grammar.fateAnswer || grammar.fateAnswerTwisted || grammar.fateAnswerRejected);
+      var _wishAnchor = _isWishPanel ? _sdWishAnchor(txt) : null;
       // cast performance
       var castRoster = ap && Array.isArray(ap.cast) ? ap.cast.map(function (c) { return String(c.name || '').toLowerCase(); }) : present.map(keyFor);
       var cast = castRoster.map(function (tok) {
@@ -153972,6 +153990,7 @@ No text, no watermark, no UI elements, share-ready.`;
         hierarchy: { primary: primary, secondary: secondary, background: background },
         grammarCues: Object.keys(grammar).filter(function (g) { return grammar[g] && _VISUAL_GRAMMAR_V1[g]; }).map(function (g) { return (g === 'sacrifice') ? _sacrificeHandGrammar(txt) : _VISUAL_GRAMMAR_V1[g]; }),
         perspectiveContract: _perspective, // reader / characters / physical-world — the three-way split
+        wishAnchor: _wishAnchor,            // the concrete thing Fate judges — where the burst attaches
         cast: cast, authored: !!ap, invalidFields: invalid
       };
       if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
@@ -154515,7 +154534,9 @@ No text, no watermark, no UI elements, share-ready.`;
       // reader-only burst); the characters do NOT — they see only the invocation, then the later
       // consequence. The Storyboard Artist exposes the asymmetry so no panel makes a character "witness" Fate.
       readerKnowledge: (type === 'Transformation') ? 'Fate’s judgment on the wish (the reader-only burst — accepted / warped / refused)' : (type === 'Consequence') ? 'the price Fate took and what has now changed' : null,
-      characterKnowledge: (type === 'Transformation') ? 'only that a wish was spoken — NO visible sign of Fate’s answer' : (type === 'Consequence') ? 'the observable result begins to register; they still cannot perceive Fate itself' : null
+      characterKnowledge: (type === 'Transformation') ? 'only that a wish was spoken — NO visible sign of Fate’s answer' : (type === 'Consequence') ? 'the observable result begins to register; they still cannot perceive Fate itself' : null,
+      // WISH ANCHOR (D) — the concrete thing Fate judges, where the burst attaches (no prayer pose).
+      wishAnchor: (type === 'Transformation' || type === 'Consequence') ? _sdWishAnchor(beatText) : null
     };
   }
   window._buildStoryboardDoc = _buildStoryboardDoc;
@@ -180491,6 +180512,9 @@ No text, no watermark, no UI elements, share-ready.`;
           }
           _cidLines.push(line);
         });
+        if (_panel && _panel.wishAnchor) {
+          _cidLines.push('WISH ANCHOR (HARD — Fate’s burst attaches HERE, to this concrete thing; the wisher’s physical action CONTINUES uninterrupted, NO prayer pose): ' + _panel.wishAnchor + '.');
+        }
         if (_panel && _panel.grammarCues && _panel.grammarCues.length) {
           _panel.grammarCues.forEach(function (g) { _cidLines.push(g); });
         }
