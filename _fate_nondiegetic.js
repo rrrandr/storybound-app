@@ -104,11 +104,15 @@ const { chromium } = require('playwright-core');
     // ── the world-law directive carries the rule into PROSE generation ──
     const proseLaw = window._buildFatelandsWishLawDirective();
     const proseLawHasRule = /NON-DIEGETIC/i.test(proseLaw) && /NOTHING visibly happens/i.test(proseLaw);
+    // #17b: INFERENCE dialogue allowed — a character may conclude from OBSERVABLE consequences (not the symbol)
+    const law = window._FATE_NONDIEGETIC_LAW;
+    const inferenceAllowed = /INFERENCE IS ALLOWED/i.test(law) && /Fate turns against you|the currents reject your bargain|your wish is fighting you/i.test(law) && /inferred from observable reality/i.test(law);
+    const inferenceStillGuarded = /never from seeing the reader-only burst|follow the observable change/i.test(law);
 
     return {
       contractThreeWay, contractOutcomeAware, charactersLearnNothing, physicalDelayed,
       consequenceObservable, nonFateBeatNoContract, panelHasContract, heroEmitsContract,
-      catchesLeak, observableDefusesLeak, noWishNoLeak, lexiconStaysSparse,
+      catchesLeak, observableDefusesLeak, noWishNoLeak, lexiconStaysSparse, inferenceAllowed, inferenceStillGuarded,
       clauseInClean, clauseInTwisted, clauseInRejected, clauseInSacrifice, lawExists,
       hasCorePrimitives, allNonDiegetic, acceptanceIsStars, bindingIsRings, takingIsShadow,
       composes, composesBroken, emptyComposeSafe,
@@ -150,7 +154,9 @@ const { chromium } = require('playwright-core');
     ['KNOWLEDGE-LEAK: catches foreboding right after a wish with no observable cue', R.catchesLeak],
     ['KNOWLEDGE-LEAK: an observable cue between wish and reaction defuses the flag', R.observableDefusesLeak],
     ['KNOWLEDGE-LEAK: no wish → no leak flag (plain suspicion is fine)', R.noWishNoLeak],
-    ['LEXICON stays deliberately SPARSE (≤12 primitives — learnable alphabet)', R.lexiconStaysSparse]
+    ['LEXICON stays deliberately SPARSE (≤12 primitives — learnable alphabet)', R.lexiconStaysSparse],
+    ['#17b INFERENCE: a character may conclude from OBSERVABLE consequences ("Fate turns against you")', R.inferenceAllowed],
+    ['#17b INFERENCE stays guarded: from the observable change, never the reader-only burst', R.inferenceStillGuarded]
   ];
 
   let pass = 0, fail = 0;

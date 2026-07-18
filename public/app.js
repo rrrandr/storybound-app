@@ -153658,7 +153658,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // Fate's judgment while the characters remain uncertain until the price lands. Only PHYSICAL
   // consequences are diegetic. Default for every Fate visual-vocabulary element: NON-DIEGETIC.
   var _FATE_NONDIEGETIC_CLAUSE = 'NON-DIEGETIC (HARD — reader-facing notation, NOT a light-source in the world): NO character sees, looks toward, points at, reacts to, or is lit by this Fate symbol. Compose so NO eyeline lands on it and it casts NO realistic light on any face or surface. Characters react ONLY to the person invoking and, later, to the physical consequence — never to this mark. It is drawn OVER the scene for the reader, never witnessed within it. CRUCIAL: non-diegetic means the WORLD ignores it — it does NOT mean faint, small, dim, or omitted. Draw it LOUD: a BOLD, high-contrast, graphically DOMINANT comic-FX overlay the reader cannot miss; only the CHARACTERS and the scene’s realistic lighting ignore it.';
-  var _FATE_NONDIEGETIC_LAW = 'FATELANDS LAW — FATE’S VISUAL LANGUAGE IS NON-DIEGETIC. The wish-burst, corruption marks, the shadow-hand of sacrifice, and every Fate symbol exist ONLY for the reader — storytelling notation, not a phenomenon inside the world. Characters NEVER perceive them: no one says "the golden burst", "the rays turned red", "the stars became crosses", "the shadow reached for him", or "the burst faded"; no one looks at the light. Characters perceive only observable reality — a wish is spoken, NOTHING visibly happens, and reality changes LATER; they infer Fate’s judgment from CONSEQUENCES alone. Do NOT confirm Fate’s judgment in prose or dialogue before the consequence reveals it ("the wish twisted", "Fate accepted/rejected you") unless there is an independent OBSERVABLE reason — preserve the dramatic irony. Only physical consequences are diegetic.';
+  var _FATE_NONDIEGETIC_LAW = 'FATELANDS LAW — FATE’S VISUAL LANGUAGE IS NON-DIEGETIC. The wish-burst, corruption marks, the shadow-hand of sacrifice, and every Fate symbol exist ONLY for the reader — storytelling notation, not a phenomenon inside the world. Characters NEVER perceive them: no one says "the golden burst", "the rays turned red", "the stars became crosses", "the shadow reached for him", or "the burst faded"; no one looks at the light. Characters perceive only observable reality — a wish is spoken, NOTHING visibly happens, and reality changes LATER; they infer Fate’s judgment from CONSEQUENCES alone. Do NOT confirm Fate’s judgment in prose or dialogue before the consequence reveals it ("the wish twisted", "Fate accepted/rejected you") unless there is an independent OBSERVABLE reason — preserve the dramatic irony. Only physical consequences are diegetic. INFERENCE IS ALLOWED, and better than silence: once the physical consequence has landed, a character MAY voice a CONCLUSION drawn from what they OBSERVE — e.g. seeing a wish visibly curdle in the world, a witness might say "Fate turns against you", "the currents reject your bargain", or "your wish is fighting you". Such a line is inferred from observable reality (never from seeing the reader-only burst), it must follow the observable change (not precede it), and it must read as a person’s reading of events, not as the narrator stating Fate’s hidden verdict as settled fact.';
   window._FATE_NONDIEGETIC_CLAUSE = _FATE_NONDIEGETIC_CLAUSE; window._FATE_NONDIEGETIC_LAW = _FATE_NONDIEGETIC_LAW;
   function _fateNonDiegeticDirective() { return _FATE_NONDIEGETIC_LAW; }
   window._fateNonDiegeticDirective = _fateNonDiegeticDirective;
@@ -153709,8 +153709,13 @@ No text, no watermark, no UI elements, share-ready.`;
   // (radiating from the wisher's hand/chest), MANIFESTS (surrounding the result), FULFILLED (confirming
   // completion). CLEAN wish = golden, orderly. TWISTED wish (Fate warped it) = red, jagged, X-scribbled.
   // Every burst string carries the NON-DIEGETIC clause so the render never lets a character witness it.
-  var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, GRAPHICALLY DOMINANT, integrated INTO the art, radiating from and WRAPPING THE WISH ANCHOR — the concrete thing Fate is judging, named in the WISH ANCHOR line): a big, BOLD GOLDEN-WHITE STAR-BURST filling much of the frame AROUND THE ANCHOR — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, high-contrast, unmistakable. NEVER a faint glow or a few tiny sparkles — it is the loudest graphic element in the panel and reads instantly as a TRUE wish acting on the world. ' + _FATE_NONDIEGETIC_CLAUSE;
-  var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — GRAPHICALLY DOMINANT; the SAME bold burst wrapping THE WISH ANCHOR, but Fate has CORRUPTED the wish): a big, high-contrast RED burst filling much of the frame AROUND THE ANCHOR — the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes; an angry crimson glow. NEVER faint — it is the loudest graphic element in the panel, radiating from the anchor but reading unmistakably WRONG — the wish has curdled. ' + _FATE_NONDIEGETIC_CLAUSE;
+  // BURST STYLE (Roman 2026-07-18, #16) — regen13 rendered the burst as an anime ENERGY BLAST (volumetric
+  // glow, particles, a floating eye). Fate's language is authorial NOTATION — a flat symbolic mark, like
+  // the reference chart. Lead with strong POSITIVE style; a short negative clarifier keeps it off "energy".
+  var _WISH_BURST_STYLE = 'STYLE (HARD — SYMBOLIC LINEWORK, not energy): draw the burst as a FLAT, INKED, ENGRAVED graphic mark — clean vector-like straight radial lines and discrete HARD-EDGED geometric stars, the look of a printed-comic sound-effect / a woodcut / a tattoo emblem, laid as a 2D graphic OVERLAY on top of the art with hard clean edges, uniform line weight, and a limited flat palette. It is symbolic notation, not a light source: keep it a graphic emblem, NOT a soft volumetric glow, lens flare, particle cloud, fiery aura, or an anime energy explosion.';
+  window._WISH_BURST_STYLE = _WISH_BURST_STYLE;
+  var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, GRAPHICALLY DOMINANT, integrated INTO the art, radiating from and WRAPPING THE WISH ANCHOR — the concrete thing Fate is judging, named in the WISH ANCHOR line): a big, BOLD GOLDEN-WHITE STAR-BURST filling much of the frame AROUND THE ANCHOR — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, high-contrast, unmistakable. NEVER a faint glow or a few tiny sparkles — it is the loudest graphic element in the panel and reads instantly as a TRUE wish acting on the world. ' + _WISH_BURST_STYLE + ' ' + _FATE_NONDIEGETIC_CLAUSE;
+  var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — GRAPHICALLY DOMINANT; the SAME bold burst wrapping THE WISH ANCHOR, but Fate has CORRUPTED the wish): a big, high-contrast RED burst filling much of the frame AROUND THE ANCHOR — the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes. NEVER faint — it is the loudest graphic element in the panel, radiating from the anchor but reading unmistakably WRONG — the wish has curdled. ' + _WISH_BURST_STYLE + ' ' + _FATE_NONDIEGETIC_CLAUSE;
   var _WISH_BURST_REJECTED = 'FATE’S BURST — REFUSED (HARD — Fate did NOT answer): the gathering light GUTTERS and DIES before any star-burst can form — a few faint sparks scatter outward and wink out, the radiance collapsing back into darkness; NO rays, NO stars, NO glow. An ABORTED burst — the ABSENCE of Fate’s signature is the point; the wisher’s petition falters and the face falls as the offered light drains to nothing. ' + _FATE_NONDIEGETIC_CLAUSE;
   var _VISUAL_GRAMMAR_V1 = {
     wish: 'WISH (visual grammar — a wish is SPEECH + INTENT, NOT a posture: do NOT force a prayer, kneeling, or hands-clasped-in-supplication pose): the wisher KEEPS whatever they are physically doing (fighting, crawling, bleeding, bracing, clutching someone) and their EMOTION drives the body — begging, whispering, screaming, gritting through it, defiant, weeping. What marks the moment as a wish is Fate\'s BURST attached to the WISH ANCHOR, NOT the wisher\'s posture. ' + _WISH_BURST_CLEAN,
@@ -154006,6 +154011,7 @@ No text, no watermark, no UI elements, share-ready.`;
         eventLed: (primary === (phase._storyboardDoc && phase._storyboardDoc.eyeMagnet)), // the EVENT is the subject
         establishing: !!phase._establishing,      // a dramatic solo introduction of a recurring character
         castingEligible: !!phase._establishing,   // only establishing shots are clean identity sources
+        wishOutcome: (typeof _wo !== 'undefined' ? _wo : null), // clean|twisted|rejected — for the postmortem
         cast: cast, authored: !!ap, invalidFields: invalid
       };
       if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
@@ -154144,11 +154150,45 @@ No text, no watermark, no UI elements, share-ready.`;
   // VISUAL LINT = staging (everyone facing camera? romance blocking in combat? identical
   //   compositions? no establishing shot? a figure hidden? recognition traits visible? injuries kept?).
   function _visualLint(panel) { return { errors: [], warnings: [] }; }
-  // POSTMORTEM = intent-vs-result on the FINISHED image (runs post-render, not in the pre-render
-  //   orchestrator): recognition trait visible? wish grammar recognized? identity preserved?
-  //   primary subject unobstructed? emotion achieved? injuries present? Turns "the model was bad"
-  //   into localized, objective feedback for tuning/comparing renderers. No-op v1.
-  function _postmortem(panel, rendered) { return { checks: [], failures: [] }; }
+  // POSTMORTEM (Roman 2026-07-18, #17) — intent-vs-result on the FINISHED image. The governing question:
+  //   "If I hid the prose, could I correctly CAPTION this panel?" A Kresh cut-in that renders Mira, or a
+  //   Consequence beat that renders two people glaring instead of the collapsing rift, is an OBJECTIVE
+  //   failure the deterministic lints can't see. _buildPostmortemIntent = the EXPECTED side (what the
+  //   panel intended to show); _postmortem compares it against an OBSERVED result (a vision pass — the
+  //   paid mechanism, like _verifyPanelAnatomy). With no observed result it returns null (never faked).
+  function _buildPostmortemIntent(panel, sbDoc, canon) {
+    panel = panel || {}; sbDoc = sbDoc || {}; canon = canon || {};
+    var prim = (panel.hierarchy && panel.hierarchy.primary) || sbDoc.primarySubject || '';
+    var c = canon[_castingToken(prim)];
+    return {
+      expectedPrimarySubject: prim,                                  // the "could I caption it?" target
+      expectedCaption: sbDoc.frozenMoment || sbDoc.visualQuestion || '',
+      recognitionTraits: (c && c.recognitionTraits) || [],
+      species: (c && c.species) || null,
+      wishBurst: panel.wishOutcome || null,                          // 'clean'|'twisted'|'rejected' if a wish panel
+      establishing: !!panel.establishing, eventLed: !!panel.eventLed
+    };
+  }
+  window._buildPostmortemIntent = _buildPostmortemIntent;
+  function _postmortem(panel, observed, opts) {
+    opts = opts || {};
+    var intent = opts.intent || _buildPostmortemIntent(panel, opts.sbDoc, opts.canon);
+    if (!observed) return { checks: [], failures: [], score: null, note: 'no observed result — the postmortem requires a vision pass (intent-vs-result on the finished image).' };
+    var norm = function (x) { return String(x || '').toLowerCase(); };
+    var contains = function (a, b) { a = norm(a); b = norm(b); return !!a && !!b && (a.indexOf(b) !== -1 || b.indexOf(a) !== -1); };
+    var checks = [];
+    // THE key check — could a reader caption this panel correctly without the prose? (subject match)
+    checks.push({ name: 'primary subject matches intent', expected: intent.expectedPrimarySubject, observed: observed.primarySubject, pass: contains(observed.primarySubject, intent.expectedPrimarySubject) });
+    if (intent.recognitionTraits.length) {
+      var seen = (observed.recognitionTraitsVisible || []).map(norm);
+      var traitPass = intent.recognitionTraits.every(function (t) { var key = norm(t).split(/[\s,\-]/)[0]; return seen.some(function (s) { return s.indexOf(key) !== -1; }); });
+      checks.push({ name: 'recognition traits visible', expected: intent.recognitionTraits, observed: observed.recognitionTraitsVisible, pass: traitPass });
+    }
+    if (intent.species && observed.species) checks.push({ name: 'species correct', expected: intent.species, observed: observed.species, pass: norm(observed.species) === norm(intent.species) });
+    if (intent.wishBurst && observed.burst) checks.push({ name: 'wish burst present + correct', expected: intent.wishBurst, observed: observed.burst, pass: contains(observed.burst, intent.wishBurst) });
+    var failures = checks.filter(function (x) { return !x.pass; });
+    return { checks: checks, failures: failures, score: checks.length ? Math.round(100 * (checks.length - failures.length) / checks.length) : null };
+  }
   window._storyLint = _storyLint; window._continuityDiff = _continuityDiff; window._visualLint = _visualLint; window._postmortem = _postmortem;
 
   // Story Director orchestrator: [story-lint] → canon → continuity → panels → [continuity-diff] →

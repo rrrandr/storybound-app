@@ -70,6 +70,9 @@ const { chromium } = require('playwright-core');
     const manyTideNotWater = !/water\/tide/i.test(window._sdWishAnchor('I wish the Many-Tide spares us')) ;
     const noPrayerInGrammar = /SPEECH \+ INTENT|NOT a posture/i.test(G.wish) && !/clasped together or open and rising in supplication/i.test(G.wish);
     const burstWrapsAnchor = /WRAPPING THE WISH ANCHOR|AROUND THE ANCHOR/i.test(G.wish);
+    // #16 aesthetic: the burst is FLAT SYMBOLIC LINEWORK (engraved/inked/2D overlay), not energy/glow
+    const burstIsSymbolic = /SYMBOLIC LINEWORK|INKED, ENGRAVED|2D graphic|woodcut|printed-comic sound-effect/i.test(G.wish) && /NOT a soft volumetric glow|not a soft volumetric glow|anime energy explosion/i.test(G.wish);
+    const twistedIsSymbolic = /SYMBOLIC LINEWORK|INKED, ENGRAVED/i.test(G.wishTwisted);
     // integration: the wish panel carries a wishAnchor and the hero prompt emits the WISH ANCHOR line
     const anchorPanel = (() => {
       s._openFateBargains = [];
@@ -111,6 +114,7 @@ const { chromium } = require('playwright-core');
       mechMaps, mostRecentWins, mechOverridesCleanText, mechRefusedOverridesHopeText, fallsThroughNoMechanic,
       rejectGrammarOk, detectsRefusedHeuristic, rejectedPanelNoBurst,
       anchorPassage, anchorWeapon, anchorWound, anchorInvocation, anchorRift, manyTideNotWater, noPrayerInGrammar, burstWrapsAnchor, panelHasAnchor,
+      burstIsSymbolic, twistedIsSymbolic,
       hasWishCue: !!clean.wishCues
     };
   });
@@ -149,7 +153,9 @@ const { chromium } = require('playwright-core');
     ['ANCHOR (regen13 fix): "Many-Tide" (proper noun) does NOT trigger the water anchor', R.manyTideNotWater],
     ['ANCHOR: the wish grammar is SPEECH+INTENT — the enforced prayer pose is GONE', R.noPrayerInGrammar],
     ['ANCHOR: the burst wraps THE WISH ANCHOR (not a "point of power")', R.burstWrapsAnchor],
-    ['ANCHOR: the wish panel carries a wishAnchor (the passage)', R.panelHasAnchor]
+    ['ANCHOR: the wish panel carries a wishAnchor (the passage)', R.panelHasAnchor],
+    ['#16 AESTHETIC: the burst is FLAT SYMBOLIC LINEWORK, not an energy blast', R.burstIsSymbolic],
+    ['#16 AESTHETIC: the twisted burst carries the symbolic-linework style too', R.twistedIsSymbolic]
   ];
 
   let pass = 0, fail = 0;
