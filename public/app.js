@@ -153641,7 +153641,9 @@ No text, no watermark, no UI elements, share-ready.`;
       var ap = authored && authored[pi] ? authored[pi] : null;
       var invalid = [];
       // shotType
-      var shotType = (ap && ap.shotType && _SHOT_LANGUAGE_V1[ap.shotType]) ? ap.shotType : _sdInferShotType(txt);
+      var shotType = (ap && ap.shotType && _SHOT_LANGUAGE_V1[ap.shotType]) ? ap.shotType
+                   : (phase._readerLearning && _RL_SHOT[phase._readerLearning]) ? _RL_SHOT[phase._readerLearning]
+                   : _sdInferShotType(txt);
       if (ap && (!ap.shotType || !_SHOT_LANGUAGE_V1[ap.shotType])) invalid.push('shotType');
       // dramatic question
       var dq = (ap && ap.dramaticQuestion) ? String(ap.dramaticQuestion) : (phase.label ? ('What happens as ' + phase.label + '?') : '');
@@ -153661,6 +153663,10 @@ No text, no watermark, no UI elements, share-ready.`;
       var grammar = {};
       if (ap && (ap.wish || ap.sacrifice || ap.fateAnswer)) { grammar.wish = !!ap.wish; grammar.sacrifice = !!ap.sacrifice; grammar.fateAnswer = !!ap.fateAnswer; }
       else grammar = _sdDetectGrammar(txt);
+      // A storyboard Transformation panel ALWAYS gets the wish/prayer grammar; a Consequence
+      // panel gets the Fate-answering grammar — so the magical event is never rendered as a stare.
+      if (phase._readerLearning === 'Transformation') grammar.wish = true;
+      if (phase._readerLearning === 'Consequence') grammar.fateAnswer = true;
       // cast performance
       var castRoster = ap && Array.isArray(ap.cast) ? ap.cast.map(function (c) { return String(c.name || '').toLowerCase(); }) : present.map(keyFor);
       var cast = castRoster.map(function (tok) {
@@ -153720,6 +153726,14 @@ No text, no watermark, no UI elements, share-ready.`;
       if (!plan) return plan;
       _storyLint(plan); // reserved — narrative coherence pass
       _buildDirectorCanon(plan);
+      // STORYBOARD ARTIST — decide WHICH beats deserve illustration (understanding-change → panel).
+      // Swap the render-driving phases to the storyboard; keep prose phases for cut-in emotion.
+      if (window._storyboardArtist !== false) {
+        try {
+          var _sb = _buildStoryboard(plan);
+          if (_sb && plan._storyboardPhases && plan._storyboardPhases.length) { plan._prosePhases = plan.phases; plan.phases = plan._storyboardPhases; }
+        } catch (_sbe) { try { console.warn('[STORYBOARD] threw: ' + (_sbe && _sbe.message)); } catch (_) {} }
+      }
       _buildContinuityLedger(plan);
       _buildPanelSpecs(plan);
       try { (plan._panels || []).forEach(function (p, i) { if (i > 0) _continuityDiff(plan._panels[i - 1], p); _visualLint(p); }); } catch (_) {} // reserved — diff + staging passes
@@ -153744,7 +153758,7 @@ No text, no watermark, no UI elements, share-ready.`;
     return t;
   }
   function _phaseForBeat(plan, beatIdx) {
-    var phases = (plan && plan.phases) || [];
+    var phases = (plan && (plan._prosePhases || plan.phases)) || []; // prose phases carry authored emotion for cut-ins
     var found = null;
     phases.forEach(function (p, i) {
       var start = (typeof p.startBeat === 'number') ? p.startBeat : 0;
@@ -153824,6 +153838,85 @@ No text, no watermark, no UI elements, share-ready.`;
     } finally { _sdRenderOrigin = prev; }
   }
   window._renderPanel = _renderPanel;
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // THE STORYBOARD ARTIST v1 (Roman 2026-07-18): decides WHICH beats deserve
+  // illustration — "what is the comic ABOUT, visually?". Replaces Phase→Panel with
+  // Understanding-Change→Panel. The unit is a moment that changes the reader's
+  // understanding, classified by what the reader LEARNS. Frozen architecture; smallest
+  // version that proves the concept. Kill switch: window._storyboardArtist === false.
+  // ═══════════════════════════════════════════════════════════════════════
+  var _RL_RX = {
+    Transformation: /\bwish(?:es|ed)?\b|fate beneath the turning tide|i (?:release|offer|ask to return)|invoke|the formal (?:words|signs)|tidal asking|casts? the|the spell|transform/i,
+    Revelation: /passage (?:open|split|reveal|widen|behind)|seam (?:split|open)|coral seam|reveal(?:ed|s)?|hidden (?:door|passage|way|seam)|the escape|a (?:narrow|new) (?:passage|tunnel|opening)|opens? (?:behind|wider)/i,
+    Consequence: /strength (?:drain|leav|fail|seep)|the (?:true )?price|weaken|seals? itself|basin (?:is )?sealed|the water warm|colou?rs? (?:drain|los|fad)|the cost|pales?|stills? completely|jerk once/i,
+    Threat: /\b(spear|cutlass|blade|dagger|lunge|lunged|attack|ambush|hunt|corner|cornered|strike|strikes|kill|cuts the water|net)\b/i,
+    Decision: /\bchoose\b|the choice|confront .* (?:or|,) (?:slip|flee|escape)|must (?:choose|decide)|between (?:the|steel)/i,
+    Resolution: /at last|finally|it was over|the fight ended|and then it was done/i
+  };
+  // Classify a beat by what the reader LEARNS. High-value events win over ambient threat.
+  function _readerLearningType(text, isFirst) {
+    var t = String(text || '');
+    if (_RL_RX.Transformation.test(t)) return 'Transformation';
+    if (_RL_RX.Revelation.test(t)) return 'Revelation';
+    if (_RL_RX.Consequence.test(t)) return 'Consequence';
+    if (_RL_RX.Decision.test(t)) return 'Decision';
+    if (_RL_RX.Threat.test(t)) return 'Threat';
+    if (_RL_RX.Resolution.test(t)) return 'Resolution';
+    if (isFirst) return 'Orientation';
+    return null;
+  }
+  window._readerLearningType = _readerLearningType;
+  // Understanding-type → shot intent (the Director's Bible then expands it). Transformation and
+  // Revelation also FORCE their visual grammar so the wish reads as prayer / the reveal lands.
+  var _RL_SHOT = { Orientation: 'discovery', Threat: 'combat', Transformation: 'wonder', Consequence: 'conversation', Revelation: 'discovery', Decision: 'conversation', Resolution: 'conversation' };
+  // Build the storyboard: an ordered set of understanding-CHANGES (not prose phases).
+  function _buildStoryboard(plan) {
+    var beats = (plan && plan.beats) || [];
+    var prose = (plan && plan.phases) || [];
+    if (beats.length < 2) return null;
+    var typed = beats.map(function (b, i) { return { idx: (b && typeof b.idx === 'number') ? b.idx : i, text: (b && b.text) || '', type: _readerLearningType((b && b.text) || '', i === 0) }; });
+    // collapse adjacent runs of the SAME understanding — the reader learns nothing new across them.
+    var sb = [], lastType = null;
+    typed.forEach(function (tb) {
+      if (!tb.type) return;                 // teaches nothing new → not a storyboard beat
+      if (tb.type === lastType) return;     // same understanding as the previous panel → collapse
+      sb.push({ beatIdx: tb.idx, type: tb.type, text: tb.text });
+      lastType = tb.type;
+    });
+    if (!sb.length) return null;
+    sb[0].type = 'Orientation'; // the first panel orients (where / who / why)
+    // MANDATORY: a Transformation / Revelation / Threat that exists in the prose MUST get a panel
+    // (the wish, the reveal, and — since relabelling beat 0 to Orientation can swallow it — the
+    // threat). Pick the first beat of that type NOT already used as a storyboard beat.
+    ['Threat', 'Transformation', 'Revelation'].forEach(function (mt) {
+      var used = {}; sb.forEach(function (s) { used[s.beatIdx] = true; });
+      if (typed.some(function (t) { return t.type === mt; }) && !sb.some(function (s) { return s.type === mt; })) {
+        var bt = typed.filter(function (t) { return t.type === mt && !used[t.idx]; })[0];
+        if (bt) sb.push({ beatIdx: bt.idx, type: mt, text: bt.text });
+      }
+    });
+    sb.sort(function (a, b) { return a.beatIdx - b.beatIdx; });
+    var rev = sb.filter(function (s) { return s.type === 'Revelation'; });
+    if (rev.length) rev[rev.length - 1].isPageTurn = true; // page-turn = the reveal that recontextualizes
+    var proseForBeat = function (bi) { var f = prose[0]; prose.forEach(function (p, pi) { var st = (typeof p.startBeat === 'number') ? p.startBeat : 0; var nx = prose[pi + 1]; var en = (nx && typeof nx.startBeat === 'number') ? nx.startBeat : Infinity; if (bi >= st && bi < en) f = p; }); return f || prose[0] || {}; };
+    plan._storyboard = sb.map(function (s, i) { return { panelIdx: i, beatIdx: s.beatIdx, type: s.type, isPageTurn: !!s.isPageTurn }; });
+    plan._storyboardPhases = sb.map(function (s, i) {
+      var pp = proseForBeat(s.beatIdx) || {};
+      return {
+        phaseIdx: i, startBeat: s.beatIdx, label: s.type + (s.isPageTurn ? ' (page-turn)' : ''),
+        characters_present: (pp.characters_present || ['protagonist']).slice(),
+        props_present: (pp.props_present || []).slice(),
+        li_visibility_phase: pp.li_visibility_phase || 'absent',
+        pc_posture: pp.pc_posture || null, pc_emotional_state: pp.pc_emotional_state || null,
+        other_postures: pp.other_postures || null, proximity: pp.proximity || null,
+        _readerLearning: s.type, _isPageTurn: !!s.isPageTurn
+      };
+    });
+    try { console.log('[STORYBOARD] ' + plan._storyboard.map(function (s) { return s.type + (s.isPageTurn ? '*' : ''); }).join(' → ')); } catch (_) {}
+    return plan._storyboard;
+  }
+  window._buildStoryboard = _buildStoryboard;
 
   // ── FAVORED SHIFT (anomalous-anatomy) NARRATOR NOTICE (Roman 2026-07-14) ──
   // Favored races (First Favored, Kwisheen) are anomalous by nature — their features can

@@ -17,6 +17,7 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     s._playerSpecies = 'human'; s._liSpecies = 'human'; s.worldInstanceId = 'sd-1';
     s.aPlot = { goal: 'survive', antagonistOrAntiForce: 'Kael the raider' };
     window._stagedFunnelBypass = true;
+    window._storyboardArtist = false; // this suite tests the phase-based Canon/Continuity/panel path; the storyboard swap has its own test (_storyboard_artist.js)
 
     const plan = {
       visualState: {
