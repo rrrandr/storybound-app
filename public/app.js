@@ -153656,14 +153656,17 @@ No text, no watermark, no UI elements, share-ready.`;
   // completion). CLEAN wish = golden, orderly. TWISTED wish (Fate warped it) = red, jagged, X-scribbled.
   var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, integrated INTO the art, radiating from the point of power): a GOLDEN-WHITE STAR-BURST — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, orderly, luminous. This burst reads as a TRUE wish acting on the world.';
   var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — the SAME burst, but Fate has CORRUPTED the wish): the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes; an angry crimson glow. It radiates from the same point but reads unmistakably WRONG — the story telling you the wish has curdled.';
+  var _WISH_BURST_REJECTED = 'FATE’S BURST — REFUSED (HARD — Fate did NOT answer): the gathering light GUTTERS and DIES before any star-burst can form — a few faint sparks scatter outward and wink out, the radiance collapsing back into darkness; NO rays, NO stars, NO glow. An ABORTED burst — the ABSENCE of Fate’s signature is the point; the wisher’s petition falters and the face falls as the offered light drains to nothing.';
   var _VISUAL_GRAMMAR_V1 = {
     wish: 'WISH (visual grammar — make it UNMISTAKABLE as prayer, like a hero taking flight): the wisher\'s eyes are CLOSED or LIFTED toward the surface above, HANDS clasped together or open and rising in supplication, the whole body in a posture of committed, vulnerable petition; a gathering GLOW of tide-light coils at the hands/chest with rising motes/threads spiralling toward them; the wisher is the elevated, reverent focal point; other figures REACT (recoil, brace, watch). This is prayer, never two people talking. ' + _WISH_BURST_CLEAN,
     wishTwisted: 'WISH — TWISTING (visual grammar): the wisher is still in the posture of petition (eyes lifted, hands rising), but the invocation has gone wrong — the reverence curdles into alarm or dawning horror on the face, the body flinching from what it has unleashed. ' + _WISH_BURST_TWISTED,
     sacrifice: 'SACRIFICE (visual grammar — THE SHADOWY HAND OF FATE): a large, dark, semi-transparent HAND-SHAPED SHADOW (Fate\'s reaching hand — clearly fingers and palm, not ambient darkness) closes over the price being taken, drawing a thread of cold pale light OUT; the wisher flinches at the loss.',
     fateAnswer: 'FATE ANSWERING (visual grammar): the WORLD responds — a warm current and a bloom of tide-colour, drifting answering light, and the environment visibly changing (a passage opening, a wound knitting shut, silt clearing); Fate\'s reply is shown in the scene itself, not narrated. ' + _WISH_BURST_CLEAN,
-    fateAnswerTwisted: 'FATE ANSWERING — TWISTED (visual grammar): the world responds but WRONG — the change is malformed or cruel (the passage opens onto a dead end, the healing knits crooked, the current turns cold), the environment recoiling. ' + _WISH_BURST_TWISTED
+    fateAnswerTwisted: 'FATE ANSWERING — TWISTED (visual grammar): the world responds but WRONG — the change is malformed or cruel (the passage opens onto a dead end, the healing knits crooked, the current turns cold), the environment recoiling. ' + _WISH_BURST_TWISTED,
+    wishRejected: 'WISH — REFUSED (visual grammar): the wisher is in the posture of petition (eyes lifted, hands rising) but the invocation is DENIED — no power gathers; the face falls from hope to dismay. ' + _WISH_BURST_REJECTED,
+    fateAnswerRejected: 'FATE UNANSWERING (visual grammar): the world does NOT change — the passage stays sealed, the wound stays open, the current stays cold; a held, indifferent stillness where a miracle was asked. ' + _WISH_BURST_REJECTED
   };
-  window._WISH_BURST_CLEAN = _WISH_BURST_CLEAN; window._WISH_BURST_TWISTED = _WISH_BURST_TWISTED;
+  window._WISH_BURST_CLEAN = _WISH_BURST_CLEAN; window._WISH_BURST_TWISTED = _WISH_BURST_TWISTED; window._WISH_BURST_REJECTED = _WISH_BURST_REJECTED;
   // SACRIFICE = THE SHADOWY HAND OF FATE (Roman 2026-07-18) — the price is TAKEN by a hand-shaped
   // shadow, Fate's own reaching hand, closing over the thing sacrificed: a tangible cost (eye, limb,
   // voice, memory) → the hand over that part; an INNER cost (years of life, courage, love) → the hand
@@ -153729,15 +153732,50 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/the water warm|fate’?s answer|the passage (?:open|shudder|widen)|wound knit|silt (?:clear|drift)|an omen/.test(t)) g.fateAnswer = true;
     return g;
   }
-  // Is THIS wish TWISTED (Fate warped it — the burst turns red/jagged)? Authoritative signal first
-  // (the pending semantic-warp classifier / an explicit flag), then a conservative beat-text heuristic.
-  // Default CLEAN — the twisted burst only fires on a clear signal, never on an ordinary wish.
-  function _sdWishTwisted(txt, plan, ap) {
-    if (ap && (ap.wishTwisted === true || ap.twisted === true)) return true;
-    if (plan && plan._wishTwisted === true) return true;
-    try { if (typeof state !== 'undefined' && (state._wishTwisted === true || (state.wish && state.wish.twisted === true))) return true; } catch (_) {}
+  // THE WISH OUTCOME — 'clean' | 'twisted' | 'rejected' — drives which burst renders. TRUTHFULNESS
+  // RULE (Roman 2026-07-18): once the actual game state exists, the visual language reads THE GAME
+  // STATE, never a heuristic — the burst must not be able to contradict the mechanic. Precedence:
+  //   1. the live Fate-bargain outcome (authoritative)  2. an explicit authored/plan/state flag
+  //   3. a last-resort beat-text heuristic (NPC/demo wishes with no mechanic state yet)  → default clean.
+  // Mechanic → burst: landed→clean · warped/distorted→twisted · refused→rejected (no burst).
+  function _sdWishMechanicOutcome() {
+    try {
+      if (typeof state === 'undefined' || !state || !Array.isArray(state._openFateBargains)) return null;
+      var withOutcome = state._openFateBargains.filter(function (b) { return b && (b.lastOutcome || b.status); });
+      if (!withOutcome.length) return null;
+      withOutcome.sort(function (a, b) { return ((+a.lastInvokedScene || +a.createdScene || 0) - (+b.lastInvokedScene || +b.createdScene || 0)); });
+      var b = withOutcome[withOutcome.length - 1]; // the most recently resolved/invoked bargain = this wish
+      var o = String(b.lastOutcome || b.status || '').toLowerCase();
+      if (o === 'landed' || o === 'resolved') return 'clean';
+      if (o === 'warped' || o === 'distorted') return 'twisted';
+      if (o === 'refused') return 'rejected';
+      return null; // 'open' / unknown → not yet authoritative
+    } catch (_) { return null; }
+  }
+  window._sdWishMechanicOutcome = _sdWishMechanicOutcome;
+  function _sdWishTwistedHeuristic(txt) {
     return /\b(twist\w*|warp\w*|curdl\w*|corrupt\w*|backfire\w*|malform\w*|festers?|the wish (?:goes|went|turns?|turned) (?:wrong|cruel|against)|not what (?:she|he|they) (?:asked|wished)|a cruel(?:ler)? (?:answer|shape)|Fate (?:betray|mock|twist))\b/i.test(String(txt || ''));
   }
+  function _sdWishOutcome(txt, plan, ap) {
+    // 1. AUTHORITATIVE — the actual Fate-bargain result. Never overridden by a heuristic.
+    var m = _sdWishMechanicOutcome();
+    if (m) return m;
+    // 2. explicit signals (an authored panel / plan / state flag from a caller that knows the outcome)
+    var oap = ap && ap.wishOutcome, opl = plan && plan._wishOutcome;
+    if (oap === 'clean' || oap === 'twisted' || oap === 'rejected') return oap;
+    if (opl === 'clean' || opl === 'twisted' || opl === 'rejected') return opl;
+    var st = (typeof state !== 'undefined' && state) || {};
+    if (st._wishOutcome === 'clean' || st._wishOutcome === 'twisted' || st._wishOutcome === 'rejected') return st._wishOutcome;
+    if ((ap && ap.wishRejected) || (plan && plan._wishRejected) || st._wishRejected === true) return 'rejected';
+    if ((ap && (ap.wishTwisted === true || ap.twisted === true)) || (plan && plan._wishTwisted === true) || st._wishTwisted === true) return 'twisted';
+    // 3. LAST-RESORT beat-text heuristic — only when NO mechanic state / flag exists (NPC or demo wishes)
+    if (/\b(refus\w+|denied|deny|Fate (?:does not|did not|would not|will not) answer|the wish (?:fails|failed|falls|dies)|no (?:power|answer|miracle) (?:comes|gathers|answers)|nothing (?:answers|happens))\b/i.test(String(txt || ''))) return 'rejected';
+    if (_sdWishTwistedHeuristic(txt)) return 'twisted';
+    return 'clean';
+  }
+  window._sdWishOutcome = _sdWishOutcome;
+  // Back-compat shim (the burst grammar's older boolean caller/tests).
+  function _sdWishTwisted(txt, plan, ap) { return _sdWishOutcome(txt, plan, ap) === 'twisted'; }
   window._sdWishTwisted = _sdWishTwisted;
   // Build a resolved PANEL SPEC per phase. Honors authored plan.panels[] when present (validate,
   // fail-LOUD on missing fields); otherwise derives from the phase (rollout fallback, logged).
@@ -153787,11 +153825,18 @@ No text, no watermark, no UI elements, share-ready.`;
       var _rail = _sdWishRailActive();
       if (_rail && phase._readerLearning === 'Transformation') grammar.wish = true;
       if (_rail && /\b(price|offer|sacrific|take what|cost|give up)\b/i.test(txt)) grammar.sacrifice = true;
-      // WISH BURST STATE: if Fate has TWISTED this wish, swap the golden burst grammar for the red,
-      // jagged, X-scribbled corrupted burst (same signature, curdled). Default stays clean/golden.
-      if ((grammar.wish || grammar.fateAnswer) && _sdWishTwisted(txt, plan, ap)) {
-        if (grammar.wish) { grammar.wish = false; grammar.wishTwisted = true; }
-        if (grammar.fateAnswer) { grammar.fateAnswer = false; grammar.fateAnswerTwisted = true; }
+      // WISH BURST STATE — driven by the ACTUAL Fate outcome (truthfulness): landed→golden burst,
+      // warped/distorted→red twisted burst, refused→aborted burst (no starburst). The grammar can
+      // never contradict the mechanic once the game state exists.
+      if (grammar.wish || grammar.fateAnswer) {
+        var _wo = _sdWishOutcome(txt, plan, ap);
+        if (_wo === 'twisted') {
+          if (grammar.wish) { grammar.wish = false; grammar.wishTwisted = true; }
+          if (grammar.fateAnswer) { grammar.fateAnswer = false; grammar.fateAnswerTwisted = true; }
+        } else if (_wo === 'rejected') {
+          if (grammar.wish) { grammar.wish = false; grammar.wishRejected = true; }
+          if (grammar.fateAnswer) { grammar.fateAnswer = false; grammar.fateAnswerRejected = true; }
+        } // 'clean' → keep the golden wish/fateAnswer grammar
       }
       // cast performance
       var castRoster = ap && Array.isArray(ap.cast) ? ap.cast.map(function (c) { return String(c.name || '').toLowerCase(); }) : present.map(keyFor);

@@ -35,7 +35,7 @@ const { chromium } = require('playwright-core');
 
     // ── INTEGRATION: a Transformation panel carries the GOLDEN burst by default ──
     const s = window.state || (window.state = {});
-    s.storyId = 'e2e-wish'; s._playerSpecies = 'human'; s._liSpecies = ''; s._wishTwisted = false;
+    s.storyId = 'e2e-wish'; s._playerSpecies = 'human'; s._liSpecies = ''; s._wishTwisted = false; s._openFateBargains = [];
     const mk = (twist) => {
       const plan = {
         _wishTwisted: !!twist,
@@ -60,10 +60,34 @@ const { chromium } = require('playwright-core');
     const cleanPanelGolden = /golden/i.test(clean.wishCues) && /sparkle stars/i.test(clean.wishCues) && !/red and jagged/i.test(clean.wishCues);
     const twistedPanelRed = /red/i.test(twisted.wishCues) && /jagged/i.test(twisted.wishCues) && /X’S|X'S/i.test(twisted.wishCues);
 
+    // ── MECHANIC-FIRST (TRUTHFULNESS): the burst reads the ACTUAL Fate-bargain outcome, not keywords ──
+    const mo = (lo) => { s._openFateBargains = [{ id: 'b', lastOutcome: lo, lastInvokedScene: 0 }]; return window._sdWishMechanicOutcome(); };
+    const mechMaps = mo('landed') === 'clean' && mo('warped') === 'twisted' && mo('distorted') === 'twisted' && mo('refused') === 'rejected';
+    s._openFateBargains = [{ id: 'a', lastOutcome: 'landed', lastInvokedScene: 0 }, { id: 'b', lastOutcome: 'refused', lastInvokedScene: 3 }];
+    const mostRecentWins = window._sdWishMechanicOutcome() === 'rejected';
+    // mechanic OVERRIDES a contradicting beat-text heuristic — the burst can never contradict the game state
+    s._openFateBargains = [{ id: 'b', lastOutcome: 'warped', lastInvokedScene: 0 }];
+    const mechOverridesCleanText = window._sdWishOutcome('he voices the wish, tide-light gathering, a welcomed clean answer', {}, null) === 'twisted';
+    s._openFateBargains = [{ id: 'b', lastOutcome: 'refused', lastInvokedScene: 0 }];
+    const mechRefusedOverridesHopeText = window._sdWishOutcome('the wish is granted and the passage opens', {}, null) === 'rejected';
+    // no mechanic state → falls through to the heuristic (NPC / demo wishes with no bargain yet)
+    s._openFateBargains = [];
+    const fallsThroughNoMechanic = window._sdWishOutcome('the wish twists and curdles', {}, null) === 'twisted';
+    // REJECTED (the third state): grammar = aborted burst, no stars
+    const rejectGrammarOk = /ABORTED/i.test(G.wishRejected) && /NO rays|NO stars/i.test(G.wishRejected) && /REFUSED/i.test(G.wishRejected);
+    const detectsRefusedHeuristic = window._sdWishOutcome('Fate did not answer; the wish fails', {}, null) === 'rejected';
+    // INTEGRATION: a refused mechanic → the panel carries the aborted (no-burst) grammar, NOT golden
+    s._openFateBargains = [{ id: 'b', lastOutcome: 'refused', lastInvokedScene: 0 }];
+    const rej = mk(false);
+    const rejectedPanelNoBurst = /ABORTED|NO rays, NO stars|gutters and dies/i.test(rej.wishCues) && !/golden/i.test(rej.wishCues);
+    s._openFateBargains = [];
+
     return {
       cleanWishOk, cleanFateOk, twistWishOk, twistFateOk, distinct, integrated,
       detectsKeyword, detectsWentWrong, detectsFlagAp, detectsFlagPlan, cleanByDefault, ordinaryWishStaysClean,
       cleanPanelGolden, twistedPanelRed,
+      mechMaps, mostRecentWins, mechOverridesCleanText, mechRefusedOverridesHopeText, fallsThroughNoMechanic,
+      rejectGrammarOk, detectsRefusedHeuristic, rejectedPanelNoBurst,
       hasWishCue: !!clean.wishCues
     };
   });
@@ -85,7 +109,15 @@ const { chromium } = require('playwright-core');
     ['TWIST DETECTION: the formal invocation stays CLEAN', R.ordinaryWishStaysClean],
     ['INTEGRATION: a Transformation panel carries the golden burst by default', R.cleanPanelGolden],
     ['INTEGRATION: with a twist signal the panel carries the red X-burst', R.twistedPanelRed],
-    ['INTEGRATION: the wish grammar actually reached the panel spec', R.hasWishCue]
+    ['INTEGRATION: the wish grammar actually reached the panel spec', R.hasWishCue],
+    ['MECHANIC: bargain outcome maps landed→clean, warped/distorted→twisted, refused→rejected', R.mechMaps],
+    ['MECHANIC: the most recently resolved bargain wins', R.mostRecentWins],
+    ['TRUTHFULNESS: a warped mechanic OVERRIDES clean-sounding beat text → twisted', R.mechOverridesCleanText],
+    ['TRUTHFULNESS: a refused mechanic OVERRIDES hopeful beat text → rejected', R.mechRefusedOverridesHopeText],
+    ['no mechanic state → falls through to the beat-text heuristic', R.fallsThroughNoMechanic],
+    ['REJECTED: third-state grammar is an aborted burst (no rays, no stars)', R.rejectGrammarOk],
+    ['REJECTED: heuristic fires on "Fate did not answer / the wish fails"', R.detectsRefusedHeuristic],
+    ['INTEGRATION: a refused outcome gives the panel the aborted no-burst grammar (not golden)', R.rejectedPanelNoBurst]
   ];
 
   let pass = 0, fail = 0;
