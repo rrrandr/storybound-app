@@ -63,6 +63,17 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     const panels = plan._panels || [];
     const transformationPanel = panels.find(p => { const ph = plan.phases.find(x => x._panel === p); return ph && ph._readerLearning === 'Transformation'; });
     const revelationPanel = panels.find(p => { const ph = plan.phases.find(x => x._panel === p); return ph && ph._readerLearning === 'Revelation'; });
+
+    // v2: STORYBOARD DOCUMENT (frozen moment / composition priority / forbidden focus) + dedup fix
+    const sbPhases = plan.phases || [];
+    const docsAllPresent = sbPhases.every(p => p._storyboardDoc && p._storyboardDoc.frozenMoment && p._storyboardDoc.compositionPriority);
+    const frozenMoments = sbPhases.map(p => p._storyboardDoc && p._storyboardDoc.frozenMoment);
+    const distinctFrozen = new Set(frozenMoments).size === frozenMoments.length; // distinct → fingerprints diverge → no dedup
+    const revPhase = sbPhases.find(p => p._readerLearning === 'Revelation');
+    const revDoc = revPhase && revPhase._storyboardDoc;
+    s._stagedRegionContract = window._buildStagedRegionContract({ visualState: plan.visualState, phases: [] });
+    const phaseVSrev = window._resolvePhaseVisualState(plan.visualState, revPhase, plan.phases, plan.beats);
+    const revHeroPrompt = window._buildStagedHeroPrompt(phaseVSrev, 0, plan) || '';
     return {
       sb, types,
       hasTransformation: types.includes('Transformation'),
@@ -75,7 +86,14 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
       pageTurnIsRevelation: sb.some(p => p.pt && p.type === 'Revelation'),
       transformationHasWishGrammar: !!(transformationPanel && (transformationPanel.grammarCues || []).some(g => /WISH \(visual grammar/.test(g))),
       revelationIsDiscovery: !!(revelationPanel && revelationPanel.shotType === 'discovery'),
-      phasesSwapped: Array.isArray(plan._prosePhases) && plan.phases !== plan._prosePhases
+      phasesSwapped: Array.isArray(plan._prosePhases) && plan.phases !== plan._prosePhases,
+      docsAllPresent, distinctFrozen,
+      revForbidsTalking: !!(revDoc && /standing and talking|a conversation/i.test(revDoc.forbiddenFocus)),
+      revCompositionIsReveal: !!(revDoc && /REVEALED/.test(revDoc.compositionPriority)),
+      revFrozenIsBeat: !!(revDoc && revDoc.frozenMoment && revDoc.frozenMoment.length > 10),
+      heroEmitsFrozenMoment: /FROZEN MOMENT \(illustrate THIS exact instant/.test(revHeroPrompt),
+      heroEmitsForbiddenFocus: /FORBIDDEN FOCUS \(must NOT dominate/.test(revHeroPrompt) && /standing and talking|a conversation/i.test(revHeroPrompt),
+      heroEmitsCompositionPriority: /COMPOSITION PRIORITY \(must DOMINATE/.test(revHeroPrompt)
     };
   });
   await browser.close();
@@ -91,7 +109,13 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['page-turn is the Revelation (recontextualizes)', R.pageTurnIsRevelation],
     ['Transformation panel carries the wish/prayer grammar', R.transformationHasWishGrammar],
     ['Revelation panel is a discovery shot', R.revelationIsDiscovery],
-    ['render-driving phases swapped to the storyboard (prose phases kept)', R.phasesSwapped]
+    ['render-driving phases swapped to the storyboard (prose phases kept)', R.phasesSwapped],
+    ['v2: every panel has a storyboard DOCUMENT (frozen moment + composition priority)', R.docsAllPresent],
+    ['v2: frozen moments are DISTINCT per panel (fingerprints diverge → no 6→4 dedup)', R.distinctFrozen],
+    ['v2: Revelation panel FORBIDS "standing and talking" (anti-drift)', R.revForbidsTalking],
+    ['v2: Revelation composition priority = the REVEALED thing', R.revCompositionIsReveal],
+    ['v2: Revelation frozen moment carries the beat instant', R.revFrozenIsBeat],
+    ['v2: hero prompt emits FROZEN MOMENT + COMPOSITION PRIORITY + FORBIDDEN FOCUS', R.heroEmitsFrozenMoment && R.heroEmitsCompositionPriority && R.heroEmitsForbiddenFocus]
   ];
 
   let pass = 0, fail = 0;

@@ -152312,6 +152312,7 @@ No text, no watermark, no UI elements, share-ready.`;
     eff._phaseProximity = phase.proximity || null;
     eff._phaseState = phase._state || null; // STORY DIRECTOR continuity snapshot (physical + relational)
     eff._phasePanel = phase._panel || null; // STORY DIRECTOR resolved panel spec (shot + hierarchy + grammar + performance)
+    eff._phaseStoryboardDoc = phase._storyboardDoc || null; // STORYBOARD ARTIST v2 doc (frozen moment / composition priority / forbidden focus)
 
     // Per-phase peak expression — scan the beats covered by this phase
     // for the most-charged expression_target, surface it so the phase
@@ -152471,6 +152472,9 @@ No text, no watermark, no UI elements, share-ready.`;
       'liw:' + (visualState.li_wardrobe || ''),
       'ch:' + chars,
       'pr:' + props,
+      // STORYBOARD identity (v2): a storyboard panel is its own EVENT — key it by the beat +
+      // understanding type so distinct panels (Revelation vs Transformation) never dedupe to one.
+      'sb:' + (phase._readerLearning ? (phase._readerLearning + '@' + (typeof phase.startBeat === 'number' ? phase.startBeat : '')) : ''),
       // Phase-0 hint — establishing shots with identical bg/lighting/POV
       // collapse to the same cache key across stories, so the user gets
       // the same opening visual mood when the world is shared.
@@ -153870,6 +153874,30 @@ No text, no watermark, no UI elements, share-ready.`;
   // Understanding-type → shot intent (the Director's Bible then expands it). Transformation and
   // Revelation also FORCE their visual grammar so the wish reads as prayer / the reveal lands.
   var _RL_SHOT = { Orientation: 'discovery', Threat: 'combat', Transformation: 'wonder', Consequence: 'conversation', Revelation: 'discovery', Decision: 'conversation', Resolution: 'conversation' };
+  // Storyboard DOCUMENT v2 (Roman 2026-07-18): a panel is not a label. Per reader-learning type,
+  // what must DOMINATE the frame and what must NOT (the Forbidden Focus that stops the renderer
+  // drifting back to "two people standing and talking"). The FROZEN MOMENT (the beat's exact
+  // instant) carries the specifics.
+  var _RL_COMP = {
+    Orientation: { priority: 'the SITUATION at a glance — WHERE they are, WHO they are, and the danger they are in, all readable in one frame', forbidden: '' },
+    Threat: { priority: 'the THREAT itself — the attacker / weapon / danger bearing down on the subject, dominating the frame', forbidden: 'a calm conversation; the characters merely standing and talking' },
+    Transformation: { priority: 'the MAGICAL EVENT in the act — the invoker mid-supplication AND its manifesting effect (gathering light, the thing visibly changing)', forbidden: 'a calm face-off; two people merely talking; a frame with NO visible magic or light' },
+    Consequence: { priority: 'the CHANGE the event just caused — the world or a body visibly DIFFERENT now (the price paid, the thing moved / opened / sealed / withered)', forbidden: 'a static standoff; a frame where nothing has visibly changed' },
+    Revelation: { priority: 'the REVEALED thing — the newly-visible opening / object DOMINATING the composition and drawing the eye first', forbidden: 'the two characters merely standing and talking; a conversation; the revealed thing shrunk into the background' },
+    Decision: { priority: 'the CHOICE — the protagonist caught at the fork with the stakes/paths of the decision visible around her', forbidden: 'a resolved or calm moment; an action already taken' },
+    Resolution: { priority: 'the AFTERMATH — the settled new state', forbidden: '' }
+  };
+  function _buildStoryboardDoc(type, beatText, primary) {
+    var c = _RL_COMP[type] || _RL_COMP.Orientation;
+    return {
+      purpose: type,
+      frozenMoment: String(beatText || '').trim(),
+      primarySubject: primary || '',
+      compositionPriority: c.priority,
+      forbiddenFocus: c.forbidden
+    };
+  }
+  window._buildStoryboardDoc = _buildStoryboardDoc;
   // Build the storyboard: an ordered set of understanding-CHANGES (not prose phases).
   function _buildStoryboard(plan) {
     var beats = (plan && plan.beats) || [];
@@ -153910,7 +153938,8 @@ No text, no watermark, no UI elements, share-ready.`;
         li_visibility_phase: pp.li_visibility_phase || 'absent',
         pc_posture: pp.pc_posture || null, pc_emotional_state: pp.pc_emotional_state || null,
         other_postures: pp.other_postures || null, proximity: pp.proximity || null,
-        _readerLearning: s.type, _isPageTurn: !!s.isPageTurn
+        _readerLearning: s.type, _isPageTurn: !!s.isPageTurn,
+        _storyboardDoc: _buildStoryboardDoc(s.type, s.text, null)
       };
     });
     try { console.log('[STORYBOARD] ' + plan._storyboard.map(function (s) { return s.type + (s.isPageTurn ? '*' : ''); }).join(' → ')); } catch (_) {}
@@ -179374,6 +179403,14 @@ No text, no watermark, no UI elements, share-ready.`;
         var _cidLines = [];
         // Panel header — the authoritative shot the renderer must execute.
         _cidLines.push('STORY DIRECTOR — PANEL (HARD; render EXACTLY this shot; figures are DISTINCT named people; you ILLUSTRATE these decisions, you do NOT change them):');
+        // STORYBOARD DOCUMENT (v2) — the exact instant + what must / must NOT dominate the frame.
+        // This is what makes each panel show its own EVENT instead of the ambient standoff.
+        var _sbDoc = visualState._phaseStoryboardDoc || null;
+        if (_sbDoc) {
+          if (_sbDoc.frozenMoment) _cidLines.push('FROZEN MOMENT (illustrate THIS exact instant — the specific event, NOT the ambient scene around it): ' + _sbDoc.frozenMoment);
+          if (_sbDoc.compositionPriority) _cidLines.push('COMPOSITION PRIORITY (must DOMINATE the frame and be seen FIRST): ' + _sbDoc.compositionPriority + '.');
+          if (_sbDoc.forbiddenFocus) _cidLines.push('FORBIDDEN FOCUS (must NOT dominate — if this is what you are drawing, the panel is WRONG): ' + _sbDoc.forbiddenFocus + '.');
+        }
         if (_panel) {
           if (_panel.dramaticQuestion) _cidLines.push('DRAMATIC QUESTION (every choice reinforces it): ' + _panel.dramaticQuestion);
           if (_panel.shotExpansion) _cidLines.push('SHOT (' + _panel.shotType + '): ' + _panel.shotExpansion);
