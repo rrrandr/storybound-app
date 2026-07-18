@@ -153650,11 +153650,20 @@ No text, no watermark, no UI elements, share-ready.`;
   // ── DIRECTOR'S BIBLE (scene-INDEPENDENT, renderer-agnostic, v1 — extend, don't rewrite) ──
   // Visual Grammar: a textless cinematic language (a reader knows a wish / sacrifice / Fate
   // answering the way they know Superman flying). Fired by panel grammar flags.
+  // FATELANDS WISH BURST (Roman 2026-07-18) — Fate's signature is a STAR-BURST, part of Fate itself,
+  // not just light: it tells the reader what happened. It appears at all three wish moments — MADE
+  // (radiating from the wisher's hand/chest), MANIFESTS (surrounding the result), FULFILLED (confirming
+  // completion). CLEAN wish = golden, orderly. TWISTED wish (Fate warped it) = red, jagged, X-scribbled.
+  var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, integrated INTO the art, radiating from the point of power): a GOLDEN-WHITE STAR-BURST — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, orderly, luminous. This burst reads as a TRUE wish acting on the world.';
+  var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — the SAME burst, but Fate has CORRUPTED the wish): the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes; an angry crimson glow. It radiates from the same point but reads unmistakably WRONG — the story telling you the wish has curdled.';
   var _VISUAL_GRAMMAR_V1 = {
-    wish: 'WISH (visual grammar — make it UNMISTAKABLE as prayer, like a hero taking flight): the wisher\'s eyes are CLOSED or LIFTED toward the surface above, HANDS clasped together or open and rising in supplication, the whole body in a posture of committed, vulnerable petition; a gathering GLOW of tide-light coils at the hands/chest with rising motes/threads spiralling toward them; the wisher is the elevated, reverent focal point; other figures REACT (recoil, brace, watch). This is prayer, never two people talking.',
+    wish: 'WISH (visual grammar — make it UNMISTAKABLE as prayer, like a hero taking flight): the wisher\'s eyes are CLOSED or LIFTED toward the surface above, HANDS clasped together or open and rising in supplication, the whole body in a posture of committed, vulnerable petition; a gathering GLOW of tide-light coils at the hands/chest with rising motes/threads spiralling toward them; the wisher is the elevated, reverent focal point; other figures REACT (recoil, brace, watch). This is prayer, never two people talking. ' + _WISH_BURST_CLEAN,
+    wishTwisted: 'WISH — TWISTING (visual grammar): the wisher is still in the posture of petition (eyes lifted, hands rising), but the invocation has gone wrong — the reverence curdles into alarm or dawning horror on the face, the body flinching from what it has unleashed. ' + _WISH_BURST_TWISTED,
     sacrifice: 'SACRIFICE (visual grammar): the price is visibly GIVEN UP — a hand pressed to the cost (an eye, a lock of hair, the chest), a flinch or held stillness of loss, and a thread of pale light drawn OUT of the wisher into the water; a cold, draining light at the point where the price is paid.',
-    fateAnswer: 'FATE ANSWERING (visual grammar): the WORLD responds — a warm current and a bloom of tide-colour, drifting answering light, and the environment visibly changing (a passage opening, a wound knitting shut, silt clearing); Fate\'s reply is shown in the scene itself, not narrated.'
+    fateAnswer: 'FATE ANSWERING (visual grammar): the WORLD responds — a warm current and a bloom of tide-colour, drifting answering light, and the environment visibly changing (a passage opening, a wound knitting shut, silt clearing); Fate\'s reply is shown in the scene itself, not narrated. ' + _WISH_BURST_CLEAN,
+    fateAnswerTwisted: 'FATE ANSWERING — TWISTED (visual grammar): the world responds but WRONG — the change is malformed or cruel (the passage opens onto a dead end, the healing knits crooked, the current turns cold), the environment recoiling. ' + _WISH_BURST_TWISTED
   };
+  window._WISH_BURST_CLEAN = _WISH_BURST_CLEAN; window._WISH_BURST_TWISTED = _WISH_BURST_TWISTED;
   // Shot Language: per dramatic type, the preferred camera / lens / angle / framing / movement /
   // composition. The author picks a shotType; the Director EXPANDS it. Author never sets cameras.
   var _SHOT_LANGUAGE_V1 = {
@@ -153684,6 +153693,16 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/the water warm|fate’?s answer|the passage (?:open|shudder|widen)|wound knit|silt (?:clear|drift)|an omen/.test(t)) g.fateAnswer = true;
     return g;
   }
+  // Is THIS wish TWISTED (Fate warped it — the burst turns red/jagged)? Authoritative signal first
+  // (the pending semantic-warp classifier / an explicit flag), then a conservative beat-text heuristic.
+  // Default CLEAN — the twisted burst only fires on a clear signal, never on an ordinary wish.
+  function _sdWishTwisted(txt, plan, ap) {
+    if (ap && (ap.wishTwisted === true || ap.twisted === true)) return true;
+    if (plan && plan._wishTwisted === true) return true;
+    try { if (typeof state !== 'undefined' && (state._wishTwisted === true || (state.wish && state.wish.twisted === true))) return true; } catch (_) {}
+    return /\b(twist\w*|warp\w*|curdl\w*|corrupt\w*|backfire\w*|malform\w*|festers?|the wish (?:goes|went|turns?|turned) (?:wrong|cruel|against)|not what (?:she|he|they) (?:asked|wished)|a cruel(?:ler)? (?:answer|shape)|Fate (?:betray|mock|twist))\b/i.test(String(txt || ''));
+  }
+  window._sdWishTwisted = _sdWishTwisted;
   // Build a resolved PANEL SPEC per phase. Honors authored plan.panels[] when present (validate,
   // fail-LOUD on missing fields); otherwise derives from the phase (rollout fallback, logged).
   // Binds Canon, expands shotType via Shot Language + grammar flags via Visual Grammar.
@@ -153726,6 +153745,12 @@ No text, no watermark, no UI elements, share-ready.`;
       // panel gets the Fate-answering grammar — so the magical event is never rendered as a stare.
       if (phase._readerLearning === 'Transformation') grammar.wish = true;
       if (phase._readerLearning === 'Consequence') grammar.fateAnswer = true;
+      // WISH BURST STATE: if Fate has TWISTED this wish, swap the golden burst grammar for the red,
+      // jagged, X-scribbled corrupted burst (same signature, curdled). Default stays clean/golden.
+      if ((grammar.wish || grammar.fateAnswer) && _sdWishTwisted(txt, plan, ap)) {
+        if (grammar.wish) { grammar.wish = false; grammar.wishTwisted = true; }
+        if (grammar.fateAnswer) { grammar.fateAnswer = false; grammar.fateAnswerTwisted = true; }
+      }
       // cast performance
       var castRoster = ap && Array.isArray(ap.cast) ? ap.cast.map(function (c) { return String(c.name || '').toLowerCase(); }) : present.map(keyFor);
       var cast = castRoster.map(function (tok) {
