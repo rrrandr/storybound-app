@@ -153921,10 +153921,127 @@ No text, no watermark, no UI elements, share-ready.`;
     Resolution:     { purpose: 'relief / exhaustion — the storm passes',              apex: 'LOW',     pc: { emotion: 'spent relief',       intensity: 4,  expression: 'shoulders dropping, breath released, eyes softening' },       other: { emotion: 'quiet exhaustion',    intensity: 4,  expression: 'sagging, spent' } }
   };
   window._RL_EMOTION = _RL_EMOTION;
+  // ============================================================================
+  // COMIC GRAPHIC LANGUAGE v1 (Roman 2026-07-18) — the visual vocabulary UNIQUE to comics.
+  // Storybound directs narrative, pacing, composition, and emotional acting; it did NOT direct
+  // the graphic language readers subconsciously expect, so fast attacks / impacts / magical
+  // surges / tension / revelations rendered as ordinary static images. Graphic effects are not
+  // decoration — they carry INFORMATION (speed / force / instability / focus / energy) that the
+  // reader reads BEFORE the dialogue. This layer emits RENDERER-AGNOSTIC SEMANTIC INTENT
+  // (motion:heavy, focus:the seam, energy:glyphs); a per-adapter translator turns intent into
+  // the prompt syntax each model honours. It does NOT change story — only how story is spoken.
+  //   Storyboard Artist: "what should the reader understand?"  Story Director: "how is it staged?"
+  //   Comic Graphic Language: "how should the comic visually SPEAK?"  Renderer: illustrate.
+  // Controlled vocabulary (6 categories), intensity scales MAGNITUDE not selection — different
+  // events need different language. v1 deterministic; expand the vocabulary later.
+  var _CGL_LEVELS = ['none', 'low', 'medium', 'high', 'heavy'];
+  function _cglLvl(n) { return _CGL_LEVELS[Math.max(0, Math.min(4, n))]; }
+  function _cglIdx(l) { var i = _CGL_LEVELS.indexOf(l); return i < 0 ? 0 : i; }
+  // Per reader-learning type: the baseline graphic language. category → [level, cue]. focus/energy
+  // targets bind to the panel's eye-magnet at build time. This is intent, not prompt text.
+  var _CGL_BY_TYPE = {
+    Orientation:    { energy: ['low', 'ambient atmosphere — drifting silt, slow underwater currents, hanging haze'], tension: ['low', 'a faint unease in the water'] },
+    Threat:         { motion: ['heavy', 'directional speed lines and motion streaks along the strike'], focus: ['medium', 'the incoming weapon'] },
+    Transformation: { tension: ['high', 'unstable magic — vibration lines, the water trembling'], energy: ['heavy', 'gathering glyphs, tide-light and distortion coiling inward'], focus: ['medium', 'the locus of the wish'] },
+    Consequence:    { impact: ['heavy', 'impact burst, radial cracks, debris and a shockwave through the water'], energy: ['medium', 'force dissipating outward'], emphasis: ['medium', 'heavy shadow pooling on the one who paid'] },
+    Revelation:     { focus: ['heavy', 'zoom lines and radial emphasis converging on the reveal'], energy: ['low', 'a subtle cold glow bleeding from the discovery'] },
+    Decision:       { emphasis: ['heavy', 'oppressive shadow and visual isolation, the world narrowing to the choice'], tension: ['high', 'a trembling, held-breath stillness'] },
+    Resolution:     { emphasis: ['low', 'soft diffused light, the pressure visibly lifting'] }
+  };
+  // Beat-text event cues: a SPECIFIC event overrides/augments the type baseline (a spear thrust
+  // needs heavy motion even mid-conversation; a strike connecting needs impact). Event ≠ type.
+  function _cglEventCues(beatText) {
+    var t = String(beatText || '').toLowerCase(), cues = {};
+    if (/thrust|lunge|cuts? (?:through|toward|at)|slash|swing|darts?|strikes? (?:toward|for)|hurls?|charges?/.test(t)) { cues.motion = ['heavy', 'directional speed lines tracking the strike']; cues.focus = cues.focus || ['medium', 'the weapon']; }
+    if (/connect|lands?|slams?|crashes?|smash|impact|collid|rams?|drives? (?:it |the )/.test(t)) { cues.impact = ['heavy', 'impact burst, radial cracks and debris at the point of contact']; }
+    if (/glow|surges?|blaz|tide-light|warms? (?:around|the)|ignit|flares?|erupt/.test(t)) { cues.energy = ['high', 'a surge of light and particles']; }
+    if (/glyph|rune|sigil|spell|incantation|invok|wish|fate/.test(t)) { cues.energy = ['heavy', 'gathering glyphs, sigils and coiling magical distortion']; }
+    if (/open|split|widen|breathe?s?|fissure|seam|passage|gate|crack (?:appears|opens)/.test(t)) { cues.focus = ['high', 'the opening']; }
+    if (/spot|notice|see[s]?|discover|reveal|behind (?:them|him|her)|catch(?:es)? sight/.test(t)) { cues.focus = ['heavy', 'zoom lines converging on what is seen']; }
+    if (/tremb|shak|shudder|quiver|unstable|falter/.test(t)) { cues.tension = ['high', 'vibration lines, trembling']; }
+    return cues;
+  }
+  // Build the structured, renderer-agnostic graphic-language intent for a panel. Combines the
+  // type baseline + specific event cues + emotional-apex magnitude scaling. Returns a map of
+  // ACTIVE categories only: { motion:{level,cue,target?}, impact:{...}, focus:{...}, ... }.
+  function _buildGraphicLanguage(type, emotionalApex, beatText, eyeMagnet) {
+    var base = _CGL_BY_TYPE[type] || _CGL_BY_TYPE.Orientation;
+    var merged = {};
+    Object.keys(base).forEach(function (k) { merged[k] = base[k].slice(); });
+    var cues = _cglEventCues(beatText);
+    Object.keys(cues).forEach(function (k) {
+      // event cue wins if it is louder than (or new vs) the baseline for that category
+      if (!merged[k] || _cglIdx(cues[k][0]) >= _cglIdx(merged[k][0])) merged[k] = cues[k].slice();
+    });
+    // EMOTIONAL APEX scales MAGNITUDE (not which categories fire): a MAXIMUM beat pushes its
+    // dominant category one louder; a LOW beat dampens. This keeps a quiet Orientation quiet and
+    // a MAXIMUM Transformation overwhelming — magnitude, not selection.
+    var bump = emotionalApex === 'MAXIMUM' ? 1 : (emotionalApex === 'LOW' ? -1 : 0);
+    if (bump) {
+      // Scale EVERY active category uniformly so apex moves MAGNITUDE, never SELECTION — the
+      // set of effects (which the beat/type chose) is invariant; only their loudness shifts.
+      // Active categories stay active on a LOW beat (floored at 'low'), so nothing is dropped.
+      Object.keys(merged).forEach(function (k) {
+        var cur = _cglIdx(merged[k][0]); if (cur <= 0) return;
+        var next = cur + bump; if (next < 1) next = 1; if (next > 4) next = 4;
+        merged[k][0] = _cglLvl(next);
+      });
+    }
+    var out = {};
+    Object.keys(merged).forEach(function (k) {
+      if (_cglIdx(merged[k][0]) <= 0) return; // 'none' → not active
+      var entry = { level: merged[k][0], cue: merged[k][1] };
+      if ((k === 'focus' || k === 'energy') && eyeMagnet && !/\bthe (weapon|opening)\b/.test(merged[k][1])) entry.target = eyeMagnet;
+      out[k] = entry;
+    });
+    return out;
+  }
+  window._buildGraphicLanguage = _buildGraphicLanguage;
+  // Renderer-agnostic → prompt translator (the ADAPTER boundary; per-model variants are a v2
+  // point). Turns structured intent into hard render direction, scaled by level, figures-first.
+  function _graphicLanguageToPrompt(gl) {
+    if (!gl || typeof gl !== 'object') return '';
+    var order = ['motion', 'impact', 'focus', 'tension', 'energy', 'emphasis'];
+    var labels = { motion: 'MOTION', impact: 'IMPACT', focus: 'FOCUS', tension: 'TENSION', energy: 'ENERGY', emphasis: 'EMOTIONAL AMPLIFICATION' };
+    var lines = [];
+    order.forEach(function (k) {
+      var v = gl[k]; if (!v || !v.level || v.level === 'none') return;
+      lines.push('- ' + labels[k] + ' (' + v.level + '): ' + v.cue + (v.target ? ' — on ' + v.target : '') + '.');
+    });
+    if (!lines.length) return '';
+    return 'GRAPHIC LANGUAGE (comic visual vocabulary — render these effects so the reader reads SPEED / FORCE / INSTABILITY / FOCUS / ENERGY before a single word; scale each to its stated level; NEVER let the effects overpower or obscure the figures and their faces):\n' + lines.join('\n');
+  }
+  window._graphicLanguageToPrompt = _graphicLanguageToPrompt;
+  function _cglDominant(gl) {
+    var dom = null, idx = -1;
+    Object.keys(gl || {}).forEach(function (k) { var i = _cglIdx(gl[k].level); if (i > idx) { idx = i; dom = { k: k, cue: gl[k].cue, level: gl[k].level }; } });
+    return dom;
+  }
+  // GRAPHIC LANGUAGE LINT — warnings only. A high-speed beat with no motion, an impact beat with
+  // no force, a tension beat with no instability, focus fighting the Eye Magnet, a loud beat
+  // rendered flat, or the SAME dominant treatment two panels running (visual monotony).
+  function _graphicLanguageLint(docs) {
+    var warnings = [], d = docs || [];
+    for (var i = 0; i < d.length; i++) {
+      var p = d[i], gl = p.graphicLanguage || {};
+      if (p.purpose === 'Threat' && (!gl.motion || _cglIdx(gl.motion.level) < 2)) warnings.push('PANEL ' + i + ' (Threat): high-speed action with no/low MOTION language — the reader will not feel the speed.');
+      if (p.purpose === 'Consequence' && (!gl.impact || _cglIdx(gl.impact.level) < 2)) warnings.push('PANEL ' + i + ' (Consequence): the cost lands with no IMPACT language — no force is communicated.');
+      if ((p.purpose === 'Transformation' || p.purpose === 'Decision') && (!gl.tension || _cglIdx(gl.tension.level) < 2) && (!gl.energy || _cglIdx(gl.energy.level) < 2)) warnings.push('PANEL ' + i + ' (' + p.purpose + '): high-tension beat with no TENSION/ENERGY instability cues.');
+      if (gl.focus && gl.focus.target && p.eyeMagnet && gl.focus.target !== p.eyeMagnet && !/weapon|opening/.test(gl.focus.cue)) warnings.push('PANEL ' + i + ': graphic FOCUS points at "' + gl.focus.target + '" but the Eye Magnet is "' + p.eyeMagnet + '".');
+      if ((p.emotionalApex === 'HIGH' || p.emotionalApex === 'MAXIMUM') && Object.keys(gl).length === 0) warnings.push('PANEL ' + i + ': ' + p.emotionalApex + ' emotional apex but ZERO graphic language — a loud beat rendered visually flat.');
+      if (i > 0) {
+        var domCur = _cglDominant(gl), domPrev = _cglDominant(d[i - 1].graphicLanguage || {});
+        if (domCur && domPrev && domCur.k === domPrev.k && domCur.cue === domPrev.cue) warnings.push('PANEL ' + i + ': identical dominant graphic treatment (' + domCur.k + ') as PANEL ' + (i - 1) + ' — vary the visual language.');
+      }
+    }
+    return { warnings: warnings };
+  }
+  window._graphicLanguageLint = _graphicLanguageLint;
   function _buildStoryboardDoc(type, beatText, primary) {
     var c = _RL_COMP[type] || _RL_COMP.Orientation;
     var e = _RL_EMOTION[type] || _RL_EMOTION.Orientation;
     var eventNoun = _sbEventNoun(beatText);
+    var eyeMagnet = eventNoun || c.eyeDefault;
     return {
       purpose: type,
       frozenMoment: String(beatText || '').trim(),
@@ -153933,12 +154050,14 @@ No text, no watermark, no UI elements, share-ready.`;
       forbiddenFocus: c.forbidden,
       composition: c.composition,                 // beat-driven, never randomized
       understandingGain: c.understanding,          // what the reader learns after this panel
-      eyeMagnet: eventNoun || c.eyeDefault,        // what the eye lands on FIRST (the event, not the people)
+      eyeMagnet: eyeMagnet,                        // what the eye lands on FIRST (the event, not the people)
       // EMOTIONAL DIRECTION (v4) — the emotional arc is the Storyboard Artist's job, same as the visual arc.
       emotionalPurpose: e.purpose,                 // what the READER should feel at this panel
       emotionalApex: e.apex,                       // LOW / MEDIUM / HIGH / MAXIMUM — the panel's loudness
       pcEmotion: e.pc,                             // { emotion, intensity 1-10, expression } for the protagonist
-      otherEmotion: e.other                        // { emotion, intensity, expression } for the other present figure
+      otherEmotion: e.other,                       // { emotion, intensity, expression } for the other present figure
+      // COMIC GRAPHIC LANGUAGE (v1) — renderer-agnostic semantic intent for the comic's visual vocabulary.
+      graphicLanguage: _buildGraphicLanguage(type, e.apex, beatText, eyeMagnet)
     };
   }
   window._buildStoryboardDoc = _buildStoryboardDoc;
@@ -154192,9 +154311,16 @@ No text, no watermark, no UI elements, share-ready.`;
       var _lint0 = _storyboardLint(_preDocs);
       if (_lint0.errors.length || _lint0.warnings.length) { try { console.log('[STORYBOARD-LINT] pre-repair: ' + _lint0.errors.length + ' error(s), ' + _lint0.warnings.length + ' warning(s)' + (_lint0.errors.length ? ' — ' + _lint0.errors.join(' | ') : '')); } catch (_) {} }
       sb = _storyboardRepair(sb);
-      var _postLint = _storyboardLint(sb.map(function (s) { return _buildStoryboardDoc(s.type, s.text, null); }));
+      var _postDocs = sb.map(function (s) { return _buildStoryboardDoc(s.type, s.text, null); });
+      var _postLint = _storyboardLint(_postDocs);
       plan._storyboardLint = _postLint;
       if (_postLint.errors.length) { try { console.warn('[STORYBOARD-LINT] post-repair STILL has ' + _postLint.errors.length + ' error(s): ' + _postLint.errors.join(' | ')); } catch (_) {} }
+      // COMIC GRAPHIC LANGUAGE LINT (v1) — the comic's visual vocabulary is directed, not hoped for.
+      try {
+        var _glLint = _graphicLanguageLint(_postDocs);
+        plan._graphicLanguageLint = _glLint;
+        if (_glLint.warnings.length) { try { console.log('[GRAPHIC-LANG-LINT] ' + _glLint.warnings.length + ' warning(s) — ' + _glLint.warnings.join(' | ')); } catch (_) {} }
+      } catch (_gle) { try { console.warn('[GRAPHIC-LANG-LINT] threw: ' + (_gle && _gle.message)); } catch (_) {} }
     } catch (_lerr) { try { console.warn('[STORYBOARD-LINT] threw: ' + (_lerr && _lerr.message)); } catch (_) {} }
     // re-mark the page-turn on the (possibly repaired) list
     sb.forEach(function (s) { delete s.isPageTurn; }); var _rev2 = sb.filter(function (s) { return s.type === 'Revelation'; }); if (_rev2.length) _rev2[_rev2.length - 1].isPageTurn = true;
@@ -179693,6 +179819,9 @@ No text, no watermark, no UI elements, share-ready.`;
             if (_sbDoc.otherEmotion && _sbDoc.otherEmotion.emotion) em.push('the other figure reads ' + _sbDoc.otherEmotion.emotion + ' (' + _sbDoc.otherEmotion.intensity + '/10) — ' + _sbDoc.otherEmotion.expression);
             if (em.length) _cidLines.push('CHARACTER EMOTION (HARD — push each face/body to the STATED intensity; do NOT flatten to neutral, calm, or generically "determined"): ' + em.join('; ') + '.');
           })();
+          // COMIC GRAPHIC LANGUAGE (v1) — the comic's visual vocabulary (speed / force / focus /
+          // tension / energy), translated from the storyboard's renderer-agnostic intent.
+          try { var _glTxt = _graphicLanguageToPrompt(_sbDoc.graphicLanguage); if (_glTxt) _cidLines.push(_glTxt); } catch (_) {}
         }
         if (_panel) {
           if (_panel.dramaticQuestion) _cidLines.push('DRAMATIC QUESTION (every choice reinforces it): ' + _panel.dramaticQuestion);

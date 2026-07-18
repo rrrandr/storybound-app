@@ -10,7 +10,7 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
   fs.mkdirSync(OUTDIR, { recursive: true });
   const browser = await chromium.launch({ headless: true });
   const page = await (await browser.newContext({ viewport: { width: 1100, height: 800 } })).newPage();
-  page.on('console', m => { const t = m.text(); if (/\[CG:SCREENPLAY|\[CG:SCAFFOLD|\[STAGED:|SCENE-CASE|status":"(SUCCESS|FAIL)|\[Gemini\] Error|FAVORED-SHIFT|SPECIES BY CHARACTER|author=|Generation failed/i.test(t)) console.error('  >', t.slice(0, 150)); });
+  page.on('console', m => { const t = m.text(); if (/\[CG:SCREENPLAY|\[CG:SCAFFOLD|\[STAGED:|\[CASTING|\[STORYBOARD|SCENE-CASE|status":"(SUCCESS|FAIL)|\[Gemini\] Error|FAVORED-SHIFT|SPECIES BY CHARACTER|author=|Generation failed/i.test(t)) console.error('  >', t.slice(0, 170)); });
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForFunction(() => window.state && typeof window._runCGScreenplayGen === 'function', { timeout: 40000 });
 
