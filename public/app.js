@@ -153693,13 +153693,30 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildPanelSpecs = _buildPanelSpecs;
 
-  // Story Director orchestrator: canon → continuity → panels (validate/enrich/expand). Never reinterprets.
+  // ── RESERVED EXTENSION POINTS (Roman 2026-07-17 — the compiler stages). NO logic yet; wired as
+  // no-op pass-throughs so the pipeline shape is real in code and each validator has a home to
+  // grow into: Author → STORY LINT → Story Director → CONTINUITY DIFF → VISUAL LINT → Renderer.
+  // STORY LINT = narrative coherence (visible threat? decision follows? conflict present? every
+  //   revelation illustrated? a character ally+enemy at once? wish motivated?).
+  function _storyLint(plan) { return { errors: [], warnings: [] }; }
+  // CONTINUITY DIFF = "what CHANGED vs the previous panel?" (hair/clothes/weapon/injury/position/
+  //   relationship/expression/buoyancy); an unauthorized change is an ERROR.
+  function _continuityDiff(prevPanel, panel) { return { changes: [], errors: [] }; }
+  // VISUAL LINT = staging (everyone facing camera? romance blocking in combat? identical
+  //   compositions? no establishing shot? a figure hidden? recognition traits visible? injuries kept?).
+  function _visualLint(panel) { return { errors: [], warnings: [] }; }
+  window._storyLint = _storyLint; window._continuityDiff = _continuityDiff; window._visualLint = _visualLint;
+
+  // Story Director orchestrator: [story-lint] → canon → continuity → panels → [continuity-diff] →
+  // [visual-lint] (validate/enrich/expand, never reinterpret). Lint stages are reserved no-ops.
   function _buildStoryDirector(plan, sceneIndex) {
     try {
       if (!plan) return plan;
+      _storyLint(plan); // reserved — narrative coherence pass
       _buildDirectorCanon(plan);
       _buildContinuityLedger(plan);
       _buildPanelSpecs(plan);
+      try { (plan._panels || []).forEach(function (p, i) { if (i > 0) _continuityDiff(plan._panels[i - 1], p); _visualLint(p); }); } catch (_) {} // reserved — diff + staging passes
       plan._storyDirectorVer = _STORY_DIRECTOR_VER;
       try { console.log('[STORY-DIRECTOR] v' + _STORY_DIRECTOR_VER + ' canon=[' + Object.keys(plan._canon || {}).join(',') + '] panels=' + ((plan._panels || []).length) + (plan._panelInvalid ? ' (INVALID authored panels — degraded)' : '')); } catch (_) {}
     } catch (e) { try { console.warn('[STORY-DIRECTOR] threw: ' + (e && e.message)); } catch (_) {} }
