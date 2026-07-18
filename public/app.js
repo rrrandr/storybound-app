@@ -153482,6 +153482,58 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (_) {}
     return null;
   }
+  // ── IDENTITY MORPHOLOGY (Roman 2026-07-18) — the IMMUTABLE identity layer (Story Director plan:
+  //    split Canon into Identity Morphology vs mutable Appearance). regen8 proved WHY this must
+  //    exist: an unnamed Kwisheen raider ("Kesh") drifted female-maned ↔ male-octopus-man panel to
+  //    panel because Canon pinned species+colour but NOT gender / face / tentacle-topology / ears.
+  //    Casting cannot fix drift that originates here — it can only reinforce an identity Canon has
+  //    already fixed. Morphology is what makes a figure the SAME individual across panels; it never
+  //    changes. Deterministically seeded by character token so it is stable across every render.
+  var _SD_M_BUILD = ['lean and wiry', 'broad and powerfully built', 'tall and rangy', 'compact and heavily muscled', 'long-limbed and lithe', 'stocky and thick-necked'];
+  var _SD_M_FACE = ['a broad flat-cheeked face with a heavy brow', 'a narrow angular face with high, sharp cheekbones', 'a square heavy jaw and wide-set eyes', 'a long face with a pointed chin and deep-set eyes', 'a rounded face with a short blunt nose', 'a gaunt hollow-cheeked face with a jutting brow'];
+  var _KW_MANE = ['a dense mane of thick tentacle-dreadlocks swept back from the skull', 'a crown of short curling head-tentacles', 'long trailing tentacle-locks gathered and bound with cord', 'a fanned crest of stubby tendrils over the crown'];
+  function _sdSeedPick(arr, key, salt) { return arr[_ffColorHash(String(key) + '|' + salt) % arr.length]; }
+  function _sdGenderPresentation(name, hint) {
+    var h = String(hint || '').toLowerCase();
+    if (/\b(female|woman|girl|she|her|feminine)\b/.test(h)) return 'female';
+    if (/\b(male|man|boy|he|him|his|masculine)\b/.test(h)) return 'male';
+    return (_ffColorHash(String(name || '') + '|gender|' + (state.worldInstanceId || state.storyId || 'seed')) % 2) ? 'male' : 'female';
+  }
+  // Immutable morphology sheet for one character. genderHint (from prose / visualState) wins over
+  // the deterministic seed so the author's stated gender is honoured; absent that, the seed pins it.
+  function _sdBuildMorphology(species, name, look, role, genderHint) {
+    var key = String(name || '').toLowerCase() + '|' + (state.worldInstanceId || state.storyId || 'seed');
+    var m = {
+      genderPresentation: _sdGenderPresentation(name, genderHint),
+      build: _sdSeedPick(_SD_M_BUILD, key, 'build'),
+      facialTopology: _sdSeedPick(_SD_M_FACE, key, 'face')
+    };
+    if (species === 'kwisheen') {
+      m.speciesTopology = 'a SIX-TENTACLE lower body (NOT legs), a humanoid scaled torso, fine hexagonal cephalopod hide';
+      m.mane = _sdSeedPick(_KW_MANE, key, 'mane');
+      m.eyes = 'wide-set eyes with horizontal slit pupils';
+      m.ears = 'NO external ears — smooth head-frills only; NEVER pointed elf-ears';
+    } else if (species === 'first_favored') {
+      m.speciesTopology = 'humanoid and fine-boned; four-point diamond pupils; faint dermal Weave-Script';
+      m.ears = 'delicately tapered ears';
+    } else {
+      m.speciesTopology = 'fully human — NO tentacles, scales, or non-human features';
+      m.ears = 'ordinary human ears';
+    }
+    return m;
+  }
+  window._sdBuildMorphology = _sdBuildMorphology;
+  // Compact morphology line for the renderer — the IMMUTABLE identity, emitted as hard direction.
+  function _sdMorphologyLine(m) {
+    if (!m) return '';
+    var bits = [m.genderPresentation + '-presenting', m.build, m.facialTopology];
+    if (m.eyes) bits.push(m.eyes);
+    if (m.mane) bits.push(m.mane);
+    if (m.ears) bits.push(m.ears);
+    if (m.speciesTopology) bits.push(m.speciesTopology);
+    return bits.join('; ');
+  }
+  window._sdMorphologyLine = _sdMorphologyLine;
   // Build immutable CANON sheets for every character in the scene. plan._canon[key] = {...}.
   function _buildDirectorCanon(plan) {
     var canon = {};
@@ -153489,7 +153541,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var pcName = (state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || 'protagonist';
     var liName = (state.picks && state.picks.identity && state.picks.identity.partnerName) || state.loveInterestName || state.partnerName || '';
     var antag = String((state.aPlot && state.aPlot.antagonistOrAntiForce) || '').toLowerCase();
-    function add(key, displayName, role, species, garment, extraSrc) {
+    function add(key, displayName, role, species, garment, extraSrc, genderHint) {
       key = String(key || '').toLowerCase();
       if (!key || canon[key]) return;
       var look = (role === 'protagonist' && typeof _resolvePcAppearance === 'function') ? _resolvePcAppearance() : _sdResolveLook(species, displayName || key);
@@ -153498,11 +153550,13 @@ No text, no watermark, no UI elements, share-ready.`;
         key: key, displayName: displayName || key, role: role, species: species,
         humanNoTentacles: (species === 'human' || species === 'wildfolk'),
         look: look || null, garment: String(garment || '').trim(), weapon: weapon,
+        // IDENTITY MORPHOLOGY (immutable) is separate from the mutable look/garment above.
+        morphology: _sdBuildMorphology(species, displayName || key, look, role, genderHint),
         recognitionTraits: _sdRecognitionTraits(species, look, garment, weapon)
       };
     }
-    add('protagonist', pcName, 'protagonist', _sdNormSpecies(state._playerSpecies), vs.pc_wardrobe, '');
-    if (liName) add(liName, liName, 'love_interest', _sdNormSpecies(state._liSpecies), vs.li_wardrobe, vs.li_position);
+    add('protagonist', pcName, 'protagonist', _sdNormSpecies(state._playerSpecies), vs.pc_wardrobe, '', state.gender || (state.picks && state.picks.gender));
+    if (liName) add(liName, liName, 'love_interest', _sdNormSpecies(state._liSpecies), vs.li_wardrobe, vs.li_position, state.loveInterest || (state.picks && state.picks.loveInterest));
     (vs.other_characters_present || []).forEach(function (c) {
       if (!c || !c.name) return;
       var nm = String(c.name);
@@ -153511,7 +153565,8 @@ No text, no watermark, no UI elements, share-ready.`;
       if (antag && (antag.indexOf(nm.toLowerCase()) !== -1)) role = 'antagonist';
       else if (/\braider|enemy|attacker|assassin|hunter|soldier|guard\b/.test(hay)) role = 'antagonist';
       else if (/\ban? ally|companion|friend|wounded|pinned\b/.test(hay)) role = 'ally';
-      add(nm, nm, role, _sdNormSpecies(c.species), c.wardrobe, c.position);
+      // gender hint: explicit c.gender, else any pronoun the author used in position/wardrobe text.
+      add(nm, nm, role, _sdNormSpecies(c.species), c.wardrobe, c.position, c.gender || hay);
     });
     // Unnamed-Kwisheen safety: if a kwisheen is present without a canon entry, give it a stable
     // lock so its anatomy is OWNED and cannot leak onto a human ally.
@@ -154213,6 +154268,16 @@ No text, no watermark, no UI elements, share-ready.`;
     var primary = _castingIsPrimarySubject(phase, token);
     // non-primary → the character may be small, side-on, or occluded: a weak identity source.
     var conf = closeness + (primary ? 6 : -22);
+    // IDENTITY QUALITY ≠ COMPOSITION QUALITY (regen8 lesson): a close, primary frame can still be
+    // a BAD identity source when the pose or expression distorts the face/body. The best "photo of
+    // the actor" is neutral — NOT screaming, praying, mid-magic, or motion-blurred. Penalize those,
+    // so the wish panel (which regen8 wrongly cast at 96) can no longer become the canonical actor.
+    var purpose = doc.purpose || (phase && phase._readerLearning);
+    if (purpose === 'Transformation') conf -= 25;               // magic-surge / prayer pose warps the body
+    if (doc.emotionalApex === 'MAXIMUM') conf -= 12;            // extreme expression (screaming) distorts the face
+    var gl = doc.graphicLanguage || {};
+    if (gl.motion && _cglIdx(gl.motion.level) >= 3) conf -= 15;  // heavy motion → dynamic / blurred pose
+    if (gl.impact && _cglIdx(gl.impact.level) >= 3) conf -= 10;  // mid-explosion / recoil distortion
     return Math.max(0, Math.min(100, Math.round(conf)));
   }
   window._castingIdentityConfidence = _castingIdentityConfidence;
@@ -154239,10 +154304,14 @@ No text, no watermark, no UI elements, share-ready.`;
     }
     rec.lastAppearance = sourcePanel;
     if (opts.tier && rec.tier !== 'WORLD') rec.tier = opts.tier; // tier can only rise toward WORLD
-    if (!rec.locked && confidence > rec.confidence) {
+    var margin = (typeof opts.promoteMargin === 'number') ? opts.promoteMargin : 4;
+    if (!rec.locked && confidence >= rec.confidence + margin) {
+      // Consensus-lite hysteresis: a new frame must be MEANINGFULLY better to supersede, so a
+      // stable identity is not thrashed by a marginally-higher outlier (regen8's cast-the-outlier
+      // failure). True image-consensus (does it AGREE with the current ref?) is the paid v2 vision step.
       var prev = rec.confidence;
       rec.url = url; rec.confidence = confidence; rec.sourcePanel = sourcePanel;
-      return { action: 'promote', from: prev, to: confidence }; // a better panel supersedes the weaker reference
+      return { action: 'promote', from: prev, to: confidence };
     }
     return { action: 'keep', confidence: rec.confidence };
   }
@@ -179850,6 +179919,10 @@ No text, no watermark, no UI elements, share-ready.`;
         _keys.forEach(function (k) {
           var c = _canon[k]; if (!c) return;
           var idBits = [String(c.species || 'human').toUpperCase()];
+          // IDENTITY MORPHOLOGY (immutable) — the SAME individual every panel; gender / face /
+          // body-topology NEVER change. Emitted before mutable appearance so the model treats it
+          // as identity, not styling (regen8: Kesh flipped gender/tentacle-topology without this).
+          if (c.morphology) { var _ml = _sdMorphologyLine(c.morphology); if (_ml) idBits.push('IDENTITY (immutable — same individual, NEVER change gender/face/body-topology): ' + _ml); }
           if (c.recognitionTraits && c.recognitionTraits.length) idBits.push('RECOGNITION: ' + c.recognitionTraits.join(', '));
           if (c.humanNoTentacles) idBits.push('fully HUMAN — NO tentacles, scales, or cephalopod features');
           var line = '- ' + c.displayName + ' [' + idBits.join('; ') + ']';
@@ -181069,16 +181142,22 @@ No text, no watermark, no UI elements, share-ready.`;
     // as an IDENTITY-ONLY anchor (match morphology + recognition traits, never expression/
     // pose). This is the generalization of the PC/LI face-master reinject to the wider cast:
     // once we've seen the antagonist, stop letting the renderer reinvent him each panel.
+    var _castOwnedSp = {};   // species → # of present NPCs of that species that HAVE a casting ref
+    var _presentNpcSp = {};  // species → # of present significant NPCs of that species
     try {
       if (window._castingLibrary !== false && visualState && Array.isArray(visualState.other_characters_present)) {
         var _castSeen = {};
+        var _cNorm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
         visualState.other_characters_present.forEach(function (o) {
           if (!_castingIsSignificantNPC(o)) return;
           var _tok = _castingToken(o.name);
           if (_castSeen[_tok]) return; _castSeen[_tok] = true;
+          var _spN = _cNorm(o.species);
+          if (_spN && _spN !== 'human') _presentNpcSp[_spN] = (_presentNpcSp[_spN] || 0) + 1;
           var _anchor = _castingResolveAnchor(o.name);
           if (_anchor && _anchor.url && combinedAnchors.length < 8) {
             combinedAnchors.push({ path: _anchor.url, label: _anchor.label, species: 'casting:' + _tok });
+            if (_spN && _spN !== 'human') _castOwnedSp[_spN] = (_castOwnedSp[_spN] || 0) + 1;
             try { console.log('[CASTING] reinject identity anchor for "' + o.name + '" (phase ' + phase.phaseIdx + ')'); } catch (_) {}
           }
         });
@@ -181097,7 +181176,8 @@ No text, no watermark, no UI elements, share-ready.`;
       var _normSp = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
       var _presentSp = {};
       var _pcSpN = _normSp(state._playerSpecies); if (_pcSpN && _pcSpN !== 'human') _presentSp[_pcSpN] = true;
-      if (!_phaseLIAbsentForSp) { var _liSpN = _normSp(state._liSpecies); if (_liSpN && _liSpN !== 'human') _presentSp[_liSpN] = true; }
+      var _liSpN = _normSp(state._liSpecies);
+      if (!_phaseLIAbsentForSp) { if (_liSpN && _liSpN !== 'human') _presentSp[_liSpN] = true; }
       // Named side characters live on visualState.other_characters_present (same place the
       // species-by-character text guard reads them). If the phase declares an explicit
       // character-token list, only count side chars actually on-stage in THIS phase.
@@ -181111,7 +181191,19 @@ No text, no watermark, no UI elements, share-ready.`;
       var _gatedAnchors = state._stagedRegionContract.anchorImages.filter(function (p) {
         var sk = _spAnchorMap[p];
         if (!sk) return true; // region background / non-species anchor — always keep
-        if (_presentSp[sk]) return true; // that species IS on-stage — keep its ref
+        if (_presentSp[sk]) {
+          // AUTHORITATIVE CASTING ANCHOR (Casting v2, Roman 2026-07-18): if a cast actor owns the
+          // identity of EVERY present character of this species (a cast NPC, and neither PC nor LI
+          // is of this species), DROP the generic species template — the specific actor's harvested
+          // reference is authoritative. regen8: the generic species anchor outcompeted casting and
+          // the reinject didn't hold; this lets the per-character identity win.
+          var _pcIsSp = (_pcSpN === sk), _liIsSp = (!_phaseLIAbsentForSp && _liSpN === sk);
+          if (!_pcIsSp && !_liIsSp && _castOwnedSp[sk] && _castOwnedSp[sk] >= (_presentNpcSp[sk] || 1)) {
+            try { console.log('[CASTING] authoritative — dropping generic ' + sk + ' species anchor (cast actor owns identity in phase ' + phase.phaseIdx + ')'); } catch (_) {}
+            return false;
+          }
+          return true; // that species IS on-stage and not casting-owned — keep its ref
+        }
         try { console.log('[STAGED:STYLE] species-anchor GATED — ' + String(p).split('/').pop() + ' (' + sk + ' not present in phase ' + phase.phaseIdx + ')'); } catch (_) {}
         return false;
       });
@@ -183506,8 +183598,9 @@ No text, no watermark, no UI elements, share-ready.`;
     var _sdCont = (sceneCtx && sceneCtx.continuity) || null;
     if (_sdCanon) {
       var _rt = (_sdCanon.recognitionTraits && _sdCanon.recognitionTraits.length) ? (' RECOGNITION TRAITS (must be visible, identical to the panels): ' + _sdCanon.recognitionTraits.join(', ') + '.') : '';
+      var _mo = (_sdCanon.morphology && typeof _sdMorphologyLine === 'function') ? (' IDENTITY MORPHOLOGY (immutable — the SAME individual; NEVER change gender/face/body-topology): ' + _sdMorphologyLine(_sdCanon.morphology) + '.') : '';
       var _hn = _sdCanon.humanNoTentacles ? ' Fully HUMAN — NO tentacles, scales, or cephalopod features.' : '';
-      _cuGrounding += 'CHARACTER IDENTITY (HARD — same person as in the surrounding panels): ' + (_sdCanon.displayName || 'the subject') + ' — ' + String(_sdCanon.species || 'human').toUpperCase() + '.' + _rt + _hn + '\n\n';
+      _cuGrounding += 'CHARACTER IDENTITY (HARD — same person as in the surrounding panels): ' + (_sdCanon.displayName || 'the subject') + ' — ' + String(_sdCanon.species || 'human').toUpperCase() + '.' + _mo + _rt + _hn + '\n\n';
     }
     if (_sdCont && _sdCont.injuries && _sdCont.injuries.length) {
       _cuGrounding += 'CONTINUITY (HARD — carried from the surrounding panels): ' + _sdCont.injuries.join('; ') + ' — if that body part is in frame, the wound is present, in the SAME location.\n\n';

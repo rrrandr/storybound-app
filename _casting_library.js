@@ -24,6 +24,14 @@ const { chromium } = require('playwright-core');
     const confWide = window._castingIdentityConfidence(establishingPhase, vs, 'Kesh');
     const confClose = window._castingIdentityConfidence(closeThreatPhase, vs, 'Kesh');
 
+    // ── v2: IDENTITY QUALITY ≠ COMPOSITION QUALITY — a close, primary WISH panel (magic-distorted
+    //    prayer pose + MAXIMUM expression) is a BAD identity source; regen8 wrongly cast it at 96. ──
+    const wishPhase = { phaseIdx: 1, _storyboardDoc: { purpose: 'Transformation', composition: 'tight close-up on the raider mid-invocation', emotionalApex: 'MAXIMUM', graphicLanguage: { energy: { level: 'heavy', cue: 'x' }, tension: { level: 'high', cue: 'y' } } }, _panel: { hierarchy: { primary: 'the raider' } } };
+    const neutralClosePhase = { phaseIdx: 3, _storyboardDoc: { purpose: 'Consequence', composition: 'close-up on the raider, steady', emotionalApex: 'HIGH', graphicLanguage: {} }, _panel: { hierarchy: { primary: 'the raider' } } };
+    const confWish = window._castingIdentityConfidence(wishPhase, vs, 'Kesh');
+    const confNeutralClose = window._castingIdentityConfidence(neutralClosePhase, vs, 'Kesh');
+    const wishIsPoorSource = confWish < confNeutralClose - 20; // the distorted wish frame loses to a neutral close
+
     // (1) ESTABLISH — a first acceptable panel casts the character (no extra render).
     const r1 = window._castingConsiderPanel('Kesh', 'data:img/close1', confClose, 'scene1_phase2', { tier: 'SESSION' });
     const castNow = lib['kesh'];
@@ -43,10 +51,19 @@ const { chromium } = require('playwright-core');
     // never DEMOTE — a subsequent weaker panel does not replace a stronger reference.
     const rKeep = window._castingConsiderPanel('Kesh', 'data:img/weaker', 60, 'scene1_phase5', {});
     const noDemote = rKeep.action === 'keep' && lib['kesh'].url === 'data:img/strong';
-    // a LOCKED reference is never auto-promoted.
+    // v2 HYSTERESIS (consensus-lite): a MARGINALLY-better frame does not thrash a stable identity.
+    lib = reset();
+    window._castingConsiderPanel('Kesh', 'data:img/a', 90, 'p1', {}); // stable identity at 90
+    const rMarginal = window._castingConsiderPanel('Kesh', 'data:img/b', 92, 'p2', {}); // +2 within margin
+    const marginKeepsStable = rMarginal.action === 'keep' && lib['kesh'].url === 'data:img/a';
+    const rClearlyBetter = window._castingConsiderPanel('Kesh', 'data:img/c', 96, 'p3', {}); // +6 clears margin
+    const clearWinnerPromotes = rClearlyBetter.action === 'promote' && lib['kesh'].url === 'data:img/c';
+    // a LOCKED reference is never auto-promoted (even by a clearly-better frame).
+    lib = reset();
+    window._castingConsiderPanel('Kesh', 'data:img/locked', 90, 'p1', {});
     lib['kesh'].locked = true;
     const rLocked = window._castingConsiderPanel('Kesh', 'data:img/betterstill', 99, 'scene1_phase6', {});
-    const lockRespected = rLocked.action === 'keep' && lib['kesh'].url === 'data:img/strong';
+    const lockRespected = rLocked.action === 'keep' && lib['kesh'].url === 'data:img/locked';
 
     // (2) REUSE — resolve returns an identity anchor, counts the reuse, and the label is
     //     IDENTITY-ONLY (morphology + recognition traits; explicitly NOT expression/pose).
@@ -83,6 +100,7 @@ const { chromium } = require('playwright-core');
 
     return {
       confWide, confClose, closeBeatsWide: confClose > confWide + 20,
+      confWish, confNeutralClose, wishIsPoorSource, marginKeepsStable, clearWinnerPromotes,
       castNow: r1.action === 'cast' && !!castNow && castNow.url === 'data:img/close1',
       wideRejected, promoted, noDemote, lockRespected,
       reuseCounts, anchorHasUrl, labelIdentityOnly, labelForbidsExpression, unknownResolvesNull,
@@ -96,6 +114,9 @@ const { chromium } = require('playwright-core');
 
   const checks = [
     ['confidence: a close-up primary panel scores far above a wide establishing shot', R.closeBeatsWide],
+    ['v2: identity-quality ≠ composition — a close WISH/MAXIMUM frame is a POOR source', R.wishIsPoorSource],
+    ['v2: hysteresis — a marginally-better frame does NOT thrash a stable identity', R.marginKeepsStable],
+    ['v2: a clearly-better frame (beyond margin) still promotes', R.clearWinnerPromotes],
     ['ESTABLISH: a first acceptable panel casts the NPC (no extra render)', R.castNow],
     ['reject: a below-threshold wide silhouette is NOT stored as an identity source', R.wideRejected],
     ['PROMOTE: a stronger later panel supersedes a weaker earlier reference (order-independent)', R.promoted],

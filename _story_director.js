@@ -122,7 +122,7 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['Continuity: injury LOCATION is locked (side, not drifting)', p2SorenState && (p2SorenState.injuries || []).some(i => /side/i.test(i))],
     ['Relationship: Kael is trying_to_kill the protagonist', p2KaelState && p2KaelState.attitudeToward && p2KaelState.attitudeToward.protagonist === 'trying_to_kill'],
     ['Hero prompt stamps the CAST with all three distinct figures', /STORY DIRECTOR — PANEL \(HARD/.test(heroPrompt) && /Soren \[HUMAN/.test(heroPrompt) && /Kael \[KWISHEEN/.test(heroPrompt)],
-    ['Hero prompt: Soren fully-HUMAN-no-tentacles + injury persists', /Soren[\s\S]{0,180}fully HUMAN — NO tentacles/.test(heroPrompt) && /INJURY \(persists until healed\)/.test(heroPrompt)],
+    ['Hero prompt: Soren fully-HUMAN-no-tentacles + injury persists', /Soren[\s\S]{0,400}(?:fully HUMAN — NO tentacles|fully human — NO tentacles)/.test(heroPrompt) && /INJURY \(persists until healed\)/.test(heroPrompt)],
     ['Panel spec: attack phase inferred shotType=combat', panel2ShotType === 'combat'],
     ['Panel spec: hierarchy assigns a primary subject', !!panel2HierPrimary],
     ['Panel spec: derived cast carries a performance object', panel0HasPerf === true],
