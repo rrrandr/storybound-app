@@ -75,6 +75,17 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     const cutTense = !!(cutPanel && cutPanel.sceneCtx && cutPanel.sceneCtx.sceneTense);
     const cutHasCanon = !!(cutPanel && cutPanel.sceneCtx && cutPanel.sceneCtx.canon);
 
+    // INVARIANT: every staged image ORIGINATES from _renderPanel(). Via the pipeline → no
+    // bypass; a DIRECT adapter call (simulating a future _renderMiniPortrait bypass) is caught.
+    window.__sdRenderBypass = null;
+    await window._renderPanel(window._buildCutInPanel(plan, cutBeat, 'dark')).catch(function () {});
+    const noBypassViaPipeline = !window.__sdRenderBypass;
+    window.__sdRenderBypass = null;
+    await window._renderCutCloseup('lips_pressed', 'dark', 'protagonist', 'face', {}).catch(function () {});
+    const bypassOnDirect = window.__sdRenderBypass === '_renderCutCloseup';
+    // hero panel also dispatches through _renderPanel (type routing)
+    const heroPanelRoutes = window._buildHeroPanel(plan.visualState, plan.phases[2], 0, plan).type === 'hero';
+
     // hero prompt for phase 2 (all three present)
     const phaseVS = window._resolvePhaseVisualState(plan.visualState, plan.phases[2], plan.phases, plan.beats);
     s._stagedRegionContract = window._buildStagedRegionContract({ visualState: plan.visualState, phases: [] });
@@ -92,11 +103,12 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
       panel1Grammar: (panel1 && panel1.grammarCues || []).join(' | '),
       panel0HasPerf: !!(panel0 && panel0.cast && panel0.cast.length && panel0.cast[0].performance),
       wishHeroPrompt, failLoud,
-      cutPrompt, cutPanelType, cutTense, cutHasCanon
+      cutPrompt, cutPanelType, cutTense, cutHasCanon,
+      noBypassViaPipeline, bypassOnDirect, heroPanelRoutes
     };
   });
   await browser.close();
-  const { canonKeys, soren, kael, p2SorenState, p2KaelState, heroPrompt, panel2ShotType, panel2HierPrimary, panel1Grammar, panel0HasPerf, wishHeroPrompt, failLoud, cutPrompt, cutPanelType, cutTense, cutHasCanon } = R;
+  const { canonKeys, soren, kael, p2SorenState, p2KaelState, heroPrompt, panel2ShotType, panel2HierPrimary, panel1Grammar, panel0HasPerf, wishHeroPrompt, failLoud, cutPrompt, cutPanelType, cutTense, cutHasCanon, noBypassViaPipeline, bypassOnDirect, heroPanelRoutes } = R;
 
   const checks = [
     ['Canon built for PC + Soren + Kael', canonKeys.includes('protagonist') && canonKeys.includes('soren') && canonKeys.includes('kael')],
@@ -120,7 +132,10 @@ const BLOCK = ['**/api/image**', '**/api/bfl-kontext**', '**/api/gemini-proxy**'
     ['FAIL-LOUD: authored panels missing required fields are flagged invalid', failLoud === true],
     ['Unified pipeline: cut-in is a panel.type=cut_in', cutPanelType === 'cut_in'],
     ['Unified pipeline: cut-in carries Canon + detects the tense scene register', cutHasCanon === true && cutTense === true],
-    ['Unified pipeline: cut-in renders through _renderPanel with identity + no-smile-in-crisis', /CHARACTER IDENTITY \(HARD/.test(cutPrompt) && /EMOTIONAL REGISTER \(HARD/.test(cutPrompt) && /NEVER be pleasant/.test(cutPrompt)]
+    ['Unified pipeline: cut-in renders through _renderPanel with identity + no-smile-in-crisis', /CHARACTER IDENTITY \(HARD/.test(cutPrompt) && /EMOTIONAL REGISTER \(HARD/.test(cutPrompt) && /NEVER be pleasant/.test(cutPrompt)],
+    ['INVARIANT: rendering via _renderPanel does NOT trip the bypass guard', noBypassViaPipeline === true],
+    ['INVARIANT: a DIRECT adapter call (pipeline bypass) is caught by the guard', bypassOnDirect === true],
+    ['Unified pipeline: hero panels route by type through _renderPanel too', heroPanelRoutes === true]
   ];
 
   let pass = 0, fail = 0;

@@ -153793,16 +153793,35 @@ No text, no watermark, no UI elements, share-ready.`;
     };
   }
   window._buildCutInPanel = _buildCutInPanel;
-  // THE single panel-consuming renderer. Keys on panel.type. The Director never knows what a
-  // "cut-in renderer" is; the renderer never knows what a "hero panel" is — both consume a panel.
+  // Build a hero/establishing panel wrapper so a phase renders through the SAME dispatcher.
+  function _buildHeroPanel(visualState, phase, sceneIndex, plan) {
+    return { type: (phase && phase._panel && phase._panel.type) || 'hero', visualState: visualState, phase: phase, sceneIndex: sceneIndex, plan: plan };
+  }
+  window._buildHeroPanel = _buildHeroPanel;
+  // INVARIANT ORIGIN GUARD (Roman 2026-07-17): every staged CG image MUST originate from
+  // _renderPanel(). The low-level adapters (_renderStagedPhaseImage / _renderCutCloseup) check
+  // this flag and warn loudly if invoked from anywhere else — so a future _renderMiniPortrait()
+  // that bypasses the pipeline trips a test immediately. `window.__sdRenderBypass` records it.
+  var _sdRenderOrigin = false;
+  function _sdAssertOrigin(who) {
+    if (!_sdRenderOrigin) { try { window.__sdRenderBypass = who; console.warn('[RENDER-BYPASS] ' + who + ' rendered a panel OUTSIDE _renderPanel() — every staged image must originate from _renderPanel().'); } catch (_) {} }
+  }
+  window._sdAssertOrigin = _sdAssertOrigin;
+  // THE single panel-consuming renderer. Keys on panel.type → a renderer adapter → the renderer.
+  // The Director never knows what a "cut-in renderer" is; the renderer never knows what a "hero
+  // panel" is — both consume a panel object. There is NO other staged-render entry point.
   async function _renderPanel(panel) {
     if (!panel) return { error: 'no_panel' };
-    if (panel.type === 'cut_in') {
-      return _renderCutCloseup(panel.expressionTarget, panel.lighting, panel.target, panel.shotType, panel.sceneCtx);
-    }
-    // hero / establishing panels still render through the phase loop (_renderStagedPhaseImage);
-    // they migrate to this dispatcher next (roadmap #1 continues). Reserved.
-    return { error: 'unhandled_panel_type', type: panel.type };
+    var prev = _sdRenderOrigin; _sdRenderOrigin = true;
+    try {
+      if (panel.type === 'cut_in') {
+        return await _renderCutCloseup(panel.expressionTarget, panel.lighting, panel.target, panel.shotType, panel.sceneCtx);
+      }
+      if (panel.type === 'hero' || panel.type === 'establishing' || panel.type === 'detail' || panel.type === 'splash') {
+        return await _renderStagedPhaseImage(panel.visualState, panel.phase, panel.sceneIndex, panel.plan);
+      }
+      return { error: 'unhandled_panel_type', type: panel.type };
+    } finally { _sdRenderOrigin = prev; }
   }
   window._renderPanel = _renderPanel;
 
@@ -180256,6 +180275,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // Render (or reuse) the hero image for a single phase of a staged scene.
   // Returns { imageUrl, fromCache, fingerprint, phaseIdx } or { error, phaseIdx } on failure.
   async function _renderStagedPhaseImage(visualState, phase, sceneIndex, planMeta) {
+    if (typeof _sdAssertOrigin === 'function') _sdAssertOrigin('_renderStagedPhaseImage'); // unified-pipeline invariant
     if (!visualState || !phase) {
       console.warn('[STAGED:HERO:PHASE] Missing visualState or phase — aborting');
       return { error: 'no_visual_state', phaseIdx: phase ? phase.phaseIdx : -1 };
@@ -180964,7 +180984,7 @@ No text, no watermark, no UI elements, share-ready.`;
             try { if (typeof _isAltPOVEdition === 'function' && _isAltPOVEdition()) { var _s = state._altPOVImgStats || (state._altPOVImgStats = { reused: 0, fresh: 0, freshOffstage: 0 }); _s.reused++; } } catch (_) {}
           } else {
             try { if (typeof _isAltPOVEdition === 'function' && _isAltPOVEdition()) { var _s2 = state._altPOVImgStats || (state._altPOVImgStats = { reused: 0, fresh: 0, freshOffstage: 0 }); _s2.fresh++; } } catch (_) {}
-            r = await _renderStagedPhaseImage(visualState, phases[pi], sceneIndex, planMeta);
+            r = await _renderPanel(_buildHeroPanel(visualState, phases[pi], sceneIndex, planMeta)); // unified pipeline: hero panels dispatch through _renderPanel too
           }
           // FRESH-VS-REUSE cost telemetry (Roman 2026-06-21) — the real margin signal for
           // companion editions. Offstage-driven fresh art is the structural cost driver.
@@ -182568,6 +182588,7 @@ No text, no watermark, no UI elements, share-ready.`;
   }
 
   async function _renderCutCloseup(expressionTarget, lighting, closeupTarget, shotType, sceneCtx) {
+    if (typeof _sdAssertOrigin === 'function') _sdAssertOrigin('_renderCutCloseup'); // unified-pipeline invariant
     var shot = shotType || 'mouth';
     // Gesture closeups are an exception to the "expression_target required"
     // rule — they fire on beats where the gesture itself carries the
