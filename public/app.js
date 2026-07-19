@@ -153752,6 +153752,7 @@ No text, no watermark, no UI elements, share-ready.`;
   var _CANONICAL_VISUAL_ASSETS = {
     kwisheen_anatomy:  { tier: 1, kind: 'species anatomy',           asset: '/assets/Fatelands/Kwisheen_Octofolk_Ref_v1.jpg', governs: 'body plan / proportions / tentacle topology', plumbing: 'species-anchor presence gate (always-on when a Kwisheen is on-stage)' },
     wish_burst:        { tier: 1, kind: 'canonical symbol',          assetByOutcome: { clean: '/assets/Fatelands/Wish_Burst_Clean_v1.png', twisted: '/assets/Fatelands/Wish_Burst_Twisted_v1.png' }, governs: 'the Fate burst graphic style', plumbing: '_resolveCanonicalAssets, by wish outcome' },
+    sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the shadowy hand of Fate taking the price + the cold-light thread', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
     manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
     character_casting: { tier: 1, kind: 'major recurring character', asset: null, governs: 'this individual\'s costume / colour / recognition traits', plumbing: 'per-character harvested crop — Casting Library reinject (establishing-shot sourced)' }
   };
@@ -153761,6 +153762,7 @@ No text, no watermark, no UI elements, share-ready.`;
   function _resolveCanonicalAssets(ctx) {
     ctx = ctx || {}; var out = [];
     if (ctx.wishOutcome) { var _br = _wishBurstStyleRef(ctx.wishOutcome); if (_br) out.push({ id: 'wish_burst', tier: 1, path: _br.path, label: _br.label }); }
+    if (ctx.sacrifice) out.push({ id: 'sacrifice_hand', tier: 1, path: _CANONICAL_VISUAL_ASSETS.sacrifice_hand.asset, label: 'SACRIFICE MARK STYLE reference — match the graphic language: a HAND-SHAPED SHADOW (fingers and palm) reaching to take the price, with a thin thread of cold pale light drawn OUT from where it touches. Match the STYLE ONLY — the shadow-hand and the light thread — not the exact pose or scene.' });
     if (ctx.wardrobe && /manta/i.test(ctx.wardrobe)) out.push({ id: 'manta_cloak', tier: 1, path: _CANONICAL_VISUAL_ASSETS.manta_cloak.asset, label: 'manta-cloak garment reference — match the cape hide, pearl strands, and braid trim STYLE ONLY, not the wearer.' });
     return out;
   }
@@ -154050,6 +154052,7 @@ No text, no watermark, no UI elements, share-ready.`;
         establishing: !!phase._establishing,      // a dramatic solo introduction of a recurring character
         castingEligible: !!phase._establishing,   // only establishing shots are clean identity sources
         wishOutcome: (typeof _wo !== 'undefined' ? _wo : null), // clean|twisted|rejected — for the postmortem
+        sacrifice: !!grammar.sacrifice,           // the panel pays a price → attach the shadow-hand reference
         cast: cast, authored: !!ap, invalidFields: invalid
       };
       if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
@@ -181912,7 +181915,8 @@ No text, no watermark, no UI elements, share-ready.`;
       if (typeof _resolveCanonicalAssets === 'function') {
         var _cvaCtx = {
           wardrobe: String((visualState && (visualState.pc_wardrobe || '')) + ' ' + (visualState && (visualState.li_wardrobe || ''))),
-          wishOutcome: phase && phase._panel && phase._panel.wishOutcome
+          wishOutcome: phase && phase._panel && phase._panel.wishOutcome,
+          sacrifice: phase && phase._panel && phase._panel.sacrifice
         };
         _resolveCanonicalAssets(_cvaCtx).forEach(function (a) {
           if (a && a.path && combinedAnchors.length < 8) {

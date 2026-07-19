@@ -16,7 +16,10 @@ const DIR = '/Users/romantsukerman/storybound-app/public/';
   const R = await page.evaluate(() => {
     const A = window._CANONICAL_VISUAL_ASSETS;
     // registry: the Tier-1 canonical assets are declared with tier + governs
-    const tier1 = ['kwisheen_anatomy', 'wish_burst', 'manta_cloak', 'character_casting'].every(k => A[k] && A[k].tier === 1 && A[k].governs);
+    const tier1 = ['kwisheen_anatomy', 'wish_burst', 'sacrifice_hand', 'manta_cloak', 'character_casting'].every(k => A[k] && A[k].tier === 1 && A[k].governs);
+    // sacrifice hand: declared + resolves when a panel pays a price
+    const sacResolved = window._resolveCanonicalAssets({ sacrifice: true }).some(a => a.id === 'sacrifice_hand' && /Sacrifice_Hand/.test(a.path) && /HAND-SHAPED SHADOW/i.test(a.label) && /STYLE ONLY/i.test(a.label));
+    const sacNotWhenAbsent = !window._resolveCanonicalAssets({ wishOutcome: 'clean' }).some(a => a.id === 'sacrifice_hand');
     const speciesGoverns = /body plan|proportions|tentacle/i.test(A.kwisheen_anatomy.governs);
     const burstHasBothOutcomes = !!(A.wish_burst.assetByOutcome && A.wish_burst.assetByOutcome.clean && A.wish_burst.assetByOutcome.twisted);
     const characterCastingDeclared = /harvested crop|Casting Library/i.test(A.character_casting.plumbing);
@@ -39,14 +42,14 @@ const DIR = '/Users/romantsukerman/storybound-app/public/';
     // "borrow the graphic language" — labels say STYLE ONLY, not "recreate this image"
     const labelsAreStyleOnly = twisted.every(a => /STYLE ONLY|match the STYLE|not the (figure|wearer)/i.test(a.label)) && manta.every(a => /STYLE ONLY|not the wearer/i.test(a.label));
 
-    return { tier1, speciesGoverns, burstHasBothOutcomes, characterCastingDeclared, burstResolved, mantaResolved, bothResolved, emptyIsNone, labelsAreStyleOnly,
-      assets: { species: A.kwisheen_anatomy.asset, mantaAsset: A.manta_cloak.asset, burstClean: A.wish_burst.assetByOutcome.clean, burstTwisted: A.wish_burst.assetByOutcome.twisted } };
+    return { tier1, speciesGoverns, burstHasBothOutcomes, characterCastingDeclared, burstResolved, mantaResolved, bothResolved, emptyIsNone, labelsAreStyleOnly, sacResolved, sacNotWhenAbsent,
+      assets: { species: A.kwisheen_anatomy.asset, mantaAsset: A.manta_cloak.asset, burstClean: A.wish_burst.assetByOutcome.clean, burstTwisted: A.wish_burst.assetByOutcome.twisted, sacrifice: A.sacrifice_hand.asset } };
   });
 
   await browser.close();
 
   // the declared Tier-1 image assets must actually exist on disk (a registry pointing at missing files is a lie)
-  const assetPaths = [R.assets.species, R.assets.mantaAsset, R.assets.burstClean, R.assets.burstTwisted];
+  const assetPaths = [R.assets.species, R.assets.mantaAsset, R.assets.burstClean, R.assets.burstTwisted, R.assets.sacrifice];
   const allAssetsExist = assetPaths.every(p => p && fs.existsSync(DIR + p.replace(/^\//, '')));
 
   const checks = [
@@ -56,6 +59,8 @@ const DIR = '/Users/romantsukerman/storybound-app/public/';
     ['registry: the recurring-character asset is declared (casting-sourced)', R.characterCastingDeclared],
     ['resolver: a twisted wish → the twisted burst emblem; clean → clean; rejected → none', R.burstResolved],
     ['resolver: a manta wardrobe → the manta garment reference', R.mantaResolved],
+    ['resolver: a panel that pays a price → the sacrifice shadow-hand emblem', R.sacResolved],
+    ['resolver: no sacrifice reference when the panel pays no price', R.sacNotWhenAbsent],
     ['resolver: burst + garment both resolve together', R.bothResolved],
     ['resolver: an empty context resolves to no references', R.emptyIsNone],
     ['CONDITIONING: labels say "match the STYLE only", not "recreate this image"', R.labelsAreStyleOnly],
