@@ -180447,6 +180447,10 @@ No text, no watermark, no UI elements, share-ready.`;
     }
 
     var camera   = _STAGED_CAMERA_DIRECTIVES[effectiveCamera] || _STAGED_CAMERA_DIRECTIVES.over_shoulder_pc;
+    // PANEL AUTHORITY — the camera directives are all PC/LI-relative (over-the-shoulder of the protagonist,
+    // etc.). On a solo Character Introduction the protagonist is absent, so replace the whole camera directive
+    // with a solo-subject framing that references no PC and no POV.
+    if (_pcSuppressed) camera = 'SOLO SUBJECT FRAMING — the camera frames ' + _soloName + ' ALONE, filling the frame in a dynamic hero shot (a low or dutch angle for menace, or a tight medium-close as they act). NO over-the-shoulder, NO point-of-view, NO protagonist, NO second figure. ' + _soloName + ' is the sole visual subject and is NEVER a foreground POV shoulder.';
     var pcVis    = _STAGED_PC_DIRECTIVES[visualState.pc_visibility] || _STAGED_PC_DIRECTIVES.back_only;
     // ── PC VISIBILITY POLICY ──
     // Architecture pivot: stories with EXACTLY ONE concealment burden render
@@ -180875,7 +180879,7 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_sbDoc.emotionalPurpose) _cidLines.push('EMOTIONAL PURPOSE (what the READER must FEEL here — the panel FAILS if it feels neutral): ' + _sbDoc.emotionalPurpose + '.' + (_sbDoc.emotionalApex ? '  EMOTIONAL APEX: ' + _sbDoc.emotionalApex + ' — pitch the faces/bodies to this loudness.' : ''));
           (function () {
             var em = [];
-            if (_sbDoc.pcEmotion && _sbDoc.pcEmotion.emotion) em.push('the protagonist reads ' + _sbDoc.pcEmotion.emotion + ' (' + _sbDoc.pcEmotion.intensity + '/10) — ' + _sbDoc.pcEmotion.expression);
+            if (!_pcSuppressed && _sbDoc.pcEmotion && _sbDoc.pcEmotion.emotion) em.push('the protagonist reads ' + _sbDoc.pcEmotion.emotion + ' (' + _sbDoc.pcEmotion.intensity + '/10) — ' + _sbDoc.pcEmotion.expression);
             if (_sbDoc.otherEmotion && _sbDoc.otherEmotion.emotion) em.push('the other figure reads ' + _sbDoc.otherEmotion.emotion + ' (' + _sbDoc.otherEmotion.intensity + '/10) — ' + _sbDoc.otherEmotion.expression);
             if (em.length) _cidLines.push('CHARACTER EMOTION (HARD — push each face/body to the STATED intensity; do NOT flatten to neutral, calm, or generically "determined"): ' + em.join('; ') + '.');
           })();
@@ -180894,7 +180898,7 @@ No text, no watermark, no UI elements, share-ready.`;
           } catch (_) {}
           // PRODUCTION POLISH (v1) — the "next page of the same comic" direction.
           if (_sbDoc.visualQuestion) _cidLines.push('VISUAL QUESTION (the image must make the reader WANT this answered — do not let the panel read as static): ' + _sbDoc.visualQuestion);
-          if (Array.isArray(_sbDoc.eyePath) && _sbDoc.eyePath.length) _cidLines.push('EYE PATH (compose so the reader\'s eye travels in THIS order, not competing equally): ' + _sbDoc.eyePath.join(' → ') + '.');
+          if (Array.isArray(_sbDoc.eyePath) && _sbDoc.eyePath.length) { var _ep = _pcSuppressed ? _sbDoc.eyePath.filter(function (s) { return !/protagonist|\bPC\b|\bpov\b/i.test(String(s)); }) : _sbDoc.eyePath; if (_ep.length) _cidLines.push('EYE PATH (compose so the reader\'s eye travels in THIS order, not competing equally): ' + _ep.join(' → ') + '.'); }
           if (_sbDoc.colorDirection) { var _cd = _sbDoc.colorDirection; _cidLines.push('COLOR DIRECTION: dominant palette ' + _cd.palette + '; accent ' + _cd.accent + '; lighting ' + _cd.lighting + '; ' + _cd.contrast + ' contrast; mood ' + _cd.mood + '.'); }
         }
         if (_panel) {
@@ -181053,13 +181057,13 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • NO COMIC ARTIFACTS: NO speech bubbles, NO speech-bubble tails, NO floating exclamation marks, NO comic shout balloons, NO panel borders, NO captions or text overlays, NO sound-effect lettering ("BAM" / "POW" / "!"). The canvas is a single illustration; ALL comic-page graphic conventions are forbidden. If a small comma-shaped or balloon-tail artifact appears in any corner, the image is broken — the model has slipped into "manga page" mode.\n' +
       '  • ILLUSTRATED, NEVER A PHOTOGRAPH (HARD — TERMINAL): the ENTIRE image is a drawn / inked ILLUSTRATION in the active artist\'s signature style (Ender Bond, Ryo Toro, Lora Venn, or Olen Droll). It is NEVER a photograph, NEVER photorealistic, NEVER a 3D / CGI render, NEVER a cinematic live-action still. If the output could be mistaken for a photo or film frame, it is BROKEN — render it as illustration. This holds for EVERY setting, ESPECIALLY gritty modern / noir / rain / neon scenes, where the model is most tempted to default to photoreal.\n' +
       '  • ENTIRE IMAGE IN ARTIST STYLE (HARD): every pixel — face, hands, body, clothing, fabric, environment, props, background, lighting — is rendered in the active artist\'s signature register. Linework, hatching, ink behavior, color palette must apply UNIFORMLY across the frame. NEVER render the face in artist-style while leaving the body/clothing/setting in photorealistic or generic-illustration style. "Photo-traced body with stylized face" is a FAIL — the entire image must be a coherent single artist-style illustration.\n';
-    prompt += pcVis + '\n\n';
+    if (!_pcSuppressed) prompt += pcVis + '\n\n';   // PANEL AUTHORITY: no PC on a solo intro → drop the whole PC-rendering apparatus
     if (liVis) {
       prompt += liVis + '\n\n';
     } else {
       // LI is offstage in this phase — explicit instruction so the model
       // doesn't paint a silhouette out of habit.
-      prompt += 'LOVE INTEREST: NOT PRESENT in this phase. Do NOT depict the love interest in any form — no silhouette, no shadow, no implied presence. The frame contains only the protagonist (per the PROTAGONIST RENDERING constraint) and any other named characters listed below.\n\n';
+      prompt += 'LOVE INTEREST: NOT PRESENT in this phase. Do NOT depict the love interest in any form — no silhouette, no shadow, no implied presence. The frame contains only ' + (_pcSuppressed ? _soloName + ' (per the SOLO PANEL constraint)' : 'the protagonist (per the PROTAGONIST RENDERING constraint)') + ' and any other named characters listed below.\n\n';
     }
     prompt += 'ENVIRONMENT: ' + bg + '\n';
     // EXACT BACKGROUND MATCH — image models drift toward stylized or
@@ -181107,7 +181111,9 @@ No text, no watermark, no UI elements, share-ready.`;
     }).join(', ');
 
     // ── AXIS 1: RELATIONAL REGISTER ──
-    if (liAbsent && !_hasSideChar) {
+    if (_pcSuppressed) {
+      prompt += 'RELATIONAL REGISTER (HARD): SOLO INTRODUCTION. Only ' + _soloName + ' is on screen. The protagonist is ABSENT. No second figure, no protagonist, no POV shoulder, no romantic partner, no couple. The space is ' + _soloName + '\'s alone.\n';
+    } else if (liAbsent && !_hasSideChar) {
       prompt += 'RELATIONAL REGISTER (HARD): SOLO. Only the protagonist is on screen. No second figure. Do NOT insert a romantic partner, do NOT add a second silhouette in the background, do NOT paint a couple. The space the protagonist occupies is theirs alone.\n';
     } else if (liAbsent && _hasSideChar) {
       prompt += 'RELATIONAL REGISTER (HARD): NON-ROMANTIC PAIRING. The two figures in this frame are the protagonist and ' + _sideNames + ' — NOT a romantic couple. The artist style references this prompt carries were authored from romance compositions; IGNORE their inter-character positioning. If the rendered image would make a stranger watching the scene think "those two are dating," the staging is WRONG — match the social staging mode below.\n';
@@ -181190,13 +181196,15 @@ No text, no watermark, no UI elements, share-ready.`;
     var _antiGender = _pcGender === 'male' ? 'NOT a woman, NOT female, no breasts, no female-coded silhouette'
                     : _pcGender === 'female' ? 'NOT a man, NOT male, no beard, no Adam\'s apple, no male-coded silhouette, no broad-shouldered musculature'
                     : '';
-    prompt += 'PROTAGONIST GENDER (HARD LOCK — overrides any visual contradicting cue from reference images, artist style anchors, or wardrobe descriptors): the protagonist is an adult ' + _genderWord + '. Gender reads CLEARLY and UNAMBIGUOUSLY as ' + _genderUpper + ' at first glance. '
+    if (!_pcSuppressed) prompt += 'PROTAGONIST GENDER (HARD LOCK — overrides any visual contradicting cue from reference images, artist style anchors, or wardrobe descriptors): the protagonist is an adult ' + _genderWord + '. Gender reads CLEARLY and UNAMBIGUOUSLY as ' + _genderUpper + ' at first glance. '
       + (_antiGender ? _antiGender + '. ' : '')
       + 'If a body-descriptor token in the WARDROBE block could be read across genders, default to ' + _genderWord + '. The ' + _genderWord + ' silhouette is the structural baseline — wardrobe and hair drape on top of that silhouette, never the other way around.\n';
 
     // Wardrobe — these are pulled verbatim from the prose by the analysis
     // pass and are CRITICAL for matching what the reader is reading.
-    if (visualState.pc_wardrobe) {
+    if (_pcSuppressed) {
+      /* PANEL AUTHORITY: no PC on a solo intro → no PC wardrobe */
+    } else if (visualState.pc_wardrobe) {
       prompt += 'PROTAGONIST WARDROBE (HARD MATCH — pull from this exact description, do NOT substitute): ' + ((typeof _expandMantaWardrobe === 'function') ? _expandMantaWardrobe(visualState.pc_wardrobe) : visualState.pc_wardrobe) + '\n';
     } else {
       // PC WARDROBE FALLBACK — when prose doesn't specify, inject a world/
@@ -181447,15 +181455,20 @@ No text, no watermark, no UI elements, share-ready.`;
       });
       // EXACT COUNT (image models obey numeric constraints more reliably than
       // semantic exclusion — "exactly 2 figures" beats "only Dani and Tess").
-      var _adultCount = 1 + _rosterNames.length;
+      // PANEL AUTHORITY — on a solo Character Introduction the protagonist is NOT counted (she is absent);
+      // the figure count is the authoritative cast only, so the model renders exactly the antagonist, alone.
+      var _adultCount = (_pcSuppressed ? 0 : 1) + _rosterNames.length;
+      if (_adultCount < 1) _adultCount = 1;
       var _countWord = _adultCount === 1 ? 'figure' : 'figures';
-      var _rosterDesc = _rosterNames.length
-        ? ('the protagonist (' + _pcWord + ') and ' + _rosterNames.join(', '))
-        : ('the protagonist (' + _pcWord + '), ALONE');
+      var _rosterDesc = _pcSuppressed
+        ? (_rosterNames.join(', ') + ' — ALONE; the protagonist is ABSENT from this panel')
+        : (_rosterNames.length
+          ? ('the protagonist (' + _pcWord + ') and ' + _rosterNames.join(', '))
+          : ('the protagonist (' + _pcWord + '), ALONE'));
       prompt += '\nLI-ABSENT ROSTER (HARD — the love interest is NOT in this scene):\n' +
         '  • FIGURE COUNT (HARD): EXACTLY ' + _adultCount + ' adult ' + _countWord + ' in frame — render ' + _adultCount + ', not ' + (_adultCount + 1) + '. If you are about to place another adult beside them, STOP: there is no one else in this scene.\n' +
         '  • The ' + _adultCount + ' adult ' + _countWord + ' ' + (_adultCount === 1 ? 'is' : 'are') + ' EXACTLY: ' + _rosterDesc + '.\n' +
-        '  • Do NOT add a love interest, a romantic partner, a "handsome stranger", or any unnamed extra adult standing with the protagonist. This is NOT a couple shot and NOT a romance-cover composition — no two-people-posed-as-lovers framing, no man-and-woman-on-a-glamorous-street tableau.\n' +
+        '  • Do NOT add a love interest, a romantic partner, a "handsome stranger", or any unnamed extra adult standing with ' + (_pcSuppressed ? _soloName : 'the protagonist') + '. This is NOT a couple shot and NOT a romance-cover composition — no two-people-posed-as-lovers framing, no man-and-woman-on-a-glamorous-street tableau.\n' +
         (_rosterNames.length
           ? '  • Render the named side character(s) above as their stated gender — NEVER substitute a male love-interest figure for a female side character.\n'
           : '  • The protagonist appears alone (ambient background extras only — unfocused, never a co-subject).\n');
@@ -181656,7 +181669,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // NPC differentiation — defensive — even if the screenplay generator
     // followed the rule, the model can collapse two female characters
     // into visual twins. Spell it out at the image-prompt layer too.
-    prompt += 'CHARACTER DIFFERENTIATION (HARD): when multiple characters appear in the frame, render them as visually DISTINCT people — different hair color, different hairstyle, different body type, different wardrobe palette, different accessories. NEVER paint two female characters as twins of the protagonist; the side character\'s wardrobe and hair are described in their OWN entry of other_characters_present and must NOT echo the PROTAGONIST WARDROBE or PROTAGONIST APPEARANCE block.\n';
+    if (!_pcSuppressed) prompt += 'CHARACTER DIFFERENTIATION (HARD): when multiple characters appear in the frame, render them as visually DISTINCT people — different hair color, different hairstyle, different body type, different wardrobe palette, different accessories. NEVER paint two female characters as twins of the protagonist; the side character\'s wardrobe and hair are described in their OWN entry of other_characters_present and must NOT echo the PROTAGONIST WARDROBE or PROTAGONIST APPEARANCE block.\n';
     // Anti-pose carry — the 4o style extractor occasionally leaks
     // subject-positioning language ("two adults leaning toward each
     // other, faces close") from the style reference into the image
@@ -181690,7 +181703,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // renders as motorcycle-goth-chick because that's what the ref happens
     // to wear. Make the override unambiguous.
     prompt += '\nWARDROBE OVERRIDE (HARD — TERMINAL):\n';
-    prompt += 'The PROTAGONIST WARDROBE and LOVE INTEREST WARDROBE specifications above are ABSOLUTE. They take complete precedence over any clothing visible in the reference images. The reference images are STYLE ANCHORS for linework, shading, color palette, anatomy treatment, and rendering technique ONLY. DO NOT copy clothing from reference images. If the reference image shows a leather jacket and the wardrobe spec says "blazer," render a blazer. If the reference shows a gown and the spec says "tactical gear," render tactical gear. The character\'s outfit is defined by the WARDROBE specification, NOT the reference image.\n';
+    if (!_pcSuppressed) prompt += 'The PROTAGONIST WARDROBE and LOVE INTEREST WARDROBE specifications above are ABSOLUTE. They take complete precedence over any clothing visible in the reference images. The reference images are STYLE ANCHORS for linework, shading, color palette, anatomy treatment, and rendering technique ONLY. DO NOT copy clothing from reference images. If the reference image shows a leather jacket and the wardrobe spec says "blazer," render a blazer. If the reference shows a gown and the spec says "tactical gear," render tactical gear. The character\'s outfit is defined by the WARDROBE specification, NOT the reference image.\n';
     prompt += 'Specifically forbidden bleeds from reference images: motorcycle leather, chokers, anime-urban-streetwear, period gowns (when scene is contemporary), school uniforms, fetishwear, stage costumes — UNLESS the wardrobe specification above explicitly calls for them.\n';
 
     // ── STYLE-REF PANEL FOCUS (Modern / Dystopia world only) ──
@@ -181731,7 +181744,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var cameraMove = visualState._phaseCameraMove || 'none';
     var focusTarget = visualState._phaseFocusTarget || null;
     if (shotStyle === 'ots_pc') {
-      prompt += '\nSHOT STYLE: OVER-THE-SHOULDER from the protagonist. PC silhouette in the foreground (shoulder + back of head per the PROTAGONIST RENDERING rule). Subject (LI or named character) in the middle ground, framed past the PC\'s shoulder. Asymmetric composition; do NOT center the subject.\n';
+      if (!_pcSuppressed) prompt += '\nSHOT STYLE: OVER-THE-SHOULDER from the protagonist. PC silhouette in the foreground (shoulder + back of head per the PROTAGONIST RENDERING rule). Subject (LI or named character) in the middle ground, framed past the PC\'s shoulder. Asymmetric composition; do NOT center the subject.\n';
       // Mystery-Man-aware OTS_PC variant — when the LI is in this phase
       // and shadowed/partial, allow the PC\'s head to PARTIALLY OCCLUDE
       // the LI so concealment is achieved by the PC herself rather than
@@ -181780,7 +181793,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // PC is the visible subject (LI is hidden via camera angle), so PC face
     // concealment is structurally unnecessary AND fights the OTS-from-LI shot.
     if (_mmActiveForStory) {
-      prompt += '- (PC FACE VISIBLE — MM STORY: this story renders the protagonist\'s face as canonical. Skipping the standard PC-face-hidden rule for ALL shots in this story. The LI concealment is handled by camera angle separately.)\n';
+      if (!_pcSuppressed) prompt += '- (PC FACE VISIBLE — MM STORY: this story renders the protagonist\'s face as canonical. Skipping the standard PC-face-hidden rule for ALL shots in this story. The LI concealment is handled by camera angle separately.)\n';
     } else {
       prompt += '- The protagonist\'s full face. Not in three-quarter view, not in profile-with-far-eye-visible, not in soft-focus, not at any framing distance. The protagonist\'s identity stays concealed. Use back-of-head, deep side profile (far eye not visible), partial cheekbone-only, or hidden-implied — never a frontal or three-quarter face.\n';
       prompt += '- The protagonist looking toward the camera. Their gaze is always TOWARD whatever the camera is looking at, never INTO the lens.\n';
@@ -181859,7 +181872,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // model reads before sampling, which is when latent biases for
     // "romantic two-shot = masculine + feminine silhouette" would
     // otherwise activate.
-    if (identityLock) {
+    if (identityLock && !_pcSuppressed) {   // PANEL AUTHORITY: PC/LI identity lock — omit the closing re-emit on a solo intro
       prompt += '\n\n' + identityLock + '\n';
     }
 
@@ -181874,8 +181887,15 @@ No text, no watermark, no UI elements, share-ready.`;
         var _pcIn = visualState._phasePcInCast !== false;
         var _viol = [];
         if (_pcSuppressed) {
-          // exclude our OWN suppression lines (they intentionally name the protagonist as ABSENT)
-          var _scan = prompt.split('\n').filter(function (l) { return !/PANEL AUTHORITY|CAMERA OVERRIDE \(HARD — SOLO/.test(l); }).join('\n');
+          // Scan line-by-line for a genuine PC SUMMONS. Skip (a) our own Panel-Authority / solo directives and
+          // (b) any NEGATION line ("no protagonist", "NO over-the-shoulder", "the protagonist is ABSENT") — those
+          // SUPPRESS the PC, they don't summon them. Only a positive assertion of PC presence is a violation.
+          var _pcLines = prompt.split('\n').filter(function (l) {
+            if (/PANEL AUTHORITY|CAMERA OVERRIDE|SOLO SUBJECT FRAMING|SOLO INTRODUCTION|CHARACTER INTRODUCTION \(HARD/.test(l)) return false;
+            if (/\b(no|not|never|without|absent|absence|only|alone|sole)\b/i.test(l)) return false; // negation / solo assertion
+            return true;
+          });
+          var _scan = _pcLines.join('\n');
           if (/\bprotagonist\b/i.test(_scan)) _viol.push('protagonist-role');
           if (/\bPOV\b|point[- ]of[- ]view/i.test(_scan)) _viol.push('POV');
           if (/over[- ]the[- ]shoulder|over_shoulder_pc/i.test(_scan)) _viol.push('OTS-camera');

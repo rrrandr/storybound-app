@@ -56,6 +56,7 @@ const { chromium } = require('playwright-core');
         const rvs = window._resolvePhaseVisualState(plan.visualState, phase, plan.phases, plan.beats);
         authExcludesPc = Array.isArray(rvs._phaseAuthoritativeCast) && rvs._phaseAuthoritativeCast.indexOf('protagonist') === -1 && rvs._phaseAuthoritativeCast.length >= 1;
         pcInCastFalse = rvs._phasePcInCast === false;
+        rvs.camera = 'over_shoulder_pc';   // worst case: the PC-POV camera that used to summon the protagonist
         s._stagedRegionContract = window._buildStagedRegionContract({ visualState: plan.visualState, phases: [] });
         const hero = window._buildStagedHeroPrompt(rvs, 0, plan) || '';
         introDirective = /CHARACTER INTRODUCTION \(HARD/.test(hero) && /caught MID-ACTION/.test(hero);
@@ -71,6 +72,7 @@ const { chromium } = require('playwright-core');
   await browser.close();
   R.authorityLogged = logs.some(t => /\[PANEL-AUTHORITY\]/.test(t));
   R.panelSpecLogged = logs.some(t => /\[PANEL-SPEC\]/.test(t) && /character_introduction\(estab\)/.test(t));
+  R.soloClean = logs.some(t => /\[PANEL-AUTHORITY\].*✓ solo clean/.test(t)) && !logs.some(t => /\[PANEL-AUTHORITY\].*VIOLATION/.test(t));
 
   const checks = [
     ['every panel is typed (character_introduction | event | scene)', R.allTyped],
@@ -83,6 +85,7 @@ const { chromium } = require('playwright-core');
     ['hero prompt emits the action-driven CHARACTER INTRODUCTION directive (mid-action, not a portrait)', R.introDirective],
     ['hero prompt emits the SOLO PANEL directive (protagonist ABSENT, pipeline-wide)', R.soloDirective],
     ['PANEL AUTHORITY AUDIT logged for the panel ([PANEL-AUTHORITY])', R.authorityLogged],
+    ['PANEL AUTHORITY AUDIT reports ✓ SOLO CLEAN under a worst-case OTS camera (no PC re-summon)', R.soloClean],
     ['PANEL-SPEC diagnostic shows narrativePanelType per panel (input visibility)', R.panelSpecLogged],
     ['hero prompt builds with the introduced character present', R.heroOK]
   ];
