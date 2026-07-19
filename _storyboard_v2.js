@@ -81,7 +81,7 @@ const { chromium } = require('playwright-core');
     // the establishing panel emits the ESTABLISHING SHOT directive
     const estVS = est ? window._resolvePhaseVisualState(plan.visualState, est, plan.phases, plan.beats) : null;
     const estHero = estVS ? (window._buildStagedHeroPrompt(estVS, 0, plan) || '') : '';
-    const heroEstablishing = /ESTABLISHING SHOT \(HARD — this panel INTRODUCES/.test(estHero);
+    const heroEstablishing = /CHARACTER INTRODUCTION \(HARD — this panel INTRODUCES/.test(estHero);
 
     return {
       revEventLed, consEventLed, eventPrimaryNotCharacter,
@@ -110,7 +110,7 @@ const { chromium } = require('playwright-core');
     ['LINT: catches an environment absent across the whole scene', R.catchesNoEnv],
     ['HERO PROMPT: an event panel emits PRIMARY VISUAL SUBJECT (the event dominates)', R.heroEventSubject],
     ['HERO PROMPT: an event panel SKIPS the face-off blocking directive', R.heroSkipsFaceoffOnEvent],
-    ['HERO PROMPT: the establishing panel emits the ESTABLISHING SHOT directive', R.heroEstablishing]
+    ['HERO PROMPT: the establishing panel emits the CHARACTER INTRODUCTION directive', R.heroEstablishing]
   ];
 
   let pass = 0, fail = 0;

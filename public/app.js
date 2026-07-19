@@ -154074,15 +154074,33 @@ No text, no watermark, no UI elements, share-ready.`;
         }
         return { key: k, name: (canon[k] && canon[k].displayName) || tok, performance: perf };
       });
+      // ═══ NARRATIVE PANEL TYPE + CAST AUTHORITY (Storyboard v3, Roman 2026-07-18) ══════════════════════
+      // The panel's narrative FUNCTION drives its cast, not the reverse. A storyboard that only says "hero
+      // panel with Kesh present" hands the renderer two figures, which it collapses into a two-shot face-off
+      // (the romance-framing failure) AND which contaminates the identity harvest (no clean solo frame). So
+      // TYPE the panel and let the type own the cast:
+      //   character_introduction → SOLO: only the introduced character (others only if the action strictly
+      //     requires, and then never equal-weight). This is the fix that makes the establishing shot actually
+      //     solo — the hierarchy already said "alone", but the CAST still listed everyone, and structure beats
+      //     prose. A clean solo frame also feeds the identity harvest (see _castingCleanIdentitySource).
+      //   event → the EVENT is primary; characters support (cast unchanged, hierarchy already event-led).
+      var _eventLed = (primary === (phase._storyboardDoc && phase._storyboardDoc.eyeMagnet));
+      var _npType = phase._establishing ? 'character_introduction' : (_eventLed ? 'event' : 'scene');
+      if (_npType === 'character_introduction') {
+        var _introKey = keyFor(String(phase._establishing).toLowerCase());
+        var _solo = cast.filter(function (c) { return c.key === _introKey; });
+        if (_solo.length) cast = _solo;   // CAST AUTHORITY — drop every figure but the one being introduced
+      }
       phase._panel = {
         type: (ap && ap.panelType) || (pi === 0 ? 'establishing' : 'hero'),
+        narrativePanelType: _npType,       // character_introduction | event | scene (v3; drives cast + the render directive)
         panelIdx: pi, dramaticQuestion: dq, shotType: shotType,
         shotExpansion: _SHOT_LANGUAGE_V1[shotType] || '',
         hierarchy: { primary: primary, secondary: secondary, background: background },
         grammarCues: Object.keys(grammar).filter(function (g) { return grammar[g] && _VISUAL_GRAMMAR_V1[g]; }).map(function (g) { return (g === 'sacrifice') ? _sacrificeHandGrammar(txt) : _VISUAL_GRAMMAR_V1[g]; }),
         perspectiveContract: _perspective, // reader / characters / physical-world — the three-way split
         wishAnchor: _wishAnchor,            // the concrete thing Fate judges — where the burst attaches
-        eventLed: (primary === (phase._storyboardDoc && phase._storyboardDoc.eyeMagnet)), // the EVENT is the subject
+        eventLed: _eventLed, // the EVENT is the subject
         establishing: !!phase._establishing,      // a dramatic solo introduction of a recurring character
         castingEligible: !!phase._establishing,   // only establishing shots are clean identity sources
         wishOutcome: (typeof _wo !== 'undefined' ? _wo : null), // clean|twisted|rejected — for the postmortem
@@ -180753,6 +180771,17 @@ No text, no watermark, no UI elements, share-ready.`;
         var _panel = visualState._phasePanel || null;
         var _perfByKey = {};
         if (_panel && Array.isArray(_panel.cast)) _panel.cast.forEach(function (c) { _perfByKey[c.key] = c.performance || null; });
+        // CAST AUTHORITY (Storyboard v3) — on a Character Introduction the panel's cast is SOLO, so the figure
+        // ROLES block must enumerate ONLY that character. The establishing TEXT already said "alone", but the
+        // renderer was still handed every present figure's anatomy here (_keys) and collapsed them into a two-
+        // shot — structure beats prose. Cut the roster to the cast so the second figure physically cannot be
+        // drawn (which also gives the identity harvest a clean solo frame). Only narrows on introduction panels.
+        if (_panel && _panel.narrativePanelType === 'character_introduction' && Array.isArray(_panel.cast) && _panel.cast.length) {
+          var _castKeys = _panel.cast.map(function (c) { return c.key; });
+          var _narrowed = _keys.filter(function (k) { return _castKeys.indexOf(k) !== -1; });
+          _keys = _narrowed.length ? _narrowed : _castKeys.slice();
+          try { console.log('[CAST-AUTHORITY] character_introduction → solo roster [' + _keys.join(', ') + '] (dropped ' + '2nd figures so the intro renders alone)'); } catch (_) {}
+        }
         var _cidLines = [];
         // Panel header — the authoritative shot the renderer must execute.
         _cidLines.push('STORY DIRECTOR — PANEL (HARD; render EXACTLY this shot; figures are DISTINCT named people; you ILLUSTRATE these decisions, you do NOT change them):');
@@ -180804,7 +180833,7 @@ No text, no watermark, no UI elements, share-ready.`;
           // STORYBOARD v2 — the PRIMARY SUBJECT is a VISUAL subject. An establishing shot = the character
           // ALONE and dominant; an event-led panel = the EVENT dominant, characters supporting.
           if (_panel.establishing) {
-            _cidLines.push('ESTABLISHING SHOT (HARD — this panel INTRODUCES ' + h.primary + '): ' + h.primary + ' ALONE and dominant, filling the frame in a dramatic entrance (emerging / blocking the way / descending) — a medium-close hero shot that teaches the reader who this is. NO second figure competing for attention; the protagonist is absent or a small silhouette. This is NOT a face-off.');
+            _cidLines.push('CHARACTER INTRODUCTION (HARD — this panel INTRODUCES ' + h.primary + ', and it is the ONLY figure in frame): teach the reader WHO ' + h.primary + ' is by what they are DOING, not how they pose. ' + h.primary + ' is caught MID-ACTION at maximum narrative velocity — the action defines their role (striking a spear into the stone, bursting through coral, blocking the only way out, descending on prey, mid-shout, halfway through making a wish). NEVER a static standing portrait, NEVER "grim expression", NEVER posing or glaring at camera. The action emerges from the hot crisis already in motion. ' + h.primary + ' fills the frame ALONE — no second figure, no protagonist, not even a small silhouette. This is the opposite of a face-off.');
           } else if (_panel.eventLed) {
             _cidLines.push('PRIMARY VISUAL SUBJECT (HARD — the EVENT is the subject, not the people): ' + h.primary + ' DOMINATES the frame and is seen FIRST; ' + (h.secondary ? h.secondary + ' is a SMALLER supporting figure reacting to it' : 'any figures are small and supporting') + '. Do NOT compose this as two faces confronting each other — SHOW THE EVENT.');
           } else if (h.primary) {
