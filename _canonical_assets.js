@@ -18,7 +18,7 @@ const DIR = '/Users/romantsukerman/storybound-app/public/';
     // registry: the Tier-1 canonical assets are declared with tier + governs
     const tier1 = ['kwisheen_anatomy', 'wish_burst', 'sacrifice_hand', 'manta_cloak', 'character_casting'].every(k => A[k] && A[k].tier === 1 && A[k].governs);
     // sacrifice hand: declared + resolves when a panel pays a price
-    const sacResolved = window._resolveCanonicalAssets({ sacrifice: true }).some(a => a.id === 'sacrifice_hand' && /Sacrifice_Hand/.test(a.path) && /HAND-SHAPED SHADOW/i.test(a.label) && /STYLE ONLY/i.test(a.label));
+    const sacResolved = window._resolveCanonicalAssets({ sacrifice: true }).some(a => a.id === 'sacrifice_hand' && /Sacrifice_Hand/.test(a.path) && /shadow-STAIN/i.test(a.label) && /STYLE ONLY/i.test(a.label));
     const sacNotWhenAbsent = !window._resolveCanonicalAssets({ wishOutcome: 'clean' }).some(a => a.id === 'sacrifice_hand');
     const speciesGoverns = /body plan|proportions|tentacle/i.test(A.kwisheen_anatomy.governs);
     const burstHasBothOutcomes = !!(A.wish_burst.assetByOutcome && A.wish_burst.assetByOutcome.clean && A.wish_burst.assetByOutcome.twisted);

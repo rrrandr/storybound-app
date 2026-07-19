@@ -153712,7 +153712,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // BURST STYLE (Roman 2026-07-18, #16) — regen13 rendered the burst as an anime ENERGY BLAST (volumetric
   // glow, particles, a floating eye). Fate's language is authorial NOTATION — a flat symbolic mark, like
   // the reference chart. Lead with strong POSITIVE style; a short negative clarifier keeps it off "energy".
-  var _WISH_BURST_STYLE = 'STYLE (HARD — SYMBOLIC LINEWORK, not energy): draw the burst as a FLAT, INKED, ENGRAVED graphic mark — clean vector-like straight radial lines and discrete HARD-EDGED geometric stars, the look of a printed-comic sound-effect / a woodcut / a tattoo emblem, laid as a 2D graphic OVERLAY on top of the art with hard clean edges, uniform line weight, and a limited flat palette. It is symbolic notation, not a light source: keep it a graphic emblem, NOT a soft volumetric glow, lens flare, particle cloud, fiery aura, or an anime energy explosion.';
+  var _WISH_BURST_STYLE = 'STYLE (HARD — SYMBOLIC LINEWORK, not energy): draw the burst as an INKED, ENGRAVED graphic mark — clean straight radial lines and discrete HARD-EDGED geometric stars, the look of a printed-comic sound-effect / a woodcut / a tattoo emblem. It is symbolic notation, not a light source: NOT a soft volumetric glow, lens flare, particle cloud, fiery aura, or an anime energy explosion. INTEGRATION (HARD — it must belong to the illustration, NOT read as a sticker pasted flat on top): render it in the SAME ink, line-weight, and hand as the rest of the artwork, and set it IN the panel\'s PERSPECTIVE and DEPTH — the rays radiate through the scene\'s 3D space from the wish anchor, passing BEHIND foreground figures and objects and converging correctly on the anchor, occluded by anything in front of it. It is a graphic mark that lives inside the drawing\'s space and line style, even though (per the non-diegetic law) it casts no real light and no character perceives it.';
   window._WISH_BURST_STYLE = _WISH_BURST_STYLE;
   var _WISH_BURST_CLEAN = 'FATE’S BURST (HARD — Fate’s own signature, GRAPHICALLY DOMINANT, integrated INTO the art, radiating from and WRAPPING THE WISH ANCHOR — the concrete thing Fate is judging, named in the WISH ANCHOR line): a big, BOLD GOLDEN-WHITE STAR-BURST filling much of the frame AROUND THE ANCHOR — clean, STRAIGHT radiant lines fanning outward, studded with bright four- and five-point SPARKLE STARS and fine drifting motes; warm, high-contrast, unmistakable. NEVER a faint glow or a few tiny sparkles — it is the loudest graphic element in the panel and reads instantly as a TRUE wish acting on the world. ' + _WISH_BURST_STYLE + ' ' + _FATE_NONDIEGETIC_CLAUSE;
   var _WISH_BURST_TWISTED = 'FATE’S BURST — TWISTED (HARD — GRAPHICALLY DOMINANT; the SAME bold burst wrapping THE WISH ANCHOR, but Fate has CORRUPTED the wish): a big, high-contrast RED burst filling much of the frame AROUND THE ANCHOR — the radiant lines become RED and JAGGED, forked and unstable like cracks or lightning, wavy and disordered; the sparkle stars become scribbled RED X’S and broken, splintered star-shapes. NEVER faint — it is the loudest graphic element in the panel, radiating from the anchor but reading unmistakably WRONG — the wish has curdled. ' + _WISH_BURST_STYLE + ' ' + _FATE_NONDIEGETIC_CLAUSE;
@@ -153759,7 +153759,7 @@ No text, no watermark, no UI elements, share-ready.`;
   var _CANONICAL_VISUAL_ASSETS = {
     kwisheen_anatomy:  { tier: 1, kind: 'species anatomy',           asset: '/assets/Fatelands/Kwisheen_Octofolk_Ref_v1.jpg', governs: 'body plan / proportions / tentacle topology', plumbing: 'species-anchor presence gate (always-on when a Kwisheen is on-stage)' },
     wish_burst:        { tier: 1, kind: 'canonical symbol',          assetByOutcome: { clean: '/assets/Fatelands/Wish_Burst_Clean_v1.png', twisted: '/assets/Fatelands/Wish_Burst_Twisted_v1.png' }, governs: 'the Fate burst graphic style', plumbing: '_resolveCanonicalAssets, by wish outcome' },
-    sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the shadowy hand of Fate taking the price + the cold-light thread', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
+    sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the localized shadow-STAIN Fate leaves over the sacrificed part (absence, not a reaching hand)', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
     manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
     character_casting: { tier: 1, kind: 'major recurring character', asset: null, governs: 'this individual\'s costume / colour / recognition traits', plumbing: 'per-character harvested crop — Casting Library reinject (establishing-shot sourced)' },
     composition:       { tier: 2, kind: 'framing / composition',      assetByFraming: { establishing_solo: '/assets/Fatelands/Comp_Establishing_Solo_v1.png', object_dominant: '/assets/Fatelands/Comp_Object_Dominant_v1.png', environment_wide: '/assets/Fatelands/Comp_Environment_Wide_v1.png' }, governs: 'HOW the panel is framed (subject scale, dominance, populated depth) — beats the renderer\'s two-shot prior', plumbing: '_resolveCanonicalAssets via ctx.framing = _panelFraming(panel)' }
@@ -153770,7 +153770,7 @@ No text, no watermark, no UI elements, share-ready.`;
   function _resolveCanonicalAssets(ctx) {
     ctx = ctx || {}; var out = [];
     if (ctx.wishOutcome) { var _br = _wishBurstStyleRef(ctx.wishOutcome); if (_br) out.push({ id: 'wish_burst', tier: 1, path: _br.path, label: _br.label }); }
-    if (ctx.sacrifice) out.push({ id: 'sacrifice_hand', tier: 1, path: _CANONICAL_VISUAL_ASSETS.sacrifice_hand.asset, label: 'SACRIFICE MARK STYLE reference — match the graphic language: a HAND-SHAPED SHADOW (fingers and palm) reaching to take the price, with a thin thread of cold pale light drawn OUT from where it touches. Match the STYLE ONLY — the shadow-hand and the light thread — not the exact pose or scene.' });
+    if (ctx.sacrifice) out.push({ id: 'sacrifice_hand', tier: 1, path: _CANONICAL_VISUAL_ASSETS.sacrifice_hand.asset, label: 'SACRIFICE MARK STYLE reference — match the graphic language: a small LOCALIZED shadow-STAIN, a soft palm-shaped patch of shadow with faint finger-like edges that settles OVER the sacrificed part and drains it to grey — an OCCLUSION / an ABSENCE, NOT a hand or arm reaching in, NOT a shadow creature. Match the STYLE ONLY — the soft palm-shaped stain — not any scene.' });
     if (ctx.wardrobe && /manta/i.test(ctx.wardrobe)) out.push({ id: 'manta_cloak', tier: 1, path: _CANONICAL_VISUAL_ASSETS.manta_cloak.asset, label: 'manta-cloak garment reference — match the cape hide, pearl strands, and braid trim STYLE ONLY, not the wearer.' });
     // COMPOSITION / FRAMING reference (Roman 2026-07-18) — attach the framing as an image, not text, because the
     // renderer's two-shot prior defeats every text directive. ONE per panel, only for framings the prior fights.
@@ -153805,7 +153805,11 @@ No text, no watermark, no UI elements, share-ready.`;
   // shadow, Fate's own reaching hand, closing over the thing sacrificed: a tangible cost (eye, limb,
   // voice, memory) → the hand over that part; an INNER cost (years of life, courage, love) → the hand
   // over the HEART. Applies to every rail (ordinary / Petition / Tempt) — it's how Fate takes, period.
-  var _SACRIFICE_HAND_BASE = 'SACRIFICE (visual grammar — THE SHADOWY HAND OF FATE): a large, dark, semi-transparent HAND-SHAPED SHADOW — Fate\'s own reaching hand, unmistakably fingers and palm (NOT ambient darkness, smoke, or a cloud) — extends into the frame and closes ';
+  // SACRIFICE = FATE QUIETLY COLLECTING A PRICE, rendered as ABSENCE not attack (Roman 2026-07-18): the
+  // earlier "shadowy hand reaching into the frame" read as a shadow monster / an attacker. The corrected
+  // grammar is a LOCALIZED shadow-STAIN that settles over the sacrificed part (a palm-shaped occlusion, soft
+  // finger-edges) and drains it to grey, then dissipates — Fate collecting, not a creature attacking.
+  var _SACRIFICE_STAIN_BASE = 'SACRIFICE (visual grammar — FATE QUIETLY COLLECTS THE PRICE, rendered as ABSENCE, not an attack): a small, LOCALIZED dark SHADOW-STAIN settles directly ';
   function _sacrificeHandTarget(txt) {
     var t = String(txt || '').toLowerCase();
     if (/\b(eyes?|sight|vision|gaze)\b/.test(t)) return { where: 'over the wisher\'s EYE', inner: false };
@@ -153823,7 +153827,7 @@ No text, no watermark, no UI elements, share-ready.`;
   window._sacrificeHandTarget = _sacrificeHandTarget;
   function _sacrificeHandGrammar(txt) {
     var tgt = _sacrificeHandTarget(txt);
-    return _SACRIFICE_HAND_BASE + tgt.where + ', drawing a thread of cold pale light OUT where it touches; the wisher stills or flinches at the loss. The shadow-hand is the focal event.' + (tgt.inner ? ' Because this is an INNER sacrifice, the hand rests OVER THE HEART, not over any body part.' : '') + ' ' + _FATE_NONDIEGETIC_CLAUSE;
+    return _SACRIFICE_STAIN_BASE + tgt.where + ' — a soft, palm-shaped patch of shadow with faint finger-like edges, as if an unseen hand pressed there and is already lifting away; the colour and detail BENEATH it DRAIN to grey where it lies, and the stain is beginning to dissipate. It is a STAIN / an OCCLUSION / an ABSENCE — NOT a hand or arm reaching into the frame, NOT a ghostly limb, NOT a shadow creature, NOT an attacker looming over the wisher. The wisher stills or quietly flinches at the loss. This muted stain is the focal event — small, specific, and quiet.' + (tgt.inner ? ' Because this is an INNER sacrifice, the stain settles OVER THE HEART.' : '') + ' ' + _FATE_NONDIEGETIC_CLAUSE;
   }
   window._sacrificeHandGrammar = _sacrificeHandGrammar;
   // Which paid Fate rail (if any) is the player using this turn? Petition/Tempt are wishes too, so
@@ -153977,6 +153981,16 @@ No text, no watermark, no UI elements, share-ready.`;
     return { warnings: warnings };
   }
   window._fateKnowledgeLeakLint = _fateKnowledgeLeakLint;
+  // LIVING WORLD (Storyboard v3) — detect narrated GROUPS so the render establishes them (an inhabited
+  // world, not two actors on an empty stage). Returns the distinct group nouns referenced in the beat text.
+  var _LIVING_WORLD_RX = /\b(raiders?|crowds?|patrols?|refugees?|pilgrims?|witnesses|onlookers|bystanders|hunters|workers|labou?rers|soldiers|guards|sentries|warriors|villagers|townsfolk|throng|mob|congregation|acolytes|cultists|mourners|dancers|revel(?:ers|lers)|servants|attendants|the crew|the court)\b/gi;
+  function _detectLivingWorldGroups(txt) {
+    var t = String(txt || ''), seen = {}, out = [], m;
+    _LIVING_WORLD_RX.lastIndex = 0;
+    while ((m = _LIVING_WORLD_RX.exec(t))) { var g = m[1].toLowerCase().replace(/s$/, function (s, i, w) { return /ss$/.test(w) ? s : ''; }); if (!seen[g]) { seen[g] = 1; out.push(m[1].toLowerCase()); } }
+    return out.slice(0, 3);
+  }
+  window._detectLivingWorldGroups = _detectLivingWorldGroups;
   // Build a resolved PANEL SPEC per phase. Honors authored plan.panels[] when present (validate,
   // fail-LOUD on missing fields); otherwise derives from the phase (rollout fallback, logged).
   // Binds Canon, expands shotType via Shot Language + grammar flags via Visual Grammar.
@@ -154104,7 +154118,8 @@ No text, no watermark, no UI elements, share-ready.`;
         establishing: !!phase._establishing,      // a dramatic solo introduction of a recurring character
         castingEligible: !!phase._establishing,   // only establishing shots are clean identity sources
         wishOutcome: (typeof _wo !== 'undefined' ? _wo : null), // clean|twisted|rejected — for the postmortem
-        sacrifice: !!grammar.sacrifice,           // the panel pays a price → attach the shadow-hand reference
+        sacrifice: !!grammar.sacrifice,           // the panel pays a price → attach the shadow-stain reference
+        livingWorld: _detectLivingWorldGroups(txt), // narrated groups → establish them so the world reads inhabited
         cast: cast, authored: !!ap, invalidFields: invalid
       };
       if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
@@ -155103,6 +155118,24 @@ No text, no watermark, no UI elements, share-ready.`;
   var _TYPO_SFX_SUPPRESS_IF = { magic: 'energy', portal: 'energy' };
   // Discrete, forceful material events read STRONG; ambient/soft events read LIGHT.
   var _TYPO_SFX_STRONG = { explosion: 1, stone_crack: 1, impact: 1, blade_clash: 1, lightning: 1 };
+  // SFX AUTHORITY (Roman 2026-07-18) — an SFX is a CONSEQUENCE OF A DEPICTED ACTION, never a genre default
+  // or mood-setter. The categorizer keys off beat TEXT, but the panel may not actually DRAW that action (the
+  // regen showed "WHAM" with no visible impact and "SHING" with no blade strike). So the renderer is told the
+  // exact visible action the SFX requires, and to OMIT the text if that action isn't in frame.
+  var _TYPO_SFX_VISIBLE_ACTION = {
+    blade_draw:  'a blade actively being drawn or bared',
+    blade_clash: 'two blades physically meeting or locking',
+    stone_crack: 'stone visibly cracking, splitting, or shattering',
+    lightning:   'a visible lightning or electric arc',
+    portal:      'a portal / passage visibly opening or widening',
+    explosion:   'a visible explosion or blast',
+    impact:      'a visible impact — bodies or objects actually colliding, a strike connecting',
+    water:       'water visibly splashing or surging',
+    fire:        'visible fire or flame',
+    magic:       'a visible magical effect at the point it occurs',
+    bubble:      'visible bubbles'
+  };
+  window._TYPO_SFX_VISIBLE_ACTION = _TYPO_SFX_VISIBLE_ACTION;
   function _letterSfxCategory(beatText) {
     var t = String(beatText || '').toLowerCase();
     if (/\b(draws?|drawn|unsheath\w*|bares?)\b[^.]*\b(blade|sword|cutlass|dagger|spear|knife)\b/.test(t)) return 'blade_draw';
@@ -155184,7 +155217,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // (the prose below carries them); render ONLY the specified SFX / outburst, integrated into the art.
   function _graphicTypographyContract(gt) {
     var lines = ['GRAPHIC TYPOGRAPHY (HARD): this is a hybrid medium — all dialogue, narration, and captions appear as PROSE BELOW the panel. Do NOT draw any speech balloons, thought balloons, caption boxes, or readable dialogue/narration text in the image. Render ONLY the sound-effect / emotional-outburst typography specified below (if any), hand-lettered and integrated INTO the artwork (perspective-aligned, wrapping the action), never inside a balloon. Incidental non-English environmental signage may remain.'];
-    if (gt && gt.sfx && gt.sfx.text) lines.push('SOUND EFFECT (integrated into the art, ' + (gt.sfx.strength || 'light') + '): ' + gt.sfx.text + ' — at the point of action, NOT over the focal subject.');
+    if (gt && gt.sfx && gt.sfx.text) { var _va = _TYPO_SFX_VISIBLE_ACTION[gt.sfx.category] || 'the action it names'; lines.push('SOUND EFFECT (integrated into the art, ' + (gt.sfx.strength || 'light') + '): ' + gt.sfx.text + ' — render this ONLY IF this panel actually DEPICTS ' + _va + ', at the point of action and NOT over the focal subject. If that action is not visibly happening in the frame, OMIT this text entirely — an SFX is a consequence of a DEPICTED action, never a genre default or a mood-setter.'); }
     if (gt && gt.burst && gt.burst.text) lines.push('EMOTIONAL OUTBURST (large, hand-lettered, part of the composition): ' + gt.burst.text);
     if (!(gt && ((gt.sfx && gt.sfx.text) || (gt.burst && gt.burst.text)))) lines.push('(No SFX or outburst for this panel — it carries NO text at all.)');
     return lines.join('\n');
@@ -180694,7 +180727,8 @@ No text, no watermark, no UI elements, share-ready.`;
         || /underwater|submerged|undersea|under the (sea|water|waves)|ocean floor|sea ?floor|sea ?bed|seabed|reef|coral|grotto|abyss|abyssal|sunken|kelp|beneath the (waves|sea|surface|water)|deep water|drowned (vein|city|hall)/.test(_bg);
       if (!_isUnderwater) return;
       prompt += 'UNDERWATER PHYSICS (HARD — this scene is SUBMERGED; render WATER physics, not land physics):\n' +
-        '- Figures are BUOYANT and weightless — they FLOAT and drift, poised off the seabed, feet not planted; never standing, walking, or posed as if on solid ground under gravity.\n' +
+        '- Figures are BUOYANT and weightless — they FLOAT and drift, SUSPENDED in mid-water, feet and tentacle-tips NOT touching or bearing weight on any surface. Bodies tilt and pitch OFF-VERTICAL (leaning, angled, one shoulder dipped), never standing bolt-upright, walking, or posed as if on solid ground under gravity.\n' +
+        '- NO GROUND PLANE UNDER THEM (this is the #1 failure): do NOT draw a flat seabed floor spanning the bottom of the frame with the figures standing on it. They HANG at DIFFERENT heights in the water column — one higher, one lower — with open water and drifting space on ALL sides, above and below; any seabed is far BELOW them or out of frame. If you find yourself planting feet on a floor, the panel is WRONG.\n' +
         '- Hair FLOATS and fans out, suspended and drifting in the current — never hanging straight down.\n' +
         '- Robes, loincloths, wraps, and every loose element BILLOW and undulate, lifting and streaming AWAY from the body and outward — never draping straight down as they would in air.\n' +
         '- Tentacles, chains, jewelry, and stray strands drift and sway with the current.\n' +
@@ -180895,6 +180929,23 @@ No text, no watermark, no UI elements, share-ready.`;
         }
         if (_panel && _panel.grammarCues && _panel.grammarCues.length) {
           _panel.grammarCues.forEach(function (g) { _cidLines.push(g); });
+        }
+        // SCENE / PROP AUTHORITY (Storyboard v3, Roman 2026-07-18) — the renderer must not invent narrative-
+        // significant objects from its fantasy prior ("magic scene → glowing artifact"): the regen grew a
+        // floating engraved rune-monolith nobody placed. Declare the allowed significant objects; treat a new
+        // significant object like an LLM hallucination.
+        (function () {
+          var allowed = [];
+          _keys.forEach(function (k) { var w = _canon[k] && _canon[k].weapon; if (w) allowed.push((_canon[k].displayName) + '’s ' + w); });
+          if (_panel && _panel.wishAnchor) allowed.push('the wish anchor named above');
+          var allowedStr = allowed.length ? ('the characters, their worn gear, and: ' + allowed.join('; ')) : 'the characters, their worn gear, and the setting described above';
+          _cidLines.push('SCENE AUTHORITY (HARD — the ONLY significant objects that exist in this panel are ' + allowedStr + '): do NOT invent additional narrative-significant objects — no glowing rune stones, engraved monoliths, floating relics, magic implements, sigil-shields, orbs, or symbolic artifacts the story did not place here. Ordinary environmental texture (coral, ruins, architecture, debris) is fine; a NEW significant object is a hallucination and is forbidden.');
+        })();
+        // LIVING WORLD (Storyboard v3) — if the narration references a GROUP (raiders, a crowd, a patrol) the
+        // world must show them, so it doesn't read as an empty stage with two actors. Skip on a solo Character
+        // Introduction (it is deliberately alone) and on intimate two-person beats.
+        if (_panel && _panel.livingWorld && _panel.livingWorld.length && _panel.narrativePanelType !== 'character_introduction') {
+          _cidLines.push('LIVING WORLD (the narration references ' + _panel.livingWorld.join(', ') + ' — the place is INHABITED): establish their presence in the frame, at least as background figures at varied distances, so the world does not read as an empty stage occupied by only the foreground characters. (Omit only if their absence is itself the point of the beat.)');
         }
         _cidLines.push('Every identity, injury, relationship, and who-does-what above is FIXED — do not infer, invent, merge, swap, romance-frame, restyle, or reinterpret. Render this shot beautifully.');
         if (_cidLines.length > 2) prompt += _cidLines.join('\n') + '\n\n';

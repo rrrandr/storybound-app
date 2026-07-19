@@ -39,7 +39,7 @@ const { chromium } = require('playwright-core');
 
     // ── the grammar string: shadowy hand of Fate, fingers-and-palm (not ambient darkness) ──
     const g = window._sacrificeHandGrammar('Fate takes her eye');
-    const grammarOk = /SHADOWY HAND OF FATE/i.test(g) && /fingers and palm/i.test(g) && /over the wisher's EYE/i.test(g) && /NOT ambient darkness/i.test(g);
+    const grammarOk = /SHADOW-STAIN/i.test(g) && /palm-shaped/i.test(g) && /over the wisher's EYE/i.test(g) && /NOT a hand or arm reaching|NOT a shadow creature/i.test(g);
     const gInner = window._sacrificeHandGrammar('a year of life offered');
     const grammarInnerOk = /OVER THE HEART/i.test(gInner) && /INNER sacrifice/i.test(gInner);
 
@@ -60,7 +60,7 @@ const { chromium } = require('playwright-core');
     window._buildStoryDirector(plan, 0);
     // the sacrifice grammar attaches to WHICHEVER panel carries the price text (here, the eye cost)
     const allCues = (plan.phases || []).map(p => (p._panel && p._panel.grammarCues || []).join(' ')).join(' || ');
-    const sacrificePanelHasHand = /SHADOWY HAND OF FATE/i.test(allCues) && /over the wisher's EYE/i.test(allCues);
+    const sacrificePanelHasHand = /SHADOW-STAIN/i.test(allCues) && /over the wisher's EYE/i.test(allCues);
 
     // ── PETITION / TEMPT inherit the burst: with a Tempt active, the wish panel gets Fate's burst ──
     s.temptFateWish = { text: 'I wish to reach the surface' };
