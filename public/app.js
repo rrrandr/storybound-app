@@ -153745,8 +153745,15 @@ No text, no watermark, no UI elements, share-ready.`;
   // "borrow the graphic language" (match the STYLE), NOT "recreate this image".
   //   TIER 1 — ALWAYS reference: species anatomy · canonical symbols (wish burst) · signature garments ·
   //            recurring artifacts · major recurring characters.
-  //   TIER 2 — reference WHEN AVAILABLE: buildings · cities · vehicles · creatures · magic implements.
-  //   TIER 3 — TEXT ONLY: lighting · emotion · camera · composition · weather · acting.
+  //   TIER 2 — reference WHEN AVAILABLE: buildings · cities · vehicles · creatures · magic implements ·
+  //            COMPOSITION / FRAMING (Roman 2026-07-18 — PROMOTED from Tier-3-text-only). The renderer has a
+  //            hard learned prior ("comic = medium two-shot of two faces") that TEXT cannot override: across
+  //            regens the shot-director text, the establishing-shot text, and the event-dominance text all lost
+  //            to it, while the ONE thing fed as an image (the burst) landed. So framing is now given the same
+  //            way — as an abstract VALUE/NOTAN reference (tonal masses, no renderable content) attached when a
+  //            panel's framing intent (establishing / event-led / wide-orientation) is exactly what the prior
+  //            fights. `_resolveCompositionRef`, keyed by `_panelFraming(panel)`.
+  //   TIER 3 — TEXT ONLY: lighting · emotion · weather · acting.
   // Create a reference asset ONLY when it (a) recurs, (b) is instantly recognizable, (c) is part of the
   // world's identity. Resist a PNG-per-effect — a bloated asset library is worse than prompts.
   var _CANONICAL_VISUAL_ASSETS = {
@@ -153754,7 +153761,8 @@ No text, no watermark, no UI elements, share-ready.`;
     wish_burst:        { tier: 1, kind: 'canonical symbol',          assetByOutcome: { clean: '/assets/Fatelands/Wish_Burst_Clean_v1.png', twisted: '/assets/Fatelands/Wish_Burst_Twisted_v1.png' }, governs: 'the Fate burst graphic style', plumbing: '_resolveCanonicalAssets, by wish outcome' },
     sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the shadowy hand of Fate taking the price + the cold-light thread', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
     manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
-    character_casting: { tier: 1, kind: 'major recurring character', asset: null, governs: 'this individual\'s costume / colour / recognition traits', plumbing: 'per-character harvested crop — Casting Library reinject (establishing-shot sourced)' }
+    character_casting: { tier: 1, kind: 'major recurring character', asset: null, governs: 'this individual\'s costume / colour / recognition traits', plumbing: 'per-character harvested crop — Casting Library reinject (establishing-shot sourced)' },
+    composition:       { tier: 2, kind: 'framing / composition',      assetByFraming: { establishing_solo: '/assets/Fatelands/Comp_Establishing_Solo_v1.png', object_dominant: '/assets/Fatelands/Comp_Object_Dominant_v1.png', environment_wide: '/assets/Fatelands/Comp_Environment_Wide_v1.png' }, governs: 'HOW the panel is framed (subject scale, dominance, populated depth) — beats the renderer\'s two-shot prior', plumbing: '_resolveCanonicalAssets via ctx.framing = _panelFraming(panel)' }
   };
   window._CANONICAL_VISUAL_ASSETS = _CANONICAL_VISUAL_ASSETS;
   // Resolve which canonical reference images to attach for a panel's context. Returns [{id,tier,path,label}].
@@ -153764,9 +153772,35 @@ No text, no watermark, no UI elements, share-ready.`;
     if (ctx.wishOutcome) { var _br = _wishBurstStyleRef(ctx.wishOutcome); if (_br) out.push({ id: 'wish_burst', tier: 1, path: _br.path, label: _br.label }); }
     if (ctx.sacrifice) out.push({ id: 'sacrifice_hand', tier: 1, path: _CANONICAL_VISUAL_ASSETS.sacrifice_hand.asset, label: 'SACRIFICE MARK STYLE reference — match the graphic language: a HAND-SHAPED SHADOW (fingers and palm) reaching to take the price, with a thin thread of cold pale light drawn OUT from where it touches. Match the STYLE ONLY — the shadow-hand and the light thread — not the exact pose or scene.' });
     if (ctx.wardrobe && /manta/i.test(ctx.wardrobe)) out.push({ id: 'manta_cloak', tier: 1, path: _CANONICAL_VISUAL_ASSETS.manta_cloak.asset, label: 'manta-cloak garment reference — match the cape hide, pearl strands, and braid trim STYLE ONLY, not the wearer.' });
+    // COMPOSITION / FRAMING reference (Roman 2026-07-18) — attach the framing as an image, not text, because the
+    // renderer's two-shot prior defeats every text directive. ONE per panel, only for framings the prior fights.
+    if (ctx.framing) { var _cr = _resolveCompositionRef(ctx.framing); if (_cr) out.push({ id: 'composition:' + ctx.framing, tier: 2, path: _cr.path, label: _cr.label }); }
     return out;
   }
   window._resolveCanonicalAssets = _resolveCanonicalAssets;
+  // ── COMPOSITION / FRAMING references — abstract VALUE/NOTAN thumbnails (tonal masses, no renderable content)
+  //    that steer HOW a panel is framed. The label is emphatic that this is a LAYOUT guide, never content to draw
+  //    — the model borrows the framing / subject-scale, not the gray shapes or palette.
+  var _COMPOSITION_REFS = {
+    establishing_solo: { path: '/assets/Fatelands/Comp_Establishing_Solo_v1.png', label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): frame this as a SINGLE figure, SMALL and OFF-CENTER, dwarfed by open environment — a lone-subject establishing shot, NOT two figures facing each other at equal size. Borrow ONLY the framing and the subject\'s small size-in-frame; do NOT render these gray shapes, this palette, or an empty set.' },
+    object_dominant:   { path: '/assets/Fatelands/Comp_Object_Dominant_v1.png',   label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): the central OBJECT/event fills most of the frame and IS the subject; any person is SMALL and pushed to the edge. The reader\'s eye must land on the OBJECT, not a face. Borrow ONLY the framing and relative scale; do NOT render this gray arch, palette, or literal shapes.' },
+    environment_wide:  { path: '/assets/Fatelands/Comp_Environment_Wide_v1.png',  label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): a WIDE, DEEP environment filling the frame, populated by SEVERAL small figures at different distances so the place reads inhabited and alive — not two isolated people on an empty set. Borrow ONLY the wide framing, the depth, and the presence of multiple small figures; do NOT render these gray blocks or palette.' }
+  };
+  window._COMPOSITION_REFS = _COMPOSITION_REFS;
+  function _resolveCompositionRef(framing) { return _COMPOSITION_REFS[framing] || null; }
+  window._resolveCompositionRef = _resolveCompositionRef;
+  // Map a panel's framing INTENT → a composition reference key. Only the framings the two-shot prior actively
+  // fights get a reference; ordinary character panels return null (shot-director text governs those). Precedence:
+  // an event object dominating > a lone-antagonist establishing shot > a wide inhabited orientation.
+  function _panelFraming(panel, readerLearning) {
+    if (!panel) return null;
+    var rl = String(readerLearning || panel.readerLearning || '');
+    if (panel.eventLed) return 'object_dominant';
+    if (panel.establishing) return 'establishing_solo';
+    if (/^Orientation$/i.test(rl)) return 'environment_wide';
+    return null;
+  }
+  window._panelFraming = _panelFraming;
   // SACRIFICE = THE SHADOWY HAND OF FATE (Roman 2026-07-18) — the price is TAKEN by a hand-shaped
   // shadow, Fate's own reaching hand, closing over the thing sacrificed: a tangible cost (eye, limb,
   // voice, memory) → the hand over that part; an INNER cost (years of life, courage, love) → the hand
@@ -182023,7 +182057,10 @@ No text, no watermark, no UI elements, share-ready.`;
         var _cvaCtx = {
           wardrobe: String((visualState && (visualState.pc_wardrobe || '')) + ' ' + (visualState && (visualState.li_wardrobe || ''))),
           wishOutcome: phase && phase._panel && phase._panel.wishOutcome,
-          sacrifice: phase && phase._panel && phase._panel.sacrifice
+          sacrifice: phase && phase._panel && phase._panel.sacrifice,
+          // COMPOSITION / FRAMING as a reference image (Roman 2026-07-18) — beats the two-shot prior that
+          // text can't. Keyed off the panel's framing intent (establishing / event-led / wide-orientation).
+          framing: (typeof _panelFraming === 'function' && phase && phase._panel) ? _panelFraming(phase._panel, phase._readerLearning) : null
         };
         _resolveCanonicalAssets(_cvaCtx).forEach(function (a) {
           if (a && a.path && combinedAnchors.length < 8) {
