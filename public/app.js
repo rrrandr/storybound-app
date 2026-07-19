@@ -152313,6 +152313,29 @@ No text, no watermark, no UI elements, share-ready.`;
     eff._phaseState = phase._state || null; // STORY DIRECTOR continuity snapshot (physical + relational)
     eff._phasePanel = phase._panel || null; // STORY DIRECTOR resolved panel spec (shot + hierarchy + grammar + performance)
     eff._phaseStoryboardDoc = phase._storyboardDoc || null; // STORYBOARD ARTIST v2 doc (frozen moment / composition priority / forbidden focus)
+    // ═══ PANEL AUTHORITY (Roman 2026-07-18) ══════════════════════════════════════════════════════════════
+    // ONE authoritative cast per panel that EVERY downstream subsystem (roster, camera, wardrobe, blocking,
+    // dialogue, pose) consumes — so no subsystem can reintroduce a character because it "usually exists". Last
+    // regen the Cast-Authority narrowing silently didn't fire in production (no [CAST-AUTHORITY] line, intro
+    // wasn't solo). Root-cause it robustly: compute the authoritative cast HERE, from phase._establishing (the
+    // driver that reliably reaches the renderer — it's what fires the establishing_solo composition ref), NOT
+    // from phase._panel.narrativePanelType (which failed to propagate). A Character Introduction is SOLO: the
+    // introduced character only, protagonist EXCLUDED.
+    (function () {
+      var _pnl = phase._panel || null;
+      var _isIntro = !!phase._establishing;
+      eff._phaseNarrativeType = _isIntro ? 'character_introduction' : ((_pnl && _pnl.eventLed) ? 'event' : 'scene');
+      var _full = (_pnl && Array.isArray(_pnl.cast) && _pnl.cast.length)
+        ? _pnl.cast.map(function (c) { return c.key; })
+        : (eff._phaseCharacters || []).map(function (t) { return String(t).toLowerCase(); });
+      if (_isIntro) {
+        var _solo = _full.filter(function (k) { return k !== 'protagonist'; });
+        eff._phaseAuthoritativeCast = _solo.length ? _solo : _full;   // introduced character only
+      } else {
+        eff._phaseAuthoritativeCast = _full;
+      }
+      eff._phasePcInCast = eff._phaseAuthoritativeCast.indexOf('protagonist') !== -1;
+    })();
 
     // Per-phase peak expression — scan the beats covered by this phase
     // for the most-charged expression_target, surface it so the phase
@@ -154125,6 +154148,7 @@ No text, no watermark, no UI elements, share-ready.`;
       if (ap && invalid.length) { plan._panelInvalid = true; try { console.warn('[STORY-DIRECTOR] PANEL ' + pi + ' authored but INVALID (missing: ' + invalid.join(', ') + ') — degrade to derived; author should regen panels'); } catch (_) {} }
     });
     plan._panels = phases.map(function (p) { return p._panel; });
+    try { console.log('[PANEL-SPEC] ' + plan._panels.map(function (p, i) { return i + ':' + (p.narrativePanelType || '?') + (p.establishing ? '(estab)' : '') + ' cast=' + (p.cast || []).map(function (c) { return c.key; }).join('+'); }).join('  ')); } catch (_) {}
     return plan;
   }
   window._buildPanelSpecs = _buildPanelSpecs;
@@ -180382,6 +180406,11 @@ No text, no watermark, no UI elements, share-ready.`;
 
   function _buildStagedHeroPrompt(visualState, sceneIndex, planMeta) {
     if (!visualState) return '';
+    // PANEL AUTHORITY (Roman 2026-07-18) — is the protagonist in THIS panel's ONE authoritative cast? A solo
+    // Character Introduction excludes them, and NO subsystem below may re-summon them (role stamp, POV/OTS
+    // camera geometry, PC appearance lock). Hoisted to the top so every block can consult it.
+    var _pcSuppressed = Array.isArray(visualState._phaseAuthoritativeCast) && visualState._phasePcInCast === false;
+    var _soloName = (visualState._phasePanel && visualState._phasePanel.hierarchy && visualState._phasePanel.hierarchy.primary) || 'the introduced character';
     // Phase 0 / PC-only LI bleed guard — if the phase character set is
     // strictly ['protagonist'], force LI absent regardless of upstream
     // values. Defensive layer: even if the parser slip-through allows
@@ -180615,7 +180644,7 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       identityLock = _buildIdentityLockBlock(visualState, liAbsent) || '';
     } catch (_) {}
-    if (identityLock) {
+    if (identityLock && !_pcSuppressed) {   // PANEL AUTHORITY: the identity lock is PC/LI-centric — omit on a solo intro
       prompt += identityLock + '\n\n';
     }
     prompt += 'STAGED VISUAL-NOVEL HERO COMPOSITION — single static image, cinematic depth.\n\n';
@@ -180761,7 +180790,13 @@ No text, no watermark, no UI elements, share-ready.`;
     // Bind role → gender BEFORE the camera/visibility blocks so the
     // model reads it as the governing identity contract for every
     // pronoun and "back of head / visual subject" reference below.
-    if (!liAbsent) {
+    // PANEL AUTHORITY — if the protagonist is NOT in this panel's authoritative cast (a solo Character
+    // Introduction), no subsystem may summon them: suppress the PROTAGONIST ROLE stamp AND override any
+    // over-the-shoulder-of-the-protagonist camera. This is the pipeline-wide half of Cast Authority — last
+    // regen the roster was cut but the PC was still summoned here (role stamp + OTS camera) and by wardrobe.
+    if (_pcSuppressed) {
+      prompt += 'PANEL AUTHORITY — SOLO PANEL (HARD): the protagonist is ABSENT from this panel. Do NOT draw the protagonist, a point-of-view shoulder, a second human, an onlooker, or any figure other than ' + _soloName + '. ' + _soloName + ' is the ONLY figure and fills the frame.\n\n';
+    } else if (!liAbsent) {
       prompt += 'CHARACTER ROLES (HARD — bind these to every pronoun and framing reference below):\n' +
         '- PROTAGONIST is a ' + _pcNoun + ' (' + _pcGenderRaw + '). Use ' + _pcPoss + '/them. The protagonist is the POV character — never the visual subject; ' + _pcPoss + ' face is never fully shown.\n' +
         '- LOVE INTEREST is a ' + _liNoun + ' (' + _liGenderRaw + '). Use ' + _liPoss + '/them. The love interest is the visual subject — the camera looks AT this character, not through them.\n' +
@@ -180770,6 +180805,7 @@ No text, no watermark, no UI elements, share-ready.`;
       prompt += 'PROTAGONIST ROLE (HARD): The protagonist is a ' + _pcNoun + ' (' + _pcGenderRaw + '). Use ' + _pcPoss + '/them. The protagonist is the POV character — never the visual subject; ' + _pcPoss + ' face is never fully shown.\n\n';
     }
     prompt += 'COMPOSITION:\n' + camera + '\n\n';
+    if (_pcSuppressed) prompt += 'CAMERA OVERRIDE (HARD — SOLO): disregard any protagonist / over-the-shoulder-of-the-protagonist framing in the COMPOSITION above. Frame ONLY ' + _soloName + ', alone — no POV shoulder, no second figure.\n\n';
     // ── CHARACTER STAGING (2026-05-22) ─────────────────────────────
     // Per-phase posture + proximity + emotional state, applied to ALL
     // phases (not just emotional-opener). Carries:
@@ -180810,11 +180846,16 @@ No text, no watermark, no UI elements, share-ready.`;
         // renderer was still handed every present figure's anatomy here (_keys) and collapsed them into a two-
         // shot — structure beats prose. Cut the roster to the cast so the second figure physically cannot be
         // drawn (which also gives the identity harvest a clean solo frame). Only narrows on introduction panels.
-        if (_panel && _panel.narrativePanelType === 'character_introduction' && Array.isArray(_panel.cast) && _panel.cast.length) {
-          var _castKeys = _panel.cast.map(function (c) { return c.key; });
-          var _narrowed = _keys.filter(function (k) { return _castKeys.indexOf(k) !== -1; });
-          _keys = _narrowed.length ? _narrowed : _castKeys.slice();
-          try { console.log('[CAST-AUTHORITY] character_introduction → solo roster [' + _keys.join(', ') + '] (dropped ' + '2nd figures so the intro renders alone)'); } catch (_) {}
+        // PANEL AUTHORITY — the figure roster is the panel's ONE authoritative cast (computed in
+        // _resolvePhaseVisualState from phase._establishing). On a Character Introduction that excludes the
+        // protagonist, so the intro renders SOLO. Consumes _phaseAuthoritativeCast (reliable) not the panel
+        // field that failed to propagate last regen.
+        var _authCast = visualState._phaseAuthoritativeCast;
+        if (Array.isArray(_authCast) && _authCast.length) {
+          var _before = _keys.slice();
+          var _narrowed = _keys.filter(function (k) { return _authCast.indexOf(k) !== -1; });
+          _keys = _narrowed.length ? _narrowed : _authCast.slice();
+          if (_keys.length !== _before.length) { try { console.log('[PANEL-AUTHORITY] ' + (visualState._phaseNarrativeType || 'scene') + ' → roster [' + _keys.join(', ') + '] (dropped [' + _before.filter(function (k) { return _keys.indexOf(k) === -1; }).join(', ') + '] — not in authoritative cast)'); } catch (_) {} }
         }
         var _cidLines = [];
         // Panel header — the authoritative shot the renderer must execute.
@@ -181609,6 +181650,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // user sees). Force the canonical layout in the image prompt so
     // the rack mask lands on the correct half of the frame.
     if (String(visualState.camera || '') === 'over_shoulder_pc') {
+      if (_pcSuppressed) { /* PANEL AUTHORITY: no PC on a solo panel → no PC-POV OTS geometry */ } else
       prompt += 'OTS LAYOUT (HARD — locks rack-focus geometry): when this is an over-the-shoulder shot from the protagonist\'s POV with a second figure on screen, the PROTAGONIST\'s back / shoulder / silhouette occupies the LEFT 30-40% of the frame (foreground, out of focus or framed at the edge). The OTHER figure occupies the RIGHT 50-65% of the frame (background subject of the OTS, the figure the protagonist is facing). NEVER flip this — do not put the other figure on the left while the PC is on the right. The rack-focus mask in the rendered viewport assumes PC-left / other-right; rendering it inverted causes the wrong character to be blurred on speaker shifts. Two-character scenes with the PC absent (PC is off-camera) are an exception — render the named characters wherever the framing requires.\n';
     }
     // NPC differentiation — defensive — even if the screenplay generator
@@ -181820,6 +181862,28 @@ No text, no watermark, no UI elements, share-ready.`;
     if (identityLock) {
       prompt += '\n\n' + identityLock + '\n';
     }
+
+    // ═══ PANEL AUTHORITY AUDIT (Roman 2026-07-18) ══ Debug from the INPUTS, not the final image. Log the
+    // authoritative cast for every panel; when the protagonist is NOT in it, scan the assembled prompt for any
+    // residual PC summon (a role stamp, POV, over-the-shoulder camera, PC wardrobe) — that means some subsystem
+    // reintroduced them, and it is a VIOLATION we surface LOUDLY instead of discovering after the fact in a render.
+    try {
+      var _acast = visualState._phaseAuthoritativeCast;
+      if (Array.isArray(_acast)) {
+        var _ntype = visualState._phaseNarrativeType || 'scene';
+        var _pcIn = visualState._phasePcInCast !== false;
+        var _viol = [];
+        if (_pcSuppressed) {
+          // exclude our OWN suppression lines (they intentionally name the protagonist as ABSENT)
+          var _scan = prompt.split('\n').filter(function (l) { return !/PANEL AUTHORITY|CAMERA OVERRIDE \(HARD — SOLO/.test(l); }).join('\n');
+          if (/\bprotagonist\b/i.test(_scan)) _viol.push('protagonist-role');
+          if (/\bPOV\b|point[- ]of[- ]view/i.test(_scan)) _viol.push('POV');
+          if (/over[- ]the[- ]shoulder|over_shoulder_pc/i.test(_scan)) _viol.push('OTS-camera');
+          if (visualState.pc_wardrobe && String(visualState.pc_wardrobe).length > 12 && _scan.indexOf(String(visualState.pc_wardrobe).slice(0, 20)) !== -1) _viol.push('pc-wardrobe');
+        }
+        console.log('[PANEL-AUTHORITY] p' + (visualState._phaseIdx != null ? visualState._phaseIdx : '?') + ' type=' + _ntype + ' cast=[' + _acast.join(', ') + '] pcInCast=' + _pcIn + (_pcSuppressed ? (_viol.length ? '  ⚠ VIOLATION — PC re-summoned by: ' + _viol.join(', ') : '  ✓ solo clean') : ''));
+      }
+    } catch (_) {}
 
     return prompt;
   }

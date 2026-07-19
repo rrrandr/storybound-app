@@ -9,7 +9,7 @@ const { chromium } = require('playwright-core');
   const page = await browser.newPage();
   const errors = [], logs = [];
   page.on('pageerror', e => errors.push(e.message));
-  page.on('console', m => { const t = m.text(); if (/\[CAST-AUTHORITY\]/.test(t)) logs.push(t); });
+  page.on('console', m => { const t = m.text(); if (/\[PANEL-AUTHORITY\]|\[PANEL-SPEC\]/.test(t)) logs.push(t); });
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => typeof window._buildStoryDirector === 'function' && typeof window._buildStagedHeroPrompt === 'function', { timeout: 15000 });
 
@@ -47,27 +47,30 @@ const { chromium } = require('playwright-core');
     // event panels typed where the event is primary
     const eventTyped = events.length >= 1 && events.every(p => p.eventLed === true);
 
-    // HERO PROMPT — the figure roster must NARROW to the solo cast (protagonist's identity block removed)
-    let heroOK = false, introDirective = false, narrowingLogged = false;
+    // PANEL AUTHORITY — the authoritative cast (computed in _resolvePhaseVisualState) must EXCLUDE the
+    // protagonist on an introduction, and the hero prompt must emit the SOLO directive + narrow the roster.
+    let heroOK = false, introDirective = false, soloDirective = false, authExcludesPc = false, pcInCastFalse = false;
     if (introPanel) {
       const phase = plan.phases.find(p => p._panel === introPanel) || plan.phases.find(p => p._establishing);
       if (phase) {
         const rvs = window._resolvePhaseVisualState(plan.visualState, phase, plan.phases, plan.beats);
+        authExcludesPc = Array.isArray(rvs._phaseAuthoritativeCast) && rvs._phaseAuthoritativeCast.indexOf('protagonist') === -1 && rvs._phaseAuthoritativeCast.length >= 1;
+        pcInCastFalse = rvs._phasePcInCast === false;
         s._stagedRegionContract = window._buildStagedRegionContract({ visualState: plan.visualState, phases: [] });
         const hero = window._buildStagedHeroPrompt(rvs, 0, plan) || '';
         introDirective = /CHARACTER INTRODUCTION \(HARD/.test(hero) && /caught MID-ACTION/.test(hero);
-        // the protagonist identity block must be GONE from the intro prompt (solo). The PC canon displayName
-        // shouldn't be stamped as a present figure. Heuristic: the roster line names only the introduced char.
+        soloDirective = /PANEL AUTHORITY — SOLO PANEL \(HARD/.test(hero) && /the protagonist is ABSENT/.test(hero);
         const introName = introPanel.hierarchy && introPanel.hierarchy.primary;
         heroOK = introDirective && introName && hero.indexOf(introName) !== -1;
       }
     }
 
-    return { panelCount: panels.length, allTyped, oneIntro, soloCast, othersKeepCast, eventTyped, introDirective, heroOK, introCast: ck };
+    return { panelCount: panels.length, allTyped, oneIntro, soloCast, othersKeepCast, eventTyped, introDirective, soloDirective, authExcludesPc, pcInCastFalse, heroOK, introCast: ck };
   });
 
   await browser.close();
-  R.narrowingLogged = logs.some(t => /character_introduction → solo roster/.test(t));
+  R.authorityLogged = logs.some(t => /\[PANEL-AUTHORITY\]/.test(t));
+  R.panelSpecLogged = logs.some(t => /\[PANEL-SPEC\]/.test(t) && /character_introduction\(estab\)/.test(t));
 
   const checks = [
     ['every panel is typed (character_introduction | event | scene)', R.allTyped],
@@ -75,8 +78,12 @@ const { chromium } = require('playwright-core');
     ['CAST AUTHORITY: the introduction cast is SOLO — the introduced character only, NOT the protagonist', R.soloCast],
     ['non-introduction panels keep their full cast (authority narrows ONLY introductions)', R.othersKeepCast],
     ['event panels are typed where the event is primary (eventLed)', R.eventTyped],
+    ['PANEL AUTHORITY: the authoritative cast EXCLUDES the protagonist on an introduction', R.authExcludesPc],
+    ['PANEL AUTHORITY: _phasePcInCast === false on the solo introduction', R.pcInCastFalse],
     ['hero prompt emits the action-driven CHARACTER INTRODUCTION directive (mid-action, not a portrait)', R.introDirective],
-    ['hero prompt narrows the figure roster to the solo cast ([CAST-AUTHORITY] logged)', R.narrowingLogged],
+    ['hero prompt emits the SOLO PANEL directive (protagonist ABSENT, pipeline-wide)', R.soloDirective],
+    ['PANEL AUTHORITY AUDIT logged for the panel ([PANEL-AUTHORITY])', R.authorityLogged],
+    ['PANEL-SPEC diagnostic shows narrativePanelType per panel (input visibility)', R.panelSpecLogged],
     ['hero prompt builds with the introduced character present', R.heroOK]
   ];
 
