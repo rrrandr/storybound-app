@@ -43,7 +43,14 @@ const { chromium } = require('playwright-core');
     // the re-authored burst emblems also still resolve
     const burstExist = (await Promise.all(['/assets/Fatelands/Wish_Burst_Clean_v1.png', '/assets/Fatelands/Wish_Burst_Twisted_v1.png'].map(p => fetch(p).then(r => r.ok).catch(() => false)))).every(Boolean);
 
-    return { eventLed, establishing, orientation, plainChar, precedence, nullPanel, three, unknownNull, labelGuards, attaches, noFramingNoComp, composes, assetsExist, burstExist };
+    // UNDERWATER BUOYANCY float ref: resolver + the ctx.underwater FALLBACK (framing wins when both set)
+    const ufRef = RC('underwater_float');
+    const ufResolves = ufRef && /Comp_Underwater_Float/.test(ufRef.path) && /BUOYANCY|SUSPENDED/i.test(ufRef.label);
+    const ufFallback = RA({ underwater: true }).some(a => a.id === 'composition:underwater_float');
+    const framingWins = (() => { const r = RA({ framing: 'object_dominant', underwater: true }); return r.some(a => a.id === 'composition:object_dominant') && !r.some(a => a.id === 'composition:underwater_float'); })();
+    const ufAssetExists = await fetch('/assets/Fatelands/Comp_Underwater_Float_v1.png').then(r => r.ok).catch(() => false);
+
+    return { eventLed, establishing, orientation, plainChar, precedence, nullPanel, three, unknownNull, labelGuards, attaches, noFramingNoComp, composes, assetsExist, burstExist, ufResolves, ufFallback, framingWins, ufAssetExists };
   });
 
   await browser.close();
@@ -61,6 +68,10 @@ const { chromium } = require('playwright-core');
     ['WIRING: _resolveCanonicalAssets attaches ONE tier-2 composition ref for ctx.framing', R.attaches],
     ['WIRING: no framing → no composition ref attached', R.noFramingNoComp],
     ['WIRING: composition composes with the burst emblem (both attach together)', R.composes],
+    ['UNDERWATER: underwater_float resolves with a BUOYANCY label', R.ufResolves],
+    ['UNDERWATER: ctx.underwater attaches the float ref as the composition FALLBACK', R.ufFallback],
+    ['UNDERWATER: a framing ref WINS over the underwater fallback (never two comp refs)', R.framingWins],
+    ['UNDERWATER: the float PNG resolves', R.ufAssetExists],
     ['ASSETS: all three composition PNGs actually resolve (no dangling path)', R.assetsExist],
     ['ASSETS: the re-authored pure-symbol burst emblems still resolve', R.burstExist]
   ];

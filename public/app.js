@@ -153798,6 +153798,10 @@ No text, no watermark, no UI elements, share-ready.`;
     // COMPOSITION / FRAMING reference (Roman 2026-07-18) — attach the framing as an image, not text, because the
     // renderer's two-shot prior defeats every text directive. ONE per panel, only for framings the prior fights.
     if (ctx.framing) { var _cr = _resolveCompositionRef(ctx.framing); if (_cr) out.push({ id: 'composition:' + ctx.framing, tier: 2, path: _cr.path, label: _cr.label }); }
+    // UNDERWATER BUOYANCY reference (Roman 2026-07-19) — the strengthened text still lost to the ground-plane
+    // prior in ~half the panels; give buoyancy the same show-don't-tell treatment. Attach as the composition
+    // FALLBACK — only when no framing ref already claimed the slot — so a panel never carries two composition refs.
+    else if (ctx.underwater) { var _uf = _resolveCompositionRef('underwater_float'); if (_uf) out.push({ id: 'composition:underwater_float', tier: 2, path: _uf.path, label: _uf.label }); }
     return out;
   }
   window._resolveCanonicalAssets = _resolveCanonicalAssets;
@@ -153807,7 +153811,8 @@ No text, no watermark, no UI elements, share-ready.`;
   var _COMPOSITION_REFS = {
     establishing_solo: { path: '/assets/Fatelands/Comp_Establishing_Solo_v1.png', label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): frame this as a SINGLE figure, SMALL and OFF-CENTER, dwarfed by open environment — a lone-subject establishing shot, NOT two figures facing each other at equal size. Borrow ONLY the framing and the subject\'s small size-in-frame; do NOT render these gray shapes, this palette, or an empty set.' },
     object_dominant:   { path: '/assets/Fatelands/Comp_Object_Dominant_v1.png',   label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): the central OBJECT/event fills most of the frame and IS the subject; any person is SMALL and pushed to the edge. The reader\'s eye must land on the OBJECT, not a face. Borrow ONLY the framing and relative scale; do NOT render this gray arch, palette, or literal shapes.' },
-    environment_wide:  { path: '/assets/Fatelands/Comp_Environment_Wide_v1.png',  label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): a WIDE, DEEP environment filling the frame, populated by SEVERAL small figures at different distances so the place reads inhabited and alive — not two isolated people on an empty set. Borrow ONLY the wide framing, the depth, and the presence of multiple small figures; do NOT render these gray blocks or palette.' }
+    environment_wide:  { path: '/assets/Fatelands/Comp_Environment_Wide_v1.png',  label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): a WIDE, DEEP environment filling the frame, populated by SEVERAL small figures at different distances so the place reads inhabited and alive — not two isolated people on an empty set. Borrow ONLY the wide framing, the depth, and the presence of multiple small figures; do NOT render these gray blocks or palette.' },
+    underwater_float:  { path: '/assets/Fatelands/Comp_Underwater_Float_v1.png',  label: 'BUOYANCY / POSE reference (grayscale LAYOUT guide — NOT content to draw): the figures are SUSPENDED in mid-water at DIFFERENT heights, bodies TILTED off-vertical, limbs and tentacles drifting, open water on ALL sides — NO seabed floor under them, NO horizon, feet not planted and bearing no weight. Borrow ONLY the floating body attitude and the absence of a ground plane; do NOT render these gray silhouettes or palette.' }
   };
   window._COMPOSITION_REFS = _COMPOSITION_REFS;
   function _resolveCompositionRef(framing) { return _COMPOSITION_REFS[framing] || null; }
@@ -153914,6 +153919,22 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (_) { return null; }
   }
   window._sdWishMechanicOutcome = _sdWishMechanicOutcome;
+  // WORLD-STATE AUTHORITY (Roman 2026-07-19) — the AUTHORITATIVE wish outcome, if one is already decided this
+  // scene by the Fate MECHANIC or an explicit flag (NOT the last-resort beat-text heuristic). Returned to the
+  // PROSE AUTHOR so the aftermath prose is written from the same truth the visual burst renders — the two can
+  // no longer diverge (regen-2: prose said "granted cleanly" while the visual forced a twist). Null = no
+  // predetermined outcome (an ordinary story where the author is free to decide, and the visual follows the prose).
+  function _worldStateWishOutcome() {
+    try {
+      var st = (typeof state !== 'undefined' && state) || {};
+      var m = _sdWishMechanicOutcome(); if (m) return { outcome: m, source: 'mechanic' };
+      if (st._wishOutcome === 'clean' || st._wishOutcome === 'twisted' || st._wishOutcome === 'rejected') return { outcome: st._wishOutcome, source: 'flag' };
+      if (st._wishRejected === true) return { outcome: 'rejected', source: 'flag' };
+      if (st._wishTwisted === true) return { outcome: 'twisted', source: 'flag' };
+      return null;
+    } catch (_) { return null; }
+  }
+  window._worldStateWishOutcome = _worldStateWishOutcome;
   function _sdWishTwistedHeuristic(txt) {
     return /\b(twist\w*|warp\w*|curdl\w*|corrupt\w*|backfire\w*|malform\w*|festers?|the wish (?:goes|went|turns?|turned) (?:wrong|cruel|against)|not what (?:she|he|they) (?:asked|wished)|a cruel(?:ler)? (?:answer|shape)|Fate (?:betray|mock|twist))\b/i.test(String(txt || ''));
   }
@@ -155022,12 +155043,17 @@ No text, no watermark, no UI elements, share-ready.`;
     var panel = phase && phase._panel;
     if (!panel || !panel.hierarchy) return false;
     var n = _castingToken(npcName);
+    // ESTABLISHING / Character Introduction — a clean source BY DESIGN for the ONE character it introduces
+    // (now genuinely solo under Panel Authority). Check this FIRST, BEFORE the primary check, so a quirk in
+    // how hierarchy.primary resolved can't reject the intro's own antagonist (the regen-2 skip). Scope it to
+    // the established name (reliable: phase._establishing) so we don't harvest a bystander from this panel.
+    if (panel.establishing) {
+      var est = _castingToken((phase && phase._establishing) || panel.hierarchy.primary || '');
+      return (!est || est === n || est.indexOf(n) !== -1 || n.indexOf(est) !== -1);
+    }
     var prim = _castingToken(panel.hierarchy.primary || '');
     // (1) the NPC must BE the primary subject (not co-equal, not background)
     if (!prim || (prim !== n && prim.indexOf(n) === -1 && n.indexOf(prim) === -1)) return false;
-    // an ESTABLISHING shot is a clean source BY DESIGN (solo, close, non-adversarial) — the reason the
-    // Storyboard reserves it. Trust the flag rather than re-deriving from the beat's wide/adversarial defaults.
-    if (panel.establishing) return true;
     // (2) medium-close or closer — a wide/medium two-shot crops the wrong region
     var doc = (phase && phase._storyboardDoc) || {};
     var closeness = _castingShotCloseness([doc.composition, panel.shotType, panel.shotExpansion, (phase && phase.camera_override)].join(' '));
@@ -182224,7 +182250,15 @@ No text, no watermark, no UI elements, share-ready.`;
           sacrifice: phase && phase._panel && phase._panel.sacrifice,
           // COMPOSITION / FRAMING as a reference image (Roman 2026-07-18) — beats the two-shot prior that
           // text can't. Keyed off the panel's framing intent (establishing / event-led / wide-orientation).
-          framing: (typeof _panelFraming === 'function' && phase && phase._panel) ? _panelFraming(phase._panel, phase._readerLearning) : null
+          framing: (typeof _panelFraming === 'function' && phase && phase._panel) ? _panelFraming(phase._panel, phase._readerLearning) : null,
+          // UNDERWATER BUOYANCY reference (Roman 2026-07-19) — attach the floating-pose guide when the scene is
+          // submerged (same detection as the UNDERWATER PHYSICS guard); resolves as the composition FALLBACK
+          // when no framing ref claimed the slot, so buoyancy gets a show-don't-tell reference like framing did.
+          underwater: (function () {
+            var _bg = String((visualState && visualState.background) || '').toLowerCase();
+            var _rl = String((state._stagedRegionContract && state._stagedRegionContract.regionLabel) || '').toLowerCase();
+            return /gloamwater/.test(_rl) || /underwater|submerged|undersea|under the (sea|water|waves)|ocean floor|sea ?floor|sea ?bed|seabed|reef|coral|grotto|abyss|abyssal|sunken|kelp|beneath the (waves|sea|surface|water)|deep water|drowned (vein|city|hall)/.test(_bg);
+          })()
         };
         _resolveCanonicalAssets(_cvaCtx).forEach(function (a) {
           if (a && a.path && combinedAnchors.length < 8) {
@@ -182585,7 +182619,12 @@ No text, no watermark, no UI elements, share-ready.`;
             // than a mis-cropped one. A face-off panel is refused; the establishing shot is accepted.
             if (!_castingCleanIdentitySource(phase, o.name)) { try { console.log('[CASTING] skip harvest "' + o.name + '" (not a clean identity source: not NPC-primary/close/solo)'); } catch (_) {} return; }
             var _cConf = _castingIdentityConfidence(phase, visualState, o.name);
-            if (_cConf < 55) return; // poor identity source (wide / non-primary) — wait for a better panel
+            // The solo Character Introduction is the DESIGNATED authoritative identity source and the earliest
+            // one available — accept it at a lower bar (40) so a slightly dynamic hero pose still SEEDS the
+            // anchor for every later panel, rather than leaving panels 1-N to reinvent the character (the
+            // green-drift cause). Non-establishing panels keep the strict 55 bar.
+            var _minConf = (phase._panel && phase._panel.establishing) ? 40 : 55;
+            if (_cConf < _minConf) { try { console.log('[CASTING] harvest "' + o.name + '" clean-source OK but confidence ' + _cConf + ' < ' + _minConf + ' — waiting for a better frame'); } catch (_) {} return; }
             var _cTier = _castingTierFor((o && o._appearances) || 2); // present recurring char → SESSION+ by default
             _deriveFromFrame(imageUrl, 'close').then(function (_crop) {
               var _r = _castingConsiderPanel(o.name, _crop || imageUrl, _cConf, _cPanelId, { tier: _cTier });
@@ -195736,6 +195775,22 @@ No text, no watermark, no UI elements, share-ready.`;
         : '';
       if (_cgPetitionDirective) lines.push(_cgPetitionDirective);
       if (_cgTemptDirective) lines.push(_cgTemptDirective);
+      // ── WORLD-STATE AUTHORITY (Roman 2026-07-19) — the wish OUTCOME is decided by the mechanic/flag, not by
+      //    the prose. When an authoritative outcome exists this scene, the author MUST write the aftermath from
+      //    it, so the prose can't say "granted cleanly" while the illustration renders Fate's twisted burst
+      //    (the regen-2 divergence). Single source of truth: the same outcome _sdWishOutcome feeds the visual.
+      try {
+        var _wsOutcome = (typeof _worldStateWishOutcome === 'function') ? _worldStateWishOutcome() : null;
+        if (_wsOutcome && _wsOutcome.outcome) {
+          var _wsMap = {
+            clean: 'LANDED (clean): Fate grants the wish AS ASKED — the world changes the way the wisher wanted. A price may still be paid, but the ASK itself is fulfilled.',
+            twisted: 'TWISTED: Fate grants the wish but WRONG — the letter is honoured while the spirit curdles (a malformed, cruel, or unforeseen-cost version). Do NOT write it as a clean success; the reader must feel the wish came out wrong.',
+            rejected: 'REFUSED: Fate does NOT answer — the world does NOT change. The wish falls, the petition fails; no miracle comes.'
+          };
+          lines.push('AUTHORITATIVE FATE OUTCOME (World-State Authority — HARD; this scene\'s wish resolves as ' + _wsOutcome.outcome.toUpperCase() + ', decided by the Fate mechanic, NOT by your prose): ' + (_wsMap[_wsOutcome.outcome] || '') + ' Every beat AFTER the wish must be consistent with this outcome — do NOT invent a different result. The illustration will render Fate\'s ' + _wsOutcome.outcome + ' burst; the prose must AGREE with it.');
+          try { console.log('[WORLD-STATE] wish outcome=' + _wsOutcome.outcome + ' (' + _wsOutcome.source + ') → author directive injected'); } catch (_) {}
+        }
+      } catch (_wsErr) {}
       // FATELANDS WISH SYSTEM injection:
       //  • LAWS OF WISHING = foundational world-physics → EVERY Fatelands scene (sacrifice magic is
       //    ordinary here; the author needs the laws whether or not a wish is priced on-page).
