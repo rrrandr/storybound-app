@@ -154062,6 +154062,101 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildPanelSpecs = _buildPanelSpecs;
 
+  // ═══ SHOT DIRECTOR (Roman 2026-07-18) — sequence of beats → sequence of SHOTS ═══════════════════════
+  // Beat→Panel was solved; Sequence→Rhythm was not. Readers perceive the CADENCE of how things are shown,
+  // not just what. This sits between Storyboard and Render and assigns every panel an explicit camera
+  // (distance / angle / blocking / movement), creating deliberate RHYTHM — like a director cutting a
+  // scene, NOT a roulette wheel. FULLY DETERMINISTIC: same storyboard → same shot progression (a
+  // recognizable visual language). Positive cinematic rules per beat type + hard anti-monotony over RUNS.
+  var _SHOT_VOCAB = {
+    distance: ['extreme_close', 'close', 'medium_close', 'medium', 'medium_wide', 'wide', 'extreme_wide'],
+    angle:    ['eye_level', 'low', 'high', 'birds_eye', 'worms_eye', 'dutch', 'over_shoulder', 'pov', 'profile', 'three_quarter'],
+    blocking: ['single', 'two_shot', 'crowd', 'environment_led', 'object_led', 'silhouette']
+  };
+  window._SHOT_VOCAB = _SHOT_VOCAB;
+  // Per reader-learning type: [primary, secondary] for distance + angle, and the movement intent.
+  // Blocking is mostly driven by the panel flags (establishing/event-led) with these as the character fallback.
+  var _SHOT_RHYTHM = {
+    Orientation:    { distance: ['wide', 'medium_wide'],   angle: ['high', 'eye_level'],       blocking: ['environment_led', 'single'], movement: 'a slow establishing drift over the place' },
+    Threat:         { distance: ['medium', 'medium_close'], angle: ['low', 'dutch'],            blocking: ['two_shot', 'single'],        movement: 'coiled, an instant from the strike' },
+    Transformation: { distance: ['close', 'medium_close'],  angle: ['low', 'three_quarter'],    blocking: ['object_led', 'single'],      movement: 'held and charged, the world bending' },   // bias CLOSER
+    Consequence:    { distance: ['wide', 'medium_wide'],    angle: ['high', 'eye_level'],       blocking: ['environment_led', 'object_led'], movement: 'the world settling into its new shape' }, // bias WIDER — see what changed
+    Revelation:     { distance: ['medium_wide', 'wide'],    angle: ['worms_eye', 'eye_level'],  blocking: ['object_led', 'environment_led'], movement: 'a push in toward the reveal' },          // must differ from prev
+    Decision:       { distance: ['medium_close', 'close'],  angle: ['eye_level', 'three_quarter'], blocking: ['single', 'two_shot'],     movement: 'stillness held on the choice' },              // readable expressions
+    Resolution:     { distance: ['medium', 'wide'],         angle: ['eye_level', 'high'],       blocking: ['single', 'environment_led'], movement: 'the release, breath let go' }
+  };
+  window._SHOT_RHYTHM = _SHOT_RHYTHM;
+  // pick primary unless it would EXTEND a run to maxRun (then secondary), or must differ from `avoid`.
+  function _pickShot(opts, run, maxRun, avoid) {
+    var primary = opts[0], secondary = opts[1] || opts[0];
+    var trailing = 0; for (var i = run.length - 1; i >= 0 && run[i] === primary; i--) trailing++;
+    if (trailing >= maxRun - 1) return secondary;                 // 3rd-in-a-row (maxRun 3) → break the run
+    if (avoid && primary === avoid) return secondary;
+    return primary;
+  }
+  // Assign an explicit shot to every panel, deterministically, with rhythm + anti-monotony.
+  function _buildShotSequence(phases) {
+    var shots = [], prev = null, distRun = [], angRun = [], blkRun = [];
+    (phases || []).forEach(function (ph) {
+      var type = ph._readerLearning || 'Orientation';
+      var r = _SHOT_RHYTHM[type] || _SHOT_RHYTHM.Orientation;
+      var panel = ph._panel || {}, hier = panel.hierarchy || {};
+      var subj = hier.primary || '';
+      var subjChanged = !!(prev && prev.subject && subj && subj !== prev.subject);
+      // DISTANCE — rhythm bias; break a run of 3; if the subject changed, avoid repeating the last distance.
+      var distance = _pickShot(r.distance, distRun, 3, subjChanged ? (prev && prev.distance) : null);
+      // ANGLE — break a run of 4.
+      var angle = _pickShot(r.angle, angRun, 4, null);
+      // BLOCKING — flags first: establishing = single; event-led = object/environment-led; else character.
+      var blocking;
+      if (panel.establishing) blocking = 'single';
+      else if (panel.eventLed) blocking = (type === 'Consequence') ? 'environment_led' : 'object_led';
+      else blocking = _pickShot(r.blocking, blkRun, 3, null);
+      // RULE: Revelation cannot reuse the previous panel's distance.
+      if (type === 'Revelation' && prev && distance === prev.distance) distance = r.distance[1] || 'wide';
+      // RULE: a change of subject should feel like a change of cinematography (distance OR angle must move).
+      if (subjChanged && prev && distance === prev.distance && angle === prev.angle) angle = (r.angle[1] !== angle ? r.angle[1] : r.angle[0]) || angle;
+      var shot = { distance: distance, angle: angle, blocking: blocking, movement: r.movement, subject: subj };
+      ph._shot = shot; if (ph._panel) ph._panel.shot = shot; shots.push(shot);
+      distRun.push(distance); angRun.push(angle); blkRun.push(blocking); prev = shot;
+    });
+    return shots;
+  }
+  window._buildShotSequence = _buildShotSequence;
+  // SHOT SEQUENCE LINT — compare RUNS, not just adjacent pairs. Positive rhythm, enforced.
+  function _shotSequenceLint(shots) {
+    var warnings = [], s = shots || [];
+    function runLint(label, valOf, maxRun) {
+      var run = 1;
+      for (var i = 1; i < s.length; i++) {
+        var a = valOf(s[i]), b = valOf(s[i - 1]);
+        if (a && a === b) { run++; if (run === maxRun) warnings.push('SHOT RHYTHM: ' + run + ' consecutive ' + label + ' shots (' + a + ') — the camera is not telling its part of the story; vary it.'); }
+        else run = 1;
+      }
+    }
+    runLint('same-distance', function (x) { return x.distance; }, 3);
+    runLint('same-angle', function (x) { return x.angle; }, 4);
+    runLint('same-blocking', function (x) { return x.blocking; }, 3);
+    runLint('character-led', function (x) { return (x.blocking === 'single' || x.blocking === 'two_shot') ? 'character-led' : ''; }, 4);
+    for (var i = 1; i < s.length; i++) {
+      if (s[i].subject && s[i - 1].subject && s[i].subject !== s[i - 1].subject && s[i].distance === s[i - 1].distance && s[i].angle === s[i - 1].angle) {
+        warnings.push('SHOT RHYTHM: PANEL ' + i + ' — subject changed (' + s[i - 1].subject + ' → ' + s[i].subject + ') but the camera did not; a change of subject should be a change of cinematography.');
+      }
+    }
+    return { warnings: warnings };
+  }
+  window._shotSequenceLint = _shotSequenceLint;
+  // SHOT DIVERSITY SCORE — distinct values / panels, per dimension + overall (0-100). More informative
+  // than "repeated composition": tells you WHICH axis (distance/angle/blocking/subject) is monotonous.
+  function _shotDiversityScore(shots) {
+    var s = shots || []; if (s.length < 2) return null;
+    var uniq = function (f) { return (new Set(s.map(f).filter(Boolean))).size; };
+    var d = { distance: Math.round(100 * uniq(function (x) { return x.distance; }) / s.length), angle: Math.round(100 * uniq(function (x) { return x.angle; }) / s.length), blocking: Math.round(100 * uniq(function (x) { return x.blocking; }) / s.length), subject: Math.round(100 * uniq(function (x) { return x.subject; }) / s.length) };
+    d.overall = Math.round((d.distance + d.angle + d.blocking + d.subject) / 4);
+    return d;
+  }
+  window._shotDiversityScore = _shotDiversityScore;
+
   // ── RESERVED EXTENSION POINTS (Roman 2026-07-17 — the compiler stages). NO logic yet; wired as
   // no-op pass-throughs so the pipeline shape is real in code and each validator has a home to
   // grow into: Author → STORY LINT → Story Director → CONTINUITY DIFF → VISUAL LINT → Renderer.
@@ -154166,6 +154261,7 @@ No text, no watermark, no UI elements, share-ready.`;
       continuity: _scoreFromLint(plan && plan._continuityLint, 25, 8),
       coverage: coverage,
       narrativeProgression: progression,   // distinct events per panel (plan-level proxy)
+      shotRhythm: (plan && plan._shotDiversity) ? plan._shotDiversity.overall : null,  // camera cadence across the sequence
       identityDirective: identityDirective
     };
     var vals = Object.keys(dims).map(function (k) { return dims[k]; }).filter(function (v) { return typeof v === 'number'; });
@@ -154249,6 +154345,14 @@ No text, no watermark, no UI elements, share-ready.`;
       }
       _buildContinuityLedger(plan);
       _buildPanelSpecs(plan);
+      // SHOT DIRECTOR — assign an explicit camera to every panel (rhythm, not diversity) + lint the sequence.
+      try {
+        var _shots = _buildShotSequence(plan.phases);
+        plan._shotSequence = _shots;
+        plan._shotSequenceLint = _shotSequenceLint(_shots);
+        plan._shotDiversity = _shotDiversityScore(_shots);
+        try { console.log('[SHOT-DIRECTOR] ' + _shots.map(function (s) { return s.distance + '/' + s.angle + '/' + s.blocking; }).join(' → ') + (plan._shotSequenceLint.warnings.length ? '  ⚠ ' + plan._shotSequenceLint.warnings.length : '')); } catch (_) {}
+      } catch (_) {}
       // VISUAL CONTINUITY DIRECTOR (Production Polish v1) — diff adjacent panels for continuity breaks.
       try {
         var _cl = _continuityLint(plan);
@@ -180658,6 +180762,9 @@ No text, no watermark, no UI elements, share-ready.`;
         if (_panel) {
           if (_panel.dramaticQuestion) _cidLines.push('DRAMATIC QUESTION (every choice reinforces it): ' + _panel.dramaticQuestion);
           if (_panel.perspectiveContract) { var _pc2 = _panel.perspectiveContract; _cidLines.push('PERSPECTIVE CONTRACT (three separate truths — keep them separate): READER learns → ' + _pc2.readerLearns + '  CHARACTERS learn → ' + _pc2.charactersLearn + '  PHYSICAL world → ' + _pc2.observableReality + '  (Render the READER\'s truth via Fate\'s non-diegetic symbol; the characters must NOT react to it.)'); }
+          // SHOT DIRECTOR (authoritative camera for THIS panel in the sequence's rhythm) — distance + angle
+          // + blocking are HARD; the shot-type expansion is supporting texture.
+          if (_panel.shot) { var _sh = _panel.shot; _cidLines.push('CAMERA (HARD — this panel\'s place in the shot rhythm; distinct from the neighbouring panels): ' + _sh.distance.replace(/_/g, ' ') + ' shot, ' + _sh.angle.replace(/_/g, ' ') + ' angle, ' + _sh.blocking.replace(/_/g, ' ') + ' blocking — ' + _sh.movement + '.'); }
           if (_panel.shotExpansion) _cidLines.push('SHOT (' + _panel.shotType + '): ' + _panel.shotExpansion);
           var h = _panel.hierarchy || {};
           // STORYBOARD v2 — the PRIMARY SUBJECT is a VISUAL subject. An establishing shot = the character
