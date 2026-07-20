@@ -154320,6 +154320,7 @@ No text, no watermark, no UI elements, share-ready.`;
     kwisheen_combat:   { tier: 1, kind: 'species combat',             asset: '/assets/Fatelands/Octofolk_Combat_Grapple_Ref_v1.png', governs: 'Many-Tide melee density: entangled grappling across several limbs, weapons caught inside the tangle, and the ATTACK-BUCKLER (a small round shield with a centre hole an armoured limb passes through to strike beyond it)', plumbing: 'attach when a Kwisheen is FIGHTING (`_isCombatScene`); `_kwisheenCombatRef()`' },
     kwisheen_disguised_threat: { tier: 1, kind: 'disguise reveal',    asset: '/assets/Fatelands/Octofolk_Disguised_Threat_Ref_v1.png', governs: 'a human-passing Kwisheen threatening a human up close — the disguise HOLDS (pleasant human face, gown/finery) while ONE sucker-lined tentacle slips from beneath the skirt/coat, often with a concealed dagger', plumbing: 'attach when a DISGUISED Kwisheen menaces/betrays a human (Showing the Deep, partial); `_kwisheenThreatRef()`' },
     kwisheen_land_combat: { tier: 1, kind: 'land combat',             asset: '/assets/Fatelands/Octofolk_Land_Combat_Ref_v1.png', governs: 'a Kwisheen fighting a HUMAN on dry land: grapple at close quarters, human legs braced against tentacle leverage, the undertide DAGGER on a tentacle striking from an unseen rear angle while the arms bind', plumbing: 'attach when a Kwisheen fights a human ON LAND (`_isCombatScene` + not underwater); `_kwisheenLandCombatRef()`' },
+    veilweave:         { tier: 1, kind: 'garment effect',            asset: '/assets/Fatelands/FirstFavored_Veilweave_Ref_v1.png', governs: 'the VEILWEAVE effect + garment ONLY (not identity): a long hooded EXTREMELY translucent gossamer leaf-vein tunic, body visible beneath, refracting the wearer into ~6 heavily overlapping MISREGISTERED projections of the same body (double-vision, no stable centre) — never clones/holograms/armour. Wearer species/identity ref still governs face/eyes/skin', plumbing: 'attach when a wearer has Veilweave (`_isVeilweaveScene`); `_veilweaveRef()` + `_veilweaveDirective(species)` (count scales: FF 6-9 / half 3-5 / other 2-3)' },
     wish_burst:        { tier: 1, kind: 'canonical symbol',          assetByOutcome: { clean: '/assets/Fatelands/Wish_Burst_Clean_v1.png', twisted: '/assets/Fatelands/Wish_Burst_Twisted_v1.png' }, governs: 'the Fate burst graphic style', plumbing: '_resolveCanonicalAssets, by wish outcome' },
     sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the localized shadow-STAIN Fate leaves over the sacrificed part (absence, not a reaching hand)', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
     manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
@@ -183157,6 +183158,57 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._kwisheenLandCombatRef = _kwisheenLandCombatRef;
 
+  // ══ VEILWEAVE — the First Favored refraction garment (Roman 2026-07-20) ═════════════════════════
+  // A gossamer leaf-vein tunic that refracts the wearer into ~N overlapping MISREGISTERED projections of
+  // the SAME body (severe double-vision, no stable centre) — NOT clones, NOT holograms, NOT armour. The
+  // effect is ALWAYS ON and anyone can wear it, but the projection count scales with ALIGNMENT: a First
+  // Favored gets 6-9, a Half-Favored 3-5, anyone else 2-3. VISUAL directive only; full canon (manufacture,
+  // combat counters, worldview) is prose — see [[project_fatelands_combat_styles]]. The Veilweave ref
+  // governs the EFFECT + GARMENT; the wearer's species/identity reference still governs face/eyes/skin.
+  function _isVeilweaveScene(sceneDesc) { return /veil[- ]?weave/i.test(String(sceneDesc || '')); }
+  window._isVeilweaveScene = _isVeilweaveScene;
+
+  function _veilweaveProjectionRange(wearerSpecies) {
+    var sp = String(wearerSpecies || '').toLowerCase().replace(/[\s-]+/g, '_');
+    if (/half.*favor/.test(sp)) return 'THREE to FIVE';          // half-Favored (check before 'favor')
+    if (/first_favored|favored|favoured/.test(sp)) return 'SIX to NINE';   // aligned First Favored — the most
+    return 'TWO to THREE';                                        // anyone else who dons it
+  }
+  window._veilweaveProjectionRange = _veilweaveProjectionRange;
+
+  function _veilweaveDirective(wearerSpecies) {
+    var range = _veilweaveProjectionRange(wearerSpecies);
+    return '\n\nVEILWEAVE (the First Favored refraction garment — the wearer is ONE physically real body, ' +
+      'NOT clones): a long, hooded, flowing, EXTREMELY TRANSLUCENT gossamer tunic of iridescent leaf-vein ' +
+      'fabric, the body clearly VISIBLE beneath it (in combat the observer sees semi-clothed versions of the ' +
+      'same figure attacking through overlapping transparent cloth). It refracts the wearer into approximately ' +
+      range + ' HEAVILY OVERLAPPING, semi-transparent, MISREGISTERED projections of that SAME body — drifting ' +
+      'slightly out of phase ABOVE, BELOW, ahead, behind, left and right, like severe DOUBLE VISION, with NO ' +
+      'stable centre to target. Offset them VERTICALLY as well as sideways, and overlap them enough that the ' +
+      'real body\'s exact position is genuinely uncertain. It is NOT separate clones standing side by side, ' +
+      'NOT orderly holographic copies, NOT opaque robes / plate armour / a superhero suit / a force field. A ' +
+      'dark setting makes the refraction legible.';
+  }
+  window._veilweaveDirective = _veilweaveDirective;
+
+  function _veilweaveRef() {
+    return (_CANONICAL_VISUAL_ASSETS && _CANONICAL_VISUAL_ASSETS.veilweave && _CANONICAL_VISUAL_ASSETS.veilweave.asset) || null;
+  }
+  window._veilweaveRef = _veilweaveRef;
+
+  // The wearer's species for Veilweave count-scaling: the First/Half-Favored on stage if any, else PC/LI.
+  function _veilweaveWearerSpecies(visualState) {
+    var norm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+    var found = '';
+    try {
+      var cast = (visualState && (visualState.characters_present || visualState.canon)) || [];
+      (Array.isArray(cast) ? cast : []).forEach(function (c) { var sp = norm(c && c.species); if (/favor|favour/.test(sp) && !found) found = sp; });
+      if (!found) { [state._playerSpecies, state._liSpecies].forEach(function (raw) { var sp = norm(raw); if (/favor|favour/.test(sp) && !found) found = sp; }); }
+    } catch (_) {}
+    return found || 'first_favored';   // Veilweave named but no Favored resolved → assume its native wearer
+  }
+  window._veilweaveWearerSpecies = _veilweaveWearerSpecies;
+
   // Pick the single most-relevant Kwisheen combat reference for a scene, or null. Order of specificity:
   // disguised-threat (a passing Kwisheen menacing a human) → land combat (fighting a human on land) →
   // general grapple (underwater/true-form melee). Returns one path so the sheet doesn't over-attach.
@@ -183286,6 +183338,16 @@ No text, no watermark, no UI elements, share-ready.`;
         }
         if (_spInScene.kwisheen || _spInScene.half_kwisheen) _combatBlock += _kwisheenCombatDirective();
         if (_spInScene.first_favored) _combatBlock += _firstFavoredCombatDirective();
+      }
+    } catch (_) {}
+    // VEILWEAVE — independent of combat (a First Favored may wear it in any scene). Fires when the scene
+    // names Veilweave; projection count scales with the wearer's alignment.
+    try {
+      if (opts.veilweave === true || (opts.veilweave !== false && _isVeilweaveScene(sceneDesc))) {
+        var _vwSp = opts.veilweaveWearerSpecies || (function () {
+          var f = ''; (Array.isArray(opts.cast) ? opts.cast : []).forEach(function (c) { var sp = String((c && c.species) || '').toLowerCase(); if (/favor|favour/.test(sp) && !f) f = sp; }); return f || 'first_favored';
+        })();
+        _combatBlock += _veilweaveDirective(_vwSp);
       }
     } catch (_) {}
 
@@ -184536,16 +184598,23 @@ No text, no watermark, no UI elements, share-ready.`;
     return out;
   }
 
-  // The combat directive block for a sheet, or '' — fires only for a FIGHT scene with a fighting species.
+  // Combat + Veilweave directive block for a sheet, or '' — combat fires for a FIGHT scene with a fighting
+  // species; Veilweave fires whenever the scene names it (independent of combat).
   function _sheetCombatBlock(visualState, phases) {
     try {
       var text = _sheetSceneText(visualState, phases);
-      if (!_isCombatScene(text)) return '';
       var sp = _sheetSpecies(visualState);
       var block = '';
-      if (sp.kwisheen || sp.half_kwisheen) block += _kwisheenCombatDirective();
-      if (sp.first_favored) block += _firstFavoredCombatDirective();
-      return block ? '\n\n══ COMBAT (applies to every fight panel) ══' + block : '';
+      if (_isCombatScene(text)) {
+        var cb = '';
+        if (sp.kwisheen || sp.half_kwisheen) cb += _kwisheenCombatDirective();
+        if (sp.first_favored) cb += _firstFavoredCombatDirective();
+        if (cb) block += '\n\n══ COMBAT (applies to every fight panel) ══' + cb;
+      }
+      if (_isVeilweaveScene(text)) {
+        block += '\n\n══ VEILWEAVE (the wearer, every panel they appear in) ══' + _veilweaveDirective(_veilweaveWearerSpecies(visualState));
+      }
+      return block;
     } catch (_) { return ''; }
   }
   window._sheetCombatBlock = _sheetCombatBlock;
@@ -184580,6 +184649,13 @@ No text, no watermark, no UI elements, share-ready.`;
             if (_crefPath) { var _crefB = await _canonRefToB64(_crefPath);
               if (_crefB) { _refs.push({ b64: _crefB, label: 'KWISHEEN COMBAT reference — Many-Tide grapple density, the attack-buckler (limb through a centre hole), and the rear-angle hidden dagger. Guides HOW the fight looks, not any specific character.' });
                 try { console.log('[ONESHOT] combat ref attached: ' + _crefPath.split('/').pop()); } catch (_) {} } }
+          }
+          // VEILWEAVE reference — the refraction EFFECT + garment, when the scene names Veilweave.
+          if (_isVeilweaveScene(_sceneTxt) && _refs.length < 5 && typeof _veilweaveRef === 'function') {
+            var _vwPath = _veilweaveRef();
+            if (_vwPath) { var _vwB = await _canonRefToB64(_vwPath);
+              if (_vwB) { _refs.push({ b64: _vwB, label: 'VEILWEAVE EFFECT reference — the transparent hooded leaf-vein garment and its heavily-overlapping misregistered projections of the SAME body (double-vision, no stable centre). Copy the EFFECT and transparency ONLY, never this figure\'s face, sex, weapon or pose.' });
+                try { console.log('[ONESHOT] veilweave ref attached'); } catch (_) {} } }
           }
         } catch (_) {}
         var _size = (window._oneShotSheetSize === '4K' || window._oneShotSheetSize === '2K') ? window._oneShotSheetSize : _ONESHOT_SIZE;
