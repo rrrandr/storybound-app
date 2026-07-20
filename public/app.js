@@ -184292,6 +184292,159 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderStagedPhaseImages = _renderStagedPhaseImages;
 
+  // ══ ONE-SHOT COLOUR SHEET RENDER PATH (Roman 2026-07-20) ═══════════════════════════════════════
+  // GRADUATED from the two-stage `_structuralPass` (which this supersedes): Gemini prices by resolution
+  // tier not content, so a 4K line-art sheet costs the same as a 4K finished sheet — staging was pure
+  // overhead, and it lost the setting at the sketch→colorize handoff and drifted identity between
+  // quadrants. This renders ALL FOUR panels in ONE 4096² generation, then splits at the centre gutters.
+  // Measured n=6: 0 hard defects / 24 quadrants; ~3.8-4.5c/panel, under the 7-8c ceiling.
+  //
+  // DROP-IN for _renderStagedPhaseImages: same signature, same results[] shape ({phaseIdx,imageUrl,
+  // fingerprint}), same .firstReady contract — so the scene-completion consumers are untouched. Gated
+  // on window._oneShotSheet===true AND exactly 4 phases; the caller falls back to the per-phase path
+  // otherwise. Reuses _resolvePhaseVisualState per phase (inherits ALL per-phase canon/authority) and
+  // the same ref assembly the per-phase path uses.
+  //
+  // TIER: 2K default (2048² sheet → 1024²/panel = current production display res, 2.5c/panel). Output
+  // resolution is independent of grid reliability — the model DRAWS the 2x2 the same at any tier — and
+  // 1024²/panel already exceeds a laptop's ~400-800px display box. 4K (2048²/panel, 3.8c/panel) is
+  // reserved for tentpole scenes wanting zoom/repair headroom, via window._oneShotSheetSize.
+  var _ONESHOT_SIZE = '2K';
+
+  // Split a 4096² data-URL into 4 quadrant data-URLs at the DETECTED centre gutters (fallback 50%).
+  // The detector (promoted from the validated harness) finds the light/dark rule between colour blocks;
+  // fixed-50% is the safety net so a missed detection never drops panels.
+  async function _splitSheetQuadrants(sheetUrl) {
+    return new Promise(function (resolve) {
+      var im = new Image();
+      im.onload = function () {
+        var W = im.width, H = im.height;
+        // Detect gutters on a downscaled copy.
+        var sw = 900, sh = Math.round(sw * H / W);
+        var pc = document.createElement('canvas'); pc.width = sw; pc.height = sh;
+        var pctx = pc.getContext('2d'); pctx.drawImage(im, 0, 0, sw, sh);
+        var d = pctx.getImageData(0, 0, sw, sh).data;
+        var lum = function (x, y) { var p = (y * sw + x) * 4; return 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2]; };
+        var uni = function (isCol, i, len) { var e = 0; for (var k = 0; k < len; k++) { var l = isCol ? lum(i, k) : lum(k, i); if (l > 232 || l < 28) e++; } return e / len; };
+        var scan = function (isCol, n, len) { var o = [], cur = null; for (var i = 0; i < n; i++) { if (uni(isCol, i, len) >= 0.82) { if (cur) cur.end = i; else cur = { start: i, end: i }; } else if (cur) { o.push(cur); cur = null; } } if (cur) o.push(cur); return o.filter(function (r) { return r.start > n * 0.10 && r.end < n * 0.90; }); };
+        var byLen = function (a, b) { return (b.end - b.start) - (a.end - a.start); };
+        var v = scan(true, sw, sh).sort(byLen)[0], h = scan(false, sh, sw).sort(byLen)[0];
+        var vPct = v ? ((v.start + v.end) / 2) / sw : 0.5;
+        var hPct = h ? ((h.start + h.end) / 2) / sh : 0.5;
+        if (Math.abs(vPct - 0.5) > 0.12) vPct = 0.5;   // reject an implausible gutter
+        if (Math.abs(hPct - 0.5) > 0.12) hPct = 0.5;
+        var vx = Math.round(W * vPct), hy = Math.round(H * hPct);
+        function cut(sx, sy, sW, sH) { var c = document.createElement('canvas'); c.width = sW; c.height = sH; c.getContext('2d').drawImage(im, sx, sy, sW, sH, 0, 0, sW, sH); return c.toDataURL('image/png'); }
+        // reading order: TL, TR, BL, BR → phase 0,1,2,3
+        resolve([ cut(0, 0, vx, hy), cut(vx, 0, W - vx, hy), cut(0, hy, vx, H - hy), cut(vx, hy, W - vx, H - hy) ]);
+      };
+      im.onerror = function () { resolve(null); };
+      im.src = sheetUrl;
+    });
+  }
+  window._splitSheetQuadrants = _splitSheetQuadrants;
+
+  // Build the 2x2 sheet prompt by reusing the per-phase prompt builder for each quadrant, so the sheet
+  // inherits every per-phase canon/authority rule (Panel Authority, presence gates, concealment, refs
+  // contract). Each phase is resolved to its own visualState then run through _buildStagedHeroPrompt.
+  function _buildOneShotSheetPrompt(visualState, phases, sceneIndex, planMeta) {
+    var frame = 'A SINGLE FINISHED COLOUR ILLUSTRATION divided into a 2 x 2 GRID of exactly FOUR equal ' +
+      'rectangular panels of identical size, separated by clean straight gutters — one vertical gutter down ' +
+      'the exact centre and one horizontal gutter across the exact centre. Do NOT vary the panel sizes, do ' +
+      'NOT make a decorative comic page layout, do NOT let any figure cross a gutter, do NOT blend the ' +
+      'quadrants. Reading order: top-left = QUADRANT 1, top-right = QUADRANT 2, bottom-left = QUADRANT 3, ' +
+      'bottom-right = QUADRANT 4.\n';
+    var quads = [];
+    for (var i = 0; i < phases.length; i++) {
+      var pvs = null;
+      try {
+        pvs = _resolvePhaseVisualState(visualState, phases[i],
+          (planMeta && Array.isArray(planMeta.phases)) ? planMeta.phases : null,
+          (planMeta && Array.isArray(planMeta.beats)) ? planMeta.beats : null);
+      } catch (_) { pvs = visualState; }
+      var body = '';
+      try { body = _buildStagedHeroPrompt(pvs || visualState, sceneIndex, planMeta) || ''; } catch (_) { body = ''; }
+      quads.push('\n══ QUADRANT ' + (i + 1) + ' ══\n' + body);
+    }
+    var close = '\n\nAcross the whole page: recurring characters stay recognisably the SAME individual in ' +
+      'every quadrant they appear in — identical face, colouring, hair and wardrobe. Ender Bond ink-and-' +
+      'colour rendering throughout. Do NOT draw panel numbers, captions, or any lettering.';
+    return frame + quads.join('\n') + close;
+  }
+  window._buildOneShotSheetPrompt = _buildOneShotSheetPrompt;
+
+  // DROP-IN replacement for _renderStagedPhaseImages when window._oneShotSheet is on and phases===4.
+  function _renderOneShotSheet(visualState, phases, sceneIndex, planMeta) {
+    var firstResolve; var firstReady = new Promise(function (res) { firstResolve = res; });
+    var allPromise = (async function () {
+      try {
+        var prompt = _buildOneShotSheetPrompt(visualState, phases, sceneIndex, planMeta);
+        // Assemble refs the same way the per-phase path does: the region contract's species anchors are
+        // already staged on state._stagedRegionContract; _renderStagedPhaseImage publishes the resolved
+        // set to window._gnSpeciesAnchorPaths, which the image adapters consume. Prime it here for the sheet.
+        var _refs = [];
+        try {
+          if (state._stagedRegionContract && Array.isArray(state._stagedRegionContract.anchorImages)) {
+            for (var a = 0; a < state._stagedRegionContract.anchorImages.length && _refs.length < 4; a++) {
+              var _p = state._stagedRegionContract.anchorImages[a];
+              var _b = await _canonRefToB64(_p);
+              if (_b) _refs.push({ b64: _b, label: 'CANON REFERENCE — ' + _p.split('/').pop() });
+            }
+          }
+        } catch (_) {}
+        var _size = (window._oneShotSheetSize === '4K' || window._oneShotSheetSize === '2K') ? window._oneShotSheetSize : _ONESHOT_SIZE;
+        console.log('[ONESHOT] rendering 2x2 sheet for scene ' + sceneIndex + ' @ ' + _size + ' (' + _refs.length + ' refs, ' + prompt.length + ' char prompt)');
+        var _t0 = Date.now();
+        var r = await fetch(IMAGE_PROXY_URL, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: prompt, provider: 'gemini', model: 'gemini-3.1-flash-image-preview',
+            imageSize: _size, aspect_ratio: '1:1', imageIntent: 'scene', textFirst: true, n: 1,
+            reference_images_b64: _refs.length ? _refs : undefined })
+        });
+        if (!r.ok) throw new Error('sheet HTTP ' + r.status);
+        var d = await r.json(); var u = d.image || d.url;
+        if (!u) throw new Error('sheet returned no image');
+        var sheetUrl = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
+        try { _chargeImage('gemini', 1, { imageSize: _size }); } catch (_) {}
+        var quads = await _splitSheetQuadrants(sheetUrl);
+        if (!quads) throw new Error('sheet split failed');
+        console.log('[ONESHOT] scene ' + sceneIndex + ' sheet done in ' + ((Date.now() - _t0) / 1000).toFixed(0) + 's → 4 quadrants');
+        var results = [];
+        for (var q = 0; q < phases.length; q++) {
+          var res = { phaseIdx: phases[q].phaseIdx, imageUrl: quads[q] || sheetUrl,
+            fingerprint: 'oneshot-s' + sceneIndex + '-q' + q, _oneShot: true };
+          results.push(res);
+          if (q === 0) firstResolve(res);
+        }
+        return results;
+      } catch (e) {
+        console.warn('[ONESHOT] failed (' + (e && e.message) + ') — falling back to per-phase render');
+        // Graceful fallback: run the real per-phase path so a sheet failure never blanks the scene.
+        try {
+          var fb = _renderStagedPhaseImages(visualState, phases, sceneIndex, planMeta);
+          fb.firstReady.then(function (r0) { firstResolve(r0); });
+          return await fb;
+        } catch (e2) {
+          var errR = { phaseIdx: phases[0] ? phases[0].phaseIdx : 0, error: (e && e.message) || 'oneshot failed' };
+          firstResolve(errR); return [errR];
+        }
+      }
+    })();
+    allPromise.firstReady = firstReady;
+    return allPromise;
+  }
+  window._renderOneShotSheet = _renderOneShotSheet;
+
+  // Scene-level chooser: one-shot sheet when flagged + exactly 4 phases, else the per-phase path.
+  function _renderSceneImages(visualState, phases, sceneIndex, planMeta) {
+    if (window._oneShotSheet === true && Array.isArray(phases) && phases.length === 4) {
+      console.log('[ONESHOT] scene ' + sceneIndex + ' → one-shot sheet path (4 phases)');
+      return _renderOneShotSheet(visualState, phases, sceneIndex, planMeta);
+    }
+    return _renderStagedPhaseImages(visualState, phases, sceneIndex, planMeta);
+  }
+  window._renderSceneImages = _renderSceneImages;
+
   // ─────────────────────────────────────────────────────────────────
   // Beat-level expression layer — Layer 2 (Kontext mutation) + Layer 3
   // (cut-to closeup). Both fire eagerly after phase images settle so
@@ -201166,7 +201319,7 @@ No text, no watermark, no UI elements, share-ready.`;
       }
 
       // Phase image gen + render — identical to the literary completion path.
-      var phaseImagesPromise = _renderStagedPhaseImages(plan.visualState, plan.phases, sceneIndex, plan);
+      var phaseImagesPromise = _renderSceneImages(plan.visualState, plan.phases, sceneIndex, plan);
       if (typeof _pregenMetaphorInserts === 'function') {
         _pregenMetaphorInserts(plan, sceneIndex).catch(function(_) {/* logged inside */});
       }
@@ -201664,7 +201817,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // consumes the array as a single promise; phase 0 mounts as the
       // initial hero, subsequent phases swap in when their startBeat is
       // reached during click-through.
-      var phaseImagesPromise = _renderStagedPhaseImages(plan.visualState, plan.phases, sceneIndex, plan);
+      var phaseImagesPromise = _renderSceneImages(plan.visualState, plan.phases, sceneIndex, plan);
 
       // Metaphor inserts — pre-gen at scene mount alongside phase
       // images so the flash is INSTANT when the trigger fires (a
@@ -203493,12 +203646,17 @@ No text, no watermark, no UI elements, share-ready.`;
 
     // Panel count enforcement
     // Scene 1 cap raised 2 → 4 to match _buildGNPanelPrompt's MAX PANELS bump.
-    // The 2-panel cap was choking the establishing scene — there's no way to
-    // land WHO/WHERE/WHAT/HOOK in two panels; the LLM had to drop most of it.
-    var idx = (typeof sceneIndex === 'number') ? sceneIndex : _gnSceneIndex;
-    if (idx === 0) {
-      parsed.panels = parsed.panels.slice(0, 4);
-    }
+    // ══ HARD CEILING: 4 GENERATED IMAGES PER CG SCENE (Roman 2026-07-20) ═══════════════════════════
+    // A CG scene renders AT MOST 4 panels — which is exactly one 2x2 one-shot sheet. This is policy,
+    // not a soft target: the one-shot sheet holds 4, and a 5th image would mean either a second sheet
+    // (double cost) or a separately-generated single (lower res + cross-generation identity drift). If
+    // a scene needs to say more, it splits into two SCENES, not two sheets.
+    // THE ONLY EXCEPTION is the diegetic DECK INSET — and it is not a generated image at all: it is a
+    // STATIC asset overlaid on the bottom-right corner of one existing panel (see `_deckInsetHtml`,
+    // `.gn-deck-inset`), appearing only in the onboarding-mandate scenes (scenes 1-3 of the 1st and 3rd
+    // non-FF story a new user sees). It costs no generation and rides on top of a panel, so it never
+    // counts against this ceiling. (The 2-panel floor was removed earlier — the establishing scene
+    // needs room to land WHO/WHERE/WHAT/HOOK.)
     if (parsed.panels.length > 4) {
       parsed.panels = parsed.panels.slice(0, 4);
     }
