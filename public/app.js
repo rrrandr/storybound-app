@@ -154318,6 +154318,8 @@ No text, no watermark, no UI elements, share-ready.`;
     kwisheen_anatomy:  { tier: 1, kind: 'species anatomy',           asset: '/assets/Fatelands/Kwisheen_Body_Anchor_v2.jpg', governs: 'body plan / proportions / tentacle topology / coral hair / attire', plumbing: 'species-anchor presence gate (always-on when a Kwisheen is on-stage)' },
     kwisheen_swim:     { tier: 1, kind: 'species locomotion',         asset: '/assets/Fatelands/Octofolk_Swim_Motion_Ref_v1.png', governs: 'how the six-tentacle mantle moves — FLEXED/spread when hovering, TRAILING in a bundle when surging (never a fish-tail)', plumbing: 'attach when a Kwisheen is SWIMMING / in-motion underwater (crowd + action); `_kwisheenSwimRef()`' },
     kwisheen_combat:   { tier: 1, kind: 'species combat',             asset: '/assets/Fatelands/Octofolk_Combat_Grapple_Ref_v1.png', governs: 'Many-Tide melee density: entangled grappling across several limbs, weapons caught inside the tangle, and the ATTACK-BUCKLER (a small round shield with a centre hole an armoured limb passes through to strike beyond it)', plumbing: 'attach when a Kwisheen is FIGHTING (`_isCombatScene`); `_kwisheenCombatRef()`' },
+    kwisheen_disguised_threat: { tier: 1, kind: 'disguise reveal',    asset: '/assets/Fatelands/Octofolk_Disguised_Threat_Ref_v1.png', governs: 'a human-passing Kwisheen threatening a human up close — the disguise HOLDS (pleasant human face, gown/finery) while ONE sucker-lined tentacle slips from beneath the skirt/coat, often with a concealed dagger', plumbing: 'attach when a DISGUISED Kwisheen menaces/betrays a human (Showing the Deep, partial); `_kwisheenThreatRef()`' },
+    kwisheen_land_combat: { tier: 1, kind: 'land combat',             asset: '/assets/Fatelands/Octofolk_Land_Combat_Ref_v1.png', governs: 'a Kwisheen fighting a HUMAN on dry land: grapple at close quarters, human legs braced against tentacle leverage, the undertide DAGGER on a tentacle striking from an unseen rear angle while the arms bind', plumbing: 'attach when a Kwisheen fights a human ON LAND (`_isCombatScene` + not underwater); `_kwisheenLandCombatRef()`' },
     wish_burst:        { tier: 1, kind: 'canonical symbol',          assetByOutcome: { clean: '/assets/Fatelands/Wish_Burst_Clean_v1.png', twisted: '/assets/Fatelands/Wish_Burst_Twisted_v1.png' }, governs: 'the Fate burst graphic style', plumbing: '_resolveCanonicalAssets, by wish outcome' },
     sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the localized shadow-STAIN Fate leaves over the sacrificed part (absence, not a reaching hand)', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
     manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
@@ -183143,6 +183145,32 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._kwisheenCombatRef = _kwisheenCombatRef;
 
+  // Disguised-Kwisheen-threatens-human reference (disguise holds, one tentacle + dagger emerges), or null.
+  function _kwisheenThreatRef() {
+    return (_CANONICAL_VISUAL_ASSETS && _CANONICAL_VISUAL_ASSETS.kwisheen_disguised_threat && _CANONICAL_VISUAL_ASSETS.kwisheen_disguised_threat.asset) || null;
+  }
+  window._kwisheenThreatRef = _kwisheenThreatRef;
+
+  // Kwisheen-fights-human-on-LAND reference (grapple, human legs vs tentacle leverage, rear-angle dagger), or null.
+  function _kwisheenLandCombatRef() {
+    return (_CANONICAL_VISUAL_ASSETS && _CANONICAL_VISUAL_ASSETS.kwisheen_land_combat && _CANONICAL_VISUAL_ASSETS.kwisheen_land_combat.asset) || null;
+  }
+  window._kwisheenLandCombatRef = _kwisheenLandCombatRef;
+
+  // Pick the single most-relevant Kwisheen combat reference for a scene, or null. Order of specificity:
+  // disguised-threat (a passing Kwisheen menacing a human) → land combat (fighting a human on land) →
+  // general grapple (underwater/true-form melee). Returns one path so the sheet doesn't over-attach.
+  function _kwisheenCombatRefForScene(sceneDesc, opts) {
+    opts = opts || {};
+    var t = String(sceneDesc || '').toLowerCase();
+    var disguised = opts.disguised === true || /disguis|passing as human|human guise|gown|ballroom|gala|court|the act|hidden tentacle|from (beneath|under) (her|his|their) (skirt|dress|gown|coat)/.test(t);
+    var underwater = opts.underwater === true || /underwater|gloamwater|submerg|reef|abyss|tidal|the depths|beneath the (waves|surface|sea)/.test(t);
+    if (disguised && !underwater) return _kwisheenThreatRef();
+    if (!underwater) return _kwisheenLandCombatRef();
+    return _kwisheenCombatRef();
+  }
+  window._kwisheenCombatRefForScene = _kwisheenCombatRefForScene;
+
   // Generate a black-and-white structural blueprint from a scene description. `feedback` (from the
   // verifier's accumulated reasons) is injected so each retry fixes the named structural faults.
   // opts = { refs:[{b64,label}], imageSize, aspectRatio, emotions, underwater }.
@@ -184469,12 +184497,58 @@ No text, no watermark, no UI elements, share-ready.`;
       ? '\n\n══ APPLIES TO EVERY QUADRANT (shared canon, style and rules — obey in all four panels) ══\n' + globalLines.join('\n')
       : '';
 
+    // CULTURAL COMBAT — a fight-scene sheet gets its species' combat directive ONCE (all quadrants of a
+    // combat scene share the style). Detect from the whole scene text + the species on stage.
+    var combatBlock = _sheetCombatBlock(visualState, phases);
+
     var close = '\n\nAcross the whole page: recurring characters stay recognisably the SAME individual in ' +
       'every quadrant they appear in — identical face, colouring, hair and wardrobe. Ender Bond ink-and-' +
       'colour rendering throughout. Do NOT draw panel numbers, captions, or any lettering.';
-    return frame + globalBlock + quads.join('\n') + close;
+    return frame + globalBlock + combatBlock + quads.join('\n') + close;
   }
   window._buildOneShotSheetPrompt = _buildOneShotSheetPrompt;
+
+  // Combined scene text for a sheet (visualState + every phase's beats) — used for combat/species detection.
+  function _sheetSceneText(visualState, phases) {
+    var parts = [];
+    try {
+      if (visualState) { parts.push(visualState.background || '', visualState.setting || '', visualState.action || ''); }
+      (Array.isArray(phases) ? phases : []).forEach(function (ph) {
+        if (!ph) return;
+        if (ph.beat) parts.push(ph.beat); if (ph.label) parts.push(ph.label);
+        if (Array.isArray(ph.beats)) ph.beats.forEach(function (b) { parts.push((b && b.text) || ''); });
+      });
+    } catch (_) {}
+    return parts.join(' ');
+  }
+
+  // Which non-human species are on stage for a sheet (cast fields, else PC/LI globals).
+  function _sheetSpecies(visualState) {
+    var norm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+    var out = {};
+    try {
+      var cast = (visualState && (visualState.characters_present || visualState.canon)) || [];
+      (Array.isArray(cast) ? cast : []).forEach(function (c) { var sp = norm(c && c.species); if (sp && sp !== 'human') out[sp] = true; });
+      if (!Object.keys(out).length) {
+        [state._playerSpecies, state._liSpecies].forEach(function (raw) { var sp = norm(raw); if (sp && sp !== 'human') out[sp] = true; });
+      }
+    } catch (_) {}
+    return out;
+  }
+
+  // The combat directive block for a sheet, or '' — fires only for a FIGHT scene with a fighting species.
+  function _sheetCombatBlock(visualState, phases) {
+    try {
+      var text = _sheetSceneText(visualState, phases);
+      if (!_isCombatScene(text)) return '';
+      var sp = _sheetSpecies(visualState);
+      var block = '';
+      if (sp.kwisheen || sp.half_kwisheen) block += _kwisheenCombatDirective();
+      if (sp.first_favored) block += _firstFavoredCombatDirective();
+      return block ? '\n\n══ COMBAT (applies to every fight panel) ══' + block : '';
+    } catch (_) { return ''; }
+  }
+  window._sheetCombatBlock = _sheetCombatBlock;
 
   // DROP-IN replacement for _renderStagedPhaseImages when window._oneShotSheet is on and phases===4.
   function _renderOneShotSheet(visualState, phases, sceneIndex, planMeta) {
@@ -184493,6 +184567,19 @@ No text, no watermark, no UI elements, share-ready.`;
               var _b = await _canonRefToB64(_p);
               if (_b) _refs.push({ b64: _b, label: 'CANON REFERENCE — ' + _p.split('/').pop() });
             }
+          }
+        } catch (_) {}
+        // COMBAT REFERENCE — a Kwisheen fight scene gets the single most-relevant grapple/threat/land ref
+        // (drives melee density + attack-buckler + hidden-dagger, which text alone under-specifies). Only
+        // when there's ref budget left, so the species anatomy anchors aren't crowded out.
+        try {
+          var _sceneTxt = _sheetSceneText(visualState, phases);
+          var _sp = _sheetSpecies(visualState);
+          if ((_sp.kwisheen || _sp.half_kwisheen) && _isCombatScene(_sceneTxt) && _refs.length < 5 && typeof _kwisheenCombatRefForScene === 'function') {
+            var _crefPath = _kwisheenCombatRefForScene(_sceneTxt, {});
+            if (_crefPath) { var _crefB = await _canonRefToB64(_crefPath);
+              if (_crefB) { _refs.push({ b64: _crefB, label: 'KWISHEEN COMBAT reference — Many-Tide grapple density, the attack-buckler (limb through a centre hole), and the rear-angle hidden dagger. Guides HOW the fight looks, not any specific character.' });
+                try { console.log('[ONESHOT] combat ref attached: ' + _crefPath.split('/').pop()); } catch (_) {} } }
           }
         } catch (_) {}
         var _size = (window._oneShotSheetSize === '4K' || window._oneShotSheetSize === '2K') ? window._oneShotSheetSize : _ONESHOT_SIZE;
