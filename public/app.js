@@ -184347,6 +184347,13 @@ No text, no watermark, no UI elements, share-ready.`;
   // Build the 2x2 sheet prompt by reusing the per-phase prompt builder for each quadrant, so the sheet
   // inherits every per-phase canon/authority rule (Panel Authority, presence gates, concealment, refs
   // contract). Each phase is resolved to its own visualState then run through _buildStagedHeroPrompt.
+  //
+  // DEDUP (Roman 2026-07-20): four full per-phase prompts concatenated ran ~148k chars — the shared
+  // boilerplate (style, no-text, species canon, world rules, refs contract) repeated 4x. This splits
+  // each phase prompt into lines, hoists lines COMMON TO ALL PHASES into ONE global block, and leaves
+  // each QUADRANT block holding only its own differences (camera, staging, cast, emotion). A line that
+  // is identical across all four phases is by definition NOT phase-specific, so hoisting it is safe. Cut
+  // the prompt ~3x with no loss of content.
   function _buildOneShotSheetPrompt(visualState, phases, sceneIndex, planMeta) {
     var frame = 'A SINGLE FINISHED COLOUR ILLUSTRATION divided into a 2 x 2 GRID of exactly FOUR equal ' +
       'rectangular panels of identical size, separated by clean straight gutters — one vertical gutter down ' +
@@ -184354,7 +184361,9 @@ No text, no watermark, no UI elements, share-ready.`;
       'NOT make a decorative comic page layout, do NOT let any figure cross a gutter, do NOT blend the ' +
       'quadrants. Reading order: top-left = QUADRANT 1, top-right = QUADRANT 2, bottom-left = QUADRANT 3, ' +
       'bottom-right = QUADRANT 4.\n';
-    var quads = [];
+
+    // 1) build each phase's full prompt
+    var perPhase = [];
     for (var i = 0; i < phases.length; i++) {
       var pvs = null;
       try {
@@ -184364,12 +184373,36 @@ No text, no watermark, no UI elements, share-ready.`;
       } catch (_) { pvs = visualState; }
       var body = '';
       try { body = _buildStagedHeroPrompt(pvs || visualState, sceneIndex, planMeta) || ''; } catch (_) { body = ''; }
-      quads.push('\n══ QUADRANT ' + (i + 1) + ' ══\n' + body);
+      perPhase.push(body);
     }
+
+    // 2) line frequency across phases (count each distinct trimmed line once per phase)
+    var N = perPhase.length;
+    var lineSets = perPhase.map(function (p) { return p.split('\n'); });
+    var freq = {};
+    lineSets.forEach(function (lines) {
+      var seen = {};
+      lines.forEach(function (l) { var t = l.trim(); if (t && !seen[t]) { seen[t] = 1; freq[t] = (freq[t] || 0) + 1; } });
+    });
+
+    // 3) GLOBAL block = lines present in ALL phases, in phase-0 order; QUADRANT blocks = the rest.
+    var globalLines = [], globalSeen = {};
+    if (N > 1 && lineSets[0]) {
+      lineSets[0].forEach(function (l) { var t = l.trim(); if (t && freq[t] === N && !globalSeen[t]) { globalSeen[t] = 1; globalLines.push(l); } });
+    }
+    var quads = lineSets.map(function (lines, qi) {
+      var uniq = lines.filter(function (l) { var t = l.trim(); return t && (N <= 1 || freq[t] < N); });
+      return '\n══ QUADRANT ' + (qi + 1) + ' ══ (this panel only)\n' + uniq.join('\n');
+    });
+
+    var globalBlock = globalLines.length
+      ? '\n\n══ APPLIES TO EVERY QUADRANT (shared canon, style and rules — obey in all four panels) ══\n' + globalLines.join('\n')
+      : '';
+
     var close = '\n\nAcross the whole page: recurring characters stay recognisably the SAME individual in ' +
       'every quadrant they appear in — identical face, colouring, hair and wardrobe. Ender Bond ink-and-' +
       'colour rendering throughout. Do NOT draw panel numbers, captions, or any lettering.';
-    return frame + quads.join('\n') + close;
+    return frame + globalBlock + quads.join('\n') + close;
   }
   window._buildOneShotSheetPrompt = _buildOneShotSheetPrompt;
 
@@ -184406,6 +184439,7 @@ No text, no watermark, no UI elements, share-ready.`;
         if (!u) throw new Error('sheet returned no image');
         var sheetUrl = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
         try { _chargeImage('gemini', 1, { imageSize: _size }); } catch (_) {}
+        try { window._lastOneShotSheet = { sceneIndex: sceneIndex, url: sheetUrl, at: (state && state.turnCount) }; } catch (_) {}   // observability: last full sheet, pre-split
         var quads = await _splitSheetQuadrants(sheetUrl);
         if (!quads) throw new Error('sheet split failed');
         console.log('[ONESHOT] scene ' + sceneIndex + ' sheet done in ' + ((Date.now() - _t0) / 1000).toFixed(0) + 's → 4 quadrants');
