@@ -184435,8 +184435,19 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderOneShotSheet = _renderOneShotSheet;
 
-  // Scene-level chooser: one-shot sheet when flagged + exactly 4 phases, else the per-phase path.
+  // Scene-level chooser + the HARD 4-IMAGE CEILING chokepoint. `plan.phases` — not `plan.panels` — is
+  // the image-generating unit: the render loop makes ONE image per phase. The storyboard subsystem
+  // (plan._storyboardPhases swap) and motion phase-splitting can push the count past 4 AFTER the
+  // upstream phase cap, so the integration test authored 5 phases. Enforce the ceiling HERE, where both
+  // render paths converge, so no scene ever generates a 5th image regardless of what produced the phases.
+  // (If a scene needs to say more, it splits into two SCENES — see the panel-cap invariant.)
   function _renderSceneImages(visualState, phases, sceneIndex, planMeta) {
+    if (Array.isArray(phases) && phases.length > 4) {
+      console.log('[CG:CEILING] scene ' + sceneIndex + ' had ' + phases.length + ' phases — capping at 4 (hard image ceiling)');
+      phases = phases.slice(0, 4);
+      phases.forEach(function (p, i) { if (p) p.phaseIdx = i; });   // keep phaseIdx sequential 0..3
+      if (planMeta && Array.isArray(planMeta.phases)) planMeta.phases = phases;   // downstream reads planMeta.phases
+    }
     if (window._oneShotSheet === true && Array.isArray(phases) && phases.length === 4) {
       console.log('[ONESHOT] scene ' + sceneIndex + ' → one-shot sheet path (4 phases)');
       return _renderOneShotSheet(visualState, phases, sceneIndex, planMeta);
