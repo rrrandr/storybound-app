@@ -30,6 +30,42 @@ function mapToOpenAISize(size, imageIntent) {
 }
 
 // ============================================================
+// GEMINI IMAGE CONFIG (Roman 2026-07-19)
+// ============================================================
+// The gemini-3.x image models accept generationConfig.imageConfig
+// { imageSize: '1K' | '2K' | '4K', aspectRatio: 'W:H' }; 2K on a 1:1 ratio
+// yields 2048x2048. gemini-2.5-flash-image ("Nano Banana") ignores it and is
+// fixed at 1024. Until now the client's `size` / `aspect_ratio` were dropped
+// entirely on the Gemini path (only mapToOpenAISize consumed them), so every
+// Gemini render came back at the model default.
+//
+// OPT-IN BY DESIGN: returns null unless the caller explicitly asks for a
+// large size, so the default request body stays byte-identical. If the field
+// name or nesting is wrong for a given model, a 400 would silently drop every
+// panel into the OpenAI/BFL fallback — so nothing opts in by accident.
+function geminiImageConfig(body) {
+  const raw = String((body && body.imageSize) || '').toUpperCase();
+  let imageSize = (raw === '1K' || raw === '2K' || raw === '4K') ? raw : null;
+
+  // Derive from an explicit WxH only when it's clearly above the 1K default.
+  if (!imageSize && body && typeof body.size === 'string') {
+    const m = body.size.match(/^(\d+)\s*x\s*(\d+)$/);
+    if (m) {
+      const max = Math.max(Number(m[1]), Number(m[2]));
+      if (max >= 3500) imageSize = '4K';
+      else if (max >= 1800) imageSize = '2K';
+    }
+  }
+  if (!imageSize) return null;
+
+  const cfg = { imageSize };
+  if (body && typeof body.aspect_ratio === 'string' && /^\d+:\d+$/.test(body.aspect_ratio)) {
+    cfg.aspectRatio = body.aspect_ratio;
+  }
+  return cfg;
+}
+
+// ============================================================
 // INTENT-BASED MODEL SELECTION
 // Backend enforces model choice - frontend cannot override
 // ============================================================
@@ -1469,9 +1505,10 @@ export default async function handler(req, res) {
                 ]
               }
             ],
-            generationConfig: {
-              responseModalities: ['IMAGE']
-            }
+            generationConfig: Object.assign(
+              { responseModalities: ['IMAGE'] },
+              geminiImageConfig(req.body) ? { imageConfig: geminiImageConfig(req.body) } : {}
+            )
           })
         }
       );
@@ -1552,6 +1589,8 @@ export default async function handler(req, res) {
         _parts.push({ text: `Generate an image: ${prompt}` });
       }
 
+      const _imgCfg = geminiImageConfig(req.body);
+      if (_imgCfg) console.log('[IMAGE] Gemini imageConfig: ' + JSON.stringify(_imgCfg) + ' (model ' + geminiModel + ')');
       const geminiRes = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${process.env.GEMINI_API_KEY}`,
         {
@@ -1559,7 +1598,10 @@ export default async function handler(req, res) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: _parts }],
-            generationConfig: { responseModalities: ['IMAGE'] }
+            generationConfig: Object.assign(
+              { responseModalities: ['IMAGE'] },
+              _imgCfg ? { imageConfig: _imgCfg } : {}
+            )
           })
         }
       );

@@ -4808,9 +4808,31 @@ ${_pcInteriorLock}`;
   // replicate / openai). OpenAI / others fall through to default.
   const IMAGE_PRICING = {
       'bfl':       0.04,
-      'gemini':    0.03,
+      // Gemini is priced by RESOLUTION TIER, not flat (Roman 2026-07-19). The
+      // old flat 0.03 understated every Gemini render by ~2x. 'gemini' = the 1K
+      // default every current caller gets; the tiered keys are resolved by
+      // estimateImageCost when a call declares its imageSize.
+      // NOTE: price per PIXEL falls sharply with tier — 4K is 16x the pixels of
+      // 1K for ~2.25x the price (~$0.009/MP vs ~$0.064/MP). That sub-linearity,
+      // not the per-call saving, is what makes batched multi-panel sheets pay.
+      'gemini':     0.067,   // 1K  1024x1024
+      'gemini-05k': 0.045,   // 0.5K 512x512
+      'gemini-1k':  0.067,
+      'gemini-2k':  0.101,   // 2K  2048x2048
+      'gemini-4k':  0.151,   // 4K  4096x4096
+      // Flash-Lite Image bills 1K and 2K at the SAME image-token count, so a 2K
+      // contact sheet costs what a single 1K render costs. Flex vs Priority is a
+      // 2x latency/price swap. Model id unconfirmed — do not route here until a
+      // live call verifies it (Roman 2026-07-19).
+      'gemini-lite-1k':  0.067,  // Flex
+      'gemini-lite-2k':  0.067,  // Flex — same token count as 1K
+      'gemini-lite-1k-priority': 0.134,
+      'gemini-lite-2k-priority': 0.134,
       'replicate': 0.025,
-      'default':   0.03
+      // Klein-9B is the cheap edit/repair model — charging it at the flat 'bfl'
+      // rate would double-count every cosmetic repair (Roman 2026-07-19).
+      'klein':     0.02,
+      'default':   0.067
   };
 
   // Pessimistic overhead — accounts for retries, orchestration extra passes,
@@ -5424,9 +5446,17 @@ ${_pcInteriorLock}`;
           + (outT * p.out);
   }
 
-  function estimateImageCost(provider, count) {
+  // imageSize ('0.5K'|'1K'|'2K'|'4K') selects a resolution tier for providers
+  // that price by resolution (Gemini). Absent → the provider's base rate, which
+  // is the 1K default every current caller gets.
+  function estimateImageCost(provider, count, imageSize) {
       const c = (typeof count === 'number' && count > 0) ? count : 1;
-      const key = (provider || '').toLowerCase();
+      let key = (provider || '').toLowerCase();
+      if (imageSize) {
+          const tier = String(imageSize).toUpperCase().replace('0.5K', '05K').replace(/K$/, 'k');
+          const tiered = key + '-' + tier.toLowerCase();
+          if (tiered in IMAGE_PRICING) key = tiered;
+      }
       const rate = (key in IMAGE_PRICING) ? IMAGE_PRICING[key] : IMAGE_PRICING['default'];
       return rate * c;
   }
@@ -5446,8 +5476,8 @@ ${_pcInteriorLock}`;
               // Roman 2026-06-03: scene-audit hook — records TTFT + call count.
               try { _auditOnTextCall(model, usage, category || 'main'); } catch (_) {}
           },
-          addImage(provider, count) {
-              const c = estimateImageCost(provider, count);
+          addImage(provider, count, imageSize) {
+              const c = estimateImageCost(provider, count, imageSize);
               this.imageCost += c;
               if (c > 0) this.breakdown.image.push({ provider, count: count || 1, cost: c });
               // LATE-ARRIVING image charge: scene finalized before this render
@@ -5494,6 +5524,41 @@ ${_pcInteriorLock}`;
       return window.state._sceneCostAcc;
   }
   window._ensureSceneCostAcc = _ensureSceneCostAcc;
+
+  // ── DIRECT IMAGE-CHARGE HOOK (Roman 2026-07-19) ──────────────────────────
+  // generateImageWithFallback records every successful image via addImage, but
+  // several sites fetch IMAGE_PROXY_URL DIRECTLY and bypassed it entirely:
+  // the staged sketch + colorize, the coloring-book line art + colorize, and
+  // the minimal covers. The CG image pipeline is Gemini-primary and all of it
+  // ran through those direct fetches, so [CG-SCENE-COSTS] reported the whole
+  // staged pass as $0 — the structural-pass cost was never measured, only
+  // estimated from trace.calls. Same live-vs-sealed routing as the fallback
+  // hook so late-arriving renders attribute to the scene that spawned them.
+  //   opts.scope === 'dev' → charge a separate session counter instead of the
+  //   scene accumulator, so review-panel experiments (cine variant / OAS mouth)
+  //   don't corrupt per-scene story math while still being visible.
+  function _chargeImage(provider, count, opts) {
+      try {
+          const o = opts || {};
+          const n = (typeof count === 'number' && count > 0) ? count : 1;
+          if (o.scope === 'dev') {
+              const c = estimateImageCost(provider, n, o.imageSize);
+              window._devImageCostSession = (window._devImageCostSession || 0) + c;
+              window._devImageCallCount = (window._devImageCallCount || 0) + n;
+              try {
+                  console.log('[DEV-IMAGE-COST] +$' + c.toFixed(4) + ' (' + provider + ' x' + n +
+                      ') | dev session $' + window._devImageCostSession.toFixed(4) +
+                      ' across ' + window._devImageCallCount + ' call(s)');
+              } catch (_) {}
+              return;
+          }
+          const _live = (typeof _ensureSceneCostAcc === 'function') ? _ensureSceneCostAcc() : null;
+          const _sealed = window.state && window.state._sealedSceneCostAcc;
+          const _target = (_sealed && _live && _live.textCost === 0) ? _sealed : _live;
+          if (_target && typeof _target.addImage === 'function') _target.addImage(provider, n, o.imageSize);
+      } catch (_) { /* cost capture non-critical */ }
+  }
+  window._chargeImage = _chargeImage;
 
   // ── DIRECT-PROXY COST RECORDER (Roman 2026-06-02) ──
   // The Bibles / R-plot / A-plot / audits call /api/anthropic-proxy (and the
@@ -74503,6 +74568,7 @@ Return ONLY valid JSON:
       state._lastSceneDiagnostics = null;
       state._sceneDiagnostics = {};
       state._priorSceneText = '';
+      state._sceneTextRing = [];   // per-story; prior-story prose must never seed a new story's continuation window
       state._lastUnexpectedMicroTurn = -99;
 
       // Threshold moments — per-story, must not bleed
@@ -80054,7 +80120,21 @@ Attraction should not move in a straight line. Closeness creates vulnerability o
       if (!choiceType) return;
       if (!PCM_SIGNIFICANT_TYPES.has(choiceType) && !PCM_BEAT_TYPES.has(choiceType)) return;
       const cm = state.choiceMemory || { memories: [] };
-      cm.memories.push({ type: choiceType, scene: state.turnCount });
+      // Roman 2026-07-19: store WHAT the player did, not only its genre. Storing
+      // {type, scene} alone meant buildChoiceMemoryDirective could ONLY ever emit
+      // a canned phrase from its `echoes` map ("a moment of honesty that still
+      // lingers") — the story remembered the CATEGORY of your choice and never the
+      // choice. No prompt-window size can fix that; the specific act was never
+      // written down. Text is the player's own do/say, which is the thing a reader
+      // expects the story to remember.
+      var _pcmRaw = (state._playerImpactRead && state._playerImpactRead.raw) || {};
+      var _pcmDid = String(_pcmRaw.do || '').trim();
+      var _pcmSaid = String(_pcmRaw.say || '').trim();
+      var _pcmText = [
+        _pcmDid  ? 'did: ' + _pcmDid : '',
+        _pcmSaid ? 'said: "' + _pcmSaid.replace(/"/g, "'") + '"' : ''
+      ].filter(Boolean).join(' · ').slice(0, 220);
+      cm.memories.push({ type: choiceType, scene: state.turnCount, text: _pcmText || null });
       if (cm.memories.length > 6) cm.memories.shift();
       state.choiceMemory = cm;
   }
@@ -80098,7 +80178,12 @@ Attraction should not move in a straight line. Closeness creates vulnerability o
       };
 
       const echo = echoes[mem.type] || 'an earlier emotional turning point';
-      return `\n\nCHOICE MEMORY: A character briefly recalls or reacts to ${echo} (from an earlier scene). This should be a fleeting reference — a glance, a half-sentence, a body memory. Do not recreate the earlier scene. Only let the emotional residue surface naturally.`;
+      // Prefer the SPECIFIC act (captured since 2026-07-19); the canned echo is now
+      // the fallback for memories recorded before that, or when the raw input was empty.
+      const subject = mem.text
+        ? `this specific earlier moment — in scene ${mem.scene} the protagonist ${mem.text} — which registered as ${echo}`
+        : `${echo} (from an earlier scene)`;
+      return `\n\nCHOICE MEMORY: A character briefly recalls or reacts to ${subject}. This should be a fleeting reference — a glance, a half-sentence, a body memory. Do not recreate the earlier scene. Only let the emotional residue surface naturally.`;
   }
   window.buildChoiceMemoryDirective = buildChoiceMemoryDirective;
 
@@ -90162,6 +90247,79 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
     } catch (_) { return false; }
   }
 
+  // ── SCENE-BOUNDARY CONTINUATION WINDOW (Roman 2026-07-19) ──────────────────
+  // Replaces the fixed 600-char tail. A literary scene is 700-1000 words
+  // (_buildAdaptiveLengthDirective ~26840) ≈ 4,200-6,000 chars, so 600 chars was
+  // ~12% of one scene — the last paragraph. The model got PLOT from the structured
+  // digest (buildStoryMemoryDirective) but almost no TEXTURE, so prose drifted
+  // toward generic at every scene seam.
+  //
+  // Why a scene boundary rather than a bigger char count: verbatim prose in the
+  // prompt is an implicit instruction to sound like it — measured next door at
+  // buildEstablishedDescriptionDirective ~58545 ("leaked 6 values/scene"). ONE
+  // scene reads as "continue from here". TWO scenes is the first point at which
+  // any device appears TWICE, and a twice-seen device generalizes into a style
+  // rule the model reproduces. So the ceiling is the 2-scene line (~11k chars).
+  // DERIVED FROM SCENE LENGTH, NOT MEASURED — validate before trusting the ceiling.
+  //
+  // REGIMES (Roman 2026-07-19): explicit and OAS scenes are far shorter than
+  // literary ones, so "one prior scene" collapses to nothing there:
+  //   literary : ~700-1000w      -> one scene IS the unit
+  //   explicit : ~400w (~2.4k c) -> one scene falls under the useful floor
+  //   oas      : 5-50w turns     -> a single turn is meaningless in isolation
+  // OAS is not "walk back further and hope": an OAS run is ONE continuous moment
+  // split into turns, so the correct unit is THE ENCOUNTER, not the turn. The
+  // mimicry risk also INVERTS there — repeating the short-turn rhythm is correct
+  // inside an encounter — so OAS may safely take many more turns at a low ceiling.
+  var _SB_CONT_WINDOW = {
+    literary: { floorChars: 3000, ceilChars: 11000, maxScenes:  2 },
+    explicit: { floorChars: 2600, ceilChars:  8000, maxScenes:  3 },
+    oas:      { floorChars: 1200, ceilChars:  6000, maxScenes: 14 }
+  };
+
+  // Exposed so a harness can set the experiment arm before generation:
+  //   window._SB_CONT_WINDOW.literary.floorChars = 5500
+  window._SB_CONT_WINDOW = _SB_CONT_WINDOW;
+
+  function _sbContinuationRegime() {
+    var s = state || {};
+    if (s.intimacyDialogue && s.intimacyDialogue.active) return 'oas';
+    if (s.intimacyPhase === true) return 'explicit';
+    return 'literary';
+  }
+
+  // Rolling scene-text ring. Fed self-healingly from state._priorSceneText at
+  // build time (set post-gen ~274068) so this needs no new write site; if that
+  // stash is ever missed we simply fall back to a char slice below.
+  function _sbPushSceneRing(text) {
+    if (!text) return;
+    var t = String(text).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    if (t.length < 40) return;
+    var ring = state._sceneTextRing = state._sceneTextRing || [];
+    if (ring.length && ring[ring.length - 1].text === t) return;   // already recorded
+    ring.push({ text: t, turn: state.turnCount || 0 });
+    while (ring.length > 16) ring.shift();
+  }
+  window._sbPushSceneRing = _sbPushSceneRing;
+
+  // Aggregate readout for the accumulated [CONT-WINDOW] distribution. Answers
+  // "does the theoretical regime distribution match reality?" in one call.
+  window._contWindowStats = function () {
+    var d = (state && state._contWindowDist) || {};
+    var keys = Object.keys(d);
+    if (!keys.length) { console.log('[CONT-WINDOW] no samples yet'); return null; }
+    var total = keys.reduce(function (a, k) { return a + d[k].n; }, 0);
+    var rows = keys.map(function (k) {
+      var p = k.split('|'), e = d[k];
+      return { regime: p[0], source: p[1], stop: p[2], n: e.n,
+               pct: +(100 * e.n / total).toFixed(1),
+               avgChars: Math.round(e.chars / e.n), avgTok: Math.round(e.tok / e.n) };
+    }).sort(function (a, b) { return b.n - a.n; });
+    console.log('[CONT-WINDOW] ' + total + ' scenes');
+    console.table(rows);
+    return rows;
+  };
+
   // ── SCENE CONTINUATION DIRECTIVE (Roman 2026-06-06) ────────────────────────
   // ROOT CAUSE FIX: the literary scene generator's user message is ONLY the
   // player's Action/Dialogue — the prior scene's prose ending is NOT in the
@@ -90467,12 +90625,75 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       if (typeof StoryPagination === 'undefined' || !StoryPagination.getAllContent) return '';
       var all = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
       if (!all || all.length < 40) return '';
-      var ending = all.slice(-600);
+      // Regime-aware, scene-boundary window (see _SB_CONT_WINDOW above).
+      _sbPushSceneRing(state._priorSceneText);
+      // FIRST-CONTINUATION SEED (Roman 2026-07-19, found by smoke test): scene 1 mounts
+      // via _mountAndTransition, NOT the turn handler whose post-gen block sets
+      // _priorSceneText — so at scene 2 the ring is EMPTY and every arm silently falls
+      // back to a char slice. Measured before this fix: a 5500 arm at scene 2 gave
+      // stop=ring_exhausted chars=1727. All accumulated content at that point IS scene 1,
+      // so seed from it. Also self-heals any later scene where the stash was missed.
+      if (!(state._sceneTextRing || []).length && all.length > 400) _sbPushSceneRing(all);
+      var _cwRegime = _sbContinuationRegime();
+      var _cw = _SB_CONT_WINDOW[_cwRegime] || _SB_CONT_WINDOW.literary;
+      var _cwRing = state._sceneTextRing || [];
+      var _cwPicked = [], _cwTotal = 0, _cwStop = 'ring_exhausted';
+      for (var _cwI = _cwRing.length - 1; _cwI >= 0; _cwI--) {
+        if (_cwPicked.length >= _cw.maxScenes) { _cwStop = 'scene_cap'; break; }
+        var _cwT = _cwRing[_cwI].text;
+        if (_cwTotal && (_cwTotal + _cwT.length) > _cw.ceilChars) { _cwStop = 'ceiling'; break; }
+        _cwPicked.unshift(_cwT);
+        _cwTotal += _cwT.length;
+        if (_cwTotal >= _cw.floorChars) { _cwStop = 'floor_met'; break; }
+      }
+      var ending, _cwWholeScenes = _cwPicked.length > 0;
+      if (_cwWholeScenes) {
+        ending = _cwPicked.join('\n\n');
+        if (ending.length > _cw.ceilChars) { ending = ending.slice(-_cw.ceilChars); _cwWholeScenes = false; }
+      } else {
+        ending = all.slice(-Math.max(600, _cw.floorChars));                // ring unavailable → char slice
+      }
       // Sanitize explicit anatomical terms (some continuation paths route to OpenAI).
-      ending = ending.replace(/\b(cock|pussy|clit(?:oris)?|nipples?|erect(?:ion)?|orgasm|thrust(?:ing|ed|s)?|moan(?:ing|ed|s)?|grind(?:ing|ed|s)?|penetrat(?:e[ds]?|ion)|cum(?:ming|s)?)\b/gi, '[intimate detail]');
-      // Trim to a clean sentence start so the excerpt doesn't begin mid-word.
-      var cut = ending.search(/[.!?"”’]\s+[A-Z“"]/);
-      if (cut > 0 && cut < ending.length - 60) ending = ending.slice(cut + 1).trim();
+      // NOTE (2026-07-19): this blunts the explicit/OAS window it now feeds — those
+      // are exactly the scenes whose texture lives in these words. Left ON so this
+      // change does not silently loosen content routing; flip to test.
+      if (window.__sbContinuationSanitize !== false) {
+        ending = ending.replace(/\b(cock|pussy|clit(?:oris)?|nipples?|erect(?:ion)?|orgasm|thrust(?:ing|ed|s)?|moan(?:ing|ed|s)?|grind(?:ing|ed|s)?|penetrat(?:e[ds]?|ion)|cum(?:ming|s)?)\b/gi, '[intimate detail]');
+      }
+      // Trim to a clean sentence start ONLY when we fell back to a char slice —
+      // a whole-scene window already starts clean, and this cut would eat its
+      // opening sentence.
+      if (!_cwWholeScenes) {
+        var cut = ending.search(/[.!?"”’]\s+[A-Z“"]/);
+        if (cut > 0 && cut < ending.length - 60) ending = ending.slice(cut + 1).trim();
+      }
+      // ── CONT-WINDOW TELEMETRY (free, console-only) ───────────────────────────
+      // continuation_source + stop reason answer the question the regime table
+      // CANNOT answer analytically: does a "smart" window ever actually reach its
+      // designed size? A window that always stops at `ceiling` is over-specified;
+      // one that always stops at `ring_exhausted` never had the scenes to spend.
+      // Distribution accumulates on state so a few hundred scenes can be read at
+      // once via window._contWindowStats().
+      var _cwSource = !_cwWholeScenes ? 'fallback_char_slice'
+        : (_cwRegime === 'oas' ? _cwPicked.length + '_turns'
+                               : _cwPicked.length + '_scene' + (_cwPicked.length > 1 ? 's' : ''));
+      var _cwTok = Math.round(ending.length / 4);   // ~chars/4, uncached suffix
+      try {
+        var _cwD = state._contWindowDist = state._contWindowDist || {};
+        var _cwK = _cwRegime + '|' + _cwSource + '|' + _cwStop;
+        var _cwE = _cwD[_cwK] = _cwD[_cwK] || { n: 0, chars: 0, tok: 0 };
+        _cwE.n++; _cwE.chars += ending.length; _cwE.tok += _cwTok;
+        // Per-scene samples, not just running totals — a mean cannot reveal that an
+        // 11k-configured arm actually DELIVERS ~5.8k because it keeps hitting scene_cap.
+        // Without median/p95 you can run two arms that are the same experiment twice.
+        var _cwS = state._contWindowSamples = state._contWindowSamples || [];
+        _cwS.push({ chars: ending.length, tok: _cwTok, source: _cwSource, stop: _cwStop, regime: _cwRegime });
+        while (_cwS.length > 500) _cwS.shift();
+      } catch (_) {}
+      try { console.log('[CONT-WINDOW] regime=' + _cwRegime + ' source=' + _cwSource + ' stop=' + _cwStop
+        + ' scenes=' + _cwPicked.length + '/' + _cw.maxScenes
+        + ' chars=' + ending.length + ' (~' + _cwTok + ' tok)'
+        + ' [floor ' + _cw.floorChars + ', ceil ' + _cw.ceilChars + ']'); } catch (_) {}
 
       // LIVE-PICKUP detection — did the prior scene end mid-moment (open dialogue,
       // a question, an active phone call)? If so this scene continues that beat
@@ -90486,7 +90707,14 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       state._sceneLiveContinuation = liveContinuation;
 
       var d = '\n\nSCENE CONTINUATION (HARD — this scene is a DIRECT CONTINUATION of the story, NOT a fresh start):\n';
-      d += 'The previous scene ended here (verbatim tail, for continuity only — do not quote it back): "…' + ending.replace(/"/g, "'") + '"\n';
+      var _cwLabel = !_cwWholeScenes
+        ? 'The previous scene ended here (verbatim tail, for continuity only — do not quote it back): "…'
+        : (_cwPicked.length > 1
+            ? (_cwRegime === 'oas'
+                ? 'The live encounter so far, verbatim (these turns are ONE continuous moment you are still inside — for continuity and voice only; do not quote it back): "'
+                : 'The previous ' + _cwPicked.length + ' scenes, verbatim (for continuity and voice only — do not quote them back, and do not treat recurring phrasing here as a style to reproduce): "')
+            : 'The previous scene in full, verbatim (for continuity and voice only — do not quote it back): "');
+      d += _cwLabel + ending.replace(/"/g, "'") + '"\n';
       d += '  RULES:\n';
       d += '  1. NEVER contradict or silently undo what just happened. If the protagonist just spoke with someone (in person OR by phone), that conversation HAPPENED — do NOT re-stage it as missed / unread / not-yet-occurred, and do NOT re-attribute it to a different character. Carry forward who was present, where, and what was said.\n';
       d += '  2. CARRY THE LIVE THREAD. If the prior scene ended mid-conversation, mid-phone-call, on an unanswered line, or on a question, this scene CONTINUES that exact moment — the protagonist is STILL in it. The player\'s Action/Dialogue is the protagonist\'s response WITHIN this continuing moment, not the start of a new day.\n';
@@ -121947,6 +122175,9 @@ The final image must look like a real published novel cover.`;
               throw new Error('No cover URL returned');
           }
 
+          // Server picks the cover provider; fall back to the default rate.
+          try { _chargeImage(data.provider || 'default', 1); } catch (_) {}
+
           _preGeneratedCoverUrl = coverUrl;
           state.coverImage = _preGeneratedCoverUrl;
           _coverGenUsed = true;
@@ -137336,24 +137567,29 @@ ${_buildSettingImageOverrideSuffix()}`,
           // AUTHORITATIVE VISUAL LAW — not stylistic inspiration. Defines non-negotiable biological invariants.
           anchors: [
             {
-              file: '/assets/Fatelands/Kwisheen_Species_Sheet.jpg?v=20260408',
+              // RE-POINTED 2026-07-19: was `Octofolk_Species_Sheet.jpg`, which is the SAME 4-panel
+              // artwork as the demoted Kwisheen_Octofolk_Ref_v1 — its two portrait panels draw the
+              // scalp growth as sucker-lined octopus arms, contradicting the coral-dreadlock canon.
+              // Now the bottom-right full-body panel, which shows the correct body plan, branching
+              // coral hair (including a bearded, largely bare-crowned male), and the ATTIRE canon.
+              file: '/assets/Fatelands/Kwisheen_Body_Anchor_v2.jpg?v=20260719',
               role: 'species_sheet',
-              label: 'Kwisheen species reference sheet (AUTHORITATIVE — 4 panels: male face, female face, pupil geometry closeup, full-body male+female pair). Defines anatomy, pupil structure, tentacle count, chromatophore skin, cranial tentacle hair, AND species-specific attire conventions. This image is VISUAL + WARDROBE LAW — do not reinterpret, simplify, or stylize these traits. The artist style reference may contribute rendering technique (line quality, palette, brush language) but MUST NOT alter: tentacle count or structure, pupil geometry, chromatophore behavior, cranial tentacle hair, or species-appropriate attire. If the artist style page shows characters in non-Kwisheen costume (modern dress, leather armor, tech gear), those are the artist\'s OTHER WORK and DO NOT apply to Kwisheen — refer ONLY to this species sheet.',
+              label: 'Kwisheen species reference (AUTHORITATIVE — a full-body male+female pair). Defines body plan (humanoid torso, exactly TWO manipulator arms, a six-tentacle lower body replacing legs), proportions, chromatophore skin, hair, AND species-specific attire conventions. HAIR: the scalp growth is living CORAL DREADLOCKS — branching, reef-textured, hair-like — NOT tentacles and NEVER counted among the limbs; it is groomed like human hair, so length, crests, beards and BALDNESS are all canonical (the male in this reference is bearded with a largely bare crown). This image is VISUAL + WARDROBE LAW — do not reinterpret, simplify, or stylize these traits, and note that BOTH figures are fully clothed with the torso covered by a garment, jewelry worn over it. The artist style reference may contribute rendering technique (line quality, palette, brush language) but MUST NOT alter: limb structure, body plan, chromatophore behavior, or species-appropriate attire. If the artist style page shows characters in non-Kwisheen costume (modern dress, leather armor, tech gear), those are the artist\'s OTHER WORK and DO NOT apply to Kwisheen — refer ONLY to this species reference.',
               weight: 1.0,
-              focus: ['species_anatomy', 'pupil_geometry', 'tentacle_count', 'chromatophore_skin', 'cranial_tentacle_hair', 'full_body_proportions', 'gender_variation'],
-              authority: ['anatomy', 'pupil geometry', 'tentacle structure', 'skin texture', 'species identity']
+              focus: ['species_anatomy', 'body_plan', 'chromatophore_skin', 'cranial_coral_hair', 'full_body_proportions', 'gender_variation', 'attire'],
+              authority: ['anatomy', 'body plan', 'limb structure', 'skin texture', 'attire', 'species identity']
             }
           ],
           // Transition anchor preserved for gender-fluidity narrative (not injected as render ref by default)
           transition_anchor: {
-            file: '/assets/Fatelands/Kwisheen_Transition_Male_Anchor.png?v=20260404',
+            file: '/assets/Fatelands/Octofolk_Transition_Male_Anchor.png?v=20260404',
             role: 'kwisheen_transition_male',
             label: 'Kwisheen transition anchor — same individual as female anchor in male-presenting phase, demonstrates gender fluidity while preserving identity',
             focus: ['identity_continuity_across_transition', 'secondary_morphology_shift', 'coloration_variation']
           },
           // Disguise anchor — Kwisheen in human-passing dry state on land
           disguise_anchor: {
-            file: '/assets/GN-Artists/EnderSBond/Kwisheen_Disguised_Female_Anchor.png?v=20260404',
+            file: '/assets/GN-Artists/EnderSBond/Octofolk_Disguised_Female_Anchor.png?v=20260404',
             role: 'kwisheen_disguise',
             label: 'Kwisheen disguise anchor — female Kwisheen in human-passing dry state. Gloves, boots, long coat concealing tentacle anatomy. Human hair appearance (cranial tentacles styled as hair). Subtle tells: a few tentacle strands mixed into hair, faint skin patterning near collar.',
             focus: ['disguise_attire', 'glove_concealment', 'boot_concealment', 'human_passing_appearance', 'subtle_tentacle_hair_tells', 'surface_world_clothing']
@@ -137425,7 +137661,7 @@ ${_buildSettingImageOverrideSuffix()}`,
           // Hand/arm micro-anchors — 3-state system for upper limb rendering
           hand_anchors: {
             primary: {
-              file: '/assets/Fatelands/Kwisheen_Arm_Primary.png?v=20260405',
+              file: '/assets/Fatelands/Octofolk_Arm_Primary.png?v=20260405',
               role: 'arm_structure_truth',
               label: 'Kwisheen arm PRIMARY — human shoulder/elbow, continuous tentacle forearm, terminal split into EXACTLY 5 fine finger-tentacles with suckers on underside',
               authority: 'ABSOLUTE',
@@ -137433,7 +137669,7 @@ ${_buildSettingImageOverrideSuffix()}`,
               lock: ['tentacle_count_5', 'continuous_forearm', 'no_joints', 'suckers_underside_only', 'smooth_taper']
             },
             articulation: {
-              file: '/assets/Fatelands/Kwisheen_Arm_Articulation.png?v=20260405',
+              file: '/assets/Fatelands/Octofolk_Arm_Articulation.png?v=20260405',
               role: 'arm_terminal_clarity',
               label: 'Kwisheen arm ARTICULATION — 5 finger-tentacles clearly separated, splayed, flexible, no joints, visible taper. All 5 must be visually distinct and individually traceable from base to tip.',
               authority: 'HIGH',
@@ -137441,7 +137677,7 @@ ${_buildSettingImageOverrideSuffix()}`,
               lock: ['tentacle_count_5', 'clear_separation', 'flexible_curvature', 'no_joints', 'all_5_traceable']
             },
             behavior: {
-              file: '/assets/Fatelands/Kwisheen_Arm_Behavior.png?v=20260405',
+              file: '/assets/Fatelands/Octofolk_Arm_Behavior.png?v=20260405',
               role: 'arm_human_passing',
               label: 'Kwisheen arm BEHAVIOR — human-passing hand, 5 finger-like structures, suckers only on underside (never visible from top), clean grip-capable form. Finger curvature must read as continuous muscular flow, not jointed articulation.',
               authority: 'HIGH',
@@ -137516,7 +137752,7 @@ ${_buildSettingImageOverrideSuffix()}`,
         kwisheen: {
           anchors: [
             {
-              file: '/assets/GN-Artists/olen_droll_anchor_kwisheen_v1.png',
+              file: '/assets/GN-Artists/olen_droll_anchor_octofolk_v1.png',
               role: 'style_species_interpretation',
               label: 'Olen Droll Kwisheen style interpretation — editorial cartoon rendering of Kwisheen anatomy. Simplified figure, muted underwater palette, flat tones, organic woven attire. Species anatomy (tentacle count, structure, pupil geometry) from species sheet is MANDATORY — this anchor shows RENDERING STYLE only.',
               weight: 0.7,
@@ -138006,7 +138242,7 @@ ${_buildSettingImageOverrideSuffix()}`,
     { patterns: [/pulse\s*point/i], images: ['/assets/Fatelands/PulsePoint.png'], label: 'Pulse Point' },
     { patterns: [/gloamwater/i], images: ['/assets/Fatelands/GloamwaterBay.png'], label: 'Gloamwater Bay' },
     { patterns: [/underwild/i], images: ['/assets/Fatelands/Underwild.png?v=20260404'], label: 'Underwild' },
-    { patterns: [/kwisheen|octo.?folk/i], images: ['/assets/Fatelands/Kwisheen_Pair_Anchor.jpg?v=20260404', '/assets/Fatelands/Kwisheen_Male_Anchor.jpg?v=20260404', '/assets/Fatelands/Kwisheen_Female_Anchor.jpg?v=20260404'], label: 'Kwisheen anatomy anchor' },
+    { patterns: [/kwisheen|octo.?folk/i], images: ['/assets/Fatelands/Octofolk_Pair_Anchor.jpg?v=20260404', '/assets/Fatelands/Octofolk_Male_Anchor.jpg?v=20260404', '/assets/Fatelands/Octofolk_Female_Anchor.jpg?v=20260404'], label: 'Kwisheen anatomy anchor' },
     { patterns: [/shackle\s*isles?|blackmoor|cinderwake|quiet\s*chain/i], images: ['/assets/Fatelands/ShackleIsles1.png'], label: 'Shackle Isles' },
     { patterns: [/fate.?s\s*favor|drowned\s*vein/i], images: ['/assets/Fatelands/FatesFavor.png'], label: "Fate's Favor" },
     { patterns: [/ascendant\s*run|syzygy/i], images: ['/assets/Fatelands/AscendantRun.png'], label: 'Ascendant Run' }
@@ -139349,7 +139585,7 @@ ${_buildSettingImageOverrideSuffix()}`,
     },
     kwisheen: {
       aliases: ['Kwisheen'],
-      expansion: 'beings with 8 tentacles — 6 for locomotion, 2 arms each splitting into 5 fine finger-tentacles (no joints, smooth taper), fine cranial tentacle-hair, fluid unfurling movement that never snaps like human joints',
+      expansion: 'beings with 8 tentacles — 6 for locomotion, 2 arms each splitting into 5 fine finger-tentacles (no joints, smooth taper), fine cranial coral dreadlocks, fluid unfurling movement that never snaps like human joints',
       priority: 2
     },
     underwild: {
@@ -142531,7 +142767,15 @@ No text, no watermark, no UI elements, share-ready.`;
               // Detect upgrade against live DOM only (preload path is always fadein).
               var _isUpgrade = shell && !!shell.querySelector('.gn-panel-img');
               var _fadeClass = _isUpgrade ? 'gn-panel-crossfade' : 'gn-panel-fadein';
-              var _imgHtml = '<img class="gn-panel-img ' + _fadeClass + '" src="' + result.imageUrl + '"' + _providerAttr + ' alt="Panel ' + (dp.narrativeIndex + 1) + '" ' +
+              // Tag underwater panels so the 0-token filter auto-hook can find them (feature-flagged).
+              var _uwAttr = '';
+              try {
+                var _uwState = (typeof _stagedKwisheenState === 'function') ? _stagedKwisheenState(plan) : null;
+                var _uwBg = String((plan && plan.visualState && plan.visualState.background) || '').toLowerCase();
+                var _isUW = (_uwState === 'true_form') || /underwater|gloamwater|submerg|reef|abyss|tidal|the depths|beneath the (waves|surface|sea)/.test(_uwBg);
+                if (_isUW) _uwAttr = ' data-underwater="1"';
+              } catch (_) {}
+              var _imgHtml = '<img class="gn-panel-img ' + _fadeClass + '" src="' + result.imageUrl + '"' + _providerAttr + _uwAttr + ' alt="Panel ' + (dp.narrativeIndex + 1) + '" ' +
                   'onerror="this.style.display=\'none\';this.parentElement.classList.add(\'gn-panel--image-failed\');if(!this.parentElement.querySelector(\'.gn-panel-fail-label\')){var l=document.createElement(\'div\');l.className=\'gn-panel-fail-label\';l.textContent=\'Image unavailable\';this.parentElement.appendChild(l);}" />';
               // Diegetic-deck inset overlay — bottom-right thumbnail on the
               // final panel(s) of the onboarding deck-mandate scenes:
@@ -143585,19 +143829,19 @@ No text, no watermark, no UI elements, share-ready.`;
       label: 'Kwisheen',
       panels: [
         {
-          src: '/assets/Fatelands/Kwisheen_Pupil_Anchor.png',
+          src: '/assets/Fatelands/Octofolk_Pupil_Anchor.png',
           camera: 'extreme_close',
           crop: 'eye',
           narrative: 'The eye catches you wrong. Not round. Not anything you recognize.'
         },
         {
-          src: '/assets/Fatelands/Kwisheen_Arm_Articulation.png',
+          src: '/assets/Fatelands/Octofolk_Arm_Articulation.png',
           camera: 'close',
           crop: 'hand',
           narrative: 'The hand reaches — no joints, no knuckles. Five tapered fingers that don\'t end the way fingers should.'
         },
         {
-          src: '/assets/Fatelands/Kwisheen_Female_Anchor.jpg',
+          src: '/assets/Fatelands/Octofolk_Female_Anchor.jpg',
           camera: 'medium',
           crop: 'full',
           narrative: 'Six tentacles where legs should be. Moving like they\'ve never heard of standing still.'
@@ -143654,14 +143898,22 @@ No text, no watermark, no UI elements, share-ready.`;
   // Style transfer: apply artist style to anatomy source image
   // Provider order: Gemini first (reliable), BFL Kontext fallback (when healthy)
   // Structure is LOCKED — only rendering style changes
-  async function _styleTransferRevealPanel(anatomySrc, artistKey, characterDesc) {
+  // opts = { fullRes: true, imageSize: '2K'|'4K' } — SHEET SUPPORT (Roman 2026-07-20).
+  // The default reference loader caps at _STYLE_REF_MAX_DIM (1280), which was sized for SINGLE panels.
+  // Feed a 4096² contact sheet through it and every quadrant arrives at ~640px — paying for 4K
+  // structural fidelity and discarding three quarters of it at the handoff. opts.fullRes switches to
+  // the 2048 loader; opts.imageSize sets the OUTPUT tier so a sheet comes back sheet-sized.
+  async function _styleTransferRevealPanel(anatomySrc, artistKey, characterDesc, opts) {
+    opts = opts || {};
     var style = RENDER_STYLE_SYSTEM[artistKey || 'ender_bond'];
     if (!style) return null;
 
     // Load anatomy source as base64
     var anatomyB64;
     try {
-      anatomyB64 = await _loadStyleRefBase64(anatomySrc);
+      anatomyB64 = opts.fullRes && typeof _loadStyleRefBase64Full === 'function'
+        ? await _loadStyleRefBase64Full(anatomySrc)
+        : await _loadStyleRefBase64(anatomySrc);
       if (!anatomyB64) return null;
     } catch (e) {
       console.warn('[REVEAL] Failed to load anatomy source:', anatomySrc);
@@ -143711,6 +143963,13 @@ No text, no watermark, no UI elements, share-ready.`;
         n: 1,
         reference_images_b64: _refs
       };
+      // Output tier — opt-in. A contact sheet must come back sheet-sized or the quadrants are useless.
+      if (opts.imageSize) _geminiBody.imageSize = opts.imageSize;
+      // A multi-panel source must survive as a multi-panel result: the default prompt says nothing about
+      // layout, and a style-transfer model given four panels could happily merge them into one picture.
+      if (opts.preserveGrid) {
+        _geminiBody.prompt += ' LAYOUT IS ALSO LOCKED: the source is a multi-panel sheet. Reproduce the SAME panel grid — same number of panels, same gutter positions, same panel borders. Do NOT merge the panels into one continuous image, do NOT re-crop or re-frame any panel, and do NOT let any figure cross a gutter. Render each panel in place.';
+      }
       var _gemRes = await fetch(IMAGE_PROXY_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -143720,6 +143979,7 @@ No text, no watermark, no UI elements, share-ready.`;
         var _gemData = await _gemRes.json();
         if (_gemData.image) {
           var url = _gemData.image.startsWith('data:') ? _gemData.image : 'data:image/png;base64,' + _gemData.image;
+          try { _chargeImage('gemini', 1); } catch (_) {}
           console.log('[REVEAL] Gemini style transfer succeeded for', anatomySrc);
           return url;
         }
@@ -143737,6 +143997,9 @@ No text, no watermark, no UI elements, share-ready.`;
         var result = await callBFLKontext(prompt, 'square', 60000, null, null, null, inputImages, 'flux-2-pro');
         if (result) {
           var bflUrl = result.startsWith('http') || result.startsWith('data:') ? result : 'data:image/png;base64,' + result;
+          // Direct callBFLKontext — bypasses generateImageWithFallback, so the
+          // scene accumulator never saw it (only the _bflCostSession counter did).
+          try { _chargeImage('bfl', 1); } catch (_) {}
           console.log('[REVEAL] BFL style transfer succeeded for', anatomySrc);
           return bflUrl;
         }
@@ -144052,6 +144315,11 @@ No text, no watermark, no UI elements, share-ready.`;
             cropW = sw * 0.3; cropH = sh * 0.3; cy = sh * 0.35; break; // upper-center for face
           case 'close':
             cropW = sw * 0.5; cropH = sh * 0.5; cy = sh * 0.4; break;
+          // BUST — head + torso, so the crop captures BOTH the face AND the worn garment. A face-only
+          // 'close' harvest was losing wardrobe: a character re-referenced from it drifted bodice→bra
+          // between scenes (Roman 2026-07-20). This is the identity+wardrobe crop for the casting store.
+          case 'bust':
+            cropW = sw * 0.62; cropH = sh * 0.62; cy = sh * 0.40; break;
           case 'medium':
             cropW = sw * 0.75; cropH = sh * 0.75; break;
           default:
@@ -147727,9 +147995,13 @@ No text, no watermark, no UI elements, share-ready.`;
     // Soft type diversity: max 2 of same type unless unavoidable
     var selected = [];
     var typeCounts = {};
+    var _salWhy = {};                                  // key -> why it did/didn't place
     for (var si = 0; si < scored.length && selected.length < 4; si++) {
       var tc = typeCounts[scored[si].type] || 0;
-      if (tc >= 2 && selected.length < 3) continue; // skip 3rd+ of same type if slots remain
+      if (tc >= 2 && selected.length < 3) {
+        _salWhy[scored[si].type + ':' + scored[si].key] = 'type-cap';
+        continue; // skip 3rd+ of same type if slots remain
+      }
       selected.push(scored[si]);
       typeCounts[scored[si].type] = tc + 1;
     }
@@ -147737,6 +148009,38 @@ No text, no watermark, no UI elements, share-ready.`;
       primary: selected.slice(0, 2),
       secondary: selected.slice(2, 4)
     };
+
+    // ── SALIENCE CONTEST TRACE (Roman 2026-07-19) — free, console-only ────────
+    // WHY: callbacks carry the LOWEST candidate weight in the pool (1.5, vs motif
+    // strength×2 / theme 2 / foreshadow 2, see _buildNarrativeCandidates), and
+    // recencyBoost decays to 0 over 10 scenes. Net effect: the OLDEST and most
+    // meaningful player choices are structurally the least able to place — which
+    // is arguably backwards for a callback system. Before touching the weights,
+    // measure WHICH candidates lost and to WHAT. Ranking is very likely a bigger
+    // lever here than the 20% random gate in _checkChoiceMemory.
+    try {
+      var _selKeys = {};
+      selected.forEach(function(s) { _selKeys[s.type + ':' + s.key] = 1; });
+      var _cut = selected.length ? selected[selected.length - 1].score : null;
+      var _rows = scored.slice(0, 10).map(function(c, i) {
+        var k = c.type + ':' + c.key;
+        var mark = _selKeys[k] ? '✓' : (_salWhy[k] === 'type-cap' ? '✗type-cap' : '·out-ranked');
+        return '  ' + (i + 1) + '. ' + mark + '  ' + c.type + '  score=' + c.score.toFixed(2) +
+               '  "' + String(c.text || c.key).replace(/\s+/g, ' ').slice(0, 44) + '"';
+      });
+      console.log('[SALIENCE] scene ' + scene + ' — ' + selected.length + '/' + scored.length +
+                  ' placed' + (_cut !== null ? ', cutoff=' + _cut.toFixed(2) : '') +
+                  (scored.length > 10 ? ' (top 10 shown)' : '') + '\n' + _rows.join('\n'));
+      var _cbAll = scored.filter(function(c) { return c.type === 'callback'; });
+      if (_cbAll.length) {
+        var _cbSel = _cbAll.filter(function(c) { return _selKeys['callback:' + c.key]; });
+        console.log('[SALIENCE:CALLBACK] ' + _cbSel.length + '/' + _cbAll.length + ' placed' +
+                    ' · best=' + _cbAll[0].score.toFixed(2) +
+                    (_cut !== null ? ' · cutoff=' + _cut.toFixed(2) : '') +
+                    (_cbSel.length ? '' : ' · SHUT OUT by: ' + selected.map(function(s) { return s.type; }).join(',')) +
+                    ' — a callback gate here also blocks buildChoiceMemoryDirective + buildCallbackEchoDirective');
+      }
+    } catch (_) {}
   }
 
   function _getActiveNarrativeDirectives() {
@@ -153320,16 +153624,29 @@ No text, no watermark, no UI elements, share-ready.`;
   var _KW_SKIN_PALETTE = ['deep crimson red', 'burnished gold', 'royal violet', 'deep ocean blue', 'burnt orange', 'jade green', 'warm copper', 'plum purple', 'teal', 'ember red-orange'];
   var _KW_PATTERN_PALETTE = ['electric-blue ringed spots', 'gold marbled veining', 'pale rosette blooms', 'dark banded stripes', 'iridescent speckle', 'a fine reticulated lattice', 'ivory chevron banding'];
   var _KW_IRIS_PALETTE = ['amber-gold', 'pale jade', 'molten orange', 'silver-grey', 'deep amber', 'copper'];
+  // BODY PLAN (canonical, immutable for a standard Kwisheen) — the lower-body morphology that
+  // drifts panel-to-panel (octopus mantle vs human legs). Pinned in the lock so it becomes an
+  // authoritative target the canon-conformance repair can repaint TO, and so every prompt-builder
+  // reads one string instead of hard-coding body text. A per-name field (not a palette) because
+  // it is a constant today but generalizes to species/individuals whose plan legitimately varies.
+  // BODY PLAN = anatomy only. Hair is an APPEARANCE trait (see _KW_MANE) and is deliberately NOT part of
+  // the body plan — a Kwisheen can be bald, cropped, or bearded and is still anatomically correct.
+  var _KW_BODY_PLAN = 'a humanoid torso with two manipulator arms above the waist, and a lower body that is a cephalopod TENTACLE-MANTLE for locomotion (about six boneless tentacles — the exact number is not important) — NO human legs, NO knees or feet';
   function _resolveKwisheenAppearance(name) {
     var key = String(name || '').trim().toLowerCase();
     if (!key) return null;
     state.kwisheenAppearance = state.kwisheenAppearance || {};
-    if (state.kwisheenAppearance[key]) return state.kwisheenAppearance[key];
+    if (state.kwisheenAppearance[key]) {
+      // Back-fill body_plan onto locks minted before this field existed (same object identity).
+      if (!state.kwisheenAppearance[key].body_plan) state.kwisheenAppearance[key].body_plan = _KW_BODY_PLAN;
+      return state.kwisheenAppearance[key];
+    }
     var seed = _ffColorHash(key + '|kw|' + (state.worldInstanceId || state.storyId || 'seed'));
     var a = {
       skin: _KW_SKIN_PALETTE[seed % _KW_SKIN_PALETTE.length],
       pattern: _KW_PATTERN_PALETTE[Math.floor(seed / 13) % _KW_PATTERN_PALETTE.length],
-      iris: _KW_IRIS_PALETTE[Math.floor(seed / 131) % _KW_IRIS_PALETTE.length]
+      iris: _KW_IRIS_PALETTE[Math.floor(seed / 131) % _KW_IRIS_PALETTE.length],
+      body_plan: _KW_BODY_PLAN
     };
     state.kwisheenAppearance[key] = a;
     return a;
@@ -153477,7 +153794,9 @@ No text, no watermark, no UI elements, share-ready.`;
     var t = [];
     if (species === 'kwisheen') {
       if (look) t.push((look.skin || 'deep') + ' scaled hide with ' + (look.pattern || 'mottling'));
-      t.push('a mane of tentacle-dreadlocks');
+      // Hair is per-character and may be shaved — use THIS character's groomed style, never a
+      // hardcoded mane (which would assert hair on a canonically bald Kwisheen).
+      if (look && look.mane) t.push(look.mane);
       t.push('a six-tentacle lower body');
       if (look && look.iris) t.push(look.iris + ' horizontal-pupil eyes');
     } else if (species === 'first_favored') {
@@ -153514,7 +153833,10 @@ No text, no watermark, no UI elements, share-ready.`;
   //    changes. Deterministically seeded by character token so it is stable across every render.
   var _SD_M_BUILD = ['lean and wiry', 'broad and powerfully built', 'tall and rangy', 'compact and heavily muscled', 'long-limbed and lithe', 'stocky and thick-necked'];
   var _SD_M_FACE = ['a broad flat-cheeked face with a heavy brow', 'a narrow angular face with high, sharp cheekbones', 'a square heavy jaw and wide-set eyes', 'a long face with a pointed chin and deep-set eyes', 'a rounded face with a short blunt nose', 'a gaunt hollow-cheeked face with a jutting brow'];
-  var _KW_MANE = ['a dense mane of thick tentacle-dreadlocks swept back from the skull', 'a crown of short curling head-tentacles', 'long trailing tentacle-locks gathered and bound with cord', 'a fanned crest of stubby tendrils over the crown'];
+  // Kwisheen hair = living CORAL DREADLOCKS: branching, reef-textured, hair-like — NOT tentacles, no
+  // suckers, never counted as limbs. Groomed like human hair, so the pool includes shaved and cropped
+  // styles: a bald Kwisheen is canonical, not a defect (Roman 2026-07-19).
+  var _KW_MANE = ['a dense mane of living coral dreadlocks swept back from the skull', 'a close-cropped crown of branching coral growth', 'long trailing coral locks gathered and bound with cord', 'a fanned coral crest ridged over the crown, the sides shaved bare', 'a shaved scalp bearing only faint coral stubble', 'a short coral-braided beard with the scalp kept bald'];
   function _sdSeedPick(arr, key, salt) { return arr[_ffColorHash(String(key) + '|' + salt) % arr.length]; }
   function _sdGenderPresentation(name, hint) {
     var h = String(hint || '').toLowerCase();
@@ -153670,6 +153992,219 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildContinuityLedger = _buildContinuityLedger;
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CANON CONFORMANCE — a rendered panel is checked against the AUTHORITATIVE canon
+  // (plan._canon + phase._state). A canonical attribute is IMMUTABLE unless the story
+  // explicitly authorizes the change this panel. Klein repairs only violations that
+  // have an authoritative answer (spear-vs-cutlass: canon knows → repair; expression:
+  // no authoritative answer → leave it). See docs / plan keen-exploring-stallman.
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // The ONLY ways a canonical attribute may legitimately change in a panel: an explicit
+  // transformation / loss / donning event in THIS beat or the immediately-preceding one,
+  // or a granted wish / transformation grammar cue on the panel. Returns the set of
+  // attribute categories whose change is authorized this panel (everything else = drift).
+  function _canonAuthorizedChanges(phase, beatText, prevBeatText) {
+    var out = {};
+    try {
+      var txt = (String(prevBeatText || '') + ' ' + String(beatText || '')).toLowerCase();
+      var panel = (phase && phase._panel) || {};
+      // GENDER + BODY-PLAN ← an explicit transformation / becoming / wish-remaking, OR a granted wish.
+      var XFORM = /\b(transform\w*|becom\w*|reshap\w*|reform\w*|unmak\w*|remak\w*|remade|shifts? (?:into|shape|form|sex|gender|from)|changes? (?:shape|form|sex|gender|into)|melts? into|the wish (?:remakes|reshapes|changes|becomes|reforms))\b/;
+      var KWSHIFT = /\b(shift\w* (?:gender|sex)|gender[- ]?(?:shift|swap|fluid)|becomes? (?:a )?(?:man|woman|male|female)|sex (?:shifts|changes)|flows? (?:into|toward) (?:a )?(?:man|woman|male|female))\b/;
+      if (XFORM.test(txt) || KWSHIFT.test(txt) || panel.wishOutcome === 'clean' || panel.wishOutcome === 'twisted') { out.gender = true; out.body_plan = true; }
+      // WEAPON ← explicitly dropped / lost / sheathed / switched / drawn / disarmed / thrown.
+      if (/\b(drops?|dropped|lets? go of|loses?|lost|sheath\w*|switch\w*|swap\w*|disarm\w*|draws?|drew|picks? up|takes? up|snatch\w*|grabs?|hurls?|throws?|casts? aside|flings?)\b/.test(txt)) out.weapon = true;
+      // CLOTHING / ARMOR ← explicitly stripped / torn / shed / donned / shattered / bared.
+      if (/\b(strips?|stripped|tears? (?:off|away|free)|torn (?:off|away|free)|sheds?|shed|removes?|dons?|pulls? on|cloak (?:falls|drops|is torn)|armou?r (?:shatters|falls|breaks|is torn|is stripped)|bares?|naked|unclothed)\b/.test(txt)) out.wardrobe = true;
+      // INJURY / SACRIFICE ← an explicit new wound / severing / sacrifice (the ledger already
+      // advances injury LOCATION; this authorizes a fresh damage-state change on the figure).
+      if (_SD_INJURY_RX.test(txt) || /\b(sacrific\w*|severs?|severed|cuts? off|rips? away|is torn from|gives? up (?:a|the|her|his|their))\b/.test(txt)) out.injury = true;
+    } catch (_) {}
+    return out;
+  }
+  window._canonAuthorizedChanges = _canonAuthorizedChanges;
+
+  // Build the compact per-character canon block + authorized-change list for a single panel,
+  // to hand to the verifier. Reuses plan._canon (identity/equipment), phase._state (carried
+  // weapon + injuries), and the Kwisheen lock (colour + body-plan). Returns null when there is
+  // no canon to check against (verifier then behaves exactly as before). Mirrors _expectedFigureCount.
+  function _expectedCanonForPanel(visualState, phase, planMeta) {
+    try {
+      var plan = (planMeta && planMeta._canon) ? planMeta
+               : ((state._stagedActive && state._stagedActive.plan && state._stagedActive.plan._canon) ? state._stagedActive.plan : null);
+      var canon = (plan && plan._canon) || (planMeta && planMeta._canon) || null;
+      if (!canon || !Object.keys(canon).length) return null;
+      var pstate = (phase && phase._state) || {};
+      // Resolve on-stage character keys (map the 'li' token to the love-interest canon key).
+      var liKey = Object.keys(canon).filter(function (x) { return canon[x] && canon[x].role === 'love_interest'; })[0] || null;
+      var present = (phase && Array.isArray(phase.characters_present)) ? phase.characters_present.map(function (t) { return String(t).toLowerCase(); }) : Object.keys(canon);
+      var keys = present.concat(['protagonist']).map(function (k) { return (k === 'li' && liKey) ? liKey : k; });
+      // Per-character BLOCKING (position) from the authored scene — used by the entity resolver to map
+      // a generic "Kwisheen on the right" to the actual character. Orchestration knows WHO is where.
+      var vs2 = visualState || {};
+      var others = Array.isArray(vs2.other_characters_present) ? vs2.other_characters_present : [];
+      function _posFor(c, k) {
+        try {
+          if (c.role === 'protagonist') return String(vs2.pc_position || '');
+          if (c.role === 'love_interest') return String(vs2.li_position || '');
+          var nm = String(c.displayName || k).toLowerCase();
+          var o = others.filter(function (x) { return x && String(x.name || '').toLowerCase() === nm; })[0];
+          return o ? String(o.position || '') : '';
+        } catch (_) { return ''; }
+      }
+      var seen = {}, chars = [];
+      keys.forEach(function (k) {
+        if (seen[k]) return; seen[k] = true;
+        var c = canon[k]; if (!c) return;
+        var m = c.morphology || {};
+        var lock = (c.species === 'kwisheen' && typeof _resolveKwisheenAppearance === 'function') ? _resolveKwisheenAppearance(c.displayName || k) : null;
+        var st = pstate[k] || {};
+        var traits = c.recognitionTraits || [];
+        chars.push({
+          name: c.displayName || k,
+          species: c.species || '',
+          position: _posFor(c, k),
+          body_plan: (lock && lock.body_plan) || m.speciesTopology || '',
+          gender: m.genderPresentation || '',
+          face: m.facialTopology || '',
+          mane: m.mane || '',
+          skin: (lock && lock.skin) || '',
+          pattern: (lock && lock.pattern) || '',
+          eyes: (lock && lock.iris) || m.eyes || '',
+          weapon: st.holding || c.weapon || '',
+          armor: String(c.garment || '').trim(),
+          jewelry: traits.filter(function (t) { return /jewel|insignia|amulet|talisman|torc|ring|circlet|pendant|necklace|bead|earring|brooch/i.test(t); }).join('; '),
+          recognition: traits.join('; '),
+          injuries: (st.injuries || []).join('; ')
+        });
+      });
+      if (!chars.length) return null;
+      // Authorized changes from this panel's beat text (+ the preceding phase's).
+      var beatText = '', prevText = '';
+      try {
+        var phases = (planMeta && Array.isArray(planMeta.phases)) ? planMeta.phases : [];
+        var pi = phases.indexOf(phase);
+        if (pi < 0 && phase && typeof phase.phaseIdx === 'number') pi = phase.phaseIdx;
+        if (planMeta && Array.isArray(planMeta.beats) && pi >= 0) {
+          beatText = _phaseBeatText(planMeta, phase, phases, pi);
+          if (pi > 0 && phases[pi - 1]) prevText = _phaseBeatText(planMeta, phases[pi - 1], phases, pi - 1);
+        }
+      } catch (_) {}
+      var authObj = _canonAuthorizedChanges(phase, beatText, prevText);
+      var wishAnchor = (phase && phase._panel && phase._panel.wishAnchor) || (phase && phase.wishAnchor) || '';
+      return { chars: chars, authorized: Object.keys(authObj), wish_anchor: wishAnchor };
+    } catch (_) { return null; }
+  }
+  window._expectedCanonForPanel = _expectedCanonForPanel;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // REPAIR ROUTING LAYER — decides the CORRECTION STRATEGY for a verified defect.
+  // Kept DELIBERATELY SEPARATE from the verifier: the verifier reports WHAT is wrong
+  // (defect_type / priority / region / expected / observed / reason); the ROUTER decides
+  // HOW to fix it (regenerate | recolorize | klein | report). This decoupling means a
+  // future editor that CAN do topology repair only needs the table below flipped —
+  // the verifier taxonomy never changes. See [[project_staged_validation_architecture]].
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // defect_type → strategy. STRUCTURAL defects (a figure must be re-composed, not repainted —
+  // masked inpaint leaves hybrids like "legs + one tentacle") REGENERATE. LOCALIZED/cosmetic
+  // defects that inpainting excels at go to KLEIN. This is DATA — change a mapping to re-route
+  // without touching verifier or dispatch code.
+  var _REPAIR_STRATEGY = {
+    // structural — regenerate (Klein cannot cleanly re-compose these)
+    species_anatomy: 'regenerate',
+    body_plan:       'regenerate',
+    gender:          'regenerate',
+    extra_person:    'regenerate',   // a duplicate/phantom OR a missing figure = a composition problem
+    // localized — Klein (inpainting's sweet spot)
+    extra_hand:      'klein',
+    extra_limb:      'klein',
+    kwisheen_face:   'klein',        // face-region repaint verified to work cleanly (regen18/19)
+    weapon:          'klein',
+    wardrobe:        'klein',
+    eye_color:       'klein',
+    skin_pattern:    'klein',
+    jewelry:         'klein',
+    held_prop:       'klein',
+    sacrifice_mark:  'klein',
+    wish_burst_anchor: 'klein'
+  };
+
+  // Route a verified defect to a strategy. `opts.stage` = 'sketch' | 'final' (default 'final').
+  // `opts.wasInSketch` — for a FINAL-stage structural defect, true means it survived from the
+  // approved sketch (a real structural problem → regenerate) and false means colorization
+  // INTRODUCED it — a colorization-CONTRACT violation → recolorize once, don't discard the good
+  // sketch. Returns 'regenerate' | 'recolorize' | 'klein' | 'report'.
+  function _routeRepairStrategy(defectType, opts) {
+    opts = opts || {};
+    var t = String(defectType || '');
+    // P3 / unclassified → report only (no authoritative answer; never a repair job).
+    if (opts.priority === 3 || opts.priority === '3') return 'report';
+    var strat = _REPAIR_STRATEGY[t];
+    if (!strat) return 'report';
+    // Colorization-contract branch: a STRUCTURAL defect present in the FINAL but NOT the approved
+    // sketch was introduced by colorize — recolorize from the sketch once rather than regenerate.
+    if (strat === 'regenerate' && opts.stage === 'final' && opts.wasInSketch === false && opts.hasApprovedSketch) {
+      return 'recolorize';
+    }
+    return strat;
+  }
+  window._routeRepairStrategy = _routeRepairStrategy;
+  window._repairStrategyTable = _REPAIR_STRATEGY;
+
+  // Turn accumulated verifier reasons into a regeneration-feedback block (verifier-as-teacher).
+  // `violations` = array of {reason|expected|observed|character|region} (or plain strings).
+  function _buildRegenFeedback(violations) {
+    var items = (violations || []).map(function (v) {
+      if (typeof v === 'string') return v;
+      if (!v) return '';
+      if (v.reason) return v.reason;
+      var who = v.character ? (v.character + ': ') : '';
+      if (v.expected || v.observed) return who + (v.observed ? ('drawn as ' + v.observed + '; ') : '') + (v.expected ? ('canon requires ' + v.expected) : '');
+      return who + (v.defect_type || 'canon violation');
+    }).filter(Boolean);
+    // dedupe (a still-valid violation carried across retries must not pile up)
+    var seen = {}, uniq = [];
+    items.forEach(function (s) { var k = s.toLowerCase().trim(); if (!seen[k]) { seen[k] = 1; uniq.push(s); } });
+    if (!uniq.length) return '';
+    return 'The previous render VIOLATED canon and was rejected. These must be fixed:\n' +
+      uniq.map(function (s) { return '• ' + s; }).join('\n') +
+      '\nPreserve everything already correct; change ONLY what is listed above.';
+  }
+  window._buildRegenFeedback = _buildRegenFeedback;
+
+  // Bounded structural regeneration loop with a HARD ceiling and accumulate-all-violations.
+  // generate(feedbackStr, attemptIdx) → Promise<imageUrl|null>; verify(url) → Promise<verifyResult>.
+  // Carries forward EVERY still-valid violation each retry (never discards one defect while
+  // introducing another). Returns { url, attempts, resolved, violations } — resolved=false means
+  // the ceiling was hit; caller decides fallback (fail loudly / keep best).
+  async function _structuralRegenLoop(opts) {
+    opts = opts || {};
+    var maxAttempts = (typeof opts.maxAttempts === 'number') ? opts.maxAttempts : 3;
+    var accumulated = [];   // all violations seen so far (deduped by _buildRegenFeedback)
+    var bestUrl = null, lastV = null, attempt = 0;
+    while (attempt < maxAttempts) {
+      var feedback = _buildRegenFeedback(accumulated);
+      var url = await opts.generate(feedback, attempt);
+      attempt++;
+      if (!url) { continue; } // a failed generation still counts against the ceiling
+      bestUrl = url;
+      var v = await opts.verify(url);
+      lastV = v;
+      if (!v || v.skipped || v.pass !== false) {
+        return { url: url, attempts: attempt, resolved: true, violations: [] }; // structurally clean
+      }
+      // accumulate this attempt's still-valid violations (structured entry preferred).
+      var entry = { reason: v.reason, expected: v.expected, observed: v.observed, character: v.defect_character, defect_type: v.defect_type };
+      accumulated = accumulated.concat(entry, (v.violations || []));
+      try { console.log('[REGEN-LOOP] attempt ' + attempt + '/' + maxAttempts + ' still fails: ' + (v.reason || v.defect_type || '?')); } catch (_) {}
+    }
+    try { console.warn('[REGEN-LOOP] CEILING hit (' + maxAttempts + ') — unresolved: ' + (lastV && (lastV.reason || lastV.defect_type) || '?') + '. Caller must fall back.'); } catch (_) {}
+    return { url: bestUrl, attempts: attempt, resolved: false, violations: accumulated };
+  }
+  window._structuralRegenLoop = _structuralRegenLoop;
+
   // ── DIRECTOR'S BIBLE (scene-INDEPENDENT, renderer-agnostic, v1 — extend, don't rewrite) ──
   // Visual Grammar: a textless cinematic language (a reader knows a wish / sacrifice / Fate
   // answering the way they know Superman flying). Fired by panel grammar flags.
@@ -153780,7 +154315,8 @@ No text, no watermark, no UI elements, share-ready.`;
   // Create a reference asset ONLY when it (a) recurs, (b) is instantly recognizable, (c) is part of the
   // world's identity. Resist a PNG-per-effect — a bloated asset library is worse than prompts.
   var _CANONICAL_VISUAL_ASSETS = {
-    kwisheen_anatomy:  { tier: 1, kind: 'species anatomy',           asset: '/assets/Fatelands/Kwisheen_Octofolk_Ref_v1.jpg', governs: 'body plan / proportions / tentacle topology', plumbing: 'species-anchor presence gate (always-on when a Kwisheen is on-stage)' },
+    kwisheen_anatomy:  { tier: 1, kind: 'species anatomy',           asset: '/assets/Fatelands/Kwisheen_Body_Anchor_v2.jpg', governs: 'body plan / proportions / tentacle topology / coral hair / attire', plumbing: 'species-anchor presence gate (always-on when a Kwisheen is on-stage)' },
+    kwisheen_swim:     { tier: 1, kind: 'species locomotion',         asset: '/assets/Fatelands/Octofolk_Swim_Motion_Ref_v1.png', governs: 'how the six-tentacle mantle moves — FLEXED/spread when hovering, TRAILING in a bundle when surging (never a fish-tail)', plumbing: 'attach when a Kwisheen is SWIMMING / in-motion underwater (crowd + action); `_kwisheenSwimRef()`' },
     wish_burst:        { tier: 1, kind: 'canonical symbol',          assetByOutcome: { clean: '/assets/Fatelands/Wish_Burst_Clean_v1.png', twisted: '/assets/Fatelands/Wish_Burst_Twisted_v1.png' }, governs: 'the Fate burst graphic style', plumbing: '_resolveCanonicalAssets, by wish outcome' },
     sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the localized shadow-STAIN Fate leaves over the sacrificed part (absence, not a reaching hand)', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
     manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
@@ -155508,10 +156044,18 @@ No text, no watermark, no UI elements, share-ready.`;
   var _STAGED_SPECIES_CONTRACTS = {
     first_favored: {
       label: 'First Favored',
+      // ORDER IS LOAD-BEARING — same rule as the Kwisheen list. Stage A takes .slice(0,1) and the region
+      // contract .slice(0,2), so slot 1 must be the BODY-PLAN + ATTIRE authority. It used to be a female
+      // FACE crop, which carries no body plan and no wardrobe: observed live (canon sheet, 2026-07-20) a
+      // First Favored rendered as an ordinary human woman, nude, with none of the species' traits. The
+      // full-body duo carries proportions, both sexes, the sheer gossamer drape, and the Weave-Script skin
+      // glow; the face crops remain as feature authorities behind it. See [[project_kwisheen_hair_canon]]
+      // for the identical bug in the Kwisheen list.
       anchorImages: [
-        '/assets/GN-Artists/EnderSBond/first_favored_anchor_face_female_v1.jpg',
+        '/assets/GN-Artists/EnderSBond/first_favored_anchor_duo_fullbody_variants_v1.jpg', // 1 — body plan, attire, skin
+        '/assets/GN-Artists/EnderSBond/first_favored_anchor_face_female_v1.jpg',           // 2 — female face/pupils
         '/assets/GN-Artists/EnderSBond/first_favored_anchor_male_face_v1.png',
-        '/assets/GN-Artists/EnderSBond/first_favored_anchor_duo_fullbody_variants_v1.jpg'
+        '/assets/Fatelands/First_Favored_Species_Sheet.jpg'
       ],
       identityBlock:
         'SPECIES: FIRST FAVORED (canonical anatomy — match the Ender Bond reference proportions + palette exactly):\n' +
@@ -155536,26 +156080,50 @@ No text, no watermark, no UI elements, share-ready.`;
     },
     kwisheen: {
       label: 'Kwisheen',
+      // ORDER IS LOAD-BEARING (Roman 2026-07-19). Stage A takes .slice(0,1); the staged region
+      // contract takes .slice(0,2). So slot 1 must be the TOPOLOGY authority and slot 2 the highest-
+      // value render authority; slots 3+ are documentation until a consumer widens its slice.
+      //
+      // v1 SHEET DEMOTED: `Kwisheen_Octofolk_Ref_v1.jpg` is a 4-panel master whose two portrait panels
+      // depict the scalp growth as SUCKER-LINED OCTOPUS ARMS — it taught the very "tentacle-hair"
+      // concept the canon text now forbids, and as slot 1 it was the ONE image Stage A ever saw. Its
+      // good panels survive as the two v2 crops below (bottom-right full-body; a tight face crop that
+      // excludes the hair). See [[project_kwisheen_hair_canon]].
+      //
+      // PATHS FIXED: the 2026-05-27 Octofolk→Kwisheen rename renamed these CODE paths but not the
+      // FILES on disk, so slots 2-4 had been 404ing silently ever since — the render contract was
+      // getting one anchor, not two, and the arm sheet (the reference for the #1 extra-arms defect)
+      // was never reaching the model at all.
       anchorImages: [
-        '/assets/Fatelands/Kwisheen_Octofolk_Ref_v1.jpg',
-        '/assets/Fatelands/Kwisheen_Pair_Anchor.jpg?v=20260404',
-        '/assets/Fatelands/Kwisheen_Species_Sheet.jpg',
-        '/assets/Fatelands/Kwisheen_Arm_Articulation.png'
+        '/assets/Fatelands/Kwisheen_Body_Anchor_v2.jpg',    // 1 — BODY PLAN: two arms, six-tentacle lower body, coral hair, ATTIRE. Stage A + render.
+        '/assets/Fatelands/Octofolk_Arm_Articulation.png',  // 2 — ARM/HAND: one arm → suckered forearm → five finger-tentacles. Render.
+        '/assets/Fatelands/Kwisheen_Face_Anchor_v2.jpg',    // 3 — FACE: lipped humanoid mouth, horizontal capsule pupils, hexagonal hide.
+        '/assets/Fatelands/Octofolk_Swim_Motion_Ref_v1.png', // 4 — LOCOMOTION: two swimmers, mantle FLEXED (spread) vs TRAILING (surge). The only motion ref.
+        '/assets/Fatelands/Octofolk_Pair_Anchor.jpg',
+        '/assets/Fatelands/Octofolk_Species_Sheet.jpg'
       ],
       identityBlock:
         'SPECIES: KWISHEEN (canonical anatomy — a cephalopod-humanoid; match the Kwisheen species reference image):\n' +
-        '- BODY — EXACT LIMB COUNTS (the #1 thing to get right; the render keeps growing extra arms): a humanoid TORSO with EXACTLY TWO upper ARMS — two tentacle-arms, no more, each ending in ONE hand of five fine finger-tentacles. TWO arms only — never three, four, or five. Below the waist the legs are replaced ENTIRELY by SIX locomotion tentacles: a lower-body mass for MOVEMENT, with no hands and no arms among them. There are THREE DISTINCT tentacle systems and they must not merge into a swarm of arms: (1) the TWO tentacle-ARMS (upper, with hands — the only manipulating limbs), (2) the SIX locomotion tentacles (lower body, no hands), (3) the hair-tentacles (sensory, on the scalp). Count the manipulating arms in the frame: there must be exactly TWO.\n' +
-        '- SILHOUETTE (HARD — pass the blacked-out test: a solid-black outline must READ AS KWISHEEN, not "a human with a few extra limbs"): the NON-HUMAN mass must DOMINATE the outline. Two features carry it — (1) the thick writhing MANE of tentacle-dreadlocks crowning the head, and (2) the BROAD SIX-TENTACLE LOWER BODY that fans out far wider than any human legs and forms the base of the figure. Add distinctive head/neck features — small swept-back FINS or a FRILL along the skull/neck and a slightly larger, wider-set cranium — and non-human proportions (a longer, more sinuous torso). A reader must recognise the species from the shape alone before any colour or detail; if the silhouette could be mistaken for a costumed human, it is WRONG.\n' +
-        '- HAIR: a full mane of thick living TENTACLE-DREADLOCKS from the scalp — sinuous, sucker-lined, in motion. This mane is a primary silhouette tell (an octopus\'s arms worn as hair), NOT fine wispy feelers.\n' +
+        '- BODY — EXACT LIMB COUNTS (the #1 thing to get right; the render keeps growing extra arms): a humanoid TORSO with EXACTLY TWO upper ARMS — two tentacle-arms, no more, each ending in ONE hand of five fine finger-tentacles. TWO arms only — never three, four, or five. Below the waist the legs are replaced ENTIRELY by SIX locomotion tentacles: a lower-body mass for MOVEMENT, with no hands and no arms among them. A Kwisheen has exactly TWO APPENDAGE SYSTEMS and they must not merge into a swarm of arms: (1) the TWO tentacle-ARMS (upper, with hands — the only manipulating limbs), (2) the SIX locomotion tentacles (lower body, no hands). The coral dreadlocks on the scalp are HAIR, NOT a third system: do not classify them as tentacles or limbs. They are living hair, analogous to human hair — they never manipulate objects, never locomote, and are NEVER included in any limb count. Only the two manipulator arms and the six lower-body locomotion tentacles count as appendages. Count the manipulating arms in the frame: there must be exactly TWO.\n' +
+        '- SILHOUETTE (HARD — pass the blacked-out test: a solid-black outline must READ AS KWISHEEN, not "a human with a few extra limbs"): the NON-HUMAN mass must DOMINATE the outline, and it is the BODY PLAN that carries it — the BROAD SIX-TENTACLE LOWER BODY that fans out far wider than any human legs and forms the base of the figure, with no human legs, knees or feet anywhere in the outline. Add distinctive head/neck features — small swept-back FINS or a FRILL along the skull/neck and a slightly larger, wider-set cranium — and non-human proportions (a longer, more sinuous torso). A reader must recognise the species from the shape alone before any colour or detail; if the silhouette could be mistaken for a costumed human, it is WRONG. (Hair does NOT carry the silhouette: a bald or close-cropped Kwisheen is still unmistakably Kwisheen from the lower body alone.)\n' +
+        '- HAIR (VARIABLE — an appearance trait, never anatomy): living CORAL DREADLOCKS growing from the scalp — branching, reef-textured, faintly luminous organic strands that read as HAIR, not as limbs. They are NOT tentacles, have NO suckers, and are never counted among the appendages. Like human hair this is GROOMED and can differ per character and per era of their life: a full mane, a bound crop, a crest or mohawk, a beard, or shaved bald. A bald or short-cropped Kwisheen is CANONICAL — never add hair to a character who is established without it, and never treat a bare scalp as a species error.\n' +
         '- SKIN: SCALED / pebbled cephalopod hide — a fine hexagonal scale-and-sucker texture across face and body (this species HAS textured, patterned skin, not smooth human skin), in a vivid exotic color (deep red, gold, violet, blue, orange) with contrasting pattern-bloom that shifts with mood.\n' +
         '- EYES: large, a vivid non-human iris (gold / amber) with a HORIZONTAL pupil — a broad bar / rounded-capsule shape lying flat SIDEWAYS across the eye, spanning much of the iris width (like a cuttlefish or a goat\'s sideways pupil). THE KEY RULE IS ORIENTATION: the pupil runs HORIZONTALLY (left-to-right). A broad rounded capsule is ideal; but if the render insists on a SLIT, make it a HORIZONTAL slit (lying flat, sideways, like a goat\'s) — a horizontal slit is acceptable and correct, a VERTICAL slit is WRONG, and a small round dot is wrong.\n' +
-        '- FACE (HARD — same humanoid structure in every panel; fixes the face drifting to a "Cthulhu" head): the FACE itself is HUMANOID — a clear brow, a nose, and a MOUTH WITH LIPS set on a defined jaw, two capsule-pupil eyes, all sheathed in the scaled hide. The ONLY tentacles are the HAIR (scalp) and the LOWER BODY; the face is NOT a mass of tentacles, has NO octopus-beak, and NO feelers/barbels/tentacles sprouting around the mouth or cheeks. A scaled humanoid visage under a tentacle mane — never a face made of tentacles.\n' +
-        '- EARS: small, close to the skull, largely hidden under the tentacle-hair.\n' +
-        '- ATTIRE (HARD — Kwisheen are fully CLOTHED, and the CHEST/TORSO is always COVERED by a GARMENT, never bare and never covered by jewelry alone — this holds for BOTH sexes and stays consistent across every panel): the torso wears a fitted shell-scale bodice, a woven kelp-fibre wrap bound across the chest, or a layered shell-and-bead breastplate; below, a loincloth or skirt of studded wraps. Over the garment sits layered jewelry — beaded necklaces, gem pendants (amethyst, pearl), fine chains. A female Kwisheen\'s breasts are covered by the bodice/wrap, not left bare with only a necklace. Ornament is cultural and expected, but it is worn ON TOP of clothing, never INSTEAD of it.\n' +
-        '- MOVEMENT: fluid unfurling, full-body engagement.\n' +
-        '- CAMOUFLAGE (octopus-like, a deliberate choice): a Kwisheen can change skin colour, texture, and even shape to pass as HUMAN or FIRST FAVORED for a while, then drop the disguise. Their DEFAULT true form (in water / unconcealed) is the tentacled, scaled, tentacle-haired, adorned being above.',
+        '- FACE (HARD — same humanoid structure in every panel; fixes the face drifting to a "Cthulhu" head): the FACE itself is HUMANOID — a clear brow, a nose, and a MOUTH WITH LIPS set on a defined jaw, two capsule-pupil eyes, all sheathed in the scaled hide. The ONLY tentacles anywhere on the body are the TWO ARMS and the LOWER BODY; the face is NOT a mass of tentacles, has NO octopus-beak, and NO feelers/barbels/tentacles sprouting around the mouth or cheeks. A scaled humanoid visage — never a face made of tentacles.\n' +
+        '- EARS (SMALL — do not merge them with the neck frill): small and close to the skull, often partly covered when the coral dreadlocks are worn long. They may taper slightly, but they are NOT large flared lizard ears, NOT fanned membranes, and NOT wing-like. The swept-back fins/frill described in SILHOUETTE run along the SKULL AND NECK — they are a separate feature from the ears and must not be drawn as giant ears.\n' +
+        '- ATTIRE (HARD — Kwisheen are DRESSED, never nude, and attire is GENDERED. The old rule said "the chest is always covered, both sexes" and led with "bodice", which put a breast-garment on male characters; it does not. Match the species reference image, which shows the male bare-chested with shoulder armour and the female in a fitted bodice):\n' +
+        '  • FEMALE presentation — the torso is COVERED: a fitted shell-scale bodice, a woven kelp-fibre wrap bound across the chest, or a layered shell-and-bead breastplate. Her breasts are covered by that garment, never left bare under only a necklace.\n' +
+        '  • MALE presentation — the chest is BARE or crossed by a harness, baldric, or scaled shoulder-pauldron. NEVER a bodice, bra, breast-wrap, or any garment shaped to cover breasts — a male Kwisheen in a bodice is a WARDROBE ERROR, not a style choice.\n' +
+        '  • BOTH — below the waist, a broad worked belt over a loincloth, a skirt of studded wraps, or overlapping scaled plates where the torso meets the tentacle mantle. Layered jewelry (beaded necklaces, gem pendants of amethyst and pearl, fine chains) is cultural and expected, but it is worn ON TOP of clothing and armour, never INSTEAD of it.\n' +
+        '- GENDER COHERENCE (HARD): a Kwisheen may canonically shift sex between scenes — but WITHIN A SINGLE PANEL the presentation and the wardrobe must AGREE. A masculine figure (beard, flat chest, heavier jaw) wears masculine attire; a feminine figure wears feminine attire. Do not mix the two on one body. The species being able to change does not license an incoherent rendering, exactly as a Kwisheen who can walk on land does not get drawn underwater with four tentacles and one human leg.\n' +
+        '- MOVEMENT (motion-dependent mantle — like an octopus): fluid, full-body, unfurling. The six lower ' +
+        'tentacles CHANGE SHAPE with what the body is doing — SPREAD and flexed wide when hovering, standing, ' +
+        'or maneuvering; drawn together and TRAILING in a streamlined bundle when surging or swimming fast ' +
+        '(jet propulsion). Both are correct. What is NEVER correct is a fused fish-tail or mermaid tail: even ' +
+        'trailing, the lower body reads as MULTIPLE DISTINCT tentacles, not one finned or scaled tail.\n' +
+        '- CAMOUFLAGE (octopus-like, a deliberate choice): a Kwisheen can change skin colour, texture, and even shape to pass as HUMAN or FIRST FAVORED for a while, then drop the disguise. Their DEFAULT true form (in water / unconcealed) is the tentacled, scaled, coral-haired, adorned being above.',
       antiDefault:
-        'The lower body is fully tentacled — tentacles replace the legs. The hair is a mane of thick tentacles. ' +
+        'The lower body is fully tentacled — tentacles replace the legs. The hair is living coral dreadlocks, not tentacles. ' +
         'The skin is a scaled, sucker-textured cephalopod hide in vivid colour. The eyes carry a horizontal capsule pupil. ' +
         'The figure wears gem-and-shell adornment and reads as one coherent cephalopod-humanoid being.'
     },
@@ -155576,6 +156144,9 @@ No text, no watermark, no UI elements, share-ready.`;
         'intimate with this person.'
     }
   };
+  // Exported so benchmarks can score SPECIES UTILIZATION against each species' own strict canon spec
+  // (the structural verifier is deliberately blind to limb counts, so it cannot serve as that scorer).
+  window._STAGED_SPECIES_CONTRACTS = _STAGED_SPECIES_CONTRACTS;
 
   // Set of region keys that belong to the Fatelands family. Used to
   // gate Fatelands-specific addendums (Hungry Eye, Syzygy) so they
@@ -155695,7 +156266,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // the act or water disrupts it (the canonical 1-3s wet-reveal tell). Replaces the
   // old always-full-anatomy contract (which contradicted any disguise scene → slips).
   var _STAGED_KWISHEEN_DISGUISE =
-    'SPECIES: KWISHEEN — CURRENTLY DISGUISED AS HUMAN (HARD — render RIGIDLY HUMAN this scene): this character is secretly a Kwisheen, but on land with their camouflage UP they hold a COMPLETE, seamless human disguise. Render them as an ORDINARY HUMAN: normal human skin (a plain human skin tone — NO chromatophore colour, NO scales, NO pattern-bloom), ordinary HUMAN HAIR (real hair, NOT tentacle-dreadlocks), ROUND human pupils, small rounded human ears, TWO human arms ending in ordinary five-fingered hands, and human LEGS — NO tentacles anywhere, no suckers, no cranial feelers. The disguise does NOT flicker: do not slip in a single tentacle, sucker, scale, feeler, or a shift of colour — they pass completely as human. You KNOW they are Kwisheen (that is continuity, not something to draw). Their true nature surfaces ONLY when the scene explicitly drops the act, or water disrupts the camouflage.';
+    'SPECIES: KWISHEEN — CURRENTLY DISGUISED AS HUMAN (HARD — render RIGIDLY HUMAN this scene): this character is secretly a Kwisheen, but on land with their camouflage UP they hold a COMPLETE, seamless human disguise. Render them as an ORDINARY HUMAN: normal human skin (a plain human skin tone — NO chromatophore colour, NO scales, NO pattern-bloom), ordinary HUMAN HAIR (plain human hair, NOT coral dreadlocks), ROUND human pupils, small rounded human ears, TWO human arms ending in ordinary five-fingered hands, and human LEGS — NO tentacles anywhere, no suckers, no cranial feelers. The disguise does NOT flicker: do not slip in a single tentacle, sucker, scale, feeler, or a shift of colour — they pass completely as human. You KNOW they are Kwisheen (that is continuity, not something to draw). Their true nature surfaces ONLY when the scene explicitly drops the act, or water disrupts the camouflage.';
   var _STAGED_KWISHEEN_WETREVEAL =
     'SPECIES: KWISHEEN — DISGUISE DISRUPTED BY WATER (HARD): water has just touched this disguised Kwisheen, so for THIS beat the camouflage GLITCHES — render them still mostly human BUT with the true-form tell breaking through: the pupils flatten into WIDE HORIZONTAL PILL / CAPSULE pupils (solid, blunt-ended, not human-round), and a brief ripple of scale-texture or shifting colour crosses the skin. Everything else still reads human. This is a 1-3 second glitch, NOT a full transformation — the disguise reasserts the moment after.';
   function _stagedKwisheenState(plan) {
@@ -155713,6 +156284,73 @@ No text, no watermark, no UI elements, share-ready.`;
     } catch (_) { return 'true_form'; }
   }
   window._stagedKwisheenState = _stagedKwisheenState;
+
+  // ══ REFERENCE-ASSET INTEGRITY (Roman 2026-07-19) ═══════════════════════════════════════════════
+  // A missing anatomy reference does not degrade the render — it SILENTLY CHANGES THE TREATMENT.
+  // For ~2 months nine `/assets/Fatelands/Kwisheen_*` paths 404'd because the Octofolk→Kwisheen
+  // rename touched code paths but not filenames. Consequences nobody saw: the region contract
+  // shipped ONE species anchor where the code says two, and `Octofolk_Arm_Articulation.png` — the
+  // purpose-built reference for the #1 extra-arms defect — never reached the model at all. Every
+  // conclusion drawn about species-reference effectiveness in that window rested on an incomplete
+  // treatment. The failure mode was not that it broke; it is that it kept working, quietly, wrong.
+  //
+  // So: a missing REQUIRED species anchor is a FATAL CONFIGURATION ERROR, surfaced BEFORE generation
+  // begins, never a warning to scroll past. Checked at contract-build time (once per scene) rather
+  // than mid-render, so a broken deploy fails loudly at the start instead of shipping bad anatomy.
+  // Kill switch: window._assetIntegrity === false (logs instead of throwing).
+  var _assetExistCache = {};   // path → true | false ; one HEAD per path per session
+
+  async function _referenceAssetExists(path) {
+    if (!path) return false;
+    var clean = String(path).split('?')[0];
+    if (_assetExistCache[clean] !== undefined) return _assetExistCache[clean];
+    var ok = false;
+    try {
+      var r = await fetch(clean, { method: 'HEAD' });
+      ok = !!(r && r.ok);
+    } catch (_) { ok = false; }
+    _assetExistCache[clean] = ok;
+    return ok;
+  }
+
+  // Verify every anchor a species will ACTUALLY ship (the consumed slice, not the whole list).
+  // Returns { ok, missing: [{species, path, slot, consumer}] }. Never throws — callers decide.
+  async function _verifyReferenceAssets(speciesKeys) {
+    var keys = Array.isArray(speciesKeys) && speciesKeys.length
+      ? speciesKeys
+      : Object.keys(_STAGED_SPECIES_CONTRACTS || {});
+    var missing = [], checked = 0;
+    for (var i = 0; i < keys.length; i++) {
+      var sk = keys[i];
+      var sp = _STAGED_SPECIES_CONTRACTS[sk];
+      if (!sp || !Array.isArray(sp.anchorImages)) continue;
+      // Slot 1 is consumed by Stage A (.slice(0,1)); slots 1-2 by the region contract (.slice(0,2)).
+      var required = sp.anchorImages.slice(0, 2);
+      for (var s = 0; s < required.length; s++) {
+        checked++;
+        var exists = await _referenceAssetExists(required[s]);
+        if (!exists) missing.push({ species: sk, path: required[s], slot: s + 1, consumer: s === 0 ? 'stage-A + render' : 'render' });
+      }
+    }
+    return { ok: missing.length === 0, missing: missing, checked: checked };
+  }
+  window._verifyReferenceAssets = _verifyReferenceAssets;
+
+  // Fatal form — call before generation. Throws unless window._assetIntegrity === false.
+  async function _assertReferenceAssets(speciesKeys) {
+    var res = await _verifyReferenceAssets(speciesKeys);
+    if (res.ok) return res;
+    var detail = res.missing.map(function (m) {
+      return '  • ' + m.species + ' anchor slot ' + m.slot + ' (' + m.consumer + '): ' + m.path;
+    }).join('\n');
+    var msg = 'REFERENCE ASSET MISSING — ' + res.missing.length + ' required species anchor(s) do not exist:\n' + detail +
+      '\nThis silently changes what the model is conditioned on. Fix the path or restore the file; ' +
+      'do not generate against an incomplete reference set. (Override: window._assetIntegrity = false)';
+    try { console.error('[ASSET-INTEGRITY] ' + msg); } catch (_) {}
+    if (window._assetIntegrity === false) return res;   // explicit opt-out: log, continue
+    throw new Error('[ASSET-INTEGRITY] ' + msg);
+  }
+  window._assertReferenceAssets = _assertReferenceAssets;
 
   function _buildStagedRegionContract(plan) {
     if (!plan) return null;
@@ -155739,14 +156377,37 @@ No text, no watermark, no UI elements, share-ready.`;
     // renderer can drop a species' reference image when NO character of that species is
     // on-stage (else e.g. the Kwisheen octofolk ref bleeds tentacles onto a lone human PC).
     var speciesAnchorByPath = {};
+    var _knownMissing = [];
+    // Warm the asset-existence cache once per session (fire-and-forget); the synchronous check below
+    // then fails HARD on anything already known to be absent. See _assertReferenceAssets.
+    if (!window._assetPreflightStarted) {
+      window._assetPreflightStarted = true;
+      try {
+        _verifyReferenceAssets(null).then(function (r) {
+          if (r.ok) { console.log('[ASSET-INTEGRITY] preflight OK — ' + r.checked + ' required species anchor(s) resolve'); return; }
+          console.error('[ASSET-INTEGRITY] preflight FAILED — ' + r.missing.length + ' of ' + r.checked +
+            ' required anchor(s) missing:\n' + r.missing.map(function (m) { return '  • ' + m.species + ' slot ' + m.slot + ': ' + m.path; }).join('\n'));
+        });
+      } catch (_) {}
+    }
     speciesKeys.forEach(function(sk) {
       // A DISGUISED Kwisheen must render human — do NOT attach the tentacled octofolk
       // reference image (it bleeds tentacles/colour straight through the disguise).
       if (sk === 'kwisheen' && _kwState === 'disguised') return;
       var sp = _STAGED_SPECIES_CONTRACTS[sk];
       if (!sp) return;
-      (sp.anchorImages || []).slice(0, 2).forEach(function(p) { if (p) { speciesAnchorByPath[p] = sk; addAnchor(p); } });
+      (sp.anchorImages || []).slice(0, 2).forEach(function(p, _i) {
+        if (!p) return;
+        // Fail-closed on KNOWN-bad, fail-open on not-yet-checked: a path the preflight has already
+        // proven absent must never silently drop out of the reference set again.
+        if (_assetExistCache[String(p).split('?')[0]] === false) { _knownMissing.push(sk + ' slot ' + (_i + 1) + ': ' + p); return; }
+        speciesAnchorByPath[p] = sk; addAnchor(p);
+      });
     });
+    if (_knownMissing.length && window._assetIntegrity !== false) {
+      throw new Error('[ASSET-INTEGRITY] Required species anchor(s) missing — refusing to build a region contract with an incomplete reference set:\n  ' +
+        _knownMissing.join('\n  ') + '\n(Override: window._assetIntegrity = false)');
+    }
     // Celestial anchors last — add only if budget remains (they
     // primarily contribute via text directives, not visual reference).
     celestialKeys.forEach(function(ck) {
@@ -156799,6 +157460,7 @@ No text, no watermark, no UI elements, share-ready.`;
       return r.json();
     }).then(function(data) {
       if (!data || !data.url) throw new Error('Gemini returned no image');
+      try { _chargeImage('gemini', 1, { scope: 'dev' }); } catch (_) {}
       setStatus('finalizing…');
       if (data.url.indexOf('data:') === 0) return data.url;
       return _fetchAsBase64DataUrl(data.url);
@@ -179135,6 +179797,7 @@ No text, no watermark, no UI elements, share-ready.`;
         return r.json();
       }).then(function(data) {
         if (!data || !data.url) throw new Error('Gemini returned no image');
+        try { _chargeImage('gemini', 1, { scope: 'dev' }); } catch (_) {}
         return (data.url.indexOf('data:') === 0) ? data.url : _mouthUrlToDataUrl(data.url);
       });
     });
@@ -179602,6 +180265,7 @@ No text, no watermark, no UI elements, share-ready.`;
       return r.json();
     }).then(function(data) {
       if (!data || !data.url) throw new Error('Gemini returned no image');
+      try { _chargeImage('gemini', 1, { scope: 'dev' }); } catch (_) {}
       if (data.url.indexOf('data:') === 0) return data.url;
       // Convert remote URL → data URL for parity with BFL path.
       return fetch(data.url).then(function(rr) { return rr.blob(); }).then(function(blob) {
@@ -180122,6 +180786,7 @@ No text, no watermark, no UI elements, share-ready.`;
             return r.json();
           }).then(function(data) {
             if (!data || !data.url) throw new Error('Gemini returned no image');
+            try { _chargeImage('gemini', 1, { scope: 'dev' }); } catch (_) {}
             if (data.url.indexOf('data:') === 0) return data.url;
             return _oasReviewFetchSourceDataUrl(data.url);
           });
@@ -180724,7 +181389,7 @@ No text, no watermark, no UI elements, share-ready.`;
       _kwLockNames.forEach(function (nm) {
         var k = String(nm).trim().toLowerCase(); if (!k || _kwSeen[k]) return; _kwSeen[k] = true;
         var a = _resolveKwisheenAppearance(nm);
-        if (a) _kwLockLines.push('- ' + nm + ': ' + a.skin + ' skin with ' + a.pattern + ', ' + a.iris + ' eyes whose pupil runs HORIZONTALLY across the iris (a flat sideways bar/capsule; or if a slit, a HORIZONTAL slit like a goat\'s — never a VERTICAL slit, never a round dot) — IDENTICAL in every panel (exactly two arms, six lower tentacles, tentacle-hair; same scaled HUMANOID face with a lipped mouth and defined jaw — NEVER a tentacle-mouthed / octopus-beaked face; the torso COVERED by a bodice/wrap, not bare; same adornment).');
+        if (a) _kwLockLines.push('- ' + nm + ': ' + a.skin + ' skin with ' + a.pattern + ', ' + a.iris + ' eyes whose pupil runs HORIZONTALLY across the iris (a flat sideways bar/capsule; or if a slit, a HORIZONTAL slit like a goat\'s — never a VERTICAL slit, never a round dot) — IDENTICAL in every panel (BODY PLAN, unchanging: ' + (a.body_plan || 'two arms, six lower tentacles') + '; same scaled HUMANOID face with a lipped mouth and defined jaw — NEVER a tentacle-mouthed / octopus-beaked face; the torso COVERED by a bodice/wrap, not bare; same adornment).');
       });
       if (_kwLockLines.length) {
         prompt += 'KWISHEEN APPEARANCE (LOCKED — these named Kwisheen keep these EXACT colours/patterns in every panel and issue; skin shifts ONLY as a deliberate camouflage beat, never as per-panel drift):\n' + _kwLockLines.join('\n') + '\n\n';
@@ -180732,7 +181397,7 @@ No text, no watermark, no UI elements, share-ready.`;
     }
     // SPECIES-BY-CHARACTER GUARD (Roman 2026-07-14): the species contract above is scene-level,
     // so the model tends to smear the non-human anatomy onto EVERY figure (e.g. a human PC in a
-    // Kwisheen scene sprouting tentacle-hair). Scope species per character so a human stays human.
+    // Kwisheen scene sprouting cephalopod traits). Scope species per character so a human stays human.
     (function () {
       var _sk = (state._stagedRegionContract && state._stagedRegionContract.speciesKeys) || [];
       if (!_sk.length) return;
@@ -180746,7 +181411,7 @@ No text, no watermark, no UI elements, share-ready.`;
         return 'Human';
       }
       function _descSp(sp) {
-        if (sp === 'Kwisheen') return 'KWISHEEN — the cephalopod anatomy above (scaled skin, tentacle-dreadlock hair, tentacle lower body, capsule pupils, gem-and-shell adornment)';
+        if (sp === 'Kwisheen') return 'KWISHEEN — the cephalopod anatomy above (scaled skin, coral-dreadlock hair (groomed, may be shaved), tentacle lower body, capsule pupils, gem-and-shell adornment)';
         if (sp === 'First Favored') return 'FIRST FAVORED — the First Favored anatomy above (four-pointed diamond pupils, small rounded ears, luminous skin, gossamer)';
         if (sp === 'Wildfolk' || /human/i.test(sp)) return 'FULLY HUMAN — ordinary human skin, hair, ears, and limbs; an entirely human person carrying none of the non-human traits above';
         return sp;
@@ -181935,6 +182600,746 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildStagedHeroPrompt = _buildStagedHeroPrompt;
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // STRUCTURAL PASS (#3) — the staged-validation pipeline: draft cheap line-art, verify its
+  // STRUCTURE, regenerate the SKETCH with feedback until structurally clean (hard ceiling), then
+  // colorize CONDITIONED on the approved sketch, then a structural recheck (colorize-contract) +
+  // one recolorize, leaving only cosmetic defects for the caller's Klein pass. Validated (n=3):
+  // colorize preserves structure with ≈0 new structural errors. Behind window._structuralPass
+  // (default OFF) until a flag-ON regen proves it end-to-end. See [[project_staged_validation_architecture]].
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  // ── STAGE-A CANON REFERENCES (Roman 2026-07-19) ────────────────────────────
+  // The blueprint stage decides species topology, proportions, and wardrobe silhouette — i.e. CANON —
+  // but until now it was the one image call in the pipeline that received NO reference images, and was
+  // asked to infer a Kwisheen from prose. The downstream symptom is [[project_canon_conformance_repair]]:
+  // canon violations discovered after the render and patched with Klein. A reference belongs at the
+  // stage that DECIDES the thing, not the stage that discovers it was wrong.
+  //
+  // These are IDENTITY references, not style references: they answer "how many tentacles, where does the
+  // mantle emerge, how wide are the shoulders" — never pose, framing, or composition. The prompt contract
+  // below says so explicitly, mirroring the Klein identity-card wording that already works.
+  //
+  // SHARED, NOT ROUTED: every ref conditions every panel. Gemini has no per-region reference binding, so
+  // per-panel routing is not expressible — but a scene's cast is largely constant, so shared conditioning
+  // is the correct semantics anyway. This is also what makes a multi-panel sheet tractable later.
+  // Kill switch: window._stageARefs === false. (Deliberately NOT the same name as the exported
+  // function `window._stageACanonRefs` — one window property cannot be both a flag and a callable,
+  // and assigning the flag would silently destroy the export.)
+  // TWO REFERENCE KINDS, and Stage A wants them in this priority order:
+  //   (1) SPECIES ANATOMY (`_STAGED_SPECIES_CONTRACTS[sk].anchorImages`, Tier 1) — governs body plan,
+  //       limb COUNTS, and topology. This is what fixes the expensive failure class (regen21's "line art
+  //       drew 4 arms"); the Kwisheen identityBlock literally calls extra arms "the #1 thing to get right".
+  //   (2) INDIVIDUAL IDENTITY (`_canonicalReferenceFor`) — governs WHO a specific character is.
+  // A face master cannot fix an arm count, so species anchors lead. These already attach at the RENDER
+  // stage via the species-anchor presence gate, but Stage A — which is where topology is actually
+  // DECIDED — never saw them.
+  var _STAGE_A_SPECIES_CAP  = 2;
+  var _STAGE_A_IDENTITY_CAP = 2;
+  var _STAGE_A_REF_CAP = _STAGE_A_SPECIES_CAP + _STAGE_A_IDENTITY_CAP;
+
+  // Normalize whatever _canonicalReferenceFor hands back (data URL / http URL / path) to the RAW
+  // base64 that /api/image's reference_images_b64 expects (it feeds .b64 straight into inlineData.data).
+  async function _canonRefToB64(u) {
+    if (!u) return null;
+    try {
+      var s = String(u);
+      if (s.indexOf('data:') === 0) return s.replace(/^data:image\/[^;]+;base64,/, '');
+      if (typeof _loadStyleRefBase64 === 'function') {
+        var b = await _loadStyleRefBase64(s);
+        if (b) return String(b).replace(/^data:image\/[^;]+;base64,/, '');
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // ══ SOLO ANCHOR SELECTION — species + sex (Roman 2026-07-20) ═══════════════════════════════════
+  // The species contracts' slot-1 anchors are DUO images: two figures in one picture. Handing the model
+  // two duos for two characters gives it FOUR candidate bodies to map onto two people, with only text
+  // saying which is which — and it mixes them. Observed live: a First Favored woman grew a Kwisheen
+  // tentacle forearm while keeping her own Weave-Script glow, and the Kwisheen male lost his mantle for
+  // a scaled skirt. Cropping each reference to the ONE figure matching that character's sex removed
+  // both defects with no prompt or architecture change.
+  //
+  // Selection order, per species present in the panel:
+  //   1. exactly ONE sex of that species on stage → the SOLO anchor for that sex
+  //   2. BOTH sexes on stage                      → the DUO anchor (it correctly shows both)
+  //   3. sex unknown, or no solo asset            → the species' slot-1 anchor (previous behaviour)
+  // Kill switch: window._soloAnchors === false restores duo-always.
+  var _SOLO_SPECIES_ANCHORS = {
+    kwisheen: {
+      male:   { path: '/assets/Fatelands/Kwisheen_Male_Solo_v2.jpg',
+                traits: 'humanoid torso, bare chest with a scaled shoulder-pauldron, bearded, six-tentacle lower body replacing legs, finger-tentacles' },
+      female: { path: '/assets/Fatelands/Kwisheen_Female_Solo_v2.jpg',
+                traits: 'humanoid torso, fitted shell-scale bodice, coral-dreadlock hair, six-tentacle lower body replacing legs, finger-tentacles' }
+    },
+    first_favored: {
+      male:   { path: '/assets/Fatelands/FirstFavored_Male_Solo_v2.jpg',
+                traits: 'fully humanoid with two ordinary legs, luminous skin with Weave-Script glow, sheer gossamer drape, pointed ears' },
+      female: { path: '/assets/Fatelands/FirstFavored_Female_Solo_v2.jpg',
+                traits: 'fully humanoid with two ordinary legs, luminous skin with Weave-Script glow, sheer gossamer drape, pointed ears' }
+    }
+  };
+
+  // Which sexes of `speciesKey` are actually on stage? Returns [] when the cast declares no sex.
+  function _sexesOnStage(canonList, speciesKey) {
+    var norm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+    var seen = {};
+    (Array.isArray(canonList) ? canonList : []).forEach(function (c) {
+      if (!c || norm(c.species) !== speciesKey) return;
+      var g = String(c.gender || c.sex || '').toLowerCase();
+      if (/^f|woman|girl|她/.test(g)) seen.female = 1;
+      else if (/^m|man|boy/.test(g)) seen.male = 1;
+    });
+    return Object.keys(seen);
+  }
+
+  // → { path, label } for the anchor this species should ship, or null to use the default slot-1.
+  function _resolveSoloAnchor(speciesKey, speciesLabel, canonList) {
+    if (window._soloAnchors === false) return null;
+    var table = _SOLO_SPECIES_ANCHORS[speciesKey];
+    if (!table) return null;
+    var sexes = _sexesOnStage(canonList, speciesKey);
+    if (sexes.length !== 1) return null;              // 0 = unknown, 2 = both → duo is correct
+    var pick = table[sexes[0]];
+    if (!pick) return null;
+    return {
+      path: pick.path,
+      label: (speciesLabel || speciesKey) + ' — SPECIES ANATOMY (' + sexes[0] + '): ' + pick.traits
+    };
+  }
+
+  // Report BOTH ref kinds separately — a run with identity cards but no species sheet looks "fine" in a
+  // single count while being blind to exactly the topology failures Stage A refs exist to fix.
+  function _logStageARefs(out, canonList) {
+    try {
+      var sp = out.filter(function (r) { return /SPECIES ANATOMY/.test(r.label); }).length;
+      console.log('[STAGE-A-REFS] ' + out.length + ' ref(s): ' + sp + ' species-anatomy + ' + (out.length - sp) + ' individual-identity' +
+        (out.length ? ' | ' + out.map(function (r) { return String(r.label).split(' — ')[0]; }).join(', ') : ' | NONE — arm B is identical to arm A, any A/B will read as a null result') +
+        ' | cast=' + ((Array.isArray(canonList) ? canonList.length : 0)));
+    } catch (_) {}
+  }
+
+  // SPECIES ANATOMY anchors for every non-human species on stage. Honors the same DISGUISED-Kwisheen
+  // guard the region contract uses (a disguised Kwisheen must render human — attaching the tentacled
+  // sheet bleeds tentacles straight through the disguise), by reusing `_stagedKwisheenState` against a
+  // shim plan built from the scene text, so there is ONE disguise rule and not a second that can drift.
+  async function _stageASpeciesAnchors(canonList, sceneDesc) {
+    var out = [];
+    try {
+      if (typeof _STAGED_SPECIES_CONTRACTS === 'undefined') return [];
+      var norm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+      var present = {};
+      (Array.isArray(canonList) ? canonList : []).forEach(function (c) {
+        var sp = norm(c && c.species); if (sp && sp !== 'human') present[sp] = true;
+      });
+      // Fall back to the PC/LI species when the canon list carries no species field.
+      if (!Object.keys(present).length) {
+        [state._playerSpecies, state._liSpecies].forEach(function (raw) {
+          var sp = norm(raw); if (sp && sp !== 'human') present[sp] = true;
+        });
+      }
+      var _kw = 'true_form';
+      try { _kw = _stagedKwisheenState({ visualState: { background: String(sceneDesc || '') }, beats: [] }); } catch (_) {}
+      var keys = Object.keys(present);
+      for (var i = 0; i < keys.length && out.length < _STAGE_A_SPECIES_CAP; i++) {
+        var sk = keys[i];
+        // half-kwisheen etc. → fall back to the base species contract
+        var sp = _STAGED_SPECIES_CONTRACTS[sk] || _STAGED_SPECIES_CONTRACTS[sk.replace(/^half_/, '')];
+        if (!sp) continue;
+        if (/kwisheen/.test(sk) && _kw === 'disguised') {
+          try { console.log('[STAGE-A-REFS] kwisheen DISGUISED — species anchor withheld (would bleed tentacles through the disguise)'); } catch (_) {}
+          continue;
+        }
+        // SOLO ANCHOR when exactly one sex of this species is on stage; otherwise the duo slot-1.
+        var _solo = null;
+        try { _solo = _resolveSoloAnchor(sk, sp.label, canonList); } catch (_) { _solo = null; }
+        var paths = _solo ? [_solo.path] : (sp.anchorImages || []).slice(0, 1);
+        for (var p = 0; p < paths.length && out.length < _STAGE_A_SPECIES_CAP; p++) {
+          var b = await _canonRefToB64(paths[p]);
+          if (!b) {
+            // A missing solo crop must not silently drop the species' anatomy reference entirely —
+            // fall back to the duo rather than shipping this species with no conditioning at all.
+            if (_solo) {
+              var _fb = (sp.anchorImages || [])[0];
+              if (_fb) { var _fbB = await _canonRefToB64(_fb);
+                if (_fbB) { out.push({ b64: _fbB, src: _fb, governs: sk, label: (sp.label || sk) + ' — SPECIES ANATOMY SHEET (body plan, exact limb COUNTS, topology, silhouette)' });
+                  try { console.warn('[STAGE-A-REFS] solo anchor missing for ' + sk + '/' + _solo.path + ' — fell back to the duo sheet'); } catch (_) {} } }
+            }
+            continue;
+          }
+          out.push({ b64: b, src: paths[p], governs: sk,
+            label: _solo ? _solo.label : (sp.label || sk) + ' — SPECIES ANATOMY SHEET (body plan, exact limb COUNTS, topology, silhouette)' });
+        }
+      }
+    } catch (_) {}
+    return out;
+  }
+
+  // Resolve Stage A's reference set → [{ b64, label }], deduped, capped, species-anatomy FIRST.
+  // Individual identity reuses _canonicalReferenceFor so Stage A and the Klein repairer share ONE
+  // canon path rather than two that can drift.
+  async function _stageACanonRefs(canonList, sceneDesc) {
+    if (window._stageARefs === false) return [];
+    if (typeof _canonicalReferenceFor !== 'function') return [];
+    // ASSET INTEGRITY — blocking, and genuinely BEFORE generation. Stage A consumes exactly ONE
+    // species anchor (.slice(0,1)); if that file is absent the arm silently degrades to "no
+    // reference" while still reporting refs as requested. Fail loudly instead. (window._assetIntegrity
+    // === false downgrades this to a log.)
+    try {
+      var _spKeys = [];
+      (Array.isArray(canonList) ? canonList : []).forEach(function (c) {
+        var sp = String((c && c.species) || '').toLowerCase().replace(/[\s-]+/g, '_');
+        if (sp && sp !== 'human' && _spKeys.indexOf(sp) === -1) _spKeys.push(sp);
+      });
+      if (_spKeys.length && typeof _assertReferenceAssets === 'function') await _assertReferenceAssets(_spKeys);
+    } catch (e) {
+      if (window._assetIntegrity === false) { try { console.warn(e && e.message); } catch (_) {} }
+      else throw e;
+    }
+    var out = [], seen = {};
+    // (1) SPECIES ANATOMY — governs the limb-count / topology failures that force expensive regens.
+    try {
+      (await _stageASpeciesAnchors(canonList, sceneDesc)).forEach(function (r) {
+        var sig = r.b64.length + ':' + r.b64.slice(0, 64);
+        if (seen[sig]) return; seen[sig] = true; out.push(r);
+      });
+    } catch (_) {}
+    // (2) INDIVIDUAL IDENTITY — who each character is. Never a substitute for (1).
+    if (!Array.isArray(canonList) || !canonList.length) { _logStageARefs(out, canonList); return out; }
+    var _idAdded = 0;
+    for (var i = 0; i < canonList.length && _idAdded < _STAGE_A_IDENTITY_CAP && out.length < _STAGE_A_REF_CAP; i++) {
+      var c = canonList[i]; var nm = c && (c.name || c);
+      if (!nm) continue;
+      var key = String(nm).trim().toLowerCase();
+      if (seen[key]) continue;
+      seen[key] = true;
+      var ref = null;
+      try { ref = await _canonicalReferenceFor(nm); } catch (_) { ref = null; }
+      if (!ref) continue;
+      var b64 = await _canonRefToB64(ref);
+      if (!b64) continue;
+      // Dedupe by payload too — face-master and reveal-anchor fallbacks can resolve to the same asset
+      // for two different names, and sending one image twice just wastes budget and muddies the prompt.
+      var sig = b64.length + ':' + b64.slice(0, 64);
+      if (seen[sig]) continue;
+      seen[sig] = true;
+      _idAdded++;
+      // src: a path for static assets, or 'data:<n>b' for a runtime-resolved face master (which has no
+      // stable path) — enough to tell two references apart in a forensic replay months later.
+      out.push({ b64: b64, src: (String(ref).indexOf('data:') === 0 ? 'data:' + b64.length + 'b' : String(ref)),
+        label: String(nm) + ' — INDIVIDUAL IDENTITY (who this character is: face, wardrobe, recognition traits)' });
+    }
+    _logStageARefs(out, canonList);
+    return out;
+  }
+  window._stageACanonRefs = _stageACanonRefs;
+
+  // ══ EMOTION → FACIAL ANATOMY (Roman 2026-07-20) ════════════════════════════════════════════════
+  // Naming an emotion resolves to the model's most common prior for it, and on a bearded male face
+  // "concern"/"worry" collapsed to a scowl four runs running. Naming the MUSCLE ACTION instead — the
+  // FACS-style action units — routes around the prior: describe the raised INNER brow and the model
+  // draws worry, not anger. Each entry is the reliable-at-a-glance signal, worded so it survives into
+  // line art (brow direction, eye aperture, mouth shape), and each names the emotion it is most often
+  // CONFUSED WITH so the contrast is explicit. Synonyms fold to a canonical key.
+  var _EMOTION_ANATOMY = {
+    anger:      'brows pulled DOWN and together into a hard V, vertical crease between them, eyes narrowed and hard, lower jaw set, lips pressed tight or teeth bared.',
+    worry:      'the INNER ends of the brows lifted UP and drawn together so the forehead pinches into vertical creases above the nose (NOT the flat downward brow of anger), upper eyelids raised, eyes soft and searching, lips pressed thin or the lower lip drawn inward.',
+    fear:       'brows raised and pulled together, eyes stretched WIDE with the whites showing above and below the iris, upper lids high, mouth open and drawn back at the corners, chin tense.',
+    sadness:    'the INNER brow corners pulled UP (never down), eyelids drooping, gaze lowered, the corners of the mouth pulled down, lower lip pushed up slightly.',
+    joy:        'genuine (Duchenne): the whole cheeks lifted so the eyes CRINKLE into arcs with crow\'s-feet, lower lids raised, mouth open or wide in an unforced smile — not a flat polite mouth-only smile.',
+    surprise:   'brows raised HIGH and curved, forehead smooth-stretched, eyes wide and round, jaw dropped so the mouth falls open, no tension in the face.',
+    disgust:    'the nose wrinkled and drawn up, upper lip raised toward the nose, lower lip loose, brows drawn slightly down, eyes narrowed.',
+    contempt:   'ONE corner of the mouth tightened and pulled up/back (asymmetric — the key tell), one brow slightly raised, chin lifted, eyes cool and half-lidded.',
+    longing:    'brows softly raised at the inner corners, eyes wide and unguarded and fixed on the other, lips slightly parted, the whole face open and reaching, chin tilted toward them.',
+    tenderness: 'brows relaxed, eyes soft and warm with the lids slightly lowered, a small closed or gently open smile, the head inclined toward the other.',
+    determination: 'brows drawn level and low but NOT into anger\'s V, eyes fixed and steady on a target, jaw firm, lips pressed in a straight line, chin slightly forward.',
+    grief:      'inner brows wrenched up and together, whole forehead creased, eyes squeezed or streaming, mouth pulled wide and down in a square, cheeks tight.'
+  };
+  var _EMOTION_SYNONYMS = {
+    fury: 'anger', rage: 'anger', angry: 'anger', furious: 'anger', enraged: 'anger', irate: 'anger',
+    worried: 'worry', concern: 'worry', concerned: 'worry', anxious: 'worry', anxiety: 'worry', apprehensive: 'worry', unease: 'worry', dread: 'worry', nervous: 'worry',
+    afraid: 'fear', fearful: 'fear', terror: 'fear', terrified: 'fear', scared: 'fear', panic: 'fear', alarm: 'fear',
+    sad: 'sadness', sorrow: 'sadness', melancholy: 'sadness', downcast: 'sadness', dejected: 'sadness',
+    happy: 'joy', joyful: 'joy', delight: 'joy', delighted: 'joy', laughing: 'joy', laughter: 'joy', elated: 'joy', gleeful: 'joy',
+    surprised: 'surprise', shock: 'surprise', shocked: 'surprise', astonished: 'surprise', startled: 'surprise', amazed: 'surprise',
+    disgusted: 'disgust', revulsion: 'disgust', repulsed: 'disgust',
+    scorn: 'contempt', disdain: 'contempt', smug: 'contempt', sneer: 'contempt',
+    yearning: 'longing', pining: 'longing', wistful: 'longing',
+    tender: 'tenderness', affection: 'tenderness', fond: 'tenderness', loving: 'tenderness', warmth: 'tenderness',
+    determined: 'determination', resolve: 'determination', resolute: 'determination', steely: 'determination',
+    grieving: 'grief', anguish: 'grief', devastated: 'grief', despair: 'grief'
+  };
+
+  // emotion word → canonical key (or null if unknown). Exposed for tests/tools.
+  function _emotionKey(word) {
+    var w = String(word || '').trim().toLowerCase();
+    if (!w) return null;
+    if (_EMOTION_ANATOMY[w]) return w;
+    if (_EMOTION_SYNONYMS[w]) return _EMOTION_SYNONYMS[w];
+    return null;
+  }
+  window._emotionKey = _emotionKey;
+
+  // Full anatomical cue for an emotion word, or '' if unknown. `who` optionally prefixes a subject.
+  function _emotionAnatomy(word, who) {
+    var k = _emotionKey(word);
+    if (!k) return '';
+    return (who ? who + ': ' : '') + _EMOTION_ANATOMY[k];
+  }
+  window._emotionAnatomy = _emotionAnatomy;
+
+  // Build a FACIAL EXPRESSION DIRECTION block from opts.emotions:
+  //   ['worry']                              → one unattributed cue
+  //   [{ who:'Vael', emotion:'worry' }, ...] → per-character cues
+  // Returns '' when nothing resolves, so callers can append unconditionally.
+  function _emotionDirective(emotions) {
+    if (!emotions) return '';
+    var list = Array.isArray(emotions) ? emotions : [emotions];
+    var lines = [];
+    list.forEach(function (e) {
+      if (typeof e === 'string') { var c = _emotionAnatomy(e); if (c) lines.push(c); }
+      else if (e && e.emotion) { var c2 = _emotionAnatomy(e.emotion, e.who); if (c2) lines.push(c2); }
+    });
+    if (!lines.length) return '';
+    return '\n\nFACIAL EXPRESSION DIRECTION (draw the MUSCLE ACTION, not a generic emotional face — these ' +
+      'anatomical cues are what make the feeling read at a glance): ' + lines.join(' ');
+  }
+  window._emotionDirective = _emotionDirective;
+
+  // ══ UNDERWATER ATMOSPHERE (Roman 2026-07-20) ══════════════════════════════════════════════════
+  // A single directive so every submerged scene reads as submerged. STAGE-AWARE, because line art and
+  // a finished render carry different cues — and putting the tonal cues (caustics, haze) on line art
+  // would reintroduce exactly the grey-wash the media contract just forbade.
+  //   'lineart' — only what pure black line can show: weightlessness + suspended particles + no ground.
+  //   'render'  — the full optical treatment: refraction, caustics, colour attenuation, particulate.
+  // This is the SAME class of fix as the emotion cues: name the physical phenomena, not "make it look
+  // underwater", so the model has concrete things to draw.
+  function _underwaterDirective(stage) {
+    if (!stage) return '';
+    if (stage === 'lineart') {
+      return '\n\nUNDERWATER (structure only): every figure is WEIGHTLESS and SUBMERGED — bodies float and ' +
+        'tilt freely with NO ground plane, no one stands, feet/tentacles hang or drift rather than bear ' +
+        'weight; hair, beard, cloth and any loose straps drift UPWARD and outward as if suspended. Scatter ' +
+        'small round SUSPENDED-PARTICLE specks through the water and a few rising bubble outlines. Thin ' +
+        'diagonal light-shaft lines fall from far above. (Keep all of this as clean line — no shading.)';
+    }
+    // 'render' / anything else → full optical treatment for the finished colour pass.
+    return '\n\nUNDERWATER ATMOSPHERE (every panel): the whole scene is SUBMERGED in deep water and must ' +
+      'read that way. A cool blue-green colour cast over everything, with warm tones muted the way water ' +
+      'swallows red at depth; god-ray light SHAFTS falling from the surface far above; a soft depth HAZE ' +
+      'that fades distant coral and ruins into the murk; drifting SUSPENDED PARTICULATE (marine snow) and ' +
+      'rising bubble trails catching the light; gentle caustic light-ripples playing across skin and stone; ' +
+      'hair, beards, cloth and fins drifting weightlessly. No sky, no horizon, no dry ground, no one ' +
+      'bearing weight — the characters are buoyant, suspended in the water column.';
+  }
+  window._underwaterDirective = _underwaterDirective;
+
+  // ══ UNDERWATER POST-PROCESS FILTER — client-side canvas, ZERO TOKENS (Roman 2026-07-20) ═════════
+  // The prompt directive draws what interacts with the figures (drifting hair, a god-ray behind a
+  // character). THIS is the uniform wash on top: refraction wobble + moving caustics + depth grade +
+  // particulate, rendered live over the DISPLAYED panel. Costs nothing per image and is IDENTICAL on
+  // every panel — the consistency a prompt can't guarantee. Preset chosen by Roman.
+  //   Default OFF: only applies when window._underwaterFilter === true AND the panel is tagged
+  //   data-underwater. So production is untouched until the flag is flipped.
+  var _UW_PRESET = { refraction: 0.2, caustics: 2.0, depth: 0.5 };
+  window._UW_PRESET = _UW_PRESET;
+
+  // Attach the animated filter over an <img>. Returns a handle with .stop(). Idempotent per element.
+  function _applyUnderwaterFilter(imgEl, opts) {
+    if (!imgEl || imgEl._uwFilter) return imgEl && imgEl._uwFilter || null;
+    opts = opts || {};
+    var P = { refraction: opts.refraction != null ? opts.refraction : _UW_PRESET.refraction,
+              caustics:   opts.caustics   != null ? opts.caustics   : _UW_PRESET.caustics,
+              depth:      opts.depth      != null ? opts.depth      : _UW_PRESET.depth };
+    var reduce = false; try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
+    function build() {
+      var W = imgEl.naturalWidth, H = imgEl.naturalHeight;
+      if (!W || !H) return null;
+      var maxW = 1400, sc = Math.min(1, maxW / W); W = Math.round(W * sc); H = Math.round(H * sc);
+      var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      // Occupy the img's box exactly; hide the img but keep it for layout/fallback.
+      cv.style.cssText = 'display:block;width:100%;height:auto;';
+      cv.className = imgEl.className + ' gn-panel-uw';
+      var buf = document.createElement('canvas'); buf.width = W; buf.height = H;
+      var caus = document.createElement('canvas'); caus.width = Math.ceil(W / 4); caus.height = Math.ceil(H / 4);
+      var ctx = cv.getContext('2d'), bctx = buf.getContext('2d'), cactx = caus.getContext('2d');
+      if (imgEl.parentNode) imgEl.parentNode.insertBefore(cv, imgEl);
+      imgEl.style.display = 'none';
+      var t = 0, alive = true;
+      function caustics(time) {
+        var w = caus.width, h = caus.height, im = cactx.createImageData(w, h), d = im.data;
+        for (var y = 0; y < h; y++) for (var x = 0; x < w; x++) {
+          var v = Math.sin(x * 0.09 + time * 0.9) + Math.sin(y * 0.11 - time * 0.7)
+                + Math.sin(x * 0.05 + y * 0.07 + time * 0.5) + Math.sin(x * 0.13 - y * 0.06 - time * 1.1);
+          v = Math.pow((v + 4) / 8, 3.2);
+          var i = (y * w + x) * 4; d[i] = 90 * v; d[i + 1] = 200 * v; d[i + 2] = 210 * v; d[i + 3] = 255 * v;
+        }
+        cactx.putImageData(im, 0, 0);
+      }
+      function frame() {
+        bctx.clearRect(0, 0, W, H);
+        var amp = 6 * P.refraction, strip = 6;
+        for (var y = 0; y < H; y += strip) {
+          var dx = amp * Math.sin(y * 0.035 + t * 1.2), dy = amp * 0.4 * Math.sin(y * 0.02 - t * 0.8);
+          bctx.drawImage(imgEl, 0, y / H * imgEl.naturalHeight, imgEl.naturalWidth, strip / H * imgEl.naturalHeight, dx, y + dy, W, strip);
+        }
+        ctx.clearRect(0, 0, W, H); ctx.drawImage(buf, 0, 0);
+        if (P.depth > 0) {
+          ctx.globalCompositeOperation = 'multiply';
+          ctx.fillStyle = 'rgba(' + Math.round(150 - 40 * P.depth) + ',205,200,' + (0.34 * P.depth) + ')'; ctx.fillRect(0, 0, W, H);
+          ctx.globalCompositeOperation = 'screen';
+          ctx.fillStyle = 'rgba(20,90,110,' + (0.12 * P.depth) + ')'; ctx.fillRect(0, 0, W, H);
+          ctx.globalCompositeOperation = 'source-over';
+        }
+        if (P.caustics > 0) {
+          caustics(t);
+          ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = 0.22 * P.caustics;
+          ctx.drawImage(caus, 0, 0, W, H); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+          ctx.fillStyle = 'rgba(220,240,245,' + (0.5 * P.caustics) + ')';
+          for (var k = 0; k < 70; k++) { var px = (k * 137.5) % W, py = H - ((t * 14 + k * 53) % (H + 40)), s = (k % 3) ? 1 : 1.6;
+            ctx.beginPath(); ctx.arc(px, py, s, 0, 6.283); ctx.fill(); }
+        }
+        var vg = ctx.createRadialGradient(W / 2, H * 0.42, H * 0.25, W / 2, H / 2, H * 0.8);
+        vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(2,14,20,0.42)');
+        ctx.fillStyle = vg; ctx.fillRect(0, 0, W, H);
+      }
+      function loop() { if (!alive) return; if (!reduce) t += 0.03; frame(); if (!reduce) requestAnimationFrame(loop); }
+      frame(); if (!reduce) requestAnimationFrame(loop);
+      var handle = { canvas: cv, stop: function () { alive = false; try { cv.remove(); } catch (_) {} imgEl.style.display = ''; imgEl._uwFilter = null; } };
+      imgEl._uwFilter = handle; return handle;
+    }
+    if (imgEl.complete && imgEl.naturalWidth) return build();
+    imgEl.addEventListener('load', build, { once: true });
+    return null;
+  }
+  window._applyUnderwaterFilter = _applyUnderwaterFilter;
+
+  // Auto-apply to any panel tagged data-underwater, once the feature flag is on. A MutationObserver
+  // catches panels that mount after this runs. Off by default — flip window._underwaterFilter = true.
+  function _initUnderwaterFilterAutohook() {
+    function sweep() {
+      if (window._underwaterFilter !== true) return;
+      var imgs = document.querySelectorAll('img.gn-panel-img[data-underwater="1"]:not([data-uw-done])');
+      for (var i = 0; i < imgs.length; i++) { imgs[i].setAttribute('data-uw-done', '1'); _applyUnderwaterFilter(imgs[i]); }
+    }
+    try {
+      var mo = new MutationObserver(sweep);
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+      sweep();
+    } catch (_) {}
+  }
+  try { if (document.readyState !== 'loading') _initUnderwaterFilterAutohook(); else document.addEventListener('DOMContentLoaded', _initUnderwaterFilterAutohook); } catch (_) {}
+
+  // ══ CROWD HETEROGENEITY (Roman 2026-07-20) ════════════════════════════════════════════════════
+  // Image models render a crowd as COPY-PASTE: one figure, cloned, identically posed, same size, same
+  // direction, often nude when the attire cue doesn't reach the background. Observed live — a Kwisheen
+  // "city" came back as rows of identical nude women all facing one way at one depth. A crowd only reads
+  // as a living population if the prompt actively FORCES variety along every axis the model would
+  // otherwise collapse. This is the [[feedback_group_individuation]] rule applied to background masses.
+  //   opts = { species, speciesLabel, underwater, marineLife, gendered }
+  function _crowdDirective(opts) {
+    opts = opts || {};
+    var sp = opts.speciesLabel || 'the people';
+    var out = '\n\nCROWD (a LIVING POPULATION, never cloned): the background figures must NOT be copies of ' +
+      'one person. Vary EVERY figure — different faces, different builds (heavy, lean, tall, small), ' +
+      'different ages, and a different POSE and facing DIRECTION for each. No two the same, none in ' +
+      'identical postures, and they do NOT all face the camera or the same way.';
+    out += ' A real society is present: adult men AND adult women in a natural mix, the ELDERLY (stooped, ' +
+      'thinner, weathered), and CHILDREN (clearly smaller, moving among the adults). ';
+    // Attire — the clone-nudity failure. Force clothing, individually, per the gendered canon.
+    out += 'EVERY figure is DRESSED — no nudity in the crowd — and dressed DIFFERENTLY from their neighbours: ' +
+      'varied garments, colours and ornament, some fine and some plain by station.';
+    if (opts.gendered) {
+      out += ' Attire is gendered: women\'s torsos are covered by bodice or wrap, men\'s chests are bare or ' +
+        'crossed by a harness or pauldron (never a bodice).';
+    }
+    if (opts.underwater) {
+      // 3D traffic — the "lanes at different heights, different directions" note.
+      out += ' This is a busy underwater THOROUGHFARE with depth: figures occupy several horizontal LANES at ' +
+        'DIFFERENT HEIGHTS in the water column, and travel in DIFFERENT directions — some swimming left, ' +
+        'some right, some rising, some descending, some hovering — like three-dimensional street traffic, ' +
+        'NOT a single row at one level. Nearer figures large and detailed, distant ones small and hazed.';
+    }
+    // BODY-PLAN LOCK for the crowd — variety must NOT drift the species. The "underwater person" prior
+    // pulls background figures toward MERMAIDS; observed live, showy foreground swimmers grew fish-tails.
+    // The lower body is MOTION-DEPENDENT (Roman 2026-07-20): a swimming cephalopod does NOT hold its
+    // mantle fanned — it draws the tentacles together and trails them to jet forward, and spreads them to
+    // hover. So a trailing tentacle bundle is CORRECT for a surging figure; only a FUSED FISH-TAIL is wrong.
+    if (opts.bodyPlan) {
+      out += ' CRUCIAL — the variety is in age, size, dress and pose ONLY, never in species: EVERY figure in ' +
+        'this crowd, foreground and background alike, has the SAME canonical body plan — ' + opts.bodyPlan +
+        '. Their locomotion is like an octopus, and the mantle changes with MOTION: figures that HOVER or ' +
+        'maneuver hold the six tentacles SPREAD and flexed wide; figures SURGING forward draw the tentacles ' +
+        'together into a streamlined bundle TRAILING behind them. Either way the lower body is always ' +
+        'MULTIPLE DISTINCT TENTACLES with suckers — NEVER a fish-tail, NEVER a mermaid tail, NEVER a single ' +
+        'fused finned or scaled tail. A figure with a fish-tail is WRONG; a figure trailing a bundle of ' +
+        'separate tentacles as it swims is CORRECT.';
+    }
+    if (opts.marineLife) {
+      out += ' Non-people marine life threads through the scene too: schools of small darting fish, a drifting ' +
+        'jellyfish or two, crustaceans on the architecture — a living reef city, not only ' + sp + '.';
+    }
+    return out;
+  }
+  window._crowdDirective = _crowdDirective;
+
+  // The Kwisheen swim-motion reference path (flexed vs trailing), or null. Callers that build a
+  // SWIMMING / in-motion underwater scene should attach this as a reference IMAGE — the text canon
+  // describes the flex-vs-trail mantle, but a line-art reference of both states is what actually stops
+  // background swimmers collapsing into mermaid tails. Line art, so it teaches STRUCTURE not palette.
+  function _kwisheenSwimRef() {
+    return (_CANONICAL_VISUAL_ASSETS && _CANONICAL_VISUAL_ASSETS.kwisheen_swim && _CANONICAL_VISUAL_ASSETS.kwisheen_swim.asset) || null;
+  }
+  window._kwisheenSwimRef = _kwisheenSwimRef;
+
+  // Generate a black-and-white structural blueprint from a scene description. `feedback` (from the
+  // verifier's accumulated reasons) is injected so each retry fixes the named structural faults.
+  // opts = { refs:[{b64,label}], imageSize, aspectRatio, emotions, underwater }.
+  async function _genStructuralLineArt(sceneDesc, feedback, opts) {
+    // NO-TEXT contract — the model likes to ANNOTATE its own blueprint ("RED WISH-BURST"), and those
+    // labels bleed through colorization into the final. Forbid written language; EXEMPT Fate notation.
+    // NO-TEXT contract. The Fate-notation exemption is GATED (Roman 2026-07-20): it used to sit in the
+    // base prompt unconditionally, phrased as "approved visual notation and may appear" — which reads as
+    // an INVITATION, not a permission. Result: small Xs and eight-pointed stars appeared in nearly every
+    // sketch regardless of world, including a modern cafe conversation and a western standoff. The clause
+    // is now emitted ONLY when the panel actually carries Fate notation, and worded as a non-violation
+    // rather than an offer.
+    var _noText = 'ABSOLUTELY NO words, letters, labels, captions, annotations, diagrams, arrows, or instructional callouts, and nothing resembling written language — communicate ALL structure visually.';
+    if (opts.fateNotation) {
+      _noText += ' (Fate notation — small Xs and broken / eight-pointed stars — is diegetically approved for THIS panel and is not a violation if the scene calls for it. Do NOT add it decoratively: include it only where the scene description places it.)';
+    } else {
+      _noText += ' Do NOT add decorative marks of any kind — no scattered Xs, no stars, no sparkles, no bursts, no symbols. Draw only what the scene description contains.';
+    }
+    opts = opts || {};
+    var _refs = Array.isArray(opts.refs) ? opts.refs.filter(function (r) { return r && r.b64; }) : [];
+
+    // CANON REFERENCE CONTRACT — only when refs are actually attached. States what the images ARE
+    // (identity) and, just as importantly, what they are NOT (pose/framing/composition), because the
+    // default read of a reference image is "imitate this picture" and that would override the blocking.
+    var _refContract = '';
+    if (_refs.length) {
+      _refContract = '\n\nCANONICAL IDENTITY REFERENCES (' + _refs.length + ' image' + (_refs.length > 1 ? 's' : '') + '): ' +
+        _refs.map(function (r, i) { return '(' + (i + 1) + ') ' + (r.label || 'identity'); }).join('; ') + '. ' +
+        'These images are the AUTHORITATIVE ANATOMY for these characters — species topology, limb/appendage count and placement, body proportions, and wardrobe silhouette. Reproduce those attributes EXACTLY. ' +
+        'Do NOT copy their pose, camera angle, framing, background, expression, lighting, or composition — those come ONLY from the scene description below. ' +
+        'A reference tells you WHAT this character is, never WHERE they stand or HOW they are framed. ' +
+        'If a reference and the scene description disagree about anatomy, the REFERENCE wins; if they disagree about staging, the SCENE wins.';
+
+      // ── REFERENCE ASSIGNMENT (Roman 2026-07-20) ────────────────────────────────────────────────
+      // Gemini conditions on the WHOLE canvas — there is no per-region reference binding — so on a
+      // MIXED-species panel a single Kwisheen anatomy sheet can bias every figure, including the
+      // human. Observed in production: "Mira's species is incorrect; canon requires a human, but she
+      // is drawn with a tentacle lower body and pointed ears."
+      //
+      // TWO CANDIDATE CAUSES, and they need different fixes:
+      //   A GLOBAL CONTAMINATION — the image biases the canvas regardless of what the text says.
+      //   B ASSIGNMENT FAILURE   — the model was never told WHICH figure the reference governs.
+      // This block tests B, which is far cheaper than the architectural change A would require.
+      // Emitted only when the cast is genuinely mixed (a reference can't be misapplied when every
+      // figure shares its species). Toggle for the A/B: opts.assignment === false suppresses it.
+      var _cast = Array.isArray(opts.cast) ? opts.cast : [];
+      if (opts.assignment !== false && _cast.length > 1) {
+        var _norm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+        var _byGoverned = {}, _others = [];
+        _cast.forEach(function (c) {
+          if (!c || !c.name) return;
+          var sp = _norm(c.species);
+          var governed = _refs.some(function (r) { return r.governs && _norm(r.governs) === sp; });
+          if (governed) { (_byGoverned[sp] = _byGoverned[sp] || []).push(c.name); }
+          else _others.push({ name: c.name, species: c.species || 'Human' });
+        });
+        // PER-REFERENCE MAPPING. The first version only distinguished governed vs ungoverned, so a panel
+        // holding TWO non-human species emitted nothing at all — every figure was "governed" and the clause
+        // fell through. That is precisely the panel where cross-contamination is likeliest: two anatomy
+        // sheets on one canvas, each free to bleed into the other's character. Map every reference to the
+        // named characters it governs, and say explicitly that it governs no one else.
+        var _mapLines = [];
+        _refs.forEach(function (r, i) {
+          if (!r.governs) return;
+          var names = (_byGoverned[_norm(r.governs)] || []);
+          if (!names.length) return;
+          _mapLines.push('Reference (' + (i + 1) + ') — ' + String(r.label || '').split(' — ')[0] +
+            ' — is the anatomy of ' + names.join(' and ') + ' ONLY.');
+        });
+        var _distinctGoverned = Object.keys(_byGoverned).length;
+        // Worth saying when a reference could be misapplied: either some figure is ungoverned, or two or
+        // more governed species share the canvas and could swap traits.
+        if (_mapLines.length && (_others.length || _distinctGoverned > 1)) {
+          _refContract += '\n\nREFERENCE ASSIGNMENT (CRITICAL — each reference describes ONE character, not the whole picture): ' +
+            _mapLines.join(' ') +
+            (_distinctGoverned > 1
+              ? ' These species are DIFFERENT and must not exchange traits: do not give one the other\'s body plan, limb structure, silhouette, or wardrobe. Draw each figure only from the reference that names it.'
+              : '') +
+            (_others.length ? ' ' + _others.map(function (o) {
+              return 'No reference above applies to ' + o.name + ', who is ' + String(o.species).toUpperCase() +
+                ' — draw ' + o.name + ' with ordinary ' + String(o.species).toLowerCase() + ' anatomy: ' +
+                (/human/i.test(o.species)
+                  ? 'two human legs with knees and feet, human hands, human ears, ordinary hair, and NO tentacles, NO scaled hide, NO suckers anywhere on their body'
+                  : 'the anatomy their own species requires, and none of the referenced species\' traits') + '.';
+            }).join(' ') : '') +
+            ' Applying one character\'s species anatomy to a DIFFERENT character is the single most common failure in this pipeline: before drawing each figure, check that figure\'s own species and give it only what that species has.';
+        }
+      }
+    }
+
+    // MEDIA CONTRACT (Roman 2026-07-20). The old opening — "a ROUGH BLACK-AND-WHITE blocking blueprint" —
+    // was a wording trap. "Black-and-white" means GREYSCALE in ordinary usage (a black-and-white
+    // photograph has every grey), and "rough" invites pencil. Together they read as "a rough pencil
+    // sketch, photographed", and the model obliged: graphite smudges, paper grain, off-white paper tone.
+    // Measured across every sheet and panel generated this session, 21/21 carried >3% midtone pixels —
+    // clean line art is BIMODAL (black strokes, white paper), so midtones are pure contamination. The
+    // existing "no shading, no textures" lost to the stronger media cue, so the media is now named and
+    // forbidden explicitly. This matters beyond tidiness: the sketch is the STRUCTURE reference the
+    // colorize stage conditions on, so smudge and false tone propagate into the finished render.
+    var linePrompt = 'STRUCTURAL LINE ART ONLY — a BLOCKING blueprint, not finished art: SOLID BLACK INK LINES on a FLAT PURE WHITE background, with nothing in between. ' +
+      'NO GREY OF ANY KIND — no shading, no tone, no grey wash, no gradients, no hatching used for shading, no soft edges. Every pixel is either black line or white background. ' +
+      'This is CLEAN DIGITAL LINE ART, NOT a photograph of a drawing: no paper texture, no paper grain, no off-white or cream paper tone, no pencil / graphite / charcoal media, no smudging or smearing, no fingerprints, no eraser marks, no scan artifacts, no vignetting. ' +
+      'No colour, no rendering, no textures. Clean ink outlines showing EXACT: figure count, each figure\'s species topology (e.g. tentacle mantle vs human legs), anatomy and proportions, who holds which weapon/prop, wardrobe silhouette, camera framing and composition, and relative positions. Structural accuracy is the ONLY priority. ' +
+      _noText +
+      _refContract +
+      _emotionDirective(opts.emotions) +
+      _underwaterDirective(opts.underwater ? 'lineart' : null) +
+      (feedback ? '\n\n' + feedback : '') +
+      '\n\nSCENE TO BLOCK OUT:\n' + String(sceneDesc || '').slice(0, 12000) +
+      '\n\nREMEMBER: pure BLACK line art on FLAT WHITE — no greys, no paper texture, no pencil smudging, no colour, no rendering, no text.';
+    try {
+      var _body = {
+        prompt: linePrompt, provider: 'gemini', model: 'gemini-3.1-flash-image-preview',
+        size: '1024x1024', aspect_ratio: opts.aspectRatio || '1:1',
+        imageIntent: 'scene', textFirst: true, n: 1
+      };
+      // textFirst:true is already set — with refs attached that puts the scene/blocking brief BEFORE
+      // the identity images, which is the ordering that keeps staging primary over reference imitation.
+      if (_refs.length) _body.reference_images_b64 = _refs;
+      // Resolution tier is OPT-IN (see geminiImageConfig in api/image.js); absent → model default 1K.
+      if (opts.imageSize) _body.imageSize = opts.imageSize;
+      // FORENSIC RECORD — capture EXACTLY what the model was sent, before it is sent. Storage is cheap;
+      // reproducing a mystery ("why did this panel inherit the anatomy plate's pose?") months later is
+      // not. Ring-buffered so a long session can't grow unbounded. Idiomatic with _canonRepairLog.
+      try {
+        window._structuralLineArtLog = window._structuralLineArtLog || [];
+        window._structuralLineArtLog.push({
+          prompt: linePrompt,
+          refs: _refs.map(function (x) { return { label: x.label, src: x.src || null, bytes: x.b64 ? x.b64.length : 0 }; }),
+          model: _body.model, imageSize: _body.imageSize || 'default', aspectRatio: _body.aspect_ratio,
+          hadFeedback: !!feedback
+        });
+        if (window._structuralLineArtLog.length > 200) window._structuralLineArtLog.shift();
+      } catch (_) {}
+      var r = await fetch(IMAGE_PROXY_URL, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(_body)
+      });
+      if (!r.ok) { try { console.warn('[STRUCTURAL-PASS] line-art HTTP ' + r.status); } catch (_) {} return null; }
+      var d = await r.json(); var u = d.image || d.url;
+      if (!u) return null;
+      // Charge the sketch — this is a full-price Gemini image, and the regen
+      // loop can fire it up to _structuralRegenLoop's ceiling per panel.
+      // Tier matters: 4K is ~2.25x the 1K rate (see IMAGE_PRICING).
+      try { _chargeImage('gemini', 1, { imageSize: opts.imageSize }); } catch (_) {}
+      return u.startsWith('data:') ? u : 'data:image/png;base64,' + u;
+    } catch (e) { try { console.warn('[STRUCTURAL-PASS] line-art threw: ' + (e && e.message)); } catch (_) {} return null; }
+  }
+  window._genStructuralLineArt = _genStructuralLineArt;
+
+  // Build a compact colour brief from the canon chars so colorize inherits the LOCKED palette
+  // (skin/pattern/eyes) rather than inventing it — keeps colorize a colorizer, not a re-designer.
+  function _structuralColorDesc(canonChars) {
+    try {
+      if (!Array.isArray(canonChars) || !canonChars.length) return '';
+      return canonChars.map(function (c) {
+        var bits = [c.name];
+        if (c.species) bits.push('(' + c.species + ')');
+        if (c.skin) bits.push(c.skin + ' skin');
+        if (c.pattern) bits.push('with ' + c.pattern);
+        if (c.eyes) bits.push(c.eyes + ' eyes');
+        return bits.join(' ');
+      }).join('; ');
+    } catch (_) { return ''; }
+  }
+
+  // The full Structural Pass. Returns { finalUrl, sketchUrl, structResolved } or null (caller falls
+  // back to a normal one-shot render). verifyOpts = { expectedPeople, canon, authorized, wishAnchor, camera, phaseIdx }.
+  async function _structuralPassRender(sceneDesc, opts) {
+    opts = opts || {}; var vo = opts.verifyOpts || {};
+    if (typeof _structuralRegenLoop !== 'function' || typeof _verifyPanelAnatomy !== 'function' || typeof _styleTransferRevealPanel !== 'function') return null;
+    function _structVerify(url) { return _verifyPanelAnatomy(url, vo.camera || '', false, { mode: 'structural', expectedPeople: vo.expectedPeople, canon: vo.canon, authorized: vo.authorized, wishAnchor: vo.wishAnchor }); }
+    // INTEGRATION TRACE — makes the pipeline observable, not just functional. Calls = cost proxy.
+    // structuralEntropy starts NULL/unknown and is only set to a number when actually MEASURED — never
+    // silently substitute 0 for "not checked" (baseline metrics must be trustworthy).
+    var trace = { attempts: 0, resolved: false, sketchDefects: [], colorizeCount: 0, recolorizeCount: 0,
+      contract: 'pass', structuralEntropy: null, entropyStatus: 'unknown', finalStructurallyClean: null,
+      calls: { lineart: 0, structVerify: 0, colorize: 0 }, ms: {} };
+    var _tAll = Date.now(), _tSketch = Date.now();
+    // 0) CANON REFS — resolve identity cards for the scene cast ONCE and reuse across every regen
+    // attempt (the cast doesn't change between attempts; re-resolving would just re-log and re-fetch).
+    var _stageRefs = [];
+    try { _stageRefs = await _stageACanonRefs(opts.canonRefs || vo.canon, sceneDesc); } catch (_) { _stageRefs = []; }
+    trace.canonRefs = _stageRefs.length;
+    // 1) SKETCH regen-loop — draft line-art, verify STRUCTURE, regenerate with accumulated feedback.
+    var loop = await _structuralRegenLoop({
+      maxAttempts: (typeof opts.maxAttempts === 'number') ? opts.maxAttempts : 3,
+      generate: function (feedback) {
+        trace.calls.lineart++;
+        // cast → the reference-assignment clause (which figures each reference does and does NOT govern).
+        return _genStructuralLineArt(sceneDesc, feedback, {
+          refs: _stageRefs, cast: (opts.canonRefs || vo.canon || []),
+          assignment: opts.refAssignment, imageSize: opts.imageSize, aspectRatio: opts.aspectRatio,
+          // Fate notation is permitted only where the panel actually carries it — a wish anchor, a
+          // sacrifice, or an explicit caller flag. Otherwise the marks are decorative contamination.
+          fateNotation: !!(opts.fateNotation || vo.wishAnchor || vo.sacrifice)
+        });
+      },
+      verify: function (url) { trace.calls.structVerify++; return _structVerify(url).then(function (v) { if (v && v.pass === false && (v.reason || v.defect_type)) trace.sketchDefects.push(v.reason || v.defect_type); return v; }); }
+    });
+    trace.attempts = loop.attempts; trace.resolved = loop.resolved; trace.ms.sketch = Date.now() - _tSketch;
+    var sketchUrl = loop.url;
+    if (!sketchUrl) { try { console.warn('[STRUCTURAL-PASS] no sketch produced — falling back to one-shot render'); } catch (_) {} return null; }
+    try { console.log('[STRUCTURAL-PASS] sketch ' + (loop.resolved ? 'APPROVED' : 'best-of-' + loop.attempts + ' (structure UNRESOLVED — proceeding, will flag)') + ' after ' + loop.attempts + ' attempt(s)' + ' | canonRefs=' + _stageRefs.length + (opts.imageSize ? ' | ' + opts.imageSize : '')); } catch (_) {}
+    // 2) COLORIZE — conditioned on the approved sketch (structure locked), inherits the canon palette.
+    var colorDesc = opts.colorDesc || _structuralColorDesc(vo.canon) || String(sceneDesc || '').slice(0, 200);
+    var _tCol = Date.now();
+    trace.calls.colorize++; trace.colorizeCount++;
+    var finalUrl = await _styleTransferRevealPanel(sketchUrl, opts.artist, colorDesc);
+    if (!finalUrl) { try { console.warn('[STRUCTURAL-PASS] colorize returned null — using approved sketch as fallback'); } catch (_) {} trace.contract = 'colorize-failed'; trace.ms.colorize = Date.now() - _tCol; trace.ms.total = Date.now() - _tAll; return { finalUrl: sketchUrl, sketchUrl: sketchUrl, structResolved: loop.resolved, colorizeFailed: true, trace: trace }; }
+    // 3) COLORIZE-CONTRACT recheck — ALWAYS measure the final's structure (never assume entropy=0).
+    //    Sketch APPROVED → a structural defect in the final was INTRODUCED by colorize = real entropy →
+    //    recolorize ONCE. Sketch UNRESOLVED → "colorize-introduced" is undefined (the sketch was already
+    //    broken), so entropy stays UNKNOWN; we still record whether the final passes, but never assume 0.
+    if (window._structuralPassRecheck !== false) {
+      try {
+        trace.calls.structVerify++;
+        var fv = await _structVerify(finalUrl);
+        var _finalOK = !(fv && fv.pass === false && fv.defect_type);
+        trace.finalStructurallyClean = _finalOK;
+        if (loop.resolved) {
+          trace.entropyStatus = 'measured';
+          if (!_finalOK) {
+            trace.contract = 'broke'; trace.structuralEntropy = 1;
+            try { console.warn('[STRUCTURAL-PASS] colorize BROKE structure (' + (fv.reason || fv.defect_type) + ') — recolorizing once'); } catch (_) {}
+            trace.calls.colorize++; trace.recolorizeCount++;
+            var re = await _styleTransferRevealPanel(sketchUrl, opts.artist, colorDesc);
+            if (re) {
+              finalUrl = re;
+              trace.calls.structVerify++;
+              var fv2 = await _structVerify(re);
+              var _reOK = !(fv2 && fv2.pass === false && fv2.defect_type);
+              trace.finalStructurallyClean = _reOK;
+              if (!_reOK) { trace.contract = 'broke-twice'; trace.structuralEntropy = 1; try { console.warn('[STRUCTURAL-PASS] CONDITIONING FAILURE — structure broke on recolorize too'); } catch (_) {} }
+              else { trace.structuralEntropy = 0; } // recolorize resolved it
+            }
+          } else { trace.structuralEntropy = 0; } // measured clean
+        } else {
+          trace.entropyStatus = 'unknown-sketch-unresolved'; trace.structuralEntropy = null; // never assume 0
+        }
+      } catch (_) {}
+    } else { trace.entropyStatus = 'recheck-disabled'; trace.structuralEntropy = null; }
+    trace.ms.colorize = Date.now() - _tCol; trace.ms.total = Date.now() - _tAll;
+    return { finalUrl: finalUrl, sketchUrl: sketchUrl, structResolved: loop.resolved, trace: trace };
+  }
+  window._structuralPassRender = _structuralPassRender;
+
   // Per-scene cap on Kontext expression-swap edits. The first N non-zero
   // phases re-use phase 0's hero render as the input image and edit it
   // (cheaper than a fresh hero render, preserves environment + lighting
@@ -182545,7 +183950,29 @@ No text, no watermark, no UI elements, share-ready.`;
     var _sizeOverride = null;
     try {
       var t0 = Date.now();
-      var imageUrl = await generateImageWithFallback({
+      // ── STRUCTURAL PASS (#3, behind window._structuralPass, default OFF) — draft+verify cheap
+      //    line-art, regenerate the SKETCH until structurally clean, then colorize conditioned on it.
+      //    Structural defects never reach this expensive stage. Falls back to a one-shot render on
+      //    any failure. When it produces the image, the post-render Klein runs in COSMETIC mode.
+      var _spResult = null;
+      try {
+        if (window._structuralPass === true && typeof _structuralPassRender === 'function') {
+          var _spCanon = (window._canonRepair !== false && typeof _expectedCanonForPanel === 'function') ? _expectedCanonForPanel(visualState, phase, planMeta) : null;
+          var _spPeople = (typeof _expectedFigureCount === 'function') ? _expectedFigureCount(visualState, phase) : null;
+          _spResult = await _structuralPassRender(prompt, {
+            artist: artistKey,
+            verifyOpts: {
+              expectedPeople: _spPeople,
+              canon: _spCanon && _spCanon.chars,
+              authorized: _spCanon && _spCanon.authorized,
+              wishAnchor: _spCanon && _spCanon.wish_anchor,
+              camera: (phase && phase.camera_override) || (visualState && visualState.camera) || '',
+              phaseIdx: (phase && typeof phase.phaseIdx === 'number') ? phase.phaseIdx : null
+            }
+          });
+        }
+      } catch (_spe) { try { console.warn('[STRUCTURAL-PASS] failed, falling back to one-shot: ' + (_spe && _spe.message)); } catch (_) {} }
+      var imageUrl = (_spResult && _spResult.finalUrl) ? _spResult.finalUrl : await generateImageWithFallback({
         prompt: prompt,
         tier: 'Clean',
         costTier: costTier,
@@ -182555,6 +183982,7 @@ No text, no watermark, no UI elements, share-ready.`;
         sizeOverride: _sizeOverride,
         preAssembled: true // _buildStagedHeroPrompt already ordered the full authority stack — opt out of the 4o funnel when window._stagedFunnelBypass=true
       });
+      var _fromStructuralPass = !!(_spResult && _spResult.finalUrl && !_spResult.colorizeFailed);
       var dur = Date.now() - t0;
 
       // Restore prior anchor paths so non-staged callers see their own globals.
@@ -182572,15 +184000,48 @@ No text, no watermark, no UI elements, share-ready.`;
       try {
         if (imageUrl && window._stagedAnatomyRepair !== false && typeof _repairStagedAnatomyKlein === 'function') {
           var _expectPeople = (typeof _expectedFigureCount === 'function') ? _expectedFigureCount(visualState, phase) : null;
-          if (_expectPeople != null) {
+          // CANON CONFORMANCE (default ON; window._canonRepair === false to disable) — hand the
+          // verifier the authoritative per-character canon + this panel's authorized changes so it
+          // also flags canon VIOLATIONS (body-plan / gender / weapon / clothing), not just anatomy.
+          var _canonBlock = (window._canonRepair !== false && typeof _expectedCanonForPanel === 'function')
+            ? _expectedCanonForPanel(visualState, phase, planMeta) : null;
+          if (_expectPeople != null || _canonBlock) {
             var _repairedUrl = await _repairStagedAnatomyKlein(imageUrl, {
               camera: (phase && phase.camera_override) || (visualState && visualState.camera) || '',
-              expectedPeople: _expectPeople
+              expectedPeople: _expectPeople,
+              phaseIdx: (phase && typeof phase.phaseIdx === 'number') ? phase.phaseIdx : null,
+              canon: _canonBlock && _canonBlock.chars,
+              authorized: _canonBlock && _canonBlock.authorized,
+              wishAnchor: _canonBlock && _canonBlock.wish_anchor,
+              // When the Structural Pass produced this image, structure was already approved + rechecked
+              // upstream — so the post-render Klein runs in COSMETIC mode (surface/prop/effect only).
+              mode: _fromStructuralPass ? 'cosmetic' : undefined,
+              hasApprovedSketch: _fromStructuralPass
             });
-            if (_repairedUrl) { imageUrl = _repairedUrl; try { console.log('[STAGED:HERO:PHASE] phase ' + phase.phaseIdx + ' anatomy spot-repaired (Klein)'); } catch (_) {} }
+            if (_repairedUrl) { imageUrl = _repairedUrl; try { console.log('[STAGED:HERO:PHASE] phase ' + phase.phaseIdx + ' spot-repaired (Klein)'); } catch (_) {} }
           }
         }
       } catch (_arErr) { try { console.warn('[ANATOMY-REPAIR] wiring threw: ' + (_arErr && _arErr.message)); } catch (_) {} }
+
+      // ── INTEGRATION TRACE (per panel) — one observable record combining the Structural Pass trace
+      //    with the cosmetic-Klein outcome, so a harness can print the dashboard (structural retries,
+      //    recolorize, Klein repairs, structural entropy, calls/latency). Only when the sketch pass ran.
+      try {
+        if (window._structuralPass === true && _spResult && _spResult.trace) {
+          var _ptPh = (phase && typeof phase.phaseIdx === 'number') ? phase.phaseIdx : -1;
+          var _ptCos = (window._canonRepairLog || []).filter(function (e) { return e.phase === _ptPh; });
+          (window._pipelineTrace = window._pipelineTrace || []).push({
+            phase: _ptPh,
+            structural: { attempts: _spResult.trace.attempts, resolved: _spResult.trace.resolved, defects: _spResult.trace.sketchDefects },
+            colorize: { count: _spResult.trace.colorizeCount, recolorize: _spResult.trace.recolorizeCount, contract: _spResult.trace.contract },
+            structuralEntropy: _spResult.trace.structuralEntropy,
+            cosmetic: { defects: _ptCos.map(function (e) { return e.type; }), kleinRepairs: _ptCos.filter(function (e) { return e.outcome === 'repaired'; }).map(function (e) { return e.type; }) },
+            calls: _spResult.trace.calls,
+            ms: _spResult.trace.ms,
+            accepted: true
+          });
+        }
+      } catch (_) {}
 
       state._stagedHeroCache[fingerprint] = {
         imageUrl: imageUrl,
@@ -182626,9 +184087,17 @@ No text, no watermark, no UI elements, share-ready.`;
             var _minConf = (phase._panel && phase._panel.establishing) ? 40 : 55;
             if (_cConf < _minConf) { try { console.log('[CASTING] harvest "' + o.name + '" clean-source OK but confidence ' + _cConf + ' < ' + _minConf + ' — waiting for a better frame'); } catch (_) {} return; }
             var _cTier = _castingTierFor((o && o._appearances) || 2); // present recurring char → SESSION+ by default
-            _deriveFromFrame(imageUrl, 'close').then(function (_crop) {
+            // TWO-CROP HARVEST: a BUST crop (face + torso) is the stored anchor — it carries identity AND
+            // wardrobe, fixing the bodice→bra drift. A tight FACE crop is kept alongside for close-ups.
+            _deriveFromFrame(imageUrl, 'bust').then(function (_crop) {
               var _r = _castingConsiderPanel(o.name, _crop || imageUrl, _cConf, _cPanelId, { tier: _cTier });
-              if (_r.action === 'cast' || _r.action === 'promote') { try { console.log('[CASTING] ' + _r.action + ' "' + o.name + '" from ' + _cPanelId + ' @ confidence ' + _cConf + (_r.from != null ? ' (was ' + _r.from + ')' : '')); } catch (_) {} }
+              if (_r.action === 'cast' || _r.action === 'promote') {
+                try { console.log('[CASTING] ' + _r.action + ' "' + o.name + '" from ' + _cPanelId + ' @ confidence ' + _cConf + (_r.from != null ? ' (was ' + _r.from + ')' : '') + ' [bust crop — identity+wardrobe]'); } catch (_) {}
+                // Stash the tight face too, so a later close-up can prefer it. Non-blocking.
+                _deriveFromFrame(imageUrl, 'close').then(function (_face) {
+                  try { var _rec = _castingLib()[_castingToken(o.name)]; if (_rec && _face) _rec.faceUrl = _face; } catch (_) {}
+                }).catch(function () {});
+              }
             }).catch(function () {});
           });
         }
@@ -183619,6 +185088,8 @@ No text, no watermark, no UI elements, share-ready.`;
       );
       var dur = Date.now() - t0;
       if (!imageUrl) return { error: 'gen_empty' };
+      // Direct callBFLKontext — never reached the scene accumulator before.
+      try { _chargeImage('klein', 1); } catch (_) {}
       state._stagedMutationCache[cacheKey] = { imageUrl: imageUrl, generatedAt: Date.now() };
       console.log('[STAGED:MUTATE] ' + expressionTarget + '@' + ampBand + ' generated in ' + dur + 'ms');
       // Per-scene cost tracking — surfaces in the FX toggle panel so
@@ -184836,7 +186307,7 @@ No text, no watermark, no UI elements, share-ready.`;
       var dur = Date.now() - t0;
       if (!imageUrl) return { error: 'gen_empty' };
       // KWISHEEN FACE spot-repair (Roman 2026-07-17): a Kwisheen face/mouth cut-in that drifted
-      // (octopus-mouth, bald scalp missing the tentacle-hair, wrong pupils) is repainted BEFORE
+      // (octopus-mouth or wrong pupils; a bald scalp is NOT a defect) is repainted BEFORE
       // caching. Gated on a Kwisheen target + a face-carrying shot so human closeups never pay.
       try {
         var _cuIsKwFace = (shot === 'face' || shot === 'mouth' || shot === 'half') && !isPC && (function () {
@@ -247810,6 +249281,7 @@ ${buildVisualContinuityDirective()}`
           }
 
           const data = await res.json();
+          if (data?.url) { try { _chargeImage(data.provider || 'default', 1); } catch (_) {} }
           return data?.url || null;
       } catch (err) {
           // Handle abort gracefully (not an error)
@@ -249435,6 +250907,7 @@ ${buildVisualContinuityDirective()}`
           const imageUrl = data?.url || null;
 
           if (imageUrl) {
+              try { _chargeImage(data.provider || 'default', 1); } catch (_) {}
               console.log('[COVER:v1] SUCCESS — Image received');
           } else {
               console.warn('[COVER:v1] No image URL in response');
@@ -257117,6 +258590,8 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   // Expose both so external code (or a future toggle) can pick.
   window._loadStyleRefBase64     = _loadStyleRefBase64;
   window._loadStyleRefBase64Full = _loadStyleRefBase64Full;
+  // Exposed for the sketch-conditioning experiment (measures how much structure survives colorize).
+  window._styleTransferRevealPanel = _styleTransferRevealPanel;
 
   // GEMINI PROVIDER: Call Gemini image generation with retry (SAFE - never throws)
   async function callGeminiImageGen(prompt, size, timeout, _tone, _intent, _visualMeta) {
@@ -257817,6 +259292,75 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   var _verifyEnabled = true; // toggle for performance
   var _verifyStats = { checked: 0, passed: 0, failed: 0, skipped: 0 };
 
+  // STRUCTURAL canonical spec — a SEPARATE species representation for the structural (sketch) verify.
+  // Encodes topology INVARIANTS as pass-conditions and lists what NOT to check, so a rough blocking
+  // sketch is judged on body-plan / contamination / gross anatomy only — never exact count/shape/detail.
+  // Scales to N species: add a block per species. Distinct from _buildIdentityTokens (full identity).
+  // ══ PRESENCE-GATED SPECIES SPEC (Roman 2026-07-19) ═════════════════════════════════════════════
+  // Build the rules from the cast of THIS PANEL, not from global story state. This used to read
+  // `state._playerSpecies` / `state._liSpecies` only, so every panel in a Kwisheen story received the
+  // KWISHEEN rule — including panels with no Kwisheen in them. Observed consequence: a crop containing
+  // one character, with canon explicitly saying Human, came back
+  //   "Human legs were drawn; canon requires a tentacle mantle for a Kwisheen."
+  // It graded the only human in frame against the Kwisheen rule and burned the entire regeneration
+  // budget doing it, in BOTH arms of a benchmark — measuring the verifier instead of the treatment.
+  //
+  // This is the SAME bug class the species reference IMAGES were given a presence gate for on
+  // 2026-07-14 ("otherwise it bleeds its anatomy onto whoever IS in frame"). The images got that gate;
+  // the text spec never did. Now both are gated on who is actually on stage.
+  //
+  // canonList = the panel's authoritative cast ([{name, species, ...}]). Falls back to the PC/LI
+  // globals ONLY when no cast is supplied, preserving old behaviour for callers that pass nothing.
+  function _structuralIdentitySpec(canonList) {
+    var specs = [];
+    var have = {};
+    var _cast = Array.isArray(canonList) ? canonList : [];
+    var _fromCanon = _cast.length > 0;
+    var _speciesList = _fromCanon
+      ? _cast.map(function (c) { return String((c && c.species) || ''); })
+      : [String(state._playerSpecies || ''), String(state._liSpecies || '')];
+    // Only assert the HUMAN contamination guard when a human is actually on stage — otherwise it is
+    // noise that invites the verifier to hunt for a human that the panel never contained.
+    var _humanPresent = !_fromCanon || _speciesList.some(function (s) {
+      var t = String(s || '').toLowerCase();
+      return !t || t === 'human' || /\bhuman\b/.test(t);
+    });
+    _speciesList.forEach(function (raw) {
+      var sp = raw.toLowerCase();
+      if (/kwisheen|octo/.test(sp) && !have.kwisheen) {
+        have.kwisheen = 1;
+        // The bald exemption gets its own emphatic line: buried mid-paragraph it was ignored live —
+        // the verifier still called "a bald head" a non-Kwisheen trait on the very panel it governs.
+        specs.push('KWISHEEN — structural PASS if: humanoid TORSO above the waist; a cephalopod LOWER BODY of tentacles (a mantle) for locomotion; NO human legs / knees / feet; roughly two manipulator arms. Those four things are the WHOLE test.\n' +
+          'A BALD KWISHEEN IS CORRECT. Read that literally: a bare scalp, a shaved head, a crest, or a beard are all canonical grooming, exactly as for a human. NEVER report a bald or hairless head as a missing feature, a species error, or a defect of any kind. Hair is not anatomy.\n' +
+          'Human-shaped EARS are also correct — Kwisheen ears are small and close to the skull. Do not treat human-like ears as a species error.\n' +
+          'DO NOT check in this mode (ignore entirely): exact tentacle COUNT, tentacle shape or curl, pupil shape, hair presence style or coverage, ear shape, facial detail, or skin pattern — those are validated after colorization.');
+      }
+      if (/favor/.test(sp) && !have.favored) {
+        have.favored = 1;
+        specs.push('FIRST FAVORED — structural PASS if: a humanoid body with the normal number of limbs and no gross non-human topology. Ignore pupil shape, ear detail, skin luminosity, and fine features in this mode.');
+      }
+    });
+    // Contamination guard — only when a human is actually in this panel's cast.
+    if (_humanPresent) {
+      // HAIR IS NOT A CONTAMINATION MARKER (Roman 2026-07-19). It used to be, when Kwisheen hair was
+      // "tentacle-hair" — sucker-lined and unmistakable. Now that it is correctly CORAL DREADLOCKS,
+      // it looks like textured human hair, which is the entire point of the rename — so using it to
+      // detect species contamination is self-defeating. Observed live: an ordinary human in a diving
+      // rig was failed for "coral-dreadlock hair" on what is plainly wavy human hair. Contamination is
+      // judged on features humans CANNOT have: scales, tentacles, capsule pupils.
+      specs.push('HUMAN — structural PASS if an ordinary human body: two human legs, two arms, and NO scales, tentacles, or other non-human limbs/features. A human drawn WITH scaled hide, tentacles, or a tentacle lower body is a STRUCTURAL violation (species contamination). HAIR IS NEVER EVIDENCE OF CONTAMINATION: humans have hair of every texture — thick, wavy, braided, locked, matted — and none of it makes a human non-human. Do NOT flag a human for hair.');
+    }
+    // SCOPE FENCE — the decisive line. Without it the verifier applies whichever species rule it was
+    // given to whatever figure it sees, which is exactly how a canon-Human got told she needed a mantle.
+    if (_fromCanon) {
+      specs.push('SCOPE: the rules above cover ONLY the species listed. Judge each figure against the species its CANON entry declares — never against a species that is absent from this panel. A figure whose canon species is Human must be judged by the HUMAN rule alone; do NOT require non-human anatomy of it.');
+    }
+    specs.push('GENERAL: judge only figure count, species body-plan, contamination, and grossly extra/missing limbs. When the blocking is right, PASS.');
+    return specs.join('\n');
+  }
+  window._structuralIdentitySpec = _structuralIdentitySpec;
+
   // strictMode: true for critical panels (reveal-adjacent, first appearance, close-ups with anatomy)
   // In strict mode: lower temperature, reject medium-confidence passes
   async function _verifyPanelAnatomy(imageUrl, panelCamera, strictMode, opts) {
@@ -257836,8 +259380,14 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       return { pass: true, skipped: true, reason: 'extreme close-up' };
     }
 
-    // Build identity tokens for verification
-    var tokens = _buildIdentityTokens();
+    // Build identity tokens for verification. In STRUCTURAL mode, feed a DIFFERENT canonical spec —
+    // topology INVARIANTS only, not the count-laden full identity (which encodes "six tentacles" and
+    // fights the blocking-sketch judgement). Representation-aware, not count-blind: the verifier gets
+    // the right question for this stage instead of being told to ignore the wrong one.
+    // PRESENCE GATE: pass THIS panel's canon cast so the spec covers only species actually on stage.
+    var tokens = (opts && opts.mode === 'structural' && typeof _structuralIdentitySpec === 'function')
+      ? _structuralIdentitySpec(opts.canon)
+      : _buildIdentityTokens();
     if (!tokens && !_figureMode) { _verifyStats.skipped++; return { pass: true, skipped: true }; }
 
     // Get species list
@@ -257873,7 +259423,15 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
           identity_tokens: tokens,
           species: speciesList.join(', '),
           strict: !!strictMode,
-          expected_people: _figureMode ? opts.expectedPeople : undefined
+          expected_people: _figureMode ? opts.expectedPeople : undefined,
+          // CANON CONFORMANCE (opt-in): when the caller supplies the authoritative per-character
+          // canon + the changes the story authorizes this panel, the verifier also flags canon
+          // VIOLATIONS (wrong body-plan / gender / weapon / clothing …), not just anatomy defects.
+          canon: (opts && Array.isArray(opts.canon) && opts.canon.length) ? opts.canon : undefined,
+          authorized_changes: (opts && Array.isArray(opts.authorized)) ? opts.authorized : undefined,
+          wish_anchor: (opts && opts.wishAnchor) ? opts.wishAnchor : undefined,
+          // 'structural' (sketch pass) | 'cosmetic' (final pass) | undefined = full (legacy single-stage)
+          mode: (opts && opts.mode) ? opts.mode : undefined
         })
       });
       if (!res.ok) {
@@ -257961,19 +259519,222 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
   }
   window._buildKleinMaskFromBbox = _buildKleinMaskFromBbox;
 
+  // ENTITY RESOLVER (#4b) — map the verifier's DEFECT ENTITY (often a generic SPECIES like "Kwisheen",
+  // not a character name) to the actual canonical CHARACTER, using the scene roster the orchestration
+  // already owns: name → species → blocking (bbox side vs the character's authored position). This keeps
+  // VISION responsible for WHAT is in the frame and ORCHESTRATION responsible for WHO it is — so we never
+  // ask Gemini to remember names it can only guess. Returns a canon char, or null (ambiguous → fall back).
+  function _resolveSceneEntity(defectChar, bbox, canonChars) {
+    if (!Array.isArray(canonChars) || !canonChars.length) return null;
+    var dc = String(defectChar || '').trim().toLowerCase();
+    function _nm(a, b) { a = String(a || '').toLowerCase(); return a && b && (a === b || a.indexOf(b) !== -1 || b.indexOf(a) !== -1); }
+    // 1) direct name match
+    for (var i = 0; i < canonChars.length; i++) { if (_nm(canonChars[i].name, dc)) return canonChars[i]; }
+    // 2) species narrowing — the entity often names a SPECIES, not a character
+    var SPW = [['kwisheen', 'kwisheen'], ['first favored', 'favor'], ['favored', 'favor'], ['human', 'human'], ['wildfolk', 'wildfolk']];
+    var spKey = null; for (var s = 0; s < SPW.length; s++) { if (dc.indexOf(SPW[s][0]) !== -1) { spKey = SPW[s][1]; break; } }
+    var cand = spKey ? canonChars.filter(function (c) { return String(c.species || '').toLowerCase().indexOf(spKey) !== -1; }) : canonChars.slice();
+    if (cand.length === 1) return cand[0];
+    // 3) blocking disambiguation — bbox side vs each candidate's authored position
+    if (cand.length > 1 && Array.isArray(bbox) && bbox.length >= 3) {
+      var xc = bbox[0] + bbox[2] / 2;
+      var side = xc < 0.4 ? 'left' : xc > 0.6 ? 'right' : 'center';
+      var byPos = cand.filter(function (c) { var p = String(c.position || '').toLowerCase(); if (!p) return false; return side === 'center' ? /center|middle|between|foreground/.test(p) : p.indexOf(side) !== -1; });
+      if (byPos.length === 1) return byPos[0];
+    }
+    return null; // still ambiguous → caller falls back (no card beats a wrong card)
+  }
+  window._resolveSceneEntity = _resolveSceneEntity;
+
+  // #4 — Resolve a character's AUTHORITATIVE IDENTITY CARD for Klein conditioning: a canonical image
+  // of WHO this character is. NOT "reference art" to copy — an identity to MAINTAIN while repairing only
+  // the masked region. SOURCE PRIORITY: (1) the LEADS' locked face-masters (pcFaceMasterUrl / liFaceMasterUrl
+  // — the casting library EXCLUDES the PC/LI, so without this the most important recurring characters had
+  // NO card, the opportunities=0 bug); (2) the Casting Library (recurring NPCs); (3) the scene's canonical
+  // reveal anchor. Emits a birth-to-use diagnostic. Returns a usable image (data/http URL) or null.
+  async function _canonicalReferenceFor(name) {
+    var url = null, src = 'none';
+    try {
+      var key = (typeof _castingToken === 'function') ? _castingToken(name) : String(name || '').trim().toLowerCase();
+      var pcName = (typeof _castingToken === 'function') ? _castingToken((state.picks && state.picks.identity && state.picks.identity.playerName) || state.playerName || '') : '';
+      var liName = (typeof _castingToken === 'function') ? _castingToken((state.picks && state.picks.identity && state.picks.identity.partnerName) || state.loveInterestName || state.partnerName || '') : '';
+      function _nameMatch(a, b) { return a && b && (a === b || a.indexOf(b) !== -1 || b.indexOf(a) !== -1); }
+      // (1) LEADS — locked face-masters (the authoritative identity for the PC/LI).
+      if (key && _nameMatch(key, pcName) && state.pcFaceMasterUrl) { url = state.pcFaceMasterUrl; src = 'pc-face-master'; }
+      else if (key && _nameMatch(key, liName)) {
+        var liId = state.canonicalLIId || (state.liFaceMasterUrl && Object.keys(state.liFaceMasterUrl)[0]);
+        if (liId && state.liFaceMasterUrl && state.liFaceMasterUrl[liId]) { url = state.liFaceMasterUrl[liId]; src = 'li-face-master'; }
+      }
+      // (2) Casting library (recurring NPCs — never the PC/LI).
+      if (!url && name && typeof _castingResolveAnchor === 'function') { var a = _castingResolveAnchor(name); if (a && a.url) { url = a.url; src = 'casting-library'; } }
+      // (3) Canonical reveal anchor (last resort).
+      if (!url && typeof _getCanonicalRevealAnchor === 'function') { var r = _getCanonicalRevealAnchor(''); if (r) { url = r; src = 'reveal-anchor'; } }
+    } catch (_) {}
+    // DIAGNOSTIC — every request logs requested / resolved / source, so a break in the harvest→use
+    // path is visible at a glance (Roman's birth-to-use trace).
+    try { console.log('[ID-CARD] requested: "' + (name || '?') + '" | resolved: ' + (url ? 'yes' : 'NO') + ' | source: ' + src); } catch (_) {}
+    if (!url) return null;
+    try {
+      if (url.indexOf('data:') === 0 || url.indexOf('http') === 0) return url;
+      if (typeof _loadStyleRefBase64 === 'function') { var b = await _loadStyleRefBase64(url); if (b) return (String(b).indexOf('data:') === 0) ? b : 'data:image/png;base64,' + b; }
+    } catch (_) {}
+    return null;
+  }
+  window._canonicalReferenceFor = _canonicalReferenceFor;
+
   // Verify figure sanity + Klein-repair a localizable removal-class defect. Returns a repaired
   // image URL, or null if nothing to fix / not fixable this way (caller keeps the original).
   async function _repairStagedAnatomyKlein(imageUrl, opts) {
     opts = opts || {};
     if (window._stagedAnatomyRepair === false) return null;
     if (!imageUrl || typeof _verifyPanelAnatomy !== 'function' || typeof callBFLKontext !== 'function') return null;
-    // 1) VERIFY in figure-sanity mode (runs for human scenes too).
+    // 1) VERIFY in figure-sanity mode (runs for human scenes too). When the caller supplies the
+    //    authoritative canon, the verifier also flags CANON violations (body-plan / gender / weapon
+    //    / clothing …), not just anatomy — and returns priority (1/2/3) + defect_character.
     var v;
-    try { v = await _verifyPanelAnatomy(imageUrl, opts.camera || '', false, { expectedPeople: opts.expectedPeople }); }
+    try {
+      v = await _verifyPanelAnatomy(imageUrl, opts.camera || '', false, {
+        expectedPeople: opts.expectedPeople,
+        canon: opts.canon, authorized: opts.authorized, wishAnchor: opts.wishAnchor,
+        mode: opts.mode // 'cosmetic' when the Structural Pass already approved structure upstream
+      });
+    }
     catch (_) { return null; }
     if (!v || v.skipped || v.pass !== false) return null; // clean or unverifiable → pay nothing
     var type = String(v.defect_type || '');
     var bbox = v.defect_bbox;
+    // Telemetry: record the detected defect (phase-attributed) so a harness can build a per-panel
+    // repair scorecard + detect oscillation (same defect recurring every panel = generator fighting
+    // Klein). outcome starts 'detected' and is upgraded to 'repaired'/'p3-report' below.
+    var _tel = { phase: (opts && opts.phaseIdx != null) ? opts.phaseIdx : -1, type: type || 'unknown', priority: (v.priority != null ? v.priority : null), character: v.defect_character || null, p1_count: (v.p1_count != null ? v.p1_count : null), outcome: 'detected' };
+    try { (window._canonRepairLog = window._canonRepairLog || []).push(_tel); } catch (_) {}
+    // BUDGET SIGNAL: more than one distinct P1 defect in a panel means the generator drifted badly —
+    // multiple localized repaints often cost more and look worse than a fresh render. Flag it (the
+    // reject-and-regenerate path is deferred until we measure how often this actually happens).
+    if (typeof v.p1_count === 'number' && v.p1_count > 1) {
+      try { console.log('[CANON-REPAIR] BUDGET: ' + v.p1_count + ' P1 defects on phase ' + _tel.phase + ' — regenerate would beat ' + v.p1_count + ' repaints (repairing the top one for now)'); } catch (_) {}
+    }
+    // ── ROUTING LAYER — decide the correction STRATEGY (separate from the verifier) ──────────
+    // regenerate/recolorize = STRUCTURAL (Klein can't cleanly re-compose it — masked inpaint would
+    // leave a hybrid); klein = LOCALIZED/cosmetic; report = no authoritative answer (P3). Only a
+    // 'klein' verdict falls through to the repaint branches below. The regenerate/recolorize EXECUTION
+    // (cheap sketch re-gen with accumulated feedback) lands with the Structural Pass; today we log the
+    // routed decision + carry the feedback so the caller can act and telemetry can measure.
+    var _strategy = (typeof _routeRepairStrategy === 'function')
+      ? _routeRepairStrategy(type, { priority: v.priority, stage: 'final', wasInSketch: opts.wasInSketch, hasApprovedSketch: !!opts.hasApprovedSketch })
+      : 'klein';
+    _tel.strategy = _strategy;
+    if (_strategy !== 'klein') {
+      _tel.outcome = (_strategy === 'report') ? 'report' : ('routed-' + _strategy);
+      _tel.feedback = _buildRegenFeedback([{ reason: v.reason, expected: v.expected, observed: v.observed, character: v.defect_character, defect_type: type }].concat(v.violations || []));
+      try {
+        console.log('[CANON-REPAIR] route=' + _strategy + ' defect=' + (type || 'none') + (v.priority ? '/P' + v.priority : '') +
+          (_strategy === 'report' ? ' — no authoritative answer, keeping original' : ' — STRUCTURAL, not a Klein job (keeping original; ' + _strategy + ' pending Structural Pass)') +
+          (v.reason ? ' | reason: ' + v.reason : ''));
+      } catch (_) {}
+      return null;
+    }
+    // Locate the canon entry the boxed defect concerns (by name), for the canon-violation branches.
+    var _canonList = (opts && Array.isArray(opts.canon)) ? opts.canon : [];
+    var _dc = String(v.defect_character || '').trim().toLowerCase();
+    var _cc = null;
+    for (var _ci = 0; _ci < _canonList.length; _ci++) {
+      var _cn = String(_canonList[_ci].name || '').trim().toLowerCase();
+      if (_cn && _dc && (_cn === _dc || _cn.indexOf(_dc) !== -1 || _dc.indexOf(_cn) !== -1)) { _cc = _canonList[_ci]; break; }
+    }
+    if (!_cc && _canonList.length === 1) _cc = _canonList[0]; // single figure → unambiguous
+    // ENTITY RESOLVER — if the verifier gave a generic entity ("Kwisheen") that matched no name,
+    // resolve WHO it is deterministically from the scene roster (species + blocking), so the identity
+    // card can be found. Vision said WHAT; orchestration decides WHO.
+    if (!_cc && typeof _resolveSceneEntity === 'function') {
+      _cc = _resolveSceneEntity(v.defect_character, bbox, _canonList);
+      if (_cc) { try { console.log('[ENTITY] "' + (v.defect_character || '?') + '" → ' + _cc.name + ' (resolved via scene graph)'); } catch (_) {} }
+    }
+    // Small helper: repaint the masked bbox toward a canonical target, keep the rest pixel-identical.
+    // #4 — when available, condition on the character's AUTHORITATIVE IDENTITY CARD (a 2nd input image):
+    // "maintain this character's identity while modifying only this region", NOT "make it look like this".
+    async function _canonRepaint(targetPrompt, label) {
+      if (!Array.isArray(bbox)) { try { console.log('[CANON-REPAIR] ' + label + ' but no bbox — keeping original'); } catch (_) {} return null; }
+      var _m = _buildKleinMaskFromBbox(bbox);
+      if (!_m) return null;
+      var _inputs = [imageUrl], _idCard = '';
+      // Resolve the identity card regardless of the flag so an A/B benchmark can count OPPORTUNITIES
+      // (reference available) separately from USAGE (card actually fed to Klein).
+      var _ref = null;
+      if (typeof _canonicalReferenceFor === 'function') { try { _ref = await _canonicalReferenceFor(_cc && _cc.name); } catch (_) {} }
+      _tel.refAvailable = !!_ref;
+      if (window._kleinCanonRef !== false && _ref) {
+        _inputs.push(_ref); _tel.usedIdCard = true;
+        _idCard = ' The SECOND image is ' + ((_cc && _cc.name) ? _cc.name + "'s" : "this character's") + ' AUTHORITATIVE IDENTITY — maintain this character\'s canonical anatomy, proportions, clothing silhouette, palette, and identity while repairing ONLY the masked region to conform to it. Do NOT copy the reference image\'s pose, framing, or background — only the character\'s identity.';
+      }
+      var _prompt = targetPrompt + _idCard + ' Keep EVERYTHING outside the masked region pixel-identical — same character, pose, framing, lighting, background, and art style. Do NOT add or remove any figures. Seamless edges, no visible boundary.';
+      try {
+        console.log('[CANON-REPAIR] Klein ' + label + ': char="' + (_cc ? _cc.name : '?') + '"' + (_inputs.length > 1 ? ' +id-card' : '') + ' bbox=' + JSON.stringify(bbox));
+        var _r = await callBFLKontext(_prompt, '1024x1024', 60000, null, null, null, _inputs, _BFL_KLEIN, _m);
+        if (!_r) { try { console.warn('[CANON-REPAIR] ' + label + ' returned empty — keeping original'); } catch (_) {} return null; }
+        _tel.outcome = 'repaired';
+        return (_r.startsWith('http') || _r.startsWith('data:')) ? _r : 'data:image/png;base64,' + _r;
+      } catch (_e) { try { console.warn('[CANON-REPAIR] ' + label + ' threw: ' + (_e && _e.message) + ' — keeping original'); } catch (_) {} return null; }
+    }
+    // ── CANON-VIOLATION BRANCHES (P1 — always repair; have an authoritative answer) ──────────
+    // BODY-PLAN: a species drawn with the wrong lower-body morphology (e.g. a Kwisheen on human
+    // legs). Repaint the boxed region to the LOCKED body-plan for that character.
+    if (/^body_plan$/.test(type) && Array.isArray(bbox)) {
+      var _bp = (_cc && _cc.body_plan) || '';
+      if (!_bp) { try { console.log('[CANON-REPAIR] body_plan defect but no locked plan — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint the masked region so the figure has the correct body plan: ' + _bp + '. LOCKED colours' + (_cc && _cc.skin ? ': ' + _cc.skin + ' skin' + (_cc.pattern ? ' with ' + _cc.pattern : '') : '') + '.', 'body-plan');
+    }
+    // GENDER PRESENTATION (unauthorized only — the verifier suppresses it when the story authorizes
+    // a shift). Repaint the boxed figure to the canonical gender presentation.
+    if (/^gender(_presentation)?$/.test(type) && Array.isArray(bbox)) {
+      var _g = (_cc && _cc.gender) || '';
+      if (!_g) { try { console.log('[CANON-REPAIR] gender defect but no canon gender — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint the masked figure so its gender presentation reads as ' + _g + ', matching the character\'s established look (' + ((_cc && _cc.recognition) || 'same face, hair, and build') + '). Keep species anatomy, wardrobe, and colours unchanged.', 'gender');
+    }
+    // WEAPON / HELD OBJECT: the figure holds the wrong weapon, or is missing the canonical one it
+    // should be holding this panel (per phase._state.holding). Repaint to the canon weapon.
+    if (/^(weapon|held_prop|held_object)$/.test(type) && Array.isArray(bbox)) {
+      var _wp = (_cc && _cc.weapon) || '';
+      if (!_wp) { try { console.log('[CANON-REPAIR] weapon defect but no canon weapon — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint the masked region so the figure holds a ' + _wp + ' (the correct weapon for this character in this scene), gripped naturally in the same hand and pose. Do NOT change the hand position or the rest of the figure.', 'weapon');
+    }
+    // CLOTHING / ARMOR: the figure\'s garment drifted from canon. Repaint to the canonical wardrobe.
+    if (/^(wardrobe|clothing|armor|armour)$/.test(type) && Array.isArray(bbox)) {
+      var _ar = (_cc && _cc.armor) || '';
+      if (!_ar) { try { console.log('[CANON-REPAIR] wardrobe defect but no canon garment — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint the masked region so the figure wears: ' + _ar + ' (the character\'s established outfit). Keep the body, pose, and colours unchanged; change only the garment to match.', 'wardrobe');
+    }
+    // ── PHASE B — LOCALIZED COSMETIC BRANCHES (P2, repair only when localized; all identity-card enabled) ──
+    // EYE COLOUR — repaint just the eyes to the canonical iris colour.
+    if (/^eye_color$/.test(type) && Array.isArray(bbox)) {
+      var _ec = (_cc && _cc.eyes) || '';
+      if (!_ec) { try { console.log('[CANON-REPAIR] eye_color defect but no canon eyes — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint ONLY the masked eyes so the iris colour is ' + _ec + ' (the character\'s canonical eyes). Keep eye shape, gaze, expression, and everything else unchanged.', 'eye-color');
+    }
+    // SKIN PATTERN / COLOUR — repaint the masked skin to the canonical colouring.
+    if (/^skin_pattern$/.test(type) && Array.isArray(bbox)) {
+      var _skc = ((_cc && _cc.skin) ? _cc.skin + ' skin' : 'skin') + ((_cc && _cc.pattern) ? ' with ' + _cc.pattern : '');
+      if (!_cc || (!_cc.skin && !_cc.pattern)) { try { console.log('[CANON-REPAIR] skin_pattern defect but no canon colouring — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint the masked region so the skin shows the character\'s canonical colouring: ' + _skc + '. Change ONLY the skin colour/pattern; keep anatomy, wardrobe, lighting, and pose unchanged.', 'skin-pattern');
+    }
+    // JEWELRY / INSIGNIA — repaint to the canonical adornment.
+    if (/^jewelry$/.test(type) && Array.isArray(bbox)) {
+      var _jw = (_cc && _cc.jewelry) || '';
+      if (!_jw) { try { console.log('[CANON-REPAIR] jewelry defect but no canon jewelry — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint the masked region so the character wears their canonical jewelry / insignia: ' + _jw + '. Keep the body, wardrobe, and pose unchanged.', 'jewelry');
+    }
+    // SACRIFICE STAIN — repaint the masked body part to the canonical damage/sacrifice state.
+    if (/^sacrifice_mark$/.test(type) && Array.isArray(bbox)) {
+      var _sac = (_cc && _cc.injuries) || '';
+      if (!_sac) { try { console.log('[CANON-REPAIR] sacrifice_mark defect but no canon injury state — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint the masked region so the damage / sacrifice state matches canon: ' + _sac + '. Render it exactly as described (e.g. a dark shadow-stump, not a glow); keep everything else unchanged.', 'sacrifice-mark');
+    }
+    // WISH-BURST ANCHOR — re-anchor the burst onto the correct focal point (localized only).
+    if (/^wish_burst_anchor$/.test(type) && Array.isArray(bbox)) {
+      var _anchor = (opts && opts.wishAnchor) || '';
+      if (!_anchor) { try { console.log('[CANON-REPAIR] wish_burst_anchor defect but no anchor — keeping original'); } catch (_) {} return null; }
+      return await _canonRepaint('Repaint the masked region so the wish-burst attaches to and wraps ' + _anchor + ' (its correct anchor point). Keep the figures, their pose, and everything else unchanged; move only the burst.', 'wish-burst-anchor');
+    }
     // 2a) SPECIES REPAIR — a Kwisheen wrongly rendered as a plain human / wrong race.
     //     verify-anatomy boxes the whole mis-rendered figure (defect_type='species_anatomy').
     //     Repaint ONLY that figure as a Kwisheen with the scene's LOCKED colours + cephalopod
@@ -258001,6 +259762,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
         console.log('[ANATOMY-REPAIR] Klein SPECIES-repaint (Kwisheen): bbox=' + JSON.stringify(bbox) + ' colours=' + _skin + '/' + _iris);
         var _repSp = await callBFLKontext(speciesPrompt, '1024x1024', 60000, null, null, null, [imageUrl], _BFL_KLEIN, _spMask);
         if (!_repSp) { console.warn('[ANATOMY-REPAIR] Klein species returned empty — keeping original'); return null; }
+        if (typeof _tel !== 'undefined' && _tel) _tel.outcome = 'repaired';
         return (_repSp.startsWith('http') || _repSp.startsWith('data:')) ? _repSp : 'data:image/png;base64,' + _repSp;
       } catch (_spe) {
         console.warn('[ANATOMY-REPAIR] Klein species threw: ' + (_spe && _spe.message) + ' — keeping original');
@@ -258008,8 +259770,10 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       }
     }
     // 2a2) KWISHEEN FACE REPAIR — the Kwisheen is the right species but the FACE/HEAD is
-    //     drawn wrong (octopus-mouth / tentacle-face, bald scalp missing the tentacle-hair,
-    //     or vertical/round pupils). verify-anatomy boxes the head-and-face region. Repaint
+    //     drawn wrong (octopus-mouth / tentacle-face, or vertical/round pupils). A BALD SCALP IS
+    //     NOT A DEFECT (Roman 2026-07-19): coral dreadlocks are groomed hair, not anatomy, and a
+    //     Kwisheen may canonically be shaved, cropped, or bearded — this repair used to paint a
+    //     mane onto every bare scalp at Klein cost. verify-anatomy boxes the head-and-face region.
     //     ONLY that region with the canonical humanoid Kwisheen face + locked colours.
     if (/kwisheen_face/.test(type) && Array.isArray(bbox)) {
       var _fspStr = (String(state._playerSpecies || '') + ' ' + String(state._liSpecies || '')).toLowerCase();
@@ -258023,11 +259787,22 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       var _firis = (_fkw && _fkw.iris) || 'amber-gold';
       var _fMask = _buildKleinMaskFromBbox(bbox);
       if (!_fMask) return null;
-      var facePrompt = 'The masked region is the HEAD and FACE of a KWISHEEN (a cephalopod-humanoid) that has been drawn WRONG. Repaint ONLY the masked head so it is the canonical Kwisheen face, keeping the same head position, size, angle, lighting and art style: a HUMANOID FACE — a clear brow, a nose, and a MOUTH WITH LIPS on a defined jaw — sheathed in fine hexagonal SCALED cephalopod hide; a full mane of thick living TENTACLE-DREADLOCKS growing from the SCALP (the scalp is NOT bald — restore the tentacle-hair mane); and eyes with a HORIZONTAL pupil running sideways across the iris (a flat capsule, or a horizontal goat-like slit — never a vertical slit, never a round dot). The face is a scaled HUMANOID visage under a tentacle mane — it is NOT a mass of tentacles, has NO octopus-beak, and NO tentacles / barbels / feelers sprouting around the mouth, chin, or cheeks. LOCKED colours, matching the body outside the mask: ' + _fskin + ' skin with ' + _fpatt + ', ' + _firis + ' eyes. Keep EVERYTHING outside the mask pixel-identical (body, tentacle-arms, wardrobe, background). Seamless edges, no visible boundary. Do NOT add any new figures.';
+      var facePrompt = 'The masked region is the HEAD and FACE of a KWISHEEN (a cephalopod-humanoid) that has been drawn WRONG. Repaint ONLY the masked head so it is the canonical Kwisheen face, keeping the same head position, size, angle, lighting and art style: a HUMANOID FACE — a clear brow, a nose, and a MOUTH WITH LIPS on a defined jaw — sheathed in fine hexagonal SCALED cephalopod hide; whatever HAIR the character already has, left EXACTLY as drawn (living coral dreadlocks are groomed hair, not anatomy — a shaved, cropped, or bearded Kwisheen is canonical; do NOT add, lengthen, or restore hair, and never treat a bare scalp as a defect to fix); and eyes with a HORIZONTAL pupil running sideways across the iris (a flat capsule, or a horizontal goat-like slit — never a vertical slit, never a round dot). The face is a scaled HUMANOID visage — it is NOT a mass of tentacles, has NO octopus-beak, and NO tentacles / barbels / feelers sprouting around the mouth, chin, or cheeks. LOCKED colours, matching the body outside the mask: ' + _fskin + ' skin with ' + _fpatt + ', ' + _firis + ' eyes. Keep EVERYTHING outside the mask pixel-identical (body, tentacle-arms, wardrobe, background). Seamless edges, no visible boundary. Do NOT add any new figures.';
+      // #4 — condition the face repaint on the character's AUTHORITATIVE IDENTITY CARD (face is the top
+      // identity lever). Maintain WHO they are while repainting only the masked head. Behind _kleinCanonRef.
+      var _fInputs = [imageUrl], _fIdCard = '';
+      var _fRef = null;
+      if (typeof _canonicalReferenceFor === 'function') { try { _fRef = await _canonicalReferenceFor((_cc && _cc.name) || v.defect_character); } catch (_) {} }
+      if (typeof _tel !== 'undefined' && _tel) _tel.refAvailable = !!_fRef;
+      if (window._kleinCanonRef !== false && _fRef) {
+        _fInputs.push(_fRef); if (typeof _tel !== 'undefined' && _tel) _tel.usedIdCard = true;
+        _fIdCard = ' The SECOND image is this Kwisheen\'s AUTHORITATIVE IDENTITY — keep the SAME individual\'s face and features while restoring the canonical Kwisheen head; match their identity, not the reference\'s pose or framing.';
+      }
       try {
-        console.log('[ANATOMY-REPAIR] Klein KWISHEEN-FACE repaint: bbox=' + JSON.stringify(bbox) + ' colours=' + _fskin + '/' + _firis);
-        var _repFace = await callBFLKontext(facePrompt, '1024x1024', 60000, null, null, null, [imageUrl], _BFL_KLEIN, _fMask);
+        console.log('[ANATOMY-REPAIR] Klein KWISHEEN-FACE repaint: bbox=' + JSON.stringify(bbox) + ' colours=' + _fskin + '/' + _firis + (_fInputs.length > 1 ? ' +id-card' : ''));
+        var _repFace = await callBFLKontext(facePrompt + _fIdCard, '1024x1024', 60000, null, null, null, _fInputs, _BFL_KLEIN, _fMask);
         if (!_repFace) { console.warn('[ANATOMY-REPAIR] Klein kwisheen-face returned empty — keeping original'); return null; }
+        if (typeof _tel !== 'undefined' && _tel) _tel.outcome = 'repaired';
         return (_repFace.startsWith('http') || _repFace.startsWith('data:')) ? _repFace : 'data:image/png;base64,' + _repFace;
       } catch (_fpe) {
         console.warn('[ANATOMY-REPAIR] Klein kwisheen-face threw: ' + (_fpe && _fpe.message) + ' — keeping original');
@@ -258051,6 +259826,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
       console.log('[ANATOMY-REPAIR] Klein spot-repair: type=' + type + ' bbox=' + JSON.stringify(bbox) + ' (people ' + (v.person_count == null ? '?' : v.person_count) + '→' + (_people == null ? '?' : _people) + ')');
       var repaired = await callBFLKontext(removePrompt, '1024x1024', 60000, null, null, null, [imageUrl], _BFL_KLEIN, mask);
       if (!repaired) { console.warn('[ANATOMY-REPAIR] Klein returned empty — keeping original'); return null; }
+      if (typeof _tel !== 'undefined' && _tel) _tel.outcome = 'repaired';
       var url = (repaired.startsWith('http') || repaired.startsWith('data:')) ? repaired : 'data:image/png;base64,' + repaired;
       // 3) Optional re-verify (once) — off by default to save a call; keep the repaired regardless.
       if (window._stagedAnatomyRepairReverify === true) {
@@ -258176,6 +259952,7 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
           if (_gemData.image || _gemData.url) {
             var gemUrl = _gemData.image || _gemData.url;
             if (!gemUrl.startsWith('data:')) gemUrl = 'data:image/png;base64,' + gemUrl;
+            try { _chargeImage('gemini', 1); } catch (_) {}
             console.log('[INPAINT] Gemini fallback succeeded for regions:', failRegions.join(', '));
             return gemUrl;
           }
@@ -258238,6 +260015,8 @@ No product photography. No stock-photo lighting. No decorative sensuality.`;
           if (_lineData.image || _lineData.url) {
             lineArtUrl = _lineData.image || _lineData.url;
             if (!lineArtUrl.startsWith('data:')) lineArtUrl = 'data:image/png;base64,' + lineArtUrl;
+            // Charged per ATTEMPT — the retry loop is the cost driver here.
+            try { _chargeImage('gemini', 1); } catch (_) {}
           }
         }
       } catch (e) {
@@ -260530,16 +262309,9 @@ REJECTION CRITERIA: Reject if pupils are not extremely small, if pupils vary bet
               // hasn't started generating), route the charge to sealed so it
               // attributes to the correct scene and triggers the retroactive
               // _lastSceneAPICost update via the addImage _sealed branch.
-              try {
-                  const _live = (typeof _ensureSceneCostAcc === 'function')
-                      ? _ensureSceneCostAcc() : null;
-                  const _sealed = window.state && window.state._sealedSceneCostAcc;
-                  const _routeToSealed = !!(_sealed && _live && _live.textCost === 0);
-                  const _target = _routeToSealed ? _sealed : _live;
-                  if (_target && typeof _target.addImage === 'function') {
-                      _target.addImage(provider.name, 1);
-                  }
-              } catch (_) { /* cost capture non-critical */ }
+              // Routing now lives in _chargeImage (shared with the direct
+              // IMAGE_PROXY_URL call sites, which previously went uncosted).
+              try { _chargeImage(provider.name, 1); } catch (_) { /* cost capture non-critical */ }
 
               // ── Ender Bond drift detection — single correction pass ──
               var _correction = _checkAndBuildEnderCorrection(provider.prompt, provider.name);
