@@ -154317,6 +154317,7 @@ No text, no watermark, no UI elements, share-ready.`;
   var _CANONICAL_VISUAL_ASSETS = {
     kwisheen_anatomy:  { tier: 1, kind: 'species anatomy',           asset: '/assets/Fatelands/Kwisheen_Body_Anchor_v2.jpg', governs: 'body plan / proportions / tentacle topology / coral hair / attire', plumbing: 'species-anchor presence gate (always-on when a Kwisheen is on-stage)' },
     kwisheen_swim:     { tier: 1, kind: 'species locomotion',         asset: '/assets/Fatelands/Octofolk_Swim_Motion_Ref_v1.png', governs: 'how the six-tentacle mantle moves — FLEXED/spread when hovering, TRAILING in a bundle when surging (never a fish-tail)', plumbing: 'attach when a Kwisheen is SWIMMING / in-motion underwater (crowd + action); `_kwisheenSwimRef()`' },
+    kwisheen_combat:   { tier: 1, kind: 'species combat',             asset: '/assets/Fatelands/Octofolk_Combat_Grapple_Ref_v1.png', governs: 'Many-Tide melee density: entangled grappling across several limbs, weapons caught inside the tangle, and the ATTACK-BUCKLER (a small round shield with a centre hole an armoured limb passes through to strike beyond it)', plumbing: 'attach when a Kwisheen is FIGHTING (`_isCombatScene`); `_kwisheenCombatRef()`' },
     wish_burst:        { tier: 1, kind: 'canonical symbol',          assetByOutcome: { clean: '/assets/Fatelands/Wish_Burst_Clean_v1.png', twisted: '/assets/Fatelands/Wish_Burst_Twisted_v1.png' }, governs: 'the Fate burst graphic style', plumbing: '_resolveCanonicalAssets, by wish outcome' },
     sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the localized shadow-STAIN Fate leaves over the sacrificed part (absence, not a reaching hand)', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
     manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
@@ -183093,6 +183094,55 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._kwisheenSwimRef = _kwisheenSwimRef;
 
+  // ══ CULTURAL COMBAT DIRECTIVES (Roman 2026-07-20) ═════════════════════════════════════════════
+  // VISUAL directives only — the full doctrine (Many-Tide principles, Avowals, Showing the Deep) is
+  // prose canon, see [[project_fatelands_combat_styles]]. Gated on a FIGHT scene so weapons never
+  // appear at a gala. Same pattern as _underwater/_crowdDirective: name the concrete things to draw.
+  // A scene "is combat" when its description carries fight vocabulary (see _isCombatScene).
+  function _isCombatScene(sceneDesc) {
+    var t = String(sceneDesc || '').toLowerCase();
+    return /\b(fight|fighting|combat|duel|battle|ambush|attack|attacks|attacking|strike|striking|clash|raider|assault|spear|cutlass|dagger|blade|sword|weapon|grapple|grappling|lunge|parry|slash|stab)\b/.test(t);
+  }
+  window._isCombatScene = _isCombatScene;
+
+  // Kwisheen melee: the Many-Tide Method + grappling doctrine + the attack-buckler.
+  function _kwisheenCombatDirective() {
+    return '\n\nKWISHEEN COMBAT (the Many-Tide Method — the whole body fights as ONE system, never human ' +
+      'attacks performed in sequence): SEVERAL limbs act AT ONCE — one tentacle-arm wields a TIDE-SPEAR or ' +
+      'TRIDENT (reach, thrusting, pinning), one a heavy curved REEF-CUTLASS (hooking cuts), one a long ' +
+      'UNDERTIDE DAGGER (the hidden killing strike from an unseen angle), while OTHER tentacles GRAPPLE — ' +
+      'coiling the opponent\'s weapon-arm, waist, thigh or ankle; anchoring to reef, deck or seabed; pulling ' +
+      'the enemy off-balance; bracing and counter-weighting. Combatants ENTANGLE rather than fence at clean ' +
+      'distance: two Kwisheen appear almost KNOTTED together, tentacles wrapped around wrists, weapons, ' +
+      'shields and armour while still striking with free limbs. Show clearly which limbs anchor, pull, ' +
+      'shield, or strike. ' +
+      'THE ATTACK-BUCKLER (signature, species-specific): a small round shield with a REINFORCED HOLE IN ITS ' +
+      'CENTRE, through which an ARMOURED arm OR lower tentacle passes and extends BEYOND the shield face to ' +
+      'strike, hook, or grapple while the disk still protects everything behind it — NOT a shield strapped ' +
+      'to a limb, but a limb projecting THROUGH its centre. Kwisheen mount it on an upper arm OR a lower ' +
+      'tentacle. Combat limbs are armoured with segmented plates, hardened rings, or scale sleeves fitted to ' +
+      'flex with the tentacle.';
+  }
+  window._kwisheenCombatDirective = _kwisheenCombatDirective;
+
+  // First Favored melee: the Avowed Path's signature weapons (visual only).
+  function _firstFavoredCombatDirective() {
+    return '\n\nFIRST FAVORED COMBAT (the Avowed Path — direct, committed, legible): the signature weapon is ' +
+      'THE ANSWER, a DOUBLE-ENDED POLEARM — one end a narrow inward-facing crescent HOOK (for trapping, ' +
+      'disarming, controlling limbs, taking alive), the other end a straight or leaf-shaped KILLING BLADE ' +
+      '(thrust, decisive cut, armour-piercing), with a weighted central shaft for staff strikes. The sidearm ' +
+      'is the AVOWAL BLADE — a broad, FORWARD-CURVING single-edged sword with a small disarming hook near the ' +
+      'base and DELIBERATELY LEGIBLE cutting geometry (no concealed second edge). Stances are direct and ' +
+      'committed, weight behind a chosen line — never the shifting multi-limb entanglement of a Kwisheen.';
+  }
+  window._firstFavoredCombatDirective = _firstFavoredCombatDirective;
+
+  // The Kwisheen combat-grapple reference (two duellists, attack-bucklers, entangled tentacles), or null.
+  function _kwisheenCombatRef() {
+    return (_CANONICAL_VISUAL_ASSETS && _CANONICAL_VISUAL_ASSETS.kwisheen_combat && _CANONICAL_VISUAL_ASSETS.kwisheen_combat.asset) || null;
+  }
+  window._kwisheenCombatRef = _kwisheenCombatRef;
+
   // Generate a black-and-white structural blueprint from a scene description. `feedback` (from the
   // verifier's accumulated reasons) is injected so each retry fixes the named structural faults.
   // opts = { refs:[{b64,label}], imageSize, aspectRatio, emotions, underwater }.
@@ -183192,6 +183242,25 @@ No text, no watermark, no UI elements, share-ready.`;
     // existing "no shading, no textures" lost to the stronger media cue, so the media is now named and
     // forbidden explicitly. This matters beyond tidiness: the sketch is the STRUCTURE reference the
     // colorize stage conditions on, so smudge and false tone propagate into the finished render.
+    // CULTURAL COMBAT — inject a species' fighting-style directive only when the scene is a FIGHT and
+    // that species is on stage. Weapons/grappling must never appear in a quiet scene.
+    var _combatBlock = '';
+    try {
+      var _combatOn = opts.combat === true || (opts.combat !== false && _isCombatScene(sceneDesc));
+      if (_combatOn) {
+        var _cnorm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+        var _spInScene = {};
+        (Array.isArray(opts.cast) ? opts.cast : []).forEach(function (c) { var sp = _cnorm(c && c.species); if (sp) _spInScene[sp] = true; });
+        // Fall back to scene text when the cast carries no species field.
+        if (!Object.keys(_spInScene).length) {
+          if (/kwisheen|octofolk/.test(String(sceneDesc || '').toLowerCase())) _spInScene.kwisheen = true;
+          if (/first[- ]favored|first favoured/.test(String(sceneDesc || '').toLowerCase())) _spInScene.first_favored = true;
+        }
+        if (_spInScene.kwisheen || _spInScene.half_kwisheen) _combatBlock += _kwisheenCombatDirective();
+        if (_spInScene.first_favored) _combatBlock += _firstFavoredCombatDirective();
+      }
+    } catch (_) {}
+
     var linePrompt = 'STRUCTURAL LINE ART ONLY — a BLOCKING blueprint, not finished art: SOLID BLACK INK LINES on a FLAT PURE WHITE background, with nothing in between. ' +
       'NO GREY OF ANY KIND — no shading, no tone, no grey wash, no gradients, no hatching used for shading, no soft edges. Every pixel is either black line or white background. ' +
       'This is CLEAN DIGITAL LINE ART, NOT a photograph of a drawing: no paper texture, no paper grain, no off-white or cream paper tone, no pencil / graphite / charcoal media, no smudging or smearing, no fingerprints, no eraser marks, no scan artifacts, no vignetting. ' +
@@ -183200,6 +183269,7 @@ No text, no watermark, no UI elements, share-ready.`;
       _refContract +
       _emotionDirective(opts.emotions) +
       _underwaterDirective(opts.underwater ? 'lineart' : null) +
+      _combatBlock +
       (feedback ? '\n\n' + feedback : '') +
       '\n\nSCENE TO BLOCK OUT:\n' + String(sceneDesc || '').slice(0, 12000) +
       '\n\nREMEMBER: pure BLACK line art on FLAT WHITE — no greys, no paper texture, no pencil smudging, no colour, no rendering, no text.';
