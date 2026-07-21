@@ -1,5 +1,15 @@
 # Benchmark A — permanent regression suite for the measurement instrument
 
+> **Benchmark A v1** · fixtures: A1, A2 seeded (A3, A4 pending) · 2026-07-21
+>
+> The fixture set is itself **versioned**. Swapping, adding, or re-rendering a fixture bumps the benchmark
+> version (v1 → v2) — you are consciously starting a new measurement regime, not silently redefining
+> "Benchmark A." The complete measurement tuple recorded with every result is:
+> ```
+> Benchmark A v1  |  IQS v1.0  |  Prompt v1.0  |  Model: gemini-2.5-flash
+> ```
+> If any one of the four changes, the numbers before and after are not directly comparable.
+
 **Frozen forever.** These sheets never change. They are not a quality benchmark for the *renderer* — they
 are the control that lets us tell **"the images changed"** from **"the instrument changed"** whenever the
 [Image Quality Specification](./image-quality-spec.md) or the classifier prompt is edited.

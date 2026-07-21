@@ -4,12 +4,13 @@
 >
 > This is a **versioned measurement standard**, not just documentation. When a clause is added, removed, or
 > redefined (e.g. redefining acceptable burst dominance), bump the version — you are not editing history,
-> you are minting a *new standard*. Every benchmark run records the versions it was measured under:
+> you are minting a *new standard*. Every benchmark run records the full tuple it was measured under:
 > ```
-> IQS: v1.0   |   Classifier prompt: v1.0   |   Model: gemini-2.5-flash
+> Benchmark A v1   |   IQS v1.0   |   Classifier prompt: v1.0   |   Model: gemini-2.5-flash
 > ```
-> Measurements are only comparable **within** a fixed (IQS × prompt × model) triple. Comparing counts across
-> versions measures the *instrument change*, not the *images* — see "Two independent validations" below.
+> Measurements are only comparable **within** a fixed (fixtures × IQS × prompt × model) tuple. If any one
+> changes, counts before and after measure the *instrument/standard change*, not the *renderer* — see "Two
+> independent validations" below.
 
 The **single source of truth** for CG image acceptance. Both the **verifier** ("does this violate the
 spec?") and the **repair planner** ("which violated clauses can this repair method address?") derive from
