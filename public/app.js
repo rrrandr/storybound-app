@@ -154295,8 +154295,11 @@ No text, no watermark, no UI elements, share-ready.`;
   // emblem; the matching one is attached as a style anchor when a wish outcome is set. (A refused wish
   // has no burst → no reference.) Mirrors the manta-cloak garment-reference pattern.
   function _wishBurstStyleRef(outcome) {
-    if (outcome === 'clean') return { path: '/assets/Fatelands/Wish_Burst_Clean_v1.png', label: 'FATE BURST STYLE reference — match the GRAPHIC STYLE of this emblem: a GOLDEN burst of straight radial lines and discrete sparkle stars, a flat inked comic mark. Match the burst STYLE ONLY — not the figure, header text, or scene in the reference.' };
-    if (outcome === 'twisted') return { path: '/assets/Fatelands/Wish_Burst_Twisted_v1.png', label: 'FATE BURST STYLE reference — match the GRAPHIC STYLE of this emblem: a RED, JAGGED, forked burst with scribbled red X’s and broken/splintered stars, a flat inked comic mark. Match the burst STYLE ONLY — not the figure, header text, or scene in the reference.' };
+    // NB: the label is passed to the model as text — do NOT put letterable proper phrases ("FATE BURST",
+    // "WISH BURST") in it, or the model draws those WORDS into the panel (seen in the sheet batch, 2026-07-21).
+    // Describe the graphic only, and forbid lettering explicitly.
+    if (outcome === 'clean') return { path: '/assets/Fatelands/Wish_Burst_Clean_v1.png', label: 'GRAPHIC BURST STYLE SWATCH (copy the drawing style, NEVER any words): a GOLDEN starburst of straight radial lines and discrete sparkle-stars, a flat inked comic mark. Reproduce the burst STYLE ONLY — NO letters, NO title, NO caption, NO figure or scene.' };
+    if (outcome === 'twisted') return { path: '/assets/Fatelands/Wish_Burst_Twisted_v1.png', label: 'GRAPHIC BURST STYLE SWATCH (copy the drawing style, NEVER any words): a RED, JAGGED, forked spiral-burst with scribbled red X’s and broken/splintered stars, a flat inked comic mark. Reproduce the burst STYLE ONLY — NO letters, NO title, NO caption, NO figure or scene.' };
     return null; // rejected / none → no burst reference
   }
   window._wishBurstStyleRef = _wishBurstStyleRef;
@@ -185042,9 +185045,26 @@ No text, no watermark, no UI elements, share-ready.`;
           'Veilweave tunic. Do not let this panel drop the effect.';
       }
     } catch (_) {}
+    // BURST SCOPING (Roman 2026-07-21, sheet batch): the wish-burst ref is attached SHEET-WIDE, so the model
+    // bled the red X-burst into 2-3 panels instead of the one wish beat. Tag EACH quadrant: allow the burst only
+    // on the Transformation (wish spoken) / Consequence (price paid) panels; forbid it everywhere else.
+    var _burstOnSheet = false;
+    try { _burstOnSheet = (phases || []).some(function (ph) { return ph && (ph._readerLearning === 'Transformation' || (ph._panel && ph._panel.wishOutcome)); }); } catch (_) {}
+    function _quadBurstTag(ph) {
+      if (!_burstOnSheet) return '';
+      var t = ph && ph._readerLearning;
+      if (t === 'Transformation' || t === 'Consequence') {
+        return '\nFATE MARK: the red twisted corruption-burst (jagged spiral + red X’s) belongs in THIS panel — a ' +
+          'reader-only graphic laid OVER the scene, roughly a THIRD of the panel or less, off to one side near the ' +
+          'wish/its price; the CHARACTERS and their action stay the dominant subject. It NEVER fills or dominates ' +
+          'the whole panel and is NEVER a standalone emblem on its own. Carry NO words in or near it.';
+      }
+      return '\nFATE MARK: NO red corruption-burst, NO red X-spray, NO radial red starburst in this panel — it ' +
+        'belongs ONLY to the wish panel, not this one.';
+    }
     var quads = lineSets.map(function (lines, qi) {
       var uniq = lines.filter(function (l) { var t = l.trim(); return t && (N <= 1 || freq[t] < N); });
-      return '\n══ QUADRANT ' + (qi + 1) + ' ══ (this panel only)\n' + uniq.join('\n') + _sheetCameraForQuad(qi, phases) + _quadVwReminder;
+      return '\n══ QUADRANT ' + (qi + 1) + ' ══ (this panel only)\n' + uniq.join('\n') + _sheetCameraForQuad(qi, phases) + _quadVwReminder + _quadBurstTag(phases[qi]);
     });
 
     var globalBlock = globalLines.length
@@ -185054,6 +185074,55 @@ No text, no watermark, no UI elements, share-ready.`;
     // CULTURAL COMBAT — a fight-scene sheet gets its species' combat directive ONCE (all quadrants of a
     // combat scene share the style). Detect from the whole scene text + the species on stage.
     var combatBlock = _sheetCombatBlock(visualState, phases);
+
+    // LIVING WORLD — the sheet path never carried the marine-life / populated-background directive (it lives
+    // outside _buildStagedHeroPrompt), so undersea panels came out lifeless. Inject it once. (Audit 2026-07-21.)
+    var livingBlock = '';
+    try { var _lw = (typeof window._buildLivingWorldDirective === 'function') ? window._buildLivingWorldDirective(state) : ''; if (_lw) livingBlock = '\n\n══ LIVING WORLD (every panel) ══\n' + _lw; } catch (_) {}
+
+    // KWISHEEN FACE — the render kept giving them monster fangs + blank white eyes. Reassert the canon face
+    // when a Kwisheen is on the sheet: humanoid, horizontal capsule pupils (solid black), no fangs. (Audit 2026-07-21.)
+    var kwFaceBlock = '';
+    try {
+      var _spF = _sheetSpecies(visualState);
+      if (_spF && (_spF.kwisheen || _spF.half_kwisheen)) {
+        kwFaceBlock = '\n\n══ KWISHEEN FACE (every panel a Kwisheen appears) ══\nA Kwisheen face is HUMANOID, ' +
+          'coastal and uncanny-beautiful — NOT a monster. Eyes have HORIZONTAL CAPSULE-SHAPED pupils (rounded ' +
+          'rectangles, solid black) — never blank white eyes, never glowing eyes, never round human pupils. The ' +
+          'mouth is an ordinary humanoid mouth — NO monster fangs, NO tusks, NO gaping maw, NO shark teeth. ' +
+          'Coral-dreadlock hair, chromatophore skin. Mysterious and sensual, never a creature-feature sea-monster.';
+      }
+    } catch (_) {}
+
+    // CAST & CONTINUITY LOCK (Roman 2026-07-21) — a single-generation sheet drifts within itself: it
+    // DUPLICATES a character into "twins", flips hair (loose→braid), redesigns the location/props between
+    // panels, and lets buoyancy lapse to standing. The weak "recurring characters stay the same" close clause
+    // didn't hold. Enumerate the EXACT roster and lock identity + hair + setting + buoyancy across all quadrants.
+    var castBlock = '';
+    try {
+      var _pcName = state.protagonistName || state.playerName || (state.picks && state.picks.identity && (state.picks.identity.displayPlayerName || state.picks.identity.playerName)) || 'the protagonist';
+      var _liName = state.loveInterestName || state.name || (state.picks && state.picks.identity && (state.picks.identity.displayPartnerName || state.picks.identity.partnerName)) || 'the love interest';
+      var _seen = {}, _roster = [];
+      var _add = function (nm, desc) { var n = String(nm || '').trim(); if (!n || _seen[n.toLowerCase()]) return; _seen[n.toLowerCase()] = 1; _roster.push(desc ? (n + ' (' + String(desc).replace(/\s+/g, ' ').trim() + ')') : n); };
+      _add(_pcName, (visualState && visualState.pc_wardrobe) || '');
+      var _liOn = (Array.isArray(phases) && phases.some(function (ph) { return ph && ph.li_visibility_phase && ph.li_visibility_phase !== 'absent'; })) ||
+        (visualState && Array.isArray(visualState.characters_present) && visualState.characters_present.indexOf('li') >= 0);
+      if (_liOn) _add(_liName, ((visualState && visualState.li_wardrobe) || '') + (state._liSpecies ? ' — ' + state._liSpecies : ''));
+      try { (visualState && visualState.other_characters_present || []).forEach(function (o) { if (o && o.name) _add(o.name, (o.wardrobe || '') + (o.species ? ' — ' + o.species : '')); }); } catch (_) {}
+      if (_roster.length) {
+        castBlock = '\n\n══ CAST & CONTINUITY (HARD — obey across ALL four panels) ══\n' +
+          'The entire page shows EXACTLY these people and NO others: ' + _roster.join('; ') + '. ' +
+          'Each is ONE single individual — the SAME face, skin, colouring, and WARDROBE in every panel they appear, ' +
+          'and the SAME hair: identical style AND length in every panel (if it is long and loose it STAYS long and ' +
+          'loose everywhere — it never switches to a braid, a ponytail, or a different length between panels). ' +
+          'NO character is duplicated or doubled — never draw two identical copies of the same person (no "twins"), ' +
+          'never show the same person twice in one panel, and never silently swap someone for a look-alike or make ' +
+          'them vanish between panels. ' +
+          'SAME PLACE: all four panels happen in the ONE same location — the same landmarks and props recur ' +
+          'unchanged (the SAME pillar/column, the same ruins, the same coral formations); do NOT redesign the ' +
+          'environment, the column a captive is bound to, or the architecture from panel to panel.';
+      }
+    } catch (_) {}
 
     var close = '\n\nAcross the whole page: recurring characters stay recognisably the SAME individual in ' +
       'every quadrant they appear in — identical face, colouring, hair and wardrobe. ' +
@@ -185067,8 +185136,32 @@ No text, no watermark, no UI elements, share-ready.`;
       'panel does not depict the action it names. ' +
       'SFX UNIQUENESS (HARD): every sound-effect word is UNIQUE across the whole page — no SFX word (SLICE, ' +
       'THUD, KLANG, CHOP, etc.) may appear in more than ONE panel. Letter each panel EXACTLY the word it was ' +
-      'given and never copy or repeat a sound-effect word you already drew in another panel.';
-    return frame + globalBlock + combatBlock + quads.join('\n') + close;
+      'given and never copy or repeat a sound-effect word you already drew in another panel. ' +
+      'The Fate wish-burst (and every reference emblem) is a PURE GRAPHIC MARK carrying NO words — NEVER render ' +
+      'the words "FATE", "BURST", "FATE BURST", "WISH", or any label, title, or header on or near it; if a ' +
+      'reference image has header/title text on it, IGNORE that text and copy only its graphic style. ' +
+      // CLASS-LEVEL text guard (Roman 2026-07-21): kill the whole "instruction-word leak" category at once —
+      // labels, phase names, quadrant headers, reference titles — not one phrase at a time.
+      'INSTRUCTION-TEXT GUARD (HARD): NONE of the words used in THESE INSTRUCTIONS may be drawn as text in the ' +
+      'image — not "PHASE", "QUADRANT", "PANEL", "ORIENTATION", "TRANSFORMATION", "THREAT", "CONSEQUENCE", ' +
+      '"REVELATION", "DECISION", "CAMERA", "SHOT", any character-role label, or any heading/title from this ' +
+      'prompt or a reference image. These are directions to you, not content to letter. The ONLY text permitted ' +
+      'in the whole image is the specified integrated SOUND-EFFECT(s) above — nothing else, anywhere.';
+    // UNIFORM BUOYANCY — the float ref/text applied unevenly (some panels lapsed to standing). Reassert once
+    // for the whole page when the scene is underwater. (Roman 2026-07-21.)
+    var buoyBlock = '';
+    try {
+      var _uwAll = (function () {
+        var _rl = String((state._stagedRegionContract && state._stagedRegionContract.regionLabel) || '').toLowerCase();
+        var _bg = String((visualState && visualState.background) || '').toLowerCase();
+        return /gloamwater/.test(_rl) || /underwater|submerged|undersea|ocean floor|sea ?floor|seabed|reef|coral|grotto|abyss|sunken|kelp|drowned|beneath the (waves|sea|surface)/.test(_bg + ' ' + _sheetSceneText(visualState, phases));
+      })();
+      if (_uwAll) buoyBlock = '\n\n══ BUOYANCY (every panel, every figure) ══\nThis is underwater: in EVERY ' +
+        'panel, ALL figures are weightless and SUSPENDED in mid-water — bodies tilted off-vertical, hair and ' +
+        'cloth drifting, feet and tentacle-tips NOT planted on or bearing weight against the seabed. No one ' +
+        'stands, walks, or is posed upright on the ground in any panel.';
+    } catch (_) {}
+    return frame + globalBlock + combatBlock + livingBlock + kwFaceBlock + castBlock + buoyBlock + quads.join('\n') + close;
   }
   window._buildOneShotSheetPrompt = _buildOneShotSheetPrompt;
 
@@ -185140,12 +185233,84 @@ No text, no watermark, no UI elements, share-ready.`;
         // already staged on state._stagedRegionContract; _renderStagedPhaseImage publishes the resolved
         // set to window._gnSpeciesAnchorPaths, which the image adapters consume. Prime it here for the sheet.
         var _refs = [];
+        // SPECIES ANATOMY ANCHOR — THE reason the sheet drew a Kwisheen raider as a human: it never attached the
+        // per-character species anchor (Kwisheen_*_Solo). The per-panel path resolves it via _stageASpeciesAnchors
+        // / _resolveSoloAnchor; the sheet used only the region SETTING refs. Attach it FIRST (highest priority) so
+        // a non-human on stage gets its body-plan reference — the same anchor a manual harness attaches. (Roman 2026-07-21.)
+        try {
+          if (typeof _stageASpeciesAnchors === 'function') {
+            var _spSceneTxt = _sheetSceneText(visualState, phases);
+            // Build a canon list (species + gender per present character) so _resolveSoloAnchor can pick the right sex.
+            var _canon = [];
+            try { if (visualState && Array.isArray(visualState.characters_present)) visualState.characters_present.forEach(function (c) { if (c && typeof c === 'object' && c.species) _canon.push(c); }); } catch (_) {}
+            try { (visualState && visualState.other_characters_present || []).forEach(function (o) { if (o && (o.species || o.name)) _canon.push({ species: o.species, gender: o.gender || o.sex, name: o.name }); }); } catch (_) {}
+            try { _canon.push({ species: state._playerSpecies, gender: state.gender, name: 'protagonist' }); } catch (_) {}
+            try {
+              var _liOnSp = (Array.isArray(phases) && phases.some(function (ph) { return ph && ph.li_visibility_phase && ph.li_visibility_phase !== 'absent'; }));
+              if (_liOnSp) _canon.push({ species: state._liSpecies, gender: (state.loveInterest || ''), name: 'li' });
+            } catch (_) {}
+            var _spAnchors = await _stageASpeciesAnchors(_canon, _spSceneTxt);
+            for (var _ai = 0; _ai < _spAnchors.length && _refs.length < 8; _ai++) {
+              if (_spAnchors[_ai] && _spAnchors[_ai].b64) { _refs.push({ b64: _spAnchors[_ai].b64, label: _spAnchors[_ai].label }); try { console.log('[ONESHOT] species anatomy anchor: ' + _spAnchors[_ai].governs); } catch (_) {} }
+            }
+          }
+        } catch (_) {}
+        // BUOYANCY FLOAT REF — attach EXPLICITLY, high priority, when underwater. It was last in
+        // _resolveCanonicalAssets and kept getting budget-cut, so figures planted on the seabed. (Sheet batch 2026-07-21.)
+        var _uwFloatPath = null;
+        try {
+          var _uwSheet = (function () {
+            var _rl = String((state._stagedRegionContract && state._stagedRegionContract.regionLabel) || '').toLowerCase();
+            var _bg = String((visualState && visualState.background) || '').toLowerCase();
+            return /gloamwater/.test(_rl) || /underwater|submerged|undersea|ocean floor|sea ?floor|seabed|reef|coral|grotto|abyss|sunken|kelp|drowned/.test(_bg + ' ' + _sheetSceneText(visualState, phases));
+          })();
+          if (_uwSheet && typeof _resolveCompositionRef === 'function') {
+            var _uf = _resolveCompositionRef('underwater_float');
+            if (_uf && _uf.path) { var _ufB = await _canonRefToB64(_uf.path); if (_ufB && _refs.length < 8) { _refs.push({ b64: _ufB, label: _uf.label }); _uwFloatPath = _uf.path; try { console.log('[ONESHOT] buoyancy float ref attached'); } catch (_) {} } }
+          }
+        } catch (_) {}
+        // STYLE ANCHOR (Ender Bond) — the sheet path attached NO style ref, so the render could drift
+        // off-style; lock it with an image, not just the prose "Ender Bond" cue. (Sheet-path audit 2026-07-21.)
+        try {
+          if (typeof _resolveStagedStyleAnchors === 'function') {
+            var _styleP = _resolveStagedStyleAnchors(1) || [];
+            for (var _si = 0; _si < _styleP.length && _refs.length < 8; _si++) {
+              var _sb = await _canonRefToB64(_styleP[_si]);
+              if (_sb) _refs.push({ b64: _sb, label: (state.gnArtist || 'ender_bond') + ' STYLE ANCHOR — match this rendering style (ink-and-colour, cross-hatching, linework) in every panel; not its content.' });
+            }
+          }
+        } catch (_) {}
         try {
           if (state._stagedRegionContract && Array.isArray(state._stagedRegionContract.anchorImages)) {
-            for (var a = 0; a < state._stagedRegionContract.anchorImages.length && _refs.length < 4; a++) {
+            for (var a = 0; a < state._stagedRegionContract.anchorImages.length && _refs.length < 5; a++) {
               var _p = state._stagedRegionContract.anchorImages[a];
               var _b = await _canonRefToB64(_p);
               if (_b) _refs.push({ b64: _b, label: 'CANON REFERENCE — ' + _p.split('/').pop() });
+            }
+          }
+        } catch (_) {}
+        // CANONICAL ASSETS — the sheet attached NONE of these, so the wish light-show (glyphs instead of the
+        // golden / red-X Fate burst), buoyancy (figures standing on the seabed), sacrifice and manta all
+        // drifted. Mirror the per-panel _resolveCanonicalAssets. Skip framing/composition (each quadrant has
+        // its OWN framing via the camera ladder → one ref would mislead; buoyancy fills that slot). (Audit 2026-07-21.)
+        try {
+          if (typeof _resolveCanonicalAssets === 'function') {
+            var _cvaText = _sheetSceneText(visualState, phases);
+            var _hasWish = (phases || []).some(function (ph) { return ph && (ph._readerLearning === 'Transformation' || (ph._panel && ph._panel.wishOutcome)); });
+            var _wo = null;
+            try { if (_hasWish && typeof _sdWishOutcome === 'function') _wo = _sdWishOutcome(_cvaText, (state._stagedActive && state._stagedActive.plan) || null, state.aPlot || null); } catch (_) {}
+            var _sac = (phases || []).some(function (ph) { return ph && ph._panel && ph._panel.sacrifice; }) || /\bsacrific|the price|paid with|withered|drained to grey\b/i.test(_cvaText);
+            var _uw = (function () {
+              var _rl = String((state._stagedRegionContract && state._stagedRegionContract.regionLabel) || '').toLowerCase();
+              var _bg = String((visualState && visualState.background) || '').toLowerCase();
+              return /gloamwater/.test(_rl) || /underwater|submerged|undersea|ocean floor|sea ?floor|seabed|reef|coral|grotto|abyss|sunken|kelp|drowned|beneath the (waves|sea|surface)/.test(_bg + ' ' + _cvaText);
+            })();
+            var _ward = String((visualState && (visualState.pc_wardrobe || '')) + ' ' + (visualState && (visualState.li_wardrobe || '')));
+            var _cva = _resolveCanonicalAssets({ wishOutcome: _wo, sacrifice: _sac, wardrobe: _ward, underwater: _uw });
+            for (var _ci = 0; _ci < _cva.length && _refs.length < 8; _ci++) {
+              if (_cva[_ci].path === _uwFloatPath) continue;   // buoyancy already attached explicitly above
+              var _cb = await _canonRefToB64(_cva[_ci].path);
+              if (_cb) { _refs.push({ b64: _cb, label: _cva[_ci].label }); try { console.log('[ONESHOT] canonical asset attached: ' + _cva[_ci].id); } catch (_) {} }
             }
           }
         } catch (_) {}
@@ -185155,7 +185320,7 @@ No text, no watermark, no UI elements, share-ready.`;
         try {
           var _sceneTxt = _sheetSceneText(visualState, phases);
           var _sp = _sheetSpecies(visualState);
-          if ((_sp.kwisheen || _sp.half_kwisheen) && _isCombatScene(_sceneTxt) && _refs.length < 5 && typeof _kwisheenCombatRefForScene === 'function') {
+          if ((_sp.kwisheen || _sp.half_kwisheen) && _isCombatScene(_sceneTxt) && _refs.length < 8 && typeof _kwisheenCombatRefForScene === 'function') {
             var _crefPath = _kwisheenCombatRefForScene(_sceneTxt, {});
             if (_crefPath) { var _crefB = await _canonRefToB64(_crefPath);
               if (_crefB) { _refs.push({ b64: _crefB, label: 'KWISHEEN COMBAT reference — Many-Tide grapple density, the attack-buckler (limb through a centre hole), and the rear-angle hidden dagger. Guides HOW the fight looks, not any specific character.' });
@@ -185164,7 +185329,7 @@ No text, no watermark, no UI elements, share-ready.`;
           // VEILWEAVE reference — the refraction EFFECT + garment, when the scene names Veilweave. SKIP for
           // a Kwisheen MIMICRY (the ref shows OUTWARD projections; the mimic has none — it would mislead).
           var _vwMimic = /kwisheen/.test(_trueVeilweaveWearerSpecies(visualState)) && _isVeilweaveMimicScene(_sceneTxt);
-          if (_isVeilweaveScene(_sceneTxt) && !_vwMimic && _refs.length < 5 && typeof _veilweaveRef === 'function') {
+          if (_isVeilweaveScene(_sceneTxt) && !_vwMimic && _refs.length < 8 && typeof _veilweaveRef === 'function') {
             var _vwPath = _veilweaveRef();
             if (_vwPath) { var _vwB = await _canonRefToB64(_vwPath);
               if (_vwB) { _refs.push({ b64: _vwB, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — use it ONLY for how the transparent hooded leaf-vein garment looks and how the heavily-overlapping misregistered projections of ONE body read (double-vision, no stable centre). The wearer in your image keeps their OWN species, face, sex, skin, eyes, hair, build, weapon and pose from the identity references — do NOT copy this swatch\'s figure, face, sex, weapon, pose or the exact number of copies, and do NOT reproduce it as its own panel.' });
