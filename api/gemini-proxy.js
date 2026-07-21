@@ -17,6 +17,7 @@
 
 // Model allowlist — only these Gemini models may be used
 const ALLOWED_GEMINI_MODELS = [
+  'gemini-2.5-flash',   // current text+vision model (2.0/1.5 retired)
   'gemini-2.0-flash',
   'gemini-1.5-flash'
 ];
@@ -92,16 +93,38 @@ module.exports = async function handler(req, res) {
     let systemInstruction = null;
     const contents = [];
 
+    // Content may be a string (legacy, text-only) OR an array of blocks for VISION:
+    //   [{ type:'text', text }, { type:'image', mime_type:'image/png', data:<base64> }]
+    // Non-text blocks map to Gemini inline_data parts. (Enables the sheet defect classifier — 2026-07-21.)
+    const _toParts = (content) => {
+      if (typeof content === 'string') return [{ text: content }];
+      if (Array.isArray(content)) {
+        const parts = [];
+        for (const b of content) {
+          if (!b || typeof b !== 'object') continue;
+          if (b.type === 'text' && typeof b.text === 'string') parts.push({ text: b.text });
+          else if (b.type === 'image' && typeof b.data === 'string' && b.data) {
+            parts.push({ inline_data: { mime_type: b.mime_type || 'image/png', data: b.data.replace(/^data:[^;]+;base64,/, '') } });
+          }
+        }
+        return parts.length ? parts : [{ text: '' }];
+      }
+      return [{ text: String(content == null ? '' : content) }];
+    };
+    const _blocksText = (content) => (typeof content === 'string' ? content
+      : Array.isArray(content) ? content.filter(b => b && b.type === 'text').map(b => b.text).join('\n') : String(content || ''));
+
     for (const msg of messages) {
       if (msg.role === 'system') {
-        // Gemini uses systemInstruction for system prompts
+        // Gemini uses systemInstruction for system prompts (text only)
+        const sysText = _blocksText(msg.content);
         systemInstruction = systemInstruction
-          ? { parts: [{ text: systemInstruction.parts[0].text + '\n\n' + msg.content }] }
-          : { parts: [{ text: msg.content }] };
+          ? { parts: [{ text: systemInstruction.parts[0].text + '\n\n' + sysText }] }
+          : { parts: [{ text: sysText }] };
       } else {
         contents.push({
           role: msg.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: msg.content }]
+          parts: _toParts(msg.content)
         });
       }
     }
@@ -122,7 +145,10 @@ module.exports = async function handler(req, res) {
       contents,
       generationConfig: {
         temperature,
-        maxOutputTokens: max_tokens
+        maxOutputTokens: max_tokens,
+        // 2.5-flash defaults thinking ON, which eats the token budget and returns empty JSON on structured
+        // tasks (verify-anatomy hit this — see reference_gemini_thinking_budget_verifier). Force it off.
+        ...(String(model).includes('2.5') ? { thinkingConfig: { thinkingBudget: 0 } } : {})
       }
     };
 
