@@ -183108,6 +183108,42 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._isCombatScene = _isCombatScene;
 
+  // ══ TRUE (CANON) SPECIES vs APPEARANCE (Roman 2026-07-20) ══════════════════════════════════════
+  // HARD RULE: disguise reproduces visible FORM only — it NEVER confers species-native PHYSIOLOGY.
+  // A Kwisheen presenting as First Favored keeps Kwisheen strength/speed/agility/durability and does NOT
+  // gain First Favored superhuman athleticism; Veilweave multiplies apparent POSITION, not the body.
+  // So ABILITY directives (First Favored athleticism, Veilweave projection count) key on TRUE species —
+  // authoritative from `state._playerSpecies`/`_liSpecies`, which are canon and never the disguise —
+  // while APPEARANCE directives (species anatomy anchor, disguise rendering) use the cast/disguise.
+  // Returns { first_favored, half_favored, kwisheen, ... } of species TRULY present.
+  // AUTHORITY = state._playerSpecies / _liSpecies — these are the CANON species and are NEVER the
+  // disguise (a Kwisheen posing as First Favored still has _liSpecies==='Kwisheen'). The cast's `species`
+  // field, by contrast, may carry the DISGUISE (what to DRAW), so it is NOT trusted here — using it leaked
+  // First Favored athleticism onto a disguised Kwisheen. A cast entry contributes its species to TRUE only
+  // when it explicitly marks it as canon via `c._trueSpecies` (for future named-side-char support).
+  function _trueSpeciesOnStage(visualState) {
+    var norm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+    var out = {};
+    try {
+      [state._playerSpecies, state._liSpecies].forEach(function (sp) { var n = norm(sp); if (n && n !== 'human') out[n] = true; });
+      var cast = (visualState && (visualState.characters_present || visualState.canon)) || [];
+      (Array.isArray(cast) ? cast : []).forEach(function (c) { var n = norm(c && c._trueSpecies); if (n && n !== 'human') out[n] = true; });
+    } catch (_) {}
+    return out;
+  }
+  window._trueSpeciesOnStage = _trueSpeciesOnStage;
+
+  // The TRUE species most likely to be the Veilweave wearer (drives projection count). Prefers a genuine
+  // Favored on stage; else the strongest non-human TRUE species present; else human/none → the low band.
+  function _trueVeilweaveWearerSpecies(visualState) {
+    var t = _trueSpeciesOnStage(visualState);
+    if (t.first_favored || t.favored || t.favoured) return 'first_favored';
+    if (t.half_favored) return 'half_favored';
+    var keys = Object.keys(t);
+    return keys.length ? keys[0] : 'human';   // a disguised-Kwisheen wearer resolves to 'kwisheen' → 2-3
+  }
+  window._trueVeilweaveWearerSpecies = _trueVeilweaveWearerSpecies;
+
   // Kwisheen melee: the Many-Tide Method + grappling doctrine + the attack-buckler.
   function _kwisheenCombatDirective() {
     return '\n\nKWISHEEN COMBAT (the Many-Tide Method — the whole body fights as ONE system, never human ' +
@@ -183128,15 +183164,20 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._kwisheenCombatDirective = _kwisheenCombatDirective;
 
-  // First Favored melee: the Avowed Path's signature weapons (visual only).
+  // First Favored melee: the Avowed Path's weapons + their superhuman ATHLETICISM. For a GENUINE First
+  // Favored only — a disguised Kwisheen does NOT get this (see _trueSpeciesOnStage gating).
   function _firstFavoredCombatDirective() {
     return '\n\nFIRST FAVORED COMBAT (the Avowed Path — direct, committed, legible): the signature weapon is ' +
       'THE ANSWER, a DOUBLE-ENDED POLEARM — one end a narrow inward-facing crescent HOOK (for trapping, ' +
       'disarming, controlling limbs, taking alive), the other end a straight or leaf-shaped KILLING BLADE ' +
       '(thrust, decisive cut, armour-piercing), with a weighted central shaft for staff strikes. The sidearm ' +
       'is the AVOWAL BLADE — a broad, FORWARD-CURVING single-edged sword with a small disarming hook near the ' +
-      'base and DELIBERATELY LEGIBLE cutting geometry (no concealed second edge). Stances are direct and ' +
-      'committed, weight behind a chosen line — never the shifting multi-limb entanglement of a Kwisheen.';
+      'base and DELIBERATELY LEGIBLE cutting geometry (no concealed second edge). ' +
+      'ATHLETICISM (defining): a First Favored is a BEYOND-OLYMPIC superhuman athlete — extraordinary strength, ' +
+      'agility, reflexes and durability. Depict them MID-MOTION with explosive, acrobatic, near-airborne ' +
+      'movement: lightning slides, flips, twists, aerial reversals and dodges (a Yoda-in-a-lightsaber-duel / ' +
+      'Spider-Man quickness), weight coiled to spring or already off the ground, faster and more agile on land ' +
+      'than any human or Kwisheen. Committed line, NOT the shifting multi-limb entanglement of a Kwisheen.';
   }
   window._firstFavoredCombatDirective = _firstFavoredCombatDirective;
 
@@ -183187,7 +183228,13 @@ No text, no watermark, no UI elements, share-ready.`;
       'stable centre to target. Offset them VERTICALLY as well as sideways, and overlap them enough that the ' +
       'real body\'s exact position is genuinely uncertain. It is NOT separate clones standing side by side, ' +
       'NOT orderly holographic copies, NOT opaque robes / plate armour / a superhero suit / a force field. A ' +
-      'dark setting makes the refraction legible.';
+      'dark setting makes the refraction legible. ' +
+      (/six|nine/i.test(range)
+        ? 'The wearer is a genuine First Favored: the many selves move at explosive SUPERHUMAN speed — aerial, ' +
+          'acrobatic, near-untargetable — a storm of positions.'
+        : 'The wearer is NOT a genuine First Favored (fewer selves): the projections reproduce their ' +
+          'appearance but move only at ORDINARY, non-superhuman capability — the garment hides position, it ' +
+          'does not grant First Favored athleticism.');
   }
   window._veilweaveDirective = _veilweaveDirective;
 
@@ -183328,25 +183375,23 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var _combatOn = opts.combat === true || (opts.combat !== false && _isCombatScene(sceneDesc));
       if (_combatOn) {
-        var _cnorm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
-        var _spInScene = {};
-        (Array.isArray(opts.cast) ? opts.cast : []).forEach(function (c) { var sp = _cnorm(c && c.species); if (sp) _spInScene[sp] = true; });
-        // Fall back to scene text when the cast carries no species field.
-        if (!Object.keys(_spInScene).length) {
-          if (/kwisheen|octofolk/.test(String(sceneDesc || '').toLowerCase())) _spInScene.kwisheen = true;
-          if (/first[- ]favored|first favoured/.test(String(sceneDesc || '').toLowerCase())) _spInScene.first_favored = true;
+        // ABILITY directives key on TRUE species (state-authoritative + cast), NEVER the disguise, so a
+        // Kwisheen posing as First Favored does NOT get First Favored athleticism.
+        var _trueSp = _trueSpeciesOnStage({ characters_present: opts.cast });
+        // scene-text fallback when neither state nor cast carries species.
+        if (!Object.keys(_trueSp).length) {
+          if (/kwisheen|octofolk/.test(String(sceneDesc || '').toLowerCase())) _trueSp.kwisheen = true;
+          if (/first[- ]favored|first favoured/.test(String(sceneDesc || '').toLowerCase())) _trueSp.first_favored = true;
         }
-        if (_spInScene.kwisheen || _spInScene.half_kwisheen) _combatBlock += _kwisheenCombatDirective();
-        if (_spInScene.first_favored) _combatBlock += _firstFavoredCombatDirective();
+        if (_trueSp.kwisheen || _trueSp.half_kwisheen) _combatBlock += _kwisheenCombatDirective();
+        if (_trueSp.first_favored) _combatBlock += _firstFavoredCombatDirective();
       }
     } catch (_) {}
     // VEILWEAVE — independent of combat (a First Favored may wear it in any scene). Fires when the scene
-    // names Veilweave; projection count scales with the wearer's alignment.
+    // names Veilweave; projection count scales with the wearer's TRUE alignment (a disguised Kwisheen → 2-3).
     try {
       if (opts.veilweave === true || (opts.veilweave !== false && _isVeilweaveScene(sceneDesc))) {
-        var _vwSp = opts.veilweaveWearerSpecies || (function () {
-          var f = ''; (Array.isArray(opts.cast) ? opts.cast : []).forEach(function (c) { var sp = String((c && c.species) || '').toLowerCase(); if (/favor|favour/.test(sp) && !f) f = sp; }); return f || 'first_favored';
-        })();
+        var _vwSp = opts.veilweaveWearerSpecies || _trueVeilweaveWearerSpecies({ characters_present: opts.cast });
         _combatBlock += _veilweaveDirective(_vwSp);
       }
     } catch (_) {}
@@ -184603,7 +184648,8 @@ No text, no watermark, no UI elements, share-ready.`;
   function _sheetCombatBlock(visualState, phases) {
     try {
       var text = _sheetSceneText(visualState, phases);
-      var sp = _sheetSpecies(visualState);
+      // ABILITY directives key on TRUE species (never the disguise), per the disguise-physiology rule.
+      var sp = _trueSpeciesOnStage(visualState);
       var block = '';
       if (_isCombatScene(text)) {
         var cb = '';
@@ -184612,7 +184658,7 @@ No text, no watermark, no UI elements, share-ready.`;
         if (cb) block += '\n\n══ COMBAT (applies to every fight panel) ══' + cb;
       }
       if (_isVeilweaveScene(text)) {
-        block += '\n\n══ VEILWEAVE (the wearer, every panel they appear in) ══' + _veilweaveDirective(_veilweaveWearerSpecies(visualState));
+        block += '\n\n══ VEILWEAVE (the wearer, every panel they appear in) ══' + _veilweaveDirective(_trueVeilweaveWearerSpecies(visualState));
       }
       return block;
     } catch (_) { return ''; }
