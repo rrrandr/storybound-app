@@ -183209,6 +183209,30 @@ No text, no watermark, no UI elements, share-ready.`;
   function _isVeilweaveScene(sceneDesc) { return /veil[- ]?weave/i.test(String(sceneDesc || '')); }
   window._isVeilweaveScene = _isVeilweaveScene;
 
+  // A Kwisheen can body-shape its chromatophore hide to FAKE the Veilweave look — but the fake is
+  // fundamentally different: it is a surface sheen BOUNDED TO THE BODY, never the outward-thrown
+  // projections of real Veilweave (which is light refraction the skin cannot reproduce).
+  function _isVeilweaveMimicScene(sceneDesc) {
+    var t = String(sceneDesc || '').toLowerCase();
+    if (!/veil[- ]?weave/.test(t)) return false;
+    // STEM match (no trailing \b) so "mimicking"/"imitating"/"faking" all hit.
+    return /\b(mimic|fake|faking|faux|imitat|counterfeit|feign|passing (as|for)|body[- ]?shap|camouflag|copy the shimmer|shimmer across|false veil)/.test(t);
+  }
+  window._isVeilweaveMimicScene = _isVeilweaveMimicScene;
+
+  // The Kwisheen-mimicry directive — a bounded surface shimmer, NO outward projections. No wearer-species
+  // count (there are no external selves to count).
+  function _veilweaveMimicDirective() {
+    return '\n\nVEILWEAVE MIMICRY (a Kwisheen faking Veilweave with body-shaping chromatophore camouflage — ' +
+      'NOT the real garment): a shimmering, iridescent, ALTERNATING prismatic sheen passes ACROSS the surface ' +
+      'of the (disguised) body — reminiscent of the Veilweave duplicating effect, but BOUNDED ENTIRELY TO THE ' +
+      'BODY\'S OWN FORM. There are NO outward projections, NO drifting duplicate selves, NO overlapping ' +
+      'misregistered copies extending beyond the silhouette — only a skin-bound camouflage shimmer contained ' +
+      'within the single body\'s outline. (This is the TELL: real Veilweave throws overlapping selves OUTWARD ' +
+      'into the space around the wearer; the mimicry cannot leave the body.)';
+  }
+  window._veilweaveMimicDirective = _veilweaveMimicDirective;
+
   function _veilweaveProjectionRange(wearerSpecies) {
     var sp = String(wearerSpecies || '').toLowerCase().replace(/[\s-]+/g, '_');
     if (/half.*favor/.test(sp)) return 'THREE to FIVE';          // half-Favored (check before 'favor')
@@ -183392,7 +183416,12 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       if (opts.veilweave === true || (opts.veilweave !== false && _isVeilweaveScene(sceneDesc))) {
         var _vwSp = opts.veilweaveWearerSpecies || _trueVeilweaveWearerSpecies({ characters_present: opts.cast });
-        _combatBlock += _veilweaveDirective(_vwSp);
+        // A Kwisheen FAKING Veilweave with body-shaping → bounded surface shimmer, no outward projections.
+        if ((/kwisheen/.test(_vwSp)) && (opts.veilweaveMimic === true || _isVeilweaveMimicScene(sceneDesc))) {
+          _combatBlock += _veilweaveMimicDirective();
+        } else {
+          _combatBlock += _veilweaveDirective(_vwSp);
+        }
       }
     } catch (_) {}
 
@@ -184658,7 +184687,12 @@ No text, no watermark, no UI elements, share-ready.`;
         if (cb) block += '\n\n══ COMBAT (applies to every fight panel) ══' + cb;
       }
       if (_isVeilweaveScene(text)) {
-        block += '\n\n══ VEILWEAVE (the wearer, every panel they appear in) ══' + _veilweaveDirective(_trueVeilweaveWearerSpecies(visualState));
+        var vwSp = _trueVeilweaveWearerSpecies(visualState);
+        if (/kwisheen/.test(vwSp) && _isVeilweaveMimicScene(text)) {
+          block += '\n\n══ VEILWEAVE MIMICRY (the disguised Kwisheen) ══' + _veilweaveMimicDirective();
+        } else {
+          block += '\n\n══ VEILWEAVE (the wearer, every panel they appear in) ══' + _veilweaveDirective(vwSp);
+        }
       }
       return block;
     } catch (_) { return ''; }
@@ -184696,8 +184730,10 @@ No text, no watermark, no UI elements, share-ready.`;
               if (_crefB) { _refs.push({ b64: _crefB, label: 'KWISHEEN COMBAT reference — Many-Tide grapple density, the attack-buckler (limb through a centre hole), and the rear-angle hidden dagger. Guides HOW the fight looks, not any specific character.' });
                 try { console.log('[ONESHOT] combat ref attached: ' + _crefPath.split('/').pop()); } catch (_) {} } }
           }
-          // VEILWEAVE reference — the refraction EFFECT + garment, when the scene names Veilweave.
-          if (_isVeilweaveScene(_sceneTxt) && _refs.length < 5 && typeof _veilweaveRef === 'function') {
+          // VEILWEAVE reference — the refraction EFFECT + garment, when the scene names Veilweave. SKIP for
+          // a Kwisheen MIMICRY (the ref shows OUTWARD projections; the mimic has none — it would mislead).
+          var _vwMimic = /kwisheen/.test(_trueVeilweaveWearerSpecies(visualState)) && _isVeilweaveMimicScene(_sceneTxt);
+          if (_isVeilweaveScene(_sceneTxt) && !_vwMimic && _refs.length < 5 && typeof _veilweaveRef === 'function') {
             var _vwPath = _veilweaveRef();
             if (_vwPath) { var _vwB = await _canonRefToB64(_vwPath);
               if (_vwB) { _refs.push({ b64: _vwB, label: 'VEILWEAVE EFFECT reference — the transparent hooded leaf-vein garment and its heavily-overlapping misregistered projections of the SAME body (double-vision, no stable centre). Copy the EFFECT and transparency ONLY, never this figure\'s face, sex, weapon or pose.' });
