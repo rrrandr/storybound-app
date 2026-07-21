@@ -109,5 +109,9 @@ A tiny, **frozen-forever** set of representative sheets spanning distinct visual
 or the classifier prompt changes, re-run Benchmark A: it is the control that separates "the images changed"
 from "the instrument changed." Composition and status: `docs/benchmark-A.md`.
 
-Related: `project_sheet_production_layer`, `docs/sheet-defect-regressions.md`, `docs/benchmark-A.md`,
-`project_staged_validation_architecture`.
+The governing principles behind this spec (versioning, evidence vs. interpretation, missing-evidence,
+orthogonal validation, one-spec-across-the-pipeline) and the pre-registered determinism gate live in
+`docs/measurement-discipline.md`.
+
+Related: `project_sheet_production_layer`, `docs/measurement-discipline.md`, `docs/sheet-defect-regressions.md`,
+`docs/benchmark-A.md`, `project_staged_validation_architecture`.
