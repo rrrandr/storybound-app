@@ -8,9 +8,9 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
 
 (async () => {
   fs.mkdirSync(OUTDIR, { recursive: true });
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, channel: 'chrome' });
   const page = await (await browser.newContext({ viewport: { width: 1100, height: 800 } })).newPage();
-  page.on('console', m => { const t = m.text(); if (/\[CG:SCREENPLAY|\[CG:SCAFFOLD|\[STAGED:|\[CASTING|\[STORYBOARD|SCENE-CASE|status":"(SUCCESS|FAIL)|\[Gemini\] Error|FAVORED-SHIFT|SPECIES BY CHARACTER|author=|Generation failed/i.test(t)) console.error('  >', t.slice(0, 170)); });
+  page.on('console', m => { const t = m.text(); if (/\[CG:SCREENPLAY|\[CG:SCAFFOLD|\[STAGED:|\[CASTING|\[STORYBOARD|\[CANON-REPAIR|\[ANATOMY-REPAIR|\[VERIFY\]|SCENE-CASE|status":"(SUCCESS|FAIL)|\[Gemini\] Error|FAVORED-SHIFT|SPECIES BY CHARACTER|author=|Generation failed/i.test(t)) console.error('  >', t.slice(0, 200)); });
   await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForFunction(() => window.state && typeof window._runCGScreenplayGen === 'function', { timeout: 40000 });
 
@@ -38,6 +38,7 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
     s._pcLookSkipped = true; // dodge the PC-Look modal await (no user in headless)
     window._devBypass = true;
     window._stagedFunnelBypass = true; // fixes reach the model
+    window._structuralPass = true; // (A) integration run — sketch→verify→colorize→cosmetic-klein
     window.__cgAuthorTimeoutMs = 180000; // give slow reasoning-model gen more time (providers degraded)
 
     // ── TWISTING-WISH VALIDATION (Roman 2026-07-18): force the scene's wish to WARP so the regen
@@ -141,7 +142,9 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
              phaseMeta: phaseMeta, heroRenders: heroRenders, allRenders: window.__probeRenders || [],
              beatCount: beatCount, microDecision: microDecision, wardrobe: wardrobe, bespokeAxis: bespokeAxis,
              heroImgCount: heroImgCount, closeups: closeups, closeupCount: closeups.length, expectedCuts: expectedCuts,
-             kwLock: (function () { try { return s.kwisheenAppearance || {}; } catch (_) { return {}; } })() };
+             kwLock: (function () { try { return s.kwisheenAppearance || {}; } catch (_) { return {}; } })(),
+             canonRepairLog: (function () { try { return window._canonRepairLog || []; } catch (_) { return []; } })(),
+             pipelineTrace: (function () { try { return window._pipelineTrace || []; } catch (_) { return []; } })() };
   });
 
   console.log('\n  E2E SCENE 1 — Fatelands / Kwisheen');
@@ -174,6 +177,94 @@ const OUTDIR = '/private/tmp/claude-501/-Users-romantsukerman-storybound-app/5b5
     try { if (String(u).startsWith('data:')) { fs.writeFileSync(path.join(OUTDIR, 'scene1_img' + i + '.png'), Buffer.from(String(u).split(',')[1], 'base64')); saved++; } } catch (_) {}
   });
   console.log('  saved: ' + saved + ' images + prose → ' + OUTDIR);
+
+  // ── CANON-REPAIR SCORECARD (Klein canon-conformance) ─────────────────────────
+  var log = res.canonRepairLog || [];
+  console.log('  ── canon-repair scorecard ──');
+  if (!log.length) {
+    console.log('    no defects detected this scene (verifier passed every panel, or canon absent)');
+  } else {
+    // Per-panel breakdown.
+    var byPhase = {};
+    log.forEach(function (e) { var p = (e.phase == null ? -1 : e.phase); (byPhase[p] = byPhase[p] || []).push(e); });
+    Object.keys(byPhase).map(Number).sort(function (a, b) { return a - b; }).forEach(function (p) {
+      var es = byPhase[p];
+      var repaired = es.filter(function (e) { return e.outcome === 'repaired'; });
+      var reported = es.filter(function (e) { return e.outcome !== 'repaired'; });
+      var line = '    panel ' + p + ': ' + (repaired.length ? 'repaired [' + repaired.map(function (e) { return e.type + (e.character ? ':' + e.character : ''); }).join(', ') + ']' : 'no repairs');
+      if (reported.length) line += ' | reported-only [' + reported.map(function (e) { return e.type + '(' + e.outcome + ')'; }).join(', ') + ']';
+      var maxP1 = Math.max.apply(null, es.map(function (e) { return e.p1_count || 0; }));
+      if (maxP1 > 1) line += ' | ⚠ ' + maxP1 + ' P1 defects (regen-budget signal)';
+      console.log(line);
+    });
+    // Totals + repairs-per-panel.
+    var totalRepairs = log.filter(function (e) { return e.outcome === 'repaired'; }).length;
+    var panels = res.heroImgCount || Object.keys(byPhase).length || 1;
+    console.log('    ── totals ── repairs=' + totalRepairs + ' across ' + panels + ' panels = ' + (totalRepairs / panels).toFixed(2) + ' repairs/panel (goal: → 0 as upstream conditioning improves)');
+    // Oscillation: the SAME defect type+character recurring on ≥2 panels = generator fighting Klein.
+    var sig = {};
+    log.filter(function (e) { return e.outcome === 'repaired'; }).forEach(function (e) { var k = e.type + '|' + (e.character || '?'); (sig[k] = sig[k] || new Set()).add(e.phase); });
+    var osc = Object.keys(sig).filter(function (k) { return sig[k].size >= 2; });
+    if (osc.length) {
+      console.log('    ⚠ OSCILLATION — same defect repaired on multiple panels (needs UPSTREAM fix, not permanent downstream correction):');
+      osc.forEach(function (k) { console.log('        ' + k + ' → panels ' + Array.from(sig[k]).sort().join(', ')); });
+    } else {
+      console.log('    ✓ no oscillation — no single defect recurred across panels');
+    }
+  }
+
+  // ── STRUCTURAL-PASS INTEGRATION TRACE + DASHBOARD (A / verifier calibration) ──
+  // Classify each rejected-sketch reason: REAL structural (bad generation) vs VERIFIER DISAGREEMENT
+  // (calibration noise — count/shape/detail the structural stage shouldn't judge). Distinguishes
+  // "paying for retries because of bad generation" from "verifier asking the wrong question".
+  var STRUCT_RX = /\bleg|feet|knee|tail|mermaid|contaminat|human.*(scale|tentacle)|(scale|tentacle).*human|extra.*(arm|limb)|too many|manipulator arm|missing.*(arm|limb)|mass of tentacles|no mantle|octopus-head|wrong species|figure count|person count/i;
+  var CALIB_RX = /\bcount|number of|about (six|two)|\d+ ?(tentacle|arm)|tentacle.{0,14}(shape|curl|number)|pupil|mane|scalp|facial detail|hair texture|skin pattern|capsule/i;
+  function classify(reasons) {
+    var struct = [], calib = [];
+    (reasons || []).forEach(function (r) { if (STRUCT_RX.test(r)) struct.push(r); else if (CALIB_RX.test(r)) calib.push(r); else struct.push(r); });
+    return { struct: struct, calib: calib };
+  }
+  var trace = res.pipelineTrace || [];
+  console.log('  ── structural-pass integration trace ──');
+  if (!trace.length) {
+    console.log('    (no structural-pass panels — flag off, or all panels fell back to one-shot)');
+  } else {
+    trace.forEach(function (t) { t._c = classify(t.structural.defects); });
+    trace.sort(function (a, b) { return a.phase - b.phase; }).forEach(function (t) {
+      console.log('    panel ' + t.phase + ':');
+      console.log('      sketch accepted: ' + (t.structural.resolved ? 'attempt ' + t.structural.attempts : 'NEVER (best-of-' + t.structural.attempts + ')') +
+        ' | final structurally clean: ' + (t.structuralEntropy === 0 ? 'yes ✓' : 'NO ⚠'));
+      if (t._c.struct.length) console.log('      REAL structural (bad generation): ' + t._c.struct.slice(0, 3).join(' / '));
+      if (t._c.calib.length) console.log('      VERIFIER DISAGREEMENT (calibration noise): ' + t._c.calib.slice(0, 3).join(' / '));
+      console.log('      colorize: ' + t.colorize.count + ' (recolorize ' + t.colorize.recolorize + ') | contract: ' + t.colorize.contract +
+        ' | entropy: ' + (t.entropyStatus === 'measured' ? (t.structuralEntropy + ' (measured)' + (t.structuralEntropy === 0 ? ' ✓' : ' ⚠')) : 'unknown (' + t.entropyStatus + ')'));
+      console.log('      cosmetic: defects [' + (t.cosmetic.defects.join(', ') || 'none') + '] → Klein repaired [' + (t.cosmetic.kleinRepairs.join(', ') || 'none') + ']');
+      console.log('      calls: lineart ' + t.calls.lineart + ' / structVerify ' + t.calls.structVerify + ' / colorize ' + t.calls.colorize +
+        ' | ms total ' + (t.ms.total || 0));
+    });
+    var n = trace.length, sum = function (f) { return trace.reduce(function (a, t) { return a + f(t); }, 0); };
+    var avg = function (f) { return (sum(f) / n).toFixed(2); };
+    var needKlein = sum(function (t) { return t.cosmetic.kleinRepairs.length > 0 ? 1 : 0; });
+    var needRetry = sum(function (t) { return t.structural.attempts > 1 ? 1 : 0; });
+    var needRecolor = sum(function (t) { return t.colorize.recolorize > 0 ? 1 : 0; });
+    var cleanThrough = sum(function (t) { return (t.structural.attempts === 1 && t.colorize.recolorize === 0 && t.cosmetic.kleinRepairs.length === 0) ? 1 : 0; });
+    console.log('  ── DASHBOARD (baseline, n=' + n + ' panels) ──');
+    console.log('    sketch accepted 1st try:       ' + sum(function (t) { return (t.structural.resolved && t.structural.attempts === 1) ? 1 : 0; }) + '/' + n);
+    console.log('    sketch accepted (ever):        ' + sum(function (t) { return t.structural.resolved ? 1 : 0; }) + '/' + n);
+    console.log('    structural entropy:            measured-0 ' + sum(function (t) { return (t.entropyStatus === 'measured' && t.structuralEntropy === 0) ? 1 : 0; }) +
+      ' | >0 ' + sum(function (t) { return (t.entropyStatus === 'measured' && t.structuralEntropy > 0) ? 1 : 0; }) +
+      ' | unknown ' + sum(function (t) { return t.entropyStatus !== 'measured' ? 1 : 0; }) + '  (never assume 0)');
+    console.log('    avg structural retries/panel:  ' + avg(function (t) { return t.structural.attempts - 1; }));
+    console.log('    avg REAL-structural flags/pnl: ' + avg(function (t) { return t._c.struct.length; }) + '  ← bad generation');
+    console.log('    avg VERIFIER-DISAGREE flags/pnl: ' + avg(function (t) { return t._c.calib.length; }) + '  ← calibration (target → 0)');
+    console.log('  ── REPAIR AVOIDANCE (the metric being optimized — fewer panels need any repair) ──');
+    console.log('    needed structural retry:       ' + needRetry + '/' + n);
+    console.log('    needed recolorize:             ' + needRecolor + '/' + n);
+    console.log('    needed Klein:                  ' + needKlein + '/' + n);
+    console.log('    clean through (no repair):     ' + cleanThrough + '/' + n + '  ← repair-avoidance rate ' + (100 * cleanThrough / n).toFixed(0) + '%');
+    console.log('    avg image-calls/panel (cost):  ' + avg(function (t) { return t.calls.lineart + t.calls.colorize; }) + ' render + ' + avg(function (t) { return t.calls.structVerify; }) + ' verify');
+    console.log('    avg total ms/panel:            ' + avg(function (t) { return t.ms.total || 0; }));
+  }
   console.log('  ' + '─'.repeat(60) + '\n');
   await browser.close();
 })().catch(function (e) { console.error('HARNESS ERROR:', e); process.exit(2); });
