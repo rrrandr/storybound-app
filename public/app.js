@@ -74110,6 +74110,10 @@ Return ONLY valid JSON:
       // re-establishes its PC/LI appearance once on first appearance, then locks.
       try { state._apprEstablished = {}; state._apprModeCache = null; } catch (_) {}
 
+      // WEAPON LEDGER (Roman 2026-07-21): named-weapon canonical visuals are per-story, so "Fatebane" in
+      // one story never leaks its established look into the next.
+      try { state._weaponLedger = {}; } catch (_) {}
+
       // PREVIEW ONBOARDING (Roman 2026-07-03): per-story preview financing state.
       // Clear so a prior Preview never leaks previewActive/pricing into the next
       // story (a corridor-built story would otherwise be mis-priced as a preview).
@@ -149613,6 +149617,7 @@ No text, no watermark, no UI elements, share-ready.`;
     '- WARDROBE INFERENCE (when prose does NOT name clothing): infer from CONTEXTUAL SIGNALS in the scene. The prose tells you the protagonist is a journalist in a newsroom — output something like "blouse, blazer, dark jeans, sensible boots" rather than leaving it blank. The setting + occupation + social register imply clothing even when no garment is named. Examples: courtroom scene → "tailored suit, polished shoes"; gala → "evening dress, heels"; battlefield → "fatigues, body armor"; coffee shop → "casual sweater, jeans"; hospital → "scrubs". Only leave blank ("") when the scene is genuinely setting-ambiguous AND no occupation/role is implied. The image generator NEEDS this signal — empty pc_wardrobe causes it to default to whatever the artist\'s reference image happens to wear (often leather/anime-urban for Ryo Toro, gowns for Lora Venn), which produces a journalist-rendered-as-motorcycle-goth-chick.\n' +
     '- WARDROBE = STATION + CIRCUMSTANCES (HARD — applies to pc_wardrobe, li_wardrobe, AND every other_characters_present[].wardrobe): every character\'s clothing must read their STATION (rank, wealth, class, profession, role in this world) AND their CIRCUMSTANCES (what they are doing right now, where they are, the temperature/weather, how long they have been there, whether they came prepared). A monarch and a scullion do not dress alike; the same person dresses differently for a funeral, a swim, and a march to war. PEER-REGISTER GUARD (fixes the "one in fine robes, one in rags" drift): two characters of SIMILAR station in the SAME setting read at a SIMILAR register — do NOT dress one in finery and the other in rags unless the prose ESTABLISHES a difference (servant vs noble, prisoner vs guard, someone caught mid-flight vs someone at home). A rags-vs-robes contrast must be a STORY choice you can point to in the prose — NEVER a default reached for to tell two figures apart. When you cannot ground a specific garment, dress the character for their station in this setting, not for drama, and never leave a visible main character blank.\n' +
     '- other_characters_present: list every non-PC, non-LI named character who is physically present in the scene at ANY phase. Include their wardrobe and position from the prose. Empty array [] if none.\n' +
+    '- WEAPON (pc_weapon, li_weapon, and every character\'s .weapon): if a character is ARMED in the scene, output {"name": <the weapon\'s name EXACTLY as the prose calls it, e.g. "the Fatebane" or "a curved tulwar">, "descriptor": <its concrete VISUAL properties as the prose/lore established them — shape, length, blade/head, colour, material, any glow or effect; e.g. "a black-bladed longsword whose edge weeps shadow">}. Pull the name and properties VERBATIM from the prose wherever it names or describes the weapon; do NOT invent properties the story never gave. If the prose only NAMES the weapon without describing it, still output the name with descriptor "" (the renderer will keep it consistent by name). Omit / null when the character is unarmed. This locks each weapon so it does not mutate or vanish between panels.\n' +
     '- key_props: list named diegetic objects that play any role in the scene (a tarot deck mentioned in dialogue, a glass that breaks, a letter passed between characters). These will appear in the staging WHEN their phase begins — not before.\n\n' +
     'PHASE RULES (HARD):\n' +
     '\n' +
@@ -155692,22 +155697,32 @@ No text, no watermark, no UI elements, share-ready.`;
   var _LETTER_SFX_VOCAB = {
     blade_draw:  ['SHNKT', 'SHING', 'SLNK'],
     blade_clash: ['KLANG', 'CLASH', 'SHRNK'],
+    blade_cut:   ['SLICE', 'CHOP', 'SHUNK', 'SLSH', 'SHKK'],   // a blade cutting/slashing into a body or armour
     stone_crack: ['KRRRK', 'CRACK', 'KRRSH'],
     lightning:   ['ZZZT', 'KRAK', 'FZZAK'],
     portal:      ['WHUMMM', 'KRRRRR', 'VWOOM'],
     explosion:   ['BOOM', 'THOOM', 'WHUMP'],
-    impact:      ['WHAM', 'THUD', 'KRUNCH'],
+    impact:      ['THUD', 'WHAM', 'KRUNCH'],
     water:       ['SPLASH', 'SPLOOSH', 'GLURSH'],
     fire:        ['FWOOSH', 'WHOOM', 'FWMP'],
     magic:       ['SHIMMER', 'FWOOM', 'VRRR'],
-    bubble:      ['BLURB', 'GLUB', 'BLUP']
+    bubble:      ['BLURB', 'GLUB', 'BLUP'],
+    // ── SUSPENSE / WARNING class (Roman 2026-07-21): the QUIET wrong sound that plants dread. Unlike the
+    // loud action SFX above, these are LIGHT and ominous, and still obey the SFX-authority rule — each is
+    // tied to a VISIBLE source in the frame (a stirring topiary, a dark doorway, a wet ceiling spot). A hush
+    // that says something is about to happen, not a genre mood-sticker.
+    rustle:      ['RUSTLE', 'FWISH', 'SSSH'],   // foliage / topiary / curtain stirring
+    creak:       ['CREAK', 'KREEE', 'KRRK'],    // a door / floorboard / old timber
+    drip:        ['DRIP', 'PLIP', 'PLINK'],     // a wet spot / dripping source overhead
+    groan:       ['GRRRN', 'MMRRN', 'NNRR'],    // structure straining — rope, timber, ice about to give
+    skitter:     ['SKTR', 'TKTK', 'SCRTCH']     // small unseen thing moving in the dark
   };
   window._LETTER_SFX_VOCAB = _LETTER_SFX_VOCAB;
   // Categories whose sound is REDUNDANT with an active Comic Graphic Language channel → suppress them
   // (the artwork already communicates it): magic/portal are covered by ENERGY (glyphs/particles).
   var _TYPO_SFX_SUPPRESS_IF = { magic: 'energy', portal: 'energy' };
   // Discrete, forceful material events read STRONG; ambient/soft events read LIGHT.
-  var _TYPO_SFX_STRONG = { explosion: 1, stone_crack: 1, impact: 1, blade_clash: 1, lightning: 1 };
+  var _TYPO_SFX_STRONG = { explosion: 1, stone_crack: 1, impact: 1, blade_clash: 1, blade_cut: 1, lightning: 1 };
   // SFX AUTHORITY (Roman 2026-07-18) — an SFX is a CONSEQUENCE OF A DEPICTED ACTION, never a genre default
   // or mood-setter. The categorizer keys off beat TEXT, but the panel may not actually DRAW that action (the
   // regen showed "WHAM" with no visible impact and "SHING" with no blade strike). So the renderer is told the
@@ -155715,6 +155730,7 @@ No text, no watermark, no UI elements, share-ready.`;
   var _TYPO_SFX_VISIBLE_ACTION = {
     blade_draw:  'a blade actively being drawn or bared',
     blade_clash: 'two blades physically meeting or locking',
+    blade_cut:   'a blade cutting or slashing into a body or armour (a landing cut, a gash opening)',
     stone_crack: 'stone visibly cracking, splitting, or shattering',
     lightning:   'a visible lightning or electric arc',
     portal:      'a portal / passage visibly opening or widening',
@@ -155723,13 +155739,19 @@ No text, no watermark, no UI elements, share-ready.`;
     water:       'water visibly splashing or surging',
     fire:        'visible fire or flame',
     magic:       'a visible magical effect at the point it occurs',
-    bubble:      'visible bubbles'
+    bubble:      'visible bubbles',
+    rustle:      'foliage / topiary / a curtain in frame that could be stirring (the source of the sound must be visible)',
+    creak:       'a door, floorboard, stair, or timber in frame that could be creaking (the source must be visible)',
+    drip:        'a visible drip, wet spot, stain, or dripping source (usually overhead — the source must be visible)',
+    groan:       'a rope, timber, hull, ice or structure in frame visibly under strain',
+    skitter:     'a dark space, gap, or shadow in frame from which something small could be moving'
   };
   window._TYPO_SFX_VISIBLE_ACTION = _TYPO_SFX_VISIBLE_ACTION;
   function _letterSfxCategory(beatText) {
     var t = String(beatText || '').toLowerCase();
     if (/\b(draws?|drawn|unsheath\w*|bares?)\b[^.]*\b(blade|sword|cutlass|dagger|spear|knife)\b/.test(t)) return 'blade_draw';
-    if (/\b(clash|parr\w+|blades? (?:meet|lock)|steel (?:rings|meets))\b/.test(t)) return 'blade_clash';
+    if (/\b(clash\w*|parr\w+|blades? (?:meet|lock)|steel (?:rings|meets|locks))\b/.test(t)) return 'blade_clash';
+    if (/\b(slash\w*|slice\w*|gash\w*|carv\w+|cuts? (?:across|into|open|through|down)|cleav\w+|rips? (?:across|open|into))\b/.test(t)) return 'blade_cut';
     if (/\b(crack\w*|shatter\w*|splinter\w*|stone[^.]*(?:break|give))\b/.test(t)) return 'stone_crack';
     if (/\b(lightning|thunderbolt|electric\w*)\b/.test(t)) return 'lightning';
     if (/\b(portal|rift|gate[^.]*(?:open\w*|widen\w*)|seam[^.]*(?:split\w*|open\w*)|passage[^.]*(?:split\w*|breath\w*))\b/.test(t)) return 'portal';
@@ -155738,6 +155760,12 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/\b(splash\w*|wave[^.]*crash|water[^.]*(?:surge|rush))\b/.test(t)) return 'water';
     if (/\b(fire|flame\w*|blaz\w+|ignit\w+)\b/.test(t)) return 'fire';
     if (/\b(magic\w*|spell|glyph\w*|tide-light|surge of[^.]*(?:power|light|strength))\b/.test(t)) return 'magic';
+    // ── SUSPENSE / WARNING (checked LAST — a real loud action above always wins). The quiet wrong sound.
+    if (/\b(rustl\w+|foliage[^.]*(?:stir|shift|mov)|topiary|hedge[^.]*(?:stir|shift|mov)|leaves?[^.]*(?:stir|shift|rustl)|curtain[^.]*(?:stir|shift|sway)|undergrowth[^.]*(?:stir|shift))\b/.test(t)) return 'rustle';
+    if (/\b(creak\w+|floorboard\w*|hinge\w*|old (?:wood|timber|stair)[^.]*(?:groan|creak)|stair[^.]*creak|door[^.]*(?:creak|groan))\b/.test(t)) return 'creak';
+    if (/\b(drip\w+|dripp\w+|a drop of|water (?:drop|bead)\w*|wet (?:spot|patch|stain)|damp (?:spot|patch)|seep\w+ from (?:the|a) ceiling)\b/.test(t)) return 'drip';
+    if (/\b(rope|timber|hull|ice|beam|floor|mast)[^.]*(?:groan|strain|creak|about to (?:give|snap|break))|straining (?:rope|timber|beam|ice)\b/.test(t)) return 'groan';
+    if (/\b(skitter\w+|scuttl\w+|scrabbl\w+|scratch\w*[^.]*(?:wall|dark|behind)|something (?:small )?(?:mov|scurr)\w+ in the (?:dark|shadow))\b/.test(t)) return 'skitter';
     return null;
   }
   window._letterSfxCategory = _letterSfxCategory;
@@ -155771,7 +155799,10 @@ No text, no watermark, no UI elements, share-ready.`;
       } else if (opts.sfxIntent === 'none') {
         out.sfx = { text: null, category: cat, suppressed: true, suppressedBy: 'storyboard:none' };
       } else {
-        var pick = _LETTER_SFX_VOCAB[cat][_ffColorHash(String(beatText || '') + '|sfx') % _LETTER_SFX_VOCAB[cat].length];
+        // opts.sfxWord = a word pre-assigned by the sheet-level dedup (so no SFX word repeats across a page).
+        var pick = (opts.sfxWord && _LETTER_SFX_VOCAB[cat].indexOf(opts.sfxWord) >= 0)
+          ? opts.sfxWord
+          : _LETTER_SFX_VOCAB[cat][_ffColorHash(String(beatText || '') + '|sfx') % _LETTER_SFX_VOCAB[cat].length];
         out.sfx = { text: pick, category: cat, strength: _TYPO_SFX_STRONG[cat] ? 'strong' : 'light', anchor: { x: 0.62, y: 0.6 }, integrated: true };
       }
     }
@@ -181587,7 +181618,7 @@ No text, no watermark, no UI elements, share-ready.`;
           // doesn't already say it (restraint). Kill switch: window._graphicTypography === false.
           try {
             if (window._graphicTypography !== false) {
-              var _gt = _buildGraphicTypography(_sbDoc.frozenMoment, _sbDoc.graphicLanguage, {});
+              var _gt = _buildGraphicTypography(_sbDoc.frozenMoment, _sbDoc.graphicLanguage, { sfxWord: _sbDoc.sfxWord });
               _cidLines.push(_graphicTypographyContract(_gt));
             }
           } catch (_) {}
@@ -183035,6 +183066,108 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   try { if (document.readyState !== 'loading') _initUnderwaterFilterAutohook(); else document.addEventListener('DOMContentLoaded', _initUnderwaterFilterAutohook); } catch (_) {}
 
+  // ══ VEILWOOD WILL-O'-WISPS (Roman 2026-07-21) ══════════════════════════════════════════════════
+  //   The Veilwood's floating atmospheric lights read badly when PAINTED into the image (static, often
+  //   ugly speckle). Instead the prompt OMITS them and we animate them live over the panel — the same
+  //   $0 client-side approach as _applyUnderwaterFilter. Wisps slowly glow IN and OUT while drifting
+  //   gently, some large/soft in the FOREGROUND, some small/dim in the BACKGROUND. A TRANSPARENT canvas
+  //   is layered over the <img> (the photo is untouched; only the wisps animate). Default OFF: applies
+  //   only when window._veilwoodWisps === true AND the panel is tagged data-veilwood.
+  var _VW_WISP_PRESET = { count: 79, color: '228,244,206', fgRatio: 0.33, speed: 0.50, maxOpacity: 0.84, sizeScale: 1.30, glowDepth: 0.32, colorVariation: 0.5 };  // Roman's tuned pick 2026-07-21
+  // Soft pastel palette a fraction of wisps sample from (colorVariation = share that deviate from the base
+  // willow-green). Harmonised pastels so the drift reads as varied but cohesive, never garish.
+  var _VW_WISP_PASTELS = ['228,244,206', '206,230,255', '255,220,236', '226,216,255', '255,240,210', '214,252,240'];
+  window._VW_WISP_PASTELS = _VW_WISP_PASTELS;
+  window._VW_WISP_PRESET = _VW_WISP_PRESET;
+
+  // Attach the animated will-o'-wisp overlay over an <img>. Returns a handle with .stop(). Idempotent.
+  function _applyVeilwoodWisps(imgEl, opts) {
+    if (!imgEl || imgEl._vwWisps) return imgEl && imgEl._vwWisps || null;
+    opts = opts || {};
+    var P = { count: opts.count != null ? opts.count : _VW_WISP_PRESET.count,
+              color: opts.color || _VW_WISP_PRESET.color,
+              fgRatio: opts.fgRatio != null ? opts.fgRatio : _VW_WISP_PRESET.fgRatio,
+              speed: opts.speed != null ? opts.speed : _VW_WISP_PRESET.speed,
+              maxOpacity: opts.maxOpacity != null ? opts.maxOpacity : _VW_WISP_PRESET.maxOpacity,
+              sizeScale: opts.sizeScale != null ? opts.sizeScale : _VW_WISP_PRESET.sizeScale,
+              glowDepth: opts.glowDepth != null ? opts.glowDepth : _VW_WISP_PRESET.glowDepth,
+              colorVariation: opts.colorVariation != null ? opts.colorVariation : _VW_WISP_PRESET.colorVariation };
+    var reduce = false; try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (_) {}
+    // deterministic PRNG so wisps don't reshuffle on every rebuild (Math.random is unavailable here anyway)
+    var _seed = 0x9e3779b1 ^ (P.count * 2654435761);
+    function rnd() { _seed = (_seed * 1664525 + 1013904223) & 0xffffffff; return ((_seed >>> 0) % 100000) / 100000; }
+    function build() {
+      var W = imgEl.clientWidth || imgEl.naturalWidth, H = imgEl.clientHeight || imgEl.naturalHeight;
+      if (!W || !H) return null;
+      var maxW = 1400, sc = Math.min(1, maxW / W); var cw = Math.round(W * sc), ch = Math.round(H * sc);
+      var cv = document.createElement('canvas'); cv.width = cw; cv.height = ch;
+      cv.className = 'gn-panel-wisps';
+      cv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;';
+      // ensure a positioned parent so the overlay sits exactly over the img
+      var parent = imgEl.parentNode; if (!parent) return null;
+      try { var cs = window.getComputedStyle(parent); if (cs && cs.position === 'static') parent.style.position = 'relative'; } catch (_) {}
+      parent.insertBefore(cv, imgEl.nextSibling);
+      var ctx = cv.getContext('2d');
+      var wisps = [];
+      for (var i = 0; i < P.count; i++) {
+        var fg = rnd() < P.fgRatio;                        // foreground = big, soft, bright, faster
+        // pastel colour variation: a `colorVariation` share of wisps sample the pastel palette, else base.
+        var wcol = (rnd() < P.colorVariation) ? _VW_WISP_PASTELS[(rnd() * _VW_WISP_PASTELS.length) | 0] : P.color;
+        wisps.push({
+          x: rnd() * cw, y: rnd() * ch,
+          r: fg ? (10 + rnd() * 16) : (2 + rnd() * 4),      // radius
+          vx: (rnd() - 0.5) * (fg ? 0.5 : 0.22) * P.speed,  // gentle drift
+          vy: (-0.06 - rnd() * (fg ? 0.28 : 0.12)) * P.speed, // slight upward float
+          phase: rnd() * 6.283, gspeed: (0.5 + rnd() * 0.9) * P.speed, // slow glow in/out
+          base: fg ? P.maxOpacity : (0.3 + rnd() * 0.4), fg: fg, color: wcol
+        });
+      }
+      var t = 0, alive = true;
+      function frame() {
+        ctx.clearRect(0, 0, cw, ch);
+        for (var i = 0; i < wisps.length; i++) {
+          var w = wisps[i];
+          w.x += w.vx; w.y += w.vy;
+          if (w.x < -20) w.x = cw + 20; else if (w.x > cw + 20) w.x = -20;
+          if (w.y < -20) { w.y = ch + 20; w.x = rnd() * cw; }
+          var glow = 0.5 + 0.5 * Math.sin(t * w.gspeed + w.phase);  // 0..1 slow pulse
+          var a = w.base * ((1 - P.glowDepth) + P.glowDepth * glow);  // glowDepth = how far they fade in/out
+          var rr = w.r * P.sizeScale * (0.85 + 0.3 * glow);
+          var g = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, rr);
+          g.addColorStop(0, 'rgba(255,255,245,' + Math.min(1, a) + ')');
+          g.addColorStop(0.35, 'rgba(' + w.color + ',' + (a * 0.7) + ')');
+          g.addColorStop(1, 'rgba(' + w.color + ',0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(w.x, w.y, rr, 0, 6.283); ctx.fill();
+          if (w.fg) { ctx.fillStyle = 'rgba(255,255,250,' + (a * 0.9) + ')'; ctx.beginPath(); ctx.arc(w.x, w.y, Math.max(1, rr * 0.14), 0, 6.283); ctx.fill(); }
+        }
+      }
+      function loop() { if (!alive) return; if (!reduce) t += 0.016; frame(); if (!reduce) requestAnimationFrame(loop); }
+      frame(); if (!reduce) requestAnimationFrame(loop);
+      var handle = { canvas: cv, stop: function () { alive = false; try { cv.remove(); } catch (_) {} imgEl._vwWisps = null; } };
+      imgEl._vwWisps = handle; return handle;
+    }
+    if (imgEl.complete && (imgEl.naturalWidth || imgEl.clientWidth)) return build();
+    imgEl.addEventListener('load', build, { once: true });
+    return null;
+  }
+  window._applyVeilwoodWisps = _applyVeilwoodWisps;
+
+  // Auto-apply to any panel tagged data-veilwood, once the flag is on. Off by default — flip
+  // window._veilwoodWisps = true. Panels are tagged data-veilwood at render for Veilwood scenes.
+  function _initVeilwoodWispsAutohook() {
+    function sweep() {
+      if (window._veilwoodWisps !== true) return;
+      var imgs = document.querySelectorAll('img.gn-panel-img[data-veilwood="1"]:not([data-vw-wisp-done])');
+      for (var i = 0; i < imgs.length; i++) { imgs[i].setAttribute('data-vw-wisp-done', '1'); _applyVeilwoodWisps(imgs[i]); }
+    }
+    try {
+      var mo = new MutationObserver(sweep);
+      mo.observe(document.documentElement, { childList: true, subtree: true });
+      sweep();
+    } catch (_) {}
+  }
+  try { if (document.readyState !== 'loading') _initVeilwoodWispsAutohook(); else document.addEventListener('DOMContentLoaded', _initVeilwoodWispsAutohook); } catch (_) {}
+
   // ══ CROWD HETEROGENEITY (Roman 2026-07-20) ════════════════════════════════════════════════════
   // Image models render a crowd as COPY-PASTE: one figure, cloned, identically posed, same size, same
   // direction, often nude when the attire cue doesn't reach the background. Observed live — a Kwisheen
@@ -183147,14 +183280,25 @@ No text, no watermark, no UI elements, share-ready.`;
   // Kwisheen melee: the Many-Tide Method + grappling doctrine + the attack-buckler.
   function _kwisheenCombatDirective() {
     return '\n\nKWISHEEN COMBAT (the Many-Tide Method — the whole body fights as ONE system, never human ' +
-      'attacks performed in sequence): SEVERAL limbs act AT ONCE — one tentacle-arm wields a TIDE-SPEAR or ' +
-      'TRIDENT (reach, thrusting, pinning), one a heavy curved REEF-CUTLASS (hooking cuts), one a long ' +
-      'UNDERTIDE DAGGER (the hidden killing strike from an unseen angle), while OTHER tentacles GRAPPLE — ' +
-      'coiling the opponent\'s weapon-arm, waist, thigh or ankle; anchoring to reef, deck or seabed; pulling ' +
-      'the enemy off-balance; bracing and counter-weighting. Combatants ENTANGLE rather than fence at clean ' +
-      'distance: two Kwisheen appear almost KNOTTED together, tentacles wrapped around wrists, weapons, ' +
-      'shields and armour while still striking with free limbs. Show clearly which limbs anchor, pull, ' +
-      'shield, or strike. ' +
+      'attacks performed in sequence). ANATOMY BUDGET (HARD — obey exactly). UPPER BODY: TWO arms from the ' +
+      'SHOULDERS (each may be a human arm OR a tentacle-arm) — NEVER a third arm, and NO limb ever grows from ' +
+      'the BACK, spine, chest or torso. LOWER BODY — pick ONE configuration and hold it IDENTICAL in every ' +
+      'panel: (a) SIX lower tentacles and NO legs; or (b) TWO legs PLUS two-to-four tentacles; or (c) just TWO ' +
+      'legs. The number of LEGS is ALWAYS exactly 0 or exactly 2 — NEVER one leg, NEVER three or more legs (a ' +
+      'missing leg or an extra leg is a HARD FAILURE; count the legs before drawing). All tentacles root at the ' +
+      'waist/hip. WHEN UNDISGUISED AND HARD-PRESSED OR LOSING: every tentacle it has is OUT and actively working ' +
+      '— gripping, bracing, climbing, hanging, striking — never tucked away or hidden; tentacles are also how a ' +
+      'Kwisheen climbs and holds itself ALOFT in the trees (a Kwisheen up off the ground is gripping a branch ' +
+      'with tentacles, not floating). ' +
+      'HOW THE MANY LIMBS ACT AT ONCE: the arms wield the hand-weapons — a TIDE-SPEAR or TRIDENT ' +
+      '(reach, thrusting, pinning) and a heavy curved REEF-CUTLASS (hooking cuts); a LOWER tentacle rising up ' +
+      'carries the long UNDERTIDE DAGGER (the hidden killing strike from an unseen low angle), while the ' +
+      'REMAINING tentacles GRAPPLE — coiling the opponent\'s weapon-arm, waist, thigh or ankle; ' +
+      'anchoring to reef, deck or seabed; pulling the enemy off-balance; bracing and counter-weighting. So the ' +
+      'many simultaneous actions come from the LOWER tentacles doing several jobs at once, NOT from extra ' +
+      'arms. Combatants ENTANGLE rather than fence at clean distance: two Kwisheen appear almost KNOTTED ' +
+      'together, tentacles wrapped around wrists, weapons, shields and armour while still striking with free ' +
+      'limbs. Show clearly which limbs anchor, pull, shield, or strike. ' +
       'THE ATTACK-BUCKLER (signature, species-specific): a small round shield with a REINFORCED HOLE IN ITS ' +
       'CENTRE, through which an ARMOURED arm OR lower tentacle passes and extends BEYOND the shield face to ' +
       'strike, hook, or grapple while the disk still protects everything behind it — NOT a shield strapped ' +
@@ -183198,6 +183342,144 @@ No text, no watermark, no UI elements, share-ready.`;
     return (_CANONICAL_VISUAL_ASSETS && _CANONICAL_VISUAL_ASSETS.kwisheen_land_combat && _CANONICAL_VISUAL_ASSETS.kwisheen_land_combat.asset) || null;
   }
   window._kwisheenLandCombatRef = _kwisheenLandCombatRef;
+
+  // ══ WEAPON LOADOUT — lock each character to ONE weapon so it does not mutate/vanish across panels ══════
+  // (Roman 2026-07-21.) Weapons were mutating because the combat directives offer each species a MENU. Fix:
+  // bind each present character to a single weapon and emit a WEAPON LOCK that overrides the menu. PROSE-
+  // CONSISTENT: a named weapon (e.g. "Fatebane") resolves to its canonical visual, in order, from — (1) the
+  // per-story ledger (registered when the story establishes it), (2) the static Fatelands weapon lore, (3) a
+  // descriptor the scene text supplies where the weapon is named, else (4) the bare name (still locked so it
+  // stops mutating). Kill switch: window._weaponLoadout === false.
+  var _WEAPON_LORE = {
+    the_answer:       { aliases: ['answer', 'the answer', 'answer polearm'],        descriptor: 'THE ANSWER — a double-ended polearm: a narrow inward-curving crescent HOOK at one end and a straight leaf-shaped killing BLADE at the other, on a long weighted shaft' },
+    avowal_blade:     { aliases: ['avowal blade', 'avowal sword', 'the avowal blade'], descriptor: 'the AVOWAL BLADE — a broad forward-curving single-edged sword with a small disarming hook near the base and a deliberately legible cutting geometry (no concealed second edge)' },
+    tide_trident:     { aliases: ['tide-trident', 'tide trident', 'trident'],        descriptor: 'a TIDE-TRIDENT — a long spear ending in EXACTLY three barbed prongs (a fixed trident head that never splits, doubles, or grows extra prongs)' },
+    reef_cutlass:     { aliases: ['reef-cutlass', 'reef cutlass'],                   descriptor: 'a REEF-CUTLASS — a broad, curved, single-edged sword with a hooked tip' },
+    undertide_dagger: { aliases: ['undertide dagger', 'undertide-dagger'],          descriptor: 'an UNDERTIDE DAGGER — a long, fine, curved dagger for a hidden low strike' },
+    tide_spear:       { aliases: ['tide-spear', 'tide spear'],                       descriptor: 'a TIDE-SPEAR — a long single-pointed reach spear for thrusting and pinning' }
+  };
+
+  function _normWeaponKey(name) {
+    return String(name || '').toLowerCase().trim().replace(/^the\s+/, '').replace(/[’']/g, '').replace(/[\s-]+/g, '_').replace(/[^a-z0-9_]/g, '');
+  }
+
+  // Register a weapon's canonical visual for THIS story (called when prose/lore establishes it). Persists on
+  // state so every panel of every scene resolves the same descriptor. Cleared per-story in _resetStoryState.
+  function _registerWeapon(name, descriptor) {
+    if (!name) return;
+    try {
+      if (!state._weaponLedger) state._weaponLedger = {};
+      var key = _normWeaponKey(name);
+      if (!key) return;
+      state._weaponLedger[key] = { name: String(name).trim(), descriptor: String(descriptor || '').trim() || null };
+    } catch (_) {}
+  }
+  window._registerWeapon = _registerWeapon;
+
+  // Resolve a weapon name → a canonical visual descriptor string. sceneText is an optional source to mine a
+  // descriptor from when the ledger/lore don't know the weapon (the "established by the story/prompt" path).
+  function _resolveWeaponDescriptor(name, sceneText) {
+    var raw = String(name || '').trim();
+    if (!raw) return null;
+    var key = _normWeaponKey(raw);
+    // 1) per-story ledger
+    try { if (state._weaponLedger && state._weaponLedger[key] && state._weaponLedger[key].descriptor) return state._weaponLedger[key].descriptor; } catch (_) {}
+    // 2) static Fatelands lore (key or alias)
+    if (_WEAPON_LORE[key]) return _WEAPON_LORE[key].descriptor;
+    for (var lk in _WEAPON_LORE) { if (_WEAPON_LORE[lk].aliases.indexOf(raw.toLowerCase().replace(/^the\s+/, '')) >= 0) return _WEAPON_LORE[lk].descriptor; }
+    // 3) mine a descriptor from the scene text where the weapon is named:  "the Fatebane, a black-bladed …"
+    try {
+      var esc = raw.replace(/^the\s+/i, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var m = new RegExp('\\b' + esc + '\\b\\s*[—–,:(]+\\s*((?:a|an|the)\\s+[^.!?;—–)]{6,140})', 'i').exec(String(sceneText || ''));
+      if (m && m[1]) { var d = raw + ' — ' + m[1].trim().replace(/[)\s]+$/, ''); _registerWeapon(raw, d); return d; }
+    } catch (_) {}
+    // 4) bare name — still locks the NAME across panels even without a known shape
+    return 'the ' + raw.replace(/^the\s+/i, '') + ' (rendered exactly as the story established it — the same object in every panel)';
+  }
+  window._resolveWeaponDescriptor = _resolveWeaponDescriptor;
+
+  // Scan prose/scene text for "<Wielder> wields/raises/draws the <Weapon>" and "he's wielding the <Weapon>!"
+  // → [{ wielder|null, weapon }]. Also registers any nearby descriptor. Capitalised weapon names only.
+  function _scanSceneForWeapons(sceneText) {
+    var txt = String(sceneText || ''); var out = [];
+    var verbs = 'wields?|wielding|wielded|raises?|raised|draws?|drew|brandish(?:es|ed)?|swings?|swung|hefts?|hefted|grips?|gripped|holding|holds?|held|carries|carrying|levels?|leveled|unsheath(?:es|ed)?';
+    var re1 = new RegExp('\\b([A-Z][\\w’\']+)\\s+(?:' + verbs + ')\\s+(?:the|his|her|their|a|an)\\s+([A-Z][\\w’\'-]+(?:\\s+[A-Z][\\w’\'-]+){0,2})', 'g');
+    var re2 = new RegExp('(?:it[’\']?s|he[’\']?s|she[’\']?s|they[’\']?re|that[’\']?s)\\s+(?:the\\s+)?(?:' + verbs + ')?\\s*(?:the|a|an)\\s+([A-Z][\\w’\'-]+(?:\\s+[A-Z][\\w’\'-]+){0,2})', 'g');
+    var m;
+    try { while ((m = re1.exec(txt))) { out.push({ wielder: m[1], weapon: m[2] }); } } catch (_) {}
+    try { while ((m = re2.exec(txt))) { out.push({ wielder: null, weapon: m[1] }); } } catch (_) {}
+    return out;
+  }
+  window._scanSceneForWeapons = _scanSceneForWeapons;
+
+  // Build the per-character loadout: [{ who, descriptor }]. Order of truth for each character's weapon:
+  //   (a) an explicit c.weapon on the cast entry (the CG extractor fills this from prose), then
+  //   (b) a scene-text scan binding a named weapon to that character by name, then
+  //   (c) a species default (First Favored → The Answer; Kwisheen → Tide-Trident).
+  function _characterWeaponLoadout(visualState, sceneText) {
+    var cast = (visualState && (visualState.characters_present || visualState.other_characters_present || visualState.canon)) || [];
+    if (!Array.isArray(cast)) cast = [];
+    var scanned = _scanSceneForWeapons(sceneText);
+    var norm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
+    var out = []; var seenWho = {};
+    var push = function (who, weaponName, descriptor) {
+      var w = String(who || '').trim(); if (!w || seenWho[w.toLowerCase()]) return;
+      var desc = descriptor || _resolveWeaponDescriptor(weaponName, sceneText);
+      if (!desc) return; seenWho[w.toLowerCase()] = 1; out.push({ who: w, descriptor: desc });
+    };
+    // PC / LI weapons come straight off the extracted visualState (pc_weapon / li_weapon), bound to their names.
+    var _weaponName = function (w) { return w && (w.name || (typeof w === 'string' ? w : '')) || null; };
+    var _weaponDesc = function (w) { return (w && w.descriptor) || null; };
+    try {
+      var pcW = visualState && visualState.pc_weapon, liW = visualState && visualState.li_weapon;
+      if (pcW && (_weaponName(pcW) || _weaponDesc(pcW))) push(state.protagonistName || state.playerName || 'the protagonist', _weaponName(pcW), _weaponDesc(pcW) || _resolveWeaponDescriptor(_weaponName(pcW), sceneText));
+      if (liW && (_weaponName(liW) || _weaponDesc(liW))) push(state.loveInterestName || state.name || 'the love interest', _weaponName(liW), _weaponDesc(liW) || _resolveWeaponDescriptor(_weaponName(liW), sceneText));
+    } catch (_) {}
+    cast.forEach(function (c) {
+      if (!c) return;
+      var who = (typeof c === 'string') ? c : (c.name || '');
+      if (!who || /^(protagonist|li|love[_\s-]?interest)$/i.test(who)) {
+        // resolve token → a display label if we can; otherwise keep the token so the lock still binds.
+        who = who || '';
+      }
+      if (!who) return;
+      // (a) explicit weapon on the cast entry
+      var explicitName = (typeof c === 'object' && (c.weapon && (c.weapon.name || c.weapon))) || null;
+      var explicitDesc = (typeof c === 'object' && c.weapon && c.weapon.descriptor) || null;
+      if (explicitName || explicitDesc) { push(who, explicitName, explicitDesc || _resolveWeaponDescriptor(explicitName, sceneText)); return; }
+      // (b) scene scan bound by wielder name
+      var bound = scanned.filter(function (s) { return s.wielder && who && s.wielder.toLowerCase() === String(who).toLowerCase(); })[0];
+      if (bound) { push(who, bound.weapon); return; }
+      // (c) species default
+      var sp = norm((typeof c === 'object') && (c._trueSpecies || c.species));
+      if (/first[_\s]?favor|favou?red/.test(sp)) { push(who, 'the_answer'); return; }
+      if (/kwisheen/.test(sp)) { push(who, 'tide_trident'); return; }
+    });
+    return out;
+  }
+  window._characterWeaponLoadout = _characterWeaponLoadout;
+
+  // Emit the WEAPON LOCK prompt block from a loadout (or '' when empty / disabled).
+  function _weaponLockBlock(loadout) {
+    if (window._weaponLoadout === false) return '';
+    if (!Array.isArray(loadout) || !loadout.length) return '';
+    var lines = loadout.map(function (l) { return '• ' + l.who + ' wields ' + l.descriptor + '.'; });
+    return '\n\nWEAPON LOCK (obey exactly — weapons must NOT change): each named fighter carries ONE fixed ' +
+      'weapon of a fixed shape, the SAME in every panel. A weapon never changes shape, never swaps owners, ' +
+      'never turns into a different weapon, and is held IN-HAND in every panel a fighter is standing or ' +
+      'fighting (a defeated fighter\'s weapon lies FALLEN BESIDE them — still the same weapon, never simply ' +
+      'gone). If a fighter wears the Veilweave, the SAME weapon appears in every one of their echoes.\n' +
+      lines.join('\n') +
+      '\nThese are the only weapons in the scene, one per fighter — ignore any other weapon a combat style ' +
+      'below may mention.';
+  }
+  window._weaponLockBlock = _weaponLockBlock;
+
+  // Convenience: resolve + emit for a scene in one call (used at the image-prompt build sites).
+  function _weaponLockForScene(visualState, sceneText) {
+    try { return _weaponLockBlock(_characterWeaponLoadout(visualState, sceneText)); } catch (_) { return ''; }
+  }
+  window._weaponLockForScene = _weaponLockForScene;
 
   // ══ VEILWEAVE — the First Favored refraction garment (Roman 2026-07-20) ═════════════════════════
   // A gossamer leaf-vein tunic that refracts the wearer into ~N overlapping MISREGISTERED projections of
@@ -183246,13 +183528,53 @@ No text, no watermark, no UI elements, share-ready.`;
     return '\n\nVEILWEAVE (the First Favored refraction garment — the wearer is ONE physically real body, ' +
       'NOT clones): a long, hooded, flowing, EXTREMELY TRANSLUCENT gossamer tunic of iridescent leaf-vein ' +
       'fabric, the body clearly VISIBLE beneath it (in combat the observer sees semi-clothed versions of the ' +
-      'same figure attacking through overlapping transparent cloth). It refracts the wearer into approximately ' +
+      'same figure attacking through overlapping transparent cloth). ' +
+      // NUDE beneath (Roman 2026-07-21): no "never-nude" underwear/denim under the sheer cloth; instead the
+      // garment blooms opaque with its own light over the private areas — the fabric does the concealing.
+      'The wearer is NUDE beneath the transparent Veilweave — do NOT add underwear, briefs, shorts, denim, a ' +
+      'loincloth, or any undergarment under it. Instead, over the wearer\'s groin and genitals (and the nipples ' +
+      'on a female wearer) the gossamer fabric gathers into a small OPAQUE LUMINOUS BLOOM — a concentrated soft ' +
+      'glow of the leaf-vein cloth\'s own light that fully and tastefully conceals the primary sexual ' +
+      'characteristics; everywhere else the nude body reads clearly through the sheer cloth. ' +
+      'It refracts the wearer into approximately ' +
       range + ' HEAVILY OVERLAPPING, semi-transparent, MISREGISTERED projections of that SAME body — drifting ' +
       'slightly out of phase ABOVE, BELOW, ahead, behind, left and right, like severe DOUBLE VISION, with NO ' +
       'stable centre to target. Offset them VERTICALLY as well as sideways, and overlap them enough that the ' +
       'real body\'s exact position is genuinely uncertain. It is NOT separate clones standing side by side, ' +
       'NOT orderly holographic copies, NOT opaque robes / plate armour / a superhero suit / a force field. A ' +
       'dark setting makes the refraction legible. ' +
+      // The #1 failure mode (same class as the Kwisheen tentacle-hair extra-arms bug): the model collapses the
+      // overlapping selves into ONE body sprouting spare limbs. Force WHOLE separate silhouettes, and prefer
+      // fewer-but-whole over one-with-extra-arms.
+      'CRUCIAL: each projection is a COMPLETE, WHOLE figure — its own full head, its own torso, its own TWO ' +
+      'arms and TWO legs — simply overlapping and drifting out of phase with the others. This is MANY WHOLE ' +
+      'OVERLAPPING BODIES, never ONE body with extra arms or extra legs growing out of it. If several whole ' +
+      'overlapping figures will not fit the panel, draw FEWER whole figures rather than adding spare limbs to a ' +
+      'single body. ' +
+      // #3: every self must be identically garbed in the full garment — no self in a plain tunic or bare.
+      'EVERY one of the overlapping selves wears the IDENTICAL full hooded Veilweave tunic — all copies dressed ' +
+      'exactly the same, head to foot; never one self in Veilweave and the others in a plain tunic or bare skin. ' +
+      // Depth/height variation: stop it collapsing into faint ghosts stacked behind one solid figure.
+      'STAGGER the selves in space so it never reads as faint ghosts lined up behind one solid central figure: ' +
+      'place them at CLEARLY DIFFERENT HEIGHTS (some crouched low, some risen high, some mid-leap) and INTERLEAVE ' +
+      'them in DEPTH so SOME projections pass IN FRONT of the others and some behind, overlapping and occluding ' +
+      'each other into one interpenetrating cloud at SIMILAR opacity — no single "solid original" standing apart ' +
+      'and no clean front-to-back stack. Each self is the SAME body caught at a slightly different INSTANT of ONE ' +
+      'continuous motion (stroboscopic motion-echoes of a single moving fighter), so their limb positions differ ' +
+      'moment to moment, yet it reads unmistakably as ONE person in motion — never several separate people ' +
+      'striking different independent blows. ' +
+      // #3 (Roman): the selves are one refracted body, so they share the TRUE body's exact garment + gear state.
+      'CONSISTENCY OF STATE (critical): every self shares the true body\'s EXACT garment, hood and gear state at ' +
+      'that moment — if the wearer\'s HOOD is DOWN it is down on ALL of them (NEVER hooded echoes around a ' +
+      'bare-headed true body, and never the reverse), if the Veilweave is torn or a sleeve is cut it is cut ' +
+      'identically on every self, the SAME single weapon in the same hand on all of them (his weapon does not ' +
+      'change shape between selves or between panels). They are one body refracted, NOT differently-dressed copies: ' +
+      'no mixing hooded and un-hooded selves, no self in a state the real body is not in. ' +
+      // The projections are the garment's constant effect, not a combat flourish — they must not vanish.
+      'ALWAYS PRESENT: the overlapping echoes appear in EVERY image the wearer is in while the Veilweave is worn — ' +
+      'they do NOT disappear when the wearer is grappled, pinned, held still, cornered, or mid-strike; at most they ' +
+      'crowd in TIGHTER (never fewer than a few). Never draw the wearer as a single solid figure with no echoes ' +
+      'while he is still in the garment. ' +
       (/six|nine/i.test(range)
         ? 'The wearer is a genuine First Favored: the many selves move at explosive SUPERHUMAN speed — aerial, ' +
           'acrobatic, near-untargetable — a storm of positions.'
@@ -183424,6 +183746,9 @@ No text, no watermark, no UI elements, share-ready.`;
         }
       }
     } catch (_) {}
+    // WEAPON LOCK — bind each present fighter to ONE weapon so it does not mutate/vanish; overrides the
+    // combat menus above. Prose-consistent (a named weapon resolves via ledger/lore/scene text).
+    try { _combatBlock += _weaponLockForScene({ characters_present: opts.cast }, sceneDesc); } catch (_) {}
 
     var linePrompt = 'STRUCTURAL LINE ART ONLY — a BLOCKING blueprint, not finished art: SOLID BLACK INK LINES on a FLAT PURE WHITE background, with nothing in between. ' +
       'NO GREY OF ANY KIND — no shading, no tone, no grey wash, no gradients, no hatching used for shading, no soft edges. Every pixel is either black line or white background. ' +
@@ -184588,13 +184913,91 @@ No text, no watermark, no UI elements, share-ready.`;
   // each QUADRANT block holding only its own differences (camera, staging, cast, emotion). A line that
   // is identical across all four phases is by definition NOT phase-specific, so hoisting it is safe. Cut
   // the prompt ~3x with no loss of content.
+  // A 2x2 sheet has no shot plan of its own — each quadrant's camera came from the phase's single
+  // `visualState.camera`, and when the phases share one (a single scene → they do), the line-dedup below
+  // HOISTS it into the shared block and every panel ends up the same eye-level medium shot (the "tripod"
+  // effect). This assigns each quadrant a DISTINCT shot so it stays in the per-panel block: it prefers a real
+  // shot from the comic engine (`ph._shot`, from _buildShotSequence) and otherwise falls back to a 4-slot
+  // cinematic ladder that varies BOTH distance and angle. (Roman 2026-07-21.)
+  var _SHEET_SHOT_LADDER = [
+    { d: 'a WIDE establishing shot', a: 'from a LOW angle looking UP' },
+    { d: 'a TIGHT medium two-shot, pushed in close', a: 'at eye level' },
+    { d: 'a dynamic WIDE action shot', a: 'from a HIGH angle looking DOWN, slightly Dutch-tilted' },
+    { d: 'a MEDIUM hero shot', a: 'from a LOW angle' }
+  ];
+  function _sheetCameraForQuad(qi, phases) {
+    try {
+      var ph = (phases || [])[qi];
+      if (ph && ph._shot && (ph._shot.distance || ph._shot.angle)) {
+        var s = ph._shot;
+        return '\nCAMERA (this panel — distinct from the others): ' + (s.distance || 'medium') + ' shot' +
+          (s.angle && !/eye/i.test(s.angle) ? ', ' + String(s.angle).replace(/_/g, ' ') + ' angle' : '') +
+          (s.blocking ? ' (' + String(s.blocking).replace(/_/g, ' ') + ')' : '') + '.';
+      }
+    } catch (_) {}
+    var slot = _SHEET_SHOT_LADDER[qi % _SHEET_SHOT_LADDER.length];
+    return '\nCAMERA (this panel — a DISTINCT shot from the other three): ' + slot.d + ', ' + slot.a + '.';
+  }
+
+  // Beat text for a single sheet phase (for storyboard-doc / shot / SFX classification).
+  function _sheetPhaseText(ph) {
+    if (!ph) return '';
+    var parts = [];
+    if (ph.beat) parts.push(ph.beat);
+    if (Array.isArray(ph.beats)) ph.beats.forEach(function (b) { if (b && b.text) parts.push(b.text); });
+    if (ph.action) parts.push(ph.action);
+    if (!parts.length && ph.label) parts.push(ph.label);
+    return parts.join(' ');
+  }
+
   function _buildOneShotSheetPrompt(visualState, phases, sceneIndex, planMeta) {
+    // STORYBOARD-DOC layer for the SHEET (Roman 2026-07-21). The comic pipeline builds a per-panel
+    // storyboard doc (frozen moment + graphic language/impact + emotional direction + eye-magnet + SFX +
+    // color), and _buildStagedHeroPrompt ALREADY emits it whenever a phase carries `_storyboardDoc` — but the
+    // sheet never populated it, so every quadrant rendered the ambient standoff with no impact/emotion. Build
+    // a doc per phase here (and a real varied shot per phase), so the whole production layer fires on sheets.
+    // Kill switch: window._sheetStoryboardDocs === false.
+    try {
+      if (window._sheetStoryboardDocs !== false && Array.isArray(phases)) {
+        phases.forEach(function (ph, i) {
+          if (!ph || ph._storyboardDoc) return;
+          var bt = _sheetPhaseText(ph);
+          var ty = ph._readerLearning || _readerLearningType(bt, i === 0) ||
+            (i === 0 ? 'Orientation' : (i === phases.length - 1 ? 'Resolution' : 'Threat'));
+          ph._readerLearning = ty;
+          ph._storyboardDoc = _buildStoryboardDoc(ty, bt, null);
+        });
+        try { if (typeof _buildShotSequence === 'function') _buildShotSequence(phases); } catch (_) {}   // sets ph._shot (varied camera)
+        // SFX UNIQUENESS (Roman 2026-07-21): no sound-effect word may appear twice on a page. Pre-assign each
+        // panel the FIRST vocab variant of its category not yet used on the sheet — a second cut becomes CHOP
+        // not another SLICE. (The global rule below also tells the model not to repeat words.)
+        try {
+          var _usedSfx = {};
+          phases.forEach(function (ph) {
+            var doc = ph && ph._storyboardDoc; if (!doc) return;
+            var cat = _letterSfxCategory(_sheetPhaseText(ph));
+            if (!cat || !_LETTER_SFX_VOCAB[cat]) return;
+            // don't reserve a word for a panel whose SFX the graphic language already suppresses
+            var supp = _TYPO_SFX_SUPPRESS_IF[cat];
+            if (supp && doc.graphicLanguage && doc.graphicLanguage[supp] && doc.graphicLanguage[supp].level && doc.graphicLanguage[supp].level !== 'none') return;
+            var vocab = _LETTER_SFX_VOCAB[cat], pick = null;
+            for (var k = 0; k < vocab.length; k++) { if (!_usedSfx[vocab[k]]) { pick = vocab[k]; break; } }
+            if (!pick) pick = vocab[0];   // vocab exhausted (rare) — reuse first
+            _usedSfx[pick] = 1; doc.sfxWord = pick;
+          });
+        } catch (_) {}
+      }
+    } catch (_) {}
+
     var frame = 'A SINGLE FINISHED COLOUR ILLUSTRATION divided into a 2 x 2 GRID of exactly FOUR equal ' +
       'rectangular panels of identical size, separated by clean straight gutters — one vertical gutter down ' +
       'the exact centre and one horizontal gutter across the exact centre. Do NOT vary the panel sizes, do ' +
       'NOT make a decorative comic page layout, do NOT let any figure cross a gutter, do NOT blend the ' +
       'quadrants. Reading order: top-left = QUADRANT 1, top-right = QUADRANT 2, bottom-left = QUADRANT 3, ' +
-      'bottom-right = QUADRANT 4.\n';
+      'bottom-right = QUADRANT 4.\n' +
+      'VARY THE CAMERA panel to panel — each quadrant is a DISTINCT shot in BOTH distance and angle (mix wide ' +
+      'and close, low and high, straight-on and tilted), per its CAMERA line below. Do NOT shoot all four from ' +
+      'the same eye-level medium distance as if from a fixed tripod in the middle of the scene.\n';
 
     // 1) build each phase's full prompt
     var perPhase = [];
@@ -184624,9 +185027,24 @@ No text, no watermark, no UI elements, share-ready.`;
     if (N > 1 && lineSets[0]) {
       lineSets[0].forEach(function (l) { var t = l.trim(); if (t && freq[t] === N && !globalSeen[t]) { globalSeen[t] = 1; globalLines.push(l); } });
     }
+    // A global-block effect (like VEILWEAVE) drifts across a 2x2 — Gemini applies it strongest to the top
+    // panels and fades or drops it by Q3/Q4. Restate a terse reminder in EVERY quadrant so the wearer is
+    // refracted in all four panels they appear in, not just the first two. Skip for the mimicry case (bounded
+    // shimmer, no outward selves — the reminder would contradict it).
+    var _quadVwReminder = '';
+    try {
+      var _sceneAll = _sheetSceneText(visualState, phases);
+      var _vwMimicSheet = /kwisheen/.test(_trueVeilweaveWearerSpecies(visualState)) && _isVeilweaveMimicScene(_sceneAll);
+      if (_isVeilweaveScene(_sceneAll) && !_vwMimicSheet) {
+        _quadVwReminder = '\nVEILWEAVE ACTIVE IN THIS PANEL: if the Veilweave wearer appears here, render the ' +
+          'full refraction — several WHOLE overlapping semi-transparent bodies of that one figure (each a ' +
+          'complete figure, NOT extra limbs on one body), every copy in the same full hooded translucent ' +
+          'Veilweave tunic. Do not let this panel drop the effect.';
+      }
+    } catch (_) {}
     var quads = lineSets.map(function (lines, qi) {
       var uniq = lines.filter(function (l) { var t = l.trim(); return t && (N <= 1 || freq[t] < N); });
-      return '\n══ QUADRANT ' + (qi + 1) + ' ══ (this panel only)\n' + uniq.join('\n');
+      return '\n══ QUADRANT ' + (qi + 1) + ' ══ (this panel only)\n' + uniq.join('\n') + _sheetCameraForQuad(qi, phases) + _quadVwReminder;
     });
 
     var globalBlock = globalLines.length
@@ -184638,8 +185056,18 @@ No text, no watermark, no UI elements, share-ready.`;
     var combatBlock = _sheetCombatBlock(visualState, phases);
 
     var close = '\n\nAcross the whole page: recurring characters stay recognisably the SAME individual in ' +
-      'every quadrant they appear in — identical face, colouring, hair and wardrobe. Ender Bond ink-and-' +
-      'colour rendering throughout. Do NOT draw panel numbers, captions, or any lettering.';
+      'every quadrant they appear in — identical face, colouring, hair and wardrobe. ' +
+      'INJURY CONTINUITY (the panels read in order, left-to-right then top-to-bottom): wounds PERSIST and ' +
+      'ACCUMULATE — once a fighter takes a cut, a wound, blood, or a torn garment in one panel, that same ' +
+      'injury stays visible on them in EVERY later panel; nobody\'s injuries heal or vanish between panels. ' +
+      'Ender Bond ink-and-colour rendering throughout. Do NOT draw panel numbers, captions, speech balloons, ' +
+      'thought balloons, or any readable dialogue/narration text. The ONLY lettering permitted is a single ' +
+      'integrated SOUND-EFFECT per panel where that panel\'s graphic-typography specifies one (hand-lettered ' +
+      'into the art at the point of action, never in a balloon) — at most ONE SFX per panel, and none where a ' +
+      'panel does not depict the action it names. ' +
+      'SFX UNIQUENESS (HARD): every sound-effect word is UNIQUE across the whole page — no SFX word (SLICE, ' +
+      'THUD, KLANG, CHOP, etc.) may appear in more than ONE panel. Letter each panel EXACTLY the word it was ' +
+      'given and never copy or repeat a sound-effect word you already drew in another panel.';
     return frame + globalBlock + combatBlock + quads.join('\n') + close;
   }
   window._buildOneShotSheetPrompt = _buildOneShotSheetPrompt;
@@ -184694,6 +185122,9 @@ No text, no watermark, no UI elements, share-ready.`;
           block += '\n\n══ VEILWEAVE (the wearer, every panel they appear in) ══' + _veilweaveDirective(vwSp);
         }
       }
+      // WEAPON LOCK — one fixed weapon per fighter across all four panels; overrides the combat menus above.
+      var _wl = _weaponLockForScene(visualState, text);
+      if (_wl) block += '\n\n══ WEAPONS (locked — same weapon per fighter in every panel) ══' + _wl;
       return block;
     } catch (_) { return ''; }
   }
@@ -184736,7 +185167,7 @@ No text, no watermark, no UI elements, share-ready.`;
           if (_isVeilweaveScene(_sceneTxt) && !_vwMimic && _refs.length < 5 && typeof _veilweaveRef === 'function') {
             var _vwPath = _veilweaveRef();
             if (_vwPath) { var _vwB = await _canonRefToB64(_vwPath);
-              if (_vwB) { _refs.push({ b64: _vwB, label: 'VEILWEAVE EFFECT reference — the transparent hooded leaf-vein garment and its heavily-overlapping misregistered projections of the SAME body (double-vision, no stable centre). Copy the EFFECT and transparency ONLY, never this figure\'s face, sex, weapon or pose.' });
+              if (_vwB) { _refs.push({ b64: _vwB, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — use it ONLY for how the transparent hooded leaf-vein garment looks and how the heavily-overlapping misregistered projections of ONE body read (double-vision, no stable centre). The wearer in your image keeps their OWN species, face, sex, skin, eyes, hair, build, weapon and pose from the identity references — do NOT copy this swatch\'s figure, face, sex, weapon, pose or the exact number of copies, and do NOT reproduce it as its own panel.' });
                 try { console.log('[ONESHOT] veilweave ref attached'); } catch (_) {} } }
           }
         } catch (_) {}
