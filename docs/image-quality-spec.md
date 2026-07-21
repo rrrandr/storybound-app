@@ -1,5 +1,16 @@
 # Image Quality Specification (Storybound CG)
 
+> **IQS v1.0** · 2026-07-21 · status: active
+>
+> This is a **versioned measurement standard**, not just documentation. When a clause is added, removed, or
+> redefined (e.g. redefining acceptable burst dominance), bump the version — you are not editing history,
+> you are minting a *new standard*. Every benchmark run records the versions it was measured under:
+> ```
+> IQS: v1.0   |   Classifier prompt: v1.0   |   Model: gemini-2.5-flash
+> ```
+> Measurements are only comparable **within** a fixed (IQS × prompt × model) triple. Comparing counts across
+> versions measures the *instrument change*, not the *images* — see "Two independent validations" below.
+
 The **single source of truth** for CG image acceptance. Both the **verifier** ("does this violate the
 spec?") and the **repair planner** ("which violated clauses can this repair method address?") derive from
 this one document — so they cannot drift apart.
@@ -69,11 +80,33 @@ quality improved — came entirely from treating a SOFT count as a HARD clause. 
 - **Provisionally validated** against this spec on the underwater-Kwisheen regression family (R1–R3):
   species false-positives 13–24 → 0; over-report 50–64 → 3–6; trend reproduced 6 → 5 → 3; failure classes
   align with the engineering that changed between passes.
+- **Cross-domain probe PASSED (First Favored / land):** on a deliberately orthogonal domain — different
+  creature (bipedal, no tentacles), setting (forest), and physics (gravity) — the classifier emitted **0
+  species false-flags** (did not demand tentacles), **0 buoyancy false-flags** (did not demand floating),
+  and still caught the real text-leaks. It judged against the *scene context*, not the underwater examples
+  baked in the prompt tail. This is the strong falsification: it removed the very cues that caused the
+  original false positives and answered correctly.
 - **The target is agreement with THIS specification, not with a human's eyeball** — a human labeler who
   isn't applying the production standard is not ground truth.
-- **Gate to "generally validated":** hold up under **distribution shift** — a different world, indoor vs
-  underwater, humans-only, non-Kwisheen creatures, action- vs dialogue-heavy. Only then is the measurement
-  layer mature enough to found the per-quadrant verify/repair system.
 
-Related: `project_sheet_production_layer`, `docs/sheet-defect-regressions.md`,
+### Two independent validations still open (do not conflate them)
+
+1. **Instrument determinism** — freeze (IQS × prompt × model × parser), run the *same images* N times, and
+   confirm the counts hold. Tests: *does the same instrument give the same measurement?* This is the gate to
+   trusting a magnitude. **(Not yet passed — probe built: `_classifier_determinism.mjs`.)**
+2. **Version sensitivity** — deliberately vary prompt v1→v2→v3 and measure how far the counts move. This is
+   a *feature* of specification evolution, not a runtime flaw. You don't freeze prompt development forever;
+   you just require every run *within a benchmark campaign* to share one version.
+
+> ⚠️ **What was shown vs. what was claimed.** The R2/R3 count shift (5/3 → 0) followed a prompt
+> *restructure* — that is evidence of **version sensitivity** (#2), *not* of run-to-run instability (#1).
+> They are different hypotheses needing different experiments; #1 has not been run to completion.
+
+### Benchmark A — the permanent regression suite for the instrument itself
+
+A tiny, **frozen-forever** set of representative sheets spanning distinct visual domains. Whenever the IQS
+or the classifier prompt changes, re-run Benchmark A: it is the control that separates "the images changed"
+from "the instrument changed." Composition and status: `docs/benchmark-A.md`.
+
+Related: `project_sheet_production_layer`, `docs/sheet-defect-regressions.md`, `docs/benchmark-A.md`,
 `project_staged_validation_architecture`.
