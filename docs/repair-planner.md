@@ -91,16 +91,42 @@ the severity gate (garbled neon skipped by both), and adds cost-aware escalation
 to regen on failure; medium-sev Klein → give up). It is the FINAL gate: an action that clears
 confidence×severity but isn't cost-justified is downgraded to `surface·uneconomical`.
 
-Implementation: `_repair_planner.mjs` `economics(class, confidence, severity)`; offline demo `_econ_demo.mjs`.
+**Model vs. Policy — a category line.** Up through the verifier, every result was *falsifiable* (does
+two-channel beat one-channel? does corroboration separate stable from unstable?). The planner's *structure*
+is still architecture, but the **numbers** are **policy** — product decisions, not properties of the world.
+So the code separates them: a stable `worth = f(confidence, impact, repair_cost)` **MODEL**, and a
+`POLICY` block (`policy-v0-placeholder`) of provisional constants — severity weights, method costs, retry
+budgets, fail-probabilities — that **will change** with real API pricing, measured latency, telemetry, and
+observed repair success rates. Freeze the formula; never the numbers. *(The localized-vs-structural
+counterexample already sufficiently demonstrates economics is a distinct axis; the specific `20/6/1` weights
+do not need — and should not get — that same "validated" status.)*
+
+**Deferred 4th input — repair success probability.** A Klein that succeeds 95 % ≠ one that succeeds 12 %,
+so eventually `expected_gain = impact × confidence × P(success)`. Not built — it awaits *measured* per-method
+success rates, which only exist once the execution + verification loop is running. Recorded, not implemented.
+
+Implementation: `_repair_planner.mjs` `economics(class, confidence, severity)` (MODEL + POLICY separated);
+offline demo `_econ_demo.mjs`.
+
+---
+
+### Status: the planner's DECISION MODEL is complete — not "the planner."
+
+The architecture now knows **what** is wrong (verifier), **whether** it's real (confidence), **whether** the
+reader cares (impact), and **whether** it's worth spending on (economics). What remains is **execution** —
+defining what a valid repair *is*, carrying it out, and proving it worked against the frozen verifier. That
+is the boundary between decision-making and action, and a deliberate pause point.
 
 ## Remaining phases (ordered — the contract comes BEFORE localization)
 
-1. **Repair Contract** — the *rules of a valid repair*, defined BEFORE localization/execution so those can't
-   evolve in inconsistent directions. It answers: What constitutes a *successful* Klein repair? May Klein
-   modify neighboring pixels? May it change composition? May it introduce stylistic drift? What is the retry
-   budget? When do we escalate Klein → regeneration? (Class→method default table lives in
-   `_repair_planner.mjs`: localized → Klein inpaint; structural → conditioned regen.)
-2. **Localization** — derive Klein's bounding region from the defect `note` (± a targeted localization query).
+1. **Repair Contract** — *the most important remaining document, and a hard gate.* **Do not implement
+   localization until it exists** — without it, localization has no objective (a bounding box for *what*
+   goal?). It answers: What counts as "fixed"? What collateral damage is acceptable? How much style drift?
+   When is Klein considered *exhausted*? What makes a regeneration *successful*? Only once those are written
+   does "find the bounding region" become a well-defined engineering problem. (Class→method default table
+   lives in `_repair_planner.mjs`: localized → Klein inpaint; structural → conditioned regen.)
+2. **Localization** — derive Klein's bounding region from the defect `note` (± a targeted localization
+   query). *Blocked on the Repair Contract.*
 3. **Execution** — perform the repair on the auto-repair set per the contract.
 4. **Verification** — re-run the **same frozen verifier** on the repaired panel: confirm the defect cleared
    AND no new defect appeared. The closed loop — the repair system checks its own work against a stable
