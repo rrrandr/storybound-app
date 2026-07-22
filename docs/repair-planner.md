@@ -141,16 +141,17 @@ what prevents the frozen verifier from bloating into a "vision Swiss-army knife"
    **Validated on Benchmark A (visual, cropped + eyeballed):** boxes land precisely on the element (PHASE
    caption, DANIEL neon, each malformed hand), in-panel, tight (3.8–6.2% of panel area) — the *minimal region*
    objective met. (Transient call flakiness handled by retry.)
-3. **Execution** ⏳ (next) — **STATELESS**, per this design contract:
-   `RepairAttempt { input_image, mask, repair_instruction } → candidate_image`.
-   Execution knows **nothing** of confidence, severity, economics, or retry count — those are the planner's.
-   It simply produces the best candidate it can from its inputs (Klein inpaint within the mask; regen for
-   structural). Stateless = maximally reusable and trivially testable, and it keeps **all** policy in the
-   planner. And **execution is an OPTIMIZATION problem, not a correctness one** — correctness is already
-   fixed by the Repair Contract; execution only tries to satisfy it *efficiently*, free to tune mask
-   expansion / prompt wording / negative prompts / feather radius / model choice / retry ordering **without
-   touching the acceptance criterion**. Telemetry: log `mask_area_percent` (from localization) on every
-   attempt — a leading indicator of Klein success/retries.
+3. **Execution** ✅ — **STATELESS**: `RepairAttempt { input_image, box(mask), repair_instruction } →
+   candidate_image` (`_execute_repair.py`). Klein = crop a context region around the box → **FLUX Kontext**
+   instruction-edit → **paste only the tight box back** (feathered). Knows nothing of confidence/severity/
+   economics/retry — those are the planner's. **Validated live on A4's malformed hand:** candidate produced
+   in 10.3 s, and the pixel-diff vs. the original is a bounding box of *exactly* the repair box — **every
+   changed pixel inside the mask, the rest byte-identical.** So §3 collateral / §1.3 minimal-intervention are
+   **mechanically guaranteed** by paste-tight, independent of the editor. Edit *quality* was modest (a
+   somewhat cleaner hand) — and that is *correct by design*: **execution is an OPTIMIZATION problem, not a
+   correctness one.** It produces a candidate; whether the candidate is *accepted* is the oracle's call
+   (Verification, §1), and §2 rollback makes a bad candidate free. Free to tune mask growth / prompt / feather
+   / model / retry without touching the acceptance criterion. Telemetry: `mask_area_percent` per attempt.
 4. **Verification** — re-run the **same frozen verifier** on the repaired panel: confirm the defect cleared,
    no new defect, and unrelated defects preserved (contract §1). The closed loop — the repair system checks
    its own work against the unchanging oracle. `detect → decide → repair → verify`.
