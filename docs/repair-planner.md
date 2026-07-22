@@ -124,13 +124,17 @@ is the boundary between decision-making and action, and a deliberate pause point
    repair can never make the sheet worse), collateral bounds (Klein in-region; regen preserves sibling
    continuity), style-drift tolerance, and exhaustion → escalate-if-worth → surface. Model/policy separated,
    same as the planner.
-2. **Localization** — derive Klein's bounding region from the defect `note` (± a targeted localization
-   query). *Unblocked.* Objective (per the contract): the **minimal** region such that a Klein edit inside it
-   passes the success test without violating the collateral bounds.
-3. **Execution** — perform the repair on the auto-repair set per the contract.
-4. **Verification** — re-run the **same frozen verifier** on the repaired panel: confirm the defect cleared
-   AND no new defect appeared. The closed loop — the repair system checks its own work against a stable
-   standard. `detect → decide → repair → verify`, with the verifier as the unchanging invariant.
+2. **Localization** ✅ — `_localizer.mjs` `localize(imgPath, defect)`. Panel index → quadrant (deterministic);
+   a spatial vision call (Gemini `box_2d`, its own tool — NOT the frozen verifier) returns a tight box around
+   the element named in the defect `note`; feather margin + clamp to the panel produce the Klein mask.
+   **Validated on Benchmark A (visual, cropped + eyeballed):** boxes land precisely on the element (PHASE
+   caption, DANIEL neon, each malformed hand), in-panel, tight (3.8–6.2% of panel area) — the *minimal region*
+   objective met. (Transient call flakiness handled by retry.)
+3. **Execution** ⏳ — perform the repair on the auto-repair set per the contract (Klein inpaint within the
+   localized mask; regen for structural). Next up.
+4. **Verification** — re-run the **same frozen verifier** on the repaired panel: confirm the defect cleared,
+   no new defect, and unrelated defects preserved (contract §1). The closed loop — the repair system checks
+   its own work against the unchanging oracle. `detect → decide → repair → verify`.
 
 ## Deferred to Verifier v2 (NOT now)
 
