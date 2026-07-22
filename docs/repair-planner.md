@@ -168,12 +168,22 @@ what prevents the frozen verifier from bloating into a "vision Swiss-army knife"
 `detect (frozen verifier) → decide (confidence × severity × economics) → localize (tight box) → execute
 (Klein candidate, locality-guaranteed) → verify (frozen oracle → accept / §2 rollback)`.
 
-Every stage built and validated against contracts that never had to move. What remains is **optimization
-inside the loop**, all made safe by the monotonic guarantee (a bad candidate is free): the planner's
-**retry/escalation** orchestration (on rollback: retry with a grown mask / different prompt, then escalate
-Klein → regen per economics), improving **Klein success** (the A4 edit shows FLUX-on-a-small-crop is often
-insufficient — mask growth, prompt craft, model choice), and the **regen path** for structural defects.
-None of these can degrade output; they only change how often a repair *succeeds*.
+Every stage built and validated against contracts that never had to move.
+
+**Retry / escalation orchestration** ✅ — `_retry_loop.mjs` `repairDefect(...)`. Each attempt runs
+localize → execute → verify(§1); ACCEPT commits, ROLLBACK discards and retries. Klein retries to its budget
+(mask **grown** each try — the A4 result showed FLUX-on-a-tight-crop is often too weak); on exhaustion it
+escalates to regen **only if economics said regen pays off**, else surfaces. **MONOTONIC**: `current` advances
+only on an accepted candidate, so a surfaced defect returns the *untouched original*. Dependency-injected
+(stubs for tests, real components for production); all six control-flow branches — accept-first-try,
+accept-on-retry, escalate-to-regen, not-economical→surface, all-fail→surface, regen-from-start — validated
+deterministically, monotonicity asserted.
+
+What remains is pure **optimization inside the loop**, all made safe by the monotonic guarantee (a bad
+candidate is free): improving **Klein success rate** (mask growth, prompt craft, model choice — the A4 edit
+shows a tight FLUX crop is often insufficient), and **implementing the regen path** for structural defects
+(the orchestrator's regen branch is wired but its executor is a stub). None can degrade output; they only
+change how *often* a repair succeeds.
 
 ## Deferred to Verifier v2 (NOT now)
 
