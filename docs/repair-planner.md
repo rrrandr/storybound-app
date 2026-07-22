@@ -117,6 +117,17 @@ reader cares (impact), and **whether** it's worth spending on (economics). What 
 defining what a valid repair *is*, carrying it out, and proving it worked against the frozen verifier. That
 is the boundary between decision-making and action, and a deliberate pause point.
 
+## Three vision roles — one responsibility each
+
+Vision appears three times in the system, each answering a *different* question. Keeping them separate is
+what prevents the frozen verifier from bloating into a "vision Swiss-army knife" and preserves replaceability.
+
+| Role | Question | Frozen? | Replaceable without reopening Benchmark A? |
+|---|---|---|---|
+| **Verifier** (oracle) | "What defects exist?" | ✅ v1.0 | no — it *is* the acceptance criterion |
+| **Localization** | "Where is *this* defect?" | no | yes (box → segmentation → SAM → …) |
+| **Execution** | "Modify *only* this region." | no | yes (Klein → any inpainter/regen) |
+
 ## Remaining phases (ordered — the contract comes BEFORE localization)
 
 1. **Repair Contract** ✅ — written: [`repair-contract.md`](./repair-contract.md). Defines "fixed" (the frozen
@@ -130,8 +141,16 @@ is the boundary between decision-making and action, and a deliberate pause point
    **Validated on Benchmark A (visual, cropped + eyeballed):** boxes land precisely on the element (PHASE
    caption, DANIEL neon, each malformed hand), in-panel, tight (3.8–6.2% of panel area) — the *minimal region*
    objective met. (Transient call flakiness handled by retry.)
-3. **Execution** ⏳ — perform the repair on the auto-repair set per the contract (Klein inpaint within the
-   localized mask; regen for structural). Next up.
+3. **Execution** ⏳ (next) — **STATELESS**, per this design contract:
+   `RepairAttempt { input_image, mask, repair_instruction } → candidate_image`.
+   Execution knows **nothing** of confidence, severity, economics, or retry count — those are the planner's.
+   It simply produces the best candidate it can from its inputs (Klein inpaint within the mask; regen for
+   structural). Stateless = maximally reusable and trivially testable, and it keeps **all** policy in the
+   planner. And **execution is an OPTIMIZATION problem, not a correctness one** — correctness is already
+   fixed by the Repair Contract; execution only tries to satisfy it *efficiently*, free to tune mask
+   expansion / prompt wording / negative prompts / feather radius / model choice / retry ordering **without
+   touching the acceptance criterion**. Telemetry: log `mask_area_percent` (from localization) on every
+   attempt — a leading indicator of Klein success/retries.
 4. **Verification** — re-run the **same frozen verifier** on the repaired panel: confirm the defect cleared,
    no new defect, and unrelated defects preserved (contract §1). The closed loop — the repair system checks
    its own work against the unchanging oracle. `detect → decide → repair → verify`.
