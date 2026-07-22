@@ -111,11 +111,21 @@ visual prompt (the roster-first medicine that cured twins) did NOT reduce hand F
 fixtures** (A1/A2 went 0 → `anatomy=2`) while A3/A4 kept flagging. Cause: this is the **enrichment-perturbs-
 perception law** (see `measurement-discipline`) — adding hand-focused instructions *primes the model to hunt
 hands harder*, so more anatomy flags appear everywhere. Reverted. **Lesson: the anatomy FP is NOT fixable by a
-quick prompt clause; more prompt text makes it worse.** Real options (deferred, careful): (a) a focused
-anatomy *second-opinion* pass (a separate call that only adjudicates a flagged region: "one malformed hand, or
-two overlapping correct hands?"), or (b) **policy** — treat `anatomy` flags as presumed-FP and route them to
-*surface-for-human-review*, never auto-repair, given the current unreliability. Until then, do not trust or
-auto-act on `anatomy`.
+quick prompt clause; more prompt text makes it worse.**
+
+**A downstream FP-adjudicator was then built and tested — and FAILED (2026-07-22).** A narrowly-scoped second
+vision call (`KEEP|DROP|UNKNOWN`, "is this a known FP or a real malformation?") scored only **4/7** against
+Roman's labeled `test/fixtures/hand-controls/` set, with **deterministic** misses in BOTH directions: it KEPT
+the fine `regen` hand and DROPPED the malformed `s2`/`both` hands. So a second vision model shares the blind
+spot.
+
+**Settled conclusion: fine hand anatomy is below the reliable-discrimination threshold of the available vision
+models.** Every automated judge failed this set — the frozen verifier (flagged all), a purpose-built
+adjudicator (4/7), and the author's own eye (wrong ~6× this session, both directions). Only the human was
+reliable. Therefore **`anatomy` is HUMAN-IN-THE-LOOP**: surface for review, **never auto-repair, never
+auto-adjudicate**. This is a risk-based policy backed by a confusion-matrix measurement, not a guess. (Text
+defects, by contrast, the verifier handles reliably.) The verifier stays frozen; nothing was changed to chase
+this — the fix is a *policy*, and the `hand-controls/` set is the recall test for any future attempt.
 
 **How it slipped past validation — a cautionary tale.** A4 would have caught it, but the label was
 **corrupted**: originally labeled *clean* (correct), then **relabeled "real defect" to match the instrument's
