@@ -104,9 +104,18 @@ the Verifier version and requires a full Benchmark A re-run under a fresh prereg
 **The frozen oracle is not infallible.** Discovered 2026-07-22 (Roman, ground-truth authority): the VISUAL
 channel flags **two overlapping correct hands** (two people's hands near each other) as **one malformed hand
 with "too many fingers"** → a spurious `anatomy` defect. Same failure family as the **twins ontology bug**:
-mistaking a legitimate MULTI-INSTANCE arrangement for a SINGLE-OBJECT defect. Twins was fixed with roster-first
-enumeration; **anatomy needs the same medicine** (enumerate distinct hands/limbs before judging malformation)
-— a **Verifier v1.1** change requiring fresh Benchmark A re-validation.
+mistaking a legitimate MULTI-INSTANCE arrangement for a SINGLE-OBJECT defect.
+
+**⚠️ The obvious v1.1 fix BACKFIRED (2026-07-22).** Adding an "enumerate the hands before judging" STEP to the
+visual prompt (the roster-first medicine that cured twins) did NOT reduce hand FPs — it **regressed the clean
+fixtures** (A1/A2 went 0 → `anatomy=2`) while A3/A4 kept flagging. Cause: this is the **enrichment-perturbs-
+perception law** (see `measurement-discipline`) — adding hand-focused instructions *primes the model to hunt
+hands harder*, so more anatomy flags appear everywhere. Reverted. **Lesson: the anatomy FP is NOT fixable by a
+quick prompt clause; more prompt text makes it worse.** Real options (deferred, careful): (a) a focused
+anatomy *second-opinion* pass (a separate call that only adjudicates a flagged region: "one malformed hand, or
+two overlapping correct hands?"), or (b) **policy** — treat `anatomy` flags as presumed-FP and route them to
+*surface-for-human-review*, never auto-repair, given the current unreliability. Until then, do not trust or
+auto-act on `anatomy`.
 
 **How it slipped past validation — a cautionary tale.** A4 would have caught it, but the label was
 **corrupted**: originally labeled *clean* (correct), then **relabeled "real defect" to match the instrument's
@@ -118,12 +127,14 @@ ground truth; a human authority overrides it; never move a label to match a flag
 repair attempt on the phantom defect **rolled back** — the monotonic guarantee bounded the damage to wasted
 compute, never a degraded sheet. A false-positive oracle wastes money; it cannot harm the product.
 
-**Clean channel-level verdict (authority ruling 2026-07-22).** On every flag reviewed: **the TEXT channel was
-100% correct** — every text flag was a real defect (`PHASE:` captions, the `DANIEL` name-sign, and bad SFX
-`STRIKE`/`SING`/`STILL` that aren't onomatopoeia). **The VISUAL/anatomy channel was 0% correct on hands** —
-*every* hand flag across A3 and A4 was the multi-instance false positive. So: **trust the text channel; treat
-`anatomy` (esp. on multi-hand/multi-character panels) as presumed-FP until v1.1.** (The text *defects* are
-fixed upstream, not by the verifier — see `feedback_cg_signage_foreshadowing` and `feedback_cg_sfx_onomatopoeia`.)
+**Authority ruling 2026-07-22 — narrowly stated (do not over-generalize).** *On the corrected Benchmark A
+fixtures,* every reviewed **text** flag corresponded to a true defect (`PHASE:` captions, the `DANIEL`
+name-sign, and bad SFX `STRIKE`/`SING`/`STILL`), while every reviewed **hand-`anatomy`** flag corresponded to
+the same **multi-instance false-positive class**. This is a small, benchmark-specific sample — it does **not**
+establish an overall accuracy for either channel. The actionable read: **treat `anatomy` on multi-hand /
+multi-character panels as presumed-FP until v1.1**, and note the text flags here were all real. (Text
+*defects* are fixed upstream in generation, not by the verifier — see `feedback_cg_signage_foreshadowing`
+and `feedback_cg_sfx_onomatopoeia`.)
 
 ## Out of scope for v1.0 (intentionally deferred, NOT unfinished)
 
