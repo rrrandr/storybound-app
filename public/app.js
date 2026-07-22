@@ -185145,8 +185145,17 @@ No text, no watermark, no UI elements, share-ready.`;
       'INSTRUCTION-TEXT GUARD (HARD): NONE of the words used in THESE INSTRUCTIONS may be drawn as text in the ' +
       'image — not "PHASE", "QUADRANT", "PANEL", "ORIENTATION", "TRANSFORMATION", "THREAT", "CONSEQUENCE", ' +
       '"REVELATION", "DECISION", "CAMERA", "SHOT", any character-role label, or any heading/title from this ' +
-      'prompt or a reference image. These are directions to you, not content to letter. The ONLY text permitted ' +
-      'in the whole image is the specified integrated SOUND-EFFECT(s) above — nothing else, anywhere.';
+      'prompt or a reference image. These are directions to you, not content to letter. NEVER letter a ' +
+      'character\'s NAME onto a sign, wall, screen, or object. The ONLY text permitted anywhere in the image is ' +
+      'the specified integrated SOUND-EFFECT(s) above. ' +
+      // SFX-QUALITY RULE (Roman 2026-07-22): image models letter text even when told not to — so if any SFX
+      // DOES appear it must be the RIGHT kind. An SFX is a written SOUND (onomatopoeia), never an action-verb
+      // or a state/mood word. Observed offenders on real renders: STRIKE (verb → should be a sound like SKRRSH),
+      // SING / STILL (a mood and a state — not sounds at all).
+      'And a SOUND-EFFECT is a written SOUND — an onomatopoeia (KRAK, FWOOSH, THUD, SKRRSH). It is NEVER an ' +
+      'action-verb (NOT "STRIKE", "PUNCH", "RUN", "SING"), NEVER a state or mood word (NOT "STILL", "TENSE", ' +
+      '"SILENCE"), and NEVER a caption or label. If a sound cannot be rendered as genuine onomatopoeia, render ' +
+      'NO text there at all.';
     // UNIFORM BUOYANCY — the float ref/text applied unevenly (some panels lapsed to standing). Reassert once
     // for the whole page when the scene is underwater. (Roman 2026-07-21.)
     var buoyBlock = '';
