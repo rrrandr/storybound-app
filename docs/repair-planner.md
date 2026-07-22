@@ -192,9 +192,19 @@ Klein rollback → regen rollback → surface, **monotonic throughout** (origina
 Every stage and executor exists and is validated. The remaining work **cannot change correctness** — only
 how *often* a repair succeeds, all safe under the monotonic guarantee (a failed repair is free; an unfixable
 defect surfaces for human review, never ships worse):
-- **Klein / regen success rate** — mask growth, prompt craft, model choice, sibling-conditioning strategy.
-  Honest baseline: FLUX failed to fix the A4 hand *both* ways (tight crop and full-panel regen) — hands are
-  the hardest case, and editing models don't reliably fix them. This is the optimization frontier.
+- **Klein / regen success rate** — the optimization frontier. **First serious attempt on the A4 hand
+  (documented honestly, `_klein_hands.py`):** levers tried = upscale crop → 1024px, anatomy/pose-specific
+  prompt, 3 varied seeds (multi-shot + oracle-picks-winner), and multi-instance localization (the panel has
+  two overlapping malformed hands). **Result: all rolled back — the oracle still flagged `anatomy:p2` on
+  every variant** (5 FLUX attempts / 4 strategies, 0 passes). The edits *looked* cleaner to the eye but the
+  oracle — trusted over the eye all session — rejected them. **Honest conclusion: modest levers (resolution
+  / prompt / seeds / multi-instance) did not crack this hand.** Hands are the known-hardest case; this is a
+  worst-case one (two overlapping hands in a ~110px region). Realistic paths (unattempted): a hand-specialist
+  refiner, a much larger shot-lottery, human-in-the-loop for surfaced hands, or Verifier v2's per-instance
+  identities for precise addressing. **The architecture behaved perfectly throughout: every failed attempt
+  rolled back, the original was never degraded, and the defect correctly surfaces for human review** — the
+  monotonic guarantee protecting production through a genuinely unfixable case. Success-rate work is real ML
+  effort, not config tuning — but it is *safe* effort.
 - Everything else (localization backend, planner policy numbers, batching, latency) is a swappable component
   inside frozen contracts.
 
