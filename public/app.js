@@ -181499,14 +181499,17 @@ No text, no watermark, no UI elements, share-ready.`;
         '- SIGNING: underwater, characters communicate mostly by SIGN — a Kwisheen weaves meaning with its TENTACLES, a human shapes cruder signs with the HANDS. When a beat is a communication moment, stage the speaker mid-SIGN (limbs/hands weaving a deliberate gesture toward the other) rather than simply talking, while the mouth still opens for the emotion of it.\n' +
         '- The whole frame reads as underwater — nothing rests or hangs as if in a dry, air-filled room.\n\n';
     })();
-    if (visualState._phaseLabel) {
-      prompt += 'PHASE: ' + visualState._phaseLabel + '\n\n';
-    }
+    // PHASE-LABEL LEAK FIX (Roman 2026-07-22): we used to emit a bare `PHASE: <type>` header here and then
+    // tell the model to "read the PHASE label" — so the image model dutifully LETTERED "PHASE: Orientation"
+    // etc. onto the art (confirmed by dumping the sheet prompt: 20 phase-token hits). The type word is a
+    // DIRECTION, never content to draw. Deleted at source: the beat-aware LOGIC (shot rhythm, casting, burst
+    // gating) all keys off `_readerLearning`, not this visible header, so nothing downstream is affected. The
+    // DRAMATIC ACTION bullets below already give beat-specific staging without naming the beat.
     // DRAMATIC ACTION (Roman 2026-07-17): the hero panels were reading as the same two figures
     // staring from slightly different angles — static tableaux, closed mouths, no beat-specific
     // action. Force each panel to ENACT its own moment, vary the blocking, and put the stakes in
     // the bodies + faces (open mouths mid-speech, wishes shown as the invocation act, etc.).
-    prompt += 'DRAMATIC ACTION (HARD — this panel ENACTS its specific moment; it is NOT a static face-off): read the PHASE label and the scene action and stage the characters DOING the thing this beat is about — mid-gesture, mid-action, bodies committed. VARY this panel\'s camera distance, angle, and blocking from the other panels so the sequence never reads as the same two figures staring from slightly different angles.\n' +
+    prompt += 'DRAMATIC ACTION (HARD — this panel ENACTS its specific moment; it is NOT a static face-off): read the scene action and stage the characters DOING the thing this beat is about — mid-gesture, mid-action, bodies committed. VARY this panel\'s camera distance, angle, and blocking from the other panels so the sequence never reads as the same two figures staring from slightly different angles.\n' +
       '- SPEECH: when a character is speaking, shouting, commanding, or invoking in this beat, render their MOUTH OPEN mid-word — not a closed-mouth stare — so the frame reads as live action; in a heated exchange at least one figure\'s mouth is open.\n' +
       '- INVOCATION / WISH / SPELL beats: show the ACT of it — the wisher with eyes closed or lifted and hands pressed together or raised, a gathering glow / light / distortion forming at the focal point, and the OTHER characters reacting (recoiling, bracing, staggering back, shielding their eyes) — never two people standing and calmly looking at each other.\n' +
       '- COMBAT / THREAT beats: show the strike IN MOTION — a weapon mid-thrust or mid-swing, a body lunging / dodging / recoiling, faces set in effort or alarm — not a posed standoff.\n' +
