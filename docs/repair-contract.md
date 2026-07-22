@@ -9,17 +9,33 @@ and must produce a result that satisfies every clause below. The arbiter of succ
 tool — it is the **frozen [`Verifier v1.0`](./verifier-contract.md)**, re-run on the output. The repair tool
 never grades its own work.
 
+> **The verifier is now the system's ORACLE, not merely a detector.** Every execution method asks exactly one
+> question afterward: *"did I satisfy the oracle?"* Because the acceptance criterion lives entirely in the
+> frozen verifier, **any** component below it — localization, Klein, regeneration, even the planner — can be
+> replaced or made arbitrarily experimental **without changing what "correct" means**. Combined with §2
+> (rollback), this makes the system *monotonic*: no execution algorithm, however experimental, can degrade
+> production output. Improvements swap components *inside* the three frozen contracts (perception, decision,
+> repair) rather than redesigning them.
+
 ## 1. The success test — what counts as "fixed"
 
 A repair **succeeds** iff, re-running the frozen verifier (via the same N-run **corroboration** used for
 confidence, `_repair_planner.mjs`) on the repaired artifact:
 
 1. **The targeted defect is gone** — it no longer appears above its original confidence tier, and
-2. **No new defect is introduced anywhere on the sheet** — the post-repair defect set, minus the target, is a
-   subset of the pre-repair set. Nothing new at `medium`+ confidence.
+2. **No new defect is introduced anywhere on the sheet** — nothing new at `medium`+ confidence, and
+3. **Unrelated defects are preserved (minimal intervention)** — every *other* defect in the pre-repair set is
+   still present, with the same class. An unrelated defect that *vanishes* or *changes class* signals an
+   out-of-region change and **fails** the repair — even if the target was fixed and no new defect appeared.
 
-Success is defined by the *independent* verifier agreeing the defect is gone and nothing broke — never by the
-repairer asserting it. This is the closed loop: `detect → decide → repair → **verify**`.
+Together, (2)+(3) make the unrelated-defect set **invariant**: `post \ {target} == pre \ {target}`. That is
+the precise meaning of *minimal intervention* — a repair changes **only** what it targets, never silently
+repainting or cropping unrelated content that merely happens to also fix (or hide) something else. (Scope: for
+Klein this holds across the whole sheet; for a whole-panel regen it holds for the **non-regenerated sibling
+panels** — within the regenerated panel, re-drawing is expected, and §3 governs sibling continuity.)
+
+Success is defined by the *independent* verifier agreeing the defect is gone and nothing else moved — never by
+the repairer asserting it. This is the closed loop: `detect → decide → repair → **verify**`.
 
 ## 2. The non-regression invariant (safety) — a repair can NEVER make the sheet worse
 
