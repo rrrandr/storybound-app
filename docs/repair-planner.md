@@ -152,9 +152,28 @@ what prevents the frozen verifier from bloating into a "vision Swiss-army knife"
    correctness one.** It produces a candidate; whether the candidate is *accepted* is the oracle's call
    (Verification, §1), and §2 rollback makes a bad candidate free. Free to tune mask growth / prompt / feather
    / model / retry without touching the acceptance criterion. Telemetry: `mask_area_percent` per attempt.
-4. **Verification** — re-run the **same frozen verifier** on the repaired panel: confirm the defect cleared,
-   no new defect, and unrelated defects preserved (contract §1). The closed loop — the repair system checks
-   its own work against the unchanging oracle. `detect → decide → repair → verify`.
+4. **Verification** ✅ — `_verify_repair.mjs` `judge(preSet, candSet, targetKey)`. Re-run the **same frozen
+   verifier** (corroboration) on the candidate; apply §1: target gone + no new defect + unrelated preserved →
+   **accept**, else **§2 rollback** (keep original) and hand back to the planner. **Demonstrated end-to-end
+   on the A4 hand:** the modest Klein edit did **not** clear it — `PRE {anatomy:p2, anatomy:p4}`,
+   `CAND {anatomy:p2, anatomy:p4}` → §1(a) target-gone ✗ → **ROLLBACK**. And it validated the guarantees: §1(c)
+   unrelated `anatomy:p4` *preserved* (only p2 was touched), §1(b) no new defect (no seam). The oracle
+   objectively settled what the eye couldn't, and the original was never degraded — the **monotonic guarantee
+   demonstrated, not asserted.**
+
+---
+
+## The loop is closed — full pipeline demonstrated end-to-end
+
+`detect (frozen verifier) → decide (confidence × severity × economics) → localize (tight box) → execute
+(Klein candidate, locality-guaranteed) → verify (frozen oracle → accept / §2 rollback)`.
+
+Every stage built and validated against contracts that never had to move. What remains is **optimization
+inside the loop**, all made safe by the monotonic guarantee (a bad candidate is free): the planner's
+**retry/escalation** orchestration (on rollback: retry with a grown mask / different prompt, then escalate
+Klein → regen per economics), improving **Klein success** (the A4 edit shows FLUX-on-a-small-crop is often
+insufficient — mask growth, prompt craft, model choice), and the **regen path** for structural defects.
+None of these can degrade output; they only change how often a repair *succeeds*.
 
 ## Deferred to Verifier v2 (NOT now)
 
