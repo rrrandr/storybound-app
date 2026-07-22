@@ -33,18 +33,30 @@ run (high), borderline ones flicker (low/medium) — *without touching perceptio
 Policy: `high → auto-repair` · `medium → corroborate` · `low → ignore/surface`.
 Implementation: `_repair_planner.mjs` `planRepairs(imgPath, scene, N)`.
 
-## Component 2 — SEVERITY / priority ⏳ (next; motivated by a concrete case)
+## Component 2 — SEVERITY / priority ✅ (built, validated on Benchmark A)
 
-Corroboration answers *"is this defect really there?"* — **not** *"is it worth repairing?"* Benchmark A
-surfaced the gap directly: on A3, the garbled background neon (`DWOOOSE`, `ONEANS`, `NEOL DIES`) came back
-**high-confidence** (it is reliably present) — but auto-Kleining garbled city set-dressing wastes a repair
-call, whereas the equally-high-confidence `DANIEL` name-leak genuinely warrants a fix.
+Corroboration answers *"is this defect really there?"* — **not** *"is it worth repairing?"* Severity is a
+separate, downstream **prioritizer**: one batched call per sheet that rates each *already-confirmed* defect
+(it never re-detects, so it can't perturb the frozen verifier). Rated `high` (reader instantly sees it broken
+— a caption/label, a name-as-signage, a tangled focal hand, a duplicated figure), `medium`, or `low` (easily
+missed / plausibly real set-dressing — garbled unreadable city neon, a minor background-hand nick).
 
-> **The auto-repair gate = confidence AND severity.** Confidence and severity are orthogonal; a defect must
-> clear both to earn an automatic Klein/regen. High-confidence + low-severity → skip or surface, don't spend.
+**The auto-repair gate = confidence AND severity** (orthogonal axes). Final action:
 
-Severity is a planner judgment (how much a defect degrades the reader experience / how visible it is),
-distinct from perception. Design open: derive from class + note, or a dedicated severity pass.
+| | severity high/med | severity low |
+|---|---|---|
+| **confidence high** | auto-repair | **surface** (don't spend) |
+| **confidence medium** | corroborate | surface |
+| **confidence low** | ignore | ignore |
+
+**Validated (N=4, Benchmark A) — the decisive test:** on A3, `DANIEL` and the garbled neon `DWOOOSE` /
+`ONEANS` / `NEOL DIES` all came back at **identical `conf=high, agree=4/4`** — Component 1 could not separate
+them. Severity did: `DANIEL` → **high → auto-repair**; garbled neon → **low → surface**. That proves severity
+*discriminates within a class at fixed confidence* — a genuinely different axis, not re-derived confidence.
+Net: 3 wasted Klein calls/sheet avoided while the real name-leak is still fixed. A2 PHASE captions →
+high/high → auto-repair; A3/A4 malformed hands → high/high → auto-repair; A1 clean.
+
+Implementation: `_repair_planner.mjs` `scoreSeverity()` + `decide(confidence, severity)`.
 
 ## Later components
 
