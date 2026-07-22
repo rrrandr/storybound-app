@@ -119,14 +119,14 @@ is the boundary between decision-making and action, and a deliberate pause point
 
 ## Remaining phases (ordered — the contract comes BEFORE localization)
 
-1. **Repair Contract** — *the most important remaining document, and a hard gate.* **Do not implement
-   localization until it exists** — without it, localization has no objective (a bounding box for *what*
-   goal?). It answers: What counts as "fixed"? What collateral damage is acceptable? How much style drift?
-   When is Klein considered *exhausted*? What makes a regeneration *successful*? Only once those are written
-   does "find the bounding region" become a well-defined engineering problem. (Class→method default table
-   lives in `_repair_planner.mjs`: localized → Klein inpaint; structural → conditioned regen.)
+1. **Repair Contract** ✅ — written: [`repair-contract.md`](./repair-contract.md). Defines "fixed" (the frozen
+   verifier agrees the defect is gone AND nothing new broke), the non-regression/rollback safety invariant (a
+   repair can never make the sheet worse), collateral bounds (Klein in-region; regen preserves sibling
+   continuity), style-drift tolerance, and exhaustion → escalate-if-worth → surface. Model/policy separated,
+   same as the planner.
 2. **Localization** — derive Klein's bounding region from the defect `note` (± a targeted localization
-   query). *Blocked on the Repair Contract.*
+   query). *Unblocked.* Objective (per the contract): the **minimal** region such that a Klein edit inside it
+   passes the success test without violating the collateral bounds.
 3. **Execution** — perform the repair on the auto-repair set per the contract.
 4. **Verification** — re-run the **same frozen verifier** on the repaired panel: confirm the defect cleared
    AND no new defect appeared. The closed loop — the repair system checks its own work against a stable
