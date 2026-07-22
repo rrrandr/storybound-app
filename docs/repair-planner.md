@@ -179,11 +179,24 @@ only on an accepted candidate, so a surfaced defect returns the *untouched origi
 accept-on-retry, escalate-to-regen, not-economical→surface, all-fail→surface, regen-from-start — validated
 deterministically, monotonicity asserted.
 
-What remains is pure **optimization inside the loop**, all made safe by the monotonic guarantee (a bad
-candidate is free): improving **Klein success rate** (mask growth, prompt craft, model choice — the A4 edit
-shows a tight FLUX crop is often insufficient), and **implementing the regen path** for structural defects
-(the orchestrator's regen branch is wired but its executor is a stub). None can degrade output; they only
-change how *often* a repair succeeds.
+**Regen executor** ✅ — `_regen_panel.py`. Regenerates the whole target PANEL conditioned on clean sibling
+panels (continuity references), pastes only that quadrant back (siblings byte-identical). **Demonstrated on
+the A4 hand (Klein had failed → escalated):** locality provably perfect (only the p2 quadrant changed);
+oracle verdict **ROLLBACK** (the hand stayed malformed). Notably `§1(b) no-new` *passed* despite a drastic
+reframe (close-up → wide) — composition is SOFT, characters/style preserved, so a valid reframe is not a
+defect; the oracle judged only whether the target cleared. Full escalation path thus demonstrated end-to-end:
+Klein rollback → regen rollback → surface, **monotonic throughout** (original retained).
+
+### The whole pipeline is built. What's left is success-rate optimization only.
+
+Every stage and executor exists and is validated. The remaining work **cannot change correctness** — only
+how *often* a repair succeeds, all safe under the monotonic guarantee (a failed repair is free; an unfixable
+defect surfaces for human review, never ships worse):
+- **Klein / regen success rate** — mask growth, prompt craft, model choice, sibling-conditioning strategy.
+  Honest baseline: FLUX failed to fix the A4 hand *both* ways (tight crop and full-panel regen) — hands are
+  the hardest case, and editing models don't reliably fix them. This is the optimization frontier.
+- Everything else (localization backend, planner policy numbers, batching, latency) is a swappable component
+  inside frozen contracts.
 
 ## Deferred to Verifier v2 (NOT now)
 
