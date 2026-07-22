@@ -99,6 +99,32 @@ dialogue) via a preregistered one-variable-at-a-time isolation:
 the Verifier version and requires a full Benchmark A re-run under a fresh preregistered hypothesis. See
 `measurement-discipline.md` and `benchmark-A.md`.
 
+## ⚠️ Known false positive — the multi-instance / anatomy FP (v1.1 backlog)
+
+**The frozen oracle is not infallible.** Discovered 2026-07-22 (Roman, ground-truth authority): the VISUAL
+channel flags **two overlapping correct hands** (two people's hands near each other) as **one malformed hand
+with "too many fingers"** → a spurious `anatomy` defect. Same failure family as the **twins ontology bug**:
+mistaking a legitimate MULTI-INSTANCE arrangement for a SINGLE-OBJECT defect. Twins was fixed with roster-first
+enumeration; **anatomy needs the same medicine** (enumerate distinct hands/limbs before judging malformation)
+— a **Verifier v1.1** change requiring fresh Benchmark A re-validation.
+
+**How it slipped past validation — a cautionary tale.** A4 would have caught it, but the label was
+**corrupted**: originally labeled *clean* (correct), then **relabeled "real defect" to match the instrument's
+flag** — moving ground truth to the classifier's output, the exact anti-pattern the discipline forbids. The
+oracle's "validation" on that case was therefore **circular**. Lesson: **the oracle is an instrument, not
+ground truth; a human authority overrides it; never move a label to match a flag.**
+
+*Silver lining that held:* a false positive still can't clear a real fix (there is nothing to fix), so every
+repair attempt on the phantom defect **rolled back** — the monotonic guarantee bounded the damage to wasted
+compute, never a degraded sheet. A false-positive oracle wastes money; it cannot harm the product.
+
+**Clean channel-level verdict (authority ruling 2026-07-22).** On every flag reviewed: **the TEXT channel was
+100% correct** — every text flag was a real defect (`PHASE:` captions, the `DANIEL` name-sign, and bad SFX
+`STRIKE`/`SING`/`STILL` that aren't onomatopoeia). **The VISUAL/anatomy channel was 0% correct on hands** —
+*every* hand flag across A3 and A4 was the multi-instance false positive. So: **trust the text channel; treat
+`anatomy` (esp. on multi-hand/multi-character panels) as presumed-FP until v1.1.** (The text *defects* are
+fixed upstream, not by the verifier — see `feedback_cg_signage_foreshadowing` and `feedback_cg_sfx_onomatopoeia`.)
+
 ## Out of scope for v1.0 (intentionally deferred, NOT unfinished)
 
 Verifier v1.0 deliberately does **not** define these — they are the repair planner's job, and each was
