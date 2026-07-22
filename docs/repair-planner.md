@@ -23,7 +23,7 @@ evolve safely.
 |---|---|---|
 | **Confidence** | Does the defect really exist? | ✅ Component 1 |
 | **Impact** (severity) | Does the reader care? | ✅ Component 2 |
-| **Repair economics** | Is the proposed repair worth its cost? | ⏳ Component 3 |
+| **Repair economics** | Is the proposed repair worth its cost? | ✅ Component 3 |
 
 Confidence and impact gate *whether* to act; economics governs *how* (and whether the expected quality gain
 beats the cost). Economics is an optimization problem, not a perception one — it weighs API cost, latency,
@@ -74,12 +74,26 @@ high/high → auto-repair; A3/A4 malformed hands → high/high → auto-repair; 
 
 Implementation: `_repair_planner.mjs` `scoreSeverity()` + `decide(confidence, severity)`.
 
+## Component 3 — REPAIR ECONOMICS ✅ (built, validated offline)
+
+The third axis, and the first planner component that is **pure computation** — no model call, no image.
+Economics is optimization, not perception: a deterministic cost-benefit over Components 1+2.
+
+> `gain = severity-value × confidence-multiplier` · `cost = method-price × expected-retries (incl. re-verify)`
+> · `worth = gain ≥ cost`. Localized → Klein (cheap); structural → regen (~8×). Klein that exhausts its
+> retry budget escalates to regen **only if** regen would itself pay off for that defect.
+
+**The decisive property — the worth-threshold is COST-DEPENDENT** (so economics can't be folded into
+confidence+severity): at identical `conf=high, sev=medium`, a **localized** defect is worth a Klein
+(gain 6 ≥ cost 3.1 → repair) while a **structural** one is not worth a regen (gain 6 < cost 11.3 → skip).
+Same evidence, opposite decision, because the repair costs differ. Economics also *independently* confirms
+the severity gate (garbled neon skipped by both), and adds cost-aware escalation (high-sev Klein → escalate
+to regen on failure; medium-sev Klein → give up). It is the FINAL gate: an action that clears
+confidence×severity but isn't cost-justified is downgraded to `surface·uneconomical`.
+
+Implementation: `_repair_planner.mjs` `economics(class, confidence, severity)`; offline demo `_econ_demo.mjs`.
+
 ## Remaining phases (ordered — the contract comes BEFORE localization)
-
-**Component 3 — Repair economics** (the third axis): API cost, latency, retry probability, expected quality
-improvement; decides Klein-vs-regen escalation and whether a repair's expected gain beats its cost.
-
-Then, in order:
 
 1. **Repair Contract** — the *rules of a valid repair*, defined BEFORE localization/execution so those can't
    evolve in inconsistent directions. It answers: What constitutes a *successful* Klein repair? May Klein
