@@ -119,13 +119,22 @@ Roman's labeled `test/fixtures/hand-controls/` set, with **deterministic** misse
 the fine `regen` hand and DROPPED the malformed `s2`/`both` hands. So a second vision model shares the blind
 spot.
 
-**Settled conclusion: fine hand anatomy is below the reliable-discrimination threshold of the available vision
-models.** Every automated judge failed this set — the frozen verifier (flagged all), a purpose-built
-adjudicator (4/7), and the author's own eye (wrong ~6× this session, both directions). Only the human was
-reliable. Therefore **`anatomy` is HUMAN-IN-THE-LOOP**: surface for review, **never auto-repair, never
-auto-adjudicate**. This is a risk-based policy backed by a confusion-matrix measurement, not a guess. (Text
-defects, by contrast, the verifier handles reliably.) The verifier stays frozen; nothing was changed to chase
-this — the fix is a *policy*, and the `hand-controls/` set is the recall test for any future attempt.
+**Settled conclusion (stated narrowly — do NOT overgeneralize):** *the vision models and prompting strategies
+evaluated in this project did not reliably discriminate fine hand anatomy on this benchmark.* Every automated
+judge tried here failed the set — the frozen verifier (flagged all), a purpose-built adjudicator (4/7), and
+the author's own eye (wrong ~6× this session, both directions). Only the human was reliable. This is NOT a
+claim about a universal ceiling — a materially better vision model or a specialist hand-analysis model could
+change it; the `hand-controls/` set is exactly the recall test to re-run when that happens.
+
+Therefore **`anatomy` is HUMAN-IN-THE-LOOP**: surface for review, **never auto-repair, never auto-adjudicate**
+— a risk-based operational policy backed by a confusion-matrix measurement, justified today regardless of
+future models. (Text defects, by contrast, the verifier handles reliably.) The verifier stays frozen; the fix
+is *policy*, not code.
+
+**Roadmap status: Hand anatomy — CLOSED pending new model capability.** Not "TODO", not "needs more prompt
+work". We have tested prompt enrichment, downstream adjudication, and multiple vision passes; prompt
+engineering is not the lever. Do not revisit until a materially better vision model or a specialist
+hand-analysis approach is available — then re-run `hand-controls/`.
 
 **How it slipped past validation — a cautionary tale.** A4 would have caught it, but the label was
 **corrupted**: originally labeled *clean* (correct), then **relabeled "real defect" to match the instrument's
