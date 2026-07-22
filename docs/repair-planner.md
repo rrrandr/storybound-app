@@ -4,14 +4,30 @@ Consumes the frozen [`Verifier v1.0`](./verifier-contract.md) output and decides
 defect. The verifier owns *semantic evidence*; the planner owns *execution metadata*.
 
 ```
-VerifierOutput {defects:[{class,panel,note}]}   ← frozen, minimal
-        │
-        ▼
-   Repair Planner  (this milestone — evolves freely without reopening the perception benchmark)
-        │
-        ▼
-RepairDecision {defect, confidence, severity, location, repair_method, corroboration_required}
+Verifier (frozen)
+      ↓
+Planner  ──►  Repair Contract  ──►  Localization  ──►  Execution  ──►  Verification
+      │                                                                     │
+      └── VerifierOutput {defects:[{class,panel,note}]} ← frozen, minimal   │
+          RepairDecision {defect, confidence, impact, economics, action}    │
+                                                                            ▼
+                                          re-run the SAME frozen verifier on the repaired panel
 ```
+
+The verifier **never changes**; everything downstream can. That stable invariant is what lets the system
+evolve safely.
+
+## The planner reasons over THREE orthogonal axes
+
+| Axis | Question | Status |
+|---|---|---|
+| **Confidence** | Does the defect really exist? | ✅ Component 1 |
+| **Impact** (severity) | Does the reader care? | ✅ Component 2 |
+| **Repair economics** | Is the proposed repair worth its cost? | ⏳ Component 3 |
+
+Confidence and impact gate *whether* to act; economics governs *how* (and whether the expected quality gain
+beats the cost). Economics is an optimization problem, not a perception one — it weighs API cost, latency,
+retry probability, and expected quality improvement, and it's where Klein-vs-regen escalation is decided.
 
 ## Component 1 — CONFIDENCE via corroboration ✅ (built, validated on Benchmark A)
 
@@ -58,13 +74,30 @@ high/high → auto-repair; A3/A4 malformed hands → high/high → auto-repair; 
 
 Implementation: `_repair_planner.mjs` `scoreSeverity()` + `decide(confidence, severity)`.
 
-## Later components
+## Remaining phases (ordered — the contract comes BEFORE localization)
 
-- **Repair method** — localized → Klein inpaint (`text-leak`, `anatomy`, `expression`, background-add);
-  structural → regenerate the panel conditioned on clean siblings (`species`, `continuity`, dominating
-  `burst`, `buoyancy`, barren `background`). Class→method table lives in `_repair_planner.mjs`.
-- **Structured location** — derive Klein's bounding region from `note` (± a targeted localization query).
-- **Klein / regen execution**; **cost model**; **re-verify after repair** (run the frozen verifier on the
-  repaired panel to confirm the defect cleared without introducing a new one).
+**Component 3 — Repair economics** (the third axis): API cost, latency, retry probability, expected quality
+improvement; decides Klein-vs-regen escalation and whether a repair's expected gain beats its cost.
+
+Then, in order:
+
+1. **Repair Contract** — the *rules of a valid repair*, defined BEFORE localization/execution so those can't
+   evolve in inconsistent directions. It answers: What constitutes a *successful* Klein repair? May Klein
+   modify neighboring pixels? May it change composition? May it introduce stylistic drift? What is the retry
+   budget? When do we escalate Klein → regeneration? (Class→method default table lives in
+   `_repair_planner.mjs`: localized → Klein inpaint; structural → conditioned regen.)
+2. **Localization** — derive Klein's bounding region from the defect `note` (± a targeted localization query).
+3. **Execution** — perform the repair on the auto-repair set per the contract.
+4. **Verification** — re-run the **same frozen verifier** on the repaired panel: confirm the defect cleared
+   AND no new defect appeared. The closed loop — the repair system checks its own work against a stable
+   standard. `detect → decide → repair → verify`, with the verifier as the unchanging invariant.
+
+## Deferred to Verifier v2 (NOT now)
+
+The verifier could emit **canonical defect identities** — `ANATOMY_HAND_FINGERS`, `TEXT_CHARACTER_NAME`,
+`TEXT_CAPTION`, `SPECIES_MORPHOLOGY`, `CONTINUITY_DUPLICATE` — instead of only coarse classes (`anatomy`,
+`text-leak`). Same minimal philosophy (still only semantic evidence), just a richer vocabulary that gives the
+planner finer routing. This is a **Verifier v2** change: it bumps the version and reopens the Benchmark A
+validation, so it waits until a concrete routing need demands it — not speculatively.
 
 Related: `verifier-contract.md`, `benchmark-A.md`, `measurement-discipline.md`, `image-quality-spec.md`.
