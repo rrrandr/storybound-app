@@ -185168,12 +185168,16 @@ No text, no watermark, no UI elements, share-ready.`;
   // First Favored melee: the Avowed Path's weapons + their superhuman ATHLETICISM. For a GENUINE First
   // Favored only — a disguised Kwisheen does NOT get this (see _trueSpeciesOnStage gating).
   function _firstFavoredCombatDirective() {
-    return '\n\nFIRST FAVORED COMBAT (the Avowed Path — direct, committed, legible): the signature weapon is ' +
-      'THE ANSWER, a DOUBLE-ENDED POLEARM — one end a narrow inward-facing crescent HOOK (for trapping, ' +
-      'disarming, controlling limbs, taking alive), the other end a straight or leaf-shaped KILLING BLADE ' +
-      '(thrust, decisive cut, armour-piercing), with a weighted central shaft for staff strikes. The sidearm ' +
-      'is the AVOWAL BLADE — a broad, FORWARD-CURVING single-edged sword with a small disarming hook near the ' +
-      'base and DELIBERATELY LEGIBLE cutting geometry (no concealed second edge). ' +
+    return '\n\nFIRST FAVORED COMBAT (the Avowed Path — direct, committed, legible): a First Favored carries ' +
+      'exactly ONE signature weapon for the whole fight, and it NEVER changes shape, never becomes a different ' +
+      'weapon, and is the SAME in every panel. The default is THE ANSWER, a DOUBLE-ENDED POLEARM — one end a ' +
+      'narrow inward-facing crescent HOOK (for trapping, disarming, controlling limbs, taking alive), the ' +
+      'other end a straight or leaf-shaped KILLING BLADE (thrust, decisive cut, armour-piercing), on a ' +
+      'weighted central shaft for staff strikes; it stays a POLEARM in every panel and never reads as a bare ' +
+      'sword. A few First Favored instead carry the AVOWAL BLADE — a broad, FORWARD-CURVING single-edged sword ' +
+      'with a small disarming hook near the base and DELIBERATELY LEGIBLE cutting geometry (no concealed ' +
+      'second edge) — but any given fighter carries EITHER the polearm OR the sword, chosen once, NEVER both ' +
+      'and NEVER switching between them. If a WEAPON LOCK section names this fighter\'s weapon, that governs. ' +
       'ATHLETICISM (defining): a First Favored is a BEYOND-OLYMPIC superhuman athlete — extraordinary strength, ' +
       'agility, reflexes and durability. Depict them MID-MOTION with explosive, acrobatic, near-airborne ' +
       'movement: lightning slides, flips, twists, aerial reversals and dodges (a Yoda-in-a-lightsaber-duel / ' +
@@ -185292,23 +185296,36 @@ No text, no watermark, no UI elements, share-ready.`;
       if (pcW && (_weaponName(pcW) || _weaponDesc(pcW))) push(state.protagonistName || state.playerName || 'the protagonist', _weaponName(pcW), _weaponDesc(pcW) || _resolveWeaponDescriptor(_weaponName(pcW), sceneText));
       if (liW && (_weaponName(liW) || _weaponDesc(liW))) push(state.loveInterestName || state.name || 'the love interest', _weaponName(liW), _weaponDesc(liW) || _resolveWeaponDescriptor(_weaponName(liW), sceneText));
     } catch (_) {}
+    // Resolve a cast entry's SPECIES and DISPLAY NAME. characters_present is usually a list of TOKEN STRINGS
+    // ('protagonist', 'li', 'Kira') that carry NO species field — so read the PC/LI species off the
+    // authoritative species state. Without this, the species-default below was DEAD for token strings
+    // (typeof c === 'object' was false → sp === 'false'), so a First Favored PC got no weapon lock and the
+    // combat menu was free to swap its weapon panel to panel — the exact sheet-render bug. (Roman 2026-07-25.)
+    var _entrySpecies = function (c, token) {
+      if (c && typeof c === 'object') return c._trueSpecies || c.species || '';
+      if (/^protagonist$/i.test(token)) return state._playerSpecies || '';
+      if (/^(li|love[_\s-]?interest)$/i.test(token)) return state._liSpecies || '';
+      return '';
+    };
+    var _displayName = function (token) {
+      if (/^protagonist$/i.test(token)) return state.protagonistName || state.playerName || 'the protagonist';
+      if (/^(li|love[_\s-]?interest)$/i.test(token)) return state.loveInterestName || state.name || 'the love interest';
+      return token;
+    };
     cast.forEach(function (c) {
       if (!c) return;
-      var who = (typeof c === 'string') ? c : (c.name || '');
-      if (!who || /^(protagonist|li|love[_\s-]?interest)$/i.test(who)) {
-        // resolve token → a display label if we can; otherwise keep the token so the lock still binds.
-        who = who || '';
-      }
-      if (!who) return;
+      var token = (typeof c === 'string') ? c : (c.name || '');
+      if (!token) return;
+      var who = _displayName(token);
       // (a) explicit weapon on the cast entry
       var explicitName = (typeof c === 'object' && (c.weapon && (c.weapon.name || c.weapon))) || null;
       var explicitDesc = (typeof c === 'object' && c.weapon && c.weapon.descriptor) || null;
       if (explicitName || explicitDesc) { push(who, explicitName, explicitDesc || _resolveWeaponDescriptor(explicitName, sceneText)); return; }
-      // (b) scene scan bound by wielder name
-      var bound = scanned.filter(function (s) { return s.wielder && who && s.wielder.toLowerCase() === String(who).toLowerCase(); })[0];
+      // (b) scene scan bound by wielder name (match the raw token OR the resolved display name)
+      var bound = scanned.filter(function (s) { var w = s.wielder && s.wielder.toLowerCase(); return w && (w === String(token).toLowerCase() || w === String(who).toLowerCase()); })[0];
       if (bound) { push(who, bound.weapon); return; }
-      // (c) species default
-      var sp = norm((typeof c === 'object') && (c._trueSpecies || c.species));
+      // (c) species default — now fires for the protagonist/li TOKEN strings too (via _entrySpecies).
+      var sp = norm(_entrySpecies(c, token));
       if (/first[_\s]?favor|favou?red/.test(sp)) { push(who, 'the_answer'); return; }
       if (/kwisheen/.test(sp)) { push(who, 'tide_trident'); return; }
     });
@@ -185327,8 +185344,8 @@ No text, no watermark, no UI elements, share-ready.`;
       'fighting (a defeated fighter\'s weapon lies FALLEN BESIDE them — still the same weapon, never simply ' +
       'gone). If a fighter wears the Veilweave, the SAME weapon appears in every one of their echoes.\n' +
       lines.join('\n') +
-      '\nThese are the only weapons in the scene, one per fighter — ignore any other weapon a combat style ' +
-      'below may mention.';
+      '\nThese are the only weapons in the scene, one per fighter — ignore any other weapon that a combat ' +
+      'style section (whether above or below this one) may mention or offer as an alternative.';
   }
   window._weaponLockBlock = _weaponLockBlock;
 
@@ -185389,10 +185406,15 @@ No text, no watermark, no UI elements, share-ready.`;
       // NUDE beneath (Roman 2026-07-21): no "never-nude" underwear/denim under the sheer cloth; instead the
       // garment blooms opaque with its own light over the private areas — the fabric does the concealing.
       'The wearer is NUDE beneath the transparent Veilweave — do NOT add underwear, briefs, shorts, denim, a ' +
-      'loincloth, or any undergarment under it. Instead, over the wearer\'s groin and genitals (and the nipples ' +
-      'on a female wearer) the gossamer fabric gathers into a small OPAQUE LUMINOUS BLOOM — a concentrated soft ' +
-      'glow of the leaf-vein cloth\'s own light that fully and tastefully conceals the primary sexual ' +
-      'characteristics; everywhere else the nude body reads clearly through the sheer cloth. ' +
+      'loincloth, a codpiece, a cup, or any undergarment under it, and do NOT place any solid, bright, or ' +
+      'sharply-outlined patch, disc, panel, or glowing spot over the groin (that reads as a white codpiece or ' +
+      'worn cup — wrong). Instead the concealment is a SOFT-FOCUS BLUR of the fabric itself: over the wearer\'s ' +
+      'groin and genitals (and the nipples on a female wearer) the sheer leaf-vein cloth simply goes gently ' +
+      'OUT OF FOCUS and a little denser — the SAME iridescent shimmer as the rest of the tunic, just hazy and ' +
+      'diffuse there — with soft FEATHERED edges that melt gradually into the surrounding fabric (no hard ' +
+      'outline, no seam, no clean edge, no discrete luminous blob). It follows the body\'s contour like a blur ' +
+      'and never sits on top of the body like a worn object; it must read as the cloth softening, not as ' +
+      'anything the wearer has on. Everywhere else the nude body reads clearly through the sheer cloth. ' +
       'It refracts the wearer into approximately ' +
       range + ' HEAVILY OVERLAPPING, semi-transparent, MISREGISTERED projections of that SAME body — drifting ' +
       'slightly out of phase ABOVE, BELOW, ahead, behind, left and right, like severe DOUBLE VISION, with NO ' +
