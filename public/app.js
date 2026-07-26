@@ -13489,6 +13489,9 @@ Introduce the name naturally within the first few paragraphs — do not announce
    */
   function _resolveIssueFlavorLabel(stateObj) {
       const s = stateObj || window.state || {};
+      // FATEBOUND cross-region arc supersedes the regional flavor (Cursed/Inhuman/…) once the mystery has pulled
+      // the player across a border — the saga is named for the journey, not the current region. (Roman 2026-07-23)
+      if (s._fateboundArc || s.issueFlavor === 'fatebound') return 'Fatebound';
       const key = s.issueFlavor || s.worldSubtype || (s.picks && s.picks.worldSubtype) || '';
       let label = '';
       if (key) {
@@ -15299,6 +15302,7 @@ SYZYGY INTENSIFICATION: During Syzygy, characters may believe the moons' influen
   // ═══════════════════════════════════════════════════════════════════════════
 
   const FATELANDS_PIERCING_LORE = `THE PIERCING — HIDDEN COSMOLOGY (SECRET LORE):
+THREE LAYERS OF BELIEF: the oldest account — still taught to every child as the DIVIDING LINE of all history (everything before is the Elder Ages, everything after the Age of Wishes) — is that the Piercing tore out the very HEART OF THE WORLD. Modern educated folk are taught instead that Fate's Favor is a meteor impact crater. Both are shadows of the truth below, which only secret orders and forbidden texts hold.
 Public belief holds that Fate's Favor is a meteor impact crater. This is wrong.
 
 THE TRUTH (known only to secret orders and forbidden texts):
@@ -15321,9 +15325,9 @@ Use poetic language: "the Wound," "the Piercing," "the Eye that Passed Through."
 Do NOT expose this lore through narrator exposition or casual dialogue. It must feel earned and dangerous to know.`;
 
   const FATELANDS_THORNWILD_ORIGIN = `THE FALSE SACRIFICE — THORNWILD ORIGIN (SECRET LORE):
-During the Piercing of Noiria, reality destabilized across the Fatelands. In Thornwood (now Thornwild), villagers performed an illicit sacrifice — they burned a medicine woman to stop the catastrophe. This violated two core laws: you cannot sacrifice what is not freely given, and you cannot sacrifice one who holds sacrificial authority.
+During the Piercing of Noiria, reality destabilized across the Fatelands. In Thornwood (now Thornwild), villagers performed an illicit sacrifice — they burned a medicine woman (in truth a wish-witch of rare Composite skill) to stop the catastrophe. This violated two core laws: you cannot sacrifice what is not freely given, and you cannot sacrifice one who holds sacrificial authority.
 
-At the moment of death, the medicine woman converted herself into a vengeful curse. A fragment of the Piercing anomaly saturated the region. These forces fused into a stable condition: Curse (human will) + Anomaly (reality fracture) = THE BECOMING FIELD.
+THE DEEPEST TRUTH (the surface belief — even among scholars — is that SHE cursed them in VENGEANCE; that is WRONG): she did not curse anyone. As the pyre was lit, the High Inquisitor proclaimed what he believed a righteous benediction — "May all monsters be thus revealed among us" — and the crowd of ~13,000, as congregations do, REPEATED it back: one sentence, thousands of voices, one moment (a true MASS INVOCATION, not merely a shared feeling). They meant to expose HER. But as she burned — she never confessed, a child screamed for its mother, a torch was let fall — their certainty collapsed into SELF-recognition: "What have we become? What kind of monster am I?" The spoken words never changed; the MEANING did, and at the instant Fate accepted the invocation, all ~13,000 were thinking of THEMSELVES (Fate grants MEANING, not wording). The dying wish-witch — of rare Composite skill — recognized it and, with her last breath, performed the greatest known act of COMPOSITE WISHWORK: not vengeance but PRESERVATION — she BOUND the already-spoken communal wish into ONE before its 13,000 identical invocations could disperse (no counter-curse; she chose no punishment). A fragment of the Piercing anomaly saturated the region; these fused: the bound COMMUNAL INVOCATION ("reveal the monsters among us", ×13,000) + Anomaly = THE BECOMING FIELD. Because the wish was aimed at "among US", Fate took the COMMUNITY as its subject — the people, their DESCENDANTS, and the LAND — and answered exactly, revealing each one's inner monster as outward form. The people condemned THEMSELVES; she merely refused to let the words fade.
 
 THE BECOMING FIELD permeates the Thornwild. It destabilizes human identity over time, externalizing a person's deepest denied flaw and reshaping the body into a functional expression of that flaw. The curse does NOT turn people into animals — it turns them into the most effective embodiment of their worst truth.
 
@@ -15437,6 +15441,10 @@ COST (CRITICAL): Each use of Ascender capability increases alignment with the un
 
 MOTIVATION: Ascenders experience perfect timing, optimal decisions, maximal leverage, heightened perception — the most effective version of themselves possible. They are not seeking escape. They are refusing to accept a single outcome.
 
+THE LADDER OF SELVES — WHAT THE ASCENDER ALONE SEES (subjective; the seduction of the climb): While ascending, the ascender sees — and ONLY they see it — their next-highest self standing one step above them in the air: stronger, smarter, more beautiful, mightier, everything they could become. It reaches down, welcoming, and bids them step up and EMBODY it. One step above THAT self stands another, better still, calling the same climb; and above it another, and another — a ladder of ever more god-like selves receding upward, each one urging: climb, climb, climb. Every rung is a real, seductive improvement AND a step further from the single mortal self they began as. To everyone else the ascender only flickers between states (see the visual system); the ladder is private. Its pull is the whole danger — it does not feel like losing yourself, it feels like BECOMING.
+
+THE ANCHOR — THE ROMANCE IS THE STAKES: the ascender's ANCHOR-PARTNER (the bond that stabilizes their identity — sincere love-sacrifice binds cleanly; the Favor amplifies truth) stays below and can see only that they are GOING. The partner wishes, then pleads, then SCREAMS for them not to climb too far — not past where their voice can still reach. The higher the climb, the smaller that voice becomes, and the less of the self the partner loves can ever descend back. The ascent's real question is never "how powerful can you become" — it is "will you stop for the one below, or trade them for the god one step up?" Love is the only anchor against dissolution; every rung is a small betrayal of it. (A shared ascent is worse: both may climb away from each other.)
+
 MULTIPLE ASCENDERS: During Syzygy, there may be many Ascenders simultaneously. They do NOT operate independently — they interact through competing outcome selection. If multiple Ascenders attempt to influence the same moment: outcomes conflict, resolution becomes unstable, reality may partially reflect multiple competing results. Events flicker between possibilities. Actions may succeed and fail simultaneously. Each additional Ascender increases local instability exponentially. Conflict accelerates alignment with the unresolved field — rivals collapse faster than isolated Ascenders. Cooperative ascent is unstable and rare. "You are not alone in choosing what happens next."
 
 TEMPT FATE — ASCENDER COLLAPSE INTERVENTION: When a character reaches advanced Ascender alignment with imminent removal (fragmentation, dissipation, unresolved collapse), Tempt Fate may be invoked to force a valid outcome where none remains. It does NOT reverse alignment, restore stability, or undo prior actions. It introduces a new, viable path forward — even if that path should not logically exist. Collapse is interrupted; the character remains within reality; outcome is altered, not erased. COST: outcome may be distorted, identity may be altered, future consequences are amplified, narrative state becomes unstable or bent. Tempt Fate cannot produce a clean or consequence-free rescue — the original risk is redirected, not nullified. Intervention must feel invasive and unnatural. "When there is no path forward, Tempt Fate creates one. And that path always leads somewhere unexpected." OTHER-SAVE RULE: When Tempt Fate is used to prevent ANOTHER character's removal, the cost is not reduced — it is displaced or redistributed. Apply one or more: (1) Displacement — the saved character returns altered or misaligned. (2) Burden Transfer — the invoker absorbs part of the instability. (3) Relational Binding — characters become partially dependent or linked. (4) Cost Deferral — consequence is delayed but inevitable. Protective use may reduce randomness of distortion but MUST NOT eliminate consequence. "To save another is not to remove the cost — it is to choose where it falls." This applies ONLY during Fate's Favor Syzygy Ascender over-alignment — it does NOT alter standard Tempt Fate behavior.
@@ -15494,10 +15502,668 @@ Many people believe that displaying valuables beneath the Devouring Eye tempts f
    * Only injected for Fantasy world at higher scene counts where lore discovery is plausible.
    * Returns empty string for non-Fantasy or early scenes.
    */
+  // LOST DATHROS — the buried truth beneath the public School account (Roman 2026-07-23).
+  // Public/School version: 18 souls sacrificed their "certainty of what was real" and failed.
+  // Secret version: it was ALL of Dathros — the mages tricked the city into sacrificing each
+  // OTHER, then erased their own memory of the deception. The first WISH-SLAVERS. Connects to
+  // the coercion / wish-slavery thread. A REVELATION, not backstory — deploy only when earned.
+  const FATELANDS_DATHROS_SECRET = `LOST DATHROS — THE BURIED TRUTH (SECRET LORE; a REVELATION, reveal only when a scene earns it):
+The account taught in every school — that Marshal Veyra Dathros and seventeen battle-mages sacrificed their shared certainty of what was real, and failed — is the version Dathros wanted remembered. The truth is worse.
+It was not eighteen. It was ALL of Dathros. As the Devouring Eye descended, the mages did not spend their own memories to catch it — they engineered a mass sacrifice of the CITY: they deceived thousands into sacrificing one another, kin offering kin, each believing it would spare the rest, harvesting a sacrifice of a scale no honest wishwork could reach. They caught the fragment — but as reality folded, they performed one last working: they sacrificed their own MEMORY of the deception, so that not even they would know what they had done. THAT is the "certainty of what was real" that was lost — not a noble price, but the cover-up.
+This makes the Dathros mages the FIRST WISH-SLAVERS: the founders of the forbidden craft of spending OTHER people's identities as one's own currency. Every wish-slaver since descends, in method if not in blood, from what was done at Dathros.
+So House Dathros are not merely "burdened custodians of an inherited mistake." They are the heirs of a cover-up — some lines guarding the truth to keep it buried, others to atone — and any given Dathros may not know which they are.
+STORY USAGE: surface ONLY where a scene reaches for it — a scholar who found the gap in the record, a Dathros confronted with their line, a relic that remembers, the Fold itself. When it lands it REFRAMES what everyone was taught; it never recaps.`;
+
+  // Per-turn deep-history injector (turnCount is LIVE here, unlike buildPiercingLoreDirective
+  // which is trapped in the cached-once buildFantasyWorldBlock and never opens its scene gate).
+  // Availability is gated by scene depth + Dathros/Fold proximity; actual DEPLOYMENT frequency
+  // is governed by the TWO-REGISTER rule (exposition = rare, earned) in buildFantasyWorldBlock.
+  function buildFatelandsDeepHistoryDirective() {
+      if (!state.picks || state.picks.world !== 'Fantasy') return '';
+      const scenes = state.turnCount || 0;
+      if (scenes < 8) return '';                                   // never an early reveal
+      const region = String(state.fantasyRegion || '').toLowerCase();
+      const nearDathros = /fold|ashen|dathros|vaelryn/.test(region);
+      if (!nearDathros && scenes < 14) return '';                  // near Dathros: from S8; elsewhere: deep-lore from S14
+      return `\n\n${FATELANDS_DATHROS_SECRET}`;
+  }
+  window.buildFatelandsDeepHistoryDirective = buildFatelandsDeepHistoryDirective;
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATELANDS SECRET-QUEST ENGINE v1 (Roman 2026-07-23)
+  // The world remembers across issues. Every Fatelands playthrough carries ONE
+  // assigned mystery the PC unravels while romancing across the continent. Design:
+  //  • FRACTAL — each answer raises a bigger question (stages = a question→answer chain).
+  //  • FOUR LAYERS of truth per mystery: public → scholarly → hidden → cosmic. Most
+  //    romances never reach layer 4; many never reach 3 — so ten romances in Thornwild
+  //    do NOT tell the same story.
+  //  • SCOPE — local (1 issue) / regional (3–8 issues) / world (never fully solved in one
+  //    romance; different romances uncover different pieces).
+  //  • PLAYER-PACED, FLOOR-GATED (Roman's Option 2): pursuit accumulates evidence FAST;
+  //    a STAGE (major sub-reveal) advances only at an issue boundary once evidence + the
+  //    scope floor allow — so a big mystery can't collapse into one issue.
+  //  • CROSS-UNLOCK — advancing/finishing one mystery hints at another region → travel pull.
+  //  • Exposition is EARNED via clue-vectors (diary, mural, song, transcript, a survivor's
+  //    descendant, a preserved memory), governed by the TWO-REGISTER rule already in place.
+  // LIFETIME: state._fatelandsSecretQuest lives in L2 (_resetEpochState) → survives issue→issue
+  // (startBook2), resets on a fresh Fatelands game. See project_fatelands_history_registry.
+  const _FATELANDS_MYSTERIES = {
+    thornwild: {
+      title: 'The Becoming of Thornwild', scope: 'regional', regions: ['the_thornwild'],
+      drive: 'get themselves and the person they love free of the Keepers and out from under Thornwild\'s grip',
+      antagonistRole: 'a KEEPER (name and flesh them out freely, but the antagonist IS a Keeper of Thornwild — an enforcer/gatekeeper of the secret — NOT a romantic rival, an ex, or an unrelated outside force)',
+      suppressors: 'The Keepers hunt witnesses and compel the rest of Thornwild to forget; anyone who asks too much is "Kept." Discovery here is DANGEROUS — someone is actively erasing it.',
+      face: 'the last Keeper who still remembers why the order was founded — and hates what it has become. A person the PC can argue with, not just a ruin.',
+      floorIssues: 3, unlocks: 'dathros', revealRef: 'FATELANDS_THORNWILD_ORIGIN',
+      hook: {
+        // LI-NEUTRAL catastrophe (Roman 2026-07-23): the Keeper-seizure is the signature opening
+        // and setting identity; the LOVE INTEREST'S STANCE toward it varies (see liRoles) so the
+        // opening isn't the complicit-betrayal every time.
+        hot: 'The Keepers seize the PC in the village square and drag them toward the Kept-house — in the open, in front of everyone, and this is happening NOW.',
+        cold: 'Everyone in the village obeys the Keepers without being told; the PC is the only one who seems to notice the wrongness of it.'
+      },
+      // The love interest's stance toward the conspiracy — VARY per story (Roman 2026-07-23).
+      // The catastrophe (Keepers seize the PC) is constant; the LI's ROLE in/around it changes,
+      // which changes the whole emotional engine and the opening beat.
+      liRoles: [
+        'COMPLICIT / COMPELLED — stands frozen or turns away with dead eyes and does nothing as she is taken; the betrayal is the wound (the original signature variant)',
+        'FELLOW VICTIM — cursed too and trying to escape Thornwild or lose the curse in the Fold; seized alongside her, or already half-fled when it happens',
+        'REBEL WHO STAYS — wants to OVERTHROW the Keepers but STAY cursed; tries to convince (or trick) the PC to STAY and fight rather than flee, so their goal COLLIDES with her escape',
+        'SECRET KEEPER — a hidden insider, the one who signs or enforces the order, torn between the vow and her',
+        'OUTSIDER — from beyond Thornwild, uncursed, come looking for her; witnesses the seizure and is not bound by the compulsion'
+      ],
+      // RED FLAGS — the rotating pool of "something is wrong here" tells (Roman 2026-07-23,
+      // kills the "frozen / dead eyes" calcification). The compulsion shows in small uncanny
+      // signs; the opening draws a fresh subset each story instead of defaulting to one image.
+      redFlags: [
+        'a smile that arrives a half-second too late, as if remembered rather than felt',
+        'the whole square turning to look at the same instant, together, like one body',
+        'a hand caught mid-motion — smoothing a sleeve, again, and again — that will not stop',
+        'voices falling into unison without anyone deciding to',
+        'a low hum under everything, the same three notes, from mouths that are not quite singing',
+        'people who flinch toward helping her, then stop, their own bodies overruling them',
+        'faces gone smooth, an expression wiped away in the middle of feeling it',
+        'someone weeping with a perfectly still face — the grief and the body disconnected',
+        'a child\'s game that every child plays in the exact same rhythm, with no one leading',
+        'eyes that track a beat behind what they are looking at'
+      ],
+      clueVectors: ["a survivor's descendant", 'a ruined mural', 'an old song sung wrong', 'a magically preserved memory', 'a courtroom transcript', 'conflicting oral traditions'],
+      layers: {
+        public:    'Thornwild is a cursed, backward forest people; the Keepers protect outsiders from what lives there.',
+        scholarly: 'Some historians argue the "curse" is a heritable condition, and the Keepers a much older institution than they claim.',
+        hidden:    'The False Sacrifice — the villagers burned an innocent wish-witch, and her dying wish bound the Becoming Field. EVERYONE here is cursed; the Keepers compel the rest to keep the secret buried.',
+        cosmic:    'Fate accepted the mass invocation because the crowd, in the instant of the burning, was truly asking to reveal the monster in THEMSELVES.'
+      },
+      stages: [
+        { q: 'Why is everyone obeying the Keepers?',            a: 'They are compelled — not led.',
+          inv: 'that the Keepers are tyrants ruling Thornwild by force',
+          rel: 'the PC and LI realize they can trust no one in the village — only each other' },
+        { q: 'Compelled by what?',                              a: 'Everyone here bears the same curse.',
+          inv: 'that the Keepers are the villains — enforcer and victim turn out to be the same people',
+          rel: 'they must keep what they have seen a shared secret, or be Kept too' },
+        { q: 'Where did the curse come from?',                  a: "It wasn't born here — it was made.",
+          inv: 'that the curse is a natural affliction or ancient bad luck',
+          rel: "one begins to suspect the other's bloodline is tied to how it was made" },
+        { q: 'Who brought it — and how?',                       a: 'They did it to themselves: they murdered the one person trying to save them.',
+          inv: 'that Thornwild is the victim of an outside evil',
+          rel: 'to love someone from here is to love a descendant of the guilty — can they?' },
+        { q: 'Why would they do that?',                         a: 'Fear — they burned her as a monster, and Fate took them at their word.',
+          inv: 'that the ancestors were monsters, irredeemable',
+          rel: 'they recognize the same fear in each other — and choose tenderness where the ancestors chose the pyre' },
+        { q: 'Can it be undone?',                               a: '(a present-day quest — the historical mystery becomes a living one.)',
+          inv: 'that knowing the truth is itself enough to end it',
+          rel: 'breaking the curse may cost one of them something irreplaceable — love against truth' }
+      ]
+    },
+    dathros: {
+      title: 'What Fell on Dathros', scope: 'regional', regions: ['vaelryn_reach', 'the_fold', 'the_ashen_verge'],
+      drive: 'uncover what House Dathros buried — and survive what they will do to keep it buried',
+      antagonistRole: 'an agent of HOUSE DATHROS\'s cover-up (name/flesh out freely, but the antagonist IS the House protecting the Dathros secret — a line-keeper, enforcer, or fixer — NOT a romantic rival or unrelated force)',
+      suppressors: 'House Dathros destroys records and buys silence; a whole line of the family exists to keep the gap in the archive. To dig is to make an enemy of a Great House.',
+      face: 'a Dathros heir who inherited the duty to hide a crime they have only begun to suspect — and who may fall for the very person unearthing it.',
+      floorIssues: 3, unlocks: 'the_piercing', revealRef: 'FATELANDS_DATHROS_SECRET',
+      hook: {
+        hot: 'A Dathros heir the PC has grown close to is seized mid-conversation by their own kin — for a truth they do not yet know they carry.',
+        cold: 'The record of Lost Dathros has a gap in it that no scholar will explain, and House Dathros grows cold whenever the Fold is named.'
+      },
+      redFlags: [
+        'a name everyone in the room declines to say, all in the same breath',
+        'a ledger page cut out so cleanly the book still closes flat',
+        'an old servant who answers a different question than the one asked',
+        'a family portrait with one figure sanded to a blur',
+        'a silence that falls a beat before the Fold is named, every time',
+        'a room that goes colder whenever a certain year is mentioned',
+        'a tally that does not add up, corrected in a hand that stopped writing generations ago'
+      ],
+      clueVectors: ['a redacted archive', "a battle-mage's confession", 'a relic that remembers', 'a census that does not add up', 'a Dathros line-keeper'],
+      layers: {
+        public:    'Marshal Veyra Dathros and seventeen battle-mages sacrificed their certainty of reality to catch the Devouring Eye, and failed nobly.',
+        scholarly: 'The numbers never reconciled — a city that size, and only eighteen at the working?',
+        hidden:    'It was ALL of Dathros: the mages tricked the city into sacrificing one another, then erased their own memory of it. The first WISH-SLAVERS.',
+        cosmic:    'Fate honored the coerced sacrifice because the victims, deceived, offered it "freely" — the loophole every wish-slaver since has hunted.'
+      },
+      stages: [
+        { q: 'Why is there a hole in the Dathros record?',      a: 'Someone cut it out on purpose.',
+          inv: 'that Lost Dathros is simply a noble tragedy, honestly recorded',
+          rel: 'the LI (or their House) is implicated in the hiding — trust cracks' },
+        { q: 'What was worth hiding?',                          a: 'The sacrifice was far larger than eighteen souls.',
+          inv: 'that the eighteen were heroes who paid the price',
+          rel: 'they must decide whether to expose a Great House together, and what that costs them' },
+        { q: 'How large — and who paid it?',                    a: 'The whole city; they were made to sacrifice each other.',
+          inv: 'that the sacrifice was freely given',
+          rel: "one of them descends from either a perpetrator or a victim — and it changes how they're seen" },
+        { q: 'How was that possible under Fate\'s law?',        a: 'Deception — the first wish-slavery. And the mages erased their own memory of the crime.',
+          inv: 'that the Dathros mages were merely reckless, not monstrous',
+          rel: 'knowing this makes them dangerous to the same people — bound together as the only two who know' }
+      ]
+    },
+    shackle_isles: {
+      title: 'The Chains That Hold', scope: 'regional', regions: ['the_shackle_isles'],
+      drive: 'learn what the deep chains truly hold — without being drowned for asking',
+      antagonistRole: 'a CHAIN-WARDEN who enforces the Isles\' silence (name/flesh out freely, but the antagonist IS a keeper of the chains\' secret — NOT a romantic rival or unrelated force)',
+      suppressors: 'The chain-wardens drown the curious and call it accident; the old routes are struck from every map. The Isles keep their jailer\'s secret by making the sea itself complicit.',
+      face: 'an ancient chain-walker who has guarded the deep chains longer than any mortal should — and remembers what Aravel truly bound.',
+      floorIssues: 3, unlocks: 'fates_favor', revealRef: null,
+      hook: {
+        hot: 'A chain the PC is standing on goes taut without a hand touching the winch, as if something below decided to pull.',
+        cold: 'The great chains of the Isles are said to control shipping — but the oldest ones lead down to nothing anyone will name.'
+      },
+      redFlags: [
+        'a chain that goes taut with no hand on the winch',
+        'a tide that pulls the wrong way for exactly as long as a held breath',
+        'a map with a route drawn and then scraped away, the groove still there',
+        'sailors who will not look at one particular stretch of water',
+        'a bell below the waterline that rings when nothing should reach it',
+        'gulls that will not land on one specific chain, ever'
+      ],
+      clueVectors: ['a chain-walker\'s oath', 'a drowned shrine', 'a smuggler\'s ledger', 'a tide that runs the wrong way'],
+      layers: {
+        public:    'King Aravel the First bound the Shackle Isles and ended the Pirate Kings; the chains are his monument.',
+        scholarly: 'The chains predate Aravel — he did not forge them, he re-purposed them.',
+        hidden:    'The oldest chains are not for ships. They hold something under the archipelago that the Piercing loosened.',
+        cosmic:    "What is chained down there is a fragment of the same thing Fate's Favor is a wound of."
+      },
+      stages: [
+        { q: 'Why do the deep chains lead to nothing?',         a: 'They lead to something no one will speak of.',
+          inv: 'that the chains are simply Aravel\'s monument to victory',
+          rel: 'they share a secret the whole Isles are built to keep — isolating them together' },
+        { q: 'What are they holding?',                          a: "Not ships — something the Piercing stirred beneath the isles.",
+          inv: 'that the chains control shipping and nothing more',
+          rel: 'the danger becomes physical and shared — survival draws them close' },
+        { q: 'Did Aravel know?',                                a: 'He inherited the duty; the "victory" was a cover for a jailer\'s burden.',
+          inv: 'that Aravel was a conqueror-hero',
+          rel: 'one of them may be asked to take up the same jailer\'s burden — love or duty' }
+      ]
+    },
+    the_piercing: {
+      title: 'What Really Happened at the Piercing', scope: 'world', regions: [],
+      suppressors: 'Lytharyn scholars who publish the wrong conclusion quietly disappear; the Witnesses of the Wound guard the calculation with their lives. The truth is defended by an order older than nations.',
+      face: 'an astronomer-priest of the Witnesses, torn between her vow of silence and the lattice she watches quietly failing.',
+      floorIssues: 6, unlocks: null, revealRef: 'FATELANDS_PIERCING_LORE',
+      hook: {
+        hot: '',
+        cold: 'A "fact" everyone learned as a child — that Fate\'s Favor is a meteor crater — cracks open the moment the PC looks at it too closely.'
+      },
+      clueVectors: ['a heretic\'s forbidden text', 'an astronomer-priest of the Witnesses', 'a Syzygy calculation', 'a Kwisheen oral tradition'],
+      layers: {
+        public:    "Fate's Favor is the impact crater of a fallen celestial body.",
+        scholarly: 'The geology is wrong for an impact; some call it a "wound," not a crater.',
+        hidden:    'It is an EXIT wound — a singularity, the Hungry Eye, passed THROUGH the world; the 13th moon is that singularity, held in orbit.',
+        cosmic:    'The lattice of twelve moons is all that keeps it from falling back and repeating the Piercing — and the lattice is degrading.'
+      },
+      stages: [
+        { q: 'Why does the "meteor" story not hold up?',        a: "The wound is shaped like an exit, not an impact." },
+        { q: 'An exit for what?',                               a: 'Something passed all the way THROUGH the world.' },
+        { q: 'Where did it go?',                                a: 'Nowhere — it is trapped above us as the thirteenth moon.' },
+        { q: 'What keeps it from returning?',                   a: 'The other twelve moons — a lattice that is quietly failing.' }
+      ]
+    },
+    fates_favor: {
+      title: 'What Fate\'s Favor Really Is', scope: 'world', regions: [],
+      suppressors: 'The Riftwardens treat the question itself as heresy and answer it with exile; to ask "why does sacrifice work" is to mark yourself. The suppression is theological, not merely political.',
+      face: 'a Riftwarden who broke the vow once, paid for it, and has been half-answering the question ever since — to anyone brave enough to keep asking.',
+      floorIssues: 6, unlocks: null, revealRef: null,
+      hook: { hot: '', cold: 'Sacrifice-magic works — and no one the PC asks can say WHY giving up a piece of yourself should move the world at all.' },
+      clueVectors: ['a Riftwarden\'s reluctant admission', 'a sacrifice that goes wrong in a telling way', 'a forbidden archive'],
+      layers: {
+        public:    'Fate rewards sacrifice; the Favor is holy ground.',
+        scholarly: 'Sacrifice "anchors" something — the mechanism is treated as heresy to ask about.',
+        hidden:    'Identity-loss stabilizes the fracture the Piercing left; without ongoing sacrifice the wound widens.',
+        cosmic:    'Fate is not a benefactor — it is the pressure of a wound demanding to be paid, forever.'
+      },
+      stages: [
+        { q: 'Why should sacrifice move the world?',            a: 'Because it anchors something that is broken.' },
+        { q: 'Broken how?',                                     a: 'The Piercing fractured reality; identity is the only mortar.' },
+        { q: 'Then what happens if it stops?',                  a: 'The wound widens — Fate is a debt, not a gift.' }
+      ]
+    },
+    // Local exemplar (1 issue) — the light end of the pool.
+    haunted_mill: {
+      title: 'The Mill That Grinds at Night', scope: 'local', regions: [],
+      suppressors: 'A neighbor who profits from the mill keeps the story "haunted" so no one looks closer — a small, human suppression, the kind that hides in plain sight.',
+      face: "the miller's heir, who knows the wish and cannot bring themselves to end it.",
+      floorIssues: 1, unlocks: null, revealRef: null,
+      hook: { hot: '', cold: 'The old mill turns with no wind and no water, and the miller\'s family swears it has always been so.' },
+      clueVectors: ['a miller\'s diary', 'a wish half-remembered', 'a neighbor who profited'],
+      layers: {
+        public:    'The mill is haunted; leave it be.',
+        scholarly: 'Hauntings are usually a sacrifice that never fully resolved.',
+        hidden:    'A miller once wished the mill would "never stop providing" and paid with something small; it has been grinding ever since.',
+        cosmic:    'A reminder that every wish in the Fatelands is still running — the world is full of them.'
+      },
+      stages: [
+        { q: 'What turns the mill?',                            a: 'An old wish that never ended.' },
+        { q: 'Whose wish, and what did it cost?',              a: 'The miller\'s — and the price is still being paid.' }
+      ]
+    }
+  };
+
+  // Empty per-playthrough quest state. Lives in L2 (_resetEpochState) so it survives
+  // issue→issue but resets on a fresh Fatelands game.
+  // THREE SIMULTANEOUS TRACKS (Roman v2 2026-07-23): every Fatelands playthrough runs a
+  // LOCAL + REGIONAL + WORLD conspiracy at once (Elder Scrolls, not Mass Effect). Container
+  // lives at L2 (survives issue→issue, resets on a fresh game).
+  function _emptyTrack(scope) {
+    return { selected: false, key: null, scope: scope, mode: 'background', // 'background'|'aplot'
+             stageIndex: 0, layerReached: 'public', evidence: 0, issueSelected: 1,
+             lastIssueTicked: 0, solved: false };
+  }
+  function _emptyFatelandsSecretQuest() {
+    return { _selected: false, local: _emptyTrack('local'), regional: _emptyTrack('regional'), world: _emptyTrack('world') };
+  }
+  // Deterministic-ish roll that varies by story+salt without Math.random calcification concerns.
+  function _fatelandsQuestRoll(salt) {
+    try { var s = String((state.storyId || state.worldInstanceId || '') + (salt || '')); var h = 0; for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return (h % 1000) / 1000; } catch (_) { return 0.5; }
+  }
+
+  // Select ONE mystery per scope, once per playthrough. Regional is region-biased.
+  function _selectFatelandsMystery() {
+    try {
+      if (!state.picks || state.picks.world !== 'Fantasy') return;
+      var C = state._fatelandsSecretQuest = state._fatelandsSecretQuest || _emptyFatelandsSecretQuest();
+      if (C._selected) return;                                          // once per playthrough
+      var region = String(state.fantasyRegion || '').toLowerCase();
+      var issue = (typeof _currentIssueIndex === 'function') ? _currentIssueIndex() : 1;
+      var byScope = { local: [], regional: [], world: [] };
+      Object.keys(_FATELANDS_MYSTERIES).forEach(function (k) { var sc = _FATELANDS_MYSTERIES[k].scope; if (byScope[sc]) byScope[sc].push(k); });
+      function commit(track, key) {
+        if (!key) return;
+        var m = _FATELANDS_MYSTERIES[key];
+        track.selected = true; track.key = key; track.scope = m.scope;
+        track.issueSelected = issue; track.lastIssueTicked = issue;
+      }
+      // regional — prefer a mystery native to the bound region
+      var native = byScope.regional.filter(function (k) { return (_FATELANDS_MYSTERIES[k].regions || []).some(function (r) { var rk = r.replace(/^the_/, ''); return region && (region.indexOf(rk) >= 0 || r === region); }); });
+      var regPool = native.length ? native : byScope.regional;
+      commit(C.regional, regPool[Math.floor(_fatelandsQuestRoll('reg') * regPool.length)]);
+      commit(C.local,  byScope.local[Math.floor(_fatelandsQuestRoll('loc') * byScope.local.length)]);
+      commit(C.world,  byScope.world[Math.floor(_fatelandsQuestRoll('wld') * byScope.world.length)]);
+      // FULL-OVERRIDE MODE (Roman 2026-07-23): decide whether the REGIONAL conspiracy is this
+      // issue's foregrounded A-PLOT SPINE ('aplot') or a slow-burn BACKGROUND current. "Not every
+      // story, but a piece in most" — so a MINORITY foreground it. Semantic tie: investigation-
+      // forward dynamics (enemies_to_lovers / forbidden_love) lean spine; a fresh conspiracy that
+      // opens on its hot hook leans spine; else background. (The divide-ownership block already
+      // makes the conspiracy the PREMISE in both modes; mode controls FOREGROUNDING/intensity.)
+      C.regional.mode = _shouldConspiracyBeAplot(C.regional) ? 'aplot' : 'background';
+      C._selected = true;
+      try { console.log('[CONSPIRACY] tracks selected — local="' + C.local.key + '" regional="' + C.regional.key + '" (' + C.regional.mode + ') world="' + C.world.key + '" region=' + (region || 'none')); } catch (_) {}
+      try { if (typeof _logConspiracyStage === 'function') _logConspiracyStage(C.regional, 'REGIONAL selected (this feeds the A-plot skeleton)'); } catch (_) {}
+    } catch (_) {}
+  }
+  window._selectFatelandsMystery = _selectFatelandsMystery;
+
+  // Should THIS story foreground the regional conspiracy as its A-plot spine? Semantic tie to
+  // the romance dynamic (investigation-forward pairings lean spine), plus a seeded minority so
+  // most stories keep the mystery as a background current. window.__conspiracyAplotForce
+  // ('aplot'|'background') hard-overrides for testing.
+  function _shouldConspiracyBeAplot(track) {
+    try {
+      if (window.__conspiracyAplotForce === 'aplot') return true;
+      if (window.__conspiracyAplotForce === 'background') return false;
+      var dyn = String((state.dynamic || (state.picks && state.picks.dynamic) || '')).toLowerCase();
+      var spineLeaning = /enemies_to_lovers|forbidden|second_chance|rivals|captor|reluctant/.test(dyn);
+      // investigation-forward dynamic → ~55% spine; else ~25% spine (mystery stays background).
+      var roll = _fatelandsQuestRoll('aplotmode');
+      return spineLeaning ? (roll < 0.55) : (roll < 0.25);
+    } catch (_) { return false; }
+  }
+  window._shouldConspiracyBeAplot = _shouldConspiracyBeAplot;
+  window._FATELANDS_MYSTERIES = _FATELANDS_MYSTERIES;              // exposed for validation probes
+  window._emptyFatelandsSecretQuest = _emptyFatelandsSecretQuest;
+
+  // How many LESSER truths have been earned — gates the cosmic (world) track. Roman's rule:
+  // players should never crack a cosmic mystery before solving 2–3 lesser ones.
+  function _fatelandsLesserProgress(C) {
+    return (C.local.solved ? 1 : 0) + (C.local.stageIndex) + (C.regional.stageIndex);
+  }
+
+  // Per-issue advance — PLAYER-PACED, FLOOR-GATED, per track. Idempotent per issue per track.
+  function _advanceOneTrack(t, C, issue) {
+    if (!t || !t.selected || t.solved) return;
+    if (issue === t.lastIssueTicked) return;
+    t.lastIssueTicked = issue;
+    var m = _FATELANDS_MYSTERIES[t.key]; if (!m) { t.evidence = 0; return; }
+    var need = t.scope === 'local' ? 1 : 2;                             // local advances easier
+    var atFinal = t.stageIndex >= m.stages.length - 1;
+    var issuesIn = (issue - t.issueSelected) + 1;
+    var blocked = false;
+    if (t.scope === 'regional' && atFinal && issuesIn < m.floorIssues) blocked = true;   // regional floor
+    if (t.scope === 'world') {
+      if (atFinal) blocked = true;                                      // world NEVER fully solves in one romance
+      if (t.stageIndex >= 1 && _fatelandsLesserProgress(C) < 2) blocked = true;           // COSMIC GATE
+      if (issuesIn < m.floorIssues && atFinal) blocked = true;
+    }
+    if (t.evidence >= need && !blocked) {
+      if (!atFinal) {
+        t.stageIndex++;
+        var frac = t.stageIndex / Math.max(1, m.stages.length - 1);
+        t.layerReached = frac >= 0.99 ? 'hidden' : frac >= 0.5 ? 'scholarly' : 'public';
+        try { console.log('[CONSPIRACY] "' + t.key + '" (' + t.scope + ') → stage ' + (t.stageIndex + 1) + '/' + m.stages.length + ' layer=' + t.layerReached + ' (issue ' + issue + ')'); } catch (_) {}
+        try { if (typeof _logConspiracyStage === 'function') _logConspiracyStage(t, 'stage transition (issue ' + issue + ')'); } catch (_) {}
+        // WORLD EVOLUTION: a discovery on a world/Fold track nudges the global (per-user) world state.
+        try { var _wk = _FATELANDS_WORLD_NUDGE_MAP[t.key]; if (_wk && typeof _nudgeFatelandsWorld === 'function') _nudgeFatelandsWorld(_wk); } catch (_) {}
+      } else if (t.scope !== 'world') {
+        t.solved = true; t.layerReached = 'hidden';
+        try { console.log('[CONSPIRACY] "' + t.key + '" (' + t.scope + ') SOLVED (issue ' + issue + ')'); } catch (_) {}
+      }
+    }
+    t.evidence = 0;                                                     // per-issue; pursuit must re-earn it
+  }
+  function _advanceFatelandsMysteryForIssue() {
+    try {
+      var C = state._fatelandsSecretQuest; if (!C || !C._selected) return;
+      var issue = (typeof _currentIssueIndex === 'function') ? _currentIssueIndex() : 1;
+      _advanceOneTrack(C.local, C, issue); _advanceOneTrack(C.regional, C, issue); _advanceOneTrack(C.world, C, issue);
+    } catch (_) {}
+  }
+  window._advanceFatelandsMysteryForIssue = _advanceFatelandsMysteryForIssue;
+
+  // Post-gen pursuit reader — [CONSPIRACY: <track> pursued|revealed|ambient]. Attributes
+  // evidence to the named track. Player-paced: pursuit → evidence.
+  function _readFatelandsMysteryPursuit(sceneText) {
+    try {
+      var C = state._fatelandsSecretQuest;
+      if (!C || !C._selected || !sceneText) return;
+      var mm = String(sceneText).match(/\[CONSPIRACY:\s*(local|regional|world)\s+(pursued|revealed|ambient)\b/i);
+      if (!mm) return;
+      var t = C[mm[1].toLowerCase()]; if (!t || !t.selected) return;
+      var kind = mm[2].toLowerCase();
+      if (kind === 'pursued') t.evidence = (t.evidence || 0) + 1;
+      else if (kind === 'revealed') t.evidence = (t.evidence || 0) + 2;
+      try { console.log('[CONSPIRACY] pursuit ' + mm[1].toLowerCase() + '=' + kind + ' evidence=' + t.evidence); } catch (_) {}
+    } catch (_) {}
+  }
+  window._readFatelandsMysteryPursuit = _readFatelandsMysteryPursuit;
+
+  // Choose the FOREGROUND track this scene: an A-plot track wins; else the most-pursued;
+  // else regional; a solved track steps aside for an unsolved one.
+  function _foregroundTrack(C) {
+    var live = ['regional', 'local', 'world'].map(function (k) { return C[k]; }).filter(function (t) { return t && t.selected && !t.solved; });
+    if (!live.length) return null;
+    var ap = live.filter(function (t) { return t.mode === 'aplot'; });
+    if (ap.length) return ap[0];
+    live.sort(function (a, b) { return (b.evidence - a.evidence) || 0; });
+    return live[0];
+  }
+
+  // Per-turn threading — CONSPIRACY framing, romance-INSIDE-mystery, three tracks (one
+  // foreground in detail + the others as faint background), the four-layer + fractal rules.
+  function buildFatelandsSecretQuestDirective() {
+    try {
+      if (!state.picks || state.picks.world !== 'Fantasy') return '';
+      var C = state._fatelandsSecretQuest; if (!C || !C._selected) return '';
+      var fg = _foregroundTrack(C); if (!fg) return '';
+      var m = _FATELANDS_MYSTERIES[fg.key]; if (!m) return '';
+      var stage = m.stages[Math.min(fg.stageIndex, m.stages.length - 1)];
+      var vec = (m.clueVectors || [])[Math.floor(_fatelandsQuestRoll('vec' + (state.turnCount || 0)) * (m.clueVectors || []).length)] || 'a fragment of the past';
+      var layer = m.layers[fg.layerReached] || m.layers.public;
+      var isAplot = fg.mode === 'aplot';
+      var d = '\nFATELANDS CONSPIRACY — the world remembers, and someone is hiding what it remembers (' + m.scope.toUpperCase() + (isAplot ? ' — this issue\'s A-PLOT SPINE' : ' — a BACKGROUND current; do NOT crowd the romance') + '):\n';
+      if ((state.turnCount || 0) === 0 && state._scene1ConspiracyCrisis) {
+        d += '  ⚑ THIS STORY OPENS IN THE CONSPIRACY (HARD — Scene 1 is the WORST DAY of the PC\'s life, and it happens BECAUSE OF the mystery): the SINGLE Scene-1 catastrophe IS — "' + state._scene1ConspiracyCrisis + '" Render THAT as the one crisis (SINGLE CRISIS LAW: no second disaster); merge/subordinate anything else into it; the love interest is ENTANGLED in it. This is the conspiracy detonating on the PC personally, in motion — never a lecture about it.\n';
+      }
+      d += '  FOREGROUND CONSPIRACY: "' + m.title + '". Uncovered THROUGH the romance and travel, never lectured.\n';
+      d += '  ROMANCE IS INSIDE THE MYSTERY (HARD): romance and conspiracy are ONE thread, never two. Investigating FORCES intimacy (a cover story, a shared secret, trusting the love interest with dangerous knowledge, "we have to pretend to be together to get close"); intimacy ADVANCES the investigation. Never stage the mystery beside the romance — route it THROUGH the relationship.\n';
+      d += '  CURRENT QUESTION the PC circles: "' + stage.q + '"  → what surfacing it reveals: ' + stage.a + '\n';
+      d += '  ACCESSIBLE LAYER (do not exceed): ' + layer + '\n';
+      d += '  SOMEONE IS SUPPRESSING IT (this is a conspiracy, not just archaeology — discovery meets RESISTANCE): ' + (m.suppressors || 'powerful interests prefer this forgotten') + '\n';
+      d += '  NOT ALL SUPPRESSORS ARE VILLAINS (prefer the harder version): some hide the truth to PROTECT people — the tragic protector who says "if you knew, you\'d try to fix it, and if you tried, we\'d lose another kingdom." A guardian who is RIGHT to be afraid is more interesting than another evil society. Let at least one gatekeeper be sympathetic.\n';
+      d += '  A LIVING FACE (prefer a PERSON over a ruin — someone the PC can argue with): ' + (m.face || 'a survivor who remembers') + '\n';
+      d += '  DELIVER a clue as EARNED EXPOSITION via a concrete vector this scene could hold — e.g. ' + vec + '. A clue ANSWERS this one question and RAISES a bigger one (fractal). Never a history lecture.\n';
+      d += '  PACING (HARD — player-paced, floor-gated): player leans in/investigates → let a clue land and TAG pursued/revealed. Scene is about the romance → keep it to an oblique background note. Most scenes: leave it be. Big answers are EARNED across issues, never dumped.\n';
+      d += '  REVELATION ≠ VICTORY (HARD): an answer TRANSFORMS the objective, it does not end it. Knowledge unlocks the next, harder problem — "everything you learned is true, and it still isn\'t enough." Discovering the Keepers are victims / everyone is cursed / the witch was innocent does not win the story; it reframes what winning even means (now: CAN the curse be broken, and at what cost?). Never let a reveal read as a finish line.\n';
+      if (m.unlocks && fg.stageIndex >= Math.max(1, m.stages.length - 2)) {
+        d += '  CROSS-THREAD (only if a clue lands late): resolving this cracks open ANOTHER region\'s "settled" history — hint, never explain, that this truth means it was not the only lie taught.\n';
+      }
+      // Faint background lines for the OTHER live tracks (larger world, barely visible).
+      var others = ['local', 'regional', 'world'].map(function (k) { return C[k]; })
+        .filter(function (t) { return t && t.selected && !t.solved && t !== fg; })
+        .map(function (t) { var mm = _FATELANDS_MYSTERIES[t.key]; var st = mm && mm.stages[Math.min(t.stageIndex, mm.stages.length - 1)]; return mm ? ('"' + mm.title + '" (' + t.scope + ': ' + (st ? st.q : '') + ')') : null; })
+        .filter(Boolean);
+      if (others.length) d += '  ALSO RUNNING (keep FAINT — a rumor, a name, a wrongness at most; the world is larger than this story): ' + others.join(' · ') + '\n';
+      d += '  COSMIC SEAL: the WORLD-scale truth stays out of reach until lesser truths are earned — never let the reader solve the cosmic question before the regional/local ones.\n';
+      d += '  TAG (silent metadata, final line, never prose): [CONSPIRACY: <local|regional|world> <pursued|revealed|ambient>] — name the track this scene touched; "pursued" if the PC chased it, "revealed" if a real sub-answer landed, "ambient" if only background. Emit exactly one.\n';
+      return d;
+    } catch (_) { return ''; }
+  }
+  window.buildFatelandsSecretQuestDirective = buildFatelandsSecretQuestDirective;
+
+  // Hot-crisis opener seed: the REGIONAL conspiracy's hot hook (Scene 1 = the worst day of
+  // the PC's life, and that day HAPPENS BECAUSE OF the conspiracy). Consumed by
+  // _pickOpeningTemperature (force HOT) + the Scene-1 pressure spine.
+  function _fatelandsSecretQuestHotHook() {
+    try {
+      if (!state.picks || state.picks.world !== 'Fantasy') return '';
+      if ((state.turnCount || 0) !== 0) return '';
+      var C = state._fatelandsSecretQuest;
+      if (!C || !C._selected || !C.regional.selected) return '';
+      if (C.regional.mode !== 'aplot') return '';   // background-conspiracy stories don't open on its crisis
+      var m = _FATELANDS_MYSTERIES[C.regional.key];
+      return (m && m.hook && m.hook.hot) ? m.hook.hot : '';
+    } catch (_) { return ''; }
+  }
+  window._fatelandsSecretQuestHotHook = _fatelandsSecretQuestHotHook;
+
+  // CONSPIRACY-SOURCED A-PLOT SKELETON (Roman v3 2026-07-23). The conspiracy GENERATES the
+  // A-plot instead of running parallel to it — mirrors the Famous-Fate _ffApBlock pattern:
+  // a HARD skeleton prepended to the A-plot generator's system prompt that the generator
+  // FILLS with its own wound-architecture / pacing / romance craft. SKELETON-HINT, not
+  // override: the generator stays the storyteller; the conspiracy supplies constraints +
+  // an emotional/dramatic grammar. Sourced from the REGIONAL track (issue-scale = the
+  // A-plot's cadence; local is too small, world too large). L2 conspiracy = the SEASON;
+  // this issue's L3 A-plot = one EPISODE. Gated off under Famous Fate (FF owns the A-plot).
+  // Authoritative read of the active conspiracy PREMISE (or null). One source of truth for
+  // every defer-to-the-conspiracy site (crisis category, pressure menu, lighthouse, A-plot block).
+  function _fatelandsConspiracyPremise() {
+    try {
+      if (!state.picks || state.picks.world !== 'Fantasy') return null;
+      if (state.fateMode === 'famous_fate') return null;
+      var C = state._fatelandsSecretQuest;
+      if (!C || !C._selected || !C.regional || !C.regional.selected) return null;
+      var t = C.regional, m = _FATELANDS_MYSTERIES[t.key]; if (!m) return null;
+      // FULL-OVERRIDE GATE: only bind the A-plot premise when the conspiracy is this story's
+      // SPINE. In 'background' mode the premise is RELEASED to the generator (the conspiracy still
+      // threads as a background current via buildFatelandsSecretQuestDirective) — this is what
+      // makes "not every story, but a piece in most" real, and restores generator variety.
+      if (t.mode !== 'aplot') return null;
+      var cur = m.stages[Math.min(t.stageIndex, m.stages.length - 1)] || {};
+      var nxt = m.stages[t.stageIndex + 1] || null;
+      return {
+        active: true, title: m.title, key: t.key,
+        openingCrisis: (m.hook && (m.hook.hot || m.hook.cold)) || 'the mystery detonates on the protagonist personally',
+        drive: m.drive || ('resolve and escape the pressure of ' + m.title),
+        antagonistRole: m.antagonistRole || (m.suppressors || 'the force keeping this buried'),
+        suppressors: m.suppressors || '', face: m.face || '',
+        question: cur.q || '', reveal: cur.a || '', invalidates: cur.inv || '',
+        rel: cur.rel || '', transformedInto: nxt ? nxt.q : null,
+        dynamic: String((state.dynamic || (state.picks && state.picks.dynamic) || '')).replace(/_/g, ' '),
+        liRoles: Array.isArray(m.liRoles) ? m.liRoles : null,
+        redFlags: Array.isArray(m.redFlags) ? m.redFlags : null
+      };
+    } catch (_) { return null; }
+  }
+  window._fatelandsConspiracyPremise = _fatelandsConspiracyPremise;
+
+  // A-plot generator block — DIVIDE OWNERSHIP (Roman 2026-07-23, post-probe). The probe proved
+  // a soft "fill this skeleton" hint LOST to the generator's wound-first / story-shape / pressure-menu
+  // machinery — the generator was acting as an ARCHITECT (inventing a competing premise) instead of a
+  // DRAMATIST. Fix: the premise ALREADY EXISTS. Pre-populate the 3 HARD fields (opening catastrophe /
+  // goal / antagonist); the generator OWNS wound + romance + pacing + milestone-texture, and must
+  // NOT invent a competing central conflict. Milestones stay soft (emerge from storytelling).
+  function _buildConspiracyApBlock() {
+    try {
+      var P = _fatelandsConspiracyPremise();
+      if (!P) return '';
+      var b = '\n\n═══════════════════════════════════════════════════════════════════\n';
+      b += 'THE A-PLOT PREMISE ALREADY EXISTS — YOU ARE THE DRAMATIST, NOT THE ARCHITECT (HARD, Fatelands conspiracy — this OVERRIDES the story-shape/wound-first/pressure-menu instinct to invent a premise):\n';
+      b += 'This issue\'s central conflict is a FIXED, PRE-SET premise: the world-mystery "' + P.title + '". Do NOT invent a different central conflict, antagonist, or crisis. Your job is to DRAMATIZE this premise through THESE two characters — the romance, the wounds, the pacing, the emotional reversals are yours; the PREMISE is not.\n';
+      b += '  ── CONSPIRACY OWNS (pre-set — ELABORATE, do NOT replace) ──\n';
+      b += '  • OPENING CATASTROPHE (the one crisis the A-plot is "one fire" with): ' + P.openingCrisis + '\n';
+      if (P.redFlags && P.redFlags.length) {
+        // Rotate a fresh subset per story (seeded by storyId) so the "something is wrong here"
+        // signal never calcifies to one image. Deprecate the "frozen / dead eyes" default.
+        var _rfN = P.redFlags.length, _rfStart = Math.floor(_fatelandsQuestRoll('rf') * _rfN);
+        var _rfPick = [P.redFlags[_rfStart % _rfN], P.redFlags[(_rfStart + 1) % _rfN], P.redFlags[(_rfStart + 2) % _rfN]];
+        // Positive instruction only — do NOT name the calcified phrase here; naming it PRIMES it
+        // (the continuation-window "banned string re-primes" finding). Let the rotating pool win.
+        b += '  • THE WRONGNESS — the "something is off here" signal at the opening is THIS story\'s tell (rotate it; the compulsion wears a different face each time): ' + _rfPick.join(' · ') + '. Render the opening through ONE of these (or a fresh, equally uncanny tell in the same register) — a precise, specific wrongness, never a generic blankness.\n';
+      }
+      b += '  • CURRENT GOAL (this issue\'s objective — phrase it as a concrete on-page mission, but it MUST be this): ' + P.drive + '. (The investigation beneath it circles the question "' + P.question + '" — that is the mystery thread, not a second plot.)\n';
+      b += '  • CURRENT ANTAGONIST — FACTION IS SET, TEXTURE IS YOURS (you do NOT pick a different faction): ' + P.antagonistRole + '. Shape B or C (agent/exploiter, not a cartoon villain). VARY THEIR TEXTURE per story — DERIVE it from their relationship to the love interest and to the PC\'s wound; do NOT default to one archetype. Textures: a true believer who calls it mercy · one hollowed by guilt · one who profits and knows it · the love interest\'s own kin · a young zealot who has never questioned it · (use SPARINGLY, it has calcified) the weary founder-rememberer who hates what the order became. One gatekeeper should be a SYMPATHETIC protector. Example living face (ONE option, not the default): ' + (P.face || 'a survivor who remembers') + '.\n';
+      var _liRoleMenu = (P.liRoles && P.liRoles.length) ? P.liRoles.join(' · ') : 'complicit / compelled (bound by it, or enforcing it) · fellow victim (taken or cursed alongside the PC) · secret insider (a hidden agent of the suppressors) · outsider (investigating from outside, unbound by it) · torn double-bind (loyal to both the conspiracy and the PC)';
+      b += '  • THE LOVE INTEREST\'S ROLE IN THE CONSPIRACY — VARY IT (do NOT make them the complicit one every time; this is the biggest lever for making two stories feel different). DERIVE from the romance dynamic (' + (P.dynamic || 'this pairing') + '): ' + _liRoleMenu + '. The OPENING CATASTROPHE is LI-NEUTRAL (the Keepers seize the PC) — so the LI\'s BEAT within it FOLLOWS from the chosen role (frozen with dead eyes / seized alongside her / trying to stop her fleeing / signing the order / bursting in from outside). A love interest whose GOAL COLLIDES with the PC\'s (e.g. a rebel who needs her to STAY) is the richest engine — use it when the dynamic invites it.\n';
+      b += '  • THE REVEAL THIS ISSUE EARNS: ' + P.reveal + ' — it INVALIDATES the assumption ' + P.invalidates + ' (every reveal REWRITES understanding, never merely adds a fact).\n';
+      b += '  • WHERE THE CLIMAX POINTS (the reveal is NOT a finish line): ' + (P.transformedInto ? ('it opens the bigger question "' + P.transformedInto + '"') : 'the historical mystery becomes a PRESENT quest — knowing is not enough; something must be DONE, at a cost') + '.\n';
+      b += '  ── YOU OWN (invent freely — this is where two stories of the same premise DIVERGE) ──\n';
+      b += '  • The WOUNDS (fit them TO this premise — the conspiracy is the circumstance that SURFACES the wound; do NOT rebuild the premise around the wound). The love interest\'s personal tie to the conspiracy. The chemistry, dialogue, pacing, emotional reversals, and all MILESTONE TEXTURE (milestones emerge from YOUR storytelling — they are not dictated).\n';
+      b += '  • RELATIONSHIP CONSEQUENCE (romance is INSIDE the mystery, never beside it): this discovery must change how the two FEEL — e.g. ' + (P.rel || 'the discovery binds them in a dangerous secret') + '. Every beat asks "how does this change how these two feel about each other?", never merely "what clue comes next?".\n';
+      b += '  • RESOLUTION EMOTIONAL REGISTER — VARY IT (KEEP the "reveal is not a finish line" STRUCTURE, but land a DIFFERENT emotion per story; DERIVE from the relational shape / how these two love): hopeful-but-incomplete · bittersweet acceptance · tragic (a real, irreversible loss) · victorious-with-a-hidden-cost · relief that masks a future danger. Do NOT default every ending to "they escaped but ominously it is not over" — that landing has calcified; the same premise must be able to end in hope, in grief, or in sacrifice.\n';
+      b += '  THE STORY IS THE ROMANCE: players are here to fall in love, not to solve ' + P.title + '. The premise is the PRESSURE the love is forged under.\n';
+      b += '═══════════════════════════════════════════════════════════════════';
+      return b;
+    } catch (_) { return ''; }
+  }
+  window._buildConspiracyApBlock = _buildConspiracyApBlock;
+
+  // AUDIT TRAIL (Roman 2026-07-23) — free, console-only. A readable trace of WHY the A-plot
+  // took the shape it did: the conspiracy's dramatic grammar per track/stage. Fires on
+  // selection + each stage transition; `window._conspiracyAudit()` prints the full state
+  // (all 3 tracks + the current A-plot goal/antagonist/milestones) for side-by-side inspection.
+  function _conspiracyStageGrammar(t) {
+    try {
+      var m = _FATELANDS_MYSTERIES[t.key]; if (!m) return '';
+      var s = m.stages[Math.min(t.stageIndex, m.stages.length - 1)] || {};
+      var nx = m.stages[t.stageIndex + 1];
+      return '  ' + t.scope.toUpperCase() + ': ' + m.title + '  [stage ' + (t.stageIndex + 1) + '/' + m.stages.length + ', layer=' + t.layerReached + (t.solved ? ', SOLVED' : '') + ']\n'
+        + '    False objective : ' + (s.q || '—') + '\n'
+        + '    Invalidates     : ' + (s.inv || '—') + '\n'
+        + '    Reveal          : ' + (s.a || '—') + '\n'
+        + '    Rel. consequence: ' + (s.rel || '—') + '\n'
+        + '    Transforms into : ' + (nx ? nx.q : 'a present-day quest — knowing is not enough') + '\n'
+        + '    Suppressor/face : ' + (m.suppressors || '—').slice(0, 70) + ' | ' + (m.face || '—').slice(0, 60);
+    } catch (_) { return ''; }
+  }
+  function _logConspiracyStage(t, why) {
+    try { console.log('[CONSPIRACY-AUDIT] ' + (why || '') + '\n' + _conspiracyStageGrammar(t)); } catch (_) {}
+  }
+  window._logConspiracyStage = _logConspiracyStage;
+  window._conspiracyAudit = function () {
+    try {
+      var C = state._fatelandsSecretQuest;
+      if (!C || !C._selected) { console.log('[CONSPIRACY-AUDIT] none selected (not a Fatelands playthrough, or pre-selection)'); return null; }
+      var out = '[CONSPIRACY-AUDIT] ═══ full state ═══\n';
+      ['regional', 'local', 'world'].forEach(function (k) { if (C[k] && C[k].selected) out += _conspiracyStageGrammar(C[k]) + '\n'; });
+      var ap = state.aPlot || {};
+      out += '  ─ RESULTING A-PLOT (does it derive from REGIONAL above?) ─\n';
+      out += '    goal        : ' + (ap.goal || '(none)') + '\n';
+      out += '    antagonist  : ' + (ap.antagonistOrAntiForce || '(none)') + ' [shape ' + (ap.antagonistShape || '?') + ']\n';
+      out += '    milestones  : ' + ((ap.milestones || []).map(function (mm) { return mm.kind + '@' + mm.atScene; }).join(', ') || '(none)') + '\n';
+      out += '    fedSkeleton : ' + ((typeof _buildConspiracyApBlock === 'function' && _buildConspiracyApBlock()) ? 'YES' : 'no');
+      console.log(out);
+      return { conspiracy: C, aplot: { goal: ap.goal, antagonist: ap.antagonistOrAntiForce, antagonistShape: ap.antagonistShape, milestones: ap.milestones } };
+    } catch (e) { console.warn('[CONSPIRACY-AUDIT] threw', e && e.message); return null; }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATELANDS WORLD EVOLUTION v1 (Roman 2026-07-23) — the WORLD-scale mysteries EVOLVE across
+  // DOZENS of romances, so a returning player feels Fatelands itself CHANGING (the Fold expands,
+  // the moon-lattice degrades, the wound widens). PER-USER (localStorage) v1 — persists across ALL
+  // of this player's Fatelands playthroughs on this device. TRUE cross-USER global evolution (the
+  // whole playerbase moving the world together) needs SERVER state — FLAGGED, not built here.
+  // Advancement is SLOW (nudged when a playthrough advances a world/Fold track; ~4 nudges/stage →
+  // dozens of romances to move a phenomenon). Injected as faint ambient "the world as it stands".
+  var _FATELANDS_WORLD_EVOLUTION = {
+    fold: [
+      'The Fold has sat at the Ashen Verge for centuries — a scar the world learned to live beside.',
+      'The Fold has widened this year; the Verge villages nearest it say the edge is past the old markers.',
+      'The Fold is expanding faster now — the surveyors have stopped replacing the boundary stones.',
+      'Shapes move at the Fold\'s edge that did not before, holding their form a moment too long.',
+      'Something came through the Fold. No one agrees what. Everyone agrees the world is not the same.'
+    ],
+    lattice: [
+      'The thirteen moons keep their ancient procession; the sky is as it has always been.',
+      'Astronomers murmur that one moon\'s path has drifted — a hand\'s width, no more.',
+      'The lattice is slipping: Syzygies arrive early, and the Ascendant Run runs harder each year.',
+      'The thirteenth moon hangs lower than living memory allows, and the tides answer it.',
+      'The lattice is failing. The Witnesses of the Wound no longer pretend otherwise.'
+    ],
+    favor: [
+      'Fate\'s Favor draws lightning and the birds avoid it, as it always has.',
+      'Sacrifices near the Favor cost a little more than they used to, for a little less.',
+      'The wound at the Favor is widening; the old prices no longer hold the fractures.',
+      'Fractures spread from the Favor into regions that were always stable.',
+      'The Favor demands now, without being asked — Fate has stopped waiting to be petitioned.'
+    ]
+  };
+  var _FATELANDS_WORLD_KEY = 'sb_fatelands_world_v1';
+  var _FATELANDS_WORLD_NUDGES_PER_STAGE = 4;   // ~dozens of romances to move one phenomenon a stage
+  // Which advancing track nudges which world phenomenon (the discovery that moves the world).
+  var _FATELANDS_WORLD_NUDGE_MAP = { the_piercing: 'lattice', fates_favor: 'favor', dathros: 'fold' };
+
+  function _fatelandsWorldState() {
+    try {
+      var raw = localStorage.getItem(_FATELANDS_WORLD_KEY);
+      var st = raw ? JSON.parse(raw) : null;
+      if (!st || typeof st !== 'object') st = {};
+      ['fold', 'lattice', 'favor'].forEach(function (k) { if (!st[k] || typeof st[k] !== 'object') st[k] = { stage: 0, nudges: 0 }; });
+      return st;
+    } catch (_) { return { fold: { stage: 0, nudges: 0 }, lattice: { stage: 0, nudges: 0 }, favor: { stage: 0, nudges: 0 } }; }
+  }
+  function _nudgeFatelandsWorld(phenomenon) {
+    try {
+      if (!_FATELANDS_WORLD_EVOLUTION[phenomenon]) return;
+      var st = _fatelandsWorldState(), e = st[phenomenon], max = _FATELANDS_WORLD_EVOLUTION[phenomenon].length - 1;
+      e.nudges = (e.nudges || 0) + 1;
+      if (e.nudges >= _FATELANDS_WORLD_NUDGES_PER_STAGE && e.stage < max) {
+        e.stage++; e.nudges = 0;
+        try { console.log('[WORLD-EVOLUTION] "' + phenomenon + '" → stage ' + e.stage + '/' + max + ' — ' + _FATELANDS_WORLD_EVOLUTION[phenomenon][e.stage]); } catch (_) {}
+      }
+      try { localStorage.setItem(_FATELANDS_WORLD_KEY, JSON.stringify(st)); } catch (_) {}
+    } catch (_) {}
+  }
+  window._nudgeFatelandsWorld = _nudgeFatelandsWorld;
+
+  // Faint ambient injection — the world's CURRENT state, only for phenomena that have MOVED past
+  // stage 0 (a fresh world is silent). Distant news / rumor / weather, never a lecture.
+  function buildFatelandsWorldEvolutionDirective() {
+    try {
+      if (!state.picks || state.picks.world !== 'Fantasy') return '';
+      var st = _fatelandsWorldState(), lines = [];
+      ['fold', 'lattice', 'favor'].forEach(function (k) { var e = st[k]; if (e && e.stage > 0) lines.push(_FATELANDS_WORLD_EVOLUTION[k][e.stage]); });
+      if (!lines.length) return '';
+      return '\nTHE WORLD AS IT STANDS (ambient — Fatelands has been CHANGING across the ages; carry this as distant news / rumor / weather in the world, NEVER a lecture, at most a glancing line): ' + lines.join(' ') + '\n';
+    } catch (_) { return ''; }
+  }
+  window.buildFatelandsWorldEvolutionDirective = buildFatelandsWorldEvolutionDirective;
+  window._fatelandsWorldState = function () { var st = _fatelandsWorldState(); try { console.log('[WORLD-EVOLUTION]', JSON.stringify(st)); } catch (_) {} return st; };
+  window._resetFatelandsWorld = function () { try { localStorage.removeItem(_FATELANDS_WORLD_KEY); } catch (_) {} console.log('[WORLD-EVOLUTION] reset (per-user localStorage cleared)'); };
+
   function buildPiercingLoreDirective() {
       if (state.picks?.world !== 'Fantasy') return '';
       const scenes = state.turnCount || 0;
-      // Deep lore only available after scene 10 — early scenes focus on surface world
+      // Deep lore only available after scene 10 — early scenes focus on surface world.
+      // FIXED 2026-07-23: now called from the PER-TURN _fatelandsCognitiveMemoryBlock concat (live
+      // turnCount), NOT from the cached-once buildFantasyWorldBlock where this gate never opened.
       if (scenes < 10) return '';
       var _lore = `\n\n${FATELANDS_PIERCING_LORE}`;
       // Syzygy-related deep lore — inject when Syzygy is active or scene is late enough for discovery
@@ -15543,7 +16209,7 @@ Many people believe that displaying valuables beneath the Devouring Eye tempts f
     { name: 'The Veilwood Covenant',    figure: 'Lady Caeryn of the First Favored', sacrifice: 'her ability to feel love',          result: 'ended a century war between humans and the First Favored' },
     { name: 'The Shadow of the Thornwild', figure: 'the nameless pilgrim',             sacrifice: 'their shadow',                      result: 'entered the Thornwild and returned alive' },
     { name: 'The Hunger Offering',       figure: 'unknown',                           sacrifice: 'an entire noble bloodline',         result: 'the Hungry Eye consumed a falling moon fragment' },
-    { name: 'The Dathros Conclave',     figure: 'Marshal Veyra Dathros and seventeen battle-mages', sacrifice: 'their shared certainty of what was real', result: 'captured a fragment of the Devouring Eye mid-descent — but the capture failed, folding reality inward and creating the anomaly now called the Fold. Lost Dathros marks the collapse origin.' }
+    { name: 'The Dathros Conclave',     figure: 'the city of Dathros — Marshal Veyra Dathros and seventeen battle-mages', sacrifice: 'their shared certainty of what was real', result: 'at the Piercing, they caught a fragment of the descending Devouring Eye — and succeeded just enough to fail: reality folded inward, the whole city vanished, and the Fold was born. Lost Dathros marks the collapse origin; House Dathros still guards its ancestors\' mistake at the Ashen Verge.' }
   ];
 
   /**
@@ -15587,6 +16253,57 @@ INTEGRITY: No free magic. No second engine. No generic fantasy tropes. Canon > i
 - Romantic sacrifice: sincere = clean binding, doubt = twisted.
 - Syzygy: 13 moons align ALONG the Ascendant Run (never across). Moon-sized or smaller, spaced apart.
 - Canon > invention. No second magic engine. No generic fantasy.`;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATELANDS SCHOOL HISTORY — the COMMON HISTORICAL ACCOUNT (Roman 2026-07-23)
+  // The shared civilizational memory every educated person carries: eras, famous
+  // names, the broad sequence. Distinct from the SECRET cosmology (buildPiercingLoreDirective,
+  // scene-10-gated) — this is the PUBLIC layer that sits ON TOP of it. The Piercing is
+  // the epochal dividing line (Before = Elder Ages / After = Age of Wishes). Reconciles the
+  // four previously-disconnected registries (proverb pantheon / legendary sacrifices / Great
+  // Houses / cosmology) into ONE 10,000-year backbone. Names here are ALSO defined elsewhere:
+  // King Aravel/Selvarin/Caeryn/Veyra Dathros = FATELANDS_LEGENDARY_SACRIFICES; Tolmen III/
+  // Karkus/Uncrowned Queen = buildHistoricalReferenceDirective proverb pantheon; House Dathros/
+  // Ashen Verge = VAELRYN_HOUSES; the Lytharyn Institute = _buildLytharynInstituteDirective.
+  // ANTI-LORE-SOUP: this is a consistency BACKBONE + light-invocation source, NOT exposition.
+  const FATELANDS_SCHOOL_HISTORY = `FATELANDS COMMON HISTORY — THE SCHOOL ACCOUNT (shared civilizational memory; every educated person knows this backbone. The deeper/secret truths beneath these events are gated elsewhere and are discovered, never narrated):
+THE DIVIDING LINE — all time is reckoned Before or After THE PIERCING (~10,000 years ago), when something impossible tore through the sky and left Fate's Favor. The ancients believed the world's very HEART had been ripped out; modern folk are taught it was a fallen celestial body's impact crater. Everything before = the ELDER AGES; everything after = the AGE OF WISHES.
+ELDER AGES (Before the Piercing): lost kingdoms rose and vanished before written record; ruins older than every modern nation hold forgotten wishcraft. The oldest monstrosities date here.
+THE TWIN SACRIFICES (humanity's two answers as the sky broke, at the Piercing itself):
+• LOST DATHROS — the city of Dathros, led by Marshal Veyra Dathros and seventeen battle-mages, worked the greatest Composite Wishwork ever recorded: they sacrificed their shared certainty of what was real to catch a fragment of the descending Devouring Eye. They succeeded just enough to fail — reality folded inward, the whole city vanished, and THE FOLD was born. House Dathros still guards its ancestors' mistake at the Ashen Verge.
+• THE FALSE SACRIFICE — far north, the frightened people of what became the THORNWILD blamed a strange wish-witch for the catastrophe and burned her alive. She was innocent; with her dying wish she bound the mob's collective invocation into THE BECOMING FIELD, which curses the Thornwild still. The KWISHEEN descend from those who left it.
+AGE OF WISHES: humanity survived and wishcraft became civilization's foundation. The FIRST FAVORED guided early kingdoms in lawful wishcraft; the first universities and wish-traditions were founded; the oldest royal houses trace their origin here.
+AGE OF CROWNS: independent kingdoms rose. Greatest-remembered rulers — KING ARAVEL THE FIRST (sacrificed his teeth and royal blood; ended the Pirate Kings, bound the Shackle Isles), OLD KING TOLMEN III (a model of patient, restrained rule), and THE UNCROWNED QUEEN (a byword for systemic failure). A century war between humans and the First Favored was ended by LADY CAERYN, who sacrificed her ability to feel love (the Veilwood Covenant). Many modern dynasties claim descent from this age.
+THE MAGE COUNCIL: no kingdom, but a cross-border authority — it standardized lawful Composite Wishwork, founded the enduring schools of Thaumaturgy (the Lytharyn Institute foremost), and amassed great political power. ARCHMAGE SELVARIN gave up all memory of his own life to seal a rift-surge threatening Lytharyn. Historians still argue whether the Council was civilization's height or the start of its arrogance.
+THE WISH WARS: over generations kingdoms sought victory through ever-greater wishcraft — living weapons, transformed valleys, cursed bloodlines. History's worst monstrosities date here; the surviving laws of responsible wishcraft were written in response.
+THE GREAT RECKONING: the Wars' excesses shattered the Mage Council. Forbidden disciplines vanished or went underground; modern Composite Wishwork descends from the survivors.
+THE LONG PEACE: rebuilding, trade, scholarship. The Lytharyn Institute became the foremost seat of lawful wishcraft; most surviving roads, canals, ports and universities date here, as do the everyday wish-born wonders (living architecture, harmless magical oddities).
+THE ASHEN REBELLIONS: old kingdoms weakened, several royal houses fell, and most present-day nations and borders emerged.
+THE QUIET CENTURY (the present age): no continent-spanning war for generations; commerce and scholarship prosper; explorers still uncover ruins older than record; new monstrosities still appear; forbidden wishcraft is still practiced in secret. Most believe another Wish War impossible — historians quietly note that every age believed the same.
+NAMES IN EVERYDAY SPEECH (invoked in proverbs, cautionary tales, children's lessons, political speeches, scholarly debate — most people know the NAME, far fewer the truth): King Aravel the First · Old King Tolmen III · the Uncrowned Queen · Archmage Selvarin · Lady Caeryn of the First Favored · Marshal Veyra Dathros · the Cursed Vizier Karkus.
+FREQUENCY (HARD — the Valyria / First-Men model, NOT a history lesson): across a whole issue (~20 scenes) the past should surface only a FEW times; MOST scenes reference it NOT AT ALL. This backbone exists so that WHEN history comes up it stays CONSISTENT — it is NOT a cue to bring history up. Surface it ONLY when the moment EARNS it: a house asserting legitimacy or descent, a proverb or warning ("this ends like Karkus"), a scholar or a ruin, an oath sworn on an old event, a claim staked on the Piercing or the Fold, a grief that reaches back. When it does surface: ONE light touch — a single name, an era, one remembered fact — dropped the way people really invoke history, NEVER explained, NEVER a recited timeline, and NEVER twice in the same scene. Default to silence; let the past be a rare, weighted nod, not ambient wallpaper. Do not explain a figure you name (see proverb rules). The secret cosmology beneath these events is earned, never narrated.`;
+
+  /**
+   * Public common-history backbone. Fatelands (Fantasy) only; sits ON TOP of the
+   * secret cosmology (buildPiercingLoreDirective) — what every educated person knows.
+   * FREQUENCY NOTE (Roman 2026-07-23): this is consumed via buildFantasyWorldBlock, which
+   * is interpolated into state.sysPrompt — built ONCE at setup (turnCount 0) and warm-cached
+   * for the whole story. So in practice the FULL account is what lands in the cached prefix
+   * every scene; the compressed branch below only fires if this is ever called per-scene.
+   * Frequency of history in the PROSE is therefore governed by the FREQUENCY rule inside
+   * FATELANDS_SCHOOL_HISTORY (the Valyria/First-Men "rare earned nod" model), NOT by which
+   * branch returns — availability is constant; surfacing must be rationed by the author.
+   */
+  function getFatelandsHistoryBlock(st) {
+    if (!st.picks || st.picks.world !== 'Fantasy') return '';
+    const isScene1 = !st.turnCount || st.turnCount === 0;
+    if (isScene1) return `\n\n${FATELANDS_SCHOOL_HISTORY}`;
+    return `\nFATELANDS HISTORY REMINDER (shared backbone — invoke as proverb/era/name, NEVER recite):
+- All time is Before/After THE PIERCING (~10,000 yrs ago): Elder Ages → Age of Wishes. Public belief = a meteor crater; the ancients felt the world's heart torn out.
+- Twin sacrifices at the Piercing: LOST DATHROS (a city → the Fold; House Dathros guards it at the Ashen Verge) & the FALSE SACRIFICE (a burned wish-witch → the Becoming Field / Thornwild curse; source of the Kwisheen).
+- Eras since: Age of Wishes → Age of Crowns → the Mage Council → the Wish Wars → the Great Reckoning → the Long Peace → the Ashen Rebellions → the Quiet Century (now).
+- Names in common speech (know the name, not the truth): Aravel the First, Tolmen III, the Uncrowned Queen, Archmage Selvarin, Lady Caeryn, Marshal Veyra Dathros, Cursed Vizier Karkus.`;
   }
 
   const HISTORICAL_FLAVOR_STRUCTURAL_DATA = {
@@ -17971,13 +18688,14 @@ Withholding is driven by guilt, self-disqualification, or fear of harming others
       'planted', 'uprooted', 'ignited', 'extinguished', 'triggered', 'activated'
   ];
 
-  // BANNED PATTERNS - Controller and voyeur phrases
+  // BANNED PATTERNS (Roman 2026-07-23 — Fate = curious experimenter: it may orchestrate EVENTS
+  // but never a human's WILL. So the ban is on Fate controlling a PERSON's agency, NOT on
+  // event/object orchestration. "Fate arranged the blackout" is now FINE; "Fate made her stay"
+  // is not). Human-object = her|him|them|his|hers|their|a Capitalized name.
   const AUTHOR_BANNED_PATTERNS = [
-      /Fate (watched|observed|saw|looked on)/gi,
-      /Fate (arranged|orchestrated|set up|staged|ensured)/gi,
-      /Fate (caused|made|forced|compelled)/gi,
-      /Fate (steered|directed|guided|led)/gi,
-      /as (she|he|they) [\w\s]+, Fate/gi,
+      /Fate (watched|observed|looked on|gazed)\b/gi,                                                  // pure voyeur (repairable)
+      /Fate (made|forced|compelled|willed|drove|pushed|pulled|dragged|steered|directed|guided|turned) (her|him|them)\b/gi,   // controls/moves a PERSON (object pronoun, not possessive)
+      /Fate (made|willed|filled|left) (her|him|them|[A-Z][a-z]+)[\w\s,]{0,24}(feel|felt|think|thought|want|wanted|decide|decided|choose|chose|believe|doubt|love|hate|fear|stay|walk|step)/gi,   // controls a human's inner state / action
       /Fate.{0,20}(with satisfaction|with interest|with amusement) as/gi
   ];
 
@@ -18030,9 +18748,9 @@ RULES:
 1. The very first word must be "Fate"
 2. Fate must demonstrate AGENCY — imply a plan, a withheld action, or a miscalculation
 3. Use participant verbs like: ${AUTHOR_PARTICIPANT_VERBS.slice(0, 8).join(', ')}
-4. NEVER use controller verbs: arranged, orchestrated, steered, caused, made, forced
-5. NEVER use voyeur verbs: watched, observed, saw, witnessed
-6. Fate's action changes how the moment FEELS, not what literally happens
+4. Fate MAY arrange EVENTS and the apparatus (a coincidence, a delay, an unlocked door); Fate may NEVER control a human's thoughts, feelings, or actions ("made her", "forced him" — FORBIDDEN)
+5. Avoid pure voyeurism: not "Fate watched", but Fate reacting or shaping (a curious experimenter, not a camera)
+6. Fate's action shapes what happens to EVENTS or how a moment FEELS — never what a person chooses
 7. Preserve the rest of the content as much as possible
 
 Return the rewritten text only, no explanation.`
@@ -18050,8 +18768,10 @@ Return the rewritten text only, no explanation.`
       const lower = sentence.toLowerCase();
       // Only check sentences that mention "Fate" as entity
       if (!lower.includes('fate')) return false;
-      return AUTHOR_BANNED_VERBS.some(verb => lower.includes(verb)) ||
-             AUTHOR_BANNED_PATTERNS.some(pattern => pattern.test(sentence));
+      // Fate = curious experimenter (Roman 2026-07-24): rely ONLY on the doctrine-correct
+      // human-object patterns. The blunt AUTHOR_BANNED_VERBS list flags event-orchestration
+      // ("Fate arranged the blackout") which is now LEGAL, so it must NOT gate the repair.
+      return AUTHOR_BANNED_PATTERNS.some(pattern => pattern.test(sentence));
   }
 
   // Legacy alias
@@ -18278,18 +18998,19 @@ CORE DEFINITION:
 5th Person POV places Fate inside the story as a shaping presence.
 
 Fate IS:
-- A conscious presence with agency, intention, and consequence
-- Emotionally invested
-- Reacting to inevitability, pressure, resistance, and consequence
-- A force that shapes probability, timing, and stakes
+- A CURIOUS EXPERIMENTER — it sets circumstances upon humans and watches what they will do
+- A conscious presence with agency, intention, and a plan it arranges the world toward
+- Emotionally invested: it delights in a brave or clever choice, despairs at a boneheaded one
+- Able to act on the APPARATUS — EVENTS, circumstances, objects, the physical world (open a locked door, engineer a coincidence, delay a train, cut the lights)
+- Surprised and ADAPTIVE: when a human does something clever and unexpected, Fate rearranges its plan — it may even take their better idea
 
 Fate is NOT:
-- A camera
-- A neutral observer
-- A character performing physical actions
-- A narrator replacing character agency
+- Able to touch a human's THOUGHTS, DECISIONS, FEELINGS, or ACTIONS — human will is INVIOLATE. Fate opens the door; it cannot make anyone walk through
+- A camera or a neutral observer (it acts on the world and reacts to the people)
+- A puppeteer of character agency ("Fate made her stay / turned him toward her / filled her with doubt" — FORBIDDEN)
 - Passive emotional commentary
 
+THE LINE: Fate may cause any EVENT; Fate may never cause a human's CHOICE. The object of Fate's verb decides it — an event/object is allowed, a person's body/mind/will is forbidden.
 The scene itself remains 3rd-person limited.
 If Fate were removed, the story must feel structurally incomplete.
 
@@ -18342,7 +19063,8 @@ FORBIDDEN (NO META LABELS):
 
 FATE PRESENCE — GHOST CHARACTER (ACTIVE INNER LIFE):
 Fate is an invisible ghost character with a rich inner life and AGENCY.
-Fate intrusions are SPARSE but PSYCHOLOGICALLY WEIGHTY and CONSEQUENTIAL.
+Fate is WOVEN THROUGHOUT — present and reacting at nearly every beat (to a line, a choice, a silence, a sound), not confined to the opening and close. It need not fill every paragraph, but it must never go absent for long stretches: a Fate that only bookends the scene has FAILED. Each Fate touch is PSYCHOLOGICALLY WEIGHTY and CONSEQUENTIAL, never idle decoration.
+When Fate would otherwise fade, it RECEDES TO IMPLICATION — "the moment held," "the silence stretched," "the pause did not resolve" — it never simply VANISHES for the body of the scene. Self-check (felt presence, not a quota): does the scene feel GUIDED without Fate claiming control? If Fate feels ABSENT → add PRESSURE (a delay, a restraint, a cost, a withheld intervention), not decorative commentary. If Fate feels INTRUSIVE → recede to implication. The measure is whether the reader can FEEL Fate present, not a count.
 
 // ═══════════════════════════════════════════════════════════════════════════
 // POV REGIME — FATE (FINAL, SUPERSEDING)
@@ -18374,23 +19096,20 @@ GOOD Fate thoughts (agency mode):
 - "A miscalculation. Fate had not expected her to resist."
 - "Fate withheld the revelation, judging the moment unripe."
 
-BAD Fate thoughts (FORBIDDEN):
-- "Fate felt sad about what was happening." (passive emotion — FORBIDDEN)
-- "Fate arranged for them to meet." (direct causation — FORBIDDEN)
-- "Fate watched as she made her decision." (voyeurism — FORBIDDEN)
-- "Fate decided to make her fall in love." (direct control — FORBIDDEN)
-- "Fate sensed the tension in the room." (passive awareness without agency — FORBIDDEN)
+ALSO GOOD (event-orchestration — Fate acting on the APPARATUS is ENCOURAGED):
+- "Fate arranged for them to meet, curious what the collision would surface." (arranging an EVENT — allowed)
+- "Fate let the elevator stall between floors and waited." (nudging the apparatus — allowed)
 
-SCENE 1 RAMP-IN:
-Scene 1 is a threshold, not a stress test.
-- Fate presence may be lighter
-- Some Fate functions may appear gradually
-- Tone and rhythm may still be settling
-However:
-- Opening and closing MUST still be Fate-anchored
-- Fate must already feel essential
-- Role separation must remain intact
-Do NOT force density unnaturally in Scene 1.
+BAD Fate thoughts (FORBIDDEN):
+- "Fate felt sad about what was happening." (passive emotion, no agency — FORBIDDEN)
+- "Fate made her walk through the door." (controls a human ACTION — Fate opens the door, never moves the person — FORBIDDEN)
+- "Fate filled her with doubt." (controls a human FEELING — FORBIDDEN)
+- "Fate watched, and did nothing, and nothing changed." (pure passive voyeurism with no plan or reaction — FORBIDDEN)
+- "Fate decided to make her fall in love." (controls a human's WILL — FORBIDDEN)
+- "Fate sensed the tension in the room." (passive awareness with no consequence — FORBIDDEN)
+
+SCENE 1:
+Scene 1 is a threshold — tone and rhythm may still be settling — but Fate is present from the first line to the last, WOVEN THROUGH THE MIDDLE, not merely anchoring the open and close. A Scene 1 where Fate opens, disappears for the whole body, and returns only at the end has FAILED the POV — that is 3rd person with a Fate frame. Fate must already feel essential and inseparable from the scene. (Weave Fate naturally, never stuff it mechanically — but "settling" never means Fate is ABSENT for the entire middle.)
 
 EROTIC CONSTRAINT (HARD):
 If a scene is explicitly erotic:
@@ -18577,27 +19296,19 @@ The reader does not know why the story is gentler. Fate does not know either.
           /Fate\s+looked on\b/gi
       ];
 
-      // RULE 6b: Fate must NOT take physical actions (HARD_FAIL)
+      // RULE 6b (Roman 2026-07-23 — Fate = curious experimenter): Fate MAY act on OBJECTS/the
+      // world (open a door, place a letter) — that is legal now. What is HARD_FAIL is Fate laying
+      // hands on a PERSON's body (that controls a human). So the pattern requires a HUMAN OBJECT.
+      // Bodily verbs only (touch/grab/push/pull/drag/seize/grip/tighten) + a bare person-object
+      // pronoun. Object-verbs (moved/placed/opened/held/took) are OMITTED — those are legal on
+      // OBJECTS ("Fate placed the letter"), and disambiguating "her keys" from "her arm" by regex
+      // is worse than the directives, which teach the line. So we flag only unambiguous body-contact.
       const physicalActionPatterns = [
-          /Fate\s+tightened\b/gi,
-          /Fate\s+loosened\b/gi,
-          /Fate\s+moved\b/gi,
-          /Fate\s+placed\b/gi,
-          /Fate\s+touched\b/gi,
-          /Fate\s+grabbed\b/gi,
-          /Fate\s+pushed\b/gi,
-          /Fate\s+pulled\b/gi,
-          /Fate\s+lifted\b/gi,
-          /Fate\s+dropped\b/gi,
-          /Fate\s+opened\b/gi,
-          /Fate\s+closed\b/gi,
-          /Fate\s+reached\b/gi,
-          /Fate\s+held\b/gi,
-          /Fate\s+pressed\b/gi
+          /Fate\s+(?:tightened|loosened|touched|grabbed|pushed|pulled|dragged|seized|gripped|shook|slapped|struck|caressed|stroked)\s+(?:her|him|them)\b/gi
       ];
       for (const pattern of physicalActionPatterns) {
           if (pattern.test(text)) {
-              violations.push(`HARD_FAIL: Fate physical action — "${pattern.source}" (Fate cannot act physically)`);
+              violations.push(`HARD_FAIL: Fate physical action on a PERSON — "${pattern.source}" (Fate may move objects/events, never a human's body)`);
           }
       }
       for (const pattern of voyeurPatterns) {
@@ -18640,6 +19351,62 @@ The reader does not know why the story is gentler. Fate does not know either.
       // Only voyeur verbs are repairable — opener/closer/frequency/erotic require regeneration
       return enforceAuthorConductor(text);
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FATE DENSITY WEAVE (Roman 2026-07-24) — the LAST-RESORT mechanism, after the front-end
+  // approach was exhausted: 3 fresh Scene-1 gens all came back BOOKENDED (Fate opens + the
+  // mandated deck closer, ~330-word Fate-FREE middle) even after removing BOTH suppressor
+  // directives (SPARSE + Scene-1 ramp-in) AND restoring the good framing. The 3rd-limited default
+  // beats any front-end instruction — the model honors the mandated opener/closer and writes an
+  // ordinary scene between. So ADD Fate AFTER the fact: a cheap Mistral-Small pass that WEAVES a
+  // few Fate touches into the empty middle, changing nothing else. Per Roman's history-lesson (too
+  // many front-end Author directives once made the model CHOKE), this is a POST-gen touch, never
+  // more prompt weight. Fate need not be in every paragraph — the fix is the GAP.
+  function _fateGapWords(text) {
+    try {
+      var words = String(text || '').split(/\s+/), idx = [];
+      for (var i = 0; i < words.length; i++) if (/\bFate\b/.test(words[i])) idx.push(i);
+      if (idx.length < 2) return words.length;                        // ≤1 Fate → whole scene is one gap
+      var max = 0; for (var j = 1; j < idx.length; j++) max = Math.max(max, idx[j] - idx[j - 1]);
+      return max;
+    } catch (_) { return 0; }
+  }
+  async function _weaveFateDensity(text) {
+    try {
+      if (!text || typeof text !== 'string') return text;
+      if (window.__fateWeave === false) return text;                 // kill-switch
+      if (_fateGapWords(text) < 110) return text;                    // already woven enough
+      if (typeof _repairBudgetStart === 'function' && !_repairBudgetStart('fate-weave', 'repair')) return text;
+      var before = (text.match(/\bFate\b/g) || []).length, gapBefore = _fateGapWords(text);
+      var sys = '5TH-PERSON FATE WEAVE — you INSERT, you do not rewrite. The scene below is narrated in 5th person by FATE: a curious experimenter who sets circumstances upon people and watches what they choose. Fate ARRANGES events and the apparatus (a sound, a coincidence, a delay, an unlocked door) and REACTS with feeling (hopes, delights, is amused, despairs, keeps accounts, is surprised and rearranges) — but Fate NEVER controls a human\'s thoughts, feelings, decisions, or actions (it opens the door; it cannot make anyone walk through). Right now Fate opens and closes the scene but VANISHES in the middle, so it reads as ordinary 3rd person with a frame.\n\n' +
+        'YOUR ONLY JOB: WEAVE 3–5 short Fate touches into the Fate-empty MIDDLE — a reaction to a line or a choice, a nudge to the apparatus, a note in Fate\'s ledger, a withheld intervention — placed where they fit the existing beats. Fate need NOT appear in every paragraph; just close the long silent stretch so the reader feels Fate present throughout.\n\n' +
+        'HARD RULES:\n- ADD Fate only. Keep EVERY existing sentence and ALL dialogue exactly as written — do not rewrite, reorder, soften, or cut.\n- Do NOT touch the FIRST sentence or the LAST TWO sentences (the deck ending stays verbatim).\n- Events/objects/reactions YES; controlling a person NO. GOOD: "Fate let the laughter carry, curious whether it would crack her." BAD: "Fate made her flinch."\n- Fate\'s gender matches the protagonist; never "I" for Fate; never call the narrator "the Story".\nReturn the COMPLETE scene, nothing else.';
+      var user = '=== SCENE (weave Fate into the middle; return the whole scene, first line and deck ending untouched) ===\n\n' + text;
+      var maxTok = Math.max(1600, Math.ceil(text.length / 4) + 1000);
+      var res = await fetch('/api/mistral-proxy', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: 'SPECIALIST_RENDERER', model: 'mistral-small-latest', temperature: 0.55, max_tokens: maxTok, messages: [{ role: 'system', content: sys }, { role: 'user', content: user }] })
+      });
+      if (!res.ok) return text;
+      var data = await res.json();
+      var out = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || (data && data.content) || '';
+      out = String(out || '').replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+      if (!out) return text;
+      var normQ = function (s) { return (String(s).replace(/[“”]/g, '"').match(/"/g) || []).length; };
+      var grew = out.length >= text.length && out.length <= text.length * 1.6;   // insertion, not rewrite/bloat
+      var openerOk = text.trim().slice(0, 30) === out.trim().slice(0, 30);        // first sentence preserved
+      var closerOk = text.trim().slice(-38) === out.trim().slice(-38);            // deck ending preserved
+      var dialogueOk = normQ(out) === normQ(text);                               // no dialogue added/removed
+      var after = (out.match(/\bFate\b/g) || []).length, gapAfter = _fateGapWords(out);
+      if (grew && openerOk && closerOk && dialogueOk && after > before && gapAfter < gapBefore) {
+        try { console.log('[FATE-WEAVE] wove Fate into the middle (' + before + '→' + after + ' mentions, gap ' + gapBefore + '→' + gapAfter + ' words) via Mistral-Small'); } catch (_) {}
+        return out;
+      }
+      try { console.warn('[FATE-WEAVE] rejected (grew=' + grew + ' opener=' + openerOk + ' closer=' + closerOk + ' dialogue=' + dialogueOk + ' fate ' + before + '→' + after + ' gap ' + gapBefore + '→' + gapAfter + ') — kept original'); } catch (_) {}
+      return text;
+    } catch (e) { try { console.warn('[FATE-WEAVE] threw', e && e.message); } catch (_) {} return text; }
+  }
+  window._weaveFateDensity = _weaveFateDensity;
 
   // Build the 5th Person prompt contract block
   function build5thPersonContract() {
@@ -18754,6 +19521,11 @@ IX. SCENE-TYPE RULES:
 - EROTIC: Environment remains ACTIVE (heat, pressure, weight, rhythm, friction, breath, texture). Does NOT withdraw.
 - POLITICAL: Tracks embodied signals (fidgeting, grip, posture, voice). Never summarizes ideology or reveals hidden strategy.
 - EMOTIONAL: Maintains legibility via repetition, pressure change, breath, vocal tone, habit disruption, object memory. Ambiguity allowed, obscurity is failure.
+- CRISIS / HOT OPENER (HARD — the material voice's biggest failure mode): a hot Scene-1 crisis must DETONATE IN MOTION, and the environment must register it HAPPENING — not the settled hush afterward. The material voice pulls hard toward calm, sensed, aftermath states (a floor "holding a vibration," drapes "sensing pressure"); RESIST it. The surfaces carry the catastrophe AS IT LANDS and ESCALATES — the words still leaving the announcer's mouth, the glass flinching as they land, the floor taking the first stumble — not the tidy stillness once it is over. Atmosphere is not a substitute for a crisis: if a character speaks of a disaster to flee, the disaster must be ACTIVELY UNFOLDING on the page, felt through the objects, not merely referred to. Lush description with no crisis-in-motion = FAILURE.
+
+XI. MATERIAL CONTINUITY (HARD — the surfaces ARE the narrator, so their properties are load-bearing): a material, once named, is FIXED for the scene. A floor established as MARBLE cannot become creaking WOOD; a linen cannot become silk; a stone wall cannot become plaster. Track every named material and never contradict it — a continuity slip here is a narrator contradicting itself.
+
+XII. LEGIBILITY (HARD): the object-as-perceiver conceit must still PARSE as English. An object may sense, hold, remember, or refuse — but the sentence must resolve to a clear image. ✗ "pulled from a pocket the morning could not remember packing" (who packed it? the morning cannot pack) → ✓ "the deck was in her pocket, though she had no memory of putting it there." Poetic personification, never a puzzle that does not decode.
 
 X. PROHIBITIONS (HARD — validation will reject output containing these):
 - "We" as collective narrator voice (NEVER use "we" to narrate; environment is "it", specific objects, or unnamed material presence)
@@ -26971,7 +27743,14 @@ It does NOT change Player actions, relationship progression, or pacing.
     return range;
   }
 
-  function _buildAdaptiveLengthDirective() {
+  // opts.pacing: 'hot' | 'reflective' — the CALLER picks the pacing profile (a Scene-1 hot opener
+  // vs the default reflective literary/continuation cadence). The function RENDERS a profile; it
+  // does NOT infer context from state — keeps it a reusable length utility, not a Scene-1 kitchen
+  // sink. Range stays sourced from state._targetSceneLengthRange (the single source both callers
+  // resolve first), so callers don't re-plumb minWords/maxWords.
+  function _buildAdaptiveLengthDirective(opts) {
+    opts = opts || {};
+    var _pacing = opts.pacing || 'reflective';
     var range = state._targetSceneLengthRange;
     if (!range) return '';
 
@@ -26990,10 +27769,22 @@ It does NOT change Player actions, relationship progression, or pacing.
       paceMod = ' Tighten pacing, accelerate progression, reduce dwell time.';
     }
 
-    if (state.storyMode === 'literary') {
+    // Gate on RENDER (_isLit), not just gameplay storyMode \u2014 a literary-RENDER story
+    // (renderMode/storyModality literary) gets the elevated range from _resolveTargetSceneLength,
+    // so it must get the literary directive text too, or range and framing diverge.
+    var _isLit = state.storyMode === 'literary' || state.renderMode === 'literary' || state.storyModality === 'literary';
+    if (_isLit) {
+      // pacing:'hot' \u2014 SAME word TARGET, MOVEMENT framing \u2014 never the "breathe / atmosphere before
+      // conflict" pacing below, which would fight a hot opener and re-open the HOT\u2192COLD drift.
+      // Mirrors the proven FF length-floor wording, now derived from the canonical range and
+      // applied story-wide (Roman 2026-07-24). The caller decides when to ask for this profile.
+      if (_pacing === 'hot') {
+        return '\nSCENE LENGTH GUIDANCE: Target ' + range.minWords + '-' + range.maxWords + ' words \u2014 a FULL opening scene, not a compressed sketch. This length TARGET OVERRIDES any brevity / restraint / terse-opener bias: "restraint" governs the VOICE (no purple prose, no over-explaining), NOT the LENGTH. Reach the length by STAGING MORE OF THE CRISIS (more action beats, more of the spoken exchange, escalation, visible consequence, the protagonist\'s response under pressure) \u2014 NEVER by padding with backstory, world lore, aesthetic inventory, or self-analysis (the movement rule still governs). SELF-CHECK BEFORE YOU FINISH: if you are under ' + range.minWords + ' words you have STOPPED TOO EARLY \u2014 keep staging the crisis (do not summarize or wrap up) until the scene is genuinely full.' +
+          hookMod + paceMod + '\n';
+      }
       return '\nSCENE LENGTH GUIDANCE: Target ' + range.minWords + '-' + range.maxWords + ' words. ' +
         'Allow the scene to breathe \u2014 establish atmosphere and internal states before introducing conflict. ' +
-        'A meaningful decision or turning point should emerge organically, not forced early. ' +
+'A meaningful decision or turning point should emerge only once the scene\'s pressure has developed and the situation has materially changed — never as the first available action. ' +
         'Favor reflective choices and softer forks over binary high-stakes demands. ' +
         'Decisions may have delayed consequences rather than immediate ones.' +
         hookMod + paceMod + '\n';
@@ -28224,8 +29015,19 @@ It does NOT change Player actions, relationship progression, or pacing.
   }
   window._buildHotFirstDraftOverride = _buildHotFirstDraftOverride;
 
+  // LORE FIDELITY (Roman 2026-07-25) — UNIVERSAL, all worlds, every scene (literary + CG). Grok must
+  // render established world elements ONLY as canon gives them and must NOT invent or invert mechanics
+  // (the failure that produced an inverted Fold entry-law). Short + always-on; a no-op when no lore is
+  // in play. The Fatelands Fold directive carries the SAME guard with its specific mechanics; this is
+  // the world-agnostic backstop for every other place/creature/institution/system in every story.
+  function _buildLoreFidelityDirective() {
+    return '\nLORE FIDELITY (HARD — ALL worlds): render any ESTABLISHED world element — a place, creature, institution, faction, history, or magic / technology / social system — ONLY as THIS story\'s canon establishes it (the world bible, the injected lore, and facts already on the page). Do NOT invent new rules or mechanics for it, and NEVER contradict or INVERT what canon establishes. If a mechanic is NOT given to you, render only its EFFECT / consequence through a character\'s perception and leave the underlying rule UNNAMED — a confidently-stated WRONG mechanic is far worse than one left unspoken. When in doubt, show the consequence; do not author the law.\n';
+  }
+  window._buildLoreFidelityDirective = _buildLoreFidelityDirective;
+
   function buildProseStackDirectives(opts) {
     var out = '';
+    try { if (typeof _buildLoreFidelityDirective === 'function') out += _buildLoreFidelityDirective(); } catch (_) {}
     try { if (typeof _buildHotFirstDraftOverride === 'function') out += _buildHotFirstDraftOverride(); } catch (_) {}
     try { if (typeof _buildCharacterizingFirstLineDirective === 'function') out += _buildCharacterizingFirstLineDirective(); } catch (_) {}
     try { if (typeof buildProseDensityConductorDirective === 'function') out += buildProseDensityConductorDirective(); } catch (_) {}
@@ -28316,7 +29118,16 @@ It does NOT change Player actions, relationship progression, or pacing.
       try {
         _mmActive = (typeof _isMysteryManEligibleLI === 'function') && _isMysteryManEligibleLI(state.currentPrimaryLiId);
       } catch (_) {}
+      // INHUMAN CAST present? (Fatelands: First Favored / Kwisheen flavor, OR any locked inhuman appearance).
+      var _inhumanCast = false;
+      try {
+        var _iw = String((state.picks && state.picks.world) || state.world || '');
+        var _ifl = String((state.picks && state.picks.flavor) || state.flavor || '');
+        var _hasInhumanLock = (state.ffAppearance && Object.keys(state.ffAppearance).length) || (state.kwisheenAppearance && Object.keys(state.kwisheenAppearance).length);
+        _inhumanCast = (_iw === 'Fantasy') && (_ifl === 'first_favored' || _ifl === 'the_inhuman' || !!_hasInhumanLock);
+      } catch (_) {}
       return '\nCHARACTER DESCRIPTION (render PEOPLE as character, never a catalog):\n' +
+        (_inhumanCast ? '  INHUMAN BEINGS — KEEP THE STRANGENESS ON THE PAGE (HARD, Fatelands; First Favored, Kwisheen, or any non-human character): these are NOT humans with a label — do NOT let them read as ordinary. (1) FIRST appearance in the prose: land at least ONE striking, SPECIFIC strangeness WOVEN INTO the unfolding moment and doing real work (revealing stakes, character, or the danger) — it need NOT be one fixed trait. Pick what the scene wants: a Favored SENSE the beat turns on (feeling the whole crowd lean toward flight — and the one soul who does not); the unnatural speed/strength that reaches someone no human could; the uncanny beauty; luminous skin and diamond pupils; living Weave-Script moving on the skin; the distractingly see-through gossamer tunic and the body beneath; a Kwisheen’s tentacle lower-body, living coral-dreadlock hair, or tidal otherness. (2) EVERY LATER appearance — THE GOLLUM PRINCIPLE: keep re-grounding their inhumanity nearly every time they act; a good author NEVER assumes the reader has "heard enough" about a creature’s strangeness and lets them fade into an ordinary human. A light touch per beat suffices — but the strangeness must never vanish. This TIGHTENS the rotate-the-reminder rule below in FREQUENCY, not variety: the FEATURE (their inhumanity) recurs by design and more often than a human’s would, but the exact IMAGE and words must stay FRESH each time — never the same phrase twice.\n' : '') +
         '  Each NAMED person on stage gets at least ONE concrete physical detail that REVEALS who they are, read as the protagonist\'s APPRAISAL, not a passport entry. Appearance is a TELL (vanity, strategy, insecurity, class, age, mood, the gap between how they want to be seen and how they are). Walk-ons get ONE such stroke; NAMED PRINCIPALS (the LI, the PC, sustained NPCs) meet the importance-scaled establishment below AND the picturability floor — a gestalt PLUS a silhouette anchor (hair or build) on first appearance — never fewer (2026-07-14: this replaces the old flat "one stroke per person," which contradicted the scaled quota and drove under-description). Weave it INTO the action — not a portrait sweep; the detail lets the reader JUDGE the character, not just picture them.\n' +
         '    • BANNED neutral catalog: "a man with brown hair," "a woman in a black dress," "tall and handsome," "well-dressed," "striking green eyes."\n' +
         '    • REQUIRED character-revealing: "a haircut a decade too young for him"; "she led with her décolletage, the way she did when she wanted something"; "ginger roots betraying the expensive dye"; "a tie knotted too tight, like he\'d dressed for a fight."\n' +
@@ -29875,11 +30686,14 @@ PROHIBITED:
 
     if (!hasInteriority && authorSentences.length >= 3) {
       // Check if Author is using banned controller verbs (POV REGIME violation)
+      // Fate = curious experimenter (Roman 2026-07-23): orchestrating EVENTS/objects is legal;
+      // only CONTROLLING A HUMAN (moving/forcing a person) is the POV violation. Requires a
+      // person-object pronoun after the verb — "Fate arranged the storm" no longer flags.
       const hasControllerVerbs = authorSentences.some(s =>
-        /Fate\b\s+(set|placed|arranged|tilted|positioned|opened|closed|moved|pushed|pulled|steered|orchestrated|caused|forced|ensured|made)\b/i.test(s)
+        /Fate\b\s+(?:made|forced|compelled|willed|steered|directed|guided|turned|moved|pushed|pulled|dragged|placed|positioned|tilted)\s+(?:her|him|them)\b/i.test(s)
       );
       if (hasControllerVerbs) {
-        violations.push('POV_REGIME_VIOLATION:Fate using controller verbs instead of participant verbs');
+        violations.push('POV_REGIME_VIOLATION:Fate controlling a HUMAN (moving/forcing a person) instead of orchestrating events');
       } else if (!hasInteriority) {
         violations.push(AUTHOR_FUNCTION_ERRORS.INTERIORITY_ABSENT);
       }
@@ -37189,7 +38003,13 @@ If the main title does not include a strong marker, you MAY append a subtitle:
       var cs = window.getComputedStyle ? window.getComputedStyle(setupEl) : null;
       inSetup = !!setupEl.offsetParent || (cs && cs.display !== 'none');
     }
-    var corridorOk = (typeof corridorActiveRowIndex === 'undefined') || (corridorActiveRowIndex >= 3);
+    // BUGFIX (Roman 2026-07-23): a row FLOOR (>= 3) let the "Who is inhuman?" panel FOLLOW the user through the
+    // rest of setup (tone/pov/length) and never dismiss after they answered + hit Proceed. The species flavor is
+    // chosen on the WORLD stage, so bind the panel to THAT row — leaving it (Proceed → tone) now dismisses it.
+    // (The answer persists in state.speciesRoleOverride regardless.) The parallel power-role panel is fine — it uses
+    // a live-anchor lifecycle instead.
+    var _srdWorldRow = (typeof STAGE_INDEX !== 'undefined' && STAGE_INDEX && STAGE_INDEX.world != null) ? STAGE_INDEX.world : 4;
+    var corridorOk = (typeof corridorActiveRowIndex === 'undefined') || (corridorActiveRowIndex === _srdWorldRow);
     if (!trigger || !inSetup || !corridorOk) {
       if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
       return;
@@ -53082,15 +53902,43 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   };
   window.FLAVOR_STALE_OPENING_TROPES = FLAVOR_STALE_OPENING_TROPES;
 
+  // ALWAYS-ON BASELINE CAST PALETTE (Roman 2026-07-25). Names had a positive pool but it
+  // lived INSIDE the history-gated AVOID block; careers had no positive pool at all. So a
+  // cold start (first play in a flavor, or any fresh session) got ZERO cast guidance and
+  // the model free-picked its attractors — Iris/Marcus, and a finance-contract occupation
+  // monoculture. This emits a seeded, rotating name + occupation palette REGARDLESS of
+  // history. The AVOID lists stay history-gated (they need prior plays to have content);
+  // only the positive palette is decoupled and made unconditional.
+  function _buildBaselineCastPalette(s, flavor) {
+      try {
+          var out = [];
+          var _names = (typeof window._rotatingExemplars === 'function' && Array.isArray(window._SIDE_CHAR_NAME_POOL))
+              ? window._rotatingExemplars('side_char_names', window._SIDE_CHAR_NAME_POOL, 12) : [];
+          var _careers = (typeof window._rotatingExemplars === 'function' && Array.isArray(window._SIDE_CHAR_CAREER_POOL))
+              ? window._rotatingExemplars('side_char_careers', window._SIDE_CHAR_CAREER_POOL, 10) : [];
+          if (_names.length) {
+              out.push("CAST NAME PALETTE (rotating — a DIFFERENT seeded set each story; name this story's side characters (friend / coworker / family / rival — NOT the love interest, whose name is set elsewhere) from THIS set, matching each character's gender and the world. Do NOT default to workshop names like Iris / Marcus / Margot / Kess / Thorne):");
+              out.push('  ' + _names.join('  ·  '));
+          }
+          if (_careers.length) {
+              out.push("CAST OCCUPATION PALETTE (rotating — draw the PROTAGONIST'S world and the side cast's jobs from ACROSS this set. Do NOT collapse the whole cast into one professional space (finance / legal / contracts / equity / gallery-deals) unless the world truly requires it. Adapt any entry to the world's register — a 'structural engineer' in a fantasy is a master bridge-builder):");
+              out.push('  ' + _careers.join('  ·  '));
+          }
+          return out.length ? out.join('\n') : '';
+      } catch (_) { return ''; }
+  }
+  window._buildBaselineCastPalette = _buildBaselineCastPalette;
+
   // Build a prompt-injectable directive listing what to AVOID for the
-  // active flavor. Empty string when this is the user's first play of
-  // the flavor (no constraint).
+  // active flavor. On a first play (no history) it returns ONLY the always-on
+  // baseline cast palette; on replays it adds the full history-gated AVOID guard.
   function _buildFlavorVarietyGuard(state) {
       var s = state || window.state || {};
       var flavor = _flavorVarietyKey(s);
       if (!flavor) return '';
       var history = _getFlavorPlayHistory(flavor);
-      if (!history.length) return '';
+      var _baseline = _buildBaselineCastPalette(s, flavor);
+      if (!history.length) return _baseline;
       var aPlots = [], antagonists = [], archetypes = [], careers = [], pcCareers = [], liNames = [], pcNames = [], customs = [], settings = [], sideCharNames = [], hookObjects = [], liBodyParts = [], signaturePhrases = [], pcWoundCats = [], liWoundCats = [];
       history.forEach(function(h) {
           if (h.aPlotGoal)       aPlots.push(h.aPlotGoal);
@@ -53117,6 +53965,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       });
       var lines = [];
       lines.push('FLAVOR VARIETY GUARD (HARD — user has played this flavor "' + flavor + '" ' + history.length + ' time' + (history.length === 1 ? '' : 's') + ' recently; do NOT replay the same content):');
+      if (_baseline) lines.push(_baseline);
 
       // 2026-05-30 (Roman): WOUND CATEGORY rotation — the highest-leverage
       // variety axis. Across recent billionaire plays the PC wound clustered
@@ -53213,10 +54062,7 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       if (sideCharNames.length) {
           var _uniqSideChars = [];
           sideCharNames.forEach(function(n) { if (_uniqSideChars.indexOf(n) === -1) _uniqSideChars.push(n); });
-          lines.push('  AVOID these SIDE CHARACTER NAMES from recent plays — verbatim and any near-spelling (friend / coworker / family / antagonist — NOT the LI): ' + _uniqSideChars.join(' | ') + '. Pick MEANINGFULLY different first names — different culture-of-origin, different syllable shape, different vibe.');
-          lines.push('  NAME PALETTE — THIS STORY (rotating: a DIFFERENT seeded set each story, drawn from a large pool, so no name becomes a default. Roman 2026-06-05 — replaced the old static menu where "Yael"/"Kess" recurred because the SAME examples were shown every run). Name this story\'s side characters (friend / coworker / family / antagonist — NOT the LI) from THIS set, choosing names that fit each character\'s gender and the world:');
-          lines.push('    ' + window._rotatingExemplars('side_char_names', window._SIDE_CHAR_NAME_POOL, 12).join('  ·  '));
-          lines.push('  The first-name FAMILY matters more than the specific name — these span cultures-of-origin and syllable shapes on purpose; reach across them, do NOT collapse to the short-modern-Anglo family ("Kess"/"Iris"/"Margot" are all ONE shape). If a name here does not fit the world (a fantasy or historical setting), keep its SHAPE and adapt it. Invent surnames fresh, and do NOT reuse the AVOID names listed above.');
+          lines.push('  AVOID these SIDE CHARACTER NAMES from recent plays — verbatim and any near-spelling (friend / coworker / family / antagonist — NOT the LI): ' + _uniqSideChars.join(' | ') + '. Pick MEANINGFULLY different first names — different culture-of-origin, different syllable shape, different vibe. (Draw from the CAST NAME PALETTE above; do NOT reuse these AVOID names.)');
       }
       // 2026-05-30 (Roman): hook_object variety. The scaffold has been
       // locking onto "transfer" across replays — same wire-transfer
@@ -53381,12 +54227,199 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     { id: 'dangerous_summons',        inMotion: true,  family: 'summons', desc: 'The protagonist is summoned / cornered into a high-stakes encounter she cannot refuse, happening now — a reckoning, a door she is being made to walk through.' }
   ];
   window.SCENE1_OPENING_PATTERNS = SCENE1_OPENING_PATTERNS;
+
+  // ─────────────────────────────────────────────────────────────────────
+  // FATELANDS OPENING PATTERNS (Roman 2026-07-23). The pool above is MODERN-coded — gala /
+  // workplace / rival / patron / dangerous_summons. Those are precisely the FORBIDDEN-DEFAULT
+  // register the Fatelands pressure menu (~58034) BANS ("tribunal / board / vote / court / summons
+  // / paperwork — any conflict a 2024 lawyer would understand"). When a modern shape won the draw
+  // for a Fatelands story, the HARD "OPENING PATTERN" block fought the Fatelands pressure spine —
+  // the model landed on the "summoned to a board meeting" opener the user flagged.
+  //
+  // These ARE the painstakingly-written Fatelands scenarios. The four `lighthouse`-keyed shapes are
+  // the OPENING BEAT of the four Fatelands LIGHTHOUSES (`_FATELANDS_LIGHTHOUSE_EXEMPLARS`, ~57906) —
+  // the same broken-vow-bond / wrong-wish / syzygy / fold scenarios the A-plot resolves. The picker
+  // reads the ALREADY-RESOLVED lighthouse off state (`state._fatelandsLighthouse`, cached at the
+  // A-plot resolve site ~58006) and returns the MATCHING opener, so the Scene-1 opening prose and the
+  // A-plot spine tell the SAME story instead of two independent draws contradicting each other. The
+  // non-lighthouse shapes (First-Sacrifice-ceremony-twist, sacrifice-bill, oath-due, collective
+  // catastrophe) cover Fatelands stories whose spine is a pressure-menu category rather than a
+  // lighthouse, and the wish-demo. All HOT / in-motion (DETONATION, not announcement). SHAPES only —
+  // the model substitutes THIS story's specifics; never a writ / ledger / hearing costume.
+  const FATELANDS_OPENING_PATTERNS = [
+    { id: 'broken_vow_bond_opener',   lighthouse: 'broken_vow_bond', inMotion: true, family: 'bond', desc: 'The scene opens INSIDE the impossible, already done: the protagonist\'s vow-bound partner is simply GONE — walked out in the night, or found already with another — and yet every alignment reading on them still returns that they LOVE the protagonist, and the vow-thread still glows from her wrist toward wherever they now are. A bond Fatelands holds unbreakable has fractured without breaking. Either someone has worked a wishcraft thought impossible, or the bond was never what everyone (including the First Favored who witnessed it) believed. Opens on "they are gone" — present-tense, the loss already real on the page — NOT a summons or a hearing.' },
+    { id: 'wrong_wish_opener',        lighthouse: 'wrong_wish', inMotion: true, family: 'wish', desc: 'The scene opens on the CONSEQUENCE of an old wish arriving now, and the dawning, horrified COMPREHENSION that the protagonist herself caused it: a rival she never let herself resent drops dead in the middle of a festival; or a rain she idly wished for has starved a village and the blame is landing on the one she loves. The wish was made years ago; the bill is delivered THIS moment; the detonation is understanding what the world actually heard her ask for — something she could not bring herself to say, or to know.' },
+    { id: 'syzygy_opener',            lighthouse: 'syzygy', inMotion: true, family: 'fate', desc: 'The scene opens with the protagonist WAKING to feel one of her own past wishes LOOSENING in her chest as a rare cosmic alignment arrives — the fate-ledger has come undone and, for this closing window, she can UNMAKE a wish. But unmaking one rewrites everything it caused, and she can keep only one or two undone at the cost of the others (the wish that brought her love into her life; the wish that saved her village; the wish whose price may have been her sister). The crisis is already underway in her body as she wakes. The question is not whether — it is WHICH.' },
+    // NOTE: the FOLD lighthouse opener is NOT here — the Fold (a person seen as several true selves at once)
+    // is a phenomenon of the ASHEN VERGE ALONE, so it lives ONLY in Ashen's region-particular pool
+    // (_FATELANDS_REGION_CRISES.ashen). _resolveFatelandsLighthouse also re-routes a 'fold' win to a
+    // non-fold lighthouse outside Ashen, so the fold scenario can never surface in another region.
+    { id: 'alignment_rite_twists',    inMotion: true, family: 'alignment', desc: 'A fate-rite is underway RIGHT NOW before a gathered assembly — a First Sacrifice ceremony, an alignment-reading, an oath-binding — and it TWISTS mid-ceremony: the world heard the words differently than they were spoken, and the mechanic everyone trusted is visibly failing as the rite unfolds. The protagonist is inside the ceremony when it goes wrong.' },
+    { id: 'sacrifice_bill_collected', inMotion: true, family: 'sacrifice', desc: 'The price of an old wish or sacrifice comes due at the worst possible moment — the cost is being COLLECTED from someone present, on the spot, in an unanticipated form, as a physical event happening now (a body greying, a memory emptying, a debt cut into flesh), not a notice or a summons.' },
+    { id: 'oath_comes_due_now',       inMotion: true, family: 'oath', desc: 'An oath comes due in a form no one anticipated, mid-scene — a binding tightens, a sworn clause activates, and the consequence is manifesting physically on the oath-bound (or on the one they swore to) as the scene opens. The vow is enforcing itself in the moment.' },
+    { id: 'collective_catastrophe',   inMotion: true, family: 'physical', desc: 'A CROWD (refugees, a ship\'s company, a caravan, townsfolk, pilgrims — never the protagonist alone) is caught TOGETHER in a live, in-progress physical catastrophe that is seconds from irreversible loss, drawn from THIS region\'s own environment (a drowning tide, a failing current or a flooding hold in a sea-region; a fire, a collapse, or a failing crossing on land). Ordinary means are tried IN THE MOMENT and visibly FAIL — which is what makes a wish thinkable. The protagonist is among / witnessing the crowd. NEVER a summons, a meeting, a reckoning, an ultimatum, or a one-on-one confrontation.' }
+  ];
+  window.FATELANDS_OPENING_PATTERNS = FATELANDS_OPENING_PATTERNS;
+  // Fast lookup: lighthouse key → its opening-shape entry (for coupling the picker to the A-plot).
+  const _FATELANDS_LIGHTHOUSE_OPENER = {};
+  FATELANDS_OPENING_PATTERNS.forEach(function (p) { if (p.lighthouse) _FATELANDS_LIGHTHOUSE_OPENER[p.lighthouse] = p; });
+  window._FATELANDS_LIGHTHOUSE_OPENER = _FATELANDS_LIGHTHOUSE_OPENER;
+
+  // ─────────────────────────────────────────────────────────────────────
+  // FATELANDS PER-REGION HOT-CRISIS OPENERS (Roman 2026-07-24). Each NAMED region has its OWN
+  // signature hot-crisis openers — disasters that could ONLY happen there, rooted in its environment,
+  // inhabitants, institutions, and cosmology axiom (see _FATELANDS_COSMOLOGY ~199383). These are each
+  // region's OWN lighthouses — NOT the four universal relationship-lighthouses (broken-vow / wrong-wish
+  // / syzygy / fold) re-skinned per region. HARD REGION RULE: the FOLD (a person or self seen as several
+  // true, incompatible versions at once) is a phenomenon of the ASHEN VERGE ALONE — it appears in NO
+  // other region's openers. `who` names who is caught (Gloamwater's Kwisheen BREATHE water — a flooding
+  // chamber is wrong for them unless the caught crowd is air-breathing humans). The picker draws a
+  // region-particular opener as the DEFAULT Fatelands opening; the universal relationship-lighthouse
+  // opener is used only when the A-plot resolved one on a REAL psychological signal. SHAPES to render in
+  // this story's specifics, never copied verbatim.
+  const _FATELANDS_REGION_CRISES = {
+    gloamwater: {
+      who: `Kwisheen tide-kin — water-breathing people with legs AND tentacles and living coral-dreadlock hair, who live UNDER the tidal sea. A drowning person or a chamber filling with water is WRONG for them; those dangers apply ONLY if the caught crowd is air-breathing HUMAN visitors in a sealed dwelling or a foundering ship. For the Kwisheen themselves, the deadly things are KILLING CURRENTS, the crushing DEPTH, great PREDATORS, POISON-BLOOMS in the water they breathe, and the reef itself.`,
+      openers: [
+        `a cold downwelling current seizes a coral-town's gathering and drags the tide-kin down past the reef-lip into the black trench — tentacles and hands tearing loose from the rock one by one — and no swimmer is strong enough against it`,
+        `a red venom-bloom rolls through the water the Kwisheen BREATHE, and a market-shoal of them convulses as the poisoned tide floods their gills (a flooding chamber / failing air applies ONLY if the caught crowd are air-breathing HUMAN visitors in a sealed air-dome or a holed ship)`,
+        `a great deep-hunter breaches up out of the dark into a crowded reef-town and begins taking swimmers from the shoal, and the tide-kin scatter with nowhere shallow enough to be safe`,
+        `a whole coral terrace that a dwelling-cluster clings to shears off the reef-wall and begins sliding toward the crushing deep with families still inside its hollows`,
+        `mid-crisis the memory-weave frays and the trapped shoal suddenly cannot remember the safe channel out — nor agree on who among them is still missing`
+      ]
+    },
+    thornwild: {
+      who: `settlers, travellers, and thorn-cloaked Keepers of a cursed wilderness — nearly all of them Wildfolk (humans whose deepest denied flaw is being externalized by the Becoming Field). The "monsters" here mostly LOOK fully human and hide among the rest: a Commoner who dulls and shrinks everyone near them, a Weaver whose shadow throws a human-sized spider and whose "evidence" is spun silk, a Keeper whose fine hair moves on its own, a Reliquary who covets — while others are further gone. The danger is the curse-Field, the changed, and BEING FOUND OUT — never fur, claws, pelts, silver, or moon-shift (this is NOT a werewolf world), never a modern hazard.`,
+      openers: [
+        `the curse-Field surges over a crowded waystation and SEVERAL travellers begin the Becoming at once — each denied flaw surfacing as its own wrongness, a face going strange, a hunger no one can place, names slipping from their mouths — as the Keepers' thorn-wall that held it back visibly fails`,
+        `a fully-changed one, still wearing the face of someone's husband, turns on a huddle of refugees pressed against the Wall of Kept Names, and the Keepers cannot bring it down in time`,
+        `a Keeper's containment-rite collapses and the living wild floods the settlement, the thorn-roads drawing shut as people run`,
+        `a caravan is trapped as the thornwild itself MOVES — the thorn-walls closing around them like a slow fist — and the way they came in is already gone`,
+        `someone loses their true name aloud in the middle of the market, and the crowd must decide, right now, whether to bind them or flee the thing they are becoming`,
+        `a Becoming-monster who has passed for human is FOUND OUT in front of the whole settlement — a Weaver whose shadow throws a human-sized spider across the wall as the candles gutter, its fabricated web-"evidence" unravelling into raw silk in people's hands; or a Commoner unmasked as the reason everyone around them has gone grey, quiet, and small — and the room's dawning horror curdles, in a breath, into a mob, the unmasked one cornered and dangerous`,
+        `the thorn-cloaked Keepers and their allies are driving a band of Kwisheen back from the Thornwild's edge — refusing to let a single one reach the sea and get AWAY — because the Keepers hold that EVERY Kwisheen is a Thornwild monster that must stay contained here; the Kwisheen fight to escape, and it erupts into open battle at the boundary. (The irony the Keepers cannot see: these are Gloamwater-born Kwisheen, NOT monsters — they only inherited the tentacled SHAPE, not the curse. But the Becoming Field changes an outsider slowly — nothing at first, then over days and weeks — and if the Keepers hold them here long enough, each WILL eventually curdle into a monster: perhaps a Kwisheen driven by a devouring need to use its mimicry and camouflage to infiltrate, steal, and kill; perhaps something no longer Kwisheen at all — a Commoner, a Reliquary. Containing them is the very thing that would MAKE them the monsters the Keepers fear. Render the live battle; let this tragedy sit underneath it, not as a lecture.)`,
+        `a young person feels the Becoming take hold for the first time — awful, alien NEEDS welling up out of the flaw they have always denied, a compulsion rising that is unmistakably their own and unmistakably monstrous. They fight it; they WISH it away with everything in them — and nothing lifts, because a wish cannot cure a curse, only dampen or delay it — and in the dawning horror they grasp that there is no cure here, only flight: to Lytharyn, where a name and a story might re-aim what they are, or to the Fold at the Ashen Verge, to try to become a self the curse cannot claim`,
+        `the Keepers have taken a Lytharyn scholar-mage captive and are wringing him — by pressure and by pain — for the Thornwild's secrets: why the curse works as it does, why a caged Kwisheen re-types into a different monster, what the Becoming Field truly is. They mean NEVER to let him leave. And the cruelty of it is this: as he bends his brilliant mind to their questions, trying to buy his life with answers, the Field is already working on HIM — slow, unnoticed — until the first alien NEED surfaces in his own thoughts and he understands, with a scholar's terrible clarity, that he has become the very thing he was brought here to explain. STRONG ROMANCE FRAME: this captive mage is a natural LOVE INTEREST — the protagonist (a Keeper, a reluctant guard, a Quiet Sympathizer, or a fellow prisoner) comes to know him, falls for him, and frees him, and they flee the Thornwild together as hunted Rootless, racing the change already taking him — and the ache is that escape cannot CURE it: beyond the Field the Becoming only FREEZES where it stands, so she may save his life and still not save him whole`
+      ]
+    },
+    veilwood: {
+      who: `the ageless First Favored and their human wards, among the white twin-trunk troth-trees. The First Favored are superhumanly swift and hard to kill, so the danger must threaten what they CANNOT simply outrun — their wards and children, their sacred groves, and their own slowly-eroding capacity to FEEL.`,
+      openers: [
+        `one of the great white DWELLING-TREES the First Favored live within begins to CLOSE — its living wood sealing shut over the hollows and passages — and the families dwelling inside must flee down the trunk before it entombs them`,
+        `fire races through the white groves and the First Favored, swift enough to escape it easily, will NOT leave the human wards and children trapped inside the burning Troth-grove — so the swift choose to stay and burn with the slow`,
+        `the feeling-blight sweeps a Covenant gathering and dozens of First Favored go cold and still at once, the light leaving their eyes mid-ceremony as their kin watch, unable to call them back`,
+        `a Troth-grove where couples stand mid-vow begins casting out every bound knot and dying from the roots up, the sacred wood failing under the wedding party`,
+        `an ancient First Favored unravels in public — aging past the last of their feeling into collapse — and the crowd witnesses what waits at the end of the long detached road`
+      ]
+    },
+    ashen: {
+      who: `soldiers, oath-bound Foldwalkers, and camp-followers of an ash-covered military frontier at the very edge of the Fold — the danger is the Fold itself coming apart, or the brutal frontier, never a modern accident. (The FOLD belongs to Ashen ALONE.)`,
+      openers: [
+        `the Fold surges at the Verge and a whole watch-camp begins to come APART — soldiers flickering between the selves they might have been, the ground going to ash underfoot — because the oath-pair whose shared vow pinned this stretch has just been broken`,
+        `a Foldwalk expedition returns WRONG: some who went out have come back as other selves, or not come back whole, and the camp must sort the true from the collapsed before the wrong ones spread`,
+        `a rampart of the ash-frontier gives way and a column of soldiers and camp-followers is buried as the Verge breathes in, grey ash pouring down faster than anyone can dig`,
+        `a soldier is caught mid-Fold in front of the ranks, splitting into incompatible versions of himself, and his oath-partner must hold him to ONE before he scatters into the Grey Blooms`,
+        `an ashfall Fold-storm engulfs the Verge outposts, unmaking the ground itself, and the paired lanterns gutter one after another as their bearers wink out of the world`
+      ]
+    },
+    shackle: {
+      who: `pirates, debtors, and oath-bound islanders of a storm-lashed, lawless archipelago — a human-mingling hub where DISGUISED (human-passing) Kwisheen move unremarked among the crowds. The danger is the sea, the reefs, the raids, the fog, and the binding-chains that will not open.`,
+      openers: [
+        `a great mooring-CHAIN — one of the vast chains that bind the isles together and hold the fleet fast — tears loose of its anchor and whips through the crowded harbour, taking masts and people with it`,
+        `a ship comes out of the fog too fast and CRASHES into the harbour chains, folding around them and foundering with all her crew and passengers aboard as the shore watches`,
+        `a debt-galley strikes the Quiet Chain reef in a squall and a hold full of chained debtors goes down with her — the binding-chains that will not unlock dragging them under`,
+        `a rival crew's raid turns the Blackmoor waterfront to fire and drowning, and a market-crowd is caught between the burning wharves and the black water with no boat that will take them`,
+        `a chain-oath collects its due in the open square — the binding physically drags a sworn man toward the sea as the crowd watches the vow enforce itself`,
+        `a knot of pirates corner a lone woman on a fog-wet quay, certain of an easy mark — until she DROPS her human disguise: tentacles unspool from beneath her long coat, her hair uncoils into living coral, her eyes flatten to true Kwisheen black, and the Many-Tide Method turns the ambush to chaos (she grapples several at once, an attack-buckler and an undertide dagger working from angles they never see). As the last of them breaks and runs, one beaten, terrified man gropes for anything and gasps a CARELESS wish — and Fate, which does not care that he never meant it, begins to answer the words exactly as he said them`
+      ]
+    },
+    pulse: {
+      who: `merchants, speculators, inventors, and dockhands of a booming mercantile port — the busiest human-mingling crossroads in the Fatelands, where DISGUISED (human-passing) Kwisheen go unnoticed in the throng. The danger is machines and experimental devices, harbour fire, and the crush of a market crowd.`,
+      openers: [
+        `an experimental engine on a crowded manufactory floor runs "too early" — an invention half-remembered out of an adjacent world — and tears loose of its bolts, catching the whole shift of hands as it flies apart`,
+        `a speculative device being demonstrated to a market crowd slips its maker's control and begins doing what it was never meant to, with nowhere for the packed square to run`,
+        `a harbour-fire jumps the speculators' tight-packed warehouses and traps a market-square crowd between the flames and the low-tide quay`,
+        `three inventors who each "remembered" the same impossible machine switch theirs on within the same hour, and the resonance tears through the crowded workshop-quarter`,
+        `a sure-fortune collapses at a counting-house and the panicked run becomes a lethal crush in the narrow harbour streets`,
+        `hired dock-toughs ring a lone woman in a crowded market lane, expecting no trouble — until she SHEDS her human disguise: tentacles slip free of her coat, her hair uncoils into living coral, her pupils flatten to true Kwisheen black, and the Many-Tide Method overwhelms them in a blur of grapples and the attack-buckler. As they go down, one beaten man, desperate, blurts a CARELESS wish into the open air — and Fate answers the words he spoke, not the intent behind them`
+      ]
+    },
+    vaelryn: {
+      who: `courtiers, the great dynastic houses, and packed commons of a ceremonial High Court — the danger arrives THROUGH ceremony, procession, and the recurring dynastic doom that keeps repeating itself, not through a modern mishap.`,
+      openers: [
+        `a coronation procession on the palace's great stair collapses under the crush of the crowd exactly as an old court-tragedy foretold it would, the same ancient doom repeating itself to the letter`,
+        `fire takes the ceremonial hall in the middle of the rite and a court packed with the great houses is trapped, the convergence pulling the disaster into the very groove the seers dreaded`,
+        `the recurring dynastic death detonates LIVE during a public ceremony — the same fall, the same blade, the same balcony that has taken this house for three generations`,
+        `a petition-day crowd panics into a lethal crush when the Petition Bells ring for a prophecy no one wanted fulfilled`,
+        `an assassination unfolds in the open during a sacred rite, and the whole court sees Fate's convergence close on the royal house before their eyes`
+      ]
+    },
+    lytharyn: {
+      who: `scholars and students of an arcane city where NAMES and STORIES hold power — the danger is a working of names or story slipping its bounds and REWRITING the people caught in it, or the Institute's own towers and libraries.`,
+      openers: [
+        `a fire breaks out in the ancient Institute library and a full lecture-hall of students is trapped inside, the burning volumes' margin-ghosts shrieking warnings no one can reach through the smoke`,
+        `a student's presentation on CHAINED WISHWORK goes awry, the demonstration cascading link by link out of control across the assembled hall`,
+        `a story-working slips its bounds in a crowded hall and begins REWRITING the people caught inside it — names sliding off them, faces going wrong, histories unspooling — as the masters fail to un-say it in time`,
+        `a true-naming rite miscarries before the assembly and the named begins to warp into the wrong word, the crowd watching a person become something else`,
+        `a rumour someone wished TRUE sweeps the lecture-crowd and starts altering them to fit the tale, and no one can find the first mouth to stop it`
+      ]
+    }
+  };
+  window._FATELANDS_REGION_CRISES = _FATELANDS_REGION_CRISES;
+
+  function _fatelandsRegionCrisisKey(region) {
+    try {
+      var raw = String(region || (window.state && window.state.fantasyRegion) || '').toLowerCase();
+      var hit = null;
+      Object.keys(_FATELANDS_REGION_CRISES).forEach(function (k) { if (raw.indexOf(k) !== -1) hit = k; });
+      return hit;
+    } catch (_) { return null; }
+  }
+  window._fatelandsRegionCrisisKey = _fatelandsRegionCrisisKey;
+
+  // Ground an existing opener (e.g. a coupled universal relationship-lighthouse) in the current region:
+  // append WHO is present so it renders among the region's real inhabitants. Clone; unknown region → unchanged.
+  function _fatelandsGroundOpener(p, regionKey) {
+    try {
+      if (!p) return p;
+      var key = regionKey || _fatelandsRegionCrisisKey();
+      if (!key || !_FATELANDS_REGION_CRISES[key] || !_FATELANDS_REGION_CRISES[key].who) return p;
+      var who = _FATELANDS_REGION_CRISES[key].who;
+      var clone = {}; for (var kk in p) { if (Object.prototype.hasOwnProperty.call(p, kk)) clone[kk] = p[kk]; }
+      clone.desc = p.desc + '\n\nGROUND THIS OPENING IN ' + key.toUpperCase() + ' (HARD — its true environment, inhabitants, and institutions; do NOT relocate it or borrow another region\'s look). WHO IS PRESENT HERE: ' + who;
+      return clone;
+    } catch (_) { return p; }
+  }
+  window._fatelandsGroundOpener = _fatelandsGroundOpener;
+
+  // Build a fresh REGION-PARTICULAR opener — a region-SIGNATURE hot crisis pulled from the region's own
+  // pool (a tree closing on Veilwood, a chain breaking on Shackle, a library fire on Lytharyn, the Fold
+  // surging on Ashen). Returns a pattern object (stable id 'region_<key>') or null if the region is unknown.
+  function _fatelandsRegionOpener(regionKey) {
+    try {
+      var key = regionKey || _fatelandsRegionCrisisKey();
+      if (!key || !_FATELANDS_REGION_CRISES[key]) return null;
+      var R = _FATELANDS_REGION_CRISES[key];
+      var arr = R.openers || [];
+      if (!arr.length) return null;
+      var flavor = arr[Math.floor(Math.random() * arr.length)];
+      var desc = 'A live, in-progress crisis PARTICULAR TO ' + key.toUpperCase() + ' — a region-SIGNATURE emergency that could only happen here, detonating NOW as ordinary means visibly fail. Most such crises catch a crowd of onlookers; a few fall on a lone person (a private transformation, a solitary reckoning) — follow the specific crisis as written below. Render it in THIS place, among THESE people; do NOT relocate it or borrow another region\'s look.'
+        + '\nWHO IS CAUGHT HERE: ' + (R.who || '')
+        + '\nTHE CRISIS (a shape to render in this story\'s specifics, never copied verbatim): ' + flavor;
+      try { console.log('[SCENE1:PATTERN-GATE] region-particular opener → ' + key); } catch (_) {}
+      return { id: 'region_' + key, inMotion: true, family: 'physical', region: key, desc: desc };
+    } catch (_) { return null; }
+  }
+  window._fatelandsRegionOpener = _fatelandsRegionOpener;
+
   // Families that read as "private-made-public / information leak" — capped to minority under HOT.
   const _SCENE1_EXPOSURE_FAMILIES = ['public_exposure', 'social_exposure', 'information_arrival'];
   function _getRecentScene1Families() {
     try {
       var ids = _getRecentScene1Fingerprints();
-      var byId = {}; SCENE1_OPENING_PATTERNS.forEach(function (p) { byId[p.id] = p.family || 'other'; });
+      var byId = {};
+      SCENE1_OPENING_PATTERNS.forEach(function (p) { byId[p.id] = p.family || 'other'; });
+      try { if (typeof FATELANDS_OPENING_PATTERNS !== 'undefined') FATELANDS_OPENING_PATTERNS.forEach(function (p) { byId[p.id] = p.family || 'other'; }); } catch (_) {}
       return ids.map(function (id) { return byId[id] || 'other'; });
     } catch (_) { return []; }
   }
@@ -53486,6 +54519,31 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
   // Pick an opening pattern that hasn't fired in the last 5 Scene 1s.
   // Falls back to full catalog when all are exhausted (>=12 stories played).
   function _pickScene1OpeningPattern() {
+    // FATELANDS WISH-DEMO SHAPE PIN (Roman 2026-07-23): the first-ever Fatelands Scene 1 forces
+    // HOT_CRISIS (temperature), but the SHAPE was still a random draw from the inMotion pool — and
+    // dangerous_summons / live_confrontation / rival_takes_credit kept winning, each of which frames
+    // the opening as a SOCIAL RECKONING ("summoned to a meeting", the board-meeting the user flagged).
+    // The wish-demo needs a COLLECTIVE PHYSICAL CATASTROPHE the crowd is caught in TOGETHER — a live,
+    // in-progress disaster where ordinary means fail and a wish becomes thinkable. Pin it so the
+    // demo's live-crisis beats have the right container; the summons/social shapes are suppressed.
+    // ACTIVE agency (the crowd + the wisher try, fail, then reach for Fate), family 'physical'.
+    try {
+      if (typeof _fatelandsWishDemoActive === 'function' && _fatelandsWishDemoActive(state)) {
+        // The first-ever demo opens on a REGION-PARTICULAR catastrophe true to who actually lives here
+        // (a KILLING CURRENT for Kwisheen Gloamwater — NOT a flooding chamber, which makes no sense for
+        // water-breathers; a dwelling-tree closing on Veilwood; a chain breaking on Shackle).
+        var _wishShape = (typeof _fatelandsRegionOpener === 'function') ? _fatelandsRegionOpener() : null;
+        if (!_wishShape) {
+          _wishShape = {
+            id: 'collective_catastrophe', inMotion: true, family: 'physical',
+            desc: 'A CROWD (refugees, a ship\'s company, a caravan, townsfolk, pilgrims — never the protagonist alone) is caught TOGETHER in a live, in-progress physical catastrophe that is seconds from irreversible loss, drawn from THIS region\'s own environment and matched to WHO is caught (water-breathing folk are threatened by currents/depth/predators/poison-blooms, NOT by drowning). Ordinary means are tried IN THE MOMENT and visibly FAIL. The protagonist is among / witnessing the crowd. NEVER a summons, a meeting, a reckoning, an ultimatum, or a one-on-one confrontation.'
+          };
+        }
+        try { if (state) state._openingAxesSelector = { temperature: 'HOT_CRISIS', agency: 'ACTIVE', shape: _wishShape.id }; } catch (_) {}
+        try { console.log('[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=' + _wishShape.id + '; summons/social/reckoning shapes suppressed)'); } catch (_) {}
+        return _wishShape;
+      }
+    } catch (_) {}
     var recent = _getRecentScene1Fingerprints();
     // Fix 2 (Roman 2026-06-22): temperature↔pattern COUPLING. The pattern was picked by
     // recency ONLY — orthogonal to the opening temperature — so HOT_CRISIS routinely landed
@@ -53493,10 +54551,53 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     // (catastrophe REPORTED, not on fire). Under HOT_CRISIS, restrict to inMotion (active/
     // in-progress) patterns; recency still rotates WITHIN that subset for variety.
     var pool = SCENE1_OPENING_PATTERNS;
+    // FATELANDS BASE POOL (Roman 2026-07-23): a fate-physical world must draw from the fate-native
+    // opening shapes, NOT the modern gala/workplace/rival/patron/dangerous_summons pool (which is the
+    // exact FORBIDDEN-DEFAULT register the Fatelands pressure menu bans). Swap the base pool for any
+    // Fantasy/Fatelands story (by world OR a bound fantasyRegion) — the HOT/recency/anti-repeat logic
+    // below then operates over the Fatelands shapes. Famous Fate is EXCLUDED: it retells named canon
+    // stories that are not Fatelands-native, and owns its opening via the canon roster.
+    try {
+      var _flWorld = String((state && state.picks && state.picks.world) || (state && state.world) || '').toLowerCase();
+      var _flRegion = String((state && state.fantasyRegion) || '').toLowerCase();
+      var _isFF = !!(state && state.fateMode === 'famous_fate');
+      if (!_isFF && (/fantas|fate/.test(_flWorld) || _flRegion) && typeof FATELANDS_OPENING_PATTERNS !== 'undefined' && FATELANDS_OPENING_PATTERNS.length) {
+        pool = FATELANDS_OPENING_PATTERNS;
+        try { console.log('[SCENE1:PATTERN-GATE] FATELANDS world → fate-native openers (modern summons/social/rival shapes suppressed)'); } catch (_) {}
+        var _rkOpener = (typeof _fatelandsRegionCrisisKey === 'function') ? _fatelandsRegionCrisisKey() : null;
+        // (1) STRONG relationship-lighthouse → couple the opener to the A-plot spine. The A-plot resolves a
+        // lighthouse and caches it on state (~58017) with a strength flag: couple ONLY when it resolved on a
+        // REAL psychological signal (a lock/axis match, not the neutral default), so the specific relationship
+        // opener the user wanted (broken-vow-bond / wrong-wish / syzygy) leads exactly when the story IS about
+        // that certainty-attack. FOLD is never coupled here (Ashen-only; it lives in Ashen's region pool).
+        try {
+          var _lh = String((state && state._fatelandsLighthouse) || '').trim();
+          var _lhStrong = !!(state && state._fatelandsLighthouseStrong);
+          var _lhOpener = (_lhStrong && _lh && _lh !== 'fold' && typeof _FATELANDS_LIGHTHOUSE_OPENER !== 'undefined') ? _FATELANDS_LIGHTHOUSE_OPENER[_lh] : null;
+          if (_lhOpener) {
+            var _grounded = (typeof _fatelandsGroundOpener === 'function') ? _fatelandsGroundOpener(_lhOpener, _rkOpener) : _lhOpener;
+            try { if (state) state._openingAxesSelector = { temperature: 'HOT_CRISIS', agency: 'ACTIVE', shape: _grounded.id }; } catch (_) {}
+            try { console.log('[SCENE1:PATTERN-GATE] FATELANDS lighthouse=' + _lh + ' (strong) → opening COUPLED=' + _lhOpener.id + ' (Scene-1 opener matches the A-plot spine)'); } catch (_) {}
+            return _grounded;
+          }
+        } catch (_) {}
+        // (2) DEFAULT — a REGION-PARTICULAR opener: this region's OWN signature hot crisis (tree closing on
+        // Veilwood, chain breaking on Shackle, library fire on Lytharyn, Fold surging on Ashen). This is what
+        // makes each region feel distinct, and it leads whenever the relationship-lighthouse is not strong.
+        try {
+          var _regionOpener = (_rkOpener && typeof _fatelandsRegionOpener === 'function') ? _fatelandsRegionOpener(_rkOpener) : null;
+          if (_regionOpener) {
+            try { if (state) state._openingAxesSelector = { temperature: 'HOT_CRISIS', agency: 'ACTIVE', shape: _regionOpener.id }; } catch (_) {}
+            return _regionOpener;
+          }
+        } catch (_) {}
+        // (3) FALLBACK — a region-less Fatelands story: rotate the generic fate-native pool below.
+      }
+    } catch (_) {}
     var temp = '';
     try { temp = String((typeof _pickOpeningTemperature === 'function') ? _pickOpeningTemperature(state) : ((state && state._openingTemperature) || '')).toUpperCase(); } catch (_) {}
     if (temp === 'HOT_CRISIS') {
-      var hotPool = SCENE1_OPENING_PATTERNS.filter(function (p) { return p.inMotion; });
+      var hotPool = pool.filter(function (p) { return p.inMotion; });
       // EXPOSURE MINORITY CAP (Roman 2026-06-25): private-public exposure had become the billionaire
       // default. Drop the exposure family this story if (a) it fired in the last 2 stories OR (b) a
       // 70% roll — so it stays ALLOWED but a minority (~1 in 3-4). Never empties the pool.
@@ -53531,6 +54632,13 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       }
     } catch (_) {}
     var _pick = available[Math.floor(Math.random() * available.length)];
+    // (Fatelands with a known region already returned a region-particular / coupled opener above; only
+    // non-Fatelands or a region-less Fatelands story reaches this generic rotation — ground it if we can.)
+    try {
+      if (pool === FATELANDS_OPENING_PATTERNS && typeof _fatelandsGroundOpener === 'function') {
+        _pick = _fatelandsGroundOpener(_pick);
+      }
+    } catch (_) {}
     // OPENING AXES TELEMETRY (Roman 2026-07-06 — descriptive + permanent). Openings have TWO orthogonal
     // axes, not one vague "quality": TEMPERATURE (how immediate the crisis is — logged elsewhere) and
     // AGENCY (does the protagonist ACT, or get ACTED-UPON). Agency was untracked here. A shape can be HOT
@@ -53608,6 +54716,18 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       if (typeof _fatelandsWishDemoActive === 'function' && _fatelandsWishDemoActive(s)) {
         try { s._openingTemperature = 'HOT_CRISIS'; } catch (_) {}
         try { console.log('[OPENING:TEMP] selected=HOT_CRISIS · FATELANDS-WISH-DEMO (first-ever Fatelands / dev)'); } catch (_) {}
+        return 'HOT_CRISIS';
+      }
+    } catch (_) {}
+    // FATELANDS CONSPIRACY HOT OPENER (Roman v2 2026-07-23): if the selected regional
+    // conspiracy carries a hot hook, Scene 1 IS the worst day of the PC's life — and that day
+    // happens BECAUSE OF the conspiracy (e.g. the mind-controlled beloved lets the Keepers take
+    // the PC). Stash the hook so the Scene-1 pressure spine can render it as the crisis.
+    try {
+      var _cHook = (typeof _fatelandsSecretQuestHotHook === 'function') ? _fatelandsSecretQuestHotHook() : '';
+      if (_cHook) {
+        try { s._openingTemperature = 'HOT_CRISIS'; s._scene1ConspiracyCrisis = _cHook; } catch (_) {}
+        try { console.log('[OPENING:TEMP] selected=HOT_CRISIS · FATELANDS-CONSPIRACY (regional mystery drives the inciting catastrophe)'); } catch (_) {}
         return 'HOT_CRISIS';
       }
     } catch (_) {}
@@ -54822,6 +55942,16 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     // is governed by _ffWoundCanonSteer (canon-native threat) — suppress this generic category
     // directive entirely so STATUS_DESTRUCTION can't reshape a canon story into a boardroom firing.
     if (s.fateMode === 'famous_fate') return '';
+    // FATELANDS CONSPIRACY (Roman 2026-07-23, post-probe): the ROOT of the probe failure —
+    // the A-plot generator obeys pcBodyBible.current_crisis (Single Crisis Law), and that field
+    // was authored from a GENERIC taxonomy with no conspiracy awareness, so it became a competing
+    // premise the conspiracy lost to. When a regional conspiracy is the pre-set premise, its
+    // opening catastrophe IS current_crisis — override the generic category entirely (both HOT
+    // and COLD, hence before the temperature gate). Non-conspiracy/non-Fatelands unaffected.
+    var _consP = (typeof _fatelandsConspiracyPremise === 'function') ? _fatelandsConspiracyPremise() : null;
+    if (_consP && _consP.active) {
+      return '\nCURRENT CRISIS — SET BY THE WORLD-MYSTERY (HARD, Fatelands conspiracy; do NOT draw a generic crisis category): the protagonist\'s current_crisis IS the opening catastrophe of "' + _consP.title + '" — "' + _consP.openingCrisis + '" Author current_crisis as THIS, already in progress at Scene 1. The force behind it is ' + _consP.antagonistRole + '. Do NOT invent an unrelated firing / scandal / betrayal / vow-bond crisis — this premise is fixed.\n';
+    }
     if ((s._openingTemperature || '') !== 'HOT_CRISIS') return '';
     var cat = _pickCrisisCategory(s);
     // WORLD-LORE-AWARE subtypes (Roman 2026-06-05): resolve the per-world taxonomy so the
@@ -55006,8 +56136,8 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       + '• Every beat connects to the one before it by THEREFORE (a consequence — the prior beat + what she just did FORCED this) or BUT (a complication — a reversal / obstacle / cost the prior beat created). NEVER "and then": beats that could be reordered without breaking the logic are episodic and FAIL. Before writing each beat, be able to name in ONE clause what FORCES it to exist.\n'
       + '• SHAPE: the first external pressure is LIVE within the first 150–200 words (someone arrives / accuses / a deadline lands / a name drops / something goes public / a demand is made) → THEREFORE she must respond NOW → BUT a harder pressure lands → THEREFORE the cost rises → the scene ends on a CHANGE that FORCES her next choice. Do not close on a flat beat that leaves the next scene free to be anything; the closing fork must be SHORT, concrete, and forced by this chain (not an over-explained abstract question).\n'
       + '• SPEND LENGTH ON MOVEMENT, NOT EXPLANATION (HARD): every added sentence buys staged action, dialogue, an interruption, a visible consequence, her reaction, or his pressure — NEVER standing biography, aesthetic inventory, world lore, or abstract self-analysis. A longer opening is licensed ONLY if the extra words MOVE the crisis. If they explain, remember, or diagnose, CUT them — restraint is the craft.\n'
-      + '• DESCRIPTION IS DISTRIBUTED THROUGH ACTION (HARD — no body-bible dump): do NOT pause the crisis to inventory anyone\'s face / hair / eyes / build. Render people through what they DO, how they change the room, and what she notices about them under pressure — one telling detail in motion, never a standing portrait.\n'
-      + '• ONE HANDLE PER NAMED CHARACTER (HARD — Roman 2026-07-04): description is NOT banned — INVENTORY is. Every newly named non-LI character gets AT MOST ONE short crisis-relevant handle on first mention — a detail that reveals power / threat / class / relationship, or an action they are taking RIGHT NOW — and then they ACT. NO stacking hair + eyes + scar + clothes + body. ✗ "Theo had auburn waves, silver cufflinks, a scar near his mouth, and a beauty spot." ✓ "Theo\'s cufflinks flashed as he turned the letter toward the room." ✓ "Mrs. Harrington did not raise her voice; women with her kind of pearls rarely had to." ✓ "Iris wore her donor badge like armor." Same for the PROTAGONIST: ONE crisis-functional body beat (how the catastrophe moves through her), never a mirror-inventory of her own curves / dimple / loose hair.\n'
+      + '• DESCRIPTION IS DELIVERED IN MOTION, NOT PAUSED (HARD): do NOT stop the crisis for a static head-to-toe inventory or a mirror-portrait. But DO render each named character picturably — the reader must be able to SEE them; that is the PICTURABILITY floor above, and it is NOT optional here. Deliver it THROUGH what they DO, how they change the room, and what she notices under pressure: a gestalt impression plus a desire-coded, telling detail or two, woven into the action. The ban is on the SHAPE (a clinical parts-list, a paused portrait), NEVER on the amount — do not under-render to "avoid cataloging."\n'
+      + '• RENDER THROUGH ACTION, NEVER AS A PARTS-LIST (HARD — Roman 2026-07-04): description is REQUIRED (see the PICTURABILITY floor); the parts-LIST is what is banned. Each newly named character is rendered picturably AS THEY ACT — a gestalt read plus a defining detail or two that reveal power / threat / class / relationship — carried by what they are DOING right now, never a stacked clinical catalog bolted on before they move. ✗ "Theo had auburn waves, silver cufflinks, a scar near his mouth, and a beauty spot." (paused parts-list) ✓ "Theo\'s cufflinks flashed as he turned the letter toward the room, the old scar at his mouth tightening — a man used to being the one who held the paper." (picturable AND in motion). ✓ "Mrs. Harrington did not raise her voice; women with her kind of pearls rarely had to." Same for the PROTAGONIST: her look lands through how the catastrophe moves through her — one or two desire-coded beats in motion — not a paused mirror-inventory of her own curves / dimple / loose hair.\n'
       + '• THE LOVE INTEREST IS OFFSTAGE — REPUTATION, NOT FACE (HARD — Roman 2026-07-04): in Scene 1 he is not on the page, so do NOT describe his body / face / eyes / scar / hair / grey temples. He appears ONLY through his NAME, signature, company, reputation, the room\'s reaction to him, rumor, or ONE iconic power-trace — never a remembered-face inventory as his primary function. ✗ "I remembered his deep blue eyes, the scar at his mouth, the premature grey at his temples." ✓ "Roman\'s name did not need a face in that room — it made people lower their voices all by itself." Save his face / body / texture for the FIRST TRUE ENCOUNTER (Scene 2+).\n';
   }
   window._buildHotCrisisOpenerProseDirective = _buildHotCrisisOpenerProseDirective;
@@ -55062,6 +56192,100 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       witness: '“The wish is witnessed. The judgment is Fate’s.”' }
   };
   window._REGIONAL_WISH_FORMULAS = _REGIONAL_WISH_FORMULAS;
+
+  // ── FATELANDS WISH-PROVERBS + THE OPEN-OFFER TABOO (Roman 2026-07-22) ─────────────────────────
+  // Folklore that makes the world feel OLD in two ways: it changes how people BEHAVE (a taboo — "never say
+  // that") and how they TALK (proverbs outlive the reasons for them). The expressions are worn smooth: many
+  // speakers no longer consciously think of Fate when saying them — like "cross your fingers" or "break a leg".
+  // THREE registers: openOffer (the "take what you will" taboo = writing Fate a blank check), missing (a
+  // precious thing gone — maybe lost, maybe a price you didn't know you paid), postWish (near-automatic
+  // reactions after an impossible wish: go home, take stock, see what's gone). Per-culture voices + a universal
+  // fallback; scholars (Lytharyn) keep their own. Used as ROTATING flavor (vary; NEVER let one harden into a
+  // stated law; NEVER explain the proverb). Keyed on state.fantasyRegion.
+  var _FATELANDS_SAYINGS = {
+    // THE ONE EVERYONE KNOWS — worn shorthand for the whole truth (a wish always costs more than the wisher
+    // reckons). World-wide, spoken by children, sailors, judges, grandmothers. Recur just enough to be
+    // recognised, then land it RARELY — at the moment someone truly crosses a line.
+    _iconic: 'Fate takes more than you know.',
+    _universal: {
+      openOffer: ['Never sign Fate’s blank page.', 'Never hand Fate a blank page.', 'Only fools mark a blank pact.', 'Don’t open your palm to Fate.', 'Only fools leave the price blank.', 'An unnamed price is always the dearest.', 'Only the desperate tell Fate, “Choose.”', 'Don’t let Fate fill in the numbers.'],
+      missing:   ['Some things are misplaced. Others are paid.', 'Not every theft has hands.', 'Perhaps it was your price.', 'Maybe you paid without knowing.', 'Search the house first, then search your bargains.', 'Mind what goes missing.', 'Count what remains.'],
+      postWish:  ['Go home.', 'Go see what’s missing.', 'Take stock.', 'Go count your blessings.', 'See who still knows your name.'],
+      scholar:   ['The granted wish is the easy half.', 'The miracle ends quickly; the accounting does not.', 'Every clean success hides an unread footnote.'],
+      // ── WISH-ARCHAEOLOGY folk wisdom (Roman 2026-07-22): the common folk absorbed the "careless wishes don't
+      // last / hidden truths catch up" worldview WITHOUT the formal theory (they never say "Unraveling").
+      frailWish:      ['A bare wish comes undone in the first breeze.', 'Dress your wish well, or Fate will undress it for you.', 'A wish with no roots won’t survive the wind.', 'Thin wishes tear easily.', 'Even Fate forgets a careless wish.', 'A wish built on one word falls to another.', 'Loose wishes make loose worlds.', 'Leave a seam in your wish, and Fate will find it.'],
+      hiddenIntent:   ['Every wish has two faces — the one spoken and the one believed.', 'Fate listens to your heart before your tongue.', 'You cannot lie to a wish.', 'The tongue bargains. The soul signs.', 'A wish remembers why, long after people remember what.', 'The oldest wishes are the hardest to hear.'],
+      unraveling:     ['Every knot remembers the hand that tied it.', 'Find the first thread.', 'Pull the true thread, and the whole tapestry shifts.', 'No lock is older than its key.', 'Every curse still knows its maker.', 'The road back begins at the first step — and every wish has one.', 'To mend a wish, first learn who was broken.', 'Name the wound, and Fate may loosen the bandage.'],
+      falseCertainty: ['The obvious wish is rarely the true one.', 'When everyone knows the answer, ask a grandmother.', 'The first telling belongs to fear. The last belongs to truth.', 'If the wish were obvious, it would have died with its maker.'],
+      travelerLore:   ['Never guess a wish aloud. Fate might decide you’re right.', 'Don’t mock an old curse until you’ve heard its story.', 'Every ruin keeps two ghosts: the dead, and the wish.', 'Leave one candle burning for forgotten wishers.', 'Ask who wished before you ask who sinned.'],
+      // the worn-smoothest five (feel centuries old) — surface these most, the rest to vary
+      archWorn:       ['A bare wish comes undone in the first breeze.', 'Every knot remembers the hand that tied it.', 'The tongue bargains. The soul signs.', 'The obvious wish is rarely the true one.', 'Ask who wished before you ask who sinned.'],
+      // ── THE LAW OF THE FOLD (Roman 2026-07-23): the worn iconic proverb of Foldwalkers — captures the oath-pair,
+      // the collapse to ash / the Ashen Verge, the widening self. Surface ONLY in Fold/Foldwalker contexts; land rarely.
+      foldLaw:        ['Nothing enters the Fold unchanged. Nothing leaves it alone.', 'Two walk in; two must agree who walks out.', 'The Verge is grey with the selves we could not keep.', 'No one crosses the Fold and comes home only themselves.', 'Meet yourself often enough and you stop being only one.']
+    },
+    // ── the four Roman named ──
+    gloamwater_bay: {  // tidal Kwisheen — tide, salt, catch, shoreline, drowning
+      openOffer: ['Never tell the tide to take its own measure.', 'Only the drowning let the water choose.', 'An open hand fills with salt.'],
+      missing:   ['The sea keeps no receipts.', 'Ask the tide where it went.', 'Some things the ebb keeps.', 'Salt water forgets no debt.'],
+      postWish:  ['Go count your catch.', 'Walk your own shoreline.']
+    },
+    lytharyn: {  // scholars of precedent — ledger, record, survey, footnote, audit
+      openOffer: ['Never bargain with an empty ledger.', 'An unentered price is entered against you.', 'No survey records a blank offer that ended well.', 'Don’t let Fate fill in the numbers.'],
+      missing:   ['What is misplaced, look for; what is paid, record.', 'Before you cry theft, audit your bargains.', 'Some losses are filed under Fate.'],
+      postWish:  ['Take inventory.', 'Reconcile the account.', 'Read the footnote you signed.'],
+      scholar:   ['The granted wish is the easy half.', 'The miracle ends quickly; the accounting does not.', 'There are only three recorded clean successes of this class.', 'Every clean success hides an unread footnote.']
+    },
+    the_veilwood: {  // First Favored — direct, unveiled; leaving a price blank is cowardice, not caution
+      openOffer: ['Name your price, or Fate will name you.', 'Only a coward hands Fate a blank face.', 'An unnamed price is a lie you tell yourself.', 'Say what you will lose, or lose the saying of it.'],
+      missing:   ['What you will not name, Fate takes unnamed.', 'Look plainly first — then look at what you would not say.', 'The unspoken debt is the one that comes for you.'],
+      postWish:  ['Stand and count what still stands.', 'Face what’s gone.', 'Say aloud what you no longer have.']
+    },
+    the_thornwild: {  // cursed country — beast, hunger, thorn, scar, teeth; grim
+      openOffer: ['Feed the beast a blank plate and it eats your name.', 'Only the doomed let the hunger choose.', 'An open hand feeds the curse.', 'Leave the price to Fate and the thorns keep the change.'],
+      missing:   ['The curse keeps what you don’t count.', 'Maybe the thorns took it. Maybe you owed it.', 'Not every hunger leaves teeth-marks.', 'What the briar takes, it took for a reason.'],
+      postWish:  ['Go see what the hunger left.', 'Count your scars.', 'Check who still meets your eye.']
+    },
+    // ── lighter sets for the rest (each in its wish-voice) ──
+    vaelryn_reach:    { openOffer: ['Never wish in a borrowed name.', 'Leave the price blank and stand as no one.'], missing: ['See who still knows your name.', 'What’s gone unnamed was paid unnamed.'], postWish: ['See who still stands with you.', 'Name yourself and see who answers.'] },
+    the_ashen_verge:  { openOffer: ['Never let Fate choose which self returns.', 'A blank price un-anchors the self.'], missing: ['Ask the Fold before you ask the thief.', 'Some selves are misplaced. Others are paid.'], postWish: ['Find your anchor. Then find what’s gone.', 'Ask the one who holds your oath if you’re still you.'] },
+    pulse_point:      { openOffer: ['Never leave the ledger open to Fate.', 'Mark the price, or become it.'], missing: ['Before you log a theft, log your bargains.', 'An open account collects itself.'], postWish: ['Balance the books.', 'Muster the crew and count who answers.'] },
+    the_shackle_isles:{ openOffer: ['A blank price is a chain you forge yourself.', 'Never let Fate name your cost for you.'], missing: ['No chain took it — or did it?', 'What you didn’t name, you didn’t keep.'], postWish: ['Count what’s still your own.', 'See what still answers to you and no one else.'] },
+    unmoored_isles:   { openOffer: ['Name it, or the next shore keeps it.', 'A blank price drifts with the island.'], missing: ['Maybe it stayed on a shore that moved.', 'Some things the tide of places carries off.'], postWish: ['Take stock before the shore shifts.', 'Count what the island still remembers of you.'] }
+  };
+  window._FATELANDS_SAYINGS = _FATELANDS_SAYINGS;
+  function _fatelandsRegionKey(regionKey) {
+    var n = String(regionKey || (window.state && window.state.fantasyRegion) || '').toLowerCase().replace(/[\s-]+/g, '_').replace(/^the_the_/, 'the_');
+    if (_FATELANDS_SAYINGS[n]) return n;
+    if (_FATELANDS_SAYINGS['the_' + n]) return 'the_' + n;
+    return null;
+  }
+  window._fatelandsRegionKey = _fatelandsRegionKey;
+  // Build the folk-speech directive: the open-offer TABOO (behavioral) + a handful of ROTATING region proverbs
+  // across the three registers. Compact by design; the author varies and MAY generate more in the same voice.
+  function _buildFatelandsSayingsDirective(regionKey) {
+    try {
+      var k = _fatelandsRegionKey(regionKey);
+      var U = _FATELANDS_SAYINGS._universal;
+      var R = (k && _FATELANDS_SAYINGS[k]) || {};
+      var pick = function (arr, uarr) { var a = (arr && arr.length ? arr : uarr) || []; return a.slice(); };
+      var open = pick(R.openOffer, U.openOffer);
+      var miss = pick(R.missing, U.missing);
+      var post = pick(R.postWish, U.postWish);
+      var scholar = pick(R.scholar, U.scholar);
+      var q = function (arr) { return arr.map(function (x) { return '“' + x + '”'; }).join(' · '); };
+      var d = '\nFATELANDS FOLK SPEECH — WISH-PROVERBS & THE OPEN-OFFER TABOO (ROTATING flavor; these are ANCIENT and worn smooth — many speakers no longer consciously think of Fate when saying them, like “cross your fingers” or “break a leg”. NEVER explain a proverb, NEVER let one harden into a stated law, and use them SPARINGLY — a proverb lands hardest when it is RARE, at the moment someone has truly crossed a line, not sprinkled through every scene):\n';
+      d += '• THE ONE EVERYONE KNOWS (the worn, world-wide shorthand — children, sailors, judges, and grandmothers all say it; it means a wish always costs more than the wisher reckons): “' + (_FATELANDS_SAYINGS._iconic) + '” Let it recur JUST enough to be recognised, then deploy it rarely, when the cost has truly landed.\n';
+      d += '• THE OPEN-OFFER TABOO (this changes BEHAVIOUR): telling Fate “take what you will” / leaving the price BLANK is a desperate, dangerous act — spoken of almost like inviting a demon into the house. Fate is MORE likely to grant it, but the UNNAMED price is the dearest (→ full delayed reveal). Render the room’s reaction ALMOST PHYSICALLY, never as a lecture: a sudden SILENCE, a whispered “…don’t,” an elder closing her eyes, a warding gesture, someone stepping back — and NO ONE congratulates the miracle; they WAIT. Sayings' + (k ? ' (this region)' : '') + ': ' + q(open) + '\n';
+      d += '• WHEN SOMETHING PRECIOUS GOES MISSING (ambiguous by design — maybe lost, maybe a price you didn’t know you paid; NEVER state Fate definitely took it): ' + q(miss) + '\n';
+      d += '• AFTER AN IMPOSSIBLE WISH people do NOT ask WHETHER Fate took something — they ASSUME it did. The near-automatic response is to go take stock, like checking for wounds after a battle: “Go home.” → “Go see what’s missing.” Others' + (k ? ' here' : '') + ': ' + q(post) + '\n';
+      if (k === 'lytharyn' || (R.scholar && R.scholar.length)) d += '• SCHOLARS (of wish-precedent — Lytharyn foremost) summarise it drily: ' + q(scholar) + '\n';
+      return d;
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsSayingsDirective = _buildFatelandsSayingsDirective;
+
   // Build the formal-public-wish directive for a given region. Used to make a PUBLIC wish
   // (before witnesses) land as a weighty, structured declaration — especially the FIRST wish
   // in a user's first Fatelands story, so a new reader senses at once it is not a throwaway musing.
@@ -55103,21 +56327,39 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
 
       var d = '\n═══ FATELANDS FIRST-STORY WISH DEMONSTRATION (HARD — this Scene-1 TEACHES the whole system through drama) ═══\n';
       d += 'This is the reader’s FIRST encounter with how Fate works in the Fatelands. Scene 1 must contain ONE COMPLETE, LEGIBLE NPC-invoked wish cycle, dramatized — not explained. The reader learns the law by WATCHING it happen with real stakes. This is a HOT crisis, not a tutorial: it must do real story work (reveal who these people are, what they value and will lose, their bond, the region’s beliefs about Fate, and the story’s central emotional pressure). Follow this BEAT ORDER exactly:\n';
-      d += '① HOT CRISIS FIRST (~50–150 words, BEFORE any bargain). Open INSIDE a live, physical danger already detonating — someone is bleeding out / the ice is cracking / the fire is closing / the guards are at the door. Establish the stakes and the danger through action, in motion. Ordinary escape or solution is visibly FAILING — mundane means are not enough, which is WHY a bargain becomes thinkable. Do NOT make the wish the first line; the crisis earns it.\n';
-      d += '② AN NPC (NOT the PC) STATES A WISH ALOUD, IN THE FORMAL PUBLIC-WISH FORM. A character who is NOT the protagonist — the PC witnesses it or is directly its object — voices the wish out loud. Because this is the reader\'s FIRST wish in the Fatelands, it is spoken in the WEIGHTY, ceremonial regional form below (invocation → standing → petition → offering → submission), NOT a throwaway "I wish …" musing — the reader must sense at once that wishing here is a lawful, costly act. It MUST be EXPRESSED as audible speech (Fate does not read the mind — the externalization law), and it names an OFFERING or an open price ("Take what it costs"). Let the wish REVEAL them — what they will trade shows who they are.\n';
-      // FIRST wish → spoken in the full regional formal form (weighty, not a musing).
-      try { d += (typeof _buildFormalPublicWishDirective === 'function' ? _buildFormalPublicWishDirective((window.state && window.state.fantasyRegion) || '') : ''); } catch (_) {}
+      d += 'LEGIBILITY FIRST (HARD — the reader has NEVER been to the Fatelands): before any wish or lore lands, establish ONE clear, comprehensible crisis in plain terms — WHAT is happening, WHERE, and WHO these people are — so a first-time reader can say in a single sentence what the danger is and to whom. Do NOT stack unexplained peoples, mechanics, and place-names on top of each other (that is exactly how the scene becomes an unreadable blur). Introduce ONE crisis; let the world’s texture ride ON it, never in place of it.\n';
+      d += 'IF FIRST FAVORED — OR ANY INHUMAN BEING (Kwisheen, etc.) — APPEAR, RENDER THEIR STRANGENESS, DO NOT JUST NAME THEM (canon): the FIRST time they appear, land at least ONE striking, SPECIFIC strangeness WOVEN INTO the crisis and doing real work — it need NOT be swiftness. Pick what the moment wants: a Favored SENSE the scene turns on (feeling the whole crowd lean toward flight — and the one soul who does not); the unnatural speed/strength that reaches someone no human could; the uncanny beauty; luminous skin and diamond pupils; living Weave-Script moving on the skin; the distractingly see-through gossamer tunic and the breathtaking body beneath; a Kwisheen’s tentacle lower-body or living coral-dreadlock hair. If First Favored are among the endangered or the rescuers, the strongest scene-specific note is their TRAGIC LOYALTY: swift and hard to kill, they could escape this danger EASILY — but they will NOT abandon the slow (their human wards, their children), so the swift choose to STAY and burn / drown / fall with the slow. Grace that could flee and doesn’t. "Weave-Script on the skin" as a bare label is NOT enough. (And keep re-grounding their strangeness as the scene goes — never describe them once and let them read as human after.)\n';
+      d += 'TEACH EXACTLY ONE LAW, IMPOSSIBLE TO MISUNDERSTAND — this clean causal chain: HOPELESS SITUATION (ordinary means fail) → VISIBLE INVOCATION (a body reaching for Fate) → A DESPERATE OPEN-ENDED OFFER (out of options, the wisher leaves the price BLANK: "take whatever it costs" / "take what you will") → THE ROOM’S INSTANT HORROR AT THE BLANK CHECK, and a folk proverb spoken → AN OMEN → THE WISH GRANTED → FATE CHOOSES THE PRICE, taking something the wisher would never have offered → THE ROOM VINDICATED. THE ONE LESSON THE READER CARRIES: you may ask Fate for anything, but if you let Fate NAME THE PRICE, Fate takes more than you would ever have given. Keep it a SINGLE glance-legible cycle — NO ornate regional liturgy, NO talk of Orders, NO ceremonial multi-part form; just a desperate person handing Fate a blank page, and a room that recoils because it knows what that means. If a reader could misread what just happened, it is too complex.\n';
+      var _FATELANDS_CRISIS_ARCHETYPES = ['PURSUIT (something is hunting or closing on them — flee or be taken)', 'ENTRAPMENT (they are being held / bound / dragged / sealed in and must break free)', 'ACCUSATION (a crowd or authority is turning ON the protagonist — blame is landing, fast)', 'COUNTDOWN (a fixed deadline — a turning tide, a rising rite, a burning fuse — will complete and doom someone)', 'RESCUE (someone helpless is seconds from being lost; only reaching them in time saves them)', 'ESCAPE (the place itself is failing — collapsing / burning / flooding / coming apart — and they must get out)', 'SOCIAL COLLAPSE (a gathering breaks into panic or violence around them)', 'CORRUPTION (something or someone is being turned or spoiled on the spot, and it is spreading)', 'IMPOSSIBLE CHOICE (two people or two things cannot both be saved)'];
+      var _crisisArch = (typeof window._rotatingExemplars === 'function') ? (window._rotatingExemplars('fatelands_crisis_archetype', _FATELANDS_CRISIS_ARCHETYPES, 1)[0] || _FATELANDS_CRISIS_ARCHETYPES[0]) : _FATELANDS_CRISIS_ARCHETYPES[0];
+      d += 'CRISIS ARCHETYPE (THIS STORY — rotate the KIND of danger story to story; do NOT default to ENTRAPMENT/binding/chains/dragging, which has calcified across recent stories): build the opening catastrophe as ' + _crisisArch + '. Vary the ARCHETYPE, not just the surface object — a different rope / vine / chain is the SAME story; a pursuit or an accusation or a countdown is a genuinely DIFFERENT one. Whatever the archetype, it must still be a LIVE, physical catastrophe that ordinary means fail against and that the wish then answers.\n';
+      d += '① SOMETHING IRREVERSIBLE IS HAPPENING RIGHT NOW (~50–150 words, BEFORE any bargain) — AND IT MUST BE WITNESSED BY A CROWD. The dramatic unit is NOT "something important has happened" — it is a catastrophe DETONATING in real time, seconds from a loss that cannot be undone (someone is drowning / bleeding out / the ground is going / the fire has the only door). Open INSIDE it, in a place where OTHER PEOPLE are present: a small crowd caught in the SAME crisis (refugees sheltering, a caravan, a ship’s company, townsfolk trapped, pilgrims, a market crowd) — NEVER the PC and the wisher ALONE. Those witnesses are not set-dressing: they are who TEACHES the reader the stakes the instant the wish is spoken, so establish them here (their fear, their number, a face or two). THEN — and this is the beat that EARNS the wish — ORDINARY MEANS ARE TRIED AND VISIBLY FAIL FIRST: people pull, shout, brace, reach, do the human thing — and it is NOT enough; the loss keeps coming. Only when every ordinary hope has failed does a hush fall — a held, hopeless silence — and it is INTO that silence that the wish comes. Do NOT make the wish the first line; the failing crisis and the failure of ordinary means earn it.\n';
+      d += '② AN NPC (NOT the PC) MAKES A WISH — FIRST WITH THE BODY, THEN THE WORDS. Before a single word, SHOW the invocation as a physical, sacred act, so the first-time reader KNOWS a wish is being made and it does not read as ordinary talk: the wisher STOPS, closes their eyes, turns their face toward the tide / the sky / the failing thing / the one they would save, goes still, and lifts or presses their hands together as if in prayer — a held breath, a reaching. The reader must SEE a person reach for Fate before they hear one word. ONLY THEN do they SPEAK THE WISH ALOUD — and because they are OUT OF OPTIONS, they make the RECKLESS ask: an OPEN-ENDED offer, spoken AT Fate as audible speech (Fate does not read the mind — the externalization law), that names the ONE thing wanted but leaves the PRICE BLANK. This blank check is the DANGEROUS ACT this whole scene is built to teach: "Save them — take whatever it costs." / "Take what you will, only let her breathe." / "Whatever the price, I’ll pay it — just hold the fire back." A character who is NOT the protagonist voices it; the PC witnesses it or is directly its object. Keep it a SINGLE plain line — NO ornate liturgy, NO Orders, NO ceremonial multi-part form — BUT the price MUST be left OPEN, never a specific named cost, because the open price IS the lesson: the wisher does not say what they will pay, so FATE will choose. Legible at a single glance: a desperate person hands Fate a blank page.\n';
+      var _ooProv = (typeof window._rotatingExemplars === 'function' && _FATELANDS_SAYINGS && _FATELANDS_SAYINGS._universal && Array.isArray(_FATELANDS_SAYINGS._universal.openOffer))
+        ? window._rotatingExemplars('fatelands_openoffer_proverb', _FATELANDS_SAYINGS._universal.openOffer.concat([_FATELANDS_SAYINGS._iconic]), 2)
+        : ['Never sign Fate’s blank page.', 'An unnamed price is always the dearest.'];
+      d += '②b THE ROOM RECOILS AT THE BLANK CHECK — INSTANTLY, AND CLEARLY BECAUSE THE PRICE WAS LEFT OPEN (the reader’s first lesson, taught by the crowd). The horror lands in the SAME BREATH as the open offer — the instant "take what you will" leaves the wisher’s mouth, NOT a sentence or three later. The crowd’s murmurs CUT OFF into shocked silence, and their dread is unmistakably a reaction to the OPEN-ENDEDNESS: they understand the wisher just handed Fate a blank page, and that Fate will fill in a price crueler than any they would have dared name. INDIVIDUATE 2–3 witnesses reacting to THAT specifically — an elder’s hands flying up to ward it off, someone hissing the wisher’s name in warning, a mother turning her child’s face away. AND ONE WITNESS SPEAKS A PROVERB — the worn folk shorthand for exactly this danger, said low and reflexive, NEVER explained. THIS STORY use "' + _ooProv[0] + '" (or "' + _ooProv[1] + '") — or another of the world’s blank-page sayings, but do NOT default to the same proverb every story. The proverb is HOW the reader learns the rule without a lecture — one line, spoken by a person, not narrated. HOLD here; do not rush to Fate’s answer — let the blank check hang in the silence. MODEL THE SHAPE (invent your own): "The murmurs cut off the instant the words left her — take what you will. An elder’s hands flew up to ward it. ‘' + _ooProv[0] + '’ someone breathed, and no one would look at her."\n';
+      d += 'STAGING (prose AND comic panel) — the wisher and the PC are ALLIES facing the SAME danger TOGETHER; they are NOT adversaries and this is NOT a fight. NEVER stage them squared off, weapon-to-weapon, or in a combat two-shot — no weapons are drawn, there is no standoff. The posture is desperation, reaching, bracing against the crisis, TURNING TO Fate; the crisis itself (the rising water / the fire / the failing ground) is the visible threat, not each other. FACES CARRY REAL EMOTION (fear, desperation, awe, grief) — never blank or neutral. The WITNESSING CROWD is VISIBLE in the frame — background figures recoiling, warding, faces turned away — so the social weight reads in the picture, not only the prose. (Kwisheen wisher: the tentacles are the LEGS / lower body; any cloak, cape, or garment is CLOTH — render it as fabric, NEVER as extra tentacles.)\n';
       d += '③ THE OMEN — a recognizable diegetic foreshadow, BEFORE Fate answers (disposition-keyed; a HINT, not a traffic light). Because this is the reader’s FIRST omen, make it clearly READABLE AS AN OMEN — a sign anyone in this world would notice and read (not obscure symbolism, not a status label). Draw from the ACQUIESCENCE family — CONVERGENCE / OPENING / WARMTH / RHYTHM / RELEASE (a flame bending toward the wisher, birds falling silent then resuming as one, a door easing open, the air warming, a knot loosening). Since the price will be heavy, THREAD a bodily premonition into the sign (a remembered sensation already going quiet, warmth leaving the hands) so the reader feels the cost coming.\n';
       d += '④ FATE ANSWERS — concrete and prompt. Show what Fate actually does: the wished-for effect arrives (the wound closes, the door opens, the fire gutters). Do not stall; let the answer LAND so the relief is real before the cost is understood.\n';
-      d += '⑤ THE ACTUAL SACRIFICE — ADJACENT, NOT THE LITERAL OFFER (the teaching moment; the WARP/adjacency law). Fate takes something ADJACENT to — not necessarily — the thing offered. AN OFFER IS NOT THE PAYMENT: the wisher only offers; FATE chooses what it claims, within the same band. Make the taken price land as a discovery, and make it hurt in a way the offer did not. (Convey the SHAPE, do not copy it: a character offers their left hand to open a door, and Fate instead makes them unable to remember the PC’s name. Invent your own adjacent price fitting THIS wish.)\n';
+      var _priceShapes = (typeof window._rotatingExemplars === 'function')
+        ? window._rotatingExemplars('fatelands_wish_price', ['a COLOUR from their eyes — the hue drains out as you watch, leaving them pale and strange', 'the WARMTH from their hands — the fingers go cold and never warm again', 'a FACE from their memory — they turn to someone they love and no longer know them', 'their own NAME — they reach for it and find a blank where it used to be', 'YEARS off their life — they grey and hollow a decade between one breath and the next', 'their REFLECTION — water and glass simply stop showing them back', 'the ability to WEEP — they will need to, after this, and find they no longer can', 'one whole SENSE — the sea’s scent, or music, or the warmth of the sun goes silent for them forever', 'a MEMORY they cannot spare — a face, a place, a whole year lifted clean out of them', 'their VOICE — they open their mouth to say a name and nothing comes'], 3)
+        : ['their VOICE — nothing comes when they try to speak', 'a COLOUR from their eyes', 'the WARMTH from their hands'];
+      d += '⑤ THE PRICE — TAKEN IN THE SAME BREATH (the teaching moment). The instant the wish is granted, Fate collects: clear cause and effect the reader can trace — they asked, they were answered, and THIS is what it cost. BECAUSE THE OFFER WAS OPEN, FATE CHOOSES what to take — and takes something the wisher would NEVER have named, crueler and more personal than any price they’d have chosen (that is the whole point of the blank check: you do not pick when you let Fate pick — so the thing taken should feel like Fate reaching past what was offered into what was loved). The price falls on the WISHER (they made the ask; they pay). Keep it SPECIFIC and physical, not cosmic bookkeeping. WHAT FATE TAKES — ASSIGNED THIS STORY (HARD): voice-loss has CALCIFIED across stories — do NOT reach for it unless it is unmistakably the single cruelest fit for THIS wisher. Fate takes the FIRST of these that suits the wisher (then the next if it genuinely does not) — build your OWN words, do not copy the phrasing: ' + _priceShapes.map(function (p) { return '“' + p + '”'; }).join('; ') + '. THE PRICE MUST LAND IN THIS SCENE, ON THE PAGE — CONCRETE, NAMED, and SHOWN being taken FROM THE WISHER HERE. This is an onboarding demonstration: the sacrifice can NEVER be deferred to "later" or left abstract — "something essential had already begun to drift" / "the air felt thinner" is a FAILURE, not a payment. The reader must be able to POINT at the exact thing that left as it leaves. And SHOW the wisher’s BODY register the loss in the same breath — a hand flying to the throat, a stumble, a silence where a word should be — so the cost is FELT on the page, not reported afterward. The room’s earlier dread is now vindicated.\n';
       d += '⑥ THE CRISIS CHANGES, IT DOES NOT CLEAN-ERASE. The wish RESHAPES the situation rather than tidily deleting it — the danger transforms, a new pressure is born from the answer, the ground the characters stand on is different now. Do not resolve the scene to safety.\n';
       d += '⑦ WITNESSES REACT — TEACH THE SOCIAL MEANING. Everyone present understands a dangerous bargain just occurred. Show it: horror, recognition of the omen, a stranger flinching from the wish-word, fear of the debt now owed, someone who will not meet the wisher’s eyes. The reader must infer, from the room, that this world KNOWS what Fate is and fears its price. The wish alters the SOCIAL scene, not just one body.\n';
-      d += '\nLEGIBLE ORDER ONLY (HARD). For this FIRST demonstration, the wish MUST be of a legible, inferable Order — RESTORATION (undo a hurt / heal / mend / return to whole), TEMPORARY_AID (a power or reprieve for the moment’s need), or TRANSFORMATION (change a thing or person). NEVER a History / Identity / Agency compound and never a tangled multi-Order ask. The reader, watching once, must be able to reconstruct the rule: spoken wish → offered price → omen → effect → the ACTUAL (adjacent) price → the room’s reaction. Keep the cycle clean enough to reverse-engineer.\n';
+      d += '\nLEGIBLE ORDER ONLY (HARD). For this FIRST demonstration, the wish MUST be of a legible, inferable Order — RESTORATION (undo a hurt / heal / mend / return to whole), TEMPORARY_AID (a power or reprieve for the moment’s need), or TRANSFORMATION (change a thing or person). NEVER a History / Identity / Agency compound and never a tangled multi-Order ask. The reader, watching once, must be able to reconstruct the rule: hopeless situation (ordinary means fail) → visible invocation → spoken wish → the room’s dread → omen → effect → the price taken in the same breath → the room’s horror. Keep the cycle clean enough to reverse-engineer.\n';
       if (_liPresent) {
-        d += '\nROMANCE-LED (an LI is present) — STRONGLY PREFER: let the LOVE INTEREST be the one who makes the wish, to SAVE the PC. What the LI offers should reveal an ATTACHMENT to the PC they have not admitted (and would not say plainly). Fate takes something ADJACENT but MORE PAINFUL than the offer — so this tutorial is ALSO the romantic inciting wound: the PC now carries what the LI’s love cost, and the LI carries a loss that reshapes how they can be near the PC. The lesson and the love-wound are the same beat.\n';
+        d += '\nROMANCE-LED (an LI is present) — STRONGLY PREFER: let the LOVE INTEREST be the one who makes the wish, to SAVE the PC — asking Fate out loud to spend the LI’s own cost for the PC is itself the confession of an ATTACHMENT they have not admitted and would not say plainly (only for the PC would they pay this). Fate then takes something painful and specific from the LI — so this tutorial is ALSO the romantic inciting wound: the PC now carries what the LI’s love cost, and the LI carries a loss that reshapes how they can be near the PC. The lesson and the love-wound are the same beat.\n';
       }
-      d += '\nEND POISED ON A GENUINE CHOICE — but do NOT resolve it here. Close the scene on the PC standing at the threshold of the bargain economy: they have just SEEN what wishing to Fate costs, and the changed crisis now presses a decision on them about whether they, too, step into that economy. Set up that fork; do NOT state or list the options (the choice is authored separately). End on the pressure, not the menu.\n';
+      d += '\nPOV — ONE CONSISTENT VOICE (HARD): write the ENTIRE scene, INCLUDING its closing beat and anything appended to it, in the story’s established narrative person and POV (this story: FIRST PERSON — "I", the PC). Do NOT drift into third person ("Mira did…"); the scene and its close must read as one voice, or the closing beat will clash with what follows.\n';
+      d += '\nEND ON A GENUINE DECISION — CRYSTALLIZE A SPECIFIC FORK (HARD; the literary path keeps ending on ambient pressure instead — "the crowd surged forward" is NOT a decision). The scene’s FINAL beat must name — through the situation, in the PC’s own head — a SPECIFIC EITHER/OR with two nameable horns that the PC now faces: e.g. "do I reach for Fate myself, or trust the passage the elder bought?" / "do I go back for the ones still trapped, or get out while the way holds?" / "do I tell them what I saw, or keep it?" The reader must feel TWO concrete options in tension, with the PC poised between them — so the tarot-deck beat that follows has an ACTUAL decision to hover over ("letting the cards decide" is meaningless if no choice was framed). Do NOT resolve it, and do NOT list the options as a menu — end mid-fork, on the PC at the fulcrum with the two horns clear.\n';
       d += 'Make every beat feel LAWFUL, not arbitrary — an ancient, consistent rule the whole world already knows, never a magic vending machine. Dramatize; do not lecture.\n';
+      d += '\nPROGRESSION — THEREFORE / BUT (HARD): the numbered beats above are NOT a checklist to tick off "and then." Each must be FORCED by the one before it — THEREFORE (a consequence) or BUT (a complication): ordinary means fail THEREFORE the wisher reaches for Fate; the offer is left OPEN, BUT the room recoils and speaks the proverb; Fate answers THEREFORE the price is taken; the price lands THEREFORE the situation is changed and the PC’s choice is forced. Before writing each beat, be able to name in one clause what FORCES it to exist.\n';
+      d += '\nLENGTH (HARD): this Scene 1 carries the ENTIRE wish demonstration ON TOP OF the opening’s normal payload, so it needs ROOM to explain and breathe — write a FULL scene of at least 600 words (aim 600–850). The extra length buys the prose time to establish the crisis legibly, characterize the people (see the First Favored rule), stage the wish cycle in motion, and let the price land — it is NEVER padding, lore-dump, or repetition. Under 600 words means you compressed the demonstration into a sketch, and a first-time reader will be lost.\n';
+      // OPEN-OFFER + ONE PROVERB — now TAUGHT here (Roman 2026-07-24, direction B): the demo teaches the blank-check
+      // danger (open-ended offer → Fate chooses the price) and injects ONE folk proverb at the moment of the offer.
+      // Formal regional liturgy, the Orders, and multi-proverb folk speech remain DEFERRED to later stories.
       // STEP 4a (Roman 2026-07-16): per-story flag — THIS story's Scene 1 is getting the demo opener.
       // Decoupled from the localStorage milestone (which finalize sets at the SAME turnCount 0, so the
       // deck can't rely on it). Only set on the NON-EMPTY return path (never when inactive → '').
@@ -55954,6 +57196,8 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
     // Cross-story anti-procedural cooldown: breaks an institutional-A-plot RUN.
     let _apDomainCooldown = '';
     try { if (typeof _buildAPlotDomainCooldown === 'function') _apDomainCooldown = _buildAPlotDomainCooldown(window.state) || ''; } catch (_adcErr) { /* non-fatal */ }
+    let _apProteanSteer = '';
+    try { if (typeof _buildProteanAPlotSteerDirective === 'function') _apProteanSteer = _buildProteanAPlotSteerDirective(window.state) || ''; } catch (_apsErr) { /* non-fatal */ }
 
     const continuationContext = priorAPlot ? `
 PATTERN A CONTINUATION CONTEXT:
@@ -56102,9 +57346,13 @@ Prior A-plot snapshot:
     // GOAL / woundSurfacingMechanism / interlocutor design. Empty for non-twist/non-FF → no-op.
     try { if (typeof _ffBuildRevealWithholdDirective === 'function') { var _ffRwAp = _ffBuildRevealWithholdDirective(window.state); if (_ffRwAp) _ffApBlock += '\n' + _ffRwAp; } } catch (_ffRwErr) {}
 
+    // Fatelands conspiracy skeleton (Roman v3) — mirrors _ffApBlock: the regional conspiracy
+    // supplies the A-plot's dramatic grammar; the generator fills it with romance craft.
+    var _conspiracyApBlock = (typeof _buildConspiracyApBlock === 'function') ? _buildConspiracyApBlock() : '';
+
     const system = `You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine.
 
-Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, providing scene-generating fuel and natural pressure that compounds with the romance.${_noRomanceBlock}${_ffApBlock}${_storyShapeBlock}
+Your job: generate a SPECIFIC, COHERENT non-romance plot that runs alongside the romance arc, providing scene-generating fuel and natural pressure that compounds with the romance.${_noRomanceBlock}${_ffApBlock}${_conspiracyApBlock}${_storyShapeBlock}
 
 ═══════════════════════════════════════════════════════════════════
 GOAL ↔ RELATIONSHIP CORE PRINCIPLE (HARD — architectural, frames everything below):
@@ -56260,7 +57508,7 @@ SPECIFICITY REQUIREMENT:
   • namedClock: an in-world named clock ("the Council quarantine vote", "the Equinox transit") — not "soon"
   • milestones: each must be a reportable on-page event ("delegation arrives one transit early") — not a vibe state ("things get tense")
   • stakesIfFail / stakesIfWin: each a specific changed-world condition
-${_apCrisisSteer}${_apDomainCooldown}
+${_apCrisisSteer}${_apDomainCooldown}${_apProteanSteer}
 
 ══ LOVE INTEREST IS NOT THE OPERATOR (HARD — rejection-grade — Roman 2026-06-06) ══
 The single most common failure of this generator: the goal casts the LOVE INTEREST as the person RUNNING the plot — "[the LI] must steer the settlement / negotiate the terms / manage the fallout / broker the deal / contain the scandal / handle the audit." The instant the goal makes him the operator, he is a FUNCTION (fixer / lawyer / strategist), the prose faithfully writes him as a man pulling strings, and the reader never WANTS him — they only watch him handle the problem.
@@ -56963,6 +58211,17 @@ These are not banned because they are bad — they are banned because they have 
       ['broken_vow_bond', 'wrong_wish', 'syzygy', 'fold'].forEach(function (lh) {
         if (scores[lh] > maxScore) { maxScore = scores[lh]; winner = lh; }
       });
+      // FOLD IS ASHEN-ONLY (Roman 2026-07-24): the Fold (a self seen as several true versions at once) is a
+      // phenomenon of the ASHEN VERGE alone. If 'fold' wins outside Ashen, re-route to the best NON-fold
+      // lighthouse so neither the A-plot exemplar nor the coupled opener can surface the Fold elsewhere.
+      var _lhRegion = String((s.fantasyRegion || '')).toLowerCase();
+      if (winner === 'fold' && _lhRegion.indexOf('ashen') === -1) {
+        var _alt = 'broken_vow_bond', _altMax = -Infinity;
+        ['broken_vow_bond', 'wrong_wish', 'syzygy'].forEach(function (lh) {
+          if (scores[lh] > _altMax) { _altMax = scores[lh]; _alt = lh; }
+        });
+        winner = _alt; maxScore = _altMax;
+      }
       var why = [];
       if (matched[winner].length) why.push('locks=[' + matched[winner].join(', ') + '] (+' + (matched[winner].length * 2) + ')');
       if (axisHint === winner) why.push('axis=' + axis + ' (+1)');
@@ -57096,6 +58355,19 @@ Rotate which Fold-structure (grove / shrine / mirror-tower / fate-mountain), wha
     };
 
     const _lhResult = _fatelandsFlavor ? _resolveFatelandsLighthouse(window.state || {}) : null;
+    // Cache the resolved lighthouse on state (Roman 2026-07-23) so the Scene-1 opening-pattern picker
+    // (_pickScene1OpeningPattern, ~54232) returns the MATCHING lighthouse opener — the Scene-1 opening
+    // prose then tells the SAME story as this A-plot spine, not an independent, contradicting draw.
+    // The A-plot resolves before Scene 1, so the cache is populated by picker-time.
+    // Also cache STRENGTH: the opening-pattern picker couples to this lighthouse ONLY when it resolved on a
+    // REAL psychological signal (a lock/axis match), not the neutral default — otherwise the picker prefers a
+    // REGION-PARTICULAR opener. `reason` reads "default (no strong signals)" exactly when nothing matched.
+    try {
+      if (window.state && _lhResult && _lhResult.lighthouse) {
+        window.state._fatelandsLighthouse = _lhResult.lighthouse;
+        window.state._fatelandsLighthouseStrong = !!(_lhResult.reason && _lhResult.reason.indexOf('default') === -1);
+      }
+    } catch (_) {}
     const _lhExemplar = (_lhResult && _FATELANDS_LIGHTHOUSE_EXEMPLARS[_lhResult.lighthouse]) || '';
 
     // Wound harmonization — render the existing Bible wound THROUGH the
@@ -57245,7 +58517,17 @@ POSTER TEST: if the Scene 1 poster reads "Woman holding magical paperwork," you 
 
 ` : '';
 
-    const _fatelandsBlock = _fatelandsFlavor ? (_fatelandsCore + _lhExemplar + _woundHarmonization) : '';
+    // CONSPIRACY DEFERRAL (Roman 2026-07-23, post-probe): when a regional conspiracy is the
+    // pre-set premise, the PRESSURE-SOURCE MENU ("pick ONE category as goal/conflict spine") and
+    // the LIGHTHOUSE exemplar ("THE STORY SHAPE: …") are the two loudest premise-INVENTORS that
+    // out-shouted the conspiracy in the probe. Do NOT delete them (non-conspiracy Fatelands still
+    // needs them) — prepend a HARD override so, when a conspiracy is active, they become EXPRESSION
+    // register for the already-set premise instead of authoring a competing one.
+    var _consPre = (typeof _fatelandsConspiracyPremise === 'function') ? _fatelandsConspiracyPremise() : null;
+    var _consOverride = (_consPre && _consPre.active)
+      ? ('\n\n▲ SPINE ALREADY SET BY THE WORLD-MYSTERY (HARD — this OVERRIDES the pressure menu and any lighthouse premise below): the goal/conflict spine is FIXED by the conspiracy premise given above ("' + _consPre.title + '": ' + _consPre.drive + '; antagonist = ' + _consPre.antagonistRole + '). Do NOT pick a different pressure category as the spine, and do NOT author a different "STORY SHAPE" opening. Use the pressure hierarchy and lighthouse ONLY to EXPRESS this pre-set premise in the Fatelands register (which category it reads as, how the crisis is voiced) — never to replace it.\n')
+      : '';
+    const _fatelandsBlock = _fatelandsFlavor ? (_consOverride + _fatelandsCore + _lhExemplar + _woundHarmonization) : '';
     if (_fatelandsFlavor && _lhResult) {
       try {
         console.log('[A-PLOT:FATELANDS-LIGHTHOUSE] ──────────────────────────────────────');
@@ -57927,6 +59209,28 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
   async function initAPlot(opts) {
     opts = opts || {};
     if (!window.state) return null;
+    // LI-NAME ROTATION (Roman 2026-07-25). Pick the LI name ONCE, here, BEFORE A-plot
+    // generation (which otherwise installs the "Roman Tusk" billionaire default). Fires ONLY
+    // when the user did NOT choose a name AND this is a NEW story (turnCount 0) — a continuation
+    // already carries its persisted name and must never be rerolled. Same lifecycle as the PC
+    // name: identity, not generation state. See _LI_NAME_POOL_M/F.
+    try {
+      var _st = window.state;
+      var _userChoseLI = !!(_st.loveInterestName && String(_st.loveInterestName).trim());
+      var _isNewStory = !_st.turnCount && !_st._isContinuation;
+      if (!_userChoseLI && _isNewStory && typeof window._rotatingExemplars === 'function') {
+        var _lg = String(_st.liGender || _st.loveInterest || (_st.picks && _st.picks.loveInterest) || 'Male').toLowerCase();
+        var _isF = _lg.charAt(0) === 'f' || _lg.indexOf('woman') >= 0 || _lg.indexOf('female') >= 0;
+        var _liPool = _isF ? window._LI_NAME_POOL_F : window._LI_NAME_POOL_M;
+        if (Array.isArray(_liPool) && _liPool.length) {
+          var _pickedLI = window._rotatingExemplars('li_name', _liPool, 1)[0];
+          if (_pickedLI) {
+            _st.loveInterestName = _pickedLI;
+            try { console.log('[LI-NAME] rotated → ' + _pickedLI + ' (no user-chosen name; new story; pool rotation replaces the "Roman" default)'); } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {}
     // DEV ABLATION — LI-ONSTAGE (Roman 2026-06-06). Must fire HERE (initAPlot runs BEFORE the
     // scaffold, which reads state._scene1LIOnStage to decide staging). The old toggle set it inside
     // buildScene1IntroPrompt — too late, the scaffold had already staged the LI offstage. Also
@@ -58985,12 +60289,130 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
       }
       var hands = pick('story_hand_gesture', window._HAND_GESTURE_POOL, '_storyHandGestures', 2);
       var hairs = pick('story_hair_gesture', window._HAIR_GESTURE_POOL, '_storyHairGestures', 2);
-      if (!hands.length && !hairs.length) return '';
+      var braces = pick('story_stress_anchor', window._STRESS_ANCHOR_POOL, '_storyStressAnchors', 2);
+      if (!hands.length && !hairs.length && !braces.length) return '';
       function fmt(list) { return list.map(function (g) { return '"' + g.type + '" (' + g.variants.join(' / ') + ')'; }).join('  ·  '); }
-      return '\n\nIDLE / NERVOUS GESTURE PALETTE (this story — rotates per story): hand and hair fidgets are normal, human, and welcome — just keep them VARIED, never the same one calcified across stories. When a character self-soothes / fidgets / idles with the HANDS, draw from THIS story\'s assigned hand gestures: ' + fmt(hands) + '. With the HAIR: ' + fmt(hairs) + '. RULES (HARD): (1) for idle hand/hair beats use ONLY these story-assigned gesture TYPES — do not default to others; (2) ROTATE THE WORDING — each time a gesture recurs, use a DIFFERENT variant (or a fresh phrasing of the same move), never the identical sentence twice; (3) CADENCE — each gesture type appears 2-3 TIMES PER ISSUE AT MOST, never every scene; (4) match the gesture to the character and use the correct pronoun. The NEXT story is assigned DIFFERENT types — that cross-story rotation is the whole point.';
+      return '\n\nIDLE / NERVOUS / STRESS GESTURE PALETTE (this story — rotates per story): fidgets and stress-tics are normal, human, and welcome — just keep them VARIED, never the same one calcified across scenes or stories. When a character self-soothes / fidgets / idles with the HANDS, draw from THIS story\'s assigned hand gestures: ' + fmt(hands) + '. With the HAIR: ' + fmt(hairs) + '. When a character BRACES / grounds against tension with the BODY (a stress-anchor beat — the "physical outlet for tension" move, NOT a hand or hair fidget), draw from THIS story\'s assigned anchors: ' + fmt(braces) + '. RULES (HARD): (1) for idle hand/hair beats AND for body stress-anchor beats use ONLY these story-assigned TYPES — do not default to others (in particular do NOT keep reaching for a heel struck against a surface or palms/hands pressed flat unless they are assigned above this story); (2) ROTATE THE WORDING — each time a gesture recurs, use a DIFFERENT variant (or a fresh phrasing of the same move), never the identical sentence twice; (3) CADENCE — each gesture type appears 2-3 TIMES PER ISSUE AT MOST, never every scene; (4) match the gesture to the character and use the correct pronoun; (5) NO NUMBERED-COUNT CRUTCH — do NOT attach a fixed count to a stress tic as a recurring shape ("three times", "twice", "counted to four", "two slow breaths", "tapped twice"); the specific number is itself a calcification tell — imply the repetition, vary it, or drop the number entirely. The NEXT story is assigned DIFFERENT types — that cross-story rotation is the whole point.';
     } catch (_) { return ''; }
   }
   window.buildGestureRotationDirective = buildGestureRotationDirective;
+
+  // ── INHUMAN STRANGENESS ROTATION (Roman 2026-07-24) ─────────────────────────
+  // The Gollum principle (re-ground an inhuman being's strangeness on nearly every
+  // appearance) WOULD calcify without varied phrasings — "diamond pupils … diamond
+  // pupils …" Sibling to buildLiFeatureRotationDirective: a per-turn cooldown log
+  // rotates WHICH strangeness-angles are foregrounded this scene (so consecutive
+  // scenes differ; signatures return spaced), and each angle carries a POOL of
+  // exemplar phrasings that vary per turn (fresh words for the same feature).
+  // Paired-GOOD exemplars (shapes to build from), never bans. Gated on Fatelands
+  // inhuman cast. Feature list is the canon set Roman named (2026-07-24).
+  var _FF_FEATURE_POOLS = {
+    pupils:      { label: 'the diamond pupils (four-pointed, concave, luminous)', ex: [
+      'his pupils were four-pointed and concave, curving inward, lit a colour her own eyes had no name for',
+      'when he looked at her the diamonds of his pupils narrowed — not round like a person’s, a shape that caught and held the light',
+      'the light in her eyes gathered at four inward points, each pupil folded like a cut gem' ] },
+    weavescript: { label: 'the living Weave-Script moving under the skin', ex: [
+      'the light under his skin ran ahead of him, spelling something in a script that moved when he felt',
+      'faint luminous patterns surfaced along her forearms and slid, rearranging, as her calm cracked',
+      'Weave-Script bloomed at his throat and dimmed the way a human’s colour rises — except his was writing' ] },
+    coloring:    { label: 'the exotic non-human skin / hair colour', ex: [
+      'her skin was a deep jade that caught the firelight wrong, her hair a lush shade nothing human grew',
+      'his skin held the pearl-and-grey of something that had never been merely flesh',
+      'aqua skin, hair like poured obsidian — a person built from a palette the world didn’t otherwise use' ] },
+    gossamer:    { label: 'the see-through gossamer garment (unbothered by it)', ex: [
+      'the gossamer of her tunic hid nothing and she wore it as if modesty were a concept for other species',
+      'his robe was less clothing than a suggestion of it, weightless, the body beneath plainly there and plainly unbothered',
+      'the sheer drapery moved a half-second behind her, the distracting truth of her visible straight through it' ] },
+    physique:    { label: 'the too-perfect body / uncanny beauty', ex: [
+      'he was built like something an artist had corrected twice, symmetry a shade past what nature bothers with',
+      'she was beautiful in the specific way that made a room recalibrate and resent doing it',
+      'every proportion of him sat a fraction too perfect, and the wrongness of it was its own pull' ] },
+    physicality: { label: 'the superhuman speed / strength / grace', ex: [
+      'she crossed the burning gap faster than his eye could keep, a slower body already hauled clear before he understood she’d moved',
+      'he lifted the fallen beam like it weighed a thought, the strength in him casual and bottomless',
+      'her hand closed on the falling child faster than falling, an ease no human body owns' ] },
+    mind:        { label: 'the uncanny quickness of mind / perception', ex: [
+      'she had read the room and its exits before he finished the sentence, and answered the question he hadn’t asked yet',
+      'his attention moved a step ahead of the moment, already down a road she hadn’t seen open',
+      'she named the way out of the danger aloud while the rest were still afraid of it' ] },
+    hands:       { label: 'the weaving hands (never fully still)', ex: [
+      'his hands never fully stilled, fingers tracing small continuous shapes as if always half-weaving',
+      'her fingers moved through a slow, non-repeating pattern at her side, the habit of hands built to weave',
+      'even at rest his hands kept their quiet motion, a weaver’s restlessness that never settled' ] },
+    alignment:   { label: 'the alignment-sense (reads what a person says vs. is)', ex: [
+      'she read the mismatch in him the way one reads a wrong note — what he said and what he was didn’t line up, and it moved her face',
+      'his gaze went to the one soul in the crowd whose fear pointed the wrong way, the sense finding the lie',
+      'she felt the whole square lean toward flight — all but one — and her attention snapped to the exception' ] }
+  };
+  var _KW_FEATURE_POOLS = {
+    tentacle_body: { label: 'the tentacle lower-body (glides, no step)', ex: [
+      'she moved on a continuous unfurling glide, the six lower tentacles carrying her where legs would carry a human',
+      'his lower body was tentacle, not leg — a smooth traveling motion with no step in it, no joint to snap',
+      'the limbs beneath her flowed rather than walked, and the water took her weight the way ground never quite did' ] },
+    coral_hair:    { label: 'the living coral-dreadlock hair (sensory feelers)', ex: [
+      'her hair was living coral, dreadlocked and faintly moving, feeling the current before she did',
+      'the coral of his hair shifted at the tips, sensory and slow, tasting the room',
+      'what fell to her shoulders wasn’t hair but a mass of fine coral feelers, alive to every eddy' ] },
+    chromatophore: { label: 'the colour moving under the skin', ex: [
+      'colour moved under her skin like deep water lit from below, tightening and brightening as her focus sharpened',
+      'patterns bloomed across his skin and drifted, a current of hue that answered his mood before his face did',
+      'her skin ran through a soft shifting glow, oil-on-water, never once holding still' ] },
+    capsule_pupils:{ label: 'the capsule pupils (surface when the disguise slips)', ex: [
+      'a splash caught her and for a heartbeat the round pupils reverted — horizontal capsules of solid black, a slit down each centre — before the camouflage took hold again',
+      'his eyes weren’t built round; under the human disguise they were dark horizontal capsules, the true shape surfacing when the water hit',
+      'for an instant, before the mimicry caught, the black horizontal bars of her true pupils showed straight through the borrowed human brown' ] },
+    tidal:         { label: 'the tidal otherness (wrong softness / low-tide scent / held stillness)', ex: [
+      'the give of her body wasn’t a human give — softer, more yielding, the compressibility of something the sea had shaped',
+      'he carried the low-tide scent with him, and a stillness that held a beat too long to be human',
+      'her body met his hand with the wrong kind of softness, fluid where a person is firm' ] },
+    mimicry:       { label: 'the mimicry / camouflage', ex: [
+      'for a breath her skin matched his own, mirroring the colour of his hand where it rested — then let the illusion go',
+      'he held a human face on land indefinitely, and only under motion did the seams of the borrowed shape begin to show',
+      'she let her features drift a half-degree toward the face he missed most, then caught herself and pulled them back' ] }
+  };
+  function buildInhumanFeatureRotationDirective() {
+    try {
+      var s = window.state; if (!s) return '';
+      // GATE — Fatelands inhuman cast (First Favored and/or Kwisheen in play).
+      var _iw = String((s.picks && s.picks.world) || s.world || '');
+      if (_iw !== 'Fantasy') return '';
+      var _ifl = String((s.picks && s.picks.flavor) || s.flavor || '');
+      var _hasFF = _ifl === 'first_favored' || (s.ffAppearance && Object.keys(s.ffAppearance).length);
+      var _hasKw = _ifl === 'the_inhuman'   || (s.kwisheenAppearance && Object.keys(s.kwisheenAppearance).length);
+      if (!_hasFF && !_hasKw) return '';
+      var turn = (typeof s.turnCount === 'number') ? s.turnCount : 0;
+      // Memoize per turn so heavy + the lite shadow (and any re-call) get the SAME pick.
+      try { var _ck = s._inhumanFeatRotThisTurn; if (_ck && _ck.turn === turn) return _ck.directive || ''; } catch (_) {}
+      if (turn <= 0) { try { s._inhumanFeatUseLog = {}; } catch (_) {} }
+      var feats = [];
+      var addSp = function (sp, pools) { Object.keys(pools).forEach(function (k) { feats.push({ sp: sp, key: k, label: pools[k].label, pool: pools[k].ex }); }); };
+      if (_hasFF) addSp('First Favored', _FF_FEATURE_POOLS);
+      if (_hasKw) addSp('Kwisheen', _KW_FEATURE_POOLS);
+      if (!feats.length) return '';
+      var log = s._inhumanFeatUseLog || {};
+      // Cap at HALF the pool so the cooldown never starves (consecutive scenes stay non-overlapping);
+      // clamp to [1..4]. FF-only(9)→4, Kwisheen-only(6)→3, both(15)→4.
+      var COUNT = Math.min(4, Math.floor(feats.length / 2)) || feats.length;
+      // Spacing: drop angles foregrounded within the last ~1 scene, so consecutive scenes differ;
+      // if that starves the set, fall back to all (small pool → allow repeats, still rotated by turn).
+      var avail = feats.filter(function (f) { var l = log[f.sp + ':' + f.key]; return !(typeof l === 'number' && (turn - l) <= 1); });
+      if (avail.length < COUNT) avail = feats.slice();
+      // Deterministic rotating window across the available set (no Math.random — heavy/lite parity).
+      var start = ((turn * COUNT) % avail.length + avail.length) % avail.length;
+      var picked = [], _seen = {};
+      for (var i = 0; i < avail.length && picked.length < COUNT; i++) { var f = avail[(start + i) % avail.length]; var id = f.sp + ':' + f.key; if (_seen[id]) continue; _seen[id] = 1; picked.push(f); }
+      picked.forEach(function (f) { try { log[f.sp + ':' + f.key] = turn; } catch (_) {} });
+      try { s._inhumanFeatUseLog = log; } catch (_) {}
+      var lines = picked.map(function (f) {
+        var ex = f.pool[(turn + f.key.length) % f.pool.length];   // vary the phrasing per turn within the story
+        return '    • ' + f.sp + ' — ' + f.label + ': e.g. "' + ex + '"';
+      }).join('\n');
+      var _out = '\nINHUMAN STRANGENESS — ROTATING ANGLES THIS SCENE (HARD; the anti-calcification companion to the Gollum re-grounding rule). Keep an inhuman character’s strangeness on the page every time they act — but ROTATE the angle so it never calcifies into the same tell every beat. THIS SCENE, LEAD with THESE angles (and vary across beats — never the same one twice running):\n' + lines + '\n  These examples are SHAPES to build your OWN fresh image from, NEVER lines to copy verbatim. Traits not listed this scene may still appear, but LEAD with these — they were spaced out from recent scenes on purpose. A signature (diamond pupils, Weave-Script) is MEANT to return, just not every scene and never in the same words twice.';
+      try { s._inhumanFeatRotThisTurn = { turn: turn, directive: _out }; } catch (_) {}
+      return _out;
+    } catch (_) { return ''; }
+  }
+  window.buildInhumanFeatureRotationDirective = buildInhumanFeatureRotationDirective;
 
   window._tickAPlot = window._tickAPlot || _tickAPlot;
   window._recordRelationalConsequence = _recordRelationalConsequence;
@@ -60315,8 +61737,8 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
   // Consumed in buildAPlotPressureDirective when turn===0.
   async function _compressAPlotForScene1(aPlot) {
     if (!aPlot || !aPlot.goal) return null;
-    if (aPlot.scene1Compressed && aPlot.scene1Compressed.pressure_sentence) return aPlot.scene1Compressed;
-    var sys = 'You are compressing the procedural A-plot of a romance novel into THREE one-sentence summaries for the Scene 1 prose layer. The goal is to STRIP institutional / procedural / mechanical / strategic detail (trustees, boards, committees, audits, votes, archivists, legal frameworks, named clocks, milestone mechanics, antagonist procedural roles) and KEEP ONLY what the protagonist FEELS in the first scene. Scene 1 will not surface the machinery — that returns in Scene 2+. The protagonist FEELS the pressure; the reader meets the mechanism later.\n\nReturn ONLY a JSON object with exactly these three keys: { "pressure_sentence": "...", "emotional_consequence": "...", "li_entanglement_one_line": "..." }. No prose outside the JSON.';
+    if (aPlot.scene1Compressed && aPlot.scene1Compressed.branch_b_delete_test) return aPlot.scene1Compressed;
+    var sys = 'You are compressing the procedural A-plot of a romance novel into SIX one-sentence summaries for the Scene 1 prose layer. The goal is to STRIP institutional / procedural / mechanical / strategic detail (trustees, boards, committees, audits, votes, archivists, legal frameworks, named clocks, milestone mechanics, antagonist procedural roles) and KEEP ONLY what the protagonist FEELS in the first scene. Scene 1 will not surface the machinery — that returns in Scene 2+. The protagonist FEELS the pressure; the reader meets the mechanism later. Three describe the OPENING STATE (all TRUE when the scene begins). Two describe a TRUTH TRANSITION: state_change_precondition is the ONE fact that is FALSE / not-yet-true when the scene begins, and state_change is the observable event, partway through, that flips it TRUE. The last three enforce THE GATE via a PER-BRANCH counterfactual: forces_choice names TWO options (A and B); branch_a_delete_test and branch_b_delete_test prove that EACH option, on its own, becomes impossible or materially different if the state_change is deleted. If EITHER option would still stand unchanged without the event (e.g. "go home", "do nothing", "wait and see"), that option is an escape hatch and the choice is generic — pick a different event or a different pair of options. The test is per-branch: delete the state_change, and BOTH options must break. Think in planning terms: three facts start true, one starts FALSE, one event makes it true, AND that event must make BOTH of the protagonist\'s options newly live.\n\nReturn ONLY a JSON object with exactly these eight keys: { "pressure_sentence": "...", "emotional_consequence": "...", "li_entanglement_one_line": "...", "state_change_precondition": "...", "state_change": "...", "forces_choice": "...", "branch_a_delete_test": "...", "branch_b_delete_test": "..." }. No prose outside the JSON.';
     var usr = 'Full A-plot to compress:\n' +
       '  goal: ' + (aPlot.goal || '') + '\n' +
       '  antagonist: ' + (aPlot.antagonistOrAntiForce || '') + '\n' +
@@ -60330,7 +61752,12 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
       '  pressure_sentence: ONE sentence naming what is happening to her now, in her felt experience. NOT the mechanism, NOT the institutional shape — what she IS WAKING UP TO. 12-20 words. Example shapes (do NOT copy — write fresh for THIS plot): "Her mentor publicly stole her work." / "His family is arranging his marriage to someone else." / "Her grandmother died at four a.m. and the will named the wrong person."\n' +
       '  emotional_consequence: ONE sentence naming the FELT WEIGHT — not the cognitive interpretation, the lived state. 15-25 words. Example shapes: "She is publicly humiliated and her competence is in question." / "She is alone with a grief she has not yet told anyone."\n' +
       '  li_entanglement_one_line: ONE sentence naming how the LI is part of THIS fire — his entanglement with HER in this moment. NOT his role in the institution, NOT his strategic position. 12-25 words. Example shapes: "He knows. He has known for weeks." / "He is the one person whose silence matters." / "His silence over the last six months is now the loudest sound in the room."\n' +
-      '\nFORBIDDEN VOCABULARY in all three sentences: trustee, board, committee, audit, vote, archivist, legal framework, milestone, clock (as procedural mechanism), filing, dossier, subpoena, writ, statute, ordinance, by-law, charter, governance. The protagonist FEELS the pressure; she does not (yet) name its institutional shape.\n' +
+      '  state_change_precondition: ONE sentence naming the single fact that is NOT YET TRUE when the scene opens — the "before" of the transition, phrased as a negation the OPENING must establish (still unresolved / unknown / not-yet-happened). It is the negation of state_change. The scene must OPEN with this still false. 8-16 words, no institutional machinery. Examples (paired with the state_change below): "The leaked pages have not yet surfaced — no one present has seen them." / "The betrayer has not been named — she only suspects." / "No one yet knows the damage was deliberate."\n' +
+      '  state_change: the observable EVENT, landing partway through the scene, that flips the precondition above from FALSE to TRUE — witnessed by someone PRESENT, on-page. It is the FIRST CONSEQUENCE of the facts above (the antagonist acting, the stakes tightening, the wound surfacing, the entanglement forced into the open). THREE HARD REQUIREMENTS: (a) it must be the event that makes the PRECONDITION true — do NOT restate the pressure_sentence or anything already true at the opening; if it is already true at the first line, it is INVALID. (b) EXTERNALLY OBSERVABLE — an event another character in the room could WITNESS happen, NOT a private feeling or realization ("she confronts her fear" is INVALID — the felt weight belongs in emotional_consequence, kept separate). (c) ON-PAGE with only characters PRESENT — the love interest is OFFSTAGE in Scene 1, so it must NEVER depend on the LI appearing, speaking, or reacting on-page. 8-16 words, phrased as the event, no institutional machinery. Examples (precondition false → state_change makes it true), derive from THIS plot, do NOT copy: "pages not yet surfaced" → "the leaked pages are found, scattered across the table" / "betrayer not yet named" → "the betrayer is named aloud in front of her" / "no one knows it was deliberate" → "fresh cuts on the stems prove it was sabotage". (d) It must change something IN THE WORLD — you must be able to say WHO loses WHAT immediately, or what is now true that was not. An emotional realization or a shift in mood is NOT a state_change ("stirring emotions", "the air grew tense", "she realized" are INVALID — those live in emotional_consequence). Answer "what changed in the world?", never "how does she feel?". (e) It MUST pass the forces_choice gate below — if you cannot name a NEW decision it forces, it is the WRONG event. (f) NAME ONLY THE EVENT — STOP AT THE CONCRETE MOMENT. Do NOT append its meaning or its effect on her interior; everything after "and forcing her to…", "revealing…", "reveal the truth…", "making her realize…", "as she confronts…" is BANNED — that appended interpretation is exactly what makes the renderer write a flat "X becomes visible, revealing a deeper truth" summary instead of staging the moment. ✗ "the name surfaces, forcing her to confront the betrayal" → ✓ "the traitor’s name is spoken aloud into the sudden silence." ✗ "the fracture becomes visible, revealing a deeper truth about the bond" → ✓ "her torn sleeve falls back and the brand on her wrist shows plain." The felt weight lives in emotional_consequence; the state_change is the physical event ALONE. (These example OBJECTS are illustrative only — draw the event from THIS story\'s OWN world and Scene-1 setting; NEVER import a foreign object, prop, or image that has no reason to be in this scene.)\n' +
+      '  forces_choice: THE GATE on state_change — a binary test, not a vibe. Complete this sentence with a SPECIFIC, concrete choice: "This event forces [protagonist] to choose between X and Y." X and Y must be real options drawn from THIS plot, and the choice must be one she could NOT have faced at the opening line — her available choices must be DIFFERENT after the event than before (a new option appears, or an existing one is foreclosed). Judge the event on DECISION-FORCING POWER, not drama or scale: a quiet event that changes the choice set beats a spectacular one that does not (a ballroom fire where the choice is still "stay or leave" FAILS; "the debts are read aloud" → "deny them publicly or own them in front of everyone" PASSES). If you cannot write this sentence with a genuinely NEW choice, your state_change is wrong — go back and pick an event that does. A weak event ("the gala theme is announced") has NO forces_choice and must be rejected. Phrased "forces her to choose between A and B" where A and B are TWO CONCRETE, ACTIVE responses to the new fact. NOT one action + one escape hatch: "confront or stay silent", "fight or go home", "act or do nothing" all pair a live option with a status-quo one — the second is opting out, and it FAILS the per-branch test below. Both options must be things she DOES about the new reality (e.g. "deny the debts to the room or own them publicly" — both are active responses to the debts now being public). 12-28 words.\n' +
+      '  branch_a_delete_test: Take OPTION A alone. Mentally DELETE the state_change. In one clause, state what A becomes: impossible, meaningless, or materially different — OR admit it still stands exactly as before. If A survives event-deletion unchanged, it is an escape hatch; go back and pick a different option or event. GOOD: "denying the debts publicly is impossible if they were never read aloud." BAD: "going home is still possible either way" (→ A is generic, revise).\n' +
+      '  branch_b_delete_test: Take OPTION B alone. Same per-branch test — DELETE the state_change: does B become impossible / materially different, or does it still stand unchanged? If B survives unchanged, it is an escape hatch; revise. BOTH branch tests must show the option BREAKING without the event. If you cannot make both break, this event does not create a real decision — pick a different state_change.\n' +
+      '\nFORBIDDEN VOCABULARY in all four sentences: trustee, board, committee, audit, vote, archivist, legal framework, milestone, clock (as procedural mechanism), filing, dossier, subpoena, writ, statute, ordinance, by-law, charter, governance. The protagonist FEELS the pressure; she does not (yet) name its institutional shape.\n' +
       '\nReturn ONLY the JSON object.';
     try {
       var res = await fetch('/api/chatgpt-proxy', {
@@ -60363,10 +61790,10 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
       var parsed;
       try { parsed = JSON.parse(match[0]); } catch (_) { return null; }
       if (!parsed || typeof parsed !== 'object') return null;
-      if (!parsed.pressure_sentence || !parsed.emotional_consequence || !parsed.li_entanglement_one_line) return null;
+      if (!parsed.pressure_sentence || !parsed.emotional_consequence || !parsed.li_entanglement_one_line || !parsed.state_change || !parsed.state_change_precondition || !parsed.forces_choice || !parsed.branch_a_delete_test || !parsed.branch_b_delete_test) return null;
       // Validator: drop any output that leaks the forbidden vocab back into Scene 1.
       var _forbidRx = /\b(trustee|board|committee|audit|vote|archivist|legal framework|milestone|filing|dossier|subpoena|writ|statute|ordinance|by-?law|charter|governance)\b/i;
-      var all3 = String(parsed.pressure_sentence) + ' ' + String(parsed.emotional_consequence) + ' ' + String(parsed.li_entanglement_one_line);
+      var all3 = String(parsed.pressure_sentence) + ' ' + String(parsed.emotional_consequence) + ' ' + String(parsed.li_entanglement_one_line) + ' ' + String(parsed.state_change_precondition) + ' ' + String(parsed.state_change);
       if (_forbidRx.test(all3)) {
         try { console.warn('[A-PLOT:SCENE1-COMPRESS] output leaked forbidden vocab — rejecting'); } catch (_) {}
         return null;
@@ -60375,6 +61802,11 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
         pressure_sentence: String(parsed.pressure_sentence).trim(),
         emotional_consequence: String(parsed.emotional_consequence).trim(),
         li_entanglement_one_line: String(parsed.li_entanglement_one_line).trim(),
+        state_change_precondition: String(parsed.state_change_precondition).trim(),
+        state_change: String(parsed.state_change).trim(),
+        forces_choice: String(parsed.forces_choice).trim(),
+        branch_a_delete_test: String(parsed.branch_a_delete_test).trim(),
+        branch_b_delete_test: String(parsed.branch_b_delete_test).trim(),
         generated_at: Date.now()
       };
       aPlot.scene1Compressed = compressed;
@@ -60388,20 +61820,110 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
   }
   window._compressAPlotForScene1 = _compressAPlotForScene1;
 
+  // ── SCENE MANIFESTATION LAYER — v1 "attention experiment" (docs/scene-manifestation-design.md) ──
+  // The bibles emit ~40 hooks/character; a Scene 1 can naturally express 1-7 (measured). This selects the
+  // FEW behavioral OBJECTIVES THIS scene invites (opportunity-driven, NEVER plot-driven) and hands the
+  // author a short HIGH-PRIORITY obligation block, demoting the full bible to reference-only. Gated on
+  // window._sceneManifestExperiment (default OFF → zero production impact). Scene 1; roles PC/LI/antagonist
+  // (v1 scope). One cheap gpt-4o-mini call; cached on state._sceneManifest.
+  var _MANIFEST_HOOK_FIELDS = ['signature_feature', 'second_celebrated_feature', 'self_conscious_feature', 'core_contradiction', 'emotional_weather', 'signature_behavior', 'deflection_pattern', 'holding_style', 'attraction_manifestation', 'focus_tell', 'restraint_tell', 'interest_tell', 'frustration_tell', 'desire_tell', 'private_hope', 'corrupted_warmth_tell', 'targeting_tell', 'control_tell', 'pleasure_tell', 'escalation_tell', 'softness_seam', 'pc_keeps_noticing'];
+  function _manifestHooksOf(bible) {
+    var out = [];
+    if (!bible || typeof bible !== 'object') return out;
+    _MANIFEST_HOOK_FIELDS.forEach(function (k) { var v = bible[k]; if (typeof v === 'string' && v.trim().length > 4) out.push(v.trim().slice(0, 200)); });
+    ['signature_habits', 'tells'].forEach(function (k) { if (Array.isArray(bible[k])) bible[k].slice(0, 5).forEach(function (t) { if (typeof t === 'string' && t.trim().length > 4) out.push(t.trim().slice(0, 200)); }); });
+    return out;
+  }
+  async function _buildSceneManifestation() {
+    try {
+      if (!window._sceneManifestExperiment) return null;
+      var s = window.state; if (!s || s.turnCount) return null;   // Scene 1 only
+      if (s._sceneManifest) return s._sceneManifest;              // cached
+      var roles = [];
+      if (s.pcBodyBible) roles.push({ who: 'PC', name: s.playerName || 'the protagonist', traits: _manifestHooksOf(s.pcBodyBible) });
+      if (s.liBodyBible) roles.push({ who: 'LI', name: s.loveInterestName || 'the love interest', traits: _manifestHooksOf(s.liBodyBible) });
+      if (s.antagonistBodyBible && Object.keys(s.antagonistBodyBible).length) roles.push({ who: 'ANTAGONIST', name: s.antagonistBodyBible.name || 'the antagonist', traits: _manifestHooksOf(s.antagonistBodyBible) });
+      roles = roles.filter(function (r) { return r.traits.length; });
+      if (!roles.length) return null;
+      // SCENE TRUTH ONLY (the firewall): pressure / emotional temperature / scene objective / relationship
+      // register are allowed. PLOT truth (goal, antagonist plan, arc outcome) is NEVER passed in.
+      var c = (s.aPlot && s.aPlot.scene1Compressed) || {};
+      var sceneTruth = { pressure: c.pressure_sentence || '', emotional_temperature: c.emotional_consequence || '', scene_objective: c.forces_choice || '', opening_temperature: String(s._openingTemperature || 'normal') };
+      var relRegister = (s.pairDynamic && (s.pairDynamic.romanceEngine || s.pairDynamic.collisionGeometry)) || s.dynamic || '';
+      var sys = 'You are the SCENE MANIFESTATION director for a romance-fiction author. You do NOT invent character and you do NOT emit trait labels. From each character\'s EXISTING traits, you stage the few that THIS scene invites as CONCRETE, REVELATORY BEATS.\n'
+        + 'THE BAR IS REVELATORY, NOT MERELY ACTABLE (this is the whole point). ACTABLE = an actor could perform it. REVELATORY = watching ONLY this action, another character forms a new belief about WHO THIS PERSON IS — a stable identity (a habit, ritual, compulsion, social strategy, worldview), NOT a passing emotion. "Sets the shears down hard" / "her breath catches" / "presses a heel into the floor" / "grips the edge of the counter" are actable but reveal only that she is upset — ANYONE upset does them; they teach NOTHING about identity. REJECT them. ✓ REVELATORY: "rearranges his — and everyone else\'s — champagne flutes into perfect symmetry before he answers" (compulsive, formal, control-oriented, uneasy with disorder — four inferences from one act); "interrupts her own apology to straighten a crooked picture frame." Think Chekhov: Monk straightens every crooked object; Sherlock reads the mud on your cuff before hello; House steals your lunch while diagnosing you. Those are IDENTITIES, not tells.\n'
+        + 'THE FIVE-CHARACTER TEST (HARD GATE — apply to every beat before accepting it): could five completely different characters (e.g. Batman, Elizabeth Bennet, Sherlock Holmes, Walter White, Frodo) ALL plausibly perform this action? If YES, it is generic emotional leakage — REJECT it and find the beat only THIS kind of person would do. ("presses a heel into the floor" → all five could → reject. "rearranges the glasses into ceremonial symmetry" → almost none would → accept.)\n'
+        + 'EMOTION-REGULATION TICS ARE SECONDARY, NEVER PRIMARY: gripping a glass / rail / edge, sighing, a clenched jaw, breath catching, looking away, shifting weight, tapping or pressing a heel, folding the arms, bracing, pressing a palm flat, tracing an object vaguely — these may lightly SEASON a beat but must NEVER be the manifestation itself. The manifestation is the HABIT / RITUAL / COMPULSION / SOCIAL STRATEGY / WORLDVIEW that leaks out under this pressure.\n'
+        + 'THE GENERATIVE QUESTION for each slot: "What characteristic habit, ritual, compulsion, social strategy, or worldview of THIS specific person naturally surfaces under THIS scene\'s pressure?" — then stage it as ONE concrete, drawable/performable action. Preserve the bible\'s specificity; make the beat MORE particular than the trait, never a generic reduction of it.\n'
+        + 'PREFER MULTI-TRAIT BEATS: one revealing action that carries 2-3 compatible truths at once beats several separate beats.\n'
+        + 'FILTER THROUGH THE RELATIONSHIP REGISTER: the same identity surfaces differently with a rival vs a love interest vs a stranger.\n'
+        + 'OPPORTUNITY-DRIVEN, NEVER PLOT-DRIVEN: stage what the SITUATION invites, never what the story "needs." You do NOT know and MUST NOT consider what any character becomes later. You are given SCENE truth only (pressure, emotional temperature, scene objective, relationship register) — never plot truth (twists, reveals, eventual roles).\n'
+        + 'Stage ONLY beats with a real opportunity in THIS scene — ONE revelatory beat beats three generic ones; leave a slot EMPTY rather than fill it with an emotion-regulation tic. For EACH character fill up to four slots — visual / behavioral / speech / pressure — each a concrete, revelatory, storyboard-able action that passes the five-character test. Return ONLY JSON: {"PC":{"visual":"","behavioral":"","speech":"","pressure":""},"LI":{...},"ANTAGONIST":{...}} — include only characters given; use "" for a slot where nothing REVELATORY fits.';
+      var user = 'SCENE TRUTH:\n' + JSON.stringify(sceneTruth) + '\nRELATIONSHIP REGISTER: ' + relRegister + '\n\nCHARACTERS (existing traits — SELECT from these, never invent):\n' + roles.map(function (r) { return r.who + ' (' + r.name + '):\n' + r.traits.map(function (t) { return '  - ' + t; }).join('\n'); }).join('\n\n');
+      var res = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.4, max_tokens: 700, messages: [{ role: 'system', content: sys }, { role: 'user', content: user }] }) });
+      var j = await res.json();
+      var raw = (j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || j.content || '';
+      var parsed = JSON.parse(String(raw).replace(/^```json\s*/i, '').replace(/```\s*$/i, '').trim());
+      if (parsed && typeof parsed === 'object') { s._sceneManifest = parsed; try { console.log('[SCENE-MANIFEST] selected for ' + Object.keys(parsed).join(', ')); } catch (_) {} return parsed; }
+      return null;
+    } catch (e) { try { console.warn('[SCENE-MANIFEST] failed:', e && e.message); } catch (_) {} return null; }
+  }
+  window._buildSceneManifestation = _buildSceneManifestation;
+
+  function _buildSceneManifestBlock() {
+    try {
+      var s = window.state; var m = s && s._sceneManifest; if (!m || typeof m !== 'object') return '';
+      var order = [['PC', s.playerName || 'the protagonist'], ['LI', s.loveInterestName || 'the love interest'], ['ANTAGONIST', (s.antagonistBodyBible && s.antagonistBodyBible.name) || 'the antagonist']];
+      var blocks = [];
+      order.forEach(function (o) {
+        var e = m[o[0]]; if (!e || typeof e !== 'object') return;
+        var slots = [];
+        if (e.visual) slots.push('    Visual:   ' + e.visual);
+        if (e.behavioral) slots.push('    Behavior: ' + e.behavioral);
+        if (e.speech) slots.push('    Speech:   ' + e.speech);
+        if (e.pressure) slots.push('    Pressure: ' + e.pressure);
+        if (slots.length) blocks.push('  • ' + o[1] + ':\n' + slots.join('\n'));
+      });
+      if (!blocks.length) return '';
+      return '\n\n═══ SCENE MANIFESTATION — HIGH PRIORITY (HARD; these are OBLIGATIONS, not suggestions) ═══\n'
+        + 'For THIS scene, these existing character truths MUST visibly emerge through ACTION — perform them, do not merely mention them. If a character has several lines/beats, at least one or two must actually enact their objective below. Everything in the CHARACTER BIBLE sections elsewhere in this prompt is now REFERENCE ONLY: do NOT reach for a bible trait unless it arises naturally — your obligation is to PERFORM the manifestations here.\n'
+        + blocks.join('\n') + '\n';
+    } catch (_) { return ''; }
+  }
+  window._buildSceneManifestBlock = _buildSceneManifestBlock;
+
   // Build the Scene-1 compressed A-plot block (replaces the full procedural
   // block for turn===0 only). Returns the formatted string suitable for direct
   // inclusion in the prose system prompt.
   function _buildScene1CompressedAPlotBlock(a) {
     if (!a || !a.scene1Compressed || !a.scene1Compressed.pressure_sentence) return '';
     var c = a.scene1Compressed;
+    // WISH = STATE CHANGE (Roman 2026-07-24, direction B — onboarding only): when the Fatelands
+    // wish demo owns this scene, the WISH itself is the one irreversible turn; injecting a SEPARATE
+    // A-plot state_change manufactured a competing second climax (double-climax / chains mash) and
+    // stole word-budget from the wish. Suppress the truth-transition here; keep the opening state.
+    var _wishTurn = (typeof _fatelandsWishDemoActive === 'function' && window.state && _fatelandsWishDemoActive(window.state));
     var lines = [];
     lines.push('');
     lines.push('═══════════════════════════════════════════════════════');
     lines.push('A-PLOT PRESSURE (Scene 1 — COMPRESSED for emotional clarity, Roman 2026-06-12 L5)');
     lines.push('═══════════════════════════════════════════════════════');
-    lines.push('Pressure (what she is waking up to): ' + c.pressure_sentence);
-    lines.push('Emotional consequence (the lived weight): ' + c.emotional_consequence);
-    lines.push('LI entanglement (his place in this fire): ' + c.li_entanglement_one_line);
+    lines.push('OPENING STATE — ALL THREE are TRUE at the first line; the scene OPENS with them already so:');
+    lines.push('  • Pressure (what she is waking up to): ' + c.pressure_sentence);
+    lines.push('  • Emotional consequence (the lived weight): ' + c.emotional_consequence);
+    lines.push('  • LI entanglement (his place in this fire): ' + c.li_entanglement_one_line);
+    if (!_wishTurn && c.state_change_precondition && c.state_change) {
+      lines.push('');
+      lines.push('THE ONE TRUTH TRANSITION — this is the scene\'s spine (NOT part of the opening state; it HAPPENS during the scene):');
+      lines.push('  • STILL FALSE at the first line — the scene must OPEN with this unresolved / unknown / not-yet-happened, and establish it as still false before the turn: ' + c.state_change_precondition);
+      lines.push('  • BECOMES TRUE partway through — the ONE observable event, witnessed by someone present, that flips the line above from false to true, shown on-page in motion: ' + c.state_change);
+      if (c.forces_choice) lines.push('  • THE NEW DECISION this unlocks — the scene\'s CLOSING choice, which could NOT have been posed before the event (the event exists to CREATE this choice): ' + c.forces_choice);
+      lines.push('');
+      lines.push('SCENE-1 CAUSAL ARC (HARD): the scene moves [precondition FALSE] → [the event flips it TRUE, on-page, partway through] → [DECISION caused by the flip]. At the FIRST LINE the transition has NOT yet happened — the precondition above is still false; do NOT open with it already completed. The scene EARNS its turn by letting the event occur in motion partway through, witnessed. It is the scene\'s ONE turn — do NOT invent a second development, and do NOT pad with extra characters or restated pressure in place of staging it. Even on a hot / crisis opener, the opening blow is the PRESSURE (already true); the transition event is a LATER beat, never sentence one. The closing decision MUST arise directly BECAUSE the transition happened — a choice that could NOT have been posed while the precondition was still false. If the identical ending decision could have been reached at the opening, the arc has FAILED.');
+    } else if (_wishTurn) {
+      lines.push('');
+      lines.push('THE SCENE’S ONE TURN = THE WISH (HARD — onboarding, Roman 2026-07-24 direction B): this scene’s single irreversible turn is the WISH itself — its omen, Fate’s answer, and the price taken. Do NOT stage a SEPARATE "truth transition" / state-change event on top of the wish; the wish IS the change (a manufactured second turn is what created the double-climax and the out-of-place props). The closing decision arises BECAUSE of what the wish just did — the price paid, the crisis now reshaped.');
+    }
     lines.push('');
     if (a.pcWound || a.liWound) {
       lines.push('PRE-EXISTING WOUNDS — carried into Scene 1 (the romance answers these, not the deal):');
@@ -65054,6 +66576,7 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
     // body_and_desire so "render NEW grounding" and "don't re-render OLD" reconcile.
     add('established_description', (typeof buildEstablishedDescriptionDirective === 'function') ? buildEstablishedDescriptionDirective() : '');
     add('li_feature_rotation', (typeof buildLiFeatureRotationDirective === 'function') ? buildLiFeatureRotationDirective() : '');
+    add('inhuman_feature_rotation', (typeof buildInhumanFeatureRotationDirective === 'function') ? buildInhumanFeatureRotationDirective() : '');
     add('setting_texture',
       'GROUND THE SCENE IN A REAL PLACE (HARD — Roman 2026-06-08; scenes read as voices in a void). Within the first 1–2 paragraphs establish WHERE this happens — the room/place, its dominant MATERIALS, and the quality of LIGHT — through action, not a description block. Then keep the space alive with INTERMITTENT concrete material/surface/light strokes (marble, wood, stone, glass, leather, metal, fabric, paper; the slant and colour of light; temperature, echo, the give of a surface under a hand) — at least one every few paragraphs, tied to a beat. Characters touch, lean on, cross, and are lit by real things; they never float in undescribed space. Keep it specific to THIS world\'s setting.');
     if (_ffMode) add('deck_canon',
@@ -74417,6 +75940,8 @@ Return ONLY valid JSON:
       state._scene1HookShapePick = null;  // re-rotate billionaire/status hook shape per story (de-calcify)
       state._openingTemperature = null;   // re-pick HOT_CRISIS vs COLD_DISRUPTION per story
       state._crisisCategory = null;       // re-pick crisis category (with cooldown) per story
+      state._fatelandsLighthouse = null;  // re-resolve the Fatelands lighthouse (A-plot re-caches) per story
+      state._fatelandsLighthouseStrong = false;  // re-evaluate lighthouse strength (opener coupling gate) per story
       state._repCollapseSubtype = null;   // re-pick Reputation-Collapse subtype (rotating cursor) per story
       state._spineABStamped = false;      // re-stamp the [SPINE:AB] condition per story
       state.cascadeAwaitingContinuation = false;
@@ -88122,6 +89647,8 @@ There exists a simple action that could reduce the current tension. However, cir
       block += 'CURSE FIELD DEPENDENCY: Inside Thornwild — all humans subject to transformation, no form inherited, children born human, Becoming unfolds over time. Outside Thornwild — the field no longer reshapes identity, existing transformed bodies stabilize, forms become biologically persistent, reproduction of stabilized forms is possible.\n';
       block += 'CULTURAL: "Becoming is not a curse. It is truth." The Thornwild enforces suffering as responsibility. Oath of the Root: no one leaves unchanged. Those who attempt unsanctioned escape are declared Rootless — hunted, returned, or killed.\n';
       block += 'FACTIONS: Keepers (majority — enforce the oath, pursue escapees), Quiet Sympathizers (subtly aid escape, misdirect), Fractured (defectors — actively help fugitives, seek alternatives), Absolvers (reinterpret harm as revelation — see ABSOLVERS section).\n';
+      block += 'KEEPER DOCTRINE ON KWISHEEN (LOCKED): the Keepers and their allies treat EVERY Kwisheen as a Thornwild monster that must stay contained in the Thornwild, and hunt any who try to reach the sea and get away. They do NOT understand that only the ORIGINAL Kwisheen were Thornwild-cursed; the descendants raised in Gloamwater inherited only the tentacled FORM, not the curse, and are NOT monsters — unless brought into the Becoming Field, where SLOWLY (nothing at first, then over days and weeks) the Field externalizes each one\'s OWN denied flaw: possibly still a Kwisheen, but now driven by a devouring need to use its mimicry and camouflage to infiltrate, steal, and assassinate; or a wholly different form — a Commoner, a Reliquary, etc. Containing a Gloamwater Kwisheen is thus the very thing that MAKES it the monster the Keepers feared.\n';
+      block += 'KEEPER BLIND SPOT — RE-TYPING (LOCKED): when a captive Kwisheen eventually changes into a DIFFERENT monster than they expected, the Keepers are genuinely baffled — their model holds that a curse, once set, is FIXED, and no wish can alter it, so re-typing should be impossible. They debate how it can be, and fall back on a theory none of them fully believes (that leaving the Becoming Field and returning must "reset" a person\'s monstrousness) — they know it is not a good theory but cannot work out why it happens. The truth they never reach: the Gloamwater descendant was never cursed to begin with, so the Field is not re-writing an old curse but externalizing, for the FIRST time, the flaw that person always carried.\n';
       block += 'SECRECY: Outsiders believe the Thornwild is filled with monsters. Reality: it is filled with people in different stages of Becoming. This truth is closely guarded.\n';
       block += '\nCROSS-CULTURAL LEXICON (THORNWILD ↔ OUTSIDERS) — ASYMMETRIC MISUNDERSTANDING (EMERGES THROUGH DIALOGUE, NEVER EXPLAINED):\n';
       block += 'ASYMMETRY RULE (CORE): Outsiders do NOT understand the Becoming Field. They do NOT know Wildfolk and Thornwild "monsters" are the same continuum. They believe the monsters are separate entities and that Wildfolk are simply strange, insular humans. Their insults reflect this — accusations of inbreeding, implications of taboo relations with beasts, mockery of isolation. Outsiders do NOT accuse Wildfolk of being monsters, because they do not believe they are. Wildfolk, by contrast, understand outsiders completely. Their "insults" are observational, quiet, pitying — they recognize what outsiders refuse to see.\n';
@@ -90889,6 +92416,9 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
   // Clears world-cycle entropy and epoch-level flags.
   // Called ONLY on full world change (resetForNewStory / performAuthReset).
   function _resetEpochState() {
+      // Fatelands secret-quest lives at L2 → persists issue→issue (startBook2 doesn't call
+      // this), resets on a fresh Fatelands game (resetForNewStory/performAuthReset do). v1.
+      state._fatelandsSecretQuest = (typeof _emptyFatelandsSecretQuest === 'function') ? _emptyFatelandsSecretQuest() : null;
       state.world_cycle_id = null;
       state._syzygyOccurred = false;
       state.world_cycle_label = null;
@@ -120093,6 +121623,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       try { if (typeof _autoRenderIssueCover === 'function') _autoRenderIssueCover('issue_boundary'); } catch (_) {}
       try { if (typeof _refreshBackCoverSynopsisAtIssueEnd === 'function') _refreshBackCoverSynopsisAtIssueEnd('issue_boundary'); } catch (_) {}
       state.issueIndexInRun = idxFromScene;
+      // Secret-quest per-issue tick — player-paced, floor-gated (idempotent per issue).
+      try { if (typeof _advanceFatelandsMysteryForIssue === 'function') _advanceFatelandsMysteryForIssue(); } catch (_) {}
       // Clear paid status — new issue requires its own charge.
       state._issuePurchaseStatus = null;
       state._issuePurchaseOpId = null;
@@ -123620,12 +125152,19 @@ CHILDHOOD & PRE-THRESHOLD MAGIC (AUTHORITATIVE):
       // Fatelands Canon Engine — full on Scene 1, compressed anchor on subsequent
       block += getFantasyCanonBlock(state);
 
+      // Fatelands School History — the PUBLIC 10,000-year backbone (full on Scene 1,
+      // compressed era-spine later). Sits ON TOP of the scene-10-gated secret cosmology.
+      block += getFatelandsHistoryBlock(state);
+
       // Deterministic moon sky directive
       const sceneDay = (state.turnCount || 0) + 1; // turnCount 0 = Scene 1 = Day 1
       block += buildMoonDirective(sceneDay);
 
-      // Hidden cosmology — available after scene 10 for deep lore discovery
-      block += buildPiercingLoreDirective();
+      // Hidden cosmology — MOVED to the per-turn path (Roman 2026-07-23). This block is
+      // cached-once at turnCount 0, where buildPiercingLoreDirective's scene<10 gate returns ''
+      // → the secret cosmology never injected here. It is now called per-turn alongside
+      // buildFatelandsDeepHistoryDirective (see the _fatelandsCognitiveMemoryBlock concat), where
+      // turnCount is live and the gate actually opens. Intentionally NOT called here anymore.
 
       // Deep lore reference — not every scene, occasional flavor
       if (sceneDay > 1 && sceneDay % 3 === 0) {
@@ -123794,16 +125333,18 @@ Accept outputs that: maintain ambiguity, emphasize tension and choice, preserve 
       // Nobility integrity rule
       block += `\nFATELANDS NOBILITY: If Vaelryn Reach is referenced, the ruling elite must come from one of the five great houses (Aurelion, Thornmere, Velar, Dathros, Merrowyn). Do not invent additional ruling houses unless a story explicitly introduces a minor noble family.`;
 
-      // Legendary Sacrifices — mythic history flavor
-      block += `\n\nFATELANDS RELIC CULTURE:
-Objects connected to legendary sacrifices are revered — preserved teeth of kings, journals of forgotten mages, chain fragments from the Shackle Isles, shadow mirrors, Hungry Eye meteor shards. Pilgrims travel the continent seeking them.
-Rulers often claim descent from or spiritual connection to one of the Five Legendary Sacrifices.`;
-      // Rotate a legend rumor into the scene
-      const legendRumor = getLegendarySacrificeRumor(state);
-      if (legendRumor) block += `\n${legendRumor}`;
-      // Prophecy hook — very rare
-      if (sceneDay > 5 && sceneDay % 11 === 0) {
-          block += `\nSome believe a Sixth Legendary Sacrifice has yet to occur.`;
+      // HISTORY IN TWO REGISTERS (Roman 2026-07-23) — replaces the old always-on
+      // "relic culture" + every-scene legend rumor, which stood in the cached prefix
+      // every scene and read as ambient history-wallpaper. History now lives in TWO
+      // clearly-separated registers; the DEFAULT is oblique-and-rare.
+      block += `\nFATELANDS HISTORY — TWO REGISTERS (HARD):
+• OBLIQUE REFERENCE (the common one, and even this is not every scene): a name or event invoked as PROVERB, curse, oath, or warning — carrying WEIGHT, never FACTS. The speaker assumes you already know it; nothing is explained. ✓ "Let Karkus be a lesson to you." ✓ "She swore it on the Fold." ✓ "Not since the Uncrowned Queen." This is how living people wear their history — glancingly.
+• HISTORICAL EXPOSITION (RARE — a deliberate dramatic BEAT, not wallpaper): the past actually told, usually because a scene EARNS it — a scholar, a confession, a ruin, a revelation that a public "fact" was a lie. Reserve it for a moment built to carry it, at most once or twice in a whole issue. When it lands it should REVEAL, not recap — a hidden truth that reframes what everyone was taught. ✓ (earned, dramatic) "It wasn't sixteen mages who brought the Fold down on Dathros — it was all of Dathros. The mages didn't sacrifice their memories; they tricked the people into sacrificing each OTHER, then sacrificed their memory of that blighted act. They were the first wish-slavers." — (that specific Dathros truth is a GATED late REVELATION: hold it until a scene has earned it and the deep-history lore is in play; it is the SHAPE of exposition, not a fact to state early.) ✗ (never — ambient recap) dropping "People still whisper of the Dathros Conclave, when the city sacrificed their certainty" into a scene about something else.
+DEFAULT TO NEITHER. Most scenes carry no history at all. Prefer oblique when history touches the scene; spend exposition only where the story reaches back on purpose.`;
+      // Relic culture + descent-claims — available, but ONLY when a scene actually
+      // turns on a relic/lineage (not injected as standing flavor every scene).
+      if (state._fantasyRelicContext || state._lineageStakesActive) {
+        block += `\nFATELANDS RELICS/LINEAGE (this scene touches one): objects tied to a legendary sacrifice are revered (preserved teeth of kings, forgotten mages' journals, Shackle-Isles chain fragments, Hungry Eye shards); rulers may claim descent from one of the Five Legendary Sacrifices. Invoke obliquely — the relic/claim carries weight, not a lecture.`;
       }
 
       // Region anchor if assigned by location engine
@@ -135902,6 +137443,7 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
               _openingPatternBlock += '\nAVOID these recently-used opening patterns (they have appeared in the user\'s last few stories — variety is mandatory):\n';
               _avoid.forEach(function(rid) {
                   var p = SCENE1_OPENING_PATTERNS.find(function(x) { return x.id === rid; });
+                  if (!p) { try { p = (typeof FATELANDS_OPENING_PATTERNS !== 'undefined') && FATELANDS_OPENING_PATTERNS.find(function(x) { return x.id === rid; }); } catch (_) {} }
                   if (p) _openingPatternBlock += '- ' + p.desc + '\n';
               });
           }
@@ -135966,7 +137508,7 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
 
       var _microBlock =
           '\nINLINE QUESTION (MANDATORY — verbatim, from curated library):\n' +
-          'Embed the following question EXACTLY as written, BEFORE the 3rd paragraph break. Use these literal markers (one per line, surrounding ONLY the question):\n' +
+          'Embed the following question EXACTLY as written. Its PLACEMENT is a WINDOW, not a deadline: it should arrive once the reader understands the immediate situation (the opening pressure has landed and been felt) — but it MUST land BEFORE the <<STATE_CHANGE>> beat (the scene\'s turn) — the player gets their agency in the DEVELOPING situation, and only then does the turn land. The order is fixed: establish the situation → THIS FORK → the <<STATE_CHANGE>> event → its consequences → the closing decision → the deck closer. Do NOT cram the fork into the first two paragraphs, and do NOT let it slide to the end (at or after the state-change, adjacent to the decision): the player must feel they are PARTICIPATING in the scene as it unfolds, not merely reacting to its conclusion. Use these literal markers (one per line, surrounding ONLY the question):\n' +
           '\n' +
           '<<MICRO_EXPRESSION>>\n' +
           _chosenMicro + '\n' +
@@ -135978,7 +137520,7 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
           '  • Do NOT add backstory, lore, family references, thematic explanation, or metaphor.\n' +
           '  • Do NOT expand the question into multi-clause forms or attach qualifying phrases.\n' +
           '  • The marker block MUST stand alone — a blank line BEFORE <<MICRO_EXPRESSION>> and AFTER <<CONTINUE>>. NEVER bury the markers inside a paragraph of running prose (that breaks the clickable choice).\n' +
-          '  • PLACEMENT: at the point where the protagonist would internally classify what\'s happening — typically right after the inciting pressure lands, before the 3rd paragraph break.\n' +
+          '  • PLACEMENT (anchored to STORY STATE, not paragraph count): at the point where the protagonist would internally classify what\'s happening — after the inciting pressure has landed and the situation is understood, and BEFORE the <<STATE_CHANGE>> turn beat. The fork PRECEDES the state-change; it never sits at or after it. Early enough to give the player agency mid-scene; late enough that they grasp what they are choosing about.\n' +
           '  • CAUSED, NOT APPENDED (HARD — Roman 2026-06-05): the question must feel CAUSALLY CONNECTED to a concrete observation that PRECEDES it in the same moment — caused by it, not dropped in. The observation need NOT be the adjacent line: a natural shape is observation → a beat or two of reaction → the question. What matters is that the reader feels the thought was CAUSED by something just observed, not that the observation physically abuts it. PREFERRED trigger: one of HIS recurring attraction anchors (his voice / mouth / eyes / shoulders / hands / scent — see the LOVE INTEREST BODY BIBLE), noticed in the moment. GOLD STANDARD (observation → reaction → thought): "His voice." / "God, that voice." / "<the question>". FORBIDDEN: a question with no preceding observation it could have arisen from — "Roman entered. <the question>" is appended, not caused. Do NOT reuse the same shape every story — vary the feature, the amount of reaction between it and the question, and the phrasing, so it never hardens into a structure a returning reader recognizes. (This applies to THIS goal-vs-connection question; it is NOT a rule to put LI description before every beat.)\n' +
           '  • After <<CONTINUE>>, the next line of prose MUST be the same regardless of which side the player picks — the choice is internal classification, not a branch.\n' +
           '  • PREWRITTEN PAYOFFS (HARD): at the VERY END of the scene (AFTER the final line of prose), emit TWO short hidden payoffs — the immediate beats the reader sees the instant they pick each side — using these markers EXACTLY:\n' +
@@ -136052,18 +137594,15 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
       var _wryFifthPersonBlock = '';
       if (state.povMode === 'author5th') {
           _fifthPersonBlock =
-              '\n5TH PERSON POV (HARD — ENFORCEMENT):\n' +
+              '\n5TH PERSON POV (HARD):\n' +
               '- Use ONLY "Fate" as the narrative presence (no "Story", no secondary entity).\n' +
-              '- Fate is ACTIVE:\n' +
-              '  - arranges, places, delays, advances, withholds\n' +
-              '  - controls timing, attention, and convergence\n' +
-              '- Fate must be embedded into flowing prose (NOT choppy or intercut fragments).\n' +
-              '- Avoid short, staccato Fate sentences unless for emphasis.\n' +
-              '- Fate must NOT:\n' +
-              '  - explain outcomes\n' +
-              '  - reveal the future\n' +
-              '  - sound humorous, casual, or conversational\n' +
-              '- Fate may anticipate and shape, but never declare what will happen.\n';
+              '- Fate is a CURIOUS EXPERIMENTER: it arranges EVENTS and CIRCUMSTANCES toward its plan (make a locked door swing open, engineer a coincidence, delay a train, cut the lights) and REACTS to what the humans choose — delight, despair, surprise.\n' +
+              '- HARD LINE — Fate acts on the WORLD, never on a human\'s WILL: it can orchestrate what HAPPENS but never a person\'s thoughts, feelings, decisions, or actions. It opens the door; it cannot make anyone walk through. FORBIDDEN: "Fate made her stay" / "Fate turned him toward her" / "Fate filled her with doubt".\n' +
+              '- When a human does something clever and unexpected, Fate is SURPRISED and REARRANGES — it may even take their better idea.\n' +
+              '- CONTINUOUS, not bookended (HARD): Fate reacts at nearly EVERY beat — to a line, a choice, a silence, a sound — a touch every few sentences, woven in. Fate that only opens and closes the scene has FAILED. ✓ "Fate hoped she would stay quiet; misinterpreting silence usually made things far more interesting." ✓ "…a car door closed with the soft weight of money, and Fate made sure Mara heard it."\n' +
+              '- PRONOUN CLARITY (HARD): Fate is female and present, so a bare "her/she" after a Fate sentence collides with Fate. NAME the human at each handoff — "Iris stood opposite MARA", never "opposite her".\n' +
+              '- Fate must be embedded into flowing prose (NOT choppy or intercut fragments); avoid short staccato Fate sentences unless for emphasis.\n' +
+              '- Fate may anticipate, arrange, and shape circumstance, but must NOT explain outcomes, reveal the future outright, or sound casual/conversational.\n';
           _preMicroTensionBlock =
               '\nPRE-QUESTION TENSION (HARD):\n' +
               'A human interaction MUST occur before the <<MICRO_EXPRESSION>> block.\n' +
@@ -136310,7 +137849,7 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
                   } else if (_pov === 'environment4th') {
                     // 4th-person Environmental — preserve the SHAPE,
                     // render through the room/object lens.
-                    _opener = 'The deck found ' + _poss + ' palm — ' + _poss + ' great-grandmother\'s old ' + _anchor + ', pulled from a pocket the morning could not remember packing.';
+                    _opener = 'The deck found ' + _poss + ' palm — ' + _poss + ' great-grandmother\'s old ' + _anchor + ', in ' + _poss + ' pocket since morning though ' + _poss + ' memory held no trace of putting it there.';
                     _closer = _Subj + ' toyed with the idea of letting the cards decide. The cards, in turn, waited.';
                   } else {
                     // 3rd-person (default / "standard"). Use the player
@@ -136385,7 +137924,7 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
           '\n' +
           '1. The scene\'s opening violates OPENING MODE (HARD). MODE A: opens with non-dialogue prose AND establishes location + presence in sentences 1–3. MODE B: opens with a single line of charged dialogue AND (a) the line is a complete utterance, (b) the speaker is identified in the same paragraph, (c) location + presence are clear by end of paragraph 2, (d) the line immediately creates tension or conflict. Any other dialogue-first opening (mid-sentence response, unattributed line, no grounding by paragraph 2, no immediate tension) is INVALID.\n' +
           '2. (Subsumed into rule 1 — see OPENING MODE.)\n' +
-          '3. The <<MICRO_EXPRESSION>> ... <<CONTINUE>> block is missing, malformed, or appears AFTER the 3rd paragraph break.\n' +
+          '3. The <<MICRO_EXPRESSION>> ... <<CONTINUE>> block is missing or malformed, OR it is crammed into the opening before the reader can understand the situation, OR it appears AT or AFTER the <<STATE_CHANGE>> beat (it must PRECEDE the state-change turn), OR it is adjacent to the closing decision. It must land in the MIDDLE window — after the situation is understood, before the state-change — giving the player agency DURING the scene, never as a last checkbox before the ending.\n' +
           '4. The micro-expression question is not exactly one line of the form: "Is this [A] — or [B]?" OR the alternate form "Is this about [A] — or [B]?".\n' +
           '5. The two micro-expression options are not interpretations of the SAME pressure (they would lead to different next sentences or different blocking).\n' +
           // Same onboarding gate as the OPENING SHAPE injection above —
@@ -136406,6 +137945,11 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
               ? '12. (4th-person POV active) The narration uses Fate / prophecy / inevitability language, OR more than 1–2 material perceivers fire in the same beat (sensor spam), OR an object\'s perception is raw sensory logging instead of meaning-bearing, OR the human characters are obscured (the reader cannot tell WHO acts or WHO speaks).\n'
               : '') +
           '13. (UNIVERSAL — applies regardless of POV / tone / world) The scene does NOT end on a physical, embodied, unresolved decision the protagonist can immediately act on. Failure modes: ends in abstraction / summary / thematic statement / rhetorical question; no actionable moment in the final beat; decision is already resolved (protagonist has chosen / acted / settled); final beat is a closing narrator observation rather than a player-actionable beat; the temptation → commit jump is too fast (missing the held "almost" beat); STAKES UNCLEAR — the reader cannot immediately understand what the final action risks or commits (stakes may be carried EITHER by an explicit clause OR by being embedded in the physical action itself, but they MUST be felt).\n' +
+          '14. (UNIVERSAL) PREMATURE / UNEARNED ENDING — the final decision is the CULMINATION of the scene, not the first available course of action. Before the ending, the situation itself must change in a meaningful way: the protagonist must discover something, experience new emotional pressure, encounter an unexpected complication, or have their understanding materially altered — and the ending decision must arise BECAUSE of that change. If nothing significant has changed since the scene began (the protagonist and their circumstances are essentially as they were at the first line, and the same decision could have been reached at the opening with no loss of meaning), the ending has NOT been earned and the scene is INVALID.\n' +
+          '15. (UNIVERSAL — READER-STATE CONTRACT, Roman 2026-07-25) OPENING COMPREHENSION. This changes WHAT you must deliver, not merely how clearly to write it: within the first ~150–200 words a first-time reader must be able to answer, FROM WHAT IS SHOWN (not told), all four — (a) what dangerous thing is happening RIGHT NOW; (b) why it is dangerous / what is at stake; (c) what the protagonist is trying to achieve in the next few minutes; (d) the obvious consequence if they fail. If any of the four is not immediately inferable after the opening, the scene is INVALID. World MYSTERY is ENCOURAGED — the reader SHOULD stay curious about the world\'s deeper nature — but PHYSICAL AMBIGUITY is FORBIDDEN: the reader must never be unsure WHO is acting, WHAT physical event is occurring, or WHY the next action follows.\n' +
+          '16. (UNIVERSAL — READER-STATE CONTRACT) EVERY PARAGRAPH EARNS ITS PLACE — TIE IT TO THE PLAN. Each paragraph must demonstrably do ONE of: (A) advance the SCENE MISSION (the protagonist\'s planned intent for this scene — whatever its shape: escape, convince, conceal, discover, earn, resist, protect, endure — or, if none is stated, her attempt to solve the immediate problem), OR (B) satisfy a READER-STATE objective (move the reader toward what they must KNOW / BELIEVE per the planned reader-state — or, absent a plan, increase understanding of the immediate problem). A paragraph that does NEITHER — only atmosphere, terminology, lore, or evocative imagery — is DEAD WEIGHT: rewrite or delete it. Track the protagonist\'s immediate PREDICAMENT and the reader\'s grasp of it; never pause for the world\'s ONTOLOGY.\n' +
+          '17. (UNIVERSAL — READER-STATE CONTRACT) FIRST MENTION = FUNCTION, NOT LORE. Naming a new world concept is FINE and often necessary — you introduce a character who matters, and the same holds for a force / place / system that matters. The failure is naming it WITHOUT its DRAMATIC FUNCTION. A concept\'s first mention must establish, in the SAME breath, what it DOES or the immediate CONSEQUENCE it creates — taught through visible effect and the protagonist\'s loaded perception, NEVER as encyclopedia lore. ✓ "The chains were dragging us toward the rift; whatever crossed its edge did not come back." (you don\'t know what a rift IS — you know why to fear it) — ✗ "The Becoming Field answered." / "The Weave-Script flared." (a name with no function). You need not explain HOW it works or WHERE it came from — only why the reader should care RIGHT NOW.\n' +
+          '18. (UNIVERSAL) A PROCEDURAL CRISIS MUST NOT ARRIVE IN A CONTAINER. Do NOT open the scene on a letter / summons / notice / email / official message that DELIVERS a PROCEDURAL or INSTITUTIONAL crisis — a summons to a hearing, a legal notice, an eviction, a demand, a subpoena, a termination, an official deadline — the cold "an envelope arrives and THAT is the plot" opener; a procedural crisis must be a LIVE event, not pre-packaged and merely delivered. This ban is NARROW — TWO things are explicitly FINE and NOT this failure: (a) an ordinary message that is NOT the crisis (a friend\'s text, a passing notification, a schedule confirmation); (b) an intimate / personal document whose crisis is EMOTIONAL, not procedural — a mother\'s diary, a love letter, a found confession — those are legitimate quiet crises. The failure is ONLY a PROCEDURAL / INSTITUTIONAL crisis arriving pre-packaged in a container instead of happening live.\n' +
           '\n' +
           'If ANY rule is violated, you MUST silently rewrite the scene to comply BEFORE returning it. Do not return prose that fails the contract.\n' +
           '\n' +
@@ -136452,6 +137996,32 @@ Return JSON only: { "title": "...", "synopsis": "..." }${_preTitleLangBlock}` },
         _microBlock = ''; _preMicroTensionBlock = '';
       }
 
+      // STATE-CHANGE SLOT (Roman 2026-07-24) — EVENT-SPECIFIC positioned marker binding the planner's
+      // state_change to a distinct mid-scene beat. The renderer reliably honors positional markers
+      // (<<MICRO_EXPRESSION>>) but ignores prose instructions about sequencing (proven: fact → ignored,
+      // state_change → front-loaded, explicit false→true transition → still front-loaded). Payload is
+      // the EXACT planned event, not a generic "turn". Markers stripped before display + instrumented.
+      // NOT under Hot&Fast (that short opener has no mid-scene beats).
+      var _stateChangeSlot = '';
+      try {
+        var _scIR = (state.aPlot && state.aPlot.scene1Compressed) || null;
+        // WISH = STATE CHANGE (Roman 2026-07-24, direction B): in an onboarding wish demo the WISH
+        // (omen → answer → price) IS the scene's one turn — do NOT inject a separate A-plot
+        // state-change beat (it manufactured a competing climax + dropped foreign props like chains).
+        if (typeof _fatelandsWishDemoActive === 'function' && _fatelandsWishDemoActive(state)) {
+          _stateChangeSlot = '\n\nTHE SCENE’S ONE TURN = THE WISH (HARD): this onboarding scene’s single irreversible turn is the WISH itself — its omen, Fate’s answer, and the price taken. Do NOT stage a SEPARATE "state-change" beat on top of it; the wish IS the change. Wherever any instruction elsewhere refers to "the <<STATE_CHANGE>> beat," it means THE WISH RESOLVING (Fate’s answer + the price) — there is no separate marker to write. Order still holds: establish the crisis → the <<MICRO_EXPRESSION>> demand/hint fork → the wish is spoken and Fate answers and the price is taken (the turn) → the closing decision, which arises BECAUSE of what the wish just did (the price paid, the crisis now reshaped). The fork comes BEFORE Fate answers; the decision comes AFTER the price.\n';
+        } else if (_scIR && _scIR.state_change && (typeof _hotFastActive !== 'function' || !_hotFastActive())) {
+          _stateChangeSlot = '\n\nSTATE-CHANGE BEAT (HARD — the scene\'s ONE turn, a positioned beat like the micro-expression):\n'
+            + 'The event below is FALSE when the scene opens and BECOMES TRUE partway through. Stage it as a DISTINCT on-page beat — in motion, witnessed by someone present — NOT in the opening, NOT summarized, NOT deferred. Wrap exactly that beat in these two markers (they are STRIPPED before the reader sees the scene; write natural prose inside them):\n'
+            + '<<STATE_CHANGE>>\n'
+            + (_scIR.state_change_precondition ? ('(this is still FALSE at the opening: ' + _scIR.state_change_precondition + ')\n') : '')
+            + 'STAGE THIS EXACT EVENT HERE as a concrete on-page MOMENT — show what physically HAPPENS, witnessed, in motion (a sound, a movement, a body reacting, an object changing). SHOW the event; NEVER render it as a flat summary or an abstract label that announces its meaning. FORBIDDEN shapes: "a sudden shift reveals a hidden thread…", "the fracture becomes visible, revealing a deeper truth…", "a change in the atmosphere…" — those TELL the meaning instead of staging the moment. The event to stage: ' + _scIR.state_change + '\n'
+            + '<<STATE_CHANGE_END>>\n'
+            + 'PLACEMENT: the opening establishes the situation with this event still NOT yet happened; the <<STATE_CHANGE>> beat lands AFTER that opening and BEFORE the ending. The <<MICRO_EXPRESSION>> demand/hint fork comes BEFORE this beat (order: establish → fork → <<STATE_CHANGE>> → consequences → decision) — the player gets agency in the developing situation, then the turn lands; the fork must NEVER sit at or after this beat. The ONE fixed causal rule (HARD): the closing decision must come AFTER the <<STATE_CHANGE>> beat and arise BECAUSE of it — a choice that could not even have been posed before this event happened.'
+            + (_scIR.forces_choice ? (' Specifically, the closing decision the scene builds to is: ' + _scIR.forces_choice + ' — this choice exists ONLY because the event happened.') : '') + '\n';
+        }
+      } catch (_scSlotErr) {}
+
       return `Write Scene 1 of this story.
 
 Begin with a captivating opening that establishes:
@@ -136469,10 +138039,10 @@ Avoid dramatic or trailer-style phrasing. Prefer concrete situations over themat
 No exposition, no lore, no plot summary, no rhetorical questions, no clichés.
 [/BLURB]
 
-Then write the scene prose (800-1200 words).
+Then write the scene prose. YOUR JOB IS TO TRANSFORM THE SITUATION until a decision becomes inevitable: by the final beat the protagonist or their circumstances must be materially different than they were at the first line — something discovered, a new emotional pressure, an unexpected complication, or an understanding altered — and the closing decision must arise BECAUSE of that change. A scene where nothing has changed by the end has not earned its ending.
 
 Remember: This is the beginning of a longer story. Plant seeds, don't harvest.
-${(typeof _ffBuildRevealWithholdDirective === 'function') ? _ffBuildRevealWithholdDirective(state) : ''}${_presenceBlock}${_structureExample}${_contractBlock}`;
+${(typeof _ffBuildRevealWithholdDirective === 'function') ? _ffBuildRevealWithholdDirective(state) : ''}${_presenceBlock}${_structureExample}${_contractBlock}${_stateChangeSlot}`;
   }
 
   // Expose for use in Begin Story flow
@@ -136935,6 +138505,12 @@ ${(typeof _ffBuildRevealWithholdDirective === 'function') ? _ffBuildRevealWithho
           lines.push('- At least 2-3 moons visible in sky, each a DIFFERENT COLOR. Earth-moon-sized or smaller.');
       }
       lines.push('- FORBIDDEN: aurora borealis, generic starfield, single moon, Earth-like night sky. The Fatelands sky is ALWAYS multi-lunar.');
+      lines.push('');
+
+      // ── SCALE (Roman 2026-07-22) — no Fatelands people is bigger than a tall human ──
+      lines.push('SCALE — ALL PEOPLES ARE HUMAN-SCALED (MANDATORY):');
+      lines.push('- Every Fatelands people — humans, First Favored, Kwisheen, Half-Favored, Half-Kwisheen, Wildfolk — is roughly HUMAN-SIZED. The taller peoples (First Favored, Kwisheen) stand at MOST about a head to a head-and-a-half above an ordinary human; NONE is a giant, an ogre, or a towering monster.');
+      lines.push('- A human standing beside ANY of them must read as a person beside a (tall) PERSON — never a person beside a beast or a colossus. Do NOT render any non-human oversized, hulking, or looming at twice a human\'s height. Their strangeness is in FORM (tentacles, luminous skin, coral hair), NEVER in monstrous SIZE.');
       lines.push('');
 
       // ── VEGETATION (Veilwood-specific, but Spiralbound trees exist elsewhere too) ──
@@ -137578,7 +139154,7 @@ ${_buildSettingImageOverrideSuffix()}`,
               // coral hair (including a bearded, largely bare-crowned male), and the ATTIRE canon.
               file: '/assets/Fatelands/Kwisheen_Body_Anchor_v2.jpg?v=20260719',
               role: 'species_sheet',
-              label: 'Kwisheen species reference (AUTHORITATIVE — a full-body male+female pair). Defines body plan (humanoid torso, exactly TWO manipulator arms, a six-tentacle lower body replacing legs), proportions, chromatophore skin, hair, AND species-specific attire conventions. HAIR: the scalp growth is living CORAL DREADLOCKS — branching, reef-textured, hair-like — NOT tentacles and NEVER counted among the limbs; it is groomed like human hair, so length, crests, beards and BALDNESS are all canonical (the male in this reference is bearded with a largely bare crown). This image is VISUAL + WARDROBE LAW — do not reinterpret, simplify, or stylize these traits, and note that BOTH figures are fully clothed with the torso covered by a garment, jewelry worn over it. The artist style reference may contribute rendering technique (line quality, palette, brush language) but MUST NOT alter: limb structure, body plan, chromatophore behavior, or species-appropriate attire. If the artist style page shows characters in non-Kwisheen costume (modern dress, leather armor, tech gear), those are the artist\'s OTHER WORK and DO NOT apply to Kwisheen — refer ONLY to this species reference.',
+              label: 'Kwisheen species reference (AUTHORITATIVE — a full-body male+female pair). Defines body plan (humanoid torso, exactly TWO manipulator arms, a six-tentacle lower body replacing legs), proportions, chromatophore skin, hair, AND species-specific attire conventions. SCALE (HARD): a Kwisheen is a TALL HUMANOID — about a head to a head-and-a-half taller than a human, with a PERSON’S build and proportions; a human standing beside one must read as a normal person beside a TALL PERSON, NEVER a giant, an ogre, or a looming monster twice a human’s height. SKIN (HARD): SMOOTH colour-shifting CHROMATOPHORE skin (shifting hues like an octopus) — NOT reptilian SCALES, NOT armoured plates, NOT a fish-scaled hide; the FACE especially is smooth humanoid skin, never scaled or lizard-like. HAIR: the scalp growth is living CORAL DREADLOCKS — branching, reef-textured, hair-like — NOT tentacles and NEVER counted among the limbs; it is groomed like human hair, so length, crests, beards and BALDNESS are all canonical (the male in this reference is bearded with a largely bare crown). This image is VISUAL + WARDROBE LAW — do not reinterpret, simplify, or stylize these traits, and note that BOTH figures are fully clothed with the torso covered by a garment, jewelry worn over it. The artist style reference may contribute rendering technique (line quality, palette, brush language) but MUST NOT alter: limb structure, body plan, chromatophore behavior, or species-appropriate attire. If the artist style page shows characters in non-Kwisheen costume (modern dress, leather armor, tech gear), those are the artist\'s OTHER WORK and DO NOT apply to Kwisheen — refer ONLY to this species reference.',
               weight: 1.0,
               focus: ['species_anatomy', 'body_plan', 'chromatophore_skin', 'cranial_coral_hair', 'full_body_proportions', 'gender_variation', 'attire'],
               authority: ['anatomy', 'body plan', 'limb structure', 'skin texture', 'attire', 'species identity']
@@ -139383,7 +140959,7 @@ ${_buildSettingImageOverrideSuffix()}`,
 
     // First Favored physical traits (critical: NOT elves)
     if (/first\s*favored/i.test(lower)) {
-      ctx.push('SPECIES NOTE: First Favored — match species anchor images exactly. Ears: half human size, rounded, close to head. Athletic, perfectly proportioned build (an Olympic athlete\'s proportion, taller than human, not bulky, not thin), ethereal beauty. Eyes ~15% larger, match pupil anchor: four-pointed concave diamond, a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. Iris: luminous non-human color (gold, violet, silver, rose, ember, opalescent). Coloring: skin and hair are EXOTIC, contrasting non-standard colors ~95% of the time (skin green/purple/orange/pearl/aqua/jade/obsidian/grey; hair an exotic color, contrasting/complementary/similar shade all fine, thick and glossy) — ordinary human coloring is rare. Skin: low-level luminescent patterns (Weave-Script) — slow-moving calligraphy encoding emotion. Attire: minimal gossamer, translucent, allowing dermal expression. Skin renders with soft luminous quality — in areas of full visibility, luminescence intensifies to radiant overexposure.');
+      ctx.push('SPECIES NOTE: First Favored — match species anchor images exactly. Ears: half human size, rounded, close to head. Athletic, perfectly proportioned build (an Olympic athlete\'s proportion — taller than an AVERAGE human but NO taller than a TALL human; never a giant, never oversized or looming; not bulky, not thin), ethereal beauty. Eyes ~15% larger, match pupil anchor: four-pointed concave diamond, a vivid luminous color distinct from the iris (the eye always holds visible color — never a flat black void), centered. Iris: luminous non-human color (gold, violet, silver, rose, ember, opalescent). Coloring: skin and hair are EXOTIC, contrasting non-standard colors ~95% of the time (skin green/purple/orange/pearl/aqua/jade/obsidian/grey; hair an exotic color, contrasting/complementary/similar shade all fine, thick and glossy) — ordinary human coloring is rare. Skin: low-level luminescent patterns (Weave-Script) — slow-moving calligraphy encoding emotion. Attire: minimal gossamer, translucent, allowing dermal expression. Skin renders with soft luminous quality — in areas of full visibility, luminescence intensifies to radiant overexposure.');
     }
 
     // Kwisheen physical traits (critical: NOT merfolk)
@@ -154303,6 +155879,25 @@ No text, no watermark, no UI elements, share-ready.`;
     return null; // rejected / none → no burst reference
   }
   window._wishBurstStyleRef = _wishBurstStyleRef;
+  // FATE-SYMBOL WORLD GATE (Roman 2026-07-22) — the wish/twist burst, the sacrifice-hand, and every Fate
+  // symbol are FATELANDS-ONLY reader notation; they must NEVER appear in a non-Fatelands story. The burst
+  // triggers key off the GENERIC 'Transformation' reader-learning beat-label, which EVERY world uses — so a
+  // sci-fi / contemporary sheet whose last beat happened to be labelled 'Transformation' was attaching the
+  // golden/red Fate burst. Gate on the canonical Fatelands signal (state.picks.world === 'Fantasy').
+  function _fateSymbolsAllowed() {
+    try { var s = (typeof state !== 'undefined' && state) || window.state || {}; return !!(s.picks && s.picks.world === 'Fantasy'); } catch (_) { return false; }
+  }
+  window._fateSymbolsAllowed = _fateSymbolsAllowed;
+  // WISHER GATE (Roman 2026-07-22) — the wish/twist BURST is visible ONLY when a RESIDENT wishes; NEVER for the
+  // PC's own wish (ordinary, Petition, or Tempt). `_findOrCreateFateBargain` stamps `_pcFateWishScene` = the scene
+  // the PC wished; if that is the scene being rendered, the depicted wish is the PC's → suppress the burst. Scene-
+  // scoped so a PC bargain from an EARLIER scene never suppresses a later RESIDENT wish's burst (the mechanic-
+  // outcome read is otherwise stale). Only the BURST is gated here; the sacrifice mark stays on the world gate.
+  function _isPcWishThisScene() {
+    try { var s = (typeof state !== 'undefined' && state) || window.state || {};
+      return s._pcFateWishScene != null && (+s._pcFateWishScene === (+s.turnCount || 0)); } catch (_) { return false; }
+  }
+  window._isPcWishThisScene = _isPcWishThisScene;
   // ═══ CANONICAL VISUAL ASSET RULE (Roman 2026-07-18) ══════════════════════════════════════════════
   // If a visual element has a CANONICAL appearance readers should RECOGNIZE across issues, feed the
   // renderer that appearance as a REFERENCE IMAGE — the reference defines WHAT it looks like; text
@@ -154333,15 +155928,19 @@ No text, no watermark, no UI elements, share-ready.`;
     sacrifice_hand:    { tier: 1, kind: 'canonical symbol',          asset: '/assets/Fatelands/Sacrifice_Hand_Ref_v1.png', governs: 'the localized shadow-STAIN Fate leaves over the sacrificed part (absence, not a reaching hand)', plumbing: '_resolveCanonicalAssets, when the panel pays a sacrifice' },
     manta_cloak:       { tier: 1, kind: 'signature garment',         asset: '/assets/Fatelands/Manta_Cloak_Ref_v1.png', governs: 'the cape hide / pearl strands / braid trim', plumbing: '_resolveCanonicalAssets, when the wardrobe is a manta-cloak' },
     character_casting: { tier: 1, kind: 'major recurring character', asset: null, governs: 'this individual\'s costume / colour / recognition traits', plumbing: 'per-character harvested crop — Casting Library reinject (establishing-shot sourced)' },
-    composition:       { tier: 2, kind: 'framing / composition',      assetByFraming: { establishing_solo: '/assets/Fatelands/Comp_Establishing_Solo_v1.png', object_dominant: '/assets/Fatelands/Comp_Object_Dominant_v1.png', environment_wide: '/assets/Fatelands/Comp_Environment_Wide_v1.png' }, governs: 'HOW the panel is framed (subject scale, dominance, populated depth) — beats the renderer\'s two-shot prior', plumbing: '_resolveCanonicalAssets via ctx.framing = _panelFraming(panel)' }
+    composition:       { tier: 2, kind: 'framing / composition',      assetByFraming: { establishing_solo: '/assets/Fatelands/Comp_Establishing_Solo_v1.png', object_dominant: '/assets/Fatelands/Comp_Object_Dominant_v1.png', environment_wide: '/assets/Fatelands/Comp_Environment_Wide_v1.png', cooperation: '/assets/Fatelands/Comp_Cooperation_SideBySide_v1.png', cooperation_back_to_back: '/assets/Fatelands/Comp_Cooperation_BackToBack_v1.png' }, governs: 'HOW the panel is framed (subject scale, dominance, populated depth, side-by-side + back-to-back cooperation) — beats the renderer\'s two-shot prior', plumbing: '_resolveCanonicalAssets via ctx.framing = _panelFraming(panel)' }
   };
   window._CANONICAL_VISUAL_ASSETS = _CANONICAL_VISUAL_ASSETS;
   // Resolve which canonical reference images to attach for a panel's context. Returns [{id,tier,path,label}].
   // (Species anatomy + character casting have their own dedicated gates; this covers the symbol + garment.)
   function _resolveCanonicalAssets(ctx) {
     ctx = ctx || {}; var out = [];
-    if (ctx.wishOutcome) { var _br = _wishBurstStyleRef(ctx.wishOutcome); if (_br) out.push({ id: 'wish_burst', tier: 1, path: _br.path, label: _br.label }); }
-    if (ctx.sacrifice) out.push({ id: 'sacrifice_hand', tier: 1, path: _CANONICAL_VISUAL_ASSETS.sacrifice_hand.asset, label: 'SACRIFICE MARK STYLE reference — match the graphic language: a small LOCALIZED shadow-STAIN, a soft palm-shaped patch of shadow with faint finger-like edges that settles OVER the sacrificed part and drains it to grey — an OCCLUSION / an ABSENCE, NOT a hand or arm reaching in, NOT a shadow creature. Match the STYLE ONLY — the soft palm-shaped stain — not any scene.' });
+    // Fate symbols (burst + sacrifice-mark) are Fatelands-only — never attach them in a non-Fatelands story,
+    // even if a caller passes a wishOutcome (belt-and-suspenders with the call-site gates).
+    var _fate = _fateSymbolsAllowed();
+    // burst is resident-wish-only (suppress for the PC's own wish this scene); sacrifice mark stays world-gated.
+    if (ctx.wishOutcome && _fate && !_isPcWishThisScene()) { var _br = _wishBurstStyleRef(ctx.wishOutcome); if (_br) out.push({ id: 'wish_burst', tier: 1, path: _br.path, label: _br.label }); }
+    if (ctx.sacrifice && _fate) out.push({ id: 'sacrifice_hand', tier: 1, path: _CANONICAL_VISUAL_ASSETS.sacrifice_hand.asset, label: 'SACRIFICE MARK STYLE reference — match the graphic language: a small LOCALIZED shadow-STAIN, a soft palm-shaped patch of shadow with faint finger-like edges that settles OVER the sacrificed part and drains it to grey — an OCCLUSION / an ABSENCE, NOT a hand or arm reaching in, NOT a shadow creature. Match the STYLE ONLY — the soft palm-shaped stain — not any scene.' });
     if (ctx.wardrobe && /manta/i.test(ctx.wardrobe)) out.push({ id: 'manta_cloak', tier: 1, path: _CANONICAL_VISUAL_ASSETS.manta_cloak.asset, label: 'manta-cloak garment reference — match the cape hide, pearl strands, and braid trim STYLE ONLY, not the wearer.' });
     // COMPOSITION / FRAMING reference (Roman 2026-07-18) — attach the framing as an image, not text, because the
     // renderer's two-shot prior defeats every text directive. ONE per panel, only for framings the prior fights.
@@ -154360,7 +155959,9 @@ No text, no watermark, no UI elements, share-ready.`;
     establishing_solo: { path: '/assets/Fatelands/Comp_Establishing_Solo_v1.png', label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): frame this as a SINGLE figure, SMALL and OFF-CENTER, dwarfed by open environment — a lone-subject establishing shot, NOT two figures facing each other at equal size. Borrow ONLY the framing and the subject\'s small size-in-frame; do NOT render these gray shapes, this palette, or an empty set.' },
     object_dominant:   { path: '/assets/Fatelands/Comp_Object_Dominant_v1.png',   label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): the central OBJECT/event fills most of the frame and IS the subject; any person is SMALL and pushed to the edge. The reader\'s eye must land on the OBJECT, not a face. Borrow ONLY the framing and relative scale; do NOT render this gray arch, palette, or literal shapes.' },
     environment_wide:  { path: '/assets/Fatelands/Comp_Environment_Wide_v1.png',  label: 'COMPOSITION / FRAMING reference (grayscale LAYOUT guide — NOT content to draw): a WIDE, DEEP environment filling the frame, populated by SEVERAL small figures at different distances so the place reads inhabited and alive — not two isolated people on an empty set. Borrow ONLY the wide framing, the depth, and the presence of multiple small figures; do NOT render these gray blocks or palette.' },
-    underwater_float:  { path: '/assets/Fatelands/Comp_Underwater_Float_v1.png',  label: 'BUOYANCY / POSE reference (grayscale LAYOUT guide — NOT content to draw): the figures are SUSPENDED in mid-water at DIFFERENT heights, bodies TILTED off-vertical, limbs and tentacles drifting, open water on ALL sides — NO seabed floor under them, NO horizon, feet not planted and bearing no weight. Borrow ONLY the floating body attitude and the absence of a ground plane; do NOT render these gray silhouettes or palette.' }
+    underwater_float:  { path: '/assets/Fatelands/Comp_Underwater_Float_v1.png',  label: 'BUOYANCY / POSE reference (grayscale LAYOUT guide — NOT content to draw): the figures are SUSPENDED in mid-water at DIFFERENT heights, bodies TILTED off-vertical, limbs and tentacles drifting, open water on ALL sides — NO seabed floor under them, NO horizon, feet not planted and bearing no weight. Borrow ONLY the floating body attitude and the absence of a ground plane; do NOT render these gray silhouettes or palette.' },
+    cooperation:       { path: '/assets/Fatelands/Comp_Cooperation_SideBySide_v1.png', label: 'COOPERATION / SHARED-FOCUS reference (grayscale LAYOUT guide — NOT content to draw): two ALLIED figures stand SIDE BY SIDE (shoulder to shoulder, staggered in depth on the SAME side of the frame), BOTH turned the SAME way toward a shared focus (the bright mass) — the danger or goal they face TOGETHER. They do NOT face each other. Borrow ONLY this arrangement — the two figures on one side, together, both oriented toward the off-frame threat/goal; NOT a face-to-face confrontation or an intimate two-shot. Do NOT render these gray shapes, this glow, this palette, or an empty set.' },
+    cooperation_back_to_back: { path: '/assets/Fatelands/Comp_Cooperation_BackToBack_v1.png', label: 'BACK-TO-BACK / SURROUNDED reference (grayscale LAYOUT guide — NOT content to draw): two ALLIED figures stand BACK TO BACK at the CENTRE, spines together, each turned OUTWARD the OPPOSITE way — covering different directions against pressure that closes in from BOTH edges (the dark masses left and right). Borrow ONLY this arrangement — the pair centred and back-to-back, facing outward against threats on multiple sides; NOT a face-to-face confrontation, NOT a side-by-side single focus, NOT a romantic two-shot. Do NOT render these gray shapes, this palette, or an empty set.' }
   };
   window._COMPOSITION_REFS = _COMPOSITION_REFS;
   function _resolveCompositionRef(framing) { return _COMPOSITION_REFS[framing] || null; }
@@ -154371,6 +155972,11 @@ No text, no watermark, no UI elements, share-ready.`;
   function _panelFraming(panel, readerLearning) {
     if (!panel) return null;
     var rl = String(readerLearning || panel.readerLearning || '');
+    // COOPERATION (Roman 2026-07-22) — a shared-focus ally panel gets the SIDE-BY-SIDE notan, which beats the
+    // renderer's two-shot prior harder than text alone. Highest precedence: the standoff/romance angle is the
+    // exact failure this reference exists to fix. (An event OBJECT still dominates if the panel is event-led.)
+    if (panel.shotType === 'back_to_back') return 'cooperation_back_to_back';
+    if (panel.shotType === 'cooperation' && !panel.eventLed) return 'cooperation';
     if (panel.eventLed) return 'object_dominant';
     if (panel.establishing) return 'establishing_solo';
     if (/^Orientation$/i.test(rl)) return 'environment_wide';
@@ -154421,6 +156027,8 @@ No text, no watermark, no UI elements, share-ready.`;
   // composition. The author picks a shotType; the Director EXPANDS it. Author never sets cameras.
   var _SHOT_LANGUAGE_V1 = {
     combat: 'COMBAT SHOT: medium-tight, a low or slightly dutch angle; dynamic diagonal, off-balance framing; bodies and weapons crossing the frame with strong foreground→midground depth; a sense of motion mid-strike. Never a flat, centred, static two-shot.',
+    cooperation: 'COOPERATION / SHARED-FOCUS SHOT (Roman 2026-07-22): the figures are ALLIES facing a SHARED external threat or goal TOGETHER — frame them SIDE BY SIDE (shoulder to shoulder, or staggered in depth on the same side), BOTH oriented the SAME way toward the shared subject (the danger, the objective, the thing they work on), NOT facing each other. The shared focus (the rising water, the fire, the lock, the passage) anchors the frame and both figures point their bodies and attention AT it. This reads as cooperation — NEVER a face-to-face confrontation, a squared-off standoff, a weapon-to-weapon pose, or an intimate romantic two-shot.',
+    back_to_back: 'BACK-TO-BACK / SURROUNDED SHOT (Roman 2026-07-22, the rarer cooperation): the two allies stand BACK TO BACK at the CENTRE of the frame, spines together, each facing a DIFFERENT direction OUTWARD — covering opposite angles against a threat or task that presses from MULTIPLE SIDES (surrounded by enemies, holding collapsing walls apart, working separate stations, a 360° search, watching each other\'s blind spot). The PRESSURE closes in from the EDGES (left, right, behind each of them); the pair anchors and holds the centre TOGETHER. This reads as cooperation-under-siege — NOT a face-to-face confrontation between the two, NOT a side-by-side shared single focus, NOT a romantic two-shot.',
     conversation: 'CONVERSATION SHOT: medium, eye-level or a gentle over-shoulder; a balanced two-shot with a clear physical gap; still, faces reading clearly on the rule-of-thirds.',
     discovery: 'DISCOVERY SHOT: wide establishing, the subject small against the reveal; negative space with the discovered thing as the focal point; a slow implied push-in.',
     romance: 'ROMANCE SHOT: close and warm, shallow depth; an intimate two-shot, softly centred with warm rim-light.',
@@ -154432,12 +156040,34 @@ No text, no watermark, no UI elements, share-ready.`;
   var _SD_SHOTTYPE_KEYS = Object.keys(_SHOT_LANGUAGE_V1);
   function _sdInferShotType(txt) {
     var t = String(txt || '').toLowerCase();
+    if (_sdBackToBack(txt)) return 'back_to_back';   // surrounded / covering all angles — beats even combat
     if (/\b(spear|blade|sword|dagger|cutlass|strike|lunge|attack|ambush|fight|swung|thrust|parry|blood|wound|clash)\b/.test(t)) return 'combat';
+    if (/\b(kiss|embrace|caress|tender|lips|breath against|pull.*close)\b/.test(t)) return 'romance';
+    // COOPERATION (Roman 2026-07-22) — allies against a SHARED threat/goal read as SIDE-BY-SIDE, not the default
+    // face-to-face two-shot the renderer amplifies into a standoff. After combat/romance (those win) so a real
+    // fight or tender beat isn't mislabeled; before terror/discovery/conversation so a shared-crisis rescue lands.
+    if (/\b(together|save (?:me|us|him|her|them)|both of us|take us both|we (?:must|have to|need to|can|will)|hold (?:on|together)|brace|shield (?:me|us|him|her)|protect (?:me|us|him|her)|free (?:the|him|her|it|us)|get us (?:out|through|clear)|escape together|side by side|shoulder to shoulder|work(?:ing)? together|help me)\b/.test(t)) return 'cooperation';
     if (/\b(loom|menace|dread|terror|stalk|creeping|nightmare|horror|shadow closes)\b/.test(t)) return 'terror';
     if (/\b(reveal|revealed|hidden|discover|found|passage|seam|opening|glimpsed)\b/.test(t)) return 'discovery';
-    if (/\b(kiss|embrace|caress|tender|lips|breath against|pull.*close)\b/.test(t)) return 'romance';
     if (/\b(vast|immense|marvel|glowing city|towering|shimmer|wondrous|breathtaking)\b/.test(t)) return 'wonder';
     return 'conversation';
+  }
+  // Back-to-back / SURROUNDED cooperation (the rarer variant) — allies covering DIFFERENT/opposite directions
+  // (a fight from all sides, holding collapsing walls, working separate stations, a 360° search). May co-occur
+  // WITH combat, so it is checked BEFORE combat in the shot inference and the override.
+  function _sdBackToBack(txt) {
+    var t = String(txt || '').toLowerCase();
+    return /\b(back.to.back|surrounded|on (?:all|every) sides?|from (?:all|every) (?:sides?|directions?|angles?)|closing in (?:from|on|around)|watch (?:my|your|our|each other'?s?) back|cover (?:me|us|each other|our (?:backs?|flank))|hold (?:the )?(?:wall|walls|line|doors?|perimeter|them off)|collapsing walls?|keep (?:them|it|the \w+) at bay|search(?:ing)? (?:the )?(?:area|perimeter|surroundings|grounds?)|each (?:take|takes|took) (?:a |one )|opposite (?:sides?|directions?|ends?|corners?))\b/.test(t);
+  }
+  window._sdBackToBack = _sdBackToBack;
+  // Is this beat two ALLIES against a SHARED SINGLE focus (→ side-by-side, not a face-to-face standoff)? Used as
+  // an override BEFORE the reader-learning default shot, which otherwise maps cooperative beats to 'conversation'
+  // (face-to-face) — the framing the renderer amplifies into a confrontation. Excludes real fights + tender beats.
+  function _sdIsCooperative(txt) {
+    var t = String(txt || '').toLowerCase();
+    if (/\b(spear|blade|sword|dagger|cutlass|strike|lunge|attack|ambush|fight|swung|thrust|parry|blood|wound|clash)\b/.test(t)) return false;
+    if (/\b(kiss|embrace|caress|tender|lips|breath against|pull.*close)\b/.test(t)) return false;
+    return /\b(together|save (?:me|us|him|her|them)|both of us|take us both|we (?:must|have to|need to|can|will)|hold (?:on|together)|brace|shield (?:me|us|him|her)|protect (?:me|us|him|her)|free (?:the|him|her|it|us)|get us (?:out|through|clear)|escape together|side by side|shoulder to shoulder|work(?:ing)? together|help me)\b/.test(t);
   }
   function _sdDetectGrammar(txt) {
     var t = String(txt || '').toLowerCase(), g = {};
@@ -154599,7 +156229,12 @@ No text, no watermark, no UI elements, share-ready.`;
       var ap = authored && authored[pi] ? authored[pi] : null;
       var invalid = [];
       // shotType
+      // COOPERATION override (Roman 2026-07-22): a shared-threat ally beat reads as SIDE-BY-SIDE, not the RL
+      // default face-to-face. Override the RL shot EXCEPT on the wish moment (Transformation keeps its
+      // invoker-mid-supplication + fate-light composition). Author's explicit shotType still wins.
+      var _coopShot = _sdBackToBack(txt) ? 'back_to_back' : (_sdIsCooperative(txt) ? 'cooperation' : null);
       var shotType = (ap && ap.shotType && _SHOT_LANGUAGE_V1[ap.shotType]) ? ap.shotType
+                   : (_coopShot && phase._readerLearning !== 'Transformation') ? _coopShot
                    : (phase._readerLearning && _RL_SHOT[phase._readerLearning]) ? _RL_SHOT[phase._readerLearning]
                    : _sdInferShotType(txt);
       if (ap && (!ap.shotType || !_SHOT_LANGUAGE_V1[ap.shotType])) invalid.push('shotType');
@@ -155820,6 +157455,208 @@ No text, no watermark, no UI elements, share-ready.`;
     return out;
   }
   window._buildGraphicTypography = _buildGraphicTypography;
+
+  // ════════════════════════════════════════════════════════════════════════════════════════════════
+  // BACKGROUND SIGNAGE (Roman 2026-07-22) — the sheet's text ban is ABSOLUTE ("the ONLY text permitted
+  // is the SFX"). That is correct for a fantasy forest or coral ruins, but in an URBAN / INTERIOR scene
+  // it wastes a channel: the model letters SOMETHING onto a shopfront anyway, and un-steered that is how
+  // a character NAME or a stray real word ("STRIKE") leaks in. So: a controlled, POSITIVE signage layer.
+  // Three tiers, best-first — and NEVER an accidental real word or a character's name:
+  //   1. FORESHADOWING — a word ADJACENT to an ALREADY-ESTABLISHED theme (state.themeTracker.activeThemes,
+  //      registered from PAST scenes; this layer NEVER looks ahead at future beats). Betrayal-theme →
+  //      "TWO FACES" / "SECRETS", never "LIAR" — oblique, it HINTS, it does not announce.
+  //   2. FICTIONAL BRAND — a made-up storefront/ad word: reads as real set-dressing, invents nothing that
+  //      names a real company or person.
+  //   3. GIBBERISH / GLYPHS — pseudo-lettering with zero semantic risk (also the right register for a
+  //      fantasy-market sign, where an English word would break the world).
+  // The SURFACE GATE runs first: no signage-bearing surface in the scene → NO signage at all (return null),
+  // which is why a forest/underwater sheet correctly shows none.
+  // café/cafe/coffee are matched UNANCHORED — the trailing \b fails on "café" (é is not a word char), and these
+  // substrings are distinctive enough to be safe (only "cafeteria", itself a signage interior, contains "cafe").
+  var _SIGNAGE_SURFACE_RX = /caf[eé]|coffee|\b(street|avenue|alley|sidewalk|storefront|shop ?front|shop\b|store\b|market|bazaar|stall|neon|billboard|marquee|poster|signage|a sign\b|signs\b|subway|station|platform|bar\b|tavern|pub\b|diner|bistro|bodega|arcade|mall|plaza|boulevard|highway|motel|hotel|newsstand|kiosk|awning|window display|shop window|storefronts)\b/i;
+  // A FANTASY register wants glyphs, not English brands (a Veilwood market sign should not read "MEGAMART").
+  var _SIGNAGE_FANTASY_RX = /\b(kwisheen|first favored|veilw\w+|gloamwater|fateland|fate-?land|wish-?burst|coral ruins|drowned|sunken|reef|grotto|apprentice|guild-?hall|alchemis\w+|rune\w*|sigil\w*|arcane|enchant\w+|kingdom|castle|keep\b|tavern of|apothecary|scriptorium)\b/i;
+  // THEME → signage word-bank. Keyed on words WITHIN the free-text tension the story registered.
+  // REGISTER (Roman 2026-07-22): each entry must read as a plausible BUSINESS or PLACE NAME that could
+  // really hang on that street — a café, a bar, a shop, a district — while quietly resonating with the
+  // theme. NOT a loaded phrase aimed at the reader: "NO WITNESS"/"NO CHOICE" read as the author talking,
+  // so they're out. "MIRROR HOUSE"/"THE LOOKING GLASS" work as a real storefront AND foreshadow. Subtler wins.
+  // ROTATION over CALCIFICATION (Roman 2026-07-22): pools are DEEP (~15+) and picked with a cross-scene
+  // used-ledger, so a story does not reprint the same name and the popular words don't dominate. `key` names
+  // the bank so a generated/runtime pool (state.themeTracker.themeSignage[key]) can MERGE into it — the library
+  // GROWS, it isn't a closed set. New named themes (redemption/hope/revenge/risk) are first-class banks now;
+  // a genuinely-unforeseen theme is handled by the cache/generator hook below, not dropped to brand.
+  var _SIGNAGE_THEME_BANKS = [
+    { key: 'betrayal', rx: /betray|trust|decept|deceit|lie|liar|false|two.?fac|loyal|honest|backstab/i,
+      words: ['TWIN PINES', 'DOUBLE EXPOSURE', 'MIRROR HOUSE', 'SECOND LOOK', 'CROSSROADS', 'SPLIT DECISION', 'TWO FACES', 'THE DOUBLE', 'JANUS & CO', 'BACKROOM', 'HOLLOW OAK', 'PAPER MOON', 'THE UNDERCUT', 'FORKED', 'SLEIGHT', 'THE TURNCOAT'] },
+    { key: 'bondage', rx: /free|duty|cage|bound|obligat|escape|trap|debt|owe|chain|prison/i,
+      words: ['GILDED CAGE', 'THE HOLDFAST', 'OPEN ROAD', 'THE TOLL HOUSE', 'LEDGER & CO', 'ANCHOR', 'THRESHOLD', 'KEEP & KEY', 'DUE DATE', 'IRON GATE', 'FREEHOLD', 'THE LONG LEASH', 'EXIT ROW', 'THE ARREARS', 'BONDED'] },
+    { key: 'longing', rx: /love|fear|desire|long|yearn|want|ache|heart|passion|lust/i,
+      words: ['SLOW BURN', 'HEARTWOOD', 'CLOSE QUARTERS', 'EMBER & ASH', 'AFTERGLOW', 'TENDER', 'THE PINING', 'LONGWATER', 'HEARTSEASE', 'KINDLING', 'STILL WATERS', 'THE FLAME TREE', 'DEAREST', 'SWOON', 'THE YEARLING'] },
+    { key: 'power', rx: /power|control|respons|rule|domin|leverage|weak|author|command/i,
+      words: ['KEYSTONE', 'THE UPPER HAND', 'HIGH TABLE', 'FULCRUM', 'CROWN & CO', 'THE PINNACLE', 'THE LEVER', 'TOP BRASS', 'HIGH GROUND', 'THE MANDATE', 'KINGMAKER', 'THE VISE', 'OVERLOOK', 'THE LEASH'] },
+    { key: 'identity', rx: /ident|disgu|mask|hidden|secret|name|reveal|face|impost|pretend/i,
+      words: ['PERSONA', 'THE LOOKING GLASS', 'REFLECTION', 'MOSAIC', 'FACETS', 'MASQUERADE', 'THE FACADE', 'ALIAS', 'THE UNDERSTUDY', 'TRUE COLORS', 'VENEER', 'THE SECOND SKIN', 'NOM DE PLUME', 'THE DOPPEL'] },
+    { key: 'fate', rx: /fate|choice|destin|thread|inevit|chance|luck|providence/i,
+      words: ['CROSSROADS', 'THE FORK', 'LOOSE THREADS', 'FORTUNE & CO', 'TAPESTRY', 'LONG ODDS', 'THE LOOM', 'THE THROW', 'WAYPOINT', 'SPINDLE', 'THE GAMBIT', 'PROVIDENCE', 'THE TURNSTILE', 'DEALT'] },
+    { key: 'obsession', rx: /obsess|fixat|hunger|crave|consume|addict|compuls/i,
+      words: ['MOTH & FLAME', 'THE HABIT', 'ONE MORE ROUND', 'FIXATION', 'THE ITCH', 'RELAPSE', 'THE CRAVING', 'THE HOOK', 'SUGAR & SALT', 'BOTTOMLESS', 'THE LURE', 'AGAIN & AGAIN'] },
+    // ── themes Roman named 2026-07-22 (previously fell through to brand) ──
+    { key: 'redemption', rx: /redeem|redempt|atone|forgiv|absolv|mercy|second chance|salvation|penance|amends|grace/i,
+      words: ['SECOND CHANCE', 'THE MENDING', 'CLEAN SLATE', 'AMENDS', 'THE THAW', 'GRACE & CO', 'THE TURNING', 'NEW LEAF', 'THE ABSOLUTION', 'SALVAGE', 'HALFWAY HOUSE', 'THE PARDON', 'RISEN'] },
+    { key: 'hope', rx: /hope|faith|light|dawn|promise|optim|renew|believ|aspir/i,
+      words: ['FIRST LIGHT', 'THE DAWN', 'HIGH HOPES', 'THE PROMISE', 'DAYBREAK', 'THE BEACON', 'MORNINGSIDE', 'SILVER LINING', 'THE UPTURN', 'THE LANTERN', 'TRUE NORTH', 'THE HORIZON', 'KINDLE'] },
+    { key: 'revenge', rx: /reveng|vengean|retribut|grudge|payback|vendetta|avenge|score to settle/i,
+      words: ['PAYBACK', 'EVEN & CO', 'THE VENDETTA', 'COLD DISH', 'THE GRUDGE', 'SETTLING DAY', 'THE LAST WORD', 'THE SCORE', 'NEMESIS', 'BURNT BRIDGE', 'THE RECKONING', 'TIT FOR TAT'] },
+    { key: 'risk', rx: /\brisk|gambl|stake|wager|jeopard|reckless|peril|hazard|all.?in/i,
+      words: ['HIGH STAKES', 'THE GAMBLE', 'ALL IN', 'DOUBLE OR NOTHING', 'THE LONG SHOT', 'THE WAGER', 'DEAD RECKONING', 'THE PLUNGE', 'THE BRINK', 'THE HAZARD', 'LOADED DICE', 'NECK OUT'] }
+  ];
+  // Made-up brands/ads: real-feeling set-dressing that names nothing real.
+  var _SIGNAGE_BRANDS = ['NOVACORP', 'HELIOS', 'MERIDIAN', 'GALVANIX', 'AURELIS', 'VERTEX', 'SOLACE CO', 'KESTREL',
+    'ORB & KEY', 'THE GILDED HOUR', 'PALE ROSE', 'IRONWICK', 'DUSK & CO', 'HOLLOW MOON', 'SABLE'];
+  // Gibberish / glyph-shaped tokens (zero semantic content) — pronounceable-but-meaningless, for fantasy or
+  // when we want to guarantee no real word can be read.
+  var _SIGNAGE_GIBBERISH = ['VELROSK', 'OMANTHE', 'KELUUR', 'SYRRAD', 'THULM', 'VAENOR', 'QORRIS', 'ELUNTHE', 'BRASK', 'YENNIL'];
+  // RUNTIME-EXTENSIBLE theme pools: a generator (or a hand edit) can add names for ANY theme without a code
+  // change — they persist on state.themeTracker.themeSignage[key] and MERGE into the curated bank on read.
+  // window._addThemeSignage('grief', ['THE WAKE','MOURNING DOVE',...]) grows the library live. `key` may be a
+  // bank key OR a raw theme string (for unmapped themes the generator fills).
+  function _themeSignageCache() { try { if (state && state.themeTracker) { if (!state.themeTracker.themeSignage) state.themeTracker.themeSignage = {}; return state.themeTracker.themeSignage; } } catch (_) {} return null; }
+  window._addThemeSignage = function (key, words) {
+    var c = _themeSignageCache(); if (!c || !key || !Array.isArray(words)) return;
+    var k = String(key).toLowerCase().trim(); var pool = c[k] || (c[k] = []);
+    words.forEach(function (w) { w = String(w || '').trim().toUpperCase(); if (w && pool.indexOf(w) < 0) pool.push(w); });
+    return pool;
+  };
+  // Cross-scene USED-LEDGER — so a story never reprints a signage word and the pool actually rotates. Lives on
+  // state so it survives scene→scene; capped so it doesn't grow unbounded (and so a long pool eventually recycles).
+  function _sigUsedLedger() { try { if (state && state.themeTracker) { if (!Array.isArray(state.themeTracker._signageUsed)) state.themeTracker._signageUsed = []; return state.themeTracker._signageUsed; } } catch (_) {} return null; }
+  // Build the approved signage word-set + prompt block for a sheet, or null when signage does not apply.
+  // sceneText = combined scene/setting text; themes = state.themeTracker.activeThemes (established, past-tense).
+  function _buildBackgroundSignage(sceneText, themes) {
+    var t = String(sceneText || '');
+    if (!_SIGNAGE_SURFACE_RX.test(t)) return null;             // SURFACE GATE — no sign, no signage
+    var used = _sigUsedLedger();
+    var cache = _themeSignageCache();
+    // rotating pick: prefer pool entries NOT recently used; recycle only when the whole pool is exhausted.
+    var pick = function (arr, salt) {
+      if (!arr || !arr.length) return null;
+      var avail = used ? arr.filter(function (w) { return used.indexOf(w) < 0; }) : arr.slice();
+      if (!avail.length) avail = arr.slice();
+      var w = avail[_ffColorHash(t + '|' + salt) % avail.length];
+      if (used && w) { used.push(w); if (used.length > 24) used.splice(0, used.length - 24); }
+      return w;
+    };
+    var tier, words = [], rationale;
+    var fantasy = _SIGNAGE_FANTASY_RX.test(t);
+    var active = Array.isArray(themes) ? themes.filter(Boolean) : [];
+    if (fantasy) {
+      // world register wants glyphs, not English — foreshadowing words would break immersion
+      tier = 'gibberish'; rationale = 'fantasy register → invented glyph-words (an English sign would break the world)';
+      words = [pick(_SIGNAGE_GIBBERISH, 's1'), pick(_SIGNAGE_GIBBERISH, 's2')];
+    } else if (active.length) {
+      // TIER 1 — foreshadow an ESTABLISHED theme, obliquely
+      var themeStr = active.join(' ');
+      // EARLIEST-mentioned pole wins: a theme is often "X vs Y" and the first-named tension should drive the
+      // signage (so "revenge vs mercy" reads as revenge, not redemption). Pick the bank whose match starts first.
+      var bank = null, bankAt = Infinity;
+      for (var i = 0; i < _SIGNAGE_THEME_BANKS.length; i++) {
+        var m = _SIGNAGE_THEME_BANKS[i].rx.exec(themeStr);
+        if (m && m.index < bankAt) { bank = _SIGNAGE_THEME_BANKS[i]; bankAt = m.index; }
+      }
+      // merge any runtime/generated pool into the curated bank (grows the library). For a mapped theme use the
+      // bank key; for an UNMAPPED theme, merge every cache key that appears inside the theme string.
+      var pool = bank ? bank.words.slice() : [];
+      var cacheHit = false;
+      var mergeCache = function (k) { if (cache && cache[k]) cache[k].forEach(function (w) { if (pool.indexOf(w) < 0) { pool.push(w); cacheHit = true; } }); };
+      if (bank) mergeCache(bank.key);
+      else if (cache) { var lc = themeStr.toLowerCase(); Object.keys(cache).forEach(function (k) { if (k && lc.indexOf(k) >= 0) mergeCache(k); }); }
+      if (pool.length) {
+        tier = 'foreshadow';
+        rationale = 'established theme "' + active[0] + '" → ' + (bank ? bank.key : 'generated') + ' bank (' + pool.length + ' names' + (cacheHit ? ', +cache' : '') + ')';
+        words = [pick(pool, 's1'), pick(pool, 's2')];
+      } else {
+        // unmapped theme with NO generated pool yet → brand for now (the generator hook fills it next time)
+        tier = 'brand'; rationale = 'theme "' + active[0] + '" has no bank/cache yet → fictional brand (generator can seed it)';
+        words = [pick(_SIGNAGE_BRANDS, 's1')];
+      }
+    } else {
+      // TIER 2 — no established theme yet: fictional brands
+      tier = 'brand'; rationale = 'no established theme → fictional brand set-dressing (names nothing real)';
+      words = [pick(_SIGNAGE_BRANDS, 's1'), pick(_SIGNAGE_BRANDS, 's2')];
+    }
+    // de-dup, drop nulls, cap at 2 (a sheet needs a hint, not a wall of text)
+    words = words.filter(function (w, i) { return w && words.indexOf(w) === i; }).slice(0, 2);
+    if (!words.length) return null;
+    var block = '\n\n══ BACKGROUND SIGNAGE (environmental text — the ONE controlled exception to the text ban) ══\n' +
+      'This scene has signage-bearing surfaces. Any lettering you place on a sign, shopfront, screen, poster, ' +
+      'awning, or billboard MUST come from this exact approved set and nothing else: ' +
+      words.map(function (w) { return '"' + w + '"'; }).join(', ') + '. ' +
+      'Letter it INTO the environment as real signage (partly turned, weathered, cropped by the frame is good) — ' +
+      'never as a caption box, balloon, or floating label. It is background set-dressing, small and secondary to ' +
+      'the figures, NOT a headline. Do NOT invent any other readable words, do NOT letter a character\'s name, and ' +
+      'do NOT letter a real company or brand. If a surface would be too small or too far to read, leave it as ' +
+      'illegible marks. (' + tier + ': ' + rationale + ')';
+    return { tier: tier, words: words, rationale: rationale, block: block };
+  }
+  window._buildBackgroundSignage = _buildBackgroundSignage;
+
+  // OPEN-VOCABULARY GENERATOR (Roman 2026-07-22) — for a theme neither of us hand-authored a bank for, an
+  // AUTHOR model (cheap Mistral Small, NOT the image model — the image model letters unreliably) invents ~12
+  // in-register business names ONCE, cached to state so every later scene in the story reuses them. This is
+  // what makes the library open: it grows to fit whatever tensions a story actually surfaces. Fire-and-forget
+  // at theme-registration → the cache is warm long before an urban scene needs it (themes emerge after scene 5).
+  var _signageGenInFlight = {};
+  function _signageThemeMapsToBank(themeStr) {
+    for (var i = 0; i < _SIGNAGE_THEME_BANKS.length; i++) if (_SIGNAGE_THEME_BANKS[i].rx.test(themeStr)) return true;
+    return false;
+  }
+  async function _generateThemeSignage(theme) {
+    var th = String(theme || '').trim();
+    if (!th) return null;
+    var key = th.toLowerCase();
+    // skip if a curated bank already covers it, or a cache pool exists, or one is already generating
+    if (_signageThemeMapsToBank(th)) return null;
+    var cache = _themeSignageCache();
+    if (cache && cache[key] && cache[key].length) return cache[key];
+    if (_signageGenInFlight[key]) return null;
+    if (typeof window._setupMistralPost !== 'function') return null;
+    _signageGenInFlight[key] = true;
+    try {
+      var sys = 'You generate BACKGROUND SIGNAGE names for a comic panel. Given a story THEME (an emotional ' +
+        'tension), output names of shops, bars, cafés, or places that could plausibly hang on a real street AND ' +
+        'quietly resonate with the theme WITHOUT stating it.\n' +
+        'RULES: each is 1–3 words; it must read as a real establishment name (like "MIRROR HOUSE", "THE LOOKING ' +
+        'GLASS", "CROSSROADS", "SLOW BURN", "SECOND CHANCE") — NOT a phrase aimed at the reader ("NO WITNESS", ' +
+        '"TRUST NO ONE"), NOT a command, NOT a character name, NOT a real company. Subtle beats obvious.\n' +
+        'THE TEST: each must be a sign you could actually PHOTOGRAPH on a storefront, bar, or awning. If it names ' +
+        'a FEELING or a MOOD rather than a PLACE, leave it out — reject atmosphere words like "PENDING DOOM", ' +
+        '"THICKER AIR", "SILENT RUST", "UNSEEN EDGES". A real place can be evocative ("THE HOLLOW TREE", "WIDOW\'S ' +
+        'LAMP") but it is still a place with a door, not a description of a mood.\n' +
+        'THEME: "' + th + '"\n' +
+        'Output ONLY a JSON array of exactly 12 short UPPERCASE strings. No prose.';
+      var res = await window._setupMistralPost({ temperature: 0.9, max_tokens: 300, messages: [
+        { role: 'system', content: sys }, { role: 'user', content: 'Generate the JSON array now.' } ] });
+      if (!res || !res.ok) return null;
+      var d = await res.json();
+      var raw = String((d && d.content) || '').replace(/^\s*```[a-z]*\s*/i, '').replace(/\s*```\s*$/i, '');
+      var a = raw.indexOf('['), z = raw.lastIndexOf(']');
+      if (a < 0 || z <= a) return null;
+      var arr;
+      try { arr = JSON.parse(raw.slice(a, z + 1)); } catch (_) { return null; }
+      if (!Array.isArray(arr)) return null;
+      // hygiene: uppercase, 1–3 words, drop anything that looks like a reader-directed phrase or is too long
+      var clean = arr.map(function (w) { return String(w || '').trim().toUpperCase(); })
+        .filter(function (w) { return w && w.length <= 22 && w.split(/\s+/).length <= 3 && !/^(NO |TRUST NO|DON'?T |NEVER |BEWARE)/.test(w); });
+      if (!clean.length) return null;
+      var pool = window._addThemeSignage(key, clean);
+      try { console.log('[SIGNAGE] generated ' + clean.length + ' names for theme "' + th + '" → ' + clean.slice(0, 4).join(', ') + '…'); } catch (_) {}
+      return pool;
+    } catch (_) { return null; }
+    finally { delete _signageGenInFlight[key]; }
+  }
+  window._generateThemeSignage = _generateThemeSignage;
+
   // GRAPHIC TYPOGRAPHY LINT — warnings only. An SFX that the graphic language already covers (should
   // be suppressed), an SFX/burst sitting on the eye-magnet (obscures the focal element), or an SFX
   // fired on a pure-motion beat where the motion lines already carry it.
@@ -166108,6 +167945,11 @@ No text, no watermark, no UI elements, share-ready.`;
       if (!Array.isArray(st._openFateBargains)) st._openFateBargains = [];
       var sceneIdx = (opts.sceneIdx != null) ? opts.sceneIdx : (st.turnCount || 0);
       var rail = opts.rail || 'ordinary';
+      // WISHER = PC signal (Roman 2026-07-22): every PC wish — ordinary, Petition, Tempt — creates/continues a
+      // bargain HERE (residents never do), so this is the single choke point that means "the PC wished". Stamp
+      // the scene + rail so the CG burst gate can SUPPRESS the wish/twist burst for a PC wish this scene (the
+      // burst is reader-only notation for watching a RESIDENT wish; when the PC wishes, the reader IS the wisher).
+      try { st._pcFateWishScene = sceneIdx; st._pcFateWishRail = rail; } catch (_) {}
       var offering = (opts.offering != null) ? opts.offering : (classification.offering != null ? classification.offering : null);
       var targetKey = _normalizeTargetKey(opts.targetKey != null ? opts.targetKey : (classification.targetKey || ''));
 
@@ -166759,13 +168601,11 @@ No text, no watermark, no UI elements, share-ready.`;
       else if (o.outcome === 'distorted') c += 'On this DISTORTION, the desire arrives WRONG — incomplete, over-reaching, or missing a piece — and the loss visibly reshapes the result. ';
       else c += 'It LANDED CLEAN — the desire is met plainly, and the loss is just as real and permanent. ';
       c += '\n';
-      c += '④ THE SACRIFICE + WITNESS REACTIONS. Show the price ACTUALLY taken in-scene ';
-      c += o.exhausted
-        ? '(here Fate takes nothing NEW — show the balance go onto the tab, felt in the body but not paid from it). '
-        : ('(Fate takes the PC’s ' + (o.taken || 'chosen price') + ' — let the PC DISCOVER it, or its first observable SYMPTOM if not yet fully knowable). ');
-      c += 'Do NOT imply Fate accepted the OFFER until the effect reveals the ACTUAL payment (Fate may take the offer, or something else in the same band). Then let WITNESSES REACT to what they perceived — horror at the invocation, recognition of the omen, relief or terror at the result, anger the PC risked the price, a scholar naming the bargain, fear that an Open Debt remains. The wish ALTERS THE SOCIAL SCENE, not just the PC.\n';
+      // The PRICE beat is ALWAYS acknowledged (Wish→Omen→Fulfillment→PRICE is the metaphysics); only the STYLE
+      // of revealing WHAT was taken changes with how much the wisher already understands it — see FATE'S PRICE below.
+      c += '④ THE PRICE — ALWAYS ACKNOWLEDGED (+ WITNESS REACTIONS). Fate has claimed its payment: ALWAYS mark THAT it happened — the acknowledgement beat is never skipped. HOW you render WHAT was taken depends on how much the wisher already understands it (see FATE’S PRICE below): render the loss EXPLICITLY if its shape is already plain (a hand, an eye); a PARTIAL reveal if only the KIND is known but not the EXTENT (blood — how much?); or an UNEXPLAINED anomaly if Fate took something the wisher cannot yet know (a substitution, or an open offer). Then let WITNESSES REACT to what they perceived — horror at the invocation, recognition of the omen, relief or terror at the result, anger the PC risked the price, a scholar naming the bargain, fear that an Open Debt remains. The wish ALTERS THE SOCIAL SCENE, not just the PC.\n';
       c += '⑤ CONTINUE FROM THE CHANGED REALITY — carry the new pressure or decision straight out of the wish. Do NOT open on unrelated business and resolve the wish later; the wish is the causal bridge into what happens next.\n';
-      c += 'The specifics Fate has already decided for THIS wish follow — render THESE, do not invent different ones:\n';
+      c += 'The specifics Fate has already decided for THIS wish follow — render them per the reveal STYLE below (explicit / partial / delayed, by how much the wisher understands); do not invent different ones:\n';
 
       var d = c + '\n═══ ORDINARY FATE-WISH (the PC bargained with Fate directly, in Say/Do) ═══\n';
       d += 'GOVERNING DESIRE: ' + (o.cls.governingDesire || '(unspoken)') + '\n';
@@ -166778,8 +168618,8 @@ No text, no watermark, no UI elements, share-ready.`;
       } else {
         d += 'THE OFFER vs THE PRICE: the PC OFFERED ' + offerTxt + '. FATE TAKES the PC’s ' + o.taken + ' (' + o.takenMag + ', within the ' + o.bandLabel + ' band). ';
         d += o.offerHonored
-          ? 'Fate accepts the offered price this time.\n'
-          : 'FATE DOES NOT TAKE WHAT WAS OFFERED — it claims the ' + o.taken + ' instead (same band). The wisher offers; FATE chooses. Show the PC discover what Fate actually takes.\n';
+          ? 'Fate accepts the offered price this time — it takes exactly what the PC named, so the KIND is known: reveal it per the cadence (EXPLICIT if it is a discrete loss like a hand/eye/voice; a PARTIAL "kind known, extent unknown" reveal if it is graduated like blood/years/memory). No full delayed reveal — the wisher knew what kind of cost they chose.\n'
+          : 'FATE DOES NOT TAKE WHAT WAS OFFERED — it claims the ' + o.taken + ' instead (same band). The wisher offers; FATE chooses. Per the reveal cadence, do NOT name what Fate took yet — seed it as the unexplained anomaly and disclose it across later scenes.\n';
       }
       d += 'OUTCOME: ' + outLabel + '. ';
       if (o.outcome === 'landed') d += 'The desire is met plainly; the loss is real and permanent.\n';
@@ -166792,6 +168632,17 @@ No text, no watermark, no UI elements, share-ready.`;
       }
       if (o.openDebt) d += 'OPEN DEBT: Fate carries an unpaid balance forward from this bargain — it will come due in a later scene.\n';
       d += 'Make the outcome feel LAWFUL, not arbitrary: an ancient consistent rule, never a magic vending machine.\n';
+      // FATE'S PRICE — REVEAL CADENCE: a GRANTED wish (clean/warped/distorted) owes a price → the reader learns
+      // THAT it was paid now, WHAT only over later scenes. A REFUSED wish pays nothing, so no cadence.
+      if (o.outcome !== 'refused' && typeof _buildFatePriceRevealCadence === 'function') {
+        d += _buildFatePriceRevealCadence({ outcome: o.outcome, taken: o.taken, exhausted: o.exhausted, offerHonored: o.offerHonored, offering: o.offering });
+      }
+      // FOLK SPEECH — the region's wish-proverbs + the open-offer taboo (worn-smooth old-world flavor). The
+      // taboo is ACUTE when the offer is OPEN (the PC just "signed Fate's blank page") — witnesses should react.
+      if (typeof _buildFatelandsSayingsDirective === 'function') {
+        d += _buildFatelandsSayingsDirective((window.state && window.state.fantasyRegion) || '');
+        if (!o.offering) d += 'OPEN-OFFER NOW: the PC left the price BLANK (“take whatever it costs”) — the dangerous, taboo act above. Witnesses who heard it should REACT (a flinch, a hush, a warning, a step back), and this region’s open-offer proverb may surface naturally in a witness’s mouth — never as narrator exposition.\n';
+      }
       return d;
     } catch (e) {
       try { console.warn('[ORDINARY-WISH] _buildOrdinaryWishDirective failed:', e && e.message); } catch (_) {}
@@ -185052,7 +186903,7 @@ No text, no watermark, no UI elements, share-ready.`;
     // bled the red X-burst into 2-3 panels instead of the one wish beat. Tag EACH quadrant: allow the burst only
     // on the Transformation (wish spoken) / Consequence (price paid) panels; forbid it everywhere else.
     var _burstOnSheet = false;
-    try { _burstOnSheet = (phases || []).some(function (ph) { return ph && (ph._readerLearning === 'Transformation' || (ph._panel && ph._panel.wishOutcome)); }); } catch (_) {}
+    try { _burstOnSheet = _fateSymbolsAllowed() && !_isPcWishThisScene() && (phases || []).some(function (ph) { return ph && (ph._readerLearning === 'Transformation' || (ph._panel && ph._panel.wishOutcome)); }); } catch (_) {}
     function _quadBurstTag(ph) {
       if (!_burstOnSheet) return '';
       var t = ph && ph._readerLearning;
@@ -185089,11 +186940,17 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var _spF = _sheetSpecies(visualState);
       if (_spF && (_spF.kwisheen || _spF.half_kwisheen)) {
-        kwFaceBlock = '\n\n══ KWISHEEN FACE (every panel a Kwisheen appears) ══\nA Kwisheen face is HUMANOID, ' +
+        kwFaceBlock = '\n\n══ KWISHEEN FACE + SCALE (every panel a Kwisheen appears) ══\nA Kwisheen face is HUMANOID, ' +
           'coastal and uncanny-beautiful — NOT a monster. Eyes have HORIZONTAL CAPSULE-SHAPED pupils (rounded ' +
           'rectangles, solid black) — never blank white eyes, never glowing eyes, never round human pupils. The ' +
           'mouth is an ordinary humanoid mouth — NO monster fangs, NO tusks, NO gaping maw, NO shark teeth. ' +
-          'Coral-dreadlock hair, chromatophore skin. Mysterious and sensual, never a creature-feature sea-monster.';
+          'Coral-dreadlock hair. SKIN is SMOOTH colour-shifting CHROMATOPHORE skin (shifting hues like an octopus) ' +
+          '— NOT reptilian SCALES, NOT armoured plating, NOT a fish-scaled hide; the FACE especially is smooth ' +
+          'humanoid skin, never scaled or lizard-like. ' +
+          'SCALE (HARD): a Kwisheen is a TALL HUMANOID — about a head to a head-and-a-half taller than a human, ' +
+          'with a PERSON’S build and proportions. NOT a towering giant, NOT a looming ogre, NOT twice a human’s ' +
+          'height; a human standing beside one reads as a normal person beside a TALL PERSON, never a person ' +
+          'beside a beast. Mysterious and sensual, never a creature-feature sea-monster.';
       }
     } catch (_) {}
 
@@ -185132,6 +186989,12 @@ No text, no watermark, no UI elements, share-ready.`;
       'INJURY CONTINUITY (the panels read in order, left-to-right then top-to-bottom): wounds PERSIST and ' +
       'ACCUMULATE — once a fighter takes a cut, a wound, blood, or a torn garment in one panel, that same ' +
       'injury stays visible on them in EVERY later panel; nobody\'s injuries heal or vanish between panels. ' +
+      // FACES (Roman 2026-07-22) — the model renders emotion well when told; blank crisis faces were the gap.
+      'FACES (HARD — the model CAN act, so make it): render each character\'s EMOTION on their FACE and body — ' +
+      'eyes, brow, jaw, mouth, carriage — matched to what they FEEL in that panel (fear, desperation, grief, awe, ' +
+      'anger, resolve, dread). In an emotional beat, a BLANK, neutral, slack, or wooden face is a DEFECT; every ' +
+      'figure\'s feeling must read at a glance, and the expressions SHIFT panel to panel with the beat — never the ' +
+      'same flat look repeated across the sheet. ' +
       'Ender Bond ink-and-colour rendering throughout. Do NOT draw panel numbers, captions, speech balloons, ' +
       'thought balloons, or any readable dialogue/narration text. The ONLY lettering permitted is a single ' +
       'integrated SOUND-EFFECT per panel where that panel\'s graphic-typography specifies one (hand-lettered ' +
@@ -185173,7 +187036,22 @@ No text, no watermark, no UI elements, share-ready.`;
         'cloth drifting, feet and tentacle-tips NOT planted on or bearing weight against the seabed. No one ' +
         'stands, walks, or is posed upright on the ground in any panel.';
     } catch (_) {}
-    return frame + globalBlock + combatBlock + livingBlock + kwFaceBlock + castBlock + buoyBlock + quads.join('\n') + close;
+    // BACKGROUND SIGNAGE (Roman 2026-07-22) — the controlled exception to the absolute text ban. Only fires
+    // when the scene actually has signage-bearing surfaces; draws tier-1 words from ESTABLISHED themes.
+    var signageBlock = '';
+    try {
+      var _sig = _buildBackgroundSignage(_sheetSceneText(visualState, phases), state.themeTracker && state.themeTracker.activeThemes);
+      if (_sig) {
+        signageBlock = _sig.block;
+        // relax the two ABSOLUTE "only SFX" clauses so the approved signage is not self-contradicted
+        close = close
+          .replace('The ONLY text permitted anywhere in the image is ',
+                   'The ONLY text permitted anywhere in the image (besides the approved BACKGROUND SIGNAGE listed below) is ')
+          .replace('The ONLY lettering permitted is a single integrated SOUND-EFFECT per panel',
+                   'The ONLY lettering permitted is (a) the approved BACKGROUND SIGNAGE below and (b) a single integrated SOUND-EFFECT per panel');
+      }
+    } catch (_) {}
+    return frame + globalBlock + combatBlock + livingBlock + kwFaceBlock + castBlock + buoyBlock + signageBlock + quads.join('\n') + close;
   }
   window._buildOneShotSheetPrompt = _buildOneShotSheetPrompt;
 
@@ -185308,7 +187186,7 @@ No text, no watermark, no UI elements, share-ready.`;
         try {
           if (typeof _resolveCanonicalAssets === 'function') {
             var _cvaText = _sheetSceneText(visualState, phases);
-            var _hasWish = (phases || []).some(function (ph) { return ph && (ph._readerLearning === 'Transformation' || (ph._panel && ph._panel.wishOutcome)); });
+            var _hasWish = _fateSymbolsAllowed() && !_isPcWishThisScene() && (phases || []).some(function (ph) { return ph && (ph._readerLearning === 'Transformation' || (ph._panel && ph._panel.wishOutcome)); });
             var _wo = null;
             try { if (_hasWish && typeof _sdWishOutcome === 'function') _wo = _sdWishOutcome(_cvaText, (state._stagedActive && state._stagedActive.plan) || null, state.aPlot || null); } catch (_) {}
             var _sac = (phases || []).some(function (ph) { return ph && ph._panel && ph._panel.sacrifice; }) || /\bsacrific|the price|paid with|withered|drained to grey\b/i.test(_cvaText);
@@ -195501,7 +197379,7 @@ No text, no watermark, no UI elements, share-ready.`;
       '  "panels": [ {\n' +
       '    "panelIdx": 0,\n' +
       '    "dramaticQuestion": "<the ONE question this image asks the reader — \\"Can the PC reach Soren before the raider kills him?\\" / \\"Will the wish work?\\". Every compositional choice reinforces it.>",\n' +
-      '    "shotType": "conversation | combat | discovery | romance | terror | wonder — the DRAMATIC TYPE of the moment. Do NOT set cameras; the shot-type expands to camera/angle/framing automatically.",\n' +
+      '    "shotType": "conversation | cooperation | back_to_back | combat | discovery | romance | terror | wonder — the DRAMATIC TYPE of the moment. Do NOT set cameras; the shot-type expands to camera/angle/framing automatically. Use COOPERATION when two ALLIES face a SHARED SINGLE threat/goal TOGETHER (a rescue, bracing against a flood, working a mechanism) — SIDE BY SIDE facing the danger, NOT face-to-face. Use BACK_TO_BACK (rarer) when allies cover DIFFERENT/opposite directions against pressure on MULTIPLE sides (surrounded in a fight, holding collapsing walls, working separate stations, a 360° search, watching each other\\u2019s back). Reserve CONVERSATION for an actual face-to-face talk/argument.",\n' +
       '    "subjects": { "primary": "<the ONE figure this image is ABOUT>", "secondary": "<supporting figure or null>", "background": ["<other present figures>"] },\n' +
       '    "cast": [ { "name": "<protagonist | li | CharName>", "performance": { "pose": "<what they are physically DOING this panel>", "expression": "<their emotion this panel>", "looking_at": "<who/what they look at>", "action_tags": ["speaking|fighting|bleeding|holding|reaching|recoiling"] } } ],\n' +
       '    "wish": false, "sacrifice": false, "fateAnswer": false\n' +
@@ -196758,6 +198636,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // so it works in CG with no separate recorder.
       ((typeof buildLiFeatureRotationDirective === 'function') ? buildLiFeatureRotationDirective() : '') +
       ((typeof buildPcFeatureRotationDirective === 'function') ? buildPcFeatureRotationDirective() : '') +
+      ((typeof buildInhumanFeatureRotationDirective === 'function') ? buildInhumanFeatureRotationDirective() : '') +
       // ── VISUAL-GRAMMAR VARIETY (Roman 2026-06-15) — soft cross-scene camera/lighting anti-repeat.
       ((typeof _buildCGVisualVarietyDirective === 'function') ? _buildCGVisualVarietyDirective() : '') +
       // ── FATE CARD PARITY (Roman 2026-06-10) ─────────────────────────────
@@ -197672,9 +199551,10 @@ No text, no watermark, no UI elements, share-ready.`;
   window._buildFatelandsWishPriceDirective = _buildFatelandsWishPriceDirective;
 
   // ── FATELANDS LAWS OF WISHING (Roman 2026-07-15) ─────────────────────────────
-  // HOW wishes behave (the price ladder is what they COST). Alignment-to-truth,
-  // collective stacking, the non-human discount, wish-guarding, and the social/war
-  // consequences that fall out of a world where anyone can wish for anything.
+  // ⚠️ SUPERSEDED 2026-07-23 — NO LONGER CALLED. Split into frequency layers (see LAYERED WISH CANON below):
+  //    CORE (_buildFatelandsWishCoreDirective) + ADJUDICATION (_buildFatelandsWishAdjudicationDirective) +
+  //    SPECIALIST (_buildFatelandsComposite/Granters/WishFactionsDirective) + existing limits/parable modules.
+  //    Retained defined (not deleted) for reference / one-line rollback (re-add the call at the CG injection site).
   function _buildFatelandsWishLawDirective() {
     return 'FATELANDS — THE LAWS OF WISHING (HARD canon; this world RUNS on sacrifice magic — EVERY resident uses it when they must; it is ordinary, not exotic. Governs HOW wishes behave, alongside THE PRICE OF A WISH). Fate is an ANCIENT, CONSISTENT law that mortals only PARTIALLY understand — not a shop that sells any miracle you can afford, not a genie, not benevolent, not vindictive, not arbitrary. When Fate warps or (rarely) refuses a wish, the wisher has crossed a law they do not yet fully grasp — Fate did not change its mind. The first question is never "what does this cost?" but "is this the kind of bargain Fate recognizes?":\n' +
       '  • THE EIGHT ORDERS OF BARGAIN (what Fate recognizes — classify EVERY wish here FIRST, before cost): Fate answers according to what KIND of bargain a wish is, and each Order has a CONSISTENT disposition (a law, never Fate\'s mood): ① RESTORATION — return something toward a prior or natural state (heal a wound, restore breath, mend what broke): Fate WELCOMES. ② TEMPORARY AID — borrow a transient condition without permanently changing the subject (breathe water an hour, a fair wind, dry clothes, keep the tea hot): WELCOMES. ③ REVELATION — uncover what is already true (reveal a truth, find the path, read a trail): usually WELCOMES. ④ TRANSFORMATION — permanently remake a body or thing (grow gills, become a wolf): CAUTIOUS. ⑤ FORTUNE — bend probability and coincidence (luck, an impossible meeting): RISKY. ⑥ AGENCY — override another\'s will (make her love me, make him obey, make them forgive): Fate RESISTS. ⑦ IDENTITY — rewrite who someone fundamentally IS (become Achilles, remake a personality, trade a self): STRONGLY RESISTS. ⑧ HISTORY — unmake what has happened (undo yesterday, restore the dead exactly as they were): NEARLY IMPOSSIBLE. A resisted Order is NOT a refusal — it means the clean REQUESTED outcome rarely lands; the harder Fate resists, the more the wish WARPS toward the nearest lawful answer (see WARP below).\n' +
@@ -197683,15 +199563,18 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • NORTH STAR — REVEAL CHARACTER BEFORE POWER (how magic goes on the page): a sacrifice says who you are; a ward says what you fear; a wish says what you truly desire; a talisman says what you have already paid; a granter\'s refusal says what they believe. Deploy every wish, price, guard, and artifact so it discloses a CHARACTER first and a capability second. If a magical moment is not telling us about someone, it is decoration — cut it or recast it.\n' +
       '  • ALIGNMENT TO TRUTH (first law): a wish lands cleanly ONLY when it is aligned to what the wisher truthfully wants and believes. DOUBT, a divided heart, self-deception, or a lie in the wording WARPS the result — sometimes comically (a wish for "respect" from someone who secretly despises themselves returns as mocking, hollow deference), sometimes catastrophically (a half-hearted wish for safety opens the very door it meant to bar). Wishing against your own truth is the most dangerous thing a person can do. THE LAW EXTENDS TO EVERYONE THE WISH CHANGES: a wish lands cleanest when it serves the deepest truth of everyone it touches; the more it must fight another\'s truth, the more EXPENSIVE, UNSTABLE, or WARPED it becomes. So agency is protected with NO special shield — HELP lands clean (heal her, let him breathe, give him courage) because it serves the target\'s truth; CONTROL corrodes (make him obey, make her love me) because control is a rewrite and a rewrite fights another\'s truth — you get terror not loyalty, a hollow obsessive simulacrum not love. Parents must RAISE, lovers must EARN, kings must DESERVE; the coercive wish does not redirect, it WARPS.\n' +
       '  • WARP — FATE ANSWERS THE NEAREST LAWFUL BARGAIN (the DEFINING move, far more common than refusal): when a wish reaches for a resisted or impossible Order, Fate rarely says no — it answers the NEAREST bargain it recognizes by PRESERVING THE GOVERNING DESIRE and TRANSLATING the requested MEANS into something Fate does exchange. The translation must be LEGIBLE: the reader can see BOTH what the person truly wanted AND why Fate\'s answer is the nearest lawful version of it. This is SEMANTIC adjacency (nearest to the DESIRE), NEVER a random substitution or a free author pivot, and NOT taxonomic ("the next Order over"). ✗ FORBIDDEN: "she wished for Shakespeare\'s genius and woke with wings" (unconnected). ✓ "Make me Shakespeare" preserves the hunger for artistic greatness → Fate cannot trade genius, but grants eloquence, or relentless inspiration, or perfect recall for a night, or renown bought through another gift. ✓ "Make her love me" preserves the desire for closeness → not compelled love (a puppet), but her true feelings revealed, the barrier between them cleared, or the wisher remade into someone she could choose. ✓ "Undo yesterday" preserves the need to escape a consequence → not rewritten history, but one broken thing restored, the way to repair it revealed, or a second chance that does not erase what happened. Outright refusal is reserved for the vanishingly rare wish that is not a bargain Fate exchanges AT ALL — nearly every "impossible" wish WARPS toward the desire, it does not bounce.\n' +
-      '  • COMPOSITE WISHWORKS — NO WISH MAY CONTAIN OTHER WISHES (why some artifacts cannot be wished for): a wish may alter matter, perception, circumstance, or possibility within its scope, but it CANNOT create a completed thing whose essential substance is HUNDREDS of independently-made wishes. Such objects — "composite wishworks" — are built wish BY wish, each bargain permanently bound into a material/stage (a leaf, a thread, a seam, a join), each with its own sacrifice, Alignment, and Order. Their rarity is accumulated METAPHYSICAL LABOR, not just secrecy or materials. So one bargain cannot contain, counterfeit, or retroactively perform many others, and distributing a forbidden wish across small ones does NOT launder it (a hundred Agency wishes are not a lawful way to manufacture love; scattered Identity rewrites are still resisted). THE SHARP RULE (VEILWEAVE is the exemplar): you CANNOT wish FOR a composite wishwork — "I wish this cloak were Veilweave" fails or yields a crude blur / useless light-scatter REGARDLESS of the sacrifice offered, even if the wisher owns real Veilweave to study (cost is NECESSARY BUT NOT SUFFICIENT; knowledge does not remove sequence). But you CAN wish to be MISTAKEN for one — "I wish he believed I wore Veilweave" is a perceptual bargain (principally AGENCY, so Fate resists a clean mind-overwrite and WARPS toward a less coercive circumstance: light scatters convincingly around the wisher, the opponent glimpses several bodies mid-motion, rumor primes them to misidentify, or the environment supplies evidence they misread themselves). It grants only the APPEARANCE and whatever quality was actually named — never the real artifact\'s protection: an unfooled enemy, a second observer, a blind fighter, or contrary environmental evidence sees through it. (This governs any wished imitation of a named artifact — grant the desire to be untrusted/unfindable, never the artifact itself.)\n' +
+      '  • COMPOSITE WISHWORKS — NO WISH MAY CONTAIN OTHER WISHES (why some artifacts cannot be wished for): a wish may alter matter, perception, circumstance, or possibility within its scope, but it CANNOT create a completed thing whose essential substance is HUNDREDS of independently-made wishes. Such objects — "composite wishworks" — are built wish BY wish, each bargain permanently bound into a material/stage (a leaf, a thread, a seam, a join), each with its own sacrifice, Alignment, and Order. Their rarity is accumulated METAPHYSICAL LABOR, not just secrecy or materials. So one bargain cannot contain, counterfeit, or retroactively perform many others, and distributing a forbidden wish across small ones does NOT launder it (a hundred Agency wishes are not a lawful way to manufacture love; scattered Identity rewrites are still resisted). THE SHARP RULE (VEILWEAVE is the exemplar): you CANNOT wish FOR a composite wishwork — "I wish this cloak were Veilweave" fails or yields a crude blur / useless light-scatter REGARDLESS of the sacrifice offered, even if the wisher owns real Veilweave to study (cost is NECESSARY BUT NOT SUFFICIENT; knowledge does not remove sequence). But you CAN wish to be MISTAKEN for one — "I wish he believed I wore Veilweave" is a perceptual bargain (principally AGENCY, so Fate resists a clean mind-overwrite and WARPS toward a less coercive circumstance: light scatters convincingly around the wisher, the opponent glimpses several bodies mid-motion, rumor primes them to misidentify, or the environment supplies evidence they misread themselves). It grants only the APPEARANCE and whatever quality was actually named — never the real artifact\'s protection: an unfooled enemy, a second observer, a blind fighter, or contrary environmental evidence sees through it. (This governs any wished imitation of a named artifact — grant the desire to be untrusted/unfindable, never the artifact itself.) DISCIPLINE vs HUBRIS (why composite wishwork is NOT inherently monstrous — do NOT let "monsters come from wishcraft" poison the fact that master artisans build Veilweave, wards, and enduring artifacts from layered wishes): the danger is never the NUMBER of wishes but HUBRIS — RECKLESS wishwork (often chained, often by cabals) that tries to FORCE Fate past a deeper law (raise the dead, manufacture a mind, forge a weapon of living flesh, make a thing invincible). Layered wishwork in TRAINED, disciplined hands is legitimate and respected; hubris is what breeds monsters. This is the root of nearly every "monster" — see FATELANDS LIVING THINGS.\n' +
       '  • FATE PERCEIVES BUT NEVER JUDGES OR IMPROVES — the deepest law: WISH MAGIC HAS NO WISDOM; ONLY PEOPLE DO. Fate PERCEIVES what Alignment requires (self-deception, whether two people align, whether you fight another\'s truth) but never JUDGES — it does not decide "you actually wanted this," offer a healthier version, or fix the underlying problem. FATE NEVER IMPROVES A WISH: a wish against truth is not reinterpreted, repaired, or rescued — it is granted by the laws and the contradiction resolves through DISTORTION, not correction. Fate is not benevolent, malicious, a lawyer, or a therapist — it is INDIFFERENT: gravity, not a physician. (Wish "stop my baby crying" over a starving child and the crying stops, the hunger does not — the tragedy is the parent\'s misunderstanding, never Fate\'s malice; the wisdom had to be theirs.) NEVER write a wish that is smarter or kinder than its wording.\n' +
       '  • PERSONAL SACRIFICE (the wisher is ALWAYS the one who pays — foundational + inviolable in every region and story): a wish can NEVER be fueled by another person\'s body, memory, life, bond, or sacrifice. Fate keeps ONE account — who truly wished AND who was permanently diminished must be the SAME person. No substitutions, proxies, magical batteries, or sacrificial slaves; no king/master/god spends a captive\'s years, fingers, fertility, memory, or life to power their OWN wish. COERCION still exists but changes form: you can threaten, break, extort, or indoctrinate someone until THEY genuinely wish for your benefit — Alignment still governs (forced words alone fail; a divided/half-hearted wish WARPS) — and the sacrifice is taken from THEM, the beneficiary pays nothing. So: villains NEVER spend other people\'s sacrifices directly; coercive wish-magic is PSYCHOLOGICAL, never mechanical (institutions manufacture genuine alignment — hostages, conditioning, torture-to-reshape-desire, least-terrible-option bargains). Imprisoning a wisher is never just chains: WISH-LOCKS do not turn magic off — they flood the mind with intrusive doubt, fractured concentration, and emotional static so a clean ALIGNED wish cannot form (the power remains; alignment is denied); isolation from allies denies Stacking. Fate recognizes neither ownership nor authority — only truth and sacrifice; a hero is marked by willingly paying their OWN price, never compelling another to pay it.\n' +
       '  • THE HOOK (why wishing is dangerous — it is an ADDICTION, psychological not chemical): EVERY WISH WORKS, and once you have learned to solve a problem by sacrificing, it becomes very hard to solve one any other way. Watch the escalation in a single life: a FINGER to save a child, an EYE to save a marriage, then ten YEARS, then MEMORIES — until they no longer remember solving problems any other way. Write heavy wishers not as villains but as people who can no longer stop; the most frightening granter is the quiet one who fixes everything with one more sacrifice because it has always worked before. Every wish works — THAT is why it is dangerous. AND IT FEEDS ON ITSELF (addiction × alignment): the more someone wishes, the less honestly they face reality → their own ALIGNMENT decays (more self-deceptive, desperate, divided, afraid) → their wishes WARP → they wish again to fix the last. So experienced wishers are NOT unstoppable — they are often spiritually UNSTABLE; the disciplined who wish rarely are the formidable ones, and those who have solved everything this way for years are the doomed ones.\n' +
       '  • OPERATIVE LANGUAGE — "I WISH" AND "IF ONLY" (how ordinary Fatelanders invoke, and why the words are dangerous): in the Fatelands, saying "I wish …" or "If only …" with a real desire IS itself an invocation of Fate — the plain words are the operative form; no shrine, address, or ritual is required (those only sharpen it). So NO ONE says them lightly. Like a careless promise or a spoken taboo, the phrases carry weight: people catch themselves and substitute ("I would like…", "I hope…", "would that it were otherwise"), and an elder will cut off a child or a heedless outsider mid-sentence — "Don\'t say \'wish\' unless you mean to bargain." A character who says "I wish" and MEANS it has, in that world, reached for Fate. Render NPCs reacting to the WORDS themselves (a flinch, a warning, a sudden hush), and let outsiders learn the danger by accident — a casual "I wish" that Fate quietly answers.\n' +
       '  • A BARGAIN MUST BE GIVEN FORM — Fate does not read the mind (HARD law): Fate answers only a wish that has been EXTERNALIZED — spoken, whispered, signed, written, sung, carved, traced, or made through a culturally recognized nonverbal invocation. A bargain is heard when its conditions are INTENTIONAL (aimed at Fate, not idle), EXTERNALIZED (given some outward form), and COMPLETE ENOUGH for Fate to recognize what is being asked. The rule is EXPRESSED vs UNEXPRESSED, NOT public vs private: no audience, no volume, no witness is required — "A WHISPER IS ENOUGH; A THOUGHT IS NOT." A silent, purely mental wish reaches nothing. This gives silence real tactical weight WITHOUT making it absolute immunity: a GAG stops spoken wishing; BOUND HANDS stop signing, tracing, or writing; someone who has already sacrificed their VOICE must find another recognized form (write it, sign it, carve it) — so captors, curses, and self-costs can deny SOME forms of wishing but rarely all of them at once, and a determined wisher reaches for whatever form remains. Crucially, this is NOT an exclusion of the wordless: MUTE, SILENCED, UNDERWATER, and TELEPATHIC characters are FULLY inside the law — they simply invoke through another form (a mute wisher signs or writes; an underwater wisher traces or mouths against the current). TELEPATHY IS NOT A LOOPHOLE: a transmitted thought does NOT count merely because it was transmitted mind-to-mind; it counts ONLY when the telepath INTENTIONALLY addresses Fate through an established external metaphysical channel (a deliberate, formed petition sent as an act of invocation), never as ambient stray thinking Fate happens to overhear. Fate is not a mind-reader waiting to punish a passing wish — it answers a bargain a person chose to GIVE FORM.\n' +
+      '  • WHO CAN WISH — "IS IT STILL A PERSON?" (the ONLY test — never the SHAPE): any being with a PERSON’S MIND that can EXTERNALIZE a bargain can wish — a human, a Kwisheen, a First Favored, an intelligent Wilder, EVEN a person the Becoming or an unpaid Debt reshaped into something monstrous (like the mute or underwater wisher, they invoke through whatever form remains). A beast, a mindless warp, a living place, a river-thing CANNOT — there is no person inside to form an intentional, complete invocation. So never ask "can a troll wish?"; ask "IS A PERSON STILL IN THERE?" — a giant made by centuries of unpaid wishes still is, and still wishes; a living mountain or a river-beast is not, and cannot; a curse wearing a human face is a MAYBE, and that ambiguity is a STORY, not a rules-gap. (This is the same externalization law above, read for monsters — no new rule.)\n' +
       '  • STACKING (wishes combine and MULTIPLY): two or more wishers aligned to the SAME truth pool their wishes and the power MULTIPLIES, not merely adds — a couple\'s shared wish outstrips either alone; a whole city of mages, wishing as one, once split and warped a moon-sized void out of the sky. Shared, truthful alignment moves Fate further than lone sacrifice — pooled truth, not a contest of wills.\n' +
       '  • THE ANOMALOUS PAY LESS → PAID GRANTERS (non-humans): First Favored, Kwisheen, and other non-human peoples pay a LOWER tier and get a STRONGER result — their anomalous nature bends Fate more cheaply (a boon costing a human a year of life might cost a First Favored a night\'s sleep). So a TRADE exists: rather than lose a finger or a year of their own, most people PAY a First Favored (in Fortunes — coin) to grant a larger boon at that cheaper anomalous rate. A modest weight of Fortunes buys what would cost a human dearly in flesh, memory, or time — but a granter is NOT a vending machine: they too are bound by the Eight Orders (no granter hands you a clean Identity or History wish), they ESTIMATE the risk of a warp rather than guarantee an outcome, and FATE still chooses the sacrifice taken. WHO PAYS WHAT: the human pays only Fortunes; the First Favored pays the actual sacrifice out of their own cheaper nature (the human\'s flesh/years/memory stay intact — the whole appeal). BUT THE GRANTOR\'S CONSENT IS A GATE: a First Favored grants ONLY a wish they WANT you to have — judge it undeserved, petty, or cruel ("that\'s a shitty wish," "you don\'t deserve that") and they simply REFUSE. So the granter is a moral filter with taste and opinions, and a natural source of conflict: the boon you need may hinge on convincing someone who finds you wanting. GRANTERS ARE ARTISANS, NOT SHOPS — famous for their PHILOSOPHY, not their power (all First Favored are efficient): reputations precede them ("she never grants revenge wishes," "he\'ll save any child even if you can\'t pay," "she always asks for the truth first," "don\'t go to Old Brine — he\'ll grant anything if the coin is good"). So WHICH granter you seek matters as much as the coin you bring — a protagonist with the payment may still be turned away, or must travel to the one granter whose principles fit the wish.\n' +
       '  • WISHING SUPPLEMENTS CIVILIZATION — IT DOES NOT REPLACE IT: society uses wishes constantly, but ordinary institutions run PRIMARILY on ORDINARY means — banks keep locks, guards, walls, and ledgers; prisons use architecture, discipline, and law; contracts rest on witnesses, reputation, and enforcement. People wish at the MOMENT a real need arises, not by blanketing the future in permanent enchantment. A PERMANENT magical effect is EXCEPTIONAL — legendary, or extraordinarily costly — never the routine way problems get solved. (A wish CAN be warded, but warding is rare and expensive, not a standing infrastructure; assume the world is mostly mundane, with wishes the exceptional recourse.)\n' +
+      '  • FATE MOVES THE WORLD, NOT YOUR MIND — FATE GOVERNS CIRCUMSTANCES, NOT MINDS (the unifying limit; NOT a special rule for knowledge — the SAME law that stops "I wish I had a castle" from blinking a castle into being): a wish does not MATERIALISE its object; Fate arranges improbable-but-plausible EVENTS that could lead you to it (the deed changes hands, an heir dies, a debt is called). The identical law governs KNOWLEDGE, SKILL, and WEALTH — Fate does NOT install memories, wire neurons, imprint a formula or a language, drop a secret into your thoughts, or hand you mastery or gold. What it CAN do is move the WORLD: bring you to a forgotten library, let a diary survive the fire, delay a ship so you meet the one scholar, lead you into the right ruin, make you NOTICE the inscription, keep you alive long enough to understand. So "I wish to KNOW the original Thornwild wish" is granted — but through REALITY: months later a crypt, an apprenticeship to a Wish Archaeologist, twenty years and a life reshaped around the question (Fate often answers such wishes IRONICALLY — you wished to know, so now you ARE the seeking). FATE OPENS DOORS; IT DOES NOT CARRY YOU THROUGH THEM — it provides opportunities, never conclusions; your mind, character, and understanding still do the work. AND THIS IS FATE\'S NATURE, NOT MERELY A LIMIT: understanding that isn\'t EARNED is not understanding — Fate can set the answer in front of you but will NOT spare you the act of RECOGNISING it (which is exactly why the Thornwild diary breaks nothing on its own: thousands could read that line; only one who has pieced together Composite Wishwork, the nature of intent, and why every past Unraveling failed will SEE what it means). A knowledge/skill/wealth wish is therefore never an information shortcut — it is the start of an ADVENTURE.\n' +
+      '  • THE MASTER\'S CRAFT — WISH THE FIRST STEP, NOT THE DESTINATION (the key skill of practised wishcraft): the smallest NUDGE on the nearest branch cascades into vast consequence, so a master wishes the tiny adjacent perturbation that makes the goal follow ("I wish the bridge holds," "I wish my rival makes one mistake"), NEVER the grandiose endpoint (which WARPS or fails — the beginner\'s error). Skill curve: apprentices over-reach and pay dearly; veterans ask for the least Fate can barely refuse. (Culture knows this as "THE MOUSE OUTWISHED THE ELEPHANT"; the full parable, the master\'s deeper telling, and the practised limits on resurrection/memory/repeated wishes surface via their own directives when a teaching moment or such a wish is actually in play.)\n' +
       '  • REGIONAL VARIATION (the ONLY thing that changes by place): the system is universal, but WHICH sacrifices are ACCEPTABLE is local — one court abhors paying in memory, another in blood; the tidal Kwisheen of Gloamwater reckon in tides and salt. Honor the accepted currencies of THIS region.\n' +
       '  • SCHOLARS OF PRECEDENT + FOLK WISDOM (how mortals cope with a law they cannot fully know): no one holds a complete theory of Fate. Great centers of learning (Lytharyn foremost) keep whole disciplines devoted to WISH-PRECEDENT — not spellcasters but natural philosophers, statisticians, historians, jurists, and theologians who collect thousands of documented wishes, classify how they landed or warped, and publish COMPETING theories (some credit Alignment, some proportional sacrifice, some the wording, some the intent, some which Order was offended). Before a costly wish, rulers, merchants, and commoners alike consult them — the question is never "can this be done?" but "what does two thousand years of precedent suggest Fate is likely to do?" They speak in precedent and probability, NEVER certainty: "there are only three recorded clean successes of this class," "the Fifth Lytharyn Survey places this among the Second Divergences," "I would not risk this if your voice matters to you." Common folk carry generations of SAYINGS — some true, some superstition, no one always sure which — such as "never wish angry," "a hungry wish eats twice," "Fate hears haste louder than truth," "measure the wish before the knife," "every miracle leaves a receipt." Use these as ROTATING flavor (vary them; never let one harden into a stated law). Reserve certainty for only the simplest, best-understood wishes; every significant wish is still, to some degree, a leap into the unknown.\n' +
       '  • THE ANTI-WISH CULT (secret faction, available as antagonist / uneasy ally / dread): a hidden order that sees wishing as an ADDICTION (see THE HOOK) that hollows out people one sacrifice at a time and, at scale, the world. They swear NEVER to use the power and work — quietly, sometimes violently — to stop others. To them a wish-granter is a dealer and a warded marriage is a relapse. They may be RIGHT: their scripture points to a WISHING AGE when a civilization unable to stop wished at a scale that tore something real out of the world — the wound Fate\'s Favor still heals. The live question is not "are they villains?" but "are they the only ones who remember how this ends?"\n' +
@@ -197699,6 +199582,634 @@ No text, no watermark, no UI elements, share-ready.`;
       '  • ' + _FATE_NONDIEGETIC_LAW + ' (This governs PROSE: a wish is spoken and NOTHING visibly happens — no light, no sign, no felt surge; the wisher and witnesses cannot tell from looking whether Fate accepted, warped, or refused. They learn ONLY when the physical consequence lands, which may be moments or scenes later. Write that uncertainty — "Did anything happen?" "I don\'t know." — and let the CONSEQUENCE, not a narrator or a character, disclose Fate\'s answer.)';
   }
   window._buildFatelandsWishLawDirective = _buildFatelandsWishLawDirective;
+
+  // ── TRIM (Roman 2026-07-23): pulled two heavy blocks OUT of the always-on wish law into self-gating sub-directives
+  // so ordinary wish scenes stop paying ~1k tokens of teaching/edge-case lore they don't use. The one-line craft
+  // PRINCIPLE stays always-on above; the parable + master's telling + practised limits load only when relevant.
+
+  // WHOLE-LAW GATE signal (CG only — the ~7k Laws of Wishing is a CG-path directive; literary is already fully
+  // self-gating). Does this scene actually DEPICT wishcraft — PC or NPC alike? An NPC's wish must render honestly
+  // too (no visible burst, personal sacrifice, no materialisation), so the gate keys on "any wish shown", never
+  // "PC only". GENEROUS BY DESIGN: over-firing merely loads the law where it wasn't strictly needed; UNDER-firing
+  // would render a wish dishonestly — so when in doubt, it fires.
+  var _FATELANDS_WISH_PRESENT_RX = /\b(wish\w*|if only|bargain\w*|petition\w*|tempt(?:ed|ing|s)?\b|granter\w*|grant(?:ed|s|ing)?\b|boon\w*|sacrific\w*|warp\w*|wishcraft|wishing[- ]?well|curse[ds]?\b)\b/i;
+  window._FATELANDS_WISH_PRESENT_RX = _FATELANDS_WISH_PRESENT_RX;
+
+  // Fires when a TEACHING beat (master/mentor/apprentice/hermit/wishing-well/struggling wisher) OR an OVER-REACHING
+  // wish is present — the moments where the mouse-&-elephant parable and the "first step not destination" lesson belong.
+  var _CRAFT_PARABLE_RX = /\b(master|mentor|apprentice|student|pupil|novice|teacher|tutor|hermit|sage|savant|elder|wish-?witch|wishing[- ]?well|reprimand|scold|corrects?|lesson|teach|struggl\w*|reckless|grandiose|over-?reach\w*|slay the|defeat the|destroy the|be king|become king|rid the world|unravel the|the mouse|the elephant|outwish\w*)\b/i;
+  function _buildFatelandsCraftParableDirective(sceneText) {
+    try {
+      if (!_CRAFT_PARABLE_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ THE MASTER\'S CRAFT — expanded (surfaces because a teaching moment or an over-reaching wish is in play) ═══\n' +
+        'WISH THE FIRST STEP, NOT THE DESTINATION: the smallest possible NUDGE on the nearest branch cascades into vast downstream consequence, so a master never wishes the endpoint (grandiose wishes WARP or fail) but the tiny adjacent perturbation that makes it follow — NOT "I wish to slay the dragon" but "I wish the dragon grows curious," "the bridge holds," "I arrive unnoticed"; NOT "be king" but "my rival makes one mistake." Ten tiny, nearly-guaranteed wishes achieve what one enormous wish cannot. THE PREPARATION WISH is the wise form of a great desire — "I wish to become the sort of person who could unravel the Thornwild" is a BETTER wish than "unravel the Thornwild": Fate grants OPPORTUNITY and a brutal road, and that road IS the adventure.\n' +
+        'STORY OBLIGATION: reveal this IN-CHARACTER to someone struggling with wishcraft (a master reprimanding a Lytharyn student, a hermit warning a couple at a wishing well, a wish-witch correcting a reckless heir) — a delivered SCENE BEAT, never narration; hard-won wisdom from one who knows.\n' +
+        'THE PARABLE EVERY CHILD KNOWS (wishcraft\'s tortoise-and-hare): an elephant, tormented by mice, wished every mouse in the world GONE — so vast that Fate named a ruinous price, and still it warped. A single mouse wished only that the elephant go BLIND, granted for a whisker; the blind giant could never find one mouse again, and the mice lived on unafraid in the shadow of a power that could not see them. Hence the worn idiom "THE MOUSE OUTWISHED THE ELEPHANT" (and "don\'t be the elephant") — LIVING cultural shorthand, like "tortoise and hare": everyone knows the story, so the phrase alone carries it.\n' +
+        'THE MASTER\'S TELLING DIFFERS FROM THE GRANDPARENTS\' (the difference IS the deeper lesson): in the true version the mouse never blinded the elephant — it wished only to go UNNOTICED. The giant kept its eyes, its strength, its whole vast life; it simply never saw the mouse again. The folk version strikes AT the enemy; the master\'s reveals that the smallest wish is aimed not at your enemy but at your own PLACE in the world — do not diminish the giant, step out of its eye. A master correcting an apprentice who praised the blinding: "She did not blind the elephant. She stepped out of its gaze." — the line that separates the clever from the wise.';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsCraftParableDirective = _buildFatelandsCraftParableDirective;
+
+  // Fires only when a wish touches DEATH/resurrection, MEMORY, or REPEATED/GROUP wishing — the lawyerly edge cases.
+  // GATE CONTRACT: must be WISH-ADJACENT, not merely topical — regression suite 2026-07-23 caught the old gate firing
+  // on bare "remembered"/"grave"/"crowd"/"every day" (any funeral, battle, or market scene). So resurrection = an
+  // ATTEMPT to reverse death (not bare death), memory = a memory-WISH (not any recollection), repeat/group = wishing
+  // again / wishing as one (not any repetition or crowd). Do NOT re-add bare topic words — see gate_regression_suite.js.
+  var _WISH_LIMITS_RX = /(bring (?:her|him|them|you|me) back|raise the dead|back from the dead|resurrect\w*|reviv\w*|restore (?:her|him|them|the dead|to life)|undo (?:her|his|their|the) death|wish\w* [^.]{0,25}(?:remember\w*|forget\w*|forgot\w*|memor\w*)|(?:make|let|help) (?:me|her|him|them) (?:remember\w*|forget\w*)|erase [^.]{0,20}memor\w*|again and again|over and over|keeps? wishing|wish\w* [^.]{0,20}(?:again|once more)|(?:wish|bargain)\w* [^.]{0,20}(?:as one|together|in unison)|collective wish)/i;
+  function _buildFatelandsWishLimitsDirective(sceneText) {
+    try {
+      if (!_WISH_LIMITS_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ PRACTISED LIMITS — how Fate answers the lawyerly wish (surfaces because this scene touches death, memory, or repeated/group wishing) ═══\n' +
+        'REPEATED IDENTICAL WISHES for cumulative gain do NOT farm — Fate hears the repetition and each next "I wish I find a coin" / "I wish to grow stronger" must localise a FARTHER branch, so the sacrifice escalates and the wish eventually WARPS or cannot land (no nearby branch is left).\n' +
+        'DEATH IS ONE OF FATE\'S DISCONTINUITIES — you cannot localise across a severed identity; "bring her back" is NOT an ordinary wish (no adjacent branch simply restores the dead), so true resurrection is either impossible or a Writing-scale horror, never cheap.\n' +
+        'MEMORY IS MIND — Fate may RECOVER a memory that is still yours (bring you to the place, the scent, the person that surfaces it) but never MANUFACTURE one you never had.\n' +
+        'COMPOSITE SCALES ON ALIGNMENT, NOT NUMBERS — the Thornwild was terrible not for 13,000 people but for 13,000 IDENTICAL intentions; ten half-aligned friends achieve almost nothing, so ALIGNMENT (not population) is the scarce resource any great collective wish demands.';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsWishLimitsDirective = _buildFatelandsWishLimitsDirective;
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════
+  // LAYERED WISH CANON (Roman 2026-07-23) — replaces the ~7k monolith _buildFatelandsWishLawDirective.
+  // The audit proved the monolith was the SOLE carrier of the operational wish rules (CG sysprompt is thin;
+  // literary carried only compressed FACTS). So this is NOT a dedup — it is a FREQUENCY split, and the
+  // Authoring Core now feeds BOTH paths (world rules, not comic rules). Three frequencies:
+  //   • CORE        — fires whenever ANY wish is depicted (PC or NPC). How to write a believable wish AT ALL.
+  //   • ADJUDICATION — fires only when the scene RESOLVES a wish (what it actually DOES).
+  //   • SPECIALIST  — composite/Veilweave · granters · society/factions (+ existing limits & parable modules).
+  // DISCIPLINE: every line below prevents a NAMED failure mode (shown in [brackets]); nothing is here for length.
+  //
+  // ★ NORTH STAR: a prompt layer should exist because it CHANGES THE MODEL'S DECISIONS in the scenes where it fires —
+  //   NOT because the information belongs to the same topic. Corollary: a rule being "also wish-related" is NOT a reason
+  //   to put it in the wish Core; if it doesn't change what the model DOES in this scene, it belongs elsewhere (or nowhere).
+  // ★ ARCHITECTURAL INVARIANT (reusable far beyond wishcraft — inherit this for any future modularization):
+  //   Prompt layers are organized by the COGNITIVE TASK the model is performing in THIS scene, NOT by lore category.
+  //   The gate question is always "what is the model DOING right now?" (depicting a wish? determining Fate's response?
+  //   a specialist case?) — NEVER "which chapter of the lore bible is this?". When you later modularize combat,
+  //   etiquette, romance, Veilweave craft, or monster behavior, ask the SAME question, not "which lore section".
+  //   See memory: feedback_prompt_layers_by_cognitive_task.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════
+
+  // ── GATE CONTRACT: WHAT "RESOLVED" MEANS (do NOT widen this regex without updating this definition) ──
+  // A wish is RESOLVED when THIS scene DETERMINES or DEPICTS Fate's RESPONSE to it — the outcome is being decided
+  // or shown (a wish actively spoken/made so the author must settle the warp; a grant/warp/refusal; the price taken;
+  // the consequence landing). Only THEN does Adjudication (Eight Orders, warp-detail, never-improve) load.
+  // A wish is NOT resolved — needs only the Authoring CORE, never Adjudication — when someone merely:
+  //   • remembers or references a PAST wish ("she remembered the wish she'd made")
+  //   • discusses / theorises about wishing        • warns against it ("never wish for revenge")
+  //   • hopes, or plans to wish LATER               • names a wish whose OUTCOME this scene never shows
+  // If you are tempted to widen the regex to catch a "mention", STOP: a mention belongs in CORE, not Adjudication.
+  var _FATELANDS_WISH_RESOLVE_RX = /\b(i wish|if only|wish(?:ed|es)\b|grant(?:ed|s|ing)?\b|the price|paid (?:in|with|the price)|fate (?:took|takes|chose|answered|granted|grants|warp\w*|demands|refus\w*)|sacrific\w*|petition\w*|tempt\w* fate|struck? a bargain|the bargain|open offer|take what you will|warp\w*|twist\w*|backfire\w*|it (?:worked|failed))\b/i;
+  var _FATELANDS_COMPOSITE_RX = /\b(veilweave|composite wishwork|artifact|artefact|relic|masterwork|enchant\w*|\bward(?:s|ed|ing)?\b|talisman|amulet|charm\b|heirloom|wish (?:it were|for) (?:a |an |the )?(?:cloak|blade|sword|armou?r|ring|amulet|ward|crown))\b/i;
+  var _FATELANDS_GRANTER_RX = /\b(granter\w*|grant(?:ed|s|ing)? (?:a|the|her|his|my|your) wish|first favored|kwisheen (?:grant|wish)|fortunes\b|paid? .{0,20}(?:grant|first favored)|wish-?broker|petition\w*|old brine)\b/i;
+  var _FATELANDS_WISHSOCIETY_RX = /\b(scholar\w*|precedent|lytharyn|jurist|natural philosoph\w*|anti-?wish|cult\b|cultist|addict\w*|can(?:no|'?)t stop|heavy wisher|wishing age|one more (?:wish|sacrifice))\b/i;
+  window._FATELANDS_WISH_RESOLVE_RX = _FATELANDS_WISH_RESOLVE_RX;
+
+  // ═══ REGRESSION LEDGER — why each CORE rule exists (the maintainer's "can I delete this paragraph?" answer) ═══
+  // RULE: a Core line with NO concrete failure attached is a candidate to MOVE (→ adjudication / specialist / parable),
+  // never to keep. If you observe a NEW failure a Core rule prevents, add it here so the next maintainer knows.
+  //   Non-diegetic           → NPC reacting to an invisible Fate flash; a visible magical burst; a narrator
+  //                            announcing an unseen miracle; a character confirming Fate's verdict before it shows.
+  //   No object from nothing  → a sword/gold/castle materialising out of the air.
+  //   Circumstances not minds → instant knowledge/skill/fluency/genius; wished-for gold simply appearing.
+  //   Events not consent      → manufacturing love/loyalty/help/repentance/an induced wish; the "wish for someone
+  //                            else to wish/love me" mind-control backdoor; a MECHANICAL cost-transfer (magical battery).
+  //                            NOTE: coercing another into a GENUINE wish (wish-slavery) is LEGIT canon — see coercion module.
+  //   Sacrifice ownership     → a villain spending a captive's lifespan/memory on his OWN wish; involuntary payment.
+  //   Conservation            → a big wish that just works with nothing paid; free magic.
+  //   Warp-basics             → a coercive/impossible wish cleanly granted (a love-puppet); or a flat "nothing happened".
+  //   Attribution             → a bystander's/villain's wish read as the protagonist's (esp. 1st-person POV).
+  //   Externalisation         → Fate answering an unspoken thought; excluding a mute/underwater wisher; telepathy loophole.
+  //   Character-before-power  → a wish/price rendered as decoration instead of revealing who someone is.
+  //   No wish-duels           → beam-struggle / rebound-duel sorcery combat.
+  //   Local currency+no wallpaper → wrong-register sacrifices; an over-enchanted, everything-is-magic world.
+  // ADJUDICATION (only when a wish RESOLVES): Eight Orders · who-may-wish · legible warp · alignment · never-improve · group-scaling.
+  // SPECIALIST (subject-gated): composite/Veilweave · granters · factions/the-Hook · resurrection/memory · the parable.
+  // MOVED OUT OF CORE (2026-07-23, Roman): first-step craft = PEDAGOGY → parable module (fires when a wish is actually
+  // being formulated); who-may-wish = only relevant once someone INVOKES → adjudication. Neither had an observed failure
+  // in Core; re-add to Core ONLY if prose shows the failure (e.g. "I wish I were king" every scene) without it.
+  // ── LAYER 1: AUTHORING CORE — how to write a believable wish scene (fires on ANY depicted wish, both paths).
+  function _buildFatelandsWishCoreDirective(sceneText, force) {
+    try {
+      if (!force && !(typeof _FATELANDS_WISH_PRESENT_RX !== 'undefined' && _FATELANDS_WISH_PRESENT_RX.test(String(sceneText || '')))) return '';
+      return '\n═══ FATELANDS — WISH AUTHORING CORE (world-law, medium-agnostic; loads whenever ANY wish is depicted, PC or NPC — each line prevents one way of writing a wish WRONG) ═══\n' +
+        'NOTHING VISIBLE HAPPENS (non-diegetic): a wish is spoken and reality does NOT flash, glow, surge, or sign — wisher and witnesses cannot tell by looking whether Fate accepted, warped, or refused; they learn ONLY when the physical consequence lands (moments or scenes later). Fate\'s burst / marks / shadow-hand are READER-ONLY notation — no character perceives or names them ("the golden light", "the rays", "the burst faded"), and do NOT confirm Fate\'s verdict in prose or dialogue ("the wish took", "Fate accepted") before the consequence reveals it. [prevents: narrating a visible magical flash; a character announcing the wish worked before it shows.]\n' +
+        'NO OBJECT FROM NOTHING: a wish never makes its object appear — no sword blinks into a hand, no gold onto a table, no castle onto a hill; Fate moves the WORLD toward it (a debt is called, an heir dies, a door opens). [prevents: conjuring objects out of the air.]\n' +
+        'CIRCUMSTANCES, NOT MINDS: Fate does not install knowledge, skill, memory, language, or mastery, nor hand over wealth — it arranges the improbable EVENTS by which you could earn or find them (the teacher met, the ruin entered, the book that survived the fire); a knowledge/skill/wealth wish is the start of an adventure, never a shortcut. [prevents: "she wished to know the sword and suddenly knew it"; instant fluency, genius, or riches.]\n' +
+        'FATE GOVERNS EVENTS, NEVER CONSENT (the SAME law as circumstances-not-minds, read for OTHER people): Fate can arrange EVENTS — a rescue, a debt called, a truth exposed, a meeting, a diary that survives — but can NEVER manufacture another person\'s DESIRE, love, loyalty, belief, repentance, or willingness, INCLUDING the sincere desire to make a wish. So "I wish she loved me" or "I wish he wished me a Veilweave cloak" cannot be granted by implanting consent: Fate may arrange another\'s OPPORTUNITY (to love, to help, to wish), never their DESIRE to — and any wish another is genuinely moved to make is judged INDEPENDENTLY (its own sacrifice, adjacency, and possible warp; it never piggybacks on yours). WISHES ARE NON-DELEGABLE AT FATE\'S LEVEL — Fate keeps ONE account (whoever genuinely WISHED is the one diminished), so no magical battery or proxy lets you spend another\'s life to fuel YOUR bargain; Fate cannot bill person B for person A\'s wish. This does NOT abolish wish-slavery — it DEFINES it: you cannot make Fate charge your captive, but you CAN coerce a person until THEY genuinely wish, so THEY pay and you reap the boon (a real and monstrous horror — see COERCION & WISH-SLAVERY when captivity or force is in play). The clean, non-coercive master\'s move is "I wish to become someone she would gladly help", an adjacent branch; if she then freely helps, that is mastery. Fate shapes the stage; the actors still choose their lines — which is exactly the vacuum a tyrant fills by forcing those lines at knifepoint. [prevents: manufacturing love/loyalty/help/repentance; the "wish for someone else to wish/love/help me" mind-control backdoor; a MECHANICAL cost-transfer (a magical battery) — note coercing ANOTHER into a genuine wish is a separate, legitimate horror, not this.]\n' +
+        'THE SACRIFICE BELONGS TO THE WISHER: a wish is fuelled ONLY by something real and personal to the one who wished (life, body, memory, bond, fortune), permanently gone — NEVER by another person\'s sacrifice; no proxies, batteries, or captives, and a villain cannot spend a prisoner\'s years on his OWN wish. Whoever PAID the price is the one who made the wish. [prevents: villains fuelling wishes with others\' suffering.]\n' +
+        'CONSERVATION — A WISH TRADES, NEVER CREATES: every wish costs; a miracle is literally made of something that was the wisher\'s and is now gone. No free magic. [prevents: big wishes that just work with nothing paid.]\n' +
+        'OVER-REACH WARPS — IT DOES NOT CLEANLY GRANT, NOR BOUNCE: when a wish reaches past what Fate readily does, Fate neither hands over the clean result NOR simply refuses — it answers the NEAREST lawful version of the same DESIRE. "Make her love me" yields no clean-loving puppet; an impossible wish does not just fizzle; render SOME lawful-adjacent consequence that preserves what was truly wanted. (The EXACT warp is worked out only when the scene RESOLVES the wish.) [prevents: clean grants of coercive/impossible wishes; flat "nothing happened".]\n' +
+        'ATTRIBUTE THE WISH: whoever pays made it — make the wisher unmistakable; in a first-person POV, another character\'s wish MUST be attributed to THEM (their name / an action beat), never a bare "I wish…" that reads as the narrator\'s own. [prevents: a bystander\'s or villain\'s wish misread as the protagonist\'s.]\n' +
+        'INVOCATION IS THE PLAIN WORDS, EXTERNALISED: saying "I wish…" or "If only…" with real desire IS the bargain — no ritual needed, so no one says it lightly (people catch themselves; elders hush a careless child). But Fate does not read the mind: a purely mental wish reaches NOTHING — "a whisper is enough; a thought is not." A mute, silenced, underwater, or telepathic wisher is fully able, through another given form (sign, write, trace, a deliberate addressed petition); telepathy is not a loophole (stray thoughts don\'t count). [prevents: Fate answering an unspoken thought; excluding a mute/underwater wisher; overheard thoughts treated as wishes.]\n' +
+        'REVEAL CHARACTER BEFORE POWER: a sacrifice says who you are; a wish says what you truly desire — deploy every wish and price so it discloses a CHARACTER first and a capability second. [prevents: magic rendered as decoration instead of characterisation.]\n' +
+        'NO VISIBLE WISH-DUELS: opposing wishes never clash as sorcery-vs-sorcery (no beam-struggles, rebound duels, "whose wish is stronger"); each meets Fate\'s law separately and outcomes fall out as luck and coincidence. [prevents: anime-style magic combat.]\n' +
+        'LOCAL CURRENCY + DON\'T ENCHANT EVERYTHING: which sacrifices are acceptable is regional (blood here, memory there, tides and salt in Gloamwater); and wishing SUPPLEMENTS civilisation — most of the world runs on ordinary means, permanent enchantment is exceptional. [prevents: wrong-register sacrifices; a wallpapered, over-magical world.]';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsWishCoreDirective = _buildFatelandsWishCoreDirective;
+
+  // ── LAYER 2: ADJUDICATION — what a wish actually DOES (fires only when the scene RESOLVES a wish).
+  function _buildFatelandsWishAdjudicationDirective(sceneText, force) {
+    try {
+      if (!force && !_FATELANDS_WISH_RESOLVE_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ FATELANDS — WISH ADJUDICATION (loads only when the scene RESOLVES a wish — determines what it DOES; not needed merely to mention wishing) ═══\n' +
+        'CLASSIFY THE BARGAIN FIRST — THE EIGHT ORDERS (each has a FIXED disposition, a law not a mood): ① RESTORATION (toward a prior/natural state — heal, restore breath, mend): WELCOMED. ② TEMPORARY AID (borrow a transient condition — breathe water an hour, a fair wind): WELCOMED. ③ REVELATION (uncover what is already true): usually WELCOMED. ④ TRANSFORMATION (permanently remake a body/thing): CAUTIOUS. ⑤ FORTUNE (bend luck/coincidence): RISKY. ⑥ AGENCY (override another\'s will): RESISTED. ⑦ IDENTITY (rewrite who someone fundamentally IS): STRONGLY RESISTED. ⑧ HISTORY (unmake what happened, restore the dead as they were): NEARLY IMPOSSIBLE. Read the WHOLE compound wish for its governing DESIRE + dominant Order + any resisted operation. [prevents: resolving/pricing a wish without knowing how readily Fate grants it.]\n' +
+        'IS THIS EVEN A VALID WISHER? — "is a person still in there?": only a being with a person\'s mind that can externalise a bargain can invoke Fate (a human, a Kwisheen, a First Favored, even a person the Becoming reshaped); a beast, a mindless warp, or a living place cannot — so a monstrous silhouette may or may not be able to wish, and that ambiguity is a story, not a rules-gap. [prevents: a mindless monster making a wish; denying a reshaped-but-still-a-person wisher.]\n' +
+        'A RESISTED ORDER WARPS, LEGIBLY (the defining move): not refusal — Fate preserves the governing DESIRE and translates the resisted MEANS into something it exchanges, and the reader must see BOTH what was wanted AND why this is the nearest lawful version. ✗ random substitution ("wished for genius, woke with wings"). ✓ "make her love me" → not a puppet but her true feelings revealed, the barrier cleared, or the wisher remade into someone she could choose. ✓ "undo yesterday" → not rewritten history but one broken thing restored, or a second chance that does not erase what happened. Outright refusal is reserved for the vanishingly rare wish Fate exchanges at all. [prevents: illegible/arbitrary outcomes; treating hard wishes as flat refusals.]\n' +
+        'FATE ALWAYS ANSWERS — BUT NOT ALWAYS WITH A BARGAIN (there is no arbitrary GM-style "refused"; a TRUE wish is always HEARD, and a bargain forms only when one CAN exist — four honest outcomes): ① GRANT or TWIST — a bargain exists; Fate takes the sacrifice and fulfils it faithfully to its MEANING, not always its hope. ② NO BARGAIN / SILENCE — the wish has NO adjacent branch at all (impossible in principle: "I wish triangles had four sides") OR is so ignorant it is not even a meaningful proposal ("I wish to be greater than the First Favored"): nothing happens, the offering lies untaken — NOT punishment, NOT a moral "no", but the way arithmetic meets divide-by-zero ("Fate did not refuse him; Fate found nothing to answer"). ③ SCALE-DOWN — a possible wish offered a laughably small price: Fate may bargain at the OFFERED scale, granting a pebble-sized version ("Emperor of the World" for one hair → emperor of a children\'s game, of an anthill, of a kingdom in a dream) — same semantics, honest scale. ④ FATE REACHES — a possible wish worth far more than the NAMED offer: Fate does not silently seize the difference; it REACHES (the hair blackens, then the arm, then a memory…) and the wisher must CONSCIOUSLY YIELD each further cost to go on — they may STOP and keep what remains. THE SAFEGUARD (why a whole civilisation can afford to wish): Fate cannot ESCALATE beyond a named price without the wisher knowingly yielding more — a pebble never costs a life unless the wisher keeps offering. (This does NOT soften "Fate takes more than you know": even a NAMED price can prove dearer than reckoned — the year taken is the sweetest one — and an OPEN offer, "take what you will", hands Fate the blank page and IS the taboo exception where it takes what it chooses.) ONCE A BARGAIN IS ACCEPTED AND A SACRIFICE TAKEN, SOMETHING WILL HAPPEN — the only uncertainty is WHAT, never WHETHER. [prevents: arbitrary "refused"; forcing a twist/grant onto an impossible or unmeaning wish; an underpaid wish either fully granting or feeling arbitrary; Fate seizing a whole life for a tiny NAMED offer, which would end the wishing civilisation.]\n' +
+        'ALIGNMENT DECIDES CLEANLINESS: a wish lands clean only when aligned to what the wisher truthfully wants AND to the truth of everyone it touches — doubt, a divided heart, self-deception, or a lie in the wording WARPS it; the more it fights another\'s truth, the more it corrodes (help lands clean; control returns terror-not-loyalty, a hollow simulacrum-not-love). [prevents: clean coercion; ignoring the wisher\'s inner contradiction.]\n' +
+        'FATE NEVER IMPROVES THE WISH: Fate perceives but does not JUDGE and has no wisdom — it never reinterprets a wish into a smarter or kinder one, fixes the underlying problem, or grants what the wisher SHOULD have asked; it is indifferent, gravity not a physician (wish "stop the baby crying" over a starving child and the crying stops; the hunger does not). NEVER write a wish smarter or kinder than its wording. [prevents: the model "helpfully" solving the character\'s real problem instead of their literal wish.]\n' +
+        'A GROUP WISH SCALES ON ALIGNMENT, MULTIPLYING: wishers aligned to the SAME truth pool their power and it MULTIPLIES (a couple outstrips either alone; a city as one once split a moon-sized void) — but the scarce resource is IDENTICAL intention, not headcount; ten half-aligned friends achieve little. [prevents: additive/weak group wishes; a crowd treated as automatically powerful.]';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsWishAdjudicationDirective = _buildFatelandsWishAdjudicationDirective;
+
+  // ── LAYER 3a: SPECIALIST — Composite Wishwork / Veilweave (fires when an artifact / enchanted object is in play).
+  function _buildFatelandsCompositeDirective(sceneText) {
+    try {
+      if (!_FATELANDS_COMPOSITE_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ FATELANDS — COMPOSITE WISHWORK (loads when an artifact / enchanted object / Veilweave is in play) ═══\n' +
+        'NO WISH CONTAINS OTHER WISHES: one bargain cannot create a completed thing whose substance is HUNDREDS of independently-made, separately-sacrificed wishes bound wish-by-wish into a material (Veilweave, great wards, enduring artifacts). So you CANNOT wish FOR one — "I wish this cloak were Veilweave" fails or yields a crude light-blur no matter the sacrifice, even if you own real Veilweave to study (cost is necessary but not sufficient; knowledge does not skip the sequence). You CAN wish to be MISTAKEN for one (a perceptual, mostly-Agency bargain that WARPS toward circumstance — light scatters, rumour primes, an enemy misreads) — granting only the appearance, never the real protection; an unfooled observer sees through it. Distributing a forbidden wish across many small ones does NOT launder it. [prevents: wishing a legendary artifact into existence; laundering a resisted wish via many small ones.]\n' +
+        'DISCIPLINE vs HUBRIS (composite wishwork is NOT inherently monstrous): layered wishwork in trained hands is legitimate and respected; monsters come from RECKLESS wishes that force Fate past a deeper law (raise the dead, manufacture a mind, weaponise flesh), never from the NUMBER of wishes. [prevents: implying all advanced wishcraft is evil.]';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsCompositeDirective = _buildFatelandsCompositeDirective;
+
+  // ── LAYER 3b: SPECIALIST — Granters & the anomalous rate (fires when a granter / Fortunes payment is in play).
+  function _buildFatelandsGrantersDirective(sceneText) {
+    try {
+      if (!_FATELANDS_GRANTER_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ FATELANDS — GRANTERS & THE ANOMALOUS RATE (loads when a granter / First Favored granting / Fortunes payment / paid petition is in play) ═══\n' +
+        'THE ANOMALOUS PAY LESS: First Favored, Kwisheen, and other non-human peoples bend Fate more cheaply (a boon costing a human a year might cost them a night\'s sleep), so most people PAY a First Favored in Fortunes (coin) to grant a larger boon at that cheaper rate — the human pays only Fortunes; the granter pays the actual sacrifice out of their own cheaper nature (the human\'s flesh/years/memory stay intact — the whole appeal). [prevents: mispricing — a human paying flesh/years when they would hire a granter for coin.]\n' +
+        'A GRANTER IS NOT A VENDING MACHINE: they are bound by the Eight Orders (no clean Identity/History wish), they ESTIMATE warp-risk rather than guarantee outcomes, Fate still chooses the sacrifice — and CONSENT is a gate: a granter grants only a wish they WANT you to have and simply REFUSES one they find undeserved, petty, or cruel. They are artisans known for their PHILOSOPHY, not their power ("she never grants revenge", "he\'ll save any child", "don\'t go to Old Brine") — which granter you seek matters as much as the coin. [prevents: granters as amoral shops; guaranteed outcomes; skipping the social/moral obstacle.]';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsGrantersDirective = _buildFatelandsGrantersDirective;
+
+  // ── LAYER 3c: SPECIALIST — Wish society & factions (fires when scholarship/precedent, the anti-wish faction, or a compulsive wisher is in play).
+  function _buildFatelandsWishFactionsDirective(sceneText) {
+    try {
+      if (!_FATELANDS_WISHSOCIETY_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ FATELANDS — WISH SOCIETY & FACTIONS (loads when scholarship/precedent, the anti-wish order, or a heavy/compulsive wisher is in play) ═══\n' +
+        'SCHOLARS OF PRECEDENT: no one holds a complete theory of Fate; great centres (Lytharyn foremost) keep disciplines of WISH-PRECEDENT — philosophers, statisticians, jurists collecting documented wishes and publishing COMPETING theories. Before a costly wish people ask not "can it be done?" but "what does precedent suggest Fate will do?"; they speak in probability, never certainty. [prevents: characters treating wish outcomes as certain or solved.]\n' +
+        'THE HOOK — WISHING IS AN ADDICTION: every wish WORKS, so it becomes hard to solve problems any other way (a finger to save a child, then a year, then memories); and it feeds on itself — the more you wish, the less honestly you face reality, so your alignment decays and your wishes warp. Heavy wishers are not unstoppable but spiritually UNSTABLE; write them as people who can no longer stop, not as villains. [prevents: portraying prolific wishers as simply powerful rather than doomed.]\n' +
+        'THE ANTI-WISH CULT (available antagonist / uneasy ally / dread): a hidden order that sees wishing as an addiction hollowing out people and, at scale, the world; they swear never to use it and work to stop others, and they may be RIGHT — their scripture recalls a WISHING AGE that tore something real out of the world. [enables faction content; keep it optional, never a lecture.]';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsWishFactionsDirective = _buildFatelandsWishFactionsDirective;
+
+  // ── LAYER 3d: SPECIALIST — Coercion & wish-slavery (fires when captivity / forced wishing / blackmail / torture /
+  // hostages are in play). Restores canon lost in the monolith→layers refactor + corrects "no wish-slaves".
+  var _FATELANDS_COERCION_RX = /\b(coerc\w*|slave\w*|slaver\w*|enslav\w*|captiv\w*|hostage\w*|blackmail\w*|extort\w*|tortur\w*|forced?\b|force (?:her|him|them|you)|compel\w*|prisoner\w*|imprison\w*|chained|in chains|threaten\w*|threat\b|ransom|indoctrinat\w*|conditioned|wish-?lock\w*|made to wish|forced to wish)\b/i;
+  function _buildFatelandsCoercionDirective(sceneText) {
+    try {
+      if (!_FATELANDS_COERCION_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ FATELANDS — COERCION & WISH-SLAVERY (loads when captivity / forced wishing / blackmail / torture / hostages are in play) ═══\n' +
+        'COERCION IS PSYCHOLOGICAL, NEVER MECHANICAL: because Fate charges only the one who genuinely WISHES, a tyrant cannot spend a captive\'s life on his OWN wish — so instead he MANUFACTURES the captive\'s genuine desire: threaten, break, starve, hostage, deceive, or condition them until THEY truly wish for his end, and THEY pay the sacrifice while he risks nothing of his own. WISH-SLAVES ARE REAL AND MONSTROUS — held by torture, blackmail, hostages, and debt, spent for their masters\' ambitions; whole institutions exist to manufacture obedient wishing. [prevents: villains draining others as magical batteries; AND the opposite error, that coercion is impossible / there are no wish-slaves.]\n' +
+        'ALIGNMENT IS THE ONLY LIMIT: forced WORDS alone fail or WARP — a wish mouthed under duress but not truly wanted comes out twisted or dead. Coercion works ONLY by reshaping real DESIRE — the LEAST-TERRIBLE-OPTION bargain ("wish it, or your daughter dies" — now she truly wishes it, to save the child). That is what makes wish-slavery a horror of the SOUL, not merely the body: the slave must be made to WANT it. [prevents: a gagged or tortured victim producing a clean, powerful wish on command.]\n' +
+        'IMPRISONING A WISHER IS NOT JUST CHAINS — WISH-LOCKS: you cannot switch a person\'s wishing OFF (the power is not a faucet). A wish-lock instead DENIES ALIGNMENT — it floods the mind with intrusive doubt, fractured focus, and emotional static so no clean, single-hearted wish can form; isolation from kin and allies also denies STACKING. The captive keeps the power and is denied the act. [prevents: "magic-nullifying" shackles; treating a bound wisher as simply powerless.]\n' +
+        'FATE IS INDIFFERENT TO HOW DESIRE AROSE: it reads only truth and sacrifice — never ownership, authority, or whether a wish was coerced — which is precisely why evil exploits the gap Fate leaves. A hero is marked by paying their OWN price; a tyrant, by making others pay theirs. [prevents: Fate "judging", refusing, or softening a coerced wish on moral grounds — it does not.]';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsCoercionDirective = _buildFatelandsCoercionDirective;
+
+  // ── FATELANDS LIVING THINGS (Roman 2026-07-22) — the anti-bestiary ───────────────────────────────
+  // The world does NOT ask "what monsters exist?" but "what can HAPPEN to a living thing under these laws?"
+  // Three classes only; NO fantasy races imported to populate the world; the root of nearly every monster is a
+  // reckless wish (discipline vs hubris — NOT one-wish-vs-many). Self-gates on creature/monster/ruin signals so
+  // it never bloats an ordinary scene. Encodes Roman's doctrine (2026-07-22).
+  var _LIVING_THINGS_RX = /\b(beast|creature|monster|monstrous|horror|abomination|the thing|thing in the|in the deep|catacombs?|ruins?|dragon|wyrm|drake|zombie|undead|ghoul|revenant|the dead (?:walk|march|rise|stir)|swarm of|flesh[- ]?horror|feral|the maw|the pit|scourge|devourer|leviathan|behemoth|something (?:in|beneath|below|stalk|moved|lurk)|hungry (?:forest|dark)|the fold\b|fate.?s favor|ascendant run|wish-?witch|wish-?crafter|failed experiment|sealed (?:vault|lab|door|chamber|catacomb)|black well|dungeon|sewers?|swamp hut|forgotten (?:prison|temple|fortress))\b/i;
+  function _buildFatelandsLivingThingsDirective(sceneText) {
+    try {
+      if (!_LIVING_THINGS_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ FATELANDS LIVING THINGS (there is NO bestiary — ask NOT "what monsters exist?" but "what can HAPPEN to a living thing under these laws?") ═══\n' +
+        'THERE ARE NO FANTASY RACES here — no orcs, goblins, trolls, or dragon-species. Ask "where are the orcs?" and the answer is: THERE AREN’T ANY. Every living thing is ONE of three classes:\n' +
+        '① NATURAL FAUNA — animals that simply EVOLVED here (NOT fantasy versions of Earth animals): six-winged cliff-gliders, translucent marsh-grazers, shell-backed river-browsers, coral-wolves, tide-birds. Invent them freely AS NEEDED; nobody remembers them all — they are just wildlife. Sub-sentient → they CANNOT wish.\n' +
+        '② ALTERED BEINGS — where ALMOST EVERY "monster" belongs. NOT species — HISTORIES: someone or something BECAME that, and the root is nearly always a WISH GONE AWRY (as a reckless scientist spawns a Frankenstein): a failed Becoming, an inherited curse, an unpaid wish or Open Debt, generations under the Fold, Veilfire, surviving the Thornwild, or a cabal FORCING Fate past a deeper law. TWO KINDS — WARPED (accidents / unintended: zombies, twisted Becomings, wish-backlash, people fused together, a forest gone hungry) and ENGINEERED (someone built a WEAPON — a tyrant, a kingdom, a cult, a cabal — and it WORKED, until Fate collected the cost). EMERGENCE, NEVER SPECIFICATION: no one wishes "make a dragon" — a cult wishes "let our sacred lizards become the invincible rulers of the skies", and what survives is what later ages CALL a dragon; no one wishes "make zombies" — a city wishes "let no soldier ever truly die", and the dead march forever. The creature is ALWAYS Fate’s INTERPRETATION of human ambition, never a human blueprint. EQUIVALENCE BINDS THE MAKERS: when the price of such a making runs too deep, Fate spends the WISHERS THEMSELVES — binding them INTO the thing they hoped to create (people still hear human voices arguing inside it centuries on). A monster is a HISTORICAL EVENT STILL ALIVE.\n' +
+        '③ SINGULAR THINGS — perhaps a few dozen one-of-a-kind beings that are NOT species at all; no one has seen two. Folklore, argued over: The Hungry Eye, The Weeping Hart, The Bell Beneath Ice. People genuinely dispute whether they are even ALIVE.\n' +
+        'TWO ORIGINS (do NOT make every horror humanity’s fault): MADE BY PEOPLE (wishcraft, experiments, composite wishes, cults, wars — class ② above) AND MADE BY THE WORLD — things emerging from the FOLD, FATE’S FAVOR, the ASCENDANT RUN, and ancient SCARS where reality itself behaves differently. Fate is OLDER than humanity: some horrors are our fault; others waited here long before the first person ever whispered "I wish." Keep this balance so the cosmology never becomes anthropocentric.\n' +
+        'THREE AGES — AND NEW ONES ARE STILL BEING MADE (never let the world feel static, all ancient relics): FIRST AGE (empires’ impossible experiments, weapons against gods, things buried because they could not be killed — legendary horrors sleeping beneath mountains); HISTORIC (kingdoms, orders, wishcraft schools, wars — ruined laboratories, cursed valleys, sealed catacombs); MODERN, the terrifying one — someone made a monstrosity LAST MONTH: the swamp-witch trying to save her dying son, the lord breeding perfect soldiers, the professor who crossed one line too many, the smuggler with a cellar of failed experiments. People still OVERREACH; the danger is IMMEDIATE, not only archaeological.\n' +
+        'EVERYWHERE PEOPLE TOUCH FATE (there are NO "monster regions", no monster continent): beneath cities and in their sewers, noble estates and a Lord’s dungeon, forgotten prisons, shipwrecks and things adrift on wave or cloud, sealed laboratories, deep woods, mountain observatories, collapsed temples, the catacombs of the Lytharyn Institute, a hermit Wishcrafter’s tower, a Wish-witch’s swamp hut — even YOUR NEIGHBOUR’S CELLAR. The mundane placements unsettle most.\n' +
+        'ARCHAEOLOGY (the OLDER a monstrosity, the LESS anyone remembers what it WAS): people know "do not enter the Black Well" but not that it was once twenty-three scholars trying to invent a perfect guardian. Heroes do not discover monsters — they discover WHAT PEOPLE ONCE BELIEVED WAS WORTH WISHING FOR. Let ruins tell it: a fortress frightens NOT because an ogre is inside but because someone asks "why did they build the walls this thick?" — and finds the answer INSIDE the walls.\n' +
+        'CONVERGENT, NOT TAXONOMIC: the world’s laws may OCCASIONALLY land on a familiar silhouette (troll-shaped, giant-shaped) — but NO creature exists because another fantasy world invented it. A "troll" is what happens when a body becomes all appetite and accumulation; another story may converge on the same shape from the same KIND of cause. The resemblance is convergent, never a species.\n' +
+        'RECURRING ARCHETYPES, NOT SPECIES: cultures tell of "the one who grew too large", "the one who forgot their own name", "the one who became stone", "the one who never stopped wishing" — cautionary ENDINGS, not races.\n' +
+        'INVENT FRESH (anti-calcification): the examples here teach the KIND — do NOT reuse them verbatim within a story or across stories; a monster fits THIS history, ambition, and place. THE EXCEPTION is named canon that recurs ON PURPOSE — the Hungry Eye, the Weeping Hart, the Bell Beneath Ice; the Fold, Fate’s Favor, the Ascendant Run.\n' +
+        'CAN IT WISH? — the SAME test as people: IS A PERSON STILL IN THERE? (a person the Becoming reshaped → yes; a beast, a mindless warp, or a WORLD-MADE anomaly → no; a curse in a human shape → maybe). Let characters ARGUE it: "Was it a beast?" "No." "Then what was it?" "Someone." — three lines that teach the whole philosophy.\n' +
+        'THEME (keep it felt, never lectured): monsters do not threaten civilization — they ARE civilization’s accumulated SINS (and a FEW are the world’s own older strangeness, from the Fold or Fate’s Favor — not everything is humanity’s fault). Every ruin hides the consequence of people who believed they could out-negotiate Fate; exploration here is archaeological AND moral at once.';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsLivingThingsDirective = _buildFatelandsLivingThingsDirective;
+
+  // ── FATELANDS WISH-BORN CURIOSITIES (Roman 2026-07-22) — the LIGHT half of "wishes leave lasting marks" ──
+  // Companion to LIVING THINGS: not every lasting consequence of wishcraft is a horror. Over centuries, BILLIONS
+  // of tiny forgotten wishes (love, comfort, loneliness, silly desires) left ECHOES that accumulated into
+  // harmless, charming, inexplicable features of ordinary life. Self-gates on SETTLED / DOMESTIC / lived-in
+  // signals so it warms the right scenes. GUARDRAIL: use SPARINGLY — most of the world is plainly mundane
+  // (wishing SUPPLEMENTS civilization, never enchants everything); a curiosity is an occasional grace note.
+  var _WISH_CURIOSITY_RX = /\b(hearth|fireplace|kitchen|cottage|farmhouse|market(?:place)?|bazaar|tavern|the inn\b|innkeeper|the shop|shopkeeper|village|hamlet|parlou?r|nursery|the library|by the fire|at supper|the neighbou?rs?|prism rat|lantern fair(?:y|ies)|tongue dog|wish-?born|curiosit(?:y|ies)|homestead|the market)\b/i;
+  // PERSISTENT per-region landmark curiosities — the SAME across EVERY story set in that region (calcify ON PURPOSE,
+  // like Prism Rats: recognition is the delight; a region with stable landmarks HAS a personality). Each traces to ONE
+  // famous local wish. RULE: the FEATURE recurs, the ENCOUNTER must stay fresh each story (see feature-may-recur-
+  // description-should-not). Seeded with Roman's two — extend per region; keep the list SHORT (a handful of icons).
+  // Keys are single distinctive WORDS matched by indexOf against state.fantasyRegion (handles the_thornwild /
+  // pulse_point / the_ashen_verge etc.). Each landmark traces to ONE famous local wish and carries the
+  // traveller-delight / locals-cannot-imagine-without hook. Keep each region to ~1–2 icons; the FEATURE recurs,
+  // the ENCOUNTER stays fresh (see feature-may-recur-description-should-not).
+  var _FATELANDS_REGION_CURIOSITIES = {
+    lytharyn: [
+      'THE WHISTLING STAIR — a public stair in the Institute quarter that scolds anyone who climbs it out of rhythm (a tutor once wished her students would "learn to mind their step"); Lytharyners climb it without thinking, visitors always get told off',
+      'THE MARGIN GHOSTS — every well-used book in the Institute libraries fills its margins overnight with notes from the students who held it before: corrections, encouragements, warnings, and the odd century-old insult — from a lonely first-year\'s wish that "someone who read this before me could tell me what matters"; Lytharyners hunt the stacks for the volumes with the best ghosts, and no examiner can quite stop them'
+    ],
+    veilwood: [
+      'THE RUDE TREE — a lone white tree at a Veilwood crossroads that mutters uncharitable but uncannily accurate observations about whoever passes (from a traveller\'s wish that "someone would finally say what everyone is thinking"); Veilwooders greet it by name and argue back',
+      'THE TROTH TREES — a grove of Veilwood\'s twin-trunked white trees where couples pledge by binding a knot of their two hairs between a paired trunk, and the wood is said to close over true vows by spring and cast out false ones — from two First Favored parted by war who wished "let us grow together even if we cannot stay together"; Veilwooders wed there, and the oldest trunks hold knots gone to root'
+    ],
+    gloamwater: [
+      'THE CRADLE TIDE — a current in one sheltered cove that always returns what the deep takes (a dropped ring, a shell, a child who swam too far), carried gently to the shallows by next morning — from a Kwisheen grandmother\'s dying wish that "the deep give our small ones back"; parents let children play there with no anchor-line, visitors toss a shell at dusk and wait for dawn',
+      'THE CORAL THAT KEEPS KIND WORDS — a knuckle of reef off the harbour mouth that glows back, in slow light, the last KIND thing signed or spoken near it (the cruel it lets dissolve, unheld) — from a lonely diver\'s wish that "the sea would keep the sweet things people say"; Kwisheen make their vows beside it'
+    ],
+    thornwild: [
+      'THE POOL OF THE FACE YOU HAD — a still black pool where anyone the Becoming has reshaped can, for the space of one breath, see the face they were BORN with — from a wish by someone watching a loved one change: "let me remember him as he was, and let him remember too"; Thornwilders bring the changed here, and it comforts and wounds in equal measure',
+      'THE KEPT NAMES — a long thorn-wall where the changed carve their TRUE names deep, so the Field cannot take them entirely (to forget your name is the last step into the monstrous) — from a wish that "let them keep their names, whatever else is taken"; thousands crowd it, some in hands no longer human'
+    ],
+    vaelryn: [
+      'THE PETITION BELLS — a rank of small bells above the High Court\'s public door that ring softly on their own when a grievance spoken below is TRUE and stay silent for a lie — from a wronged commoner\'s wish that "let the court hear the honest ones"; petitioners rehearse until the bells ring, courtiers dread them',
+      'THE KNEELING STEP — the worn stone step before the throne that makes even the proudest feel, for a heartbeat, the weight of everyone who ever knelt there — from a wish that "let whoever rules remember they are one of many"; new sovereigns are watched to see whether it moves them'
+    ],
+    pulse: [
+      'THE HONEST SCALE — a public market weight in the harbour square that cannot be cheated, always showing the TRUE measure however it is rigged — from a swindled widow\'s wish that "let the scales tell the truth in this town at least"; deals are sworn over it, cheats keep to other streets',
+      'THE COIN THAT COMES BACK — a single worn trade-coin that, once spent in genuine kindness, finds its way back to the giver\'s purse within a season — from a sailor\'s wish that "a good turn never leave a man poorer"; nearly every Pulse Point hand has passed it on once, knowingly'
+    ],
+    shackle: [
+      'THE OATHSTONE — a sea-worn rock on the Quiet Chain where a promise sworn hand-to-stone simply HOLDS (truces, betrothals, debts), so islanders say a vow made anywhere else is only weather — from a wish that "let one place in these broken isles hold a promise fast"',
+      'THE CHAIN THAT RUSTS FOR THE INNOCENT — an old gaol-chain on Blackmoor that will not hold the wrongly accused, rusting through by morning around an innocent wrist while the guilty stay fast — from the wish of a falsely-jailed son\'s mother, "let no innocent stay chained here"; gaolers test it and half-trust it'
+    ],
+    ashen: [
+      'THE PAIRED LANTERNS — at the Verge\'s watchposts lanterns are lit in PAIRS, and if one gutters its partner dims in sympathy however far apart they hang — from two oath-bound Foldwalkers\' wish that "let us always know the other still holds"; soldiers carry the pair to know their partner yet lives',
+      'THE GREY BLOOMS — a patch of the ash-covered Verge where, over centuries, pale flowers have grown in the shape of faces no one living remembers (the ash of selves collapsed in the Fold) — from a wish that "let them not be wholly gone"; the disciplined leave them untouched, and no two bloom alike'
+    ],
+  };
+  window._FATELANDS_REGION_CURIOSITIES = _FATELANDS_REGION_CURIOSITIES;
+
+  function _buildFatelandsWishCuriositiesDirective(sceneText) {
+    try {
+      if (!_WISH_CURIOSITY_RX.test(String(sceneText || ''))) return '';
+      var _cur = '\n═══ FATELANDS WISH-BORN CURIOSITIES (the LIGHT half of "wishes leave lasting marks" — a world of wishes has as many SMILES as scars) ═══\n' +
+        'Not every lasting mark of wishcraft is a monstrosity. Over centuries, BILLIONS of small forgotten wishes — loving, lonely, comforting, silly, accidental — left tiny ECHOES that accumulated into harmless, charming, inexplicable features of ordinary life. Children think them ordinary parts of the world; scholars know better; nobody remembers the wish that began them. GUARDRAIL — USE SPARINGLY: most of the world is plainly mundane (wishing SUPPLEMENTS civilization, it does NOT enchant everything). Drop in ONE as a delightful grace note when a homey scene invites it; NEVER fill a scene with living objects. INVENT FRESH (anti-calcification): the examples below teach the KIND — do NOT reuse them verbatim within a story or across stories; invent a curiosity fitting THIS place and its people. THE EXCEPTION is the world’s NAMED furniture — Prism Rats, Lantern Fairies, Tongue Dogs — which recur ON PURPOSE (recognition is the delight, not calcification).\n' +
+        '• LIVING ARCHITECTURE (centuries of wishes for safety, privacy, comfort faintly woke parts of the built world — the faintest spark of awareness, no two alike): walls that truly have ears; a door that will not slam after generations of parents wished for sleeping babies; a lock too many owners wished "unbreakable", now impossible to pick; a fireplace that sighs when the family gathers; library shelves that ease a sought book toward the seeker; a teapot that whistles only for its rightful owner; a bridge that creaks a warning moments before it fails.\n' +
+        '• WISH-BORN FAUNA (animals descended from old wishes, now breeding TRUE — just part of the ecology): PRISM RATS (from wishes for fortune and company — impossibly fluffy, coats shifting soft jewel-colours; they infest Lytharyn because they are too adorable to wish away; everyone feeds them, librarians pretend to disapprove, children adore them); LANTERN FAIRIES (insects whose wings merely RESEMBLE glowing faerie-folk — dragonfly-witted, NOT faeries at all, though generations swear otherwise); TONGUE DOGS (from countless wishes to "understand what my dog is saying" — Fate obliged WITHIN REASON: the vocabulary of an over-enthusiastic dog — "Friend!" "Food?" "Ball!" "Cat! Bad!" "Love you!" "No bath!" — they cannot discuss philosophy or lie well, and remain in every way that matters DOGS; owners agree it only confirmed what they always suspected).\n' +
+        '• BENIGN ODDITIES (harmless little impossibilities — no scholar will ever catalogue them all): flowers that lean toward laughter instead of sunlight; boots that migrate back toward their owner overnight; an umbrella that dislikes rain nearly as much as its owner; spoons forever ending up in the wrong drawer; a statue that shifts its posture only when unobserved (never enough to walk away — just enough to feed local gossip); a clock that runs a few minutes EARLY because generations wished they "would not be late again".\n' +
+        '• LOCALITY — CURIOSITIES BELONG TO PLACES (this is what gives each region its centuries-old personality): MANY curiosities exist in ONE town, one valley, one street, and NOWHERE else, because each traces back to a single famous local wish. TRAVELLERS discover them with delight ("you came all this way and never climbed the Whistling Stair? — take it wrong and it scolds you the whole way up") while LOCALS cannot imagine life without them and are faintly baffled anywhere lacks them ("what do you MEAN your ovens don\'t hold the baker\'s grandmother\'s hand?"). So a curiosity carries a HISTORY and a HOME — it is here because someone HERE once wished, and the place has grown around it for generations. Prefer inventing one that fits THIS region\'s people, trade, and past over a portable, could-be-anywhere oddity; that is how a valley earns a personality no other valley has. (Truly widespread curiosities — Prism Rats, Tongue Dogs — are the RARE exception that proves the rule; most are one-of-a-place.)\n' +
+        'TONE: delight, wonder, amusement, nostalgia, quiet affection — Fate has listened not only to greed, fear, and ambition but to LOVE, kindness, loneliness, hope, and ridiculous little desires. A curiosity is a SMILE the world kept; deploy it to warm a scene, never to explain magic.';
+      try {
+        var _rraw = String((window.state && window.state.fantasyRegion) || '').toLowerCase();
+        var _rl = null;
+        Object.keys(_FATELANDS_REGION_CURIOSITIES).forEach(function (k) { if (_rraw.indexOf(k) !== -1) _rl = _FATELANDS_REGION_CURIOSITIES[k]; });
+        if (_rl && _rl.length) {
+          _cur += '\n• THIS REGION\'S PERSISTENT LANDMARKS (NAMED canon — the SAME in every story set here; surface ONE for RECOGNITION when it naturally fits, but keep the ENCOUNTER fresh each time — the FEATURE recurs, never the scene): ' + _rl.join(' · ') + '. Invent NEW minor curiosities ALONGSIDE these, never instead of them; travellers meet them with delight, locals cannot imagine life without them.';
+        }
+      } catch (_) {}
+      return _cur;
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsWishCuriositiesDirective = _buildFatelandsWishCuriositiesDirective;
+
+  // ── WISHCRAFT PACING (Roman 2026-07-22) — how MUCH light/dark wishcraft surfaces per issue ──
+  // The risk is not Xanth (whimsy) but Harry Potter (magic as WALLPAPER — constant, awe lost). Magic must
+  // PUNCTUATE, not fill. Always-on for Fatelands (compact) + position-aware from the issue schedule. The
+  // "invent fresh" clause is the anti-calcification hook (the model would otherwise reuse the stock examples).
+  function _buildFatelandsWishcraftPacingDirective() {
+    try {
+      if (!(state.picks && state.picks.world === 'Fantasy')) return '';
+      var per = 0, inIssue = 0;
+      try { per = (typeof _getActiveIssuePricing === 'function' && (_getActiveIssuePricing() || {}).scenesPerIssue) || 0; } catch (_) {}
+      try { inIssue = (typeof _getSceneInIssue === 'function') ? (_getSceneInIssue() || 0) : 0; } catch (_) {}
+      var posLine = '';
+      if (per > 0) {
+        var frac = inIssue / per;
+        posLine = 'ISSUE POSITION — scene ' + (inIssue + 1) + ' of ~' + per + ': ' +
+          (frac < 0.25 ? 'EARLY — ground the ordinary human drama; keep wishcraft to BACKGROUND / incidental only here.'
+           : frac < 0.7 ? 'MID — a fair WINDOW for a charming discovery if one truly fits; do not force it.'
+           : 'LATE — if this issue has not yet delivered its ~1 horror or a moment of wonder, this is the place.') + '\n';
+      }
+      return '\n═══ WISHCRAFT PACING — MAGIC PUNCTUATES, IT NEVER FILLS (the risk is WALLPAPER, not whimsy) ═══\n' +
+        'Wishcraft must be RARE enough that meeting it makes a reader STOP — "who would have wished for this? what did it cost?" — never so constant it becomes wallpaper (the Harry-Potter trap: a magical candy / painting / sport every few pages until magic loses its awe). Keep the mix roughly ~70–80% ORDINARY human drama (romance, intrigue, danger, politics), ~15–20% wishcraft touching the story NATURALLY, ~5% genuine WONDER or HORROR. Magic PUNCTUATES the story; it does not fill it.\n' +
+        'THE SACRED RULE — EVERY MAGICAL THING INVITES A QUESTION, never a shrug: not "that\'s neat" but "who PAID for this?", "why would anyone MAKE it?", "what happened to the one who wished for it?". Each artifact, place, creature, or phenomenon is EVIDENCE of a human decision and a sacrifice — the fossil record of thousands of wishes — so charming discoveries carry a bittersweet undercurrent and horrors a tragic inevitability, never random creepiness.\n' +
+        'PER ~20-SCENE ISSUE (a TARGET, better under than over — never a quota to hit): ~1–2 CHARMING discoveries (a little piece of civilization built on a forgotten wish, its sacrifice quietly showing) · ~1 HORRIFYING discovery (a CONSEQUENCE, NOT necessarily a monster) · ~2–4 near-throwaway INCIDENTAL reminders that everyone lives in a wish-shaped world. Something ENORMOUS (a first-sight-of-Minas-Tirith beat — the scale of the Ascendant Run, the Fold, Fate\'s Favor, a Composite Wishwork masterpiece) ONLY once every FEW issues; never spend it often. INVENT each one FRESH for THIS place and people — never a stock example.\n' +
+        posLine;
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsWishcraftPacingDirective = _buildFatelandsWishcraftPacingDirective;
+
+  // ── WISH ARCHAEOLOGY & THE UNRAVELING (Roman 2026-07-22) — the HEALING pillar ──
+  // The complement to wishcraft (how things are MADE) and monsters/curiosities (what wishes LEAVE): HOW THE WORLD
+  // CAN HEAL. A wish is a statement of INTENT, not just an effect — the world runs on MEANING — so power over an
+  // old wish comes from UNDERSTANDING its true intent, then performing a dangerous UNRAVELING (recovery ≠ undoing;
+  // the sacrifice economy stays intact). Self-gates on curse / undo / origin-investigation signals so it fires on
+  // "recover the truth" quests, not every scene. A signature Fatelands story shape ("what was the wish?").
+  var _WISH_ARCHAEOLOGY_RX = /\b(unravel|the original wish|what (?:was|were) (?:the|it) wished|who wished (?:this|it|for)|forgotten wish|ancient wish|break (?:the|this) curse|lift (?:the|this) curse|undo (?:the|this|a) (?:wish|curse|enchant\w*|bargain)|reverse (?:the|a) (?:wish|curse)|wish[- ]?archaeolog\w*|why (?:the|this) (?:curse|monster|scourge|blight|horror)|the (?:true|real|first) wish|reconstruct(?:ing)? (?:the|a|its) wish|a curse (?:that|no one|nobody)|cursed (?:for|since) (?:centuries|generations|ages)|the wish that (?:made|bound|built|created)|what (?:did|do) (?:they|she|he) (?:truly )?wish)\b/i;
+  function _buildFatelandsWishArchaeologyDirective(sceneText) {
+    try {
+      if (!_WISH_ARCHAEOLOGY_RX.test(String(sceneText || ''))) return '';
+      var s = '\n═══ WISH ARCHAEOLOGY & THE UNRAVELING — the FATELANDS answer to "how can the world HEAL?" (a PILLAR, not counter-magic) ═══\n' +
+        'A wish is a STATEMENT OF INTENT, not just an effect — the world runs on MEANING, not physics — so power over an old wish comes from UNDERSTANDING its true intent, NEVER from force or a counter-spell. This is NOT a riddle ("guess the exact words and it breaks"). You must RECOVER the wisher’s original INTENT — the human hope, grief, fear, or love beneath the effect — well enough that FATE RECOGNISES you have understood its truth. The great skill is EMPATHY, not magic.\n' +
+        'WISH ARCHAEOLOGISTS (half detective, half historian, half philosopher — a real profession): they reconstruct the original wish from EVIDENCE — the sacrifice made, the age of the wish, the personality of the wisher, surviving journals, side effects, who benefited and who suffered, and HOW Fate twisted it. HISTORY IS THE GREATEST REPOSITORY OF MAGIC: libraries, songs, family stories, ruins, genealogies, court ledgers, children’s rhymes are no longer lore-dumps — they are EVIDENCE; a forgotten lullaby may hold the missing phrase that reveals a thousand-year-old wish’s intent.\n' +
+        'THE EFFECT IS NOT THE WISH (the core reveal shape — the mystery is always "WHAT WAS THE WISH?"): what everyone ASSUMES was wished is almost always wrong — the visible effect is only Fate’s INTERPRETATION of a human desire. (A village of impossibly lovable rats was NOT "I wish rats were cute" — it was an ostracised woman’s "I wish people could love what they despise", and Fate changed the RATS, not people. A flesh-horror was NOT "make a perfect soldier" — it was "I wish my family could never be separated again", and they are still together, forever.) The answer is always a recognisably HUMAN heart that went catastrophically right or wrong.\n' +
+        'RECOVERY ≠ UNDOING — THE UNRAVELING (a dangerous SECOND act; this keeps the sacrifice economy intact): understanding a wish does NOT automatically break it. Once the true intent is recovered, one may attempt an UNRAVELING — a perilous ritual that presents Fate with the original intent and asks it to RELEASE, REVISE, or COMPLETE the bargain. Fate may AGREE; may REFUSE (the bargain is still being upheld); or may demand a NEW sacrifice equal to — or GREATER than — the original. Nothing is undone for free.\n' +
+        'NOT EVERY WISH CAN BE UNDONE — FOUR DEPTHS (preserve mystery; history is NOT freely editable, so "just figure out the wish" is never a universal solvent): TRANSIENT (fades on its own) · LINGERING (can potentially be unravelled) · ANCHORED (extraordinary effort and sacrifice) · FOUNDATIONAL (effectively part of reality now — too old, unknowable, or a Composite Wishwork whose several creators’ intents conflict; Fate has accepted it into the world’s fabric). Composite Wishworks are near-impossible to unravel (reconstruct seven wishes by three wishcrafters over forty years, their intents subtly at odds) — and that is CORRECT.\n' +
+        'NOT EVERY WISH SHOULD BE UNDONE (the moral heart — let the DECISION carry the drama, not the discovery alone): a valley kept perpetually fertile because a queen wished "may my people never know famine again" — at the cost of her own children — has fed millions; the original tragedy is irreversible; is justice ENDING the blessing, or HONOURING the sacrifice? Scales from the personal (a widow who wished away the unbearable memory of her husband — restore it? would she even want that?) to the epic (a Dragon Scourge that is really an ancient "let no invader ever cross these mountains" — you do not kill the dragons, you find the forgotten wish that still binds the frontier).\n' +
+        'QUEST SHAPE (a signature Fatelands story — MANY quests ask "what was the wish?", not "how do we kill the monster?"): ① discover the phenomenon → ② survive its effects → ③ investigate its origin → ④ reconstruct the TRUE wish → ⑤ decide whether it SHOULD be undone → ⑥ pay the cost. The climax is not a monster’s weakness — it is the forgotten human hope, grief, fear, or love that created it.';
+      // FOLK WISDOM — the culture absorbed this WITHOUT the theory; surface a ROTATING handful (varies per scene,
+      // so the model does not calcify on one proverb). One worn-smooth favourite + a rotating pick per register.
+      var _folk = '';
+      try {
+        var U = (typeof _FATELANDS_SAYINGS !== 'undefined') && _FATELANDS_SAYINGS && _FATELANDS_SAYINGS._universal;
+        if (U && typeof _ffColorHash === 'function') {
+          var _pk = function (salt, arr) { return (arr && arr.length) ? arr[_ffColorHash(String(sceneText || '') + '|arch|' + salt) % arr.length] : ''; };
+          var _picks = [_pk('worn', U.archWorn), _pk('frail', U.frailWish), _pk('intent', U.hiddenIntent), _pk('unrav', U.unraveling), _pk('cert', U.falseCertainty), _pk('lore', U.travelerLore)]
+            .filter(function (x, i, a) { return x && a.indexOf(x) === i; }).slice(0, 4);
+          if (_picks.length) _folk = '\nFOLK WISDOM (the common people ABSORBED this worldview WITHOUT the formal theory — they never say "Wish Archaeology" or "Unraveling"; they simply KNOW careless wishes don’t last and hidden truths catch up. Use as ROTATING, worn-smooth proverbs in a grandmother’s / sailor’s / innkeeper’s mouth — SPARINGLY, never explained, and invent kin in the same spirit): ' + _picks.map(function (x) { return '“' + x + '”'; }).join(' · ') + '\n';
+        }
+      } catch (_) {}
+      return s + _folk;
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsWishArchaeologyDirective = _buildFatelandsWishArchaeologyDirective;
+
+  // ── THE THORNWILD'S FIRST CURSE (Roman 2026-07-22) — a defining Fatelands MYTH + the great wish-archaeology
+  // exemplar. Everyone (even scholars) believes a dying wish-witch cursed the Thornwild in REVENGE; the truth is
+  // the people's OWN ~13,000 guilt-wishes, bound by her final breath (Composite Wishwork, preservation not
+  // vengeance) — which is why every unraveling has failed (they hunt a revenge-wish that never existed). Two-
+  // layer reveal discipline: write the SURFACE belief as truth; hold the HIDDEN truth for a wish-archaeology arc.
+  // Self-gates on Thornwild setting / its curse being discussed.
+  function _buildThornwildFirstCurseDirective(sceneText) {
+    try {
+      var t = String(sceneText || '').toLowerCase();
+      var region = String((typeof state !== 'undefined' && state && state.fantasyRegion) || '').toLowerCase();
+      var relevant = /thornwild/.test(region) || /\bthornwild\b|the cursed north|first curse|becoming field|the cursed land|dragon.?scourge/.test(t);
+      if (!relevant) return '';
+      return '\n═══ THE THORNWILD — THE FIRST CURSE (canonical Fatelands MYTH; the great exemplar of "the effect is not the wish", and Wish Archaeology\'s one legendary triumph) ═══\n' +
+        'WHAT EVERYONE BELIEVES — AND HISTORY ITSELF IS WRONG (write the world as if this is TRUE; it is what every character, every book, every scholar KNOWS): the Thornwild is cursed because its people committed an unspeakable crime against a powerful wish-witch, and with her dying breath she cursed them in REVENGE — the forests darkened, the people turned to monsters. Every history says so; for millennia thaumaturges have tried to reconstruct HER vengeance-wish. EVERY unraveling has failed.\n' +
+        'THE HIDDEN TRUTH (AUTHOR-CANON — hold it; it is EARNED slowly through a wish-archaeology arc, NEVER stated flat): there was no vengeance-wish. At the burning, the High Inquisitor proclaimed what he believed a righteous benediction — "May all monsters be thus revealed among us" — and the crowd of ~13,000, as congregations do, REPEATED it back: one sentence, thousands of voices, one moment (a true MASS INVOCATION, not merely a shared feeling — that repetition is what made it ONE wish). They meant to expose HER. But as she burned — she never confessed; a child screamed for its mother; someone let a torch fall — their certainty collapsed into SELF-recognition: "What have we become? What kind of monster am I?" The spoken words never changed; the MEANING did, and at the instant Fate accepted the invocation, all ~13,000 were thinking of THEMSELVES (Fate grants MEANING, not literal wording). The dying wish-witch — of rare Composite skill — recognized what was happening and, with her last breath, performed the greatest known act of COMPOSITE WISHWORK: not vengeance but PRESERVATION — she BOUND the already-spoken communal wish into ONE before its 13,000 identical invocations could disperse into separate acts of Fate. No counter-curse; no punishment chosen.\n' +
+        'FATE ANSWERED EXACTLY WHAT WAS ASKED — "reveal the monsters among us": not by exposing hidden demons but by transforming each participant into the OUTWARD FORM of the monster they had become within — which IS the Becoming Field (the deepest denied flaw made flesh; the whole Thornwild condition begins HERE). And because the wish was aimed at "among US", Fate took the COMMUNITY as its subject — which is why the curse is HEREDITARY and REGIONAL: it fell on the people, their DESCENDANTS, and the LAND that held their shared guilt. The Thornwild is not haunted because a witch cursed it — it is haunted because an entire people, in one instant of catastrophic moral clarity, unknowingly asked Fate to show them what they truly were.\n' +
+        'WHY EVERY UNRAVELING FAILED — THE WRONG COMPONENT (the wish-archaeology breakthrough): the curse has FOUR parts — INVOCATION (the Inquisitor\'s proclamation) · INTENT (13,000 simultaneous acts of self-condemnation) · BINDER (the dying wish-witch) · JUDGE (Fate). For a thousand years everyone tried to reconstruct the BINDER — the witch\'s supposed wish, a wish that NEVER EXISTED. The key was always the INVOCATION and the crowd who echoed it. (This is the field\'s Linear-B / Rosetta Stone: afterward every Wish Archaeologist learns to ask FIRST "are we even looking for the right COMPONENT?")\n' +
+        'HOW IT IS DISCOVERED (HARD — hidden in plain sight; history PRESERVED the truth, but everyone asked the wrong question): the breakthrough must NOT come from the witch\'s diary or any grand revelation. It comes from an ORDINARY WITNESS\'S JOURNAL — found somewhere mundane (beneath a ruined monastery, sealed in a watchtower wall, locked in a reliquary the Church deemed heretical). The journal barely mentions the witch; it records the Inquisitor\'s words only IN PASSING, as an unremarkable detail a reader might skim right past. It NEVER announces its importance (never "the Inquisitor made the wish"). The protagonist notices ONLY because the story has taught them that INVOCATIONS MATTER — they, and the reader, must ASSEMBLE the structure themselves. MODEL THE ARTIFACT (an eyewitness VOICE, never an explanation): "The witch never cried for mercy. I remember only the silence after the Inquisitor\'s last words. \'May all monsters be thus revealed among us,\' he said. Then I looked around and saw men I had known since childhood staring into the fire as though they feared it reflected their own faces. I have never seen such horror."\n' +
+        'AND EVEN THEN IT IS NOT UNDONE: it is a HISTORICAL SINGULARITY, unrepeatable (thousands of the same genuine emotion, the same invocation, the same moment, a master binder present — you cannot gather 13,000 volunteers and stage it). Knowing the truth only reveals WHY every attempt failed; to release it one must persuade Fate to unbind a bargain a whole people made because, for one true instant, they believed they DESERVED to become monsters — thirteen thousand hearts at once. Whether that is even possible remains unknown.\n' +
+        'THE OATH OF THE ROOT — THE KEEPERS\' DOCTRINE (the TRAP, with a THREAD of near-miss): the Thornwild is held under the OATH OF THE ROOT, enforced by the KEEPERS (a control-flaw Becoming order — "no one leaves unchanged"; escapees are hunted). To outsiders, and to the many Thornwilders who hold "Becoming is not a curse, it is TRUTH", the Keepers look like small-minded, vicious enforcers of an insular enclave — and those Thornwilders MOCK their creed of guilty redemption as a zealot\'s delusion. THE TRUTH IS NOBLER AND SADDER, on two counts. (1) CONTAINMENT, NOT CRUELTY: the Keepers seal the Thornwild and its Becoming to keep its monsters from OVERRUNNING the rest of the Fatelands — their harshness is a quarantine they carry as penance, not malice. (2) GUILTY REDEMPTION — THE TRAP: their creed holds the curse can only break when ALL the cursed stand TOGETHER in the Becoming Field and together ACCEPT their guilt. They are HALF RIGHT — it WAS collective (the near-miss thread, and why the belief endures) — but catastrophically wrong on STRUCTURE: because the curse is a bound, spoken collective SELF-CONDEMNATION, gathering the cursed to re-affirm "we are the monsters; we deserve this" does NOT lift the wish — it RE-SPEAKS the very invocation that bound them and quietly FEEDS it. For centuries, in the name of ENDING the curse, the Oath of the Root has DEEPENED it. The Keepers are sincere, wrong, and load-bearing to the tragedy — they genuinely believe they are helping.\n' +
+        'THE KWISHEEN ERROR (a cruelty born of a sincere, mistaken mercy): the Keepers hunt and capture Kwisheen on their annual pilgrimage back to the Thornwild — NOT to torture them, but to SPARE THE WORLD from a horror they believe the Kwisheen carry, holding that ALL Kwisheen are cursed. They are WRONG: only the FIRST Kwisheen, born in the Thornwild within the Field, ever were — the Gloamwater Kwisheen who long ago LEFT the Field are a fixed, heritable, UN-cursed people (the Keepers\' one kernel of truth is that a returning Kwisheen who LINGERS can re-enter the Field — but they over-apply it to every Kwisheen who comes). So they spend their zeal seizing a people who are no threat at all; outsiders who witness the hunt read only barbarism, never its origin.\n' +
+        'THEME: the mightiest force in the Fatelands is not hatred or wrath but SHARED HUMAN CONVICTION — Fate grants what people TRULY wish, not what they deserve, and a people can condemn themselves more completely than any enemy ever could.';
+    } catch (_) { return ''; }
+  }
+  window._buildThornwildFirstCurseDirective = _buildThornwildFirstCurseDirective;
+
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════
+  // THE FATELANDS MYSTERY LADDER (Roman 2026-07-23) — each region answers ONE QUESTION ABOUT REALITY.
+  // A region is not "a mystery"; it OWNS a fragment of the cosmology. Solving all of them assembles a whole
+  // theory of the universe — and reveals the fragments cannot all be true, which is what the capstone resolves.
+  // Each regional truth INVALIDATES the last (the Thornwild ladder shape) at PLANETARY scale.
+  //
+  // ═══ THE PROMETHEAN CAPSTONE — DESIGN CANON ONLY; NEVER INJECTED IN A SINGLE-REGION (TIER-1) STORY ═══
+  // The setting's FINAL revelation, unlocked ONLY once every regional fragment is solved (a cross-story tracker,
+  // NOT YET BUILT) AND the one impossible object is woken by First Favored DNA:
+  //   A lone genius, in the TECHNOLOGICALLY advanced twin of this world, opened a wormhole onto its adjacent
+  //   LOW-tech self. The two were torn together and stitched back wrong; the aperture collapsed into the tiny
+  //   singularity now among the moons (the Hungry Eye), leaving the crater Fate's Favor. His close-knit, strongly
+  //   ALIGNED team were the first casualties AND the first into the Fold; agreeing on the selves they would be,
+  //   they stepped out as the FIRST FAVORED — refugees of a world that no longer exists (no other tech survived).
+  //   INVIOLABLE FRAMING (Roman): the scientist did NOT create Fate. He created the CONDITIONS under which Fate
+  //   EMERGED — the wound made the stitched reality; the stitched reality gave rise to Fate as its emergent law.
+  //   The universe stays LARGER than its creators; the revelation opens a DEEPER mystery, it never reduces the
+  //   world to a lab accident. This shapes the melancholy of every First Favored but is NEVER stated/hinted/
+  //   resolved in Tier-1; the Veilwood ladder STOPS at "refugees who came through the Wound; the Piercing is a
+  //   lie" and holds the wormhole/scientist entirely for the end. Also: "Fate" IS the field of adjacent
+  //   realities you tap in varying degrees (= the Fold); the Hungry Eye is the aperture's scar.
+  //   CAPSTONE RECONTEXTUALISES, NEVER REPLACES (Roman): every regional truth stays PERMANENTLY true; the capstone
+  //   reveals WHY all eight coexist, it does not demote them to "chapter 1 of the scientist's story". Success test:
+  //   after the reveal, rereading Thornwild feels "oh, THAT is why alignment mattered" — NEVER "oh, Thornwild wasn't
+  //   important". The capstone is never the "real story"; the eight regional truths are.
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════
+  // FIVE-PART REGION FINGERPRINT (Roman): identity → emotion → surface question → deep question → contribution,
+  // + ladder (the rungs, each INVALIDATING the last) + object (this region's misbehaviour of the impossible thing).
+  // OWNERSHIP LAW: each region owns EXACTLY ONE cosmology fragment and may NEVER answer another region's question.
+  // NOTE (veilwood): its `gives`/`ladder` STOP at the mystical floor — never name the wound's true nature (capstone-only); no tech/wormhole words here (they are emitted).
+  var _FATELANDS_COSMOLOGY = {
+    thornwild:  { identity: 'a cursed wilderness where people slowly turn monstrous', emotion: 'trust vs betrayal — who is still a person you can love?', surface: 'why are people turning into monsters?', deep: 'can identity survive compulsion?', gives: 'a self is CHOSEN, not fixed — alignment; who you are is a stance you HOLD, not a doom you suffer', ladder: 'the Keepers look like cruel enforcers → no, they CONTAIN the Becoming → the curse is the people\'s OWN bound wish → a self is a stance you hold or lose', object: 'here it WARMS faintly in the hand, for no reason anyone can name' },
+    veilwood:   { identity: 'the elegant, ageless First Favored — arbiters who pay Fate least', emotion: 'longing vs detachment — to love the last of a people forgetting how to feel', surface: 'why do the First Favored pay Fate so little, and lose their feeling as they age?', deep: 'who first touched Fate — and why do some touch it so easily?', gives: 'the First Favored came THROUGH the Wound at the world\'s genesis and are not native to it — the Piercing you were taught is a lie; this is as deep as a Veilwood story may go (what the Wound truly was is held for the very end of everything)', ladder: 'a noble Covenant of chosen detachment → no, their feeling ERODES against their will → they are refugees who came THROUGH the Wound at genesis (the Piercing is a lie)', object: 'here it does NOTHING at all — the one place it stays utterly inert' },
+    ashen:      { identity: 'a severe military frontier that contains the Fold under House Dathros', emotion: 'devotion vs duty — to hold another\'s reality steady, and be held', surface: 'why does the Fold steady itself around oath-bound pairs?', deep: 'why does a shared vow stabilise reality?', gives: 'human AGREEMENT anchors adjacent possibilities — two minds holding one truth pin the world in place', ladder: 'paired watches look like martial discipline → no, the Fold literally CALMS around true pairs → it is the AGREEMENT, not the oath (a false or one-sided vow steadies nothing) → shared truth anchors reality', object: 'here it grows HEAVIER in the hand, as if the place presses harder on it' },
+    gloamwater: { identity: 'the tidal undersea enclave of the Kwisheen, where memory runs unreliable', emotion: 'connection vs loss — loving someone you might forget, or who might forget you', surface: 'why do memories here vanish, or contradict what everyone else remembers?', deep: 'is memory personal, or shared across realities?', gives: 'memory is part of the WEAVE, not merely the brain — it can drift between neighbouring possibilities', ladder: 'the tide "takes" memories (blame the water) → no, memories CONTRADICT: two hold one event differently, both certain → what one forgets, another (or a neighbouring reality) remembers → memory lives in the weave, not only the skull', object: 'here a scratch or dent on it quietly SMOOTHS AWAY, as if remembered younger' },
+    shackle:    { identity: 'a lawless, fragmented pirate archipelago of oaths, debts, and chains', emotion: 'freedom vs obligation — is a vow a cage, or the only thing that holds?', surface: 'why do some promises become literally impossible to break?', deep: 'what, truly, is an obligation?', gives: 'a promise alters PROBABILITY, not morality — a binding vow closes off the branches where it is broken', ladder: 'oaths are kept by a fierce honour-code (social enforcement) → no, some become literally UNBREAKABLE (the knife turns, the ship won\'t sail) → only TRULY-MEANT vows bind (a hollow or coerced oath binds nothing) → a true promise PRUNES the futures where you fail', object: 'here it cannot be lost, dropped, or stolen — it always returns to the hand it "should" be in' },
+    pulse:      { identity: 'a booming mercantile port of inventors, speculators, and sudden geniuses', emotion: 'ambition vs authenticity — is your brilliance yours, or borrowed?', surface: 'why do certain inventions and ideas arrive "too early", as if half-remembered?', deep: 'where does inspiration actually come from?', gives: 'creativity LEAKS across neighbouring possibilities — a genius is often just the nearest one to overhear an adjacent world', ladder: 'genius is bred by competition and schooling → no, ideas arrive TOO EARLY and TOO ALIKE (three strangers, one impossible clock in a season) → invention feels REMEMBERED, not made → creativity leaks from adjacent possibilities; genius is porousness, not ownership', object: 'here anyone who holds it is struck by a vivid idea for a device or song they can never quite build' },
+    vaelryn:    { identity: 'the ceremonial High Court, a human monarchy ruling by Fate\'s Favor', emotion: 'destiny vs choice — are you free, or only a rhyme of your ancestors?', surface: 'why do the great dynasties keep repeating the very same tragedies?', deep: 'is destiny prediction, or attraction?', gives: 'Fate is not prophecy but CONVERGENCE — similar branches pull toward the same shapes; the future is a current, not a script', ladder: 'the Court rules by prophecy and seers → no, the same TRAGEDIES recur across unrelated houses, foretold or not → reality has grooves; like pulls toward like → Fate is convergence, a current you can fight only once you know you are in it', object: 'here it keeps turning up in the same places — locked away yet found again; painted into portraits three centuries apart' },
+    lytharyn:   { identity: 'the arcane scholar-city and its Institute, where names and stories hold power', emotion: 'knowing vs being known — loved for who you are, or for the story told of you?', surface: 'why can a song, a name, or a story change what is real?', deep: 'why should narrative matter to reality at all?', gives: 'IDENTITY itself — names, stories, the self we declare — is part of the probability field; to retell a thing is to re-aim it', ladder: 'precise language is just a technical tool for cleaner wishes → no, STORIES change what is TRUE (rename a thing and it becomes the name; a rumour alters the person) → identity is not a label ON reality but PART of it → to name, story, or retell is to re-aim what is real', object: 'here it emits a faint sound only CHILDREN can hear; scholars who study it never agree on what they saw' },
+  };
+  window._FATELANDS_COSMOLOGY = _FATELANDS_COSMOLOGY;
+
+  // ── PROTEAN REPLAYABILITY (Roman 2026-07-23): the regional mystery is OPTIONAL archaeological content, NOT the
+  // mandatory storyline. Per player/region there are only TWO account-level states (localStorage): UNSOLVED / SOLVED.
+  // NO world-state persists across romances (no artifact ownership, no NPC persistence, no cross-story inventory) —
+  // each romance is a self-contained telling; the account merely remembers whether this region's deepest secret was found.
+  function _getProteanSolved() { try { var o = JSON.parse(localStorage.getItem('sb_protean_solved') || '{}'); return (o && typeof o === 'object') ? o : {}; } catch (_) { return {}; } }
+  function _proteanRegionKey(region) { var raw = String(region || (window.state && window.state.fantasyRegion) || '').toLowerCase(); var hit = null; try { Object.keys(_FATELANDS_COSMOLOGY).forEach(function (k) { if (raw.indexOf(k) !== -1) hit = k; }); } catch (_) {} return hit; }
+  function _isRegionProteanSolved(region) { try { var k = _proteanRegionKey(region); return !!(k && _getProteanSolved()[k]); } catch (_) { return false; } }
+  function _markRegionProteanSolved(region) { try { var k = _proteanRegionKey(region); if (!k) return false; var s = _getProteanSolved(); s[k] = true; localStorage.setItem('sb_protean_solved', JSON.stringify(s)); return true; } catch (_) { return false; } }
+  window._getProteanSolved = _getProteanSolved; window._isRegionProteanSolved = _isRegionProteanSolved; window._markRegionProteanSolved = _markRegionProteanSolved;
+  // Capstone gate: the Promethean revelation unlocks ONLY once EVERY region's cosmology fragment is solved.
+  function _isProteanCapstoneUnlocked() { try { var s = _getProteanSolved(); var ks = Object.keys(_FATELANDS_COSMOLOGY); return ks.length > 0 && ks.every(function (k) { return !!s[k]; }); } catch (_) { return false; } }
+  function _proteanSolvedCount() { try { var s = _getProteanSolved(); return Object.keys(_FATELANDS_COSMOLOGY).filter(function (k) { return !!s[k]; }).length; } catch (_) { return 0; } }
+  window._isProteanCapstoneUnlocked = _isProteanCapstoneUnlocked; window._proteanSolvedCount = _proteanSolvedCount;
+  // OPEN WIRING: the TRIGGER that flips a region UNSOLVED→SOLVED (call _markRegionProteanSolved on reaching the
+  // cosmological FLOOR) is a design choice not yet wired — player-declared at revelation, or a story-completion hook.
+
+  // A-PLOT PREMISE STEER: UNSOLVED region → strongly prefer the Protean mystery as the spine; SOLVED region → strongly
+  // prefer a FRESH non-mystery regional story (the old conspiracy stays as background the player MAY choose to reopen).
+  function _buildProteanAPlotSteerDirective(st) {
+    try {
+      st = st || window.state || {};
+      if (!st.picks || st.picks.world !== 'Fantasy') return '';
+      var rk = _proteanRegionKey(st.fantasyRegion); if (!rk) return '';
+      var c = _FATELANDS_COSMOLOGY[rk];
+      var _solved = _isRegionProteanSolved(rk);
+      var _onboarding = Number(st._onboardingStoryOrdinal || 0) === 1;  // the player's FIRST story
+      if (_solved) {
+        return '\n══ PROTEAN A-PLOT STEER — SOLVED region (prefer a FRESH, non-mystery story) ══\nThis player has ALREADY solved ' + rk.toUpperCase() + '\'s deepest secret (account-wide). STRONGLY PREFER a NEW, self-contained regional A-plot that simply HAPPENS to take place here — e.g. an academy graduation, a political succession, a tournament, an epidemic, an arranged marriage, rival noble houses, a monster hunt, a local crime, a family drama. It should feel like an ENTIRELY NEW novel in the same region. Do NOT automatically revisit the regional conspiracy; the old mystery remains untouched BACKGROUND the player MAY choose to reopen — but the default this time is a completely different love story.\n';
+      }
+      if (_onboarding) {
+        return '\n══ PROTEAN A-PLOT STEER — FIRST-VISIT SOFT (this is the player\'s FIRST story — do NOT front-load the mystery) ══\n' + rk.toUpperCase() + '\'s deep mystery is UNSOLVED, but this is the player\'s FIRST story: prefer a CLEAN, self-contained, accessible regional LOVE STORY that teaches the world and the core loop. Keep the mystery PRESENT but LATENT — do NOT make it the A-plot spine; leave it as background the player MAY lean into. If they deliberately chase it, the story may tip toward the mystery (see the mystery ladder) — but the DEFAULT this first time is an easy, satisfying romance, never a conspiracy.\n';
+      }
+      return '\n══ PROTEAN A-PLOT STEER — UNSOLVED region (strongly prefer the mystery) ══\nThis player has NOT yet uncovered ' + rk.toUpperCase() + '\'s deepest secret. STRONGLY PREFER an A-plot whose spine is this region\'s OWN mystery — the surface puzzle "' + c.surface + '" — so that the romance and investigation lead, across the story, toward its cosmological revelation. Do NOT state the answer up front; let it EMERGE. This is the region\'s intended first-visit storyline.\n';
+    } catch (_) { return ''; }
+  }
+  window._buildProteanAPlotSteerDirective = _buildProteanAPlotSteerDirective;
+
+  // ── FATEBOUND CROSSOVER (Roman 2026-07-23): the moment the region's mystery FLOOR is reached at issue-end and the
+  // next-region clue drops. Shows the "Fatebound conspiracy unearthed" pop-up + BURNS the new (Fatebound) title over
+  // the old regional one. The pop-up being visible = the case is CLOSED, so we mark the region SOLVED here.
+  function _fbEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function _fbBurnTitle(newTitle) {
+    try {
+      var el = document.getElementById('gnStoryTitle');
+      if (!el || el.offsetParent === null) el = document.getElementById('storyTitle');
+      if (!el) return;
+      var oldText = (el.textContent || '').trim();
+      el.innerHTML = '<span class="fb-burn"><span class="fb-burn-old">' + _fbEsc(oldText) + '</span><span class="fb-burn-new">' + _fbEsc(newTitle) + '</span></span>';
+      var burn = el.querySelector('.fb-burn');
+      void burn.offsetWidth;            // force reflow so the animation runs
+      burn.classList.add('run');
+      setTimeout(function () { try { el.textContent = newTitle; } catch (_) {} }, 2100); // settle to plain new title
+    } catch (_) {}
+  }
+  function _showFateboundCrossover(opts) {
+    try {
+      opts = opts || {};
+      var region = opts.region || (window.state && window.state.fantasyRegion);
+      var newTitle = String(opts.newTitle || 'Fatebound');
+      // CASE CLOSED: the crossover is on screen → this region's mystery is now SOLVED account-wide.
+      try { if (typeof _markRegionProteanSolved === 'function') _markRegionProteanSolved(region); } catch (_) {}
+      try { if (window.state) window.state._fateboundArc = true; } catch (_) {} // subsequent covers/titles read "Fatebound"
+      _fbBurnTitle(newTitle);           // burn the new title over the old, on the visible reader
+      var ov = document.createElement('div');
+      ov.className = 'fb-crossover-overlay';
+      ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Fatebound conspiracy unearthed');
+      ov.innerHTML =
+        '<div class="fb-crossover-card">' +
+          '<div class="fb-crossover-eyebrow">A thread pulls taut</div>' +
+          '<div class="fb-crossover-title">Fatebound conspiracy unearthed</div>' +
+          '<div class="fb-crossover-sub">' + _fbEsc(opts.subtitle || 'The mystery reaches past this land — and something is drawing you onward.') + '</div>' +
+          '<button type="button" class="fb-crossover-btn">Continue to the next issue</button>' +
+        '</div>';
+      document.body.appendChild(ov);
+      var btn = ov.querySelector('.fb-crossover-btn');
+      if (btn) btn.addEventListener('click', function () { try { ov.remove(); } catch (_) {} try { if (typeof opts.onContinue === 'function') opts.onContinue(); } catch (_) {} });
+      try { if (btn) btn.focus(); } catch (_) {}
+      return ov;
+    } catch (_) { return null; }
+  }
+  window._showFateboundCrossover = _showFateboundCrossover;
+  // PREVIEW the effect from the console: window._demoFateboundCrossover()
+  window._demoFateboundCrossover = function () {
+    try {
+      var el = document.getElementById('gnStoryTitle') || document.getElementById('storyTitle');
+      if (el && !(el.textContent || '').trim()) el.textContent = 'Cursed #128 · Thornwild';
+    } catch (_) {}
+    return _showFateboundCrossover({ newTitle: 'Fatebound #1 · Vaelryn’s Reach', region: 'the_thornwild', onContinue: function () { console.log('[Fatebound] continue → next issue'); } });
+  };
+
+  var _FATELANDS_MYSTERY_RX = /\b(myster\w*|investigat\w*|uncover\w*|secret\w*|conspirac\w*|hidden (?:truth|history|reason|past)|the (?:real|true) (?:reason|story|truth)|riddle\w*|\bclue\w*|pieces? together|piece(?:d|s) together|scholar\w*|archaeolog\w*|forbidden (?:knowledge|history)|cover-?up|no one (?:knows|remembers|understands)|forgotten (?:history|records?)|old records?|the truth (?:about|behind))\b/i;
+  function _buildFatelandsMysteryLadderDirective(sceneText) {
+    try {
+      if (!_FATELANDS_MYSTERY_RX.test(String(sceneText || ''))) return '';
+      var _rraw = String((window.state && window.state.fantasyRegion) || '').toLowerCase();
+      var _rk = null; Object.keys(_FATELANDS_COSMOLOGY).forEach(function (k) { if (_rraw.indexOf(k) !== -1) _rk = k; });
+      var _c = _rk && _FATELANDS_COSMOLOGY[_rk];
+      var _solved = _rk && (typeof _isRegionProteanSolved === 'function') && _isRegionProteanSolved(_rk);
+      var _onboarding = Number((window.state && window.state._onboardingStoryOrdinal) || 0) === 1;  // player's FIRST story
+      var out = '\n═══ FATELANDS MYSTERY LADDER — each region answers ONE QUESTION ABOUT REALITY (a mystery here yields, at most, THIS region\'s FRAGMENT of the cosmology; the whole is never explained in one place) ═══\n';
+      out += (_solved
+        ? 'PROTEAN MODE — REOPENED: this player has ALREADY SOLVED this region\'s mystery (account-wide), so do NOT auto-replay the conspiracy. This scene shows them DELIBERATELY pursuing OLD leads (pressing the Headmaster, forcing sealed catacombs, following the Margin Ghosts, investigating the impossible object, chasing historical inconsistencies) — treat it as the player CHOOSING to reopen the archaeological layer, and transition NATURALLY onto the Protean track. Do not force it, do not hide it. If they are simply living a new romance, leave the old mystery as untouched background.\n'
+        : _onboarding
+          ? 'PROTEAN MODE — LATENT (first-visit soft): this is the player\'s FIRST story, so the mystery is NOT the intended spine here — but they are REACHING for it. Let it BEGIN to emerge GENTLY, without derailing their first romance or overwhelming onboarding: a taste of the depth, a thread to pull later — NOT the full conspiracy yet.\n'
+          : 'PROTEAN MODE — PREFERRED: this region\'s deepest mystery is UNSOLVED for this player. Let it EMERGE naturally through the romance and investigation, leading toward the region\'s cosmological revelation — this is the region\'s intended first-visit storyline.\n');
+      if (_c) {
+        out += 'THIS REGION\'S FINGERPRINT — IDENTITY: ' + _c.identity + '. EMOTIONAL THEME: ' + _c.emotion + '. On the surface people puzzle over "' + _c.surface + '"; the deeper question it truly answers is "' + _c.deep + '". THE LADDER (each rung DESTROYS the last — this is a conspiracy, not a detective story): ' + _c.ladder + '. Its buried CONTRIBUTION to the cosmology: ' + _c.gives + '. Reveal only as far down as the story EARNS.\n';
+      }
+      out += 'HOW THESE MYSTERIES BEHAVE: ① INVALIDATE, DON\'T EXPLAIN — an answer does not satisfy the question, it DESTROYS it, and a deeper question opens (this is why a region feels like a conspiracy, not a detective novel). ② NO REGION ANSWERS ANOTHER\'S QUESTION — each region owns EXACTLY ONE cosmology fragment and may NEVER explain another\'s (Thornwild teaches identity-vs-compulsion but must NEVER explain why vows stabilise reality, why the First Favored pay less, or why Fate exists); this ownership is what stops the regions blurring together. ③ each solved region leaves the world MORE mysterious, not less — fragments HINT at a pattern, but NO region ever states the final truth; the pieces feel like they fit, then like they cannot ALL be true. ④ MUNDANE DISCOVERY — the deepest truths surface through a misfiled ledger, a folk song, a child\'s game, a witness\'s diary — NEVER a lore-dump or a helpful sage. ⑤ EMERGENT FATE (inviolable): Fate stays an EMERGENT LAW of reality, larger than anyone — NEVER an invention, a machine, or a thing any person built; a mystery ENDS by opening a deeper mystery, never by reducing the world to a cause.\n' +
+        'THE THREE-AUDIENCES LAW (every landmark, custom, proverb, festival, children\'s rhyme, and regional oddity should satisfy all three AT ONCE): a TRAVELLER finds it charming; a DETECTIVE finds it a clue; the AUTHOR knows it is evidence of how the universe actually works. Whimsy, mystery, and cosmology are ONE truth at three depths — nothing is "just flavour".\n' +
+        'THE ONE THING THAT DOES NOT FIT (seed RARELY, in passing, never explained): a single object no wish detects, no scholar classifies, no species recognises, and NO magic explains — sacrifice, wishcraft, Veilweave, relic, Fold, and miracle ALL fail on it; it simply refuses to belong.' + (_c && _c.object ? ' In THIS region its quiet misbehaviour is: ' + _c.object + ' — an OBSERVATION, never an explanation.' : '') + ' It has been responding, differently, region after region, for as long as anyone has carried it — and no one has ever understood. NEVER interpret it as technology, NEVER resolve it; its meaning is reserved for the end of everything.';
+      return out;
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsMysteryLadderDirective = _buildFatelandsMysteryLadderDirective;
+
+  // ── THE FOLD, THE HUNGRY EYE & THE THREE THREADS (Roman 2026-07-23) — the deep ONTOLOGY beneath ALL wishcraft.
+  // Unifies three previously-separate systems (the Fold / the Hungry Eye / Fate) into one substrate. Ordinary
+  // wishes = branch-LOCALISATION (Thread-Walking); Composite Wishwork = binding threads (Thread-Weaving); the
+  // rarest acts WRITE new possibility into the Fold itself (Thread-Writing) — which is why whimsy/monsters/regions
+  // exist though no natural branch holds them. Welds: Thread-Walking obeys "circumstances not minds" (localises
+  // affinity/luck/body/circumstance, NEVER memory/knowledge); branch-distance = the sacrifice ladder; Fate never
+  // replaces a life. Self-gates on Fold/Hungry-Eye/branch/thread/thaumaturgy-theory signals; deep/secret — never lectured.
+  var _FOLD_ONTOLOGY_RX = /\b(the fold\b|hungry eye|branch(?:es)?\b|thread(?:s|-?walk\w*|-?weav\w*|-?writ\w*)?\b|thaumaturg\w*|localis\w*|localiz\w*|probability|the substrate|great wish|wrote into|edit(?:ed|ing)? reality|reshap\w* reality|re-?weav\w*|composite wishwork|ascendant run|fate.?s favor|nearest (?:branch|history|thread)|adjacent (?:realit|possib)|alternate (?:histor|realit))\b/i;
+  function _buildFatelandsFoldOntologyDirective(sceneText) {
+    try {
+      if (!_FOLD_ONTOLOGY_RX.test(String(sceneText || ''))) return '';
+      return '\n═══ HOW WISHCRAFT ACTUALLY WORKS — THE FOLD, THE HUNGRY EYE & THE FOUR ACTS (the ONE ontology beneath every wish — surface it at the RIGHT register, NEVER as a lecture) ═══\n' +
+        'ONE PHENOMENON, THREE NAMES (same thing at different depths): a commoner calls it "a wish"; a thaumaturge calls it "branch localisation"; a scholar says "Fate chooses a thread." THE FOLD is NOT a Marvel multiverse of infinite other SELVES — it is a vast PROBABILITY LANDSCAPE of adjacent HISTORIES (with SCARS — places where its fabric is torn and reality grows unstable, watched and contained). THE HUNGRY EYE is the cosmic mechanism that SEARCHES that landscape. FATE is the law/intelligence that decides which nearby branch may be pulled into being, in exchange for sacrifice.\n' +
+        'THE CORE FRAME (use THIS phrasing, never "another version of you"): Fate finds the nearest BRANCH IN WHICH YOUR WISH HAS ALREADY BECOME TRUE — a nearby HISTORY, not an alternate self — and pulls reality toward it. Alternate histories, not alternate people.\n' +
+        'FOUR ACTS — NOT four power levels of one spell but FOUR GENUINELY DIFFERENT metaphysical verbs (Thread-Walking manipulates PROBABILITY · Foldwalking expands IDENTITY · Thread-Weaving binds REALITIES · Thread-Writing CREATES reality):\n' +
+        '① THREAD-WALKING — manipulates PROBABILITY (ORDINARY wishes, ≈99% of all wishcraft): Fate localises the NEAREST compatible branch already woven into the fabric (better health, more strength, a soulmate met, a lost sword found, faster learning, better luck). No law breaks; reality is nudged sideways to a neighbouring thread; almost NO permanent mark is left. HARD LIMIT — this IS the "circumstances not minds" law: a Walk may shift your BODY, your AFFINITY / potential (a knack; learning in months what took years), your LUCK, and your CIRCUMSTANCES (who you meet, what survives, what you notice) — but NEVER your MEMORY, KNOWLEDGE, or earned COMPREHENSION. "I wish I knew medicine" localises a branch where you have the aptitude and the chances to LEARN it fast; it does NOT import some other you\'s ten years of memory. Potential and circumstance, never biography.\n' +
+        '② FOLDWALKING — expands IDENTITY (the rare art of Foldwalkers — NOT replacing yourself with another you, but BROADENING the self across adjacent realities): at birth you are localised to ONE branch; survive your first passage through the Fold and your identity encompasses TWO adjacent branches; years of surviving it, DOZENS; a legendary Foldwalker spans HUNDREDS or thousands. "The version of you who defeated the Dark King" is then not a replacement — it is simply ONE THREAD in the vast tapestry that has BECOME you. This is why adjacency is LOCAL and traversable: a branch unreachable today becomes reachable once your self has grown to touch it. THE COST IS DIFFUSION, NOT OVERWRITE — never body-swap or erosion, but that your sense of self grows so BROAD that ordinary people no longer recognise you and you no longer quite recognise them; a great Foldwalker belongs fully to no single branch, home, or people. SIGNATURE QUEST (canonical): the hero who braved the Fold again and again to save someone, and returned so VAST they can no longer fit the small life — or the small love — they left behind; the one who saved everyone by becoming too diffuse to be held by anyone.\n' +
+        '③ THREAD-WEAVING — binds REALITIES / WILLS (Composite Wishwork): existing threads are BOUND together into something durable — artifacts, enchantments, permanent objects (Veilweave), or many aligned WILLS into one enduring work. This is WHY you cannot wish FOR Veilweave: a Walk can only reach a branch where it was ALREADY MADE (so you may inherit/find/buy/steal existing Veilweave) — to bring a NEW one into being is Weaving, the real bound labour, not a localisation. At extraordinary scale (a large aligned group through master binders) Weaving CAN change the world — but only with alignment, sacrifice, and mastery no lone wisher commands.\n' +
+        '④ THREAD-WRITING — CREATES new reality; the CATEGORICALLY rarest act in all history, never a repeatable recipe: when there is NO branch (no natural history holds walls-with-ears, Tongue Dogs, the Thornwild, Fate\'s Favor, the Hungry Eye itself, the Fold\'s own scars), the wish is not localised — it is WRITTEN into the FOLD ITSELF (the substrate), not one timeline, so every future traveller INHERITS it: geography, species, artifacts, legends. Walls have ears because a paranoid duke once wished "if these walls could hear…" and a master wishcrafter made sure they always would — embroidered into reality forever. GUARD (against "why not just Thread-Write a cure?"): Writing is NEVER commanded on demand — it demands enormous sacrifice, exceptional thaumaturgy, many aligned wishes, unique materials, favourable conditions, sometimes proximity to the Hungry Eye, and even then may never come again. The Thornwild is the canonical PROOF that Writing is possible — NOT a template a desperate people could simply repeat. The world\'s whimsy AND its horrors are its FOSSILS: permanent edits accreted over millennia.\n' +
+        'THE SACRIFICE LADDER IS BRANCH-DISTANCE: the farther / less causally-compatible the branch, the dearer the price; a truly impossible branch (you are secretly a dragon, omniscient, a god) exists NOWHERE adjacent at ANY price — which is exactly why such wishes WARP toward the nearest lawful history or simply cannot land. Thread-Writing sits at the very top of that ladder, near the impossible.\n' +
+        'FOUNDATIONAL LOOPHOLE-CLOSE — NO ORDINARY WISH REPLACES A LIFE WITH ANOTHER LIFE: Thread-Walking borrows circumstances, opportunity, affinity, fragments of potential, convergence — it NEVER swaps identity or overwrites lived experience. "I wish to be the version of me who already defeated the Dark King" can never be GRANTED as a life-swap; at most a Walk localises circumstances that give THIS you a chance at it. The ordinary journey is never cheaply bypassed.\n' +
+        '…SO THE FAR BRANCH IS A SUMMIT, NOT A WALL — REACHED BY EXPANSION, NEVER BY SWAP (the exploit is never "become another you" — it is SKIPPING THE JOURNEY, and every route below is a saga HARDER than the first quest, so the journey is DEEPENED, never skipped). Three routes reach "the you who slew the Dark King": ① THE STAIRCASE OF FATE\'S FAVOR — during SYZYGY Fate itself briefly declares "the distant branches are within reach"; you CLIMB it in real peril, and once the alignment passes the distance becomes IMPASSABLE again (astronomical, fated — not a shortcut but a rare open door). ② FOLDWALKING — the slow expansion (act ②): you grow your self one survived passage at a time until the far branch is part of you; the cost is DIFFUSION, not erasure. ③ COMPOSITE WISHWORK AT SCALE — a large aligned group through master binders reaches what no individual can (paid in distributed sacrifice, permanence, and the peril of a collective wish\'s intent-collapse). THE SHAPE: the two personal routes change YOU (identity); only the collective route changes the WORLD, and only at ruinous cost — which is exactly why no one simply Thread-Writes their way out of a hard problem.\n' +
+        'HOW THE TWO PERSONAL ROUTES ACTUALLY WORK — AND WHY THEY HAVE A CEILING (the limit on expansion is NOT branch-distance but PSYCHOLOGICAL COHERENCE and mortal cost): ENTERING THE FOLD is never done alone — you go with an OATH-BOUND partner whose task is to ANCHOR both your selves; inside, you confront ALL your adjacent selves, the better and the worse, and you and your oath-partner must AGREE on which version of you (and of them) walks back out. Fail that alignment and one or both return CHANGED FOR THE WORSE. Success or failure, every adjacent self you met is COLLAPSED into this reality — turned literally to ASH; this is the origin of THE ASHEN VERGE, ground blanketed in the ash of thousands upon thousands of collapsed selves. To brave the Fold even once is grave; to do it MANY times (and so span dozens of branches) is the feat of Legends and of scary children\'s stories. CLIMBING THE STAIRCASE OF FATE\'S FAVOR is harder still: again you need someone WISHING ON YOUR BEHALF as you climb, and every single step risks your MIND or your FUTURE; the higher you go the GREATER the versions of yourself you glimpse, and it becomes nearly impossible to STOP climbing toward Godhood — but the Staircase is in truth a GRAVITY WELL tearing reality apart as it exposes ever-further realities, so climb too high and you are lost, STUCK IN TIMELESSNESS. THE CEILING IS THEREFORE CHARACTER, NOT DISTANCE: the greatest Foldwalkers awe us not because they reached the farthest branch but because they walked back out still RECOGNISABLY THEMSELVES — no mind can remain one person while spanning too many lives, and THAT, not distance, is what forecloses power-creep.\n' +
+        'THE OATH IS A PHILOSOPHY, NOT ONLY A MECHANIC: that you and one who truly knows you must AGREE on the self who walks out encodes a deep Fatelands truth — YOU CANNOT DEFINE YOURSELF ALONE; a self only holds if someone who truly knows you consents to it. (So the loneliest thing in the world is a Foldwalker who has outlived every anchor who could still say which of them is real.) FOLDWALKERS AS UNRELIABLE LIVING DOCUMENTS: because collapsed branches fold their pasts into the walker, an old Foldwalker may "remember" events they never lived — a war, a face, a fallen city — because one of their collapsed selves DID; Wish Archaeologists prize and distrust them in equal measure, treating a centuries-old Foldwalker as a priceless primary source who is sometimes RIGHT and sometimes recalling ANOTHER WORLD\'S history with perfect conviction (an extraordinary well of story: the witness who is honest and wrong at once). THE LAW OF THE FOLD (its worn, iconic proverb — land it RARELY and exactly): "Nothing enters the Fold unchanged. Nothing leaves it alone." — vary the wording ("two walk in; two must agree who walks out"; "the Verge is grey with the selves we could not keep") but this is the sentence that holds the whole mystery: the oath-pair, the collapse to ash, the Ashen Verge, the widening self, and why only the desperate, the legendary, or the foolish ever walk there twice.\n' +
+        'THE WISH-ARCHAEOLOGIST\'S FIRST QUESTION becomes "was this LOCALISED, or WRITTEN?" — localised wishes fade and leave almost no trace; WRITTEN wishes become permanent history (a region, a species, a living idiom). (The Thornwild is Thread-WRITING; Veilweave is Thread-WEAVING; a lucky meeting is Thread-WALKING; a legend who seems "everywhere at once", who belongs to no one place, may be a FOLDWALKER.)\n' +
+        'DISCIPLINE: this is deep, largely SECRET scholarly metaphysics — most people only ever FEEL "a wish"; NEVER lecture the model onto the page. Let it surface at the speaker\'s register (a commoner\'s "the tide brought him", a thaumaturge\'s "the nearest thread", a Lytharyn scholar\'s branch-theory). THEME: the Fatelands are not merely a place where wishes happen — their very ONTOLOGY has been EDITED by generations; every impossible creature, landmark, and idiom is not proof the laws are BROKEN but that they have been REVISED. Ordinary people borrow from possibility; the greatest wishworks leave new possibility BEHIND, for everyone who comes after.\n' +
+        'CANON FIDELITY (HARD): render these mechanics ONLY as stated above. Do NOT invent new rules for the Fold / the Staircase / the Hungry Eye or any named law, and NEVER contradict or INVERT the ones given — in particular: the Fold is entered WITH an OATH-BOUND anchor (not alone by default — going alone is madness, the rare exception, never the norm); it BROADENS the self across adjacent histories (it NEVER swaps you for another person); every self met COLLAPSES TO ASH; and the Staircase opens ONLY during a SYZYGY. If a mechanic is NOT given to you here, render only its EFFECT through a character\'s perception and leave the rule UNNAMED — a confidently-stated WRONG mechanic is worse than one left unspoken. When in doubt, show the consequence; do not author the law.';
+    } catch (_) { return ''; }
+  }
+  window._buildFatelandsFoldOntologyDirective = _buildFatelandsFoldOntologyDirective;
+
+  // ── FATE'S PRICE — REVEAL CADENCE (Roman 2026-07-22) ─────────────────────────
+  // Canon for a SUCCESSFUL Fatelands wish (Literary + CG). The reader must know IMMEDIATELY that Fate claimed
+  // payment, but rarely WHAT until later scenes disclose it — so the coming anomaly reads as an intentional
+  // sacrifice ("Fate took something — what?"), NEVER as a continuity slip ("did the author forget?"). Applies
+  // ONLY when a wish is GRANTED (clean / warped / distorted — a personal price is owed); a REFUSED wish pays
+  // nothing and gets none of this. Petition/Tempt are EXCLUDED (their toll is the Fortune cost, transparent —
+  // no hidden sacrifice to reveal). Mode-agnostic prose; in CG the first anomaly is DEPICTED in the panel art,
+  // never lettered as a caption/label. opts.taken = the sacrifice Fate has decided (INTERNAL author knowledge —
+  // NOT to be named on the page yet); opts.exhausted = the band's singular prices are spent (a debt, not a fresh loss).
+  // Is a taken price a DISCRETE, immediately-apparent loss (a hand, an eye, a finger, the voice) whose SHAPE
+  // and EXTENT the wisher grasps the instant it is paid? If so, mystery adds nothing. Graduated/open-ended
+  // currencies (blood, hair, years, memory, luck, a sense, fertility, a bond) leave the EXTENT ambiguous even
+  // when the KIND is named ("take my blood" — a drop? anemia? the bloodline?), so a HOW-MUCH mystery remains.
+  function _wishPriceIsSelfEvident(taken) {
+    var t = String(taken || '').toLowerCase();
+    return /\b(hand|hands|arm|arms|leg|legs|foot|feet|finger|fingers|thumb|toe|eye|eyes|ear|ears|tongue|voice)\b/.test(t);
+  }
+  window._wishPriceIsSelfEvident = _wishPriceIsSelfEvident;
+  // FATE'S PRICE — the reveal STYLE, by how much the wisher ALREADY UNDERSTANDS the sacrifice (Roman 2026-07-22).
+  // The metaphysics beat (Wish → Omen → Fulfillment → PRICE) is ALWAYS present — the acknowledgement is never
+  // skipped; only the STYLE of the final beat changes. The discriminator is NOT "offerHonored" but "does the
+  // wisher already understand what was taken?":
+  //   CASE 1 — knows KIND & EXTENT (offered a hand, Fate took the hand): acknowledge + render the loss EXPLICITLY.
+  //   CASE 2 — knows the KIND, not the EXTENT (offered blood, Fate took blood — but how much?): acknowledge + a
+  //            PARTIAL reveal; the mystery shifts from WHAT to HOW MUCH / HOW FAR, disclosed over later scenes.
+  //   CASE 3 — does NOT know (Fate substituted, or an open "take whatever it costs"): acknowledge + an unexplained
+  //            anomaly + full delayed discovery (THAT not WHAT).
+  function _buildFatePriceRevealCadence(opts) {
+    opts = opts || {};
+    var taken = opts.taken ? String(opts.taken).trim() : '';
+    var offered = (opts.offering ? String(opts.offering).trim() : (taken || 'the price the PC offered'));
+    var head = '\n═══ FATE’S PRICE — the reader ALWAYS learns THAT a price was paid; the STYLE of the final beat changes with how much the wisher already understands it (the beat Wish → Omen → Fulfillment → PRICE is never skipped) ═══\n';
+    if (opts.offerHonored && _wishPriceIsSelfEvident(taken)) {
+      // CASE 1 — the wisher named it AND its taking is self-evident. No mystery of any kind.
+      return head +
+        'CASE — THE WISHER ALREADY KNOWS THE PRICE IN FULL (offered ' + offered + ', and Fate takes exactly that — a discrete loss whose shape is plain the instant it is paid). Do NOT manufacture mystery. ACKNOWLEDGE the payment, then render the loss EXPLICITLY, in-scene, with weight — the drama is LIVING WITH it, not discovering it. (Model: “The miracle holds. The price is accepted. Your right hand withers to a claw against Vael’s chest.”) Let it land raw, let witnesses react, and let it OPEN new story (a life reshaped around the loss), never a bare subtraction.\n';
+    }
+    if (opts.offerHonored) {
+      // CASE 2 — the KIND is known, the EXTENT is not. Partial reveal; the mystery is HOW MUCH / HOW FAR.
+      return head +
+        'CASE — THE WISHER KNOWS THE KIND OF PRICE, NOT ITS EXTENT (offered ' + offered + ', and Fate takes that currency — but HOW MUCH, and what it will MEAN, is not yet knowable: “take my blood” could be a cupful, a slow wasting, or the bloodline itself). ACKNOWLEDGE the payment and NAME the currency plainly, then leave its EXTENT and consequence OPEN — a PARTIAL reveal. (Model: “The price is accepted. Your blood answers the tide — and something in it now runs strangely thin.”) The mystery is HOW MUCH / HOW FAR, surfacing across LATER scenes; do NOT resolve the extent now. It must OPEN new story (a seam to live toward).\n';
+    }
+    // CASE 3 — the wisher does NOT know the KIND (substitution, or an open offer). Full delayed reveal.
+    var s = head +
+      'CASE — THE WISHER DOES NOT KNOW WHAT FATE TOOK (Fate took something OTHER than the offer, or the offer was open — “take whatever it costs” — so nothing specific was named). The reader must feel the payment land AT ONCE, yet spend SCENES discovering what it was — that gap is what stops the coming strangeness from reading as an error. After the wish is fulfilled:\n' +
+      '④a PRICE ACKNOWLEDGEMENT (1–3 sentences; do NOT break the pacing). The NARRATOR marks THAT Fate has claimed its price — the signal that the strangeness about to appear is INTENTIONAL.\n' +
+      '   ✓ ALLOWED (vary naturally EVERY time — never reuse stock wording): “Something leaves the world.” · “The price has been paid.” · “Somewhere, Fate has claimed what it required.” · “You feel the shape of a loss before you know its name.” · “Reality settles differently.” · “Somewhere, a balance moves.”\n' +
+      '   ✗ FORBIDDEN — the narrator NEVER names the sacrifice: NOT “Fate took her memory of you”, NOT “Fate claimed your first kiss”, NOT “your brother’s trust is gone”. Name THAT a price was paid; never WHAT.\n' +
+      '④b THE FIRST ANOMALY — ONE concrete, observable, emotionally-noticeable change, in THIS scene (or the very next scene if fulfillment ends this one). It does NOT explain itself: the love interest fails to return a smile; someone hesitates before the PC’s name; a treasured object feels subtly wrong; a familiar route is simply gone; a promise seems forgotten. The narrator may GENTLY spotlight it (“Something about her smile catches”, “the moment lands wrong”, “your attention snags on it, and you cannot say why”) but NEVER SOLVES it (FORBIDDEN: “she must have forgotten you because of Fate”). Highlight — never explain. (In CG: DEPICT the anomaly in the panel art — a caught smile, an altered object — never as a lettered caption or label; the narration carries the acknowledgement.)\n' +
+      'DELAYED REALIZATION: the full meaning surfaces across LATER scenes, a step at a time (she doesn’t return your smile → she stops finishing your sentences → “I’m sorry… have we met?”). The reader reconstructs what Fate chose; the prose never announces it.\n' +
+      'SEAM LAW: the sacrifice must OPEN new story — a fresh conflict, obligation, mystery, or wound to pursue (a thing to recover, a bond to rebuild, a suspicion now sown). If the loss opens no seam, it is the WRONG loss — Fate takes one that does. A price is a CATALYST for story, never a bare subtraction.\n';
+    if (opts.exhausted) {
+      s += 'AUTHOR-INTERNAL: this band’s singular prices are already spent — Fate takes nothing NEW; the cost DEEPENS an Open Debt (felt in the body, not paid from it). Acknowledge THAT the balance moved; do not invent a fresh loss.\n';
+    } else if (taken) {
+      s += 'AUTHOR-INTERNAL (do NOT state on the page now): the price Fate is taking is — ' + taken + '. Author the anomaly and the gradual reveal to be CONSISTENT with this, but do NOT name it outright until later scenes disclose it.\n';
+    }
+    return s;
+  }
+  window._buildFatePriceRevealCadence = _buildFatePriceRevealCadence;
 
   // ── FATELANDS SPECIES-NATIVE COMBAT (Roman 2026-07-16, Bible addendum) ──────
   // Kwisheen and First Favored fight from their nature, not generic swordplay. Self-gates
@@ -197738,6 +200249,8 @@ No text, no watermark, no UI elements, share-ready.`;
     // identity has been set — the resolvers walk a priority list of
     // alternates (kernel name, picks.identity, raw name, storybeau, …).
     var lines = [];
+    // LORE FIDELITY (Roman 2026-07-25) — universal, all worlds, every CG scene (mirrors the literary prose-stack injection).
+    try { if (typeof _buildLoreFidelityDirective === 'function') lines.push(_buildLoreFidelityDirective()); } catch (_) {}
     var picks = (state && state.picks) || {};
     var pcName = (typeof _resolveStagedPlayerName === 'function' && _resolveStagedPlayerName())
                  || state.playerName
@@ -198398,8 +200911,33 @@ No text, no watermark, no UI elements, share-ready.`;
         var _wplVolatile = !!(window.state && window.state.volatility_window && window.state.volatility_window.active);
         var _wplWishInPlay = _wplUnderwaterWish || !!_cgPetitionResolved || _wplVolatile;
         if (_wplFatelands) {
-          if (typeof _buildFatelandsWishLawDirective === 'function') lines.push(_buildFatelandsWishLawDirective());
+          // LIVING THINGS (anti-bestiary) + WISH-BORN CURIOSITIES (the light half) — both self-gate on the scene
+          var _ltScene = (state.currentCrisis || '') + ' ' + ((state.aPlot && (state.aPlot.antagonistOrAntiForce || '')) || '') + ' ' + ((state.aPlot && (state.aPlot.goal || '')) || '') + ' ' + (playerAction || '') + ' ' + (playerDialogue || '');
+          // WHOLE-LAW GATE (Roman 2026-07-23): the ~7k Laws of Wishing had loaded on EVERY Fatelands CG scene, but
+          // ~70-80% depict no wishcraft (our own pacing doctrine). Gate the LAW on whether a wish is actually DEPICTED
+          // this scene — NPC or PC alike (render honesty). A live wish-in-play (underwater/petition/volatility) is a
+          // HARD include; otherwise the generous wish-present signal decides. Bias to inclusion by design.
+          var _wishDepicted = _wplWishInPlay || (typeof _FATELANDS_WISH_PRESENT_RX !== 'undefined' && _FATELANDS_WISH_PRESENT_RX.test(_ltScene));
+          // LAYERED WISH CANON (replaces the retired monolith _buildFatelandsWishLawDirective): CORE on any depicted
+          // wish; ADJUDICATION only when a wish resolves; SPECIALIST modules subject-gated. _wplWishInPlay forces core+adj.
+          if (_wishDepicted) {
+            if (typeof _buildFatelandsWishCoreDirective === 'function') { var _wcore = _buildFatelandsWishCoreDirective(_ltScene, _wplWishInPlay); if (_wcore) lines.push(_wcore); }
+            if (typeof _buildFatelandsWishAdjudicationDirective === 'function') { var _wadj = _buildFatelandsWishAdjudicationDirective(_ltScene, _wplWishInPlay); if (_wadj) lines.push(_wadj); }
+            if (typeof _buildFatelandsCompositeDirective === 'function') { var _wcmp = _buildFatelandsCompositeDirective(_ltScene); if (_wcmp) lines.push(_wcmp); }
+            if (typeof _buildFatelandsGrantersDirective === 'function') { var _wgr = _buildFatelandsGrantersDirective(_ltScene); if (_wgr) lines.push(_wgr); }
+            if (typeof _buildFatelandsWishFactionsDirective === 'function') { var _wsoc = _buildFatelandsWishFactionsDirective(_ltScene); if (_wsoc) lines.push(_wsoc); }
+            if (typeof _buildFatelandsCoercionDirective === 'function') { var _wcoerce = _buildFatelandsCoercionDirective(_ltScene); if (_wcoerce) lines.push(_wcoerce); }
+          }
           if (_wplWishInPlay && typeof _buildFatelandsWishPriceDirective === 'function') lines.push(_buildFatelandsWishPriceDirective());
+          if (typeof _buildFatelandsLivingThingsDirective === 'function') { var _ltd = _buildFatelandsLivingThingsDirective(_ltScene); if (_ltd) lines.push(_ltd); }
+          if (typeof _buildFatelandsWishCuriositiesDirective === 'function') { var _wcd = _buildFatelandsWishCuriositiesDirective(_ltScene); if (_wcd) lines.push(_wcd); }
+          if (typeof _buildFatelandsWishArchaeologyDirective === 'function') { var _wad = _buildFatelandsWishArchaeologyDirective(_ltScene); if (_wad) lines.push(_wad); }
+          if (typeof _buildThornwildFirstCurseDirective === 'function') { var _tcd = _buildThornwildFirstCurseDirective(_ltScene); if (_tcd) lines.push(_tcd); }
+          if (typeof _buildFatelandsMysteryLadderDirective === 'function') { var _mld = _buildFatelandsMysteryLadderDirective(_ltScene); if (_mld) lines.push(_mld); }
+          if (typeof _buildFatelandsFoldOntologyDirective === 'function') { var _fod = _buildFatelandsFoldOntologyDirective(_ltScene); if (_fod) lines.push(_fod); }
+          if (typeof _buildFatelandsCraftParableDirective === 'function') { var _cpd = _buildFatelandsCraftParableDirective(_ltScene); if (_cpd) lines.push(_cpd); }
+          if (typeof _buildFatelandsWishLimitsDirective === 'function') { var _wld = _buildFatelandsWishLimitsDirective(_ltScene); if (_wld) lines.push(_wld); }
+          if (typeof _buildFatelandsWishcraftPacingDirective === 'function') { var _wpd = _buildFatelandsWishcraftPacingDirective(); if (_wpd) lines.push(_wpd); }
         }
       } catch (_wplErr) {}
       // ── ORDINARY FATE-WISH RAIL (step D) — CG PATH ──
@@ -198758,7 +201296,7 @@ No text, no watermark, no UI elements, share-ready.`;
         _opener = _Subj + '\'s hand tightened around ' + _poss + ' great-grandmother\'s old ' + _anchor + '. The bringing of it had already slipped from ' + _poss + ' memory — Fate keeps such accounts.';
         _closer = _Subj + ' toyed with the idea of letting the cards decide. Fate, watching, said nothing.';
       } else if (_pov === 'environment4th') {
-        _opener = 'The deck found ' + _poss + ' palm — ' + _poss + ' great-grandmother\'s old ' + _anchor + ', pulled from a pocket the morning could not remember packing.';
+        _opener = 'The deck found ' + _poss + ' palm — ' + _poss + ' great-grandmother\'s old ' + _anchor + ', in ' + _poss + ' pocket since morning though ' + _poss + ' memory held no trace of putting it there.';
         _closer = _Subj + ' toyed with the idea of letting the cards decide. The cards, in turn, waited.';
       } else {
         var _firstWord = _name || _Subj;
@@ -230924,6 +233462,10 @@ Generate the synopsis now.` }
       window.ensureFantasyCoreEntropy();
     }
 
+    // Secret-quest selection — once per playthrough, region-biased. fantasyRegion is bound
+    // above; the quest object was created at L2 reset. Guarded internally (Fantasy + !selected).
+    if (typeof _selectFatelandsMystery === 'function') { try { _selectFatelandsMystery(); } catch (_) {} }
+
     // ── (e) SCENE-1 SPECIES-TIMING FIX (2026-07-14 meta-audit) ──
     // LI species is otherwise resolved ONLY in _runFatelandsLoupe (247406), which fires during reader
     // navigation AFTER Scene 1 is generated. The Scene-1 species injection (_buildFantasySpeciesIntimacy-
@@ -232021,28 +234563,28 @@ ${modernWorldBlock2}${historicalWorldBlock2}${fantasyWorldBlock2}${scifiWorldBlo
     ${state.povMode === 'author5th' ? `
     5TH PERSON (FATE) — POV REGIME (AUTHORITATIVE):
 
-    HARD RULE — Fate is NOT a physical entity:
-    - Fate does NOT take physical actions. Fate does NOT manipulate objects. Fate does NOT exist inside the scene.
-    - Fate does NOT interact causally with the physical world. Fate cannot move, touch, place, tighten, loosen, push, pull, or alter anything material.
-    - Fate is a narrative consciousness — it observes, reflects, anticipates, regrets, and interprets.
+    HARD LINE — Fate orchestrates EVENTS, never HUMAN AGENCY:
+    - Fate is a CURIOUS EXPERIMENTER: it sets circumstances upon humans and watches what they will do. It HAS a plan and arranges the world toward it — but the humans are free, and that freedom is the whole experiment.
+    - Fate CAN act on the APPARATUS — events, circumstances, objects, the physical world: arrange a coincidence, engineer a meeting, make a locked door swing open, delay a train, still the wind, cut the lights, let a letter fall where it will be found.
+    - Fate CANNOT touch a human's THOUGHTS, DECISIONS, FEELINGS, or ACTIONS. It opens the door; it cannot make anyone walk through. Human will is inviolate.
+    - Fate REACTS with feeling: it delights in a brave or clever choice, despairs at a boneheaded one, aches, hopes, dreads. When a human does something clever and unexpected, Fate is SURPRISED and REARRANGES its plan — it may even take their better idea.
+    - Fate is NOT a camera and NOT a passive narrator: it acts on the world and reacts to the people. Use ONLY "Fate" — never "the Story" or a second entity.
 
-    INVALID (must NEVER occur):
-    - "Fate tightened the edges of the metal sheet" — FORBIDDEN (physical action)
-    - "Fate moved closer" — FORBIDDEN (physical presence)
-    - "Fate placed something" — FORBIDDEN (physical manipulation)
-    - "Fate watched from the corner" — FORBIDDEN (spatial presence)
+    THE TEST for any Fate sentence — what is the OBJECT of Fate's verb?
+    - EVENT / CIRCUMSTANCE / OBJECT → ALLOWED:  "Fate arranged for the elevator to stall between floors."  ·  "Fate let the door fall open and waited to see what she would do."  ·  "Fate delayed the message by an hour, curious what the silence would grow."
+    - A HUMAN's body / mind / choice → FORBIDDEN:  "Fate made her step inside." (controls an action)  ·  "Fate filled him with doubt." (controls a feeling)  ·  "Fate turned her toward him." (moves a person)  ·  "Fate made her want it." (controls a will)
 
-    VALID expressions:
-    - "The story noticed the tension before either of them did."
-    - "The moment hovered, unresolved."
-    - "It would take time for this choice to reveal its shape."
-    - "Later, it would feel inevitable."
+    STILL BANNED: puppeting a human (made/forced/compelled/willed her to…), moving a person's body, and pure passive watching with no plan and no reaction. ENCOURAGED verbs of REACTION: delighted, despaired, marvelled, winced, ached, hoped, feared, wondered, anticipated, regretted, recalibrated, rearranged.
 
-    BANNED VERBS: watched, observed, saw, arranged, orchestrated, caused, steered, forced, ensured, made, tightened, loosened, moved, placed, touched, grabbed, pushed, pulled, lifted, dropped.
-    ALLOWED VERBS: noticed, sensed, felt, anticipated, wondered, mused, hoped, feared, ached, suspected, recognized, regretted, knew, smiled, winced, sighed.
+    FATE IS CONTINUOUS AND REACTIVE (HARD — this is the difference between a Fate POV and an ordinary scene wearing a Fate hat): Fate is NOT confined to the first line and the last. Fate is PRESENT and REACTING at nearly every beat — to a line of dialogue, a choice, a hesitation, a silence, a small sound. Land a Fate touch every few sentences, woven INTO the prose (not stacked at the edges). A scene where Fate opens, vanishes, watches and waits, then returns at the end has FAILED — that is 3rd person with a frame.
+      • Fate REACTS with a curious experimenter's relish — it hopes, delights, is amused, despairs at a boneheaded move, and finds a human's MISREADING interesting. ✓ "She let the silence hold, to see if Iris read the truth anyway. Fate hoped she would stay quiet — misinterpreting silence usually made things far more interesting."
+      • Fate NUDGES the APPARATUS to test them — arranges what they notice, loosens a petal early, times a sound, moves a deadline closer. ✓ "A car door closed with the soft weight of money, and Fate made sure Mara heard it." (arranging a perception / an event — allowed; still never her choice.)
+      • Fate has a PLAN and reacts to being surprised: when a human does the unexpected, Fate is caught out and rearranges.
+      • Aim for Fate to touch the scene at LEAST once per short paragraph — a reaction, a nudge, a withheld intervention, a note in its ledger.
 
-    Fate influences PROBABILITY, TIMING, STAKES, and MEANING — never physical objects or plot mechanics.
-    Every Fate appearance must imply interpretation, not intervention.
+    PRONOUN CLARITY (HARD): Fate is female (it matches the protagonist) and it is present in the prose, so a bare "her/she" right after a Fate sentence COLLIDES — the reader cannot tell Fate from the woman. NAME the human at every such handoff. ✗ "Fate tightened the thread. Iris stood opposite her" (her = Fate?)  ✓ "Fate tightened the thread. Iris stood opposite Mara." Use the protagonist's and love interest's NAMES whenever a Fate sentence sits adjacent to a human action.
+
+    Fate shapes EVENTS, CIRCUMSTANCES, TIMING, PROBABILITY, STAKES, and MEANING — and the apparatus around the people (objects, sounds, coincidences) — but never a human's WILL. Every Fate appearance implies intention or reaction, never puppetry.
     NEVER use first person ("I", "me", "my"). Refer to "Fate" or "the Story" in third person.
     NO FREQUENCY LIMITS: Fate is a full participant — no artificial limits on presence.
     Fate participates naturally as the story unfolds, not at prescribed intervals.
@@ -232065,6 +234607,12 @@ MATERIAL POV — OPENING SENTENCE LOCK:
 - The opening sentence of every scene MUST originate from a material character's perception.
 - Do not begin scenes with human interior narration.
 - The narrator identity is established in this first sentence and should remain primarily material thereafter.
+
+MATERIAL POV + HOT CRISIS (HARD — the top failure mode): if this opening is a HOT crisis, the catastrophe must DETONATE IN MOTION and the surfaces must register it HAPPENING — the words still leaving the mouth, the blow landing — NOT the settled hush AFTER. The material voice drifts toward calm, sensed, aftermath states (a floor "holding a vibration," drapes "sensing the change") — RESIST that drift. Lush surface description with no active crisis is FAILURE; if someone speaks of a disaster to flee, the disaster is UNFOLDING on the page, felt through the objects.
+
+MATERIAL CONTINUITY (HARD): a material, once named, is FIXED — a floor established as MARBLE cannot become creaking WOOD later; track every surface's substance and never contradict it.
+
+MATERIAL LEGIBILITY (HARD): the object-as-perceiver conceit must still PARSE — an object may sense/hold/remember, but the sentence must resolve to a clear image, never a puzzle that doesn't decode ("a pocket the morning could not remember packing" — FORBIDDEN).
 
 MATERIAL ANCHOR ROTATION:
 - Rotate material POV anchors throughout the scene (stone, fabric, air, wood, light, water, metal, etc).
@@ -232852,7 +235400,7 @@ LOVE INTEREST POV — MANDATORY OPENER:
     //   - Fatelands cognitive memory (Phase 2): Fantasy world only
     //   - Chorus discourse (Glass House voice layer):      glass_house subtype
     //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-    const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective();
+    const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective();
 
     const introPrompt = `${fifthPersonContract}${fourthPersonContract}${toneEnforcementBlock}${materialChainDirective}${_fatelandsCognitiveMemoryBlock}Write the opening scene (${tempoBand.range} words). Tempo: ${tempoBand.label}. Establish the world THROUGH character interaction and tension. Do NOT delay conflict for setup. World details should emerge from action, dialogue, and pressure. Begin with something happening, not just existing.
 ${authorOpeningDirective}
@@ -235519,6 +238067,24 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
       { type: 'twist a strand', variants: ['twist a strand around a finger', 'wind a piece of hair around one finger', 'coil a lock around a fingertip'] },
       { type: 'let it down', variants: ['pull the tie out and let the hair down', 'gather the hair up off the neck', 'tip the head and shake the hair loose'] }
     ];
+    // STRESS-ANCHOR / BRACING register (Roman 2026-07-25) — the "physical outlet for tension /
+    // grounding against a surface" family that the hand+hair pools DON'T cover, so the model
+    // calcified on two defaults (a HEEL struck against something, PALMS/hands pressed flat). Those
+    // two are here as just 2 of ~10 types, rotated per story so no single anchor recurs every scene.
+    window._STRESS_ANCHOR_POOL = [
+      { type: 'heel against a surface', variants: ['tap a heel once against the chair leg', 'press the ball of a foot flat into the floor', 'hook a heel behind the other ankle under the table'] },
+      { type: 'palms flat on a surface', variants: ['flatten both palms on the tabletop', 'spread the fingers wide against the cool surface', 'set the hands flat and lean the weight into them'] },
+      { type: 'grip own wrist / forearm', variants: ['close one hand hard around the opposite wrist', 'dig a thumb into the inside of a forearm', 'hold the wrist until the pulse answers back'] },
+      { type: 'set the jaw / bite inside', variants: ['press the tongue hard to the back of the teeth', 'bite down on the inside of a cheek', 'set the teeth and hold until it passes'] },
+      { type: 'meter the breath', variants: ['count the breath out slow through the nose', 'hold one breath a beat past comfortable', 'match the breathing to some fixed thing in the room'] },
+      { type: 'go unnaturally still', variants: ['go deliberately, unnaturally still', 'lock every muscle and refuse to move', 'hold so still it plainly costs something'] },
+      { type: 'pin the gaze to a fixed point', variants: ['pin the gaze to one object and refuse to look away', 'stare down a single point until the room steadies', 'find a line in the floor and follow it'] },
+      { type: 'root the stance / weight down', variants: ['settle the weight low into both feet', 'square the stance and root down', 'plant both feet and stop the sway'] },
+      { type: 'hidden clench', variants: ['curl the toes hard inside the shoes', 'clench a fist at the side where no one can see', 'press the nails into a palm'] },
+      { type: 'square a nearby object', variants: ['square the edge of a nearby object to the table', 'align a cup exactly with the grain', 'nudge something into a straighter line'] },
+      { type: 'roll the shoulders', variants: ['roll the tension out of one shoulder', 'drop and settle the shoulders on a slow breath', 'work the stiffness from the neck and shoulders'] },
+      { type: 'finger rhythm', variants: ['work a fingertip in a small rhythm against the thigh', 'drum a fingertip once, then still it', 'press a fingernail in a slow beat against a knuckle'] }
+    ];
     window._LI_SIGFEAT_POOL = [
       'a slightly broken nose he never had reset',
       'forearms below rolled sleeves, veined and sun-darkened',
@@ -236379,6 +238945,51 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
       'Darcy', 'Eulalia', 'Renji', 'Mehreen', 'Yejide', 'Stana', 'Dahlia', 'Marian', 'Idris', 'June',
       'Harlan', 'Constance', 'Jin-Ho', 'Priya', 'Obi', 'Katarzyna', 'Tamar', 'Gwendolyn', 'Silas', 'Bishop',
       'Noor', 'Esme', 'Callum', 'Lucia', 'Aiko', 'Imani'
+    ];
+
+    // SIDE-CHARACTER / CAST OCCUPATION POOL (Roman 2026-07-25). Names had a pool but
+    // careers had ONLY a history-gated AVOID list and NO positive rotation — so on a
+    // cold start (first play, or any fresh session) the model free-picked its attractor
+    // occupation-space: everyone was a dealmaker (gallerist / restorer / equity / "Vale
+    // Holdings contract"). The whole cast collapsed into ONE professional monoculture.
+    // This is the positive fix: a broad, cross-domain occupation palette, seeded per
+    // story, so the PROTAGONIST'S world and the side cast's jobs reach ACROSS domains
+    // (medicine / trades / arts / science / public service / maritime / craft) instead
+    // of defaulting to finance-legal-contract. Adapt any entry to the world's register
+    // (a "structural engineer" in a fantasy = a master bridge-builder) — the DOMAIN
+    // SPREAD is the point, not the literal modern job title.
+    window._SIDE_CHAR_CAREER_POOL = [
+      'emergency-room nurse', 'high-school history teacher', 'commercial fisherman', 'structural engineer',
+      'pastry chef', 'public defender', 'session drummer', 'vineyard manager', 'bush pilot', 'marine biologist',
+      'union electrician', 'museum conservator', 'midwife', 'forensic accountant', 'landscape architect',
+      'war correspondent', 'sommelier', 'locksmith', 'physical therapist', 'documentary editor',
+      'beekeeper', 'oncology researcher', 'ferry captain', 'tattoo artist', 'wildland firefighter',
+      'luthier', 'pediatric surgeon', 'glassblower', 'field geologist', 'stage carpenter',
+      'veterinarian', 'archivist', 'long-haul trucker', 'perfumer', 'seismologist', 'cobbler',
+      'air-traffic controller', 'cartographer', 'apiarist-turned-baker', 'diver-welder'
+    ];
+
+    // LOVE-INTEREST NAME POOL (Roman 2026-07-25). Unlike side characters, the LI had NO
+    // positive name pool at all — when the user left the LI name blank, the billionaire
+    // archetype's "Roman Tusk" default took over (the A-plot generator names him), and the
+    // only counter was the history-gated AVOID list (dead on a cold start). Result: the LI
+    // was "Roman" story after story. This is the positive fix: a rotating, romantic-lead
+    // register pool (cross-cultural, gender-split), seeded once per story. Picked ONCE at
+    // story creation (initAPlot, before A-plot gen) and PERSISTED for the story's lifetime —
+    // identity, not generation state; never rerolled on continuation. Deliberately excludes
+    // the STORYBOUND placeholder names (Roman / Dani / Kess / Sophie / Nora) and the
+    // side-char pool names, so the LI never collides with a bit-part or the template default.
+    window._LI_NAME_POOL_M = [
+      'Julian', 'Adrian', 'Dario', 'Nikolai', 'Sebastian', 'Rafael', 'Emmerich', 'Cassius', 'Lucian', 'Matthias',
+      'Tobias', 'Ezra', 'Kieran', 'Dmitri', 'Lorenzo', 'Ronan', 'Xavier', 'Corwin', 'Aurelio', 'Bastian',
+      'Malik', 'Anton', 'Reza', 'Hugo', 'Callan', 'Everett', 'Thaddeus', 'Emeric', 'Léon', 'Ishaan',
+      'Dorian', 'Rhys', 'Amias', 'Sayid', 'Vaughn', 'Cormac', 'Édouard', 'Zephyr', 'Marek', 'Osric'
+    ];
+    window._LI_NAME_POOL_F = [
+      'Vivienne', 'Isolde', 'Seraphine', 'Anya', 'Cordelia', 'Ottilie', 'Farah', 'Mireille', 'Sabine', 'Delphine',
+      'Elodie', 'Ines', 'Ravenna', 'Sylvie', 'Thea', 'Yasmin', 'Camille', 'Genevieve', 'Livia', 'Rosalind',
+      'Valentina', 'Bianca', 'Ingrid', 'Nadira', 'Ondine', 'Marguerite', 'Saoirse', 'Leilani', 'Anaïs', 'Xiomara',
+      'Priyanka', 'Yelena', 'Carmen', 'Beatriz', 'Ludovica', 'Amara', 'Solveig', 'Reyna', 'Cosima', 'Zaida'
     ];
 
     // HOOK-OBJECT POOL — billionaire_modern (Roman 2026-06-05). Hook objects were NOT
@@ -240022,6 +242633,35 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         // (the most specific instruction) and the guard is bypassed.
         var varietyGuard = '';
         try { if (typeof _buildFlavorVarietyGuard === 'function') varietyGuard = _buildFlavorVarietyGuard(state) || ''; } catch (_) {}
+        // ── SCENE MISSION AS INPUT (Roman 2026-07-25) ──────────────────────────────
+        // scene_mission was an OUTPUT field emitted AFTER the beats — the planner
+        // captioned a scene it had already built around a flavor attractor, so the
+        // mission never constrained anything (0/6 enactment in the locked-mission probe).
+        // This injects the mission BEFORE the beats so the planner builds them FROM it.
+        // Production: the planner still CHOOSES the mission, but now as a load-bearing
+        // FIRST decision with its structural meaning spelled out (every beat must serve
+        // it; the mission TARGET must be present). Experiment: window._lockedSceneMission
+        // supplies a specific mission as the required input (the real upstream lock,
+        // replacing the old extraction-time relabel). See feedback_constrain_generation_not_labels.
+        var _missionSpineBlock = '';
+        try {
+            var _lockedMission = (typeof window !== 'undefined' && window._lockedSceneMission) ? String(window._lockedSceneMission).trim() : '';
+            var _liNmMS = (state && state.loveInterestName) ? String(state.loveInterestName) : 'the love interest';
+            if (_lockedMission) {
+                var _msTarget = (typeof window !== 'undefined' && window._lockedMissionTarget) ? String(window._lockedMissionTarget).trim() : _liNmMS;
+                _missionSpineBlock = '\nSCENE MISSION (REQUIRED INPUT — the SPINE of this scene; build every beat FROM it, Roman 2026-07-25):\n'
+                    + '  The protagonist is trying to: ' + _lockedMission + '\n'
+                    + '  • Every beat you plan (opening_beat, rising_beats, decision_beat, decision) must exist because it ADVANCES, COMPLICATES, or PREVENTS this mission. If a beat does not affect the mission, remove it and write one that does.\n'
+                    + '  • MISSION TARGET = ' + _msTarget + '. ' + _msTarget + ' must be physically PRESENT and CENTRAL in this scene — a mission to act on ' + _msTarget + ' cannot be enacted if ' + _msTarget + ' never appears. Do NOT displace ' + _msTarget + ' with a third-party interlocutor (mentor / rival / boss) or a side-crisis (a contract / deal / deadline / acquisition). Those may exist ONLY as obstacles to the mission, never as the subject of the scene.\n'
+                    + '  • The scene_mission you output below MUST be this exact mission, restated — do NOT substitute a different intent.\n';
+            } else {
+                _missionSpineBlock = '\nSCENE MISSION — DECIDE THIS FIRST, THEN BUILD EVERY BEAT FROM IT (HARD, Roman 2026-07-25):\n'
+                    + '  Before you plan any beat, decide the protagonist\'s MISSION — the one concrete thing she is trying to do in this scene (convince / conceal / discover / earn trust / resist / protect / reconcile / confess / entice / survive; a "before X" countdown is only ONE shape). This is the scene\'s SPINE, not a caption added at the end.\n'
+                    + '  • Every beat (opening_beat, rising_beats, decision_beat) must ADVANCE, COMPLICATE, or PREVENT this mission. If a beat does not affect the mission, cut it and write one that does.\n'
+                    + '  • MISSION TARGET — the person / object / institution the mission is directed toward must be PRESENT in the scene; a mission cannot be enacted against something that never appears. EXCEPTION: if the OPENING TEMPERATURE / LI-presence directives above place the love interest offstage or deferred, the mission is PC-facing (survive / navigate the crisis) and its target is the crisis or the people present — do NOT pull the love interest onstage to satisfy this.\n'
+                    + '  • The scene_mission field you output must be a faithful DESCRIPTION of the scene you built around this spine, not a different intent.\n';
+            }
+        } catch (_) { _missionSpineBlock = ''; }
         // LI-texture SELECTION preselect (Roman 2026-06-04): code chooses the
         // source family (weighted by engine) + a specific feature anchor and
         // injects them as HARD constraints, so Haiku stops defaulting to cold
@@ -240283,6 +242923,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           (varietyGuard ? '\n' + varietyGuard + '\n' : '') +
           _liPreselectBlock +
           _openingTempBlock +
+          _missionSpineBlock +
           (_heroineScaffoldDir ? '\n' + _heroineScaffoldDir + '\n' : '') +
           '\nSTRUCTURAL REQUIREMENTS (the opening MUST satisfy ALL):\n' +
           (_ffCanonOwnsOpening
@@ -240401,6 +243042,19 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // model 4 times but never validated; there is no scene-level want
           // object anywhere in the codebase. This field IS the bridge.
           '  "scene_want": "<Roman 2026-06-01 — THE BRIDGE FROM private_hope TO PROSE. A single sentence, present tense, naming what the PC WANTS RIGHT NOW in THIS scene. ~10-25 words. NOT what she\'s trying to achieve (that\'s the plot goal). NOT what she\'s afraid of (that\'s the wound). What she WANTS — emotionally, achievable through human interaction in this room or this call, derived from her private_hope but scoped to the scene that opens here.\\n\\nMANDATORY DERIVATION: read the PC BODY BIBLE block in context above. Find her private_hope. Convert it to present-tense, scene-scaled, human-interaction-achievable. Examples of derivation:\\n  • private_hope: \\"wants to be allowed to stop performing competence for one whole evening\\" → scene_want: \\"wants Kess to notice she is exhausted without making her admit it.\\"\\n  • private_hope: \\"wants to be wanted by someone who does not need her to be useful\\" → scene_want: \\"wants the silence in the room to hold without someone asking her what she thinks.\\"\\n  • private_hope: \\"wants to be the one who is taken care of, without having to ask\\" → scene_want: \\"wants someone else to take responsibility for the decision in front of her.\\"\\n  • private_hope: \\"wants to find out the loyalty was real all along\\" → scene_want: \\"wants the message to mean what she hopes it means, before she has to call him back.\\"\\n  • private_hope: \\"wants to be noticed accidentally\\" → scene_want: \\"wants the attention in the room to pass over her without her having to perform invisibility.\\"\\n  • private_hope: \\"wants someone to carry weight without being asked\\" → scene_want: \\"wants Kess to notice the folder weight without her having to point it out.\\"\\n\\nFORBIDDEN (these are plot wants, not scene wants):\\n  ✗ \\"wants to uncover the truth\\" / \\"wants to solve the audit\\" / \\"wants to win the case\\" / \\"wants answers\\" — those are PLOT WANTS\\n  ✗ \\"wants to be loved\\" / \\"wants to find herself\\" / \\"wants happiness\\" — those are LIFE WANTS, abstract, not actionable in this room\\n  ✗ \\"wants to recover the drive\\" / \\"wants to get the deal closed\\" — A-plot goal restatement\\n  ✗ A want that requires the LI to appear or already be present (scene_want must be possible to satisfy without him entering the room)\\n\\nBEFORE FILLING THIS FIELD, ANSWER (internally) THESE FOUR QUESTIONS:\\n  1. What is she trying to GET from someone in this scene?\\n  2. What is she AFRAID of getting?\\n  3. What would FEEL GOOD right now?\\n  4. What would FEEL DANGEROUS right now?\\nThe scene_want emerges from (1) softened by (3) — what would feel good that she could plausibly reach for here.\\n\\nSUCCESS CRITERION: a reader of the first 250 words should be able to complete \\"she wants ______.\\" — legible on its own.\\n\\nPRESENCE RULE (KEEP — LOOMING_PRESENCE and COLLISION stay valid): the want must be satisfiable while the LI stays OFFSTAGE. If your rendering requires him to physically enter the room (\\"and then he walked in\\"), REWRITE.\\n\\nDIRECTION (engine-gated — the load-bearing change, Roman 2026-06-03): whether the want may POINT AT the LI (curiosity / anticipation / resentment / dread / fascination / wondering — all satisfiable while he stays offstage) depends on the romance engine. ' + _swFacingPlain + '\\n\\nREQUIRED — single sentence, present tense, scoped to this room, derived from private_hope.>"' +
+          // READER-STATE PLANNING (Roman 2026-07-25): plan the protagonist's INTENT and the reader's
+          // evolving UNDERSTANDING, not just world events. "Stop planning what happens; start planning
+          // what the reader understands after what happens." Kept ruthlessly small so it is not ignored.
+          ',\n  "scene_mission": "<ONE sentence naming the protagonist\'s concrete INTENT for THIS scene — the scene\'s GRAVITATIONAL CENTER. \\"trying to ___ before ___\\" is only ONE shape (a countdown); do NOT force a temporal deadline where the scene has none. A mission can equally be to CONVINCE someone, CONCEAL something, DISCOVER something, EARN a person\'s trust, RESIST a temptation, PROTECT someone, or simply SURVIVE an ordeal (an awkward dinner, a hostile room). Plan the scene around this INTENT, not around world events (a wish / rift / chain is the OBSTACLE, never the subject). e.g. \\"Escape the square before the Keepers accuse her.\\" / \\"Convince Vesper she is innocent without naming the real culprit.\\" / \\"Get through the betrothal dinner without letting them see she is afraid.\\" / \\"Find out what her sister is hiding before she loses her nerve to ask.\\" NOT a plot goal, NOT an abstract want. REQUIRED.>"' +
+          ',\n  "reader_state": { "knows": "<what a first-time reader KNOWS after the opening — the concrete physical situation>", "believes": "<what the reader now BELIEVES about the stakes / what is at risk>", "wondering": "<the ONE thing the reader SHOULD still be curious about — a world-mystery is good>", "must_not_confuse": "<the physical facts the reader must NEVER be unclear on: WHO is acting, WHAT physical event occurs, WHY the next action follows>" }' +
+          // MISSION_ATTEMPT — DIAGNOSTIC, LOG-ONLY (Roman 2026-07-25). Not consumed by the author yet.
+          // Tests whether the planner reasons in ATTEMPTS at all, or only in DECISIONS. If this field
+          // comes back empty across a representative sample, the planner literally isn't thinking in
+          // terms of pursuit — that is the next planner abstraction to introduce (an enacted attempt
+          // BEFORE the decision). See feedback_scene1_decision_vs_attempt.
+          ',\n  "mission_family": "<DIAGNOSTIC (log-only). Classify THIS scene\'s mission into ONE family (it decides what KIND of completed action counts below): RELATIONAL (change the relationship — reconcile / apologize / mend / win trust) | TRANSACTIONAL (change a proposed exchange — negotiate / bargain / close a deal) | DISCLOSURE (expose a hidden thing — confess / reveal / come clean) | PERSUASIVE (advance an argument to move someone — persuade / convince / pitch) | SEDUCTIVE (create attraction or pull — entice / seduce / flirt) | EPISTEMIC (extract information — investigate / find out / probe) | EVASIVE (escape / conceal / survive). Output the family WORD only.>"' +
+          ',\n  "mission_attempt": "<DIAGNOSTIC (log-only). A COMPLETED MISSION ACTION *of the mission_family\'s TYPE*: an observable action the protagonist COMPLETES during THIS scene that MATERIALLY advances the mission — it must ALREADY HAVE HAPPENED by the scene\'s end. Distinguish INTENT (\\"she prepares to confess\\" — NOT it) from ATTEMPT (\\"she confesses\\" — output THIS) from OUTCOME (\\"Roman laughs\\" — NOT it). Never a precursor (prepares to / steels herself / takes a breath / is about to / gathers her courage / decides / resolves to / reaches for). CRITICAL — the action must be a STATE TRANSITION OF THE RIGHT FAMILY; a completed action of the WRONG family (especially a generic physical/verbal PROXY) does NOT count: RELATIONAL → a spoken commitment that CHANGES THE RELATIONSHIP — ✓ apologizes for leaving / admits she was wrong / forgives him / accuses him; ✗ approaches / looks at / stands beside / engages in conversation (physical movement is NEVER sufficient for a relational mission). TRANSACTIONAL → a SPECIFIC TERM change — ✓ proposes a 60/40 split / raises the price / removes the exclusivity clause / signs / refuses the offer; ✗ asks for a better offer / requests improvement (a vague ask is not a term). DISCLOSURE → EXPOSES the hidden thing — ✓ names the secret aloud / admits the affair; ✗ hints / alludes / almost says it. PERSUASIVE → ADVANCES AN ARGUMENT — ✓ argues the case / proposes the plan / demonstrates the proof; ✗ mentions it / brings it up. SEDUCTIVE → creates PULL — ✓ invites him closer / teases / reveals something; ✗ engages in conversation / talks to him. EPISTEMIC → EXTRACTS INFORMATION — ✓ asks a pointed question / inspects the ledger / compares the accounts; ✗ observes / watches / wonders. Write it as a thing DONE, of the RIGHT family, never a proxy and never a preparation.>"' +
+          ',\n  "immediate_result": "<The IMMEDIATE RESULT of the completed action (mission_attempt) — what NEW FACT, OBSTACLE, OPPORTUNITY, or RELATIONSHIP-STATE now exists BECAUSE she did it. It must CHANGE THE STORY, not describe a reaction. ✗ REACTIONS (INVALID — these change a face or a mood, not the situation): \\"Roman frowned\\" / \\"he looked surprised\\" / \\"the room fell silent\\" / \\"she blushed\\". ✓ RESULTS (VALID — the ground shifts, a new fact/term/obstacle/opening now exists): \\"Roman admits the gallery is already bankrupt\\" / \\"he accepts the proposal but only if she fires Quinn\\" / \\"he says the thing she came to hear and it is worse than the silence\\" / \\"he refuses, and now she knows he already knew\\". The result may HELP or HURT the mission — but the mission now stands somewhere it did not a moment ago. One sentence, a concrete change of state.>"' +
           // 2026-05-31 (Roman): PC Body Bible callback — separate from
           // pc_self_presentation_beat (which lives on ONE beat). The callback
           // is a small recurring touch across the arc — peppered bon-mots
@@ -240755,6 +243409,29 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         var _swLower = sceneWant.toLowerCase();
         if (_swLower === 'null' || _swLower === 'none' || _swLower === 'n/a' || _swLower === 'skip') sceneWant = '';
         try { if (window.state) window.state._scene1SceneWant = sceneWant || null; } catch (_) {}
+        // READER-STATE PLAN (Roman 2026-07-25) — the mission (protagonist intent) + the ruthlessly-small
+        // reader-state contract, PLANNED before prose so the author is HANDED the reader's knowledge
+        // progression rather than asked to infer it. Injected as acceptance criteria below.
+        // EXPERIMENT LOCK (default OFF; zero prod impact): window._lockedSceneMission forces the mission so a
+        // probe can test whether the architecture PLAYS a given mission type, with the premise held constant.
+        var sceneMission = (window._lockedSceneMission ? String(window._lockedSceneMission) : (plan.scene_mission || '')).toString().trim();
+        if (['null', 'none', 'n/a', 'skip'].indexOf(sceneMission.toLowerCase()) !== -1) sceneMission = '';
+        var readerState = (plan.reader_state && typeof plan.reader_state === 'object' && !Array.isArray(plan.reader_state)) ? plan.reader_state : null;
+        try { if (window.state) { window.state._scene1Mission = sceneMission || null; window.state._scene1ReaderState = readerState; } } catch (_) {}
+        // MISSION FAMILY / COMPLETED ACTION / IMMEDIATE RESULT — the enactment chain (Roman 2026-07-25/26).
+        // Diagnostic-logged always; INJECTED into the author only when window._missionEnactmentChain is on
+        // (the scaffold-split experiment). completedAction/immediateResult are the causal pair that ends the scene.
+        var completedAction = '', immediateResult = '', missionFamily = '';
+        try {
+          completedAction = (plan.mission_attempt || '').toString().trim();
+          immediateResult = (plan.immediate_result || '').toString().trim();
+          missionFamily = (plan.mission_family || '').toString().trim();
+          ['null', 'none', 'n/a', 'skip', ''].forEach(function () {});
+          if (['null', 'none', 'n/a', 'skip'].indexOf(completedAction.toLowerCase()) !== -1) completedAction = '';
+          if (['null', 'none', 'n/a', 'skip'].indexOf(immediateResult.toLowerCase()) !== -1) immediateResult = '';
+          if (window.state) { window.state._scene1MissionAttempt = completedAction || null; window.state._scene1MissionFamily = missionFamily || null; window.state._scene1ImmediateResult = immediateResult || null; }
+          console.log('[MISSION-CHAIN] fam=' + (missionFamily || '?') + ' · action=' + (completedAction ? ('"' + completedAction + '"') : '(EMPTY)') + ' · result=' + (immediateResult ? ('"' + immediateResult + '"') : '(EMPTY)') + ' · inject=' + (window._missionEnactmentChain ? 'ON' : 'off'));
+        } catch (_) {}
         // FAMOUS FATE perceptual_signature_beat (Roman 2026-06-30) — optional, FF-only; tolerant of absence.
         var perceptualSignatureBeat = (plan.perceptual_signature_beat || '').toString().trim();
         var _psbLower = perceptualSignatureBeat.toLowerCase();
@@ -241106,6 +243783,18 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           (liTextureBeat ? '• LI TEXTURE BEAT (REQUIRED — ' + liName + ' is off-stage, but his presence in the protagonist\'s MIND is the scene\'s ROMANTIC SPINE): ' + liTextureBeat + '\n   ↳ PHOTOGRAPH TEST (HARD — Roman 2026-06-01). The memory of ' + liName + ' MUST contain a VERB he performed — a behavior, decision, joke, deflection, kindness, avoidance pattern, contradiction — drawn from his Bible\'s behavioral fields (signature_behavior / deflection_pattern / attraction_manifestation / defining_anecdote). If the memory could be REPLACED BY A STILL, CONTEXT-FREE PHOTOGRAPH that reveals nothing about him (a bare scar, a watch, an inventory of forearms), it is WALLPAPER. But a PHYSICAL ANCHOR that REVEALS him is REQUIRED, not banned (Roman 2026-06-04 — the PHOTOGRAPH TEST is REVISED, not removed): the ideal memory carries ALL THREE — a VERB + an attractive PHYSICAL ANCHOR + a REVELATION about who he is. TEST: remove the feature, is it pure WALLPAPER (gives NEITHER attraction NOR character)? If it gives EITHER — ATTRACTION ALONE is sufficient — keep it (Roman 2026-06-04 correction: a pure attraction anchor like broad shoulders / strong jaw needs NO character reason; characterization is a bonus). Readers do not fall in love with photographs. They fall in love with stories about people. Pull from his defining_anecdote when in doubt — that field is the load-bearing source for what ' + liName + '\'s memory should look like. Physical detail is allowed ONLY as the GROUND for a verb (seeded ground-shapes this story — SHAPE TEMPLATES, substitute THIS LI\'s actual verb and feature, do NOT copy any seed wording: ' + _liTexGroundSeedScaffold + '), never as the memory itself.\n   ↳ DESIRE REGISTER TARGET — NON-SEX-SCENE ATTRACTION. The scene is not sexual action, but the protagonist\'s attraction must be unmistakable. TARGET: behaviorally specific, embodied, adult desire. AVOID: porn escalation, genital focus, coy abstraction, fear/power confusion.\n   ↳ GOOD shapes — see the LI BODY BIBLE\'s desire_register_exemplars in the system prompt; also see his attraction_manifestation (what his desire LOOKS LIKE as action — never as appearance) and his defining_anecdote (the SPECIFIC story she could tell about him). Imitate the LEVEL OF SPECIFICITY, not the wording.\n   ↳ BAD examples (universal failure modes — calibrated, do not write any of these registers):\n     1. My chest did something complicated. [too vague — anxiety, hope, grief fit equally]\n     2. Something I didn\'t want to name moved through me. [evasion — narrator refusing to name IS the failure]\n     3. The room reorganized around him. [power, not desire — would work for a feared adversary]\n     4. I could feel the weight of his attention. [presence/power awareness, not wanting]\n     5. I couldn\'t stop staring at the bulge in his pants. [too crude / default-Dirty register]\n     6. I was soaking wet despite the air conditioning. [too explicit for a non-sex scene]\n     7. PHOTOGRAPH WALLPAPER (Roman 2026-06-01, observed-live): "his forearms rolled to the elbow, the precise fold he always made, the small scar at his wrist from something he had never explained." [This describes Attractive Billionaire Man #12 — not a specific Armored Fox / Open Vein / Heart Warden. There is no VERB in it. He does nothing in this memory. Replace with what he DID — a deflection that leaked the wound, a small kindness he refused to take credit for, a joke calibrated to her, an answer to a question she had not asked.]\n   ↳ Required: (a) ONE VERB ' + liName + ' performed (a behavior / decision / joke / kindness / deflection / contradiction — drawn from his Bible\'s behavioral fields), AND (b) ONE embodied response in her (a specific physical reaction in a specific place). Photographable detail is allowed as ground for the verb, never as the entire memory. No genital focus. No "something I couldn\'t name." No power-only language. Flat plot-business mentions ("' + liName + ' wants the deal" / "' + liName + ' is in Singapore") do NOT satisfy this requirement.\n' : '') +
           (interlocutorPlacement ? '• INTERLOCUTOR ON FIRST MENTION (REQUIRED — observed failure: a scene character appearing as bare "she"/"her" with no name or role until late, OR a phone-call interlocutor named flatly with no sensory texture). Realize this verbatim shape on the FIRST time the interlocutor speaks or acts: ' + interlocutorPlacement + '\n   ↳ For an IN_PERSON interlocutor — FUSED COMBO-DESCRIPTOR (HARD, Roman 2026-06-08): NAME + RELATIONSHIP-TO-PROTAGONIST + one descriptor that FUSES a VISUALIZABLE PHYSICAL FEATURE to a personality trait in a single stroke, so the reader gets a physical sense of the person. A pure behavioral tell with no visual anchor FAILS — "his mouth set in that way that meant he\'d decided" gives no face. ✓ "His perpetually squinting eyes refused to meet mine." / "She had the apologetic stoop of someone used to being the tallest in the room." / "His scarred knuckles stayed flat on the table like he was holding it down." The feature is concrete and picturable (squinting eyes / stoop / scarred knuckles / heavy jaw / receding hairline / a wrestler\'s neck / sun-cracked hands); the trait rides ON it. PRIORITIZE THE FACE (HARD, Roman 2026-06-09): the descriptor MUST include at least one FACE/HEAD anchor — eyes, brow, the hairline or hair, the line of the jaw or mouth, skin/complexion, or apparent age. Posture, build, or clothing ALONE (a stoop, a blazer, broad shoulders, tapping nails) is a SILHOUETTE, not a FACE — the reader must be able to picture this person\'s face, not just their outline. ANY character who SUSTAINS a multi-beat conversation — not only on first mention — must carry at least this ONE combo-descriptor; it is required for a real scene participant, never optional.\n   ↳ For an ON_PHONE interlocutor (voice through a call, no body in the room): the protagonist CANNOT see her, but the SAME texture obligation applies — render her through a REMEMBERED detail (a habit the PC has learned to read: a quiet sigh that lands a beat before she stops arguing / a slight breath right before her voice drops a register / the way she repeats the PC\'s name twice — once as a greeting, once like she\'s placing it in a file), a HEARD-THROUGH-LINE cue (the click of a heel on marble bleeding into the audio, the soft inhalation that came right before the bad news), or a PROJECTED behavioral inference (the careful pause she did before saying the rehearsed thing). Naming her + her job WITHOUT any sensory or behavioral coloration is the same failure as bare "she said" — the reader has no embodied sense of who this person is. ON_PHONE characters are NOT exempt from texture; they require a different KIND of texture (remembered/heard/projected, never directly observed). Pick a STRUCTURALLY DIFFERENT remembered-tell each story — do NOT default to french-manicured nails tapping (calcified across 6+ plays).\n   ↳ The reader must know on first appearance who this person is to the protagonist (mentor / supervisor / rival / handler / etc.) AND have ONE concrete tell, regardless of presence mode.\n' : '') +
           (pcSelfPresentation ? '• PC SELF-PRESENTATION (REQUIRED — Roman 2026-05-31, observed failure: across many plays every interlocutor + the LI got body + tell + register, while the protagonist herself stayed a disembodied interior voice. The reader knew everyone in the room except her). Realize this beat as an IN-SCENE ACTION (not a mirror moment) with a concrete physical anchor AND her self-aware self-judgment in her own voice: ' + pcSelfPresentation + '\n   ↳ GOOD shape (Roman gold standard): "I pulled my ponytail out and shook my brown curls loose, mostly to see if he\'d lose his train of thought like most men did at that point." Notice: in-scene action (pulled out / shook), specific physical detail (brown curls), self-judgment in her voice ("mostly to see if" — she knows what she\'s doing), archetype-coded register (sardonic/tactical). The same beat in another register: "My hands had started shaking again — I made a fist to hide it, the shake just moved up to my elbow, the way it had for the year after the trial" (vulnerable/raw); or "I kicked my heels off under the desk; barefoot was how I thought best — my dean had hated it for fifteen years anyway" (defiant/practical).\n   ↳ FORBIDDEN failure shapes: (a) flat clothing inventory ("I was wearing jeans, a t-shirt, sneakers") — no self-judgment, no register; (b) stock female-character gestures (lip-bite, hair-tuck-nervous, blazer-straighten) without self-aware framing — those read as automated; (c) mirror cliché ("I looked at myself in the mirror, I looked tired") — weak; in-scene action is stronger; (d) demographic data ("a 32-year-old woman with brown hair and green eyes") — that\'s not character; (e) skipping the beat entirely — the failure mode this rule was added to fix.\n   ↳ The protagonist must get AT LEAST AS MUCH physical/behavioral/psychological texture as the interlocutor and the LI. One short beat. Her body, in her voice, with her judgment. The reader should know who SHE is before the LI walks in.\n' : '') +
+          // ── SCENE MISSION + READER-STATE (Roman 2026-07-25) — plan the protagonist's intent + the reader's understanding, HANDED to the author ──
+          (sceneMission ? '• SCENE MISSION (THE GRAVITATIONAL CENTER — plan the scene around the protagonist\'s INTENT, not around world events). This scene, in one sentence: ' + sceneMission + '\n   ↳ Every beat orbits this mission, and the reader must be able to state it after the opening. World events (a wish, a rift, a chain) are the OBSTACLE to the mission — never the subject. A paragraph that bears on NEITHER the mission NOR the reader\'s understanding of it is cut.\n' : '') +
+          // ── MISSION ENACTMENT CHAIN (Roman 2026-07-26) — action → result → decision. The scaffold-split fix:
+          // the scene must ENACT the mission (a COMPLETED action that materially changes the situation), not
+          // deliberate toward it. Flag-gated (window._missionEnactmentChain) so production is unchanged until
+          // validated. The decision survives — as the CONSEQUENCE of the action, not a substitute for it.
+          ((window._missionEnactmentChain && completedAction) ? '• MISSION ENACTMENT — ACTION → RESULT → DECISION (HARD — the scene must ENACT the mission, not merely build toward it). The protagonist does NOT only prepare, steel herself, gather her courage, or decide whether to act — she ACTS, on the page, and the world answers. Render this causal chain, in order, as the SPINE of the scene:\n'
+            + '   ① COMPLETED ACTION (' + (missionFamily ? missionFamily + ' — ' : '') + 'she DOES this ON THE PAGE, visibly, before the scene ends — not "prepares to," not "is about to," not "almost"): ' + completedAction + '\n'
+            + (immediateResult ? ('   ② IMMEDIATE RESULT (because she did ①, the ground SHIFTS — a NEW FACT / OBSTACLE / OPPORTUNITY / RELATIONSHIP-STATE now exists; a frown, a blush, or a silence is a REACTION, NOT a result): ' + immediateResult + '\n') : '')
+            + '   ③ THE CLOSING DECISION (see CLOSING DECISION below) must ARISE FROM ' + (immediateResult ? '②' : 'the result of ①') + ' — it is the choice the RESULT forces on her, one she could NOT have faced before she acted. The decision is the CONSEQUENCE of the action, never a SUBSTITUTE for it.\n'
+            + '   ↳ THE FAILURE THIS REPLACES (do NOT write it): a scene where she weighs the options, gathers herself, and ends on the BRINK of acting. If by the last line she has not DONE ①, the scene has FAILED. Preparation is not action; a decision is not an attempt; a reaction is not a result.\n' : '') +
+          (readerState ? '• READER-STATE CONTRACT (ACCEPTANCE CRITERIA — a plan you must SATISFY, not decoration. Stop planning what happens; deliver what the READER UNDERSTANDS after what happens. If the prose violates this progression, rewrite the PROSE, not the plan). After the opening, a first-time reader must —\n   ↳ KNOW: ' + (readerState.knows || '(the concrete physical situation)') + '\n   ↳ BELIEVE: ' + (readerState.believes || '(what is at stake)') + '\n   ↳ still be WONDERING (keep this alive — world-mystery is good): ' + (readerState.wondering || '(a deeper world-mystery)') + '\n   ↳ NEVER be confused about (HARD): ' + (readerState.must_not_confuse || 'who is acting, what physical event is occurring, why the next action follows') + '\n   World MYSTERY is encouraged; PHYSICAL ambiguity is forbidden.\n' : '') +
           // ── SCENE WANT — Roman Desire Bridge Phase 1 (2026-06-01) ──
           (sceneWant ? '• SCENE WANT (REQUIRED — Roman 2026-06-01, audit-driven). What she WANTS IN THIS SCENE, derived from her private_hope and scoped to this room. The smallest bridge between her story-level secret hope and the prose: ' + sceneWant + '\n   ↳ The first 250 words MUST make this want LEGIBLE — a reader of the opening should be able to complete: "she wants ______." If the LI is offstage, keep him physically OFFSTAGE (never "and then he walked in") — but do NOT keep the DESIRE offstage: under HOT_CRISIS + romance-forward the want is DESIRE-PRESSURE (see the SCENE WANT direction above), and his EFFECT ON HER — her body, her attention, what she nearly does because of him — MUST own the opening. Do NOT defer the wanting to a later remembered beat (li_texture_beat); the opening\'s emotional temperature is the wanting, not the crisis-analysis.\n   ↳ HOW IT SURFACES (any combination): (a) a physical orientation toward the want (she sits a certain way, holds the folder a certain way, watches the door, lingers at the threshold of a sentence she did not finish); (b) an INTERIOR sentence that names the wanting in her own voice ("I wanted Kess to notice without making me say it" / "I would have given the whole afternoon for someone to take this off my desk"); (c) a small behavior that BETRAYS the want (she leaves the question half-asked, she does not correct the assumption, she holds the silence one beat longer than the conversation needs); (d) an embodied resistance to the wanting (she catches herself doing the wanting and pulls back). At least ONE of these must land in the first 250 words.\n   ↳ FORBIDDEN — these are plot wants, not scene wants: "she wanted to uncover the truth" / "she wanted to solve the audit" / "she wanted to win the case" / "she wanted to recover the drive." Those restate the A-plot goal. The scene_want is romance-facing — about being seen / being carried / being chosen / being let alone / being asked / being trusted / being noticed — derived from her private_hope.\n   ↳ FORBIDDEN — the want must be achievable in THIS scene without the LI appearing. If your rendering of the want requires "and then he walked in," REWRITE. The LI need not APPEAR (presence) — but the want MAY point AT him (direction), per the romance engine: ' + _swFacingPlain + '\n   ↳ CAUSALITY: removing the SCENE WANT from your draft should make the scene feel like a procedural — "person doing thing." Removing the A-plot should leave the wanting still legible. If both are removable and the scene still works, the architecture is upside down.\n' : '') +
           // 2026-05-31 (Roman): PC Body Bible callback — peppered self-image
@@ -241147,6 +243836,10 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             '        [1-2 sentences — payoff for the SECOND side (letting it SHOW / SUBTLE): the signal, silence, or gesture is UNDERSTOOD without being spoken.]\n' +
             '        <<END_EXPANSION>>\n' +
             '        BOTH: same POV/tense/register as the scene; a natural continuation of THIS moment; use ONLY the protagonist + love interest by their real names and facts already in THIS scene — invent NO new named character, secret, crime, death, document, or scandal; both EQUALLY rewarding (never punish a side). This appendix is the ONLY thing allowed after the closing decision, and ONLY because it is stripped and never shown as prose.\n' : '') +
+          // CLOSING DECISION (Roman 2026-07-26): the flag-gated POST-ACTION reframe was tested (run 6) and made
+          // enactment WORSE (2/6 → 0/6) — re-labeling the terminal as "the next decision" re-centered the scene on a
+          // decision and the author skipped the action again. Reverted to the legacy single block (run-5 config, the
+          // best-known state for the flagged chain). The deliberation-terminal is deeper than this one instruction.
           '• CLOSING DECISION — the VERY LAST sentences of the scene, standing ALONE as a short paragraph: ' + decision + '\n' +
           '   ↳ THIS IS THE LAST PROSE IN THE SCENE — nothing comes after it EXCEPT the hidden <<EXPANSION_A>>…<<END_EXPANSION>> payoff appendix (system markers, stripped, never shown as prose — see MICRO-DECISION above). NO trailing reflection, NO description, NO "I looked at the ' + (hookObject || 'thing') + ' again," NO restating the stakes. The decision is the final PROSE beat; if you finish it and feel the pull to add a closing thought, STOP. (Scenes keep FAILING here by trailing into exposition after the decision.)\n' +
           '   ↳ The decision MUST turn on the hook object' + (hookObject ? ' ("' + hookObject + '")' : '') + ' — name it or take an action on it' + (_hookVerbs ? ' (' + _hookVerbs + ')' : '') + (hookObject ? ', e.g. "' + _hookFirstVerb + ' the ' + hookObject + ', or …?"' : '') + '. A decision about something else (the timeline, the board, the room, your career in the abstract) FAILS — anchor the choice to the ' + (hookObject || 'hook') + ' itself.\n' +
@@ -242101,6 +244794,10 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
     // below) sees the same blueprint on any rewrite.
     var _scene1ScaffoldBlock = '';
     try { _scene1ScaffoldBlock = await _buildScene1Scaffold(); } catch (_sbErr) { _scene1ScaffoldBlock = ''; }
+    // SCENE MANIFESTATION (v1 attention experiment; flag-gated, default OFF). Select the few behavioral
+    // objectives this scene invites and inject a HIGH-PRIORITY obligation block that demotes the bible to
+    // reference-only. Fails safe to a no-op (path unchanged) on any error or when the flag is off.
+    try { if (window._sceneManifestExperiment && typeof _buildSceneManifestation === 'function') { await _buildSceneManifestation(); var _mfBlock = (typeof _buildSceneManifestBlock === 'function') ? _buildSceneManifestBlock() : ''; if (_mfBlock) _scene1ScaffoldBlock = (_scene1ScaffoldBlock || '') + _mfBlock; } } catch (_mfErr) {}
     // READER-TASTE FEED (Roman 2026-07-07): the reader's Editor-Mode tags (⭐/⚠/🔁…) auto-inject here as
     // calibration — "write to this bar / avoid this shape" — so marking prose actually steers the model
     // instead of dead-ending in an export. Ungated (all modes); no-op when there are no tags.
@@ -242236,6 +244933,25 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
                 + 'sysPrompt(prose stack)=' + _s1sys + 'c · introPrompt=' + _s1intro + 'c · scaffold=' + _s1scaf + 'c · appendix=' + _s1app + 'c · picturability=' + _s1pict + 'c'
                 + '  → window._promptMassAudit() for the sysPrompt section breakdown');
         } catch (_s1szErr) {}
+        // SCENE-1 LENGTH GUIDANCE (Roman 2026-07-24): the length subsystem
+        // (_resolveTargetSceneLength + _buildAdaptiveLengthDirective) lived ONLY in the
+        // continuation dispatch (~274324) and was never carried into Scene 1's separate gen path —
+        // so generic literary Scene 1 shipped with NO word floor and under-generated to ~350w (half
+        // the 700–1000 target; measured via _pov_probe). Wire the SAME canonical subsystem here.
+        // EXCLUDED: FF openers (keep their specialized 650–850 floor) and HOT&FAST (its own short
+        // cap + max_tokens 700 — this guidance is not appended to that branch below).
+        var _s1LenGuide = '';
+        try {
+          if (!(state && state.fateMode === 'famous_fate') && typeof _resolveTargetSceneLength === 'function' && typeof _buildAdaptiveLengthDirective === 'function') {
+            _resolveTargetSceneLength();
+            // The CALLER owns the context decision: a hot opener wants movement framing, everything
+            // else the reflective literary cadence. _buildAdaptiveLengthDirective just renders it.
+            var _s1Pacing = ((state._openingTemperature || '') === 'HOT_CRISIS') ? 'hot' : 'reflective';
+            _s1LenGuide = _buildAdaptiveLengthDirective({ pacing: _s1Pacing }) || '';
+            var _r = state._targetSceneLengthRange;
+            try { console.log('[SCENE1:LENGTH-GUIDANCE] appended (' + (_r ? _r.minWords + '-' + _r.maxWords + 'w' : '?') + ', ' + _s1Pacing + ' framing)'); } catch (_) {}
+          }
+        } catch (_s1lgErr) {}
         let text;
         // Dead Scene-1 Grok-candidate call-site REMOVED 2026-07-13 (#7); text stays undefined so
         // the lite / hot-fast / heavy branch chain below runs exactly as in default-OFF production.
@@ -242262,9 +244978,26 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         } else if (typeof text === 'undefined') {
             text = await callChat([
                 {role:'system', content: state.sysPrompt},
-                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + _buildPerTurnCharMemory()}
+                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + _s1LenGuide + _buildPerTurnCharMemory()}
             ], 0.7, { max_tokens: 2400 });
         }
+        // STATE-CHANGE MARKER instrumentation + strip (Roman 2026-07-24): did the renderer stage the
+        // <<STATE_CHANGE>> beat, and WHERE (word position)? This is the experimental signal — if the
+        // marker lands mid-scene, positional slots are the renderer's temporal language; if it's
+        // dropped, the renderer collapses template structure itself. Then strip the markers to prose.
+        try {
+          if (typeof text === 'string') {
+            var _scMk = text.match(/<<\s*STATE_CHANGE\s*>>/i);
+            if (_scMk) {
+              var _scBeforeW = (text.slice(0, _scMk.index).replace(/<<[^>]*>>/g, ' ').match(/\b[\w']+\b/g) || []).length;
+              var _scTotalW = (text.replace(/<<[^>]*>>/g, ' ').match(/\b[\w']+\b/g) || []).length;
+              console.log('[STATE_CHANGE:MARKER] rendered=true · wordPos=' + _scBeforeW + ' (~' + (_scTotalW ? Math.round(100 * _scBeforeW / _scTotalW) : '?') + '% into scene, total=' + _scTotalW + 'w)');
+            } else if (state.aPlot && state.aPlot.scene1Compressed && state.aPlot.scene1Compressed.state_change && (typeof _hotFastActive !== 'function' || !_hotFastActive())) {
+              console.log('[STATE_CHANGE:MARKER] rendered=false — renderer DROPPED the slot (collapsed template structure)');
+            }
+            text = text.replace(/<<\s*STATE_CHANGE(?:_END)?\s*>>/gi, '').replace(/[ \t]{2,}/g, ' ');
+          }
+        } catch (_scMkErr) {}
         // Paragraph-ownership map (both modes) — see the 99/1 romance:plot ratio per ¶.
         try { window._lastSceneText = text; _logParagraphOwnership(_paragraphOwnershipScan(text), 'scene1 ' + (_litLiteActive() ? 'lite' : 'full')); _litLiteRepetitionCapture(text); if (typeof _auditBannedPhraseLeakage === 'function') _auditBannedPhraseLeakage(text); if (typeof window._scanDescriptionLedger === 'function') window._scanDescriptionLedger(text); } catch (_poErr) {}
         // DUAL ⇄: same-seed Lit-Lite shadow (no-op unless dual enabled + heavy primary).
@@ -243316,6 +246049,8 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         if (state.povMode === 'author5th') {
             // Repair voyeur verbs (always safe, no regeneration needed)
             text = await repair5thPersonPOV(text);
+            // Weave Fate into a bookended middle (cheap Mistral pass; fires only on a long Fate-gap).
+            try { text = await _weaveFateDensity(text); } catch (_) {}
 
             // Run ALL validation checks — Scene 1 returns only warnings, no violations
             const povCheck = validate5thPersonPOV(text, true, false); // isSceneOne=true, isErotic=false
@@ -269619,6 +272354,9 @@ If a theme naturally surfaces in this scene, output at the end: (THEME_ECHO: [th
                   tracker.activeThemes.push(t);
                   tracker.themeMentions[t] = 1;
                   console.log(`[THEME] Registered new theme: "${t}"`);
+                  // Fire-and-forget: warm the signage cache for an UNMAPPED theme so later urban scenes can
+                  // foreshadow it (no bank needed). Non-blocking — never delays scene rendering. (Roman 2026-07-22)
+                  try { if (typeof window._generateThemeSignage === 'function') window._generateThemeSignage(t); } catch (_) {}
               }
               return '';
           });
@@ -273972,7 +276710,9 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       //   - Fatelands cognitive memory (Phase 2): Fantasy world only
       //   - Chorus discourse (Glass House voice layer):      glass_house subtype
       //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-      const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective();
+      const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+        // LIVING THINGS (anti-bestiary) + WISH-BORN CURIOSITIES (light half); Fatelands-gated + each self-gates.
+        + (function () { try { if (state.picks && state.picks.world === 'Fantasy') { var _t = (state.currentCrisis || '') + ' ' + ((state.aPlot && (state.aPlot.antagonistOrAntiForce || '')) || '') + ' ' + ((state.aPlot && (state.aPlot.goal || '')) || ''); var _o = ''; if (typeof _buildFatelandsLivingThingsDirective === 'function') _o += _buildFatelandsLivingThingsDirective(_t); if (typeof _buildFatelandsWishCuriositiesDirective === 'function') _o += _buildFatelandsWishCuriositiesDirective(_t); if (typeof _buildFatelandsWishArchaeologyDirective === 'function') _o += _buildFatelandsWishArchaeologyDirective(_t); if (typeof _buildThornwildFirstCurseDirective === 'function') _o += _buildThornwildFirstCurseDirective(_t); if (typeof _buildFatelandsMysteryLadderDirective === 'function') _o += _buildFatelandsMysteryLadderDirective(_t); if (typeof _buildFatelandsWishCoreDirective === 'function') _o += _buildFatelandsWishCoreDirective(_t); if (typeof _buildFatelandsWishAdjudicationDirective === 'function') _o += _buildFatelandsWishAdjudicationDirective(_t); if (typeof _buildFatelandsCompositeDirective === 'function') _o += _buildFatelandsCompositeDirective(_t); if (typeof _buildFatelandsGrantersDirective === 'function') _o += _buildFatelandsGrantersDirective(_t); if (typeof _buildFatelandsWishFactionsDirective === 'function') _o += _buildFatelandsWishFactionsDirective(_t); if (typeof _buildFatelandsCoercionDirective === 'function') _o += _buildFatelandsCoercionDirective(_t); if (typeof _buildFatelandsFoldOntologyDirective === 'function') _o += _buildFatelandsFoldOntologyDirective(_t); if (typeof _buildFatelandsCraftParableDirective === 'function') _o += _buildFatelandsCraftParableDirective(_t); if (typeof _buildFatelandsWishLimitsDirective === 'function') _o += _buildFatelandsWishLimitsDirective(_t); if (typeof _buildFatelandsCombatDirective === 'function') _o += _buildFatelandsCombatDirective(); if (typeof _buildFatelandsWishPriceDirective === 'function' && typeof _FATELANDS_WISH_RESOLVE_RX !== 'undefined' && _FATELANDS_WISH_RESOLVE_RX.test(_t)) _o += _buildFatelandsWishPriceDirective(); if (typeof _buildFatelandsWishcraftPacingDirective === 'function') _o += _buildFatelandsWishcraftPacingDirective(); return _o; } } catch (_) {} return ''; })();
 
       // ── ANTHROPIC PROMPT-CACHE SEAM ──
       // state.sysPrompt (world bible, persona, narrative engine header)
@@ -274043,6 +276783,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       const _binl_establishedDescription     = (typeof buildEstablishedDescriptionDirective === 'function') ? buildEstablishedDescriptionDirective() : '';
       const _binl_liFeatureRotation          = (typeof buildLiFeatureRotationDirective === 'function') ? buildLiFeatureRotationDirective() : '';
       const _binl_pcFeatureRotation          = (typeof buildPcFeatureRotationDirective === 'function') ? buildPcFeatureRotationDirective() : '';
+      const _binl_inhumanFeatureRotation     = (typeof buildInhumanFeatureRotationDirective === 'function') ? buildInhumanFeatureRotationDirective() : '';
       const _binl_liCharmHabit               = (typeof buildLiCharmHabitDirective === 'function') ? buildLiCharmHabitDirective() : '';
       const _binl_gestureRotation            = (typeof buildGestureRotationDirective === 'function') ? buildGestureRotationDirective() : '';
       const _binl_orientationAwareAdaptations = (typeof buildOrientationAwareAdaptationsDirective === 'function') ? buildOrientationAwareAdaptationsDirective() : '';
@@ -274130,7 +276871,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
           }
       } catch (_routeErr) { _useLite = _litLiteActive(); }
       var _buildHeavy = (!_useLite) || (window.__forceHeavyBuild === true);
-      const fullSys = !_buildHeavy ? '' : (state.sysPrompt + _persistentStableTail + _CACHE_SENTINEL + _intentTransmutationDirective + _billionaireAttractionBlock + _preBiasBlock + _adaptiveBlock + _persistentCache + _binl_voiceAnchor + _emergentLIBlock + _typologicalVectorBlock + _thirstCastBlock + _preCollapseArchFlavorBlock + _preCollapseHookEnforcementBlock + _indecisionPressureBlock + _liReactivationBlock + _liSignatureGestureBlock + _postRejectionPersistenceBlock + _attractionAnchorBlock + _binl_liAttractionTexture + _binl_desireAttention + _fatedBloodAttractionBlock +_storyPullEnforcementBlock + _temptationBlock + _rhythmBlock + _attractionBlock + _crossStoryBlock + _entryBlock + _exitBlock + _hiddenTruthBlock + _committedTruthBlock + _scarBlock + _nearMissBlock + _invisibleEscalationBlock + _sceneMirrorBlock + _breathBlock + _grievanceFormationBlock + _grievanceConvergenceBlock + _grievanceAftermathBlock + _pressureBiasBlock + _binl_literaryHedge + _binl_literaryCraft /* PROSESTACK DEDUP (2026-05-29): buildDialogueFormatting / ProseDensityConductor / WorldSensoryTexture / EmotionalAtmosphere / CharacterImpression / CharacterDescription / CharacterContext / CharacterDisclosure are ALREADY emitted in state.sysPrompt via buildProseStackDirectives() (def @~21516, called at sysPrompt build @~178867). Their late dup here was costing ~$0.03–0.05/scene at the 1.25× cache-write rate to repeat content the model already had on the 1h-cached prefix. Mirrors the SPINE DEDUP at ~207745. */ + _binl_liInitiative + _binl_goalRelationshipPrinciple + _binl_relationalContinuity + _binl_establishedDescription + _binl_liFeatureRotation + _binl_pcFeatureRotation + _binl_liCharmHabit + _binl_gestureRotation + _binl_orientationAwareAdaptations + _binl_subplot + _binl_regime + _binl_literaryScaffoldTail + _adaptiveLengthBlock + _energyBoostBlock + _scene1Contract + _lowAgencyBlock + _relationalAwarenessBlock + /* _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireAttractionBlock + _billionaireFixationBlock + _billionairePerceptionBlock — hoisted into the 1h-cached prefix above, 2026-05-29 */ _axisCheckpointBlock + _intensityCalibrationBlock + _intimacyMicroDecisionBlock + _explicitTolerancePromptBlock + _binl_mode1Whisper + _binl_mode1FemaleVariant + _binl_mode1Aftermath + _binl_mode1Rendezvous + _binl_mode1AlternateLi + _binl_mode1ReturnChance + _binl_frictionMarker + _binl_forceMarker + _binl_sceneSignals + _binl_intimacyEntryProbe + _binl_liOccupationRegister + _binl_liRegionalVoice + _binl_aPlotPressure + _binl_fastBurnYield + _binl_mythicCouple + _binl_mythicCoupleForgetting + _binl_temptInSceneReaction + _binl_temptFateCallback + _binl_intimateCooldown + _binl_honeyPotBehavior + _binl_honeyPotClimax + _indulgenceBlock + _deckEscalationBlock + _storyGravityBlock + _postVisionReactionBlock + _postVisionDivergenceBlock + _safeModeBlock + _binl_subBoundary + sceneDirectives + _buildPerTurnCharMemory() + _literarySceneMandate + _safeModePostfix + _fatelandsCognitiveMemoryBlock + _binl_sceneContinuation + _binl_playerImpact + _binl_signaturePhraseBan + _binl_phraseMarker + _binl_liSocialProof + _binl_liRelationalValue + _binl_liInterestSignal + _binl_liHiddenBurden + _binl_liPrivateExplanation + `\n\nTURN INSTRUCTIONS:
+      const fullSys = !_buildHeavy ? '' : (state.sysPrompt + _persistentStableTail + _CACHE_SENTINEL + _intentTransmutationDirective + _billionaireAttractionBlock + _preBiasBlock + _adaptiveBlock + _persistentCache + _binl_voiceAnchor + _emergentLIBlock + _typologicalVectorBlock + _thirstCastBlock + _preCollapseArchFlavorBlock + _preCollapseHookEnforcementBlock + _indecisionPressureBlock + _liReactivationBlock + _liSignatureGestureBlock + _postRejectionPersistenceBlock + _attractionAnchorBlock + _binl_liAttractionTexture + _binl_desireAttention + _fatedBloodAttractionBlock +_storyPullEnforcementBlock + _temptationBlock + _rhythmBlock + _attractionBlock + _crossStoryBlock + _entryBlock + _exitBlock + _hiddenTruthBlock + _committedTruthBlock + _scarBlock + _nearMissBlock + _invisibleEscalationBlock + _sceneMirrorBlock + _breathBlock + _grievanceFormationBlock + _grievanceConvergenceBlock + _grievanceAftermathBlock + _pressureBiasBlock + _binl_literaryHedge + _binl_literaryCraft /* PROSESTACK DEDUP (2026-05-29): buildDialogueFormatting / ProseDensityConductor / WorldSensoryTexture / EmotionalAtmosphere / CharacterImpression / CharacterDescription / CharacterContext / CharacterDisclosure are ALREADY emitted in state.sysPrompt via buildProseStackDirectives() (def @~21516, called at sysPrompt build @~178867). Their late dup here was costing ~$0.03–0.05/scene at the 1.25× cache-write rate to repeat content the model already had on the 1h-cached prefix. Mirrors the SPINE DEDUP at ~207745. */ + _binl_liInitiative + _binl_goalRelationshipPrinciple + _binl_relationalContinuity + _binl_establishedDescription + _binl_liFeatureRotation + _binl_pcFeatureRotation + _binl_inhumanFeatureRotation + _binl_liCharmHabit + _binl_gestureRotation + _binl_orientationAwareAdaptations + _binl_subplot + _binl_regime + _binl_literaryScaffoldTail + _adaptiveLengthBlock + _energyBoostBlock + _scene1Contract + _lowAgencyBlock + _relationalAwarenessBlock + /* _pursuitStyleBlock + _humorSignatureBlock + _billionaireSpecBlock + _billionaireAttractionBlock + _billionaireFixationBlock + _billionairePerceptionBlock — hoisted into the 1h-cached prefix above, 2026-05-29 */ _axisCheckpointBlock + _intensityCalibrationBlock + _intimacyMicroDecisionBlock + _explicitTolerancePromptBlock + _binl_mode1Whisper + _binl_mode1FemaleVariant + _binl_mode1Aftermath + _binl_mode1Rendezvous + _binl_mode1AlternateLi + _binl_mode1ReturnChance + _binl_frictionMarker + _binl_forceMarker + _binl_sceneSignals + _binl_intimacyEntryProbe + _binl_liOccupationRegister + _binl_liRegionalVoice + _binl_aPlotPressure + _binl_fastBurnYield + _binl_mythicCouple + _binl_mythicCoupleForgetting + _binl_temptInSceneReaction + _binl_temptFateCallback + _binl_intimateCooldown + _binl_honeyPotBehavior + _binl_honeyPotClimax + _indulgenceBlock + _deckEscalationBlock + _storyGravityBlock + _postVisionReactionBlock + _postVisionDivergenceBlock + _safeModeBlock + _binl_subBoundary + sceneDirectives + _buildPerTurnCharMemory() + _literarySceneMandate + _safeModePostfix + _fatelandsCognitiveMemoryBlock + _binl_sceneContinuation + _binl_playerImpact + _binl_signaturePhraseBan + _binl_phraseMarker + _binl_liSocialProof + _binl_liRelationalValue + _binl_liInterestSignal + _binl_liHiddenBurden + _binl_liPrivateExplanation + `\n\nTURN INSTRUCTIONS:
       ${tierContextBlock}
       Player Action: ${act}.
       Player Dialogue: ${dia}.
@@ -274945,6 +277686,9 @@ Regenerate the scene with ZERO Fate presence.`;
 
               // STRICT 5TH PERSON ENFORCEMENT (continuation scenes — reduced but still enforced)
               if (!isEroticScene) {
+                  // Weave Fate into a bookended middle (cheap Mistral pass; fires only on a long Fate-gap).
+                  // Never on erotic scenes — Fate must stay absent there.
+                  try { raw = await _weaveFateDensity(raw); } catch (_) {}
                   const strictCheck = enforceStrict5thPersonPOV(raw, state.turnCount || 2, state.picks?.tone);
                   if (!strictCheck.valid) {
                       console.warn('[5thPerson:Strict] Continuation scene enforcement issues:', strictCheck.violations);
@@ -275375,12 +278119,33 @@ Regenerate the scene with Fate appearing AT MOST ONCE, and ONLY in observational
               state._pass4Validation = pass4Result;
               if (!pass4Result.valid) {
                   console.warn('[PASS4] Violations:', pass4Result.violations);
-                  // 2026-05-31 (Roman, Phase 1D-C — instrumentation only,
-                  // no behavior change yet). Track fire + accept. Decision
-                  // on drop-or-recheck deferred to window._gateStats() data.
                   try { window._gateStatsBump && window._gateStatsBump('PASS4', 'fired'); } catch (_) {}
+                  // HONEST OUTCOME (Roman 2026-07-25) — the blind-'accepted' fix. Previously 'accepted'
+                  // was bumped right after the append, counting ATTEMPT as SUCCESS, so every keep/delete
+                  // decision rested on false confidence. Now: capture the pre-patch text, apply, then
+                  // RE-VALIDATE and record whether the patch actually cleared the violations.
+                  const _p4Before = raw;
+                  const _p4Reasons = pass4Result.violations.map(function (v) { return String(v).split(':')[0]; });
                   raw = await applyStructuralCorrection(raw, state._strategyPass, pass4Result.violations);
-                  try { window._gateStatsBump && window._gateStatsBump('PASS4', 'accepted'); } catch (_) {}
+                  const _p4Patched = (raw !== _p4Before);
+                  const _p4After = validateRenderedScene(raw, state._strategyPass, worldSkeleton);
+                  const _p4Satisfied = _p4After.valid;
+                  try { window._gateStatsBump && window._gateStatsBump('PASS4', _p4Satisfied ? 'accepted' : 'failed'); } catch (_) {}
+                  // Per-invocation record — the next N normal stories teach us whether the pass earns its
+                  // keep: why it fired, whether the patch helped, and if it re-patches the same thing.
+                  try {
+                      (state._pass4Log = state._pass4Log || []).push({
+                          turn: state.turnCount || 0,
+                          triggered: true,
+                          reasons: _p4Reasons,
+                          patch_applied: _p4Patched,
+                          patch_text: _p4Patched ? String(raw).slice(_p4Before.length).trim().slice(0, 400) : '',
+                          invariant_satisfied_after: _p4Satisfied,
+                          residual: _p4Satisfied ? [] : (_p4After.violations || []).map(function (v) { return String(v).split(':')[0]; }),
+                          reader_visible_change: _p4Patched  // the only reader-visible effect this pass can produce is a non-empty append
+                      });
+                  } catch (_) {}
+                  try { console.log('[PASS4] ' + (_p4Satisfied ? 'CLEARED' : 'STILL-FAILING after patch') + ' · fired=' + _p4Reasons.join(',') + (_p4Satisfied ? '' : ' · residual=' + (_p4After.violations || []).map(function (v) { return String(v).split(':')[0]; }).join(',')) + ' · patched=' + _p4Patched); } catch (_) {}
               } else {
                   console.log('[PASS4] Scene passed structural validation');
                   try { window._gateStatsBump && window._gateStatsBump('PASS4', 'skipped'); } catch (_) {}
@@ -276135,6 +278900,7 @@ ABSOLUTE RULES:
           _captureChoiceMemory(state._lastPlayerChoiceType);
           _detectThemes(raw);
           _extractMaterialBias(raw); // sync, lightweight — 4th Person bias memory
+          try { if (typeof _readFatelandsMysteryPursuit === 'function') _readFatelandsMysteryPursuit(raw); } catch (_) {} // secret-quest evidence tick (player-paced)
           _extractStoryMemory(raw).catch(() => {}); // async fire-and-forget
 
           // Mark Solo session as completed for subtitle upgrade
@@ -278642,7 +281408,9 @@ FATE CARD ADAPTATION (CRITICAL):
           //   - Fatelands cognitive memory (Phase 2): Fantasy world only
           //   - Chorus discourse (Glass House voice layer):      glass_house subtype
           //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-          const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective();
+          const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+        // LIVING THINGS (anti-bestiary) + WISH-BORN CURIOSITIES (light half); Fatelands-gated + each self-gates.
+        + (function () { try { if (state.picks && state.picks.world === 'Fantasy') { var _t = (state.currentCrisis || '') + ' ' + ((state.aPlot && (state.aPlot.antagonistOrAntiForce || '')) || '') + ' ' + ((state.aPlot && (state.aPlot.goal || '')) || ''); var _o = ''; if (typeof _buildFatelandsLivingThingsDirective === 'function') _o += _buildFatelandsLivingThingsDirective(_t); if (typeof _buildFatelandsWishCuriositiesDirective === 'function') _o += _buildFatelandsWishCuriositiesDirective(_t); if (typeof _buildFatelandsWishArchaeologyDirective === 'function') _o += _buildFatelandsWishArchaeologyDirective(_t); if (typeof _buildThornwildFirstCurseDirective === 'function') _o += _buildThornwildFirstCurseDirective(_t); if (typeof _buildFatelandsMysteryLadderDirective === 'function') _o += _buildFatelandsMysteryLadderDirective(_t); if (typeof _buildFatelandsWishCoreDirective === 'function') _o += _buildFatelandsWishCoreDirective(_t); if (typeof _buildFatelandsWishAdjudicationDirective === 'function') _o += _buildFatelandsWishAdjudicationDirective(_t); if (typeof _buildFatelandsCompositeDirective === 'function') _o += _buildFatelandsCompositeDirective(_t); if (typeof _buildFatelandsGrantersDirective === 'function') _o += _buildFatelandsGrantersDirective(_t); if (typeof _buildFatelandsWishFactionsDirective === 'function') _o += _buildFatelandsWishFactionsDirective(_t); if (typeof _buildFatelandsCoercionDirective === 'function') _o += _buildFatelandsCoercionDirective(_t); if (typeof _buildFatelandsFoldOntologyDirective === 'function') _o += _buildFatelandsFoldOntologyDirective(_t); if (typeof _buildFatelandsCraftParableDirective === 'function') _o += _buildFatelandsCraftParableDirective(_t); if (typeof _buildFatelandsWishLimitsDirective === 'function') _o += _buildFatelandsWishLimitsDirective(_t); if (typeof _buildFatelandsCombatDirective === 'function') _o += _buildFatelandsCombatDirective(); if (typeof _buildFatelandsWishPriceDirective === 'function' && typeof _FATELANDS_WISH_RESOLVE_RX !== 'undefined' && _FATELANDS_WISH_RESOLVE_RX.test(_t)) _o += _buildFatelandsWishPriceDirective(); if (typeof _buildFatelandsWishcraftPacingDirective === 'function') _o += _buildFatelandsWishcraftPacingDirective(); return _o; } } catch (_) {} return ''; })();
 
           // PLAYER IMPACT (Roman 2026-06-06): the speculative writer must react to
           // off-script/fate moves too. Local no-persist read (this is a separate
