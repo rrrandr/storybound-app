@@ -124944,7 +124944,7 @@ REALITY MODEL:
           taboo: 'The Last True Feeling — the final remaining authentic emotion (often love or grief). To sacrifice it is self-extinction: perfectly empty, worse than death. The violator is feared, not admired — treated as something no longer fully human. "He gave up loving her" is catastrophic.',
           tabooRomance: 'Ultimate romantic betrayal — sacrificing the capacity to love the other person.',
           unboundLore: 'Unpaired trees (The Unbound) grow perfectly straight with reaching branches — solemn, rare. After ~1000 years unmated, an Unbound undergoes The Stilling: petrifies into stone. Only stilled trees may be harvested. Veilsmiths are elite artisans who perform Kindling the Unbound — ritual charring of stilled wood. The charred wood carries residual seeking/longing energy, used for charms, bindings, protective objects. Effects are subtle, relational, symbolic.',
-          spiralboundLore: 'Paired trees are Spiralbound — branches connect first, trunks spiral upward, roots migrate underground over years. Spirarchs (First Favored architects) guide growth: twist, spacing, curvature, form. They entreat, never force. Spiralbound structures (homes, bridges, sanctuaries) are grown, not built — smooth, continuous, organic, living, evolving. Lumenweave are small drifting light entities symbiotic with Spiralbound trees — provide ambient shifting illumination responsive to emotional and environmental changes.',
+          spiralboundLore: 'Paired trees are Spiralbound — two separate trees whose branches find each other first, wind around each other\'s trunks, and over years PULL the pair together through the soil until the trunks meet and twist into one another; a mid-stage pair reads as a loose helix (branches joined, trunks not yet pulled tight), while most mature pairs are a full tight twist. Spirarchs (First Favored architects) guide growth: twist, spacing, curvature, form. They entreat, never force. Spiralbound structures (homes, bridges, sanctuaries) are grown, not built — smooth, continuous, organic, living, evolving. Lumenweave are small drifting light entities symbiotic with Spiralbound trees — provide ambient shifting illumination responsive to emotional and environmental changes.',
           unveiledLore: 'The Unveiled are First Favored who alter reality to align with their will rather than revealing truth. Physically indistinguishable from other First Favored. Immune to misalignment detection. Cannot be reliably identified through normal perception. They seek remote Spiralbound trees, reshape trunks to create hollow interior chambers, and perform sacrifices using the living tree as the offering. Corrupted Spiralbound trees: subtly asymmetrical, tension-distorted, containing unnatural hollow spaces within the spiral. Lumenweave avoid corrupted trees — flicker irregularly or disappear near them. The Unveiled must feel hidden, rare, deeply unsettling. Horror is subtle, not overt. Corruption is structural, not explosive. Never portray as visibly monstrous or externally marked.'
       },
       the_ashen_verge: {
@@ -125393,7 +125393,8 @@ The Veilwood has a single authoritative visual identity. All descriptions must c
 The Veilwood is a living cathedral forest. Every element is organic, grown, intertwined. Nothing is constructed. Nothing is straight.
 
 TREES (Spiralbound — primary structure):
-• All Veilwood trees are Spiralbound pairs: two trunks braided together like thick woven rope, twisting upward in a double-helix.
+• Veilwood trees grow as MATED PAIRS. Two trees begin a little apart; their branches reach out, wind around each other's trunks, and over years PULL the pair together through the soil until the trunks meet and twist into one another.
+• So the forest shows a range of life-stages: a few young pairs still leaning together, joined by braided branches with a gap between the trunks; some mid-stage pairs whose trunks have just met and opened into a loose two-strand HELIX (begun twisting, not yet pulled tight); and MOST mature trees a full tight twist — two trunks wound completely together like thick braided rope.
 • Trunk surfaces show visible fiber texture — individual strands woven tightly, not smooth bark.
 • Trunks are tall, cathedral-scale, and partially to heavily obscured by their own cascading foliage.
 • Root systems interweave with the ground, braided into the substrate — no clear boundary between tree and earth.
@@ -125406,8 +125407,8 @@ CANOPY (veil curtains — defines the space):
 • Foliage color: white, ivory, pearl, pale lavender, cool blue-white. NEVER green.
 
 GROUND (Spiralgrass — the living floor):
-• The forest floor is covered in Spiralgrass: deep crimson/red, thick, fleshy, ribbon-like blades that curl and spiral in every direction.
-• Spiralgrass is CHAOTIC — multi-directional, non-uniform, densely tangled. No rows, no patterns, no symmetry.
+• The forest floor is covered in Spiralgrass: deep crimson/red, thick, fleshy, ribbon-like blades that grow in MATED PAIRS — two blades wound and twisted around each other, echoing the paired tree trunks.
+• The wound pairs are scattered CHAOTICALLY — multi-directional, non-uniform, densely tangled. No rows, no patterns, no symmetry (each clump is a twisted pair; their arrangement is wild).
 • Scattered bioluminescent sparks glow among the red blades like embers in a living carpet.
 • The contrast is dramatic: white/ivory canopy above, deep red ground below.
 
@@ -139845,12 +139846,14 @@ ${_buildSettingImageOverrideSuffix()}`,
       // STYLE RESOLUTION ORDER: STRUCTURE (trees) > SYSTEM (ground ecology) > DETAIL (dwellings).
       // If references disagree: structure overrides system, system overrides detail.
       structure: [
-        'Spiralbound paired trees — trunks are thick braided/woven rope-like forms twisting together as double-helix pairs',
+        'Spiralbound trees grow as MATED PAIRS by a slow courtship: two separate trees start a little apart; their BRANCHES reach out, wind around each other\'s trunks, and over years PULL the pair together through the soil until the trunks meet and wind into one another',
+        'so the forest shows a RANGE of life-stages — a few YOUNG pairs still leaning together, joined only by braided branches with a clear GAP between the two trunks; some MID-STAGE pairs whose trunks have just met and opened into a LOOSE two-strand HELIX (begun twisting, not yet pulled tight); and MOST MATURE trees a FULL TIGHT TWIST, the two trunks wound completely together like thick braided rope',
+        'render MOSTLY full tight twists, with a few loose-helix mid-stage pairs (and the occasional young leaning pair) for variety',
         'trunk surface shows individual strands woven tightly, like braided rope or plaited hair — not smooth bark',
         'trunks are partially to heavily obscured by their own cascading foliage curtains',
         'root-cathedrals formed from fused trunk bases where braided roots interweave with ground',
-        'no earth-like standard trees — all mature trees are Spiralbound pairs',
-        'if any tree appears straight, smooth-barked, non-braided, or earth-like: REJECT'
+        'no solitary earth-like straight trees — every tree is a wound pair, or a pair visibly in the act of winding together',
+        'if any tree appears as a single straight smooth-barked earth-like trunk: REJECT'
       ],
       foliage: [
         'DENSE vertical curtains of white/ivory/pale hanging foliage that cascade from canopy to ground level',
@@ -139862,14 +139865,14 @@ ${_buildSettingImageOverrideSuffix()}`,
         'leaves must never appear as standard broad-leaf or coniferous canopy'
       ],
       ground: [
-        'Spiralgrass: DEEP CRIMSON/RED ground cover of thick curling and spiraling ribbon-like blades',
-        'Spiralgrass is CHAOTIC — multi-directional, non-uniform, no rows, no repeating patterns, no symmetry',
-        'individual blades are thick, fleshy, curling in random directions — some coiling, some sweeping, some tangled',
-        'density is high — ground is densely packed with overlapping spiraling red forms, no bare earth visible',
+        'Spiralgrass: DEEP CRIMSON/RED ground cover that echoes the trees — each unit is a MATED PAIR, two ribbon-like blades wound and twisted around each other (a two-strand twist), not single blades',
+        'the twisted PAIRS are scattered CHAOTICALLY — multi-directional, non-uniform, no rows, no repeating patterns, no symmetry (the PAIRING is the regular motif; the arrangement is wild)',
+        'blades are thick, fleshy, glossy; the wound pairs lean, coil, and sweep in every direction, densely tangled together',
+        'density is high — ground is densely packed with overlapping twisted-pair red forms, no bare earth visible',
         'scattered bioluminescent sparks/motes glowing among the red blades',
-        'Spiralgrass must read as a living, organic carpet of tangled red growth — NOT neat, NOT combed, NOT uniform',
+        'Spiralgrass must read as a living carpet of twisted red PAIRS — NOT neat, NOT combed, NOT uniform, yet each clump clearly a wound pair',
         'color: saturated deep red to crimson, with luminous red-orange sparks — strong contrast against white canopy above',
-        'FORBIDDEN: no traditional grass blades, no green, no earth-like vegetation, no grid/row patterns, no symmetry'
+        'FORBIDDEN: no traditional single grass blades, no green, no earth-like vegetation, no grid/row patterns, no symmetry'
       ],
       lighting: [
         'diffused ethereal glow filtering through layered white foliage curtains',
@@ -140060,10 +140063,10 @@ ${_buildSettingImageOverrideSuffix()}`,
       block += 'If elements conflict: Structure overrides System, System overrides Detail.\n\n';
       block += 'STRUCTURAL AUTHORITY (NON-NEGOTIABLE):\n';
       block += 'All Veilwood environments must obey Spiralbound tree biology:\n';
-      block += '- Trunks are thick BRAIDED/WOVEN pairs — two trunks twisted together like rope or plaited hair\n';
+      block += '- Trees are WOUND PAIRS — two trunks twisted together like braided rope; MOST are full tight twists, a few are mid-stage pairs opened into a loose two-strand HELIX (branches have joined and are still pulling the trunks together), and the odd young pair still leans together with a gap between the trunks\n';
       block += '- Foliage forms DENSE white/ivory hanging curtains from canopy to ground level — heavy veils, not sparse wisps\n';
       block += '- Trunks must be PARTIALLY OBSCURED by their own foliage curtains\n';
-      block += '- Spiralgrass is DEEP RED/CRIMSON, chaotic, multi-directional — no rows, no patterns, no symmetry\n';
+      block += '- Spiralgrass is DEEP RED/CRIMSON and grows in MATED PAIRS (two blades wound around each other like the trees), the pairs scattered chaotically — no rows, no patterns, no symmetry\n';
       block += '- No straight lines, no clean geometry, no artificial spacing — everything must feel GROWN\n';
       block += 'These are structural rules, not stylistic preferences.\n';
       block += 'If any tree appears straight, smooth-barked, non-braided, or earth-like: REJECT and regenerate.\n\n';
@@ -186956,6 +186959,39 @@ No text, no watermark, no UI elements, share-ready.`;
     var livingBlock = '';
     try { var _lw = (typeof window._buildLivingWorldDirective === 'function') ? window._buildLivingWorldDirective(state) : ''; if (_lw) livingBlock = '\n\n══ LIVING WORLD (every panel) ══\n' + _lw; } catch (_) {}
 
+    // VEILWOOD FOLIAGE — the sheet path never carried the region's world-anchor foliage directive (it lives in
+    // buildWorldAnchor, only wired to the per-scene render), so Veilwood combat sheets came out with bare
+    // twisted trunks and an EMPTY background — no white weeping veil-leaf canopy at all. Inject a compact,
+    // sheet-tuned foliage directive: fill the empty background with the white veil + frame the foreground with
+    // side-curtains that do NOT occlude the fighters. (Roman 2026-07-26.)
+    var veilwoodEnvBlock = '';
+    try {
+      var _rlV = String((state._stagedRegionContract && state._stagedRegionContract.regionLabel) || '').toLowerCase();
+      var _sceneV = (_sheetSceneText(visualState, phases) + ' ' + String((visualState && visualState.background) || '')).toLowerCase();
+      var _isVeilwood = state.fantasyRegion === 'the_veilwood' || /veilwood/.test(_rlV) || /veilwood|spiralbound|spiralgrass|veil-?leaf/.test(_sceneV);
+      if (_isVeilwood) {
+        veilwoodEnvBlock = '\n\n══ VEILWOOD FOLIAGE (every panel — the white veil IS the setting; never omit it) ══\n' +
+          'These panels are set in the VEILWOOD. Its pale trees grow as MATED PAIRS — two trunks wound together ' +
+          'like braided rope (MOST fully twisted; a few mid-stage pairs still opened into a loose helix, their ' +
+          'branches pulling the two trunks together). Its defining feature is a WHITE WEEPING CANOPY: from the ' +
+          'branches of these paired trunks hang DENSE vertical CURTAINS of white / ivory / pearl ' +
+          'weeping-willow-style veil-leaf — long, drooping, layered veils of small oval leaf-strands, NEVER green, ' +
+          'never bare branches. ' +
+          'BACKGROUND (HARD — the specific fix): the background behind the fighters must be FILLED with these white ' +
+          'veil-leaf curtains — receding, layered WALLS of hanging white veil fading into luminous misty depth. A ' +
+          'blank, plain, empty, flat, or dark background is a DEFECT in the Veilwood; wherever the action leaves the ' +
+          'background open (it usually does in a fight), fill that open space with the white weeping veil. ' +
+          'FOREGROUND FRAMING: at the LEFT and RIGHT edges of each panel, let a few nearer curtains of the same ' +
+          'white veil-leaf hang down into frame like soft theatrical drapes, framing the action from the sides — ' +
+          'but they must NOT cover, occlude, or obscure the fighters or the key beat; they dress the frame edges ' +
+          'only, never the centre. ' +
+          'GROUND: deep crimson spiralgrass underfoot, growing in twisted MATED PAIRS (two blades wound around ' +
+          'each other like the trees), the pairs scattered chaotically; never green, never neat. ' +
+          'Palette: white / ivory canopy above, deep crimson ground below, warm amber accents — luminous and ' +
+          'otherworldly, never a generic dark forest.';
+      }
+    } catch (_) {}
+
     // KWISHEEN FACE — the render kept giving them monster fangs + blank white eyes. Reassert the canon face
     // when a Kwisheen is on the sheet: humanoid, horizontal capsule pupils (solid black), no fangs. (Audit 2026-07-21.)
     var kwFaceBlock = '';
@@ -187073,7 +187109,7 @@ No text, no watermark, no UI elements, share-ready.`;
                    'The ONLY lettering permitted is (a) the approved BACKGROUND SIGNAGE below and (b) a single integrated SOUND-EFFECT per panel');
       }
     } catch (_) {}
-    return frame + globalBlock + combatBlock + livingBlock + kwFaceBlock + castBlock + buoyBlock + signageBlock + quads.join('\n') + close;
+    return frame + globalBlock + combatBlock + livingBlock + veilwoodEnvBlock + kwFaceBlock + castBlock + buoyBlock + signageBlock + quads.join('\n') + close;
   }
   window._buildOneShotSheetPrompt = _buildOneShotSheetPrompt;
 
