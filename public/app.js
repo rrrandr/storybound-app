@@ -185187,6 +185187,33 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._kwisheenCombatDirective = _kwisheenCombatDirective;
 
+  // SHARED Kwisheen render guard (face + body + skin + size) — ONE source of truth so the CG sheet AND the
+  // literary Vision Orb apply the SAME anatomy hard-failure locks (no fangs / capsule pupils / no fused tail /
+  // smooth papillae not scales / shapeshifter legs). Render-neutral wording; each caller frames its own header.
+  // (Roman 2026-07-26 — Vision-Orb parity.)
+  function _kwisheenRenderGuardText() {
+    return 'A Kwisheen face is HUMANOID, coastal and uncanny-beautiful — NOT a monster. Eyes have HORIZONTAL ' +
+      'CAPSULE-SHAPED pupils (rounded rectangles, solid black) — never blank white eyes, never glowing eyes, ' +
+      'never round human pupils. The mouth is an ordinary humanoid mouth — NO monster fangs, NO tusks, NO ' +
+      'gaping maw, NO shark teeth. Coral-dreadlock hair (living HAIR, not tentacles). ' +
+      'BODY: TWO arms (each a human arm OR a tentacle-arm — never a third arm). LOWER BODY — a Kwisheen is a ' +
+      'SHAPESHIFTER: its NATURAL form has NO legs (a lower body of SIX distinct locomotion TENTACLES replacing ' +
+      'the legs — tall, elegant, graceful, never squat or blobby), but it can CHOOSE to grow LEGS at will, and ' +
+      'usually does when PASSING (as a human, a large animal, or a First Favored) — on land in public it is ' +
+      'most often in such a disguise. So EITHER a legged form OR the six-tentacle true form is correct per the ' +
+      'scene; LEGS ARE NEVER AN ERROR. The ONE hard rule: the lower body is legs OR distinct tentacles — NEVER ' +
+      'a single fused FISH TAIL, mermaid / merfolk tail, or smooth reptile tail (a HARD FAILURE). ' +
+      'SKIN is SMOOTH colour-shifting CEPHALOPOD skin with a fine pebbled PAPILLAE micro-texture (octopus-like ' +
+      '— a soft bumpy papillae grain) — NOT reptilian SCALES, NOT a fish-scaled hide, NOT armoured plating, ' +
+      'NOT a lizard look; face AND body are the same smooth papillae skin, never scaled or lizard-like (any ' +
+      'scaly/plated surface is worn ARMOUR of shell plates, never the skin itself). ' +
+      'SIZE: a Kwisheen is a TALL HUMANOID — about a head to a head-and-a-half taller than a human, with a ' +
+      'PERSON’S build and proportions. NOT a towering giant, NOT a looming ogre, NOT twice a human’s ' +
+      'height; a human beside one reads as a normal person beside a TALL PERSON, never a person beside a beast. ' +
+      'Mysterious and sensual, never a creature-feature sea-monster.';
+  }
+  window._kwisheenRenderGuardText = _kwisheenRenderGuardText;
+
   // First Favored melee: the Avowed Path's weapons + their superhuman ATHLETICISM. For a GENUINE First
   // Favored only — a disguised Kwisheen does NOT get this (see _trueSpeciesOnStage gating).
   function _firstFavoredCombatDirective() {
@@ -187019,27 +187046,7 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var _spF = _sheetSpecies(visualState);
       if (_spF && (_spF.kwisheen || _spF.half_kwisheen)) {
-        kwFaceBlock = '\n\n══ KWISHEEN FACE + BODY + SKIN (every panel a Kwisheen appears) ══\nA Kwisheen face is HUMANOID, ' +
-          'coastal and uncanny-beautiful — NOT a monster. Eyes have HORIZONTAL CAPSULE-SHAPED pupils (rounded ' +
-          'rectangles, solid black) — never blank white eyes, never glowing eyes, never round human pupils. The ' +
-          'mouth is an ordinary humanoid mouth — NO monster fangs, NO tusks, NO gaping maw, NO shark teeth. ' +
-          'Coral-dreadlock hair (living HAIR, not tentacles). ' +
-          'BODY (HARD, every panel): TWO arms (each a human arm OR a tentacle-arm — never a third arm). LOWER ' +
-          'BODY — a Kwisheen is a SHAPESHIFTER: its NATURAL form has NO legs (a lower body of SIX distinct ' +
-          'locomotion TENTACLES replacing the legs — tall, elegant, graceful, never squat or blobby), but it can ' +
-          'CHOOSE to grow LEGS at will, and usually does when PASSING (as a human, a large animal, or a First ' +
-          'Favored) — on land in public it is most often in such a disguise. So for THIS panel EITHER a legged ' +
-          'form OR the six-tentacle true form is correct per the scene; LEGS ARE NEVER AN ERROR. The ONE hard ' +
-          'rule: the lower body is legs OR distinct tentacles — NEVER a single fused FISH TAIL, mermaid / ' +
-          'merfolk tail, or smooth reptile tail (a HARD FAILURE). ' +
-          'SKIN is SMOOTH colour-shifting CEPHALOPOD skin with a fine pebbled PAPILLAE micro-texture (octopus-like ' +
-          '— a soft bumpy papillae grain) — NOT reptilian SCALES, NOT a fish-scaled hide, NOT armoured plating, ' +
-          'NOT a lizard look; face AND body are the same smooth papillae skin, never scaled or lizard-like (any ' +
-          'scaly/plated surface is worn ARMOUR of shell plates, never the skin itself). ' +
-          'SIZE (HARD): a Kwisheen is a TALL HUMANOID — about a head to a head-and-a-half taller than a human, ' +
-          'with a PERSON’S build and proportions. NOT a towering giant, NOT a looming ogre, NOT twice a human’s ' +
-          'height; a human standing beside one reads as a normal person beside a TALL PERSON, never a person ' +
-          'beside a beast. Mysterious and sensual, never a creature-feature sea-monster.';
+        kwFaceBlock = '\n\n══ KWISHEEN FACE + BODY + SKIN (every panel a Kwisheen appears) ══\n' + _kwisheenRenderGuardText();
       }
     } catch (_) {}
 
@@ -264871,6 +264878,25 @@ Do NOT describe Veilwood environments as static architecture or inert forests.`;
 
       // Thumbnail-specific sanitization (before general sanitization)
       _imagePrompt = sanitizeThumbnailPrompt(_imagePrompt, context);
+
+      // ── FATELANDS SPECIES GUARD (PARITY with the CG sheet's kwFaceBlock) — injected EARLY, right after the
+      //    base prompt, so it survives the BFL 5000-char prompt cap (the verbose environment lore below would
+      //    otherwise push it past the cut). The literary Vision Orb / any non-GN Fantasy render otherwise had
+      //    NO Kwisheen face/body/skin lock and drifted to monster fangs / mermaid tail / reptile scales. Same
+      //    shared guard the sheet uses, as TEXT (literary is deliberately text-only photoreal — no comic refs).
+      //    Skip GN panels (they build their own kwFaceBlock). (Roman 2026-07-26 — Vision-Orb parity.) ──
+      if (context !== 'graphic-novel-panel' && state.picks?.world === 'Fantasy') {
+        try {
+          if (typeof _isKwisheenSpecies === 'function' &&
+              (_isKwisheenSpecies(state._playerSpecies) || _isKwisheenSpecies(state._liSpecies)) &&
+              typeof _kwisheenRenderGuardText === 'function') {
+            _imagePrompt += '\n\nKWISHEEN SPECIES CANON (NON-NEGOTIABLE — overrides illustrator/style drift; if a Kwisheen appears): ' + _kwisheenRenderGuardText();
+          }
+          if (typeof _isVeilweaveScene === 'function' && _isVeilweaveScene(_imagePrompt) && typeof _veilweaveDirective === 'function') {
+            _imagePrompt += _veilweaveDirective(typeof _trueVeilweaveWearerSpecies === 'function' ? _trueVeilweaveWearerSpecies({}) : 'first_favored');
+          }
+        } catch (_) {}
+      }
 
       // ── STEP 1: Assemble full prompt (composition directives BEFORE sanitization) ──
       // Skip directive builders for GN panels — provider-specific builders handle style independently.
