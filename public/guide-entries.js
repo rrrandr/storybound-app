@@ -137,6 +137,43 @@ window._GUIDE_PUBLICATIONS = {
     editor: 'assorted municipal offices, and one docent who cares far more than the budget allows',
     audience: 'schoolchildren on trips, and the idle who read everything on a rack',
     binding_note: 'A rack of thin leaflets by a museum door, restocked more often than anyone notices.'
+  },
+
+  // ── HISTORICAL (world: 'historical') — 19th-c. register; reputation binds action, the
+  //    public/private gap is the texture. Locale-generic (no real figures/events) so it
+  //    reads across Regency→Victorian. Archetype rhymes: Book of Conduct ≈ Etiquette ·
+  //    Society Pages ≈ gossip · Almanac ≈ Thirteen Moons · Household Companion ≈ Recipes. ──
+  'book-of-conduct': {
+    world: 'historical',
+    title: 'The Complete Book of Conduct',
+    subtitle: 'A Guide to Deportment, Correspondence, and the Preservation of Reputation, for Persons of Every Rank',
+    editor: 'A Lady of Quality (who declines to be named, as a Lady should)',
+    audience: 'the anxious, the aspiring, and the recently enriched',
+    binding_note: 'Gilt-edged, frequently gifted, and — the giver suspects — rarely finished.'
+  },
+  'society-pages': {
+    world: 'historical',
+    title: 'The Society Pages',
+    subtitle: 'Intelligence of Marriages, Mournings, Ruin & Return, for Readers Who Would Never Admit to Reading Them',
+    editor: '"A Correspondent" (a coward, and correct)',
+    audience: 'everyone; acknowledged by no one',
+    binding_note: 'Cheap paper, read to translucency, folded inside a more respectable volume.'
+  },
+  'household-companion': {
+    world: 'historical',
+    title: 'The Household Companion',
+    subtitle: 'Being Receipts, Remedies, and the Management of a Respectable Home',
+    editor: 'Mrs. —— (the surname worn away by thumbs)',
+    audience: 'the mistress of the house and her much-tried staff',
+    binding_note: 'Stained, annotated in three hands, the spine broken open at the pudding chapter.'
+  },
+  'the-almanac': {
+    world: 'historical',
+    title: 'The Almanac',
+    subtitle: 'Weather, Tides, Markets, Moon-Phases & Feast-Days, Reckoned for the Coming Year',
+    editor: 'the Almanack-maker (in office, by tradition, until dead)',
+    audience: 'farmers, sailors, and the superstitious, which is to say everyone',
+    binding_note: 'A thin yearly pamphlet with a hole punched in one corner for the nail by the door.'
   }
   // FILL-OUT ORDER (popularity): Modern → Fantasy(ahead) → Historical → Dystopia →
   //   Sci-Fi → Post-Apoc. Each flavor gets its own publishing ecosystem (see memory
@@ -602,6 +639,88 @@ window._GUIDE_ENTRIES = [
     category: 'City History', title: 'A Brief and Contested History of the City\'s Name', author: 'the Historical Society', edition: 'revised, contentiously',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "The Historical Society is obliged to report that the origin of the city's name is disputed by three factions who no longer attend the same luncheons. One holds it comes from a founder's surname; one, from a mistranslation of an older word for 'crossing'; one, from a tavern that stood where the courthouse now stands. Each faction has documents. Each faction's documents contradict the others. The Society's official position is that the name means 'a place people kept arriving at,' which satisfies no faction and is, the Society privately believes, the only version that has ever been true."
+  },
+
+  /* ══ HISTORICAL (world: 'historical') — 19th-century register; reputation is currency ══ */
+
+  /* ── THE COMPLETE BOOK OF CONDUCT — prescriptive, morally certain, of its time ── */
+  {
+    id: 'boc-calls', world: 'historical', publication: 'book-of-conduct',
+    category: 'Deportment', title: 'On the Paying of Calls', author: 'A Lady of Quality', edition: 'the Nineteenth Edition',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "A morning call is neither morning nor, strictly, a call, and lasts no more than fifteen minutes, a limit the well-bred feel in the body like a change in the weather. One leaves a card; the corner turned down declares the visit made in person; the corner left flat, a card sent by a servant, which is a lesser thing and understood as such by all parties, forever. Do not overstay. Do not remove your gloves. Do not, under any circumstances, refer to the health of the family before the second visit. There is an order to these things, and the order is the point of them."
+  },
+  {
+    id: 'boc-correspondence', world: 'historical', publication: 'book-of-conduct',
+    category: 'Correspondence', title: 'On the Writing of Letters', author: 'A Lady of Quality', edition: 'the Nineteenth Edition',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "A letter is a portrait of its writer that may be produced in evidence for the rest of her life, and should be composed accordingly. A young lady does not correspond with a gentleman to whom she is not engaged; that a great many young ladies do so is a matter for their confessors and not for this volume. Cross your lines to save paper if you must, but know that a crossed letter is read twice — once for the words, once for the character of a person who would economize on a confession. Beware the postscript. It is where the truth, having been kept out of the letter, waits by the door."
+  },
+  {
+    id: 'boc-the-cut', world: 'historical', publication: 'book-of-conduct',
+    category: 'Deportment', title: 'On the Cut Direct', author: 'A Lady of Quality', edition: 'the Nineteenth Edition',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "To 'cut' a person is to meet their eye in a public place and decline, deliberately and unmistakably, to know them. It is the gravest weapon a respectable person may wield without raising the voice, and like all grave weapons it is most dangerous to the one who draws it clumsily. Reserve the Cut Direct for genuine dishonour; a cut given in mere temper reflects upon the cutter, and society, which forgets a great deal, never quite forgets a snub delivered without cause. Reputation is the only estate a lady may hold entirely in her own name. Spend it as such."
+  },
+  {
+    id: 'boc-chaperonage', world: 'historical', publication: 'book-of-conduct',
+    category: 'The Unmarried', title: 'On the Chaperonage of Young Persons', author: 'A Lady of Quality', edition: 'the Nineteenth Edition',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "An unmarried lady is never alone with a gentleman, and this is not, whatever the young may sulk, a doubt of her character but a defence of it — for reputation is destroyed not by what occurs but by what may be supposed to have occurred, and supposition requires only a closed door and a quarter-hour. Beware the conservatory at a ball; beware the turn about the garden; beware, above all, the gentleman who suggests either with the particular ease of a man who has suggested it before. A chaperone who dozes is worse than none, for she supplies the appearance of safety without the substance."
+  },
+
+  /* ── THE SOCIETY PAGES — arch, gossipy, delighted by precisely what Conduct forbids ── */
+  {
+    id: 'sp-announcements', world: 'historical', publication: 'society-pages',
+    category: 'Announcements', title: 'Marriages of the Season', author: 'A Correspondent', edition: 'the Spring Number',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "We are delighted to report the engagement of Miss —— of the county to a gentleman of considerable fortune and no particular conversation, a match everyone agrees is very suitable and no one agrees is very happy. The bride's mother is said to be overjoyed, which we do not doubt, having seen the settlement. We wish the couple every felicity the arrangement permits, and note, purely as intelligence, that the gentleman she did not marry has taken rooms in town and been seen at every ball she is expected to attend. We report. We do not speculate. We merely place the facts adjacent to one another and step back."
+  },
+  {
+    id: 'sp-regrettable', world: 'historical', publication: 'society-pages',
+    category: 'Intelligence', title: 'A Regrettable Circumstance', author: 'A Correspondent', edition: 'the Autumn Number',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "It is with the deepest and most attentive regret that we learn a certain young lady, lately so admired, has been 'removed to the country for her health' — a phrase that has never once, in the history of this column, referred to health. We shall say no more, both from delicacy and because we have been advised by counsel to say no more. The Book of Conduct, we understand, devotes four pages to preventing precisely this and would faint to see it in print. We devote one paragraph to reporting it, and sleep untroubled. The country air, we are told, is very restorative. It restores a remarkable number of young ladies each season."
+  },
+  {
+    id: 'sp-return', world: 'historical', publication: 'society-pages',
+    category: 'Intelligence', title: 'A Notable Return', author: 'A Correspondent', edition: 'the Winter Number',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "The gentleman whose departure some years ago we declined, at the time, to explain, has returned — and returned, we are obliged to note, extremely rich, which alters a great many memories. Doors that were firmly closed to him have discovered they were merely ajar. Hostesses who cut him now recall the acquaintance fondly. Society, that most principled of institutions, has weighed his disgrace against his fortune with its usual exquisite arithmetic and arrived, as ever, at the larger number. We welcome him back. We welcomed him away, too, but no one keeps those numbers."
+  },
+
+  /* ── THE HOUSEHOLD COMPANION — domestic, practical, medically alarming ── */
+  {
+    id: 'hc-nerves', world: 'historical', publication: 'household-companion',
+    category: 'Remedies', title: 'For the Restoration of the Nerves', author: 'Mrs. ——', edition: 'much-amended',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "For a lady overtaken by nervous excitement, the Companion recommends rest in a darkened room, beef tea, and a tonic of the apothecary's own devising, the contents of which are best not enquired into and the effects of which are best described as thorough. Should the nerves persist, a change of air is advised. Should they persist further, the Companion observes — carefully, and in the smallest type — that a great many nervous complaints in young wives resolve entirely upon their being listened to, a remedy the apothecary does not stock and cannot bottle, and which is therefore seldom prescribed."
+  },
+  {
+    id: 'hc-preserving', world: 'historical', publication: 'household-companion',
+    category: 'Receipts', title: 'To Keep Fruit Through the Winter', author: 'Mrs. ——', edition: 'much-amended',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Choose fruit sound and not over-ripe, for the winter is unforgiving of optimism. Lay down in sugar, in a jar scalded and dried by the fire, and seal with a paper dipped in spirits — the paper the housekeeper will swear by and the master will suspect her of dipping twice. Store in the coolest, darkest part of the cellar, away from the door and, if you value it, away from the boot-boy. Opened at the depth of winter, a good preserve is a small argument against despair, which is the true reason we make it, whatever we tell the grocer."
+  },
+  {
+    id: 'hc-servants', world: 'historical', publication: 'household-companion',
+    category: 'Management', title: 'On the Ordering of the Household', author: 'Mrs. ——', edition: 'much-amended',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "A well-run house is one in which the mistress is never seen to run it. Address the staff through the housekeeper; the housekeeper through habit; and habit, once established, will do most of the governing for you, which is the entire secret of authority and the reason it is so rarely explained. Be just, be regular, and be, above all, consistent — a household forgives a hard rule far sooner than a shifting one. And remember that the servants know everything that occurs beneath the roof, always have, and keep it, mostly, out of a loyalty they are paid too little to feel and feel anyway."
+  },
+
+  /* ── THE ALMANAC — terse, agricultural, cheerfully superstitious ── */
+  {
+    id: 'alm-weather', world: 'historical', publication: 'the-almanac',
+    category: 'Weather & Feast-Days', title: 'Signs of the Coming Weather', author: 'the Almanack-maker', edition: 'for the Coming Year',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Red sky at night, the shepherd's delight; red sky at morning, take in the washing and believe nothing the gentry tell you about rain. When the cattle lie down together, weather comes; when the cat washes behind its ear, likewise; when the parson predicts a fair harvest, prepare for flood. The feast-days are marked here as the Church keeps them and the fields ignore them. Plant nothing before the last frost, whatever the calendar says — the calendar has never once had to dig anything out of the mud, and the Almanack-maker has, every year of a long and mistrustful life."
+  },
+  {
+    id: 'alm-moon', world: 'historical', publication: 'the-almanac',
+    category: 'The Reckoning of the Moon', title: 'For Planting & for Slaughter', author: 'the Almanack-maker', edition: 'for the Coming Year',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Sow what grows above the ground on the waxing moon; sow what grows below on the waning; and if you sow against the moon, you may still get a crop, but you will get it with a bad conscience and a poorer yield, and no man can prove the two are unconnected. Slaughter on the wane, that the meat keep. Wean on the wane. Cut hair on the wane if you wish it to grow slow, on the wax if fast — a matter of no agricultural importance whatsoever, included because every reader checks it first and the Almanack-maker is not a fool about what sells the pamphlet."
   }
 
 ];
