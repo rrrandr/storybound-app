@@ -108,7 +108,39 @@ window._GUIDE_PUBLICATIONS = {
     editor: 'unedited (the hand is the author\'s own)',
     audience: 'nobody; these were never meant to be read',
     binding_note: 'A water-warped pocket journal, half the pages loose, several stuck together.'
+  },
+
+  // ── MODERN (world: 'modern') — a real city publishes SEVERAL things; the runtime
+  //    selects the books whose `world` matches the story's flavor. Archetype rhymes:
+  //    City Companion ≈ a local voice · Visitor's Guide ≈ the Traveler's Guide ·
+  //    Civic Pamphlets ≈ schoolbook History. (Newspapers deferred to the UI phase.) ──
+  'city-companion': {
+    world: 'modern',
+    title: 'The City Companion',
+    subtitle: 'The City, Explained to Itself, Monthly, Whether It Asked or Not',
+    editor: 'the Editors (who live here and are exhausted about it)',
+    audience: 'residents who love the city precisely as much as they love complaining about it',
+    binding_note: 'Glossy, disposable, and somehow kept in a kitchen drawer for nine years.'
+  },
+  'visitors-guide-modern': {
+    world: 'modern',
+    title: "A Visitor's Guide to the City",
+    subtitle: 'Everything a Newcomer Needs, Explained Slightly Too Slowly and With Great Confidence',
+    editor: 'the Bureau of Tourism',
+    audience: 'newcomers, tourists, and the recently and thoroughly lost',
+    binding_note: 'A free foldout map that will not refold. It never refolds. Stop trying.'
+  },
+  'civic-pamphlets': {
+    world: 'modern',
+    title: 'Civic & Museum Pamphlets',
+    subtitle: 'Small Printed Answers to Questions Almost Nobody Asked Out Loud',
+    editor: 'assorted municipal offices, and one docent who cares far more than the budget allows',
+    audience: 'schoolchildren on trips, and the idle who read everything on a rack',
+    binding_note: 'A rack of thin leaflets by a museum door, restocked more often than anyone notices.'
   }
+  // FILL-OUT ORDER (popularity): Modern → Fantasy(ahead) → Historical → Dystopia →
+  //   Sci-Fi → Post-Apoc. Each flavor gets its own publishing ecosystem (see memory
+  //   project_travelers_guide: archetype rhymes + how-info-spreads per civilization).
   // PROMOTE next (mechanical — change `publication` on existing entries): the
   // Traveler's Guide still CONTAINS these as sections; each is its own book on
   // the shelf → 'book-of-etiquette' (The Book of Etiquette), 'field-guide-creatures'
@@ -490,6 +522,86 @@ window._GUIDE_ENTRIES = [
     category: 'Notes', title: 'A general principle', author: null, edition: 'the author\'s own hand',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Trust no single book. Including this one. Especially this one — I wrote it tired, and half of it in inns, and some of it to settle scores the other party will never read. A guidebook is a confident stranger. A field note is an anxious one. Carry several, believe none entirely, and when they disagree, note that the disagreement is usually the truest thing on either page."
+  },
+
+  /* ══ MODERN (world: 'modern') — a contemporary metropolis publishing about itself ══ */
+
+  /* ── THE CITY COMPANION — local magazine; opinionated, insidery, in love with complaining ── */
+  {
+    id: 'cc-neighborhoods', world: 'modern', publication: 'city-companion',
+    category: 'The City', title: 'The Neighborhoods, Ranked (Yet Again)', author: 'the Editors', edition: 'the Annual Issue',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Every year we rank the neighborhoods, and every year the winner is a place none of you can afford and half of you claim to hate. This is not a coincidence; it is the ranking. The truly desirable block is the one with no valet, no sign, no visible restaurant, and rents that would make a banker sit down. If you can see the money, it isn't the good part of town — it's the part that wants you to think it is. The good part is quiet. The good part has a hardware store that has somehow survived. We will not tell you which block. You would only move there."
+  },
+  {
+    id: 'cc-old-money', world: 'modern', publication: 'city-companion',
+    category: 'The City', title: 'How to Spot Old Money (You Won\'t)', author: 'the Editors', edition: 'the Style Issue',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "The rule is simple and cruel: the more you can name it, the less it costs. Real money wears a watch you don't recognize, drives a car that is deliberately ten years old, and owns a coat so plain you'd pass it in a thrift shop and so expensive you couldn't. Logos are for people climbing; the ones who've arrived took the ladder away behind them. You will meet someone in a grey sweater and assume they're nobody. That is the sweater working exactly as intended. The tell, if there is one, is that nothing about them is asking you for anything. That is the most expensive thing a person can wear."
+  },
+  {
+    id: 'cc-rent', world: 'modern', publication: 'city-companion',
+    category: 'Living Here', title: 'The Rent: A Love Letter', author: 'the Editors', edition: 'the Housing Issue (recurring, screaming)',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "We love the city the way one loves a person who is bad for us: completely, and against all financial advice. The rent is a crime, the closets are theoretical, and the phrase 'cozy' in a listing is legally actionable. And yet. You will stand at your too-small window at some ordinary hour and watch the lights come on across a thousand other too-small windows, each holding someone who also cannot afford to be here and is here anyway, and you will understand that the rent is not the price of the apartment. It is the price of the window."
+  },
+  {
+    id: 'cc-brunch', world: 'modern', publication: 'city-companion',
+    category: 'Eating', title: 'Brunch: Meal, or Personality?', author: 'the Dining Desk', edition: 'the Food Issue',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "A ninety-minute wait for eggs you could have made in four minutes is not about the eggs, and everyone in the line knows it. Brunch is the city's one sanctioned ritual of unhurriedness — the performance of having, for once, nowhere to be — which is why it is taken so grimly seriously and defended so fiercely. Order the thing that comes with the little pot of something. Tip as though you mean it. And when someone says they 'don't really do brunch,' understand that you have learned something true about them, and adjust accordingly."
+  },
+  {
+    id: 'cc-summer', world: 'modern', publication: 'city-companion',
+    category: 'Living Here', title: 'Surviving the Summer', author: 'the Editors', edition: 'the July Issue',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "For roughly six weeks the city becomes a held breath in a wool coat. The trains are worse. The smell arrives — you'll know it — and becomes, by August, oddly nostalgic. This is the season of the rooftop, that great equalizer, where a good roof beats a bad penthouse and everyone pretends the view was the point. Drink water. Walk on the shady side; the city was laid out by someone who understood shade was a form of wealth. And forgive the place its August temper. It has been standing in the heat all day for you."
+  },
+
+  /* ── A VISITOR'S GUIDE TO THE CITY — the Bureau of Tourism; earnest, patient, slightly slow ── */
+  {
+    id: 'vg-trains', world: 'modern', publication: 'visitors-guide-modern',
+    category: 'Getting Around', title: 'Riding the Trains', author: 'the Bureau of Tourism', edition: 'current',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "The trains are the fastest way across the city and the surest way to be identified as a newcomer. Stand to the right of the escalator; walk on the left. Let riders off before you board. Do not hold the doors — they do not negotiate. Above all, do not make prolonged eye contact: it is not that the city is unfriendly, but that eight million people in a small space have agreed, wordlessly, to grant each other the courtesy of being briefly invisible. Accept the gift. Look at the middle distance, like everyone else. You'll find it restful."
+  },
+  {
+    id: 'vg-tipping', world: 'modern', publication: 'visitors-guide-modern',
+    category: 'Customs', title: 'The Silent Math of Tipping', author: 'the Bureau of Tourism', edition: 'current',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Tipping is expected, frequent, and calculated at a speed that will alarm you. The screen will turn toward you; there will be suggested amounts; there will be a person watching, kindly, while you decide who you are. Visitors freeze here. Locals have made peace with it. The rule of thumb is generosity slightly beyond comfort — the city runs on a thousand people doing small things for you, and the tip is how the city admits this to itself. When in doubt, round up. You will never once regret having been the generous stranger."
+  },
+  {
+    id: 'vg-directions', world: 'modern', publication: 'visitors-guide-modern',
+    category: 'Getting Around', title: 'Asking for Directions', author: 'the Bureau of Tourism', edition: 'current',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Contrary to its reputation, the city will help you — enthusiastically, at length, and often incorrectly. A local asked for directions considers it a point of honor to answer, whether or not they know, and you will receive a confident route involving a landmark that closed in the previous decade. Thank them warmly; the warmth was sincere even where the geography was not. Then ask a second person. The true route lies, as with so much here, somewhere in the disagreement between two certain strangers."
+  },
+  {
+    id: 'vg-coffee', world: 'modern', publication: 'visitors-guide-modern',
+    category: 'Customs', title: 'Ordering Coffee Without Incident', author: 'the Bureau of Tourism', edition: 'current',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Know your order before you reach the counter. This is not a suggestion; it is the social contract, and the line behind you is enforcing it. Step up, say the thing, step aside to wait — the three-beat rhythm the whole city performs before it has fully woken. Do not ask the barista what they recommend during the morning rush; you may ask this in the calm of the afternoon, when it becomes, briefly, a lovely conversation. The city is not rude. It is simply on its way somewhere, and would like, gently, for you to already know what you want."
+  },
+
+  /* ── CIVIC & MUSEUM PAMPHLETS — municipal, earnest, oddly specific; openly at odds with the Companion ── */
+  {
+    id: 'civ-green-bridge', world: 'modern', publication: 'civic-pamphlets',
+    category: 'City Curiosities', title: 'Why the Bridge Is Painted Green', author: 'the Municipal Landmarks Office', edition: 'reprinted often',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Visitors ask, and here is the true and dull answer the Office is proud to provide: the bridge is green because in 1911 the committee could not agree between grey and blue, and green was the color no one loved enough to fight over. It has been repainted the same shade forty times since, each time by a contractor who assumed the color meant something. It does not. (The City Companion insists the green honors a lost harbor pilot named Green. There was no pilot named Green. The Companion has been told this. The Companion prints it anyway, every summer, because it is a better story, which the Office concedes but does not forgive.)"
+  },
+  {
+    id: 'civ-fast-clock', world: 'modern', publication: 'civic-pamphlets',
+    category: 'City Curiosities', title: 'The Station Clock That Runs Four Minutes Fast', author: 'the Transit Heritage Society', edition: '3rd printing',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "The great clock in the old station has run exactly four minutes fast for over a century, and every proposal to correct it has failed, because the city discovered it preferred to be lied to in this one particular way. The four minutes belong to the commuters — the small mercy of a train you thought you'd missed, still waiting. Generations have made their connections on a clock that was wrong on purpose. The Heritage Society has voted, repeatedly, to keep it wrong. Some kindnesses only work if no one fixes them."
+  },
+  {
+    id: 'civ-city-name', world: 'modern', publication: 'civic-pamphlets',
+    category: 'City History', title: 'A Brief and Contested History of the City\'s Name', author: 'the Historical Society', edition: 'revised, contentiously',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "The Historical Society is obliged to report that the origin of the city's name is disputed by three factions who no longer attend the same luncheons. One holds it comes from a founder's surname; one, from a mistranslation of an older word for 'crossing'; one, from a tavern that stood where the courthouse now stands. Each faction has documents. Each faction's documents contradict the others. The Society's official position is that the name means 'a place people kept arriving at,' which satisfies no faction and is, the Society privately believes, the only version that has ever been true."
   }
 
 ];
