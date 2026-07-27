@@ -109,6 +109,32 @@ window._GUIDE_PUBLICATIONS = {
     audience: 'nobody; these were never meant to be read',
     binding_note: 'A water-warped pocket journal, half the pages loose, several stuck together.'
   },
+  // ── promoted from the Traveler's Guide: three sections grown large enough to stand
+  //    as books of their own. Same folk-layer, same disagreement — a wider shelf.
+  'thirteen-moons': {
+    world: 'fatelands',
+    title: 'Under the Thirteen Moons',
+    subtitle: 'Being the Standing Almanac of the Four Holds, Their Moons Named, Their Tempers Recorded, and Their Quarrels Left Unsettled',
+    editor: 'the Almanac of the Four Holds (revised yearly, agreed upon never)',
+    audience: 'ferrymen, planters, and the sleepless',
+    binding_note: 'Broad and flat as a chart-book, thumbed dark along the moon-tables; the last leaf is a fold-out sky no two copies draw alike.'
+  },
+  'book-of-etiquette': {
+    world: 'fatelands',
+    title: 'The Book of Etiquette',
+    subtitle: 'Being a Compendium of Manners for the Traveler Who Would Give No Offense Abroad, Across Peoples Who Agree on Almost Nothing but the Fact of Being Offended',
+    editor: 'gathered from many tables, few of which set out the same forks',
+    audience: 'guests, suitors, and those who have already erred once',
+    binding_note: 'Slim, clothbound, a ribbon marker sewn in; the courtship pages fall open of their own accord.'
+  },
+  'field-guide-creatures': {
+    world: 'fatelands',
+    title: 'A Field Guide to the Creatures of the Fatelands',
+    subtitle: 'Being the Naturalist\'s Attempt to Name and Sort the Living Country, Undertaken in Full Knowledge That the Country Does Not Consent to Being Sorted',
+    editor: 'a Field Naturalist of little repute, and one or two who corrected them in the margins',
+    audience: 'the curious, the cautious, and the recently startled',
+    binding_note: 'Pocket-sized, rain-buckled, pressed specimens still flattening a few of the plates; a wisp-scorch mars the endpaper.'
+  },
 
   // ── MODERN (world: 'modern') — a real city publishes SEVERAL things; the runtime
   //    selects the books whose `world` matches the story's flavor. Archetype rhymes:
@@ -364,26 +390,26 @@ window._GUIDE_ENTRIES = [
 
   /* ── REGIONAL ETIQUETTE (4) ───────────────────────────────────────────── */
   {
-    id: 'etq-kwisheen-dining', world: 'fatelands', publication: 'travelers-guide',
+    id: 'etq-kwisheen-dining', world: 'fatelands', publication: 'book-of-etiquette',
     category: 'Etiquette', title: 'Dining with the Kwisheen', author: 'a Guest of the Many-Tide Houses', edition: 'as told to the compilers',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     margin_notes: [{ hand: 'M.V.', note: 'The author plainly never dined with a southern clan. Ignore the part about the cloak; among the southern houses it means the opposite, and I have the scars to prove it.' }],
     body: "Your host will be tall — taller than the doorway seems to allow — and will move as though the floor were tide, which to them it faintly is. Do not stare at the hair; it is not for looking at, and it is, in a sense, looking back. Accept every dish with both hands. Refuse nothing outright; a Kwisheen reads a flat 'no' as a slammed door. Instead, praise a dish so warmly that taking a second helping would insult it. This is understood. If a manta-cloak is laid across your shoulders, you have been paid an honor you cannot yet repay. Wear it. Say little. Do not, whatever the temptation, ask them to remove it near water."
   },
   {
-    id: 'etq-first-favored-dining', world: 'fatelands', publication: 'travelers-guide',
+    id: 'etq-first-favored-dining', world: 'fatelands', publication: 'book-of-etiquette',
     category: 'Etiquette', title: 'Dining with the First Favored', author: 'Master Ilyr (attributed)', edition: 'Court Printing',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "You will be seated before you have finished deciding to sit; they are faster than politeness and kinder about it than you'd expect. Do not comment on the light beneath their skin. It is weather, not decoration, and remarking on a person's weather is what one does to strangers on ferries, not to hosts. Eat slowly — they will finish an hour before you and pretend, gracefully, not to have noticed. If the script on a wrist stills entirely while you speak, you have their whole attention, which is rarer and more dangerous than their distraction. Choose your next sentence as if it will be remembered. It will."
   },
   {
-    id: 'etq-ashen-courtship', world: 'fatelands', publication: 'travelers-guide',
+    id: 'etq-ashen-courtship', world: 'fatelands', publication: 'book-of-etiquette',
     category: 'Etiquette', title: 'Ashen Courtship, for the Bewildered', author: 'Lady Caeryn', edition: '2nd',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "In the grey country they do not say love; they say I would cross with you, which means the same and costs more to mean. A suitor brings not flowers but a second lantern — the implication being that the road ahead is dark and they intend to be on it beside you. To accept, you light it from your own. To decline, you thank them and light it yourself, which tells them, gently, that you can manage your own dark, thank you. Nobody in the grey country is ever refused rudely. They have too much practice at it to be clumsy."
   },
   {
-    id: 'etq-gloamwater-hospitality', world: 'fatelands', publication: 'travelers-guide',
+    id: 'etq-gloamwater-hospitality', world: 'fatelands', publication: 'book-of-etiquette',
     category: 'Etiquette', title: 'The Threshold Cup of Gloamwater', author: 'Marisela Quay', edition: 'Tidewater Printing',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "A Gloamwater host greets a guest at the threshold with a cup of plain water — never wine, never tea, water — and drinks first, in front of you, before offering it. Drink what remains and you are, for the length of your stay, family: your quarrels are their quarrels, your debts are negotiable, and no one under that roof may raise a hand against you. Do not pour it out, do not set it down full, and do not, ever, ask what the water is from. The answer is 'the house,' and the house does not care to be interrogated by its own guests."
@@ -477,19 +503,19 @@ window._GUIDE_ENTRIES = [
 
   /* ── PLANTS, ANIMALS & CURIOSITIES (3) — field-guide style ─────────────── */
   {
-    id: 'field-will-o-wisps', world: 'fatelands', publication: 'travelers-guide',
+    id: 'field-will-o-wisps', world: 'fatelands', publication: 'field-guide-creatures',
     category: 'Plants & Creatures', title: 'The Wisps of Veilwood', author: 'a Field Naturalist of little repute', edition: 'privately printed',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Small, pale, drifting; commonest in the white wood where the trees grow in devoted pairs. The naturalists cannot agree whether the wisps are alive, and the woodsfolk cannot understand why anyone would need to know. They keep to the pathless dark and mind their own business, which is more than can be said for most travelers. A wisp will follow you if you are lost and lead you if you are kind to it and abandon you the instant you try to catch one, which is the correct response to being caught and a lesson several species could stand to learn. Do not eat them. They are not for eating. Nothing that glows gently should ever be for eating."
   },
   {
-    id: 'field-tide-mantas', world: 'fatelands', publication: 'travelers-guide',
+    id: 'field-tide-mantas', world: 'fatelands', publication: 'field-guide-creatures',
     category: 'Plants & Creatures', title: 'The Grey Mantas of the Gloam', author: 'Marisela Quay', edition: 'Tidewater Printing',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Broad, silent, unhurried, the mantas of Gloamwater glide the shallow gloam like slow grey thoughts. Harmless, unless you are a small fish or in a great hurry — mantas have no patience with hurry and have been known to shepherd a racing skiff gently, immovably, back to a walking pace. The water-folk hold them in an esteem that is not quite worship and not quite affection, and will not say which. A manta's passing is considered good luck, an omen of arrival, and — if it circles you once — a suggestion, kindly meant, that you slow down. Heed it. The gloam is not a place that rewards speed."
   },
   {
-    id: 'field-fernmarch-salt-fern', world: 'fatelands', publication: 'travelers-guide',
+    id: 'field-fernmarch-salt-fern', world: 'fatelands', publication: 'field-guide-creatures',
     category: 'Plants & Creatures', title: 'Salt-Fern, & Its Overstated Virtues', author: 'a Field Naturalist of little repute', edition: 'privately printed, unsold',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     margin_notes: [{ hand: 'a soggy pilgrim', note: 'Followed the salt-fern faithfully across the Fernmarch flats. Lost a boot anyway. Ten out of ten, would trust the fern again, will not trust the flats.' }],
@@ -512,79 +538,79 @@ window._GUIDE_ENTRIES = [
 
   /* ── UNDER THE THIRTEEN MOONS (13) — one page per moon; living culture, not astronomy ── */
   {
-    id: 'moon-velorin', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-velorin', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Velorin, the First-Rising', author: 'the Almanac of the Four Holds', edition: 'revised yearly',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Quicksilver, and always first over the eastern hills, Velorin is the moon of beginnings, and every hold keeps its own list of what may only be begun beneath it: a first furrow, a first voyage, the opening of a shop, the first word of a courtship. Nothing begun under Velorin ends badly, the almanac promises — then adds, in smaller type, that it may still end. The cautious begin nothing at all, on the grounds that a thing not begun cannot be begun wrongly, which is the kind of wisdom that keeps a barn very tidy and very empty."
   },
   {
-    id: 'moon-tessryn', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-tessryn', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Tessryn, the Steady Moon', author: 'the Almanac of the Four Holds', edition: 'revised yearly',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Pale amber and utterly dependable, Tessryn neither hurries nor surprises, and so it is the moon for things meant to last. Contracts sealed beneath it are held unbreakable by any honest court; a couple who marry under Tessryn are marrying, everyone understands, for the long haul and not the leap. It is the harvest moon and the moon of keeping one's word. 'Promise under Tessryn,' the saying goes, 'or don't promise.' The Astrael-born, who make their promises under a moon that forgives them, find this insufferable, and say so."
   },
   {
-    id: 'moon-khalyra', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-khalyra', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Khalyra, the Clear Moon', author: 'the Court Calendars', edition: 'as kept in the holds',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Blue-white and pitiless, Khalyra is when the courts sit, debts are named aloud, and the thing everyone has been not-saying at last gets said. Confessions made beneath it are believed; lies, it is held, catch in the throat. Families schedule their hardest conversations for it, on the theory that the moon does half the work — and it usually does. No festival is held under Khalyra; comfort and clarity, the calendars note dryly, are seldom on speaking terms."
   },
   {
-    id: 'moon-serapha', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-serapha', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Serapha, the Sacred Radiance', author: 'the Temple Registers', edition: 'approved',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Brightest of the inner moons, Serapha crowns the calendar of holy days — the great festivals, the blessing of newborns, the lighting of the year-fires. A child blessed under Serapha is thought lucky, or at least to have been begun luckily, a distinction the temples are careful to keep. Pilgrims time long journeys to arrive beneath it. The one thing never done under Serapha is mourning: the dead are asked, gently, to wait for a dimmer moon, and — the registers insist — they generally oblige."
   },
   {
-    id: 'moon-astrael', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-astrael', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Astrael, the Copper Moon', author: 'Harlen of Three Ferries', edition: '8th Revised',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "The travelers' moon: copper-lit, low, and the busiest night on any road, when ferries run late and are forgiven, inns overfill, and the whole world seems briefly to be going somewhere. One rule governs it, absolute and cheerful — you do not make promises under Astrael. The road will make a liar of you, and everyone knows it, so a vow sworn beneath the Copper Moon is treated as a fond joke and held to nothing. 'Ah, it's Astrael,' they say when someone swears too grandly. 'Better not.' They are laughing. They also mean it."
   },
   {
-    id: 'moon-dathriel', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-dathriel', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Dathriel, the Violet Moon', author: 'collected, cautiously', edition: 'unattributed',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Deep violet and half-hidden, Dathriel is the moon of what is not said aloud. Letters are burned beneath it, meetings go unwitnessed, and those who cannot yet love in daylight are, by long and forgiving custom, invisible under it. It is not the moon of lies — that is a different failing — but of secrets honestly kept. Ask a Fatelander what they did under the last Dathriel and watch a friendly face go briefly, softly, like a closed door. Then it opens again, and they offer you tea, and you do not ask twice."
   },
   {
-    id: 'moon-mournfall', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-mournfall', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Mournfall, the Omen Moon', author: 'the hold-almanacs, grimly', edition: 'traditional',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Dim and red and unloved, Mournfall is the moon of the dead: funerals are held beneath it, the names of the lost are spoken once and then deliberately not again, and every old superstition thickens to soup. Do not sweep after dark. Do not leave a chair pulled out. Do not, whatever else you ignore, answer if you are called by name from a room you know to be empty. Whether any of it is true, no one under Mournfall will say — saying so is itself unlucky, and the moon has a long memory for the confident."
   },
   {
-    id: 'moon-tharos', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-tharos', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Tharos, the Trade Moon', author: 'Marisela Quay', edition: 'Tidewater Printing',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Silver-green and bound to the tides, Tharos is the merchants' moon and the sailors' — the great markets open beneath it, cargoes move, the coast does not sleep. A bargain struck under Tharos is a bargain of goods and coin, sturdy and unromantic; the moon has no patience for vows of the heart, and a marriage proposal made beneath it is reckoned either a category error or a very poor negotiating tactic. Fishermen read the tide by it. So, more quietly, do the smugglers, who observe that a busy moon is a forgiving one."
   },
   {
-    id: 'moon-the-chain', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-the-chain', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'The Chain, the Broken Moon', author: 'the Almanac, reluctantly', edition: 'revised yearly',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Not one moon but a scatter of broken stone dragged across the sky, the Chain is the moon of endings and undoings. Partnerships dissolve beneath it, debts are forgiven or defaulted, apprentices walk out, and marriages — the almanacs note with visible discomfort — are never, ever begun. It is thought unlucky for beginnings and honest for endings, and there is a hard mercy in it: a thing ended under the Chain is held to be ended cleanly, without shame to either side. People weep under the Chain and are not judged for it, which may be the kindest thing the sky does all year."
   },
   {
-    id: 'moon-ithralis', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-ithralis', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Ithralis, the Lovers\' Moon', author: 'Lady Caeryn', edition: '2nd',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Warm gold and slow to set, Ithralis is the moon of vows and confessions, and the one everyone waits for. Beneath it, weddings of love — as distinct from the practical marriages of Tessryn — are held, proposals are made, and the thing you have carried in your chest for a whole season is, at last, said out loud. It is the busiest moon for wishcraft of the small and tender kind, and the temples look politely away. To confess under Ithralis and be refused is thought the gentlest way to be refused — if there is a gentle way, which Lady Caeryn, who would know, doubts."
   },
   {
-    id: 'moon-vorath', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-vorath', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Vorath, the Bone Moon', author: 'the hold-almanacs', edition: 'traditional',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Bone-white and cold, Vorath is when debts come due — all of them, and not a day past. Reckonings are held beneath it, hard bargains paid, accounts of coin and otherwise settled. It is reckoned the worst possible moon to borrow under and the only honest one to repay under, and the prudent arrange to owe nothing at all as Vorath approaches. Where a hold still keeps the old sacrifice-customs, they are made beneath it. The almanacs do not describe those, and this Guide, following their good example, will not either."
   },
   {
-    id: 'moon-elarion', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-elarion', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'Elarion, the Changing Moon', author: 'the Lytharyn Registers', edition: 'student issue',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Pale green and shimmering, Elarion is the moon of becoming. Children are named adults beneath it; apprentices are freed and made masters; the newly-changed take their new names; and those setting down an old life for a new one choose Elarion to do it. In Lytharyn the great graduations are held under it, and a graduate who forgets the date is forgiven — while a graduate who forgets their notebook is not, a distinction the Registers consider self-evident and outsiders find baffling. Nothing under Elarion stays quite as it was. That is the entire point of it."
   },
   {
-    id: 'moon-hungry-eye', world: 'fatelands', publication: 'travelers-guide',
+    id: 'moon-hungry-eye', world: 'fatelands', publication: 'thirteen-moons',
     category: 'Under the Thirteen Moons', title: 'The Hungry Eye', author: 'the compilers, and no further', edition: 'unrevised, deliberately',
     unlock: 'always', spoiler_level: 2, canon_safe: true,
     margin_notes: [{ hand: '(unsigned)', note: 'Do not read this page aloud after dark. I am not going to tell you why. I am only going to tell you not to.' }],
