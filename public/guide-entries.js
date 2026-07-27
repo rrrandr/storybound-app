@@ -108,15 +108,26 @@ window._GUIDE_SHELVES = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // _GUIDE_CONCEPTS — the canonical vocabulary the Guide tags pages with (Roman's #5).
-// Concepts are IDEAS (person/place/moon/species/event/book/custom/institution/
+// Concepts are IDEAS (person/place/moon/species/event/work/custom/institution/
 // phenomenon/practice/era/artifact/concept), NOT words. ONE stable id per thing.
+// A concept is a MEANINGFUL CONNECTION, not only an "aboutness": subject and
+// authorship are ORTHOGONAL edges — a Rowan aphorism is tagged both `wishcraft`
+// (the discipline) and `wishmaster-rowan` (the philosopher whose teaching it IS),
+// the way "Know thyself" is Socrates. `type:'work'` = a book-as-concept for
+// cross-book references (slug = the publication key when it's one of our own books,
+// so concept↔publication join is trivial); a page tags a work only when it CITES
+// that book — being printed IN a book is the `publication` field's job, not a tag.
 // Guide entries reference these by slug in `concepts:[]`. `description` is left ''
 // for now — room to grow (a concept becomes navigable once described). These power
 // Related Reading / search / unlock / encyclopedia / analytics — NEVER dialogue gating.
+// INVISIBLE PLUMBING: concepts make BOOKS discoverable/connected/referenceable —
+// players browse "Traveler's Guide", never "Concept #47". Do not surface the graph
+// to players or let it drift into a lore-encyclopedia; the Guide stays books-by-people.
 // TAG CONSERVATIVELY: only concepts a page is substantially about (Wikipedia rule).
 // ─────────────────────────────────────────────────────────────────────────────
 window._GUIDE_CONCEPTS = {
   // ── FATELANDS ──
+  'wishmaster-rowan':   { type: 'person',      label: 'Wishmaster Rowan', aliases: ['Rowan'], description: '' },
   'wishcraft':          { type: 'practice',    label: 'Wishcraft', aliases: [], description: '' },
   'the-fold':           { type: 'concept',     label: 'The Fold', aliases: [], description: '' },
   'kwisheen':           { type: 'species',     label: 'Kwisheen', aliases: ['Many-Tide'], description: '' },
@@ -181,6 +192,8 @@ window._GUIDE_CONCEPTS = {
   'greenhold':          { type: 'place',       label: 'Greenhold', aliases: [], description: '' },
   'scav-packs':         { type: 'species',     label: 'Scav-Packs', aliases: [], description: '' },
   'ash-crawler':        { type: 'species',     label: 'Ash-Crawler', aliases: [], description: '' },
+  // ── WORKS (books-as-concepts, for cross-book references) ──
+  'book-of-conduct':    { type: 'work',        label: 'The Complete Book of Conduct', aliases: ['Book of Conduct'], description: '' },
 };
 
 window._GUIDE_PUBLICATIONS = {
@@ -547,25 +560,25 @@ window._GUIDE_ENTRIES = [
   {
     id: 'rowan-cost', world: 'fatelands', publication: 'on-wishcraft',
     category: 'On Wishcraft', title: 'The First Cost', author: 'Wishmaster Rowan', edition: 'collected excerpts',
-    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['wishcraft'],
+    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['wishmaster-rowan', 'wishcraft'],
     body: "Every apprentice asks me what a wish costs, and every apprentice is disappointed by the answer, which is: less than you fear and more than you will admit. The bill does not arrive at once. It arrives the way weather arrives — you were always going to get wet; you simply chose the day. I have never met a wisher who was cheated. I have met a great many who did not read to the bottom of what they wanted."
   },
   {
     id: 'rowan-refusal', world: 'fatelands', publication: 'on-wishcraft',
     category: 'On Wishcraft', title: 'The Dignity of No', author: 'Wishmaster Rowan', edition: 'collected excerpts',
-    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['wishcraft'],
+    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['wishmaster-rowan', 'wishcraft'],
     body: "It is said Fate cannot refuse. This is a comfort told to children and a lie told to kings. Fate refuses constantly; it simply does so by granting. If you have ever received exactly what you asked and hated it, you have been refused with great courtesy. The wise learn to hear the No inside the Yes. The rest learn to live in the house they demanded be built on sand."
   },
   {
     id: 'rowan-for-another', world: 'fatelands', publication: 'on-wishcraft',
     category: 'On Wishcraft', title: 'Wishing for Another', author: 'Wishmaster Rowan', edition: 'collected excerpts',
-    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['wishcraft'],
+    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['wishmaster-rowan', 'wishcraft'],
     body: "To wish for yourself is arithmetic. To wish for another is trespass, however tender. I do not forbid it — I have done it, and would again — but know that you are carrying a lamp into a room that is not yours, and that the person asleep there may wake to find the furniture rearranged and not thank you for the light. The kindest wishes I have witnessed asked permission first. The unkindest were also the most loving. Make of that what you can; I never could."
   },
   {
     id: 'rowan-small-wishes', world: 'fatelands', publication: 'on-wishcraft',
     category: 'On Wishcraft', title: 'In Praise of Small Wishes', author: 'Wishmaster Rowan', edition: 'collected excerpts (disputed)',
-    unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: ['wishcraft'],
+    unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: ['wishmaster-rowan', 'wishcraft'],
     body: "The great wishes are carved on monuments; the small ones hold the world up. A wish for the bread to rise. A wish for the fever to break by morning. A wish, muttered, that he would look up before I lost my nerve. These leave no marks and start no wars and are, I suspect, the only wishcraft Fate actually enjoys. (Later editors mark this passage 'sentimental' and 'probably not Rowan.' Later editors have never waited for a fever to break.)"
   },
 
@@ -802,25 +815,25 @@ window._GUIDE_ENTRIES = [
   {
     id: 'ow-clever-and-wise', world: 'fatelands', publication: 'on-wishcraft',
     category: 'On Wishcraft', title: 'The Clever and the Wise', author: 'Wishmaster Rowan', edition: 'collected excerpts',
-    unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: ['wishcraft'],
+    unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: ['wishmaster-rowan', 'wishcraft'],
     body: "The clever bargain with Fate. The wise bargain with themselves. I have been both, at different ages, and only the second kind of bargain ever left me better than it found me."
   },
   {
     id: 'ow-quiet-hearts', world: 'fatelands', publication: 'on-wishcraft',
     category: 'On Wishcraft', title: 'What Fate Hears', author: 'Wishmaster Rowan', edition: 'collected excerpts',
-    unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: ['wishcraft'],
+    unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: ['wishmaster-rowan', 'wishcraft'],
     body: "Every child believes Fate hears the louder words. Every old man knows it hears the quieter hearts. This is why children shout their wishes and are so often answered exactly — and so seldom answered kindly."
   },
   {
     id: 'ow-both-true', world: 'fatelands', publication: 'on-wishcraft',
     category: 'On Wishcraft', title: 'On Being Contradicted (by Myself)', author: 'Wishmaster Rowan', edition: 'collected excerpts, with apology',
-    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['wishcraft'],
+    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['wishmaster-rowan', 'wishcraft'],
     body: "Elsewhere in this volume I have written that a wish costs less than you fear. Elsewhere again, that it costs everything. Students bring me the two pages side by side, triumphant, as if they had caught me out. They have caught nothing. Both are true. A thing that cost you everything and also less than you feared is not a paradox — it is simply a life. That is why we call it wishcraft, and not arithmetic."
   },
   {
     id: 'ow-three-wrong-times', world: 'fatelands', publication: 'on-wishcraft',
     category: 'On Wishcraft', title: 'The Three Wrong Times', author: 'Wishmaster Rowan', edition: 'collected excerpts',
-    unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: ['wishcraft'],
+    unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: ['wishmaster-rowan', 'wishcraft'],
     body: "Never wish while angry, while drunk, or while in love. Angry, you will aim true and regret it. Drunk, you will aim wide and regret that. In love, you will aim at the wrong person entirely and call it generosity. This leaves almost no good time to wish, which is exactly my point: the best wishes are made by people who have very nearly talked themselves out of wishing at all."
   },
 
@@ -1006,7 +1019,7 @@ window._GUIDE_ENTRIES = [
   {
     id: 'sp-regrettable', world: 'historical', publication: 'society-pages',
     category: 'Intelligence', title: 'A Regrettable Circumstance', author: 'A Correspondent', edition: 'the Autumn Number',
-    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['reputation'],
+    unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['reputation', 'book-of-conduct'],
     body: "It is with the deepest and most attentive regret that we learn a certain young lady, lately so admired, has been 'removed to the country for her health' — a phrase that has never once, in the history of this column, referred to health. We shall say no more, both from delicacy and because we have been advised by counsel to say no more. The Book of Conduct, we understand, devotes four pages to preventing precisely this and would faint to see it in print. We devote one paragraph to reporting it, and sleep untroubled. The country air, we are told, is very restorative. It restores a remarkable number of young ladies each season."
   },
   {
@@ -1366,5 +1379,47 @@ window._guidePickBookThenPage = function (opts) {
     provenance: prov,
     totalPages: paged.totalPages, pageStart: pageStart, pageEnd: pageEnd,
     entriesOnSpread: onSpread
+  };
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CONCEPT-GRAPH METRICS (Roman's canon-health dashboard) — AUTHOR-FACING plumbing,
+// never shown to players. On-demand (nothing stored). Surfaces where the world is
+// thin: a concept with a single page ("maybe Tolmen deserves another page"), a
+// registered concept no page connects to, and which ideas cluster together.
+// ─────────────────────────────────────────────────────────────────────────────
+window._guideConceptMetrics = function () {
+  var C = window._GUIDE_CONCEPTS || {}, E = window._GUIDE_ENTRIES || [];
+  var count = {}, pages = {}, cooc = {};
+  Object.keys(C).forEach(function (k) { count[k] = 0; pages[k] = []; });
+  E.forEach(function (e) {
+    var cs = e.concepts || [];
+    cs.forEach(function (s) { if (s in count) { count[s]++; pages[s].push(e.id); } });
+    for (var a = 0; a < cs.length; a++) for (var b = a + 1; b < cs.length; b++) {
+      var key = [cs[a], cs[b]].sort().join(' + ');
+      cooc[key] = (cooc[key] || 0) + 1;
+    }
+  });
+  var ranked = Object.keys(count).map(function (k) {
+    return { slug: k, type: C[k].type, count: count[k] };
+  }).sort(function (x, y) { return y.count - x.count; });
+  // orphans split: a content concept with 0 pages is a gap; a `work` with 0 is just
+  // an un-cited reference target (fine, like an empty catalog entry) — reported apart.
+  var contentOrphans = ranked.filter(function (r) { return r.count === 0 && r.type !== 'work'; });
+  var uncitedWorks   = ranked.filter(function (r) { return r.count === 0 && r.type === 'work'; });
+  var thin           = ranked.filter(function (r) { return r.count === 1; }); // "needs another page?"
+  var byType = {};
+  ranked.forEach(function (r) { (byType[r.type] = byType[r.type] || { concepts: 0, pageRefs: 0 }); byType[r.type].concepts++; byType[r.type].pageRefs += r.count; });
+  var coocRanked = Object.keys(cooc).map(function (k) { return { pair: k, count: cooc[k] }; })
+    .sort(function (x, y) { return y.count - x.count; });
+  return {
+    totalConcepts: ranked.length,
+    mostConnected: ranked.slice(0, 12),
+    thinConcepts: thin,            // exactly one page — candidates for a second page
+    contentOrphans: contentOrphans, // should stay empty; a nonzero list is a bug/gap
+    uncitedWorks: uncitedWorks,     // reference targets awaiting a citing page
+    byType: byType,
+    topCooccurrence: coocRanked.slice(0, 12),
+    pages: pages                    // slug -> [entry ids], for "show me every page about X"
   };
 };
