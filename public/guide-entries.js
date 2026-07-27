@@ -80,6 +80,17 @@
  * (Phase 0 is pure content; this file is not yet wired into index.html.)
  * ========================================================================== */
 
+// In-universe scarcity (Roman's #4 — "DISCOVERY", never "rarity/Legendary"). The world does not
+// know a book is special; the PLAYER discovers it. `weight` = relative surfacing chance during
+// loading (Lost almost never appears → "feels special"). Library shows e.g. "Lost Works 2/17 discovered".
+window._GUIDE_DISCOVERY = {
+  common:     { label: 'Common',     order: 1, weight: 100, note: 'Widely printed; nearly everyone has a copy.' },
+  uncommon:   { label: 'Uncommon',   order: 2, weight: 45,  note: 'Specialist or regional; you have to want it.' },
+  rare:       { label: 'Rare',       order: 3, weight: 12,  note: 'Passed quietly, hand to hand; hard to come by.' },
+  restricted: { label: 'Restricted', order: 4, weight: 4,   note: 'Exists, but controlled, suppressed, or spoken of carefully.' },
+  lost:       { label: 'Lost',       order: 5, weight: 1,   note: 'Presumed gone; a genuine find. Holy grails live here.' },
+};
+
 // Cross-FLAVOR shelving axis for the Library building (see design #7): books are grouped by
 // what KIND of book they are, NOT which world — so On Wishcraft can be shelved beside a sci-fi
 // ethics primer because both are philosophy. Every publication carries a `shelf`; `order` = walk order.
@@ -98,6 +109,8 @@ window._GUIDE_SHELVES = {
 window._GUIDE_PUBLICATIONS = {
   'travelers-guide': {
     shelf: 'travel', voice: 'practical, witty, occasionally and confidently wrong — a chorus of many hands that never fully agree',
+    discovery: 'common', edition_label: 'Revised Past Counting',
+    provenance: ['Bought from a ferry-house stall, the price haggled down for a torn cover.', 'Left behind by a previous traveler, your name written over theirs.', 'Borrowed from an inn and, regrettably, never returned.'],
     world: 'fatelands',
     title: "The Traveler's Guide to the Fatelands",
     subtitle: 'Being a Compendium of Roads, Customs, Cautions & Curiosities, Gathered by Many Hands',
@@ -105,6 +118,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'on-wishcraft': {
     shelf: 'philosophy', voice: 'sparse, philosophical, almost meditative; more silence than sentence',
+    discovery: 'uncommon', edition_label: 'Students’ Assembly, Corrected',
+    provenance: ['Copied out by hand from a Lytharyn copy that could not be removed.', 'Pressed on you by a student who swore it changed everything.', 'Found among a dead wishworker’s effects, three passages underlined.'],
     world: 'fatelands',
     title: 'On Wishcraft',
     subtitle: 'Being the Collected Observations of Wishmaster Rowan, Assembled After His Time by Various Students, Not All of Whom Agreed',
@@ -112,6 +127,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'lytharyn-handbook': {
     shelf: 'handbook', voice: 'dry, bureaucratic, unintentionally funny; rules issued to people it assumes are already wrong',
+    discovery: 'uncommon', edition_label: 'This Cohort-Year’s Issue',
+    provenance: ['Issued on your first day and never formally taken back.', 'Borrowed from the Lytharyn stacks and quietly kept.', 'Handed down from an older cohort, their marginal complaints intact.'],
     world: 'fatelands',
     title: 'The Lytharyn Student Handbook',
     subtitle: 'Issued to Every Incoming Cohort of the Lytharyn Schools, and Read by Approximately None of Them',
@@ -121,6 +138,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'travelers-notes': {
     shelf: 'notebooks', voice: 'clipped, sceptical, first-person; trusts nothing, least of all the official guides (this one included)',
+    discovery: 'rare', edition_label: 'The Only Copy',
+    provenance: ['Found in an abandoned satchel at a crossing-house.', 'Sold to you as scrap paper by someone who could not read the hand.', 'Slipped into your pack by a stranger who then vanished onto the ferry.'],
     world: 'fatelands',
     title: "Traveler's Notes",
     subtitle: 'The Private Notebook of a Traveler Who Went Everywhere Twice and Trusted No Guidebook, Including This One',
@@ -132,6 +151,8 @@ window._GUIDE_PUBLICATIONS = {
   //    as books of their own. Same folk-layer, same disagreement — a wider shelf.
   'thirteen-moons': {
     shelf: 'almanac', voice: 'terse almanac cadence — names, tempers, warnings — sky-superstition worn smooth by yearly use',
+    discovery: 'uncommon', edition_label: 'This Year’s Reckoning',
+    provenance: ['Taken down from the nail beside a ferryman’s door.', 'Bought at a dockside market, the fold-out sky already torn.', 'Left on the sill of a shuttered planting-house.'],
     world: 'fatelands',
     title: 'Under the Thirteen Moons',
     subtitle: 'Being the Standing Almanac of the Four Holds, Their Moons Named, Their Tempers Recorded, and Their Quarrels Left Unsettled',
@@ -141,6 +162,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'book-of-etiquette': {
     shelf: 'etiquette', voice: 'anxious and exacting, certain one wrong fork ends a life, among peoples who share only the capacity for offense',
+    discovery: 'uncommon', edition_label: 'Revised for the Anxious',
+    provenance: ['A gift before your first journey abroad, meaningfully given.', 'Bought hastily at a port after your first grave mistake.', 'Passed to you by a host too polite to correct you aloud.'],
     world: 'fatelands',
     title: 'The Book of Etiquette',
     subtitle: 'Being a Compendium of Manners for the Traveler Who Would Give No Offense Abroad, Across Peoples Who Agree on Almost Nothing but the Fact of Being Offended',
@@ -150,6 +173,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'field-guide-creatures': {
     shelf: 'natural-history', voice: 'amateur-naturalist enthusiasm undercut by margin-corrections; sorts a country that refuses to be sorted',
+    discovery: 'uncommon', edition_label: 'Second Impression, Margins Included',
+    provenance: ['Pressed on you by an amateur naturalist who would not stop talking.', 'Recovered from a flooded archive, the plates still drying.', 'Traded for at a Veilwood waystation, one specimen still inside.'],
     world: 'fatelands',
     title: 'A Field Guide to the Creatures of the Fatelands',
     subtitle: 'Being the Naturalist\'s Attempt to Name and Sort the Living Country, Undertaken in Full Knowledge That the Country Does Not Consent to Being Sorted',
@@ -164,6 +189,8 @@ window._GUIDE_PUBLICATIONS = {
   //    Civic Pamphlets ≈ schoolbook History. (Newspapers deferred to the UI phase.) ──
   'city-companion': {
     shelf: 'travel', voice: 'affectionate, weary, insider; loves the city exactly as much as it complains about it',
+    discovery: 'common', edition_label: 'This Month’s Number',
+    provenance: ['Left in a rented flat’s drawer by a tenant long gone.', 'Grabbed free from a café rack your first week here.', 'Handed to you by a neighbor who insisted you’d need it.'],
     world: 'modern',
     title: 'The City Companion',
     subtitle: 'The City, Explained to Itself, Monthly, Whether It Asked or Not',
@@ -173,6 +200,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'visitors-guide-modern': {
     shelf: 'travel', voice: 'over-explains with great confidence, slightly too slowly, for the thoroughly lost',
+    discovery: 'common', edition_label: 'Current Season',
+    provenance: ['Taken from a hotel lobby, the map already unfoldable.', 'Given at the airport kiosk with a bright, tired smile.', 'Found on a train seat, someone’s coffee ring on the cover.'],
     world: 'modern',
     title: "A Visitor's Guide to the City",
     subtitle: 'Everything a Newcomer Needs, Explained Slightly Too Slowly and With Great Confidence',
@@ -182,6 +211,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'civic-pamphlets': {
     shelf: 'history', voice: 'earnest municipal primer; a docent who cares far more than the budget allows',
+    discovery: 'uncommon', edition_label: 'Latest Printing',
+    provenance: ['Pocketed from a rack by a museum door.', 'Handed out at a civic open day you wandered into.', 'Kept from a school trip and never thrown away.'],
     world: 'modern',
     title: 'Civic & Museum Pamphlets',
     subtitle: 'Small Printed Answers to Questions Almost Nobody Asked Out Loud',
@@ -196,6 +227,8 @@ window._GUIDE_PUBLICATIONS = {
   //    Society Pages ≈ gossip · Almanac ≈ Thirteen Moons · Household Companion ≈ Recipes. ──
   'book-of-conduct': {
     shelf: 'etiquette', voice: 'starched and prescriptive; reputation is survival and feeling is beside the point',
+    discovery: 'common', edition_label: 'New and Enlarged Edition',
+    provenance: ['A gift from a well-meaning aunt, the inscription faded.', 'Borrowed from a circulating library and guiltily retained.', 'Bought secondhand, a previous owner’s corrections in pencil.'],
     world: 'historical',
     title: 'The Complete Book of Conduct',
     subtitle: 'A Guide to Deportment, Correspondence, and the Preservation of Reputation, for Persons of Every Rank',
@@ -205,6 +238,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'society-pages': {
     shelf: 'periodical', voice: 'arch, gleeful, deniable gossip that everyone reads and no one admits to',
+    discovery: 'common', edition_label: 'This Week’s Sheet',
+    provenance: ['Folded inside a more respectable volume where none would see.', 'Bought from a boy on a corner, still damp from the press.', 'Left on a drawing-room table for anyone to deny reading.'],
     world: 'historical',
     title: 'The Society Pages',
     subtitle: 'Intelligence of Marriages, Mournings, Ruin & Return, for Readers Who Would Never Admit to Reading Them',
@@ -214,6 +249,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'household-companion': {
     shelf: 'handbook', voice: 'brisk domestic competence in three annotating hands; the spine broken at the pudding chapter',
+    discovery: 'common', edition_label: 'The Family Copy',
+    provenance: ['Inherited from a mother, the pudding chapter broken open.', 'Receipts pasted over the printed ones you never use.', 'Bought at a market stall, three hands already in the margins.'],
     world: 'historical',
     title: 'The Household Companion',
     subtitle: 'Being Receipts, Remedies, and the Management of a Respectable Home',
@@ -223,6 +260,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'the-almanac': {
     shelf: 'almanac', voice: 'flat yearly reckoning of weather, tide and feast-day; superstition stated as plain fact',
+    discovery: 'common', edition_label: 'For the Coming Year',
+    provenance: ['Taken from the nail by the kitchen door at year’s end.', 'Bought with the season’s seed from the same merchant.', 'Handed over with your change, as every year.'],
     world: 'historical',
     title: 'The Almanac',
     subtitle: 'Weather, Tides, Markets, Moon-Phases & Feast-Days, Reckoned for the Coming Year',
@@ -242,6 +281,8 @@ window._GUIDE_PUBLICATIONS = {
   //    shelves in fill-out. See memory project_glass_house_* + project_modern_dystopias_one_axis. ──
   'field-companion': {
     shelf: 'handbook', voice: 'warm, communal, gently insistent; you are never alone here, and that is meant as the whole comfort',
+    discovery: 'common', edition_label: 'Warm Welcome Edition',
+    provenance: ['Given to you, warmly, at the Community Welcome Office.', 'Found already open on a shared table, as if left for you.', 'Pressed into your hands your first day in the Field.'],
     world: 'dystopia', subworld: 'glass_house',
     title: 'The Field Companion',
     subtitle: 'Your Warm Welcome to a Life You Never Have to Feel Alone In',
@@ -251,6 +292,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'open-aperture': {
     shelf: 'etiquette', voice: 'sunlit lifestyle-magazine glow; every door open in every photograph, and you only notice later',
+    discovery: 'uncommon', edition_label: 'This Season’s Issue',
+    provenance: ['Left face-up in a waiting room, every door in it open.', 'Delivered to your door though you don’t recall subscribing.', 'Shared by a neighbor who could feel you’d want it.'],
     world: 'dystopia', subworld: 'glass_house',
     title: 'Open Aperture',
     subtitle: 'The Magazine for Living Fully in the Field',
@@ -260,6 +303,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'first-field': {
     shelf: 'philosophy', voice: 'three-warm-colours board-book tenderness, teaching the youngest to be held',
+    discovery: 'uncommon', edition_label: 'Board-Book Edition',
+    provenance: ['Read to you once, and kept long after you’d outgrown it.', 'Given at the Welcome Office for the little ones, or the newly arrived.', 'Found in a bright bin of them, all identical, all warm.'],
     world: 'dystopia', subworld: 'glass_house',
     title: 'First Field: A Reader for New Hearts',
     subtitle: 'Gentle Pages for Children, Newcomers, and Anyone Learning to Be Held',
@@ -269,6 +314,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'a-solos-notes': {
     shelf: 'notebooks', voice: 'quiet handwritten dissent; the one private voice in a world with no closed doors',
+    discovery: 'rare', edition_label: 'No Two Alike',
+    provenance: ['Pressed into your palm and folded before anyone could feel it.', 'Found tucked in the lining of a secondhand coat.', 'Passed with a look that said: do not carry this into the Field.'],
     world: 'dystopia', subworld: 'glass_house',
     title: "A Solo's Notes",
     subtitle: '(untitled; passed hand to hand; please do not carry this into the Field)',
@@ -285,6 +332,8 @@ window._GUIDE_PUBLICATIONS = {
   //    Galactic Phrasebook ≈ Etiquette / First Contact Protocol. ──
   'colonist-handbook': {
     shelf: 'handbook', voice: 'reassuring institutional calm that updates itself overnight and never quite says what changed',
+    discovery: 'common', edition_label: 'Overnight Revision',
+    provenance: ['Printed on request from the station terminal your first shift.', 'Left in your bunk locker by whoever held it before.', 'Loaded onto your slate by an administrator who didn’t look up.'],
     world: 'scifi',
     title: 'The Colonist Handbook',
     subtitle: 'Everything You Need to Stay Alive, Sane, and Roughly on Schedule This Far From Home',
@@ -294,6 +343,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'xenobiology-manual': {
     shelf: 'natural-history', voice: 'clinical survey prose revised after every incident; a page torn cleanly out that everyone asks about',
+    discovery: 'uncommon', edition_label: 'Provisional, Revised After the Incident',
+    provenance: ['Salvaged from a survey team’s kit; a page already missing.', 'Traded for at a port, the blast-scar included at no charge.', 'Handed down by a medic who told you to read the fauna first.'],
     world: 'scifi',
     title: 'The Xenobiology Field Manual',
     subtitle: 'Observed Life of the Frontier, Classified Provisionally and Revised Often, Usually After an Incident',
@@ -303,6 +354,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'captains-almanac': {
     shelf: 'almanac', voice: 'gruff, opinionated, full of sea stories; compiled by captains and corrected by their widows',
+    discovery: 'uncommon', edition_label: 'Corrected by the Widows',
+    provenance: ['Bought off a docked captain who’d stopped flying that route.', 'Inherited with the ship, the widow’s corrections in red.', 'Found grease-thumbed in a helm-locker, three ports crossed out.'],
     world: 'scifi',
     title: "The Ship Captain's Almanac",
     subtitle: 'Fees, Fuel, Routes & the Customs of Ports That Will Space You for Getting Them Wrong',
@@ -312,6 +365,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'galactic-phrasebook': {
     shelf: 'etiquette', voice: 'brisk protocol courtesy with a black-edged section; how not to insult what could kill you',
+    discovery: 'uncommon', edition_label: 'Pocket Edition, Black-Edged',
+    provenance: ['Issued by the Diplomatic Service with a bereaved nod.', 'Bought at a frontier port from a trader who wished you luck.', 'Left on a galley shelf, the black-edged section dog-eared.'],
     world: 'scifi',
     title: 'The Galactic Phrasebook',
     subtitle: 'How Not to Insult the Species You Will Meet, and the One You Should Pray You Do Not',
@@ -328,6 +383,8 @@ window._GUIDE_PUBLICATIONS = {
   //    History/nostalgia. (Radio Transcripts = the ephemeral/newspaper analog → UI phase.) ──
   'survivors-manual': {
     shelf: 'handbook', voice: 'no single author — an argument in the margins between everyone who held it; the true text is the disagreement',
+    discovery: 'common', edition_label: 'No Two Copies Alike',
+    provenance: ['Found in an abandoned satchel, half its pages someone else’s.', 'Traded for a day’s water at a settlement gate.', 'Carried by three walkers before it reached your hands.'],
     world: 'postapocalyptic',
     title: "The Survivor's Manual",
     subtitle: 'Water, Fire, Fungus, and the Difference Between a Myth That Kills You and One That Does Not',
@@ -337,6 +394,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'settlement-registry': {
     shelf: 'travel', voice: 'ledger-plain gazetteer, hearsay included; entries crossed out and, hopefully, written back in',
+    discovery: 'uncommon', edition_label: 'Rebound in Salvage',
+    provenance: ['Copied from a Registrar’s ledger at the cost of a meal.', 'Taken from a settlement that no longer needed it.', 'Recovered from a flooded archive, the salvage-binding still sound.'],
     world: 'postapocalyptic',
     title: 'The Settlement Registry',
     subtitle: 'Every Known Town, Its People, Its Trade, and What Is Said of It in the Next Town Over',
@@ -346,6 +405,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'wasteland-bestiary': {
     shelf: 'natural-history', voice: 'hard-won danger ratings inked in red and re-inked upward; fear made procedural',
+    discovery: 'uncommon', edition_label: 'Ratings Re-Inked',
+    provenance: ['Bought from a scavenger, the danger ratings re-inked upward.', 'Pulled from the pack of someone who didn’t make it back.', 'Passed to you at the wall: "read the red ones first."'],
     world: 'postapocalyptic',
     title: 'The Wasteland Bestiary',
     subtitle: 'What Walks, Crawls, and Waits Out There, With Danger Ratings Learned the Hard Way',
@@ -355,6 +416,8 @@ window._GUIDE_PUBLICATIONS = {
   },
   'beforefall-memories': {
     shelf: 'history', voice: 'bittersweet artifacts of a vanished world; tender to the young who cannot understand and the old who understand too well',
+    discovery: 'rare', edition_label: 'What Could Be Saved',
+    provenance: ['Given by a Rememberer, old and fewer each winter.', 'Found in a sealed tin with photographs you don’t recognize.', 'Kept by a family for generations, softening at every fold.'],
     world: 'postapocalyptic',
     title: 'Beforefall Memories',
     subtitle: 'Relics and Remembrances of the World That Ended, for Those Who Recall It and Those Who Cannot',
@@ -1157,3 +1220,74 @@ window._GUIDE_ENTRIES = [
   }
 
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SELECTION MODEL (Roman's architectural note): loading does NOT pick a random
+// PAGE. It picks a BOOK — weighted by discovery tier, filtered to the story's
+// world when one is given — then OPENS it to a spread. Players remember books,
+// not page numbers ("I hope I get another page from Rowan," never "page 312").
+// Both helpers are PURE (rng injectable) so the UI/tests are deterministic.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Paginate one book: entries in file order, cumulative page numbers by word count.
+// Returns { publication, totalPages, entries:[{...entry, startPage, endPage}] }.
+window._guidePaginateBook = function (pubKey) {
+  var wpp = window._GUIDE_WORDS_PER_PAGE || 110;
+  var entries = (window._GUIDE_ENTRIES || []).filter(function (e) { return e.publication === pubKey; });
+  var page = 1, wordsOnPage = 0, out = [];
+  entries.forEach(function (e) {
+    var words = (e.body || '').trim().split(/\s+/).filter(Boolean).length;
+    var startPage = page;
+    // consume `words` across pages, filling the current page first
+    var remaining = words;
+    while (remaining > (wpp - wordsOnPage)) { remaining -= (wpp - wordsOnPage); page++; wordsOnPage = 0; }
+    wordsOnPage += remaining;
+    out.push(Object.assign({}, e, { startPage: startPage, endPage: page }));
+    // each entry begins on a fresh page (an entry never shares a page with the next)
+    if (wordsOnPage > 0) { page++; wordsOnPage = 0; }
+  });
+  return { publication: pubKey, totalPages: Math.max(1, page - 1), entries: out };
+};
+
+// Pick a book (discovery-weighted, optional world filter), then open to a spread.
+// opts: { world?, rng? (→[0,1)), discovered? (Set/array of unlocked pub keys) }
+// Returns a rich object the loading UI can render as a physical volume, or null.
+window._guidePickBookThenPage = function (opts) {
+  opts = opts || {};
+  var rng = opts.rng || Math.random;
+  var P = window._GUIDE_PUBLICATIONS || {};
+  var D = window._GUIDE_DISCOVERY || {};
+  var keys = Object.keys(P);
+  if (opts.world) keys = keys.filter(function (k) { return P[k].world === opts.world; });
+  // if a discovered set is supplied, prefer books the player already owns (loading should
+  // feel like re-shelving YOUR library); fall back to all if none discovered yet.
+  if (opts.discovered) {
+    var have = (opts.discovered.has ? Array.from(opts.discovered) : opts.discovered);
+    var owned = keys.filter(function (k) { return have.indexOf(k) !== -1; });
+    if (owned.length) keys = owned;
+  }
+  if (!keys.length) return null;
+  // discovery-weighted pick (Lost almost never surfaces → "feels special")
+  var weights = keys.map(function (k) { var t = D[P[k].discovery]; return (t && t.weight) || 1; });
+  var total = weights.reduce(function (a, b) { return a + b; }, 0);
+  var roll = rng() * total, book = keys[keys.length - 1];
+  for (var i = 0; i < keys.length; i++) { roll -= weights[i]; if (roll < 0) { book = keys[i]; break; } }
+  var meta = P[book];
+  var paged = window._guidePaginateBook(book);
+  // choose a leaf: left page even where possible (mock: "184–185"), clamped to the book
+  var left = Math.max(1, Math.floor(rng() * paged.totalPages) + 1);
+  if (left % 2 === 1 && left < paged.totalPages) left += 1;
+  var pageStart = left, pageEnd = Math.min(paged.totalPages, left + 1);
+  var onSpread = paged.entries.filter(function (e) { return e.endPage >= pageStart && e.startPage <= pageEnd; });
+  var prov = meta.provenance && meta.provenance.length
+    ? meta.provenance[Math.floor(rng() * meta.provenance.length)] : null;
+  return {
+    publication: book,
+    title: meta.title, subtitle: meta.subtitle,
+    voice: meta.voice, shelf: meta.shelf,
+    discovery: meta.discovery, edition_label: meta.edition_label,
+    provenance: prov,
+    totalPages: paged.totalPages, pageStart: pageStart, pageEnd: pageEnd,
+    entriesOnSpread: onSpread
+  };
+};
