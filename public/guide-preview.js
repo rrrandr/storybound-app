@@ -52,6 +52,10 @@
     // book
     '.gp-bookwrap{display:flex;flex-direction:column;align-items:center;gap:12px;}',
     '.gp-intro{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9c8b6b;}',
+    '.gp-librarian{max-width:56ch;margin:2px auto 0;text-align:center;font-style:italic;color:#cbb891;',
+      'font-size:14.5px;line-height:1.5;display:flex;gap:8px;align-items:baseline;justify-content:center;}',
+    '.gp-lib-mark{color:#c9a86a;font-style:normal;}',
+    '.gp-lib-by{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#8c7c5c;text-align:center;}',
     '.gp-book{position:relative;width:100%;max-width:720px;background:linear-gradient(180deg,#f4ead6,#ece0c8);',
       'color:#2b2118;border-radius:6px;padding:clamp(22px,3.4vw,40px) clamp(20px,4vw,52px);',
       'box-shadow:0 30px 70px rgba(0,0,0,.55),0 2px 0 #d9cba9,inset 0 0 0 1px rgba(120,96,52,.18);}',
@@ -107,11 +111,12 @@
     '.gp-cbtn:hover{filter:brightness(1.06);}',
     '.gp-ready{font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#c9a86a;margin-bottom:10px;text-align:center;}',
     // homepage trigger
-    '#gpTrigger{position:fixed;top:12px;right:12px;z-index:9500;background:rgba(20,14,28,.82);',
-      'border:1px solid rgba(201,168,106,.5);color:#e6d3a6;padding:8px 13px;border-radius:22px;',
-      'font-family:Georgia,serif;font-size:12.5px;letter-spacing:.04em;cursor:pointer;backdrop-filter:blur(4px);',
-      'box-shadow:0 4px 14px rgba(0,0,0,.4);}',
-    '#gpTrigger:hover{background:rgba(40,28,54,.92);border-color:#c9a86a;}',
+    // trigger: joins the localhost dev-button stack (bottom-right), circular gold/dark
+    // to match the ✡ Mock-Mode toggle (bottom:168px) and intimacy launcher (bottom:116px).
+    '#gpTrigger{position:fixed;bottom:220px;right:20px;z-index:999999;width:40px;height:40px;padding:0;',
+      'display:flex;align-items:center;justify-content:center;border-radius:50%;background:#222;color:#c9a24e;',
+      'border:1px solid #444;cursor:pointer;font-size:18px;line-height:1;box-shadow:0 2px 10px rgba(0,0,0,.5);}',
+    '#gpTrigger:hover{background:#2c2c2c;border-color:#c9a24e;}',
     '@media(max-width:640px){.gp-page{column-count:1!important;}}'
   ].join('');
 
@@ -203,8 +208,15 @@
     refreshBook();
   }
   function drawAnother() {
-    draw(state.world);
+    var pk = draw(state.world);
     refreshBook();
+    setLibrarian(pk, true);
+  }
+  function setLibrarian(pick, isRedraw) {
+    var el = document.getElementById('gpLibLine');
+    if (el && window._guideLibrarianLine) {
+      el.textContent = window._guideLibrarianLine(pick, { isRedraw: isRedraw, filtered: !!state.world });
+    }
   }
 
   // ---------------------------------------------------------------- the bar
@@ -251,6 +263,8 @@
           '<div class="gp-rule"></div></div>' +
         '<div class="gp-bookwrap">' +
           '<div class="gp-intro">While your next scene is composed, read on</div>' +
+          '<div class="gp-librarian"><span class="gp-lib-mark">✒</span><span id="gpLibLine"></span></div>' +
+          '<div class="gp-lib-by">— the Librarian</div>' +
           '<div id="gpBookHost" style="width:100%;display:flex;justify-content:center;"></div>' +
           '<div class="gp-controls">' +
             '<button class="gp-btn" id="gpTurnBack">‹ Turn back</button>' +
@@ -301,8 +315,9 @@
     var ov = document.getElementById('gpOverlay') || buildOverlay();
     state.world = '';
     var wsel = document.getElementById('gpWorld'); if (wsel) wsel.value = '';
-    draw('');
+    var pk = draw('');
     refreshBook();
+    setLibrarian(pk, false);
     var cont = document.getElementById('gpContinue'); if (cont) cont.classList.remove('gp-show');
     var bz = document.getElementById('gpBarZone'); if (bz) bz.style.display = '';
     ov.classList.add('gp-open');
@@ -318,12 +333,18 @@
     if (document.getElementById('gpTrigger')) return;
     var b = document.createElement('button');
     b.id = 'gpTrigger';
-    b.textContent = '📖 Preview: Between-Scenes Guide';
+    b.textContent = '📖';
+    b.title = "Loading-screen tester — between-scenes Traveler's Guide intermission (preview)";
     b.addEventListener('click', openOverlay);
     document.body.appendChild(b);
   }
 
-  function boot() { injectStyle(); injectButton(); window._gpOpenPreview = openOverlay; }
+  function boot() {
+    injectStyle();
+    window._gpOpenPreview = openOverlay; // callable from the console on any host
+    var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (local) injectButton();           // match the other dev buttons: localhost only
+  }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();

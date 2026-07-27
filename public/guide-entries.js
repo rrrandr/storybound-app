@@ -1423,3 +1423,70 @@ window._guideConceptMetrics = function () {
     pages: pages                    // slug -> [entry ids], for "show me every page about X"
   };
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// THE LIBRARIAN (Roman) — makes book selection feel CHOSEN, not random: a short
+// line as if someone handed you this volume. HONEST curation only — keyed to
+// signals we actually have (scarcity, a worn copy, a re-draw, an active world
+// filter). It never fakes personalization ("you've been reading about wishing"
+// would need read-tracking we don't have) — the Librarian observes, never invents.
+// Returns a line string; pass the pick from _guidePickBookThenPage.
+//   opts: { isRedraw?, filtered? (a world filter is active), rng?, last? }
+// ─────────────────────────────────────────────────────────────────────────────
+window._GUIDE_LIBRARIAN_LINES = {
+  generic: [
+    'Here — I set this one aside for you.',
+    'This volume may interest you while you wait.',
+    'A fitting companion for the interval.',
+    'Take this one. It reads well in a spare moment.',
+    "You'll want something for the wait. This will do."
+  ],
+  redraw: [
+    'Another, then? As you like.',
+    'Still browsing — take your time. The shelves keep.',
+    'Not that one? Try this.',
+    'Restless tonight. Here, something different.'
+  ],
+  scarce: [
+    'This one rarely leaves the shelf. Handle it gently.',
+    'A scarce find — you may not see its like again soon.',
+    'Careful with this. Few copies remain.'
+  ],
+  worn: [
+    'This copy has seen better days. Read it kindly.',
+    'Water and years have had at this one, but it still speaks.',
+    'Forgive the state of it — the words survived; the binding, less so.'
+  ]
+};
+window._GUIDE_WORLD_LABEL = {
+  fatelands: 'Fatelands', modern: 'Modern', historical: 'Historical',
+  dystopia: 'Dystopia', scifi: 'Sci-Fi', postapocalyptic: 'Post-Apocalypse'
+};
+(function () {
+  var last = '';
+  window._guideLibrarianLine = function (pick, opts) {
+    opts = opts || {};
+    var rng = opts.rng || Math.random;
+    var L = window._GUIDE_LIBRARIAN_LINES;
+    if (!pick || !L) return '';
+    var ctx = [];
+    var d = pick.discovery;
+    if (d === 'rare' || d === 'restricted' || d === 'lost') ctx = ctx.concat(L.scarce);
+    if (/flooded|salvage|abandon|torn|water-warp|brittle|damp|soften|blast|grease|crossed out|regrettably|loose|stuck together|rain-buckl|warp/i.test(pick.provenance || '')) ctx = ctx.concat(L.worn);
+    if (opts.filtered) {
+      var P = window._GUIDE_PUBLICATIONS || {};
+      var w = (P[pick.publication] || {}).world;
+      var lbl = (window._GUIDE_WORLD_LABEL || {})[w] || w;
+      if (lbl) ctx.push('From the ' + lbl + ' shelf, as you asked.');
+    }
+    if (opts.isRedraw) ctx = ctx.concat(L.redraw);
+    // favour a contextual line when one applies, else fall back to the neutral pool
+    var pool = (ctx.length && rng() < 0.72) ? ctx : L.generic;
+    var avoid = opts.last != null ? opts.last : last;
+    var choices = pool.filter(function (l) { return l !== avoid; });
+    if (!choices.length) choices = pool;
+    var line = choices[Math.floor(rng() * choices.length)];
+    last = line;
+    return line;
+  };
+})();
