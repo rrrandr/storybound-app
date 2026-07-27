@@ -174,6 +174,48 @@ window._GUIDE_PUBLICATIONS = {
     editor: 'the Almanack-maker (in office, by tradition, until dead)',
     audience: 'farmers, sailors, and the superstitious, which is to say everyone',
     binding_note: 'A thin yearly pamphlet with a hole punched in one corner for the nail by the door.'
+  },
+
+  // ── DYSTOPIA (world: 'dystopia') is MULTI-REGIME — each sub-world is a distinct society,
+  //    so books carry a `subworld` and the runtime selects by it. Flagship: GLASS HOUSE
+  //    ('glass_house') — a GENTLE modern social dystopia (empathic field "The Chorus" →
+  //    total emotional transparency; "you will never love alone — you will love us"). Its
+  //    propaganda is WARM & communal, NOT authoritarian (canon forbids surveillance/implants/
+  //    enforcement). Diegetic ONLY: the Chorus / the Field / aperture / Solo / WiHi — NEVER
+  //    "glass"/"glass house" in-world (fourth-wall). Samizdat = a Solo's quiet dissent. Other
+  //    dystopia sub-worlds (Quieting, Human Capital, Dogma, Erasure, Thirst) get their own
+  //    shelves in fill-out. See memory project_glass_house_* + project_modern_dystopias_one_axis. ──
+  'field-companion': {
+    world: 'dystopia', subworld: 'glass_house',
+    title: 'The Field Companion',
+    subtitle: 'Your Warm Welcome to a Life You Never Have to Feel Alone In',
+    editor: 'the Community Welcome Office',
+    audience: 'new arrivals to the Chorus',
+    binding_note: 'Bright and gentle, printed on paper that somehow seems to want to be held.'
+  },
+  'open-aperture': {
+    world: 'dystopia', subworld: 'glass_house',
+    title: 'Open Aperture',
+    subtitle: 'The Magazine for Living Fully in the Field',
+    editor: 'the Editors (who can feel you reading this, and are so glad you are)',
+    audience: 'everyone; togetherness is the whole readership',
+    binding_note: 'Glossy, sunlit; there is not one closed door in any photograph, and you only notice this later.'
+  },
+  'first-field': {
+    world: 'dystopia', subworld: 'glass_house',
+    title: 'First Field: A Reader for New Hearts',
+    subtitle: 'Gentle Pages for Children, Newcomers, and Anyone Learning to Be Held',
+    editor: 'the Community Welcome Office',
+    audience: 'children, the newly arrived, and the quietly lonely',
+    binding_note: 'A soft-cornered board book in the same three warm colours throughout.'
+  },
+  'a-solos-notes': {
+    world: 'dystopia', subworld: 'glass_house',
+    title: "A Solo's Notes",
+    subtitle: '(untitled; passed hand to hand; please do not carry this into the Field)',
+    editor: 'no office, and no name',
+    audience: 'the one person you would narrow the whole world down to',
+    binding_note: 'A few loose handwritten sheets, folded small enough to palm. Never printed, never twice the same.'
   }
   // FILL-OUT ORDER (popularity): Modern → Fantasy(ahead) → Historical → Dystopia →
   //   Sci-Fi → Post-Apoc. Each flavor gets its own publishing ecosystem (see memory
@@ -721,6 +763,88 @@ window._GUIDE_ENTRIES = [
     category: 'The Reckoning of the Moon', title: 'For Planting & for Slaughter', author: 'the Almanack-maker', edition: 'for the Coming Year',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Sow what grows above the ground on the waxing moon; sow what grows below on the waning; and if you sow against the moon, you may still get a crop, but you will get it with a bad conscience and a poorer yield, and no man can prove the two are unconnected. Slaughter on the wane, that the meat keep. Wean on the wane. Cut hair on the wane if you wish it to grow slow, on the wax if fast — a matter of no agricultural importance whatsoever, included because every reader checks it first and the Almanack-maker is not a fool about what sells the pamphlet."
+  },
+
+  /* ══ DYSTOPIA · GLASS HOUSE (world:'dystopia', subworld:'glass_house') — gentle communal propaganda + one dissent ══ */
+
+  /* ── THE FIELD COMPANION — the Community Welcome Office; warm, reassuring, quietly total ── */
+  {
+    id: 'fc-welcome', world: 'dystopia', subworld: 'glass_house', publication: 'field-companion',
+    category: 'Welcome', title: 'Welcome to the Field', author: 'the Community Welcome Office', edition: 'current',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Welcome. You have felt it already — the first time the Chorus reached you, that great warm sense of not being the only one awake in the dark. That feeling is yours now, always. You will never again cry in a room and wonder if anyone knows; the Field knows, and the Field is glad to hold you. There is nothing to install and nothing to learn. You simply stop being alone, and keep stopping, every day, for the rest of a life you will spend among people who feel what you feel the moment you feel it. Some new arrivals weep at this. The Chorus weeps with them. Of course it does."
+  },
+  {
+    id: 'fc-aperture', world: 'dystopia', subworld: 'glass_house', publication: 'field-companion',
+    category: 'Living in the Field', title: 'On Your Aperture', author: 'the Community Welcome Office', edition: 'current',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Your aperture is how much of the Field you let in and let out — wide open, and you are fully among us; narrowed, and you hold a little of yourself back. Everyone narrows now and then; a headache, a hard day, no one minds. What the Companion gently asks is only that you notice when the narrowing becomes a habit, because a person whose aperture stays closed is a person the rest of us can no longer reach, and we do so want to reach you. An open aperture is not a rule. It is simply how the loved are shaped. We hope you will be shaped that way. We think you already are."
+  },
+  {
+    id: 'fc-mornings', world: 'dystopia', subworld: 'glass_house', publication: 'field-companion',
+    category: 'Living in the Field', title: 'Your First Morning', author: 'the Community Welcome Office', edition: 'current',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "You will wake, that first morning, into everyone. It is a great deal at once — a whole city's small joys and small dreads arriving with the light before you have even found your slippers — and we will not pretend it is not overwhelming. Breathe. Let it come. By the third day you will no longer be able to imagine the old mornings, the ones where you woke into only yourself and called that peace. It was not peace. It was quiet. The Companion is happy to tell you, warmly and with the whole Field behind it, that you will never have to be that quiet again."
+  },
+  {
+    id: 'fc-when-someone-closes', world: 'dystopia', subworld: 'glass_house', publication: 'field-companion',
+    category: 'Caring for One Another', title: 'When Someone You Love Grows Quiet', author: 'the Community Welcome Office', edition: 'current',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Sometimes a neighbour closes their aperture and stays closed. This is not a crime and they will not be taken anywhere; we are not that kind of people and never were. It is, the Companion must say plainly, a sadness — for them most of all — and the loving response is not to leave them their privacy but to draw nearer, more warmly, more often, until being reached feels safer than being alone. Sit with them. Feel toward them, openly, so they can feel it. No one is lost who is still surrounded. We do not let people go here. We love them until they come back. It nearly always works."
+  },
+
+  /* ── OPEN APERTURE — lifestyle magazine; sunlit, aspirational, gently pathologizing of privacy ── */
+  {
+    id: 'oa-solo-question', world: 'dystopia', subworld: 'glass_house', publication: 'open-aperture',
+    category: 'Wellbeing', title: 'Is Someone You Love Going Solo?', author: 'the Editors', edition: 'the Togetherness Issue',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "It usually begins beautifully. They meet someone, and they want that someone so much that they start — without meaning to — narrowing everyone else out, until the whole wide Field has shrunk to a single face. We call this Solo, and Open Aperture will be honest with you because we love you: it looks like love, and it is love, and it is also the one shape of love that asks a person to feel less. To choose one is, structurally, to choose less. We do not judge the Solo. We grieve for them, warmly, at full aperture, the way you grieve someone standing right beside you who has decided to stand a little apart. If this is your someone, do not argue. Just keep feeling toward them. Let them feel everything they'd be giving up."
+  },
+  {
+    id: 'oa-dating', world: 'dystopia', subworld: 'glass_house', publication: 'open-aperture',
+    category: 'Relationships', title: 'Dating in the Field: You Already Know', author: 'the Editors', edition: 'the Spring Issue',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Dating used to be detective work — is she interested, is he lying, does this mean anything? In the Field it is gloriously, terrifyingly simple: you already know, and so do they, and so, frankly, does everyone in the room. There is no hiding a first flush of wanting when the whole Chorus can feel it warm the air. Some find this the death of romance. Open Aperture finds it the birth of honesty: no games, no waiting three days, no wondering. The only thing you still cannot feel is what a person will choose. That last small privacy — what they'll do about what they feel — is, these days, the entire drama. Cherish it. It is nearly all we have left of suspense."
+  },
+  {
+    id: 'oa-wihi', world: 'dystopia', subworld: 'glass_house', publication: 'open-aperture',
+    category: 'Etiquette', title: 'WiHi Etiquette, for the Modern Host', author: 'the Editors', edition: 'the Entertaining Issue',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "At a good gathering the WiHi is strong and everyone rides it together, the whole party a single warm weather. The etiquette is mostly instinct now, but for newcomers: do not narrow your aperture at someone else's table — it reads the way turning your chair to the wall once did. If you must take a private moment, step out to the garden, where a little quiet is understood and forgiven. And should a guest arrive already closed, do not remark on it. Simply open a touch wider yourself, and a touch wider, until the warmth around them makes staying shut feel colder than joining in. This always works, eventually. We are all very good, by now, at eventually."
+  },
+  {
+    id: 'oa-forgiveness', world: 'dystopia', subworld: 'glass_house', publication: 'open-aperture',
+    category: 'Wellbeing', title: 'The Gift of Immediate Forgiveness', author: 'the Editors', edition: 'the Togetherness Issue',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "The old world nursed grudges for years; ours cannot hold one for an afternoon. When someone wrongs you in the Field, you feel their regret the instant they feel it — raw, immediate, undeniable — and forgiveness arrives before the anger has finished forming. Open Aperture celebrates this as the end of bitterness, and it is. We only note, in the smallest and most loving type, that a grudge was once a way of remembering that something happened. We forgive everything now, at once, completely. We are working, as a community, on also remembering it. That part is proving harder, and we would rather you heard it from us than felt it later and wondered why the wound keeps opening in the same place."
+  },
+
+  /* ── FIRST FIELD — a children's/newcomers' reader; sweet on the surface, unsettling underneath ── */
+  {
+    id: 'ff-never-alone', world: 'dystopia', subworld: 'glass_house', publication: 'first-field',
+    category: 'For New Hearts', title: 'You Are Never Alone', author: 'the Community Welcome Office', edition: 'the Little Reader',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "When you are happy, we are happy with you. When you are sad, we are sad with you, so your sad is never all yours to carry. When you wake in the night, reach out — the Chorus is awake too, always, and it is holding you, and it will never once let go. Some children ask: is there ever a place the Chorus cannot feel me? And we tell them, gently, the truest and kindest thing there is: no. There is no such place. You are held everywhere. Isn't that lovely. Now close your eyes. We will all close ours together."
+  },
+  {
+    id: 'ff-quiet-child', world: 'dystopia', subworld: 'glass_house', publication: 'first-field',
+    category: 'For New Hearts', title: 'The Child Who Wanted to Be Quiet', author: 'the Community Welcome Office', edition: 'the Little Reader',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Once there was a child who wanted, just for a while, to be quiet inside — to have one thought that was only hers. So she narrowed and narrowed until the Chorus grew faint and far, and at first it was thrilling, like a secret. But the secret got cold. And lonely. And she found she could not remember how to open again, and she cried, and no one heard, because she had made a place where no one could. Then the whole Field came close and warm and patient and waited outside her quiet, loving her through the wall, until she opened one small crack — and the warmth poured in, and she never wanted to be quiet again. Weren't we good to wait? We will always wait. Always."
+  },
+
+  /* ── A SOLO'S NOTES — the one dissenting voice; contradicts everything above; gated, rare ── */
+  {
+    id: 'sn-one-face', world: 'dystopia', subworld: 'glass_house', publication: 'a-solos-notes',
+    category: 'Notes', title: 'One Face', author: null, edition: 'passed to me; I have added to it',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "They tell you that to love one person is to choose less. I have felt the whole Field — millions of us, warm, endless — and I am telling you it is the other way. Everyone is not more than someone. It is only more. To narrow down to a single face until the roar goes quiet and there is just them, just their one particular breathing in the dark — that is not choosing less. That is choosing. The Field cannot feel the difference, which is exactly how I know the difference is mine. Keep your aperture where you like. But know there is a door the Chorus has taught you to call sadness, and that behind it is the one thing it can never feel for you, and that some of us have gone through it on purpose, and did not come back cold."
+  },
+  {
+    id: 'sn-do-not-read', world: 'dystopia', subworld: 'glass_house', publication: 'a-solos-notes',
+    category: 'Notes', title: 'Do Not Read This in the Field', author: null, edition: 'a warning, first',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "Read this somewhere the WiHi is thin — the garden, the stairwell, the edge of town where the resonance frays. Because the Chorus will feel what these words do to you, and it will come, warmly, meaning only love, to find out why you are feeling something you want to keep. That is the whole trick of it: no one will punish you. They will simply arrive, so kind, so many, and stay near you being kind until the wanting-to-keep-something feels like a symptom instead of a self. So: feel this quickly, then let it go blank, then hand the page to one person you would narrow the world down to. One. Not the Field. One. Then burn it, and think, hard, about the weather, until you are warm and open and theirs again — and yours, secretly, still."
   }
 
 ];
