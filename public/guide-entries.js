@@ -1234,7 +1234,11 @@ window._GUIDE_ENTRIES = [
     id: 'sm-water', world: 'postapocalyptic', publication: 'survivors-manual',
     category: 'The Basics', title: 'On Water, and Not Dying of It', author: 'many hands', edition: 'this copy, so far',
     unlock: 'always', spoiler_level: 0, canon_safe: true, concepts: [],
-    body: "Boil it. If you cannot boil it, filter it through charcoal and cloth and boil it anyway the moment you can. Clear water lies; the worst of what kills you cannot be seen, only remembered, afterward, by the people who dug the grave. Rain caught off a clean surface is a gift; rain caught off a roof is a gamble; standing water is a decision you are making about how much you want to live. (In the margin of this copy, a second hand: 'Or drink from the spring at the mile-marker and stop being dramatic.' A third hand, below, smaller: 'The spring is why we buried Tomas.' The Manual lets both stand. That is the Manual.)"
+    margin_notes: [
+      { hand: 'a second hand', note: 'Or drink from the spring at the mile-marker and stop being dramatic.' },
+      { hand: 'a third hand, smaller', note: 'The spring is why we buried Tomas.' }
+    ],
+    body: "Boil it. If you cannot boil it, filter it through charcoal and cloth and boil it anyway the moment you can. Clear water lies; the worst of what kills you cannot be seen, only remembered, afterward, by the people who dug the grave. Rain caught off a clean surface is a gift; rain caught off a roof is a gamble; standing water is a decision you are making about how much you want to live. The later hands argue with this page in the margins — the Manual lets them stand. That is the Manual."
   },
   {
     id: 'sm-fungus', world: 'postapocalyptic', publication: 'survivors-manual',
