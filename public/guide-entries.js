@@ -1126,9 +1126,9 @@ window._GUIDE_ENTRIES = [
   },
   {
     id: 'ff-quiet-child', world: 'dystopia', subworld: 'glass_house', publication: 'first-field',
-    category: 'For New Hearts', title: 'The Child Who Wanted to Be Quiet', author: 'the Community Welcome Office', edition: 'the Little Reader',
+    category: 'For New Hearts', title: 'The Girl Who Wanted to Be Quiet', author: 'the Community Welcome Office', edition: 'the Little Reader',
     unlock: 'always', spoiler_level: 1, canon_safe: true, concepts: ['aperture'],
-    body: "Once there was a child who wanted, just for a while, to be quiet inside — to have one thought that was only hers. So she narrowed and narrowed until the Chorus grew faint and far, and at first it was thrilling, like a secret. But the secret got cold. And lonely. And she found she could not remember how to open again, and she cried, and no one heard, because she had made a place where no one could. Then the whole Field came close and warm and patient and waited outside her quiet, loving her through the wall, until she opened one small crack — and the warmth poured in, and she never wanted to be quiet again. Weren't we good to wait? We will always wait. Always."
+    body: "Once there was a girl newly old enough for the Chorus — its voices only lately open to her — who wanted, just for a while, to be quiet inside, to have one thought that was only hers. So she narrowed and narrowed until the Chorus grew faint and far, and at first it was thrilling, like a secret. But the secret got cold. And lonely. And she found she could not remember how to open again, and she cried, and no one heard, because she had made a place where no one could. Then the whole Field came close and warm and patient and waited outside her quiet, loving her through the wall, until she opened one small crack — and the warmth poured in, and she never wanted to be quiet again. Weren't we good to wait? We will always wait. Always."
   },
 
   /* ── A SOLO'S NOTES — the one dissenting voice; contradicts everything above; gated, rare ── */
