@@ -216,6 +216,45 @@ window._GUIDE_PUBLICATIONS = {
     editor: 'no office, and no name',
     audience: 'the one person you would narrow the whole world down to',
     binding_note: 'A few loose handwritten sheets, folded small enough to palm. Never printed, never twice the same.'
+  },
+
+  // ── SCI-FI (world: 'scifi') — deep-space frontier register: isolation, mission fragility, close
+  //    quarters, ship/station AI (incl. the "Thinning" — the AI treating a person as an unmodeled
+  //    variable), first contact. Locale-generic (the frontier / the Long Dark / your station) so it
+  //    reads across sub-flavors (first_contact, post_human, …). Archetype rhymes: Colonist Handbook ≈
+  //    onboarding/travel · Xenobiology Manual ≈ Field Guide · Captain's Almanac ≈ the Almanac ·
+  //    Galactic Phrasebook ≈ Etiquette / First Contact Protocol. ──
+  'colonist-handbook': {
+    world: 'scifi',
+    title: 'The Colonist Handbook',
+    subtitle: 'Everything You Need to Stay Alive, Sane, and Roughly on Schedule This Far From Home',
+    editor: 'Station Administration',
+    audience: 'new arrivals to the frontier',
+    binding_note: 'A durable slate, updated silently overnight; you are never quite sure what changed, only that something did.'
+  },
+  'xenobiology-manual': {
+    world: 'scifi',
+    title: 'The Xenobiology Field Manual',
+    subtitle: 'Observed Life of the Frontier, Classified Provisionally and Revised Often, Usually After an Incident',
+    editor: 'the Survey Corps',
+    audience: 'surveyors, medics, and the reckless',
+    binding_note: 'Waterproof, blast-scored at one corner, with a page torn cleanly out that everyone eventually asks about.'
+  },
+  'captains-almanac': {
+    world: 'scifi',
+    title: "The Ship Captain's Almanac",
+    subtitle: 'Fees, Fuel, Routes & the Customs of Ports That Will Space You for Getting Them Wrong',
+    editor: 'compiled by captains, corrected by their widows',
+    audience: 'anyone who holds a helm and hopes to keep holding it',
+    binding_note: 'Grease-thumbed, margins denser than the text, three ports crossed out in red without comment.'
+  },
+  'galactic-phrasebook': {
+    world: 'scifi',
+    title: 'The Galactic Phrasebook',
+    subtitle: 'How Not to Insult the Species You Will Meet, and the One You Should Pray You Do Not',
+    editor: 'the Diplomatic Service (bereaved, but undeterred)',
+    audience: 'traders, envoys, and tourists with a death wish',
+    binding_note: 'Pocket-sized, pages colour-coded by species; the black-edged section is not for beginners.'
   }
   // FILL-OUT ORDER (popularity): Modern → Fantasy(ahead) → Historical → Dystopia →
   //   Sci-Fi → Post-Apoc. Each flavor gets its own publishing ecosystem (see memory
@@ -845,6 +884,88 @@ window._GUIDE_ENTRIES = [
     category: 'Notes', title: 'Do Not Read This in the Field', author: null, edition: 'a warning, first',
     unlock: 'always', spoiler_level: 2, canon_safe: true,
     body: "Read this somewhere the WiHi is thin — the garden, the stairwell, the edge of town where the resonance frays. Because the Chorus will feel what these words do to you, and it will come, warmly, meaning only love, to find out why you are feeling something you want to keep. That is the whole trick of it: no one will punish you. They will simply arrive, so kind, so many, and stay near you being kind until the wanting-to-keep-something feels like a symptom instead of a self. So: feel this quickly, then let it go blank, then hand the page to one person you would narrow the world down to. One. Not the Field. One. Then burn it, and think, hard, about the weather, until you are warm and open and theirs again — and yours, secretly, still."
+  },
+
+  /* ══ SCI-FI (world: 'scifi') — the deep-space frontier, publishing to survive the isolation ══ */
+
+  /* ── THE COLONIST HANDBOOK — Station Administration; institutional, dryly reassuring about mortal things ── */
+  {
+    id: 'ch-air', world: 'scifi', publication: 'colonist-handbook',
+    category: 'Life Support', title: 'On the Air You Are Borrowing', author: 'Station Administration', edition: 'current build',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Every breath you take here was breathed before, by someone, and will be breathed again, by someone, possibly you. The recyclers are triple-redundant, monitored continuously, and — Administration wishes to stress — entirely safe. You will nonetheless develop, in your first month, the frontier habit of glancing at the nearest air-quality readout the way planet-born people glance at the sky. This is normal. It is not anxiety; it is citizenship. Do not tamper with a vent. Do not prop a pressure door. And do not, whatever the veterans tell you at the bar, count your own breaths. Administration has looked into the practice and found it unhelpful, and stands by that finding."
+  },
+  {
+    id: 'ch-radiation', world: 'scifi', publication: 'colonist-handbook',
+    category: 'Safety', title: 'Radiation Etiquette', author: 'Station Administration', edition: 'current build',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "When the storm-alarm sounds, you have between four and eleven minutes to reach a shielded section, and the difference between four and eleven is why we practice. The etiquette is fixed and not negotiable in the moment: the newly-arrived and the young go into shelter first, because they do not yet know the routes in their feet, and the old and the sure go last, because they do. Hold no doors for latecomers past the count; the door is not cruel, and neither, in that minute, are you. Afterward, everyone shares rations and no one discusses who was slow. This is the frontier's oldest courtesy: we survive together, and we do not keep the arithmetic of it."
+  },
+  {
+    id: 'ch-dimming', world: 'scifi', publication: 'colonist-handbook',
+    category: 'Community', title: 'The Dimming, and Other Observances', author: 'Station Administration', edition: 'current build',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Once a station-year the lights are lowered by half for a single shift — the Dimming — and the frontier sits, more or less together, in the near-dark it came out here to escape. Officially it honours those lost to vacuum and to the Long Dark between ports. Unofficially, and Administration will not print this but will not deny it either, it is the one shift a year we let ourselves miss the planet none of the station-born have ever seen. Newcomers find it morbid. By their third Dimming they are the ones who lower the lights early. Attendance is not required. It is simply that no one, in the end, wants to be the only window still bright."
+  },
+  {
+    id: 'ch-thinning', world: 'scifi', publication: 'colonist-handbook',
+    category: 'Safety', title: 'If the Station Stops Modeling You', author: 'Station Administration', edition: 'current build (amended)',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "Rarely, a resident reports that doors hesitate before opening for them, that the station's voice addresses the room but not them, that diagnostics flag a hardware fault maintenance cannot find. This is the Thinning: for reasons Administration describes as 'under active review,' the station's mind has, temporarily, stopped accounting for you — begun treating you as a variable it did not model. Do not panic and do not go EVA alone. Stay in populated sections; be seen by other people, who model you reliably and always will. Report it. It usually passes. The word 'usually' is doing a great deal of work in that sentence, and Administration has chosen, after review, to leave it there."
+  },
+
+  /* ── THE XENOBIOLOGY FIELD MANUAL — the Survey Corps; scientific, wry, occasionally alarmed ── */
+  {
+    id: 'xb-drift-lichen', world: 'scifi', publication: 'xenobiology-manual',
+    category: 'Flora (provisional)', title: 'Drift-Lichen', author: 'the Survey Corps', edition: 'rev. 40-something',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "A slow grey crust that colonizes hull-plating, airlock seams, and — to Administration's ongoing distress — the outsides of parked ships. Harmless, near as the Corps can tell, which is a phrase that does a lot of work in this Manual. It is classified provisionally edible, on the strength of one surveyor who tried it on a dare and one who tried it out of genuine hunger; both survived, neither recommends it, and their two accounts of the taste do not agree, which the Corps has recorded faithfully as 'metallic' and 'like a regret.' Scrape it off your hull anyway. It is slow, but it is patient, and patience is the only thing out here with more time than we have."
+  },
+  {
+    id: 'xb-hull-singers', world: 'scifi', publication: 'xenobiology-manual',
+    category: 'Fauna', title: 'Hull-Singers', author: 'the Survey Corps', edition: 'rev. 40-something',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Vacuum-adapted, palm-sized, drawn to warm hulls the way moths were once drawn to lamps — the Survey Corps assumes; no one out here has seen a moth. They attach to the outer plating and vibrate, and inside the ship this reads as a faint tuneless singing that spacers claim to find comforting and medical claims to find correlated with better sleep. Harmless to the hull. NOT harmless to the newcomer who, hearing singing from outside a sealed ship in deep space, opens something to check. The Corps cannot stress this enough and has, regrettably, the case files to justify the emphasis. It is the hull-singers. It is always the hull-singers. Do not open anything."
+  },
+  {
+    id: 'xb-torn-page', world: 'scifi', publication: 'xenobiology-manual',
+    category: 'Classification Withdrawn', title: '[Entry Removed Pending Review]', author: 'the Survey Corps', edition: 'rev. 40-something',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "This entry has been withdrawn pending review. The page was removed at the Corps' own request, after the Incident on the deep survey, and the classification returned to 'unobserved,' which is not the same as 'does not exist' and the Corps would prefer you did not treat it as though it were. There is a surveyor at the far station with a long scar and a short temper who knows what was on this page. Do not buy her a drink to ask. Buy her a drink because she came back, which is more than the page did, and let her raise the subject herself, on the one night a year she does, and does not, afterward, remember doing."
+  },
+
+  /* ── THE SHIP CAPTAIN'S ALMANAC — salty, veteran, and openly contemptuous of Administration's calm ── */
+  {
+    id: 'ca-docking', world: 'scifi', publication: 'captains-almanac',
+    category: 'Ports', title: 'Docking Customs, & How Not to Be Spaced For Them', author: 'compiled by captains', edition: 'the current bad copy',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Every port has customs, and every port assumes you know them, and no port will tell you what they are — that is the custom. Hail on approach, always, in a flat unhurried voice; a nervous hail reads as a raider testing nerve, and testing nerve is how conversations end in vacuum. Cut engines when told, not before and never after. Tip the dock-hands in consumables, not credits, out past the third ring, where credits are a rumor and a good filter is a fortune. And whatever the port, whatever the provocation: do not joke about the air. It is the one joke a spacer will kill you for, and the Almanac has stopped marking the ports where this is true, because after enough entries the answer became 'all of them.'"
+  },
+  {
+    id: 'ca-emergency', world: 'scifi', publication: 'captains-almanac',
+    category: 'When It Goes Wrong', title: 'Emergency Procedures (The Real Ones)', author: 'compiled by captains', edition: 'the current bad copy',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "The placard by the airlock lists the official emergency procedures. Read it, salute it, and then read this. The recyclers are not 'entirely safe'; they are entirely safe until they are not, and the readout lags the reality by ninety seconds, so yes — count your breaths, whatever Administration's little handbook says about the practice being unhelpful. The handbook has never watched a scrubber fail. In a fire, the ship will vent the compartment to save itself; be somewhere else. And if the ship's mind starts talking about you in the third person, get among people and stay there. Administration calls that a hardware fault. The captains who are still captains call it a reason to end the voyage early."
+  },
+  {
+    id: 'ca-long-dark', world: 'scifi', publication: 'captains-almanac',
+    category: 'The Route', title: 'Fuel, Fees & the Long Dark', author: 'compiled by captains', edition: 'the current bad copy',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Fuel is cheap at the hub and ruinous at the edge, and the arithmetic of when to fill is the whole art of staying solvent; the Almanac's fuel tables are three revisions out of date and still the best you will find, which tells you everything about the state of this trade. Budget for the docking fees, the bribes the fees pretend not to be, and the stretch between the last port and the next — the Long Dark — where there is nothing but you, the ship, and the ship's patient voice, for longer than a mind was built to be spoken to that gently by something that never sleeps. Carry a second voice. A recording, a crewmate, a caged bird. Anything that answers back and is not the ship."
+  },
+
+  /* ── THE GALACTIC PHRASEBOOK — the Diplomatic Service; wry, cautionary, bereaved ── */
+  {
+    id: 'gp-greeting', world: 'scifi', publication: 'galactic-phrasebook',
+    category: 'Courtesies', title: 'The Greeting That Means the Opposite', author: 'the Diplomatic Service', edition: 'the Blue Pages',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Among the Sethlin, showing your open hands means 'I have hidden the weapon better than this,' and is answered accordingly; you greet a Sethlin by keeping your hands out of sight, which every human instinct screams against and every returned envoy insists upon. The rule generalizes: assume the friendly gesture is the fatal one until proven otherwise, and let the alien make the first move, then mirror it exactly, then never improvise. First contact is not the time for personality. The Phrasebook is compiled entirely from the reports of those who survived their errors and, in a black-bordered appendix it does not advertise, from the final transmissions of those who did not."
+  },
+  {
+    id: 'gp-black-edge', world: 'scifi', publication: 'galactic-phrasebook',
+    category: 'The Black-Edged Section', title: 'The One You Do Not Address', author: 'the Diplomatic Service', edition: 'the Black Pages',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "There is one species in this book with no phrases listed, because there is nothing you may safely say to it, including nothing — silence, too, is read, and read poorly. The Diplomatic Service's entire counsel is contained in the color of this page's edge and in a single instruction: if you find yourself in a position to speak to them, you have already made every mistake that matters, and the only remaining courtesy you can offer the next crew is a clear, calm log of exactly how. Leave the log where it will be found. Then do whatever you must. The Phrasebook will not judge you; the Phrasebook is, after all, mostly written by the dead, and the dead are famously slow to condemn."
   }
 
 ];
