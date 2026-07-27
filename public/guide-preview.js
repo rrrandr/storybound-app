@@ -69,7 +69,22 @@
     '.gp-intro{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9c8b6b;text-align:center;}',
     '.gp-book{position:relative;width:100%;max-width:720px;background:linear-gradient(180deg,#f4ead6,#ece0c8);',
       'color:#2b2118;border-radius:6px;padding:clamp(22px,3.4vw,40px) clamp(20px,4vw,52px);',
+      'font-family:var(--gp-body,Georgia,"Iowan Old Style","Times New Roman",serif);',
       'box-shadow:0 30px 70px rgba(0,0,0,.55),0 2px 0 #d9cba9,inset 0 0 0 1px rgba(120,96,52,.18);}',
+    // ── per-world typography (each civilization sets --gp-body + --gp-title) ──
+    ".gp-world-modern{--gp-body:'Lora',Georgia,serif;--gp-title:'Lora',Georgia,serif;}",
+    ".gp-world-historical{--gp-body:'EB Garamond',Georgia,serif;--gp-title:'EB Garamond',Georgia,serif;}",
+    ".gp-world-fatelands{--gp-body:'MedievalSharp',Georgia,serif;--gp-title:'Uncial Antiqua','MedievalSharp',serif;}",
+    ".gp-world-dystopia{--gp-body:'Zilla Slab',Georgia,serif;--gp-title:'Zilla Slab',Georgia,serif;}",
+    ".gp-world-scifi{--gp-body:'Chakra Petch',system-ui,sans-serif;--gp-title:'Orbitron','Chakra Petch',sans-serif;}",
+    ".gp-world-postapocalyptic{--gp-body:'Special Elite','Courier New',monospace;--gp-title:'Architects Daughter','Special Elite',cursive;}",
+    // display-only faces are titles only; body stays the readable partner above
+    '.gp-btitle,.gp-etitle{font-family:var(--gp-title,var(--gp-body,inherit));}',
+    '.gp-world-postapocalyptic .gp-btitle,.gp-world-postapocalyptic .gp-etitle{text-transform:uppercase;letter-spacing:.03em;}',
+    '.gp-world-dystopia .gp-btitle{font-weight:700;letter-spacing:-0.01em;}',
+    '.gp-world-scifi .gp-btitle{letter-spacing:.06em;text-transform:uppercase;}',
+    '.gp-world-fatelands .gp-page{line-height:1.68;}', // MedievalSharp runs tall
+    '.gp-world-scifi .gp-page,.gp-world-postapocalyptic .gp-page{font-size:clamp(13px,1.7vw,15px);}', // mono/techy read larger
     // decorative center crease
     '.gp-book::before{content:"";position:absolute;top:14px;bottom:14px;left:50%;width:2px;transform:translateX(-1px);',
       'background:linear-gradient(180deg,transparent,rgba(120,96,52,.28),transparent);pointer-events:none;}',
@@ -136,6 +151,17 @@
     s.textContent = STYLE;
     document.head.appendChild(s);
   }
+  // per-world book fonts (the app already loads Google Fonts, so this is CSP-safe)
+  function injectFonts() {
+    if (document.getElementById('gp-fonts')) return;
+    var l = document.createElement('link');
+    l.id = 'gp-fonts'; l.rel = 'stylesheet';
+    l.href = 'https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400' +
+      '&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Uncial+Antiqua&family=MedievalSharp' +
+      '&family=Zilla+Slab:wght@400;600;700&family=Orbitron:wght@500;700&family=Chakra+Petch:wght@400;500' +
+      '&family=Special+Elite&family=Architects+Daughter&display=swap';
+    document.head.appendChild(l);
+  }
 
   function esc(t) { var d = document.createElement('div'); d.textContent = t == null ? '' : t; return d.innerHTML; }
 
@@ -186,7 +212,7 @@
         paras + margins + '</div>';
     }).join('') || '<div class="gp-entry"><p><em>(blank leaf)</em></p></div>';
 
-    return '<div class="gp-book">' +
+    return '<div class="gp-book gp-world-' + esc(meta.world || 'modern') + '">' +
       '<div class="gp-bhead"><span class="gp-btitle">' + esc(meta.title) + '</span>' +
       (meta.edition_label ? '<span class="gp-bedition">' + esc(meta.edition_label) + '</span>' : '') + '</div>' +
       '<div class="gp-chiprow">' + chips + '</div>' +
@@ -588,6 +614,7 @@
 
   function boot() {
     injectStyle();
+    injectFonts();
     window._gpOpenPreview = function () { openOverlay('preview'); }; // console, any host
     installLiveHooks();
     var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
