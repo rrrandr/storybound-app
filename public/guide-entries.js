@@ -255,6 +255,45 @@ window._GUIDE_PUBLICATIONS = {
     editor: 'the Diplomatic Service (bereaved, but undeterred)',
     audience: 'traders, envoys, and tourists with a death wish',
     binding_note: 'Pocket-sized, pages colour-coded by species; the black-edged section is not for beginners.'
+  },
+
+  // ── POST-APOCALYPSE (world: 'postapocalyptic') — scarcity & grief register: the before/after,
+  //    survival math, the need for a WITNESS, convoys & elders & old warnings, and the wasteland
+  //    that "seems to pay attention." Multi-sub-world (ashfall / year-zero / predation / hunger),
+  //    but these books read across them. Archetype rhymes: Survivor's Manual ≈ onboarding/travel ·
+  //    Settlement Registry ≈ gazetteer · Wasteland Bestiary ≈ Field Guide · Beforefall Memories ≈
+  //    History/nostalgia. (Radio Transcripts = the ephemeral/newspaper analog → UI phase.) ──
+  'survivors-manual': {
+    world: 'postapocalyptic',
+    title: "The Survivor's Manual",
+    subtitle: 'Water, Fire, Fungus, and the Difference Between a Myth That Kills You and One That Does Not',
+    editor: 'no one; everyone; whoever held it last, in the margins',
+    audience: 'the living, and those working to stay that way',
+    binding_note: 'No two copies alike — pages added, torn, corrected in a dozen hands; the true text is the argument between them.'
+  },
+  'settlement-registry': {
+    world: 'postapocalyptic',
+    title: 'The Settlement Registry',
+    subtitle: 'Every Known Town, Its People, Its Trade, and What Is Said of It in the Next Town Over',
+    editor: 'the Registrars (a title now, not a job)',
+    audience: 'traders, walkers, and the lost looking for a wall',
+    binding_note: 'A ledger rebound in salvage; many entries crossed out, a few crossed out and then, hopefully, written back in.'
+  },
+  'wasteland-bestiary': {
+    world: 'postapocalyptic',
+    title: 'The Wasteland Bestiary',
+    subtitle: 'What Walks, Crawls, and Waits Out There, With Danger Ratings Learned the Hard Way',
+    editor: 'compiled by scavengers, at cost',
+    audience: 'anyone going past the wall',
+    binding_note: 'The danger ratings are inked in red, and several have been re-inked, upward, more than once.'
+  },
+  'beforefall-memories': {
+    world: 'postapocalyptic',
+    title: 'Beforefall Memories',
+    subtitle: 'Relics and Remembrances of the World That Ended, for Those Who Recall It and Those Who Cannot',
+    editor: 'the Rememberers (old, and fewer each winter)',
+    audience: 'the young, who do not understand, and the old, who understand too well',
+    binding_note: 'A scrapbook, really — pasted-in scraps of the old world, softening a little more at every fold.'
   }
   // FILL-OUT ORDER (popularity): Modern → Fantasy(ahead) → Historical → Dystopia →
   //   Sci-Fi → Post-Apoc. Each flavor gets its own publishing ecosystem (see memory
@@ -966,6 +1005,88 @@ window._GUIDE_ENTRIES = [
     category: 'The Black-Edged Section', title: 'The One You Do Not Address', author: 'the Diplomatic Service', edition: 'the Black Pages',
     unlock: 'always', spoiler_level: 2, canon_safe: true,
     body: "There is one species in this book with no phrases listed, because there is nothing you may safely say to it, including nothing — silence, too, is read, and read poorly. The Diplomatic Service's entire counsel is contained in the color of this page's edge and in a single instruction: if you find yourself in a position to speak to them, you have already made every mistake that matters, and the only remaining courtesy you can offer the next crew is a clear, calm log of exactly how. Leave the log where it will be found. Then do whatever you must. The Phrasebook will not judge you; the Phrasebook is, after all, mostly written by the dead, and the dead are famously slow to condemn."
+  },
+
+  /* ══ POST-APOCALYPSE (world: 'postapocalyptic') — scarcity, grief, and the need for a witness ══ */
+
+  /* ── THE SURVIVOR'S MANUAL — terse, hard-won, corrected in many hands; the true text is the argument ── */
+  {
+    id: 'sm-water', world: 'postapocalyptic', publication: 'survivors-manual',
+    category: 'The Basics', title: 'On Water, and Not Dying of It', author: 'many hands', edition: 'this copy, so far',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Boil it. If you cannot boil it, filter it through charcoal and cloth and boil it anyway the moment you can. Clear water lies; the worst of what kills you cannot be seen, only remembered, afterward, by the people who dug the grave. Rain caught off a clean surface is a gift; rain caught off a roof is a gamble; standing water is a decision you are making about how much you want to live. (In the margin of this copy, a second hand: 'Or drink from the spring at the mile-marker and stop being dramatic.' A third hand, below, smaller: 'The spring is why we buried Tomas.' The Manual lets both stand. That is the Manual.)"
+  },
+  {
+    id: 'sm-fungus', world: 'postapocalyptic', publication: 'survivors-manual',
+    category: 'Food', title: 'The Fungi You May Eat', author: 'many hands', edition: 'this copy, so far',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Learn four fungi cold and eat only those four: the grey shelf on dead oak, the little brown button of the cellar-dark, the orange fan (cooked, always cooked), and the pale one that smells of nothing. Everything else you find, however hungry, you leave, because hunger is a slow death and the wrong mushroom is a fast one and the wasteland respects neither. The ones that lie are the prettiest — the wasteland kept a sense of humor the old world did not survive. When in doubt, do not. There is always, the Manual is sorry to say, more doubt than food."
+  },
+  {
+    id: 'sm-myths', world: 'postapocalyptic', publication: 'survivors-manual',
+    category: 'What They Say', title: 'Common Myths (and the One That Is True)', author: 'many hands', edition: 'this copy, so far',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "The settlements will tell you: that the ash is safe once it's grey (it is not), that a fever sweated hard breaks clean (it does not), that the walkers who talk to no one are the ones to fear (they are the least of it). Debunk these gently; people need their small wrong certainties out here, and the Manual has learned not to take them for sport. But one myth the townsfolk keep, the Manual keeps too, and does not debunk: that the wasteland pays attention — that if the same person survives too much, too easily, the land begins to notice, and the convoys reroute, and the elders go quiet. The Manual has no mechanism for this. The Manual has only the graves of everyone who laughed at it."
+  },
+  {
+    id: 'sm-witness', world: 'postapocalyptic', publication: 'survivors-manual',
+    category: 'On the Road', title: 'On Traveling With Someone', author: 'many hands', edition: 'this copy, so far',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Two travel slower than one, eat twice as much, and argue at the worst moments; every practical column in this Manual says travel alone. Every practical column is wrong, and the Manual, which is practical, does not know how to say why, so it will say this instead: a person alone stops washing, then stops cooking, then stops talking, then stops. What the second person is for is not the watch-shifts or the shared load. It is that someone saw you today. Someone will say your name tomorrow. In a world that ended, being witnessed is not comfort — it is the last technology that still works. Find someone. Be found. It is, in the end, the only survival that was ever worth the trouble."
+  },
+
+  /* ── THE SETTLEMENT REGISTRY — bureaucratic, fraying, rumor in the margins ── */
+  {
+    id: 'sr-greenhold', world: 'postapocalyptic', publication: 'settlement-registry',
+    category: 'Standing Settlements', title: 'GREENHOLD', author: 'the Registrars', edition: 'last confirmed two winters ago',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "GREENHOLD. Population, at last count, two hundred and change; the 'and change' is the honest part, the count being older than the children in it. Walls sound, well deep, a working greenhouse that is the reason for the name and the reason to be let in at all. Trades seed and glass for salt and medicine; will not trade water, will not discuss why. Governed by a council that is mostly one woman. RUMOR (margin, unverified): they take in strangers freely and the strangers, freely, tend to stay, and no one who has left Greenhold in three years has been seen since in any other entry in this book. The Registry notes this without comment. The Registry has learned that comment is how Registrars stop being Registrars."
+  },
+  {
+    id: 'sr-crossed-out', world: 'postapocalyptic', publication: 'settlement-registry',
+    category: 'Standing Settlements', title: '[HOLLOW CREEK — struck]', author: 'the Registrars', edition: 'struck this spring',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "HOLLOW CREEK. Population one hundred and eleven. Traded honestly, kept the road-shrine, gave water to walkers without asking their trade — a rare entry, in this book, with nothing bad said of it in the next town over. Struck this spring. The Registrar who struck it drew one clean line and no second line, the second line being reserved, by long custom, for settlements that might yet be written back, and did not use it, which is how you read this book: not by what it says but by which crossings-out were made in hope. There is a space beneath this entry. The Registry has left it. In case."
+  },
+  {
+    id: 'sr-convoy', world: 'postapocalyptic', publication: 'settlement-registry',
+    category: 'The Roads', title: 'On Convoys, & the Rerouting', author: 'the Registrars', edition: 'standing advice',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "Travel with a convoy where one runs; the road is kinder to a crowd. Convoy law is simple — walk your watch, share your find, and abide the convoy-master's reroutes without argument, even the ones that make no sense, especially the ones that make no sense. A master who suddenly turns the whole train off a good road and onto a bad one is not lost; a master is reading something the Registry cannot print because the Registry does not have a word for it. The old hands call it the land paying attention. The young hands call it superstition, once, loudly, and then walk the reroute anyway, quietly, ever after."
+  },
+
+  /* ── THE WASTELAND BESTIARY — grim field-guide; danger ratings re-inked upward ── */
+  {
+    id: 'wb-scav-packs', world: 'postapocalyptic', publication: 'wasteland-bestiary',
+    category: 'Common Dangers', title: 'Scav-Packs (Danger: III, rising)', author: 'scavengers', edition: 'the marked-up copy',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "The descendants of the old world's dogs, and smarter than it for having survived it. They hunt the roads at dusk in packs of six to twelve, drive prey toward walls and drop-offs, and have learned — this is the part that raises the rating — to recognize a person who is alone. A pack will follow a lone walker for a day, testing, and will not touch a pair that keeps its back to a fire. Danger rated III and re-inked, in a different hand, to IV, with a note: 'the ones near the old kennels have started opening latches.' The Bestiary is not certain that note is true. The Bestiary is certain the walker who wrote it is not available to ask."
+  },
+  {
+    id: 'wb-ash-crawler', world: 'postapocalyptic', publication: 'wasteland-bestiary',
+    category: 'Mutations', title: 'Ash-Crawler (Danger: II)', author: 'scavengers', edition: 'the marked-up copy',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "A pale, blind, hand-length thing that lives in the deep ash and eats what the ash eats, which is everything, slowly. Harmless to a waking person; it flees light and noise. The danger is that it burrows toward warmth in the night, and a sleeper on bare ash may wake to find several nestled against them, which is not deadly but is, by universal report, the single worst way to wake up in the wasteland, and has ended more partnerships than hunger. Rated II for the bite, which festers. Rated, unofficially and in every margin, X for the feeling. Sleep off the ash. Sleep off the ash. The Bestiary will not say it a third time, but wants to."
+  },
+  {
+    id: 'wb-the-quiet', world: 'postapocalyptic', publication: 'wasteland-bestiary',
+    category: 'Unclassified', title: 'The Quiet (Danger: —)', author: 'scavengers', edition: 'the marked-up copy',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "Not a creature. The Bestiary includes it because scavengers kept turning to this book for it and finding nothing, and a blank where an answer should be is its own kind of danger. The Quiet is what the old hands mean when they say a stretch of road has 'gone attentive' — when the birds that were never there are more not-there than usual, when your own footsteps start to sound like they are being counted. There is nothing to fight and nothing to flee; the entries that describe fighting or fleeing are in a hand that stops. The advice, such as it is: turn back the way you came, out loud, so the land hears you agree to leave. Danger unrated. You cannot rate the danger of a thing you cannot prove noticed you."
+  },
+
+  /* ── BEFOREFALL MEMORIES — elegiac; the old world pasted in, softening at every fold ── */
+  {
+    id: 'bm-menu', world: 'postapocalyptic', publication: 'beforefall-memories',
+    category: 'Relics', title: 'A Menu', author: 'the Rememberers', edition: 'pasted in, faded',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Pasted here is a paper menu from a place that served food to strangers for money, all day, without asking what they had done to deserve it. Read the prices to a child now and watch their face: not the numbers, which mean nothing, but the idea — that there was once so much of everything that a person chose their supper from a list, and sent back what displeased them, and the sending-back was allowed. The Rememberers keep this not to grieve the food. They keep it to prove to the young that abundance was real, that it is a thing a world can have and lose, so that if the world ever has it again, someone will know to be astonished, and to hold on."
+  },
+  {
+    id: 'bm-ticket', world: 'postapocalyptic', publication: 'beforefall-memories',
+    category: 'Relics', title: 'A Ticket', author: 'the Rememberers', edition: 'pasted in, brittle',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "A stub, torn once, for a room where hundreds of strangers sat together in the dark — willingly, in the dark, among strangers — to watch light tell a story none of them needed to survive. The young cannot make it make sense: the dark, the crowd, the not-watching-the-door. The Rememberers do not try to explain the films. They explain the trust. That a person once walked into a dark room full of strangers and thought about nothing but the story. We had that. A whole world of people who could afford to stop watching each other for two hours at a time. Keep the stub. It is evidence of the safest thing our kind ever built, and forgot it was building, and called an ordinary night out."
   }
 
 ];
