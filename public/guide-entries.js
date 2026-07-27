@@ -145,7 +145,7 @@ window._GUIDE_CONCEPTS = {
   'tessryn':            { type: 'moon',        label: 'Tessryn', aliases: [], description: '' },
   'khalyra':            { type: 'moon',        label: 'Khalyra', aliases: [], description: '' },
   'serapha':            { type: 'moon',        label: 'Serapha', aliases: [], description: '' },
-  'astrael':            { type: 'moon',        label: 'Astrael', aliases: ['Copper Moon', 'Promise Moon'], description: '' },
+  'astrael':            { type: 'moon',        label: 'Astrael', aliases: ['Copper Moon', "the travelers' moon"], description: '' },
   'dathriel':           { type: 'moon',        label: 'Dathriel', aliases: [], description: '' },
   'mournfall':          { type: 'moon',        label: 'Mournfall', aliases: [], description: '' },
   'tharos':             { type: 'moon',        label: 'Tharos', aliases: [], description: '' },
