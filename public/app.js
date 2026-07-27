@@ -90568,7 +90568,13 @@ There exists a simple action that could reduce the current tension. However, cir
   // buildPlayerSpeciesDirective also embeds it, but that helper is reachable only via the dead
   // background-gen limb, so its copy never ships (2026-07-14 meta-audit).
   function _kwisheenAnatomyLine(label) {
-    return label + ' ANATOMY (structurally non-human — render consistently, NEVER human-with-tentacles): eight limbs — SIX lower tentacles (locomotion; a continuous unfurling glide, never joint-snapping) and TWO arms that are continuous tentacles splitting terminally into five smooth finger-tentacles (no knuckles); suckers on the underside only. Hair = fine cranial sensory feelers. Chromatophore skin: full colour/pattern/texture control when WET (true form), muted flush when DRY. Camouflage can hold human skin, round pupils and ears indefinitely on land; deeper texture degrades under motion. WATER-DISRUPTION TELL: a splash briefly (1-3s) reverts the pupils to horizontally-elongated solid-black capsules with a central vertical slit, then camouflage reasserts (the primary species tell). Sex/gender biology is FLUID when wet. NEVER fish-tails, NEVER merfolk.';
+    // DISGUISE TELL (Roman 2026-07-26): a disguised Kwisheen smells of the ocean + has moister skin, and — having
+    // no human olfactory sense — is oblivious to it. Heightened to a comedic low-tide reek in Wry mode only.
+    var _wry = (function () { try { return (typeof getEffectiveTone === 'function' ? getEffectiveTone() : (state.picks && state.picks.tone)) === 'WryConfession'; } catch (_) { return false; } })();
+    var _disguiseTell = _wry
+      ? ' DISGUISE TELL (Wry — comedic, play it broad): a Kwisheen passing as human REEKS of LOW TIDE and — having no human sense of smell — is utterly OBLIVIOUS to people gagging, convinced it is passing brilliantly while it is in fact forever standing in a puddle stinking of low tide; it also gender-swaps casually, without a second thought.'
+      : ' DISGUISE TELL (subtle — a quiet giveaway a sharp human might catch): a Kwisheen passing as human carries a faint SMELL OF THE OCEAN (brine, sea-salt) and skin slightly MOISTER than a human\'s — and, lacking a human sense of smell, never realises it and so never masks it. It may also gender-swap at will. Keep this understated, never comedic.';
+    return label + ' ANATOMY (structurally non-human — render consistently, NEVER human-with-tentacles): eight limbs — SIX lower tentacles (locomotion; a continuous unfurling glide, never joint-snapping) and TWO arms that are continuous tentacles splitting terminally into five smooth finger-tentacles (no knuckles); suckers on the underside only. Hair = fine cranial sensory feelers. Chromatophore skin: full colour/pattern/texture control when WET (true form), muted flush when DRY. Camouflage can hold human skin, round pupils and ears indefinitely on land; deeper texture degrades under motion. WATER-DISRUPTION TELL: a splash briefly (1-3s) reverts the pupils to horizontally-elongated solid-black capsules with a central vertical slit, then camouflage reasserts (the primary species tell). Sex/gender biology is FLUID when wet. NEVER fish-tails, NEVER merfolk.' + _disguiseTell;
   }
 
   // The intimacy canon proper — tentacle engagement + the signature mimicry-during-sex.
@@ -90593,7 +90599,7 @@ There exists a simple action that could reduce the current tension. However, cir
         var halfK = (pc === 'Half-Kwisheen' || li === 'Half-Kwisheen');
         out += '\n\nKWISHEEN INTIMACY PHYSICS (HARD — this body is structurally non-human; write the act per these rules, NOT generic-human, and NEVER as a human with tentacles painted on):\n';
         out += whoK + ' Kwisheen.\n';
-        out += '• BODY IN THE ACT: full-body engagement — the six lower tentacles and the two tentacle-arms (finger-tentacles at the ends) all participate: restraint, stroking, multi-point simultaneous contact, penetration, suction along the underside. Cranial feelers are sensory and read the partner\'s scent, breath, hair, pulse. Chromatophore skin blooms into pattern and colour under arousal (vivid + fluid when wet; muted flush when dry). Sex/gender anatomy is FLUID when wet and can shift toward what is wanted.\n';
+        out += '• BODY IN THE ACT: full-body engagement — the six lower tentacles and the two tentacle-arms (finger-tentacles at the ends) all participate: restraint, stroking, multi-point simultaneous contact, penetration, suction along the underside. Cranial feelers are sensory and read the partner\'s scent, breath, hair, pulse. Chromatophore skin blooms into pattern and colour under arousal (vivid + fluid when wet; muted flush when dry). Sex/gender anatomy is FLUID when wet and shifts toward what is wanted: a Kwisheen assumes ALL manner of genders — growing male AND/OR female genitalia AT WILL, in unexpected places and in MULTIPLE numbers — or CYCLES through appearing as one person after another, reshaping their whole presentation to match whatever the partner desires moment to moment. Playful, deliberate, uncanny — an expression of the shapeshifter body, never mechanical.\n';
         out += '• MIMICRY DURING SEX (the signature — USE it, do not omit it): a Kwisheen may camouflage their skin to match the lover\'s, mirror the lover\'s own features back at them, or briefly TAKE THE APPEARANCE OF SOMEONE ELSE — a former lover, a forbidden figure, the partner\'s deepest desire (chosen, or surfacing unconsciously at the peak). This is an intimacy choice: sometimes a gift, sometimes a manipulation, sometimes a slip they did not mean to make. Let it carry meaning and consequence; never a party trick.\n';
         if (inField) {
           out += '• BECOMING-FIELD PRESSURE (currently in the Thornwild): the Kwisheen\'s form is destabilizing — mimicry is harder to hold, and an involuntary shape or the underlying flaw can surface mid-act; arousal/climax stresses control.\n';
@@ -157990,21 +157996,21 @@ No text, no watermark, no UI elements, share-ready.`;
         '- BODY — EXACT LIMB COUNTS (the #1 thing to get right; the render keeps growing extra arms): a humanoid TORSO with EXACTLY TWO upper ARMS — two tentacle-arms, no more, each ending in ONE hand of five fine finger-tentacles. TWO arms only — never three, four, or five. Below the waist the legs are replaced ENTIRELY by SIX locomotion tentacles: a lower-body mass for MOVEMENT, with no hands and no arms among them. A Kwisheen has exactly TWO APPENDAGE SYSTEMS and they must not merge into a swarm of arms: (1) the TWO tentacle-ARMS (upper, with hands — the only manipulating limbs), (2) the SIX locomotion tentacles (lower body, no hands). The coral dreadlocks on the scalp are HAIR, NOT a third system: do not classify them as tentacles or limbs. They are living hair, analogous to human hair — they never manipulate objects, never locomote, and are NEVER included in any limb count. Only the two manipulator arms and the six lower-body locomotion tentacles count as appendages. Count the manipulating arms in the frame: there must be exactly TWO.\n' +
         '- SILHOUETTE (HARD — pass the blacked-out test: a solid-black outline must READ AS KWISHEEN, not "a human with a few extra limbs"): the NON-HUMAN mass must DOMINATE the outline, and it is the BODY PLAN that carries it — the BROAD SIX-TENTACLE LOWER BODY that fans out far wider than any human legs and forms the base of the figure, with no human legs, knees or feet anywhere in the outline. Add distinctive head/neck features — small swept-back FINS or a FRILL along the skull/neck and a slightly larger, wider-set cranium — and non-human proportions (a longer, more sinuous torso). A reader must recognise the species from the shape alone before any colour or detail; if the silhouette could be mistaken for a costumed human, it is WRONG. (Hair does NOT carry the silhouette: a bald or close-cropped Kwisheen is still unmistakably Kwisheen from the lower body alone.)\n' +
         '- HAIR (VARIABLE — an appearance trait, never anatomy): living CORAL DREADLOCKS growing from the scalp — branching, reef-textured, faintly luminous organic strands that read as HAIR, not as limbs. They are NOT tentacles, have NO suckers, and are never counted among the appendages. Like human hair this is GROOMED and can differ per character and per era of their life: a full mane, a bound crop, a crest or mohawk, a beard, or shaved bald. A bald or short-cropped Kwisheen is CANONICAL — never add hair to a character who is established without it, and never treat a bare scalp as a species error.\n' +
-        '- SKIN: SCALED / pebbled cephalopod hide — a fine hexagonal scale-and-sucker texture across face and body (this species HAS textured, patterned skin, not smooth human skin), in a vivid exotic color (deep red, gold, violet, blue, orange) with contrasting pattern-bloom that shifts with mood.\n' +
+        '- SKIN: SMOOTH colour-shifting CEPHALOPOD hide with a fine pebbled PAPILLAE micro-texture (octopus-like — a soft bumpy papillae grain, NOT reptilian scales, NOT a fish-scaled hide, NOT a lizard look; this species has textured papillae skin, not flat human skin, but it is never plated or scaled like a reptile), in a vivid exotic color (deep red, gold, violet, blue, orange) with contrasting pattern-bloom that shifts with mood.\n' +
         '- EYES: large, a vivid non-human iris (gold / amber) with a HORIZONTAL pupil — a broad bar / rounded-capsule shape lying flat SIDEWAYS across the eye, spanning much of the iris width (like a cuttlefish or a goat\'s sideways pupil). THE KEY RULE IS ORIENTATION: the pupil runs HORIZONTALLY (left-to-right). A broad rounded capsule is ideal; but if the render insists on a SLIT, make it a HORIZONTAL slit (lying flat, sideways, like a goat\'s) — a horizontal slit is acceptable and correct, a VERTICAL slit is WRONG, and a small round dot is wrong.\n' +
-        '- FACE (HARD — same humanoid structure in every panel; fixes the face drifting to a "Cthulhu" head): the FACE itself is HUMANOID — a clear brow, a nose, and a MOUTH WITH LIPS set on a defined jaw, two capsule-pupil eyes, all sheathed in the scaled hide. The ONLY tentacles anywhere on the body are the TWO ARMS and the LOWER BODY; the face is NOT a mass of tentacles, has NO octopus-beak, and NO feelers/barbels/tentacles sprouting around the mouth or cheeks. A scaled humanoid visage — never a face made of tentacles.\n' +
+        '- FACE (HARD — same humanoid structure in every panel; fixes the face drifting to a "Cthulhu" head): the FACE itself is HUMANOID — a clear brow, a nose, and a MOUTH WITH LIPS set on a defined jaw, two capsule-pupil eyes, all sheathed in the smooth papillae hide. The ONLY tentacles anywhere on the body are the TWO ARMS and the LOWER BODY; the face is NOT a mass of tentacles, has NO octopus-beak, and NO feelers/barbels/tentacles sprouting around the mouth or cheeks. A smooth papillae-skinned humanoid visage — never a face made of tentacles, never a scaled reptile face.\n' +
         '- EARS (SMALL — do not merge them with the neck frill): small and close to the skull, often partly covered when the coral dreadlocks are worn long. They may taper slightly, but they are NOT large flared lizard ears, NOT fanned membranes, and NOT wing-like. The swept-back fins/frill described in SILHOUETTE run along the SKULL AND NECK — they are a separate feature from the ears and must not be drawn as giant ears.\n' +
         '- ATTIRE (HARD — Kwisheen are DRESSED, never nude, and attire is GENDERED. The old rule said "the chest is always covered, both sexes" and led with "bodice", which put a breast-garment on male characters; it does not. Match the species reference image, which shows the male bare-chested with shoulder armour and the female in a fitted bodice):\n' +
-        '  • FEMALE presentation — the torso is COVERED: a fitted shell-scale bodice, a woven kelp-fibre wrap bound across the chest, or a layered shell-and-bead breastplate. Her breasts are covered by that garment, never left bare under only a necklace.\n' +
-        '  • MALE presentation — the chest is BARE or crossed by a harness, baldric, or scaled shoulder-pauldron. NEVER a bodice, bra, breast-wrap, or any garment shaped to cover breasts — a male Kwisheen in a bodice is a WARDROBE ERROR, not a style choice.\n' +
-        '  • BOTH — below the waist, a broad worked belt over a loincloth, a skirt of studded wraps, or overlapping scaled plates where the torso meets the tentacle mantle. Layered jewelry (beaded necklaces, gem pendants of amethyst and pearl, fine chains) is cultural and expected, but it is worn ON TOP of clothing and armour, never INSTEAD of it.\n' +
+        '  • FEMALE presentation — the torso is COVERED: a fitted shell-plate bodice, a woven kelp-fibre wrap bound across the chest, or a layered shell-and-bead breastplate. Her breasts are covered by that garment, never left bare under only a necklace.\n' +
+        '  • MALE presentation — the chest is BARE or crossed by a harness, baldric, or shell-plate shoulder-pauldron. NEVER a bodice, bra, breast-wrap, or any garment shaped to cover breasts — a male Kwisheen in a bodice is a WARDROBE ERROR, not a style choice.\n' +
+        '  • BOTH — below the waist, a broad worked belt over a loincloth, a skirt of studded wraps, or overlapping shell plates where the torso meets the tentacle mantle. Layered jewelry (beaded necklaces, gem pendants of amethyst and pearl, fine chains) is cultural and expected, but it is worn ON TOP of clothing and armour, never INSTEAD of it.\n' +
         '- GENDER COHERENCE (HARD): a Kwisheen may canonically shift sex between scenes — but WITHIN A SINGLE PANEL the presentation and the wardrobe must AGREE. A masculine figure (beard, flat chest, heavier jaw) wears masculine attire; a feminine figure wears feminine attire. Do not mix the two on one body. The species being able to change does not license an incoherent rendering, exactly as a Kwisheen who can walk on land does not get drawn underwater with four tentacles and one human leg.\n' +
         '- MOVEMENT (motion-dependent mantle — like an octopus): fluid, full-body, unfurling. The six lower ' +
         'tentacles CHANGE SHAPE with what the body is doing — SPREAD and flexed wide when hovering, standing, ' +
         'or maneuvering; drawn together and TRAILING in a streamlined bundle when surging or swimming fast ' +
         '(jet propulsion). Both are correct. What is NEVER correct is a fused fish-tail or mermaid tail: even ' +
         'trailing, the lower body reads as MULTIPLE DISTINCT tentacles, not one finned or scaled tail.\n' +
-        '- CAMOUFLAGE (octopus-like, a deliberate choice): a Kwisheen can change skin colour, texture, and even shape to pass as HUMAN or FIRST FAVORED for a while, then drop the disguise. Their DEFAULT true form (in water / unconcealed) is the tentacled, scaled, coral-haired, adorned being above.',
+        '- CAMOUFLAGE (octopus-like, a deliberate choice): a Kwisheen needs NO legs in water OR on land — legs are a CHOSEN passing-form. It can change skin colour, texture and shape — GROWING LEGS and passing as a HUMAN, a LARGE ANIMAL, or a FIRST FAVORED — then drop the disguise. On land in public it is USUALLY disguised (most often human) to avoid being stared at; its true form shows underwater, among its own kind, in combat, or on a reveal. That DEFAULT true form (unconcealed) is the no-legs tentacled, smooth papillae-skinned, coral-haired, adorned being above.',
       antiDefault:
         'The lower body is fully tentacled — tentacles replace the legs. The hair is living coral dreadlocks, not tentacles. ' +
         'The skin is a scaled, sucker-textured cephalopod hide in vivid colour. The eyes carry a horizontal capsule pupil. ' +
@@ -184569,9 +184575,9 @@ No text, no watermark, no UI elements, share-ready.`;
   var _SOLO_SPECIES_ANCHORS = {
     kwisheen: {
       male:   { path: '/assets/Fatelands/Kwisheen_Male_Solo_v2.jpg',
-                traits: 'humanoid torso, bare chest with a scaled shoulder-pauldron, bearded, six-tentacle lower body replacing legs, finger-tentacles' },
+                traits: 'tall graceful humanoid torso with SMOOTH cephalopod papillae skin (never reptilian scales), bare chest with a shell-plate shoulder-pauldron, bearded, SIX-tentacle lower body in the natural (no-legs) form — may CHOOSE to grow legs when passing (distinct tentacles, never a fish tail), finger-tentacles' },
       female: { path: '/assets/Fatelands/Kwisheen_Female_Solo_v2.jpg',
-                traits: 'humanoid torso, fitted shell-scale bodice, coral-dreadlock hair, six-tentacle lower body replacing legs, finger-tentacles' }
+                traits: 'tall graceful humanoid torso with SMOOTH cephalopod papillae skin (never reptilian scales), fitted shell-plate bodice, coral-dreadlock hair, SIX-tentacle lower body in the natural (no-legs) form — may CHOOSE to grow legs when passing (distinct tentacles, never a fish tail), finger-tentacles' }
     },
     first_favored: {
       male:   { path: '/assets/Fatelands/FirstFavored_Male_Solo_v2.jpg',
@@ -185147,17 +185153,23 @@ No text, no watermark, no UI elements, share-ready.`;
     return '\n\nKWISHEEN COMBAT (the Many-Tide Method — the whole body fights as ONE system, never human ' +
       'attacks performed in sequence). ANATOMY BUDGET (HARD — obey exactly). UPPER BODY: TWO arms from the ' +
       'SHOULDERS (each may be a human arm OR a tentacle-arm) — NEVER a third arm, and NO limb ever grows from ' +
-      'the BACK, spine, chest or torso. LOWER BODY — pick ONE configuration and hold it IDENTICAL in every ' +
-      'panel: (a) SIX lower tentacles and NO legs; or (b) TWO legs PLUS two-to-four tentacles; or (c) just TWO ' +
-      'legs. The number of LEGS is ALWAYS exactly 0 or exactly 2 — NEVER one leg, NEVER three or more legs (a ' +
-      'missing leg or an extra leg is a HARD FAILURE; count the legs before drawing). All tentacles root at the ' +
+      'the BACK, spine, chest or torso. LOWER BODY — a Kwisheen is a SHAPESHIFTER: its NATURAL form is (a) SIX ' +
+      'distinct locomotion tentacles replacing the legs (no legs); it may also CHOOSE (b) two legs plus a few ' +
+      'tentacles or (c) two legs when passing as a human, a large animal, or a First Favored. Any of the three ' +
+      'is valid — pick ONE and hold it IDENTICAL in every panel. Legs number ALWAYS exactly 0 or exactly 2 — ' +
+      'NEVER one, NEVER three or more (a HARD FAILURE; count before drawing). Whichever is chosen, the lower ' +
+      'body is legs OR distinct tentacles, never a fused fish/merfolk tail. All tentacles root at the ' +
       'waist/hip. WHEN UNDISGUISED AND HARD-PRESSED OR LOSING: every tentacle it has is OUT and actively working ' +
       '— gripping, bracing, climbing, hanging, striking — never tucked away or hidden; tentacles are also how a ' +
       'Kwisheen climbs and holds itself ALOFT in the trees (a Kwisheen up off the ground is gripping a branch ' +
       'with tentacles, not floating). ' +
-      'HOW THE MANY LIMBS ACT AT ONCE: the arms wield the hand-weapons — a TIDE-SPEAR or TRIDENT ' +
-      '(reach, thrusting, pinning) and a heavy curved REEF-CUTLASS (hooking cuts); a LOWER tentacle rising up ' +
-      'carries the long UNDERTIDE DAGGER (the hidden killing strike from an unseen low angle), while the ' +
+      'HOW THE MANY LIMBS ACT AT ONCE: the PRIMARY hand-weapon is the TIDE-TRIDENT (a long three-pronged spear ' +
+      '— reach, thrusting, pinning), held in a main arm and the SAME in every panel; a Kwisheen fighter is NEVER ' +
+      'reduced to a single bare curved sword, and its trident never turns into a sword. As part of the Many-Tide ' +
+      'method a SECOND arm MAY add a heavy curved REEF-CUTLASS (hooking cuts) and a LOWER tentacle the long ' +
+      'UNDERTIDE DAGGER (the hidden killing strike from an unseen low angle) — but that is a FIXED SET that never ' +
+      'changes between panels, and the cutlass/dagger NEVER replace the trident. Defer to any WEAPON LOCK ' +
+      'section, which names the exact weapons. While the ' +
       'REMAINING tentacles GRAPPLE — coiling the opponent\'s weapon-arm, waist, thigh or ankle; ' +
       'anchoring to reef, deck or seabed; pulling the enemy off-balance; bracing and counter-weighting. So the ' +
       'many simultaneous actions come from the LOWER tentacles doing several jobs at once, NOT from extra ' +
@@ -185168,8 +185180,10 @@ No text, no watermark, no UI elements, share-ready.`;
       'CENTRE, through which an ARMOURED arm OR lower tentacle passes and extends BEYOND the shield face to ' +
       'strike, hook, or grapple while the disk still protects everything behind it — NOT a shield strapped ' +
       'to a limb, but a limb projecting THROUGH its centre. Kwisheen mount it on an upper arm OR a lower ' +
-      'tentacle. Combat limbs are armoured with segmented plates, hardened rings, or scale sleeves fitted to ' +
-      'flex with the tentacle.';
+      'tentacle. Combat limbs are armoured with segmented plates, hardened rings, or shell-plate sleeves fitted ' +
+      'to flex with the tentacle (armour of shell, never reptilian skin-scales). ANATOMY (HARD): the lower body ' +
+      'is DISTINCT TENTACLES, never a fish tail or merfolk tail; skin is smooth pebbled cephalopod PAPILLAE, ' +
+      'never reptilian scales.';
   }
   window._kwisheenCombatDirective = _kwisheenCombatDirective;
 
@@ -185353,7 +185367,9 @@ No text, no watermark, no UI elements, share-ready.`;
       'gone). If a fighter wears the Veilweave, the SAME weapon appears in every one of their echoes.\n' +
       lines.join('\n') +
       '\nThese are the only weapons in the scene, one per fighter — ignore any other weapon that a combat ' +
-      'style section (whether above or below this one) may mention or offer as an alternative.';
+      'style section (whether above or below this one) may mention or offer as an alternative, AND ignore any ' +
+      'different weapon shown in an attached REFERENCE IMAGE (a reference guides pose, anatomy and motion, never ' +
+      'weapon choice — the weapons listed here always win).';
   }
   window._weaponLockBlock = _weaponLockBlock;
 
@@ -187003,14 +187019,24 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var _spF = _sheetSpecies(visualState);
       if (_spF && (_spF.kwisheen || _spF.half_kwisheen)) {
-        kwFaceBlock = '\n\n══ KWISHEEN FACE + SCALE (every panel a Kwisheen appears) ══\nA Kwisheen face is HUMANOID, ' +
+        kwFaceBlock = '\n\n══ KWISHEEN FACE + BODY + SKIN (every panel a Kwisheen appears) ══\nA Kwisheen face is HUMANOID, ' +
           'coastal and uncanny-beautiful — NOT a monster. Eyes have HORIZONTAL CAPSULE-SHAPED pupils (rounded ' +
           'rectangles, solid black) — never blank white eyes, never glowing eyes, never round human pupils. The ' +
           'mouth is an ordinary humanoid mouth — NO monster fangs, NO tusks, NO gaping maw, NO shark teeth. ' +
-          'Coral-dreadlock hair. SKIN is SMOOTH colour-shifting CHROMATOPHORE skin (shifting hues like an octopus) ' +
-          '— NOT reptilian SCALES, NOT armoured plating, NOT a fish-scaled hide; the FACE especially is smooth ' +
-          'humanoid skin, never scaled or lizard-like. ' +
-          'SCALE (HARD): a Kwisheen is a TALL HUMANOID — about a head to a head-and-a-half taller than a human, ' +
+          'Coral-dreadlock hair (living HAIR, not tentacles). ' +
+          'BODY (HARD, every panel): TWO arms (each a human arm OR a tentacle-arm — never a third arm). LOWER ' +
+          'BODY — a Kwisheen is a SHAPESHIFTER: its NATURAL form has NO legs (a lower body of SIX distinct ' +
+          'locomotion TENTACLES replacing the legs — tall, elegant, graceful, never squat or blobby), but it can ' +
+          'CHOOSE to grow LEGS at will, and usually does when PASSING (as a human, a large animal, or a First ' +
+          'Favored) — on land in public it is most often in such a disguise. So for THIS panel EITHER a legged ' +
+          'form OR the six-tentacle true form is correct per the scene; LEGS ARE NEVER AN ERROR. The ONE hard ' +
+          'rule: the lower body is legs OR distinct tentacles — NEVER a single fused FISH TAIL, mermaid / ' +
+          'merfolk tail, or smooth reptile tail (a HARD FAILURE). ' +
+          'SKIN is SMOOTH colour-shifting CEPHALOPOD skin with a fine pebbled PAPILLAE micro-texture (octopus-like ' +
+          '— a soft bumpy papillae grain) — NOT reptilian SCALES, NOT a fish-scaled hide, NOT armoured plating, ' +
+          'NOT a lizard look; face AND body are the same smooth papillae skin, never scaled or lizard-like (any ' +
+          'scaly/plated surface is worn ARMOUR of shell plates, never the skin itself). ' +
+          'SIZE (HARD): a Kwisheen is a TALL HUMANOID — about a head to a head-and-a-half taller than a human, ' +
           'with a PERSON’S build and proportions. NOT a towering giant, NOT a looming ogre, NOT twice a human’s ' +
           'height; a human standing beside one reads as a normal person beside a TALL PERSON, never a person ' +
           'beside a beast. Mysterious and sensual, never a creature-feature sea-monster.';
@@ -187276,7 +187302,7 @@ No text, no watermark, no UI elements, share-ready.`;
           if ((_sp.kwisheen || _sp.half_kwisheen) && _isCombatScene(_sceneTxt) && _refs.length < 8 && typeof _kwisheenCombatRefForScene === 'function') {
             var _crefPath = _kwisheenCombatRefForScene(_sceneTxt, {});
             if (_crefPath) { var _crefB = await _canonRefToB64(_crefPath);
-              if (_crefB) { _refs.push({ b64: _crefB, label: 'KWISHEEN COMBAT reference — Many-Tide grapple density, the attack-buckler (limb through a centre hole), and the rear-angle hidden dagger. Guides HOW the fight looks, not any specific character.' });
+              if (_crefB) { _refs.push({ b64: _crefB, label: 'KWISHEEN COMBAT reference — Many-Tide grapple density, the attack-buckler (limb through a centre hole), and the rear-angle hidden dagger. Guides HOW the fight MOVES and grapples ONLY — not any specific character, and NOT weapon choice: keep each fighter\'s WEAPON-LOCK weapon (do NOT copy any blade/weapon shown in this reference), and keep smooth cephalopod papillae skin (this reference is not a skin-texture guide).' });
                 try { console.log('[ONESHOT] combat ref attached: ' + _crefPath.split('/').pop()); } catch (_) {} } }
           }
           // VEILWEAVE reference — the refraction EFFECT + garment, when the scene names Veilweave. SKIP for
