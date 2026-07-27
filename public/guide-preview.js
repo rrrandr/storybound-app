@@ -105,13 +105,9 @@
     '.gp-loader-foot{margin-top:12px;padding-top:22px;border-top:1px solid rgba(201,168,106,.12);}',
     '.gp-status{font-size:13.5px;color:#c3b389;letter-spacing:.06em;margin-bottom:12px;min-height:18px;font-style:italic;}',
     '.gp-hint{font-size:12px;color:#8c7c5c;margin:12px auto 0;max-width:52ch;line-height:1.5;}',
-    '.gp-bar{position:relative;width:100%;max-width:520px;height:8px;margin:0 auto;border-radius:6px;',
-      'background:rgba(201,168,106,.14);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(201,168,106,.22);}',
-    '.gp-fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:6px;',
-      'background:linear-gradient(90deg,#8a6d34,#d8b978,#f0dca6);box-shadow:0 0 14px rgba(216,185,120,.5);transition:width .2s linear;}',
-    '.gp-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);',
-      'transform:translateX(-100%);animation:gpShim 1.6s ease-in-out infinite;}',
-    '@keyframes gpShim{to{transform:translateX(100%)}}',
+    // the loader visual is the real card-flip row (.fate-loading-row / .fate-loading-card),
+    // styled by the app's global styles.css — no bar styles needed here.
+    '.gp-flip{margin:16px auto;}',
     '.gp-meta{margin-top:12px;display:flex;justify-content:center;}',
     '.gp-skip{background:none;border:none;color:#877a5c;text-decoration:underline;cursor:pointer;font:inherit;font-size:11.5px;}',
     '.gp-skip:hover{color:#c9a86a;}',
@@ -231,46 +227,80 @@
   }
 
   // ---------------------------------------------------------------- the bar
-  function startBar() {
-    state.done = false;
-    var minMs = 120000, maxMs = 240000; // 2–4 minutes, as in the real thing
-    state.dur = (window._GP_DURATION_MS) || Math.round(minMs + Math.random() * (maxMs - minMs));
-    state.start = performance.now();
-    tick();
-  }
   // both loader blocks update together (shared classes, not ids)
   function each(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), fn); }
   function setAllText(sel, t) { each(sel, function (el) { el.textContent = t; }); }
-  function setFill(p) { each('.gp-fill', function (el) { el.style.width = (p * 100).toFixed(1) + '%'; }); }
 
-  function tick() {
-    var p = Math.min(1, (performance.now() - state.start) / state.dur);
-    setFill(p);
-    setAllText('.gp-status', STATUS[Math.min(STATUS.length - 1, Math.floor(p * STATUS.length))]);
-    if (p >= 1) { finishBar(); return; }
-    state.raf = requestAnimationFrame(tick);
+  // ---- the REAL card-flip loader, replicated from app.js _startLitOverlayFlip.
+  //      Per-instance timers (el._flipTimers) so the two loader rows animate independently;
+  //      relies on the app's global .fate-loading-* CSS + card-art assets. ----
+  var FLIP_DECK = [
+    { name: 'Temptation',    front: '/assets/card-art/cards/Tarot-Gold-front-Temptation.png',    back: '/assets/card-art/cards/Tarot-Gold-back.png' },
+    { name: 'Boundary',      front: '/assets/card-art/cards/Tarot-Gold-front-Boundary.png',      back: '/assets/card-art/cards/Tarot-Gold-back.png' },
+    { name: 'Reversal',      front: '/assets/card-art/cards/Tarot-Gold-front-Reversal.png',      back: '/assets/card-art/cards/Tarot-Gold-back.png' },
+    { name: 'Silence',       front: '/assets/card-art/cards/Tarot-Gold-front-Silence.png',       back: '/assets/card-art/cards/Tarot-Gold-back.png' },
+    { name: 'Confession',    front: '/assets/card-art/cards/Tarot-Gold-front-Confession.png',    back: '/assets/card-art/cards/Tarot-Gold-back.png' },
+    { name: 'Petition Fate', front: '/assets/card-art/cards/Tarot-Gold-PetitionFate-front.png',  back: '/assets/card-art/cards/Tarot-Gold-back-PetitionFate.png' },
+    { name: 'Tempt Fate',    front: '/assets/card-art/cards/Tarot-RED-front-TemptFate.png',       back: '/assets/card-art/cards/Tarot-RED-back-TemptFate.png' }
+  ];
+  function startFlip(rowEl) {
+    if (!rowEl) return;
+    stopFlip(rowEl);
+    rowEl.innerHTML = FLIP_DECK.map(function (c, i) {
+      return '<div class="fate-loading-card" data-idx="' + i + '" title="' + esc(c.name) + '">' +
+        '<div class="fate-loading-card-inner">' +
+        '<img class="fate-loading-card-face fate-loading-card-back" src="' + c.back + '" alt="" aria-hidden="true" />' +
+        '<img class="fate-loading-card-face fate-loading-card-front" src="' + c.front + '" alt="' + esc(c.name) + '" />' +
+        '</div></div>';
+    }).join('');
+    var INITIAL_HOLD = 2000, FAST = 700, PAUSE_AFTER_3 = 2000, STEADY = 2400, HOLD = 2000;
+    function schedule(n) { var s = [], t = INITIAL_HOLD; for (var i = 0; i < n; i++) { s.push(t); if (i < 2) t += FAST; else if (i === 2) t += PAUSE_AFTER_3; else if (i === 3) t += FAST; else t += STEADY; } return s; }
+    function cycle() {
+      if (!rowEl || !document.body.contains(rowEl)) { stopFlip(rowEl); return; }
+      var cards = rowEl.querySelectorAll('.fate-loading-card');
+      Array.prototype.forEach.call(cards, function (c) { c.classList.remove('flipped'); });
+      var sched = schedule(cards.length), timers = [];
+      sched.forEach(function (d, i) { timers.push(setTimeout(function () { var live = rowEl.querySelectorAll('.fate-loading-card'); if (live[i]) live[i].classList.add('flipped'); }, d)); });
+      timers.push(setTimeout(cycle, (sched.length ? sched[sched.length - 1] : 0) + HOLD));
+      rowEl._flipTimers = timers;
+    }
+    cycle();
   }
-  function finishBar() {
-    cancelAnimationFrame(state.raf);
-    state.done = true;
-    setFill(1);
+  function stopFlip(rowEl) {
+    if (rowEl && Array.isArray(rowEl._flipTimers)) rowEl._flipTimers.forEach(function (h) { try { clearTimeout(h); } catch (_) {} });
+    if (rowEl) rowEl._flipTimers = null;
+  }
+
+  // ---- loader lifecycle: flip animation + rotating phrase (above) / hint (below).
+  //      No progress bar — the flip is decorative (as in the real overlay); readiness is
+  //      signalled by the status text + the Continue button. ----
+  function startLoaders(isLive) {
+    state.done = false;
+    each('.gp-flip', function (el) { startFlip(el); });
+    var i = 0, h = 0;
+    setAllText('.gp-status', STATUS[0]);
+    state.phraseTimer = setInterval(function () { i = (i + 1) % STATUS.length; setAllText('.gp-status', STATUS[i]); }, 3200);
+    state.hintTimer = setInterval(function () { h = (h + 1) % HINTS.length; setAllText('.gp-hint', HINTS[h]); }, 6000);
+    if (!isLive) { // preview: no real completion → finish after a realistic 2–4 min (skippable)
+      state.dur = (window._GP_DURATION_MS) || Math.round(120000 + Math.random() * 120000);
+      state.previewTimer = setTimeout(finishBar, state.dur);
+    }
+  }
+  function stopLoaders() {
+    each('.gp-flip', function (el) { stopFlip(el); });
+    clearInterval(state.phraseTimer); clearInterval(state.hintTimer);
+    if (state.previewTimer) { clearTimeout(state.previewTimer); state.previewTimer = 0; }
+  }
+  function showReady() {
+    if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; }
+    stopLoaders();
     each('.gp-meta', function (el) { el.style.display = 'none'; });
     each('.gp-continue', function (el) { el.classList.add('gp-show'); });
   }
-
-  // live bar: asymptotic climb toward ~95% while the scene really generates; the real
-  // completion signal (sb:scene-page-added) calls onLiveFinish() to snap to 100% + Continue.
-  function startBarLive() {
-    state.done = false; state.live = true; state.start = performance.now();
-    tickLive();
-  }
-  function tickLive() {
-    var t = (performance.now() - state.start) / 1000;
-    var p = 0.95 * (1 - Math.exp(-t / 45));  // ~63% @45s, ~86% @90s, easing toward 95%
-    setFill(p);
-    setAllText('.gp-status', STATUS[Math.floor(t / 12) % STATUS.length]);
-    if (state.done) return;
-    state.raf = requestAnimationFrame(tickLive);
+  function finishBar() { // preview completion (timer or "skip the wait")
+    state.done = true;
+    setAllText('.gp-status', 'Your next scene is ready.');
+    showReady();
   }
 
   function recapHTML(kicker, bullets) {
@@ -281,12 +311,12 @@
   }
 
   // ---------------------------------------------------------------- overlay
-  // one loader block = cute phrase (above) · bar · hint (below) · Continue (when ready).
+  // one loader block = cute phrase (above) · card-flip row · hint (below) · Continue (when ready).
   // Rendered TWICE: primary (centered in the first viewport) + foot (for scroll-down readers).
   function loaderBlock(primary) {
     return '<div class="gp-loader ' + (primary ? 'gp-loader-primary' : 'gp-loader-foot') + '">' +
       '<div class="gp-status">' + esc(STATUS[0]) + '</div>' +
-      '<div class="gp-bar"><div class="gp-fill"></div></div>' +
+      '<div class="fate-loading-row gp-flip"></div>' +
       '<div class="gp-hint">' + esc(HINTS[0]) + '</div>' +
       '<div class="gp-meta"><button class="gp-skip">skip the wait</button></div>' +
       '<div class="gp-continue"><div class="gp-ready">✦ Next scene ready</div>' +
@@ -350,10 +380,10 @@
     var isLive = (mode === 'live');
     ov.classList.toggle('gp-live', isLive);
     ov.classList.remove('gp-fading');
-    if (isLive) { live.engaged = false; live.ready = false; if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; } }
+    if (isLive) { live.engaged = false; live.ready = false; live.cycle = (live.cycle || 0) + 1; if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; } }
     setAllText('.gp-continue-btn', isLive ? 'Return to Story' : 'Continue ›');
     setAllText('.gp-ready', isLive ? '✦ Your next scene is ready' : '✦ Next scene ready');
-    // recap: real "Previously…" (3 short beats) from the last scene in live mode; dummy in preview
+    // recap: extractive fallback shown instantly; live mode then upgrades it via a tiny LLM call
     var recap = document.getElementById('gpRecap');
     if (recap) {
       var r = isLive ? composeRecap() : { kicker: RECAP.kicker, bullets: RECAP.bullets };
@@ -368,7 +398,8 @@
     each('.gp-continue', function (el) { el.classList.remove('gp-show'); });
     each('.gp-hint', function (el) { el.textContent = HINTS[Math.floor(Math.random() * HINTS.length)]; });
     ov.classList.add('gp-open');
-    if (isLive) startBarLive(); else startBar();
+    startLoaders(isLive);
+    if (isLive) summarizeRecap(live.cycle);
   }
   function closeOverlay() {
     cancelAnimationFrame(state.raf);
@@ -384,25 +415,74 @@
   // scene has mounted + auto-navigated UNDERNEATH). Continue merely lifts the curtain
   // to reveal it — no scheduling change, no app.js edits; read-only observation only.
   var live = { enabled: false, active: false, engaged: false, ready: false,
-    pageAddedSinceStart: false, wasAdvancing: false, poll: 0, dismissTimer: 0 };
+    pageAddedSinceStart: false, wasAdvancing: false, poll: 0, dismissTimer: 0,
+    cycle: 0, didText: '', saidText: '' };
   function byId(id) { return document.getElementById(id); }
 
+  function shorten13(s) {
+    var w = String(s).replace(/^["'“”‘’\-–•*\s]+/, '').split(/\s+/).filter(Boolean);
+    return (w.length <= 13 ? w.join(' ') : w.slice(0, 13).join(' ') + '…').replace(/[",;:]+$/, '');
+  }
+  function lastSceneText() {
+    var t = String(window._lastSceneText || '');
+    if (!t) { var sw = (window.state && window.state.sceneWindow) || []; t = sw.length ? sw[sw.length - 1] : ''; }
+    return String(t).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  // deterministic bullet for what the reader entered into Say/Do — GUARANTEES the say/do
+  // is represented (used in the instant fallback; the LLM upgrade also summarizes it).
+  function actionBullet() {
+    var did = (live.didText || '').trim(), said = (live.saidText || '').trim();
+    if (did && said) return shorten13('You ' + did.charAt(0).toLowerCase() + did.slice(1) + ', and said, “' + said + '”');
+    if (did) return shorten13('You ' + did.charAt(0).toLowerCase() + did.slice(1));
+    if (said) return shorten13('You said, “' + said + '”');
+    return '';
+  }
   function composeRecap() {
     try {
-      var sw = (window.state && window.state.sceneWindow) || [];
-      var last = sw.length ? sw[sw.length - 1] : '';
-      var txt = String(last || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (!txt) return { kicker: 'Your story begins', bullets: ['The page is blank, the ink still wet.'] };
-      return { kicker: 'Previously', bullets: recapBullets(txt) };
+      var scene = lastSceneText();
+      var ab = actionBullet();
+      if (!scene && !ab) return { kicker: 'Your story begins', bullets: ['The page is blank, the ink still wet.'] };
+      var sceneBullets = scene ? recapBullets(scene).slice(0, 2) : [];
+      return { kicker: 'Previously', bullets: sceneBullets.concat(ab ? [ab] : []) };
     } catch (e) { return { kicker: '', bullets: [] }; }
   }
-  // extractive, no LLM: the last few sentences (where we left off), each capped at 13 words
+  // extractive fallback, no LLM: the last sentences (where we left off), each ≤13 words
   function recapBullets(txt) {
     var sents = txt.split(/(?<=[.!?"'”’])\s+/).map(function (s) { return s.trim(); }).filter(Boolean);
-    return sents.slice(-3).map(function (s) {
-      var w = s.replace(/^["'“”‘’\-–\s]+/, '').split(/\s+/);
-      return (w.length <= 13 ? w.join(' ') : w.slice(0, 13).join(' ') + '…').replace(/[",;:]+$/, '');
-    });
+    return sents.slice(-2).map(shorten13);
+  }
+  // the tiny summarization call (gpt-4o-mini via the app's chatgpt-proxy). 3 bullets, one of
+  // which recaps the reader's Say/Do. Upgrades the fallback in place; keeps it if it fails.
+  function summarizeRecap(cycle) {
+    if (typeof fetch !== 'function') return;
+    var scene = lastSceneText();
+    var did = (live.didText || '').trim(), said = (live.saidText || '').trim();
+    if (!scene && !did && !said) return; // scene 1 / nothing to summarize → keep "Your story begins"
+    var action = [did ? 'DID: ' + did : '', said ? 'SAID: ' + said : ''].filter(Boolean).join('\n') || '(the reader waited in silence)';
+    var sys = 'Write a "Previously…" recap as EXACTLY three bullet points. Bullets 1–2 summarize the PREVIOUS SCENE; bullet 3 summarizes WHAT THE READER CHOSE TO DO OR SAY, addressed as "you". Each bullet MUST be 13 words or fewer, evocative, present or simple past tense. Output ONLY the three lines, one bullet per line — no numbering, no dashes, no markup.';
+    var body = { role: 'BACK_COVER_SYNOPSIS', model: 'gpt-4o-mini', mode: (window.state && window.state.mode) || 'solo',
+      temperature: 0.4, max_tokens: 140,
+      messages: [{ role: 'system', content: sys },
+        { role: 'user', content: 'PREVIOUS SCENE:\n' + scene.slice(0, 1600) + '\n\nWHAT THE READER DID/SAID:\n' + action }] };
+    try {
+      fetch('/api/chatgpt-proxy', { method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (cycle !== live.cycle || !live.active) return; // a newer cycle started → discard
+          var text = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
+          var lines = text.split(/\n+/).map(function (s) { return s.replace(/^[\s\-•*\d.\)]+/, '').trim(); }).filter(Boolean).slice(0, 3).map(shorten13);
+          if (lines.length < 2) return; // too thin → keep the fallback
+          var recap = document.getElementById('gpRecap');
+          if (recap) recap.innerHTML = recapHTML('Previously', lines);
+        })
+        .catch(function () { /* keep the extractive fallback */ });
+    } catch (e) { /* keep fallback */ }
+  }
+  function captureInputs() {
+    var a = document.getElementById('actionInput'), d = document.getElementById('dialogueInput');
+    live.didText = a ? String(a.value || '').trim() : '';
+    live.saidText = d ? String(d.value || '').trim() : '';
   }
   function storyWorldToGuide() {
     try {
@@ -425,21 +505,15 @@
   function markEngaged() {
     if (!live.active) return;
     live.engaged = true;
-    if (live.ready) showReturn(); // scene already waiting → upgrade PASSIVE→READING (cancel auto-fade)
-  }
-  function showReturn() {
-    if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; }
-    each('.gp-meta', function (el) { el.style.display = 'none'; });
-    each('.gp-continue', function (el) { el.classList.add('gp-show'); });
+    if (live.ready) showReady(); // scene already waiting → upgrade PASSIVE→READING (cancel auto-fade)
   }
   function onLiveFinish() {
     if (!live.active) return;
     live.pageAddedSinceStart = true; live.ready = true;
-    state.done = true; cancelAnimationFrame(state.raf);
-    setFill(1);
+    state.done = true;
     setAllText('.gp-status', 'Your next scene is ready.');
-    if (live.engaged) showReturn();                    // READING → wait for the click
-    else live.dismissTimer = setTimeout(dismiss, 800); // PASSIVE → brief beat, then auto-fade
+    if (live.engaged) { showReady(); }                 // READING → wait for the click
+    else { stopLoaders(); live.dismissTimer = setTimeout(dismiss, 800); } // PASSIVE → brief beat, auto-fade
   }
   function dismiss() {
     if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; }
@@ -455,6 +529,11 @@
   }
   function installLiveHooks() {
     window.addEventListener('sb:scene-page-added', onLiveFinish);  // universal FINISH signal
+    // capture the Say/Do text at submit-CLICK (capture phase), before app.js clears the fields
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t && (t.id === 'submitBtn' || (t.closest && t.closest('#submitBtn')))) captureInputs();
+    }, true);
     // START for scene 2+/GN: poll the in-flight flag (no "generation started" event exists)
     live.poll = setInterval(function () {
       if (!live.enabled) return;
