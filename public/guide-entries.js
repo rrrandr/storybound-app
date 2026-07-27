@@ -23,6 +23,20 @@
  *   4. VOICE. Hitchhiker's Guide crossed with an old Baedeker: opinionated,
  *      occasionally funny, occasionally melancholy, always from INSIDE the
  *      world. Never RPG-codex, never neutral-wiki.
+ *   5. NO PUBLICATION EXPLAINS ANOTHER. The Traveler's Guide never cites Rowan
+ *      as an authority; the Student Handbook never references the Guide; the
+ *      Book of Etiquette never explains WHY a custom exists. Every publication
+ *      believes itself SUFFICIENT — that separation makes the world feel
+ *      organically PUBLISHED, not centrally designed.
+ *   6. PRESERVE DISAGREEMENT. Books may CONTRADICT one another on INTERPRETATION
+ *      (never on objective fact): a traveler praises Kwisheen hospitality, an
+ *      etiquette manual calls them impossible dinner guests, a children's tale
+ *      says King Tolmen never laughed while a history says otherwise. The world
+ *      has HISTORIANS, not a narrator. The friction is healthy.
+ *   BREADTH BEFORE DEPTH (priority, not a per-entry law): build the SHELF — many
+ *   books, each a distinct voice/editor/audience — before deepening any one. The
+ *   Library will also live in the Storybound Library BUILDING (browse/search/
+ *   reread), not only the loading screen. See memory project_travelers_guide.
  *
  * HOW IT GROWS (authored like worlds, NOT a live pipeline): when new
  * worldbuilding is invented (a figure, landmark, custom, battle, holiday), file
@@ -78,12 +92,29 @@ window._GUIDE_PUBLICATIONS = {
     title: 'On Wishcraft',
     subtitle: 'Being the Collected Observations of Wishmaster Rowan, Assembled After His Time by Various Students, Not All of Whom Agreed',
     binding_note: 'A thin, much-thumbed volume. The margins are fuller than some of the pages.'
+  },
+  'lytharyn-handbook': {
+    world: 'fatelands',
+    title: 'The Lytharyn Student Handbook',
+    subtitle: 'Issued to Every Incoming Cohort of the Lytharyn Schools, and Read by Approximately None of Them',
+    editor: 'the Office of the Provost',
+    audience: 'students (assumed to already know everything, and to be wrong)',
+    binding_note: 'Stiff grey board, a cohort-year stamped on the spine, corners already soft.'
+  },
+  'travelers-notes': {
+    world: 'fatelands',
+    title: "Traveler's Notes",
+    subtitle: 'The Private Notebook of a Traveler Who Went Everywhere Twice and Trusted No Guidebook, Including This One',
+    editor: 'unedited (the hand is the author\'s own)',
+    audience: 'nobody; these were never meant to be read',
+    binding_note: 'A water-warped pocket journal, half the pages loose, several stuck together.'
   }
-  // PLANNED (own books, own voices — future authoring batches):
-  //   'lytharyn-handbook'    → "The Lytharyn Student Handbook"
-  //   'thornwild-field-guide'→ "A Field Guide to the Thornwild"
-  //   modern settings each get their own: "The City Companion", "CitizenNet",
-  //   "Employee Orientation", "Student Handbook", "Visitor's Guide", "Frontier Almanac".
+  // PROMOTE next (mechanical — change `publication` on existing entries): the
+  // Traveler's Guide still CONTAINS these as sections; each is its own book on
+  // the shelf → 'book-of-etiquette' (The Book of Etiquette), 'field-guide-creatures'
+  // (A Field Guide to the Creatures of the Fatelands), 'thirteen-moons' (Under
+  // the Thirteen Moons — an almanac). Then modern/sci-fi/etc. get their own
+  // publishing ecosystems (see memory project_travelers_guide: archetype rhymes).
 };
 
 window._GUIDE_WORDS_PER_PAGE = 110; // Phase-1 pagination hook (collectible = the page)
@@ -395,6 +426,70 @@ window._GUIDE_ENTRIES = [
     category: 'On Wishcraft', title: 'The Three Wrong Times', author: 'Wishmaster Rowan', edition: 'collected excerpts',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Never wish while angry, while drunk, or while in love. Angry, you will aim true and regret it. Drunk, you will aim wide and regret that. In love, you will aim at the wrong person entirely and call it generosity. This leaves almost no good time to wish, which is exactly my point: the best wishes are made by people who have very nearly talked themselves out of wishing at all."
+  },
+
+  /* ── THE LYTHARYN STUDENT HANDBOOK — institutional voice; assumes it is sufficient; explains nothing outside itself ── */
+  {
+    id: 'lyt-provost-welcome', world: 'fatelands', publication: 'lytharyn-handbook',
+    category: 'A Word from the Provost', title: 'Welcome', author: 'the Office of the Provost', edition: 'issued each cohort',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Welcome to Lytharyn. Everything you need to know is in these pages. Everything you want to know is not, and the Office suggests you make your peace with that early, as the ones who don't tend to leave by the north gate before the first frost. You will be cold, occasionally frightened, and frequently wrong. This is not a failure of the Schools; it is the curriculum. Read the Handbook. Keep it dry. Do not lend it. A student without their Handbook is, by long tradition, not a student but a visitor, and visitors are charged for meals."
+  },
+  {
+    id: 'lyt-notebooks', world: 'fatelands', publication: 'lytharyn-handbook',
+    category: 'Conduct', title: 'Concerning Notebooks', author: 'the Office of the Provost', edition: 'issued each cohort',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Lateness to lecture is forgiven; the Schools were built on a marsh and no one has ever crossed it on time. Forgetting your notebook is not forgiven, and no appeal has ever succeeded. The reasoning is not explained to first-years, on the grounds that a first-year who understood it would not need to be told, and a first-year who needed to be told would not believe it. You will understand by your third year. Until then: the notebook. Always the notebook. There is no sentence in this Handbook the Office means more sincerely."
+  },
+  {
+    id: 'lyt-residence-wishwork', world: 'fatelands', publication: 'lytharyn-handbook',
+    category: 'Conduct', title: 'On Unsanctioned Work in the Residences', author: 'the Office of the Provost', edition: 'issued each cohort (amended, wearily)',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Students are reminded that the practice of the wishing arts within the residence halls is prohibited without a tutor present, a signed slate, and a bucket of sand, in that order. The Office is aware this rule is broken every term. The Office is also aware of which rooms flooded, which corridor now runs slightly downhill, and whose eyebrows have not fully returned. We do not name them here. We simply note that the bursar keeps a longer memory than any student, and settles accounts in the autumn."
+  },
+  {
+    id: 'lyt-the-changing', world: 'fatelands', publication: 'lytharyn-handbook',
+    category: 'Traditions', title: 'The Changing', author: 'the Office of the Provost', edition: 'issued each cohort',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "In the final term a student may set down the name they arrived with and take up the one they mean to leave under. This is the Changing, and it is not a ceremony so much as a paperwork with candles. The old name is entered in the Register and struck through — not erased; the Schools keep everything — and the new one written beneath. Most students weep. Most students deny it. The Register notes neither, recording only the two names and the date, which is the kindest thing a Register can do and the most it is permitted."
+  },
+  {
+    id: 'lyt-refectory', world: 'fatelands', publication: 'lytharyn-handbook',
+    category: 'Practical Matters', title: 'The Refectory & the Second Bell', author: 'the Office of the Provost', edition: 'issued each cohort',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Meals are taken at the long tables, and you sit where there is room, not where there are friends; the Schools consider this instructional. The first bell opens the refectory. The second bell means the doors are closing and you have the length of its ringing to be inside them. Students learn the exact length of the second bell within a week, to the stride, and forget almost everything else they are taught, which the Office has stopped finding disappointing and started finding instructive."
+  },
+
+  /* ── TRAVELER'S NOTES — one traveler's private notebook; terse, opinionated, and openly at odds with the official Guide ── */
+  {
+    id: 'tnote-kwisheen-spear', world: 'fatelands', publication: 'travelers-notes',
+    category: 'Notes', title: 'On Kwisheen spears', author: null, edition: 'the author\'s own hand',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Never compliment a Kwisheen spear. Praise it and it is yours — pressed into your hands, refusal impossible, the giving a courtesy you cannot decline without a graver rudeness than the taking. You will leave with a spear you did not want and a debt you cannot name the size of. I own four. I have complimented, in my life, exactly four spears. Learn from me: admire the weather instead. The weather cannot be given away."
+  },
+  {
+    id: 'tnote-fold-walker', world: 'fatelands', publication: 'travelers-notes',
+    category: 'Notes', title: 'On Fold-Walkers', author: null, edition: 'the author\'s own hand',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    body: "Never ask a Fold-Walker which way they went in. They do not remember, and it is not the kind of not-remembering you help someone with. I asked, once, a kind-faced woman at an inn near the grey country, only making conversation. She smiled for a long moment and could not answer and knew that she could not, and I have thought about that smile for eleven years. Ask them anything else. Ask them nothing. But not that."
+  },
+  {
+    id: 'tnote-gloamwater-cup', world: 'fatelands', publication: 'travelers-notes',
+    category: 'Notes', title: 'On the threshold cup (a correction)', author: null, edition: 'the author\'s own hand',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "The official guides tell you to drink the threshold cup and become family for the length of your stay. The official guides have never been to the eastern quarter, where drinking it means you have agreed to something, and no one will tell you what until it is time to have agreed to it. I drank. I agreed. It cost me a summer and a very good coat. Drink the cup — but in the eastern quarter, ask first what you are drinking to. They will respect the asking. They will not respect the not."
+  },
+  {
+    id: 'tnote-lytharyn-notebook', world: 'fatelands', publication: 'travelers-notes',
+    category: 'Notes', title: 'On Lytharyn', author: null, edition: 'the author\'s own hand',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "In Lytharyn they will forgive you for being late and never for forgetting your notebook. I asked three separate scholars to explain this and received three separate lectures and no explanation, only the growing sense that the question itself marked me as an outsider. I have stopped asking. I now simply carry a notebook everywhere in Lytharyn and arrive whenever I please, and am treated, I notice, with a respect I have done nothing else to earn."
+  },
+  {
+    id: 'tnote-trust-no-book', world: 'fatelands', publication: 'travelers-notes',
+    category: 'Notes', title: 'A general principle', author: null, edition: 'the author\'s own hand',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Trust no single book. Including this one. Especially this one — I wrote it tired, and half of it in inns, and some of it to settle scores the other party will never read. A guidebook is a confident stranger. A field note is an anxious one. Carry several, believe none entirely, and when they disagree, note that the disagreement is usually the truest thing on either page."
   }
 
 ];
