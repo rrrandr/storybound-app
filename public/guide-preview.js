@@ -19,15 +19,23 @@
   // ---- dummy between-scenes recap (world-neutral romance intermission) ----
   var RECAP = {
     kicker: 'Previously',
-    body: [
-      "The masque had emptied by the time he found you on the terrace. He did not pretend the evening had been chance, and you did not pretend you had wanted it to be. Somewhere below, the tide came in against the stones; somewhere behind you, a door you could still have closed. You left it open.",
-      "He said your name once — the way a person says a word they have decided to keep. Whatever the morning asks of you both, it will not be able to ask it of strangers."
+    bullets: [
+      "You told him the truth on the terrace; he didn't look away.",
+      "The tide came in below; a door stayed open behind you.",
+      "He said your name like a word he means to keep."
     ]
   };
 
   var STATUS = [
     'Composing the next scene…', 'Setting the stage…', 'Consulting the fates…',
     'Deciding who speaks first…', 'Letting the moment breathe…', 'Turning toward what happens next…'
+  ];
+  var HINTS = [
+    'The Guide is older than your story — and does not always agree with it.',
+    'No two copies of a Guide are quite the same.',
+    'Turn a page; your next scene will wait for you.',
+    'Some volumes are common. A few are nearly lost.',
+    'Every book here was written by someone who believed it.'
   ];
 
   var DISC_LABEL = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', restricted: 'Restricted', lost: 'Lost' };
@@ -47,18 +55,17 @@
     '.gp-close{position:fixed;top:14px;right:16px;z-index:2;background:none;border:1px solid rgba(201,168,106,.4);',
       'color:#c9a86a;width:34px;height:34px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;}',
     '.gp-close:hover{background:rgba(201,168,106,.14);}',
-    // recap zone
-    '.gp-recap{text-align:center;}',
-    '.gp-kicker{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:#c9a86a;opacity:.85;margin-bottom:14px;}',
-    '.gp-recap p{font-size:clamp(15px,1.9vw,18px);line-height:1.7;color:#d8ccb4;max-width:60ch;margin:0 auto 12px;font-style:italic;}',
-    '.gp-rule{width:64px;height:1px;background:linear-gradient(90deg,transparent,#c9a86a,transparent);margin:6px auto 0;}',
+    // top zone: recap (compact, at top) + primary loader centered in the first viewport
+    '.gp-top{min-height:86vh;display:flex;flex-direction:column;}',
+    '.gp-recap{text-align:center;flex:0 0 auto;}',
+    '.gp-kicker{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:#c9a86a;opacity:.85;margin-bottom:16px;}',
+    '.gp-bullets{list-style:none;padding:0;margin:0 auto;max-width:56ch;display:flex;flex-direction:column;gap:10px;}',
+    '.gp-bullets li{position:relative;padding-left:22px;font-size:clamp(15px,1.9vw,17px);line-height:1.45;color:#d8ccb4;font-style:italic;text-align:left;}',
+    '.gp-bullets li::before{content:"❧";position:absolute;left:0;top:0;color:#c9a86a;font-style:normal;opacity:.7;}',
+    '.gp-rule{width:64px;height:1px;background:linear-gradient(90deg,transparent,#c9a86a,transparent);margin:18px auto 0;}',
     // book
     '.gp-bookwrap{display:flex;flex-direction:column;align-items:center;gap:12px;}',
-    '.gp-intro{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9c8b6b;}',
-    '.gp-librarian{max-width:56ch;margin:2px auto 0;text-align:center;font-style:italic;color:#cbb891;',
-      'font-size:14.5px;line-height:1.5;display:flex;gap:8px;align-items:baseline;justify-content:center;}',
-    '.gp-lib-mark{color:#c9a86a;font-style:normal;}',
-    '.gp-lib-by{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:#8c7c5c;text-align:center;}',
+    '.gp-intro{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#9c8b6b;text-align:center;}',
     '.gp-book{position:relative;width:100%;max-width:720px;background:linear-gradient(180deg,#f4ead6,#ece0c8);',
       'color:#2b2118;border-radius:6px;padding:clamp(22px,3.4vw,40px) clamp(20px,4vw,52px);',
       'box-shadow:0 30px 70px rgba(0,0,0,.55),0 2px 0 #d9cba9,inset 0 0 0 1px rgba(120,96,52,.18);}',
@@ -92,9 +99,12 @@
     '.gp-btn:hover:not(:disabled){background:rgba(201,168,106,.22);}',
     '.gp-btn:disabled{opacity:.35;cursor:default;}',
     '.gp-sel{background:#160f22;border:1px solid rgba(201,168,106,.4);color:#e6d3a6;padding:7px 12px;border-radius:20px;font:inherit;font-size:13px;}',
-    // bar
-    '.gp-barzone{margin-top:6px;text-align:center;}',
-    '.gp-status{font-size:13px;color:#b7a680;letter-spacing:.06em;margin-bottom:10px;min-height:18px;}',
+    // loader block — repeated: primary (centered, top) + foot (for scroll-down readers)
+    '.gp-loader{text-align:center;width:100%;}',
+    '.gp-loader-primary{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;}',
+    '.gp-loader-foot{margin-top:12px;padding-top:22px;border-top:1px solid rgba(201,168,106,.12);}',
+    '.gp-status{font-size:13.5px;color:#c3b389;letter-spacing:.06em;margin-bottom:12px;min-height:18px;font-style:italic;}',
+    '.gp-hint{font-size:12px;color:#8c7c5c;margin:12px auto 0;max-width:52ch;line-height:1.5;}',
     '.gp-bar{position:relative;width:100%;max-width:520px;height:8px;margin:0 auto;border-radius:6px;',
       'background:rgba(201,168,106,.14);overflow:hidden;box-shadow:inset 0 0 0 1px rgba(201,168,106,.22);}',
     '.gp-fill{position:absolute;inset:0 auto 0 0;width:0;border-radius:6px;',
@@ -102,7 +112,7 @@
     '.gp-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);',
       'transform:translateX(-100%);animation:gpShim 1.6s ease-in-out infinite;}',
     '@keyframes gpShim{to{transform:translateX(100%)}}',
-    '.gp-meta{margin-top:10px;font-size:11.5px;color:#877a5c;display:flex;justify-content:center;gap:14px;align-items:center;}',
+    '.gp-meta{margin-top:12px;display:flex;justify-content:center;}',
     '.gp-skip{background:none;border:none;color:#877a5c;text-decoration:underline;cursor:pointer;font:inherit;font-size:11.5px;}',
     '.gp-skip:hover{color:#c9a86a;}',
     // continue (replaces bar)
@@ -120,8 +130,9 @@
       'display:flex;align-items:center;justify-content:center;border-radius:50%;background:#222;color:#c9a24e;',
       'border:1px solid #444;cursor:pointer;font-size:18px;line-height:1;box-shadow:0 2px 10px rgba(0,0,0,.5);}',
     '#gpTrigger:hover{background:#2c2c2c;border-color:#c9a24e;}',
-    // live mode hides the preview-only affordances (world picker, skip, close-to-home)
-    '.gp-live #gpWorld,.gp-live #gpSkip,.gp-live #gpClose{display:none;}',
+    // live mode hides preview-only affordances (skip + its meta row, close-to-home);
+    // the world picker + turn/draw controls stay, per the layout spec.
+    '.gp-live .gp-skip,.gp-live .gp-meta,.gp-live #gpClose{display:none;}',
     '@media(max-width:640px){.gp-page{column-count:1!important;}}'
   ].join('');
 
@@ -214,16 +225,9 @@
     markEngaged();
   }
   function drawAnother() {
-    var pk = draw(state.world);
+    draw(state.world);
     refreshBook();
-    setLibrarian(pk, true);
     markEngaged();
-  }
-  function setLibrarian(pick, isRedraw) {
-    var el = document.getElementById('gpLibLine');
-    if (el && window._guideLibrarianLine) {
-      el.textContent = window._guideLibrarianLine(pick, { isRedraw: isRedraw, filtered: !!state.world });
-    }
   }
 
   // ---------------------------------------------------------------- the bar
@@ -234,31 +238,28 @@
     state.start = performance.now();
     tick();
   }
+  // both loader blocks update together (shared classes, not ids)
+  function each(sel, fn) { Array.prototype.forEach.call(document.querySelectorAll(sel), fn); }
+  function setAllText(sel, t) { each(sel, function (el) { el.textContent = t; }); }
+  function setFill(p) { each('.gp-fill', function (el) { el.style.width = (p * 100).toFixed(1) + '%'; }); }
+
   function tick() {
-    var now = performance.now();
-    var p = Math.min(1, (now - state.start) / state.dur);
-    var fill = document.getElementById('gpFill');
-    var pct = document.getElementById('gpPct');
-    var st = document.getElementById('gpStatus');
-    if (fill) fill.style.width = (p * 100).toFixed(1) + '%';
-    if (pct) pct.textContent = Math.floor(p * 100) + '%';
-    if (st) st.textContent = STATUS[Math.min(STATUS.length - 1, Math.floor(p * STATUS.length))];
+    var p = Math.min(1, (performance.now() - state.start) / state.dur);
+    setFill(p);
+    setAllText('.gp-status', STATUS[Math.min(STATUS.length - 1, Math.floor(p * STATUS.length))]);
     if (p >= 1) { finishBar(); return; }
     state.raf = requestAnimationFrame(tick);
   }
   function finishBar() {
     cancelAnimationFrame(state.raf);
     state.done = true;
-    var fill = document.getElementById('gpFill'); if (fill) fill.style.width = '100%';
-    var pct = document.getElementById('gpPct'); if (pct) pct.textContent = '100%';
-    var bz = document.getElementById('gpBarZone');
-    var cont = document.getElementById('gpContinue');
-    if (bz) bz.style.display = 'none';
-    if (cont) cont.classList.add('gp-show');
+    setFill(1);
+    each('.gp-meta', function (el) { el.style.display = 'none'; });
+    each('.gp-continue', function (el) { el.classList.add('gp-show'); });
   }
 
   // live bar: asymptotic climb toward ~95% while the scene really generates; the real
-  // completion signal (sb:scene-page-added) calls finishBar() to snap to 100% + Continue.
+  // completion signal (sb:scene-page-added) calls onLiveFinish() to snap to 100% + Continue.
   function startBarLive() {
     state.done = false; state.live = true; state.start = performance.now();
     tickLive();
@@ -266,23 +267,32 @@
   function tickLive() {
     var t = (performance.now() - state.start) / 1000;
     var p = 0.95 * (1 - Math.exp(-t / 45));  // ~63% @45s, ~86% @90s, easing toward 95%
-    var fill = document.getElementById('gpFill');
-    var pct = document.getElementById('gpPct');
-    var st = document.getElementById('gpStatus');
-    if (fill) fill.style.width = (p * 100).toFixed(1) + '%';
-    if (pct) pct.textContent = Math.floor(p * 100) + '%';
-    if (st) st.textContent = STATUS[Math.floor(t / 12) % STATUS.length];
+    setFill(p);
+    setAllText('.gp-status', STATUS[Math.floor(t / 12) % STATUS.length]);
     if (state.done) return;
     state.raf = requestAnimationFrame(tickLive);
   }
 
-  function recapHTML(kicker, paras) {
+  function recapHTML(kicker, bullets) {
+    var items = (bullets || []).map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('');
     return '<div class="gp-kicker">' + esc(kicker) + '</div>' +
-      (paras || []).map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
+      (items ? '<ul class="gp-bullets">' + items + '</ul>' : '') +
       '<div class="gp-rule"></div>';
   }
 
   // ---------------------------------------------------------------- overlay
+  // one loader block = cute phrase (above) · bar · hint (below) · Continue (when ready).
+  // Rendered TWICE: primary (centered in the first viewport) + foot (for scroll-down readers).
+  function loaderBlock(primary) {
+    return '<div class="gp-loader ' + (primary ? 'gp-loader-primary' : 'gp-loader-foot') + '">' +
+      '<div class="gp-status">' + esc(STATUS[0]) + '</div>' +
+      '<div class="gp-bar"><div class="gp-fill"></div></div>' +
+      '<div class="gp-hint">' + esc(HINTS[0]) + '</div>' +
+      '<div class="gp-meta"><button class="gp-skip">skip the wait</button></div>' +
+      '<div class="gp-continue"><div class="gp-ready">✦ Next scene ready</div>' +
+        '<button class="gp-cbtn gp-continue-btn">Continue ›</button></div>' +
+    '</div>';
+  }
   function buildOverlay() {
     var ov = document.createElement('div');
     ov.id = 'gpOverlay';
@@ -292,11 +302,12 @@
     ov.innerHTML =
       '<button class="gp-close" id="gpClose" title="Back to homepage">&times;</button>' +
       '<div class="gp-shell">' +
-        '<div class="gp-recap" id="gpRecap">' + recapHTML(RECAP.kicker, RECAP.body) + '</div>' +
+        '<div class="gp-top">' +
+          '<div class="gp-recap" id="gpRecap">' + recapHTML(RECAP.kicker, RECAP.bullets) + '</div>' +
+          loaderBlock(true) +
+        '</div>' +
         '<div class="gp-bookwrap">' +
-          '<div class="gp-intro">While your next scene is composed, read on</div>' +
-          '<div class="gp-librarian"><span class="gp-lib-mark">✒</span><span id="gpLibLine"></span></div>' +
-          '<div class="gp-lib-by">— the Librarian</div>' +
+          '<div class="gp-intro">While your next scene is composed, consider:</div>' +
           '<div id="gpBookHost" style="width:100%;display:flex;justify-content:center;"></div>' +
           '<div class="gp-controls">' +
             '<button class="gp-btn" id="gpTurnBack">‹ Turn back</button>' +
@@ -305,17 +316,7 @@
             '<select class="gp-sel" id="gpWorld">' + worldOpts + '</select>' +
           '</div>' +
         '</div>' +
-        '<div class="gp-barzone" id="gpBarZone">' +
-          '<div class="gp-status" id="gpStatus">' + esc(STATUS[0]) + '</div>' +
-          '<div class="gp-bar"><div class="gp-fill" id="gpFill"></div></div>' +
-          '<div class="gp-meta"><span id="gpPct">0%</span><span>·</span>' +
-            '<span>this usually takes a few minutes</span><span>·</span>' +
-            '<button class="gp-skip" id="gpSkip">skip the wait</button></div>' +
-        '</div>' +
-        '<div class="gp-continue" id="gpContinue">' +
-          '<div><div class="gp-ready" id="gpReady">✦ Next scene ready</div>' +
-          '<button class="gp-cbtn" id="gpContinueBtn">Continue ›</button></div>' +
-        '</div>' +
+        loaderBlock(false) +
       '</div>';
     document.body.appendChild(ov);
 
@@ -324,8 +325,8 @@
     ov.querySelector('#gpTurnFwd').addEventListener('click', function () { turn(1); });
     ov.querySelector('#gpDraw').addEventListener('click', drawAnother);
     ov.querySelector('#gpWorld').addEventListener('change', function (e) { state.world = e.target.value; drawAnother(); });
-    ov.querySelector('#gpSkip').addEventListener('click', finishBar);
-    ov.querySelector('#gpContinueBtn').addEventListener('click', dismiss);
+    Array.prototype.forEach.call(ov.querySelectorAll('.gp-skip'), function (el) { el.addEventListener('click', finishBar); });
+    Array.prototype.forEach.call(ov.querySelectorAll('.gp-continue-btn'), function (el) { el.addEventListener('click', dismiss); });
     return ov;
   }
 
@@ -350,21 +351,22 @@
     ov.classList.toggle('gp-live', isLive);
     ov.classList.remove('gp-fading');
     if (isLive) { live.engaged = false; live.ready = false; if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; } }
-    var rb = document.getElementById('gpContinueBtn'); if (rb) rb.textContent = isLive ? 'Return to Story' : 'Continue ›';
-    var rd = document.getElementById('gpReady'); if (rd) rd.textContent = isLive ? '✦ Your next scene is ready' : '✦ Next scene ready';
-    // recap: real "Previously…" from the last scene in live mode; the dummy copy in preview
+    setAllText('.gp-continue-btn', isLive ? 'Return to Story' : 'Continue ›');
+    setAllText('.gp-ready', isLive ? '✦ Your next scene is ready' : '✦ Next scene ready');
+    // recap: real "Previously…" (3 short beats) from the last scene in live mode; dummy in preview
     var recap = document.getElementById('gpRecap');
     if (recap) {
-      var r = isLive ? composeRecap() : { kicker: RECAP.kicker, body: RECAP.body };
-      recap.innerHTML = recapHTML(r.kicker, r.body);
+      var r = isLive ? composeRecap() : { kicker: RECAP.kicker, bullets: RECAP.bullets };
+      recap.innerHTML = recapHTML(r.kicker, r.bullets);
     }
     state.world = isLive ? (ctx.world || '') : '';
     var wsel = document.getElementById('gpWorld'); if (wsel) wsel.value = state.world;
-    var pk = draw(state.world);
+    draw(state.world);
     refreshBook();
-    setLibrarian(pk, false);
-    var cont = document.getElementById('gpContinue'); if (cont) cont.classList.remove('gp-show');
-    var bz = document.getElementById('gpBarZone'); if (bz) bz.style.display = '';
+    // reset BOTH loader blocks to the loading state
+    each('.gp-meta', function (el) { el.style.display = ''; });
+    each('.gp-continue', function (el) { el.classList.remove('gp-show'); });
+    each('.gp-hint', function (el) { el.textContent = HINTS[Math.floor(Math.random() * HINTS.length)]; });
     ov.classList.add('gp-open');
     if (isLive) startBarLive(); else startBar();
   }
@@ -390,16 +392,17 @@
       var sw = (window.state && window.state.sceneWindow) || [];
       var last = sw.length ? sw[sw.length - 1] : '';
       var txt = String(last || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (!txt) return { kicker: 'Your story begins', body: ['The page is blank, the ink still wet. Just ahead, the first scene is being set.'] };
-      return { kicker: 'Previously', body: [tailExcerpt(txt, 320)] };
-    } catch (e) { return { kicker: '', body: [] }; }
+      if (!txt) return { kicker: 'Your story begins', bullets: ['The page is blank, the ink still wet.'] };
+      return { kicker: 'Previously', bullets: recapBullets(txt) };
+    } catch (e) { return { kicker: '', bullets: [] }; }
   }
-  function tailExcerpt(txt, max) {
-    if (txt.length <= max) return txt;
-    var slice = txt.slice(txt.length - max);
-    var m = slice.search(/[.!?]["'”’]?\s+[A-Z"'“]/); // start on a sentence boundary
-    if (m > -1 && m < max * 0.6) slice = slice.slice(m + 1).replace(/^["'”’\s]+/, '');
-    return '…' + slice.trim();
+  // extractive, no LLM: the last few sentences (where we left off), each capped at 13 words
+  function recapBullets(txt) {
+    var sents = txt.split(/(?<=[.!?"'”’])\s+/).map(function (s) { return s.trim(); }).filter(Boolean);
+    return sents.slice(-3).map(function (s) {
+      var w = s.replace(/^["'“”‘’\-–\s]+/, '').split(/\s+/);
+      return (w.length <= 13 ? w.join(' ') : w.slice(0, 13).join(' ') + '…').replace(/[",;:]+$/, '');
+    });
   }
   function storyWorldToGuide() {
     try {
@@ -426,16 +429,15 @@
   }
   function showReturn() {
     if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; }
-    var bz = byId('gpBarZone'); if (bz) bz.style.display = 'none';
-    var cont = byId('gpContinue'); if (cont) cont.classList.add('gp-show');
+    each('.gp-meta', function (el) { el.style.display = 'none'; });
+    each('.gp-continue', function (el) { el.classList.add('gp-show'); });
   }
   function onLiveFinish() {
     if (!live.active) return;
     live.pageAddedSinceStart = true; live.ready = true;
     state.done = true; cancelAnimationFrame(state.raf);
-    var fill = byId('gpFill'); if (fill) fill.style.width = '100%';
-    var pct = byId('gpPct'); if (pct) pct.textContent = '100%';
-    var stt = byId('gpStatus'); if (stt) stt.textContent = 'Your next scene is ready.';
+    setFill(1);
+    setAllText('.gp-status', 'Your next scene is ready.');
     if (live.engaged) showReturn();                    // READING → wait for the click
     else live.dismissTimer = setTimeout(dismiss, 800); // PASSIVE → brief beat, then auto-fade
   }
