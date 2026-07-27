@@ -22,7 +22,8 @@
     bullets: [
       "You told him the truth on the terrace; he didn't look away.",
       "The tide came in below; a door stayed open behind you.",
-      "He said your name like a word he means to keep."
+      "You chose to stay, and said nothing.",
+      "What holds you here: the letter he hasn't mentioned."
     ]
   };
 
@@ -55,9 +56,9 @@
     '.gp-close{position:fixed;top:14px;right:16px;z-index:2;background:none;border:1px solid rgba(201,168,106,.4);',
       'color:#c9a86a;width:34px;height:34px;border-radius:50%;font-size:18px;line-height:1;cursor:pointer;}',
     '.gp-close:hover{background:rgba(201,168,106,.14);}',
-    // top zone: recap (compact, at top) + primary loader centered in the first viewport
-    '.gp-top{min-height:86vh;display:flex;flex-direction:column;}',
-    '.gp-recap{text-align:center;flex:0 0 auto;}',
+    // top zone: recap + primary loader, TIGHT (no viewport-fill) so the guide is visible
+    '.gp-top{display:flex;flex-direction:column;gap:14px;}',
+    '.gp-recap{text-align:center;}',
     '.gp-kicker{font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:#c9a86a;opacity:.85;margin-bottom:16px;}',
     '.gp-bullets{list-style:none;padding:0;margin:0 auto;max-width:56ch;display:flex;flex-direction:column;gap:10px;}',
     '.gp-bullets li{position:relative;padding-left:22px;font-size:clamp(15px,1.9vw,17px);line-height:1.45;color:#d8ccb4;font-style:italic;text-align:left;}',
@@ -101,16 +102,13 @@
     '.gp-sel{background:#160f22;border:1px solid rgba(201,168,106,.4);color:#e6d3a6;padding:7px 12px;border-radius:20px;font:inherit;font-size:13px;}',
     // loader block — repeated: primary (centered, top) + foot (for scroll-down readers)
     '.gp-loader{text-align:center;width:100%;}',
-    '.gp-loader-primary{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;}',
+    '.gp-loader-primary{margin-top:2px;}',
     '.gp-loader-foot{margin-top:12px;padding-top:22px;border-top:1px solid rgba(201,168,106,.12);}',
     '.gp-status{font-size:13.5px;color:#c3b389;letter-spacing:.06em;margin-bottom:12px;min-height:18px;font-style:italic;}',
     '.gp-hint{font-size:12px;color:#8c7c5c;margin:12px auto 0;max-width:52ch;line-height:1.5;}',
     // the loader visual is the real card-flip row (.fate-loading-row / .fate-loading-card),
     // styled by the app's global styles.css — no bar styles needed here.
-    '.gp-flip{margin:16px auto;}',
-    '.gp-meta{margin-top:12px;display:flex;justify-content:center;}',
-    '.gp-skip{background:none;border:none;color:#877a5c;text-decoration:underline;cursor:pointer;font:inherit;font-size:11.5px;}',
-    '.gp-skip:hover{color:#c9a86a;}',
+    '.gp-flip{margin:12px auto;}',
     // continue (replaces bar)
     '.gp-continue{display:none;justify-content:center;margin-top:4px;}',
     '.gp-continue.gp-show{display:flex;animation:gpFade .5s ease both;}',
@@ -126,9 +124,8 @@
       'display:flex;align-items:center;justify-content:center;border-radius:50%;background:#222;color:#c9a24e;',
       'border:1px solid #444;cursor:pointer;font-size:18px;line-height:1;box-shadow:0 2px 10px rgba(0,0,0,.5);}',
     '#gpTrigger:hover{background:#2c2c2c;border-color:#c9a24e;}',
-    // live mode hides preview-only affordances (skip + its meta row, close-to-home);
-    // the world picker + turn/draw controls stay, per the layout spec.
-    '.gp-live .gp-skip,.gp-live .gp-meta,.gp-live #gpClose{display:none;}',
+    // live mode hides the close-to-home ×; the world picker + turn/draw controls stay.
+    '.gp-live #gpClose{display:none;}',
     '@media(max-width:640px){.gp-page{column-count:1!important;}}'
   ].join('');
 
@@ -318,7 +315,6 @@
       '<div class="gp-status">' + esc(STATUS[0]) + '</div>' +
       '<div class="fate-loading-row gp-flip"></div>' +
       '<div class="gp-hint">' + esc(HINTS[0]) + '</div>' +
-      '<div class="gp-meta"><button class="gp-skip">skip the wait</button></div>' +
       '<div class="gp-continue"><div class="gp-ready">✦ Next scene ready</div>' +
         '<button class="gp-cbtn gp-continue-btn">Continue ›</button></div>' +
     '</div>';
@@ -355,7 +351,6 @@
     ov.querySelector('#gpTurnFwd').addEventListener('click', function () { turn(1); });
     ov.querySelector('#gpDraw').addEventListener('click', drawAnother);
     ov.querySelector('#gpWorld').addEventListener('change', function (e) { state.world = e.target.value; drawAnother(); });
-    Array.prototype.forEach.call(ov.querySelectorAll('.gp-skip'), function (el) { el.addEventListener('click', finishBar); });
     Array.prototype.forEach.call(ov.querySelectorAll('.gp-continue-btn'), function (el) { el.addEventListener('click', dismiss); });
     return ov;
   }
@@ -459,9 +454,14 @@
     var did = (live.didText || '').trim(), said = (live.saidText || '').trim();
     if (!scene && !did && !said) return; // scene 1 / nothing to summarize → keep "Your story begins"
     var action = [did ? 'DID: ' + did : '', said ? 'SAID: ' + said : ''].filter(Boolean).join('\n') || '(the reader waited in silence)';
-    var sys = 'Write a "Previously…" recap as EXACTLY three bullet points. Bullets 1–2 summarize the PREVIOUS SCENE; bullet 3 summarizes WHAT THE READER CHOSE TO DO OR SAY, addressed as "you". Each bullet MUST be 13 words or fewer, evocative, present or simple past tense. Output ONLY the three lines, one bullet per line — no numbering, no dashes, no markup.';
+    var sys = 'Write a "Previously…" recap as EXACTLY four bullet points, each 13 words or fewer, addressed to the reader as "you". ' +
+      'Bullet 1: a vivid beat from the PREVIOUS SCENE. ' +
+      'Bullet 2: another beat, or the feeling you were left on. ' +
+      'Bullet 3: WHAT YOU CHOSE TO DO OR SAY. ' +
+      'Bullet 4: WHAT YOU ARE TRYING TO ACCOMPLISH NOW, or WHAT STANDS IN YOUR WAY (your current goal or obstacle). ' +
+      'Output ONLY the four lines, one bullet per line — no numbering, no dashes, no markup.';
     var body = { role: 'BACK_COVER_SYNOPSIS', model: 'gpt-4o-mini', mode: (window.state && window.state.mode) || 'solo',
-      temperature: 0.4, max_tokens: 140,
+      temperature: 0.4, max_tokens: 180,
       messages: [{ role: 'system', content: sys },
         { role: 'user', content: 'PREVIOUS SCENE:\n' + scene.slice(0, 1600) + '\n\nWHAT THE READER DID/SAID:\n' + action }] };
     try {
@@ -471,7 +471,7 @@
         .then(function (d) {
           if (cycle !== live.cycle || !live.active) return; // a newer cycle started → discard
           var text = (d && (d.content || (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content))) || '';
-          var lines = text.split(/\n+/).map(function (s) { return s.replace(/^[\s\-•*\d.\)]+/, '').trim(); }).filter(Boolean).slice(0, 3).map(shorten13);
+          var lines = text.split(/\n+/).map(function (s) { return s.replace(/^[\s\-•*\d.\)]+/, '').trim(); }).filter(Boolean).slice(0, 4).map(shorten13);
           if (lines.length < 2) return; // too thin → keep the fallback
           var recap = document.getElementById('gpRecap');
           if (recap) recap.innerHTML = recapHTML('Previously', lines);
@@ -564,6 +564,7 @@
     enable: function () { live.enabled = true; return 'live intermission ON'; },
     disable: function () { live.enabled = false; if (live.active) dismiss(); return 'live intermission OFF'; },
     status: function () { return { enabled: live.enabled, active: live.active, engaged: live.engaged, ready: live.ready }; },
+    skip: function () { finishBar(); return 'skipped (dev)'; }, // dev-only: end the preview wait from the console
     // demo the live look with NO generation: opens, then simulates "ready" as a READING user
     demo: function () {
       live.active = true; live.pageAddedSinceStart = true;
