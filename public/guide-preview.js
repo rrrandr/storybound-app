@@ -39,8 +39,9 @@
     '#gpOverlay{position:fixed;inset:0;z-index:10000;display:none;flex-direction:column;',
       'background:radial-gradient(120% 90% at 50% -10%,#1b1526 0%,#0e0b14 60%,#080610 100%);',
       'color:#e9dcc4;font-family:Georgia,"Iowan Old Style","Times New Roman",serif;',
-      'overflow-y:auto;padding:clamp(16px,4vw,40px);animation:gpFade .5s ease both;}',
+      'overflow-y:auto;padding:clamp(16px,4vw,40px);animation:gpFade .5s ease both;transition:opacity .3s ease;}',
     '#gpOverlay.gp-open{display:flex;}',
+    '#gpOverlay.gp-fading{opacity:0;}',
     '@keyframes gpFade{from{opacity:0}to{opacity:1}}',
     '.gp-shell{width:100%;max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:clamp(18px,3vw,32px);}',
     '.gp-close{position:fixed;top:14px;right:16px;z-index:2;background:none;border:1px solid rgba(201,168,106,.4);',
@@ -210,11 +211,13 @@
     state.left = Math.min(Math.max(1, state.left + delta * 2), Math.max(1, total - (total % 2 === 0 ? 1 : 0)));
     if (state.left < 1) state.left = 1;
     refreshBook();
+    markEngaged();
   }
   function drawAnother() {
     var pk = draw(state.world);
     refreshBook();
     setLibrarian(pk, true);
+    markEngaged();
   }
   function setLibrarian(pick, isRedraw) {
     var el = document.getElementById('gpLibLine');
@@ -310,19 +313,19 @@
             '<button class="gp-skip" id="gpSkip">skip the wait</button></div>' +
         '</div>' +
         '<div class="gp-continue" id="gpContinue">' +
-          '<div><div class="gp-ready">✦ Next scene ready</div>' +
+          '<div><div class="gp-ready" id="gpReady">✦ Next scene ready</div>' +
           '<button class="gp-cbtn" id="gpContinueBtn">Continue ›</button></div>' +
         '</div>' +
       '</div>';
     document.body.appendChild(ov);
 
-    ov.querySelector('#gpClose').addEventListener('click', closeOverlay);
+    ov.querySelector('#gpClose').addEventListener('click', dismiss);
     ov.querySelector('#gpTurnBack').addEventListener('click', function () { turn(-1); });
     ov.querySelector('#gpTurnFwd').addEventListener('click', function () { turn(1); });
     ov.querySelector('#gpDraw').addEventListener('click', drawAnother);
     ov.querySelector('#gpWorld').addEventListener('change', function (e) { state.world = e.target.value; drawAnother(); });
     ov.querySelector('#gpSkip').addEventListener('click', finishBar);
-    ov.querySelector('#gpContinueBtn').addEventListener('click', closeOverlay);
+    ov.querySelector('#gpContinueBtn').addEventListener('click', dismiss);
     return ov;
   }
 
@@ -345,6 +348,10 @@
     var ov = document.getElementById('gpOverlay') || buildOverlay();
     var isLive = (mode === 'live');
     ov.classList.toggle('gp-live', isLive);
+    ov.classList.remove('gp-fading');
+    if (isLive) { live.engaged = false; live.ready = false; if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; } }
+    var rb = document.getElementById('gpContinueBtn'); if (rb) rb.textContent = isLive ? 'Return to Story' : 'Continue ›';
+    var rd = document.getElementById('gpReady'); if (rd) rd.textContent = isLive ? '✦ Your next scene is ready' : '✦ Next scene ready';
     // recap: real "Previously…" from the last scene in live mode; the dummy copy in preview
     var recap = document.getElementById('gpRecap');
     if (recap) {
@@ -363,7 +370,8 @@
   }
   function closeOverlay() {
     cancelAnimationFrame(state.raf);
-    live.active = false;
+    if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; }
+    live.active = false; live.engaged = false; live.ready = false;
     var ov = document.getElementById('gpOverlay');
     if (ov) ov.classList.remove('gp-open');
   }
@@ -373,7 +381,9 @@
   // true (overlay also un-hides); FINISH = the 'sb:scene-page-added' event (the new
   // scene has mounted + auto-navigated UNDERNEATH). Continue merely lifts the curtain
   // to reveal it — no scheduling change, no app.js edits; read-only observation only.
-  var live = { enabled: false, active: false, pageAddedSinceStart: false, wasAdvancing: false, poll: 0 };
+  var live = { enabled: false, active: false, engaged: false, ready: false,
+    pageAddedSinceStart: false, wasAdvancing: false, poll: 0, dismissTimer: 0 };
+  function byId(id) { return document.getElementById(id); }
 
   function composeRecap() {
     try {
@@ -405,31 +415,82 @@
       return ''; // unknown → draw from any world
     } catch (e) { return ''; }
   }
+  // Three reading states, so the guide is a reward for curiosity, never a mandatory click:
+  //   PASSIVE (no interaction) → scene ready → brief beat → auto-fade (no click)
+  //   READING (turned a page / drew a volume) → scene ready → wait for "Return to Story"
+  //   BUSY (still generating) → read freely, no pressure
+  function markEngaged() {
+    if (!live.active) return;
+    live.engaged = true;
+    if (live.ready) showReturn(); // scene already waiting → upgrade PASSIVE→READING (cancel auto-fade)
+  }
+  function showReturn() {
+    if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; }
+    var bz = byId('gpBarZone'); if (bz) bz.style.display = 'none';
+    var cont = byId('gpContinue'); if (cont) cont.classList.add('gp-show');
+  }
+  function onLiveFinish() {
+    if (!live.active) return;
+    live.pageAddedSinceStart = true; live.ready = true;
+    state.done = true; cancelAnimationFrame(state.raf);
+    var fill = byId('gpFill'); if (fill) fill.style.width = '100%';
+    var pct = byId('gpPct'); if (pct) pct.textContent = '100%';
+    var stt = byId('gpStatus'); if (stt) stt.textContent = 'Your next scene is ready.';
+    if (live.engaged) showReturn();                    // READING → wait for the click
+    else live.dismissTimer = setTimeout(dismiss, 800); // PASSIVE → brief beat, then auto-fade
+  }
+  function dismiss() {
+    if (live.dismissTimer) { clearTimeout(live.dismissTimer); live.dismissTimer = 0; }
+    var ov = byId('gpOverlay');
+    if (ov) ov.classList.add('gp-fading');             // "closing the book" fade-out
+    setTimeout(function () { closeOverlay(); if (ov) ov.classList.remove('gp-fading'); }, 320);
+  }
+  function startCurtain() {
+    if (!live.enabled || live.active) return;
+    if (window.state && window.state._travelMapActive) return; // travel-map owns its reveal
+    live.active = true; live.pageAddedSinceStart = false;
+    try { openOverlay('live', { world: storyWorldToGuide() }); } catch (e) { live.active = false; }
+  }
   function installLiveHooks() {
-    window.addEventListener('sb:scene-page-added', function () {
-      if (live.active) { live.pageAddedSinceStart = true; finishBar(); }
-    });
-    // no "generation started" event exists → poll the in-flight flag transitions
+    window.addEventListener('sb:scene-page-added', onLiveFinish);  // universal FINISH signal
+    // START for scene 2+/GN: poll the in-flight flag (no "generation started" event exists)
     live.poll = setInterval(function () {
       if (!live.enabled) return;
-      var st = window.state || {};
-      var adv = !!st._isAdvancingScene;
-      var travel = !!st._travelMapActive; // Fantasy travel-map path owns its own reveal
-      if (adv && !live.wasAdvancing && !live.active && !travel) {
-        live.active = true; live.pageAddedSinceStart = false;
-        try { openOverlay('live', { world: storyWorldToGuide() }); }
-        catch (e) { live.active = false; }
-      } else if (!adv && live.wasAdvancing && live.active && !live.pageAddedSinceStart) {
-        closeOverlay(); // generation ended with no new page (error/cancel) → lift curtain
-      }
+      var adv = !!(window.state && window.state._isAdvancingScene);
+      if (adv && !live.wasAdvancing) startCurtain();
+      if (!adv && live.wasAdvancing && live.active && !live.pageAddedSinceStart) dismiss();
       live.wasAdvancing = adv;
     }, 250);
+    // START for SCENE 1: the first generation doesn't set _isAdvancingScene, so watch the
+    // real overlay un-hide while turnCount is 0 (skip image/visualize loaders). Also
+    // grace-dismisses the curtain if the overlay hides without a scene mounting (error/misfire).
+    var ov = document.getElementById('loadingOverlay');
+    if (ov && typeof MutationObserver !== 'undefined') {
+      new MutationObserver(function () {
+        if (!live.enabled) return;
+        var shown = !ov.classList.contains('hidden');
+        var st = window.state || {};
+        var txt = (byId('loadingText') || {}).textContent || '';
+        if (shown && !live.active && !st.turnCount && !/paint|visuali|portrait|image|cover|frontispiece/i.test(txt)) {
+          startCurtain();
+        } else if (!shown && live.active && !live.pageAddedSinceStart) {
+          setTimeout(function () { if (live.active && !live.pageAddedSinceStart) dismiss(); }, 600);
+        }
+      }).observe(ov, { attributes: true, attributeFilter: ['class'] });
+    }
   }
   window._GUIDE_INTERMISSION = {
     enable: function () { live.enabled = true; return 'live intermission ON'; },
-    disable: function () { live.enabled = false; if (live.active) closeOverlay(); return 'live intermission OFF'; },
-    status: function () { return { enabled: live.enabled, active: live.active }; },
-    demo: function () { openOverlay('live', { world: storyWorldToGuide() }); }, // preview live look w/o generating
+    disable: function () { live.enabled = false; if (live.active) dismiss(); return 'live intermission OFF'; },
+    status: function () { return { enabled: live.enabled, active: live.active, engaged: live.engaged, ready: live.ready }; },
+    // demo the live look with NO generation: opens, then simulates "ready" as a READING user
+    demo: function () {
+      live.active = true; live.pageAddedSinceStart = true;
+      openOverlay('live', { world: storyWorldToGuide() });
+      live.engaged = true;                       // show the Return-to-Story path
+      setTimeout(onLiveFinish, 1300);
+      return 'live demo — read, then "Return to Story" appears';
+    },
     _debug: { composeRecap: function () { return composeRecap(); }, worldMap: function () { return storyWorldToGuide(); } }
   };
 
