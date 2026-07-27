@@ -1,7 +1,9 @@
 /* ─────────────────────────────────────────────────────────────────────────────
- * guide-preview.js — a STANDALONE preview of the between-scenes "story intermission"
- * (the loading screen as an in-world Traveler's-Guide reader). Purely a preview harness:
- * it does NOT touch the production #loadingOverlay pipeline, app.js, or styles.css.
+ * guide-preview.js — the between-scenes "story intermission" (loading screen as an
+ * in-world Traveler's-Guide reader), in TWO modes: a homepage PREVIEW harness, and a
+ * LIVE curtain wired to the real generation lifecycle. Does NOT edit app.js/styles.css/
+ * the #loadingOverlay pipeline — LIVE mode only OBSERVES window.state + the
+ * 'sb:scene-page-added' event and lays its own overlay over the real flow.
  * It drives the REAL guide-entries.js selection model so what you see is what the
  * shipped feature will do. Requires guide-entries.js to load first.
  *
@@ -117,6 +119,8 @@
       'display:flex;align-items:center;justify-content:center;border-radius:50%;background:#222;color:#c9a24e;',
       'border:1px solid #444;cursor:pointer;font-size:18px;line-height:1;box-shadow:0 2px 10px rgba(0,0,0,.5);}',
     '#gpTrigger:hover{background:#2c2c2c;border-color:#c9a24e;}',
+    // live mode hides the preview-only affordances (world picker, skip, close-to-home)
+    '.gp-live #gpWorld,.gp-live #gpSkip,.gp-live #gpClose{display:none;}',
     '@media(max-width:640px){.gp-page{column-count:1!important;}}'
   ].join('');
 
@@ -242,10 +246,37 @@
   function finishBar() {
     cancelAnimationFrame(state.raf);
     state.done = true;
+    var fill = document.getElementById('gpFill'); if (fill) fill.style.width = '100%';
+    var pct = document.getElementById('gpPct'); if (pct) pct.textContent = '100%';
     var bz = document.getElementById('gpBarZone');
     var cont = document.getElementById('gpContinue');
     if (bz) bz.style.display = 'none';
     if (cont) cont.classList.add('gp-show');
+  }
+
+  // live bar: asymptotic climb toward ~95% while the scene really generates; the real
+  // completion signal (sb:scene-page-added) calls finishBar() to snap to 100% + Continue.
+  function startBarLive() {
+    state.done = false; state.live = true; state.start = performance.now();
+    tickLive();
+  }
+  function tickLive() {
+    var t = (performance.now() - state.start) / 1000;
+    var p = 0.95 * (1 - Math.exp(-t / 45));  // ~63% @45s, ~86% @90s, easing toward 95%
+    var fill = document.getElementById('gpFill');
+    var pct = document.getElementById('gpPct');
+    var st = document.getElementById('gpStatus');
+    if (fill) fill.style.width = (p * 100).toFixed(1) + '%';
+    if (pct) pct.textContent = Math.floor(p * 100) + '%';
+    if (st) st.textContent = STATUS[Math.floor(t / 12) % STATUS.length];
+    if (state.done) return;
+    state.raf = requestAnimationFrame(tickLive);
+  }
+
+  function recapHTML(kicker, paras) {
+    return '<div class="gp-kicker">' + esc(kicker) + '</div>' +
+      (paras || []).map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
+      '<div class="gp-rule"></div>';
   }
 
   // ---------------------------------------------------------------- overlay
@@ -258,9 +289,7 @@
     ov.innerHTML =
       '<button class="gp-close" id="gpClose" title="Back to homepage">&times;</button>' +
       '<div class="gp-shell">' +
-        '<div class="gp-recap"><div class="gp-kicker">' + esc(RECAP.kicker) + '</div>' +
-          RECAP.body.map(function (p) { return '<p>' + esc(p) + '</p>'; }).join('') +
-          '<div class="gp-rule"></div></div>' +
+        '<div class="gp-recap" id="gpRecap">' + recapHTML(RECAP.kicker, RECAP.body) + '</div>' +
         '<div class="gp-bookwrap">' +
           '<div class="gp-intro">While your next scene is composed, read on</div>' +
           '<div class="gp-librarian"><span class="gp-lib-mark">✒</span><span id="gpLibLine"></span></div>' +
@@ -307,27 +336,102 @@
       dystopia: 'Dystopia', scifi: 'Sci-Fi', postapocalyptic: 'Post-Apocalypse' })[w] || w;
   }
 
-  function openOverlay() {
+  function openOverlay(mode, ctx) {
+    mode = mode || 'preview'; ctx = ctx || {};
     if (!window._GUIDE_ENTRIES || !window._guidePickBookThenPage) {
-      alert('Guide data not loaded — check that guide-entries.js is included before guide-preview.js.');
+      if (mode === 'preview') alert('Guide data not loaded — check that guide-entries.js is included before guide-preview.js.');
       return;
     }
     var ov = document.getElementById('gpOverlay') || buildOverlay();
-    state.world = '';
-    var wsel = document.getElementById('gpWorld'); if (wsel) wsel.value = '';
-    var pk = draw('');
+    var isLive = (mode === 'live');
+    ov.classList.toggle('gp-live', isLive);
+    // recap: real "Previously…" from the last scene in live mode; the dummy copy in preview
+    var recap = document.getElementById('gpRecap');
+    if (recap) {
+      var r = isLive ? composeRecap() : { kicker: RECAP.kicker, body: RECAP.body };
+      recap.innerHTML = recapHTML(r.kicker, r.body);
+    }
+    state.world = isLive ? (ctx.world || '') : '';
+    var wsel = document.getElementById('gpWorld'); if (wsel) wsel.value = state.world;
+    var pk = draw(state.world);
     refreshBook();
     setLibrarian(pk, false);
     var cont = document.getElementById('gpContinue'); if (cont) cont.classList.remove('gp-show');
     var bz = document.getElementById('gpBarZone'); if (bz) bz.style.display = '';
     ov.classList.add('gp-open');
-    startBar();
+    if (isLive) startBarLive(); else startBar();
   }
   function closeOverlay() {
     cancelAnimationFrame(state.raf);
+    live.active = false;
     var ov = document.getElementById('gpOverlay');
     if (ov) ov.classList.remove('gp-open');
   }
+
+  // ------------------------------------------------------ LIVE lifecycle wiring
+  // A curtain over the real generation flow. START = state._isAdvancingScene flips
+  // true (overlay also un-hides); FINISH = the 'sb:scene-page-added' event (the new
+  // scene has mounted + auto-navigated UNDERNEATH). Continue merely lifts the curtain
+  // to reveal it — no scheduling change, no app.js edits; read-only observation only.
+  var live = { enabled: false, active: false, pageAddedSinceStart: false, wasAdvancing: false, poll: 0 };
+
+  function composeRecap() {
+    try {
+      var sw = (window.state && window.state.sceneWindow) || [];
+      var last = sw.length ? sw[sw.length - 1] : '';
+      var txt = String(last || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+      if (!txt) return { kicker: 'Your story begins', body: ['The page is blank, the ink still wet. Just ahead, the first scene is being set.'] };
+      return { kicker: 'Previously', body: [tailExcerpt(txt, 320)] };
+    } catch (e) { return { kicker: '', body: [] }; }
+  }
+  function tailExcerpt(txt, max) {
+    if (txt.length <= max) return txt;
+    var slice = txt.slice(txt.length - max);
+    var m = slice.search(/[.!?]["'”’]?\s+[A-Z"'“]/); // start on a sentence boundary
+    if (m > -1 && m < max * 0.6) slice = slice.slice(m + 1).replace(/^["'”’\s]+/, '');
+    return '…' + slice.trim();
+  }
+  function storyWorldToGuide() {
+    try {
+      var picks = (window.state && window.state.picks) || {};
+      var w = String(picks.world || picks.worldSubtype || '').toLowerCase();
+      if (uniqueWorlds().indexOf(w) > -1) return w;
+      if (/fant|fate/.test(w)) return 'fatelands';
+      if (/hist|regen|victor|period|edwardian/.test(w)) return 'historical';
+      if (/dyst|glass|chorus/.test(w)) return 'dystopia';
+      if (/sci|space|star|galax|frontier|future/.test(w)) return 'scifi';
+      if (/post|apoc|wasteland|ruin|fallout/.test(w)) return 'postapocalyptic';
+      if (/modern|contemp|city|urban/.test(w)) return 'modern';
+      return ''; // unknown → draw from any world
+    } catch (e) { return ''; }
+  }
+  function installLiveHooks() {
+    window.addEventListener('sb:scene-page-added', function () {
+      if (live.active) { live.pageAddedSinceStart = true; finishBar(); }
+    });
+    // no "generation started" event exists → poll the in-flight flag transitions
+    live.poll = setInterval(function () {
+      if (!live.enabled) return;
+      var st = window.state || {};
+      var adv = !!st._isAdvancingScene;
+      var travel = !!st._travelMapActive; // Fantasy travel-map path owns its own reveal
+      if (adv && !live.wasAdvancing && !live.active && !travel) {
+        live.active = true; live.pageAddedSinceStart = false;
+        try { openOverlay('live', { world: storyWorldToGuide() }); }
+        catch (e) { live.active = false; }
+      } else if (!adv && live.wasAdvancing && live.active && !live.pageAddedSinceStart) {
+        closeOverlay(); // generation ended with no new page (error/cancel) → lift curtain
+      }
+      live.wasAdvancing = adv;
+    }, 250);
+  }
+  window._GUIDE_INTERMISSION = {
+    enable: function () { live.enabled = true; return 'live intermission ON'; },
+    disable: function () { live.enabled = false; if (live.active) closeOverlay(); return 'live intermission OFF'; },
+    status: function () { return { enabled: live.enabled, active: live.active }; },
+    demo: function () { openOverlay('live', { world: storyWorldToGuide() }); }, // preview live look w/o generating
+    _debug: { composeRecap: function () { return composeRecap(); }, worldMap: function () { return storyWorldToGuide(); } }
+  };
 
   function injectButton() {
     if (document.getElementById('gpTrigger')) return;
@@ -335,15 +439,18 @@
     b.id = 'gpTrigger';
     b.textContent = '📖';
     b.title = "Loading-screen tester — between-scenes Traveler's Guide intermission (preview)";
-    b.addEventListener('click', openOverlay);
+    b.addEventListener('click', function () { openOverlay('preview'); });
     document.body.appendChild(b);
   }
 
   function boot() {
     injectStyle();
-    window._gpOpenPreview = openOverlay; // callable from the console on any host
+    window._gpOpenPreview = function () { openOverlay('preview'); }; // console, any host
+    installLiveHooks();
     var local = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-    if (local) injectButton();           // match the other dev buttons: localhost only
+    if (local) injectButton();  // preview button: localhost only (joins the dev stack)
+    live.enabled = local;       // LIVE intermission auto-ON for localhost testing, OFF in
+                                // production (enable there via _GUIDE_INTERMISSION.enable())
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
