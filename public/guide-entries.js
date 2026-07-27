@@ -45,6 +45,20 @@
  *                 region completed. Mostly 0-1. NEVER used to hide a solution —
  *                 only to time public knowledge to the player's journey.
  *   canon_safe    true only after a human/authoring review confirmed law #2.
+ *   margin_notes  OPTIONAL. ~5% of pages carry handwritten marginalia in other
+ *                 hands: [{ hand, note }] — a previous reader arguing with, or
+ *                 testing, the text ("The author clearly never met a southern
+ *                 clan. Ignore paragraph three. — M.V." / "Tested this. Lost a
+ *                 boot."). This makes the book feel like YOUR copy, passed
+ *                 between travelers for decades. Never on more than ~1 in 20.
+ *
+ * THINK IN EDITIONS / A LIVING LIBRARY, NOT ONE BOOK (Roman): the shelf holds
+ * SEVERAL publications, each with its own author, voice, and page count — the
+ * Traveler's Guide, Wishmaster Rowan's "On Wishcraft", the Lytharyn Student
+ * Handbook, a Field Guide to the Thornwild, etc. The loading screen may pull a
+ * DIFFERENT book off the shelf on different days. Each entry names its own
+ * `publication`; the library metaphor already built (Vault/Forbidden Library)
+ * makes the whole shelf feel like an institution rather than a single artifact.
  *
  * PAGES, NOT ENTRIES, ARE THE COLLECTIBLE UNIT. Phase-1 runtime paginates each
  * body at _GUIDE_WORDS_PER_PAGE and assigns global page numbers by array order,
@@ -58,7 +72,18 @@ window._GUIDE_PUBLICATIONS = {
     title: "The Traveler's Guide to the Fatelands",
     subtitle: 'Being a Compendium of Roads, Customs, Cautions & Curiosities, Gathered by Many Hands',
     binding_note: 'Bound in ferry-oak, revised past counting; no two copies agree entirely.'
+  },
+  'on-wishcraft': {
+    world: 'fatelands',
+    title: 'On Wishcraft',
+    subtitle: 'Being the Collected Observations of Wishmaster Rowan, Assembled After His Time by Various Students, Not All of Whom Agreed',
+    binding_note: 'A thin, much-thumbed volume. The margins are fuller than some of the pages.'
   }
+  // PLANNED (own books, own voices — future authoring batches):
+  //   'lytharyn-handbook'    → "The Lytharyn Student Handbook"
+  //   'thornwild-field-guide'→ "A Field Guide to the Thornwild"
+  //   modern settings each get their own: "The City Companion", "CitizenNet",
+  //   "Employee Orientation", "Student Handbook", "Visitor's Guide", "Frontier Almanac".
 };
 
 window._GUIDE_WORDS_PER_PAGE = 110; // Phase-1 pagination hook (collectible = the page)
@@ -93,26 +118,26 @@ window._GUIDE_ENTRIES = [
 
   /* ── WISHMASTER ROWAN, "On Wishcraft" (4) ─────────────────────────────── */
   {
-    id: 'rowan-cost', world: 'fatelands', publication: 'travelers-guide',
-    category: 'Wishmaster Rowan', title: 'On Wishcraft: The First Cost', author: 'Wishmaster Rowan', edition: 'collected excerpts',
+    id: 'rowan-cost', world: 'fatelands', publication: 'on-wishcraft',
+    category: 'On Wishcraft', title: 'The First Cost', author: 'Wishmaster Rowan', edition: 'collected excerpts',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "Every apprentice asks me what a wish costs, and every apprentice is disappointed by the answer, which is: less than you fear and more than you will admit. The bill does not arrive at once. It arrives the way weather arrives — you were always going to get wet; you simply chose the day. I have never met a wisher who was cheated. I have met a great many who did not read to the bottom of what they wanted."
   },
   {
-    id: 'rowan-refusal', world: 'fatelands', publication: 'travelers-guide',
-    category: 'Wishmaster Rowan', title: 'On Wishcraft: The Dignity of No', author: 'Wishmaster Rowan', edition: 'collected excerpts',
+    id: 'rowan-refusal', world: 'fatelands', publication: 'on-wishcraft',
+    category: 'On Wishcraft', title: 'The Dignity of No', author: 'Wishmaster Rowan', edition: 'collected excerpts',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "It is said Fate cannot refuse. This is a comfort told to children and a lie told to kings. Fate refuses constantly; it simply does so by granting. If you have ever received exactly what you asked and hated it, you have been refused with great courtesy. The wise learn to hear the No inside the Yes. The rest learn to live in the house they demanded be built on sand."
   },
   {
-    id: 'rowan-for-another', world: 'fatelands', publication: 'travelers-guide',
-    category: 'Wishmaster Rowan', title: 'On Wishcraft: Wishing for Another', author: 'Wishmaster Rowan', edition: 'collected excerpts',
+    id: 'rowan-for-another', world: 'fatelands', publication: 'on-wishcraft',
+    category: 'On Wishcraft', title: 'Wishing for Another', author: 'Wishmaster Rowan', edition: 'collected excerpts',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
     body: "To wish for yourself is arithmetic. To wish for another is trespass, however tender. I do not forbid it — I have done it, and would again — but know that you are carrying a lamp into a room that is not yours, and that the person asleep there may wake to find the furniture rearranged and not thank you for the light. The kindest wishes I have witnessed asked permission first. The unkindest were also the most loving. Make of that what you can; I never could."
   },
   {
-    id: 'rowan-small-wishes', world: 'fatelands', publication: 'travelers-guide',
-    category: 'Wishmaster Rowan', title: 'On Wishcraft: In Praise of Small Wishes', author: 'Wishmaster Rowan', edition: 'collected excerpts (disputed)',
+    id: 'rowan-small-wishes', world: 'fatelands', publication: 'on-wishcraft',
+    category: 'On Wishcraft', title: 'In Praise of Small Wishes', author: 'Wishmaster Rowan', edition: 'collected excerpts (disputed)',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "The great wishes are carved on monuments; the small ones hold the world up. A wish for the bread to rise. A wish for the fever to break by morning. A wish, muttered, that he would look up before I lost my nerve. These leave no marks and start no wars and are, I suspect, the only wishcraft Fate actually enjoys. (Later editors mark this passage 'sentimental' and 'probably not Rowan.' Later editors have never waited for a fever to break.)"
   },
@@ -122,6 +147,7 @@ window._GUIDE_ENTRIES = [
     id: 'etq-kwisheen-dining', world: 'fatelands', publication: 'travelers-guide',
     category: 'Etiquette', title: 'Dining with the Kwisheen', author: 'a Guest of the Many-Tide Houses', edition: 'as told to the compilers',
     unlock: 'always', spoiler_level: 1, canon_safe: true,
+    margin_notes: [{ hand: 'M.V.', note: 'The author plainly never dined with a southern clan. Ignore the part about the cloak; among the southern houses it means the opposite, and I have the scars to prove it.' }],
     body: "Your host will be tall — taller than the doorway seems to allow — and will move as though the floor were tide, which to them it faintly is. Do not stare at the hair; it is not for looking at, and it is, in a sense, looking back. Accept every dish with both hands. Refuse nothing outright; a Kwisheen reads a flat 'no' as a slammed door. Instead, praise a dish so warmly that taking a second helping would insult it. This is understood. If a manta-cloak is laid across your shoulders, you have been paid an honor you cannot yet repay. Wear it. Say little. Do not, whatever the temptation, ask them to remove it near water."
   },
   {
@@ -246,6 +272,7 @@ window._GUIDE_ENTRIES = [
     id: 'field-fernmarch-salt-fern', world: 'fatelands', publication: 'travelers-guide',
     category: 'Plants & Creatures', title: 'Salt-Fern, & Its Overstated Virtues', author: 'a Field Naturalist of little repute', edition: 'privately printed, unsold',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
+    margin_notes: [{ hand: 'a soggy pilgrim', note: 'Followed the salt-fern faithfully across the Fernmarch flats. Lost a boot anyway. Ten out of ten, would trust the fern again, will not trust the flats.' }],
     body: "A grey, brittle fern of the tidal flats, credited by hedge-healers with curing fevers, calming nerves, ensuring safe crossings, and improving the singing voice, of which it reliably does none. Its one genuine virtue is that it grows only where the ground is firm, so a marsh-crossing traveler who follows the salt-fern keeps their boots. This is worth more than the healers' promises and is, naturally, the one use no one advertises. The Guide recommends salt-fern highly, for walking on. As medicine it is best appreciated at a distance, ideally the distance between your coin and the seller's hand."
   },
 
@@ -261,6 +288,113 @@ window._GUIDE_ENTRIES = [
     category: 'Recipes', title: 'Copper Cakes, for a Traveler Setting Out', author: 'a western holdwife', edition: 'as passed down, argued over',
     unlock: 'always', spoiler_level: 0, canon_safe: true,
     body: "Made under the travelers' moon for someone about to leave, these small copper-glazed cakes are pressed with a thumbprint — the baker's, not the traveler's — so that the one who goes carries the one who stays. Honey, dark flour, a little salt for the tears the holdwife will absolutely deny. Eat one at the door and pocket the rest; tradition holds you must not finish the last until you are home again, which is either a sweet promise or a very old trick to make certain you come home. The cakes go stale by then. You eat it anyway. That, the holdwives say, is the whole point of leaving."
+  },
+
+  /* ── UNDER THE THIRTEEN MOONS (13) — one page per moon; living culture, not astronomy ── */
+  {
+    id: 'moon-velorin', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Velorin, the First-Rising', author: 'the Almanac of the Four Holds', edition: 'revised yearly',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Quicksilver, and always first over the eastern hills, Velorin is the moon of beginnings, and every hold keeps its own list of what may only be begun beneath it: a first furrow, a first voyage, the opening of a shop, the first word of a courtship. Nothing begun under Velorin ends badly, the almanac promises — then adds, in smaller type, that it may still end. The cautious begin nothing at all, on the grounds that a thing not begun cannot be begun wrongly, which is the kind of wisdom that keeps a barn very tidy and very empty."
+  },
+  {
+    id: 'moon-tessryn', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Tessryn, the Steady Moon', author: 'the Almanac of the Four Holds', edition: 'revised yearly',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Pale amber and utterly dependable, Tessryn neither hurries nor surprises, and so it is the moon for things meant to last. Contracts sealed beneath it are held unbreakable by any honest court; a couple who marry under Tessryn are marrying, everyone understands, for the long haul and not the leap. It is the harvest moon and the moon of keeping one's word. 'Promise under Tessryn,' the saying goes, 'or don't promise.' The Astrael-born, who make their promises under a moon that forgives them, find this insufferable, and say so."
+  },
+  {
+    id: 'moon-khalyra', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Khalyra, the Clear Moon', author: 'the Court Calendars', edition: 'as kept in the holds',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Blue-white and pitiless, Khalyra is when the courts sit, debts are named aloud, and the thing everyone has been not-saying at last gets said. Confessions made beneath it are believed; lies, it is held, catch in the throat. Families schedule their hardest conversations for it, on the theory that the moon does half the work — and it usually does. No festival is held under Khalyra; comfort and clarity, the calendars note dryly, are seldom on speaking terms."
+  },
+  {
+    id: 'moon-serapha', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Serapha, the Sacred Radiance', author: 'the Temple Registers', edition: 'approved',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Brightest of the inner moons, Serapha crowns the calendar of holy days — the great festivals, the blessing of newborns, the lighting of the year-fires. A child blessed under Serapha is thought lucky, or at least to have been begun luckily, a distinction the temples are careful to keep. Pilgrims time long journeys to arrive beneath it. The one thing never done under Serapha is mourning: the dead are asked, gently, to wait for a dimmer moon, and — the registers insist — they generally oblige."
+  },
+  {
+    id: 'moon-astrael', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Astrael, the Copper Moon', author: 'Harlen of Three Ferries', edition: '8th Revised',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "The travelers' moon: copper-lit, low, and the busiest night on any road, when ferries run late and are forgiven, inns overfill, and the whole world seems briefly to be going somewhere. One rule governs it, absolute and cheerful — you do not make promises under Astrael. The road will make a liar of you, and everyone knows it, so a vow sworn beneath the Copper Moon is treated as a fond joke and held to nothing. 'Ah, it's Astrael,' they say when someone swears too grandly. 'Better not.' They are laughing. They also mean it."
+  },
+  {
+    id: 'moon-dathriel', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Dathriel, the Violet Moon', author: 'collected, cautiously', edition: 'unattributed',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Deep violet and half-hidden, Dathriel is the moon of what is not said aloud. Letters are burned beneath it, meetings go unwitnessed, and those who cannot yet love in daylight are, by long and forgiving custom, invisible under it. It is not the moon of lies — that is a different failing — but of secrets honestly kept. Ask a Fatelander what they did under the last Dathriel and watch a friendly face go briefly, softly, like a closed door. Then it opens again, and they offer you tea, and you do not ask twice."
+  },
+  {
+    id: 'moon-mournfall', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Mournfall, the Omen Moon', author: 'the hold-almanacs, grimly', edition: 'traditional',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Dim and red and unloved, Mournfall is the moon of the dead: funerals are held beneath it, the names of the lost are spoken once and then deliberately not again, and every old superstition thickens to soup. Do not sweep after dark. Do not leave a chair pulled out. Do not, whatever else you ignore, answer if you are called by name from a room you know to be empty. Whether any of it is true, no one under Mournfall will say — saying so is itself unlucky, and the moon has a long memory for the confident."
+  },
+  {
+    id: 'moon-tharos', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Tharos, the Trade Moon', author: 'Marisela Quay', edition: 'Tidewater Printing',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Silver-green and bound to the tides, Tharos is the merchants' moon and the sailors' — the great markets open beneath it, cargoes move, the coast does not sleep. A bargain struck under Tharos is a bargain of goods and coin, sturdy and unromantic; the moon has no patience for vows of the heart, and a marriage proposal made beneath it is reckoned either a category error or a very poor negotiating tactic. Fishermen read the tide by it. So, more quietly, do the smugglers, who observe that a busy moon is a forgiving one."
+  },
+  {
+    id: 'moon-the-chain', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'The Chain, the Broken Moon', author: 'the Almanac, reluctantly', edition: 'revised yearly',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Not one moon but a scatter of broken stone dragged across the sky, the Chain is the moon of endings and undoings. Partnerships dissolve beneath it, debts are forgiven or defaulted, apprentices walk out, and marriages — the almanacs note with visible discomfort — are never, ever begun. It is thought unlucky for beginnings and honest for endings, and there is a hard mercy in it: a thing ended under the Chain is held to be ended cleanly, without shame to either side. People weep under the Chain and are not judged for it, which may be the kindest thing the sky does all year."
+  },
+  {
+    id: 'moon-ithralis', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Ithralis, the Lovers\' Moon', author: 'Lady Caeryn', edition: '2nd',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Warm gold and slow to set, Ithralis is the moon of vows and confessions, and the one everyone waits for. Beneath it, weddings of love — as distinct from the practical marriages of Tessryn — are held, proposals are made, and the thing you have carried in your chest for a whole season is, at last, said out loud. It is the busiest moon for wishcraft of the small and tender kind, and the temples look politely away. To confess under Ithralis and be refused is thought the gentlest way to be refused — if there is a gentle way, which Lady Caeryn, who would know, doubts."
+  },
+  {
+    id: 'moon-vorath', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Vorath, the Bone Moon', author: 'the hold-almanacs', edition: 'traditional',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Bone-white and cold, Vorath is when debts come due — all of them, and not a day past. Reckonings are held beneath it, hard bargains paid, accounts of coin and otherwise settled. It is reckoned the worst possible moon to borrow under and the only honest one to repay under, and the prudent arrange to owe nothing at all as Vorath approaches. Where a hold still keeps the old sacrifice-customs, they are made beneath it. The almanacs do not describe those, and this Guide, following their good example, will not either."
+  },
+  {
+    id: 'moon-elarion', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'Elarion, the Changing Moon', author: 'the Lytharyn Registers', edition: 'student issue',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Pale green and shimmering, Elarion is the moon of becoming. Children are named adults beneath it; apprentices are freed and made masters; the newly-changed take their new names; and those setting down an old life for a new one choose Elarion to do it. In Lytharyn the great graduations are held under it, and a graduate who forgets the date is forgiven — while a graduate who forgets their notebook is not, a distinction the Registers consider self-evident and outsiders find baffling. Nothing under Elarion stays quite as it was. That is the entire point of it."
+  },
+  {
+    id: 'moon-hungry-eye', world: 'fatelands', publication: 'travelers-guide',
+    category: 'Under the Thirteen Moons', title: 'The Hungry Eye', author: 'the compilers, and no further', edition: 'unrevised, deliberately',
+    unlock: 'always', spoiler_level: 2, canon_safe: true,
+    margin_notes: [{ hand: '(unsigned)', note: 'Do not read this page aloud after dark. I am not going to tell you why. I am only going to tell you not to.' }],
+    body: "There is a thirteenth light, if light is the word, and it is not spoken of as the others are. Under the Hungry Eye nothing is begun, no vow is made, no wish is said aloud; wells are covered, children kept in, and the merriest hold goes quiet as a held breath until it passes. What it is, this Guide does not say — not out of discretion, but because no two authors have ever agreed, and the ones who claimed to know for certain are, notably, not here to be asked. Wait it out. Everyone does. Then go back to living, which is the only thing anyone has ever found to do about it."
+  },
+
+  /* ── ON WISHCRAFT — additional excerpts (its own book; Rowan grows toward ~100) ── */
+  {
+    id: 'ow-clever-and-wise', world: 'fatelands', publication: 'on-wishcraft',
+    category: 'On Wishcraft', title: 'The Clever and the Wise', author: 'Wishmaster Rowan', edition: 'collected excerpts',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "The clever bargain with Fate. The wise bargain with themselves. I have been both, at different ages, and only the second kind of bargain ever left me better than it found me."
+  },
+  {
+    id: 'ow-quiet-hearts', world: 'fatelands', publication: 'on-wishcraft',
+    category: 'On Wishcraft', title: 'What Fate Hears', author: 'Wishmaster Rowan', edition: 'collected excerpts',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Every child believes Fate hears the louder words. Every old man knows it hears the quieter hearts. This is why children shout their wishes and are so often answered exactly — and so seldom answered kindly."
+  },
+  {
+    id: 'ow-both-true', world: 'fatelands', publication: 'on-wishcraft',
+    category: 'On Wishcraft', title: 'On Being Contradicted (by Myself)', author: 'Wishmaster Rowan', edition: 'collected excerpts, with apology',
+    unlock: 'always', spoiler_level: 1, canon_safe: true,
+    body: "Elsewhere in this volume I have written that a wish costs less than you fear. Elsewhere again, that it costs everything. Students bring me the two pages side by side, triumphant, as if they had caught me out. They have caught nothing. Both are true. A thing that cost you everything and also less than you feared is not a paradox — it is simply a life. That is why we call it wishcraft, and not arithmetic."
+  },
+  {
+    id: 'ow-three-wrong-times', world: 'fatelands', publication: 'on-wishcraft',
+    category: 'On Wishcraft', title: 'The Three Wrong Times', author: 'Wishmaster Rowan', edition: 'collected excerpts',
+    unlock: 'always', spoiler_level: 0, canon_safe: true,
+    body: "Never wish while angry, while drunk, or while in love. Angry, you will aim true and regret it. Drunk, you will aim wide and regret that. In love, you will aim at the wrong person entirely and call it generosity. This leaves almost no good time to wish, which is exactly my point: the best wishes are made by people who have very nearly talked themselves out of wishing at all."
   }
 
 ];
