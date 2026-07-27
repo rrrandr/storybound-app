@@ -80,20 +80,38 @@
  * (Phase 0 is pure content; this file is not yet wired into index.html.)
  * ========================================================================== */
 
+// Cross-FLAVOR shelving axis for the Library building (see design #7): books are grouped by
+// what KIND of book they are, NOT which world — so On Wishcraft can be shelved beside a sci-fi
+// ethics primer because both are philosophy. Every publication carries a `shelf`; `order` = walk order.
+window._GUIDE_SHELVES = {
+  travel:            { label: 'Travel & Gazetteers',         order: 1, note: 'Roads, ports, cities, and where the walls still stand.' },
+  history:           { label: 'History & Memory',            order: 2, note: 'What happened, what is remembered, and what was quietly lost.' },
+  philosophy:        { label: 'Philosophy & Belief',         order: 3, note: 'The books that argue about why, not how.' },
+  'natural-history': { label: 'Natural History',             order: 4, note: 'Field guides and bestiaries — the living country, sorted (badly).' },
+  etiquette:         { label: 'Manners & Etiquette',         order: 5, note: 'How not to give offense among peoples who agree on almost nothing.' },
+  almanac:           { label: 'Almanacs & Reckonings',       order: 6, note: 'Moons, tides, feast-days, fees — the year set down in advance.' },
+  handbook:          { label: 'Handbooks & Practical',       order: 7, note: "Every civilization's \"how to live here\" — one per world." },
+  periodical:        { label: 'Newspapers & Periodicals',    order: 8, note: 'The ephemeral shelf: gossip, bulletins, things printed to be thrown away.' },
+  notebooks:         { label: 'Private Papers & Marginalia', order: 9, note: 'Unofficial voices — journals and samizdat that argue with the shelves around them.' },
+};
+
 window._GUIDE_PUBLICATIONS = {
   'travelers-guide': {
+    shelf: 'travel', voice: 'practical, witty, occasionally and confidently wrong — a chorus of many hands that never fully agree',
     world: 'fatelands',
     title: "The Traveler's Guide to the Fatelands",
     subtitle: 'Being a Compendium of Roads, Customs, Cautions & Curiosities, Gathered by Many Hands',
     binding_note: 'Bound in ferry-oak, revised past counting; no two copies agree entirely.'
   },
   'on-wishcraft': {
+    shelf: 'philosophy', voice: 'sparse, philosophical, almost meditative; more silence than sentence',
     world: 'fatelands',
     title: 'On Wishcraft',
     subtitle: 'Being the Collected Observations of Wishmaster Rowan, Assembled After His Time by Various Students, Not All of Whom Agreed',
     binding_note: 'A thin, much-thumbed volume. The margins are fuller than some of the pages.'
   },
   'lytharyn-handbook': {
+    shelf: 'handbook', voice: 'dry, bureaucratic, unintentionally funny; rules issued to people it assumes are already wrong',
     world: 'fatelands',
     title: 'The Lytharyn Student Handbook',
     subtitle: 'Issued to Every Incoming Cohort of the Lytharyn Schools, and Read by Approximately None of Them',
@@ -102,6 +120,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Stiff grey board, a cohort-year stamped on the spine, corners already soft.'
   },
   'travelers-notes': {
+    shelf: 'notebooks', voice: 'clipped, sceptical, first-person; trusts nothing, least of all the official guides (this one included)',
     world: 'fatelands',
     title: "Traveler's Notes",
     subtitle: 'The Private Notebook of a Traveler Who Went Everywhere Twice and Trusted No Guidebook, Including This One',
@@ -112,6 +131,7 @@ window._GUIDE_PUBLICATIONS = {
   // ── promoted from the Traveler's Guide: three sections grown large enough to stand
   //    as books of their own. Same folk-layer, same disagreement — a wider shelf.
   'thirteen-moons': {
+    shelf: 'almanac', voice: 'terse almanac cadence — names, tempers, warnings — sky-superstition worn smooth by yearly use',
     world: 'fatelands',
     title: 'Under the Thirteen Moons',
     subtitle: 'Being the Standing Almanac of the Four Holds, Their Moons Named, Their Tempers Recorded, and Their Quarrels Left Unsettled',
@@ -120,6 +140,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Broad and flat as a chart-book, thumbed dark along the moon-tables; the last leaf is a fold-out sky no two copies draw alike.'
   },
   'book-of-etiquette': {
+    shelf: 'etiquette', voice: 'anxious and exacting, certain one wrong fork ends a life, among peoples who share only the capacity for offense',
     world: 'fatelands',
     title: 'The Book of Etiquette',
     subtitle: 'Being a Compendium of Manners for the Traveler Who Would Give No Offense Abroad, Across Peoples Who Agree on Almost Nothing but the Fact of Being Offended',
@@ -128,6 +149,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Slim, clothbound, a ribbon marker sewn in; the courtship pages fall open of their own accord.'
   },
   'field-guide-creatures': {
+    shelf: 'natural-history', voice: 'amateur-naturalist enthusiasm undercut by margin-corrections; sorts a country that refuses to be sorted',
     world: 'fatelands',
     title: 'A Field Guide to the Creatures of the Fatelands',
     subtitle: 'Being the Naturalist\'s Attempt to Name and Sort the Living Country, Undertaken in Full Knowledge That the Country Does Not Consent to Being Sorted',
@@ -141,6 +163,7 @@ window._GUIDE_PUBLICATIONS = {
   //    City Companion ≈ a local voice · Visitor's Guide ≈ the Traveler's Guide ·
   //    Civic Pamphlets ≈ schoolbook History. (Newspapers deferred to the UI phase.) ──
   'city-companion': {
+    shelf: 'travel', voice: 'affectionate, weary, insider; loves the city exactly as much as it complains about it',
     world: 'modern',
     title: 'The City Companion',
     subtitle: 'The City, Explained to Itself, Monthly, Whether It Asked or Not',
@@ -149,6 +172,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Glossy, disposable, and somehow kept in a kitchen drawer for nine years.'
   },
   'visitors-guide-modern': {
+    shelf: 'travel', voice: 'over-explains with great confidence, slightly too slowly, for the thoroughly lost',
     world: 'modern',
     title: "A Visitor's Guide to the City",
     subtitle: 'Everything a Newcomer Needs, Explained Slightly Too Slowly and With Great Confidence',
@@ -157,6 +181,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'A free foldout map that will not refold. It never refolds. Stop trying.'
   },
   'civic-pamphlets': {
+    shelf: 'history', voice: 'earnest municipal primer; a docent who cares far more than the budget allows',
     world: 'modern',
     title: 'Civic & Museum Pamphlets',
     subtitle: 'Small Printed Answers to Questions Almost Nobody Asked Out Loud',
@@ -170,6 +195,7 @@ window._GUIDE_PUBLICATIONS = {
   //    reads across Regency→Victorian. Archetype rhymes: Book of Conduct ≈ Etiquette ·
   //    Society Pages ≈ gossip · Almanac ≈ Thirteen Moons · Household Companion ≈ Recipes. ──
   'book-of-conduct': {
+    shelf: 'etiquette', voice: 'starched and prescriptive; reputation is survival and feeling is beside the point',
     world: 'historical',
     title: 'The Complete Book of Conduct',
     subtitle: 'A Guide to Deportment, Correspondence, and the Preservation of Reputation, for Persons of Every Rank',
@@ -178,6 +204,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Gilt-edged, frequently gifted, and — the giver suspects — rarely finished.'
   },
   'society-pages': {
+    shelf: 'periodical', voice: 'arch, gleeful, deniable gossip that everyone reads and no one admits to',
     world: 'historical',
     title: 'The Society Pages',
     subtitle: 'Intelligence of Marriages, Mournings, Ruin & Return, for Readers Who Would Never Admit to Reading Them',
@@ -186,6 +213,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Cheap paper, read to translucency, folded inside a more respectable volume.'
   },
   'household-companion': {
+    shelf: 'handbook', voice: 'brisk domestic competence in three annotating hands; the spine broken at the pudding chapter',
     world: 'historical',
     title: 'The Household Companion',
     subtitle: 'Being Receipts, Remedies, and the Management of a Respectable Home',
@@ -194,6 +222,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Stained, annotated in three hands, the spine broken open at the pudding chapter.'
   },
   'the-almanac': {
+    shelf: 'almanac', voice: 'flat yearly reckoning of weather, tide and feast-day; superstition stated as plain fact',
     world: 'historical',
     title: 'The Almanac',
     subtitle: 'Weather, Tides, Markets, Moon-Phases & Feast-Days, Reckoned for the Coming Year',
@@ -212,6 +241,7 @@ window._GUIDE_PUBLICATIONS = {
   //    dystopia sub-worlds (Quieting, Human Capital, Dogma, Erasure, Thirst) get their own
   //    shelves in fill-out. See memory project_glass_house_* + project_modern_dystopias_one_axis. ──
   'field-companion': {
+    shelf: 'handbook', voice: 'warm, communal, gently insistent; you are never alone here, and that is meant as the whole comfort',
     world: 'dystopia', subworld: 'glass_house',
     title: 'The Field Companion',
     subtitle: 'Your Warm Welcome to a Life You Never Have to Feel Alone In',
@@ -220,6 +250,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Bright and gentle, printed on paper that somehow seems to want to be held.'
   },
   'open-aperture': {
+    shelf: 'etiquette', voice: 'sunlit lifestyle-magazine glow; every door open in every photograph, and you only notice later',
     world: 'dystopia', subworld: 'glass_house',
     title: 'Open Aperture',
     subtitle: 'The Magazine for Living Fully in the Field',
@@ -228,6 +259,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Glossy, sunlit; there is not one closed door in any photograph, and you only notice this later.'
   },
   'first-field': {
+    shelf: 'philosophy', voice: 'three-warm-colours board-book tenderness, teaching the youngest to be held',
     world: 'dystopia', subworld: 'glass_house',
     title: 'First Field: A Reader for New Hearts',
     subtitle: 'Gentle Pages for Children, Newcomers, and Anyone Learning to Be Held',
@@ -236,6 +268,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'A soft-cornered board book in the same three warm colours throughout.'
   },
   'a-solos-notes': {
+    shelf: 'notebooks', voice: 'quiet handwritten dissent; the one private voice in a world with no closed doors',
     world: 'dystopia', subworld: 'glass_house',
     title: "A Solo's Notes",
     subtitle: '(untitled; passed hand to hand; please do not carry this into the Field)',
@@ -251,6 +284,7 @@ window._GUIDE_PUBLICATIONS = {
   //    onboarding/travel · Xenobiology Manual ≈ Field Guide · Captain's Almanac ≈ the Almanac ·
   //    Galactic Phrasebook ≈ Etiquette / First Contact Protocol. ──
   'colonist-handbook': {
+    shelf: 'handbook', voice: 'reassuring institutional calm that updates itself overnight and never quite says what changed',
     world: 'scifi',
     title: 'The Colonist Handbook',
     subtitle: 'Everything You Need to Stay Alive, Sane, and Roughly on Schedule This Far From Home',
@@ -259,6 +293,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'A durable slate, updated silently overnight; you are never quite sure what changed, only that something did.'
   },
   'xenobiology-manual': {
+    shelf: 'natural-history', voice: 'clinical survey prose revised after every incident; a page torn cleanly out that everyone asks about',
     world: 'scifi',
     title: 'The Xenobiology Field Manual',
     subtitle: 'Observed Life of the Frontier, Classified Provisionally and Revised Often, Usually After an Incident',
@@ -267,6 +302,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Waterproof, blast-scored at one corner, with a page torn cleanly out that everyone eventually asks about.'
   },
   'captains-almanac': {
+    shelf: 'almanac', voice: 'gruff, opinionated, full of sea stories; compiled by captains and corrected by their widows',
     world: 'scifi',
     title: "The Ship Captain's Almanac",
     subtitle: 'Fees, Fuel, Routes & the Customs of Ports That Will Space You for Getting Them Wrong',
@@ -275,6 +311,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'Grease-thumbed, margins denser than the text, three ports crossed out in red without comment.'
   },
   'galactic-phrasebook': {
+    shelf: 'etiquette', voice: 'brisk protocol courtesy with a black-edged section; how not to insult what could kill you',
     world: 'scifi',
     title: 'The Galactic Phrasebook',
     subtitle: 'How Not to Insult the Species You Will Meet, and the One You Should Pray You Do Not',
@@ -290,6 +327,7 @@ window._GUIDE_PUBLICATIONS = {
   //    Settlement Registry ≈ gazetteer · Wasteland Bestiary ≈ Field Guide · Beforefall Memories ≈
   //    History/nostalgia. (Radio Transcripts = the ephemeral/newspaper analog → UI phase.) ──
   'survivors-manual': {
+    shelf: 'handbook', voice: 'no single author — an argument in the margins between everyone who held it; the true text is the disagreement',
     world: 'postapocalyptic',
     title: "The Survivor's Manual",
     subtitle: 'Water, Fire, Fungus, and the Difference Between a Myth That Kills You and One That Does Not',
@@ -298,6 +336,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'No two copies alike — pages added, torn, corrected in a dozen hands; the true text is the argument between them.'
   },
   'settlement-registry': {
+    shelf: 'travel', voice: 'ledger-plain gazetteer, hearsay included; entries crossed out and, hopefully, written back in',
     world: 'postapocalyptic',
     title: 'The Settlement Registry',
     subtitle: 'Every Known Town, Its People, Its Trade, and What Is Said of It in the Next Town Over',
@@ -306,6 +345,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'A ledger rebound in salvage; many entries crossed out, a few crossed out and then, hopefully, written back in.'
   },
   'wasteland-bestiary': {
+    shelf: 'natural-history', voice: 'hard-won danger ratings inked in red and re-inked upward; fear made procedural',
     world: 'postapocalyptic',
     title: 'The Wasteland Bestiary',
     subtitle: 'What Walks, Crawls, and Waits Out There, With Danger Ratings Learned the Hard Way',
@@ -314,6 +354,7 @@ window._GUIDE_PUBLICATIONS = {
     binding_note: 'The danger ratings are inked in red, and several have been re-inked, upward, more than once.'
   },
   'beforefall-memories': {
+    shelf: 'history', voice: 'bittersweet artifacts of a vanished world; tender to the young who cannot understand and the old who understand too well',
     world: 'postapocalyptic',
     title: 'Beforefall Memories',
     subtitle: 'Relics and Remembrances of the World That Ended, for Those Who Recall It and Those Who Cannot',
