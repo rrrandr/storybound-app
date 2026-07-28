@@ -79,8 +79,13 @@
     var now = (typeof performance !== 'undefined' && performance.now) ? function () { return performance.now(); } : function () { return 0; };
     var t0 = now();
     var log = {
-      scene: sceneNum, first_verdict: null, retried: false, retry_count: 0, second_verdict: null,
-      transition_position_1: null, transition_position_final: null, transition_position_delta: null, latency_ms: 0
+      // ── SHARED TELEMETRY SCHEMA — BOTH momentum arms emit these (A: SCENE-SPINE / upstream,
+      //    B: retry / downstream), so the eventual comparison is apples-to-apples. Instrumentation
+      //    is shared; BEHAVIOR is not. Arm A should log the same fields with architecture:'scene_spine'.
+      scene_id: sceneNum, architecture: 'retry', first_verdict: null, retry_count: 0,
+      transition_position: null, latency_ms: 0, reader_score: null, // reader_score filled later by the blind read
+      // ── retry-arm extras (beyond the shared schema) ──
+      retried: false, second_verdict: null, transition_position_1: null, transition_position_delta: null
     };
     var v1 = await window._verifyDelivery(raw, proposedEvent);
     log.first_verdict = v1.delivery; log.transition_position_1 = v1.transition_position;
@@ -98,7 +103,7 @@
         if (v2.delivery === 'DELIVERED') break;
       }
     }
-    log.transition_position_final = finalV.transition_position;
+    log.transition_position = finalV.transition_position; // the delivered position (shared schema)
     // does semantic repair MOVE the turning point (e.g. 90% → 55%)? null when no valid retry.
     log.transition_position_delta = (secondPos != null && secondPos >= 0 && v1.transition_position >= 0) ? (secondPos - v1.transition_position) : null;
     log.latency_ms = Math.round(now() - t0);
