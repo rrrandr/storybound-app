@@ -82,16 +82,20 @@
       // ── SHARED TELEMETRY SCHEMA — BOTH momentum arms emit these (A: SCENE-SPINE / upstream,
       //    B: retry / downstream), so the eventual comparison is apples-to-apples. Instrumentation
       //    is shared; BEHAVIOR is not. Arm A should log the same fields with architecture:'scene_spine'.
-      scene_id: sceneNum, architecture: 'retry', first_verdict: null, retry_count: 0,
+      scene_id: sceneNum, architecture: 'retry', first_verdict: null, final_verdict: null, retry_count: 0,
       transition_position: null, latency_ms: 0, reader_score: null, // reader_score filled later by the blind read
+      // dominant_replacement = the FAILURE-CLUSTER key (Roman's success-bias guard): what displaced
+      // the transition on a miss — atmosphere/relationship_dialogue/internal_monologue/world_exposition/
+      // different_event, or 'none' when delivered. Cluster residual misses by THIS, don't optimize the average.
+      dominant_replacement: null,
       // "was the reader gain worth the tokens?" — join to app.js _sceneCostsThisStory spend:
       // first_pass_cost ≈ spend.initial · final_cost ≈ spend.total (the retry regen lands in spend.regens).
       first_pass_cost: null, final_cost: null,
       // ── retry-arm extras (beyond the shared schema) ──
-      retried: false, second_verdict: null, transition_position_1: null, transition_position_delta: null
+      retried: false, second_verdict: null, transition_position_1: null, transition_position_delta: null, dominant_replacement_1: null
     };
     var v1 = await window._verifyDelivery(raw, proposedEvent);
-    log.first_verdict = v1.delivery; log.transition_position_1 = v1.transition_position;
+    log.first_verdict = v1.delivery; log.transition_position_1 = v1.transition_position; log.dominant_replacement_1 = v1.dominant_replacement;
     var best = raw, finalV = v1, secondDraft = null, secondPos = null;
     if ((v1.delivery === 'MISSED' || v1.delivery === 'PARTIAL') && typeof reauthor === 'function') {
       for (var i = 0; i < retryBudget; i++) {
@@ -107,6 +111,8 @@
       }
     }
     log.transition_position = finalV.transition_position; // the delivered position (shared schema)
+    log.dominant_replacement = finalV.dominant_replacement; // failure-cluster key ('none' when delivered)
+    log.final_verdict = finalV.delivery; // what the reader saw (post-retry)
     // does semantic repair MOVE the turning point (e.g. 90% → 55%)? null when no valid retry.
     log.transition_position_delta = (secondPos != null && secondPos >= 0 && v1.transition_position >= 0) ? (secondPos - v1.transition_position) : null;
     log.latency_ms = Math.round(now() - t0);
