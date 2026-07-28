@@ -5269,8 +5269,23 @@ ${_pcInteriorLock}`;
     { re: /\baccording\s+to\s+your\s+(specification|instruction|request|spec)/i,           reason: 'meta_intent_statement' },
     { re: /\bi'?(ll|\s*will)\s+(apply|fix|correct|edit|make|perform)\b[^.\n]{0,40}\b(correction|change|edit|fix|specification|repair)/i, reason: 'meta_intent_statement' },
     { re: /\bhere'?s\s+the\s+(corrected|revised|edited|fixed|updated|repaired)\b/i,        reason: 'meta_preamble' },
-    { re: /\b(as an?\s+AI|language model|content policy|against (my|the) (guideline|policy)|i must decline|i'?m (unable|not able)|i (can'?t|cannot)\s+(help|assist|comply|provide))\b/i, reason: 'refusal_or_policy' }
+    { re: /\b(as an?\s+AI|language model|content policy|against (my|the) (guideline|policy)|i must decline|i'?m (unable|not able)|i (can'?t|cannot)\s+(help|assist|comply|provide))\b/i, reason: 'refusal_or_policy' },
+    // PRIMARY-AUTHOR SCENE-GENERATION REFUSALS (Roman 2026-07-27) — the primary author (not just a
+    // repair pass) can return a meta-refusal that shipped as prose: "The scene cannot be generated as
+    // specified. The provided instructions contain numerous [contradictions]…". None of the above
+    // matched it (it says "the SCENE cannot be generated", not "I cannot help"). Catch that class.
+    { re: /\b(scene|text|prose|passage|content|story|chapter|response)\s+cannot\s+be\s+(generated|written|created|produced|completed|provided|fulfilled)\b/i, reason: 'generation_refusal' },
+    { re: /\bcannot\s+be\s+(generated|written|produced|created|fulfilled|completed)\s+as\s+(specified|requested|instructed|described|written)\b/i, reason: 'generation_refusal' },
+    { re: /\bunable\s+to\s+(generate|write|create|produce|complete)\s+(this|the|a)\s+(scene|response|prose|text|passage|story)\b/i, reason: 'generation_refusal' },
+    { re: /\bthe\s+(provided|given|supplied|following)\s+(instruction|prompt|specification|direction|constraint)s?\b/i, reason: 'meta_complaint' },
+    { re: /\b(instruction|prompt|specification|constraint|direction|requirement)s?\s+(contain|include|are|have|present)\s+[^.\n]{0,40}\b(contradict|conflict|impossible|numerous|mutually|incompatible)/i, reason: 'meta_complaint' }
   ];
+  // Is a candidate scene-body a meta-refusal / non-answer (never fit to publish)? Reuses the patterns
+  // above via metaOnly (skips length/opening checks — a primary body has no "original" to compare to).
+  function _isMetaRefusal(text) {
+    try { return !_validateRepairOutput(text, '', 'primary-prose', { metaOnly: true }).ok; } catch (_) { return false; }
+  }
+  window._isMetaRefusal = _isMetaRefusal;
   function _validateRepairOutput(candidate, original, passName, opts) {
     opts = opts || {};
     var c = (candidate == null ? '' : String(candidate)).trim();
@@ -20176,6 +20191,15 @@ It does NOT change Player actions, relationship progression, or pacing.
       var world = (st.picks && st.picks.world) || '';
       var flavor = st.picks?.worldSubtype || st.worldSubtype || '';
 
+      // 0. META-REFUSAL (CRITICAL, highest priority — Roman 2026-07-27). The PRIMARY author can return a
+      // meta non-answer that would ship as prose ("The scene cannot be generated as specified. The provided
+      // instructions contain numerous contradictions…"). Flag it critical so the pipeline treats it as a
+      // hard failure; a final substitution guard (~278533) guarantees it never reaches the reader even when
+      // the line-edit regen can't repair it.
+      if (typeof _isMetaRefusal === 'function' && _isMetaRefusal(sceneText)) {
+          return { valid: false, reasons: ['META_REFUSAL: author returned a refusal / meta non-answer instead of prose'], severity: 'critical' };
+      }
+
       // 1. WORLD CONTRACT (CRITICAL) — forbidden structural elements
       if (flavor === 'prehistoric') {
           _PREHISTORIC_FORBIDDEN.lastIndex = 0;
@@ -22872,6 +22896,29 @@ It does NOT change Player actions, relationship progression, or pacing.
             });
             out = out.replace(/[ \t]+\n/g, '\n').replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
           }
+        } catch (_) {}
+        // SIGNATURE-FRAGMENT DEDUP (Roman 2026-07-26) — fixes the "triple Tempt Fate" closer bug.
+        // The closer is a multi-sentence block whose loudest pieces are independently quotable — the
+        // quoted CARD NAME ("Tempt Fate." / "Petition Fate") and verbatim sub-sentences (the "Grandma
+        // never let me play…" / "static shock…" lines). The model reliably ECHOES those earlier in the
+        // tail. Neither guard above removes them: the fuzzy pass skips <3-word lines AND divides overlap
+        // by the WHOLE closer's length (a verbatim SUB-fragment scores far under 0.6), and the robust
+        // pass only matches the closer as ONE block. Result: the card name surfaced 2-4× on the page.
+        // Strip every verbatim closer FRAGMENT from the body BEFORE the canonical closer is appended.
+        try {
+          var _frags = [];
+          (closer.match(/"[^"]+"/g) || []).forEach(function (q) { if (q.length >= 5) _frags.push(q); });          // quoted card names
+          closer.split(/(?<=[.!?…])\s+/).forEach(function (s) { s = s.trim(); if (s.length >= 10) _frags.push(s); }); // verbatim closer sentences
+          _frags = Array.from(new Set(_frags)).sort(function (a, b) { return b.length - a.length; });               // longest-first
+          var _stripped = 0;
+          _frags.forEach(function (fr) {
+            var _escF = fr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            var _before = out;
+            try { out = out.replace(new RegExp(_escF, 'g'), ''); } catch (_) { out = out.split(fr).join(''); }
+            if (out !== _before) _stripped++;
+          });
+          out = out.replace(/[ \t]+([.,!?;:…])/g, '$1').replace(/[ \t]{2,}/g, ' ').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+          if (_stripped) { try { console.log('[SCENE-FRAME] Stripped ' + _stripped + ' echoed closer fragment-type(s) from body (turn path — anti triple-closer).'); } catch (_) {} }
         } catch (_) {}
         // ROBUST CLOSER ANCHORING (Roman 2026-06-08 — same fix as the Scene-1 frame).
         // Remove the closer SENTENCE wherever it sits (slice(-600)-window + paragraph-
@@ -29288,8 +29335,16 @@ It does NOT change Player actions, relationship progression, or pacing.
           parsed.beatFulfillment.forEach(function (bf) {
             if (!bf || !bf.id) return;
             try { console.log('[PLOT-CONTRACT:AUDIT] id=' + bf.id + ' status=' + bf.status + (bf.recommendedAction ? ' action=' + bf.recommendedAction : '')); } catch (_) {}
-            if (bf.status === 'fulfilled') return;
             var src = _pcBeats.filter(function (b) { return b.id === bf.id; })[0] || {};
+            // COMMITTED-STATE v0 (Roman 2026-07-27): this scorer is ANALYTICS (how well did the scene satisfy the
+            // contract), NOT the runtime commit gate. State_change TRANSITIONS commit at the deterministic
+            // Commit-Scene stage (top of _generateLiteraryPlotContract, awaited, both paths) — NEVER here (this
+            // pass is UI-mount-gated). Here we only ensure the analytics debt path does NOT reassert a stale beat
+            // for a transition — the unit of debt moved to pendingIntent, which drives replanning instead.
+            if (src._derivedFromStateChange && !(typeof window !== 'undefined' && window._committedStateV0 === false)) {
+              return; // transitions are owned by Commit-Scene; no obligation debt for them here
+            }
+            if (bf.status === 'fulfilled') return;
             if (src.dropAllowed === true && bf.status === 'partial') return;   // partial + droppable → let go
             if (typeof _recordObligationDebt === 'function') _recordObligationDebt({
               id: bf.id, importance: 'hard', description: src.description || bf.id,
@@ -62201,12 +62256,21 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
       }
     } catch (_) {}
 
+    // MILESTONE AS THE SCENE'S JOB (Roman 2026-07-26 — experiment). Was framed as "most recent beat" +
+    // "next pending beat, N scenes from now" — informative only, so the stateless scene planner ignored it
+    // and re-derived a beat from goal + last-scene-end, spinning in place. Reframe: the prior milestone is
+    // COMPLETED (do not re-play it); the next milestone is THIS SCENE'S JOB (land it, or make concrete
+    // progress toward it). If merely EXPOSING this makes scenes advance, the planner can consume milestones
+    // and no controller is needed; if it doesn't, a persistent beat-sheet controller is justified.
     if (lastTriggered) {
-      lines.push('Most recent A-plot beat (already on-page in prior scene): [' + lastTriggered.kind + '] ' + lastTriggered.event);
+      lines.push('Previous A-plot milestone — COMPLETED (it already happened on-page; do NOT re-establish, re-argue, or re-play it): [' + lastTriggered.kind + '] ' + lastTriggered.event);
     }
     if (nextPending) {
       const turnsUntil = (nextPending.atScene || turn) - turn;
-      lines.push('Next pending A-plot beat (scene ' + nextPending.atScene + ', ' + turnsUntil + ' scenes from now): [' + nextPending.kind + '] ' + nextPending.event);
+      lines.push('THIS SCENE\'S JOB — the CURRENT REQUIRED MILESTONE (drive the scene toward it; do NOT spin in place re-covering the prior beat): [' + nextPending.kind + '] ' + nextPending.event
+        + (turnsUntil > 0
+            ? ' — it is due by scene ' + nextPending.atScene + '; THIS scene must make concrete, visible PROGRESS toward it (a step that cannot be undone), not re-render where the last scene ended.'
+            : ' — LAND it in THIS scene.'));
     }
 
     if (sepHint || proxHint) {
@@ -70201,6 +70265,29 @@ TEMPT FATE NARRATIVE STRUCTURE (MANDATORY — this scene must open with all thre
       const currentIdx = getStoryturnIndex(state.storyturn || 'ST1');
       const nextSt = getStoryturnById(currentIdx + 1);
 
+      // ── SINGLE PACING AUTHORITY (Roman 2026-07-27) ───────────────────────────────────────
+      // Route ALL storyturn advancement through the pacing-window POLICY (getAllowedSTWindow, which
+      // already applies FAST-BURN + threshold desire-bias). Previously the advance CADENCE
+      // (_shouldAdvanceStoryturnGN) was a SECOND clock that overshot the window (ST3 by scene 2 in a
+      // fling) → intimacyPhase + the whole ST3/4/5 battery opened OUT OF the tier gate, and the render
+      // prompt self-contradicted (relationship_state:ST3 vs the BINDING strategy directive:ST1). If the
+      // window does not permit this scene's advance, HOLD storyturn (do not fire the ST battery). This
+      // collapses the two ST clocks into one; the strategy pass's own clamp is now a redundant safety net.
+      // SCOPE: LITERARY path only. The literary caller does state.turnCount++ BEFORE this call (~278931),
+      // so `turnCount+1` == the scene being advanced INTO (matches runStrategyPass). The CG/GN path
+      // (~209557) tracks scene progression differently and is NOT verified here — left unclamped to avoid
+      // an unverified CG pacing regression (follow-up: verify CG turnCount timing, then extend the clamp).
+      try {
+          if (state.currentEngine !== 'graphic') {
+              var _advScene = (state.turnCount || 0) + 1;   // literary: turnCount++ ran before this → next scene
+              var _advCeil = getAllowedSTWindow(_advScene, state.storyLength).maxST;   // window POLICY (incl. fast-burn/bias)
+              if (_stPhaseToIndex(nextSt) > _advCeil) {
+                  console.log('[STORYTURN] advance HELD by pacing window: scene=' + _advScene + ' storyLength=' + (state.storyLength || '?') + ' current=' + (state.storyturn || 'ST1') + ' window-ceiling=ST' + _advCeil + ' (raw advance wanted ' + nextSt + ')');
+                  return;   // hold within the policy — no advance, no ST battery, no premature intimacy
+              }
+          }
+      } catch (_) {}
+
       if (!canAdvanceStoryturn(nextSt)) {
           throw new Error(`[STORYTURN] Invalid advancement from ${state.storyturn} to ${nextSt}`);
       }
@@ -70208,6 +70295,18 @@ TEMPT FATE NARRATIVE STRUCTURE (MANDATORY — this scene must open with all thre
       const prevSt = state.storyturn;
       state.storyturn = nextSt;
       console.log(`[STORYTURN] Advanced: ${prevSt} → ${nextSt}`);
+
+      // PERMANENT INVARIANT (Roman 2026-07-27): storyturn must NEVER exceed the pacing-window ceiling.
+      // If a future edit to _shouldAdvanceStoryturnGN / the advance path re-introduces a second clock, this
+      // trips IMMEDIATELY (console.error → telemetry) instead of surfacing months later as romance bugs.
+      try {
+          if (state.currentEngine !== 'graphic') {
+              var _invCeil = getAllowedSTWindow((state.turnCount || 0) + 1, state.storyLength).maxST;
+              if (_stPhaseToIndex(state.storyturn) > _invCeil) {
+                  console.error('[STORYTURN:INVARIANT-BROKEN] storyturn=' + state.storyturn + ' exceeds pacing-window ceiling ST' + _invCeil + ' at scene=' + ((state.turnCount || 0) + 1) + ' (storyLength=' + (state.storyLength || '?') + '). The two ST clocks have diverged again — check the advance path / _shouldAdvanceStoryturnGN.');
+              }
+          }
+      } catch (_) {}
 
       // ── DESIRE CALIBRATION — FINALIZE at ST3 entry (Slice 2, 2026-06-18) ──
       // The pre-intimacy window closes here. Lock desireCalibration = dwell − avoidance
@@ -75808,6 +75907,8 @@ Return ONLY valid JSON:
       state._charLedgerLastFp = null;
       state._sceneStateCard = null;  // scene end-state snapshot (fate-card grounding)
       state._scenePlotContract = null; // per-scene HARD plot-beat contract (Roman 2026-06-27)
+      state._committedState = null;    // COMMITTED STATE v0 (Roman 2026-07-27) — transactional story-position owner; fresh per story
+      state._priorSceneStateChange = null;
       state._obligationLedger = [];    // Continuity Obligation Ledger — carried missed hard beats
       // Relational embodiment ledger (2026-05-27) — Layer 3, story-scoped.
       // Per-(PC,LI)-pair durable embodied-grammar residue. Telemetry slice
@@ -91393,7 +91494,12 @@ Return ONLY numbered beats. No prose. No dialogue.` }
       if (!state.sceneSkeleton || !state._skeletonMeta) return false;
       const meta = state._skeletonMeta;
       const scenesSince = state.turnCount - meta.generatedAt;
-      if (scenesSince >= 2) return false; // Tightened from 5 → 2 to prevent prose drift
+      // Tightened 5 → 2 → 1 (Roman 2026-07-26): reusing a skeleton ACROSS scenes reproduced the prior
+      // scene's environment_anchor / beat_style / tension_rhythm — a direct driver of the measured
+      // cross-scene repetition (~60% of scene-pairs re-rendered the prior beat; [PROSE:DEDUP] cross-scene
+      // verbatim strips were the symptom). A skeleton is now valid ONLY for the SAME scene it was built
+      // for (intra-scene re-calls reuse it); every NEW scene regenerates so it can reach a new dramatic state.
+      if (scenesSince >= 1) return false;
       if (state.relationship_phase !== meta.relationship_phase) return false;
       if ((state.narrativeState?.storyturn_state || state.storyturn || '') !== meta.storyturn) return false;
       const currentLoc = state.physicalState?.location || '';
@@ -91825,9 +91931,52 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
 
   function _sbContinuationRegime() {
     var s = state || {};
-    if (s.intimacyDialogue && s.intimacyDialogue.active) return 'oas';
-    if (s.intimacyPhase === true) return 'explicit';
-    return 'literary';
+    // ── DECISION (behavior UNCHANGED) ──
+    var _oasActive = !!(s.intimacyDialogue && s.intimacyDialogue.active);
+    var _intimacyPhase = (s.intimacyPhase === true);
+    var regime = _oasActive ? 'oas' : (_intimacyPhase ? 'explicit' : 'literary');
+    // ── INSTRUMENTATION (Roman 2026-07-27, no behavior change). Two storyturn trackers disagree: the RAW
+    // `state.storyturn` advances every scene in a fling (ST3 by scene 2), while the GATED, tier-clamped
+    // narrative ST lives at `state._strategyPass.st_phase` (ST1 for a fling's early scenes). The intimacy gate
+    // (app.js:70374) reads the RAW one, so `intimacyPhase` opens out-of-gate and this classifier turns it into
+    // explicit/OAS at gated-ST1 / LI-offstage — canon-impossible. Log the decision chain + the raw-vs-gated
+    // DIVERGENCE + an INVARIANT assertion keyed on the GATED ST (the actual narrative contract), once per scene. ──
+    try {
+      var _turn = s.turnCount || 0;
+      if (s._regimeLogTurn !== _turn) {
+        s._regimeLogTurn = _turn;
+        var _rawST = String(s.storyturn || 'ST?');
+        var _gatedST = String((s._strategyPass && s._strategyPass.st_phase) || '');   // '' if strategy pass hasn't run this scene
+        var _rawNum = parseInt((_rawST.match(/ST(\d+)/) || [])[1] || '0', 10);
+        var _gatedNum = parseInt((_gatedST.match(/ST(\d+)/) || [])[1] || '0', 10);
+        var _liOn = (s._scene1LIOnStage === true);
+        var _liPres = String((s.romanceEnginePlan && s.romanceEnginePlan.scene1Presence) || (s.pairDynamic && s.pairDynamic.scene1Presence) || (_liOn ? 'ONSTAGE' : 'UNKNOWN')).toUpperCase();
+        var _liConnected = _liOn || _liPres.indexOf('ONSTAGE') !== -1;
+        console.log('[CONTINUATION-REGIME] scene=' + _turn + ' raw_storyturn=' + _rawST + ' gated_storyturn=' + (_gatedST || '(unset)')
+          + ' li_presence=' + _liPres + ' li_connected=' + _liConnected + ' relationship_phase=' + (s.relationship_phase || '?')
+          + ' intensity=' + (s.intensity || '?') + ' storyLength=' + (s.storyLength || '?')
+          + ' | intimacyPhase=' + _intimacyPhase + ' intimacyDialogue.active=' + _oasActive
+          + ' → selected_regime=' + regime
+          + ' | chain: oas(intimacyDialogue)?' + (_oasActive ? 'Y' : 'n') + ' explicit(intimacyPhase)?' + (_intimacyPhase ? 'Y' : 'n')
+          + ' · storyturn-gate=NOT-CONSULTED · li-presence-gate=NOT-CONSULTED');
+        // ST-DIVERGENCE — the two trackers disagree and a consumer (the intimacy gate) reads the RAW one.
+        if (_rawNum && _gatedNum && _rawNum !== _gatedNum) {
+          console.warn('[ST-DIVERGENCE] raw_storyturn=' + _rawST + ' gated_storyturn=' + _gatedST
+            + ' | consumer=intimacyPhase (reads RAW @ app.js:70374) → RESULT: intimacy may open before narrative eligibility.'
+            + ' scene=' + _turn + ' storyLength=' + (s.storyLength || '?'));
+        }
+        // INVARIANT (narrative contract): explicit/OAS is impossible before the GATED ST reaches the intimacy
+        // checkpoint (ST3), and impossible while the LI has never been onstage. Assert against the GATED ST.
+        if ((regime === 'explicit' || regime === 'oas') && ((_gatedNum && _gatedNum < 3) || !_liConnected)) {
+          console.warn('[CONTINUATION-REGIME:INVARIANT-VIOLATION] selected_regime=' + regime
+            + ' but gated_storyturn=' + (_gatedST || '(unset)') + ' (< ST3) and/or LI never onstage (li_presence=' + _liPres + ').'
+            + ' Per canon this is IMPOSSIBLE. Cause: intimacyPhase (set by the intimacy gate off RAW storyturn=' + _rawST
+            + ') opened before the gated narrative ST allowed it. Inputs: intensity=' + (s.intensity || '?')
+            + ' storyLength=' + (s.storyLength || '?') + ' scene=' + _turn + '.');
+        }
+      }
+    } catch (_) {}
+    return regime;
   }
 
   // Rolling scene-text ring. Fed self-healingly from state._priorSceneText at
@@ -92101,10 +92250,131 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
 
   // THIS scene's hard-beat obligations (the contract). Injected at the same two roots as the
   // deferred-setup/ledger consumer. Reads state._scenePlotContract (populated by the generator).
+  // COMMITTED STATE v0 (Roman 2026-07-27) — the transactional runtime: ONE canonical owner of story position.
+  // A state_change is a PROPOSED TRANSITION until the post-gen fulfillment scorer verifies delivery; only a
+  // DELIVERED transition COMMITS as a fact (with provenance = one delivered transition per fact). PARTIAL/MISSED
+  // → no commit → the planner replans from the UNCHANGED committed state (replan, not retry). Kill switch:
+  // window._committedStateV0 === false. facts = irreversible truths; tableau = the _sceneStateCard view;
+  // pendingIntent = planner memory of what it's driving toward (NOT authority).
+  function _ensureCommittedState() {
+    if (!window.state._committedState) window.state._committedState = { facts: [], tableau: null, pendingIntent: null };
+    return window.state._committedState;
+  }
+  function _commitTransition(fact, sourceEvent, scene) {
+    try {
+      if (!fact) return;
+      var cs = _ensureCommittedState();
+      cs.facts.push({ fact: String(fact).slice(0, 200), sourceEvent: String(sourceEvent || '').slice(0, 60), committedAtScene: (typeof scene === 'number' ? scene : (window.state.turnCount || 0)), provenance: 'delivered' });
+      if (cs.facts.length > 40) cs.facts = cs.facts.slice(-40); // bound
+    } catch (_) {}
+  }
+  window._ensureCommittedState = _ensureCommittedState;
+  window._commitTransition = _commitTransition;
+
+  // COMMIT SCENE (Roman 2026-07-27) — the ONE deterministic runtime commit stage. A scene does not "exist"
+  // (transactionally) until this finishes. Runs at the top of _generateLiteraryPlotContract for scene N,
+  // committing scene N-1 BEFORE N plans → structurally enforces the ordering invariant (planner reads
+  // CommittedState(N) only AFTER Commit-Scene(N-1)). RUNTIME, not analytics: a dedicated single-transition
+  // verifier (NOT the mount-gated fulfillment scorer) decides DELIVERED/PARTIAL/MISSED and returns the
+  // end-state tableau in ONE awaited call. DELIVERED → commit fact + clear pendingIntent; else → no commit,
+  // pendingIntent kept → planner replans from the unchanged committed state. Kill switch: window._committedStateV0.
+  async function _commitScene(prevText, prevProposal, prevSceneNum) {
+    try {
+      if (typeof window !== 'undefined' && window._committedStateV0 === false) return;
+      if (!prevProposal || !prevProposal.event) return;
+      var _pt = String(prevText || '').replace(/<[^>]*>/g, ' ').replace(/\[[A-Z][^\]]*\]/g, ' ').trim();
+      if (_pt.length < 40) return;
+      var cs = _ensureCommittedState();
+      if (cs._committedThroughScene != null && cs._committedThroughScene >= prevSceneNum) return; // already committed
+      var _factsBefore = cs.facts.length;
+      var _piBefore = (cs.pendingIntent && cs.pendingIntent.proposed) ? String(cs.pendingIntent.proposed).slice(0, 55) : 'none';
+      var _vSys = 'You are the RUNTIME COMMIT verifier for an interactive story engine. Given a PROPOSED TRANSITION (an intended irreversible on-page event) and the SCENE PROSE that was rendered, decide ONE thing: did the prose DELIVER that transition as a concrete, externally-observable ON-PAGE event? Then report the scene end-state tableau. This is a runtime gate, not a critique — judge ONLY delivery. Output STRICT JSON only.\n'
+        + 'delivery: "DELIVERED" (the event concretely happened on the page), "PARTIAL" (begun / only gestured / not completed), or "MISSED" (did not happen).\n'
+        + 'dominant_replacement (AUTHOR PRIORITY INDEX — when delivery is PARTIAL or MISSED, what did the scene spend MOST of its words on INSTEAD of staging the transition?): "atmosphere" (mood/setting/sensory expansion), "relationship_dialogue" (the characters talking/clashing), "internal_monologue" (the protagonist\'s interior), "world_exposition" (lore/backstory/mechanics), "different_event" (a DIFFERENT concrete external event happened instead), or "none" (when DELIVERED). This reveals what the author OPTIMIZED FOR over the transition.\n'
+        + 'transition_position (TRANSITION-POSITION METRIC — an INTEGER PERCENTAGE 0-100 marking how far through the prose the transition FIRST concretely occurs; e.g. 12 = it happens in the opening tenth, 91 = it barely happens at the very end; use -1 if it NEVER occurs). This shows whether the author front-loads the event or lets it drift toward the end under competing objectives.\n'
+        + 'first_irreversible_position (PACING METRIC — INTEGER PERCENTAGE 0-100 of the FIRST point where SOMETHING irreversible happens: ANY revelation, betrayal, discovery, transformation, attack, or confession after which the scene can no longer simply continue as before — regardless of whether it is the proposed transition; -1 if nothing irreversible happens). This is the pacing beat a reader actually feels.\n'
+        + 'tableau: { "setting": <=120 chars or null, "charactersPresent": [names], "protagonistStatus": short phrase for what the protagonist is DOING or has just BECOME at the final line, "decisiveChange": if the closing beat OVERTURNED the scene premise name it else null, "activeInterlocutor": name of whoever the protagonist must respond to or null, "protagonistAlone": bool }.\n'
+        + 'JSON: {"delivery":"MISSED","dominant_replacement":"atmosphere","transition_position":-1,"first_irreversible_position":-1,"tableau":{"setting":null,"charactersPresent":[],"protagonistStatus":null,"decisiveChange":null,"activeInterlocutor":null,"protagonistAlone":false}}';
+      var _vUsr = 'PROPOSED TRANSITION: ' + String(prevProposal.event).slice(0, 240) + '\n\nSCENE PROSE:\n' + _pt.slice(0, 6000) + '\n\nReturn the JSON now.';
+      var _delivery = 'MISSED', _tab = null, _replacement = 'none', _txnPos = -1, _firstIrrev = -1;
+      try {
+        var _vRes = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: [{ role: 'system', content: _vSys }, { role: 'user', content: _vUsr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.1, max_tokens: 280, jsonMode: true }) });
+        if (_vRes.ok) {
+          var _vData = await _vRes.json();
+          var _vC = (_vData && _vData.content) || (_vData && _vData.choices && _vData.choices[0] && _vData.choices[0].message && _vData.choices[0].message.content);
+          var _vP; try { _vP = JSON.parse(_vC); } catch (e) { var _m = String(_vC || '').match(/\{[\s\S]*\}/); if (_m) { try { _vP = JSON.parse(_m[0]); } catch (_) {} } }
+          if (_vP) { _delivery = String(_vP.delivery || 'MISSED').toUpperCase(); _tab = _vP.tableau || null; _replacement = String(_vP.dominant_replacement || 'none'); _txnPos = (typeof _vP.transition_position === 'number') ? _vP.transition_position : -1; _firstIrrev = (typeof _vP.first_irreversible_position === 'number') ? _vP.first_irreversible_position : -1; }
+        }
+      } catch (_) { /* verifier unreachable → treat as MISSED (no commit; planner replans) */ }
+      try { console.log('[TRANSITION-POS] scene=' + prevSceneNum + ' delivery=' + _delivery + ' first_occurs_at=' + (_txnPos < 0 ? 'ABSENT' : (_txnPos + '%')) + ' first_irreversible_at=' + (_firstIrrev < 0 ? 'NONE' : (_firstIrrev + '%')) + ' placement=' + ((typeof window !== 'undefined' && window.__transitionWindowV1 === true) ? 'windowV1' : 'end-slot')); } catch (_) {}
+      if (_delivery === 'DELIVERED') {
+        _commitTransition(prevProposal.event, 'scene' + prevSceneNum + '_transition', prevSceneNum);
+        cs.pendingIntent = null; // intent achieved
+        console.log('[COMMIT] transition=accepted scene=' + prevSceneNum + ' fact+=1 factsTotal=' + cs.facts.length);
+      } else {
+        if (cs.pendingIntent) cs.pendingIntent.lastStatus = _delivery;
+        console.log('[ROLLBACK] transition=rejected scene=' + prevSceneNum + ' delivery=' + _delivery + ' → replan from unchanged CommittedState (pendingIntent kept)');
+        // AUTHOR PRIORITY INDEX (Roman 2026-07-27): what displaced the transition = what the author optimized for.
+        console.log('[AUTHOR-PRIORITY] scene=' + prevSceneNum + ' delivery=' + _delivery + ' replaced_by=' + _replacement + ' mandate=' + (typeof window !== 'undefined' && window._deliveryMandate === 'B' ? 'B' : 'A'));
+      }
+      // RUNTIME owns the tableau now (closes the headless/prod gap where _sceneStateCard was only written by the
+      // mount-gated scorer). The planner reads this as continuity, identically in both paths.
+      if (_tab && typeof _tab === 'object') {
+        var _tc = { forScene: prevSceneNum, setting: (typeof _tab.setting === 'string' ? _tab.setting.slice(0, 120) : null), charactersPresent: Array.isArray(_tab.charactersPresent) ? _tab.charactersPresent.map(function (x) { return String(x || '').trim(); }).filter(Boolean).slice(0, 8) : [], protagonistStatus: (typeof _tab.protagonistStatus === 'string' ? _tab.protagonistStatus.slice(0, 140) : null), decisiveChange: (typeof _tab.decisiveChange === 'string' ? _tab.decisiveChange.slice(0, 140) : null), activeInterlocutor: (typeof _tab.activeInterlocutor === 'string' ? _tab.activeInterlocutor.slice(0, 60) : null), protagonistAlone: (_tab.protagonistAlone === true) };
+        window.state._sceneStateCard = _tc; cs.tableau = _tc;
+      }
+      cs._committedThroughScene = prevSceneNum;
+      var _piAfter = (cs.pendingIntent && cs.pendingIntent.proposed) ? String(cs.pendingIntent.proposed).slice(0, 55) : 'none';
+      console.log('[COMMIT-SCENE] scene=' + prevSceneNum + ' delivery=' + _delivery + ' facts_before=' + _factsBefore + ' facts_after=' + cs.facts.length + ' committedThrough=' + prevSceneNum
+        + ' | proposed="' + String(prevProposal.event).slice(0, 55) + '" | pendingIntent_before="' + _piBefore + '" pendingIntent_after="' + _piAfter + '"');
+    } catch (_) {}
+  }
+  window._commitScene = _commitScene;
+
+  // transition-retry experiment (default OFF) — capture the author messages so the retry can re-invoke
+  // with the ORIGINAL inputs + a separate system correction. Flag OFF ⇒ identical passthrough to callChat.
+  // (callChat is a hoisted top-level fn, in scope here; exposed on window so call-sites can't scope-miss.)
+  window._authorChatCapture = function (messages, temp, opts) {
+    try { if (window.__transitionRetryExperiment) window.state._lastAuthorMessages = { messages: messages, temp: temp, opts: opts }; } catch (_) {}
+    return callChat(messages, temp, opts);
+  };
+
   function _buildPlotContractDirective() {
     try {
       if (!_plotContractActive()) return '';
       var pc = state._scenePlotContract;
+      // SCENE-SPINE v0: when a canonical state_change exists, IT is the scene's organizing directive —
+      // injected via the proven Scene-1 renderer language (~138284), with the engine subordinated to
+      // BEHAVIOR (not event ownership) and the dialogue-relevance rule. state_change is the sole authority;
+      // the legacy beat directive below is fallback only (kill switch on, or no state_change).
+      var _sc = pc && pc.stateChange;
+      if (_sc && _sc.event && !(typeof window !== 'undefined' && window._stateChangeSpineV0 === false)) {
+        try { console.log('[PLOT-CONTRACT:DIRECTIVE] scene=' + (state.turnCount == null ? '?' : state.turnCount) + ' mode=state_change'); } catch (_) {}
+        // PLACEMENT/PACING CONTRACT A/B (Roman 2026-07-27): the transition-position metric showed the event is
+        // ALWAYS ABSENT or at ~99-100% — the author treats it as the CLOSER ("by the scene's END"). Variant B
+        // (window.__transitionWindowV1) replaces the end-slot framing with a WINDOW contract: build pressure →
+        // event by ~mid-scene → the final portion depicts CONSEQUENCES/fallout → the DECISION is the closer.
+        // Preserves dramatic shape (no swing to "first third") while attacking the end-jamming pathology. Target
+        // distribution: 40-70% ideal, >90% danger, absent = fail.
+        var _placementOn = (typeof window !== 'undefined' && window.__transitionWindowV1 === true);
+        var _afterLine = _placementOn
+          ? '  • PLACEMENT (HARD — pacing window): build pressure toward the event, then let THE EVENT OCCUR BY ROUGHLY THE MIDDLE of the scene — NEVER saved for the final line. The scene\'s FINAL PORTION must depict the immediate CONSEQUENCES of the event — the reactions, the cost paid, the new impossible choice it opens — not merely its occurrence. A scene where the event lands on the last sentence (or not at all) has FAILED: there must be AFTERMATH. By the scene\'s end the BEFORE fact is irreversibly TRUE and its fallout is on the page.\n'
+          : '  • AFTER: by the scene\'s end the BEFORE fact is now TRUE — the world has changed, and it cannot be undone.\n';
+        return '\n  SCENE SPINE — THE STATE CHANGE (HARD; this is what the scene is ABOUT — every other element serves it):\n'
+          + (_sc.precondition ? '  • BEFORE (still FALSE at the first line — OPEN with this unresolved and establish it as not-yet-true): ' + _sc.precondition + '\n' : '')
+          + '  • THE EVENT — stage THIS EXACT event as a concrete on-page MOMENT, witnessed, in motion (a sound, a movement, a body reacting, an object changing). SHOW what physically HAPPENS; NEVER render it as a flat summary or an abstract label that announces its meaning. FORBIDDEN shapes: "a sudden shift reveals a hidden thread…", "the fracture becomes visible, revealing a deeper truth…", "a change in the atmosphere…". The event to stage: ' + _sc.event + '\n'
+          + _afterLine
+          + (_sc.forces_choice ? '  • THE DECISION this unlocks (the CLOSING beat, reached through the event\'s aftermath; it exists ONLY because the event happened): ' + _sc.forces_choice + '\n' : '')
+          + '  DIALOGUE RULE (HARD): every significant line must ADVANCE TOWARD the event or RESPOND TO it — never keep pursuing an objective the event has already made obsolete.\n'
+          + '  RELATIONSHIP DYNAMIC = BEHAVIOR, NOT SUBJECT: the characters\' clash or attraction governs HOW they behave before, during, and after this event — it does NOT replace the event as the scene\'s organizing subject. The scene is about the event; the dynamic is how they live through it.\n'
+          // DELIVERY-MANDATE A/B (Roman 2026-07-27): Arm A = the directive above ("stage the transition"). Arm B
+          // reframes the transition as the scene's DEFINITION OF SUCCESS — testing whether the author's misses are
+          // a PRIORITY problem (B collapses rollback) vs a CAPABILITY limit (B barely moves it). window._deliveryMandate.
+          + ((typeof window !== 'undefined' && window._deliveryMandate === 'B')
+              ? '  SUCCESS CRITERION (ABSOLUTE): this scene is a FAILURE — unwritten — unless the event above becomes IRREVOCABLY TRUE by the final line. Atmosphere, mood, interiority, and dialogue EXIST TO DELIVER the event; they are NEVER a substitute for it. A beautiful scene in which the event did not happen has FAILED. Before finishing, confirm: did the event concretely occur on the page? If not, the scene is not done.\n'
+              : '');
+      }
       var beats = (pc && Array.isArray(pc.hardBeats)) ? pc.hardBeats.filter(function (b) { return b && b.description; }) : [];
       if (!beats.length) return '';
       try { console.log('[PLOT-CONTRACT:DIRECTIVE] scene=' + (state.turnCount == null ? '?' : state.turnCount) + ' beats=' + beats.length); } catch (_) {}
@@ -92123,6 +92393,29 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
     try {
       var s = window.state || {};
       if (!_plotContractActive()) return;
+      // ═══ COMMIT SCENE (Roman 2026-07-27): commit the PREVIOUS scene's transaction BEFORE planning this one.
+      // Making the commit the FIRST thing the planner does structurally enforces the ordering invariant:
+      // the planner reads CommittedState(N) only AFTER Commit-Scene(N-1). Awaited; both paths; ONE commit point.
+      try {
+        var _csEnabled = !(typeof window !== 'undefined' && window._committedStateV0 === false);
+        if (typeof _commitScene === 'function' && _csEnabled && s._priorSceneStateChange) {
+          var _prevProp = s._priorSceneStateChange;
+          // prior scene text from the RENDER layer (both paths — state.scenes is not the headless capture array).
+          var _prevText = '';
+          try { if (typeof StoryPagination !== 'undefined' && StoryPagination.getAllContent) _prevText = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim(); } catch (_) {}
+          if ((!_prevText || _prevText.length < 40) && Array.isArray(s.scenes) && s.scenes.length) _prevText = String((s.scenes[s.scenes.length - 1] || {}).text || '');
+          var _prevNum = (typeof _prevProp.sceneProposed === 'number') ? _prevProp.sceneProposed : ((s.turnCount || 1) - 1);
+          if (_prevText && _prevText.length >= 40) {
+            await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum); // last ~scene worth for the delivery verifier
+            var _csI = _ensureCommittedState();
+            if (_csI._committedThroughScene != null && _csI._committedThroughScene < _prevNum) console.error('[COMMIT-SCENE:INVARIANT-BROKEN] planning after Commit-Scene(' + _prevNum + ') but committedThrough=' + _csI._committedThroughScene);
+          } else {
+            console.log('[COMMIT-SCENE:SKIP] plan-scene=' + (s.turnCount || 0) + ' reason=no-prior-text priorTxtLen=' + (_prevText ? _prevText.length : 0));
+          }
+        } else if (_csEnabled && typeof _commitScene === 'function') {
+          console.log('[COMMIT-SCENE:SKIP] plan-scene=' + (s.turnCount || 0) + ' reason=no-prior-transition');
+        }
+      } catch (_e) { try { console.log('[COMMIT-SCENE:SKIP] err=' + (_e && _e.message)); } catch (_) {} }
       // NOTE: this generator only runs from the Scene-2+ submitBtn path (the _literarySceneMandate
       // block), so Scene 1 is already excluded by the call site. Do NOT gate on turnCount here —
       // turnCount lags (0 at the Scene-2 build) and would wrongly skip the generator.
@@ -92131,15 +92424,151 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       var milestones = Array.isArray(rp.relationshipMilestones) ? rp.relationshipMilestones.slice(0, 4) : [];
       var pressures = Array.isArray(rp.issuePressures) ? rp.issuePressures.slice(0, 4) : [];
       var goal = (s.aPlot && s.aPlot.goal) || '';
+      // TEST HARNESS — TRANSITION DENSITY (Roman 2026-07-27; NOT production, NOT the system under test).
+      // The specificity fix is about behavior ACROSS milestone transitions, but a 6-scene run of the real
+      // 40-scene schedule contains ~1 transition — a poor microscope. This knob compresses the milestone
+      // SCHEDULE (atScene) ONLY — content and ORDER untouched — so a short run crosses many boundaries,
+      // giving the specificity invariant multiple transitions to prove itself. Like raising a sampling rate,
+      // not changing the planner. Enabled ONLY by window._msTransitionDensityTest; applied once.
+      try {
+        if (typeof window !== 'undefined' && window._msTransitionDensityTest && s.aPlot && Array.isArray(s.aPlot.milestones) && !s.aPlot._transitionDensityApplied) {
+          s.aPlot.milestones.forEach(function (m, i) { if (m) { m.atScene = i + 1; m.triggered = false; } }); // one distinct anchor per scene; re-arm so _tickAPlot re-evaluates on the compressed schedule
+          s.aPlot._transitionDensityApplied = true;
+          try { console.log('[TEST-HARNESS:TRANSITION-DENSITY] compressed milestone schedule → atScene=' + s.aPlot.milestones.map(function (m) { return m && m.atScene; }).join(',') + ' (content + order UNCHANGED)'); } catch (_) {}
+        }
+      } catch (_) {}
+      // v0 MILESTONE EXECUTION LOOP (Roman 2026-07-27) — close the open loop. The A-plot has an ordered
+      // milestone PLAN, but this generator derived beats from "where the last scene ended" and never
+      // consumed the plan → it looped on the prior beat (measured 100% cross-scene repeat). v0 changes
+      // EXACTLY ONE thing: the strategic ANCHOR becomes the current (next-pending) A-plot milestone, and
+      // "where the last scene ended" is demoted to continuity-only. The milestone is the PHASE, not the
+      // literal beat — the scene makes IRREVERSIBLE TACTICAL PROGRESS toward it. No completion evaluator,
+      // no budget yet (that is v0.5/v1). Kill switch: window._milestoneAnchorV0 === false restores the old source.
+      var _mAnchorOn = !(typeof window !== 'undefined' && window._milestoneAnchorV0 === false);
+      var _curMs = null;
+      try {
+        var _msArr = (s.aPlot && Array.isArray(s.aPlot.milestones)) ? s.aPlot.milestones : [];
+        _curMs = _msArr.find(function (m) { return m && !m.triggered && m.event; }) || _msArr.find(function (m) { return m && m.event; }) || null;
+      } catch (_) {}
+      var _v0 = !!(_mAnchorOn && _curMs);   // active only when there is a milestone to anchor to
+
+      // ═══ SCENE-SPINE v0 (Roman 2026-07-27): state_change is the SOLE authoritative scene primitive.
+      // Generalizes Storybound's PROVEN Scene-1 `state_change` (from _compressAPlotForScene1 ~61789) to
+      // scenes 2+ — the contract (observable-event / world-state / name-only-the-event / delete-test) is
+      // reused VERBATIM, not redesigned. The legacy multi-beat list becomes a DERIVED one-element compat
+      // view (ONE direction only: state_change → hardBeat) so the fulfillment scorer / obligation ledger /
+      // CG carryover keep running UNCHANGED. Kill switch: window._stateChangeSpineV0 === false → legacy below.
+      var _scSpineOn = !(typeof window !== 'undefined' && window._stateChangeSpineV0 === false);
+      if (_scSpineOn) {
+        try {
+          var _prevSc = s._priorSceneStateChange || null;
+          var _scSys = 'You are the SCENE-SPINE planner for an interactive romance engine. The scene has ONE organizing event: a STATE CHANGE — an irreversible, externally observable event that flips a specific fact from FALSE to TRUE. Everything else in the scene serves it. First name the TACTICAL MOVE (what this scene does to advance the current milestone — an input constraint, NOT the event), then express it as a state_change per the CONTRACT.\n'
+            + 'STATE_CHANGE CONTRACT (HARD — reused from the proven Scene-1 primitive, do NOT soften):\n'
+            + '  • state_change_precondition: ONE sentence naming the single fact NOT YET TRUE when the scene opens — the "before", the negation of the state_change, phrased so the scene must OPEN with it still false. 8-16 words.\n'
+            + '  • state_change: the observable EVENT, landing partway through, that flips the precondition FALSE→TRUE, witnessed on-page. HARD REQUIREMENTS: (a) it makes the precondition true — do NOT restate anything already true at the opening; (b) EXTERNALLY OBSERVABLE — an event another character in the room could WITNESS happen, NOT a private feeling or realization ("she realizes the chain is alive" is INVALID; "the chain recoils from his hand, links contracting" is VALID); (c) it CHANGES SOMETHING IN THE WORLD — you must be able to say WHO loses WHAT immediately, or what is now true that was not; an emotional realization or a shift in mood is NOT a state_change — answer "what changed in the world?", never "how does she feel?"; (d) NAME ONLY THE EVENT — STOP AT THE CONCRETE MOMENT; everything after "revealing…", "making her realize…", "as she understands…" is BANNED (that appended interpretation makes the renderer write a flat "X becomes visible, revealing a deeper truth" summary instead of staging the moment). 8-16 words, phrased as the event.\n'
+            + '  • forces_choice: the decision the event UNLOCKS — the scene\'s closing choice, which could NOT have been posed before it (the event exists to CREATE this choice). "forces [PC] to choose between A and B" where A and B are TWO ACTIVE responses to the new fact (NOT one action + one escape hatch like "act or do nothing").\n'
+            + '  • SPECIFICITY (HARD — the state_change must UNIQUELY identify THIS milestone): realize the milestone\'s SPECIFIC concrete content — its named objects, places, and actions — NOT a generic version of the theme. If the milestone names "a submerged bell that rings for their bond", the event must involve THAT bell ("the submerged bell tolls once beneath the water"); do NOT abstract it to "their bond glows" / "the thread pulses" / "the vow binds them". SPECIFICITY TEST: hide the milestone text and show ONLY your state_change — a reader must be able to point to WHICH milestone it came from. If your event could equally belong to a DIFFERENT milestone in this arc, or to "their bond" in general, it has FAILED — rewrite it using the milestone\'s OWN nouns and actions.\n'
+            + '  • forces_choice — NO ESCAPE HATCH (HARD): both branches must be ACTIVE responses to the new fact. "reject it / retreat / flee / wait / do nothing / walk away / leave" are opt-outs — if EITHER branch is an opt-out, the choice is INVALID; both must be things the PC DOES about the new reality. Provide branch_a and branch_b explicitly.\n'
+            + '  • DELETE TEST (the sufficiency invariant — the state_change is valid ONLY if it passes): delete the event, and BOTH branch_a AND branch_b become impossible or materially different. If either branch would still stand unchanged without the event, the event is too weak — pick a stronger one.\n'
+            + 'DERIVE from: THE CURRENT MILESTONE (strategic anchor — realize ITS specific event, do NOT collapse it to the theme) + the tactical move + the PRIOR scene\'s state (below). The new state MUST differ from the prior scene\'s — never re-flip an already-true fact, and never re-emit the prior event merely reworded.\n'
+            + 'Return ONLY JSON: { "tactical_move":"", "state_change_precondition":"", "state_change":"", "forces_choice":"", "branch_a":"", "branch_b":"" }';
+          var _csGen = (typeof _ensureCommittedState === 'function') ? _ensureCommittedState() : { facts: [], pendingIntent: null };
+          var _scUsr = 'CURRENT MILESTONE (distant TARGET — constrains what the next event may be; NOT a per-scene mandate): ' + JSON.stringify((_curMs && _curMs.event) || goal).slice(0, 300)
+            + '\nA-plot goal: ' + JSON.stringify(goal).slice(0, 200)
+            + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 250)
+            + '\nCOMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): ' + JSON.stringify((_csGen.facts || []).slice(-8).map(function (f) { return f.fact; })).slice(0, 480)
+            + (_csGen.pendingIntent ? ('\nPENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: ' + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
+            + (_prevSc ? ('\nPrior proposed transition (context): ' + JSON.stringify(_prevSc.event || '').slice(0, 160)) : '\n(First spine scene — no prior transition.)')
+            + '\nReachability (HARD): the event must be reachable in ONE scene FROM the committed world state above — a single irreversible step, not a leap past intermediate states the story has not reached.\n'
+            + '\nContinuity (where the last scene ended — context only, NOT the event to repeat): ' + JSON.stringify(sc).slice(0, 300)
+            + '\nPlayer action: ' + String(act || '').slice(0, 250) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 200)
+            + '\nScene index: ' + (s.turnCount || 0);
+          var _scRes = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: [{ role: 'system', content: _scSys }, { role: 'user', content: _scUsr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.3, max_tokens: 320, jsonMode: true }) });
+          if (!_scRes.ok) return;
+          var _scData = await _scRes.json();
+          var _scContent = (_scData && _scData.content) || (_scData && _scData.choices && _scData.choices[0] && _scData.choices[0].message && _scData.choices[0].message.content);
+          if (!_scContent) return;
+          var _scP; try { _scP = JSON.parse(_scContent); } catch (e) { var _scM = String(_scContent).match(/\{[\s\S]*\}/); if (!_scM) return; try { _scP = JSON.parse(_scM[0]); } catch (e2) { return; } }
+          var _scEvent = _scP && String(_scP.state_change || '').trim();
+          if (!_scEvent) return;
+          var _stateChange = { precondition: String(_scP.state_change_precondition || '').trim(), event: _scEvent, forces_choice: String(_scP.forces_choice || '').trim(), tactical_move: String(_scP.tactical_move || '').trim(), branch_a: String(_scP.branch_a || '').trim(), branch_b: String(_scP.branch_b || '').trim(), sceneProposed: (s.turnCount || 0) };
+          // DERIVED one-element hardBeats (compat view — ONE DIRECTION ONLY: state_change → beat, never read back
+          // to reinterpret the scene). Downstream fulfillment scorer / obligation ledger / CG carryover consume
+          // this UNCHANGED; state_change remains the sole authority.
+          var _derivedBeat = { id: 'scene' + (s.turnCount || 0) + '_statechange', description: _stateChange.event, whyItMatters: _stateChange.forces_choice, type: 'plot', importance: 'hard', bornScene: (s.turnCount || 0), locationBound: null, carryStrategy: 'pay_if_plausible_else_adapt', dropAllowed: false, _derivedFromStateChange: true };
+          state._scenePlotContract = { sceneIndex: (s.turnCount || 0), stateChange: _stateChange, hardBeats: [_derivedBeat] };
+          state._priorSceneStateChange = _stateChange; // next scene's "before" (DECLARED, not delivery-verified — the commit gate verifies)
+          // COMMITTED-STATE v0: record the PROPOSED transition as pendingIntent (planner memory). It becomes a
+          // committed fact ONLY if the post-gen scorer verifies delivery (see the commit hook ~29335); on a miss
+          // it stays pending and the planner replans toward the same milestone from the unchanged committed state.
+          try { _csGen.pendingIntent = { milestone: (_curMs && _curMs.event) || '', proposed: _stateChange.event, sceneProposed: (s.turnCount || 0) }; _csGen.tableau = s._sceneStateCard || _csGen.tableau; } catch (_) {}
+          try {
+            console.log('[PLOT-CONTRACT:ENABLED] true');
+            console.log('[COMMITTED-STATE] scene=' + (s.turnCount || 0) + ' facts=' + ((_csGen.facts || []).length) + ' proposed="' + _stateChange.event.slice(0, 60) + '" (pending until delivery)');
+            console.log('[STATE-CHANGE] scene=' + (s.turnCount || 0) + ' move="' + _stateChange.tactical_move.slice(0, 70) + '"');
+            console.log('[STATE-CHANGE:EVENT] scene=' + (s.turnCount || 0) + ' :: ' + _stateChange.event);
+            console.log('[STATE-CHANGE:PRECOND] ' + _stateChange.precondition);
+            console.log('[STATE-CHANGE:FORCES] ' + _stateChange.forces_choice);
+            var _feelRe = /^\s*(?:the\s+)?(?:pc|player|[a-z]+)?\s*(?:reali[sz]es?|understands?|feels?|senses?|knows?|decides?)\b/i; // observability parity check (Scene-1 rule (b))
+            console.log('[STATE-CHANGE:OBSERVABLE] scene=' + (s.turnCount || 0) + ' event-is-observable=' + (!_feelRe.test(_stateChange.event)));
+            console.log('[STATE-CHANGE:BRANCHES] A="' + _stateChange.branch_a.slice(0, 60) + '" B="' + _stateChange.branch_b.slice(0, 60) + '"');
+            // SPECIFICITY METRIC (Roman 2026-07-27) — deterministic, judged WITHOUT prose: does the emitted
+            // event carry THIS milestone's DISTINCTIVE content (tokens UNIQUE to it), or only the arc's shared
+            // theme vocabulary (thread/bond/names — words in ≥2 milestones)? Distinctive hits: 0 → GENERIC
+            // (theme-collapse, the bug), 1 → THEMATIC, ≥2 → UNIQUE. Catches the failure at the planner layer.
+            var _stopRe = /\b(the|a|an|and|or|to|of|in|on|at|their|they|them|with|that|this|its|it|is|are|be|has|have|not|yet|when|only|which|who|for|as|by|from|into|between|about|both)\b/g;
+            var _specTok = function (t) { return String(t || '').toLowerCase().replace(/[^a-z\s]/g, ' ').replace(_stopRe, ' ').split(/\s+/).filter(function (w) { return w.length >= 4; }); };
+            var _allMsForSpec = (s.aPlot && Array.isArray(s.aPlot.milestones)) ? s.aPlot.milestones : [];
+            var _msFreq = {}; _allMsForSpec.forEach(function (m) { var _seen = {}; _specTok(m && m.event).forEach(function (w) { if (!_seen[w]) { _seen[w] = 1; _msFreq[w] = (_msFreq[w] || 0) + 1; } }); });
+            var _distinctToks = _specTok(_curMs && _curMs.event).filter(function (w) { return (_msFreq[w] || 0) <= 1; }); // appears in THIS milestone only → distinctive
+            var _evLc = _stateChange.event.toLowerCase();
+            var _hitToks = _distinctToks.filter(function (w) { return _evLc.indexOf(w) !== -1; });
+            var _specVerdict = _hitToks.length >= 2 ? 'UNIQUE' : (_hitToks.length === 1 ? 'THEMATIC' : 'GENERIC');
+            console.log('[STATE-CHANGE:SPECIFICITY] scene=' + (s.turnCount || 0) + ' ' + _specVerdict + ' distinctive-tokens-in-event=' + _hitToks.length + '/' + _distinctToks.length + (_hitToks.length ? (' [' + _hitToks.join(',') + ']') : '') + (_specVerdict === 'GENERIC' ? ' ⚠ THEME-COLLAPSE' : ''));
+            // MILESTONE-TRANSITION: did the anchoring milestone change vs the last spine scene? Lets a reader
+            // correlate transition → specificity → ownership → outcome without reconstructing where anchors moved.
+            var _anchorKey = (_curMs && _curMs.event) ? String(_curMs.event).slice(0, 45) : '(none)';
+            var _priorAnchor = (typeof state._priorAnchorMs === 'undefined') ? null : state._priorAnchorMs;
+            console.log('[MILESTONE-TRANSITION] scene=' + (s.turnCount || 0) + ' transition=' + (_priorAnchor === null ? 'INIT' : (_priorAnchor !== _anchorKey ? 'YES' : 'no')) + ' prev="' + (_priorAnchor || '') + '" current="' + _anchorKey + '"');
+            state._priorAnchorMs = _anchorKey;
+          } catch (_) {}
+          return;
+        } catch (_scErr) { /* any throw → fall through to the legacy beat generator below */ }
+      }
+
+      var _deriveLine = _v0
+        ? 'Derive the beats from THE CURRENT MILESTONE (below) as the STRATEGIC ANCHOR: this scene must make CONCRETE, IRREVERSIBLE TACTICAL PROGRESS toward it — a step that cannot be undone (obtain / interrogate / steal / discover / lose / betray / reveal / decode) — plus the player\'s action. Do NOT restate the milestone as the beat, and do NOT derive the beat from "prior scene end-state" (that is CONTINUITY CONTEXT ONLY, never the beat to repeat). The milestone is the PHASE; your beat is this scene\'s MOVE within it.\n'
+        : 'Derive the beats from: the A-plot goal, the outstanding relationship obligations, WHERE the last scene ended, and the player\'s action.\n';
+      // STAGEABILITY TRANSFORM (Roman 2026-07-27): the realization audit showed abstract "PC discovers X"
+      // beats collapse into the COLLISION engine's default (an argument) because they give the author NO
+      // camera-visible event to stage — conflict fills the vacuum. Fix = transform each beat at the BEAT
+      // LAYER into a stageable event that CARRIES the intent (preserve "discover", embed the mechanism),
+      // NOT a stronger instruction to the prose author. Engine untouched (single isolated variable).
+      // Kill switch: window._stageableBeatsV0 === false.
+      var _stageOn = !(typeof window !== 'undefined' && window._stageableBeatsV0 === false);
+      var _stageLine = _stageOn
+        ? 'STAGEABILITY (HARD — every beat MUST be a CAMERA-VISIBLE EVENT, not an abstract goal). Write each `description` as something a reader could point a camera at — a physical action, a demonstration, a manifestation — that CARRIES the tactical intent INSIDE it. Keep the intent (discover / learn / realize / expose / decide) but EMBED the staging: name WHAT concretely happens on the page that makes the intent land. Transform abstract intents into visible events:\n'
+          + '  • "discover X" → X visibly MANIFESTS (the reader watches X happen)\n'
+          + '  • "learn Y" → someone DEMONSTRATES Y on the page\n'
+          + '  • "realize a betrayal" → the betrayer PERFORMS it in view\n'
+          + '  • "understand the danger" → the danger physically OCCURS\n'
+          + '  • "the chain is sentient" → the chain RECOILS / tightens / bleeds light / whispers\n'
+          + '  PATTERN: "<intent> WHEN <stageable event>" — e.g. "Kael discovers the chain is sentient WHEN it recoils from his grief, links contracting." A beat that names ONLY a mental state (discovers / realizes / understands / decides / must decide) with NO camera-visible event attached is FORBIDDEN — rewrite it until a reader could SEE it happen.\n'
+        : '';
       var sys = 'You are the PLOT-CONTRACT planner for an interactive romance engine. Output the 1–3 CONCRETE CAUSAL HARD BEATS this next scene MUST land so the STORY advances — never atmosphere, never generic emotion, never description, never a "vibe". Each beat must be TESTABLE after the scene (did it literally happen, yes/no) and CAUSAL (it changes what is possible next).\n'
         + 'VALID examples: "PC discovers the forged ledger page in the library"; "Dorian publicly refuses to deny knowing PC"; "the antagonist delivers a midnight deadline forcing PC to choose"; "PC accepts his help but hides the stolen card"; "the rival reveals they know PC lied".\n'
         + 'INVALID — NEVER output these shapes: "make the scene tense"; "deepen the mystery"; "show attraction"; "describe the love interest vividly"; "add gothic atmosphere"; "make him seem dangerous".\n'
-        + 'Derive the beats from: the A-plot goal, the outstanding relationship obligations, WHERE the last scene ended, and the player\'s action. Output 1–3 beats (4 ONLY for a climax/turning point). If a beat is tied to a place, set locationBound.\n'
+        + 'DIFFERENT DRAMATIC STATE (HARD): the scene that just ended is COMPLETED — do NOT restate or re-play its beat. Your beats must move the characters to a MEANINGFULLY DIFFERENT dramatic state than "where the last scene ended" (given below): deepen the conflict, reverse an expectation, complicate the plan, reveal new information, shift the power balance, or change what the protagonist wants. If the last scene was a confrontation in a tavern, this scene must NOT be another confrontation in that tavern. Beats that could equally have been this scene\'s OR the last scene\'s are WRONG.\n'
+        + _deriveLine
+        + _stageLine
+        + 'Output 1–3 beats (4 ONLY for a climax/turning point). If a beat is tied to a place, set locationBound.\n'
         + 'Return ONLY JSON, no prose: { "hardBeats": [ { "id":"", "type":"plot|relationship|object|reveal|choice|consequence", "description":"", "whyItMatters":"", "locationBound": null, "carryStrategy":"pay_if_plausible_else_adapt", "dropAllowed": false } ] }';
       var usr = 'A-plot goal: ' + JSON.stringify(goal).slice(0, 300)
+        + (_v0 ? ('\nCURRENT MILESTONE (strategic anchor — make irreversible progress TOWARD this; do NOT restate it): ' + JSON.stringify(_curMs.event).slice(0, 300)) : '')
         + '\nOutstanding relationship milestones: ' + JSON.stringify(milestones).slice(0, 400)
         + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 300)
-        + '\nWhere the LAST scene ended: ' + JSON.stringify(sc).slice(0, 400)
+        + '\n' + (_v0 ? 'Prior scene end-state (CONTINUITY CONTEXT ONLY — not the beat to repeat): ' : 'Where the LAST scene ended: ') + JSON.stringify(sc).slice(0, 400)
         + '\nPlayer action: ' + String(act || '').slice(0, 300) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 300)
         + '\nScene index: ' + (s.turnCount || 0);
       var res = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -92153,6 +92582,43 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       beats.forEach(function (b, i) { b.id = 'scene' + (s.turnCount || 0) + '_beat' + (i + 1); b.importance = 'hard'; b.bornScene = (s.turnCount || 0); }); // canonical id (overwrites any LLM-supplied id) so logs/debts are stable across Literary + CG
       state._scenePlotContract = { sceneIndex: (s.turnCount || 0), hardBeats: beats };
       try { console.log('[PLOT-CONTRACT:ENABLED] true'); console.log('[PLOT-CONTRACT:BEATS] scene=' + (s.turnCount || 0) + ' count=' + beats.length); } catch (_) {}
+      // full (un-truncated) beat descriptions so the realization-audit's CONFIRMATORY pass has clean ground
+      // truth (the [MILESTONE-EXEC] tactical field is capped at ~120 chars). One line, telemetry only.
+      try { console.log('[PLOT-CONTRACT:BEATS-FULL] scene=' + (s.turnCount || 0) + ' :: ' + beats.map(function (b) { return String(b.description); }).join(' ||| ')); } catch (_) {}
+      // STAGEABILITY telemetry (Roman 2026-07-27): measure at the INPUT layer whether the transform worked —
+      // a beat is STILL-ABSTRACT if it leads with a bare mental-state verb and attaches NO camera-visible
+      // event (no "when/as/by …ing" staging clause). Separates "beats became stageable" (this log) from
+      // "prose executed them" (realization audit) → if abstract=0 but prose still flattens, it's the ENGINE.
+      try {
+        if (_stageOn) {
+          var _absRe = /^\s*(?:the\s+)?(?:pc|player|[a-z]+)?\s*(?:discovers?|reali[sz]es?|learns?|understands?|comes?\s+to\s+understand|decides?|must\s+decide)\b/i;
+          var _stageClue = /\bwhen\b|\bas\b|\bby\s+\w+ing\b|—/i;
+          var _abstract = beats.filter(function (b) { var d = String(b.description); return _absRe.test(d) && !_stageClue.test(d); });
+          console.log('[STAGEABILITY] scene=' + (s.turnCount || 0) + ' beats=' + beats.length + ' still-abstract=' + _abstract.length + (_abstract.length ? ' :: ' + _abstract.map(function (b) { return String(b.description).slice(0, 70); }).join(' | ') : ''));
+        }
+      } catch (_) {}
+      // v0 MILESTONE-EXEC TELEMETRY (Roman 2026-07-27): log the strategic milestone + this scene's tactical
+      // objective, and flag the failure mode Roman named — SAME milestone + SAME tactical = the loop moved
+      // up one layer (bad); SAME milestone + DIFFERENT tactical = healthy progress toward the phase.
+      // The anchor rides a CLOCK-triggered milestone (v0 leaves that loop open on purpose), so a "milestone-
+      // advanced" can be a genuine advance OR a clock pivot (atScene crossed, prior milestone never delivered).
+      // The runtime cannot know DELIVERY (that is the deferred v1 evaluator), but it CAN surface the pivot's
+      // shape — anchor atScene vs this scene ordinal — so the artifact is OBSERVABLE, not laundered as healthy.
+      try {
+        if (_v0) {
+          var _tac = beats.map(function (b) { return String(b.description); }).join(' | ');
+          var _prev = state._milestoneExecPrev || {};
+          var _sameMs = (_prev.milestone === _curMs.event);
+          var _sameTac = (_prev.tactical === _tac);
+          var _msAt = (typeof _curMs.atScene === 'number') ? _curMs.atScene : null;
+          var _clockPivot = (!_sameMs && _prev.milestone && _msAt !== null && _msAt <= (s.turnCount || 0)); // anchor changed AND its clock threshold just crossed → suspect clock, not story
+          var _verdict = (_sameMs && _sameTac) ? 'SAME-MILESTONE/SAME-TACTICAL ⚠ LOOP-MOVED-UP-A-LAYER'
+            : (_sameMs ? 'same-milestone/different-tactical ✓ (progress within phase)'
+            : (_clockPivot ? 'milestone-advanced ⚠ CLOCK-PIVOT? (confirm prior milestone was DELIVERED, not just clock-ticked)' : 'milestone-advanced ✓'));
+          console.log('[MILESTONE-EXEC] scene=' + (s.turnCount || 0) + ' | anchor@' + (_msAt === null ? '?' : _msAt) + ' | milestone="' + String(_curMs.event).slice(0, 80) + '" | tactical="' + _tac.slice(0, 120) + '" | ' + _verdict);
+          state._milestoneExecPrev = { milestone: _curMs.event, tactical: _tac };
+        }
+      } catch (_) {}
     } catch (_) {}
   }
   window._generateLiteraryPlotContract = _generateLiteraryPlotContract;
@@ -92163,6 +92629,12 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
   function buildSceneContinuationDirective() {
     try {
       state._sceneLiveContinuation = false;
+      // ABLATION TOGGLE (Roman 2026-07-27, test scaffolding — NOT a runtime behavior change; default OFF): remove
+      // the continuation-window objective ("DIRECT CONTINUATION — you are still inside this moment, carry it
+      // forward") to test the instruction-economics hypothesis that this TEMPORAL objective ("continue this
+      // moment") out-competes "stage the proposed transition". Structured continuity (CommittedState facts +
+      // tableau) still reaches the planner, so this ablates the RAW-PROSE continuation only. window.__ablateContinuationWindow.
+      if (typeof window !== 'undefined' && window.__ablateContinuationWindow === true) { try { console.log('[ABLATE] continuation-window OFF'); } catch (_) {} return ''; }
       if (!_hasPriorRenderedScene()) return '';                  // opening scene → no prior beat (turnCount is unreliable here)
       if (typeof StoryPagination === 'undefined' || !StoryPagination.getAllContent) return '';
       var all = StoryPagination.getAllContent().replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -92195,6 +92667,21 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       } else {
         ending = all.slice(-Math.max(600, _cw.floorChars));                // ring unavailable → char slice
       }
+      // STRIP MANDATED DECK CLOSERS FROM THE CONTINUATION TAIL (Roman 2026-07-26). The onboarding deck
+      // closers (Scene 1 deck / Scene 2 Petition / Scene 3 Tempt) are scripted VERBATIM blocks. When the
+      // prior scene ends on one and it is fed into THIS scene's continuation window, the author ECHOES it —
+      // Scene 3 was closing on a Petition-echo ("Petition Fate … I would wish myself a way out. No — a way
+      // in. If only…"), so consecutive onboarding scenes ended on near-identical deck beats (a major source
+      // of the measured cross-scene repetition). The closer already did its onboarding job IN ITS OWN scene;
+      // the next scene must not see it. Removing the source here prevents both verbatim AND paraphrased echoes.
+      try {
+        [state._sceneThreeMandatedCloser, state._sceneTwoMandatedCloser, state._sceneOneMandatedCloser].forEach(function (mc) {
+          if (mc && typeof mc === 'string' && mc.length > 20 && ending.indexOf(mc) !== -1) {
+            ending = ending.split(mc).join(' ').replace(/[ \t]{2,}/g, ' ').replace(/\s+([.!?,;])/g, '$1').replace(/\n{3,}/g, '\n\n').trim();
+            try { console.log('[CONT-WINDOW] stripped a mandated deck closer from the continuation tail (anti onboarding-echo).'); } catch (_) {}
+          }
+        });
+      } catch (_) {}
       // Sanitize explicit anatomical terms (some continuation paths route to OpenAI).
       // NOTE (2026-07-19): this blunts the explicit/OAS window it now feeds — those
       // are exactly the scenes whose texture lives in these words. Left ON so this
@@ -92262,6 +92749,30 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       d += '  2. CARRY THE LIVE THREAD. If the prior scene ended mid-conversation, mid-phone-call, on an unanswered line, or on a question, this scene CONTINUES that exact moment — the protagonist is STILL in it. The player\'s Action/Dialogue is the protagonist\'s response WITHIN this continuing moment, not the start of a new day.\n';
       d += '  3. DO NOT RESET TO AN ESTABLISHING SHOT. Forbidden opening moves when continuing: waking to a new morning, setting down / picking up the phone, checking a notification / voicemail / message, or a fresh "the [light] catches the [surface]" scene-setting beat — UNLESS the player\'s action explicitly creates that time gap. Begin INSIDE the ongoing moment.\n';
       d += '  CAUSAL LINK (HARD — THEREFORE / BUT, never "and then"): this scene must follow from the last as a CONSEQUENCE (therefore: the prior ending + the player\'s action FORCED this situation) or a COMPLICATION (but: a reversal / obstacle / cost the prior moment created). Before the first line, answer "what in the prior scene + the player\'s action FORCES this scene to exist?" and let THAT pressure open it — not a new beat that could have followed any scene. And by the scene\'s end, something must CHANGE that forces the next scene (a choice taken, a truth surfaced, a cost incurred, a line crossed); do not close on a flat beat that leaves the next scene free to be anything.\n';
+      // DIFFERENT DRAMATIC STATE (Roman 2026-07-26) — the counterweight to "continue, do not reset". The
+      // continuation window above points BACKWARD (carry forward what happened); with no forward mandate the
+      // model re-renders the prior beat (measured: ~60% of scene-pairs re-told the previous scene). Continuity
+      // is NOT repetition. NOTE "different state" is about DRAMA, not chronology/location — a scene may stay in
+      // the same room and still reach a new state by deepening / reversing / complicating / revealing.
+      // STATE→CONTRACT BINDING (Roman 2026-07-27): the generic "reach a different state by
+      // deepen/reverse/complicate/…" MENU below is UNCONSTRAINING — realization-audit measured 0/6 scenes
+      // executed their requested move because "escalate the existing standoff" satisfies "deepen the
+      // conflict" without leaving the dramatic state. Fix = name the SPECIFIC new state (the plot-contract
+      // hard beats) as the REQUIRED target, INSIDE this high-salience continuation block the author anchors
+      // on (not only in the separate _buildPlotContractDirective), and close the escalation loophole.
+      // Kill switch: window._bindStateToContract === false.
+      var _dsMove = '';
+      try {
+        if (!(typeof window !== 'undefined' && window._bindStateToContract === false)) {
+          var _dsPc = state._scenePlotContract;
+          var _dsBeats = (_dsPc && Array.isArray(_dsPc.hardBeats)) ? _dsPc.hardBeats.filter(function (b) { return b && b.description; }) : [];
+          if (_dsBeats.length) {
+            _dsMove = ' THE SPECIFIC NEW STATE THIS SCENE MUST REACH (this is the target — do NOT substitute a vaguer option from the menu above): the state in which these have CONCRETELY HAPPENED ON THE PAGE — ' + _dsBeats.map(function (b) { return '«' + String(b.description) + '»'; }).join('; ') + '. Intensifying, re-arguing, or escalating the PREVIOUS scene\'s confrontation/standoff does NOT count as reaching a new state, even when the wording differs — the scene is UNFINISHED until the above occurs as a concrete on-page event. If the requested move names people, objects, or places (a sigil, a wrist, a chain, an overheard conversation), they MUST APPEAR and the move MUST land through them.';
+            try { console.log('[STATE-CONTRACT-BIND] scene=' + (state.turnCount == null ? '?' : state.turnCount) + ' boundBeats=' + _dsBeats.length); } catch (_) {}
+          }
+        }
+      } catch (_) {}
+      d += '  DIFFERENT DRAMATIC STATE (HARD — continuity is NOT repetition): the previous scene is COMPLETED. Its beat ALREADY HAPPENED — it does not need to be re-established, re-argued, or re-played. Carry its facts and voice FORWARD (above), but this scene MUST leave the characters in a MEANINGFULLY DIFFERENT DRAMATIC STATE than the previous one. Reach that new state by ONE OR MORE of: deepening the conflict, reversing an expectation, complicating the plan, revealing new information, shifting the balance of power, or changing what the protagonist wants — this need NOT mean a new location or a time-jump (a scene can stay in the same place and still reach a new state). FORBIDDEN: re-staging the previous scene\'s same confrontation, the same standoff, the same emotional register, or the same closing image. If this scene could be swapped with the previous one without the reader noticing, you have FAILED — move the drama to a new state.' + _dsMove + '\n';
       if (liveContinuation) {
         d += '  4. LIVE PICKUP DETECTED (the prior scene ended mid-moment — open dialogue / question / active call). This scene OPENS in that live moment and this OVERRIDES the SCENE ENVIRONMENT ANCHOR\'s "first sentence must originate from the anchor" rule: do NOT open from a physical establishing object — continue the live exchange. Any environment anchor may surface LATER, woven into the ongoing action.\n';
       } else {
@@ -101201,8 +101712,10 @@ LONG-HORIZON EMOTIONAL CONTINUITY DISCIPLINE (MANDATORY):
     // per-scene goal/connection micro-decision, summed by _getUnifiedAxisTally)
     // that they want the burn faster. BOUNDED so it can't break the slow-burn for
     // everyone: +1 maxST only, capped at ST3 (never pre-authorizes ST4 this early);
-    // the FLOOR (minST) is untouched so escalation is PERMITTED, not forced; and the
-    // intimacy gate still governs explicit content independently of this window.
+    // the FLOOR (minST) is untouched so escalation is PERMITTED, not forced. (Roman 2026-07-27:
+    // the intimacy gate is NO LONGER independent of this window — advanceStoryturn now clamps
+    // state.storyturn to this policy, so intimacyPhase/ST battery flow THROUGH this window. This
+    // function is the single pacing authority; do NOT re-introduce a second, ungated ST clock.)
     try {
       // THRESHOLD PACING BIAS (Roman 2026-06-08): the escapist desire-probe lets the
       // reader steer the burn directly. "Stay in it" accumulates +bias, "move past"
@@ -172137,6 +172650,10 @@ No text, no watermark, no UI elements, share-ready.`;
   window._buildSimulationFateKnowledgeGate = _buildSimulationFateKnowledgeGate;
 
   function _buildIntentTransmutationDirective(activeWorld, activeTone, activeSubtype, playerInputText) {
+    // ABLATION TOGGLE (Roman 2026-07-27, test scaffolding, default OFF): remove the ~23k-char intent-transmutation
+    // family — the biggest single objective block — to test whether its semantic weight dilutes the transition
+    // below the salience needed to win. window.__ablateIntentTransmutation.
+    if (typeof window !== 'undefined' && window.__ablateIntentTransmutation === true) { try { console.log('[ABLATE] intent-transmutation OFF'); } catch (_) {} return ''; }
     var _w = String(activeWorld || '').toLowerCase();
     var _t = String(activeTone || '').toLowerCase();
     // Drill into subtype for Historical period accuracy. Callers that
@@ -277587,7 +278104,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               try { window.state._lastContinuationAuditPrompt = { system: _ll.system, act: act, dia: dia, turn: (state.turnCount || 0), world: state.worldSubtype || '', li: state.loveInterestName || '', pc: state.playerName || '' }; } catch (_) {}
               _logLitLitePromptBreakdown(_ll, fullSys.length);
               var _llBoost = (state._petitionTokenBoost || 0);
-              raw = await callChat([
+              raw = await window._authorChatCapture([
                   { role: 'system', content: _ll.system },
                   { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
               ], 0.7, { max_tokens: 3000 + (_llBoost || 0) }); // Roman 2026-06-09: was 1000(+boost)/default-1000 → truncated full scenes, cutting the ending (deck closer + decision question). 3000 clears any scene length; cap is free (pay only for tokens generated).
@@ -277664,7 +278181,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
                 console.log('[MULTI-PASS] Pass 2 prompt:', _pass2Sys.length, 'chars (~' + Math.round(_pass2Sys.length / 4) + ' tokens) vs legacy:', fullSys.length, 'chars (~' + Math.round(fullSys.length / 4) + ' tokens). Savings:', Math.round((1 - _pass2Sys.length / fullSys.length) * 100) + '%');
 
                 const _tokenBoost = (state._petitionTokenBoost || 0) + (_hasActiveComplexSystems() ? 500 : 0);
-                raw = await callChat([
+                raw = await window._authorChatCapture([
                     {role:'system', content: _pass2Sys},
                     {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
                 ], 0.7, { max_tokens: 3000 + (_tokenBoost || 0) }); // Roman 2026-06-09: was 1000(+boost)/default-1000 → truncated scene endings. See lite path.
@@ -277699,7 +278216,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
                 // Pass 1 failed — fall back to legacy single-pass
                 console.warn('[MULTI-PASS] Pass 1 failed, using legacy pipeline');
                 const _tokenBoost = (state._petitionTokenBoost || 0) + (_hasActiveComplexSystems() ? 500 : 0);
-                raw = await callChat([
+                raw = await window._authorChatCapture([
                     {role:'system', content: fullSys},
                     {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
                 ], 0.7, { max_tokens: 3000 + (_tokenBoost || 0) }); // Roman 2026-06-09: raised from 1000 base — truncated scene endings (deck closer + decision). Cap is free; pay only for tokens generated.
@@ -277727,7 +278244,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
               }
               const sceneIntentBlock = buildSceneIntentDirective();
               const _tokenBoost = (state._petitionTokenBoost || 0) + (_hasActiveComplexSystems() ? 500 : 0);
-              raw = await callChat([
+              raw = await window._authorChatCapture([
                   {role:'system', content: fullSys + skeletonBlock + beatBlock + sceneIntentBlock},
                   {role:'user', content: `Action: ${act}\nDialogue: "${dia}"`}
               ], 0.7, { max_tokens: 3000 + (_tokenBoost || 0) }); // Roman 2026-06-09: raised from 1000 base — truncated scene endings (deck closer + decision). Cap is free; pay only for tokens generated.
@@ -278463,6 +278980,24 @@ ABSOLUTE RULES:
           }
           // Reset preserved for backward-compat with any downstream readers.
           state._integrityRegenAttempted = false;
+
+          // META-REFUSAL FINAL SAFETY NET (Roman 2026-07-27). The line-edit regen above cannot turn a
+          // refusal into prose, and reverting re-ships it — so if `raw` is STILL a meta non-answer here
+          // ("The scene cannot be generated as specified…"), it must NOT reach the reader. Substitute a
+          // minimal neutral bridge and flag it. DEFENSIVE STOPGAP: the ROOT fix is the over-constrained
+          // Scene-1 prompt that makes the author refuse (tracked separately). Guarantees the invariant:
+          // a meta-refusal string is never published.
+          try {
+              if (typeof _isMetaRefusal === 'function' && _isMetaRefusal(raw)) {
+                  console.error('[SCENE-GUARD:META-REFUSAL] author refusal reached the commit point — BLOCKED from publication, substituting safe bridge. (root cause: over-constrained prompt)');
+                  var _mrPov = String((state && state.pov) || 'first_person').toLowerCase();
+                  var _mr1p = _mrPov.indexOf('first') !== -1 || _mrPov === '1st';
+                  raw = _mr1p
+                      ? 'The moment held, and I let it — the weight of everything unsaid pressing close before I could move again.'
+                      : 'The moment held, and she let it — the weight of everything unsaid pressing close before anything could move again.';
+                  try { if (state) state._sceneMetaRefusalBlocked = (state._sceneMetaRefusalBlocked || 0) + 1; } catch (_) {}
+              }
+          } catch (_) {}
 
           // ═══════════════════════════════════════════════════════════════════════
           // TENSION GATE — hard enforcement that every scene carries active tension
@@ -279570,6 +280105,26 @@ ABSOLUTE RULES:
           if (_stagedRouting) {
             _completeStagedSceneFromLiterary(raw, rawAct, rawDia);
           } else {
+            // ── transition-retry EXPERIMENT (default OFF) — verify the authored scene against its
+            // required transition; if MISSED/PARTIAL, regenerate ONCE with a separate system correction
+            // on the ORIGINAL inputs, then display the better draft. window.__transitionRetryExperiment.
+            if (window.__transitionRetryExperiment && typeof window._runTransitionRetry === 'function') {
+              try {
+                var _trxEvent = (state._scenePlotContract && state._scenePlotContract.stateChange && state._scenePlotContract.stateChange.event) || '';
+                var _trxLam = state._lastAuthorMessages;
+                if (_trxEvent && _trxLam && _trxLam.messages) {
+                  var _trxRes = await window._runTransitionRetry({
+                    raw: raw, proposedEvent: _trxEvent, sceneNum: (state.turnCount || 0),
+                    reauthor: async function (correction) {
+                      var _m = _trxLam.messages.slice();
+                      _m.push({ role: 'system', content: correction }); // ORIGINAL inputs + a SEPARATE correction
+                      return await callChat(_m, _trxLam.temp, _trxLam.opts);
+                    }
+                  });
+                  if (_trxRes && _trxRes.replaced && _trxRes.prose) { raw = _trxRes.prose; _formattedScene = formatStory(raw); }
+                }
+              } catch (_trxErr) { try { console.warn('[TXN-RETRY-EXP] ' + (_trxErr && _trxErr.message)); } catch (_) {} }
+            }
             pageContent += _formattedScene;
             StoryPagination.addPage(pageContent, true);
           }
@@ -281628,7 +282183,7 @@ REMINDER: Archetype titles (Heart Warden, Open Vein, Spellbinder, Armored Fox, D
                   onPhaseChange: () => {} // No UI updates for speculative
               });
           } else {
-              raw = await callChat([
+              raw = await window._authorChatCapture([
                   { role: 'system', content: fullSys },
                   { role: 'user', content: `Action: ${act}\nDialogue: "${dia}"` }
               ]);
