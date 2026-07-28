@@ -84,6 +84,9 @@
       //    is shared; BEHAVIOR is not. Arm A should log the same fields with architecture:'scene_spine'.
       scene_id: sceneNum, architecture: 'retry', first_verdict: null, retry_count: 0,
       transition_position: null, latency_ms: 0, reader_score: null, // reader_score filled later by the blind read
+      // "was the reader gain worth the tokens?" — join to app.js _sceneCostsThisStory spend:
+      // first_pass_cost ≈ spend.initial · final_cost ≈ spend.total (the retry regen lands in spend.regens).
+      first_pass_cost: null, final_cost: null,
       // ── retry-arm extras (beyond the shared schema) ──
       retried: false, second_verdict: null, transition_position_1: null, transition_position_delta: null
     };
