@@ -1,0 +1,105 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+ * transition-retry-experiment.js — a FALSIFICATION experiment, not "Storybound v2".
+ *
+ * QUESTION IT TESTS: "Is semantic correction AFTER generation sufficient to solve the
+ * momentum problem?"  Mechanism = verify the authored scene against its required
+ * transition; if MISSED/PARTIAL, regenerate ONCE with an explicit (deliberately simple)
+ * failure note. Named after the MECHANISM (retry/repair), not the hoped outcome.
+ *
+ * MINDSET: trying to DISPROVE retry. A clean "no" is a SUCCESSFUL experiment — it
+ * eliminates a class of architectures and earns the two-pass build.
+ *
+ * STOPPING RULE (decide BEFORE reading results): retry improves delivery BUT readers
+ * don't prefer the scenes → DISCARD. Retry doesn't materially improve delivery → DISCARD.
+ * Continue ONLY if BOTH improve. Reader preference is the deciding metric — not delivery %.
+ *
+ * SCOPE: the ONLY behavioral change is author → verify → (if missed) regenerate-with-
+ * failure-note → else continue. Touches NOTHING else (planner/spine/scaffold/prompts/
+ * cache/continuity/pacing). Gated behind window.__transitionRetryExperiment (default OFF).
+ * Reuses the existing _commitScene verifier prompt verbatim (narrow SEMANTIC delivery only).
+ * ───────────────────────────────────────────────────────────────────────────── */
+(function () {
+  if (typeof window === 'undefined') return;
+
+  // Do NOT optimize this. First version is deliberately simple; if it fails, that is a finding.
+  var FAILURE_NOTE =
+    '\n\nYour previous draft did not satisfy the required transition. Rewrite the scene so ' +
+    'that the required transition occurs, while preserving as much of the existing intent, ' +
+    'tone, and characterization as possible.';
+
+  // ---- narrow SEMANTIC verifier: copied verbatim from _commitScene (app.js:92291) ----
+  // Judges ONLY delivery (DELIVERED / PARTIAL / MISSED) + reports what displaced it and
+  // where it lands. It is NOT allowed to judge pacing / inevitability / prose quality.
+  var VERIFY_SYS =
+    'You are the RUNTIME COMMIT verifier for an interactive story engine. Given a PROPOSED TRANSITION (an intended irreversible on-page event) and the SCENE PROSE that was rendered, decide ONE thing: did the prose DELIVER that transition as a concrete, externally-observable ON-PAGE event? Then report the scene end-state tableau. This is a runtime gate, not a critique — judge ONLY delivery. Output STRICT JSON only.\n' +
+    'delivery: "DELIVERED" (the event concretely happened on the page), "PARTIAL" (begun / only gestured / not completed), or "MISSED" (did not happen).\n' +
+    'dominant_replacement (AUTHOR PRIORITY INDEX — when delivery is PARTIAL or MISSED, what did the scene spend MOST of its words on INSTEAD of staging the transition?): "atmosphere", "relationship_dialogue", "internal_monologue", "world_exposition", "different_event", or "none" (when DELIVERED).\n' +
+    'transition_position (INTEGER PERCENTAGE 0-100 marking how far through the prose the transition FIRST concretely occurs; -1 if it NEVER occurs).\n' +
+    'first_irreversible_position (INTEGER PERCENTAGE 0-100 of the FIRST point where SOMETHING irreversible happens, regardless of whether it is the proposed transition; -1 if nothing irreversible happens).\n' +
+    'JSON: {"delivery":"MISSED","dominant_replacement":"atmosphere","transition_position":-1,"first_irreversible_position":-1}';
+
+  window._verifyDelivery = async function (proseText, proposedEvent) {
+    var out = { delivery: 'MISSED', transition_position: -1, first_irreversible_position: -1, dominant_replacement: 'none', ok: false };
+    try {
+      var pt = String(proseText || '').replace(/<[^>]*>/g, ' ').replace(/\[[A-Z][^\]]*\]/g, ' ').trim();
+      if (pt.length < 40 || !proposedEvent) return out;
+      var usr = 'PROPOSED TRANSITION: ' + String(proposedEvent).slice(0, 240) + '\n\nSCENE PROSE:\n' + pt.slice(0, 6000) + '\n\nReturn the JSON now.';
+      var res = await fetch('/api/chatgpt-proxy', {
+        method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'system', content: VERIFY_SYS }, { role: 'user', content: usr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.1, max_tokens: 280, jsonMode: true })
+      });
+      if (res.ok) {
+        var d = await res.json();
+        var c = (d && d.content) || (d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content);
+        var p; try { p = JSON.parse(c); } catch (e) { var m = String(c || '').match(/\{[\s\S]*\}/); if (m) { try { p = JSON.parse(m[0]); } catch (_) {} } }
+        if (p) {
+          out.delivery = String(p.delivery || 'MISSED').toUpperCase();
+          out.transition_position = (typeof p.transition_position === 'number') ? p.transition_position : -1;
+          out.first_irreversible_position = (typeof p.first_irreversible_position === 'number') ? p.first_irreversible_position : -1;
+          out.dominant_replacement = String(p.dominant_replacement || 'none');
+          out.ok = true;
+        }
+      }
+    } catch (_) { /* verifier unreachable → treat as MISSED */ }
+    return out;
+  };
+
+  // ---- the experiment: verify → (retry once if missed) → log EVERYTHING → return best prose.
+  // `reauthor(failureNote)` re-invokes the author (supplied by the app.js seam). `usage(prose)`
+  // optionally returns a cost estimate. Pure w.r.t. those injected deps → headless-testable.
+  var rank = function (d) { return d === 'DELIVERED' ? 2 : d === 'PARTIAL' ? 1 : 0; };
+  window._runTransitionRetry = async function (opts) {
+    opts = opts || {};
+    var raw = opts.raw, proposedEvent = opts.proposedEvent, sceneNum = opts.sceneNum;
+    var reauthor = opts.reauthor, retryBudget = opts.retryBudget == null ? 1 : opts.retryBudget;
+    var now = (typeof performance !== 'undefined' && performance.now) ? function () { return performance.now(); } : function () { return 0; };
+    var t0 = now();
+    var log = {
+      scene: sceneNum, first_verdict: null, retried: false, retry_count: 0, second_verdict: null,
+      transition_position_1: null, transition_position_final: null, latency_ms: 0
+    };
+    var v1 = await window._verifyDelivery(raw, proposedEvent);
+    log.first_verdict = v1.delivery; log.transition_position_1 = v1.transition_position;
+    var best = raw, finalV = v1;
+    if ((v1.delivery === 'MISSED' || v1.delivery === 'PARTIAL') && typeof reauthor === 'function') {
+      for (var i = 0; i < retryBudget; i++) {
+        log.retried = true; log.retry_count++;
+        var raw2;
+        try { raw2 = await reauthor(FAILURE_NOTE); } catch (e) { break; }
+        if (!raw2) break;
+        var v2 = await window._verifyDelivery(raw2, proposedEvent);
+        log.second_verdict = v2.delivery;
+        if (rank(v2.delivery) > rank(finalV.delivery)) { best = raw2; finalV = v2; } // monotonic: only accept if better
+        if (v2.delivery === 'DELIVERED') break;
+      }
+    }
+    log.transition_position_final = finalV.transition_position;
+    log.latency_ms = Math.round(now() - t0);
+    try { console.log('[TXN-RETRY-EXP] ' + JSON.stringify(log)); } catch (_) {}
+    // append to a session buffer so the whole run can be dumped for analysis
+    (window.__txnRetryLog = window.__txnRetryLog || []).push(log);
+    return { prose: best, verdict: finalV.delivery, replaced: (best !== raw), log: log };
+  };
+
+  window.__transitionRetryDump = function () { return window.__txnRetryLog || []; };
+})();
