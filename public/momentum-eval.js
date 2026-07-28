@@ -71,4 +71,37 @@
     try { console.log('[MOMENTUM-EVAL]', JSON.stringify(out, null, 2)); } catch (_) {}
     return out;
   };
+
+  // ── CORPUS SELECTOR (Roman): before spending a single API dollar, mine EXISTING telemetry
+  //    (browser sb_scene_audit_v1 / commit-scene logs / realization audit) for a purpose-built
+  //    CONTRAST corpus — not "30 scenes" but 10 likely-succeed / 10 historically-fail / 10 near-
+  //    boundary, so the eval tests the HARD cases first (higher information density). Pure, no API.
+  //    Flexible field access so it runs over any of the telemetry shapes.
+  function _v(r) { return String(r.final_verdict || r.delivery || (r.move_executed === 'no' ? 'MISSED' : (r.move_executed === 'yes' ? 'DELIVERED' : '')) || '').toUpperCase(); }
+  function _ret(r) { return r.retry_count != null ? r.retry_count : (Array.isArray(r.regens) ? r.regens.length : 0); }
+  function _pos(r) { return typeof r.transition_position === 'number' ? r.transition_position : -1; }
+  function _pend(r) { return !!(r.pendingIntent || r.pending_unresolved); }
+  function _slipped(r) { var v = _v(r); return v === 'MISSED' || v === 'ABSENT' || r.state_change_ownership === 'absent' || r.outcome_delivered === false; }
+  root._momentumCorpus = function (records, opts) {
+    opts = opts || {}; var per = opts.perBucket || 10;
+    if (!Array.isArray(records) || !records.length) return { error: 'no records — pass _auditTail(200) / a dumped log / the realization audit', pool: 0 };
+    var hard = [], boundary = [], easy = [];
+    records.forEach(function (r) {
+      var v = _v(r), p = _pos(r), rt = _ret(r);
+      if (_slipped(r) || rt >= 2 || _pend(r)) hard.push(r);                       // historically fail: miss / repeated retries / unresolved intent
+      else if (v === 'PARTIAL' || (v === 'DELIVERED' && p >= 85) || rt === 1) boundary.push(r); // near boundary: partial / barely-landed / 1-retry rescue
+      else if (v === 'DELIVERED') easy.push(r);                                    // likely succeed: clean early delivery
+    });
+    hard.sort(function (a, b) { return _ret(b) - _ret(a); }); // most-retried first = hardest
+    var out = {
+      likely_succeed: easy.slice(0, per),
+      historically_fail: hard.slice(0, per),
+      near_boundary: boundary.slice(0, per),
+      counts: { pool: records.length, easy: easy.length, hard: hard.length, boundary: boundary.length,
+        selected: { likely_succeed: Math.min(easy.length, per), historically_fail: Math.min(hard.length, per), near_boundary: Math.min(boundary.length, per) } },
+      note: 'Regenerate THESE scenes under SCENE-SPINE (then retry) — hard cases first. If any bucket is thin, that itself is a finding about where the corpus is scarce.'
+    };
+    try { console.log('[MOMENTUM-CORPUS]', JSON.stringify(out.counts, null, 2)); } catch (_) {}
+    return out;
+  };
 })(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
