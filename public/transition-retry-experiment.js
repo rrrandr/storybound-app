@@ -21,11 +21,15 @@
 (function () {
   if (typeof window === 'undefined') return;
 
-  // Do NOT optimize this. First version is deliberately simple; if it fails, that is a finding.
-  var FAILURE_NOTE =
-    '\n\nYour previous draft did not satisfy the required transition. Rewrite the scene so ' +
-    'that the required transition occurs, while preserving as much of the existing intent, ' +
-    'tone, and characterization as possible.';
+  // Do NOT optimize this — deliberately simple; if it fails, that is a finding.
+  // Roman refinement: the wire injects this as a SEPARATE SYSTEM correction on the ORIGINAL
+  // inputs — NOT appended to the prior user message (appending anchors the model to preserving
+  // the first draft's TEXT, which can block the structural change). Preserve INTENT, not text.
+  var CORRECTION =
+    'The scene you just wrote did NOT deliver the required transition: the required irreversible ' +
+    'on-page event did not concretely happen. Rewrite the scene so that it DOES happen. Ignore the ' +
+    'exact wording of your previous draft — preserve the INTENT, tone, and characterization, NOT ' +
+    'the text. You may restructure freely.';
 
   // ---- narrow SEMANTIC verifier: copied verbatim from _commitScene (app.js:92291) ----
   // Judges ONLY delivery (DELIVERED / PARTIAL / MISSED) + reports what displaced it and
@@ -76,28 +80,31 @@
     var t0 = now();
     var log = {
       scene: sceneNum, first_verdict: null, retried: false, retry_count: 0, second_verdict: null,
-      transition_position_1: null, transition_position_final: null, latency_ms: 0
+      transition_position_1: null, transition_position_final: null, transition_position_delta: null, latency_ms: 0
     };
     var v1 = await window._verifyDelivery(raw, proposedEvent);
     log.first_verdict = v1.delivery; log.transition_position_1 = v1.transition_position;
-    var best = raw, finalV = v1;
+    var best = raw, finalV = v1, secondDraft = null, secondPos = null;
     if ((v1.delivery === 'MISSED' || v1.delivery === 'PARTIAL') && typeof reauthor === 'function') {
       for (var i = 0; i < retryBudget; i++) {
         log.retried = true; log.retry_count++;
         var raw2;
-        try { raw2 = await reauthor(FAILURE_NOTE); } catch (e) { break; }
+        try { raw2 = await reauthor(CORRECTION); } catch (e) { break; }
         if (!raw2) break;
+        secondDraft = raw2;
         var v2 = await window._verifyDelivery(raw2, proposedEvent);
-        log.second_verdict = v2.delivery;
+        log.second_verdict = v2.delivery; secondPos = v2.transition_position;
         if (rank(v2.delivery) > rank(finalV.delivery)) { best = raw2; finalV = v2; } // monotonic: only accept if better
         if (v2.delivery === 'DELIVERED') break;
       }
     }
     log.transition_position_final = finalV.transition_position;
+    // does semantic repair MOVE the turning point (e.g. 90% → 55%)? null when no valid retry.
+    log.transition_position_delta = (secondPos != null && secondPos >= 0 && v1.transition_position >= 0) ? (secondPos - v1.transition_position) : null;
     log.latency_ms = Math.round(now() - t0);
     try { console.log('[TXN-RETRY-EXP] ' + JSON.stringify(log)); } catch (_) {}
-    // append to a session buffer so the whole run can be dumped for analysis
-    (window.__txnRetryLog = window.__txnRetryLog || []).push(log);
+    // rich record keeps BOTH drafts for side-by-side analysis — storage is cheap, learning isn't.
+    (window.__txnRetryLog = window.__txnRetryLog || []).push(Object.assign({}, log, { first_draft: raw, second_draft: secondDraft }));
     return { prose: best, verdict: finalV.delivery, replaced: (best !== raw), log: log };
   };
 
