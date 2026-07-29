@@ -248437,6 +248437,10 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
 
   // Expose for internal callers and event delegation
   window.handleBeginStory = handleBeginStory;
+  // Test-infra exposure (momentum harness): the programmatic literary-story launcher + starter defs,
+  // so a headless harness can bootstrap a full onboarded story without driving the corridor UI.
+  // Exposure only — no behavior change (mirrors window.handleBeginStory above).
+  try { window._launchStarterStory = _launchStarterStory; window.STARTER_STORIES = STARTER_STORIES; } catch (_) {}
 
   // Delegated click handler: works regardless of corridor mount/unmount timing
   document.addEventListener('click', (e) => {
