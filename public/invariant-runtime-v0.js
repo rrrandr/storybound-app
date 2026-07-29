@@ -36,6 +36,26 @@
     try { console.log.apply(console, arguments); } catch (_) {}
   }
 
+  // ── per-invariant lifetime record (Roman 2026-07-29) ─────────────────────
+  // Every state transition and evaluation touch appends here. This timeline is
+  // the primary debugging artifact: available → attempt/partial(reason) →
+  // forced → satisfied(matched_via) → canonical, per invariant.
+  function _life(rt, id, scene, event, detail) {
+    try {
+      if (!rt.lifetimes[id]) rt.lifetimes[id] = [];
+      rt.lifetimes[id].push({ scene: scene, event: event, detail: detail || '' });
+    } catch (_) {}
+  }
+  // Record any invariant that has newly become available since last check.
+  function _logNewlyAvailable(rt, scene) {
+    rt.invariants.forEach(function (inv) {
+      if (inv.status === 'available' && !inv._availLogged) {
+        inv._availLogged = true;
+        _life(rt, inv.id, scene, 'available', 'deps realized: [' + inv.depends_on.join(',') + ']');
+      }
+    });
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // LAYER: NARRATIVE INVARIANTS — the hand-authored 5-node DAG.
   // Linear A→B→C→D→E (runtime-policy.md §5 — start at five, not twenty).
@@ -130,7 +150,14 @@
       if (ROOT._invariantRuntimeV0 !== true) return false;
       var s = state || ROOT.state;
       if (!s) return false;
-      return s.worldSubtype === 'arcane_binding' || s._starterId === 'starter_first_sacrifice';
+      // The First Sacrifice starter writes flavor identity to state.picks (not top-level
+      // worldSubtype) and locks its title. Gate on any of the signals the launch actually sets.
+      var ws = s.worldSubtype || (s.picks && s.picks.worldSubtype);
+      var flavor = s.flavor || (s.picks && s.picks.flavor);
+      return ws === 'arcane_binding'
+        || flavor === 'Arcane Binding'
+        || s.immutableTitle === 'The First Sacrifice'
+        || s._starterId === 'starter_first_sacrifice';
     } catch (_) { return false; }
   }
 
@@ -167,9 +194,14 @@
       invariants: invs,
       lastSteeredId: null,
       branchRisks: [],           // irreversible events that satisfied NO available invariant
+      lifetimes: {},             // per-invariant timeline (Roman 2026-07-29): id → [{scene,event,detail}]
+      evalLog: [],               // full evaluator-decision transcript (evaluator quality = dominant risk)
       log: []
     };
+    invs.forEach(function (i) { s._invariantRuntime.lifetimes[i.id] = []; });
     computeStatuses(s._invariantRuntime);
+    // A is available from the start — seed its timeline so the record is complete.
+    invs.forEach(function (i) { if (i.status === 'available') { i._availLogged = true; _life(s._invariantRuntime, i.id, 0, 'available', 'no dependencies'); } });
     log('[INVARIANT-RUNTIME] initialized First Sacrifice DAG — ' + invs.length + ' nodes (A→B→C→D→E).');
     return s._invariantRuntime;
   }
@@ -240,11 +272,13 @@
     // starvation escalation (runtime-policy.md §2) — pressure, NEVER mandate.
     var forced = false;
     if (top.scenes_overdue >= K_FORCE && top.scenes_overdue < K_MAX) {
+      if (!top.forced) _life(rt, top.id, turn, 'forced', 'overdue=' + top.scenes_overdue + ' → dominant objective (pressure)');
       top.forced = true; forced = true;
       log('[DESTINY-FORCE] scene=' + turn + ' invariant=' + top.id + ' overdue=' + top.scenes_overdue +
           ' → this truth is the scene\'s DOMINANT objective (pressure, any realization still valid).');
     } else if (top.scenes_overdue >= K_MAX && !top.replanned) {
       top.replanned = true;
+      _life(rt, top.id, turn, 'replan', 'overdue=' + top.scenes_overdue + ' → re-derive reachable realization');
       log('[DESTINY-REPLAN] scene=' + turn + ' invariant=' + top.id + ' overdue=' + top.scenes_overdue +
           ' → statement is sacred; re-deriving a more reachable realization (unstageable from current state).');
       // For the prototype we re-steer with the equivalent realizations foregrounded;
@@ -358,6 +392,14 @@
     computeStatuses(rt);
     var avail = availableSet(rt);
     if (!avail.length) { log('[INVARIANT-EVAL:SKIP] scene=' + sceneNum + ' no-available-invariant'); return null; }
+    // capture the state AS OFFERED this scene (pre-promotion) for the consolidated snapshot
+    var snapAvail = avail.map(function (i) { return i.id; });
+    var snapBlocked = rt.invariants.filter(function (i) { return i.status === 'blocked'; }).map(function (i) {
+      var waiting = i.depends_on.filter(function (d) { var dd = byId(rt, d); return !dd || dd.status !== 'realized'; });
+      return { id: i.id, waiting: waiting };
+    });
+    var snapObsolete = rt.invariants.filter(function (i) { return i.status === 'obsolete'; }).map(function (i) { return i.id; });
+    var snapSteered = rt.lastSteeredId;
 
     var result;
     try {
@@ -373,35 +415,51 @@
     var conf = (result && typeof result.confidence === 'number') ? result.confidence : 0;
     var id = result && result.satisfied_id;
     var target = id ? byId(rt, id) : null;
+    var reason = (result && result.reason) ? String(result.reason).slice(0, 240) : '';
+    var matchedVia = (result && result.matched_via) || null;
+
+    // EVALUATOR TRANSCRIPT — the primary readout (evaluator quality = dominant risk).
+    rt.evalLog.push({
+      scene: sceneNum, available: avail.map(function (i) { return i.id; }),
+      status: status, satisfied_id: id || null, confidence: conf, matched_via: matchedVia,
+      branch_risk: !!(result && result.branch_risk), reason: reason
+    });
 
     // GATE: promote only an AVAILABLE invariant, at/above confidence, respecting DAG.
     var promoted = null;
     if (status === 'satisfied' && target && (target.status === 'available' || target.status === 'partial') && conf >= CONF_GATE) {
       target.status = 'realized';
       target.realized_at = sceneNum;
-      target.matched_via = result.matched_via || 'equivalent';
+      target.matched_via = matchedVia || 'equivalent';
       target.confidence = conf;
       target.canonical_consequences = Array.isArray(result.canonical_consequences)
         ? result.canonical_consequences.map(function (c) { return String(c).slice(0, 200); }).slice(0, 3) : [];
       promoted = target;
+      _life(rt, target.id, sceneNum, 'satisfied', 'conf=' + conf.toFixed(2) + ' via=' + target.matched_via + ' :: ' + reason);
+      _life(rt, target.id, sceneNum, 'canonical', target.canonical_consequences.join(' | '));
       // UNIFY: write consequences into the ONE canonical store (CommittedState facts).
       _mirrorToCommittedState(s, target, sceneNum);
       computeStatuses(rt);              // unblock downstream
+      _logNewlyAvailable(rt, sceneNum); // record the newly-unblocked invariants' timelines
       _checkObsolescence(rt, sceneNum); // runtime-policy.md §3
       log('[INVARIANT-REALIZED] scene=' + sceneNum + ' id=' + target.id + ' conf=' + conf.toFixed(2) +
           ' via=' + target.matched_via + ' consequences=' + target.canonical_consequences.length +
           ' :: ' + target.statement.slice(0, 70));
     } else if (status === 'satisfied' && target && conf < CONF_GATE) {
       if (target.status === 'available') target.status = 'partial'; // begun-but-not-irreversible
+      _life(rt, target.id, sceneNum, 'partial', 'conf=' + conf.toFixed(2) + ' (< ' + CONF_GATE + ' gate) :: ' + reason);
       log('[INVARIANT-PARTIAL] scene=' + sceneNum + ' id=' + target.id + ' conf=' + conf.toFixed(2) + ' (< ' + CONF_GATE + ' gate) → not canonical, re-offered with escalation');
     } else if (result && result.branch_risk) {
-      rt.branchRisks.push({ scene: sceneNum, reason: result.reason || '' });
-      log('[INVARIANT-BRANCH-RISK] scene=' + sceneNum + ' an irreversible event satisfied NO available truth — flagged, NOT credited :: ' + (result.reason || ''));
+      rt.branchRisks.push({ scene: sceneNum, reason: reason });
+      if (rt.lastSteeredId) _life(rt, rt.lastSteeredId, sceneNum, 'branch_risk', 'irreversible event satisfied no available truth :: ' + reason);
+      log('[INVARIANT-BRANCH-RISK] scene=' + sceneNum + ' an irreversible event satisfied NO available truth — flagged, NOT credited :: ' + reason);
     } else {
+      if (rt.lastSteeredId) _life(rt, rt.lastSteeredId, sceneNum, 'none', reason);
       log('[INVARIANT-EVAL] scene=' + sceneNum + ' status=none — no truth landed (available: ' + avail.map(function (i) { return i.id; }).join(',') + ')');
     }
 
     _abLog(s, rt, sceneNum, promoted);
+    _sceneSnapshot(s, rt, sceneNum, { avail: snapAvail, blocked: snapBlocked, obsolete: snapObsolete, steered: snapSteered, status: status, conf: conf, matchedVia: matchedVia, promoted: promoted, branch: !!(result && result.branch_risk) });
     return { promoted: promoted, result: result, available: avail.map(function (i) { return i.id; }) };
   }
 
@@ -479,6 +537,51 @@
     }
   }
 
+  // ── CONSOLIDATED PER-SCENE SNAPSHOT (Roman 2026-07-29) ───────────────────
+  // One readable block per scene — the primary live readout during real play.
+  // Replaces reading scattered log lines: what was offered, what the scheduler
+  // steered, how the author satisfied it, the evaluator verdict, what became
+  // canonical, and what the LEGACY spine would have (wrongly) committed instead.
+  function _legacyWouldCommit(s, sceneNum) {
+    try {
+      var a = s && s.aPlot;
+      if (!a || !Array.isArray(a.milestones)) return '—';
+      var m = a.milestones.filter(function (mm) { return typeof mm.atScene === 'number' && mm.atScene <= sceneNum; }).sort(function (x, y) { return y.atScene - x.atScene; })[0];
+      if (!m) return '—';
+      return 'milestone ' + (m.kind || 'ms') + '@' + m.atScene + (m.emotional_conductivity ? ' (+consequence, pre-delivery)' : '');
+    } catch (_) { return '—'; }
+  }
+  function _sceneSnapshot(s, rt, sceneNum, x) {
+    try {
+      var authorMode = x.promoted
+        ? (x.matchedVia === 'suggested' ? 'used suggested realization'
+           : x.matchedVia === 'novel' ? 'NOVEL realization (unexpected but valid)'
+           : 'substituted realization (equivalent)')
+        : (x.branch ? 'committed a DIFFERENT irreversible event (competing branch)' : 'no truth landed');
+      var verdict = x.promoted ? ('SATISFIED (' + x.conf.toFixed(2) + ')')
+        : (x.status === 'satisfied' ? ('PARTIAL (' + x.conf.toFixed(2) + ') — below ' + CONF_GATE + ' gate')
+           : (x.branch ? 'UNSATISFIED [BRANCH-RISK]' : 'UNSATISFIED'));
+      var canonical = x.promoted
+        ? (x.promoted.id + ' → "' + (x.promoted.canonical_consequences[0] || x.promoted.statement).slice(0, 90) + '"')
+        : '—';
+      var blocked = x.blocked.length
+        ? x.blocked.map(function (b) { return b.id + (b.waiting.length ? ' (waiting on ' + b.waiting.join(',') + ')' : ''); }).join('  ')
+        : '—';
+      var L = [
+        '[INVARIANT-SNAPSHOT] ═══ Scene ' + sceneNum + ' ═══',
+        '    Available:  ' + (x.avail.length ? x.avail.join(', ') : '—'),
+        '    Blocked:    ' + blocked,
+        '    Obsolete:   ' + (x.obsolete.length ? x.obsolete.join(', ') : '—'),
+        '    Scheduler:  ' + (x.steered ? 'attempt ' + x.steered : '(no destiny beat due)'),
+        '    Author:     ' + authorMode,
+        '    Evaluator:  ' + verdict,
+        '    Canonical:  ' + canonical,
+        '    Shadow:     legacy would have committed ' + _legacyWouldCommit(s, sceneNum)
+      ];
+      log(L.join('\n'));
+    } catch (_) {}
+  }
+
   function _abLog(s, rt, sceneNum, promoted) {
     try {
       var a = s && s.aPlot;
@@ -506,6 +609,33 @@
     });
   }
 
+  // Full lifecycle + evaluator transcript, as plain data (harness serializes it)
+  // and as a human-readable string (dropped into the run report).
+  function lifecycleReport(state) {
+    var s = state || ROOT.state;
+    var rt = s && s._invariantRuntime;
+    if (!rt) return { text: '(no invariant runtime)', data: null };
+    var lines = [];
+    lines.push('INVARIANT LIFETIMES');
+    rt.invariants.forEach(function (inv) {
+      var ev = rt.lifetimes[inv.id] || [];
+      lines.push('  ' + inv.id + '  [final: ' + inv.status + (inv.realized_at != null ? ', canonical@' + inv.realized_at : '') + ']');
+      ev.forEach(function (e) { lines.push('      s' + e.scene + '  ' + e.event.toUpperCase() + (e.detail ? '  — ' + e.detail : '')); });
+      if (!ev.length) lines.push('      (no events — never left ' + inv.status + ')');
+    });
+    lines.push('');
+    lines.push('EVALUATOR TRANSCRIPT (read THIS — evaluator quality is the dominant risk)');
+    rt.evalLog.forEach(function (e) {
+      lines.push('  s' + e.scene + '  avail=[' + e.available.join(',') + ']  → ' + e.status.toUpperCase() +
+        (e.satisfied_id ? ' ' + e.satisfied_id : '') +
+        '  conf=' + (e.confidence != null ? e.confidence.toFixed(2) : '?') +
+        (e.matched_via ? ' via=' + e.matched_via : '') +
+        (e.branch_risk ? ' [BRANCH-RISK]' : ''));
+      if (e.reason) lines.push('        reason: ' + e.reason);
+    });
+    return { text: lines.join('\n'), data: { lifetimes: rt.lifetimes, evalLog: rt.evalLog, branchRisks: rt.branchRisks, snapshot: snapshot(s) } };
+  }
+
   ROOT.InvariantRuntimeV0 = {
     _v: 0,
     FIRST_SACRIFICE_DAG: FIRST_SACRIFICE_DAG,
@@ -521,6 +651,7 @@
     evaluatePriorScene: evaluatePriorScene,
     shadowLegacyTick: shadowLegacyTick,
     snapshot: snapshot,
+    lifecycleReport: lifecycleReport,
     _buildEvalMessages: _buildEvalMessages,
     _evalFn: null   // offline smoke test sets this to a mock; browser uses the proxy
   };
