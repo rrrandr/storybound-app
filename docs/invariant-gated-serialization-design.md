@@ -112,37 +112,32 @@ Only `semantically_satisfied`/`realized` may condition downstream prose. `schedu
 
 ---
 
-## 5. Evaluation — THREE evaluators, not one verifier (decision, 2026-07-29)
+## 5. Evaluation — ONE gate, a rich result (+ one side diagnostic)
 
-Evaluation is three genuinely different problems; separating them keeps each independently improvable (and preserves the diagnostic we fought to get):
-
-| evaluator | question | role |
-|---|---|---|
-| **Realization matcher** (the existing exact-event verifier, `_commitScene` @92281) | Did the author use one of the invariant's *equivalent realizations* (the planner's preferred HOW)? | **diagnostic only** — reveals over-specification (e.g. "exact 18% / invariant 91%"); never a gate. Keep forever. |
-| **Invariant evaluator** (new) | Did the underlying *truth* become true? | **the ONLY gate** (§6) |
-| **Consequence extractor** (new, runs only after the gate passes) | Given it's now true, what new *canonical facts* exist because of it? | feeds the unified world state |
-
-The exact-event verifier's `dominant_replacement` / `competing_transition` output stays as the substitution-study surface — losing it would blind us to whether the planner over-constrains realization.
-
-**New INVARIANT verifier** (semantic, not exact-event). Given the milestone `invariant` + the rendered scene prose, decide:
+**One evaluation gates the spine.** It answers *did the underlying truth become true?* and returns a result that also carries the derived facts — consequence extraction is post-processing, not a second judgment, so it lives in the result, not a separate service (we split more only if experience shows they must diverge):
 
 ```json
 {
   "status": "SATISFIED | PARTIAL | UNSATISFIED",
-  "confidence": 0.0,                                     // semantic certainty the truth became true
+  "confidence": 0.0,                         // semantic certainty the truth became true
   "matched_via": "planned_realization | author_substitution | none",
-  "substitution_preserves_invariant": true|false|null,   // only when matched_via=author_substitution
-  "branch_risk": "none | competing_branch",              // an irreversible event that does NOT satisfy this invariant and diverts the arc
-  "reason": "one sentence — e.g. 'trust broken but public modality missing'"
+  "substitution_preserves_invariant": true|false|null,
+  "branch_risk": "none | competing_branch",
+  "reason": "one sentence — e.g. 'trust broken but public modality missing'",
+  "canonical_consequences": ["derived facts that now exist because it's true"]  // post-processing, not a judgment
 }
 ```
 
-**Two independent axes gate differently:** `confidence` (from the evaluator, above) and `importance` (a property of the invariant, set by the planner: `high` = mandatory, the spine waits & starvation escalates; `low` = optional, the spine advances even if it never lands). Only a **high-confidence SATISFIED** promotes an invariant; a `PARTIAL (0.56)` stays pending; a failed `low`-importance invariant must not derail the destiny spine. Keeping certainty separate from weight is what lets some beats be sacred and others disposable.
+Only a **high-confidence SATISFIED** promotes the invariant to `realized` and writes its `canonical_consequences`. `PARTIAL (0.56)` stays pending.
 
-Key properties:
+**Kept separate — the realization matcher (diagnostic only).** The existing exact-event verifier (`_commitScene` @92281) keeps running purely as a metric: *did the author use the planner's preferred realization?* Its `dominant_replacement` / `competing_transition` output is the substitution-study surface (the "exact 18% / invariant 91%" signal). Never a gate; never deleted.
+
+> **No `importance` field.** (Reversed, 2026-07-29.) How much the spine depends on an invariant is *contextual and emergent* — the story can make a "minor" beat central or leave a "major" one behind — so it can't be intrinsic planner metadata. Relevance is a **runtime status** (`blocked` / `available` / `satisfied` / `obsolete`), decided at runtime, not a weight set at authoring time. See [Runtime Policy](./runtime-policy.md).
+
+Key properties of the gating evaluation:
 - **Semantic, not literal.** "Rowan confesses" and "the crowd discovers the forged vows" both → SATISFIED (matched_via=author_substitution, preserves=true). "Quinn injures her hand" → UNSATISFIED, branch_risk=competing_branch.
-- Reuses the existing verifier plumbing (`/api/chatgpt-proxy` gpt-4o-mini, jsonMode). It runs **alongside** the exact-event verifier (§5 decision) — two calls per scene (invariant gate + exact diagnostic). Net +1 gpt-4o-mini call/scene vs. today; watch cost/latency (§12).
-- **How satisfaction is actually determined is the hard part of the whole project** — specified separately in [the Invariant Language Spec](./invariant-language-spec.md), which must exist before Phase 0.
+- Reuses the existing verifier plumbing (`/api/chatgpt-proxy` gpt-4o-mini, jsonMode). Gate + the side diagnostic ≈ +1 gpt-4o-mini call/scene vs. today; watch cost/latency (§13).
+- **How satisfaction is actually determined is the hard part** — specified in [the Invariant Language Spec](./invariant-language-spec.md), which must be frozen before Phase 0.
 
 ---
 
