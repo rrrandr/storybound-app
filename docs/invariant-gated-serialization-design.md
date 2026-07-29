@@ -29,17 +29,24 @@ Two independent "what happened" tracks that can contradict each other:
 
 ---
 
-## 2. Target architecture
+## 2. Target architecture — five layers, one clean separation of concerns
 
 ```
-Story Destiny
-   → Issue Destiny
-      → NARRATIVE INVARIANTS   (planner emits these — testable truths, not prose events)
-         → Scene Realizations   (author's free choice of HOW)
-            → Author Prose
+Story Goal            what the whole story must make true
+   ↓
+Issue Goal            desired emotional arc · escalation profile · pacing preferences
+   ↓
+Narrative Invariants  atomic truths + dependency DAG + importance   ← the ONLY thing that can be canonical
+   ↓
+Narrative Scheduler   (reformed "milestones") derives "attempt Invariant X around Scene N".
+                       TEMPORAL ONLY — never truth, never canonical, never injects consequences.
+   ↓
+Scene Realizations    the author writes (HOW — free, inside the invariant)
+   ↓
+Evaluation            three evaluators (§5) → Canonical World State (destiny + facts unified)
 ```
 
-Single source of truth. A milestone's consequence becomes canonical (enters the ledger, conditions future prompts) **only when its invariant has been verified true in the rendered prose** — the same gate the FACT track already uses. Destiny and facts describe the same world.
+**goals define WHAT · the Scheduler suggests WHEN · the author decides HOW · the evaluator decides WHETHER.** Pacing is fully decoupled from truth — which is exactly what caused the original bug (see [Does the milestone layer survive?](./does-the-milestone-layer-survive.md)). A truth becomes canonical (enters the ledger, conditions future prompts) **only when the invariant evaluator confirms it in the rendered prose**. Destiny and facts describe the same world.
 
 ---
 
@@ -105,29 +112,32 @@ Only `semantically_satisfied`/`realized` may condition downstream prose. `schedu
 
 ---
 
-## 5. Verifier changes — TWO verifiers, permanently (decision, 2026-07-29)
+## 5. Evaluation — THREE evaluators, not one verifier (decision, 2026-07-29)
 
-**Do NOT replace the exact-event verifier. Run both indefinitely.** They answer different questions:
+Evaluation is three genuinely different problems; separating them keeps each independently improvable (and preserves the diagnostic we fought to get):
 
-| Verifier | Question | Role |
+| evaluator | question | role |
 |---|---|---|
-| Exact-event (`_commitScene` @92281, existing) | Did the author realize the planner's *chosen* realization? | **Diagnostic metric** (no longer a gate) |
-| Invariant (new, §5) | Did the story satisfy the narrative *destiny*? | **The serialization gate** (§6) |
+| **Realization matcher** (the existing exact-event verifier, `_commitScene` @92281) | Did the author use one of the invariant's *equivalent realizations* (the planner's preferred HOW)? | **diagnostic only** — reveals over-specification (e.g. "exact 18% / invariant 91%"); never a gate. Keep forever. |
+| **Invariant evaluator** (new) | Did the underlying *truth* become true? | **the ONLY gate** (§6) |
+| **Consequence extractor** (new, runs only after the gate passes) | Given it's now true, what new *canonical facts* exist because of it? | feeds the unified world state |
 
-Keeping both is load-bearing: e.g. discovering "exact delivery = 18% / invariant satisfaction = 91%" tells us the planner over-specifies realization while destiny is preserved — an insight we lose forever if we delete the exact verifier. The exact verifier's `dominant_replacement` / `competing_transition` telemetry stays as the substitution-study surface.
+The exact-event verifier's `dominant_replacement` / `competing_transition` output stays as the substitution-study surface — losing it would blind us to whether the planner over-constrains realization.
 
 **New INVARIANT verifier** (semantic, not exact-event). Given the milestone `invariant` + the rendered scene prose, decide:
 
 ```json
 {
-  "invariant_status": "SATISFIED | PARTIAL | UNSATISFIED",
-  "realization": "how the scene made it true (or why not), 1 sentence",
+  "status": "SATISFIED | PARTIAL | UNSATISFIED",
+  "confidence": 0.0,                                     // semantic certainty the truth became true
   "matched_via": "planned_realization | author_substitution | none",
   "substitution_preserves_invariant": true|false|null,   // only when matched_via=author_substitution
-  "branch_risk": "none | competing_branch",              // competing_branch = an irreversible event that does NOT satisfy this invariant and diverts the arc
-  "tableau": { ... }                                     // unchanged
+  "branch_risk": "none | competing_branch",              // an irreversible event that does NOT satisfy this invariant and diverts the arc
+  "reason": "one sentence — e.g. 'trust broken but public modality missing'"
 }
 ```
+
+**Two independent axes gate differently:** `confidence` (from the evaluator, above) and `importance` (a property of the invariant, set by the planner: `high` = mandatory, the spine waits & starvation escalates; `low` = optional, the spine advances even if it never lands). Only a **high-confidence SATISFIED** promotes an invariant; a `PARTIAL (0.56)` stays pending; a failed `low`-importance invariant must not derail the destiny spine. Keeping certainty separate from weight is what lets some beats be sacred and others disposable.
 
 Key properties:
 - **Semantic, not literal.** "Rowan confesses" and "the crowd discovers the forged vows" both → SATISFIED (matched_via=author_substitution, preserves=true). "Quinn injures her hand" → UNSATISFIED, branch_risk=competing_branch.
