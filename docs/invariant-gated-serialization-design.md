@@ -67,6 +67,20 @@ Single source of truth. A milestone's consequence becomes canonical (enters the 
 - The planner's job becomes: **define what must become true**, not exactly how. `invariant.statement` is the sacred, serialization-load-bearing field. `suggested_realization` is a disposable hint (author may ignore it — that is not a failure).
 - Generator prompt (`~57627`) rewritten to emit invariants with a `precondition` and an explicit satisfaction `test`, and to keep `kind`/`atScene`/amplitude for pacing.
 
+### 3a. HARD invariants vs. SOFT objectives (first-class distinction)
+
+Every milestone carries two separable things — never conflate them:
+
+| | HARD invariant | SOFT objective |
+|---|---|---|
+| field | `invariant.statement` | `suggested_realization` |
+| example | *"Quinn permanently loses trust in Rowan."* | *"Rowan publicly confesses."* |
+| role | **Must become true.** Failure means destiny cannot advance. | Preferred dramatic realization. **Influences** the author. |
+| serialization | **Is a gate.** | **Is NOT a gate.** |
+| author freedom | realization is free; the *truth* is mandatory | may be ignored freely |
+
+Only HARD invariants gate serialization and enter the ledger. SOFT objectives are steering hints — the author may swap "confesses" for "the crowd discovers the forged vows" and *nothing is lost*, because the hard invariant (trust broken via public evidence) is preserved. This separation is what makes the whole architecture clean: the planner stops betting the story's continuity on a specific realization.
+
 ---
 
 ## 4. Milestone lifecycle state machine
@@ -91,9 +105,16 @@ Only `semantically_satisfied`/`realized` may condition downstream prose. `schedu
 
 ---
 
-## 5. Verifier changes
+## 5. Verifier changes — TWO verifiers, permanently (decision, 2026-07-29)
 
-Today (`_commitScene` @92281): *"Did the prose DELIVER this exact proposed transition?"* → DELIVERED / PARTIAL / MISSED.
+**Do NOT replace the exact-event verifier. Run both indefinitely.** They answer different questions:
+
+| Verifier | Question | Role |
+|---|---|---|
+| Exact-event (`_commitScene` @92281, existing) | Did the author realize the planner's *chosen* realization? | **Diagnostic metric** (no longer a gate) |
+| Invariant (new, §5) | Did the story satisfy the narrative *destiny*? | **The serialization gate** (§6) |
+
+Keeping both is load-bearing: e.g. discovering "exact delivery = 18% / invariant satisfaction = 91%" tells us the planner over-specifies realization while destiny is preserved — an insight we lose forever if we delete the exact verifier. The exact verifier's `dominant_replacement` / `competing_transition` telemetry stays as the substitution-study surface.
 
 **New INVARIANT verifier** (semantic, not exact-event). Given the milestone `invariant` + the rendered scene prose, decide:
 
@@ -110,8 +131,8 @@ Today (`_commitScene` @92281): *"Did the prose DELIVER this exact proposed trans
 
 Key properties:
 - **Semantic, not literal.** "Rowan confesses" and "the crowd discovers the forged vows" both → SATISFIED (matched_via=author_substitution, preserves=true). "Quinn injures her hand" → UNSATISFIED, branch_risk=competing_branch.
-- Reuses the existing verifier plumbing (`/api/chatgpt-proxy` gpt-4o-mini, jsonMode) — one call per scene, same cost profile as the current commit verifier (it **replaces** it, not adds).
-- The current exact-event `dominant_replacement` telemetry is preserved for continuity/A-B, but is no longer the gate.
+- Reuses the existing verifier plumbing (`/api/chatgpt-proxy` gpt-4o-mini, jsonMode). It runs **alongside** the exact-event verifier (§5 decision) — two calls per scene (invariant gate + exact diagnostic). Net +1 gpt-4o-mini call/scene vs. today; watch cost/latency (§12).
+- **How satisfaction is actually determined is the hard part of the whole project** — specified separately in [the Invariant Language Spec](./invariant-language-spec.md), which must exist before Phase 0.
 
 ---
 
@@ -178,7 +199,8 @@ If an invariant is still pending after its scene:
 
 Each phase is behind a kill switch; each is independently shippable and measurable. **No big-bang.**
 
-- **Phase 0 — Observe (no behavior change).** Add the state machine (§4) *alongside* `triggered`, and the invariant verifier (§5) run in **shadow** (result logged, not gating). Add §8 telemetry. This *measures* how often schedule-firing diverges from invariant-satisfaction on real stories — turning the demo's deterministic proof into a production frequency (answers the open "reader-impact / how often" question's precursor). Flag: `window._invariantShadow`.
+- **Phase −1 — SPECIFY THE INVARIANT LANGUAGE FIRST (no code).** Before any telemetry, write [the Invariant Language Spec](./invariant-language-spec.md): what an invariant looks like, and — the hard part — *how satisfaction is determined* (does an internal realization count? is public evidence required? does physical separation satisfy "loses trust"? can it be partially satisfied?). Prototype the verifier prompt against ~15–20 hand-labeled (invariant, scene-prose) pairs until its SATISFIED/PARTIAL/UNSATISFIED + preserves-invariant judgments match human labels. **Rationale:** shadow-testing a verifier whose satisfaction criteria are still moving would gather telemetry whose meaning changes every refinement — measuring a moving target. Freeze the criteria first.
+- **Phase 0 — Observe (no behavior change).** *Only after Phase −1.* Add the state machine (§4) *alongside* `triggered`, and the (now-calibrated) invariant verifier (§5) in **shadow** (result logged, not gating). Add §8 telemetry. This *measures* how often schedule-firing diverges from invariant-satisfaction on real stories — turning the demo's deterministic proof into a production frequency, and giving the exact-vs-invariant delivery split (§5). Flag: `window._invariantShadow`.
 - **Phase 1 — Invariant representation.** Add `invariant` to milestone generation (§3), keeping `event`/`suggested_realization` for backward compat. Author directive begins naming the pending *invariant* (not just the event). Still schedule-gated. Flag: `window._milestoneInvariantsV1`.
 - **Phase 2 — Delivery-gate the spine (the fix).** Move consequence recording behind the invariant gate (§6, §7); `_tickAPlot` stops auto-firing. Flag: `window._destinyDeliveryGate`. Kill switch restores current behavior instantly.
 - **Phase 3 — Unify stores.** Collapse ledger ↔ CommittedState into one (§7 longer-term). Optional; the divergence is already gone after Phase 2.
@@ -195,9 +217,28 @@ Gate each phase-advance on the §11 success criteria + telemetry, not on gut fee
 
 ---
 
-## 12. Risks & open questions
+## 12. Failure modes (where serialization systems usually break)
 
-1. **The band-aid was doing work.** Today the ledger is ~100% schedule-filled; it papered over missing beats and kept stories feeling connected. Delivery-gating makes the ledger sparser (only satisfied invariants). If satisfaction is low (~40% today), stories could feel *less* connected, not more — the false-but-present consequence removed with nothing true to replace it. **Mitigation:** the author directive must actively *steer toward the pending invariant* so satisfaction rate rises; Phase 0 measures the real satisfaction rate before we remove the band-aid. **This is the biggest risk and the reason for the phased rollout.**
+Each needs an explicit, tested answer — this is where the design lives or dies.
+
+1. **Invariant never satisfied.** An invariant scheduled for scene 8 is still `pending` at scene 12.
+   → Escalating steering pressure each pending scene (the author directive foregrounds it harder). At a bound (`atScene + K`, K tunable, e.g. 4) emit `[DESTINY-STARVATION]` telemetry and, if configured, allow a **forced realization** — a scene whose *only* mandate is the invariant (a last-resort gate, logged loudly). Never silently mark it satisfied. Persistent starvation is a *planner* signal (the invariant may be unstageable — see #5).
+
+2. **Multiple equivalent realizations.** Scenes 8 and 10 both satisfy the same invariant.
+   → An invariant transitions to `realized` on **first** satisfaction and is then **closed** (removed from the pending set); later scenes cannot re-satisfy a closed invariant. The consequence is recorded once. (Re-satisfaction attempts are telemetry, not new facts.)
+
+3. **Contradictory realizations.** Two scenes satisfy the invariant in incompatible ways (scene 8: "Rowan confesses"; scene 10: "Rowan is proven innocent").
+   → Cannot happen for a *closed* invariant (see #2 — first satisfaction closes it). The scene-10 event is then judged against the *remaining* pending invariants; if it satisfies none and is irreversible, it's a `competing_branch` (flagged, not committed as canonical destiny). The already-committed fact stands; the contradiction becomes a visible branch-risk signal, not a silent overwrite.
+
+4. **Late satisfaction / pacing recovery.** The scene-8 midpoint invariant isn't satisfied until scene 13.
+   → Because destiny is now *event-based, not clock-based*, the arc's *shape* is preserved even if its *timing* slips: the milestone simply realizes late, and downstream invariants (which depend on it) stay `pending` until it's satisfied (they were never really available earlier — the old system only *pretended* they were). Pacing pressure (§9) discourages long slips; the `scenes_pending` telemetry surfaces drift. The story is *slower to destiny* but never *false to destiny* — the correct trade.
+
+5. **Impossible / malformed invariant.** The planner emits an invariant that cannot be satisfied (self-contradictory, references absent entities, or unstageable in this world).
+   → Guard at generation: validate each invariant (has precondition + a concrete satisfaction test; entities exist; passes a "could a scene make this true?" check — reuse the Scene-1 delete-test discipline). On failure, regenerate that milestone. At runtime, the starvation bound (#1) is the backstop: an invariant unsatisfied past `atScene + K_max` is flagged `[INVARIANT-IMPOSSIBLE]` and dropped-with-telemetry rather than blocking the arc forever. Fallback to a `suggested_realization`-derived soft objective so the story continues.
+
+## 13. Risks & open questions
+
+1. **The band-aid was doing work — expect first builds to look WORSE before better.** Today the ledger is ~100% schedule-filled; those false consequences papered over missing beats and kept stories feeling connected. We are *removing a lie*, and lies sometimes hold systems together — delivery-gating exposes weaknesses that were previously hidden. If satisfaction is low (~40% today), stories could feel *less* connected before they feel more *inevitable*. That is not a reason to avoid the fix; it is a reason to expect a dip and not panic at it. **Mitigation:** the author directive must actively *steer toward the pending invariant* so satisfaction rises; Phase 0 measures the real satisfaction rate before we remove the band-aid; keep the kill switch one flag away. **This is the biggest risk and the reason for the phased rollout.**
 2. **Semantic invariant verification is fuzzy.** An LLM judging "is the invariant now true?" needs calibration (esp. `substitution_preserves_invariant`). Phase 0 shadow-runs let us calibrate against human spot-checks before gating.
 3. **Extra reasoning per scene.** The invariant verifier *replaces* the commit verifier (no net add), but the substitution/branch judgment is richer → watch latency/cost.
 4. **Planner quality shifts.** Emitting good invariants is a different skill than emitting events; the generator prompt (§3) needs its own iteration (but this is prompt work *inside* the new architecture, not a return to prompt-tweaking the old one).
@@ -205,7 +246,7 @@ Gate each phase-advance on the §11 success criteria + telemetry, not on gut fee
 
 ---
 
-## 13. Success criteria (evaluate post-implementation)
+## 14. Success criteria (evaluate post-implementation)
 
 Optimize for destiny preservation, NOT exact-event delivery. After the redesign:
 - Does every scene permanently change something (real irreversible progress, tracked as satisfied/substituted invariants)?
@@ -217,7 +258,7 @@ Optimize for destiny preservation, NOT exact-event delivery. After the redesign:
 
 ---
 
-## 14. What I need from review before writing production code
+## 15. What I need from review before writing production code
 
 - Sign-off on the **milestone-as-invariant** representation (§3) and the **state machine** (§4).
 - Sign-off on **replacing** the commit verifier with the invariant verifier (§5) vs. running both.
