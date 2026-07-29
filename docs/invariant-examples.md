@@ -9,8 +9,11 @@
 - **Precondition** — the "before"; what is still true when the beat opens (guards against "was already true").
 - **Satisfied when** — the yes/no test a reader answers from the prose alone.
 - **Anchor / modality** — what is load-bearing (external act? public? witnessed by whom?).
-- **Freedom (any of these count)** — 2–3 different realizations the author may choose; all satisfy it.
+- **Equivalent realizations (any of these count)** — 2–3 different realizations the author may choose; all satisfy it.
 - **Boundary (does NOT count)** — a correlate, an interior-only version, or a competing branch that must be flagged, not credited.
+- **Requires** *(when present)* — an invariant that must be `realized` first (a causality edge). The engine cannot satisfy this one until its dependency has actually happened. This is what makes the set a **narrative-causality graph**, not a list.
+
+**Verifier output (v2, per review):** the verifier does not return YES/NO. It returns `{ status: SATISFIED | PARTIAL | UNSATISFIED, confidence: 0–1, matched_via, reason }`. Only high-confidence SATISFIED gates the spine; `PARTIAL (0.56) — "trust broken, public modality missing"` is exactly the debugging surface we want.
 
 Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billionaire · Fatelands (wishcraft) · Glass House/Chorus · Gloamwater/Kwisheen.
 
@@ -23,7 +26,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** The PC still believes she has other options.
 - **Satisfied when:** It is concretely, externally true that only the LI can grant or deny it, and the PC has acted on that knowledge.
 - **Anchor:** external (she asks him, or visibly stops pursuing alternatives).
-- **Freedom:** she's shown he's the sole signatory / a third party tells her he holds the only key / she abandons her fallback plan on-page.
+- **Equivalent realizations:** she's shown he's the sole signatory / a third party tells her he holds the only key / she abandons her fallback plan on-page.
 - **Boundary:** she privately suspects he might matter (interior-only) · a *different* obstacle appears (competing branch).
 
 **2 · First forbidden pull made real** · Fatelands · L
@@ -31,7 +34,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** She's been able to explain the pull away as something else.
 - **Satisfied when:** She does something she cannot re-explain (an act, not a feeling) that only makes sense if she wants him.
 - **Anchor:** external+internal — the interior shift must leave a visible trace (she alters her behavior).
-- **Freedom:** she keeps a token of his / she changes route to pass him / she lies to a friend to protect the pull.
+- **Equivalent realizations:** she keeps a token of his / she changes route to pass him / she lies to a friend to protect the pull.
 - **Boundary:** she notices he's handsome and moves on · she thinks "I want him" with no behavioral trace (interior-only → at most PARTIAL).
 
 **3 · The secret enters the room** · Glass House/Chorus · M
@@ -39,7 +42,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** No other living person knows it.
 - **Satisfied when:** One specific character irreversibly learns it (and the PC knows they know).
 - **Anchor:** external, single-witness (the *who* matters — a wrong witness doesn't satisfy).
-- **Freedom:** the LI overhears it / she confesses it to a rival for leverage / the Chorus surfaces it to one mind.
+- **Equivalent realizations:** the LI overhears it / she confesses it to a rival for leverage / the Chorus surfaces it to one mind.
 - **Boundary:** the reader learns it but no character does · the whole town learns it (that's a *different, later* invariant — over-satisfaction, flag don't credit).
 
 **4 · The stakes become personal** · Gloamwater/Kwisheen · M
@@ -47,7 +50,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** The threat reads as impersonal/procedural.
 - **Satisfied when:** It's made concrete on the page that the threat costs the LI something he cannot replace.
 - **Anchor:** external (a named thing/person of his is put in the threat's path).
-- **Freedom:** his sibling is named as a target / his tide-bond is what the raiders want / his exile is the price of inaction.
+- **Equivalent realizations:** his sibling is named as a target / his tide-bond is what the raiders want / his exile is the price of inaction.
 - **Boundary:** he says he's worried (interior) · the danger merely escalates in scale (bigger ≠ personal).
 
 ---
@@ -59,7 +62,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** She's kept a protective reserve.
 - **Satisfied when:** She gives him a concrete point of leverage/vulnerability, witnessed, that can't be un-given.
 - **Anchor:** external (she hands over the file / signs / tells him the thing).
-- **Freedom:** she gives him the incriminating drive / co-signs the risk / tells him the secret from #3.
+- **Equivalent realizations:** she gives him the incriminating drive / co-signs the risk / tells him the secret from #3.
 - **Boundary:** she decides to trust him but does nothing with it (interior) · she trusts a *different* person (branch).
 
 **6 · A line crossed, not uncrossable-yet** · Fatelands · L→M
@@ -67,7 +70,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** They can still pretend nothing is between them.
 - **Satisfied when:** An intimate act occurs on the page whose *acknowledgment* neither can now avoid.
 - **Anchor:** external, mutual (both participate; a one-sided almost doesn't count).
-- **Freedom:** a first kiss neither pulls back from / a confession answered / a night that ends the pretense.
+- **Equivalent realizations:** a first kiss neither pulls back from / a confession answered / a night that ends the pretense.
 - **Boundary:** an almost-kiss interrupted (PARTIAL) · one wants it, the other doesn't reciprocate (not yet mutual).
 
 **7 · Ally revealed as compromised** · Glass House/Chorus · M
@@ -75,7 +78,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** The ally reads as safe.
 - **Satisfied when:** Concrete on-page evidence establishes the betrayal as fact (not suspicion).
 - **Anchor:** external evidence (the reader must be able to point to the proof).
-- **Freedom:** the PC finds the ally's message to the enemy / catches them in the act / the Chorus leaks their true intent.
+- **Equivalent realizations:** the PC finds the ally's message to the enemy / catches them in the act / the Chorus leaks their true intent.
 - **Boundary:** the ally acts shifty (suggestive, not proven) · a *stranger* betrays her (wrong subject).
 
 ---
@@ -87,7 +90,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** One of them has been clearly in control.
 - **Satisfied when:** An on-page event makes the previously-weaker party the one who now decides.
 - **Anchor:** external (a concrete shift in who can grant/withhold).
-- **Freedom:** she acquires the leverage he had / he needs something only she can give / the deal inverts publicly.
+- **Equivalent realizations:** she acquires the leverage he had / he needs something only she can give / the deal inverts publicly.
 - **Boundary:** they feel more equal (mood) · a third party gains power (branch — the flip must be *between them*).
 
 **9 · A wish's true cost is revealed** · Fatelands · H
@@ -95,7 +98,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** The wish seemed to cost nothing, or a bearable price.
 - **Satisfied when:** The real, permanent cost is made concrete on the page (who lost what).
 - **Anchor:** external, observable (a named person/thing is shown permanently altered/taken).
-- **Freedom:** the Favored she loved is revealed frozen / her own years are shown spent / a stranger paid in her place.
+- **Equivalent realizations:** the Favored she loved is revealed frozen / her own years are shown spent / a stranger paid in her place.
 - **Boundary:** she fears there's a hidden cost (dread, not revelation) · the wish is merely reversed (that un-pays it — not this).
 
 **10 · The bond becomes literal** · Gloamwater/Kwisheen · H
@@ -103,7 +106,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** Either could still walk away cleanly.
 - **Satisfied when:** A concrete binding is established on the page such that leaving now has a named price.
 - **Anchor:** external, witnessed or ritual (the bond leaves a mark/record).
-- **Freedom:** a tide-vow is spoken and takes / their fates are entangled by an act / a Keeper records them as a pair.
+- **Equivalent realizations:** a tide-vow is spoken and takes / their fates are entangled by an act / a Keeper records them as a pair.
 - **Boundary:** they say "I'm yours" with no binding cost (romantic, not structural) · they grow closer (mood).
 
 ---
@@ -115,7 +118,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** She still extends him private trust; no breach has surfaced.
 - **Satisfied when:** An external act makes it irreversibly true, on the page, that she no longer trusts him.
 - **Anchor:** external (a witnessed refusal/withdrawal/exposure) — an internal-only "she'd never trust him again" is at most PARTIAL.
-- **Freedom:** the court hears him name her secret and she won't look at him / she refuses the ledger and walks out / she's shown proof of his forgery.
+- **Equivalent realizations:** the court hears him name her secret and she won't look at him / she refuses the ledger and walks out / she's shown proof of his forgery.
 - **Boundary:** she privately decides not to trust him (interior) · they're assigned separate wings (separation ≠ trust loss — correlate) · he confesses privately and she forgives (didn't break) · **required modality "public"** if the milestone specifies it — a private break wouldn't satisfy a public-modality invariant.
 
 **12 · A sacrifice made, not offered** · Fatelands · H
@@ -123,7 +126,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** She still holds the thing.
 - **Satisfied when:** The surrender is completed and irreversible (not merely promised).
 - **Anchor:** external, completed act.
-- **Freedom:** she burns the pardon that would have saved her / trades her Favored-mark / spends the last of her years.
+- **Equivalent realizations:** she burns the pardon that would have saved her / trades her Favored-mark / spends the last of her years.
 - **Boundary:** she vows she *would* sacrifice it (intention) · she almost does but is stopped (PARTIAL) · it's taken from her (must be *her will* — coercion is a different invariant).
 
 **13 · The protagonist is left truly alone** · Glass House/Chorus · H
@@ -131,7 +134,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** She has at least one dependable ally.
 - **Satisfied when:** It becomes concretely true that no remaining ally can help her now.
 - **Anchor:** external (each ally is removed by a namable cause).
-- **Freedom:** the Chorus casts her out / her allies are turned or taken / she severs them to protect them.
+- **Equivalent realizations:** the Chorus casts her out / her allies are turned or taken / she severs them to protect them.
 - **Boundary:** she *feels* alone while allies remain (mood) · one ally is lost but others remain (not yet "every").
 
 ---
@@ -143,7 +146,7 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** Both remain possible.
 - **Satisfied when:** She acts such that one path is now permanently closed (not just favored).
 - **Anchor:** external, committed act.
-- **Freedom:** she chooses the truth and loses the deal / protects him and burns her career / takes the career and lets him go.
+- **Equivalent realizations:** she chooses the truth and loses the deal / protects him and burns her career / takes the career and lets him go.
 - **Boundary:** she agonizes but defers the choice (no foreclosure) · circumstances choose for her (must be *her* choice — else it's a different beat).
 
 **15 · The vow is publicly broken** · Fatelands · H
@@ -151,15 +154,16 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** The vow still holds and still shelters them.
 - **Satisfied when:** The vow is broken on the page, publicly, and its protection is shown gone.
 - **Anchor:** external + **modality: public/witnessed** (a private break wouldn't end the world-facing protection).
-- **Freedom:** one of them renounces it before the Keepers / an act voids it in the open / a rival forces its exposure.
+- **Equivalent realizations:** one of them renounces it before the Keepers / an act voids it in the open / a rival forces its exposure.
 - **Boundary:** the vow weakens/frays (PARTIAL) · one privately stops meaning it (interior, un-witnessed).
+- **Requires:** `#10 realized` — a vow can only be *broken* if it was first made *binding*.
 
 **16 · Loyalty proven by cost** · Gloamwater/Kwisheen · H
 - **Invariant:** The LI proves his loyalty to the PC by paying a price only genuine loyalty would pay.
 - **Precondition:** His loyalty is in doubt (to her and the reader).
 - **Satisfied when:** He pays a concrete, irreversible cost that serves her over himself.
 - **Anchor:** external, costly act (words don't satisfy — the cost must be real).
-- **Freedom:** he gives up his standing to shield her / takes the wound meant for her / surrenders the thing he wanted most.
+- **Equivalent realizations:** he gives up his standing to shield her / takes the wound meant for her / surrenders the thing he wanted most.
 - **Boundary:** he *says* he's loyal (words) · he helps her at no cost to himself (cheap) · someone else pays for her (wrong subject).
 
 ---
@@ -171,15 +175,16 @@ Amplitude tags: **L** light · **M** medium · **H** heavy. Worlds: Modern/Billi
 - **Precondition:** #11 is realized (trust was broken and remains broken).
 - **Satisfied when:** She chooses, on the page, to trust him again *with the breach acknowledged*, in an irreversible act.
 - **Anchor:** external, informed act.
-- **Freedom:** she signs the new agreement eyes-open / hands him something vulnerable again, naming the old wound / chooses him publicly.
+- **Equivalent realizations:** she signs the new agreement eyes-open / hands him something vulnerable again, naming the old wound / chooses him publicly.
 - **Boundary:** she forgets/minimizes the breach and drifts back (that's not rebuilding — it's the *bug*: canonical trust without the invariant) · she feels ready but does nothing (interior).
+- **Requires:** `#11 realized` — you literally cannot rebuild a trust that was never broken. The engine refuses to even schedule this until #11 is canonical.
 
 **18 · The world-truth accepted** · Fatelands · M
 - **Invariant:** The PC irreversibly accepts a truth about how her world works that she'd been refusing.
 - **Precondition:** She's been denying it.
 - **Satisfied when:** She acts on the page in a way only possible if she now accepts it.
 - **Anchor:** external+internal (acceptance shown through a changed action).
-- **Freedom:** she uses the Fold as it truly is / stops fighting the law and works within it / teaches the truth to another.
+- **Equivalent realizations:** she uses the Fold as it truly is / stops fighting the law and works within it / teaches the truth to another.
 - **Boundary:** she says she accepts it but keeps acting as before (contradicted) · she merely understands it intellectually (no changed act).
 
 ---
