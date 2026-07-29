@@ -118,10 +118,17 @@ const ROLE_MODEL_CHAIN = {
   // required (this is prose, not ESD-gated explicit rendering; explicit beats
   // still route through INTIMACY_SPECIALIST/SPECIALIST_RENDERER). Gated
   // client-side by CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR (default OFF).
+  // VERIFIED 2026-07-28: grok-4-1-fast-reasoning is the SAME reasoning model as grok-4.3 (both emit
+  // reasoning_content, both ~10-13s on a trivial prompt, both slow/hang-prone on the ~80k-token prose
+  // prompt) — so it is USELESS as an immediate fallback from a reasoning primary (it just hangs again,
+  // wasting a whole hang-guard timeout). The only genuinely-DIFFERENT, fast literary fallback is the
+  // NON-reasoning model. So: reasoning primary → FAST non-reasoning fallback → (last-resort) the reasoning
+  // alias (kept only so a client requesting it still validates). Author-quality choice (which reasoning
+  // model / Grok 4.5 / Mistral) is deferred — this only fixes the fallback ORDER.
   NARRATIVE_AUTHOR: [
-    'grok-4-1-fast-reasoning',       // primary — reasoning model for scene prose
-    'grok-4-1-fast-non-reasoning',   // fallback 1 / connective-tier primary
-    'grok-4.3'                        // fallback 2
+    'grok-4.3',                      // primary — reasoning tentpole author (client forces this via preferredModel)
+    'grok-4-1-fast-non-reasoning',   // fallback 1 — genuinely different FAST author when the reasoning model hangs
+    'grok-4-1-fast-reasoning'        // fallback 2 — reasoning alias of 4.3; last resort only (redundant, rarely reached)
   ]
 };
 
@@ -129,6 +136,27 @@ const ROLE_MODEL_CHAIN = {
 // 400 = "model not found" / "invalid model". 404 = same in some routes.
 // Everything else (401/403/429/5xx) fails fast.
 const RETRY_NEXT_MODEL_STATUSES = new Set([400, 404]);
+
+// ── UPSTREAM HANG GUARD (2026-07-28) ──────────────────────────────────────────
+// THE BUG this fixes: a HUNG xAI request never becomes an error, so the per-role
+// fallback chain (which only advances on 400/404) NEVER executes — the proxy waits
+// forever and the whole continuation hangs indefinitely (observed: grok-4.3 on the
+// ~80k-token HEAVY prose prompt stalling >420s; real users on tentpole scenes hit
+// the same unrecoverable hang). FIX: an AbortController timeout converts a hang into
+// a retryable condition that ADVANCES THE EXISTING CHAIN. Model-agnostic — the routing
+// table decides WHICH literary models fill the chain; this only bounds each attempt.
+// The chain stays literary-only (Grok→Grok→…); on full exhaustion the handler fails
+// LOUDLY (never silently substitutes a non-literary author) — see the !selectedModel guard.
+// Timeout is a CONFIGURABLE constant, sized from OBSERVED latency (2026-07-28): healthy grok-4.3
+// authoring of the full ~80k-token prose prompt completes in ~13-23s; the failure mode is an
+// INTERMITTENT indefinite hang (>230s). Confirmed over a batch: healthy reasoning-author calls top out
+// ~26s; true hangs are caught >120s. The distribution is bimodal with a huge gap, so 90s sits far above
+// any healthy completion (~3.5x the observed p100 → no legitimately-slow gen is cut → no unintended
+// fallback) yet bounds each hang tightly — important because ONE continuation makes several Grok calls
+// (author + renderer + repair), so a smaller per-call bound keeps the worst-case (multiple passes hang)
+// from stacking. Retune from the per-call latency logged below ([SPECIALIST-PROXY] latency=…) if healthy
+// tentpole scenes are ever seen above ~50s.
+const XAI_CALL_TIMEOUT_MS = Number(process.env.XAI_CALL_TIMEOUT_MS) || 90000;
 
 /**
  * Validate that the requested model is allowed.
@@ -293,6 +321,8 @@ export default async function handler(req, res) {
     let selectedModel = null;
     let lastErrorStatus = 0;
     let lastErrorData = null;
+    // Per-request override of the hang-guard timeout (for tuning/verification); defaults to the constant.
+    const _xaiTimeoutMs = Number(req.body && req.body.__xaiTimeoutMs) || XAI_CALL_TIMEOUT_MS;
 
     for (let i = 0; i < modelChain.length; i++) {
       const tryModel = modelChain[i];
@@ -314,12 +344,32 @@ export default async function handler(req, res) {
       // prompt-cache lookups by this stable key. Harmless if the upstream ignores it;
       // pairs with x-grok-conv-id to maximize prefix-cache hits across a story's scenes.
       if (convId) _xaiBody.prompt_cache_key = String(convId);
-      xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: _xaiHeaders,
-        body: JSON.stringify(_xaiBody)
-      });
-      responseText = await xaiResponse.text();
+      // Bound this attempt so a HUNG upstream advances the chain instead of waiting forever.
+      const _callStart = Date.now();
+      const _ac = new AbortController();
+      const _timer = setTimeout(() => _ac.abort(), _xaiTimeoutMs);
+      try {
+        xaiResponse = await fetch('https://api.x.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: _xaiHeaders,
+          body: JSON.stringify(_xaiBody),
+          signal: _ac.signal
+        });
+        responseText = await xaiResponse.text();
+      } catch (fetchErr) {
+        clearTimeout(_timer);
+        const _elapsed = Date.now() - _callStart;
+        const _timedOut = fetchErr && (fetchErr.name === 'AbortError');
+        // A timeout (hang) OR a transient network error → retryable: advance to the next
+        // literary model in the chain. This is the core reliability fix — a hang is no
+        // longer an infinite wait; it becomes a fast fallback to the next Grok author.
+        console.warn(`[SPECIALIST-PROXY] Model ${tryModel} ${_timedOut ? 'TIMED OUT' : 'FETCH ERROR'} after ${_elapsed}ms${_timedOut ? ' (>' + _xaiTimeoutMs + 'ms hang guard) — advancing chain' : ': ' + (fetchErr && fetchErr.message) + ' — advancing chain'}`);
+        lastErrorStatus = _timedOut ? 504 : 502;
+        lastErrorData = { error: { message: _timedOut ? `xAI call for ${tryModel} exceeded ${_xaiTimeoutMs}ms (hang guard tripped)` : `xAI fetch failed for ${tryModel}: ${fetchErr && fetchErr.message}` } };
+        continue; // next model in the literary-only chain
+      }
+      clearTimeout(_timer);
+      console.log(`[SPECIALIST-PROXY] latency=${Date.now() - _callStart}ms model=${tryModel} status=${xaiResponse.status}`);
       try {
         data = JSON.parse(responseText);
       } catch (e) {
