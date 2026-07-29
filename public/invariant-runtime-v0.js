@@ -250,9 +250,12 @@
   // available set (evaluate() credits any of them).
   // ═══════════════════════════════════════════════════════════════════════
   function schedule(rt, turn) {
+    // Turn-cache: the state_change realization planner AND the author directive both resolve the
+    // steered target within one scene. Cache so they agree and overdue/forced aren't double-counted.
+    if (rt._schedTurn === turn && rt._schedResult) return rt._schedResult;
     computeStatuses(rt);
     var avail = availableSet(rt);
-    if (!avail.length) return { top: null, available: [], forced: false, breather: true };
+    if (!avail.length) { rt._schedTurn = turn; rt._schedResult = { top: null, available: [], forced: false, breather: true }; return rt._schedResult; }
 
     // update overdue counters against Issue pacing
     avail.forEach(function (inv) {
@@ -268,6 +271,7 @@
 
     var top = avail[0];
     rt.lastSteeredId = top.id;
+    rt._schedTurn = turn; rt._schedResult = null; // set below after forced/replan resolved
 
     // starvation escalation (runtime-policy.md §2) — pressure, NEVER mandate.
     var forced = false;
@@ -285,7 +289,27 @@
       // the truth (statement) is never rewritten. A production replan would re-derive
       // suggested_realization from canonical state via the planner.
     }
-    return { top: top, available: avail, forced: forced, breather: false };
+    rt._schedResult = { top: top, available: avail, forced: forced, breather: false };
+    return rt._schedResult;
+  }
+
+  // The single steered target for this scene — what the realization planner must realize and what
+  // the author is ultimately told (as the scene_realization). ONE semantic authority (Roman 2026-07-29).
+  function currentTarget(state) {
+    var s = state || ROOT.state;
+    var rt = ensure(s);
+    if (!rt) return null;
+    var sched = schedule(rt, (s.turnCount || 0));
+    if (!sched.top) return null;
+    var inv = sched.top;
+    return {
+      id: inv.id,
+      statement: inv.statement,
+      precondition: inv.precondition,
+      boundary: inv.boundary,
+      suggested_realization: inv.suggested_realization,
+      forced: sched.forced
+    };
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -316,25 +340,14 @@
       });
     }
 
-    // 2) THIS SCENE'S NARRATIVE OBJECTIVE — steered, pressure not mandate.
+    // 2) NO COMPETING OBJECTIVE HERE. The scene's semantic objective is carried by the SCENE SPINE
+    //    (the scene_realization the planner generates FROM currentTarget()) — the SINGLE semantic
+    //    authority in the prompt (Roman 2026-07-29: "the most salient instruction wins; there must be
+    //    exactly one"). This directive adds only continuity + the DAG guard, never a second target.
     if (sched.breather) {
-      L.push('\nNO DESTINY BEAT IS DUE THIS SCENE — every pending truth is blocked on one that has not happened yet. This is a legitimate relationship/breather beat: deepen what is already true; do not manufacture a beat out of order.');
+      L.push('\nNO DESTINY BEAT IS DUE THIS SCENE — every pending destiny truth is blocked on one that has not happened yet. This is a legitimate relationship/breather beat: deepen what is already true; do not manufacture a destiny beat out of order.');
     } else {
-      var top = sched.top;
-      var others = sched.available.filter(function (i) { return i.id !== top.id; });
-      L.push('\nTHIS SCENE\'S NARRATIVE OBJECTIVE (the truth this scene should work to make REAL on the page — a target, not a script):');
-      L.push('  • TRUTH TO ESTABLISH: ' + top.statement);
-      if (top.precondition) L.push('  • Currently still true / not-yet-overturned: ' + top.precondition);
-      L.push('  • ONE WAY IT COULD HAPPEN (a suggestion — you are free to reach the truth by any equivalent path, or an unexpected but valid one): ' + top.suggested_realization);
-      L.push('  • DOES NOT COUNT: ' + top.boundary);
-      if (sched.forced) {
-        L.push('  • THIS IS THE SCENE\'S DOMINANT OBJECTIVE THIS TURN. Narrative pressure has built for several scenes — let this truth land now. (Pressure, not a mandate: satisfy it through ANY realization that concretely makes it true; you are NOT required to use the suggestion above.)');
-      }
-      if (others.length) {
-        L.push('  • ALSO AVAILABLE (you may instead make any of these true and the scene still succeeds — the objective above is steering, not a cage): ' +
-          others.map(function (i) { return '«' + i.statement + '»'; }).join('  '));
-      }
-      L.push('  • HARD: do NOT stage any LATER truth (rebuilt trust, reconciliation, aftermath of a betrayal) that depends on a truth not yet established above — a bond cannot re-form before it has broken. Only the truths named here are reachable this scene.');
+      L.push('\nDESTINY CONTINUITY (the scene\'s central event above IS the on-page realization of the story\'s next necessary truth — serve it): do NOT additionally stage any LATER destiny beat — reconciliation, rebuilt trust, or the aftermath of a betrayal that has not happened yet. A bond cannot re-form before it has broken. Only the current beat and the truths already TRUE above are in play this scene.');
     }
     return L.join('\n');
   }
@@ -647,6 +660,7 @@
     computeStatuses: computeStatuses,
     availableSet: availableSet,
     schedule: schedule,
+    currentTarget: currentTarget,
     buildDirective: buildDirective,
     evaluatePriorScene: evaluatePriorScene,
     shadowLegacyTick: shadowLegacyTick,
