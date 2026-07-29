@@ -46,11 +46,14 @@ The top available invariant stays unsatisfied across scenes. Policy is a bounded
 
 ```
 each scene it is top + unsatisfied:  ESCALATE steering (foreground it harder)   [track scenes_overdue]
-at K scenes overdue (K≈4, tunable):  FORCE once — a scene whose sole mandate is this invariant   [DESTINY-FORCE]
+at K scenes overdue (K≈4, tunable):  FORCE once — allocate a window where this invariant is the
+                                        DOMINANT narrative objective (pressure, not a mandate)   [DESTINY-FORCE]
 still unsatisfied:                    REPLAN — re-express the SAME truth via a more reachable path
                                         (statement is sacred; only realization/precondition re-derived)  [DESTINY-REPLAN]
 past K_max:                           RETIRE (→ obsolete/impossible, §3/§4) + flag for review   [DESTINY-STARVATION]
 ```
+
+**FORCE is pressure, never a mandate.** It does *not* tell the author "you MUST satisfy Invariant A in this scene" — that would recreate the original over-constrained-author problem the whole design exists to kill. It allocates another attempt window where satisfying the invariant becomes the scene's *dominant* narrative objective. The author remains free to satisfy it through any equivalent realization — or an unexpected but valid one. The Scheduler raises narrative pressure; it never dictates prose.
 
 Replan is not "invent a new destiny" — the invariant's `statement` (the truth) is never rewritten; only its reachability/`suggested_realization` is re-derived, because persistent starvation usually means the beat was *unstageable from the current state*, not wrong.
 
@@ -80,10 +83,11 @@ Per the review: don't rebuild the whole serialization engine; prove the design o
 
 - **Scope:** ONE flavor, ONE issue. Recommend **First Sacrifice** (arcane_binding / Fatelands) — the harness already bootstraps it headlessly and its arc is a clean romance-fantasy shape. (First Taste / Modern is the simpler fallback.)
 - **Build behind a flag** (`window._invariantRuntimeV0`), for that flavor only — the legacy milestone/`_tickAPlot` path stays untouched for everything else:
-  - a hand-authored **invariant DAG** for that one issue (3–6 invariants + dependencies, in the [20-examples](./invariant-examples.md) style) + Issue-pacing preferences;
+  - a hand-authored **invariant DAG** — start at **five nodes**, not twenty: `A dependency established → B trust extended → C trust broken → D sacrifice made → E trust rebuilt` (linear `depends_on` chain) + Issue-pacing preferences. A five-node graph that works over real prose validates the architecture; a five-node graph that fails is vastly easier to debug than a twenty-node one.
   - the **Scheduler** (§1 priority + §2 starvation);
   - the **one gating evaluation** (§5 of the design) + the runtime **status/DAG/obsolescence** checks (§0/§3);
   - the **unified canonical world state** (destiny + facts, one store).
+- **Shadow the legacy system (log-only).** For the prototype flavor, keep the old milestone/`_tickAPlot` spine *running but inert* — it advances nothing canonical; it only **logs what it would have done**. Every scene then yields an immediate A/B: legacy-scheduled beat vs. invariant actually realized, old relational ledger vs. new canonical state, and the downstream author-prompt diff. These comparisons are the fastest way to see the divergence disappear (or catch the prototype misbehaving).
 - **Validate over ~1 issue (~6–8 scenes, real generation):**
   - Can the Destiny/Fact divergence reproduce? (target: **no** — `_destiny_fracture_demo` becomes impossible by construction.)
   - Do downstream scenes reference **only realized** truths?
