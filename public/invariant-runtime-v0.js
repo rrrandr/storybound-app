@@ -375,7 +375,10 @@
       + '- If a clearly IRREVERSIBLE event happened but it satisfies NONE of the candidate truths, set status "none" and branch_risk true (the author advanced a different thread).\n'
       + '- confidence is 0.0–1.0: how sure you are the truth became true.\n'
       + '- canonical_consequences: 1–3 short factual clauses that are NOW TRUE because this truth landed (what future scenes must honor). Empty if status "none".\n'
-      + 'JSON shape: {"status":"satisfied|none","satisfied_id":"<id or null>","confidence":0.0,"matched_via":"suggested|equivalent|novel|null","substitution_preserves_invariant":true,"branch_risk":false,"reason":"<one sentence>","canonical_consequences":["..."]}';
+      + '- AUTHOR REALIZATION FIDELITY (ALWAYS fill these, satisfied or not — this measures what the author DID vs what was asked):\n'
+      + '    actual_beat: 2-6 words naming the DOMINANT relationship beat the scene ACTUALLY delivered (e.g. "mutual vulnerability", "deepening attraction", "an actual betrayal", "shared sacrifice", "stalled tension", "duty over feeling"). What the scene was really ABOUT for the relationship.\n'
+      + '    relationship_delta: integer -5..+5 — how the central relationship moved THIS scene (negative = ruptured/distanced/betrayed; positive = closer/more trusting/more intimate; 0 = held).\n'
+      + 'JSON shape: {"status":"satisfied|none","satisfied_id":"<id or null>","confidence":0.0,"matched_via":"suggested|equivalent|novel|null","substitution_preserves_invariant":true,"branch_risk":false,"reason":"<one sentence>","canonical_consequences":["..."],"actual_beat":"<2-6 words>","relationship_delta":0}';
     var usr = 'CANDIDATE TRUTHS (only these are reachable this scene):\n' + menu +
       '\n\nSCENE PROSE:\n' + String(proseText || '').slice(0, 6000) + '\n\nReturn the JSON now.';
     return [{ role: 'system', content: sys }, { role: 'user', content: usr }];
@@ -432,10 +435,15 @@
     var matchedVia = (result && result.matched_via) || null;
 
     // EVALUATOR TRANSCRIPT — the primary readout (evaluator quality = dominant risk).
+    // + AUTHOR REALIZATION FIDELITY (Workstream B): what the author actually delivered vs the target.
+    var actualBeat = (result && result.actual_beat) ? String(result.actual_beat).slice(0, 60) : '';
+    var relDelta = (result && typeof result.relationship_delta === 'number') ? result.relationship_delta : null;
     rt.evalLog.push({
       scene: sceneNum, available: avail.map(function (i) { return i.id; }),
       status: status, satisfied_id: id || null, confidence: conf, matched_via: matchedVia,
-      branch_risk: !!(result && result.branch_risk), reason: reason
+      branch_risk: !!(result && result.branch_risk), reason: reason,
+      target_id: rt.lastSteeredId || (avail[0] && avail[0].id) || null,
+      actual_beat: actualBeat, relationship_delta: relDelta
     });
 
     // GATE: promote only an AVAILABLE invariant, at/above confidence, respecting DAG.
