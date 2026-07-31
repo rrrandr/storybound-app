@@ -1222,33 +1222,39 @@ The energy is fully translated into the chosen domain — never deflected away.
           '═══════════════════════════════════════════════════════\n' +
           'When characters in this scene curse, swear, or use vulgar emphasis, use the WORLD-NATIVE equivalents below — NOT modern English profanity. Translate INTENT, not literal wording. Keep utterances short, punchy, spoken. Never mix vocabularies across worlds.\n\n';
 
-      const _cats = ['shit', 'piss', 'fuck', 'cock', 'pussy', 'tits', 'ass',
-                     'limp-dick', 'incel', 'whore', 'slut', 'loser',
-                     'moron', 'jerkoff', 'dildo', 'fuckup'];
+      // TINY CORE LIST (Roman 2026-07-30): the categories that actually occur in prose. The rare ones
+      // (piss/tits/pussy/limp-dick/incel/slut/loser/moron/jerkoff/dildo/fuckup) stay in the data file, unshipped.
+      const _cats = ['shit', 'fuck', 'ass', 'cock', 'whore', 'slut'];
       const _pad = function(s) { return (s + '            ').slice(0, 12); };
 
       if (resolved.key === 'fatelands') {
-          dir += 'SPECIES-AWARE: pick the column matching the SPEAKER\'s species. Default to HUMAN when the speaker\'s species is unspecified or unknown.\n\n';
-          _cats.forEach(function(cat) {
-              if (band.insultsShared && band.insultsShared[cat]) {
-                  dir += '  ' + _pad(cat) + ' → all species: "' + band.insultsShared[cat] + '"\n';
-                  return;
-              }
-              const h = (band.species.human.base[cat] || (band.species.human.insults || {})[cat]);
-              const f = (band.species.first_favored.base[cat] || (band.species.first_favored.insults || {})[cat]);
-              const o = (band.species.kwisheen.base[cat] || (band.species.kwisheen.insults || {})[cat]);
-              if (!h && !f && !o) return;
-              dir += '  ' + _pad(cat) + ' → human: "' + (h || '—') + '"  |  First-Favored: "' + (f || '—') + '"  |  Kwisheen: "' + (o || '—') + '"\n';
+          // SPECIES-PRESENT ONLY (Roman 2026-07-30): ship only the column(s) for species actually IN the
+          // scene — human baseline + First-Favored / Kwisheen ONLY when the PC or LI is that species. No
+          // dead tokens for a species that never speaks. The full 3-species matrix stays in the data file.
+          var _sNorm = function (x) { return String(x || '').toLowerCase(); };
+          var _spKeys = ['human'];
+          [window.state._liSpecies, window.state._pcSpecies].forEach(function (sp) {
+              var v = _sNorm(sp);
+              if (/kwisheen/.test(v) && _spKeys.indexOf('kwisheen') < 0) _spKeys.push('kwisheen');
+              else if (/favored/.test(v) && _spKeys.indexOf('first_favored') < 0) _spKeys.push('first_favored');
           });
-          // Surface species-level usage notes (e.g. Kwisheen's required
-          // modifier on "ninth" / "tenth" — bare numerical body-part
-          // words are anatomical, not insults).
-          ['human', 'first_favored', 'kwisheen'].forEach(function(sp) {
-              const sb = band.species[sp];
-              if (sb && sb.notes) {
-                  const _label = sp === 'first_favored' ? 'First-Favored' : (sp.charAt(0).toUpperCase() + sp.slice(1));
-                  dir += '\n  ' + _label + ' usage note: ' + sb.notes + '\n';
-              }
+          var _spLabel = function (sp) { return sp === 'first_favored' ? 'First-Favored' : (sp.charAt(0).toUpperCase() + sp.slice(1)); };
+          if (_spKeys.length > 1) dir += 'SPECIES-AWARE: use the column matching the speaker\'s species.\n\n';
+          _cats.forEach(function(cat) {
+              if (band.insultsShared && band.insultsShared[cat]) { dir += '  ' + _pad(cat) + ' → "' + band.insultsShared[cat] + '"\n'; return; }
+              var cells = [];
+              _spKeys.forEach(function (sp) {
+                  var sb = band.species[sp]; if (!sb) return;
+                  var val = (sb.base && sb.base[cat]) || (sb.insults && sb.insults[cat]);
+                  if (val) cells.push((_spKeys.length > 1 ? _spLabel(sp) + ': ' : '') + '"' + val + '"');
+              });
+              if (cells.length) dir += '  ' + _pad(cat) + ' → ' + cells.join('  |  ') + '\n';
+          });
+          // usage notes: only for a NON-human species that is actually present
+          _spKeys.forEach(function(sp) {
+              if (sp === 'human') return;
+              var sb = band.species[sp];
+              if (sb && sb.notes) dir += '\n  ' + _spLabel(sp) + ' usage note: ' + sb.notes + '\n';
           });
       } else {
           _cats.forEach(function(cat) {
@@ -1264,23 +1270,10 @@ The energy is fully translated into the chosen domain — never deflected away.
       if (band.intensifiers && band.intensifiers.length) {
           dir += 'INTENSIFIERS: ' + band.intensifiers.map(function(s) { return '"' + s + '"'; }).join(', ') + '\n';
       }
-      dir += '\nINSULT-CLASS MAPPING: cock-class insults (prick, dickhead, dick-as-noun) → use the band\'s `cock` entry. Limp-dick-class (shriveled, soft, deflated) → use the band\'s `limp-dick` entry. Do NOT use `limp-dick` to render generic "prick" — they are different insult classes.\n';
-      dir += '\nFIRST-USE GLOSS:\n' +
-             'When a band-specific term appears for the FIRST time in this story, ensure its meaning is clear through MINIMAL, NATURAL context. Use the LIGHTEST method that lands the meaning. Three valid styles, ordered DEFAULT FIRST:\n\n' +
-             '  1. MICRO-CONTEXT (DEFAULT — fastest, cleanest, zero pacing interruption):\n' +
-             '       "He\'s a swollen ninth," she muttered.\n' +
-             '       A couple nearby snorted.\n\n' +
-             '  2. REACTION-BASED (still fast, emotionally grounded):\n' +
-             '       "Swollen ninth."\n' +
-             '       He winced. Not a compliment.\n\n' +
-             '  3. FULL ASIDE (RARE — reserve for Scene 1, slow pacing, or genuine world-intro moments):\n' +
-             '       "He\'s such a swollen ninth." Every Kwisheen knew what the "ninth" tentacle referred to. Being called the ninth was not a compliment. Being ninth in anything was bound to produce a giggle from immature Kwisheen. The only thing worse was being "tenth", which was an object used to approximate the "ninth". In races and contests, sometimes the fiercest battles were between the last-place finishers trying not to be either of those.\n\n' +
-             'THE GLOSS MUST:\n' +
-             '  • remain embedded in the flow of the scene\n' +
-             '  • avoid extended explanation unless tone and pacing support it\n' +
-             '  • never read like a formal definition, lore block, or footnote\n\n' +
-             'After first-use clarity is established, the term may be used freely. Avoid repeating the same explanation unless clarity is genuinely needed again.\n';
-      dir += '\nLIMIT: 1-2 vulgar utterances per scene unless emotional spike justifies more. Do NOT leak modern slang.\n';
+      // FIRST-USE + LIMIT compacted (Roman 2026-07-30): the multi-style gloss + the Kwisheen ninth/tenth
+      // lore paragraph + insult-class mapping were shipped every scene regardless of who was present.
+      dir += '\nFIRST USE: when a band term first appears, land its meaning in ONE light beat of embedded context (a mutter, a wince) — never a definition, footnote, or lore aside. After that, use it freely.\n';
+      dir += 'LIMIT: 1-2 vulgar utterances per scene unless an emotional spike justifies more. Never leak modern slang.\n';
       return dir;
   }
   window.buildWorldProfanityBandDirective = buildWorldProfanityBandDirective;
@@ -22271,6 +22264,86 @@ It does NOT change Player actions, relationship progression, or pacing.
   }
   window._shouldMandateSceneOneDeckFrame = _shouldMandateSceneOneDeckFrame;
 
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CANONICAL LOVE-INTEREST IDENTITY (Roman 2026-07-30) — the single source of truth.
+  // ═══════════════════════════════════════════════════════════════════════════
+  // The LI's identity (name + mask/archetype + gender) is committed ONCE, BEFORE any
+  // identity-bearing artifact (LI Body Bible, Scene-1) is generated — never after. Two phases:
+  //   • GENESIS (no identity committed yet — starter/first Scene-1): a name is taken from the
+  //     corridor/seed if present, else PROPOSED from the name pool; then committed. Immutable after.
+  //   • RUNTIME (committed): every reader CONSUMES it via getCanonicalLoveInterest(); generation may
+  //     NOT redefine it. An author-emitted divergent name ("Kael" when canon is "Quinn") is a
+  //     consistency error to validate, NOT a write-back — the author realizes the LI, it does not
+  //     decide who the LI is (same separation as planner/author/detectors ⟶ consume canonical state).
+  // Legacy scattered fields (loveInterestName / storybeau.name) are MIRRORED for back-compat while
+  // consumers migrate onto the single accessor. This fixes the ordering defect (bible-before-identity)
+  // and the scatter (≥9 name fields resolved ≥9 ways).
+  function _isLIPlaceholderName(n) {
+    var s = String(n == null ? '' : n).trim().toLowerCase();
+    return !s || s === 'the love interest' || s === 'love interest' || s === 'the' || s === 'primary' || s.length < 3;
+  }
+  // Inline fallback pools — the window._LI_NAME_POOL_M/F globals are defined LATE (inside a setup fn that
+  // has not run at genesis-commit time), so genesis must not depend on them. Same romantic-lead register.
+  var _LI_NAME_FALLBACK_M = ['Julian', 'Adrian', 'Dario', 'Nikolai', 'Sebastian', 'Rafael', 'Cassius', 'Lucian', 'Kieran', 'Ronan', 'Dorian', 'Rhys', 'Cormac', 'Vaughn', 'Xavier', 'Tobias', 'Ezra', 'Callan', 'Everett', 'Bastian'];
+  var _LI_NAME_FALLBACK_F = ['Vivienne', 'Isolde', 'Seraphine', 'Cordelia', 'Delphine', 'Elodie', 'Ravenna', 'Sylvie', 'Thea', 'Camille', 'Genevieve', 'Livia', 'Rosalind', 'Valentina', 'Ingrid', 'Ondine', 'Saoirse', 'Reyna', 'Cosima', 'Anya'];
+  function _proposeLIName(s) {
+    try {
+      var lg = String((s && (s.liGender || s.loveInterest || (s.picks && s.picks.loveInterest))) || 'Male').toLowerCase();
+      var isF = lg.indexOf('female') === 0 || lg === 'f' || lg === 'woman';
+      var pool = (isF ? window._LI_NAME_POOL_F : window._LI_NAME_POOL_M);
+      if (!Array.isArray(pool) || !pool.length) pool = isF ? _LI_NAME_FALLBACK_F : _LI_NAME_FALLBACK_M;  // load-order-safe
+      if (typeof window._rotatingExemplars === 'function' && Array.isArray(pool) && pool.length) {
+        var p = window._rotatingExemplars('li_name', pool, 1)[0];
+        if (p) return p;
+      }
+      if (Array.isArray(pool) && pool.length) return pool[0];  // last resort — never leave genesis unresolved
+    } catch (_) {}
+    return '';
+  }
+  // Commit the canonical LI identity. Idempotent + IMMUTABLE after the first genesis commit
+  // (a later call is a no-op unless opts.force). Returns state.canonicalLI.
+  function commitCanonicalLoveInterest(state, opts) {
+    var s = state || window.state; if (!s) return null;
+    opts = opts || {};
+    if (s.canonicalLI && s.canonicalLI.committed && !opts.force) return s.canonicalLI; // runtime immutability
+    var name = opts.name, source = 'explicit'; if (_isLIPlaceholderName(name)) name = null;
+    // SEED is authoritative over legacy fields / random proposal (Roman 2026-07-30): a story with an
+    // active seed whose LI cast is nameLock'd commits THAT name (First Sacrifice → "Julian"), no drift.
+    if (!name) { var _seedNm = (typeof _seedLIName === 'function') ? _seedLIName(s) : ''; if (_seedNm) { name = _seedNm; source = 'seed'; } }
+    if (!name) { var ex = s.loveInterestName || s.partnerName || (s.storybeau && s.storybeau.name); if (!_isLIPlaceholderName(ex)) { name = ex; source = 'corridor/seed'; } }
+    if (!name) { name = _proposeLIName(s); source = 'genesis-proposal'; }
+    var mask = opts.mask || (s.archetype && s.archetype.primary) || s.liArchetype || (s.pairDynamic && s.pairDynamic.liArchetype) || null;
+    var gender = opts.gender || (s.liGender || s.loveInterest || (s.picks && s.picks.loveInterest)) || null;
+    s.canonicalLI = { name: name || '', mask: mask, archetype: mask, gender: gender, committed: !!name, committedAt: opts.at || 'genesis', source: source };
+    if (name) {  // mirror to legacy fields for back-compat during migration (these become implementation
+      s.loveInterestName = name;                    // details, NOT data sources — consumers read the accessor)
+      s.storybeau = s.storybeau || {}; s.storybeau.name = name; s.storybeau.role = s.storybeau.role || 'primary romantic interest';
+    }
+    try { _dumpCanonicalCharacters(s, 'commit@' + s.canonicalLI.committedAt); } catch (_) {}
+    return s.canonicalLI;
+  }
+  // Startup/observability dump — one visible lineage anchor (extend to antagonist/mentor when those
+  // become canonical Character objects too — Roman 2026-07-30: this is really a Canonical CHARACTER pattern).
+  function _dumpCanonicalCharacters(state, when) {
+    try {
+      var s = state || window.state; var li = s && s.canonicalLI;
+      console.log('[CANONICAL-CHARACTERS] (' + (when || '?') + ')  LI: name="' + ((li && li.name) || '(unresolved)') + '" · mask=' + ((li && li.mask) || '?') + ' · source=' + ((li && li.source) || '?') + ' · committed=' + (li && li.committed ? '✓' : '✗'));
+    } catch (_) {}
+  }
+  // The single read path. Returns the committed identity, or a placeholder-filtered fallback across the
+  // legacy scattered fields until commit runs (migration will remove those readers).
+  function getCanonicalLoveInterest(state) {
+    var s = state || window.state; if (!s) return { name: '', mask: null, committed: false };
+    if (s.canonicalLI && s.canonicalLI.name) return s.canonicalLI;
+    // FALLBACK path — canonical not committed yet. Roman 2026-07-30: once a canonical LI exists this must
+    // NEVER execute; the migration is "done" when fallback stops firing. Be LOUD in debug so a stale
+    // pre-commit read (an ordering bug) or an un-migrated direct reader is visible, not silent-forever.
+    var name = [s.loveInterestName, s.partnerName, (s.storybeau && s.storybeau.name), s.liName].filter(function (x) { return !_isLIPlaceholderName(x); })[0] || '';
+    try { if (window.STORYBOUND_DEBUG) console.warn('[CANONICAL-LI:FALLBACK] accessor hit legacy-field resolution (canonical not committed) → name="' + name + '" — should not happen after commit'); } catch (_) {}
+    return { name: name, mask: (s.archetype && s.archetype.primary) || s.liArchetype || null, committed: false };
+  }
+  try { window.commitCanonicalLoveInterest = commitCanonicalLoveInterest; window.getCanonicalLoveInterest = getCanonicalLoveInterest; } catch (_) {}
+
   // ── DETERMINISTIC MANDATED-FRAME ENFORCEMENT ─────────────────────────
   // When the deck mandate is active, buildScene1IntroPrompt sets
   // state._sceneOneMandatedOpener / _sceneOneMandatedCloser and instructs the
@@ -29072,9 +29145,35 @@ It does NOT change Player actions, relationship progression, or pacing.
   }
   window._buildLoreFidelityDirective = _buildLoreFidelityDirective;
 
+  // ── REACTION-CUE LEGIBILITY (precedence over withholding) ──────────────
+  // Roman (2026-07-30): the fix for the reader-orientation gap. The prompt
+  // already carries the "make the room legible" move in ~5 scene-locked corners
+  // (Fatelands Scene-1 wish, LI-proof STATUS, container-weaponized opening,
+  // First-Favored alignment-sense, Chorus) and a large GENERAL "withhold the
+  // why" pole (Delayed Behavioral Echo, recognition/flaw-drift subtext,
+  // First-Anomaly "Highlight — never explain", deck-secrecy canon) — with NO
+  // rule saying which wins. This is that missing ARBITER, not another writing
+  // instruction: it replaces the implicit "withholding wins by default" with an
+  // explicit precedence on READER-INFERENCE vs AUTHOR-WITHHOLDING. Axis: can a
+  // first-time reader correctly interpret what they can SEE? North star: judge
+  // success by whether an unfamiliar noun LANDS (stops feeling arbitrary), not
+  // by whether explanations appear. Outcome-based on purpose — no "N reactions"
+  // checklist; the mechanism (a line, a step-back, a sign, gloves removed) is
+  // the author's freedom. Sits high in the prose stack (2nd, after LoreFidelity)
+  // so it governs the withholding directives that follow.
+  function _buildReactionCueLegibilityDirective() {
+    try {
+      return '\nREACTION-CUE LEGIBILITY (precedence over withholding):\n' +
+        '  When a visible event would cause the people present to immediately interpret the scene differently, the reader must be able to make the same update from what they observe. A first-time reader should never need outside lore to correctly interpret the visible scene. Do not explain the world; let its inhabitants reveal it through what they immediately notice, say, or do.\n' +
+        '  PRECEDENCE: If the reader cannot correctly interpret the visible scene without additional context, legibility takes precedence over withholding. If the mystery depends on hidden intent, concealed motive, private thought, or intentionally delayed revelation, withholding takes precedence.\n';
+    } catch (_) { return ''; }
+  }
+  window._buildReactionCueLegibilityDirective = _buildReactionCueLegibilityDirective;
+
   function buildProseStackDirectives(opts) {
     var out = '';
     try { if (typeof _buildLoreFidelityDirective === 'function') out += _buildLoreFidelityDirective(); } catch (_) {}
+    try { if (typeof _buildReactionCueLegibilityDirective === 'function') out += _buildReactionCueLegibilityDirective(); } catch (_) {}
     try { if (typeof _buildHotFirstDraftOverride === 'function') out += _buildHotFirstDraftOverride(); } catch (_) {}
     try { if (typeof _buildCharacterizingFirstLineDirective === 'function') out += _buildCharacterizingFirstLineDirective(); } catch (_) {}
     try { if (typeof buildProseDensityConductorDirective === 'function') out += buildProseDensityConductorDirective(); } catch (_) {}
@@ -29143,7 +29242,7 @@ It does NOT change Player actions, relationship progression, or pacing.
       return '\nCHARACTER IMPRESSION (how to render people — ONE fused move, not three separate passes):\n' +
         '  Strong characterization fuses three layers into a SINGLE stroke that never stops the scene: (1) a PHYSICAL cue (the observable thing) → (2) its RELATIONAL/SOCIAL meaning (status, history, power, occupation) → (3) the narrator\'s POV INTERPRETATION (how THIS viewpoint emotionally frames it).\n' +
         '  GOLD STANDARD: "Geralt\'s cufflinks flashed whenever he spoke — tiny gold guillotines punctuating every acquisition target he intended to swallow whole." (physical + wealth + aggression + occupation + metaphor + narrator attitude, all in one moving sentence.)\n' +
-        '  SOFT DENSITY GOVERNOR (CRITICAL — prevents overwritten "AI-literary" prose): NOT every description is interpretive. If every tie "represents his emotional repression," the prose drowns. MOST descriptive strokes stay plain observation; reserve the full three-layer fusion for MAJOR characters and CHARGED beats. One loaded image lands; three loaded images in a paragraph is purple. Over the whole story each major character ACCUMULATES interpretive impressions — but any SINGLE scene spends them sparingly.\n' +
+        '  SOFT DENSITY GOVERNOR (CRITICAL — prevents overwritten "AI-literary" prose): NOT every description is interpretive. If every tie "represents his emotional repression," the prose drowns — one loaded image lands; three loaded images in a paragraph is purple. But EVERY named, on-stage character earns ONE memorable characterizing stroke on FIRST appearance — required, not reserved: it is how the reader builds a model of who is in the room, and a named character reduced to "the woman by the door" or "brown hair" is the failure. AFTER that opening stroke, further mentions of that character stay mostly plain observation, and the full three-layer fusion is spent sparingly — reserved for MAJOR characters and CHARGED beats. Over the whole story each major character ACCUMULATES interpretive impressions — but any SINGLE scene spends them sparingly. Unnamed background stays plain.\n' +
         '  POV-RELATIVE (the dimensional move): the SAME character reads DIFFERENTLY through different eyes — one narrator\'s predatory shark is another\'s competent stabilizer, a junior\'s terrifying legend, an ex-lover\'s insecure fraud hiding in status rituals. Frame every impression through the CURRENT narrator\'s wants / history / fear — never a neutral, fixed character tag. On a POV transition, the SAME facts get RE-INTERPRETED by the new viewpoint.\n' +
         _spineSeedClause('character');
     } catch (_) { return ''; }
@@ -29171,7 +29270,11 @@ It does NOT change Player actions, relationship progression, or pacing.
         var _iw = String((state.picks && state.picks.world) || state.world || '');
         var _ifl = String((state.picks && state.picks.flavor) || state.flavor || '');
         var _hasInhumanLock = (state.ffAppearance && Object.keys(state.ffAppearance).length) || (state.kwisheenAppearance && Object.keys(state.kwisheenAppearance).length);
-        _inhumanCast = (_iw === 'Fantasy') && (_ifl === 'first_favored' || _ifl === 'the_inhuman' || !!_hasInhumanLock);
+        // Also fire on the resolved CAST SPECIES (Roman 2026-07-30): the strangeness canon must reach
+        // the prose author whenever the PC/LI is non-human, not only when the FLAVOR is first_favored/
+        // the_inhuman. A declared-species cast (First Sacrifice → First Favored) now trips this.
+        var _nonHumanCast = /First Favored|Half-Favored|Kwisheen|Half-Kwisheen|Wilder|Half-Wild/i.test(String(state._playerSpecies || '') + ' ' + String(state._liSpecies || ''));
+        _inhumanCast = (_iw === 'Fantasy') && (_ifl === 'first_favored' || _ifl === 'the_inhuman' || !!_hasInhumanLock || _nonHumanCast);
       } catch (_) {}
       return '\nCHARACTER DESCRIPTION (render PEOPLE as character, never a catalog):\n' +
         (_inhumanCast ? '  INHUMAN BEINGS — KEEP THE STRANGENESS ON THE PAGE (HARD, Fatelands; First Favored, Kwisheen, or any non-human character): these are NOT humans with a label — do NOT let them read as ordinary. (1) FIRST appearance in the prose: land at least ONE striking, SPECIFIC strangeness WOVEN INTO the unfolding moment and doing real work (revealing stakes, character, or the danger) — it need NOT be one fixed trait. Pick what the scene wants: a Favored SENSE the beat turns on (feeling the whole crowd lean toward flight — and the one soul who does not); the unnatural speed/strength that reaches someone no human could; the uncanny beauty; luminous skin and diamond pupils; living Weave-Script moving on the skin; the distractingly see-through gossamer tunic and the body beneath; a Kwisheen’s tentacle lower-body, living coral-dreadlock hair, or tidal otherness. (2) EVERY LATER appearance — THE GOLLUM PRINCIPLE: keep re-grounding their inhumanity nearly every time they act; a good author NEVER assumes the reader has "heard enough" about a creature’s strangeness and lets them fade into an ordinary human. A light touch per beat suffices — but the strangeness must never vanish. This TIGHTENS the rotate-the-reminder rule below in FREQUENCY, not variety: the FEATURE (their inhumanity) recurs by design and more often than a human’s would, but the exact IMAGE and words must stay FRESH each time — never the same phrase twice.\n' : '') +
@@ -38153,6 +38256,23 @@ If the main title does not include a strong marker, you MAY append a subtitle:
 
   // Initialize emergent mode — set flag based on authorship selection
   function _initEmergentLIMode() {
+      // ── EMERGENT-LI GATE (Roman 2026-07-30): the multi-candidate emergent LI system is gated to
+      // THIRST ONLY for now. Thirst never collapses (the water-sovereign distributes across all five —
+      // that IS the world); every other story has ONE directed love interest. Starters get a named LI
+      // from their seed; emergent is a post-traction feature to roll out later. This single gate drops
+      // the ENTIRE emergent directive stack (emergentLI / typologicalVector / preCollapseArchFlavor /
+      // preCollapseHook / indecisionPressure / liReactivation / liSignatureGesture / postRejectionPersistence
+      // / attractionAnchor — ~9 blocks) for every non-Thirst story, cutting prompt ENTROPY, not just cost.
+      try {
+          var _wsGate = String((state.worldSubtype || (state.picks && state.picks.worldSubtype) || '')).toLowerCase().replace(/[\s-]/g, '_');
+          if (_wsGate !== 'thirst') {
+              state.loveInterestMode = 'explicit';
+              state.liMode = 'directed';
+              state._liModeInitialized = true;
+              console.log('[EmergentLI] Mode GATED → directed (emergent is Thirst-only for now; worldSubtype=' + (_wsGate || '(none)') + ')');
+              return;
+          }
+      } catch (_eEmGate) { /* fall through to legacy logic on any error */ }
       // ── GRANDFATHER GUARD — pre-Phase-1 stories keep legacy behavior ──
       // Stories created before the _liLogicVersion field existed (or before
       // it was bumped to 2) use the original authorship-based logic. This
@@ -50637,7 +50757,16 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
       // Also mirror onto state so downstream prompt-builders (scaffold/R-plot/
       // scene-1) can read the presence plan without reaching into pairDynamic.
       s.romanceEnginePlan = { engine: pairDynamic.romanceEngine, acquaintance: pairDynamic.acquaintance, scene1Presence: pairDynamic.scene1Presence, validSet: pairDynamic.engineValidSet };
-      console.log('[PAIR-DYNAMIC] resolved — ' + (pairDynamic.pcArchetype || '?') + ' × ' + (pairDynamic.liArchetype || '?') + ' · engine=' + pairDynamic.romanceEngine + ' · acq=' + pairDynamic.acquaintance + ' · scene1Presence=' + pairDynamic.scene1Presence + (pairDynamic.collisionGeometry ? ' · ' + pairDynamic.collisionGeometry.slice(0, 120) + (pairDynamic.collisionGeometry.length > 120 ? '...' : '') : ''));
+      // SEMANTIC ENCOUNTER STATE (Roman 2026-07-30) — the truth STRANGER SOFTENING actually cares about
+      // ("are they still strangers?"), replacing the incidental `scene1Presence` proxy. Forward-only:
+      // UNMET → MET the moment the LI is first encountered on-page (latched at the LI-FIRST-CONVO marker).
+      // Genuine strangers with an offstage/proxy Scene 1 start UNMET; anyone who already knows the LI
+      // (known_adversary / known / intimate / ex / onstage Scene 1) is not a stranger → starts MET.
+      try {
+        var _acqEnc = String(pairDynamic.acquaintance || '').toLowerCase();
+        s._liEncounterState = (_acqEnc === 'strangers' && pairDynamic.scene1Presence !== 'ONSTAGE') ? 'UNMET' : 'MET';
+      } catch (_) { s._liEncounterState = 'MET'; }
+      console.log('[PAIR-DYNAMIC] resolved — ' + (pairDynamic.pcArchetype || '?') + ' × ' + (pairDynamic.liArchetype || '?') + ' · engine=' + pairDynamic.romanceEngine + ' · acq=' + pairDynamic.acquaintance + ' · scene1Presence=' + pairDynamic.scene1Presence + ' · encounter=' + s._liEncounterState + (pairDynamic.collisionGeometry ? ' · ' + pairDynamic.collisionGeometry.slice(0, 120) + (pairDynamic.collisionGeometry.length > 120 ? '...' : '') : ''));
     } catch (_) {}
     return pairDynamic;
   }
@@ -59728,7 +59857,17 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
     const turn = (window.state.turnCount || 0);
     a.currentTurn = turn;
 
-    if (Array.isArray(a.milestones)) {
+    // INVARIANT RUNTIME v0 (Roman 2026-07-29): for First Sacrifice, the schedule-gated
+    // milestone spine (which injects consequences BEFORE delivery — the Destiny/Fact
+    // divergence bug) is SUPPRESSED. Legacy runs LOG-ONLY (shadow) so every scene yields
+    // an A/B: what legacy would have fired vs. what the invariant runtime actually realized.
+    // The pacing-flag block below still runs (atScene routing is harmless). Legacy untouched
+    // for every other flavor.
+    var _invRtActive = false;
+    try { _invRtActive = !!(window.InvariantRuntimeV0 && window.InvariantRuntimeV0.isActive(window.state)); } catch (_) {}
+    if (_invRtActive) { try { window.InvariantRuntimeV0.shadowLegacyTick(window.state, turn); } catch (_) {} }
+
+    if (!_invRtActive && Array.isArray(a.milestones)) {
       // ORIGINAL-STORY DETOUR (Roman 2026-07-08): while the player is on a bounded detour, DEFER main
       // milestone firing — the main clock keeps ticking (pressure-debt accrues in the divergence tick), and
       // the deferred milestones fire on RETURN (re-paced as heightened pressure). Beats are deferred, never
@@ -59868,6 +60007,15 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
 
   function buildRelationalContinuityDirective() {
     if (!window.state) return '';
+    // INVARIANT RUNTIME v0 (Roman 2026-07-29, flag+flavor gated): for First Sacrifice the
+    // legacy destiny ledger is REPLACED by the invariant directive (canonical world state +
+    // this scene's steered objective). Both prompt-build call sites route through here, so
+    // this single early-return is the only injection needed. Legacy path untouched otherwise.
+    try {
+      if (window.InvariantRuntimeV0 && window.InvariantRuntimeV0.isActive(window.state)) {
+        return window.InvariantRuntimeV0.buildDirective(window.state, window.state.turnCount || 0);
+      }
+    } catch (_) {}
     var ledger = window.state._relationalConsequenceLedger;
     if (!Array.isArray(ledger) || ledger.length === 0) return '';
     var currentScene = window.state.turnCount || 0;
@@ -61714,7 +61862,17 @@ Return ONLY a single valid JSON object. STRICT JSON RULES (HARD — malformed JS
       // the upstream fix; this is the prose backstop — force every emotional beat onto him.
       var _i1eng = (aplot.romanceEngine || '').toUpperCase();
       var _i1pres = ((s.romanceEnginePlan && s.romanceEnginePlan.scene1Presence) || '').toUpperCase();
-      var _i1Stranger = (_i1eng === 'COLLISION' && (_i1pres === 'ABSENT' || _i1pres === 'PROXY'));
+      // STRANGER SOFTENING is about "are they still strangers?" — the SEMANTIC ENCOUNTER STATE — NOT the
+      // incidental "were they absent in Scene 1?" (Roman 2026-07-30). Driving from `scene1Presence` (a
+      // frozen Scene-1 plan value) kept the softening firing FOREVER, so the LI's Scene-2 on-page arrival
+      // never released it and the established longing reset to "cannot yearn" every scene. Drive from the
+      // forward-only `_liEncounterState` so the softening releases the moment they actually meet → the LI
+      // MANIFESTATION ANCHOR FLOOR (the else-branch) takes over and longing acquires a body. Fall back to
+      // the old presence proxy only if the encounter state was never initialized (defensive).
+      var _i1Stranger = (_i1eng === 'COLLISION') && (
+        s._liEncounterState === 'UNMET'
+        || (s._liEncounterState == null && (_i1pres === 'ABSENT' || _i1pres === 'PROXY'))
+      );
       // ALL scenes of Issue 1, not just Scene 1 (Roman 2026-06-05 — the drift fix): the
       // forces that steal ownership (wound, mystery, conspiracy, career) do not vanish
       // after Scene 1; a story can pass Scene 1 and revert to plot by scene 5. The law
@@ -67660,11 +67818,11 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
             || (L && L.system && ('Action: ' + (L.act || '') + '\nDialogue: "' + (L.dia || '') + '"'))
             || 'Action: continue the scene\nDialogue: ""';
     var PRICE = {
-      'grok-4.3':                    { in: 1.25e-6, out: 2.5e-6, cr: 0.2e-6 },
-      'grok-4-1-fast-reasoning':     { in: 0.5e-6,  out: 1.5e-6, cr: 0.08e-6 },
+      'grok-4.3':                    { in: 1.25e-6, out: 2.5e-6, cr: 0.2e-6 },   // ≤200k ctx; all efforts same rate
+      'mistral-small-2603':          { in: 1.5e-7,  out: 6e-7,   cr: 1.5e-7 },   // Mistral Small 4 ($0.15/$0.60 per M)
       'mistral-small-latest':        { in: 1e-7,    out: 3e-7,   cr: 1e-7 }
     };
-    function priceFor(m) { m = String(m || '').toLowerCase(); if (m.indexOf('mistral') >= 0) return PRICE['mistral-small-latest']; if (m.indexOf('fast-reasoning') >= 0) return PRICE['grok-4-1-fast-reasoning']; return PRICE['grok-4.3']; }
+    function priceFor(m) { m = String(m || '').toLowerCase(); if (m.indexOf('2603') >= 0) return PRICE['mistral-small-2603']; if (m.indexOf('mistral') >= 0) return PRICE['mistral-small-latest']; return PRICE['grok-4.3']; }
     function summarize(d, label, ms) {
       var u = (d && d.usage) || {};
       var served = (d && (d.model || (d._orchestration && d._orchestration.model))) || '?';
@@ -67685,16 +67843,17 @@ One sentence maximum. Atmospheric only. If reality bends, the deck should stir.\
         return summarize(d, label, ms);
       } catch (e) { console.warn('[AB] ' + label + ' threw: ' + (e && e.message)); return { label: label, error: (e && e.message) || 'err' }; }
     }
-    var grokBody = function (sys) { return { role: 'NARRATIVE_AUTHOR', preferredModel: 'grok-4.3', messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], max_tokens: 3000, temperature: 0.7 }; };
-    var mistralBody = function (sys) { return { model: 'mistral-small-latest', messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], max_tokens: 3000, temperature: 0.7 }; };
+    var grokBody = function (sys, effort) { return { role: 'NARRATIVE_AUTHOR', preferredModel: 'grok-4.3', reasoningEffort: effort || 'high', messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], max_tokens: 3000, temperature: 0.7 }; };
+    var mistralBody = function (sys) { return { model: 'mistral-small-2603', messages: [{ role: 'system', content: sys }, { role: 'user', content: user }], max_tokens: 3000, temperature: 0.7 }; };
     console.log('[AB] firing (HEAVY ' + (H && H.system ? H.system.length : '—') + 'c, LITE ' + (L && L.system ? L.system.length : '—') + 'c)…');
     var rows = [];
     if (H && H.system) {
-      rows.push(await fire('/api/proxy', grokBody(H.system), 'Grok-HEAVY (cold)'));
-      rows.push(await fire('/api/proxy', grokBody(H.system), 'Grok-HEAVY (warm)'));
-      if (opts.mistral !== false) rows.push(await fire('/api/mistral-proxy', mistralBody(H.system), 'Mistral-HEAVY'));
+      rows.push(await fire('/api/proxy', grokBody(H.system, 'high'), 'Grok-4.3 reasoning=high (cold)'));
+      rows.push(await fire('/api/proxy', grokBody(H.system, 'high'), 'Grok-4.3 reasoning=high (warm)'));
+      rows.push(await fire('/api/proxy', grokBody(H.system, 'low'), 'Grok-4.3 reasoning=low'));   // the reasoning-tax test (#4)
+      if (opts.mistral !== false) rows.push(await fire('/api/mistral-proxy', mistralBody(H.system), 'Mistral-Small-4 (2603)'));   // the B arm
     }
-    if (L && L.system) rows.push(await fire('/api/proxy', grokBody(L.system), 'Grok-LITE'));
+    if (L && L.system) rows.push(await fire('/api/proxy', grokBody(L.system, 'high'), 'Grok-LITE'));
     var live = rows.filter(function (r) { return !r.error; });
     try { console.table(live.map(function (r) { return { config: r.label, served: r.served, prompt_tok: r.promptTok, cached_tok: r.cachedTok, out_tok: r.outTok, cost: '$' + r.costUsd, ms: r.ms, prose_chars: r.chars }; })); } catch (_) { console.log(live); }
     console.log('%c[AB] PROSE — cost is measured; QUALITY is yours to judge by eye:', 'font-weight:bold;color:#c9a24e');
@@ -79735,7 +79894,7 @@ The scene carries the weight of something almost chosen. There should be a quiet
   // ═══════════════════════════════════════════════════════════════════════════
   var PREVIEW_CATALOG = {
     starter_the_first_taste: { format: 'literary', previewPrice: 30, previewStop: { type: 'scene', at: 10 }, continuationPrice: 30, continuationResume: { type: 'scene', from: 11 }, previewLabel: 'A literary preview.', sceneCountLabel: '10 scenes' },
-    starter_first_sacrifice: { format: 'literary', previewPrice: 30, previewStop: { type: 'scene', at: 10 }, continuationPrice: 30, continuationResume: { type: 'scene', from: 11 }, previewLabel: 'A literary preview.', sceneCountLabel: '10 scenes' },
+    starter_first_sacrifice: { format: 'literary', previewPrice: 30, previewStop: { type: 'scene', at: 20 }, continuationPrice: 30, continuationResume: { type: 'scene', from: 21 }, previewLabel: 'A literary preview.', sceneCountLabel: '20 scenes' },
     starter_famous_fate:     { format: 'literary', previewPrice: 10, previewStop: { type: 'scene', at: 3 },  continuationPrice: 50, continuationResume: { type: 'scene', from: 4 }, previewLabel: 'A Famous Fate preview.', sceneCountLabel: '3 scenes' },
     starter_glass_house:     { format: 'cg', previewPrice: 15, previewStop: { type: 'oas_interrupt', scene: 1, at: 8, before: 'satisfaction' }, continuationPrice: 115, continuationResume: { type: 'scene', from: 2 }, stub: true, previewLabel: 'A cinematic preview.', sceneCountLabel: '1 cinematic scene + interactions' }
   };
@@ -92409,6 +92568,15 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
             await _commitScene(_prevText.slice(-5000), _prevProp, _prevNum); // last ~scene worth for the delivery verifier
             var _csI = _ensureCommittedState();
             if (_csI._committedThroughScene != null && _csI._committedThroughScene < _prevNum) console.error('[COMMIT-SCENE:INVARIANT-BROKEN] planning after Commit-Scene(' + _prevNum + ') but committedThrough=' + _csI._committedThroughScene);
+            // INVARIANT RUNTIME v0 (Roman 2026-07-29): the ONE gating evaluation. Reads the
+            // ACTUAL prior-scene prose and promotes an available invariant to canonical ONLY if
+            // a truth concretely landed. This is the sole path by which a destiny truth becomes
+            // real — nothing schedule-driven can. Same commit point, same prose the verifier saw.
+            try {
+              if (window.InvariantRuntimeV0 && window.InvariantRuntimeV0.isActive(s)) {
+                await window.InvariantRuntimeV0.evaluatePriorScene(s, _prevText.slice(-6000), _prevNum);
+              }
+            } catch (_e2) { try { console.log('[INVARIANT-EVAL:SKIP] err=' + (_e2 && _e2.message)); } catch (_) {} }
           } else {
             console.log('[COMMIT-SCENE:SKIP] plan-scene=' + (s.turnCount || 0) + ' reason=no-prior-text priorTxtLen=' + (_prevText ? _prevText.length : 0));
           }
@@ -92483,8 +92651,46 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
             + '\nContinuity (where the last scene ended — context only, NOT the event to repeat): ' + JSON.stringify(sc).slice(0, 300)
             + '\nPlayer action: ' + String(act || '').slice(0, 250) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 200)
             + '\nScene index: ' + (s.turnCount || 0);
-          var _scRes = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: [{ role: 'system', content: _scSys }, { role: 'user', content: _scUsr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.3, max_tokens: 320, jsonMode: true }) });
+          // ═══ INVARIANT RUNTIME v0 (Roman 2026-07-29) — DEMOTE this planner to a REALIZATION planner ═══
+          // When active, the invariant is the SINGLE semantic authority (WHAT). This planner keeps its
+          // craft (invents the concrete, specific HOW) but must realize the STEERED INVARIANT's truth —
+          // it may NOT invent an independent destiny target. Fixes the objective collision (two destiny
+          // authorities in the prompt → the loud one wins; there must be exactly one).
+          try {
+            if (window.InvariantRuntimeV0 && window.InvariantRuntimeV0.isActive(s)) {
+              var _invT = window.InvariantRuntimeV0.currentTarget(s);
+              if (_invT) {
+                _scSys += '\nSEMANTIC TARGET OVERRIDE (HIGHEST PRIORITY — this REPLACES the CURRENT MILESTONE as the thing to realize; ignore any other destiny target above): the state_change you generate MUST be a concrete, externally-observable event that makes THIS TRUTH become irreversibly true in THIS scene:\n'
+                  + '  TRUTH TO MAKE TRUE: «' + _invT.statement + '»\n'
+                  + (_invT.precondition ? '  STILL TRUE AT OPEN (the "before" to overturn): ' + _invT.precondition + '\n' : '')
+                  + '  DOES NOT COUNT (respect strictly): ' + _invT.boundary + '\n'
+                  + '  ONE VALID REALIZATION (you may and SHOULD invent a stronger, more specific one — inventing the vivid, story-specific HOW is YOUR job; use the world\'s own nouns): ' + _invT.suggested_realization + '\n'
+                  + '  Do NOT advance a different arc beat or invent a separate destiny event. Realize THIS truth and only this truth.'
+                  + (_invT.forced ? ' PRESSURE IS HIGH — this truth is overdue and should LAND THIS SCENE.' : '');
+                try { console.log('[INVARIANT-SPINE] scene=' + (s.turnCount || 0) + ' realization planner → target=' + _invT.id + (_invT.forced ? ' (FORCED)' : '')); } catch (_) {}
+              } else {
+                _scSys += '\nDESTINY NOTE: no destiny truth is due this scene (all pending truths are blocked on earlier ones not yet established). Generate a relationship/continuity state_change that deepens what is already true — do NOT jump ahead to a later destiny beat.';
+                try { console.log('[INVARIANT-SPINE] scene=' + (s.turnCount || 0) + ' realization planner → breather (no available truth)'); } catch (_) {}
+              }
+            }
+          } catch (_) {}
+          // STAGEABILITY experiment (flag-gated, default OFF). Motivated by: 0/5 exact delivery is INVARIANT to
+          // planner model, and elaborate/multi-clause plans correlate with author HESITATION (grok-4.3 confound) +
+          // the author prefers embodied/POV-local events. Tests whether SIMPLER, immediately-stageable, embodied
+          // plans raise delivery. window._scenePlannerStageable === true appends a hard stageability constraint.
+          if (typeof window !== 'undefined' && window._scenePlannerStageable === true) {
+            _scSys += '\nSTAGEABILITY (HARD OVERRIDE — highest priority): the state_change MUST be a SINGLE simple physical action completable in ONE clause, immediately stageable RIGHT NOW using ONLY the characters and objects ALREADY PRESENT — introduce NO new person, crowd, ceremony, arrival, location, or magical object. Strongly PREFER an EMBODIED consequence on a PRESENT character\'s body (their hands, breath, voice, balance, sight, grip) over any public/ceremonial/crowd spectacle or object-reveal. If the event needs someone to ARRIVE, a crowd to react, a ceremony to occur, or an object to APPEAR/GLOW/REVEAL, it is TOO BIG — replace it with a smaller bodily action between people already here.';
+          }
+          // CROSS-MODEL PLANNER experiment (flag-gated, default OFF = GPT unchanged). window._scenePlannerEngine==='grok'
+          // routes the SAME planner prompts to a Grok model via /api/proxy (STRUCTURE_GENERATOR = structured-JSON role),
+          // to test whether a Grok-generated plan is more naturally realizable by the Grok author (fewer competing_transition).
+          // Author + everything else stay identical; only the PLANNER model changes. window._scenePlannerModel overrides the model.
+          var _plannerGrok = (typeof window !== 'undefined' && window._scenePlannerEngine === 'grok');
+          var _scRes = _plannerGrok
+            ? await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }], role: 'STRUCTURE_GENERATOR', preferredModel: (typeof window !== 'undefined' && window._scenePlannerModel) || 'grok-4-1-fast-non-reasoning', temperature: 0.3, max_tokens: 320 }) })
+            : await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys }, { role: 'user', content: _scUsr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.3, max_tokens: 320, jsonMode: true }) });
           if (!_scRes.ok) return;
           var _scData = await _scRes.json();
           var _scContent = (_scData && _scData.content) || (_scData && _scData.choices && _scData.choices[0] && _scData.choices[0].message && _scData.choices[0].message.content);
@@ -120098,6 +120304,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       worldSubtype: 'arcane_binding',
       pressure: 'PowerControl',
       flavor: 'Arcane Binding',
+      pcSpecies: 'First Favored',   // canonical cast (Roman 2026-07-30); consumed by the declared-species pipe
+      liSpecies: 'First Favored',
       tone: 'Earnest',
       pov: 'First',
       length: 'taste',
@@ -120306,6 +120514,147 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // STARTER SEEDS — GROUND-TRUTH DATABASE (Roman 2026-07-30)
+  // The seed is the story's IMMUTABLE dramatic truth: everything the planner and
+  // author must NOT invent (see feedback_seed_planner_author_layers). WHAT IS TRUE,
+  // never WHEN IT BECOMES KNOWN (that is planner state). The author QUERIES this
+  // instead of inventing nouns — "what happened? → Julian illegally wished → write
+  // it beautifully." Keyed by starter id. A species-level CANON registry is coming to
+  // hold reusable per-species facts; for now visualCanon['First Favored'] carries the
+  // species canon inline (factor it out into CANON later) beside the per-character locks.
+  // NOTHING CONSUMES THIS YET — pure data; delivery wiring is a separate reviewed pass.
+  const STARTER_SEEDS = {
+    starter_first_sacrifice: {
+      issue: 1,
+      cast: [
+        { role: 'PC', species: 'First Favored', nameLock: false, // PC = player-named via the casting line
+          bio: 'A young First Favored apprentice. Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself. Brilliant but untested; terrified of failing publicly.' },
+        { role: 'LI', name: 'Julian', species: 'First Favored', nameLock: true,
+          bio: 'An older First Favored: calm, quietly respected. Already knows something about the PC’s lineage. Present at the ritual only as an observer.' },
+        { role: 'youth', species: 'First Favored', nameLock: false,
+          bio: 'A youth making their First Sacrifice — earnest, frightened, emotionally overwhelmed.' }
+      ],
+      // WORLD TRUTHS — canon invariants the author must receive and never contradict.
+      worldTruths: [
+        'Everyone present is First Favored.',
+        'Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.',
+        'Misalignment is visible ONLY to trained observers reading signs — Weave-Script distortion, changed breathing, collapsing posture, ritual cues. It is expertise, NOT a psychic sense and NOT a light show.',
+        'During a First Sacrifice, NO ONE may interfere.',
+        'Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.'
+      ],
+      // VISUAL CANON — locked appearance so the author never infers it. Species block =
+      // First Favored canon (→ future CANON registry); per-character = seed-specific anchors.
+      visualCanon: {
+        'First Favored': ['barefoot', 'gossamer / Veilweave attire (never cloaks or boots)', 'visible Weave-Script on the skin', 'strikingly, unmistakably beautiful in the First Favored way'],
+        Julian: ['black hair', 'silver Weave-Script', 'a scar over the left wrist', 'always stands too still'],
+        PC: [/* TODO (Roman): PC character-specific visual anchor — FF species canon applies; PC is player-named */],
+        youth: [/* TODO: youth visual anchor — FF species canon applies */]
+      },
+      // TRUTHS — immutable plot facts / secrets. NEVER change. The PLANNER decides, per
+      // scene, WHEN (if ever) each becomes known to the PC / the crowd / the reader.
+      truths: [
+        'The youth slipped into catastrophic misalignment; the wish should have twisted horribly.',
+        'Instead the wish succeeded cleanly — impossible without illegal intervention.',
+        'JULIAN made the forbidden wish, knowingly accepting an enormous unseen sacrifice to save the youth (and, ultimately, the PC).',
+        'The PC did NOT intervene — she is innocent of the crime she is blamed for.',
+        'The youth never realizes any of this.'
+      ],
+      dramaticTruth: 'Julian committed the gravest taboo in wishcraft to save a stranger; the PC is publicly blamed for it, and trust must grow between them under suspicion.',
+      // CONSTRAINTS — storytelling invariants (not lore, not plot). Scene-gated ones
+      // ("before Scene 8") activate once the planner is wired; the rest are always-on.
+      constraints: [
+        'Julian must never read as suspicious before Scene 8.',
+        'The PC must never consciously suspect Julian before the planner allows it.',
+        'No character may infer or state the true explanation before the planned reveal.',
+        'Nobody may speak the actual hidden truth aloud.',
+        'The author must never invent additional wish or Fate laws beyond worldTruths.',
+        'The author must never depict visible Fate effects.',
+        'The crowd’s accusations must always remain logically explainable from publicly observable events.'
+      ]
+    }
+  };
+  window.STARTER_SEEDS = STARTER_SEEDS;
+
+  // STARTER PLANS — the PLANNER input (NOT seed): which beats, in what order, what each
+  // scene must accomplish. Two valid tellings could differ, so this is planner-owned.
+  // Rich per-scene shape: { goal, requiredTruth, exitState, cliffhanger }. Roman authored
+  // the Issue-1 spine as goals; scene 9 shows the target rich format — fleshing out the
+  // rest (exit states / cliffhangers / required reader-truths) is a planner-authoring pass.
+  const STARTER_PLANS = {
+    starter_first_sacrifice: {
+      issue: 1,
+      scenes: [
+        { n: 1, goal: 'The First Sacrifice begins (hot crisis). The youth suddenly falls into catastrophic misalignment; every experienced First Favored recognizes the signs. The impossible happens instead — the wish succeeds cleanly. The crowd turns on the PC.' },
+        { n: 2, goal: 'The ceremony collapses into accusations; the PC tries to explain something she does not understand herself.' },
+        { n: 3, goal: 'Evidence begins to point toward deliberate interference.' },
+        { n: 4, goal: 'The elders formally begin investigating the PC.' },
+        { n: 5, goal: 'Julian quietly prevents the investigation from uncovering the truth.' },
+        { n: 6, goal: 'The PC discovers the wish succeeded in a way that should have been impossible.' },
+        { n: 7, goal: 'Rumors spread through the city; the PC’s reputation collapses.' },
+        { n: 8, goal: 'The PC realizes someone else may have intervened.' },
+        { n: 9, goal: 'She begins suspecting Julian.', requiredTruth: 'Julian is still innocent in the reader’s eyes.', exitState: 'Suspicion established; evidence incomplete.', cliffhanger: 'The PC finds contradictory evidence.' },
+        { n: 10, goal: 'Julian denies involvement — but not convincingly.' },
+        { n: 11, goal: 'The consequences of the hidden sacrifice begin manifesting.' },
+        { n: 12, goal: 'The PC discovers every miracle has a sacrifice — but cannot determine whose.' },
+        { n: 13, goal: 'Someone else is endangered by the hidden bargain.' },
+        { n: 14, goal: 'The investigation closes in on Julian.' },
+        { n: 15, goal: 'The PC learns the intervention violated one of the oldest taboos.' },
+        { n: 16, goal: 'Julian finally admits he acted.' },
+        { n: 17, goal: 'The PC learns what he sacrificed.' },
+        { n: 18, goal: 'She realizes he did it to save both the youth and her.' },
+        { n: 19, goal: 'She must decide whether to expose the truth or let history condemn her.' },
+        { n: 20, goal: 'She chooses — and the consequences launch the next issue.' }
+      ]
+    }
+  };
+  window.STARTER_PLANS = STARTER_PLANS;
+
+  // ── SEED ACCESSORS + DELIVERY (Roman 2026-07-30) ──────────────────────────
+  // The seed is a QUERYABLE ground-truth DB, not prompt text — the builder EXTRACTS
+  // only what a scene needs (cast species canon + on-stage character anchors + always-on
+  // constraints), never dumps the whole thing. Returns '' for non-seeded stories.
+  function _activeSeed(s) { try { s = s || window.state; var id = s && s._starterId; return (id && typeof STARTER_SEEDS !== 'undefined' && STARTER_SEEDS[id]) || null; } catch (_) { return null; } }
+  function _activePlan(s) { try { s = s || window.state; var id = s && s._starterId; return (id && typeof STARTER_PLANS !== 'undefined' && STARTER_PLANS[id]) || null; } catch (_) { return null; } }
+  function _seedLIName(s) { try { if (typeof window !== 'undefined' && window.__disableSeedGrounding) return ''; var seed = _activeSeed(s); if (!seed || !seed.cast) return ''; var li = seed.cast.filter(function (c) { return c && c.role === 'LI' && c.nameLock && c.name; })[0]; return (li && li.name) || ''; } catch (_) { return ''; } }
+  function _buildSeedContextDirective(s) {
+    try {
+      s = s || window.state; if (typeof window !== 'undefined' && window.__disableSeedGrounding) return ''; var seed = _activeSeed(s); if (!seed) return '';
+      var out = '\n═══ STORY GROUND TRUTH (CANON for THIS story — render it, never re-invent or contradict it; when unsure what happened or how the world looks, this is the answer, not your imagination) ═══\n';
+      if (seed.worldTruths && seed.worldTruths.length) out += 'WORLD (established — do not invent around it):\n' + seed.worldTruths.map(function (t) { return '  • ' + t; }).join('\n') + '\n';
+      // WHO IS PRESENT + CLOSED CAST (Roman 2026-07-31): the builder previously emitted no roster, so
+      // the author invented a referent for the unnamed youth ("a friend") and a phantom name for the
+      // gated intervenor ("Soren"). Emit the cast by name/role, and forbid inventing new named people.
+      if (seed.cast && seed.cast.length) {
+        var castLines = [], namedPeople = [];
+        seed.cast.forEach(function (c) {
+          if (!c) return;
+          var nm = (c.name && c.nameLock) ? c.name : null;
+          if (nm) namedPeople.push(nm);
+          var who = (c.role === 'PC') ? 'the narrator (you)' : (nm || ('the ' + (c.role || 'figure') + ' — UNNAMED: refer to them by role/description, invent NO name'));
+          castLines.push('  ' + who + (c.species ? ' — ' + c.species : '') + (c.bio ? '. ' + c.bio : ''));
+        });
+        if (castLines.length) {
+          out += 'WHO IS PRESENT (the closed cast):\n' + castLines.join('\n') + '\n' +
+            '  CLOSED CAST (HARD): ' + (namedPeople.length ? 'the ONLY named individuals are ' + namedPeople.join(', ') + '. ' : '') +
+            'Introduce NO other named character; crowds, elders, and witnesses stay unnamed groups. If an event has no known cause, leave it UNEXPLAINED and UNATTRIBUTED — do NOT invent a named person to account for it.\n';
+        }
+      }
+      if (seed.visualCanon) {
+        var vc = seed.visualCanon; var lines = []; var seen = {};
+        (seed.cast || []).forEach(function (c) { if (c && c.species && !seen[c.species] && vc[c.species] && vc[c.species].length) { seen[c.species] = 1; lines.push('  ' + c.species + ' (all such beings): ' + vc[c.species].join('; ')); } });
+        (seed.cast || []).forEach(function (c) { var key = c && (c.name || c.role); var a = key && vc[key] && vc[key].filter(function (x) { return x && typeof x === 'string'; }); if (a && a.length) lines.push('  ' + key + ': ' + a.join('; ')); });
+        if (lines.length) out += 'APPEARANCE (locked — deploy as established, never a neutral catalog):\n' + lines.join('\n') + '\n';
+      }
+      if (seed.constraints && seed.constraints.length) {
+        var always = seed.constraints.filter(function (c) { return c && !/before Scene \d|before the planner|planned reveal/i.test(c); });
+        if (always.length) out += 'INVARIANTS (never violate):\n' + always.map(function (c) { return '  • ' + c; }).join('\n') + '\n';
+      }
+      return out;
+    } catch (_) { return ''; }
+  }
+  try { window._activeSeed = _activeSeed; window._activePlan = _activePlan; window._seedLIName = _seedLIName; window._buildSeedContextDirective = _buildSeedContextDirective; } catch (_) {}
+
   /**
    * Launch the starter story — sets up picks, generates Scene 1, transitions to game.
    */
@@ -120339,6 +120688,11 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       state.picks.pov = def.pov;
       state.picks.length = def.length;
       state.picks.dynamic = def.dynamic;
+      // Declared cast species (cast-agnostic pipe, Roman 2026-07-30): a starter def may NAME the
+      // canonical species so the prose author is TOLD the cast instead of defaulting to Human.
+      if (def.pcSpecies) state.picks.pcSpecies = def.pcSpecies;
+      if (def.liSpecies) state.picks.liSpecies = def.liSpecies;
+      state._starterId = def.id; // seed/plan registry key (STARTER_SEEDS / STARTER_PLANS)
       state.picks.authorship = 'fate'; // Guided Fate for starter
       state.storyLength = 'taste';
       // CG starters (Glass House) carry render_mode so the begin flow routes to
@@ -200205,7 +200559,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // too (no visible burst, personal sacrifice, no materialisation), so the gate keys on "any wish shown", never
   // "PC only". GENEROUS BY DESIGN: over-firing merely loads the law where it wasn't strictly needed; UNDER-firing
   // would render a wish dishonestly — so when in doubt, it fires.
-  var _FATELANDS_WISH_PRESENT_RX = /\b(wish\w*|if only|bargain\w*|petition\w*|tempt(?:ed|ing|s)?\b|granter\w*|grant(?:ed|s|ing)?\b|boon\w*|sacrific\w*|warp\w*|wishcraft|wishing[- ]?well|curse[ds]?\b)\b/i;
+  var _FATELANDS_WISH_PRESENT_RX = /\b(wish\w*|if only|bargain\w*|petition\w*|tempt(?:ed|ing|s)?\b|granter\w*|grant(?:ed|s|ing)?\b|boon\w*|sacrific\w*|bind\w*|warp\w*|wishcraft|wishing[- ]?well|curse[ds]?\b)\b/i;
   window._FATELANDS_WISH_PRESENT_RX = _FATELANDS_WISH_PRESENT_RX;
 
   // Fires when a TEACHING beat (master/mentor/apprentice/hermit/wishing-well/struggling wisher) OR an OVER-REACHING
@@ -234107,6 +234461,13 @@ Generate the synopsis now.` }
       if (state.picks && state.picks.world === 'Fantasy' && !state._liSpecies) {
         var _regionFinalPreGen = state._fantasyRegionOverrideApplied || !state._cachedAncestryPlayer;
         if (_regionFinalPreGen) {
+          // DECLARED SEED PC SPECIES is authoritative (Roman 2026-07-31): honor picks.pcSpecies BEFORE the
+          // pre-gen region-force so a seeded cast (First Sacrifice → First Favored) isn't out-raced into a
+          // random region species (observed PC='Wilder', which pulled the whole scene toward Thornwild).
+          if (state.picks.pcSpecies && !state._playerSpecies && !state._identityLock) {
+            state._playerSpecies = state.picks.pcSpecies; state._identityLock = true; state._speciesSource = 'declared_seed';
+            try { console.log('[SPECIES:PREGEN] declared PC species:', state.picks.pcSpecies); } catch (_) {}
+          }
           if (!state._playerSpecies && !state._identityLock && typeof _resolveRegionalSpecies === 'function') {
             var _fk = _resolveRegionKey(state.fantasyRegion || '');
             var _fsp = _resolveRegionalSpecies(_fk);
@@ -235587,6 +235948,13 @@ INCORRECT:
       // them. The ANTAGONIST Bible is NOT fired here: it gates on
       // aPlot.antagonistShape, and the A-plot does not exist yet in the
       // inverted chain. It fires AFTER initAPlot below (see _antagBks).
+      // ═══ CANONICAL LI IDENTITY — COMMIT BEFORE THE BIBLE (Roman 2026-07-30) ═══
+      // The LI Body Bible is an identity-bearing artifact; it must NEVER be generated before the LI's
+      // identity exists. Previously the name was assigned late (initAPlot rotation, AFTER this bible),
+      // so starters froze the bible with the 'the love interest' placeholder. Commit the canonical
+      // identity (corridor/seed name, else a genesis proposal) HERE, first — so _generateLIBodyBible
+      // (and every downstream reader) sees a real name.
+      try { if (typeof commitCanonicalLoveInterest === 'function') commitCanonicalLoveInterest(state, { at: 'pre-bible' }); } catch (_eCanonLI) { try { console.warn('[CANONICAL-LI] pre-bible commit threw:', _eCanonLI && _eCanonLI.message); } catch (__) {} }
       try {
         var _spineBks = [];
         if (typeof _generatePCBodyBible === 'function' && !state.pcBodyBible) _spineBks.push(_generatePCBodyBible());
@@ -236027,9 +236395,15 @@ LOVE INTEREST POV — MANDATORY OPENER:
     //   - Fatelands cognitive memory (Phase 2): Fantasy world only
     //   - Chorus discourse (Glass House voice layer):      glass_house subtype
     //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-    const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective();
+    const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+      // WISH LAW AT THE OPENING (Roman 2026-07-30): the opening builder previously LACKED the wish
+      // core/adjudication that the two per-turn builders carry — so a binding-sacrifice OPENING was told
+      // "sacrifice-magic exists, do not name the law" with NO law supplied, forcing the author to
+      // confabulate one ("the wood chose us / I gave what the wood asked"). Supply the real Fate-law at
+      // the opening; self-gates on wish-relevance via _wt (title/crisis/aPlot), same regex the turns use.
+      + (function () { try { if (state.picks && state.picks.world === 'Fantasy') { var _wt = (state.currentCrisis || '') + ' ' + ((state.aPlot && state.aPlot.antagonistOrAntiForce) || '') + ' ' + ((state.aPlot && state.aPlot.goal) || '') + ' ' + (state.immutableTitle || '') + ' ' + ((state.picks && state.picks.synopsis) || ''); var _wo = ''; if (typeof _buildFatelandsWishCoreDirective === 'function') _wo += _buildFatelandsWishCoreDirective(_wt); if (typeof _buildFatelandsWishAdjudicationDirective === 'function') _wo += _buildFatelandsWishAdjudicationDirective(_wt); return _wo; } } catch (_) {} return ''; })();
 
-    const introPrompt = `${fifthPersonContract}${fourthPersonContract}${toneEnforcementBlock}${materialChainDirective}${_fatelandsCognitiveMemoryBlock}Write the opening scene (${tempoBand.range} words). Tempo: ${tempoBand.label}. Establish the world THROUGH character interaction and tension. Do NOT delay conflict for setup. World details should emerge from action, dialogue, and pressure. Begin with something happening, not just existing.
+    const introPrompt = `${(typeof _buildSeedContextDirective === 'function' ? _buildSeedContextDirective() : '')}${fifthPersonContract}${fourthPersonContract}${toneEnforcementBlock}${materialChainDirective}${_fatelandsCognitiveMemoryBlock}Write the opening scene (${tempoBand.range} words). Tempo: ${tempoBand.label}. Establish the world THROUGH character interaction and tension. Do NOT delay conflict for setup. World details should emerge from action, dialogue, and pressure. Begin with something happening, not just existing.
 ${authorOpeningDirective}
 ═══════════════════════════════════════════════════════
 SCENE COMPOSITION
@@ -237259,7 +237633,10 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
     function _liOnPageThisScene(s) {
       try {
         var staged = (s.sceneSkeleton && s.sceneSkeleton.staged_characters) || [];
-        var liName = String(s.partnerName || s.liName || s.loveInterestName || '').toLowerCase().split(/\s+/)[0];
+        // CANONICAL LI (Roman 2026-07-30): read the LI name through the single accessor, not the
+        // scattered fields — so on-page detection uses the committed identity, not a stale/placeholder.
+        var _canonLIName = (typeof window.getCanonicalLoveInterest === 'function') ? (window.getCanonicalLoveInterest(s).name || '') : (s.partnerName || s.liName || s.loveInterestName || '');
+        var liName = String(_canonLIName).toLowerCase().split(/\s+/)[0];
         if (Array.isArray(staged) && staged.length && liName) {
           for (var i = 0; i < staged.length; i++) {
             var c = staged[i] || {}; var nm = String(c.name || '').toLowerCase();
@@ -238095,7 +238472,9 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
     function _liDescriptionCheck(prose, stage) {
       try {
         if (!prose || typeof prose !== 'string') return null;
-        var liFull = (window.state && window.state.loveInterestName) || '';
+        // CANONICAL LI (Roman 2026-07-30): resolve the LI name via the single accessor so the
+        // desire-coded latch / picturability repair key on the committed identity, not just loveInterestName.
+        var liFull = ((typeof window.getCanonicalLoveInterest === 'function' && window.getCanonicalLoveInterest(window.state).name) || (window.state && window.state.loveInterestName) || '');
         var liFirst = (liFull.split(/\s+/)[0] || '');
         if (!liFirst || liFirst.length < 3) return null;
         var liEsc = liFirst.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -247163,6 +247542,18 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
                 && typeof _liOnPageThisScene === 'function' && _liOnPageThisScene(state)) {
               state._liFirstConvoScene = state.turnCount || 0;
               try { console.log('[LI-FIRST-CONVO] scene ' + ((state.turnCount || 0) + 1) + ' — LI on-page; intensity axis unlocked (event-driven)'); } catch (_) {}
+            }
+          } catch (_) {}
+          // ENCOUNTER TRANSITION (Roman 2026-07-30) — UNMET → MET the moment the LI is actually encountered
+          // on-page. Releases STRANGER SOFTENING so the established longing ACQUIRES A BODY (the LI
+          // MANIFESTATION ANCHOR FLOOR takes over) instead of resetting to "cannot yearn" every scene.
+          // Forward-only. On-page is the v1 threshold; a substantive remote encounter (wall/radio) is a
+          // future refinement of the same semantic.
+          try {
+            if (state && state._liEncounterState === 'UNMET'
+                && typeof _liOnPageThisScene === 'function' && _liOnPageThisScene(state)) {
+              state._liEncounterState = 'MET';
+              try { console.log('[LI-ENCOUNTER] scene ' + ((state.turnCount || 0) + 1) + ' — UNMET → MET (LI first on-page); stranger-softening released, manifestation-floor engaged'); } catch (_) {}
             }
           } catch (_) {}
           // AXIS SCHEDULE DIAGNOSTIC (Roman 2026-07-05): print the resolved schedule + invariants whenever
@@ -256405,6 +256796,16 @@ ${buildVisualContinuityDirective()}`
    * Called once during species initialization. Sets state._liSpecies and state._liSpeciesSource.
    */
   function _resolveLISpecies() {
+    // DECLARED SEED SPECIES is authoritative (Roman 2026-07-31): a seed/starter may name the LI
+    // species (First Sacrifice → First Favored). Honor it here — the single choke point both callers
+    // pass through — so the PRE-GEN caller (beginStory) can't out-race it into a random region species
+    // (the observed 'Wilder' bug: pre-gen resolution ran before the declared pipe and won the guard).
+    if (state.picks && state.picks.liSpecies && !state._liSpecies) {
+      state._liSpecies = state.picks.liSpecies;
+      state._liSpeciesSource = 'declared_seed';
+      try { state._relationshipRiskLevel = _getRelationshipRisk(state._playerSpecies || 'Human', state.picks.liSpecies); } catch (_) {}
+      return;
+    }
     var playerSpecies = state._playerSpecies;
     var regionKey = _resolveRegionKey(state.fantasyRegion || '');
     var dominant = _REGION_DOMINANT_SPECIES[regionKey];
@@ -258734,6 +259135,26 @@ ${buildVisualContinuityDirective()}`
     // Priority 3: entropy (already assigned at 58778) — tag source if neither override fired
     if (!state._regionSource) {
       state._regionSource = 'entropy';
+    }
+
+    // ── Priority 2.5: EXPLICIT declared cast species (starter seed / picks) ──
+    // Cast-agnostic pipe (Roman 2026-07-30): a starter def / seed may DECLARE the canonical cast
+    // species (First Sacrifice → First Favored). Honor it BEFORE the region-based fallback so the
+    // author is TOLD the canonical answer instead of defaulting to Human. The VALUE lives in the
+    // seed/def; nothing is hardcoded here. Inert for every existing story (nothing sets these today).
+    if (state.picks && (state.picks.pcSpecies || state.picks.liSpecies) && !(typeof window !== 'undefined' && window.__disableSeedGrounding)) {
+      if (state.picks.pcSpecies && !state._playerSpecies && !state._identityLock) {
+        state._playerSpecies = state.picks.pcSpecies;
+        state._identityLock = true;
+        state._speciesSource = 'declared_seed';
+        console.log('[LOUPE] Player species from declared seed:', state.picks.pcSpecies);
+      }
+      if (state.picks.liSpecies && !state._liSpecies) {
+        state._liSpecies = state.picks.liSpecies;
+        state._liSpeciesSource = 'declared_seed';
+        try { if (typeof _getRelationshipRisk === 'function') state._relationshipRiskLevel = _getRelationshipRisk(state._playerSpecies || 'Human', state.picks.liSpecies); } catch (_) {}
+        console.log('[LOUPE] LI species from declared seed:', state.picks.liSpecies);
+      }
     }
 
     // ── Forced non-human casting for dominant-species regions ──
@@ -281864,6 +282285,11 @@ ABSOLUTE RULES:
    * Only difference: { speculative: true, skipSideEffects: true }
    */
   async function preloadNextScene() {
+      // TEST/COST GUARD (Roman 2026-07-30, default OFF — production unaffected): the speculative preload
+      // is a full extra Grok author generation of the next scene. In a headless harness that drives the
+      // next scene with a fresh submit, it is generated then DISCARDED — ~2× the Grok spend for nothing.
+      // window.__disableSpeculativePreload skips it for test runs (keeps HEAVY/Grok fidelity on the real scene).
+      if (typeof window !== 'undefined' && window.__disableSpeculativePreload === true) return;
       // Guard: don't preload if already preloading or have valid speculation
       // FF CONTAINMENT (root cause #2): the speculative assembly (Site C) omits the FF
       // canon-facts steer, and committed speculative scenes ship with no regen — so a
