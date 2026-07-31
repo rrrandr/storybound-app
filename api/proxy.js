@@ -158,6 +158,25 @@ const RETRY_NEXT_MODEL_STATUSES = new Set([400, 404]);
 // tentpole scenes are ever seen above ~50s.
 const XAI_CALL_TIMEOUT_MS = Number(process.env.XAI_CALL_TIMEOUT_MS) || 90000;
 
+// ── GROK 4.3 MODEL/EFFORT RESOLUTION (Roman 2026-07-30) ──────────────────────
+// xAI retired the Grok-4-Fast tier (2026-05-15): grok-4-1-fast-non-reasoning /
+// grok-4-1-fast-reasoning / grok-4.20-*-non-reasoning are gone — every call now
+// resolves to grok-4.3, and the ONLY real lever is reasoning.effort (none|low|
+// medium|high), all at the same token price. The chains still carry the legacy
+// names (they encode the *intent* — reasoning vs not — and keep preferredModel
+// matching working), but we translate to the live model + an EXPLICIT effort so
+// behavior is intended, not left to the opaque redirect. non-reasoning intent →
+// 'none' (skips the reasoning phase: fewer output tokens, lower latency, fewer of
+// the 80k-prompt hangs); reasoning intent → 'high'. A client may override per call
+// with body.reasoningEffort (used by the per-scene effort routing + the author A/B).
+function _resolveGrokModel(name, overrideEffort) {
+  const n = String(name || '');
+  let effort = (/non-reasoning|4\.20/.test(n)) ? 'none' : 'high';
+  const OK = { none: 1, low: 1, medium: 1, high: 1 };
+  if (overrideEffort && OK[String(overrideEffort)]) effort = String(overrideEffort);
+  return { model: 'grok-4.3', effort };
+}
+
 /**
  * Validate that the requested model is allowed.
  * Throws an error if the model is not in the allowlist.
@@ -334,11 +353,14 @@ export default async function handler(req, res) {
         'Authorization': `Bearer ${XAI_API_KEY}`
       };
       if (convId) _xaiHeaders['x-grok-conv-id'] = String(convId);
+      // Resolve the (legacy-named) chain entry → live grok-4.3 + explicit reasoning.effort.
+      const _grok = _resolveGrokModel(tryModel, req.body && req.body.reasoningEffort);
       const _xaiBody = {
-        model: tryModel,
+        model: _grok.model,
         messages: messages,
         temperature: temperature,
-        max_tokens: max_tokens
+        max_tokens: max_tokens,
+        reasoning: { effort: _grok.effort }
       };
       // Belt-and-suspenders cache hint: OpenAI-compatible APIs (xAI included) route
       // prompt-cache lookups by this stable key. Harmless if the upstream ignores it;
@@ -369,7 +391,7 @@ export default async function handler(req, res) {
         continue; // next model in the literary-only chain
       }
       clearTimeout(_timer);
-      console.log(`[SPECIALIST-PROXY] latency=${Date.now() - _callStart}ms model=${tryModel} status=${xaiResponse.status}`);
+      console.log(`[SPECIALIST-PROXY] latency=${Date.now() - _callStart}ms model=${_grok.model} effort=${_grok.effort} (chain="${tryModel}") status=${xaiResponse.status}`);
       try {
         data = JSON.parse(responseText);
       } catch (e) {

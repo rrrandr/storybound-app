@@ -981,9 +981,21 @@
       // (gpt-4o etc.) are left as-is unless ENABLE_GROK_NARRATIVE_AUTHOR routes them.
       const _isPaidClaude = /^claude-(sonnet|opus)/.test(decision.model);
       if (_hot) {
-        return _isPaidClaude
-          ? Object.assign({}, decision, { model: CONFIG.SCENE_RENDERER_MODEL, _origModel: decision.model, reason: (decision.reason || '') + ':GrokRenderer(hot,Sonnet-deprecated)' })
-          : decision; // hot non-Anthropic (e.g. already grok renderer) keeps its pipeline
+        // BUG FIX (Roman 2026-07-23): the old ternary remapped ONLY paid-Claude hot
+        // decisions to Grok and returned everything else as-is — on the assumption that
+        // a hot non-Anthropic decision was "already grok renderer". That assumption is
+        // false: _resolveRenderTierInner returns gpt-4o / gpt-4o-mini for non-intricate
+        // worlds, so a gpt-4o hot decision fell straight through, failed the
+        // /grok/ test at :3915, and AUTHORED THE EXPLICIT SCENE ON gpt-4o at :3946 —
+        // in normal operation, no fallback required. We are already past the early
+        // "already Grok → return" guard above, so decision.model here is ALWAYS non-Grok
+        // (paid-Claude OR gpt-4o*). A hot/intimate scene is Grok-owned everywhere, so
+        // remap unconditionally to the intimate SCENE RENDERER.
+        return Object.assign({}, decision, {
+          model: CONFIG.SCENE_RENDERER_MODEL,
+          _origModel: decision.model,
+          reason: (decision.reason || '') + ':GrokRenderer(hot)'
+        });
       }
       if (!CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR && !_isPaidClaude) return decision; // flag off: only force-remap the deprecated paid models
       return Object.assign({}, decision, {
@@ -2490,7 +2502,9 @@ FAILURE CONDITIONS (invalid outputs):
     var injected = false;
     for (var i = 0; i < msgs.length; i++) { if (msgs[i] && msgs[i].role === 'system') { msgs[i].content += _guard; injected = true; break; } }
     if (!injected) msgs.unshift({ role: 'system', content: _guard.trim() });
-    var r = await fetch(CONFIG.MISTRAL_PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mistral-small-latest', messages: msgs, temperature: 0.7, max_tokens: opts.max_tokens || 3000 }) });
+    // Pinned to Mistral Small 4 (Roman 2026-07-30): the validated/priced author model, not the drifting
+    // 'latest' alias. Used both for connecting-scene authoring and as the cross-provider Grok escape hatch.
+    var r = await fetch(CONFIG.MISTRAL_PROXY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mistral-small-2603', messages: msgs, temperature: 0.7, max_tokens: opts.max_tokens || 3000 }) });
     if (!r.ok) throw new Error('mistral-small author HTTP ' + r.status);
     var d = await r.json();
     try { if (typeof _accumulateTokens === 'function') _accumulateTokens(d, 'mistral-small-latest', 'author'); } catch (_) {}
@@ -2518,7 +2532,12 @@ FAILURE CONDITIONS (invalid outputs):
     const _smallAuthor = _smallAuthorEnabled() && !_premium;
     const _bridge = _smallAuthor && _prevWasPremium; // Grok-tentpole → Mistral seam → continuity-style bridge
     try { if (typeof window !== 'undefined' && window.state) window.state._authorPrevWasPremium = _premium; } catch (_) {} // record THIS scene's tier for the next scene's seam check
-    const _grokAuthor = () => callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
+    const _grokAuthor = () => {
+      // TEST HOOK (Roman 2026-07-30, default off): force a Grok author failure to verify the
+      // cross-provider Mistral fallback actually catches it. No production effect.
+      if (typeof window !== 'undefined' && window.__forceGrokAuthorFail === true) return Promise.reject(new Error('forced Grok author failure (test hook)'));
+      return callGrokNarrativeAuthor(messages, { preferredModel: CONFIG.NARRATIVE_AUTHOR_MODEL || CONFIG.SCENE_RENDERER_MODEL, max_tokens: _maxTokens });
+    };
     try {
       if (_smallAuthor) {
         try { console.log('[GROK-LIT] author = Mistral-small (non-premium' + (_bridge ? ', continuity-bridge after tentpole' : '') + ', restraint-guarded)'); } catch (_) {}
@@ -2530,16 +2549,26 @@ FAILURE CONDITIONS (invalid outputs):
         if (!prose) throw new Error('Grok author returned empty');
       }
     } catch (_authErr) {
-      // Fallback chain across INDEPENDENT infra. Small fails → Grok (the premium author) →
-      // gpt-4o. Grok fails → gpt-4o. No Sonnet/Opus rescue (cost-deprecated).
-      console.warn('[GROK-LIT] ' + (_smallAuthor ? 'Mistral-small' : 'Grok') + ' author failed/empty (' + (_authErr && _authErr.message) + ') — falling back');
+      // CROSS-PROVIDER FALLBACK (Roman 2026-07-30 — health-based redundancy, never fail a scene if another
+      // provider can finish it). A Grok hang/glitch must NOT drop straight to gpt-4o (pricier + a different
+      // voice); it falls to the OTHER cheap INDEPENDENT vendor first. Each hop is a different provider so
+      // one outage can't kill the scene:  Grok(x.ai) fails → Mistral(mistral.ai) → gpt-4o(openai) terminal;
+      // Mistral fails → Grok → gpt-4o. gpt-4o stays TERMINAL only (no Sonnet/Opus rescue — cost-deprecated).
+      console.warn('[GROK-LIT] ' + (_smallAuthor ? 'Mistral-small' : 'Grok') + ' author failed/empty (' + (_authErr && _authErr.message) + ') — cross-provider fallback');
       try {
-        if (_smallAuthor) { prose = _extract(await _grokAuthor()); if (prose) { console.log('[GROK-LIT] author recovered via Grok'); } }
-      } catch (_g) { /* fall through to gpt-4o */ }
+        if (_smallAuthor) {
+          prose = _extract(await _grokAuthor());
+          if (prose) { try { console.log('[AUTHOR-FALLBACK] served=Grok (Mistral primary failed)'); } catch (_) {} }
+        } else {
+          // Grok (premium/tentpole) primary failed → the CROSS-PROVIDER escape hatch: Mistral, not gpt-4o.
+          prose = _extract(await _mistralAuthor(messages, { max_tokens: _maxTokens, bridge: false }));
+          if (prose) { try { console.log('[AUTHOR-FALLBACK] served=Mistral (Grok primary failed — hang/glitch escape hatch)'); } catch (_) {} }
+        }
+      } catch (_x) { /* fall through to the gpt-4o terminal below */ }
       if (!prose) {
         prose = _extract(await callChatGPT(messages, 'PRIMARY_AUTHOR', { model: 'gpt-4o', max_tokens: _maxTokens, temperature: 0.8 }));
-        if (!prose) throw new Error('scene authors (small/grok/gpt-4o) returned empty — Sonnet/Opus rescue is cost-deprecated; retry / wait for provider');
-        console.log('[GROK-LIT] author recovered via gpt-4o');
+        if (!prose) throw new Error('scene authors (grok/mistral/gpt-4o) all returned empty — Sonnet/Opus rescue is cost-deprecated; retry / wait for provider');
+        try { console.log('[AUTHOR-FALLBACK] served=gpt-4o (terminal — grok+mistral both failed)'); } catch (_) {}
       }
     }
     // 1.5 Strip leaked metadata tags (Roman 2026-06-25): Small sometimes prefixes the prose with

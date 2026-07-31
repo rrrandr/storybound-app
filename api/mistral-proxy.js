@@ -21,7 +21,8 @@
 const ALLOWED_MISTRAL_MODELS = [
   'mistral-medium-latest',
   'mistral-large-latest',
-  'mistral-small-latest'
+  'mistral-small-latest',
+  'mistral-small-2603'    // Mistral Small 4 (119B/6.5B active, 256k ctx, $0.15/$0.60 per M) — author A/B (Roman 2026-07-30)
 ];
 
 // SECURITY: server-side prompt-injection scrub on user-role messages.
