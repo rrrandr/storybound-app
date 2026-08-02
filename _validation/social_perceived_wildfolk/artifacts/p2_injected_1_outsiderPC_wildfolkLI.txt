@@ -1,0 +1,26 @@
+[CHARACTERS: Liora:F, Kael:M, Torven:M]
+[TITLE: "Words in the Firelight"]
+[SYNOPSIS: "At a Thornwild waystation, an outsider's assumption about a Wildfolk companion forces Liora to navigate the tension between her companion and the room's expectations, where every glance carries the weight of old divisions."]
+
+Torven leaned across the bench, his voice carrying over the crackle of the fire. "That one with you, he has the look of the brush about him. You sure you want his kind at your table?"
+
+Kael's hands never stopped their quiet motion, fingers tracing patterns only he seemed to hear. The light from the hearth caught the faint lines under his skin and held them a moment longer than it should have.
+
+I felt the room tilt toward the insult the way a current pulls at loose cloth. My fingers tightened around the edge of the bench. Kael's gaze stayed on Torven, calm and edged at once, the kind of stillness that made others fill silence they later regretted.
+
+Torven smiled like he had scored a point. "No offense meant. Just saying what everyone sees."
+
+Kael answered without raising his voice. "What you see is what you came here to find."
+
+The fire popped. Two travellers at the next bench looked away. One woman drew her child closer without seeming to move.
+
+<<MICRO_EXPRESSION>>
+Is this a line I have to cross — or one I can let pass?
+<<CONTINUE>>
+
+Heat climbed the back of my neck. Kael's presence pulled at the edge of every choice I made in that room, the way a held breath changes the shape of the next one. I could feel the weight of the travellers watching, waiting to see whether I would step closer to him or farther from the fire.
+
+Torven waited, still smiling. Kael waited without smiling at all.
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.
+<!--sceneDuty: social_navigation | attraction: latent-->

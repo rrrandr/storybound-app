@@ -1,0 +1,26 @@
+[TITLE: "Thornwild's Edge"]
+[SYNOPSIS: At a dusk waystation where Wildfolk and outsiders share uneasy firelight, a single public slight exposes the fragile line between tolerance and fracture. The Becoming's quiet pressure builds beneath every glance, forcing choices that cannot stay hidden. What will the First Favored risk to answer it?]
+
+[CHARACTERS: Lirael:F, Thorne:M, Garrick:M]
+
+The traveller's voice cut across the common room like a snapped branch.
+
+Garrick leaned on the scarred bench, his eyes on Thorne. "That brushborn beside you—best keep him from the fire. His kind never learned to tend it without burning the roof down."
+
+Heat rose under my skin, the Weave-Script flickering once along my wrist before I could still it. The room's low talk thinned. A keeper by the door set his cup down too carefully. Thorne's shoulders stayed loose, but his fingers had gone still on the edge of the table.
+
+I felt the old fracture open—the one that said closeness always cost more than I could afford to pay. Garrick waited, smiling as if he had only offered helpful advice.
+
+<<MICRO_EXPRESSION>>
+Is this a slight to overlook — or a challenge to meet?
+<<CONTINUE>>
+
+Thorne did not look at me. He reached for the jug instead, pouring with deliberate calm. The liquid caught the last of the dusk light through the shutters.
+
+Garrick's smile widened. "See? Even he knows his place."
+
+The words landed between us like a thrown stone. My hand wanted to move—to rise, to speak, to close the space the insult had opened. Thorne's gaze found mine for half a breath, unreadable, before he set the jug down again.
+
+Confront Garrick now, or let Thorne answer for himself?
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.

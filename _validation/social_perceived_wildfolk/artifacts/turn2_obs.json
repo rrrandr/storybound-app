@@ -1,0 +1,11 @@
+{
+  "authorPromptPresent": true,
+  "sysLen": 207474,
+  "hasTurnInstructions": true,
+  "hasBinl": true,
+  "ownerPresent": true,
+  "ownerPositionPct": 99,
+  "precedenceClause": true,
+  "ownerTerminal": true,
+  "trailingAfterOwner": "."
+}

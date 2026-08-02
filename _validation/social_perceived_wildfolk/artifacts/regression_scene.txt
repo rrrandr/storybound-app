@@ -1,0 +1,33 @@
+[CHARACTERS: Elara:F, Thorne:M, Garrick:M]
+
+[TITLE: "Thornwild Whispers"]
+
+[SYNOPSIS: In the shadowed waystations of the Thornwild, an outsider's careless word threatens to expose long-buried truths. As tensions rise among travelers and locals, the cost of silence grows heavier with each passing dusk. What will it take to keep the old oaths unbroken?]
+
+The common room smelled of damp wool and roasted root. Firelight slid across the benches where travellers and locals sat shoulder to shoulder. I kept my hands on the table, fingers loose, the way I had learned to hold them when I did not want to be read.
+
+Garrick leaned across the scarred wood, voice loud enough to carry. “You lot always travel in pairs like that, or is he just here to keep the rest of us from getting lost in the brush?”
+
+Thorne did not lift his head at once. His fingers kept their slow, unconscious weave above the board, tracing patterns only he seemed to follow. When he spoke, the words were quiet. “You mistake silence for permission.”
+
+I felt the shift in the room before I saw it. Two locals set their cups down. A woman near the hearth turned her child’s face toward the wall without looking at us.
+
+Garrick laughed once, short. “No harm meant. Just wondering how a smoothskin keeps company with someone who still smells of the old groves.”
+
+My breath caught. I had not expected him to name it so plainly. Thorne’s hands stilled. The motion that had seemed unconscious now looked deliberate, as if he had chosen to stop rather than be seen continuing.
+
+<<MICRO_EXPRESSION>>
+Is this a challenge to our place here — or a test of what we will defend?
+<<CONTINUE>>
+
+I stood. The bench scraped once against the stone. “He travels where he chooses. The same as you.”
+
+Garrick’s smile did not reach his eyes. “And you vouch for him, outsider?”
+
+Thorne rose with me, the movement unhurried. “She does not need to.”
+
+The fire popped. No one spoke. The weight of the room pressed between us, asking which of us would name the next line that could not be taken back.
+
+Tell Garrick to leave the table, or let Thorne answer for both of us?
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.

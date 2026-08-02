@@ -1,0 +1,39 @@
+[CHARACTERS: Veyra:F, Thorne:M, Harlan:M]
+[TITLE: "The Waystation Slight"]
+[SYNOPSIS: At a Thornwild waystation as dusk falls, an outsider's public slight against a Wildfolk companion pulls the First Favored protagonist into a charged exchange that shifts the room's balance and leaves her facing an immediate choice about how far to press the matter.]
+
+The bench creaked under Harlan's weight as he leaned across the scarred plank table and pointed his cup at Thorne.
+
+"Never seen one of your kind sit so still through a whole turning," Harlan said, loud enough that the fire's crackle could not swallow it. "Most of you twitch before the light fades."
+
+Thorne's hands stayed folded on the table, the fine hair at his wrist moving once against the grain of the wood. He did not answer.
+
+I set my own cup down harder than I meant to. The sound drew a few glances from the travellers on the far bench.
+
+Harlan kept his eyes on Thorne. "Must cost you something, holding it in like that. Or does the Field already own the worst of it?"
+
+The murmurs along the benches thinned to nothing.
+
+Thorne lifted his head. His voice came low and even. "The Field owns nothing until it is paid for."
+
+Harlan smiled without warmth. "Then you are still in debt. Useful to know."
+
+I stood. The movement drew every eye in the room to me instead.
+
+"You have mistaken silence for permission," I said.
+
+Harlan's cup paused halfway to his mouth. "And you have mistaken my curiosity for insult."
+
+"No," I answered. "I have not."
+
+Thorne's fingers uncurled against the table. The hair at his wrist stilled.
+
+<<MICRO_EXPRESSION>>
+Is this a line that needs holding — or a silence that needs breaking?
+<<CONTINUE>>
+
+Harlan set the cup down. The bench scraped as he shifted back half a handspan, but he did not rise.
+
+The fire popped once. No one else spoke.
+
+My hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.

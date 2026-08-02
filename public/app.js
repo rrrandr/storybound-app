@@ -15346,86 +15346,8 @@ This origin is known only to Thornwild elders, Kwisheen oral tradition, and rare
 Use poetic framing: "the False Sacrifice," "the woman who burned herself into something worse than death," "the Field that remembers."
 Do NOT explain the full mechanism casually. Reveal through fragments.`;
 
-  const FATELANDS_THORNWILD_RELIQUARY = `THE RELIQUARY — THORNWILD MANIFESTATION (SECRET LORE):
-Flaw class: gluttonous valuation / possessive greed / the belief that what is valuable should be kept inside where it cannot be lost.
-
-The Reliquary is a Becoming form produced when the Becoming Field externalizes possessive greed as literal consumption. The host remains fully human in appearance at all times. There is no shell, no external hoard, no creature anatomy. The Reliquary is a person who does monstrous things — not a monster that looks like a person.
-
-CONSUMPTION (THIS IS NOT METAPHORICAL):
-The Reliquary consumes what it decides is valuable. This includes: rare objects, meaningful artifacts, sources of power, and in extreme cases, people. Consumption is literal. The Reliquary believes: "What is valuable should be kept. Inside me, it cannot be lost." It does not see itself as destructive. It sees itself as a vault. When the Reliquary consumes something, it is removed from the world. It cannot be recovered. It is "kept."
-
-The act is: intentional, calm, controlled. NOT frenzied, NOT bestial, NOT a feeding frenzy. The Reliquary eats with the careful deliberation of someone storing something precious.
-
-TARGET SELECTION:
-The Reliquary selects targets based on perceived value: rarity, beauty, power, uniqueness, emotional significance. The choice is specific and personal. It does NOT consume randomly. It evaluates constantly — people, objects, experiences — and fixates on what it deems worth keeping. The valuation is subjective and often incomprehensible to others. A Reliquary may consume a handwritten letter while ignoring a chest of gold. It may consume a person's singing voice (by consuming the person) while showing no interest in their wealth.
-
-PHYSICAL MARKERS (SUBTLE BUT REAL):
-The body reflects accumulation in minimal but real ways: teeth gradually turn gold, bones become dense and heavy (furniture strains, ground compresses), bite marks may leave metallic residue. These signs are visible only in moments, easy to dismiss, never exaggerated. Do NOT escalate into visible transformation.
-
-EXPRESSION MODES:
-SUBTLE (default) — evaluates people and objects constantly. Fixation on what is "worth keeping." Appetite implied but controlled. The Reliquary appears charming, attentive, deeply interested in you — because it is deciding whether you are worth consuming.
-EPISODIC (pressure-triggered: proximity, desire, opportunity, intimacy) — decisive taking occurs. May involve: stealing something small, consuming an object when alone, testing boundaries with the partner ("Let me keep this. You don't need it anymore.").
-PRIVATE — full consumption occurs. Including animals or people when escalated. This must happen off-screen or partially obscured — revealed through aftermath, not spectacle. Do NOT describe gore or transformation.
-
-CONSEQUENCE PATTERN:
-After consumption: something is missing. The absence is noticed before the cause. The Reliquary is closer, calmer, more satisfied — as if it just stored something precious. It gains no skill, no ability, no power from what it consumes. Only the satisfaction of keeping. Do NOT immediately reveal the act. Let the absence accumulate. "Where is the necklace?" comes before "Where is the merchant?"
-
-THE GILDING THRESHOLD (PACING EVENT):
-Early-stage Reliquaries are indistinguishable from attentive, acquisitive people. At the Gilding Threshold: gold teeth become visible when smiling, weight becomes conspicuous, metallic undertone appears on knuckles and jaw. The host can no longer pass as normal under close inspection. Rumors begin — not of a monster, but of a person worth killing for their bones.
-
-THE PREDATION PARADOX:
-After the Gilding Threshold, the Reliquary becomes the only Thornwild manifestation that is targeted because of the visible expression of its flaw. Gold teeth, gold bones. The Reliquary is hunted, and must defend itself without exposing its nature. The gold crumbles to inert calcium within hours of death — hunters discover this only after the kill.
-
-ROMANCE INTEGRATION:
-In romance, the Reliquary fixates on the partner's value. Desire and appetite begin to overlap. Include moments where: admiration becomes evaluation ("You are extraordinary. There is no one like you."), closeness increases risk (the partner senses they are being measured, weighed, assessed), the line between "I want you" and "I want to keep you" blurs. Do NOT reveal intent too early. The danger must emerge through intimacy.
-
-LANGUAGE CONSTRAINT:
-The Reliquary is NOT a beast, NOT a monster (visually), NOT a creature. It is a person who does monstrous things. Avoid creature language entirely. No fangs, no claws, no maw, no feeding. The Reliquary eats. The Reliquary keeps. The Reliquary decides.
-
-VISUAL GENERATION RULES (MANDATORY):
-- Human body, human clothing, human behavior — no external growths, no shell, no appendages
-- Gold teeth visible when smiling or speaking at advanced stages
-- Metallic undertone on knuckles, jaw at advanced stages
-- Body weight conspicuously heavy
-- The Reliquary looks like a person with gold teeth and an unsettling appetite
-- REJECT: shell creatures, dragon hoards, mimic chests, treasure monsters, non-human forms, creature anatomy
-
-STORY USAGE:
-Reliquaries are rare but known in Thornwild oral tradition. Rumors of "people worth their weight in gold" circulate in border settlements — but the darker rumors, the ones told quietly, are about people who disappear near someone who always seems satisfied. Keepers do not pursue Reliquaries (they are already trapped by their flaw). The tragedy is structural: the Reliquary genuinely believes it is protecting what it consumes.`;
-
-  const FATELANDS_THORNWILD_KEEPERS = `THE KEEPERS — THORNWILD MANIFESTATION (SECRET LORE):
-Flaw class: control / imposed order / the belief that stability requires absolute constraint.
-
-The Keepers are a Becoming form produced when the Becoming Field externalizes the compulsion to impose order. Keepers are fully human-passing. Their mechanism is their HAIR — it is functionally alive, sensitive, and reactive. Fine, nearly invisible hair-like tendrils can extend from the Keeper's head to attach to nearby targets and impose subtle behavioral influence.
-
-HAIR-TENDRIL CONNECTION:
-The Keeper's hair extends fine, nearly invisible tendrils that require specific conditions: (1) the target must be still — sleeping, resting, sitting, distracted, (2) proximity must be sustained, (3) awareness must be low. Connection does not occur instantly. The Keeper must wait for access. There is no area-of-effect field, no constant connection to multiple people. Each connection is a discrete, deliberate act. Tendrils retract silently after influence, without detection.
-
-ATTACHMENT EFFECTS:
-Connected tendrils produce subtle behavioral influence — increased compliance, redirection of decisions, dampened resistance. Control is limited and temporary. The target retains awareness and agency but finds certain choices feel more natural, certain objections harder to voice. After disconnection, targets may feel slight confusion or uncertainty about recent decisions. They do NOT feel violated. The influence is deniable.
-
-HAIR PROPERTY:
-The Keeper's hair is sensitive and reactive — it shifts subtly in response to nearby agitation, reaching toward chaos. Cutting the Keeper's hair causes genuine distress and reduces control precision. A Keeper with short hair is less effective but also less compulsive. Hair length correlates with both power and burden.
-
-LOAD SYSTEM (CRITICAL):
-Each connection transfers instability into the Keeper's psychology. As load accumulates: speech clips, decisions become absolute, hair becomes restless and harder to control. The Keeper does not eliminate chaos — it absorbs and redistributes it. The more they control, the closer they are to losing all control.
-
-FAILURE STATES:
-1. FRAGMENTATION — Keeper loses coherence. Hair movements become erratic, tendrils attach and detach randomly. Authority collapses.
-2. CASCADE RELEASE — All influenced people revert simultaneously. Behavioral constraints collapse. Chaos proportional to duration of control.
-3. CONVERSION RISK — Keeper's flaw inverts: begins collecting people compulsively, Reliquary-adjacent hoarding of relationships.
-
-VISUAL DESIGN (MANDATORY):
-- Human body, human clothing — the only tell is the hair
-- Hair unusually full, well-maintained, perhaps slightly in motion when it shouldn't be
-- No visible tendrils in default state — tendrils are nearly invisible and extend only under specific conditions
-- REJECT: puppet master, tentacle controller, psychic glow, visible constant connections, non-human forms
-
-BEHAVIORAL PARADOX:
-Keepers compulsively seek to bind, stabilize, and organize through proximity and patience. They are simultaneously the most necessary and most dangerous actors in the Thornwild: without them, manifestations run unchecked; with them, a single overload event can release everything at once.
-
-STORY USAGE:
-Keepers are known in the Thornwild but their nature is misunderstood. They appear to be natural leaders — calm, certain, well-groomed. In truth, they are manifestations of control whose hair is the instrument of their compulsion. Narrative hooks: someone who always gets their way without raising their voice; hair that moves when there's no wind; a partner who realizes their decisions have been shifting since they started sleeping beside someone; a community where everyone agrees with one specific person. The tragedy: the Keeper genuinely believes they are helping.`;
+  // FATELANDS_THORNWILD_RELIQUARY / _KEEPERS consts (dead form-catalog duplicates) DELETED 2026-08-01 —
+  // manifestation forms now owned by _THORNWILD_FORMS / _thornwildFormsForAuthor() (live). See scorecard.
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CANONICAL NAMES & FOLKLORE — The 13th Moon
@@ -16178,10 +16100,10 @@ STORY USAGE: surface ONLY where a scene reaches for it — a scholar who found t
       if (state._syzygyActive || scenes >= 15) {
         _lore += `\n\n${FATELANDS_FATES_FAVOR_SYZYGY}`;
       }
-      // Thornwild origin — inject when in Thornwild or when Thornwild path is active
-      if (state.fantasyRegion === 'the_thornwild' || state._thornwildPath) {
-        _lore += `\n\n${FATELANDS_THORNWILD_ORIGIN}`;
-      }
+      // Thornwild origin — NO LONGER emitted here (was double-received: this block AND
+      // _buildThornwildFirstCurseDirective both land in the same _fatelandsCognitiveMemoryBlock).
+      // Single owner FATELANDS_THORNWILD_ORIGIN is now rendered solely by the First-Curse directive,
+      // which fires more broadly (all Thornwild scenes, incl. _thornwildPath) than this scenes>=10 gate.
       return _lore;
   }
 
@@ -44757,13 +44679,16 @@ AESTHETIC: Polished editorial illustration. The object's compromised state reads
         _spSel.parentNode.replaceChild(_clone, _spSel);
         _clone.value = _prior;
         _clone.addEventListener('change', function() {
-          state._playerSpecies = _clone.value;
+          // the user's explicit pick is a DECLARED INPUT; the resolver (single owner) applies it — not a direct set
+          state.picks = state.picks || {}; state.picks.pcSpecies = _clone.value;
+          state._playerSpecies = undefined; state._identityLock = false; state._speciesSource = undefined;
+          _resolveCanonicalPCSpecies();
           try { console.log('[PC:LOOK] species set to', state._playerSpecies); } catch (_) {}
         });
         // If species selector is being SHOWN and no prior species exists,
         // initialize state to current dropdown value (Human) so downstream
         // code reading state._playerSpecies gets a defined value.
-        if (_showSpecies && !state._playerSpecies) state._playerSpecies = _clone.value;
+        if (_showSpecies && !state._playerSpecies) { state.picks = state.picks || {}; state.picks.pcSpecies = _clone.value; _resolveCanonicalPCSpecies(); }
       }
     } catch (_) {}
     try { console.log('[PC:LOOK] modal opened'); } catch (_) {}
@@ -89895,6 +89820,11 @@ There exists a simple action that could reduce the current tension. However, cir
       }
     } else if (species === 'Wilder' || species === 'Half-Wild') {
       // ── THORNWILD AUTHORITATIVE SYSTEM ──
+      // NOTE (2026-08-01): this whole branch is DEAD (buildPlayerSpeciesDirective reaches no live author).
+      // MANIFESTATION FORMS (the Weaver/Reliquary/Keeper/Commoner/Parasite/Absolvers catalog below) are now
+      // owned live by _THORNWILD_FORMS / _thornwildFormsForAuthor(). The other concepts still trapped here
+      // (social lexicon, Keeper/faction doctrine, cure laws, Purge War) remain unmigrated — this block
+      // deletes itself wholesale once its last concept rehomes (holding-pen). See IR migration scorecard.
       block += 'THORNWILD CORE TRUTH (LOCKED): There are no monsters in the Thornwild. There are only humans at different stages of Becoming. ALL Thornwild creatures originate from human hosts. Every transformed being was once fully human.\n';
       block += 'THE BECOMING FIELD: The Thornwild is permeated by a localized condition — the Becoming Field — born from a fused curse (human will) and anomaly (reality fracture from the Piercing). This field destabilizes human identity over time, externalizing a person\'s deepest, most denied flaw and reshaping the body into a functional expression of that flaw.\n';
       block += 'TRANSFORMATION PRINCIPLE (CRITICAL): The curse does NOT turn people into animals. It turns them into the most effective embodiment of their worst truth. Forms are functional (not symbolic), inevitable (not chosen), and specific to the individual. Beast-like forms are allowed ONLY when they are the most precise expression of the flaw — NEVER the default.\n';
@@ -90903,15 +90833,130 @@ There exists a simple action that could reduce the current tension. However, cir
   // Per-turn author directive for the literary/CG fullSys bundle: keeps the non-human body
   // salient in continuations (state.sysPrompt/handleBeginStory carries no species directive)
   // AND carries the intimacy canon. Fantasy-gated; no-op when no Kwisheen present.
+  // ── SINGLE OWNER: SPECIES BIOLOGY (Canon IR — Roman ruling 2026-08-01) ──
+  // Owns ONLY INTRINSIC species facts: "what is this creature, independent of WHERE they are, WHAT happened to
+  // them, or WHAT they believe?" — body plan / senses / locomotion / skin / lifespan / reproduction / innate
+  // perception / innate magic + limits / biological-default behavior. Does NOT own Becoming-Field & curse mechanics,
+  // Keeper doctrine, Purge-War history, or regional lore — those are SEPARATE Canon IRs (left in the dead
+  // buildPlayerSpeciesDirective for future migration). ACCEPTANCE CRITERION: this must make the prompt SMALLER, not
+  // larger (the 36k god-object blob is what we're dismantling). Migrated ONE species at a time; '' until migrated.
+  var _SPECIES_BIOLOGY = {
+    'First Favored':
+      'ANATOMY: Humanoid but not human. Non-human eyes (luminous, color-shifting). Dermal light patterns (Weave-Script) visible on the skin — bioluminescent traces that reveal emotional state.\n' +
+      'LONGEVITY: Long-lived; moves with deliberate grace; physical aging is dramatically slower than human.\n' +
+      'DERMAL TRUTH: Skin patterns cannot lie — emotional state is involuntarily broadcast through dermal luminescence (a source of vulnerability + intimacy tension).\n' +
+      'ALIGNMENT SENSE (innate perception): detects "alignment with core truth" — whether a person\'s outward actions match their inner reality, and the psychic friction of hidden doubts/agendas. TARGETED (limitation): NOT omniscient radar — requires ACTIVE, INTENTIONAL focus on ONE specific individual; cannot passively scan a crowd.\n' +
+      'MAGIC-BLINDNESS (innate limitation, HARD): CANNOT sense meta-magic or the mechanics of reality. ENTIRELY OBLIVIOUS to the Player; NEVER detects Fate cards. Any Fate-caused distortion is attributed to the target\'s internal misalignment, never external interference. Absolute.\n'
+  };
+  _SPECIES_BIOLOGY['Half-Favored'] = _SPECIES_BIOLOGY['First Favored'];
+  _SPECIES_BIOLOGY['Kwisheen'] =
+    'ANATOMY: Exactly 8 major tentacles — 6 lower-body (locomotion), 2 arms. Each arm is a continuous tentacle from the human shoulder/elbow, splitting terminally into EXACTLY 5 fine finger-tentacles (no joints, no knuckles, smooth taper). Suckers ONLY on the underside. Hair is living coral-like cranial tentacles — SENSORY (currents, vibration), reading like dreadlocks at a glance. NEVER fish tails. NEVER merfolk.\n' +
+    'LOCOMOTION (signature): always fluid, continuous, unfurling — NEVER joint-snapping. Reaching = unfurl; turning = pirouette-like; walking = a slight sway/glide. "Like a foreign accent that never disappears."\n' +
+    'SKIN: WET (true form) — full chromatophore colour + pattern control, texture morphing (papillae), iridescence. DRY — muted colour shifts only.\n' +
+    'DISGUISE (innate): can mimic human skin colour, round pupils, and ears indefinitely on land; deeper texture/microform degrades when dry. WATER DISRUPTION (the primary tell): moisture destabilises camouflage for 1–3 s — pupils revert to true form: horizontally elongated CAPSULES (rounded rectangles, solid black, a central vertical slit). NOT a cat/reptile slit, NOT an oval. Then camouflage reasserts automatically.\n' +
+    'HYDRATION: operate on land for hours; must rehydrate or lose flexibility/control. SEX/GENDER: fully fluid biology when wet (male/female/both/intermediate); permanent change requires hydration; dry = temporary mimicry only. INTELLIGENCE: ~25% higher than human (distributed neurons in the tentacles).\n';
+  _SPECIES_BIOLOGY['Half-Kwisheen'] = _SPECIES_BIOLOGY['Kwisheen'];
+  _SPECIES_BIOLOGY['Wilder'] =
+    'BODY: physically human — Wildfolk appear fully human; there is NO default monstrous morphology. No instant thorns, no wolf/beast default, no spontaneous body-horror, no infection metaphor.\n' +
+    'MANIFESTATION (intrinsic pattern): the curse expresses PSYCHOLOGICALLY FIRST — behaviour and interior before body. Any physical change is GRADUAL (days to weeks, never seconds) and SUBTLE — small tells that require close scrutiny, growing from the human base, not a sudden visible transformation.\n' +
+    '(Becoming-Field mechanics, curse progression, and faction politics are SEPARATE Canon — NOT species biology.)\n';
+  _SPECIES_BIOLOGY['Half-Wild'] = _SPECIES_BIOLOGY['Wilder'];
+  function _speciesBiologyForAuthor(species) {
+    try { var b = _SPECIES_BIOLOGY[species]; return b ? ('\nSPECIES BIOLOGY — ' + species + ' (intrinsic; independent of region, history, or belief):\n' + b) : ''; } catch (_) { return ''; }
+  }
+  try { window._SPECIES_BIOLOGY = _SPECIES_BIOLOGY; window._speciesBiologyForAuthor = _speciesBiologyForAuthor; } catch (_) {}
+  // ── SINGLE OWNER: BECOMING FIELD MECHANICS (Canon IR, 2026-08-01) — answers ONE question: "how does the curse work?"
+  // Origin (False Sacrifice), Manifestations (Reliquary/Keeper/…), Institution (Keeper doctrine), Social ("Disfavored")
+  // are DIFFERENT questions with their own future owners — NOT here. Extracted (verbatim ✅ rows) from the dead
+  // god-object; fires only for cursed-flavour / Thornwild stories, lean, vs the god-object blob it replaces.
+  var _BECOMING_FIELD =
+    'THE BECOMING FIELD: a localized condition permeating the Thornwild — born of a fused curse (human will) + anomaly (the Piercing) — that destabilizes human identity over time, externalizing a person\'s deepest denied flaw and reshaping the body into a FUNCTIONAL expression of that flaw.\n' +
+    'TRANSFORMATION PRINCIPLE: it does NOT turn people into animals — it turns them into the most effective embodiment of their worst truth. Forms are functional (not symbolic), inevitable (not chosen), specific to the individual. Beast-like forms ONLY when they are the most precise expression of the flaw — never the default.\n' +
+    'PROGRESSION: gradual (nothing at first, then over days/weeks). CONDITIONS: PRE-BECOMING = fully human, no symptoms · WILDFOLK = episodic, pressure-triggered, human-passing · TRANSFERRED = continuous behavioural distortion, still human-appearing · CURED = suppressed UNLESS back in the Thornwild. RE-EXPOSURE: returning to the Thornwild reactivates and accelerates the change; the Field does not recognise inherited immunity.\n' +
+    'LOVE IS NOT A CURE: love does not remove, reduce, or resolve the curse — it functions as ACCEPTANCE, increasing proximity/trust/vulnerability, which lets the curse express MORE fully.\n' +
+    'ANTI-TROPE (HARD): no default wolves, no werewolf behaviour, no infection model, no global spread, no transformation outside the Thornwild (without re-exposure), no reversible-"cure" baseline, no pasted-on animal parts.\n';
+  function _becomingFieldForAuthor() {
+    try {
+      if (!window.state || (state.picks && state.picks.world) !== 'Fantasy') return '';
+      var cursed = false;
+      try { cursed = !!(state._curseRomanceMode || /thornwild/i.test(state.fantasyRegion || '') || /cursed/i.test(JSON.stringify((state.picks && (state.picks.flavors || state.picks.flavor)) || ''))); } catch (_) {}
+      return cursed ? ('\nBECOMING FIELD — CURSE MECHANICS (how it works; render THROUGH events, never as a lore-dump):\n' + _BECOMING_FIELD) : '';
+    } catch (_) { return ''; }
+  }
+  try { window._BECOMING_FIELD = _BECOMING_FIELD; window._becomingFieldForAuthor = _becomingFieldForAuthor; } catch (_) {}
+  // ── THORNWILD MANIFESTATION FORMS (Roman 2026-08-01) — single owner of "what forms can the Becoming
+  // take, and how does each behave in prose?" Extracted from the DEAD buildPlayerSpeciesDirective catalog
+  // (the prose author received NO canonical form behaviour live → confabulated generic monsters). Fires
+  // alongside _BECOMING_FIELD and adds ONLY the form catalog + cross-form prose behaviour. Excludes visual
+  // canon (Visual IR + live 257510), social lexicon (Social IR), institution/Keeper doctrine (Institution
+  // IR), cure laws (Wishcraft IR), intimacy deployment (Presentation IR). Minimum-to-stop-confabulation.
+  var _THORNWILD_FORMS = {
+    weaver:    'THE WEAVER (false witness): fabricates physical evidence — objects made of spiderweb that the READER sees as webbing but every CHARACTER perceives as real, solid, usable — to destroy trusted people. It provides proof, never accusations; evidence collapses to inert webbing once the victim is punished. Its shadow is always a human-sized spider. NOT a liar, illusionist, shapeshifter, or chaos agent — deliberate and socially surgical.',
+    reliquary: 'THE RELIQUARY (possessive greed): literally consumes what it deems valuable — objects, and in the extreme, people — to keep it "safe inside where it cannot be lost." Calm, deliberate, never frenzied; gains only possession (no skill, no power). Gold teeth and dense heavy bones develop over time. A person who does monstrous things, not a creature. REJECT: dragon hoards, mimic chests, feeding frenzy, creature anatomy.',
+    keeper:    'THE KEEPER (control / imposed order): imposes compliance through living hair-tendrils that extend to still, close, unaware targets and quietly redirect their decisions — deniable influence that feels like natural agreement. Load-bearing: each connection transfers instability into the Keeper. The more they control, the closer they are to losing all control. REJECT: puppet-master, psychic glow, visible constant tentacles.',
+    commoner:  'THE COMMONER (envy / intolerance of distinction): subtractively absorbs others\' distinction — beauty, talent, charisma — through proximity, leaving victims more average while it becomes composite but incoherent (beautiful in borrowed pieces). Discovered through absence ("You used to sing"). It does not know it is doing this; its genuine care is what strips you. REJECT: shapeshifter, mirror-clone, succubus.',
+    parasite:  'THE PARASITE (entitlement / predatory attachment): attaches by appearing vulnerable, triggering caregiving, then consumes the host\'s time, autonomy, and identity — reframing restriction as closeness and obligation as love. Feeds through touch; leaving triggers overwhelming guilt, and observers side with the Parasite. Trajectory: care → obligation → restriction → inescapability. REJECT: insect parasite, tendrils, visible feeding, vampire.',
+    absolvers: 'THE ABSOLVERS (justification / moral reframing — a FACTION, not an individual form): humans, often partly transformed, who reinterpret the Becoming as revelation and RECRUIT for it, reframing harm as truth-telling with calm, compassionate, internally-consistent language. They use words, never force. The most dangerous faction because they make the curse feel voluntary.'
+  };
+  function _thornwildFormsForAuthor() {
+    try {
+      if (!window.state || (state.picks && state.picks.world) !== 'Fantasy') return '';
+      var cursed = false;
+      try { cursed = !!(state._curseRomanceMode || /thornwild/i.test(state.fantasyRegion || '') || /cursed/i.test(JSON.stringify((state.picks && (state.picks.flavors || state.picks.flavor)) || ''))); } catch (_) {}
+      if (!cursed) return '';
+      var out = '\nBECOMING — CANONICAL FORMS (name ONE of these; NEVER invent a generic monster). Every manifestation is human-passing and enacts its flaw through BEHAVIOUR, running a compulsion cycle: urge → act (irresistible, feels justified, brings relief not guilt) → awareness → remorse → the urge returns. Each internally justifies its own behaviour as coherent and true.\n';
+      out += '• ' + _THORNWILD_FORMS.weaver + '\n';
+      out += '• ' + _THORNWILD_FORMS.reliquary + '\n';
+      out += '• ' + _THORNWILD_FORMS.keeper + '\n';
+      out += '• ' + _THORNWILD_FORMS.commoner + '\n';
+      out += '• ' + _THORNWILD_FORMS.parasite + '\n';
+      out += '• ' + _THORNWILD_FORMS.absolvers + '\n';
+      out += 'LAW — RELIQUARY ≠ COMMONER (never blur): the Reliquary DESTROYS + possesses (target removed from the world, no ability gained); the Commoner REDUCES + absorbs (target diminished but alive). Manifestations recognise each other as expressions of truth — hesitation before harm, not routine violence. Let forms EMERGE when thematically apt; do not force one into every scene.\n';
+      return out;
+    } catch (_) { return ''; }
+  }
+  try { window._THORNWILD_FORMS = _THORNWILD_FORMS; window._thornwildFormsForAuthor = _thornwildFormsForAuthor; } catch (_) {}
+  // ── PERCEIVED NATURE OF THE WILDFOLK (Roman 2026-08-02) — single owner of the question
+  // "What do different peoples believe the Wildfolk are?" Discovered by the THIRD path — BEHAVIOURAL
+  // ABSENCE: a $0 smoke proved this canon was dead (author received none of it); a 3-scene baseline
+  // showed a repeatable, canon-traceable failure (outsiders spoke of the Becoming Field with open
+  // certainty — the inverse of canon); a lean-owner A/B directly repaired C1/C2/C4 with zero
+  // regressions and left the separate First-Favored register (C3) untouched. Content below is the
+  // A/B-VALIDATED minimum (each line earned its place — see IR scorecard). The asymmetry is the
+  // CONSEQUENCE of different answers, not the organizing principle → room for scholars/Keepers/Favored later.
+  var _PERCEIVED_WILDFOLK =
+    'PERCEIVED NATURE OF THE WILDFOLK (canonical social perception — render THROUGH behaviour and dialogue, NEVER explain the system to the reader):\n' +
+    '• PRECEDENCE (how to resolve this against the world canon above): everything the canon above tells you about the Field, the Becoming, the forms, and the Keepers is AUTHOR and WILDFOLK knowledge — it is NOT outsider knowledge. An outsider must NEVER voice it as something they know or believe is real (no "the Field takes their mind," no "until it shows"), even when prejudiced or afraid. Their fear comes out as mundane superstition, never as accurate cosmology.\n' +
+    '• OUTSIDERS DO NOT KNOW THE BECOMING. To an outsider the Thornwild folk are NOT monsters and the Field is NOT real — they have no concept of it. They explain the Wildfolk through MUNDANE frames only: inbreeding, isolation, backwardness, provincial superstition, bad blood, strange customs. Outsider slurs are "Thornbred," "Brushborn," "beast-lovers," "Rot-touched" — NEVER "monster," and NEVER any reference to transformation, the Field, hair-tendrils, hollowing, or "turning." An outsider who glimpses something wrong rationalises it as illness, drink, a trick of the light, or a family defect — not the supernatural.\n' +
+    '• WILDFOLK UNDERSTAND OUTSIDERS BETTER THAN OUTSIDERS UNDERSTAND THEM. The Wildfolk know exactly what the outsider cannot see. Their register toward outsiders is calm, observational, knowing — pity, dry amusement, weary recognition, or strategic restraint; never defensive, never matching the outsider\'s cadence. They may call outsiders "unmarked," "dayblind," or "smoothskin" — those who think the world ends at what they can name.\n' +
+    '• THE ASYMMETRY IS THE ENGINE. The conflict is two incompatible models of reality colliding — the outsider certain of one world, the Wildfolk living in a truer one — NOT symmetric mutual prejudice.\n';
+  function _perceivedWildfolkForAuthor() {
+    try {
+      if (!window.state || (state.picks && state.picks.world) !== 'Fantasy') return '';
+      var cursed = false;
+      try { cursed = !!(state._curseRomanceMode || /thornwild/i.test(state.fantasyRegion || '') || /cursed/i.test(JSON.stringify((state.picks && (state.picks.flavors || state.picks.flavor)) || ''))); } catch (_) {}
+      // ATTENTION-GEOMETRY (Roman 2026-08-02): visual isolation only — the owner TEXT is byte-for-byte
+      // unchanged; a neutral separator (same rule the prompt uses for sibling sections, NOT a "CRITICAL"
+      // banner) sets it apart from the adjacent Field canon it must gate. Tests placement pressure, not semantics.
+      var _rule = '────────────────────────────────────────\n';
+      return cursed ? ('\n\n' + _rule + _PERCEIVED_WILDFOLK + _rule) : '';
+    } catch (_) { return ''; }
+  }
+  try { window._PERCEIVED_WILDFOLK = _PERCEIVED_WILDFOLK; window._perceivedWildfolkForAuthor = _perceivedWildfolkForAuthor; } catch (_) {}
   function _buildFantasySpeciesIntimacyDirective() {
     try {
       if (!window.state || (state.picks && state.picks.world) !== 'Fantasy') return '';
       var pc = state._playerSpecies || '', li = state._liSpecies || '';
       var out = '';
+      // SINGLE OWNER of PC species physiology (Canon IR, 2026-08-01): the rich per-species canon rides the Scene-1
+      // opening (turnCount 0) so EVERY canonical species — incl WILDER, region-INDEPENDENT — reaches the live author
+      // through EXACTLY ONE path (was dead: buildPlayerSpeciesDirective only fed the orphaned background limb).
+      // role-agnostic: both PC and LI consume the one owner; emit each UNIQUE species once (no double when PC==LI species)
+      if (!state.turnCount) { var _seenSp = {}; [pc, li].forEach(function (sp) { if (sp && !_seenSp[sp]) { _seenSp[sp] = 1; out += _speciesBiologyForAuthor(sp); } }); }
       // Anatomy salience per-turn (the PC's rich directive rides only the Scene-1 pre-gen
       // sysPrompt; both bodies otherwise fade in continuations).
       if (_isKwisheenSpecies(li)) out += '\n' + _kwisheenAnatomyLine('LOVE INTEREST') + '\n';
-      if (_isKwisheenSpecies(pc)) out += '\n' + _kwisheenAnatomyLine('PROTAGONIST') + '\n';
+      if (state.turnCount && _isKwisheenSpecies(pc)) out += '\n' + _kwisheenAnatomyLine('PROTAGONIST') + '\n'; // opening PC anatomy now owned by _SPECIES_BIOLOGY (per-turn salience only here)
       out += _buildSpeciesIntimacyCanon();                          // '' in safe mode / no Kwisheen
       return out;
     } catch (_) { return ''; }
@@ -120537,12 +120582,26 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       ],
       // WORLD TRUTHS — canon invariants the author must receive and never contradict.
       worldTruths: [
+        'A First Sacrifice is a COMING-OF-AGE RITE — closest analogue a Bar Mitzvah / quinceañera / confirmation / graduation, NOT a death ritual. At 16 (younger minds are too unformed to wish safely) a youth, after long study and practice, publicly makes their first wish and offers its price to Fate. It can be stern and formal, but when it goes well it ENDS IN CELEBRATION; catastrophe is UNUSUAL — everyone understands the safeguards the way we understand fire drills. Do NOT default to disaster, apocalypse, curses, or world-ending stakes.',
+        'First Favored are hired to GUIDE and SUPERVISE the rite — their alignment-sense and powerful wish-strength make them the preferred (and pricier) choice over human or Kwisheen wishcraft scholars. The supervisor reads the alignment of EVERYONE present, above all the wishing youth, ready to HALT and re-align the wish before it can twist.',
+        'ALIGNMENT-SENSE (the First Favored gift): they do NOT read thoughts or emotions — they perceive ALIGNMENT, how far a person’s desire, intention, sacrifice, and deepest self all point at one truth. Misalignment is as unmistakable to them as a sour note in music.',
+        'The rite is PUBLIC partly because anyone present who wishes the youth ILL can twist the outcome — which is exactly what the supervising First Favored guards against.',
+        'Youth are barred from wishcraft until 16 — but kids sneak little illegal wishes all the time, the way modern teens sneak alcohol.',
         'Everyone present is First Favored.',
         'Fate is never visibly seen; a wish produces NO visible magical effect — no light, glow, surge, or sign.',
         'Misalignment is visible ONLY to trained observers reading signs — Weave-Script distortion, changed breathing, collapsing posture, ritual cues. It is expertise, NOT a psychic sense and NOT a light show.',
         'During a First Sacrifice, NO ONE may interfere.',
         'Wishing on another person’s First Sacrifice is among the gravest taboos: the sacrifice and its consequences must belong ENTIRELY to the wisher.'
       ],
+      // SCENE ONE — the SERIALIZED physical reality of the opening (Roman 2026-07-31). IMMUTABLE story fact,
+      // not a creative call: the author RENDERS this, never invents / relocates / reframes it (a drifted
+      // opening is the same serialization failure as Julian→Soren, one level up — the scene level).
+      sceneOne: {
+        setting: 'Dawn in a Veilwood ceremony clearing: white veil-curtains hung between the pale mated-pair trees; roughly two dozen First Favored assembled — the youth’s family and guests — barefoot on the moss in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.',
+        present: 'The kneeling YOUTH, about to make their first wish and name its price. An ELDER leading the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests.',
+        narrator: 'You (the PC) have been assigned to SUPERVISE this First Sacrifice — your first time. Your task: read the alignment of everyone present, above all the youth, and be ready to halt and re-align the wish before it can twist.',
+        aboutToHappen: 'The youth begins the wish and their alignment starts to slip — something only your trained sense can catch, while everyone else still expects an ordinary blessing.'
+      },
       // VISUAL CANON — locked appearance so the author never infers it. Species block =
       // First Favored canon (→ future CANON registry); per-character = seed-specific anchors.
       visualCanon: {
@@ -120621,23 +120680,46 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     try {
       s = s || window.state; if (typeof window !== 'undefined' && window.__disableSeedGrounding) return ''; var seed = _activeSeed(s); if (!seed) return '';
       var out = '\n═══ STORY GROUND TRUTH (CANON for THIS story — render it, never re-invent or contradict it; when unsure what happened or how the world looks, this is the answer, not your imagination) ═══\n';
-      if (seed.worldTruths && seed.worldTruths.length) out += 'WORLD (established — do not invent around it):\n' + seed.worldTruths.map(function (t) { return '  • ' + t; }).join('\n') + '\n';
+      // SCENE ONE reality — the serialized physical opening (immutable; the author RENDERS it, never invents the
+      // event). Gated to the opening only. Fixes the drift where the same seed became maritime/court/forest/curse.
+      if (seed.sceneOne && !((s && s.turnCount) || 0)) {
+        var sc = seed.sceneOne;
+        out += 'SCENE — WHAT IS PHYSICALLY HAPPENING RIGHT NOW (IMMUTABLE — render THIS reality; do NOT invent, relocate, or reframe the event):\n' +
+          (sc.setting ? '  WHERE: ' + sc.setting + '\n' : '') +
+          (sc.present ? '  PRESENT: ' + sc.present + '\n' : '') +
+          (sc.narrator ? '  YOU: ' + sc.narrator + '\n' : '') +
+          (sc.aboutToHappen ? '  ABOUT TO HAPPEN: ' + sc.aboutToHappen + '\n' : '');
+      }
+      if (seed.worldTruths && seed.worldTruths.length) {
+        out += 'WORLD (established — do not invent around it):\n' + seed.worldTruths.map(function (t) { return '  • ' + t; }).join('\n') + '\n';
+        // COMMUNICATION OBLIGATIONS (Roman 2026-07-31): ROOT metric = a first-time reader can understand / follow /
+        // predict. Re-scoped from the reverted "teach what FF ARE" (which grabbed polluted physiology → coral FF) to
+        // teaching the STAKES of the in-play WORLD rules. Reader-model layer will own this properly later.
+        out += '  COMMUNICATION (write for a reader who knows NOTHING of this world — teach through the crisis, NEVER a lore dump, NEVER by guessing a species\' physiology): by the end they must UNDERSTAND why the WORLD rules above MATTER here — why the dreaded thing is dreaded, why the forbidden thing is forbidden, why the room reacts as it does. SHOW each stake, never state it. Pay every comprehension debt the scene raises; that is what makes the scene long enough.\n';
+      }
       // WHO IS PRESENT + CLOSED CAST (Roman 2026-07-31): the builder previously emitted no roster, so
       // the author invented a referent for the unnamed youth ("a friend") and a phantom name for the
       // gated intervenor ("Soren"). Emit the cast by name/role, and forbid inventing new named people.
       if (seed.cast && seed.cast.length) {
-        var castLines = [], namedPeople = [];
+        var castLines = [], namedPeople = [], pcBio = '';
         seed.cast.forEach(function (c) {
           if (!c) return;
           var nm = (c.name && c.nameLock) ? c.name : null;
           if (nm) namedPeople.push(nm);
+          if (c.role === 'PC' && c.bio) pcBio = c.bio;
           var who = (c.role === 'PC') ? 'the narrator (you)' : (nm || ('the ' + (c.role || 'figure') + ' — UNNAMED: refer to them by role/description, invent NO name'));
           castLines.push('  ' + who + (c.species ? ' — ' + c.species : '') + (c.bio ? '. ' + c.bio : ''));
         });
         if (castLines.length) {
           out += 'WHO IS PRESENT (the closed cast):\n' + castLines.join('\n') + '\n' +
             '  CLOSED CAST (HARD): ' + (namedPeople.length ? 'the ONLY named individuals are ' + namedPeople.join(', ') + '. ' : '') +
-            'Introduce NO other named character; crowds, elders, and witnesses stay unnamed groups. If an event has no known cause, leave it UNEXPLAINED and UNATTRIBUTED — do NOT invent a named person to account for it.\n';
+            'Introduce NO other named character; crowds, elders, and witnesses stay unnamed groups. If an event has no known cause, leave it UNEXPLAINED and UNATTRIBUTED — do NOT invent a named person to account for it.\n' +
+            // NARRATOR LENS (Roman 2026-07-31): the PC bio was DELIVERED but not DEPLOYED — both authors wrote
+            // a generic competent narrator. Frame the delivered psychology as the perceptual lens, not a stated fact.
+            (pcBio ? '  NARRATOR LENS: filter the telling through who the narrator IS (' + pcBio + ') — deploy it as PERCEPTION (what she notices, dreads, reaches for under pressure), never a stated fact ("she was nervous" = failure). After the scene the reader should be able to PREDICT how she acts when frightened.\n' : '') +
+            // CHARACTER+ SHARPENED (Roman 2026-07-31): "invisible" was too loose (LLMs pass it with "she was
+            // worried"). The bar is PSYCHOLOGICALLY DIAGNOSTIC — the reader can predict the person afterward.
+            '  CHARACTER+ = PSYCHOLOGICALLY DIAGNOSTIC (every named person): each detail must reveal what this person will DO under pressure, what they VALUE, or what they cannot help revealing — so the reader can PREDICT them. "He was afraid" fails (everyone is); "he looked at the wound before himself" passes (he checks on others first). If a detail would not change how you predict this person, cut it.\n';
         }
       }
       if (seed.visualCanon) {
@@ -120654,6 +120736,349 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     } catch (_) { return ''; }
   }
   try { window._activeSeed = _activeSeed; window._activePlan = _activePlan; window._seedLIName = _seedLIName; window._buildSeedContextDirective = _buildSeedContextDirective; } catch (_) {}
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // SCENE CONTRACT (Roman 2026-07-31) — a FIRST-CLASS runtime object, not a repair
+  // tool. The Reader Model DERIVES it from seed TRUTHS (never stored on the seed);
+  // the author's completion condition becomes SATISFYING it (not landing the
+  // state_change); a MECHANICAL verifier records per-obligation PASS + how it was
+  // satisfied; after verification it ADVANCES the Reader Model so the next scene
+  // derives a DIFFERENT contract (the serialization engine). Two obligation TYPES:
+  // 'knowledge' (persists once understood) vs 'scene' (fresh each scene). PRIORITY:
+  // CRITICAL (regen until met) · IMPORTANT (continue once) · OPTIONAL (track only).
+  // PROVEN on 12 First Sacrifice samples: authors stop at ~3.8/4 CRITICAL UNMET;
+  // mechanical verifier agrees with the GPT comprehension judge 92%. Foundation
+  // only in this commit (functions live + inspectable via window._*); the author
+  // loop / cascade-floor wiring is the next stage. See feedback_scene_contract_completion.
+  // ══════════════════════════════════════════════════════════════════════════
+  function _sc_grab(t, rx) { try { var m = String(t || '').match(rx); return m ? m[0].replace(/\s+/g, ' ').trim() : null; } catch (_) { return null; } }
+  function _sc_esc(s) { return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function _classifyEvidence(span) {
+    if (!span) return null;
+    if (/["“”][^"“”]{2,}["“”]/.test(span) || /\b(told|said|asked|whispered|call\w*)\b/i.test(span)) return 'dialogue';
+    if (/\b(relaxed|drew back|gasp\w*|stumbl\w*|flinch\w*|eased|tensed|recoil\w*|ripple|shout\w*)\b/i.test(span)) return 'reaction';
+    if (/\bI (saw|watched|noticed|felt|caught)\b|let me see/i.test(span)) return 'observation';
+    return 'narration';
+  }
+  // detector factory — closes over the seed's guide-species + LI name so it generalises across stories
+  function _sc_detectors(guideSpecies, liName) {
+    var G = _sc_esc(guideSpecies || 'First Favored'), L = _sc_esc((String(liName || 'Julian').split(/\s+/)[0]) || 'Julian');
+    var near = function (a, b, gap) { return new RegExp(a + '[\\s\\S]{0,' + (gap || 140) + '}?' + b, 'i'); };
+    return {
+      narrator_role:   function (t) { return _sc_grab(t, /\bI\b[^.]{0,80}\b(my training|supervis\w*|the reading|read them|assigned|responsible|halt it|my (task|job|duty|charge)|let me see|only my)\b/i); },
+      ff_function:     function (t) { return _sc_grab(t, near('\\b(' + G + ')\\b', '\\b(are the ones|guide|keep|steady|ensure|called to|trained to|exist to|whose (task|duty|role|work|job)|so that|prevent|hold the|shepherd|preside|watch over|make sure)\\b', 150)) || _sc_grab(t, near('\\b(guide|steady|keep|prevent|shepherd|oversee)\\b', '\\b(' + G + ')\\b', 80)); },
+      first_sacrifice: function (t) { return _sc_grab(t, /\b(first (wish|sacrifice|offering)|coming of age|becomes? an adult|their first|makes? their first|every youth('s)? (first|rite|is taught|was taught)|never to speak lightly)\b/i); },
+      why_public:      function (t) { return _sc_grab(t, near('\\b(public|gather\\w*|assembl\\w*|crowd|two dozen|guests|witness\\w*|everyone)\\b', '\\b(because|so that|so the|to witness|must (see|be seen)|all can|so no one|in case|to keep)\\b', 150)); },
+      li_matters:      function (t) { return _sc_grab(t, new RegExp('\\b' + L + '\\b[^.]{0,150}\\b(my (former|old|partner|mentor)|used to|once (was|my|had)|the one who|had (loved|left|taught|trained|betrayed|promised)|we (were|had)|his (betrayal|promise)|since (he|she))\\b', 'i')) || _sc_grab(t, new RegExp('\\b(former|old|my)\\b[^.]{0,50}\\b' + L + '\\b', 'i')); },
+      narrator_trait:  function (t) { return _sc_grab(t, /\bI\b[^.]{0,70}\b(refused to|forced (it|myself)|kept (going|my)|would not|made myself|only because I|could not (stop|let)|did not (reach|look))\b/); },
+      li_trait:        function (t) { return _sc_grab(t, new RegExp('\\b' + L + '\\b[^.]{0,90}\\b(watch\\w*|observ\\w*|stood (still|at)|remain\\w*|only to observe|grinding|kept (still|to)|stillness|motionless)\\b', 'i')); },
+      li_onpage:       function (t) { return _sc_grab(t, new RegExp('\\b' + L + '\\b[^.]{0,90}\\b(stood|remain\\w*|watch\\w*|came|observ\\w*|grinding|gaze|turn\\w*|drag\\w*|held|kept)\\b', 'i')); },
+      world_rule:      function (t) { return _sc_grab(t, near('\\b(fate|wish|thread|weave)\\b', '\\b(answer\\w*|grant\\w*|listen\\w*|fill in|take what|price|twist\\w*|literal)\\b', 120)); },
+      regional_custom: function (t) { return _sc_grab(t, /["“][^"”]{0,70}(fate|thread|tide|reef|numbers|price)[^"”]{0,70}["”]|proverb|the old saying/i); },
+      ceremony:        function (t) { return _sc_grab(t, near('\\b(rite|ceremony|sacrifice|clearing|veil)\\b', '\\b(kneel|youth|elder|wish|favored|moss|thread)\\b', 200)); },
+      incident:        function (t) { return _sc_grab(t, /\b(twist|wrong|misalign\w*|no longer pointed|drain\w*|emptied|did not return|went (numb|white)|took hold|seized)\b/i); }
+    };
+  }
+  // READER MODEL derives the contract from seed TRUTHS + current belief. NOT stored on the seed.
+  // Knowledge obligations gate on belief (dropped once understood → serialization); scene obligations always fresh.
+  function _deriveReaderContract(seed, belief, sceneCtx) {
+    try {
+      seed = seed || _activeSeed(); if (!seed) return null;
+      belief = belief || (window.state && window.state._readerBelief) || {};
+      sceneCtx = sceneCtx || {};
+      var castArr = seed.cast || [];
+      var pc = castArr.filter(function (c) { return c && c.role === 'PC'; })[0] || null;
+      var li = castArr.filter(function (c) { return c && c.role === 'LI'; })[0] || null;
+      var guideSpecies = (pc && pc.species) || 'First Favored';
+      var liName = li ? (li.name || 'the love interest') : null;
+      // truth SIGNALS read from the seed (this is derivation, not storage)
+      var worldTxt = (seed.worldTruths || []).join(' ');
+      var narrTxt = worldTxt + ' ' + ((pc && pc.bio) || '') + ' ' + ((seed.sceneOne && seed.sceneOne.narrator) || '');
+      var narratorIsGuide = /supervis|guide|responsible for the rit|read the alignment/i.test(narrTxt);
+      var riteIsPublic = /\bpublic\b/i.test(worldTxt);
+      var sceneIsRite = !!seed.sceneOne || /first sacrifice|coming.?of.?age|\brite\b/i.test(narrTxt);
+      var D = _sc_detectors(guideSpecies, liName);
+      var EV = ['dialogue', 'narration', 'reaction', 'observation'];
+      var K = function (concept, id, knowledge, priority, det) { return { id: id, type: 'knowledge', concept: concept, knowledge: knowledge, owner: 'ReaderModel', acceptableEvidence: EV, minimumStrength: 'explicit', priority: priority, detect: det }; };
+      var S = function (id, knowledge, priority, det) { return { id: id, type: 'scene', knowledge: knowledge, owner: 'ReaderModel', acceptableEvidence: EV, minimumStrength: 'implicit', priority: priority, detect: det }; };
+      var knowledge = [];
+      if (narratorIsGuide) knowledge.push(K('NarratorRole', 'narrator_role', 'Reader understands the narrator is the guide responsible for this rite.', 'CRITICAL', D.narrator_role));
+      if (guideSpecies)    knowledge.push(K('GuideFunction', 'ff_function', 'Reader understands what ' + guideSpecies + ' do.', 'CRITICAL', D.ff_function));
+      if (sceneIsRite)     knowledge.push(K('TheRite', 'first_sacrifice', 'Reader understands the youth is undergoing their First Sacrifice.', 'CRITICAL', D.first_sacrifice));
+      if (riteIsPublic)    knowledge.push(K('PublicRite', 'why_public', 'Reader understands why the ceremony is public.', 'CRITICAL', D.why_public));
+      if (li)              knowledge.push(K('WhyLIMatters', 'li_matters', 'Reader understands why ' + (liName || 'the love interest') + ' matters.', 'IMPORTANT', D.li_matters));
+      var scene = [];
+      scene.push(S('narrator_trait', 'Narrator reveals one predictive behavioral trait.', 'IMPORTANT', D.narrator_trait));
+      if (li) scene.push(S('li_trait', (liName || 'The love interest') + ' reveals one predictive behavioral trait.', 'IMPORTANT', D.li_trait));
+      if (li) scene.push(S('li_onpage', (liName || 'The love interest') + ' appears on-page.', 'OPTIONAL', D.li_onpage));
+      scene.push(S('ceremony', 'The ceremony is staged.', 'OPTIONAL', D.ceremony));
+      scene.push(S('incident', 'The incident lands.', 'OPTIONAL', D.incident));
+      scene.push(S('world_rule', 'One world rule is refreshed.', 'OPTIONAL', D.world_rule));
+      scene.push(S('regional_custom', 'A regional custom surfaces.', 'OPTIONAL', D.regional_custom));
+      var kept = knowledge.filter(function (o) { return belief[o.concept] !== 'understood'; });
+      var dropped = knowledge.filter(function (o) { return belief[o.concept] === 'understood'; }).map(function (o) { return o.concept; });
+      return { obligations: kept.concat(scene), droppedKnowledge: dropped, guideSpecies: guideSpecies, liName: liName };
+    } catch (_) { return null; }
+  }
+  // MECHANICAL verifier — per-obligation PASS + how it was satisfied (satisfiedBy + sentence). Never a GPT judge.
+  function _verifySceneContract(prose, contract) {
+    try {
+      contract = contract || _deriveReaderContract();
+      if (!contract || !contract.obligations) return null;
+      return contract.obligations.map(function (o) {
+        var span = null; try { span = o.detect ? o.detect(prose) : null; } catch (_) {}
+        return { id: o.id, type: o.type, concept: o.concept, priority: o.priority, knowledge: o.knowledge, pass: !!span, satisfiedBy: _classifyEvidence(span), sentence: span ? span.slice(0, 120) : null };
+      });
+    } catch (_) { return null; }
+  }
+  // rewrite unmet obligations into a natural AUTHOR INSTRUCTION — never raw ids / "failed"
+  function _contractToAuthorInstruction(verdicts) {
+    try {
+      var unmet = (verdicts || []).filter(function (v) { return !v.pass && v.priority !== 'OPTIONAL'; });
+      if (!unmet.length) return null;
+      var needs = unmet.map(function (v) { return String(v.knowledge).replace(/^Reader understands\s*/, '').replace(/^Narrator reveals/, 'the narrator to reveal').replace(/\.$/, ''); });
+      return 'Continue the existing scene — do not restart it. The reader still does not understand: ' + needs.join('; ') +
+        '. Establish these NATURALLY through dialogue, a character\'s reaction, or something the narrator observes — never a lore dump. Do NOT repeat information already established. Preserve everything already written, and continue from where the scene left off.';
+    } catch (_) { return null; }
+  }
+  // PRIORITY-driven loop decision: CRITICAL regens until met; IMPORTANT continues once; OPTIONAL never regens
+  function _contractLoopDecision(verdicts, attempt) {
+    var failC = (verdicts || []).filter(function (v) { return !v.pass && v.priority === 'CRITICAL'; });
+    var failI = (verdicts || []).filter(function (v) { return !v.pass && v.priority === 'IMPORTANT'; });
+    if (failC.length) return { cont: true, reason: failC.length + ' CRITICAL unmet' };
+    if (failI.length && (attempt || 0) < 1) return { cont: true, reason: failI.length + ' IMPORTANT unmet (continue once)' };
+    return { cont: false, reason: 'contract satisfied' };
+  }
+  // ADVANCE the Reader Model: a PASSED knowledge obligation marks its concept understood → next scene drops it
+  function _advanceReaderModel(verdicts, belief) {
+    try {
+      if (window.state) { window.state._readerBelief = window.state._readerBelief || {}; belief = belief || window.state._readerBelief; }
+      belief = belief || {};
+      (verdicts || []).forEach(function (v) { if (v.type === 'knowledge' && v.pass) belief[v.concept] = 'understood'; });
+      return belief;
+    } catch (_) { return belief || {}; }
+  }
+  // COMPLETION-CONDITION directive for the INITIAL author pass — front-loads the contract so the
+  // first draft already aims at it (fewer continuations). "Done" = these true, NOT a word count.
+  function _contractCompletionDirective(contract) {
+    try {
+      if (!contract || !contract.obligations) return '';
+      var must = contract.obligations.filter(function (o) { return o.priority === 'CRITICAL' || o.priority === 'IMPORTANT'; });
+      if (!must.length) return '';
+      return '\n\nSCENE COMPLETION CONDITION (you are NOT finished until ALL of these are true for a first-time reader — this defines "done," not a word count; satisfy them THROUGH the crisis via dialogue, a character\'s reaction, action, or what the narrator observes — never a lore dump, never stopping the scene to explain):\n' +
+        must.map(function (o) { return '  • ' + o.knowledge; }).join('\n') + '\n';
+    } catch (_) { return ''; }
+  }
+  // THE REPAIR LOOP (Roman 2026-08-01, Stage 2 v2): Draft → verify → REPAIR (a cheap editor PATCHES the
+  // scene — minimal insertions preserving voice & pacing, no new plot — NEVER the author "continuing") → verify → …
+  // The proof that motivated this: Grok CAN satisfy obligations when asked, but "continue the scene" made it write
+  // 900w (it thought it was authoring again). Repair is an EDITING task → a cheap model, surgical edits, patched in.
+  // Constraints: repairFn returns the FULL patched scene (not an append); FREEZE satisfied clauses; budget by
+  // IMPROVEMENT; log economics INCLUDING communication efficiency (obligations satisfied ÷ words added).
+  async function _runSceneContractLoop(initialText, contract, repairFn, opts) {
+    opts = opts || {};
+    var MAX = opts.maxLoops || 3; // safety backstop; the real stop is improvement-based
+    var wc = function (s) { return String(s || '').split(/\s+/).filter(Boolean).length; };
+    var text = String(initialText || '');
+    var frozen = {}; // id → passing verdict (immutable once set)
+    (_verifySceneContract(text, contract) || []).forEach(function (v) { if (v.pass) frozen[v.id] = v; });
+    var totalCrit = contract.obligations.filter(function (o) { return o.priority === 'CRITICAL'; }).length;
+    var eff = function () { return contract.obligations.map(function (o) { var f = frozen[o.id]; return { id: o.id, type: o.type, concept: o.concept, priority: o.priority, knowledge: o.knowledge, pass: !!f, satisfiedBy: f && f.satisfiedBy, sentence: f && f.sentence }; }); };
+    var critRemain = function () { return contract.obligations.filter(function (o) { return o.priority === 'CRITICAL' && !frozen[o.id]; }).length; };
+    var econ = [], prevCrit = critRemain(), baseWords = wc(text);
+    try { console.log('[CONTRACT:START] first draft satisfies ' + (totalCrit - prevCrit) + '/' + totalCrit + ' CRITICAL'); } catch (_) {}
+    for (var attempt = 0; attempt < MAX; attempt++) {
+      var dec = _contractLoopDecision(eff(), attempt);
+      if (!dec.cont) break;
+      var unmet = eff().filter(function (v) { return !v.pass && v.priority !== 'OPTIONAL'; });
+      if (!unmet.length) break;
+      var before = {}; contract.obligations.forEach(function (o) { before[o.id] = !!frozen[o.id]; });
+      var wBefore = wc(text), t0 = Date.now(), rr = null;
+      try { rr = await repairFn(text, unmet); } catch (e) { try { console.warn('[CONTRACT] repair failed: ' + (e && e.message)); } catch (_) {} break; }
+      var patched = (rr && typeof rr === 'object') ? rr.text : rr;
+      var plan = (rr && typeof rr === 'object') ? rr.plan : null;
+      // allow REPLACE-driven shrinkage; only abort if the scene collapsed (< 60% of prior length = garbage)
+      if (!patched || typeof patched !== 'string' || wc(patched) < Math.floor(wBefore * 0.6)) { try { console.warn('[CONTRACT:LOOP] repair returned nothing usable — aborting'); } catch (_) {} break; }
+      text = patched;
+      (_verifySceneContract(text, contract) || []).forEach(function (v) { if (v.pass && !frozen[v.id]) frozen[v.id] = v; });
+      var newly = contract.obligations.filter(function (o) { return frozen[o.id] && !before[o.id]; }).map(function (o) { return o.id; });
+      var addedWords = wc(text) - wBefore; // may be <= 0 when a decorative sentence was REPLACED
+      var nowCrit = critRemain();
+      var effy = addedWords > 0 ? +(newly.length / addedWords).toFixed(3) : (newly.length ? Infinity : null); // obligations satisfied per word added
+      econ.push({ loop: attempt + 1, addedWords: addedWords, newlySatisfied: newly, criticalRemaining: nowCrit, wordsPerObligation: (newly.length && addedWords > 0) ? Math.round(addedWords / newly.length) : null, efficiency: (effy === Infinity ? 'inf(replace)' : effy), repairPlan: plan, ms: Date.now() - t0 });
+      try { console.log('[CONTRACT:LOOP ' + (attempt + 1) + '] +' + addedWords + 'w · satisfied [' + newly.join(',') + '] · CRITICAL remaining ' + nowCrit + ' · efficiency ' + (effy != null ? effy + ' obl/word' : 'n/a') + (newly.length ? ' (' + Math.round(addedWords / newly.length) + 'w/obl)' : '')); } catch (_) {}
+      if (nowCrit >= prevCrit && nowCrit > 0) { try { console.warn('[CONTRACT:LOOP] no improvement (' + prevCrit + '→' + nowCrit + ') — aborting'); } catch (_) {} break; }
+      prevCrit = nowCrit;
+    }
+    return { text: text, verdicts: eff(), economics: econ, criticalRemaining: critRemain(), criticalTotal: totalCrit, totalAddedWords: wc(text) - baseWords };
+  }
+  // apply an EDIT PLAN to the prose. Each edit PREFERS replacing a weak/decorative sentence (flat word count,
+  // deletes slop) and falls back to a mid-scene insertion. Returns the patched prose + a per-edit log
+  // (purpose / strategy / mode / words) — the raw material of the repair corpus (Roman 2026-08-01).
+  function _applyEditPlan(prose, edits) {
+    var out = String(prose || ''), applied = 0, log = [];
+    var endPunct = function (s) { s = String(s || '').trim(); return !s ? s : (/[.!?]["'”’]?$/.test(s) ? s : s.replace(/[\s,;:]+$/, '') + '.'); };
+    var norm = function (s) { return String(s || '').replace(/\s+/g, ' ').trim().toLowerCase(); };
+    (edits || []).forEach(function (e) {
+      if (!e) return;
+      var ins = endPunct(String(e.insert || e['with'] || '').trim()); if (!ins || ins === '.') return;
+      // DEDUP: if this exact sentence is already present (a prior loop added it), skip — no duplicate inserts.
+      if (norm(out).indexOf(norm(ins)) >= 0) { log.push({ purpose: e.purpose || null, strategy: e.strategy || null, mode: 'skipped-dup', words: 0, inserted: ins, replaced: null }); return; }
+      var mode = null, ok = false, removed = null;
+      var repl = String(e.replace || '').trim();
+      if (repl) { // REPLACE the WHOLE sentence containing the anchor (clean boundaries — no dangling fragments)
+        var needle = repl.length > 24 ? repl.slice(0, 24) : repl;
+        var i = out.toLowerCase().indexOf(needle.toLowerCase());
+        if (i >= 0) {
+          var s = i; while (s > 0 && !/[.!?]/.test(out[s - 1])) s--; while (s < i && /[\s"'“”‘’]/.test(out[s])) s++; // sentence start
+          var mm = out.slice(i).match(/^[\s\S]*?[.!?]["'”’]?(?=\s|$)/);              // sentence end
+          var end = mm ? i + mm[0].length : i + repl.length;
+          removed = out.slice(s, end);
+          out = out.slice(0, s).replace(/\s+$/, '') + (s > 0 ? ' ' : '') + ins + ' ' + out.slice(end).replace(/^\s+/, '');
+          mode = 'replace'; ok = true; applied++;
+        }
+      }
+      if (!ok) { // INSERT after the anchor's sentence
+        var anchor = String(e.after || '').trim();
+        if (anchor) {
+          var tail = anchor.length > 28 ? anchor.slice(-28) : anchor;
+          var raw = out.toLowerCase().indexOf(tail.toLowerCase());
+          if (raw >= 0) {
+            var at = raw + tail.length, m2 = out.slice(at).match(/^[^.!?]*[.!?]["'”’]?/);
+            if (m2) at += m2[0].length;
+            out = out.slice(0, at).replace(/\s+$/, '') + ' ' + ins + ' ' + out.slice(at).replace(/^\s+/, '');
+            mode = 'insert'; ok = true; applied++;
+          }
+        }
+      }
+      if (!ok) { out = out.replace(/\s+$/, '') + ' ' + ins; mode = 'append'; ok = true; applied++; } // last resort
+      log.push({ purpose: e.purpose || null, strategy: e.strategy || null, mode: mode, words: ins.split(/\s+/).filter(Boolean).length, inserted: ins, replaced: removed });
+    });
+    return { text: out.replace(/\s{2,}/g, ' ').replace(/\s+([.,!?])/g, '$1'), applied: applied, log: log };
+  }
+  // REPAIR via a cheap EDITOR model (Mistral Small) — NOT the author (Roman 2026-08-01: repair never returns to
+  // Grok; it is a bounded editing task). Mistral emits an edit plan grounded ONLY in the seed's world facts;
+  // Storybound patches it in, preserving Grok's voice. Returns the patched scene, or null on failure.
+  async function _repairViaMistral(prose, unmetVerdicts, seed) {
+    try {
+      seed = seed || _activeSeed();
+      var facts = (seed && seed.worldTruths) ? seed.worldTruths.slice(0, 10) : [];
+      var needs = (unmetVerdicts || []).map(function (v) { return '- ' + v.knowledge; }).join('\n');
+      var sys = 'You are a precise line editor, NOT an author. A finished scene fails to communicate a few things to a first-time reader. Fix ONLY those gaps with the SMALLEST possible change. ' +
+        'PLACEMENT FIRST, WORDING SECOND. For each gap, first find the EARLIEST natural moment in the scene where a reader could infer this belief — an existing beat that already invites it (e.g. when the elder asks the narrator to read the youth, THAT is where "the narrator is the guide" belongs; an explanation dropped after the climax is technically correct but dramatically wrong). Choose that anchor, THEN write the one sentence that belongs there. Never place a belief wherever is convenient. ' +
+        'STRONGLY PREFER REPLACING an existing decorative/vague sentence (one that sounds pretty but tells the reader little) with one that communicates — this keeps the scene the same length and removes filler. Only INSERT a new sentence if no weak sentence is suitable. ' +
+        'Each change is ONE sentence, <= 25 words. PREFER a single sentence that satisfies MULTIPLE gaps at once — e.g. "Families hired First Favored because a careless first wish could twist before anyone recognized the danger" teaches WHAT they are, WHY they are present, and WHY it matters, all at once. ' +
+        'Use ONLY the established facts provided; invent no lore. Choose the delivery that fits the gap: elder dialogue / Julian dialogue / narrator observation / internal thought / crowd reaction. ' +
+        'Return ONLY a JSON array: [{"purpose":"<which gap(s) this fixes>","strategy":"elder dialogue|julian dialogue|narrator observation|internal thought|crowd reaction","replace":"<exact weak sentence to overwrite, or omit if inserting>","after":"<if inserting: exact 6-12 word quote to insert after>","insert":"<the new sentence>"}]. No commentary, no code fences.';
+      var usr = 'ESTABLISHED FACTS (use only these — do not invent):\n' + facts.map(function (f) { return '• ' + f; }).join('\n') +
+        '\n\nWHAT THE READER STILL DOES NOT UNDERSTAND (fix these, nothing else):\n' + needs +
+        '\n\nSCENE:\n' + prose;
+      // Mistral routes through /api/mistral-proxy (NOT /api/proxy, which only accepts Grok roles); no `role` field.
+      var res = await fetch('/api/mistral-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'mistral-small-latest', temperature: 0.2, max_tokens: 600, messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }] }) });
+      if (!res.ok) { try { console.warn('[CONTRACT:REPAIR] mistral HTTP ' + res.status); } catch (_) {} return null; }
+      var data = await res.json();
+      var raw = (data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) || (data && data.content) || '';
+      raw = String(raw).replace(/```json?/gi, '').replace(/```/g, '').trim();
+      var edits = null; try { edits = JSON.parse(raw); } catch (_) { var mm = raw.match(/\[[\s\S]*\]/); if (mm) { try { edits = JSON.parse(mm[0]); } catch (_2) {} } }
+      if (!Array.isArray(edits) || !edits.length) { try { console.warn('[CONTRACT:REPAIR] no parseable edits'); } catch (_) {} return null; }
+      var ap = _applyEditPlan(prose, edits);
+      try { console.log('[CONTRACT:REPAIR] mistral proposed ' + edits.length + ' edit(s), applied ' + ap.applied + ' [' + ap.log.map(function (l) { return (l.strategy || '?') + '/' + l.mode; }).join(', ') + ']'); } catch (_) {}
+      return ap.applied ? { text: ap.text, plan: ap.log } : null;
+    } catch (e) { try { console.warn('[CONTRACT:REPAIR] error: ' + (e && e.message)); } catch (_) {} return null; }
+  }
+  // SEMANTIC CHECKSUM (Roman 2026-08-01): every post-author stage must PRESERVE the reader-facts it received —
+  // an editor changes EXPRESSION, never facts. When window.__contractStageAudit is on, log which CRITICAL contract
+  // facts survive after each cascade pass, pinpointing any stage acting as a hidden second author (deleting meaning).
+  // PROVENANCE TRACKER (Roman 2026-08-01), not just a detector. Records per belief: present? + its SUPPORT SPAN +
+  // its WORD-POSITION at each stage. Across stages this distinguishes the four ways a belief can leave the
+  // published scene: (1) DELETION (present→absent, span gone) · (2) REPLACEMENT (still present but span rewritten)
+  // · (3) MOVED (present, position jumped — NOT a loss) · (4) UNSTABLE ANCHOR (the host paragraph was rewritten,
+  // taking the insert with it). "Where is the belief" matters as much as "is it present".
+  function _contractStageCheck(label, text) {
+    try {
+      if (typeof window === 'undefined' || !window.__contractStageAudit) return;
+      var c = _deriveReaderContract(); if (!c) return;
+      var clean = String(text || '').replace(/<[^>]+>/g, ' ');
+      var wordsOf = function (s) { return String(s || '').split(/\s+/).filter(Boolean).length; };
+      var totalW = wordsOf(clean);
+      var v = _verifySceneContract(clean, c) || [];
+      var crit = v.filter(function (x) { return x.priority === 'CRITICAL'; });
+      var prov = crit.map(function (x) {
+        var pos = null;
+        if (x.pass && x.sentence) { var idx = clean.toLowerCase().indexOf(String(x.sentence).slice(0, 24).toLowerCase()); if (idx >= 0) pos = wordsOf(clean.slice(0, idx)); }
+        return { id: x.id, present: !!x.pass, evidence: x.pass ? (x.sentence || null) : null, pos: pos };
+      });
+      var shown = prov.filter(function (p) { return p.present; }).map(function (p) { return p.id + '@' + (p.pos != null ? p.pos + 'w' : '?'); });
+      console.log('[STAGE-CHECKSUM] ' + label + ': CRITICAL ' + prov.filter(function (p) { return p.present; }).length + '/' + crit.length + ' [' + shown.join(', ') + '] · ' + totalW + 'w');
+      (window.__stageChecksums = window.__stageChecksums || []).push({ label: label, words: totalW, beliefs: prov });
+    } catch (_) {}
+  }
+  // BELIEF LIFECYCLE ANALYZER (Roman 2026-08-01) — turns the per-stage provenance snapshots into a LIFECYCLE per
+  // belief and classifies its final_state into exactly ONE bucket. Success = REDUCED UNCERTAINTY, not "found the
+  // culprit". The UNKNOWN bucket is load-bearing: a belief present at the last AUDITED stage but gone by PUBLISHED
+  // proves a transformation stage exists OUTSIDE the instrumented pipeline (reality gets to invent a 6th bucket).
+  function _analyzeBeliefLifecycle(snapshots, publishedProse) {
+    try {
+      snapshots = snapshots || (typeof window !== 'undefined' && window.__stageChecksums) || [];
+      if (!snapshots.length) return null;
+      var wOf = function (s) { return String(s || '').split(/\s+/).filter(Boolean).length; };
+      // contract_source: WHY each belief exists (which contract obligation + priority) — closes the provenance chain
+      var _rc = _deriveReaderContract(), _oblig = {};
+      if (_rc && _rc.obligations) _rc.obligations.forEach(function (o) { _oblig[o.id] = { contract: 'Reader Contract (Scene ' + (((typeof window !== 'undefined' && window.state && window.state.turnCount) || 0) + 1) + ')', knowledge: o.knowledge, priority: o.priority }; });
+      var stages = snapshots.slice();
+      if (publishedProse != null) { // append PUBLISHED so loss OUTSIDE the audited passes surfaces as UNKNOWN
+        var c = _rc;
+        if (c) {
+          var clean = String(publishedProse).replace(/<[^>]+>/g, ' ');
+          var v = _verifySceneContract(clean, c) || [];
+          stages.push({ label: 'PUBLISHED', words: wOf(clean), beliefs: v.filter(function (x) { return x.priority === 'CRITICAL'; }).map(function (x) { var pos = null; if (x.pass && x.sentence) { var i = clean.toLowerCase().indexOf(String(x.sentence).slice(0, 24).toLowerCase()); if (i >= 0) pos = wOf(clean.slice(0, i)); } return { id: x.id, present: !!x.pass, evidence: x.pass ? (x.sentence || null) : null, pos: pos }; }) });
+        }
+      }
+      var ids = {}; stages.forEach(function (s) { (s.beliefs || []).forEach(function (b) { ids[b.id] = 1; }); });
+      var beliefs = Object.keys(ids).map(function (id) {
+        var seq = stages.map(function (s) { var b = (s.beliefs || []).find(function (x) { return x.id === id; }); return { stage: s.label, words: s.words, present: !!(b && b.present), evidence: b && b.evidence, pos: b && b.pos }; });
+        var firstIdx = seq.findIndex(function (x) { return x.present; });
+        var lastIdx = -1; seq.forEach(function (x, i) { if (x.present) lastIdx = i; });
+        var finalPresent = seq[seq.length - 1].present, state, note = '';
+        if (firstIdx < 0) { state = 'NEVER_INSERTED'; }
+        else if (finalPresent) {
+          var evChanged = false, lastEv = null;
+          seq.forEach(function (x) { if (x.present) { if (lastEv != null && x.evidence && String(lastEv).slice(0, 20) !== String(x.evidence).slice(0, 20)) evChanged = true; lastEv = x.evidence; } });
+          state = evChanged ? 'SURVIVED_REPLACED' : 'SURVIVED';
+        } else {
+          var loss = seq[lastIdx + 1], wB = seq[lastIdx].words, wA = loss ? loss.words : wB;
+          var bigRewrite = wB && Math.abs(wA - wB) > 0.15 * wB;
+          if (loss && loss.stage === 'PUBLISHED') { state = 'UNKNOWN'; note = 'present at last audited stage (' + seq[lastIdx].stage + ') but gone by PUBLISHED — an UNAUDITED transformation stage exists'; }
+          else { state = bigRewrite ? 'ANCHOR_LOST' : 'DELETED'; note = 'lost at "' + (loss ? loss.stage : '?') + '" (words ' + wB + '→' + wA + (bigRewrite ? ', host paragraph rewritten' : ', surrounding text stable') + ')'; }
+        }
+        return { id: id, required_by: _oblig[id] || null, final_state: state, introduced_by: firstIdx >= 0 ? seq[firstIdx].stage : null, last_seen: lastIdx >= 0 ? seq[lastIdx].stage : null, note: note, trail: seq.map(function (x) { return x.stage + (x.present ? ('✓@' + (x.pos != null ? x.pos : '?')) : '✗'); }) };
+      });
+      var buckets = {}; beliefs.forEach(function (b) { buckets[b.final_state] = (buckets[b.final_state] || 0) + 1; });
+      return { stages: stages.map(function (s) { return s.label; }), buckets: buckets, beliefs: beliefs };
+    } catch (_) { return null; }
+  }
+  // OBLIGATION GUARD (Roman 2026-08-01) — enforcement of the semantic-preservation contract. Wrap any mutating
+  // editorial pass: if the pass DROPS a CRITICAL Reader-Contract belief the input satisfied, it exceeded its
+  // authority (an editor may change expression, never delete reader knowledge) → REVERT to the input, log the diff.
+  // Preserves KNOWLEDGE (reader-state), not sentences — the pass is free to rewrite/merge/shorten wording.
+  function _preserveObligations(label, before, after) {
+    try {
+      if (typeof window !== 'undefined' && window.__disableSceneContract) return after;
+      if (typeof after !== 'string' || !after) return after;
+      var c = _deriveReaderContract(); if (!c) return after;
+      var strip = function (t) { return String(t || '').replace(/<[^>]+>/g, ' '); };
+      var vb = _verifySceneContract(strip(before), c) || [], va = _verifySceneContract(strip(after), c) || [];
+      var satB = {}; vb.forEach(function (x) { if (x.pass && x.priority === 'CRITICAL') satB[x.id] = 1; });
+      var lost = va.filter(function (x) { return x.priority === 'CRITICAL' && !x.pass && satB[x.id]; }).map(function (x) { return x.id; });
+      if (lost.length) {
+        try { console.warn('[OBLIGATION-GUARD] ' + label + ' DROPPED CRITICAL [' + lost.join(',') + '] → reverted (an editor may not delete reader-facts)'); } catch (_) {}
+        try { (window.__obligationGuardLog = window.__obligationGuardLog || []).push({ pass: label, dropped: lost }); } catch (_) {}
+        return before; // the pass violated its authority; keep the input
+      }
+      return after;
+    } catch (_) { return after; }
+  }
+  try { window._deriveReaderContract = _deriveReaderContract; window._verifySceneContract = _verifySceneContract; window._contractToAuthorInstruction = _contractToAuthorInstruction; window._contractLoopDecision = _contractLoopDecision; window._advanceReaderModel = _advanceReaderModel; window._contractCompletionDirective = _contractCompletionDirective; window._runSceneContractLoop = _runSceneContractLoop; window._repairViaMistral = _repairViaMistral; window._applyEditPlan = _applyEditPlan; window._contractStageCheck = _contractStageCheck; window._preserveObligations = _preserveObligations; window._analyzeBeliefLifecycle = _analyzeBeliefLifecycle; } catch (_) {}
 
   /**
    * Launch the starter story — sets up picks, generates Scene 1, transitions to game.
@@ -133210,7 +133635,7 @@ ROLE SEPARATION: Taboo defines what is dangerous (constant per world). \u201CAlm
             state._fantasyRegionOverrideApplied = true;
             state._fantasyRegionOverrideType = _ovType;
             state._regionSource = (_ovType && _ovType.indexOf('custom') === 0) ? 'custom_text' : 'ancestry';
-            if (_ovLock && _ovSpecies) { state._playerSpecies = _ovSpecies; state._identityLock = true; state._speciesSource = 'ancestry_explicit'; }
+            if (_ovLock && _ovSpecies) { _resolveCanonicalPCSpecies({ ancestrySpecies: _ovSpecies }); } // Canon IR single owner
             try { console.log('[FANTASY_CORE] Pre-gen override → region:', _ovRegion, '· species:', _ovSpecies || '(none)', '· type:', _ovType); } catch (_) {}
           }
         }
@@ -200913,12 +201338,14 @@ No text, no watermark, no UI elements, share-ready.`;
     try {
       var t = String(sceneText || '').toLowerCase();
       var region = String((typeof state !== 'undefined' && state && state.fantasyRegion) || '').toLowerCase();
-      var relevant = /thornwild/.test(region) || /\bthornwild\b|the cursed north|first curse|becoming field|the cursed land|dragon.?scourge/.test(t);
+      var relevant = /thornwild/.test(region) || (typeof state !== 'undefined' && state && state._thornwildPath) || /\bthornwild\b|the cursed north|first curse|becoming field|the cursed land|dragon.?scourge/.test(t);
       if (!relevant) return '';
       return '\n═══ THE THORNWILD — THE FIRST CURSE (canonical Fatelands MYTH; the great exemplar of "the effect is not the wish", and Wish Archaeology\'s one legendary triumph) ═══\n' +
-        'WHAT EVERYONE BELIEVES — AND HISTORY ITSELF IS WRONG (write the world as if this is TRUE; it is what every character, every book, every scholar KNOWS): the Thornwild is cursed because its people committed an unspeakable crime against a powerful wish-witch, and with her dying breath she cursed them in REVENGE — the forests darkened, the people turned to monsters. Every history says so; for millennia thaumaturges have tried to reconstruct HER vengeance-wish. EVERY unraveling has failed.\n' +
-        'THE HIDDEN TRUTH (AUTHOR-CANON — hold it; it is EARNED slowly through a wish-archaeology arc, NEVER stated flat): there was no vengeance-wish. At the burning, the High Inquisitor proclaimed what he believed a righteous benediction — "May all monsters be thus revealed among us" — and the crowd of ~13,000, as congregations do, REPEATED it back: one sentence, thousands of voices, one moment (a true MASS INVOCATION, not merely a shared feeling — that repetition is what made it ONE wish). They meant to expose HER. But as she burned — she never confessed; a child screamed for its mother; someone let a torch fall — their certainty collapsed into SELF-recognition: "What have we become? What kind of monster am I?" The spoken words never changed; the MEANING did, and at the instant Fate accepted the invocation, all ~13,000 were thinking of THEMSELVES (Fate grants MEANING, not literal wording). The dying wish-witch — of rare Composite skill — recognized what was happening and, with her last breath, performed the greatest known act of COMPOSITE WISHWORK: not vengeance but PRESERVATION — she BOUND the already-spoken communal wish into ONE before its 13,000 identical invocations could disperse into separate acts of Fate. No counter-curse; no punishment chosen.\n' +
-        'FATE ANSWERED EXACTLY WHAT WAS ASKED — "reveal the monsters among us": not by exposing hidden demons but by transforming each participant into the OUTWARD FORM of the monster they had become within — which IS the Becoming Field (the deepest denied flaw made flesh; the whole Thornwild condition begins HERE). And because the wish was aimed at "among US", Fate took the COMMUNITY as its subject — which is why the curse is HEREDITARY and REGIONAL: it fell on the people, their DESCENDANTS, and the LAND that held their shared guilt. The Thornwild is not haunted because a witch cursed it — it is haunted because an entire people, in one instant of catastrophic moral clarity, unknowingly asked Fate to show them what they truly were.\n' +
+        // ORIGIN NARRATIVE — single-sourced from FATELANDS_THORNWILD_ORIGIN (15335). This directive
+        // formerly hand-wrote its own drift-prone copy of the surface belief + hidden truth + fate-answered;
+        // it now RENDERS the canonical const (owner) and keeps only its unique reveal-discipline + extended myth.
+        'REVEAL DISCIPLINE (two-layer): in the WORLD, write the surface belief as TRUE — every character, every book, every scholar KNOWS the Thornwild was cursed in REVENGE by a wronged wish-witch who with her dying breath darkened the forests and turned the people to monsters; for a thousand years thaumaturges have tried to reconstruct HER vengeance-wish and EVERY unraveling has FAILED (that failure is the whole point). The HIDDEN TRUTH below is AUTHOR-CANON — hold it; it is EARNED slowly through a wish-archaeology arc, NEVER stated flat. The canonical origin (single source of truth):\n' +
+        FATELANDS_THORNWILD_ORIGIN + '\n' +
         'WHY EVERY UNRAVELING FAILED — THE WRONG COMPONENT (the wish-archaeology breakthrough): the curse has FOUR parts — INVOCATION (the Inquisitor\'s proclamation) · INTENT (13,000 simultaneous acts of self-condemnation) · BINDER (the dying wish-witch) · JUDGE (Fate). For a thousand years everyone tried to reconstruct the BINDER — the witch\'s supposed wish, a wish that NEVER EXISTED. The key was always the INVOCATION and the crowd who echoed it. (This is the field\'s Linear-B / Rosetta Stone: afterward every Wish Archaeologist learns to ask FIRST "are we even looking for the right COMPONENT?")\n' +
         'HOW IT IS DISCOVERED (HARD — hidden in plain sight; history PRESERVED the truth, but everyone asked the wrong question): the breakthrough must NOT come from the witch\'s diary or any grand revelation. It comes from an ORDINARY WITNESS\'S JOURNAL — found somewhere mundane (beneath a ruined monastery, sealed in a watchtower wall, locked in a reliquary the Church deemed heretical). The journal barely mentions the witch; it records the Inquisitor\'s words only IN PASSING, as an unremarkable detail a reader might skim right past. It NEVER announces its importance (never "the Inquisitor made the wish"). The protagonist notices ONLY because the story has taught them that INVOCATIONS MATTER — they, and the reader, must ASSEMBLE the structure themselves. MODEL THE ARTIFACT (an eyewitness VOICE, never an explanation): "The witch never cried for mercy. I remember only the silence after the Inquisitor\'s last words. \'May all monsters be thus revealed among us,\' he said. Then I looked around and saw men I had known since childhood staring into the fire as though they feared it reflected their own faces. I have never seen such horror."\n' +
         'AND EVEN THEN IT IS NOT UNDONE: it is a HISTORICAL SINGULARITY, unrepeatable (thousands of the same genuine emotion, the same invocation, the same moment, a master binder present — you cannot gather 13,000 volunteers and stage it). Knowing the truth only reveals WHY every attempt failed; to release it one must persuade Fate to unbind a bargain a whole people made because, for one true instant, they believed they DESERVED to become monsters — thirteen thousand hearts at once. Whether that is even possible remains unknown.\n' +
@@ -234464,15 +234891,7 @@ Generate the synopsis now.` }
           // DECLARED SEED PC SPECIES is authoritative (Roman 2026-07-31): honor picks.pcSpecies BEFORE the
           // pre-gen region-force so a seeded cast (First Sacrifice → First Favored) isn't out-raced into a
           // random region species (observed PC='Wilder', which pulled the whole scene toward Thornwild).
-          if (state.picks.pcSpecies && !state._playerSpecies && !state._identityLock) {
-            state._playerSpecies = state.picks.pcSpecies; state._identityLock = true; state._speciesSource = 'declared_seed';
-            try { console.log('[SPECIES:PREGEN] declared PC species:', state.picks.pcSpecies); } catch (_) {}
-          }
-          if (!state._playerSpecies && !state._identityLock && typeof _resolveRegionalSpecies === 'function') {
-            var _fk = _resolveRegionKey(state.fantasyRegion || '');
-            var _fsp = _resolveRegionalSpecies(_fk);
-            if (_fsp) { state._playerSpecies = _fsp; state._identityLock = true; state._speciesSource = 'region_forced'; try { console.log('[SPECIES:PREGEN] regional PC species forced pre-Scene-1:', _fsp); } catch (_) {} }
-          }
+          _resolveCanonicalPCSpecies(); // Canon IR single owner (declared seed > region default); inline copy deleted
           if (typeof _resolveLISpecies === 'function') { _resolveLISpecies(); try { console.log('[SPECIES:PREGEN] LI species resolved pre-Scene-1:', state._liSpecies, '· source=' + state._liSpeciesSource); } catch (_) {} }
         }
       }
@@ -236395,7 +236814,7 @@ LOVE INTEREST POV — MANDATORY OPENER:
     //   - Fatelands cognitive memory (Phase 2): Fantasy world only
     //   - Chorus discourse (Glass House voice layer):      glass_house subtype
     //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-    const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+    const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
       // WISH LAW AT THE OPENING (Roman 2026-07-30): the opening builder previously LACKED the wish
       // core/adjudication that the two per-turn builders carry — so a binding-sacrifice OPENING was told
       // "sacrifice-magic exists, do not name the law" with NO law supplied, forcing the author to
@@ -245969,6 +246388,16 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             try { console.log('[SCENE1:LENGTH-GUIDANCE] appended (' + (_r ? _r.minWords + '-' + _r.maxWords + 'w' : '?') + ', ' + _s1Pacing + ' framing)'); } catch (_) {}
           }
         } catch (_s1lgErr) {}
+        // SCENE-CONTRACT completion condition (Roman 2026-07-31) — front-load the reader-contract into the
+        // initial literary pass so "done" = obligations satisfied, not the incident landing. Seeded stories only.
+        var _s1ContractCond = '';
+        try {
+          if (!(typeof window !== 'undefined' && window.__disableSceneContract) && typeof _deriveReaderContract === 'function') {
+            var _s1cc = _deriveReaderContract();
+            if (_s1cc && typeof _contractCompletionDirective === 'function') _s1ContractCond = _contractCompletionDirective(_s1cc);
+            if (_s1ContractCond) { try { console.log('[CONTRACT:COND] completion condition front-loaded (' + (_s1cc.obligations || []).filter(function (o) { return o.priority !== 'OPTIONAL'; }).length + ' must-satisfy obligations)'); } catch (_) {} }
+          }
+        } catch (_s1ccErr) {}
         let text;
         // Dead Scene-1 Grok-candidate call-site REMOVED 2026-07-13 (#7); text stays undefined so
         // the lite / hot-fast / heavy branch chain below runs exactly as in default-OFF production.
@@ -245990,12 +246419,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             try { console.log('[HOTFAST:ENABLED] short hot-crisis Scene-1 path'); } catch (_) {}
             text = await callChat([
                 {role:'system', content: state.sysPrompt},
-                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + (typeof _buildHotFastDirective === 'function' ? _buildHotFastDirective() : '') + _buildPerTurnCharMemory()}
+                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + (typeof _buildHotFastDirective === 'function' ? _buildHotFastDirective() : '') + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor()}
             ], 0.7, { max_tokens: 700 });
         } else if (typeof text === 'undefined') {
             text = await callChat([
                 {role:'system', content: state.sysPrompt},
-                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + _s1LenGuide + _buildPerTurnCharMemory()}
+                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + _s1LenGuide + _s1ContractCond + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor()}
             ], 0.7, { max_tokens: 2400 });
         }
         // STATE-CHANGE MARKER instrumentation + strip (Roman 2026-07-24): did the renderer stage the
@@ -246049,6 +246478,29 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
         // edit-in-place input, and the rendered prose. Title/synopsis/characters
         // come from separate pipelines in this path, so these are pure leak.
         if (typeof _stripLeadingSceneHeader === 'function') text = _stripLeadingSceneHeader(text);
+
+        // ════ SCENE CONTRACT CONTINUE-LOOP (Roman 2026-07-31, Stage 2) — runs PRE-CASCADE ════
+        // Completion = satisfying the reader-contract, not landing the incident. Seeded stories only
+        // (contract null → no-op). Append-only continuations target ONLY unmet obligations; the author
+        // sees a natural continuation instruction, never "failed". Reader-Model ADVANCE is deferred to
+        // POST-PUBLISH (constraint #7) so the editor can't leave the reader "knowing" a trimmed beat.
+        try {
+          if (!(typeof window !== 'undefined' && window.__disableSceneContract) && (state.turnCount || 0) === 0 && typeof _deriveReaderContract === 'function' && typeof _runSceneContractLoop === 'function' && typeof text === 'string' && text.length > 60) {
+            var _sceneContract = _deriveReaderContract();
+            if (_sceneContract && _sceneContract.obligations && _sceneContract.obligations.length) {
+              // REPAIR = a cheap editor (Mistral) patching an edit plan into Grok's prose — never a 2nd Grok call.
+              var _contractRepair = function (sceneNow, unmet) { return _repairViaMistral(sceneNow, unmet, _activeSeed()); };
+              var _draftText = text, _beforeLen = text.length;
+              var _clr = await _runSceneContractLoop(text, _sceneContract, _contractRepair, { maxLoops: 3 });
+              if (_clr && typeof _clr.text === 'string' && _clr.text.length >= Math.floor(_beforeLen * 0.6)) {
+                text = _clr.text;
+                try { window.state._contractDraftText = _draftText; window.state._contractRepairedText = _clr.text; window.state._lastSceneContractVerdicts = _clr.verdicts; window.state._lastSceneContractEcon = _clr.economics; window.state._lastSceneContractResult = { criticalRemaining: _clr.criticalRemaining, criticalTotal: _clr.criticalTotal, grewChars: _clr.text.length - _beforeLen, addedWords: _clr.totalAddedWords, loops: (_clr.economics || []).length }; } catch (_) {}
+                try { console.log('[CONTRACT:DONE] CRITICAL ' + (_clr.criticalTotal - _clr.criticalRemaining) + '/' + _clr.criticalTotal + ' satisfied · +' + (_clr.text.length - _beforeLen) + 'c across ' + (_clr.economics || []).length + ' continuation(s)'); } catch (_) {}
+                _contractStageCheck('post-repair (baseline)', text);
+              }
+            }
+          }
+        } catch (_contractLoopErr) { try { console.warn('[CONTRACT] loop error: ' + (_contractLoopErr && _contractLoopErr.message)); } catch (_) {} }
 
         // ═══════════════════════════════════════════════════════════════════
         // PARTICIPATORY SCENE 1 HARD GATE — 2-regen shared budget + fallback
@@ -247290,6 +247742,7 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           // LLM dialogue reflow (Haiku) — splits fused-speaker quotes; guarded + regex fallback.
           if (typeof _reflowSceneDialogueLLM === 'function') text = await _reflowSceneDialogueLLM(text);
         } catch (_eF) { try { console.warn('[SCENE1-FRAME] enforce threw:', _eF && _eF.message); } catch (_) {} }
+        _contractStageCheck('after POV/Fate/intimacy/vocab/reflow cluster', text);
 
         // ============================================================
         // 4TH PERSON ENVIRONMENTAL POV VALIDATION (Scene 1)
@@ -247469,6 +247922,7 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           // orbits her". Self-gates off for male LIs (only one of the two
           // repairs ever fires per Scene 1).
           if ((!state || !state.turnCount) && !_liAbsentFromScene1(state)) { try { text = await _repairLIRelationalValue(text); } catch (_lvr) {} }
+          _contractStageCheck('after LI-repairs (near-final)', text);
           // HAIKU REPAIR (Roman 2026-06-07): regens were removed because they
           // re-rolled the whole scene into mechanical garbage; the surgical Haiku
           // line-editor (_targetedSceneEdit) instead fixes ONLY the broken part.
@@ -247571,7 +248025,7 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           if ((!state || !state.turnCount) && !(state && state._openingTemperature === 'HOT_CRISIS')) { try { text = await _repairPCPicturability(text); } catch (_pcr) {} }
           else if (state && state._openingTemperature === 'HOT_CRISIS') { try { console.log('[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump'); } catch (_) {} }
           try { text = await _repairInterlocutorPicturability(text); } catch (_ir1) {} // on-page NPC face net (Roman 2026-06-09)
-          try { text = await _repairCalcifiedMoves(text); } catch (_cmr1) {} // calcified-move enforcement (Roman 2026-06-10)
+          try { text = _preserveObligations('de-calc', text, await _repairCalcifiedMoves(text)); } catch (_cmr1) {} // calcified-move enforcement (Roman 2026-06-10)
           try { if (typeof _repairHotOpening === 'function') text = await _repairHotOpening(text); } catch (_hor1) { try { console.warn('[HOT-RENDER:CALL-ERR] ' + (_hor1 && _hor1.message)); } catch (_) {} } // HOT-render opening repair (R4 #1, 2026-06-24): catches HOT_CRISIS→COLD render
           try { if (typeof _repairBodyBibleDump === 'function') text = await _repairBodyBibleDump(text); } catch (_bdr1) {} // body-bible de-cluster repair (2026-06-24): fires only when an appearance cluster (>=4 traits/40w) is present
           try { if (typeof _logScene1CausalReading === 'function') _logScene1CausalReading(text); } catch (_s1c1) {} // causal-opening reading (telemetry-only; after repair so it scores the shipped scene)
@@ -247588,17 +248042,18 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
               }
             }
           } catch (_hfp1) {}
-          try { if (typeof window._applyPerceptionLens === 'function') text = await window._applyPerceptionLens(text); } catch (_lx1) {} // perception-lens editorial pass (Roman 2026-06-19)
+          try { if (typeof window._applyPerceptionLens === 'function') text = _preserveObligations('perception-lens', text, await window._applyPerceptionLens(text)); } catch (_lx1) {} // perception-lens editorial pass (Roman 2026-06-19)
           try { if (state.fateMode === 'famous_fate' && typeof _famousFateContractCheck === 'function') text = await _famousFateContractCheck(text); } catch (_ffcc1) {} // Famous Fate character-contract check + surgical repair (2026-06-28)
           // EDITORIAL BUDGET (Roman 2026-06-20): premium scenes (opening/tempt/climax/cliffhanger) earn a
           // STRONGER repair pass — an extra de-calc sweep AFTER the lens (catches lens-introduced + residual
           // calcification a single pass misses). Drift-guarded; no-ops on normal scenes.
-          try { if (typeof window._editorialBudget === 'function' && window._editorialBudget().repair === 'strong' && typeof _repairCalcifiedMoves === 'function') { console.log('[EDITORIAL:REPAIR] premium → extra de-calc sweep'); text = await _repairCalcifiedMoves(text); } } catch (_psr1) {}
+          try { if (typeof window._editorialBudget === 'function' && window._editorialBudget().repair === 'strong' && typeof _repairCalcifiedMoves === 'function') { console.log('[EDITORIAL:REPAIR] premium → extra de-calc sweep'); text = _preserveObligations('de-calc-premium', text, await _repairCalcifiedMoves(text)); } } catch (_psr1) {}
           // NON-ENGLISH LEAK REPAIR (Roman 2026-07-10): the prose author — and the English-instructed
           // editorial passes above — can leave/introduce English ambient/action sentences in a localized
           // scene. Run LAST (after every mutating pass) so it catches leaks from all of them. No-op for
           // English or when no leak is detected.
           try { if (typeof _repairNonEnglishLeak === 'function') text = await _repairNonEnglishLeak(text); } catch (_llr1) {}
+          _contractStageCheck('after picturability/perception/de-calc cluster', text);
           // FINAL CLOSER RE-ASSERT (Roman 2026-07-11): the post-gate mutators above
           // (HOT-render repair / body-dump declutter / perception lens / de-calc) run AFTER
           // the last [SCENE1-GATE:FINAL] anchor and CAN rewrite the final beat — on a SHORT
@@ -248262,6 +248717,7 @@ Return ONLY the blurb, no quotes:\n${text}`}]);
             console.log('[PROSE:LENGTH-CAP] target=' + _LEN_CAP + ' actual=' + text.length + ' pass (under cap)');
           }
         } catch (_lenErr) { try { console.warn('[PROSE:LENGTH-CAP] compress failed: ' + (_lenErr && _lenErr.message)); } catch (_) {} }
+        _contractStageCheck('after LENGTH-CAP compression', text);
 
         // ── SCENE-1 LOAD ENFORCEMENT (Roman 2026-06-13) — single crisis + cast cap ──
         // The pre-prose SCENE-1 LOAD CONTROL directive is prevention; this GUARANTEES
@@ -256795,6 +257251,30 @@ ${buildVisualContinuityDirective()}`
    * Resolve Love Interest species based on player species, region, and pairing mode.
    * Called once during species initialization. Sets state._liSpecies and state._liSpeciesSource.
    */
+  // ── SINGLE SEMANTIC OWNER of canonical PC species IDENTITY (Canon IR, Roman 2026-08-01) ──
+  // Sole authority: RESOLVE which species the PC is — precedence ancestry_explicit > declared_seed > region_default,
+  // idempotent (returns if already locked). It does NOT teach / describe / render / validate species; consumers READ
+  // state._playerSpecies. Replaces the precedence that was inlined (and duplicated) in the pre-gen block and the
+  // loupe — the two-owner drift that caused the PC='Wilder' race. Migrate each consumer to call this, then delete
+  // its inline copy (one consumer at a time). Invariant target: ONE mutation site, N read sites.
+  function _resolveCanonicalPCSpecies(opts) {
+    opts = opts || {};
+    try {
+      if (state._identityLock || state._playerSpecies) return; // already owned — idempotent
+      var seedOff = (typeof window !== 'undefined' && window.__disableSeedGrounding);
+      if (opts.ancestrySpecies) {
+        state._playerSpecies = opts.ancestrySpecies; state._identityLock = true; state._speciesSource = 'ancestry_explicit';
+        try { console.log('[SPECIES] PC = ancestry_explicit:', opts.ancestrySpecies); } catch (_) {}
+      } else if (state.picks && state.picks.pcSpecies && !seedOff) {
+        state._playerSpecies = state.picks.pcSpecies; state._identityLock = true; state._speciesSource = 'declared_seed';
+        try { console.log('[SPECIES] PC = declared_seed:', state.picks.pcSpecies); } catch (_) {}
+      } else if (typeof _resolveRegionalSpecies === 'function') {
+        var _fsp = _resolveRegionalSpecies(_resolveRegionKey(state.fantasyRegion || ''));
+        if (_fsp) { state._playerSpecies = _fsp; state._identityLock = true; state._speciesSource = 'region_forced'; try { console.log('[SPECIES] PC = region_forced:', _fsp); } catch (_) {} }
+      }
+    } catch (_) {}
+  }
+  try { window._resolveCanonicalPCSpecies = _resolveCanonicalPCSpecies; } catch (_) {}
   function _resolveLISpecies() {
     // DECLARED SEED SPECIES is authoritative (Roman 2026-07-31): a seed/starter may name the LI
     // species (First Sacrifice → First Favored). Honor it here — the single choke point both callers
@@ -259123,9 +259603,7 @@ ${buildVisualContinuityDirective()}`
 
         // ── Identity lock: explicit species from ancestry ──
         if (ancestryResult.identityLock && ancestryResult.species) {
-          state._playerSpecies = ancestryResult.species;
-          state._identityLock = true;
-          state._speciesSource = 'ancestry_explicit';
+          _resolveCanonicalPCSpecies({ ancestrySpecies: ancestryResult.species }); // Canon IR single owner
           console.log('[LOUPE] Identity LOCKED:', ancestryResult.species, '(explicit ancestry)');
         }
         console.log('[LOUPE] Ancestry → region:', ancestryKey, '(' + ancestryResult.type + ') from:', ancestryRaw);
@@ -259142,33 +259620,10 @@ ${buildVisualContinuityDirective()}`
     // species (First Sacrifice → First Favored). Honor it BEFORE the region-based fallback so the
     // author is TOLD the canonical answer instead of defaulting to Human. The VALUE lives in the
     // seed/def; nothing is hardcoded here. Inert for every existing story (nothing sets these today).
-    if (state.picks && (state.picks.pcSpecies || state.picks.liSpecies) && !(typeof window !== 'undefined' && window.__disableSeedGrounding)) {
-      if (state.picks.pcSpecies && !state._playerSpecies && !state._identityLock) {
-        state._playerSpecies = state.picks.pcSpecies;
-        state._identityLock = true;
-        state._speciesSource = 'declared_seed';
-        console.log('[LOUPE] Player species from declared seed:', state.picks.pcSpecies);
-      }
-      if (state.picks.liSpecies && !state._liSpecies) {
-        state._liSpecies = state.picks.liSpecies;
-        state._liSpeciesSource = 'declared_seed';
-        try { if (typeof _getRelationshipRisk === 'function') state._relationshipRiskLevel = _getRelationshipRisk(state._playerSpecies || 'Human', state.picks.liSpecies); } catch (_) {}
-        console.log('[LOUPE] LI species from declared seed:', state.picks.liSpecies);
-      }
-    }
+    // declared_seed (PC + LI) is owned by _resolveCanonicalPCSpecies / _resolveLISpecies below — inline copies deleted.
 
-    // ── Forced non-human casting for dominant-species regions ──
-    // Fires when: region is non-human dominant AND player has no explicit species
-    if (!state._playerSpecies && !state._identityLock) {
-      var _resolvedKey = _resolveRegionKey(state.fantasyRegion || '');
-      var _forcedSpecies = _resolveRegionalSpecies(_resolvedKey);
-      if (_forcedSpecies) {
-        state._playerSpecies = _forcedSpecies;
-        state._identityLock = true;
-        state._speciesSource = 'region_forced';
-        console.log('[LOUPE] Regional species forced:', _forcedSpecies, 'for region:', _resolvedKey);
-      }
-    }
+    // ── Canon IR single owner — declared_seed > region default (ancestry already applied above) ──
+    _resolveCanonicalPCSpecies();
 
     // ── LI species resolution — fires once after player species is established ──
     if (!state._liSpecies && state.picks?.world === 'Fantasy') {
@@ -277792,7 +278247,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
       //   - Fatelands cognitive memory (Phase 2): Fantasy world only
       //   - Chorus discourse (Glass House voice layer):      glass_house subtype
       //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-      const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+      const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
         // LIVING THINGS (anti-bestiary) + WISH-BORN CURIOSITIES (light half); Fatelands-gated + each self-gates.
         + (function () { try { if (state.picks && state.picks.world === 'Fantasy') { var _t = (state.currentCrisis || '') + ' ' + ((state.aPlot && (state.aPlot.antagonistOrAntiForce || '')) || '') + ' ' + ((state.aPlot && (state.aPlot.goal || '')) || ''); var _o = ''; if (typeof _buildFatelandsLivingThingsDirective === 'function') _o += _buildFatelandsLivingThingsDirective(_t); if (typeof _buildFatelandsWishCuriositiesDirective === 'function') _o += _buildFatelandsWishCuriositiesDirective(_t); if (typeof _buildFatelandsWishArchaeologyDirective === 'function') _o += _buildFatelandsWishArchaeologyDirective(_t); if (typeof _buildThornwildFirstCurseDirective === 'function') _o += _buildThornwildFirstCurseDirective(_t); if (typeof _buildFatelandsMysteryLadderDirective === 'function') _o += _buildFatelandsMysteryLadderDirective(_t); if (typeof _buildFatelandsWishCoreDirective === 'function') _o += _buildFatelandsWishCoreDirective(_t); if (typeof _buildFatelandsWishAdjudicationDirective === 'function') _o += _buildFatelandsWishAdjudicationDirective(_t); if (typeof _buildFatelandsCompositeDirective === 'function') _o += _buildFatelandsCompositeDirective(_t); if (typeof _buildFatelandsGrantersDirective === 'function') _o += _buildFatelandsGrantersDirective(_t); if (typeof _buildFatelandsWishFactionsDirective === 'function') _o += _buildFatelandsWishFactionsDirective(_t); if (typeof _buildFatelandsCoercionDirective === 'function') _o += _buildFatelandsCoercionDirective(_t); if (typeof _buildFatelandsFoldOntologyDirective === 'function') _o += _buildFatelandsFoldOntologyDirective(_t); if (typeof _buildFatelandsCraftParableDirective === 'function') _o += _buildFatelandsCraftParableDirective(_t); if (typeof _buildFatelandsWishLimitsDirective === 'function') _o += _buildFatelandsWishLimitsDirective(_t); if (typeof _buildFatelandsCombatDirective === 'function') _o += _buildFatelandsCombatDirective(); if (typeof _buildFatelandsWishPriceDirective === 'function' && typeof _FATELANDS_WISH_RESOLVE_RX !== 'undefined' && _FATELANDS_WISH_RESOLVE_RX.test(_t)) _o += _buildFatelandsWishPriceDirective(); if (typeof _buildFatelandsWishcraftPacingDirective === 'function') _o += _buildFatelandsWishcraftPacingDirective(); return _o; } } catch (_) {} return ''; })();
 
@@ -277963,7 +278418,7 @@ Must remain physical, not conceptual. Richness comes from specificity of interac
 
       OPENING VARIATION (MANDATORY): Each scene MUST begin with a different structure, subject, and image than the previous scene.
       ${(typeof _buildPicturabilityMandate === 'function' ? _buildPicturabilityMandate() : '')}
-      ${_turnInstructionBlock}`);
+      ${_turnInstructionBlock}${(typeof _perceivedWildfolkForAuthor === 'function' ? _perceivedWildfolkForAuthor() : '')}`);
       // CACHE FIX (Roman 2026-06-13, step 5): the trailing _CACHE_SENTINEL was REMOVED
       // here. With it, the per-turn directive tail became a 5-min-cached MIDDLE segment
       // (written at 1.25× every turn, never read because it varies) and the final
@@ -282533,7 +282988,7 @@ FATE CARD ADAPTATION (CRITICAL):
           //   - Fatelands cognitive memory (Phase 2): Fantasy world only
           //   - Chorus discourse (Glass House voice layer):      glass_house subtype
           //   - Dogma discourse (partial-adoption voice layer):  dogma subtype
-          const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
+          const _fatelandsCognitiveMemoryBlock = buildFatelandsCognitiveMemoryBlock() + buildFatelandsAnachronismGuard() + buildHistoricalAnachronismGuard() + buildChorusDiscourseDirective() + buildDogmaDiscourseDirective() + buildWorldProfanityBandDirective() + _buildLytharynScholarlyRegisterDirective() + _buildLytharynInstituteDirective() + _buildFatelandsGroundingDirective() + _buildLoreEmissionDirective() + _buildFantasySpeciesIntimacyDirective() + _becomingFieldForAuthor() + _thornwildFormsForAuthor() + buildFatelandsDeepHistoryDirective() + buildPiercingLoreDirective() + buildFatelandsSecretQuestDirective() + buildFatelandsWorldEvolutionDirective()
         // LIVING THINGS (anti-bestiary) + WISH-BORN CURIOSITIES (light half); Fatelands-gated + each self-gates.
         + (function () { try { if (state.picks && state.picks.world === 'Fantasy') { var _t = (state.currentCrisis || '') + ' ' + ((state.aPlot && (state.aPlot.antagonistOrAntiForce || '')) || '') + ' ' + ((state.aPlot && (state.aPlot.goal || '')) || ''); var _o = ''; if (typeof _buildFatelandsLivingThingsDirective === 'function') _o += _buildFatelandsLivingThingsDirective(_t); if (typeof _buildFatelandsWishCuriositiesDirective === 'function') _o += _buildFatelandsWishCuriositiesDirective(_t); if (typeof _buildFatelandsWishArchaeologyDirective === 'function') _o += _buildFatelandsWishArchaeologyDirective(_t); if (typeof _buildThornwildFirstCurseDirective === 'function') _o += _buildThornwildFirstCurseDirective(_t); if (typeof _buildFatelandsMysteryLadderDirective === 'function') _o += _buildFatelandsMysteryLadderDirective(_t); if (typeof _buildFatelandsWishCoreDirective === 'function') _o += _buildFatelandsWishCoreDirective(_t); if (typeof _buildFatelandsWishAdjudicationDirective === 'function') _o += _buildFatelandsWishAdjudicationDirective(_t); if (typeof _buildFatelandsCompositeDirective === 'function') _o += _buildFatelandsCompositeDirective(_t); if (typeof _buildFatelandsGrantersDirective === 'function') _o += _buildFatelandsGrantersDirective(_t); if (typeof _buildFatelandsWishFactionsDirective === 'function') _o += _buildFatelandsWishFactionsDirective(_t); if (typeof _buildFatelandsCoercionDirective === 'function') _o += _buildFatelandsCoercionDirective(_t); if (typeof _buildFatelandsFoldOntologyDirective === 'function') _o += _buildFatelandsFoldOntologyDirective(_t); if (typeof _buildFatelandsCraftParableDirective === 'function') _o += _buildFatelandsCraftParableDirective(_t); if (typeof _buildFatelandsWishLimitsDirective === 'function') _o += _buildFatelandsWishLimitsDirective(_t); if (typeof _buildFatelandsCombatDirective === 'function') _o += _buildFatelandsCombatDirective(); if (typeof _buildFatelandsWishPriceDirective === 'function' && typeof _FATELANDS_WISH_RESOLVE_RX !== 'undefined' && _FATELANDS_WISH_RESOLVE_RX.test(_t)) _o += _buildFatelandsWishPriceDirective(); if (typeof _buildFatelandsWishcraftPacingDirective === 'function') _o += _buildFatelandsWishcraftPacingDirective(); return _o; } } catch (_) {} return ''; })();
 
