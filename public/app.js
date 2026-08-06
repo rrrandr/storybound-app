@@ -75959,6 +75959,11 @@ Return ONLY valid JSON:
       state._ffIntersectThisScene = null;
       state._ffNewsThisScene = null;
       state._ffPlayerFledFar = false;
+      // OFF-CANON ANTAGONIST PRESSURE (Roman 2026-08-06): once the player has left canon and the
+      // pre-authored world beats run dry, the world goes slack. This engine manufactures NEW
+      // situation-tailored antagonist strikes to keep pushing the hero. State reset per story.
+      state._ffLastPressureScene = null;   // world-clock value when the last emergent beat was injected
+      state._ffEmergentBeats = [];         // descriptions of prior emergent moves (anti-repeat)
       // CANON WORLD RUNTIME (v1.6): a lightweight location model so reachability + due-ness use real
       // state instead of the crude _ffPlayerFledFar flag. Anchored from canonOpening.setting, nudged
       // by the player's movement verbs each turn.
@@ -130786,6 +130791,163 @@ If a scene begins drifting into another world's pressure model, correct it back 
   }
   try { window._ffTickWorldClock = _ffTickWorldClock; } catch (_) {}
 
+  // ── OFF-CANON ANTAGONIST PRESSURE (Roman 2026-08-06) ───────────────────────────────────────────
+  // Gap the audit found: after the player hard-diverges, _ffTickWorldClock only resolves the finite
+  // pre-authored canonBeatLedger. Once those run dry the world goes REACTIVE — nothing manufactures a
+  // new, situation-tailored antagonist strike (the "Doom crashes the vibranium surgery" beat). This
+  // generator invents ONE such beat when the world is quiet, appends it to the ledger as a
+  // world_parallel beat, and lets the EXISTING world-clock rails surface it (intersect / news). It is
+  // the same shape as a cartographer beat, so everything downstream just works.
+  // Kill switch: window._ffAntagonistPressure === false. Cadence: window._ffPressureGap (default 2).
+  // The PC's dramatic state shapes WHICH events may fire (Roman 2026-08-06):
+  //  'vulnerable' = exposed / defenseless but not yet losing → ONLY the villain strikes (seize the opening);
+  //  'losing'     = about to be defeated / beaten / captured / needs rescuing → ally/LI rescue much likelier;
+  //  'stable'     = the full event mix.
+  function _ffPcDramaticState(text) {
+    try {
+      var t = ' ' + String(text || '').toLowerCase() + ' ';
+      // LOSING / about-to-be-defeated / needs rescue — check FIRST (the dramatic peak that earns a rescue).
+      if (/\b(defeated|beaten|overwhelmed|outmatched|overpowered|on the ropes|at (his|her|their) mercy|about to (die|fall|be killed|lose)|killing blow|final blow|finishing blow|bleeding out|dying|mortally|captured|taken prisoner|in chains|pinned (down|beneath)|no way out|left for dead|near death|going down|can'?t hold|losing the fight|about to be overrun)\b/.test(t)) return 'losing';
+      // VULNERABLE / exposed / defenseless (not yet losing).
+      if (/\b(defen[cs]eless|helpless|vulnerable|exposed|strapped (down|to)|unconscious|sedated|drugged|mid-?(surgery|operation)|open (chest|wound)|unarmed|weaponless|incapacitated|paralyz|can'?t move|immobiliz|restrained|bound and|asleep|caught off guard|guard down|back turned|off balance|out cold)\b/.test(t)) return 'vulnerable';
+      return 'stable';
+    } catch (_) { return 'stable'; }
+  }
+  try { window._ffPcDramaticState = _ffPcDramaticState; } catch (_) {}
+
+  async function _ffGenerateEmergentPressureBeat(actText, diaText) {
+    try {
+      if (typeof _auditPost !== 'function') return null;
+      var ctr = state.ffContract || {}; var world = ctr.world || {};
+      var universe = (state.famousFate && (state.famousFate.source || state.famousFate.universe)) || world.name || 'this world';
+      var hero = state.protagonistName || (state.famousFate && state.famousFate.embodied) || 'the protagonist';
+      // Antagonist roster: villains from castList + hunt/war/conspiracy worldArcs, MINUS the dead/absent.
+      var dead = {}; (Array.isArray(ctr.forbiddenPresence) ? ctr.forbiddenPresence : []).forEach(function (f) { if (f && f.name) dead[String(f.name).toLowerCase()] = 1; });
+      // Full roster (villains AND allies/rivals/mentors/love), minus the dead — so betrayal/ally events
+      // have people to draw from, not just antagonist strikes.
+      var roster = (Array.isArray(ctr.castList) ? ctr.castList : [])
+        .filter(function (c) { return c && c.name && !dead[String(c.name).toLowerCase()]; })
+        .map(function (c) { return String(c.name) + (c.role ? (' [' + c.role + ']') : ''); });
+      var allies = (Array.isArray(ctr.castList) ? ctr.castList : [])
+        .filter(function (c) { return c && c.name && /(ally|friend|mentor|love|partner|companion|kin|family|lover)/i.test(String(c.role || '')) && !dead[String(c.name).toLowerCase()]; })
+        .map(function (c) { return String(c.name); });
+      var hasAlly = allies.length > 0 || (Array.isArray(state.ffStoryMemory) && state.ffStoryMemory.some(function (m) { return /(ally|friend|love|trust|rescue|partner|together|family|daughter|son)/i.test(typeof m === 'string' ? m : String((m && (m.change || m.text)) || '')); }));
+      var arcs = (Array.isArray(world.worldArcs) ? world.worldArcs : [])
+        .map(function (a) { return a && a.arc ? (String(a.arc) + (a.who ? (' — ' + a.who) : '') + (a.kind ? (' (' + a.kind + ')') : '')) : ''; }).filter(Boolean);
+      var deadList = Object.keys(dead);
+      var lastProse = '';
+      try { var sc = state.scenes; if (Array.isArray(sc) && sc.length) { var t = sc[sc.length - 1] && sc[sc.length - 1].text; lastProse = (typeof _stripHtmlForClassifier === 'function') ? _stripHtmlForClassifier(String(t || '')) : String(t || ''); } } catch (_) {}
+      lastProse = String(lastProse || '').slice(-1400);
+      var changes = (Array.isArray(state.ffStoryMemory) ? state.ffStoryMemory : []).slice(-8).map(function (m) { return typeof m === 'string' ? m : (m && (m.change || m.text) ? String(m.change || m.text) : ''); }).filter(Boolean);
+      var goal = (state.aPlot && state.aPlot.goal) || '';
+      var loc = (state.ffLocationState && state.ffLocationState.currentPlace) || '';
+      var priorMoves = (Array.isArray(state._ffEmergentBeats) ? state._ffEmergentBeats : []).slice(-4);
+      var player = (String(actText || '') + ' ' + String(diaText || '')).slice(0, 400);
+
+      // EVENT MIX (Roman 2026-08-06): antagonist strike is the backbone; betrayal / ally-or-LI surfacing /
+      // quest-giver are the occasional variety. Weights overridable via window._ffEmergentEventMix.
+      var TYPES = [
+        { key: 'antagonist_strike', w: 0.52,
+          desc: 'a proactive ANTAGONIST STRIKE — a villain or hostile faction moves AGAINST the protagonist, aimed at their current vulnerability or the very thing they just gained/built',
+          rule: 'The move MUST be an enemy actively DOING something to pressure the hero. Draw the mover from the villains in the roster. Not a mood, not a mere rumor, not friendly.',
+          mover: 'the antagonist(s) making the move' },
+        { key: 'quest_giver', w: 0.18,
+          desc: 'a QUEST-GIVER crossing the protagonist\'s path — a stranger or minor figure arrives with an urgent PLEA that opens a NEW thread (e.g. "my daughter is missing — please, help me")',
+          rule: 'It creates an OBLIGATION or hook that pulls the hero somewhere new. Desperate and sympathetic; it may LATER prove a trap, but it reads first as a genuine need. Not a villain attack.',
+          mover: 'the petitioner(s) crossing their path' },
+        { key: 'ally_surfaces', w: 0.16,
+          desc: 'an ALLY, old friend, or LOVE-INTEREST SURFACES — arrives to help, reunites (possibly a charged reunion), or re-enters the story bearing news or aid',
+          rule: 'Draw from the allies in the roster / the player\'s established relationships when possible. A welcome or complicated arrival, NOT an attack — though it may carry its own trouble.',
+          mover: 'the ally / love-interest who arrives' },
+        { key: 'betrayal', w: 0.14,
+          desc: 'a BETRAYAL — someone the protagonist has trusted (an ally, companion, or supposed friend) turns on them: a hidden agenda surfaces, they sell the hero out, or switch sides',
+          rule: 'Ground it in a KNOWN ally / relationship — the betrayer must be someone with a prior bond, and the turn should recontextualize what came before.',
+          mover: 'the betrayer (someone previously trusted)' }
+      ];
+      // Dramatic state gates the mix: vulnerable → villain only; losing → ally-rescue heavy; else full mix.
+      var dramatic = _ffPcDramaticState(lastProse + ' ' + player);
+      var stateW = (dramatic === 'vulnerable') ? { antagonist_strike: 1 }
+                 : (dramatic === 'losing') ? { ally_surfaces: 0.72, antagonist_strike: 0.28 }
+                 : null;
+      var mixW = stateW || ((window._ffEmergentEventMix && typeof window._ffEmergentEventMix === 'object') ? window._ffEmergentEventMix : null);
+      var pool = TYPES.filter(function (t) {
+        if (t.key === 'betrayal' && !hasAlly) return false;       // no established ally → nothing to betray
+        if (mixW && !(mixW[t.key] > 0)) return false;             // profile excludes types with 0/absent weight
+        return true;
+      });
+      if (!pool.length) pool = [TYPES[0]];                        // safety: antagonist strike
+      var total = 0; pool.forEach(function (t) { t._w = mixW ? (mixW[t.key] || 0) : t.w; if (!mixW && !hasAlly && t.key === 'ally_surfaces') t._w *= 0.5; total += t._w; });
+      var roll = Math.random() * (total || 1), acc = 0, T = pool[0];
+      for (var ti = 0; ti < pool.length; ti++) { acc += pool[ti]._w; if (roll <= acc) { T = pool[ti]; break; } }
+
+      var sys = 'You are the LIVING-WORLD EVENT DIRECTOR for an off-canon interactive story set in "' + universe + '". The player has left the source\'s canon plot and things have been going too smoothly — like a good comic/serial, the world must keep HAPPENING to the hero with its own momentum. Invent ONE event of the requested TYPE that lands NOW and does NOT wait for the hero to act. Aim it at the protagonist\'s CURRENT situation. Genre-savvy, specific, escalating, native to this world — never generic. Reply with ONE strict JSON object, no prose.';
+      var usr = 'EVENT TYPE TO CREATE: ' + T.desc + '.\nTYPE RULE: ' + T.rule + '\n\n'
+        + 'PROTAGONIST: ' + hero + '\n'
+        + (goal ? ('THROUGH-LINE GOAL: ' + goal + '\n') : '')
+        + (loc ? ('WHERE THEY ARE NOW: ' + loc + '\n') : '')
+        + 'KEY CHARACTERS (villains, allies, rivals — pick whoever fits this event TYPE): ' + (roster.length ? roster.join('; ') : '(the source\'s canonical cast)') + '\n'
+        + (arcs.length ? ('LARGER PRESSURES ALREADY IN MOTION: ' + arcs.join('; ') + '\n') : '')
+        + (deadList.length ? ('FORBIDDEN — these are DEAD/ABSENT in this continuity and must NOT appear as living or present: ' + deadList.join(', ') + '\n') : '')
+        + (changes.length ? ('WHAT THE PLAYER HAS CHANGED (respect these — the world reacts to the NEW reality, not canon): ' + changes.join('; ') + '\n') : '')
+        + 'PLAYER\'S LATEST ACTION: ' + player + '\n'
+        + 'RECENT SCENE (their current situation):\n' + lastProse + '\n'
+        + (priorMoves.length ? ('DO NOT REPEAT these recent world events: ' + priorMoves.join(' | ') + '\n') : '')
+        + '\nReturn {"canonBeat":"the event in one vivid sentence — WHO does WHAT, and why NOW","setting":"where it lands (put it near the protagonist so it can intersect their scene)","presentCharacters":["' + T.mover + '"],"urgency":"high|medium","triggerWindow":{"kind":"immediate|next_scene","minScene":0,"maxScene":2},"outcomeIfAbsent":"what this costs / how it lands if the protagonist does nothing"}.';
+      var r = await _auditPost({ max_tokens: 320, temperature: 0.9, messages: [{ role: 'system', content: sys }, { role: 'user', content: usr }] });
+      if (!r || !r.ok) return null;
+      var d = await r.json();
+      try { if (typeof _recordProxyTextCost === 'function') _recordProxyTextCost(d, 'gpt-4o-mini', 'audit'); } catch (_) {}
+      var m = (String((d && d.content) || '')).match(/\{[\s\S]*\}/); if (!m) return null;
+      var o = JSON.parse(m[0]); if (!o || !o.canonBeat) return null;
+      var tk = (o.triggerWindow && o.triggerWindow.kind === 'next_scene') ? 'next_scene' : 'immediate';
+      return {
+        canonBeat: String(o.canonBeat).slice(0, 400),
+        setting: String(o.setting || loc || '').slice(0, 200),
+        presentCharacters: Array.isArray(o.presentCharacters) ? o.presentCharacters.filter(Boolean).map(String).slice(0, 4) : [],
+        urgency: (o.urgency === 'medium' || o.urgency === 'low') ? o.urgency : 'high',
+        triggerWindow: { kind: tk, minScene: 0, maxScene: (o.triggerWindow && Number(o.triggerWindow.maxScene)) || 2 },
+        outcomeIfAbsent: String(o.outcomeIfAbsent || o.canonBeat || '').slice(0, 300),
+        canIntersectPlayer: true, canWaitForPlayer: (T.key === 'quest_giver'),
+        _emergentType: T.key, _dramaticState: dramatic
+      };
+    } catch (_) { return null; }
+  }
+  try { window._ffGenerateEmergentPressureBeat = _ffGenerateEmergentPressureBeat; } catch (_) {}
+
+  // Per-scene decision: is the world QUIET enough (off-canon, no canon world-beat due, cadence gap met,
+  // no emergent beat still pending) to manufacture a new antagonist strike? If so, generate + append it
+  // to the ledger so _ffTickWorldClock (run right after this) surfaces it. Awaited before the world clock.
+  async function _ffTickAntagonistPressure(actText, diaText) {
+    try {
+      if (window._ffAntagonistPressure === false) return;
+      if (state.fateMode !== 'famous_fate' || _FF_CANON_PERIOD() !== 'canon') return;
+      if (state._ffCanonDivergedAt == null) return;                 // only AFTER the player leaves canon
+      var ctr = state.ffContract; var led = ctr && ctr.canonBeatLedger;
+      if (!Array.isArray(led) || !led.length) return;
+      if (!led.some(function (b) { return b && b.momentum; })) return; // momentum-less v1 ledger → skip
+      // If a real canon world_parallel beat is already due this scene, let the clock spend it — don't pile on.
+      var due = (typeof _ffDueWorldBeats === 'function') ? _ffDueWorldBeats() : [];
+      if (due.some(function (dd) { return dd && dd.beat && String(dd.beat.momentum) === 'world_parallel' && !dd.beat._emergent; })) return;
+      var clock = state._ffWorldClock || 0;
+      var GAP = (typeof window._ffPressureGap === 'number') ? window._ffPressureGap : 2;
+      if (state._ffLastPressureScene != null && (clock - state._ffLastPressureScene) < GAP) return;
+      // Don't stack: if a prior emergent beat is still unresolved, wait for it to surface first.
+      if (!state._ffResolvedWorldBeats || typeof state._ffResolvedWorldBeats !== 'object') state._ffResolvedWorldBeats = {};
+      var pending = led.some(function (b, i) { var bi = (typeof b.beatIndex === 'number' && b.beatIndex > 0) ? b.beatIndex : (i + 1); return b && b._emergent && !state._ffResolvedWorldBeats[bi]; });
+      if (pending) return;
+      var beat = await _ffGenerateEmergentPressureBeat(actText, diaText);
+      if (!beat || !beat.canonBeat) return;
+      var maxIdx = 0; led.forEach(function (b, i) { var bi = (typeof b.beatIndex === 'number') ? b.beatIndex : (i + 1); if (bi > maxIdx) maxIdx = bi; });
+      beat.beatIndex = maxIdx + 1; beat.momentum = 'world_parallel'; beat._emergent = true; beat.nextCanonBeat = beat.beatIndex + 1;
+      led.push(beat);
+      state._ffLastPressureScene = clock;
+      if (!Array.isArray(state._ffEmergentBeats)) state._ffEmergentBeats = [];
+      state._ffEmergentBeats.push((beat._emergentType ? ('[' + beat._emergentType + '] ') : '') + String(beat.canonBeat).slice(0, 110));
+      try { console.log('[FF-PRESSURE] emergent ' + (beat._emergentType || 'event') + ' injected (pc=' + (beat._dramaticState || '?') + '): "' + String(beat.canonBeat).slice(0, 76) + '" [' + (beat.presentCharacters || []).join(', ') + '] urg=' + beat.urgency); } catch (_) {}
+    } catch (_) {}
+  }
+  try { window._ffTickAntagonistPressure = _ffTickAntagonistPressure; } catch (_) {}
+
   // READ-ONLY surfacing directive (period=canon; injected alongside the canon-beat directive on all
   // three prose paths). (i) INTERSECT: a world_parallel event walks into THIS scene, adapted to what
   // the protagonist actually did. (ii) OFF-SCREEN: the committed world state the prose must respect,
@@ -131972,8 +132134,8 @@ If a scene begins drifting into another world's pressure model, correct it back 
       // STORY MEMORY (Phase 4) — how THIS run has evolved; OVERRIDES baseline canon where they conflict
       var sm = Array.isArray(state.ffStoryMemory) ? state.ffStoryMemory.filter(Boolean) : [];
       if (sm.length) {
-        L.push('— STORY MEMORY (additive log of changes earned IN THIS STORY; an OVERLAY on top of the canon above, applied where it differs — it does NOT erase or rewrite the locked contract) —');
-        sm.forEach(function (m) { if (m && m.change) L.push('  • ' + (m.subject ? m.subject + ': ' : '') + m.change); });
+        L.push('— STORY MEMORY (additive log of changes earned IN THIS STORY; an OVERLAY on top of the canon above, applied where it differs — it does NOT erase or rewrite the locked contract). Lines marked [ESTABLISHED] are DURABLE player-set facts (an object left somewhere, a permanent state change, a standing order, a death) — they REMAIN TRUE and must be honored/paid off later; never quietly forget or revert them. —');
+        sm.forEach(function (m) { if (m && m.change) { var dk = m && typeof m === 'object' && _FF_DURABLE_KIND[String(m.kind || '').toLowerCase()]; L.push('  • ' + (dk ? '[ESTABLISHED] ' : '') + (m.subject ? m.subject + ': ' : '') + m.change); } });
       }
       L.push('LAYER ORDER (precedence): CANONICAL CONTRACT (base — facts/voice/visual/world, always true) → RELATIONSHIP OVERLAY → STORY MEMORY (this run\'s additive changes). When applying a scene, read the base, then the relationship, then this run\'s memory.');
       L.push('CONTRACT (HARD): these facts, behaviors, voice, VISUAL CANON, social realities, and world-laws are LOCKED. Never contradict them — no forgotten/dropped power, no mundane injury or defeat a power would prevent, no out-of-character voice (e.g. the NEVER-in-character list), no appearance that breaks the Visual Canon (prose description must match it; never lose recognizability), no broken world-law or assumed-truth — UNLESS the story has explicitly established an in-world reason (power suppression, a depowering arc, deliberate growth). Powers and traits persist even when unmentioned. Story Memory only ADDS; it never edits this base.');
@@ -131981,6 +132143,20 @@ If a scene begins drifting into another world's pressure model, correct it back 
     } catch (_) { return ''; }
   }
   window._buildFamousFateContractDirective = _buildFamousFateContractDirective;
+
+  // DURABLE player-established fact kinds (Roman 2026-08-06): objects placed/left, permanent state changes
+  // (incl. the PC's own body), standing orders/oaths, locations, deaths, world-facts — the things the story
+  // kept FORGETTING. These NEVER age out of ffStoryMemory; only soft relationship notes keep the recent cap.
+  var _FF_DURABLE_KIND = { state: 1, object: 1, order: 1, location: 1, death: 1, world: 1 };
+  function _ffTrimStoryMemory(arr) {
+    try {
+      var a = Array.isArray(arr) ? arr.filter(Boolean) : [];
+      var durable = a.filter(function (m) { return m && typeof m === 'object' && _FF_DURABLE_KIND[String(m.kind || '').toLowerCase()]; });
+      var soft = a.filter(function (m) { return !(m && typeof m === 'object' && _FF_DURABLE_KIND[String(m.kind || '').toLowerCase()]); });
+      return durable.slice(-40).concat(soft.slice(-14));   // durable kept in full (safety cap 40); soft capped 14
+    } catch (_) { return Array.isArray(arr) ? arr.slice(-14) : []; }
+  }
+  try { window._ffTrimStoryMemory = _ffTrimStoryMemory; } catch (_) {}
 
   // PROSE-VOICE HOMAGE (Roman 2026-06-29): FF prose emulates the canon work's
   // DEFINING author (Doyle/Fleming/Rowling/Claremont/Millar/…), NOT Storybound's
@@ -132364,8 +132540,16 @@ If a scene begins drifting into another world's pressure model, correct it back 
         + 'CONFIDENCE (0.0–1.0): for each violation, how SURE are you it is a REAL contradiction (not a defensible authorial choice)? Be honest and calibrated — use high (>0.9) only for unmistakable breaks; use middling values when it "might be" a violation. Borderline calls get a low number, not omission.\n'
         + 'ALSO REPORT (these are NOT violations — just observations):\n'
         + '• newCanonical: names of any CANONICAL characters of this world who APPEAR in the scene but are NOT already covered by the contract/known list below (so a contract can be added for them). Canonical only — omit original/walk-on characters. EXCLUDE anyone on the CANON STATUS dead/absent list — a dead figure on-stage is a canon_status VIOLATION, never a character to add.\n'
-        + '• memoryUpdates: only if the scene produced a MATERIAL, lasting change to a relationship or to a character\'s state that future scenes should remember (e.g. "Sabretooth now grudgingly respects Logan", "they are now lovers", "X learned Logan\'s secret"). Conservative — most scenes have none.\n'
-        + 'Output ONLY JSON: {"violations":[{"type":"fact|world|naming|appearance|voice|canon_status|vow_break|vow_aftermath","tier":"hard|soft","confidence":0.0,"quote":"<short EXACT span copied verbatim>","problem":"...","fix":"..."}], "newCanonical":["Name"], "memoryUpdates":[{"subject":"who/what","change":"the lasting change"}]}. (Do not emit stylistic-tier items at all.) Empty arrays when nothing applies.';
+        + '• memoryUpdates: capture EVERY durable change the PLAYER established this scene that a LATER scene must still honor — do NOT be conservative about these; they are exactly what the engine keeps FORGETTING. Give each a "kind":\n'
+        + '   - relationship — a bond shifts ("they are now lovers", "Sabretooth grudgingly respects Logan", "X learned the secret").\n'
+        + '   - state — a PERMANENT change to any character INCLUDING the protagonist ("Logan\'s adamantium skeleton is now vibranium", "she lost her right eye", "he broke his vow and used his claws").\n'
+        + '   - object — an item placed / left / hidden / taken / given / destroyed ("the sword was left buried in the cave", "he gave the amulet to the child").\n'
+        + '   - order — a STANDING ORDER / command / promise / oath the player gave someone ("the followers were told to train until his return", "he swore to come back for them").\n'
+        + '   - location — a base / camp / stronghold established or destroyed ("they fortified the old farmhouse").\n'
+        + '   - death — a death the player caused or witnessed that removes someone from play.\n'
+        + '   - world — any other world-fact the player changed from canon.\n'
+        + '   Only skip a scene that genuinely established nothing lasting. relationship/state/object/order/location/death/world.\n'
+        + 'Output ONLY JSON: {"violations":[{"type":"fact|world|naming|appearance|voice|canon_status|vow_break|vow_aftermath","tier":"hard|soft","confidence":0.0,"quote":"<short EXACT span copied verbatim>","problem":"...","fix":"..."}], "newCanonical":["Name"], "memoryUpdates":[{"subject":"who/what","change":"the lasting change","kind":"relationship|state|object|order|location|death|world"}]}. (Do not emit stylistic-tier items at all.) Empty arrays when nothing applies.';
       var knownNames = [];
       [b.character, b.loveInterest].concat(Array.isArray(b.cast) ? b.cast : []).forEach(function (c) {
         if (!c) return;
@@ -132530,15 +132714,18 @@ If a scene begins drifting into another world's pressure model, correct it back 
           if (newlyUsed.length) { state._ffUsedIconicLines = _used.concat(newlyUsed); try { console.log('[FF-CONTRACT-CHECK] iconic line(s) banked (1/story): ' + newlyUsed.map(function (t) { return '"' + t.slice(0, 40) + '"'; }).join(' / ')); } catch (_) {} }
         } catch (_eTrk) {}
       }
-      // STORY MEMORY (Phase 4) — record material in-story evolution (dedup, capped).
+      // STORY MEMORY (Phase 4) — record material in-story evolution. Durable player-facts (state/object/
+      // order/location/death/world) NEVER age out; only soft relationship notes keep the recent cap. The
+      // old flat slice(-14) silently dropped durable facts — the "forgetting" bug. (Roman 2026-08-06.)
       try {
         var mu = (parsed && Array.isArray(parsed.memoryUpdates)) ? parsed.memoryUpdates.filter(function (m) { return m && m.change; }) : [];
         if (mu.length) {
           var smem = Array.isArray(state.ffStoryMemory) ? state.ffStoryMemory : [];
-          var seenM = {}; smem.forEach(function (m) { seenM[String((m.subject || '') + '|' + m.change).toLowerCase()] = 1; });
-          mu.forEach(function (m) { var k = String((m.subject || '') + '|' + m.change).toLowerCase(); if (!seenM[k]) { smem.push({ subject: m.subject || '', change: m.change }); seenM[k] = 1; } });
-          state.ffStoryMemory = smem.slice(-14);
-          try { console.log('[FF-CONTRACT] story-memory +' + mu.length + ' (total ' + state.ffStoryMemory.length + ')'); } catch (_) {}
+          var seenM = {}; smem.forEach(function (m) { var s = (m && typeof m === 'object') ? ((m.subject || '') + '|' + m.change) : String(m); seenM[String(s).toLowerCase()] = 1; });
+          mu.forEach(function (m) { var k = String((m.subject || '') + '|' + m.change).toLowerCase(); if (!seenM[k]) { smem.push({ subject: m.subject || '', change: m.change, kind: String(m.kind || 'relationship').toLowerCase() }); seenM[k] = 1; } });
+          state.ffStoryMemory = _ffTrimStoryMemory(smem);
+          var _dn = state.ffStoryMemory.filter(function (m) { return m && typeof m === 'object' && _FF_DURABLE_KIND[String(m.kind || '').toLowerCase()]; }).length;
+          try { console.log('[FF-CONTRACT] story-memory +' + mu.length + ' (durable ' + _dn + ' / total ' + state.ffStoryMemory.length + ')'); } catch (_) {}
         }
       } catch (_eMem) {}
       // ON-DEMAND CAST (hybrid) — fire-and-forget; the new contract is live next scene.
@@ -274561,6 +274748,10 @@ FATE CARD ADAPTATION (CRITICAL):
         // LIVING WORLD — advance the world-clock AFTER the beat classification (so it sees a fresh
         // divergence). world_parallel beats the player abandoned keep resolving on their own (v1.6: on
         // their trigger windows + real reachability, not a blind 1-per-scene drip).
+        // OFF-CANON ANTAGONIST PRESSURE (Roman 2026-08-06): once off-canon and the pre-authored world
+        // beats run dry, manufacture a new situation-tailored antagonist strike and append it to the
+        // ledger BEFORE the world clock ticks, so the clock surfaces it (intersect/news) this scene.
+        try { if (typeof _ffTickAntagonistPressure === 'function') await _ffTickAntagonistPressure(act, dia); } catch (_etap) {}
         try { if (typeof _ffTickWorldClock === 'function') _ffTickWorldClock(); } catch (_etwc) {}
       }
 
@@ -281856,8 +282047,8 @@ ABSOLUTE RULES:
                       var _cvw = (st.ffContract && st.ffContract.character && st.ffContract.character.canonVow) || {};
                       if (_cvw.power) {
                         if (!Array.isArray(st.ffStoryMemory)) st.ffStoryMemory = [];
-                        st.ffStoryMemory.push({ subject: _subj, change: 'BROKE the vow held for ' + (_cvw.heldFor || 'decades') + ' and used ' + _cvw.power + ' for the FIRST time' + (_cvw.reason ? (' (' + _cvw.reason + ')') : '') + ' — IRREVERSIBLE. ' + _subj + ' is now the man who broke it: he is FALLEN, NOT restored to who he was before the vow. Every use of ' + _cvw.power + ' from here is HAUNTED — shame, sickening relief, horror at how easily it returned, the knowledge something sacred is permanently gone. NEVER casual or triumphant superhero combat; the cost rides every scene.' });
-                        st.ffStoryMemory = st.ffStoryMemory.slice(-14);
+                        st.ffStoryMemory.push({ subject: _subj, kind: 'state', change: 'BROKE the vow held for ' + (_cvw.heldFor || 'decades') + ' and used ' + _cvw.power + ' for the FIRST time' + (_cvw.reason ? (' (' + _cvw.reason + ')') : '') + ' — IRREVERSIBLE. ' + _subj + ' is now the man who broke it: he is FALLEN, NOT restored to who he was before the vow. Every use of ' + _cvw.power + ' from here is HAUNTED — shame, sickening relief, horror at how easily it returned, the knowledge something sacred is permanently gone. NEVER casual or triumphant superhero combat; the cost rides every scene.' });
+                        st.ffStoryMemory = (typeof _ffTrimStoryMemory === 'function') ? _ffTrimStoryMemory(st.ffStoryMemory) : st.ffStoryMemory.slice(-14);
                       }
                     } catch (_) {}
                     // STEP 2 — IMMEDIATE dedicated on-page release beat (instant from pre-gen). The
