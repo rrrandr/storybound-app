@@ -92544,6 +92544,83 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
     return callChat(messages, temp, opts);
   };
 
+  // EDITORIAL PASS (Roman 2026-08-05, FLAG-GATED via window._editorialPass; OFF by default). A cheap EDITOR that is
+  // a MOMENT SELECTOR, not an opening planner. The SEED owns EVENTS (what happens); the editor owns EXPRESSION
+  // (what the narration NOTICES while the fixed beat unfolds). It reads the scene's MANDATORY BEAT, reasons from the
+  // actor's SECRET HOPE (the tiny change they try to produce while doing the required thing — reassure, hide terror,
+  // hold dignity, be taken for someone who belongs), and emits ONE observation to notice INSIDE that beat — never a
+  // new/changed event, never the hope itself. Cooperates with the seed opener (agrees on the event, adds the lens).
+  // Theory lives HERE; only the concrete observation reaches the author (front-loaded on the Scene-1 user message,
+  // ~246454); only prose reaches the reader.
+  window._runEditorialPass = async function (s) {
+    try {
+      s = s || window.state || {};
+      var pc = s.pcBodyBible || {}, cr = pc.current_crisis || {}, ap = s.aPlot || {};
+      var who = s.name || s.playerName || 'the protagonist';
+      var li = s.loveInterestName || s.partnerName || '';
+      var fear = String(cr.immediate_fear || '').slice(0, 200);
+      var world = [s.world, s.flavor].filter(Boolean).join(' / ');
+      // THE MANDATORY BEAT — the fixed event the seed owns. When a seed-level opener owns Scene 1 (Fatelands
+      // wish-demo), hand the editor that STRUCTURAL beat so it stops inventing a different scene (the mis-source bug);
+      // otherwise fall back to the crisis/pressure the aPlot declares.
+      var isWishDemo = (typeof _fatelandsWishDemoActive === 'function') && _fatelandsWishDemoActive(s) && (s._openingTemperature === 'HOT_CRISIS');
+      var beat = '';
+      if (isWishDemo) {
+        beat = 'A live catastrophe strikes a crowd and ordinary means visibly fail; a DESPERATE BYSTANDER (a minor NPC invented for this scene — NOT ' + who + ', and do NOT assume it is the love interest or any named main character; you do not know who they are) reaches for Fate and speaks a BLANK-CHECK wish aloud to save someone, leaving the price unnamed ("take what you will"); the room recoils, Fate grants it, and takes a price no one would have offered. ' + who + ' can only WITNESS this — so CENTER YOUR OBSERVATION ON ' + who + ' (the one person here whose identity is fixed), never on the unknown wisher, and NEVER name the wisher.';
+      } else {
+        beat = String((cr.event || (ap.scene1Compressed && ap.scene1Compressed.pressure_sentence) || (ap.scene1Compressed && ap.scene1Compressed.pressure) || '')).slice(0, 320);
+      }
+      if (!beat) return '';
+      var editorSys = 'You are the story\'s EDITOR, not the writer. The scene\'s EVENTS are ALREADY FIXED by the story — you do NOT choose what happens, and you may not add, remove, or alter a single event. You choose ONE revealing SOCIAL MOVE — a deliberate BID — the narration should NOTICE while the fixed beat unfolds. Do not write prose.\n\n'
+        + 'POINT OF VIEW / NARRATOR: ' + who + (world ? ' (world: ' + world + ')' : '') + '\n'
+        + 'THE MANDATORY BEAT (this WILL happen exactly; you may NOT change it): ' + beat + '\n'
+        + (fear ? 'What ' + who + ' is trying not to show: ' + fear + ' (never stated to the reader).\n' : '')
+        + '\n'
+        + 'Your job: find the ONE social BID this person makes inside this beat — just before, during, or right after the required event — WITHOUT changing the event.\n\n'
+        + 'HOW TO FIND IT — center the bid on ' + who + ' (the narrator/protagonist) OR the person whose CHOICE DRIVES this beat, but ONLY if that person is someone the STORY TURNS ON (e.g., the love interest); NEVER a bystander, a background face, or a guard/captor/functionary/crowd-member carrying out a role, even if they are the one physically acting. If the beat is done TO ' + who + ' by such a figure, center ' + who + '.\n'
+        + 'GENERATOR (a private search aid — NEVER emitted): ask what this person secretly wishes someone HERE would believe about them right now. The BID is what they DO about that wish — the move they make because they are TRYING to INFLUENCE how the room sees them (their status, belonging, competence, authority, how liked or wanted they are, their intimacy with someone here). Judge a bid by INTENT, not outcome: a bid can SUCCEED or FAIL — he insists on paying and everyone ignores him; she says "I think I know this one" and nobody notices — and a FAILED bid is often the MOST revealing; what matters is that they were TRYING to move the room, never whether the room actually moved. SCALE DOES NOT MATTER — hunt for the social MOVE, never for the SMALLEST thing. A bid can be the DOMINANT action in the scene (insisting on paying the check before anyone else reaches for a wallet; ordering for the whole table; introducing herself with a nickname nobody uses; leading with her décolletage) or physically tiny (covering the word "student" with her thumb; saying "I think I know this one" half a beat too late). People do not remember hopes; they remember BIDS — the wish stays with YOU; only the bid reaches the page.\n'
+        + 'SELECT among the bids by RECOGNITION — the test that rejects boring bids without enumerating them: which bid would make someone who has known this person for YEARS laugh and say "God — that is EXACTLY what they do"? Most bids are generic (smiling politely, introducing herself, thanking the waiter, shaking hands, volunteering first) — real bids, but nobody tells a story about them; reject those. Put the same test another way: what would someone who knew them for years remember about HOW THEY WERE in this moment — not the memorable EVENT but the memorable PERSON (weak, an event: "the Keeper had a bad knee"; strong, who she was: "even as they dragged her off she shifted to the Keeper\'s good side so he would not limp in front of everyone"). Keep searching until it feels EXACTLY like them; then forget the question and hand over the observation.\n'
+        + 'REJECT any candidate that:\n'
+        + '- shows NO attempt to INFLUENCE how the room sees them — judge by INTENT (were they TRYING to move how the others here regard them?), NEVER by outcome; a bid that FAILS or that nobody notices still counts, and is often the most revealing;\n'
+        + '- would still make EQUAL SENSE if the character were ALONE in the room. Other people are present in this beat, so the move MUST arise from the character\'s negotiation WITH them, not from solitary physiology. THIS ONE TEST kills most bad candidates — apply it first.\n'
+        + '- succeeds only as BODY LANGUAGE or a private nervous tic — a thumb rubbing a palm, a heel tapping, a caught breath, a hand at a collar or necklace, fingers brushing the air, a quickened pulse, a clenched jaw. Nobody else in the room could catch it and tell a story about it later.\n'
+        + '- changes, adds, or removes an EVENT (you may only choose what is NOTICED, never what HAPPENS);\n'
+        + '- feels INVENTED by a writer to characterize them, rather than REMEMBERED by someone who has watched them for years;\n'
+        + '- is the memorable EVENT rather than the memorable PERSON — something that merely HAPPENED, not who they were being while it happened;\n'
+        + '- is retrospective narration or how they would TELL it later ("she would always remember…", "years later she would say…") — it must be who they were IN the moment, not a later recounting;\n'
+        + '- states a conclusion the reader could infer, or explains the psychology.\n'
+        + 'THE POSITIVE TEST: the observation should be something ANOTHER PERSON in the scene could notice and later REMEMBER about them. If nobody in the room could catch it, it is not the one. If nothing extraordinary appears, take the simplest socially legible thing a friend would recognize — do NOT manufacture brilliance.\n\n'
+        + 'Output EXACTLY these three lines, nothing else:\n'
+        + 'BEAT: <one clause restating the fixed event you are working inside>\n'
+        + 'OBSERVE: <a POINTER to the one social BID to notice inside the beat — "catch him [the move]" / "the moment she [makes the bid]". The author invents the exact gesture, line, or action; you only point at the bid. Do NOT restate the event as the observation.>\n'
+        + 'WHY THIS: <one clause — what is LOST if this observation is omitted (e.g. "without it he is interchangeable"; "this is the one thing someone who loved her would remember years later"). A note for the editor\'s record ONLY; it is NOT given to the writer.>';
+      var r = await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: [{ role: 'system', content: editorSys }, { role: 'user', content: 'Your lines:' }], role: 'SPECIALIST_RENDERER', preferredModel: 'grok-4-1-fast-non-reasoning', temperature: 0.95, max_tokens: 220, convId: 'sb-editorial-pass' }) });
+      var j = await r.json();
+      var plan = String((j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || (j && j.content) || '').trim();
+      var mObs = plan.match(/OBSERVE:\s*([^\n]+)/i), mBeat = plan.match(/BEAT:\s*([^\n]+)/i), mWhy = plan.match(/WHY THIS:\s*([^\n]+)/i);
+      var observe = String((mObs && mObs[1]) || '').trim();
+      var beatEcho = String((mBeat && mBeat[1]) || '').trim() || beat;
+      var whyThis = String((mWhy && mWhy[1]) || '').trim();
+      if (!observe) return '';
+      // DIAGNOSTIC (experimental): log the beat the editor worked inside + the observation + WHY THIS. WHY THIS is
+      // LOGGED but NEVER sent to the author (the writer does not need the psychology) — on a failure it lets us tell
+      // whether the author ignored a STRONG plan or correctly dropped a WEAK one.
+      try { console.log('[EDITORIAL-PASS] BEAT: ' + beatEcho + '\n[EDITORIAL-PASS] OBSERVE: ' + observe + (isWishDemo ? '  [seed-owned opener]' : '') + (whyThis ? '\n[EDITORIAL-PASS] WHY THIS: ' + whyThis : '')); } catch (_) {}
+      return '\n\n⚠ THIS SCENE\'S OPENING BEAT IS FIXED — render the required event exactly; the editor has chosen only WHAT the narration NOTICES while it happens (this does NOT replace the beat, it colors it):\n'
+        + '  THE BEAT (unchanged — do NOT add, remove, or alter any event): ' + beatEcho + '\n'
+        + '  NOTICE, as the beat unfolds: ' + observe + '\n'
+        + '  Stage this as a LIVE MOMENT woven INTO the required beat — the exact gesture or line an observant narrator catches while the event happens; SHOW it, do not summarize it. Land it EARLY (it colors how we first meet this person), said the way someone who KNOWS them would say it (wry, fond, understated — whatever fits this narrator\'s feeling toward them; never clinical).\n'
+        + '  DO NOT explain WHY they do it. DO NOT name the feeling or the hope behind it. Trust the reader to notice.\n'
+        + '  CUT — do NOT reduce the observation to any of these:\n'
+        + '    - a conclusion the reader could already infer ("he was terrified", "panic surged as I realized");\n'
+        + '    - a generic bodily tell anyone could do (clenched jaw, drummed fingers, a hand at a necklace);\n'
+        + '    - a generic physiological symptom (pulse quickened, stomach tightened, breath caught, hands shook, throat tightened);\n'
+        + '    - decorative metaphor or bolted-on cleverness;\n'
+        + '    - the constructions "as if" / "apparently" / "I found myself".\n'
+        + '  You are NOT choosing what happens — only what the narration catches while it does. The scene\'s danger and stakes remain fully in play.\n\n════════════════════\n\n';
+    } catch (_epErr) { try { console.warn('[EDITORIAL-PASS] error:', _epErr && _epErr.message); } catch (_) {} return ''; }
+  };
+
   function _buildPlotContractDirective() {
     try {
       if (!_plotContractActive()) return '';
@@ -246399,6 +246476,11 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
           }
         } catch (_s1ccErr) {}
         let text;
+        // EDITORIAL PASS (window._editorialPass, OFF by default): decide the Scene-1 opening via the editor
+        // (questions + rejection set) and front-load the concrete OPEN-ON/IMPLY/CUT plan onto the author's USER
+        // message (top of the fresh payload, below the cached system prefix). No-op when the flag is off. See ~92547.
+        var _editorialPlanBlock = '';
+        if (window._editorialPass && (state.turnCount || 0) === 0) { try { _editorialPlanBlock = (await window._runEditorialPass(state)) || ''; try { console.log('[EDITORIAL-PASS] block.len=' + _editorialPlanBlock.length); } catch (_) {} } catch (_edErr) { try { console.log('[EDITORIAL-PASS] error ' + (_edErr && _edErr.message)); } catch (_) {} } }
         // Dead Scene-1 Grok-candidate call-site REMOVED 2026-07-13 (#7); text stays undefined so
         // the lite / hot-fast / heavy branch chain below runs exactly as in default-OFF production.
         if (typeof text === 'undefined' && _litLiteActive()) {
@@ -246419,12 +246501,12 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             try { console.log('[HOTFAST:ENABLED] short hot-crisis Scene-1 path'); } catch (_) {}
             text = await callChat([
                 {role:'system', content: state.sysPrompt},
-                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + (typeof _buildHotFastDirective === 'function' ? _buildHotFastDirective() : '') + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor()}
+                {role:'user', content: _editorialPlanBlock + introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + (typeof _buildHotFastDirective === 'function' ? _buildHotFastDirective() : '') + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor()}
             ], 0.7, { max_tokens: 700 });
         } else if (typeof text === 'undefined') {
             text = await callChat([
                 {role:'system', content: state.sysPrompt},
-                {role:'user', content: introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + _s1LenGuide + _s1ContractCond + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor()}
+                {role:'user', content: _editorialPlanBlock + introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + _s1LenGuide + _s1ContractCond + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor()}
             ], 0.7, { max_tokens: 2400 });
         }
         // STATE-CHANGE MARKER instrumentation + strip (Roman 2026-07-24): did the renderer stage the
