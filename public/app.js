@@ -4825,6 +4825,12 @@ ${_pcInteriorLock}`;
       // Klein-9B is the cheap edit/repair model — charging it at the flat 'bfl'
       // rate would double-count every cosmetic repair (Roman 2026-07-19).
       'klein':     0.02,
+      // DashScope (Alibaba) image models — for the A/B trial vs BFL/Gemini (Roman 2026-08-07). Billed per
+      // successful image, flat regardless of resolution/variant. qwen prices from the official Model Studio
+      // pricing page; 'wan' is an UNCONFIRMED estimate (the pro image SKU isn't on the public price page yet).
+      'qwen':      0.035,   // qwen-image-2.0 (base)
+      'qwen-pro':  0.075,   // qwen-image-2.0-pro  (NB: dearer than flux-2-pro @ 0.06)
+      'wan':       0.06,    // wan2.7-image-pro — ESTIMATE, verify in console
       'default':   0.067
   };
 
@@ -5468,6 +5474,57 @@ ${_pcInteriorLock}`;
       const rate = (key in IMAGE_PRICING) ? IMAGE_PRICING[key] : IMAGE_PRICING['default'];
       return rate * c;
   }
+
+  // ── DashScope (Qwen-Image / Wan) image call — A/B trial provider, PARALLEL to the BFL/Gemini chain ──────
+  // Native DashScope image API (NOT OpenAI-compatible) via the /api/dashscope-image proxy. Synchronous — the
+  // proxy returns a URL directly. Reference images are POSITIONAL on Qwen/Wan (no per-image label fields), so
+  // this folds each ref's LABEL into the prompt text and passes the images in order. Returns a URL or null.
+  // Requires server env DASHSCOPE_API_KEY. Kept standalone (no hot-path edit) so it can't destabilise the live
+  // pipeline; drive it from a harness or a gated toggle. (Roman 2026-08-07.)
+  async function callDashScopeImage(prompt, opts) {
+    opts = opts || {};
+    try {
+      var model = opts.model || 'qwen-image-2.0-pro';
+      var isWan = /wan/i.test(model);
+      var size = opts.size || (isWan ? '2K' : '2048*2048');
+      var imgs = Array.isArray(opts.images) ? opts.images.filter(Boolean) : [];
+      // Fold ref labels into the prompt text (the model reads images in order + by textual description).
+      var labeled = imgs.map(function (im, i) { return (i + 1) + ') ' + (im.label || 'reference image'); });
+      var refBlock = labeled.length
+        ? ('\n\nREFERENCE IMAGES (provided in this order — use each for identity / anatomy / style consistency as described): ' + labeled.join('; ') + '.')
+        : '';
+      var toDataUri = function (im) {
+        if (!im) return null;
+        if (im.url) return String(im.url);
+        var b = im.b64 || (typeof im === 'string' ? im : null);
+        if (!b) return null;
+        return String(b).indexOf('data:') === 0 ? String(b) : ('data:image/png;base64,' + String(b));
+      };
+      var body = {
+        model: model,
+        prompt: String(prompt || '') + refBlock,
+        negative_prompt: opts.negativePrompt || opts.negative_prompt || '',
+        size: size,
+        n: opts.n || 1,
+        images: imgs.map(toDataUri).filter(Boolean)
+      };
+      var r = await fetch('/api/dashscope-image', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!r.ok) { var e = ''; try { e = await r.text(); } catch (_) {} console.error('[DASHSCOPE] HTTP ' + r.status + ' ' + String(e).slice(0, 200)); return null; }
+      var d = await r.json();
+      if (d && d.url) {
+        try {
+          var costKey = isWan ? 'wan' : (model.indexOf('pro') >= 0 ? 'qwen-pro' : 'qwen');
+          var cst = estimateImageCost(costKey, body.n, null);
+          window._dashscopeCostSession = (window._dashscopeCostSession || 0) + cst;
+          console.log('[DASHSCOPE:COST] ~$' + cst.toFixed(3) + ' (' + model + ', ' + size + ', refs=' + body.images.length + ') | session $' + window._dashscopeCostSession.toFixed(3));
+        } catch (_) {}
+        return d.url;
+      }
+      console.error('[DASHSCOPE] no url in response', JSON.stringify(d).slice(0, 200));
+      return null;
+    } catch (e) { console.error('[DASHSCOPE] error', e && e.message); return null; }
+  }
+  try { window.callDashScopeImage = callDashScopeImage; } catch (_) {}
 
   function createSceneCostAccumulator() {
       return {
@@ -23365,6 +23422,137 @@ It does NOT change Player actions, relationship progression, or pacing.
       + lines.join('\n')
       + '\nKeep EVERYTHING else verbatim — the opening line, the closing line, the paragraph structure, and every other sentence. Return the COMPLETE edited scene and nothing else.';
   }
+
+  // ── INTRA-STORY BODY-BEAT DE-CALCIFICATION (Roman 2026-08-07) ──
+  // The cross-story calcified-move system above catches beats recurring across the writer's recent
+  // STORIES, via exact motif/phrase regexes. It does NOT catch a body-beat the author reuses WITHIN
+  // the current story, paraphrased — e.g. "heel scraped once against the moss" (scene 2) → "heel
+  // scrapes once against the moss" (scene 3) → "heel scraped against the moss once more" (scene 4).
+  // A headless First-Sacrifice audit (2026-08-07), REPLICATED across two independent samplings,
+  // confirmed this as an AUTHOR-LEVEL ATTRACTOR: each story settles into ~4-5 reused micro-beats (a
+  // foot/moss motion, a repeated character gesture, a hand micro-gesture) + a heavy "X once" tic; the
+  // SPECIFIC beats are sampling variance, the TENDENCY is structural. Exact-match detection misses it.
+  // CRITIC-SIDE by design (detect + surgically repair post-gen) — a prompt avoid-list would PRIME the
+  // very gestures it names (see the "naming primes it" calcified-phrase note). Signature = (body-part
+  // stem : motion-verb stem), PREFIX-matched (no stemmer) so scraped/scrapes/scrape collapse. Per-story
+  // ledger keyed by first turn; a signature reused in a LATER scene than its first is flagged
+  // (rotate-not-ban: first use is always fine). state._intraStoryGestureLedger resets per story.
+  var _IBD_BODY = ['forefinger','finger','knuckle','thumb','wrist','palm','hand','heel','boot','feet','foot','toe','jaw','chin','brow','gaze','eye','breath','pulse','heart','shoulder','collar','throat','lip','tongue','cheek','fist','knee','spine','neck','elbow','temple','tendon'];
+  var _IBD_VERB = ['scrap','scuff','shift','lift','press','trac','drag','twitch','flicker','hitch','catch','tighten','brush','hover','dart','flash','curl','clench','tremble','hammer','pound','quirk','narrow','graze','skim','ghost','dig','bite','roll','tilt','tap','sink','settle','clos','drop','slide','flex','cock','crack','find','found','reach','grip','grasp','twist','fold','cross','lace','cup','splay','hook','worry','knead','rest','land','meet','hold','held','rub','stroke','cradle'];
+  function _ibdStem(word, lex) { var w = String(word || '').toLowerCase(); var best = ''; for (var i = 0; i < lex.length; i++) { if (w.indexOf(lex[i]) === 0 && lex[i].length > best.length) best = lex[i]; } return best; }
+  function _ibdSignatures(sentence) {
+    // "body:verb" signatures in the sentence — each body-part paired with the NEAREST motion verb within a 4-token window.
+    var toks = String(sentence || '').toLowerCase().split(/[^a-z]+/).filter(Boolean);
+    var bodyAt = toks.map(function (t) { return _ibdStem(t, _IBD_BODY); });
+    var verbAt = toks.map(function (t) { return _ibdStem(t, _IBD_VERB); });
+    var sigs = {};
+    for (var i = 0; i < toks.length; i++) {
+      if (!bodyAt[i]) continue;
+      for (var dd = 1; dd <= 4; dd++) {
+        if (i + dd < toks.length && verbAt[i + dd]) { sigs[bodyAt[i] + ':' + verbAt[i + dd]] = 1; break; }
+        if (i - dd >= 0 && verbAt[i - dd]) { sigs[bodyAt[i] + ':' + verbAt[i - dd]] = 1; break; }
+      }
+    }
+    return Object.keys(sigs);
+  }
+  function _ibdExemptSignatures(st) {
+    // FALSE-POSITIVE GUARD (Roman 2026-08-07): some gestures are SUPPOSED to recur — a nervous
+    // habit, a wound, a ritual, a sword-grip born of fear. The Character+ bibles DECLARE those. A
+    // signature drawn from a declared recurring behavior is INTENTIONAL continuity, not calcification
+    // → never repair it. Two tiers, erring toward PRESERVING intentional continuity (Roman): the
+    // HABIT fields (signature_behavior/habits) declare a recurring PHYSICAL ACTION whose verb may be
+    // phrased without a body word ("grips his sword") → exempt that VERB entirely; the other tells
+    // pin a precise body:verb → exempt just that signature. (V1 caveat: surface body:verb, not the
+    // deeper "involuntary signal standing in for emotion" invariant — that's the V2 abstraction.)
+    var sigSet = {}, verbSet = {};
+    try {
+      if (!st) return { sigSet: sigSet, verbSet: verbSet };
+      var bibles = [st.pcBodyBible, st.liBodyBible, st.antagonistBodyBible];
+      var SIG_FIELDS = ['stress_tic', 'desire_tell', 'impatience_tell', 'confidence_tell', 'vulnerability_tell', 'focus_tell', 'restraint_tell', 'interest_tell', 'frustration_tell', 'deflection_pattern', 'attraction_manifestation', 'wound', 'current_crisis'];
+      var VERB_FIELDS = ['signature_behavior', 'signature_habits']; // declared recurring physical action → verb-level exempt
+      var asText = function (v) { return (typeof v === 'string') ? v : (v && typeof v === 'object' ? Object.keys(v).map(function (k) { return typeof v[k] === 'string' ? v[k] : ''; }).join(' ') : ''); };
+      bibles.forEach(function (b) {
+        if (!b || typeof b !== 'object') return;
+        SIG_FIELDS.forEach(function (f) { var t = asText(b[f]); if (t) _ibdSignatures(t).forEach(function (sig) { sigSet[sig] = 1; }); });
+        VERB_FIELDS.forEach(function (f) {
+          var t = asText(b[f]); if (!t) return;
+          _ibdSignatures(t).forEach(function (sig) { sigSet[sig] = 1; });                                   // keep the precise sig too
+          t.toLowerCase().split(/[^a-z]+/).forEach(function (tok) { var vs = _ibdStem(tok, _IBD_VERB); if (vs) verbSet[vs] = 1; }); // + verb-level
+        });
+      });
+    } catch (_) {}
+    return { sigSet: sigSet, verbSet: verbSet };
+  }
+  async function _deCalcifyIntraStoryBeats(text) {
+    try {
+      if (!text || typeof text !== 'string' || text.length < 200) return text;
+      var st = (typeof window !== 'undefined' && window.state) ? window.state : (typeof state !== 'undefined' ? state : null);
+      if (!st) return text;
+      if (!st._intraStoryGestureLedger || typeof st._intraStoryGestureLedger !== 'object') st._intraStoryGestureLedger = {};
+      var ledger = st._intraStoryGestureLedger;
+      var T = (typeof st.turnCount === 'number') ? st.turnCount : 0;
+      var ex = _ibdExemptSignatures(st); // declared tells/habits/wounds — intentional recurrence, never repaired
+      var sentences = String(text).split(/(?<=[.!?"”’])\s+/);
+      var offenders = [], sceneSigs = {};
+      sentences.forEach(function (s) {
+        if (!s || s.length < 15) return;
+        if (typeof _MANDATED_FRAME_RE !== 'undefined' && _MANDATED_FRAME_RE.test(s)) return; // never touch the mandated deck/tarot frame
+        var sigs = _ibdSignatures(s);
+        var reusedHere = [];
+        sigs.forEach(function (sig) {
+          sceneSigs[sig] = 1;
+          if (ex.sigSet[sig] || ex.verbSet[sig.split(':')[1]]) return; // declared character tell / habit-verb → intentional, leave it
+          var prev = ledger[sig];
+          if (prev && typeof prev.firstTurn === 'number' && prev.firstTurn < T) reusedHere.push(sig);
+        });
+        if (reusedHere.length) offenders.push({ excerpt: s.trim().slice(0, 120), sigs: reusedHere });
+      });
+      if (offenders.length && (typeof window === 'undefined' || window.__intraBeatDecalc !== false)) {
+        var pick = offenders.slice(0, 3); // cap edits per scene to avoid over-editing
+        try { console.log('[INTRA-BEAT:DECALC] turn=' + T + ' reused body-beats: ' + pick.map(function (o) { return o.sigs.join('/') + ' :: "' + o.excerpt.slice(0, 46) + '"'; }).join(' | ')); } catch (_) {}
+        if (typeof _proseLineEdit === 'function') {
+          var instr = 'PROBLEM: this scene reuses BODY-BEATS already used EARLIER IN THIS SAME STORY — the same body part making the same kind of motion, now reading as a verbal tic of the writer rather than the character. SURGICALLY rewrite ONLY the sentences below so each lands its moment through a DIFFERENT physical register — a different body part, a different sense, an action, a line of dialogue, or simply cut the gesture. A synonym swap does NOT count (a foot "scuffing" instead of "scraping" the moss is STILL the same beat; drop the filler "once" too). Preserve prose quality, rhythm, meaning, POV, and EVERYTHING ELSE verbatim — the opening line, the closing line, paragraph structure, and every other sentence. REUSED BODY-BEATS (rewrite each):\n'
+            + pick.map(function (o) { return '  ✗ "' + o.excerpt + '"'; }).join('\n')
+            + '\nReturn the COMPLETE edited scene and nothing else.';
+          try {
+            var edited = await _proseLineEdit(text, instr, { passName: 'intra-beat-decalc' });
+            if (edited && typeof edited === 'string' && edited !== text) text = edited;
+          } catch (_) {}
+        }
+      }
+      // record THIS scene's signatures (first-seen turn) so later scenes can detect reuse
+      Object.keys(sceneSigs).forEach(function (sig) { if (!ledger[sig]) ledger[sig] = { firstTurn: T }; });
+      return text;
+    } catch (_) { return text; }
+  }
+  window._deCalcifyIntraStoryBeats = _deCalcifyIntraStoryBeats;
+
+  // ── "once" LEXICAL-TIC REDUCER (Roman 2026-08-07) ──
+  // SEPARATE from the gesture detector by design (Roman): the "X once" pileup (13-15/scene in the
+  // audit, replicated) is a LEXICAL attractor, not a gesture — same class as suddenly/immediately/
+  // just. DETERMINISTIC, no LLM: when "once" is overused, strip it from the clear "<verb> once" tic
+  // form beyond the first two, preserving MEANINGFUL "once" (one-time / once more/again / at once /
+  // once <subject>). Conservative: only fires on a genuine pileup, keeps the first two, never touches
+  // "once" that carries meaning.
+  function _reduceOnceTic(text) {
+    try {
+      if (!text || typeof text !== 'string') return text;
+      if ((text.match(/\bonce\b/gi) || []).length < 5) return text; // only act on an actual tic-level pileup
+      var kept = 0, dropped = 0;
+      // Strip "once" ONLY when it directly follows a MOTION verb (the exact tic context — "flashed/
+      // scraped/twitched/cracked once"), beyond the first two, excluding "once more/again/upon". This
+      // leaves NARRATIVE "once" fully intact (kissed once, moved once, at once, once he saw, only once).
+      var out = text.replace(/\b([a-z]{3,})\s+once\b(?!\s+(?:more|again|upon)\b)/gi, function (m, verb) {
+        if (!_ibdStem(verb, _IBD_VERB)) return m;      // not a physical-motion verb → narrative "once", keep
+        kept++;
+        if (kept <= 2) return m;                        // keep the first two even in tic form
+        dropped++; return verb;                         // drop the filler "once"
+      });
+      try { if (dropped) console.log('[ONCE-TIC:REDUCE] pared ' + dropped + ' motion-verb "once" filler (kept 2 + all narrative uses)'); } catch (_) {}
+      return out;
+    } catch (_) { return text; }
+  }
+  window._reduceOnceTic = _reduceOnceTic;
 
   // TIERED REPAIR CASCADE (Roman 2026-06-10) — before display:
   //   Tier 1  Grok (reasoning DISABLED, grok-4-1-fast-non-reasoning) strict line-edit
@@ -75816,6 +76004,10 @@ Return ONLY valid JSON:
       // APPEARANCE ESTABLISHMENT GATING (Roman 2026-06-19): per-story, so each new story
       // re-establishes its PC/LI appearance once on first appearance, then locks.
       try { state._apprEstablished = {}; state._apprModeCache = null; } catch (_) {}
+
+      // INTRA-STORY BODY-BEAT LEDGER (Roman 2026-08-07): per-story gesture-reuse memory for
+      // _deCalcifyIntraStoryBeats — clears so one story's body-beats never seed the next.
+      try { state._intraStoryGestureLedger = {}; } catch (_) {}
 
       // WEAPON LEDGER (Roman 2026-07-21): named-weapon canonical visuals are per-story, so "Fatebane" in
       // one story never leaks its established look into the next.
@@ -248490,6 +248682,8 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           else if (state && state._openingTemperature === 'HOT_CRISIS') { try { console.log('[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump'); } catch (_) {} }
           try { text = await _repairInterlocutorPicturability(text); } catch (_ir1) {} // on-page NPC face net (Roman 2026-06-09)
           try { text = _preserveObligations('de-calc', text, await _repairCalcifiedMoves(text)); } catch (_cmr1) {} // calcified-move enforcement (Roman 2026-06-10)
+          try { if (typeof _deCalcifyIntraStoryBeats === 'function') text = _preserveObligations('intra-beat', text, await _deCalcifyIntraStoryBeats(text)); } catch (_ibd1) {} // intra-story body-beat de-calcification (Roman 2026-08-07)
+          try { if (typeof _reduceOnceTic === 'function') text = _reduceOnceTic(text); } catch (_ot1) {} // deterministic "once" lexical-tic reducer (Roman 2026-08-07) — separate from gestures by design
           try { if (typeof _repairHotOpening === 'function') text = await _repairHotOpening(text); } catch (_hor1) { try { console.warn('[HOT-RENDER:CALL-ERR] ' + (_hor1 && _hor1.message)); } catch (_) {} } // HOT-render opening repair (R4 #1, 2026-06-24): catches HOT_CRISIS→COLD render
           try { if (typeof _repairBodyBibleDump === 'function') text = await _repairBodyBibleDump(text); } catch (_bdr1) {} // body-bible de-cluster repair (2026-06-24): fires only when an appearance cluster (>=4 traits/40w) is present
           try { if (typeof _logScene1CausalReading === 'function') _logScene1CausalReading(text); } catch (_s1c1) {} // causal-opening reading (telemetry-only; after repair so it scores the shipped scene)
