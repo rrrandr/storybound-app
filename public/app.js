@@ -23483,76 +23483,54 @@ It does NOT change Player actions, relationship progression, or pacing.
     } catch (_) {}
     return { sigSet: sigSet, verbSet: verbSet };
   }
-  async function _deCalcifyIntraStoryBeats(text) {
+  // ── SCENE-DYNAMICS TELEMETRY (Roman 2026-08-07) — REPLACES the reverted de-calc REPAIR ──
+  // A validated headless experiment FALSIFIED the repair's governing assumption. The intra-story
+  // repair fired and rewrote the surface, yet reader-visible recurrence did NOT drop: when
+  // "heel:scrap" was suppressed the author substituted "boot:shift"/"gaze:drop" — a DIFFERENT
+  // body:verb with the SAME narrative move (near-verbatim involuntary-signal beats survived across
+  // scenes). So the repeated unit is NOT body-part+verb; it is a narrative FUNCTION — Roman, one
+  // level higher still: "emotion externalized through NARRATION rather than by changing the scene"
+  // (body signals are one manifestation; "his voice softened" / "silence settled" / "the room seemed
+  // smaller" serve the same purpose — all substitutes for dramatic movement). This increasingly looks
+  // like a SYMPTOM of insufficient scene dynamics (cf. the same-clearing stall in the momentum
+  // investigation), not an independent bug. ⟹ NO repair. This is now a PURE, non-mutating MEASUREMENT
+  // instrument: it counts per-scene dynamics so a corpus baseline (strong published scenes vs
+  // Storybound) can tell us whether involuntary body signals are truly overrepresented, or whether the
+  // deeper predictor is something like "external state changes per page" — THEN a V2 is designed around
+  // a demonstrated invariant (the Character+ discipline), not another plausible abstraction.
+  var _ENV_INTERACT_RE = /\b(moss|tree|trees|bark|resin|vine|fern|root|leaf|leaves|pine|clearing|altar|stone|earth|mist|rain|wind|window|door|wall|floor|hearth|fire|candle|water|tide|sand|grass|branch|threshold)\b/i;
+  function _measureSceneDynamics(prose) {
+    var out = { turn: 0, involuntary_body: 0, reused_body: 0, dialogue: 0, action: 0, decision: 0, interruption: 0, relocation: 0, environmental: 0, once: 0 };
     try {
-      if (!text || typeof text !== 'string' || text.length < 200) return text;
+      var text = String(prose || ''); if (text.length < 80) return out;
       var st = (typeof window !== 'undefined' && window.state) ? window.state : (typeof state !== 'undefined' ? state : null);
-      if (!st) return text;
-      if (!st._intraStoryGestureLedger || typeof st._intraStoryGestureLedger !== 'object') st._intraStoryGestureLedger = {};
-      var ledger = st._intraStoryGestureLedger;
-      var T = (typeof st.turnCount === 'number') ? st.turnCount : 0;
-      var ex = _ibdExemptSignatures(st); // declared tells/habits/wounds — intentional recurrence, never repaired
-      var sentences = String(text).split(/(?<=[.!?"”’])\s+/);
-      var offenders = [], sceneSigs = {};
-      sentences.forEach(function (s) {
-        if (!s || s.length < 15) return;
-        if (typeof _MANDATED_FRAME_RE !== 'undefined' && _MANDATED_FRAME_RE.test(s)) return; // never touch the mandated deck/tarot frame
+      var ledger = st ? (st._intraStoryGestureLedger || (st._intraStoryGestureLedger = {})) : {};
+      var T = (st && typeof st.turnCount === 'number') ? st.turnCount : 0; out.turn = T;
+      var ex = st ? _ibdExemptSignatures(st) : { sigSet: {}, verbSet: {} };
+      var sceneSigs = {};
+      String(text).split(/(?<=[.!?"”’])\s+/).forEach(function (s) {
+        if (!s || s.length < 12) return;
         var sigs = _ibdSignatures(s);
-        var reusedHere = [];
+        if (sigs.length) out.involuntary_body++;                                   // sentences carrying an involuntary body signal
         sigs.forEach(function (sig) {
           sceneSigs[sig] = 1;
-          if (ex.sigSet[sig] || ex.verbSet[sig.split(':')[1]]) return; // declared character tell / habit-verb → intentional, leave it
-          var prev = ledger[sig];
-          if (prev && typeof prev.firstTurn === 'number' && prev.firstTurn < T) reusedHere.push(sig);
+          if (ex.sigSet[sig] || ex.verbSet[sig.split(':')[1]]) return;             // declared tell/habit — not a tic
+          var p = ledger[sig]; if (p && typeof p.firstTurn === 'number' && p.firstTurn < T) out.reused_body++;  // repeats an earlier scene's beat
         });
-        if (reusedHere.length) offenders.push({ excerpt: s.trim().slice(0, 120), sigs: reusedHere });
+        if (_ENV_INTERACT_RE.test(s)) out.environmental++;
       });
-      if (offenders.length && (typeof window === 'undefined' || window.__intraBeatDecalc !== false)) {
-        var pick = offenders.slice(0, 3); // cap edits per scene to avoid over-editing
-        try { console.log('[INTRA-BEAT:DECALC] turn=' + T + ' reused body-beats: ' + pick.map(function (o) { return o.sigs.join('/') + ' :: "' + o.excerpt.slice(0, 46) + '"'; }).join(' | ')); } catch (_) {}
-        if (typeof _proseLineEdit === 'function') {
-          var instr = 'PROBLEM: this scene reuses BODY-BEATS already used EARLIER IN THIS SAME STORY — the same body part making the same kind of motion, now reading as a verbal tic of the writer rather than the character. SURGICALLY rewrite ONLY the sentences below so each lands its moment through a DIFFERENT physical register — a different body part, a different sense, an action, a line of dialogue, or simply cut the gesture. A synonym swap does NOT count (a foot "scuffing" instead of "scraping" the moss is STILL the same beat; drop the filler "once" too). Preserve prose quality, rhythm, meaning, POV, and EVERYTHING ELSE verbatim — the opening line, the closing line, paragraph structure, and every other sentence. REUSED BODY-BEATS (rewrite each):\n'
-            + pick.map(function (o) { return '  ✗ "' + o.excerpt + '"'; }).join('\n')
-            + '\nReturn the COMPLETE edited scene and nothing else.';
-          try {
-            var edited = await _proseLineEdit(text, instr, { passName: 'intra-beat-decalc' });
-            if (edited && typeof edited === 'string' && edited !== text) text = edited;
-          } catch (_) {}
-        }
-      }
-      // record THIS scene's signatures (first-seen turn) so later scenes can detect reuse
-      Object.keys(sceneSigs).forEach(function (sig) { if (!ledger[sig]) ledger[sig] = { firstTurn: T }; });
-      return text;
-    } catch (_) { return text; }
+      Object.keys(sceneSigs).forEach(function (sig) { if (!ledger[sig]) ledger[sig] = { firstTurn: T }; }); // ledger for cross-scene recurrence stats
+      out.dialogue     = (text.match(/["“][^"”]{2,}["”]/g) || []).length;
+      out.once         = (text.match(/\bonce\b/gi) || []).length;
+      out.action       = (text.match(/\b(?:grabbed|seized|shoved|pushed|pulled|struck|slammed|threw|hurled|lunged|snatched|yanked|kicked|swung|drove|wrenched|flung|tore)\b/gi) || []).length;
+      out.decision     = (text.match(/\bI (?:decided|chose|choose|will|refuse to|resolved to|would rather)\b|made up (?:my|her|his) mind|\bI'?d had enough\b/gi) || []).length;
+      out.interruption = (text.match(/["“][^"”]*[—–]\s*["”]|\bbefore (?:I|he|she|they) could\b|\bcut (?:in|me|him|her|them) off\b|\binterrupt/gi) || []).length;
+      out.relocation   = (text.match(/\b(?:crossed to|stepped (?:into|out|through|toward)|walked (?:to|into|out|toward)|strode (?:to|into|toward|out)|entered the|left the|out (?:into|onto)|through the (?:door|gate|arch)|down the (?:hall|stairs|path|corridor)|up the (?:stairs|path))\b/gi) || []).length;
+      try { console.log('[SCENE-DYNAMICS] turn=' + T + ' body=' + out.involuntary_body + ' reused=' + out.reused_body + ' dialogue=' + out.dialogue + ' action=' + out.action + ' decision=' + out.decision + ' interrupt=' + out.interruption + ' reloc=' + out.relocation + ' env=' + out.environmental + ' once=' + out.once); } catch (_) {}
+    } catch (_) {}
+    return out;
   }
-  window._deCalcifyIntraStoryBeats = _deCalcifyIntraStoryBeats;
-
-  // ── "once" LEXICAL-TIC REDUCER (Roman 2026-08-07) ──
-  // SEPARATE from the gesture detector by design (Roman): the "X once" pileup (13-15/scene in the
-  // audit, replicated) is a LEXICAL attractor, not a gesture — same class as suddenly/immediately/
-  // just. DETERMINISTIC, no LLM: when "once" is overused, strip it from the clear "<verb> once" tic
-  // form beyond the first two, preserving MEANINGFUL "once" (one-time / once more/again / at once /
-  // once <subject>). Conservative: only fires on a genuine pileup, keeps the first two, never touches
-  // "once" that carries meaning.
-  function _reduceOnceTic(text) {
-    try {
-      if (!text || typeof text !== 'string') return text;
-      if ((text.match(/\bonce\b/gi) || []).length < 5) return text; // only act on an actual tic-level pileup
-      var kept = 0, dropped = 0;
-      // Strip "once" ONLY when it directly follows a MOTION verb (the exact tic context — "flashed/
-      // scraped/twitched/cracked once"), beyond the first two, excluding "once more/again/upon". This
-      // leaves NARRATIVE "once" fully intact (kissed once, moved once, at once, once he saw, only once).
-      var out = text.replace(/\b([a-z]{3,})\s+once\b(?!\s+(?:more|again|upon)\b)/gi, function (m, verb) {
-        if (!_ibdStem(verb, _IBD_VERB)) return m;      // not a physical-motion verb → narrative "once", keep
-        kept++;
-        if (kept <= 2) return m;                        // keep the first two even in tic form
-        dropped++; return verb;                         // drop the filler "once"
-      });
-      try { if (dropped) console.log('[ONCE-TIC:REDUCE] pared ' + dropped + ' motion-verb "once" filler (kept 2 + all narrative uses)'); } catch (_) {}
-      return out;
-    } catch (_) { return text; }
-  }
-  window._reduceOnceTic = _reduceOnceTic;
+  window._measureSceneDynamics = _measureSceneDynamics;
 
   // TIERED REPAIR CASCADE (Roman 2026-06-10) — before display:
   //   Tier 1  Grok (reasoning DISABLED, grok-4-1-fast-non-reasoning) strict line-edit
@@ -76005,8 +75983,8 @@ Return ONLY valid JSON:
       // re-establishes its PC/LI appearance once on first appearance, then locks.
       try { state._apprEstablished = {}; state._apprModeCache = null; } catch (_) {}
 
-      // INTRA-STORY BODY-BEAT LEDGER (Roman 2026-08-07): per-story gesture-reuse memory for
-      // _deCalcifyIntraStoryBeats — clears so one story's body-beats never seed the next.
+      // INTRA-STORY BODY-BEAT LEDGER (Roman 2026-08-07): per-story body:verb memory used by the
+      // _measureSceneDynamics telemetry to count cross-scene reuse — clears per story.
       try { state._intraStoryGestureLedger = {}; } catch (_) {}
 
       // WEAPON LEDGER (Roman 2026-07-21): named-weapon canonical visuals are per-story, so "Fatebane" in
@@ -248682,8 +248660,7 @@ Edit ONLY the phrases that reference internal mechanics / system terms — trans
           else if (state && state._openingTemperature === 'HOT_CRISIS') { try { console.log('[PC-PICTURABILITY:SKIP] HOT_CRISIS Scene-1 — deferring PC establishment to avoid mid-crisis inventory dump'); } catch (_) {} }
           try { text = await _repairInterlocutorPicturability(text); } catch (_ir1) {} // on-page NPC face net (Roman 2026-06-09)
           try { text = _preserveObligations('de-calc', text, await _repairCalcifiedMoves(text)); } catch (_cmr1) {} // calcified-move enforcement (Roman 2026-06-10)
-          try { if (typeof _deCalcifyIntraStoryBeats === 'function') text = _preserveObligations('intra-beat', text, await _deCalcifyIntraStoryBeats(text)); } catch (_ibd1) {} // intra-story body-beat de-calcification (Roman 2026-08-07)
-          try { if (typeof _reduceOnceTic === 'function') text = _reduceOnceTic(text); } catch (_ot1) {} // deterministic "once" lexical-tic reducer (Roman 2026-08-07) — separate from gestures by design
+          try { if (typeof _measureSceneDynamics === 'function') _measureSceneDynamics(text); } catch (_sd1) {} // scene-dynamics telemetry (non-mutating; Roman 2026-08-07 — repair reverted, measurement kept)
           try { if (typeof _repairHotOpening === 'function') text = await _repairHotOpening(text); } catch (_hor1) { try { console.warn('[HOT-RENDER:CALL-ERR] ' + (_hor1 && _hor1.message)); } catch (_) {} } // HOT-render opening repair (R4 #1, 2026-06-24): catches HOT_CRISIS→COLD render
           try { if (typeof _repairBodyBibleDump === 'function') text = await _repairBodyBibleDump(text); } catch (_bdr1) {} // body-bible de-cluster repair (2026-06-24): fires only when an appearance cluster (>=4 traits/40w) is present
           try { if (typeof _logScene1CausalReading === 'function') _logScene1CausalReading(text); } catch (_s1c1) {} // causal-opening reading (telemetry-only; after repair so it scores the shipped scene)
@@ -281514,6 +281491,11 @@ ABSOLUTE RULES:
           // LLM dialogue reflow (Haiku): splits fused-speaker quotes the regex
           // cannot. Guarded (verbatim words) + falls back to the regex pass.
           if (typeof _reflowSceneDialogueLLM === 'function') raw = await _reflowSceneDialogueLLM(raw);
+
+          // SCENE-DYNAMICS TELEMETRY (turn path — Roman 2026-08-07). The intra-story body-beat REPAIR
+          // was reverted (a validated experiment falsified its body:verb abstraction); this is the pure,
+          // non-mutating MEASUREMENT that replaced it — counts per-scene dynamics for the corpus baseline.
+          try { if (typeof _measureSceneDynamics === 'function') _measureSceneDynamics(raw); } catch (_sd2) {}
 
           // FINAL CLOSER GUARD (2026-05-29, Roman: the deck/Tempt closer landed but
           // prose followed it). The closer is appended at the tail above, but the
