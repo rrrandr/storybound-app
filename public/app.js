@@ -200957,17 +200957,22 @@ No text, no watermark, no UI elements, share-ready.`;
       if (pcB.complexion) pcPhys.push(pcB.complexion);
       if (pcB.signature_feature) pcPhys.push('signature: ' + pcB.signature_feature);
       if (pcB.second_celebrated_feature) pcPhys.push('also: ' + pcB.second_celebrated_feature);
-      var pcTells = [];
-      if (pcB.stress_tic)         pcTells.push('STRESS — ' + pcB.stress_tic);
-      if (pcB.desire_tell)        pcTells.push('DESIRE — ' + pcB.desire_tell);
-      if (pcB.impatience_tell)    pcTells.push('IMPATIENCE — ' + pcB.impatience_tell);
-      if (pcB.confidence_tell)    pcTells.push('CONFIDENCE — ' + pcB.confidence_tell);
-      if (pcB.vulnerability_tell) pcTells.push('VULNERABILITY — ' + pcB.vulnerability_tell);
+      // INTERIOR, not tics (Roman 2026-08-06): CG reasons fresh panel behavior FROM who she is,
+      // rather than replaying a fixed nervous tell. The anti-calcification lesson applied to CG —
+      // the five emotional tells (stress/desire/impatience/confidence/vulnerability) are no longer
+      // forwarded; the deep-psych interior is, as constraints the panel author reasons behavior from.
+      var pcInterior = [];
+      if (pcB.core_contradiction) pcInterior.push('CONTRADICTION she lives with — ' + pcB.core_contradiction);
+      if (pcB.private_hope)       pcInterior.push('PRIVATE HOPE (never captioned; it only bends what she reaches for) — ' + pcB.private_hope);
+      if (pcB.emotional_weather)  pcInterior.push('EMOTIONAL WEATHER (her baseline climate) — ' + pcB.emotional_weather);
+      // signature_habits is deliberately NOT forwarded to CG (Roman 2026-08-06): it is a tic-CARRIER
+      // (e.g. "counts the steps when anxious") that the panel author replays verbatim across every scene —
+      // the exact calcification the interior swap exists to kill. The PURE interior above forces fresh reasoning.
       if (_cgMode.pc === 'lock') out.push(_cgLockLine('PROTAGONIST APPEARANCE', pcName));
       else out.push('PROTAGONIST PHYSICAL CANON (HARD — visual continuity across panels; render exactly): ' + pcPhys.join('; '));
-      if (pcTells.length) {
-        out.push('PROTAGONIST ACTION-LINE RESERVOIR (the protagonist\'s emotional tells. In CG these are PURE ACTION LINES — render the body doing the tell when the trigger fires, NOT interior thought. "She rolls the pen between her fingers without realizing it." NOT "She felt anxious." One tell per scene, when its trigger fires):');
-        pcTells.forEach(function(t){ out.push('  • ' + t); });
+      if (pcInterior.length) {
+        out.push('PROTAGONIST INTERIOR (HARD — this is who she IS, not a menu of gestures. When a beat needs her body / expression / posture to carry state, REASON a fresh, panel-specific action that THIS person — given this interior — would do in THIS exact moment. Do NOT default to a fixed nervous tic (no reflex hand-to-face / ring-twist / hair-touch); invent what she does HERE from who she is. Never caption the interior — show only the behavior it produces):');
+        pcInterior.forEach(function(t){ out.push('  • ' + t); });
       }
       if (pcB.li_keenly_aware_of) {
         out.push('LI NOTICING THE PROTAGONIST (when LI shares panels with PC, plan ONE shot per scene where LI clocks a specific PC feature — micro-shot, brief, never compliment): ' + pcB.li_keenly_aware_of);
@@ -201003,15 +201008,19 @@ No text, no watermark, no UI elements, share-ready.`;
         out.push('LI SENSORY PRESENCE (HARD — drives SHOT / panel composition choices, not prose interiority):');
         liShot.forEach(function(s){ out.push('  • ' + s); });
       }
-      var liTells = [];
-      if (liB.focus_tell)       liTells.push('FOCUS (attention locks on her) — ' + liB.focus_tell);
-      if (liB.restraint_tell)   liTells.push('RESTRAINT (holding himself back) — ' + liB.restraint_tell);
-      if (liB.interest_tell)    liTells.push('INTEREST (treats her differently than the room) — ' + liB.interest_tell);
-      if (liB.frustration_tell) liTells.push('FRUSTRATION — ' + liB.frustration_tell);
-      if (liB.desire_tell)      liTells.push('DESIRE (NOT power-coded) — ' + liB.desire_tell);
-      if (liTells.length) {
-        out.push('LI ACTION-LINE RESERVOIR (pure action lines — render the body doing the tell when its trigger fires; NEVER caption "he was holding himself back". Show the dropped shoulders. One tell per scene when relevant):');
-        liTells.forEach(function(t){ out.push('  • ' + t); });
+      // INTERIOR, not tics (Roman 2026-08-06): give CG who he IS + how his pull toward her SHOWS,
+      // and let it reason the panel-specific signal fresh — instead of replaying a fixed romance-tell.
+      // The five tells (focus/restraint/interest/frustration/desire) are no longer forwarded;
+      // attraction_manifestation preserves the romance signal without pre-canning the beat.
+      var liInterior = [];
+      if (liB.emotional_weather)        liInterior.push('EMOTIONAL WEATHER (his baseline climate) — ' + liB.emotional_weather);
+      if (liB.signature_behavior)       liInterior.push('CHARACTERISTIC BEHAVIOR (who he is, not a tic) — ' + liB.signature_behavior);
+      if (liB.deflection_pattern)       liInterior.push('HOW HE GUARDS / DEFLECTS — ' + liB.deflection_pattern);
+      if (liB.attraction_manifestation) liInterior.push('HOW HIS PULL TOWARD HER SHOWS (the romance signal — reason it fresh each time, never the same beat twice) — ' + liB.attraction_manifestation);
+      // signature_habits NOT forwarded to CG (Roman 2026-08-06) — a tic-carrier that calcifies (see PC note).
+      if (liInterior.length) {
+        out.push('LI INTERIOR (HARD — who he IS, not a menu of gestures. When a beat needs his body to carry state — including his pull toward her — REASON a fresh panel-specific action THIS man would do in THIS moment; do NOT replay a fixed tell. Show the behavior, never caption the feeling):');
+        liInterior.forEach(function(t){ out.push('  • ' + t); });
       }
       if (liB.pc_keenly_notices) {
         out.push('PC NOTICING MENU — ' + liName + ' (HARD — when LI is in the panel, this is the rotating per-scene INSERT-SHOT menu. Pick ONE item per scene; ROTATE across scenes — do NOT default to the same anchor every scene. NEVER "jaw" / "jaw tightening" — calcified, banned):');
@@ -201899,6 +201908,60 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildFatelandsCombatDirective = _buildFatelandsCombatDirective;
 
+  // ── CG ARC-LEVEL CONTINUITY HELPERS (Roman 2026-08-07) ──
+  // Two arc-level failure modes the per-scene consumption contract misses because it
+  // only sees the prior-scene TAIL: (1) a named antagonist who acts only through
+  // proxies (messenger/document/leak) and never appears on-panel in a VISUAL medium;
+  // (2) an already-revealed object (envelope/photos/evidence) re-revealed as if new.
+  // These back an arc guard (escalate the antagonist to on-panel late in the arc) and
+  // a rolling "already established" ledger fed to the author as an avoid-re-reveal list.
+  var _CG_REVEAL_NOUNS = ['envelope','letter','photograph','photo','picture','document','file','dossier','folder','package','parcel','message','telegram','recording','tape','video','footage','ledger','contract','deed','testament','note','evidence','locket','vial','journal','diary','manuscript','ticket','receipt','invitation'];
+  function _cgAntagonistPersonName(antagStr) {
+    // Return an INDIVIDUAL PERSON'S proper name embedded ANYWHERE in the antagonist
+    // string, else null. Antagonist descriptions frequently lead with a relational or
+    // descriptive phrase ("His cousin Lena who...", "The daughter of the man...", "Her
+    // rival Elias"), so a leading-token-only parse misses the name (confirmed: "His
+    // cousin Lena" disabled the guard). An abstract force ("the rising debt", "her own
+    // guilt") or a collective ("the Hulk Gang", "the Board") has no single on-panel
+    // person → return null so the guard skips it.
+    var s = String(antagStr || '').trim();
+    if (!s) return null;
+    var STOP = { The:1,A:1,An:1,His:1,Her:1,Their:1,Its:1,Our:1,Your:1,My:1,This:1,That:1,These:1,Those:1,He:1,She:1,They:1,It:1,And:1,But:1,Or:1,Who:1,Whom:1,Whose:1,When:1,Where:1,While:1,With:1,By:1,For:1,To:1,Of:1,In:1,On:1,As:1,At:1,From:1,If:1,Then:1,So:1 };
+    var COLLECTIVE = /^(gang|army|order|guild|council|house|clan|family|mob|syndicate|cartel|court|senate|coven|legion|horde|pack|crew|company|brotherhood|sisterhood|circle|cabal|faction|tribe|host|board|committee|tribunal|bureau|department|agency|corporation|firm|bank|press|media|network|foundation|institute|division|regime|government|state|crown|throne|empire|kingdom|republic|union)$/i;
+    var CUE = /^(mr|mrs|ms|miss|lord|lady|sir|dame|count|countess|duke|duchess|baron|baroness|king|queen|prince|princess|cousin|brother|sister|daughter|son|father|mother|uncle|aunt|nephew|niece|rival|partner|ex|lover|husband|wife|friend|enemy|heir|captain|general|colonel|doctor|professor|master|mistress|widow|widower|stepmother|stepfather)$/i;
+    var toks = s.split(/\s+/).map(function (t) { return t.replace(/[^A-Za-z'\-]/g, ''); });
+    function isName(w) { return w && /^[A-Z][a-z'\-]+$/.test(w) && !STOP[w]; }
+    function collect(i) { var parts = [toks[i]]; for (var j = i + 1; j < toks.length && parts.length < 3; j++) { if (isName(toks[j]) && !COLLECTIVE.test(toks[j])) parts.push(toks[j]); else break; } return parts; }
+    var chosen = null;
+    // Prefer a name introduced by a person-cue ("cousin Lena", "Lord Elias").
+    for (var i = 0; i < toks.length; i++) {
+      if (CUE.test(toks[i]) && i + 1 < toks.length && isName(toks[i + 1]) && !COLLECTIVE.test(toks[i + 1])) { chosen = collect(i + 1); break; }
+    }
+    // Else the first proper noun in the string.
+    if (!chosen) {
+      for (var k = 0; k < toks.length; k++) {
+        if (isName(toks[k])) {
+          if (COLLECTIVE.test(toks[k])) return null;                            // "the Board of Directors", "the Order..."
+          if (k + 1 < toks.length && COLLECTIVE.test(toks[k + 1])) return null; // "Hulk Gang" / "Voss Family"
+          chosen = collect(k); break;
+        }
+      }
+    }
+    if (!chosen) return null;
+    var name = chosen.join(' ');
+    if (name.split(/\s+/).length === 1 && name.length < 3) return null;
+    return name;
+  }
+  function _cgScanRevealObjects(prose) {
+    var found = [];
+    var lc = ' ' + String(prose || '').toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ') + ' ';
+    for (var i = 0; i < _CG_REVEAL_NOUNS.length; i++) {
+      var n = _CG_REVEAL_NOUNS[i];
+      if (lc.indexOf(' ' + n + ' ') >= 0 || lc.indexOf(' ' + n + 's ') >= 0 || lc.indexOf(' ' + n + 'es ') >= 0) found.push(n);
+    }
+    return found;
+  }
+
   function _buildCGScreenplayUserPrompt(sceneIndex, playerAction, playerDialogue) {
     // Gather the context the model needs to write the scene. Uses the
     // canonical name resolvers (_resolveStagedPlayerName /
@@ -202331,10 +202394,38 @@ No text, no watermark, no UI elements, share-ready.`;
 
       lines.push('SCENE CONSUMPTION CONTRACT (HARD — audit fix; the romance still OWNS the scene):');
       lines.push('  • NEW A-PRESSURE (exactly one, NOT a recap): introduce ONE specific, previously-unseen A-plot movement this scene — a new fact/clue, an enemy move, a cost incurred, a deadline shift, a consequence landing, or a document/message/witness surfacing. ' + (_msEvent ? 'The A-plot beat due around now: "' + _msEvent.slice(0, 220) + '" — land it or visibly move toward it.' : 'Move toward the named goal: "' + String(_ap2.goal || '').slice(0, 180) + '".'));
+      // ARC-MEMORY AVOID-RE-REVEAL (Roman 2026-08-07): the NEW A-PRESSURE bullet only sees the
+      // prior-scene tail; feed the OBJECTS already surfaced across ALL prior scenes so an
+      // already-revealed envelope/evidence/photo is not re-revealed as new (the observed echo).
+      try {
+        var _estReveals = (state && Array.isArray(state._cgEstablishedReveals)) ? state._cgEstablishedReveals : [];
+        if (_estReveals.length) {
+          lines.push('  • ALREADY ESTABLISHED — do NOT re-reveal as new: these have ALREADY surfaced in earlier scenes and the reader KNOWS them — ' + _estReveals.slice(0, 10).join(', ') + '. Do not re-introduce, re-discover, or re-open any of them as if for the first time. Reference them only by building FORWARD to a NEW consequence, or bring in something genuinely new. A re-revealed object reads as the plot spinning in place.');
+        }
+      } catch (_) {}
       lines.push('  • NEW R-DELTA (exactly one, NOT the same charge): shift the PC↔LI relationship in ONE concrete way that did not exist last scene — a change in attraction, trust, a misread, a vulnerability shown, a debt, jealousy, intimacy pressure, a power reversal, or a boundary moved. "I want him but shouldn\'t / he watches without moving" is NOT a delta — name what is DIFFERENT now.');
       lines.push('  • BAN RE-PRESENTING THE PRIOR DECISION: whatever unresolved choice or question closed the prior scene (e.g. "tell him or stay silent") MUST NOT be this scene\'s main beat or its closing prompt. Either it is ACTED ON and its consequence drives this scene, or a NEW pressure overtakes it. Do not restage the same fork in a new room.');
       if (_clock2) lines.push('  • CLOCK MOVES: the pressure clock (' + _clock2 + ') must visibly ADVANCE or be MATERIALLY COMPLICATED this scene — never restate the same remaining time ("three days / hours away") without a new consequence attached.');
-      if (_antag2) lines.push('  • PRESSURE FORCE ON-PAGE: the antagonist / anti-force (' + _antag2.slice(0, 180) + ') must ACT this scene — present in the room, OR acting through a messenger, document, threat, witness, leak, legal/financial/family move, or a message just received. It may not stay a purely abstract offstage idea every scene.');
+      if (_antag2) {
+        // ── ANTAGONIST ON-PANEL ARC GUARD (Roman 2026-08-07) ──
+        // The base directive permits offstage proxy action EVERY scene — which is why a
+        // named antagonist can run a whole issue without ever being SEEN (observed: "Lena
+        // Voss" referenced, never staged). Once the arc reaches its back half with no
+        // on-panel appearance, revoke the proxy option and escalate to an in-person mandate.
+        var _antagName = (typeof _cgAntagonistPersonName === 'function') ? _cgAntagonistPersonName(_antag2) : null;
+        var _antagSeen = !!(state && state._cgAntagonistOnPanel);
+        var _sInIssueA = (typeof window._getSceneInIssue === 'function' && window._getSceneInIssue()) || (sceneIndex + 1);
+        var _issueLenA = (typeof scenesPerIssue !== 'undefined' && scenesPerIssue) || 10;
+        var _backHalfA = _sInIssueA >= Math.ceil(_issueLenA * 0.6);
+        var _finalStretchA = _sInIssueA >= (_issueLenA - 1);
+        if (_antagName && !_antagSeen && _finalStretchA) {
+          lines.push('  • ANTAGONIST ON-PANEL — MANDATORY (arc guard): ' + _antagName + ' has ACTED only from offstage across this entire issue and has NEVER appeared on-panel. This is a VISUAL medium — an antagonist the reader never SEES cannot land. Bring ' + _antagName + ' PHYSICALLY on-panel in THIS scene: present in the space, staged in at least one panel, face-to-face with the protagonist, ideally speaking. A proxy (messenger / document / message / leak) is NO LONGER sufficient — ' + _antagName + ' appears in person.');
+        } else if (_antagName && !_antagSeen && _backHalfA) {
+          lines.push('  • PRESSURE FORCE ON-PAGE (arc escalation): ' + _antagName + ' has so far acted only from offstage and has NOT yet appeared on-panel. In a VISUAL medium the antagonist needs a face. Strongly prefer bringing ' + _antagName + ' PHYSICALLY into this scene — present in the room, staged in a panel, not another proxy. If not this scene it must happen very soon; do not let the issue reach its climax with ' + _antagName + ' still unseen.');
+        } else {
+          lines.push('  • PRESSURE FORCE ON-PAGE: the antagonist / anti-force (' + _antag2.slice(0, 180) + ') must ACT this scene — present in the room, OR acting through a messenger, document, threat, witness, leak, legal/financial/family move, or a message just received. It may not stay a purely abstract offstage idea every scene.');
+        }
+      }
       if (_isLastOfIssue2) {
         var _chFam2 = (typeof _pickCliffhangerFamily === 'function') ? _pickCliffhangerFamily(state) : null;
         if (_chFam2) lines.push('  • CLIFFHANGER FAMILY (rotation steer — GROUND it in seeded pressure, do not bolt on): ' + _chFam2.label + ' — ' + _chFam2.desc + ' Realize it through the A/R threads this story has already been tightening; if it cannot be grounded here, use the nearest family that CAN. Grounding beats hitting the assigned family.');
@@ -204561,6 +204652,53 @@ No text, no watermark, no UI elements, share-ready.`;
           }
         }
       }
+      // ── DEDUP MANDATED-CLOSER ECHO (Roman 2026-08-07) ──
+      // All three onboarding deck-frame scenes force a verbatim closer on the LAST
+      // beat (enforced just below): Scene 1 = grandmother's-deck discovery, Scene 2 =
+      // Petition emergence, Scene 3 = Tempt emergence. The model sometimes ALSO writes
+      // its own paraphrase of that same closer in an EARLIER beat → two near-identical
+      // closing paragraphs (observed Scene 2 in a headless CG run). Detect and remove
+      // earlier beats that reproduce the mandated closer's distinctive content.
+      // Driven off _mCloser itself (single source of truth) so ALL THREE scenes are
+      // covered uniformly — no per-card special-casing. Method: distinctive 3-word
+      // shingles of the closer; an earlier beat is an echo if it shares >=25% of them
+      // AND >=3 shingles. Tuned against the real doubled text — genuine echoes score
+      // 0.33-0.69; incidental deck glances / dialogue mentions / setting echoes score
+      // <=0.06. The true last beat is never scanned (loop stops at length-2), and the
+      // mandated OPENER beat (Scene 1 non-deck-at-end) is explicitly never removed.
+      var _normLite = function (s) {
+        return String(s || '').toLowerCase().replace(/[‘’“”]/g, '\'').replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ').trim();
+      };
+      var _closerShingles = (function () {
+        var w = _normLite(_mCloser).split(' ').filter(Boolean), out = [];
+        for (var _wi = 0; _wi + 2 < w.length; _wi++) {
+          if (w[_wi].length >= 5 || w[_wi + 1].length >= 5 || w[_wi + 2].length >= 5) out.push(w[_wi] + ' ' + w[_wi + 1] + ' ' + w[_wi + 2]);
+        }
+        return out;
+      })();
+      if (_closerShingles.length >= 3) {
+        var _openerNorm = _mOpener ? _normalize(_mOpener) : null;
+        var _removedEcho = 0;
+        for (var _bi = plan.beats.length - 2; _bi >= 0; _bi--) {
+          var _bt = (plan.beats[_bi] && plan.beats[_bi].text) || '';
+          if (!_bt) continue;
+          // never remove the legit mandated opener (Scene 1 non-deck-at-end path puts the deck opener at beat 0)
+          if (_openerNorm && _normalize(_bt).indexOf(_openerNorm) === 0) continue;
+          var _hay = ' ' + _normLite(_bt) + ' ', _hits = 0;
+          for (var _si = 0; _si < _closerShingles.length; _si++) if (_hay.indexOf(' ' + _closerShingles[_si] + ' ') >= 0) _hits++;
+          if (_hits >= 3 && (_hits / _closerShingles.length) >= 0.25) {
+            plan.beats.splice(_bi, 1);
+            _removedEcho++;
+            if (plan.microDecision && typeof plan.microDecision.afterBeat === 'number' && plan.microDecision.afterBeat > _bi) plan.microDecision.afterBeat -= 1;
+          }
+        }
+        if (_removedEcho) {
+          plan.beats.forEach(function (b, i) { b.idx = i; });
+          plan.decisionGateBeatIdx = plan.beats.length - 1;
+          if (plan.microDecision && typeof plan.microDecision.afterBeat === 'number' && plan.microDecision.afterBeat > plan.beats.length - 1) plan.microDecision.afterBeat = plan.beats.length - 1;
+          try { console.log('[CG:SCREENPLAY:MANDATE] Scene ' + _sceneNo + ' — removed ' + _removedEcho + ' duplicate mandated-closer echo(es) before the verbatim closer.'); } catch (_) {}
+        }
+      }
       // CLOSER (all three) — enforce on the ACTUAL last beat (clamp the gate
       // so a mid-scene decisionGateBeatIdx doesn't leave a freelanced ending).
       var _trueLastIdx = plan.beats.length - 1;
@@ -206415,6 +206553,43 @@ No text, no watermark, no UI elements, share-ready.`;
           if (typeof window._mineUnknownRepeats === 'function') window._mineUnknownRepeats();
         }
       } catch (_) {}
+
+      // ── ARC-LEVEL CONTINUITY TRACKING (Roman 2026-08-07) ──
+      // Feeds the avoid-re-reveal ledger + antagonist-on-panel arc guard built into the
+      // CG user prompt. Runs post-commit so scene N's prompt sees scenes 0..N-1.
+      try {
+        if (sceneIndex === 0) { state._cgAntagonistOnPanel = false; state._cgAntagonistOnPanelScene = null; state._cgEstablishedReveals = []; }
+        // (a) accumulate already-surfaced reveal-objects (dedup)
+        var _revsCommit = (typeof _cgScanRevealObjects === 'function') ? _cgScanRevealObjects(proseAssembled) : [];
+        if (_revsCommit.length) {
+          state._cgEstablishedReveals = state._cgEstablishedReveals || [];
+          _revsCommit.forEach(function (r) { if (state._cgEstablishedReveals.indexOf(r) === -1) state._cgEstablishedReveals.push(r); });
+        }
+        // (b) antagonist on-panel detection — did the named antagonist SPEAK or ACT AS SUBJECT this scene?
+        if (!state._cgAntagonistOnPanel) {
+          var _antStrC = (state.aPlot && (state.aPlot.antagonistOrAntiForce || state.aPlot.antagonistShape)) || '';
+          var _antNmC = (typeof _cgAntagonistPersonName === 'function') ? _cgAntagonistPersonName(_antStrC) : null;
+          if (_antNmC) {
+            var _firstC = _antNmC.split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            var _fullReC = new RegExp('\\b' + _antNmC.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '\\b', 'i');
+            var _firstReC = new RegExp('\\b' + _firstC + '\\b', 'i');
+            // "Lena enters/says/steps/turns…" — name directly as the subject of a present action ⇒ physically present.
+            // Possessive ("Lena's father") breaks \s+VERB, so a referential mention does NOT trigger.
+            var _subjActReC = new RegExp('\\b' + _firstC + '\\s+(?:coldly |quietly |slowly |finally |now |simply |just )?(?:enters?|entered|steps?|stepped|walks?|walked|strides?|strode|stands?|stood|sits?|sat|leans?|leaned|arrives?|arrived|appears?|appeared|turns?|turned|faces?|faced|crosses?|crossed|grabs?|grabbed|reaches?|reached|says?|said|hisses?|snarls?|smiles?|smiled|laughs?|nods?|raises?|lifts?|moves?|slides?)\\b', 'i');
+            var _beatsC = (plan && Array.isArray(plan.beats)) ? plan.beats : [];
+            var _onPanelC = false;
+            for (var _diC = 0; _diC < _beatsC.length && !_onPanelC; _diC++) {
+              var _bdC = _beatsC[_diC]; if (!_bdC) continue;
+              if (_bdC.speaker && (_fullReC.test(String(_bdC.speaker)) || _firstReC.test(String(_bdC.speaker)))) { _onPanelC = true; break; }
+              if (_subjActReC.test(String(_bdC.text || ''))) { _onPanelC = true; break; }
+            }
+            if (_onPanelC) {
+              state._cgAntagonistOnPanel = true; state._cgAntagonistOnPanelScene = sceneIndex;
+              try { console.log('[CG:ARC-GUARD] antagonist "' + _antNmC + '" detected on-panel at scene ' + sceneIndex); } catch (_) {}
+            }
+          }
+        }
+      } catch (_cgArcErr) { try { console.warn('[CG:ARC-GUARD] tracking threw:', _cgArcErr && _cgArcErr.message); } catch (_) {} }
 
       // ── CROSS-STORY ANTI-REPETITION — RECORD ──
       // After Scene 1 lands, save its fingerprint (side character name,
@@ -233027,6 +233202,17 @@ Generate the synopsis now.` }
                 _ffWoundCanonSteer += ' THIS STORY\'S CRISIS (HARD — the current_crisis MUST realize this specific canon threat, not a generic one): "' + String(_ffwCrisis.premise) + '"' + (_ffwCrisis.enemy ? (' — ' + _ffwCrisis.enemy) : '') + '. ';
               }
             } catch (_) {}
+            // FF INTERIOR STEER (Roman 2026-08-06): the deep-psych fields (core_contradiction /
+            // private_hope / emotional_weather) must be canon-derived too — a canon character's
+            // interior is as fixed as their wound, and it is what the prose author AND CG now reason
+            // behavior from. Previously only wound/crisis were canon; the interior stayed generic.
+            try {
+              var _ffwVow = _ffwc.canonVow ? String(_ffwc.canonVow) : '';
+              var _ffwVoice = Array.isArray(_ffwc.voiceMarkers) ? _ffwc.voiceMarkers.filter(Boolean).slice(0, 4).join('; ') : (_ffwc.voiceMarkers ? String(_ffwc.voiceMarkers) : '');
+              _ffWoundCanonSteer += ' CANON INTERIOR (HARD — derive core_contradiction, private_hope, emotional_weather, AND signature_habits from THIS character\'s CANON, never a generic romance interior): the CONTRADICTION they canonically live with (the tension between what they are and what they long to be — e.g. Wolverine: wants peace, built for violence); the PRIVATE HOPE their canon actually carries (what they long for and cannot ask for); the EMOTIONAL WEATHER native to them (their baseline climate — e.g. Wolverine: banked rage over grief); the CHARACTERISTIC BEHAVIORS they are canonically known for (chosen habits, NOT nervous tics — e.g. Wolverine: cigars, reckless healing-factor stunts, claws-first when cornered).'
+                + (_ffwVow ? ' Canon vow/creed to honor: "' + _ffwVow + '" — let it shape the hope and the contradiction.' : '')
+                + (_ffwVoice ? ' Canon voice/manner (informs emotional_weather + how the interior surfaces): ' + _ffwVoice + '.' : '') + ' ';
+            } catch (_) {}
           }
         } catch (_) {}
         // ── INTER-STORY SIGNATURE DIVERSITY (Roman 2026-06-01 regime) ──
@@ -238813,19 +238999,24 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
     // intentionally excluded. The invariant audit asserts schema = include ∪
     // excludedByDesign (no orphan fields).
     var BIBLE_MODE_PROFILES = {
-      // ── 'cg' — CG screenplay system prompt serializer (~line 170190)
-      // Forwards shot-grammar fields + tells; drops interiority (CG renders
-      // action lines, not interior monologue). Wound/kink consumed via A-plot.
+      // ── 'cg' — CG screenplay system prompt serializer (~line 200924)
+      // Forwards shot-grammar fields + the DEEP-PSYCH INTERIOR (contradiction /
+      // hope / emotional_weather / habits) as constraints the panel author reasons
+      // fresh behavior from; the five emotional TELLS are dropped (Roman 2026-08-06,
+      // anti-calcification). Wound/crisis/kink consumed via A-plot.
       cg: {
         pc: {
           modeSpecific: [
             'ancestry', // Roman 2026-06-11 Phase 2: heritage informs CG visual canon
             'complexion', 'second_celebrated_feature',
-            'stress_tic', 'desire_tell', 'impatience_tell', 'confidence_tell', 'vulnerability_tell',
+            // INTERIOR, not tics (Roman 2026-08-06): five tells dropped; PURE deep-psych forwarded.
+            // signature_habits is EXCLUDED — it is a tic-carrier that calcifies in the panel author.
+            'emotional_weather', 'core_contradiction', 'private_hope',
             'li_keenly_aware_of'
           ],
           excludedByDesign: [
-            'face', 'emotional_weather', 'core_contradiction', 'private_hope',
+            'face',
+            'stress_tic', 'desire_tell', 'impatience_tell', 'confidence_tell', 'vulnerability_tell',
             'signature_habits', 'self_conscious_feature', 'current_crisis', 'wound'
           ]
         },
@@ -238834,13 +239025,17 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the 
             'ancestry', // Roman 2026-06-11 Phase 2: heritage informs CG visual canon
             'complexion', 'voice_quality', 'hands_quality', 'mouth_quality', 'holding_style',
             'second_celebrated_feature',
-            'focus_tell', 'restraint_tell', 'interest_tell', 'frustration_tell', 'desire_tell',
+            // INTERIOR, not tics (Roman 2026-08-06): five tells dropped; interior forwarded.
+            // attraction_manifestation preserves the romance signal without pre-canning the beat.
+            // signature_habits EXCLUDED (tic-carrier that calcifies — see PC note above).
+            'emotional_weather', 'signature_behavior', 'deflection_pattern', 'attraction_manifestation',
             'pc_keenly_notices', 'desire_register_exemplars_cg'
           ],
           excludedByDesign: [
-            'face', 'signature_behavior', 'deflection_pattern', 'attraction_manifestation',
+            'face',
+            'focus_tell', 'restraint_tell', 'interest_tell', 'frustration_tell', 'desire_tell',
             'defining_anecdote', 'secondary_anecdote_different_register',
-            'emotional_weather', 'signature_habits', 'self_conscious_feature',
+            'signature_habits', 'self_conscious_feature',
             'wound', 'signature_kink', 'desire_register_exemplars'
           ]
         },
