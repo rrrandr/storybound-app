@@ -188758,9 +188758,14 @@ No text, no watermark, no UI elements, share-ready.`;
     var isVeilweave = /veilweave/i.test(sceneTxt + ' ' + String((visualState && visualState.pc_wardrobe) || ''));
     var isVeilwood = s.fantasyRegion === 'the_veilwood' || /veilwood/i.test(bg + ' ' + String((s._stagedRegionContract && s._stagedRegionContract.regionLabel) || ''));
     var gTxt = function (g) { g = String(g || '').toLowerCase(); return g === 'male' ? 'a man (he/him)' : g === 'female' ? 'a woman (she/her)' : ''; };
+    // Reconnect the shot planner the full builder uses — the compact assembly was bypassing it, so
+    // every panel came out eye-level medium. _buildShotSequence assigns a varied {distance,angle} per
+    // panel; _sheetCameraForQuad emits the per-panel CAMERA line below. (Roman 2026-08-08 — regression.)
+    try { if (typeof _buildShotSequence === 'function') _buildShotSequence(phases); } catch (_) {}
     var L = [];
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dense ornament. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
     L.push('COMPOSITION: ONE SQUARE image = a 2x2 grid of four equal comic panels with thin gutters. NO lettering, captions, speech balloons, or SFX text anywhere in the image.');
+    L.push('CAMERA: VARY the camera panel to panel — each panel is a DISTINCT shot in BOTH distance and angle (mix wide and close, low-angle and high-angle, straight-on and tilted, over-the-shoulder, worm\'s-eye through the tentacles, etc.). Do NOT shoot all four eye-level medium. Each panel\'s specific camera is given in its PANELS entry below — obey it.');
     if (isVeilwood) L.push('SETTING (every panel): the VEILWOOD — pale WHITE trees grown as MATED PAIRS (two trunks braided around each other, NEVER brown, never one single trunk), long WHITE weeping-willow canopy, ground of deep-CRIMSON grass in twisted mated braids. Luminous and otherworldly, never a generic green/brown forest.');
     else if (bg) L.push('SETTING (every panel): ' + bg + '.');
     L.push('CHARACTERS — match EACH to their REFERENCE image EXACTLY: same face, hair, skin colour, wardrobe and weapon, held identical in every panel. Three DISTINCT individuals:');
@@ -188779,7 +188784,7 @@ No text, no watermark, no UI elements, share-ready.`;
     }
     if (hasKwisheen) L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, and about SIX boneless waist TENTACLES that are LONGER than any legs and actively grappling or reaching (never idle/decorative).');
     L.push('PANELS:');
-    (phases || []).forEach(function (ph, i) { L.push('  ' + (i + 1) + ') ' + String((ph && (ph.beat || ph.label)) || '')); });
+    (phases || []).forEach(function (ph, i) { L.push('  ' + (i + 1) + ') ' + String((ph && (ph.beat || ph.label)) || '') + (typeof _sheetCameraForQuad === 'function' ? _sheetCameraForQuad(i, phases) : '')); });
     L.push('EMOTION: every face at 7+/10 intensity fitting the beat — snarling, fierce, straining, alarmed — never blank or calm (calm only if a character is deliberately controlling/hiding emotion or resigned). Masked faces still emote through the eyes.');
     L.push('CONSISTENCY (HARD — every panel): each figure has EXACTLY TWO arms (never three); each Kwisheen attacks with its NAMED weapon plus its tentacles (never a bare tentacle used AS the weapon); each character keeps the SAME gender presentation in EVERY panel — nobody swaps sex mid-fight (a male stays male, a female stays female); ' + pcName + ' is ALWAYS clothed in the glowing mesh Veilweave in EVERY panel — never plain clothes, never armour, never a robe, never bare, never absent — and his face (and the nearest solid afterimage) stays clearly EXPRESSIVE and fierce (the refraction never blanks his face); the named characters stay DISTINCT individuals (never two of the same person); every panel is mid-ACTION with nobody standing idle or blank-faced.');
     L.push('CONTINUITY: all four panels are the SAME location; each character stays one consistent individual across panels; injuries persist.');
