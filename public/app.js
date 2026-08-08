@@ -184702,7 +184702,10 @@ No text, no watermark, no UI elements, share-ready.`;
   // ═══════════════════════════════════════════════════════════════════════
   function _buildIdentityLockBlock(visualState, liAbsent) {
     var s = window.state || {};
-    var pcGenderRaw = String(s.gender || s.playerGender || 'Female').trim().toLowerCase();
+    // Read the PC gender from every place it may be set BEFORE the legacy female fallback, so a
+    // canonically-male protagonist (e.g. Kael) is never asserted female just because s.gender was
+    // unset on this path. (Roman 2026-08-08 — the "Kael is an unambiguously female" bug.)
+    var pcGenderRaw = String(s.gender || s.playerGender || s.pcGender || (s.picks && s.picks.identity && (s.picks.identity.gender || s.picks.identity.pcGender)) || 'Female').trim().toLowerCase();
     var liGenderRaw = String(s.loveInterest || s.loveInterestGender || _defaultLIGenderForPC(s)).trim().toLowerCase();
     var pcName      = s.playerName || '';
     var liName      = (s.storybeau && s.storybeau.name) || s.loveInterestName || '';
@@ -185568,7 +185571,16 @@ No text, no watermark, no UI elements, share-ready.`;
       // with the CHEMISTRY/CHARGE gate, which likewise suppresses on a missing SSM.
       var _stForSsm = String((state && state.storyturn) || '').toUpperCase();
       var _st3plusSsm = (_stForSsm === 'ST3' || _stForSsm === 'ST4');
-      _ssm = (liAbsent && !_hasSideChar) ? 'solo'
+      // COMBAT OVERRIDE (Roman 2026-08-08): a fight with no LI + side characters was routed
+      // UNCONDITIONALLY to platonic_warm (friendly-chat blocking) — a whole class of fights
+      // staged as conversations. Detect combat and pick adversarial instead.
+      var _combatSSM = false;
+      try {
+        var _ctxtSSM = (typeof _sheetSceneText === 'function') ? _sheetSceneText(visualState, planMeta && planMeta.phases) : String((visualState && visualState.background) || '');
+        _combatSSM = (typeof _isCombatScene === 'function') && _isCombatScene(_ctxtSSM);
+      } catch (_) {}
+      _ssm = (liAbsent && _combatSSM) ? 'adversarial'
+           : (liAbsent && !_hasSideChar) ? 'solo'
            : (liAbsent && _hasSideChar) ? 'platonic_warm'
            : _st3plusSsm ? 'romance_eligible'
            : 'professional';
