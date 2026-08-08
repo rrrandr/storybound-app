@@ -75968,6 +75968,10 @@ Return ONLY valid JSON:
       // Resets all per-story couple/fate/narrative mechanics.
       // Called by startBook2 and startNewInWorld.
       // Does NOT touch Epoch State (Layer 2) or Region Physics (Layer 1).
+      // CG scene-image sequence — per-ISSUE tracking (L3 is the issue boundary: startBook2 calls this).
+      state._introducedCast = {};        // who has an intro portrait this issue
+      state._firedMomentSplashes = {};   // fire-once major-moment splashes this issue
+      state._lastRenderedRegion = null;  // previous region, for the location-change loupe trigger (Phase C)
 
       // A3-F1: CG Scene-1 cover pre-fire ABANDON — a story reset fired while a cover pre-fire was still
       // pending (the user left the cover WITHOUT entering the reader). That text+image spend was wasted.
@@ -189368,6 +189372,54 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderSceneImages = _renderSceneImages;
 
+  // ══ CG SCENE IMAGE SEQUENCE — Phase A foundation (Roman 2026-08-08) ══════════════════════════════
+  // Assembler that will emit an ORDERED per-scene image sequence: [location transition] + [intro portrait
+  // per NEW significant player] + [2x2 sheet] + [major-moment splash], all drawing on the shared anchor
+  // infrastructure (identity + structural anchors). See project_cg_image_architecture for the full plan.
+  //
+  // DIVISION OF LABOUR (Roman): the SHEET is the action-advancing unit — the identity / structural-anchor /
+  // weapon-readability / Veilweave-persistence / full-body pressures make it lean toward clear, centred,
+  // eye-level shots, and THAT IS FINE for a legible action diagram (the purpose->camera map in _SHOT_RHYTHM
+  // is already good; the model out-votes it under clarity pressure, and fighting that on a 4-character panel
+  // is the wrong battle). The CINEMATIC, viewer-forward compositions (dramatic low/high/dutch, silhouettes)
+  // live in the SPLASH + intro PORTRAITS — a single charged subject with no 4-character clarity tax, so
+  // dramatic framing actually lands there.
+  //
+  // PHASE A = a PASS-THROUGH wrapper (no new images) that lands the integration point + state scaffolding
+  // and proves parity by construction. Later phases add the slots. Preserves the sheet's .firstReady contract.
+
+  // Output-resolution policy (Roman 2026-08-08): 2K for everything; 4K ONLY for crowded battlefield splashes.
+  function _cgImageTier(kind, sceneFlags) {
+    sceneFlags = sceneFlags || {};
+    if (kind === 'splash' && sceneFlags.crowdedBattlefield === true) return '4K';
+    return '2K';
+  }
+  window._cgImageTier = _cgImageTier;
+
+  // Per-ISSUE tracking (cleared in _resetEpochState, NOT per scene). Lazy-init so it exists pre-first-reset.
+  function _cgIssueState() {
+    if (!state._introducedCast) state._introducedCast = {};          // { token: {portraitUrl, at} } — has an intro portrait this issue
+    if (!state._firedMomentSplashes) state._firedMomentSplashes = {}; // { momentType: true } — fire-once per issue
+    return state;
+  }
+  window._cgIssueState = _cgIssueState;
+
+  // TODO(Phase C): re-fire the loupe zoom to a new region on a mid-issue location change (reuse animation + art).
+  function _fireLocationTransition(regionToken) { return false; }
+  // TODO(Phase D): classify the scene's major moment → 'first_kiss'|'reversal'|'betrayal'|'mcguffin_sighting'|'disaster'|'cliffhanger'|null.
+  function _sceneMajorMoment(sceneCtx) { return null; }
+  window._fireLocationTransition = _fireLocationTransition;
+  window._sceneMajorMoment = _sceneMajorMoment;
+
+  // The assembler. PHASE A: pure PASS-THROUGH to _renderSceneImages so behaviour is byte-identical (parity
+  // by construction) while the entry point + state scaffolding land. Returns the same {results[], firstReady}
+  // contract the scene-completion consumers expect. (Later: prepend location+portraits, append splash.)
+  function _renderSceneImageSequence(visualState, phases, sceneIndex, planMeta) {
+    _cgIssueState();
+    return _renderSceneImages(visualState, phases, sceneIndex, planMeta);
+  }
+  window._renderSceneImageSequence = _renderSceneImageSequence;
+
   // ─────────────────────────────────────────────────────────────────
   // Beat-level expression layer — Layer 2 (Kontext mutation) + Layer 3
   // (cut-to closeup). Both fire eagerly after phase images settle so
@@ -207080,7 +207132,7 @@ No text, no watermark, no UI elements, share-ready.`;
       }
 
       // Phase image gen + render — identical to the literary completion path.
-      var phaseImagesPromise = _renderSceneImages(plan.visualState, plan.phases, sceneIndex, plan);
+      var phaseImagesPromise = _renderSceneImageSequence(plan.visualState, plan.phases, sceneIndex, plan);
       if (typeof _pregenMetaphorInserts === 'function') {
         _pregenMetaphorInserts(plan, sceneIndex).catch(function(_) {/* logged inside */});
       }
@@ -207578,7 +207630,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // consumes the array as a single promise; phase 0 mounts as the
       // initial hero, subsequent phases swap in when their startBeat is
       // reached during click-through.
-      var phaseImagesPromise = _renderSceneImages(plan.visualState, plan.phases, sceneIndex, plan);
+      var phaseImagesPromise = _renderSceneImageSequence(plan.visualState, plan.phases, sceneIndex, plan);
 
       // Metaphor inserts — pre-gen at scene mount alongside phase
       // images so the flash is INSTANT when the trigger fires (a
