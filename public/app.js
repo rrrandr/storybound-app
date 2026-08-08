@@ -188787,8 +188787,20 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildSheetPromptV2 = _buildSheetPromptV2;
 
+  // Which prompt assembly to use for a sheet. NOT "v1 vs v2" — think SPECIALIZED RENDERERS sharing the
+  // common anchor infrastructure. The compact character-forward assembly is the validated COMBAT sheet
+  // renderer; every OTHER scene type (romance, intimacy, wish-burst, quiet, storyboard-heavy) keeps the
+  // full assembly until it earns its own experiment. window._promptAssemblyV2 === true forces it on for
+  // any scene (manual override); === false is a kill switch. (Roman 2026-08-08 — Option 1 promotion.)
+  function _useV2Assembly(visualState, phases) {
+    if (window._promptAssemblyV2 === true) return true;
+    if (window._promptAssemblyV2 === false) return false;
+    try { return (typeof _isCombatScene === 'function') && _isCombatScene(_sheetSceneText(visualState, phases)); } catch (_) { return false; }
+  }
+  window._useV2Assembly = _useV2Assembly;
+
   function _buildOneShotSheetPrompt(visualState, phases, sceneIndex, planMeta) {
-    if (window._promptAssemblyV2 === true) {
+    if (_useV2Assembly(visualState, phases)) {
       try { var _v2 = _buildSheetPromptV2(visualState, phases, sceneIndex, planMeta); if (_v2) { try { console.log('[ONESHOT] v2 prompt assembly (' + _v2.length + ' chars)'); } catch (_) {} return _v2; } } catch (e) { try { console.warn('[ONESHOT] v2 assembly failed (' + e.message + '), falling back to v1'); } catch (_) {} }
     }
     // STORYBOARD-DOC layer for the SHEET (Roman 2026-07-21). The comic pipeline builds a per-panel
@@ -189155,7 +189167,7 @@ No text, no watermark, no UI elements, share-ready.`;
               // v2: drop the GENERIC species anchor when a present NPC of that species has its own
               // character anchor — the character anchor supplies identity AND anatomy (the paid
               // experiment showed removing the competing generic anchor improved anatomy).
-              if (window._promptAssemblyV2 === true) {
+              if (_useV2Assembly(visualState, phases)) {
                 var _govSp = String((_spAnchors[_ai] && _spAnchors[_ai].governs) || '').toLowerCase();
                 var _coveredByChar = (visualState.other_characters_present || []).some(function (o) { return o && o.name && _MANUAL_CASTING_ANCHORS[_castingToken(o.name)] && String(o.species || '').toLowerCase() === _govSp; });
                 if (_coveredByChar) { try { console.log('[ONESHOT:v2] dropped generic species anchor: ' + _govSp + ' (character anchor present)'); } catch (_) {} continue; }
@@ -189181,10 +189193,10 @@ No text, no watermark, no UI elements, share-ready.`;
               var _aOS = _castingResolveAnchor(_oOS.name);
               if (_aOS && _aOS.url) {
                 var _aB64 = (String(_aOS.url).indexOf('data:') === 0) ? String(_aOS.url).split(',')[1] : await _canonRefToB64(_aOS.url);
-                var _castLbl = (window._promptAssemblyV2 === true)
+                var _castLbl = (_useV2Assembly(visualState, phases))
                   ? ('MATCH ' + _oOS.name + ' TO THIS REFERENCE IMAGE EXACTLY — same face, hair, skin colour, wardrobe, weapon and markings; this image defines who ' + _oOS.name + ' is. Only the pose and expression come from the panel.')
                   : _aOS.label;
-                if (_aB64 && _refs.length < 8) { _refs.push({ b64: _aB64, label: _castLbl }); try { console.log('[ONESHOT] casting identity anchor: ' + _oOS.name + (window._promptAssemblyV2 === true ? ' (v2 authoritative label)' : '')); } catch (_) {} }
+                if (_aB64 && _refs.length < 8) { _refs.push({ b64: _aB64, label: _castLbl }); try { console.log('[ONESHOT] casting identity anchor: ' + _oOS.name + (_useV2Assembly(visualState, phases) ? ' (v2 authoritative label)' : '')); } catch (_) {} }
               }
             }
           }
@@ -189193,7 +189205,7 @@ No text, no watermark, no UI elements, share-ready.`;
         // concept sheet) when the scene names the object. This is the production mechanism validated by the
         // weapon-anchor experiment; distinct from identity/casting anchors. (Roman 2026-08-08.)
         try {
-          if (window._promptAssemblyV2 === true) {
+          if (_useV2Assembly(visualState, phases)) {
             var _structTxt = _sheetSceneText(visualState, phases) + ' ' + String((visualState && visualState.pc_weapon) || '');
             var _saKeys = Object.keys(_MANUAL_STRUCTURAL_ANCHORS);
             for (var _sk = 0; _sk < _saKeys.length && _refs.length < 8; _sk++) {
