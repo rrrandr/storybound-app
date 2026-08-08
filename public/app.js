@@ -159041,6 +159041,60 @@ No text, no watermark, no UI elements, share-ready.`;
     };
   }
   window._castingResolveAnchor = _castingResolveAnchor;
+
+  // ── MANUAL casting anchors (Roman 2026-08-08) ────────────────────────────────────────────────
+  // The MANUAL half of the Casting Library: seed a KNOWN, hand-picked reference (e.g. a rendered
+  // character-introduction portrait) as a LOCKED record, so _castingResolveAnchor serves it
+  // immediately — no waiting for the confidence-HARVEST loop, and auto-promotion (_castingConsiderPanel,
+  // which skips `locked` records) never overwrites it. This is deliberately independent of AUTOMATIC
+  // promotion (deferred until we've measured how far directives + reference images get us on their own).
+  //
+  // Registry shape: token → { url, displayName }. `url` may be a committed asset path or a data URL.
+  // Populate as intro portraits are locked (e.g. the Kael / Threxa / Orun Veilwood anchors). Empty until
+  // those assets are committed; the plumbing below is ready for them.
+  var _MANUAL_CASTING_ANCHORS = {};
+  window._MANUAL_CASTING_ANCHORS = _MANUAL_CASTING_ANCHORS;
+
+  // Seed one manual anchor as a locked, authoritative WORLD-tier record. Won't clobber an existing
+  // locked anchor unless opts.replace. Returns {action}.
+  function _castingSeedManualAnchor(token, url, opts) {
+    opts = opts || {};
+    if (!token || !url) return { action: 'skip', reason: 'missing-token-or-url' };
+    var lib = _castingLib();
+    var n = _castingToken(token);
+    var existing = lib[n];
+    if (existing && existing.locked && !opts.replace) return { action: 'keep', reason: 'already-locked' };
+    lib[n] = {
+      token: n,
+      displayName: String(opts.displayName || token),
+      url: url,
+      confidence: 100,            // hand-picked — authoritative
+      sourcePanel: opts.sourcePanel || 'manual',
+      firstAppearance: 'manual',
+      lastAppearance: 'manual',
+      timesUsed: 0,
+      tier: 'WORLD',              // a chosen anchor is a pillar
+      locked: true,               // _castingConsiderPanel leaves locked records alone (never auto-demoted)
+      manual: true
+    };
+    return { action: 'seed', token: n };
+  }
+  window._castingSeedManualAnchor = _castingSeedManualAnchor;
+
+  // Seed every anchor in the registry (call once per story once the flag is on). Returns a count.
+  function _castingSeedRegisteredAnchors() {
+    if (window._castingLibrary === false) return 0;
+    var seeded = 0;
+    try {
+      Object.keys(_MANUAL_CASTING_ANCHORS).forEach(function (tok) {
+        var a = _MANUAL_CASTING_ANCHORS[tok];
+        if (a && a.url && _castingSeedManualAnchor(tok, a.url, { displayName: a.displayName || tok }).action === 'seed') seeded++;
+      });
+    } catch (_) {}
+    return seeded;
+  }
+  window._castingSeedRegisteredAnchors = _castingSeedRegisteredAnchors;
+
   // CASTING LINT — warnings only. A recurring character with no reference (reinvented each
   // panel), a low-confidence reference that should be superseded, or a reference never reused.
   function _castingLint(appearancesByToken) {
