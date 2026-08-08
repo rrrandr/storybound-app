@@ -187183,33 +187183,23 @@ No text, no watermark, no UI elements, share-ready.`;
 
   function _veilweaveDirective(wearerSpecies) {
     var range = _veilweaveProjectionRange(wearerSpecies);
-    return '\n\nVEILWEAVE (the First Favored refraction garment — the wearer is ONE physically real body, ' +
-      'NOT clones): a long, hooded, MANY-FOLDED, EXTREMELY TRANSLUCENT veil woven from a luminous iridescent ' +
-      'FILAMENT-NET — a fine glowing web of criss-crossing thread-lines studded with sparkling light-NODES, the ' +
-      'net clearly VISIBLE as the veil\'s weave across the WHOLE garment (never a plain smooth sheen, never a ' +
-      'grid painted on skin), draping in many soft folds; the body clearly VISIBLE beneath it and the wearer ' +
-      'BAREFOOT (in combat the observer sees semi-clothed versions of the ' +
-      'same figure attacking through overlapping transparent cloth). ' +
-      // NUDE beneath (Roman 2026-07-21): no "never-nude" underwear/denim under the sheer cloth; instead the
-      // garment blooms opaque with its own light over the private areas — the fabric does the concealing.
-      'The wearer is NUDE and BAREFOOT beneath the transparent Veilweave — do NOT add underwear, briefs, shorts, ' +
-      'denim, a loincloth, a codpiece, a cup, shoes, boots, or any undergarment under it. MODESTY is done by the ' +
-      'veil itself: across the WHOLE HIPS and UPPER-THIGHS band (and the chest on a female wearer) the SAME ' +
-      'filament-net simply DENSIFIES to OPAQUE — the net thickening across that broad zone and GRADIENT-fading ' +
-      'back to sheer above the waist and below mid-thigh (a smooth opacity gradient in ONE continuous piece of ' +
-      'the veil, the glowing net pattern STILL visible in the opaque part). It matches the veil\'s LIGHTING — a ' +
-      'soft LUMINOUS WHITE fade where the wearer is well-lit and the veil is bright, dark only where the wearer ' +
-      'is in darkness. It is NOT a separate wrap, sarong, skirt, brief, thong, patch, or worn object, NOT a ' +
-      'small opaque zone only at the crotch, and NOT a solid, bright, hard-edged, or sharply-outlined glowing ' +
-      'spot (that reads as a codpiece — wrong); just the veil going opaque across the hips and thighs and ' +
-      'feathering back out. Everywhere else the nude body reads clearly through the sheer net. ' +
-      'It refracts the wearer into approximately ' +
-      range + ' HEAVILY OVERLAPPING, semi-transparent, MISREGISTERED projections of that SAME body — drifting ' +
-      'slightly out of phase ABOVE, BELOW, ahead, behind, left and right, like severe DOUBLE VISION, with NO ' +
-      'stable centre to target. Offset them VERTICALLY as well as sideways, and overlap them enough that the ' +
-      'real body\'s exact position is genuinely uncertain. It is NOT separate clones standing side by side, ' +
-      'NOT orderly holographic copies, NOT opaque robes / plate armour / a superhero suit / a force field. A ' +
-      'dark setting makes the refraction legible. ' +
+    return '\n\n══ VEILWEAVE — GARMENT ══ a long, hooded, semi-transparent GLOWING WHITE MESH VEIL: an open ' +
+      'glowing lattice/mesh weave with tiny points of light at the crossings, draping in many soft folds, the ' +
+      'nude body visible through the open gaps of the mesh. The mesh stays VISIBLY OPEN (you see through it); it ' +
+      'is NEVER opaque fabric, latex, a wetsuit, spandex, stockings, a bodysuit, or a smooth shiny sheen, and ' +
+      'NEVER a flat grid painted on skin. ' +
+      'The wearer is NUDE and BAREFOOT beneath it — no underwear, briefs, shorts, loincloth, codpiece, cup, ' +
+      'shoes, or boots. MODESTY: across the whole HIPS and UPPER-THIGHS band (and the chest on a female wearer) ' +
+      'the mesh becomes OPAQUE — denser mesh in that band, GRADIENT-fading back to sheer above the waist and ' +
+      'below mid-thigh (a smooth gradient, the mesh pattern still visible in the opaque part). This opaque band ' +
+      'matches the light on the veil: luminous WHITE where the wearer is lit, dark only in shadow. It is NOT a ' +
+      'separate wrap, skirt, brief, thong, or worn object, NOT only a small patch at the crotch, and NOT a ' +
+      'bright hard-edged spot. Everywhere else the nude body reads through the open mesh. ' +
+      '\n\n══ VEILWEAVE — REFRACTION EFFECT ══ the wearer appears as approximately ' +
+      range + ' overlapping, semi-transparent AFTERIMAGES of the SAME body — each drifting out of phase ABOVE, ' +
+      'BELOW, ahead, behind, left and right, offset vertically as well as sideways and overlapping heavily so no ' +
+      'single copy is the obvious real one. NOT separate clones standing side by side, NOT orderly holographic ' +
+      'copies, NOT opaque robes / armour / a bodysuit / a force field. ' +
       // The #1 failure mode (same class as the Kwisheen tentacle-hair extra-arms bug): the model collapses the
       // overlapping selves into ONE body sprouting spare limbs. Force WHOLE separate silhouettes, and prefer
       // fewer-but-whole over one-with-extra-arms.
@@ -187219,8 +187209,8 @@ No text, no watermark, no UI elements, share-ready.`;
       'overlapping figures will not fit the panel, draw FEWER whole figures rather than adding spare limbs to a ' +
       'single body. ' +
       // #3: every self must be identically garbed in the full garment — no self in a plain tunic or bare.
-      'EVERY one of the overlapping selves wears the IDENTICAL full hooded Veilweave tunic — all copies dressed ' +
-      'exactly the same, head to foot; never one self in Veilweave and the others in a plain tunic or bare skin. ' +
+      'EVERY one of the overlapping afterimages wears the IDENTICAL full hooded mesh veil — all copies dressed ' +
+      'exactly the same, head to foot; never one in the mesh veil and the others in plain cloth or bare skin. ' +
       // Depth/height variation: stop it collapsing into faint ghosts stacked behind one solid figure.
       'STAGGER the selves in space so it never reads as faint ghosts lined up behind one solid central figure: ' +
       'place them at CLEARLY DIFFERENT HEIGHTS (some crouched low, some risen high, some mid-leap) and INTERLEAVE ' +
@@ -187242,22 +187232,16 @@ No text, no watermark, no UI elements, share-ready.`;
       'they do NOT disappear when the wearer is grappled, pinned, held still, cornered, or mid-strike; at most they ' +
       'crowd in TIGHTER (never fewer than a few). Never draw the wearer as a single solid figure with no echoes ' +
       'while he is still in the garment. ' +
-      // Mystery-Man concealment via the garment (only when the scene withholds the wearer's identity) + the
-      // multi-sensory disorientation the Veilweave inflicts on enemies (visual copies + phantom sounds).
-      'MYSTERY MAN (ONLY if the scene establishes the wearer\'s identity as concealed / face withheld): the net ' +
-      'thickens into a DENSE, PACKED, OPAQUE half-mask over the NOSE and MOUTH, leaving the EYES visible and ' +
-      'expressive — the mask is OPAQUE (the nose and mouth cannot be seen through it), identical on every ' +
-      'projection; otherwise the wearer\'s face is normally visible. ' +
-      'DISORIENTATION (in combat): enemies facing the wearer are visibly DISORIENTED — stage them surrounded or ' +
-      'RINGED by the overlapping copies, often striking THROUGH an illusory self, unable to tell which body is ' +
-      'real. The Veilweave also throws PHANTOM SOUNDS — footsteps, breathing, the rustle of movement — from the ' +
-      'wrong selves, so the real body cannot be found by ear either. ' +
+      // Mystery-Man mask (gated) + the enemy-surround, both stated as PAINTABLE visuals only — no "disorientation"
+      // (internal state) and no "phantom sounds" (no visual manifestation). (Roman 2026-08-08.)
+      'MYSTERY MAN (ONLY if the scene withholds the wearer\'s identity): a DENSE OPAQUE band of the mesh covers ' +
+      'the NOSE and MOUTH like a half-mask, the EYES visible above it, identical on every afterimage; otherwise ' +
+      'the face is normally visible. ' +
+      'AROUND ENEMIES (in combat): the afterimages SURROUND the nearby enemies — an enemy is shown swinging AT ' +
+      'or THROUGH the wrong afterimage, its weapon passing through a semi-transparent copy. ' +
       (/six|nine/i.test(range)
-        ? 'The wearer is a genuine First Favored: the many selves move at explosive SUPERHUMAN speed — aerial, ' +
-          'acrobatic, near-untargetable — a storm of positions.'
-        : 'The wearer is NOT a genuine First Favored (fewer selves): the projections reproduce their ' +
-          'appearance but move only at ORDINARY, non-superhuman capability — the garment hides position, it ' +
-          'does not grant First Favored athleticism.');
+        ? 'The afterimages move at explosive, acrobatic, near-airborne speed — a storm of positions.'
+        : 'The afterimages move at ordinary, non-superhuman speed.');
   }
   window._veilweaveDirective = _veilweaveDirective;
 
