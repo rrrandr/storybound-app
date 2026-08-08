@@ -159066,6 +159066,18 @@ No text, no watermark, no UI elements, share-ready.`;
   var _MANUAL_PC_FACE_ANCHORS = { kael: '/assets/Fatelands/Kael_Anchor_v1.jpg' };
   window._MANUAL_PC_FACE_ANCHORS = _MANUAL_PC_FACE_ANCHORS;
 
+  // STRUCTURAL anchors (Roman 2026-08-08) — a DIFFERENT kind of anchor from identity/casting. Identity
+  // anchors teach the model WHO something is (character face/hair/clothing); STRUCTURAL anchors teach
+  // WHAT SHAPE an object has (weapons, vehicles, architecture, symbols, creature anatomy). The reference
+  // must be a CLEAN / ORTHOGRAPHIC concept sheet (object alone, plain background), NOT cinematic art —
+  // orthographic transfers geometry markedly better (validated: The Answer's class-drift was fixed by an
+  // orthographic weapon ref, which beat a cinematic one). Attached in v2 when the scene names the object.
+  // Shape: token -> { url, match:/regex/ (optional), label }.
+  var _MANUAL_STRUCTURAL_ANCHORS = {
+    the_answer: { url: '/assets/Fatelands/The_Answer_Anchor_v1.jpg', match: /\bthe answer\b|answer polearm|double[- ]?hook|question[- ]?mark hook/i, label: 'THE ANSWER — WEAPON SHAPE REFERENCE. Match the First Favored\'s weapon to THIS exact shape: a double-ended polearm with a deep question-mark HOOK at BOTH ends (outer edge a blade, inner curve serrated). Small proportion variation is fine, but it must stay recognizably this weapon and NEVER become a trident, spear, axe, or sword.' }
+  };
+  window._MANUAL_STRUCTURAL_ANCHORS = _MANUAL_STRUCTURAL_ANCHORS;
+
   // Seed one manual anchor as a locked, authoritative WORLD-tier record. Won't clobber an existing
   // locked anchor unless opts.replace. Returns {action}.
   function _castingSeedManualAnchor(token, url, opts) {
@@ -188753,7 +188765,7 @@ No text, no watermark, no UI elements, share-ready.`;
     else if (bg) L.push('SETTING (every panel): ' + bg + '.');
     L.push('CHARACTERS — match EACH to their REFERENCE image EXACTLY: same face, hair, skin colour, wardrobe and weapon, held identical in every panel. Three DISTINCT individuals:');
     var pcLine = '  • ' + pcName + ' — ' + (gTxt(pcGender) ? gTxt(pcGender) + ', ' : '');
-    pcLine += /favor|favour/.test(pcSpecies) ? 'a First Favored: silver-white hair, athletic build; wears the VEILWEAVE (below).' : ((pcSpecies || 'human') + '.');
+    pcLine += /favor|favour/.test(pcSpecies) ? 'a First Favored: silver-white hair, athletic build, ALWAYS wearing the glowing mesh VEILWEAVE (his signature garment — in EVERY panel, never plain clothes, never armour; see below).' : ((pcSpecies || 'human') + '.');
     L.push(pcLine);
     others.forEach(function (o) {
       if (!o || !o.name) return;
@@ -188769,7 +188781,7 @@ No text, no watermark, no UI elements, share-ready.`;
     L.push('PANELS:');
     (phases || []).forEach(function (ph, i) { L.push('  ' + (i + 1) + ') ' + String((ph && (ph.beat || ph.label)) || '')); });
     L.push('EMOTION: every face at 7+/10 intensity fitting the beat — snarling, fierce, straining, alarmed — never blank or calm (calm only if a character is deliberately controlling/hiding emotion or resigned). Masked faces still emote through the eyes.');
-    L.push('CONSISTENCY (HARD — every panel): each figure has EXACTLY TWO arms (never three); each Kwisheen attacks with its NAMED weapon plus its tentacles (never a bare tentacle used AS the weapon); ' + pcName + ' wears the glowing mesh Veilweave in EVERY panel (never plain, never absent) and his face — and the nearest solid afterimage — stays clearly EXPRESSIVE and fierce (the refraction never blanks his face); Threxa and Orun stay DISTINCT individuals (never two of the same Kwisheen); every panel is mid-ACTION with nobody standing idle or blank-faced.');
+    L.push('CONSISTENCY (HARD — every panel): each figure has EXACTLY TWO arms (never three); each Kwisheen attacks with its NAMED weapon plus its tentacles (never a bare tentacle used AS the weapon); each character keeps the SAME gender presentation in EVERY panel — nobody swaps sex mid-fight (a male stays male, a female stays female); ' + pcName + ' is ALWAYS clothed in the glowing mesh Veilweave in EVERY panel — never plain clothes, never armour, never a robe, never bare, never absent — and his face (and the nearest solid afterimage) stays clearly EXPRESSIVE and fierce (the refraction never blanks his face); the named characters stay DISTINCT individuals (never two of the same person); every panel is mid-ACTION with nobody standing idle or blank-faced.');
     L.push('CONTINUITY: all four panels are the SAME location; each character stays one consistent individual across panels; injuries persist.');
     return '\n\n' + L.join('\n');
   }
@@ -189173,6 +189185,22 @@ No text, no watermark, no UI elements, share-ready.`;
                   ? ('MATCH ' + _oOS.name + ' TO THIS REFERENCE IMAGE EXACTLY — same face, hair, skin colour, wardrobe, weapon and markings; this image defines who ' + _oOS.name + ' is. Only the pose and expression come from the panel.')
                   : _aOS.label;
                 if (_aB64 && _refs.length < 8) { _refs.push({ b64: _aB64, label: _castLbl }); try { console.log('[ONESHOT] casting identity anchor: ' + _oOS.name + (window._promptAssemblyV2 === true ? ' (v2 authoritative label)' : '')); } catch (_) {} }
+              }
+            }
+          }
+        } catch (_) {}
+        // STRUCTURAL ANCHORS (v2) — attach a clean geometry reference (e.g. The Answer's orthographic
+        // concept sheet) when the scene names the object. This is the production mechanism validated by the
+        // weapon-anchor experiment; distinct from identity/casting anchors. (Roman 2026-08-08.)
+        try {
+          if (window._promptAssemblyV2 === true) {
+            var _structTxt = _sheetSceneText(visualState, phases) + ' ' + String((visualState && visualState.pc_weapon) || '');
+            var _saKeys = Object.keys(_MANUAL_STRUCTURAL_ANCHORS);
+            for (var _sk = 0; _sk < _saKeys.length && _refs.length < 8; _sk++) {
+              var _sa = _MANUAL_STRUCTURAL_ANCHORS[_saKeys[_sk]];
+              if (_sa && _sa.url && (!_sa.match || _sa.match.test(_structTxt))) {
+                var _saB = await _canonRefToB64(_sa.url);
+                if (_saB) { _refs.push({ b64: _saB, label: _sa.label }); try { console.log('[ONESHOT:v2] structural anchor: ' + _saKeys[_sk]); } catch (_) {} }
               }
             }
           }
