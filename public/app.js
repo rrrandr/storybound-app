@@ -159052,8 +159052,19 @@ No text, no watermark, no UI elements, share-ready.`;
   // Registry shape: token → { url, displayName }. `url` may be a committed asset path or a data URL.
   // Populate as intro portraits are locked (e.g. the Kael / Threxa / Orun Veilwood anchors). Empty until
   // those assets are committed; the plumbing below is ready for them.
-  var _MANUAL_CASTING_ANCHORS = {};
+  var _MANUAL_CASTING_ANCHORS = {
+    // Fatelands — First Sacrifice cast (Veilwood). These are NPCs → casting registry. The PC
+    // (Kael) routes to the PC face-master path via _MANUAL_PC_FACE_ANCHORS instead. See
+    // project_casting_library / project_fatelands_veilweave (anchor portraits, 2026-08-08).
+    threxa: { url: '/assets/Fatelands/Threxa_Anchor_v1.jpg', displayName: 'Threxa' },
+    orun:   { url: '/assets/Fatelands/Orun_Anchor_v1.jpg',   displayName: 'Orun' }
+  };
   window._MANUAL_CASTING_ANCHORS = _MANUAL_CASTING_ANCHORS;
+
+  // Manual PC face-master anchors: token → asset. Routed to the PC identity pipeline (the
+  // highest-priority layer) by _resolveIdentityAnchor when that story's protagonist matches.
+  var _MANUAL_PC_FACE_ANCHORS = { kael: '/assets/Fatelands/Kael_Anchor_v1.jpg' };
+  window._MANUAL_PC_FACE_ANCHORS = _MANUAL_PC_FACE_ANCHORS;
 
   // Seed one manual anchor as a locked, authoritative WORLD-tier record. Won't clobber an existing
   // locked anchor unless opts.replace. Returns {action}.
@@ -159094,6 +159105,40 @@ No text, no watermark, no UI elements, share-ready.`;
     return seeded;
   }
   window._castingSeedRegisteredAnchors = _castingSeedRegisteredAnchors;
+
+  // ── Priority identity-anchor resolver (Roman 2026-08-08) ─────────────────────────────────────
+  // ONE question for the renderer: "what is the highest-priority identity anchor for this character?"
+  // The registry does not care WHY a character is anchored — only owner + priority:
+  //   1) PC face master  (state.pcFaceMasterUrl, else the manual PC anchor asset) — immutable in a playthrough
+  //   2) LI face master  (state.liFaceMasterUrl[liId]) — same idea when applicable
+  //   3) manual casting anchor (locked) — hand-picked; never overwritten by auto
+  //   4) auto-promoted casting anchor (lowest) — may upgrade, never replaces the above
+  // Layers 3+4 both live in the casting library and _castingResolveAnchor already returns the manual
+  // (locked) record over an auto one, so this resolver only has to order PC/LI vs casting. Exposed for
+  // the renderer to adopt as the single identity-anchor entry point (migration is a later step).
+  function _resolveIdentityAnchor(token, opts) {
+    opts = opts || {};
+    var n = _castingToken(token);
+    // 1) PC face master — this character is the protagonist.
+    var pcTok = _castingToken(opts.pcName || state.protagonistName || state.playerName || '');
+    if (opts.isPC === true || (pcTok && n === pcTok)) {
+      if (state.pcFaceMasterUrl) return { url: state.pcFaceMasterUrl, source: 'pc_face_master', label: 'PC IDENTITY reference — keep the protagonist looking like THIS person (face, hair, colouring, build); the panel sets pose and emotion.' };
+      var mpc = _MANUAL_PC_FACE_ANCHORS[n];
+      if (mpc) return { url: mpc, source: 'pc_face_master_manual', label: 'PC IDENTITY reference — keep the protagonist looking like THIS person (face, hair, colouring, build); the panel sets pose and emotion.' };
+    }
+    // 2) LI face master — this character is the (primary) love interest.
+    var liTok = _castingToken(opts.liName || state.loveInterestName || '');
+    if (opts.isLI === true || (liTok && n === liTok)) {
+      var liId = opts.liId || state.currentPrimaryLiId;
+      var liUrl = (state.liFaceMasterUrl && liId && state.liFaceMasterUrl[liId]) || null;
+      if (liUrl) return { url: liUrl, source: 'li_face_master', label: 'LI IDENTITY reference — keep the love interest looking like THIS person; the panel sets pose and emotion.' };
+    }
+    // 3)+4) casting library (manual-locked over auto-promoted, ordered inside _castingResolveAnchor).
+    var cast = _castingResolveAnchor(token);
+    if (cast && cast.url) return { url: cast.url, source: 'casting', label: cast.label };
+    return null;
+  }
+  window._resolveIdentityAnchor = _resolveIdentityAnchor;
 
   // CASTING LINT — warnings only. A recurring character with no reference (reinvented each
   // panel), a low-confidence reference that should be superseded, or a reference never reused.
@@ -187957,6 +188002,8 @@ No text, no watermark, no UI elements, share-ready.`;
     var _presentNpcSp = {};  // species → # of present significant NPCs of that species
     try {
       if (window._castingLibrary !== false && visualState && Array.isArray(visualState.other_characters_present)) {
+        // Seed registered manual anchors (idempotent — _castingSeedManualAnchor keeps existing locked records). (2026-08-08)
+        try { _castingSeedRegisteredAnchors(); } catch (_) {}
         var _castSeen = {};
         var _cNorm = function (x) { return String(x || '').toLowerCase().replace(/[\s-]+/g, '_'); };
         visualState.other_characters_present.forEach(function (o) {
