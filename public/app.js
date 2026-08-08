@@ -186892,7 +186892,9 @@ No text, no watermark, no UI elements, share-ready.`;
       'waist/hip. WHEN UNDISGUISED AND HARD-PRESSED OR LOSING: every tentacle it has is OUT and actively working ' +
       '— gripping, bracing, climbing, hanging, striking — never tucked away or hidden; tentacles are also how a ' +
       'Kwisheen climbs and holds itself ALOFT in the trees (a Kwisheen up off the ground is gripping a branch ' +
-      'with tentacles, not floating). ' +
+      'with tentacles, not floating). WHEN a Kwisheen is shown with BOTH legs AND tentacles, the tentacles are ' +
+      'LONGER than the legs and always DOING something — bracing the stance, grappling, gripping a weapon, ' +
+      'reaching to backstab, catching a limb — NEVER left to dangle idle or hang decoratively off the hips. ' +
       'HOW THE MANY LIMBS ACT AT ONCE: the PRIMARY hand-weapon is the TIDE-TRIDENT (a long three-pronged spear ' +
       '— reach, thrusting, pinning), held in a main arm and the SAME in every panel; a Kwisheen fighter is NEVER ' +
       'reduced to a single bare curved sword, and its trident never turns into a sword. As part of the Many-Tide ' +
@@ -186949,11 +186951,12 @@ No text, no watermark, no UI elements, share-ready.`;
   function _firstFavoredCombatDirective() {
     return '\n\nFIRST FAVORED COMBAT (the Avowed Path — direct, committed, legible): a First Favored carries ' +
       'exactly ONE signature weapon for the whole fight, and it NEVER changes shape, never becomes a different ' +
-      'weapon, and is the SAME in every panel. The default is THE ANSWER, a DOUBLE-ENDED POLEARM — one end a ' +
-      'narrow inward-facing crescent HOOK (for trapping, disarming, controlling limbs, taking alive), the ' +
-      'other end a straight or leaf-shaped KILLING BLADE (thrust, decisive cut, armour-piercing), on a ' +
-      'weighted central shaft for staff strikes; it stays a POLEARM in every panel and never reads as a bare ' +
-      'sword. A few First Favored instead carry the AVOWAL BLADE — a broad, FORWARD-CURVING single-edged sword ' +
+      'weapon, and is the SAME in every panel. The default is THE ANSWER, a DOUBLE-ENDED POLEARM with a DEEP ' +
+      'QUESTION-MARK HOOK at EACH end (both ends alike) — each hook\'s OUTER edge a curved BLADE and its INNER ' +
+      'curve SERRATED with saw-teeth to catch and control a limb or neck (trapping, disarming, taking alive) — ' +
+      'on a weighted central shaft for staff strikes; it stays this double bladed-serrated-hook POLEARM in every ' +
+      'panel and never reads as a bare sword or a straight spear. (It can split at mid-shaft into two dual-wield ' +
+      'hook-blades, or a hook can detach as a spinning returning throw.) A few First Favored instead carry the AVOWAL BLADE — a broad, FORWARD-CURVING single-edged sword ' +
       'with a small disarming hook near the base and DELIBERATELY LEGIBLE cutting geometry (no concealed ' +
       'second edge) — but any given fighter carries EITHER the polearm OR the sword, chosen once, NEVER both ' +
       'and NEVER switching between them. If a WEAPON LOCK section names this fighter\'s weapon, that governs. ' +
@@ -186991,7 +186994,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // descriptor the scene text supplies where the weapon is named, else (4) the bare name (still locked so it
   // stops mutating). Kill switch: window._weaponLoadout === false.
   var _WEAPON_LORE = {
-    the_answer:       { aliases: ['answer', 'the answer', 'answer polearm'],        descriptor: 'THE ANSWER — a double-ended polearm: a narrow inward-curving crescent HOOK at one end and a straight leaf-shaped killing BLADE at the other, on a long weighted shaft' },
+    the_answer:       { aliases: ['answer', 'the answer', 'answer polearm'],        descriptor: 'THE ANSWER — a double-ended polearm with a DEEP QUESTION-MARK HOOK at EACH end (both ends alike): each hook\'s OUTER edge a curved BLADE and its INNER curve SERRATED with saw-teeth to catch and control a limb or neck, on a long weighted shaft. It can separate at mid-shaft into two dual-wield hook-blades, and a hook end can detach as a spinning returning throw — but it is ALWAYS this double bladed-serrated-hook polearm, never a straight spear, a trident, or a plain sword' },
     avowal_blade:     { aliases: ['avowal blade', 'avowal sword', 'the avowal blade'], descriptor: 'the AVOWAL BLADE — a broad forward-curving single-edged sword with a small disarming hook near the base and a deliberately legible cutting geometry (no concealed second edge)' },
     tide_trident:     { aliases: ['tide-trident', 'tide trident', 'trident'],        descriptor: 'a TIDE-TRIDENT — a long spear ending in EXACTLY three barbed prongs (a fixed trident head that never splits, doubles, or grows extra prongs)' },
     reef_cutlass:     { aliases: ['reef-cutlass', 'reef cutlass'],                   descriptor: 'a REEF-CUTLASS — a broad, curved, single-edged sword with a hooked tip' },
@@ -187181,21 +187184,25 @@ No text, no watermark, no UI elements, share-ready.`;
   function _veilweaveDirective(wearerSpecies) {
     var range = _veilweaveProjectionRange(wearerSpecies);
     return '\n\nVEILWEAVE (the First Favored refraction garment — the wearer is ONE physically real body, ' +
-      'NOT clones): a long, hooded, flowing, EXTREMELY TRANSLUCENT gossamer tunic of iridescent leaf-vein ' +
-      'fabric, the body clearly VISIBLE beneath it (in combat the observer sees semi-clothed versions of the ' +
+      'NOT clones): a long, hooded, MANY-FOLDED, EXTREMELY TRANSLUCENT veil woven from a luminous iridescent ' +
+      'FILAMENT-NET — a fine glowing web of criss-crossing thread-lines studded with sparkling light-NODES, the ' +
+      'net clearly VISIBLE as the veil\'s weave across the WHOLE garment (never a plain smooth sheen, never a ' +
+      'grid painted on skin), draping in many soft folds; the body clearly VISIBLE beneath it and the wearer ' +
+      'BAREFOOT (in combat the observer sees semi-clothed versions of the ' +
       'same figure attacking through overlapping transparent cloth). ' +
       // NUDE beneath (Roman 2026-07-21): no "never-nude" underwear/denim under the sheer cloth; instead the
       // garment blooms opaque with its own light over the private areas — the fabric does the concealing.
-      'The wearer is NUDE beneath the transparent Veilweave — do NOT add underwear, briefs, shorts, denim, a ' +
-      'loincloth, a codpiece, a cup, or any undergarment under it, and do NOT place any solid, bright, or ' +
-      'sharply-outlined patch, disc, panel, or glowing spot over the groin (that reads as a white codpiece or ' +
-      'worn cup — wrong). Instead the concealment is a SOFT-FOCUS BLUR of the fabric itself: over the wearer\'s ' +
-      'groin and genitals (and the nipples on a female wearer) the sheer leaf-vein cloth simply goes gently ' +
-      'OUT OF FOCUS and a little denser — the SAME iridescent shimmer as the rest of the tunic, just hazy and ' +
-      'diffuse there — with soft FEATHERED edges that melt gradually into the surrounding fabric (no hard ' +
-      'outline, no seam, no clean edge, no discrete luminous blob). It follows the body\'s contour like a blur ' +
-      'and never sits on top of the body like a worn object; it must read as the cloth softening, not as ' +
-      'anything the wearer has on. Everywhere else the nude body reads clearly through the sheer cloth. ' +
+      'The wearer is NUDE and BAREFOOT beneath the transparent Veilweave — do NOT add underwear, briefs, shorts, ' +
+      'denim, a loincloth, a codpiece, a cup, shoes, boots, or any undergarment under it. MODESTY is done by the ' +
+      'veil itself: across the WHOLE HIPS and UPPER-THIGHS band (and the chest on a female wearer) the SAME ' +
+      'filament-net simply DENSIFIES to OPAQUE — the net thickening across that broad zone and GRADIENT-fading ' +
+      'back to sheer above the waist and below mid-thigh (a smooth opacity gradient in ONE continuous piece of ' +
+      'the veil, the glowing net pattern STILL visible in the opaque part). It matches the veil\'s LIGHTING — a ' +
+      'soft LUMINOUS WHITE fade where the wearer is well-lit and the veil is bright, dark only where the wearer ' +
+      'is in darkness. It is NOT a separate wrap, sarong, skirt, brief, thong, patch, or worn object, NOT a ' +
+      'small opaque zone only at the crotch, and NOT a solid, bright, hard-edged, or sharply-outlined glowing ' +
+      'spot (that reads as a codpiece — wrong); just the veil going opaque across the hips and thighs and ' +
+      'feathering back out. Everywhere else the nude body reads clearly through the sheer net. ' +
       'It refracts the wearer into approximately ' +
       range + ' HEAVILY OVERLAPPING, semi-transparent, MISREGISTERED projections of that SAME body — drifting ' +
       'slightly out of phase ABOVE, BELOW, ahead, behind, left and right, like severe DOUBLE VISION, with NO ' +
@@ -187235,6 +187242,16 @@ No text, no watermark, no UI elements, share-ready.`;
       'they do NOT disappear when the wearer is grappled, pinned, held still, cornered, or mid-strike; at most they ' +
       'crowd in TIGHTER (never fewer than a few). Never draw the wearer as a single solid figure with no echoes ' +
       'while he is still in the garment. ' +
+      // Mystery-Man concealment via the garment (only when the scene withholds the wearer's identity) + the
+      // multi-sensory disorientation the Veilweave inflicts on enemies (visual copies + phantom sounds).
+      'MYSTERY MAN (ONLY if the scene establishes the wearer\'s identity as concealed / face withheld): the net ' +
+      'thickens into a DENSE, PACKED, OPAQUE half-mask over the NOSE and MOUTH, leaving the EYES visible and ' +
+      'expressive — the mask is OPAQUE (the nose and mouth cannot be seen through it), identical on every ' +
+      'projection; otherwise the wearer\'s face is normally visible. ' +
+      'DISORIENTATION (in combat): enemies facing the wearer are visibly DISORIENTED — stage them surrounded or ' +
+      'RINGED by the overlapping copies, often striking THROUGH an illusory self, unable to tell which body is ' +
+      'real. The Veilweave also throws PHANTOM SOUNDS — footsteps, breathing, the rustle of movement — from the ' +
+      'wrong selves, so the real body cannot be found by ear either. ' +
       (/six|nine/i.test(range)
         ? 'The wearer is a genuine First Favored: the many selves move at explosive SUPERHUMAN speed — aerial, ' +
           'acrobatic, near-untargetable — a storm of positions.'
@@ -188821,6 +188838,11 @@ No text, no watermark, no UI elements, share-ready.`;
       'anger, resolve, dread). In an emotional beat, a BLANK, neutral, slack, or wooden face is a DEFECT; every ' +
       'figure\'s feeling must read at a glance, and the expressions SHIFT panel to panel with the beat — never the ' +
       'same flat look repeated across the sheet. ' +
+      'EMOTIONAL INTENSITY FLOOR: comic panels should sit at 7-plus-out-of-10 emotional intensity MOST of the ' +
+      'time — visibly screaming, snarling, straining, elated, terrified, awed — not mild, pleasant, or composed. ' +
+      'A neutral or composed face is permitted ONLY as a deliberate choice (a character actively CONTROLLING / ' +
+      'hiding an emotion, or RESIGNED), never as the default. Where a wearer\'s face is masked or concealed, the ' +
+      'emotion still lands through the EYES and body. ' +
       'Ender Bond ink-and-colour rendering throughout. Do NOT draw panel numbers, captions, speech balloons, ' +
       'thought balloons, or any readable dialogue/narration text. The ONLY lettering permitted is a single ' +
       'integrated SOUND-EFFECT per panel where that panel\'s graphic-typography specifies one (hand-lettered ' +
