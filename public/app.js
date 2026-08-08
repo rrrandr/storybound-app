@@ -159056,8 +159056,8 @@ No text, no watermark, no UI elements, share-ready.`;
     // Fatelands — First Sacrifice cast (Veilwood). These are NPCs → casting registry. The PC
     // (Kael) routes to the PC face-master path via _MANUAL_PC_FACE_ANCHORS instead. See
     // project_casting_library / project_fatelands_veilweave (anchor portraits, 2026-08-08).
-    threxa: { url: '/assets/Fatelands/Threxa_Anchor_v1.jpg', displayName: 'Threxa' },
-    orun:   { url: '/assets/Fatelands/Orun_Anchor_v1.jpg',   displayName: 'Orun' }
+    threxa: { url: '/assets/Fatelands/Threxa_Anchor_v1.jpg', displayName: 'Threxa', desc: 'a FEMALE Kwisheen: burnt-orange iridescent papillae skin, coral-dreadlocks in a CONTRASTING deep TEAL-VIOLET, a fitted coral-and-shell harness, about six boneless waist tentacles, wields a tide-trident' },
+    orun:   { url: '/assets/Fatelands/Orun_Anchor_v1.jpg',   displayName: 'Orun',   desc: 'a MALE Kwisheen: deep-crimson skin with luminous GOLD veining, coral-dreadlocks in a CONTRASTING pale ICE-CYAN, a coral-and-shell harness, about six boneless waist tentacles, carries an undertide blade; clearly a different individual from Threxa' }
   };
   window._MANUAL_CASTING_ANCHORS = _MANUAL_CASTING_ANCHORS;
 
@@ -188724,7 +188724,58 @@ No text, no watermark, no UI elements, share-ready.`;
     return parts.join(' ');
   }
 
+  // ══ v2 PROMPT ASSEMBLY (Roman 2026-08-08, flagged: window._promptAssemblyV2) ═══════════════════
+  // The validation found the production prompt spends ~2% on the characters that must be recognizable
+  // and heavily over-describes generic constraints. This is a COMPACT, character-forward assembly that
+  // reallocates the budget: correct genders, each present character gets a real appearance line (pulled
+  // from _MANUAL_CASTING_ANCHORS.desc when available), paint-only Veilweave/Answer/Kwisheen, the beats,
+  // an emotion floor — and drops the boilerplate. Baseline (_buildOneShotSheetPrompt) stays untouched.
+  function _buildSheetPromptV2(visualState, phases, sceneIndex, planMeta) {
+    var s = window.state || {};
+    var artist = String(s.gnArtist || 'ryo_toro').replace(/_/g, ' ');
+    var pcName = s.protagonistName || s.playerName || 'the protagonist';
+    var pcGender = String(s.gender || s.playerGender || s.pcGender || '').toLowerCase();
+    var pcSpecies = String(s._playerSpecies || '').toLowerCase();
+    var bg = String((visualState && visualState.background) || '');
+    var sceneTxt = '';
+    try { sceneTxt = (typeof _sheetSceneText === 'function') ? _sheetSceneText(visualState, phases) : bg; } catch (_) { sceneTxt = bg; }
+    var others = (visualState && Array.isArray(visualState.other_characters_present)) ? visualState.other_characters_present : [];
+    var hasKwisheen = /kwisheen/i.test(sceneTxt) || others.some(function (o) { return /kwisheen/i.test(String((o && o.species) || '')); });
+    var isVeilweave = /veilweave/i.test(sceneTxt + ' ' + String((visualState && visualState.pc_wardrobe) || ''));
+    var isVeilwood = s.fantasyRegion === 'the_veilwood' || /veilwood/i.test(bg + ' ' + String((s._stagedRegionContract && s._stagedRegionContract.regionLabel) || ''));
+    var gTxt = function (g) { g = String(g || '').toLowerCase(); return g === 'male' ? 'a man (he/him)' : g === 'female' ? 'a woman (she/her)' : ''; };
+    var L = [];
+    L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dense ornament. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
+    L.push('COMPOSITION: ONE SQUARE image = a 2x2 grid of four equal comic panels with thin gutters. NO lettering, captions, speech balloons, or SFX text anywhere in the image.');
+    if (isVeilwood) L.push('SETTING (every panel): the VEILWOOD — pale WHITE trees grown as MATED PAIRS (two trunks braided around each other, NEVER brown, never one single trunk), long WHITE weeping-willow canopy, ground of deep-CRIMSON grass in twisted mated braids. Luminous and otherworldly, never a generic green/brown forest.');
+    else if (bg) L.push('SETTING (every panel): ' + bg + '.');
+    L.push('CHARACTERS — match EACH to their REFERENCE image EXACTLY: same face, hair, skin colour, wardrobe and weapon, held identical in every panel. Three DISTINCT individuals:');
+    var pcLine = '  • ' + pcName + ' — ' + (gTxt(pcGender) ? gTxt(pcGender) + ', ' : '');
+    pcLine += /favor|favour/.test(pcSpecies) ? 'a First Favored: silver-white hair, athletic build; wears the VEILWEAVE (below).' : ((pcSpecies || 'human') + '.');
+    L.push(pcLine);
+    others.forEach(function (o) {
+      if (!o || !o.name) return;
+      var reg = _MANUAL_CASTING_ANCHORS[_castingToken(o.name)];
+      var desc = (reg && reg.desc) ? reg.desc : (String(o.species || '') + (o.wardrobe ? ', ' + o.wardrobe : ''));
+      L.push('  • ' + o.name + ' — ' + (gTxt(o.gender) ? gTxt(o.gender) + ', ' : '') + desc + '.');
+    });
+    if (isVeilweave) {
+      L.push('VEILWEAVE (' + pcName + '): a glowing white open MESH veil — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit, latex, or spandex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer (luminous white where lit). It refracts ' + pcName + ' into about SIX overlapping, SEMI-TRANSPARENT AFTERIMAGES of the SAME body — see-through copies drifting out of phase and overlapping, NOT a group of separate opaque people.');
+      L.push('THE ANSWER (' + pcName + '’s weapon): a polearm with a DEEP question-mark HOOK at EACH end (outer edge a blade, inner curve serrated). Never a straight spear, trident, or plain sword.');
+    }
+    if (hasKwisheen) L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, and about SIX boneless waist TENTACLES that are LONGER than any legs and actively grappling or reaching (never idle/decorative).');
+    L.push('PANELS:');
+    (phases || []).forEach(function (ph, i) { L.push('  ' + (i + 1) + ') ' + String((ph && (ph.beat || ph.label)) || '')); });
+    L.push('EMOTION: every face at 7+/10 intensity fitting the beat — snarling, fierce, straining, alarmed — never blank or calm (calm only if a character is deliberately controlling/hiding emotion or resigned). Masked faces still emote through the eyes.');
+    L.push('CONTINUITY: all four panels are the SAME location; each character stays one consistent individual across panels; injuries persist.');
+    return '\n\n' + L.join('\n');
+  }
+  window._buildSheetPromptV2 = _buildSheetPromptV2;
+
   function _buildOneShotSheetPrompt(visualState, phases, sceneIndex, planMeta) {
+    if (window._promptAssemblyV2 === true) {
+      try { var _v2 = _buildSheetPromptV2(visualState, phases, sceneIndex, planMeta); if (_v2) { try { console.log('[ONESHOT] v2 prompt assembly (' + _v2.length + ' chars)'); } catch (_) {} return _v2; } } catch (e) { try { console.warn('[ONESHOT] v2 assembly failed (' + e.message + '), falling back to v1'); } catch (_) {} }
+    }
     // STORYBOARD-DOC layer for the SHEET (Roman 2026-07-21). The comic pipeline builds a per-panel
     // storyboard doc (frozen moment + graphic language/impact + emotional direction + eye-magnet + SFX +
     // color), and _buildStagedHeroPrompt ALREADY emits it whenever a phase carries `_storyboardDoc` — but the
@@ -189086,6 +189137,14 @@ No text, no watermark, no UI elements, share-ready.`;
             } catch (_) {}
             var _spAnchors = await _stageASpeciesAnchors(_canon, _spSceneTxt);
             for (var _ai = 0; _ai < _spAnchors.length && _refs.length < 8; _ai++) {
+              // v2: drop the GENERIC species anchor when a present NPC of that species has its own
+              // character anchor — the character anchor supplies identity AND anatomy (the paid
+              // experiment showed removing the competing generic anchor improved anatomy).
+              if (window._promptAssemblyV2 === true) {
+                var _govSp = String((_spAnchors[_ai] && _spAnchors[_ai].governs) || '').toLowerCase();
+                var _coveredByChar = (visualState.other_characters_present || []).some(function (o) { return o && o.name && _MANUAL_CASTING_ANCHORS[_castingToken(o.name)] && String(o.species || '').toLowerCase() === _govSp; });
+                if (_coveredByChar) { try { console.log('[ONESHOT:v2] dropped generic species anchor: ' + _govSp + ' (character anchor present)'); } catch (_) {} continue; }
+              }
               if (_spAnchors[_ai] && _spAnchors[_ai].b64) { _refs.push({ b64: _spAnchors[_ai].b64, label: _spAnchors[_ai].label }); try { console.log('[ONESHOT] species anatomy anchor: ' + _spAnchors[_ai].governs); } catch (_) {} }
             }
           }
@@ -189107,7 +189166,10 @@ No text, no watermark, no UI elements, share-ready.`;
               var _aOS = _castingResolveAnchor(_oOS.name);
               if (_aOS && _aOS.url) {
                 var _aB64 = (String(_aOS.url).indexOf('data:') === 0) ? String(_aOS.url).split(',')[1] : await _canonRefToB64(_aOS.url);
-                if (_aB64 && _refs.length < 8) { _refs.push({ b64: _aB64, label: _aOS.label }); try { console.log('[ONESHOT] casting identity anchor: ' + _oOS.name); } catch (_) {} }
+                var _castLbl = (window._promptAssemblyV2 === true)
+                  ? ('MATCH ' + _oOS.name + ' TO THIS REFERENCE IMAGE EXACTLY — same face, hair, skin colour, wardrobe, weapon and markings; this image defines who ' + _oOS.name + ' is. Only the pose and expression come from the panel.')
+                  : _aOS.label;
+                if (_aB64 && _refs.length < 8) { _refs.push({ b64: _aB64, label: _castLbl }); try { console.log('[ONESHOT] casting identity anchor: ' + _oOS.name + (window._promptAssemblyV2 === true ? ' (v2 authoritative label)' : '')); } catch (_) {} }
               }
             }
           }
