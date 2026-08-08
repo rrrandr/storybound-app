@@ -188761,12 +188761,13 @@ No text, no watermark, no UI elements, share-ready.`;
     });
     if (isVeilweave) {
       L.push('VEILWEAVE (' + pcName + '): a glowing white open MESH veil — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit, latex, or spandex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer (luminous white where lit). It refracts ' + pcName + ' into about SIX overlapping, SEMI-TRANSPARENT AFTERIMAGES of the SAME body — see-through copies drifting out of phase and overlapping, NOT a group of separate opaque people.');
-      L.push('THE ANSWER (' + pcName + '’s weapon): a polearm with a DEEP question-mark HOOK at EACH end (outer edge a blade, inner curve serrated). Never a straight spear, trident, or plain sword.');
+      L.push('THE ANSWER (' + pcName + '’s weapon): a polearm with a DEEP question-mark HOOK at EACH end — BOTH ends identical (outer edge a blade, inner curve serrated). The SAME shape in every panel and on every afterimage; NEVER a straight spear or plain sword, NEVER asymmetric (never two blades on one end, never a spear-point on one end), NEVER reverting to a spear.');
     }
     if (hasKwisheen) L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, and about SIX boneless waist TENTACLES that are LONGER than any legs and actively grappling or reaching (never idle/decorative).');
     L.push('PANELS:');
     (phases || []).forEach(function (ph, i) { L.push('  ' + (i + 1) + ') ' + String((ph && (ph.beat || ph.label)) || '')); });
     L.push('EMOTION: every face at 7+/10 intensity fitting the beat — snarling, fierce, straining, alarmed — never blank or calm (calm only if a character is deliberately controlling/hiding emotion or resigned). Masked faces still emote through the eyes.');
+    L.push('CONSISTENCY (HARD — every panel): each figure has EXACTLY TWO arms (never three); each Kwisheen attacks with its NAMED weapon plus its tentacles (never a bare tentacle used AS the weapon); ' + pcName + ' wears the glowing mesh Veilweave in EVERY panel (never plain, never absent) and his face — and the nearest solid afterimage — stays clearly EXPRESSIVE and fierce (the refraction never blanks his face); Threxa and Orun stay DISTINCT individuals (never two of the same Kwisheen); every panel is mid-ACTION with nobody standing idle or blank-faced.');
     L.push('CONTINUITY: all four panels are the SAME location; each character stays one consistent individual across panels; injuries persist.');
     return '\n\n' + L.join('\n');
   }
