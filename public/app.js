@@ -187061,13 +187061,15 @@ No text, no watermark, no UI elements, share-ready.`;
   // Favored only — a disguised Kwisheen does NOT get this (see _trueSpeciesOnStage gating).
   function _firstFavoredCombatDirective() {
     return '\n\nFIRST FAVORED COMBAT (the Avowed Path — direct, committed, legible): a First Favored carries ' +
-      'exactly ONE signature weapon for the whole fight, and it NEVER changes shape, never becomes a different ' +
-      'weapon, and is the SAME in every panel. The default is THE ANSWER, a DOUBLE-ENDED POLEARM with a DEEP ' +
+      'exactly ONE signature weapon for the whole fight — it keeps its iconic IDENTITY and never becomes a ' +
+      'different weapon class. The default is THE ANSWER, a DOUBLE-ENDED POLEARM with a DEEP ' +
       'QUESTION-MARK HOOK at EACH end (both ends alike) — each hook\'s OUTER edge a curved BLADE and its INNER ' +
       'curve SERRATED with saw-teeth to catch and control a limb or neck (trapping, disarming, taking alive) — ' +
-      'on a weighted central shaft for staff strikes; it stays this double bladed-serrated-hook POLEARM in every ' +
-      'panel and never reads as a bare sword or a straight spear. (It can split at mid-shaft into two dual-wield ' +
-      'hook-blades, or a hook can detach as a spinning returning throw.) A few First Favored instead carry the AVOWAL BLADE — a broad, FORWARD-CURVING single-edged sword ' +
+      'on a weighted central shaft for staff strikes. CANON: The Answer is a chained-wish artifact the wielder ' +
+      'constantly reshapes with tiny combat wishes, so its exact PROPORTIONS vary (hook depth, shaft length, ' +
+      'blade width) and it may split into two dual-wield hook-blades or throw a detaching returning hook — but ' +
+      'its two-opposing-question-mark-hook SILHOUETTE always persists and it NEVER becomes a trident, spear, ' +
+      'axe, or plain sword (no visible transformation VFX by default). A few First Favored instead carry the AVOWAL BLADE — a broad, FORWARD-CURVING single-edged sword ' +
       'with a small disarming hook near the base and DELIBERATELY LEGIBLE cutting geometry (no concealed ' +
       'second edge) — but any given fighter carries EITHER the polearm OR the sword, chosen once, NEVER both ' +
       'and NEVER switching between them. If a WEAPON LOCK section names this fighter\'s weapon, that governs. ' +
@@ -187105,7 +187107,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // descriptor the scene text supplies where the weapon is named, else (4) the bare name (still locked so it
   // stops mutating). Kill switch: window._weaponLoadout === false.
   var _WEAPON_LORE = {
-    the_answer:       { aliases: ['answer', 'the answer', 'answer polearm'],        descriptor: 'THE ANSWER — a double-ended polearm with a DEEP QUESTION-MARK HOOK at EACH end (both ends alike): each hook\'s OUTER edge a curved BLADE and its INNER curve SERRATED with saw-teeth to catch and control a limb or neck, on a long weighted shaft. It can separate at mid-shaft into two dual-wield hook-blades, and a hook end can detach as a spinning returning throw — but it is ALWAYS this double bladed-serrated-hook polearm, never a straight spear, a trident, or a plain sword' },
+    the_answer:       { aliases: ['answer', 'the answer', 'answer polearm'],        descriptor: 'THE ANSWER — a double-ended polearm with a DEEP QUESTION-MARK HOOK at EACH end (both ends alike): each hook\'s OUTER edge a curved BLADE and its INNER curve SERRATED with saw-teeth, on a long weighted shaft. CANON: it is a chained-wish artifact the First Favored constantly reshapes with tiny combat wishes — so its exact PROPORTIONS vary (hook depth, shaft length, blade width) and it can split into two dual-wield hook-blades or throw a detaching returning hook. Its ICONIC silhouette — two opposing question-mark hooks — always persists; it NEVER becomes a different weapon class (never a trident, spear, axe, or plain sword). No visible transformation VFX by default' },
     avowal_blade:     { aliases: ['avowal blade', 'avowal sword', 'the avowal blade'], descriptor: 'the AVOWAL BLADE — a broad forward-curving single-edged sword with a small disarming hook near the base and a deliberately legible cutting geometry (no concealed second edge)' },
     tide_trident:     { aliases: ['tide-trident', 'tide trident', 'trident'],        descriptor: 'a TIDE-TRIDENT — a long spear ending in EXACTLY three barbed prongs (a fixed trident head that never splits, doubles, or grows extra prongs)' },
     reef_cutlass:     { aliases: ['reef-cutlass', 'reef cutlass'],                   descriptor: 'a REEF-CUTLASS — a broad, curved, single-edged sword with a hooked tip' },
@@ -188761,7 +188763,7 @@ No text, no watermark, no UI elements, share-ready.`;
     });
     if (isVeilweave) {
       L.push('VEILWEAVE (' + pcName + '): a glowing white open MESH veil — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit, latex, or spandex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer (luminous white where lit). It refracts ' + pcName + ' into about SIX overlapping, SEMI-TRANSPARENT AFTERIMAGES of the SAME body — see-through copies drifting out of phase and overlapping, NOT a group of separate opaque people.');
-      L.push('THE ANSWER (' + pcName + '’s weapon): a polearm with a DEEP question-mark HOOK at EACH end — BOTH ends identical (outer edge a blade, inner curve serrated). The SAME shape in every panel and on every afterimage; NEVER a straight spear or plain sword, NEVER asymmetric (never two blades on one end, never a spear-point on one end), NEVER reverting to a spear.');
+      L.push('THE ANSWER (' + pcName + '’s weapon): a polearm with a DEEP question-mark HOOK at EACH end (outer edge a blade, inner curve serrated). Keep this canonical silhouette — TWO OPPOSING QUESTION-MARK HOOKS — clearly recognizable in every panel. It is a wish-reshaped weapon, so small variation is fine (hook depth, shaft length, blade width may differ slightly panel to panel); but it must ALWAYS read as THE ANSWER and NEVER become a different WEAPON CLASS — never a trident, spear, axe, or plain sword, and never a single hook + a spear/trident point. No visible magic/transformation VFX.');
     }
     if (hasKwisheen) L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, and about SIX boneless waist TENTACLES that are LONGER than any legs and actively grappling or reaching (never idle/decorative).');
     L.push('PANELS:');
