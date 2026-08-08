@@ -189078,6 +189078,28 @@ No text, no watermark, no UI elements, share-ready.`;
             }
           }
         } catch (_) {}
+        // CASTING IDENTITY ANCHORS — the ONE reference source the one-shot path forgot to inherit from
+        // the per-phase assembly (whose header says it "reuses the same reference assembly"). Per-phase
+        // resolves a per-character identity anchor via _castingResolveAnchor for each significant NPC;
+        // mirror it here, high priority (right after species anatomy) so a recurring NPC keeps its identity.
+        // (Roman 2026-08-08 — parity fix; casting was the sole omission.)
+        try {
+          if (window._castingLibrary !== false && visualState && Array.isArray(visualState.other_characters_present)) {
+            try { _castingSeedRegisteredAnchors(); } catch (_) {}
+            var _castSeenOS = {};
+            for (var _oi = 0; _oi < visualState.other_characters_present.length && _refs.length < 8; _oi++) {
+              var _oOS = visualState.other_characters_present[_oi];
+              if (!_castingIsSignificantNPC(_oOS)) continue;
+              var _tokOS = _castingToken(_oOS.name);
+              if (_castSeenOS[_tokOS]) continue; _castSeenOS[_tokOS] = true;
+              var _aOS = _castingResolveAnchor(_oOS.name);
+              if (_aOS && _aOS.url) {
+                var _aB64 = (String(_aOS.url).indexOf('data:') === 0) ? String(_aOS.url).split(',')[1] : await _canonRefToB64(_aOS.url);
+                if (_aB64 && _refs.length < 8) { _refs.push({ b64: _aB64, label: _aOS.label }); try { console.log('[ONESHOT] casting identity anchor: ' + _oOS.name); } catch (_) {} }
+              }
+            }
+          }
+        } catch (_) {}
         // BUOYANCY FLOAT REF — attach EXPLICITLY, high priority, when underwater. It was last in
         // _resolveCanonicalAssets and kept getting budget-cut, so figures planted on the seabed. (Sheet batch 2026-07-21.)
         var _uwFloatPath = null;
