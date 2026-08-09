@@ -75972,6 +75972,7 @@ Return ONLY valid JSON:
       state._introducedCast = {};        // who has an intro portrait this issue
       state._firedMomentSplashes = {};   // fire-once major-moment splashes this issue
       state._lastRenderedRegion = null;  // previous region, for the location-change loupe trigger (Phase C)
+      state._castCards = {};             // { token: {card, role, surfaced} } — cast-splash crops, surfaced at introduction
 
       // A3-F1: CG Scene-1 cover pre-fire ABANDON — a story reset fired while a cover pre-fire was still
       // pending (the user left the cover WITHOUT entering the reader). That text+image spend was wasted.
@@ -189648,6 +189649,89 @@ No text, no watermark, no UI elements, share-ready.`;
     return out;
   }
   window._renderIntroPortraitsForScene = _renderIntroPortraitsForScene;
+
+  // ── CAST SPLASH (validated 2026-08-08) — the PRIMARY intro-portrait path ──────────────────────────
+  // The intro image's real product is the ANCHOR, not the pixels. So render ONE 4K 2x2 CAST SPLASH of the
+  // issue's known main players (from the seed) → auto-split into four clean ~2K anchors ($0.15 vs $0.40 for
+  // four separate portraits), then surface each cropped card when its character is first introduced
+  // ("distributed cards", Roman's call). Cross-pollination validated clean even for two same-species
+  // characters and a reference-less one. Cap 4 (5+ = the scene is too crowded). _renderIntroPortrait (solo)
+  // stays as the FALLBACK for a main player who appears mid-issue and wasn't in the opening cast.
+  var _CG_QUAD_LABELS = ['TOP-LEFT', 'TOP-RIGHT', 'BOTTOM-LEFT', 'BOTTOM-RIGHT'];
+  // Per-character canon block for one cast card — shared vocabulary with the solo portrait.
+  function _cgCastCardBlock(o) {
+    var name = (o && o.name) || 'a character';
+    var role = (o && o.role) || '';
+    var species = String((o && o.species) || '').toLowerCase();
+    var tok = _castingToken(name), desc = '';
+    try { var ma = (typeof _MANUAL_CASTING_ANCHORS !== 'undefined') && _MANUAL_CASTING_ANCHORS[tok]; if (ma && ma.desc) desc = ma.desc; } catch (_) {}
+    if (!desc && o && (o.desc || o.description)) desc = o.desc || o.description;
+    var parts = [name + (role ? ' (the ' + role + ')' : '') + ': ' + (desc || species || 'match the reference') + '.'];
+    if (/favor|favour/.test(species)) parts.push('Wears the glowing white open MESH VEILWEAVE (a visible net weave, NUDE beneath, opaque across the hips fading to sheer), refracted into ~6 overlapping semi-transparent afterimages; if armed, carries THE ANSWER (a double question-mark-hook polearm — never a trident, spear or sword).');
+    if (/kwisheen/.test(species)) parts.push('SMOOTH pebbled papillae skin (never scales), coral-dreadlock hair, a coral-and-shell harness, ~6 boneless waist tentacles LONGER than the legs and coiling.');
+    parts.push('A SIGNATURE mid-action pose that reveals the character. Match the identity REFERENCE if one is provided.');
+    return parts.join(' ');
+  }
+  // Auto anti-cross-pollination guard for same-species pairs (the validated risk — two FF men, two Kwisheen).
+  function _cgSameSpeciesGuard(cast) {
+    var bySp = {};
+    (cast || []).forEach(function (o) { var sp = String((o && o.species) || '').toLowerCase().replace(/[^a-z]/g, ''); if (!sp) return; (bySp[sp] = bySp[sp] || []).push((o && o.name) || ''); });
+    var out = [];
+    Object.keys(bySp).forEach(function (sp) { var names = bySp[sp].filter(Boolean); if (names.length > 1) out.push(' ' + names.join(' and ') + ' are the SAME species but DIFFERENT individuals — keep their faces, hair colours and weapons distinct; never merge them.'); });
+    return out.join('');
+  }
+  function _buildCastSplashPrompt(cast, visualState) {
+    var s = window.state || {};
+    var artist = String(s.gnArtist || 'ryo_toro').replace(/_/g, ' ');
+    cast = (cast || []).slice(0, 4);
+    var L = [];
+    L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic lighting. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
+    L.push('COMPOSITION: ONE SQUARE image = a 2x2 grid of four equal quadrants with thin gutters. Each quadrant is a SEPARATE full-body CHARACTER-INTRODUCTION SPLASH CARD of a DIFFERENT individual — like a fighting-game character-select screen or a comic cast page. NO lettering, nameplates, captions, speech balloons or text anywhere.');
+    L.push('COVER-QUALITY, NOT PORTRAITS: every character is mid-ACTION, emotionally charged, ASYMMETRICAL and immediately memorable — NEVER centered, static, or standing to attention looking at camera. Each shows a SIGNATURE pose, SIGNATURE weapon, canonical costume and a SIGNATURE expression (7+/10 intensity). Background is a plain or minimal evocative wash, kept fully subordinate — no clutter.');
+    L.push('FOUR DISTINCT INDIVIDUALS — do NOT blend faces, hair, skin, colours or weapons across quadrants; each character keeps ONLY their own palette and weapon.' + _cgSameSpeciesGuard(cast));
+    cast.forEach(function (o, i) { L.push((_CG_QUAD_LABELS[i] || ('QUADRANT ' + (i + 1))) + ' — ' + _cgCastCardBlock(o)); });
+    L.push('EMOTION: every face high-intensity, fitting the character — never blank or calm. AVOID: any text/lettering/nameplates; a photo look; blending any two characters; a First Favored losing the Veilweave; the two First Favored looking like the same man; two Kwisheen sharing a dread colour; The Answer rendered as a plain trident/spear.');
+    return L.join('\n\n');
+  }
+  window._buildCastSplashPrompt = _buildCastSplashPrompt;
+
+  // Render ONE 4K cast splash, split into quadrants, promote each as a LOCKED anchor + cache each crop as a
+  // card to be surfaced at that character's introduction. Idempotent per issue (skips if already built).
+  async function _renderCastSplash(cast, visualState, sceneIndex) {
+    cast = (cast || []).slice(0, 4);
+    if (!cast.length) return null;
+    var prompt = _buildCastSplashPrompt(cast, visualState);
+    var anyFF = cast.some(function (o) { return /favor|favour/.test(String((o && o.species) || '').toLowerCase()); });
+    var _refs = [];
+    try { if (typeof _styleReferenceB64 === 'function') { var sb = await _styleReferenceB64(); if (sb) _refs.push({ b64: sb, label: 'STYLE — match this artist\'s linework/rendering (style only, NOT a character)' }); } } catch (_) {}
+    for (var i = 0; i < cast.length; i++) {
+      try { var tok = _castingToken(cast[i].name); var a = (typeof _resolveIdentityAnchor === 'function') ? _resolveIdentityAnchor(tok, {}) : null;
+        if (a && a.url && _refs.length < 8) { var b = await _canonRefToB64(a.url); if (b) _refs.push({ b64: b, label: 'REFERENCE for ' + cast[i].name + ' (' + (_CG_QUAD_LABELS[i] || ('quadrant ' + (i + 1))) + ') — match this character exactly' }); } } catch (_) {}
+    }
+    try { if (anyFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — the transparent mesh garment + its ~6 misregistered projections; keep each figure\'s OWN identity.' }); } } } catch (_) {}
+    try { if (anyFF && typeof _MANUAL_STRUCTURAL_ANCHORS !== 'undefined' && _MANUAL_STRUCTURAL_ANCHORS.the_answer && _refs.length < 8) { var wb = await _canonRefToB64(_MANUAL_STRUCTURAL_ANCHORS.the_answer.url); if (wb) _refs.push({ b64: wb, label: 'THE ANSWER — WEAPON SHAPE REFERENCE (double question-mark hooks) for the armed First Favored.' }); } } catch (_) {}
+    console.log('[CAST-SPLASH] rendering 4K 2x2 for ' + cast.length + ' main players (' + _refs.length + ' refs)');
+    var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt, provider: 'gemini', model: 'gemini-3.1-flash-image-preview',
+        imageSize: '4K', aspect_ratio: '1:1', imageIntent: 'scene', textFirst: true, n: 1, reference_images_b64: _refs.length ? _refs : undefined }) });
+    if (!r.ok) throw new Error('cast-splash HTTP ' + r.status);
+    var d = await r.json(); var u = d.image || d.url;
+    if (!u) throw new Error('cast-splash returned no image');
+    var sheetUrl = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
+    try { _chargeImage('gemini', 1, { imageSize: '4K' }); } catch (_) {}
+    var quads = await _splitSheetQuadrants(sheetUrl);
+    if (!quads) throw new Error('cast-splash split failed');
+    _cgIssueState(); if (!state._castCards) state._castCards = {};
+    for (var q = 0; q < cast.length; q++) {
+      var ctok = _castingToken(cast[q].name), crop = quads[q] || sheetUrl;
+      try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(ctok, crop, { locked: true, desc: (cast[q].desc || cast[q].description || '') }); } catch (_) {}
+      state._castCards[ctok] = { card: crop, role: cast[q].role || _cgIntroRole(cast[q]) || '', surfaced: false, at: (window.state && window.state.turnCount) };
+    }
+    try { window._lastCastSplash = { url: sheetUrl, at: (window.state && window.state.turnCount), tokens: cast.map(function (c) { return _castingToken(c.name); }) }; } catch (_) {}
+    console.log('[CAST-SPLASH] done → ' + cast.length + ' cards cached + promoted to locked anchors');
+    return { sheetUrl: sheetUrl, cards: state._castCards };
+  }
+  window._renderCastSplash = _renderCastSplash;
 
   // TODO(Phase C): re-fire the loupe zoom to a new region on a mid-issue location change (reuse animation + art).
   function _fireLocationTransition(regionToken) { return false; }
