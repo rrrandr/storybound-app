@@ -189740,7 +189740,104 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderSituatedIntro = _renderSituatedIntro;
 
-  // Detect the NEW main players entering THIS scene → render a situated intro card for each (once per issue).
+  // ── COUNT-ADAPTIVE PREMIUM PAGE (Roman 2026-08-09) — 2-4 mains entering the SAME scene → one 2x2 ──────
+  // Never a blank quadrant: 2 mains = 2 full-body + 2 DETAIL insets; 3 = 3 full-body + 1 EMBLEM; 4 = 4 full-body.
+  // Full-body CHARACTER quadrants are cropped as clean ANCHORS; DETAIL / EMBLEM quadrants are reader BONUS ART
+  // (never identity anchors). Situated + reveal-gated like the solo card. (1 main → single splash, above.)
+  // Blanks buy no fidelity (diffusion renders one 4096² regardless) — filling is a DESIGN win, not a quality one.
+  function _cgDetailPanelFor(o, role, obscure) {
+    var species = String((o && o.species) || '').toLowerCase();
+    var nm = (o && o.name) || 'the character';
+    if (role === 'li' && obscure) return 'a jewel-like identity CLOSE-UP of ' + nm + ' with NO face shown — the silver Weave-Script tracing a forearm, the scar over the left wrist, or the hands; a study, not a portrait';
+    if (/favor|favour/.test(species)) return 'a jewel-like CLOSE-UP from ' + nm + ' — the glowing MESH Veilweave refracting into overlapping afterimages, a hand gripping THE ANSWER (double question-mark hook), or the silver Weave-Script; a study, not a portrait';
+    if (/kwisheen/.test(species)) return 'a jewel-like CLOSE-UP from ' + nm + ' — coiling waist TENTACLES, the coral-and-shell harness, or pebbled papillae skin catching the light; a study, not a portrait';
+    return 'a jewel-like CLOSE-UP detail from ' + nm + ' — a signature costume piece, weapon, or marking; a study, not a portrait';
+  }
+  // Reader-safe issue emblem — a single story OBJECT (from the seed if present; NEVER a secret truth).
+  function _cgIssueEmblem() {
+    try { var id = (window.state || {})._starterId;
+      if (id && typeof STARTER_SEEDS !== 'undefined' && STARTER_SEEDS[id] && STARTER_SEEDS[id].issueEmblem)
+        return 'the ISSUE EMBLEM — ' + String(STARTER_SEEDS[id].issueEmblem) + '; a single iconic story OBJECT on a plain vignette, no characters'; } catch (_) {}
+    return 'the ISSUE EMBLEM — a single iconic story OBJECT drawn from this scene\'s setting and props (a ritual vessel, an oath stone, a token) on a plain vignette, no characters';
+  }
+  // Quadrant layout for N mains (2-4): characters first, then detail/emblem fills.
+  function _cgLayoutForCast(mains) {
+    var n = mains.length, q = [];
+    for (var i = 0; i < n && i < 4; i++) q.push({ type: 'char', main: mains[i] });
+    if (n === 2) { q.push({ type: 'detail', main: mains[0] }); q.push({ type: 'detail', main: mains[1] }); }
+    else if (n === 3) { q.push({ type: 'emblem' }); }
+    return q.slice(0, 4);
+  }
+  window._cgLayoutForCast = _cgLayoutForCast; window._cgDetailPanelFor = _cgDetailPanelFor; window._cgIssueEmblem = _cgIssueEmblem;
+  function _buildSituatedCastPagePrompt(quadrants, visualState) {
+    var s = window.state || {};
+    var artist = String(s.gnArtist || 'ryo_toro').replace(/_/g, ' ');
+    var chars = quadrants.filter(function (q) { return q.type === 'char'; }).map(function (q) { return q.main.o; });
+    var L = [];
+    L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic lighting. Match the STYLE reference image. NOT a photo, NOT 3D.');
+    L.push('COMPOSITION: ONE SQUARE image = a premium comic CAST / FEATURE PAGE laid out as a 2x2 grid with thin gutters. NO lettering, nameplates, captions or text anywhere. The FULL-BODY CHARACTER quadrants are cover-quality single-figure introductions; the DETAIL / EMBLEM quadrants are cinematic INSET studies (a close-up or a single object), clearly smaller in scope than a full figure.');
+    L.push('FOUR DISTINCT INDIVIDUALS — do NOT blend faces, hair, skin, colours or weapons across quadrants; each keeps ONLY their own palette and weapon.' + _cgSameSpeciesGuard(chars));
+    quadrants.forEach(function (q, i) {
+      var label = _CG_QUAD_LABELS[i] || ('QUADRANT ' + (i + 1));
+      if (q.type === 'char') {
+        var m = q.main;
+        var beatTxt = (m.beat && (m.beat.beat || m.beat.emotion)) ? ' SITUATED in this moment: ' + (m.beat.beat || '') + (m.beat.emotion ? ' — face reads ' + m.beat.emotion : '') + '.' : '';
+        var obsc = m.obscure ? ' FACE HIDDEN (identity not yet revealed): face turned away / veiled by hair / in shadow — identity via body, silhouette and bearing, still unmistakably magnetic.' : '';
+        L.push(label + ' [FULL-BODY CHARACTER] — ' + _cgCastCardBlock(m.o, m.seedDesc) + beatTxt + obsc);
+      } else if (q.type === 'detail') {
+        L.push(label + ' [DETAIL INSET] — ' + _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure) + '. Beautiful, iconic; NOT a full figure, NOT a face portrait.');
+      } else {
+        L.push(label + ' [EMBLEM INSET] — ' + _cgIssueEmblem() + '. No text.');
+      }
+    });
+    L.push('EMOTION: every character face at 7+/10 intensity fitting the moment — never blank or calm. AVOID: any text/lettering/nameplates; a photo look; blending any two characters; a First Favored losing the Veilweave; two same-species characters looking alike; The Answer as a plain trident/spear.');
+    return L.join('\n\n');
+  }
+  window._buildSituatedCastPagePrompt = _buildSituatedCastPagePrompt;
+
+  // Render the premium situated 2x2 page, split, crop ONLY the CHARACTER quadrants as anchors (fills = bonus art).
+  async function _renderSituatedCastPage(mains, visualState, phases, sceneIndex) {
+    mains = (mains || []).slice(0, 4);
+    if (!mains.length) return null;
+    var quadrants = _cgLayoutForCast(mains);
+    var prompt = _buildSituatedCastPagePrompt(quadrants, visualState);
+    var anyFF = mains.some(function (m) { return /favor|favour/.test(String((m.o && m.o.species) || '').toLowerCase()); });
+    var _refs = [];
+    try { if (typeof _styleReferenceB64 === 'function') { var sb = await _styleReferenceB64(); if (sb) _refs.push({ b64: sb, label: 'STYLE — match this artist (style only, NOT a character)' }); } } catch (_) {}
+    for (var i = 0; i < mains.length; i++) {
+      try { var tk = _castingToken(mains[i].o.name); var a = (typeof _resolveIdentityAnchor === 'function') ? _resolveIdentityAnchor(tk, {}) : null;
+        if (a && a.url && _refs.length < 8) { var b = await _canonRefToB64(a.url); if (b) _refs.push({ b64: b, label: 'REFERENCE for ' + mains[i].o.name + ' — match exactly' }); } } catch (_) {}
+    }
+    try { if (anyFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE SWATCH (style only) — mesh garment + ~6 projections; keep each figure\'s own identity' }); } } } catch (_) {}
+    try { if (anyFF && typeof _MANUAL_STRUCTURAL_ANCHORS !== 'undefined' && _MANUAL_STRUCTURAL_ANCHORS.the_answer && _refs.length < 8) { var wb = await _canonRefToB64(_MANUAL_STRUCTURAL_ANCHORS.the_answer.url); if (wb) _refs.push({ b64: wb, label: 'THE ANSWER — weapon shape (double question-mark hooks)' }); } } catch (_) {}
+    console.log('[CAST-PAGE] situated 2x2 for ' + mains.length + ' mains (' + _refs.length + ' refs)');
+    var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt, provider: 'gemini', model: 'gemini-3.1-flash-image-preview',
+        imageSize: '4K', aspect_ratio: '1:1', imageIntent: 'scene', textFirst: true, n: 1, reference_images_b64: _refs.length ? _refs : undefined }) });
+    if (!r.ok) throw new Error('cast-page HTTP ' + r.status);
+    var d = await r.json(); var u = d.image || d.url;
+    if (!u) throw new Error('cast-page returned no image');
+    var sheetUrl = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
+    try { _chargeImage('gemini', 1, { imageSize: '4K' }); } catch (_) {}
+    var quads = await _splitSheetQuadrants(sheetUrl);
+    _cgIssueState(); if (!state._castCards) state._castCards = {};
+    for (var qi = 0; qi < quadrants.length; qi++) {
+      var qd = quadrants[qi]; if (qd.type !== 'char') continue;    // ONLY full-body character quads become anchors
+      var m = qd.main, tok = _castingToken(m.o.name), crop = (quads && quads[qi]) || sheetUrl;
+      if (!m.obscure) { try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(tok, crop, { locked: true, desc: (m.seedDesc || '') }); } catch (_) {} }
+      state._castCards[tok] = { card: crop, role: m.role, surfaced: true, obscured: !!m.obscure, at: (window.state && window.state.turnCount) };
+      state._introducedCast[tok] = state._introducedCast[tok] || { portraitUrl: crop, role: m.role, at: (window.state && window.state.turnCount) };
+    }
+    // obscured LI(s): the face-hidden crop is a poor anchor → render one clean supplementary identity anchor.
+    for (var mj = 0; mj < mains.length; mj++) { if (mains[mj].obscure) { try { await _renderIntroPortrait(mains[mj].o, mains[mj].role, visualState, sceneIndex, { seedDesc: mains[mj].seedDesc, cleanAnchor: true }); } catch (_) {} } }
+    try { window._lastCastSplash = { url: sheetUrl, at: (window.state && window.state.turnCount), situated: true, count: mains.length }; } catch (_) {}
+    console.log('[CAST-PAGE] done → ' + quadrants.filter(function (q) { return q.type === 'char'; }).length + ' anchors cropped, fills as bonus art');
+    return { imageUrl: sheetUrl, kind: 'castPage', count: mains.length };
+  }
+  window._renderSituatedCastPage = _renderSituatedCastPage;
+
+  // Detect the NEW main players entering THIS scene → COUNT-ADAPTIVE situated delivery (once per issue):
+  // 1 → a single situated splash; 2-4 → one premium 2x2 page (full-body + detail/emblem fills); 5+ → cap 4.
   async function _renderIntroCardsForScene(visualState, phases, sceneIndex) {
     _cgIssueState();
     var s = window.state || {};
@@ -189749,16 +189846,23 @@ No text, no watermark, no UI elements, share-ready.`;
     if (pcName) cands.push({ name: pcName, isPC: true, species: s._playerSpecies || '' });
     var others = (visualState && Array.isArray(visualState.other_characters_present)) ? visualState.other_characters_present : [];
     others.forEach(function (o) { if (o && o.name) cands.push(o); });
-    var out = [];
+    var mains = [];
     for (var i = 0; i < cands.length; i++) {
       var c = cands[i], tok = _castingToken(c.name);
       if (!tok || state._introducedCast[tok]) continue;           // already introduced this issue → skip
       var role = _cgIntroRole(c);
       if (!role) continue;                                        // not a main player
-      try { out.push(await _renderSituatedIntro(c, role, visualState, phases, sceneIndex)); }
-      catch (e) { try { console.warn('[INTRO-CARD] ' + tok + ' failed: ' + (e && e.message)); } catch (_) {} }
+      c.role = role;
+      mains.push({ o: c, role: role, seedDesc: _cgSeedVisualCanon(tok), beat: _cgIntroBeatFor(c, role, visualState, phases), obscure: (role === 'li' && !_cgLIFaceRevealed(c, role)) });
     }
-    return out;
+    if (!mains.length) return [];
+    if (mains.length === 1) {
+      try { var card = await _renderSituatedIntro(mains[0].o, mains[0].role, visualState, phases, sceneIndex); return card ? [card] : []; }
+      catch (e) { try { console.warn('[INTRO-CARD] solo failed: ' + (e && e.message)); } catch (_) {} return []; }
+    }
+    if (mains.length > 4) { try { console.log('[INTRO-CARD] ' + mains.length + ' mains entering — capping at 4 (scene too crowded)'); } catch (_) {} mains = mains.slice(0, 4); }
+    try { var page = await _renderSituatedCastPage(mains, visualState, phases, sceneIndex); return page ? [page] : []; }
+    catch (e) { try { console.warn('[INTRO-CARD] page failed: ' + (e && e.message)); } catch (_) {} return []; }
   }
   window._renderIntroCardsForScene = _renderIntroCardsForScene;
 
@@ -189807,12 +189911,12 @@ No text, no watermark, no UI elements, share-ready.`;
   // stays as the FALLBACK for a main player who appears mid-issue and wasn't in the opening cast.
   var _CG_QUAD_LABELS = ['TOP-LEFT', 'TOP-RIGHT', 'BOTTOM-LEFT', 'BOTTOM-RIGHT'];
   // Per-character canon block for one cast card — shared vocabulary with the solo portrait.
-  function _cgCastCardBlock(o) {
+  function _cgCastCardBlock(o, seedDesc) {
     var name = (o && o.name) || 'a character';
     var role = (o && o.role) || '';
     var species = String((o && o.species) || '').toLowerCase();
-    var tok = _castingToken(name), desc = '';
-    try { var ma = (typeof _MANUAL_CASTING_ANCHORS !== 'undefined') && _MANUAL_CASTING_ANCHORS[tok]; if (ma && ma.desc) desc = ma.desc; } catch (_) {}
+    var tok = _castingToken(name), desc = String(seedDesc || '');   // seed visualCanon = ground truth; prefer it
+    try { if (!desc) { var ma = (typeof _MANUAL_CASTING_ANCHORS !== 'undefined') && _MANUAL_CASTING_ANCHORS[tok]; if (ma && ma.desc) desc = ma.desc; } } catch (_) {}
     if (!desc && o && (o.desc || o.description)) desc = o.desc || o.description;
     var parts = [name + (role ? ' (the ' + role + ')' : '') + ': ' + (desc || species || 'match the reference') + '.'];
     if (/favor|favour/.test(species)) parts.push('Wears the glowing white open MESH VEILWEAVE (a visible net weave, NUDE beneath, opaque across the hips fading to sheer), refracted into ~6 overlapping semi-transparent afterimages; if armed, carries THE ANSWER (a double question-mark-hook polearm — never a trident, spear or sword).');
