@@ -189578,14 +189578,15 @@ No text, no watermark, no UI elements, share-ready.`;
 
   // The portrait prompt — a characterizing single-subject splash. A portrait's "beat" is WHO this character
   // is (what they want, how they carry themselves), so the pose must REVEAL, never a neutral turnaround.
-  function _buildIntroPortraitPrompt(o, role, visualState) {
+  function _buildIntroPortraitPrompt(o, role, visualState, opts) {
+    opts = opts || {};
     var s = window.state || {};
     var artist = String(s.gnArtist || 'ryo_toro').replace(/_/g, ' ');
     var name = (o && o.name) || 'the character';
     var species = String((o && o.species) || '').toLowerCase();
     var tok = _castingToken(name);
-    var desc = '';
-    try { var ma = (typeof _MANUAL_CASTING_ANCHORS !== 'undefined') && _MANUAL_CASTING_ANCHORS[tok]; if (ma && ma.desc) desc = ma.desc; } catch (_) {}
+    var desc = String(opts.seedDesc || '');   // seed visualCanon = ground truth (reveal-safe); prefer it
+    try { if (!desc) { var ma = (typeof _MANUAL_CASTING_ANCHORS !== 'undefined') && _MANUAL_CASTING_ANCHORS[tok]; if (ma && ma.desc) desc = ma.desc; } } catch (_) {}
     if (!desc && o && (o.desc || o.description)) desc = o.desc || o.description;
     var isFF = /favor|favour/.test(species) || (role === 'pc' && /favor|favour/.test(String(s._playerSpecies || '').toLowerCase()));
     var L = [];
@@ -189600,8 +189601,19 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/kwisheen/.test(species)) {
       L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, a coral-and-shell harness, and about SIX boneless waist TENTACLES LONGER than the legs, actively coiling (never idle/decorative).');
     }
-    L.push('POSE: a DYNAMIC, characterizing FULL-BODY pose that reveals who they are — mid-gesture or mid-action, intent and weight visible; NOT a static neutral turnaround, NOT arms-at-sides. A cinematic single-subject composition: a strong hero angle (low or high), the figure off-centre or on a diagonal, real depth behind them.');
-    L.push('EMOTION: the face at 7+/10 intensity fitting the character — never blank or calm (calm only if the character is deliberately controlling/hiding emotion, or resigned). A masked face still emotes through the eyes.');
+    if (opts.cleanAnchor) {
+      // supplementary IDENTITY anchor — clear face, clean characterizing pose (a good reference, not a dramatic moment)
+      L.push('POSE: a clear, characterizing FULL-BODY pose — the FACE fully visible and unobscured, three-quarter or front, calm and readable; a clean identity reference, not an extreme action shot.');
+    } else if (opts.beat && (opts.beat.beat || opts.beat.emotion)) {
+      // SITUATED intro — posed for THIS moment, from reader-KNOWN scene facts only (never secret truths)
+      L.push('POSE — SITUATED in this exact moment: ' + (opts.beat.beat || 'stepping into the scene') + (opts.beat.emotion ? ' — their face reads ' + opts.beat.emotion : '') + '. A DYNAMIC full-body, mid-action pose that reads the moment; cinematic single subject, off-centre or on a diagonal, a strong angle, real depth behind them.');
+    } else {
+      L.push('POSE: a DYNAMIC, characterizing FULL-BODY pose that reveals who they are — mid-gesture or mid-action, intent and weight visible; NOT a static neutral turnaround, NOT arms-at-sides. A cinematic single-subject composition: a strong hero angle (low or high), the figure off-centre or on a diagonal, real depth behind them.');
+    }
+    if (opts.obscureFace) {
+      L.push('FACE HIDDEN (identity not yet revealed to the reader): the FACE is NOT clearly shown — turned away, veiled by hair, or lost in shadow. Identity reads through the BODY, silhouette, hair and bearing, NOT the face. The attractiveness rule still holds: the hidden figure is unmistakably magnetic.');
+    }
+    L.push('EMOTION: at 7+/10 intensity fitting the character — never blank or calm (calm only if deliberately controlling/hiding emotion, or resigned); if the face is hidden, the emotion reads through posture and body. A masked face still emotes through the eyes.');
     L.push('SETTING: a simple, evocative hint of ' + ((visualState && visualState.background) || 'their world') + ' behind, kept subordinate to the figure — never competing for detail.');
     L.push('NO text, no watermark, no UI elements, no panel borders — ONE figure, share-ready.');
     return L.join('\n\n');
@@ -189609,9 +189621,10 @@ No text, no watermark, no UI elements, share-ready.`;
   window._buildIntroPortraitPrompt = _buildIntroPortraitPrompt;
 
   // Render ONE intro portrait, charge it, and PROMOTE it to the character's locked casting anchor.
-  async function _renderIntroPortrait(o, role, visualState, sceneIndex) {
+  async function _renderIntroPortrait(o, role, visualState, sceneIndex, opts) {
+    opts = opts || {};
     var tok = _castingToken(o.name);
-    var prompt = _buildIntroPortraitPrompt(o, role, visualState);
+    var prompt = _buildIntroPortraitPrompt(o, role, visualState, opts);
     var species = String((o && o.species) || '').toLowerCase();
     var isFF = /favor|favour/.test(species) || (role === 'pc' && /favor|favour/.test(String((window.state || {})._playerSpecies || '').toLowerCase()));
     var _refs = [];
@@ -189631,8 +189644,10 @@ No text, no watermark, no UI elements, share-ready.`;
     var url = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
     try { _chargeImage('gemini', 1, { imageSize: size }); } catch (_) {}
     // PROMOTE → locked casting anchor + mark introduced this issue (so it fires once, and later sheets reference it).
-    try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(tok, url, { locked: true, desc: (o.desc || o.description || '') }); } catch (_) {}
-    try { _cgIssueState()._introducedCast[tok] = { portraitUrl: url, role: role, at: (window.state && window.state.turnCount) }; } catch (_) {}
+    // opts.promote===false / opts.noMark let the situated path render an obscured DISPLAY card without letting it
+    // become the anchor (a clean supplementary render promotes+marks instead).
+    if (opts.promote !== false) { try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(tok, url, { locked: true, desc: (opts.seedDesc || o.desc || o.description || '') }); } catch (_) {} }
+    if (!opts.noMark) { try { _cgIssueState()._introducedCast[tok] = { portraitUrl: url, role: role, at: (window.state && window.state.turnCount) }; } catch (_) {} }
     try { console.log('[INTRO-PORTRAIT] ' + tok + ' (' + role + ') rendered @ ' + size + ' + promoted to locked anchor'); } catch (_) {}
     return { token: tok, role: role, imageUrl: url, kind: 'portrait', fingerprint: 'intro-' + tok + '-s' + sceneIndex };
   }
@@ -189660,6 +189675,128 @@ No text, no watermark, no UI elements, share-ready.`;
     return out;
   }
   window._renderIntroPortraitsForScene = _renderIntroPortraitsForScene;
+
+  // ══ SLICE 2b — SITUATED INTRO CARDS (live wiring; flag window._cgSituatedIntros, DEFAULT OFF) ═══════
+  // "Situated at the moment" (Roman): render each main player's intro card LIVE at their intro scene, posed
+  // from the scene's READER-KNOWN dramatic beat (NEVER secret truths[] — that would leak the plot), with
+  // appearance sourced from the seed's visualCanon, reveal-gated (an unrevealed LI renders FACE-OBSCURED +
+  // gets one clean supplementary anchor). The card doubles as the anchor. Shown as a full-frame tap-through
+  // splash BEFORE the scene mounts. Flag OFF ⇒ every entry below is a no-op — zero live behaviour change.
+
+  // Ground-truth appearance from the active seed's visualCanon (immutable; the author never invents it).
+  function _cgSeedVisualCanon(token) {
+    try {
+      var id = (window.state || {})._starterId;
+      if (!id || typeof STARTER_SEEDS === 'undefined' || !STARTER_SEEDS[id]) return '';
+      var vc = STARTER_SEEDS[id].visualCanon; if (!vc) return '';
+      var t = _castingToken(token);
+      for (var k in vc) { if (_castingToken(k) === t) { var v = vc[k]; return Array.isArray(v) ? v.join('; ') : String(v || ''); } }
+    } catch (_) {}
+    return '';
+  }
+  window._cgSeedVisualCanon = _cgSeedVisualCanon;
+
+  // LI face-reveal gate: may this LI's face be shown? (pending / kept_mystery / unknown → NO → render obscured.)
+  function _cgLIFaceRevealed(o, role) {
+    if (role !== 'li') return true;                               // non-LI: face shown normally
+    try {
+      var st = (window.state || {}).liRevealStatus || {};
+      var vals = Object.keys(st).map(function (k) { return st[k]; });
+      return vals.indexOf('revealed') !== -1;                     // conservative: obscure until an LI is revealed
+    } catch (_) { return false; }
+  }
+  window._cgLIFaceRevealed = _cgLIFaceRevealed;
+
+  // The SITUATED intro beat — from reader-KNOWN scene facts ONLY (this character's on-page emotion + a role
+  // framing). NEVER from secret truths[] (that leaks the plot to the reader). Refine per-scene at validation.
+  function _cgIntroBeatFor(o, role, visualState, phases) {
+    var tok = _castingToken((o && o.name) || '');
+    var emo = '';
+    try { (phases || []).forEach(function (ph) { var em = ph && ph.emotions; if (em) { for (var k in em) { if (!emo && _castingToken(k) === tok) emo = String(em[k] || ''); } } }); } catch (_) {}
+    var beat = (role === 'antagonist') ? 'entering with cold authority as the room turns to them'
+      : (role === 'li') ? 'a striking presence at the edge of the scene, drawing every eye'
+      : (role === 'pc') ? 'caught in the moment the scene turns on them'
+      : 'stepping into the scene';
+    return { emotion: emo, beat: beat };
+  }
+  window._cgIntroBeatFor = _cgIntroBeatFor;
+
+  // Render one SITUATED intro card (doubles as anchor). Unrevealed LI → face-obscured DISPLAY card (not the
+  // anchor) + a separate CLEAN supplementary anchor (a hidden-face card is a poor identity reference).
+  async function _renderSituatedIntro(o, role, visualState, phases, sceneIndex) {
+    var tok = _castingToken(o.name);
+    var seedDesc = _cgSeedVisualCanon(tok);
+    var beat = _cgIntroBeatFor(o, role, visualState, phases);
+    var obscure = (role === 'li') && !_cgLIFaceRevealed(o, role);
+    var card;
+    if (obscure) {
+      card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat, obscureFace: true, promote: false, noMark: true });
+      try { await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, cleanAnchor: true }); } catch (_) {}
+    } else {
+      card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat });
+    }
+    card.kind = 'introCard'; card.situated = true; card.obscured = obscure;
+    return card;
+  }
+  window._renderSituatedIntro = _renderSituatedIntro;
+
+  // Detect the NEW main players entering THIS scene → render a situated intro card for each (once per issue).
+  async function _renderIntroCardsForScene(visualState, phases, sceneIndex) {
+    _cgIssueState();
+    var s = window.state || {};
+    var cands = [];
+    var pcName = s.protagonistName || s.playerName || '';
+    if (pcName) cands.push({ name: pcName, isPC: true, species: s._playerSpecies || '' });
+    var others = (visualState && Array.isArray(visualState.other_characters_present)) ? visualState.other_characters_present : [];
+    others.forEach(function (o) { if (o && o.name) cands.push(o); });
+    var out = [];
+    for (var i = 0; i < cands.length; i++) {
+      var c = cands[i], tok = _castingToken(c.name);
+      if (!tok || state._introducedCast[tok]) continue;           // already introduced this issue → skip
+      var role = _cgIntroRole(c);
+      if (!role) continue;                                        // not a main player
+      try { out.push(await _renderSituatedIntro(c, role, visualState, phases, sceneIndex)); }
+      catch (e) { try { console.warn('[INTRO-CARD] ' + tok + ' failed: ' + (e && e.message)); } catch (_) {} }
+    }
+    return out;
+  }
+  window._renderIntroCardsForScene = _renderIntroCardsForScene;
+
+  // Full-frame tap-through splash for the intro card(s). Self-contained overlay — does NOT touch the phase-
+  // keyed staged reader. Advance with click / Enter / Space; resolves once all cards are dismissed.
+  function _showIntroCardSplash(cards) {
+    return new Promise(function (resolve) {
+      try {
+        cards = (cards || []).filter(function (c) { return c && c.imageUrl; });
+        if (!cards.length || typeof document === 'undefined') return resolve();
+        var idx = 0;
+        var ov = document.createElement('div');
+        ov.className = 'cg-intro-card-splash';
+        ov.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:rgba(8,6,10,0.96);display:flex;align-items:center;justify-content:center;cursor:pointer;');
+        var img = document.createElement('img');
+        img.setAttribute('style', 'max-width:92vw;max-height:92vh;object-fit:contain;border-radius:10px;box-shadow:0 12px 60px rgba(0,0,0,0.6);');
+        ov.appendChild(img);
+        function done() { try { ov.remove(); } catch (_) {} try { document.removeEventListener('keydown', onKey); } catch (_) {} resolve(); }
+        function next() { idx++; if (idx >= cards.length) done(); else img.src = cards[idx].imageUrl; }
+        function onKey(e) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); next(); } }
+        ov.addEventListener('click', next);
+        document.addEventListener('keydown', onKey);
+        document.body.appendChild(ov);
+        img.src = cards[0].imageUrl;
+      } catch (_) { resolve(); }
+    });
+  }
+  window._showIntroCardSplash = _showIntroCardSplash;
+
+  // Wiring entry — call just before the staged scene mounts. No-op unless window._cgSituatedIntros===true.
+  async function _maybeShowIntroCards(plan, sceneIndex) {
+    if (window._cgSituatedIntros !== true) return;
+    try {
+      var cards = await _renderIntroCardsForScene(plan && plan.visualState, plan && plan.phases, sceneIndex);
+      if (cards && cards.length) await _showIntroCardSplash(cards);
+    } catch (e) { try { console.warn('[INTRO-CARD] show failed: ' + (e && e.message)); } catch (_) {} }
+  }
+  window._maybeShowIntroCards = _maybeShowIntroCards;
 
   // ── CAST SPLASH (validated 2026-08-08) — the PRIMARY intro-portrait path ──────────────────────────
   // The intro image's real product is the ANCHOR, not the pixels. So render ONE 4K 2x2 CAST SPLASH of the
@@ -207601,6 +207738,8 @@ No text, no watermark, no UI elements, share-ready.`;
           try { console.log('[STAGED:IMG] Phase 0 first-ready after ' + _imgWaitMs + 'ms — scene mounting with image cached'); } catch (_) {}
         }
       } catch (_) {}
+      // SLICE 2b: situated intro card(s) as a tap-through splash BEFORE the scene mounts (flag-gated; no-op when off).
+      if (window._cgSituatedIntros === true) { try { await _maybeShowIntroCards(plan, sceneIndex); } catch (_) {} }
       _renderStagedScene(plan, phaseImagesPromise);
       // COST TELEMETRY (Fable CG audit A3-F3, 2026-07-13): seal this CG scene's accumulated cost.
       // Text is now recorded per author leg via _recordProxyTextCost (the raw Grok/Mistral/DeepSeek
@@ -208101,6 +208240,8 @@ No text, no watermark, no UI elements, share-ready.`;
       } catch (_) {}
       // Mount the new scene. _renderStagedScene tears down the prior
       // session (key handler, micro state) and clears _stagedSubmitting.
+      // SLICE 2b: situated intro card(s) splash before mount (flag-gated; no-op when off).
+      if (window._cgSituatedIntros === true) { try { await _maybeShowIntroCards(plan, sceneIndex); } catch (_) {} }
       _renderStagedScene(plan, phaseImagesPromise);
     } catch (e) {
       console.warn('[STAGED:COMPLETE] Threw:', e && e.message);
