@@ -189754,12 +189754,32 @@ No text, no watermark, no UI elements, share-ready.`;
     return 'a jewel-like CLOSE-UP detail from ' + nm + ' — a signature costume piece, weapon, or marking; a study, not a portrait';
   }
   // Reader-safe issue emblem — a single story OBJECT (from the seed if present; NEVER a secret truth).
-  function _cgIssueEmblem() {
+  // FATELANDS per-culture CEREMONIAL WISH-OBJECTS (Roman 2026-08-09) — each culture's formal-wishing icon,
+  // used as the issue EMBLEM. Public/reader-safe. See project_fatelands_ceremonial_objects.
+  var _FATELANDS_CEREMONIAL_OBJECTS = {
+    first_favored: 'THE ANSWER as a ceremonial instrument — a wish-reshaped blade/polearm (deep question-mark hooks) that takes its FORM from the wielder\'s intent, so its shape reads as a TEST OF ALIGNMENT; shown ALONE on a plain vignette, no wielder',
+    human: 'THE FOLDED FATE — an ancient book the Uncrowned Queen carried through the Fold, each chapter the history of a different reality; a human community\'s formal wishing-book, laid open on a plain vignette (no legible text)',
+    kwisheen: 'a coral-and-nacre CIRCLET in the style of the first Kwisheen King; shown alone on a plain vignette, no wearer',
+    wilder: 'a charred length of WOOD from the pyre where the wish-witch who cursed the Wilders was burned; shown alone on a plain vignette'
+  };
+  function _cgCultureKey(species) {
+    var s = String(species || '').toLowerCase();
+    if (/favor|favour/.test(s)) return 'first_favored';
+    if (/kwisheen/.test(s)) return 'kwisheen';
+    if (/wilder/.test(s)) return 'wilder';
+    if (/human/.test(s)) return 'human';
+    return '';
+  }
+  // Resolve the emblem: explicit seed override → the scene culture's ceremonial wish-object → generic fallback.
+  function _cgIssueEmblem(species) {
     try { var id = (window.state || {})._starterId;
       if (id && typeof STARTER_SEEDS !== 'undefined' && STARTER_SEEDS[id] && STARTER_SEEDS[id].issueEmblem)
         return 'the ISSUE EMBLEM — ' + String(STARTER_SEEDS[id].issueEmblem) + '; a single iconic story OBJECT on a plain vignette, no characters'; } catch (_) {}
+    var key = _cgCultureKey(species);
+    if (key && _FATELANDS_CEREMONIAL_OBJECTS[key]) return 'the CEREMONIAL WISH-OBJECT (culture emblem) — ' + _FATELANDS_CEREMONIAL_OBJECTS[key];
     return 'the ISSUE EMBLEM — a single iconic story OBJECT drawn from this scene\'s setting and props (a ritual vessel, an oath stone, a token) on a plain vignette, no characters';
   }
+  window._cgIssueEmblem = _cgIssueEmblem; window._cgCultureKey = _cgCultureKey;
   // Quadrant layout for N mains (2-4): characters first, then detail/emblem fills.
   function _cgLayoutForCast(mains) {
     var n = mains.length, q = [];
@@ -189787,7 +189807,8 @@ No text, no watermark, no UI elements, share-ready.`;
       } else if (q.type === 'detail') {
         L.push(label + ' [DETAIL INSET] — ' + _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure) + '. Beautiful, iconic; NOT a full figure, NOT a face portrait.');
       } else {
-        L.push(label + ' [EMBLEM INSET] — ' + _cgIssueEmblem() + '. No text.');
+        var _emCulture = ((window.state || {})._playerSpecies) || (chars[0] && chars[0].species) || '';
+        L.push(label + ' [EMBLEM INSET] — ' + _cgIssueEmblem(_emCulture) + '. No text.');
       }
     });
     L.push('EMOTION: every character face at 7+/10 intensity fitting the moment — never blank or calm. AVOID: any text/lettering/nameplates; a photo look; blending any two characters; a First Favored losing the Veilweave; two same-species characters looking alike; The Answer as a plain trident/spear.');
