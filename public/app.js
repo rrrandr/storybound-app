@@ -188717,18 +188717,29 @@ No text, no watermark, no UI elements, share-ready.`;
     { d: 'a dynamic WIDE action shot', a: 'from a HIGH angle looking DOWN, slightly Dutch-tilted' },
     { d: 'a MEDIUM hero shot', a: 'from a LOW angle' }
   ];
+  // WHERE the figures sit in frame — the missing control. Varied angles still came out with the hero
+  // squared-up dead-center (Roman 2026-08-08); "dead-center" is a PLACEMENT failure, not an angle one.
+  // Every slot is OFF-CENTER, so no panel defaults to the centered-hero read; the four differ from each other.
+  var _SHEET_PLACEMENT_LADDER = [
+    'the figures pushed OFF-CENTER onto the LEFT third, open space on the right',
+    'the figures OFF-CENTER onto the RIGHT third, a foreground limb / weapon / branch cutting across the LEFT foreground',
+    'the main figure LARGE in a FOREGROUND corner with the rest of the scene falling away behind — deep perspective, NOT centered',
+    'a canted, cropped framing — the main figure off to one side and clipped by the panel edge, never squared-up'
+  ];
   function _sheetCameraForQuad(qi, phases) {
+    var place = _SHEET_PLACEMENT_LADDER[qi % _SHEET_PLACEMENT_LADDER.length];
     try {
       var ph = (phases || [])[qi];
       if (ph && ph._shot && (ph._shot.distance || ph._shot.angle)) {
         var s = ph._shot;
-        return '\nCAMERA (this panel — distinct from the others): ' + (s.distance || 'medium') + ' shot' +
-          (s.angle && !/eye/i.test(s.angle) ? ', ' + String(s.angle).replace(/_/g, ' ') + ' angle' : '') +
-          (s.blocking ? ' (' + String(s.blocking).replace(/_/g, ' ') + ')' : '') + '.';
+        // State the angle ALWAYS — never blank on eye-level (a blank framing defaults to a centered tripod shot).
+        var ang = String(s.angle || 'eye_level').replace(/_/g, ' ') + ' angle';
+        return '\nFRAMING (this panel — composition FIRST, distinct from the others): ' + (s.distance || 'medium') + ' shot, ' + ang +
+          (s.blocking ? ' (' + String(s.blocking).replace(/_/g, ' ') + ')' : '') + ' — ' + place + '.';
       }
     } catch (_) {}
     var slot = _SHEET_SHOT_LADDER[qi % _SHEET_SHOT_LADDER.length];
-    return '\nCAMERA (this panel — a DISTINCT shot from the other three): ' + slot.d + ', ' + slot.a + '.';
+    return '\nFRAMING (this panel — composition FIRST, distinct from the other three): ' + slot.d + ', ' + slot.a + ' — ' + place + '.';
   }
 
   // Beat text for a single sheet phase (for storyboard-doc / shot / SFX classification).
@@ -188769,10 +188780,11 @@ No text, no watermark, no UI elements, share-ready.`;
     var L = [];
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dense ornament. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
     L.push('COMPOSITION: ONE SQUARE image = a 2x2 grid of four equal comic panels with thin gutters. NO lettering, captions, speech balloons, or SFX text anywhere in the image.');
-    L.push('CAMERA: VARY the camera panel to panel — each panel is a DISTINCT shot in BOTH distance and angle (mix wide and close, low-angle and high-angle, straight-on and tilted, over-the-shoulder, worm\'s-eye through the tentacles, etc.). Do NOT shoot all four eye-level medium. Each panel\'s specific camera is given in its PANELS entry below — obey it.');
+    L.push('CAMERA & PLACEMENT: VARY the camera panel to panel — each panel a DISTINCT shot in BOTH distance and angle (mix wide and close, low and high, straight-on and Dutch-tilt, over-the-shoulder, worm\'s-eye through the tentacles). Do NOT shoot four eye-level medium shots. AND vary WHERE the figures sit: in at least THREE of the four panels the main figure is clearly OFF-CENTER (on a left/right third, large in a foreground corner, or cropped at an edge), NOT squared-up dead-center. A hero standing centered, eye-level and full-body is the single most common failure of this sheet — actively avoid it; prefer a dynamic off-center composition over the cleanest hero shot. Each panel\'s specific FRAMING is given in its PANELS entry below — obey it.');
     if (isVeilwood) L.push('SETTING (every panel): the VEILWOOD — pale WHITE trees grown as MATED PAIRS (two trunks braided around each other, NEVER brown, never one single trunk), long WHITE weeping-willow canopy, ground of deep-CRIMSON grass in twisted mated braids. Luminous and otherworldly, never a generic green/brown forest.');
     else if (bg) L.push('SETTING (every panel): ' + bg + '.');
     L.push('CHARACTERS — match EACH to their REFERENCE image EXACTLY: same face, hair, skin colour, wardrobe and weapon, held identical in every panel. Three DISTINCT individuals:');
+    L.push('(Reference-matching governs WHAT each character looks like — face, hair, skin, wardrobe, weapon — NOT where the camera sits or where they stand. A character stays fully recognizable while OFF-CENTER, cropped at the edge, seen from below or above, or partly behind a foreground element; being recognizable does NOT require a centered, eye-level, full-body hero shot.)');
     var pcLine = '  • ' + pcName + ' — ' + (gTxt(pcGender) ? gTxt(pcGender) + ', ' : '');
     pcLine += /favor|favour/.test(pcSpecies) ? 'a First Favored: silver-white hair, athletic build, ALWAYS wearing the glowing mesh VEILWEAVE (his signature garment — in EVERY panel, never plain clothes, never armour; see below).' : ((pcSpecies || 'human') + '.');
     L.push(pcLine);
