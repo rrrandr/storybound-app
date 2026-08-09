@@ -92921,6 +92921,32 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       } catch (_) {}
       var _v0 = !!(_mAnchorOn && _curMs);   // active only when there is a milestone to anchor to
 
+      // ═══ PHASE 0 (Roman 2026-08-08): ALTERNATE PLANNING SOURCE — the hand-authored STARTER_PLANS spine.
+      // The authored per-scene spine (_activePlan) has been BORN-DEAD since 43e58bb (introduced with a data
+      // registry + accessor but NEVER a caller). This flag (window._usePlanSpine === true) makes it EXECUTABLE
+      // for the first time: for a SEEDED story with a plan, the scene's OBJECTIVE comes from the authored
+      // per-scene goal instead of the generic aPlot milestone. NO blending — the plan wins outright when a
+      // matching scene exists; falls back to the generic milestone otherwise. Default OFF → generic path is
+      // byte-identical. Purpose: enable the same-story A/B (generic vs authored spine) with ONLY this swapped.
+      try {
+        if (typeof window !== 'undefined' && window._usePlanSpine === true) {
+          var _apFn = (typeof _activePlan === 'function') ? _activePlan : (window._activePlan || null);
+          var _plan = _apFn ? _apFn(s) : null;
+          if (_plan && Array.isArray(_plan.scenes)) {
+            var _planSceneNum = (s.turnCount || 0) + 2;   // scene being BUILT (turnCount lags by 2 here — see note @~92889)
+            var _planScene = _plan.scenes.find(function (p) { return p && p.n === _planSceneNum && p.goal; }) || null;
+            if (_planScene) {
+              _curMs = { event: _planScene.goal, atScene: _planScene.n, kind: 'authored-spine', triggered: false, _fromPlan: true,
+                         requiredTruth: _planScene.requiredTruth || null, exitState: _planScene.exitState || null };
+              _v0 = true;
+              try { console.log('[PLAN-SPINE] scene=' + _planSceneNum + ' OBJECTIVE from authored spine: "' + String(_planScene.goal).slice(0, 110) + '"'); } catch (_) {}
+            } else {
+              try { console.log('[PLAN-SPINE] scene=' + _planSceneNum + ' no authored plan-scene → generic milestone fallback'); } catch (_) {}
+            }
+          }
+        }
+      } catch (_) {}
+
       // ═══ SCENE-SPINE v0 (Roman 2026-07-27): state_change is the SOLE authoritative scene primitive.
       // Generalizes Storybound's PROVEN Scene-1 `state_change` (from _compressAPlotForScene1 ~61789) to
       // scenes 2+ — the contract (observable-event / world-state / name-only-the-event / delete-test) is
@@ -92942,8 +92968,15 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
             + 'DERIVE from: THE CURRENT MILESTONE (strategic anchor — realize ITS specific event, do NOT collapse it to the theme) + the tactical move + the PRIOR scene\'s state (below). The new state MUST differ from the prior scene\'s — never re-flip an already-true fact, and never re-emit the prior event merely reworded.\n'
             + 'Return ONLY JSON: { "tactical_move":"", "state_change_precondition":"", "state_change":"", "forces_choice":"", "branch_a":"", "branch_b":"" }';
           var _csGen = (typeof _ensureCommittedState === 'function') ? _ensureCommittedState() : { facts: [], pendingIntent: null };
-          var _scUsr = 'CURRENT MILESTONE (distant TARGET — constrains what the next event may be; NOT a per-scene mandate): ' + JSON.stringify((_curMs && _curMs.event) || goal).slice(0, 300)
-            + '\nA-plot goal: ' + JSON.stringify(goal).slice(0, 200)
+          var _scUsr = ((_curMs && _curMs._fromPlan)
+              // AUTHORED SPINE: the plan goal is a PER-SCENE objective (not a distant milestone) — present it as
+              // this scene's central development to realize NOW, and suppress the competing generic A-plot goal
+              // so the planner has ONE objective (no blending — the whole point of the Phase-0 experiment).
+              ? ('THIS SCENE\'S OBJECTIVE (authored story spine — the scene\'s central development to realize NOW as this scene\'s state_change, NOT a distant target): ' + JSON.stringify(_curMs.event).slice(0, 300)
+                 + (_curMs.requiredTruth ? '\nMUST STILL BE TRUE for the reader after this scene: ' + JSON.stringify(_curMs.requiredTruth).slice(0, 160) : '')
+                 + (_curMs.exitState ? '\nSCENE EXIT STATE (where this scene should leave the story): ' + JSON.stringify(_curMs.exitState).slice(0, 160) : ''))
+              : ('CURRENT MILESTONE (distant TARGET — constrains what the next event may be; NOT a per-scene mandate): ' + JSON.stringify((_curMs && _curMs.event) || goal).slice(0, 300)
+                 + '\nA-plot goal: ' + JSON.stringify(goal).slice(0, 200)))
             + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 250)
             + '\nCOMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): ' + JSON.stringify((_csGen.facts || []).slice(-8).map(function (f) { return f.fact; })).slice(0, 480)
             + (_csGen.pendingIntent ? ('\nPENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: ' + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
@@ -188711,35 +188744,121 @@ No text, no watermark, no UI elements, share-ready.`;
   // effect). This assigns each quadrant a DISTINCT shot so it stays in the per-panel block: it prefers a real
   // shot from the comic engine (`ph._shot`, from _buildShotSequence) and otherwise falls back to a 4-slot
   // cinematic ladder that varies BOTH distance and angle. (Roman 2026-07-21.)
-  var _SHEET_SHOT_LADDER = [
-    { d: 'a WIDE establishing shot', a: 'from a LOW angle looking UP' },
-    { d: 'a TIGHT medium two-shot, pushed in close', a: 'at eye level' },
-    { d: 'a dynamic WIDE action shot', a: 'from a HIGH angle looking DOWN, slightly Dutch-tilted' },
-    { d: 'a MEDIUM hero shot', a: 'from a LOW angle' }
-  ];
-  // WHERE the figures sit in frame — the missing control. Varied angles still came out with the hero
-  // squared-up dead-center (Roman 2026-08-08); "dead-center" is a PLACEMENT failure, not an angle one.
-  // Every slot is OFF-CENTER, so no panel defaults to the centered-hero read; the four differ from each other.
-  var _SHEET_PLACEMENT_LADDER = [
-    'the figures pushed OFF-CENTER onto the LEFT third, open space on the right',
-    'the figures OFF-CENTER onto the RIGHT third, a foreground limb / weapon / branch cutting across the LEFT foreground',
-    'the main figure LARGE in a FOREGROUND corner with the rest of the scene falling away behind — deep perspective, NOT centered',
-    'a canted, cropped framing — the main figure off to one side and clipped by the panel edge, never squared-up'
-  ];
-  function _sheetCameraForQuad(qi, phases) {
-    var place = _SHEET_PLACEMENT_LADDER[qi % _SHEET_PLACEMENT_LADDER.length];
+  // ══ BLOCKING GRAMMAR (Roman 2026-08-08) — CAMERA IS A CONSEQUENCE OF BLOCKING ═══════════════════
+  // The earlier index-based placement ladder was the mistake: it assigned "left third" to a panel
+  // regardless of the beat, so it fought beats with their own spatial logic (P1 "surrounded" wants a
+  // CENTERED figure). Correct pipeline: BEAT → BLOCKING (the spatial relationship of the participants)
+  // → CAMERA (the shot that best photographs that blocking). "Surrounded" keeps a centered figure but
+  // FORBIDS the flat eye-level catalog shot; directional beats (clash/lunge/drive-back) create their own
+  // asymmetry. Each entry: match (beat-text detector), blocking (spatial arrangement, paint-only),
+  // cameras (rotated across repeats so panels differ), forbid (the shot that would flatten the beat).
+  // Ordered by priority — SURROUNDED before the directional situations before AFTERMATH; ESTABLISH is
+  // the no-match fallback. This is combat/action-seeded; the schema generalises (a betrayal, a
+  // reconciliation, an interrogation each have blocking) — add situations as data, not new code.
+  var _BLOCKING_GRAMMAR = {
+    SURROUNDED: {
+      match: /surround|at bay|encircl|closing in|close in|both sides|hemmed|ringed|cornered|back(ed)? to|beset|outnumber/i,
+      blocking: 'the lone figure held CENTER-FRAME but ENCIRCLED — attackers ringing him, closing inward from several sides (or he is compressed into a corner / backed to an edge). The pressure comes from all around, so a CENTERED figure is correct here; the drama comes from the ANGLE, not from moving him off-centre.',
+      cameras: [
+        'a HIGH OVERHEAD looking straight DOWN onto the closing ring — the trap read from above',
+        'a WORM’S-EYE from the ground looking UP past the encircling attackers at the figure',
+        'a LONG-LENS compression shot THROUGH one attacker’s shoulder in the foreground, flattening the ring inward',
+        'a low DUTCH-tilted wide, the wall of enemies leaning in from every edge'
+      ],
+      forbid: 'a flat eye-level medium tripod shot, or a calm evenly-spaced symmetric line-up'
+    },
+    CLASH: {
+      match: /lock(ed)?|parr|clash|cross(ed)?[- ]?(blade|weapon|hook)|blade against|against (his|her|the) (trident|blade|hook|weapon|shaft)|sparks|grapple the|jammed|strain(ing)? against/i,
+      blocking: 'two combatants JAMMED at a single point of contact — weapons or limbs locked at the centre, bodies driving in from OPPOSITE sides along a hard left-vs-right diagonal. Strong asymmetry; the line of force splits the frame.',
+      cameras: [
+        'a tight LOW angle right at the point of contact, both fighters looming',
+        'an OVER-THE-SHOULDER from behind one combatant, the other filling the far frame',
+        'a DUTCH-tilted medium-close on the locked weapons, sparks in the foreground'
+      ],
+      forbid: 'both fighters squared-up, evenly spaced and centred; a calm symmetric two-shot'
+    },
+    DRIVING_BACK: {
+      match: /driv(e|es|ing) (back|backward|both|him|her|them)|press(es|ing)? the attack|forc(e|es|ing).*(back|backward)|advanc|retreat|giving ground|back foot|pin(s|ned)? .* against|pushed back/i,
+      blocking: 'a clear VECTOR across the frame — the aggressor advancing IN from one side, the defender giving ground toward the OPPOSITE edge and often cropped/pressed against it. Diagonal momentum; empty space collapsing ahead of the advance.',
+      cameras: [
+        'a WIDE side-on angle showing the ground given up — aggressor on one third, defender pressed to the far edge',
+        'a LOW angle favouring the advancing aggressor as he drives forward',
+        'a shot looking straight DOWN the line of the advance, foreshortened'
+      ],
+      forbid: 'both figures static, evenly balanced and centred with no directional vector'
+    },
+    LUNGE: {
+      match: /lunge|charg|leap|spring|dives?|hurl|launch|snap(s|ping)? forward|strike from|comes? in|reach(es|ing) to (hook|grab|grapple)|lash(es|ing)?/i,
+      blocking: 'the attacker EXPLODING in from one edge toward the target at the far side — the striking limb, weapon or tentacle owning the immediate FOREGROUND (big and foreshortened), the target reacting at depth.',
+      cameras: [
+        'a foreshortened angle straight down the striking weapon/limb into the target',
+        'a LOW angle catching the attacker mid-leap against the canopy',
+        'an over-the-target-shoulder shot as the attacker fills the frame coming in'
+      ],
+      forbid: 'a flat side-on eye-level shot with no foreshortening or depth'
+    },
+    REVEAL_TRANSFORM: {
+      match: /transform|shifts?|change(s|d)? (form|shape|into)|reveal|blanch|reshap|mid-change|morph|becom(e|ing)|dissolv/i,
+      blocking: 'the changing / revealed figure ISOLATED and dominant, owning the centre and most of the frame; the others pull back or react from the EDGES. All the weight is on the single figure and the change happening to it.',
+      cameras: [
+        'a slow PUSH-IN to a low close-up, the change looming',
+        'a WORM’S-EYE so the transformation towers over the reactors',
+        'a tight close on the point of change, reactors soft at the frame edge'
+      ],
+      forbid: 'a distant wide that shrinks the change, or rival subjects sharing the frame equally'
+    },
+    AFTERMATH: {
+      match: /pull back|aftermath|settl|stands? over|breath|dust settl|survey|left standing|falls?|collaps|fallen|defeat|pin(s|ned)? both|holds? (both|them)/i,
+      blocking: 'the victor / survivor set OFF to one third, the CONSEQUENCE (the fallen or held enemy, the changed ground) occupying the rest of the frame — asymmetric weight, the eye travelling from figure to result.',
+      cameras: [
+        'a WIDE HIGH angle surveying the new state of the field',
+        'a wide shot with deep foreground-to-background depth, victor on a third',
+        'a medium looking PAST the fallen in the foreground up to the victor'
+      ],
+      forbid: 'a tight centred hero bust that hides the consequence'
+    },
+    ESTABLISH: {
+      match: null,   // no-match fallback (Orientation / scene-setting)
+      blocking: 'the participants arranged to show the SPACE and their positions within it — spread through the environment along a diagonal, not clustered dead-centre; the setting is a character. Establish who is where before the action.',
+      cameras: [
+        'a WIDE establishing angle, high or low, using the trees / canopy for depth',
+        'a deep-perspective shot with foreground scenery framing the figures',
+        'a wide shot with the figures placed along a diagonal through the place'
+      ],
+      forbid: 'a flat centred eye-level portrait of one figure'
+    }
+  };
+  var _BLOCKING_TYPE_FALLBACK = {
+    Orientation: 'ESTABLISH', Threat: 'LUNGE', Transformation: 'REVEAL_TRANSFORM',
+    Revelation: 'REVEAL_TRANSFORM', Decision: 'CLASH', Consequence: 'AFTERMATH', Resolution: 'AFTERMATH'
+  };
+  // Resolve a phase to its blocking situation: explicit planner signal (durable home) → beat-text match → type fallback.
+  function _blockingSituation(ph) {
     try {
-      var ph = (phases || [])[qi];
-      if (ph && ph._shot && (ph._shot.distance || ph._shot.angle)) {
-        var s = ph._shot;
-        // State the angle ALWAYS — never blank on eye-level (a blank framing defaults to a centered tripod shot).
-        var ang = String(s.angle || 'eye_level').replace(/_/g, ' ') + ' angle';
-        return '\nFRAMING (this panel — composition FIRST, distinct from the others): ' + (s.distance || 'medium') + ' shot, ' + ang +
-          (s.blocking ? ' (' + String(s.blocking).replace(/_/g, ' ') + ')' : '') + ' — ' + place + '.';
-      }
+      var explicit = ph && (ph._blocking || (ph._panel && ph._panel.blocking));
+      if (explicit && _BLOCKING_GRAMMAR[String(explicit).toUpperCase()]) return String(explicit).toUpperCase();
     } catch (_) {}
-    var slot = _SHEET_SHOT_LADDER[qi % _SHEET_SHOT_LADDER.length];
-    return '\nFRAMING (this panel — composition FIRST, distinct from the other three): ' + slot.d + ', ' + slot.a + ' — ' + place + '.';
+    var txt = '';
+    try { txt = (typeof _sheetPhaseText === 'function') ? _sheetPhaseText(ph) : ((ph && (ph.beat || ph.label)) || ''); } catch (_) { txt = (ph && (ph.beat || ph.label)) || ''; }
+    for (var k in _BLOCKING_GRAMMAR) { var g = _BLOCKING_GRAMMAR[k]; if (g && g.match && g.match.test(txt)) return k; }
+    var type = (ph && ph._readerLearning) || 'Orientation';
+    return _BLOCKING_TYPE_FALLBACK[type] || 'ESTABLISH';
+  }
+  window._blockingSituation = _blockingSituation;
+  // Per-panel BLOCKING-then-CAMERA line. Blocking is solved first; the camera photographs it. Distance
+  // (framing size) still comes from the shot planner; angle/lens now derive from the blocking grammar.
+  function _sheetCameraForQuad(qi, phases) {
+    var ph = (phases || [])[qi] || {};
+    var sit = _blockingSituation(ph);
+    var g = _BLOCKING_GRAMMAR[sit] || _BLOCKING_GRAMMAR.ESTABLISH;
+    // rotate the camera choice so panels that share a situation still differ from each other
+    var occ = 0; for (var j = 0; j < qi; j++) { try { if (_blockingSituation((phases || [])[j]) === sit) occ++; } catch (_) {} }
+    var cam = g.cameras[occ % g.cameras.length];
+    var dist = '';
+    try { if (ph._shot && ph._shot.distance) dist = String(ph._shot.distance).replace(/_/g, ' ') + ', '; } catch (_) {}
+    return '\nBLOCKING (' + sit + ' — solve the spatial relationship FIRST): ' + g.blocking +
+      '\nCAMERA (photograph that blocking): ' + dist + cam + '.' +
+      (g.forbid ? ' AVOID here: ' + g.forbid + '.' : '');
   }
 
   // Beat text for a single sheet phase (for storyboard-doc / shot / SFX classification).
@@ -188780,7 +188899,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var L = [];
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dense ornament. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
     L.push('COMPOSITION: ONE SQUARE image = a 2x2 grid of four equal comic panels with thin gutters. NO lettering, captions, speech balloons, or SFX text anywhere in the image.');
-    L.push('CAMERA & PLACEMENT: VARY the camera panel to panel — each panel a DISTINCT shot in BOTH distance and angle (mix wide and close, low and high, straight-on and Dutch-tilt, over-the-shoulder, worm\'s-eye through the tentacles). Do NOT shoot four eye-level medium shots. AND vary WHERE the figures sit: in at least THREE of the four panels the main figure is clearly OFF-CENTER (on a left/right third, large in a foreground corner, or cropped at an edge), NOT squared-up dead-center. A hero standing centered, eye-level and full-body is the single most common failure of this sheet — actively avoid it; prefer a dynamic off-center composition over the cleanest hero shot. Each panel\'s specific FRAMING is given in its PANELS entry below — obey it.');
+    L.push('CAMERA IS A CONSEQUENCE OF BLOCKING: every panel below states its BLOCKING first — the spatial relationship of the figures (who is centred/encircled, who advances, who flanks, who owns the foreground, who is trapped) — then the CAMERA that photographs that blocking. Solve the blocking, then shoot it. A CENTERED figure is CORRECT when the beat calls for it (e.g. surrounded / at bay) — PROVIDED the camera is doing something dramatic (high overhead, worm\'s-eye, through an opponent\'s shoulder, long-lens compression, tilted frame). What is forbidden in EVERY panel is the flat eye-level medium "catalog" shot — the squared-up tripod view of a figure standing to attention. Obey each panel\'s BLOCKING and CAMERA; no two panels share the same composition.');
     if (isVeilwood) L.push('SETTING (every panel): the VEILWOOD — pale WHITE trees grown as MATED PAIRS (two trunks braided around each other, NEVER brown, never one single trunk), long WHITE weeping-willow canopy, ground of deep-CRIMSON grass in twisted mated braids. Luminous and otherworldly, never a generic green/brown forest.');
     else if (bg) L.push('SETTING (every panel): ' + bg + '.');
     L.push('CHARACTERS — match EACH to their REFERENCE image EXACTLY: same face, hair, skin colour, wardrobe and weapon, held identical in every panel. Three DISTINCT individuals:');
