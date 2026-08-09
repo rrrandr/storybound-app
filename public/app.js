@@ -189566,6 +189566,16 @@ No text, no watermark, no UI elements, share-ready.`;
   function _cgIntroQualifies(o) { return !!_cgIntroRole(o); }
   window._cgIntroRole = _cgIntroRole; window._cgIntroQualifies = _cgIntroQualifies;
 
+  // LI ATTRACTIVENESS CANON (Roman 2026-08-09, HARD): the love interest is ALWAYS gorgeous + amazingly
+  // proportioned — even face-hidden, the body/bearing read mesmerizing and others are visibly drawn.
+  // Only exception: a deliberate Quasimodo/beast trope (o.beastTrope / attractiveness:'beast').
+  function _cgAttractivenessDirective(o, role) {
+    if (role !== 'li') return '';
+    if (o && (o.beastTrope === true || o.attractiveness === 'beast')) return '';
+    return 'ATTRACTIVENESS (love interest — HARD RULE): strikingly beautiful and amazingly proportioned — tall, fit, balanced, magnetic; NEVER skinny, paunchy, short, overweight or balding. Even if the face is hidden, turned away, or veiled, the body, posture and bearing read as mesmerizingly attractive, and anyone nearby is visibly drawn to them.';
+  }
+  window._cgAttractivenessDirective = _cgAttractivenessDirective;
+
   // The portrait prompt — a characterizing single-subject splash. A portrait's "beat" is WHO this character
   // is (what they want, how they carry themselves), so the pose must REVEAL, never a neutral turnaround.
   function _buildIntroPortraitPrompt(o, role, visualState) {
@@ -189582,6 +189592,7 @@ No text, no watermark, no UI elements, share-ready.`;
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic lighting. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
     L.push('A single-character INTRODUCTION SPLASH — ONE figure only, full-length, no other characters, no 2x2 grid, no panel borders, no lettering or captions anywhere.');
     L.push('CHARACTER: ' + name + (role ? ' — the ' + role : '') + '. ' + (desc || species || 'match the identity reference') + '. Match the identity REFERENCE image exactly: same face, hair, skin colour, build, wardrobe and weapon.');
+    var _liAttr = _cgAttractivenessDirective(o, role); if (_liAttr) L.push(_liAttr);
     if (isFF) {
       L.push('Wears the glowing white open MESH VEILWEAVE — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit or latex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer. It refracts the figure into about SIX overlapping semi-transparent AFTERIMAGES of the same body.');
       L.push('If armed, carries THE ANSWER — a polearm with a DEEP question-mark HOOK at EACH end (never a trident, spear, axe or plain sword).');
@@ -189670,6 +189681,8 @@ No text, no watermark, no UI elements, share-ready.`;
     if (/favor|favour/.test(species)) parts.push('Wears the glowing white open MESH VEILWEAVE (a visible net weave, NUDE beneath, opaque across the hips fading to sheer), refracted into ~6 overlapping semi-transparent afterimages; if armed, carries THE ANSWER (a double question-mark-hook polearm — never a trident, spear or sword).');
     if (/kwisheen/.test(species)) parts.push('SMOOTH pebbled papillae skin (never scales), coral-dreadlock hair, a coral-and-shell harness, ~6 boneless waist tentacles LONGER than the legs and coiling.');
     parts.push('A SIGNATURE mid-action pose that reveals the character. Match the identity REFERENCE if one is provided.');
+    var _ccRole = (o && o.role) || (typeof _cgIntroRole === 'function' ? _cgIntroRole(o) : '');
+    var _ccAttr = _cgAttractivenessDirective(o, _ccRole); if (_ccAttr) parts.push(_ccAttr);
     return parts.join(' ');
   }
   // Auto anti-cross-pollination guard for same-species pairs (the validated risk — two FF men, two Kwisheen).
