@@ -189535,6 +189535,120 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._cgIssueState = _cgIssueState;
 
+  // ══ PHASE B — DYNAMIC INTRO PORTRAITS (Roman 2026-08-08) ═══════════════════════════════════════
+  // One authored FULL-BODY character-intro splash per MAIN PLAYER — PC / LI / antagonist / role-flagged
+  // ally|rival|quest_giver|mentor — the FIRST time they appear in an issue. Rendered SOLO (single charged
+  // subject → cinematic framing with no clarity tax, the composition the 2x2 sheet can't carry), 2K, then
+  // PROMOTED to that character's LOCKED casting anchor so every later sheet references it (the real payoff:
+  // amortised identity). SLICE 1 = dormant building blocks + free prompt validation; nothing in the live
+  // render path calls these yet (the display + firstReady integration is slice 2). No behaviour change.
+  var _CG_PORTRAIT_ASPECT = '3:4';   // full-body splash; revisit at validation if the reader slot wants 1:1
+  var _CG_INTRO_STORY_ROLES = { ally: 1, rival: 1, quest_giver: 1, mentor: 1, antagonist: 1, guardian: 1 };
+  function _cgIsLIName(name) {
+    try { var s = window.state || {}; var li = String(s.loveInterestName || (s.storybeau && s.storybeau.name) || '').toLowerCase();
+      return !!(li && name && String(name).toLowerCase().indexOf(li) !== -1); } catch (_) { return false; }
+  }
+  function _cgIsAntagonistName(name) {
+    try { var s = window.state || {}; var ag = String(s.antagonistName || (s._antagonist && (s._antagonist.name || s._antagonist.display_name)) || '').toLowerCase();
+      return !!(ag && name && String(name).toLowerCase().indexOf(ag) !== -1); } catch (_) { return false; }
+  }
+  // THE LOCKED GATE: PC | LI | antagonist | major-role NPC. Returns the role string, or '' if not a main player.
+  function _cgIntroRole(o) {
+    if (!o) return '';
+    var tok = _castingToken(o.name || o);
+    if (o.isPC || o.role === 'protagonist' || tok === 'protagonist' || tok === 'pc') return 'pc';
+    if (o.isLI || o.role === 'li' || o.role === 'love_interest' || _cgIsLIName(o.name)) return 'li';
+    if (_cgIsAntagonistName(o.name) || o.role === 'antagonist' || o.storyRole === 'antagonist') return 'antagonist';
+    var sr = String(o.storyRole || o.role || '').toLowerCase();
+    return _CG_INTRO_STORY_ROLES[sr] ? sr : '';
+  }
+  function _cgIntroQualifies(o) { return !!_cgIntroRole(o); }
+  window._cgIntroRole = _cgIntroRole; window._cgIntroQualifies = _cgIntroQualifies;
+
+  // The portrait prompt — a characterizing single-subject splash. A portrait's "beat" is WHO this character
+  // is (what they want, how they carry themselves), so the pose must REVEAL, never a neutral turnaround.
+  function _buildIntroPortraitPrompt(o, role, visualState) {
+    var s = window.state || {};
+    var artist = String(s.gnArtist || 'ryo_toro').replace(/_/g, ' ');
+    var name = (o && o.name) || 'the character';
+    var species = String((o && o.species) || '').toLowerCase();
+    var tok = _castingToken(name);
+    var desc = '';
+    try { var ma = (typeof _MANUAL_CASTING_ANCHORS !== 'undefined') && _MANUAL_CASTING_ANCHORS[tok]; if (ma && ma.desc) desc = ma.desc; } catch (_) {}
+    if (!desc && o && (o.desc || o.description)) desc = o.desc || o.description;
+    var isFF = /favor|favour/.test(species) || (role === 'pc' && /favor|favour/.test(String(s._playerSpecies || '').toLowerCase()));
+    var L = [];
+    L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic lighting. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
+    L.push('A single-character INTRODUCTION SPLASH — ONE figure only, full-length, no other characters, no 2x2 grid, no panel borders, no lettering or captions anywhere.');
+    L.push('CHARACTER: ' + name + (role ? ' — the ' + role : '') + '. ' + (desc || species || 'match the identity reference') + '. Match the identity REFERENCE image exactly: same face, hair, skin colour, build, wardrobe and weapon.');
+    if (isFF) {
+      L.push('Wears the glowing white open MESH VEILWEAVE — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit or latex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer. It refracts the figure into about SIX overlapping semi-transparent AFTERIMAGES of the same body.');
+      L.push('If armed, carries THE ANSWER — a polearm with a DEEP question-mark HOOK at EACH end (never a trident, spear, axe or plain sword).');
+    }
+    if (/kwisheen/.test(species)) {
+      L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, a coral-and-shell harness, and about SIX boneless waist TENTACLES LONGER than the legs, actively coiling (never idle/decorative).');
+    }
+    L.push('POSE: a DYNAMIC, characterizing FULL-BODY pose that reveals who they are — mid-gesture or mid-action, intent and weight visible; NOT a static neutral turnaround, NOT arms-at-sides. A cinematic single-subject composition: a strong hero angle (low or high), the figure off-centre or on a diagonal, real depth behind them.');
+    L.push('EMOTION: the face at 7+/10 intensity fitting the character — never blank or calm (calm only if the character is deliberately controlling/hiding emotion, or resigned). A masked face still emotes through the eyes.');
+    L.push('SETTING: a simple, evocative hint of ' + ((visualState && visualState.background) || 'their world') + ' behind, kept subordinate to the figure — never competing for detail.');
+    L.push('NO text, no watermark, no UI elements, no panel borders — ONE figure, share-ready.');
+    return L.join('\n\n');
+  }
+  window._buildIntroPortraitPrompt = _buildIntroPortraitPrompt;
+
+  // Render ONE intro portrait, charge it, and PROMOTE it to the character's locked casting anchor.
+  async function _renderIntroPortrait(o, role, visualState, sceneIndex) {
+    var tok = _castingToken(o.name);
+    var prompt = _buildIntroPortraitPrompt(o, role, visualState);
+    var species = String((o && o.species) || '').toLowerCase();
+    var isFF = /favor|favour/.test(species) || (role === 'pc' && /favor|favour/.test(String((window.state || {})._playerSpecies || '').toLowerCase()));
+    var _refs = [];
+    try { if (typeof _styleReferenceB64 === 'function') { var sb = await _styleReferenceB64(); if (sb) _refs.push({ b64: sb, label: 'STYLE — match this artist\'s linework and rendering (style only, NOT a character)' }); } } catch (_) {}
+    try { var idA = (typeof _resolveIdentityAnchor === 'function') ? _resolveIdentityAnchor(tok, {}) : null;
+      if (idA && idA.url) { var b = await _canonRefToB64(idA.url); if (b) _refs.push({ b64: b, label: 'IDENTITY REFERENCE — match this character exactly (face, hair, skin, wardrobe, weapon)' }); } } catch (_) {}
+    try { if (isFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — how the transparent mesh garment and its ~6 misregistered overlapping projections look; keep the figure\'s OWN identity.' }); } } } catch (_) {}
+    try { if (isFF && typeof _MANUAL_STRUCTURAL_ANCHORS !== 'undefined' && _MANUAL_STRUCTURAL_ANCHORS.the_answer && _refs.length < 8) { var wb = await _canonRefToB64(_MANUAL_STRUCTURAL_ANCHORS.the_answer.url); if (wb) _refs.push({ b64: wb, label: 'THE ANSWER — WEAPON SHAPE REFERENCE (double question-mark hooks); match the silhouette if the figure is armed.' }); } } catch (_) {}
+    var size = _cgImageTier('portrait');
+    var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt, provider: 'gemini', model: 'gemini-3.1-flash-image-preview',
+        imageSize: size, aspect_ratio: _CG_PORTRAIT_ASPECT, imageIntent: 'scene', textFirst: true, n: 1,
+        reference_images_b64: _refs.length ? _refs : undefined }) });
+    if (!r.ok) throw new Error('portrait HTTP ' + r.status);
+    var d = await r.json(); var u = d.image || d.url;
+    if (!u) throw new Error('portrait returned no image');
+    var url = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
+    try { _chargeImage('gemini', 1, { imageSize: size }); } catch (_) {}
+    // PROMOTE → locked casting anchor + mark introduced this issue (so it fires once, and later sheets reference it).
+    try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(tok, url, { locked: true, desc: (o.desc || o.description || '') }); } catch (_) {}
+    try { _cgIssueState()._introducedCast[tok] = { portraitUrl: url, role: role, at: (window.state && window.state.turnCount) }; } catch (_) {}
+    try { console.log('[INTRO-PORTRAIT] ' + tok + ' (' + role + ') rendered @ ' + size + ' + promoted to locked anchor'); } catch (_) {}
+    return { token: tok, role: role, imageUrl: url, kind: 'portrait', fingerprint: 'intro-' + tok + '-s' + sceneIndex };
+  }
+  window._renderIntroPortrait = _renderIntroPortrait;
+
+  // Collect the NEW main players in this scene and render an intro portrait for each (once per issue).
+  async function _renderIntroPortraitsForScene(visualState, phases, sceneIndex) {
+    _cgIssueState();
+    var s = window.state || {};
+    var cands = [];
+    // PC — always a candidate (gate resolves it to 'pc'); its identity is the protagonist.
+    var pcName = s.protagonistName || s.playerName || '';
+    if (pcName) cands.push({ name: pcName, isPC: true, species: s._playerSpecies || '' });
+    // NPCs present this scene (LI / antagonist / role-flagged carry their role on the entry).
+    var others = (visualState && Array.isArray(visualState.other_characters_present)) ? visualState.other_characters_present : [];
+    others.forEach(function (o) { if (o && o.name) cands.push(o); });
+    var out = [];
+    for (var i = 0; i < cands.length; i++) {
+      var c = cands[i], tok = _castingToken(c.name);
+      if (!tok || state._introducedCast[tok]) continue;          // already introduced this issue → skip
+      var role = _cgIntroRole(c);
+      if (!role) continue;                                       // not a main player → no paid portrait
+      try { out.push(await _renderIntroPortrait(c, role, visualState, sceneIndex)); } catch (e) { try { console.warn('[INTRO-PORTRAIT] ' + tok + ' failed: ' + (e && e.message)); } catch (_) {} }
+    }
+    return out;
+  }
+  window._renderIntroPortraitsForScene = _renderIntroPortraitsForScene;
+
   // TODO(Phase C): re-fire the loupe zoom to a new region on a mid-issue location change (reuse animation + art).
   function _fireLocationTransition(regionToken) { return false; }
   // TODO(Phase D): classify the scene's major moment → 'first_kiss'|'reversal'|'betrayal'|'mcguffin_sighting'|'disaster'|'cliffhanger'|null.
