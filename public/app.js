@@ -187347,16 +187347,18 @@ No text, no watermark, no UI elements, share-ready.`;
 
   function _veilweaveDirective(wearerSpecies) {
     var range = _veilweaveProjectionRange(wearerSpecies);
-    return '\n\n══ VEILWEAVE — GARMENT ══ a long, hooded, semi-transparent GLOWING WHITE MESH VEIL: an open ' +
-      'glowing lattice/mesh weave with tiny points of light at the crossings, draping in many soft folds, the ' +
-      'nude body visible through the open gaps of the mesh. The mesh stays VISIBLY OPEN (you see through it); it ' +
-      'is NEVER opaque fabric, latex, a wetsuit, spandex, stockings, a bodysuit, or a smooth shiny sheen, and ' +
-      'NEVER a flat grid painted on skin. ' +
+    return '\n\n══ VEILWEAVE — GARMENT ══ a long, hooded, MANY-LAYERED FLOWING GOSSAMER CLOAK / robe of ' +
+      'impossibly fine translucent veil-cloth, threaded throughout with THIN IRIDESCENT FILAMENT that catches ' +
+      'warm GOLD glints at its crossings (like glowing leaf-veins), draping to the floor in many soft overlapping ' +
+      'layers; the nude body is softly visible THROUGH the sheer layers. It is a flowing LAYERED GOSSAMER garment ' +
+      '— NEVER a FISHNET, a tight net / mesh worn to the skin, an open-lattice bodysuit, a catsuit, opaque fabric, ' +
+      'latex, spandex, stockings, or a flat grid painted on skin; the threads are DELICATE FILAMENT WITHIN flowing ' +
+      'cloth, not a coarse net. ' +
       'The wearer is NUDE and BAREFOOT beneath it — no underwear, briefs, shorts, loincloth, codpiece, cup, ' +
-      'shoes, or boots. MODESTY: across the whole HIPS and UPPER-THIGHS band (and the chest on a female wearer) ' +
-      'the mesh becomes OPAQUE — denser mesh in that band, GRADIENT-fading back to sheer above the waist and ' +
-      'below mid-thigh (a smooth gradient, the mesh pattern still visible in the opaque part). This opaque band ' +
-      'matches the light on the veil: luminous WHITE where the wearer is lit, dark only in shadow. It is NOT a ' +
+      'shoes, or boots. MODESTY: over the HIPS and UPPER-THIGHS (and the chest on a female wearer) the flowing ' +
+      'gossamer LAYERS gather and OVERLAP so that band reads OPAQUE, GRADIENT-fading back to sheer above the ' +
+      'waist and below mid-thigh (a smooth gradient); the modesty comes from the LAYERED CLOTH itself, luminous ' +
+      'where the wearer is lit, dark only in shadow. It is NOT a ' +
       'separate wrap, skirt, brief, thong, or worn object, NOT only a small patch at the crotch, and NOT a ' +
       'bright hard-edged spot. Everywhere else the nude body reads through the open mesh. ' +
       '\n\n══ VEILWEAVE — REFRACTION EFFECT ══ the wearer appears as approximately ' +
@@ -187373,8 +187375,8 @@ No text, no watermark, no UI elements, share-ready.`;
       'overlapping figures will not fit the panel, draw FEWER whole figures rather than adding spare limbs to a ' +
       'single body. ' +
       // #3: every self must be identically garbed in the full garment — no self in a plain tunic or bare.
-      'EVERY one of the overlapping afterimages wears the IDENTICAL full hooded mesh veil — all copies dressed ' +
-      'exactly the same, head to foot; never one in the mesh veil and the others in plain cloth or bare skin. ' +
+      'EVERY one of the overlapping afterimages wears the IDENTICAL full hooded gossamer veil — all copies dressed ' +
+      'exactly the same, head to foot; never one in the gossamer veil and the others in plain cloth or bare skin. ' +
       // Depth/height variation: stop it collapsing into faint ghosts stacked behind one solid figure.
       'STAGGER the selves in space so it never reads as faint ghosts lined up behind one solid central figure: ' +
       'place them at CLEARLY DIFFERENT HEIGHTS (some crouched low, some risen high, some mid-leap) and INTERLEAVE ' +
@@ -187398,7 +187400,7 @@ No text, no watermark, no UI elements, share-ready.`;
       'while he is still in the garment. ' +
       // Mystery-Man mask (gated) + the enemy-surround, both stated as PAINTABLE visuals only — no "disorientation"
       // (internal state) and no "phantom sounds" (no visual manifestation). (Roman 2026-08-08.)
-      'MYSTERY MAN (ONLY if the scene withholds the wearer\'s identity): a DENSE OPAQUE band of the mesh covers ' +
+      'MYSTERY MAN (ONLY if the scene withholds the wearer\'s identity): a gathered OPAQUE fold of the gossamer covers ' +
       'the NOSE and MOUTH like a half-mask, the EYES visible above it, identical on every afterimage; otherwise ' +
       'the face is normally visible. ' +
       'AROUND ENEMIES (in combat): the afterimages SURROUND the nearby enemies — an enemy is shown swinging AT ' +
@@ -188907,7 +188909,7 @@ No text, no watermark, no UI elements, share-ready.`;
     L.push('CHARACTERS — match EACH to their REFERENCE image EXACTLY: same face, hair, skin colour, wardrobe and weapon, held identical in every panel. Three DISTINCT individuals:');
     L.push('(Reference-matching governs WHAT each character looks like — face, hair, skin, wardrobe, weapon — NOT where the camera sits or where they stand. A character stays fully recognizable while OFF-CENTER, cropped at the edge, seen from below or above, or partly behind a foreground element; being recognizable does NOT require a centered, eye-level, full-body hero shot.)');
     var pcLine = '  • ' + pcName + ' — ' + (gTxt(pcGender) ? gTxt(pcGender) + ', ' : '');
-    pcLine += /favor|favour/.test(pcSpecies) ? 'a First Favored: silver-white hair, athletic build, ALWAYS wearing the glowing mesh VEILWEAVE (his signature garment — in EVERY panel, never plain clothes, never armour; see below).' : ((pcSpecies || 'human') + '.');
+    pcLine += /favor|favour/.test(pcSpecies) ? 'a First Favored: silver-white hair, athletic build, ALWAYS wearing the flowing gossamer VEILWEAVE (his signature garment — in EVERY panel, never plain clothes, never armour; see below).' : ((pcSpecies || 'human') + '.');
     L.push(pcLine);
     others.forEach(function (o) {
       if (!o || !o.name) return;
@@ -188916,14 +188918,14 @@ No text, no watermark, no UI elements, share-ready.`;
       L.push('  • ' + o.name + ' — ' + (gTxt(o.gender) ? gTxt(o.gender) + ', ' : '') + desc + '.');
     });
     if (isVeilweave) {
-      L.push('VEILWEAVE (' + pcName + '): a glowing white open MESH veil — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit, latex, or spandex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer (luminous white where lit). It refracts ' + pcName + ' into about SIX overlapping, SEMI-TRANSPARENT AFTERIMAGES of the SAME body — see-through copies drifting out of phase and overlapping, NOT a group of separate opaque people.');
+      L.push('VEILWEAVE (' + pcName + '): a long hooded MANY-LAYERED flowing GOSSAMER cloak of impossibly fine translucent veil-cloth, threaded with thin iridescent FILAMENT that catches warm GOLD glints at the crossings (like glowing leaf-veins), draping in soft layers; NEVER a FISHNET, a tight net/mesh on the skin, a bodysuit, catsuit, latex or spandex; NUDE and BAREFOOT beneath; the layered gossamer reads OPAQUE across the hips and upper thighs and gradient-fades to sheer (luminous where lit). It refracts ' + pcName + ' into about SIX overlapping, SEMI-TRANSPARENT AFTERIMAGES of the SAME body — see-through copies drifting out of phase and overlapping, NOT a group of separate opaque people.');
       L.push('THE ANSWER (' + pcName + '’s weapon): a polearm with a DEEP question-mark HOOK at EACH end (outer edge a blade, inner curve serrated). Keep this canonical silhouette — TWO OPPOSING QUESTION-MARK HOOKS — clearly recognizable in every panel. It is a wish-reshaped weapon, so small variation is fine (hook depth, shaft length, blade width may differ slightly panel to panel); but it must ALWAYS read as THE ANSWER and NEVER become a different WEAPON CLASS — never a trident, spear, axe, or plain sword, and never a single hook + a spear/trident point. No visible magic/transformation VFX.');
     }
     if (hasKwisheen) L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, and about SIX boneless waist TENTACLES that are LONGER than any legs and actively grappling or reaching (never idle/decorative).');
     L.push('PANELS:');
     (phases || []).forEach(function (ph, i) { L.push('  ' + (i + 1) + ') ' + String((ph && (ph.beat || ph.label)) || '') + (typeof _sheetCameraForQuad === 'function' ? _sheetCameraForQuad(i, phases) : '')); });
     L.push('EMOTION: every face at 7+/10 intensity fitting the beat — snarling, fierce, straining, alarmed — never blank or calm (calm only if a character is deliberately controlling/hiding emotion or resigned). Masked faces still emote through the eyes.');
-    L.push('CONSISTENCY (HARD — every panel): each figure has EXACTLY TWO arms (never three); each Kwisheen attacks with its NAMED weapon plus its tentacles (never a bare tentacle used AS the weapon); each character keeps the SAME gender presentation in EVERY panel — nobody swaps sex mid-fight (a male stays male, a female stays female); ' + pcName + ' is ALWAYS clothed in the glowing mesh Veilweave in EVERY panel — never plain clothes, never armour, never a robe, never bare, never absent — and his face (and the nearest solid afterimage) stays clearly EXPRESSIVE and fierce (the refraction never blanks his face); the named characters stay DISTINCT individuals (never two of the same person); every panel is mid-ACTION with nobody standing idle or blank-faced.');
+    L.push('CONSISTENCY (HARD — every panel): each figure has EXACTLY TWO arms (never three); each Kwisheen attacks with its NAMED weapon plus its tentacles (never a bare tentacle used AS the weapon); each character keeps the SAME gender presentation in EVERY panel — nobody swaps sex mid-fight (a male stays male, a female stays female); ' + pcName + ' is ALWAYS clothed in the flowing gossamer Veilweave in EVERY panel — never plain clothes, never armour, never a robe, never bare, never absent — and his face (and the nearest solid afterimage) stays clearly EXPRESSIVE and fierce (the refraction never blanks his face); the named characters stay DISTINCT individuals (never two of the same person); every panel is mid-ACTION with nobody standing idle or blank-faced.');
     L.push('CONTINUITY: all four panels are the SAME location; each character stays one consistent individual across panels; injuries persist.');
     return '\n\n' + L.join('\n');
   }
@@ -189597,10 +189599,10 @@ No text, no watermark, no UI elements, share-ready.`;
     var _liAttr = _cgAttractivenessDirective(o, role); if (_liAttr) L.push(_liAttr);
     if (isFF) {
       if (opts.combat) {
-        L.push('Wears the glowing white open MESH VEILWEAVE (the COMBAT garment) — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit or latex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer. It refracts the figure into about SIX overlapping semi-transparent AFTERIMAGES of the same body.');
+        L.push('Wears the VEILWEAVE (the COMBAT garment) — a long hooded MANY-LAYERED flowing GOSSAMER cloak threaded with thin iridescent FILAMENT (warm GOLD glints at the crossings, like glowing leaf-veins), draping in soft layers; NUDE and BAREFOOT beneath; the layered gossamer reads OPAQUE across the hips and upper thighs and fades to sheer. NOT a fishnet, net or mesh catsuit. It refracts the figure into about SIX overlapping semi-transparent AFTERIMAGES of the same body.');
         L.push('Carries THE ANSWER — a polearm with a DEEP question-mark HOOK at EACH end (never a trident, spear, axe or plain sword).');
       } else {
-        L.push('Wears the gossamer TUNIC the First Favored favour for ALL non-combat occasions — a flowing, fine, translucent-edged robe/tunic; BAREFOOT (feet visible); visible silver WEAVE-SCRIPT tracing the skin. NOT the mesh Veilweave (that is COMBAT-ONLY), NOT armour, NOT afterimages.');
+        L.push('Wears the gossamer TUNIC the First Favored favour for ALL non-combat occasions — a flowing, fine, translucent-edged robe/tunic; BAREFOOT (feet visible); visible silver WEAVE-SCRIPT tracing the skin. NOT the combat Veilweave (COMBAT-ONLY), NOT armour, NOT afterimages.');
         L.push('UNARMED — empty hands. Does NOT carry The Answer (it is only drawn when a battle is imminent, or borne in the First Sacrifice rite by the WISHER, never idly).');
       }
     }
@@ -189637,7 +189639,7 @@ No text, no watermark, no UI elements, share-ready.`;
     try { if (typeof _styleReferenceB64 === 'function') { var sb = await _styleReferenceB64(); if (sb) _refs.push({ b64: sb, label: 'STYLE — match this artist\'s linework and rendering (style only, NOT a character)' }); } } catch (_) {}
     try { var idA = (typeof _resolveIdentityAnchor === 'function') ? _resolveIdentityAnchor(tok, {}) : null;
       if (idA && idA.url) { var b = await _canonRefToB64(idA.url); if (b) _refs.push({ b64: b, label: 'IDENTITY REFERENCE — match this character exactly (face, hair, skin, wardrobe, weapon)' }); } } catch (_) {}
-    try { if (isFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — how the transparent mesh garment and its ~6 misregistered overlapping projections look; keep the figure\'s OWN identity.' }); } } } catch (_) {}
+    try { if (isFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — how the layered translucent GOSSAMER garment (thin gold filament) and its ~6 misregistered overlapping projections look; keep the figure\'s OWN identity.' }); } } } catch (_) {}
     try { if (isFF && typeof _MANUAL_STRUCTURAL_ANCHORS !== 'undefined' && _MANUAL_STRUCTURAL_ANCHORS.the_answer && _refs.length < 8) { var wb = await _canonRefToB64(_MANUAL_STRUCTURAL_ANCHORS.the_answer.url); if (wb) _refs.push({ b64: wb, label: 'THE ANSWER — WEAPON SHAPE REFERENCE (double question-mark hooks); match the silhouette if the figure is armed.' }); } } catch (_) {}
     var size = _cgImageTier('portrait');
     var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -189805,7 +189807,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var nm = (o && o.name) || 'the character';
     if (role === 'li' && obscure) return 'a jewel-like identity CLOSE-UP of ' + nm + ' with NO face shown — the silver Weave-Script tracing a forearm, the scar over the left wrist, or the hands; a study, not a portrait';
     if (/favor|favour/.test(species)) return combat
-      ? 'a jewel-like CLOSE-UP from ' + nm + ' — the glowing MESH Veilweave refracting into overlapping afterimages, a hand gripping THE ANSWER (double question-mark hook), or the silver Weave-Script; a study, not a portrait'
+      ? 'a jewel-like CLOSE-UP from ' + nm + ' — the layered gossamer Veilweave (thin gold filament) refracting into overlapping afterimages, a hand gripping THE ANSWER (double question-mark hook), or the silver Weave-Script; a study, not a portrait'
       : 'a jewel-like CLOSE-UP from ' + nm + ' — the silver WEAVE-SCRIPT tracing the skin, the fine gossamer TUNIC edge, or a bare foot on the crimson grass; a study, not a portrait (NO Veilweave, NO weapon — non-combat)';
     if (/kwisheen/.test(species)) return 'a jewel-like CLOSE-UP from ' + nm + ' — coiling waist TENTACLES, the coral-and-shell harness, or pebbled papillae skin catching the light; a study, not a portrait';
     return 'a jewel-like CLOSE-UP detail from ' + nm + ' — a signature costume piece, weapon, or marking; a study, not a portrait';
@@ -189903,7 +189905,7 @@ No text, no watermark, no UI elements, share-ready.`;
       try { var tk = _castingToken(mains[i].o.name); var a = (typeof _resolveIdentityAnchor === 'function') ? _resolveIdentityAnchor(tk, {}) : null;
         if (a && a.url && _refs.length < 8) { var b = await _canonRefToB64(a.url); if (b) _refs.push({ b64: b, label: 'REFERENCE for ' + mains[i].o.name + ' — match exactly' }); } } catch (_) {}
     }
-    try { if (anyFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE SWATCH (style only) — mesh garment + ~6 projections; keep each figure\'s own identity' }); } } } catch (_) {}
+    try { if (anyFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE SWATCH (style only) — layered gossamer garment + ~6 projections; keep each figure\'s own identity' }); } } } catch (_) {}
     try { if (anyFF && typeof _MANUAL_STRUCTURAL_ANCHORS !== 'undefined' && _MANUAL_STRUCTURAL_ANCHORS.the_answer && _refs.length < 8) { var wb = await _canonRefToB64(_MANUAL_STRUCTURAL_ANCHORS.the_answer.url); if (wb) _refs.push({ b64: wb, label: 'THE ANSWER — weapon shape (double question-mark hooks)' }); } } catch (_) {}
     console.log('[CAST-PAGE] situated 2x2 for ' + mains.length + ' mains (' + _refs.length + ' refs)');
     var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -190015,7 +190017,7 @@ No text, no watermark, no UI elements, share-ready.`;
     if (!desc && o && (o.desc || o.description)) desc = o.desc || o.description;
     var parts = [name + (role ? ' (the ' + role + ')' : '') + ': ' + (desc || species || 'match the reference') + '.'];
     if (/favor|favour/.test(species)) parts.push(combat
-      ? 'Wears the glowing white open MESH VEILWEAVE (COMBAT garment; a visible net weave, NUDE beneath, opaque across the hips fading to sheer), refracted into ~6 overlapping afterimages; carries THE ANSWER (a double question-mark-hook polearm — never a trident, spear or sword).'
+      ? 'Wears the VEILWEAVE (COMBAT garment; a many-layered flowing GOSSAMER cloak threaded with thin GOLD filament, NUDE beneath, layers reading opaque across the hips fading to sheer — NOT a fishnet or net), refracted into ~6 overlapping afterimages; carries THE ANSWER (a double question-mark-hook polearm — never a trident, spear or sword).'
       : 'Wears the gossamer TUNIC First Favored favour for all NON-combat occasions (flowing, translucent-edged; BAREFOOT, feet visible; silver Weave-Script on the skin) — NOT the combat Veilweave, NOT afterimages; UNARMED (The Answer is only for an imminent battle or borne by the wisher in the First Sacrifice rite).');
     if (/kwisheen/.test(species)) parts.push('SMOOTH pebbled papillae skin (never scales), coral-dreadlock hair, a coral-and-shell harness, ~6 boneless waist tentacles LONGER than the legs and coiling.');
     parts.push('A SIGNATURE mid-action pose that reveals the character. Match the identity REFERENCE if one is provided.');
@@ -190059,7 +190061,7 @@ No text, no watermark, no UI elements, share-ready.`;
       try { var tok = _castingToken(cast[i].name); var a = (typeof _resolveIdentityAnchor === 'function') ? _resolveIdentityAnchor(tok, {}) : null;
         if (a && a.url && _refs.length < 8) { var b = await _canonRefToB64(a.url); if (b) _refs.push({ b64: b, label: 'REFERENCE for ' + cast[i].name + ' (' + (_CG_QUAD_LABELS[i] || ('quadrant ' + (i + 1))) + ') — match this character exactly' }); } } catch (_) {}
     }
-    try { if (anyFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — the transparent mesh garment + its ~6 misregistered projections; keep each figure\'s OWN identity.' }); } } } catch (_) {}
+    try { if (anyFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — the layered gossamer garment (thin gold filament) + its ~6 misregistered projections; keep each figure\'s OWN identity.' }); } } } catch (_) {}
     try { if (anyFF && typeof _MANUAL_STRUCTURAL_ANCHORS !== 'undefined' && _MANUAL_STRUCTURAL_ANCHORS.the_answer && _refs.length < 8) { var wb = await _canonRefToB64(_MANUAL_STRUCTURAL_ANCHORS.the_answer.url); if (wb) _refs.push({ b64: wb, label: 'THE ANSWER — WEAPON SHAPE REFERENCE (double question-mark hooks) for the armed First Favored.' }); } } catch (_) {}
     console.log('[CAST-SPLASH] rendering 4K 2x2 for ' + cast.length + ' main players (' + _refs.length + ' refs)');
     var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
