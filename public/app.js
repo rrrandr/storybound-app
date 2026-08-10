@@ -187411,6 +187411,24 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._veilweaveDirective = _veilweaveDirective;
 
+  // Per-species BLOOD / ICHOR (Roman 2026-08-10) — non-red fluids read as FANTASY (filter-friendly) and
+  // reinforce species otherness. Injected into combat prompts ONLY where a wound/blood is actually shown.
+  var _FATELANDS_ICHOR = {
+    first_favored: 'QUICKSILVER — bright liquid MIRROR-SILVER metal that beads and runs like mercury (NEVER red)',
+    kwisheen: 'BLACK INK — inky black fluid that sprays and clouds like a cephalopod\'s ink (NEVER red)',
+    wilder: 'a dark GREEN-FLECKED RED — red shot through with flecks and veins of green',
+    human: 'ordinary red blood'
+  };
+  function _cgSpeciesIchor(species) {
+    var s = String(species || '').toLowerCase();
+    if (/favor|favour/.test(s)) return _FATELANDS_ICHOR.first_favored;
+    if (/kwisheen/.test(s)) return _FATELANDS_ICHOR.kwisheen;
+    if (/wilder/.test(s)) return _FATELANDS_ICHOR.wilder;
+    if (/human/.test(s)) return _FATELANDS_ICHOR.human;
+    return '';
+  }
+  window._cgSpeciesIchor = _cgSpeciesIchor;
+
   function _veilweaveRef() {
     return (_CANONICAL_VISUAL_ASSETS && _CANONICAL_VISUAL_ASSETS.veilweave && _CANONICAL_VISUAL_ASSETS.veilweave.asset) || null;
   }
@@ -188922,6 +188940,12 @@ No text, no watermark, no UI elements, share-ready.`;
       L.push('THE ANSWER (' + pcName + '’s weapon): a polearm with a DEEP question-mark HOOK at EACH end (outer edge a blade, inner curve serrated). Keep this canonical silhouette — TWO OPPOSING QUESTION-MARK HOOKS — clearly recognizable in every panel. It is a wish-reshaped weapon, so small variation is fine (hook depth, shaft length, blade width may differ slightly panel to panel); but it must ALWAYS read as THE ANSWER and NEVER become a different WEAPON CLASS — never a trident, spear, axe, or plain sword, and never a single hook + a spear/trident point. No visible magic/transformation VFX.');
     }
     if (hasKwisheen) L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, and about SIX boneless waist TENTACLES that are LONGER than any legs and actively grappling or reaching (never idle/decorative).');
+    try {
+      var _ichSp = {}; if (pcSpecies) _ichSp[pcSpecies] = 1;
+      others.forEach(function (o) { if (o && o.species) _ichSp[String(o.species).toLowerCase()] = 1; });
+      var _ichL = Object.keys(_ichSp).map(function (sp) { var i = (typeof _cgSpeciesIchor === 'function') ? _cgSpeciesIchor(sp) : ''; return i ? (sp + ' bleed ' + i) : ''; }).filter(Boolean);
+      if (_ichL.length) L.push('BLOOD / ICHOR (ONLY if a wound or blood is actually shown — do NOT add gore unprompted): ' + _ichL.join('; ') + '. A First Favored NEVER bleeds red; a Kwisheen NEVER bleeds red.');
+    } catch (_) {}
     L.push('PANELS:');
     (phases || []).forEach(function (ph, i) { L.push('  ' + (i + 1) + ') ' + String((ph && (ph.beat || ph.label)) || '') + (typeof _sheetCameraForQuad === 'function' ? _sheetCameraForQuad(i, phases) : '')); });
     L.push('EMOTION: every face at 7+/10 intensity fitting the beat — snarling, fierce, straining, alarmed — never blank or calm (calm only if a character is deliberately controlling/hiding emotion or resigned). Masked faces still emote through the eyes.');
