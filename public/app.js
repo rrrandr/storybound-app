@@ -189727,14 +189727,12 @@ No text, no watermark, no UI elements, share-ready.`;
     var tok = _castingToken(o.name);
     var seedDesc = _cgSeedVisualCanon(tok);
     var beat = _cgIntroBeatFor(o, role, visualState, phases);
-    var obscure = (role === 'li') && !_cgLIFaceRevealed(o, role);
-    var card;
-    if (obscure) {
-      card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat, obscureFace: true, promote: false, noMark: true });
-      try { await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, cleanAnchor: true }); } catch (_) {}
-    } else {
-      card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat });
-    }
+    var isLI = (role === 'li');
+    var obscure = isLI && !_cgLIFaceRevealed(o, role);
+    // LIs defer their face-anchor to the reveal system (liFaceMasterUrl / liMysteryLock) — NEVER promote a
+    // competing casting anchor. A mystery LI renders FACE-OBSCURED and establishes NO face (the player shapes
+    // it at reveal); his cross-scene consistency comes from seed canon fed each render, not a stored face.
+    var card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat, obscureFace: obscure, promote: !isLI });
     card.kind = 'introCard'; card.situated = true; card.obscured = obscure;
     return card;
   }
@@ -189847,12 +189845,12 @@ No text, no watermark, no UI elements, share-ready.`;
     for (var qi = 0; qi < quadrants.length; qi++) {
       var qd = quadrants[qi]; if (qd.type !== 'char') continue;    // ONLY full-body character quads become anchors
       var m = qd.main, tok = _castingToken(m.o.name), crop = (quads && quads[qi]) || sheetUrl;
-      if (!m.obscure) { try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(tok, crop, { locked: true, desc: (m.seedDesc || '') }); } catch (_) {} }
+      // LIs defer their face-anchor to the reveal system (liFaceMasterUrl / liMysteryLock) — never promote a
+      // competing casting anchor (a mystery LI establishes NO face; the player shapes it at reveal). Others promote.
+      if (m.role !== 'li') { try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(tok, crop, { locked: true, desc: (m.seedDesc || '') }); } catch (_) {} }
       state._castCards[tok] = { card: crop, role: m.role, surfaced: true, obscured: !!m.obscure, at: (window.state && window.state.turnCount) };
       state._introducedCast[tok] = state._introducedCast[tok] || { portraitUrl: crop, role: m.role, at: (window.state && window.state.turnCount) };
     }
-    // obscured LI(s): the face-hidden crop is a poor anchor → render one clean supplementary identity anchor.
-    for (var mj = 0; mj < mains.length; mj++) { if (mains[mj].obscure) { try { await _renderIntroPortrait(mains[mj].o, mains[mj].role, visualState, sceneIndex, { seedDesc: mains[mj].seedDesc, cleanAnchor: true }); } catch (_) {} } }
     try { window._lastCastSplash = { url: sheetUrl, at: (window.state && window.state.turnCount), situated: true, count: mains.length }; } catch (_) {}
     console.log('[CAST-PAGE] done → ' + quadrants.filter(function (q) { return q.type === 'char'; }).length + ' anchors cropped, fills as bonus art');
     return { imageUrl: sheetUrl, kind: 'castPage', count: mains.length };
