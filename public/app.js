@@ -189839,13 +189839,23 @@ No text, no watermark, no UI elements, share-ready.`;
     return 'the ISSUE EMBLEM — a single iconic story OBJECT drawn from this scene\'s setting and props (a ritual vessel, an oath stone, a token) on a plain vignette, no characters';
   }
   window._cgIssueEmblem = _cgIssueEmblem; window._cgCultureKey = _cgCultureKey;
-  // Quadrant layout for N mains (2-4): characters first, then detail/emblem fills.
-  function _cgLayoutForCast(mains) {
+  // Quadrant layout for N mains (2-4). Each full-body char gets its OWN quadrant (clean segmentation → feet
+  // visible). For 2 mains, quadrants 3-4 are STORY CLOSE-UPS (their own image beats, surfaced later in the
+  // scene), NOT tiny insets — content is planner/scene-specified via `closeups[]` (e.g. "the youth in
+  // distress", "Elara's Weave-Script flushing with fear"), else a sensible canon default. (Roman 2026-08-09.)
+  function _cgLayoutForCast(mains, closeups) {
+    closeups = closeups || [];
     var n = mains.length, q = [];
     for (var i = 0; i < n && i < 4; i++) q.push({ type: 'char', main: mains[i] });
-    if (n === 2) { q.push({ type: 'detail', main: mains[0] }); q.push({ type: 'detail', main: mains[1] }); }
+    if (n === 2) { q.push({ type: 'closeup', main: mains[0], spec: closeups[0] }); q.push({ type: 'closeup', main: mains[1], spec: closeups[1] }); }
     else if (n === 3) { q.push({ type: 'emblem' }); }
     return q.slice(0, 4);
+  }
+  // A STORY CLOSE-UP quadrant — a full image beat (planner-specified subject preferred; else a canon default).
+  function _cgStoryCloseup(q, combat) {
+    if (q && q.spec) return String(q.spec);
+    var m = (q && q.main) || {};
+    return _cgDetailPanelFor(m.o, m.role, m.obscure, combat);
   }
   window._cgLayoutForCast = _cgLayoutForCast; window._cgDetailPanelFor = _cgDetailPanelFor; window._cgIssueEmblem = _cgIssueEmblem;
   function _buildSituatedCastPagePrompt(quadrants, visualState, combat) {
@@ -189854,8 +189864,8 @@ No text, no watermark, no UI elements, share-ready.`;
     var chars = quadrants.filter(function (q) { return q.type === 'char'; }).map(function (q) { return q.main.o; });
     var L = [];
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic lighting. Match the STYLE reference image. NOT a photo, NOT 3D.');
-    L.push('COMPOSITION: ONE SQUARE image = a premium comic CAST / FEATURE PAGE laid out as a 2x2 grid with thin gutters. NO lettering, nameplates, captions or text anywhere. The FULL-BODY CHARACTER quadrants are cover-quality single-figure introductions; the DETAIL / EMBLEM quadrants are cinematic INSET studies (a close-up or a single object), clearly smaller in scope than a full figure.');
-    L.push('CONTAINMENT (HARD): each FULL-BODY figure must be shown ENTIRELY WITHIN ITS OWN quadrant — head to BARE FEET, the FEET fully visible and NOT cut off or covered. Figures must NOT bleed across a gutter into another quadrant. The DETAIL / EMBLEM insets sit ONLY in their own quadrants and must NEVER overlap, cover, or crop any figure\'s feet or body.');
+    L.push('COMPOSITION: ONE SQUARE image = a premium comic 2x2 grid with thin gutters — FOUR SEPARATE image beats, one per quadrant. NO lettering, nameplates, captions or text anywhere. FULL-BODY CHARACTER quadrants are cover-quality single-figure introductions; STORY CLOSE-UP quadrants are full cinematic close-ups of their own dramatic moment; an EMBLEM quadrant is a single object. Each quadrant is its OWN complete image, NOT overlapping the others.');
+    L.push('CONTAINMENT (HARD): each FULL-BODY figure must be shown ENTIRELY WITHIN ITS OWN quadrant — head to BARE FEET, the FEET fully visible and NOT cut off or covered. Figures must NOT bleed across a gutter into another quadrant. Every quadrant\'s image stays inside its own quadrant and must NEVER overlap, cover, or crop a neighbour.');
     L.push('FOUR DISTINCT INDIVIDUALS — do NOT blend faces, hair, skin, colours or weapons across quadrants; each keeps ONLY their own palette and weapon.' + _cgSameSpeciesGuard(chars));
     quadrants.forEach(function (q, i) {
       var label = _CG_QUAD_LABELS[i] || ('QUADRANT ' + (i + 1));
@@ -189864,6 +189874,8 @@ No text, no watermark, no UI elements, share-ready.`;
         var beatTxt = (m.beat && (m.beat.beat || m.beat.emotion)) ? ' SITUATED in this moment: ' + (m.beat.beat || '') + (m.beat.emotion ? ' — face reads ' + m.beat.emotion : '') + '.' : '';
         var obsc = m.obscure ? (' FACE HIDDEN (identity not yet revealed): keep his face unreadable — here, ' + (m.concealText || 'shot over-the-shoulder, the face turned away') + '. The framing must feel like the shot the cinematographer NATURALLY wanted for this moment, NEVER one chosen to hide the face. Identity via body, silhouette and bearing, magnetic even hidden. Any shadow/backlight/flare must be motivated by an in-scene source and match this panel\'s lighting — no unmotivated dark patch.') : '';
         L.push(label + ' [FULL-BODY CHARACTER] — ' + _cgCastCardBlock(m.o, m.seedDesc, combat) + beatTxt + obsc);
+      } else if (q.type === 'closeup') {
+        L.push(label + ' [STORY CLOSE-UP — its own image beat] — ' + _cgStoryCloseup(q, combat) + '. A full, cinematic close-up of this dramatic moment (NOT a tiny inset), filling and contained within its quadrant.');
       } else if (q.type === 'detail') {
         L.push(label + ' [DETAIL INSET] — ' + _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure, combat) + '. Beautiful, iconic; NOT a full figure, NOT a face portrait.');
       } else {
@@ -189882,7 +189894,7 @@ No text, no watermark, no UI elements, share-ready.`;
     if (!mains.length) return null;
     mains.forEach(function (m) { if (m.obscure) m.concealText = _cgConcealForLI(m.o, m.seedDesc); });   // OTS-dominant, varied
     var combat = _cgIsCombatScene(visualState, phases);   // Veilweave + The Answer are combat-only
-    var quadrants = _cgLayoutForCast(mains);
+    var quadrants = _cgLayoutForCast(mains, (visualState && visualState.introCloseups) || []);   // planner/scene story close-ups
     var prompt = _buildSituatedCastPagePrompt(quadrants, visualState, combat);
     var anyFF = mains.some(function (m) { return /favor|favour/.test(String((m.o && m.o.species) || '').toLowerCase()); });
     var _refs = [];
