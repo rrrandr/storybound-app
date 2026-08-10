@@ -189612,7 +189612,7 @@ No text, no watermark, no UI elements, share-ready.`;
       L.push('POSE: a DYNAMIC, characterizing FULL-BODY pose that reveals who they are — mid-gesture or mid-action, intent and weight visible; NOT a static neutral turnaround, NOT arms-at-sides. A cinematic single-subject composition: a strong hero angle (low or high), the figure off-centre or on a diagonal, real depth behind them.');
     }
     if (opts.obscureFace) {
-      L.push('FACE HIDDEN (identity not yet revealed to the reader) — conceal it THIS way: ' + (opts.concealText || 'shot over-the-shoulder, the face turned away') + '. The FACE is NEVER clearly shown; identity reads through the BODY, silhouette, hair and bearing. The attractiveness rule still holds: the hidden figure is unmistakably magnetic. LIGHTING CONSISTENCY: any shadow, backlight or flare hiding the face MUST be motivated by a light source or occluder that is part of THIS scene, and his lighting MUST match the rest of the frame — never an unmotivated dark patch on the face in an otherwise evenly-lit scene.');
+      L.push('FACE HIDDEN (identity not yet revealed to the reader): keep his face unreadable — here, ' + (opts.concealText || 'shot over-the-shoulder, the face turned away') + '. GOLDEN RULE: the shot must feel like the framing the cinematographer NATURALLY wanted for this dramatic moment (a reunion → over the protagonist\'s shoulder; a first sighting across a distance → a backlit silhouette; a council → profile; a battle → a helm\'s shadow) — NEVER a shot that looks CHOSEN to hide the face. Identity reads through the BODY, silhouette, hair and bearing; the attractiveness rule still holds (magnetic even hidden). LIGHTING CONSISTENCY: any shadow/backlight/flare must be MOTIVATED by an in-scene source or occluder and MATCH the rest of the frame — never an unmotivated dark patch in an otherwise evenly-lit scene.');
     }
     L.push('EMOTION: at 7+/10 intensity fitting the character — never blank or calm (calm only if deliberately controlling/hiding emotion, or resigned); if the face is hidden, the emotion reads through posture and body. A masked face still emotes through the eyes.');
     L.push('SETTING: a simple, evocative hint of ' + ((visualState && visualState.background) || 'their world') + ' behind, kept subordinate to the figure — never competing for detail.');
@@ -189714,11 +189714,13 @@ No text, no watermark, no UI elements, share-ready.`;
   // repeated lens-flare/backlight never becomes a tell. Deterministic rotation per LI; reset per issue.
   // Geometric techniques (occlusion/crop) FIRST — they carry NO lighting-mismatch risk; the lighting-based
   // ones come later and are each MOTIVATED by an in-scene source/occluder so the frame stays consistent.
+  // Ranked (Roman): foreground occluder → architectural shadow → backlight silhouette → brow crop → lens flare
+  // LAST (emergency spice only — even motivated, a flare reads as "hiding something").
   var _LI_CONCEAL_ATMOSPHERIC = [
     'a FOREGROUND element (a passing figure, a raised arm, a banner, drifting veil-cloth) crossing and CROPPING his face',
-    'the frame CROPPING at the brow so the eyes sit just above the top edge',
     'he stands where an in-scene OCCLUDER (an overhang, a pillar, a doorway, foliage) throws his face into SHADOW — the shadow is cast by that object and his lighting MATCHES the rest of the scene',
     'strong BACKLIGHTING from a light source that is PART OF the scene (the dawn, a doorway, a fire) making him a near-SILHOUETTE against it — the whole frame lit by that same source',
+    'the frame CROPPING at the brow so the eyes sit just above the top edge',
     'a bright LENS-FLARE / bloom from an in-scene light source crossing exactly where the eyes would be'
   ];
   var _LI_CONCEAL_WARDROBE = [
@@ -189734,13 +189736,13 @@ No text, no watermark, no UI elements, share-ready.`;
     var n = state._liConcealHistory[tok] || 0;
     state._liConcealHistory[tok] = n + 1;
     if (n === 0) return 'shot from BEHIND — his back and shoulders to us, the face turned fully away; render him in near-BLACK SILHOUETTE against a BRIGHT background (sky, a doorway, a glow) so the silhouette is MOTIVATED by real backlight (the classic mystery intro)';
-    var OTS = 'shot OVER-THE-SHOULDER or in strict PROFILE, the face turned away from camera';
-    if (n % 6 !== 5) return OTS;                          // ~83% OTS after the intro
+    var OTS = 'shot OVER-THE-SHOULDER, from BEHIND, or in strict PROFILE, the face turned away from camera';
+    if (n % 12 !== 11) return OTS;                        // ~92% OTS/profile/from-behind — invisible cinematography
     var hay = String((seedDesc || '') + ' ' + ((o && (o.wardrobe || o.desc || o.description)) || '')).toLowerCase();
     var fit = [];
     _LI_CONCEAL_WARDROBE.forEach(function (w) { if (w.re.test(hay)) fit.push(w.t); });
     var pool = fit.concat(_LI_CONCEAL_ATMOSPHERIC);
-    return pool[Math.floor(n / 6) % pool.length];         // rotating variety on the ~1-in-6 turns
+    return pool[Math.floor(n / 12) % pool.length];        // rare rotating variety on the ~1-in-12 turns
   }
   window._cgConcealForLI = _cgConcealForLI;
 
@@ -189840,7 +189842,7 @@ No text, no watermark, no UI elements, share-ready.`;
       if (q.type === 'char') {
         var m = q.main;
         var beatTxt = (m.beat && (m.beat.beat || m.beat.emotion)) ? ' SITUATED in this moment: ' + (m.beat.beat || '') + (m.beat.emotion ? ' — face reads ' + m.beat.emotion : '') + '.' : '';
-        var obsc = m.obscure ? (' FACE HIDDEN (identity not yet revealed) — conceal it THIS way: ' + (m.concealText || 'shot over-the-shoulder, the face turned away') + '; identity via body, silhouette and bearing, still unmistakably magnetic. Any shadow/backlight/flare hiding the face MUST be motivated by an in-scene source and match this panel\'s lighting — no unmotivated dark patch.') : '';
+        var obsc = m.obscure ? (' FACE HIDDEN (identity not yet revealed): keep his face unreadable — here, ' + (m.concealText || 'shot over-the-shoulder, the face turned away') + '. The framing must feel like the shot the cinematographer NATURALLY wanted for this moment, NEVER one chosen to hide the face. Identity via body, silhouette and bearing, magnetic even hidden. Any shadow/backlight/flare must be motivated by an in-scene source and match this panel\'s lighting — no unmotivated dark patch.') : '';
         L.push(label + ' [FULL-BODY CHARACTER] — ' + _cgCastCardBlock(m.o, m.seedDesc) + beatTxt + obsc);
       } else if (q.type === 'detail') {
         L.push(label + ' [DETAIL INSET] — ' + _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure) + '. Beautiful, iconic; NOT a full figure, NOT a face portrait.');
