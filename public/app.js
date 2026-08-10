@@ -189996,20 +189996,24 @@ No text, no watermark, no UI elements, share-ready.`;
       try {
         cards = (cards || []).filter(function (c) { return c && c.imageUrl; });
         if (!cards.length || typeof document === 'undefined') return resolve();
-        var idx = 0;
+        var idx = 0, settled = false;
         var ov = document.createElement('div');
         ov.className = 'cg-intro-card-splash';
-        ov.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:rgba(8,6,10,0.96);display:flex;align-items:center;justify-content:center;cursor:pointer;');
+        ov.setAttribute('style', 'position:fixed;inset:0;z-index:99999;background:rgba(8,6,10,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .35s ease;');
         var img = document.createElement('img');
-        img.setAttribute('style', 'max-width:92vw;max-height:92vh;object-fit:contain;border-radius:10px;box-shadow:0 12px 60px rgba(0,0,0,0.6);');
-        ov.appendChild(img);
-        function done() { try { ov.remove(); } catch (_) {} try { document.removeEventListener('keydown', onKey); } catch (_) {} resolve(); }
-        function next() { idx++; if (idx >= cards.length) done(); else img.src = cards[idx].imageUrl; }
+        img.setAttribute('style', 'max-width:92vw;max-height:88vh;object-fit:contain;border-radius:10px;box-shadow:0 12px 60px rgba(0,0,0,0.6);');
+        var hint = document.createElement('div');
+        hint.setAttribute('style', 'margin-top:14px;font:600 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,0.55);user-select:none;');
+        ov.appendChild(img); ov.appendChild(hint);
+        function setHint() { hint.textContent = (cards.length > 1 ? ((idx + 1) + ' / ' + cards.length + '  ·  ') : '') + 'tap to continue'; }
+        function done() { if (settled) return; settled = true; ov.style.opacity = '0'; setTimeout(function () { try { ov.remove(); } catch (_) {} }, 350); try { document.removeEventListener('keydown', onKey); } catch (_) {} resolve(); }
+        function next() { idx++; if (idx >= cards.length) done(); else { img.src = cards[idx].imageUrl; setHint(); } }
         function onKey(e) { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') { e.preventDefault(); next(); } }
         ov.addEventListener('click', next);
         document.addEventListener('keydown', onKey);
         document.body.appendChild(ov);
-        img.src = cards[0].imageUrl;
+        img.src = cards[0].imageUrl; setHint();
+        requestAnimationFrame(function () { ov.style.opacity = '1'; });
       } catch (_) { resolve(); }
     });
   }
@@ -190019,11 +190023,16 @@ No text, no watermark, no UI elements, share-ready.`;
   async function _maybeShowIntroCards(plan, sceneIndex) {
     if (window._cgSituatedIntros !== true) return;
     try {
-      var cards = await _renderIntroCardsForScene(plan && plan.visualState, plan && plan.phases, sceneIndex);
+      var cardsP = _renderIntroCardsForScene(plan && plan.visualState, plan && plan.phases, sceneIndex);
+      // FAILSAFE: never strand the reader if an intro render hangs — cap the wait, then let the scene mount
+      // (the scene's own sheet is already rendering in parallel via phaseImagesPromise).
+      var cards = await Promise.race([cardsP, new Promise(function (r) { setTimeout(function () { r(null); }, 30000); })]);
       if (cards && cards.length) await _showIntroCardSplash(cards);
     } catch (e) { try { console.warn('[INTRO-CARD] show failed: ' + (e && e.message)); } catch (_) {} }
   }
   window._maybeShowIntroCards = _maybeShowIntroCards;
+  // LIVE by default (Roman 2026-08-10 — "wire up the live display"). Set window._cgSituatedIntros=false to disable.
+  if (typeof window !== 'undefined' && window._cgSituatedIntros === undefined) window._cgSituatedIntros = true;
 
   // ── CAST SPLASH (validated 2026-08-08) — the PRIMARY intro-portrait path ──────────────────────────
   // The intro image's real product is the ANCHOR, not the pixels. So render ONE 4K 2x2 CAST SPLASH of the
