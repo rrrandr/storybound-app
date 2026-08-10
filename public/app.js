@@ -190121,12 +190121,97 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._renderCastSplash = _renderCastSplash;
 
-  // TODO(Phase C): re-fire the loupe zoom to a new region on a mid-issue location change (reuse animation + art).
-  function _fireLocationTransition(regionToken) { return false; }
-  // TODO(Phase D): classify the scene's major moment → 'first_kiss'|'reversal'|'betrayal'|'mcguffin_sighting'|'disaster'|'cliffhanger'|null.
-  function _sceneMajorMoment(sceneCtx) { return null; }
+  // ══ PHASE C (Roman 2026-08-10) — LOCATION TRANSITION ═══════════════════════════════════════════════
+  // Re-fire the Fatelands LOUPE zoom to a new region on a mid-issue region change (reuse the map animation +
+  // region art — zero new gen). Fatelands-only; gated window._cgLocationTransition (default ON via !==false);
+  // graceful. First scene of the issue just records the region; a subsequent DIFFERENT region re-fires.
+  function _fireLocationTransition() {
+    try { if (typeof showFatelandsFrontispiece !== 'function') return false; showFatelandsFrontispiece(); return true; } catch (_) { return false; }
+  }
   window._fireLocationTransition = _fireLocationTransition;
+  function _maybeFireLocationTransition(plan) {
+    try {
+      if (window._cgLocationTransition === false) return;
+      var s = window.state || {};
+      var isFantasy = (s.picks && s.picks.world === 'Fantasy') || s.world === 'Fantasy';
+      if (!isFantasy) return;
+      var region = String(s.fantasyRegion || '').toLowerCase();
+      if (!region) return;
+      _cgIssueState();
+      var prev = s._lastRenderedRegion;
+      s._lastRenderedRegion = region;
+      if (!prev || region === prev) return;          // first scene → record only; same region → no transition
+      try { console.log('[LOCATION-TRANSITION] region ' + prev + ' → ' + region + ' — re-firing loupe'); } catch (_) {}
+      _fireLocationTransition();                      // the map re-zooms to the new region, then auto-dismisses
+    } catch (_) {}
+  }
+  window._maybeFireLocationTransition = _maybeFireLocationTransition;
+
+  // ══ PHASE D (Roman 2026-08-10) — MAJOR-MOMENT SPLASH ═══════════════════════════════════════════════
+  // A 2K full-frame cinematic hero of a charged beat (cliffhanger / reversal-betrayal / first kiss / disaster),
+  // FIRE-ONCE per moment-type per issue (state._firedMomentSplashes), shown at end of scene (the decision gate).
+  // Gated window._cgMomentSplash (default ON); graceful.
+  function _sceneMajorMoment(plan) {
+    try {
+      var s = window.state || {};
+      var sig = s._sceneSignals || {};
+      if (s._isCliffhangerScene) return 'cliffhanger';
+      if (sig.majorConsequence) return 'reversal';                                   // betrayal / major loss / shift
+      if (sig.intimacy && s.milestones && s.milestones.first_kiss === false) return 'first_kiss';
+      return null;
+    } catch (_) { return null; }
+  }
   window._sceneMajorMoment = _sceneMajorMoment;
+  var _CG_MOMENT_DIRECTIVE = {
+    cliffhanger: 'the scene\'s CLIFFHANGER — the single held image the beat ends on, frozen at maximum unresolved tension',
+    reversal: 'the REVERSAL / betrayal — the exact instant the turn lands, the faces and bodies registering that everything just changed',
+    betrayal: 'the BETRAYAL — the wound of it on both faces, the moment of the turn',
+    first_kiss: 'the FIRST KISS — the charged, finally-meeting moment of the two leads, a single intimate subject-pair',
+    disaster: 'the DISASTER — the catastrophe at its peak, the characters caught in it'
+  };
+  async function _renderMomentSplash(momentType, plan, sceneIndex) {
+    var s = window.state || {}, vs = (plan && plan.visualState) || {};
+    var artist = String(s.gnArtist || 'ryo_toro').replace(/_/g, ' ');
+    var dir = _CG_MOMENT_DIRECTIVE[momentType] || 'the scene\'s single most charged dramatic beat';
+    var prompt = [
+      'STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic cinematic lighting. Match the STYLE reference. NOT a photo, NOT 3D.',
+      'A single FULL-FRAME cinematic SPLASH — ONE image, no 2x2 grid, no panels, no lettering or captions — of ' + dir + '.',
+      'SETTING: ' + (vs.background || 'the scene') + '.',
+      'A viewer-forward, dramatic composition (bold angle, strong depth, the emotional PEAK of the moment); faces at 7+/10 intensity. NO text, no watermark — share-ready.'
+    ].join('\n\n');
+    var _refs = [];
+    try { if (typeof _styleReferenceB64 === 'function') { var sb = await _styleReferenceB64(); if (sb) _refs.push({ b64: sb, label: 'STYLE — match this artist (style only, NOT a character)' }); } } catch (_) {}
+    try {
+      var toks = []; if (s.protagonistName) toks.push(_castingToken(s.protagonistName));
+      ((vs.other_characters_present) || []).forEach(function (o) { if (o && o.name) toks.push(_castingToken(o.name)); });
+      for (var i = 0; i < toks.length && _refs.length < 6; i++) { var a = (typeof _resolveIdentityAnchor === 'function') ? _resolveIdentityAnchor(toks[i], {}) : null; if (a && a.url) { var b = await _canonRefToB64(a.url); if (b) _refs.push({ b64: b, label: 'IDENTITY REFERENCE — match this character exactly' }); } }
+    } catch (_) {}
+    var size = _cgImageTier('splash');
+    var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt, provider: 'gemini', model: 'gemini-3.1-flash-image-preview', imageSize: size, aspect_ratio: '1:1', imageIntent: 'scene', textFirst: true, n: 1, reference_images_b64: _refs.length ? _refs : undefined }) });
+    if (!r.ok) throw new Error('moment-splash HTTP ' + r.status);
+    var d = await r.json(); var u = d.image || d.url; if (!u) throw new Error('moment-splash returned no image');
+    var url = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
+    try { _chargeImage('gemini', 1, { imageSize: size }); } catch (_) {}
+    try { window._lastMomentSplash = { type: momentType, url: url, at: (s.turnCount) }; } catch (_) {}
+    console.log('[MOMENT-SPLASH] ' + momentType + ' rendered @ ' + size);
+    return { imageUrl: url, kind: 'momentSplash', moment: momentType };
+  }
+  window._renderMomentSplash = _renderMomentSplash;
+  async function _maybeShowMomentSplash(plan, sceneIndex) {
+    if (window._cgMomentSplash === false) return;
+    try {
+      var moment = _sceneMajorMoment(plan);
+      if (!moment) return;
+      _cgIssueState();
+      if (state._firedMomentSplashes[moment]) return;   // fire-once per moment-type per issue
+      state._firedMomentSplashes[moment] = true;
+      var cardP = _renderMomentSplash(moment, plan, sceneIndex);
+      var card = await Promise.race([cardP, new Promise(function (r) { setTimeout(function () { r(null); }, 30000); })]);
+      if (card && card.imageUrl && typeof _showIntroCardSplash === 'function') await _showIntroCardSplash([card]);
+    } catch (e) { try { console.warn('[MOMENT-SPLASH] show failed: ' + (e && e.message)); } catch (_) {} }
+  }
+  window._maybeShowMomentSplash = _maybeShowMomentSplash;
 
   // The assembler. PHASE A: pure PASS-THROUGH to _renderSceneImages so behaviour is byte-identical (parity
   // by construction) while the entry point + state scaffolding land. Returns the same {results[], firstReady}
@@ -196246,6 +196331,7 @@ No text, no watermark, no UI elements, share-ready.`;
     if (nextIdx > lastIdx) {
       if (!active.gateShown) {
         active.gateShown = true;
+        try { _maybeShowMomentSplash(active.plan, active.sceneIndex); } catch (_) {}   // PHASE D: major-moment splash at end of scene (self-gated, fire-once)
         _showStagedDecisionGate();
       }
       return;
@@ -207977,6 +208063,7 @@ No text, no watermark, no UI elements, share-ready.`;
         }
       } catch (_) {}
       // SLICE 2b: situated intro card(s) as a tap-through splash BEFORE the scene mounts (flag-gated; no-op when off).
+      try { _maybeFireLocationTransition(plan); } catch (_) {}   // PHASE C: loupe re-fire on region change (self-gated)
       if (window._cgSituatedIntros === true) { try { await _maybeShowIntroCards(plan, sceneIndex); } catch (_) {} }
       _renderStagedScene(plan, phaseImagesPromise);
       // COST TELEMETRY (Fable CG audit A3-F3, 2026-07-13): seal this CG scene's accumulated cost.
@@ -208479,6 +208566,7 @@ No text, no watermark, no UI elements, share-ready.`;
       // Mount the new scene. _renderStagedScene tears down the prior
       // session (key handler, micro state) and clears _stagedSubmitting.
       // SLICE 2b: situated intro card(s) splash before mount (flag-gated; no-op when off).
+      try { _maybeFireLocationTransition(plan); } catch (_) {}   // PHASE C: loupe re-fire on region change (self-gated)
       if (window._cgSituatedIntros === true) { try { await _maybeShowIntroCards(plan, sceneIndex); } catch (_) {} }
       _renderStagedScene(plan, phaseImagesPromise);
     } catch (e) {
