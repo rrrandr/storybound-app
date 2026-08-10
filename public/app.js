@@ -189596,8 +189596,13 @@ No text, no watermark, no UI elements, share-ready.`;
     L.push('CHARACTER: ' + name + (role ? ' — the ' + role : '') + '. ' + (desc || species || 'match the identity reference') + '. Match the identity REFERENCE image exactly: same face, hair, skin colour, build, wardrobe and weapon.');
     var _liAttr = _cgAttractivenessDirective(o, role); if (_liAttr) L.push(_liAttr);
     if (isFF) {
-      L.push('Wears the glowing white open MESH VEILWEAVE — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit or latex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer. It refracts the figure into about SIX overlapping semi-transparent AFTERIMAGES of the same body.');
-      L.push('If armed, carries THE ANSWER — a polearm with a DEEP question-mark HOOK at EACH end (never a trident, spear, axe or plain sword).');
+      if (opts.combat) {
+        L.push('Wears the glowing white open MESH VEILWEAVE (the COMBAT garment) — a visible net weave, NEVER a smooth/opaque bodysuit, catsuit or latex; NUDE and BAREFOOT beneath; the mesh turns OPAQUE across the hips and upper thighs and gradient-fades to sheer. It refracts the figure into about SIX overlapping semi-transparent AFTERIMAGES of the same body.');
+        L.push('Carries THE ANSWER — a polearm with a DEEP question-mark HOOK at EACH end (never a trident, spear, axe or plain sword).');
+      } else {
+        L.push('Wears the gossamer TUNIC the First Favored favour for ALL non-combat occasions — a flowing, fine, translucent-edged robe/tunic; BAREFOOT (feet visible); visible silver WEAVE-SCRIPT tracing the skin. NOT the mesh Veilweave (that is COMBAT-ONLY), NOT armour, NOT afterimages.');
+        L.push('UNARMED — empty hands. Does NOT carry The Answer (it is only drawn when a battle is imminent, or borne in the First Sacrifice rite by the WISHER, never idly).');
+      }
     }
     if (/kwisheen/.test(species)) {
       L.push('KWISHEEN anatomy: SMOOTH pebbled papillae skin (NEVER reptilian scales), a humanoid face (no fangs), coral-dreadlock hair, a coral-and-shell harness, and about SIX boneless waist TENTACLES LONGER than the legs, actively coiling (never idle/decorative).');
@@ -189708,6 +189713,17 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._cgLIFaceRevealed = _cgLIFaceRevealed;
 
+  // Is THIS scene combat? (Gates FF wardrobe/weapon: Veilweave + The Answer are COMBAT-ONLY; otherwise FF wear
+  // the gossamer tunic and go unarmed — Roman 2026-08-09.) Falls back to a keyword test if _isCombatScene absent.
+  function _cgIsCombatScene(visualState, phases) {
+    try {
+      var txt = (typeof _sheetSceneText === 'function') ? _sheetSceneText(visualState, phases) : ((visualState && visualState.background) || '');
+      if (typeof _isCombatScene === 'function') return !!_isCombatScene(txt);
+      return /\b(fight|battle|combat|duel|attack|strike|clash|war|ambush|siege|skirmish)\b/i.test(String(txt));
+    } catch (_) { return false; }
+  }
+  window._cgIsCombatScene = _cgIsCombatScene;
+
   // MYSTERY-LI FACE CONCEALMENT (Roman 2026-08-09) — VARIED so it never reads as the same trick every image.
   // FIRST appearance = the dramatic from-BEHIND black-SILHOUETTE intro; thereafter OVER-THE-SHOULDER / turned-
   // away DOMINATES (~80-90%), with ~1-in-6 swapping to a character-fit (wardrobe) or atmospheric variety so a
@@ -189769,10 +189785,11 @@ No text, no watermark, no UI elements, share-ready.`;
     var isLI = (role === 'li');
     var obscure = isLI && !_cgLIFaceRevealed(o, role);
     var concealText = obscure ? _cgConcealForLI(o, seedDesc) : '';   // OTS-dominant, varied; from-behind silhouette first
+    var combat = _cgIsCombatScene(visualState, phases);              // Veilweave + The Answer are combat-only
     // LIs defer their face-anchor to the reveal system (liFaceMasterUrl / liMysteryLock) — NEVER promote a
     // competing casting anchor. A mystery LI renders FACE-OBSCURED and establishes NO face (the player shapes
     // it at reveal); his cross-scene consistency comes from seed canon fed each render, not a stored face.
-    var card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat, obscureFace: obscure, concealText: concealText, promote: !isLI });
+    var card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat, obscureFace: obscure, concealText: concealText, combat: combat, promote: !isLI });
     card.kind = 'introCard'; card.situated = true; card.obscured = obscure;
     return card;
   }
@@ -189783,11 +189800,13 @@ No text, no watermark, no UI elements, share-ready.`;
   // Full-body CHARACTER quadrants are cropped as clean ANCHORS; DETAIL / EMBLEM quadrants are reader BONUS ART
   // (never identity anchors). Situated + reveal-gated like the solo card. (1 main → single splash, above.)
   // Blanks buy no fidelity (diffusion renders one 4096² regardless) — filling is a DESIGN win, not a quality one.
-  function _cgDetailPanelFor(o, role, obscure) {
+  function _cgDetailPanelFor(o, role, obscure, combat) {
     var species = String((o && o.species) || '').toLowerCase();
     var nm = (o && o.name) || 'the character';
     if (role === 'li' && obscure) return 'a jewel-like identity CLOSE-UP of ' + nm + ' with NO face shown — the silver Weave-Script tracing a forearm, the scar over the left wrist, or the hands; a study, not a portrait';
-    if (/favor|favour/.test(species)) return 'a jewel-like CLOSE-UP from ' + nm + ' — the glowing MESH Veilweave refracting into overlapping afterimages, a hand gripping THE ANSWER (double question-mark hook), or the silver Weave-Script; a study, not a portrait';
+    if (/favor|favour/.test(species)) return combat
+      ? 'a jewel-like CLOSE-UP from ' + nm + ' — the glowing MESH Veilweave refracting into overlapping afterimages, a hand gripping THE ANSWER (double question-mark hook), or the silver Weave-Script; a study, not a portrait'
+      : 'a jewel-like CLOSE-UP from ' + nm + ' — the silver WEAVE-SCRIPT tracing the skin, the fine gossamer TUNIC edge, or a bare foot on the crimson grass; a study, not a portrait (NO Veilweave, NO weapon — non-combat)';
     if (/kwisheen/.test(species)) return 'a jewel-like CLOSE-UP from ' + nm + ' — coiling waist TENTACLES, the coral-and-shell harness, or pebbled papillae skin catching the light; a study, not a portrait';
     return 'a jewel-like CLOSE-UP detail from ' + nm + ' — a signature costume piece, weapon, or marking; a study, not a portrait';
   }
@@ -189829,13 +189848,14 @@ No text, no watermark, no UI elements, share-ready.`;
     return q.slice(0, 4);
   }
   window._cgLayoutForCast = _cgLayoutForCast; window._cgDetailPanelFor = _cgDetailPanelFor; window._cgIssueEmblem = _cgIssueEmblem;
-  function _buildSituatedCastPagePrompt(quadrants, visualState) {
+  function _buildSituatedCastPagePrompt(quadrants, visualState, combat) {
     var s = window.state || {};
     var artist = String(s.gnArtist || 'ryo_toro').replace(/_/g, ' ');
     var chars = quadrants.filter(function (q) { return q.type === 'char'; }).map(function (q) { return q.main.o; });
     var L = [];
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic lighting. Match the STYLE reference image. NOT a photo, NOT 3D.');
     L.push('COMPOSITION: ONE SQUARE image = a premium comic CAST / FEATURE PAGE laid out as a 2x2 grid with thin gutters. NO lettering, nameplates, captions or text anywhere. The FULL-BODY CHARACTER quadrants are cover-quality single-figure introductions; the DETAIL / EMBLEM quadrants are cinematic INSET studies (a close-up or a single object), clearly smaller in scope than a full figure.');
+    L.push('CONTAINMENT (HARD): each FULL-BODY figure must be shown ENTIRELY WITHIN ITS OWN quadrant — head to BARE FEET, the FEET fully visible and NOT cut off or covered. Figures must NOT bleed across a gutter into another quadrant. The DETAIL / EMBLEM insets sit ONLY in their own quadrants and must NEVER overlap, cover, or crop any figure\'s feet or body.');
     L.push('FOUR DISTINCT INDIVIDUALS — do NOT blend faces, hair, skin, colours or weapons across quadrants; each keeps ONLY their own palette and weapon.' + _cgSameSpeciesGuard(chars));
     quadrants.forEach(function (q, i) {
       var label = _CG_QUAD_LABELS[i] || ('QUADRANT ' + (i + 1));
@@ -189843,9 +189863,9 @@ No text, no watermark, no UI elements, share-ready.`;
         var m = q.main;
         var beatTxt = (m.beat && (m.beat.beat || m.beat.emotion)) ? ' SITUATED in this moment: ' + (m.beat.beat || '') + (m.beat.emotion ? ' — face reads ' + m.beat.emotion : '') + '.' : '';
         var obsc = m.obscure ? (' FACE HIDDEN (identity not yet revealed): keep his face unreadable — here, ' + (m.concealText || 'shot over-the-shoulder, the face turned away') + '. The framing must feel like the shot the cinematographer NATURALLY wanted for this moment, NEVER one chosen to hide the face. Identity via body, silhouette and bearing, magnetic even hidden. Any shadow/backlight/flare must be motivated by an in-scene source and match this panel\'s lighting — no unmotivated dark patch.') : '';
-        L.push(label + ' [FULL-BODY CHARACTER] — ' + _cgCastCardBlock(m.o, m.seedDesc) + beatTxt + obsc);
+        L.push(label + ' [FULL-BODY CHARACTER] — ' + _cgCastCardBlock(m.o, m.seedDesc, combat) + beatTxt + obsc);
       } else if (q.type === 'detail') {
-        L.push(label + ' [DETAIL INSET] — ' + _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure) + '. Beautiful, iconic; NOT a full figure, NOT a face portrait.');
+        L.push(label + ' [DETAIL INSET] — ' + _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure, combat) + '. Beautiful, iconic; NOT a full figure, NOT a face portrait.');
       } else {
         var _emCulture = ((window.state || {})._playerSpecies) || (chars[0] && chars[0].species) || '';
         L.push(label + ' [EMBLEM INSET] — ' + _cgIssueEmblem(_emCulture) + '. No text.');
@@ -189861,8 +189881,9 @@ No text, no watermark, no UI elements, share-ready.`;
     mains = (mains || []).slice(0, 4);
     if (!mains.length) return null;
     mains.forEach(function (m) { if (m.obscure) m.concealText = _cgConcealForLI(m.o, m.seedDesc); });   // OTS-dominant, varied
+    var combat = _cgIsCombatScene(visualState, phases);   // Veilweave + The Answer are combat-only
     var quadrants = _cgLayoutForCast(mains);
-    var prompt = _buildSituatedCastPagePrompt(quadrants, visualState);
+    var prompt = _buildSituatedCastPagePrompt(quadrants, visualState, combat);
     var anyFF = mains.some(function (m) { return /favor|favour/.test(String((m.o && m.o.species) || '').toLowerCase()); });
     var _refs = [];
     try { if (typeof _styleReferenceB64 === 'function') { var sb = await _styleReferenceB64(); if (sb) _refs.push({ b64: sb, label: 'STYLE — match this artist (style only, NOT a character)' }); } } catch (_) {}
@@ -189973,7 +189994,7 @@ No text, no watermark, no UI elements, share-ready.`;
   // stays as the FALLBACK for a main player who appears mid-issue and wasn't in the opening cast.
   var _CG_QUAD_LABELS = ['TOP-LEFT', 'TOP-RIGHT', 'BOTTOM-LEFT', 'BOTTOM-RIGHT'];
   // Per-character canon block for one cast card — shared vocabulary with the solo portrait.
-  function _cgCastCardBlock(o, seedDesc) {
+  function _cgCastCardBlock(o, seedDesc, combat) {
     var name = (o && o.name) || 'a character';
     var role = (o && o.role) || '';
     var species = String((o && o.species) || '').toLowerCase();
@@ -189981,7 +190002,9 @@ No text, no watermark, no UI elements, share-ready.`;
     try { if (!desc) { var ma = (typeof _MANUAL_CASTING_ANCHORS !== 'undefined') && _MANUAL_CASTING_ANCHORS[tok]; if (ma && ma.desc) desc = ma.desc; } } catch (_) {}
     if (!desc && o && (o.desc || o.description)) desc = o.desc || o.description;
     var parts = [name + (role ? ' (the ' + role + ')' : '') + ': ' + (desc || species || 'match the reference') + '.'];
-    if (/favor|favour/.test(species)) parts.push('Wears the glowing white open MESH VEILWEAVE (a visible net weave, NUDE beneath, opaque across the hips fading to sheer), refracted into ~6 overlapping semi-transparent afterimages; if armed, carries THE ANSWER (a double question-mark-hook polearm — never a trident, spear or sword).');
+    if (/favor|favour/.test(species)) parts.push(combat
+      ? 'Wears the glowing white open MESH VEILWEAVE (COMBAT garment; a visible net weave, NUDE beneath, opaque across the hips fading to sheer), refracted into ~6 overlapping afterimages; carries THE ANSWER (a double question-mark-hook polearm — never a trident, spear or sword).'
+      : 'Wears the gossamer TUNIC First Favored favour for all NON-combat occasions (flowing, translucent-edged; BAREFOOT, feet visible; silver Weave-Script on the skin) — NOT the combat Veilweave, NOT afterimages; UNARMED (The Answer is only for an imminent battle or borne by the wisher in the First Sacrifice rite).');
     if (/kwisheen/.test(species)) parts.push('SMOOTH pebbled papillae skin (never scales), coral-dreadlock hair, a coral-and-shell harness, ~6 boneless waist tentacles LONGER than the legs and coiling.');
     parts.push('A SIGNATURE mid-action pose that reveals the character. Match the identity REFERENCE if one is provided.');
     var _ccRole = (o && o.role) || (typeof _cgIntroRole === 'function' ? _cgIntroRole(o) : '');
