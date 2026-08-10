@@ -189754,13 +189754,15 @@ No text, no watermark, no UI elements, share-ready.`;
     return 'a jewel-like CLOSE-UP detail from ' + nm + ' — a signature costume piece, weapon, or marking; a study, not a portrait';
   }
   // Reader-safe issue emblem — a single story OBJECT (from the seed if present; NEVER a secret truth).
-  // FATELANDS per-culture CEREMONIAL WISH-OBJECTS (Roman 2026-08-09) — each culture's formal-wishing icon,
-  // used as the issue EMBLEM. Public/reader-safe. See project_fatelands_ceremonial_objects.
-  var _FATELANDS_CEREMONIAL_OBJECTS = {
-    first_favored: 'THE ANSWER as a ceremonial instrument — a wish-reshaped blade/polearm (deep question-mark hooks) that takes its FORM from the wielder\'s intent, so its shape reads as a TEST OF ALIGNMENT; shown ALONE on a plain vignette, no wielder',
-    human: 'THE FOLDED FATE — an ancient book the Uncrowned Queen carried through the Fold, each chapter the history of a different reality; a human community\'s formal wishing-book, laid open on a plain vignette (no legible text)',
-    kwisheen: 'a coral-and-nacre CIRCLET in the style of the first Kwisheen King; shown alone on a plain vignette, no wearer',
-    wilder: 'a charred length of WOOD from the pyre where the wish-witch who cursed the Wilders was burned; shown alone on a plain vignette'
+  // THE WITNESSES (Roman 2026-08-09) — each Fatelands culture's sacred RELIC that a wish is made BEFORE
+  // (the thing that culture holds cannot be lied to); its theory of wishes made physical. Recurring
+  // civilizational relics (learned like the One Ring), not per-issue emblems. CG strings are PAINT-ONLY
+  // (the object's LOOK); the philosophy/mechanics are PROSE lore. See project_fatelands_witnesses.
+  var _FATELANDS_WITNESSES = {
+    first_favored: 'THE ANSWER, the First Favored\'s WITNESS — a hooked wish-blade / polearm (a DEEP question-mark hook at each end) caught MID-SHIFT as it reshapes to the wielder\'s intent, faintly luminous; shown ALONE on a plain vignette, no wielder',
+    human: 'THE FOLDED FATE, the human WITNESS — a great ancient tome laid open on a plain plinth, pages faintly luminous with some passages shimmering as if rewriting themselves; NO legible text',
+    kwisheen: 'the KING\'S CIRCLET, the Kwisheen WITNESS — a coral-and-nacre circlet, luminous and austere; shown ALONE on a plain vignette, no wearer',
+    wilder: 'the ASH, the Wilder WITNESS — a charred, cracked length of pyre-wood resting on plain dark cloth; a relic of catastrophe, not glory'
   };
   function _cgCultureKey(species) {
     var s = String(species || '').toLowerCase();
@@ -189776,7 +189778,7 @@ No text, no watermark, no UI elements, share-ready.`;
       if (id && typeof STARTER_SEEDS !== 'undefined' && STARTER_SEEDS[id] && STARTER_SEEDS[id].issueEmblem)
         return 'the ISSUE EMBLEM — ' + String(STARTER_SEEDS[id].issueEmblem) + '; a single iconic story OBJECT on a plain vignette, no characters'; } catch (_) {}
     var key = _cgCultureKey(species);
-    if (key && _FATELANDS_CEREMONIAL_OBJECTS[key]) return 'the CEREMONIAL WISH-OBJECT (culture emblem) — ' + _FATELANDS_CEREMONIAL_OBJECTS[key];
+    if (key && _FATELANDS_WITNESSES[key]) return 'THE WITNESS (this culture\'s sacred relic — every important wish is made before it, because it cannot be lied to) — ' + _FATELANDS_WITNESSES[key];
     return 'the ISSUE EMBLEM — a single iconic story OBJECT drawn from this scene\'s setting and props (a ritual vessel, an oath stone, a token) on a plain vignette, no characters';
   }
   window._cgIssueEmblem = _cgIssueEmblem; window._cgCultureKey = _cgCultureKey;
