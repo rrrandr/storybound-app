@@ -189621,6 +189621,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var L = [];
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic lighting. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
     L.push('A single-character INTRODUCTION SPLASH — ONE figure only, full-length, no other characters, no 2x2 grid, no panel borders, no lettering or captions anywhere.');
+    L.push('DETAIL: MASTERWORK illustration density — ornate, intricate costume, jewellery and prop detail; fine textures, layered shading, rich ornament throughout; a finished gallery-quality Ryo Toro splash, NEVER sparse, flat, or under-rendered.');
     L.push('CHARACTER: ' + name + (role ? ' — the ' + role : '') + '. ' + (desc || species || 'match the identity reference') + '. Match the identity REFERENCE image exactly: same face, hair, skin colour, build, wardrobe and weapon.');
     var _liAttr = _cgAttractivenessDirective(o, role); if (_liAttr) L.push(_liAttr);
     if (isFF) {
@@ -189648,7 +189649,7 @@ No text, no watermark, no UI elements, share-ready.`;
       L.push('FACE HIDDEN (identity not yet revealed to the reader): keep his face unreadable — here, ' + (opts.concealText || 'shot over-the-shoulder, the face turned away') + '. GOLDEN RULE: the shot must feel like the framing the cinematographer NATURALLY wanted for this dramatic moment (a reunion → over the protagonist\'s shoulder; a first sighting across a distance → a backlit silhouette; a council → profile; a battle → a helm\'s shadow) — NEVER a shot that looks CHOSEN to hide the face. Identity reads through the BODY, silhouette, hair and bearing; the attractiveness rule still holds (magnetic even hidden). LIGHTING CONSISTENCY: any shadow/backlight/flare must be MOTIVATED by an in-scene source or occluder and MATCH the rest of the frame — never an unmotivated dark patch in an otherwise evenly-lit scene.');
     }
     L.push('EMOTION: at 7+/10 intensity fitting the character — never blank or calm (calm only if deliberately controlling/hiding emotion, or resigned); if the face is hidden, the emotion reads through posture and body. A masked face still emotes through the eyes.');
-    L.push('SETTING: a simple, evocative hint of ' + ((visualState && visualState.background) || 'their world') + ' behind, kept subordinate to the figure — never competing for detail.');
+    L.push('SETTING: the figure stands IN the actual scene — ' + ((visualState && visualState.background) || 'their world') + ' — rendered in FULL DEPTH and DETAIL: architecture, props, foliage, atmosphere, foreground AND background layers, a finished illustrated ENVIRONMENT (NEVER an empty wash, gradient, or amorphous backdrop). The figure stays the clear focal subject through pose, lighting and placement — but the world around them is fully realised.');
     L.push('NO text, no watermark, no UI elements, no panel borders — ONE figure, share-ready.');
     return L.join('\n\n');
   }
@@ -190075,7 +190076,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var L = [];
     L.push('STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic lighting. Match the STYLE reference image. NOT a photo, NOT 3D, NOT a flat basic comic.');
     L.push('COMPOSITION: ONE SQUARE image = a 2x2 grid of four equal quadrants with thin gutters. Each quadrant is a SEPARATE full-body CHARACTER-INTRODUCTION SPLASH CARD of a DIFFERENT individual — like a fighting-game character-select screen or a comic cast page. NO lettering, nameplates, captions, speech balloons or text anywhere.');
-    L.push('COVER-QUALITY, NOT PORTRAITS: every character is mid-ACTION, emotionally charged, ASYMMETRICAL and immediately memorable — NEVER centered, static, or standing to attention looking at camera. Each shows a SIGNATURE pose, SIGNATURE weapon, canonical costume and a SIGNATURE expression (7+/10 intensity). Background is a plain or minimal evocative wash, kept fully subordinate — no clutter.');
+    L.push('COVER-QUALITY, NOT PORTRAITS: every character is mid-ACTION, emotionally charged, ASYMMETRICAL and immediately memorable — NEVER centered, static, or standing to attention looking at camera. Each shows a SIGNATURE pose, SIGNATURE weapon, canonical costume and a SIGNATURE expression (7+/10 intensity), with MASTERWORK detail density (ornate costume/props, fine textures). Each quadrant places its figure IN a real rendered SETTING with depth (the scene\'s actual location), NOT an empty wash — kept readable within its own quadrant.');
     L.push('FOUR DISTINCT INDIVIDUALS — do NOT blend faces, hair, skin, colours or weapons across quadrants; each character keeps ONLY their own palette and weapon.' + _cgSameSpeciesGuard(cast));
     cast.forEach(function (o, i) { L.push((_CG_QUAD_LABELS[i] || ('QUADRANT ' + (i + 1))) + ' — ' + _cgCastCardBlock(o)); });
     L.push('EMOTION: every face high-intensity, fitting the character — never blank or calm. AVOID: any text/lettering/nameplates; a photo look; blending any two characters; a First Favored losing the Veilweave; the two First Favored looking like the same man; two Kwisheen sharing a dread colour; The Answer rendered as a plain trident/spear.');
@@ -190176,7 +190177,7 @@ No text, no watermark, no UI elements, share-ready.`;
     var prompt = [
       'STYLE: ' + artist + ' — a richly detailed, high-detail colour comic illustration; confident ink linework, layered shading, dramatic cinematic lighting. Match the STYLE reference. NOT a photo, NOT 3D.',
       'A single FULL-FRAME cinematic SPLASH — ONE image, no 2x2 grid, no panels, no lettering or captions — of ' + dir + '.',
-      'SETTING: ' + (vs.background || 'the scene') + '.',
+      'SETTING: ' + (vs.background || 'the scene') + ' — rendered in FULL DEPTH and DETAIL (architecture, props, atmosphere, foreground + background layers), a finished illustrated environment, NOT an empty wash; MASTERWORK detail density throughout.',
       'A viewer-forward, dramatic composition (bold angle, strong depth, the emotional PEAK of the moment); faces at 7+/10 intensity. NO text, no watermark — share-ready.'
     ].join('\n\n');
     var _refs = [];
