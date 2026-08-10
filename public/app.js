@@ -75973,6 +75973,7 @@ Return ONLY valid JSON:
       state._firedMomentSplashes = {};   // fire-once major-moment splashes this issue
       state._lastRenderedRegion = null;  // previous region, for the location-change loupe trigger (Phase C)
       state._castCards = {};             // { token: {card, role, surfaced} } — cast-splash crops, surfaced at introduction
+      state._liConcealHistory = {};      // per-LI face-conceal rotation (mystery LI) — OTS-dominant, varied
 
       // A3-F1: CG Scene-1 cover pre-fire ABANDON — a story reset fired while a cover pre-fire was still
       // pending (the user left the cover WITHOUT entering the reader). That text+image spend was wasted.
@@ -189611,7 +189612,7 @@ No text, no watermark, no UI elements, share-ready.`;
       L.push('POSE: a DYNAMIC, characterizing FULL-BODY pose that reveals who they are — mid-gesture or mid-action, intent and weight visible; NOT a static neutral turnaround, NOT arms-at-sides. A cinematic single-subject composition: a strong hero angle (low or high), the figure off-centre or on a diagonal, real depth behind them.');
     }
     if (opts.obscureFace) {
-      L.push('FACE HIDDEN (identity not yet revealed to the reader): the FACE is NOT clearly shown — turned away, veiled by hair, or lost in shadow. Identity reads through the BODY, silhouette, hair and bearing, NOT the face. The attractiveness rule still holds: the hidden figure is unmistakably magnetic.');
+      L.push('FACE HIDDEN (identity not yet revealed to the reader) — conceal it THIS way: ' + (opts.concealText || 'shot over-the-shoulder, the face turned away') + '. The FACE is NEVER clearly shown; identity reads through the BODY, silhouette, hair and bearing. The attractiveness rule still holds: the hidden figure is unmistakably magnetic.');
     }
     L.push('EMOTION: at 7+/10 intensity fitting the character — never blank or calm (calm only if deliberately controlling/hiding emotion, or resigned); if the face is hidden, the emotion reads through posture and body. A masked face still emotes through the eyes.');
     L.push('SETTING: a simple, evocative hint of ' + ((visualState && visualState.background) || 'their world') + ' behind, kept subordinate to the figure — never competing for detail.');
@@ -189707,6 +189708,40 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._cgLIFaceRevealed = _cgLIFaceRevealed;
 
+  // MYSTERY-LI FACE CONCEALMENT (Roman 2026-08-09) — VARIED so it never reads as the same trick every image.
+  // FIRST appearance = the dramatic from-BEHIND black-SILHOUETTE intro; thereafter OVER-THE-SHOULDER / turned-
+  // away DOMINATES (~80-90%), with ~1-in-6 swapping to a character-fit (wardrobe) or atmospheric variety so a
+  // repeated lens-flare/backlight never becomes a tell. Deterministic rotation per LI; reset per issue.
+  var _LI_CONCEAL_ATMOSPHERIC = [
+    'the face lost in deep SHADOW, only the jaw and mouth catching light',
+    'strong BACKLIGHTING rendering him a near-SILHOUETTE, the face dark against the glow',
+    'a FOREGROUND element (a passing figure, a raised arm, a banner, drifting veil-cloth) crossing and CROPPING his face',
+    'a bright LENS-FLARE / bloom washing out exactly where the eyes would be',
+    'the frame CROPPING at the brow so the eyes sit just above the top edge'
+  ];
+  var _LI_CONCEAL_WARDROBE = [
+    { re: /\bhair\b|long hair/i, t: 'his own hair fallen ACROSS his face' },
+    { re: /hood|cloak|cowl/i, t: 'a deep HOOD throwing the eyes into shadow' },
+    { re: /\bhat\b|brim|\bcap\b/i, t: 'a hat BRIM pulled low over the eyes' },
+    { re: /glasses|visor|goggles|shades/i, t: 'dark GLASSES / a visor across the eyes' },
+    { re: /\bmask\b/i, t: 'a MASK over the upper face' }
+  ];
+  function _cgConcealForLI(o, seedDesc) {
+    var tok = _castingToken((o && o.name) || '');
+    _cgIssueState(); if (!state._liConcealHistory) state._liConcealHistory = {};
+    var n = state._liConcealHistory[tok] || 0;
+    state._liConcealHistory[tok] = n + 1;
+    if (n === 0) return 'shot from BEHIND — his back and the set of his shoulders to us, the face turned fully away and rendered in BLACK SILHOUETTE (the classic mystery intro)';
+    var OTS = 'shot OVER-THE-SHOULDER or in strict PROFILE, the face turned away from camera';
+    if (n % 6 !== 5) return OTS;                          // ~83% OTS after the intro
+    var hay = String((seedDesc || '') + ' ' + ((o && (o.wardrobe || o.desc || o.description)) || '')).toLowerCase();
+    var fit = [];
+    _LI_CONCEAL_WARDROBE.forEach(function (w) { if (w.re.test(hay)) fit.push(w.t); });
+    var pool = fit.concat(_LI_CONCEAL_ATMOSPHERIC);
+    return pool[Math.floor(n / 6) % pool.length];         // rotating variety on the ~1-in-6 turns
+  }
+  window._cgConcealForLI = _cgConcealForLI;
+
   // The SITUATED intro beat — from reader-KNOWN scene facts ONLY (this character's on-page emotion + a role
   // framing). NEVER from secret truths[] (that leaks the plot to the reader). Refine per-scene at validation.
   function _cgIntroBeatFor(o, role, visualState, phases) {
@@ -189729,10 +189764,11 @@ No text, no watermark, no UI elements, share-ready.`;
     var beat = _cgIntroBeatFor(o, role, visualState, phases);
     var isLI = (role === 'li');
     var obscure = isLI && !_cgLIFaceRevealed(o, role);
+    var concealText = obscure ? _cgConcealForLI(o, seedDesc) : '';   // OTS-dominant, varied; from-behind silhouette first
     // LIs defer their face-anchor to the reveal system (liFaceMasterUrl / liMysteryLock) — NEVER promote a
     // competing casting anchor. A mystery LI renders FACE-OBSCURED and establishes NO face (the player shapes
     // it at reveal); his cross-scene consistency comes from seed canon fed each render, not a stored face.
-    var card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat, obscureFace: obscure, promote: !isLI });
+    var card = await _renderIntroPortrait(o, role, visualState, sceneIndex, { seedDesc: seedDesc, beat: beat, obscureFace: obscure, concealText: concealText, promote: !isLI });
     card.kind = 'introCard'; card.situated = true; card.obscured = obscure;
     return card;
   }
@@ -189802,7 +189838,7 @@ No text, no watermark, no UI elements, share-ready.`;
       if (q.type === 'char') {
         var m = q.main;
         var beatTxt = (m.beat && (m.beat.beat || m.beat.emotion)) ? ' SITUATED in this moment: ' + (m.beat.beat || '') + (m.beat.emotion ? ' — face reads ' + m.beat.emotion : '') + '.' : '';
-        var obsc = m.obscure ? ' FACE HIDDEN (identity not yet revealed): face turned away / veiled by hair / in shadow — identity via body, silhouette and bearing, still unmistakably magnetic.' : '';
+        var obsc = m.obscure ? (' FACE HIDDEN (identity not yet revealed) — conceal it THIS way: ' + (m.concealText || 'shot over-the-shoulder, the face turned away') + '; identity via body, silhouette and bearing, still unmistakably magnetic.') : '';
         L.push(label + ' [FULL-BODY CHARACTER] — ' + _cgCastCardBlock(m.o, m.seedDesc) + beatTxt + obsc);
       } else if (q.type === 'detail') {
         L.push(label + ' [DETAIL INSET] — ' + _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure) + '. Beautiful, iconic; NOT a full figure, NOT a face portrait.');
@@ -189820,6 +189856,7 @@ No text, no watermark, no UI elements, share-ready.`;
   async function _renderSituatedCastPage(mains, visualState, phases, sceneIndex) {
     mains = (mains || []).slice(0, 4);
     if (!mains.length) return null;
+    mains.forEach(function (m) { if (m.obscure) m.concealText = _cgConcealForLI(m.o, m.seedDesc); });   // OTS-dominant, varied
     var quadrants = _cgLayoutForCast(mains);
     var prompt = _buildSituatedCastPagePrompt(quadrants, visualState);
     var anyFF = mains.some(function (m) { return /favor|favour/.test(String((m.o && m.o.species) || '').toLowerCase()); });
