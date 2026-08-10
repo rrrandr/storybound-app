@@ -188946,13 +188946,13 @@ No text, no watermark, no UI elements, share-ready.`;
       var _ichSp = {}; if (pcSpecies) _ichSp[pcSpecies] = 1;
       others.forEach(function (o) { if (o && o.species) _ichSp[String(o.species).toLowerCase()] = 1; });
       var _ichL = Object.keys(_ichSp).map(function (sp) { var i = (typeof _cgSpeciesIchor === 'function') ? _cgSpeciesIchor(sp) : ''; return i ? (sp + ' bleed ' + i) : ''; }).filter(Boolean);
-      if (_ichL.length) L.push('BLOOD / ICHOR (ONLY if a wound or blood is actually shown — do NOT add gore unprompted): ' + _ichL.join('; ') + '. A First Favored NEVER bleeds red; a Kwisheen NEVER bleeds red.');
+      if (_ichL.length) L.push('BLOOD / ICHOR (ONLY if a wound or blood is actually shown — do NOT add gore unprompted): ' + _ichL.join('; ') + '. A First Favored NEVER bleeds red; a Kwisheen NEVER bleeds red. Any ichor SPRAYS, ARCS and FALLS under gravity — spattering the figures and the ground — it NEVER floats, hangs, or weaves through empty air.');
     } catch (_) {}
     L.push('PANELS:');
     (phases || []).forEach(function (ph, i) { L.push('  ' + (i + 1) + ') ' + String((ph && (ph.beat || ph.label)) || '') + (typeof _sheetCameraForQuad === 'function' ? _sheetCameraForQuad(i, phases) : '')); });
     L.push('EMOTION: every face at 7+/10 intensity fitting the beat — snarling, fierce, straining, alarmed — never blank or calm (calm only if a character is deliberately controlling/hiding emotion or resigned). Masked faces still emote through the eyes.');
     L.push('CONSISTENCY (HARD — every panel): each figure has EXACTLY TWO arms (never three); each Kwisheen attacks with its NAMED weapon plus its tentacles (never a bare tentacle used AS the weapon); each character keeps the SAME gender presentation in EVERY panel — nobody swaps sex mid-fight (a male stays male, a female stays female); ' + pcName + ' is ALWAYS clothed in the flowing gossamer Veilweave in EVERY panel — never plain clothes, never armour, never a robe, never bare, never absent — and his face (and the nearest solid afterimage) stays clearly EXPRESSIVE and fierce (the refraction never blanks his face); the named characters stay DISTINCT individuals (never two of the same person); every panel is mid-ACTION with nobody standing idle or blank-faced.');
-    L.push('CONTINUITY: all four panels are the SAME location; each character stays one consistent individual across panels; injuries persist.');
+    L.push('CONTINUITY: all four panels are the SAME location; each character stays one consistent individual across panels; each keeps their WEAPON across every panel (a weapon shown does not vanish or change class); injuries persist and ACCUMULATE — a character DISMEMBERED or BEHEADED in an earlier panel STAYS that way in every later panel (no re-attached heads, no regrown limbs).');
     return '\n\n' + L.join('\n');
   }
   window._buildSheetPromptV2 = _buildSheetPromptV2;
