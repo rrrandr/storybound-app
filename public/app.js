@@ -76018,6 +76018,9 @@ Return ONLY valid JSON:
       // CG scene-image sequence — per-ISSUE tracking (L3 is the issue boundary: startBook2 calls this).
       state._introducedCast = {};        // who has an intro portrait this issue
       state._firedMomentSplashes = {};   // fire-once major-moment splashes this issue
+      state._cgTier2Pending = [];        // Tier-2 anchor buffer (cross-scene) — clears per issue
+      state._cgTier2PendingSince = null;
+      state._cgRevealed = {};            // { token: true } — identity-reveal re-anchors fired this issue
       state._lastRenderedRegion = null;  // previous region, for the location-change loupe trigger (Phase C)
       state._castCards = {};             // { token: {card, role, surfaced} } — cast-splash crops, surfaced at introduction
       state._liConcealHistory = {};      // per-LI face-conceal rotation (mystery LI) — OTS-dominant, varied
@@ -92719,6 +92722,9 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
       if (!prevProposal || !prevProposal.event) return;
       var _pt = String(prevText || '').replace(/<[^>]*>/g, ' ').replace(/\[[A-Z][^\]]*\]/g, ' ').trim();
       if (_pt.length < 40) return;
+      // VERIFIER-INPUT instrumentation (Roman): log the EXACT prose the verifier judges, so analysis can always align
+      // the check to its scene (a naive index-align once produced a false "false-pass" alarm — this closes that gap).
+      try { console.log('[VERIFIER-INPUT] scene=' + prevSceneNum + ' prose_len=' + _pt.length + ' head="' + _pt.slice(0, 70).replace(/\s+/g, ' ') + '" tail="' + _pt.slice(-70).replace(/\s+/g, ' ') + '"'); } catch (_) {}
       var cs = _ensureCommittedState();
       if (cs._committedThroughScene != null && cs._committedThroughScene >= prevSceneNum) return; // already committed
       var _factsBefore = cs.facts.length;
@@ -92731,6 +92737,14 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
         + 'tableau: { "setting": <=120 chars or null, "charactersPresent": [names], "protagonistStatus": short phrase for what the protagonist is DOING or has just BECOME at the final line, "decisiveChange": if the closing beat OVERTURNED the scene premise name it else null, "activeInterlocutor": name of whoever the protagonist must respond to or null, "protagonistAlone": bool }.\n'
         + 'JSON: {"delivery":"MISSED","dominant_replacement":"atmosphere","transition_position":-1,"first_irreversible_position":-1,"tableau":{"setting":null,"charactersPresent":[],"protagonistStatus":null,"decisiveChange":null,"activeInterlocutor":null,"protagonistAlone":false}}';
       var _vUsr = 'PROPOSED TRANSITION: ' + String(prevProposal.event).slice(0, 240) + '\n\nSCENE PROSE:\n' + _pt.slice(0, 6000) + '\n\nReturn the JSON now.';
+      // STRUCTURED EVENT HANDOFF: when the proposal carries load-bearing slots, verify them SLOT-BY-SLOT. A slot
+      // mismatch (e.g. TARGET=Julian but Julian absent) is NOT "close enough" — it forces MISSED. This is the
+      // determinism gate: the planned event must appear with its essential slots intact, or be rejected.
+      var _slots = (typeof window !== 'undefined' && window._structuredEventHandoff === true && prevProposal && prevProposal.slots && prevProposal.slots.exitState) ? prevProposal.slots : null;
+      if (_slots) {
+        _vSys += '\nEVIDENCE-GROUNDED SLOT CHECK (HARD — GROUND every judgment in the SCENE PROSE above, NOT in this planned event and NOT in outside context or "what seems consistent"). For each slot, return the LITERAL verbatim quote FROM THE SCENE PROSE that supports it. Return "slots_check": {"precondition_evidence":"<verbatim quote showing the required actor/target is PRESENT in the scene so the event was possible — they count as present even if the event then changes them; else empty>","actor_evidence":"<verbatim quote showing the actor performs the action, else empty>","action_evidence":"<verbatim quote showing the action occurs, else empty>","target_evidence":"<verbatim quote showing the target is present and receiving it, else empty>","exit_state_evidence":"<verbatim quote showing the exit state became TRUE on the page, else empty>","occurred_this_scene":true|false}. (Empty precondition_evidence means the event was IMPOSSIBLE — the required condition was not present.) HARD RULES: (1) every evidence value MUST be a verbatim substring of the SCENE PROSE — if you cannot find one, return "" (do NOT paraphrase, do NOT infer, do NOT write "the scene implies"). (2) if the named actor or target does not literally appear and act in the prose, its evidence is "". (3) occurred_this_scene = did it happen DURING this prose, not merely set up. A slot with EMPTY evidence is FALSE; if any load-bearing slot is FALSE, delivery MUST be "MISSED". Also return "actual_exit_state": a short phrase for what actually became TRUE this scene, or "".';
+        _vUsr += '\n\nPLANNED EVENT SLOTS (find verbatim supporting text in the SCENE PROSE for each; use "" if absent):\n  PRECONDITION: ' + (_slots.precondition || '(none)') + '\n  ACTOR: ' + _slots.actor + '\n  ACTION: ' + _slots.action + '\n  TARGET: ' + _slots.target + '\n  EXIT STATE: ' + _slots.exitState;
+      }
       var _delivery = 'MISSED', _tab = null, _replacement = 'none', _txnPos = -1, _firstIrrev = -1;
       try {
         var _vRes = await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -92740,10 +92754,30 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
           var _vC = (_vData && _vData.content) || (_vData && _vData.choices && _vData.choices[0] && _vData.choices[0].message && _vData.choices[0].message.content);
           var _vP; try { _vP = JSON.parse(_vC); } catch (e) { var _m = String(_vC || '').match(/\{[\s\S]*\}/); if (_m) { try { _vP = JSON.parse(_m[0]); } catch (_) {} } }
           if (_vP) { _delivery = String(_vP.delivery || 'MISSED').toUpperCase(); _tab = _vP.tableau || null; _replacement = String(_vP.dominant_replacement || 'none'); _txnPos = (typeof _vP.transition_position === 'number') ? _vP.transition_position : -1; _firstIrrev = (typeof _vP.first_irreversible_position === 'number') ? _vP.first_irreversible_position : -1; }
+          // SLOT-CHECK OVERRIDE: a load-bearing slot mismatch forces MISSED regardless of the LLM's delivery label.
+          if (_slots && _vP && _vP.slots_check) {
+            var _sk = _vP.slots_check;
+            // Derive the verdict MECHANICALLY from EVIDENCE PRESENCE: empty verbatim quote → that slot is FALSE.
+            // This is what fixed the rubber-stamp (verifier probe 4/4 on gpt-4o-mini) — the model cannot fabricate a
+            // match it cannot cite. Any load-bearing slot with no evidence forces MISSED.
+            var _hasEv = function (x) { return typeof x === 'string' && x.trim().length > 3; };
+            var _preReq = (_slots.precondition && String(_slots.precondition).toLowerCase().trim() !== 'none' && String(_slots.precondition).trim() !== '');
+            var _pEv = _preReq ? _hasEv(_sk.precondition_evidence) : true;   // no precondition required → treated as met
+            var _tReq = (_slots.target && String(_slots.target).toLowerCase().trim() !== 'none' && String(_slots.target).trim() !== '');   // impersonal event (target "none") requires no target evidence
+            var _aEv = _hasEv(_sk.actor_evidence), _acEv = _hasEv(_sk.action_evidence), _tEv = _tReq ? _hasEv(_sk.target_evidence) : true, _eEv = _hasEv(_sk.exit_state_evidence);
+            var _impossible = _preReq && !_pEv;   // precondition absent from the scene → the planned event was IMPOSSIBLE (PLANNER error, not author's)
+            var _slotFail = (_impossible || !_eEv || !_aEv || !_acEv || !_tEv || _sk.occurred_this_scene === false);
+            if (_slotFail && _delivery === 'DELIVERED') { _delivery = 'MISSED'; }
+            try { console.log('[SLOT-CHECK] scene=' + prevSceneNum + (_slotFail ? ' FAIL→MISSED' : ' PASS') + (_impossible ? ' [IMPOSSIBLE-EVENT: precondition absent = PLANNER error]' : '') + ' evidence[pre=' + (_pEv ? 'Y' : '—') + ' actor=' + (_aEv ? 'Y' : '—') + ' action=' + (_acEv ? 'Y' : '—') + ' target=' + (_tEv ? 'Y' : '—') + ' exit=' + (_eEv ? 'Y' : '—') + '] thisScene=' + _sk.occurred_this_scene); } catch (_) {}
+            try { console.log('[SLOT-EVIDENCE] scene=' + prevSceneNum + ' exit_ev="' + String(_sk.exit_state_evidence || '').slice(0, 80) + '"'); } catch (_) {}
+          }
         }
       } catch (_) { /* verifier unreachable → treat as MISSED (no commit; planner replans) */ }
       try { console.log('[TRANSITION-POS] scene=' + prevSceneNum + ' delivery=' + _delivery + ' first_occurs_at=' + (_txnPos < 0 ? 'ABSENT' : (_txnPos + '%')) + ' first_irreversible_at=' + (_firstIrrev < 0 ? 'NONE' : (_firstIrrev + '%')) + ' placement=' + ((typeof window !== 'undefined' && window.__transitionWindowV1 === true) ? 'windowV1' : 'end-slot')); } catch (_) {}
+      // STATE-TRANSITION diagnostic (Roman 2026-08-10): read drift in ONE line — Entry → Planned Exit → Actual Exit → Match.
+      try { if (_slots) { var _entrySt = cs._priorExitState || 'story open'; var _actualEx = (typeof _vP !== 'undefined' && _vP && _vP.actual_exit_state) ? String(_vP.actual_exit_state).slice(0, 90) : '(unreported)'; console.log('[STATE-TRANSITION] scene=' + prevSceneNum + ' ENTRY="' + String(_entrySt).slice(0, 80) + '" PLANNED_EXIT="' + String(_slots.exitState).slice(0, 80) + '" ACTUAL_EXIT="' + _actualEx + '" MATCH=' + (_delivery === 'DELIVERED' ? 'PASS' : 'FAIL')); } } catch (_) {}
       if (_delivery === 'DELIVERED') {
+        if (_slots && _slots.exitState) cs._priorExitState = _slots.exitState; // becomes the ENTRY state for the next scene's transition log
         _commitTransition(prevProposal.event, 'scene' + prevSceneNum + '_transition', prevSceneNum);
         cs.pendingIntent = null; // intent achieved
         console.log('[COMMIT] transition=accepted scene=' + prevSceneNum + ' fact+=1 factsTotal=' + cs.facts.length);
@@ -92878,6 +92912,15 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
           + '  • THE EVENT — stage THIS EXACT event as a concrete on-page MOMENT, witnessed, in motion (a sound, a movement, a body reacting, an object changing). SHOW what physically HAPPENS; NEVER render it as a flat summary or an abstract label that announces its meaning. FORBIDDEN shapes: "a sudden shift reveals a hidden thread…", "the fracture becomes visible, revealing a deeper truth…", "a change in the atmosphere…". The event to stage: ' + _sc.event + '\n'
           + _afterLine
           + (_sc.forces_choice ? '  • THE DECISION this unlocks (the CLOSING beat, reached through the event\'s aftermath; it exists ONLY because the event happened): ' + _sc.forces_choice + '\n' : '')
+          + ((typeof window !== 'undefined' && window._structuredEventHandoff === true && _sc.slots && _sc.slots.exitState)
+              ? ('  EVENT CONTRACT (HARD — you own DRAMATIZATION, the planner owns the EVENT. Choose location, imagery, pacing, phrasing freely, and you MAY invent additional micro-beats — hesitation, a lie, an escalation, a reversal. But the SEMANTIC event below is FIXED (meaning, not wording): do NOT change who acts, the core action, whom it targets, or the exit state):\n'
+                 + (_sc.slots.precondition ? '    – PRECONDITION (must already be true when the scene opens for this to be possible): ' + _sc.slots.precondition + '\n' : '')
+                 + '    – ACTOR: ' + _sc.slots.actor + ' — this character performs it.\n'
+                 + '    – ACTION: ' + _sc.slots.action + '\n'
+                 + '    – TARGET: ' + _sc.slots.target + ' — done TO / BEFORE / WITH this; if a character, that character MUST be physically present in THIS scene for it to count.\n'
+                 + '    – EXIT STATE (THE invariant — this MUST be TRUE by the end of THIS scene): ' + _sc.slots.exitState + '\n'
+                 + '    Rerouting the event (e.g. confessing to a different person), changing who acts, or leaving the exit state un-true is a CONTRACT BREACH — the scene FAILS even if the prose is beautiful. If the named target cannot plausibly be present, that is the PLANNER\'s error to surface, NOT yours to fix by rerouting — stage it as written.\n')
+              : '')
           + '  DIALOGUE RULE (HARD): every significant line must ADVANCE TOWARD the event or RESPOND TO it — never keep pursuing an objective the event has already made obsolete.\n'
           + '  RELATIONSHIP DYNAMIC = BEHAVIOR, NOT SUBJECT: the characters\' clash or attraction governs HOW they behave before, during, and after this event — it does NOT replace the event as the scene\'s organizing subject. The scene is about the event; the dynamic is how they live through it.\n'
           // DELIVERY-MANDATE A/B (Roman 2026-07-27): Arm A = the directive above ("stage the transition"). Arm B
@@ -93031,12 +93074,24 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
                  + '\nA-plot goal: ' + JSON.stringify(goal).slice(0, 200)))
             + '\nIssue pressures: ' + JSON.stringify(pressures).slice(0, 250)
             + '\nCOMMITTED WORLD STATE — facts already TRUE (irreversible; do NOT re-establish or re-flip; your event MUST build FROM these): ' + JSON.stringify((_csGen.facts || []).slice(-8).map(function (f) { return f.fact; })).slice(0, 480)
-            + (_csGen.pendingIntent ? ('\nPENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: ' + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
+            + ((_csGen.pendingIntent && !(typeof window !== 'undefined' && window._suppressPendingIntent === true)) ? ('\nPENDING INTENT — a prior scene tried to advance toward the milestone but did NOT deliver. Continue TOWARD the milestone, but choose the BEST reachable event NOW from the committed state; do NOT blindly repeat the failed attempt: ' + JSON.stringify(_csGen.pendingIntent.proposed || '').slice(0, 200)) : '')
             + (_prevSc ? ('\nPrior proposed transition (context): ' + JSON.stringify(_prevSc.event || '').slice(0, 160)) : '\n(First spine scene — no prior transition.)')
             + '\nReachability (HARD): the event must be reachable in ONE scene FROM the committed world state above — a single irreversible step, not a leap past intermediate states the story has not reached.\n'
             + '\nContinuity (where the last scene ended — context only, NOT the event to repeat): ' + JSON.stringify(sc).slice(0, 300)
             + '\nPlayer action: ' + String(act || '').slice(0, 250) + '\nPlayer dialogue: ' + String(dia || '').slice(0, 200)
             + '\nScene index: ' + (s.turnCount || 0);
+          // PLANNER-PROMPT DUMP + PENDING-INTENT DELETION TEST (Roman 2026-08-10). window._dumpPlannerPrompt logs the
+          // LITERAL user prompt the scene planner reasons from (to see what dominates: committed facts vs pendingIntent
+          // vs continuity vs milestone). window._suppressPendingIntent omits the pendingIntent line after a MISS (the
+          // single variable in the behavioral deletion A/B: does the planner invent a NEW objective, or independently
+          // regenerate the same one?). pendingIntent lives ONLY in _scUsr; the flag-gated planners below touch only _scSys.
+          try {
+            if (typeof window !== 'undefined' && window._dumpPlannerPrompt === true) {
+              var _piInj = !!(_csGen.pendingIntent && !(window._suppressPendingIntent === true));
+              var _piRaw = !!_csGen.pendingIntent;
+              console.log('[PLANNER-PROMPT] scene=' + (s.turnCount || 0) + ' pendingIntent_present=' + _piRaw + ' pendingIntent_injected=' + _piInj + ' committedFacts=' + ((_csGen.facts || []).length) + '\n----- SCUSR BEGIN -----\n' + _scUsr + '\n----- SCUSR END -----');
+            }
+          } catch (_) {}
           // ═══ INVARIANT RUNTIME v0 (Roman 2026-07-29) — DEMOTE this planner to a REALIZATION planner ═══
           // When active, the invariant is the SINGLE semantic authority (WHAT). This planner keeps its
           // craft (invents the concrete, specific HOW) but must realize the STEERED INVARIANT's truth —
@@ -93071,20 +93126,170 @@ ${(function(){ try { return (typeof _ffBuildRevealWithholdDirective === 'functio
           // routes the SAME planner prompts to a Grok model via /api/proxy (STRUCTURE_GENERATOR = structured-JSON role),
           // to test whether a Grok-generated plan is more naturally realizable by the Grok author (fewer competing_transition).
           // Author + everything else stay identical; only the PLANNER model changes. window._scenePlannerModel overrides the model.
+          // ═══ ACCOMPLISHED-EVENT SCENE CONTRACT (Roman 2026-08-08, flag-gated: window._accomplishedEventContract === true; default OFF = byte-identical) ═══
+          // Tests the converged design: the planner emits an ACCOMPLISHED, irreversible EVENT derived WHY-NOW-FIRST
+          // (what just changed → what is now unavoidable → the event), with a Pixar BUT/THEREFORE causal skeleton, a
+          // pressure delta, and a planner-facing NEXT-NECESSITY. Verb discipline bans process verbs. Output is normalized
+          // back onto the existing state_change keys below, so ALL downstream consumers run UNCHANGED — only the planner's
+          // REASONING contract changes (ONE variable, for a clean blind A/B vs the current state_change contract). The
+          // evaluator is deliberately left unchanged in this build (one variable at a time).
+          var _aecOn = (typeof window !== 'undefined' && window._accomplishedEventContract === true);
+          if (_aecOn) {
+            _scSys = 'You are the SCENE planner for an interactive story engine. You output a SCENE CONTRACT for exactly ONE scene. The scene delivers ONE accomplished, irreversible, externally-observable EVENT — it either happens on the page or the scene has FAILED. You NEVER write prose, emotion, atmosphere, or reader-effects; you emit only the event and its causal skeleton. The author owns everything else.\n'
+              + 'THE MILESTONE IS CONTEXT, NOT YOUR OBJECTIVE. The CURRENT MILESTONE in the context is a DISTANT destination — never restate it as the objective, never "realize the milestone." Instead: from the CURRENT WORLD STATE (the committed facts — where the story actually is right now), derive a FRESH single irreversible event that most advances the story toward that milestone. Take the next REAL step from the committed facts; do not chew on the milestone.\n'
+              + 'Think in THIS ORDER — do NOT pick the event first:\n'
+              + '  1) why_now — what has JUST changed (from the committed facts, the prior scene, or the player\'s action) that makes an irreversible event UNAVOIDABLE this scene. If nothing forces one, you have not found the scene — look again at the pressures and the prior event. 1 sentence.\n'
+              + '  2) objective — the SINGLE irreversible event that why_now makes unavoidable AND that most advances the story from the current world state toward the milestone. HARD VERB TEST: it must be PAST-TENSE-COMPLETABLE — the sentence "By the end of the scene, ____ had happened" must read naturally. GOOD: "Julian publicly accepted blame" / "The bond shattered" / "The elder exposed the forged vow." BAD (process, not event): "Julian moves toward trusting Elara" / "The relationship deepens" / "She advances the investigation." EXTERNALLY OBSERVABLE — a witness in the room could see it happen, not a feeling/realization. Name ONLY the event; stop at the concrete moment (no "…revealing…", "…making her realize…"). 6-14 words.\n'
+              + '  3) obstacle — a concrete force that should PREVENT the objective, strong enough that WITHOUT the therefore it would NOT happen. NOT a vague internal reluctance ("he is scared"); a real external, relational, or stakes-based resistance. The objective may NOT happen trivially.\n'
+              + '  4) therefore — the specific decision, action, or cost (often driven by the player\'s move) that OVERCOMES that obstacle so the objective occurs BY this means. If your therefore is essentially "he does it anyway," the obstacle was too weak — strengthen the obstacle.\n'
+              + '  5) entry_fact_false — the single fact NOT YET TRUE at the open (the negation of the objective), phrased so the scene must open with it still false. 8-16 words.\n'
+              + '  6) pressure_entering / pressure_leaving — the active pressure(s) at open, and which pressure is now HIGHER or newly-active because the objective landed (what is now worse / closer / at stake). Pressures are plural and need not be hierarchical.\n'
+              + '  7) exit_state — one sentence: what is now objectively TRUE that was not before. MUST differ from the entry state.\n'
+              + '  8) next_necessity (VALIDATOR — this GATES the objective): one sentence naming something that becomes newly necessary and could NOT have happened before this scene\'s objective. If you cannot state one, or it merely repeats the objective, your OBJECTIVE IS TOO WEAK — go back and choose a stronger event. A scene that forces no next scene has failed.\n'
+              + '  9) forces_choice + branch_a + branch_b — the closing choice the objective unlocks for the player: TWO ACTIVE responses to the new fact (no opt-out / do-nothing / walk-away branch).\n'
+              + 'HARD RULES:\n'
+              + '  - Reachable in ONE scene from the committed world state — a single irreversible step, not a leap past states the story has not reached.\n'
+              + '  - Do NOT re-flip a fact already TRUE in committed state, and do NOT re-emit the prior scene\'s event reworded. If your objective restates something already true, it is INVALID — pick the next UNREALIZED event.\n'
+              + 'Return ONLY JSON: { "why_now":"", "objective":"", "obstacle":"", "therefore":"", "entry_fact_false":"", "pressure_entering":"", "pressure_leaving":"", "exit_state":"", "next_necessity":"", "forces_choice":"", "branch_a":"", "branch_b":"" }';
+          }
+          // ═══ SITUATION-DRIVEN PLANNER (Roman 2026-08-09, flag: window._situationDrivenPlanner === true; default OFF) ═══
+          // THE ROLE INVERSION: the current planner uses the MILESTONE to generate the scene and world-state only to
+          // prevent contradiction. This flips it — the EVOLVING SITUATION generates the scene; the milestone only
+          // prevents long-range drift (a per-scene REJECTION CONSTRAINT, not a generator). Steering input is the
+          // "unavoidable current situation" (last delivered event + player's new action + unresolved pressures), NOT
+          // raw world state. Therefore/But connect SITUATIONS (event → new situation), not steps toward a milestone.
+          // Nothing else changes; the _scUsr context already supplies the milestone as a "distant TARGET / NOT a
+          // per-scene mandate", the committed facts, the pressures, the prior transition, and the player's action.
+          var _sdpOn = (typeof window !== 'undefined' && window._situationDrivenPlanner === true);
+          if (_sdpOn) {
+            _scSys = 'You are the SCENE planner for an interactive story engine. You emit a SCENE CONTRACT for ONE scene: a single irreversible, externally-observable EVENT plus its causal skeleton. You NEVER write prose, emotion, or atmosphere — the author owns all of that.\n'
+              + 'CHOOSE THE EVENT FROM THE SITUATION, NOT FROM THE MILESTONE. Work in THIS ORDER:\n'
+              + '  1) dominant_situation — Given (a) the LAST DELIVERED irreversible EVENT, (b) the PLAYER\'S most recent ACTION, and (c) EVERY unresolved obligation, threat, opportunity, and consequence now present in the committed world state, identify THE ONE situation the characters can NO LONGER IGNORE. Phrase it as a CONCRETE DRAMATIC PROBLEM, not a topic or object. GOOD: "The elders are preparing to sever the bond." / "Julian has become the public target." / "The crowd no longer trusts Elara." / "Fate now demands payment." BAD (topic/object/intensification): "The bond." / "The wish." / "Julian." / "The thread glows brighter." / "Continue exposing the bond." HARD SAMENESS TEST: if the dominant situation could be resolved by EXACTLY THE SAME player action as the previous scene, it is the SAME situation — REJECT it and name the new problem the last event created.\n'
+              + '  2) but — the concrete OBSTACLE preventing this situation from being resolved easily this scene: a real external, relational, or stakes-based resistance (not vague internal reluctance).\n'
+              + '  3) objective — the SINGLE irreversible event that CHANGES the dominant situation NOW — not one that merely intensifies the current fact. HARD verb rule: PAST-TENSE-COMPLETABLE ("By the end of the scene, ____ had happened"); an accomplished-event verb (exposes, severs, arrests, flees, confesses, destroys, chooses, seizes, betrays, kills), NEVER a process verb (advance, deepen, intensify, build toward). EXTERNALLY OBSERVABLE. 6-14 words. It must MOVE the situation to a new one, not make the same fact louder / brighter / more public.\n'
+              + '  4) therefore — the NEW situation that NECESSARILY exists BECAUSE this event happened: what the characters must now deal with next. 1 sentence. This becomes the NEXT scene\'s dominant situation, so it must be a genuinely DIFFERENT problem, not the same one continued.\n'
+              + '  5) forces_choice + branch_a + branch_b — the closing choice the event unlocks for the player: TWO ACTIVE responses to the new situation (no opt-out / do-nothing).\n'
+              + 'THE MILESTONE IS A CONSTRAINT, NOT YOUR GENERATOR. The issue\'s long-range MILESTONE appears in the context below. Do NOT derive your event from it, do NOT restate it, do NOT try to "advance" it. It only REJECTS candidates: your chosen event must stay COMPATIBLE with eventually reaching that milestone — UNLESS the player\'s action has legitimately forced a reroute. The milestone answers "where is the issue ultimately going", never "what happens next".\n'
+              + 'PROGRESSION SELF-CHECK (hard, before returning): (1) is your dominant_situation the prior scene\'s problem with more intensity? If yes, REJECT. (2) CONSEQUENCE TEST — could the PREVIOUS scene have produced this exact objective event WITHOUT anything that happened in this scene? If yes, the event is NOT a consequence of the current situation — REGENERATE it (no arbitrary event-hopping). Movement (brighter/louder/closer) is a FAIL; progression (the story is now about something DIFFERENT, caused by what just happened) is the requirement.\n'
+              + 'Return ONLY JSON: { "dominant_situation":"", "but":"", "objective":"", "therefore":"", "forces_choice":"", "branch_a":"", "branch_b":"" }';
+          }
+          // ═══ CONSEQUENCE-SELECTION PLANNER (Roman 2026-08-10, Phase 2 exp #1; flag window._consequenceSelectionPlanner; default OFF) ═══
+          // Changes WHICH event is selected (not HOW it is communicated — it still emits the frozen event_slots below).
+          // STATE-TRANSITION reframe (Roman 2026-08-10): the planner does NOT ask "what consequence follows" (that
+          // attractor collapsed to "someone must reveal the truth" — exposition whose only consequence is more
+          // exposition). It asks "what is now DIFFERENT because the last irreversible event happened" → which fact most
+          // changes what someone MUST / CAN / WANTS to DO → build the next irreversible event on that change. The
+          // must/can/wants triple is the anti-collapse mechanism (drop one and it slides back to the disclosure basin);
+          // "irreversible" is the taxonomy-free operationalization of scene fuel (a disclosure that leaves the world
+          // otherwise unchanged is reversible → starves the verifier → not selected). Scene TYPES (world-change /
+          // disclosure / sacrifice / …) are GRADED downstream as telemetry, NEVER prompted as goals.
+          var _csqOn = (typeof window !== 'undefined' && window._consequenceSelectionPlanner === true);
+          if (_csqOn) {
+            _scSys = 'You are the SCENE planner for an interactive story engine. You do NOT invent a situation from scratch and you do NOT ask "how do I advance the milestone." You perform a STATE TRANSITION: the last irreversible event changed the world; find what is now DIFFERENT and build the next scene on the single change that matters most.\n'
+              + 'Work in THIS ORDER:\n'
+              + '  1) facts_now_true — from the LAST IRREVERSIBLE EVENT (the committed world state below) and the PLAYER\'S new action, list 2-4 facts that are NOW TRUE that were not true before (short clauses).\n'
+              + '  2) changes — enumerate EVERY meaningful change that became true because of the last irreversible event (there may be one, there may be six — do NOT pad to a count). Each change is exactly ONE of: someone now MUST do something they were not forced to before (a new obligation) · someone now CAN, or can no longer, do something (their available choices changed) · someone now WANTS something different (their incentive shifted). Tag each [must] / [can] / [wants], and name WHOSE choices changed. A fact merely becoming KNOWN is NOT a change — it counts only if it changes what someone must, can, or wants to DO.\n'
+              + '  3) selected_change — the change that creates the STRONGEST UNRESOLVED DRAMATIC PROBLEM: the change whose consequences the characters can least ignore right now. Return changed_dimension = must | can | wants for it.\n'
+              + '     SELF-CHECK (anti-stagnation): could this same change have been selected in the PREVIOUS scene — was it already available before the last event happened (already implied by the prior committed world state)? If yes, it is NOT new — REJECT it and choose a different change. The story must move to a problem that did not exist one scene ago.\n'
+              + '  4) objective — one IRREVERSIBLE EVENT that acts on the selected change and, once it happens, cannot be taken back. It may be an action, a confrontation, a confession, a sacrifice, a betrayal, an arrival, or a refusal — do NOT aim for any particular kind; aim for the change and let the form follow. A genuine NEW step the last event caused — NOT a restatement of the last event, NOT the milestone reworded. Accomplished-event verb, externally observable, 6-14 words. An explanation or disclosure that leaves the world otherwise unchanged is NOT irreversible — do not select it.\n'
+              + '  5) forces_choice + branch_a + branch_b — the closing choice the objective unlocks (two ACTIVE responses, no opt-out / do-nothing).\n'
+              + 'The MILESTONE in the context is a DISTANT compass (context only): your objective must not wander AWAY from it, but you do NOT derive it from the milestone — you derive it from the change you selected.\n'
+              + 'HARD: do not re-flip a fact already TRUE in the committed world state; the objective must move the story to a NEW problem, not re-render the last one.\n'
+              + 'Return ONLY JSON: { "facts_now_true":[], "changes":[], "selected_change":"", "changed_dimension":"", "objective":"", "forces_choice":"", "branch_a":"", "branch_b":"" }';
+          }
+          // ⛔ FROZEN INTERFACE (2026-08-10) — the planner→author→verifier protocol (Precondition/Actor/Action/Target/
+          // Exit-State + the evidence-grounded verifier in _commitScene) is VALIDATED for current production semantics
+          // and the _verifier_regression.mjs suite. Do NOT change the slot set, evidence rules, precondition semantics,
+          // or verifier judgment unless a regression case breaks. Future planner experiments change only WHICH event is
+          // selected, never HOW it is communicated. New event TYPES → add regression cases (the suite grows; the interface stays).
+          // STRUCTURED EVENT HANDOFF (Roman 2026-08-09, flag: window._structuredEventHandoff === true; default OFF).
+          // Make the planner→author→verifier channel EXACT: the planner also decomposes its chosen event into
+          // load-bearing slots. The author may dramatize but NOT substitute them; the verifier checks them slot-by-slot
+          // (see _buildPlotContractDirective + _commitScene). Fixes the determinism loss ("confess to Julian" → prose
+          // confessed to the ELDERS → verifier said close-enough). Applies to whichever contract set _scSys above.
+          if (typeof window !== 'undefined' && window._structuredEventHandoff === true) {
+            _scSys += '\n\nSTRUCTURED EVENT HANDOFF (REQUIRED — add ONE more key to your JSON): also return "event_slots", decomposing THE SAME single event you chose (do NOT invent a different one) into its SEMANTIC core: { "precondition":"WHAT MUST BE PRESENT for this event to be STAGEABLE — the actor and target must exist / be present in the scene (e.g. \\"Julian is present in the scene\\"). A PRESENCE / availability condition, NOT the before-state the event overturns. If the needed party cannot be present, the event is IMPOSSIBLE — pick a different event", "actor":"who performs it", "action":"the core thing they do", "target":"who or what it is done TO / BEFORE / WITH — a specific character or object; if genuinely none, \\"none\\"", "exit_state":"the ONE fact about the world that is now TRUE because it happened, phrased as a STATE (e.g. \\"the elders now believe Julian caused it\\")" }. EXIT_STATE is the PRIMARY invariant. These four are the author\'s SEMANTIC contract — MEANING, not wording: the author may freely choose location, phrasing, imagery, pacing, AND invent additional micro-beats (hesitation, a lie, an escalation, a reversal), but may NEVER change WHO acts, the core action, WHOM it targets, or the exit_state.';
+          }
           var _plannerGrok = (typeof window !== 'undefined' && window._scenePlannerEngine === 'grok');
+          // Richer contracts (situation-driven / accomplished-event / structured-handoff) emit more fields; 320 tokens
+          // truncated the output and DROPPED the trailing event_slots (found in channel validation). Give them room.
+          var _scMaxTok = ((typeof window !== "undefined") && window._consequenceSelectionPlanner === true) ? 760 : (((typeof window !== "undefined") && (window._structuredEventHandoff === true || window._situationDrivenPlanner === true || window._accomplishedEventContract === true)) ? 640 : 320);
           var _scRes = _plannerGrok
             ? await fetch('/api/proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }], role: 'STRUCTURE_GENERATOR', preferredModel: (typeof window !== 'undefined' && window._scenePlannerModel) || 'grok-4-1-fast-non-reasoning', temperature: 0.3, max_tokens: 320 }) })
+                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys + '\nOutput STRICT JSON ONLY — no preamble, no code fences.' }, { role: 'user', content: _scUsr }], role: 'STRUCTURE_GENERATOR', preferredModel: (typeof window !== 'undefined' && window._scenePlannerModel) || 'grok-4-1-fast-non-reasoning', temperature: 0.3, max_tokens: _scMaxTok }) })
             : await fetch('/api/chatgpt-proxy', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys }, { role: 'user', content: _scUsr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.3, max_tokens: 320, jsonMode: true }) });
+                body: JSON.stringify({ messages: [{ role: 'system', content: _scSys }, { role: 'user', content: _scUsr }], role: 'PRIMARY_AUTHOR', model: 'gpt-4o-mini', temperature: 0.3, max_tokens: _scMaxTok, jsonMode: true }) });
           if (!_scRes.ok) return;
           var _scData = await _scRes.json();
           var _scContent = (_scData && _scData.content) || (_scData && _scData.choices && _scData.choices[0] && _scData.choices[0].message && _scData.choices[0].message.content);
           if (!_scContent) return;
           var _scP; try { _scP = JSON.parse(_scContent); } catch (e) { var _scM = String(_scContent).match(/\{[\s\S]*\}/); if (!_scM) return; try { _scP = JSON.parse(_scM[0]); } catch (e2) { return; } }
+          // ACCOMPLISHED-EVENT CONTRACT: normalize the richer schema back onto the legacy state_change keys so the
+          // rest of this function (and every downstream consumer) runs UNCHANGED. Only the reasoning contract differs.
+          if (_aecOn && _scP) {
+            _scP.state_change = _scP.objective || _scP.state_change;
+            _scP.state_change_precondition = _scP.entry_fact_false || _scP.state_change_precondition;
+            _scP.tactical_move = _scP.why_now || _scP.tactical_move;
+          }
+          // SITUATION-DRIVEN PLANNER: normalize its schema onto the legacy state_change keys — the objective is the
+          // event; the dominant_situation is the "before" (what the event changes). Downstream runs UNCHANGED.
+          if (_sdpOn && _scP) {
+            _scP.state_change = _scP.objective || _scP.state_change;
+            _scP.state_change_precondition = _scP.dominant_situation || _scP.state_change_precondition;
+            _scP.tactical_move = _scP.dominant_situation || _scP.tactical_move;
+          }
+          if (_csqOn && _scP) {
+            _scP.state_change = _scP.objective || _scP.state_change;
+            _scP.tactical_move = _scP.selected_change || _scP.selected_consequence || _scP.tactical_move;
+            if (_scP.event_slots && _scP.event_slots.precondition) _scP.state_change_precondition = _scP.event_slots.precondition;
+          }
           var _scEvent = _scP && String(_scP.state_change || '').trim();
           if (!_scEvent) return;
           var _stateChange = { precondition: String(_scP.state_change_precondition || '').trim(), event: _scEvent, forces_choice: String(_scP.forces_choice || '').trim(), tactical_move: String(_scP.tactical_move || '').trim(), branch_a: String(_scP.branch_a || '').trim(), branch_b: String(_scP.branch_b || '').trim(), sceneProposed: (s.turnCount || 0) };
+          // ACCOMPLISHED-EVENT CONTRACT: attach the causal skeleton to the transition so it rides on
+          // state._priorSceneStateChange (available to the next scene's context + the commit gate) and gets logged.
+          if (_aecOn && _scP) {
+            _stateChange.whyNow = String(_scP.why_now || '').trim();
+            _stateChange.obstacle = String(_scP.obstacle || '').trim();
+            _stateChange.therefore = String(_scP.therefore || '').trim();
+            _stateChange.pressureEntering = String(_scP.pressure_entering || '').trim();
+            _stateChange.pressureLeaving = String(_scP.pressure_leaving || '').trim();
+            _stateChange.exitState = String(_scP.exit_state || '').trim();
+            _stateChange.nextNecessity = String(_scP.next_necessity || '').trim();
+            try {
+              console.log('[SCENE-CONTRACT:AEC] scene=' + (s.turnCount || 0) + ' why_now="' + _stateChange.whyNow.slice(0, 80) + '"');
+              console.log('[SCENE-CONTRACT:AEC] OBSTACLE="' + _stateChange.obstacle.slice(0, 70) + '" THEREFORE="' + _stateChange.therefore.slice(0, 70) + '"');
+              console.log('[SCENE-CONTRACT:AEC] next_necessity="' + _stateChange.nextNecessity.slice(0, 90) + '"');
+              var _procRe = /\b(advance|advances|continue|continues|build toward|builds toward|deepen|deepens|move closer|moves closer|explore|explores|begin to|begins to|start to|starts to|grow|grows)\b/i;
+              console.log('[SCENE-CONTRACT:AEC] verb-discipline-ok=' + (!_procRe.test(_stateChange.event)) + ' event="' + _stateChange.event.slice(0, 70) + '"');
+            } catch (_) {}
+          }
+          // SITUATION-DRIVEN PLANNER: attach the situation skeleton + log the DOMINANT SITUATION per scene (so the
+          // progression test — does the governing problem CHANGE scene-to-scene? — is readable straight from the trace).
+          if (_sdpOn && _scP) {
+            _stateChange.dominantSituation = String(_scP.dominant_situation || '').trim();
+            _stateChange.but = String(_scP.but || '').trim();
+            _stateChange.therefore = String(_scP.therefore || '').trim();
+            try {
+              console.log('[SITUATION-PLANNER] scene=' + (s.turnCount || 0) + ' SITUATION="' + _stateChange.dominantSituation.slice(0, 100) + '"');
+              console.log('[SITUATION-PLANNER] BUT="' + _stateChange.but.slice(0, 60) + '" event="' + _stateChange.event.slice(0, 60) + '" THEREFORE(next situation)="' + _stateChange.therefore.slice(0, 80) + '"');
+            } catch (_) {}
+          }
+          if (_csqOn && _scP) {
+            try {
+              console.log('[CONSEQUENCE] scene=' + (s.turnCount || 0) + ' dimension=' + String(_scP.changed_dimension || '?') + ' selected="' + String(_scP.selected_change || _scP.selected_consequence || '').slice(0, 90) + '"');
+              console.log('[CONSEQUENCE] facts_now_true=' + JSON.stringify((_scP.facts_now_true || []).slice(0, 3)).slice(0, 170));
+              console.log('[CONSEQUENCE] changes=' + JSON.stringify((_scP.changes || _scP.consequences || []).slice(0, 4)).slice(0, 240));
+              console.log('[CONSEQUENCE] objective="' + _stateChange.event.slice(0, 80) + '"');
+            } catch (_) {}
+          }
+          // STRUCTURED EVENT HANDOFF: attach the load-bearing slots to the transition (they ride on _priorSceneStateChange
+          // → the commit verifier checks them; and on _scenePlotContract → _buildPlotContractDirective gives them to the author).
+          if (typeof window !== 'undefined' && window._structuredEventHandoff === true && _scP && _scP.event_slots) {
+            var _es = _scP.event_slots || {};
+            _stateChange.slots = { precondition: String(_es.precondition || '').trim(), actor: String(_es.actor || '').trim(), action: String(_es.action || '').trim(), target: String(_es.target || '').trim(), exitState: String(_es.exit_state || '').trim() };
+            try { console.log('[EVENT-SLOTS] scene=' + (s.turnCount || 0) + ' actor="' + _stateChange.slots.actor + '" action="' + _stateChange.slots.action + '" target="' + _stateChange.slots.target + '" exit="' + _stateChange.slots.exitState.slice(0, 70) + '"'); } catch (_) {}
+          }
           // DERIVED one-element hardBeats (compat view — ONE DIRECTION ONLY: state_change → beat, never read back
           // to reinterpret the scene). Downstream fulfillment scorer / obligation ledger / CG carryover consume
           // this UNCHANGED; state_change remains the sole authority.
@@ -120914,12 +121119,12 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
     starter_first_sacrifice: {
       issue: 1,
       cast: [
-        { role: 'PC', species: 'First Favored', nameLock: false, // PC = player-named via the casting line
+        { role: 'PC', species: 'First Favored', nameLock: false, castingTier: 1, // PC = player-named via the casting line
           bio: 'A young First Favored apprentice. Today is her first time SUPERVISING another person’s First Sacrifice — responsible for the ritual being conducted correctly, not for the wish itself. Brilliant but untested; terrified of failing publicly.' },
-        { role: 'LI', name: 'Julian', species: 'First Favored', nameLock: true,
+        { role: 'LI', name: 'Julian', species: 'First Favored', nameLock: true, castingTier: 1,
           bio: 'An older First Favored: calm, quietly respected. Already knows something about the PC’s lineage. Present at the ritual only as an observer.' },
-        { role: 'youth', species: 'First Favored', nameLock: false,
-          bio: 'A youth making their First Sacrifice — earnest, frightened, emotionally overwhelmed.' }
+        { role: 'youth', species: 'First Favored', nameLock: false, gender: 'female', castingTier: 1, // in every S1 panel + accuses PC later → lead-tier anchor
+          bio: 'A GIRL making her First Sacrifice — earnest, frightened, emotionally overwhelmed. (Gender LOCKED female so she stays consistent across panels — the render must never flip her to a boy.)' }
       ],
       // WORLD TRUTHS — canon invariants the author must receive and never contradict.
       worldTruths: [
@@ -120948,9 +121153,9 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       // First Favored canon (→ future CANON registry); per-character = seed-specific anchors.
       visualCanon: {
         'First Favored': ['barefoot', 'gossamer / Veilweave attire (never cloaks or boots)', 'visible Weave-Script on the skin', 'strikingly, unmistakably beautiful in the First Favored way'],
-        Julian: ['First Favored (NOT human): a saturated exotic SKIN hue (deep slate-blue) — never a human skin tone', 'black hair', 'silver Weave-Script visible on the skin', 'sheer gossamer tunic (never bare-chested / human-clothed)', 'small rounded human ears', 'a scar over the left wrist', 'always stands too still'],
+        Julian: ['First Favored (NOT human): a saturated exotic SKIN hue (deep slate-blue) — never a human skin tone', 'black hair', 'silver Weave-Script visible on the skin', 'sheer gossamer tunic like every First Favored — NEVER heavy robes, vestments, a mantle, or human clothing, and never bare-chested (even seen from behind: exotic slate-blue skin + silver Weave-Script above the gossamer, not a robed back)', 'small rounded human ears', 'a scar over the left wrist', 'always stands too still'],
         PC: ['First Favored species canon applies (PC is player-named)', 'officiating Sacrificiant: the same sheer gossamer tunic as everyone + ONE ornamented ceremonial SASH (never robes)', 'THE SACRIFICIANT SEAL — a gossamer band tied across the mouth (cloth only, NO orb/bead) — drawn IN for CG throughout the rite; her cries are muffled behind it'],
-        youth: [/* TODO: youth visual anchor — FF species canon applies */]
+        youth: ['a young GIRL (female — never a boy), consistent across every panel', 'First Favored species canon applies: aqua skin, pale coral hair, small rounded ears', 'child-of-the-rite: small, kneeling, earnest and frightened', 'when restored: her WHOLE face on her body (never a disembodied / floating head)']
       },
       // TRUTHS — immutable plot facts / secrets. NEVER change. The PLANNER decides, per
       // scene, WHEN (if ever) each becomes known to the PC / the crowd / the reader.
@@ -189630,6 +189835,9 @@ No text, no watermark, no UI elements, share-ready.`;
   function _cgIssueState() {
     if (!state._introducedCast) state._introducedCast = {};          // { token: {portraitUrl, at} } — has an intro portrait this issue
     if (!state._firedMomentSplashes) state._firedMomentSplashes = {}; // { momentType: true } — fire-once per issue
+    if (!state._cgTier2Pending) state._cgTier2Pending = [];           // Tier-2 chars buffered across scenes for a 4-up anchor sheet
+    if (state._cgTier2PendingSince === undefined) state._cgTier2PendingSince = null; // sceneIndex the oldest pending head has waited from
+    if (!state._cgRevealed) state._cgRevealed = {};                   // { token: true } — identity-reveal re-anchors fired this issue
     return state;
   }
   window._cgIssueState = _cgIssueState;
@@ -189663,6 +189871,34 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   function _cgIntroQualifies(o) { return !!_cgIntroRole(o); }
   window._cgIntroRole = _cgIntroRole; window._cgIntroQualifies = _cgIntroQualifies;
+
+  // ── CASTING TIERS (Roman 2026-08-11) — this is a CASTING SYSTEM. Separate the PERMANENT thing from the
+  // replaceable thing: the CASTING is a character's identity assignment (permanent); the ANCHOR is their
+  // CURRENT visual reference (replaceable — see _cgRefreshAnchor). A character's casting tier is their
+  // importance to the story, NOT their screen-time.
+  //   CASTING TIER 1 — IDENTITY-DEFINING (Flux / highest quality individual splash): PC, LI, antagonist, the
+  //            First-Sacrifice youth, any major cast the planner marks a LEAD.
+  //   CASTING TIER 2 — CONSISTENCY (a batched Gemini 4K CASTING SESSION — see _cgCastingSessionLayout —
+  //            split into anchors): concierge, mentor, captain of the guard, quest-giver, recurring merchant.
+  //   CASTING TIER 0 — none: crowd, bartender, passerby.
+  // THE PLANNER OWNS THE DECISION (appearance count is a poor proxy — a character may appear twice and change
+  // everything, or twenty times serving drinks). Declare o.castingTier (0|1|2) or o.castingImportance
+  // (lead|supporting|recurring|incidental); else fall back to the role default ONLY. No count heuristic.
+  var _CG_TIER1_ROLES = { pc: 1, li: 1, antagonist: 1 };
+  var _CG_IMPORTANCE_TIER = { lead: 1, supporting: 2, recurring: 2, incidental: 0 };
+  function _cgCastingTier(o, role) {
+    if (!o) return 0;
+    if (o.castingTier === 0 || o.castingTier === 1 || o.castingTier === 2) return o.castingTier;  // planner declaration WINS
+    if (o.anchorTier === 0 || o.anchorTier === 1 || o.anchorTier === 2) return o.anchorTier;       // alias
+    if (o.castTier === 0 || o.castTier === 1 || o.castTier === 2) return o.castTier;               // legacy alias
+    if (o.castingImportance && _CG_IMPORTANCE_TIER[o.castingImportance] != null) return _CG_IMPORTANCE_TIER[o.castingImportance];
+    role = role || _cgIntroRole(o);
+    if (_CG_TIER1_ROLES[role]) return 1;   // leads → identity-defining
+    if (role) return 2;                    // any other recognised role → consistency anchor
+    return 0;                              // crowd / passerby → none
+  }
+  var _cgAnchorTier = _cgCastingTier, _cgCastTier = _cgCastingTier;   // back-compat lexical aliases (call sites unchanged)
+  window._cgCastingTier = _cgCastingTier; window._cgAnchorTier = _cgCastingTier; window._cgCastTier = _cgCastingTier;
 
   // LI ATTRACTIVENESS CANON (Roman 2026-08-09, HARD): the love interest is ALWAYS gorgeous + amazingly
   // proportioned — even face-hidden, the body/bearing read mesmerizing and others are visibly drawn.
@@ -189724,6 +189960,31 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._buildIntroPortraitPrompt = _buildIntroPortraitPrompt;
 
+  // TIER-1 DENSITY (Roman 2026-08-11) — render a lead's establishing splash via BFL FLUX.2 [pro] (denser than
+  // Gemini-flash), client-side create + poll. Portrait 1152×1536; caps refs at 3 to stay under BFL's 9MP
+  // output+refs budget. Returns a usable image URL (data: or /api/img-proxy path). Throws on any failure so
+  // the caller falls back to Gemini. Consistency across later panels is still Gemini feeding THIS anchor forward.
+  async function _renderPortraitViaBFL(prompt, refs) {
+    var body = { prompt: prompt, model: 'flux-2-pro', width: 1152, height: 1536, output_format: 'png' };
+    (refs || []).slice(0, 3).forEach(function (rf, i) {
+      var b = rf && rf.b64; if (b && b.indexOf('data:') === 0) b = b.split(',')[1];
+      if (b) body[i === 0 ? 'input_image' : 'input_image_' + (i + 1)] = b;
+    });
+    var cr = await fetch('/api/bfl-kontext', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    var created = await cr.json().catch(function () { return {}; });
+    if (!cr.ok || (!created.polling_url && !created.id)) throw new Error('BFL create ' + cr.status);
+    var q = created.polling_url ? ('polling_url=' + encodeURIComponent(created.polling_url)) : ('id=' + encodeURIComponent(created.id));
+    for (var i = 0; i < 48; i++) {
+      await new Promise(function (res) { setTimeout(res, 2500); });
+      var pr = await fetch('/api/bfl-kontext?' + q);
+      var pj = await pr.json().catch(function () { return {}; });
+      if (pj.status === 'succeeded' && pj.image) return pj.image;
+      if (pj.status === 'failed') throw new Error('BFL ' + (pj.error || 'failed'));
+    }
+    throw new Error('BFL timeout');
+  }
+  window._renderPortraitViaBFL = _renderPortraitViaBFL;
+
   // Render ONE intro portrait, charge it, and PROMOTE it to the character's locked casting anchor.
   async function _renderIntroPortrait(o, role, visualState, sceneIndex, opts) {
     opts = opts || {};
@@ -189738,19 +189999,28 @@ No text, no watermark, no UI elements, share-ready.`;
     try { if (isFF && typeof _veilweaveRef === 'function' && _refs.length < 8) { var vp = _veilweaveRef(); if (vp) { var vb = await _canonRefToB64(vp); if (vb) _refs.push({ b64: vb, label: 'VEILWEAVE FABRIC + EFFECT SWATCH (style only, NOT a character) — how the layered translucent GOSSAMER garment (thin gold filament) and its ~6 misregistered overlapping projections look; keep the figure\'s OWN identity.' }); } } } catch (_) {}
     try { if (isFF && typeof _MANUAL_STRUCTURAL_ANCHORS !== 'undefined' && _MANUAL_STRUCTURAL_ANCHORS.the_answer && _refs.length < 8) { var wb = await _canonRefToB64(_MANUAL_STRUCTURAL_ANCHORS.the_answer.url); if (wb) _refs.push({ b64: wb, label: 'THE ANSWER — WEAPON SHAPE REFERENCE (double question-mark hooks); match the silhouette if the figure is armed.' }); } } catch (_) {}
     var size = _cgImageTier('portrait');
-    var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prompt, provider: 'gemini', model: 'gemini-3.1-flash-image-preview',
-        imageSize: size, aspect_ratio: _CG_PORTRAIT_ASPECT, imageIntent: 'scene', textFirst: true, n: 1,
-        reference_images_b64: _refs.length ? _refs : undefined }) });
-    if (!r.ok) throw new Error('portrait HTTP ' + r.status);
-    var d = await r.json(); var u = d.image || d.url;
-    if (!u) throw new Error('portrait returned no image');
-    var url = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
-    try { _chargeImage('gemini', 1, { imageSize: size }); } catch (_) {}
+    var url = null;
+    // TIER-1 dense path (opt-in window._cgTier1Flux): route leads through FLUX.2 for the establishing splash.
+    if (window._cgTier1Flux === true && _cgCastTier(o, role) === 1) {
+      try { var fx = await _renderPortraitViaBFL(prompt, _refs);
+        if (fx) { url = fx; try { _chargeImage('flux', 1, {}); } catch (_) {} try { console.log('[INTRO-PORTRAIT] ' + tok + ' via FLUX.2 (Tier-1 dense)'); } catch (_) {} }
+      } catch (e) { try { console.warn('[INTRO-PORTRAIT] Flux failed → Gemini fallback: ' + (e && e.message)); } catch (_) {} }
+    }
+    if (!url) {
+      var r = await fetch(IMAGE_PROXY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: prompt, provider: 'gemini', model: 'gemini-3.1-flash-image-preview',
+          imageSize: size, aspect_ratio: _CG_PORTRAIT_ASPECT, imageIntent: 'scene', textFirst: true, n: 1,
+          reference_images_b64: _refs.length ? _refs : undefined }) });
+      if (!r.ok) throw new Error('portrait HTTP ' + r.status);
+      var d = await r.json(); var u = d.image || d.url;
+      if (!u) throw new Error('portrait returned no image');
+      url = u.indexOf('data:') === 0 ? u : 'data:image/png;base64,' + u;
+      try { _chargeImage('gemini', 1, { imageSize: size }); } catch (_) {}
+    }
     // PROMOTE → locked casting anchor + mark introduced this issue (so it fires once, and later sheets reference it).
     // opts.promote===false / opts.noMark let the situated path render an obscured DISPLAY card without letting it
     // become the anchor (a clean supplementary render promotes+marks instead).
-    if (opts.promote !== false) { try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(tok, url, { locked: true, desc: (opts.seedDesc || o.desc || o.description || '') }); } catch (_) {} }
+    if (opts.promote !== false) { try { if (typeof _castingSeedManualAnchor === 'function') _castingSeedManualAnchor(tok, url, { locked: true, replace: !!opts.replaceAnchor, desc: (opts.seedDesc || o.desc || o.description || '') }); } catch (_) {} }
     if (!opts.noMark) { try { _cgIssueState()._introducedCast[tok] = { portraitUrl: url, role: role, at: (window.state && window.state.turnCount) }; } catch (_) {} }
     try { console.log('[INTRO-PORTRAIT] ' + tok + ' (' + role + ') rendered @ ' + size + ' + promoted to locked anchor'); } catch (_) {}
     return { token: tok, role: role, imageUrl: url, kind: 'portrait', fingerprint: 'intro-' + tok + '-s' + sceneIndex };
@@ -189949,6 +190219,30 @@ No text, no watermark, no UI elements, share-ready.`;
     else if (n === 3) { q.push({ type: 'emblem' }); }
     return q.slice(0, 4);
   }
+  // CASTING SESSION (Roman 2026-08-11) — a Tier-2 anchor batch owns ONE Gemini 4K sheet = 4 quadrants. Rather
+  // than "exactly 4 characters or waste space", the CHARACTER quads become anchors and any SPARE quads are
+  // filled with reusable SCENE-DETAIL insets (a clenched fist on a table, a hand on a sword hilt, a tugged
+  // collar) — evocative atmosphere the scene renderer can reuse, NOT redundant portraits of the same head.
+  // Detail quads are bonus art, never anchors. Planner may pass its own details[] (e.g. beats from this arc).
+  var _CG_SCENE_DETAILS = [
+    'a clenched FIST pressed knuckle-down on a worn tabletop',
+    'a hand tugging tensely at a stiff shirt COLLAR',
+    'a hand resting on a sword HILT, fingers loosely curled',
+    'white-knuckled fingers gripping the back of a chair',
+    'a hand half-drawing a blade an inch from its sheath',
+    'fingers drumming a slow rhythm on a scarred armrest',
+    'a hand crushing a folded letter into a fist',
+    'a boot heel grinding out an ember on flagstones'
+  ];
+  function _cgCastingSessionLayout(mains, details) {
+    var n = Math.min(mains.length, 4), q = [];
+    for (var i = 0; i < n; i++) q.push({ type: 'char', main: mains[i] });
+    var pool = (details && details.length) ? details : _CG_SCENE_DETAILS;
+    var st = _cgIssueState(); if (st._cgDetailCursor == null) st._cgDetailCursor = 0;
+    while (q.length < 4 && pool.length) { q.push({ type: 'detail', spec: pool[st._cgDetailCursor % pool.length] }); st._cgDetailCursor++; }
+    return q.slice(0, 4);
+  }
+  window._cgCastingSessionLayout = _cgCastingSessionLayout;
   // A STORY CLOSE-UP quadrant — a full image beat (planner-specified subject preferred; else a canon default).
   function _cgStoryCloseup(q, combat) {
     if (q && q.spec) return String(q.spec);
@@ -189975,7 +190269,8 @@ No text, no watermark, no UI elements, share-ready.`;
       } else if (q.type === 'closeup') {
         L.push(label + ' [STORY CLOSE-UP — its own image beat] — ' + _cgStoryCloseup(q, combat) + '. A full, cinematic close-up of this dramatic moment (NOT a tiny inset), filling and contained within its quadrant.');
       } else if (q.type === 'detail') {
-        L.push(label + ' [DETAIL INSET] — ' + _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure, combat) + '. Beautiful, iconic; NOT a full figure, NOT a face portrait.');
+        var _detailTxt = q.spec ? String(q.spec) : (q.main ? _cgDetailPanelFor(q.main.o, q.main.role, q.main.obscure, combat) : 'an evocative object detail');
+        L.push(label + ' [DETAIL INSET] — ' + _detailTxt + '. A close, evocative body-language / object detail — its own small cinematic composition; NOT a full figure, NOT a face portrait.');
       } else {
         var _emCulture = ((window.state || {})._playerSpecies) || (chars[0] && chars[0].species) || '';
         L.push(label + ' [EMBLEM INSET] — ' + _cgIssueEmblem(_emCulture) + '. No text.');
@@ -189987,12 +190282,15 @@ No text, no watermark, no UI elements, share-ready.`;
   window._buildSituatedCastPagePrompt = _buildSituatedCastPagePrompt;
 
   // Render the premium situated 2x2 page, split, crop ONLY the CHARACTER quadrants as anchors (fills = bonus art).
-  async function _renderSituatedCastPage(mains, visualState, phases, sceneIndex) {
+  async function _renderSituatedCastPage(mains, visualState, phases, sceneIndex, opts) {
+    opts = opts || {};
     mains = (mains || []).slice(0, 4);
     if (!mains.length) return null;
     mains.forEach(function (m) { if (m.obscure) m.concealText = _cgConcealForLI(m.o, m.seedDesc); });   // OTS-dominant, varied
     var combat = _cgIsCombatScene(visualState, phases);   // Veilweave + The Answer are combat-only
-    var quadrants = _cgLayoutForCast(mains, (visualState && visualState.introCloseups) || []);   // planner/scene story close-ups
+    // A Tier-2 CASTING SESSION spends spare quadrants on extra reference shots of the SAME heads; the legacy
+    // same-scene path fills them with story close-ups / an emblem.
+    var quadrants = opts.castingSession ? _cgCastingSessionLayout(mains) : _cgLayoutForCast(mains, (visualState && visualState.introCloseups) || []);
     var prompt = _buildSituatedCastPagePrompt(quadrants, visualState, combat);
     var anyFF = mains.some(function (m) { return /favor|favour/.test(String((m.o && m.o.species) || '').toLowerCase()); });
     var _refs = [];
@@ -190015,7 +190313,8 @@ No text, no watermark, no UI elements, share-ready.`;
     var quads = await _splitSheetQuadrants(sheetUrl);
     _cgIssueState(); if (!state._castCards) state._castCards = {};
     for (var qi = 0; qi < quadrants.length; qi++) {
-      var qd = quadrants[qi]; if (qd.type !== 'char') continue;    // ONLY full-body character quads become anchors
+      var qd = quadrants[qi];
+      if (qd.type !== 'char') continue;                             // detail / closeup / emblem = bonus scene art (not an anchor)
       var m = qd.main, tok = _castingToken(m.o.name), crop = (quads && quads[qi]) || sheetUrl;
       // LIs defer their face-anchor to the reveal system (liFaceMasterUrl / liMysteryLock) — never promote a
       // competing casting anchor (a mystery LI establishes NO face; the player shapes it at reveal). Others promote.
@@ -190031,6 +190330,32 @@ No text, no watermark, no UI elements, share-ready.`;
 
   // Detect the NEW main players entering THIS scene → COUNT-ADAPTIVE situated delivery (once per issue):
   // 1 → a single situated splash; 2-4 → one premium 2x2 page (full-body + detail/emblem fills); 5+ → cap 4.
+  // CROSS-SCENE TIER-2 BUFFERING (Roman 2026-08-11) — limited-recurring characters accumulate and get their
+  // anchors minted 4-at-a-time in ONE Gemini 2×2 (cheap per head), instead of a solo render each. Flush when
+  // 4 are pending; the remainder flushes on a staleness cap (oldest waited ≥ STALE scenes) or a forced flush
+  // (opts.force — e.g. issue/act boundary). Reuses _renderSituatedCastPage (which splits the sheet + seeds each
+  // quadrant as a locked anchor). A buffered head is NOT marked introduced until its anchor lands, so it may
+  // appear once from its description before the anchor exists — an accepted trade for minor cast.
+  async function _cgFlushTier2Pending(visualState, phases, sceneIndex, opts) {
+    opts = opts || {};
+    var st = _cgIssueState(); var pend = st._cgTier2Pending; var cards = [];
+    var STALE = 3;
+    var stale = !!(pend.length && st._cgTier2PendingSince != null && (sceneIndex - st._cgTier2PendingSince) >= STALE);
+    while (pend.length && (pend.length >= 4 || opts.force || stale)) {
+      var batch = pend.splice(0, 4);
+      try {
+        var card = (batch.length === 1)
+          ? await _renderSituatedIntro(batch[0].o, batch[0].role, visualState, phases, sceneIndex)   // lone leftover → solo
+          : await _renderSituatedCastPage(batch, visualState, phases, sceneIndex, { castingSession: true }); // 1-4 heads → one 4K casting session (spare quads = extra reference shots), split into anchors
+        if (card) cards.push(card);
+      } catch (e) { try { console.warn('[TIER2-FLUSH] batch failed: ' + (e && e.message)); } catch (_) {} }
+    }
+    st._cgTier2PendingSince = pend.length ? (st._cgTier2PendingSince == null ? sceneIndex : st._cgTier2PendingSince) : null;
+    if (cards.length) { try { console.log('[TIER2-FLUSH] minted ' + cards.length + ' anchor sheet(s); ' + pend.length + ' still pending'); } catch (_) {} }
+    return cards;
+  }
+  window._cgFlushTier2Pending = _cgFlushTier2Pending;
+
   async function _renderIntroCardsForScene(visualState, phases, sceneIndex) {
     _cgIssueState();
     var s = window.state || {};
@@ -190039,16 +190364,45 @@ No text, no watermark, no UI elements, share-ready.`;
     if (pcName) cands.push({ name: pcName, isPC: true, species: s._playerSpecies || '' });
     var others = (visualState && Array.isArray(visualState.other_characters_present)) ? visualState.other_characters_present : [];
     others.forEach(function (o) { if (o && o.name) cands.push(o); });
+    var _tiersOn = (typeof window !== 'undefined' && window._cgCastTiers === true);
     var mains = [];
     for (var i = 0; i < cands.length; i++) {
       var c = cands[i], tok = _castingToken(c.name);
       if (!tok || state._introducedCast[tok]) continue;           // already introduced this issue → skip
       var role = _cgIntroRole(c);
-      if (!role) continue;                                        // not a main player
+      // eligibility: with tiers ON, a Tier-1/2 character qualifies even without a standard CG role (a seed
+      // may DECLARE castingTier — e.g. the 'youth' — who would otherwise be skipped); with tiers OFF, legacy gate.
+      var tier = _tiersOn ? _cgCastTier(c, role) : (role ? 1 : 0);
+      if (!tier) continue;
       c.role = role;
-      mains.push({ o: c, role: role, seedDesc: _cgSeedVisualCanon(tok), beat: _cgIntroBeatFor(c, role, visualState, phases), obscure: (role === 'li' && !_cgLIFaceRevealed(c, role)) });
+      mains.push({ o: c, role: role, tier: tier, seedDesc: _cgSeedVisualCanon(tok), beat: _cgIntroBeatFor(c, role, visualState, phases), obscure: (role === 'li' && !_cgLIFaceRevealed(c, role)) });
     }
     if (!mains.length) return [];
+
+    if (_tiersOn) {
+      // ── TIER ROUTING (Roman 2026-08-11): leads get an INDIVIDUAL dense splash NOW; limited recurring are
+      // BUFFERED across scenes and minted 4-at-a-time (see _cgFlushTier2Pending).
+      var cards = [];
+      var _t1 = mains.filter(function (m) { return m.tier === 1; });
+      var _t2 = mains.filter(function (m) { return m.tier === 2; });
+      for (var a = 0; a < _t1.length; a++) {
+        try { var c1 = await _renderSituatedIntro(_t1[a].o, _t1[a].role, visualState, phases, sceneIndex); if (c1) cards.push(c1); }
+        catch (e) { try { console.warn('[INTRO-CARD] tier1 solo failed: ' + (e && e.message)); } catch (_) {} }
+      }
+      if (_t2.length) {                                     // enqueue Tier-2 heads (dedup; not-yet-anchored only)
+        var _st = _cgIssueState();
+        if (_st._cgTier2PendingSince == null) _st._cgTier2PendingSince = sceneIndex;
+        _t2.forEach(function (m) {
+          var tk = _castingToken(m.o.name);
+          if (tk && !_st._introducedCast[tk] && !_st._cgTier2Pending.some(function (p) { return _castingToken(p.o.name) === tk; })) _st._cgTier2Pending.push(m);
+        });
+      }
+      try { var flushed = await _cgFlushTier2Pending(visualState, phases, sceneIndex); if (flushed && flushed.length) cards.push.apply(cards, flushed); } catch (_) {}
+      try { console.log('[INTRO-CARD] tiers: ' + _t1.length + ' Tier-1 solo now, ' + _t2.length + ' Tier-2 queued (pending ' + _cgIssueState()._cgTier2Pending.length + ') → ' + cards.length + ' card(s)'); } catch (_) {}
+      return cards;
+    }
+
+    // ── LEGACY count-based routing (unchanged when _cgCastTiers !== true) ──
     if (mains.length === 1) {
       try { var card = await _renderSituatedIntro(mains[0].o, mains[0].role, visualState, phases, sceneIndex); return card ? [card] : []; }
       catch (e) { try { console.warn('[INTRO-CARD] solo failed: ' + (e && e.message)); } catch (_) {} return []; }
@@ -190089,7 +190443,61 @@ No text, no watermark, no UI elements, share-ready.`;
   }
   window._showIntroCardSplash = _showIntroCardSplash;
 
-  // Wiring entry — call just before the staged scene mounts. No-op unless window._cgSituatedIntros===true.
+  // ══ ANCHOR REFRESH (Roman 2026-08-11) — Identity Reveal → Refresh Anchor. NOT a promotion for screen-time:
+  // when a character's IDENTITY fundamentally CHANGES, the reader's understanding of who they are changes, and
+  // usually their appearance does too — so the old anchor has done its job and a NEW anchor now represents the
+  // new truth. Mint a fresh dense (Tier-1) splash of the REVEALED look and REPLACE the locked anchor, so every
+  // later panel uses the new identity. Fire-once per character per issue.
+  //   Reveals (new identities, not more screen-time): mystery LI → face revealed · concierge → actually the
+  //   emperor · beggar → prince · mentor → revealed villain · ally → transformed by the Fold · Wilder → full
+  //   manifestation · human → becomes First Favored.
+  //   Signal sources (checked each scene): (1) a scene emits state._sceneSignals.reveals = [{name,revealedDesc}
+  //   | token]; (2) a seed/plan cast entry with revealAt (scene index) + revealedDesc; (3) direct call
+  //   window._cgRefreshAnchor(char, ...). The mystery-LI keeps its own interactive face-reveal flow.
+  async function _cgRefreshAnchor(o, visualState, phases, sceneIndex, opts) {
+    opts = opts || {};
+    try {
+      var tok = _castingToken((o && (o.name || o.token)) || o);
+      if (!tok) return null;
+      if (!state._cgRevealed) state._cgRevealed = {};
+      if (state._cgRevealed[tok]) return null;                     // fire-once
+      var char = (o && typeof o === 'object') ? o : { name: tok };
+      char.castingTier = 1;                                         // the new identity is lead-tier (dense anchor)
+      var role = char.role || _cgIntroRole(char) || 'antagonist';
+      var revealedDesc = opts.revealedDesc || char.revealedDesc || char.desc || char.description || '';
+      // fresh dense splash of the REVEALED look → REPLACE the locked anchor (mask is off, so face NOT obscured)
+      var card = await _renderIntroPortrait(char, role, visualState, sceneIndex, {
+        seedDesc: revealedDesc, cleanAnchor: true, obscureFace: false, promote: true, replaceAnchor: true, reveal: true
+      });
+      state._cgRevealed[tok] = true;
+      try { console.log('[CG-REVEAL] ' + tok + ' revealed → re-anchored at Tier-1 (dense, replacing prior)'); } catch (_) {}
+      return card;
+    } catch (e) { try { console.warn('[CG-REVEAL] fire failed: ' + (e && e.message)); } catch (_) {} return null; }
+  }
+  var _cgFireCharacterReveal = _cgRefreshAnchor;                    // back-compat lexical alias
+  window._cgRefreshAnchor = _cgRefreshAnchor; window._cgFireCharacterReveal = _cgRefreshAnchor;
+
+  // Dispatcher — scan this scene for DUE anchor-refreshes (identity reveals) and fire them (fire-once each).
+  // Active only with the anchor-tier system on. Returns the "new identity" re-anchor card(s) to surface.
+  async function _cgCheckReveals(visualState, phases, sceneIndex) {
+    if (window._cgCastTiers !== true) return [];
+    var cards = [];
+    try {
+      var seen = {}, due = [];
+      var sig = (window.state && state._sceneSignals && Array.isArray(state._sceneSignals.reveals)) ? state._sceneSignals.reveals : [];
+      sig.forEach(function (r) { var t = _castingToken((r && (r.name || r.token)) || r); if (t && !seen[t]) { seen[t] = 1; due.push((r && typeof r === 'object') ? r : { name: t }); } });
+      try {
+        var seed = (window.STARTER_SEEDS && state && state._starterSeedId) ? window.STARTER_SEEDS[state._starterSeedId] : null;
+        var cast = seed && Array.isArray(seed.cast) ? seed.cast : [];
+        cast.forEach(function (c) { var t = _castingToken(c && c.name); if (t && !seen[t] && c && c.revealAt != null && sceneIndex >= c.revealAt) { seen[t] = 1; due.push(c); } });
+      } catch (_) {}
+      for (var i = 0; i < due.length; i++) { var card = await _cgFireCharacterReveal(due[i], visualState, phases, sceneIndex, {}); if (card) cards.push(card); }
+      if (due.length) { try { console.log('[CG-REVEAL] scene ' + sceneIndex + ': ' + due.length + ' due → ' + cards.length + ' re-anchored'); } catch (_) {} }
+    } catch (e) { try { console.warn('[CG-REVEAL] check failed: ' + (e && e.message)); } catch (_) {} }
+    return cards;
+  }
+  window._cgCheckReveals = _cgCheckReveals;
+
   async function _maybeShowIntroCards(plan, sceneIndex) {
     if (window._cgSituatedIntros !== true) return;
     try {
@@ -190097,7 +190505,11 @@ No text, no watermark, no UI elements, share-ready.`;
       // FAILSAFE: never strand the reader if an intro render hangs — cap the wait, then let the scene mount
       // (the scene's own sheet is already rendering in parallel via phaseImagesPromise).
       var cards = await Promise.race([cardsP, new Promise(function (r) { setTimeout(function () { r(null); }, 30000); })]);
-      if (cards && cards.length) await _showIntroCardSplash(cards);
+      // REVEALS: after intros, fire any due identity-reveal re-anchors (the mask comes off → dense Tier-1 re-anchor).
+      var revealCards = [];
+      try { revealCards = await _cgCheckReveals(plan && plan.visualState, plan && plan.phases, sceneIndex); } catch (_) {}
+      var all = [].concat(cards || [], revealCards || []).filter(Boolean);
+      if (all.length) await _showIntroCardSplash(all);
     } catch (e) { try { console.warn('[INTRO-CARD] show failed: ' + (e && e.message)); } catch (_) {} }
   }
   window._maybeShowIntroCards = _maybeShowIntroCards;
