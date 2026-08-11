@@ -169,6 +169,12 @@ export default async function handler(req, res) {
       // Text-to-image: prompt + dimensions
       payload.width = width || 1024;
       payload.height = height || 1024;
+    } else {
+      // Reference/edit mode: forward explicit dimensions when the caller asks
+      // for a specific output size (else BFL infers from the refs). No default,
+      // so existing callers that omit these are unchanged.
+      if (width) payload.width = width;
+      if (height) payload.height = height;
     }
 
     // Optional parameters
