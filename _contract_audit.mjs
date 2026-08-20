@@ -18,7 +18,7 @@ const audit = eval('(' + fn[1].replace(/;$/,'') + ')');
 window._auditMutation = audit;
 
 const load = f => { try { return JSON.parse(fs.readFileSync(`${dir}/${f}`,'utf8')); } catch(_) { return []; } };
-const snaps = [...load('textsnap.json'), ...load('rawsnap.json')]
+const snaps = [...load('textsnap.json'), ...load('rawsnap_full.json'), ...load('rawsnap.json')]
   .filter(r => r && r.before && r.after && r.before !== r.after);
 
 let n = 0;
