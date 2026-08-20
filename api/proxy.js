@@ -92,7 +92,8 @@ const ROLE_MODEL_CHAIN = {
     'grok-4.3'
   ],
   RENDERER: [
-    'grok-4-1-fast-non-reasoning',   // primary — non-reasoning is cheaper for visual extraction
+    'grok-4-1-fast-non-reasoning',   // NOTE: resolves to grok-4.3; 'non-reasoning' is NOT a cheaper SKU.
+    //   Visual extraction is a UTILITY task and should default to Mistral Small (migration pending).
     'grok-4-1-fast-reasoning',       // fallback 1
     'grok-4.3'                        // fallback 2
   ],
@@ -117,7 +118,7 @@ const ROLE_MODEL_CHAIN = {
   // only renders prose under a decision a checked model already made. No ESD
   // required (this is prose, not ESD-gated explicit rendering; explicit beats
   // still route through INTIMACY_SPECIALIST/SPECIALIST_RENDERER). Gated
-  // client-side by CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR (default OFF).
+  // client-side by CONFIG.ENABLE_GROK_NARRATIVE_AUTHOR (default ON as of 2026-08-16).
   // VERIFIED 2026-07-28: grok-4-1-fast-reasoning is the SAME reasoning model as grok-4.3 (both emit
   // reasoning_content, both ~10-13s on a trivial prompt, both slow/hang-prone on the ~80k-token prose
   // prompt) — so it is USELESS as an immediate fallback from a reasoning primary (it just hangs again,

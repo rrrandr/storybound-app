@@ -122,14 +122,13 @@
   // the cost system; reasoning_tokens billed as output (xAI).
   if (typeof window !== 'undefined') window._promptProfileSummary = function () {
     const RATE = { // [in, out] $/token; prefix-matched against model name
-      'grok-4-1-fast-reasoning': [0.0000005, 0.0000015],
-      'grok-4-1-fast-non-reasoning': [0.0000002, 0.0000005],
+      // DEPRECATED 4.1 ALIASES — resolve to grok-4.3 at the proxy; must be priced as 4.3 (see app.js
+      // price table note, 2026-08-16). Do NOT restore the old cheap-tier numbers.
+      'grok-4-1-fast-reasoning': [0.00000125, 0.0000025],
+      'grok-4-1-fast-non-reasoning': [0.00000125, 0.0000025],
       'grok-4.3': [0.00000125, 0.0000025],
       'gpt-4o-mini': [0.00000015, 0.0000006],
       'gpt-4o': [0.0000025, 0.00001],
-      'claude-opus': [0.000015, 0.000075],
-      'claude-sonnet': [0.000003, 0.000015],
-      'claude-haiku': [0.000001, 0.000005]
     };
     const rate = (m) => { for (const k in RATE) if ((m || '').indexOf(k) === 0) return RATE[k]; return [0.0000005, 0.0000015]; };
     const recs = (window.state && window.state._promptProfile) || [];
@@ -164,7 +163,6 @@
   const CONFIG = {
     // API endpoints
     CHATGPT_PROXY: '/api/chatgpt-proxy',
-    ANTHROPIC_PROXY: '/api/anthropic-proxy',
     SPECIALIST_PROXY: '/api/proxy',
     GEMINI_PROXY: '/api/gemini-proxy',
     MISTRAL_PROXY: '/api/mistral-proxy',
@@ -188,11 +186,15 @@
     // Anthropic prose-tier models (require /api/anthropic-proxy endpoint —
     // not yet wired; resolveRenderTier returns these slugs but the proxy
     // dispatcher will need to route them once the endpoint exists).
-    OPUS_MODEL:   'claude-opus-4-7',     // Opus 4.7 — top-quality prose, $15/$75 per M tokens. Reserved for Tier A major scenes.
-    SONNET_MODEL: 'claude-sonnet-4-5',   // Sonnet 4.x — strong prose, $3/$15 per M tokens. Tier A in-between + Tier B Scene 1.
+    // PREMIUM CREATIVE (Roman 2026-08-16). Replaces OPUS_MODEL/SONNET_MODEL, retired with Anthropic.
+    // The four resolveRenderTier branches that used them are all creative prose authoring (Tier A
+    // intricate / major / in-between, Tier B opening window), so they take the premium creative model.
+    // The null tripwire that briefly stood here surfaced those four LIVE consumers — deleting the
+    // constants as "dead architecture" would have shipped model:null into the dispatcher.
+    PREMIUM_CREATIVE_MODEL: 'grok-4.3',
 
     // Model allowlists (must match server-side)
-    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'claude-haiku-4-5'], // Sonnet/Opus removed 2026-06-24 — cost-deprecated as authors (Haiku repair only)
+    ALLOWED_PRIMARY_MODELS: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-4', 'mistral-small-latest'], // Sonnet/Opus removed 2026-06-24; Haiku removed 2026-08-16 — no Anthropic in production as authors (Haiku repair only)
     ALLOWED_FALLBACK_MODELS: ['gemini-2.0-flash', 'gemini-1.5-flash'],
     ALLOWED_SD_AUTHOR_MODELS: ['grok-4-1-fast-reasoning'],
     ALLOWED_SD_DEEPSEEK_MODELS: ['deepseek-v4-pro', 'deepseek-v4-flash'],
@@ -1051,7 +1053,7 @@
     if (_isIntricateContext(appState)) {
       const _initHazard = _isInitializationHazard(appState, coherenceVector);
       if (_initHazard) {
-        return { model: CONFIG.OPUS_MODEL, max_tokens: 2400, tier: 'A', reason: 'CoherenceInit:' + _initHazard };
+        return { model: CONFIG.PREMIUM_CREATIVE_MODEL, max_tokens: 2400, tier: 'A', reason: 'CoherenceInit:' + _initHazard };
       }
       if (_isMajorScene(appState)) {
         // Major scenes within intricate context — all Sonnet now. Reason
@@ -1064,11 +1066,11 @@
           : appState.storyturn === 'ST3' ? 'TierA:ST3:Sonnet'
           : appState.storyturn === 'ST4' ? 'TierA:ST4:Sonnet'
           : 'TierA:Major:Sonnet';
-        return { model: CONFIG.SONNET_MODEL, max_tokens: 2200, tier: 'A', reason: reason };
+        return { model: CONFIG.PREMIUM_CREATIVE_MODEL, max_tokens: 2200, tier: 'A', reason: reason };
       }
       // In-between scene in an intricate world — Sonnet handles the
       // connective tissue with strong voice, no need for Opus spend.
-      return { model: CONFIG.SONNET_MODEL, max_tokens: 2000, tier: 'A', reason: 'TierA:InBetween:Sonnet' };
+      return { model: CONFIG.PREMIUM_CREATIVE_MODEL, max_tokens: 2000, tier: 'A', reason: 'TierA:InBetween:Sonnet' };
     }
 
     // Scene importance ranking (used by momentum, Wry discipline, and other Tier B rules)
@@ -1091,7 +1093,7 @@
     // Setting voice early with the strongest realistic writer pays back
     // across the rest of the story (momentum carries the voice).
     if (turnCount <= 3) {
-      return { model: CONFIG.SONNET_MODEL, max_tokens: turnCount === 1 ? 2000 : 1800, tier: 'B', reason: 'TierB:OpeningWindow:Sonnet' };
+      return { model: CONFIG.PREMIUM_CREATIVE_MODEL, max_tokens: turnCount === 1 ? 2000 : 1800, tier: 'B', reason: 'TierB:OpeningWindow:Sonnet' };
     }
 
     // B2) Tempt Fate — highest priority key scene
@@ -1203,13 +1205,17 @@
     // DOWNGRADED to claude-haiku-4-5 (repair-class, allowed by the server firewall).
     // This catches polish/expand passes AND every manual A/B harness arm without
     // per-callsite edits. A dev who genuinely wants a paid-Anthropic baseline
-    // comparison sets window.__ALLOW_PAID_ANTHROPIC_AUTHOR__ = true to opt back in
-    // (the server allowlist must also be widened for it to actually go through).
+    // The __ALLOW_PAID_ANTHROPIC_AUTHOR__ opt-in was REMOVED 2026-08-16: a dormant switch that can
+    // silently restore a banned provider contradicts the invariant.
     if (typeof modelResolved === 'string' && /^claude-(sonnet|opus)/.test(modelResolved)) {
-      const _allowPaid = (typeof window !== 'undefined' && window.__ALLOW_PAID_ANTHROPIC_AUTHOR__ === true);
-      if (!_allowPaid) {
-        try { console.warn('[COST-GUARD] ' + modelResolved + ' is cost-deprecated — downgrading to claude-haiku-4-5. Set window.__ALLOW_PAID_ANTHROPIC_AUTHOR__=true (and widen the server allowlist) to A/B against it.'); } catch (_) {}
-        modelResolved = 'claude-haiku-4-5';
+      {
+        // ANTHROPIC REMOVED FROM PRODUCTION ROUTING (Roman 2026-08-16). This guard used to downgrade
+        // Sonnet/Opus to claude-haiku-4-5 — i.e. it SELECTED an Anthropic model at runtime. Storybound's
+        // model families are now Grok 4.3 (premium creative) and Mistral Small 4 (utility, non-reasoning
+        // first). Downgrade target is Mistral Small; the opt-in flag still allows a deliberate Anthropic
+        // experiment, but nothing reaches Anthropic by default.
+        try { console.warn('[COST-GUARD] ' + modelResolved + ' is Anthropic — not a production provider; routing to mistral-small-latest.'); } catch (_) {}
+        modelResolved = 'mistral-small-latest';
       }
     }
 
@@ -1357,9 +1363,25 @@
       payload.response_format = { type: 'json_object' };
     }
 
-    const _proxyUrl = _isClaudeModel ? CONFIG.ANTHROPIC_PROXY : CONFIG.CHATGPT_PROXY;
+    // NO-ANTHROPIC INVARIANT (Roman 2026-08-16). This dispatcher used to route any claude-* model
+    // string to the Anthropic proxy, which made the policy ACCIDENTAL — nothing chose Claude, but
+    // anything that produced a claude-* slug still could. Anthropic is not a Storybound production
+    // provider. A claude-* model reaching here is a routing BUG and must fail loudly, never silently
+    // dispatch to OpenAI (which would hide the defect) or to Anthropic (which would violate policy).
+    if (!payload || !payload.model) {
+      // A null/absent model must not drift into a provider default. The Anthropic tripwire showed that
+      // `null` silently failed the _isClaudeModel predicate and fell through to chatgpt-proxy — a
+      // provider predicate is not an identity check. Unsupported identity throws before dispatch.
+      throw new Error('MODEL_ROUTE_VIOLATION: no model identity supplied before endpoint selection.');
+    }
+    if (_isClaudeModel) {
+      throw new Error('MODEL_ROUTE_VIOLATION: Anthropic is not a production provider (got "'
+        + ((payload && payload.model) || 'unknown') + '"). Route utility work to mistral-small-latest '
+        + 'and premium creative work to grok-4.3.');
+    }
+    const _proxyUrl = CONFIG.CHATGPT_PROXY;
     const _model = (payload && payload.model) || 'unknown-model';
-    const _proxy = _isClaudeModel ? 'anthropic-proxy' : 'chatgpt-proxy';
+    const _proxy = 'chatgpt-proxy';
     // Per-call timeout override (heavy Scene-1 author calls need >60s headroom);
     // defaults to the global. retryOnTimeout=true → one extra attempt on a
     // TRANSIENT failure (client-abort timeout, or 502/503/529 overloaded). The
@@ -2390,11 +2412,19 @@ FAILURE CONDITIONS (invalid outputs):
   // falls back to gpt-4o-mini, then to KEEPING THE ORIGINAL PROSE (returns null). No Haiku.
   async function _mistralRepairPass(messages, opts, label) {
     opts = opts || {};
+    var __snapOrig = (opts && opts.originalProse) || null;   // LANE-2 SNAPSHOT (harness-only)
     label = label || 'Mistral-small repair';
     const _orig = (function () { for (let i = messages.length - 1; i >= 0; i--) { if (messages[i] && messages[i].role === 'user') return String(messages[i].content || ''); } return ''; })();
     const _valid = (txt) => {
       if (!txt || txt.length < 40) return false;
-      try { if (typeof window !== 'undefined' && typeof window._validateRepairOutput === 'function') return !!window._validateRepairOutput(txt, _orig, label, {}).ok; } catch (_) {}
+      // TRANSPORT vs OPERATION CONTRACT (Roman 2026-08-16). `_orig` is the last USER message, which for
+      // callers that prefix an instruction is NOT the prose being edited — so the length + opening-
+      // preservation predicates rejected perfectly good full-scene edits from EVERY model (measured:
+      // mistral-small AND gpt-4o-mini both false-rejected). Callers that own their own drift/length/
+      // opening checks pass validateOpts:{metaOnly:true} to get transport-level validation only
+      // (empty / meta-leak / task-list), leaving the operation contract to the owner.
+      var _vOpts = opts.validateOpts || {};
+      try { if (typeof window !== 'undefined' && typeof window._validateRepairOutput === 'function') return !!window._validateRepairOutput(txt, opts.originalProse || _orig, label, _vOpts).ok; } catch (_) {}
       return true;
     };
     // 1) Mistral Small via the mistral proxy
@@ -2407,7 +2437,9 @@ FAILURE CONDITIONS (invalid outputs):
         const d = await r.json();
         try { if (typeof _accumulateTokens === 'function') _accumulateTokens(d, 'mistral-small-latest', 'repair'); } catch (_) {}
         const t = String((d && d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content) || (d && d.content) || '').trim();
-        if (_valid(t)) return t;
+        if (_valid(t)) { try { if (window.__proseSnap) window.__proseSnap.push({ owner:'_mistralRepairPass',
+          label: label||null, inText: String(__snapOrig||_orig||''), outText: String(t||''),
+          changed: String(t||'')!==String(__snapOrig||_orig||'') }); } catch (_) {} return t; }
         console.warn('[REPAIR] ' + label + ' via mistral-small rejected (empty/invalid/meta-leak) — falling back to gpt-4o-mini');
       } else {
         console.warn('[REPAIR] ' + label + ' mistral-small HTTP ' + r.status + ' — falling back to gpt-4o-mini');
@@ -2419,8 +2451,13 @@ FAILURE CONDITIONS (invalid outputs):
       const t2 = String((typeof r2 === 'string') ? r2 : (r2 && r2.content) || '').trim();
       if (_valid(t2)) { console.log('[REPAIR] ' + label + ' recovered via gpt-4o-mini'); return t2; }
     } catch (_e2) { console.warn('[REPAIR] ' + label + ' gpt-4o-mini fallback also failed: ' + ((_e2 && _e2.message) || _e2)); }
+    try { if (window.__proseSnap) window.__proseSnap.push({ owner:'_mistralRepairPass', label: label||null,
+      inText: String(__snapOrig||_orig||''), outText: null, changed: false, rejected: true }); } catch (_) {}
     return null; // caller keeps the original prose
   }
+  // UTILITY TRANSPORT (Roman 2026-08-16): exposed so app.js utility editors can reach Mistral Small
+  // without duplicating transport. /api/proxy is Grok-ONLY, so a model-string swap cannot migrate them.
+  try { window._mistralRepairPass = _mistralRepairPass; } catch (_) {}
 
   // ── TIERED AUTHOR ROUTING (Roman 2026-06-25) ────────────────────────────────
   // Non-premium scenes → Mistral Small authors (cheap) under a RESTRAINT GUARD that
@@ -2665,6 +2702,12 @@ FAILURE CONDITIONS (invalid outputs):
           : prose.replace(/\s*$/, '') + '\n<<CONTINUE>>';
       }
     } catch (_e) {}
+    // LANE-2 (harness-only): AUTHOR_RETURN — prose AFTER _grokLiteraryAuthor's internal
+    // deterministic quote fixes + Mistral repair + purple-lens. GROK_RAW (the literal network
+    // response) is captured separately by the harness; the delta between them is in-author
+    // post-processing, which Lane 2 counts as a mutation, not as part of 'raw'.
+    try { if (window.__rawSnap) window.__rawSnap.push({ sid:'AUTHOR_RETURN', label:'grokLiteraryAuthor',
+      mutationClass:'model', after: String(prose||'') }); } catch (_) {}
     return prose;
   }
 
