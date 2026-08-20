@@ -27,10 +27,11 @@ for (const r of snaps) {
   const res = audit(owner, r.before, r.after);
   if (!res.ok) {
     n++;
+    if (res.status === 'INCONCLUSIVE') { console.log(`\n? ${owner}  AUDIT INCONCLUSIVE — ${res.violations.join(', ')}`); continue; }
     const spec = window.MUTATION_CONTRACTS.owners[owner];
     console.log(`\n⚠ ${owner}  [${spec ? spec.role + '/' + spec.pen : 'UNDECLARED → _default'}]  ${r.before.length}→${r.after.length}`);
     res.violations.forEach(v => console.log('    · ' + v));
   }
 }
-console.log(n ? `\n${n} authority violation(s) across ${snaps.length} mutating site(s).`
+console.log(n ? `\n${n} finding(s) (violation or INCONCLUSIVE) across ${snaps.length} mutating site(s).`
               : `\nNo authority violations across ${snaps.length} mutating site(s).`);
