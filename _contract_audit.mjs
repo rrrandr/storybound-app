@@ -18,7 +18,10 @@ const audit = eval('(' + fn[1].replace(/;$/,'') + ')');
 window._auditMutation = audit;
 
 const load = f => { try { return JSON.parse(fs.readFileSync(`${dir}/${f}`,'utf8')); } catch(_) { return []; } };
-const snaps = [...load('textsnap.json'), ...load('rawsnap_full.json'), ...load('rawsnap.json')]
+const SNAP_FILES = (() => { try {
+  return fs.readdirSync(dir).filter(f => /(textsnap|rawsnap_full|rawsnap)\.json$/.test(f));
+} catch(_) { return ['textsnap.json','rawsnap_full.json','rawsnap.json']; } })();
+const snaps = SNAP_FILES.flatMap(f => load(f))
   .filter(r => r && r.before && r.after && r.before !== r.after);
 
 // Coverage: which declared owners were actually EXERCISED by this capture?
@@ -31,7 +34,7 @@ const setState = (o, st) => {
   if (!seen.has(o) || RANK[st] > RANK[seen.get(o)]) seen.set(o, st);
 };
 // any snap record proves the owner RAN; changed text proves it WROTE
-for (const f of ['textsnap.json','rawsnap_full.json','rawsnap.json'])
+for (const f of SNAP_FILES)
   for (const r of (load(f) || [])) {
     if (!r || !r.label) continue;
     const o = String(r.label).replace(/^window\./,'');

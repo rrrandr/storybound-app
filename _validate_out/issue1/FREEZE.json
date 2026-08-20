@@ -1,0 +1,32 @@
+{
+ "frozen_at": "2026-08-20",
+ "commit": "b179d5d0ad7aa16b6b7ac504794103a57d05b8a7",
+ "branch": "fix/procedural-container-rootout",
+ "tree_clean_for": "public/app.js + index.html CLEAN",
+ "app_js_sha256": "3ba91ebfe0299aaf",
+ "contracts_sha256": "183e14e9e5f86e4c",
+ "pens_removed": [
+  "clr (scene-contract loop)",
+  "_repairLISocialProof",
+  "_repairHotOpening"
+ ],
+ "pens_active": [
+  "_repairPCPicturability",
+  "_repairLIPicturability",
+  "_repairLIRelationalValue",
+  "_cheapLineEdit (compiler-pass contract)",
+  "_repairCalcifiedMoves",
+  "_reflowSceneDialogueLLM"
+ ],
+ "defaults": {
+  "_contractRepairOff": "true (validate-only)",
+  "_liProofPenOff": "true (validate-only)",
+  "_hotPenOff": "true (validate-only)",
+  "_preflightBlock": "false (report-only)",
+  "_contractEnforce": "false (report-only)"
+ },
+ "seed": "starter_first_sacrifice (Fatelands, First Sacrifice)",
+ "pc": "Lirael \u00b7 OPEN_VEIN \u00b7 first_person",
+ "li": "Julian \u00b7 Male \u00b7 First Favored",
+ "note": "Author model/temperature recorded from the live request at run time."
+}
