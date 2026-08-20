@@ -3,7 +3,11 @@
 import fs from 'fs';
 const dir = process.argv[2];
 if (!dir) { console.error('usage: node _contract_audit.mjs <_validate_out/RUNDIR>'); process.exit(1); }
-const C = JSON.parse(fs.readFileSync('_mutation_contracts.json','utf8'));
+// SINGLE SOURCE OF TRUTH: parse the registry out of app.js rather than duplicating it.
+const _appSrc = fs.readFileSync('public/app.js','utf8');
+const _m = _appSrc.match(/window\.MUTATION_CONTRACTS\s*=\s*(\{[\s\S]*?\n\});/);
+if (!_m) { console.error('MUTATION_CONTRACTS not found in public/app.js'); process.exit(1); }
+const C = JSON.parse(_m[1]);
 const load = f => { try { return JSON.parse(fs.readFileSync(`${dir}/${f}`,'utf8')); } catch(_) { return []; } };
 const snaps = [...load('textsnap.json'), ...load('rawsnap.json')].filter(r => r && r.before && r.after && r.before !== r.after);
 
