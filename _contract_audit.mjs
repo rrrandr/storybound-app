@@ -85,7 +85,7 @@ console.log(n ? `\n${n} finding(s) (violation or INCONCLUSIVE) across ${snaps.le
               : `\nNo authority violations across ${snaps.length} mutating site(s).`);
 
 // ── FOUR-STATE ADJUDICATION TABLE ──────────────────────────────────────────
-console.log('\nADJUDICATION');
+console.log('\nADJUDICATION  (AUTHOR may create · EDITOR bounded transforms · JUDGE reports only · HYBRID = judge+author, suspicious)');
 const owners = Object.keys(window.MUTATION_CONTRACTS.owners);
 const pad = (x,w) => String(x).padEnd(w);
 for (const o of owners) {
@@ -106,9 +106,16 @@ for (const o of owners) {
     'WROTE·FAIL':  'wrote, VIOLATED contract',
     'INCONCLUSIVE':'audit could not complete'
   };
-  console.log('  ' + pad(o,32) + pad(st2,18) + (spec.pen === 'REMOVED' ? '[pen removed] ' : '') + (NOTE[st2] || ''));
+  console.log('  ' + pad((spec.class||'?'),8) + pad(o,32) + pad(st2,18) + (spec.pen === 'REMOVED' ? '[pen removed] ' : '') + (NOTE[st2] || ''));
 }
 const untested = owners.filter(o => !seen.has(o));
 const noop = owners.filter(o => seen.get(o) === 'NO-OP');
 console.log(`\n  ${untested.length} UNTESTED · ${noop.length} ran-but-declined · ${owners.length} declared owners total.`);
+const hyb = owners.filter(o => (window.MUTATION_CONTRACTS.owners[o].class||'') === 'HYBRID');
+const wrote = owners.filter(o => String(seen.get(o)||'').indexOf('WROTE') === 0);
+const badWrite = wrote.filter(o => ['JUDGE','GATE'].includes(window.MUTATION_CONTRACTS.owners[o].class||''));
+console.log(`  HYBRID (judge+author, suspicious by default): ${hyb.join(', ') || 'none'}`);
+console.log(badWrite.length
+  ? `  ✗ AUTHORITY BREACH — a JUDGE wrote prose: ${badWrite.join(', ')}`
+  : `  ✓ no JUDGE wrote prose in this capture`);
 if (untested.length || noop.length) console.log('  Neither state is evidence that the pass is safe.');
