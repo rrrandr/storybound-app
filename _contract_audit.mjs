@@ -40,6 +40,31 @@ for (const f of ['textsnap.json','rawsnap_full.json','rawsnap.json'])
     setState(o, wrote ? 'WROTE·PASS' : 'NO-OP');
   }
 
+// NO-OP is ambiguous: "evaluated and correctly declined" is evidence the system works;
+// "gate never let it reach the detector" is no evidence at all. Split them using the
+// decision markers each pass already logs.
+let logTxt = '';
+for (const lf of ['budget.log','finalizer.log'])
+  { try { logTxt += fs.readFileSync(`${dir}/${lf}`,'utf8') + '\n'; } catch(_) {} }
+const DECISION = [
+  [/\[PC-PICTURABILITY:SKIP\]/,        '_repairPCPicturability', 'NOT-REACHED'],
+  [/\[HOT-RENDER:SKIP\]/,              '_repairHotOpening',      'NOT-REACHED'],
+  [/\[HOT-RENDER:GATE\]/,              '_repairHotOpening',      'EVALUATED'],
+  [/\[LI-PROOF\] scene=/,              '_repairLISocialProof',   'EVALUATED'],
+  [/\[LI-PROOF\] VALIDATE-ONLY/,       '_repairLISocialProof',   'EVALUATED'],
+  [/\[LI-PROOF:REPAIR\]/,              '_repairLISocialProof',   'EVALUATED'],
+  [/\[CONTRACT\] validate-only/,       'clr',                    'EVALUATED'],
+  [/\[DECISION\] _repairLIPicturability ENTERED/,           '_repairLIPicturability',           'EVALUATED'],
+  [/\[DECISION\] _repairLIRelationalValue ENTERED/,         '_repairLIRelationalValue',         'EVALUATED'],
+  [/\[DECISION\] _repairPCPicturability ENTERED/,           '_repairPCPicturability',           'EVALUATED'],
+  [/\[DECISION\] _repairCalcifiedMoves ENTERED/,            '_repairCalcifiedMoves',            'EVALUATED'],
+  [/\[DECISION\] _repairInterlocutorPicturability ENTERED/, '_repairInterlocutorPicturability',  'EVALUATED'],
+];
+const decided = new Map();
+for (const [rx, owner, st] of DECISION) if (rx.test(logTxt)) {
+  if (st === 'EVALUATED' || !decided.has(owner)) decided.set(owner, st);
+}
+
 let n = 0;
 for (const r of snaps) {
   const owner = String(r.label || r.site || '?').replace(/^window\./,'');
@@ -63,14 +88,22 @@ const pad = (x,w) => String(x).padEnd(w);
 for (const o of owners) {
   const spec = window.MUTATION_CONTRACTS.owners[o];
   const st = seen.get(o) || 'UNTESTED';
+  let st2 = st;
+  if (st === 'NO-OP') {
+    const d = decided.get(o);
+    st2 = d === 'EVALUATED' ? 'VALIDATED·NO-OP' : d === 'NOT-REACHED' ? 'NOT-REACHED' : 'NO-OP·UNKNOWN';
+  }
   const NOTE = {
-    'UNTESTED':    'never exercised — NOT evidence of safety',
-    'NO-OP':       'ran and declined to write — weak evidence',
+    'UNTESTED':        'never exercised — NOT evidence of safety',
+    'VALIDATED·NO-OP': 'evaluated and declined — evidence it works',
+    'NOT-REACHED':     'gate blocked it before the detector — NO evidence',
+    'NO-OP·UNKNOWN':   'ran without a decision log — cannot classify',
+    'NO-OP':           'ran and declined to write — weak evidence',
     'WROTE·PASS':  'wrote, stayed within contract',
     'WROTE·FAIL':  'wrote, VIOLATED contract',
     'INCONCLUSIVE':'audit could not complete'
   };
-  console.log('  ' + pad(o,32) + pad(st,14) + (spec.pen === 'REMOVED' ? '[pen removed] ' : '') + (NOTE[st] || ''));
+  console.log('  ' + pad(o,32) + pad(st2,18) + (spec.pen === 'REMOVED' ? '[pen removed] ' : '') + (NOTE[st2] || ''));
 }
 const untested = owners.filter(o => !seen.has(o));
 const noop = owners.filter(o => seen.get(o) === 'NO-OP');
