@@ -50,14 +50,17 @@ const RULES = [
             if (!m) return true;
             return F(m[0], 'the office (Dohkar/Profer/Chayr), or "eldest Dohkar" if age is the point',
                      'canon_⑤l_examples'); }],
-  ['⑤m', '"pays twice" fires only after BOTH price and twist have landed',
+  ['⑤m', '"pays twice" is spoken in a wish context, never as consolation',
     () => { const i = prose.search(/pays twice/i); if (i < 0) return true;
-            const before = prose.slice(0, i);
-            const priced = /\b(?:memory|memories)\b[^.!?]{0,80}\b(?:gone|lost|taken|left her|could not)\b/i.test(before);
-            const twisted = /\b(?:found (?:him|her|them)|spoke (?:the|her|my) name|rose from|stepped out of|came forward|turned out to be)\b/i.test(before);
-            if (priced && twisted) return true;
-            return F('saying used before both payments landed (price:' + priced + ' twist:' + twisted + ')',
-                     'the sacrifice taken AND the twist bitten, both before the line is spoken',
+            const near = prose.slice(Math.max(0, i - 1200), i + 400);
+            // valid as WARNING (wishcraft taught, a wish threatened, a wish reported, a
+            // wish-shaped misfortune) or as VERDICT (both payments landed). Broad by
+            // design — a proverb stays alive by being said before the proof arrives.
+            const wishCtx = /\b(?:wish|wishes|wished|wishcraft|Sacrificiant|First Sacrifice|petition|offering|Fate)\b/i.test(near);
+            const consolation = /\b(?:it will be (?:all right|alright|fine)|do not blame yourself|none of this is your fault)\b[^.!?]{0,60}pays twice/i.test(near);
+            if (wishCtx && !consolation) return true;
+            return F(consolation ? 'used as consolation' : 'no wish context around the saying',
+                     'spoken where wishing is the subject — as warning or as verdict, never to comfort',
                      'canon_⑤m'); }],
   ['⑤m', 'blank-page proverb requires an OPEN offering nearby',
     () => { const i = prose.search(/blank page/i); if (i < 0) return true;
