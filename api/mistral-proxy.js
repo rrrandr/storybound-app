@@ -60,7 +60,8 @@ module.exports = async function handler(req, res) {
       model = 'mistral-medium-latest',
       role = 'SD_FALLBACK',
       temperature = 0.7,
-      max_tokens = 500
+      max_tokens = 500,
+      reasoning_effort            // 'low' | 'medium' | 'high' — 2603 accepts it; verified 2026-08
     } = req.body;
     // SECURITY: scrub user-role messages before any downstream code touches them.
     const messages = sanitizeUserMessages(_rawMessages, 'mistral');
@@ -101,12 +102,16 @@ module.exports = async function handler(req, res) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${MISTRAL_API_KEY}`
       },
-      body: JSON.stringify({
-        model: requestedModel,
-        messages,
-        temperature,
-        max_tokens
-      })
+      body: (() => {
+        const body = { model: requestedModel, messages, temperature, max_tokens };
+        // REASONING — allowlisted, never passed through raw. Reasoning tokens bill as
+        // OUTPUT; on a ~100k-token author payload that is a few percent of scene cost.
+        const RE = ['low', 'medium', 'high'];
+        if (reasoning_effort && RE.includes(String(reasoning_effort))) {
+          body.reasoning_effort = String(reasoning_effort);
+        }
+        return JSON.stringify(body);
+      })()
     });
 
     const responseText = await mistralResponse.text();
@@ -150,9 +155,22 @@ module.exports = async function handler(req, res) {
         role,
         model: requestedModel,
         provider: 'mistral',
+        reasoning_effort: (reasoning_effort && ['low','medium','high'].includes(String(reasoning_effort)))
+          ? String(reasoning_effort) : null,
+        // CACHE OBSERVABILITY (Roman 2026-08-21): the proxy previously discarded usage
+        // entirely, so there was no way to tell whether ANY prompt caching occurred.
+        // Surface whatever Mistral reports; a cached-token field appearing here is the
+        // evidence needed before wiring a cache directive.
+        usage: data.usage || null,
         timestamp: new Date().toISOString()
       }
     };
+
+    try {
+      const u = data.usage || {};
+      console.log('[MISTRAL-PROXY] usage ' + JSON.stringify(u) +
+        (enrichedResponse._orchestration.reasoning_effort ? ' reasoning=' + enrichedResponse._orchestration.reasoning_effort : ''));
+    } catch (_) {}
 
     return res.status(200).json(enrichedResponse);
 
