@@ -7,10 +7,19 @@ if (!dir) { console.error('usage: node _canon_regression.mjs <_validate_out/RUND
 
 const read = (...names) => { for (const n of names) { try { return fs.readFileSync(`${dir}/${n}`,'utf8'); } catch(_) {} } return ''; };
 let prose = read('all_prose.txt','all_final.txt');
-if (!prose) prose = ['scene1_final.txt','scene2_final.txt','scene3_final.txt','final.txt']
-  .map(f => read(f)).filter(Boolean).join('\n\n');
+// SCENE-BOUNDARY AWARE. The twist sequence spans scenes — steps 1-4 in Scene 1,
+// 5-6 in Scene 2, 7 in Scene 3 — so a whole-issue blob cannot tell "the twist happened
+// in the right place" from "it happened at all". Slice by real scene files when present.
+const SCENES = ['scene1_final.txt','scene2_final.txt','scene3_final.txt']
+  .map(f => read(f)).filter(Boolean);
+if (!prose && SCENES.length) prose = SCENES.join('\n\n');
+if (!prose) prose = read('final.txt');
 if (!prose) { console.error('no prose found in ' + dir); process.exit(1); }
-const S1 = prose.slice(0, Math.max(2200, Math.floor(prose.length * 0.45)));
+// S1 = Scene 1 exactly when we have it; otherwise the first 45% as before.
+const S1 = SCENES.length ? SCENES[0] : prose.slice(0, Math.max(2200, Math.floor(prose.length * 0.45)));
+const S2 = SCENES.length > 1 ? SCENES[1] : '';
+const S3 = SCENES.length > 2 ? SCENES[2] : '';
+const haveScenes = SCENES.length >= 2;
 
 const has = (rx, t = prose) => rx.test(t);
 const count = (rx, t = prose) => (t.match(rx) || []).length;
@@ -96,21 +105,22 @@ const RULES = [
   // ── PRESENCE CHECKS. Every rule above verifies a bad pattern is ABSENT. A scene can
   // satisfy all of them and still contain no twist and no Character+ — which is exactly
   // what testB did while scoring 20/20. These assert the good thing EXISTS.
-  ['TWIST', 'the wish is FULFILLED — Fate answers the words, not just consequences',
-    () => { const w = prose.search(/\bfind the one (?:she|I) lost/i);
-            if (w < 0) return F('no wish located', 'a spoken wish for Fate to answer', 'canon_⑤h');
-            const after = prose.slice(w, w + 2500);
-            // Fulfilment = the wished-for thing OCCURS. For "find the one she lost":
-            // someone is found, named, revealed, arrives, or claims the description.
-            const FULFIL = /\b(?:found (?:him|her|them|me)|had been found|spoke (?:the|a) name|said (?:my|her) name|named (?:him|her|the man)|stepped out of|rose from the (?:crowd|assembly)|came forward and|claimed the (?:name|words)|answered to (?:it|that name)|turned out to be|was standing (?:there|among))\b/i;
-            const m = after.match(FULFIL);
-            if (m) return true;
-            // Social fallout is NOT fulfilment — name it so the failure is legible.
-            const fallout = /\b(?:explain|deviation|conclusions|accus|blame|judgment|inquiry)\b/i.test(after);
-            return F(fallout ? 'only social fallout after the wish (accusation/explanation), no fulfilment'
-                             : 'nothing fulfils the wish\'s literal wording',
-                     'the words come true by an ordinary route — someone found, named, or revealed in the room',
-                     'canon_⑤h'); }],
+  ['TWIST', 'the wish is FULFILLED — and in the RIGHT SCENE (2, not 1)',
+    () => { const FULFIL = /\b(?:found (?:him|her|them|me)|had been found|spoke (?:the|a) name|said (?:my|her) name|named (?:him|her|the man)|stepped out of|rose from the (?:crowd|assembly)|came forward and|claimed the (?:name|words)|answered to (?:it|that name)|turned out to be|was standing (?:there|among))\b/i;
+            const where = haveScenes
+              ? (FULFIL.test(S2) ? 2 : FULFIL.test(S1) ? 1 : FULFIL.test(S3) ? 3 : 0)
+              : (FULFIL.test(prose) ? 2 : 0);
+            if (where === 2) return true;
+            if (where === 1) return F('twist landed in SCENE 1', 'scene 1 ends on the DECISION; the twist belongs to scene 2', 'canon_⑤o');
+            if (where === 3) return F('twist landed in SCENE 3', 'scene 3 is the PRICE; the twist belongs to scene 2', 'canon_⑤o');
+            const fallout = /\b(?:explain|deviation|conclusions|accus|blame|inquiry)\b/i.test(haveScenes ? S2 : prose);
+            return F(fallout ? 'only social fallout — no fulfilment anywhere' : 'nothing fulfils the wish\'s literal wording',
+                     'the words come true by an ordinary route, in scene 2', 'canon_⑤o'); }],
+  ['⑤o', 'scene 1 ends on the DECISION, not the twist',
+    () => { if (!haveScenes) return true;
+            const decided = /\b(?:tear|break|step|move|hold|stay|choose|decide)\b[^.!?]{0,80}(?:\?|$)|\bDo I\b|\bor (?:hold|let|stay|remain)\b/i.test(S1.slice(-700));
+            return decided ? true : F(S1.slice(-110).replace(/\s+/g,' ').trim(),
+                     'scene 1 closes on a choice the player must make', 'canon_⑤o'); }],
   ['CHAR+', 'at least one Character+ beat — observation bound to accumulated knowledge',
     () => { // A beat spans sentences: the observation in one, the knowledge in the next.
             // Slide a 3-sentence window; the person may be named OR a pronoun whose
