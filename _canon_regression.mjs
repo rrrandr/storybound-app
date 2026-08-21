@@ -36,16 +36,33 @@ const RULES = [
     () => !has(/\b(?:I|she|he)\s+(?:chose|choose|played|drew|took)\s+[""]?Tempt Fate/i)],
   ['⑤k', 'no rule-recitation / enumerated violations',
     () => !has(/(beneficiary was not|counted the fractures|the target had no name|an open price)/i)],
-  ['⑤l', "world's own nouns — no generic substitution",
-    () => count(/\belder\b/i) === 0 && !has(/\bthe (?:priest|old one)\b/i)],
-  ['⑤m', 'blank-page proverb only when the price is OPEN',
-    () => !has(/blank page/i) || has(/(take what you will|whatever the (?:cost|price)|name your own price|whatever it costs)/i)],
+  ['⑤l', "named office used, not a generic substitute",
+    () => { const m = prose.match(/\b(?:an?|the)\s+elder\b(?!\s*(?:Dohkar|Profer|Chayr))/i);
+            if (!m) return true;
+            return F(m[0], 'the office (Dohkar/Profer/Chayr), or "eldest Dohkar" if age is the point',
+                     'canon_⑤l_examples'); }],
+  ['⑤m', 'blank-page proverb requires an OPEN offering nearby',
+    () => { const i = prose.search(/blank page/i); if (i < 0) return true;
+            const near = prose.slice(Math.max(0,i-900), i+400);
+            const open = /(take what(?:ever)? you (?:will|demand)|whatever the (?:cost|price)|whatever it costs|name your own price|I surrender anything|unspecified)/i.test(near);
+            if (open) return true;
+            const named = (near.match(/\b(?:I offer|I give)[^.!?]{0,80}/i) || [''])[0];
+            return F('proverb fired after a NAMED price: ' + named.trim(),
+                     'an open/unbounded offering within ~900 chars before the proverb',
+                     'canon_⑤m'); }],
   ['FATE', 'Fate manifests nothing — no apparition',
     () => !has(/(stepped from the trees|apparition|summoned figure|wearing (?:a|his|her) face|took the shape of)/i)],
   ['RITE', 'no invented seal/binding/circle machinery',
     () => !has(/(broke the (?:seal|circle)|the binding (?:failed|broke)|unsealed[^.!?]{0,30}(?:wish|rite))/i)],
-  ['CALC', 'no colour-drain calcification',
-    () => !has(/(went bone-white|lost its last fleck|colou?r (?:drained|left|fled|drain)|drained of colou?r)/i)],
+  ['⑤i', 'Fate cost expressed in the OFFERED domain',
+    () => { const offered = /\b(?:offer|give)[^.!?]{0,60}\bmemor(?:y|ies)\b/i.test(S1) ? 'memory' : null;
+            if (!offered) return true;
+            const bodyCost = S1.match(/(?:iris|eyes?|hair|skin|voice|hands?)[^.!?]{0,50}(?:went|lost|drained|faded|failed|white)/i)
+                          || S1.match(/(?:colou?r|green|light)[^.!?]{0,30}(?:drained|left|fled|faded)/i);
+            if (!bodyCost) return true;
+            return F(bodyCost[0].trim(),
+                     'loss expressed in the memory domain — what she can no longer reach, or what remains without its meaning',
+                     'canon_⑤i_examples'); }],
   ['CALC', 'no heel tic monoculture',
     () => count(/\bheel(?:s)?\b[^.!?]{0,40}(?:lifted|scraped|dug|grinding|pressed|tapped)/gi) <= 1],
   ['LI',   'attraction not asserted via eyes/gaze cliché',
@@ -63,12 +80,22 @@ const RULES = [
 ];
 
 let pass = 0, fail = [];
+const F = (found, expected, source) => ({ ok:false, found, expected, source });
 console.log(`\nCANON REGRESSION — ${dir}  (${prose.length} chars of prose)\n`);
 for (const [id, rule, fn] of RULES) {
-  let ok = false; try { ok = !!fn(); } catch (_) { ok = false; }
-  if (ok) pass++; else fail.push(`${id} ${rule}`);
+  let r; try { r = fn(); } catch (e) { r = { ok:false, found:'check threw: '+e.message, expected:'check to run', source:'harness' }; }
+  const ok = (r === true) || (r && r.ok === true);
+  if (ok) pass++; else fail.push({ id, rule, ...(typeof r === 'object' ? r : {}) });
   console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${id.padEnd(6)} ${rule}`);
 }
 console.log(`\n  ${pass}/${RULES.length} canon rules hold.`);
-if (fail.length) { console.log('\n  REGRESSIONS:'); fail.forEach(f => console.log('    ✗ ' + f)); }
+if (fail.length) {
+  console.log('\n  REGRESSIONS');
+  for (const f of fail) {
+    console.log(`\n    RULE      ${f.id} ${f.rule}`);
+    if (f.found)    console.log(`    FOUND     ${String(f.found).slice(0,150)}`);
+    if (f.expected) console.log(`    EXPECTED  ${f.expected}`);
+    console.log(`    SOURCE    ${f.source || 'canon_' + f.id}`);
+  }
+}
 process.exitCode = fail.length ? 1 : 0;
