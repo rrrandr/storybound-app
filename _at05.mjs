@@ -3,7 +3,7 @@
 import { chromium } from 'playwright-core';
 import fs from 'fs';
 const log=(...a)=>console.error(...a);
-const OUT='_validate_out/at05_r1'; fs.mkdirSync(OUT,{recursive:true});
+const OUT='_validate_out/at05_g'; fs.mkdirSync(OUT,{recursive:true});
 const RAW = fs.readFileSync('_validate_out/authority_audit_R/raw_author_1.txt','utf8');
 const isAuthor=(sys,usr,model)=>/STORYBOUND ARCHITECTURE LAWS/.test(sys)||/grok-4\.3/.test(String(model||''));
 let spend=0, authorMocked=0, apiCalls=[];
