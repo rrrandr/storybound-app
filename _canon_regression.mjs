@@ -50,6 +50,15 @@ const RULES = [
             if (!m) return true;
             return F(m[0], 'the office (Dohkar/Profer/Chayr), or "eldest Dohkar" if age is the point',
                      'canon_⑤l_examples'); }],
+  ['⑤m', '"pays twice" fires only after BOTH price and twist have landed',
+    () => { const i = prose.search(/pays twice/i); if (i < 0) return true;
+            const before = prose.slice(0, i);
+            const priced = /\b(?:memory|memories)\b[^.!?]{0,80}\b(?:gone|lost|taken|left her|could not)\b/i.test(before);
+            const twisted = /\b(?:found (?:him|her|them)|spoke (?:the|her|my) name|rose from|stepped out of|came forward|turned out to be)\b/i.test(before);
+            if (priced && twisted) return true;
+            return F('saying used before both payments landed (price:' + priced + ' twist:' + twisted + ')',
+                     'the sacrifice taken AND the twist bitten, both before the line is spoken',
+                     'canon_⑤m'); }],
   ['⑤m', 'blank-page proverb requires an OPEN offering nearby',
     () => { const i = prose.search(/blank page/i); if (i < 0) return true;
             const near = prose.slice(Math.max(0,i-900), i+400);
