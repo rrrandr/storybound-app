@@ -24,7 +24,7 @@ const RULES = [
   ['⑤g', 'offering is a MEMORY, not an abstraction',
     () => has(/\b(?:offer|give)[^.!?]{0,60}\bmemor(?:y|ies)\b/i, S1)],
   ['⑤g', 'offering is SPOKEN as dialogue',
-    () => has(/[""][^""]{0,180}(?:I offer|I give)[^""]{0,200}[""]/i, S1)],
+    () => has(/[\u201C"][^\u201D"]{0,180}(?:I offer|I give)[^\u201D"]{0,200}[\u201D"]/i, S1)],
   ['⑤h', 'twist is immediate — no deferred irony',
     () => !has(/(years later|would later|in time she would|one day she would|it would be years)/i, S1)],
   ['⑤h', 'twist uses someone/something ALREADY PRESENT',
