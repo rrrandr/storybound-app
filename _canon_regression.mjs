@@ -81,6 +81,42 @@ const RULES = [
     () => !has(/\b(?:Mira|Thorne|Hunched Eye)\b/)],
   ['SPINE','Seren is named, not "the youth"',
     () => count(/\bSeren\b/) > 0 && count(/the youth/i) === 0],
+  // ── PRESENCE CHECKS. Every rule above verifies a bad pattern is ABSENT. A scene can
+  // satisfy all of them and still contain no twist and no Character+ — which is exactly
+  // what testB did while scoring 20/20. These assert the good thing EXISTS.
+  ['TWIST', 'the wish is FULFILLED — Fate answers the words, not just consequences',
+    () => { const w = prose.search(/\bfind the one (?:she|I) lost/i);
+            if (w < 0) return F('no wish located', 'a spoken wish for Fate to answer', 'canon_⑤h');
+            const after = prose.slice(w, w + 2500);
+            // Fulfilment = the wished-for thing OCCURS. For "find the one she lost":
+            // someone is found, named, revealed, arrives, or claims the description.
+            const FULFIL = /\b(?:found (?:him|her|them|me)|had been found|spoke (?:the|a) name|said (?:my|her) name|named (?:him|her|the man)|stepped out of|rose from the (?:crowd|assembly)|came forward and|claimed the (?:name|words)|answered to (?:it|that name)|turned out to be|was standing (?:there|among))\b/i;
+            const m = after.match(FULFIL);
+            if (m) return true;
+            // Social fallout is NOT fulfilment — name it so the failure is legible.
+            const fallout = /\b(?:explain|deviation|conclusions|accus|blame|judgment|inquiry)\b/i.test(after);
+            return F(fallout ? 'only social fallout after the wish (accusation/explanation), no fulfilment'
+                             : 'nothing fulfils the wish\'s literal wording',
+                     'the words come true by an ordinary route — someone found, named, or revealed in the room',
+                     'canon_⑤h'); }],
+  ['CHAR+', 'at least one Character+ beat — observation bound to accumulated knowledge',
+    () => { // A beat spans sentences: the observation in one, the knowledge in the next.
+            // Slide a 3-sentence window; the person may be named OR a pronoun whose
+            // referent was named inside the window.
+            const CAUSAL = /(because (?:he|she|they) (?:had|never|always)|the way (?:he|she) (?:had|used to|always|once)|(?:he|she) (?:always|never) (?:does|did|moves|answers|says|looks)|I had (?:learned|watched|seen|heard) (?:him|her|it)|the same (?:\w+ ){0,4}(?:he|she) (?:had|used|uses)|as usual|(?:he|she) had taught me|I had heard it \w+ times|had taught me never|mistaken it for)/i;
+            const PERSON = /\b(?:Julian|Seren|Dohkar|he|she|his|her)\b/i;
+            const sents = prose.split(/(?<=[.!?\u201D"])\s+/);
+            for (let k = 0; k < sents.length; k++) {
+              const win = sents.slice(k, k + 3).join(' ');
+              if (CAUSAL.test(win) && PERSON.test(win)) return true;
+            }
+            return F('no beat ties an observation to what the narrator has accumulated about a person',
+                     'e.g. "He never moves when people expect him to defend himself; I had watched him do it four times."',
+                     'feedback_character_plus_mechanisms'); }],
+  ['FMT',  'no truncated sentences',
+    () => { const m = prose.match(/\b(?:as|like|than|of|the|a|an|and|with|into)\s*\.(?:\s|$)/);
+            return m ? F(prose.slice(Math.max(0,prose.indexOf(m[0])-60), prose.indexOf(m[0])+12).trim(),
+                         'complete sentences', 'harness_fmt') : true; }],
   ['FMT',  'no markdown leaking into prose',
     () => !has(/\*\*/)],
   ['FMT',  'no unresolved template tokens',
