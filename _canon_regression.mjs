@@ -30,8 +30,17 @@ const RULES = [
   ['⑤h', 'twist uses someone/something ALREADY PRESENT',
     () => has(/(already present|among those|stepped forward|rose from|turned toward|in the clearing|spoke the name)/i, S1)],
   ['⑤i', 'price stays INSIDE the offering (no unoffered faculty)',
-    () => !['voice','sight','hands','years','breath'].some(w =>
-      new RegExp(`(?:took|takes|taken|stripped|stole)[^.!?]{0,60}\\b${w}\\b|\\b${w}\\b[^.!?]{0,40}(?:was taken|stripped away)`,'i').test(S1))],
+    () => { // any faculty NEAR a loss verb, in either order — not a fixed phrasing
+            const LOSS = '(?:took|takes|taken|stripped|stole|failed|gone|lost|died|withered|emptied|silenced)';
+            // strip idioms first: "in the same breath", "in one breath" mean IMMEDIATELY,
+            // not a faculty being taken. A false positive here trains people to ignore reds.
+            const T = S1.replace(/in (?:the same|one|a single) breath/gi, ' ');
+            for (const w of ['voice','sight','eyes','hands','years','breath','name']) {
+              const rx = new RegExp(`\\b${w}\\b[^.!?]{0,50}\\b${LOSS}\\b|\\b${LOSS}\\b[^.!?]{0,50}\\b${w}\\b`,'i');
+              const m = T.match(rx);
+              if (m) return F(m[0].trim(), 'the price confined to what was named in the offering', 'canon_⑤i');
+            }
+            return true; }],
   ['⑤j', 'Tempt Fate never CHOSEN by a character',
     () => !has(/\b(?:I|she|he)\s+(?:chose|choose|played|drew|took)\s+[""]?Tempt Fate/i)],
   ['⑤k', 'no rule-recitation / enumerated violations',
@@ -53,7 +62,8 @@ const RULES = [
   ['FATE', 'Fate manifests nothing — no apparition',
     () => !has(/(stepped from the trees|apparition|summoned figure|wearing (?:a|his|her) face|took the shape of)/i)],
   ['RITE', 'no invented seal/binding/circle machinery',
-    () => !has(/(broke the (?:seal|circle)|the binding (?:failed|broke)|unsealed[^.!?]{0,30}(?:wish|rite))/i)],
+    () => { const m = prose.match(/\b(?:the\s+)?(?:seal|binding|circle)\b[^.!?]{0,50}\b(?:broke|broken|breaking|failed|shattered|snapped)\b|\b(?:broke|broken|shattered)\b[^.!?]{0,40}\b(?:the\s+)?(?:seal|circle|binding)\b|\bunsealed\b[^.!?]{0,30}(?:wish|rite)/i);
+            return m ? F(m[0].trim(), 'no seal/binding/circle mechanics — the rite has no machinery', 'canon_rite') : true; }],
   ['⑤i', 'Fate cost expressed in the OFFERED domain',
     () => { const offered = /\b(?:offer|give)[^.!?]{0,60}\bmemor(?:y|ies)\b/i.test(S1) ? 'memory' : null;
             if (!offered) return true;
