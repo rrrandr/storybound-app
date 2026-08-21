@@ -96,6 +96,7 @@ module.exports = async function handler(req, res) {
     // CALL MISTRAL API (OpenAI-compatible format)
     // ==========================================================================
 
+    let _effortUsed = null;
     const mistralResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -107,9 +108,19 @@ module.exports = async function handler(req, res) {
         // REASONING — allowlisted, never passed through raw. Reasoning tokens bill as
         // OUTPUT; on a ~100k-token author payload that is a few percent of scene cost.
         const RE = ['low', 'medium', 'high'];
-        if (reasoning_effort && RE.includes(String(reasoning_effort))) {
-          body.reasoning_effort = String(reasoning_effort);
+        let effort = (reasoning_effort && RE.includes(String(reasoning_effort))) ? String(reasoning_effort) : null;
+        // AUTHOR-CLASS DEFAULT (Roman 2026-08-21): scene authoring on Mistral gets reasoning
+        // unless the caller says otherwise. Detected from the payload itself — the client
+        // route that sends 2603 with the author system prompt is not yet located in app.js,
+        // so keying on the prompt is the only reliable place to apply this today.
+        const isAuthorClass = Array.isArray(messages) && messages.some(m =>
+          m && m.role === 'system' && /STORYBOUND ARCHITECTURE LAWS/.test(String(m.content || '')));
+        if (!effort && isAuthorClass && /mistral-small/.test(String(requestedModel))) {
+          effort = 'high';
+          console.log('[MISTRAL-PROXY] author-class payload — defaulting reasoning_effort=high');
         }
+        if (effort) body.reasoning_effort = effort;
+        _effortUsed = effort;
         return JSON.stringify(body);
       })()
     });
@@ -155,8 +166,7 @@ module.exports = async function handler(req, res) {
         role,
         model: requestedModel,
         provider: 'mistral',
-        reasoning_effort: (reasoning_effort && ['low','medium','high'].includes(String(reasoning_effort)))
-          ? String(reasoning_effort) : null,
+        reasoning_effort: _effortUsed,
         // CACHE OBSERVABILITY (Roman 2026-08-21): the proxy previously discarded usage
         // entirely, so there was no way to tell whether ANY prompt caching occurred.
         // Surface whatever Mistral reports; a cached-token field appearing here is the

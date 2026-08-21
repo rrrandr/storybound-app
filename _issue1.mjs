@@ -5,7 +5,7 @@
 import { chromium } from 'playwright-core';
 import fs from 'fs';
 const log = (...a) => console.error(...a);
-const OUTDIR = '_validate_out/issue1';
+const OUTDIR = '_validate_out/issue3';
 fs.mkdirSync(OUTDIR, { recursive: true });
 fs.writeFileSync(OUTDIR + '/.writetest', 'ok'); fs.unlinkSync(OUTDIR + '/.writetest');
 log('[preflight] output dir writable: ' + OUTDIR);
@@ -26,7 +26,7 @@ await page.route('**/api/**', async route => {
   const usr = String((msgs.find(m => m.role === 'user') || {}).content || '');
   if (!isAuthor(sys, usr, b.model || b.preferredModel)) return route.continue();
   try { fs.writeFileSync(`${OUTDIR}/payload_${raws.length + 1}.txt`, sys + '\n=====USER=====\n' + usr); } catch (_) {}
-  try { fs.appendFileSync(`${OUTDIR}/author_calls.jsonl`, JSON.stringify({ n: raws.length+1, model: b.model || b.preferredModel || null, temperature: b.temperature ?? null, max_tokens: b.max_tokens ?? null })+'\n'); } catch (_) {}
+  try { fs.appendFileSync(`${OUTDIR}/author_calls.jsonl`, JSON.stringify({ n: raws.length+1, url: r.url(), model: b.model || b.preferredModel || null, role: b.role || null, temperature: b.temperature ?? null, max_tokens: b.max_tokens ?? null, reasoning_effort: b.reasoning_effort ?? null, bodyKeys: Object.keys(b) })+'\n'); } catch (_) {}
   const resp = await route.fetch({ timeout: 0 });   // REAL generation
   const bodyTxt = await resp.text();
   try {
