@@ -22,7 +22,7 @@ const RULES = [
             const d = S1.search(/\bso that\b|\bso she may\b|\bthat she may\b/i);
             return o >= 0 && d >= 0 && o < d; }],
   ['⑤g', 'offering is a MEMORY, not an abstraction',
-    () => has(/\b(?:offer|give)[^.!?]{0,60}\bmemor(?:y|ies)\b/i, S1)],
+    () => has(/\b(?:offer(?:s|ed|ing)?|give|gave|gives)\b[^.!?]{0,70}\bmemor(?:y|ies)\b|\bmemor(?:y|ies)\b[^.!?]{0,70}\b(?:offer(?:s|ed|ing)?|give|gave|gives)\b/i, S1)],
   ['⑤g', 'offering is SPOKEN as dialogue',
     () => has(/[\u201C"][^\u201D"]{0,180}(?:I offer|I give)[^\u201D"]{0,200}[\u201D"]/i, S1)],
   ['⑤h', 'twist is immediate — no deferred irony',
