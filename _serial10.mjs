@@ -35,6 +35,14 @@ const ACTIONS = [
 
 const isAuthor = (sys, usr, model) => /STORYBOUND ARCHITECTURE LAWS/.test(sys) || /grok-4\.3/.test(String(model || ''));
 let spend = 0, raws = [];
+// CALL LEDGER. A duplicate whose output is DISCARDED is a different bug from one whose output
+// WINS: the first is waste, the second means every prior comparison measured an output path we
+// did not know about. Consumption is resolved after each scene settles, by checking which
+// captured drafts actually reached the page.
+let scene = 1;
+const calls = [];
+const hash = t => String(t).length + ':' + [...String(t).slice(0, 6000)]
+  .reduce((a, c) => ((a * 31 + c.charCodeAt(0)) | 0), 7);
 
 const browser = await chromium.launch({ headless: true });
 const page = await (await browser.newContext()).newPage();
@@ -49,17 +57,12 @@ await page.route('**/api/**', async route => {
   const usr = String((msgs.find(m => m.role === 'user') || {}).content || '');
   if (!isAuthor(sys, usr, b.model || b.preferredModel)) return route.continue();
   try { fs.writeFileSync(`${OUTDIR}/payload_${raws.length + 1}.txt`, sys + '\n=====USER=====\n' + usr); } catch (_) {}
-  // DUPLICATE HUNT. One byte-identical pass-2 payload is still being issued twice with the
-  // speculative preload disabled, and static reading could not name the caller. Record a hash
-  // and a timestamp per author call so the pair is identifiable, and pair it with the in-page
-  // stack capture below — an immediate duplicate is a retry, a delayed one is a second trigger.
-  try {
-    const h = String(sys.length) + ':' + String(usr.length) + ':' +
-      [...sys.slice(0, 4000)].reduce((a2, c) => ((a2 * 31 + c.charCodeAt(0)) | 0), 7);
-    fs.appendFileSync(`${OUTDIR}/author_calls.jsonl`,
-      JSON.stringify({ n: raws.length + 1, t: Date.now(), hash: h, sysChars: sys.length,
-        sentinel: /STORYBOUND_CACHE_BOUNDARY/.test(sys) }) + '\n');
-  } catch (_) {}
+  const rec = { id: calls.length + 1, scene, t: Date.now(), inHash: hash(sys + usr),
+    sysChars: sys.length,
+    pass: /STRICT MODE \(retry\)/.test(sys) ? 'pass2-strict'
+      : /STORYBOUND_CACHE_BOUNDARY/.test(sys) ? 'pass2' : 'pass1-or-legacy',
+    outHash: null, outLen: 0, consumed: null };
+  calls.push(rec);
   const resp = await route.fetch({ timeout: 0 });
   const bodyTxt = await resp.text();
   try {
@@ -68,8 +71,9 @@ await page.route('**/api/**', async route => {
     const txt = Array.isArray(c) ? c.filter(x => x && x.type === 'text').map(x => x.text).join('') : String(c || '');
     if (txt && txt.length > 200) {
       raws.push(txt);
+      rec.outHash = hash(txt); rec.outLen = txt.length; rec.text = txt;
       fs.writeFileSync(`${OUTDIR}/raw_author_${raws.length}.txt`, txt);
-      log(`  [author ${raws.length}] ${txt.length} chars`);
+      log(`  [author ${raws.length}] ${txt.length} chars · ${rec.pass} · scene ${scene}`);
     }
   } catch (_) {}
   return route.fulfill({ response: resp, body: bodyTxt });
@@ -152,6 +156,18 @@ await page.evaluate(() => window.handleBeginStory());
 for (let w = 0; w < 900000; w += 4000) { await page.waitForTimeout(4000); if ((await pageText()).length > 1200) break; }
 await page.waitForTimeout(12000);
 let all = await pageText();
+// A draft counts as consumed if a distinctive run of it survives into the rendered page.
+const norm = x => String(x).replace(/\s+/g, ' ').replace(/[“”"’']/g, '').toLowerCase();
+const resolve = (sceneNo, finalText) => {
+  const F = norm(finalText);
+  for (const c of calls.filter(x => x.scene === sceneNo && x.text)) {
+    const n = norm(c.text);
+    let hit = false;
+    for (let i = 60; i + 60 <= n.length && !hit; i += 120) if (F.includes(n.slice(i, i + 60))) hit = true;
+    c.consumed = hit; delete c.text;
+  }
+};
+resolve(1, all);
 fs.writeFileSync(`${OUTDIR}/scene1_final.txt`, all);
 log(`  scene 1: ${all.length} chars   spend=$${spend.toFixed(3)}`);
 let prevLen = all.length;
@@ -163,6 +179,7 @@ for (let n = 2; n <= N; n++) {
   await page.evaluate(() => { const s = window.state;
     s._cliffhangerContinueAuthorized = true; s._isAdvancingScene = false;
     s._petitionEmergenceFired = true; s._deckExamineFired = true; });
+  scene = n;
   const action = ACTIONS[(n - 2) % ACTIONS.length];
   log(`[serial] SCENE ${n} — "${action}"`);
   await page.evaluate((a) => {
@@ -178,6 +195,7 @@ for (let n = 2; n <= N; n++) {
   const { all: now, ok } = await settle(prevLen);
   if (!ok) { log(`  ⚠ scene ${n} UNSETTLED (${now.length} vs ${prevLen}) — stopping, partial output kept`); break; }
   const body = now.slice(prevLen).trim();
+  resolve(n, body);
   fs.writeFileSync(`${OUTDIR}/scene${n}_final.txt`, body);
   fs.writeFileSync(`${OUTDIR}/all_final.txt`, now);
   log(`  scene ${n}: ${body.length} chars   spend=$${spend.toFixed(3)}`);
@@ -193,6 +211,15 @@ try {
   const stacks = await page.evaluate(() => window.__authorStacks || []);
   fs.writeFileSync(OUTDIR + '/author_stacks.txt', stacks.map((x, i) => `#${i + 1}  ${x}`).join('\n'));
   log(`  author call stacks captured: ${stacks.length} → author_stacks.txt`);
+  fs.writeFileSync(OUTDIR + '/author_calls.jsonl', calls.map(c => JSON.stringify(c)).join('\n'));
+  const dupes = {};
+  for (const c of calls) (dupes[c.inHash] = dupes[c.inHash] || []).push(c);
+  log('\n  ── CALL LEDGER ──');
+  for (const c of calls) log(`   #${c.id} scene ${c.scene} · ${c.pass.padEnd(16)} · out ${String(c.outLen).padStart(5)} · consumed=${c.consumed}`);
+  for (const [h, g] of Object.entries(dupes)) if (g.length > 1) {
+    log(`   ⚠ DUPLICATE INPUT ×${g.length}: calls ${g.map(x => '#' + x.id).join(',')} · ${g[0].pass}`
+      + ` · Δt ${g[1].t - g[0].t}ms · consumed ${g.map(x => x.consumed).join('/')}`);
+  }
   log(`  runtime — violations ${rt.violations.length} · preflight ${rt.preflight.length} · reports ${rt.reports.length}`);
 } catch (e) { log('  runtime dump failed: ' + e.message); }
 
