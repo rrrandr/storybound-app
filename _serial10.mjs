@@ -13,7 +13,7 @@ import { chromium } from 'playwright-core';
 import fs from 'fs';
 
 const N = Number(process.argv[2]) || 10;
-const OUTDIR = '_validate_out/serial10';
+const OUTDIR = process.env.OUTDIR || '_validate_out/serial10';
 const log = (...a) => console.error(...a);
 fs.mkdirSync(OUTDIR, { recursive: true });
 fs.writeFileSync(OUTDIR + '/.writetest', 'ok'); fs.unlinkSync(OUTDIR + '/.writetest');
@@ -94,6 +94,9 @@ await page.evaluate(() => {
   // Real switch — read inside the function. Assigning window.scheduleSpeculativePreload
   // disables nothing (bare internal callers resolve the declaration, not the alias).
   window.__disableSpeculativePreload = true;
+  // A/50 is gated behind a flag no production path sets, so the previous serial was written
+  // without the house prose mode entirely. Arm it so the test measures the real target style.
+  window._armA50 = true;
 });
 
 const pageText = () => page.evaluate(() => (window.StoryPagination.getPages() || []).join('\n')
