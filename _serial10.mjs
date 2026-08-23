@@ -49,6 +49,17 @@ await page.route('**/api/**', async route => {
   const usr = String((msgs.find(m => m.role === 'user') || {}).content || '');
   if (!isAuthor(sys, usr, b.model || b.preferredModel)) return route.continue();
   try { fs.writeFileSync(`${OUTDIR}/payload_${raws.length + 1}.txt`, sys + '\n=====USER=====\n' + usr); } catch (_) {}
+  // DUPLICATE HUNT. One byte-identical pass-2 payload is still being issued twice with the
+  // speculative preload disabled, and static reading could not name the caller. Record a hash
+  // and a timestamp per author call so the pair is identifiable, and pair it with the in-page
+  // stack capture below — an immediate duplicate is a retry, a delayed one is a second trigger.
+  try {
+    const h = String(sys.length) + ':' + String(usr.length) + ':' +
+      [...sys.slice(0, 4000)].reduce((a2, c) => ((a2 * 31 + c.charCodeAt(0)) | 0), 7);
+    fs.appendFileSync(`${OUTDIR}/author_calls.jsonl`,
+      JSON.stringify({ n: raws.length + 1, t: Date.now(), hash: h, sysChars: sys.length,
+        sentinel: /STORYBOUND_CACHE_BOUNDARY/.test(sys) }) + '\n');
+  } catch (_) {}
   const resp = await route.fetch({ timeout: 0 });
   const bodyTxt = await resp.text();
   try {
@@ -97,6 +108,25 @@ await page.evaluate(() => {
   // A/50 is gated behind a flag no production path sets, so the previous serial was written
   // without the house prose mode entirely. Arm it so the test measures the real target style.
   window._armA50 = true;
+  // Name the caller of every author call. The duplicate survives with the preload off, so the
+  // stack is the only thing that will say who issues it.
+  window.__authorStacks = [];
+  try {
+    const _orig = window._authorChatCapture;
+    if (typeof _orig === 'function') {
+      window._authorChatCapture = function (m, t2, o) {
+        try { window.__authorStacks.push(String(new Error('author-call').stack || '').split('\n').slice(1, 7).join(' | ')); } catch (_) {}
+        return _orig.apply(this, arguments);
+      };
+    }
+    const _oc = window.callChat;
+    if (typeof _oc === 'function') {
+      window.callChat = function () {
+        try { window.__authorStacks.push('callChat:: ' + String(new Error('cc').stack || '').split('\n').slice(1, 7).join(' | ')); } catch (_) {}
+        return _oc.apply(this, arguments);
+      };
+    }
+  } catch (_) {}
 });
 
 const pageText = () => page.evaluate(() => (window.StoryPagination.getPages() || []).join('\n')
@@ -160,6 +190,9 @@ try {
     preflight: (window.state && window.state._payloadPreflight) || [],
     reports: (window.state && window.state._validatorReports) || [] }));
   fs.writeFileSync(OUTDIR + '/runtime.json', JSON.stringify(rt, null, 1));
+  const stacks = await page.evaluate(() => window.__authorStacks || []);
+  fs.writeFileSync(OUTDIR + '/author_stacks.txt', stacks.map((x, i) => `#${i + 1}  ${x}`).join('\n'));
+  log(`  author call stacks captured: ${stacks.length} → author_stacks.txt`);
   log(`  runtime — violations ${rt.violations.length} · preflight ${rt.preflight.length} · reports ${rt.reports.length}`);
 } catch (e) { log('  runtime dump failed: ' + e.message); }
 

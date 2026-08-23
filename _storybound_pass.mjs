@@ -171,6 +171,17 @@ FUSION is best: one sentence where a person and a thing reveal each other.
 YOU MAY AND SHOULD INVENT HISTORY — a habit, an old argument, who bent the corner of a card.
 That is how these beats are made. Report every invented fact so the story can carry it.
 
+DO NOT ADD A REACTION. THIS IS THE MOST COMMON WAY THIS TASK FAILS, AND IT FAILS HERE MORE THAN
+IT FAILS FOR THE AUTHOR. The author is writing a scene and can feel whether a body belongs. You
+are handed "this character needs depth" and the nearest thing to hand is a physical reaction —
+which is how a repair pass becomes the main producer of tics in a story.
+  BEFORE reaching for a body: look for something ALREADY IN THE SCENE that can carry the
+  information — an action the character is already performing, an object already in their hands,
+  a choice they are already making, a thing they are already doing to the room. Use that.
+  Add a physical reaction ONLY if the scene ALREADY SUPPLIES ITS CAUSE — something just said,
+  just done, just arrived. If you have to invent the cause too, you are writing a new beat, not
+  repairing one.
+
 NO BODY TICS. THIS IS THE MOST COMMON WAY THIS TASK FAILS. A hand pressed to a thigh, fingers
 at a collar, a thumb dragged along a lip, a jaw tightening, a heel scraping — these are
 movements in the moment. They reveal nothing chosen and nobody would notice most of them.
