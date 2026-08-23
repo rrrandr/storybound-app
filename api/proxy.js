@@ -63,7 +63,8 @@ const ALLOWED_GROK_MODELS = [
   'grok-4.20-0309-non-reasoning', // OAS author primary (fast, no reasoning-token tax; cleaned by gpt-4o-mini)
   'grok-4-1-fast-non-reasoning',  // RENDERER primary + INTIMACY_SPECIALIST fallback
   'grok-4-1-fast-reasoning',      // INTIMACY_SPECIALIST primary
-  'grok-4.3'                      // Universal fallback if 4-1 names get renamed/deprecated
+  'grok-4.3',                     // Universal fallback if 4-1 names get renamed/deprecated
+  'grok-4.6'                      // EXPERIMENT ONLY (_sbModelOverride); remove when the 4.3-vs-4.6 question closes
 ];
 
 /**
@@ -170,11 +171,16 @@ const XAI_CALL_TIMEOUT_MS = Number(process.env.XAI_CALL_TIMEOUT_MS) || 90000;
 // 'none' (skips the reasoning phase: fewer output tokens, lower latency, fewer of
 // the 80k-prompt hangs); reasoning intent → 'high'. A client may override per call
 // with body.reasoningEffort (used by the per-scene effort routing + the author A/B).
-function _resolveGrokModel(name, overrideEffort) {
+const _SB_MODEL_OVERRIDES = ['grok-4.6'];
+function _resolveGrokModel(name, overrideEffort, sbOverride) {
   const n = String(name || '');
   let effort = (/non-reasoning|4\.20/.test(n)) ? 'none' : 'high';
   const OK = { none: 1, low: 1, medium: 1, high: 1 };
   if (overrideEffort && OK[String(overrideEffort)]) effort = String(overrideEffort);
+  if (sbOverride && _SB_MODEL_OVERRIDES.includes(String(sbOverride))) {
+    console.log('[PROXY] SB model override -> ' + sbOverride + ' (effort ' + effort + ')');
+    return { model: String(sbOverride), effort };
+  }
   return { model: 'grok-4.3', effort };
 }
 
@@ -355,7 +361,16 @@ export default async function handler(req, res) {
       };
       if (convId) _xaiHeaders['x-grok-conv-id'] = String(convId);
       // Resolve the (legacy-named) chain entry → live grok-4.3 + explicit reasoning.effort.
-      const _grok = _resolveGrokModel(tryModel, req.body && req.body.reasoningEffort);
+      let _sbOv = req.body && req.body._sbModelOverride;
+      if (!_sbOv && process.env.SB_FORCE_AUTHOR_MODEL) {
+        try {
+          const _sys = (messages || []).find(m => m && m.role === 'system');
+          if (_sys && /STORYBOUND ARCHITECTURE LAWS/.test(String(_sys.content || ''))) {
+            _sbOv = process.env.SB_FORCE_AUTHOR_MODEL;
+          }
+        } catch (_) {}
+      }
+      const _grok = _resolveGrokModel(tryModel, req.body && req.body.reasoningEffort, _sbOv);
       const _xaiBody = {
         model: _grok.model,
         messages: messages,
