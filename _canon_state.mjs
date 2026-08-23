@@ -187,6 +187,43 @@ export function decay(state, now) {
   return events;
 }
 
+// ── SPENT-SLOT LEDGER ────────────────────────────────────────────────────────
+// Character+ rotates through nine mechanisms and Environment+ through seven axes. The rule
+// existed in the prompt and was delivered every scene, but nothing recorded WHICH slot a
+// character had already spent, so "rotate" was an instruction the author had to satisfy from
+// inside a single call with no memory. That is how one person ends up leading with her
+// décolletage in scene 1, choosing a dress by its neckline in scene 2 and angling her bust in
+// scene 3: three different sentences, one mechanism, no way to notice.
+//
+// What is stored is the SLOT, never a reading of the character. "Jess has spent A and D" is a
+// fact about what is used up. "Jess uses sexuality to control perception" is a thesis the
+// system would then bend every future scene toward, and it is exactly what this avoids.
+export const SLOT_COOLDOWN = 5;
+
+export function recordSlot(state, entity, slot, sceneLabel) {
+  if (!slot) return null;
+  state.scenes ||= [];
+  if (!state.scenes.includes(sceneLabel)) state.scenes.push(sceneLabel);
+  const ent = (state.entities[entity] ||= { beliefs: [] });
+  (ent.spent ||= []).push({ slot: String(slot), scene: sceneLabel, tick: state.scenes.length });
+  return { entity, slot, tick: state.scenes.length };
+}
+
+// A slot comes back into play after the cooldown — the mechanism may return once it can
+// DEEPEN rather than restate. Surface repetition is a separate guard; this one is about
+// which lens the scene is allowed to look through.
+export function slotStatus(state, entity, allSlots, now, cooldown = SLOT_COOLDOWN) {
+  const ent = state.entities[entity];
+  const hist = (ent && ent.spent) || [];
+  const recent = new Set(hist.filter(x => now - x.tick < cooldown).map(x => x.slot));
+  return {
+    spent: [...recent],
+    available: allSlots.filter(x => !recent.has(x)),
+    everUsed: [...new Set(hist.map(x => x.slot))],
+    history: hist.map(x => `${x.slot}@${String(x.scene).replace(/^.*\//, '')}`),
+  };
+}
+
 // WHAT THE AUTHOR RECEIVES. Observations are withheld on purpose (see the header). Traits are
 // stated as established; patterns are offered and explicitly marked optional, because a
 // pattern the author MUST honour becomes a tic just as fast as a bad extraction.
@@ -276,6 +313,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.log(`        ${b.id} · ${b.type} · ${b.origin || 'observed'} · seen ${b.seen.length}× · last tick ${b.lastTick || '?'}`
           + (b.significance === 'unknown' ? ' · significance unknown (open hook)' : ''));
         for (const x of b.exceptions || []) console.log(`        ⚡ exception: ${x.fact}  (${x.scene})`);
+      }
+      if (ent.spent && ent.spent.length) {
+        console.log(`     ⟳ slots spent: ${ent.spent.map(x => `${x.slot}@tick${x.tick}`).join(', ')}`);
       }
     }
     const all = ents().flatMap(([, e]) => e.beliefs);

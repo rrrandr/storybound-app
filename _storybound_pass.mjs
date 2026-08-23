@@ -18,7 +18,12 @@
 //
 // usage: node _storybound_pass.mjs <scene.txt> [--lens=OPEN_VEIN] [--apply]
 import fs from 'fs';
-import { load, ingest, save, renderForAuthor, renderForExtractor, describe } from './_canon_state.mjs';
+import { load, ingest, save, renderForAuthor, renderForExtractor, describe,
+         recordSlot, slotStatus, SLOT_COOLDOWN } from './_canon_state.mjs';
+import { loadMechanisms, renderMechanismMenu, renderRotation, EPLUS_AXES } from './_cplus_rules.mjs';
+
+const MECHS = loadMechanisms().map(m => m.letter);
+const AXES = EPLUS_AXES.map(a => a.key);
 
 const file = process.argv.find(a => a.endsWith('.txt'));
 const lens = (process.argv.find(a => a.startsWith('--lens=')) || '=').split('=')[1] || 'OPEN_VEIN';
@@ -47,6 +52,11 @@ const MATERIAL = /\b(stone|wood|moss|grass|spiralgrass|bark|cloth|silk|gossamer|
 const LIGHT = /\b(sun\w*|dappled|shadow\w*|dark\w*|dim\w*|dusk|dawn|lamp\w*|torch\w*|candle\w*|moon\w*|firelight|glare|grey|overcast|daylight|lamplight)\b/i;
 const INTERPRETIVE = /\b(as (?:though|if)|had (?:learned|spent|always|never|once)|nobody (?:had|remembered|alive)|no one had ever|used to|had been (?:built|carved|replaced|repaired)|older than|remembered why)\b/i;
 
+const NOT_A_PERSON = new Set(['The', 'She', 'His', 'Her', 'Him', 'They', 'Them', 'That', 'This',
+  'Every', 'When', 'Then', 'Stop', 'Close', 'Present', 'Protocol', 'Run', 'Eyes', 'Let', 'You', 'Your',
+  'Fate', 'Tempt', 'Petition', 'Weave', 'Script', 'Weave-Script', 'Veilweave', 'Veilwood', 'Favored',
+  'First', 'Sacrifice', 'Ascendant', 'Fold', 'Nothing', 'Someone', 'Everyone', 'Because', 'What', 'Why']);
+
 // Named speakers = a capitalised name in or beside a quoted line.
 const names = new Map();
 S.forEach((s, i) => {
@@ -54,22 +64,37 @@ S.forEach((s, i) => {
   if (!QUOTED.test(near)) return;
   for (const m of s.matchAll(/\b([A-Z][a-z]{2,})\b/g)) {
     const n = m[1];
-    if (['The', 'She', 'His', 'Her', 'They', 'That', 'This', 'Every', 'When', 'Stop', 'Present'].includes(n)) continue;
+    // NOT PEOPLE. Capitalised recurring tokens near a quote also catch the PC pronoun, world
+    // mechanics and compound proper nouns, and the pass would then dutifully invent "chosen
+    // self-presentation" for Fate — which canon says is never seen and is not a character.
+    if (NOT_A_PERSON.has(n)) continue;
     if ((body.match(new RegExp(`\\b${n}\\b`, 'g')) || []).length < 2) continue;  // a real name recurs
     names.set(n, (names.get(n) || 0) + 1);
   }
 });
 
+const state = load();
+const now = (state.scenes || []).includes(file) ? (state.scenes || []).indexOf(file) + 1 : (state.scenes || []).length + 1;
+
+// THE QUESTION CHANGED. It used to be "does this character have a Character+ beat in this
+// scene?", which fires every scene forever and is how a character acquires one mechanism as a
+// personality. It is now "does this character have an UNSPENT mechanism?" — a character whose
+// slots are all on cooldown is left alone.
 const gaps = [];
 for (const [n] of names) {
   const rx = new RegExp(`\\b${n}\\b`);
   const mine = S.filter(x => rx.test(x));
   const traits = mine.filter(x => TRAIT.test(x)).length;
   const chosen = mine.some(x => CHOSEN.test(x));
-  if (!chosen && traits <= 2) {
-    gaps.push({ kind: 'C+', subject: n,
-      note: `speaks; carried by ${traits} physical trait(s) and no chosen self-presentation` });
+  if (chosen || traits > 2) continue;
+  const st = slotStatus(state, n, MECHS, now);
+  if (!st.available.length) {
+    console.log(`   (skipping ${n} — every mechanism spent within ${SLOT_COOLDOWN} scenes: ${st.spent.join(', ')})`);
+    continue;
   }
+  gaps.push({ kind: 'C+', subject: n, slots: st,
+    note: `speaks; carried by ${traits} physical trait(s) and no chosen self-presentation`
+      + (st.spent.length ? `; has spent ${st.spent.join(', ')}` : '') });
 }
 const hasMaterial = S.some(x => MATERIAL.test(x));
 const hasLight = S.some(x => LIGHT.test(x));
@@ -79,8 +104,10 @@ if (!hasMaterial || !hasLight) {
   gaps.push({ kind: 'E', subject: 'the scene',
     note: `no place established (${hasMaterial ? '' : 'no surface/material'}${!hasMaterial && !hasLight ? ', ' : ''}${hasLight ? '' : 'no quality of light'})` });
 } else if (!hasEplus) {
-  gaps.push({ kind: 'E+', subject: 'the scene',
-    note: `${groundedSentences.length} grounding sentence(s), none carrying a relationship to anyone` });
+  const st = slotStatus(state, 'the scene', AXES, now);
+  gaps.push({ kind: 'E+', subject: 'the scene', slots: st,
+    note: `${groundedSentences.length} grounding sentence(s), none carrying a relationship to anyone`
+      + (st.spent.length ? `; axes already used here: ${st.spent.join(', ')}` : '') });
 }
 
 console.log(`\n${'═'.repeat(78)}\nSTORYBOUND+ PASS   ${file}   lens ${lens}\n${'═'.repeat(78)}`);
@@ -92,30 +119,34 @@ for (const g of gaps) console.log(`   [${g.kind}] ${g.subject} — ${g.note}`
 if (ONLY && !wanted.length) { console.log(`\n  no [${ONLY}] gap in this scene — nothing to test here.`); process.exit(0); }
 if (!gaps.length || process.argv.includes('--scan')) process.exit(0);  // --scan = local only, free
 
+// Only mechanisms that are actually free are shown. An exhausted slot is not "discouraged" —
+// it is absent from the menu, because a model offered a mechanism will reach for it.
+const freeC = [...new Set(gaps.filter(g => g.kind === 'C+').flatMap(g => (g.slots ? g.slots.available : MECHS)))]
+  .sort();
+const freeE = [...new Set(gaps.filter(g => g.kind === 'E+').flatMap(g => (g.slots ? g.slots.available : AXES)))];
+const C_MENU = renderMechanismMenu(freeC.length ? freeC : MECHS);
+const E_MENU = EPLUS_AXES.filter(a => !freeE.length || freeE.includes(a.key))
+  .map(a => `  ${a.key} · ${a.axis}: ${a.example}`).join('\n');
+
 const WRITER_SYS = `You are an editor for Storybound, writing in the voice of S. Tory Bound.
 You are given a finished scene and a list of specific gaps. Fix ONLY those gaps.
 
 CHARACTER+ — the person DOES something to control how they are read, it costs them
 something, and the narrator reads that choice. Not a feeling. Not an involuntary tell (a
 tremor, a caught breath, a blush is texture, never the insight).
-  ✓ "He corrected everyone who called him a doorman, though he had never once pronounced
-    'concierge' correctly."
-  ✓ "Jess led with her décolletage, as usual."
-  ✓ "Dohkar Raes never called it bad luck. Bad luck implied the universe was careless. He
-    preferred 'a debt coming due.'"
-  ✓ "Sir Vale took his helmet off before anyone asked him to. He wanted them to see his face
-    before they heard his reputation."
-  ✓ "He apologised the way he always did: with a shrug and a big tip."
-  ✓ "The queen never let a servant finish apologising."
+
+ROTATE MECHANISMS, NEVER SURFACES. A person is revealed through a DIFFERENT lens each time
+they appear. Writing the same mechanism again in fresh words is the failure this rule exists
+to prevent: leading with a neckline, then choosing a dress by its neckline, then angling the
+body — three sentences, one mechanism, a person flattened into a single trait.
+These are the mechanisms STILL AVAILABLE. Use one of them and no other. They demonstrate the
+PHYSICS, never the choreography — do not reuse their syntax or connective tissue:
+${C_MENU}
+
 ENVIRONMENT+ — what a PLACE **or an OBJECT** has become because of what happened to it. Objects
 count fully: a blade, a card, a coat, a door, a cup. Not symbolism, not atmosphere, not lore.
-  ✓ "There were four chairs and three of them matched. Nobody had ever suggested replacing
-    the fourth."
-  ✓ "The sword had been re-gripped three times. The blade was never touched."
-  ✓ "They rebuilt the same gate three times, always facing the same way. Nobody remembered
-    what they were keeping out. Everyone remembered what got in."
-  ✓ "Every chair faced the door except the one at the head of the table. That chair faced
-    everyone else."
+It rotates the same way. Axes still available here:
+${E_MENU}
 ENVIRONMENT+ DECISION TEST — apply this before writing anything environmental:
   "Would this place or object be ANY DIFFERENT if this story had never happened here?"
   If the answer is no, what you have written is scenery, and scenery is not Environment+.
@@ -190,6 +221,7 @@ in the original sentence, or dropping something you listed, is a failed patch.
 
 Return ONLY JSON:
 {"patches":[{"kind":"C+|E|E+|fusion","sentence":<number>,
+"slot":"<the mechanism letter (C+) or axis key (E+) you used — must be one offered above>",
 "job":"<what this sentence is for, e.g. 'introduces the youth kneeling in ritual space'>",
 "must_preserve":["<thing from the original that has to survive>", "..."],
 "replacement":"<the complete upgraded sentence(s)>"}]}`;
@@ -202,7 +234,6 @@ Return ONLY JSON:
 // that holds the pen, and it dutifully wrote scene 1's once-seen gesture into scene 2 —
 // manufacturing the pattern the tiers exist to make the story earn. Withholding observations
 // from "the author" means nothing if the repair model sees them and also writes.
-const state = load();
 const cast = [...names.keys()];
 const safe = renderForAuthor(state, cast);
 const known = renderForExtractor(state, cast);
@@ -223,7 +254,8 @@ const ask = async (sys, user, max) => {
 };
 
 const w = await ask(NEUTRAL ? WRITER_SYS.replace(/Dohkar Raes/g, 'Ellery Kane') : WRITER_SYS,
-  `${safe ? safe + '\n\n' : ''}GAPS:\n${wanted.map(g => `- [${g.kind}] ${g.subject}: ${g.note}`).join('\n')}`
+  `${safe ? safe + '\n\n' : ''}GAPS:\n${wanted.map(g => `- [${g.kind}] ${g.subject}: ${g.note}`
+    + (g.slots && g.slots.spent.length ? `\n` + renderRotation(g.slots.spent, g.slots.available) : '')).join('\n')}`
   + `\n\nSCENE (numbered by sentence):\n${S.map((x, i) => `${i + 1}. ${x}`).join('\n')}`, 1100);
 const patches = w.json.patches || [];
 console.log(`\nWRITER    served ${w.model || '?'} · ${w.tok} tok ≈ $${w.cost.toFixed(4)}`
@@ -337,6 +369,11 @@ for (const p of patches) {
   if (bad.length) console.log(`     ⚠ REJECT: ${bad.join(', ')}`);
   else {
     out = out.replace(orig, repl); applied++; landed.push(repl);
+    const subject = (wanted.find(g => g.kind === p.kind) || {}).subject;
+    if (p.slot && subject) {
+      recordSlot(state, subject, p.slot, file);
+      console.log(`     ⟳ slot ${p.slot} spent for ${subject} (cooldown ${SLOT_COOLDOWN} scenes)`);
+    }
     const inOrig = new Set(CW(orig)), sceneWords = new Set(CW(scene));
     for (const w of new Set(CW(repl))) {
       if (inOrig.has(w) || (!NUMBER.test(w) && sceneWords.has(w))) continue;
