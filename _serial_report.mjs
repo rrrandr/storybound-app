@@ -12,6 +12,19 @@
 import fs from 'fs';
 import { execFileSync } from 'child_process';
 
+// Per-scene generation facts, read from the harness ledger rather than inferred. A duplicate
+// whose output was DISCARDED is waste; one whose output WON means the measured prose came from
+// a path we did not know existed, and the scene's row should be discounted.
+const gen = {};
+try {
+  for (const l of fs.readFileSync((process.argv[2] || '_validate_out/serial10') + '/author_calls.jsonl', 'utf8')
+    .trim().split('\n').filter(Boolean).map(JSON.parse)) {
+    const g = (gen[l.scene] ||= { calls: 0, dupes: 0, consumed: 0, seen: {} });
+    g.calls++; if (l.consumed) g.consumed++;
+    if (g.seen[l.inHash]) g.dupes++; g.seen[l.inHash] = 1;
+  }
+} catch (_) {}
+
 const DIR = process.argv[2] || '_validate_out/serial10';
 const scenes = fs.readdirSync(DIR).filter(f => /^scene\d+_final\.txt$/.test(f))
   .sort((a, b) => Number(a.match(/\d+/)[0]) - Number(b.match(/\d+/)[0]));
@@ -32,8 +45,17 @@ for (const f of scenes) {
   const gaps = [...out.matchAll(/^   \[C\+\] (\S+)/gm)].map(m => m[1]);
   const now = (out.match(/^     now: (.+)$/m) || [])[1] || '';
 
+  // Prose-level measurements, independent of whether repair fired.
+  const raw = fs.readFileSync(`${DIR}/${f}`, 'utf8');
+  let tells = '?';
+  try {
+    const o = execFileSync('node', ['_tell_causality.mjs', `${DIR}/${f}`], { encoding: 'utf8' });
+    tells = (o.match(/(\d+) unlicensed/) || [])[1] ?? '?';
+  } catch (_) {}
+  const g = gen[n] || {};
   rows.push({ n, subject: slot[2] || (gaps[0] || '—'), slot: slot[1] || '—',
-    applied: !!slot[1], skipped, rejects, gaps: gaps.length });
+    applied: !!slot[1], skipped, rejects, gaps: gaps.length, tells,
+    calls: g.calls ?? '?', dupes: g.dupes ?? 0, words: raw.split(/\s+/).length });
   if (slot[1] && now) beats.push({ n, subject: slot[2], text: now });
   if (skipped.length) notes.push(`scene ${n}: skipped ${skipped.join(', ')} — every mechanism on cooldown`);
   for (const r of rejects) notes.push(`scene ${n}: rejected — ${r.slice(0, 90)}`);
@@ -51,16 +73,33 @@ for (const r of rows) {
 }
 
 console.log(`\n${'═'.repeat(76)}\nSERIAL C+ ROTATION   ${DIR}   ${scenes.length} scenes\n${'═'.repeat(76)}`);
-console.log('\n scene  subject       mechanism  repeated axis?        outcome');
-console.log(' ' + '─'.repeat(73));
+console.log('\n scene words calls dup  C+mech repeated?      unlicensed-tells  outcome');
+console.log(' ' + '─'.repeat(84));
 for (const r of rows) {
   const outcome = r.applied ? 'applied'
-    : r.skipped.length ? 'skipped (slots spent)'
-    : r.rejects.length ? `refused (${r.rejects.length})`
-    : r.gaps ? 'no patch returned' : 'no gap';
-  console.log(` ${String(r.n).padEnd(6)} ${String(r.subject).slice(0, 13).padEnd(13)} ${r.slot.padEnd(10)} `
-    + `${String(r.repeat).padEnd(21)} ${outcome}`);
+    : r.skipped.length ? 'skipped(spent)'
+    : r.rejects.length ? `refused(${r.rejects.length})`
+    : r.gaps ? 'no patch' : 'no gap';
+  console.log(` ${String(r.n).padEnd(5)} ${String(r.words).padStart(5)} ${String(r.calls).padStart(5)}`
+    + ` ${String(r.dupes || '').padStart(3)}  ${r.slot.padEnd(6)} ${String(r.repeat).padEnd(15)}`
+    + ` ${String(r.tells).padStart(14)}  ${outcome}`);
 }
+// Cross-scene motif recurrence — the failure the mechanism ledger cannot see, because the
+// same pathology can wear a new surface each time (heel→ring→hand becomes jaw→sleeve→cup).
+const texts = scenes.map(f => fs.readFileSync(`${DIR}/${f}`, 'utf8'));
+const BODY = '(?:hand|fingers?|thumb|palm|heel|foot|jaw|shoulders?|throat|chest|mouth|eyes?|wrist)';
+const motif = {};
+texts.forEach((t, i) => {
+  const seen = new Set();
+  const rx = new RegExp(`\\b${BODY}\\b[^.]{0,30}?\\b(\\w+(?:ed|ing))\\b`, 'gi');
+  let m; while ((m = rx.exec(t))) { const k = m[0].toLowerCase().replace(/\s+/g, ' ');
+    const key = k.split(' ').filter(w => /^(?:hand|fingers?|thumb|palm|heel|foot|jaw|shoulders?|throat|chest|mouth|eyes?|wrist)$/.test(w)).concat(m[1].toLowerCase()).join(' ');
+    if (seen.has(key)) continue; seen.add(key); (motif[key] = motif[key] || []).push(i + 1); }
+});
+const motifRepeats = Object.entries(motif).filter(([, v]) => v.length >= 3);
+console.log('\n MOTIF RECURRENCE (same body+verb in 3+ scenes — mechanism ledger is blind to this):');
+if (!motifRepeats.length) console.log('   none');
+for (const [k, v] of motifRepeats.sort((a, b) => b[1].length - a[1].length).slice(0, 8)) console.log(`   ✗ "${k}" — scenes ${v.join(',')}`);
 
 const applied = rows.filter(r => r.applied);
 const repeats = rows.filter(r => /YES/.test(String(r.repeat)));
