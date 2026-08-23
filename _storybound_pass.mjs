@@ -24,6 +24,11 @@ const file = process.argv.find(a => a.endsWith('.txt'));
 const lens = (process.argv.find(a => a.startsWith('--lens=')) || '=').split('=')[1] || 'OPEN_VEIN';
 const APPLY = process.argv.includes('--apply');
 const ONLY = (process.argv.find(a => a.startsWith('--only=')) || '=').split('=')[1] || '';
+// EXEMPLAR SWAP. The Character+ examples below use "Dohkar Raes" — a name that is also live
+// cast in these scenes. A demonstration built from the story's own entities is indistinguishable
+// from canon at read time, so --exemplar=neutral renames it to test whether the observations
+// the extractor produces about Dohkar are the story's or the prompt's.
+const NEUTRAL = process.argv.includes('--exemplar=neutral');
 if (!file) { console.error('usage: node _storybound_pass.mjs <scene.txt> [--lens=X] [--apply]'); process.exit(2); }
 const scene = fs.readFileSync(file, 'utf8');
 
@@ -178,8 +183,10 @@ THE SCENE IS NUMBERED BY SENTENCE. You upgrade WHOLE SENTENCES, identified by nu
 a fragment. Keep any dialogue word for word. One or two sentences out for one in; no more.
 
 Before writing each upgrade, state the sentence's JOB and what MUST SURVIVE it. Both are
-checked. Listing something that is not in the original sentence, or dropping something you
-listed, is a failed patch.
+checked. Each must_preserve entry must be WORDS COPIED FROM THE ORIGINAL SENTENCE — "The
+Dohkar's mouth opened", "muffled" — never a description of them ("the dialogue that follows",
+"the tension"). Copy the words; do not summarise what they do. Listing something that is not
+in the original sentence, or dropping something you listed, is a failed patch.
 
 Return ONLY JSON:
 {"patches":[{"kind":"C+|E|E+|fusion","sentence":<number>,
@@ -215,7 +222,7 @@ const ask = async (sys, user, max) => {
     tok: `${u.prompt_tokens || '?'}/${u.completion_tokens || '?'}` };
 };
 
-const w = await ask(WRITER_SYS,
+const w = await ask(NEUTRAL ? WRITER_SYS.replace(/Dohkar Raes/g, 'Ellery Kane') : WRITER_SYS,
   `${safe ? safe + '\n\n' : ''}GAPS:\n${wanted.map(g => `- [${g.kind}] ${g.subject}: ${g.note}`).join('\n')}`
   + `\n\nSCENE (numbered by sentence):\n${S.map((x, i) => `${i + 1}. ${x}`).join('\n')}`, 1100);
 const patches = w.json.patches || [];
@@ -228,6 +235,8 @@ const landed = [];
 // specificity: one E+ run produced "three shallow depressions" and "three stones that had
 // anchored every rite", taking the scene from two "three"s to four. A distinctive word one
 // patch invents is not available to the next.
+const CW = t => (String(t).toLowerCase().match(/[a-z’']{4,}/g) || [])
+  .map(w => w.replace(/(?:ings?|ed|es|s)$/, '')).filter(w => !/^(?:that|this|with|from|were|been|have|they|their|there|then|than|when|what|which|would|could|about|into|over|only|some|such|will|your)$/.test(w));
 const NUMBER = /^(?:one|two|three|four|five|six|seven|eight|nine|ten|dozen|twice|thrice)$/;
 const introduced = new Map();
 // Dialogue is plot. Anything quoted in the sentence must survive verbatim in the replacement.
@@ -266,8 +275,6 @@ for (const p of patches) {
     // deletes what the sentence was for: an E+ pass overwrote "The youth knelt on the crimson
     // spiralgrass, her aqua skin luminous" with grass history alone, and the scene lost the
     // character's entrance. An upgrade keeps the original's content and adds to it.
-    const CW = t => (String(t).toLowerCase().match(/[a-z’']{4,}/g) || [])
-      .map(w => w.replace(/(?:ings?|ed|es|s)$/, '')).filter(w => !/^(?:that|this|with|from|were|been|have|they|their|there|then|than|when|what|which|would|could|about|into|over|only|some|such|will|your)$/.test(w));
     const origCW = [...new Set(CW(orig))], replLower = repl.toLowerCase();
     const kept = origCW.filter(w => replLower.includes(w)).length;
     const keepRatio = origCW.length ? kept / origCW.length : 1;
