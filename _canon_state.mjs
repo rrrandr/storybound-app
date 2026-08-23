@@ -200,6 +200,18 @@ export function decay(state, now) {
 // system would then bend every future scene toward, and it is exactly what this avoids.
 export const SLOT_COOLDOWN = 5;
 
+// STORY-LEVEL PROSE-PATTERN MEMORY, kept apart from the per-character mechanism ledger. The
+// mechanism ledger governs WHAT is revealed; this governs HOW it is delivered. The 10-scene
+// serial rotated mechanisms correctly (B, C, E, B) and still produced one sentence four
+// times — "the way he always measured a debt", "the way he always did when he sensed me
+// watching", "the way he always did when the work was about to", "the one she always used
+// first" — because nothing remembered the delivery form. The author wrote that construction
+// zero times in ten scenes; the repair pass introduced every instance.
+export function recordShells(state, keys, sceneLabel, sample) {
+  state.shells ||= {};
+  for (const k of keys) if (!state.shells[k]) state.shells[k] = { scene: sceneLabel, sample: String(sample || '').slice(0, 70) };
+}
+
 export function recordSlot(state, entity, slot, sceneLabel) {
   if (!slot) return null;
   state.scenes ||= [];

@@ -91,7 +91,9 @@ await page.evaluate(() => {
   s.previewActive = false; s._skipCorridorValidation = true; s.intensity = 'Steamy'; s.pov = 'first_person';
   s.identity = { playerName: 'Lirael', partnerName: 'Julian' }; s.picks.identity = s.identity;
   s._pcLookSkipped = true; s.pcLookLocked = true; s.renderMode = 'literary'; s.currentEngine = 'literary';
-  if (typeof window.scheduleSpeculativePreload === 'function') window.scheduleSpeculativePreload = function () {};
+  // Real switch — read inside the function. Assigning window.scheduleSpeculativePreload
+  // disables nothing (bare internal callers resolve the declaration, not the alias).
+  window.__disableSpeculativePreload = true;
 });
 
 const pageText = () => page.evaluate(() => (window.StoryPagination.getPages() || []).join('\n')

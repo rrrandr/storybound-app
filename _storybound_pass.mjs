@@ -19,8 +19,9 @@
 // usage: node _storybound_pass.mjs <scene.txt> [--lens=OPEN_VEIN] [--apply]
 import fs from 'fs';
 import { load, ingest, save, renderForAuthor, renderForExtractor, describe,
-         recordSlot, slotStatus, SLOT_COOLDOWN } from './_canon_state.mjs';
-import { loadMechanisms, renderMechanismMenu, renderRotation, EPLUS_AXES, shapeEcho } from './_cplus_rules.mjs';
+         recordSlot, slotStatus, SLOT_COOLDOWN, recordShells } from './_canon_state.mjs';
+import { loadMechanisms, renderMechanismMenu, renderRotation, EPLUS_AXES, shapeEcho,
+         shellKeys, shellEcho } from './_cplus_rules.mjs';
 
 const MECHS = loadMechanisms().map(m => m.letter);
 const AXES = EPLUS_AXES.map(a => a.key);
@@ -306,6 +307,11 @@ for (const p of patches) {
     // The exemplars teach the axis; reusing their skeleton is imitation, not learning.
     const echo = shapeEcho(repl);
     if (echo) bad.push(`copies mechanism ${echo.letter}'s sentence shape ("${echo.shared}") — take the axis, not the form`);
+    // Vertical imitation (copying an exemplar) was guarded; horizontal self-repetition — the
+    // story reusing its OWN delivery form — was not, and that is what actually happened.
+    const shell = shellEcho(repl, state.shells);
+    if (shell) bad.push(`reuses a delivery form already spent in ${String(shell.scene).replace(/^.*\//, '')}`
+      + ` ("${shell.sample}") — rotate the FORM as well as the mechanism`);
     // ADD, DO NOT REPLACE. The structural guards stop broken grammar but not a patch that
     // deletes what the sentence was for: an E+ pass overwrote "The youth knelt on the crimson
     // spiralgrass, her aqua skin luminous" with grass history alone, and the scene lost the
@@ -373,6 +379,7 @@ for (const p of patches) {
   else {
     out = out.replace(orig, repl); applied++; landed.push(repl);
     const subject = (wanted.find(g => g.kind === p.kind) || {}).subject;
+    recordShells(state, shellKeys(repl), file, repl);
     if (p.slot && subject) {
       recordSlot(state, subject, p.slot, file);
       console.log(`     ⟳ slot ${p.slot} spent for ${subject} (cooldown ${SLOT_COOLDOWN} scenes)`);

@@ -91,6 +91,36 @@ const grams = (t, n) => {
 
 const SHAPE_N = 6;
 
+// DELIVERY FORMS — a closed set, like the mechanisms, and for the same reason. A skeleton
+// n-gram matcher was tried first and failed on real data: at n=4 it rejected "She apologised
+// the way she always did: by bringing food and pretending it wasn't an apology" — genuinely
+// good C+ — and at n=6 it caught only one of three real repeats, because the shared template
+// "the way X always Y" hides a slot that is sometimes a function word ("did") and sometimes
+// content ("measured"), which no fixed-width gram can span.
+//
+// STORY-LEVEL, deliberately not per character: "the way he always did" spread across Dohkar,
+// Julian and Jess is the same defect as one character repeating it, merely distributed.
+export const DELIVERY_FORMS = [
+  { key: 'way-always',   rx: /\bthe (?:way|one) (?:he|she|they|[A-Z][a-z]+) (?:always|never)\b/i },
+  { key: 'as-usual',     rx: /\bas usual\b/i },
+  { key: 'in-that-order',rx: /\b(?:does|did) it in that order\b/i },
+  { key: 'that-was-tell',rx: /\bthat (?:was|is) the tell\b/i },
+  { key: 'not-x-but-y',  rx: /\bnot because\b[^.]{0,60}\bbut because\b/i },
+  { key: 'the-kind-who', rx: /\bthe kind of \w+ (?:who|that)\b/i },
+  { key: 'before-he',    rx: /\bbefore (?:he|she|they) (?:had )?\w+ed\b[^.]{0,50}\b(?:he|she|they)\b/i },
+  { key: 'x-taught-me',  rx: /\b(?:he|she|they|[A-Z][a-z]+) taught me\b/i },
+  { key: 'would-have',   rx: /\b(?:he|she|they)['’]?d have\b/i },
+];
+
+export const shellKeys = text => DELIVERY_FORMS.filter(f => f.rx.test(String(text))).map(f => f.key);
+
+// A form is not banned — it is SPENT. The first revelation to use it is free; what must not
+// happen is that form becoming the default container every later repair reaches for.
+export function shellEcho(text, spentShells) {
+  for (const k of shellKeys(text)) if (spentShells && spentShells[k]) return { key: k, ...spentShells[k] };
+  return null;
+}
+
 // Returns the exemplar letter whose skeleton the text reuses, or null.
 export function shapeEcho(text, mechanisms = loadMechanisms()) {
   const mine = new Set(grams(text, SHAPE_N));
