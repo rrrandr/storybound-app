@@ -115,6 +115,7 @@ await page.evaluate(() => {
   // Name the caller of every author call. The duplicate survives with the preload off, so the
   // stack is the only thing that will say who issues it.
   window.__authorStacks = [];
+  window.__traceAuthorCalls = true;   // dev trace at the callChat choke point
   try {
     const _orig = window._authorChatCapture;
     if (typeof _orig === 'function') {
@@ -201,6 +202,11 @@ for (let n = 2; n <= N; n++) {
   log(`  scene ${n}: ${body.length} chars   spend=$${spend.toFixed(3)}`);
   all = now; prevLen = now.length;
 }
+
+// The duplicate only completes when nothing follows it — after the last scene. Idle here so it
+// fires and is captured, instead of needing a longer (more expensive) run to expose it.
+const IDLE = Number(process.env.IDLE_MS || 0);
+if (IDLE) { log(`[serial] idling ${IDLE / 1000}s to catch any trailing generation…`); await page.waitForTimeout(IDLE); }
 
 try {
   const rt = await page.evaluate(() => ({
