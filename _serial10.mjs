@@ -91,7 +91,8 @@ for (let a = 1; a <= 3 && !loaded; a++) {
 if (!loaded) { await browser.close(); throw new Error('page never loaded'); }
 await page.waitForTimeout(600);
 
-await page.evaluate(() => {
+await page.evaluate((ARM) => {
+  window.__ARM = ARM;
   const s = window.state;
   window.__rawSnap = []; window.__textSnap = []; window.__cheapEditTrace = [];
   window._devBypass = true; s.picks = s.picks || {};
@@ -112,6 +113,8 @@ await page.evaluate(() => {
   // A/50 is gated behind a flag no production path sets, so the previous serial was written
   // without the house prose mode entirely. Arm it so the test measures the real target style.
   window._armA50 = true;
+  // ARM=1 runs without the Emotional Physics law so the prompt-time rule can be measured.
+  if (window.__ARM === 1) window._armEmotionalPhysics = false;
   // Name the caller of every author call. The duplicate survives with the preload off, so the
   // stack is the only thing that will say who issues it.
   window.__authorStacks = [];
@@ -132,7 +135,7 @@ await page.evaluate(() => {
       };
     }
   } catch (_) {}
-});
+}, Number(process.env.ARM || 0));
 
 const pageText = () => page.evaluate(() => (window.StoryPagination.getPages() || []).join('\n')
   .replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim());
