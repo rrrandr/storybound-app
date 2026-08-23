@@ -378,7 +378,16 @@ for (const p of patches) {
   if (bad.length) console.log(`     ⚠ REJECT: ${bad.join(', ')}`);
   else {
     out = out.replace(orig, repl); applied++; landed.push(repl);
-    const subject = (wanted.find(g => g.kind === p.kind) || {}).subject;
+    // Attribute to the character the patch is ACTUALLY about, not the first gap of its kind.
+    // Scene 7's beat was about the Chayr and got filed under Dohkar, which silently corrupts
+    // the ledger the whole rotation system reads from.
+    const candidates = wanted.filter(g => g.kind === p.kind);
+    const named = candidates.filter(g => new RegExp(`\\b${String(g.subject).replace(/[^\w]/g, '')}\\b`, 'i').test(repl));
+    const subject = named.length === 1 ? named[0].subject
+      : candidates.length === 1 ? candidates[0].subject : null;
+    if (!subject && candidates.length) {
+      console.log(`     ⚠ slot NOT recorded — cannot tell which of ${candidates.map(g => g.subject).join('/')} this is about`);
+    }
     recordShells(state, shellKeys(repl), file, repl);
     if (p.slot && subject) {
       recordSlot(state, subject, p.slot, file);
