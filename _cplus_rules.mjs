@@ -53,6 +53,53 @@ export function renderRotation(spent, available, kind = 'mechanism') {
     + `  Prefer: ${available.join(', ') || '(all spent — deepen an earlier one instead of restating it)'}`;
 }
 
+// SHAPE GUARD. Examples teach the AXIS, never the SURFACE FORM — and this is the same
+// displacement seen everywhere else in this project: ban the heel and the model moves to the
+// sole; ban glow on hands and it moves to the sigil; give an exemplar and it keeps the
+// skeleton and swaps the nouns. Mechanism B's "Marcus asked how my mother was before he asked
+// for the money. He always does it in that order." came back as "The Dohkar asked for Julian
+// before he asked for my answer. He always did it in that order." — same idea, which is fine;
+// same shape, which is not.
+//
+// Content words are blanked so only connective tissue and clause order remain, then any long
+// shared run of that skeleton is an imitation regardless of subject matter.
+const FUNCTION_WORDS = new Set(('a an the of to in on at and or but for with when while as if than then '
+  + 'that this these those he she they it his her their my our your him them me us i we you '
+  + 'is are was were be been being do does did done have has had will would could should '
+  + 'not no never always usually once again before after until because so very just only even '
+  + 'still yet already about into over under from by out up down off through').split(' '));
+
+// Tense and number are surface, not shape: "he always DOES it in that order" and "he always
+// DID it in that order" are the same skeleton. Content runs collapse to a single slot so a
+// two-word noun phrase still aligns with a one-word one.
+const LEMMA = { does: 'do', did: 'do', done: 'do', is: 'be', are: 'be', was: 'be', were: 'be',
+  been: 'be', being: 'be', has: 'have', had: 'have', would: 'will', could: 'can' };
+const skeleton = t => String(t).toLowerCase().replace(/[^a-z\s']/g, ' ').split(/\s+/)
+  .filter(Boolean).map(w => (FUNCTION_WORDS.has(w) ? (LEMMA[w] || w) : '_'))
+  .join(' ').replace(/(?:_ )+_/g, '_');
+
+const grams = (t, n) => {
+  const w = skeleton(t).split(' ');
+  const out = [];
+  for (let i = 0; i + n <= w.length; i++) {
+    const g = w.slice(i, i + n);
+    // A run of blanks and articles matches everything; require real connective tissue.
+    if (g.filter(x => x !== '_' && !['the', 'a', 'an', 'of', 'to'].includes(x)).length >= 2) out.push(g.join(' '));
+  }
+  return out;
+};
+
+const SHAPE_N = 6;
+
+// Returns the exemplar letter whose skeleton the text reuses, or null.
+export function shapeEcho(text, mechanisms = loadMechanisms()) {
+  const mine = new Set(grams(text, SHAPE_N));
+  for (const m of mechanisms) {
+    for (const g of grams(m.example, SHAPE_N)) if (mine.has(g)) return { letter: m.letter, shared: g };
+  }
+  return null;
+}
+
 export function renderMechanismMenu(letters) {
   const all = loadMechanisms();
   const pick = letters && letters.length ? all.filter(m => letters.includes(m.letter)) : all;

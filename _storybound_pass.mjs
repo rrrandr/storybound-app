@@ -20,7 +20,7 @@
 import fs from 'fs';
 import { load, ingest, save, renderForAuthor, renderForExtractor, describe,
          recordSlot, slotStatus, SLOT_COOLDOWN } from './_canon_state.mjs';
-import { loadMechanisms, renderMechanismMenu, renderRotation, EPLUS_AXES } from './_cplus_rules.mjs';
+import { loadMechanisms, renderMechanismMenu, renderRotation, EPLUS_AXES, shapeEcho } from './_cplus_rules.mjs';
 
 const MECHS = loadMechanisms().map(m => m.letter);
 const AXES = EPLUS_AXES.map(a => a.key);
@@ -303,6 +303,9 @@ for (const p of patches) {
     const lost = quotesIn(orig).filter(q => !repl.includes(q));
     if (lost.length) bad.push(`drops dialogue: "${lost[0].slice(0, 40)}"`);
     if (fragments(repl)) bad.push('replacement contains a lowercase sentence start');
+    // The exemplars teach the axis; reusing their skeleton is imitation, not learning.
+    const echo = shapeEcho(repl);
+    if (echo) bad.push(`copies mechanism ${echo.letter}'s sentence shape ("${echo.shared}") — take the axis, not the form`);
     // ADD, DO NOT REPLACE. The structural guards stop broken grammar but not a patch that
     // deletes what the sentence was for: an E+ pass overwrote "The youth knelt on the crimson
     // spiralgrass, her aqua skin luminous" with grass history alone, and the scene lost the
