@@ -2279,16 +2279,18 @@ FAILURE CONDITIONS (invalid outputs):
     // < floor after scene-decay) are dropped from context entirely.
     const promptSlice = prose.length > 900 ? prose.slice(-900) : prose;
 
-    // ── AUTO-EXTRACT NPC NAMES FROM PROSE (added 2026-05-18) ──
-    // Discovers named characters mentioned in prose that aren't already
-    // in state.secondaryCharacters / liCandidates. Conservative regex —
-    // only matches Title+Name pairs and Names-followed-by-dialogue-verbs.
-    // Populates state.npcSpecies via _recordNPCSighting.
-    try {
-      if (typeof window !== 'undefined' && typeof window._autoExtractNPCsFromProse === 'function' && scanSlice) {
-        window._autoExtractNPCsFromProse(scanSlice, st);
-      }
-    } catch (_extractErr) { /* non-fatal */ }
+    // ── NPC ROSTER INGESTION MOVED OUT (2026-08-24) ──
+    // _autoExtractNPCsFromProse used to run HERE, mutating state.npcSpecies from
+    // inside a context READ — across seven call sites and three audiences, several
+    // times per scene, including PC- and LI-facing builds that have no business
+    // writing the roster, and against whatever prose slice this builder happened to
+    // hold. It now runs once per finalized scene from the two output seams
+    // (triggerPostRenderHooks and _renderStagedScene) via window._ingestSceneEntities,
+    // keyed by the canonical sceneUid with its own processed set.
+    //
+    // This builder is now read-only with respect to the NPC roster. It still writes
+    // _sceneEntityState SALIENCE inside _buildActiveSceneEntities below — a separate
+    // concern, deliberately untouched here.
 
     const activeEntities = _buildActiveSceneEntities(st, scanSlice, promptSlice);
 
