@@ -49,6 +49,32 @@ const page = await (await browser.newContext()).newPage();
 for (const p of ['**/api/image', '**/api/bfl-kontext', '**/api/get-parent-images', '**/api/replicate**', '**/api/fal**'])
   await page.route(p, r => r.fulfill({ status: 500, contentType: 'application/json', body: '{}' }));
 
+// Skeleton planning call: capture routing options in and planning fields out.
+await page.route('**/api/mistral-proxy', async route => {
+  const rq = route.request();
+  let b = {}; try { b = JSON.parse(rq.postData() || '{}'); } catch (_) {}
+  const joined = (b.messages || []).map(m => String(m && m.content || '')).join(' ');
+  const isSkel = /narrative skeletons for fiction scenes/i.test(joined);
+  const resp = await route.fetch({ timeout: 0 });
+  const txt = await resp.text();
+  if (isSkel) {
+    log(`   [SKEL-REQ] model=${b.model} role=${b.role} max_tokens=${b.max_tokens} reasoning=${b.reasoning_effort || 'none'}`);
+    let parsed = null;
+    try {
+      const j = JSON.parse(txt);
+      const c = String(j.content || j.choices?.[0]?.message?.content || '');
+      parsed = JSON.parse(c.replace(/```json?\s*/g, '').replace(/```/g, '').trim());
+    } catch (e) { log('   [SKEL-RES] unparseable: ' + (e && e.message)); }
+    if (parsed) {
+      log('   [SKEL-RES] character_plus=' + JSON.stringify(parsed.character_plus));
+      log('              environment_plus=' + JSON.stringify(parsed.environment_plus));
+      log('              fusion=' + JSON.stringify(parsed.fusion));
+      fs.writeFileSync(`${OUTDIR}/skeleton_response.json`, JSON.stringify(parsed, null, 1));
+    }
+  }
+  return route.fulfill({ response: resp, body: txt });
+});
+
 await page.route('**/api/**', async route => {
   const r = route.request(); if (r.method() !== 'POST') return route.continue();
   let b = null; try { b = JSON.parse(r.postData() || '{}'); } catch (_) { return route.continue(); }
@@ -149,6 +175,15 @@ await page.evaluate((ARM) => {
 // capture stored one run-on line. That also glued sentences together across the boundary
 // ("…waiting to be spoken.I realize that old tarot deck…"), so every sentence-level measure
 // taken from these files was operating on damaged input.
+// Module scope — the teardown referenced this from another scope and threw
+// 'ledger is not defined', losing both specLedger captures.
+const ledger = async (when) => {
+  try {
+    const L = await page.evaluate(() => (window._specLedger ? window._specLedger() : null));
+    log('   [specLedger ' + when + '] ' + JSON.stringify(L));
+  } catch (e) { log('   [specLedger ' + when + '] FAILED: ' + (e && e.message)); }
+};
+
 const pageText = () => page.evaluate(() => (window.StoryPagination.getPages() || []).join('\n')
   .replace(/<\s*br\s*\/?>/gi, '\n')
   .replace(/<\/\s*(?:p|div|h[1-6]|li|blockquote)\s*>/gi, '\n\n')
@@ -171,6 +206,7 @@ async function settle(beforeLen) {
   return { all, ok };
 }
 
+await ledger('before');
 log('[serial] SCENE 1 — real generation…');
 await page.evaluate(() => window.handleBeginStory());
 for (let w = 0; w < 900000; w += 4000) { await page.waitForTimeout(4000); if ((await pageText()).length > 1200) break; }
@@ -214,6 +250,19 @@ for (let n = 2; n <= N; n++) {
 
   const { all: now, ok } = await settle(prevLen);
   if (!ok) { log(`  ⚠ scene ${n} UNSETTLED (${now.length} vs ${prevLen}) — stopping, partial output kept`); break; }
+  // Did the parsed fields survive normalisation into state, and did the gate report?
+  try {
+    const sk = await page.evaluate(() => (window.state && window.state.sceneSkeleton) || null);
+    log('   [state.sceneSkeleton] ' + (sk ? 'keys=' + Object.keys(sk).join(',') : 'NULL'));
+    if (sk) {
+      log('     character_plus=' + JSON.stringify(sk.character_plus));
+      log('     environment_plus=' + JSON.stringify(sk.environment_plus));
+      log('     fusion=' + JSON.stringify(sk.fusion));
+      fs.writeFileSync(`${OUTDIR}/state_sceneSkeleton.json`, JSON.stringify(sk, null, 1));
+    }
+    const gb = await page.evaluate(() => window.__lastSkeletonGateBeacon || null);
+    log('   [gate-beacon] ' + JSON.stringify(gb));
+  } catch (e) { log('   [skeleton dump] FAILED: ' + (e && e.message)); }
   const body = now.slice(prevLen).trim();
   resolve(n, body);
   fs.writeFileSync(`${OUTDIR}/scene${n}_final.txt`, body);
@@ -236,6 +285,7 @@ try {
   const stacks = await page.evaluate(() => window.__authorStacks || []);
   fs.writeFileSync(OUTDIR + '/author_stacks.txt', stacks.map((x, i) => `#${i + 1}  ${x}`).join('\n'));
   log(`  author call stacks captured: ${stacks.length} → author_stacks.txt`);
+  await ledger('after');
   fs.writeFileSync(OUTDIR + '/author_calls.jsonl', calls.map(c => JSON.stringify(c)).join('\n'));
   const dupes = {};
   for (const c of calls) (dupes[c.inHash] = dupes[c.inHash] || []).push(c);
