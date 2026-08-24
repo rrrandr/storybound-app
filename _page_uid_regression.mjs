@@ -198,6 +198,49 @@ t('CG UID distinct across scene indices', cg.distinct);
 t('CG UID not derived from turnCount', cg.independentOfTurnCount);
 t('CG UID persisted on state', cg.persisted);
 
+// ── 9b. identity belongs to the FINALIZED OUTPUT, not the slot ──
+// A scene index is reusable — the alt-POV and paid-issue "Try Again" popups re-invoke
+// _completeStagedSceneFromScreenplay with the same index, and the literary path derives
+// its index from turnCount. A replacement plan must not inherit the UID of the scene it
+// replaced, or its prose would be suppressed by the successful-UID guard.
+console.log('\n 9b. CG REPLACEMENT AT THE SAME INDEX');
+const beats = m => ({ beats: [{ text: 'The hall was cold and ' + m + ' hung over the table where the relic sat.' }] });
+const repl = await page.evaluate(({ p1, p2 }) => {
+  const s = window.state;
+  s._cgSceneUidByIndex = {};
+  const planA = p1, planB = p2;
+  const a1 = window._cgSceneUidFor(2, planA);
+  const a2 = window._cgSceneUidFor(2, planA);            // re-render same instance
+  const b1 = window._cgSceneUidFor(2, planB);            // REPLACEMENT at same index
+  const b2 = window._cgSceneUidFor(2, planB);
+  // re-render after restore: plan object rebuilt, same content → same UID
+  const planAClone = JSON.parse(JSON.stringify(planA));
+  delete planAClone.__sceneUid;
+  s._cgSceneUidByIndex['2'] = { uid: a1, sig: null };     // slot records A, sig unknown
+  const aAfterRestoreNoSig = window._cgSceneUidFor(2, planAClone);
+  return { a1, a2, b1, b2, aAfterRestoreNoSig, stampedA: planA.__sceneUid, stampedB: planB.__sceneUid };
+}, { p1: beats('ALPHAPLAN'), p2: beats('BETAPLAN') });
+t('9b. re-rendering the SAME plan reuses its UID', repl.a1 === repl.a2);
+t('9b. replacement plan at same index gets a NEW UID', repl.b1 !== repl.a1, `a=${repl.a1} b=${repl.b1}`);
+t('9b. replacement UID is itself stable', repl.b1 === repl.b2);
+t('9b. UID is stamped on the plan instance', repl.stampedA === repl.a1 && repl.stampedB === repl.b1);
+
+// Both finalized outputs must remain extractable — the whole point of the fix.
+extractions = [];
+await page.evaluate(({ uidA, uidB, t1, t2 }) => {
+  window._updateCharacterDisclosureLedgerForCurrent('<p>' + t1 + '</p>', uidA);
+  window._updateCharacterDisclosureLedgerForCurrent('<p>' + t2 + '</p>', uidB);
+}, { uidA: repl.a1, uidB: repl.b1,
+     t1: prose('CGPLANALPHA'), t2: prose('CGPLANBETA') });
+await settle();
+t('9b. both finalized plans at one index remain extractable', extractions.length === 2,
+  `got ${extractions.length}`);
+extractions = [];
+await page.evaluate(({ uidB, t2 }) => window._updateCharacterDisclosureLedgerForCurrent('<p>' + t2 + '</p>', uidB),
+  { uidB: repl.b1, t2: prose('CGPLANBETA') });
+await settle();
+t('9b. re-rendering a finalized plan dedupes', extractions.length === 0, `got ${extractions.length}`);
+
 await browser.close();
 
 // ── 10. cost fence ──
