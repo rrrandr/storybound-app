@@ -103,7 +103,7 @@ t('unbound possessive is NOT resolved', a.length === 0, `got ${a.length}: ${a.jo
 
 // ── 4. a LIE stays asserted_on_page, never promoted to truth ──
 console.log('\n 4. A LIE IS STILL AN ASSERTION');
-const P4 = '"Corwin is my brother," Julian said, lying easily to Lirael while the guards watched the door.';
+const P4 = '"Corwin is my brother," Julian said, lying easily to Lirael while the guards watched. Corwin stepped closer.';
 await ingest(P4, [{ quote: 'Corwin is my brother', from: 'Corwin', to: 'my brother',
   type: 'sibling_of', basis: 'asserted_on_page', assertedBy: 'Julian', addressedTo: 'Lirael' }], { storyId: 'x4', characters: ['Corwin'] });
 a = await proj('author');
@@ -143,7 +143,7 @@ await page.evaluate(({ prose }) => {
   const s = window.state; s.storyId = 'x7'; s._relationshipLedger = null; s._ledgerProcessedUids = {};
   s.pov = 'first_person'; s.name = 'Lirael'; s.playerName = 'Lirael';
   window._updateCharacterDisclosureLedgerForCurrent(prose, 'pg:malformed');
-}, { prose: '"Sera is my sister," Lirael said, and the west ledger stayed shut on the table between them.' });
+}, { prose: '"Sera is my sister," Lirael said, and the west ledger stayed shut. Sera watched the door and said nothing.' });
 await settle();
 const disclosureOk = await page.evaluate(() => !!(window.state._characterDisclosureLedger || {})['sera']);
 t('character disclosure still applied', disclosureOk);
@@ -153,7 +153,8 @@ t('UID marked processed despite bad entries',
 
 // ── 8. four-entry cap ──
 console.log('\n 8. CAP');
-const P8 = '"Ada is my sister," Lirael said. "Bea is my sister. Cyd is my sister. Dee is my sister. Eve is my sister."';
+const P8 = '"Ada is my sister," Lirael said. "Bea is my sister. Cyd is my sister. Dee is my sister. Eve is my sister." '
+  + 'Ada laughed and Bea nodded and Cyd turned away and Dee smiled and Eve said nothing at all.';
 await ingest(P8, ['Ada', 'Bea', 'Cyd', 'Dee', 'Eve'].map(n => ({
   quote: n + ' is my sister', from: n, to: 'my sister', type: 'sibling_of',
   basis: 'asserted_on_page', assertedBy: 'Lirael', addressedTo: null })), { storyId: 'x8', characters: ['Ada','Bea','Cyd','Dee','Eve'] });
@@ -163,7 +164,7 @@ t('the 5th was dropped', !capped.some(l => /eve/i.test(l)));
 
 // ── 9/10/11. hooks, dedup, replacement CG UID ──
 console.log('\n 9-11. HOOKS, DEDUP, CG REPLACEMENT');
-const P9 = '"Maren is my father," Lirael said, and the hall went quiet as the guards turned toward her voice.';
+const P9 = '"Maren is my father," Lirael said, and the hall went quiet. Maren stepped closer and watched them both.';
 const rel9 = [{ quote: 'Maren is my father', from: 'Maren', to: 'my father', type: 'parent_of',
   basis: 'asserted_on_page', assertedBy: 'Lirael', addressedTo: null }];
 disclosureCalls = 0;
