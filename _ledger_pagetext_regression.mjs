@@ -45,8 +45,21 @@ await page.route('**/api/**', async route => {
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
 await page.waitForFunction(() => window.state && window.StoryPagination, { timeout: 40000 });
 
-const mark = () => page.evaluate(() => window.__n = 0);
 const settle = () => page.waitForTimeout(700);   // extraction is fire-and-forget
+
+// Record what the HOOK RECEIVES, then call through. Navigation assertions must read
+// this rather than the network: since UID-based processing landed, revisiting an
+// already-extracted page correctly issues no request, so the network can no longer
+// witness "which prose was presented for page N". The hook argument still can.
+await page.evaluate(() => {
+  window.__hookArgs = [];
+  const orig = window._updateCharacterDisclosureLedgerForCurrent;
+  window._updateCharacterDisclosureLedgerForCurrent = function (text, uid) {
+    window.__hookArgs.push({ text: String(text || ''), uid: uid || null });
+    return orig.apply(this, arguments);
+  };
+});
+const hookArgs = async () => page.evaluate(() => window.__hookArgs.splice(0));
 
 // ── Scene 1 — mirrors _mountAndTransition's commit order (95730-95733) ──
 await page.evaluate(({ s1 }) => {
@@ -67,7 +80,7 @@ await page.evaluate(({ s2 }) => {
 await settle();
 const afterCont = extractions.length;
 
-// ── Immediate duplicate render of the SAME page — the fp guard should suppress. ──
+// ── Immediate duplicate render of the SAME page — must not re-extract. ──
 await page.evaluate(() => {
   const P = window.StoryPagination;
   if (P.goToPage) P.goToPage(1);
@@ -75,12 +88,15 @@ await page.evaluate(() => {
 await settle();
 const afterDup = extractions.length;
 
-// ── Back-nav then forward-nav — each should send the DISPLAYED page's prose. ──
+// ── Back-nav then forward-nav — each must PRESENT the displayed page's prose. ──
+await hookArgs();   // drain everything up to this point
 await page.evaluate(() => { const P = window.StoryPagination; if (P.prevPage) P.prevPage(); else P.goToPage(0); });
 await settle();
+const backArgs = await hookArgs();
 const afterBack = extractions.length;
 await page.evaluate(() => { const P = window.StoryPagination; if (P.nextPage) P.nextPage(); else P.goToPage(1); });
 await settle();
+const fwdArgs = await hookArgs();
 
 await browser.close();
 
@@ -108,19 +124,26 @@ t('Scene 1 sends Scene 1 prose', sc1.length >= 1 && sc1.every(e => e.hasS1 && !e
   `got ${sc1.map(tag).join(',') || 'nothing'}`);
 t('continuation sends CONTINUATION prose, not Scene 1', cont.length >= 1 && cont.every(e => e.hasS2 && !e.hasS1),
   `got ${cont.map(tag).join(',') || 'nothing'} — this is the bug being fixed`);
-t('back-nav sends the displayed page (Scene 1)', back.length >= 1 && back.every(e => e.hasS1 && !e.hasS2),
-  `got ${back.map(tag).join(',') || 'nothing'}`);
-t('forward-nav sends the displayed page (continuation)', fwd.length >= 1 && fwd.every(e => e.hasS2 && !e.hasS1),
-  `got ${fwd.map(tag).join(',') || 'nothing'}`);
+// Navigation is asserted on what the HOOK RECEIVED. Since UID-based processing landed,
+// revisiting an already-extracted page issues no request by design, so the network can
+// no longer witness which prose was presented — but presenting the WRONG page's prose
+// is still the bug this file exists to catch, and the hook argument proves it.
+const nav = (args, marker, other) =>
+  args.length >= 1 && args.every(a => a.text.includes(marker) && !a.text.includes(other));
+t('back-nav presents the displayed page (Scene 1)', nav(backArgs, M1, M2),
+  `got ${backArgs.map(a => a.text.includes(M2) ? 'CONTINUATION' : a.text.includes(M1) ? 'SCENE-1' : '?').join(',') || 'nothing'}`);
+t('forward-nav presents the displayed page (continuation)', nav(fwdArgs, M2, M1),
+  `got ${fwdArgs.map(a => a.text.includes(M2) ? 'CONTINUATION' : a.text.includes(M1) ? 'SCENE-1' : '?').join(',') || 'nothing'}`);
+t('every hook call carries a sceneUid', backArgs.concat(fwdArgs).every(a => !!a.uid));
 t('no paid request escaped', attempts.filter(a => a.paid).length >= 0 && true);
 
-console.log('\n FINGERPRINT GUARD (_charLedgerLastFp)');
+console.log('\n UID PROCESSING GUARD (replaces _charLedgerLastFp)');
 console.log(`   immediate duplicate render of same page → ${dup.length} extraction(s)`
   + `  ${dup.length === 0 ? '✓ suppressed' : '✗ NOT suppressed'}`);
-console.log(`   navigation to a DIFFERENT page          → ${back.length} extraction(s)`
-  + `  ${back.length >= 1 ? '✓ allowed' : '✗ wrongly suppressed'}`);
-t('guard suppresses immediate duplicates', dup.length === 0);
-t('guard allows a different page', back.length >= 1);
+console.log(`   back-nav to an ALREADY-PROCESSED page   → ${back.length} extraction(s)`
+  + `  ${back.length === 0 ? '✓ suppressed (was re-billed under the fp guard)' : '✗ re-extracted'}`);
+t('duplicate render does not re-extract', dup.length === 0);
+t('revisiting a processed page does not re-extract', back.length === 0 && fwd.length === 0);
 
 console.log(`\n COST FENCE — ${attempts.length} intercepted, 0 issued;`
   + ` ${attempts.filter(a => a.paid).length} paid-endpoint attempt(s) blocked.`);
