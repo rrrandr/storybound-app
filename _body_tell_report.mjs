@@ -19,8 +19,19 @@
 import fs from 'fs';
 
 const BODY = '(?:heels?|foot|feet|fingers?|thumb|hands?|palm|jaw|mouth|lips?|shoulders?|throat|chest|ribs?|breath|pulse|stomach|eyes?|knuckles?|spine|neck|body)';
-const REACT = '(?:lift\\w*|press\\w*|bounc\\w*|scrap\\w*|tighten\\w*|clench\\w*|curl\\w*|flex\\w*|twitch\\w*|shift\\w*|mov\\w*|catch|caught|hitch\\w*|quicken\\w*|race[ds]?|racing|tremb\\w*|still\\w*|settle[ds]?|stiffen\\w*|loosen\\w*|drop\\w*|rose|risen|burn\\w*|knot\\w*|turn\\w*|brush\\w*|rub\\w*|work\\w*|part\\w*)';
-const TELL = new RegExp(`\\b(?:my|his|her|its|their|the)\\b[^.!?]{0,26}?\\b${BODY}\\b[^.!?]{0,45}?\\b${REACT}\\b`, 'i');
+// STRUCTURAL, NOT ENUMERATED. The old extractor listed reaction verbs and the model simply
+// used one that was not on the list — "his thumb TRACED the rim of his sandal strap" walked
+// straight through, which is the heel->sole, ring->mouth failure reproduced inside the
+// instrument built to catch it. A verb list can always be stepped around.
+//
+// So: a body part belonging to someone, doing anything at all. The extractor is deliberately
+// over-inclusive and the classifier decides what matters — the same division that makes the
+// wish rules hold (define the physics, do not enumerate the outcomes).
+const VERBISH = '(?:\\w+(?:ed|ing|s)|rose|fell|went|held|kept|caught|shook|felt|lay|sat|stood|hung|drew|came|left|grew|met|found|gave|took)';
+const SKIP = /\b(?:was|were|is|are|had|has|have|been|being)\s+$/i;
+// A possessive proper name is a determiner too — "Julian's fingers tightened" was missed.
+const OWNER = "(?:my|his|her|its|their|the|[A-Z][a-z]+['\u2019]s)";
+const TELL = new RegExp(`\\b${OWNER}\\b[^.!?]{0,30}?\\b${BODY}\\b[^.!?]{0,20}?\\b${VERBISH}\\b`);
 
 export const PERMISSION_SYS = `You classify physical-reaction sentences from a novel. You do not rewrite anything.
 
