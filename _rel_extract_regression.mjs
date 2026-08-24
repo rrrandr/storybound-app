@@ -47,7 +47,11 @@ const settle = () => page.waitForTimeout(650);
 // Drive the REAL guarded path: the same hook, the same canonical sceneUid.
 let uidN = 0;
 async function ingest(prose, relations, opts) {
-  nextBody = { characters: [], scene: {}, sceneState: {}, ...(relations !== undefined ? { relations } : {}) };
+  // Endpoints resolve only through existing identities, so a fixture asserting a
+  // relation about Maren must also report Maren in characters[] — which is what a
+  // real extraction does.
+  const chars = ((opts && opts.characters) || []).map(n => ({ name: n, present: true }));
+  nextBody = { characters: chars, scene: {}, sceneState: {}, ...(relations !== undefined ? { relations } : {}) };
   const uid = (opts && opts.uid) || ('pg:test-' + (++uidN));
   await page.evaluate(({ prose, uid, storyId }) => {
     const s = window.state;
@@ -74,7 +78,7 @@ t('response WITHOUT relations still valid', disclosureCalls === 1);
 console.log('\n 1. NAMED + VERIFIED SPEAKER');
 const P1 = '"Lord Maren is my father," Lirael said, and the hall went very quiet around her words.';
 await ingest(P1, [{ quote: 'Lord Maren is my father', from: 'Lord Maren', to: 'my father',
-  type: 'parent_of', basis: 'asserted_on_page', assertedBy: 'Lirael', addressedTo: null }], { storyId: 'x1' });
+  type: 'parent_of', basis: 'asserted_on_page', assertedBy: 'Lirael', addressedTo: null }], { storyId: 'x1', characters: ['Lord Maren'] });
 let a = await proj('author');
 t('edge created from a verified named assertion', a.some(l => /lord maren/i.test(l)));
 t('recorded as asserted_on_page', a.some(l => /asserted_on_page/.test(l)), a.join(' | '));
@@ -101,7 +105,7 @@ t('unbound possessive is NOT resolved', a.length === 0, `got ${a.length}: ${a.jo
 console.log('\n 4. A LIE IS STILL AN ASSERTION');
 const P4 = '"Corwin is my brother," Julian said, lying easily to Lirael while the guards watched the door.';
 await ingest(P4, [{ quote: 'Corwin is my brother', from: 'Corwin', to: 'my brother',
-  type: 'sibling_of', basis: 'asserted_on_page', assertedBy: 'Julian', addressedTo: 'Lirael' }], { storyId: 'x4' });
+  type: 'sibling_of', basis: 'asserted_on_page', assertedBy: 'Julian', addressedTo: 'Lirael' }], { storyId: 'x4', characters: ['Corwin'] });
 a = await proj('author');
 t('assertion recorded', a.length >= 1, a.join(' | '));
 t('basis is asserted_on_page, not a truth claim', a.every(l => !/seed_truth/.test(l)));
@@ -152,7 +156,7 @@ console.log('\n 8. CAP');
 const P8 = '"Ada is my sister," Lirael said. "Bea is my sister. Cyd is my sister. Dee is my sister. Eve is my sister."';
 await ingest(P8, ['Ada', 'Bea', 'Cyd', 'Dee', 'Eve'].map(n => ({
   quote: n + ' is my sister', from: n, to: 'my sister', type: 'sibling_of',
-  basis: 'asserted_on_page', assertedBy: 'Lirael', addressedTo: null })), { storyId: 'x8' });
+  basis: 'asserted_on_page', assertedBy: 'Lirael', addressedTo: null })), { storyId: 'x8', characters: ['Ada','Bea','Cyd','Dee','Eve'] });
 const capped = await proj('author');
 t('at most 4 relations ingested', capped.length <= 4, `got ${capped.length}`);
 t('the 5th was dropped', !capped.some(l => /eve/i.test(l)));
@@ -163,14 +167,14 @@ const P9 = '"Maren is my father," Lirael said, and the hall went quiet as the gu
 const rel9 = [{ quote: 'Maren is my father', from: 'Maren', to: 'my father', type: 'parent_of',
   basis: 'asserted_on_page', assertedBy: 'Lirael', addressedTo: null }];
 disclosureCalls = 0;
-await ingest(P9, rel9, { storyId: 'x9', uid: 'pg:lit-1' });
+await ingest(P9, rel9, { storyId: 'x9', uid: 'pg:lit-1', characters: ['Maren'] });
 const afterLit = disclosureCalls;
-await ingest(P9, rel9, { uid: 'pg:lit-1' });                 // same UID again
+await ingest(P9, rel9, { uid: 'pg:lit-1', characters: ['Maren'] });                 // same UID again
 t('literary hook ingested', (await proj('author')).some(l => /maren/i.test(l)));
 t('same UID does not call the model again', disclosureCalls === afterLit, `calls=${disclosureCalls}`);
-await ingest(P9, rel9, { uid: 'cg:plan-A' });                // CG UID
+await ingest(P9, rel9, { uid: 'cg:plan-A', characters: ['Maren'] });                // CG UID
 t('CG hook ingests under its own UID', disclosureCalls === afterLit + 1, `calls=${disclosureCalls}`);
-await ingest(P9, rel9, { uid: 'cg:plan-B' });                // replacement plan
+await ingest(P9, rel9, { uid: 'cg:plan-B', characters: ['Maren'] });                // replacement plan
 t('replacement CG UID ingests again', disclosureCalls === afterLit + 2, `calls=${disclosureCalls}`);
 
 // ── retryability of a top-level failure ──
