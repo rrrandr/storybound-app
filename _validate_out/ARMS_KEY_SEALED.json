@@ -1,0 +1,10 @@
+{
+ "A": "arm3",
+ "B": "arm1",
+ "C": "arm2",
+ "legend": {
+  "arm1": "no Emotional Physics",
+  "arm2": "Emotional Physics",
+  "arm3": "EP + evaluator repair"
+ }
+}
