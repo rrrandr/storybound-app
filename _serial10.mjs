@@ -78,7 +78,14 @@ await page.route('**/api/**', async route => {
   } catch (_) {}
   return route.fulfill({ response: resp, body: bodyTxt });
 });
-page.on('console', m => { const mm = m.text().match(/Finalized: \$([0-9.]+)/); if (mm) spend += parseFloat(mm[1]); });
+page.on('console', m => {
+  const t = m.text();
+  const mm = t.match(/Finalized: \$([0-9.]+)/); if (mm) spend += parseFloat(mm[1]);
+  // Branch tracing: which generation path actually runs, and why the skeleton is empty.
+  if (/\[BRANCH\]|\[TIER-ROUTE\]|\[SKELETON\]|\[MULTI-PASS\]|\[SPECULATIVE\]|LIT-LITE PATH|legacy pipeline|Pass 1 failed|SCENE_VALIDATE/i.test(t)) {
+    log('   [trace] ' + t.slice(0, 160));
+  }
+});
 
 let loaded = false;
 for (let a = 1; a <= 3 && !loaded; a++) {
