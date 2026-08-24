@@ -2071,6 +2071,68 @@ FAILURE CONDITIONS (invalid outputs):
   //   { name, role, salience, emotionalCharge, lastSeenTurn }
   // sorted by salience descending, filtered to salience >= SALIENCE_FLOOR,
   // capped to MAX_ACTIVE_ENTITIES.
+  // ── EVIDENCE WRITE (2026-08-24) — the ONLY writer of _sceneEntityState ──
+  // Called once per finalized scene from window._ingestSceneEntities, on the exact
+  // prose that scene produced. Stores salience AT THE MOMENT OF EVIDENCE plus the
+  // chronological marker it was observed at; decay is computed later during
+  // projection and never written back, which is what removes the compounding.
+  function ingestSceneEntityEvidence(st, prose, ordinal) {
+    st = st || window.state || {};
+    const text = String(prose || '');
+    if (!text) return 0;
+    const cur = String(st.storyId || '');
+    if (!cur) return 0;                                   // fail closed
+    // Ownership: this is the write path, so it may clear and stamp.
+    if (st._sceneEntityState && Object.keys(st._sceneEntityState).length && st._sceneEntityStoryId !== cur) {
+      st._sceneEntityState = {};
+    }
+    st._sceneEntityStoryId = cur;
+    st._sceneEntityState = st._sceneEntityState || {};
+    const entState = st._sceneEntityState;
+    const ord = (typeof ordinal === 'number') ? ordinal : 0;
+
+    // Candidate set mirrors the projection's: structured cast + discovered NPCs.
+    const cands = {};
+    const sc = st.secondaryCharacters || {};
+    (Array.isArray(sc.antagonists) ? sc.antagonists : []).forEach(n => { if (n) cands[n] = 'antagonist'; });
+    (Array.isArray(sc.rivals) ? sc.rivals : []).forEach(n => { if (n && !cands[n]) cands[n] = 'rival'; });
+    (Array.isArray(sc.observers) ? sc.observers : []).forEach(n => { if (n && !cands[n]) cands[n] = 'observer'; });
+    if (Array.isArray(st.liCandidates)) st.liCandidates.forEach(c => { if (c && c.name && !cands[c.name]) cands[c.name] = 'li-candidate'; });
+    if (st.npcSpecies && typeof st.npcSpecies === 'object') {
+      Object.keys(st.npcSpecies).forEach(n => { if (n && !cands[n]) cands[n] = 'observer'; });
+    }
+
+    const recentSlice = text.length > 900 ? text.slice(-900) : text;
+    let written = 0;
+    Object.keys(cands).forEach(name => {
+      const role = cands[name];
+      const indices = _findAllMatchIndices(text, name);
+      if (!indices.length) return;                        // absent → no new evidence
+      const mentionScore = Math.min(0.45, indices.length * 0.12);
+      const recentStart = text.length - recentSlice.length;
+      const recencyBoost = indices[indices.length - 1] >= recentStart ? 0.20 : 0.05;
+      const roleBase = _ROLE_BASE_SALIENCE[role] || 0;
+      const salience = Math.min(1.0, roleBase + mentionScore + recencyBoost);
+      const prior = entState[name] || {};
+      const detected = _scoreEmotionalCharge(text, name);
+      entState[name] = {
+        lastSeenTurn: (typeof st.turnCount === 'number') ? st.turnCount : null,
+        lastSeenOrdinal: ord,
+        salience: salience,
+        role: role,
+        emotionalCharge: detected || prior.emotionalCharge || ''
+      };
+      written++;
+      // Species sighting belongs with evidence, not with prompt construction.
+      try {
+        if (typeof window !== 'undefined' && typeof window._recordNPCSighting === 'function') {
+          window._recordNPCSighting(name, st, null);
+        }
+      } catch (_) {}
+    });
+    return written;
+  }
+
   function _buildActiveSceneEntities(st, proseScanText, recentProseSlice) {
     const currentTurn = (st.turnCount | 0);
     // ── OWNERSHIP GUARD (2026-08-24) ───────────────────────────────────────────
@@ -2080,22 +2142,15 @@ FAILURE CONDITIONS (invalid outputs):
     // cannot prove the entities belong to the story being restored. Stamp it, validate on every
     // read, and fail closed. The store is rebuildable from rendered prose, so discarding a
     // roster of unproven provenance costs one scene of salience, not data.
-    (function _guardEntityOwnership() {
-      const cur = String(st.storyId || '');
-      const owner = st._sceneEntityStoryId;
-      const nonEmpty = st._sceneEntityState && Object.keys(st._sceneEntityState).length > 0;
-      if (!cur) {                             // no story identity → never reuse, never stamp
-        if (nonEmpty) st._sceneEntityState = {};
-        st._sceneEntityStoryId = null;
-        return;
-      }
-      if (nonEmpty && owner !== cur) {        // mismatched OR unstamped legacy store
-        st._sceneEntityState = {};
-      }
-      st._sceneEntityStoryId = cur;
-    })();
-    st._sceneEntityState = st._sceneEntityState || {};
-    const entState = st._sceneEntityState;
+    // READ-ONLY ownership validation. The store rode into saves through the
+    // { ...state } spread for its whole existence, so restore cannot prove the roster
+    // belongs to the story being restored. Projection therefore IGNORES an unowned or
+    // mismatched roster rather than clearing it — clearing is a write, and this
+    // function no longer writes anything. ingestSceneEntityEvidence owns the stamp.
+    const _entOwner = st._sceneEntityStoryId;
+    const _entCur = String(st.storyId || '');
+    const _entTrusted = !!_entCur && _entOwner === _entCur;
+    const entState = _entTrusted ? (st._sceneEntityState || {}) : {};
 
     // Collect all candidate entities with their static role.
     const candidates = [];
@@ -2129,72 +2184,36 @@ FAILURE CONDITIONS (invalid outputs):
       }
     });
 
+    // ── PURE PROJECTION (2026-08-24) ──
+    // This used to RECOMPUTE and WRITE salience on every call. Because the decay path
+    // read prior.salience while preserving the old lastSeen marker, seven prompt builds
+    // in one scene applied decay seven times: 0.80 -> 0.0019 instead of 0.338, which
+    // pushed entities under SALIENCE_FLOOR and silently removed them from author
+    // context. See _entity_salience_audit.mjs.
+    //
+    // Evidence is now written ONCE per finalized scene by ingestSceneEntityEvidence.
+    // Here decay is COMPUTED from immutable evidence and never stored, so calling this
+    // once or a hundred times returns the same answer and changes nothing.
     const ranked = [];
+    const nowOrd = (typeof st._sceneChronoCurrent === 'number') ? st._sceneChronoCurrent : 0;
     Object.values(byName).forEach(cand => {
-      const prior = entState[cand.name] || { lastSeenTurn: null, salience: 0, role: cand.role, emotionalCharge: '' };
-      const indices = _findAllMatchIndices(proseScanText, cand.name);
-      const mentionCount = indices.length;
-
-      let salience;
-      let emotionalCharge = prior.emotionalCharge;
-
-      if (mentionCount > 0) {
-        // Present in recent prose — recompute salience from evidence.
-        // Mentions contribute (capped to avoid runaway from one paragraph).
-        const mentionScore = Math.min(0.45, mentionCount * 0.12);
-        // Recency-within-prose bonus: was the most recent mention in the
-        // LAST ~900 chars (what we actually ship to Grok)? If yes, +0.20.
-        const recentSliceStart = (proseScanText.length - (recentProseSlice ? recentProseSlice.length : 900));
-        const recentMention = indices[indices.length - 1] >= recentSliceStart;
-        const recencyBoost = recentMention ? 0.20 : 0.05;
-        const roleBase = _ROLE_BASE_SALIENCE[cand.role] || 0;
-        salience = Math.min(1.0, roleBase + mentionScore + recencyBoost);
-        // Refresh emotional charge from current prose window.
-        const detected = _scoreEmotionalCharge(proseScanText, cand.name);
-        if (detected) emotionalCharge = detected;
-        entState[cand.name] = {
-          lastSeenTurn: currentTurn,
-          salience: salience,
-          role: cand.role,
-          emotionalCharge: emotionalCharge
-        };
-      } else {
-        // Not in recent prose — decay from prior, scaled by scenes elapsed.
-        const lastTurn = (typeof prior.lastSeenTurn === 'number') ? prior.lastSeenTurn : currentTurn;
-        const scenesElapsed = Math.max(0, currentTurn - lastTurn);
-        // First-time candidates with no prior get the role base as their
-        // starting salience (treat as "freshly named — give them a chance").
-        const startingSalience = (prior.salience > 0) ? prior.salience : (_ROLE_BASE_SALIENCE[cand.role] || 0);
-        salience = startingSalience * Math.pow(SALIENCE_DECAY_PER_SCENE, scenesElapsed);
-        entState[cand.name] = {
-          lastSeenTurn: prior.lastSeenTurn,
-          salience: salience,
-          role: cand.role,
-          emotionalCharge: emotionalCharge
-        };
-      }
-
-      if (salience >= SALIENCE_FLOOR) {
-        // Auto-classify species for this NPC and record it in the
-        // per-NPC species table. Cheap — canonical lookup + region
-        // fallback. High-confidence entries (canonical / explicit)
-        // are never downgraded. See _classifyNPCSpecies in app.js.
-        var npcSpecies = null;
-        try {
-          if (typeof window !== 'undefined' && typeof window._recordNPCSighting === 'function') {
-            var rec = window._recordNPCSighting(cand.name, st, null);
-            if (rec && rec.species) npcSpecies = rec.species;
-          }
-        } catch (_) {}
-        ranked.push({
-          name: cand.name,
-          role: cand.role,
-          salience: salience,
-          emotionalCharge: emotionalCharge,
-          species: npcSpecies,
-          lastSeenTurn: entState[cand.name].lastSeenTurn
-        });
-      }
+      const stored = entState[cand.name];
+      // No evidence yet — an entity named in structured cast but not yet seen in a
+      // finalized scene projects at its role base ("freshly named, give them a chance").
+      const base = _ROLE_BASE_SALIENCE[cand.role] || 0;
+      const storedSalience = (stored && typeof stored.salience === 'number') ? stored.salience : base;
+      const seenOrd = (stored && typeof stored.lastSeenOrdinal === 'number') ? stored.lastSeenOrdinal : nowOrd;
+      const elapsed = Math.max(0, nowOrd - seenOrd);
+      const salience = storedSalience * Math.pow(SALIENCE_DECAY_PER_SCENE, elapsed);
+      if (salience < SALIENCE_FLOOR) return;
+      ranked.push({
+        name: cand.name,
+        role: (stored && stored.role) || cand.role,
+        salience: salience,
+        emotionalCharge: (stored && stored.emotionalCharge) || '',
+        species: (st.npcSpecies && st.npcSpecies[cand.name] && st.npcSpecies[cand.name].species) || null,
+        lastSeenTurn: (stored && stored.lastSeenTurn != null) ? stored.lastSeenTurn : null
+      });
     });
 
     ranked.sort((a, b) => b.salience - a.salience);
@@ -6832,6 +6851,7 @@ Tension: ${outline.tension_vector || 'N/A'}`;
     // and any future Grok call that needs to resolve user references to
     // named story characters / plot threads).
     buildSceneAndPlotContext: _buildSceneAndPlotContext,
+    ingestSceneEntityEvidence: ingestSceneEntityEvidence,
 
     // Reader preference adaptation (session-scoped, deterministic)
     recordPreferenceSignal,     // Record user behavior signals
