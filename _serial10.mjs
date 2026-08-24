@@ -137,8 +137,17 @@ await page.evaluate((ARM) => {
   } catch (_) {}
 }, Number(process.env.ARM || 0));
 
+// Pages are HTML (innerHTML = pages[i]), so the paragraph boundary lives ONLY in the block
+// tags. Stripping tags first deleted every break: the author wrote 6 paragraphs and the
+// capture stored one run-on line. That also glued sentences together across the boundary
+// ("…waiting to be spoken.I realize that old tarot deck…"), so every sentence-level measure
+// taken from these files was operating on damaged input.
 const pageText = () => page.evaluate(() => (window.StoryPagination.getPages() || []).join('\n')
-  .replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim());
+  .replace(/<\s*br\s*\/?>/gi, '\n')
+  .replace(/<\/\s*(?:p|div|h[1-6]|li|blockquote)\s*>/gi, '\n\n')
+  .replace(/<[^>]+>/g, '')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&#39;|&rsquo;/g, '\u2019')
+  .replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim());
 
 // Settle on the REAL condition — text must GROW past the previous scene and then hold steady
 // for two consecutive reads. An earlier harness slept a fixed 15s, read too early, and wrote
