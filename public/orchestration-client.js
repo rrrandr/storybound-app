@@ -2201,8 +2201,23 @@ FAILURE CONDITIONS (invalid outputs):
     return ranked.slice(0, MAX_ACTIVE_ENTITIES);
   }
 
-  function _buildSceneAndPlotContext(st) {
+  // AUDIENCE PROJECTIONS (2026-08-24). This builder is shared by narrative authors, the
+  // LI-playing OAS prompt and FOUR player-facing Fate paths. It was emitting liHiddenAgenda and
+  // liConversionScore identically to all of them, so the LI's hidden agenda reached the player's
+  // own suggested dialogue. Fields are now projected by audience:
+  //   author — everything, including authorial controls and omniscient structure
+  //   li     — observable/shared facts + the LI's own knowledge; agenda only as PRIVATE control
+  //   pc     — observable/shared facts only
+  // FAIL CLOSED: a missing audience is treated as 'pc', the least privileged, and warns.
+  function _buildSceneAndPlotContext(st, opts) {
     st = st || window.state || {};
+    const _aud = (opts && opts.audience) || null;
+    if (!_aud) {
+      try { console.warn('[CTX:AUDIENCE] caller passed no audience — defaulting to pc (least privileged).', new Error('ctx').stack.split('\n')[2]); } catch (_) {}
+    }
+    const audience = (_aud === 'author' || _aud === 'li') ? _aud : 'pc';
+    const isAuthor = audience === 'author';
+    const isLI = audience === 'li';
     const ctxLines = [];
 
     // Recent story prose (last ~900 chars, HTML stripped) — what Grok actually
@@ -2226,11 +2241,18 @@ FAILURE CONDITIONS (invalid outputs):
       ? prose.slice(-RECENT_PROSE_SCAN_LEN)
       : prose;
 
-    if (st.archetype && st.archetype.primary)             ctxLines.push(`LI archetype: ${st.archetype.primary}`);
+    // Literal archetype is authorial CLASSIFICATION. The LI receives its behavioural
+    // translation through the voice/character builders instead.
+    if (isAuthor && st.archetype && st.archetype.primary) ctxLines.push(`LI archetype: ${st.archetype.primary}`);
     if (st.liCoverIdentity)                                ctxLines.push(`LI cover identity: ${st.liCoverIdentity}`);
-    if (st.liHiddenAgenda)                                 ctxLines.push(`LI hidden agenda: ${st.liHiddenAgenda}`);
+    // Author sees it plainly. The LI gets it as an explicitly PRIVATE control so the model
+    // shapes behaviour without narrating it. The PC never sees it at all — that was the leak.
+    // Once buildHoneyPotBehaviorDirective is wired into OAS, that builder becomes the preferred
+    // owner of LI agenda behaviour and this line should reduce to author-only.
+    if (isAuthor && st.liHiddenAgenda)                     ctxLines.push(`LI hidden agenda: ${st.liHiddenAgenda}`);
+    else if (isLI && st.liHiddenAgenda)                    ctxLines.push(`PRIVATE LI MOTIVE — use to shape behaviour; never state or reveal merely because it appears here: ${st.liHiddenAgenda}`);
     if (typeof st.liConversionScore === 'number' && st.liConversionScore !== 0) {
-      ctxLines.push(`Player conversion toward LI: ${st.liConversionScore > 0 ? '+' : ''}${st.liConversionScore}`);
+      if (isAuthor) ctxLines.push(`Player conversion toward LI: ${st.liConversionScore > 0 ? '+' : ''}${st.liConversionScore}`);
     }
     if (st.picks?.dynamic)                                 ctxLines.push(`Relationship dynamic: ${st.picks.dynamic}`);
 
@@ -2273,9 +2295,17 @@ FAILURE CONDITIONS (invalid outputs):
         parts.push('salience ' + e.salience.toFixed(2));
         if (e.species) parts.push('species: ' + e.species);
         if (e.emotionalCharge) parts.push('charge: ' + e.emotionalCharge);
+        // NAMES ONLY for li/pc. Authorial role labels (antagonist / rival / li-candidate),
+        // numeric salience and inferred emotional charge are classification, not character
+        // knowledge. Species is withheld too — npcSpecies may be canonical author knowledge
+        // rather than something either character has observed. Relationship and presence are
+        // absent because no edge ledger or presence source exists yet; salience is NOT presence.
+        if (!isAuthor) return e.name;
         return e.name + ' [' + parts.join(' · ') + ']';
       });
-      ctxLines.push('Active scene entities (ranked by salience, most pressing first): ' + entityLines.join('; '));
+      ctxLines.push(isAuthor
+        ? 'Active scene entities (ranked by salience, most pressing first): ' + entityLines.join('; ')
+        : 'Characters recently in play: ' + entityLines.join(', '));
     }
 
     if (st.settingLocationAnchor) {
@@ -2285,10 +2315,14 @@ FAILURE CONDITIONS (invalid outputs):
     }
     const worldFlavor = st.worldSubtype || st.picks?.worldSubtype;
     if (worldFlavor)                                       ctxLines.push(`World flavor: ${worldFlavor}`);
-    if (st.worldCustomText)                                ctxLines.push(`World notes: ${st.worldCustomText}`);
+    // AUTHOR-ONLY FOR NOW, conservatively. worldCustomText is player-authored, so it is
+    // provenance-safe, but its contents are unpartitioned and a player may have written secrets
+    // into it. FOLLOW-UP: give it a public/secret split rather than permanent exclusion — much
+    // of it is likely essential public world fact that OAS should have.
+    if (isAuthor && st.worldCustomText)                    ctxLines.push(`World notes: ${st.worldCustomText}`);
     if (st.fantasyRegion)                                  ctxLines.push(`Fantasy region: ${st.fantasyRegion}`);
-    if (st._lastScenePlan?.early_decision_hook)            ctxLines.push(`Scene hook: ${st._lastScenePlan.early_decision_hook}`);
-    if (Array.isArray(st.reasonLedger) && st.reasonLedger.length > 0) {
+    if (isAuthor && st._lastScenePlan?.early_decision_hook) ctxLines.push(`Scene hook: ${st._lastScenePlan.early_decision_hook}`);
+    if (isAuthor && Array.isArray(st.reasonLedger) && st.reasonLedger.length > 0) {
       ctxLines.push(`Recent moral friction: ${st.reasonLedger.slice(-3).join(' · ')}`);
     }
 
@@ -3060,7 +3094,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
     // dynamic, setting, recent story prose. Lets the SD author render
     // with awareness of named characters (so "do it before Triton sees"
     // resolves cleanly), the LI's hidden agenda, etc.
-    const _sdSceneContext = _buildSceneAndPlotContext(window.state);
+    const _sdSceneContext = _buildSceneAndPlotContext(window.state, { audience: 'author' });
     const messages = [
       { role: 'system', content: esdPrompt },
       { role: 'user', content:
@@ -3359,7 +3393,7 @@ hardStops: consent_withdrawal, scene_boundary${!gateEnforcement.completionAllowe
     // dynamic, setting, recent story prose. Lets the SD author render
     // with awareness of named characters (so "do it before Triton sees"
     // resolves cleanly), the LI's hidden agenda, etc.
-    const _sdSceneContext = _buildSceneAndPlotContext(window.state);
+    const _sdSceneContext = _buildSceneAndPlotContext(window.state, { audience: 'author' });
     const messages = [
       { role: 'system', content: esdPrompt },
       { role: 'user', content:
@@ -5924,7 +5958,7 @@ Classify.`
 
     // Scene/plot context — uses the shared builder so OAS, SD authoring,
     // and fate-card previews all see the same character roster + plot.
-    const sceneContext = _buildSceneAndPlotContext(st);
+    const sceneContext = _buildSceneAndPlotContext(st, { audience: 'pc' });
 
     // World-register block — same helper used by the batch preview path.
     let _registerBlockSingle = '';
@@ -6086,7 +6120,7 @@ Respond in EXACTLY two lines:
     const allContent = window.StoryPagination?.getAllContent?.()?.replace(/<[^>]*>/g, ' ') || '';
     const recentScene = (typeof window !== 'undefined' && typeof window._stripDeckFromFateContext === 'function') ? window._stripDeckFromFateContext(allContent.slice(-500)) : allContent.slice(-500);
     const emotionalCore = st.esd?.emotionalCore || st.esd?.dominant_emotion || 'desire';
-    const sceneContext = _buildSceneAndPlotContext(st);
+    const sceneContext = _buildSceneAndPlotContext(st, { audience: 'pc' });
     const modeInstructions = {
       ROMANTIC: 'Tender but present. Bodies in contact, sensory detail, undressing, kissing with intention. Implication allowed but body NOT absent.',
       VISCERAL: 'Explicit physical detail. Anatomy referenced directly. Rhythm, friction, contact narrated without euphemism.',
