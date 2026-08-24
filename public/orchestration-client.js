@@ -2073,6 +2073,27 @@ FAILURE CONDITIONS (invalid outputs):
   // capped to MAX_ACTIVE_ENTITIES.
   function _buildActiveSceneEntities(st, proseScanText, recentProseSlice) {
     const currentTurn = (st.turnCount | 0);
+    // ── OWNERSHIP GUARD (2026-08-24) ───────────────────────────────────────────
+    // Resetting the store on new-story fixes in-memory carryover, but an OLD SNAPSHOT can
+    // already contain a contaminated roster: the store rode into saves through the
+    // `{ ...state }` spread for its whole existence and carries no ownership stamp, so restore
+    // cannot prove the entities belong to the story being restored. Stamp it, validate on every
+    // read, and fail closed. The store is rebuildable from rendered prose, so discarding a
+    // roster of unproven provenance costs one scene of salience, not data.
+    (function _guardEntityOwnership() {
+      const cur = String(st.storyId || '');
+      const owner = st._sceneEntityStoryId;
+      const nonEmpty = st._sceneEntityState && Object.keys(st._sceneEntityState).length > 0;
+      if (!cur) {                             // no story identity → never reuse, never stamp
+        if (nonEmpty) st._sceneEntityState = {};
+        st._sceneEntityStoryId = null;
+        return;
+      }
+      if (nonEmpty && owner !== cur) {        // mismatched OR unstamped legacy store
+        st._sceneEntityState = {};
+      }
+      st._sceneEntityStoryId = cur;
+    })();
     st._sceneEntityState = st._sceneEntityState || {};
     const entState = st._sceneEntityState;
 
