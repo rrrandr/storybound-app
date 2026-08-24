@@ -2256,6 +2256,23 @@ FAILURE CONDITIONS (invalid outputs):
     }
     if (st.picks?.dynamic)                                 ctxLines.push(`Relationship dynamic: ${st.picks.dynamic}`);
 
+    // ── RELATIONSHIP LEDGER (3A) — knowledge-gated, read-only here ──
+    // _relProject filters by knownTo, so an edge reaches this audience only if that
+    // audience is known to hold it. Unknown edges are omitted ENTIRELY rather than
+    // hinted at — naming that a secret exists is itself the leak. Basis and
+    // contested flags are appended for the author only, inside _relProject.
+    // Purely a read: extraction never happens in this builder (see the
+    // _autoExtractNPCsFromProse defect noted below, migrated separately).
+    try {
+      if (typeof window !== 'undefined' && typeof window._relProject === 'function') {
+        const relLines = window._relProject(audience) || [];
+        if (relLines.length) {
+          ctxLines.push('Known relationships:');
+          for (const r of relLines.slice(0, 12)) ctxLines.push('  ' + r);
+        }
+      }
+    } catch (_relErr) { /* non-fatal */ }
+
     // Active scene entities — ranked by salience [0..1], capped to top N.
     // Each entry shows role + salience + emotional charge so Grok knows
     // which character is most pressing and why. Stale characters (salience
