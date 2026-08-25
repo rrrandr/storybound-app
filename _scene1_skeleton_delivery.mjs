@@ -64,6 +64,9 @@ function plannerReply(usr, mutate) {
   if (mutate === 'fusionempty')    fu = { character: cast[0], target:'   ' };
   const skel = { character_plus:cp, fusion:fu };
   if (ep !== undefined) skel.environment_plus = ep;   // `noep` omits the KEY, not just the value
+  // A planner reply that will not parse is the same failure class as an invalid one: the
+  // author must not be called. This is the shape the LIVE run actually produced.
+  if (mutate === 'unparseable') return 'I was unable to produce a plan for this scene.';
   return JSON.stringify({ opening_spine: spine, scene_skeleton: skel });
 }
 
@@ -95,8 +98,16 @@ async function run({ hot, mutate }) {
                      response_format:b.response_format, user: usr });
       out = plannerReply(usr, mutate);
     } else out = JSON.stringify(GENERIC);
-    return route.fulfill({ status:200, contentType:'application/json',
-      body: JSON.stringify({ content: out, choices:[{message:{content: out}}] }) });
+    // SHAPE-FAITHFUL ENVELOPES (2026-08-25 — added after the paid run). /api/mistral-proxy
+    // returns the RAW Mistral envelope and never sets a top-level `content`; only
+    // /api/chatgpt-proxy normalises to {content}. The old mock returned BOTH shapes at once,
+    // which is precisely why this suite passed while production discarded every opening plan
+    // as "no JSON object". A mock must never hand the client a shape the proxy cannot produce.
+    const envelope = /mistral-proxy/.test(url)
+      ? { id:'mock', object:'chat.completion', model:b.model, usage:{}, _orchestration:{},
+          choices:[{ index:0, finish_reason:'stop', message:{ role:'assistant', content: out } }] }
+      : { ok:true, content: out, choices:[{ message:{ content: out } }] };
+    return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(envelope) });
   });
   page.on('request', r => { if (/\/api\//.test(r.url()) && !/localhost|127\.0\.0\.1/.test(r.url())) escaped.push(r.url()); });
   const logs = [];
@@ -150,6 +161,9 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     && R.planner[0].reasoning_effort === 'none' && R.planner[0].response_format
     && R.planner[0].response_format.type === 'json_object' && R.planner[0].max_tokens >= 1800,
     JSON.stringify(R.planner[0] && { m:R.planner[0].model, re:R.planner[0].reasoning_effort, mt:R.planner[0].max_tokens }));
+  t(`${label} 2b: planner reply read from the RAW mistral envelope (no top-level content)`,
+    !!(R.skeleton && R.skeleton.cp && R.skeleton.cp.length),
+    'skeleton is empty — the client is reading a response shape mistral-proxy never returns');
   t(`${label} 3: every eligible recipient has a C+ assignment, none truncated`,
     R.eligible && R.skeleton && R.skeleton.cp && R.skeleton.cp.length === R.eligible.length,
     `eligible=${R.eligible && R.eligible.length} cp=${R.skeleton && R.skeleton.cp && R.skeleton.cp.length}`);
@@ -237,9 +251,12 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
 console.log(` 9 · PLANNER FAULTS SURFACE (no silent skeleton-less continuation)`);
 for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'fmfalse', 'fmmissing', 'fmstring', 'emptyangle', 'placeholderang', 'thinangle',
-                      'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty']) {
+                      'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty', 'unparseable']) {
   const R = await run({ hot: false, mutate });
-  const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID/.test(l));
+  // Both failure classes must exit visibly: semantic (SKELETON:INVALID) and unparseable
+  // planner output (PLANNER:UNRECOVERABLE). Either way the ABORT must follow.
+  const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID|SCENE1:PLANNER:UNRECOVERABLE/.test(l))
+               && R.logs.some(l => /SCENE1:ABORT/.test(l));
   if (mutate === 'unknown') {
     console.log('   --- diagnostic (mutate=unknown) ---');
     console.log('   threw: ' + R.threw);
