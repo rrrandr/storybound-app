@@ -38,7 +38,7 @@ const PRICE = { in: 0.00000015, out: 0.0000006 };   // mistral-small-latest, in-
 
 const browser = await chromium.launch({ headless: true });
 
-async function sample(i) {
+async function sample(i, mode) {
   const page = await (await browser.newContext()).newPage();
   const planner = [], authorAttempts = [], escaped = [], mocked = [];
   const logs = [];
@@ -80,18 +80,25 @@ async function sample(i) {
 
   await page.goto('http://localhost:3000/', { waitUntil:'domcontentloaded', timeout:30000 });
   await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:40000 });
-  const st = await page.evaluate(async () => {
+  const st = await page.evaluate(async (mode) => {
     const s = window.state;
     const def = (window.STARTER_STORIES||[]).find(d=>d&&d.id==='starter_first_sacrifice');
     s.picks = s.picks||{};
     ['world','worldSubtype','pressure','flavor','tone','pov','length','dynamic','pcSpecies','liSpecies']
       .forEach(k=>{ s.picks[k]=def[k]; });
     Object.assign(s,{ world:def.world, worldSubtype:def.worldSubtype, flavor:def.flavor, dynamic:def.dynamic,
-      _starterId:def.id, is_starter_story:true, immutableTitle:def.title, archetype:{primary:def.archetype,modifier:null},
+      archetype:{primary:def.archetype,modifier:null},
       name:'Lirael', playerName:'Lirael', loveInterestName:'Julian', partnerName:'Julian',
       liGender:'male', playerMask:'OPEN_VEIN', storyLength:'fling', tier:'fling', access:'sub', subscribed:true,
       fortunes:9999999, intensity:'Steamy', pov:'first_person', identity:{playerName:'Lirael',partnerName:'Julian'},
       renderMode:'literary', currentEngine:'literary', storyId:'probe3', myUid:'probe' });
+    if (mode === 'corridor') {
+      // No seed. The planner OWNS setting and presence, and the LI is MENTIONED in the mission
+      // but never staged — so exclusion is exercised against live output, not just synthetically.
+      s._scene1Mission = 'She waits alone in the customs house before the tide turns, rehearsing what she will say to Julian when he finally comes to collect the debt';
+    } else {
+      Object.assign(s, { _starterId: def.id, is_starter_story: true, immutableTitle: def.title });
+    }
     s.picks.identity = s.identity; s._skipCorridorValidation = true;
     let threw = null;
     try { await Promise.race([window.handleBeginStory(), new Promise(x=>setTimeout(x,150000))]); }
@@ -105,19 +112,21 @@ async function sample(i) {
                         offStage:(stage.offStage||[]).map(c=>({ name:c.name, reason:c.reason })) },
       assignments: s._scene1SceneAssignments || null,
       fatal: s._scene1SkeletonFatal || null,
+      envelopeNormalised: !!s._scene1EnvelopeNormalised,
       attempts: s._scene1PlannerAttempts, retryReason: s._scene1PlannerRetryReason || null };
-  });
+  }, mode);
   await page.close();
-  return { i, planner, authorAttempts, escaped, mocked, logs, ...st };
+  return { i, mode, planner, authorAttempts, escaped, mocked, logs, ...st };
 }
 
 const results = [];
 console.log(`\n${'═'.repeat(94)}\nBOUNDED PLANNER PROBE — First Sacrifice Scene 1 · ${N} sequential samples\n${'═'.repeat(94)}`);
 console.log(` one real call per sample (the planner) · Grok hard-blocked · upstream mocked\n`);
 
+const MODES = ['seeded', 'seeded', 'corridor'];
 for (let i = 1; i <= N; i++) {
   if (i > 1) { console.log(` … 25s gap (sequential, never a burst)\n`); await new Promise(r => setTimeout(r, 25000)); }
-  const R = await sample(i);
+  const R = await sample(i, MODES[i - 1] || 'seeded');
   results.push(R);
 
   const p = R.planner[0];
@@ -144,7 +153,7 @@ for (let i = 1; i <= N; i++) {
       angleRejections: R.logs.filter(l => /ANGLE:REJECTED/.test(l)),
       logs: R.logs.filter(l => /STAGE|SKELETON|PLANNER|ABORT/.test(l)) }, null, 2));
 
-  console.log(` ── SAMPLE ${i} ${'─'.repeat(76)}`);
+  console.log(` ── SAMPLE ${i} · ${R.mode.toUpperCase()} ${'─'.repeat(66)}`);
   console.log(`  network      : planner=${R.planner.length} real · mocked=${R.mocked.length} · GROK attempts=${R.authorAttempts.length} · escaped=${R.escaped.length}`);
   console.log(`  attempts     : ${R.attempts} ${R.retryReason ? `(retried: ${R.retryReason})` : '(no retry)'}`);
   console.log(`  usage        : ${usage ? `${usage.prompt_tokens} in / ${usage.completion_tokens} out · finish=${finish}` : 'n/a'}`);
@@ -164,6 +173,11 @@ for (let i = 1; i <= N; i++) {
   } else console.log(`  C+ : n/a`);
   console.log(`  E+           : ${skel ? JSON.stringify(skel.environment_plus) : 'n/a'}`);
   console.log(`  fusion       : ${skel ? JSON.stringify(skel.fusion) : 'n/a'}`);
+  const aliasLogs = R.logs.filter(l => /SCENE1:ALIAS/.test(l));
+  console.log(`  alias resolves: ${aliasLogs.length ? '' : 'none needed'}`);
+  aliasLogs.forEach(l => console.log(`      ${l.replace(/^\[SCENE1:ALIAS\]\s*/, '')}`));
+  console.log(`  envelope     : ${R.envelopeNormalised ? 'NORMALISED (nested skeleton lifted)' : 'top-level as sent'}`);
+  console.log(`  STORED C+    : ${JSON.stringify(((R.assignments && R.assignments.character_plus) || []).map(c => c.character))}`);
   console.log(`  VALIDATION   : ${R.fatal ? 'REJECTED — ' + R.fatal : 'ACCEPTED'}`);
   const rej = R.logs.filter(l => /ANGLE:REJECTED/.test(l));
   if (rej.length) rej.forEach(l => console.log(`      ${l}`));
