@@ -76,8 +76,24 @@ function plannerReply(usr, mutate) {
   if (mutate === 'fusionfalsecode') fu = { character:null, target:null, impossible_because:'NO_ONSTAGE_CHARACTER' };
   if (mutate === 'fusionnobeat')   fu = { character: cast[0], target:'the spiralgrass' };
   if (mutate === 'fusionthinbeat') fu = { character: cast[0], target:'the spiralgrass', beat:'they connect' };
+  // ── identity / grounding / envelope mutations (2026-08-25) ──
+  // Aliases the planner really used live: "the narrator" for the PC, "Dohkar" for the role figure.
+  if (mutate === 'aliasNarrator')  cp = cp.map((c,i) => i === 0 ? { ...c, character:'the narrator' } : c);
+  if (mutate === 'aliasProtag')    cp = cp.map((c,i) => i === 0 ? { ...c, character:'the protagonist' } : c);
+  if (mutate === 'aliasDohkar')    cp = cp.map(c => /presiding/i.test(c.character) ? { ...c, character:'Dohkar' } : c);
+  if (mutate === 'aliasOffstage')  cp = cp.concat([{ character:'the narrator’s absent mother', first_mention:true, angle:'sets the cloth straight twice' }]);
+  if (mutate === 'clothEp') {
+    // Canonically in-scene, but described ONLY in seed.sceneOne.narrator.
+    ep = { target:'the gossamer band', axis:'ritual' };
+    fu = { character: cast[0], target:'the gossamer band', beat:'she tugs the band tighter until the knot bites' };
+  }
   const skel = { character_plus:cp, fusion:fu };
   if (ep !== undefined) skel.environment_plus = ep;   // `noep` omits the KEY, not just the value
+
+  // ENVELOPE SHAPES. `nested` is what the live planner produced in 1 of 3 samples.
+  if (mutate === 'nested')       return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel } });
+  if (mutate === 'dupSkeleton')  return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel }, scene_skeleton: skel });
+  if (mutate === 'nestedThin')   return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: { fusion: null } } });
   // A planner reply that will not parse is the same failure class as an invalid one: the
   // author must not be called. This is the shape the LIVE run actually produced.
   if (mutate === 'unparseable') return 'I was unable to produce a plan for this scene.';
@@ -153,7 +169,7 @@ async function run({ hot, mutate }) {
       stage: (window._scene1StageContract ? window._scene1StageContract(s) : null),
       heuristicCast: (window._sceneEligibleCast ? window._sceneEligibleCast(s, 1) : null),
       eligible: (window._scene1StageContract
-        ? (window._scene1StageContract(s).onStage || []).map(c => c.name)
+        ? (window._scene1StageContract(s).onStage || []).map(c => c.label)
         : (window._sceneEligibleCast ? window._sceneEligibleCast(s, 1) : null)),
       assignments: s._scene1SceneAssignments || null,
       skeleton: s.sceneSkeleton ? { cp: s.sceneSkeleton.character_plus, ep: s.sceneSkeleton.environment_plus, fu: s.sceneSkeleton.fusion } : null,
@@ -285,9 +301,9 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
       && st.onStage.some(c => c.kind === 'pc') && st.onStage.some(c => c.kind === 'role'),
     JSON.stringify((st.onStage || []).map(c => `${c.name}:${c.kind}`)));
   t(`12c: a character absent from the PRESENT text is NOT eligible`,
-    !(st.onStage || []).some(c => !new RegExp(c.name.replace(/^the presiding /, ''), 'i')
+    !(st.onStage || []).some(c => !new RegExp(String(c.label).replace(/^the presiding /, ''), 'i')
       .test(st.presentText + ' ' + (st.pcName || ''))),
-    JSON.stringify({ present: (st.presentText || '').slice(0, 90), onStage: (st.onStage || []).map(c => c.name) }));
+    JSON.stringify({ present: (st.presentText || '').slice(0, 90), onStage: (st.onStage || []).map(c => c.label) }));
 
   // The planner must RECEIVE the authority it was missing — this is the whole root cause.
   t(`12d: the planner request carries the immutable WHERE`,
@@ -324,6 +340,36 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
   console.log('');
 }
 
+// ── 13 · IDENTITY / GROUNDING / ENVELOPE — these must be ACCEPTED, not rejected ──
+// Every case here is output the live planner actually produced and the validator wrongly refused.
+console.log(` 13 · ACCEPTED AFTER RESOLUTION (alias · grounding · envelope)`);
+for (const [mutate, label, expect] of [
+  ['aliasNarrator', 'C+ recipient "the narrator" resolves to the PC',        { alias:true }],
+  ['aliasProtag',   'C+ recipient "the protagonist" resolves to the PC',     { alias:true }],
+  ['aliasDohkar',   'C+ recipient "Dohkar" resolves to the role figure',     { alias:true }],
+  ['clothEp',       'E+ grounded through seed.sceneOne.narrator',           { alias:false }],
+  ['nested',        'nested scene_skeleton lifted intact',                   { alias:false, lifted:true }],
+]) {
+  const R = await run({ hot: false, mutate });
+  const cp = ((R.skeleton && R.skeleton.cp) || []).map(c => c.character);
+  const ok = !R.logs.some(l => /SCENE1:ABORT/.test(l)) && R.author.length === 1;
+  t(`   "${mutate}" — ${label}`, ok, `authorCalls=${R.author.length} cp=${JSON.stringify(cp)} ` +
+    R.logs.filter(l => /INVALID|ABORT/.test(l)).slice(0,1).join(''));
+  if (expect.alias) {
+    t(`   "${mutate}" — canonical label stored, alias logged`,
+      ok && cp.length === (R.eligible || []).length
+        && cp.every(n => (R.eligible || []).includes(n))
+        && R.logs.some(l => /SCENE1:ALIAS/.test(l)),
+      `cp=${JSON.stringify(cp)} eligible=${JSON.stringify(R.eligible)}`);
+  }
+  if (expect.lifted) {
+    t(`   "${mutate}" — normalization telemetry emitted`,
+      R.logs.some(l => /ENVELOPE:NORMALISED/.test(l)),
+      R.logs.filter(l => /ENVELOPE/.test(l)).slice(0,1).join(''));
+  }
+}
+console.log('');
+
 // ── 9 · planner faults must surface, never continue silently to Grok ──
 console.log(` 9 · PLANNER FAULTS SURFACE (no silent skeleton-less continuation)`);
 for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
@@ -331,11 +377,13 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty', 'unparseable',
                       // revised planning contract
                       'diagnosisangle', 'diagnosisangle2', 'offsceneEp', 'relocate',
-                      'fusionnull', 'fusionbadcode', 'fusionfalsecode', 'fusionnobeat', 'fusionthinbeat']) {
+                      'fusionnull', 'fusionbadcode', 'fusionfalsecode', 'fusionnobeat', 'fusionthinbeat',
+                      // identity / envelope faults that must STILL abort
+                      'aliasOffstage', 'dupSkeleton', 'nestedThin']) {
   const R = await run({ hot: false, mutate });
   // Both failure classes must exit visibly: semantic (SKELETON:INVALID) and unparseable
   // planner output (PLANNER:UNRECOVERABLE). Either way the ABORT must follow.
-  const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID|SCENE1:PLANNER:UNRECOVERABLE/.test(l))
+  const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID|SCENE1:PLANNER:UNRECOVERABLE|SCENE1:ENVELOPE:(CONFLICT|INCOMPLETE)|SCENE1:STAGE:UNRESOLVED/.test(l))
                && R.logs.some(l => /SCENE1:ABORT/.test(l));
   if (mutate === 'unknown') {
     console.log('   --- diagnostic (mutate=unknown) ---');

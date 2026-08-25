@@ -70,7 +70,7 @@ const browser = await chromium.launch({ headless: true });
       return { ok:c.ok, fault:c.fault, source:c.source, settingSource:c.settingSource,
                settingOwner:c.settingOwner, presenceOwner:c.presenceOwner, pending:c.pending,
                setting:c.setting, pcName:c.pcName, pcFirstPerson:c.pcFirstPerson,
-               onStage:(c.onStage||[]).map(x => `${x.name}:${x.kind}:${x.presence}`),
+               onStage:(c.onStage||[]).map(x => `${x.label}:${x.kind}:${x.presence}`),
                offStage:(c.offStage||[]).map(x => x.name), groundText:(c.groundText||'').slice(0,200) };
     };
     return {
@@ -167,6 +167,81 @@ const browser = await chromium.launch({ headless: true });
   t('A6 contradictory locations FAIL visibly — never merged, never arbitrated by a model',
     C.ok === false && /conflicting location sources/i.test(C.fault || ''), JSON.stringify(C.fault));
 
+  // ── PART A2 · CANONICAL IDENTITY + GROUNDING (2026-08-25) ──
+  // Every case here is output the LIVE planner produced and the validator wrongly refused.
+  const ID = await page.evaluate(() => {
+    const S = window._scene1StageContract, R = window._resolveEligiblePerson, G = window._targetInScene;
+    const fs1 = (patch) => S(Object.assign({ pov:'first_person', _starterId:'starter_first_sacrifice',
+                                             loveInterestName:'Julian' }, patch));
+    // Measured live at the scaffold boundary: playerName holds the KERNEL while the real name
+    // survives on state.name / identity.playerName.
+    const placeholderPC = fs1({ playerName:'the one who carries the story', name:'Lirael',
+                                identity:{ playerName:'Lirael' } });
+    const protagPC      = fs1({ playerName:'The Protagonist', name:'Lirael', identity:{ playerName:'Lirael' } });
+    const trulyUnnamed  = fs1({ playerName:'', name:'', identity:{} });
+    const st = placeholderPC;
+    const res = (n) => { const r = R(n, st); return r ? { id:r.id, label:r.label } : null; };
+
+    // Ambiguity: two entities sharing an alias must abort rather than be guessed at.
+    const amb = (() => {
+      const c = fs1({ playerName:'Seren', name:'Seren', identity:{ playerName:'Seren' } });
+      return { ok:c.ok, fault:c.fault };
+    })();
+
+    return {
+      pcLabel: st.pcName, pcSource: st.pcNameSource,
+      pcAliases: st.pcAliases,
+      protagLabel: protagPC.pcName, unnamedLabel: trulyUnnamed.pcName,
+      onStage: (st.onStage||[]).map(r => ({ id:r.id, label:r.label, aliases:r.aliases, source:r.source })),
+      resolveLirael: res('Lirael'), resolveNarrator: res('the narrator'),
+      resolveProtagonist: res('the protagonist'), resolveDohkar: res('Dohkar'),
+      resolveTheDohkar: res('the Dohkar'), resolvePresiding: res('the presiding Dohkar'),
+      resolveJulian: res('Julian'), resolveUnknown: res('Nobody Here'),
+      resolveSubstring: res('Lir'),                       // must NOT resolve — no fuzzy matching
+      ambiguous: amb,
+      groundCloth: G('the gossamer band', st.groundText),  // canon, described only in narrator
+      groundSpiral: G('spiralgrass', st.groundText),
+      groundInvented: G('the gallery hallway', st.groundText),
+      groundText: (st.groundText||'').length,
+    };
+  });
+
+  console.log(`\n${'═'.repeat(92)}\nPART A2 — CANONICAL IDENTITY + GROUNDING\n${'═'.repeat(92)}\n`);
+  console.log(` PC label "${ID.pcLabel}" (source ${ID.pcSource})   aliases=${JSON.stringify(ID.pcAliases)}`);
+  ID.onStage.forEach(r => console.log(`   ${r.id.padEnd(24)} label="${r.label}"  aliases=${JSON.stringify(r.aliases)}`));
+  console.log('');
+
+  t('C1 placeholder PC resolves to the real established name',
+    ID.pcLabel === 'Lirael' && /state\.name|identity/.test(ID.pcSource), JSON.stringify(ID));
+  t('C1 "The Protagonist" placeholder also resolves to the real name',
+    ID.protagLabel === 'Lirael', ID.protagLabel);
+  t('C1 a genuinely unnamed PC still falls back to the stable role label',
+    ID.unnamedLabel === 'the narrator', ID.unnamedLabel);
+  t('C2 Lirael / the narrator / the protagonist all resolve to ONE PC entity',
+    ID.resolveLirael && ID.resolveNarrator && ID.resolveProtagonist
+    && ID.resolveLirael.id === ID.resolveNarrator.id
+    && ID.resolveLirael.id === ID.resolveProtagonist.id
+    && ID.resolveLirael.label === 'Lirael',
+    JSON.stringify([ID.resolveLirael, ID.resolveNarrator, ID.resolveProtagonist]));
+  t('C3 Dohkar / the Dohkar / the presiding Dohkar resolve to ONE role entity',
+    ID.resolveDohkar && ID.resolveTheDohkar && ID.resolvePresiding
+    && ID.resolveDohkar.id === ID.resolveTheDohkar.id
+    && ID.resolveDohkar.id === ID.resolvePresiding.id
+    && ID.resolveDohkar.label === 'the presiding Dohkar',
+    JSON.stringify([ID.resolveDohkar, ID.resolveTheDohkar, ID.resolvePresiding]));
+  t('C3 resolution is EXACT — a substring does not resolve',
+    ID.resolveSubstring === null && ID.resolveUnknown === null,
+    JSON.stringify({ substring: ID.resolveSubstring, unknown: ID.resolveUnknown }));
+  t('C4 an alias claimed by two entities is a visible ambiguity fault',
+    ID.ambiguous.ok === false && /ambiguous alias/i.test(ID.ambiguous.fault || ''),
+    JSON.stringify(ID.ambiguous));
+  t('C6 the ceremonial band is grounded through seed.sceneOne.narrator',
+    ID.groundCloth === true, `groundTextLen=${ID.groundText}`);
+  t('C6 an object from the WHERE is still grounded',
+    ID.groundSpiral === true);
+  t('C7 an INVENTED object is still rejected',
+    ID.groundInvented === false);
+
   await page.close();
 }
 
@@ -232,7 +307,7 @@ async function fullRun({ label, statePatch, injectSeedB }) {
     return { threw, stage: { ok:c.ok, fault:c.fault, source:c.source, setting:c.setting,
                              settingOwner:c.settingOwner, presenceOwner:c.presenceOwner,
                              settingSource:c.settingSource,
-                             onStage:(c.onStage||[]).map(x=>x.name), offStage:(c.offStage||[]).map(x=>x.name) },
+                             onStage:(c.onStage||[]).map(x=>x.label), offStage:(c.offStage||[]).map(x=>x.name) },
              assignments: s._scene1SceneAssignments || null,
              skeletonFatal: s._scene1SkeletonFatal || null };
   }, { patch: statePatch, seedB: injectSeedB ? SEED_B : null });
