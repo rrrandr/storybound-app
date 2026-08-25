@@ -90,7 +90,15 @@ function plannerReply(usr, mutate) {
   const skel = { character_plus:cp, fusion:fu };
   if (ep !== undefined) skel.environment_plus = ep;   // `noep` omits the KEY, not just the value
 
-  // ENVELOPE SHAPES. `nested` is what the live planner produced in 1 of 3 samples.
+  // ENVELOPE SHAPES. `nested` is what the live planner produced in 1 of 3 samples;
+  // `stagedTop` is what the live CORRIDOR sample produced.
+  if (mutate === 'stagedTop') {
+    const { staged_characters, ...rest } = spine;
+    return JSON.stringify({ opening_spine: rest, staged_characters, scene_skeleton: skel });
+  }
+  if (mutate === 'stagedBoth')  return JSON.stringify({ opening_spine: spine, staged_characters: spine.staged_characters, scene_skeleton: skel });
+  if (mutate === 'stagedThin')  { const { staged_characters, ...rest } = spine;
+                                  return JSON.stringify({ opening_spine: rest, staged_characters: [{ presence_mode:'IN_PERSON' }], scene_skeleton: skel }); }
   if (mutate === 'nested')       return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel } });
   if (mutate === 'dupSkeleton')  return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel }, scene_skeleton: skel });
   if (mutate === 'nestedThin')   return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: { fusion: null } } });
@@ -349,6 +357,7 @@ for (const [mutate, label, expect] of [
   ['aliasDohkar',   'C+ recipient "Dohkar" resolves to the role figure',     { alias:true }],
   ['clothEp',       'E+ grounded through seed.sceneOne.narrator',           { alias:false }],
   ['nested',        'nested scene_skeleton lifted intact',                   { alias:false, lifted:true }],
+  ['stagedTop',     'lone top-level staged_characters moved into the spine', { alias:false, staged:true }],
 ]) {
   const R = await run({ hot: false, mutate });
   const cp = ((R.skeleton && R.skeleton.cp) || []).map(c => c.character);
@@ -362,11 +371,32 @@ for (const [mutate, label, expect] of [
         && R.logs.some(l => /SCENE1:ALIAS/.test(l)),
       `cp=${JSON.stringify(cp)} eligible=${JSON.stringify(R.eligible)}`);
   }
-  if (expect.lifted) {
+  if (expect.lifted || expect.staged) {
     t(`   "${mutate}" — normalization telemetry emitted`,
       R.logs.some(l => /ENVELOPE:NORMALISED/.test(l)),
       R.logs.filter(l => /ENVELOPE/.test(l)).slice(0,1).join(''));
   }
+  if (expect.staged) {
+    t(`   "${mutate}" — moved intact: every staged entry survives`,
+      R.logs.some(l => /moved top-level staged_characters/.test(l)
+                       && new RegExp(`\\(${(R.eligible || []).length} entries, contents unchanged\\)`).test(l)),
+      R.logs.filter(l => /ENVELOPE:NORMALISED/.test(l)).slice(0,1).join(''));
+  }
+}
+console.log('');
+
+// The dispatched TEMPLATE — not the surrounding prose — must carry the field. This is the exact
+// check that would have caught the corridor sample's real cause before spending on it.
+{
+  const R = await run({ hot: false, mutate: null });
+  const pu = String((R.planner[0] || {}).user || '');
+  const tmpl = pu.slice(pu.indexOf('Return ONLY this JSON'), pu.indexOf('"scene_skeleton"'));
+  t(`   dispatched JSON TEMPLATE declares opening_spine.environment_elements`,
+    /"environment_elements"\s*:/.test(tmpl) && tmpl.indexOf('"opening_setting"') !== -1
+      && tmpl.indexOf('"environment_elements"') > tmpl.indexOf('"opening_setting"'),
+    `inTemplate=${/"environment_elements"\s*:/.test(tmpl)} templateLen=${tmpl.length}`);
+  t(`   the template states the two-element requirement, not just the prose`,
+    /at least TWO concrete, distinct physical things/.test(tmpl));
 }
 console.log('');
 
@@ -379,7 +409,8 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'diagnosisangle', 'diagnosisangle2', 'offsceneEp', 'relocate',
                       'fusionnull', 'fusionbadcode', 'fusionfalsecode', 'fusionnobeat', 'fusionthinbeat',
                       // identity / envelope faults that must STILL abort
-                      'aliasOffstage', 'dupSkeleton', 'nestedThin']) {
+                      'aliasOffstage', 'dupSkeleton', 'nestedThin',
+                      'stagedBoth', 'stagedThin']) {
   const R = await run({ hot: false, mutate });
   // Both failure classes must exit visibly: semantic (SKELETON:INVALID) and unparseable
   // planner output (PLANNER:UNRECOVERABLE). Either way the ABORT must follow.

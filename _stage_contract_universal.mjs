@@ -248,7 +248,7 @@ const browser = await chromium.launch({ headless: true });
 // ════════════════════════════════════════════════════════════════════════════════════════════
 // PART B — the same contract must appear in all FOUR surfaces, for each successful case
 // ════════════════════════════════════════════════════════════════════════════════════════════
-async function fullRun({ label, statePatch, injectSeedB }) {
+async function fullRun({ label, statePatch, injectSeedB, reply }) {
   const page = await (await browser.newContext()).newPage();
   const planner = [], author = [], escaped = [], unknown = [];
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
@@ -267,7 +267,7 @@ async function fullRun({ label, statePatch, injectSeedB }) {
     if (/ARCHITECTURE LAWS/.test(sys)) { author.push({ system:sys, user:usr }); out = PROSE; }
     else if (/scene-structure planner for the OPENING scene/.test(sys)) {
       planner.push({ user: usr });
-      out = plannerReplyFor(usr);
+      out = reply ? reply(usr) : plannerReplyFor(usr);
     } else out = JSON.stringify(GENERIC);
     const env = /mistral-proxy/.test(url)
       ? { id:'mock', object:'chat.completion', model:b.model, usage:{}, choices:[{ index:0, finish_reason:'stop', message:{ role:'assistant', content: out } }] }
@@ -532,6 +532,77 @@ console.log(`\n${'═'.repeat(92)}\nPART D — CORRIDOR OWNERSHIP (roster-bound 
     D.epUndeclared === false);
 
   await page.close();
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════════
+// PART E — STRUCTURAL RECOVERY MUST NOT BECOME IDENTITY RECOVERY
+// The exact shape the live corridor sample produced: staged_characters at the envelope's top
+// level, containing an invented person. The array must be MOVED intact and then REJECTED.
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═'.repeat(92)}`);
+{
+  const CORRIDOR = { playerName:'', name:'',
+    _scene1Mission:'She counts crates in the customs house before the tide turns',
+    loveInterestName:'Dorian', partnerName:'Dorian', liGender:'male' };
+
+  // Build a corridor reply whose staged_characters sits at the TOP level.
+  const corridorReply = (usr, { stagedNames, epTarget, elements }) => {
+    const roster = [...usr.matchAll(/^ {2}• (.+?)\s{2}\(/gm)].map(m => m[1].trim());
+    const els = elements || ['the weighhouse ledger', 'a bolt of undyed cloth'];
+    const names = stagedNames || roster;
+    const spine = { pressure_source_type:'institutional', pressure_source:L, hook_object:'the ledger',
+      opening_beat:'The count is already short', rising_beats:['a','b'], decision_beat:'Does she sign',
+      pc_career:'clerk', opening_setting:'customs house', environment_elements: els,
+      li_texture_beat:'He is not here', interlocutor_placement:'They stand apart', pc_wound_anchor:L,
+      pc_self_presentation_beat:'decision', scene_want:SCENE_WANT, scene_mission:L,
+      reader_state:{ knows:L, believes:L, wondering:L, must_not_confuse:L },
+      pc_body_callback:'decision', li_body_callback:'opening', antagonist_body_callback:null,
+      perceptual_signature_beat:L };
+    const target = epTarget || els[0];
+    return JSON.stringify({
+      opening_spine: spine,                                  // NOTE: no staged_characters here
+      staged_characters: names.map(n => ({ name:n, presence_mode:'IN_PERSON', presence:'IN_PERSON',
+                                           anchor_beat:'is already at the ledger' })),
+      scene_skeleton: {
+        character_plus: names.map(n => ({ character:n, first_mention:true, angle:`${n} checks the ledger before the words` })),
+        environment_plus: { target, axis:'use' },
+        fusion: { character: names[0], target, beat:`she sets her palm flat on the ${target} to keep it still` },
+      },
+    });
+  };
+
+  // E1 — lone top-level array, all names on the roster: lifted AND accepted.
+  {
+    const R = await fullRun({ label:'corridor stagedTop (valid)', statePatch: CORRIDOR,
+      reply: (u) => corridorReply(u, {}) });
+    const lifted = R.logs.some(l => /moved top-level staged_characters/.test(l));
+    t('E1 lone top-level staged_characters is lifted and the plan validates',
+      lifted && R.author.length === 1 && !R.skeletonFatal,
+      `lifted=${lifted} author=${R.author.length} fault=${R.skeletonFatal}`);
+  }
+  // E2 — same shape, but the array contains an INVENTED person.
+  {
+    const R = await fullRun({ label:'corridor stagedTop + Mateo', statePatch: CORRIDOR,
+      reply: (u) => {
+        const roster = [...u.matchAll(/^ {2}• (.+?)\s{2}\(/gm)].map(m => m[1].trim());
+        return corridorReply(u, { stagedNames: roster.concat(['Mateo']) });
+      } });
+    const lifted = R.logs.some(l => /moved top-level staged_characters/.test(l));
+    const rejected = /not on the allowed roster/i.test(String(R.skeletonFatal || ''));
+    t('E2 an invented person is MOVED intact and then rejected by the roster validator',
+      lifted && rejected && R.author.length === 0,
+      `lifted=${lifted} rejected=${rejected} author=${R.author.length} fault=${R.skeletonFatal}`);
+    t('E2 structural recovery did not become identity recovery',
+      R.logs.some(l => /roster validation still applies/.test(l)) && rejected);
+  }
+  // E3 — corridor E+ pointing at an element that was never declared.
+  {
+    const R = await fullRun({ label:'corridor undeclared E+', statePatch: CORRIDOR,
+      reply: (u) => corridorReply(u, { epTarget: 'a brass lamp' }) });
+    t('E3 corridor E+ cannot target an UNDECLARED element',
+      R.author.length === 0 && /not one of the declared environment_elements/i.test(String(R.skeletonFatal || '')),
+      `author=${R.author.length} fault=${R.skeletonFatal}`);
+  }
 }
 
 await browser.close();
