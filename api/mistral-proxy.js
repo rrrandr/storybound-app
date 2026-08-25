@@ -61,8 +61,36 @@ module.exports = async function handler(req, res) {
       role = 'SD_FALLBACK',
       temperature = 0.7,
       max_tokens = 500,
-      reasoning_effort            // 'low' | 'medium' | 'high' — 2603 accepts it; verified 2026-08
+      // 'none' | 'low' | 'medium' | 'high'. 'none' is the documented way to request
+      // MINIMAL reasoning with no thinking chunk — OMITTING the field is NOT the same
+      // thing, so callers that need non-reasoning must send it explicitly.
+      reasoning_effort,
+      response_format             // e.g. { type: 'json_object' } — Mistral JSON mode
     } = req.body;
+    // REASONING CONTRACT (2026-08-25). An explicitly supplied value must be valid: silently
+    // coercing a typo to null used to mean the caller believed it had disabled reasoning while
+    // the author-class default below could still switch it on.
+    const _RE_ALLOWED = ['none', 'low', 'medium', 'high'];
+    if (reasoning_effort !== undefined && reasoning_effort !== null
+        && !_RE_ALLOWED.includes(String(reasoning_effort))) {
+      return res.status(400).json({
+        error: 'invalid_reasoning_effort',
+        detail: `reasoning_effort must be one of ${_RE_ALLOWED.join('|')}`,
+        received: String(reasoning_effort)
+      });
+    }
+    // Structured output: only the shapes we understand are forwarded.
+    if (response_format !== undefined && response_format !== null) {
+      const _rfType = response_format && response_format.type;
+      if (_rfType !== 'json_object') {
+        return res.status(400).json({
+          error: 'invalid_response_format',
+          detail: "response_format.type must be 'json_object'",
+          received: _rfType === undefined ? String(response_format) : String(_rfType)
+        });
+      }
+    }
+
     // SECURITY: scrub user-role messages before any downstream code touches them.
     const messages = sanitizeUserMessages(_rawMessages, 'mistral');
 
@@ -107,19 +135,24 @@ module.exports = async function handler(req, res) {
         const body = { model: requestedModel, messages, temperature, max_tokens };
         // REASONING — allowlisted, never passed through raw. Reasoning tokens bill as
         // OUTPUT; on a ~100k-token author payload that is a few percent of scene cost.
-        const RE = ['low', 'medium', 'high'];
-        let effort = (reasoning_effort && RE.includes(String(reasoning_effort))) ? String(reasoning_effort) : null;
+        // Validated above, so an explicit value is always honoured here — including 'none',
+        // which must survive the author-class default rather than being treated as absent.
+        const _explicit = (reasoning_effort !== undefined && reasoning_effort !== null)
+          ? String(reasoning_effort) : null;
+        let effort = _explicit;
         // AUTHOR-CLASS DEFAULT (Roman 2026-08-21): scene authoring on Mistral gets reasoning
         // unless the caller says otherwise. Detected from the payload itself — the client
         // route that sends 2603 with the author system prompt is not yet located in app.js,
         // so keying on the prompt is the only reliable place to apply this today.
         const isAuthorClass = Array.isArray(messages) && messages.some(m =>
           m && m.role === 'system' && /STORYBOUND ARCHITECTURE LAWS/.test(String(m.content || '')));
-        if (!effort && isAuthorClass && /mistral-small/.test(String(requestedModel))) {
+        // Applies ONLY when the caller supplied nothing at all.
+        if (_explicit === null && isAuthorClass && /mistral-small/.test(String(requestedModel))) {
           effort = 'high';
           console.log('[MISTRAL-PROXY] author-class payload — defaulting reasoning_effort=high');
         }
-        if (effort) body.reasoning_effort = effort;
+        if (effort) body.reasoning_effort = effort;   // includes the explicit 'none'
+        if (response_format) body.response_format = response_format;
         _effortUsed = effort;
         return JSON.stringify(body);
       })()
