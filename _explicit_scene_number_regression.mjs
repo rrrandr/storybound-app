@@ -123,6 +123,64 @@ const gen = await page.evaluate(async () => {
 });
 t('failed generation leaves no skeleton or meta', gen.failLeftNothing);
 
+// ── 5. LEGACY META COMPATIBILITY — discriminating, against the REAL predicate ──
+// The normalization is boolean coercion, not loose equality:
+//     if (!!(opts && opts.openingScene) !== !!meta.openingScene) return false;
+//     if (opts && typeof opts.sceneNumber === 'number' && meta.sceneNumber
+//         && opts.sceneNumber !== meta.sceneNumber) return false;
+// A legacy meta has neither field, so !!undefined === false matches the omitted-opts
+// default, while an explicit opening call yields true !== false and is refused.
+console.log('\n 5. LEGACY _skeletonMeta COMPATIBILITY');
+const legacy = await page.evaluate(() => {
+  const s = window.state;
+  // A legacy meta: written before sceneNumber/openingScene existed, otherwise VALID
+  // (same turn, same phase/storyturn/location/auth) so the only thing under test is
+  // the new opening-vs-continuation rule.
+  s.turnCount = 4;
+  s.relationship_phase = 'strangers';
+  s.storyturn = 'ST2';
+  s.narrativeState = { storyturn_state: 'ST2' };
+  s.physicalState = { location: 'the shrine' };
+  s.explicitEmbodimentAuthorized = false;
+  s.sceneSkeleton = { character_plus: [], environment_plus: null, fusion: null };
+  s._skeletonMeta = {
+    generatedAt: 4,
+    relationship_phase: 'strangers',
+    storyturn: 'ST2',
+    location: 'the shrine',
+    explicitAuth: false
+    // NOTE: no sceneNumber, no openingScene — this is the legacy shape
+  };
+  const hasNeither = !('sceneNumber' in s._skeletonMeta) && !('openingScene' in s._skeletonMeta);
+  return {
+    hasNeither,
+    continuationReuse: window.__isSkeletonValid(),                                  // omitted opts
+    continuationReuseExplicitUndef: window.__isSkeletonValid(undefined),
+    openingReuse: window.__isSkeletonValid({ sceneNumber: 1, openingScene: true }),  // must refuse
+    openingOnlyFlag: window.__isSkeletonValid({ openingScene: true }),
+    numberMismatch: window.__isSkeletonValid({ sceneNumber: 9 })                     // meta has none → allowed
+  };
+});
+t('legacy meta really lacks both fields', legacy.hasNeither);
+t('omitted-opts continuation CAN reuse a legacy meta', legacy.continuationReuse === true);
+t('explicit undefined behaves as omitted', legacy.continuationReuseExplicitUndef === true);
+t('{sceneNumber:1, openingScene:true} CANNOT reuse it', legacy.openingReuse === false);
+t('openingScene:true alone is enough to refuse', legacy.openingOnlyFlag === false);
+t('a number against a meta with none does not refuse', legacy.numberMismatch === true);
+
+// and the converse: an opening meta must not be reused by a continuation caller
+const converse = await page.evaluate(() => {
+  const s = window.state;
+  s._skeletonMeta = { generatedAt: 4, sceneNumber: 1, openingScene: true,
+    relationship_phase: 'strangers', storyturn: 'ST2', location: 'the shrine', explicitAuth: false };
+  return {
+    openingReuse: window.__isSkeletonValid({ sceneNumber: 1, openingScene: true }),
+    continuationReuse: window.__isSkeletonValid()
+  };
+});
+t('an opening meta IS reusable by the same opening call', converse.openingReuse === true);
+t('an opening meta is NOT reusable by a continuation caller', converse.continuationReuse === false);
+
 await browser.close();
 console.log(`\n  network: ${attempts.length} intercepted, 0 issued.`);
 console.log(`\n${'─'.repeat(82)}\n  ${pass} passed · ${fail} failed\n`);
