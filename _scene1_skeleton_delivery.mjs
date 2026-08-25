@@ -40,15 +40,31 @@ function plannerReply(usr, mutate) {
     pc_body_callback:'decision', li_body_callback:'opening', antagonist_body_callback:null,
     perceptual_signature_beat:L,
     staged_characters: cast.map(n => ({ name:n, presence_mode:'IN_PERSON', role_to_protagonist:'witness' })) };
-  let cp = cast.map(n => ({ character:n, first_mention:true, angle:'holds the room steady at private cost' }));
+  // Angles are DISTINCT per recipient so "the directive renders each returned angle" is a real
+  // claim rather than one string matching by accident.
+  let cp = cast.map(n => ({ character:n, first_mention:true, angle:`${n} works to seem unbothered by the cost` }));
   let ep = { target:'the shrine table', axis:'ritual' };
   let fu = null;
-  if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, angle:'x y z' }]);
+  if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, angle:'x y z reads as steady' }]);
   if (mutate === 'missing')   cp = cp.slice(0, Math.max(0, cp.length - 1));
   if (mutate === 'duplicate') cp = cp.concat([cp[0]]);
   if (mutate === 'badaxis')   ep = { target:'the shrine table', axis:'vibes' };
-  if (mutate === 'badfusion') fu = { character:'Nobody Here', target:'the table' };
-  return JSON.stringify({ opening_spine: spine, scene_skeleton: { character_plus:cp, environment_plus:ep, fusion:fu } });
+  if (mutate === 'badfusion') fu = { character:'Nobody Here', target:'the shrine table' };
+  // ── scalar-invariant mutations ──
+  if (mutate === 'withfusion')     fu = { character: cast[0], target:'the shrine table' };
+  if (mutate === 'fmfalse')        cp = cp.map((c,i) => i === 0 ? { ...c, first_mention:false } : c);
+  if (mutate === 'fmmissing')      cp = cp.map((c,i) => { if (i !== 0) return c; const { first_mention, ...r } = c; return r; });
+  if (mutate === 'fmstring')       cp = cp.map((c,i) => i === 0 ? { ...c, first_mention:'false' } : c);
+  if (mutate === 'emptyangle')     cp = cp.map((c,i) => i === 0 ? { ...c, angle:'   ' } : c);
+  if (mutate === 'placeholderang') cp = cp.map((c,i) => i === 0 ? { ...c, angle:'N/A' } : c);
+  if (mutate === 'thinangle')      cp = cp.map((c,i) => i === 0 ? { ...c, angle:'is sad' } : c);
+  if (mutate === 'noep')           ep = undefined;
+  if (mutate === 'emptyeptarget')  ep = { target:'   ', axis:'ritual' };
+  if (mutate === 'fusionmismatch') fu = { character: cast[0], target:'the window casement' };
+  if (mutate === 'fusionempty')    fu = { character: cast[0], target:'   ' };
+  const skel = { character_plus:cp, fusion:fu };
+  if (ep !== undefined) skel.environment_plus = ep;   // `noep` omits the KEY, not just the value
+  return JSON.stringify({ opening_spine: spine, scene_skeleton: skel });
 }
 
 let pass = 0, fail = 0;
@@ -163,9 +179,65 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
   console.log('');
 }
 
+// ── 11 · SCALAR ASSIGNMENT INVARIANTS + verbatim rendering into the Grok request ──
+// Recipient identity was already proven. This proves the FIELDS of each assignment are
+// substantive, and that buildSkeletonDirective actually carries them into the dispatched
+// system prompt — an assignment that validates but never renders is not delivered.
+const EP_AXES = ['history','use','damage','ownership','repair','ritual','absence'];
+console.log(` 11 · SCALAR INVARIANTS + VERBATIM RENDER (fusion present)`);
+for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
+  const R = await run({ hot, mutate: 'withfusion' });
+  const au = R.author[0];
+  const sys = au ? au.system : '';
+  const cp = (R.skeleton && R.skeleton.cp) || [];
+  const ep = R.skeleton && R.skeleton.ep;
+  const fu = R.skeleton && R.skeleton.fu;
+  const tnorm = s => String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim().replace(/^(the|a|an)\s+/,'').replace(/\s+/g,' ').trim();
+
+  t(`${label} 11a: delivered — every C+ entry has first_mention === true`,
+    cp.length > 0 && cp.every(c => c.first_mention === true),
+    JSON.stringify(cp.map(c => [c.character, c.first_mention])));
+  t(`${label} 11b: delivered — every C+ angle is nonempty and substantive`,
+    cp.length > 0 && cp.every(c => String(c.angle||'').trim().length >= 12
+      && String(c.angle).trim().split(/\s+/).length >= 3),
+    JSON.stringify(cp.map(c => c.angle)));
+  t(`${label} 11c: delivered — E+ target nonempty, axis in the allowlist`,
+    !!(ep && String(ep.target||'').trim() && EP_AXES.includes(String(ep.axis||''))),
+    JSON.stringify(ep));
+  t(`${label} 11d: delivered — fusion character eligible, target nonempty, target === E+ target`,
+    !!(fu && R.eligible && R.eligible.map(tnorm).includes(tnorm(fu.character))
+       && String(fu.target||'').trim() && tnorm(fu.target) === tnorm(ep && ep.target)),
+    JSON.stringify({ fu, epTarget: ep && ep.target }));
+
+  // ── the same values, verbatim, in the bytes handed to Grok ──
+  t(`${label} 11e: EVERY returned angle renders verbatim in the outgoing system prompt`,
+    cp.length > 0 && cp.every(c => sys.includes(c.angle)),
+    JSON.stringify(cp.filter(c => !sys.includes(c.angle)).map(c => c.angle)));
+  t(`${label} 11f: every C+ recipient renders on a first-mention-tagged line`,
+    cp.length > 0 && cp.every(c => new RegExp(`•\\s*${c.character.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\s*\\(first mention`).test(sys)),
+    'a recipient rendered without the first-mention tag');
+  t(`${label} 11g: E+ target AND axis render verbatim on the ENVIRONMENT+ line`,
+    (() => { const line = (sys.split('\n').find(l => l.includes('ENVIRONMENT+ ASSIGNED THIS SCENE')) || '');
+             return !!ep && line.includes(ep.target) && line.includes(ep.axis); })(),
+    JSON.stringify(sys.split('\n').find(l => l.includes('ENVIRONMENT+ ASSIGNED THIS SCENE')) || null));
+  t(`${label} 11h: fusion PAIR renders verbatim on one FUSION line`,
+    (() => { const line = (sys.split('\n').find(l => l.includes('FUSION OPPORTUNITY')) || '');
+             return !!fu && line.includes(fu.character) && line.includes(fu.target); })(),
+    JSON.stringify(sys.split('\n').find(l => l.includes('FUSION OPPORTUNITY')) || null));
+  t(`${label} 11i: still exactly ONE skeleton block with fusion present`,
+    au && count(au.system, 'Narrative skeleton for this scene:') === 1
+      && count(au.system, 'FUSION OPPORTUNITY') === 1,
+    `skel=${au && count(au.system,'Narrative skeleton for this scene:')} fusion=${au && count(au.system,'FUSION OPPORTUNITY')}`);
+  t(`${label} 11j: observer snapshot === dispatched prompt, zero escaped`,
+    R.auditSystem !== null && au && R.auditSystem === au.system && R.escaped.length === 0 && R.unknown.length === 0);
+  console.log('');
+}
+
 // ── 9 · planner faults must surface, never continue silently to Grok ──
 console.log(` 9 · PLANNER FAULTS SURFACE (no silent skeleton-less continuation)`);
-for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion']) {
+for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
+                      'fmfalse', 'fmmissing', 'fmstring', 'emptyangle', 'placeholderang', 'thinangle',
+                      'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty']) {
   const R = await run({ hot: false, mutate });
   const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID/.test(l));
   if (mutate === 'unknown') {
