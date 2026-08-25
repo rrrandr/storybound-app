@@ -291,10 +291,10 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
 
   // The planner must RECEIVE the authority it was missing — this is the whole root cause.
   t(`12d: the planner request carries the immutable WHERE`,
-    /THE SCENE AS IT ALREADY EXISTS/.test(pu) && /WHERE:/.test(pu) && /Veilwood/i.test(pu),
-    `WHERE=${/WHERE:/.test(pu)} Veilwood=${/Veilwood/i.test(pu)}`);
+    /THE SCENE'S STAGE — WHO OWNS WHAT/.test(pu) && /WHERE \(fixed\):/.test(pu) && /Veilwood/i.test(pu),
+    `WHERE=${/WHERE \(fixed\):/.test(pu)} Veilwood=${/Veilwood/i.test(pu)}`);
   t(`12e: the planner request carries WHO IS PHYSICALLY PRESENT`,
-    /WHO IS PHYSICALLY PRESENT/.test(pu) && /Julian/i.test(pu) && /Seren/i.test(pu));
+    /WHO IS PHYSICALLY PRESENT \(fixed\)/.test(pu) && /Julian/i.test(pu) && /Seren/i.test(pu));
   t(`12f: the planner request forbids relocation and materialising the absent`,
     /Do NOT relocate the scene/.test(pu) && /Do NOT materialise anyone/.test(pu)
       && /does NOT make a character physically present/.test(pu));
