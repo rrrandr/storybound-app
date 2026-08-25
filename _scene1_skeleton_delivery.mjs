@@ -33,7 +33,9 @@ function plannerReply(usr, mutate) {
   const cast = m ? m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
   const spine = { pressure_source_type:'institutional', pressure_source:L, hook_object:'the band',
     opening_beat:'She sets the relic down', rising_beats:['a','b'], decision_beat:'Does she name it',
-    pc_career:'shrine witness', opening_setting:'the hall', li_texture_beat:'He crosses toward her',
+    // opening_setting must AGREE with the seed's immutable WHERE — the fixture previously said
+    // "the hall", which the new relocation check correctly rejects.
+    pc_career:'shrine witness', opening_setting:'a Veilwood ceremony clearing', li_texture_beat:'He crosses toward her',
     interlocutor_placement:'The Dohkar stands between', pc_wound_anchor:L,
     pc_self_presentation_beat:'decision', scene_want:SCENE_WANT, scene_mission:L,
     reader_state:{ knows:L, believes:L, wondering:L, must_not_confuse:L },
@@ -42,16 +44,18 @@ function plannerReply(usr, mutate) {
     staged_characters: cast.map(n => ({ name:n, presence_mode:'IN_PERSON', role_to_protagonist:'witness' })) };
   // Angles are DISTINCT per recipient so "the directive renders each returned angle" is a real
   // claim rather than one string matching by accident.
-  let cp = cast.map(n => ({ character:n, first_mention:true, angle:`${n} works to seem unbothered by the cost` }));
-  let ep = { target:'the shrine table', axis:'ritual' };
-  let fu = null;
-  if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, angle:'x y z reads as steady' }]);
+  // Angles must now be RENDERABLE BEATS, not diagnoses, and E+/fusion targets must be things the
+  // resolved scene actually contains. "spiralgrass" is in the First Sacrifice seed's WHERE.
+  let cp = cast.map(n => ({ character:n, first_mention:true, angle:`${n} checks the youth's hands before the words` }));
+  let ep = { target:'the spiralgrass', axis:'ritual' };
+  let fu = { character: cast[0], target:'the spiralgrass', beat:'she sets her palm flat on the spiralgrass to keep it still' };
+  if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]);
   if (mutate === 'missing')   cp = cp.slice(0, Math.max(0, cp.length - 1));
   if (mutate === 'duplicate') cp = cp.concat([cp[0]]);
-  if (mutate === 'badaxis')   ep = { target:'the shrine table', axis:'vibes' };
-  if (mutate === 'badfusion') fu = { character:'Nobody Here', target:'the shrine table' };
+  if (mutate === 'badaxis')   ep = { target:'the spiralgrass', axis:'vibes' };
+  if (mutate === 'badfusion') fu = { character:'Nobody Here', target:'the spiralgrass', beat:'he sets his palm flat on the spiralgrass' };
   // ── scalar-invariant mutations ──
-  if (mutate === 'withfusion')     fu = { character: cast[0], target:'the shrine table' };
+  if (mutate === 'withfusion')     fu = { character: cast[0], target:'the spiralgrass', beat:'she sets her palm flat on the spiralgrass to keep it still' };
   if (mutate === 'fmfalse')        cp = cp.map((c,i) => i === 0 ? { ...c, first_mention:false } : c);
   if (mutate === 'fmmissing')      cp = cp.map((c,i) => { if (i !== 0) return c; const { first_mention, ...r } = c; return r; });
   if (mutate === 'fmstring')       cp = cp.map((c,i) => i === 0 ? { ...c, first_mention:'false' } : c);
@@ -60,8 +64,18 @@ function plannerReply(usr, mutate) {
   if (mutate === 'thinangle')      cp = cp.map((c,i) => i === 0 ? { ...c, angle:'is sad' } : c);
   if (mutate === 'noep')           ep = undefined;
   if (mutate === 'emptyeptarget')  ep = { target:'   ', axis:'ritual' };
-  if (mutate === 'fusionmismatch') fu = { character: cast[0], target:'the window casement' };
-  if (mutate === 'fusionempty')    fu = { character: cast[0], target:'   ' };
+  if (mutate === 'fusionmismatch') fu = { character: cast[0], target:'the window casement', beat:'she sets her palm on the casement' };
+  if (mutate === 'fusionempty')    fu = { character: cast[0], target:'   ', beat:'she sets her palm flat to keep it still' };
+  // ── revised planning-contract mutations (2026-08-25) ──
+  if (mutate === 'diagnosisangle') cp = cp.map((c,i) => i === 0 ? { ...c, angle:'a woman clinging to the illusion of worthiness' } : c);
+  if (mutate === 'diagnosisangle2') cp = cp.map((c,i) => i === 0 ? { ...c, angle:'an authority whose judgment will decide her fate' } : c);
+  if (mutate === 'offsceneEp')     ep = { target:'the gallery hallway', axis:'damage' };
+  if (mutate === 'relocate')       spine.opening_setting = 'a gallery hallway';
+  if (mutate === 'fusionnull')     fu = null;                                   // bare null, no reason
+  if (mutate === 'fusionbadcode')  fu = { character:null, target:null, impossible_because:'DIDNT_FEEL_RIGHT' };
+  if (mutate === 'fusionfalsecode') fu = { character:null, target:null, impossible_because:'NO_ONSTAGE_CHARACTER' };
+  if (mutate === 'fusionnobeat')   fu = { character: cast[0], target:'the spiralgrass' };
+  if (mutate === 'fusionthinbeat') fu = { character: cast[0], target:'the spiralgrass', beat:'they connect' };
   const skel = { character_plus:cp, fusion:fu };
   if (ep !== undefined) skel.environment_plus = ep;   // `noep` omits the KEY, not just the value
   // A planner reply that will not parse is the same failure class as an invalid one: the
@@ -134,7 +148,13 @@ async function run({ hot, mutate }) {
     catch(e){ threw = String(e && e.message); }
     s._skipCorridorValidation = false;
     return { threw,
-      eligible: (window._sceneEligibleCast ? window._sceneEligibleCast(s, 1) : null),
+      // Eligibility now comes from the STAGE CONTRACT when the seed is authoritative; the old
+      // heuristic is kept alongside so the harness can prove they differ where it matters.
+      stage: (window._scene1StageContract ? window._scene1StageContract(s) : null),
+      heuristicCast: (window._sceneEligibleCast ? window._sceneEligibleCast(s, 1) : null),
+      eligible: (window._scene1StageContract
+        ? (window._scene1StageContract(s).onStage || []).map(c => c.name)
+        : (window._sceneEligibleCast ? window._sceneEligibleCast(s, 1) : null)),
       assignments: s._scene1SceneAssignments || null,
       skeleton: s.sceneSkeleton ? { cp: s.sceneSkeleton.character_plus, ep: s.sceneSkeleton.environment_plus, fu: s.sceneSkeleton.fusion } : null,
       auditSystem: (s._lastScene1AuditPrompt && s._lastScene1AuditPrompt.system) || null,
@@ -168,9 +188,9 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     R.eligible && R.skeleton && R.skeleton.cp && R.skeleton.cp.length === R.eligible.length,
     `eligible=${R.eligible && R.eligible.length} cp=${R.skeleton && R.skeleton.cp && R.skeleton.cp.length}`);
   t(`${label} 4: E+ and fusion survive normalization`,
-    R.skeleton && R.skeleton.ep && R.skeleton.ep.target === 'the shrine table'
-    && R.skeleton.ep.axis === 'ritual' && R.skeleton.fu === null,
-    JSON.stringify(R.skeleton && R.skeleton.ep));
+    R.skeleton && R.skeleton.ep && R.skeleton.ep.target === 'the spiralgrass'
+    && R.skeleton.ep.axis === 'ritual' && R.skeleton.fu && R.skeleton.fu.beat,
+    JSON.stringify(R.skeleton && { ep: R.skeleton.ep, fu: R.skeleton.fu }));
   const key = `${label} ${hot ? 6 : 5}`;
   t(`${key}: outgoing ${label} system carries exactly ONE skeleton block`,
     au && count(au.system, 'Narrative skeleton for this scene:') === 1,
@@ -235,15 +255,72 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
              return !!ep && line.includes(ep.target) && line.includes(ep.axis); })(),
     JSON.stringify(sys.split('\n').find(l => l.includes('ENVIRONMENT+ ASSIGNED THIS SCENE')) || null));
   t(`${label} 11h: fusion PAIR renders verbatim on one FUSION line`,
-    (() => { const line = (sys.split('\n').find(l => l.includes('FUSION OPPORTUNITY')) || '');
+    (() => { const line = (sys.split('\n').find(l => l.includes('FUSION —')) || '');
              return !!fu && line.includes(fu.character) && line.includes(fu.target); })(),
-    JSON.stringify(sys.split('\n').find(l => l.includes('FUSION OPPORTUNITY')) || null));
+    JSON.stringify(sys.split('\n').find(l => l.includes('FUSION —')) || null));
   t(`${label} 11i: still exactly ONE skeleton block with fusion present`,
     au && count(au.system, 'Narrative skeleton for this scene:') === 1
-      && count(au.system, 'FUSION OPPORTUNITY') === 1,
-    `skel=${au && count(au.system,'Narrative skeleton for this scene:')} fusion=${au && count(au.system,'FUSION OPPORTUNITY')}`);
+      && count(au.system, 'FUSION —') === 1,
+    `skel=${au && count(au.system,'Narrative skeleton for this scene:')} fusion=${au && count(au.system,'FUSION —')}`);
   t(`${label} 11j: observer snapshot === dispatched prompt, zero escaped`,
     R.auditSystem !== null && au && R.auditSystem === au.system && R.escaped.length === 0 && R.unknown.length === 0);
+  console.log('');
+}
+
+// ── 12 · REVISED PLANNING CONTRACT (2026-08-25) — the fixes the paid run demanded ──
+console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, first-person landing`);
+{
+  const R = await run({ hot: false, mutate: null });
+  const st = R.stage || {};
+  const pl = R.planner[0] || {};
+  const pu = String(pl.user || '');
+  const au = R.author[0];
+  const sys = au ? au.system : '';
+
+  t(`12a: the stage contract resolves from the SEED, not the heuristic`,
+    st.authoritative === true && st.source === 'seed.sceneOne' && !!st.setting && !!st.presentText,
+    JSON.stringify({ authoritative: st.authoritative, source: st.source }));
+  t(`12b: eligibility is the ON-STAGE roster (PC + named present + role figures)`,
+    Array.isArray(st.onStage) && st.onStage.length >= 3
+      && st.onStage.some(c => c.kind === 'pc') && st.onStage.some(c => c.kind === 'role'),
+    JSON.stringify((st.onStage || []).map(c => `${c.name}:${c.kind}`)));
+  t(`12c: a character absent from the PRESENT text is NOT eligible`,
+    !(st.onStage || []).some(c => !new RegExp(c.name.replace(/^the presiding /, ''), 'i')
+      .test(st.presentText + ' ' + (st.pcName || ''))),
+    JSON.stringify({ present: (st.presentText || '').slice(0, 90), onStage: (st.onStage || []).map(c => c.name) }));
+
+  // The planner must RECEIVE the authority it was missing — this is the whole root cause.
+  t(`12d: the planner request carries the immutable WHERE`,
+    /THE SCENE AS IT ALREADY EXISTS/.test(pu) && /WHERE:/.test(pu) && /Veilwood/i.test(pu),
+    `WHERE=${/WHERE:/.test(pu)} Veilwood=${/Veilwood/i.test(pu)}`);
+  t(`12e: the planner request carries WHO IS PHYSICALLY PRESENT`,
+    /WHO IS PHYSICALLY PRESENT/.test(pu) && /Julian/i.test(pu) && /Seren/i.test(pu));
+  t(`12f: the planner request forbids relocation and materialising the absent`,
+    /Do NOT relocate the scene/.test(pu) && /Do NOT materialise anyone/.test(pu)
+      && /does NOT make a character physically present/.test(pu));
+  t(`12g: the planner request demands RENDERABLE angles and bans diagnoses`,
+    /ANGLES MUST BE RENDERABLE, NOT DIAGNOSES/.test(pu)
+      && /clinging to the illusion of worthiness/.test(pu)
+      && /could a camera record it/i.test(pu));
+  t(`12h: the planner request requires fusion + a coded impossibility`,
+    /fusion is REQUIRED whenever an on-stage character/.test(pu)
+      && /impossible_because/.test(pu) && /NO_ONSTAGE_CHARACTER/.test(pu));
+  t(`12i: FIRST-PERSON landing point is defined for the PC`,
+    /FIRST-PERSON NARRATOR/.test(pu) && /FIRST EMBODIED SELF-REFERENCE OR ACTION/.test(pu),
+    'planner was not told where the narrator beat lands');
+
+  // …and the author must receive the same contract, in the assignment region.
+  t(`12j: the author directive carries the negative constraints`,
+    /Do NOT relocate the scene to reach a target/.test(sys)
+      && /Do NOT materialise anyone not physically present/.test(sys)
+      && /the SCENE wins/.test(sys));
+  t(`12k: the author directive states the first-person landing point`,
+    /narrates as "I" and is not named in the prose/.test(sys)
+      && /first embodied action or self-reference/.test(sys));
+  t(`12l: the fusion BEAT reaches the author, not just the pair`,
+    /FUSION — one sentence in which/.test(sys) && /sets her palm flat on the spiralgrass/.test(sys),
+    JSON.stringify(sys.split('\n').find(l => l.includes('FUSION —')) || null));
+  t(`12m: zero escaped / unknown requests`, R.escaped.length === 0 && R.unknown.length === 0);
   console.log('');
 }
 
@@ -251,7 +328,10 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
 console.log(` 9 · PLANNER FAULTS SURFACE (no silent skeleton-less continuation)`);
 for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'fmfalse', 'fmmissing', 'fmstring', 'emptyangle', 'placeholderang', 'thinangle',
-                      'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty', 'unparseable']) {
+                      'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty', 'unparseable',
+                      // revised planning contract
+                      'diagnosisangle', 'diagnosisangle2', 'offsceneEp', 'relocate',
+                      'fusionnull', 'fusionbadcode', 'fusionfalsecode', 'fusionnobeat', 'fusionthinbeat']) {
   const R = await run({ hot: false, mutate });
   // Both failure classes must exit visibly: semantic (SKELETON:INVALID) and unparseable
   // planner output (PLANNER:UNRECOVERABLE). Either way the ABORT must follow.
