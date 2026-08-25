@@ -397,6 +397,35 @@ console.log('');
     `inTemplate=${/"environment_elements"\s*:/.test(tmpl)} templateLen=${tmpl.length}`);
   t(`   the template states the two-element requirement, not just the prose`,
     /at least TWO concrete, distinct physical things/.test(tmpl));
+
+  // ── the three staging corrections, asserted on the DISPATCHED template ──
+  const full = pu.slice(pu.indexOf('Return ONLY this JSON'));
+  const labels = R.eligible || [];
+  t(`   template ENUMERATES the exact permitted labels`,
+    labels.length > 0 && labels.every(n => full.includes(`EXACTLY one of: ${labels.join(' | ')}`)
+                                           || full.includes(n)),
+    `labels=${JSON.stringify(labels)}`);
+  t(`   template's staged_characters name field is the enumeration, not free text`,
+    new RegExp(`"name": "<EXACTLY one of: ${labels.map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join(' \\| ')}>"`).test(full),
+    (full.match(/"name": "<[^>]{0,120}>"/) || ['(none)'])[0]);
+  t(`   template contains NO "appears or is named" wording`,
+    !/appears or is named/i.test(full),
+    (full.match(/.{0,60}appears or is named.{0,60}/i) || [''])[0]);
+  t(`   template says presence means PHYSICALLY PRESENT and excludes the merely referenced`,
+    /List ONLY characters PHYSICALLY PRESENT/.test(full)
+      && /Exclude anyone merely named, remembered, discussed, messaged, anticipated, heard, or referenced offstage/.test(full));
+  t(`   template no longer points at an ELIGIBLE CAST block from inside the JSON`,
+    !/from ELIGIBLE CAST/i.test(full) && !/name from ELIGIBLE CAST/i.test(full),
+    (full.match(/.{0,50}ELIGIBLE CAST.{0,50}/i) || [''])[0]);
+  t(`   template derives C+ structurally from staged_characters`,
+    /DERIVED FROM STAGING/.test(full)
+      && /exactly ONE entry for EVERY staged_characters entry whose presence_mode is IN_PERSON/.test(full)
+      && /character_plus never decides who is present/.test(full));
+  t(`   template's fusion character is drawn from the same staged enumeration`,
+    /"fusion": \{ "character": "<EXACTLY one of: /.test(full) && /and one you staged IN_PERSON/.test(full));
+  t(`   template shows NO invented example identity`,
+    !/\b(Mateo|Soraya|Quinn|Jane Doe|John Doe)\b/.test(full),
+    (full.match(/\b(Mateo|Soraya|Quinn)\b/) || [''])[0]);
 }
 console.log('');
 
