@@ -56,7 +56,7 @@ const t = (n, c, d) => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fa
 async function run(optIn) {
   const browser = await chromium.launch({ headless: true });
   const page = await (await browser.newContext()).newPage();
-  const surgical = [], author = [], downstream = [], escaped = [], unknown = [];
+  const surgical = [], author = [], downstream = [], planner = [], escaped = [], unknown = [];
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP_SRC }));
   await page.route('**/api/**', async route => {
     const url = route.request().url().replace(/^https?:\/\/[^/]+/, '');
@@ -73,6 +73,8 @@ async function run(optIn) {
       author.push({ max_tokens: b.max_tokens, temperature: b.temperature });
       out = ORIGINAL;
     } else if (/scene-structure planner for the OPENING scene/.test(sys)) {
+      planner.push({ url, model: b.model, temperature: b.temperature, max_tokens: b.max_tokens,
+                     reasoning_effort: b.reasoning_effort, response_format: b.response_format });
       out = JSON.stringify(SCAFFOLD);
     } else if (b && b.role === 'SPECIALIST_RENDERER' && /mistral-proxy/.test(url) && /paragraph/i.test(usr)) {
       surgical.push({ url, userLen: usr.length });          // must never fire
@@ -123,7 +125,7 @@ async function run(optIn) {
       mounted: (window.StoryPagination.getAllContent()||'').replace(/<[^>]*>/g,' ') };
   }, { optIn });
   await browser.close();
-  return { surgical, author, downstream, escaped, unknown, logs, ...res };
+  return { surgical, author, downstream, planner, escaped, unknown, logs, ...res };
 }
 
 console.log(`\n${'═'.repeat(88)}\nSCENE-1 SURGICAL REPAIR — RETIREMENT REGRESSION\n${'═'.repeat(88)}\n`);
@@ -165,6 +167,19 @@ t('downstream line-editor/specialist stages still ran', R.downstream.length > 0,
 t('exactly one author dispatch', R.author.length === 1, `got ${R.author.length}`);
 
 // ── fence ──
+console.log('\n  OPENING PLANNER REQUEST (migrated):');
+R.planner.forEach(q=>console.log(`    ${q.url}  model=${q.model} temp=${q.temperature} max_tokens=${q.max_tokens}`
+  + ` reasoning_effort=${q.reasoning_effort===undefined?'(ABSENT)':q.reasoning_effort}`
+  + ` response_format=${q.response_format?JSON.stringify(q.response_format):'(ABSENT)'}`));
+R.logs.filter(l=>/PLANNER/.test(l)).slice(0,2).forEach(l=>console.log(`    · ${l.slice(0,170)}`));
+t('exactly ONE opening-planner request', R.planner.length === 1, `got ${R.planner.length}`);
+t('planner routes to mistral-proxy', R.planner[0] && /mistral-proxy/.test(R.planner[0].url));
+t('planner model is mistral-small-latest', R.planner[0] && R.planner[0].model === 'mistral-small-latest');
+t('planner reasoning_effort is EXPLICIT none', R.planner[0] && R.planner[0].reasoning_effort === 'none');
+t('planner uses JSON mode', R.planner[0] && R.planner[0].response_format
+  && R.planner[0].response_format.type === 'json_object');
+t('planner budget is the calculated value, not the old flat 1200',
+  R.planner[0] && R.planner[0].max_tokens >= 1800, `got ${R.planner[0] && R.planner[0].max_tokens}`);
 t('zero escaped requests', R.escaped.length === 0, JSON.stringify(R.escaped.slice(0,3)));
 t('zero unknown model signatures', R.unknown.length === 0, JSON.stringify(R.unknown.slice(0,3)));
 
