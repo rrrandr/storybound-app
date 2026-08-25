@@ -1,5 +1,11 @@
 // SCENE-1 REPAIR CASCADE — same-execution proof. No cross-run comparison.
 //
+// STATUS: the tier this harness characterises was RETIRED on 2026-08-25 on the strength
+// of these very results (see _scene1_surgical_retirement.mjs for the live regression).
+// It is no longer reachable in production. This harness now runs the implementation via
+// the developer opt-in `window._scene1SurgicalRepairEnabled = true` so the four branch
+// outcomes stay documented and re-verifiable if the tier is ever reconsidered.
+//
 // Established statically: Scene-1 full Grok regeneration is dead code
 // (_buildStrengthenedUser has no caller). The only reachable repair tier is the Mistral
 // surgical editor, bounded by _MAX_SCENE1_REGEN_ATTEMPTS (default 2).
@@ -119,6 +125,7 @@ async function run(mode) {
   const res = await page.evaluate(async ({ mode }) => {
     const s = window.state;
     window.__textSnap = [];                     // enable the pre-existing boundary snapshots
+    window._scene1SurgicalRepairEnabled = true; // RETIRED in production — opt in to characterise it
     if (mode === 'accept-on') window._scene1GateAcceptOff = false;   // restore the pen
     const def = (window.STARTER_STORIES||[]).find(d=>d&&d.id==='starter_first_sacrifice');
     s.picks = s.picks||{};
