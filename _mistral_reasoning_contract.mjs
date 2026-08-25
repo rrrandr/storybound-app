@@ -102,6 +102,23 @@ t('skeleton combination forwarded intact',
   && r.upstream.body.model === 'mistral-small-latest'
   && r.upstream.body.max_tokens === 1400);
 
+// 10. BACKWARD COMPATIBILITY — an existing non-author caller that omits both fields must
+// see a byte-equivalent body: neither field injected, nothing else altered.
+const legacyReq = {
+  model: 'mistral-small-latest', temperature: 0.2, max_tokens: 500, role: 'SPECIALIST_RENDERER',
+  messages: [{ role: 'system', content: 'You are a precision editor for romance fiction prose.' },
+             { role: 'user', content: 'tidy this line' }]
+};
+r = await call({ ...legacyReq });
+const ub = r.upstream && r.upstream.body;
+t('legacy caller: no reasoning_effort injected', ub && !('reasoning_effort' in ub));
+t('legacy caller: no response_format injected', ub && !('response_format' in ub));
+t('legacy caller: body otherwise byte-equivalent',
+  ub && JSON.stringify(ub) === JSON.stringify({
+    model: legacyReq.model, messages: legacyReq.messages,
+    temperature: legacyReq.temperature, max_tokens: legacyReq.max_tokens }),
+  JSON.stringify(ub));
+
 console.log(`\n  no network: every upstream call was intercepted in-process.`);
 console.log(`\n${'─'.repeat(80)}\n  ${pass} passed · ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
