@@ -320,19 +320,23 @@ function plannerReplyFor(usr) {
   const m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
   let cast = m ? m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
   if (!cast.length) {
-    // Planner-owned presence: only the narrator is guaranteed, and the planner stages the rest.
-    const g = usr.match(/GUARANTEED ON STAGE \(\d+\):\s*([^\n]+)/);
-    const guaranteed = g ? g[1].split(',').map(x => x.trim()).filter(Boolean) : [];
-    cast = guaranteed.concat(['the harbourmaster']);
+    // Planner-owned presence: stage ONLY from the allowed roster — inventing a person is now a
+    // fault, which is exactly what the live corridor sample did.
+    const roster = [...usr.matchAll(/^ {2}• (.+?)\s{2}\(/gm)].map(m => m[1].trim());
+    cast = roster.length ? roster : ['the narrator'];
   }
   // When the stage is FIXED the planner must conform to it; when the planner OWNS the setting
   // (unseeded corridor) it invents one, and that choice becomes canon.
   const wm = usr.match(/WHERE \(fixed\):\s*([^\n]+)/);
   const plannerOwnsSetting = /YOU choose opening_setting/.test(usr);
+  const plannerOwnsPresence = /"staged_characters" is REQUIRED/.test(usr);
   const where = wm ? wm[1].trim() : (plannerOwnsSetting ? 'the customs house at the end of the quay' : '');
+  // Planner-owned stages must DECLARE their inventory; E+ then points at a declared item.
+  const elements = plannerOwnsSetting
+    ? ['the weighhouse ledger', 'a bolt of undyed cloth', 'the shutters propped open'] : null;
   // Pick a target that is genuinely IN whatever WHERE applies.
   const tok = (where.toLowerCase().match(/\b[a-z]{5,}\b/g) || []).filter(w => w !== 'midnight');
-  const target = tok.length ? tok[tok.length - 1] : 'room';
+  const target = plannerOwnsSetting ? elements[0] : (tok.length ? tok[tok.length - 1] : 'room');
   const spine = { pressure_source_type:'institutional', pressure_source:L, hook_object:'the band',
     opening_beat:'The moment is already underway', rising_beats:['a','b'], decision_beat:'Does she name it',
     pc_career:'clerk', opening_setting:where.slice(0, 60), li_texture_beat:'He crosses toward her',
@@ -341,7 +345,10 @@ function plannerReplyFor(usr) {
     reader_state:{ knows:L, believes:L, wondering:L, must_not_confuse:L },
     pc_body_callback:'decision', li_body_callback:'opening', antagonist_body_callback:null,
     perceptual_signature_beat:L,
-    staged_characters: cast.map(n => ({ name:n, presence_mode:'IN_PERSON', role_to_protagonist:'witness' })) };
+    staged_characters: cast.map(n => ({ name:n, presence_mode:'IN_PERSON', presence:'IN_PERSON',
+                                        anchor_beat:'is already at work as the scene opens',
+                                        role_to_protagonist:'witness' })) };
+  if (elements) spine.environment_elements = elements;
   return JSON.stringify({ opening_spine: spine, scene_skeleton: {
     character_plus: cast.map(n => ({ character:n, first_mention:true, angle:`${n} checks the ledger before the words` })),
     environment_plus: { target, axis:'use' },
@@ -424,6 +431,107 @@ for (const cfg of [
   t(`   "${cfg.label}" aborts visibly with zero author calls`,
     aborted && R.author.length === 0 && R.planner.length === 0,
     `aborted=${aborted} author=${R.author.length} planner=${R.planner.length} fault=${R.skeletonFatal}`);
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════════
+// PART D — CORRIDOR OWNERSHIP CONTRACT (structured cast + environment)
+// Every case is exercised through the REAL resolution path, with a planner reply crafted per case.
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(92)}\nPART D — CORRIDOR OWNERSHIP (roster-bound staging, declared inventory)\n${'═'.repeat(92)}\n`);
+{
+  const page = await (await browser.newContext()).newPage();
+  await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.goto('http://localhost:3000/', { waitUntil:'domcontentloaded', timeout:30000 });
+  await page.waitForFunction(() => window.state && window._resolveStageFromPlan, { timeout:40000 });
+
+  const D = await page.evaluate(() => {
+    const S = window._scene1StageContract, RS = window._resolveStageFromPlan;
+    // LI is MENTIONED in the mission → mention-only → off the allowed roster.
+    const mentionedLI = { pov:'first_person', name:'Ilse', playerName:'Ilse', identity:{playerName:'Ilse'},
+      loveInterestName:'Dorian', partnerName:'Dorian',
+      _scene1Mission:'She waits alone in the customs house, rehearsing what she will say to Dorian' };
+    // LI is NOT mentioned → a legitimate allowed candidate the planner may choose to stage.
+    const availableLI = { pov:'first_person', name:'Ilse', playerName:'Ilse', identity:{playerName:'Ilse'},
+      loveInterestName:'Dorian', partnerName:'Dorian',
+      _scene1Mission:'She counts crates in the customs house before the tide turns' };
+    const ELS = ['the weighhouse ledger', 'a bolt of undyed cloth'];
+    const spine = (extra) => Object.assign({ opening_setting:'customs house', environment_elements:ELS }, extra);
+    const run = (st, planExtra) => {
+      const c = S(st);
+      const r = RS(c, spine(planExtra), null);
+      return { ok:r.ok, fault:r.fault, setting:r.setting,
+               elements:r.environmentElements, envOwner:r.environmentOwner,
+               roster:(c.allowedRoster||[]).map(x=>x.label),
+               onStage:(r.onStage||[]).map(x=>x.label), offStage:(r.offStage||[]).map(x=>x.name) };
+    };
+    const IP = (n) => ({ name:n, presence:'IN_PERSON', presence_mode:'IN_PERSON', anchor_beat:'is at the ledger' });
+    return {
+      narratorOnly: run(mentionedLI, { staged_characters:[IP('Ilse')] }),
+      allowedNPC:   run(availableLI, { staged_characters:[IP('Ilse'), IP('Dorian')] }),
+      stageMentioned: run(mentionedLI, { staged_characters:[IP('Ilse'), IP('Dorian')] }),
+      inventedCast: run(mentionedLI, { staged_characters:[IP('Ilse'), IP('Quinn')] }),
+      noStaged:     run(mentionedLI, { staged_characters: undefined }),
+      pcNotStaged:  run(availableLI, { staged_characters:[IP('Dorian')] }),
+      noElements:   run(mentionedLI, { staged_characters:[IP('Ilse')], environment_elements: undefined }),
+      oneElement:   run(mentionedLI, { staged_characters:[IP('Ilse')], environment_elements:['the weighhouse ledger'] }),
+      abstractEl:   run(mentionedLI, { staged_characters:[IP('Ilse')], environment_elements:['the weighhouse ledger','a sense of unease'] }),
+      dupEl:        run(mentionedLI, { staged_characters:[IP('Ilse')], environment_elements:['the weighhouse ledger','The Weighhouse Ledger.'] }),
+      // E+ matching, via the shipped inventory matcher
+      epDeclared:   window._targetInInventory('the weighhouse ledger', ELS, 'customs house'),
+      epSetting:    window._targetInInventory('customs house', ELS, 'customs house'),
+      epUndeclared: window._targetInInventory('a brass lamp', ELS, 'customs house'),
+    };
+  });
+
+  Object.entries(D).forEach(([k, v]) => {
+    if (v && typeof v === 'object') {
+      console.log(` ${k.padEnd(15)} ok=${String(v.ok).padEnd(5)} roster=${JSON.stringify(v.roster)} onStage=${JSON.stringify(v.onStage)}`);
+      if (v.fault) console.log(`   ${' '.repeat(15)} fault: ${String(v.fault).slice(0, 150)}`);
+    }
+  });
+  console.log('');
+
+  t('D1 corridor narrator-only staging is VALID',
+    D.narratorOnly.ok === true && D.narratorOnly.onStage.length === 1
+    && D.narratorOnly.envOwner === 'planner' && (D.narratorOnly.elements || []).length === 2,
+    JSON.stringify(D.narratorOnly));
+  t('D2 corridor may stage a known allowed NPC',
+    D.allowedNPC.ok === true && D.allowedNPC.onStage.includes('Dorian')
+    && D.allowedNPC.roster.includes('Dorian'),
+    JSON.stringify(D.allowedNPC));
+  t('D3 a MENTIONED-only LI is off the roster and cannot be staged',
+    D.stageMentioned.ok === false && /not on the allowed roster/i.test(D.stageMentioned.fault || '')
+    && !D.narratorOnly.roster.includes('Dorian'),
+    JSON.stringify({ roster: D.narratorOnly.roster, fault: D.stageMentioned.fault }));
+  t('D4 an INVENTED staged character is rejected',
+    D.inventedCast.ok === false && /"Quinn" is not on the allowed roster/i.test(D.inventedCast.fault || ''),
+    JSON.stringify(D.inventedCast.fault));
+  t('D5 missing staged_characters is rejected — C+ may never define presence',
+    D.noStaged.ok === false && /returned no staged_characters/i.test(D.noStaged.fault || '')
+    && /character_plus may never define/i.test(D.noStaged.fault || ''),
+    JSON.stringify(D.noStaged.fault));
+  t('D6 the narrator must be staged IN_PERSON',
+    D.pcNotStaged.ok === false && /narrator is not staged IN_PERSON/i.test(D.pcNotStaged.fault || ''),
+    JSON.stringify(D.pcNotStaged.fault));
+  t('D7 missing environmental inventory is rejected',
+    D.noElements.ok === false && /no environment_elements/i.test(D.noElements.fault || ''),
+    JSON.stringify(D.noElements.fault));
+  t('D7 a single element is rejected (at least two required)',
+    D.oneElement.ok === false && /at least 2 concrete elements/i.test(D.oneElement.fault || ''),
+    JSON.stringify(D.oneElement.fault));
+  t('D8 an ABSTRACT element is rejected visibly',
+    D.abstractEl.ok === false && /abstract, not a physical thing/i.test(D.abstractEl.fault || ''),
+    JSON.stringify(D.abstractEl.fault));
+  t('D8 a DUPLICATE element is rejected visibly',
+    D.dupEl.ok === false && /duplicate environment element/i.test(D.dupEl.fault || ''),
+    JSON.stringify(D.dupEl.fault));
+  t('D9 E+ matching a DECLARED element is accepted; the setting itself also counts',
+    D.epDeclared === true && D.epSetting === true);
+  t('D10 E+ inventing an UNDECLARED element is rejected',
+    D.epUndeclared === false);
+
+  await page.close();
 }
 
 await browser.close();
