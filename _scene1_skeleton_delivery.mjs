@@ -733,6 +733,18 @@ console.log(`\n${'─'.repeat(90)}\n  solo stage — a second BODY or VOICE (no 
     /WHERE THE PRESSURE COMES FROM INSTEAD/.test(pu)
       && /PROCEDURE\s+or RITUAL/.test(pu) && /CONCEALMENT of something/.test(pu)
       && /A scene with one person in it is not an empty scene/.test(pu));
+  t('S10 solo pressure_source may not be another person',
+    /SOLO SCENE — THE PRESSURE MAY NOT BE ANOTHER PERSON/.test(pu)
+      && /a PROCEDURE or RITE she can get wrong/.test(pu));
+  t('S10 the rival worked-example is GONE from the solo template',
+    !/a rival is denouncing her to the room/.test(pu)
+      && !/the accuser is in the doorway/.test(pu)
+      && !/the summons is being read aloud/.test(pu),
+    (pu.match(/.{0,70}(?:rival is denouncing|accuser is in the doorway|summons is being read).{0,70}/) || [''])[0]);
+  t('S10 solo opening_beat drops the two-person shapes',
+    !/a hand is already on her/.test(pu) && !/the room has already turned on her/.test(pu)
+      && !/open on the PRESSURE SOURCE in motion — a person present/.test(pu),
+    (pu.match(/.{0,70}(?:hand is already on her|room has already turned|a person present).{0,70}/) || [''])[0]);
   t('S10 GROK receives the enumerated forbidden acts too',
     /NOBODY ELSE ACTS IN THIS SCENE/.test(authorAll)
       && /WHERE THE PRESSURE COMES FROM INSTEAD/.test(authorAll));
@@ -778,6 +790,9 @@ console.log(`\n${'─'.repeat(90)}\n  multi-person scenes keep the interlocutor 
   t('S8 a multi-person stage keeps the human-interaction want and the full mission shapes',
     /achievable through human interaction in this room or this call/i.test(pu)
       && /CONVINCE someone, CONCEAL something/.test(pu));
+  t('S8 a multi-person HOT template KEEPS the original person-in-motion phrasing',
+    !/HOT OPENING \(REQUIRED PHRASING\)/.test(pu) || /a rival is denouncing her to the room/.test(pu),
+    'multi-person lost its hot-opening phrasing');
   t('S8 a multi-person stage gets NO solo directive',
     !/SOLO STAGE/.test(pu) && !/SOLO STAGE/.test(authorAll));
   t('S8 the multi-person interlocutor directive still reaches Grok',

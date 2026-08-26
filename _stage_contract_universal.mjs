@@ -835,6 +835,11 @@ console.log(`\n${'═'.repeat(92)}\nPART H — SOLO-STAGE INTERACTION (pure)\n${
       r_body:     chk('the witness stands in the doorway and watches her'),
       r_someone:  chk('someone moves in the corridor behind her'),
 
+      // ── round 9: the three the validator missed on live output ──
+      r_readerVoice: chk("the reader's voice stumbles on the same syllable my pulse stutters on"),
+      r_passive:     chk('the accusation is being read aloud as she walks in'),
+      r_unseen:      chk('the accusation is being read aloud by an unseen voice, no one else is in the room', 'reader_state'),
+
       // ── MUST ALLOW — memory, anticipation, documents, environment ──
       a_memory:   chk('she remembers Julian setting the pen down with both hands'),
       a_thinks:   chk("why Julian's name keeps surfacing in her thoughts under pressure", 'reader_state'),
@@ -849,6 +854,11 @@ console.log(`\n${'═'.repeat(92)}\nPART H — SOLO-STAGE INTERACTION (pure)\n${
       a_object:   chk('the wax-sealed ledger, the ceremonial table, the melted candle stubs', 'environment_elements'),
       a_solowant: chk('wants the ledger to stay intact until she can get it to the vault', 'scene_want'),
       a_liBeat:   chk('beat 2: she catches herself remembering how Julian answered the wrong question', 'li_texture_beat'),
+      // negative controls for the two frames added after round 9
+      a_ledgerRead: chk('the ledger is read only by the guild, and only once a year'),
+      a_ownVoicePos:chk("her own voice is the only sound in the loft"),
+      a_wasWritten: chk('the charge was written in a hand she does not recognise'),
+      a_isSealed:   chk('the parchment is sealed and was never opened'),
 
       // shape of a finding
       shape: V({ scene_mission:'keep it shut until the rival finishes speaking' }, { narrator:'Lirael' }).violations[0] || null,
@@ -875,6 +885,9 @@ console.log(`\n${'═'.repeat(92)}\nPART H — SOLO-STAGE INTERACTION (pure)\n${
     ['H1 "wait for the messenger" is rejected',                 'r_wait'],
     ['H1 a second body acting in the room is rejected',         'r_body'],
     ['H1 "someone moves in the corridor" is rejected',          'r_someone'],
+    ["H1 round 9: \"the reader's voice stumbles\" is rejected",   'r_readerVoice'],
+    ['H1 round 9: PASSIVE "is being read aloud" is rejected',   'r_passive'],
+    ['H1 round 9: "read aloud by an unseen voice" is rejected',  'r_unseen'],
   ];
   for (const [label, key] of REJECT) {
     t(label, H[key] && H[key].ok === false, JSON.stringify(H[key]));
@@ -893,6 +906,10 @@ console.log(`\n${'═'.repeat(92)}\nPART H — SOLO-STAGE INTERACTION (pure)\n${
     ['H2 an environment inventory is allowed',                  'a_object'],
     ['H2 the round-8 solo want is allowed',                     'a_solowant'],
     ['H2 li_texture_beat is contractually a memory, allowed',   'a_liBeat'],
+    ['H2 "the ledger is read only by the guild" is allowed',    'a_ledgerRead'],
+    ['H2 the narrator\'s OWN voice as the only sound is allowed','a_ownVoicePos'],
+    ['H2 "was written in a hand she does not recognise" allowed','a_wasWritten'],
+    ['H2 "is sealed and was never opened" is allowed',          'a_isSealed'],
   ];
   for (const [label, key] of ALLOW) {
     t(label, H[key] && H[key].ok === true, JSON.stringify(H[key]));
