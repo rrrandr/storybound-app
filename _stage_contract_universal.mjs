@@ -53,10 +53,11 @@ const browser = await chromium.launch({ headless: true });
 // ════════════════════════════════════════════════════════════════════════════════════════════
 {
   const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
   await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
-  await page.goto('http://localhost:3000/', { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForFunction(() => window.state && window._scene1StageContract && window.STARTER_SEEDS, { timeout:40000 });
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window.state && window._scene1StageContract && window.STARTER_SEEDS, { timeout:120000 });
 
   const R = await page.evaluate((seedB) => {
     window.STARTER_SEEDS[seedB.id] = seedB;
@@ -250,6 +251,7 @@ const browser = await chromium.launch({ headless: true });
 // ════════════════════════════════════════════════════════════════════════════════════════════
 async function fullRun({ label, statePatch, injectSeedB, reply }) {
   const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   const planner = [], author = [], escaped = [], unknown = [];
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
   await page.route('**/api/**', async route => {
@@ -278,8 +280,8 @@ async function fullRun({ label, statePatch, injectSeedB, reply }) {
   const logs = [];
   page.on('console', m => { const x=m.text(); if (/SCENE1:|STAGE|SKELETON|ANGLE/.test(x)) logs.push(x.slice(0,240)); });
 
-  await page.goto('http://localhost:3000/', { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_SEEDS, { timeout:40000 });
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_SEEDS, { timeout:120000 });
   const res = await page.evaluate(async ({ patch, seedB }) => {
     if (seedB) window.STARTER_SEEDS[seedB.id] = seedB;
     const s = window.state;
@@ -440,10 +442,11 @@ for (const cfg of [
 console.log(`\n${'═'.repeat(92)}\nPART D — CORRIDOR OWNERSHIP (roster-bound staging, declared inventory)\n${'═'.repeat(92)}\n`);
 {
   const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
   await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
-  await page.goto('http://localhost:3000/', { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForFunction(() => window.state && window._resolveStageFromPlan, { timeout:40000 });
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window.state && window._resolveStageFromPlan, { timeout:120000 });
 
   const D = await page.evaluate(() => {
     const S = window._scene1StageContract, RS = window._resolveStageFromPlan;

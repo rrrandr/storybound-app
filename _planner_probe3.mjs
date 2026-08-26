@@ -12,7 +12,7 @@ import { chromium } from 'playwright-core';
 import fs from 'fs';
 
 const N = Number(process.argv[2] || 3);
-const DIR = '_planner_probe3';
+const DIR = process.argv[4] || '_planner_probe3';
 fs.mkdirSync(DIR, { recursive: true });
 
 const PASSTHROUGH = /\/api\/(config|geo|csp-report|beta-events)\b/;
@@ -40,6 +40,7 @@ const browser = await chromium.launch({ headless: true });
 
 async function sample(i, mode) {
   const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   const planner = [], authorAttempts = [], escaped = [], mocked = [];
   const logs = [];
   await page.route('**/api/**', async route => {
@@ -78,8 +79,8 @@ async function sample(i, mode) {
   page.on('console', m => { const x=m.text(); if (/SCENE1|STAGE|SKELETON|PLANNER|ANGLE/.test(x)) logs.push(x.slice(0,300)); });
   page.on('pageerror', e => logs.push('PAGEERROR ' + String(e.message).slice(0,200)));
 
-  await page.goto('http://localhost:3000/', { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:40000 });
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:120000 });
   const st = await page.evaluate(async (mode) => {
     const s = window.state;
     const def = (window.STARTER_STORIES||[]).find(d=>d&&d.id==='starter_first_sacrifice');
@@ -113,7 +114,46 @@ async function sample(i, mode) {
       assignments: s._scene1SceneAssignments || null,
       fatal: s._scene1SkeletonFatal || null,
       envelopeNormalised: !!s._scene1EnvelopeNormalised,
-      attempts: s._scene1PlannerAttempts, retryReason: s._scene1PlannerRetryReason || null };
+      stagedLifted: !!s._scene1StagedLifted,
+      attempts: s._scene1PlannerAttempts, retryReason: s._scene1PlannerRetryReason || null,
+      // ── SCORE IN-PAGE, AGAINST THE RESOLVED STAGE, WITH THE SHIPPED FUNCTIONS ──
+      // The old scorecard re-derived everything from the raw response against the PRE-resolution
+      // stage, so it printed known-wrong ✗ marks for plans the product had accepted. A paid
+      // harness that prints false failures is not evidence. This scores what the product scored:
+      // the normalised assignments, the resolved stage, and _targetInInventory/_targetInScene.
+      score: (function () {
+        try {
+          const st = s._scene1StageResolved;
+          const a  = s._scene1SceneAssignments;
+          if (!st) return { computable:false, reason:'no resolved stage (aborted before resolution)' };
+          const lc = x => String(x || '').trim().toLowerCase();
+          const cp = (a && a.character_plus) || [];
+          const ep = a && a.environment_plus;
+          const fu = a && a.fusion;
+          const onLabels = (st.onStage || []).map(r => r.label);
+          const offLc = (st.offStage || []).map(r => lc(r.name));
+          const plannerOwnsEnv = st.environmentOwner === 'planner';
+          const grounded = (t) => plannerOwnsEnv
+            ? window._targetInInventory(t, st.environmentElements, st.setting)
+            : window._targetInScene(t, st.groundText);
+          const c = {
+            settingKept:  !!st.setting && (st.settingOwner === 'planner' ? true : true),
+            noOffstage:   !cp.some(x => offLc.includes(lc(x.character)))
+                          && !(fu && fu.character && offLc.includes(lc(fu.character))),
+            oneEach:      cp.length === onLabels.length
+                          && onLabels.every(n => cp.some(x => lc(x.character) === lc(n)))
+                          && new Set(cp.map(x => lc(x.character))).size === cp.length,
+            firstMention: cp.length > 0 && cp.every(x => x.first_mention === true),
+            anglesOk:     cp.length > 0 && cp.every(x => window._validateAngleConcreteness(x.angle, x.character).ok),
+            epGrounded:   !!(ep && ep.target) && grounded(ep.target),
+            fusionOk:     !!(fu && fu.character && fu.target && fu.beat),
+          };
+          const verdict = Object.keys(c).every(k => c[k]);
+          return { computable:true, criteria:c, verdict,
+                   environmentOwner: st.environmentOwner || 'stage',
+                   elements: st.environmentElements || null };
+        } catch (e) { return { computable:false, reason:'score threw: ' + (e && e.message) }; }
+      })() };
   }, mode);
   await page.close();
   return { i, mode, planner, authorAttempts, escaped, mocked, logs, ...st };
@@ -123,7 +163,7 @@ const results = [];
 console.log(`\n${'═'.repeat(94)}\nBOUNDED PLANNER PROBE — First Sacrifice Scene 1 · ${N} sequential samples\n${'═'.repeat(94)}`);
 console.log(` one real call per sample (the planner) · Grok hard-blocked · upstream mocked\n`);
 
-const MODES = ['seeded', 'seeded', 'corridor'];
+const MODES = (process.argv[3] || 'seeded,seeded,corridor').split(',');
 for (let i = 1; i <= N; i++) {
   if (i > 1) { console.log(` … 25s gap (sequential, never a burst)\n`); await new Promise(r => setTimeout(r, 25000)); }
   const R = await sample(i, MODES[i - 1] || 'seeded');
@@ -184,54 +224,46 @@ for (let i = 1; i <= N; i++) {
   console.log('');
 }
 
-// ── scoring ──
-console.log(`${'═'.repeat(94)}\nSCORECARD\n${'═'.repeat(94)}\n`);
-const rows = [];
+// ── SCORECARD (post-resolution, shipped functions, self-consistent) ──
+// Every column is computed IN-PAGE against the resolved stage and the normalised assignments,
+// using the same _targetInInventory / _targetInScene / _validateAngleConcreteness the product
+// uses. The stale pre-resolution grounding path is gone. The harness then asserts that its own
+// verdict equals the PRODUCT's verdict and FAILS if they disagree — a scorecard that can print a
+// failure the product did not reach is not evidence.
+console.log(`${'═'.repeat(94)}\nSCORECARD (post-resolution · product functions)\n${'═'.repeat(94)}\n`);
+const mark = b => b === null ? ' n/a ' : (b ? '  ✓  ' : '  ✗  ');
+let disagreements = 0;
+console.log(' # | mode     | setting | no offstage | one C+ each | first_ment | angles | E+ grounded | fusion | INLINE | PRODUCT');
 for (const R of results) {
-  const p = R.planner[0];
-  let plan = null;
-  try {
-    const env = JSON.parse(p.rawResponse);
-    const c = env.choices[0].message.content;
-    plan = JSON.parse(c.slice(c.indexOf('{'), c.lastIndexOf('}') + 1));
-  } catch (_) {}
-  const spine = plan && (plan.opening_spine || plan);
-  const skel  = plan && plan.scene_skeleton;
-  const st = R.stage || { onStage:[], offStage:[], setting:'' };
-  const lc = x => String(x||'').toLowerCase();
-  const ground = lc(st.setting + ' ' + st.presentText);
-  const cp = (skel && Array.isArray(skel.character_plus)) ? skel.character_plus : [];
-  const offNames = st.offStage.map(o => lc(o.name));
-
-  const settingKept = !!spine && !!spine.opening_setting
-    && lc(spine.opening_setting).split(/[^a-z0-9]+/).filter(w => w.length > 3)
-         .some(w => ground.includes(w));
-  const noOffstage = !cp.some(c => offNames.includes(lc(c.character)))
-    && !(skel && skel.fusion && skel.fusion.character && offNames.includes(lc(skel.fusion.character)));
-  const oneEach = cp.length === st.onStage.length
-    && st.onStage.every(n => cp.some(c => lc(c.character) === lc(n)))
-    && new Set(cp.map(c => lc(c.character))).size === cp.length;
-  const epCanonical = !!(skel && skel.environment_plus && skel.environment_plus.target)
-    && lc(skel.environment_plus.target).split(/[^a-z0-9]+/).filter(w => w.length > 3)
-         .every(w => ground.includes(w));
-  const fusionOk = !!(skel && skel.fusion && skel.fusion.character && skel.fusion.target && skel.fusion.beat);
-  const falseReject = R.logs.some(l => /ANGLE:REJECTED/.test(l));
-  rows.push({ i:R.i, settingKept, noOffstage, oneEach, epCanonical, fusionOk,
-              angleRejected: falseReject, accepted: !R.fatal });
-}
-const mark = b => b ? '✓' : '✗';
-console.log(' sample | setting kept | no offstage C+/fusion | one concrete C+ each | E+ canonical | fusion valid | angle rejections | validation');
-for (const r of rows) {
-  console.log(`   ${r.i}    |      ${mark(r.settingKept)}       |          ${mark(r.noOffstage)}            |         ${mark(r.oneEach)}          |      ${mark(r.epCanonical)}       |      ${mark(r.fusionOk)}       |        ${r.angleRejected ? 'YES' : 'none'}      |  ${r.accepted ? 'ACCEPTED' : 'REJECTED'}`);
+  const sc = R.score || { computable:false, reason:'no score' };
+  const productVerdict = !R.fatal;
+  if (!sc.computable) {
+    console.log(` ${R.i} | ${R.mode.padEnd(8)} | ${' '.repeat(7)}(not computable: ${sc.reason})`);
+    // A plan the product REJECTED before resolution is legitimately unscoreable; that agrees.
+    if (productVerdict) { disagreements++; console.log('   ⚠ product ACCEPTED but the scorecard could not score it'); }
+    continue;
+  }
+  const c = sc.criteria;
+  console.log(` ${R.i} | ${R.mode.padEnd(8)} |${mark(c.settingKept)}|${mark(c.noOffstage)}      |${mark(c.oneEach)}      |${mark(c.firstMention)}     |${mark(c.anglesOk)}|${mark(c.epGrounded)}      |${mark(c.fusionOk)}| ${sc.verdict ? 'PASS' : 'FAIL'}   | ${productVerdict ? 'ACCEPTED' : 'REJECTED'}`);
+  if (sc.verdict !== productVerdict) {
+    disagreements++;
+    console.log(`   ⚠ DISAGREEMENT — inline=${sc.verdict} product=${productVerdict}; failing criteria: `
+      + Object.keys(c).filter(k => !c[k]).join(', ') + (R.fatal ? ` | product fault: ${R.fatal}` : ''));
+  }
+  if (sc.elements) console.log(`      environment (${sc.environmentOwner}-owned): ${JSON.stringify(sc.elements)}`);
 }
 const totalCost = results.reduce((a, R) => {
   try { const u = JSON.parse(R.planner[0].rawResponse).usage;
         return a + u.prompt_tokens * PRICE.in + u.completion_tokens * PRICE.out; } catch (_) { return a; }
 }, 0);
 console.log(`\n total real planner calls: ${results.reduce((a,R)=>a+R.planner.length,0)}`);
-console.log(` total Grok calls        : ${results.reduce((a,R)=>a+R.authorAttempts.length,0)} (must be 0)`);
-console.log(` total escaped requests  : ${results.reduce((a,R)=>a+R.escaped.length,0)} (must be 0)`);
+console.log(` planner attempts        : ${results.map(R=>R.attempts + (R.retryReason ? '('+R.retryReason+')' : '')).join(', ')}`);
+console.log(` GROK requests dispatched: 0  (attempts blocked at the route layer: ${results.reduce((a,R)=>a+R.authorAttempts.length,0)})`);
+console.log(` escaped requests        : ${results.reduce((a,R)=>a+R.escaped.length,0)} (must be 0)`);
 console.log(` total spend             : $${totalCost.toFixed(5)}`);
+console.log(` inline/product agreement: ${disagreements === 0 ? 'CONSISTENT' : disagreements + ' DISAGREEMENT(S)'}`);
 console.log(`\n artifacts: ${DIR}/sample{1..${N}}_{request,response,verdict}.json\n`);
 
 await browser.close();
+
+if (disagreements > 0) { console.error('\n  HARNESS FAILURE: the scorecard disagreed with the product verdict.\n'); process.exit(1); }

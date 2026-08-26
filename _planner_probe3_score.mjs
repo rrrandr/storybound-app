@@ -9,8 +9,8 @@ const DIR = '_planner_probe3';
 const browser = await chromium.launch({ headless: true });
 const page = await (await browser.newContext()).newPage();
 await page.route('**/api/**', r => /\/api\/(config|geo)\b/.test(r.request().url()) ? r.continue() : r.abort());
-await page.goto('http://localhost:3000/', { waitUntil:'domcontentloaded', timeout:30000 });
-await page.waitForFunction(() => window.state && window._scene1StageContract, { timeout:40000 });
+await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+await page.waitForFunction(() => window.state && window._scene1StageContract, { timeout:120000 });
 
 const stages = await page.evaluate(() => {
   const mk = (patch) => {

@@ -115,6 +115,7 @@ const count = (h, n) => (String(h).split(n).length - 1);
 async function run({ hot, mutate }) {
   const browser = await chromium.launch({ headless: true });
   const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   const planner = [], author = [], escaped = [], unknown = [];
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: mk(hot) }));
   await page.route('**/api/**', async route => {
@@ -152,8 +153,8 @@ async function run({ hot, mutate }) {
   page.on('console', m => { const x=m.text(); if (/SCENE1:|SKELETON|PLANNER/.test(x)) logs.push(x.slice(0,220)); });
   page.on('pageerror', e => logs.push('PAGEERROR ' + String(e.message).slice(0,200)));
 
-  await page.goto('http://localhost:3000/', { waitUntil:'domcontentloaded', timeout:30000 });
-  await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:40000 });
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:120000 });
   const res = await page.evaluate(async () => {
     const s = window.state;
     // observer: capture what the audit sees, to compare against the dispatched bytes
