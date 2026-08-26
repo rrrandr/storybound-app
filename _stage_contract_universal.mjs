@@ -1004,6 +1004,124 @@ console.log(`\n${'═'.repeat(92)}\nPART H — SOLO-STAGE INTERACTION (pure)\n${
   await page.close();
 }
 
+// ════════════════════════════════════════════════════════════════════════════════════════════
+// PART I — THE THREE VALIDATOR DEFECTS THE PAID RUN EXPOSED (pure)
+// A real planner draw produced correct cast, correct setting and scenery quoted from the seed,
+// and was thrown away by three over-strict checks. These pin the corrections AND the limits:
+// the negative controls matter more than the positives, because a loosened validator that stops
+// rejecting real faults is worse than the brittleness it replaced.
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(92)}\nPART I — GROUNDING · ANGLE · FUSION (pure)\n${'═'.repeat(92)}\n`);
+{
+  const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
+  await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window._targetInSceneDetail && window._validateFusionConcreteness && window._tokEquivalent, { timeout:120000 });
+
+  const I = await page.evaluate(() => {
+    const G = window._targetInSceneDetail, A = window._validateAngleConcreteness,
+          F = window._validateFusionConcreteness, EQ = window._tokEquivalent;
+    // the seed's own scenery, verbatim from the paid run
+    const WHERE = 'Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down '
+      + 'from the pale mated-pair trees, the floor a deep-crimson carpet of braided mated-pair spiralgrass; '
+      + 'roughly two dozen First Favored assembled, barefoot in gossamer Veilweave.';
+    const REAL_TARGET = 'the long white weeping-willow veil-canopy draping down from the pale mated-pair trees';
+    return {
+      // ── 1 GROUNDING ──
+      gReal:      G(REAL_TARGET, WHERE),
+      gPlural:    G('the mated-pair trees', WHERE),
+      gExact:     G('the deep-crimson carpet of braided mated-pair spiralgrass', WHERE),
+      gHyphen:    G('THE  Weeping   Willow, veil-canopy!', WHERE),
+      gUnrelated: G('a brass lamp on an oak lectern', WHERE),
+      gPartial:   G('the gallery hallway', WHERE),
+      gShortTok:  G('the ash urn', WHERE),
+      gTwoMiss:   G('the long white weeping-willow veil-canopy draping sideways from pale glass trees', WHERE),
+      gShortAll:  G('brass lantern', WHERE),
+      // morphology unit checks
+      eqDrape:    EQ('drapes', 'draping'),
+      eqCanopy:   EQ('canopies', 'canopy'),
+      eqDropped:  EQ('dropping', 'drops'),
+      eqShort:    EQ('ash', 'ashes'),
+      eqUnrel1:   EQ('trees', 'treat'),
+      eqUnrel2:   EQ('drape', 'drapery'),
+      eqUnrel3:   EQ('veil', 'vein'),
+      // ── 2 C+ ANGLE ──
+      aReal:      A('kneels with Veilweave gown catching the light, her throat bare and vulnerable', 'Seren'),
+      aAbstract:  A('clinging to the illusion of worthiness', 'Seren'),
+      aBareTrait: A('a proud woman who is afraid', 'Seren'),
+      aActAdj:    A('sets the ledger down twice, hands unsteady and ashamed', 'Lirael'),
+      aRescue:    A('the weight of her longing for what she cannot name', 'Lirael'),
+      aClean:     A('adjusts the ceremonial cloth with deliberate slowness', 'Lirael'),
+      aThin:      A('is sad', 'Lirael'),
+      // ── 3 FUSION ──
+      fReal:      F("lets her fingers trail along the veil's edge, feeling the weight of the ritual she is supposed to uphold", 'Lirael', 'the long white weeping-willow veil-canopy'),
+      fFeelOnly:  F('feels the weight of the ritual she is supposed to uphold', 'Lirael', 'the long white weeping-willow veil-canopy'),
+      fNotice:    F('notices the veil-canopy shifting in the dawn light above her', 'Lirael', 'the long white weeping-willow veil-canopy'),
+      fThink:     F('thinks about the veil-canopy and what it cost to grow it', 'Lirael', 'the long white weeping-willow veil-canopy'),
+      fWrongObj:  F('presses her palm flat against the ceremonial table to steady herself', 'Lirael', 'the long white weeping-willow veil-canopy'),
+      fNoWho:     F('grips the veil-canopy hem until the leaf-curtain gives way', '', 'the long white weeping-willow veil-canopy'),
+      fNamed:     F('Lirael grips the veil-canopy hem until the leaf-curtain gives', 'Lirael', 'the long white weeping-willow veil-canopy'),
+    };
+  });
+
+  // ── 1 GROUNDING ──
+  t('I1 the REAL paid-run target now grounds (drapes ↔ draping)',
+    I.gReal.ok === true, JSON.stringify(I.gReal));
+  t('I1 …and it matched cleanly, NOT via the tolerance path',
+    I.gReal.ok === true && I.gReal.tolerance === false && I.gReal.missing.length === 0, JSON.stringify(I.gReal));
+  t('I1 simple plural behaviour still works',            I.gPlural.ok === true, JSON.stringify(I.gPlural));
+  t('I1 an exact multi-token target still works',        I.gExact.ok === true, JSON.stringify(I.gExact));
+  t('I1 case / punctuation / hyphen normalisation kept', I.gHyphen.ok === true, JSON.stringify(I.gHyphen));
+  t('I1 an UNRELATED target still fails',                I.gUnrelated.ok === false, JSON.stringify(I.gUnrelated));
+  t('I1 a partial-word target ("gallery hallway") still fails', I.gPartial.ok === false, JSON.stringify(I.gPartial));
+  t('I1 a short unrelated token cannot sneak in',        I.gShortTok.ok === false, JSON.stringify(I.gShortTok));
+  t('I1 TWO unmatched tokens still fail (tolerance is one)', I.gTwoMiss.ok === false, JSON.stringify(I.gTwoMiss));
+  t('I1 a SHORT target must match completely (no tolerance)', I.gShortAll.ok === false, JSON.stringify(I.gShortAll));
+  t('I1 morphology: drapes↔draping, canopies↔canopy, dropping↔drops',
+    I.eqDrape && I.eqCanopy && I.eqDropped, JSON.stringify([I.eqDrape, I.eqCanopy, I.eqDropped]));
+  t('I1 morphology: short tokens exact-only (ash ≠ ashes)', I.eqShort === false, String(I.eqShort));
+  t('I1 morphology: unrelated roots do NOT match',
+    !I.eqUnrel1 && !I.eqUnrel2 && !I.eqUnrel3, JSON.stringify([I.eqUnrel1, I.eqUnrel2, I.eqUnrel3]));
+
+  // ── 2 C+ ANGLE ──
+  t('I2 the REAL rejected angle now passes',
+    I.aReal.ok === true && I.aReal.code === 'OK_CONCRETE', JSON.stringify(I.aReal));
+  t('I2 …and it logs WHICH concrete frame carried it',
+    !!I.aReal.frame && !!I.aReal.frameMatch && I.aReal.diagnosisTerm === 'vulnerable',
+    JSON.stringify({ frame: I.aReal.frame, match: I.aReal.frameMatch, term: I.aReal.diagnosisTerm }));
+  t('I2 "clinging to the illusion of worthiness" still FAILS',
+    I.aAbstract.ok === false && I.aAbstract.code === 'DIAGNOSIS', JSON.stringify(I.aAbstract));
+  t('I2 a bare trait/diagnosis still FAILS',
+    I.aBareTrait.ok === false, JSON.stringify(I.aBareTrait));
+  t('I2 concrete action + short interpretive adjective PASSES',
+    I.aActAdj.ok === true && I.aActAdj.code === 'OK_CONCRETE', JSON.stringify(I.aActAdj));
+  t('I2 a diagnosis word CANNOT rescue an otherwise abstract angle',
+    I.aRescue.ok === false, JSON.stringify(I.aRescue));
+  t('I2 a clean angle is unaffected (still plain OK)',
+    I.aClean.ok === true && I.aClean.code === 'OK', JSON.stringify(I.aClean));
+  t('I2 a thin angle still FAILS', I.aThin.ok === false, JSON.stringify(I.aThin));
+
+  // ── 3 FUSION ──
+  t('I3 the REAL rejected fusion now passes (interaction + interpretive tail)',
+    I.fReal.ok === true && !!I.fReal.contact, JSON.stringify(I.fReal));
+  t('I3 "feels the weight of the ritual" alone FAILS',
+    I.fFeelOnly.ok === false && I.fFeelOnly.code === 'PERCEPTION_ONLY', JSON.stringify(I.fFeelOnly));
+  t('I3 merely NOTICING the target FAILS',
+    I.fNotice.ok === false, JSON.stringify(I.fNotice));
+  t('I3 merely THINKING about the target FAILS',
+    I.fThink.ok === false, JSON.stringify(I.fThink));
+  t('I3 physical interaction with an UNRELATED object FAILS',
+    I.fWrongObj.ok === false && I.fWrongObj.code === 'TARGET_ABSENT', JSON.stringify(I.fWrongObj));
+  t('I3 a beat with no identifiable actor FAILS',
+    I.fNoWho.ok === false && I.fNoWho.code === 'CHARACTER_ABSENT', JSON.stringify(I.fNoWho));
+  t('I3 the assigned character named explicitly also passes',
+    I.fNamed.ok === true, JSON.stringify(I.fNamed));
+
+  await page.close();
+}
+
 await browser.close();
 console.log(`\n${'─'.repeat(92)}\n  ${pass} passed · ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
