@@ -683,11 +683,47 @@ console.log(`\n${'═'.repeat(92)}\nPART F — ENVELOPE RECONCILER\n${'═'.repe
     // 10 skeleton in both places
     const e10 = canonical(); e10.opening_spine.scene_skeleton = JSON.parse(JSON.stringify(SK));
     const t10 = run(e10);
+    // ── 2026-08-26 duplicate policy: IDENTICAL collapses, DIFFERENT still aborts ──
+    // 11a object-key ORDER must not count as a difference
+    const e11 = canonical();
+    e11.reader_state = { knows: 'k' };                    // same data, built separately
+    const t11 = run(e11);
+    const eKeyOrder = canonical();
+    eKeyOrder.opening_spine.reader_state = { a: 1, b: 2, c: { x: 9, y: 8 } };
+    eKeyOrder.reader_state = { c: { y: 8, x: 9 }, b: 2, a: 1 };   // same keys, reversed order
+    const tKeyOrder = run(eKeyOrder);
+    // 11b DIFFERING copies must still abort — one per type
+    const diff = (k, v) => { const e = canonical(); e[k] = v; return run(e); };
+    const dScalar = diff('opening_setting', 'weighhouse');
+    const dArray  = diff('environment_elements', ['a bolt of cloth', 'the ledger']);   // ORDER differs
+    const dArrLen = diff('environment_elements', ['the ledger']);
+    const dObject = diff('reader_state', { knows: 'k', believes: 'b' });               // extra key
+    const dNested = diff('staged_characters', [{ name: 'Lirael', presence_mode: 'ON_PHONE' }]);
+    // 11c skeleton: identical collapses, differing aborts
+    const eSkSame = canonical(); eSkSame.opening_spine.scene_skeleton = JSON.parse(JSON.stringify(SK));
+    const tSkSame = run(eSkSame);
+    const eSkDiff = canonical();
+    eSkDiff.opening_spine.scene_skeleton = { character_plus: [{ character: 'Julian' }] };
+    const tSkDiff = run(eSkDiff);
+    // 11d NO coercion / normalisation may make unequal things equal
+    const nCoerce = diff('hook_object', ' the summons ');        // whitespace
+    const nCase   = diff('opening_setting', 'Customs House');    // case
+    const nType   = diff('hook_object', ['the summons']);        // string vs array
+    // 11e idempotence AFTER a collapse, and the canonical output is stable
+    const cOnce = R((function(){ const e = canonical(); e.reader_state = { knows:'k' };
+                                 e.opening_spine.scene_skeleton = JSON.parse(JSON.stringify(SK)); return e; })(), FIELDS);
+    const cTwice = R(cOnce.envelope, FIELDS);
     // 12 idempotence — reconcile the reconciled output again
     const once = R(Object.assign({ opening_spine: {} }, JSON.parse(JSON.stringify(spineVals)), { scene_skeleton: SK }), FIELDS);
     const twice = R(once.envelope, FIELDS);
 
-    return { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10,
+    return { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10, t11, tKeyOrder,
+             dScalar, dArray, dArrLen, dObject, dNested, tSkSame, tSkDiff,
+             nCoerce, nCase, nType,
+             collapseIdem: { firstMoves: cOnce.moves, secondMoves: cTwice.moves.length,
+                             secondFault: cTwice.fault,
+                             identical: JSON.stringify(cOnce.envelope) === JSON.stringify(cTwice.envelope),
+                             canonical: cOnce.envelope },
              idem: { firstMoves: once.moves.length, secondMoves: twice.moves.length, secondFault: twice.fault,
                      identical: JSON.stringify(once.envelope) === JSON.stringify(twice.envelope) },
              // values must survive byte-identical through a move
@@ -706,18 +742,62 @@ console.log(`\n${'═'.repeat(92)}\nPART F — ENVELOPE RECONCILER\n${'═'.repe
     JSON.stringify(F.t3.fault || F.t3));
   t('F4 mixed unique placement is reconciled',
     okShape(F.t4) && F.t4.moves.length === 3, JSON.stringify(F.t4.fault || F.t4.moves));
-  t('F5 duplicate SCALAR is rejected even when byte-equivalent',
-    /opening_setting" is present BOTH/.test(F.t5.fault || ''), JSON.stringify(F.t5.fault));
-  t('F6 duplicate ARRAY is rejected even when byte-equivalent',
-    /environment_elements" is present BOTH/.test(F.t6.fault || ''), JSON.stringify(F.t6.fault));
-  t('F7 duplicate OBJECT is rejected even when byte-equivalent',
-    /reader_state" is present BOTH/.test(F.t7.fault || ''), JSON.stringify(F.t7.fault));
+  // ── SUPERSEDED 2026-08-26 (round-10 evidence): identical duplicates carry no competing
+  //    decision, so they collapse. Rejecting them protected nothing and lost a valid opening.
+  //    A DIFFERENCE of any kind still hard-fails — that is asserted immediately below.
+  const collapsed = (t, k) => !t.fault && t.env && t.env.opening_spine
+    && !Object.prototype.hasOwnProperty.call(t.env, k)                       // top-level copy gone
+    && Object.prototype.hasOwnProperty.call(t.env.opening_spine, k)          // nested copy kept
+    && t.moves.some(m => m === k + '\u2261');
+  t('F5 identical duplicate SCALAR collapses onto the nested copy',
+    collapsed(F.t5, 'opening_setting')
+      && F.t5.env.opening_spine.opening_setting === 'customs house',
+    JSON.stringify({ fault: F.t5.fault, moves: F.t5.moves }));
+  t('F6 identical duplicate ARRAY collapses (order-sensitive match)',
+    collapsed(F.t6, 'environment_elements')
+      && JSON.stringify(F.t6.env.opening_spine.environment_elements) === JSON.stringify(['the ledger', 'a bolt of cloth']),
+    JSON.stringify({ fault: F.t6.fault, moves: F.t6.moves }));
+  t('F7 identical duplicate OBJECT collapses',
+    collapsed(F.t7, 'reader_state'), JSON.stringify({ fault: F.t7.fault, moves: F.t7.moves }));
+  t('F7 identical duplicate OBJECT collapses despite KEY ORDER differing',
+    collapsed(F.tKeyOrder, 'reader_state')
+      && JSON.stringify(F.tKeyOrder.env.opening_spine.reader_state) === JSON.stringify({ a:1, b:2, c:{ x:9, y:8 } }),
+    JSON.stringify({ fault: F.tKeyOrder.fault, moves: F.tKeyOrder.moves }));
+  t('F7 a separately-built but equal object still collapses',
+    collapsed(F.t11, 'reader_state'), JSON.stringify(F.t11.fault));
+
+  // ── DIFFERENCES STILL ABORT ──
+  const aborts = (t, k) => /is present BOTH/.test(t.fault || '') && /DIFFERENT values/.test(t.fault || '')
+    && new RegExp(k).test(t.fault || '');
+  t('F5b a DIFFERING scalar duplicate still aborts',      aborts(F.dScalar, 'opening_setting'), JSON.stringify(F.dScalar.fault));
+  t('F6b an array differing only in ORDER still aborts',  aborts(F.dArray, 'environment_elements'), JSON.stringify(F.dArray.fault));
+  t('F6b an array differing in LENGTH still aborts',      aborts(F.dArrLen, 'environment_elements'), JSON.stringify(F.dArrLen.fault));
+  t('F7b an object with an EXTRA key still aborts',       aborts(F.dObject, 'reader_state'), JSON.stringify(F.dObject.fault));
+  t('F7b a difference NESTED inside an array of objects still aborts',
+    aborts(F.dNested, 'staged_characters'), JSON.stringify(F.dNested.fault));
+  t('F7c NO whitespace normalisation — " the summons " differs',  aborts(F.nCoerce, 'hook_object'), JSON.stringify(F.nCoerce.fault));
+  t('F7c NO case folding — "Customs House" differs',              aborts(F.nCase, 'opening_setting'), JSON.stringify(F.nCase.fault));
+  t('F7c NO type coercion — a string is not a one-element array', aborts(F.nType, 'hook_object'), JSON.stringify(F.nType.fault));
   t('F8 an unknown top-level key is a visible schema fault, never discarded',
     /unrecognised top-level field\(s\).*pc_body_bible/.test(F.t8.fault || ''), JSON.stringify(F.t8.fault));
   t('F9 a nested-only scene_skeleton is lifted to the top level',
     okShape(F.t9) && F.t9.moves.some(m => /scene_skeleton/.test(m)), JSON.stringify(F.t9.fault || F.t9.moves));
-  t('F10 scene_skeleton in BOTH places is rejected',
-    /scene_skeleton is present BOTH/.test(F.t10.fault || ''), JSON.stringify(F.t10.fault));
+  t('F10 an IDENTICAL scene_skeleton duplicate collapses onto the TOP-LEVEL copy',
+    !F.tSkSame.fault && F.tSkSame.env
+      && !Object.prototype.hasOwnProperty.call(F.tSkSame.env.opening_spine, 'scene_skeleton')
+      && JSON.stringify(F.tSkSame.env.scene_skeleton) === JSON.stringify({ character_plus: [{ character: 'Lirael' }] })
+      && F.tSkSame.moves.some(m => m === 'scene_skeleton\u2261'),
+    JSON.stringify({ fault: F.tSkSame.fault, moves: F.tSkSame.moves }));
+  t('F10b a DIFFERING scene_skeleton duplicate still aborts',
+    /scene_skeleton is present BOTH/.test(F.tSkDiff.fault || '')
+      && /DIFFERENT values/.test(F.tSkDiff.fault || ''),
+    JSON.stringify(F.tSkDiff.fault));
+  t('F11 after a collapse the reconciler is still IDEMPOTENT and the output is canonical',
+    F.collapseIdem.secondMoves === 0 && !F.collapseIdem.secondFault && F.collapseIdem.identical
+      && Object.keys(F.collapseIdem.canonical).length === 2
+      && !!F.collapseIdem.canonical.scene_skeleton
+      && !Object.prototype.hasOwnProperty.call(F.collapseIdem.canonical.opening_spine, 'scene_skeleton'),
+    JSON.stringify(F.collapseIdem));
   t('F12 the reconciler is idempotent',
     F.idem.firstMoves === 5 && F.idem.secondMoves === 0 && !F.idem.secondFault && F.idem.identical,
     JSON.stringify(F.idem));

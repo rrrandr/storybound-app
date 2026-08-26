@@ -138,6 +138,9 @@ function plannerReply(usr, mutate) {
     return JSON.stringify({ opening_spine: rest, staged_characters, scene_skeleton: skel });
   }
   if (mutate === 'stagedBoth')  return JSON.stringify({ opening_spine: spine, staged_characters: spine.staged_characters, scene_skeleton: skel });
+  // DIFFERING counterparts (2026-08-26): identical duplicates collapse, any difference aborts.
+  if (mutate === 'stagedBothDiff') return JSON.stringify({ opening_spine: spine,
+    staged_characters: spine.staged_characters.map(c => ({ ...c, presence:'ON_PHONE' })), scene_skeleton: skel });
   // The round-4 live shape: the spine distributed across the envelope's top level. Only fields the
   // template ACTUALLY declares for this request are distributed — several spine fields are emitted
   // conditionally, and an undeclared field at top level is a schema fault by design, not drift.
@@ -197,6 +200,9 @@ function plannerReply(usr, mutate) {
                                   return JSON.stringify({ opening_spine: rest, staged_characters: [{ presence_mode:'IN_PERSON' }], scene_skeleton: skel }); }
   if (mutate === 'nested')       return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel } });
   if (mutate === 'dupSkeleton')  return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel }, scene_skeleton: skel });
+  if (mutate === 'dupSkeletonBadCast') { const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]) };
+                                        return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: bad }, scene_skeleton: bad }); }
+  if (mutate === 'dupSkeletonDiff') return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: { ...skel, fusion: null } }, scene_skeleton: skel });
   if (mutate === 'nestedThin')   return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: { fusion: null } } });
   // A planner reply that will not parse is the same failure class as an invalid one: the
   // author must not be called. This is the shape the LIVE run actually produced.
@@ -590,8 +596,9 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'diagnosisangle', 'diagnosisangle2', 'offsceneEp', 'relocate',
                       'fusionnull', 'fusionbadcode', 'fusionfalsecode', 'fusionnobeat', 'fusionthinbeat',
                       // identity / envelope faults that must STILL abort
-                      'aliasOffstage', 'dupSkeleton', 'nestedThin',
-                      'stagedBoth', 'stagedThin',
+                      'aliasOffstage', 'nestedThin', 'stagedThin',
+                      // identical duplicates now COLLAPSE (tested below); a DIFFERENCE still aborts
+                      'dupSkeletonDiff', 'stagedBothDiff',
                       // reconciler must not rescue semantics, and must not swallow invented fields
                       'spreadBadCast', 'unknownKey',
                       // the fixed cast may not be edited
@@ -818,6 +825,39 @@ console.log(`\n${'─'.repeat(90)}\n  multi-person scenes keep the interlocutor 
   // interlocutor_placement from the template entirely. Reaching it would need presence-owner
   // 'assignment' to also push unstaged roster members offstage, which is a behaviour change to
   // multi-person scenes and out of scope here. Left as defence, recorded as uncovered.
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// PART T — IDENTICAL DUPLICATE COLLAPSE, END TO END (2026-08-26, from round-10 evidence)
+// Two structurally identical copies contain no competing decision. Round 10 produced a plan that
+// was clean on every semantic axis and was thrown away for emitting its skeleton twice, with the
+// two copies byte-identical. The collapse must recover it — and every semantic validator must
+// still run afterwards, on the canonical copy.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(90)}\nPART T — IDENTICAL DUPLICATE COLLAPSE\n${'═'.repeat(90)}\n`);
+for (const [mutate, what, tag] of [
+  ['dupSkeleton', 'an IDENTICAL duplicate scene_skeleton (the round-10 shape)', 'scene_skeleton'],
+  ['stagedBoth',  'an IDENTICAL duplicate staged_characters',                   'staged_characters'],
+]) {
+  const R = await run({ hot: false, mutate });
+  t(`   ${what} COLLAPSES and the plan proceeds`,
+    R.author.length === 1
+      && R.logs.some(l => /IDENTICAL DUPLICATE COLLAPSED/.test(l))
+      && !R.logs.some(l => /SCENE1:ABORT/.test(l)),
+    `author=${R.author.length} | ${(R.logs.find(l=>/ENVELOPE|ABORT/.test(l))||'(no envelope log)').slice(0,160)}`);
+  t(`   …and the collapse log names ${tag}`,
+    R.logs.some(l => /IDENTICAL DUPLICATE COLLAPSED/.test(l) && l.includes(tag)),
+    (R.logs.find(l=>/IDENTICAL DUPLICATE COLLAPSED/.test(l))||'(none)').slice(0,180));
+}
+{
+  // EVERY semantic validator must still run after a collapse — the collapse recovers PLACEMENT,
+  // never semantics. An invented C+ recipient inside an identical-duplicate skeleton still aborts.
+  const R = await run({ hot: false, mutate: 'dupSkeletonBadCast' });
+  t('   a collapse does NOT rescue semantics — invented cast inside the duplicate still aborts',
+    R.author.length === 0
+      && R.logs.some(l => /IDENTICAL DUPLICATE COLLAPSED/.test(l))
+      && R.logs.some(l => /SKELETON:INVALID/.test(l)) && R.logs.some(l => /SCENE1:ABORT/.test(l)),
+    `author=${R.author.length} | ${(R.logs.find(l=>/SKELETON:INVALID/.test(l))||'(no invalid log)').slice(0,160)}`);
 }
 
 console.log(`\n${'─'.repeat(90)}\n  ${pass} passed · ${fail} failed\n`);
