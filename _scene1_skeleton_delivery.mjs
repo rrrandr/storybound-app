@@ -67,7 +67,7 @@ function plannerReply(usr, mutate) {
     reader_state:{ knows:L, believes:L, wondering:L, must_not_confuse:L },
     pc_body_callback:'decision', li_body_callback:'opening', antagonist_body_callback:null,
     perceptual_signature_beat:L,
-    staged_characters: cast.map(n => ({ name:n, presence_mode:'IN_PERSON', role_to_protagonist:'witness' })) };
+    staged_characters: cast.map(n => ({ name:n, presence:'IN_PERSON', anchor_beat:'is already in place as the scene opens' })) };
   // Angles are DISTINCT per recipient so "the directive renders each returned angle" is a real
   // claim rather than one string matching by accident.
   // Angles must now be RENDERABLE BEATS, not diagnoses, and E+/fusion targets must be things the
@@ -142,6 +142,13 @@ function plannerReply(usr, mutate) {
     const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]) };
     return JSON.stringify(Object.assign({ opening_spine: nested }, top, { scene_skeleton: bad }));
   }
+  // ── FIXED-CAST mutations (2026-08-26): staged_characters is a prefilled echo, not a choice ──
+  if (mutate === 'stagedAdded')    spine.staged_characters = spine.staged_characters.concat([{ name:'Mateo', presence:'IN_PERSON', anchor_beat:'leans in the doorway' }]);
+  if (mutate === 'stagedOmitted')  spine.staged_characters = spine.staged_characters.slice(0, -1);
+  if (mutate === 'stagedRenamed')  spine.staged_characters = spine.staged_characters.map((c,i) => i === 1 ? { ...c, name:'Serena' } : c);
+  if (mutate === 'stagedPresence') spine.staged_characters = spine.staged_characters.map((c,i) => i === 1 ? { ...c, presence:'OFFSTAGE_REFERENCED' } : c);
+  if (mutate === 'stagedReordered') spine.staged_characters = spine.staged_characters.slice().reverse();
+  if (mutate === 'stagedAliased')  spine.staged_characters = spine.staged_characters.map(c => /presiding/i.test(c.name) ? { ...c, name:'Dohkar' } : c);
   if (mutate === 'unknownKey')  return JSON.stringify({ opening_spine: spine, scene_skeleton: skel, pc_body_bible: { invented: true } });
   if (mutate === 'stagedThin')  { const { staged_characters, ...rest } = spine;
                                   return JSON.stringify({ opening_spine: rest, staged_characters: [{ presence_mode:'IN_PERSON' }], scene_skeleton: skel }); }
@@ -406,6 +413,8 @@ for (const [mutate, label, expect] of [
   ['nested',        'nested scene_skeleton lifted intact',                   { alias:false, lifted:true }],
   ['stagedTop',     'lone top-level staged_characters moved into the spine', { alias:false, staged:true }],
   ['spread',        'WHOLE spine distributed at top level is reconciled',    { alias:false, lifted:true }],
+  ['stagedReordered','a REORDERED fixed cast is canonicalised, not rejected', { alias:false }],
+  ['stagedAliased', 'an ALIASED staged name resolves to the canonical person',{ alias:false }],
 ]) {
   const R = await run({ hot: false, mutate });
   const cp = ((R.skeleton && R.skeleton.cp) || []).map(c => c.character);
@@ -454,15 +463,23 @@ console.log('');
     labels.length > 0 && labels.every(n => full.includes(`EXACTLY one of: ${labels.join(' | ')}`)
                                            || full.includes(n)),
     `labels=${JSON.stringify(labels)}`);
-  t(`   template's staged_characters name field is the enumeration, not free text`,
-    new RegExp(`"name": "<EXACTLY one of: ${labels.map(s=>s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join(' \\| ')}>"`).test(full),
-    (full.match(/"name": "<[^>]{0,120}>"/) || ['(none)'])[0]);
+  // The name field is no longer an enumeration to choose from — it is PREFILLED, one literal
+  // entry per required person, so there is nothing left to select and no free-text slot at all.
+  t(`   template's staged_characters is PREFILLED with each required name, with no free-text slot`,
+    labels.length > 0
+      && labels.every(n => full.includes(`{ "name": "${n}", "presence": "IN_PERSON"`))
+      && !/"name": "<[^>]*>"/.test(full),
+    `labels=${JSON.stringify(labels)} freeTextSlot=${(full.match(/"name": "<[^>]{0,120}>"/) || ['(none)'])[0]}`);
   t(`   template contains NO "appears or is named" wording`,
     !/appears or is named/i.test(full),
     (full.match(/.{0,60}appears or is named.{0,60}/i) || [''])[0]);
-  t(`   template says presence means PHYSICALLY PRESENT and excludes the merely referenced`,
-    /List ONLY characters PHYSICALLY PRESENT/.test(full)
-      && /Exclude anyone merely named, remembered, discussed, messaged, anticipated, heard, or referenced offstage/.test(full));
+  t(`   template says the fixed cast is the whole room and excludes the merely referenced`,
+    /PREFILLED AND FIXED/.test(full)
+      && /this is the complete physical cast of the opening/i.test(full)
+      && /Do NOT add a person/i.test(full)
+      && /Anyone not listed here is NOT in the room/i.test(full)
+      && /they may be named, remembered or spoken about in the prose, but they are not present/i.test(full),
+    (full.match(/PREFILLED AND FIXED.{0,240}/) || ['(none)'])[0]);
   t(`   template no longer points at an ELIGIBLE CAST block from inside the JSON`,
     !/from ELIGIBLE CAST/i.test(full) && !/name from ELIGIBLE CAST/i.test(full),
     (full.match(/.{0,50}ELIGIBLE CAST.{0,50}/i) || [''])[0]);
@@ -517,11 +534,13 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'aliasOffstage', 'dupSkeleton', 'nestedThin',
                       'stagedBoth', 'stagedThin',
                       // reconciler must not rescue semantics, and must not swallow invented fields
-                      'spreadBadCast', 'unknownKey']) {
+                      'spreadBadCast', 'unknownKey',
+                      // the fixed cast may not be edited
+                      'stagedAdded', 'stagedOmitted', 'stagedRenamed', 'stagedPresence']) {
   const R = await run({ hot: false, mutate });
   // Both failure classes must exit visibly: semantic (SKELETON:INVALID) and unparseable
   // planner output (PLANNER:UNRECOVERABLE). Either way the ABORT must follow.
-  const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID|SCENE1:PLANNER:UNRECOVERABLE|SCENE1:ENVELOPE:FAULT|SCENE1:STAGE:UNRESOLVED/.test(l))
+  const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID|SCENE1:PLANNER:UNRECOVERABLE|SCENE1:ENVELOPE:FAULT|SCENE1:STAGE:UNRESOLVED|SCENE1:STAGED:INVALID/.test(l))
                && R.logs.some(l => /SCENE1:ABORT/.test(l));
   if (mutate === 'unknown') {
     console.log('   --- diagnostic (mutate=unknown) ---');

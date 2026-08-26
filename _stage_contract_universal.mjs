@@ -398,9 +398,7 @@ for (const cfg of [
             : /YOU choose opening_setting/.test(pu))
       // Under planner-owned presence only the GUARANTEED names can be in the input — the rest are
       // the planner's own invention and appear for the first time in its output.
-      && (st.presenceOwner === 'planner'
-            ? /GUARANTEED ON STAGE/.test(pu) && pu.includes(st.onStage[0])
-            : st.onStage.every(n => pu.includes(n))),
+      && st.onStage.every(n => pu.includes(n)),
     `key=${key} inPlanner=${pu.includes(key)} owner=${st.settingOwner}/${st.presenceOwner}`);
   t(`${R.label} — surface 2/4: OPENING SPINE validated against the same WHERE`,
     // the spine's opening_setting was accepted only because it matched the resolved ground text
@@ -449,38 +447,51 @@ console.log(`\n${'═'.repeat(92)}\nPART D — CORRIDOR OWNERSHIP (roster-bound 
   await page.waitForFunction(() => window.state && window._resolveStageFromPlan, { timeout:120000 });
 
   const D = await page.evaluate(() => {
-    const S = window._scene1StageContract, RS = window._resolveStageFromPlan;
-    // LI is MENTIONED in the mission → mention-only → off the allowed roster.
-    const mentionedLI = { pov:'first_person', name:'Ilse', playerName:'Ilse', identity:{playerName:'Ilse'},
-      loveInterestName:'Dorian', partnerName:'Dorian',
-      _scene1Mission:'She waits alone in the customs house, rehearsing what she will say to Dorian' };
-    // LI is NOT mentioned → a legitimate allowed candidate the planner may choose to stage.
-    const availableLI = { pov:'first_person', name:'Ilse', playerName:'Ilse', identity:{playerName:'Ilse'},
-      loveInterestName:'Dorian', partnerName:'Dorian',
-      _scene1Mission:'She counts crates in the customs house before the tide turns' };
-    const ELS = ['the weighhouse ledger', 'a bolt of undyed cloth'];
-    const spine = (extra) => Object.assign({ opening_setting:'customs house', environment_elements:ELS }, extra);
-    const run = (st, planExtra) => {
-      const c = S(st);
-      const r = RS(c, spine(planExtra), null);
-      return { ok:r.ok, fault:r.fault, setting:r.setting,
-               elements:r.environmentElements, envOwner:r.environmentOwner,
-               roster:(c.allowedRoster||[]).map(x=>x.label),
-               onStage:(r.onStage||[]).map(x=>x.label), offStage:(r.offStage||[]).map(x=>x.name) };
+    const S = window._scene1StageContract;
+    const call = (patch) => {
+      const c = S(Object.assign({ pov:'first_person', name:'Ilse', playerName:'Ilse',
+        identity:{playerName:'Ilse'} }, patch));
+      return { ok:c.ok, fault:c.fault, settingOwner:c.settingOwner, presenceOwner:c.presenceOwner,
+               pending:c.pending, onStage:(c.onStage||[]).map(x=>x.label),
+               offStage:(c.offStage||[]).map(x=>x.name) };
     };
-    const IP = (n) => ({ name:n, presence:'IN_PERSON', presence_mode:'IN_PERSON', anchor_beat:'is at the ledger' });
+    window.STARTER_PLANS['test_explicit_two'] = { scenes: [{ n:1,
+      goal:'She counts crates in the customs house', setting:'the customs house',
+      participants:['Ilse', 'Dorian'] }] };
+    // ── RESTORED 2026-08-26: environment-inventory coverage ──
+    // These five assertions were dropped when Part D was rewritten for deterministic presence,
+    // but the guards they cover are still live and enforcing in _resolveStageFromPlan. Presence
+    // is no longer read from the plan, so the corridor state is fixed and only the plan's
+    // environment_elements vary.
+    const RS = window._resolveStageFromPlan;
+    const ELS = ['the weighhouse ledger', 'a bolt of undyed cloth'];
+    const envRun = (planExtra) => {
+      const c = S({ pov:'first_person', name:'Ilse', playerName:'Ilse', identity:{playerName:'Ilse'},
+        loveInterestName:'Dorian', partnerName:'Dorian',
+        _scene1Mission:'She counts crates in the customs house before the tide turns' });
+      const r = RS(c, Object.assign({ opening_setting:'customs house', environment_elements:ELS }, planExtra), null);
+      return { ok:r.ok, fault:r.fault, elements:r.environmentElements, envOwner:r.environmentOwner,
+               onStage:(r.onStage||[]).map(x=>x.label) };
+    };
     return {
-      narratorOnly: run(mentionedLI, { staged_characters:[IP('Ilse')] }),
-      allowedNPC:   run(availableLI, { staged_characters:[IP('Ilse'), IP('Dorian')] }),
-      stageMentioned: run(mentionedLI, { staged_characters:[IP('Ilse'), IP('Dorian')] }),
-      inventedCast: run(mentionedLI, { staged_characters:[IP('Ilse'), IP('Quinn')] }),
-      noStaged:     run(mentionedLI, { staged_characters: undefined }),
-      pcNotStaged:  run(availableLI, { staged_characters:[IP('Dorian')] }),
-      noElements:   run(mentionedLI, { staged_characters:[IP('Ilse')], environment_elements: undefined }),
-      oneElement:   run(mentionedLI, { staged_characters:[IP('Ilse')], environment_elements:['the weighhouse ledger'] }),
-      abstractEl:   run(mentionedLI, { staged_characters:[IP('Ilse')], environment_elements:['the weighhouse ledger','a sense of unease'] }),
-      dupEl:        run(mentionedLI, { staged_characters:[IP('Ilse')], environment_elements:['the weighhouse ledger','The Weighhouse Ledger.'] }),
-      // E+ matching, via the shipped inventory matcher
+      // 1 corridor, nothing explicit -> narrator only, and the LI stays offstage
+      narratorOnly: call({ _scene1Mission:'She counts crates in the customs house before the tide turns',
+                           loveInterestName:'Dorian', partnerName:'Dorian' }),
+      // 2 explicit two-person assignment row
+      explicitTwo:  call({ _starterId:'test_explicit_two', loveInterestName:'Dorian', partnerName:'Dorian' }),
+      // 3 LI mentioned in the mission -> still offstage, never promoted
+      mentionedLI:  call({ _scene1Mission:'She waits alone, rehearsing what she will say to Dorian',
+                           loveInterestName:'Dorian', partnerName:'Dorian' }),
+      // 4 a global-roster NPC that the scene never stages
+      rosterNPC:    call({ _scene1Mission:'She counts crates before the tide turns',
+                           loveInterestName:'Dorian', partnerName:'Mara' }),
+      // environment inventory, through the REAL plan-resolution path
+      envGood:      envRun({}),
+      noElements:   envRun({ environment_elements: undefined }),
+      oneElement:   envRun({ environment_elements: ['the weighhouse ledger'] }),
+      abstractEl:   envRun({ environment_elements: ['the weighhouse ledger', 'a sense of unease'] }),
+      dupEl:        envRun({ environment_elements: ['the weighhouse ledger', 'The Weighhouse Ledger.'] }),
+      // E+ target matching, via the shipped inventory matcher
       epDeclared:   window._targetInInventory('the weighhouse ledger', ELS, 'customs house'),
       epSetting:    window._targetInInventory('customs house', ELS, 'customs house'),
       epUndeclared: window._targetInInventory('a brass lamp', ELS, 'customs house'),
@@ -495,44 +506,55 @@ console.log(`\n${'═'.repeat(92)}\nPART D — CORRIDOR OWNERSHIP (roster-bound 
   });
   console.log('');
 
-  t('D1 corridor narrator-only staging is VALID',
-    D.narratorOnly.ok === true && D.narratorOnly.onStage.length === 1
-    && D.narratorOnly.envOwner === 'planner' && (D.narratorOnly.elements || []).length === 2,
+  t('D1 a corridor with no explicit presence stages the NARRATOR ONLY',
+    D.narratorOnly.ok && D.narratorOnly.presenceOwner === 'narrator-only'
+    && D.narratorOnly.onStage.length === 1 && D.narratorOnly.onStage[0] === 'Ilse',
     JSON.stringify(D.narratorOnly));
-  t('D2 corridor may stage a known allowed NPC',
-    D.allowedNPC.ok === true && D.allowedNPC.onStage.includes('Dorian')
-    && D.allowedNPC.roster.includes('Dorian'),
-    JSON.stringify(D.allowedNPC));
-  t('D3 a MENTIONED-only LI is off the roster and cannot be staged',
-    D.stageMentioned.ok === false && /not on the allowed roster/i.test(D.stageMentioned.fault || '')
-    && !D.narratorOnly.roster.includes('Dorian'),
-    JSON.stringify({ roster: D.narratorOnly.roster, fault: D.stageMentioned.fault }));
-  t('D4 an INVENTED staged character is rejected',
-    D.inventedCast.ok === false && /"Quinn" is not on the allowed roster/i.test(D.inventedCast.fault || ''),
-    JSON.stringify(D.inventedCast.fault));
-  t('D5 missing staged_characters is rejected — C+ may never define presence',
-    D.noStaged.ok === false && /returned no staged_characters/i.test(D.noStaged.fault || '')
-    && /character_plus may never define/i.test(D.noStaged.fault || ''),
-    JSON.stringify(D.noStaged.fault));
-  t('D6 the narrator must be staged IN_PERSON',
-    D.pcNotStaged.ok === false && /narrator is not staged IN_PERSON/i.test(D.pcNotStaged.fault || ''),
-    JSON.stringify(D.pcNotStaged.fault));
-  t('D7 missing environmental inventory is rejected',
+  t('D1 presence is NEVER planner-owned, under any corridor shape',
+    ['narratorOnly','explicitTwo','mentionedLI','rosterNPC']
+      .every(k => D[k].presenceOwner !== 'planner'),
+    JSON.stringify(Object.keys(D).map(k => `${k}:${D[k].presenceOwner}`)));
+  t('D1 the planner still owns the corridor WHERE (setting stays pending)',
+    D.narratorOnly.settingOwner === 'planner' && D.narratorOnly.pending === true,
+    JSON.stringify(D.narratorOnly));
+  t('D2 an EXPLICIT assignment row stages exactly its stated participants',
+    D.explicitTwo.ok && D.explicitTwo.presenceOwner === 'assignment'
+    && D.explicitTwo.onStage.includes('Ilse') && D.explicitTwo.onStage.includes('Dorian')
+    && D.explicitTwo.onStage.length === 2,
+    JSON.stringify(D.explicitTwo));
+  t('D3 a mention-only LI stays offstage and never becomes presence',
+    D.mentionedLI.ok && !D.mentionedLI.onStage.includes('Dorian')
+    && D.mentionedLI.offStage.includes('Dorian'),
+    JSON.stringify(D.mentionedLI));
+  t('D4 a global-roster NPC the scene never staged stays offstage',
+    D.rosterNPC.ok && D.rosterNPC.onStage.length === 1
+    && D.rosterNPC.offStage.includes('Mara') && D.rosterNPC.offStage.includes('Dorian'),
+    JSON.stringify(D.rosterNPC));
+  t('D5 no side-cast is manufactured to give the scene another body',
+    D.narratorOnly.onStage.length === 1 && D.rosterNPC.onStage.length === 1);
+
+  // ── RESTORED environment-inventory cases (were D7-D10 before the presence rewrite) ──
+  t('D6 a valid two-element inventory is accepted and becomes the contract',
+    D.envGood.ok === true && D.envGood.envOwner === 'planner'
+    && (D.envGood.elements || []).length === 2,
+    JSON.stringify(D.envGood));
+  t('D6 missing environmental inventory is rejected',
     D.noElements.ok === false && /no environment_elements/i.test(D.noElements.fault || ''),
     JSON.stringify(D.noElements.fault));
   t('D7 a single element is rejected (at least two required)',
     D.oneElement.ok === false && /at least 2 concrete elements/i.test(D.oneElement.fault || ''),
     JSON.stringify(D.oneElement.fault));
-  t('D8 an ABSTRACT element is rejected visibly',
+  t('D7 an ABSTRACT element is rejected visibly',
     D.abstractEl.ok === false && /abstract, not a physical thing/i.test(D.abstractEl.fault || ''),
     JSON.stringify(D.abstractEl.fault));
   t('D8 a DUPLICATE element is rejected visibly',
     D.dupEl.ok === false && /duplicate environment element/i.test(D.dupEl.fault || ''),
     JSON.stringify(D.dupEl.fault));
   t('D9 E+ matching a DECLARED element is accepted; the setting itself also counts',
-    D.epDeclared === true && D.epSetting === true);
-  t('D10 E+ inventing an UNDECLARED element is rejected',
-    D.epUndeclared === false);
+    D.epDeclared === true && D.epSetting === true,
+    JSON.stringify({ declared: D.epDeclared, setting: D.epSetting }));
+  t('D9 E+ inventing an UNDECLARED element is rejected by the matcher',
+    D.epUndeclared === false, JSON.stringify(D.epUndeclared));
 
   await page.close();
 }
@@ -550,7 +572,9 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
 
   // Build a corridor reply whose staged_characters sits at the TOP level.
   const corridorReply = (usr, { stagedNames, epTarget, elements }) => {
-    const roster = [...usr.matchAll(/^ {2}• (.+?)\s{2}\(/gm)].map(m => m[1].trim());
+    // The fixed cast is PREFILLED in the template now; echo it back unless the case is
+    // deliberately editing it.
+    const roster = [...usr.matchAll(/\{ "name": "([^"]+)", "presence": "IN_PERSON"/g)].map(m => m[1]);
     const els = elements || ['the weighhouse ledger', 'a bolt of undyed cloth'];
     const names = stagedNames || roster;
     const spine = { pressure_source_type:'institutional', pressure_source:L, hook_object:'the ledger',
@@ -564,8 +588,7 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
     const target = epTarget || els[0];
     return JSON.stringify({
       opening_spine: spine,                                  // NOTE: no staged_characters here
-      staged_characters: names.map(n => ({ name:n, presence_mode:'IN_PERSON', presence:'IN_PERSON',
-                                           anchor_beat:'is already at the ledger' })),
+      staged_characters: names.map(n => ({ name:n, presence:'IN_PERSON', anchor_beat:'is already at the ledger' })),
       scene_skeleton: {
         character_plus: names.map(n => ({ character:n, first_mention:true, angle:`${n} checks the ledger before the words` })),
         environment_plus: { target, axis:'use' },
@@ -587,12 +610,12 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
   {
     const R = await fullRun({ label:'corridor stagedTop + Mateo', statePatch: CORRIDOR,
       reply: (u) => {
-        const roster = [...u.matchAll(/^ {2}• (.+?)\s{2}\(/gm)].map(m => m[1].trim());
+        const roster = [...u.matchAll(/\{ "name": "([^"]+)", "presence": "IN_PERSON"/g)].map(m => m[1]);
         return corridorReply(u, { stagedNames: roster.concat(['Mateo']) });
       } });
     const lifted = R.logs.some(l => /ENVELOPE:NORMALISED/.test(l) && /staged_characters \(top level -> opening_spine\)/.test(l));
-    const rejected = /not on the allowed roster/i.test(String(R.skeletonFatal || ''));
-    t('E2 an invented person is MOVED intact and then rejected by the roster validator',
+    const rejected = /not part of this scene's fixed cast/i.test(String(R.skeletonFatal || ''));
+    t('E2 an invented person is MOVED intact and then rejected by the fixed-cast validator',
       lifted && rejected && R.author.length === 0,
       `lifted=${lifted} rejected=${rejected} author=${R.author.length} fault=${R.skeletonFatal}`);
     t('E2 structural recovery did not become identity recovery',

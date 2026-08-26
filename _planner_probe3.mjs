@@ -200,13 +200,13 @@ for (let i = 1; i <= N; i++) {
   console.log(`  cost         : ${cost != null ? '$' + cost.toFixed(5) : 'n/a'}`);
   if (R.stage) {
     console.log(`  SUPPLIED WHERE (${R.stage.settingOwner}-owned): ${String(R.stage.setting).slice(0,100)}`);
-    console.log(`  SUPPLIED PRESENT       : ${String(R.stage.presentText).slice(0,120)}`);
+    console.log(`  SUPPLIED PRESENT       : ${String(R.stage.presentText).slice(0,120)} (presenceOwner=${R.stage.presenceOwner})`);
     console.log(`  eligible C+ recipients : ${JSON.stringify(R.stage.onStage)}`);
     console.log(`  offstage (ineligible)  : ${JSON.stringify(R.stage.offStage.map(o=>o.name))}`);
   }
   console.log(`  RETURNED opening_setting: ${spine ? JSON.stringify(spine.opening_setting) : 'n/a'}`);
   console.log(`  RETURNED staged cast    : ${spine && Array.isArray(spine.staged_characters)
-      ? JSON.stringify(spine.staged_characters.map(c => `${c.name}:${c.presence_mode}`)) : 'n/a'}`);
+      ? JSON.stringify(spine.staged_characters.map(c => `${c.name}:${c.presence || c.presence_mode || '?'}`)) : 'n/a'}`);
   if (skel && Array.isArray(skel.character_plus)) {
     console.log(`  C+ (${skel.character_plus.length}):`);
     skel.character_plus.forEach(c => console.log(`      • ${String(c.character).padEnd(24)} first_mention=${JSON.stringify(c.first_mention)}  angle="${c.angle}"`));
