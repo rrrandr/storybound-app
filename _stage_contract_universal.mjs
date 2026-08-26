@@ -798,6 +798,115 @@ console.log(`\n${'═'.repeat(92)}\nPART G — INVENTED-IDENTITY SCANNER (pure)\
   await page.close();
 }
 
+// ════════════════════════════════════════════════════════════════════════════════════════════
+// PART H — SOLO-STAGE INTERACTION VALIDATOR (pure)
+// IDENTITY and PRESENCE are different checks. Rounds 7 and 8 invented no name and still put a
+// second person in a one-person scene. The discriminator is CONTEMPORANEITY: a second person may
+// be remembered, anticipated, written to and feared; they may not speak, act or arrive HERE.
+// The ALLOW cases carry the weight — a validator that rejects memory is worse than no validator.
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(92)}\nPART H — SOLO-STAGE INTERACTION (pure)\n${'═'.repeat(92)}\n`);
+{
+  const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
+  await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window.state && window._validateSoloStageInteraction, { timeout:120000 });
+
+  const H = await page.evaluate(() => {
+    const V = window._validateSoloStageInteraction;
+    const chk = (text, field) => {
+      const r = V({ [field || 'scene_mission']: text }, { narrator:'Lirael' });
+      return { ok:r.ok, codes:r.violations.map(v => v.code), texts:r.violations.map(v => v.text) };
+    };
+    return {
+      // ── MUST REJECT — the two live leaks, then the rest of the class ──
+      r_rival:    chk('keep the ledger unopened until the rival finishes speaking'),
+      r_rival2:   chk('Preserve the ledger before the rival finishes speaking'),
+      r_clerk:    chk('a clerk calls from outside the door'),
+      r_voice:    chk('a voice outside the door rises as she works', 'reader_state'),
+      r_voice2:   chk("a rival's voice cuts through the hall"),
+      r_denounce: chk('Lirael is alone in the loft while a rival denounces her lineage', 'reader_state'),
+      r_message:  chk('a message arrives as she reaches the vault'),
+      r_call:     chk('she answers the call before the tide turns'),
+      r_guard:    chk('convince the guard to let her pass'),
+      r_wait:     chk('wait for the messenger to bring the seal'),
+      r_body:     chk('the witness stands in the doorway and watches her'),
+      r_someone:  chk('someone moves in the corridor behind her'),
+
+      // ── MUST ALLOW — memory, anticipation, documents, environment ──
+      a_memory:   chk('she remembers Julian setting the pen down with both hands'),
+      a_thinks:   chk("why Julian's name keeps surfacing in her thoughts under pressure", 'reader_state'),
+      a_prepare:  chk('prepare what she will say to Julian when he comes to collect the debt'),
+      a_future:   chk('get the ledger to the vault before Julian arrives'),
+      a_letter:   chk('an old letter from Julian, folded twice, still in the ledger'),
+      a_wind:     chk('wind moves through the leaded glass and the candle stubs gutter'),
+      a_sound:    chk('the building settles and something rattles in the flue'),
+      a_narrator: chk('Lirael speaks the oath aloud to steady her hands'),
+      a_selfvoice:chk('she hears her own voice crack on the second line'),
+      a_stakes:   chk('the guild will strip her name if the ledger is opened'),
+      a_object:   chk('the wax-sealed ledger, the ceremonial table, the melted candle stubs', 'environment_elements'),
+      a_solowant: chk('wants the ledger to stay intact until she can get it to the vault', 'scene_want'),
+      a_liBeat:   chk('beat 2: she catches herself remembering how Julian answered the wrong question', 'li_texture_beat'),
+
+      // shape of a finding
+      shape: V({ scene_mission:'keep it shut until the rival finishes speaking' }, { narrator:'Lirael' }).violations[0] || null,
+      // purity: identical input, identical output, and the input is not mutated
+      pure: (function () {
+        const inp = { scene_mission:'a clerk calls from outside' };
+        const a = JSON.stringify(V(inp, { narrator:'Lirael' }));
+        const b = JSON.stringify(V(inp, { narrator:'Lirael' }));
+        return { same:a === b, untouched: inp.scene_mission === 'a clerk calls from outside' };
+      })(),
+    };
+  });
+
+  const REJECT = [
+    ['H1 "the rival finishes speaking" is rejected',            'r_rival'],
+    ['H1 …and again inside a mission sentence',                 'r_rival2'],
+    ['H1 "a clerk calls from outside" is rejected',             'r_clerk'],
+    ['H1 an unnamed voice outside the door is rejected',        'r_voice'],
+    ['H1 "a rival\'s voice cuts through the hall" is rejected', 'r_voice2'],
+    ['H1 a rival denouncing her mid-scene is rejected',         'r_denounce'],
+    ['H1 a live message arriving is rejected',                  'r_message'],
+    ['H1 answering a live call is rejected',                    'r_call'],
+    ['H1 "convince the guard" is rejected',                     'r_guard'],
+    ['H1 "wait for the messenger" is rejected',                 'r_wait'],
+    ['H1 a second body acting in the room is rejected',         'r_body'],
+    ['H1 "someone moves in the corridor" is rejected',          'r_someone'],
+  ];
+  for (const [label, key] of REJECT) {
+    t(label, H[key] && H[key].ok === false, JSON.stringify(H[key]));
+  }
+  const ALLOW = [
+    ['H2 a MEMORY of Julian is allowed',                        'a_memory'],
+    ['H2 THINKING about Julian is allowed',                     'a_thinks'],
+    ['H2 PREPARING to meet Julian later is allowed',            'a_prepare'],
+    ['H2 anticipating Julian arriving later is allowed',        'a_future'],
+    ['H2 an OLD LETTER from Julian is allowed',                 'a_letter'],
+    ['H2 wind and environmental sound are allowed',             'a_wind'],
+    ['H2 the building settling is allowed',                     'a_sound'],
+    ['H2 the NARRATOR speaking is allowed',                     'a_narrator'],
+    ['H2 the narrator hearing her OWN voice is allowed',        'a_selfvoice'],
+    ['H2 established offstage STAKES are allowed',              'a_stakes'],
+    ['H2 an environment inventory is allowed',                  'a_object'],
+    ['H2 the round-8 solo want is allowed',                     'a_solowant'],
+    ['H2 li_texture_beat is contractually a memory, allowed',   'a_liBeat'],
+  ];
+  for (const [label, key] of ALLOW) {
+    t(label, H[key] && H[key].ok === true, JSON.stringify(H[key]));
+  }
+  t('H3 a finding carries code + frame + verbatim text + path',
+    H.shape && H.shape.code === 'SOLO_VOICE' && typeof H.shape.frame === 'string' && H.shape.frame.length > 8
+      && typeof H.shape.text === 'string' && H.shape.text.length > 0 && H.shape.path === 'scene_mission',
+    JSON.stringify(H.shape));
+  t('H3 the validator is PURE — repeatable, and it never rewrites its input',
+    H.pure && H.pure.same && H.pure.untouched, JSON.stringify(H.pure));
+
+  await page.close();
+}
+
 await browser.close();
 console.log(`\n${'─'.repeat(92)}\n  ${pass} passed · ${fail} failed\n`);
 process.exit(fail ? 1 : 0);

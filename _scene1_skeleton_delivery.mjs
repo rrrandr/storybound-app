@@ -176,6 +176,20 @@ function plannerReply(usr, mutate) {
   if (mutate === 'quinnFusion')   skel.fusion = { ...skel.fusion, beat:`she presses her palm flat on ${ANCHOR} while Quinn watches from the doorway` };
   // ESTABLISHED OFFSTAGE reference — Julian is a known story person, NOT an invention. Allowed.
   if (mutate === 'julianRef')     spine.scene_want = 'wants to be gone before Julian arrives to collect what she owes';
+  // ── SOLO-INTERACTION mutations (2026-08-26): a second person ACTING, with no name invented.
+  //    Rounds 7 and 8 shipped exactly these and the proper-name scanner was rightly silent.
+  if (mutate === 'rivalSpeaks')   spine.scene_mission = 'keep the ledger unopened until the rival finishes speaking';
+  if (mutate === 'clerkCalls')    spine.reader_state = { ...spine.reader_state, knows:'she is alone in the customs house while a clerk calls from outside the door' };
+  if (mutate === 'voiceOutside')  spine.opening_beat = 'a voice outside the door rises as she sets the ledger down';
+  if (mutate === 'liveMessage')   spine.decision_beat = 'a message arrives and she has to decide whether to break the seal';
+  if (mutate === 'waitMessenger') spine.scene_want = 'wants to wait for the messenger without letting her hands shake';
+  if (mutate === 'guardConvince') spine.scene_mission = 'Convince the guard to let her past the weighhouse door';
+  // ── ALLOWED: memory, thought, anticipation, documents, environment ──
+  if (mutate === 'memoryJulian')  spine.scene_want = 'wants to stop remembering how Julian set the pen down with both hands';
+  if (mutate === 'thinkJulian')   spine.reader_state = { ...spine.reader_state, wondering:"why Julian's name keeps surfacing in her thoughts under pressure" };
+  if (mutate === 'prepareJulian') spine.scene_mission = 'Prepare what she will say to Julian when he comes to collect the debt';
+  if (mutate === 'letterJulian')  spine.opening_beat = 'an old letter from Julian, folded twice, still tucked in the ledger';
+  if (mutate === 'windSound')     spine.opening_beat = 'wind moves through the shutters and the tally-marks blur under her thumb';
   if (mutate === 'interlocOffstage') spine.interlocutor_placement = 'Julian — the man she owes, his jaw set the way it goes when he has already decided';
   if (mutate === 'julianStaged')  spine.staged_characters = spine.staged_characters.concat([{ name:'Julian', presence:'IN_PERSON', anchor_beat:'leans in the doorway' }]);
   if (mutate === 'unknownKey')  return JSON.stringify({ opening_spine: spine, scene_skeleton: skel, pc_body_bible: { invented: true } });
@@ -699,6 +713,59 @@ for (const [mutate, where] of [
     `caught=${caught} authorCalls=${R.author.length} | ${(R.logs.find(l=>/IDENTITY|ENVELOPE:FAULT/.test(l))||'(no identity log)').slice(0,150)}`);
 }
 
+// ── SOLO INTERACTION: a second person ACTING, end to end ──────────────────────────────────
+console.log(`\n${'─'.repeat(90)}\n  solo stage — a second BODY or VOICE (no name invented)\n${'─'.repeat(90)}`);
+{
+  const S = await run({ hot: false, solo: true, mutate: null });
+  const pu = (S.planner[0] || {}).user || '';
+  const authorAll = ((S.author[0] || {}).user || '') + '\n' + ((S.author[0] || {}).system || '');
+  t('S10 the template forbids a contemporaneous second voice in the WANT',
+    /any want that waits on another party to speak, finish speaking, call, send word or show up/.test(pu)
+      && /not a rival, not a clerk, not a voice through the door/.test(pu));
+  t('S10 the template forbids a person-shaped deadline in the MISSION',
+    /A deadline must be a fact of the world \(a tide, a bell, a fire, a closing door\), never a person finishing a sentence/.test(pu));
+  t('S10 the template forbids reader_state depicting anyone else acting',
+    /It may NOT describe anyone else speaking, calling, arriving or acting during the scene/.test(pu));
+  t('S10 the solo directive enumerates the forbidden acts',
+    /NOBODY ELSE ACTS IN THIS SCENE/.test(pu)
+      && /An UNNAMED role .{0,80}is still a second person: not naming them does not make them absent/.test(pu));
+  t('S10 the solo directive makes the alternative pressure sources explicit',
+    /WHERE THE PRESSURE COMES FROM INSTEAD/.test(pu)
+      && /PROCEDURE\s+or RITUAL/.test(pu) && /CONCEALMENT of something/.test(pu)
+      && /A scene with one person in it is not an empty scene/.test(pu));
+  t('S10 GROK receives the enumerated forbidden acts too',
+    /NOBODY ELSE ACTS IN THIS SCENE/.test(authorAll)
+      && /WHERE THE PRESSURE COMES FROM INSTEAD/.test(authorAll));
+}
+
+for (const [mutate, what] of [
+  ['rivalSpeaks',   '"the rival finishes speaking" (round 8\'s leak)'],
+  ['clerkCalls',    '"a clerk calls from outside"'],
+  ['voiceOutside',  'an unnamed voice outside the door (round 7\'s leak)'],
+  ['liveMessage',   'a live message arriving mid-scene'],
+  ['waitMessenger', '"wait for the messenger"'],
+  ['guardConvince', '"convince the guard"'],
+]) {
+  const R = await run({ hot: false, solo: true, mutate });
+  const caught = R.logs.some(l => /SCENE1:SOLO:INTERACTION/.test(l)) && R.logs.some(l => /SCENE1:ABORT/.test(l));
+  t(`   solo: ${what} is rejected before Grok`,
+    caught && R.author.length === 0,
+    `caught=${caught} author=${R.author.length} | ${(R.logs.find(l=>/SOLO:INTERACTION/.test(l))||'(no solo log)').slice(0,150)}`);
+}
+
+for (const [mutate, what] of [
+  ['memoryJulian',  'a MEMORY of Julian'],
+  ['thinkJulian',   'THINKING about Julian'],
+  ['prepareJulian', 'PREPARING to meet Julian later'],
+  ['letterJulian',  'an OLD LETTER from Julian'],
+  ['windSound',     'wind and environmental sound'],
+]) {
+  const R = await run({ hot: false, solo: true, mutate });
+  t(`   solo: ${what} is ALLOWED`,
+    R.author.length === 1 && !R.logs.some(l => /SOLO:INTERACTION|IDENTITY:INVENTED/.test(l)),
+    `author=${R.author.length} | ${(R.logs.find(l=>/SOLO:INTERACTION|IDENTITY/.test(l))||'').slice(0,150)}`);
+}
+
 // ── MULTI-PERSON MUST BE UNCHANGED ────────────────────────────────────────────────────────
 console.log(`\n${'─'.repeat(90)}\n  multi-person scenes keep the interlocutor contract\n${'─'.repeat(90)}`);
 {
@@ -715,6 +782,8 @@ console.log(`\n${'─'.repeat(90)}\n  multi-person scenes keep the interlocutor 
     !/SOLO STAGE/.test(pu) && !/SOLO STAGE/.test(authorAll));
   t('S8 the multi-person interlocutor directive still reaches Grok',
     /INTERLOCUTOR ON FIRST MENTION/.test(authorAll));
+  t('S8 the solo-interaction validator does NOT run on a multi-person stage',
+    !M.logs.some(l => /SCENE1:SOLO:INTERACTION/.test(l)) && M.author.length === 1);
   t('S8 multi-person plan is still ACCEPTED end to end',
     M.author.length === 1 && (M.skeleton && M.skeleton.cp || []).length === (M.eligible || []).length,
     `author=${M.author.length} cp=${(M.skeleton && M.skeleton.cp || []).length} cast=${(M.eligible||[]).length}`);
