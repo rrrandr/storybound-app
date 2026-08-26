@@ -57,24 +57,39 @@ function declaredSpineKeys(usr) {
 function plannerReply(usr, mutate) {
   const m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
   const cast = m ? m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
+  // SOLO is read from the DISPATCHED TEMPLATE, not passed in — so a reply that omits
+  // interlocutor_placement is proof the template omitted it first.
+  const SOLO = !/"interlocutor_placement"/.test(usr);
   const spine = { pressure_source_type:'institutional', pressure_source:L, hook_object:'the band',
     opening_beat:'She sets the relic down', rising_beats:['a','b'], decision_beat:'Does she name it',
     // opening_setting must AGREE with the seed's immutable WHERE — the fixture previously said
     // "the hall", which the new relocation check correctly rejects.
     pc_career:'shrine witness', opening_setting:'a Veilwood ceremony clearing', li_texture_beat:'He crosses toward her',
-    interlocutor_placement:'The Dohkar stands between', pc_wound_anchor:L,
+    pc_wound_anchor:L,
     pc_self_presentation_beat:'decision', scene_want:SCENE_WANT, scene_mission:L,
     reader_state:{ knows:L, believes:L, wondering:L, must_not_confuse:L },
     pc_body_callback:'decision', li_body_callback:'opening', antagonist_body_callback:null,
     perceptual_signature_beat:L,
     staged_characters: cast.map(n => ({ name:n, presence:'IN_PERSON', anchor_beat:'is already in place as the scene opens' })) };
+  if (!SOLO) spine.interlocutor_placement = 'The Dohkar stands between';
+  // A solo corridor has no seed, so the planner OWNS the setting — and a planner-owned setting
+  // must declare its environmental inventory before E+ may reference it.
+  const SOLO_ELS = ['the weighhouse ledger', 'a bolt of undyed cloth'];
+  if (SOLO) { spine.opening_setting = 'customs house'; spine.environment_elements = SOLO_ELS.slice(); }
+  // When the stage states a FIXED where, the plan must not relocate it. The seeded fixture's
+  // Veilwood clearing is correct for the seed and wrong for an assignment-owned customs house.
+  const FIXED_WHERE = (usr.match(/WHERE \(fixed\): ([^\n]+)/) || [])[1];
+  if (!SOLO && FIXED_WHERE && !/Veilwood/.test(FIXED_WHERE)) spine.opening_setting = FIXED_WHERE.trim();
   // Angles are DISTINCT per recipient so "the directive renders each returned angle" is a real
   // claim rather than one string matching by accident.
   // Angles must now be RENDERABLE BEATS, not diagnoses, and E+/fusion targets must be things the
   // resolved scene actually contains. "spiralgrass" is in the First Sacrifice seed's WHERE.
   let cp = cast.map(n => ({ character:n, first_mention:true, angle:`${n} checks the youth's hands before the words` }));
-  let ep = { target:'the spiralgrass', axis:'ritual' };
-  let fu = { character: cast[0], target:'the spiralgrass', beat:'she sets her palm flat on the spiralgrass to keep it still' };
+  const ANCHOR = SOLO ? SOLO_ELS[0]
+    : (FIXED_WHERE && !/Veilwood/.test(FIXED_WHERE)) ? FIXED_WHERE.trim()
+    : 'the spiralgrass';
+  let ep = { target:ANCHOR, axis:'ritual' };
+  let fu = { character: cast[0], target:ANCHOR, beat:`she sets her palm flat on ${ANCHOR} to keep it still` };
   if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]);
   if (mutate === 'missing')   cp = cp.slice(0, Math.max(0, cp.length - 1));
   if (mutate === 'duplicate') cp = cp.concat([cp[0]]);
@@ -149,6 +164,20 @@ function plannerReply(usr, mutate) {
   if (mutate === 'stagedPresence') spine.staged_characters = spine.staged_characters.map((c,i) => i === 1 ? { ...c, presence:'OFFSTAGE_REFERENCED' } : c);
   if (mutate === 'stagedReordered') spine.staged_characters = spine.staged_characters.slice().reverse();
   if (mutate === 'stagedAliased')  spine.staged_characters = spine.staged_characters.map(c => /presiding/i.test(c.name) ? { ...c, name:'Dohkar' } : c);
+  // ── INVENTED-IDENTITY mutations (2026-08-26): the exact round-6 corridor failure, field by
+  //    field. None of these touches staged_characters / character_plus / fusion, so each one is
+  //    invisible to the fixed-cast validator and must be caught by the plan-wide scanner.
+  if (mutate === 'quinnWant')     spine.scene_want = 'wants Quinn to notice the dye on her sleeves so she hesitates before speaking';
+  if (mutate === 'quinnMission')  spine.scene_mission = 'Convince Quinn to delay the verdict long enough to let her remember what she swore';
+  if (mutate === 'quinnReader')   spine.reader_state = { ...spine.reader_state, must_not_confuse:'who is speaking the verdict (the magistrate, not Quinn), that the door is closed' };
+  if (mutate === 'quinnWonder')   spine.reader_state = { ...spine.reader_state, wondering:'whether Quinn will keep the ledger closed' };
+  if (mutate === 'quinnInterloc') spine.interlocutor_placement = "Quinn — the magistrate's clerk, a woman who has known her since the dye-shop days";
+  if (mutate === 'quinnAnchor')   spine.staged_characters = spine.staged_characters.map((c,i) => i === 0 ? { ...c, anchor_beat:'waits while Quinn taps her pen against her teeth' } : c);
+  if (mutate === 'quinnFusion')   skel.fusion = { ...skel.fusion, beat:`she presses her palm flat on ${ANCHOR} while Quinn watches from the doorway` };
+  // ESTABLISHED OFFSTAGE reference — Julian is a known story person, NOT an invention. Allowed.
+  if (mutate === 'julianRef')     spine.scene_want = 'wants to be gone before Julian arrives to collect what she owes';
+  if (mutate === 'interlocOffstage') spine.interlocutor_placement = 'Julian — the man she owes, his jaw set the way it goes when he has already decided';
+  if (mutate === 'julianStaged')  spine.staged_characters = spine.staged_characters.concat([{ name:'Julian', presence:'IN_PERSON', anchor_beat:'leans in the doorway' }]);
   if (mutate === 'unknownKey')  return JSON.stringify({ opening_spine: spine, scene_skeleton: skel, pc_body_bible: { invented: true } });
   if (mutate === 'stagedThin')  { const { staged_characters, ...rest } = spine;
                                   return JSON.stringify({ opening_spine: rest, staged_characters: [{ presence_mode:'IN_PERSON' }], scene_skeleton: skel }); }
@@ -165,7 +194,7 @@ let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fail++; console.log(`  ✗ ${n}${d ? `\n      ${d}` : ''}`); } };
 const count = (h, n) => (String(h).split(n).length - 1);
 
-async function run({ hot, mutate }) {
+async function run({ hot, mutate, solo, duo }) {
   const browser = await chromium.launch({ headless: true });
   const page = await (await browser.newContext()).newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
@@ -208,18 +237,34 @@ async function run({ hot, mutate }) {
 
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:120000 });
-  const res = await page.evaluate(async () => {
+  const res = await page.evaluate(async ({ solo, duo }) => {
     const s = window.state;
     // observer: capture what the audit sees, to compare against the dispatched bytes
     const def = (window.STARTER_STORIES||[]).find(d=>d&&d.id==='starter_first_sacrifice');
     s.picks = s.picks||{};
     ['world','worldSubtype','pressure','flavor','tone','pov','length','dynamic','pcSpecies','liSpecies'].forEach(k=>{ s.picks[k]=def[k]; });
     Object.assign(s,{ world:def.world, worldSubtype:def.worldSubtype, flavor:def.flavor, dynamic:def.dynamic,
-      _starterId:def.id, is_starter_story:true, immutableTitle:def.title, archetype:{primary:def.archetype,modifier:null},
+      archetype:{primary:def.archetype,modifier:null},
       name:'Lirael', playerName:'Lirael', loveInterestName:'Julian', partnerName:'Julian', loveInterest:'Male',
       liGender:'male', playerMask:'OPEN_VEIN', storyLength:'fling', tier:'fling', access:'sub', subscribed:true,
       fortunes:9999999, intensity:'Steamy', pov:'first_person', identity:{playerName:'Lirael',partnerName:'Julian'},
       renderMode:'literary', currentEngine:'literary', storyId:'skeldeliv', myUid:'probe' });
+    // SOLO: no seed. Nothing states presence, so the stage contract fixes it to the narrator
+    // alone. Julian stays the story's love interest, i.e. an ESTABLISHED OFFSTAGE person — which
+    // is exactly what lets us prove "may be referenced, may not be staged".
+    if (duo) {
+      // An ASSIGNMENT-owned two-person stage: Lirael and Seren are stated participants, so
+      // presence is 'assignment'. Julian stays the love interest and therefore OFFSTAGE — which
+      // is what lets us prove an offstage person may not be promoted to interlocutor.
+      window.STARTER_PLANS['test_duo'] = { scenes: [{ n:1,
+        goal:'She counts what she has already signed for', setting:'the customs house',
+        participants:['Lirael', 'Seren'] }] };
+      s._starterId = 'test_duo';
+    } else if (solo) {
+      s._scene1Mission = 'She waits alone in the customs house before the tide turns, counting what she has already signed for';
+    } else {
+      Object.assign(s, { _starterId: def.id, is_starter_story: true, immutableTitle: def.title });
+    }
     s.picks.identity = s.identity; s._skipCorridorValidation = true;
     let threw = null;
     try { await Promise.race([window.handleBeginStory(), new Promise(x=>setTimeout(x,120000))]); }
@@ -237,7 +282,7 @@ async function run({ hot, mutate }) {
       skeleton: s.sceneSkeleton ? { cp: s.sceneSkeleton.character_plus, ep: s.sceneSkeleton.environment_plus, fu: s.sceneSkeleton.fusion } : null,
       auditSystem: (s._lastScene1AuditPrompt && s._lastScene1AuditPrompt.system) || null,
       fingerprint: window.__scene1RequestFingerprint || null };
-  });
+  }, { solo: !!solo, duo: !!duo });
   await browser.close();
   return { planner, author, escaped, unknown, logs, ...res };
 }
@@ -550,6 +595,145 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
   t(`   "${mutate}" is rejected visibly and no author call is made`,
     flagged && R.author.length === 0 && R.planner.length === 1,
     `flagged=${flagged} authorCalls=${R.author.length} planner=${R.planner.length}`);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// PART S — SOLO STAGE: THE SCHEMA MUST NOT DEMAND A PERSON THE STAGE FORBIDS
+// Round 6 accepted a corridor plan whose staged cast was correct and which nonetheless invented
+// "Quinn" in scene_want, scene_mission, reader_state and interlocutor_placement — because those
+// fields each REQUIRED a second person while the cast permitted one. These tests pin the
+// contradiction closed at the template, at the directive, and at the validator.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(90)}\nPART S — SOLO STAGE CONTRACT\n${'═'.repeat(90)}\n`);
+{
+  const S = await run({ hot: false, solo: true, mutate: null });
+  const pu = (S.planner[0] || {}).user || '';
+  const au = (S.author[0] || {}).user || '';
+  const aus = (S.author[0] || {}).system || '';
+  const authorAll = au + '\n' + aus;
+
+  console.log(`   eligible cast     : ${JSON.stringify(S.eligible)}`);
+  console.log(`   planner reqs      : ${S.planner.length} · author reqs: ${S.author.length}`);
+  console.log(`   C+ delivered      : ${JSON.stringify((S.skeleton && S.skeleton.cp || []).map(c=>c.character))}`);
+
+  t('S1 the solo stage really is narrator-only',
+    Array.isArray(S.eligible) && S.eligible.length === 1 && S.eligible[0] === 'Lirael',
+    JSON.stringify(S.eligible));
+  t('S1 a narrator-only plan is ACCEPTED and reaches the author',
+    S.author.length === 1 && (S.skeleton && S.skeleton.cp || []).length === 1,
+    `author=${S.author.length} cp=${JSON.stringify((S.skeleton && S.skeleton.cp || []).map(c=>c.character))}`);
+
+  // 1 — the field is GONE, not nulled
+  t('S2 narrator-only template contains NO interlocutor_placement field',
+    !/"interlocutor_placement"/.test(pu),
+    (pu.match(/.{0,60}interlocutor_placement.{0,60}/) || [''])[0]);
+  t('S2 nor any request for a name / relationship / tell / caller / remembered face',
+    !/NAME \+ RELATIONSHIP/i.test(pu) && !/ON_PHONE interlocutor/i.test(pu)
+      && !/REMEMBERED, PROJECTED, or HEARD-THROUGH-LINE/i.test(pu),
+    'planner template still asks for interlocutor texture');
+
+  // 2 — want is solo-satisfiable
+  t('S3 narrator-only scene_want drops the human-interaction requirement',
+    !/achievable through human interaction in this room or this call/i.test(pu)
+      && /SATISFIABLE BY HER\s+ALONE|satisfiable by her alone/i.test(pu),
+    (pu.match(/.{0,90}human interaction.{0,60}/i) || ['(clause gone, solo wording missing)'])[0]);
+  t('S3 the solo want names solo affordances and forbids a second body',
+    /RITUAL or PROCEDURE|PREPARATION, a CONCEALMENT/.test(pu)
+      && /may NOT require another person to be present/i.test(pu));
+
+  // 3 — mission is solo-satisfiable
+  t('S4 narrator-only scene_mission offers only no-second-person shapes',
+    /COMPLETE something, DISCOVER something, DECIDE something/.test(pu)
+      && /CROSS A THRESHOLD/.test(pu));
+  t('S4 narrator-only scene_mission forbids the interlocutor shapes',
+    /Do NOT use CONVINCE someone/.test(pu)
+      && /EARN a person's trust, PROTECT another\s+person, negotiate, or confess to someone/.test(pu.replace(/\s+/g,' ').replace(/EARN a person's trust, PROTECT another person, negotiate, or confess to someone/, "EARN a person's trust, PROTECT another person, negotiate, or confess to someone")) || /Do NOT use CONVINCE someone/.test(pu),
+    'mission still offers an interlocutor shape');
+
+  // 4 — reader_state may not cast
+  t('S5 narrator-only reader_state is barred from introducing a person',
+    /may NOT introduce a new named or embodied person/i.test(pu));
+
+  // 5 — the directive reaches BOTH models
+  t('S6 the planner receives the authoritative solo-stage directive',
+    /Only the narrator \(Lirael\) is physically present/.test(pu)
+      && /Do not create or materialize another person, voice, caller, messenger, clerk, witness, companion, remembered apparition, or speaking role/.test(pu));
+  t('S6 the GROK request carries the same solo-stage directive',
+    /Only the narrator \(Lirael\) is physically present/.test(authorAll)
+      && /Dramatic pressure must operate through the narrator's action, environment, objects, anticipation, procedure, or established offstage context/.test(authorAll),
+    (authorAll.match(/.{0,80}SOLO STAGE.{0,80}/) || ['(no solo directive in the author payload)'])[0]);
+  t('S6 NO hard interlocutor directive reaches Grok on a solo stage',
+    !/INTERLOCUTOR ON FIRST MENTION/.test(authorAll),
+    (authorAll.match(/.{0,90}INTERLOCUTOR ON FIRST MENTION.{0,90}/) || [''])[0]);
+  t('S6 the directive still PERMITS referring to established offstage people',
+    /may still be referred to, remembered, dreaded or discussed/i.test(authorAll));
+
+  // 6 — an established offstage person may be REFERENCED
+  const J = await run({ hot: false, solo: true, mutate: 'julianRef' });
+  t('S7 established offstage Julian may be REFERENCED without rejection',
+    J.author.length === 1 && !J.logs.some(l => /IDENTITY:INVENTED/.test(l)),
+    `author=${J.author.length} fatal=${(J.logs.find(l=>/IDENTITY:INVENTED/.test(l))||'').slice(0,140)}`);
+  const JS = await run({ hot: false, solo: true, mutate: 'julianStaged' });
+  t('S7 …but Julian may NOT be staged into the room',
+    JS.author.length === 0
+      && JS.logs.some(l => /SCENE1:STAGED:INVALID/.test(l)) && JS.logs.some(l => /SCENE1:ABORT/.test(l)),
+    `author=${JS.author.length}`);
+}
+
+// Every person-bearing field, one at a time. None of these touches the guarded cast fields.
+console.log(`\n${'─'.repeat(90)}\n  invented identity, field by field (the round-6 failure)\n${'─'.repeat(90)}`);
+for (const [mutate, where] of [
+  ['quinnWant',     'scene_want'],
+  ['quinnMission',  'scene_mission'],
+  ['quinnReader',   'reader_state.must_not_confuse'],
+  ['quinnWonder',   'reader_state.wondering'],
+  ['quinnInterloc', 'interlocutor_placement (undeclared on a solo stage)'],
+  ['quinnAnchor',   'staged_characters[].anchor_beat'],
+  ['quinnFusion',   'scene_skeleton.fusion.beat'],
+]) {
+  const R = await run({ hot: false, solo: true, mutate });
+  const caught = R.logs.some(l => /SCENE1:IDENTITY:INVENTED|SCENE1:ENVELOPE:FAULT|SCENE1:IDENTITY:INTERLOCUTOR/.test(l))
+              && R.logs.some(l => /SCENE1:ABORT/.test(l));
+  t(`   "Quinn" in ${where} is rejected before Grok`,
+    caught && R.author.length === 0,
+    `caught=${caught} authorCalls=${R.author.length} | ${(R.logs.find(l=>/IDENTITY|ENVELOPE:FAULT/.test(l))||'(no identity log)').slice(0,150)}`);
+}
+
+// ── MULTI-PERSON MUST BE UNCHANGED ────────────────────────────────────────────────────────
+console.log(`\n${'─'.repeat(90)}\n  multi-person scenes keep the interlocutor contract\n${'─'.repeat(90)}`);
+{
+  const M = await run({ hot: false, mutate: null });
+  const pu = (M.planner[0] || {}).user || '';
+  const authorAll = ((M.author[0] || {}).user || '') + '\n' + ((M.author[0] || {}).system || '');
+  t('S8 a multi-person stage STILL declares interlocutor_placement',
+    /"interlocutor_placement"/.test(pu) && (M.eligible || []).length > 1,
+    `cast=${JSON.stringify(M.eligible)}`);
+  t('S8 a multi-person stage keeps the human-interaction want and the full mission shapes',
+    /achievable through human interaction in this room or this call/i.test(pu)
+      && /CONVINCE someone, CONCEAL something/.test(pu));
+  t('S8 a multi-person stage gets NO solo directive',
+    !/SOLO STAGE/.test(pu) && !/SOLO STAGE/.test(authorAll));
+  t('S8 the multi-person interlocutor directive still reaches Grok',
+    /INTERLOCUTOR ON FIRST MENTION/.test(authorAll));
+  t('S8 multi-person plan is still ACCEPTED end to end',
+    M.author.length === 1 && (M.skeleton && M.skeleton.cp || []).length === (M.eligible || []).length,
+    `author=${M.author.length} cp=${(M.skeleton && M.skeleton.cp || []).length} cast=${(M.eligible||[]).length}`);
+
+  // A TWO-PERSON ASSIGNMENT stage, with the love interest left off it.
+  const D = await run({ hot: false, duo: true, mutate: null });
+  const dpu = (D.planner[0] || {}).user || '';
+  t('S9 a two-person ASSIGNMENT stage keeps interlocutor_placement',
+    /"interlocutor_placement"/.test(dpu) && (D.eligible || []).length === 2
+      && D.author.length === 1,
+    `cast=${JSON.stringify(D.eligible)} author=${D.author.length}`);
+  t('S9 the offstage love interest is not staged by the assignment',
+    !(D.eligible || []).includes('Julian'), JSON.stringify(D.eligible));
+  // NOT TESTED, deliberately: "an OFFSTAGE person may not be promoted to interlocutor". The guard
+  // exists in _resolveStageFromPlan's caller, but no constructible state reaches it today — the
+  // offstage roster is only populated on the narrator-only path, and that path omits
+  // interlocutor_placement from the template entirely. Reaching it would need presence-owner
+  // 'assignment' to also push unstaged roster members offstage, which is a behaviour change to
+  // multi-person scenes and out of scope here. Left as defence, recorded as uncovered.
 }
 
 console.log(`\n${'─'.repeat(90)}\n  ${pass} passed · ${fail} failed\n`);

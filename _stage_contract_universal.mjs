@@ -725,6 +725,79 @@ console.log(`\n${'═'.repeat(92)}\nPART F — ENVELOPE RECONCILER\n${'═'.repe
   await page.close();
 }
 
+// ════════════════════════════════════════════════════════════════════════════════════════════
+// PART G — THE IDENTITY SCANNER, AS A PURE FUNCTION
+// The scanner's whole value depends on it NOT being a capitalization sweep. A loose one would
+// reject "Veilwood", "Guildhall", "The Answer" and every sentence-initial word, and the first
+// false positive would get it switched off. The negative controls matter more than the positives.
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(92)}\nPART G — INVENTED-IDENTITY SCANNER (pure)\n${'═'.repeat(92)}\n`);
+{
+  const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
+  await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window.state && window._planInventedPersons, { timeout:120000 });
+
+  const G = await page.evaluate(() => {
+    const stage = {
+      onStage:  [{ id:'pc:lirael', label:'Lirael', kind:'pc', aliases:['Lirael'] }],
+      offStage: [{ name:'Julian', reason:'mentioned in the scene mission, never staged' }],
+      setting: 'the Veilwood guildhall corridor',
+      environmentElements: ['a carved oak door', 'the Ashen Ledger', 'waxed stone floor'],
+    };
+    const st = { playerName:'Lirael', loveInterestName:'Julian', partnerName:'Julian' };
+    const known = window._planKnownNameSet(stage, st);
+    const scan = (o) => window._planInventedPersons(o, known, '', [], 0).map(v => v.name);
+    return {
+      known: Object.keys(known).sort(),
+      // ── POSITIVES: the exact round-6 failure, field by field ──
+      pWant:     scan({ scene_want:'wants Quinn to notice the dye on her sleeves' }),
+      pMission:  scan({ scene_mission:'Convince Quinn to delay the verdict' }),
+      pReader:   scan({ reader_state:{ must_not_confuse:'who is speaking (the magistrate, not Quinn)' } }),
+      pWonder:   scan({ reader_state:{ wondering:'whether Quinn will keep the ledger closed' } }),
+      pApposit:  scan({ interlocutor_placement:"Quinn — the magistrate's clerk, silver-streaked braid" }),
+      pPossess:  scan({ beat:"she waited for Quinn's voice to steady" }),
+      pSubject:  scan({ beat:'Mateo hesitated in the doorway' }),
+      pNested:   scan({ opening_spine:{ reader_state:{ knows:'Soraya waits at the gate' } } }),
+      // ── NEGATIVES: none of these may be reported ──
+      nPlace:    scan({ opening_setting:'the Veilwood guildhall corridor', beat:'Veilwood will keep its own counsel' }),
+      nElements: scan({ environment_elements:['a carved oak door','the Ashen Ledger','waxed stone floor'] }),
+      nSentInit: scan({ a:'The door held.', b:'She waited.', c:'Then the light moved.', d:'Nobody came.',
+                        e:'There was no answer.', f:'It stopped.' }),
+      nOnStage:  scan({ scene_want:'wants Lirael to stop counting', beat:"Lirael's hand flattened on the ledger" }),
+      nOffStage: scan({ scene_want:'wants to be gone before Julian arrives', m:'Convince Julian to wait' }),
+      nMonths:   scan({ beat:'March will come before the tide turns' }),
+      nRoleNoun: scan({ beat:'the clerk hesitated; the magistrate said nothing' }),
+      nEmpty:    scan({ a:null, b:'', c:0, d:[], e:{} }),
+    };
+  });
+
+  console.log(` known-name set: ${JSON.stringify(G.known)}\n`);
+  const only = (arr, n) => Array.isArray(arr) && arr.length === 1 && arr[0] === n;
+
+  t('G1 "wants Quinn to notice" — the want frame catches it',            only(G.pWant, 'Quinn'), JSON.stringify(G.pWant));
+  t('G1 "Convince Quinn ..." sentence-initial verb still catches it',    only(G.pMission, 'Quinn'), JSON.stringify(G.pMission));
+  t('G1 "the magistrate, not Quinn" — the contrast frame catches it',    only(G.pReader, 'Quinn'), JSON.stringify(G.pReader));
+  t('G1 "whether Quinn will keep ..." — the modal frame catches it',     only(G.pWonder, 'Quinn'), JSON.stringify(G.pWonder));
+  t('G1 "Quinn — the clerk" — the appositive frame catches it',          only(G.pApposit, 'Quinn'), JSON.stringify(G.pApposit));
+  t("G1 \"Quinn's voice\" — the possessive frame catches it",            only(G.pPossess, 'Quinn'), JSON.stringify(G.pPossess));
+  t('G1 "Mateo hesitated" — the subject frame catches it',               only(G.pSubject, 'Mateo'), JSON.stringify(G.pSubject));
+  t('G1 the walk reaches ARBITRARILY NESTED fields',                     only(G.pNested, 'Soraya'), JSON.stringify(G.pNested));
+
+  t('G2 a PLACE in a person frame is not a person',                      G.nPlace.length === 0, JSON.stringify(G.nPlace));
+  t('G2 capitalised environment elements are not people',                G.nElements.length === 0, JSON.stringify(G.nElements));
+  t('G2 sentence-initial words are never reported',                      G.nSentInit.length === 0, JSON.stringify(G.nSentInit));
+  t('G2 the narrator herself is not an invention',                       G.nOnStage.length === 0, JSON.stringify(G.nOnStage));
+  t('G2 an ESTABLISHED OFFSTAGE person may be referenced freely',        G.nOffStage.length === 0, JSON.stringify(G.nOffStage));
+  t('G2 month and weekday names are not people',                         G.nMonths.length === 0, JSON.stringify(G.nMonths));
+  t('G2 unnamed role-nouns are not people (the sanctioned escape hatch)',G.nRoleNoun.length === 0, JSON.stringify(G.nRoleNoun));
+  t('G2 null / empty / non-string values never throw',                   Array.isArray(G.nEmpty) && G.nEmpty.length === 0, JSON.stringify(G.nEmpty));
+
+  await page.close();
+}
+
 await browser.close();
 console.log(`\n${'─'.repeat(92)}\n  ${pass} passed · ${fail} failed\n`);
 process.exit(fail ? 1 : 0);
