@@ -28,6 +28,32 @@ const GENERIC = { goal:L, antagonistOrAntiForce:'the assembly', milestones:[], s
 
 // The planner reply is built FROM the eligible cast the request advertises, so the
 // harness never hard-codes a roster the product might legitimately change.
+// Depth-1 keys of the dispatched opening_spine template. Mirrors the product's
+// _openingSpineDeclaredFields; the product's own parser is asserted separately against the same
+// dispatched text, so this local copy only has to agree with it, never to define the contract.
+function declaredSpineKeys(usr) {
+  const s = String(usr || '');
+  const at = s.indexOf('"opening_spine"');
+  if (at === -1) return [];
+  const open = s.indexOf('{', at);
+  const out = []; let depth = 0;
+  for (let i = open; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '"') {
+      let close = i + 1; while (close < s.length && s[close] !== '"') close++;
+      let after = close + 1; while (after < s.length && /\s/.test(s[after])) after++;
+      if (depth === 1 && s[after] === ':') {
+        const key = s.slice(i + 1, close);
+        if (/^[a-z_][a-z0-9_]*$/i.test(key) && !out.includes(key)) out.push(key);
+      }
+      i = close; continue;
+    }
+    if (ch === '{') depth++;
+    else if (ch === '}') { depth--; if (depth === 0) break; }
+  }
+  return out;
+}
+
 function plannerReply(usr, mutate) {
   const m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
   const cast = m ? m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
@@ -97,6 +123,26 @@ function plannerReply(usr, mutate) {
     return JSON.stringify({ opening_spine: rest, staged_characters, scene_skeleton: skel });
   }
   if (mutate === 'stagedBoth')  return JSON.stringify({ opening_spine: spine, staged_characters: spine.staged_characters, scene_skeleton: skel });
+  // The round-4 live shape: the spine distributed across the envelope's top level. Only fields the
+  // template ACTUALLY declares for this request are distributed — several spine fields are emitted
+  // conditionally, and an undeclared field at top level is a schema fault by design, not drift.
+  if (mutate === 'spread') {
+    const declared = declaredSpineKeys(usr);
+    const top = {}, nested = {};
+    Object.keys(spine).forEach(k => { (declared.includes(k) ? top : nested)[k] = spine[k]; });
+    return JSON.stringify(Object.assign({ opening_spine: nested }, top, { scene_skeleton: skel }));
+  }
+  // Same drift, but semantically invalid — reconciliation must not rescue it.
+  if (mutate === 'spreadBadCast') {
+    // Distribute only DECLARED fields, so the envelope reconciles cleanly and the plan reaches the
+    // SEMANTIC validators — the point being that reconciliation must not rescue an off-roster cast.
+    const declared = declaredSpineKeys(usr);
+    const top = {}, nested = {};
+    Object.keys(spine).forEach(k => { (declared.includes(k) ? top : nested)[k] = spine[k]; });
+    const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]) };
+    return JSON.stringify(Object.assign({ opening_spine: nested }, top, { scene_skeleton: bad }));
+  }
+  if (mutate === 'unknownKey')  return JSON.stringify({ opening_spine: spine, scene_skeleton: skel, pc_body_bible: { invented: true } });
   if (mutate === 'stagedThin')  { const { staged_characters, ...rest } = spine;
                                   return JSON.stringify({ opening_spine: rest, staged_characters: [{ presence_mode:'IN_PERSON' }], scene_skeleton: skel }); }
   if (mutate === 'nested')       return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel } });
@@ -359,6 +405,7 @@ for (const [mutate, label, expect] of [
   ['clothEp',       'E+ grounded through seed.sceneOne.narrator',           { alias:false }],
   ['nested',        'nested scene_skeleton lifted intact',                   { alias:false, lifted:true }],
   ['stagedTop',     'lone top-level staged_characters moved into the spine', { alias:false, staged:true }],
+  ['spread',        'WHOLE spine distributed at top level is reconciled',    { alias:false, lifted:true }],
 ]) {
   const R = await run({ hot: false, mutate });
   const cp = ((R.skeleton && R.skeleton.cp) || []).map(c => c.character);
@@ -378,9 +425,10 @@ for (const [mutate, label, expect] of [
       R.logs.filter(l => /ENVELOPE/.test(l)).slice(0,1).join(''));
   }
   if (expect.staged) {
-    t(`   "${mutate}" — moved intact: every staged entry survives`,
-      R.logs.some(l => /moved top-level staged_characters/.test(l)
-                       && new RegExp(`\\(${(R.eligible || []).length} entries, contents unchanged\\)`).test(l)),
+    t(`   "${mutate}" — moved intact, into its declared position`,
+      R.logs.some(l => /ENVELOPE:NORMALISED/.test(l)
+                       && /staged_characters \(top level -> opening_spine\)/.test(l)
+                       && /values moved intact/.test(l)),
       R.logs.filter(l => /ENVELOPE:NORMALISED/.test(l)).slice(0,1).join(''));
   }
 }
@@ -424,6 +472,33 @@ console.log('');
       && /character_plus never decides who is present/.test(full));
   t(`   template's fusion character is drawn from the same staged enumeration`,
     /"fusion": \{ "character": "<EXACTLY one of: /.test(full) && /and one you staged IN_PERSON/.test(full));
+  // ── the reconciler's allowlist IS the template's contract ──
+  // Parsed from the SAME dispatched text the planner received, so a field added to the schema
+  // later cannot silently become unreconciled.
+  const declared = await (async () => {
+    const b2 = await chromium.launch({ headless: true });
+    const p2 = await (await b2.newContext()).newPage();
+    p2.setDefaultTimeout(180000); p2.setDefaultNavigationTimeout(180000);
+    await p2.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: mk(false) }));
+    await p2.route('**/api/**', r => /\/api\/(config|geo)\b/.test(r.request().url()) ? r.continue() : r.abort());
+    await p2.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+    await p2.waitForFunction(() => window._openingSpineDeclaredFields, { timeout:180000 });
+    const d = await p2.evaluate(t2 => window._openingSpineDeclaredFields(t2), pu);
+    await b2.close();
+    return d;
+  })();
+  const MUST_RECONCILE = ['opening_setting', 'environment_elements', 'staged_characters',
+                          'reader_state', 'hook_object', 'scene_want', 'scene_mission'];
+  t(`   reconciler allowlist is PARSED from the dispatched template`,
+    Array.isArray(declared) && declared.length >= 10, `parsed ${declared && declared.length} field(s)`);
+  t(`   every field the template declares is reconcilable`,
+    MUST_RECONCILE.every(f => declared.includes(f)),
+    `missing from parsed list: ${MUST_RECONCILE.filter(f => !declared.includes(f))}`);
+  t(`   the allowlist does NOT leak nested or sibling keys`,
+    !declared.includes('character_plus') && !declared.includes('scene_skeleton')
+      && !declared.includes('knows') && !declared.includes('name'),
+    JSON.stringify(declared.filter(f => ['character_plus','scene_skeleton','knows','name'].includes(f))));
+
   t(`   template shows NO invented example identity`,
     !/\b(Mateo|Soraya|Quinn|Jane Doe|John Doe)\b/.test(full),
     (full.match(/\b(Mateo|Soraya|Quinn)\b/) || [''])[0]);
@@ -440,11 +515,13 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'fusionnull', 'fusionbadcode', 'fusionfalsecode', 'fusionnobeat', 'fusionthinbeat',
                       // identity / envelope faults that must STILL abort
                       'aliasOffstage', 'dupSkeleton', 'nestedThin',
-                      'stagedBoth', 'stagedThin']) {
+                      'stagedBoth', 'stagedThin',
+                      // reconciler must not rescue semantics, and must not swallow invented fields
+                      'spreadBadCast', 'unknownKey']) {
   const R = await run({ hot: false, mutate });
   // Both failure classes must exit visibly: semantic (SKELETON:INVALID) and unparseable
   // planner output (PLANNER:UNRECOVERABLE). Either way the ABORT must follow.
-  const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID|SCENE1:PLANNER:UNRECOVERABLE|SCENE1:ENVELOPE:(CONFLICT|INCOMPLETE)|SCENE1:STAGE:UNRESOLVED/.test(l))
+  const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID|SCENE1:PLANNER:UNRECOVERABLE|SCENE1:ENVELOPE:FAULT|SCENE1:STAGE:UNRESOLVED/.test(l))
                && R.logs.some(l => /SCENE1:ABORT/.test(l));
   if (mutate === 'unknown') {
     console.log('   --- diagnostic (mutate=unknown) ---');

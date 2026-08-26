@@ -578,7 +578,7 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
   {
     const R = await fullRun({ label:'corridor stagedTop (valid)', statePatch: CORRIDOR,
       reply: (u) => corridorReply(u, {}) });
-    const lifted = R.logs.some(l => /moved top-level staged_characters/.test(l));
+    const lifted = R.logs.some(l => /ENVELOPE:NORMALISED/.test(l) && /staged_characters \(top level -> opening_spine\)/.test(l));
     t('E1 lone top-level staged_characters is lifted and the plan validates',
       lifted && R.author.length === 1 && !R.skeletonFatal,
       `lifted=${lifted} author=${R.author.length} fault=${R.skeletonFatal}`);
@@ -590,13 +590,13 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
         const roster = [...u.matchAll(/^ {2}• (.+?)\s{2}\(/gm)].map(m => m[1].trim());
         return corridorReply(u, { stagedNames: roster.concat(['Mateo']) });
       } });
-    const lifted = R.logs.some(l => /moved top-level staged_characters/.test(l));
+    const lifted = R.logs.some(l => /ENVELOPE:NORMALISED/.test(l) && /staged_characters \(top level -> opening_spine\)/.test(l));
     const rejected = /not on the allowed roster/i.test(String(R.skeletonFatal || ''));
     t('E2 an invented person is MOVED intact and then rejected by the roster validator',
       lifted && rejected && R.author.length === 0,
       `lifted=${lifted} rejected=${rejected} author=${R.author.length} fault=${R.skeletonFatal}`);
     t('E2 structural recovery did not become identity recovery',
-      R.logs.some(l => /roster validation still applies/.test(l)) && rejected);
+      R.logs.some(l => /values moved intact/.test(l)) && rejected);
   }
   // E3 — corridor E+ pointing at an element that was never declared.
   {
@@ -606,6 +606,100 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
       R.author.length === 0 && /not one of the declared environment_elements/i.test(String(R.skeletonFatal || '')),
       `author=${R.author.length} fault=${R.skeletonFatal}`);
   }
+}
+
+// ════════════════════════════════════════════════════════════════════════════════════════════
+// PART F — GENERALISED ENVELOPE RECONCILER (pure)
+// Tolerate container placement drift; stay uncompromising about content.
+// ════════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(92)}\nPART F — ENVELOPE RECONCILER\n${'═'.repeat(92)}\n`);
+{
+  const page = await (await browser.newContext()).newPage();
+  page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
+  await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+  await page.waitForFunction(() => window._reconcileOpeningEnvelope && window._openingSpineDeclaredFields, { timeout:180000 });
+
+  const F = await page.evaluate(() => {
+    const R = window._reconcileOpeningEnvelope;
+    const FIELDS = ['opening_setting', 'environment_elements', 'staged_characters', 'reader_state', 'hook_object'];
+    const SK = { character_plus: [{ character: 'Lirael' }] };
+    const spineVals = {
+      opening_setting: 'customs house',
+      environment_elements: ['the ledger', 'a bolt of cloth'],
+      staged_characters: [{ name: 'Lirael', presence_mode: 'IN_PERSON' }],
+      reader_state: { knows: 'k' },
+      hook_object: 'the summons',
+    };
+    const canonical = () => ({ opening_spine: JSON.parse(JSON.stringify(spineVals)), scene_skeleton: JSON.parse(JSON.stringify(SK)) });
+    const run = (env) => { const r = R(env, FIELDS); return {
+      fault: r.fault, moves: r.moves, createdSpine: r.createdSpine,
+      env: r.fault ? null : r.envelope }; };
+
+    // 1 canonical, fully nested
+    const t1 = run(canonical());
+    // 2 whole spine distributed at top level
+    const t2 = run(Object.assign({ opening_spine: {} }, JSON.parse(JSON.stringify(spineVals)), { scene_skeleton: SK }));
+    // 3 container absent entirely
+    const t3 = run(Object.assign({}, JSON.parse(JSON.stringify(spineVals)), { scene_skeleton: SK }));
+    // 4 mixed: some nested, some at top, each exactly once
+    const t4 = run({ opening_spine: { opening_setting: 'customs house', reader_state: { knows: 'k' } },
+                     environment_elements: ['the ledger', 'a bolt of cloth'],
+                     staged_characters: [{ name: 'Lirael', presence_mode: 'IN_PERSON' }],
+                     hook_object: 'the summons', scene_skeleton: SK });
+    // 5/6/7 duplicates — scalar, array, object — byte-equivalent on purpose
+    const dup = (k) => { const e = canonical(); e[k] = JSON.parse(JSON.stringify(spineVals[k])); e.scene_skeleton = SK; return run(e); };
+    const t5 = dup('opening_setting'), t6 = dup('environment_elements'), t7 = dup('reader_state');
+    // 8 unknown top-level key
+    const e8 = canonical(); e8.pc_body_bible = { x: 1 };
+    const t8 = run(e8);
+    // 9 skeleton nested only
+    const e9 = canonical(); e9.opening_spine.scene_skeleton = e9.scene_skeleton; delete e9.scene_skeleton;
+    const t9 = run(e9);
+    // 10 skeleton in both places
+    const e10 = canonical(); e10.opening_spine.scene_skeleton = JSON.parse(JSON.stringify(SK));
+    const t10 = run(e10);
+    // 12 idempotence — reconcile the reconciled output again
+    const once = R(Object.assign({ opening_spine: {} }, JSON.parse(JSON.stringify(spineVals)), { scene_skeleton: SK }), FIELDS);
+    const twice = R(once.envelope, FIELDS);
+
+    return { t1, t2, t3, t4, t5, t6, t7, t8, t9, t10,
+             idem: { firstMoves: once.moves.length, secondMoves: twice.moves.length, secondFault: twice.fault,
+                     identical: JSON.stringify(once.envelope) === JSON.stringify(twice.envelope) },
+             // values must survive byte-identical through a move
+             valuesIntact: JSON.stringify(t2.env && t2.env.opening_spine) === JSON.stringify(spineVals) };
+  });
+
+  const okShape = (t) => !t.fault && t.env && t.env.opening_spine && t.env.scene_skeleton
+    && Object.keys(t.env).length === 2;
+  t('F1 canonical fully-nested envelope passes unchanged (no moves)',
+    okShape(F.t1) && F.t1.moves.length === 0 && !F.t1.createdSpine, JSON.stringify(F.t1.fault || F.t1.moves));
+  t('F2 a whole spine distributed at top level is reconciled',
+    okShape(F.t2) && F.t2.moves.length === 5, JSON.stringify(F.t2.fault || F.t2.moves));
+  t('F2 moved values are byte-identical — no merge, no coercion', F.valuesIntact);
+  t('F3 an absent opening_spine is reconstructed from recognised fields',
+    okShape(F.t3) && F.t3.createdSpine === true && F.t3.moves.length === 5,
+    JSON.stringify(F.t3.fault || F.t3));
+  t('F4 mixed unique placement is reconciled',
+    okShape(F.t4) && F.t4.moves.length === 3, JSON.stringify(F.t4.fault || F.t4.moves));
+  t('F5 duplicate SCALAR is rejected even when byte-equivalent',
+    /opening_setting" is present BOTH/.test(F.t5.fault || ''), JSON.stringify(F.t5.fault));
+  t('F6 duplicate ARRAY is rejected even when byte-equivalent',
+    /environment_elements" is present BOTH/.test(F.t6.fault || ''), JSON.stringify(F.t6.fault));
+  t('F7 duplicate OBJECT is rejected even when byte-equivalent',
+    /reader_state" is present BOTH/.test(F.t7.fault || ''), JSON.stringify(F.t7.fault));
+  t('F8 an unknown top-level key is a visible schema fault, never discarded',
+    /unrecognised top-level field\(s\).*pc_body_bible/.test(F.t8.fault || ''), JSON.stringify(F.t8.fault));
+  t('F9 a nested-only scene_skeleton is lifted to the top level',
+    okShape(F.t9) && F.t9.moves.some(m => /scene_skeleton/.test(m)), JSON.stringify(F.t9.fault || F.t9.moves));
+  t('F10 scene_skeleton in BOTH places is rejected',
+    /scene_skeleton is present BOTH/.test(F.t10.fault || ''), JSON.stringify(F.t10.fault));
+  t('F12 the reconciler is idempotent',
+    F.idem.firstMoves === 5 && F.idem.secondMoves === 0 && !F.idem.secondFault && F.idem.identical,
+    JSON.stringify(F.idem));
+
+  await page.close();
 }
 
 await browser.close();
