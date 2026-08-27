@@ -56,7 +56,9 @@ function declaredSpineKeys(usr) {
 
 function plannerReply(usr, mutate) {
   const m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
-  const cast = m ? m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
+  // BULLETS ONLY. A prose line that appeared between the header and the rule was parsed as a
+  // cast member, which is exactly how a real consumer of this list would have failed too.
+  const cast = m ? m[2].split('\n').filter(x => /^\s*•\s/.test(x)).map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
   // SOLO is read from the DISPATCHED TEMPLATE, not passed in — so a reply that omits
   // interlocutor_placement is proof the template omitted it first.
   const SOLO = !/"interlocutor_placement"/.test(usr);
@@ -91,10 +93,13 @@ function plannerReply(usr, mutate) {
   // her staged anchor is that same beat. One source of truth for the opening.
   const PCN = cast[0];
   const POF_BEAT = `my thumb finds ${ANCHOR} where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
-  let cp = cast.map(n => ({ character:n, first_mention:true,
-    angle: n === PCN ? POF_BEAT : `${n} checks the youth's hands before the words` }));
+  // THE PROTAGONIST GETS NO C+ ENTRY (2026-08-26). Her first appearance is pc_opening_fusion,
+  // and her accounting row is SYNTHESISED after validation — the planner never sends one.
+  let cp = cast.filter(n => n !== PCN)
+    .map(n => ({ character:n, first_mention:true, angle:`${n} checks the youth's hands before the words` }));
+  // Anchors are the prefilled SENTINELS, copied back untouched, as the template asks.
   spine.staged_characters = spine.staged_characters.map(c =>
-    c.name === PCN ? { ...c, anchor_beat: POF_BEAT } : c);
+    ({ ...c, anchor_beat: c.name === PCN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
   let pof = { character:PCN, placement:'PC_FIRST_EMBODIED_BEAT',
     character_angle:'rehearsed steadiness that does not survive contact',
     environment_target:ANCHOR, environment_axis:'ritual', beat:POF_BEAT };
@@ -138,6 +143,21 @@ function plannerReply(usr, mutate) {
   if (mutate === 'aliasProtag')    cp = cp.map((c,i) => i === 0 ? { ...c, character:'the protagonist' } : c);
   if (mutate === 'aliasDohkar')    cp = cp.map(c => /presiding/i.test(c.character) ? { ...c, character:'Dohkar' } : c);
   if (mutate === 'aliasOffstage')  cp = cp.concat([{ character:'the narrator’s absent mother', first_mention:true, angle:'sets the cloth straight twice' }]);
+  // ── THE SINGLE-SOURCE CONTRACT (2026-08-26, round 12) ──
+  // A PC character_plus entry is a SECOND opening beat, and the planner is no longer asked for
+  // one. An anchor the planner wrote over the sentinel is the same defect a field lower down.
+  if (mutate === 'pcInCp')        cp = cp.concat([{ character:PCN, first_mention:true, angle:'presses her palm to the spiralgrass, feeling its damp give' }]);
+  if (mutate === 'pcAnchorOwn')   spine.staged_characters = spine.staged_characters.map(c =>
+    c.name === PCN ? { ...c, anchor_beat:'stands at the edge of the circle counting the petitioners' } : c);
+  if (mutate === 'nonPcAnchorOwn') spine.staged_characters = spine.staged_characters.map(c =>
+    c.name !== PCN ? { ...c, anchor_beat:'watches the horizon for the light to fail' } : c);
+  // The remaining way to return nothing once every worked example is gone.
+  if (mutate === 'epSchemaEcho')  ep = { target:ANCHOR, axis:'ritual',
+    beat:'<TARGET + PHYSICAL CHANGE CAUSED BY THE AXIS + MATERIAL TRACE VISIBLE IN THIS SCENE>' };
+  if (mutate === 'epCategoryEcho') ep = { target:ANCHOR, axis:'ritual',
+    beat:'the target shows physical change from the axis, a material trace' };
+  if (mutate === 'pofSchemaEcho') pof = { ...pof, beat:'<ONE concrete beat in which the environment REVEALS her>' };
+
   // ── THE GAPS THE FIRST REAL SAMPLE EXPOSED (2026-08-26, round 11) ──
   // Live Mistral returned NO standalone fusion. Every cross-field coherence check was nested
   // inside `if (_norm.fusion)`, so none of them ran, and a plan whose opening beat touched the
@@ -145,11 +165,7 @@ function plannerReply(usr, mutate) {
   // which is exactly why the suite could not see it. These mutations omit it, as the real one did.
   if (mutate === 'pofOffTarget') {
     fu = undefined;                                    // as live: no standalone fusion at all
-    const OFF = `my thumb finds the ledger-slate where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
-    pof = { ...pof, beat: OFF };                       // declares ANCHOR, touches something else
-    cp = cp.map(c => c.character === PCN ? { ...c, angle: OFF } : c);
-    spine.staged_characters = spine.staged_characters.map(c =>
-      c.name === PCN ? { ...c, anchor_beat: OFF } : c);
+    pof = { ...pof, beat: `my thumb finds the ledger-slate where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit` };
   }
   if (mutate === 'noFusionNoEpBeat') {
     fu = undefined;
@@ -172,9 +188,6 @@ function plannerReply(usr, mutate) {
            beat:`${CLOTH} is worn thin along one edge where the rite has been performed the same way for generations` };
     fu = { character: cast[0], target:CLOTH, beat:'she tugs the band tighter until the knot bites' };
     pof = { ...pof, environment_target:CLOTH, environment_axis:'ritual', beat:CLOTH_BEAT };
-    cp = cp.map(c => c.character === PCN ? { ...c, angle:CLOTH_BEAT } : c);
-    spine.staged_characters = spine.staged_characters.map(c =>
-      c.name === PCN ? { ...c, anchor_beat: CLOTH_BEAT } : c);
   }
   const skel = { character_plus:cp, fusion:fu };
   if (pof) skel.pc_opening_fusion = pof;   // a null pof omits the KEY, as a planner omission would
@@ -348,6 +361,7 @@ async function run({ hot, mutate, solo, duo }) {
         ? (window._scene1StageContract(s).onStage || []).map(c => c.label)
         : (window._sceneEligibleCast ? window._sceneEligibleCast(s, 1) : null)),
       assignments: s._scene1SceneAssignments || null,
+      staged: s._scene1StagedCharacters || null,
       skeleton: s.sceneSkeleton ? { cp: s.sceneSkeleton.character_plus, ep: s.sceneSkeleton.environment_plus, fu: s.sceneSkeleton.fusion, pof: s.sceneSkeleton.pc_opening_fusion } : null,
       auditSystem: (s._lastScene1AuditPrompt && s._lastScene1AuditPrompt.system) || null,
       fingerprint: window.__scene1RequestFingerprint || null };
@@ -423,10 +437,16 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
   t(`${label} 11a: delivered — every C+ entry has first_mention === true`,
     cp.length > 0 && cp.every(c => c.first_mention === true),
     JSON.stringify(cp.map(c => [c.character, c.first_mention])));
-  t(`${label} 11b: delivered — every C+ angle is nonempty and substantive`,
-    cp.length > 0 && cp.every(c => String(c.angle||'').trim().length >= 12
-      && String(c.angle).trim().split(/\s+/).length >= 3),
-    JSON.stringify(cp.map(c => c.angle)));
+  // The PC's entry is ACCOUNTING, not an assignment: no angle, by contract. Everyone else owes one.
+  t(`${label} 11b: delivered — every non-PC C+ angle is nonempty and substantive`,
+    cp.filter(c => c.fulfilled_by !== 'pc_opening_fusion').length > 0
+      && cp.filter(c => c.fulfilled_by !== 'pc_opening_fusion').every(c => String(c.angle||'').trim().length >= 12
+        && String(c.angle).trim().split(/\s+/).length >= 3),
+    JSON.stringify(cp.map(c => [c.character, c.angle, c.fulfilled_by])));
+  t(`${label} 11b2: the PC's entry is an ACCOUNTING row — present, first_mention, no angle`,
+    (() => { const p = cp.filter(c => c.fulfilled_by === 'pc_opening_fusion')[0];
+             return !!p && p.first_mention === true && !String(p.angle || '').trim(); })(),
+    JSON.stringify(cp.filter(c => c.fulfilled_by === 'pc_opening_fusion')));
   t(`${label} 11c: delivered — E+ target nonempty, axis in the allowlist`,
     !!(ep && String(ep.target||'').trim() && EP_AXES.includes(String(ep.axis||''))),
     JSON.stringify(ep));
@@ -518,12 +538,30 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
   t(`12h: the planner request requires ONE opening beat carrying C+, E+ and the fusion`,
     /"pc_opening_fusion"/.test(pu)
       && /PC_FIRST_EMBODIED_BEAT/.test(pu)
-      && /REPLACES the old standalone fusion/.test(pu)
-      && /copy its "beat" verbatim into her character_plus entry AND into her staged_characters anchor_beat/.test(pu),
+      && /IS the protagonist's entire first appearance/.test(pu)
+      && /The PROTAGONIST gets NO character_plus entry/.test(pu),
     'the planner was not given the single-opening-beat contract');
   t(`12h2: the planner request requires environment_plus to carry physical evidence`,
-    /environment_plus\.beat is REQUIRED/.test(pu) && /The mark left behind/.test(pu),
+    /"beat" is REQUIRED and is the whole point of the axis/.test(pu)
+      && /PERSISTENT PHYSICAL ALTERATION or USE-PATTERN/.test(pu)
+      && /PERCEPTIBLE IN THIS SCENE/.test(pu),
     'E+ was assigned as a bare target + axis, with no evidence owed');
+  // ── NO WORKED EXAMPLES ANYWHERE IN THE DISPATCHED REQUEST ──
+  // Twice measured: an example comes back paraphrased. The seed's own WHERE legitimately contains
+  // "veil-canopy", so this asserts the EXEMPLAR PHRASING is gone, not the noun.
+  t(`12h3: the retired E+ worked example appears NOWHERE in the planner request`,
+    !/hangs lower on the left/i.test(pu)
+      && !/petitioners have pulled it aside/i.test(pu)
+      && !/through the axis of ritual" is an assignment with nothing in it/i.test(pu),
+    JSON.stringify((pu.match(/.{0,60}(hangs lower on the left|pulled it aside).{0,60}/i) || [])[0] || null));
+  t(`12h4: the retired opening-fusion worked example appears NOWHERE either`,
+    !/worn hollow/i.test(pu) && !/newly counterfeit/i.test(pu)
+      && !/generations of petitioners had polished it smooth/i.test(pu),
+    JSON.stringify((pu.match(/.{0,60}(worn hollow|newly counterfeit).{0,60}/i) || [])[0] || null));
+  t(`12h5: E+ is stated as a SHAPE, with placeholders to replace rather than prose to copy`,
+    /"beat": "<TARGET \+ PHYSICAL CHANGE CAUSED BY THE AXIS \+ MATERIAL TRACE VISIBLE IN THIS SCENE>"/.test(pu)
+      && /Replace EVERY angle-bracket placeholder with your own words/.test(pu)
+      && /CATEGORY NAMES, not content/.test(pu));
   t(`12i: FIRST-PERSON landing point is defined for the PC`,
     /FIRST-PERSON NARRATOR/.test(pu) && /FIRST EMBODIED SELF-REFERENCE OR ACTION/.test(pu),
     'planner was not told where the narrator beat lands');
@@ -549,8 +587,6 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
 // Every case here is output the live planner actually produced and the validator wrongly refused.
 console.log(` 13 · ACCEPTED AFTER RESOLUTION (alias · grounding · envelope)`);
 for (const [mutate, label, expect] of [
-  ['aliasNarrator', 'C+ recipient "the narrator" resolves to the PC',        { alias:true }],
-  ['aliasProtag',   'C+ recipient "the protagonist" resolves to the PC',     { alias:true }],
   ['aliasDohkar',   'C+ recipient "Dohkar" resolves to the role figure',     { alias:true }],
   ['clothEp',       'E+ grounded through seed.sceneOne.narrator',           { alias:false }],
   ['nested',        'nested scene_skeleton lifted intact',                   { alias:false, lifted:true }],
@@ -683,6 +719,11 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       // cross-field coherence must run when the standalone fusion is ABSENT —
                       // which is what the live planner actually returns
                       'pofOffTarget', 'noFusionNoEpBeat', 'anchorPlaceholder', 'anchorEmpty',
+                      // single-source: one asking per first appearance, and no schema echoed back
+                      'pcInCp', 'pcAnchorOwn', 'nonPcAnchorOwn',
+                      // …and she is still recognised under an alias, then still rejected
+                      'aliasNarrator', 'aliasProtag',
+                      'epSchemaEcho', 'epCategoryEcho', 'pofSchemaEcho',
                       // identical duplicates now COLLAPSE (tested below); a DIFFERENCE still aborts
                       'dupSkeletonDiff', 'stagedBothDiff',
                       // reconciler must not rescue semantics, and must not swallow invented fields
@@ -955,8 +996,15 @@ console.log(`\n${'═'.repeat(90)}\nPART V — COHERENCE WITHOUT A STANDALONE FU
 for (const [mutate, label, needle] of [
   ['pofOffTarget',     'the opening beat never reaches its declared target', 'never reaches the assigned environment target'],
   ['noFusionNoEpBeat', 'E+ with no evidence beat',                           'environment_plus has no "beat"'],
-  ['anchorPlaceholder','a staged anchor that echoes the field name',         'no usable anchor_beat'],
-  ['anchorEmpty',      'a staged anchor left blank',                         'no usable anchor_beat'],
+  ['anchorPlaceholder','a staged anchor that echoes the field name',         'there was nothing to fill in'],
+  ['anchorEmpty',      'a staged anchor left blank',                         'there was nothing to fill in'],
+  ['pcInCp',           'a character_plus entry for the protagonist',         'character_plus contains the protagonist'],
+  ['aliasNarrator',    '…and under the alias "the narrator" too',            'character_plus contains the protagonist'],
+  ['pcAnchorOwn',      'a PC anchor the planner wrote itself',               'a different moment from her'],
+  ['nonPcAnchorOwn',   'a non-PC anchor that is a second first appearance',  'TWO different first appearances'],
+  ['epSchemaEcho',     'E+ beat returned as the bracket text',               'returns the schema instead of content'],
+  ['epCategoryEcho',   'E+ beat built out of the category words',            'returns the schema instead of content'],
+  ['pofSchemaEcho',    'the opening beat returned as the bracket text',      'returns the schema instead of content'],
 ]) {
   const R = await run({ hot: false, mutate });
   const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');
@@ -1029,20 +1077,34 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
   t(`${label} U8: staged anchor_beat, C+ angle, E+ target and the opening fusion all resolve to ONE assignment`,
     (() => {
       if (!pof || !ep) return false;
-      const stagedPc = ((R.assignments && R.assignments.staged_characters) || (stage.staged || []))
-        .concat([]) // tolerate either shape
-        .find(c => c && (c.name === pcLabel));
+      const stagedPc = (R.staged || []).find(c => c && c.name === pcLabel);
       const cpPc = (sk.cp || []).find(c => c.character === pcLabel);
-      const sameAngle = cpPc && String(cpPc.angle).trim() === String(beat).trim();
-      const sameAnchor = !stagedPc || String(stagedPc.anchor_beat || '').trim() === String(beat).trim();
+      // Her C+ row is ACCOUNTING (no angle); the single source it points at is the fusion beat.
+      const sameAngle = !!cpPc && cpPc.fulfilled_by === 'pc_opening_fusion' && !String(cpPc.angle || '').trim();
+      const sameAnchor = !!stagedPc && String(stagedPc.anchor_beat || '').trim() === String(beat).trim();
       const sameTarget = String(pof.environment_target).toLowerCase() === String(ep.target).toLowerCase();
       const sameAxis = String(pof.environment_axis).toLowerCase() === String(ep.axis).toLowerCase();
       const sameWho = String(pof.character) === pcLabel;
       return !!(sameAngle && sameAnchor && sameTarget && sameAxis && sameWho);
     })(),
     JSON.stringify({ pofWho: pof && pof.character, pcLabel,
-                     cpAngle: (sk.cp||[]).filter(c=>c.character===pcLabel).map(c=>c.angle)[0],
+                     pcRow: (sk.cp||[]).filter(c=>c.character===pcLabel)[0],
+                     pcAnchor: (R.staged||[]).filter(c=>c.name===pcLabel).map(c=>c.anchor_beat)[0],
                      beat, epTarget: ep && ep.target, pofTarget: pof && pof.environment_target }));
+  t(`${label} U8b: every NON-PC staged anchor is DERIVED from that person's C+ angle`,
+    (R.staged || []).filter(c => c.name !== pcLabel && c.presence_mode === 'IN_PERSON').length > 0
+      && (R.staged || []).filter(c => c.name !== pcLabel && c.presence_mode === 'IN_PERSON').every(c => {
+        const m = (sk.cp || []).find(x => x.character === c.name);
+        return !!m && String(c.anchor_beat || '').trim() === String(m.angle || '').trim();
+      }),
+    JSON.stringify((R.staged||[]).map(c => [c.name, c.anchor_beat])));
+  t(`${label} U8d: the persisted manifest marks the on-stage cast IN_PERSON`,
+    (R.staged || []).length > 0
+      && (R.staged || []).every(c => c.presence_mode === 'IN_PERSON'),
+    JSON.stringify((R.staged||[]).map(c => [c.name, c.presence_mode])));
+  t(`${label} U8c: no prefilled SENTINEL survives into state`,
+    (R.staged || []).every(c => !/^FROM_(PC_OPENING_FUSION|CHARACTER_PLUS)$/.test(String(c.anchor_beat || '').trim())),
+    JSON.stringify((R.staged||[]).map(c => c.anchor_beat)));
   t(`${label} U9: every NON-PC staged character still gets exactly one independent C+ line`,
     nonPc.length > 0 && nonPc.every(n => {
       const lines = sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — read: /.test(l));

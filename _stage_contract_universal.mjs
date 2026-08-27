@@ -355,11 +355,13 @@ function plannerReplyFor(usr) {
   // fusion — so her C+ angle and her staged anchor must be that same beat.
   const pcName = cast[0];
   const pofBeat = `my thumb finds the ${target} where it has been worn smooth by hands that came before mine, and my rehearsed steadiness feels newly counterfeit`;
+  // 2026-08-27 single-source contract: the PROTAGONIST gets no character_plus entry and no
+  // anchor of her own. Anchors ship as the prefilled sentinels and are derived after validation.
   spine.staged_characters = spine.staged_characters.map(c =>
-    c.name === pcName ? { ...c, anchor_beat: pofBeat } : c);
+    ({ ...c, anchor_beat: c.name === pcName ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
   return JSON.stringify({ opening_spine: spine, scene_skeleton: {
-    character_plus: cast.map(n => ({ character:n, first_mention:true,
-      angle: n === pcName ? pofBeat : `${n} checks the ledger before the words` })),
+    character_plus: cast.filter(n => n !== pcName)
+      .map(n => ({ character:n, first_mention:true, angle:`${n} checks the ledger before the words` })),
     environment_plus: { target, axis:'use',
       beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
     pc_opening_fusion: { character: pcName, placement:'PC_FIRST_EMBODIED_BEAT',
@@ -601,10 +603,10 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
     return JSON.stringify({
       opening_spine: spine,                                  // NOTE: no staged_characters here
       staged_characters: names.map(n => ({ name:n, presence:'IN_PERSON',
-        anchor_beat: n === pcN ? pofBeat : 'is already at the ledger' })),
+        anchor_beat: n === pcN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' })),
       scene_skeleton: {
-        character_plus: names.map(n => ({ character:n, first_mention:true,
-          angle: n === pcN ? pofBeat : `${n} checks the ledger before the words` })),
+        character_plus: names.filter(n => n !== pcN).map(n => ({ character:n, first_mention:true,
+          angle: `${n} checks the ledger before the words` })),
         environment_plus: { target, axis:'use',
           beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
         pc_opening_fusion: { character: pcN, placement:'PC_FIRST_EMBODIED_BEAT',
