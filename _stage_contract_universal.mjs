@@ -332,18 +332,32 @@ const SLOT_READS = [
 // actually offered — which is the same discipline the validator enforces on the real planner.
 function candidatesFromPrompt(usr) {
   const out = {};
-  const re = /^\s*•\s*(.+?)\n\s*modes permitted: ([^\n]*)\n\s*authored facets: ([^\n]*)/gm;
-  let m; while ((m = re.exec(String(usr || '')))) {
-    const facets = m[3].trim();
-    out[m[1].trim()] = { modes: m[2].trim().split(' | ').filter(Boolean),
-                         facets: /^\(/.test(facets) ? [] : facets.split(' | ').filter(Boolean) };
-  }
+  const block = (String(usr || '').match(/CHARACTER\+ CANDIDATES \(\d+\)[\s\S]*?(?=\nNOT CANDIDATES|\nEVERY character_plus|\nWHERE A PERSON HAS|\nThis story has no authored)/) || [''])[0];
+  block.split(/\n(?=  • )/).forEach(chunk => {
+    const name = (chunk.match(/^\s*•\s*(.+)$/m) || [])[1];
+    if (!name) return;
+    const modes = ((chunk.match(/modes permitted: ([^\n]*)/) || [])[1] || '').trim().split(' | ').filter(Boolean);
+    // Facet ids are the bullets under AUTHORED PSYCHOLOGY, each followed by its [category], and
+    // each carries its applicability conditions. The reply cites the FIRST verbatim — the point
+    // is that a condition the record does not list is refused, so the mock must not paraphrase.
+    const facets = [], pressures = {};
+    const fre = /^\s{6,}·\s+(\S+)\s+\[[a-z_]+\][\s\S]*?applicability conditions \([^)]*\): ([^\n]*)/gm;
+    let f; while ((f = fre.exec(chunk))) {
+      facets.push(f[1]);
+      const conds = f[2].trim();
+      pressures[f[1]] = /^\(none/.test(conds) ? '' : conds.split(' · ')[0].trim();
+    }
+    out[name.trim()] = { modes, facets, pressures };
+  });
   return out;
 }
-const cpEntry = (C, n, extra) => ({ character:n,
-  mode: ((C[n] && C[n].modes[0]) || 'IN_PERSON'),
-  ...((C[n] && C[n].facets[0]) ? { facet_id: C[n].facets[0] } : {}),
-  first_mention:true, ...extra });
+const cpEntry = (C, n, extra) => {
+  const c = C[n] || {}; const fid = (c.facets || [])[0];
+  const pr = fid ? ((c.pressures || {})[fid] || '') : '';
+  return { character:n, mode: ((c.modes || [])[0] || 'IN_PERSON'),
+           ...(fid ? { facet_id: fid } : {}), ...(pr ? { pressure: pr } : {}),
+           first_mention:true, ...extra };
+};
 
 function plannerReplyFor(usr) {
   // The roster block is the PHYSICAL roster now, and no longer ends on a per-body C+ rule.

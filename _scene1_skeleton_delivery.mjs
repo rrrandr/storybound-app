@@ -54,6 +54,28 @@ function declaredSpineKeys(usr) {
   return out;
 }
 
+// The C+ CANDIDATE block as dispatched: canonical label -> permitted modes, authored facet ids,
+// and each facet's applicability conditions. Read from the prompt so a reply can only cite what
+// the request actually offered — the same discipline the validator enforces on the real planner.
+function candidatesFromPrompt(usr) {
+  const out = {};
+  const block = (String(usr || '').match(/CHARACTER\+ CANDIDATES \(\d+\)[\s\S]*?(?=\nNOT CANDIDATES|\nEVERY character_plus|\nWHERE A PERSON HAS|\nThis story has no authored)/) || [''])[0];
+  block.split(/\n(?=  • )/).forEach(chunk => {
+    const name = (chunk.match(/^\s*•\s*(.+)$/m) || [])[1];
+    if (!name) return;
+    const modes = ((chunk.match(/modes permitted: ([^\n]*)/) || [])[1] || '').trim().split(' | ').filter(Boolean);
+    const facets = [], pressures = {};
+    const fre = /^\s{6,}·\s+(\S+)\s+\[[a-z_]+\][\s\S]*?applicability conditions \([^)]*\): ([^\n]*)/gm;
+    let f; while ((f = fre.exec(chunk))) {
+      facets.push(f[1]);
+      const conds = f[2].trim();
+      pressures[f[1]] = /^\(none/.test(conds) ? '' : conds.split(' · ')[0].trim();
+    }
+    out[name.trim()] = { modes, facets, pressures };
+  });
+  return out;
+}
+
 function plannerReply(usr, mutate) {
   // The block is the PHYSICAL roster now ("ELIGIBLE CAST" conflated presence with C+
   // eligibility, which is the contradiction the candidate list resolves), and it no longer ends
@@ -117,13 +139,20 @@ function plannerReply(usr, mutate) {
   // A C+ assignment names WHICH opportunity carries it and WHICH authored facet it draws on.
   // These are the real ids from the First Sacrifice seed: a mock that invented them would prove
   // the validator accepts anything shaped like an id.
-  const FACET = { Julian:'julian_status_without_display',
-                  Seren:'seren_goodness_needs_witness',
-                  'the presiding Dohkar':'presiding_dohkar_ritual_contempt' };
+  // ── CITE WHAT THE REQUEST OFFERED, NOT WHAT WE REMEMBER (2026-08-27) ──
+  // These were hard-coded per name, which is wrong twice: the same person has no authored
+  // psychology in an UNSEEDED story (the duo fixture proved it — a citation for a facet that
+  // does not exist there), and a hard-coded id cannot fail when the source stops supplying it.
+  // Modes, facet ids and applicability conditions are read from the dispatched candidate block.
+  const CAND = candidatesFromPrompt(usr);
   let cp = cast.filter(n => n !== PCN)
-    .map(n => ({ character:n, mode:'IN_PERSON', first_mention:true,
-                 ...(FACET[n] ? { facet_id:FACET[n] } : {}),
-                 ...(READS[n] || READ_FALLBACK(n)) }));
+    .map(n => {
+      const c = CAND[n] || {}; const fid = (c.facets || [])[0];
+      const pr = fid ? ((c.pressures || {})[fid] || '') : '';
+      return { character:n, mode: ((c.modes || [])[0] || 'IN_PERSON'),
+               ...(fid ? { facet_id: fid } : {}), ...(pr ? { pressure: pr } : {}),
+               first_mention:true, ...(READS[n] || READ_FALLBACK(n)) };
+    });
   // Anchors are the prefilled SENTINELS, copied back untouched, as the template asks.
   spine.staged_characters = spine.staged_characters.map(c =>
     ({ ...c, anchor_beat: c.name === PCN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
@@ -552,8 +581,8 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     cp.filter(c => c.psychological_read).length > 0
       && cp.filter(c => c.psychological_read).every(c =>
         sys.split('\n').some(l => l.includes(c.behavior) && l.includes(c.psychological_read)
-                                   && / — behavior: /.test(l) && /; character revelation: /.test(l))),
-    JSON.stringify(sys.split('\n').filter(l => / — behavior: /.test(l)).slice(0, 3)));
+                                   && /; behavior: /.test(l) && /; PC reading: /.test(l))),
+    JSON.stringify(sys.split('\n').filter(l => /; behavior: /.test(l)).slice(0, 3)));
   t(`${label} 11f: every C+ recipient renders on a first-mention-tagged line`,
     cp.length > 0 && cp.every(c => new RegExp(`•\\s*${c.character.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\s*\\(first mention`).test(sys)),
     'a recipient rendered without the first-mention tag');
@@ -793,8 +822,11 @@ console.log('');
   t(`   the C+ CANDIDATE block is a separate list carrying modes, evidence and facet ids`,
     /CHARACTER\+ CANDIDATES \(\d+\)/.test(pu)
       && /PHYSICAL PRESENCE IS NOT THE QUALIFICATION/.test(pu)
-      && /modes permitted:/.test(pu) && /authored facets:/.test(pu)
-      && /seren_goodness_needs_witness/.test(pu),
+      && /modes permitted:/.test(pu) && /AUTHORED PSYCHOLOGY —/.test(pu)
+      && /seren_goodness_needs_witness/.test(pu)
+      // the TRUTH, not only the slug — the break this whole pass exists to close
+      && /canonical truth: Her compassion is genuine but requires an audience/.test(pu)
+      && /applicability conditions \(WHEN this truth is available to reveal/.test(pu),
     (pu.match(/CHARACTER\+ CANDIDATES.{0,200}/) || ['(missing)'])[0]);
   t(`   the four delivery modes are spelled out, ANTICIPATED marked as expectation`,
     /· IN_PERSON — a behaviour they CHOOSE/.test(pu)
@@ -1258,7 +1290,7 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     JSON.stringify((R.staged||[]).map(c => c.anchor_beat)));
   t(`${label} U9: every NON-PC staged character still gets exactly one independent C+ line`,
     nonPc.length > 0 && nonPc.every(n => {
-      const lines = sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — behavior: /.test(l));
+      const lines = sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && /; behavior: /.test(l));
       return lines.length === 1;
     }),
     JSON.stringify(nonPc.map(n => [n, sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — read: /.test(l)).length])));
