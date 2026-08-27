@@ -138,6 +138,31 @@ function plannerReply(usr, mutate) {
   if (mutate === 'aliasProtag')    cp = cp.map((c,i) => i === 0 ? { ...c, character:'the protagonist' } : c);
   if (mutate === 'aliasDohkar')    cp = cp.map(c => /presiding/i.test(c.character) ? { ...c, character:'Dohkar' } : c);
   if (mutate === 'aliasOffstage')  cp = cp.concat([{ character:'the narrator’s absent mother', first_mention:true, angle:'sets the cloth straight twice' }]);
+  // ── THE GAPS THE FIRST REAL SAMPLE EXPOSED (2026-08-26, round 11) ──
+  // Live Mistral returned NO standalone fusion. Every cross-field coherence check was nested
+  // inside `if (_norm.fusion)`, so none of them ran, and a plan whose opening beat touched the
+  // spiralgrass while declaring the veil-canopy was accepted. The mock had always sent a fusion,
+  // which is exactly why the suite could not see it. These mutations omit it, as the real one did.
+  if (mutate === 'pofOffTarget') {
+    fu = undefined;                                    // as live: no standalone fusion at all
+    const OFF = `my thumb finds the ledger-slate where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
+    pof = { ...pof, beat: OFF };                       // declares ANCHOR, touches something else
+    cp = cp.map(c => c.character === PCN ? { ...c, angle: OFF } : c);
+    spine.staged_characters = spine.staged_characters.map(c =>
+      c.name === PCN ? { ...c, anchor_beat: OFF } : c);
+  }
+  if (mutate === 'noFusionNoEpBeat') {
+    fu = undefined;
+    ep = { target:ANCHOR, axis:'ritual' };             // E+ with no evidence, and nothing to hide behind
+  }
+  // The live reply staged all four people with anchor_beat "opening_beat" — the FIELD NAME.
+  if (mutate === 'anchorPlaceholder') {
+    spine.staged_characters = spine.staged_characters.map(c => ({ ...c, anchor_beat:'opening_beat' }));
+  }
+  if (mutate === 'anchorEmpty') {
+    spine.staged_characters = spine.staged_characters.map(c =>
+      c.name === PCN ? { ...c, anchor_beat:'   ' } : c);
+  }
   if (mutate === 'clothEp') {
     // Canonically in-scene, but described ONLY in seed.sceneOne.narrator. The whole assignment
     // moves together: E+ carries its evidence and the opening fusion points at the same thing.
@@ -655,6 +680,9 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'fusionnull', 'fusionbadcode', 'fusionfalsecode', 'fusionnobeat', 'fusionthinbeat',
                       // identity / envelope faults that must STILL abort
                       'aliasOffstage', 'nestedThin', 'stagedThin',
+                      // cross-field coherence must run when the standalone fusion is ABSENT —
+                      // which is what the live planner actually returns
+                      'pofOffTarget', 'noFusionNoEpBeat', 'anchorPlaceholder', 'anchorEmpty',
                       // identical duplicates now COLLAPSE (tested below); a DIFFERENCE still aborts
                       'dupSkeletonDiff', 'stagedBothDiff',
                       // reconciler must not rescue semantics, and must not swallow invented fields
@@ -917,6 +945,26 @@ for (const [mutate, what, tag] of [
       && R.logs.some(l => /SKELETON:INVALID/.test(l)) && R.logs.some(l => /SCENE1:ABORT/.test(l)),
     `author=${R.author.length} | ${(R.logs.find(l=>/SKELETON:INVALID/.test(l))||'(no invalid log)').slice(0,160)}`);
 }
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// PART V — THE ROUND-11 GAPS, EACH REJECTED FOR ITS OWN REASON
+// A must-abort list proves only that something failed. These name WHICH fault fired, so a
+// coherence check cannot quietly stop running while an unrelated one keeps the case green.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(90)}\nPART V — COHERENCE WITHOUT A STANDALONE FUSION\n${'═'.repeat(90)}\n`);
+for (const [mutate, label, needle] of [
+  ['pofOffTarget',     'the opening beat never reaches its declared target', 'never reaches the assigned environment target'],
+  ['noFusionNoEpBeat', 'E+ with no evidence beat',                           'environment_plus has no "beat"'],
+  ['anchorPlaceholder','a staged anchor that echoes the field name',         'no usable anchor_beat'],
+  ['anchorEmpty',      'a staged anchor left blank',                         'no usable anchor_beat'],
+]) {
+  const R = await run({ hot: false, mutate });
+  const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');
+  t(`   "${mutate}" — ${label}`,
+    R.author.length === 0 && /SCENE1:ABORT/.test(R.logs.join(' ')) && invalid.includes(needle),
+    `authorCalls=${R.author.length} | ${invalid.slice(0, 240) || '(no INVALID log)'}`);
+}
+console.log('');
 
 // ══════════════════════════════════════════════════════════════════════════════════════════
 // PART U — EXACT-COUNT AUDIT: ONE OBLIGATION, NOT THREE SYNCHRONISED COPIES

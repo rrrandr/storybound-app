@@ -149,7 +149,36 @@ async function sample(i, mode) {
             fusionOk:     !!(fu && fu.character && fu.target && fu.beat),
           };
           const verdict = Object.keys(c).every(k => c[k]);
-          return { computable:true, criteria:c, verdict,
+          // ── NEW SCHEMA (2026-08-26) — REPORTED, NOT SCORED ──
+          // Kept out of `verdict` deliberately: the product judges these with token-coverage
+          // tolerance, and an exact-match column here would print disagreements the product
+          // never reached. Reported so the sample can be read; the product's own accept/reject
+          // remains the only verdict.
+          const pof = a && a.pc_opening_fusion;
+          const pcRec = (st.onStage || []).filter(r => r.kind === 'pc')[0] || null;
+          const pcLabel = pcRec ? pcRec.label : '';
+          const pcCp = cp.filter(x => lc(x.character) === lc(pcLabel))[0] || null;
+          // The staged manifest as VALIDATED and stored by the product (state._scene1StagedCharacters),
+          // not a re-read of the raw reply — the anchor we compare is the one that shipped.
+          const stagedPc = (s._scene1StagedCharacters || [])
+            .filter(x => x && lc(x.name) === lc(pcLabel))[0] || null;
+          const newSchema = {
+            pcLabel,
+            epBeat: (ep && ep.beat) || null,
+            epBeatGrounded: !!(ep && ep.beat) && grounded(ep.target),
+            pof: pof || null,
+            pofTargetMatches: !!(pof && ep) && lc(pof.environment_target) === lc(ep.target)
+                              && lc(pof.environment_axis) === lc(ep.axis),
+            pofIsPc: !!(pof && pcLabel) && lc(pof.character) === lc(pcLabel),
+            pcCpAngle: pcCp ? pcCp.angle : null,
+            pcCpIsTheBeat: !!(pof && pcCp) && String(pcCp.angle).trim() === String(pof.beat).trim(),
+            pcAnchor: stagedPc ? (stagedPc.anchor_beat || null) : null,
+            pcAnchorIsTheBeat: !!(pof && stagedPc)
+              && String(stagedPc.anchor_beat || '').trim() === String(pof.beat).trim(),
+            nonPcCp: cp.filter(x => lc(x.character) !== lc(pcLabel))
+                       .map(x => ({ who: x.character, angle: x.angle })),
+          };
+          return { computable:true, criteria:c, verdict, newSchema,
                    environmentOwner: st.environmentOwner || 'stage',
                    elements: st.environmentElements || null };
         } catch (e) { return { computable:false, reason:'score threw: ' + (e && e.message) }; }
@@ -188,7 +217,7 @@ for (let i = 1; i <= N; i++) {
       system: p && p.system, user: p && p.user }, null, 2));
   fs.writeFileSync(`${DIR}/sample${i}_response.json`, p ? p.rawResponse : '');
   fs.writeFileSync(`${DIR}/sample${i}_verdict.json`, JSON.stringify(
-    { stage: R.stage, assignments: R.assignments, fatal: R.fatal,
+    { stage: R.stage, assignments: R.assignments, newSchema: (R.score && R.score.newSchema) || null, fatal: R.fatal,
       attempts: R.attempts, retryReason: R.retryReason, usage, finish, cost,
       angleRejections: R.logs.filter(l => /ANGLE:REJECTED/.test(l)),
       logs: R.logs.filter(l => /STAGE|SKELETON|PLANNER|ABORT/.test(l)) }, null, 2));
@@ -213,6 +242,21 @@ for (let i = 1; i <= N; i++) {
   } else console.log(`  C+ : n/a`);
   console.log(`  E+           : ${skel ? JSON.stringify(skel.environment_plus) : 'n/a'}`);
   console.log(`  fusion       : ${skel ? JSON.stringify(skel.fusion) : 'n/a'}`);
+  // ── THE NEW COMBINED FIELD, AS RETURNED ──
+  const ns = (R.score && R.score.newSchema) || null;
+  console.log(`  pc_opening_fusion (raw): ${skel ? JSON.stringify(skel.pc_opening_fusion) : 'n/a'}`);
+  if (ns) {
+    console.log(`  ── one-assignment coherence (PC = ${JSON.stringify(ns.pcLabel)}) ──`);
+    console.log(`     recipient is the PC        : ${ns.pofIsPc ? 'YES' : 'NO'}`);
+    console.log(`     E+ target/axis match       : ${ns.pofTargetMatches ? 'YES' : 'NO'}`);
+    console.log(`     E+ evidence beat           : ${ns.epBeat ? JSON.stringify(ns.epBeat) : 'MISSING'}${ns.epBeat ? ' · grounded=' + ns.epBeatGrounded : ''}`);
+    console.log(`     PC C+ angle IS the beat    : ${ns.pcCpIsTheBeat ? 'YES' : 'NO'}`);
+    console.log(`     PC anchor_beat IS the beat : ${ns.pcAnchorIsTheBeat ? 'YES' : 'NO'}`);
+    if (!ns.pcCpIsTheBeat)     console.log(`        C+ angle : ${JSON.stringify(ns.pcCpAngle)}`);
+    if (!ns.pcAnchorIsTheBeat) console.log(`        anchor   : ${JSON.stringify(ns.pcAnchor)}`);
+    console.log(`     non-PC C+ (${ns.nonPcCp.length}):`);
+    ns.nonPcCp.forEach(x => console.log(`        • ${String(x.who).padEnd(24)} "${x.angle}"`));
+  }
   const aliasLogs = R.logs.filter(l => /SCENE1:ALIAS/.test(l));
   console.log(`  alias resolves: ${aliasLogs.length ? '' : 'none needed'}`);
   aliasLogs.forEach(l => console.log(`      ${l.replace(/^\[SCENE1:ALIAS\]\s*/, '')}`));
