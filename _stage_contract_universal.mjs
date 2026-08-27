@@ -327,8 +327,27 @@ const SLOT_READS = [
   'cannot be bothered to pretend the proceeding deserves his attention, and knows nobody checks',
   'trusts what a column of figures admits over what a mouth says, because a ledger has never lied to her',
 ];
+// The C+ CANDIDATE block as dispatched: canonical label -> permitted modes + authored facet
+// ids. Read from the prompt rather than hard-coded, so a reply can only cite what the request
+// actually offered — which is the same discipline the validator enforces on the real planner.
+function candidatesFromPrompt(usr) {
+  const out = {};
+  const re = /^\s*•\s*(.+?)\n\s*modes permitted: ([^\n]*)\n\s*authored facets: ([^\n]*)/gm;
+  let m; while ((m = re.exec(String(usr || '')))) {
+    const facets = m[3].trim();
+    out[m[1].trim()] = { modes: m[2].trim().split(' | ').filter(Boolean),
+                         facets: /^\(/.test(facets) ? [] : facets.split(' | ').filter(Boolean) };
+  }
+  return out;
+}
+const cpEntry = (C, n, extra) => ({ character:n,
+  mode: ((C[n] && C[n].modes[0]) || 'IN_PERSON'),
+  ...((C[n] && C[n].facets[0]) ? { facet_id: C[n].facets[0] } : {}),
+  first_mention:true, ...extra });
+
 function plannerReplyFor(usr) {
-  const m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
+  // The roster block is the PHYSICAL roster now, and no longer ends on a per-body C+ rule.
+  const m = usr.match(/STAGED ROSTER — PHYSICALLY ON STAGE \((\d+)\)[^\n]*\n([\s\S]*?)\nThese are the only people/);
   let cast = m ? m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
   if (!cast.length) {
     // Planner-owned presence: stage ONLY from the allowed roster — inventing a person is now a
@@ -369,9 +388,9 @@ function plannerReplyFor(usr) {
   spine.staged_characters = spine.staged_characters.map(c =>
     ({ ...c, anchor_beat: c.name === pcName ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
   return JSON.stringify({ opening_spine: spine, scene_skeleton: {
-    character_plus: cast.filter(n => n !== pcName)
-      .map((n, i) => ({ character:n, first_mention:true, behavior:`${n} checks the ledger before the words`,
-                        psychological_read: SLOT_READS[i % SLOT_READS.length] })),
+    character_plus: (cands => cast.filter(n => n !== pcName)
+      .map((n, i) => cpEntry(cands, n, { behavior:`${n} checks the ledger before the words`,
+                                         psychological_read: SLOT_READS[i % SLOT_READS.length] })))(candidatesFromPrompt(usr)),
     environment_plus: { target, axis:'use',
       beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
     pc_opening_fusion: { character: pcName, placement:'PC_FIRST_EMBODIED_BEAT',
@@ -615,9 +634,9 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
       staged_characters: names.map(n => ({ name:n, presence:'IN_PERSON',
         anchor_beat: n === pcN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' })),
       scene_skeleton: {
-        character_plus: names.filter(n => n !== pcN).map((n, i) => ({ character:n, first_mention:true,
-          behavior: `${n} checks the ledger before the words`,
-          psychological_read: SLOT_READS[i % SLOT_READS.length] })),
+        character_plus: (cands => names.filter(n => n !== pcN).map((n, i) =>
+          cpEntry(cands, n, { behavior: `${n} checks the ledger before the words`,
+                              psychological_read: SLOT_READS[i % SLOT_READS.length] })))(candidatesFromPrompt(usr)),
         environment_plus: { target, axis:'use',
           beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
         pc_opening_fusion: { character: pcN, placement:'PC_FIRST_EMBODIED_BEAT',

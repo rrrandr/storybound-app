@@ -55,7 +55,10 @@ function declaredSpineKeys(usr) {
 }
 
 function plannerReply(usr, mutate) {
-  const m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
+  // The block is the PHYSICAL roster now ("ELIGIBLE CAST" conflated presence with C+
+  // eligibility, which is the contradiction the candidate list resolves), and it no longer ends
+  // on "Exactly one character_plus entry per name" — cardinality follows pressure.
+  const m = usr.match(/STAGED ROSTER — PHYSICALLY ON STAGE \((\d+)\)[^\n]*\n([\s\S]*?)\nThese are the only people/);
   // BULLETS ONLY. A prose line that appeared between the header and the rule was parsed as a
   // cast member, which is exactly how a real consumer of this list would have failed too.
   const cast = m ? m[2].split('\n').filter(x => /^\s*•\s/.test(x)).map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
@@ -110,8 +113,17 @@ function plannerReply(usr, mutate) {
   };
   const READ_FALLBACK = n => ({ behavior:`${n} checks the youth's hands before the words`,
     psychological_read:`${n} learned to read hands before faces, and trusts what a body admits over what a mouth says` });
+  // ── THE TWO CITATIONS (2026-08-27) ──
+  // A C+ assignment names WHICH opportunity carries it and WHICH authored facet it draws on.
+  // These are the real ids from the First Sacrifice seed: a mock that invented them would prove
+  // the validator accepts anything shaped like an id.
+  const FACET = { Julian:'julian_status_without_display',
+                  Seren:'seren_goodness_needs_witness',
+                  'the presiding Dohkar':'presiding_dohkar_ritual_contempt' };
   let cp = cast.filter(n => n !== PCN)
-    .map(n => ({ character:n, first_mention:true, ...(READS[n] || READ_FALLBACK(n)) }));
+    .map(n => ({ character:n, mode:'IN_PERSON', first_mention:true,
+                 ...(FACET[n] ? { facet_id:FACET[n] } : {}),
+                 ...(READS[n] || READ_FALLBACK(n)) }));
   // Anchors are the prefilled SENTINELS, copied back untouched, as the template asks.
   spine.staged_characters = spine.staged_characters.map(c =>
     ({ ...c, anchor_beat: c.name === PCN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
@@ -122,7 +134,20 @@ function plannerReply(usr, mutate) {
              beat:`${ANCHOR} is worn smooth along one edge where the rite has been performed the same way for generations` };
   let fu = { character: cast[0], target:ANCHOR, beat:`she sets her palm flat on ${ANCHOR} to keep it still` };
   if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs the cloth to be the reason she is standing there, so no one asks why she came' }]);
+  // CARDINALITY IS PRESSURE, NOT HEADCOUNT (2026-08-27): a candidate with no assignment used to
+  // be a fault ("eligible recipient has NO character_plus assignment"). That rule was the
+  // per-body quota, and it is retired — this mutation is now an ACCEPT case, tested as one.
   if (mutate === 'missing')   cp = cp.slice(0, Math.max(0, cp.length - 1));
+  // ── THE CITATIONS THE ASSIGNMENT MUST MAKE ──
+  if (mutate === 'cpNoMode')   cp = cp.map((c,i) => { if (i !== 0) return c; const { mode, ...r } = c; return r; });
+  if (mutate === 'cpBadMode')  cp = cp.map((c,i) => i === 0 ? { ...c, mode:'RECALLED' } : c);   // she is in the room
+  if (mutate === 'cpNoFacet')  cp = cp.map((c,i) => { if (i !== 0) return c; const { facet_id, ...r } = c; return r; });
+  // ORDER-INDEPENDENT: cite a facet that is real but belongs to someone ELSE. Keyed off the
+  // entry's own facet so a change in roster order cannot turn this into a valid citation — which
+  // it silently did once, and the case passed by being correct.
+  if (mutate === 'cpBadFacet') { const wrong = 'presiding_dohkar_ritual_contempt';
+    const i0 = cp.findIndex(c => c.facet_id && c.facet_id !== wrong);
+    if (i0 >= 0) cp = cp.map((c,i) => i === i0 ? { ...c, facet_id:wrong } : c); }
   if (mutate === 'duplicate') cp = cp.concat([cp[0]]);
   if (mutate === 'badaxis')   ep = { target:'the spiralgrass', axis:'vibes' };
   if (mutate === 'badfusion') fu = { character:'Nobody Here', target:'the spiralgrass', beat:'he sets his palm flat on the spiralgrass' };
@@ -367,7 +392,9 @@ async function run({ hot, mutate, solo, duo }) {
   });
   page.on('request', r => { if (/\/api\//.test(r.url()) && !/localhost|127\.0\.0\.1/.test(r.url())) escaped.push(r.url()); });
   const logs = [];
-  page.on('console', m => { const x=m.text(); if (/SCENE1:|SKELETON|PLANNER/.test(x)) logs.push(x.slice(0,220)); });
+  // 400, not 220: a fault list is truncated by this line, and a needle assertion that reads the
+  // truncated text reports a check as broken when the check fired and the tail was cut.
+  page.on('console', m => { const x=m.text(); if (/SCENE1:|SKELETON|PLANNER/.test(x)) logs.push(x.slice(0,400)); });
   page.on('pageerror', e => logs.push('PAGEERROR ' + String(e.message).slice(0,200)));
 
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
@@ -443,7 +470,9 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
   t(`${label} 2b: planner reply read from the RAW mistral envelope (no top-level content)`,
     !!(R.skeleton && R.skeleton.cp && R.skeleton.cp.length),
     'skeleton is empty — the client is reading a response shape mistral-proxy never returns');
-  t(`${label} 3: every eligible recipient has a C+ assignment, none truncated`,
+  // Not an obligation any more — cardinality follows pressure. This fixture assigns one per
+  // candidate, so it still proves NOTHING IS TRUNCATED between planner and normaliser.
+  t(`${label} 3: the fixture's full C+ set survives delivery, none truncated`,
     R.eligible && R.skeleton && R.skeleton.cp && R.skeleton.cp.length === R.eligible.length,
     `eligible=${R.eligible && R.eligible.length} cp=${R.skeleton && R.skeleton.cp && R.skeleton.cp.length}`);
   t(`${label} 4: E+ and fusion survive normalization`,
@@ -664,6 +693,8 @@ for (const [mutate, label, expect] of [
   ['longTargetHeadNoun', 'a long noun-phrase target NAMED by its head noun',   { alias:false }],
   ['sentinelSpelling',   'the pointer sentinel returned without its FROM_ prefix', { alias:false }],
   ['angleIsAReading',    'an interpretive PC angle that stages no body is untouched', { alias:false }],
+  // CARDINALITY BY PRESSURE: a candidate the planner declined to assign is a legitimate plan.
+  ['missing',            'a candidate left WITHOUT a C+ assignment is accepted, not faulted', { alias:false }],
 ]) {
   const R = await run({ hot: false, mutate });
   const cp = ((R.skeleton && R.skeleton.cp) || []).map(c => c.character);
@@ -732,10 +763,49 @@ console.log('');
   t(`   template no longer points at an ELIGIBLE CAST block from inside the JSON`,
     !/from ELIGIBLE CAST/i.test(full) && !/name from ELIGIBLE CAST/i.test(full),
     (full.match(/.{0,50}ELIGIBLE CAST.{0,50}/i) || [''])[0]);
-  t(`   template derives C+ structurally from staged_characters`,
-    /DERIVED FROM STAGING/.test(full)
-      && /exactly ONE entry for EVERY staged_characters entry whose presence_mode is IN_PERSON/.test(full)
-      && /character_plus never decides who is present/.test(full));
+  // ── THE DOCTRINE CHANGE, ASSERTED ON THE DISPATCHED BYTES (2026-08-27) ──
+  // Presence governs staging; it does not govern who may be revealed. The retired rules are
+  // checked by ABSENCE so they cannot quietly return, and the new ones by presence.
+  t(`   template no longer derives C+ from staging, or taxes one entry per body`,
+    !/DERIVED FROM STAGING/.test(full)
+      && !/exactly ONE entry for EVERY staged_characters entry whose presence_mode is IN_PERSON/.test(full)
+      && !/Exactly one character_plus entry per name above/.test(pu),
+    (full.match(/.{0,80}DERIVED FROM STAGING.{0,80}/) || full.match(/.{0,60}exactly ONE entry for EVERY.{0,80}/) || [''])[0]);
+  t(`   template states cardinality by PRESSURE, with the five qualifying moves`,
+    /character_plus is OPTIONAL PER PERSON and is NOT derived from staging/.test(full)
+      && /pressures the protagonist/.test(full) && /turns the scene/.test(full)
+      && /reveals a consequential choice/.test(full) && /forces a decision/.test(full)
+      && /establishes themselves as a continuing force/.test(full)
+      && /AT MOST ONE entry per character per scene/.test(full),
+    (full.match(/.{0,100}OPTIONAL PER PERSON.{0,120}/) || ['(missing)'])[0]);
+  t(`   a scene where nobody earns one is stated to be a correct plan`,
+    /merely present, merely named, or merely furniture gets NO entry/.test(full)
+      && /is a correct plan, not an omission/.test(full));
+  t(`   the assignment must cite an opportunity and an authored facet`,
+    /"mode": "<one of THAT person's permitted modes/.test(full)
+      && /"facet_id": "<one of THAT person's authored facet ids>/.test(full));
+  t(`   the ROSTER block is the physical roster, and says what it governs`,
+    /STAGED ROSTER — PHYSICALLY ON STAGE/.test(pu)
+      && /it governs staged_characters, every embodied beat, and the opening fusion/.test(pu)
+      && /It is not the Character\+ candidate list/.test(pu)
+      && !/ELIGIBLE CAST \(/.test(pu),
+    (pu.match(/.{0,60}ELIGIBLE CAST.{0,60}/) || ['(renamed)'])[0]);
+  t(`   the C+ CANDIDATE block is a separate list carrying modes, evidence and facet ids`,
+    /CHARACTER\+ CANDIDATES \(\d+\)/.test(pu)
+      && /PHYSICAL PRESENCE IS NOT THE QUALIFICATION/.test(pu)
+      && /modes permitted:/.test(pu) && /authored facets:/.test(pu)
+      && /seren_goodness_needs_witness/.test(pu),
+    (pu.match(/CHARACTER\+ CANDIDATES.{0,200}/) || ['(missing)'])[0]);
+  t(`   the four delivery modes are spelled out, ANTICIPATED marked as expectation`,
+    /· IN_PERSON — a behaviour they CHOOSE/.test(pu)
+      && /· RECALLED — one clearly framed remembered behaviour/.test(pu)
+      && /· REPORTED — a behaviour attributed to them through dialogue/.test(pu)
+      && /marked as expectation and not as present fact/.test(pu));
+  t(`   "absent" no longer means "ineligible for character_plus"`,
+    !/INELIGIBLE for character_plus/.test(pu)
+      && /ABSENT CANDIDATES STAY ABSENT/.test(pu)
+      && /does NOT put them in the room/.test(pu),
+    (pu.match(/.{0,80}INELIGIBLE for character_plus.{0,80}/) || ['(retired)'])[0]);
   t(`   template binds the opening fusion to the PROTAGONIST and to environment_plus`,
     /"pc_opening_fusion": \{/.test(full)
       && /"placement": "PC_FIRST_EMBODIED_BEAT"/.test(full)
@@ -777,7 +847,9 @@ console.log('');
 
 // ── 9 · planner faults must surface, never continue silently to Grok ──
 console.log(` 9 · PLANNER FAULTS SURFACE (no silent skeleton-less continuation)`);
-for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
+for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
+                      // an assignment must cite an opportunity it was given and a facet that is theirs
+                      'cpNoMode', 'cpBadMode', 'cpNoFacet', 'cpBadFacet',
                       'fmfalse', 'fmmissing', 'fmstring', 'emptyangle', 'placeholderang', 'thinangle',
                       'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty', 'unparseable',
                       // revised planning contract
