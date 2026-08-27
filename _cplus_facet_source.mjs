@@ -63,10 +63,22 @@ t('2e: it carries NO characterization from the doctrine\'s other Dohkar (Raes)',
   !R.dohkar.some(f => /debt coming due|bad luck/i.test(f.canonical_truth)));
 
 // ── LI and PC ──
-// Julian's drafted facets proposed NEW canonical motives for the LI rather than projecting
-// authored bio text, so they are held for Roman's approval. [] is the correct state.
-t('3a: Julian resolves to NO facets — his are held for canon approval',
-  R.julian.length === 0, JSON.stringify(R.julian.map(f => f.facet_id)));
+// Julian's ORIGINAL drafts invented a motive for withholding the lineage knowledge and were
+// withdrawn. Roman authored these two instead: they project only what the bio already states.
+t('3a: Julian resolves to his own approved facets, not Seren\'s',
+  R.julian.length === 2 && R.julian.every(f => f.source_character_id === 'named:julian'),
+  JSON.stringify(R.julian.map(f => f.facet_id)));
+t('3a2: …and they are the APPROVED pair',
+  R.julian.map(f => f.facet_id).sort().join('|')
+    === 'julian_notices_without_volunteering|julian_status_without_display',
+  JSON.stringify(R.julian.map(f => f.facet_id)));
+t('3a3: the WITHDRAWN drafts have not come back — they invented a motive',
+  !Object.values(R.idx).flatMap(e => e.facets)
+    .some(f => /watches_from_the_edge|holds_what_he_knows/.test(f.facet_id)),
+  'a withdrawn draft was restored; the reason it was withdrawn has not changed');
+t('3a4: neither approved facet decides WHY he withholds what he knows',
+  !R.julian.some(f => /lineage|withhold|secret|protect(?:ing)? her|because he knows/i.test(f.canonical_truth)),
+  JSON.stringify(R.julian.map(f => f.canonical_truth)));
 t('3b: the PC has facets too — she is the OBSERVED party elsewhere',
   R.pc.length === 2 && R.pc.every(f => f.source_character_id === 'pc:lirael'),
   JSON.stringify(R.pc.map(f => f.facet_id)));
@@ -235,6 +247,39 @@ const M = await page.evaluate(() => {
       { providerId:'seed',         index: rec([F('f_a','truth A')], 'Seren') },
       { providerId:'relationship', index: rec([F('f_b','truth B')], 'Someone Else') },
     ])['named:x'],
+    // (f) IDENTITY IS NOT ONLY THE LABEL. role_instance_id and scene_scope decide WHICH
+    //     instance and WHICH scene — the two fields the Dohkar bug turned on.
+    roleInstance: merge([
+      { providerId:'seed',     index: { 'role:d': { canonical_id:'role:d', label:'the presiding Dohkar',
+          aliases:['Dohkar'], role_instance_id:'first_sacrifice_presiding_dohkar', scene_scope:1,
+          facets:[F('f_a','truth A')] } } },
+      { providerId:'emergent', index: { 'role:d': { canonical_id:'role:d', label:'the presiding Dohkar',
+          aliases:['Dohkar'], role_instance_id:'inquiry_presiding_dohkar', scene_scope:1,
+          facets:[F('f_b','truth B')] } } },
+    ])['role:d'],
+    sceneScope: merge([
+      { providerId:'seed',     index: { 'role:d': { canonical_id:'role:d', label:'the presiding Dohkar',
+          aliases:['Dohkar'], role_instance_id:'first_sacrifice_presiding_dohkar', scene_scope:1,
+          facets:[F('f_a','truth A')] } } },
+      { providerId:'emergent', index: { 'role:d': { canonical_id:'role:d', label:'the presiding Dohkar',
+          aliases:['Dohkar'], role_instance_id:'first_sacrifice_presiding_dohkar', scene_scope:14,
+          facets:[F('f_b','truth B')] } } },
+    ])['role:d'],
+    // (g) a record filed under a key its own canonical_id contradicts
+    keyMismatch: merge([
+      { providerId:'seed',     index: rec([F('f_a','truth A')]) },
+      { providerId:'emergent', index: { 'named:x': { canonical_id:'named:SOMEONE_ELSE', label:'X',
+          aliases:['X'], facets:[F('f_b','truth B')] } } },
+    ])['named:x'],
+    // (h) CONTROL — agreeing metadata on every identity field still merges
+    agreeing: merge([
+      { providerId:'seed',     index: { 'role:d': { canonical_id:'role:d', label:'the presiding Dohkar',
+          aliases:['Dohkar'], role_instance_id:'first_sacrifice_presiding_dohkar', scene_scope:1,
+          facets:[F('f_a','truth A')] } } },
+      { providerId:'emergent', index: { 'role:d': { canonical_id:'role:d', label:'the presiding Dohkar',
+          aliases:['Dohkar'], role_instance_id:'first_sacrifice_presiding_dohkar', scene_scope:1,
+          facets:[F('f_b','truth B')] } } },
+    ])['role:d'],
   };
 });
 
@@ -259,6 +304,22 @@ t('7g: incompatible identity metadata for one canonical id FAILS VISIBLY',
   M.identity.identity_conflict === true && M.identity.facets.length === 0,
   JSON.stringify({ conflict: M.identity.identity_conflict, label: M.identity.label,
                    facets: M.identity.facets.length }));
+t('7h: two DIFFERENT role instances under one id are rejected — not only a different label',
+  M.roleInstance.identity_conflict === true && M.roleInstance.facets.length === 0
+    && (M.roleInstance.identity_conflict_fields || []).includes('role_instance_id'),
+  JSON.stringify(M.roleInstance.identity_conflict_fields));
+t('7i: a disagreeing scene_scope is rejected too — scope decides WHICH scene it is in play',
+  M.sceneScope.identity_conflict === true && M.sceneScope.facets.length === 0
+    && (M.sceneScope.identity_conflict_fields || []).includes('scene_scope'),
+  JSON.stringify(M.sceneScope.identity_conflict_fields));
+t('7j: a record whose own canonical_id contradicts its key is rejected',
+  M.keyMismatch.identity_conflict === true && M.keyMismatch.facets.length === 0
+    && (M.keyMismatch.identity_conflict_fields || []).includes('canonical_id/key'),
+  JSON.stringify(M.keyMismatch.identity_conflict_fields));
+t('7k: CONTROL — agreeing metadata on every identity field still merges cleanly',
+  !M.agreeing.identity_conflict && M.agreeing.facets.length === 2,
+  JSON.stringify({ conflict: !!M.agreeing.identity_conflict,
+                   facets: M.agreeing.facets.map(f => f.facet_id) }));
 
 await browser.close();
 console.log(`\n${'─'.repeat(88)}\n  ${pass} passed · ${fail} failed\n`);
