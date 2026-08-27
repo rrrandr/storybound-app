@@ -95,8 +95,23 @@ function plannerReply(usr, mutate) {
   const POF_BEAT = `my thumb finds ${ANCHOR} where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
   // THE PROTAGONIST GETS NO C+ ENTRY (2026-08-26). Her first appearance is pc_opening_fusion,
   // and her accounting row is SYNTHESISED after validation — the planner never sends one.
+  // ── DISCRIMINATING PSYCHOLOGY, NOT A GESTURE APIECE (2026-08-27) ──
+  // The fixture is the contract's worked example, so it has to clear the bar the contract sets:
+  // each read names a need, defense or expectation that would NOT survive being handed to the
+  // person standing next to them. Reads are per-character, keyed off the First Sacrifice cast.
+  const READS = {
+    Julian: { behavior:`keeps his eyes on the exit line for the whole rite`,
+              psychological_read:`he has already decided he will be blamed for this, and is choosing where he will be standing when it happens` },
+    Seren:  { behavior:`checks the faces in the crowd twice before she kneels`,
+              psychological_read:`she expected approving smiles and cannot begin until she has counted them; the empathy is real and it needs an audience` },
+    'the presiding Dohkar':
+            { behavior:`says the liturgy's final clause a half-beat faster than the rest`,
+              psychological_read:`he cannot be bothered to pretend the ceremony deserves his attention, and has performed it often enough to know nobody checks` },
+  };
+  const READ_FALLBACK = n => ({ behavior:`${n} checks the youth's hands before the words`,
+    psychological_read:`${n} learned to read hands before faces, and trusts what a body admits over what a mouth says` });
   let cp = cast.filter(n => n !== PCN)
-    .map(n => ({ character:n, first_mention:true, angle:`${n} checks the youth's hands before the words` }));
+    .map(n => ({ character:n, first_mention:true, ...(READS[n] || READ_FALLBACK(n)) }));
   // Anchors are the prefilled SENTINELS, copied back untouched, as the template asks.
   spine.staged_characters = spine.staged_characters.map(c =>
     ({ ...c, anchor_beat: c.name === PCN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
@@ -106,7 +121,7 @@ function plannerReply(usr, mutate) {
   let ep = { target:ANCHOR, axis:'ritual',
              beat:`${ANCHOR} is worn smooth along one edge where the rite has been performed the same way for generations` };
   let fu = { character: cast[0], target:ANCHOR, beat:`she sets her palm flat on ${ANCHOR} to keep it still` };
-  if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]);
+  if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs the cloth to be the reason she is standing there, so no one asks why she came' }]);
   if (mutate === 'missing')   cp = cp.slice(0, Math.max(0, cp.length - 1));
   if (mutate === 'duplicate') cp = cp.concat([cp[0]]);
   if (mutate === 'badaxis')   ep = { target:'the spiralgrass', axis:'vibes' };
@@ -116,16 +131,16 @@ function plannerReply(usr, mutate) {
   if (mutate === 'fmfalse')        cp = cp.map((c,i) => i === 0 ? { ...c, first_mention:false } : c);
   if (mutate === 'fmmissing')      cp = cp.map((c,i) => { if (i !== 0) return c; const { first_mention, ...r } = c; return r; });
   if (mutate === 'fmstring')       cp = cp.map((c,i) => i === 0 ? { ...c, first_mention:'false' } : c);
-  if (mutate === 'emptyangle')     cp = cp.map((c,i) => i === 0 ? { ...c, angle:'   ' } : c);
-  if (mutate === 'placeholderang') cp = cp.map((c,i) => i === 0 ? { ...c, angle:'N/A' } : c);
-  if (mutate === 'thinangle')      cp = cp.map((c,i) => i === 0 ? { ...c, angle:'is sad' } : c);
+  if (mutate === 'emptyangle')     cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'   ' } : c);
+  if (mutate === 'placeholderang') cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'N/A' } : c);
+  if (mutate === 'thinangle')      cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'is sad' } : c);
   if (mutate === 'noep')           ep = undefined;
   if (mutate === 'emptyeptarget')  ep = { target:'   ', axis:'ritual' };
   if (mutate === 'fusionmismatch') fu = { character: cast[0], target:'the window casement', beat:'she sets her palm on the casement' };
   if (mutate === 'fusionempty')    fu = { character: cast[0], target:'   ', beat:'she sets her palm flat to keep it still' };
   // ── revised planning-contract mutations (2026-08-25) ──
-  if (mutate === 'diagnosisangle') cp = cp.map((c,i) => i === 0 ? { ...c, angle:'a woman clinging to the illusion of worthiness' } : c);
-  if (mutate === 'diagnosisangle2') cp = cp.map((c,i) => i === 0 ? { ...c, angle:'an authority whose judgment will decide her fate' } : c);
+  if (mutate === 'diagnosisangle') cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'a woman clinging to the illusion of worthiness' } : c);
+  if (mutate === 'diagnosisangle2') cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'an authority whose judgment will decide her fate' } : c);
   if (mutate === 'offsceneEp')     ep = { target:'the gallery hallway', axis:'damage' };
   if (mutate === 'relocate')       spine.opening_setting = 'a gallery hallway';
   // A bare null with no reason and NOTHING to supersede it: the obligation is simply dropped.
@@ -142,11 +157,49 @@ function plannerReply(usr, mutate) {
   if (mutate === 'aliasNarrator')  cp = cp.map((c,i) => i === 0 ? { ...c, character:'the narrator' } : c);
   if (mutate === 'aliasProtag')    cp = cp.map((c,i) => i === 0 ? { ...c, character:'the protagonist' } : c);
   if (mutate === 'aliasDohkar')    cp = cp.map(c => /presiding/i.test(c.character) ? { ...c, character:'Dohkar' } : c);
-  if (mutate === 'aliasOffstage')  cp = cp.concat([{ character:'the narrator’s absent mother', first_mention:true, angle:'sets the cloth straight twice' }]);
+  if (mutate === 'aliasOffstage')  cp = cp.concat([{ character:'the narrator’s absent mother', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs a task that keeps her hands in the room and her eyes out of it' }]);
+  // ── THE ROUND-12 GESTURES THEMSELVES (2026-08-27) ──
+  // Every one of these passed the old contract. "Camera-recordable" was the acceptance ceiling
+  // when it was only the floor: three interchangeable gestures, no revelation between them.
+  if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ psychological_read, ...r }) => r)(c) : c);
+  if (mutate === 'readVoiceDrops') cp = cp.map((c,i) => i === 0
+    ? { ...c, behavior:'his voice drops to a murmur as he intones the final clause', psychological_read:'he speaks more quietly at the end' } : c);
+  if (mutate === 'readBreathHitch') cp = cp.map((c,i) => i === 0
+    ? { ...c, behavior:'her breath hitches when the Dohkar says the name', psychological_read:'she is nervous about what is coming' } : c);
+  if (mutate === 'readFingersFlex') cp = cp.map((c,i) => i === 0
+    ? { ...c, behavior:'his fingers flex once at his side', psychological_read:'a quiet tension runs through him' } : c);
+  if (mutate === 'readIsAction')  cp = cp.map((c,i) => i === 0
+    ? { ...c, psychological_read:'she presses her palm flat against the table to keep it still' } : c);
+  if (mutate === 'readShared')    cp = cp.map(c =>
+    ({ ...c, psychological_read:'they expect the rite to go badly and have already decided who to blame' }));
+
+  // ── ROUND 12, THE REAL SAMPLE: TWO FALSE POSITIVES AND ONE MISSED DEFECT ──
+  // A five-token target ("the white weeping-willow veil-canopy") is NAMED perfectly well by its
+  // head noun, and scored 0.20 against a 0.34 floor — two valid fields rejected. And the sentinel
+  // came back as "pc_opening_fusion" rather than "FROM_PC_OPENING_FUSION": the same pointer,
+  // doing the same job. All three of these must now be ACCEPTED.
+  if (mutate === 'longTargetHeadNoun') {
+    const LONG = 'the long white weeping-willow veil-canopy';
+    ep = { target:LONG, axis:'ritual',
+           beat:`the canopy hangs lower on one side where hands have pulled it aside for generations` };
+    pof = { ...pof, environment_target:LONG, environment_axis:'ritual',
+            beat:`the canopy's leaves brush my shoulder and I hold still under them` };
+    fu = undefined;
+  }
+  if (mutate === 'sentinelSpelling') spine.staged_characters = spine.staged_characters.map(c =>
+    ({ ...c, anchor_beat: c.name === PCN ? 'pc_opening_fusion' : 'character_plus' }));
+  // …while the defect NOTHING caught stays rejected: the angle staging a second action elsewhere.
+  if (mutate === 'angleSecondAction') pof = { ...pof,
+    character_angle:'her bare feet press into the ledger-slate, feeling the cold fibers coil around her arches' };
+  // The first attempt at that check inverted the concreteness detector and rejected THIS — a
+  // textbook reading. The accept-case is the guard against reaching for a blunt instrument again.
+  if (mutate === 'angleIsAReading') pof = { ...pof,
+    character_angle:'a composure she has practised since childhood, thinning at the edges' };
+
   // ── THE SINGLE-SOURCE CONTRACT (2026-08-26, round 12) ──
   // A PC character_plus entry is a SECOND opening beat, and the planner is no longer asked for
   // one. An anchor the planner wrote over the sentinel is the same defect a field lower down.
-  if (mutate === 'pcInCp')        cp = cp.concat([{ character:PCN, first_mention:true, angle:'presses her palm to the spiralgrass, feeling its damp give' }]);
+  if (mutate === 'pcInCp')        cp = cp.concat([{ character:PCN, first_mention:true, behavior:'presses her palm to the spiralgrass', psychological_read:'she needs the ground to hold still because nothing else will' }]);
   if (mutate === 'pcAnchorOwn')   spine.staged_characters = spine.staged_characters.map(c =>
     c.name === PCN ? { ...c, anchor_beat:'stands at the edge of the circle counting the petitioners' } : c);
   if (mutate === 'nonPcAnchorOwn') spine.staged_characters = spine.staged_characters.map(c =>
@@ -219,7 +272,7 @@ function plannerReply(usr, mutate) {
     const declared = declaredSpineKeys(usr);
     const top = {}, nested = {};
     Object.keys(spine).forEach(k => { (declared.includes(k) ? top : nested)[k] = spine[k]; });
-    const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]) };
+    const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs the cloth to be the reason she is standing there' }]) };
     return JSON.stringify(Object.assign({ opening_spine: nested }, top, { scene_skeleton: bad }));
   }
   // ── FIXED-CAST mutations (2026-08-26): staged_characters is a prefilled echo, not a choice ──
@@ -262,7 +315,7 @@ function plannerReply(usr, mutate) {
                                   return JSON.stringify({ opening_spine: rest, staged_characters: [{ presence_mode:'IN_PERSON' }], scene_skeleton: skel }); }
   if (mutate === 'nested')       return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel } });
   if (mutate === 'dupSkeleton')  return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel }, scene_skeleton: skel });
-  if (mutate === 'dupSkeletonBadCast') { const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]) };
+  if (mutate === 'dupSkeletonBadCast') { const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs the cloth to be the reason she is standing there' }]) };
                                         return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: bad }, scene_skeleton: bad }); }
   if (mutate === 'dupSkeletonDiff') return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: { ...skel, fusion: null } }, scene_skeleton: skel });
   if (mutate === 'nestedThin')   return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: { fusion: null } } });
@@ -438,11 +491,16 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     cp.length > 0 && cp.every(c => c.first_mention === true),
     JSON.stringify(cp.map(c => [c.character, c.first_mention])));
   // The PC's entry is ACCOUNTING, not an assignment: no angle, by contract. Everyone else owes one.
-  t(`${label} 11b: delivered — every non-PC C+ angle is nonempty and substantive`,
+  t(`${label} 11b: delivered — every non-PC C+ carries BOTH a behavior and a read`,
     cp.filter(c => c.fulfilled_by !== 'pc_opening_fusion').length > 0
-      && cp.filter(c => c.fulfilled_by !== 'pc_opening_fusion').every(c => String(c.angle||'').trim().length >= 12
-        && String(c.angle).trim().split(/\s+/).length >= 3),
-    JSON.stringify(cp.map(c => [c.character, c.angle, c.fulfilled_by])));
+      && cp.filter(c => c.fulfilled_by !== 'pc_opening_fusion').every(c =>
+        String(c.behavior||'').trim().split(/\s+/).length >= 3
+        && String(c.psychological_read||'').trim().split(/\s+/).length >= 4),
+    JSON.stringify(cp.map(c => [c.character, c.behavior, c.psychological_read])));
+  t(`${label} 11b3: no two characters were handed the same reading`,
+    (() => { const rs = cp.filter(c => c.psychological_read).map(c => c.psychological_read);
+             return rs.length === new Set(rs).size; })(),
+    JSON.stringify(cp.map(c => c.psychological_read)));
   t(`${label} 11b2: the PC's entry is an ACCOUNTING row — present, first_mention, no angle`,
     (() => { const p = cp.filter(c => c.fulfilled_by === 'pc_opening_fusion')[0];
              return !!p && p.first_mention === true && !String(p.angle || '').trim(); })(),
@@ -456,9 +514,17 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     JSON.stringify({ fu, epTarget: ep && ep.target }));
 
   // ── the same values, verbatim, in the bytes handed to Grok ──
-  t(`${label} 11e: EVERY returned angle renders verbatim in the outgoing system prompt`,
-    cp.length > 0 && cp.every(c => sys.includes(c.angle)),
-    JSON.stringify(cp.filter(c => !sys.includes(c.angle)).map(c => c.angle)));
+  t(`${label} 11e: EVERY behavior AND read renders verbatim in the outgoing system prompt`,
+    cp.length > 0 && cp.filter(c => c.psychological_read).every(c =>
+      sys.includes(c.behavior) && sys.includes(c.psychological_read)),
+    JSON.stringify(cp.filter(c => c.psychological_read && !(sys.includes(c.behavior) && sys.includes(c.psychological_read)))
+      .map(c => c.character)));
+  t(`${label} 11e2: behavior and revelation land on ONE line, as one obligation`,
+    cp.filter(c => c.psychological_read).length > 0
+      && cp.filter(c => c.psychological_read).every(c =>
+        sys.split('\n').some(l => l.includes(c.behavior) && l.includes(c.psychological_read)
+                                   && / — behavior: /.test(l) && /; character revelation: /.test(l))),
+    JSON.stringify(sys.split('\n').filter(l => / — behavior: /.test(l)).slice(0, 3)));
   t(`${label} 11f: every C+ recipient renders on a first-mention-tagged line`,
     cp.length > 0 && cp.every(c => new RegExp(`•\\s*${c.character.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\s*\\(first mention`).test(sys)),
     'a recipient rendered without the first-mention tag');
@@ -531,8 +597,8 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
   t(`12f: the planner request forbids relocation and materialising the absent`,
     /Do NOT relocate the scene/.test(pu) && /Do NOT materialise anyone/.test(pu)
       && /does NOT make a character physically present/.test(pu));
-  t(`12g: the planner request demands RENDERABLE angles and bans diagnoses`,
-    /ANGLES MUST BE RENDERABLE, NOT DIAGNOSES/.test(pu)
+  t(`12g: the planner request demands a RENDERABLE behavior and bans diagnoses`,
+    /"behavior" is the FLOOR/.test(pu)
       && /clinging to the illusion of worthiness/.test(pu)
       && /could a camera record it/i.test(pu));
   t(`12h: the planner request requires ONE opening beat carrying C+, E+ and the fusion`,
@@ -595,6 +661,9 @@ for (const [mutate, label, expect] of [
   ['stagedReordered','a REORDERED fixed cast is canonicalised, not rejected', { alias:false }],
   ['stagedAliased', 'an ALIASED staged name resolves to the canonical person',{ alias:false }],
   ['fusionNullPof', 'a null standalone fusion is SUPERSEDED by the opening fusion',{ alias:false }],
+  ['longTargetHeadNoun', 'a long noun-phrase target NAMED by its head noun',   { alias:false }],
+  ['sentinelSpelling',   'the pointer sentinel returned without its FROM_ prefix', { alias:false }],
+  ['angleIsAReading',    'an interpretive PC angle that stages no body is untouched', { alias:false }],
 ]) {
   const R = await run({ hot: false, mutate });
   const cp = ((R.skeleton && R.skeleton.cp) || []).map(c => c.character);
@@ -723,7 +792,10 @@ for (const mutate of ['unknown', 'missing', 'duplicate', 'badaxis', 'badfusion',
                       'pcInCp', 'pcAnchorOwn', 'nonPcAnchorOwn',
                       // …and she is still recognised under an alias, then still rejected
                       'aliasNarrator', 'aliasProtag',
-                      'epSchemaEcho', 'epCategoryEcho', 'pofSchemaEcho',
+                      'epSchemaEcho', 'epCategoryEcho', 'pofSchemaEcho', 'angleSecondAction',
+                      // C+ must REVEAL, not merely be recordable
+                      'readMissing', 'readVoiceDrops', 'readBreathHitch', 'readFingersFlex',
+                      'readIsAction', 'readShared',
                       // identical duplicates now COLLAPSE (tested below); a DIFFERENCE still aborts
                       'dupSkeletonDiff', 'stagedBothDiff',
                       // reconciler must not rescue semantics, and must not swallow invented fields
@@ -1005,6 +1077,13 @@ for (const [mutate, label, needle] of [
   ['epSchemaEcho',     'E+ beat returned as the bracket text',               'returns the schema instead of content'],
   ['epCategoryEcho',   'E+ beat built out of the category words',            'returns the schema instead of content'],
   ['pofSchemaEcho',    'the opening beat returned as the bracket text',      'returns the schema instead of content'],
+  ['angleSecondAction','the angle staging a second action elsewhere',        'stages a SECOND action'],
+  ['readMissing',      'a behavior with no psychological_read at all',       'no psychological_read'],
+  ['readVoiceDrops',   '"his voice drops" read as "he speaks more quietly"', 'psychological_read'],
+  ['readBreathHitch',  '"her breath hitches" read as "she is nervous"',      'generic STATE'],
+  ['readFingersFlex',  '"his fingers flex" read as "a quiet tension"',       'psychological_read'],
+  ['readIsAction',     'a read that stages another action',                  'psychological_read'],
+  ['readShared',       'one reading handed to every character',              'the SAME reading'],
 ]) {
   const R = await run({ hot: false, mutate });
   const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');
@@ -1107,7 +1186,7 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     JSON.stringify((R.staged||[]).map(c => c.anchor_beat)));
   t(`${label} U9: every NON-PC staged character still gets exactly one independent C+ line`,
     nonPc.length > 0 && nonPc.every(n => {
-      const lines = sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — read: /.test(l));
+      const lines = sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — behavior: /.test(l));
       return lines.length === 1;
     }),
     JSON.stringify(nonPc.map(n => [n, sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — read: /.test(l)).length])));

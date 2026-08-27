@@ -318,6 +318,15 @@ async function fullRun({ label, statePatch, injectSeedB, reply }) {
 }
 
 // The planner reply is derived FROM the request, so it always matches whatever stage resolved.
+// Reads keyed by slot, not by name: the fixture serves two different seeds and must still hand
+// each character a reading that would NOT survive being given to the person beside them. The
+// first version name-swapped one template and the uniqueness check rejected it, correctly.
+const SLOT_READS = [
+  'has already decided he will be blamed for whatever goes wrong, and is choosing where to be standing when it does',
+  'expected to be thanked by now and cannot settle until someone acknowledges her',
+  'cannot be bothered to pretend the proceeding deserves his attention, and knows nobody checks',
+  'trusts what a column of figures admits over what a mouth says, because a ledger has never lied to her',
+];
 function plannerReplyFor(usr) {
   const m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
   let cast = m ? m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
@@ -361,7 +370,8 @@ function plannerReplyFor(usr) {
     ({ ...c, anchor_beat: c.name === pcName ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
   return JSON.stringify({ opening_spine: spine, scene_skeleton: {
     character_plus: cast.filter(n => n !== pcName)
-      .map(n => ({ character:n, first_mention:true, angle:`${n} checks the ledger before the words` })),
+      .map((n, i) => ({ character:n, first_mention:true, behavior:`${n} checks the ledger before the words`,
+                        psychological_read: SLOT_READS[i % SLOT_READS.length] })),
     environment_plus: { target, axis:'use',
       beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
     pc_opening_fusion: { character: pcName, placement:'PC_FIRST_EMBODIED_BEAT',
@@ -605,8 +615,9 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
       staged_characters: names.map(n => ({ name:n, presence:'IN_PERSON',
         anchor_beat: n === pcN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' })),
       scene_skeleton: {
-        character_plus: names.filter(n => n !== pcN).map(n => ({ character:n, first_mention:true,
-          angle: `${n} checks the ledger before the words` })),
+        character_plus: names.filter(n => n !== pcN).map((n, i) => ({ character:n, first_mention:true,
+          behavior: `${n} checks the ledger before the words`,
+          psychological_read: SLOT_READS[i % SLOT_READS.length] })),
         environment_plus: { target, axis:'use',
           beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
         pc_opening_fusion: { character: pcN, placement:'PC_FIRST_EMBODIED_BEAT',
