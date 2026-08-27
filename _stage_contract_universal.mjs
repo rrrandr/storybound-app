@@ -351,10 +351,20 @@ function plannerReplyFor(usr) {
                                         anchor_beat:'is already at work as the scene opens',
                                         role_to_protagonist:'witness' })) };
   if (elements) spine.environment_elements = elements;
+  // 2026-08-26 schema: E+ carries physical evidence of its axis, and the PC's opening beat IS the
+  // fusion — so her C+ angle and her staged anchor must be that same beat.
+  const pcName = cast[0];
+  const pofBeat = `my thumb finds the ${target} where it has been worn smooth by hands that came before mine, and my rehearsed steadiness feels newly counterfeit`;
+  spine.staged_characters = spine.staged_characters.map(c =>
+    c.name === pcName ? { ...c, anchor_beat: pofBeat } : c);
   return JSON.stringify({ opening_spine: spine, scene_skeleton: {
-    character_plus: cast.map(n => ({ character:n, first_mention:true, angle:`${n} checks the ledger before the words` })),
-    environment_plus: { target, axis:'use' },
-    fusion: { character: cast[0], target, beat:`she sets her palm flat on the ${target} to keep it still` },
+    character_plus: cast.map(n => ({ character:n, first_mention:true,
+      angle: n === pcName ? pofBeat : `${n} checks the ledger before the words` })),
+    environment_plus: { target, axis:'use',
+      beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
+    pc_opening_fusion: { character: pcName, placement:'PC_FIRST_EMBODIED_BEAT',
+      character_angle:'rehearsed steadiness that does not survive contact',
+      environment_target: target, environment_axis:'use', beat: pofBeat },
   } });
 }
 
@@ -586,13 +596,20 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
       pc_body_callback:'decision', li_body_callback:'opening', antagonist_body_callback:null,
       perceptual_signature_beat:L };
     const target = epTarget || els[0];
+    const pcN = names[0];
+    const pofBeat = `my thumb finds the ${target} where it has been worn smooth by hands that came before mine, and my rehearsed steadiness feels newly counterfeit`;
     return JSON.stringify({
       opening_spine: spine,                                  // NOTE: no staged_characters here
-      staged_characters: names.map(n => ({ name:n, presence:'IN_PERSON', anchor_beat:'is already at the ledger' })),
+      staged_characters: names.map(n => ({ name:n, presence:'IN_PERSON',
+        anchor_beat: n === pcN ? pofBeat : 'is already at the ledger' })),
       scene_skeleton: {
-        character_plus: names.map(n => ({ character:n, first_mention:true, angle:`${n} checks the ledger before the words` })),
-        environment_plus: { target, axis:'use' },
-        fusion: { character: names[0], target, beat:`she sets her palm flat on the ${target} to keep it still` },
+        character_plus: names.map(n => ({ character:n, first_mention:true,
+          angle: n === pcN ? pofBeat : `${n} checks the ledger before the words` })),
+        environment_plus: { target, axis:'use',
+          beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
+        pc_opening_fusion: { character: pcN, placement:'PC_FIRST_EMBODIED_BEAT',
+          character_angle:'rehearsed steadiness that does not survive contact',
+          environment_target: target, environment_axis:'use', beat: pofBeat },
       },
     });
   };

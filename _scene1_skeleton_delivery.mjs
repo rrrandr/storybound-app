@@ -84,11 +84,22 @@ function plannerReply(usr, mutate) {
   // claim rather than one string matching by accident.
   // Angles must now be RENDERABLE BEATS, not diagnoses, and E+/fusion targets must be things the
   // resolved scene actually contains. "spiralgrass" is in the First Sacrifice seed's WHERE.
-  let cp = cast.map(n => ({ character:n, first_mention:true, angle:`${n} checks the youth's hands before the words` }));
   const ANCHOR = SOLO ? SOLO_ELS[0]
     : (FIXED_WHERE && !/Veilwood/.test(FIXED_WHERE)) ? FIXED_WHERE.trim()
     : 'the spiralgrass';
-  let ep = { target:ANCHOR, axis:'ritual' };
+  // The PC's opening beat IS the fusion: one beat carries her C+, the E+ axis and the fusion, and
+  // her staged anchor is that same beat. One source of truth for the opening.
+  const PCN = cast[0];
+  const POF_BEAT = `my thumb finds ${ANCHOR} where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
+  let cp = cast.map(n => ({ character:n, first_mention:true,
+    angle: n === PCN ? POF_BEAT : `${n} checks the youth's hands before the words` }));
+  spine.staged_characters = spine.staged_characters.map(c =>
+    c.name === PCN ? { ...c, anchor_beat: POF_BEAT } : c);
+  let pof = { character:PCN, placement:'PC_FIRST_EMBODIED_BEAT',
+    character_angle:'rehearsed steadiness that does not survive contact',
+    environment_target:ANCHOR, environment_axis:'ritual', beat:POF_BEAT };
+  let ep = { target:ANCHOR, axis:'ritual',
+             beat:`${ANCHOR} is worn smooth along one edge where the rite has been performed the same way for generations` };
   let fu = { character: cast[0], target:ANCHOR, beat:`she sets her palm flat on ${ANCHOR} to keep it still` };
   if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, angle:'sets the cloth straight twice' }]);
   if (mutate === 'missing')   cp = cp.slice(0, Math.max(0, cp.length - 1));
@@ -112,7 +123,11 @@ function plannerReply(usr, mutate) {
   if (mutate === 'diagnosisangle2') cp = cp.map((c,i) => i === 0 ? { ...c, angle:'an authority whose judgment will decide her fate' } : c);
   if (mutate === 'offsceneEp')     ep = { target:'the gallery hallway', axis:'damage' };
   if (mutate === 'relocate')       spine.opening_setting = 'a gallery hallway';
-  if (mutate === 'fusionnull')     fu = null;                                   // bare null, no reason
+  // A bare null with no reason and NOTHING to supersede it: the obligation is simply dropped.
+  if (mutate === 'fusionnull')     { fu = null; pof = null; }
+  // …but a null standalone fusion beside a VALID pc_opening_fusion is the new contract, not a
+  // fault: the opening beat discharges the obligation. This one must be ACCEPTED.
+  if (mutate === 'fusionNullPof')  fu = null;
   if (mutate === 'fusionbadcode')  fu = { character:null, target:null, impossible_because:'DIDNT_FEEL_RIGHT' };
   if (mutate === 'fusionfalsecode') fu = { character:null, target:null, impossible_because:'NO_ONSTAGE_CHARACTER' };
   if (mutate === 'fusionnobeat')   fu = { character: cast[0], target:'the spiralgrass' };
@@ -124,11 +139,20 @@ function plannerReply(usr, mutate) {
   if (mutate === 'aliasDohkar')    cp = cp.map(c => /presiding/i.test(c.character) ? { ...c, character:'Dohkar' } : c);
   if (mutate === 'aliasOffstage')  cp = cp.concat([{ character:'the narrator’s absent mother', first_mention:true, angle:'sets the cloth straight twice' }]);
   if (mutate === 'clothEp') {
-    // Canonically in-scene, but described ONLY in seed.sceneOne.narrator.
-    ep = { target:'the gossamer band', axis:'ritual' };
-    fu = { character: cast[0], target:'the gossamer band', beat:'she tugs the band tighter until the knot bites' };
+    // Canonically in-scene, but described ONLY in seed.sceneOne.narrator. The whole assignment
+    // moves together: E+ carries its evidence and the opening fusion points at the same thing.
+    const CLOTH = 'the gossamer band';
+    const CLOTH_BEAT = `my thumb finds ${CLOTH} where the rite has worn it smooth, and my rehearsed steadiness feels newly counterfeit`;
+    ep = { target:CLOTH, axis:'ritual',
+           beat:`${CLOTH} is worn thin along one edge where the rite has been performed the same way for generations` };
+    fu = { character: cast[0], target:CLOTH, beat:'she tugs the band tighter until the knot bites' };
+    pof = { ...pof, environment_target:CLOTH, environment_axis:'ritual', beat:CLOTH_BEAT };
+    cp = cp.map(c => c.character === PCN ? { ...c, angle:CLOTH_BEAT } : c);
+    spine.staged_characters = spine.staged_characters.map(c =>
+      c.name === PCN ? { ...c, anchor_beat: CLOTH_BEAT } : c);
   }
   const skel = { character_plus:cp, fusion:fu };
+  if (pof) skel.pc_opening_fusion = pof;   // a null pof omits the KEY, as a planner omission would
   if (ep !== undefined) skel.environment_plus = ep;   // `noep` omits the KEY, not just the value
 
   // ENVELOPE SHAPES. `nested` is what the live planner produced in 1 of 3 samples;
@@ -299,7 +323,7 @@ async function run({ hot, mutate, solo, duo }) {
         ? (window._scene1StageContract(s).onStage || []).map(c => c.label)
         : (window._sceneEligibleCast ? window._sceneEligibleCast(s, 1) : null)),
       assignments: s._scene1SceneAssignments || null,
-      skeleton: s.sceneSkeleton ? { cp: s.sceneSkeleton.character_plus, ep: s.sceneSkeleton.environment_plus, fu: s.sceneSkeleton.fusion } : null,
+      skeleton: s.sceneSkeleton ? { cp: s.sceneSkeleton.character_plus, ep: s.sceneSkeleton.environment_plus, fu: s.sceneSkeleton.fusion, pof: s.sceneSkeleton.pc_opening_fusion } : null,
       auditSystem: (s._lastScene1AuditPrompt && s._lastScene1AuditPrompt.system) || null,
       fingerprint: window.__scene1RequestFingerprint || null };
   }, { solo: !!solo, duo: !!duo });
@@ -397,14 +421,35 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     (() => { const line = (sys.split('\n').find(l => l.includes('ENVIRONMENT+ ASSIGNED THIS SCENE')) || '');
              return !!ep && line.includes(ep.target) && line.includes(ep.axis); })(),
     JSON.stringify(sys.split('\n').find(l => l.includes('ENVIRONMENT+ ASSIGNED THIS SCENE')) || null));
-  t(`${label} 11h: fusion PAIR renders verbatim on one FUSION line`,
-    (() => { const line = (sys.split('\n').find(l => l.includes('FUSION —')) || '');
-             return !!fu && line.includes(fu.character) && line.includes(fu.target); })(),
-    JSON.stringify(sys.split('\n').find(l => l.includes('FUSION —')) || null));
-  t(`${label} 11i: still exactly ONE skeleton block with fusion present`,
+  // ── THE OPENING BEAT IS THE DELIVERED FUSION (2026-08-26) ──
+  // Validating pc_opening_fusion proves nothing on its own: the Scene-1 handoff copies the
+  // skeleton field by field, so an assignment can pass every check and never reach the author.
+  // These assert the BYTES.
+  const pof = R.skeleton && R.skeleton.pof;
+  t(`${label} 11h: the PC opening beat renders verbatim in the outgoing system prompt`,
+    !!(pof && pof.beat) && sys.includes(pof.beat)
+      && /PROTAGONIST OPENING BEAT \(HARD/.test(sys),
+    JSON.stringify({ beat: pof && pof.beat, present: !!(pof && sys.includes(pof.beat)),
+                     block: /PROTAGONIST OPENING BEAT/.test(sys) }));
+  t(`${label} 11h2: it carries its placement, its angle and the E+ axis`,
+    /PC_FIRST_EMBODIED_BEAT|FIRST embodied action or sensory response/.test(sys)
+      && !!(pof && pof.character_angle) && sys.includes(pof.character_angle)
+      && !!(pof && pof.environment_target) && sys.includes(pof.environment_target)
+      && new RegExp('axis of ' + String(pof && pof.environment_axis)).test(sys),
+    JSON.stringify(sys.split('\n').filter(l => /↳/.test(l)).slice(0, 4)));
+  t(`${label} 11h3: the SUPERSEDED standalone FUSION line is not also sent`,
+    count(au ? au.system : '', 'FUSION — one sentence') === 0,
+    `the author received BOTH an opening beat and a competing fusion line`);
+  t(`${label} 11h4: the E+ evidence beat renders, not just target + axis`,
+    !!(ep && ep.beat) && sys.includes(ep.beat) && /THE EVIDENCE TO RENDER/.test(sys),
+    JSON.stringify({ beat: ep && ep.beat }));
+  // The block header, not the phrase: the C+ roster and the E+ block both POINT at the opening
+  // beat by name, and a cross-reference is what stops a second obligation, not one more copy.
+  t(`${label} 11i: still exactly ONE skeleton block, with ONE opening-beat BLOCK in it`,
     au && count(au.system, 'Narrative skeleton for this scene:') === 1
-      && count(au.system, 'FUSION —') === 1,
-    `skel=${au && count(au.system,'Narrative skeleton for this scene:')} fusion=${au && count(au.system,'FUSION —')}`);
+      && count(au.system, 'PROTAGONIST OPENING BEAT (HARD') === 1
+      && !!(pof && pof.beat) && count(au.system, pof.beat) === 1,
+    `skel=${au && count(au.system,'Narrative skeleton for this scene:')} block=${au && count(au.system,'PROTAGONIST OPENING BEAT (HARD')} beat=${au && pof && count(au.system, pof.beat)}`);
   t(`${label} 11j: observer snapshot === dispatched prompt, zero escaped`,
     R.auditSystem !== null && au && R.auditSystem === au.system && R.escaped.length === 0 && R.unknown.length === 0);
   console.log('');
@@ -445,9 +490,15 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
     /ANGLES MUST BE RENDERABLE, NOT DIAGNOSES/.test(pu)
       && /clinging to the illusion of worthiness/.test(pu)
       && /could a camera record it/i.test(pu));
-  t(`12h: the planner request requires fusion + a coded impossibility`,
-    /fusion is REQUIRED whenever an on-stage character/.test(pu)
-      && /impossible_because/.test(pu) && /NO_ONSTAGE_CHARACTER/.test(pu));
+  t(`12h: the planner request requires ONE opening beat carrying C+, E+ and the fusion`,
+    /"pc_opening_fusion"/.test(pu)
+      && /PC_FIRST_EMBODIED_BEAT/.test(pu)
+      && /REPLACES the old standalone fusion/.test(pu)
+      && /copy its "beat" verbatim into her character_plus entry AND into her staged_characters anchor_beat/.test(pu),
+    'the planner was not given the single-opening-beat contract');
+  t(`12h2: the planner request requires environment_plus to carry physical evidence`,
+    /environment_plus\.beat is REQUIRED/.test(pu) && /The mark left behind/.test(pu),
+    'E+ was assigned as a bare target + axis, with no evidence owed');
   t(`12i: FIRST-PERSON landing point is defined for the PC`,
     /FIRST-PERSON NARRATOR/.test(pu) && /FIRST EMBODIED SELF-REFERENCE OR ACTION/.test(pu),
     'planner was not told where the narrator beat lands');
@@ -460,9 +511,11 @@ console.log(` 12 · PLANNING CONTRACT: stage authority, on-stage eligibility, fi
   t(`12k: the author directive states the first-person landing point`,
     /narrates as "I" and is not named in the prose/.test(sys)
       && /first embodied action or self-reference/.test(sys));
-  t(`12l: the fusion BEAT reaches the author, not just the pair`,
-    /FUSION — one sentence in which/.test(sys) && /sets her palm flat on the spiralgrass/.test(sys),
-    JSON.stringify(sys.split('\n').find(l => l.includes('FUSION —')) || null));
+  t(`12l: the opening BEAT reaches the author, not just the pair`,
+    /PROTAGONIST OPENING BEAT \(HARD/.test(sys)
+      && /my thumb finds the spiralgrass where the rite has worn it smooth/.test(sys)
+      && !/FUSION — one sentence in which/.test(sys),
+    JSON.stringify(sys.split('\n').filter(l => /PROTAGONIST OPENING BEAT|FUSION —/.test(l)).slice(0, 2)));
   t(`12m: zero escaped / unknown requests`, R.escaped.length === 0 && R.unknown.length === 0);
   console.log('');
 }
@@ -480,6 +533,7 @@ for (const [mutate, label, expect] of [
   ['spread',        'WHOLE spine distributed at top level is reconciled',    { alias:false, lifted:true }],
   ['stagedReordered','a REORDERED fixed cast is canonicalised, not rejected', { alias:false }],
   ['stagedAliased', 'an ALIASED staged name resolves to the canonical person',{ alias:false }],
+  ['fusionNullPof', 'a null standalone fusion is SUPERSEDED by the opening fusion',{ alias:false }],
 ]) {
   const R = await run({ hot: false, mutate });
   const cp = ((R.skeleton && R.skeleton.cp) || []).map(c => c.character);
@@ -552,8 +606,12 @@ console.log('');
     /DERIVED FROM STAGING/.test(full)
       && /exactly ONE entry for EVERY staged_characters entry whose presence_mode is IN_PERSON/.test(full)
       && /character_plus never decides who is present/.test(full));
-  t(`   template's fusion character is drawn from the same staged enumeration`,
-    /"fusion": \{ "character": "<EXACTLY one of: /.test(full) && /and one you staged IN_PERSON/.test(full));
+  t(`   template binds the opening fusion to the PROTAGONIST and to environment_plus`,
+    /"pc_opening_fusion": \{/.test(full)
+      && /"placement": "PC_FIRST_EMBODIED_BEAT"/.test(full)
+      && /the SAME string as environment_plus\.target, verbatim/.test(full)
+      && /the SAME value as environment_plus\.axis/.test(full),
+    (full.match(/.{0,60}pc_opening_fusion.{0,80}/) || ['(none)'])[0]);
   // ── the reconciler's allowlist IS the template's contract ──
   // Parsed from the SAME dispatched text the planner received, so a field added to the schema
   // later cannot silently become unreconciled.
@@ -858,6 +916,116 @@ for (const [mutate, what, tag] of [
       && R.logs.some(l => /IDENTICAL DUPLICATE COLLAPSED/.test(l))
       && R.logs.some(l => /SKELETON:INVALID/.test(l)) && R.logs.some(l => /SCENE1:ABORT/.test(l)),
     `author=${R.author.length} | ${(R.logs.find(l=>/SKELETON:INVALID/.test(l))||'(no invalid log)').slice(0,160)}`);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// PART U — EXACT-COUNT AUDIT: ONE OBLIGATION, NOT THREE SYNCHRONISED COPIES
+//
+// Delivery alone is not correctness. The first delivered build shipped the protagonist's beat
+// TWICE — once as her CHARACTER+ line, once as the PROTAGONIST OPENING BEAT — which is the very
+// competition pc_opening_fusion exists to end, reintroduced one block higher. These are exact
+// COUNTS against the bytes that leave for Grok, plus a seam-by-seam trace of the field.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(90)}\nPART U — EXACT-COUNT AUDIT OF THE DISPATCHED SCENE-1 PROMPT\n${'═'.repeat(90)}\n`);
+for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
+  const R = await run({ hot, mutate: null });
+  const au = R.author[0];
+  const sys = au ? au.system : '';
+  const usr = au ? au.user : '';
+  const sk = R.skeleton || {};
+  const pof = sk.pof || null;
+  const ep = sk.ep || null;
+  const stage = R.stage || {};
+  const pcRec = (stage.onStage || []).find(c => c.kind === 'pc') || null;
+  const pcLabel = pcRec ? pcRec.label : '';
+  const nonPc = (stage.onStage || []).filter(c => c.kind !== 'pc').map(c => c.label);
+  const beat = pof ? pof.beat : '';
+  console.log(` ${label} — PC=${JSON.stringify(pcLabel)} others=${JSON.stringify(nonPc)}`);
+
+  // ── exactly one of everything ──
+  t(`${label} U1: exactly ONE "PROTAGONIST OPENING BEAT" block`,
+    count(sys, 'PROTAGONIST OPENING BEAT (HARD') === 1,
+    `got ${count(sys, 'PROTAGONIST OPENING BEAT (HARD')}`);
+  t(`${label} U2: pc_opening_fusion.beat appears EXACTLY ONCE in the whole request`,
+    !!beat && count(sys, beat) === 1 && count(usr, beat) === 0,
+    `system=${beat && count(sys, beat)} user=${beat && count(usr, beat)}`);
+  t(`${label} U3: the PC angle appears exactly once, as an actionable assignment`,
+    !!(pof && pof.character_angle) && count(sys, pof.character_angle) === 1
+      && new RegExp('WHAT IT REVEALS ABOUT HER: ' + pof.character_angle.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test(sys),
+    `count=${pof && pof.character_angle && count(sys, pof.character_angle)}`);
+  t(`${label} U4: the PC gets NO independent CHARACTER+ assignment line`,
+    (() => {
+      const line = sys.split('\n').find(l => /^\s*•\s/.test(l) && l.includes(pcLabel));
+      return !!line && !/ — read: /.test(line) && /PROTAGONIST OPENING BEAT/.test(line);
+    })(),
+    JSON.stringify(sys.split('\n').find(l => /^\s*•\s/.test(l) && l.includes(pcLabel)) || null));
+  t(`${label} U4b: …but she is NOT silently dropped from the roster or the data`,
+    ((sk.cp || []).some(c => c.character === pcLabel))
+      && sys.split('\n').some(l => /^\s*•\s/.test(l) && l.includes(pcLabel))
+      && (R.eligible || []).includes(pcLabel)
+      && (stage.onStage || []).some(c => c.label === pcLabel),
+    JSON.stringify({ inCp: (sk.cp||[]).map(c=>c.character), eligible: R.eligible }));
+  t(`${label} U5: the superseded standalone fusion line appears ZERO times`,
+    count(sys, 'FUSION — one sentence') === 0 && count(sys, 'FUSION OPPORTUNITY') === 0,
+    `fusionLine=${count(sys, 'FUSION — one sentence')} opportunity=${count(sys, 'FUSION OPPORTUNITY')}`);
+  t(`${label} U6: the E+ evidence beat appears exactly once`,
+    !!(ep && ep.beat) && count(sys, ep.beat) === 1 && count(usr, ep.beat) === 0,
+    `system=${ep && ep.beat && count(sys, ep.beat)} user=${ep && ep.beat && count(usr, ep.beat)}`);
+  t(`${label} U7: E+ may keep developing the object but may not schedule a rival realisation`,
+    /THIS IS THE SAME THING THE PROTAGONIST OPENING BEAT BELOW TOUCHES/.test(sys)
+      && /do NOT stage a second, separate moment of realising/.test(sys)
+      && count(sys, 'ENVIRONMENT+ ASSIGNED THIS SCENE') === 1,
+    `epBlocks=${count(sys, 'ENVIRONMENT+ ASSIGNED THIS SCENE')}`);
+
+  // ── one canonical assignment, four accountings of it ──
+  t(`${label} U8: staged anchor_beat, C+ angle, E+ target and the opening fusion all resolve to ONE assignment`,
+    (() => {
+      if (!pof || !ep) return false;
+      const stagedPc = ((R.assignments && R.assignments.staged_characters) || (stage.staged || []))
+        .concat([]) // tolerate either shape
+        .find(c => c && (c.name === pcLabel));
+      const cpPc = (sk.cp || []).find(c => c.character === pcLabel);
+      const sameAngle = cpPc && String(cpPc.angle).trim() === String(beat).trim();
+      const sameAnchor = !stagedPc || String(stagedPc.anchor_beat || '').trim() === String(beat).trim();
+      const sameTarget = String(pof.environment_target).toLowerCase() === String(ep.target).toLowerCase();
+      const sameAxis = String(pof.environment_axis).toLowerCase() === String(ep.axis).toLowerCase();
+      const sameWho = String(pof.character) === pcLabel;
+      return !!(sameAngle && sameAnchor && sameTarget && sameAxis && sameWho);
+    })(),
+    JSON.stringify({ pofWho: pof && pof.character, pcLabel,
+                     cpAngle: (sk.cp||[]).filter(c=>c.character===pcLabel).map(c=>c.angle)[0],
+                     beat, epTarget: ep && ep.target, pofTarget: pof && pof.environment_target }));
+  t(`${label} U9: every NON-PC staged character still gets exactly one independent C+ line`,
+    nonPc.length > 0 && nonPc.every(n => {
+      const lines = sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — read: /.test(l));
+      return lines.length === 1;
+    }),
+    JSON.stringify(nonPc.map(n => [n, sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — read: /.test(l)).length])));
+  t(`${label} U9b: …and no non-PC angle is a duplicate of the opening beat`,
+    !!beat && (sk.cp || []).filter(c => c.character !== pcLabel)
+      .every(c => String(c.angle).trim() !== String(beat).trim()));
+
+  // ── THE SEAMS: raw → envelope → normalised → state → directive → descriptor → callChat → Grok ──
+  const rawHasPof = /"pc_opening_fusion"/.test(String((R.planner[0] || {}).user || '')) ;
+  t(`${label} U10 seam 1-2 · the planner was ASKED for the field and the reply survived reconciliation`,
+    rawHasPof && !!(R.assignments && R.assignments.pc_opening_fusion),
+    `askedFor=${rawHasPof} reconciled=${!!(R.assignments && R.assignments.pc_opening_fusion)}`);
+  t(`${label} U11 seam 3 · normalised assignment carries every subfield`,
+    (() => { const a = R.assignments && R.assignments.pc_opening_fusion; return !!a && !!a.beat && !!a.character
+      && a.placement === 'PC_FIRST_EMBODIED_BEAT' && !!a.environment_target && !!a.environment_axis && !!a.character_angle; })(),
+    JSON.stringify(R.assignments && R.assignments.pc_opening_fusion));
+  t(`${label} U12 seam 4 · state.sceneSkeleton (the hand-copied field list) carries it`,
+    !!(pof && pof.beat) && pof.beat === (R.assignments && R.assignments.pc_opening_fusion.beat),
+    JSON.stringify(pof));
+  t(`${label} U13 seam 5 · buildSkeletonDirective rendered it into the skeleton block`,
+    (() => { const i = sys.indexOf('Narrative skeleton for this scene:'); const j = sys.indexOf(beat);
+             return i !== -1 && j > i; })());
+  t(`${label} U14 seam 6-7 · the frozen descriptor === the bytes handed to callChat`,
+    R.auditSystem !== null && R.auditSystem === sys && R.auditSystem.includes(beat));
+  t(`${label} U15 seam 8 · it is in the UPSTREAM system message, and nothing escaped`,
+    sys.includes(beat) && /ARCHITECTURE LAWS/.test(sys) && R.escaped.length === 0 && R.unknown.length === 0,
+    JSON.stringify({ escaped: R.escaped.slice(0,2), unknown: R.unknown.slice(0,2) }));
+  console.log('');
 }
 
 console.log(`\n${'─'.repeat(90)}\n  ${pass} passed · ${fail} failed\n`);
