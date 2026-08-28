@@ -122,6 +122,113 @@ try {
     out.pickClearedOnDiscard = s._allyFunctionPick === null || s._allyFunctionPick === undefined;
     out.pickA = pickA;
 
+    // ══════════════════════════════════════════════════════════════════════════════
+    // CANONICAL IDENTITY (step 1)
+    // ══════════════════════════════════════════════════════════════════════════════
+    Object.assign(s, base, { storyId: 'story-ID1', _socialEcosystem: null, _allyFunctionPick: null,
+                             _relationshipLedger: null });
+    const slots1 = window._resolveSocialEcosystem(s);
+    out.slotIds = slots1.map(x => x.slotId);
+    // A slot kind is either a KNOWN vocabulary entry or NULL. Null is not a failure — it is the
+    // fail-closed state for a phrase nobody has mapped, and it must never be a known kind chosen
+    // as a fallback. Real circles contain both: "a colleague" maps, "a member of his staff the
+    // PC befriends" does not.
+    out.slotKinds = slots1.map(x => x.slotKind);
+    out.slotKindsAreNotEdgeTypes = slots1.every(x =>
+      x.slotKind === null ? x.slotKindUnresolved === true
+                          : window._relSocialSlotKinds().indexOf(x.slotKind) !== -1);
+    out.unresolvedKeepPhrase = slots1.filter(x => x.slotKind === null)
+      .every(x => typeof x.rolePhrase === 'string' && x.rolePhrase.length > 0);
+    out.notMaterialisedOnResolve = slots1.every(x => x.entityId === null);
+    // stable across a save/restore of the stamped record
+    const savedSlots = JSON.parse(JSON.stringify(window._socialEcoRecord(s)));
+    s._socialEcosystem = savedSlots;
+    out.slotIdsAfterRestore = (window._resolveSocialEcosystem(s) || []).map(x => x.slotId);
+
+    // materialisation is lazy, idempotent, backend-owned
+    const first = slots1[0].slotId;
+    out.entA = window._materializeSocialSlot(first);
+    out.entB = window._materializeSocialSlot(first);         // retry → same person
+    const L1 = window._relLedger();
+    out.entRec = L1 && JSON.parse(JSON.stringify(L1.entities[out.entA] || null));
+    out.entityCount = L1 ? Object.keys(L1.entities).length : 0;
+
+    // two slots of the SAME kind are two people
+    Object.assign(s, base, { storyId: 'story-ID2', _socialEcosystem: null, _allyFunctionPick: null,
+                             _relationshipLedger: null });
+    const e1 = window._relSocialSlotEntity('pc', 'close_friend', { ord: 1 });
+    const e2 = window._relSocialSlotEntity('pc', 'close_friend', { ord: 2 });
+    const e1again = window._relSocialSlotEntity('pc', 'close_friend', { ord: 1 });
+    out.twoFriends = [e1, e2, e1again];
+
+    // an edge-free node is legitimate: identity does not imply a relationship
+    const L2 = window._relLedger();
+    out.edgeCountAfterSlots = L2 ? Object.keys(L2.edges).length : -1;
+
+    // reconciliation: naming it later keeps the SAME identity
+    out.named = window._relNameSlot(e1, 'Nadia', { sceneUid: 'scene-3' });
+    out.nameKeptIdentity = out.named === e1;
+    out.namedLabel = (window._relLedger().entities[e1] || {}).label;
+    // a SECOND person with that same name must not merge into the first
+    out.ambiguous = window._relNameSlot(e2, 'Nadia');
+
+    // projections: the person may be known; the planning profile may not
+    window._relLedger().entities[e1].authorProfile.cPlusFacets =
+      [{ facet_id: 'x_secret_truth', canonical_truth: 'SECRET PLANNING TRUTH' }];
+    out.projAuthor = window._relProjectEntity(e1, 'author');
+    out.projPc     = window._relProjectEntity(e1, 'pc');
+    out.projLi     = window._relProjectEntity(e1, 'li');
+    out.projEdges  = { pc: window._relProject('pc'), li: window._relProject('li') };
+
+    // ── UNKNOWN ROLE PHRASE FAILS CLOSED ──
+    out.canonKnown   = window._relSocialSlotCanonFor('a close friend');
+    out.canonUnknown = window._relSocialSlotCanonFor('a spectral notary of the seventh house');
+    out.mintedUnknown = window._relSocialSlotEntity('pc', 'a spectral notary of the seventh house', { ord: 1 });
+    // a slot whose phrase maps to nothing keeps its id and mints nobody
+    window._resolveSocialEcosystem(s);          // story-ID2 has no circle yet
+    const eco = window._socialEcoRecord(s);
+    eco.slots.push({ role: 'a spectral notary of the seventh house', fnKey: 'BRAKE',
+                     fn: { key:'BRAKE', label:'', effect:'', moves:[] },
+                     rolePhrase: 'a spectral notary of the seventh house',
+                     slotKind: null, slotKindUnresolved: true,
+                     slotOrd: 1, slotId: 'a_spectral_notary_of_the_seventh_house#1', entityId: null });
+    out.matUnresolved = window._materializeSocialSlot('a_spectral_notary_of_the_seventh_house#1');
+    out.unresolvedKeptPhrase = eco.slots[eco.slots.length - 1].rolePhrase;
+    out.entityCountAfterUnresolved = Object.keys(window._relLedger().entities).length;
+
+    // ── ALIASES ARE AUDIENCE-SCOPED ──
+    // e1 is 'Nadia' publicly. Give her a COVER identity nobody has learned, and one alias the
+    // PC has actually heard. Only the latter may appear in her view.
+    window._relLedger().entities[e1].aliases =
+      (window._relLedger().entities[e1].aliases || []).concat(['the auditor', 'nadia vail']);
+    window._relDiscloseAlias(e1, 'Nads', 'pc');
+    window._relDiscloseAlias(e1, 'Nadia', 'pc');   // the PC has now been told her actual name
+    out.aliasProjPc     = window._relProjectEntity(e1, 'pc');
+    out.aliasProjLi     = window._relProjectEntity(e1, 'li');
+    out.aliasProjAuthor = window._relProjectEntity(e1, 'author');
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // IDENTITY MUST NOT DEPEND ON MATERIALISATION ORDER
+    // Two slots materialised in opposite orders in two otherwise identical stories. If the id
+    // were numbered at materialisation time the two people would SWAP, and every fact recorded
+    // about one would silently transfer to the other.
+    // ══════════════════════════════════════════════════════════════════════════════
+    const orderRun = (storyId, reverse) => {
+      Object.assign(s, base, { storyId, _socialEcosystem: null, _allyFunctionPick: null,
+                               _relationshipLedger: null });
+      const sl = window._resolveSocialEcosystem(s).filter(x => x.slotKind).map(x => x.slotId);
+      const order = reverse ? sl.slice().reverse() : sl.slice();
+      const map = {};
+      order.forEach(id => { map[id] = window._materializeSocialSlot(id); });
+      return map;
+    };
+    out.orderFwd = orderRun('story-ORD-A', false);
+    out.orderRev = orderRun('story-ORD-B', true);
+
+    // no storyId → materialise nothing
+    s.storyId = '';
+    out.matNoStory = window._materializeSocialSlot(first);
+
     // ── the reset layer reaches it ──
     Object.assign(s, base, { storyId: 'story-D' });
     window._resolveSocialEcosystem(s);
@@ -180,6 +287,86 @@ try {
       const j = SRC.indexOf('state._socialEcosystem = null');
       return i > 0 && j > i && (j - i) < 1200;
     })(), 'the ecosystem reset must sit with the per-story narrative memory it belongs to');
+  console.log('\n 8 · CANONICAL IDENTITY — SLOTS');
+  t('8a: every slot carries a stable backend-owned id (kind#ordinal)',
+    R.slotIds.length >= 2 && R.slotIds.every(x => /^[a-z_]+#\d+$/.test(x)), JSON.stringify(R.slotIds));
+  t('8b: every slot kind is a KNOWN vocabulary entry or explicitly UNRESOLVED — never a fallback',
+    R.slotKindsAreNotEdgeTypes, JSON.stringify([R.slotIds, R.slotKinds]));
+  t('8b2: …and an unresolved slot still carries its authored phrase',
+    R.unresolvedKeepPhrase, JSON.stringify(R.slotKinds));
+  t('8c: resolving the circle materialises NOBODY — instantiation is lazy',
+    R.notMaterialisedOnResolve, JSON.stringify(R.slotIds));
+  t('8d: slot ids are identical across save/restore',
+    JSON.stringify(R.slotIds) === JSON.stringify(R.slotIdsAfterRestore),
+    JSON.stringify([R.slotIds, R.slotIdsAfterRestore]));
+
+  console.log('\n 9 · MATERIALISATION');
+  t('9a: a slot materialises into a canonical entity id', !!R.entA && /^role:pc:/.test(R.entA), String(R.entA));
+  t('9b: materialising twice returns the SAME person — a retry creates nobody new',
+    R.entA === R.entB && R.entityCount <= 3, JSON.stringify({ a: R.entA, b: R.entB, n: R.entityCount }));
+  t('9c: the record carries slot provenance and a PRIVATE authorProfile compartment',
+    !!R.entRec && R.entRec.kind === 'social_slot' && !!R.entRec.slotId
+      && !!R.entRec.authorProfile && R.entRec.authorProfile.provenance === 'social_slot',
+    JSON.stringify(R.entRec));
+  t('9d: two slots of the same KIND are two different people, and asking again returns the first',
+    R.twoFriends[0] !== R.twoFriends[1] && R.twoFriends[0] === R.twoFriends[2],
+    JSON.stringify(R.twoFriends));
+  t('9e: identity does NOT imply a relationship — the nodes are edge-free',
+    R.edgeCountAfterSlots === 0, String(R.edgeCountAfterSlots));
+  t('9f: with no storyId, materialisation creates nothing', R.matNoStory === null, String(R.matNoStory));
+
+  console.log('\n 10 · RECONCILIATION');
+  t('10a: naming a slot later keeps the SAME canonical id',
+    R.nameKeptIdentity && R.namedLabel === 'Nadia', JSON.stringify([R.named, R.namedLabel]));
+  t('10b: a SECOND person with the same name FAILS CLOSED rather than merging',
+    R.ambiguous === null, String(R.ambiguous));
+
+  console.log('\n 11 · UNKNOWN ROLES FAIL CLOSED');
+  t('11a: a mapped phrase still resolves', R.canonKnown === 'close_friend', String(R.canonKnown));
+  t('11b: an UNMAPPED phrase resolves to NOTHING — not to acquaintance, not to any known kind',
+    R.canonUnknown === null, String(R.canonUnknown));
+  t('11c: …and mints no entity through the slot API', R.mintedUnknown === null, String(R.mintedUnknown));
+  t('11d: …nor through materialisation, which refuses an unclassified slot',
+    R.matUnresolved === null, String(R.matUnresolved));
+  t('11e: the authored phrase is PRESERVED for diagnosis rather than discarded',
+    R.unresolvedKeptPhrase === 'a spectral notary of the seventh house', String(R.unresolvedKeptPhrase));
+
+  console.log('\n 12 · ALIASES ARE NOT UNIVERSALLY PUBLIC');
+  t('12a: a name the PC HAS been told is what she sees',
+    R.aliasProjPc && R.aliasProjPc.display === 'Nadia', JSON.stringify(R.aliasProjPc));
+  t('12b: a COVER identity stored for matching never reaches the PC or LI',
+    !/the auditor|nadia vail/i.test(JSON.stringify([R.aliasProjPc, R.aliasProjLi])),
+    JSON.stringify([R.aliasProjPc, R.aliasProjLi]));
+  t('12c: only an alias this audience has been told appears in that audience\'s view',
+    (R.aliasProjPc.aliases || []).indexOf('Nads') !== -1
+      && (R.aliasProjLi.aliases || []).indexOf('Nads') === -1,
+    JSON.stringify({ pc: R.aliasProjPc.aliases, li: R.aliasProjLi.aliases }));
+  t('12d: the AUTHOR still sees the full matching index',
+    /the auditor/.test(JSON.stringify(R.aliasProjAuthor)), JSON.stringify(R.aliasProjAuthor && R.aliasProjAuthor.aliases));
+
+  console.log('\n 12b · IDENTITY IS ORDER-INDEPENDENT');
+  t('12e: the same slot yields the same canonical id whichever order it materialises in',
+    Object.keys(R.orderFwd).length >= 2
+      && Object.keys(R.orderFwd).every(k => R.orderFwd[k] && R.orderFwd[k] === R.orderRev[k]),
+    JSON.stringify([R.orderFwd, R.orderRev]));
+  t('12f: …and the id derives from the stable SLOT id, not from an arrival ordinal',
+    Object.values(R.orderFwd).every(v => /^role:pc:social:/.test(String(v))),
+    JSON.stringify(Object.values(R.orderFwd)));
+
+  console.log('\n 13 · EPISTEMIC SEPARATION');
+  const priv = JSON.stringify([R.projPc, R.projLi, R.projEdges]);
+  t('13a: an UNDISCLOSED true name is withheld from the PC entirely',
+    !!R.projPc && R.projPc.display === null && R.projPc.authorProfile === undefined, JSON.stringify(R.projPc));
+  t('13a2: …and no semantic id, kind, slot kind or role-instance metadata is serialised',
+    !/role:pc|social_slot|close_friend|slotId|slotKind|roleInstanceId/.test(JSON.stringify([R.projPc, R.projLi])),
+    JSON.stringify([R.projPc, R.projLi]));
+  t('13b: no C+ facet, provenance, narrative function or slot metadata reaches PC/LI views',
+    !/SECRET PLANNING TRUTH|x_secret_truth|cPlusFacets|authorProfile|narrativeFunction|provenance|slotId|slotKind|namedAtSceneUid/.test(priv),
+    priv.slice(0, 240));
+  t('13c: …while the AUTHOR view still has everything it needs to plan',
+    !!R.projAuthor && !!R.projAuthor.authorProfile
+      && R.projAuthor.authorProfile.cPlusFacets[0].facet_id === 'x_secret_truth',
+    JSON.stringify(R.projAuthor && R.projAuthor.authorProfile));
 } finally { await ctx.close().catch(() => {}); }
 
 console.log(`\n${'─'.repeat(88)}\n  ${pass} passed · ${fail} failed\n`);
