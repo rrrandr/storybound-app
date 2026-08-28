@@ -99,7 +99,8 @@ function plannerReply(usr, mutate) {
     staged_characters: cast.map(n => ({ name:n, presence:'IN_PERSON',
       anchor_beat: n === PCN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' })) };
   // A verbatim span of the scene material — the WHERE line is exactly stage.setting.
-  const WHERE_SPAN = ((usr.match(/WHERE \(fixed\): ([^\n]+)/) || [])[1] || '').split(/\s+/).slice(0, 9).join(' ');
+  const CORPUS = (usr.match(/<<<QUOTABLE SCENE MATERIAL\n([\s\S]*?)\nQUOTABLE SCENE MATERIAL>>>/) || [])[1] || '';
+  const WHERE_SPAN = CORPUS.trim().split(/\s+/).slice(0, 9).join(' ');
   const CAND = candidatesFromPrompt(usr);
   const pidOf = (n, fid, i) => (((CAND[n] || {}).pressures || {})[fid] || [])[i || 0];
   const full = n => { const fid = FACET[n]; const pr = pidOf(n, fid);
@@ -547,9 +548,14 @@ t('8b1: pressures are cited by STABLE ID, not by reproducing their text',
   /pressure_id: p_\w+\s+→\s+a gathering where standing is being displayed/.test(pu)
     && /"pressure_id": "<the ONE pressure_id listed under THAT facet/.test(pu),
   (pu.match(/pressure_id: [^\n]{0,90}/) || ['(missing)'])[0]);
+t('8b1b: the quotable corpus is DELIMITED, so "quote it" is mechanical rather than hopeful',
+  /<<<QUOTABLE SCENE MATERIAL[\s\S]{50,}QUOTABLE SCENE MATERIAL>>>/.test(pu)
+    && /Do not describe the evidence in your own words, do not summarise it/.test(pu)
+    && /copy an actual run of words out of it/.test(pu),
+  (pu.match(/<<<QUOTABLE SCENE MATERIAL.{0,90}/) || ['(missing)'])[0]);
 t('8b2: the plan must QUOTE the span that proves the condition applies',
   /"pressure_evidence": "<an EXACT span copied character-for-character/.test(pu)
-    && /QUOTE THE SPAN OF THE SCENE MATERIAL THAT PROVES IT/.test(pu)
+    && /QUOTE THE SPAN THAT PROVES IT, copied character for character from BETWEEN THE MARKERS ABOVE/.test(pu)
     && /An asserted condition with no evidence behind it is the failure this field exists to catch/.test(pu));
 t('8b3: the two jobs are two fields, each with its own definition',
   /"character_revelation" is about THEM/.test(pu) && /"pc_archetype_reaction" is about HER/.test(pu)
