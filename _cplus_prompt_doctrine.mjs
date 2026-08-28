@@ -48,7 +48,7 @@ const READS = {
             character_revelation:`she expected approving smiles and cannot begin until she has counted them; the empathy is real and it needs an audience` },
   'the presiding Dohkar':
           { behavior:`says the liturgy's final clause a half-beat faster than the rest`,
-            // NOT a restatement of "cannot be bothered to pretend this ceremony deserves his
+            // NOT a restatement of "routine ceremony rarely deserves his full attention" — that
             // attention" — that sentence IS the source. This is what the half-beat shows of it.
             character_revelation:`the half-beat is a measurement: he has said these words often enough to know exactly which of them nobody checks, and he spends what he saves on nothing at all` },
 };
@@ -159,6 +159,9 @@ function plannerReply(usr, mutate) {
     pc_effect:'she reads it as a challenge to her authority' });
   // …and the same theft with the adversarial half removed, so the contempt clause alone is tested.
   if (mutate === 'probeJulianContemptOnly') cp = put('Julian', {
+    // VERBATIM, AND IT STAYS VERBATIM. This is what mistral-small-latest actually returned
+    // against a2c3a0b. Rewording it to track a change in the Dohkar's canon would quietly
+    // retire the regression: the string is HISTORY, not prose we own.
     behavior:'he cannot be bothered to pretend the ceremony deserves his attention, and lets it show' });
   // …and the guardrail the seed already carried, before this probe existed.
   if (mutate === 'probeJulianSuspicion') cp = put('Julian', {
@@ -549,11 +552,11 @@ t('6c5: …and the AUTHOR receives no facet ID at all, and exactly one truth per
   'a facet id leaked to the author, or a recipient carried more than one truth');
 t('6c6: …and no UNSELECTED truth of his reaches the author as prose either',
   (() => {
-    const all = ['cannot be bothered to pretend',
-                 'measures himself against every First Favored',
-                 'cannot watch a child do a thing badly',
-                 'gave more at his own First Sacrifice',
-                 'gentle with anyone who arrived here with nothing'];
+    const all = ['Routine ceremony rarely deserves his full attention',
+                 'Public honour paid to a peer makes him newly attentive',
+                 'With children he turns mistakes, questions and even play into lessons',
+                 'In questions of sacrifice he assumes his judgement carries an authority',
+                 'With people who have little and cannot confer status'];
     const present = all.filter(o => asys.includes(o));
     return present.length <= 1;
   })(),
@@ -707,7 +710,7 @@ console.log('\n 8d · THE INTENDED TRANSFORMATION');
       && /PC INTERPRETATION — MUST GOVERN THE NARRATION: INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST[^\n]*kindness waiting for permission/.test(fs2),
     (fs2.match(/•\s*Seren[\s\S]{0,420}/) || ['(missing)'])[0]);
   t('8d2: the Dohkar — the same construction, a different truth',
-    /SOURCE TRUTH — DO NOT STATE: He cannot be bothered to pretend this ceremony deserves his attention/.test(fs2)
+    /SOURCE TRUTH — DO NOT STATE: Routine ceremony rarely deserves his full attention/.test(fs2)
       && /VISIBLE ACTION — MUST OCCUR: he begins the next clause before the assembly has finished answering the first/.test(fs2)
       && /PC INTERPRETATION — MUST GOVERN THE NARRATION: EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE[^\n]*reverence is not worth waiting for/.test(fs2),
     (fs2.match(/•\s*the presiding Dohkar[\s\S]{0,420}/) || ['(missing)'])[0]);

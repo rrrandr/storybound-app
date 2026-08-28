@@ -84,12 +84,18 @@ try {
 
   console.log(' 1 · THE PORTFOLIO IS FIVE DISTINCT TRUTHS');
   t('1a: five facets resolve for the presiding Dohkar', R.facets.length === 5, JSON.stringify(R.ids));
-  t('1b: five DISTINCT categories — a portfolio, not one truth said five ways',
+  // A CATEGORY LABEL IS NOT EVIDENCE OF DISTINCTNESS. Five different labels can sit on five
+  // rewordings of one truth; the label is a routing/novelty signal, nothing more. This asserts
+  // the data property only. What actually establishes that these are five different truths is
+  // section 2 — five scenes, written separately, each selecting a different one.
+  t('1b: five distinct category labels (a data property, NOT proof of distinctness)',
     new Set(R.cats).size === 5, JSON.stringify(R.cats));
   t('1c: every facet carries at least two conditions and its own misreadings',
     R.facets.every(f => (f.pressures || []).length >= 2 && (f.forbidden_restatements || []).length >= 1),
     JSON.stringify(R.facets.map(f => [f.facet_id, (f.pressures||[]).length, (f.forbidden_restatements||[]).length])));
-  t('1d: no canonical truth is a near-copy of another (paraphrase would fake a portfolio)',
+  // HEURISTIC REGRESSION GUARD, not a distinctness proof: a synonym-heavy paraphrase passes it
+  // easily. It exists to catch the cheap failure — one truth pasted twice and lightly edited.
+  t('1d: heuristic guard — no canonical truth is a lexical near-copy of another',
     (() => {
       const words = x => new Set(String(x).toLowerCase().match(/[a-z]{4,}/g) || []);
       for (let i = 0; i < R.facets.length; i++) for (let j = i + 1; j < R.facets.length; j++) {

@@ -61,7 +61,7 @@ t('2a3: …and every one carries its own conditions and its own misreadings',
   R.dohkar.every(f => (f.pressures || []).length >= 2 && (f.forbidden_restatements || []).length >= 1),
   JSON.stringify(R.dohkar.map(f => [f.facet_id, (f.pressures||[]).length, (f.forbidden_restatements||[]).length])));
 t('2b: his contempt is the authored facet',
-  R.dohkar.some(f => f.facet_id === 'presiding_dohkar_ritual_contempt' && /cannot be bothered to pretend/i.test(f.canonical_truth)));
+  R.dohkar.some(f => f.facet_id === 'presiding_dohkar_ritual_contempt' && /Routine ceremony rarely deserves his full attention/i.test(f.canonical_truth)));
 t('2c: he resolves by alias too ("Dohkar" as the planner spells it)',
   R.dohkarByAlias.length === 5 && R.dohkarByAlias.some(f => f.facet_id === 'presiding_dohkar_ritual_contempt'),
   JSON.stringify(R.dohkarByAlias.map(f => f.facet_id)));
@@ -132,6 +132,25 @@ const H = await page.evaluate(() => {
   // and the scope must follow the SUPPLIED number, not turnCount
   s.turnCount = 0;
   out.dohkarScopeIsSupplied = window._facetsForCharacter(dohkarRec, s, { sceneNumber: 14 }).length;
+  // ── (b2) IDENTITY PERSISTS, THE ALIAS DOES NOT (2026-08-28) ──
+  // The recurrence case. A returning presiding Dohkar must carry his own micro-bible into scene
+  // 14; a DIFFERENT Dohkar must inherit none of it; and the bare profession word must never be
+  // enough to decide which of them is standing there.
+  const CANON = 'role:first_sacrifice_presiding_dohkar';
+  const canonRec = id => ({ id, label: 'the presiding Dohkar', aliases: ['the presiding Dohkar', 'Dohkar'] });
+  out.sameManScene1  = window._facetsForCharacter(canonRec(CANON), s, { sceneNumber: 1 });
+  out.sameManScene14 = window._facetsForCharacter(canonRec(CANON), s, { sceneNumber: 14 });
+  out.sameManScene40 = window._facetsForCharacter(canonRec(CANON), s, { sceneNumber: 40 });
+  // A different individual in the same office, carrying his own canonical id.
+  out.otherDohkar = window._facetsForCharacter(
+    { id: 'role:harvest_rite_presiding_dohkar', label: 'the presiding Dohkar', aliases: ['the presiding Dohkar', 'Dohkar'] },
+    s, { sceneNumber: 14 });
+  // Reconciled to a personal name later in the story: the NAME changes, the identity does not.
+  out.reconciled = window._facetsForCharacter(
+    { id: CANON, label: 'Dohkar Aemon', aliases: ['Dohkar Aemon', 'Aemon'] }, s, { sceneNumber: 22 });
+  // No canonical id at all, only the profession word, outside its authored scene.
+  out.bareAliasLate = window._facetsForCharacter(
+    { id: 'role:unknown_dohkar', label: 'Dohkar', aliases: ['Dohkar'] }, s, { sceneNumber: 22 });
   // (c) ambiguity fails closed — driven through the PURE resolver with constructed data,
   //     because _facetsForCharacter closes over its own index and ignores any window swap.
   const twoRecords = {
@@ -180,8 +199,34 @@ t('6b: …and her facets still resolve under the kernel placeholder',
 t('6c: the Scene-1 presiding Dohkar resolves in scene 1',
   H.dohkarScene1.length === 5 && H.dohkarScene1.some(f => f.facet_id === 'presiding_dohkar_ritual_contempt'),
   JSON.stringify(H.dohkarScene1.map(f => f.facet_id)));
-t('6d: a DIFFERENT Dohkar later in the story inherits nothing',
+t('6d: a bare alias later in the story inherits nothing',
   H.dohkarScene14.length === 0, JSON.stringify(H.dohkarScene14.map(f => f.facet_id)));
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// 6b · THE SAME MAN COMES BACK (2026-08-28)
+//
+// Scene-scoping the whole record protected a different Dohkar from inheriting this one's
+// psychology — by making THIS one facetless the moment he reappeared. A ledger built on that
+// would treat a returning character as either brand new or as somebody else. Identity is
+// carried by the canonical role_instance_id, story-wide; only the generic ALIAS is scoped.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+t('6f: the Scene-1 presiding Dohkar resolves all five facets by canonical id',
+  H.sameManScene1.length === 5, JSON.stringify(H.sameManScene1.map(f => f.facet_id)));
+t('6g: THE SAME canonical role_instance_id returning in scene 14 resolves all five',
+  H.sameManScene14.length === 5, JSON.stringify(H.sameManScene14.map(f => f.facet_id)));
+t('6g2: …and in scene 40 — recurrence has no expiry date',
+  H.sameManScene40.length === 5, JSON.stringify(H.sameManScene40.map(f => f.facet_id)));
+t('6h: a DIFFERENT Dohkar with his own canonical id inherits none of this man\'s psychology',
+  H.otherDohkar.length === 0, JSON.stringify(H.otherDohkar.map(f => f.facet_id)));
+t('6i: a bare "Dohkar" with no canonical id, outside its authored scope, FAILS CLOSED',
+  H.bareAliasLate.length === 0, JSON.stringify(H.bareAliasLate.map(f => f.facet_id)));
+t('6j: reconciled to a personal name, the identity and its portfolio SURVIVE',
+  H.reconciled.length === 5, JSON.stringify(H.reconciled.map(f => f.facet_id)));
+t('6k: two different Dohkars never share one facet — no C+ history can cross between them',
+  (() => {
+    const a = new Set(H.sameManScene14.map(f => f.facet_id));
+    return H.otherDohkar.every(f => !a.has(f.facet_id));
+  })(), JSON.stringify([H.sameManScene14.length, H.otherDohkar.length]));
 t('6e: two records sharing an alias fail CLOSED, never first-match',
   Array.isArray(H.ambiguous) && H.ambiguous.length === 0, JSON.stringify(H.ambiguous));
 t('6e2: …and the test is not vacuous — first-match WOULD have returned a record',

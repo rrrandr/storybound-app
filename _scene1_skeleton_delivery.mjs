@@ -143,7 +143,7 @@ function plannerReply(usr, mutate) {
               character_revelation:`she expected approving smiles and cannot begin until she has counted them; the empathy is real and it needs an audience` },
     'the presiding Dohkar':
             { behavior:`says the liturgy's final clause a half-beat faster than the rest`,
-              // NOT a restatement of "cannot be bothered to pretend this ceremony deserves his
+              // NOT a restatement of "routine ceremony rarely deserves his full attention" — that
             // attention" — that sentence IS the source. This is what the half-beat shows of it.
             character_revelation:`the half-beat is a measurement: he has said these words often enough to know exactly which of them nobody checks, and he spends what he saves on nothing at all` },
   };
@@ -263,6 +263,22 @@ function plannerReply(usr, mutate) {
   // hang it on whatever evidence the scene happens to contain. Here the Dohkar's contempt is
   // cited over a fact about JULIAN — real evidence id, real pressure id, wrong truth. The
   // predicate is proven directly in _cplus_multifacet; this proves the VALIDATOR reaches it.
+  // ── GUARDRAIL SCOPE, BOTH POLARITIES (2026-08-28) ──
+  // His contempt facet forbids "cares deeply". His kindness facet REQUIRES something very like
+  // it. A record-wide ban would reject the second, so the ban is scoped — and a scope is only
+  // proven by showing it fires for its own facet and stays silent for the other.
+  if (mutate === 'caringOnKindnessFacet' || mutate === 'caringOnContemptFacet') {
+    const wantK = mutate === 'caringOnKindnessFacet';
+    const barefoot = (CO.facts.filter(f => /barefoot|nothing|guest/i.test(f.text))[0] || {}).id;
+    const rite     = (CO.facts.filter(f => /ceremon|rite|generations/i.test(f.text))[0] || {}).id;
+    cp = cp.map(c => /Dohkar/i.test(c.character)
+      ? { ...c,
+          facet_id: wantK ? 'presiding_dohkar_kindness_to_the_poor' : 'presiding_dohkar_ritual_contempt',
+          pressure_id: wantK ? 'p_someone_present_who_came' : 'p_rite_he_has_performed',
+          pressure_evidence_ids: [wantK ? barefoot : rite].filter(Boolean),
+          behavior: 'he steps aside for the guest at the edge like someone who cares deeply where they stand' }
+      : c);
+  }
   if (mutate === 'contemptOverJealousyEvidence') {
     const jul = (CO.facts.filter(f => /Julian|observer|edge/i.test(f.text))[0] || {}).id;
     cp = cp.map(c => /Dohkar/i.test(c.character) && jul
@@ -1032,7 +1048,7 @@ for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
                       'aliasNarrator', 'aliasProtag',
                       'epSchemaEcho', 'epCategoryEcho', 'pofSchemaEcho', 'angleSecondAction',
                       // C+ must REVEAL, not merely be recordable
-                      'readMissing', 'contemptOverJealousyEvidence',
+                      'readMissing', 'contemptOverJealousyEvidence', 'caringOnContemptFacet',
                       // identical duplicates now COLLAPSE (tested below); a DIFFERENCE still aborts
                       'dupSkeletonDiff', 'stagedBothDiff',
                       // reconciler must not rescue semantics, and must not swallow invented fields
@@ -1316,6 +1332,9 @@ for (const [mutate, label, needle] of [
   ['pofSchemaEcho',    'the opening beat returned as the bracket text',      'returns the schema instead of content'],
   ['angleSecondAction','the angle staging a second action elsewhere',        'stages a SECOND action'],
   ['readMissing',      'a behavior removed entirely',                        'the angle is empty'],
+  ['caringOnContemptFacet',
+                       'a "cares deeply" read attached to the CONTEMPT facet it inverts',
+                                                                             'breaks a guardrail on this character'],
   ['contemptOverJealousyEvidence',
                        'his FIRST facet hung on evidence that does not establish it',
                                                                              'none of the evidence it cites establishes it'],
@@ -1339,6 +1358,14 @@ console.log('');
 // The guard itself is not retired: it still runs on the one population that has no record to
 // overwrite with, which the unseeded case below proves.
 // ══════════════════════════════════════════════════════════════════════════════════════════
+{
+  const K = await run({ hot: false, mutate: 'caringOnKindnessFacet' });
+  t('   a scoped guardrail stays SILENT on the facet it does not police (same words, kindness facet)',
+    K.author.length === 1 && !/SCENE1:ABORT/.test(K.logs.join(' ')),
+    `authorCalls=${K.author.length} | ${K.logs.filter(l=>/INVALID/.test(l)).slice(0,1).join('').slice(0,200)}`);
+}
+console.log('');
+
 console.log(' READS THE MODEL WRITES ANYWAY — DISCARDED, NOT OBEYED');
 for (const [mutate, label, junk] of [
   ['readVoiceDrops',   '"his voice drops" read as "he speaks more quietly"', 'he speaks more quietly at the end'],

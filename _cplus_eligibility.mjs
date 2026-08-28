@@ -237,6 +237,18 @@ const L = await page.evaluate(() => {
   const noNumber = window._cPlusEligibleCandidates(s, {});
   const cov1  = window._facetSourceCoverage(live.candidates, s, { sceneNumber: 1 });
   const cov14 = window._facetSourceCoverage(live.candidates, s, { sceneNumber: 14 });
+  // ── WHAT THE SCENE NUMBER STILL GOVERNS (2026-08-28) ──
+  // It no longer decides whether a person HAS psychology — only whether a bare profession word
+  // is allowed to name him. So the wiring proof needs both records: one carrying the canonical
+  // role_instance_id, one carrying only the word.
+  const aliasOnly = [{ id: 'role:the_presiding_dohkar', label: 'the presiding Dohkar',
+                       kind: 'role', aliases: ['Dohkar', 'the presiding Dohkar'] }];
+  const canonical = [{ id: 'role:first_sacrifice_presiding_dohkar', label: 'the presiding Dohkar',
+                       kind: 'role', aliases: ['Dohkar', 'the presiding Dohkar'] }];
+  const covAlias14  = window._facetSourceCoverage(aliasOnly, s, { sceneNumber: 14 });
+  const covAlias1   = window._facetSourceCoverage(aliasOnly, s, { sceneNumber: 1 });
+  const covCanon14  = window._facetSourceCoverage(canonical, s, { sceneNumber: 14 });
+  const liveDohkar  = (live.candidates || []).filter(c => /Dohkar/i.test(c.label || ''))[0] || null;
   // THE OWNERSHIP FIXTURE: strip the PC's facets and nobody else's. Ordinary coverage must not
   // notice — her Scene-1 beat was never an ordinary assignment's to make.
   const pc = window.STARTER_SEEDS.starter_first_sacrifice.cast.find(c => c.role === 'PC');
@@ -246,6 +258,7 @@ const L = await page.evaluate(() => {
   const covNoPc = window._facetSourceCoverage(liveNoPc.candidates, s, { sceneNumber: 1 });
   pc.cPlusFacets = keep;
   return { live, scene14, noNumber, cov1, cov14, covNoPc,
+           covAlias14, covAlias1, covCanon14, liveDohkar,
            labels: (live.candidates || []).map(c => [c.label, c.mode, c.ownedBy]) };
 });
 
@@ -296,9 +309,21 @@ t('7f: …and ordinary coverage does NOT fail — nothing ordinary was going to 
     && L.covNoPc.ordinaryCoveredCount === L.covNoPc.ordinaryCount,
   JSON.stringify({ ordinaryUncovered: L.covNoPc.ordinaryUncovered,
                    covered: L.covNoPc.ordinaryCoveredCount, of: L.covNoPc.ordinaryCount }));
-t('7g: the scene number REACHES the facet index — at scene 14 the Dohkar is uncovered',
-  L.cov14.uncovered.includes('the presiding Dohkar'),
-  JSON.stringify(L.cov14.uncovered));
+// ── 7g SPLIT (2026-08-28) ── It used to read "at scene 14 the Dohkar is uncovered", which
+// asserted that a returning character LOSES his psychology. That is the bug, not the contract.
+// What the scene number governs is ALIAS SCOPE, so the wiring proof is now stated on the record
+// where the alias is all there is — and the canonical record proves the other half.
+t('7g: the scene number REACHES the resolver — a bare PROFESSION WORD is uncovered at scene 14',
+  L.covAlias14.uncovered.includes('the presiding Dohkar'),
+  JSON.stringify(L.covAlias14.uncovered));
+t('7g2: …and the same alias IS covered inside its authored scene',
+  L.covAlias1.uncovered.length === 0, JSON.stringify(L.covAlias1.uncovered));
+t('7g3: the SAME MAN by canonical role_instance_id keeps his portfolio at scene 14',
+  L.covCanon14.uncovered.length === 0, JSON.stringify(L.covCanon14.uncovered));
+t('7g4: the LIVE candidate builder stamps the authored identity, not a slug of the sentence',
+  !!L.liveDohkar && L.liveDohkar.id === 'role:first_sacrifice_presiding_dohkar'
+    && L.liveDohkar.role_instance_id === 'first_sacrifice_presiding_dohkar',
+  JSON.stringify(L.liveDohkar && { id: L.liveDohkar.id, rid: L.liveDohkar.role_instance_id }));
 t('7h: failing closed is STILL hard-disabled — a selector existing does not authorise it',
   L.cov1.safeToFailClosed === false && !!L.cov1.failClosedBlockedBy,
   JSON.stringify(L.cov1.failClosedBlockedBy));
