@@ -410,9 +410,28 @@ let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fail++; console.log(`  ✗ ${n}${d ? `\n      ${d}` : ''}`); } };
 const count = (h, n) => (String(h).split(n).length - 1);
 
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// ONE BROWSER FOR THE WHOLE SUITE (2026-08-27)
+//
+// run() used to launch a fresh Chromium per case — 23 launches, each closed only on the happy
+// path, so a throw or a timeout stranded the whole process tree. That is the memory defect. One
+// browser is launched here; every case gets its own CONTEXT (the isolation the per-case launch
+// was really buying) and closes it in `finally`, including on a failure or a timeout, so nothing
+// is left behind. Cases stay SERIAL: the product writes to one dev server and one console stream.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+const browser = await chromium.launch({ headless: true });
+let _closing = false;
+const closeBrowser = async () => { if (_closing) return; _closing = true; try { await browser.close(); } catch (_) {} };
+// A throw anywhere must not strand Chromium children — the old suite left them behind on every
+// timeout, and that is the other half of the memory story.
+process.on('uncaughtException', async (e) => { await closeBrowser(); console.error(e); process.exit(1); });
+process.on('unhandledRejection', async (e) => { await closeBrowser(); console.error(e); process.exit(1); });
+process.on('exit', () => { try { browser.close(); } catch (_) {} });
+
 async function run({ hot, mutate, solo, duo }) {
-  const browser = await chromium.launch({ headless: true });
-  const page = await (await browser.newContext()).newPage();
+  const ctx = await browser.newContext();
+  try {
+  const page = await ctx.newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   const planner = [], author = [], escaped = [], unknown = [];
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: mk(hot) }));
@@ -502,8 +521,8 @@ async function run({ hot, mutate, solo, duo }) {
       auditSystem: (s._lastScene1AuditPrompt && s._lastScene1AuditPrompt.system) || null,
       fingerprint: window.__scene1RequestFingerprint || null };
   }, { solo: !!solo, duo: !!duo });
-  await browser.close();
   return { planner, author, escaped, unknown, logs, ...res };
+  } finally { await ctx.close().catch(() => {}); }
 }
 
 console.log(`\n${'═'.repeat(90)}\nCOMMIT B PART 2 — MERGED OPENING PLANNER + SKELETON DELIVERY\n${'═'.repeat(90)}\n`);
@@ -876,16 +895,17 @@ console.log('');
   // Parsed from the SAME dispatched text the planner received, so a field added to the schema
   // later cannot silently become unreconciled.
   const declared = await (async () => {
-    const b2 = await chromium.launch({ headless: true });
-    const p2 = await (await b2.newContext()).newPage();
+    const c2 = await browser.newContext();
+    try {
+    const p2 = await c2.newPage();
     p2.setDefaultTimeout(180000); p2.setDefaultNavigationTimeout(180000);
     await p2.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: mk(false) }));
     await p2.route('**/api/**', r => /\/api\/(config|geo)\b/.test(r.request().url()) ? r.continue() : r.abort());
     await p2.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
     await p2.waitForFunction(() => window._openingSpineDeclaredFields, { timeout:180000 });
     const d = await p2.evaluate(t2 => window._openingSpineDeclaredFields(t2), pu);
-    await b2.close();
     return d;
+    } finally { await c2.close().catch(() => {}); }
   })();
   const MUST_RECONCILE = ['opening_setting', 'environment_elements', 'staged_characters',
                           'reader_state', 'hook_object', 'scene_want', 'scene_mission'];
