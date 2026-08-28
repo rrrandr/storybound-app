@@ -65,11 +65,13 @@ function candidatesFromPrompt(usr) {
     if (!name) return;
     const modes = ((chunk.match(/modes permitted: ([^\n]*)/) || [])[1] || '').trim().split(' | ').filter(Boolean);
     const facets = [], pressures = {};
-    const fre = /^\s{6,}·\s+(\S+)\s+\[[a-z_]+\][\s\S]*?applicability conditions \([^)]*\): ([^\n]*)/gm;
+    // facet_id: <id>  [category] … then one "pressure_id: <id>  →  <text>" line per condition.
+    const fre = /^\s{6,}· facet_id: (\S+)\s+\[[a-z_]+\]([\s\S]*?)(?=^\s{6,}· facet_id: |^\s{6,}READS THIS|^\s{6,}⟂|$(?![\s\S]))/gm;
     let f; while ((f = fre.exec(chunk))) {
       facets.push(f[1]);
-      const conds = f[2].trim();
-      pressures[f[1]] = /^\(none/.test(conds) ? '' : conds.split(' · ')[0].trim();
+      const conds = [...f[2].matchAll(/pressure_id: (\S+)\s+→\s+([^\n]*)/g)]
+        .map(m => ({ pressure_id: m[1], text: m[2].trim() }));
+      pressures[f[1]] = conds[0] ? conds[0].pressure_id : '';
     }
     out[name.trim()] = { modes, facets, pressures };
   });
@@ -125,16 +127,32 @@ function plannerReply(usr, mutate) {
   // each read names a need, defense or expectation that would NOT survive being handed to the
   // person standing next to them. Reads are per-character, keyed off the First Sacrifice cast.
   const READS = {
-    Julian: { behavior:`keeps his eyes on the exit line for the whole rite`,
-              psychological_read:`he has already decided he will be blamed for this, and is choosing where he will be standing when it happens` },
+    Julian: { behavior:`lets the assembly's noise arrive at him at the edge rather than moving into it`,
+              character_revelation:`he does not need the clearing to register him, and the not-needing is the thing he has that everyone else here is still working for` },
     Seren:  { behavior:`checks the faces in the crowd twice before she kneels`,
-              psychological_read:`she expected approving smiles and cannot begin until she has counted them; the empathy is real and it needs an audience` },
+              character_revelation:`she expected approving smiles and cannot begin until she has counted them; the empathy is real and it needs an audience` },
     'the presiding Dohkar':
             { behavior:`says the liturgy's final clause a half-beat faster than the rest`,
-              psychological_read:`he cannot be bothered to pretend the ceremony deserves his attention, and has performed it often enough to know nobody checks` },
+              // NOT a restatement of "cannot be bothered to pretend this ceremony deserves his
+            // attention" — that sentence IS the source. This is what the half-beat shows of it.
+            character_revelation:`the half-beat is a measurement: he has said these words often enough to know exactly which of them nobody checks, and he spends what he saves on nothing at all` },
   };
   const READ_FALLBACK = n => ({ behavior:`${n} checks the youth's hands before the words`,
-    psychological_read:`${n} learned to read hands before faces, and trusts what a body admits over what a mouth says` });
+    character_revelation:`${n} learned to read hands before faces, and trusts what a body admits over what a mouth says` });
+  // ── HER HALF (2026-08-27) ── the reception, which is a separate obligation from the
+  // revelation and must reach the protagonist. First person, because this fixture is first person.
+  const REACT = {
+    Julian: `I had decided what his stillness meant before I had earned the right to decide it`,
+    Seren:  `I wanted to be proud of her and could not find anywhere in myself to put it`,
+    'the presiding Dohkar': `his boredom was in my chest before I had finished disagreeing with it`,
+  };
+  const REACT_FALLBACK = n => `I felt the room tilt toward ${n} before I understood why it had`;
+  // The evidence span must be VERBATIM scene material. The WHERE line is exactly stage.setting,
+  // so a slice of it is a real quotation rather than a composed one.
+  const WHERE_SPAN = (() => {
+    const w = (usr.match(/WHERE \(fixed\): ([^\n]+)/) || [])[1] || '';
+    return w.split(/\s+/).slice(0, 9).join(' ');
+  })();
   // ── THE TWO CITATIONS (2026-08-27) ──
   // A C+ assignment names WHICH opportunity carries it and WHICH authored facet it draws on.
   // These are the real ids from the First Sacrifice seed: a mock that invented them would prove
@@ -150,8 +168,11 @@ function plannerReply(usr, mutate) {
       const c = CAND[n] || {}; const fid = (c.facets || [])[0];
       const pr = fid ? ((c.pressures || {})[fid] || '') : '';
       return { character:n, mode: ((c.modes || [])[0] || 'IN_PERSON'),
-               ...(fid ? { facet_id: fid } : {}), ...(pr ? { pressure: pr } : {}),
-               first_mention:true, ...(READS[n] || READ_FALLBACK(n)) };
+               ...(fid ? { facet_id: fid } : {}), ...(pr ? { pressure_id: pr } : {}),
+               ...(pr && WHERE_SPAN ? { pressure_evidence: WHERE_SPAN } : {}),
+               first_mention:true, ...(READS[n] || READ_FALLBACK(n)),
+               pc_archetype_reaction: REACT[n] || REACT_FALLBACK(n),
+               source_bridge: `the act is ${fid || 'the cited truth'} under this scene's condition, and belongs to ${n} rather than to anyone else on this stage` };
     });
   // Anchors are the prefilled SENTINELS, copied back untouched, as the template asks.
   spine.staged_characters = spine.staged_characters.map(c =>
@@ -162,7 +183,7 @@ function plannerReply(usr, mutate) {
   let ep = { target:ANCHOR, axis:'ritual',
              beat:`${ANCHOR} is worn smooth along one edge where the rite has been performed the same way for generations` };
   let fu = { character: cast[0], target:ANCHOR, beat:`she sets her palm flat on ${ANCHOR} to keep it still` };
-  if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs the cloth to be the reason she is standing there, so no one asks why she came' }]);
+  if (mutate === 'unknown')   cp = cp.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', character_revelation:'she needs the cloth to be the reason she is standing there, so no one asks why she came' }]);
   // CARDINALITY IS PRESSURE, NOT HEADCOUNT (2026-08-27): a candidate with no assignment used to
   // be a fault ("eligible recipient has NO character_plus assignment"). That rule was the
   // per-body quota, and it is retired — this mutation is now an ACCEPT case, tested as one.
@@ -171,6 +192,12 @@ function plannerReply(usr, mutate) {
   if (mutate === 'cpNoMode')   cp = cp.map((c,i) => { if (i !== 0) return c; const { mode, ...r } = c; return r; });
   if (mutate === 'cpBadMode')  cp = cp.map((c,i) => i === 0 ? { ...c, mode:'RECALLED' } : c);   // she is in the room
   if (mutate === 'cpNoFacet')  cp = cp.map((c,i) => { if (i !== 0) return c; const { facet_id, ...r } = c; return r; });
+  if (mutate === 'cpNoReaction') cp = cp.map((c,i) => { if (i !== 0) return c; const { pc_archetype_reaction, ...r } = c; return r; });
+  if (mutate === 'cpBadEvidence') cp = cp.map((c,i) => i === 0
+    ? { ...c, pressure_evidence:'a solemn hush the assembly had not expected to hold' } : c);   // never in the scene
+  if (mutate === 'cpBadPressureId') cp = cp.map((c,i) => i === 0 ? { ...c, pressure_id:'p_not_a_real_condition' } : c);
+  if (mutate === 'cpProp')     cp = cp.map((c,i) => i === 0
+    ? { ...c, behavior:'he taps the ceremonial blade against his thigh while the words run on' } : c);
   // ORDER-INDEPENDENT: cite a facet that is real but belongs to someone ELSE. Keyed off the
   // entry's own facet so a change in roster order cannot turn this into a valid citation — which
   // it silently did once, and the case passed by being correct.
@@ -211,21 +238,21 @@ function plannerReply(usr, mutate) {
   if (mutate === 'aliasNarrator')  cp = cp.map((c,i) => i === 0 ? { ...c, character:'the narrator' } : c);
   if (mutate === 'aliasProtag')    cp = cp.map((c,i) => i === 0 ? { ...c, character:'the protagonist' } : c);
   if (mutate === 'aliasDohkar')    cp = cp.map(c => /presiding/i.test(c.character) ? { ...c, character:'Dohkar' } : c);
-  if (mutate === 'aliasOffstage')  cp = cp.concat([{ character:'the narrator’s absent mother', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs a task that keeps her hands in the room and her eyes out of it' }]);
+  if (mutate === 'aliasOffstage')  cp = cp.concat([{ character:'the narrator’s absent mother', first_mention:true, behavior:'sets the cloth straight twice', character_revelation:'she needs a task that keeps her hands in the room and her eyes out of it' }]);
   // ── THE ROUND-12 GESTURES THEMSELVES (2026-08-27) ──
   // Every one of these passed the old contract. "Camera-recordable" was the acceptance ceiling
   // when it was only the floor: three interchangeable gestures, no revelation between them.
-  if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ psychological_read, ...r }) => r)(c) : c);
+  if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ character_revelation, ...r }) => r)(c) : c);
   if (mutate === 'readVoiceDrops') cp = cp.map((c,i) => i === 0
-    ? { ...c, behavior:'his voice drops to a murmur as he intones the final clause', psychological_read:'he speaks more quietly at the end' } : c);
+    ? { ...c, behavior:'his voice drops to a murmur as he intones the final clause', character_revelation:'he speaks more quietly at the end' } : c);
   if (mutate === 'readBreathHitch') cp = cp.map((c,i) => i === 0
-    ? { ...c, behavior:'her breath hitches when the Dohkar says the name', psychological_read:'she is nervous about what is coming' } : c);
+    ? { ...c, behavior:'her breath hitches when the Dohkar says the name', character_revelation:'she is nervous about what is coming' } : c);
   if (mutate === 'readFingersFlex') cp = cp.map((c,i) => i === 0
-    ? { ...c, behavior:'his fingers flex once at his side', psychological_read:'a quiet tension runs through him' } : c);
+    ? { ...c, behavior:'his fingers flex once at his side', character_revelation:'a quiet tension runs through him' } : c);
   if (mutate === 'readIsAction')  cp = cp.map((c,i) => i === 0
-    ? { ...c, psychological_read:'she presses her palm flat against the table to keep it still' } : c);
+    ? { ...c, character_revelation:'she presses her palm flat against the table to keep it still' } : c);
   if (mutate === 'readShared')    cp = cp.map(c =>
-    ({ ...c, psychological_read:'they expect the rite to go badly and have already decided who to blame' }));
+    ({ ...c, character_revelation:'they expect the rite to go badly and have already decided who to blame' }));
 
   // ── ROUND 12, THE REAL SAMPLE: TWO FALSE POSITIVES AND ONE MISSED DEFECT ──
   // A five-token target ("the white weeping-willow veil-canopy") is NAMED perfectly well by its
@@ -253,7 +280,7 @@ function plannerReply(usr, mutate) {
   // ── THE SINGLE-SOURCE CONTRACT (2026-08-26, round 12) ──
   // A PC character_plus entry is a SECOND opening beat, and the planner is no longer asked for
   // one. An anchor the planner wrote over the sentinel is the same defect a field lower down.
-  if (mutate === 'pcInCp')        cp = cp.concat([{ character:PCN, first_mention:true, behavior:'presses her palm to the spiralgrass', psychological_read:'she needs the ground to hold still because nothing else will' }]);
+  if (mutate === 'pcInCp')        cp = cp.concat([{ character:PCN, first_mention:true, behavior:'presses her palm to the spiralgrass', character_revelation:'she needs the ground to hold still because nothing else will' }]);
   if (mutate === 'pcAnchorOwn')   spine.staged_characters = spine.staged_characters.map(c =>
     c.name === PCN ? { ...c, anchor_beat:'stands at the edge of the circle counting the petitioners' } : c);
   if (mutate === 'nonPcAnchorOwn') spine.staged_characters = spine.staged_characters.map(c =>
@@ -326,7 +353,7 @@ function plannerReply(usr, mutate) {
     const declared = declaredSpineKeys(usr);
     const top = {}, nested = {};
     Object.keys(spine).forEach(k => { (declared.includes(k) ? top : nested)[k] = spine[k]; });
-    const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs the cloth to be the reason she is standing there' }]) };
+    const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', character_revelation:'she needs the cloth to be the reason she is standing there' }]) };
     return JSON.stringify(Object.assign({ opening_spine: nested }, top, { scene_skeleton: bad }));
   }
   // ── FIXED-CAST mutations (2026-08-26): staged_characters is a prefilled echo, not a choice ──
@@ -369,7 +396,7 @@ function plannerReply(usr, mutate) {
                                   return JSON.stringify({ opening_spine: rest, staged_characters: [{ presence_mode:'IN_PERSON' }], scene_skeleton: skel }); }
   if (mutate === 'nested')       return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel } });
   if (mutate === 'dupSkeleton')  return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: skel }, scene_skeleton: skel });
-  if (mutate === 'dupSkeletonBadCast') { const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', psychological_read:'she needs the cloth to be the reason she is standing there' }]) };
+  if (mutate === 'dupSkeletonBadCast') { const bad = { ...skel, character_plus: skel.character_plus.concat([{ character:'Nobody Here', first_mention:true, behavior:'sets the cloth straight twice', character_revelation:'she needs the cloth to be the reason she is standing there' }]) };
                                         return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: bad }, scene_skeleton: bad }); }
   if (mutate === 'dupSkeletonDiff') return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: { ...skel, fusion: null } }, scene_skeleton: skel });
   if (mutate === 'nestedThin')   return JSON.stringify({ opening_spine: { ...spine, scene_skeleton: { fusion: null } } });
@@ -823,10 +850,11 @@ console.log('');
     /CHARACTER\+ CANDIDATES \(\d+\)/.test(pu)
       && /PHYSICAL PRESENCE IS NOT THE QUALIFICATION/.test(pu)
       && /modes permitted:/.test(pu) && /AUTHORED PSYCHOLOGY —/.test(pu)
-      && /seren_goodness_needs_witness/.test(pu)
+      && /facet_id: seren_goodness_needs_witness/.test(pu)
       // the TRUTH, not only the slug — the break this whole pass exists to close
       && /canonical truth: Her compassion is genuine but requires an audience/.test(pu)
-      && /applicability conditions \(WHEN this truth is available to reveal/.test(pu),
+      && /applicability conditions — cite ONE by its pressure_id/.test(pu)
+      && /pressure_id: p_\w+\s+→\s+observed by people whose approval she wants/.test(pu),
     (pu.match(/CHARACTER\+ CANDIDATES.{0,200}/) || ['(missing)'])[0]);
   t(`   the four delivery modes are spelled out, ANTICIPATED marked as expectation`,
     /· IN_PERSON — a behaviour they CHOOSE/.test(pu)
@@ -882,6 +910,9 @@ console.log(` 9 · PLANNER FAULTS SURFACE (no silent skeleton-less continuation)
 for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
                       // an assignment must cite an opportunity it was given and a facet that is theirs
                       'cpNoMode', 'cpBadMode', 'cpNoFacet', 'cpBadFacet',
+                      // the causal chain: a pressure that is real, evidenced, and a beat that
+                      // brings no prop of its own
+                      'cpNoReaction', 'cpBadEvidence', 'cpBadPressureId', 'cpProp',
                       'fmfalse', 'fmmissing', 'fmstring', 'emptyangle', 'placeholderang', 'thinangle',
                       'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty', 'unparseable',
                       // revised planning contract

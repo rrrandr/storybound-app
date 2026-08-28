@@ -321,11 +321,15 @@ async function fullRun({ label, statePatch, injectSeedB, reply }) {
 // Reads keyed by slot, not by name: the fixture serves two different seeds and must still hand
 // each character a reading that would NOT survive being given to the person beside them. The
 // first version name-swapped one template and the uniqueness check rejected it, correctly.
+// DISTINCT PER SLOT (the same-reading validator), and deliberately sharing no vocabulary with
+// any seeded canonical_truth — the restatement check measures overlap against the truth a plan
+// cites, and a fixture read built from the truth's own words trips it. Slot 3 used to be the
+// Dohkar's truth almost verbatim and scored 83%.
 const SLOT_READS = [
-  'has already decided he will be blamed for whatever goes wrong, and is choosing where to be standing when it does',
-  'expected to be thanked by now and cannot settle until someone acknowledges her',
-  'cannot be bothered to pretend the proceeding deserves his attention, and knows nobody checks',
-  'trusts what a column of figures admits over what a mouth says, because a ledger has never lied to her',
+  'has already decided who will be blamed and is choosing where to be standing when it lands',
+  'expected to be thanked by now and cannot settle until somebody says the words out loud',
+  'has learned exactly which parts nobody checks, and treats that knowledge as a form of seniority',
+  'trusts what a body admits over what a mouth says, and has been right often enough to stop apologising for it',
 ];
 // The C+ CANDIDATE block as dispatched: canonical label -> permitted modes + authored facet
 // ids. Read from the prompt rather than hard-coded, so a reply can only cite what the request
@@ -341,22 +345,32 @@ function candidatesFromPrompt(usr) {
     // each carries its applicability conditions. The reply cites the FIRST verbatim — the point
     // is that a condition the record does not list is refused, so the mock must not paraphrase.
     const facets = [], pressures = {};
-    const fre = /^\s{6,}·\s+(\S+)\s+\[[a-z_]+\][\s\S]*?applicability conditions \([^)]*\): ([^\n]*)/gm;
+    const fre = /^\s{6,}· facet_id: (\S+)\s+\[[a-z_]+\]([\s\S]*?)(?=^\s{6,}· facet_id: |^\s{6,}READS THIS|^\s{6,}⟂|$(?![\s\S]))/gm;
     let f; while ((f = fre.exec(chunk))) {
       facets.push(f[1]);
-      const conds = f[2].trim();
-      pressures[f[1]] = /^\(none/.test(conds) ? '' : conds.split(' · ')[0].trim();
+      const cs = [...f[2].matchAll(/pressure_id: (\S+)\s+→/g)].map(m => m[1]);
+      pressures[f[1]] = cs[0] || '';
     }
     out[name.trim()] = { modes, facets, pressures };
   });
   return out;
 }
-const cpEntry = (C, n, extra) => {
+const cpEntry = (C, n, extra, whereSpan) => {
   const c = C[n] || {}; const fid = (c.facets || [])[0];
   const pr = fid ? ((c.pressures || {})[fid] || '') : '';
+  const { psychological_read, ...rest } = extra || {};
   return { character:n, mode: ((c.modes || [])[0] || 'IN_PERSON'),
-           ...(fid ? { facet_id: fid } : {}), ...(pr ? { pressure: pr } : {}),
-           first_mention:true, ...extra };
+           ...(fid ? { facet_id: fid } : {}), ...(pr ? { pressure_id: pr } : {}),
+           ...(pr && whereSpan ? { pressure_evidence: whereSpan } : {}),
+           first_mention:true, ...rest,
+           character_revelation: psychological_read,
+           pc_archetype_reaction: `I had read ${n} before I had any evidence and could not unread it`,
+           source_bridge: `the act shows ${fid || 'the cited truth'} and belongs to ${n}, not to anyone else on this stage` };
+};
+// The WHERE line is verbatim stage.setting, so a slice of it is a real quotation.
+const whereSpanOf = usr => {
+  const w = (String(usr||'').match(/WHERE \(fixed\): ([^\n]+)/) || [])[1] || '';
+  return w.split(/\s+/).slice(0, 9).join(' ');
 };
 
 function plannerReplyFor(usr) {
@@ -403,8 +417,9 @@ function plannerReplyFor(usr) {
     ({ ...c, anchor_beat: c.name === pcName ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
   return JSON.stringify({ opening_spine: spine, scene_skeleton: {
     character_plus: (cands => cast.filter(n => n !== pcName)
-      .map((n, i) => cpEntry(cands, n, { behavior:`${n} checks the ledger before the words`,
-                                         psychological_read: SLOT_READS[i % SLOT_READS.length] })))(candidatesFromPrompt(usr)),
+      .map((n, i) => cpEntry(cands, n, { behavior:`${n} lets the pause run a beat longer than the words need`,
+                                         psychological_read: SLOT_READS[i % SLOT_READS.length] },
+                             whereSpanOf(usr))))(candidatesFromPrompt(usr)),
     environment_plus: { target, axis:'use',
       beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
     pc_opening_fusion: { character: pcName, placement:'PC_FIRST_EMBODIED_BEAT',
@@ -650,7 +665,8 @@ console.log(`\n${'═'.repeat(92)}\nPART E — LIFTED, THEN STILL JUDGED\n${'═
       scene_skeleton: {
         character_plus: (cands => names.filter(n => n !== pcN).map((n, i) =>
           cpEntry(cands, n, { behavior: `${n} checks the ledger before the words`,
-                              psychological_read: SLOT_READS[i % SLOT_READS.length] })))(candidatesFromPrompt(usr)),
+                              psychological_read: SLOT_READS[i % SLOT_READS.length] },
+                  whereSpanOf(usr))))(candidatesFromPrompt(usr)),
         environment_plus: { target, axis:'use',
           beat:`the ${target} is worn smooth along one edge where it has been handled the same way for years` },
         pc_opening_fusion: { character: pcN, placement:'PC_FIRST_EMBODIED_BEAT',
