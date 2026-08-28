@@ -62,6 +62,16 @@ const REACT = { Julian:'I had decided what his stillness meant before I had earn
 
 // Parse the dispatched candidate packets: facet ids and each facet's pressure ids. A reply that
 // guessed at ids would be testing my memory of the slug rule, not the product's contract.
+// The dispatched corpora: numbered facts, objects, people, and the PC's own lens operations.
+function corporaFromPrompt(usr) {
+  const u = String(usr || '');
+  const facts = [...u.matchAll(/^  (E\d+): (.+)$/gm)].map(m => ({ id: m[1], text: m[2] }));
+  const objects = [...u.matchAll(/^  (O\d+): (.+)$/gm)].map(m => ({ id: m[1], text: m[2] }));
+  const people = [...u.matchAll(/^  ((?:pc|named|role):[a-z0-9_]+): (.+)$/gm)].map(m => ({ id: m[1], text: m[2] }));
+  const ops = [...u.matchAll(/^    · ([A-Z_]{6,})  —  /gm)].map(m => m[1]);
+  return { facts, objects, people, ops };
+}
+
 function candidatesFromPrompt(usr) {
   const out = {};
   const block = (String(usr || '').match(/CHARACTER\+ CANDIDATES \(\d+\)[\s\S]*?(?=\nNOT CANDIDATES|\nEVERY character_plus|\nWHERE A PERSON HAS|\nThis story has no authored)/) || [''])[0];
@@ -99,31 +109,44 @@ function plannerReply(usr, mutate) {
     staged_characters: cast.map(n => ({ name:n, presence:'IN_PERSON',
       anchor_beat: n === PCN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' })) };
   // A verbatim span of the scene material — the WHERE line is exactly stage.setting.
-  const CORPUS = (usr.match(/<<<QUOTABLE SCENE MATERIAL\n([\s\S]*?)\nQUOTABLE SCENE MATERIAL>>>/) || [])[1] || '';
-  const WHERE_SPAN = CORPUS.trim().split(/\s+/).slice(0, 9).join(' ');
+  const CO = corporaFromPrompt(usr);
+  const E1 = (CO.facts[0] || {}).id;            // a real evidence id from the dispatched corpus
+  const OP = CO.ops[0];                          // a real operation from THIS pc's lens
   const CAND = candidatesFromPrompt(usr);
   const pidOf = (n, fid, i) => (((CAND[n] || {}).pressures || {})[fid] || [])[i || 0];
   const full = n => { const fid = FACET[n]; const pr = pidOf(n, fid);
     return { character:n, mode:'IN_PERSON', first_mention:true,
       ...(fid ? { facet_id:fid } : {}),
-      ...(pr ? { pressure_id:pr.pressure_id, pressure_evidence:WHERE_SPAN } : {}),
-      ...READS[n], pc_archetype_reaction: REACT[n],
-      source_bridge:`the act shows ${fid} and belongs to ${n} alone` }; };
+      ...(pr ? { pressure_id:pr.pressure_id, pressure_evidence_ids:[E1] } : {}),
+      behavior: READS[n].behavior, behavior_object_ids:[], behavior_person_ids:[],
+      pc_lens_operation: OP, pc_effect: REACT[n] }; };
   let cp = cast.filter(n => n !== PCN).map(full);
   const WREN = { character:'Wren', mode:'ANTICIPATED', first_mention:true,
     behavior:'will have re-tied the canopy cords a third time before the assembly is called',
+    behavior_object_ids:[], behavior_person_ids:[],
+    pc_lens_operation: OP,
+    // She has NO authored psychology, so the legacy field is the only source there is.
     character_revelation:'she would rather be found fussing than be found with nothing to do, because idleness is where the questions start',
-    pc_archetype_reaction:'I recognised the manoeuvre because it is mine, and I disliked her for a second on my own behalf',
-    source_bridge:'no authored facet exists for her; the beat is unsourced by design in the mixed regime' };
+    pc_effect:'I recognised the manoeuvre because it is mine' };
   // A candidate with NO authored psychology is still a candidate — and cites no facet.
   if (mutate === 'unsourcedAssign')     cp = cp.concat([WREN]);
   // …but may not borrow a real facet belonging to somebody else.
   if (mutate === 'unsourcedBorrows')    cp = cp.concat([{ ...WREN, facet_id:OTHER_FACET,
-    pressure_id:(pidOf('Seren', OTHER_FACET)||{}).pressure_id, pressure_evidence:WHERE_SPAN }]);
+    pressure_id:(pidOf('Seren', OTHER_FACET)||{}).pressure_id, pressure_evidence_ids:[E1] }]);
   // A condition that facet does not list — the planner asserting an applicability nobody authored.
   if (mutate === 'inventedPressure')    cp = cp.map((c,i) => i === 0
     ? { ...c, pressure_id:'p_nobody_is_watching' } : c);
   if (mutate === 'noPressure')          cp = cp.map((c,i) => { if (i !== 0) return c; const { pressure_id, ...r } = c; return r; });
+  // ── THE STRUCTURAL CITATIONS ──
+  if (mutate === 'badEvidenceId')  cp = cp.map((c,i) => i === 0 ? { ...c, pressure_evidence_ids:['E999'] } : c);
+  if (mutate === 'noEvidenceId')   cp = cp.map((c,i) => { if (i !== 0) return c; const { pressure_evidence_ids, ...r } = c; return r; });
+  if (mutate === 'badObjectId')    cp = cp.map((c,i) => i === 0 ? { ...c, behavior_object_ids:['O99'] } : c);
+  if (mutate === 'badPersonId')    cp = cp.map((c,i) => i === 0 ? { ...c, behavior_person_ids:['named:nobody'] } : c);
+  if (mutate === 'noLensOp')       cp = cp.map((c,i) => { if (i !== 0) return c; const { pc_lens_operation, ...r } = c; return r; });
+  if (mutate === 'foreignLensOp')  cp = cp.map((c,i) => i === 0 ? { ...c, pc_lens_operation:'KEEP_AN_EXIT_OPEN' } : c);  // Armored Fox's
+  // A body that reacts, offered in place of a way of paying attention.
+  if (mutate === 'somaticOnly')    cp = cp.map((c,i) => { if (i !== 0) return c;
+    const { pc_lens_operation, ...r } = c; return { ...r, pc_effect:'my pulse hammers against the veil-band' }; });
   // ══════════════════════════════════════════════════════════════════════════════════════
   // THE FIRST PAID PROBE'S OWN OUTPUT, VERBATIM (2026-08-27)
   // Every string below was returned by mistral-small-latest against a2c3a0b with a MECHANICALLY
@@ -132,30 +155,50 @@ function plannerReply(usr, mutate) {
   const put = (who, patch) => cp.map(c => c.character === who ? { ...c, ...patch } : c);
   // 1 · Julian cited his own facet and was given the DOHKAR's psychology.
   if (mutate === 'probeJulianContempt') cp = put('Julian', {
-    behavior:'he stands apart, perfectly still, his gaze fixed on her without shifting to the kneeling Seren',
-    character_revelation:'his silence is a refusal to acknowledge the rite\u2019s importance',
-    pc_archetype_reaction:'she reads it as a challenge to her authority' });
+    behavior:'he stands apart, perfectly still, his silence a refusal to acknowledge the rite\u2019s importance',
+    pc_effect:'she reads it as a challenge to her authority' });
   // …and the same theft with the adversarial half removed, so the contempt clause alone is tested.
   if (mutate === 'probeJulianContemptOnly') cp = put('Julian', {
-    character_revelation:'he cannot be bothered to pretend the ceremony deserves his attention' });
+    behavior:'he cannot be bothered to pretend the ceremony deserves his attention, and lets it show' });
   // …and the guardrail the seed already carried, before this probe existed.
   if (mutate === 'probeJulianSuspicion') cp = put('Julian', {
-    character_revelation:'his stillness is the discipline of a man who knows something he has chosen not to say' });
+    behavior:'he holds still with the discipline of a man who knows something he has chosen not to say' });
   // 2 · Seren's revelation restated her facet and never reached the protagonist.
+  // The paraphrase has nowhere left to live: there is no field for it. What IS still reachable
+  // is putting it in the behaviour, so that is what this replays.
   if (mutate === 'probeSerenParaphrase') cp = put('Seren', {
     facet_id:'seren_trained_composure',
     pressure_id:(pidOf('Seren','seren_trained_composure')||{}).pressure_id,
-    pressure_evidence:WHERE_SPAN,
-    behavior:'her hands tremble once, then still, as if she rehearses perfection under scrutiny',
-    character_revelation:'she treats the coming failure as a performance to master, not a wound to endure' });
+    pressure_evidence_ids:[E1],
+    behavior:'she treats the coming failure as a performance to master, not a wound to endure' });
   // …and the pressure she was given, with evidence that is not in this scene.
   if (mutate === 'probeSerenNoEvidence') cp = put('Seren', {
     facet_id:'seren_trained_composure',
     pressure_id:(pidOf('Seren','seren_trained_composure')||{}).pressure_id,
-    pressure_evidence:'the Dohkar corrects her aloud before the assembly' });   // nowhere in the scene
+    pressure_evidence_ids:[] });                       // asserted with nothing behind it
   // 3 · the Dohkar's beat brought its own prop into a rite the seed says has no machinery.
   if (mutate === 'probeDohkarBlade') cp = put('the presiding Dohkar', {
     behavior:'he recites the rite in a flat monotone, his fingers tapping the ceremonial blade against his thigh' });
+  // …and the second probe's own invention, in the other direction.
+  // ── THE INTENDED TRANSFORMATION (Roman's fixtures, 2026-08-27) ──
+  // Structural fixtures, NOT prose exemplars — nothing here is shown to the production prompt.
+  // Each is an ACTION ONLY, with the interpretation carried separately by the operation.
+  if (mutate === 'fixtureTransform') cp = cp.map(c => {
+    if (c.character === 'Seren') return { ...c,
+      facet_id:'seren_goodness_needs_witness',
+      pressure_id:(pidOf('Seren','seren_goodness_needs_witness')||{}).pressure_id,
+      pressure_evidence_ids:[E1],
+      behavior:'she checks the faces of the crowd before she reaches for Lirael',
+      pc_lens_operation:'INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST',
+      pc_effect:'the hesitation arrives in me as kindness waiting for permission' };
+    if (c.character === 'the presiding Dohkar') return { ...c,
+      behavior:'he begins the next clause before the assembly has finished answering the first',
+      pc_lens_operation:'EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE',
+      pc_effect:'I understand that their reverence is not worth waiting for' };
+    return c;
+  });
+  if (mutate === 'probeSerenBowl') cp = put('Seren', {
+    behavior:'her fingers hover over the offering bowl, nails biting into her palms' });
   // A model-supplied copy of the canonical truth must never survive into the assignment.
   if (mutate === 'modelSuppliesTruth')  cp = cp.map((c,i) => i === 0
     ? { ...c, facet_truth:'HE IS A LIAR AND THE TRUTH IS WHATEVER I SAY IT IS', facet_category:'forged' } : c);
@@ -163,18 +206,17 @@ function plannerReply(usr, mutate) {
   // Unrelated to the cited truth, and carefully breaking no guardrail and no restatement guard —
   // which is exactly why nothing mechanical stops it. This is the recorded limit.
   if (mutate === 'unrelatedRead')       cp = put('Seren', {
-    character_revelation:'she has been counting the exits since she arrived and has already chosen one' });
+    behavior:'she has been counting the exits since she arrived and has already chosen one' });
 
   // THE CLAIM: an absent candidate receives a C+ and is NOT added to staged_characters.
   if (mutate === 'absentAssign') cp = cp.concat([{ character:'Halvern', mode:'ANTICIPATED',
-    facet_id:HALVERN_FACET, pressure_id:(pidOf('Halvern', HALVERN_FACET)||{}).pressure_id, pressure_evidence:WHERE_SPAN, first_mention:true,
+    facet_id:HALVERN_FACET, pressure_id:(pidOf('Halvern', HALVERN_FACET)||{}).pressure_id, pressure_evidence_ids:[E1], first_mention:true,
     behavior:'will already be standing at the edge of the clearing when the assembly is called, having come on his own',
-    character_revelation:'he treats being summoned as a discourtesy he can spare everyone by never needing to be summoned',
-    pc_archetype_reaction:'I resented how easy he made it look, and knew I resented it before I knew why',
-    source_bridge:'arriving uncalled is the cited truth under a gathering that has not formally begun' }]);
+    behavior_object_ids:[], behavior_person_ids:[], pc_lens_operation: OP,
+    pc_effect:'I resented how easy he made it look' }]);
   // The same beat, plus the mistake the rule forbids: materialising him into the room.
   if (mutate === 'absentMaterialised') {
-    cp = cp.concat([{ character:'Halvern', mode:'ANTICIPATED', facet_id:HALVERN_FACET, pressure_id:(pidOf('Halvern', HALVERN_FACET)||{}).pressure_id, pressure_evidence:WHERE_SPAN, first_mention:true,
+    cp = cp.concat([{ character:'Halvern', mode:'ANTICIPATED', facet_id:HALVERN_FACET, pressure_id:(pidOf('Halvern', HALVERN_FACET)||{}).pressure_id, pressure_evidence_ids:[E1], first_mention:true,
       behavior:'will already be standing at the edge of the clearing when the assembly is called, having come on his own',
       character_revelation:'he treats being summoned as a discourtesy he can spare everyone by never needing to be summoned',
     pc_archetype_reaction:'I resented how easy he made it look, and knew I resented it before I knew why',
@@ -183,14 +225,12 @@ function plannerReply(usr, mutate) {
   }
   // …and the person this scene never mentions stays ineligible however well-formed the entry is.
   if (mutate === 'unmentionedAssign') cp = cp.concat([{ character:'Klaus', mode:'REPORTED',
-    facet_id:KLAUS_FACET, pressure_id:'p_record_someone_else', pressure_evidence:WHERE_SPAN, first_mention:true,
+    facet_id:KLAUS_FACET, pressure_id:'p_record_someone_else', pressure_evidence_ids:[E1], first_mention:true,
     behavior:'is said to have copied the tally himself rather than let a clerk touch it',
-    character_revelation:'he trusts no record he did not make with his own hand, and would rather be thought petty than be surprised',
-    pc_archetype_reaction:'I felt the insult of it land somewhere behind my sternum before I had parsed the sentence',
-    source_bridge:'copying the tally himself is the cited truth under a record someone else handled' }]);
+    behavior_object_ids:[], behavior_person_ids:[], pc_lens_operation: OP }]);
   // An absent candidate given the one mode that would put him in the room.
   if (mutate === 'absentInPerson') cp = cp.concat([{ character:'Halvern', mode:'IN_PERSON',
-    facet_id:HALVERN_FACET, pressure_id:(pidOf('Halvern', HALVERN_FACET)||{}).pressure_id, pressure_evidence:WHERE_SPAN, first_mention:true,
+    facet_id:HALVERN_FACET, pressure_id:(pidOf('Halvern', HALVERN_FACET)||{}).pressure_id, pressure_evidence_ids:[E1], first_mention:true,
     behavior:'stands at the edge of the clearing with his hands behind him',
     character_revelation:'he treats being summoned as a discourtesy he can spare everyone by never needing to be summoned',
     pc_archetype_reaction:'I resented how easy he made it look, and knew I resented it before I knew why',
@@ -309,6 +349,8 @@ console.log(`\n${'═'.repeat(88)}\nC+ PROMPT DOCTRINE — presence governs stag
 
 const B = await run(null);
 const pu = (B.planner[0] || {}).user || '';
+// If the prompt never went out, the reason is worth more than 30 failed assertions.
+if (!pu) { console.log('  ⚠ no planner request — threw:', B.threw); (B.logs||[]).slice(0,8).forEach(l=>console.log('     ',l)); }
 
 console.log(' 1 · THE DISPATCHED PLANNER BYTES — WHO IS OFFERED');
 t('1a: the planner request carries a CHARACTER+ CANDIDATES block',
@@ -357,12 +399,15 @@ t('2d: possible_pressures are labelled APPLICABILITY CONDITIONS, never prose',
   (pu.match(/applicability conditions[^\n]{0,160}/) || ['(missing)'])[0]);
 t('2e: the model is told to return the ID ONLY, never a copy of the truth',
   /RETURN THE facet_id ONLY/.test(pu) && /a re-worded copy of it is how a truth quietly becomes a different truth/.test(pu));
-t('2f: …and that the read must be a reading OF the cited truth',
+t('2f: …and the behaviour must be an act the truth could be inferred from',
   /CITE, DO NOT RESTATE/.test(pu)
-    && /A revelation that would stand just as well with the facet deleted is not sourced/.test(pu));
-t('2g: the planner is asked which applicability condition THIS scene meets, WITH evidence',
-  /"pressure_id" IS THE JUDGEMENT ONLY YOU CAN MAKE, AND "pressure_evidence" IS WHAT MAKES IT CHECKABLE/.test(pu)
-    && /If you cannot find a span to quote, the condition does not apply/.test(pu));
+    && /an act a camera could record, from which that truth could be inferred/.test(pu));
+t('2f2: the one case where the model DOES write psychology is named and bounded',
+  /ONE EXCEPTION, AND ONLY ONE/.test(pu)
+    && /Never add it for anyone whose packet lists facets/.test(pu));
+t('2g: the planner is asked which condition THIS scene meets, with the facts that establish it',
+  /"pressure_id" IS THE JUDGEMENT ONLY YOU CAN MAKE, AND "pressure_evidence_ids" IS WHAT MAKES IT CHECKABLE/.test(pu)
+    && /If no fact establishes the condition, it does not apply here/.test(pu));
 
 // ══════════════════════════════════════════════════════════════════════════════════════
 // 3 · THE PC'S READING LENS — the mask, never state.archetype.primary
@@ -377,14 +422,14 @@ t('3b: it names the PC MASK (Open Vein), not the LI archetype (Beautiful Ruin)',
   (pu.match(/CHARACTER\+ READING LENS[^\n]{0,120}/) || ['(missing)'])[0]);
 t('3b2: …and the test is not vacuous — the LI archetype really is the other one',
   B.candidates && B.candidates.pcMask === 'OPEN_VEIN', JSON.stringify(B.candidates && B.candidates.pcMask));
-t('3c: it states the read is HER reading, not a neutral diagnosis',
-  /is NOT a neutral character diagnosis/.test(pu)
-    && /can sharpen it, soften it, or bend it toward what she needs to believe/.test(pu));
+t('3c: it states her archetype decides HOW her attention moves onto the beat',
+  /does not receive this beat neutrally; her archetype decides HOW her attention moves onto it/.test(pu));
 t('3d: …and gives the archetype\'s attention movement, so the bias is nameable',
   /HOW HER ATTENTION MOVES: /.test(pu) && /INWARD TRANSLATION/.test(pu),
   (pu.match(/HOW HER ATTENTION MOVES: .{0,90}/) || ['(missing)'])[0]);
-t('3e: two protagonists must not produce the same sentence — stated as the test',
-  /Two protagonists of different archetypes reading the same facet must not produce the same sentence/.test(pu));
+t('3e: the operation set offered is exactly this archetype\'s, and each carries its gloss',
+  (pu.match(/^    · [A-Z_]{6,}  —  /gm) || []).length >= 4,
+  JSON.stringify((pu.match(/^    · [A-Z_]{6,}/gm) || []).slice(0, 6)));
 
 // ══════════════════════════════════════════════════════════════════════════════════════
 // 4 · THE CONTRACT IS INVOCATION-LOCAL, AND HAS THREE REGIMES
@@ -468,46 +513,51 @@ const aall = asys + '\n' + ((A.author[0] || {}).user || '');
 const FM = '(?: \\(first mention[^)]*\\))?';
 const line = n => new RegExp('•\\s*' + n + FM + ' — ');
 t('6a: the author is told the MODE of the assignment',
-  new RegExp(line('Halvern').source + 'ANTICIPATED').test(asys),
-  (aall.match(/•\s*Halvern[^\n]{0,240}/) || ['(missing)'])[0]);
+  /•\s*Halvern[^\n]*— ANTICIPATED/.test(asys),
+  (aall.match(/•\s*Halvern[\s\S]{0,300}/) || ['(missing)'])[0]);
 t('6b: …that the person is NOT PHYSICALLY PRESENT',
-  new RegExp(line('Halvern').source + 'ANTICIPATED; NOT PHYSICALLY PRESENT').test(asys),
-  (aall.match(/•\s*Halvern[^\n]{0,240}/) || ['(missing)'])[0]);
-t('6c: …the TRUSTED FACET TRUTH, the PRESSURE, the behavior and the PC reading, in one line',
-  new RegExp(line('Halvern').source
-    + 'ANTICIPATED; NOT PHYSICALLY PRESENT — trusted facet: He arrives before he is sent for[^\n]*?'
-    + '; pressure: a gathering that has not formally begun; behavior: [^\n]*; PC reading: [^\n]+').test(asys),
-  (aall.match(/•\s*Halvern[^\n]{0,400}/) || ['(missing)'])[0]);
+  /•\s*Halvern[^\n]*— ANTICIPATED; NOT PHYSICALLY PRESENT/.test(asys),
+  (aall.match(/•\s*Halvern[\s\S]{0,300}/) || ['(missing)'])[0]);
+t('6b2: …and an ABSENT recipient gets the SAME three-component construction',
+  /•\s*Halvern[^\n]*\n\s+SOURCE TRUTH — DO NOT STATE: He arrives before he is sent for[\s\S]{0,400}?VISIBLE ACTION — MUST OCCUR: [^\n]+\n\s+PC INTERPRETATION — MUST GOVERN THE NARRATION: [A-Z_]{6,}/.test(asys),
+  (aall.match(/•\s*Halvern[\s\S]{0,500}/) || ['(missing)'])[0]);
+t('6c: …the applicable pressure travels as OUR wording, marked as why it applies',
+  /\(it applies here because: a gathering that has not formally begun\)/.test(asys),
+  (asys.match(/it applies here because: [^\n]{0,90}/) || ['(missing)'])[0]);
 t('6c3: …and the first-mention tag survives beside the new fields',
   /•\s*Halvern \(first mention/.test(asys),
   (aall.match(/•\s*Halvern[^\n]{0,80}/) || ['(missing)'])[0]);
 t('6c2: …and the author gets ONE facet, not the person\'s whole micro-bible',
-  (asys.split('trusted facet:').length - 1) === (A.cp||[]).filter(c => c.facet_truth).length
+  (asys.split('SOURCE TRUTH — DO NOT STATE:').length - 1) === (A.cp||[]).filter(c => c.facet_truth).length
     && !/applicability conditions/.test(asys) && !/AUTHORED PSYCHOLOGY/.test(asys),
   'the full facet list belongs to the planner; the author receives the one that was selected');
 t('6d: a PRESENT recipient carries a mode and NO absence marker',
-  new RegExp(line('Seren').source + 'IN_PERSON — trusted facet: ').test(asys)
-    && !/NOT PHYSICALLY PRESENT — trusted facet: Her compassion/.test(asys),
-  (aall.match(/•\s*Seren[^\n]{0,240}/) || ['(missing)'])[0]);
+  /•\s*Seren[^\n]*— IN_PERSON\n/.test(asys) && !/•\s*Seren[^\n]*NOT PHYSICALLY PRESENT/.test(asys),
+  (aall.match(/•\s*Seren[\s\S]{0,240}/) || ['(missing)'])[0]);
 t('6e: the NON-MATERIALISATION LAW reaches the component that would otherwise break it',
   /ABSENT PEOPLE STAY ABSENT \(HARD\)/.test(asys)
     && /do NOT enter, arrive, appear, act in the present moment, speak a line of dialogue/.test(asys)
     && /ANTICIPATED = what the protagonist EXPECTS of them, written as expectation and never as present fact/.test(asys),
   (asys.match(/ABSENT PEOPLE STAY ABSENT[\s\S]{0,200}/) || ['(missing)'])[0]);
-t('6f0: the SOURCE BRIDGE never reaches the author — it is the system\'s reasoning, not the story\'s',
-  !/source_bridge/i.test(asys) && !/belongs to Halvern alone|belongs to Seren alone/i.test(asys),
-  (asys.match(/.{0,60}source_bridge.{0,60}/i) || ['(absent, correct)'])[0]);
-t('6f1: the author line carries BOTH halves, separately labelled',
-  new RegExp(line('Seren').source + 'IN_PERSON[^\n]*; reveals: [^\n]*; PC reading: [^\n]+').test(asys),
-  (aall.match(/•\s*Seren[^\n]{0,300}/) || ['(missing)'])[0]);
+t('6f0: the author gets ONE pressure, not the facet\'s whole condition list or portfolio',
+  !/pressure_id:/.test(asys) && !/applicability conditions/.test(asys)
+    && !/AUTHORED PSYCHOLOGY/.test(asys) && !/facet_id:/.test(asys),
+  (asys.match(/.{0,60}(applicability conditions|AUTHORED PSYCHOLOGY).{0,60}/i) || ['(absent, correct)'])[0]);
+t('6f1: the SOURCE TRUTH is the record\'s wording, never a model paraphrase',
+  /SOURCE TRUTH — DO NOT STATE: Her compassion is genuine but requires an audience/.test(asys)
+    && /PC INTERPRETATION — MUST GOVERN THE NARRATION: [A-Z_]{6,} — /.test(asys),
+  (aall.match(/•\s*Seren[\s\S]{0,400}/) || ['(missing)'])[0]);
+t('6f2: NO model-authored psychology reaches the author at all',
+  !/reveals:/.test(asys) && !/source_bridge/i.test(asys) && !/character_revelation/i.test(asys),
+  (asys.match(/.{0,60}(reveals:|source_bridge|character_revelation).{0,60}/i) || ['(none, correct)'])[0]);
 t('6f: the trusted facet is marked SOURCE, never a line to reproduce',
   /"trusted facet" is the established, canonical truth about that person/.test(asys)
     && /do not state it, do not paraphrase it into narration, and do not let a character say it aloud/.test(asys));
 t('6g: each arrives EXACTLY ONCE — no double-delivery through a second builder',
-  ((asys.match(new RegExp(line('Halvern').source + 'ANTICIPATED', 'g')) || []).length) === 1
+  ((asys.match(/•\s*Halvern[^\n]*— ANTICIPATED/g) || []).length) === 1
     && (asys.split('ABSENT PEOPLE STAY ABSENT (HARD)').length - 1) === 1
     && (asys.split('He arrives before he is sent for').length - 1) === 1,
-  JSON.stringify({ mode: (asys.match(new RegExp(line('Halvern').source + 'ANTICIPATED', 'g')) || []).length,
+  JSON.stringify({ mode: (asys.match(/•\s*Halvern[^\n]*— ANTICIPATED/g) || []).length,
                    law: asys.split('ABSENT PEOPLE STAY ABSENT (HARD)').length - 1,
                    truth: asys.split('He arrives before he is sent for').length - 1 }));
 
@@ -528,6 +578,13 @@ for (const [mutate, label] of [
   ['unsourcedBorrows',  'an unsourced candidate may not borrow a real facet belonging to someone else'],
   ['inventedPressure',  'a condition the cited facet does not list is an invented applicability'],
   ['noPressure',        'a cited facet with conditions must name the one this scene meets'],
+  ['badEvidenceId',     'an evidence id this scene does not contain'],
+  ['noEvidenceId',      'a condition asserted with no evidence cited at all'],
+  ['badObjectId',       'an object id this scene does not contain'],
+  ['badPersonId',       'a person id who is not in this scene'],
+  ['noLensOp',          'no pc_lens_operation — how her attention moves is a choice she must make'],
+  ['foreignLensOp',     'another archetype\'s operation, offered for this protagonist'],
+  ['somaticOnly',       'a hammering pulse offered in place of a way of paying attention'],
 ]) {
   const R = await run(mutate);
   const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID|SCENE1:STAGED:INVALID|SCENE1:PLANNER:UNRECOVERABLE/.test(l))
@@ -548,21 +605,35 @@ t('8b1: pressures are cited by STABLE ID, not by reproducing their text',
   /pressure_id: p_\w+\s+→\s+a gathering where standing is being displayed/.test(pu)
     && /"pressure_id": "<the ONE pressure_id listed under THAT facet/.test(pu),
   (pu.match(/pressure_id: [^\n]{0,90}/) || ['(missing)'])[0]);
-t('8b1b: the quotable corpus is DELIMITED, so "quote it" is mechanical rather than hopeful',
-  /<<<QUOTABLE SCENE MATERIAL[\s\S]{50,}QUOTABLE SCENE MATERIAL>>>/.test(pu)
-    && /Do not describe the evidence in your own words, do not summarise it/.test(pu)
-    && /copy an actual run of words out of it/.test(pu),
-  (pu.match(/<<<QUOTABLE SCENE MATERIAL.{0,90}/) || ['(missing)'])[0]);
-t('8b2: the plan must QUOTE the span that proves the condition applies',
-  /"pressure_evidence": "<an EXACT span copied character-for-character/.test(pu)
-    && /QUOTE THE SPAN THAT PROVES IT, copied character for character from BETWEEN THE MARKERS ABOVE/.test(pu)
-    && /An asserted condition with no evidence behind it is the failure this field exists to catch/.test(pu));
-t('8b3: the two jobs are two fields, each with its own definition',
-  /"character_revelation" is about THEM/.test(pu) && /"pc_archetype_reaction" is about HER/.test(pu)
-    && /It must be RECEPTION, not a second revelation about them/.test(pu));
-t('8b4: the source bridge is demanded, and marked never-printed',
-  /"source_bridge" is DIAGNOSTIC and is never printed/.test(pu)
-    && /why this reading is not some other candidate's truth wearing this person's name/.test(pu));
+t('8b1b: the scene is a NUMBERED FACT CORPUS — evidence is cited, never quoted',
+  /THE SCENE, AS NUMBERED FACTS/.test(pu) && /^  E1: /m.test(pu) && /^  E2: /m.test(pu)
+    && /CITE IDS — never quote, never paraphrase, never compose a sentence that sounds like the scene/.test(pu),
+  (pu.match(/THE SCENE, AS NUMBERED FACTS[\s\S]{0,160}/) || ['(missing)'])[0]);
+t('8b1c: objects and people are addressable too',
+  /THE OBJECTS THIS SCENE CONTAINS/.test(pu) && /^  O1: /m.test(pu)
+    && /THE PEOPLE PHYSICALLY PRESENT, by id/.test(pu) && /^  named:seren: /m.test(pu),
+  (pu.match(/THE OBJECTS THIS SCENE CONTAINS[\s\S]{0,140}/) || ['(missing)'])[0]);
+t('8b2: the entry cites evidence, objects and people by id',
+  /"pressure_evidence_ids": \["<evidence_ids of the facts that establish it/.test(pu)
+    && /"behavior_object_ids"/.test(pu) && /"behavior_person_ids"/.test(pu));
+t('8b3: the model is told it does NOT write the psychology',
+  /YOU DO NOT WRITE THE PSYCHOLOGY/.test(pu)
+    && /delivered to the writer from the record, word for word, by us/.test(pu)
+    && /there is no field for that, on purpose/.test(pu));
+t('8b3b: …and the retired paraphrase fields are gone from the schema entirely',
+  !/"source_bridge"/.test(pu) && !/"pc_archetype_reaction"/.test(pu)
+    // character_revelation survives ONLY inside the bounded no-facet exception, never in the entry
+    && !/"character_revelation": "</.test(pu),
+  (pu.match(/.{0,50}(source_bridge|pc_archetype_reaction).{0,50}/) || ['(retired)'])[0]);
+t('8b4: the PC lens is an ENUMERATED OPERATION, and a pulse is explicitly not one',
+  /"pc_lens_operation" MUST be exactly one of these, verbatim/.test(pu)
+    && /EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE/.test(pu)
+    && /INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST/.test(pu)
+    && /A racing pulse, a tight chest, prickling skin or a held breath is a somatic event, not an operation/.test(pu),
+  (pu.match(/pc_lens_operation" MUST be[\s\S]{0,200}/) || ['(missing)'])[0]);
+t('8b4b: the operations offered are the PC MASK\'s, not another archetype\'s',
+  /EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE/.test(pu) && !/KEEP_AN_EXIT_OPEN/.test(pu),
+  'Armored Fox operations must never appear in an Open Vein packet');
 t('8b5: each candidate is a CONTIGUOUS packet that closes on itself',
   /⟂ Everything in this packet belongs to Julian ALONE/.test(pu)
     && /⟂ Everything in this packet belongs to Seren ALONE/.test(pu),
@@ -587,11 +658,34 @@ for (const [mutate, label] of [
   ['probeSerenParaphrase',    'Seren\'s revelation restates "to perfect, not to survive" with the nouns swapped'],
   ['probeSerenNoEvidence',    '…and asserts "public correction" with a span this scene does not contain'],
   ['probeDohkarBlade',        'the Dohkar\'s beat brings a ceremonial blade into a rite with no machinery'],
+  ['probeSerenBowl',          'the second probe\'s offering bowl, in a rite whose only offering is a memory'],
 ]) {
   const R = await run(mutate);
   const flagged = R.logs.some(l => /SCENE1:SKELETON:INVALID/.test(l)) && R.logs.some(l => /SCENE1:ABORT/.test(l));
   t(`8c "${mutate}" — ${label}`, flagged && R.author.length === 0,
     `flagged=${flagged} author=${R.author.length} ` + R.logs.filter(l=>/INVALID/.test(l)).slice(0,1).join('').slice(0,300));
+}
+
+console.log('\n 8d · THE INTENDED TRANSFORMATION');
+{
+  const F = await run('fixtureTransform');
+  const fs2 = (F.author[0] || {}).system || '';
+  t('8d1: Seren — truth backstage, action grounded, interpretation carried by the operation',
+    /SOURCE TRUTH — DO NOT STATE: Her compassion is genuine but requires an audience/.test(fs2)
+      && /VISIBLE ACTION — MUST OCCUR: she checks the faces of the crowd before she reaches for Lirael/.test(fs2)
+      && /PC INTERPRETATION — MUST GOVERN THE NARRATION: INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST[^\n]*kindness waiting for permission/.test(fs2),
+    (fs2.match(/•\s*Seren[\s\S]{0,420}/) || ['(missing)'])[0]);
+  t('8d2: the Dohkar — the same construction, a different truth',
+    /SOURCE TRUTH — DO NOT STATE: He cannot be bothered to pretend this ceremony deserves his attention/.test(fs2)
+      && /VISIBLE ACTION — MUST OCCUR: he begins the next clause before the assembly has finished answering the first/.test(fs2)
+      && /PC INTERPRETATION — MUST GOVERN THE NARRATION: EMOTIONAL_CONCLUSION_BEFORE_EVIDENCE[^\n]*reverence is not worth waiting for/.test(fs2),
+    (fs2.match(/•\s*the presiding Dohkar[\s\S]{0,420}/) || ['(missing)'])[0]);
+  t('8d3: the ACTION carries no psychological explanation of itself',
+    !/VISIBLE ACTION — MUST OCCUR: [^\n]*\b(?:because|which (?:reveals|shows|means)|revealing that|as if to prove)\b/.test(fs2),
+    (fs2.match(/VISIBLE ACTION[^\n]{0,140}/) || ['(none)'])[0]);
+  t('8d4: no planner-authored finished C+ line is anywhere in the payload',
+    !/reveals:/.test(fs2) && !/character revelation/i.test(fs2),
+    (fs2.match(/.{0,60}reveals:.{0,60}/) || ['(none, correct)'])[0]);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════════════

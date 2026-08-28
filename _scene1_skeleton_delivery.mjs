@@ -57,6 +57,16 @@ function declaredSpineKeys(usr) {
 // The C+ CANDIDATE block as dispatched: canonical label -> permitted modes, authored facet ids,
 // and each facet's applicability conditions. Read from the prompt so a reply can only cite what
 // the request actually offered — the same discipline the validator enforces on the real planner.
+// The dispatched corpora: numbered facts, objects, people, and the PC's own lens operations.
+function corporaFromPrompt(usr) {
+  const u = String(usr || '');
+  const facts = [...u.matchAll(/^  (E\d+): (.+)$/gm)].map(m => ({ id: m[1], text: m[2] }));
+  const objects = [...u.matchAll(/^  (O\d+): (.+)$/gm)].map(m => ({ id: m[1], text: m[2] }));
+  const people = [...u.matchAll(/^  ((?:pc|named|role):[a-z0-9_]+): (.+)$/gm)].map(m => ({ id: m[1], text: m[2] }));
+  const ops = [...u.matchAll(/^    · ([A-Z_]{6,})  —  /gm)].map(m => m[1]);
+  return { facts, objects, people, ops };
+}
+
 function candidatesFromPrompt(usr) {
   const out = {};
   const block = (String(usr || '').match(/CHARACTER\+ CANDIDATES \(\d+\)[\s\S]*?(?=\nNOT CANDIDATES|\nEVERY character_plus|\nWHERE A PERSON HAS|\nThis story has no authored)/) || [''])[0];
@@ -149,10 +159,9 @@ function plannerReply(usr, mutate) {
   const REACT_FALLBACK = n => `I felt the room tilt toward ${n} before I understood why it had`;
   // The evidence span must be VERBATIM scene material. The WHERE line is exactly stage.setting,
   // so a slice of it is a real quotation rather than a composed one.
-  const WHERE_SPAN = (() => {
-    const w = (usr.match(/WHERE \(fixed\): ([^\n]+)/) || [])[1] || '';
-    return w.split(/\s+/).slice(0, 9).join(' ');
-  })();
+  const CO = corporaFromPrompt(usr);
+  const E1 = (CO.facts[0] || {}).id;
+  const OP = CO.ops[0];
   // ── THE TWO CITATIONS (2026-08-27) ──
   // A C+ assignment names WHICH opportunity carries it and WHICH authored facet it draws on.
   // These are the real ids from the First Sacrifice seed: a mock that invented them would prove
@@ -167,12 +176,18 @@ function plannerReply(usr, mutate) {
     .map(n => {
       const c = CAND[n] || {}; const fid = (c.facets || [])[0];
       const pr = fid ? ((c.pressures || {})[fid] || '') : '';
+      const R = READS[n] || READ_FALLBACK(n);
       return { character:n, mode: ((c.modes || [])[0] || 'IN_PERSON'),
                ...(fid ? { facet_id: fid } : {}), ...(pr ? { pressure_id: pr } : {}),
-               ...(pr && WHERE_SPAN ? { pressure_evidence: WHERE_SPAN } : {}),
-               first_mention:true, ...(READS[n] || READ_FALLBACK(n)),
-               pc_archetype_reaction: REACT[n] || REACT_FALLBACK(n),
-               source_bridge: `the act is ${fid || 'the cited truth'} under this scene's condition, and belongs to ${n} rather than to anyone else on this stage` };
+               ...(pr && E1 ? { pressure_evidence_ids: [E1] } : {}),
+               first_mention:true, behavior: R.behavior,
+               // NO AUTHORED PSYCHOLOGY ON RECORD is the one case where the planner still writes
+               // the read; where a facet EXISTS, sending one is the model rewriting canon, and the
+               // request says so. The duo (unseeded) fixture is the whole no-facet population.
+               ...(fid ? {} : { character_revelation: R.character_revelation }),
+               behavior_object_ids: [], behavior_person_ids: [],
+               ...(OP ? { pc_lens_operation: OP } : {}),
+               pc_effect: REACT[n] || REACT_FALLBACK(n) };
     });
   // Anchors are the prefilled SENTINELS, copied back untouched, as the template asks.
   spine.staged_characters = spine.staged_characters.map(c =>
@@ -192,9 +207,10 @@ function plannerReply(usr, mutate) {
   if (mutate === 'cpNoMode')   cp = cp.map((c,i) => { if (i !== 0) return c; const { mode, ...r } = c; return r; });
   if (mutate === 'cpBadMode')  cp = cp.map((c,i) => i === 0 ? { ...c, mode:'RECALLED' } : c);   // she is in the room
   if (mutate === 'cpNoFacet')  cp = cp.map((c,i) => { if (i !== 0) return c; const { facet_id, ...r } = c; return r; });
-  if (mutate === 'cpNoReaction') cp = cp.map((c,i) => { if (i !== 0) return c; const { pc_archetype_reaction, ...r } = c; return r; });
-  if (mutate === 'cpBadEvidence') cp = cp.map((c,i) => i === 0
-    ? { ...c, pressure_evidence:'a solemn hush the assembly had not expected to hold' } : c);   // never in the scene
+
+  if (mutate === 'cpBadEvidence') cp = cp.map((c,i) => i === 0 ? { ...c, pressure_evidence_ids:['E999'] } : c);
+  if (mutate === 'cpNoLensOp')  cp = cp.map((c,i) => { if (i !== 0) return c; const { pc_lens_operation, ...r } = c; return r; });
+  if (mutate === 'cpBadObject') cp = cp.map((c,i) => i === 0 ? { ...c, behavior_object_ids:['O99'] } : c);
   if (mutate === 'cpBadPressureId') cp = cp.map((c,i) => i === 0 ? { ...c, pressure_id:'p_not_a_real_condition' } : c);
   if (mutate === 'cpProp')     cp = cp.map((c,i) => i === 0
     ? { ...c, behavior:'he taps the ceremonial blade against his thigh while the words run on' } : c);
@@ -242,7 +258,7 @@ function plannerReply(usr, mutate) {
   // ── THE ROUND-12 GESTURES THEMSELVES (2026-08-27) ──
   // Every one of these passed the old contract. "Camera-recordable" was the acceptance ceiling
   // when it was only the floor: three interchangeable gestures, no revelation between them.
-  if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ character_revelation, ...r }) => r)(c) : c);
+  if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ behavior, ...r }) => r)(c) : c);
   if (mutate === 'readVoiceDrops') cp = cp.map((c,i) => i === 0
     ? { ...c, behavior:'his voice drops to a murmur as he intones the final clause', character_revelation:'he speaks more quietly at the end' } : c);
   if (mutate === 'readBreathHitch') cp = cp.map((c,i) => i === 0
@@ -411,13 +427,18 @@ const t = (n, c, d) => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fa
 const count = (h, n) => (String(h).split(n).length - 1);
 
 // ══════════════════════════════════════════════════════════════════════════════════════════
-// ONE BROWSER FOR THE WHOLE SUITE (2026-08-27)
+// ONE BROWSER, ONE CONTEXT PER CASE (2026-08-27)
 //
-// run() used to launch a fresh Chromium per case — 23 launches, each closed only on the happy
-// path, so a throw or a timeout stranded the whole process tree. That is the memory defect. One
-// browser is launched here; every case gets its own CONTEXT (the isolation the per-case launch
-// was really buying) and closes it in `finally`, including on a failure or a timeout, so nothing
-// is left behind. Cases stay SERIAL: the product writes to one dev server and one console stream.
+// This suite used to LAUNCH A CHROMIUM PER CASE — around sixty per run — which is where its
+// memory and most of its twelve minutes went. The fix is not to share a page: a page carries
+// window state, storage, globals and the product's own module-level caches, and reusing one
+// would trade a resource problem for silent cross-case contamination, which in a suite whose
+// whole job is proving delivery would be much worse.
+//
+// A CONTEXT is the isolation boundary Playwright actually guarantees — separate storage,
+// cookies, and a fresh page with fresh globals — at a fraction of a browser's cost. Each case
+// gets its own and closes it in `finally`, including on a failure or a timeout, so nothing is
+// left behind. Cases stay SERIAL: the product writes to one dev server and one console stream.
 // ══════════════════════════════════════════════════════════════════════════════════════════
 const browser = await chromium.launch({ headless: true });
 let _closing = false;
@@ -428,7 +449,7 @@ process.on('uncaughtException', async (e) => { await closeBrowser(); console.err
 process.on('unhandledRejection', async (e) => { await closeBrowser(); console.error(e); process.exit(1); });
 process.on('exit', () => { try { browser.close(); } catch (_) {} });
 
-async function run({ hot, mutate, solo, duo }) {
+async function run({ hot, mutate, solo, duo, pollute }) {
   const ctx = await browser.newContext();
   try {
   const page = await ctx.newPage();
@@ -474,8 +495,14 @@ async function run({ hot, mutate, solo, duo }) {
 
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:120000 });
-  const res = await page.evaluate(async ({ solo, duo }) => {
+  const res = await page.evaluate(async ({ solo, duo, pollute }) => {
     const s = window.state;
+    // ISOLATION SELF-CONTROL. Measured FIRST, before anything this case does: if a previous
+    // case's pollution were visible here, context isolation is not doing its job and every
+    // other result in this suite is suspect.
+    let sentinelSeen = false;
+    try { sentinelSeen = (typeof window.__ISOLATION_SENTINEL !== 'undefined')
+                      || !!window.localStorage.getItem('__isolation_sentinel'); } catch (_) {}
     // observer: capture what the audit sees, to compare against the dispatched bytes
     const def = (window.STARTER_STORIES||[]).find(d=>d&&d.id==='starter_first_sacrifice');
     s.picks = s.picks||{};
@@ -519,8 +546,14 @@ async function run({ hot, mutate, solo, duo }) {
       staged: s._scene1StagedCharacters || null,
       skeleton: s.sceneSkeleton ? { cp: s.sceneSkeleton.character_plus, ep: s.sceneSkeleton.environment_plus, fu: s.sceneSkeleton.fusion, pof: s.sceneSkeleton.pc_opening_fusion } : null,
       auditSystem: (s._lastScene1AuditPrompt && s._lastScene1AuditPrompt.system) || null,
-      fingerprint: window.__scene1RequestFingerprint || null };
-  }, { solo: !!solo, duo: !!duo });
+      fingerprint: window.__scene1RequestFingerprint || null,
+      sentinelSeen: sentinelSeen,
+      polluted: (function () {
+        if (!pollute) return false;
+        try { window.__ISOLATION_SENTINEL = 1; window.localStorage.setItem('__isolation_sentinel', '1');
+              window.state.__isolationJunk = 'this must not survive'; return true; } catch (_) { return false; }
+      })() };
+  }, { solo: !!solo, duo: !!duo, pollute: !!pollute });
   return { planner, author, escaped, unknown, logs, ...res };
   } finally { await ctx.close().catch(() => {}); }
 }
@@ -623,12 +656,36 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
       sys.includes(c.behavior) && sys.includes(c.psychological_read)),
     JSON.stringify(cp.filter(c => c.psychological_read && !(sys.includes(c.behavior) && sys.includes(c.psychological_read)))
       .map(c => c.character)));
-  t(`${label} 11e2: behavior and revelation land on ONE line, as one obligation`,
+  // ── THE THREE COMPONENTS, RENDERED APART (2026-08-27) ──
+  // They used to share one line, which is a single overloaded "write a C+ beat" instruction and
+  // produces "They did X. I realised this meant Y." Each now has its own standing.
+  t(`${label} 11e2: SOURCE TRUTH / VISIBLE ACTION / PC INTERPRETATION are separate, once each`,
     cp.filter(c => c.psychological_read).length > 0
       && cp.filter(c => c.psychological_read).every(c =>
-        sys.split('\n').some(l => l.includes(c.behavior) && l.includes(c.psychological_read)
-                                   && /; behavior: /.test(l) && /; PC reading: /.test(l))),
-    JSON.stringify(sys.split('\n').filter(l => /; behavior: /.test(l)).slice(0, 3)));
+           count(sys, `SOURCE TRUTH — DO NOT STATE: ${c.psychological_read}`) === 1
+           && count(sys, `VISIBLE ACTION — MUST OCCUR: ${c.behavior}`) === 1)
+      && count(sys, 'PC INTERPRETATION — MUST GOVERN THE NARRATION:')
+           === cp.filter(c => c.psychological_read).length,
+    JSON.stringify(sys.split('\n').filter(l => /SOURCE TRUTH|VISIBLE ACTION|PC INTERPRETATION/.test(l)).slice(0, 4)));
+  t(`${label} 11e3: the SOURCE TRUTH is the backend record, and is marked never-to-state`,
+    cp.filter(c => c.facet_source === 'trusted-record').length > 0
+      && cp.filter(c => c.facet_source === 'trusted-record').every(c =>
+           sys.includes(`SOURCE TRUTH — DO NOT STATE: ${c.facet_truth}`)),
+    JSON.stringify(cp.map(c => [c.character, c.facet_source])));
+  t(`${label} 11e4: the RECONSTRUCTION instruction reaches this author path`,
+    /RECONSTRUCT each of these into ONE OR TWO natural sentences of finished prose/.test(sys)
+      && /The SOURCE TRUTH governs accuracy and must remain UNSTATED/.test(sys)
+      && /DO NOT write the action and then append an explanatory diagnosis of it/.test(sys)
+      && /They did X\. I realised this meant Y\./.test(sys),
+    (sys.match(/RECONSTRUCT each of these[^\n]{0,90}/) || ['(missing)'])[0]);
+  t(`${label} 11e5: …offering several realisation shapes, not one template`,
+    count(sys, 'the action, then one brief focalised inference') === 1
+      && count(sys, 'the interpretation folded into how the action is described') === 1
+      && count(sys, 'a consequence that makes her reading legible without naming it') === 1);
+  t(`${label} 11e6: the facet PORTFOLIO and condition list never reach the author`,
+    !/AUTHORED PSYCHOLOGY/.test(sys) && !/applicability conditions/.test(sys)
+      && !/pressure_id:/.test(sys) && !/facet_id:/.test(sys),
+    (sys.match(/.{0,60}(AUTHORED PSYCHOLOGY|applicability conditions|pressure_id:).{0,60}/) || ['(none, correct)'])[0]);
   t(`${label} 11f: every C+ recipient renders on a first-mention-tagged line`,
     cp.length > 0 && cp.every(c => new RegExp(`•\\s*${c.character.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\s*\\(first mention`).test(sys)),
     'a recipient rendered without the first-mention tag');
@@ -897,14 +954,13 @@ console.log('');
   const declared = await (async () => {
     const c2 = await browser.newContext();
     try {
-    const p2 = await c2.newPage();
-    p2.setDefaultTimeout(180000); p2.setDefaultNavigationTimeout(180000);
-    await p2.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: mk(false) }));
-    await p2.route('**/api/**', r => /\/api\/(config|geo)\b/.test(r.request().url()) ? r.continue() : r.abort());
-    await p2.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
-    await p2.waitForFunction(() => window._openingSpineDeclaredFields, { timeout:180000 });
-    const d = await p2.evaluate(t2 => window._openingSpineDeclaredFields(t2), pu);
-    return d;
+      const p2 = await c2.newPage();
+      p2.setDefaultTimeout(180000); p2.setDefaultNavigationTimeout(180000);
+      await p2.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: mk(false) }));
+      await p2.route('**/api/**', r => /\/api\/(config|geo)\b/.test(r.request().url()) ? r.continue() : r.abort());
+      await p2.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+      await p2.waitForFunction(() => window._openingSpineDeclaredFields, { timeout:180000 });
+      return await p2.evaluate(t2 => window._openingSpineDeclaredFields(t2), pu);
     } finally { await c2.close().catch(() => {}); }
   })();
   const MUST_RECONCILE = ['opening_setting', 'environment_elements', 'staged_characters',
@@ -925,6 +981,21 @@ console.log('');
 }
 console.log('');
 
+// ── 8x · HARNESS SELF-CONTROL: isolation, not just economy ──
+// The refactor to one browser is only safe if a context is a real boundary. This pollutes one
+// case on purpose and proves the next one cannot see it — otherwise every green in this suite
+// could be a leak from the case before.
+{
+  const P1 = await run({ hot: false, mutate: null, pollute: true });
+  const P2 = await run({ hot: false, mutate: null });
+  t('8x: the polluting case actually polluted (the control is not vacuous)', P1.polluted === true,
+    JSON.stringify({ polluted: P1.polluted }));
+  t('8x: …and the NEXT case sees none of it — globals, storage or state',
+    P1.sentinelSeen === false && P2.sentinelSeen === false,
+    JSON.stringify({ first: P1.sentinelSeen, next: P2.sentinelSeen }));
+}
+console.log('');
+
 // ── 9 · planner faults must surface, never continue silently to Grok ──
 console.log(` 9 · PLANNER FAULTS SURFACE (no silent skeleton-less continuation)`);
 for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
@@ -932,7 +1003,7 @@ for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
                       'cpNoMode', 'cpBadMode', 'cpNoFacet', 'cpBadFacet',
                       // the causal chain: a pressure that is real, evidenced, and a beat that
                       // brings no prop of its own
-                      'cpNoReaction', 'cpBadEvidence', 'cpBadPressureId', 'cpProp',
+                      'cpBadEvidence', 'cpBadPressureId', 'cpProp', 'cpNoLensOp', 'cpBadObject',
                       'fmfalse', 'fmmissing', 'fmstring', 'emptyangle', 'placeholderang', 'thinangle',
                       'noep', 'emptyeptarget', 'fusionmismatch', 'fusionempty', 'unparseable',
                       // revised planning contract
@@ -949,8 +1020,7 @@ for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
                       'aliasNarrator', 'aliasProtag',
                       'epSchemaEcho', 'epCategoryEcho', 'pofSchemaEcho', 'angleSecondAction',
                       // C+ must REVEAL, not merely be recordable
-                      'readMissing', 'readVoiceDrops', 'readBreathHitch', 'readFingersFlex',
-                      'readIsAction', 'readShared',
+                      'readMissing',
                       // identical duplicates now COLLAPSE (tested below); a DIFFERENCE still aborts
                       'dupSkeletonDiff', 'stagedBothDiff',
                       // reconciler must not rescue semantics, and must not swallow invented fields
@@ -1233,18 +1303,80 @@ for (const [mutate, label, needle] of [
   ['epCategoryEcho',   'E+ beat built out of the category words',            'returns the schema instead of content'],
   ['pofSchemaEcho',    'the opening beat returned as the bracket text',      'returns the schema instead of content'],
   ['angleSecondAction','the angle staging a second action elsewhere',        'stages a SECOND action'],
-  ['readMissing',      'a behavior with no psychological_read at all',       'no psychological_read'],
-  ['readVoiceDrops',   '"his voice drops" read as "he speaks more quietly"', 'psychological_read'],
-  ['readBreathHitch',  '"her breath hitches" read as "she is nervous"',      'generic STATE'],
-  ['readFingersFlex',  '"his fingers flex" read as "a quiet tension"',       'psychological_read'],
-  ['readIsAction',     'a read that stages another action',                  'psychological_read'],
-  ['readShared',       'one reading handed to every character',              'the SAME reading'],
+  ['readMissing',      'a behavior removed entirely',                        'the angle is empty'],
 ]) {
   const R = await run({ hot: false, mutate });
   const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');
   t(`   "${mutate}" — ${label}`,
     R.author.length === 0 && /SCENE1:ABORT/.test(R.logs.join(' ')) && invalid.includes(needle),
     `authorCalls=${R.author.length} | ${invalid.slice(0, 240) || '(no INVALID log)'}`);
+}
+console.log('');
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// A MODEL-WRITTEN READ IS NO LONGER REJECTED — IT IS DISCARDED (2026-08-27)
+//
+// These five gestures used to abort the scene: a revelation that merely restated its own
+// behaviour was a fault. It cannot be one any more, because for a person with an authored facet
+// the planner is not asked for psychology at all, and anything it sends is overwritten by the
+// record before delivery. The property that MUST hold is therefore no longer "the plan is
+// refused" but "those words never reach the writer" — and that is what is asserted here.
+// The guard itself is not retired: it still runs on the one population that has no record to
+// overwrite with, which the unseeded case below proves.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log(' READS THE MODEL WRITES ANYWAY — DISCARDED, NOT OBEYED');
+for (const [mutate, label, junk] of [
+  ['readVoiceDrops',   '"his voice drops" read as "he speaks more quietly"', 'he speaks more quietly at the end'],
+  ['readBreathHitch',  '"her breath hitches" read as "she is nervous"',      'she is nervous about what is coming'],
+  ['readFingersFlex',  '"his fingers flex" read as "a quiet tension"',       'a quiet tension runs through him'],
+  ['readIsAction',     'a read that stages another action',                  'she presses her palm flat against the table'],
+  ['readShared',       'one reading handed to every character',              'have already decided who to blame'],
+]) {
+  const R = await run({ hot: false, mutate });
+  const sys = (R.author[0] || {}).system || '';
+  const usr = (R.author[0] || {}).user || '';
+  const cp = ((R.skeleton || {}).cp) || [];
+  t(`   "${mutate}" — ${label}: the plan still ships`,
+    R.author.length === 1 && !/SCENE1:ABORT/.test(R.logs.join(' ')),
+    `authorCalls=${R.author.length} | ${R.logs.filter(l=>/INVALID/.test(l)).slice(0,1).join('')}`);
+  t(`   "${mutate}" — …and the model's words reach NOBODY`,
+    !(sys + '\n' + usr).includes(junk) && !cp.some(c => String(c.psychological_read || '').includes(junk)
+      || String(c.character_revelation || '').includes(junk)),
+    `inPrompt=${(sys + usr).includes(junk)} inSkeleton=${JSON.stringify(cp.map(c => (c.psychological_read||'').slice(0,40)))}`);
+  // The PC's own entry is owned by pc_opening_fusion and cites no facet — she is not a recipient
+  // of her own reading. Only the ORDINARY recipients draw on the record.
+  const recips = cp.filter(c => c.fulfilled_by !== 'pc_opening_fusion');
+  t(`   "${mutate}" — …because the RECORD's truth is what travels`,
+    recips.length > 0 && recips.every(c => c.facet_source === 'trusted-record'
+      && String(c.psychological_read || '').trim().length > 0),
+    JSON.stringify(cp.map(c => [c.character, c.fulfilled_by || null, c.facet_source])));
+  // ONLY THE PSYCHOLOGY IS DISCARDED. The grounded act and the chosen lens ARE the planner's real
+  // output — a discard that swallowed them would be a silent amputation, not a correction. Each
+  // recipient's block must carry its own three components, once each, beside the record's truth.
+  const blockOf = n => {
+    const L = sys.split('\n');
+    const i = L.findIndex(l => /^\s*•\s/.test(l) && l.includes(n));
+    return i < 0 ? '' : L.slice(i, i + 6).join('\n');
+  };
+  const once = (hay, needle) => !!needle && (hay.split(needle).length - 1) === 1;
+  t(`   "${mutate}" — …and the ACT and the LENS still reach Grok, once each, beside that truth`,
+    recips.length > 0 && recips.every(c => {
+      const b = blockOf(c.character);
+      const act = 'VISIBLE ACTION — MUST OCCUR: ' + String(c.behavior || c.angle || '');
+      return once(b, 'SOURCE TRUTH — DO NOT STATE: ' + String(c.facet_truth || c.psychological_read || ''))
+          && once(b, act) && once(sys, act)
+          && once(b, 'PC INTERPRETATION — MUST GOVERN THE NARRATION: ' + String(c.pc_lens_operation || ''));
+    }),
+    JSON.stringify(recips.map(c => [c.character, (blockOf(c.character).match(/(SOURCE TRUTH|VISIBLE ACTION|PC INTERPRETATION)/g) || [])])));
+}
+// THE GUARD IS NOT GONE. It has one live population: a candidate with no authored psychology,
+// where the model's sentence is all there is and therefore has to be judged.
+{
+  const R = await run({ hot: false, duo: true, mutate: 'readVoiceDrops' });
+  const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');
+  t('   UNSEEDED: with no record to overwrite it, a restating read is STILL rejected',
+    R.author.length === 0 && /SCENE1:ABORT/.test(R.logs.join(' ')),
+    `authorCalls=${R.author.length} | ${invalid.slice(0, 200) || '(no INVALID log)'}`);
 }
 console.log('');
 
@@ -1339,12 +1471,20 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
   t(`${label} U8c: no prefilled SENTINEL survives into state`,
     (R.staged || []).every(c => !/^FROM_(PC_OPENING_FUSION|CHARACTER_PLUS)$/.test(String(c.anchor_beat || '').trim())),
     JSON.stringify((R.staged||[]).map(c => c.anchor_beat)));
+  // ONE ASSIGNMENT IS NO LONGER ONE LINE (2026-08-27). It is a bullet naming the person followed
+  // by SOURCE TRUTH / VISIBLE ACTION / PC INTERPRETATION on their own lines, so "exactly one
+  // independent C+ line" is counted as exactly one bullet that OWNS an action block.
+  const cpBlocks = n => {
+    const L = sys.split('\n'); let seen = 0;
+    L.forEach((l, i) => {
+      if (!/^\s*•\s/.test(l) || !l.includes(n)) return;
+      if (/VISIBLE ACTION — MUST OCCUR: \S/.test(L.slice(i + 1, i + 6).join('\n'))) seen++;
+    });
+    return seen;
+  };
   t(`${label} U9: every NON-PC staged character still gets exactly one independent C+ line`,
-    nonPc.length > 0 && nonPc.every(n => {
-      const lines = sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && /; behavior: /.test(l));
-      return lines.length === 1;
-    }),
-    JSON.stringify(nonPc.map(n => [n, sys.split('\n').filter(l => /^\s*•\s/.test(l) && l.includes(n) && / — read: /.test(l)).length])));
+    nonPc.length > 0 && nonPc.every(n => cpBlocks(n) === 1),
+    JSON.stringify(nonPc.map(n => [n, cpBlocks(n)])));
   t(`${label} U9b: …and no non-PC angle is a duplicate of the opening beat`,
     !!beat && (sk.cp || []).filter(c => c.character !== pcLabel)
       .every(c => String(c.angle).trim() !== String(beat).trim()));
