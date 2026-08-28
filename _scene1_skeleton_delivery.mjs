@@ -468,6 +468,33 @@ const count = (h, n) => (String(h).split(n).length - 1);
 // gets its own and closes it in `finally`, including on a failure or a timeout, so nothing is
 // left behind. Cases stay SERIAL: the product writes to one dev server and one console stream.
 // ══════════════════════════════════════════════════════════════════════════════════════════
+// ── INFRASTRUCTURE PREFLIGHT (2026-08-28) ──
+// A hung `vercel dev` still LISTENS on :3000 while answering nothing, and every case in this
+// suite then spends its full page timeout before failing. One run burned 180s and reported a
+// timeout that looked like a code regression; it was an eleven-hour-old server process. Ask the
+// server one question BEFORE launching Chromium, and abort with an infrastructure message rather
+// than browsers against a dead port.
+async function preflight(url = 'http://localhost:3000/') {
+  const started = Date.now();
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 8000);
+    const res = await fetch(url, { signal: ctl.signal });
+    clearTimeout(timer);
+    const body = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!/<\s*script|<\s*html/i.test(body)) throw new Error('response is not the app shell');
+    console.log(`  ⚙ preflight ok — ${url} responded ${res.status} in ${Date.now() - started}ms\n`);
+  } catch (e) {
+    console.error(`\n  ✗ INFRASTRUCTURE: ${url} is not serving the app (${e.message}).`);
+    console.error('    Start it with:  npx vercel dev --listen 3000');
+    console.error('    If it is already "running", it may be hung while still holding the port —');
+    console.error('    check with:  lsof -nP -iTCP:3000   and kill that PID directly.\n');
+    process.exit(2);
+  }
+}
+await preflight();
+
 const browser = await chromium.launch({ headless: true });
 let _closing = false;
 const closeBrowser = async () => { if (_closing) return; _closing = true; try { await browser.close(); } catch (_) {} };

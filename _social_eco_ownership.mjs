@@ -18,6 +18,33 @@ const t = (n, c, d) => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fa
 
 console.log(`\n${'═'.repeat(88)}\nSOCIAL ECOSYSTEM — one story's circle may never become another's\n${'═'.repeat(88)}\n`);
 
+// ── INFRASTRUCTURE PREFLIGHT (2026-08-28) ──
+// A hung `vercel dev` still LISTENS on :3000 while answering nothing, and every case in this
+// suite then spends its full page timeout before failing. One run burned 180s and reported a
+// timeout that looked like a code regression; it was an eleven-hour-old server process. Ask the
+// server one question BEFORE launching Chromium, and abort with an infrastructure message rather
+// than browsers against a dead port.
+async function preflight(url = 'http://localhost:3000/') {
+  const started = Date.now();
+  try {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 8000);
+    const res = await fetch(url, { signal: ctl.signal });
+    clearTimeout(timer);
+    const body = await res.text();
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!/<\s*script|<\s*html/i.test(body)) throw new Error('response is not the app shell');
+    console.log(`  ⚙ preflight ok — ${url} responded ${res.status} in ${Date.now() - started}ms\n`);
+  } catch (e) {
+    console.error(`\n  ✗ INFRASTRUCTURE: ${url} is not serving the app (${e.message}).`);
+    console.error('    Start it with:  npx vercel dev --listen 3000');
+    console.error('    If it is already "running", it may be hung while still holding the port —');
+    console.error('    check with:  lsof -nP -iTCP:3000   and kill that PID directly.\n');
+    process.exit(2);
+  }
+}
+await preflight();
+
 const browser = await chromium.launch({ headless: true });
 let _closing = false;
 const closeBrowser = async () => { if (_closing) return; _closing = true; try { await browser.close(); } catch (_) {} };
@@ -134,9 +161,11 @@ try {
     // as a fallback. Real circles contain both: "a colleague" maps, "a member of his staff the
     // PC befriends" does not.
     out.slotKinds = slots1.map(x => x.slotKind);
+    // Three legitimate states now: a social kind, a KINSHIP route (kind null, kinshipSlot set),
+    // or explicitly unresolved. What must never happen is a known kind chosen as a fallback.
     out.slotKindsAreNotEdgeTypes = slots1.every(x =>
-      x.slotKind === null ? x.slotKindUnresolved === true
-                          : window._relSocialSlotKinds().indexOf(x.slotKind) !== -1);
+      x.slotKind ? window._relSocialSlotKinds().indexOf(x.slotKind) !== -1
+                 : (!!x.kinshipSlot || x.slotKindUnresolved === true));
     out.unresolvedKeepPhrase = slots1.filter(x => x.slotKind === null)
       .every(x => typeof x.rolePhrase === 'string' && x.rolePhrase.length > 0);
     out.notMaterialisedOnResolve = slots1.every(x => x.entityId === null);
@@ -225,7 +254,288 @@ try {
     out.orderFwd = orderRun('story-ORD-A', false);
     out.orderRev = orderRun('story-ORD-B', true);
 
+    // ══════════════════════════════════════════════════════════════════════════════
+    // THE VOCABULARY MUST COVER THE ROLES THE PRODUCT ACTUALLY DECLARES
+    // Accepting "unresolved" without a floor is how a 38%-coverage mapper passed green: fantasy
+    // 1/7, historical 1/7, dystopia 1/6. Fail-closed is only a virtue when the closed cases are
+    // rare and named — otherwise it is just a system that cannot identify its own cast.
+    // ══════════════════════════════════════════════════════════════════════════════
+    // ROUTING IS NOT MATERIALISING. "65/65 routed" was true and still hid a phrase that routed
+    // to a kinship slot the ledger does not have, so it resolved cleanly and then produced
+    // nobody. Every phrase is now driven ALL THE WAY to an entity id.
+    out.poolCoverage = {};
+    out.materialiseMatrix = {};
+    Object.keys(window._SOCIAL_ROLE_POOLS).forEach(k => {
+      const pool = window._SOCIAL_ROLE_POOLS[k];
+      out.poolCoverage[k] = { total: pool.length,
+        unrouted: pool.filter(x => !window._relRolePhraseRoute(x)) };
+      const failed = [];
+      pool.forEach((phrase, i) => {
+        Object.assign(s, base, { storyId: 'mx-' + k + '-' + i, _socialEcosystem: null,
+                                 _allyFunctionPick: null, _relationshipLedger: null });
+        // one synthetic slot carrying exactly this phrase, through the real resolution path
+        const route = window._relRolePhraseRoute(phrase);
+        const slug = phrase.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+        window._resolveSocialEcosystem(s);
+        window._socialEcoRecord(s).slots.push({
+          role: phrase, fnKey: 'LOYALIST', fn: { key:'LOYALIST', label:'', effect:'', moves:[] },
+          rolePhrase: phrase, provenance: 'social_slot',
+          kinshipSlot: route && route.route === 'kinship' ? route.slot : null,
+          slotKind: route && route.route === 'social' ? route.kind : null,
+          slotKindUnresolved: !route, slotOrd: 1, slotId: slug + '#1', entityId: null });
+        const id = window._materializeSocialSlot(slug + '#1');
+        const ent = id ? window._relLedger().entities[id] : null;
+        if (!id || !ent || !ent.authorProfile || !Array.isArray(ent.authorProfile.cPlusFacets)) {
+          failed.push(phrase + ' → ' + (id ? 'no authorProfile' : 'no entity'));
+        }
+      });
+      out.materialiseMatrix[k] = failed;
+    });
+    // kinship goes down the kinship path, never a social kind
+    out.kinshipRoute = window._relRolePhraseRoute('a sibling');
+    out.socialRoute  = window._relRolePhraseRoute('a close friend');
+    out.bondSisterIsNotSibling = window._relRolePhraseRoute('a bond-sister / bondmate');
+
+    // ── A CACHED ENTITY ID THAT THE LEDGER NO LONGER CONTAINS ──
+    // The ecosystem and the ledger have different lifetimes: a restore can bring one back and
+    // reject the other. A cached id must be verified, not trusted.
+    const danglingSlot = window._resolveSocialEcosystem(s).filter(x => x.slotKind)[0];
+    const realId = window._materializeSocialSlot(danglingSlot.slotId);
+    delete window._relLedger().entities[realId];          // ledger loses the person
+    out.danglingRecreated = window._materializeSocialSlot(danglingSlot.slotId);
+    out.danglingSameId = out.danglingRecreated === realId;
+    out.danglingInLedger = !!(window._relLedger().entities[out.danglingRecreated]);
+    // a cached id pointing at an entity belonging to a DIFFERENT slot fails closed
+    danglingSlot.entityId = 'role:pc:social:some_other_slot_1';
+    window._relLedger().entities['role:pc:social:some_other_slot_1'] =
+      { id:'role:pc:social:some_other_slot_1', kind:'social_slot', slotId:'some_other_slot#1', label:'x', aliases:[] };
+    out.mismatchRefused = window._materializeSocialSlot(danglingSlot.slotId);
+
+    // ── A LIVE SUPERSESSION TARGET IS NOT AUTOMATICALLY THE RIGHT ONE ──
+    // A corrupted supersededBy can point at any live person. Following it blindly hands this
+    // slot somebody else's identity AND their portfolio, so the target must be able to show it
+    // came from this source.
+    Object.assign(s, base, { storyId: 'mt-1', _socialEcosystem: null, _allyFunctionPick: null,
+                             _relationshipLedger: null });
+    const mtSlot = window._resolveSocialEcosystem(s).filter(x => x.slotKind)[0];
+    const mtReal = window._materializeSocialSlot(mtSlot.slotId);
+    const ML = window._relLedger();
+    ML.entities['ent:unrelated_person'] =
+      { id: 'ent:unrelated_person', kind: 'named', label: 'Someone Else', aliases: ['someone else'] };
+    ML.entities[mtReal].supersededBy = 'ent:unrelated_person';    // corrupted pointer
+    out.mtCachedBefore = mtSlot.entityId;
+    out.mtResult = window._materializeSocialSlot(mtSlot.slotId);
+    out.mtCachedAfter = mtSlot.entityId;
+    // …and a target that DOES claim the source is adopted
+    ML.entities['ent:legit_named'] = { id: 'ent:legit_named', kind: 'named', label: 'Legit',
+      aliases: ['legit'], wasRole: [{ roleId: mtReal }] };
+    ML.entities[mtReal].supersededBy = 'ent:legit_named';
+    out.mtLegit = window._materializeSocialSlot(mtSlot.slotId);
+
+    // ── RENAMING IS FOR SLOTS ONLY, AND KINSHIP RECONCILES ──
+    out.renameAnchorRefused = window._relNameSlot('pc', 'Impostor');
+    Object.assign(s, base, { storyId: 'kin-1', _socialEcosystem: null, _allyFunctionPick: null,
+                             _relationshipLedger: null });
+    const kinId = window._relRoleEntity('pc', 'father', { label: 'your father' });
+    out.kinBefore = kinId;
+    out.kinNamed = window._relNameSlot(kinId, 'Lord Maren', { sceneUid: 'kin-scene' });
+    const KL = window._relLedger();
+    out.kinSuperseded = !!(KL.entities[kinId] && KL.entities[kinId].supersededBy);
+    out.kinNamedIsDifferentEntity = out.kinNamed && out.kinNamed !== kinId;
+    out.kinNamedLabel = out.kinNamed ? (KL.entities[out.kinNamed] || {}).label : null;
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // THE PORTFOLIO MUST SURVIVE THE IDENTITY LIFECYCLE
+    // Creating the compartment is not preserving it. A kinship placeholder can hold facets
+    // before anyone names them; reconciliation used to transfer aliases and edges and drop the
+    // portfolio on the floor — at exactly the moment the person became worth naming.
+    // ══════════════════════════════════════════════════════════════════════════════
+    Object.assign(s, base, { storyId: 'pf-1', _socialEcosystem: null, _allyFunctionPick: null,
+                             _relationshipLedger: null });
+    const fatherId = window._relRoleEntity('pc', 'father', { label: 'your father' });
+    window._relEnsureAuthorProfile(window._relLedger().entities[fatherId], 'kinship_slot', 'PROTECTOR');
+    window._relLedger().entities[fatherId].authorProfile.cPlusFacets = [
+      { facet_id: 'f_pride',   category: 'value',      canonical_truth: 'A' },
+      { facet_id: 'f_absence', category: 'history',    canonical_truth: 'B' },
+      { facet_id: 'f_debt',    category: 'insecurity', canonical_truth: 'C' }
+    ];
+    out.pfBefore = JSON.parse(JSON.stringify(window._relLedger().entities[fatherId].authorProfile));
+    out.pfNamed = window._relNameSlot(fatherId, 'Lord Maren', { sceneUid: 'pf-scene' });
+    const PL = window._relLedger();
+    out.pfAfter = out.pfNamed ? JSON.parse(JSON.stringify((PL.entities[out.pfNamed] || {}).authorProfile || null)) : null;
+    // …and across a save/restore of the ledger
+    const savedLedger = JSON.parse(JSON.stringify(PL));
+    s._relationshipLedger = savedLedger;
+    out.pfAfterRestore = JSON.parse(JSON.stringify((window._relLedger().entities[out.pfNamed] || {}).authorProfile || null));
+
+    // ── THE COLLISION POLICY, ON A TARGET THAT ACTUALLY OWNS THINGS ──
+    // The first version of this test reconciled onto an EMPTY named entity, so it proved the
+    // transfer and nothing about the stated conflict rules. Here the named person already has a
+    // facet whose id collides but whose truth differs, a unique facet of their own, and their
+    // own provenance and narrative function.
+    Object.assign(s, base, { storyId: 'pf-2', _socialEcosystem: null, _relationshipLedger: null });
+    const roleB = window._relRoleEntity('pc', 'mother', { label: 'your mother' });
+    window._relEnsureAuthorProfile(window._relLedger().entities[roleB], 'kinship_slot', 'BRAKE');
+    window._relLedger().entities[roleB].authorProfile.cPlusFacets = [
+      { facet_id: 'shared_id', canonical_truth: 'ROLE VERSION' },
+      { facet_id: 'role_only', canonical_truth: 'ROLE UNIQUE' }
+    ];
+    const namedB = window._relEntityForName('Isolde Vane', { kind: 'named', create: true });
+    window._relEnsureAuthorProfile(window._relLedger().entities[namedB], 'generated_cast', 'TRUTH_TELLER');
+    window._relLedger().entities[namedB].authorProfile.cPlusFacets = [
+      { facet_id: 'shared_id', canonical_truth: 'NAMED VERSION' },
+      { facet_id: 'named_only', canonical_truth: 'NAMED UNIQUE' }
+    ];
+    out.collideResult = window._relNameSlot(roleB, 'Isolde Vane', { sceneUid: 'pf2-scene' });
+    const CB = window._relLedger();
+    out.collideProfile = out.collideResult
+      ? JSON.parse(JSON.stringify(CB.entities[out.collideResult].authorProfile)) : null;
+    // the superseded role must keep its OWN copy — no shared mutable objects
+    out.collideRoleFacets = JSON.parse(JSON.stringify((CB.entities[roleB].authorProfile || {}).cPlusFacets || []));
+    if (out.collideResult) {
+      const live = CB.entities[out.collideResult].authorProfile.cPlusFacets
+        .filter(f => f.facet_id === 'role_only')[0];
+      if (live) live.canonical_truth = 'MUTATED AFTER TRANSFER';
+    }
+    out.collideRoleAfterMutation = JSON.parse(JSON.stringify(
+      (CB.entities[roleB].authorProfile || {}).cPlusFacets || []));
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // BARE-NAME RESOLUTION: ONE RULE, EVERY CALLER, CANON INCLUDED
+    // Excluding canonical entities from name lookup protected against hijacking and created a
+    // worse bug — an unnamed role later identified as a known canon character could not SEE
+    // them, and minted a duplicate. Uniqueness is the protection, not invisibility.
+    // ══════════════════════════════════════════════════════════════════════════════
+    Object.assign(s, base, { storyId: 'nm-1', _relationshipLedger: null });
+    const canonPhoebe = window._relEntityForName('Phoebe', { kind: 'named', create: true, canonicalId: 'ff:7' });
+    window._relEnsureAuthorProfile(window._relLedger().entities[canonPhoebe], 'ff_cast', 'LOYALIST');
+    window._relLedger().entities[canonPhoebe].authorProfile.cPlusFacets =
+      [{ facet_id: 'ph_1', canonical_truth: 'PHOEBE TRUTH' }];
+    out.uniqueCanonByName = window._relMatchByName('Phoebe', {});
+    // a kinship placeholder reconciled to that unique canon character must REUSE her
+    const sisterRole = window._relRoleEntity('pc', 'sister', { label: 'your sister' });
+    out.reconToCanon = window._relNameSlot(sisterRole, 'Phoebe', { sceneUid: 'nm-scene' });
+    out.reconReusedCanon = out.reconToCanon === canonPhoebe;
+    out.reconKeptPortfolio = out.reconToCanon
+      ? ((window._relLedger().entities[out.reconToCanon].authorProfile || {}).cPlusFacets || [])
+          .some(f => f.facet_id === 'ph_1') : false;
+    out.entityCountAfterRecon = Object.keys(window._relLedger().entities).length;
+
+    // generic Robin + canonical Robin → bare name resolves to NOTHING
+    Object.assign(s, base, { storyId: 'nm-2', _relationshipLedger: null });
+    window._relEntityForName('Robin', { kind: 'named', create: true });                       // generic
+    window._relEntityForName('Robin', { kind: 'named', create: true, canonicalId: 'ff:9' });  // canon
+    out.twoRobins = window._relMatchByName('Robin', {});
+    out.twoRobinsResolve = window._relEntityForName('Robin', { kind: 'named', create: false });
+    // …and prose-driven relationship extraction must assert NOTHING under that ambiguity
+    out.edgesBefore = Object.keys(window._relLedger().edges).length;
+    out.ingest = (typeof window._relIngestRelations === 'function')
+      ? window._relIngestRelations([{ from: 'Robin', to: 'Ava', relationship: 'ally_of',
+                                      basis: 'asserted_on_page', quote: 'Robin is my ally, said Ava.' }],
+                                   { sceneUid: 'nm2-scene', prose: 'Robin is my ally, said Ava.' })
+      : 'NO INGEST FN';
+    out.edgesAfter = Object.keys(window._relLedger().edges).length;
+
+    // ── AMBIGUITY MUST FAIL CLOSED, NOT PICK THE FIRST MATCH ──
+    Object.assign(s, base, { storyId: 'amb-1', _socialEcosystem: null, _relationshipLedger: null });
+    const a1 = window._relEntityForName('Ash', { kind: 'named', create: true });
+    window._relLedger().entities['ent:ash_two'] =
+      { id: 'ent:ash_two', kind: 'named', label: 'Ash', aliases: ['ash'] };
+    out.ambFirst = a1;
+    out.ambNow = window._relEntityForName('Ash', { kind: 'named', create: true });  // two live matches
+    out.ambNoCreate = window._relEntityForName('Nobody Here At All', { create: false });
+    out.ambDefaultNoCreate = window._relEntityForName('Also Nobody At All', {});     // {} must NOT mint
+
+    // ══════════════════════════════════════════════════════════════════════════════
+    // FAMOUS FATE — a SEPARATE population from the 65 role-pool phrases
+    // Its members are named canon characters, not role phrases; the matrix above says nothing
+    // about them and must not be described as if it did.
+    // ══════════════════════════════════════════════════════════════════════════════
+    // PRODUCTION SHAPE: the real castShape has no id, castId or canonicalId. Fixtures that
+    // supply one test a data shape production does not have, which is how "cast id owns
+    // identity" was claimed while production was still keying on array position.
+    const ffRun = (castRecs, storyId) => {
+      const contract = { character: { canonicalName: 'Ava' },
+                         loveInterest: { canonicalName: 'Ben' }, cast: castRecs };
+      window._ffStampCastIds(contract);          // exactly what the contract boundary does
+      Object.assign(s, base, { storyId, _socialEcosystem: null, _allyFunctionPick: null,
+                               _relationshipLedger: null, fateMode: 'famous_fate',
+                               ffContract: contract });
+      const slots = window._resolveSocialEcosystem(s);
+      const out2 = { slots: slots.map(x => ({ role: x.role, prov: x.provenance,
+                        hasRec: !!x.castRecord, unresolved: x.slotKindUnresolved })) };
+      out2.ids = slots.map(x => window._materializeSocialSlot(x.slotId));
+      out2.entities = out2.ids.map(id => id ? window._relLedger().entities[id] : null);
+      return out2;
+    };
+    out.ff = ffRun([{ name: 'Phoebe', canonicalName: 'Phoebe Buffay', aliases: ['Pheebs'] },
+                    { name: 'Joey',   canonicalName: 'Joey Tribbiani', aliases: [] }], 'ff-1');
+    // ── STAMPING, ON THE REAL SHAPE ──
+    out.stamp = (() => {
+      const contract = { cast: [{ name: 'Phoebe' }, { name: 'Joey' }, { name: 'Phoebe' }] };
+      window._ffStampCastIds(contract);
+      const ids = contract.cast.map(c => c._sbCastId);      // BACKEND-RESERVED field
+      // idempotent: running again must renumber nobody
+      window._ffStampCastIds(contract);
+      const again = contract.cast.map(c => c._sbCastId);
+      // save/restore, then REORDER the array — identity must ride the record, not the position
+      const restored = JSON.parse(JSON.stringify(contract));
+      restored.cast.reverse();
+      window._ffStampCastIds(restored);
+      const afterReorder = restored.cast.map(c => ({ name: c.name, castId: c._sbCastId }));
+      return { ids, again, stable: JSON.stringify(ids) === JSON.stringify(again),
+               unique: new Set(ids).size === ids.length,
+               afterReorder,
+               reorderKept: afterReorder.every(x =>
+                 contract.cast.some(c => c._sbCastId === x.castId && c.name === x.name)) };
+    })();
+    // ── OPAQUE IDS MUST NOT COLLAPSE ──
+    out.opaque = (() => {
+      Object.assign(s, base, { storyId: 'op-1', _relationshipLedger: null });
+      const ids = ['c-1', 'c_1', 'c 1'].map(cid =>
+        window._relEntityForName('Same Name', { kind: 'named', create: true, canonicalId: cid }));
+      return { ids, distinct: new Set(ids).size };
+    })();
+    // ── THE CAST ID OWNS IDENTITY: four cases ──
+    // (a) same cast id, DIFFERENT display name → the same person
+    out.ffRenamed = (() => {
+      const r1 = ffRun([{ name: 'Phoebe', canonicalName: 'Phoebe', aliases: [] }], 'ff-rn-1');
+      const first = r1.ids[0];
+      const stampedId = s.ffContract.cast[0]._sbCastId;
+      // same story, same ledger: the character is renamed in canon and asked for again
+      const again = window._relEntityForName('Regina Phalange', { kind: 'named', create: true, canonicalId: stampedId });
+      return { first, again, same: first === again,
+               label: (window._relLedger().entities[again] || {}).label };
+    })();
+    // (b) two DIFFERENT cast ids sharing a display name → two people, both selected
+    out.ffTwins = (() => {
+      const r = ffRun([{ name: 'Robin', canonicalName: 'Robin', aliases: [] },
+                       { name: 'Robin', canonicalName: 'Robin', aliases: [] }], 'ff-tw-1');
+      const ents = r.ids.map(id => id ? window._relLedger().entities[id] : null);
+      return { slots: r.slots.length, ids: r.ids, distinct: new Set(r.ids.filter(Boolean)).size,
+               portfolios: ents.map(e => e && e.authorProfile ? e.authorProfile.cPlusFacets.length : null),
+               shared: ents[0] && ents[1] ? ents[0].authorProfile === ents[1].authorProfile : null };
+    })();
+    // (c) a generic same-name entity already exists → the FF character must NOT hijack it
+    out.ffNoHijack = (() => {
+      Object.assign(s, base, { storyId: 'ff-hj-1', _socialEcosystem: null, _allyFunctionPick: null,
+                               _relationshipLedger: null, fateMode: 'famous_fate',
+                               ffContract: { character: { canonicalName: 'Ava' },
+                                             loveInterest: { canonicalName: 'Ben' },
+                                             cast: window._ffStampCastIds({ cast: [{ name: 'Robin', canonicalName: 'Robin', aliases: [] }] }).cast } });
+      const slots = window._resolveSocialEcosystem(s);
+      window._relSocialSlotEntity('pc', 'friend', { ord: 99, slotId: 'ledger_seed#99' });
+      const L2 = window._relLedger();
+      L2.entities['ent:robin'] = { id: 'ent:robin', kind: 'named', label: 'Robin', aliases: ['robin'] };
+      const before = JSON.parse(JSON.stringify(L2.entities['ent:robin']));
+      const id = slots.length ? window._materializeSocialSlot(slots[0].slotId) : null;
+      const after = window._relLedger().entities['ent:robin'];
+      return { id, hijacked: id === 'ent:robin',
+               genericUntouched: JSON.stringify(before) === JSON.stringify(after) };
+    })();
+
     // no storyId → materialise nothing
+    Object.assign(s, base, { storyId: 'x', fateMode: null, ffContract: null });
     s.storyId = '';
     out.matNoStory = window._materializeSocialSlot(first);
 
@@ -241,7 +551,7 @@ try {
 
   console.log(' 1 · OWNERSHIP');
   t('1a: a story resolves a circle and it is stamped with that story id',
-    !!R.aMembers && (R.aRecord || {}).storyId === 'story-A' && (R.aRecord || {}).v === 1,
+    !!R.aMembers && (R.aRecord || {}).storyId === 'story-A' && (R.aRecord || {}).v === 2,
     JSON.stringify({ members: R.aMembers, rec: R.aRecord && { v: R.aRecord.v, storyId: R.aRecord.storyId } }));
   t('1b: …and it still MEMOIZES within that story — role/function selection is unchanged',
     R.aAgain === R.aMembers, JSON.stringify([R.aMembers, R.aAgain]));
@@ -290,7 +600,7 @@ try {
   console.log('\n 8 · CANONICAL IDENTITY — SLOTS');
   t('8a: every slot carries a stable backend-owned id (kind#ordinal)',
     R.slotIds.length >= 2 && R.slotIds.every(x => /^[a-z_]+#\d+$/.test(x)), JSON.stringify(R.slotIds));
-  t('8b: every slot kind is a KNOWN vocabulary entry or explicitly UNRESOLVED — never a fallback',
+  t('8b: every slot is a known social kind, a kinship route, or explicitly UNRESOLVED — never a fallback',
     R.slotKindsAreNotEdgeTypes, JSON.stringify([R.slotIds, R.slotKinds]));
   t('8b2: …and an unresolved slot still carries its authored phrase',
     R.unresolvedKeepPhrase, JSON.stringify(R.slotKinds));
@@ -352,6 +662,137 @@ try {
   t('12f: …and the id derives from the stable SLOT id, not from an arrival ordinal',
     Object.values(R.orderFwd).every(v => /^role:pc:social:/.test(String(v))),
     JSON.stringify(Object.values(R.orderFwd)));
+
+  console.log('\n 12c · THE VOCABULARY COVERS THE DECLARED ROLES');
+  {
+    const bad = Object.entries(R.poolCoverage).filter(([, v]) => v.unrouted.length);
+    t('12g: EVERY phrase in EVERY declared role pool routes somewhere',
+      bad.length === 0,
+      bad.map(([k, v]) => k + ': ' + v.unrouted.join(' · ')).join(' | '));
+    t('12h: kinship routes to the KINSHIP path, not to an invented social kind',
+      R.kinshipRoute && R.kinshipRoute.route === 'kinship' && R.kinshipRoute.slot === 'sibling',
+      JSON.stringify(R.kinshipRoute));
+    t('12i: …while a social phrase routes to a social kind',
+      R.socialRoute && R.socialRoute.route === 'social' && R.socialRoute.kind === 'close_friend',
+      JSON.stringify(R.socialRoute));
+    t('12j: a "bond-sister" is a BONDMATE, not a sibling — specificity wins over the kinship word',
+      R.bondSisterIsNotSibling && R.bondSisterIsNotSibling.route === 'social'
+        && R.bondSisterIsNotSibling.kind === 'bondmate', JSON.stringify(R.bondSisterIsNotSibling));
+  }
+
+  {
+    const bad = Object.entries(R.materialiseMatrix).filter(([, v]) => v.length);
+    t('12g2: EVERY declared role phrase materialises into a real entity WITH a portfolio compartment',
+      bad.length === 0, bad.map(([k, v]) => k + ': ' + v.join(' · ')).join(' | '));
+  }
+
+  console.log('\n 12d · A CACHED ID IS VERIFIED, NOT TRUSTED');
+  t('12k: an id the ledger no longer contains is recreated deterministically — same id',
+    R.danglingSameId && R.danglingInLedger, JSON.stringify([R.danglingRecreated, R.danglingInLedger]));
+  t('12l: a cached id belonging to a DIFFERENT slot fails closed rather than being reused',
+    R.mismatchRefused === null, String(R.mismatchRefused));
+  t('12m: _relNameSlot refuses to rename an anchor', R.renameAnchorRefused === null,
+    String(R.renameAnchorRefused));
+  t('12n: a KINSHIP role is RECONCILED through supersession, not renamed in place',
+    !!R.kinNamed && R.kinNamedIsDifferentEntity && R.kinSuperseded,
+    JSON.stringify({ before: R.kinBefore, after: R.kinNamed, superseded: R.kinSuperseded }));
+  t('12o: …and the named entity carries the name',
+    R.kinNamedLabel === 'Lord Maren', String(R.kinNamedLabel));
+
+  console.log('\n 12d2 · A LIVE TARGET MUST ALSO BE THE RIGHT TARGET');
+  t('12k2: a supersession pointer at an UNRELATED live entity fails closed',
+    R.mtResult === null, String(R.mtResult));
+  t('12k3: …and the cached entityId is NOT rewritten to that stranger',
+    R.mtCachedAfter === R.mtCachedBefore, JSON.stringify([R.mtCachedBefore, R.mtCachedAfter]));
+  t('12k4: a target that CLAIMS the source through wasRole is adopted',
+    R.mtLegit === 'ent:legit_named', String(R.mtLegit));
+
+  console.log('\n 12e · THE PORTFOLIO SURVIVES THE IDENTITY LIFECYCLE');
+  t('12p: reconciling a kinship placeholder to a name PRESERVES every facet, one for one',
+    !!R.pfAfter && R.pfAfter.cPlusFacets.length === R.pfBefore.cPlusFacets.length
+      && R.pfBefore.cPlusFacets.every(f => R.pfAfter.cPlusFacets.some(g => g.facet_id === f.facet_id)),
+    JSON.stringify({ before: (R.pfBefore||{}).cPlusFacets, after: (R.pfAfter||{}).cPlusFacets }));
+  t('12q: …along with narrative function and provenance',
+    !!R.pfAfter && R.pfAfter.narrativeFunction === R.pfBefore.narrativeFunction
+      && !!R.pfAfter.provenance, JSON.stringify(R.pfAfter));
+  t('12r: …and it is still there after a save/restore of the ledger',
+    !!R.pfAfterRestore && R.pfAfterRestore.cPlusFacets.length === R.pfBefore.cPlusFacets.length,
+    JSON.stringify(R.pfAfterRestore));
+  t('12s: the origin of an inherited portfolio stays inspectable',
+    !!R.pfAfter && Array.isArray(R.pfAfter.inheritedFrom) && R.pfAfter.inheritedFrom.length === 1,
+    JSON.stringify((R.pfAfter||{}).inheritedFrom));
+
+  console.log('\n 12e2 · THE COLLISION POLICY, TESTED ON A POPULATED TARGET');
+  {
+    const P = R.collideProfile || { cPlusFacets: [] };
+    const byId = id => P.cPlusFacets.filter(f => f.facet_id === id)[0];
+    t('12p2: on a colliding facet_id the NAMED entity\'s own truth wins',
+      !!byId('shared_id') && byId('shared_id').canonical_truth === 'NAMED VERSION',
+      JSON.stringify(P.cPlusFacets));
+    t('12p3: both UNIQUE facets survive — nothing is dropped by the merge',
+      !!byId('role_only') && !!byId('named_only') && P.cPlusFacets.length === 3,
+      JSON.stringify(P.cPlusFacets.map(f => f.facet_id)));
+    t('12p4: the named entity KEEPS its own provenance and narrative function',
+      P.provenance === 'generated_cast' && P.narrativeFunction === 'TRUTH_TELLER',
+      JSON.stringify([P.provenance, P.narrativeFunction]));
+    t('12p5: transferred facets are COPIES — mutating the live one leaves the role\'s history intact',
+      JSON.stringify(R.collideRoleFacets) === JSON.stringify(R.collideRoleAfterMutation),
+      JSON.stringify({ before: R.collideRoleFacets, after: R.collideRoleAfterMutation }));
+  }
+
+  console.log('\n 12f0 · ONE NAME RULE, CANON INCLUDED');
+  t('12n1: a UNIQUE canonical character resolves by bare name',
+    R.uniqueCanonByName.status === 'unique', JSON.stringify(R.uniqueCanonByName));
+  t('12n2: a kinship placeholder reconciled to her REUSES the cast entity — no duplicate minted',
+    R.reconReusedCanon && R.entityCountAfterRecon <= 4,
+    JSON.stringify({ id: R.reconToCanon, n: R.entityCountAfterRecon }));
+  t('12n3: …and her portfolio is still hers afterwards',
+    R.reconKeptPortfolio, String(R.reconKeptPortfolio));
+  t('12n4: generic Robin + canonical Robin → bare name resolves to NOTHING',
+    R.twoRobins.status === 'ambiguous' && R.twoRobinsResolve === null,
+    JSON.stringify([R.twoRobins, R.twoRobinsResolve]));
+  t('12n5: …and relationship extraction asserts NO edge under that ambiguity',
+    R.edgesBefore === R.edgesAfter,
+    JSON.stringify({ before: R.edgesBefore, after: R.edgesAfter, ingest: R.ingest }));
+
+  console.log('\n 12f · NAME RESOLUTION FAILS CLOSED');
+  t('12t: one live match resolves', !!R.ambFirst, String(R.ambFirst));
+  t('12u: TWO live matches resolve to NOTHING — never first-match',
+    R.ambNow === null, String(R.ambNow));
+  t('12v: zero matches with create:false mints nobody',
+    R.ambNoCreate === null, String(R.ambNoCreate));
+  t('12v2: …and an OMITTED create option mints nobody either — the contract is opt-IN',
+    R.ambDefaultNoCreate === null, String(R.ambDefaultNoCreate));
+
+  console.log('\n 12g · FAMOUS FATE (a SEPARATE population from the 65 role phrases)');
+  t('12w: FF cast members are carried as structured records, not bare name strings',
+    R.ff.slots.length > 0 && R.ff.slots.every(x => x.prov === 'ff_cast' && x.hasRec),
+    JSON.stringify(R.ff.slots));
+  t('12x: …and are never marked unresolved — a canon name is not an unclassified role phrase',
+    R.ff.slots.every(x => x.unresolved !== true), JSON.stringify(R.ff.slots));
+  t('12y: each materialises to a canonical entity WITH a portfolio compartment',
+    R.ff.ids.every(Boolean) && R.ff.entities.every(e => e && e.authorProfile
+      && Array.isArray(e.authorProfile.cPlusFacets) && e.authorProfile.provenance === 'ff_cast'),
+    JSON.stringify(R.ff.entities && R.ff.entities.map(e => e && [e.id, e.authorProfile && e.authorProfile.provenance])));
+  t('12y2: production-shaped cast records (NO incoming id) are stamped with unique ids',
+    R.stamp.unique && R.stamp.ids.every(Boolean), JSON.stringify(R.stamp.ids));
+  t('12y3: …stamping is idempotent — a second pass renumbers nobody',
+    R.stamp.stable, JSON.stringify([R.stamp.ids, R.stamp.again]));
+  t('12y4: …and identity rides the RECORD: after save/restore and a REORDER, each name keeps its id',
+    R.stamp.reorderKept, JSON.stringify(R.stamp.afterReorder));
+  t('12y5: opaque ids "c-1" / "c_1" / "c 1" stay THREE people — no lossy normalisation',
+    R.opaque.distinct === 3, JSON.stringify(R.opaque.ids));
+  t('12z: the SAME cast id with a CHANGED display name is the SAME person',
+    R.ffRenamed.same && R.ffRenamed.label === 'Regina Phalange', JSON.stringify(R.ffRenamed));
+  t('12z2: TWO cast ids sharing a display name are TWO people — both survive selection',
+    R.ffTwins.slots === 2 && R.ffTwins.distinct === 2 && R.ffTwins.ids.every(Boolean),
+    JSON.stringify(R.ffTwins));
+  t('12z3: …each with its OWN portfolio compartment, not a shared object',
+    R.ffTwins.portfolios.every(x => x === 0) && R.ffTwins.shared === false,
+    JSON.stringify(R.ffTwins));
+  t('12z4: an existing generic same-name entity is NOT hijacked by an FF cast id',
+    !R.ffNoHijack.hijacked && R.ffNoHijack.genericUntouched && !!R.ffNoHijack.id,
+    JSON.stringify(R.ffNoHijack));
 
   console.log('\n 13 · EPISTEMIC SEPARATION');
   const priv = JSON.stringify([R.projPc, R.projLi, R.projEdges]);
