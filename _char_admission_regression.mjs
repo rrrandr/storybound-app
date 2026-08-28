@@ -118,14 +118,16 @@ const e2e = await page.evaluate(async ({ prose }) => {
     ]
   };
   const ledger = s._characterDisclosureLedger;
+  // Drives the REAL admission step (2026-08-28). This used to hand-write a v1 ledger row, which
+  // skipped identity attachment entirely — so the fixture could pass while production behaved
+  // differently. _charLedgerApplyVerified is what the extractor itself calls.
   parsed.characters.forEach(c => {
-    if (window._charAdmit(c, prose, ledger).ok) {
-      ledger[c.name.toLowerCase()] = { name: c.name, appearances: 1, revealedLayers: [c.newLayer] };
-    }
+    if (window._charAdmit(c, prose, ledger).ok) window._charLedgerApplyVerified(c, 1);
   });
   window._relSeedFromState();
   const res = window._relIngestRelations(parsed.relations, { prose, sceneUid: 'pg:e2e', pcViewpoint: true });
-  return { ledgerKeys: Object.keys(ledger), accepted: res.accepted, dropped: res.dropped,
+  return { ledgerKeys: Object.keys(window._charLedger ? window._charLedger() : ledger),
+    accepted: res.accepted, dropped: res.dropped,
     project: window._relProject('author'),
     named: Object.keys(s._relationshipLedger.entities).filter(k => k.indexOf('ent:') === 0) };
 // The prose must attribute coherently: the earlier draft had the line spoken by

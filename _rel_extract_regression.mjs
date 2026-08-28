@@ -145,7 +145,14 @@ await page.evaluate(({ prose }) => {
   window._updateCharacterDisclosureLedgerForCurrent(prose, 'pg:malformed');
 }, { prose: '"Sera is my sister," Lirael said, and the west ledger stayed shut. Sera watched the door and said nothing.' });
 await settle();
-const disclosureOk = await page.evaluate(() => !!(window.state._characterDisclosureLedger || {})['sera']);
+// v2 (2026-08-28): records are keyed by canonical id, so a top-level ['sera'] lookup no longer
+// finds them. Asserted through the supported accessor, and checking the LAYER actually landed —
+// which is the behaviour this test was always about.
+const disclosureOk = await page.evaluate(() => {
+  const r = window._charLedgerResolve('Sera');
+  const rec = r && r.record;
+  return !!rec && (rec.revealedLayers || []).some(l => /west ledger/i.test(l));
+});
 t('character disclosure still applied', disclosureOk);
 t('valid relation still ingested', (await proj('author')).some(l => /sera/i.test(l)));
 t('UID marked processed despite bad entries',

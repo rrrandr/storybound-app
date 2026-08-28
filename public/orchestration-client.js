@@ -1985,9 +1985,11 @@ FAILURE CONDITIONS (invalid outputs):
   // Grok sees the right characters with the right weights instead of an
   // undifferentiated roster dump.
   //
-  // Persistence: state._sceneEntityState[name] = { lastSeenTurn, salience,
-  // role, emotionalCharge }. Updated on each build; decays for entities
-  // not present in recent prose so old characters fade out naturally.
+  // Persistence: state._sceneEntityState[<canonicalId or name>] = { lastSeenTurn,
+  // lastSeenOrdinal, salience, role, emotionalCharge, canonicalId }. Written ONCE per
+  // finalized scene by ingestSceneEntityEvidence — NOT "on each build", which was the old
+  // model this comment outlived. Salience is stored AT THE MOMENT OF EVIDENCE and decay is
+  // computed during projection and never written back, which is what removed the compounding.
   //
   // Cheap: 5-15 regex tests per entity, 5 emotion-pool scans per entity.
   // Runs on demand.
@@ -2076,6 +2078,91 @@ FAILURE CONDITIONS (invalid outputs):
   // prose that scene produced. Stores salience AT THE MOMENT OF EVIDENCE plus the
   // chronological marker it was observed at; decay is computed later during
   // projection and never written back, which is what removes the compounding.
+  // ── ONE SALIENCE LOOKUP, USED BY WRITER AND EVERY READER (Roman 2026-08-28) ──
+  // The store is keyed by canonical id where identity is known and by name where it is not, so a
+  // reader that only ever looked up by name would stop seeing a character the moment they became
+  // canonical. This resolves the key the same way for everyone, and fails closed on ambiguity:
+  // two people answering to one name means the evidence belongs to neither.
+  function salienceKeyFor(name, st) {
+    const out = { key: name, canonicalId: null, ambiguous: false, ids: null };
+    try {
+      const m = (typeof window !== 'undefined' && typeof window._relMatchByName === 'function')
+        ? window._relMatchByName(name, {}) : { status: 'none' };
+      if (m.status === 'unique') { out.key = m.id; out.canonicalId = m.id; }
+      else if (m.status === 'ambiguous') { out.ambiguous = true; out.ids = (m.ids || []).slice(); }
+    } catch (_) {}
+    return out;
+  }
+  function salienceRecordFor(name, st) {
+    st = st || (typeof window !== 'undefined' && window.state) || {};
+    const cur = String(st.storyId || '');
+    if (!cur || st._sceneEntityStoryId !== cur) return null;      // unowned → nothing
+    const es = st._sceneEntityState || {};
+    const k = salienceKeyFor(name, st);
+    if (k.ambiguous) return null;                                 // fail closed
+    return es[k.key] || es[name] || null;
+  }
+  try {
+    if (typeof window !== 'undefined') {
+      window._salienceKeyFor = function (n, st) { return salienceKeyFor(n, st); };
+      window._salienceRecordFor = function (n, st) { return salienceRecordFor(n, st); };
+    }
+  } catch (_) {}
+
+  // ── LAZY RE-HOMING (Roman 2026-08-28) ──
+  // Called by verified disclosure admission once an identity exists for a name. Salience for a
+  // character's first scene is written BEFORE that identity does, so without this the earliest
+  // evidence about a person would stay orphaned under a bare name forever. It moves a UNIQUE
+  // name-keyed record onto its canonical key; ambiguous evidence is left exactly where it is.
+  function salienceRehome(name, canonicalId, st) {
+    st = st || (typeof window !== 'undefined' && window.state) || {};
+    if (!name || !canonicalId) return false;
+    const cur = String(st.storyId || ''); if (!cur) return false;
+    if (st._sceneEntityStoryId !== cur) return false;            // not ours → touch nothing
+    const es = st._sceneEntityState; if (!es) return false;
+    const rec = es[name];
+    if (!rec || rec.ambiguous) return false;                     // conflated evidence stays put
+    // DEFENCE IN DEPTH. Verified admission never calls this for an ambiguous name — it takes the
+    // ambiguous branch instead — but a name that resolves to two live people must be refused
+    // here too, rather than trusting that every future caller checked first.
+    const nm = salienceKeyFor(name, st);
+    if (nm.ambiguous) {
+      try { console.warn('[SALIENCE] "' + name + '" names several identities — refusing to re-home'); } catch (_) {}
+      return false;
+    }
+    if (rec.canonicalId && rec.canonicalId !== canonicalId) return false;
+    rec.canonicalId = canonicalId;
+    // THE CANONICAL KEY MAY ALREADY HOLD EVIDENCE. Assigning over it threw away whichever
+    // observation happened to be there — including, in the common case, the NEWER one. Evidence
+    // is chronological, so the record with the later lastSeenOrdinal is the current one and the
+    // other contributes only what the winner lacks.
+    const existing = es[canonicalId];
+    if (existing && existing !== rec) {
+      const recOrd = (typeof rec.lastSeenOrdinal === 'number') ? rec.lastSeenOrdinal : -1;
+      const exOrd  = (typeof existing.lastSeenOrdinal === 'number') ? existing.lastSeenOrdinal : -1;
+      const winner = (recOrd >= exOrd) ? rec : existing;
+      const loser  = (winner === rec) ? existing : rec;
+      // Deliberate metadata policy: the winner's salience and role are the current reading;
+      // an emotional charge the winner never observed is still knowledge about this person, and
+      // an ambiguity flag from either side must survive rather than be dropped by chronology.
+      if (!winner.emotionalCharge && loser.emotionalCharge) winner.emotionalCharge = loser.emotionalCharge;
+      if (typeof winner.lastSeenTurn !== 'number' && typeof loser.lastSeenTurn === 'number') winner.lastSeenTurn = loser.lastSeenTurn;
+      if (!winner.role && loser.role) winner.role = loser.role;
+      if (!winner.name && loser.name) winner.name = loser.name;
+      if (loser.ambiguous) { winner.ambiguous = true; winner.ambiguousAmong = winner.ambiguousAmong || loser.ambiguousAmong || null; }
+      winner.canonicalId = canonicalId;
+      es[canonicalId] = winner;
+      try { console.log('[SALIENCE] merged evidence for "' + name + '" onto ' + canonicalId
+        + ' (kept ordinal ' + Math.max(recOrd, exOrd) + ')'); } catch (_) {}
+    } else {
+      es[canonicalId] = rec;
+      try { console.log('[SALIENCE] re-homed evidence for "' + name + '" onto ' + canonicalId); } catch (_) {}
+    }
+    if (name !== canonicalId) delete es[name];
+    return true;
+  }
+  try { if (typeof window !== 'undefined') window._salienceRehome = function (n, id, st) { return salienceRehome(n, id, st); }; } catch (_) {}
+
   function ingestSceneEntityEvidence(st, prose, ordinal) {
     st = st || window.state || {};
     const text = String(prose || '');
@@ -2089,6 +2176,13 @@ FAILURE CONDITIONS (invalid outputs):
     st._sceneEntityStoryId = cur;
     st._sceneEntityState = st._sceneEntityState || {};
     const entState = st._sceneEntityState;
+    // ── CANONICAL REFERENCE, NEVER CANONICAL AUTHORITY (Roman 2026-08-28) ──
+    // Salience evidence may point AT an identity; it may not mint one. This writer runs
+    // synchronously at the finalized scene, while verified disclosure admission completes after
+    // a model call — so on a character's first scene there is usually no entity yet. Attaching
+    // to an already-unique entity is safe; creating one here would make a lexical name match an
+    // identity authority, which is the whole failure this separation exists to prevent.
+
     const ord = (typeof ordinal === 'number') ? ordinal : 0;
 
     // Candidate set mirrors the projection's: structured cast + discovered NPCs.
@@ -2113,15 +2207,35 @@ FAILURE CONDITIONS (invalid outputs):
       const recencyBoost = indices[indices.length - 1] >= recentStart ? 0.20 : 0.05;
       const roleBase = _ROLE_BASE_SALIENCE[role] || 0;
       const salience = Math.min(1.0, roleBase + mentionScore + recencyBoost);
-      const prior = entState[name] || {};
+      // RESOLVE IDENTITY BEFORE CHOOSING THE KEY. salienceRehome moves a record onto
+      // entState[canonicalId]; a writer that kept keying by name would create a SECOND row on
+      // the next scene and the canonical one would drift, unread. The key is the identity when
+      // there is exactly one, and the name otherwise.
+      const _slot = salienceKeyFor(name, st);
+      // NEW EVIDENCE goes to the canonical key once identity exists. HISTORICAL name-keyed
+      // evidence is NOT absorbed here: this writer is lexical — it matched a string in prose —
+      // and moving a character's whole history on that basis is the same "a name is an identity"
+      // shortcut the disclosure side refuses. Re-homing is authorised by verified admission
+      // (_charLedgerApplyVerified → salienceRehome), which merges chronologically and then
+      // removes the old key. Until then both rows exist and the shared lookup prefers canonical.
+      const prior = entState[_slot.key] || {};
       const detected = _scoreEmotionalCharge(text, name);
-      entState[name] = {
+      entState[_slot.key] = {
         lastSeenTurn: (typeof st.turnCount === 'number') ? st.turnCount : null,
         lastSeenOrdinal: ord,
         salience: salience,
         role: role,
-        emotionalCharge: detected || prior.emotionalCharge || ''
+        emotionalCharge: detected || prior.emotionalCharge || '',
+        // References carried forward: an identity once established stays established, and an
+        // ambiguity once observed stays recorded until later evidence resolves it.
+        canonicalId: prior.canonicalId || null,
+        ambiguous: prior.ambiguous || false,
+        ambiguousAmong: prior.ambiguousAmong || null
       };
+      const _rec = entState[_slot.key];
+      _rec.name = name;                                   // the surface form stays discoverable
+      if (_slot.canonicalId) _rec.canonicalId = _slot.canonicalId;
+      if (_slot.ambiguous) { _rec.ambiguous = true; _rec.ambiguousAmong = _slot.ids || null; }
       written++;
       // Species sighting belongs with evidence, not with prompt construction.
       try {
@@ -2197,7 +2311,12 @@ FAILURE CONDITIONS (invalid outputs):
     const ranked = [];
     const nowOrd = (typeof st._sceneChronoCurrent === 'number') ? st._sceneChronoCurrent : 0;
     Object.values(byName).forEach(cand => {
-      const stored = entState[cand.name];
+      // Through the shared lookup, so a character who became canonical mid-story stays visible.
+      // Authoritative when it exists — see the note on the app.js readers. A refusal is an
+      // answer ("this name means two people"), not an absence to route around.
+      const stored = (typeof salienceRecordFor === 'function')
+        ? salienceRecordFor(cand.name, st)
+        : entState[cand.name];
       // No evidence yet — an entity named in structured cast but not yet seen in a
       // finalized scene projects at its role base ("freshly named, give them a chance").
       const base = _ROLE_BASE_SALIENCE[cand.role] || 0;
@@ -2307,9 +2426,10 @@ FAILURE CONDITIONS (invalid outputs):
     // (triggerPostRenderHooks and _renderStagedScene) via window._ingestSceneEntities,
     // keyed by the canonical sceneUid with its own processed set.
     //
-    // This builder is now read-only with respect to the NPC roster. It still writes
-    // _sceneEntityState SALIENCE inside _buildActiveSceneEntities below — a separate
-    // concern, deliberately untouched here.
+    // This builder is now read-only, full stop. The line that used to say it still writes
+    // salience inside _buildActiveSceneEntities was left behind by the evidence rewrite and was
+    // false: ingestSceneEntityEvidence is the sole writer (see its header), and the projection
+    // at _buildActiveSceneEntities validates ownership read-only, deliberately never clearing.
 
     const activeEntities = _buildActiveSceneEntities(st, scanSlice, promptSlice);
 
@@ -6852,6 +6972,9 @@ Tension: ${outline.tension_vector || 'N/A'}`;
     // named story characters / plot threads).
     buildSceneAndPlotContext: _buildSceneAndPlotContext,
     ingestSceneEntityEvidence: ingestSceneEntityEvidence,
+    // Exported for regression only: the projection is where a fail-closed salience lookup has to
+    // hold end to end, and asserting the helper alone would miss a fallback creeping back in.
+    _buildActiveSceneEntitiesForTest: _buildActiveSceneEntities,
 
     // Reader preference adaptation (session-scoped, deterministic)
     recordPreferenceSignal,     // Record user behavior signals

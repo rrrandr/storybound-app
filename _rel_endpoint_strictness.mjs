@@ -38,7 +38,10 @@ const attempt = (prose, rel, known) => page.evaluate(({ prose, rel, known }) => 
   s._relationshipLedger = null; s._characterDisclosureLedger = {};
   s.pov = 'first_person'; s.name = 'Lirael'; s.playerName = 'Lirael';
   s.loveInterestName = 'Julian'; s.partnerName = 'Julian';
-  (known || []).forEach(n => { s._characterDisclosureLedger[n.toLowerCase()] = { name: n, appearances: 1 }; });
+  // A "known" character is one VERIFIED ADMISSION has already processed, so the fixture drives
+  // that step rather than hand-writing a v1 row. A hand-written row is now a LEGACY row, and a
+  // legacy row is explicitly not authorization to resolve or create an identity.
+  (known || []).forEach(n => { window._charLedgerApplyVerified({ name: n, present: true }, 1); });
   window._relSeedFromState();                            // materialise ledger + anchors
   const before = JSON.stringify(s._relationshipLedger);
   const res = window._relIngestRelations([rel], { prose, sceneUid: 'pg:s', pcViewpoint: true });
@@ -110,7 +113,9 @@ const cDurable = await page.evaluate(({ prose, rel }) => {
   const s = window.state;
   s.storyId = 'durable'; s._relationshipLedger = null; s._characterDisclosureLedger = {};
   s.pov = 'first_person'; s.name = 'Lirael'; s.playerName = 'Lirael'; s.loveInterestName = 'Julian';
-  window._relEntityForName('Corwin', {});     // already durable from an earlier scene
+  // Creation is EXPLICIT since the identity work: `{}` resolves and mints nothing. "Already
+  // durable from an earlier scene" means the earlier scene created him, so the fixture must say so.
+  window._relEntityForName('Corwin', { create: true });
   const res = window._relIngestRelations([rel], { prose, sceneUid: 'pg:d', pcViewpoint: true });
   return res.accepted;
 }, { prose: proseFor('Corwin'), rel: rel('Corwin') });
@@ -129,9 +134,11 @@ t('PC role placeholder still resolves', role.accepted === 1 && role.roles.some(k
 console.log('\n MIXED BATCH');
 const mixed = await page.evaluate(({ prose }) => {
   const s = window.state;
-  s.storyId = 'mixed'; s._relationshipLedger = null; s._characterDisclosureLedger = { corwin: { name: 'Corwin' } };
+  s.storyId = 'mixed'; s._relationshipLedger = null; s._characterDisclosureLedger = {};
   s.pov = 'first_person'; s.name = 'Lirael'; s.playerName = 'Lirael'; s.loveInterestName = 'Julian';
   window._relSeedFromState();
+  // Corwin is KNOWN because verified admission processed him, not because a row was poked in.
+  window._charLedgerApplyVerified({ name: 'Corwin', present: true }, 1);
   const res = window._relIngestRelations([
     { quote: 'Veilwood is my father', from: 'Veilwood', to: 'my father', type: 'parent_of',
       basis: 'asserted_on_page', assertedBy: 'Lirael', addressedTo: null },
