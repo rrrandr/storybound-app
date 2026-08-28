@@ -527,6 +527,37 @@ t('6c: …the applicable pressure travels as OUR wording, marked as why it appli
 t('6c3: …and the first-mention tag survives beside the new fields',
   /•\s*Halvern \(first mention/.test(asys),
   (aall.match(/•\s*Halvern[^\n]{0,80}/) || ['(missing)'])[0]);
+// ── THE PORTFOLIO STOPS AT THE PLANNER (Roman 2026-08-27) ──
+// Five truths are a selection problem for the planner and a distraction for the writer. That
+// asymmetry is the whole point of authoring more than one, so it is asserted on both sides.
+t('6c4: the PLANNER receives the Dohkar\'s WHOLE portfolio — five facets to choose between',
+  (() => {
+    const pu = (A.planner[0] || {}).user || '';
+    return ['ritual_contempt', 'peer_jealousy', 'compulsive_pedagogy',
+            'sacrificial_arrogance', 'kindness_to_the_poor']
+      .every(x => pu.includes('facet_id: presiding_dohkar_' + x));
+  })(),
+  'the planner cannot choose between truths it was never shown');
+t('6c5: …and the AUTHOR receives no facet ID at all, and exactly one truth per recipient',
+  (() => {
+    const leaked = ['ritual_contempt', 'peer_jealousy', 'compulsive_pedagogy',
+                    'sacrificial_arrogance', 'kindness_to_the_poor']
+      .filter(x => asys.includes('presiding_dohkar_' + x));
+    return leaked.length === 0
+      && (asys.split('SOURCE TRUTH — DO NOT STATE:').length - 1) === (A.cp || []).filter(c => c.facet_truth).length;
+  })(),
+  'a facet id leaked to the author, or a recipient carried more than one truth');
+t('6c6: …and no UNSELECTED truth of his reaches the author as prose either',
+  (() => {
+    const all = ['cannot be bothered to pretend',
+                 'measures himself against every First Favored',
+                 'cannot watch a child do a thing badly',
+                 'gave more at his own First Sacrifice',
+                 'gentle with anyone who arrived here with nothing'];
+    const present = all.filter(o => asys.includes(o));
+    return present.length <= 1;
+  })(),
+  'more than one of his five truths reached the writer — the micro-bible leaking a facet at a time');
 t('6c2: …and the author gets ONE facet, not the person\'s whole micro-bible',
   (asys.split('SOURCE TRUTH — DO NOT STATE:').length - 1) === (A.cp||[]).filter(c => c.facet_truth).length
     && !/applicability conditions/.test(asys) && !/AUTHORED PSYCHOLOGY/.test(asys),

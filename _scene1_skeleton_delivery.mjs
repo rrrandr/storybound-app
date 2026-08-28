@@ -258,6 +258,18 @@ function plannerReply(usr, mutate) {
   // ── THE ROUND-12 GESTURES THEMSELVES (2026-08-27) ──
   // Every one of these passed the old contract. "Camera-recordable" was the acceptance ceiling
   // when it was only the floor: three interchangeable gestures, no revelation between them.
+  // ── THE PORTFOLIO'S OWN FAILURE MODE (2026-08-27) ──
+  // With five truths on one person, the cheapest wrong answer is to take the FIRST facet and
+  // hang it on whatever evidence the scene happens to contain. Here the Dohkar's contempt is
+  // cited over a fact about JULIAN — real evidence id, real pressure id, wrong truth. The
+  // predicate is proven directly in _cplus_multifacet; this proves the VALIDATOR reaches it.
+  if (mutate === 'contemptOverJealousyEvidence') {
+    const jul = (CO.facts.filter(f => /Julian|observer|edge/i.test(f.text))[0] || {}).id;
+    cp = cp.map(c => /Dohkar/i.test(c.character) && jul
+      ? { ...c, facet_id: 'presiding_dohkar_ritual_contempt',
+          pressure_id: 'p_procedural_step_nobody_checks', pressure_evidence_ids: [jul] }
+      : c);
+  }
   if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ behavior, ...r }) => r)(c) : c);
   if (mutate === 'readVoiceDrops') cp = cp.map((c,i) => i === 0
     ? { ...c, behavior:'his voice drops to a murmur as he intones the final clause', character_revelation:'he speaks more quietly at the end' } : c);
@@ -1020,7 +1032,7 @@ for (const mutate of ['unknown', 'duplicate', 'badaxis', 'badfusion',
                       'aliasNarrator', 'aliasProtag',
                       'epSchemaEcho', 'epCategoryEcho', 'pofSchemaEcho', 'angleSecondAction',
                       // C+ must REVEAL, not merely be recordable
-                      'readMissing',
+                      'readMissing', 'contemptOverJealousyEvidence',
                       // identical duplicates now COLLAPSE (tested below); a DIFFERENCE still aborts
                       'dupSkeletonDiff', 'stagedBothDiff',
                       // reconciler must not rescue semantics, and must not swallow invented fields
@@ -1304,6 +1316,9 @@ for (const [mutate, label, needle] of [
   ['pofSchemaEcho',    'the opening beat returned as the bracket text',      'returns the schema instead of content'],
   ['angleSecondAction','the angle staging a second action elsewhere',        'stages a SECOND action'],
   ['readMissing',      'a behavior removed entirely',                        'the angle is empty'],
+  ['contemptOverJealousyEvidence',
+                       'his FIRST facet hung on evidence that does not establish it',
+                                                                             'none of the evidence it cites establishes it'],
 ]) {
   const R = await run({ hot: false, mutate });
   const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');

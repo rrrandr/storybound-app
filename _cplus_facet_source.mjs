@@ -52,11 +52,19 @@ t('1d: every facet carries its own source_character_id',
   R.seren.every(f => f.source_character_id === 'named:seren'));
 
 // ── the role instance, and the scoping that keeps it out of the profession ──
-t('2a: the presiding Dohkar resolves by canonical id', R.dohkar.length === 1, JSON.stringify(R.dohkar.map(f => f.facet_id)));
+t('2a: the presiding Dohkar resolves by canonical id to his WHOLE portfolio', R.dohkar.length === 5,
+  JSON.stringify(R.dohkar.map(f => f.facet_id)));
+t('2a2: …five DISTINCT facet ids, five DISTINCT categories — no truth authored twice',
+  new Set(R.dohkar.map(f => f.facet_id)).size === 5 && new Set(R.dohkar.map(f => f.category)).size === 5,
+  JSON.stringify(R.dohkar.map(f => [f.facet_id, f.category])));
+t('2a3: …and every one carries its own conditions and its own misreadings',
+  R.dohkar.every(f => (f.pressures || []).length >= 2 && (f.forbidden_restatements || []).length >= 1),
+  JSON.stringify(R.dohkar.map(f => [f.facet_id, (f.pressures||[]).length, (f.forbidden_restatements||[]).length])));
 t('2b: his contempt is the authored facet',
   R.dohkar.some(f => f.facet_id === 'presiding_dohkar_ritual_contempt' && /cannot be bothered to pretend/i.test(f.canonical_truth)));
 t('2c: he resolves by alias too ("Dohkar" as the planner spells it)',
-  R.dohkarByAlias.length === 1 && R.dohkarByAlias[0].facet_id === 'presiding_dohkar_ritual_contempt');
+  R.dohkarByAlias.length === 5 && R.dohkarByAlias.some(f => f.facet_id === 'presiding_dohkar_ritual_contempt'),
+  JSON.stringify(R.dohkarByAlias.map(f => f.facet_id)));
 t('2d: the record is a ROLE INSTANCE, not the Dohkar profession',
   Object.keys(R.idx).some(k => R.idx[k].role_instance_id === 'first_sacrifice_presiding_dohkar'));
 t('2e: it carries NO characterization from the doctrine\'s other Dohkar (Raes)',
@@ -170,7 +178,8 @@ t('6a: a placeholder playerName does not hide the PC — identity resolves to th
 t('6b: …and her facets still resolve under the kernel placeholder',
   H.pcFacets.length === 2, JSON.stringify(H.pcFacets.map(f => f.facet_id)));
 t('6c: the Scene-1 presiding Dohkar resolves in scene 1',
-  H.dohkarScene1.length === 1 && H.dohkarScene1[0].facet_id === 'presiding_dohkar_ritual_contempt');
+  H.dohkarScene1.length === 5 && H.dohkarScene1.some(f => f.facet_id === 'presiding_dohkar_ritual_contempt'),
+  JSON.stringify(H.dohkarScene1.map(f => f.facet_id)));
 t('6d: a DIFFERENT Dohkar later in the story inherits nothing',
   H.dohkarScene14.length === 0, JSON.stringify(H.dohkarScene14.map(f => f.facet_id)));
 t('6e: two records sharing an alias fail CLOSED, never first-match',
