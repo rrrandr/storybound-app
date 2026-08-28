@@ -77,7 +77,12 @@ try {
                                  .filter(x => x.checked && x.ok).length,
       })),
     }));
-    return { facets, matrix,
+    const allFacets = {};
+    [['named:julian','Julian'], ['named:seren','Seren'],
+     ['role:first_sacrifice_presiding_dohkar','the presiding Dohkar']].forEach(([id, label]) => {
+      allFacets[id] = window._facetsForCharacter({ id, label, aliases: [label] }, s, { sceneNumber: 1 });
+    });
+    return { facets, matrix, allFacets,
              ids: facets.map(f => f.facet_id), cats: facets.map(f => f.category),
              contemptPressures: (rec('presiding_dohkar_ritual_contempt') || {}).pressures || [] };
   }, CASES);
@@ -144,16 +149,85 @@ try {
   // deliberate act and has to be re-justified here rather than appearing quietly.
   {
     const reads = [...SRC.matchAll(/[.\w]evidence_requires/g)].length;   // property reads only
-    const authored = [...SRC.matchAll(/\{ text: '[^']+', evidence_requires:/g)].length;
     // Four reads, all accounted for: two normalising the authored field, two inside the one
     // predicate that consumes it. A fifth means someone found a new use — re-justify it here.
     t('4b: the requirement is read in exactly four places — normalise (2), guard (2), nowhere else',
-      authored === 10 && reads === 4,
-      `authored=${authored} reads=${reads} (expected 10 authored conditions, 4 property reads)`);
+      reads === 4, `reads=${reads} (expected 4 property reads; a fifth means a new consumer)`);
     t('4c: …and no prompt builder concatenates it into text a model could receive',
       !/evidence_requires[^\n]{0,80}(?:\+\s*'|directive|prompt|lines\.push)/.test(SRC),
       'a render site would put the answer key in the request');
   }
+
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // 5 · EVERY AUTHORED CONDITION, DRIVEN BOTH WAYS (2026-08-28)
+  //
+  // The wrong-facet guard only bites where a condition says what establishes it. Until now that
+  // was the presiding Dohkar alone; Julian and Seren returned `checked:false` and any evidence
+  // id passed. These requirements author NO psychology — each pattern is read off the condition's
+  // own wording — so what has to be proven is exactly that: the condition fires on material that
+  // matches it, and stays silent on material that does not.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  console.log('\n 5 · JULIAN AND SEREN — each condition, positively and negatively');
+  const DRIVE = [
+    ['named:julian', 'julian_status_without_display', 'p_gathering_where_standing_is',
+      'Roughly two dozen First Favored are assembled, family and guests, in gossamer Veilweave.',
+      'She blurs the wording to avoid naming the wound out loud.'],
+    ['named:julian', 'julian_status_without_display', 'p_someone_competing_for_the',
+      'The whole room turns toward whoever is speaking, and the attention moves with him.',
+      'The carpet underfoot is braided mated-pair spiralgrass.'],
+    ['named:julian', 'julian_notices_without_volunteering', 'p_consequential_moment_he_has',
+      'Julian stands at the edge of the gathering, here only as an observer.',
+      'Her offering is a memory, and she names it aloud.'],
+    ['named:julian', 'julian_notices_without_volunteering', 'p_room_reaching_for_an',
+      'Nobody in the clearing can explain what has just gone wrong.',
+      'The veil-canopy hangs down from the pale mated-pair trees.'],
+    ['named:seren', 'seren_goodness_needs_witness', 'p_observed_by_people_whose',
+      'Her family and the assembled guests are watching her kneel.',
+      'The rite has a fixed order that has not changed in generations.'],
+    ['named:seren', 'seren_goodness_needs_witness', 'p_chance_to_be_visibly',
+      'She spends her First Sacrifice on Lirael instead of on herself.',
+      'Julian stands at the edge, perfectly still.'],
+    ['named:seren', 'seren_trained_composure', 'p_public_correction',
+      'She has been corrected in front of the others before, and held her composure.',
+      'The floor is a deep-crimson carpet of spiralgrass.'],
+    ['named:seren', 'seren_trained_composure', 'p_rehearsed_procedure_going_wrong',
+      'She abandons the practised wish she rehearsed for months.',
+      'The assembled First Favored are barefoot.'],
+    ['named:seren', 'seren_delicacy_over_truth', 'p_someone_s_pain_becomes',
+      'She asks that Lirael find the one she lost, and the grief is suddenly in the open.',
+      'A gossamer band is tied across the officiant\'s mouth.'],
+    ['named:seren', 'seren_delicacy_over_truth', 'p_precision_would_embarrass_a',
+      'She blurs the wording rather than embarrass her by naming it.',
+      'Two dozen First Favored stand in the clearing.'],
+  ];
+  const D = await page.evaluate((DRIVE) => {
+    const s = window.state;
+    const facetsOf = id => window._facetsForCharacter(
+      { id, label: id.split(':')[1], aliases: [id.split(':')[1]] }, s, { sceneNumber: 1 });
+    return DRIVE.map(row => {
+      const [owner, fid, pid, pos, neg] = row;
+      const f = facetsOf(owner).filter(x => x.facet_id === fid)[0] || null;
+      if (!f) return { fid, pid, missing: true };
+      return { fid, pid,
+        knownPressure: (f.pressures || []).some(p => p.pressure_id === pid),
+        pos: window._cpEvidenceEstablishes(f, pid, [pos]),
+        neg: window._cpEvidenceEstablishes(f, pid, [neg]) };
+    });
+  }, DRIVE);
+  D.forEach(r => {
+    t(`5 · ${r.fid} / ${r.pid} — the pressure id exists as authored`,
+      !r.missing && r.knownPressure, JSON.stringify(r));
+    t(`5 · ${r.fid} / ${r.pid} — POSITIVE: matching material establishes it`,
+      !r.missing && r.pos.checked && r.pos.ok, JSON.stringify(r.pos));
+    t(`5 · ${r.fid} / ${r.pid} — NEGATIVE: unrelated scene material does NOT`,
+      !r.missing && r.neg.checked && !r.neg.ok, JSON.stringify(r.neg));
+  });
+  t('5z: EVERY authored condition in the seed now states what establishes it',
+    (() => {
+      const all = ['named:julian', 'named:seren', 'role:first_sacrifice_presiding_dohkar'];
+      return all.every(id => (R.allFacets[id] || []).every(f =>
+        (f.pressures || []).every(p => String(p.evidence_requires || '').trim().length > 0)));
+    })(), JSON.stringify(Object.keys(R.allFacets).map(k => [k, (R.allFacets[k] || []).length])));
 } finally { await ctx.close().catch(() => {}); }
 
 console.log(`\n${'─'.repeat(88)}\n  ${pass} passed · ${fail} failed\n`);
