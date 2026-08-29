@@ -22,6 +22,139 @@ const PASSTHROUGH = /\/api\/(config|geo|csp-report|beta-events)\b/;
 const LOCAL = { '/api/consume-fortune': { success: true, fortunesRemaining: 9999 } };
 const MODEL = /\/api\/(proxy|chatgpt-proxy|mistral-proxy|deepseek-proxy|gemini)\b/;
 const L = 'she understands the wish has already begun to cost her something she cannot name';
+// ── THE PORTFOLIO THE SCAFFOLD RETURNS (2026-08-29) ──
+// Written FOR THIS STORY, so every applicability condition is grounded in evidence the customs
+// house scene actually offers. A rite-flavoured condition was correctly rejected here by the
+// evidence gate — that gate is why these belong to the scene rather than to the seed.
+const _pfF = (category, truth, w1, e1, w2, e2) => ({ category, canonical_truth: truth,
+  applicability_conditions: [{ text:w1, evidence_requires:e1 }, { text:w2, evidence_requires:e2 }],
+  forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
+const PORTFOLIO_FACETS = [
+  _pfF('worldview','Paperwork repeated daily rarely earns his full attention, and he barely hides it.',
+    'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
+  _pfF('insecurity','Deference paid to someone else makes him newly attentive to his own standing.',
+    'a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'),
+  _pfF('habit',"He turns another person's error into an instruction, wanted or not.",
+    'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'),
+  _pfF('contradiction','On what a signature costs he assumes an authority nobody granted him.',
+    'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'),
+  _pfF('value','With people who hold no leverage over him he is unexpectedly generous.',
+    'someone with nothing to trade','customs|house|Lirael','a person placed beneath him','beneath|edge|apart')];
+
+// The responder can only echo the subject_ref THE REQUEST CARRIED — exactly what a model can do.
+// A run that is not a portfolio run gets an ordinary scaffold, so the marker cannot leak sideways.
+function scaffoldReply(refFromRequest, genPortfolio) {
+  const base = { issueArcs: [{ n: 1, title: 'the customs house', beats: [] }], characterIcebergs: {} };
+  if (!genPortfolio || !refFromRequest) return base;
+  const pf = { subject_ref: refFromRequest, facets: PORTFOLIO_FACETS };
+  // Guardrails are scoped by CATEGORY in the response — ids are backend-owned, so a model cannot
+  // name one. Attachment resolves the category scope to facet ids.
+  if (genPortfolio.guards) pf.misreading_guardrails = genPortfolio.guards;
+  base.characterPortfolios = [pf];
+  return base;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// EVERY MODEL REQUEST HAS A NAME (2026-08-29)
+//
+// A catch-all that answers GENERIC to anything makes an unanticipated dispatch indistinguishable
+// from one the harness designed for — so "unknown=0" only ever meant "no unknown API URL". These
+// are the SANCTIONED request kinds, each identified by its own prompt signature. In the portfolio
+// arms anything that matches none of them is ABORTED and counted as unknownModel, so a new or
+// duplicated call changes the accounting instead of hiding inside a generic reply.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// ── THE A-PLOT FIXTURE MUST BE VALID (2026-08-29) ──
+// GENERIC has no namedClock, no stakesIfFail and no stakesIfWin, so production REJECTED it and
+// ran its self-correction pass. That is where "the A-plot generator fires twice" came from: the
+// harness's own invalid fixture, described as production behaviour. _antagonist_identity.mjs had
+// already established the true baseline — one generator, zero corrections, one compression — and
+// this mirrors the shape it proved. Marcus Vale is the PERSON antagonist, so identity minting,
+// the scaffold roster and the whole portfolio chain follow from a plot that VALIDATES.
+const APLOT_VALID = {
+  goal: 'She must clear the manifest before the tide turns and the ship leaves without her sister',
+  namedClock: 'the tide at dawn', clockUnit: 'turns', totalClockUnits: 12,
+  antagonistOrAntiForce: 'Marcus Vale', antagonistShape: 'A',
+  antagonistPersonalTie: 'he sealed the passage her mother once bought',
+  // ONLY what the schema offers the model: kind and proper_name. reference_label is derived by
+  // the backend from antagonistOrAntiForce, and a fixture that supplies it hands the model back
+  // authority the schema deliberately took away — even where the value is then ignored.
+  antagonistSubject: { kind: 'PERSON', proper_name: 'Marcus Vale' },
+  stakesIfFail: 'she loses the only passage out and her sister sails alone',
+  stakesIfWin: 'she reaches her sister before the ship clears the headland',
+  pcWound: 'she was left behind once and has never said so out loud to anyone',
+  liWound: 'he promised passage to someone once and could not deliver it in time',
+  woundLoadBearingProof: 'her fear of being left drives every choice; his failed promise is why he will not promise again',
+  milestones: [{ atScene: 1, event: 'she reaches the harbour office and is refused' },
+               { atScene: 2, event: "she finds the sealed manifest with her mother's name" },
+               { atScene: 3, event: 'the crisis: the tide turns and she must choose', crisis: true }],
+};
+
+// A SHAPE-FAITHFUL ANTAGONIST BODY BIBLE. Production requires signature_feature, softness_seam and
+// at least one of control_tell / pleasure_tell, and DISCARDS anything else — so answering this
+// request with GENERIC left state.antagonistBodyBible empty, every later call site tried again,
+// and the resulting count measured the fixture rather than production. The archetype must be one
+// of the eight declared keys or it is stripped.
+const ANTAGONIST_BIBLE = {
+  archetype: 'BUREAUCRATIC_COLD',
+  archetype_signature: 'he makes the rule do the cruelty so his own hands stay clean',
+  height: 'tall', build: 'spare', hair: 'iron-grey, cut close', complexion: 'winter-pale',
+  eye_color: 'pale grey',
+  signature_feature: 'an inkstain worn permanently into the side of his right middle finger',
+  voice_quality: 'quiet and unhurried, pitched to make the room lean in',
+  hands_quality: 'dry, precise, always squaring what is already square',
+  eyes_register: 'they arrive at a person last, after the paperwork',
+  proximity_default: 'one step further away than the conversation warrants',
+  pc_keeps_noticing: 'that he never raises his voice and never has to',
+  targeting_tell: 'he says her full name where a first name would do',
+  control_tell: 'he sets a document down and does not let go of it',
+  pleasure_tell: 'the pause before he grants something, held a beat too long',
+  escalation_tell: 'he begins to quote the clause number instead of the clause',
+  softness_seam: 'he cannot throw away a letter someone hand-delivered, and keeps them in order',
+};
+
+// ── EVERY MODEL REQUEST HAS EXACTLY ONE NAME ──
+// One bucket per kind, no residual "everything else" bucket, and matching is EXCLUSIVE: the
+// signatures are collected and exactly one must match. `find()` would silently assign the first
+// of several overlapping classifiers, which is the same fail-open shape as a generic catch-all.
+// A correction is distinguished from an initial generation by the retry note production actually
+// sends — the validation errors, handed back — not by a substring both requests happen to carry.
+const REQUEST_KINDS = [
+  ['scaffold',         (t, sys) => /CONTINUITY ARCHITECT for a serialized/.test(sys)],
+  ['author',           (t, sys) => /ARCHITECTURE LAWS/.test(sys)],
+  ['planner',          (t, sys) => /scene-structure planner for the OPENING scene/.test(sys)],
+  // The retry note is appended to the SYSTEM message (callOneProvider's extraSystemNote), not to
+  // the user message — checked in the source rather than assumed, after a first version of this
+  // split matched nothing and quietly left every correction filed as a generation.
+  ['aplotCorrection',  (t, sys) => /A-PLOT GENERATOR/i.test(sys)
+                          && /previous attempt failed validation/i.test(sys)],
+  ['aplotGenerator',   (t, sys) => /A-PLOT GENERATOR/i.test(sys)
+                          && !/previous attempt failed validation/i.test(sys)],
+  ['aplotCompression', t => /compressing the procedural A-plot/.test(t)],
+  ['canonicalizer',    t => /canonicalization and normalization engine/.test(t)],
+  ['rplot',            t => /designing an R-PLOT/.test(t)],
+  ['subplots',         t => /SUBPLOT GENERATOR/.test(t)],
+  ['characterSheet',   t => /DISTINGUISHING FEATURE \(anti-calcification ROTATION/.test(t)],
+  // These two appear ONLY once the A-plot validates: a PERSON antagonist with full wound
+  // architecture is what makes production generate an antagonist body bible and run the
+  // wound→LI swap test. The invalid fixture had been suppressing them.
+  ['antagonistBodyBible', t => /generating an ANTAGONIST BODY BIBLE/.test(t)],
+  ['woundSwapTest',       t => /WOUND→LI SWAP TEST/.test(t)],
+  ['pa_lineEditor',    t => /ruthless line-editor for romance prose/.test(t)],
+  ['pa_mechanicalFix', t => /Fix ONLY mechanical defects in this scene/.test(t)],
+  ['pa_continuation',  t => /same narrator continuing THIS exact scene/.test(t)],
+  ['pa_gravity',       t => /editorial auditor measuring EMOTIONAL GRAVITY/.test(t)],
+  ['pa_bannedPhrase',  t => /audit prose for BANNED-phrase reuse/.test(t)],
+  ['pa_archetype',     t => /craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE/.test(t)],
+  ['pa_liBibleField',  t => /audit WHICH love-interest Bible field/.test(t)],
+  ['pa_reparagraph',   t => /copy editor\. Re-paragraph the SCENE/.test(t)],
+  ['pa_perception',    t => /PERCEPTION EDITOR/.test(t)],
+  ['pa_calcification', t => /calcification detector for a serial-fiction engine/.test(t)],
+  ['pa_voiceAnchor',   t => /generate a VOICE ANCHOR/.test(t)],
+  ['pa_preciseEditor', t => /precise line-editor, not a writer/.test(t)],
+  ['pa_soundscape',    t => /classify the ambient soundscape/.test(t)],
+  ['pa_memory',        t => /CHARACTER MEMORY EXTRACTOR/.test(t)],
+];
+
 const GENERIC = { goal:L, antagonistOrAntiForce:'the assembly', milestones:[], scenes:[], timelineLength:20,
   characters:[], name:'Julian', distinguishing_feature:'a burn scar', private_hope:L,
   defining_anecdote:L, attraction_manifestation:L, desire_register_exemplars:[L] };
@@ -504,13 +637,30 @@ process.on('uncaughtException', async (e) => { await closeBrowser(); console.err
 process.on('unhandledRejection', async (e) => { await closeBrowser(); console.error(e); process.exit(1); });
 process.on('exit', () => { try { browser.close(); } catch (_) {} });
 
-async function run({ hot, mutate, solo, duo, pollute }) {
+async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc }) {
   const ctx = await browser.newContext();
   try {
   const page = await ctx.newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
-  const planner = [], author = [], escaped = [], unknown = [];
-  await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: mk(hot) }));
+  const planner = [], author = [], escaped = [], unknown = [], scaffold = [],
+        unknownModel = [], ambiguous = [];
+  const kinds = {}; let bibleReq = 0;
+  // MUTATION CONTROL. The served source is the ONE lever; a case that passes with the production
+  // invocation deleted is evidence about a helper, not about the call site.
+  let _srcMutated = null, _mutationTargets = null;
+  await page.route('**/app.js*', r => {
+    let body = mk(hot);
+    if (mutateSrc) {
+      // The target must be UNIQUE. A marker that appears twice deletes one call site and leaves
+      // the other standing, and the control then proves nothing — this is the same non-unique
+      // marker mistake that once cost a six-figure line count.
+      _mutationTargets = body.split(mutateSrc.from).length - 1;
+      const next = body.replace(mutateSrc.from, mutateSrc.to);
+      _srcMutated = next !== body;
+      body = next;
+    }
+    return r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body });
+  });
   await page.route('**/api/**', async route => {
     const url = route.request().url().replace(/^https?:\/\/[^/]+/, '');
     if (PASSTHROUGH.test(url)) return route.continue();
@@ -521,15 +671,56 @@ async function run({ hot, mutate, solo, duo, pollute }) {
     const m=(b&&b.messages)||[];
     const sys=String((m.find(x=>x.role==='system')||{}).content||'');
     const usr=String((m.find(x=>x.role==='user')||{}).content||'');
+    // EXCLUSIVE CLASSIFICATION. Every signature is evaluated; exactly one must match. Zero
+    // matches is an unnamed request, more than one is an overlapping classifier — both are
+    // accounted for and, in the portfolio arms, ABORTED rather than answered.
+    const _txt = sys + '\n' + usr;
+    const _hits = REQUEST_KINDS.filter(([, test]) => test(_txt, sys, usr)).map(([k]) => k);
     let out;
-    if (/ARCHITECTURE LAWS/.test(sys)) {
-      author.push({ system: sys, user: usr, max_tokens: b.max_tokens, url });
-      out = PROSE;
-    } else if (/scene-structure planner for the OPENING scene/.test(sys)) {
-      planner.push({ url, model:b.model, max_tokens:b.max_tokens, reasoning_effort:b.reasoning_effort,
-                     response_format:b.response_format, user: usr });
-      out = plannerReply(usr, mutate);
-    } else out = JSON.stringify(GENERIC);
+    if (_hits.length !== 1) {
+      const rec = { url, matched: _hits, head: (sys || usr).slice(0, 110).replace(/\s+/g, ' ') };
+      (_hits.length === 0 ? unknownModel : ambiguous).push(rec);
+      if (genPortfolio) return route.abort();
+      out = JSON.stringify(GENERIC);
+    } else {
+      const kind = _hits[0];
+      kinds[kind] = (kinds[kind] || 0) + 1;
+      if (kind === 'scaffold') {
+        // The roster line the request carries is the ONLY source of the ref the responder echoes
+        // back — exactly what a model can do and no more.
+        const _ref = _txt.match(/subject_ref:\s*(\S+)/);
+        scaffold.push({ url, system: sys, user: usr, max_tokens: b.max_tokens,
+                        subject_ref: _ref ? _ref[1] : null });
+        out = JSON.stringify(scaffoldReply(_ref ? _ref[1] : null, genPortfolio));
+      } else if (kind === 'author') {
+        author.push({ system: sys, user: usr, max_tokens: b.max_tokens, url });
+        out = PROSE;
+      } else if (kind === 'planner') {
+        planner.push({ url, model:b.model, max_tokens:b.max_tokens, reasoning_effort:b.reasoning_effort,
+                       response_format:b.response_format, user: usr });
+        out = plannerReply(usr, mutate);
+      } else if (kind === 'aplotGenerator' && genPortfolio) {
+        // A VALID plot, so production accepts it first time and never enters correction. It
+        // declares a PERSON; normalisation, the canonical mint and the roster line are all
+        // production's work from here. `invalidAplot` deliberately withholds it, so the
+        // correction bucket is EXERCISED rather than asserted at zero and never tested.
+        out = JSON.stringify(genPortfolio.invalidAplot ? GENERIC : APLOT_VALID);
+      } else if (kind === 'aplotCorrection' && genPortfolio) {
+        out = JSON.stringify(APLOT_VALID);      // the correction succeeds, as it does in production
+      } else if (kind === 'antagonistBodyBible' && genPortfolio) {
+        // ONE REQUEST IS NOT PROOF OF DEDUPLICATION. With an instant answer, callers that would
+        // have raced are simply serialised by the response — the first one finishes before the
+        // second is reached. Holding the response open is the only way to ask whether a second
+        // caller enters WHILE the first is in flight, which is the shape a duplicate PAID call
+        // would take in production.
+        bibleReq++;
+        if (genPortfolio.holdBibleMs) await new Promise(r => setTimeout(r, genPortfolio.holdBibleMs));
+        // A nominated request returns a bible production must DISCARD (no signature_feature, no
+        // softness_seam, no tell), so the failure-and-retry path is exercised for real.
+        out = JSON.stringify((genPortfolio.failBibleOn || []).indexOf(bibleReq) !== -1
+          ? { archetype: 'BUREAUCRATIC_COLD', height: 'tall' } : ANTAGONIST_BIBLE);
+      } else out = JSON.stringify(GENERIC);
+    }
     // SHAPE-FAITHFUL ENVELOPES (2026-08-25 — added after the paid run). /api/mistral-proxy
     // returns the RAW Mistral envelope and never sets a top-level `content`; only
     // /api/chatgpt-proxy normalises to {content}. The old mock returned BOTH shapes at once,
@@ -550,7 +741,7 @@ async function run({ hot, mutate, solo, duo, pollute }) {
 
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:120000 });
-  const res = await page.evaluate(async ({ solo, duo, pollute }) => {
+  const res = await page.evaluate(async ({ solo, duo, pollute, genPortfolio }) => {
     const s = window.state;
     // ISOLATION SELF-CONTROL. Measured FIRST, before anything this case does: if a previous
     // case's pollution were visible here, context isolation is not doing its job and every
@@ -571,7 +762,21 @@ async function run({ hot, mutate, solo, duo, pollute }) {
     // SOLO: no seed. Nothing states presence, so the stage contract fixes it to the narrator
     // alone. Julian stays the story's love interest, i.e. an ESTABLISHED OFFSTAGE person — which
     // is exactly what lets us prove "may be referenced, may not be staged".
-    if (duo) {
+    if (genPortfolio) {
+      // ── A GENERATED ANTAGONIST, STAGED (2026-08-29) ──
+      // Marcus Vale has no seed facets, so the generated_cast provider is his ONLY psychological
+      // source. Staging him through the plan's participants is what makes him a C+ candidate, so
+      // this proves the whole chain in one run: attached portfolio → provider → planner choices →
+      // one selected truth in the author request.
+      window.STARTER_PLANS['test_genpf'] = { scenes: [{ n:1,
+        goal:'She counts what she has already signed for', setting:'the customs house',
+        participants:['Lirael', 'Marcus Vale'] }] };
+      s._starterId = 'test_genpf';
+      // NOTHING IS STAGED BY HAND HERE — not the A-plot, not the canonical entity, not the
+      // portfolio. The A-plot response declares a PERSON antagonist; production normalises it,
+      // mints the canonical identity, puts the subject_ref on the scaffold request, and attaches
+      // what comes back. The canonical id is READ AFTERWARDS, from wherever production put it.
+    } else if (duo) {
       // An ASSIGNMENT-owned two-person stage: Lirael and Seren are stated participants, so
       // presence is 'assignment'. Julian stays the love interest and therefore OFFSTAGE — which
       // is what lets us prove an offstage person may not be promoted to interlocutor.
@@ -589,7 +794,39 @@ async function run({ hot, mutate, solo, duo, pollute }) {
     try { await Promise.race([window.handleBeginStory(), new Promise(x=>setTimeout(x,120000))]); }
     catch(e){ threw = String(e && e.message); }
     s._skipCorridorValidation = false;
-    return { threw,
+    // ── TWO CALLERS, DELIBERATELY AT ONCE ──
+    // The natural Scene-1 path reaches its call sites sequentially, so a held response proves
+    // nothing about the FUNCTION's own deduplication. This asks the question directly: with no
+    // completed bible on state and the response held open, does a second concurrent caller issue
+    // a second PAID request? Production has five call sites and only a completed-state check.
+    let bibleProbe = null;
+    if (genPortfolio && genPortfolio.probeConcurrentBible) {
+      // A · DEDUPLICATION. Two callers, nothing on state, the response held open.
+      s.antagonistBodyBible = null;
+      const both = await Promise.all([window._generateAntagonistBodyBible(),
+                                      window._generateAntagonistBodyBible()]);
+      const dedupe = { resolved: both.filter(Boolean).length, same: both[0] === both[1],
+                       stored: !!s.antagonistBodyBible };
+      // B · FAILURE IS RETRYABLE. An in-flight entry that is never cleared on failure poisons the
+      // generator for the rest of the story — the second attempt would join a promise that
+      // already resolved to null and no request would ever be made again.
+      s.antagonistBodyBible = null;
+      const failed = await window._generateAntagonistBodyBible();      // responder returns junk
+      s.antagonistBodyBible = null;
+      const retried = await window._generateAntagonistBodyBible();     // must issue a NEW request
+      const retry = { failedReturned: failed, retriedOk: !!retried, stored: !!s.antagonistBodyBible };
+      // C · OWNERSHIP. The story changes while the request is in flight; the answer belongs to a
+      // story nobody is playing, and must not be written onto the new one.
+      s.antagonistBodyBible = null;
+      const priorStory = s.storyId;
+      const inflight = window._generateAntagonistBodyBible();
+      s.storyId = 'story-B-' + Math.random().toString(36).slice(2, 7);
+      const late = await inflight;
+      const ownership = { returned: late, stored: !!s.antagonistBodyBible };
+      s.storyId = priorStory;
+      bibleProbe = { dedupe, retry, ownership };
+    }
+    return { threw, bibleProbe,
       // Eligibility now comes from the STAGE CONTRACT when the seed is authoritative; the old
       // heuristic is kept alongside so the harness can prove they differ where it matters.
       stage: (window._scene1StageContract ? window._scene1StageContract(s) : null),
@@ -597,6 +834,41 @@ async function run({ hot, mutate, solo, duo, pollute }) {
       eligible: (window._scene1StageContract
         ? (window._scene1StageContract(s).onStage || []).map(c => c.label)
         : (window._sceneEligibleCast ? window._sceneEligibleCast(s, 1) : null)),
+      // Read from production's own A-plot, never from a value the harness supplied.
+      genPfCid: (function () { try {
+        return (s.aPlot && s.aPlot.antagonistSubject && s.aPlot.antagonistSubject.canonicalId) || null;
+      } catch (_) { return null; } })(),
+      // Production's OWN encoder, applied to the id production minted — never a copy of the rule.
+      genPfEncodedCid: (function () {
+        try { const id = ((window.state.aPlot||{}).antagonistSubject||{}).canonicalId;
+              return (id && window._relEncodeId) ? window._relEncodeId(id) : null;
+        } catch (_) { return null; } })(),
+      // WHAT PERSISTED. The scaffold must keep its own fields and NOT the raw portfolio payload:
+      // characterPortfolios is consumed and scrubbed, never left on state for a later reader.
+      genPfScaffold: (function () {
+        try { const sc = s.cgScaffold; if (!sc) return null;
+              return { keys: Object.keys(sc), raw: JSON.stringify(sc).indexOf('characterPortfolios') !== -1,
+                       hasArcs: Array.isArray(sc.issueArcs) && sc.issueArcs.length > 0 };
+        } catch (_) { return null; } })(),
+      // The attached compartment, read off the canonical entity the scaffold request named.
+      genPfProfile: (function () {
+        try { const L = window._relLedger(false); const e = L && L.entities[((window.state.aPlot||{}).antagonistSubject||{}).canonicalId];
+              const ap = e && e.authorProfile; if (!ap) return null;
+              return { status: ap.status, failureCode: ap.failureCode, n: (ap.cPlusFacets || []).length,
+                       label: e.label, origins: [...new Set((ap.cPlusFacets || []).map(f => f.origin))] };
+        } catch (_) { return null; } })(),
+      // The PUBLISHED guardrails, with the facet ids attachment resolved their category scope to.
+      // Without this, "the unselected guardrail did not fire" could mean it was never attached.
+      genPfGuards: (function () {
+        try { const L = window._relLedger(false); const e = L && L.entities[((window.state.aPlot||{}).antagonistSubject||{}).canonicalId];
+              return ((e && e.authorProfile && e.authorProfile.guardrails) || [])
+                .map(function (g) { return { why: g.why, facets: (g.facets || []).slice() }; });
+        } catch (_) { return null; } })(),
+      genPfFacets: ((window.state.aPlot||{}).antagonistSubject||{}).canonicalId
+        ? (window._facetsForCharacter({ id: ((window.state.aPlot||{}).antagonistSubject||{}).canonicalId, label: 'Marcus Vale',
+             aliases: ['Marcus Vale'] }, s, { sceneNumber: 1 }) || []).map(function (f) {
+             return { id: f.facet_id, cat: f.category, truth: f.canonical_truth }; })
+        : null,
       assignments: s._scene1SceneAssignments || null,
       staged: s._scene1StagedCharacters || null,
       skeleton: s.sceneSkeleton ? { cp: s.sceneSkeleton.character_plus, ep: s.sceneSkeleton.environment_plus, fu: s.sceneSkeleton.fusion, pof: s.sceneSkeleton.pc_opening_fusion } : null,
@@ -608,8 +880,9 @@ async function run({ hot, mutate, solo, duo, pollute }) {
         try { window.__ISOLATION_SENTINEL = 1; window.localStorage.setItem('__isolation_sentinel', '1');
               window.state.__isolationJunk = 'this must not survive'; return true; } catch (_) { return false; }
       })() };
-  }, { solo: !!solo, duo: !!duo, pollute: !!pollute });
-  return { planner, author, escaped, unknown, logs, ...res };
+  }, { solo: !!solo, duo: !!duo, pollute: !!pollute, genPortfolio: genPortfolio || null });
+  return { planner, author, scaffold, kinds, unknownModel, ambiguous, escaped, unknown, logs,
+           srcMutated: _srcMutated, mutationTargets: _mutationTargets, ...res };
   } finally { await ctx.close().catch(() => {}); }
 }
 
@@ -1578,6 +1851,299 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
   t(`${label} U15 seam 8 · it is in the UPSTREAM system message, and nothing escaped`,
     sys.includes(beat) && /ARCHITECTURE LAWS/.test(sys) && R.escaped.length === 0 && R.unknown.length === 0,
     JSON.stringify({ escaped: R.escaped.slice(0,2), unknown: R.unknown.slice(0,2) }));
+  console.log('');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// PART X — ONE UNINTERRUPTED CHAIN: GENERATED PORTFOLIO → PLANNER CHOICES → ONE TRUTH TO GROK
+//
+// Marcus Vale is not in the seed, so the generated_cast provider is his ONLY psychological
+// source. Nothing here is asserted against a helper: the facets are read back through
+// _facetsForCharacter, the choices are read out of the dispatched planner request, and the
+// selected material is read out of the bytes handed to the author.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO END\n${'═'.repeat(90)}\n`);
+{
+  const G = await run({ hot: false, mutate: null, genPortfolio: true });
+  const pu = (G.planner[0] || {}).user || '';
+  const asys = (G.author[0] || {}).system || '';
+  const aall = asys + '\n' + ((G.author[0] || {}).user || '');
+  const facets = G.genPfFacets || [];
+  console.log(`   provider facets   : ${JSON.stringify(facets.map(f => f.cat))}`);
+  console.log(`   C+ delivered      : ${JSON.stringify((G.skeleton && G.skeleton.cp || []).map(c => c.character))}`);
+
+  // ── THE SEAM THIS PART EXISTS FOR ──
+  // Nothing was staged by hand: no aPlot, no canonical entity, no attachment. The A-plot response
+  // declared a PERSON; production normalised it, minted the identity, put the ref on the scaffold
+  // request, and attached what the scaffold RESPONSE carried.
+  const sc = G.scaffold[0] || null;
+  const prof = G.genPfProfile || null;
+  t('X0a: exactly one scaffold, one Scene-1 planner and one author request',
+    G.scaffold.length === 1 && G.planner.length === 1 && G.author.length === 1,
+    `scaffold=${G.scaffold.length} planner=${G.planner.length} author=${G.author.length}`);
+  t('X0b: the dispatched scaffold request carried a backend-owned subject_ref for a person ' +
+    'production minted itself',
+    !!sc && !!sc.subject_ref && /:primary_antagonist$/.test(sc.subject_ref)
+      && /PORTFOLIO SUBJECTS/.test(sc.system + '\n' + sc.user),
+    JSON.stringify(sc && sc.subject_ref));
+  t('X0c: the portfolio was parsed, validated and ATTACHED from that response — status ready, ' +
+    'five facets, origin generated_cast',
+    !!prof && prof.status === 'ready' && prof.n === 5 && prof.label === 'Marcus Vale'
+      && JSON.stringify(prof.origins) === '["generated_cast"]',
+    JSON.stringify(prof));
+  // One ref, three places: the request that asked, the entity that holds the portfolio, and the
+  // stem every derived facet id is built on. All five ids share ONE stem, so no facet can have
+  // been minted against a different subject.
+  // Not "they share A stem" — the stem must BE the requested identity, encoded by production's
+  // own encoder. Five ids derived from the same WRONG person share a stem too.
+  const _expectPrefix = G.genPfEncodedCid ? `gen:${G.genPfEncodedCid}:v1:` : null;
+  t('X0d: the SAME canonical ref travels request → attached entity → every derived facet id',
+    !!sc && sc.subject_ref === G.genPfCid && !!_expectPrefix
+      && (G.genPfFacets || []).length === 5
+      && (G.genPfFacets || []).every(f => f.id === _expectPrefix + f.cat),
+    JSON.stringify({ req: sc && sc.subject_ref, entity: G.genPfCid, expect: _expectPrefix,
+                     ids: (G.genPfFacets || []).map(f => f.id).slice(0, 1) }));
+  t('X0e: the PERSISTED scaffold keeps its own fields and NO raw characterPortfolios — the ' +
+    'payload is consumed and scrubbed, never left on state for a later reader',
+    !!G.genPfScaffold && G.genPfScaffold.raw === false && G.genPfScaffold.hasArcs === true
+      && G.genPfScaffold.keys.indexOf('characterPortfolios') === -1,
+    JSON.stringify(G.genPfScaffold));
+
+  t('X1: the generated portfolio is SELECTABLE — five facets on the canonical entity, five categories',
+    facets.length === 5 && new Set(facets.map(f => f.cat)).size === 5,
+    JSON.stringify(facets.map(f => f.cat)));
+  t('X2: the PLANNER request offers all five, each under its backend-owned facet_id',
+    facets.length === 5 && facets.every(f => pu.includes('facet_id: ' + f.id)),
+    JSON.stringify(facets.filter(f => !pu.includes('facet_id: ' + f.id)).map(f => f.id)));
+  t('X3: …and all five canonical truths are legible as choices',
+    facets.length === 5 && facets.every(f => pu.includes(f.truth)),
+    JSON.stringify(facets.filter(f => !pu.includes(f.truth)).map(f => f.cat)));
+
+  const cp = (G.skeleton && G.skeleton.cp) || [];
+  const chosen = cp.filter(c => /Marcus Vale/i.test(String(c.character || '')))[0] || null;
+  t('X4: the planner selects exactly ONE of his facets, by id',
+    !!chosen && !!chosen.facet_id && facets.some(f => f.id === chosen.facet_id),
+    JSON.stringify(chosen && { character: chosen.character, facet_id: chosen.facet_id }));
+
+  const selected = chosen ? facets.filter(f => f.id === chosen.facet_id)[0] : null;
+  const others   = chosen ? facets.filter(f => f.id !== chosen.facet_id) : [];
+  // His block only — so "present" cannot be satisfied by another character's rendering.
+  const blk = (asys.match(/^  • Marcus Vale[\s\S]*?(?=\n  • |\n  RECONSTRUCT)/m) || [''])[0];
+  console.log(`   author block      : ${JSON.stringify(blk.slice(0, 200))}`);
+
+  t('X5: the AUTHOR receives the backend-resolved SOURCE TRUTH — the selected one, exactly once',
+    !!selected && (asys.split(selected.truth).length - 1) === 1
+      && blk.includes('SOURCE TRUTH — DO NOT STATE: ' + selected.truth),
+    JSON.stringify(selected && selected.truth.slice(0, 70)));
+  // THE VALUES, NOT THE HEADERS. Counting a label proves the template rendered; it does not
+  // prove the selected material travelled. Every one of these must be non-empty and appear
+  // verbatim, exactly once, inside HIS block.
+  const once = (hay, needle) => !!needle && String(needle).trim().length > 0
+    && (hay.split(String(needle)).length - 1) === 1;
+  const _act = chosen && String(chosen.behavior || '').trim();
+  const _op  = chosen && String(chosen.pc_lens_operation || '').trim();
+  const _eff = chosen && String(chosen.pc_effect || '').trim();
+  t('X6: …and beside it the selected VISIBLE ACTION and PC INTERPRETATION — the VALUES, ' +
+    'non-empty and once each',
+    !!chosen && once(blk, 'VISIBLE ACTION — MUST OCCUR: ' + _act)
+      && once(blk, 'PC INTERPRETATION — MUST GOVERN THE NARRATION: ' + _op)
+      && once(blk, '; here: ' + _eff),
+    JSON.stringify({ act: _act, op: _op, eff: _eff && _eff.slice(0, 50) }));
+  const _pr = chosen && String(chosen.facet_pressure || '').trim();
+  t('X7: the applicability condition is PRESENT and travels as OUR wording, once, as the reason ' +
+    'the truth applies here',
+    !!chosen && !!_pr && once(blk, '(it applies here because: ' + _pr + ')'),
+    JSON.stringify({ pressure: _pr, inBlock: !!_pr && blk.includes(_pr) }));
+  t('X8: the OTHER FOUR canonical truths reach Grok nowhere',
+    others.length === 4 && others.every(f => !aall.includes(f.truth)),
+    JSON.stringify(others.filter(f => aall.includes(f.truth)).map(f => f.cat)));
+  t('X9: no facet id reaches Grok',
+    facets.length === 5 && facets.every(f => !aall.includes(f.id)),
+    JSON.stringify(facets.filter(f => aall.includes(f.id)).map(f => f.id)));
+  t('X10: no evidence machinery, guardrail bookkeeping or raw portfolio JSON reaches Grok',
+    !/evidence_requires|applicability_conditions|characterPortfolios|forbidden_restatements|misreading_guardrails|pressure_id|subject_ref/.test(aall),
+    (aall.match(/evidence_requires|applicability_conditions|characterPortfolios|forbidden_restatements|misreading_guardrails|pressure_id|subject_ref/g) || []).slice(0, 3).join(','));
+
+  // ── THE SCOPED GUARDRAIL, ON A GENERATED PORTFOLIO ──
+  // Both patterns match the same behavior string, so scope is the ONLY difference between them.
+  // The selected facet's guardrail must fire; one scoped to a facet nobody chose must not.
+  const selCat = selected ? selected.cat : null;
+  const othCat = others.length ? others[0].cat : null;
+  const GG = selCat && othCat ? await run({ hot: false, mutate: null, genPortfolio: { guards: [
+      { forbid: "checks the youth's hands", facets: [selCat], why: 'GUARD-ON-SELECTED-FACET' },
+      { forbid: 'before the words',         facets: [othCat], why: 'GUARD-ON-UNSELECTED-FACET' },
+    ] } }) : null;
+  const invalid = GG ? GG.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ') : '';
+  t('X11: a guardrail scoped to the SELECTED facet reaches validation and fires',
+    !!GG && GG.author.length === 0 && invalid.includes('GUARD-ON-SELECTED-FACET'),
+    `scoped to [${selCat}] · authorCalls=${GG && GG.author.length} | ${invalid.slice(0, 200) || '(no INVALID log)'}`);
+  const gg = (GG && GG.genPfGuards) || [];
+  t('X12: …while a guardrail scoped to a facet nobody selected does not fire',
+    !!GG && !invalid.includes('GUARD-ON-UNSELECTED-FACET')
+      // …and it was PRESENT to fire: both guardrails attached, each scoped to exactly one facet id.
+      && gg.length === 2 && gg.every(g => g.facets.length === 1)
+      && gg.some(g => g.why === 'GUARD-ON-UNSELECTED-FACET'),
+    `scoped to [${othCat}] — published guardrails: ${JSON.stringify(gg)}`);
+
+  // ── EXACT ACCOUNTING, BY NAME ──
+  // Every model request an arm issues is either one of the three chain kinds or a named sanctioned
+  // kind; anything else was ABORTED and counted as unknownModel. The A-plot generator that starts
+  // this chain is counted like everything else — and it fires TWICE (initial generation and the
+  // classification pass), which is exactly the kind of fact a generic catch-all used to hide.
+  const acct = a => a && ({ scaffold: a.scaffold.length, planner: a.planner.length,
+                           author: a.author.length, ...a.kinds,
+                           unknownApi: a.unknown.length, unknownModel: a.unknownModel.length,
+                           ambiguous: a.ambiguous.length, escaped: a.escaped.length });
+  // ── THE CENSUS ──
+  // Every count below was OBSERVED across repeated runs, not assumed. All but two are identical
+  // every time and are PINNED exactly. `pa_liBibleField` and `pa_soundscape` are conditionally
+  // gated and genuinely appear in some runs and not others, so they are bounded at 0..1 — a
+  // narrow range, not permission for arbitrary multiplicity: a regression firing an auditor a
+  // hundred times fails here. No bucket may appear that neither table names.
+  //
+  // aplotGenerator is 1 and aplotCorrection is 0 BECAUSE THE FIXTURE IS VALID. The earlier
+  // "the generator fires twice" was the harness answering with a GENERIC object that has no
+  // namedClock and no stakes, forcing production's self-correction pass — a fixture defect
+  // reported as a production fact. antagonistBodyBible and woundSwapTest only exist at all
+  // once the plot validates with a PERSON antagonist and real wound architecture.
+  const PINNED_FULL = {
+    scaffold:1, planner:1, author:1,
+    aplotGenerator:1, aplotCorrection:0, aplotCompression:1,
+    canonicalizer:2, rplot:1, subplots:1, characterSheet:6,
+    // ONE, now that the fixture returns a bible production keeps. The earlier 3 was the harness
+    // answering with an object missing signature_feature / softness_seam / any tell: production
+    // discarded each one, state stayed empty, and every later call site tried again.
+    antagonistBodyBible:1, woundSwapTest:1,
+    pa_lineEditor:1, pa_mechanicalFix:2, pa_continuation:2, pa_gravity:1, pa_bannedPhrase:2,
+    pa_archetype:1, pa_reparagraph:2, pa_perception:1, pa_calcification:1, pa_voiceAnchor:1,
+    pa_preciseEditor:1, pa_memory:1,
+    unknownApi:0, unknownModel:0, ambiguous:0, escaped:0 };
+  const BOUNDED_FULL = { pa_liBibleField: [0, 1], pa_soundscape: [0, 1] };
+  // The guard arm aborts on the guardrail fault BEFORE the author, so no author call, no
+  // post-author lane and no subplot pass. Everything upstream of the author is unchanged.
+  const EXPECT_GUARD = Object.fromEntries(Object.entries(PINNED_FULL)
+    .map(([k, v]) => [k, k.indexOf('pa_') === 0 ? 0 : v]));
+  EXPECT_GUARD.author = 0; EXPECT_GUARD.subplots = 0;
+  const BOUNDED_GUARD = { pa_liBibleField: [0, 0], pa_soundscape: [0, 0] };
+  const census = (a, pinned, bounded) => {
+    if (!a) return ['(no arm)'];
+    const got = acct(a), bad = [];
+    Object.keys(pinned).forEach(k => {
+      if ((got[k] || 0) !== pinned[k]) bad.push(`${k}=${got[k] || 0} want ${pinned[k]}`); });
+    Object.keys(bounded).forEach(k => { const v = got[k] || 0;
+      if (v < bounded[k][0] || v > bounded[k][1]) bad.push(`${k}=${v} outside ${JSON.stringify(bounded[k])}`); });
+    // A bucket neither table names is a new kind of traffic, and it fails the census.
+    Object.keys(a.kinds).forEach(k => {
+      if (!(k in pinned) && !(k in bounded)) bad.push('undeclared:' + k); });
+    return bad;
+  };
+  console.log(`   accounting main    : ${JSON.stringify(acct(G))}`);
+  console.log(`   accounting guard   : ${JSON.stringify(acct(GG))}`);
+  t('X13: the main arm matches its exact request census — one A-plot generator, ZERO corrections, ' +
+    'one compression, and every other kind pinned',
+    census(G, PINNED_FULL, BOUNDED_FULL).length === 0,
+    JSON.stringify(census(G, PINNED_FULL, BOUNDED_FULL)));
+  t('X13b: the guard arm matches its own exact census — same chain and setup, no author call, ' +
+    'no post-author lane, no subplot pass',
+    census(GG, EXPECT_GUARD, BOUNDED_GUARD).length === 0,
+    JSON.stringify(census(GG, EXPECT_GUARD, BOUNDED_GUARD)));
+  t('X13c: every model request matched EXACTLY ONE signature — none unnamed, none ambiguous, ' +
+    'and nothing answered generically',
+    G.unknownModel.length === 0 && G.ambiguous.length === 0
+      && !!GG && GG.unknownModel.length === 0 && GG.ambiguous.length === 0,
+    JSON.stringify({ unnamed: [...G.unknownModel, ...GG.unknownModel].slice(0, 3),
+                     ambiguous: [...G.ambiguous, ...GG.ambiguous].map(x => x.matched).slice(0, 3) }));
+  // ── MUTATION CONTROL ── the production invocation deleted from the SERVED source. Everything
+  // else is identical, including the scaffold response. If the chain still delivers a truth, this
+  // whole part is evidence about a helper rather than about the call site.
+  const MX = await run({ hot: false, mutate: null, genPortfolio: true, mutateSrc: {
+    from: '_handleScaffoldPortfolios(parsed, _pfRoster);',
+    to:   '/* MUTATION CONTROL: the production invocation is removed */' } });
+  const mxSys = (MX.author[0] || {}).system || '';
+  t('X14: the mutation target occurs EXACTLY ONCE in the served source and was replaced',
+    MX.mutationTargets === 1 && MX.srcMutated === true,
+    `targets=${MX.mutationTargets} mutated=${MX.srcMutated}`);
+  t('X15: with the production handler invocation REMOVED, the scaffold still runs but NOTHING ' +
+    'attaches, no truth reaches Grok, and the planner has nothing to select',
+    MX.scaffold.length === 1 && (MX.genPfFacets || []).length === 0
+      && (MX.genPfProfile || {}).status !== 'ready'
+      && facets.every(f => !mxSys.includes(f.truth)),
+    JSON.stringify({ scaffold: MX.scaffold.length, facets: (MX.genPfFacets || []).length,
+                     profile: MX.genPfProfile,
+                     leaked: facets.filter(f => mxSys.includes(f.truth)).map(f => f.cat) }));
+  const mxPu = (MX.planner[0] || {}).user || '';
+  const mxCp = ((MX.skeleton && MX.skeleton.cp) || [])
+    .filter(c => /Marcus Vale/i.test(String(c.character || '')))[0] || null;
+  t('X15b: …and the PLANNER was offered nothing — no facet id reaches the request, and his ' +
+    'assignment comes back with no selected facet_id',
+    facets.every(f => !mxPu.includes(f.id)) && !!mxCp && !mxCp.facet_id,
+    JSON.stringify({ leakedIds: facets.filter(f => mxPu.includes(f.id)).map(f => f.id),
+                     cp: mxCp && { character: mxCp.character, facet_id: mxCp.facet_id || null } }));
+  // ── THE CORRECTION BUCKET, EXERCISED ──
+  // "aplotCorrection = 0" is only evidence if a correction can be seen when one really happens.
+  // This arm withholds the valid plot exactly once: production rejects it, sends the retry with
+  // its validation errors, and the classifier must file that as a CORRECTION, not as a second
+  // generation. This is the same shape that produced the false "the generator fires twice".
+  const CX = await run({ hot: false, mutate: null, genPortfolio: { invalidAplot: true } });
+  console.log(`   accounting invalid : ${JSON.stringify(acct(CX))}`);
+  t('X17: given an INVALID A-plot, production runs its self-correction pass — and it is counted ' +
+    'as a correction, not as a second generator call',
+    (CX.kinds.aplotGenerator || 0) === 1 && (CX.kinds.aplotCorrection || 0) === 1
+      && (CX.kinds.aplotCompression || 0) === 1
+      && CX.unknownModel.length === 0 && CX.ambiguous.length === 0,
+    JSON.stringify({ gen: CX.kinds.aplotGenerator, corr: CX.kinds.aplotCorrection,
+                     comp: CX.kinds.aplotCompression, unnamed: CX.unknownModel.length }));
+  // ── THE CONCURRENCY PROBE ──
+  // The body-bible response is held open long enough that any caller entering while the first is
+  // still in flight must issue its own request. Production checks only for a COMPLETED bible, so
+  // if more than one call site can be reached during that window, this is where it shows.
+  // Request #1 is the natural one; #2 serves BOTH concurrent probe callers; #3 is nominated to
+  // come back unusable; #4 is the retry; #5 is answered after the story has changed underneath it.
+  const HB = await run({ hot: false, mutate: null, genPortfolio: {
+    holdBibleMs: 3000, probeConcurrentBible: true, failBibleOn: [3] } });
+  const bp = HB.bibleProbe || {};
+  console.log(`   body-bible requests : ${HB.kinds.antagonistBodyBible}`);
+  console.log(`   body-bible probe    : ${JSON.stringify(bp)}`);
+  t('X18: on the Scene-1 path the body bible is requested ONCE even with the response held in ' +
+    'flight — the call sites are reached sequentially, and the earlier count of three was the ' +
+    'harness answering with an object production discards',
+    (HB.kinds.antagonistBodyBible || 0) === 5,
+    `total=${HB.kinds.antagonistBodyBible} (want 5: 1 natural + 1 shared by two concurrent ` +
+    `callers + 1 discarded + 1 retry + 1 answered after the story changed)`);
+  t('X18b: TWO CONCURRENT CALLERS with nothing on state and the response held open issue ONE ' +
+    'paid request between them, and both receive the SAME bible',
+    !!bp.dedupe && bp.dedupe.resolved === 2 && bp.dedupe.same === true && bp.dedupe.stored === true,
+    JSON.stringify(bp.dedupe));
+  t('X18c: a FAILED attempt is retryable — the in-flight entry clears when it settles, so the ' +
+    'next caller issues a real request instead of joining a promise that already resolved to null',
+    !!bp.retry && bp.retry.failedReturned === null && bp.retry.retriedOk === true
+      && bp.retry.stored === true, JSON.stringify(bp.retry));
+  t('X18d: a bible that arrives AFTER the story changed is discarded, not written onto the new ' +
+    'story — ownership is verified before storage',
+    !!bp.ownership && bp.ownership.returned === null && bp.ownership.stored === false,
+    JSON.stringify(bp.ownership));
+
+  // ── AND BOTH NEW GUARDS ARE MUTATION-CONTROLLED ──
+  // A guard asserted but never shown to bite is the exact shape this review has been catching.
+  // Each is deleted from the SERVED source in its own arm; the corresponding claim must go red.
+  const bibleProbeArm = { holdBibleMs: 3000, probeConcurrentBible: true, failBibleOn: [3] };
+  const MB1 = await run({ hot: false, mutate: null, genPortfolio: bibleProbeArm, mutateSrc: {
+    from: 'if (_antBibleInFlight && _antBibleInFlight.key === _key) {', to: 'if (false) {' } });
+  t('X18e: with the in-flight JOIN removed, the two concurrent callers issue a SECOND paid ' +
+    'request — so X18b is evidence about that guard, not about the response being fast',
+    MB1.mutationTargets === 1 && (MB1.kinds.antagonistBodyBible || 0) > 5,
+    `targets=${MB1.mutationTargets} requests=${MB1.kinds.antagonistBodyBible} (unmutated is 5)`);
+  const MB2 = await run({ hot: false, mutate: null, genPortfolio: bibleProbeArm, mutateSrc: {
+    from: 'if (_keyAtRequest && _antBibleScopeKey() !== _keyAtRequest) {', to: 'if (false) {' } });
+  t('X18f: with the OWNERSHIP check removed, the late bible IS written onto the story that ' +
+    'replaced it — so X18d is evidence about that guard',
+    MB2.mutationTargets === 1 && !!MB2.bibleProbe && MB2.bibleProbe.ownership.stored === true,
+    `targets=${MB2.mutationTargets} ownership=${JSON.stringify(MB2.bibleProbe && MB2.bibleProbe.ownership && { stored: MB2.bibleProbe.ownership.stored })}`);
+  console.log(`   accounting mutant  : ${JSON.stringify(acct(MX))}`);
+  t('X16: the mutant arm matches the SAME exact census — the difference is the deleted call ' +
+    'site, not the traffic that reaches it',
+    census(MX, PINNED_FULL, BOUNDED_FULL).length === 0,
+    JSON.stringify(census(MX, PINNED_FULL, BOUNDED_FULL)));
   console.log('');
 }
 
