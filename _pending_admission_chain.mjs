@@ -3,7 +3,7 @@
 // batch will later produce, plus the intercepted model responses.
 //
 // mutateSrc removes one production call at a time; each removal must break the chain.
-export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
+export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreBeforeExtraction, outOfOrder } = {}) {
   const APLOT = {
     goal: 'She must clear the manifest before the tide turns and the ship leaves without her sister',
     namedClock: 'the tide at dawn', clockUnit: 'turns', totalClockUnits: 12,
@@ -17,11 +17,19 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
     woundLoadBearingProof: 'her fear of being left drives every choice; his failed promise is why he will not promise again',
     milestones: [{ atScene: 1, event: 'she reaches the harbour office and is refused' }],
   };
+  // Both staged people are ON the page. The byte-identical-prose case needs that: if B's character
+  // were absent from the text, admission would refuse him for good reason and the test would be
+  // measuring an admission rule rather than invocation identity.
+  // Both staged people appear MID-SENTENCE and both carry a DIALOGUE TAG. Production refuses a new
+  // identity whose only occurrence is sentence-initial (every sentence starts with a capital, so
+  // that proves nothing) and it refuses one with no person-context evidence at all — "passed
+  // without stopping" is not evidence that a name belongs to a person; "said" is, anywhere.
+  // Two fixture faults found this way, both of them production being right.
   const PROSE = 'The customs house smelled of wet rope. Mara Dunn said the clause number instead of the '
-    + 'clause, and I counted what I had already signed for while she watched me do it. A clerk passed '
-    + 'behind her without stopping. I had come to have the manifest cleared before the tide turned, and '
-    + 'she had come to be the reason it would not be. She waited for me to find the number myself, which '
-    + 'was a kindness, and then she said it again anyway.';
+    + 'clause, and I counted what I had already signed for while she watched me do it. Behind her, Tom '
+    + 'Reed said nothing at all and did not look up. I had come to have the manifest cleared before '
+    + 'the tide turned, and she had come to be the reason it would not be. She waited for me to find the '
+    + 'number myself, which was a kindness, and then she said it again anyway.';
 
   const ctx = await browser.newContext();
   try {
@@ -29,12 +37,26 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
     page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
     let targets = null, planner = null, author = null, extraction = null, escaped = [];
     let body = SRC;
-    if (mutateSrc) { targets = body.split(mutateSrc.from).length - 1; body = body.replace(mutateSrc.from, mutateSrc.to); }
+    // One mutation or several. Each marker's uniqueness is asserted independently; `targets` is
+    // the minimum across them, so a non-unique marker anywhere fails the control.
+    if (mutateSrc) {
+      const list = Array.isArray(mutateSrc) ? mutateSrc : [mutateSrc];
+      targets = Infinity;
+      for (const mut of list) {
+        targets = Math.min(targets, body.split(mut.from).length - 1);
+        body = body.replace(mut.from, mut.to);
+      }
+    }
     await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body }));
     page.on('request', r => { if (/\/api\//.test(r.url()) && !/localhost|127\.0\.0\.1/.test(r.url())) escaped.push(r.url()); });
     await page.route('**/api/**', async route => {
       const u = route.request().url();
-      if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return route.continue();
+      // FULFILLED, NOT CONTINUED. Letting these reach the real dev server spawns a per-invocation
+      // @vercel/node runtime that is never reaped — 358 of them, 1.1 GB, accumulated across one
+      // day's suite runs, and that is what kept "wedging" the server mid-suite.
+      if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) {
+        return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
+      }
       let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
       const m = (b && b.messages) || [];
       const sys = String((m.find(x => x.role === 'system') || {}).content || '');
@@ -88,9 +110,10 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
         // WHOLE response: no admission, no promotion, nothing mutated.
         const echoRef = badEcho ? 'cand:00000000-dead-beef-0000-000000000000' : ref;
         out = { characters: [
-            { name: 'Mara Dunn', present: true, relationshipToPC: 'the customs officer',
+            { name: (sys.match(/subject_ref: \S+  —  ([^\n(]+)/) || [])[1]?.trim() || 'Mara Dunn',
+              present: true, relationshipToPC: 'the customs officer',
               newLayer: null, vehicle: 'none', framing: null, ...(echoRef ? { subject_ref: echoRef } : {}) },
-            { name: 'a passing clerk', present: true, relationshipToPC: null,
+            { name: 'a passing porter', present: true, relationshipToPC: null,
               newLayer: null, vehicle: 'none', framing: null } ],
           scene: { chargeTier: 'low', interpretiveDensity: 'measured', loadedSentenceRatio: 0.1 },
           sceneState: { setting: 'the customs house', charactersPresent: ['Mara Dunn'],
@@ -107,7 +130,11 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
     await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => typeof window.handleBeginStory === 'function', { timeout: 60000 });
 
-    const res = await page.evaluate(async ({ PROSE }) => {
+    // A page that navigates or a context torn down mid-run must produce a REPORTABLE result, not
+    // an uncaught rejection that hides which arm failed.
+    let res;
+    try {
+    res = await page.evaluate(async ({ PROSE, staged, restoreBeforeExtraction, outOfOrder }) => {
       const s = window.state;
       const def = (window.STARTER_STORIES || []).find(d => d && d.id === 'starter_first_sacrifice');
       s.picks = s.picks || {};
@@ -119,7 +146,7 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
         playerMask:'OPEN_VEIN', storyLength:'fling', tier:'fling', access:'sub', subscribed:true,
         fortunes:9999999, intensity:'Steamy', pov:'first_person',
         identity:{ playerName:'Lirael', partnerName:'Julian' },
-        renderMode:'literary', currentEngine:'literary', storyId:'pa-chain', myUid:'probe' });
+        renderMode: staged ? 'staged' : 'literary', currentEngine:'literary', storyId:'pa-chain', myUid:'probe' });
       // An UNSEEDED plan whose only ordinary candidate exists in no seed and no registry.
       window.STARTER_PLANS['pa_chain'] = { scenes: [{ n:1,
         goal:'She counts what she has already signed for', setting:'the customs house',
@@ -149,6 +176,18 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
             'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')] }));
       };
 
+      window.__admitTrace = [];
+      // DRAIN, DO NOT SLEEP. The extraction guard set is the real signal that the guarded work
+      // has finished; a timer only says how long we waited.
+      window.__drainLedger = async function () {
+        for (let i = 0; i < 400; i++) {
+          const n = (window.__ledgerInFlightUids && window.__ledgerInFlightUids.size) || 0;
+          if (n === 0) { await new Promise(r => setTimeout(r, 0)); 
+            if (((window.__ledgerInFlightUids && window.__ledgerInFlightUids.size) || 0) === 0) return true; }
+          await new Promise(r => setTimeout(r, 25));
+        }
+        return false;
+      };
       const logs = [];
       const realWarn = console.warn, realLog = console.log, realErr = console.error;
       console.warn = function () { try { logs.push('W ' + [].join.call(arguments, ' ')); } catch (_) {} return realWarn.apply(console, arguments); };
@@ -161,10 +200,57 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
       const uid = (window.StoryPagination && window.StoryPagination.getPageUids
         ? window.StoryPagination.getPageUids() : [])[0] || null;
       const beforeSnap = uid ? window._pendingAdmissionSnapshot(s, uid) : null;
+      let restoreEvidence = null, orderEvidence = null;
+
+      // ── RESTORE AFTER BINDING, BEFORE EXTRACTION SUCCEEDS ──
+      // The page is mounted and bound; extraction has not run. Everything durable round-trips
+      // through JSON exactly as a save file does, and the retry must reuse the SAME package.
+      if (restoreBeforeExtraction) {
+        const savedPending = JSON.stringify(s._pendingAdmission);
+        const savedProcessed = JSON.stringify(s._ledgerProcessedUids || {});
+        const refBefore = (s._pendingAdmission.byInvocation[Object.keys(s._pendingAdmission.byInvocation)[0]] || {})
+          .candidates[0].candidate_ref;
+        s._pendingAdmission = JSON.parse(savedPending);
+        s._ledgerProcessedUids = JSON.parse(savedProcessed);
+        const snapAfter = window._pendingAdmissionSnapshot(s, uid);
+        restoreEvidence = { refBefore, snapAfter,
+          sameRef: !!snapAfter && snapAfter.subjects[0] && snapAfter.subjects[0].subject_ref === refBefore,
+          stillBound: !!snapAfter && snapAfter.sceneUid === uid,
+          generatorCalls: window.__pendingCalls };
+      }
+
+      // ── TWO INVOCATIONS, COMPLETING OUT OF ORDER ──
+      // A is the real generation above. B is captured and parked through the SAME production
+      // functions and mounted as its own page naming its own invocation. B is then extracted
+      // FIRST. When `outOfOrder === 'identical'` B's page carries byte-identical prose to A's, so
+      // only the page metadata can tell them apart.
+      if (outOfOrder) {
+        const mB = window._captureAdmissionManifest(s,
+          [{ id:'named:tom_reed', label:'Tom Reed', aliases:['Tom Reed'],
+             providerOwner:'ordinary/emergent name-only' }],
+          { invocationId: 'inv-B', lineage: String(s.storyId) + '::scene1' });
+        const parked = await window._generatePendingPortfolios(mB, s);
+        parked.forEach(x => window._parkPendingPortfolio(s, 'inv-B', x.subject_ref, x.facets));
+        const proseB = (outOfOrder === 'identical') ? PROSE
+          : PROSE.replace('The customs house smelled of wet rope.', 'The tide was already turning.');
+        window._recordInvocationProse(s, 'inv-B', proseB);
+        window.StoryPagination.addPage('<p>' + proseB + '</p>', false, undefined, { invocationId: 'inv-B' });
+        const uidB = window.StoryPagination.getPageUids()[1];
+        // B EXTRACTS FIRST.
+        window.__echoName = 'Tom Reed';
+        await window._updateCharacterDisclosureLedgerForCurrent(proseB, uidB);
+        await window.__drainLedger();
+        window.__echoName = null;
+        const stB = s._pendingAdmission.byInvocation['inv-B'];
+        orderEvidence = { uidB, bBound: stB && stB.sceneUid === uidB,
+                          bStatus: stB && stB.candidates[0].status,
+                          bPromotedTo: stB && stB.candidates[0].promotedTo };
+      }
+
       if (typeof window._updateCharacterDisclosureLedgerForCurrent === 'function') {
         await window._updateCharacterDisclosureLedgerForCurrent(PROSE, uid);
       }
-      await new Promise(r => setTimeout(r, 1500));           // extraction resolves off-thread
+      const drained = await window.__drainLedger();
       console.warn = realWarn; console.log = realLog; console.error = realErr;
 
       const store = window._pendingAdmissionStore(s);
@@ -176,7 +262,12 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
       const facetsAfter = promotedTo
         ? (window._facetsForCharacter({ id: promotedTo, label:'Mara Dunn', aliases:['Mara Dunn'] }, s, { sceneNumber: 2 }) || [])
         : [];
-      return { uid, beforeSnap, pendingCalls: window.__pendingCalls,
+      return { uid, beforeSnap, restoreEvidence, orderEvidence, drained,
+               trace: window.__admitTrace.slice(0, 80),
+               pageUids: window.StoryPagination.getPageUids(),
+               metaByUid: window.StoryPagination.getPageUids().map(function (u) {
+                 var m = window.StoryPagination.getPageMetaByUid(u); return u + '→' + (m ? m.invocationId : 'none'); }),
+               pendingCalls: window.__pendingCalls,
                diagPages: (window.StoryPagination && window.StoryPagination.getPageUids)
                  ? window.StoryPagination.getPageUids() : 'no accessor',
                diagHandoff: s._scene1PendingInvocation === undefined ? 'undefined' : s._scene1PendingInvocation,
@@ -190,9 +281,13 @@ export async function chain(browser, SRC, { mutateSrc, badEcho } = {}) {
                charLedgerKeys: Object.keys((window._charLedger && window._charLedger()) || {}).sort(),
                relEntities: Object.keys((window._relLedger(false) || {}).entities || {}).sort(),
                clerkAdmitted: !!(window._charLedger && Object.keys(window._charLedger() || {})
-                 .some(k => /clerk/i.test(k))),
-               logs: logs.filter(x => /^E |ADMIT:|CPLUS|SCENE1:|CHAR-ADMIT|LEDGER/.test(x)).map(x => x.slice(0, 220)).slice(0, 30) };
-    }, { PROSE });
+                 .some(k => /porter/i.test(k))),
+               logs: logs.filter(x => /^E |ADMIT:|CPLUS|SCENE1:|CHAR-ADMIT|LEDGER/.test(x)).map(x => x.slice(0, 220)).slice(-40) };
+    }, { PROSE, staged: !!staged, restoreBeforeExtraction: !!restoreBeforeExtraction, outOfOrder: outOfOrder || false });
+    } catch (e) {
+      res = { evaluateFailed: String(e && e.message).slice(0, 140), pendingCalls: null,
+              charLedgerKeys: [], relEntities: [], facetsAfter: 0, cand: null, rec: null, logs: [] };
+    }
 
     const ref = res.cand && res.cand.ref;
     const checks = {

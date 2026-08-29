@@ -241,6 +241,88 @@ await page.evaluate(({ uidB, t2 }) => window._updateCharacterDisclosureLedgerFor
 await settle();
 t('9b. re-rendering a finalized plan dedupes', extractions.length === 0, `got ${extractions.length}`);
 
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  11. BACKEND PAGE METADATA — KEYED BY UID, NOT BY INDEX
+//
+// The invocation that produced a page is named ON that page, in backend-only metadata, because a
+// content fingerprint cannot be an identity (retries, cached responses and deterministic authors
+// collide). An index-aligned array had to be kept in step by every insertion, deletion, reorder,
+// restore and prune — and it was not: setPages rebuilt it as all-nulls, silently erasing the
+// metadata of pages whose UIDs it PRESERVED. Keyed by the minted UID, that class is gone; these
+// cases hold it gone.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 11. PAGE METADATA SURVIVES REORDER, REMOVAL, REPLACEMENT AND RESTORE');
+{
+  const r = await page.evaluate(() => {
+    const P = window.StoryPagination;
+    const meta = u => P.getPageMetaByUid(u);
+    const inv = u => (meta(u) || {}).invocationId || null;
+    P.clear();
+    P.addPage('<p>alpha, long enough to be a real page of prose for the ledger.</p>', false, 'pg:A', { invocationId: 'inv-A' });
+    P.addPage('<p>beta, long enough to be a real page of prose for the ledger.</p>',  false, 'pg:B', { invocationId: 'inv-B' });
+    P.addPage('<p>gamma with no invocation metadata at all, still a real page.</p>',  false, 'pg:C');
+    const afterAdd = { A: inv('pg:A'), B: inv('pg:B'), C: inv('pg:C') };
+
+    // REORDER: the same three pages, order reversed. Each UID keeps its OWN metadata.
+    const pages = P.getPages(), uids = P.getPageUids();
+    P.setPages([pages[2], pages[1], pages[0]], ['pg:C', 'pg:B', 'pg:A']);
+    const afterReorder = { A: inv('pg:A'), B: inv('pg:B'), C: inv('pg:C'), order: P.getPageUids() };
+
+    // REMOVAL: drop B. Only B's entry disappears.
+    const p2 = P.getPages();
+    P.setPages([p2[0], p2[2]], ['pg:C', 'pg:A']);
+    const afterRemove = { A: inv('pg:A'), B: inv('pg:B'), C: inv('pg:C'), order: P.getPageUids() };
+
+    // SURVIVORS + NEW: a new UID has no metadata until it is explicitly given some.
+    const p3 = P.getPages();
+    P.setPages([p3[0], p3[1], '<p>delta, a brand new page with its own identity.</p>'],
+               ['pg:C', 'pg:A', 'pg:D']);
+    const afterGrow = { A: inv('pg:A'), C: inv('pg:C'), D: inv('pg:D') };
+
+    // REPLACING TEXT IN PLACE keeps the UID, so the metadata stays with the page — which is
+    // correct storage. Whether that invocation may still be BOUND is a separate question, and
+    // the integrity check answers it: prose that does not match refuses the bind.
+    P.goToPage(1);                                   // pg:A
+    P.updateCurrentPage('<p>alpha REPLACED with entirely different prose of adequate length.</p>');
+    const afterReplace = { A: inv('pg:A'), text: P.getPages()[1].indexOf('REPLACED') !== -1 };
+
+    // TWO BYTE-IDENTICAL PAGES, DISTINCT UIDS: independently addressable.
+    P.clear();
+    const SAME = '<p>identical prose on two different pages, of a length that fingerprints.</p>';
+    P.addPage(SAME, false, 'pg:X', { invocationId: 'inv-X' });
+    P.addPage(SAME, false, 'pg:Y', { invocationId: 'inv-Y' });
+    const twins = { X: inv('pg:X'), Y: inv('pg:Y'), same: P.getPages()[0] === P.getPages()[1] };
+
+    // CLEAR removes every entry — no orphan may survive.
+    P.clear();
+    const afterClear = { X: meta('pg:X'), Y: meta('pg:Y'), A: meta('pg:A'), count: P.getPageCount() };
+    return { afterAdd, afterReorder, afterRemove, afterGrow, afterReplace, twins, afterClear };
+  });
+
+  t('11a: metadata is stored per UID at addPage, and a page given none has none',
+    r.afterAdd.A === 'inv-A' && r.afterAdd.B === 'inv-B' && r.afterAdd.C === null,
+    JSON.stringify(r.afterAdd));
+  t('11b: after a REORDER each UID still carries its own invocation',
+    r.afterReorder.A === 'inv-A' && r.afterReorder.B === 'inv-B' && r.afterReorder.C === null
+      && JSON.stringify(r.afterReorder.order) === '["pg:C","pg:B","pg:A"]',
+    JSON.stringify(r.afterReorder));
+  t('11c: REMOVING one page drops only that UID\'s metadata',
+    r.afterRemove.B === null && r.afterRemove.A === 'inv-A'
+      && JSON.stringify(r.afterRemove.order) === '["pg:C","pg:A"]',
+    JSON.stringify(r.afterRemove));
+  t('11d: survivors keep their metadata across setPages; a NEW uid starts with none',
+    r.afterGrow.A === 'inv-A' && r.afterGrow.C === null && r.afterGrow.D === null,
+    JSON.stringify(r.afterGrow));
+  t('11e: replacing a page\'s TEXT in place keeps its UID and its metadata (the integrity check, ' +
+    'not storage, is what refuses a mismatched bind)',
+    r.afterReplace.A === 'inv-A' && r.afterReplace.text === true, JSON.stringify(r.afterReplace));
+  t('11f: two BYTE-IDENTICAL pages with distinct UIDs stay independently addressable',
+    r.twins.same === true && r.twins.X === 'inv-X' && r.twins.Y === 'inv-Y', JSON.stringify(r.twins));
+  t('11g: clear() leaves NO orphan metadata behind',
+    r.afterClear.X === null && r.afterClear.Y === null && r.afterClear.A === null
+      && r.afterClear.count === 0, JSON.stringify(r.afterClear));
+}
+
 await browser.close();
 
 // ── 10. cost fence ──
