@@ -1,5 +1,18 @@
 // RELATIONSHIP LEDGER (3A) — free unit tests. No model calls; the ledger makes none.
 //
+// ── THE OBSOLETE ASSUMPTION THIS SUITE CARRIED (Roman 2026-08-29) ──
+// Every _relEntityForName call here was written when RESOLVING a name IMPLIED CREATING it. 1A
+// removed that: the function resolves or refuses, and minting now requires an explicit
+// { create: true } — which is the guard the whole no-ghost-identities rule rests on, because a
+// bare name from a plan that may be retried, changed or abandoned must not leave a permanent
+// person behind. The fixture kept calling the old signature, so `maren` was null, _relAssert had
+// no endpoint, and ten assertions failed downstream of ONE stale call shape. Ten symptoms, one
+// cause. Production was never broken: _rel_ledger_control.mjs drives the current API end to end —
+// create, ingest, version, supersede, serialise, restore — and it is green.
+//
+// A second stale detail lived in the same family: an unrecognised relationship type is DROPPED by
+// design, so a fixture must use a type REL_TYPES actually declares or it measures its own spelling.
+//
 // The case that drives the design: "Your father would kill us if he found out" has to
 // work BEFORE the father is named. An unnamed relative is therefore a first-class node,
 // scoped to anchor + kinship slot rather than to the literal phrase, and reconciled —
@@ -43,7 +56,7 @@ console.log('\n 1. NAMED ASSERTION');
 await reset();
 const r1 = await run(() => {
   const pc = window._relPcId();
-  const maren = window._relEntityForName('Lord Maren');
+  const maren = window._relEntityForName('Lord Maren', { create: true });
   window._relAssert({ from: maren, to: pc, type: 'parent_of', basis: 'asserted_on_page',
     knownTo: ['author', 'pc'], quote: 'Lord Maren is my father', assertedBy: pc, sceneUid: 'pg:1' });
   return { author: window._relProject('author'), pc: window._relProject('pc'), li: window._relProject('li') };
@@ -126,7 +139,7 @@ const r56 = await run(() => {
   s.liCoverIdentity = 'a wandering archivist';
   s.liHiddenAgendaContext = { agendaType: 'EXTRACTION', handler: 'the Pale Marshal', conversionCriteria: [] };
   window._relSeedFromState();
-  const pcId = window._relEntityForName('a wandering archivist');
+  const pcId = window._relEntityForName('a wandering archivist', { create: true });
   return { author: window._relProject('author'), li: window._relProject('li'), pc: window._relProject('pc'),
     personaKind: (window._relLedger().entities[pcId] || {}).kind };
 });
@@ -141,7 +154,7 @@ console.log('\n 7. SUPERSESSION');
 await reset();
 const r7 = await run(() => {
   const pc = window._relPcId();
-  const other = window._relEntityForName('Ilesa');
+  const other = window._relEntityForName('Ilesa', { create: true });
   window._relAssert({ from: pc, to: other, type: 'spouse_of', basis: 'asserted_on_page', knownTo: ['author', 'pc'], sceneUid: 'pg:1' });
   const mid = window._relProject('author');
   window._relAssert({ from: pc, to: other, type: 'former_spouse_of', basis: 'asserted_on_page', knownTo: ['author', 'pc'], sceneUid: 'pg:4' });
@@ -180,7 +193,7 @@ const r9 = await run(() => {
   const s = window.state;
   s.storyId = null; s._relationshipLedger = null;
   const pc = window._relPcId();
-  const e = window._relEntityForName('Nobody');
+  const e = window._relEntityForName('Nobody', { create: true });
   const asserted = window._relAssert({ from: pc, to: 'ent:nobody', type: 'parent_of', basis: 'seed_truth' });
   const marked = window._relMarkSceneProcessed(null);
   const ledger = window._relLedger();
@@ -197,7 +210,7 @@ console.log('\n 10. UNKNOWN EDGES OMITTED');
 await reset();
 const r10 = await run(() => {
   const li = window._relLiId();
-  const secret = window._relEntityForName('the Ninth Fold');
+  const secret = window._relEntityForName('the Ninth Fold', { create: true });
   window._relAssert({ from: li, to: secret, type: 'works_for', basis: 'inferred', knownTo: ['author', 'pc'], sceneUid: 'pg:1' });
   return { author: window._relProject('author'), pc: window._relProject('pc'), li: window._relProject('li') };
 });
@@ -209,7 +222,7 @@ t('10. omission is total — no placeholder text leaks', !r10.pc.join(' ').match
 console.log('\n IDEMPOTENCY AND VOCABULARY');
 await reset();
 const rx = await run(() => {
-  const pc = window._relPcId(), o = window._relEntityForName('Sera');
+  const pc = window._relPcId(), o = window._relEntityForName('Sera', { create: true });
   const first = window._relMarkSceneProcessed('pg:9');
   const seen = window._relSceneProcessed('pg:9');
   const bogus = window._relAssert({ from: pc, to: o, type: 'nemesis_of_sorts', basis: 'seed_truth' });
