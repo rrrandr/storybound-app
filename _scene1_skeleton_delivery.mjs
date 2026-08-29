@@ -89,11 +89,15 @@ const APLOT_VALID = {
                { atScene: 3, event: 'the crisis: the tide turns and she must choose', crisis: true }],
 };
 
-// A SHAPE-FAITHFUL ANTAGONIST BODY BIBLE. Production requires signature_feature, softness_seam and
-// at least one of control_tell / pleasure_tell, and DISCARDS anything else — so answering this
-// request with GENERIC left state.antagonistBodyBible empty, every later call site tried again,
-// and the resulting count measured the fixture rather than production. The archetype must be one
-// of the eight declared keys or it is stripped.
+// AN ANTAGONIST BODY BIBLE THE AUTHOR CAN ACTUALLY USE. Production requires signature_feature,
+// softness_seam and at least one of control_tell / pleasure_tell, and DISCARDS anything else — so
+// answering this request with GENERIC left state.antagonistBodyBible empty, every later call site
+// tried again, and the resulting count measured the fixture rather than production. The archetype
+// must be one of the declared keys or it is stripped.
+// Clearing the validator is not the same as reproducing a normal author context: visual_anchor is
+// what the author is told to OPEN a character's first description on, so a fixture without one
+// hands Grok a payload no successful production run would produce. The two SPURNED_EX-only fields
+// are deliberately absent — production nulls them for every other archetype.
 const ANTAGONIST_BIBLE = {
   archetype: 'BUREAUCRATIC_COLD',
   archetype_signature: 'he makes the rule do the cruelty so his own hands stay clean',
@@ -110,6 +114,7 @@ const ANTAGONIST_BIBLE = {
   pleasure_tell: 'the pause before he grants something, held a beat too long',
   escalation_tell: 'he begins to quote the clause number instead of the clause',
   softness_seam: 'he cannot throw away a letter someone hand-delivered, and keeps them in order',
+  visual_anchor: { focus: 'the hands', detail: 'an inkstain worn into the side of one finger' },
 };
 
 // ── EVERY MODEL REQUEST HAS EXACTLY ONE NAME ──
@@ -2127,14 +2132,18 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
   // A guard asserted but never shown to bite is the exact shape this review has been catching.
   // Each is deleted from the SERVED source in its own arm; the corresponding claim must go red.
   const bibleProbeArm = { holdBibleMs: 3000, probeConcurrentBible: true, failBibleOn: [3] };
+  // The targets live in the ONE shared body-bible helper all three generators route through, so
+  // deleting either exercises the guard the antagonist path actually depends on. (These markers
+  // moved when the antagonist's bespoke copy was folded into that helper — and the uniqueness
+  // assertion below is what caught the stale ones rather than letting them pass silently.)
   const MB1 = await run({ hot: false, mutate: null, genPortfolio: bibleProbeArm, mutateSrc: {
-    from: 'if (_antBibleInFlight && _antBibleInFlight.key === _key) {', to: 'if (false) {' } });
+    from: 'if (cur && cur.key === key) {', to: 'if (false) {' } });
   t('X18e: with the in-flight JOIN removed, the two concurrent callers issue a SECOND paid ' +
     'request — so X18b is evidence about that guard, not about the response being fast',
     MB1.mutationTargets === 1 && (MB1.kinds.antagonistBodyBible || 0) > 5,
     `targets=${MB1.mutationTargets} requests=${MB1.kinds.antagonistBodyBible} (unmutated is 5)`);
   const MB2 = await run({ hot: false, mutate: null, genPortfolio: bibleProbeArm, mutateSrc: {
-    from: 'if (_keyAtRequest && _antBibleScopeKey() !== _keyAtRequest) {', to: 'if (false) {' } });
+    from: 'if (!keyAtRequest || keyAtRequest === currentKey) return true;', to: 'if (true) return true;' } });
   t('X18f: with the OWNERSHIP check removed, the late bible IS written onto the story that ' +
     'replaced it — so X18d is evidence about that guard',
     MB2.mutationTargets === 1 && !!MB2.bibleProbe && MB2.bibleProbe.ownership.stored === true,

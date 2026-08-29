@@ -512,9 +512,16 @@ try {
   }, { issueArcs: [{ n:1 }] });
   const noneBody = scaffoldBody, noneTok = scaffoldMaxTokens;
   // (the baseline was measured before the person case; this run re-confirms it)
-  t('8f: a no-subject request states characterPortfolios MUST be exactly []',
-    // The body is JSON, so the quote is escaped — match on the instruction itself.
-    !!noneBody && /MUST be exactly \[\]/.test(noneBody), 'instruction missing');
+  // ── THE SCHEMA AND THE ROSTER APPEAR TOGETHER, OR NOT AT ALL (2026-08-29) ──
+  // This asserted the old contract: the response schema always showed "characterPortfolios", so a
+  // no-subject request needed a sentence telling the model to return []. That sentence was a rule
+  // about a field with no subjects to fill it, printed beside a slot that said "COPY a subject_ref
+  // from PORTFOLIO SUBJECTS below" when there was no such list — an instruction to invent one.
+  // Now neither the key nor the rule is shown, so there is nothing to invent against.
+  t('8f: a no-subject request is never shown the portfolio schema at all — no key, and no rule ' +
+    'about a key the model cannot see',
+    !!noneBody && !/characterPortfolios/.test(noneBody) && !/MUST be exactly \[\]/.test(noneBody),
+    'the no-subject request still mentions characterPortfolios');
   t('8g: …carries no subject_ref, and preserves the ORIGINAL ceiling EXACTLY',
     !!noneBody && !/PORTFOLIO SUBJECTS — the ONLY/.test(noneBody) && noneTok === BASE_TOK,
     'max_tokens=' + noneTok + ' expected ' + BASE_TOK);

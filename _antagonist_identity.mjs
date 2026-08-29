@@ -307,13 +307,21 @@ try {
   t('0i: a PERSON\'s backend subject_ref reaches the scaffold request EXACTLY once',
     !!sPerson && (sPerson.match(/plot:[A-Za-z0-9_]+:primary_antagonist/g) || []).length === 1,
     sPerson ? JSON.stringify((sPerson.match(/plot:[^"\\ ]{6,60}/g) || []).slice(0, 3)) : 'NO SCAFFOLD REQUEST CAPTURED');
-  t('0j: …and a FORCE supplies NO roster and no subject_ref at all',
+  t('0j: …and a FORCE supplies NO roster block and no subject_ref at all',
     !!sForce && !/plot:[A-Za-z0-9_]+:primary_antagonist/.test(sForce)
-      && !/PORTFOLIO SUBJECTS/.test(sForce),
-    sForce ? 'no subject_ref and no roster block present' : 'NO SCAFFOLD REQUEST CAPTURED');
-  t('0j2: neither request asks the model to RETURN portfolios — that is provider scope',
-    !!sPerson && !/characterPortfolios/.test(sPerson) && !!sForce && !/characterPortfolios/.test(sForce),
-    'this commit establishes the ref reaches the request; it does not request generation');
+      && !/PORTFOLIO SUBJECTS \(/.test(sForce),
+    sForce ? ('ref=' + /plot:[A-Za-z0-9_]+:primary_antagonist/.test(sForce)
+              + ' roster=' + /PORTFOLIO SUBJECTS \(/.test(sForce)) : 'NO SCAFFOLD REQUEST CAPTURED');
+  // ── UPDATED WITH THE PROVIDER COMMIT (2026-08-29) ──
+  // This asserted that NEITHER request asks for portfolios, which was true while the roster was
+  // input-only. Portfolios are now generated, so the real contract is CONDITIONAL: a PERSON gets
+  // both the roster and the response schema; a FORCE gets neither. The schema used to be printed
+  // unconditionally — telling a model with no subject list to "COPY a subject_ref from PORTFOLIO
+  // SUBJECTS below", which is an instruction to invent one.
+  t('0j2: the PERSON request asks for portfolios; the FORCE request is not shown the schema at all',
+    !!sPerson && /characterPortfolios/.test(sPerson)
+      && !!sForce && !/characterPortfolios/.test(sForce),
+    `person=${sPerson && /characterPortfolios/.test(sPerson)} force=${sForce && /characterPortfolios/.test(sForce)}`);
 
   // ── A-PLOT ID: PRODUCTION MINT + RERENDER, THEN A JSON ROUND-TRIP ──
   // Honest scope: the mint and rerender ARE production. The restore half is a serialise/assign
