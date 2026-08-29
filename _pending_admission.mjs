@@ -289,6 +289,58 @@ console.log('\n 6 · SAVE / RESTORE, RETRY, AND CONCURRENT ADMISSION');
     r.rebind === false);
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════════════
+// 8 · THE PRODUCTION LOOP, END TO END
+//
+// Nothing below calls a helper directly. A real Scene 1 runs: production captures the manifest at
+// its own pre-planner seam, parks MOCKED portfolios through the seam the paid batch will occupy,
+// offers all five facets to the planner, sends one truth to the author, mounts the page, binds the
+// invocation by the prose it produced, hands extraction the snapshot, validates the whole echoed
+// response, admits, and promotes exactly once.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 8 · THE PRODUCTION LOOP — capture → planner → author → mount → echo → promote');
+{
+  const { chain } = await import('./_pending_admission_chain.mjs');
+  const R = await chain(browser, SRC, {});
+  if (process.env.PA_DIAG) console.log('   DIAG logs:\n' + (R.res.logs || []).join('\n'));
+  if (process.env.PA_DIAG) console.log('   DIAG state: ' + JSON.stringify({ pages: R.res.diagPages, handoff: R.res.diagHandoff, scenes: R.res.diagScenes }));
+  Object.entries(R.checks).forEach(([k, v]) => t('   ' + k, v.ok, v.detail));
+
+  // ── A BAD ECHO MUTATES NOTHING ──
+  const B = await chain(browser, SRC, { badEcho: true });
+  t('   C10 one unknown ref sinks the WHOLE response — zero admissions, zero promotions',
+    (B.res.cand || {}).status === 'ready' && !(B.res.cand || {}).promotedTo
+      && B.res.charLedgerKeys.length === 0 && B.res.facetsAfter === 0,
+    JSON.stringify({ cand: B.res.cand, ledger: B.res.charLedgerKeys, facets: B.res.facetsAfter }));
+
+  // ── MUTATION CONTROLS ON THE FIVE PRODUCTION CALLS ──
+  // Each removal must turn a specific claim red. The marker for each is asserted UNIQUE first.
+  console.log('\n 9 · MUTATION CONTROLS — remove one production call, break one claim');
+  const MUTS = [
+    ['capture',            '_pendingInvocation = window._captureAdmissionManifest(state, _payable,',
+                           '_pendingInvocation = null && (',
+                           M => !M.res.manifestSeen && M.res.pendingCalls === 0, {}],
+    ['uid binding',        'window._bindPendingAdmissionByProse(s, plain, uid);',
+                           '/* MUTATION CONTROL */',
+                           M => !M.res.rec || M.res.rec.sceneUid === null, {}],
+    ['snapshot delivery',  `_pendingSnap = (typeof window._pendingAdmissionSnapshot === 'function')
+          ? window._pendingAdmissionSnapshot(window.state, sceneUid) : null;`,
+                           '_pendingSnap = null;',
+                           M => !/STAGED SUBJECTS/.test(M.extraction || '') && !(M.res.cand || {}).promotedTo, {}],
+    ['whole-response validation', 'if (_pendingSnap && !_echo.ok) {', 'if (false) {',
+                           M => M.res.charLedgerKeys.length > 0, { badEcho: true }],
+    ['promotion',          'var _pr = window._promotePendingPortfolio(window.state, sceneUid, _ref, _cid);',
+                           'var _pr = { ok: false, code: "MUTATION CONTROL" };',
+                           M => !(M.res.cand || {}).promotedTo && M.res.facetsAfter === 0, {}],
+  ];
+  for (const [label, from, to, check, opts] of MUTS) {
+    const M = await chain(browser, SRC, { ...opts, mutateSrc: { from, to } });
+    t(`   MUT "${label}" removed → the chain breaks`,
+      M.targets === 1 && check(M),
+      `targets=${M.targets} cand=${JSON.stringify(M.res.cand)} ledger=${JSON.stringify(M.res.charLedgerKeys)}`);
+  }
+}
+
 console.log('\n 7 · COST');
 t('7a: the handshake generated nothing — zero model calls', paid === 0, String(paid));
 
