@@ -18,7 +18,11 @@ function force(src, fn, v) {
 const mk = hot => instrument(force(force(SRC, '_litLiteActive', 'false'), '_hotFastActive', hot ? 'true' : 'false'));
 
 const PROSE = buildScene1Prose(NONTOKEN_A);
-const PASSTHROUGH = /\/api\/(config|geo|csp-report|beta-events)\b/;
+import { configBody, installSession, isAuthOrigin } from './_test_session_env.mjs';
+// config is handled separately now — see _test_session_env.mjs: fulfilling it with {} stopped the
+// runtime leak and also silently unauthenticated every run, so Scene 1 was refused at the purchase
+// gate and all 344 assertions below were measuring a chain that never executed.
+const PASSTHROUGH = /\/api\/(geo|csp-report|beta-events)\b/;
 const LOCAL = { '/api/consume-fortune': { success: true, fortunesRemaining: 9999 } };
 const MODEL = /\/api\/(proxy|chatgpt-proxy|mistral-proxy|deepseek-proxy|gemini)\b/;
 const L = 'she understands the wish has already begun to cost her something she cannot name';
@@ -652,6 +656,7 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
   try {
   const page = await ctx.newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
+  await installSession(page);
   const planner = [], author = [], escaped = [], unknown = [], scaffold = [],
         unknownModel = [], ambiguous = [];
   const kinds = {}; let bibleReq = 0;
@@ -671,8 +676,11 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
     }
     return r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body });
   });
+  await page.route('**/sb-test.localhost/**', r => r.fulfill({ status:200, contentType:'application/json', body:'{}' }));
   await page.route('**/api/**', async route => {
     const url = route.request().url().replace(/^https?:\/\/[^/]+/, '');
+    if (/\/api\/config\b/.test(url)) return route.fulfill({ status:200, contentType:'application/json', body: configBody() });
+    if (isAuthOrigin(route.request().url())) return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     if (PASSTHROUGH.test(url)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     const k = Object.keys(LOCAL).find(x => url.startsWith(x));
     if (k) return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(LOCAL[k]) });
@@ -1321,7 +1329,12 @@ console.log('');
       const p2 = await c2.newPage();
       p2.setDefaultTimeout(180000); p2.setDefaultNavigationTimeout(180000);
       await p2.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: mk(false) }));
-      await p2.route('**/api/**', r => /\/api\/(config|geo)\b/.test(r.request().url()) ? r.continue() : r.abort());
+      await p2.route('**/api/**', r => /\/api\/config\b/.test(r.request().url())
+        ? r.fulfill({ status:200, contentType:'application/json', body: configBody() })
+        : (/\/api\/geo\b/.test(r.request().url())
+            ? r.fulfill({ status:200, contentType:'application/json', body:'{}' })
+            : r.abort()));
+      await p2.route('**/sb-test.localhost/**', r => r.fulfill({ status:200, contentType:'application/json', body:'{}' }));
       await p2.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
       await p2.waitForFunction(() => window._openingSpineDeclaredFields, { timeout:180000 });
       return await p2.evaluate(t2 => window._openingSpineDeclaredFields(t2), pu);

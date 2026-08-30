@@ -35,17 +35,30 @@ const browser = await chromium.launch({ headless: true });
 // classifier, and calling that a paid call would be as misleading as ignoring it.
 const dispatched = { pageAmbient: 0, generation: 0, other: [] };
 const ctx = await browser.newContext();
+const { configBody, installSession, isAuthOrigin } = await import('./_test_session_env.mjs');
 const page = await ctx.newPage();
 page.setDefaultTimeout(120000); page.setDefaultNavigationTimeout(120000);
+await installSession(page);
+await page.route('**/sb-test.localhost/**', r => r.fulfill({ status:200, contentType:'application/json', body:'{}' }));
 await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: SRC }));
 await page.route('**/api/**', async route => {
   const u = route.request().url();
   // FULFILLED, NOT CONTINUED. Letting these reach the real dev server spawns a per-invocation
-      // @vercel/node runtime that is never reaped — 358 of them, 1.1 GB, accumulated across one
-      // day's suite runs, and that is what kept "wedging" the server mid-suite.
-      if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) {
-        return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
-      }
+  // @vercel/node runtime that is never reaped — 358 of them, 1.1 GB, accumulated across one
+  // day's suite runs, and that is what kept "wedging" the server mid-suite. But config is
+  // fulfilled with its REAL SHAPE (_test_session_env.mjs): an empty body leaves supabaseUrl
+  // blank, the app builds no auth client, and anything behind the purchase gate quietly stops
+  // running. These sections do not purchase, so they were never wrong — they are made faithful
+  // so the last copy of that pattern cannot be inherited by the next harness written from this one.
+  if (/\/api\/config\b/.test(u)) {
+    return route.fulfill({ status:200, contentType:'application/json', body: configBody() });
+  }
+  if (isAuthOrigin(u)) {
+    return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
+  }
+  if (/\/api\/(geo|csp-report|beta-events)\b/.test(u)) {
+    return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
+  }
   if (/proxy|chat|complet|grok|mistral/i.test(u)) {
     let sys = '';
     try { const b = JSON.parse(route.request().postData() || '{}');
@@ -314,10 +327,13 @@ console.log('\n 6 · SAVE / RESTORE, RETRY, AND CONCURRENT ADMISSION');
 // response, admits, and promotes exactly once.
 // ══════════════════════════════════════════════════════════════════════════════════════════
 console.log('\n 8 · THE PRODUCTION LOOP — capture → planner → author → mount → echo → promote');
+const { chain } = await import('./_pending_admission_chain.mjs');
+let POS = null;   // the positive arm's environment evidence, read by section 9
 {
-  const { chain } = await import('./_pending_admission_chain.mjs');
   const R = await chain(browser, SRC, {});
+  POS = R;
   if (process.env.PA_DIAG) console.log('   DIAG logs:\n' + (R.res.logs || []).join('\n'));
+  if (process.env.PA_DIAG) console.log('   DIAG threw: ' + JSON.stringify(R.res.beginThrew));
   if (process.env.PA_DIAG) console.log('   DIAG state: ' + JSON.stringify({ pages: R.res.diagPages, handoff: R.res.diagHandoff, scenes: R.res.diagScenes }));
   Object.entries(R.checks).forEach(([k, v]) => t('   ' + k, v.ok, v.detail));
 
@@ -496,6 +512,36 @@ console.log('\n 11 · RESTORE AND SIBLINGS');
     r.rec2.abandoned.length === 1 && r.after2.indexOf('inv-11a') === -1
       && r.after2.indexOf('inv-11b') !== -1 && r.bStillReady === true,
     JSON.stringify({ rec2: r.rec2, after: r.after2, bReady: r.bStillReady }));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  9 · THE TEST ENVIRONMENT ITSELF
+//  Every assertion above runs inside a purchased issue, so the environment that authorises the
+//  purchase is load-bearing evidence. Left unchecked, a harness that quietly stops authenticating
+//  turns 58 real assertions into 58 assertions about a chain that never ran — which is precisely
+//  what happened when /api/config was fulfilled with {}. So the environment is tested, and it is
+//  tested by REMOVING the session: production must refuse, and this suite must go red without it.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 9 · ENTITLEMENT ENVIRONMENT');
+{
+  t('9a: the positive fixture carries a nonempty session token, and the gate reaches the charge ' +
+    'boundary EXACTLY once — not zero times (silently skipped) and not twice (double-charged)',
+    POS.sessionToken.length > 0 && POS.chargeCalls === 1,
+    JSON.stringify({ token: POS.sessionToken ? 'nonempty' : 'EMPTY', chargeCalls: POS.chargeCalls }));
+
+  const N = await chain(browser, SRC, { withSession: false });
+  t('9b: NEGATIVE CONTROL — same config, no session: production refuses at the gate, no charge ' +
+    'request is ever made, and the scene never reaches the capture seam',
+    N.chargeCalls === 0 && !N.res.rec && !N.res.cand,
+    JSON.stringify({ chargeCalls: N.chargeCalls, rec: N.res.rec, cand: N.res.cand }));
+  t('9c: …and the refusal is what turns the chain red — removing the session does not merely ' +
+    'change a count, it collapses the admission evidence every section above depends on',
+    N.batchCalls === 0 && !N.extraction && N.res.facetsAfter === 0,
+    JSON.stringify({ batchCalls: N.batchCalls, extraction: !!N.extraction,
+                     facets: N.res.facetsAfter })); 
+  t('9d: neither arm let a single request escape to a real network',
+    POS.escaped.length === 0 && N.escaped.length === 0,
+    JSON.stringify({ positive: POS.escaped.slice(0, 3), negative: N.escaped.slice(0, 3) }));
 }
 
 console.log('\n 7 · COST');

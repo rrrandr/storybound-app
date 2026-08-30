@@ -3,7 +3,10 @@
 // batch will later produce, plus the intercepted model responses.
 //
 // mutateSrc removes one production call at a time; each removal must break the chain.
-export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreBeforeExtraction, outOfOrder } = {}) {
+import { SB_URL, configBody, makeSession, installSession, isAuthOrigin } from './_test_session_env.mjs';
+const SB_SESSION = makeSession();
+
+export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreBeforeExtraction, outOfOrder, withSession = true } = {}) {
   const APLOT = {
     goal: 'She must clear the manifest before the tide turns and the ship leaves without her sister',
     namedClock: 'the tide at dawn', clockUnit: 'turns', totalClockUnits: 12,
@@ -36,7 +39,8 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
     const page = await ctx.newPage();
     page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
     let targets = null, planner = null, author = null, extraction = null, escaped = [];
-    let batchCalls = 0; const batchRosters = [];
+    let batchCalls = 0;
+    let chargeCalls = 0; const batchRosters = [];
     let body = SRC;
     // One mutation or several. Each marker's uniqueness is asserted independently; `targets` is
     // the minimum across them, so a non-unique marker anywhere fails the control.
@@ -55,8 +59,34 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       // FULFILLED, NOT CONTINUED. Letting these reach the real dev server spawns a per-invocation
       // @vercel/node runtime that is never reaped — 358 of them, 1.1 GB, accumulated across one
       // day's suite runs, and that is what kept "wedging" the server mid-suite.
-      if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) {
+      // ── A SCHEMA-FAITHFUL TEST CONFIG, NOT AN EMPTY OBJECT ──
+      // Returning {} stopped the dev-server runtime leak and also left supabaseUrl empty, so the
+      // app never constructed its auth client at all (app.js: createClient runs only when the URL
+      // starts with http AND a key is present). The entitlement check then found no session and
+      // production CORRECTLY refused to charge. Production is right; the harness was serving a
+      // config no deployment would ever return. These are dummy, non-secret values with the real
+      // shape; no real token is used or printed anywhere.
+      if (/\/api\/config\b/.test(u)) {
+        return route.fulfill({ status:200, contentType:'application/json', body: configBody() });
+      }
+      if (/\/api\/(geo|csp-report|beta-events)\b/.test(u)) {
         return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
+      }
+      // The auth client must never reach a network. Its own origin is intercepted with
+      // valid-shaped replies so nothing escapes and nothing hangs.
+      if (isAuthOrigin(u)) {
+        return route.fulfill({ status:200, contentType:'application/json', body:'{}' });
+      }
+      // ── THE PURCHASE GATE IS INTERCEPTED, NEVER BYPASSED ──
+      // The gate itself is production code, byte-unchanged: it authenticates, then charges. The
+      // harness supplies the session it authenticates against (above) and terminates the charge
+      // here, so the real ledger is never touched. Counted, because "exactly one charge" is an
+      // assertion, not an assumption — a gate charging twice, or silently not at all, is the
+      // failure mode this suite exists to catch.
+      if (/\/api\/(consume-fortune|issue-purchase)\b/.test(u)) {
+        chargeCalls++;
+        return route.fulfill({ status:200, contentType:'application/json',
+          body: JSON.stringify({ success: true, fortunesRemaining: 9999 }) });
       }
       let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
       const m = (b && b.messages) || [];
@@ -152,6 +182,17 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
         : { ok:true, content, choices:[{ message:{ content } }] };
       return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(env) });
     });
+    // ── THE SESSION IS ESTABLISHED BEFORE THE APPLICATION READS IT ──
+    // supabase-js resolves getSession() from storage, so the fixture is seeded in an init script
+    // that runs before any page script. `withSession:false` is the negative control: same config,
+    // no session, and the entitlement gate must still refuse.
+    if (withSession) {
+      await installSession(page, SB_SESSION);
+    }
+    const nodeLogs = [];
+    page.on('pageerror', e => nodeLogs.push('PAGEERROR ' + String(e && e.message).slice(0, 300)));
+    page.on('console', m => { const x = m.text();
+      if (/PAGEERROR|Uncaught|BeginStory|ADMIT:PENDING|PORTFOLIO:BATCH|ISSUE-PURCHASE|PAYWALL|FORTUNE|declined/i.test(x)) nodeLogs.push('C ' + x.slice(0, 240)); });
     await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => typeof window.handleBeginStory === 'function', { timeout: 60000 });
 
@@ -202,7 +243,9 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       console.log  = function () { try { logs.push('L ' + [].join.call(arguments, ' ')); } catch (_) {} return realLog.apply(console, arguments); };
       console.error = function () { try { logs.push('E ' + [].join.call(arguments, ' ')); } catch (_) {} return realErr.apply(console, arguments); };
 
-      try { await Promise.race([window.handleBeginStory(), new Promise(x => setTimeout(x, 150000))]); } catch (_) {}
+      let beginThrew = null;
+      try { await Promise.race([window.handleBeginStory(), new Promise(x => setTimeout(x, 150000))]); }
+      catch (e) { beginThrew = String((e && e.message) || e).slice(0, 300); }
 
       // The page has mounted. Drive the REAL admission entry point with the REAL uid.
       const uid = (window.StoryPagination && window.StoryPagination.getPageUids
@@ -288,7 +331,7 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       const facetsAfter = promotedTo
         ? (window._facetsForCharacter({ id: promotedTo, label:'Mara Dunn', aliases:['Mara Dunn'] }, s, { sceneNumber: 2 }) || [])
         : [];
-      return { uid, beforeSnap, restoreEvidence, orderEvidence, drained, restoredRead,
+      return { beginThrew, uid, beforeSnap, restoreEvidence, orderEvidence, drained, restoredRead,
                trace: window.__admitTrace.slice(0, 80),
                pageUids: window.StoryPagination.getPageUids(),
                metaByUid: window.StoryPagination.getPageUids().map(function (u) {
@@ -312,7 +355,7 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
                relEntities: Object.keys((window._relLedger(false) || {}).entities || {}).sort(),
                clerkAdmitted: !!(window._charLedger && Object.keys(window._charLedger() || {})
                  .some(k => /porter/i.test(k))),
-               logs: logs.filter(x => /^E |ADMIT:|CPLUS|SCENE1:|CHAR-ADMIT|LEDGER/.test(x)).map(x => x.slice(0, 220)).slice(-40) };
+               logs: logs.filter(x => /^E |PAGEERROR|ADMIT:|CPLUS|SCENE1:|CHAR-ADMIT|LEDGER|BeginStory/.test(x)).map(x => x.slice(0, 240)).slice(-40) };
     }, { PROSE, staged: !!staged, restoreBeforeExtraction: !!restoreBeforeExtraction, outOfOrder: outOfOrder || false });
     } catch (e) {
       res = { evaluateFailed: String(e && e.message).slice(0, 140), pendingCalls: null,
@@ -375,6 +418,7 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       'C9 nothing escaped the harness':
         { ok: escaped.length === 0, detail: JSON.stringify(escaped.slice(0, 2)) },
     };
-    return { checks, res, targets, planner, author, extraction, escaped, batchCalls, batchRosters };
+    res.logs = (res.logs || []).concat(nodeLogs);
+    return { checks, res, targets, planner, author, extraction, escaped, batchCalls, batchRosters, chargeCalls, sessionToken: withSession ? SB_SESSION.access_token : '' };
   } finally { await ctx.close().catch(() => {}); }
 }
