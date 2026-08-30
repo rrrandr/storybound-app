@@ -1,0 +1,55 @@
+{
+  "rates": {
+    "gpt-4o": {
+      "in": 2.5,
+      "out": 10
+    },
+    "gpt-4o-mini": {
+      "in": 0.15,
+      "out": 0.6
+    },
+    "mistral-small-latest": {
+      "in": 0.15,
+      "out": 0.6
+    }
+  },
+  "calls": [
+    {
+      "what": "A/B arm A",
+      "model": "gpt-4o",
+      "prompt_tokens": 645,
+      "completion_tokens": 1672,
+      "cost": 0.0183325
+    },
+    {
+      "what": "A/B arm B",
+      "model": "gpt-4o-mini",
+      "prompt_tokens": 645,
+      "completion_tokens": 828,
+      "cost": 0.00059355
+    },
+    {
+      "what": "unintended contract probe",
+      "model": "gpt-4o-mini",
+      "prompt_tokens": 20,
+      "completion_tokens": 1500,
+      "note": "upper bound, not measured",
+      "cost": 0.0009029999999999999
+    },
+    {
+      "what": "voided first Mistral sample",
+      "model": "mistral-small-latest",
+      "prompt_tokens": 680,
+      "completion_tokens": 3199,
+      "cost": 0.0020214
+    },
+    {
+      "what": "2026-08-30 authorised production-path sample",
+      "model": "mistral-small-latest",
+      "prompt_tokens": 1435,
+      "completion_tokens": 3874,
+      "cost": 0.00253965
+    }
+  ],
+  "total": 0.0243901
+}

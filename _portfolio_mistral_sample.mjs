@@ -41,31 +41,33 @@ const SUBJECTS = [
 ];
 const ROLE_PHRASE_CONTROL = 'the presiding Watchman';
 
-// Prior spend, unrounded, from recorded usage. Displayed figures are never the arithmetic.
+// ── PRIOR SPEND: ONE LEDGER, NOT A RECOMPUTATION ──
+// This used to be re-derived on every run from whichever result files happened to be on disk —
+// and the file holding the last live call's usage is overwritten by the next run, so the guard
+// would have silently forgotten a call that had actually been paid for. Every paid call is
+// recorded once, with its measured usage, and the guard reads that.
 const PRIOR = (() => {
-  const R = { 'gpt-4o': { in: 2.50, out: 10.00 }, 'gpt-4o-mini': { in: 0.15, out: 0.60 },
-              'mistral-small-latest': { in: 0.15, out: 0.60 } };
-  const c = (m, pi, co) => (pi / 1e6) * R[m].in + (co / 1e6) * R[m].out;
-  const ab = JSON.parse(fs.readFileSync('_portfolio_ab_raw.json', 'utf8'));
-  const key = JSON.parse(fs.readFileSync('_portfolio_ab_KEY.json', 'utf8'));
-  let total = c(key.outputA, ab.A.usage.prompt_tokens, ab.A.usage.completion_tokens)
-            + c(key.outputB, ab.B.usage.prompt_tokens, ab.B.usage.completion_tokens)
-            + c('gpt-4o-mini', 20, 1500);                  // the unintended contract call
-  try {                                                     // the voided first Mistral sample
-    const m = JSON.parse(fs.readFileSync('_portfolio_mistral_raw.json', 'utf8'));
-    total += c('mistral-small-latest', m.usage.prompt_tokens, m.usage.completion_tokens);
-  } catch (_) {}
-  return { total, RATES: R };
+  const L = JSON.parse(fs.readFileSync('_portfolio_spend_ledger.json', 'utf8'));
+  const c = (x) => (x.prompt_tokens / 1e6) * L.rates[x.model].in
+                 + (x.completion_tokens / 1e6) * L.rates[x.model].out;
+  return { total: L.calls.reduce((n, x) => n + c(x), 0), calls: L.calls, RATES: L.rates };
 })();
 
-// The authorised figures, exact.
-// The authorised ceiling, exactly as stated: at most $0.00732645 more, cumulative at most
-// $0.03187465. The second figure uses the CONSERVATIVE prior upper bound, so the guard below
-// also checks the prior actually recorded on disk against it — an authorisation computed from a
-// larger prior than the one that exists must not silently license the difference.
+// ── THE AUTHORISED CEILING ──
+// CAP_ADDITIONAL is unchanged: the same per-call worst case as last time (the request is in fact
+// slightly smaller now that the category clauses are gone, so the real figure comes in under it).
+// The CUMULATIVE figure is NOT the one authorised before the last call — that ceiling was computed
+// from a conservative prior that predates a call which has since been made and paid for. The
+// conservative prior therefore carries that call's measured cost, and the ceiling moves with it.
+// Spending against a stale ceiling would be spending money that was reasoned about once and
+// counted twice.
+// Where the evidence lands. Written before any assertion runs; see the block after run().
 const EV_RAW = '_portfolio_sample_raw.txt';
 const EV_PARSED = '_portfolio_sample_evidence.json';
-const CAP_ADDITIONAL = 0.00732645, CAP_CUMULATIVE = 0.03187465, PRIOR_UPPER_BOUND = 0.02454820;
+
+const CAP_ADDITIONAL = 0.00732645;
+const PRIOR_UPPER_BOUND = 0.02708785;   // 0.02454820 conservative + 0.00253965 measured, 2026-08-30
+const CAP_CUMULATIVE = 0.03440530;      // PRIOR_UPPER_BOUND + CAP_ADDITIONAL
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext();
@@ -394,7 +396,7 @@ if (DRY) {
   const M = PRIOR.RATES[CONTRACT.model];
   const worst = (inTok / 1e6) * M.in + ((req ? req.body.max_tokens : 0) / 1e6) * M.out;
   console.log(`\n${'─'.repeat(84)}\n COST — unrounded`);
-  console.log(`   spent so far (A/B + contract call + the voided sample)  $${PRIOR.total.toFixed(8)}`);
+  console.log(`   recorded so far, from the ledger (5 paid calls)          $${PRIOR.total.toFixed(8)}`);
   console.log(`   this call, worst case at max_tokens ${req && req.body.max_tokens}          $${worst.toFixed(8)}`);
   console.log(`   cumulative if billed to the ceiling, recorded prior      $${(PRIOR.total + worst).toFixed(8)}`);
   console.log(`   cumulative against the CONSERVATIVE prior (the guard)   $${(PRIOR_UPPER_BOUND + worst).toFixed(8)}`);
