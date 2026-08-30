@@ -76340,21 +76340,19 @@ The scene carries the weight of something almost chosen. There should be a quiet
       : (ctx + '_' + Date.now() + '_' + Math.random().toString(36).slice(2));
     var chargeResp;
     try {
-      chargeResp = await fetch('/api/consume-fortune', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      var _altR = await _postFortuneCharge({
           userId: _supabaseProfileId,
           amount: totalCost,
           context: ctx,
           operationId: altPOVOpId
-        })
-      });
+        , storyId: state.storyId || null });
+      chargeResp = _altR.resp;
+      chargeResp._parsed = _altR.data;
     } catch (e) {
       console.error('[ALT-POV] charge fetch threw:', e && e.message);
       return { ok: false, error: 'charge_network' };
     }
-    var chargeData = await chargeResp.json().catch(function() { return {}; });
+    var chargeData = chargeResp._parsed || {};
     if (!chargeResp.ok) {
       if (chargeData.fortunesRemaining != null) state.fortunes = chargeData.fortunesRemaining;
       console.warn('[ALT-POV] server declined charge:', chargeData.error);
@@ -99162,12 +99160,14 @@ Extract details for ALL named characters. Be specific about face, hair, clothing
               return;
           }
 
-          const res = await fetch('/api/consume-fortune', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: user.id, amount: 1, context: 'fortune_sacrifice' })
-          });
-          const data = await res.json();
+          // consume_fortunes_v3 REQUIRES an operationId — this call site had none
+          // for its entire life, which the old endpoint tolerated and the new one
+          // refuses. Without it a retry is a second charge.
+          const _sacOpId = (crypto && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : ('fortune_sacrifice_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+          const _sacR = await _postFortuneCharge({ userId: user.id, amount: 1, context: 'fortune_sacrifice', operationId: _sacOpId });
+          const res = _sacR.resp, data = _sacR.data;
 
           if (!res.ok || data.error === 'insufficient_fortunes') {
               btn.textContent = 'No Fortunes remaining';
@@ -116744,6 +116744,37 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
   // continuationPrice (at the preview stop). Kept ENTIRELY separate from
   // _chargeIssuePurchase so Issue Two onward are byte-for-byte unchanged.
   // Idempotent per (story × slice) via a dedicated opId.
+  // ── EVERY CHARGE CARRIES ITS SESSION ──
+  // /api/consume-fortune derives the spending account from this token, not from
+  // the userId in the body. The endpoint deducts with the service-role key,
+  // which bypasses RLS, so the identity it is handed is the only thing between a
+  // caller and someone else's wallet. A body userId is still sent as a
+  // cross-check; the server rejects the call if the two disagree.
+  //
+  // consume_fortunes_v3 also REQUIRES an operationId — without one a retry is a
+  // second charge, so the server refuses rather than guess.
+  async function _postFortuneCharge(body) {
+    var headers = { 'Content-Type': 'application/json' };
+    try {
+      if (sb && sb.auth && sb.auth.getSession) {
+        var sess = (await sb.auth.getSession()).data && (await sb.auth.getSession()).data.session;
+        var tok = sess && sess.access_token;
+        if (tok) headers['Authorization'] = 'Bearer ' + tok;
+      }
+    } catch (e) { try { console.warn('[FORTUNE] could not attach session token:', e && e.message); } catch (_) {} }
+    if (!headers['Authorization']) {
+      // Without a session there is nothing to charge against. Fail here rather
+      // than send an unauthenticated request the server will refuse anyway.
+      console.warn('[FORTUNE] no session token — charge not attempted');
+      return { resp: { ok: false, status: 401 }, data: { error: 'authentication_required' } };
+    }
+    var resp = await fetch('/api/consume-fortune', { method: 'POST', headers: headers, body: JSON.stringify(body) });
+    var data = null;
+    try { data = await resp.json(); } catch (_) { data = {}; }
+    return { resp: resp, data: data };
+  }
+  window._postFortuneCharge = _postFortuneCharge;
+
   async function _chargePreviewSlice(which /* 'preview' | 'continuation' */) {
     var p = _activePreviewProduct();
     if (!p) return true;
@@ -116768,12 +116799,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       return true;
     }
     try {
-      var resp = await fetch('/api/consume-fortune', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: _supabaseProfileId, amount: amount, context: context, operationId: opId })
-      });
-      var data = await resp.json();
+      var _r = await _postFortuneCharge({ userId: _supabaseProfileId, amount: amount, context: context, operationId: opId, storyId: state.storyId || null });
+      var resp = _r.resp, data = _r.data;
       if (!resp.ok) {
         if (data.fortunesRemaining != null) state.fortunes = data.fortunesRemaining;
         console.warn('[PREVIEW-SLICE] server declined:', data.error);
@@ -116875,17 +116902,14 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
       return true;
     }
     try {
-      var resp = await fetch('/api/consume-fortune', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: _supabaseProfileId,
-          amount: amount,
-          context: context,
-          operationId: opId
-        })
+      var _r = await _postFortuneCharge({
+        userId: _supabaseProfileId,
+        amount: amount,
+        context: context,
+        operationId: opId,
+        storyId: state.storyId || null
       });
-      var data = await resp.json();
+      var resp = _r.resp, data = _r.data;
       if (!resp.ok) {
         if (data.fortunesRemaining != null) state.fortunes = data.fortunesRemaining;
         console.warn('[ISSUE-PURCHASE] server declined:', data.error);
@@ -117235,12 +117259,8 @@ Output ONLY the rewritten text. No commentary, no meta-text, no explanations.`;
           // So "I lost 3 Fortunes" resolves to the exact story_id + scene_idx that charged.
           var _storyId = (opts && opts.storyId != null) ? opts.storyId : (state.storyId || null);
           var _sceneIdx = (opts && Number.isInteger(opts.sceneIdx)) ? opts.sceneIdx : (Number.isInteger(state.turnCount) ? state.turnCount : null);
-          const resp = await fetch('/api/consume-fortune', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: _supabaseProfileId, amount, context, operationId: _opId, storyId: _storyId, sceneIdx: _sceneIdx, metadata: (opts && opts.metadata) || undefined })
-          });
-          const data = await resp.json();
+          const _r = await _postFortuneCharge({ userId: _supabaseProfileId, amount, context, operationId: _opId, storyId: _storyId, sceneIdx: _sceneIdx, metadata: (opts && opts.metadata) || undefined });
+          const resp = _r.resp, data = _r.data;
           if (!resp.ok) {
               console.warn('[Fortunes] Server declined fortune consumption:', data.error);
               if (data.fortunesRemaining !== undefined) state.fortunes = data.fortunesRemaining;
@@ -279366,7 +279386,7 @@ height: calc(42 / 855 * ${state.shelfWidth.toFixed(1)}vw);
               if (!_signedIn) {
                 _appendMessage('ai', '\u201CWelcome. Tap the keyhole menu, upper right, to join the masquerade and unlock these books \u2014 or, if you\u2019d rather stay anonymous, you\u2019re free to browse the offerings of The Forbidden Library.\u201D', { skipCCL: true });
               } else {
-                var _WELCOME_GIFT_FORTUNES = 60;  // the new-account onboarding wallet (mirrors DEFAULT-60 in migration 20260703_gift_60_fortunes)
+                var _WELCOME_GIFT_FORTUNES = 90;  // display only — mirrors the fortunes column DEFAULT set by migration 20260830_gift_90_fortunes (superseding the 60F default). Never used to credit a balance.
                 // Profile flag is authoritative (per-account). NO localStorage read —
                 // a device-global flag from another account/test would wrongly suppress
                 // this account's gift (the exact bug this fixes).
