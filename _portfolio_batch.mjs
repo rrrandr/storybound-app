@@ -7,6 +7,7 @@
 //
 // usage: node _portfolio_batch.mjs   (needs vercel dev on :3000) — every request intercepted
 import { chromium } from 'playwright-core';
+import fs from 'fs';
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fail++; console.log(`  ✗ ${n}${d ? `\n      ${d}` : ''}`); } };
 try {
@@ -22,7 +23,7 @@ page.setDefaultTimeout(60000);
 // and fails the run. Nothing is forwarded to the dev server (a forwarded call spawns a runtime
 // that is never reaped).
 const reqs = { batch: [], staticApi: 0, unknown: [], escaped: [] };
-let responder = null;
+let responder = null, rawOverride = null;
 page.on('request', r => { if (/\/api\//.test(r.url()) && !/localhost|127\.0\.0\.1/.test(r.url())) reqs.escaped.push(r.url()); });
 await page.route('**/api/**', async route => {
   const u = route.request().url();
@@ -33,7 +34,8 @@ await page.route('**/api/**', async route => {
   if (/You author CHARACTER PORTFOLIOS/.test(sys)) {
     const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
     reqs.batch.push({ refs, max_tokens: b.max_tokens, role: b.role, model: b.model, url: u, sys });
-    const content = JSON.stringify(responder ? responder(refs, reqs.batch.length) : { characterPortfolios: [] });
+    const content = rawOverride ? String(rawOverride(refs))
+      : JSON.stringify(responder ? responder(refs, reqs.batch.length) : { characterPortfolios: [] });
     return route.fulfill({ status:200, contentType:'application/json',
       body: JSON.stringify({ ok:true, content, choices:[{ message:{ content } }] }) });
   }
@@ -78,6 +80,44 @@ const gen = () => page.evaluate(async () => {
   return { r, batchCalls: ((st && st.byInvocation['inv-b']) || {}).batchCalls || 0,
            statuses: cands.map(c => c.status) };
 });
+
+// Serves a mutated app.js to a fresh context and runs one rejecting batch through it.
+async function mutantRun(mut) {
+  const src = fs.readFileSync('public/app.js', 'utf8');
+  const targets = src.split(mut.from).length - 1;
+  const c2 = await browser.newContext();
+  try {
+    const p2 = await c2.newPage();
+    await p2.route('**/app.js*', r => r.fulfill({ status: 200,
+      contentType: 'application/javascript; charset=utf-8', body: src.replace(mut.from, mut.to) }));
+    await p2.route('**/api/**', async route => {
+      const u = route.request().url();
+      if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u))
+        return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+      let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
+      if (b && b.role === 'CHARACTER_PORTFOLIO') {
+        const refs = [...String(((b.messages || []).find(m => m.role === 'system') || {}).content || '')
+          .matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
+        const p = FIVE(refs[0]); delete p.facets[0].unique_prediction;   // one rejecting subject
+        const content = JSON.stringify({ characterPortfolios: [p] });
+        return route.fulfill({ status: 200, contentType: 'application/json',
+          body: JSON.stringify({ ok: true, content, choices: [{ message: { content } }] }) });
+      }
+      return route.abort();
+    });
+    await p2.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded' });
+    await p2.waitForFunction(() => typeof window._generatePendingPortfolios === 'function', { timeout: 30000 });
+    const r = await p2.evaluate(async () => {
+      const s = window.state;
+      Object.assign(s, { storyId: 'mut-diag', _relationshipLedger: null, _pendingAdmission: null });
+      window._captureAdmissionManifest(s, [{ id: 'named:m', label: 'Mara Dunn', aliases: ['Mara Dunn'],
+        providerOwner: 'ordinary/emergent name-only' }], { invocationId: 'inv-md', lineage: 'L-md' });
+      const rep = await window._generatePendingPortfolios({ invocationId: 'inv-md' }, s);
+      return { code: rep.code, diagnostics: rep.diagnostics || [] };
+    });
+    return Object.assign({ targets }, r);
+  } finally { await c2.close().catch(() => {}); }
+}
 
 console.log(`\n${'═'.repeat(84)}\nTHE BOUNDED BATCH — chunking, ceilings, and what a defect costs\n${'═'.repeat(84)}\n`);
 
@@ -245,6 +285,82 @@ console.log('\n 5c · CONTRAST IS STRUCTURAL, IN THE DISPATCHED BYTES');
       const bad = await gen();
       return bad.r.parked.length === 0;
     })(), 'a facet with no unique_prediction was accepted');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  5d · EVERY FAILURE NAMES ITSELF
+//
+// A live paid call once reported `subjects_unresolved` for a response that had SUCCEEDED at
+// transport and returned 4140 tokens against an 11883 ceiling. Nothing in the result could tell
+// that apart from an HTTP failure, so the money bought no diagnosis. `subjects_unresolved` is the
+// SUMMARY; it may never be the whole explanation.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 5d · EVERY FAILURE PRODUCES ITS OWN NAMED DIAGNOSTIC');
+{
+  const DIAG = await page.evaluate(() => window.__PORTFOLIO_DIAG);
+  const bad = o => JSON.stringify(o);
+  const CASES = [
+    ['malformed JSON', 1, () => '~~ not json at all ~~', DIAG.NO_JSON, 'response'],
+    ['no characterPortfolios array', 1, () => JSON.stringify({ somethingElse: [] }), DIAG.NO_ARRAY, 'response'],
+    // Only ONE subject is missing, so exactly one diagnostic — the other two parked fine.
+    ['one subject omitted', 3, refs => bad({ characterPortfolios: refs.slice(0, 2).map(FIVE) }), DIAG.SUBJECT_MISSING, 'roster', 1],
+    ['all three omitted', 3, () => bad({ characterPortfolios: [] }), DIAG.SUBJECT_MISSING, 'roster'],
+    ['a subject returned twice', 2, refs => bad({ characterPortfolios: [FIVE(refs[0]), FIVE(refs[0])] }), DIAG.ROSTER_CORRUPT, 'roster'],
+    ['a cross-assigned / unknown ref', 2, refs => bad({ characterPortfolios: [FIVE('cand:not-ours'), FIVE(refs[1])] }), DIAG.ROSTER_CORRUPT, 'roster'],
+    ['wrong slot for the facet', 1, refs => { const p = FIVE(refs[0]); p.facets[2].dimension = p.facets[0].dimension; return bad({ characterPortfolios: [p] }); }, DIAG.SCHEMA, 'schema'],
+    ['a missing contrast field', 1, refs => { const p = FIVE(refs[0]); delete p.facets[1].not_explained_by; return bad({ characterPortfolios: [p] }); }, DIAG.SCHEMA, 'schema'],
+    ['an obsolete pattern field', 1, refs => { const p = FIVE(refs[0]); p.facets[0].applicability_conditions[0] = { text: 'x', evidence_requires: 'a|b' }; return bad({ characterPortfolios: [p] }); }, DIAG.SCHEMA, 'schema'],
+    ['invalid evidence words', 1, refs => { const p = FIVE(refs[0]); p.facets[0].applicability_conditions[0].evidence_words = ['(a+)+$']; return bad({ characterPortfolios: [p] }); }, DIAG.SCHEMA, 'schema'],
+  ];
+  for (const [label, n, mk, wantCode, wantStage, wantDiagCount] of CASES) {
+    await setup(n);
+    responder = null;
+    rawOverride = mk;
+    const g = await gen();
+    rawOverride = null;
+    const expect = wantDiagCount === undefined ? n : wantDiagCount;
+    const d = (g.r.diagnostics || [])[0] || {};
+    t(`5d "${label}" → ${wantCode} at the ${wantStage} stage (${expect} diagnostic${expect === 1 ? '' : 's'})`,
+      g.r.code === 'subjects_unresolved'
+        && (g.r.diagnostics || []).length === expect
+        && d.code === wantCode && d.stage === wantStage,
+      JSON.stringify({ summary: g.r.code, diagnostics: (g.r.diagnostics || []).slice(0, 2) }));
+  }
+  // PARTIAL AND FULL SUCCESS
+  await setup(3);
+  rawOverride = null;
+  responder = refs => ({ characterPortfolios: refs.map((r, i) =>
+    i === 1 ? (() => { const p = FIVE(r); delete p.facets[0].unique_prediction; return p; })() : FIVE(r)) });
+  const partial = await gen();
+  t('5d "two valid plus one invalid" → two parked, ONE diagnostic naming only the invalid subject',
+    partial.r.parked.length === 2 && partial.r.unresolved.length === 1
+      && (partial.r.diagnostics || []).length === 1
+      && partial.r.diagnostics[0].stage === 'schema'
+      && partial.r.diagnostics[0].subject_ref === partial.r.unresolved[0],
+    JSON.stringify({ parked: partial.r.parked.length, diag: partial.r.diagnostics }));
+  await setup(3);
+  responder = refs => ({ characterPortfolios: refs.map(FIVE) });
+  const allGood = await gen();
+  t('5d "all three valid" → no diagnostics at all, and usage is still recorded',
+    allGood.r.ok === true && (allGood.r.diagnostics || []).length === 0
+      && Array.isArray(allGood.r.usage),
+    JSON.stringify({ ok: allGood.r.ok, diag: allGood.r.diagnostics, usage: allGood.r.usage }));
+  t('5d the ordinary result carries CODES and REFS, never psychology',
+    !/canonical_truth|Paperwork|Deference|instruction/.test(JSON.stringify(partial.r)),
+    'a diagnostic leaked model content into the ordinary result');
+}
+
+// ── MUTATION CONTROL ON THE DIAGNOSTIC HANDOFF ──
+// Without it the suite must go red: a summary that cannot be distinguished from an explanation is
+// exactly the state that wasted a paid call.
+{
+  const MUT = await mutantRun({
+    from: "out.diagnostics.push({ subject_ref: c.candidate_ref, stage: 'schema',",
+    to:   "out.__noDiag = true; ({ subject_ref: c.candidate_ref, stage: 'schema'," });
+  t('5e MUTATION: with the schema-stage diagnostic removed, a rejected subject reports only the ' +
+    'summary — and this suite notices',
+    MUT.targets === 1 && MUT.diagnostics.length === 0 && MUT.code === 'subjects_unresolved',
+    JSON.stringify(MUT));
 }
 
 console.log('\n 6 · EXACT ACCOUNTING');
