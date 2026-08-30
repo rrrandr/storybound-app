@@ -5,7 +5,9 @@
     "verify:content-register": "node scripts/verify-content-register.js",
     "verify:causal": "node scripts/ff-causal/test.js && node scripts/ff-causal/golden.js && node scripts/ff-causal/tempt.js",
     "verify:geo": "node scripts/geo-gate/test.js",
-    "verify:sacred": "node scripts/sacred-figure-guard/test.js"
+    "verify:sacred": "node scripts/sacred-figure-guard/test.js",
+    "verify:files": "node scripts/verify-runtime-files.mjs",
+    "verify:security": "node scripts/verify-fortune-security.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
