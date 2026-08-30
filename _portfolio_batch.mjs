@@ -380,6 +380,18 @@ t('6c: every batch request stayed within the hard ceiling and carried ≤3 subje
   reqs.batch.every(x => x.refs.length <= 3 && x.max_tokens <= ceil.hard),
   JSON.stringify(reqs.batch.map(x => ({ n: x.refs.length, mt: x.max_tokens }))));
 
+// ── ONE MODEL-FACING TAXONOMY ──
+// The batch prompt used to carry BOTH the five named slots and the ten technical categories, and
+// ask the model to pick one of each per facet. `defense` has no matching category, so a live call
+// invented `security_strategy` for that slot and the subject was rejected wholesale. The prompt
+// now offers slots only.
+const batchSys = reqs.batch[0] ? reqs.batch[0].sys : '';
+t('6d: the BATCH schema asks for a dimension and NOT for a category — no facet field, no allowed ' +
+  'list, no guardrail scope named in categories',
+  !!batchSys && !/"category"/.test(batchSys) && !/allowed categories/i.test(batchSys)
+    && /"dimension": "<the slot name above, in order>"/.test(batchSys),
+  JSON.stringify((batchSys.match(/[^\n]*categor[^\n]*/gi) || []).slice(0, 3)));
+
 console.log(`\n${'─'.repeat(84)}\n  ${pass} passed · ${fail} failed\n`);
 await browser.close();
 process.exit(fail ? 1 : 0);

@@ -10,6 +10,19 @@ import { instrument } from './_scene1_instrument.mjs';
 import { buildScene1Prose, NONTOKEN_A, SCENE_WANT } from './_hook_fixture_prose.mjs';
 
 const SRC = fs.readFileSync('public/app.js', 'utf8');
+// PRODUCTION'S SLOT → CATEGORY MAP, read rather than remembered. The model is given slot names
+// only; `category` is derived in the backend, so a fixture that names categories is speaking a
+// vocabulary the model no longer has.
+const SLOT_CATEGORY = (() => {
+  const blk = (SRC.match(/PORTFOLIO_CONTRAST_DIMENSIONS = \[([\s\S]*?)\n  \];/) || [])[1] || '';
+  const m = {};
+  for (const row of blk.match(/key: '([a-z_]+)',\s*category: '([a-z_]+)'/g) || []) {
+    const [, k, c] = row.match(/key: '([a-z_]+)',\s*category: '([a-z_]+)'/); m[k] = c;
+  }
+  return m;
+})();
+const SLOTS = Object.keys(SLOT_CATEGORY);
+const SLOT_FOR_CATEGORY = (c) => SLOTS.find(k => SLOT_CATEGORY[k] === c) || null;
 function force(src, fn, v) {
   const needle = `function ${fn}() {`;
   if (src.split(needle).length - 1 !== 1) throw new Error(`${fn}: not exactly one definition`);
@@ -30,20 +43,20 @@ const L = 'she understands the wish has already begun to cost her something she 
 // Written FOR THIS STORY, so every applicability condition is grounded in evidence the customs
 // house scene actually offers. A rite-flavoured condition was correctly rejected here by the
 // evidence gate — that gate is why these belong to the scene rather than to the seed.
-const _pfF = (category, truth, w1, e1, w2, e2) => ({ category, canonical_truth: truth,
+const _pfF = (dimension, truth, w1, e1, w2, e2) => ({ dimension, canonical_truth: truth,
   applicability_conditions: [{ text:w1, evidence_words: e1.split('|') }, { text:w2, evidence_words: e2.split('|') }],
-  forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
+  forbidden_restatements: [{ forbid:'is ' + dimension, why:'the truth stated, not shown' }] });
 const PORTFOLIO_FACETS = [
-  _pfF('worldview','Paperwork repeated daily rarely earns his full attention, and he barely hides it.',
-    'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
+  _pfF('value','With people who hold no leverage over him he is unexpectedly generous.',
+    'someone with nothing to trade','customs|house|Lirael','a person placed beneath him','beneath|edge|apart'),
   _pfF('insecurity','Deference paid to someone else makes him newly attentive to his own standing.',
     'a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'),
-  _pfF('habit',"He turns another person's error into an instruction, wanted or not.",
+  _pfF('defense','Paperwork repeated daily rarely earns his full attention, and he barely hides it.',
+    'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
+  _pfF('relationship',"He turns another person's error into an instruction, wanted or not.",
     'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'),
-  _pfF('contradiction','On what a signature costs he assumes an authority nobody granted him.',
-    'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'),
-  _pfF('value','With people who hold no leverage over him he is unexpectedly generous.',
-    'someone with nothing to trade','customs|house|Lirael','a person placed beneath him','beneath|edge|apart')];
+  _pfF('exception','On what a signature costs he assumes an authority nobody granted him.',
+    'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid')];
 
 // The responder can only echo the subject_ref THE REQUEST CARRIED — exactly what a model can do.
 // A run that is not a portfolio run gets an ordinary scaffold, so the marker cannot leak sideways.
@@ -51,8 +64,8 @@ function scaffoldReply(refFromRequest, genPortfolio) {
   const base = { issueArcs: [{ n: 1, title: 'the customs house', beats: [] }], characterIcebergs: {} };
   if (!genPortfolio || !refFromRequest) return base;
   const pf = { subject_ref: refFromRequest, facets: PORTFOLIO_FACETS };
-  // Guardrails are scoped by CATEGORY in the response — ids are backend-owned, so a model cannot
-  // name one. Attachment resolves the category scope to facet ids.
+  // Guardrails are scoped by SLOT in the response — ids and categories are both backend-owned, so
+  // a model can name neither. Attachment resolves slot → category → facet ids.
   if (genPortfolio.guards) pf.misreading_guardrails = genPortfolio.guards;
   base.characterPortfolios = [pf];
   return base;
@@ -2042,8 +2055,10 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
   const selCat = selected ? selected.cat : null;
   const othCat = others.length ? others[0].cat : null;
   const GG = selCat && othCat ? await run({ hot: false, mutate: null, genPortfolio: { guards: [
-      { forbid: "checks the youth's hands", facets: [selCat], why: 'GUARD-ON-SELECTED-FACET' },
-      { forbid: 'before the words',         facets: [othCat], why: 'GUARD-ON-UNSELECTED-FACET' },
+      // Scoped by SLOT — the only facet vocabulary the model is given. The backend resolves the
+      // slot to its derived category and then to facet ids.
+      { forbid: "checks the youth's hands", facets: [SLOT_FOR_CATEGORY(selCat)], why: 'GUARD-ON-SELECTED-FACET' },
+      { forbid: 'before the words',         facets: [SLOT_FOR_CATEGORY(othCat)], why: 'GUARD-ON-UNSELECTED-FACET' },
     ] } }) : null;
   const invalid = GG ? GG.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ') : '';
   t('X11: a guardrail scoped to the SELECTED facet reaches validation and fires',

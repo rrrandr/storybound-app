@@ -62,17 +62,17 @@ try {
     // FIVE GENUINELY DIFFERENT TRUTHS, modelled on the approved standard: different categories
     // AND different subjects — the ceremony, his standing, a child's error, the price he paid,
     // and who arrived with nothing.
-    const F = (category, truth, w1, e1, w2, e2) => ({
-      category, canonical_truth: truth,
+    const F = (dimension, truth, w1, e1, w2, e2) => ({
+      dimension, canonical_truth: truth,
       applicability_conditions: [{ text: w1, evidence_words: e1.split('|') }, { text: w2, evidence_words: e2.split('|') }],
-      forbidden_restatements: [{ forbid: 'is ' + category, why: 'the truth stated, not shown' }]
+      forbidden_restatements: [{ forbid: 'is ' + dimension, why: 'the truth stated, not shown' }]
     });
     const GOOD = [
-      F('worldview',     'Routine ceremony rarely deserves his full attention, and he barely disguises it.', 'a rite performed many times', 'rite|liturgy|ceremon', 'a step nobody checks', 'order|step|clause'),
-      F('insecurity',    'Public honour paid to a peer makes him newly attentive to rank and merit.', 'a peer the room defers to', 'defer|regard|watching', 'someone younger holding standing', 'younger|senior|standing'),
-      F('habit',         'With children he turns mistakes and even play into lessons, always.', 'a youth doing a thing badly', 'youth|child|first time', 'an error he could still fix', 'error|wrong|mistake'),
-      F('contradiction', 'In questions of sacrifice he assumes an authority others have not earned.', 'an offering named aloud', 'offering|memory|cost', 'a cost he judges too small', 'cost|price|paid'),
-      F('value',         'With people who have little and cannot confer status he becomes unexpectedly kind.', 'someone who came with nothing', 'barefoot|nothing|guest', 'a person placed beneath the room', 'beneath|edge|apart')
+      F('value', 'With people who have little and cannot confer status he becomes unexpectedly kind.', 'someone who came with nothing', 'barefoot|nothing|guest', 'a person placed beneath the room', 'beneath|edge|apart'),
+      F('insecurity', 'Public honour paid to a peer makes him newly attentive to rank and merit.', 'a peer the room defers to', 'defer|regard|watching', 'someone younger holding standing', 'younger|senior|standing'),
+      F('defense', 'Routine ceremony rarely deserves his full attention, and he barely disguises it.', 'a rite performed many times', 'rite|liturgy|ceremon', 'a step nobody checks', 'order|step|clause'),
+      F('relationship', 'With children he turns mistakes and even play into lessons, always.', 'a youth doing a thing badly', 'youth|child|first time', 'an error he could still fix', 'error|wrong|mistake'),
+      F('exception', 'In questions of sacrifice he assumes an authority others have not earned.', 'an offering named aloud', 'offering|memory|cost', 'a cost he judges too small', 'cost|price|paid')
     ];
     const ROSTER = () => ({ subject_ref: out.cid, required_facet_count: 5 });
     const reset = (id) => {
@@ -116,13 +116,13 @@ try {
       invented:      V({ characterPortfolios: [{ subject_ref: 'plot:made:up', facets: GOOD }] }).code,
       duplicate:     V({ characterPortfolios: [{ subject_ref: out.cid, facets: GOOD }, { subject_ref: out.cid, facets: GOOD }] }).code,
       wrongCount:    V({ characterPortfolios: [{ subject_ref: out.cid, facets: GOOD.slice(0, 3) }] }).code,
-      dupCategory:   V({ characterPortfolios: [{ subject_ref: out.cid, facets: [GOOD[0], GOOD[0], GOOD[1], GOOD[2], GOOD[3]] }] }).code,
+      dupSlot:       V({ characterPortfolios: [{ subject_ref: out.cid, facets: [GOOD[0], GOOD[0], GOOD[1], GOOD[2], GOOD[3]] }] }).code,
       paraphrase:    V({ characterPortfolios: [{ subject_ref: out.cid, facets: [
-                        F('worldview','He cannot be bothered to pretend the ceremony deserves attention.','a','rite','b','step'),
+                        F('value','He cannot be bothered to pretend the ceremony deserves attention.','a','rite','b','step'),
                         F('insecurity','He cannot be bothered to pretend the ceremony deserves his attention.','a','rite','b','step'),
                         GOOD[2], GOOD[3], GOOD[4]] }] }).code,
       badPattern:    V({ characterPortfolios: [{ subject_ref: out.cid, facets: [
-                        { category:'worldview', canonical_truth:'A truth long enough to pass the floor here.',
+                        { dimension:'value', canonical_truth:'A truth long enough to pass the floor here.',
                           applicability_conditions:[{text:'x',evidence_words: ["([unclosed"]},{text:'y',evidence_words: ["ok"]}] },
                         GOOD[1], GOOD[2], GOOD[3], GOOD[4]] }] }).code,
       envelopeLift:  V({ scaffold: { characterPortfolios: [{ subject_ref: out.cid, facets: GOOD }] } }).code
@@ -135,7 +135,8 @@ try {
     out.repeatIdentical = window._attachPortfolio(out.cid, vv.facets, {});
     // Realistic patterns: a single-letter alternative is rejected by the bounded grammar, since
     // it would match any word containing that letter.
-    const CONFLICT = GOOD.slice(0, 4).concat([F('value',
+    // The fifth slot, refilled with a different truth — a genuine conflict, not a repeated slot.
+    const CONFLICT = GOOD.slice(0, 4).concat([F('exception',
       'A completely different fifth truth about him entirely.',
       'when he is owed something', 'owed|debt|owing', 'when nobody is watching', 'alone|unseen|private')]);
     const vc = V({ characterPortfolios: [{ subject_ref: out.cid, facets: CONFLICT }] });
@@ -198,7 +199,7 @@ try {
 
   console.log('\n 3 · REJECTIONS (each leaves the rest of the scaffold alone)');
   const expect = { absent:'absent', notArray:'malformed', invented:'invented_ref', duplicate:'duplicate',
-    wrongCount:'wrong_count', dupCategory:'duplicate_category', paraphrase:'paraphrase',
+    wrongCount:'wrong_count', dupSlot:'duplicate_category', paraphrase:'paraphrase',
     badPattern:'malformed', envelopeLift:'absent' };
   Object.keys(expect).forEach(k => {
     t(`3 · ${k} → ${expect[k]}`, R.rej[k] === expect[k], `got ${R.rej[k]}`);
@@ -237,16 +238,16 @@ try {
   const seam = await page.evaluate(() => {
     const s = window.state;
     const out = {};
-    const F = (category, truth, w1, e1, w2, e2) => ({
-      category, canonical_truth: truth,
+    const F = (dimension, truth, w1, e1, w2, e2) => ({
+      dimension, canonical_truth: truth,
       applicability_conditions: [{ text: w1, evidence_words: e1.split('|') }, { text: w2, evidence_words: e2.split('|') }],
-      forbidden_restatements: [{ forbid: 'is ' + category, why: 'the truth stated, not shown' }] });
+      forbidden_restatements: [{ forbid: 'is ' + dimension, why: 'the truth stated, not shown' }] });
     const GOOD = [
-      F('worldview','Routine ceremony rarely deserves his full attention, and he barely disguises it.','a rite performed many times','rite|liturgy|ceremon','a step nobody checks','order|step|clause'),
-      F('insecurity','Public honour paid to a peer makes him newly attentive to rank and merit.','a peer the room defers to','defer|regard|watching','someone younger holding standing','younger|senior|standing'),
-      F('habit','With children he turns mistakes and even play into lessons, always.','a youth doing a thing badly','youth|child|first time','an error he could still fix','error|wrong|mistake'),
-      F('contradiction','In questions of sacrifice he assumes an authority others have not earned.','an offering named aloud','offering|memory|cost','a cost he judges too small','cost|price|paid'),
-      F('value','With people who have little and cannot confer status he becomes unexpectedly kind.','someone who came with nothing','barefoot|nothing|guest','a person placed beneath the room','beneath|edge|apart')];
+      F('value', 'With people who have little and cannot confer status he becomes unexpectedly kind.', 'someone who came with nothing', 'barefoot|nothing|guest', 'a person placed beneath the room', 'beneath|edge|apart'),
+      F('insecurity', 'Public honour paid to a peer makes him newly attentive to rank and merit.', 'a peer the room defers to', 'defer|regard|watching', 'someone younger holding standing', 'younger|senior|standing'),
+      F('defense', 'Routine ceremony rarely deserves his full attention, and he barely disguises it.', 'a rite performed many times', 'rite|liturgy|ceremon', 'a step nobody checks', 'order|step|clause'),
+      F('relationship', 'With children he turns mistakes and even play into lessons, always.', 'a youth doing a thing badly', 'youth|child|first time', 'an error he could still fix', 'error|wrong|mistake'),
+      F('exception', 'In questions of sacrifice he assumes an authority others have not earned.', 'an offering named aloud', 'offering|memory|cost', 'a cost he judges too small', 'cost|price|paid')];
     const setup = (id) => {
       Object.assign(s, { storyId: id, _relationshipLedger: null, name: 'Lirael', playerName: 'Lirael',
         _characterDisclosureLedger: {} });
@@ -362,21 +363,21 @@ try {
   // that results from it, and they fail if the production handler invocation is removed.
   // ══════════════════════════════════════════════════════════════════════════════════════
   const FIVE = [
-    { category:'worldview', canonical_truth:'Routine ceremony rarely deserves his full attention, and he barely disguises it.',
-      applicability_conditions:[{text:'a rite performed often',evidence_words: ["rite", "liturgy", "ceremon"]},{text:'a step nobody checks',evidence_words: ["order", "step", "clause"]}],
-      forbidden_restatements:[{forbid:'is bored',why:'the truth stated, not shown'}] },
-    { category:'insecurity', canonical_truth:'Public honour paid to a peer makes him newly attentive to rank and merit.',
+    { dimension:'value', canonical_truth:'With people who have little and cannot confer status he becomes unexpectedly kind.',
+      applicability_conditions:[{text:'someone with nothing',evidence_words: ["barefoot", "nothing", "guest"]},{text:'a person placed beneath',evidence_words: ["beneath", "edge", "apart"]}],
+      forbidden_restatements:[{forbid:'is kind',why:'named, not shown'}] },
+    { dimension:'insecurity', canonical_truth:'Public honour paid to a peer makes him newly attentive to rank and merit.',
       applicability_conditions:[{text:'a peer deferred to',evidence_words: ["defer", "regard", "watching"]},{text:'someone younger with standing',evidence_words: ["younger", "senior", "standing"]}],
       forbidden_restatements:[{forbid:'is jealous',why:'named, not shown'}] },
-    { category:'habit', canonical_truth:'With children he turns mistakes and even play into lessons, always.',
+    { dimension:'defense', canonical_truth:'Routine ceremony rarely deserves his full attention, and he barely disguises it.',
+      applicability_conditions:[{text:'a rite performed often',evidence_words: ["rite", "liturgy", "ceremon"]},{text:'a step nobody checks',evidence_words: ["order", "step", "clause"]}],
+      forbidden_restatements:[{forbid:'is bored',why:'the truth stated, not shown'}] },
+    { dimension:'relationship', canonical_truth:'With children he turns mistakes and even play into lessons, always.',
       applicability_conditions:[{text:'a youth doing badly',evidence_words: ["youth", "child", "first time"]},{text:'a fixable error',evidence_words: ["error", "wrong", "mistake"]}],
       forbidden_restatements:[{forbid:'is a teacher',why:'named, not shown'}] },
-    { category:'contradiction', canonical_truth:'In questions of sacrifice he assumes an authority others have not earned.',
+    { dimension:'exception', canonical_truth:'In questions of sacrifice he assumes an authority others have not earned.',
       applicability_conditions:[{text:'an offering named aloud',evidence_words: ["offering", "memory", "cost"]},{text:'a cost judged small',evidence_words: ["cost", "price", "paid"]}],
-      forbidden_restatements:[{forbid:'is arrogant',why:'named, not shown'}] },
-    { category:'value', canonical_truth:'With people who have little and cannot confer status he becomes unexpectedly kind.',
-      applicability_conditions:[{text:'someone with nothing',evidence_words: ["barefoot", "nothing", "guest"]},{text:'a person placed beneath',evidence_words: ["beneath", "edge", "apart"]}],
-      forbidden_restatements:[{forbid:'is kind',why:'named, not shown'}] }
+      forbidden_restatements:[{forbid:'is arrogant',why:'named, not shown'}] }
   ];
 
   let scaffoldBody = null, scaffoldMaxTokens = null, respondWith = null;
@@ -492,6 +493,22 @@ try {
     personBody ? 'occurrences: ' + ((personBody.match(new RegExp(realCid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []).length) : 'NO REQUEST CAPTURED');
   t('8b: …and required_facet_count: 5 is stated by the backend, not chosen by the model',
     !!personBody && /required_facet_count:\s*5/.test(personBody), 'roster line missing');
+  // DECODED FIRST. personBody is the JSON request body, so every quote in the prompt is escaped
+  // inside it — a naive /"category"/ over the raw body can never match and would pass whether or
+  // not the field was there. These read the actual system message.
+  const personSys = (() => { try {
+    return String((JSON.parse(personBody).messages || []).map(m => m.content).join('\n'));
+  } catch (_) { return ''; } })();
+  t('8b2: the SCAFFOLD schema shows the model the five NAMED SLOTS, in order',
+    !!personSys && /THE FIVE FACETS ARE FIVE NAMED SLOTS, IN THIS ORDER/.test(personSys)
+      && ['value','insecurity','defense','relationship','exception']
+           .every(k => personSys.indexOf('"dimension": "' + k + '"') !== -1),
+    personSys ? 'slot list absent from the decoded system message' : 'NO REQUEST CAPTURED');
+  t('8b3: …and asks the model for NO category — not in the facet shape, not as an allowed list, ' +
+    'not as a guardrail scope. Two taxonomies is what broke the live sample',
+    !!personSys && !/"category"/.test(personSys) && !/allowed categories/i.test(personSys)
+      && !/DISTINCT categories/i.test(personSys),
+    personSys ? JSON.stringify((personSys.match(/[^\n]*categor[^\n]*/gi) || []).slice(0, 3)) : 'NO REQUEST CAPTURED');
   t('8a2: the acceptance path issues EXACTLY ONE scaffold call', personCalls === 1, String(personCalls));
   t('8c: the ceiling is EXACTLY the fixture baseline plus the declared allowance (a conservative\n      chars÷3 approximation over the measured worst-case response, not a token count)',
     personTok === BASE_TOK + PORTFOLIO_ALLOWANCE,
@@ -732,6 +749,145 @@ try {
     paid === 0 && staticReqs.every(u => STATIC_API.test(u)),
     'paid=' + paid + ' static=' + JSON.stringify(staticReqs.slice(0, 3)));
 } finally { await ctx.close().catch(() => {}); }
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  10 · ONE MODEL-FACING TAXONOMY
+//  A live sample lost a valid portfolio because the model was handed two overlapping
+//  vocabularies — five positional slots AND ten technical categories — and asked to reconcile
+//  them. Three slots have a same-named category and `defense` has none, so the model coined
+//  `security_strategy` for the defence slot and the whole subject was rejected. The model now
+//  sees slots only; the category is bookkeeping the backend derives. These assertions read the
+//  mapping and the field lists out of production rather than restating them.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 10 · MODEL-FACING SLOTS, BACKEND-DERIVED CATEGORIES');
+{
+  const ctx8 = await browser.newContext();
+  try {
+    const page8 = await ctx8.newPage();
+    page8.setDefaultTimeout(120000); page8.setDefaultNavigationTimeout(120000);
+    await page8.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: SRC }));
+    await page8.route('**/api/**', route => route.fulfill({ status:200, contentType:'application/json', body:'{}' }));
+    await page8.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
+    await page8.waitForFunction(() => window._validatePortfolioResponse
+      && window.__PORTFOLIO_DIMENSION_CATEGORY && window._relEnsureAuthorProfile, { timeout:60000 });
+    const D = await page8.evaluate(() => {
+      const dims = window.__PORTFOLIO_CONTRAST_DIMENSIONS;
+      const map  = window.__PORTFOLIO_DIMENSION_CATEGORY;
+      const cats = window.__CPLUS_FACET_CATEGORIES;
+      const fields = window.__PORTFOLIO_SCHEMA_FIELDS;
+      const derived = dims.map(d => map[d]);
+
+      // A response that fills the five slots AND supplies a hostile `category` on every facet.
+      const F = (dimension, category, truth, w) => ({ dimension, category, canonical_truth: truth,
+        unique_prediction: 'a prediction only this facet makes',
+        not_explained_by: 'not the neighbouring facet, which is about something else',
+        applicability_conditions: [{ text: 'when ' + w, evidence_words: [w, w + 'ing'] },
+                                   { text: 'a second, different ' + w, evidence_words: [w + 'ed'] }],
+        forbidden_restatements: [{ forbid: 'is ' + dimension, why: 'the truth stated, not shown' }] });
+      const TRUTHS = ['He treats a promise as a debt that outlives the person owed it.',
+                      'Being thanked in public makes him suspect he is being managed.',
+                      'He answers a challenge by reciting procedure until the room gives up.',
+                      'He keeps score of who asked after him and who did not.',
+                      'With anyone who cannot repay him he stops keeping score at all.'];
+      // Every facet claims 'security_strategy' — the exact invented value that broke the sample,
+      // plus a valid-but-wrong category, to prove neither can reach the record.
+      const hostile = dims.map((d, i) => F(d, i === 2 ? 'security_strategy' : 'worldview', TRUTHS[i], 'pressure' + i));
+
+      const s = window.state;
+      Object.assign(s, { storyId: 'tax-' + Math.random().toString(36).slice(2, 7),
+        _relationshipLedger: null, name: 'Lirael', playerName: 'Lirael' });
+      const cid = window._relPlotRoleEntity('aplot:tax', 'primary_antagonist',
+        { label: 'Vero Ashe', provenance: 'aplot_antagonist' });
+      s.aPlot = { id: 'aplot:tax', antagonistOrAntiForce: 'Vero Ashe', antagonistShape: 'A',
+        antagonistSubject: { kind: 'PERSON', reference_label: 'Vero Ashe', proper_name: 'Vero Ashe', canonicalId: cid } };
+      const v = window._validatePortfolioResponse(
+        { characterPortfolios: [{ subject_ref: cid, facets: hostile }] }, { subject_ref: cid });
+
+      // SEED FACETS TAKE A DIFFERENT ROUTE AND MUST BE UNTOUCHED.
+      const seedFacet = { facet_id: 'seed_one', category: 'worldview',
+                          canonical_truth: 'authored by hand, and not the backend\'s to relabel' };
+      const e = window._relLedger(true).entities[cid];
+      const ap2 = window._relEnsureAuthorProfile(e, 'seed');
+      ap2.provenance = 'seed'; ap2.cPlusFacets = [seedFacet];
+      const seedAfter = JSON.parse(JSON.stringify(window._relLedger(false).entities[cid].authorProfile.cPlusFacets));
+
+      return { dims, map, cats, fields, derived,
+               ok: v.ok, code: v.code, errors: v.errors,
+               outCats: (v.facets || []).map(f => f.category),
+               outHasDimension: (v.facets || []).some(f => 'dimension' in f && f.dimension),
+               validatedFacets: v.facets || [],
+               seedAfter };
+    });
+
+    // ── ATTACH, FINGERPRINT, PERSIST, RESTORE ──
+    const P = await page8.evaluate(({ facets }) => {
+      const s = window.state;
+      const cid = Object.keys(window._relLedger(false).entities)
+        .find(k => (window._relLedger(false).entities[k].label || '') === 'Vero Ashe');
+      const e = window._relLedger(true).entities[cid];
+      const ap = window._relEnsureAuthorProfile(e, 'generated_cast');
+      ap.provenance = 'generated_cast'; ap.immutable = false; ap.cPlusFacets = []; ap.status = null;
+      const att = window._attachPortfolio(cid, facets, {});
+      const read = () => (window._facetsForCharacter(
+        { id: cid, label: 'Vero Ashe', aliases: ['Vero Ashe'] }, s, { sceneNumber: 2 }) || []);
+      const before = read().map(f => ({ id: f.facet_id, cat: f.category }));
+      const fp = (window._relLedger(false).entities[cid].authorProfile || {}).fingerprint || null;
+      // PERSISTENCE ROUND TRIP: the ledger through JSON and back, the way a reload restores it.
+      const frozen = JSON.stringify(window._relLedger(false));
+      s._relationshipLedger = JSON.parse(frozen);
+      const after = read().map(f => ({ id: f.facet_id, cat: f.category }));
+      const fp2 = (window._relLedger(false).entities[cid].authorProfile || {}).fingerprint || null;
+      // WHAT ACTUALLY TRAVELS to the planner and the author.
+      const delivered = read().map(f => Object.keys(f).sort());
+      return { attached: !!(att && att.ok !== false), before, after, fp, fp2, delivered };
+    }, { facets: D.validatedFacets });
+
+    t('10a: the five slots map onto five EXISTING categories — nothing was added to the global ' +
+      'enum to accommodate a model response',
+      D.derived.length === 5 && D.derived.every(c => D.cats.indexOf(c) !== -1),
+      JSON.stringify({ derived: D.derived, known: D.cats }));
+    t('10b: …and onto five DISTINCT ones, so five filled slots can never collide on category',
+      new Set(D.derived).size === 5, JSON.stringify(D.derived));
+    t('10c: the mapping is TOTAL — every slot production offers the model has a category',
+      D.dims.every(d => !!D.map[d]), JSON.stringify({ dims: D.dims, map: D.map }));
+    t('10d: `category` is NOT a model-facing field of the published contract',
+      D.fields.perFacet.indexOf('category') === -1
+        && (D.fields.derivedNotModelFacing || []).indexOf('category') !== -1,
+      JSON.stringify(D.fields.perFacet));
+    t('10e: a response that fills every slot VALIDATES — the shape the live sample was rejected for ' +
+      'is now the shape production asks for',
+      D.ok === true, JSON.stringify({ code: D.code, errors: D.errors }));
+    t('10f: MODEL-SUPPLIED CATEGORY CANNOT OVERRIDE — every facet sent a category (one of them the ' +
+      'invented `security_strategy` that broke the live call) and the record carries the DERIVED ' +
+      'value in slot order instead',
+      JSON.stringify(D.outCats) === JSON.stringify(D.derived),
+      JSON.stringify({ got: D.outCats, want: D.derived }));
+    t('10g: `security_strategy` reached no record and was never added to the vocabulary',
+      D.outCats.indexOf('security_strategy') === -1 && D.cats.indexOf('security_strategy') === -1,
+      JSON.stringify(D.outCats));
+    t('10h: SEED facets keep their AUTHORED category — derivation touches generated facets only',
+      D.seedAfter.length === 1 && D.seedAfter[0].category === 'worldview'
+        && D.seedAfter[0].facet_id === 'seed_one',
+      JSON.stringify(D.seedAfter));
+    t('10i: the portfolio ATTACHES and the derived category is what the FACET ID is built from — ' +
+      'identity and fingerprint are backend bookkeeping, never a model string',
+      P.attached && P.before.length === 5
+        && P.before.every(f => D.derived.indexOf(f.cat) !== -1)
+        && P.before.every(f => f.id.indexOf(':' + f.cat) === f.id.length - (f.cat.length + 1)),
+      JSON.stringify(P.before));
+    t('10j: RESTORED from persistence, every facet still carries the DERIVED category and the ' +
+      'same fingerprint — a reload cannot reintroduce a model-authored taxonomy',
+      JSON.stringify(P.after) === JSON.stringify(P.before) && !!P.fp && P.fp2 === P.fp,
+      JSON.stringify({ before: P.before, after: P.after, fp: P.fp, fp2: P.fp2 }));
+    t('10k: the PLANNER/AUTHOR payload is unchanged in shape — it carries `category` and none of ' +
+      'the planning-only slot fields the model was given',
+      P.delivered.length === 5
+        && P.delivered.every(k => k.indexOf('category') !== -1)
+        && P.delivered.every(k => k.indexOf('dimension') === -1
+             && k.indexOf('unique_prediction') === -1 && k.indexOf('not_explained_by') === -1),
+      JSON.stringify(P.delivered[0] || []));
+  } finally { await ctx8.close().catch(() => {}); }
+}
 
 console.log(`\n${'─'.repeat(88)}\n  ${pass} passed · ${fail} failed\n`);
 await closeBrowser();
