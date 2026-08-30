@@ -99,22 +99,30 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
         batchRosters.push(refs);
         const DIMS = ['value','insecurity','defense','relationship','exception'];
         let _fi = 0;
-        const F = (category, canonical_truth, w1, e1, w2, e2) => ({ dimension: DIMS[(_fi++) % 5], category, canonical_truth,
-          unique_prediction: 'a prediction only this facet makes',
+        // Third person, mechanisms rather than maxims, a fresh pressure in every prediction, and
+        // an exception that names the pattern it interrupts — the craft contract, not just the
+        // structural one. Placeholder text no longer validates.
+        const F = (canonical_truth, unique_prediction, w1, e1, w2, e2) => ({
+          dimension: DIMS[(_fi++) % 5], canonical_truth, unique_prediction,
           not_explained_by: 'not the neighbouring facet, which is about something else',
           applicability_conditions: [{ text:w1, evidence_words: e1.split('|') }, { text:w2, evidence_words: e2.split('|') }],
-          forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
+          forbidden_restatements: [{ forbid:'is predictable', why:'the truth stated, not shown' }] });
         out = { characterPortfolios: refs.map(r => ({ subject_ref: r,
           identity_signature: 'the only one here who reads a rule as a shelter', facets: (_fi = 0, [
-          F('worldview','Paperwork repeated daily rarely earns her full attention, and she barely hides it.',
+          F('With people who hold no leverage over her she is unexpectedly generous.',
+            'Offered a favour by someone powerful, she declines it and helps the clerk instead.',
             'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
-          F('insecurity','Deference paid to someone else makes her newly attentive to her own standing.',
+          F('Deference paid to someone else makes her newly attentive to her own standing.',
+            'When a junior is thanked before her, she recites her own seniority to a stranger.',
             'a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'),
-          F('habit',"She turns another person's error into an instruction, wanted or not.",
+          F('Paperwork repeated daily rarely earns her full attention, and she barely hides it.',
+            'Asked to witness a routine signing, she signs without reading and dares anyone to object.',
             'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'),
-          F('contradiction','On what a signature costs she assumes an authority nobody granted her.',
+          F("She turns another person's error into an instruction, wanted or not.",
+            'Once a colleague admits confusion, she explains at length past the point of welcome.',
             'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'),
-          F('value','With people who hold no leverage over her she is unexpectedly generous.',
+          F('Her relationship habit of correcting others stops entirely with anyone already humiliated once.',
+            'When a clerk she once corrected is mocked by someone else, she covers the error herself.',
             'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')]) })) };
       }
       else if (/A-PLOT GENERATOR/i.test(sys)) out = APLOT;

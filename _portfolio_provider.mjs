@@ -779,7 +779,7 @@ console.log('\n 10 · MODEL-FACING SLOTS, BACKEND-DERIVED CATEGORIES');
 
       // A response that fills the five slots AND supplies a hostile `category` on every facet.
       const F = (dimension, category, truth, w) => ({ dimension, category, canonical_truth: truth,
-        unique_prediction: 'a prediction only this facet makes',
+        unique_prediction: 'When his standing is questioned in public, he answers by reciting the rule that protects it.',
         not_explained_by: 'not the neighbouring facet, which is about something else',
         applicability_conditions: [{ text: 'when ' + w, evidence_words: [w, w + 'ing'] },
                                    { text: 'a second, different ' + w, evidence_words: [w + 'ed'] }],

@@ -65,9 +65,16 @@ const PRIOR = (() => {
 const EV_RAW = '_portfolio_sample_raw.txt';
 const EV_PARSED = '_portfolio_sample_evidence.json';
 
-const CAP_ADDITIONAL = 0.00732645;
-const PRIOR_UPPER_BOUND = 0.02708785;   // 0.02454820 conservative + 0.00253965 measured, 2026-08-30
-const CAP_CUMULATIVE = 0.03440530;      // PRIOR_UPPER_BOUND + CAP_ADDITIONAL
+// REQUESTED, NOT YET GRANTED at the time of writing. Both figures moved for stated reasons and
+// neither may be carried over from the last authorisation:
+//   · the per-call worst case ROSE to $0.00741810, because the prompt now spells out every bound
+//     and teaches four craft rules with worked examples — the fix for the hidden-bound defect
+//     costs input tokens, and pretending otherwise would spend against a stale number;
+//   · the conservative prior now carries the second measured sample ($0.00228660), so the old
+//     cumulative ceiling would count the same headroom twice.
+const CAP_ADDITIONAL = 0.00741810;
+const PRIOR_UPPER_BOUND = 0.02937445;   // 0.02708785 conservative + 0.00228660 measured
+const CAP_CUMULATIVE = 0.03679255;      // PRIOR_UPPER_BOUND + CAP_ADDITIONAL
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext();
@@ -110,13 +117,31 @@ await page.route('**/api/**', async route => {
       // the shape production asks for rather than a shape this file remembers.
       const dims = CONTRACT.dimensions;
       const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
+      // The sentinel must satisfy the CRAFT contract too — third person, a mechanism rather than
+      // a maxim, a named pressure in every prediction, and an exception that names the slot it
+      // complicates and when. A sentinel that could not pass production's own gates would prove
+      // the evidence path on a response production would reject.
+      const TRUTH = [
+        'She keeps a promise past the point where keeping it costs her something.',
+        'She hears praise given to someone else as a verdict on her own standing.',
+        'She answers a challenge by reciting procedure until the room gives up.',
+        'She keeps score of who asked after her and who did not.',
+        'Her habit of keeping score stops entirely with anyone who has already failed her and stayed.'];
+      const PRED = [
+        'Asked to withdraw a promise quietly, she repeats it aloud in front of witnesses.',
+        'When a junior is thanked before her, she recites her seniority to a stranger.',
+        'Once challenged on a ruling, she reads the clause aloud twice and waits.',
+        'Offered help she did not ask for, she notes who offered and mentions it weeks later.',
+        'When someone who failed her returns, she stops counting and gives without terms.'];
       const F = (d, i) => ({ dimension: d,
-        canonical_truth: SENTINEL_PHRASE + ' — slot ' + i + ' truth, long enough to pass the floor.',
-        unique_prediction: 'a prediction only this facet makes',
-        not_explained_by: 'not the neighbouring facet, which is about something else',
+        canonical_truth: TRUTH[i],
+        unique_prediction: PRED[i],
+        not_explained_by: i === 4
+          ? 'could be mistaken for the relationship facet, but that is the pattern this suspends'
+          : 'not the neighbouring facet, which is about something else',
         applicability_conditions: [{ text: 'when pressure ' + i + ' is present', evidence_words: ['pressure', 'weight'] },
                                    { text: 'a second, different condition ' + i, evidence_words: ['second', 'other'] }],
-        forbidden_restatements: [{ forbid: 'is ' + d, why: 'the truth stated, not shown' }] });
+        forbidden_restatements: [{ forbid: 'is predictable', why: SENTINEL_PHRASE + ' — the truth stated, not shown' }] });
       const content = JSON.stringify({ characterPortfolios: refs.map(r => ({
         subject_ref: r, identity_signature: SENTINEL_PHRASE + ' identity signature',
         facets: dims.map(F) })) });
@@ -396,7 +421,7 @@ if (DRY) {
   const M = PRIOR.RATES[CONTRACT.model];
   const worst = (inTok / 1e6) * M.in + ((req ? req.body.max_tokens : 0) / 1e6) * M.out;
   console.log(`\n${'─'.repeat(84)}\n COST — unrounded`);
-  console.log(`   recorded so far, from the ledger (5 paid calls)          $${PRIOR.total.toFixed(8)}`);
+  console.log(`   recorded so far, from the ledger (6 paid calls)          $${PRIOR.total.toFixed(8)}`);
   console.log(`   this call, worst case at max_tokens ${req && req.body.max_tokens}          $${worst.toFixed(8)}`);
   console.log(`   cumulative if billed to the ceiling, recorded prior      $${(PRIOR.total + worst).toFixed(8)}`);
   console.log(`   cumulative against the CONSERVATIVE prior (the guard)   $${(PRIOR_UPPER_BOUND + worst).toFixed(8)}`);

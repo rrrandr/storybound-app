@@ -46,19 +46,36 @@ await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => typeof window._generatePendingPortfolios === 'function', { timeout: 30000 });
 
 const DIMS = ['value','insecurity','defense','relationship','exception'];
+// A response that satisfies the CRAFT contract as well as the structural one: third person
+// throughout, every truth a mechanism this person runs on rather than a maxim, every prediction
+// naming a fresh pressure and the choice made under it, and the exception naming which slot it
+// complicates and when. Placeholder text ("a prediction only this facet makes") no longer passes,
+// which is the point — the gates it fails are the gates the live sample failed.
 const FIVE = refs => ({ subject_ref: refs,
   identity_signature: 'the only one here who treats a rule as a shelter rather than a weapon',
   facets: [
-  ['worldview','Paperwork repeated daily rarely earns her full attention, and she barely hides it.','a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'],
-  ['insecurity','Deference paid to someone else makes her newly attentive to her own standing.','a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'],
-  ['habit',"She turns another person's error into an instruction, wanted or not.",'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'],
-  ['contradiction','On what a signature costs she assumes an authority nobody granted her.','an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'],
-  ['value','With people who hold no leverage over her she is unexpectedly generous.','someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart'],
-].map(([category, canonical_truth, w1, e1, w2, e2], i) => ({ dimension: DIMS[i], category, canonical_truth,
-  unique_prediction: 'predicts ' + DIMS[i] + ' behaviour none of the other four would produce',
-  not_explained_by: 'could be mistaken for facet ' + ((i + 1) % 5 + 1) + ', but that one is about something else',
+  ['With people who hold no leverage over her she is unexpectedly generous.',
+   'Offered a favour by someone powerful, she declines it and helps the clerk instead.',
+   'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'],
+  ['Deference paid to someone else makes her newly attentive to her own standing.',
+   'When a junior is thanked before her, she recites her own seniority to a stranger.',
+   'a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'],
+  ['Paperwork repeated daily rarely earns her full attention, and she barely hides it.',
+   'Asked to witness a routine signing, she signs without reading and dares anyone to object.',
+   'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'],
+  ["She turns another person's error into an instruction, wanted or not.",
+   'Once a colleague admits confusion, she explains at length past the point of welcome.',
+   'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'],
+  ['Her habit of correcting others stops entirely with anyone who has already been humiliated once.',
+   'When a clerk she once corrected is mocked by someone else, she covers the error herself.',
+   'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart'],
+].map(([canonical_truth, unique_prediction, w1, e1, w2, e2], i) => ({ dimension: DIMS[i], canonical_truth,
+  unique_prediction,
+  not_explained_by: i === 4
+    ? 'could be mistaken for the relationship facet, but that one is the pattern and this is where it stops'
+    : 'could be mistaken for facet ' + ((i + 1) % 5 + 1) + ', but that one is about something else',
   applicability_conditions: [{ text:w1, evidence_words:e1.split('|') }, { text:w2, evidence_words:e2.split('|') }],
-  forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] })) });
+  forbidden_restatements: [{ forbid:'is predictable', why:'the truth stated, not shown' }] })) });
 
 const setup = n => page.evaluate((n) => {
   const s = window.state;
@@ -391,6 +408,181 @@ t('6d: the BATCH schema asks for a dimension and NOT for a category — no facet
   !!batchSys && !/"category"/.test(batchSys) && !/allowed categories/i.test(batchSys)
     && /"dimension": "<the slot name above, in order>"/.test(batchSys),
   JSON.stringify((batchSys.match(/[^\n]*categor[^\n]*/gi) || []).slice(0, 3)));
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  7 · NO HIDDEN BOUNDS
+//  A live sample lost a whole subject — five good facets — to `guardrail_0_why_too_long:118`
+//  against a limit of 110 the prompt never mentioned. Same defect as the category collision:
+//  production enforcing a contract the model was never shown. This walks production's own bounds
+//  table and proves, for every model-controlled field, that the number is BOTH stated in the
+//  dispatched request AND the number actually enforced — an at-limit payload accepted, an
+//  over-limit one rejected. A declared bound nobody enforces, or an enforced bound nobody
+//  declares, fails here.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 7 · NO HIDDEN BOUNDS');
+{
+  // Production's OWN valid response, handed to the page so every mutation below starts from a
+  // payload that really validates — a parity test built on an already-invalid fixture proves
+  // nothing about where the boundary is.
+  await page.evaluate((f) => { window.__batchFixture = f; }, FIVE('cand:parity-0000000000000000'));
+  const BOUNDS = await page.evaluate(() => window.__PORTFOLIO_BOUNDS);
+  t('7a: production publishes a bounds table covering every model-controlled field',
+    Array.isArray(BOUNDS) && BOUNDS.length >= 12, JSON.stringify((BOUNDS || []).length));
+
+  const stated = BOUNDS.filter(b => !new RegExp('"' + b.field + '"').test(batchSys)
+                                 || batchSys.indexOf(String(b.value)) === -1);
+  t('7b: every declared bound appears in the DISPATCHED request, beside its field — no bound is ' +
+    'enforced that the model was never told',
+    stated.length === 0,
+    JSON.stringify(stated.map(b => b.field + ' ' + b.kind + ' ' + b.value)));
+
+  // PARITY: the stated number is the enforced number. Built by mutating production's own valid
+  // fixture, so the payload stays otherwise legal and only the bound under test moves.
+  const parity = await page.evaluate((BB) => {
+    const out = [];
+    const base = () => JSON.parse(JSON.stringify(window.__batchFixture));
+    const V = (p) => window._validatePortfolioResponse({ characterPortfolios: [p] },
+      { eligible: true, subject_ref: p.subject_ref, required_facet_count: 5,
+        reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true });
+    const pad = (n, seed) => { let s = ''; while (s.length < n) s += seed; return s.slice(0, n); };
+    for (const b of BB) {
+      if (b.kind !== 'max' || !/^chars/.test(b.unit)) continue;
+      const at = base(), over = base();
+      const set = (p, len) => {
+        if (b.field === 'canonical_truth') p.facets[0].canonical_truth = ('He ' + pad(len, 'x')).slice(0, len);
+        else if (b.field === 'unique_prediction') p.facets[0].unique_prediction = ('When pressed, he ' + pad(len, 'y')).slice(0, len);
+        else if (b.field === 'not_explained_by') p.facets[0].not_explained_by = ('not ' + pad(len, 'z')).slice(0, len);
+        else if (b.field === 'identity_signature') p.identity_signature = pad(len, 'q');
+        else if (b.field === 'text') p.facets[0].applicability_conditions[0].text = pad(len, 'c');
+        else if (b.field === 'forbid') {
+          // Branch-aware: the total cap is only reachable through alternatives, each within its
+          // own declared range, which is exactly what the second `forbid` bound now says.
+          const parts = []; let left = len;
+          while (left > 0) { const take = Math.min(50, left); parts.push(pad(take, 'f')); left -= take; if (left > 0) left -= 1; }
+          p.facets[0].forbidden_restatements[0].forbid = parts.join('|').slice(0, len);
+        }
+        else if (b.field === 'why') p.facets[0].forbidden_restatements[0].why = pad(len, 'w');
+        else return false;
+        return true;
+      };
+      if (!set(at, b.value) || !set(over, b.value + 1)) continue;
+      const rAt = V(at), rOver = V(over);
+      out.push({ field: b.field, value: b.value, at: rAt.ok, over: rOver.ok,
+                 atErrors: (rAt.errors || []).slice(0, 1), overErrors: (rOver.errors || []).slice(0, 1) });
+    }
+    return out;
+  }, BOUNDS);
+
+  // `why` is the deliberate exception: explanatory metadata, normalised rather than fatal.
+  const fatal = parity.filter(r => r.field !== 'why');
+  t('7c: PARITY — for every character bound, a payload AT the limit validates and one ONE ' +
+    'character over is rejected. The declared number is the enforced number',
+    fatal.length >= 5 && fatal.every(r => r.at === true && r.over === false),
+    JSON.stringify(fatal.map(r => r.field + ':' + r.value + ' at=' + r.at + ' over=' + r.over
+      + (r.at ? '' : ' atErr=' + JSON.stringify(r.atErrors)))));
+  t('7d: …and `why` is the one declared exception — over the bound it is NORMALISED, not fatal, ' +
+    'so five valid facets are never discarded over an explanatory caption',
+    parity.some(r => r.field === 'why' && r.at === true && r.over === true),
+    JSON.stringify(parity.filter(r => r.field === 'why')));
+
+  const norm = await page.evaluate(() => {
+    const p = JSON.parse(JSON.stringify(window.__batchFixture));
+    const long = 'this flattens her core complexity into a single anxious habit rather than holding her generosity and cruelty as equals';
+    p.misreading_guardrails = [{ forbid: 'is merely anxious', why: long, facets: ['value'] }];
+    const v = window._validatePortfolioResponse({ characterPortfolios: [p] },
+      { eligible: true, subject_ref: p.subject_ref, required_facet_count: 5,
+        reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true });
+    const g = (v.guardrails || [])[0] || {};
+    return { ok: v.ok, sentLen: long.length, keptLen: (g.why || '').length,
+             forbid: g.forbid, scope: g._categories, limit: (window.__PORTFOLIO_BOUNDS
+               .find(b => b.field === 'why') || {}).value };
+  });
+  t('7e: the exact guardrail that cost the live sample a subject now SURVIVES — the terms and ' +
+    'the scope are preserved byte-for-byte and only the explanation is trimmed to the bound',
+    norm.ok === true && norm.sentLen === 118 && norm.keptLen <= norm.limit && norm.keptLen > 0
+      && norm.forbid === 'is merely anxious' && JSON.stringify(norm.scope) === JSON.stringify(['value']),
+    JSON.stringify(norm));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  8 · THE CRAFT CONTRACT
+//  Every case below is a shape the LIVE sample actually produced, paired with the correction the
+//  prompt now teaches. A gate that only rejects invented nonsense proves nothing; these reject
+//  the real output and accept the real fix.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 8 · THE CRAFT CONTRACT');
+{
+  const CASES = [
+    { name: 'first-person truth — reads as the PROTAGONIST once it reaches the author',
+      err: 'truth_first_person',
+      bad:  p => { p.facets[0].canonical_truth = 'I let others assume I am harmless until I choose otherwise.'; },
+      good: p => { p.facets[0].canonical_truth = 'He lets others assume he is harmless until he chooses otherwise.'; } },
+    { name: 'first-person unique_prediction',
+      err: 'contrast_first_person',
+      bad:  p => { p.facets[0].unique_prediction = 'When cornered, I answer with the rule that protects me.'; },
+      good: p => { p.facets[0].unique_prediction = 'When cornered, he answers with the rule that protects him.'; } },
+    { name: 'first-person identity_signature',
+      err: 'identity_signature_first_person',
+      bad:  p => { p.identity_signature = 'I am the only one here who reads a rule as a shelter'; },
+      good: p => { p.identity_signature = 'the only one here who reads a rule as a shelter'; } },
+    { name: 'a maxim — true of everyone, so it predicts nothing about them',
+      err: 'truth_is_a_maxim',
+      bad:  p => { p.facets[0].canonical_truth = 'Desire is a compass; following it is the only way to avoid being lost.'; },
+      good: p => { p.facets[0].canonical_truth = 'She follows an appetite past the point where it costs her standing.'; } },
+    { name: 'a prediction that names no pressure — the truth in the future tense',
+      err: 'prediction_names_no_pressure',
+      bad:  p => { p.facets[0].unique_prediction = 'She will provide support only to frame it as a future obligation.'; },
+      good: p => { p.facets[0].unique_prediction = 'Offered a gift she cannot repay, she refuses it and is cold for weeks.'; } },
+    { name: 'an exception naming no other facet — a virtue, not an exception',
+      err: 'exception_names_no_other_facet',
+      bad:  p => { p.facets[4].canonical_truth = 'She gives without expectation to someone who has proven worthless.';
+                   p.facets[4].unique_prediction = 'When it serves a higher purpose she abandons her principle.';
+                   p.facets[4].not_explained_by = 'a different facet entirely, about something else'; },
+      // The correction must satisfy BOTH exception rules — name the slot it complicates AND state
+      // the condition — because a fix that trades one gate's failure for another's is not a fix.
+      good: p => { p.facets[4].not_explained_by = 'could be mistaken for the relationship facet, but that is the pattern this suspends';
+                   p.facets[4].canonical_truth = 'She gives without expectation once someone has already failed her and stayed.'; } },
+    { name: 'an exception stating no condition',
+      err: 'exception_states_no_condition',
+      // The prediction keeps a valid pressure marker, so this case reaches the condition gate
+      // instead of being caught by the earlier one — a test that fires for the wrong reason is
+      // not evidence that the gate it names works.
+      bad:  p => { p.facets[4].canonical_truth = 'Her relationship habit of correcting others is not absolute.';
+                   p.facets[4].unique_prediction = 'When it serves mercy, she abandons the correcting entirely.'; },
+      good: p => { p.facets[4].canonical_truth = 'Her relationship habit of correcting others stops with anyone already humiliated once.'; } },
+  ];
+
+  const results = await page.evaluate((CS) => {
+    const V = (p) => window._validatePortfolioResponse({ characterPortfolios: [p] },
+      { eligible: true, subject_ref: p.subject_ref, required_facet_count: 5,
+        reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true });
+    return CS.map((c) => {
+      const bad = JSON.parse(JSON.stringify(window.__batchFixture));
+      (new Function('p', c.badSrc))(bad);
+      const rb = V(bad);
+      const good = JSON.parse(JSON.stringify(window.__batchFixture));
+      (new Function('p', c.badSrc))(good); (new Function('p', c.goodSrc))(good);
+      const rg = V(good);
+      return { name: c.name, err: c.err, badOk: rb.ok, badErrors: rb.errors || [],
+               goodOk: rg.ok, goodErrors: (rg.errors || []).slice(0, 2) };
+    });
+  }, CASES.map(c => ({ name: c.name, err: c.err,
+       badSrc: '(' + c.bad.toString() + ')(p)', goodSrc: '(' + c.good.toString() + ')(p)' })));
+
+  for (const r of results) {
+    t('8 · ' + r.name,
+      r.badOk === false && r.badErrors.some(e => e.indexOf(r.err) !== -1) && r.goodOk === true,
+      JSON.stringify({ badOk: r.badOk, sawExpectedError: r.badErrors.some(e => e.indexOf(r.err) !== -1),
+                       badErrors: r.badErrors.slice(0, 2), goodOk: r.goodOk, goodErrors: r.goodErrors }));
+  }
+  t('8z: the unmodified fixture validates — every rejection above is caused by its own mutation, ' +
+    'not by a fixture that was already broken',
+    await page.evaluate(() => window._validatePortfolioResponse(
+      { characterPortfolios: [window.__batchFixture] },
+      { eligible: true, subject_ref: window.__batchFixture.subject_ref, required_facet_count: 5,
+        reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true }).ok === true),
+    'the base fixture does not validate');
+}
 
 console.log(`\n${'─'.repeat(84)}\n  ${pass} passed · ${fail} failed\n`);
 await browser.close();
