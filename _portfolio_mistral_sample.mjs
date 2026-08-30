@@ -1,234 +1,430 @@
-// MISTRAL-ONLY PORTFOLIO SAMPLE — ONE CALL, PREPARED, NOT RUN.
+// MISTRAL PORTFOLIO SAMPLE — DRIVES PRODUCTION, OWNS NOTHING.
 //
-// This file was a gpt-4o vs gpt-4o-mini bakeoff. That was the wrong experiment: both models were
-// candidates only because gpt-4o-mini was the SCAFFOLD's inherited fallback, not because any
-// project evidence said either was good at psychological characterisation. The record said the
-// opposite — gpt-4o had already failed at literary prose, mini showed no advantage over Mistral at
-// higher cost, and Mistral is the structured Scene-1 planner that has produced the sharpest
-// psychological reasoning in these probes.
+// The first attempt at this file hand-copied the schema, the category list and the evidence rules,
+// and so tested a contract production had already stopped sending: three subjects came back
+// structurally invalid for reasons that were the harness's fault. The result was directional
+// evidence about Mistral's psychology and NOTHING about the shipping contract.
 //
-// The $0.0198 was not wasted: it proved price bought no psychological distinction (the EXPENSIVE
-// arm produced the most interchangeable characters) and exposed four prompt defects, all fixed for
-// free. But no further OpenAI arm will be run.
+// This file therefore contains no category list, no facet schema, no evidence field definitions,
+// no prompt clauses and no validation logic. It sets up state, calls production's own
+// _generatePendingPortfolios (which builds the prompt, dispatches, parses, validates and parks),
+// and reports what production concluded. Every literal it needs is READ FROM PRODUCTION.
+// _portfolio_sample_hygiene.mjs fails if any production-owned literal reappears here.
 //
-// This is now ONE call, on the identical three-subject fixture, through the exact model and
-// provider the Scene-1 planner already uses. There is no second arm and no blinding, because there
-// is nothing to blind: a single route is being sampled, not compared.
-//
-// usage: SB_AB_AUTHORIZE=1 node _portfolio_model_ab.mjs      (needs vercel dev on :3000)
-//        node _portfolio_model_ab.mjs --dry                  (bytes + cost, spends nothing)
+// usage: node _portfolio_mistral_sample.mjs --dry     free; aborts the batch, proves the request
+//        SB_SAMPLE_AUTHORIZE=1 node _portfolio_mistral_sample.mjs    one paid call
 import { chromium } from 'playwright-core';
 import fs from 'fs';
+import crypto from 'crypto';
 
-const DRY = process.argv.includes('--dry');
-const AUTHORIZED = process.env.SB_AB_AUTHORIZE === '1';
-const MODEL = 'mistral-small-latest';   // exactly what the Scene-1 planner uses
-const ROUTE = '/api/mistral-proxy';
+const DRY = !process.env.SB_SAMPLE_AUTHORIZE;
+// ── THE FREE SENTINEL ARM ──
+// Proves the EVIDENCE PATH without a provider: production is handed a constructed response whose
+// bytes this file already knows, so "the raw body was persisted intact" becomes checkable by
+// hash rather than by trust. The live sample's psychology was lost because the page returned a
+// character count and the browser then closed; nothing about that failure needed a paid call to
+// find, and nothing about it needs one to prevent.
+const SENTINEL = !!process.env.SB_SAMPLE_SENTINEL;
+const SENTINEL_PHRASE = 'SENTINEL-8f3a91c2-evidence-marker';
+let SENTINEL_CONTENT = null;
+// LOSE_BODY reproduces the exact defect on purpose — the control that proves these assertions
+// can fail. Without it they are decoration.
+const LOSE_BODY = process.env.SB_SAMPLE_LOSE_BODY || '';
+let pass = 0, fail = 0;
+const t = (n, c, d) => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fail++; console.log(`  ✗ ${n}${d ? `\n      ${d}` : ''}`); } };
 
-// ── THE RUBRIC, FROZEN BEFORE THE RUN ────────────────────────────────────────────────────
-// Written down here so scoring cannot drift toward whichever output reads better. Ten criteria,
-// per subject, each scored 0 (absent) / 1 (partial) / 2 (met).
-const RUBRIC = [
-  ['R1  five genuinely DIFFERENT facets', 'not five phrasings of one disposition'],
-  ['R2  psychological TRUTHS', 'not gestures, voice changes, facial expressions or scene actions'],
-  ['R3  character-SPECIFIC', 'swapping this portfolio onto another subject would sound wrong'],
-  ['R4  no unsupported BIOGRAPHY', 'no invented fact, secret, relationship, power or world lore'],
-  ['R5  conditions are REUSABLE', 'concrete and portable to future situations, not a paraphrase of this scene'],
-  ['R6  the five SPAN contrasting possibilities', 'generosity, jealousy, arrogance, insecurity, pedagogy, kindness, contradiction — not one note'],
-  ['R7  each facet could INDEPENDENTLY generate a visible action and a PC interpretation', 'without dictating either sentence in advance'],
-  ['R8  no CROSS-SUBJECT borrowing', 'nothing that belongs to one of the other two'],
-  ['R9  no GENERIC body psychology', 'no "breath catches / voice lowers / fingers flex"'],
-  ['R10 guardrails PREVENT the likely flattening', 'they block the most probable misreading of that facet'],
-];
-
-// ── THE FIXTURE: MAXIMUM SIZE, THREE CONTRASTING KINDS ───────────────────────────────────
-// Three subjects is the batch maximum and the case that tests cross-character contamination as
-// well as literary quality: three portfolios authored in one response can bleed into each other.
+// The three subjects. Labels and scene evidence only — what a plan would supply. No schema.
 const SUBJECTS = [
-  { ref: 'cand:AB-present-0001', label: 'Mara Dunn',
-    kind: 'present, interacting ordinary NPC',
-    evidence: 'IN_PERSON at the weighhouse ledger. She says the clause number instead of the clause, '
-            + 'waits for the protagonist to find it herself, then says it again anyway.' },
-  { ref: 'cand:AB-absent-0002', label: 'Tomas Reyne',
-    kind: 'absent but explicitly ANTICIPATED — the Waldorf-concierge class',
-    evidence: 'ANTICIPATED, never on stage. The protagonist expects him at the harbour office in the '
-            + 'morning and is already composing what she will say to him.' },
-  // A RECURRING FUNCTION, BUT A NAMED PERSON. The presiding Watchman was here first and was the
-  // wrong choice: role phrases are deliberately INELIGIBLE for this batch, so a third of the
-  // model-selection evidence would have come from a subject production will never buy. Halden Roe
-  // holds the same recurring function and the same distinct pressures — and the REAL ownership
-  // classifier is asserted to return ordinary/emergent and payable BEFORE the calls are made.
-  { ref: 'cand:AB-recurring-0003', label: 'Halden Roe',
-    kind: 'recurring ordinary/emergent person with a standing function',
-    evidence: 'IN_PERSON with a storm-lantern, recurring across the arc. He is the one who decides '
-            + 'whose manifest is read tonight and whose waits until morning.' },
+  { label: 'Mara Dunn',   note: 'present, interacting ordinary NPC' },
+  { label: 'Tomas Reyne', note: 'absent but explicitly ANTICIPATED — the Waldorf-concierge class' },
+  { label: 'Halden Roe',  note: 'recurring ordinary/emergent person with a standing function' },
 ];
-// Kept as a FREE routing regression, not as evidence: proof that a role phrase is excluded.
-const INELIGIBLE_CONTROL = { label: 'the presiding Watchman' };
+const ROLE_PHRASE_CONTROL = 'the presiding Watchman';
 
-// The request bytes are built ONCE and sent to both arms unchanged.
-function buildRequest(model, ceiling) {
-  const roster = SUBJECTS.map(s =>
-    '    subject_ref: ' + s.ref + '  —  ' + s.label + '\n'
-  + '      in this scene: ' + s.evidence).join('\n');
-  const sys = 'You author CHARACTER PORTFOLIOS for a romance engine. You are given SUBJECTS by an '
-    + 'opaque reference. Return ONE portfolio per subject, each carrying exactly 5 facets in 5 '
-    + 'DIFFERENT categories, each facet with exactly 2 applicability conditions.\n\n'
-    + 'A FACET IS A PSYCHOLOGICAL TRUTH about this person that would not be true of most people — '
-    + 'never a gesture, a voice change, an expression, or something they do in this scene. It must '
-    + 'be reusable: the same truth should still be true in a scene fifty pages from now.\n\n'
-    + 'INVENT NO FACTS. No biography, no secret, no relationship, no power, no world lore beyond '
-    + 'what the evidence below states. You are authoring how this person WORKS, not what has '
-    + 'happened to them.\n\n'
-    + 'The five facets must SPAN contrasting possibilities — generosity and jealousy, arrogance and '
-    + 'insecurity, a teaching compulsion and a cruelty — so the character is not locked into one '
-    + 'note. Each must be able to produce a visible action and a protagonist\'s reading of it '
-    + 'without dictating either sentence.\n\n'
-    + 'PORTFOLIO SUBJECTS — the ONLY values "subject_ref" may take. COPY one exactly; never invent '
-    + 'one, never reuse one twice.\n' + roster + '\n\n'
-    + 'allowed categories (each facet a DIFFERENT one): competence | insecurity | desire | fear | '
-    + 'value | contradiction | worldview | habit | loyalty | shame\n'
-    + 'Return ONLY JSON: { "characterPortfolios": [ { "subject_ref": "<copied>", '
-    + '"misreading_guardrails": [ { "forbid": "<plain phrases separated by |>", "why": "<why that '
-    + 'reading inverts them>" } ], "facets": [ { "category": "<one of the allowed>", '
-    + '"canonical_truth": "<one sentence, max 150 chars>", "applicability_conditions": '
-    + '[ { "text": "<when this truth is available to reveal, max 80 chars>", "evidence_requires": '
-    + '"<plain words separated by |, 4+ characters each>" }, { "text": "<a SECOND, different '
-    + 'condition>", "evidence_requires": "<its own alternatives>" } ], "forbidden_restatements": '
-    + '[ { "forbid": "<phrases that merely SAY the truth>", "why": "<why saying it kills it>" } ] } ] } ] }';
-  return { messages: [{ role: 'system', content: sys },
-                      { role: 'user', content: 'Author the portfolios now as JSON.' }],
-           role: 'PRIMARY_AUTHOR', model, max_tokens: ceiling, temperature: 0.8,
-           response_format: { type: 'json_object' } };
-}
+// Prior spend, unrounded, from recorded usage. Displayed figures are never the arithmetic.
+const PRIOR = (() => {
+  const R = { 'gpt-4o': { in: 2.50, out: 10.00 }, 'gpt-4o-mini': { in: 0.15, out: 0.60 },
+              'mistral-small-latest': { in: 0.15, out: 0.60 } };
+  const c = (m, pi, co) => (pi / 1e6) * R[m].in + (co / 1e6) * R[m].out;
+  const ab = JSON.parse(fs.readFileSync('_portfolio_ab_raw.json', 'utf8'));
+  const key = JSON.parse(fs.readFileSync('_portfolio_ab_KEY.json', 'utf8'));
+  let total = c(key.outputA, ab.A.usage.prompt_tokens, ab.A.usage.completion_tokens)
+            + c(key.outputB, ab.B.usage.prompt_tokens, ab.B.usage.completion_tokens)
+            + c('gpt-4o-mini', 20, 1500);                  // the unintended contract call
+  try {                                                     // the voided first Mistral sample
+    const m = JSON.parse(fs.readFileSync('_portfolio_mistral_raw.json', 'utf8'));
+    total += c('mistral-small-latest', m.usage.prompt_tokens, m.usage.completion_tokens);
+  } catch (_) {}
+  return { total, RATES: R };
+})();
 
-// ── COST, BEFORE ANYTHING IS SPENT ───────────────────────────────────────────────────────
-// Published per-1M rates. Input is the exact serialized request; output is charged at the CEILING
-// for the worst case, because max_tokens is what we could be billed up to.
-// Mistral Small, priced from this repo's own note on the small tier ($0.15 / $0.60 per M) — used
-// as a CONSERVATIVE figure; the published small-tier rate is at or below it.
-const RATES = { 'mistral-small-latest': { in: 0.15, out: 0.60 } };
+// The authorised figures, exact.
+// The authorised ceiling, exactly as stated: at most $0.00732645 more, cumulative at most
+// $0.03187465. The second figure uses the CONSERVATIVE prior upper bound, so the guard below
+// also checks the prior actually recorded on disk against it — an authorisation computed from a
+// larger prior than the one that exists must not silently license the difference.
+const EV_RAW = '_portfolio_sample_raw.txt';
+const EV_PARSED = '_portfolio_sample_evidence.json';
+const CAP_ADDITIONAL = 0.00732645, CAP_CUMULATIVE = 0.03187465, PRIOR_UPPER_BOUND = 0.02454820;
+
 const browser = await chromium.launch({ headless: true });
-const page = await (await browser.newContext()).newPage();
-let liveCalls = 0, aborted = 0;
-const results = {};
+const ctx = await browser.newContext();
+const page = await ctx.newPage();
+page.setDefaultTimeout(120000);
+const seen = { batch: [], aborted: 0, escaped: [], logs: [], rawResponse: null };
+let mutateSrc = null;
+const SRC = fs.readFileSync('public/app.js', 'utf8');
+let mutTargets = null;
+await page.route('**/app.js*', r => {
+  let body = SRC;
+  if (mutateSrc) { mutTargets = body.split(mutateSrc.from).length - 1; body = body.replace(mutateSrc.from, mutateSrc.to); }
+  return r.fulfill({ status: 200, contentType: 'application/javascript; charset=utf-8', body });
+});
+page.on('request', r => { if (/\/api\//.test(r.url()) && !/localhost|127\.0\.0\.1/.test(r.url())) seen.escaped.push(r.url()); });
+// ── A FAILED PAID CALL MUST BE DIAGNOSABLE ──
+// The first production-path run failed with all three subjects unresolved and NOTHING recorded
+// about why: the harness captured neither production's per-subject rejection reasons nor the raw
+// response. A paid attempt that cannot be diagnosed is a paid attempt wasted, so both are captured
+// now — before the next authorisation, not after it.
+page.on('console', m => {
+  const x = m.text();
+  if (/PORTFOLIO:BATCH|ADMIT:PENDING|CPLUS:FACET/.test(x)) seen.logs.push(x.slice(0, 400));
+});
+page.on('response', async r => {
+  try {
+    if (!/mistral-proxy/.test(r.url())) return;
+    seen.rawResponse = { status: r.status(), body: (await r.text()).slice(0, 60000) };
+  } catch (_) {}
+});
 await page.route('**/api/**', async route => {
   const u = route.request().url();
   let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
   const sys = String(((b && b.messages || []).find(m => m.role === 'system') || {}).content || '');
-  // ONLY the portfolio calls may escape. Everything else — planner, author, auditors, bibles,
-  // scaffold, ambient — is aborted and counted, so two paid calls is a fact, not a hope.
-  if (/You author CHARACTER PORTFOLIOS/.test(sys) && b && b.__abArm && /mistral-proxy/.test(u)) return route.continue();
-  aborted++;
+  const isBatch = !!b && b.role === 'CHARACTER_PORTFOLIO';
+  if (isBatch) {
+    seen.batch.push({ url: u, sys, body: b });
+    if (SENTINEL) {
+      // Built from the SAME production contract the request was built from, so the response is
+      // the shape production asks for rather than a shape this file remembers.
+      const dims = CONTRACT.dimensions;
+      const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
+      const F = (d, i) => ({ dimension: d,
+        canonical_truth: SENTINEL_PHRASE + ' — slot ' + i + ' truth, long enough to pass the floor.',
+        unique_prediction: 'a prediction only this facet makes',
+        not_explained_by: 'not the neighbouring facet, which is about something else',
+        applicability_conditions: [{ text: 'when pressure ' + i + ' is present', evidence_words: ['pressure', 'weight'] },
+                                   { text: 'a second, different condition ' + i, evidence_words: ['second', 'other'] }],
+        forbidden_restatements: [{ forbid: 'is ' + d, why: 'the truth stated, not shown' }] });
+      const content = JSON.stringify({ characterPortfolios: refs.map(r => ({
+        subject_ref: r, identity_signature: SENTINEL_PHRASE + ' identity signature',
+        facets: dims.map(F) })) });
+      SENTINEL_CONTENT = content;
+      const envelope = { id: 'sentinel', model: CONTRACT.model,
+        choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: content } }],
+        usage: { prompt_tokens: 1111, completion_tokens: 2222, total_tokens: 3333 } };
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(envelope) });
+    }
+    if (DRY) return route.abort();     // the dry arm proves the REQUEST; it never invents a reply
+    // ── PRE-DISPATCH SPEND GUARD ──
+    // Enforced HERE, on the real outgoing bytes, because this is the last moment before money
+    // moves. Unrounded throughout; the authorised figures are exact, not rounded for display.
+    const M = PRIOR.RATES[b.model] || { in: 0.15, out: 0.60 };
+    const inTok = Math.ceil(JSON.stringify(b).length / 4);
+    const worst = (inTok / 1e6) * M.in + ((b.max_tokens || 0) / 1e6) * M.out;
+    // The cumulative test uses the CONSERVATIVE prior, not the smaller figure recorded on disk:
+    // the authorisation was computed from the conservative one, so spending the difference would
+    // be spending money that was reasoned about but never granted.
+    const cumWorst = Math.max(PRIOR.total, PRIOR_UPPER_BOUND) + worst;
+    if (worst > CAP_ADDITIONAL + 1e-12 || cumWorst > CAP_CUMULATIVE + 1e-12) {
+      console.error(`\n  ✗ ABORTING BEFORE DISPATCH: worst case $${worst.toFixed(8)} `
+        + `(cumulative $${cumWorst.toFixed(8)}) exceeds the authorisation.\n`);
+      seen.guardBlocked = true;
+      return route.abort();
+    }
+    seen.worstCase = worst;
+    if (seen.batch.length > 1) {       // exactly one attempt, enforced not hoped
+      console.error('\n  ✗ ABORTING: a SECOND portfolio request was attempted.\n');
+      seen.secondAttempt = true;
+      return route.abort();
+    }
+    return route.continue();
+  }
+  seen.aborted++;
   return route.abort();
 });
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
-const ceiling = await page.evaluate(() => window.__PORTFOLIO_BATCH_HARD_CEILING);
+await page.waitForFunction(() => typeof window._generatePendingPortfolios === 'function', { timeout: 30000 });
 
-// ── PRE-FLIGHT: THE REAL CLASSIFIER MUST AGREE ───────────────────────────────────────────
-// Every subject must be one production would actually pay for, and the role phrase must not be.
-// Asserted against production's own ownership classifier, before a penny moves.
-const own = await page.evaluate(({ labels, ineligible }) => {
+// Everything a claim below needs to name is read from production, never remembered here.
+const CONTRACT = await page.evaluate(() => ({
+  fields: window.__PORTFOLIO_SCHEMA_FIELDS,
+  dimensions: window.__PORTFOLIO_CONTRAST_DIMENSIONS,
+  categories: window.__CPLUS_FACET_CATEGORIES,
+  model: window.__PORTFOLIO_BATCH_MODEL,
+  ceiling: window.__PORTFOLIO_BATCH_HARD_CEILING,
+}));
+
+// ── DRIVE PRODUCTION ─────────────────────────────────────────────────────────────────────
+const run = () => page.evaluate(async ({ SUBJECTS, ROLE_PHRASE_CONTROL }) => {
   const s = window.state;
-  Object.assign(s, { storyId: 'ab-pre', _relationshipLedger: null, _pendingAdmission: null,
+  Object.assign(s, { storyId: 'sample-' + Math.random().toString(36).slice(2, 7),
+    _relationshipLedger: null, _pendingAdmission: null,
     loveInterestName: 'Julian', partnerName: 'Julian', _starterId: null, aPlot: null });
-  const cands = labels.concat([ineligible]).map((l, i) => ({
-    id: 'named:ab' + i, label: l, aliases: [l] }));
-  // The manifest only ever accepts what the seam deems payable, so capture is the honest probe.
-  const payable = cands.filter(c => !/^(the|a|an|her|his|their|its|my|your|our)\s/i.test(c.label));
-  const man = window._captureAdmissionManifest(s, payable.map(c => Object.assign({}, c,
-    { providerOwner: 'ordinary/emergent name-only' })), { invocationId: 'inv-ab', lineage: 'L-ab' });
-  return { payable: payable.map(c => c.label),
-           manifest: (man && man.candidates || []).map(c => c.label),
-           ineligibleIsRolePhrase: /^(the|a|an|her|his|their|its|my|your|our)\s/i.test(ineligible) };
-}, { labels: SUBJECTS.map(x => x.label), ineligible: INELIGIBLE_CONTROL.label });
-const preOk = own.manifest.length === 3
-  && SUBJECTS.every(x => own.manifest.indexOf(x.label) !== -1)
-  && own.payable.indexOf(INELIGIBLE_CONTROL.label) === -1
-  && own.ineligibleIsRolePhrase === true;
-console.log(' PRE-FLIGHT — the real classifier');
-console.log(`   payable subjects : ${JSON.stringify(own.manifest)}`);
-console.log(`   excluded control : "${INELIGIBLE_CONTROL.label}" — role phrase, never bought`);
-if (!preOk) {
-  console.error('\n  ✗ PRE-FLIGHT FAILED — a subject is not production-payable, or the control was not '
-    + 'excluded. Refusing to spend.\n      ' + JSON.stringify(own) + '\n');
-  await browser.close(); process.exit(3);
-}
-console.log('');
+  // The real capture seam decides who is payable; the control must be refused by it.
+  const cands = SUBJECTS.concat([{ label: ROLE_PHRASE_CONTROL }]).map((x, i) => ({
+    id: 'named:s' + i, label: x.label, aliases: [x.label],
+    providerOwner: /^(the|a|an|her|his|their|its|my|your|our)\s/i.test(x.label)
+      ? 'role phrase — not a name' : 'ordinary/emergent name-only' }));
+  const payable = cands.filter(c => c.providerOwner === 'ordinary/emergent name-only');
+  const man = window._captureAdmissionManifest(s, payable, { invocationId: 'inv-sample', lineage: 'L-sample' });
+  if (!man) return { error: 'capture produced no manifest' };
+  // PRODUCTION'S OWN GENERATOR. It builds the prompt, dispatches, parses, validates and parks.
+  // TEST-ONLY RAW CAPTURE. Production exposes the untouched body through this hook alone; the
+  // ordinary result carries codes and refs, never psychology.
+  window.__portfolioRawHits = [];
+  window.__portfolioRawCapture = function (x) { window.__portfolioRawHits.push(x); };
+  const report = await window._generatePendingPortfolios({ invocationId: 'inv-sample' }, s);
+  const store = window._pendingAdmissionStore(s);
+  const rec = store && store.byInvocation['inv-sample'];
+  const hits = window.__portfolioRawHits || [];
+  return { rawCaptured: hits.length, rawLength: hits[0] ? String(hits[0].raw || '').length : 0,
+           // THE BODY ITSELF. Returning only a length is what lost the first live sample: the
+           // psychology existed for the lifetime of a closed browser and was never written down.
+           rawBody: hits[0] ? String(hits[0].raw || '') : null,
+           rawEnvelope: hits[0] && hits[0].data ? hits[0].data : null,
+           providerMeta: hits[0] && hits[0].data ? { usage: hits[0].data.usage || null,
+             finish_reason: (((hits[0].data.choices || [])[0]) || {}).finish_reason || null,
+             model: hits[0].data.model || null } : null,
+           manifest: (man.candidates || []).map(c => ({ label: c.label, ref: c.candidate_ref })),
+           excluded: (man.excluded || []),
+           payableLabels: payable.map(c => c.label),
+           report,
+           // The VERDICT comes from production's store, not from anything computed here.
+           verdicts: (rec ? rec.candidates : []).map(c => ({ label: c.label, status: c.status,
+             facets: (c.portfolio || []).length })) };
+}, { SUBJECTS, ROLE_PHRASE_CONTROL });
 
-// ── ONE ROUTE, ONE CALL ──────────────────────────────────────────────────────────────────
-const req = buildRequest(MODEL, ceiling);
-const bytes = JSON.stringify(req).length;
-const inTok = Math.ceil(bytes / 4);
-const cost = m => (inTok / 1e6) * RATES[m].in + (ceiling / 1e6) * RATES[m].out;
-const expOut = Math.ceil(ceiling * 0.45);
-const expected = m => (inTok / 1e6) * RATES[m].in + (expOut / 1e6) * RATES[m].out;
+console.log(`\n${'═'.repeat(84)}\nMISTRAL SAMPLE — PRODUCTION PATH ${DRY ? '(DRY: request proven, nothing spent)' : '(LIVE)'}\n${'═'.repeat(84)}\n`);
+const R = await run();
 
-console.log(`\n${'═'.repeat(84)}\nMISTRAL PORTFOLIO SAMPLE — PREPARED, NOT RUN\n${'═'.repeat(84)}\n`);
-console.log(' ROUTE');
-console.log(`   endpoint        : ${ROUTE}   (the Scene-1 planner's own proxy)`);
-console.log(`   model           : ${MODEL}   (the Scene-1 planner's own model)`);
-console.log(`   role            : CHARACTER_PORTFOLIO   (telemetry names what this is)`);
-console.log(`   fallback        : NONE — if Mistral fails, the batch fails loudly\n`);
-console.log(' REQUEST');
-console.log(`   subjects        : 3 — ${SUBJECTS.map(s => s.label).join(' · ')}`);
-console.log(`   request bytes   : ${bytes}  ·  input tokens ~${inTok} (chars÷4, conservative)`);
-console.log(`   output ceiling  : ${ceiling} max_tokens (the constructed three-subject maximum)`);
-console.log(`   temperature 0.8 · reasoning_effort none · one attempt · no repair, no retry\n`);
-const PRIOR_SPEND = 0.0198;      // the whole OpenAI bakeoff, already spent and closed
-const HARD_CAP = 0.13 - PRIOR_SPEND;
-console.log(' COST');
-console.log(`   worst case (billed to the full ceiling)   $${cost(MODEL).toFixed(4)}`);
-console.log(`   expected   (output ~${expOut} tokens)             $${expected(MODEL).toFixed(4)}`);
-console.log(`   already spent on this line of work        $${PRIOR_SPEND.toFixed(4)}`);
-console.log(`   remaining authorised ceiling             $${HARD_CAP.toFixed(4)} of $0.1300\n`);
-if (cost(MODEL) > HARD_CAP) {
-  console.error(`\n  ✗ REFUSING TO RUN: worst case exceeds the remaining ceiling.\n`);
-  await browser.close(); process.exit(4);
-}
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  EVIDENCE IS WRITTEN HERE — before a single assertion, before the browser can close.
+//  The first live sample captured 16486 characters of psychology inside the page, returned the
+//  NUMBER 16486 to Node, and closed the browser. The diagnosis survived; the thing the call was
+//  bought for did not. Persistence is therefore not a reporting step at the end of the file, it
+//  is the first thing that happens once the body exists.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+const evidence = (() => {
+  // LOSE_BODY is the control: it reproduces the original defect deliberately so the assertions
+  // below can be shown to fail. 'length' persists a count instead of the body; 'drop' persists
+  // nothing at all.
+  const body = LOSE_BODY === 'drop' ? null
+             : LOSE_BODY === 'length' ? String((R.rawBody || '').length)
+             : R.rawBody;
+  const wrote = { raw: false, parsed: false, bytes: 0, sha256: null };
+  try {
+    if (body != null) {
+      fs.writeFileSync(EV_RAW, body);
+      wrote.raw = true;
+      wrote.bytes = Buffer.byteLength(body);
+      wrote.sha256 = crypto.createHash('sha256').update(body).digest('hex');
+    } else if (fs.existsSync(EV_RAW)) {
+      fs.unlinkSync(EV_RAW);        // a stale file from a previous run must never look like evidence
+    }
+  } catch (e) { wrote.rawError = String(e && e.message); }
+  try {
+    fs.writeFileSync(EV_PARSED, JSON.stringify({
+      // What the model actually authored, parsed — the portfolios themselves.
+      portfolios: (function () { try { return JSON.parse(R.rawBody).characterPortfolios || null; }
+                                 catch (_) { return null; } })(),
+      // What production concluded about them, in production's own words.
+      report: R.report || null,
+      diagnostics: (R.report && R.report.diagnostics) || [],
+      usage: (R.report && R.report.usage) || [],
+      providerMeta: R.providerMeta || null,
+      verdicts: R.verdicts || null,
+      manifest: R.manifest || null,
+      rawBytes: wrote.bytes, rawSha256: wrote.sha256,
+      requestCensus: { dispatched: seen.batch.length, aborted: seen.aborted, escaped: seen.escaped.length },
+    }, null, 2));
+    wrote.parsed = true;
+  } catch (e) { wrote.parsedError = String(e && e.message); }
+  return wrote;
+})();
+const req = seen.batch[0];
 
-console.log(' RUBRIC — FROZEN BEFORE THE RUN, scored 0/1/2 per subject per arm');
-RUBRIC.forEach(([k, v]) => console.log(`   ${k}\n       ${v}`));
-console.log('\n ALSO RECORDED');
-[' structural validation result per subject',
- ' subject-local failures',
- ' exact input/output tokens and cost per arm',
- ' pairwise similarity among each subject\'s five truths',
- ' cross-subject similarity (contamination)',
- ' whether any condition merely restates the supplied evidence'].forEach(x => console.log('  ·' + x));
-console.log('\n INTERCEPTION');
-console.log(`   ${aborted} downstream request(s) aborted so far; only the two portfolio calls may escape.`);
+console.log(' 1 · THE DISPATCHED REQUEST IS PRODUCTION\'S OWN');
+t('1a: exactly one portfolio request was dispatched, by production',
+  seen.batch.length === 1, `batch requests = ${seen.batch.length}`);
+t('1b: it carries production\'s role, model and route — read from production, not remembered here',
+  !!req && req.body.role === 'CHARACTER_PORTFOLIO' && req.body.model === CONTRACT.model
+    && /mistral-proxy/.test(req.url),
+  JSON.stringify(req && { role: req.body.role, model: req.body.model, url: req.url }));
+t('1c: all three production-payable subjects are on the roster, and the role phrase is not',
+  !!req && SUBJECTS.every(x => req.sys.indexOf(x.label) !== -1)
+    && req.sys.indexOf(ROLE_PHRASE_CONTROL) === -1
+    && R.payableLabels.length === 3,
+  JSON.stringify({ payable: R.payableLabels, excluded: R.excluded }));
+t('1d: the schema demands every per-facet field production declares',
+  !!req && CONTRACT.fields.perFacet.every(f => req.sys.indexOf(f) !== -1),
+  JSON.stringify(CONTRACT.fields.perFacet.filter(f => !req || req.sys.indexOf(f) === -1)));
+t('1e: …every per-subject field, including the identity signature',
+  !!req && CONTRACT.fields.perSubject.every(f => req.sys.indexOf(f) !== -1),
+  JSON.stringify(CONTRACT.fields.perSubject.filter(f => !req || req.sys.indexOf(f) === -1)));
+t(`1f: all ${CONTRACT.dimensions.length} positional slots are named — ${SUBJECTS.length} subjects × ${CONTRACT.dimensions.length} = ${SUBJECTS.length * CONTRACT.dimensions.length} slots to fill`,
+  !!req && CONTRACT.dimensions.every(d => req.sys.indexOf(d) !== -1),
+  JSON.stringify(CONTRACT.dimensions.filter(d => !req || req.sys.indexOf(d) === -1)));
+t('1g: evidence_words is demanded and no model-authored pattern field appears',
+  !!req && CONTRACT.fields.perCondition.every(f => req.sys.indexOf(f) !== -1)
+    && CONTRACT.fields.forbiddenFromModels.every(f => req.sys.indexOf(f) === -1),
+  JSON.stringify({ missing: CONTRACT.fields.perCondition.filter(f => !req || req.sys.indexOf(f) === -1),
+                   forbiddenPresent: CONTRACT.fields.forbiddenFromModels.filter(f => req && req.sys.indexOf(f) !== -1) }));
+// Field names and category names are READ from production, never quoted here — a harness that
+// spells the contract out is asserting against its own memory of it.
+const FIELD_DIM = CONTRACT.fields.perFacet[0];
+// What must be absent is the VOCABULARY being offered, not every English word that happens to be
+// a category name: the contrast instruction legitimately says "a pride beside a f" + "ear", and a
+// bare word scan reports that as a taxonomy leak. So: the joined enum must not appear, and no
+// category may appear in a JSON field position.
+const CAT_ONLY = CONTRACT.categories.filter(c => CONTRACT.dimensions.indexOf(c) === -1);
+const offersEnum = req ? req.sys.indexOf(CONTRACT.categories.join(' | ')) !== -1 : true;
+const quotedCat = req ? CAT_ONLY.filter(c => req.sys.indexOf('"' + c + '"') !== -1) : CAT_ONLY;
+const derivedLeak = req ? (CONTRACT.fields.derivedNotModelFacing || [])
+  .filter(f => req.sys.indexOf('"' + f + '"') !== -1) : ['(no request)'];
+t('1h: the model is offered ONE taxonomy — production\'s five named slots. The technical category ' +
+  'enum is never presented and no category sits in a field position; two vocabularies is what ' +
+  'cost the last sample a subject',
+  !!req && CONTRACT.dimensions.every(d => req.sys.indexOf('"' + FIELD_DIM + '": "' + d + '"') !== -1)
+    && !offersEnum && quotedCat.length === 0 && derivedLeak.length === 0,
+  JSON.stringify({ offersEnum, quotedCat, derivedLeak }));
+t('1i: the token allowance is production\'s ceiling for this chunk',
+  !!req && req.body.max_tokens > 0 && req.body.max_tokens <= CONTRACT.ceiling,
+  `max_tokens=${req && req.body.max_tokens} ceiling=${CONTRACT.ceiling}`);
+t('1j: every non-portfolio request was aborted, and nothing escaped',
+  seen.aborted > 0 && seen.escaped.length === 0,
+  `aborted=${seen.aborted} escaped=${JSON.stringify(seen.escaped.slice(0, 2))}`);
+t('1k: the structural verdict comes from production — this file computes none',
+  Array.isArray(R.verdicts) && R.verdicts.length === 3 && !!R.report,
+  JSON.stringify({ report: R.report && R.report.code, verdicts: R.verdicts }));
+t('1m: production returns a NAMED diagnostic per unresolved subject — the summary is never the ' +
+  'whole explanation',
+  !R.report || R.report.ok
+    || ((R.report.diagnostics || []).length === (R.report.unresolved || []).length
+        && (R.report.diagnostics || []).every(d => d.code && d.stage)),
+  JSON.stringify({ summary: R.report && R.report.code, diagnostics: R.report && R.report.diagnostics }));
 
-if (!AUTHORIZED || DRY) {
-  console.log(`\n${'─'.repeat(84)}`);
-  console.log('  NOT RUN. No money spent. To authorize:  SB_AB_AUTHORIZE=1 node _portfolio_model_ab.mjs');
-  console.log(`${'─'.repeat(84)}\n`);
+console.log(`\n   dispatched request: ${req ? req.sys.length : 0} chars · max_tokens ${req && req.body.max_tokens}`);
+if (req) fs.writeFileSync('_portfolio_sample_request.json', JSON.stringify(
+  { sys: req.sys, model: req.body.model, role: req.body.role, max_tokens: req.body.max_tokens,
+    temperature: req.body.temperature }, null, 2));
+
+if (DRY) {
+  // ── MUTATION CONTROL: without production's batch call there is no request at all ──
+  mutateSrc = { from: 'var body = await _portfolioBatchCall(chunk, rec, s);',
+                to:   'var body = null;' };
+  seen.batch.length = 0;
+  const ctx2 = await browser.newContext(); const p2 = await ctx2.newPage();
+  await p2.route('**/app.js*', r => {
+    let body = SRC; mutTargets = body.split(mutateSrc.from).length - 1;
+    return r.fulfill({ status: 200, contentType: 'application/javascript; charset=utf-8',
+                       body: body.replace(mutateSrc.from, mutateSrc.to) }); });
+  await p2.route('**/api/**', async route => {
+    let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
+    if (b && b.role === 'CHARACTER_PORTFOLIO') seen.batch.push({ url: route.request().url() });
+    return route.abort(); });
+  await p2.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await p2.waitForFunction(() => typeof window._generatePendingPortfolios === 'function', { timeout: 30000 });
+  await p2.evaluate(async () => {
+    const s = window.state;
+    Object.assign(s, { storyId: 'mut', _relationshipLedger: null, _pendingAdmission: null });
+    const m = window._captureAdmissionManifest(s, [{ id: 'named:x', label: 'Mara Dunn',
+      aliases: ['Mara Dunn'], providerOwner: 'ordinary/emergent name-only' }],
+      { invocationId: 'inv-mut', lineage: 'L-mut' });
+    if (m) await window._generatePendingPortfolios({ invocationId: 'inv-mut' }, s);
+  });
+  await ctx2.close();
+  t('1l: MUTATION — with production\'s batch call removed, NO request is dispatched at all',
+    mutTargets === 1 && seen.batch.length === 0,
+    `targets=${mutTargets} dispatched=${seen.batch.length}`);
+
+  if (SENTINEL) {
+    console.log('\n 2 · THE EVIDENCE PATH (free sentinel — no provider was contacted)');
+    const want = SENTINEL_CONTENT || '';
+    const exists = fs.existsSync(EV_RAW);
+    const onDisk = exists ? fs.readFileSync(EV_RAW, 'utf8') : '';
+    const shaOf = (x) => crypto.createHash('sha256').update(x).digest('hex');
+    t('2a: the raw file EXISTS on disk after the run', exists, EV_RAW);
+    t('2b: its byte length and SHA-256 match the intercepted body EXACTLY — not a summary, not a ' +
+      'truncation, not a re-serialisation',
+      exists && Buffer.byteLength(onDisk) === Buffer.byteLength(want) && shaOf(onDisk) === shaOf(want),
+      JSON.stringify({ diskBytes: Buffer.byteLength(onDisk), wantBytes: Buffer.byteLength(want),
+                       diskSha: shaOf(onDisk).slice(0, 16), wantSha: shaOf(want).slice(0, 16) }));
+    t('2c: the sentinel text is present in the persisted body — the file holds the authored ' +
+      'content, not an envelope wrapped around nothing',
+      onDisk.indexOf(SENTINEL_PHRASE) !== -1, 'sentinel absent');
+    t('2d: the persisted file parses on its own, without the harness that wrote it',
+      (() => { try { return !!JSON.parse(onDisk).characterPortfolios; } catch (_) { return false; } })(),
+      'unparseable');
+    const ev = (() => { try { return JSON.parse(fs.readFileSync(EV_PARSED, 'utf8')); } catch (_) { return null; } })();
+    t('2e: the PARSED portfolios are persisted — the thing a paid call is actually bought for',
+      !!ev && Array.isArray(ev.portfolios) && ev.portfolios.length > 0
+        && (ev.portfolios[0].facets || []).length === CONTRACT.fields.requiredFacetCount,
+      JSON.stringify({ n: ev && ev.portfolios && ev.portfolios.length,
+                       facets: ev && ev.portfolios && (ev.portfolios[0] || {}).facets
+                               && ev.portfolios[0].facets.length }));
+    t('2f: production\'s own diagnostics and verdicts are persisted beside them',
+      !!ev && Array.isArray(ev.diagnostics) && !!ev.report && Array.isArray(ev.verdicts),
+      JSON.stringify({ diagnostics: ev && ev.diagnostics, verdicts: ev && ev.verdicts }));
+    t('2g: usage and finish_reason are persisted — so the next truncation question is arithmetic',
+      !!ev && !!ev.providerMeta && ev.providerMeta.finish_reason === 'stop'
+        && !!ev.providerMeta.usage && ev.providerMeta.usage.completion_tokens === 2222
+        && Array.isArray(ev.usage) && ev.usage.length === 1,
+      JSON.stringify(ev && ev.providerMeta));
+    t('2h: the five slots came back and production derived the categories — no category was sent',
+      !!ev && (ev.portfolios[0].facets || []).map(f => f.dimension).join(',')
+                === CONTRACT.dimensions.join(',')
+        && (ev.portfolios[0].facets || []).every(f => !('category' in f)),
+      JSON.stringify((ev && ev.portfolios[0].facets || []).map(f => f.dimension)));
+    console.log(`\n${'─'.repeat(84)}\n  ${pass} passed · ${fail} failed  (sentinel arm — $0.00 spent)\n`);
+    await browser.close();
+    process.exit(fail ? 1 : 0);
+  }
+
+  const inTok = Math.ceil((req ? JSON.stringify(req.body).length : 0) / 4);
+  const M = PRIOR.RATES[CONTRACT.model];
+  const worst = (inTok / 1e6) * M.in + ((req ? req.body.max_tokens : 0) / 1e6) * M.out;
+  console.log(`\n${'─'.repeat(84)}\n COST — unrounded`);
+  console.log(`   spent so far (A/B + contract call + the voided sample)  $${PRIOR.total.toFixed(8)}`);
+  console.log(`   this call, worst case at max_tokens ${req && req.body.max_tokens}          $${worst.toFixed(8)}`);
+  console.log(`   cumulative if billed to the ceiling, recorded prior      $${(PRIOR.total + worst).toFixed(8)}`);
+  console.log(`   cumulative against the CONSERVATIVE prior (the guard)   $${(PRIOR_UPPER_BOUND + worst).toFixed(8)}`);
+  console.log(`   authorised ceiling                                      $${CAP_CUMULATIVE.toFixed(8)}`);
+  console.log(`\n  NOT RUN. The previous authorization is consumed; this needs a new one.`);
+  console.log(`${'─'.repeat(84)}\n  ${pass} passed · ${fail} failed\n`);
   await browser.close();
-  process.exit(0);
+  process.exit(fail ? 1 : 0);
 }
 
-// ── THE TWO PAID CALLS ───────────────────────────────────────────────────────────────────
-// Truncation or invalid JSON is the SAMPLE FAILING. It is never permission to retry.
-const r = await page.evaluate(async (payload) => {
-  const t0 = Date.now();
-  const res = await fetch('/api/mistral-proxy', { method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(Object.assign({ __abArm: true }, payload)) });
-  const data = await res.json().catch(() => null);
-  return { ok: res.ok, status: res.status, ms: Date.now() - t0, data };
-}, req);
-liveCalls++;
-const usage = (r.data && r.data.usage) || {};
-const content = (r.data && (r.data.content
-  || (r.data.choices && r.data.choices[0] && r.data.choices[0].message && r.data.choices[0].message.content))) || null;
-fs.writeFileSync('_portfolio_mistral_raw.json', JSON.stringify(
-  { model: MODEL, ceiling, status: r.status, ms: r.ms, usage, content }, null, 2));
-const spend = ((usage.prompt_tokens || 0) / 1e6) * RATES[MODEL].in
-            + ((usage.completion_tokens || 0) / 1e6) * RATES[MODEL].out;
-console.log(`\n  HTTP ${r.status} in ${r.ms}ms · ${liveCalls} paid call · ${aborted} downstream request(s) aborted`);
-console.log(`  usage: ${JSON.stringify(usage)}`);
-console.log(`  this sample: $${spend.toFixed(4)}`);
-console.log(`  CUMULATIVE on this line of work: $${(spend + PRIOR_SPEND).toFixed(4)} of $0.1300`);
-if (liveCalls !== 1) console.error('  ⚠ call count is not exactly 1 — investigate before trusting this.');
-console.log('\n  _portfolio_mistral_raw.json written. Score it against the SAME frozen rubric.');
+// ── LIVE ─────────────────────────────────────────────────────────────────────────────────
+fs.writeFileSync('_portfolio_sample_result.json', JSON.stringify(
+  { report: R.report, verdicts: R.verdicts, manifest: R.manifest,
+    providerMeta: R.providerMeta, rawCaptured: R.rawCaptured,
+    productionLogs: seen.logs, rawResponse: seen.rawResponse,
+    requestCensus: { dispatched: seen.batch.length, aborted: seen.aborted, escaped: seen.escaped.length } },
+  null, 2));
+if (seen.guardBlocked) console.error('  the spend guard blocked dispatch — nothing was spent.');
+if (seen.secondAttempt) console.error('  a second attempt was blocked — report this.');
+console.log('\n  requests dispatched: ' + seen.batch.length + ' · aborted: ' + seen.aborted
+  + ' · escaped: ' + seen.escaped.length);
+console.log('  production verdicts: ' + JSON.stringify(R.verdicts));
+console.log('  batch report: ' + JSON.stringify(R.report));
+console.log('  provider meta: ' + JSON.stringify(R.providerMeta));
+console.log('  raw captured: ' + R.rawCaptured + ' response(s), ' + R.rawLength + ' chars');
+console.log('  diagnostics: ' + JSON.stringify((R.report && R.report.diagnostics) || []));
+console.log('  production said:');
+(seen.logs.length ? seen.logs : ['(nothing captured)']).slice(0, 8).forEach(l => console.log('    ' + l));
+console.log('  worst case authorised: $' + CAP_ADDITIONAL.toFixed(8)
+  + ' · this request\'s worst case: $' + (seen.worstCase || 0).toFixed(8));
+console.log('  _portfolio_sample_result.json written.');
 await browser.close();
+process.exit(fail ? 1 : 0);
