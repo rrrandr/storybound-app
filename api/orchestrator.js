@@ -219,6 +219,13 @@ const ALLOWED_MODELS = {
     'grok-4-1-fast-reasoning'
   ],
 
+  // CHARACTER_PORTFOLIO IS DELIBERATELY ABSENT HERE (Roman 2026-08-29). It briefly lived in this
+  // table with two OpenAI models, which was the whole mistake in miniature: the role existed only
+  // because gpt-4o-mini was the scaffold's inherited fallback. A blinded A/B then showed the
+  // EXPENSIVE OpenAI model producing the most interchangeable psychology of the two. Portfolio
+  // authoring routes through Mistral — the Scene-1 planner's own model — and an allowlist entry
+  // here would preserve exactly the route that was closed. See DENIED_OPENAI_ROLES.
+
   // Fate Card structural authority
   FATE_STRUCTURAL: [
     'gpt-4o',
@@ -273,6 +280,17 @@ const ALLOWED_MODELS = {
 };
 
 // Default models for each role
+/**
+ * Roles that must NEVER route through OpenAI, whatever a caller asks for.
+ * Absence from ALLOWED_MODELS already refuses them, but silence is a weak record: a future
+ * allowlist edit could re-open the route without anyone noticing it had been closed on purpose.
+ */
+const DENIED_OPENAI_ROLES = {
+  CHARACTER_PORTFOLIO: 'portfolio authoring routes through Mistral (the Scene-1 planner\'s model). '
+    + 'A blinded A/B found the expensive OpenAI model produced the most interchangeable psychology; '
+    + 'this role was only ever here because gpt-4o-mini was the scaffold\'s inherited fallback.'
+};
+
 const DEFAULT_MODELS = {
   PRIMARY_AUTHOR: 'gpt-4o-mini',
   NORMALIZATION: 'gpt-4o-mini',
@@ -952,6 +970,7 @@ Integrate the scene and finalize the story beat.`
 // =============================================================================
 
 module.exports = {
+  DENIED_OPENAI_ROLES,
   // Core orchestration
   orchestrateStoryGeneration,
   createOrchestrationState,

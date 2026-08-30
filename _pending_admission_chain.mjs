@@ -67,10 +67,15 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
         batchCalls++;
         const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
         batchRosters.push(refs);
-        const F = (category, canonical_truth, w1, e1, w2, e2) => ({ category, canonical_truth,
-          applicability_conditions: [{ text:w1, evidence_requires:e1 }, { text:w2, evidence_requires:e2 }],
+        const DIMS = ['value','insecurity','defense','relationship','exception'];
+        let _fi = 0;
+        const F = (category, canonical_truth, w1, e1, w2, e2) => ({ dimension: DIMS[(_fi++) % 5], category, canonical_truth,
+          unique_prediction: 'a prediction only this facet makes',
+          not_explained_by: 'not the neighbouring facet, which is about something else',
+          applicability_conditions: [{ text:w1, evidence_words: e1.split('|') }, { text:w2, evidence_words: e2.split('|') }],
           forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
-        out = { characterPortfolios: refs.map(r => ({ subject_ref: r, facets: [
+        out = { characterPortfolios: refs.map(r => ({ subject_ref: r,
+          identity_signature: 'the only one here who reads a rule as a shelter', facets: (_fi = 0, [
           F('worldview','Paperwork repeated daily rarely earns her full attention, and she barely hides it.',
             'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
           F('insecurity','Deference paid to someone else makes her newly attentive to her own standing.',
@@ -80,7 +85,7 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
           F('contradiction','On what a signature costs she assumes an authority nobody granted her.',
             'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'),
           F('value','With people who hold no leverage over her she is unexpectedly generous.',
-            'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')] })) };
+            'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')]) })) };
       }
       else if (/A-PLOT GENERATOR/i.test(sys)) out = APLOT;
       else if (/CONTINUITY ARCHITECT for a serialized/.test(sys)) out = { issueArcs: [{ n: 1 }], characterIcebergs: {} };
@@ -355,6 +360,18 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
         { ok: !!res.restoredRead && res.restoredRead.n === 5 && res.restoredRead.cats === 5
               && JSON.stringify(res.restoredRead.origins) === '["generated_cast"]',
           detail: JSON.stringify(res.restoredRead) },
+      'C9c the PLANNING-ONLY contrast fields never reach the planner or the author':
+        // Matched as FIELD NAMES, not as bare words: the author payload legitimately contains
+        // "dimension" in unrelated craft prose ("the LI's dominant gravitational dimension"), and
+        // a check that cannot tell a leaked schema key from an English noun reports a leak that
+        // is not there.
+        { ok: (() => {
+            const LEAK = /"(?:dimension|unique_prediction|not_explained_by|identity_signature)"|\b(?:unique_prediction|not_explained_by|identity_signature)\b/;
+            return !LEAK.test(planner || '') && !LEAK.test(author || '');
+          })(),
+          detail: JSON.stringify({
+            inPlanner: (String(planner || '').match(/"(?:dimension|unique_prediction|not_explained_by|identity_signature)"|\b(?:unique_prediction|not_explained_by|identity_signature)\b/g) || []).slice(0, 3),
+            inAuthor: (String(author || '').match(/"(?:dimension|unique_prediction|not_explained_by|identity_signature)"|\b(?:unique_prediction|not_explained_by|identity_signature)\b/g) || []).slice(0, 3) }) },
       'C9 nothing escaped the harness':
         { ok: escaped.length === 0, detail: JSON.stringify(escaped.slice(0, 2)) },
     };

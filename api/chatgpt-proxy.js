@@ -37,7 +37,7 @@
  * =============================================================================
  */
 
-const { validateModelForRole, getDefaultModel, ALLOWED_MODELS, getPassTier, buildPassTierPrompt, stripWalletData } = require('./orchestrator');
+const { validateModelForRole, getDefaultModel, ALLOWED_MODELS, DENIED_OPENAI_ROLES, getPassTier, buildPassTierPrompt, stripWalletData } = require('./orchestrator');
 // SECURITY: server-side prompt-injection scrub on user-role messages.
 const { sanitizeUserMessages } = require('./_sanitize-injection.js');
 
@@ -211,6 +211,19 @@ module.exports = async function handler(req, res) {
      * - Unauthorized model substitutions
      * - Configuration errors
      */
+
+    // ── ROLES THAT MAY NEVER COME THROUGH HERE ──
+    // Refused BEFORE model resolution, with the reason, so a future allowlist edit cannot quietly
+    // re-open a route that was closed on purpose.
+    if (DENIED_OPENAI_ROLES && DENIED_OPENAI_ROLES[role]) {
+      console.error(`[CHATGPT-PROXY] Role "${role}" is denied on this provider: ${DENIED_OPENAI_ROLES[role]}`);
+      return res.status(400).json({
+        error: 'Role not permitted on this provider',
+        role: role,
+        reason: DENIED_OPENAI_ROLES[role],
+        hint: 'This role routes through /api/mistral-proxy.'
+      });
+    }
 
     const requestedModel = model || getDefaultModel(role);
 

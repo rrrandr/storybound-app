@@ -32,7 +32,7 @@ await page.route('**/api/**', async route => {
   const sys = String(((b && b.messages || []).find(m => m.role === 'system') || {}).content || '');
   if (/You author CHARACTER PORTFOLIOS/.test(sys)) {
     const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
-    reqs.batch.push({ refs, max_tokens: b.max_tokens });
+    reqs.batch.push({ refs, max_tokens: b.max_tokens, role: b.role, model: b.model, url: u, sys });
     const content = JSON.stringify(responder ? responder(refs, reqs.batch.length) : { characterPortfolios: [] });
     return route.fulfill({ status:200, contentType:'application/json',
       body: JSON.stringify({ ok:true, content, choices:[{ message:{ content } }] }) });
@@ -43,14 +43,19 @@ await page.route('**/api/**', async route => {
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => typeof window._generatePendingPortfolios === 'function', { timeout: 30000 });
 
-const FIVE = refs => ({ subject_ref: refs, facets: [
+const DIMS = ['value','insecurity','defense','relationship','exception'];
+const FIVE = refs => ({ subject_ref: refs,
+  identity_signature: 'the only one here who treats a rule as a shelter rather than a weapon',
+  facets: [
   ['worldview','Paperwork repeated daily rarely earns her full attention, and she barely hides it.','a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'],
   ['insecurity','Deference paid to someone else makes her newly attentive to her own standing.','a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'],
   ['habit',"She turns another person's error into an instruction, wanted or not.",'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'],
   ['contradiction','On what a signature costs she assumes an authority nobody granted her.','an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'],
   ['value','With people who hold no leverage over her she is unexpectedly generous.','someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart'],
-].map(([category, canonical_truth, w1, e1, w2, e2]) => ({ category, canonical_truth,
-  applicability_conditions: [{ text:w1, evidence_requires:e1 }, { text:w2, evidence_requires:e2 }],
+].map(([category, canonical_truth, w1, e1, w2, e2], i) => ({ dimension: DIMS[i], category, canonical_truth,
+  unique_prediction: 'predicts ' + DIMS[i] + ' behaviour none of the other four would produce',
+  not_explained_by: 'could be mistaken for facet ' + ((i + 1) % 5 + 1) + ', but that one is about something else',
+  applicability_conditions: [{ text:w1, evidence_words:e1.split('|') }, { text:w2, evidence_words:e2.split('|') }],
   forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] })) });
 
 const setup = n => page.evaluate((n) => {
@@ -203,11 +208,58 @@ console.log('\n 5b · OWNERSHIP CLASS DECIDES WHO MAY BE BOUGHT');
     JSON.stringify(m));
 }
 
+console.log('\n 5c · CONTRAST IS STRUCTURAL, IN THE DISPATCHED BYTES');
+{
+  await setup(3);
+  reqs.batch.length = 0;
+  responder = refs => ({ characterPortfolios: refs.map(FIVE) });
+  await gen();
+  const sys = reqs.batch[0] ? reqs.batch[0].sys : '';
+  const dims = ['value','insecurity','defense','relationship','exception'];
+  t('5c1: all FIVE named slots appear in the dispatched schema, in order',
+    dims.every(d => sys.indexOf('"dimension": "' + d + '"') !== -1)
+      || dims.every(d => new RegExp('"dimension": "' + d + '"').test(sys)),
+    JSON.stringify(dims.filter(d => sys.indexOf(d) === -1)));
+  t('5c2: …and with three subjects that is FIFTEEN slots the model must fill',
+    reqs.batch[0].refs.length === 3 && dims.length === 5,
+    `${reqs.batch[0].refs.length} subjects × ${dims.length} slots`);
+  t('5c3: the per-facet contrast fields are demanded',
+    /"unique_prediction"/.test(sys) && /"not_explained_by"/.test(sys),
+    'unique_prediction/not_explained_by missing from the schema');
+  t('5c4: …and the per-subject identity signature',
+    /"identity_signature"/.test(sys), 'identity_signature missing from the schema');
+  t('5c5: a portfolio that fills a slot with the WRONG dimension is structurally rejected',
+    await (async () => {
+      await setup(1);
+      responder = refs => ({ characterPortfolios: refs.map(r => {
+        const p = FIVE(r); p.facets[2].dimension = 'value';   // slot 3 must be `defense`
+        return p; }) });
+      const bad = await gen();
+      return bad.r.parked.length === 0 && bad.r.unresolved.length === 1;
+    })(), 'a mis-slotted facet was accepted');
+  t('5c6: …and one missing its unique_prediction is rejected too',
+    await (async () => {
+      await setup(1);
+      responder = refs => ({ characterPortfolios: refs.map(r => {
+        const p = FIVE(r); delete p.facets[0].unique_prediction; return p; }) });
+      const bad = await gen();
+      return bad.r.parked.length === 0;
+    })(), 'a facet with no unique_prediction was accepted');
+}
+
 console.log('\n 6 · EXACT ACCOUNTING');
 console.log(`   batch=${reqs.batch.length} staticApi=${reqs.staticApi} unknown=${reqs.unknown.length} escaped=${reqs.escaped.length}`);
 t('6a: every request was named — nothing unrecognised was answered',
   reqs.unknown.length === 0, JSON.stringify(reqs.unknown.slice(0, 3)));
 t('6b: nothing escaped the harness', reqs.escaped.length === 0, JSON.stringify(reqs.escaped.slice(0, 2)));
+// THE PROXY VALIDATES model-against-role and throws without a role. Interception answers a
+// request the proxy never sees, so this is the only place that failure can be caught before a
+// live call pays for it.
+t('6b2: every batch request names CHARACTER_PORTFOLIO and routes to the Mistral the Scene-1 ' +
+  'planner already uses — never an inherited OpenAI fallback',
+  reqs.batch.length > 0 && reqs.batch.every(x => x.role === 'CHARACTER_PORTFOLIO'
+    && x.model === 'mistral-small-latest' && /mistral-proxy/.test(x.url || '')),
+  JSON.stringify(reqs.batch.map(x => ({ role: x.role, model: x.model, url: x.url }))));
 t('6c: every batch request stayed within the hard ceiling and carried ≤3 subjects',
   reqs.batch.every(x => x.refs.length <= 3 && x.max_tokens <= ceil.hard),
   JSON.stringify(reqs.batch.map(x => ({ n: x.refs.length, mt: x.max_tokens }))));

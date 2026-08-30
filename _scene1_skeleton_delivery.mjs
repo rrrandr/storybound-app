@@ -27,7 +27,7 @@ const L = 'she understands the wish has already begun to cost her something she 
 // house scene actually offers. A rite-flavoured condition was correctly rejected here by the
 // evidence gate — that gate is why these belong to the scene rather than to the seed.
 const _pfF = (category, truth, w1, e1, w2, e2) => ({ category, canonical_truth: truth,
-  applicability_conditions: [{ text:w1, evidence_requires:e1 }, { text:w2, evidence_requires:e2 }],
+  applicability_conditions: [{ text:w1, evidence_words: e1.split('|') }, { text:w2, evidence_words: e2.split('|') }],
   forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
 const PORTFOLIO_FACETS = [
   _pfF('worldview','Paperwork repeated daily rarely earns his full attention, and he barely hides it.',
@@ -697,10 +697,20 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
       kinds[kind] = (kinds[kind] || 0) + 1;
       if (kind === 'portfolioBatch') {
         const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
-        const F = (category, canonical_truth, w1, e1, w2, e2) => ({ category, canonical_truth,
-          applicability_conditions: [{ text:w1, evidence_requires:e1 }, { text:w2, evidence_requires:e2 }],
+        // The five NAMED SLOTS the contract now requires, plus the per-facet contrast fields and
+        // the per-subject signature. A harness that kept the old shape would be testing a schema
+        // production no longer accepts.
+        const DIMS = ['value','insecurity','defense','relationship','exception'];
+        let _fi = 0;
+        const F = (category, canonical_truth, w1, e1, w2, e2) => ({
+          dimension: DIMS[(_fi++) % DIMS.length], category, canonical_truth,
+          unique_prediction: 'a prediction about ' + category + ' that none of the other four make',
+          not_explained_by: 'not the neighbouring facet, which is about something else entirely',
+          applicability_conditions: [{ text:w1, evidence_words: e1.split('|') }, { text:w2, evidence_words: e2.split('|') }],
           forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
-        out = JSON.stringify({ characterPortfolios: refs.map(r => ({ subject_ref: r, facets: [
+        out = JSON.stringify({ characterPortfolios: refs.map(r => ({ subject_ref: r,
+          identity_signature: 'the only one here who reads a rule as a shelter rather than a weapon',
+          facets: (_fi = 0, [
           F('worldview','Paperwork repeated daily rarely earns her full attention, and she barely hides it.',
             'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
           F('insecurity','Deference paid to someone else makes her newly attentive to her own standing.',
@@ -710,7 +720,7 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
           F('contradiction','On what a signature costs she assumes an authority nobody granted her.',
             'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'),
           F('value','With people who hold no leverage over her she is unexpectedly generous.',
-            'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')] })) });
+            'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')]) })) });
       } else if (kind === 'scaffold') {
         // The roster line the request carries is the ONLY source of the ref the responder echoes
         // back — exactly what a model can do and no more.
@@ -2010,8 +2020,8 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
     facets.length === 5 && facets.every(f => !aall.includes(f.id)),
     JSON.stringify(facets.filter(f => aall.includes(f.id)).map(f => f.id)));
   t('X10: no evidence machinery, guardrail bookkeeping or raw portfolio JSON reaches Grok',
-    !/evidence_requires|applicability_conditions|characterPortfolios|forbidden_restatements|misreading_guardrails|pressure_id|subject_ref/.test(aall),
-    (aall.match(/evidence_requires|applicability_conditions|characterPortfolios|forbidden_restatements|misreading_guardrails|pressure_id|subject_ref/g) || []).slice(0, 3).join(','));
+    !/evidence_requires|evidence_words|applicability_conditions|characterPortfolios|forbidden_restatements|misreading_guardrails|pressure_id|subject_ref|unique_prediction|not_explained_by|identity_signature|"dimension"/.test(aall),
+    (aall.match(/evidence_requires|evidence_words|applicability_conditions|characterPortfolios|forbidden_restatements|misreading_guardrails|pressure_id|subject_ref|unique_prediction|not_explained_by|identity_signature|"dimension"/g) || []).slice(0, 3).join(','));
 
   // ── THE SCOPED GUARDRAIL, ON A GENERATED PORTFOLIO ──
   // Both patterns match the same behavior string, so scope is the ONLY difference between them.

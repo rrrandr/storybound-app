@@ -64,7 +64,7 @@ try {
     // and who arrived with nothing.
     const F = (category, truth, w1, e1, w2, e2) => ({
       category, canonical_truth: truth,
-      applicability_conditions: [{ text: w1, evidence_requires: e1 }, { text: w2, evidence_requires: e2 }],
+      applicability_conditions: [{ text: w1, evidence_words: e1.split('|') }, { text: w2, evidence_words: e2.split('|') }],
       forbidden_restatements: [{ forbid: 'is ' + category, why: 'the truth stated, not shown' }]
     });
     const GOOD = [
@@ -123,7 +123,7 @@ try {
                         GOOD[2], GOOD[3], GOOD[4]] }] }).code,
       badPattern:    V({ characterPortfolios: [{ subject_ref: out.cid, facets: [
                         { category:'worldview', canonical_truth:'A truth long enough to pass the floor here.',
-                          applicability_conditions:[{text:'x',evidence_requires:'([unclosed'},{text:'y',evidence_requires:'ok'}] },
+                          applicability_conditions:[{text:'x',evidence_words: ["([unclosed"]},{text:'y',evidence_words: ["ok"]}] },
                         GOOD[1], GOOD[2], GOOD[3], GOOD[4]] }] }).code,
       envelopeLift:  V({ scaffold: { characterPortfolios: [{ subject_ref: out.cid, facets: GOOD }] } }).code
     };
@@ -239,7 +239,7 @@ try {
     const out = {};
     const F = (category, truth, w1, e1, w2, e2) => ({
       category, canonical_truth: truth,
-      applicability_conditions: [{ text: w1, evidence_requires: e1 }, { text: w2, evidence_requires: e2 }],
+      applicability_conditions: [{ text: w1, evidence_words: e1.split('|') }, { text: w2, evidence_words: e2.split('|') }],
       forbidden_restatements: [{ forbid: 'is ' + category, why: 'the truth stated, not shown' }] });
     const GOOD = [
       F('worldview','Routine ceremony rarely deserves his full attention, and he barely disguises it.','a rite performed many times','rite|liturgy|ceremon','a step nobody checks','order|step|clause'),
@@ -363,19 +363,19 @@ try {
   // ══════════════════════════════════════════════════════════════════════════════════════
   const FIVE = [
     { category:'worldview', canonical_truth:'Routine ceremony rarely deserves his full attention, and he barely disguises it.',
-      applicability_conditions:[{text:'a rite performed often',evidence_requires:'rite|liturgy|ceremon'},{text:'a step nobody checks',evidence_requires:'order|step|clause'}],
+      applicability_conditions:[{text:'a rite performed often',evidence_words: ["rite", "liturgy", "ceremon"]},{text:'a step nobody checks',evidence_words: ["order", "step", "clause"]}],
       forbidden_restatements:[{forbid:'is bored',why:'the truth stated, not shown'}] },
     { category:'insecurity', canonical_truth:'Public honour paid to a peer makes him newly attentive to rank and merit.',
-      applicability_conditions:[{text:'a peer deferred to',evidence_requires:'defer|regard|watching'},{text:'someone younger with standing',evidence_requires:'younger|senior|standing'}],
+      applicability_conditions:[{text:'a peer deferred to',evidence_words: ["defer", "regard", "watching"]},{text:'someone younger with standing',evidence_words: ["younger", "senior", "standing"]}],
       forbidden_restatements:[{forbid:'is jealous',why:'named, not shown'}] },
     { category:'habit', canonical_truth:'With children he turns mistakes and even play into lessons, always.',
-      applicability_conditions:[{text:'a youth doing badly',evidence_requires:'youth|child|first time'},{text:'a fixable error',evidence_requires:'error|wrong|mistake'}],
+      applicability_conditions:[{text:'a youth doing badly',evidence_words: ["youth", "child", "first time"]},{text:'a fixable error',evidence_words: ["error", "wrong", "mistake"]}],
       forbidden_restatements:[{forbid:'is a teacher',why:'named, not shown'}] },
     { category:'contradiction', canonical_truth:'In questions of sacrifice he assumes an authority others have not earned.',
-      applicability_conditions:[{text:'an offering named aloud',evidence_requires:'offering|memory|cost'},{text:'a cost judged small',evidence_requires:'cost|price|paid'}],
+      applicability_conditions:[{text:'an offering named aloud',evidence_words: ["offering", "memory", "cost"]},{text:'a cost judged small',evidence_words: ["cost", "price", "paid"]}],
       forbidden_restatements:[{forbid:'is arrogant',why:'named, not shown'}] },
     { category:'value', canonical_truth:'With people who have little and cannot confer status he becomes unexpectedly kind.',
-      applicability_conditions:[{text:'someone with nothing',evidence_requires:'barefoot|nothing|guest'},{text:'a person placed beneath',evidence_requires:'beneath|edge|apart'}],
+      applicability_conditions:[{text:'someone with nothing',evidence_words: ["barefoot", "nothing", "guest"]},{text:'a person placed beneath',evidence_words: ["beneath", "edge", "apart"]}],
       forbidden_restatements:[{forbid:'is kind',why:'named, not shown'}] }
   ];
 

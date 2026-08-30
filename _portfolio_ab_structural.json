@@ -1,0 +1,140 @@
+{
+  "A": {
+    "status": 200,
+    "usage": {
+      "prompt_tokens": 645,
+      "completion_tokens": 1672,
+      "total_tokens": 2317,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "parsed": true,
+    "subjects": {
+      "Mara Dunn": {
+        "present": true,
+        "valid": true,
+        "code": null,
+        "errors": [],
+        "facets": 5,
+        "categories": 5,
+        "selfSimilarityMax": 0.111,
+        "selfSimilarityMean": 0.092,
+        "conditionsEchoingEvidence": 0,
+        "conditionCount": 10,
+        "guardrails": 1,
+        "truths": [
+          "Mara has a strong grasp of the details and processes in her work.",
+          "Mara fears her expertise might not be recognized without proof.",
+          "Mara desires organizational clarity and order.",
+          "Mara values efficiency in communication and operations.",
+          "Mara balances a need for precision with impatience for delays."
+        ]
+      },
+      "Tomas Reyne": {
+        "present": true,
+        "valid": true,
+        "code": null,
+        "errors": [],
+        "facets": 5,
+        "categories": 5,
+        "selfSimilarityMax": 0.2,
+        "selfSimilarityMean": 0.1,
+        "conditionsEchoingEvidence": 0,
+        "conditionCount": 10,
+        "guardrails": 1,
+        "truths": [
+          "Tomas is adept at managing expectations and timing.",
+          "Tomas worries about failing to meet others’ expectations.",
+          "Tomas wants to maintain an influential presence, even when absent.",
+          "Tomas values strategic communication and forethought.",
+          "Tomas fears being misunderstood and misrepresenting himself."
+        ]
+      },
+      "Halden Roe": {
+        "present": true,
+        "valid": true,
+        "code": null,
+        "errors": [],
+        "facets": 5,
+        "categories": 5,
+        "selfSimilarityMax": 0.1,
+        "selfSimilarityMean": 0.086,
+        "conditionsEchoingEvidence": 0,
+        "conditionCount": 10,
+        "guardrails": 1,
+        "truths": [
+          "Halden possesses the skill to prioritize tasks under pressure.",
+          "Halden fears the consequences of poor decision-making.",
+          "Halden desires to maintain order amidst chaos.",
+          "Halden values fairness and objectivity in his decisions.",
+          "Halden struggles with the tension between swift action and thoroughness."
+        ]
+      }
+    },
+    "note": null,
+    "returned": 3,
+    "crossSubjectMax": 0.25,
+    "crossSubjectMean": 0.015
+  },
+  "B": {
+    "status": 200,
+    "usage": {
+      "prompt_tokens": 645,
+      "completion_tokens": 828,
+      "total_tokens": 1473,
+      "prompt_tokens_details": {
+        "cached_tokens": 0,
+        "audio_tokens": 0
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 0,
+        "audio_tokens": 0,
+        "accepted_prediction_tokens": 0,
+        "rejected_prediction_tokens": 0
+      }
+    },
+    "parsed": true,
+    "subjects": {
+      "Mara Dunn": {
+        "present": true,
+        "valid": false,
+        "code": "malformed",
+        "errors": [
+          "facet_4_condition_1_unsafe_pattern"
+        ],
+        "facets": 5,
+        "categories": 5,
+        "selfSimilarityMax": 0.231,
+        "selfSimilarityMean": 0.147,
+        "conditionsEchoingEvidence": 0,
+        "conditionCount": 10,
+        "guardrails": 1,
+        "truths": [
+          "Mara thrives on being the one with the answers, often withholding them.",
+          "Mara often masks her self-doubt with sharpness and distance.",
+          "Mara desires validation, but is often too proud to seek it directly.",
+          "Mara fears being perceived as irrelevant or unimportant.",
+          "Mara values independence but often feels it's a burden."
+        ]
+      },
+      "Tomas Reyne": {
+        "present": false
+      },
+      "Halden Roe": {
+        "present": false
+      }
+    },
+    "note": null,
+    "returned": 1,
+    "crossSubjectMax": 0,
+    "crossSubjectMean": 0
+  }
+}
