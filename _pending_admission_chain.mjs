@@ -36,6 +36,7 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
     const page = await ctx.newPage();
     page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
     let targets = null, planner = null, author = null, extraction = null, escaped = [];
+    let batchCalls = 0; const batchRosters = [];
     let body = SRC;
     // One mutation or several. Each marker's uniqueness is asserted independently; `targets` is
     // the minimum across them, so a non-unique marker anywhere fails the control.
@@ -62,7 +63,26 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       const sys = String((m.find(x => x.role === 'system') || {}).content || '');
       const usr = String((m.find(x => x.role === 'user') || {}).content || '');
       let out = { ok: true };
-      if (/A-PLOT GENERATOR/i.test(sys)) out = APLOT;
+      if (/You author CHARACTER PORTFOLIOS/.test(sys)) {
+        batchCalls++;
+        const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
+        batchRosters.push(refs);
+        const F = (category, canonical_truth, w1, e1, w2, e2) => ({ category, canonical_truth,
+          applicability_conditions: [{ text:w1, evidence_requires:e1 }, { text:w2, evidence_requires:e2 }],
+          forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
+        out = { characterPortfolios: refs.map(r => ({ subject_ref: r, facets: [
+          F('worldview','Paperwork repeated daily rarely earns her full attention, and she barely hides it.',
+            'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
+          F('insecurity','Deference paid to someone else makes her newly attentive to her own standing.',
+            'a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'),
+          F('habit',"She turns another person's error into an instruction, wanted or not.",
+            'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'),
+          F('contradiction','On what a signature costs she assumes an authority nobody granted her.',
+            'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'),
+          F('value','With people who hold no leverage over her she is unexpectedly generous.',
+            'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')] })) };
+      }
+      else if (/A-PLOT GENERATOR/i.test(sys)) out = APLOT;
       else if (/CONTINUITY ARCHITECT for a serialized/.test(sys)) out = { issueArcs: [{ n: 1 }], characterIcebergs: {} };
       else if (/scene-structure planner for the OPENING scene/.test(sys)) {
         planner = usr;
@@ -154,27 +174,10 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       s._starterId = 'pa_chain';
       s.picks.identity = s.identity; s._skipCorridorValidation = true;
 
-      // THE SEAM THE PAID BATCH WILL OCCUPY. Production calls this; the mock only supplies what
-      // the batch would have bought, keyed by the ref production minted.
+      // THE BATCH IS PRODUCTION'S NOW. Nothing here replaces _generatePendingPortfolios; its
+      // REQUEST is intercepted like any other, so this chain exercises the real chunking, the real
+      // ceiling, the real roster and the real per-subject validation.
       window.__pendingCalls = 0;
-      window._generatePendingPortfolios = async function (manifest) {
-        window.__pendingCalls++;
-        window.__manifestSeen = JSON.parse(JSON.stringify(manifest));
-        const F = (category, truth, w1, e1, w2, e2) => ({ category, canonical_truth: truth,
-          applicability_conditions: [{ text:w1, evidence_requires:e1 }, { text:w2, evidence_requires:e2 }],
-          forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
-        return manifest.candidates.map(c => ({ subject_ref: c.candidate_ref, facets: [
-          F('worldview','Paperwork repeated daily rarely earns her full attention, and she barely hides it.',
-            'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
-          F('insecurity','Deference paid to someone else makes her newly attentive to her own standing.',
-            'a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'),
-          F('habit',"She turns another person's error into an instruction, wanted or not.",
-            'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'),
-          F('contradiction','On what a signature costs she assumes an authority nobody granted her.',
-            'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'),
-          F('value','With people who hold no leverage over her she is unexpectedly generous.',
-            'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')] }));
-      };
 
       window.__admitTrace = [];
       // DRAIN, DO NOT SLEEP. The extraction guard set is the real signal that the guarded work
@@ -229,8 +232,10 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
           [{ id:'named:tom_reed', label:'Tom Reed', aliases:['Tom Reed'],
              providerOwner:'ordinary/emergent name-only' }],
           { invocationId: 'inv-B', lineage: String(s.storyId) + '::scene1' });
-        const parked = await window._generatePendingPortfolios(mB, s);
-        parked.forEach(x => window._parkPendingPortfolio(s, 'inv-B', x.subject_ref, x.facets));
+        // The REAL batch buys B's portfolio too — it returns a report, not facets, and parks
+        // through its own validated path.
+        const bBatch = await window._generatePendingPortfolios({ invocationId: 'inv-B' }, s);
+        if (!bBatch || !bBatch.ok) throw new Error('B batch failed: ' + JSON.stringify(bBatch));
         const proseB = (outOfOrder === 'identical') ? PROSE
           : PROSE.replace('The customs house smelled of wet rope.', 'The tide was already turning.');
         window._recordInvocationProse(s, 'inv-B', proseB);
@@ -253,6 +258,22 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       const drained = await window.__drainLedger();
       console.warn = realWarn; console.log = realLog; console.error = realErr;
 
+      // ── THE RESTORED PROVIDER READ ──
+      // Promotion is only worth anything if it survives a save. The whole ledger round-trips
+      // through JSON and the facets are read again through the provider, in a LATER scene.
+      let restoredRead = null;
+      try {
+        const wire = JSON.stringify(s._relationshipLedger);
+        s._relationshipLedger = null;
+        s._relationshipLedger = JSON.parse(wire);
+        const st0 = window._pendingAdmissionStore(s);
+        const k0 = st0 && Object.keys(st0.byInvocation)[0];
+        const cid0 = k0 && (st0.byInvocation[k0].candidates[0] || {}).promotedTo;
+        const f = cid0 ? (window._facetsForCharacter({ id: cid0, label: 'Mara Dunn', aliases: ['Mara Dunn'] },
+          s, { sceneNumber: 4 }) || []) : [];
+        restoredRead = { cid: cid0, n: f.length, origins: [...new Set(f.map(x => x.origin))],
+                         cats: [...new Set(f.map(x => x.category))].length };
+      } catch (e) { restoredRead = { error: String(e && e.message) }; }
       const store = window._pendingAdmissionStore(s);
       const inv = store && Object.keys(store.byInvocation)[0];
       const rec = inv && store.byInvocation[inv];
@@ -262,17 +283,21 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       const facetsAfter = promotedTo
         ? (window._facetsForCharacter({ id: promotedTo, label:'Mara Dunn', aliases:['Mara Dunn'] }, s, { sceneNumber: 2 }) || [])
         : [];
-      return { uid, beforeSnap, restoreEvidence, orderEvidence, drained,
+      return { uid, beforeSnap, restoreEvidence, orderEvidence, drained, restoredRead,
                trace: window.__admitTrace.slice(0, 80),
                pageUids: window.StoryPagination.getPageUids(),
                metaByUid: window.StoryPagination.getPageUids().map(function (u) {
                  var m = window.StoryPagination.getPageMetaByUid(u); return u + '→' + (m ? m.invocationId : 'none'); }),
-               pendingCalls: window.__pendingCalls,
+               pendingCalls: null,   // superseded by batchCalls: the real request count
                diagPages: (window.StoryPagination && window.StoryPagination.getPageUids)
                  ? window.StoryPagination.getPageUids() : 'no accessor',
                diagHandoff: s._scene1PendingInvocation === undefined ? 'undefined' : s._scene1PendingInvocation,
                diagScenes: (s.scenes || []).length,
-               manifestSeen: window.__manifestSeen || null,
+               manifestSeen: (function () {
+                 try { const st = window._pendingAdmissionStore(window.state);
+                       const k = st && Object.keys(st.byInvocation)[0];
+                       return k ? JSON.parse(JSON.stringify(st.byInvocation[k])) : null;
+                 } catch (_) { return null; } })(),
                rec: rec ? { sceneUid: rec.sceneUid, status: rec.status, hasProseFp: !!rec.proseFingerprint } : null,
                cand: cand ? { status: cand.status, promotedTo: cand.promotedTo, ref: cand.candidate_ref } : null,
                facetsAfter: facetsAfter.length,
@@ -291,10 +316,10 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
 
     const ref = res.cand && res.cand.ref;
     const checks = {
-      'C1 production captured a manifest at its own pre-planner seam, and asked the batch seam once':
-        { ok: res.pendingCalls === 1 && !!res.manifestSeen && res.manifestSeen.candidates.length === 1
+      'C1 production captured a manifest at its own pre-planner seam and issued exactly one real batch request':
+        { ok: batchCalls === 1 && !!res.manifestSeen && res.manifestSeen.candidates.length === 1
               && res.manifestSeen.candidates[0].label === 'Mara Dunn',
-          detail: JSON.stringify({ calls: res.pendingCalls, n: res.manifestSeen && res.manifestSeen.candidates.length }) },
+          detail: JSON.stringify({ batchCalls, n: res.manifestSeen && res.manifestSeen.candidates.length }) },
       'C2 all five parked facets reached the PLANNER under their opaque backend refs':
         { ok: !!planner && /Mara Dunn/.test(planner)
               && (planner.match(/facet_id: /g) || []).length === 5,
@@ -320,9 +345,19 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       'C8 the incidental clerk was admitted on the ordinary path and consumed nobody\'s package':
         { ok: res.clerkAdmitted === false || res.clerkAdmitted === true,   // either is fine; it must not be promoted
           detail: 'clerk holds no promoted portfolio (promotion is keyed by ref, not name)' },
+      'C9a the batch ran ONCE, its roster held only the ordinary/emergent subject, and the ownership-excluded candidates never reached it':
+        { ok: batchCalls === 1 && batchRosters.length === 1 && batchRosters[0].length === 1
+              && !!res.manifestSeen && res.manifestSeen.candidates.length === 1
+              && res.manifestSeen.candidates[0].providerOwner === 'ordinary/emergent name-only',
+          detail: JSON.stringify({ calls: batchCalls, roster: batchRosters,
+            owners: (res.manifestSeen && res.manifestSeen.candidates || []).map(c => c.providerOwner) }) },
+      'C9b a RESTORED provider read still resolves all five facets, five categories, as generated_cast':
+        { ok: !!res.restoredRead && res.restoredRead.n === 5 && res.restoredRead.cats === 5
+              && JSON.stringify(res.restoredRead.origins) === '["generated_cast"]',
+          detail: JSON.stringify(res.restoredRead) },
       'C9 nothing escaped the harness':
         { ok: escaped.length === 0, detail: JSON.stringify(escaped.slice(0, 2)) },
     };
-    return { checks, res, targets, planner, author, extraction, escaped };
+    return { checks, res, targets, planner, author, extraction, escaped, batchCalls, batchRosters };
   } finally { await ctx.close().catch(() => {}); }
 }

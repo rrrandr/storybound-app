@@ -50,7 +50,7 @@ page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
 await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: SRC }));
 await page.route('**/api/**', async route => {
   const u = route.request().url();
-  if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return route.continue();
+  if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
   let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
   const sys = String(((b && b.messages || []).find(m => m.role === 'system') || {}).content || '');
   let out = { ok: true };
@@ -134,7 +134,7 @@ await page2.route('**/app.js*', r => r.fulfill({ status:200, contentType:'applic
 let plannerAt = null, candidatesAt = null, seq = 0;
 await page2.route('**/api/**', async route => {
   const u = route.request().url();
-  if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return route.continue();
+  if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
   let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
   const sys = String(((b && b.messages || []).find(m => m.role === 'system') || {}).content || '');
   seq++;
@@ -237,7 +237,7 @@ async function measure(label, seeded) {
   await pg.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: SRC2 }));
   await pg.route('**/api/**', async route => {
     const u = route.request().url();
-    if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return route.continue();
+    if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
     const sys = String(((b && b.messages || []).find(m => m.role === 'system') || {}).content || '');
     seq++;

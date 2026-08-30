@@ -82,7 +82,7 @@ const browser = await chromium.launch({ headless: true });
   const page = await (await browser.newContext()).newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
-  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' }) : route.abort());
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window.state && window._scene1StageContract && window.STARTER_SEEDS, { timeout:120000 });
 
@@ -283,7 +283,7 @@ async function fullRun({ label, statePatch, injectSeedB, reply }) {
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
   await page.route('**/api/**', async route => {
     const url = route.request().url().replace(/^https?:\/\/[^/]+/, '');
-    if (PASSTHROUGH.test(url)) return route.continue();
+    if (PASSTHROUGH.test(url)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     if (url.startsWith('/api/consume-fortune')) {
       return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify({ success:true, fortunesRemaining:9999 }) });
     }
@@ -548,7 +548,7 @@ console.log(`\n${'═'.repeat(92)}\nPART D — CORRIDOR OWNERSHIP (roster-bound 
   const page = await (await browser.newContext()).newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
-  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' }) : route.abort());
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window.state && window._resolveStageFromPlan, { timeout:120000 });
 
@@ -755,7 +755,7 @@ console.log(`\n${'═'.repeat(92)}\nPART F — ENVELOPE RECONCILER\n${'═'.repe
   const page = await (await browser.newContext()).newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
-  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' }) : route.abort());
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window._reconcileOpeningEnvelope && window._openingSpineDeclaredFields, { timeout:180000 });
 
@@ -931,7 +931,7 @@ console.log(`\n${'═'.repeat(92)}\nPART G — INVENTED-IDENTITY SCANNER (pure)\
   const page = await (await browser.newContext()).newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
-  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' }) : route.abort());
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window.state && window._planInventedPersons, { timeout:120000 });
 
@@ -1005,7 +1005,7 @@ console.log(`\n${'═'.repeat(92)}\nPART H — SOLO-STAGE INTERACTION (pure)\n${
   const page = await (await browser.newContext()).newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
-  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' }) : route.abort());
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window.state && window._validateSoloStageInteraction, { timeout:120000 });
 
@@ -1131,7 +1131,7 @@ console.log(`\n${'═'.repeat(92)}\nPART I — GROUNDING · ANGLE · FUSION (pur
   const page = await (await browser.newContext()).newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
-  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? route.continue() : route.abort());
+  await page.route('**/api/**', route => PASSTHROUGH.test(route.request().url()) ? /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' }) : route.abort());
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window._targetInSceneDetail && window._validateFusionConcreteness && window._tokEquivalent, { timeout:120000 });
 

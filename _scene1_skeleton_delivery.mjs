@@ -124,6 +124,11 @@ const ANTAGONIST_BIBLE = {
 // A correction is distinguished from an initial generation by the retry note production actually
 // sends — the validation errors, handed back — not by a substring both requests happen to carry.
 const REQUEST_KINDS = [
+  // The bounded portfolio batch. It fires whenever a scene stages an ordinary, uncovered,
+  // name-only candidate — which every UNSEEDED fixture here does — and production refuses to plan
+  // a scene whose due subject has no psychology. A harness that left it unanswered would be
+  // testing its own silence.
+  ['portfolioBatch',   (t, sys) => /You author CHARACTER PORTFOLIOS/.test(sys)],
   ['scaffold',         (t, sys) => /CONTINUITY ARCHITECT for a serialized/.test(sys)],
   ['author',           (t, sys) => /ARCHITECTURE LAWS/.test(sys)],
   ['planner',          (t, sys) => /scene-structure planner for the OPENING scene/.test(sys)],
@@ -668,7 +673,7 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
   });
   await page.route('**/api/**', async route => {
     const url = route.request().url().replace(/^https?:\/\/[^/]+/, '');
-    if (PASSTHROUGH.test(url)) return route.continue();
+    if (PASSTHROUGH.test(url)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     const k = Object.keys(LOCAL).find(x => url.startsWith(x));
     if (k) return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(LOCAL[k]) });
     let b=null; try { b = JSON.parse(route.request().postData()||'{}'); } catch(_){}
@@ -690,7 +695,23 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
     } else {
       const kind = _hits[0];
       kinds[kind] = (kinds[kind] || 0) + 1;
-      if (kind === 'scaffold') {
+      if (kind === 'portfolioBatch') {
+        const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
+        const F = (category, canonical_truth, w1, e1, w2, e2) => ({ category, canonical_truth,
+          applicability_conditions: [{ text:w1, evidence_requires:e1 }, { text:w2, evidence_requires:e2 }],
+          forbidden_restatements: [{ forbid:'is ' + category, why:'the truth stated, not shown' }] });
+        out = JSON.stringify({ characterPortfolios: refs.map(r => ({ subject_ref: r, facets: [
+          F('worldview','Paperwork repeated daily rarely earns her full attention, and she barely hides it.',
+            'a procedure the house performs every day','customs|house','a step nobody audits','signed|counts|already'),
+          F('insecurity','Deference paid to someone else makes her newly attentive to her own standing.',
+            'a room holding more than one authority','customs|house|Lirael','someone junior given weight','younger|senior|standing'),
+          F('habit',"She turns another person's error into an instruction, wanted or not.",
+            'a mistake that can still be corrected','counts|signed|already','a person doing the work badly','error|wrong|mistake'),
+          F('contradiction','On what a signature costs she assumes an authority nobody granted her.',
+            'an obligation already entered into','signed|counts|already','a price judged small','cost|price|paid'),
+          F('value','With people who hold no leverage over her she is unexpectedly generous.',
+            'someone with nothing to trade','customs|house|Lirael','a person placed beneath her','beneath|edge|apart')] })) });
+      } else if (kind === 'scaffold') {
         // The roster line the request carries is the ONLY source of the ref the responder echoes
         // back — exactly what a model can do and no more.
         const _ref = _txt.match(/subject_ref:\s*(\S+)/);
@@ -1716,14 +1737,37 @@ for (const [mutate, label, junk] of [
     }),
     JSON.stringify(recips.map(c => [c.character, (blockOf(c.character).match(/(SOURCE TRUTH|VISIBLE ACTION|PC INTERPRETATION)/g) || [])])));
 }
-// THE GUARD IS NOT GONE. It has one live population: a candidate with no authored psychology,
-// where the model's sentence is all there is and therefore has to be judged.
+// THE GUARD IS NOT GONE — BUT ITS POPULATION HAS MOVED (2026-08-29).
+// This asserted that an UNSEEDED ordinary candidate has no authored psychology, so a restating
+// model-written read is all there is and must be judged. With the generated-cast provider live
+// that premise is retired for name-only candidates: the batch buys Seren a portfolio before the
+// planner runs, so she IS sourced and the model's sentence is DISCARDED rather than judged — which
+// is the stronger outcome this whole line of work exists to produce.
+//
+// The guard's live population is now a candidate the batch will never buy: a ROLE PHRASE. Nobody
+// authors psychology for "the harbour watchman", and a relationship label must never manufacture
+// any, so the model's sentence is again all there is — and is judged.
 {
   const R = await run({ hot: false, duo: true, mutate: 'readVoiceDrops' });
   const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');
-  t('   UNSEEDED: with no record to overwrite it, a restating read is STILL rejected',
-    R.author.length === 0 && /SCENE1:ABORT/.test(R.logs.join(' ')),
-    `authorCalls=${R.author.length} | ${invalid.slice(0, 200) || '(no INVALID log)'}`);
+  t('   UNSEEDED: the candidate is now SOURCED by the batch, so the model\'s restating read is ' +
+    'DISCARDED rather than judged — the record\'s truth is what travels',
+    (() => {
+      // The scene SHIPS (the read is not a fault any more), and what reaches Grok is the RECORD's
+      // truth — the batch's canonical_truth — not the model's restatement.
+      if (R.author.length !== 1) return false;
+      const sys = R.author[0].system || '';
+      const cp = (R.skeleton && R.skeleton.cp) || [];
+      const seren = cp.filter(c => /Seren/i.test(String(c.character || '')))[0];
+      if (!seren || !seren.facet_id) return false;                 // she must be SOURCED
+      const truths = (sys.match(/SOURCE TRUTH — DO NOT STATE: ([^\n]+)/g) || []);
+      // her block carries a truth, and it is the record's — the model's read never reaches Grok
+      return truths.length >= 1
+        && !/character_revelation/.test(sys)
+        && (!seren.character_revelation || sys.indexOf(seren.character_revelation) === -1);
+    })(),
+    `authorCalls=${R.author.length} sourced=${JSON.stringify(((R.skeleton && R.skeleton.cp) || [])
+      .filter(c => /Seren/i.test(String(c.character || ''))).map(c => ({ ch: c.character, f: !!c.facet_id })))}`);
 }
 console.log('');
 

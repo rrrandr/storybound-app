@@ -47,7 +47,7 @@ try {
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: SRC }));
   await page.route('**/api/**', async route => {
     const u = route.request().url();
-    if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return route.continue();
+    if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     if (/proxy|chat|complet|grok|mistral/i.test(u)) paid++;
     return route.fulfill({ status:200, contentType:'application/json', body:'{"ok":true}' });
   });
@@ -400,7 +400,7 @@ try {
   });
   await page.route('**/api/**', async route => {
     const u = route.request().url();
-    if (STATIC_API.test(u)) { staticReqs.push(u); return route.continue(); }
+    if (STATIC_API.test(u)) { staticReqs.push(u); return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' }); }
     const body = route.request().postData() || '';
     let _sys = '';
     try { const _b = JSON.parse(body || '{}');
@@ -673,7 +673,7 @@ try {
         contentType:'application/javascript; charset=utf-8', body: MUTANT }));
       await mp.route('**/api/**', async route => {
         const u = route.request().url();
-        if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return route.continue();
+        if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
         const body = route.request().postData() || '';
         if (/issueArcs|characterIcebergs|PORTFOLIO SUBJECTS/i.test(body)) {
           const seen = body.match(/plot:[A-Za-z0-9_]+:primary_antagonist/);

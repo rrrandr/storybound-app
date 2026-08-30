@@ -338,16 +338,16 @@ console.log('\n 8 · THE PRODUCTION LOOP — capture → planner → author → 
   const G1 = await chain(browser, SRC, { mutateSrc: NOCAP });
   t('   C15 with scene1_literary declared NOT capable, the literary path still CAPTURES and ' +
     'generates nothing',
-    G1.targets === 1 && !!G1.res.manifestSeen === false && G1.res.pendingCalls === 0
+    G1.targets === 1 && G1.batchCalls === 0 && !!G1.res.manifestSeen
       && (G1.res.rec || {}).status === 'captured',
-    JSON.stringify({ targets: G1.targets, calls: G1.res.pendingCalls, rec: G1.res.rec }));
+    JSON.stringify({ targets: G1.targets, batchCalls: G1.batchCalls, rec: G1.res.rec }));
   const G2 = await chain(browser, SRC, { mutateSrc: [NOCAP, {
     from: 'if (_capable && _pendingInvocation && typeof window._generatePendingPortfolios',
     to:   'if (_pendingInvocation && typeof window._generatePendingPortfolios' }] });
   t('   MUT the capability gate removed → the incapable path generates, so C15\'s zero is ' +
     'evidence about the gate and not about the path',
-    G2.targets === 1 && G2.res.pendingCalls > 0,
-    `targets=${G2.targets} generatorCalls=${G2.res.pendingCalls}`);
+    G2.targets === 1 && G2.batchCalls > 0,
+    `targets=${G2.targets} batchRequests=${G2.batchCalls}`);
 
   // ── RESTORE AFTER BINDING, BEFORE EXTRACTION SUCCEEDS ──
   const RS = await chain(browser, SRC, { restoreBeforeExtraction: true });
@@ -355,8 +355,7 @@ console.log('\n 8 · THE PRODUCTION LOOP — capture → planner → author → 
     'bound, generator not called again — and it still promotes exactly once',
     !!RS.res.restoreEvidence && RS.res.restoreEvidence.sameRef === true
       && RS.res.restoreEvidence.stillBound === true
-      && RS.res.restoreEvidence.generatorCalls === 1
-      && RS.res.pendingCalls === 1
+      && RS.batchCalls === 1
       && (RS.res.cand || {}).status === 'promoted' && RS.res.facetsAfter === 5
       && RS.res.charLedgerKeys.filter(k => /mara/i.test(k)).length === 1,
     JSON.stringify({ restore: RS.res.restoreEvidence, cand: RS.res.cand,
@@ -390,8 +389,7 @@ console.log('\n 8 · THE PRODUCTION LOOP — capture → planner → author → 
     JSON.stringify(CAP));
   const ST = await chain(browser, SRC, { staged: true });
   t('   C14 …and a real run on a non-capable path dispatches ZERO portfolio generation',
-    ST.res.pendingCalls === 0,
-    'generator calls on the staged path = ' + ST.res.pendingCalls);
+    ST.batchCalls === 0, 'batch requests on the staged path = ' + ST.batchCalls);
 
   // ── MUTATION CONTROLS ON THE FIVE PRODUCTION CALLS ──
   // Each removal must turn a specific claim red. The marker for each is asserted UNIQUE first.
@@ -399,7 +397,7 @@ console.log('\n 8 · THE PRODUCTION LOOP — capture → planner → author → 
   const MUTS = [
     ['capture',            '_pendingInvocation = window._captureAdmissionManifest(state, _payable,',
                            '_pendingInvocation = null && (',
-                           M => !M.res.manifestSeen && M.res.pendingCalls === 0, {}],
+                           M => !M.res.manifestSeen && M.batchCalls === 0, {}],
     ['uid binding',        'window._bindPendingAdmissionByProse(s, plain, uid);',
                            '/* MUTATION CONTROL */',
                            M => !M.res.rec || M.res.rec.sceneUid === null, {}],

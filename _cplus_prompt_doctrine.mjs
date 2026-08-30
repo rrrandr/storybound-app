@@ -262,7 +262,7 @@ async function run(mutate, opts) {
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: APP }));
   await page.route('**/api/**', async route => {
     const url = route.request().url().replace(/^https?:\/\/[^/]+/, '');
-    if (PASSTHROUGH.test(url)) return route.continue();
+    if (PASSTHROUGH.test(url)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     const k = Object.keys(LOCAL).find(x => url.startsWith(x));
     if (k) return route.fulfill({ status:200, contentType:'application/json', body: JSON.stringify(LOCAL[k]) });
     let b=null; try { b = JSON.parse(route.request().postData()||'{}'); } catch(_){}

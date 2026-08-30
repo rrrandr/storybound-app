@@ -91,7 +91,7 @@ async function probe({ who, mutateSrc, holdMs = 3000 }) {
     });
     await page.route('**/api/**', async route => {
       const u = route.request().url();
-      if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return route.continue();
+      if (/\/api\/(config|geo|csp-report|beta-events)\b/.test(u)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
       let b = null; try { b = JSON.parse(route.request().postData() || '{}'); } catch (_) {}
       const sys = String(((b && b.messages || []).find(m => m.role === 'system') || {}).content || '');
       let out, held = false;

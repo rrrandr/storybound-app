@@ -59,7 +59,7 @@ try {
   await page.route('**/app.js*', r => r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body: SRC }));
   await page.route('**/api/**', async route => {
     const url = route.request().url().replace(/^https?:\/\/[^/]+/, '');
-    if (PASSTHROUGH.test(url)) return route.continue();
+    if (PASSTHROUGH.test(url)) return /* FULFILLED, NOT FORWARDED: a forwarded static endpoint spawns a @vercel/node runtime that is never reaped — they accumulate into gigabytes and wedge the dev server mid-suite. */ route.fulfill({ status:200, contentType:'application/json', body:'{}' });
     // ANY model call during a cold restore is a FAILURE OF THIS SUITE'S PREMISE, not a fixture
     // detail: reopening a saved story must not regenerate or re-roll anything.
     if (/proxy|chat|complet|grok|mistral|openai|anthropic/i.test(url)) modelCalls.push(url);
