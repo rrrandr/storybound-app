@@ -281,6 +281,28 @@ const evidence = (() => {
       requestCensus: { dispatched: seen.batch.length, aborted: seen.aborted, escaped: seen.escaped.length },
     }, null, 2));
     wrote.parsed = true;
+    // ── THE LEDGER IS PART OF THE EVIDENCE, NOT A REPORTING STEP ──
+    // Three times running, a paid call had to be added to the ledger by hand afterwards, and
+    // twice the guard quoted a cumulative figure that was missing the newest call. A spend record
+    // that depends on someone remembering to update it is not a spend record. Appended here, from
+    // the provider's own usage, the moment the response exists.
+    try {
+      const meta = R.providerMeta;
+      if (meta && meta.usage && !DRY && !SENTINEL) {
+        const L = JSON.parse(fs.readFileSync('_portfolio_spend_ledger.json', 'utf8'));
+        const dup = L.calls.some(c => c.prompt_tokens === meta.usage.prompt_tokens
+                                   && c.completion_tokens === meta.usage.completion_tokens);
+        if (!dup) {
+          L.calls.push({ what: STAMP + ' production-path sample', model: meta.model,
+            prompt_tokens: meta.usage.prompt_tokens, completion_tokens: meta.usage.completion_tokens });
+          const cost = (x) => (x.prompt_tokens / 1e6) * L.rates[x.model].in
+                            + (x.completion_tokens / 1e6) * L.rates[x.model].out;
+          L.total = L.calls.reduce((n, x) => n + cost(x), 0);
+          fs.writeFileSync('_portfolio_spend_ledger.json', JSON.stringify(L, null, 2));
+          wrote.ledger = L.calls.length;
+        }
+      }
+    } catch (e) { wrote.ledgerError = String(e && e.message); }
     try { fs.writeFileSync('_portfolio_samples/' + STAMP + '.evidence.json',
       fs.readFileSync(EV_PARSED)); } catch (_) {}
   } catch (e) { wrote.parsedError = String(e && e.message); }
