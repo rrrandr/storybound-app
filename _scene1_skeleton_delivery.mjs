@@ -234,16 +234,14 @@ function candidatesFromPrompt(usr) {
     const name = (chunk.match(/^\s*•\s*(.+)$/m) || [])[1];
     if (!name) return;
     const modes = ((chunk.match(/modes permitted: ([^\n]*)/) || [])[1] || '').trim().split(' | ').filter(Boolean);
-    const facets = [], pressures = {};
-    // facet_id: <id>  [category] … then one "pressure_id: <id>  →  <text>" line per condition.
-    const fre = /^\s{6,}· facet_id: (\S+)\s+\[[a-z_]+\]([\s\S]*?)(?=^\s{6,}· facet_id: |^\s{6,}READS THIS|^\s{6,}⟂|$(?![\s\S]))/gm;
-    let f; while ((f = fre.exec(chunk))) {
-      facets.push(f[1]);
-      const conds = [...f[2].matchAll(/pressure_id: (\S+)\s+→\s+([^\n]*)/g)]
-        .map(m => ({ pressure_id: m[1], text: m[2].trim() }));
-      pressures[f[1]] = conds[0] ? conds[0].pressure_id : '';
-    }
-    out[name.trim()] = { modes, facets, pressures };
+    // ── THE OFFER IS GROUNDED OPTIONS, NOT A FACET LIST ──
+    // Facet, pressure and evidence arrive welded under one option_id, so the fixture reads the
+    // options the packet actually carries and picks one. It can no longer compose a pairing,
+    // which is the entire point of the change.
+    const options = [];
+    const ore = /· option_id: (OPT-\d+)\n\s+truth \(fixed, not yours to rewrite\): ([^\n]+)\n\s+applies here because: ([^\n]+)/g;
+    let o; while ((o = ore.exec(chunk))) options.push({ option_id: o[1], truth: o[2].trim(), pressure: o[3].trim() });
+    out[name.trim()] = { modes, options };
   });
   return out;
 }
@@ -334,19 +332,24 @@ function plannerReply(usr, mutate) {
   const CAND = candidatesFromPrompt(usr);
   let cp = cast.filter(n => n !== PCN)
     .map(n => {
-      const c = CAND[n] || {}; const fid = (c.facets || [])[0];
-      const pr = fid ? ((c.pressures || {})[fid] || '') : '';
+      const c = CAND[n] || {}; const opt = (c.options || [])[0];
       const R = READS[n] || READ_FALLBACK(n);
+      const kw = (x) => (String(x).toLowerCase().match(/[a-z]{5,}/g) || []).slice(0, 6).join(' ');
       return { character:n, mode: ((c.modes || [])[0] || 'IN_PERSON'),
-               ...(fid ? { facet_id: fid } : {}), ...(pr ? { pressure_id: pr } : {}),
-               ...(pr && E1 ? { pressure_evidence_ids: [E1] } : {}),
-               first_mention:true, behavior: R.behavior,
+               ...(opt ? { option_id: opt.option_id } : {}),
+               ...(opt ? { expression_mode: 'CONTROL' } : {}),
+               first_mention:true, behavior: R.behavior, visible_action: R.behavior,
                // NO AUTHORED PSYCHOLOGY ON RECORD is the one case where the planner still writes
-               // the read; where a facet EXISTS, sending one is the model rewriting canon, and the
-               // request says so. The duo (unseeded) fixture is the whole no-facet population.
-               ...(fid ? {} : { character_revelation: R.character_revelation }),
+               // the read; where an option EXISTS, sending one is the model rewriting canon.
+               ...(opt ? {} : { character_revelation: R.character_revelation }),
                behavior_object_ids: [], behavior_person_ids: [],
+               // Built from the option's own truth and condition, so the bridge genuinely connects
+               // the two things it claims to — the gate checks shape, not sentiment.
+               ...(opt ? { revelation_bridge: 'this act is how ' + kw(opt.truth)
+                    + ' surfaces, and this scene is the case where ' + kw(opt.pressure) } : {}),
                ...(OP ? { pc_lens_operation: OP } : {}),
+               ...(opt ? { pc_interpretation: String(n).split(' ')[0] + ' is not doing this idly — she is '
+                    + 'making the other person state what they actually want' } : {}),
                pc_effect: REACT[n] || REACT_FALLBACK(n) };
     });
   // Anchors are the prefilled SENTINELS, copied back untouched, as the template asks.
@@ -366,20 +369,27 @@ function plannerReply(usr, mutate) {
   // ── THE CITATIONS THE ASSIGNMENT MUST MAKE ──
   if (mutate === 'cpNoMode')   cp = cp.map((c,i) => { if (i !== 0) return c; const { mode, ...r } = c; return r; });
   if (mutate === 'cpBadMode')  cp = cp.map((c,i) => i === 0 ? { ...c, mode:'RECALLED' } : c);   // she is in the room
-  if (mutate === 'cpNoFacet')  cp = cp.map((c,i) => { if (i !== 0) return c; const { facet_id, ...r } = c; return r; });
+  // The model no longer sends facet_id; the equivalent omission is now the option itself.
+  if (mutate === 'cpNoFacet')  cp = cp.map((c,i) => { if (i !== 0) return c; const { option_id, ...r } = c; return r; });
 
-  if (mutate === 'cpBadEvidence') cp = cp.map((c,i) => i === 0 ? { ...c, pressure_evidence_ids:['E999'] } : c);
+  // Evidence is inside the option, so a bad evidence id is unreachable. The equivalent defect is
+  // an option this scene never offered.
+  if (mutate === 'cpBadEvidence') cp = cp.map((c,i) => i === 0 ? { ...c, option_id:'OPT-9999' } : c);
   if (mutate === 'cpNoLensOp')  cp = cp.map((c,i) => { if (i !== 0) return c; const { pc_lens_operation, ...r } = c; return r; });
   if (mutate === 'cpBadObject') cp = cp.map((c,i) => i === 0 ? { ...c, behavior_object_ids:['O99'] } : c);
-  if (mutate === 'cpBadPressureId') cp = cp.map((c,i) => i === 0 ? { ...c, pressure_id:'p_not_a_real_condition' } : c);
+  // A pressure can no longer be named independently; the equivalent is a missing bridge.
+  if (mutate === 'cpBadPressureId') cp = cp.map((c,i) => i === 0 ? (() => { const { revelation_bridge, ...r } = c; return r; })() : c);
   if (mutate === 'cpProp')     cp = cp.map((c,i) => i === 0
     ? { ...c, behavior:'he taps the ceremonial blade against his thigh while the words run on' } : c);
   // ORDER-INDEPENDENT: cite a facet that is real but belongs to someone ELSE. Keyed off the
   // entry's own facet so a change in roster order cannot turn this into a valid citation — which
   // it silently did once, and the case passed by being correct.
-  if (mutate === 'cpBadFacet') { const wrong = 'presiding_dohkar_ritual_contempt';
-    const i0 = cp.findIndex(c => c.facet_id && c.facet_id !== wrong);
-    if (i0 >= 0) cp = cp.map((c,i) => i === i0 ? { ...c, facet_id:wrong } : c); }
+  // Borrowing another character's OPTION is the new form of this defect: a real id that belongs
+  // to somebody else. Keyed off the entry's own id so roster order cannot make it accidentally valid.
+  if (mutate === 'cpBadFacet') { const wrong = (cp.find(c => c.option_id && c.option_id !== (cp[0] || {}).option_id) || {}).option_id
+      || 'OPT-1';
+    const i0 = cp.findIndex(c => c.option_id && c.option_id !== wrong);
+    if (i0 >= 0) cp = cp.map((c,i) => i === i0 ? { ...c, option_id:wrong } : c); }
   if (mutate === 'duplicate') cp = cp.concat([cp[0]]);
   if (mutate === 'badaxis')   ep = { target:'the spiralgrass', axis:'vibes' };
   if (mutate === 'badfusion') fu = { character:'Nobody Here', target:'the spiralgrass', beat:'he sets his palm flat on the spiralgrass' };
@@ -1312,24 +1322,29 @@ console.log('');
   t(`   a scene where nobody earns one is stated to be a correct plan`,
     /merely present, merely named, or merely furniture gets NO entry/.test(full)
       && /is a correct plan, not an omission/.test(full));
-  t(`   the assignment must cite an opportunity and an authored facet`,
+  t(`   the assignment must cite an opportunity and ONE grounded option — not a facet, a pressure `
+    + `and an evidence id it could recombine`,
     /"mode": "<one of THAT person's permitted modes/.test(full)
-      && /"facet_id": "<one of THAT person's authored facet ids>/.test(full));
+      && /"option_id": "<EXACTLY one option_id/.test(full)
+      && !/"facet_id":/.test(full) && !/"pressure_evidence_ids":/.test(full));
   t(`   the ROSTER block is the physical roster, and says what it governs`,
     /STAGED ROSTER — PHYSICALLY ON STAGE/.test(pu)
       && /it governs staged_characters, every embodied beat, and the opening fusion/.test(pu)
       && /It is not the Character\+ candidate list/.test(pu)
       && !/ELIGIBLE CAST \(/.test(pu),
     (pu.match(/.{0,60}ELIGIBLE CAST.{0,60}/) || ['(renamed)'])[0]);
-  t(`   the C+ CANDIDATE block is a separate list carrying modes, evidence and facet ids`,
+  t(`   the C+ CANDIDATE block is a separate list carrying modes and that person's grounded options`,
     /CHARACTER\+ CANDIDATES \(\d+\)/.test(pu)
       && /PHYSICAL PRESENCE IS NOT THE QUALIFICATION/.test(pu)
-      && /modes permitted:/.test(pu) && /AUTHORED PSYCHOLOGY —/.test(pu)
-      && /facet_id: seren_goodness_needs_witness/.test(pu)
-      // the TRUTH, not only the slug — the break this whole pass exists to close
-      && /canonical truth: Her compassion is genuine but requires an audience/.test(pu)
-      && /applicability conditions — cite ONE by its pressure_id/.test(pu)
-      && /pressure_id: p_\w+\s+→\s+observed by people whose approval she wants/.test(pu),
+      && /modes permitted:/.test(pu) && /GROUNDED OPTIONS —/.test(pu)
+      && /option_id: OPT-\d+/.test(pu)
+      // The TRUTH still reaches the planner — that break stays closed. What changed is that the
+      // condition and its evidence now arrive welded to it inside the option, so they are no
+      // longer separately citable fields.
+      && /truth \(fixed, not yours to rewrite\): Her compassion is genuine but requires an audience/.test(pu)
+      && /applies here because: [^\n]*observed by people whose approval she wants/.test(pu)
+      && /established by: E\d+/.test(pu)
+      && !/cite ONE by its pressure_id/.test(pu),
     (pu.match(/CHARACTER\+ CANDIDATES.{0,200}/) || ['(missing)'])[0]);
   t(`   the four delivery modes are spelled out, ANTICIPATED marked as expectation`,
     /· IN_PERSON — a behaviour they CHOOSE/.test(pu)

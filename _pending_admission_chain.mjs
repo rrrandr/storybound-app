@@ -129,11 +129,15 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       else if (/CONTINUITY ARCHITECT for a serialized/.test(sys)) out = { issueArcs: [{ n: 1 }], characterIcebergs: {} };
       else if (/scene-structure planner for the OPENING scene/.test(sys)) {
         planner = usr;
-        // The planner cites the facet it was OFFERED — read from the dispatched packet, so the
-        // reply can only use psychology the request actually carried.
-        const fid = (usr.match(/facet_id: (\S+)/) || [])[1] || null;
-        const pid = (usr.match(/pressure_id: (\S+)/) || [])[1] || null;
-        const E1 = (usr.match(/^  (E\d+): /m) || [])[1] || 'E1';
+        // The planner picks an OPTION it was OFFERED — read from the dispatched packet, so the
+        // reply can only use an option the request actually carried. Facet, pressure and evidence
+        // are no longer separable fields: they are resolved from the option by the backend.
+        const packetAll = sys + '\n' + usr;
+        const optM = packetAll.match(/option_id: (OPT-\d+)\n\s+truth \(fixed, not yours to rewrite\): ([^\n]+)\n\s+applies here because: ([^\n]+)/);
+        const oid = optM ? optM[1] : null;
+        const oTruth = optM ? optM[2] : '';
+        const oPress = optM ? optM[3] : '';
+        const w = (x, n) => (String(x).toLowerCase().match(/[a-z]{5,}/g) || []).slice(0, 6).join(' ');
         const op = (usr.match(/^    · ([A-Z_]{6,})  —  /m) || [])[1] || null;
         out = { opening_spine: {
             pressure_source_type:'institutional', pressure_source:'the customs house',
@@ -150,12 +154,17 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
                                { name:'Mara Dunn', presence:'IN_PERSON', anchor_beat:'FROM_CHARACTER_PLUS' }] },
           scene_skeleton: {
             character_plus: [{ character:'Mara Dunn', mode:'IN_PERSON',
-              ...(fid ? { facet_id: fid } : {}), ...(pid ? { pressure_id: pid } : {}),
-              ...(pid ? { pressure_evidence_ids: [E1] } : {}),
-              first_mention:true, behavior:'says the clause number instead of the clause',
+              ...(oid ? { option_id: oid } : {}),
+              expression_mode:'CONTROL', first_mention:true,
+              visible_action:'says the customs house clause number instead of the clause',
               behavior_object_ids:[], behavior_person_ids:[],
+              // Shares language with the option's own truth and condition, which is what the
+              // bridge gate checks — built from the packet, never guessed.
+              revelation_bridge:'naming the clause instead of reading it is how ' + w(oTruth)
+                + ' surfaces, and this scene is the case where ' + w(oPress),
               ...(op ? { pc_lens_operation: op } : {}),
-              pc_effect:'I had decided what the clause number meant before I had earned the right to' }],
+              pc_interpretation:'Mara is not being obstructive — she is making him ask for the thing '
+                + 'he wants rather than assume it' }],
             environment_plus:{ target:'the customs house', axis:'use',
               beat:'the customs house counter is worn pale where every manifest has crossed it' },
             fusion:null,
@@ -376,10 +385,17 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
         { ok: batchCalls === 1 && !!res.manifestSeen && res.manifestSeen.candidates.length === 1
               && res.manifestSeen.candidates[0].label === 'Mara Dunn',
           detail: JSON.stringify({ batchCalls, n: res.manifestSeen && res.manifestSeen.candidates.length }) },
-      'C2 all five parked facets reached the PLANNER under their opaque backend refs':
+      // The offer is GROUNDED OPTIONS now, not a facet list. Only pressures this scene actually
+      // proves are offered, so "all five facets reach the planner" is no longer the contract —
+      // and it should not be: an ungrounded facet is precisely what must NOT be offered. What
+      // must hold is that every option carries a truth from the parked record, under an opaque
+      // backend id, and that nothing separable leaks alongside it.
+      'C2 every GROUNDED option reached the PLANNER, carrying a parked truth under a backend id':
         { ok: !!planner && /Mara Dunn/.test(planner)
-              && (planner.match(/facet_id: /g) || []).length === 5,
-          detail: 'facet_id count = ' + ((planner || '').match(/facet_id: /g) || []).length },
+              && ((planner.match(/option_id: OPT-\d+/g) || []).length > 0)
+              && !/pressure_evidence_ids/.test(planner),
+          detail: 'options = ' + ((planner || '').match(/option_id: OPT-\d+/g) || []).length
+                + ' · separable evidence field present = ' + /pressure_evidence_ids/.test(planner || '') },
       'C3 exactly ONE selected truth reached the AUTHOR, and no ref or portfolio did':
         { ok: !!author && (author.match(/SOURCE TRUTH — DO NOT STATE: /g) || []).length === 1
               && !!ref && author.indexOf(ref) === -1 && !/candidate_ref|subject_ref/.test(author),

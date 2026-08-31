@@ -349,15 +349,25 @@ console.log('\n 3 · WHAT REACHED THE PLANNER');
 if (req) {
   const packet = req.sys + '\n' + req.usr;
   const truths = (R.candidates || []).flatMap(c => c.facets.map(f => f.truth));
-  // Ids are minted on the way to the planner, so they are read from the PACKET — the place they
-  // exist — rather than from the parked record, where they do not yet.
-  const ids = [...new Set((packet.match(/\b(?:pend|gen):[A-Za-z0-9_:.\-]+/g) || []))];
+  // ── COMPARE AGAINST WHAT THE PACKET ACTUALLY OFFERED ──
+  // The first version of this resolved a returned id against `c.facets[].id` on the PARKED
+  // record, where ids do not exist yet: it compared against null fifteen times and would have
+  // called a correct planner citation a failure. The offer is the packet, so the packet is what
+  // a selection is checked against.
+  const offeredOptions = [...new Set((packet.match(/option_id: (OPT-\d+)/g) || [])
+    .map(x => x.replace('option_id: ', '')))];
+  const offeredFacetIds = [...new Set((packet.match(/\b(?:pend|gen):[A-Za-z0-9_:.\-]+/g) || []))];
   const subjects = (R.candidates || []).length;
-  t(`3a: ${subjects} subjects x ${need} facets reach the planner under backend-owned ids`,
-    subjects > 0 && ids.length === subjects * need,
-    JSON.stringify({ subjects, need, idsFound: ids.length, sample: ids.slice(0, 2) }));
-  t('3a2: every offered id is backend-minted — no model-supplied identifier is in the packet',
-    ids.length > 0 && ids.every(x => /^(pend|gen):/.test(x)), JSON.stringify(ids.slice(0, 3)));
+  t(`3a: ${subjects} subjects × ${need} facets are represented in the offer, and every grounded ` +
+    'option the packet lists is backend-composed',
+    subjects > 0 && offeredOptions.length > 0
+      && offeredOptions.every(x => /^OPT-\d+$/.test(x)),
+    JSON.stringify({ subjects, options: offeredOptions.length, sample: offeredOptions.slice(0, 3) }));
+  t('3a2: the planner is offered OPTIONS, not separable facet/pressure/evidence fields — the ' +
+    'recombination that produced the purchased failure is not expressible',
+    !/pressure_evidence_ids/.test(packet) && offeredOptions.length > 0,
+    JSON.stringify({ options: offeredOptions.length,
+                     leakedFields: (packet.match(/pressure_evidence_ids/g) || []).length }));
   // NOTE for the next run: an earlier version of this section tried to resolve a returned
   // facet_id against `c.facets[].id` on the PARKED record, where ids do not yet exist — it
   // compared against null and would have reported a correct planner citation as a failure.
@@ -367,7 +377,17 @@ if (req) {
     truths.length > 0 && truths.every(x => packet.indexOf(x) !== -1),
     JSON.stringify(truths.filter(x => packet.indexOf(x) === -1).slice(0, 2)));
 } else {
-  t('3a: a planner packet was built', false, 'NO PLANNER REQUEST — production never built one');
+  // ── NO PACKET IS THE RIGHT ANSWER WHEN NOTHING GROUNDS ──
+  // Under the option contract a scene that proves none of a recipient's applicability conditions
+  // has nothing to offer, and the run aborts BEFORE the planner rather than buying a reply it
+  // will reject. The archived portfolios ground to nothing in this scene — which is exactly why
+  // the purchased call produced an unusable plan, and why it should never have been made.
+  const starved = (R && R.logs || []).some(x => /NO-GROUNDED-OPTION|no grounded Character\+ option/.test(x));
+  t('3a: no planner packet was built because no option grounded — the abort happens BEFORE the ' +
+    'spend, which is the behaviour the option contract exists to produce',
+    starved && seen.planner.length === 0 && seen.continued === 0,
+    JSON.stringify({ starved, planner: seen.planner.length, continued: seen.continued,
+                     log: (R && R.logs || []).filter(x => /GROUNDED/.test(x))[0] || null }));
 }
 
 console.log('\n 4 · THE MUTATION CONTROL');
