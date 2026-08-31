@@ -67,14 +67,14 @@ const EV_PARSED = '_portfolio_sample_evidence.json';
 
 // REQUESTED, NOT YET GRANTED at the time of writing. Both figures moved for stated reasons and
 // neither may be carried over from the last authorisation:
-//   · the per-call worst case ROSE to $0.00741810, because the prompt now spells out every bound
-//     and teaches four craft rules with worked examples — the fix for the hidden-bound defect
-//     costs input tokens, and pretending otherwise would spend against a stale number;
+//   · the per-call worst case is $0.00739605. It rose from $0.00731745 because the prompt now
+//     spells out every bound and states an obligation per field — the fix for the hidden-bound
+//     defect costs input tokens — and then came back down when the worked examples were removed;
 //   · the conservative prior now carries the second measured sample ($0.00228660), so the old
 //     cumulative ceiling would count the same headroom twice.
-const CAP_ADDITIONAL = 0.00741810;
+const CAP_ADDITIONAL = 0.00739605;
 const PRIOR_UPPER_BOUND = 0.02937445;   // 0.02708785 conservative + 0.00228660 measured
-const CAP_CUMULATIVE = 0.03679255;      // PRIOR_UPPER_BOUND + CAP_ADDITIONAL
+const CAP_CUMULATIVE = 0.03677050;      // PRIOR_UPPER_BOUND + CAP_ADDITIONAL
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext();

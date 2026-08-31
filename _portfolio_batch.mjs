@@ -511,6 +511,7 @@ console.log('\n 7 · NO HIDDEN BOUNDS');
 //  the real output and accept the real fix.
 // ══════════════════════════════════════════════════════════════════════════════════════════
 console.log('\n 8 · THE CRAFT CONTRACT');
+let CRAFT_CASES = null;   // read again by section 9, which proves none of it reaches the model
 {
   const CASES = [
     { name: 'first-person truth — reads as the PROTAGONIST once it reaches the author',
@@ -552,6 +553,7 @@ console.log('\n 8 · THE CRAFT CONTRACT');
       good: p => { p.facets[4].canonical_truth = 'Her relationship habit of correcting others stops with anyone already humiliated once.'; } },
   ];
 
+  CRAFT_CASES = CASES;
   const results = await page.evaluate((CS) => {
     const V = (p) => window._validatePortfolioResponse({ characterPortfolios: [p] },
       { eligible: true, subject_ref: p.subject_ref, required_facet_count: 5,
@@ -582,6 +584,102 @@ console.log('\n 8 · THE CRAFT CONTRACT');
       { eligible: true, subject_ref: window.__batchFixture.subject_ref, required_facet_count: 5,
         reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true }).ok === true),
     'the base fixture does not validate');
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  9 · NO EXEMPLARS REACH THE MODEL
+//  Models copy examples. This project retired literary exemplars from prompts after the E+ and
+//  pressure-source anchoring incidents, and a draft of the craft block reintroduced them as ✗/✓
+//  pairs — including a real sentence from a live sample. Every failing and corrected shape stays
+//  in section 8, where it is a fixture and cannot be plagiarised. Nothing that looks like a
+//  sentence to imitate may reach the model.
+//
+//  The banned prose is READ OUT OF THE FIXTURES rather than restated here, so a future fixture
+//  edit cannot leave this test guarding sentences nobody uses any more.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 9 · NO EXEMPLARS REACH THE MODEL');
+{
+  const shingle = (t) => String(t).toLowerCase().replace(/[^a-z ]/g, ' ')
+    .split(/\s+/).filter(Boolean).slice(0, 5).join(' ');
+  const sysLower = batchSys.toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ');
+
+  // (a) the CORRECTED prose — every truth, prediction and signature the fixtures use.
+  const fx = FIVE('cand:exemplar-check');
+  const corrected = [fx.identity_signature]
+    .concat(fx.facets.map(f => f.canonical_truth))
+    .concat(fx.facets.map(f => f.unique_prediction));
+  const leakedCorrected = corrected.filter(x => sysLower.indexOf(shingle(x)) !== -1);
+  t('9a: none of the corrected fixture prose appears in the dispatched prompt',
+    leakedCorrected.length === 0, JSON.stringify(leakedCorrected.slice(0, 2)));
+
+  // (b) the LIVE SAMPLE's distinctive phrases, and both halves of every pinned craft case.
+  const pinned = [];
+  for (const c of CRAFT_CASES) { pinned.push(c.bad.toString(), c.good.toString()); }
+  const quoted = pinned.join(' ').match(/'([^']{25,})'/g) || [];
+  const fromCases = quoted.map(q => q.slice(1, -1));
+  const liveSamplePhrases = [
+    'Desire is a compass; following it is the only way to avoid being lost',
+    'I let others assume I am harmless until I choose to be otherwise',
+    'I turn generosity into a debt so no one can use it against me',
+    'I test loyalty by how much someone will endure before they break',
+    'He will give without expectation to someone who has already proven themselves worthless',
+    'abandon his principle of earned kindness if it serves a higher purpose, like mercy or principle',
+    'stillness is not absence but a gathering of force',
+  ];
+  const leakedPinned = fromCases.concat(liveSamplePhrases)
+    .filter(x => shingle(x).split(' ').length >= 4 && sysLower.indexOf(shingle(x)) !== -1);
+  t('9b: none of the live sample\'s distinctive phrases, and neither half of any pinned craft ' +
+    'case, appears in the dispatched prompt',
+    leakedPinned.length === 0, JSON.stringify(leakedPinned.slice(0, 3)));
+
+  // (c) no exemplar APPARATUS of any kind — the block, not just this batch of sentences.
+  const markers = [
+    ['✗ / ✓ marks',        /[✗✓]/],
+    ['a bad/good example', /\b(?:bad|good|wrong|right)\s+(?:example|shape)\b/i],
+    ['"for example"',     /\bfor example\b/i],
+    ['"e.g."',            /\be\.g\./i],
+    ['"such as ["',       /\bsuch as ["“']/],
+    ['a quoted specimen sentence', /["“][A-Z][^"”]{40,}["”]/],
+  ].filter(([, re]) => re.test(batchSys)).map(([n]) => n);
+  t('9c: no ✗/✓ marks, no bad/good example block, and no quoted specimen sentence of any kind ' +
+    'reaches the model — the apparatus is gone, not just this set of sentences',
+    markers.length === 0, JSON.stringify(markers));
+
+  // (d) what MUST remain: the obligations, the bounds, the slot bindings.
+  const obligations = ['canonical_truth', 'unique_prediction', 'not_explained_by',
+                       'identity_signature', 'exception'];
+  t('9d: the FIELD OBLIGATIONS survive the removal — every model-written field still carries a ' +
+    'stated requirement, so the exemplars were replaced rather than merely deleted',
+    /HOW EACH FIELD MUST BE WRITTEN/.test(batchSys)
+      && obligations.every(f => new RegExp('"' + f + '"[^\\n]*—').test(batchSys))
+      && /THIRD PERSON/.test(batchSys) && /MECHANISM/.test(batchSys),
+    JSON.stringify(obligations.filter(f => !new RegExp('"' + f + '"[^\\n]*—').test(batchSys))));
+  t('9e: the structural contract is untouched — five slot bindings and every declared bound are ' +
+    'still in the dispatched prompt',
+    ['value','insecurity','defense','relationship','exception']
+      .every(d => batchSys.indexOf('"dimension": "' + d + '"') !== -1)
+      && (await page.evaluate(() => window.__PORTFOLIO_BOUNDS))
+           .every(b => batchSys.indexOf(String(b.value)) !== -1),
+    'a slot binding or a bound went missing with the exemplars');
+
+  // NOT VACUOUS. The same detectors, run against a prompt that DOES carry an exemplar block,
+  // must fire on every count — otherwise the five green assertions above mean only that the
+  // matchers are broken.
+  const poisoned = batchSys + '\n  ✗ "Desire is a compass; following it is the only way to avoid '
+    + 'being lost." (a maxim)\n  ✓ "' + fx.facets[0].canonical_truth + '" (a mechanism)\n'
+    + 'For example, e.g. a good example of the shape.';
+  const pLower = poisoned.toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ');
+  const caught = {
+    corrected: corrected.some(x => pLower.indexOf(shingle(x)) !== -1),
+    live: liveSamplePhrases.some(x => pLower.indexOf(shingle(x)) !== -1),
+    marks: /[✗✓]/.test(poisoned),
+    block: /\b(?:bad|good|wrong|right)\s+(?:example|shape)\b/i.test(poisoned),
+    forExample: /\bfor example\b/i.test(poisoned),
+    specimen: /["“][A-Z][^"”]{40,}["”]/.test(poisoned),
+  };
+  t('9f: CONTROL — every detector above fires on a prompt that does carry an exemplar block, so ' +
+    'the clean result is evidence rather than a broken matcher',
+    Object.values(caught).every(Boolean), JSON.stringify(caught));
 }
 
 console.log(`\n${'─'.repeat(84)}\n  ${pass} passed · ${fail} failed\n`);
