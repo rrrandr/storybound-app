@@ -755,6 +755,97 @@ console.log('\n 10 · ONE FIELD, ONE JOB');
     'the ownership statement is missing from the dispatched prompt');
 }
 
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  11 · EVIDENCE NORMALISATION — DROP THE TOKEN, NOT THE PORTFOLIO
+//  A paid sample lost two complete subjects — ten facets passing every craft rule — because four
+//  words were three characters long. The floor is right; applying a per-token judgement as a
+//  per-subject verdict was not.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 11 · EVIDENCE NORMALISATION');
+{
+  const N = await page.evaluate(() => {
+    const V = (words) => {
+      const p = JSON.parse(JSON.stringify(window.__batchFixture));
+      p.facets[0].applicability_conditions[0].evidence_words = words;
+      const v = window._validatePortfolioResponse({ characterPortfolios: [p] },
+        { eligible: true, subject_ref: p.subject_ref, required_facet_count: 5,
+          reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true });
+      return { ok: v.ok, code: v.code, errors: (v.errors || []).slice(0, 1),
+               dropped: v.normalizations || [],
+               matcher: v.ok ? (v.facets[0].possible_pressures[0] || {}).evidence_requires : null };
+    };
+    const pat = (() => {           // a model-authored pattern must still be refused outright
+      const p = JSON.parse(JSON.stringify(window.__batchFixture));
+      delete p.facets[0].applicability_conditions[0].evidence_words;
+      p.facets[0].applicability_conditions[0].evidence_requires = 'signal|weight';
+      const v = window._validatePortfolioResponse({ characterPortfolios: [p] },
+        { eligible: true, subject_ref: p.subject_ref, required_facet_count: 5,
+          reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true });
+      return { ok: v.ok, errors: (v.errors || []).slice(0, 1) };
+    })();
+    return {
+      mixed:    V(['signal', 'new', 'weight', 'has']),
+      allBad:   V(['new', 'has', 'for']),
+      dupes:    V(['Signal', '  signal ', 'SIGNAL', 'weight']),
+      unsafe:   V(['signal', 'we(ird', 'we?ird', 'back\\slash', 'weight']),
+      pattern:  pat,
+    };
+  });
+
+  t('11a: MIXED valid and invalid — the valid literals survive, the subject VALIDATES, and both ' +
+    'bad tokens are named individually',
+    N.mixed.ok === true && N.mixed.matcher === 'signal|weight'
+      && N.mixed.dropped.length === 2
+      && ['new','has'].every(w => N.mixed.dropped.some(d => d.literal === w && d.reason === 'not_a_plain_word')),
+    JSON.stringify(N.mixed));
+  t('11b: ALL-INVALID — the condition no longer meets the existing minimum, so the condition and ' +
+    'the subject reject. Normalisation rescues what it can, never everything',
+    N.allBad.ok === false && String(N.allBad.errors[0] || '').indexOf('no_evidence_words') !== -1,
+    JSON.stringify(N.allBad));
+  t('11c: duplicates and casing normalise deterministically — one literal survives, the repeats ' +
+    'are named as duplicates, and the matcher carries no repeat',
+    N.dupes.ok === true && N.dupes.matcher === 'signal|weight'
+      && N.dupes.dropped.filter(d => d.reason === 'duplicate').length === 2,
+    JSON.stringify(N.dupes));
+  t('11d: unsafe punctuation and pattern syntax drop as individual literals — the matcher is ' +
+    'built from the survivors and contains none of them',
+    N.unsafe.ok === true && N.unsafe.matcher === 'signal|weight'
+      && N.unsafe.dropped.length === 3,
+    JSON.stringify(N.unsafe));
+  t('11e: a model-authored PATTERN field is still refused outright — normalising words never ' +
+    'became a licence to accept a regex',
+    N.pattern.ok === false && String(N.pattern.errors[0] || '').indexOf('supplied_a_pattern') !== -1,
+    JSON.stringify(N.pattern));
+  t('11f: the diagnostic names the literal, where it was, and why — and carries no psychology, ' +
+    'so it can be logged anywhere',
+    N.mixed.dropped.every(d => JSON.stringify(Object.keys(d).sort()) === '["at","literal","reason"]'),
+    JSON.stringify(N.mixed.dropped[0] || null));
+  t('11g: what the PLANNER receives is the normalised matcher, never the raw token list',
+    N.mixed.matcher.split('|').every(b => b.length >= 4)
+      && N.mixed.matcher.indexOf('new') === -1 && N.mixed.matcher.indexOf('has') === -1,
+    N.mixed.matcher);
+
+  // IDEMPOTENT UNDER RETRY: the same valid evidence plus the same discarded noise must fingerprint
+  // identically, or a retry looks like a conflicting rewrite of a portfolio nobody changed.
+  const FP = await page.evaluate(() => {
+    const run = (words) => {
+      const p = JSON.parse(JSON.stringify(window.__batchFixture));
+      p.facets[0].applicability_conditions[0].evidence_words = words;
+      const v = window._validatePortfolioResponse({ characterPortfolios: [p] },
+        { eligible: true, subject_ref: p.subject_ref, required_facet_count: 5,
+          reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true });
+      return JSON.stringify(v.facets.map(f => [f.category, f.canonical_truth,
+        (f.possible_pressures || []).map(x => x.text + '~' + x.evidence_requires)]));
+    };
+    return { a: run(['signal', 'new', 'weight']), b: run(['signal', 'new', 'weight']),
+             c: run(['signal', 'has', 'weight']), d: run(['signal', 'weight']) };
+  });
+  t('11h: normalisation happens BEFORE the fingerprint — a retry carrying the same valid words ' +
+    'and the same discarded noise is byte-identical, and so is one carrying different noise',
+    FP.a === FP.b && FP.a === FP.c && FP.a === FP.d,
+    JSON.stringify({ sameNoise: FP.a === FP.b, differentNoise: FP.a === FP.c, noNoise: FP.a === FP.d }));
+}
+
 console.log(`\n${'─'.repeat(84)}\n  ${pass} passed · ${fail} failed\n`);
 await browser.close();
 process.exit(fail ? 1 : 0);

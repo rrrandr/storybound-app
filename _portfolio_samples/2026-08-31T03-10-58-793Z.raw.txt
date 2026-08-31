@@ -1,0 +1,249 @@
+{
+  "characterPortfolios": [
+    {
+    "subject_ref": "cand:9ce7653a-e945-43c7-a9c4-642324e33636",
+    "misreading_guardrails": [
+      {"forbid": "generous with time|selfless helper|always puts others first", "why": "casts her as a pure virtue, obscuring her ruthless boundary"},
+      {"forbid": "quietly critical|judgmental|hard to please", "why": "makes her seem cold, hiding her warmth with close friends"},
+      {"forbid": "works tirelessly|relentless dedication|never rests", "why": "confuses her energy with productivity, ignoring her selective effort"},
+      {"forbid": "soft spoken|meek demeanor|avoids conflict", "why": "hides her sharp tongue and fearless honesty when provoked"}
+    ],
+    "identity_signature": "Mara Dunn centers herself through disciplined defiance, refusing to shrink even when her values are invisible to others.",
+    "facets": [
+      {
+        "dimension": "value",
+        "canonical_truth": "She measures worth by loyalty that survives betrayal without apology or explanation.",
+        "unique_prediction": "When a close friend cancels plans last minute for something trivial, she never asks again.",
+        "not_explained_by": "insecurity — this is a deliberate choice, not a fear of loss.",
+        "applicability_conditions": [
+          {"text": "When she feels her standards are being mocked or ignored", "evidence_words": ["mock", "standards", "ignored", "mocked"]},
+          {"text": "When someone she trusted proves unworthy", "evidence_words": ["trusted", "unworthy", "betrayal", "proves"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "She values loyalty above all else", "why": "reduces her mechanism to a slogan"},
+          {"forbid": "She cuts people off easily", "why": "confuses action with motivation"}
+        ]
+      },
+      {
+        "dimension": "insecurity",
+        "canonical_truth": "She fears that devotion without visible return cheapens her existence.",
+        "unique_prediction": "After a long weekend of making meals for someone, she suddenly stops cooking for them without warning.",
+        "not_explained_by": "defense — this is the feeling driving the behavior, not the strategy itself.",
+        "applicability_conditions": [
+          {"text": "When her efforts are met with indifference or routine acceptance", "evidence_words": ["indifference", "routine", "acceptance", "efforts"]},
+          {"text": "When she notices a relationship becoming one-sided", "evidence_words": ["one-sided", "notices", "relationship", "becoming"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "She worries she is being taken for granted", "why": "turns fear into a cliché, removing her distinctive mechanism"},
+          {"forbid": "She fears abandonment", "why": "too vague, erasing her specific mechanism"}
+        ]
+      },
+      {
+        "dimension": "defense",
+        "canonical_truth": "She weaponizes withdrawal of care to force others to name what they truly want.",
+        "unique_prediction": "When a lover asks for more intimacy, she stops all affection for a full day to see if they notice.",
+        "not_explained_by": "relationship — this is the method, not the pattern.",
+        "applicability_conditions": [
+          {"text": "When she detects emotional dishonesty or avoidance", "evidence_words": ["dishonesty", "avoidance", "detects", "emotional"]},
+          {"text": "When someone assumes her presence is automatic", "evidence_words": ["assumes", "automatic", "presence", "someone"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "She punishes people by ignoring them", "why": "makes her sound spiteful, not strategic"},
+          {"forbid": "She uses silence as a tool", "why": "too abstract, removes the agency in her withdrawal"}
+        ]
+      },
+      {
+        "dimension": "relationship",
+        "canonical_truth": "She tests loyalty by giving small, unasked-for gifts that force the recipient to reciprocate or admit they don’t care.",
+        "unique_prediction": "She bakes an elaborate dessert for a new friend and watches closely to see if it’s eaten with enthusiasm.",
+        "not_explained_by": "value — this reveals how she tests it, not the value itself.",
+        "applicability_conditions": [
+          {"text": "When forming new connections where trust is uncertain", "evidence_words": ["forming", "new", "trust", "uncertain"]},
+          {"text": "When she suspects someone is using her", "evidence_words": ["suspects", "using", "someone", "suspects"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "She tries to buy affection", "why": "reduces her actions to a crude transaction"},
+          {"forbid": "She is manipulative with kindness", "why": "frames her as scheming, not testing"}
+        ]
+      },
+      {
+        "dimension": "exception",
+        "canonical_truth": "She suspends her need for visible return when someone risks their safety for hers.",
+        "unique_prediction": "If a coworker steps between her and an aggressive client, she gives them a long hug in front of everyone.",
+        "not_explained_by": "insecurity — this is the condition under which her insecurity does not apply.",
+        "applicability_conditions": [
+          {"text": "When someone acts without calculation to protect her", "evidence_words": ["calculation", "protect", "acts", "without"]},
+          {"text": "When she witnesses selfless courage", "evidence_words": ["selfless", "courage", "witnesses", "courage"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "She is capable of pure generosity", "why": "turns exception into a general trait"},
+          {"forbid": "She will do anything for someone who saves her", "why": "overstates the breadth of the exception"}
+        ]
+      }
+    ]
+    },
+    {
+    "subject_ref": "cand:fd1df844-3ed0-4d39-8462-7c44df58e44a",
+    "misreading_guardrails": [
+      {"forbid": "charismatic performer|stage presence|natural entertainer", "why": "ignores his self-conscious need to be seen as effortless"},
+      {"forbid": "romantic idealist|daydreamer|whimsical", "why": "hides his sharp observational cynicism about human motives"},
+      {"forbid": "workaholic|driven professional|ambitious", "why": "misreads his avoidance of real responsibility"},
+      {"forbid": "shy with strangers|social anxiety|awkward", "why": "hides his performative social ease when under scrutiny"}
+    ],
+    "identity_signature": "Tomas Reyne hides behind charm that feels like truth, making others believe he is more transparent than he actually is.",
+    "facets": [
+      {
+        "dimension": "value",
+        "canonical_truth": "He prizes the feeling of being understood without having to explain himself.",
+        "unique_prediction": "When someone asks him a direct question, he answers with a story that sidesteps the topic entirely.",
+        "not_explained_by": "defense — this is the value, not the method.",
+        "applicability_conditions": [
+          {"text": "When he feels exposed or vulnerable", "evidence_words": ["exposed", "vulnerable", "feels", "exposure"]},
+          {"text": "When he wants to bond quickly with someone", "evidence_words": ["bond", "quickly", "wants", "someone"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He values deep connection", "why": "too vague, removes his mechanism"},
+          {"forbid": "He hates explaining things", "why": "describes behavior, not the psychological need"}
+        ]
+      },
+      {
+        "dimension": "insecurity",
+        "canonical_truth": "He fears that revealing his true thoughts will make him less appealing.",
+        "unique_prediction": "After a heartfelt conversation, he suddenly lightens the mood with a joke that deflects the intimacy.",
+        "not_explained_by": "relationship — this is the driver of the behavior, not the pattern itself.",
+        "applicability_conditions": [
+          {"text": "When he has shared something personal", "evidence_words": ["shared", "personal", "something", "has"]},
+          {"text": "When someone seems to be looking too closely at him", "evidence_words": ["looking", "closely", "someone", "seems"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He worries people won't like him if they know him", "why": "turns fear into melodrama"},
+          {"forbid": "He is afraid of rejection", "why": "too broad, erases his specific mechanism"}
+        ]
+      },
+      {
+        "dimension": "defense",
+        "canonical_truth": "He camouflages his intentions by making himself entertaining before anyone can question them.",
+        "unique_prediction": "When asked hard questions by a superior, he cracks a joke that makes the room laugh and changes the subject.",
+        "not_explained_by": "value — this is the tactic, not the goal it serves.",
+        "applicability_conditions": [
+          {"text": "When he feels cornered or interrogated", "evidence_words": ["cornered", "interrogated", "feels", "interrogation"]},
+          {"text": "When his competence is being tested", "evidence_words": ["competence", "tested", "being", "test"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He distracts people with humor", "why": "makes his defense sound like a talent"},
+          {"forbid": "He avoids direct answers", "why": "too procedural, removes his psychological mechanism"}
+        ]
+      },
+      {
+        "dimension": "relationship",
+        "canonical_truth": "He gives people the version of himself he thinks they want, then resents them for not loving that version.",
+        "unique_prediction": "He sends a thoughtful gift to someone, then acts annoyed when they don’t reciprocate immediately.",
+        "not_explained_by": "insecurity — this describes the relational consequence, not the fear.",
+        "applicability_conditions": [
+          {"text": "When he is trying to impress someone new", "evidence_words": ["impress", "new", "someone", "trying"]},
+          {"text": "When he volunteers for a favor", "evidence_words": ["volunteers", "favor", "for", "when"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He is a people pleaser", "why": "reduces him to a cliché"},
+          {"forbid": "He resents being taken for granted", "why": "frames resentment as the primary trait"}
+        ]
+      },
+      {
+        "dimension": "exception",
+        "canonical_truth": "He drops all pretense when faced with someone who is completely indifferent to his charm.",
+        "unique_prediction": "When someone yawns mid-conversation with him, he forgets the joke and speaks bluntly for the first time.",
+        "not_explained_by": "defense — this is the condition that nullifies his usual tactic.",
+        "applicability_conditions": [
+          {"text": "When someone does not react to his attempts to engage", "evidence_words": ["react", "attempts", "engage", "does not"]},
+          {"text": "When he notices someone’s boredom is genuine", "evidence_words": ["boredom", "genuine", "notices", "notice"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He is vulnerable when ignored", "why": "too sentimental, removes the precise mechanism"},
+          {"forbid": "He gets angry when his charm fails", "why": "overstates the emotional response"}
+        ]
+      }
+    ]
+    },
+    {
+    "subject_ref": "cand:e161a5f1-ff35-4a21-9b83-ea9072e4672d",
+    "misreading_guardrails": [
+      {"forbid": "stoic survivor|emotionally detached|practical realist", "why": "hides his latent intensity and sudden emotional storms"},
+      {"forbid": "control freak|rigid planner|obsessive organizer", "why": "erases his willingness to let things fall apart if it serves someone he trusts"},
+      {"forbid": "loner|independent|self sufficient", "why": "ignores his desperate need for quiet intimacy with a chosen few"},
+      {"forbid": "authoritarian|strict disciplinarian|harsh judge", "why": "masks his deep protectiveness toward those he claims"}
+    ],
+    "identity_signature": "Halden Roe’s quiet authority comes from a willingness to break his own rules when someone’s need matters more.",
+    "facets": [
+      {
+        "dimension": "value",
+        "canonical_truth": "He believes strength should always serve the well-being of the people he claims.",
+        "unique_prediction": "When a subordinate is struggling, he quietly takes on their work so they can recover without admitting it.",
+        "not_explained_by": "relationship — this describes what he values, not how he treats others.",
+        "applicability_conditions": [
+          {"text": "When someone under his care is vulnerable or exposed", "evidence_words": ["vulnerable", "exposed", "under", "care"]},
+          {"text": "When a person’s competence is questioned unfairly", "evidence_words": ["competence", "questioned", "unfairly", "person"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He values loyalty above all", "why": "too generic, removes his specific mechanism"},
+          {"forbid": "He is protective of people", "why": "turns his value into a trait, not a principle"}
+        ]
+      },
+      {
+        "dimension": "insecurity",
+        "canonical_truth": "He fears that caring too much will expose him as weak when he is most needed.",
+        "unique_prediction": "When someone thanks him sincerely, he changes the subject abruptly to avoid the emotion.",
+        "not_explained_by": "exception — this is the fear underlying his exception, not the breaking point itself.",
+        "applicability_conditions": [
+          {"text": "When he has done something kind without an agenda", "evidence_words": ["kind", "agenda", "without", "done"]},
+          {"text": "When he senses someone discovering his hidden efforts", "evidence_words": ["discovering", "hidden", "senses", "efforts"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He worries his kindness will be seen as weakness", "why": "too direct, reduces his mechanism"},
+          {"forbid": "He fears betrayal if he loves too openly", "why": "overstates the paranoia, ignores his specific fear"}
+        ]
+      },
+      {
+        "dimension": "defense",
+        "canonical_truth": "He presents himself as a fixed point so that others will rely on him, then uses that reliance to justify his interventions.",
+        "unique_prediction": "When a colleague hesitates over a decision, he gives a definitive answer and takes responsibility if it goes wrong.",
+        "not_explained_by": "value — this is the tactic he uses to enact his principle, not the principle itself.",
+        "applicability_conditions": [
+          {"text": "When a situation requires decisive action but no one steps forward", "evidence_words": ["decisive", "action", "situation", "requires"]},
+          {"text": "When he notices hesitation that could harm someone", "evidence_words": ["hesitation", "harm", "notice", "could"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He takes control in crises", "why": "makes him sound reactive, not strategic"},
+          {"forbid": "He is a natural leader", "why": "frames him as a role, not a calculated persona"}
+        ]
+      },
+      {
+        "dimension": "relationship",
+        "canonical_truth": "He makes himself indispensably useful to the people he trusts, then expects absolute faith in return.",
+        "unique_prediction": "He fixes a broken appliance for a friend, then later acts hurt if they don’t call him first when they need help.",
+        "not_explained_by": "defense — this shows the relational consequence, not the tactic.",
+        "applicability_conditions": [
+          {"text": "When he has invested significant time or skill in someone", "evidence_words": ["significant", "skill", "someone", "invested"]},
+          {"text": "When he suspects a close friend might need him", "evidence_words": ["suspects", "friend", "might", "suspects"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He is a giver in relationships", "why": "too abstract, removes his mechanism"},
+          {"forbid": "He expects loyalty because he is loyal", "why": "circular reasoning, not a psychological truth"}
+        ]
+      },
+      {
+        "dimension": "exception",
+        "canonical_truth": "He disregards his own rules when someone’s need forces him to choose between their well-being and his reputation.",
+        "unique_prediction": "He publicly supports a colleague who everyone else has written off, even when it risks his own standing.",
+        "not_explained_by": "value — this is the condition that overrides his principle, not the principle itself.",
+        "applicability_conditions": [
+          {"text": "When someone he trusts is being unfairly judged", "evidence_words": ["unfairly", "judged", "trusts", "someone"]},
+          {"text": "When following protocol would harm an innocent person", "evidence_words": ["protocol", "harm", "innocent", "following"]}
+        ],
+        "forbidden_restatements": [
+          {"forbid": "He will do anything for someone he loves", "why": "too sentimental, removes the precise condition"},
+          {"forbid": "He breaks his own rules when emotions run high", "why": "makes exception sound reactive, not principled"}
+        ]
+      }
+    ]
+    }]
+}

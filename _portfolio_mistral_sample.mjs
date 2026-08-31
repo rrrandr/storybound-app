@@ -255,9 +255,15 @@ const evidence = (() => {
   try {
     if (body != null) {
       fs.writeFileSync(EV_RAW, body);
-      try { fs.mkdirSync('_portfolio_samples', { recursive: true });
-            wrote.archive = '_portfolio_samples/' + STAMP + '.raw.txt';
-            fs.writeFileSync(wrote.archive, body); } catch (_) {}
+      // THE ARCHIVE IS FOR PAID EVIDENCE ONLY. A sentinel writes a real body to the fixed path so
+      // its own assertions can hash it, but archiving it would bury the paid samples among
+      // synthetic ones — and a replay that silently picks the newest file would then validate a
+      // fixture while claiming to validate a purchase. It did exactly that once.
+      if (!DRY && !SENTINEL) {
+        try { fs.mkdirSync('_portfolio_samples', { recursive: true });
+              wrote.archive = '_portfolio_samples/' + STAMP + '.raw.txt';
+              fs.writeFileSync(wrote.archive, body); } catch (_) {}
+      }
       wrote.raw = true;
       wrote.bytes = Buffer.byteLength(body);
       wrote.sha256 = crypto.createHash('sha256').update(body).digest('hex');
@@ -290,10 +296,17 @@ const evidence = (() => {
       const meta = R.providerMeta;
       if (meta && meta.usage && !DRY && !SENTINEL) {
         const L = JSON.parse(fs.readFileSync('_portfolio_spend_ledger.json', 'utf8'));
-        const dup = L.calls.some(c => c.prompt_tokens === meta.usage.prompt_tokens
-                                   && c.completion_tokens === meta.usage.completion_tokens);
+        // IDEMPOTENT BY PROVIDER REQUEST ID. Token counts are not an identity: two calls can
+        // legitimately produce the same usage, and replaying one response must never bill twice.
+        // The provider's own id is the key; token counts remain a fallback when it is absent.
+        const rid = (R.rawEnvelope && R.rawEnvelope.id) || null;
+        const dup = rid
+          ? L.calls.some(c => c.requestId === rid)
+          : L.calls.some(c => c.prompt_tokens === meta.usage.prompt_tokens
+                           && c.completion_tokens === meta.usage.completion_tokens);
         if (!dup) {
           L.calls.push({ what: STAMP + ' production-path sample', model: meta.model,
+            requestId: rid,
             prompt_tokens: meta.usage.prompt_tokens, completion_tokens: meta.usage.completion_tokens });
           const cost = (x) => (x.prompt_tokens / 1e6) * L.rates[x.model].in
                             + (x.completion_tokens / 1e6) * L.rates[x.model].out;
@@ -303,8 +316,10 @@ const evidence = (() => {
         }
       }
     } catch (e) { wrote.ledgerError = String(e && e.message); }
-    try { fs.writeFileSync('_portfolio_samples/' + STAMP + '.evidence.json',
-      fs.readFileSync(EV_PARSED)); } catch (_) {}
+    if (!DRY && !SENTINEL) {
+      try { fs.writeFileSync('_portfolio_samples/' + STAMP + '.evidence.json',
+        fs.readFileSync(EV_PARSED)); } catch (_) {}
+    }
   } catch (e) { wrote.parsedError = String(e && e.message); }
   return wrote;
 })();
