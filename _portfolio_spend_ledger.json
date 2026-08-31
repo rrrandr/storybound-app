@@ -67,7 +67,14 @@
       "model": "mistral-small-latest",
       "prompt_tokens": 2035,
       "completion_tokens": 4242
+    },
+    {
+      "what": "2026-08-31 planner-only selection sample",
+      "model": "mistral-small-latest",
+      "requestId": null,
+      "prompt_tokens": 20982,
+      "completion_tokens": 1275
     }
   ],
-  "total": 0.03301645
+  "total": 0.03692875
 }

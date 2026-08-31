@@ -358,6 +358,11 @@ if (req) {
     JSON.stringify({ subjects, need, idsFound: ids.length, sample: ids.slice(0, 2) }));
   t('3a2: every offered id is backend-minted — no model-supplied identifier is in the packet',
     ids.length > 0 && ids.every(x => /^(pend|gen):/.test(x)), JSON.stringify(ids.slice(0, 3)));
+  // NOTE for the next run: an earlier version of this section tried to resolve a returned
+  // facet_id against `c.facets[].id` on the PARKED record, where ids do not yet exist — it
+  // compared against null and would have reported a correct planner citation as a failure.
+  // Ids are minted on the way to the planner; resolve them by parsing the id, as the scoring
+  // step does.
   t('3b: the packet carries the backend truths themselves, so a selection can be resolved against them',
     truths.length > 0 && truths.every(x => packet.indexOf(x) !== -1),
     JSON.stringify(truths.filter(x => packet.indexOf(x) === -1).slice(0, 2)));

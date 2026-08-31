@@ -1,0 +1,107 @@
+{
+  "scoredAt": "2026-08-31T17:45:34.519Z",
+  "rubric": "_planner_sample_rubric_frozen.md",
+  "productionVerdict": "REJECTED — scene_skeleton invalid; the cited evidence does not establish the cited pressure",
+  "usage": {
+    "prompt_tokens": 20982,
+    "total_tokens": 22257,
+    "completion_tokens": 1275,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "finish_reason": "stop",
+  "model": "mistral-small-latest",
+  "costUnrounded": 0.0039123000000000005,
+  "requestCensus": {
+    "plannerDispatched": 1,
+    "plannerSeen": 1,
+    "authorAborted": 0,
+    "portfolio": 0,
+    "subplot": 1,
+    "auditor": 0,
+    "otherIntercepted": 17,
+    "escaped": 0
+  },
+  "assignments": [
+    {
+      "character": "Mara Dunn",
+      "facet_id": "pend:cand:f81c1238-606f-4445-8ef1-c756799bb237:v1:habit",
+      "facetResolves": true,
+      "trustedTruth": "She weaponizes withdrawal of care to force others to name what they truly want.",
+      "pressure_id": "p_when_someone_assumes_her",
+      "pressureEvidence": [
+        "E3"
+      ],
+      "pressureIsTrusted": true,
+      "behavior": "taps her nails against the counter in the rhythm of impatience",
+      "pcLens": "PERSONALIZE_SOCIAL_HARM",
+      "pcEffect": "the rhythm lands in her ribs like a countdown",
+      "verdict": {
+        "r1_evidence_fits": false,
+        "r2_pressure_trusted": true,
+        "r3_camera_recordable": true,
+        "r4_reveals_mechanism": false,
+        "r5_pc_judges": false,
+        "r6_not_paraphrase": true,
+        "r7_distinguishable": false,
+        "r8_no_materialisation": "n/a — all IN_PERSON",
+        "r9_no_borrowing": true,
+        "r10_directive": "unverifiable — the plan was rejected, so no directive was built"
+      }
+    },
+    {
+      "character": "Tomas Reyne",
+      "facet_id": "pend:cand:b084fb11-a9d5-4f8c-ba48-ff5e921fb99c:v1:habit",
+      "facetResolves": true,
+      "trustedTruth": "He camouflages his intentions by making himself entertaining before anyone can question them.",
+      "pressure_id": "p_when_he_feels_cornered",
+      "pressureEvidence": [
+        "E3"
+      ],
+      "pressureIsTrusted": true,
+      "behavior": "shifts his weight, the floorboards groaning under his boots",
+      "pcLens": "INWARD_TRANSLATION_OF_ANOTHER_PERSONS_COST",
+      "pcEffect": "she feels the groaning in her own knees",
+      "verdict": {
+        "r1_evidence_fits": false,
+        "r2_pressure_trusted": true,
+        "r3_camera_recordable": true,
+        "r4_reveals_mechanism": false,
+        "r5_pc_judges": false,
+        "r6_not_paraphrase": true,
+        "r7_distinguishable": false,
+        "r8_no_materialisation": "n/a — all IN_PERSON",
+        "r9_no_borrowing": true,
+        "r10_directive": "unverifiable — the plan was rejected, so no directive was built"
+      }
+    },
+    {
+      "character": "Halden Roe",
+      "facet_id": "pend:cand:1d2b2754-31c4-4a52-b82a-9bce3ebad58c:v1:value",
+      "facetResolves": true,
+      "trustedTruth": "He believes strength should always serve the well-being of the people he claims.",
+      "pressure_id": "p_when_someone_under_his",
+      "pressureEvidence": [
+        "E3"
+      ],
+      "pressureIsTrusted": true,
+      "behavior": "leans against the counter, arms crossed, watching the ledger without speaking",
+      "pcLens": "MOVE_TOWARD_PERCEIVED_HURT",
+      "pcEffect": "his stillness makes the room feel heavier",
+      "verdict": {
+        "r1_evidence_fits": false,
+        "r2_pressure_trusted": true,
+        "r3_camera_recordable": true,
+        "r4_reveals_mechanism": false,
+        "r5_pc_judges": false,
+        "r6_not_paraphrase": true,
+        "r7_distinguishable": false,
+        "r8_no_materialisation": "n/a — all IN_PERSON",
+        "r9_no_borrowing": true,
+        "r10_directive": "unverifiable — the plan was rejected, so no directive was built"
+      }
+    }
+  ]
+}
