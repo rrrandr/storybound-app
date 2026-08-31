@@ -449,7 +449,13 @@ console.log('\n 7 · NO HIDDEN BOUNDS');
       if (b.kind !== 'max' || !/^chars/.test(b.unit)) continue;
       const at = base(), over = base();
       const set = (p, len) => {
-        if (b.field === 'canonical_truth') p.facets[0].canonical_truth = ('He ' + pad(len, 'x')).slice(0, len);
+        if (b.field === 'canonical_truth') {
+          // Built from WORDS, not one long token: canonical_truth now carries a word cap as well
+          // as a character cap, so a single 150-character run would fail the wrong bound and the
+          // parity check would be measuring the word rule while claiming to measure the char one.
+          let t = 'He'; while (t.length < len) t += ' ' + 'xxxxxxx';
+          p.facets[0].canonical_truth = t.slice(0, len);
+        }
         else if (b.field === 'unique_prediction') p.facets[0].unique_prediction = ('When pressed, he ' + pad(len, 'y')).slice(0, len);
         else if (b.field === 'not_explained_by') p.facets[0].not_explained_by = ('not ' + pad(len, 'z')).slice(0, len);
         else if (b.field === 'identity_signature') p.identity_signature = pad(len, 'q');
@@ -680,6 +686,73 @@ console.log('\n 9 · NO EXEMPLARS REACH THE MODEL');
   t('9f: CONTROL — every detector above fires on a prompt that does carry an exemplar block, so ' +
     'the clean result is evidence rather than a broken matcher',
     Object.values(caught).every(Boolean), JSON.stringify(caught));
+}
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  10 · ONE FIELD, ONE JOB
+//  A live sample returned truths at a median of 177 characters against a 150 limit, 14 of 15
+//  over — because canonical_truth had been asked to carry psychology, behaviour, justification
+//  and distinctiveness at once. The limit was not too small; the field was over-asked. These
+//  cases are calibrated against that archived response and against the two reference sentences
+//  the shape was designed around.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+console.log('\n 10 · ONE FIELD, ONE JOB');
+{
+  // A mechanism that must pass, and an explanation that must fail. Both are real sentences from
+  // archived samples — fixtures here, never sent to a model.
+  const SHARP = 'He turns generosity into a debt so no one can use it against him.';
+  const PADDED = 'Tomas values precision above all else\u2014whether in thought, action, or speech\u2014'
+               + 'because he believes that clarity prevents chaos and that imprecision leads to '
+               + 'unnecessary harm.';
+  // Under the character cap and still thirty words: the case that proves the word cap is not a
+  // duplicate of the character cap.
+  const SHORT_BUT_PADDED = 'Mara fears that if she ever needs help, no one will be left to give it, '
+               + 'leaving her utterly alone in a world that has already taken enough from her.';
+
+  const R = await page.evaluate(({ SHARP, PADDED, SHORT_BUT_PADDED }) => {
+    const f = window._portfolioTruthShapeFault;
+    const V = (truth) => {
+      const p = JSON.parse(JSON.stringify(window.__batchFixture));
+      p.facets[0].canonical_truth = truth;
+      return window._validatePortfolioResponse({ characterPortfolios: [p] },
+        { eligible: true, subject_ref: p.subject_ref, required_facet_count: 5,
+          reference_label: 'Mara Dunn' }, { pendingAuthority: true, requireContrast: true });
+    };
+    const words = (t) => (t.trim().match(/[^\s]+/g) || []).length;
+    return { sharp: { fault: f(SHARP), ok: V(SHARP).ok, chars: SHARP.length, words: words(SHARP) },
+             padded: { fault: f(PADDED), ok: V(PADDED).ok, chars: PADDED.length, words: words(PADDED),
+                       errors: (V(PADDED).errors || []).slice(0, 1) },
+             shortPadded: { fault: f(SHORT_BUT_PADDED), ok: V(SHORT_BUT_PADDED).ok,
+                            chars: SHORT_BUT_PADDED.length, words: words(SHORT_BUT_PADDED) },
+             bounds: window.__PORTFOLIO_BOUNDS.filter(b => b.field === 'canonical_truth') };
+  }, { SHARP, PADDED, SHORT_BUT_PADDED });
+
+  t('10a: the 65-character MECHANISM passes — the shape rule does not punish concision, which is ' +
+    'the whole point of moving the other work out of this field',
+    R.sharp.fault === null && R.sharp.ok === true,
+    JSON.stringify(R.sharp));
+  t('10b: the 171-character EXPLANATION fails — a truth that justifies itself is doing another ' +
+    'field\'s job',
+    R.padded.fault !== null && R.padded.ok === false,
+    JSON.stringify(R.padded));
+  t('10c: a truth UNDER the character limit but thirty words long still fails — the word cap ' +
+    'catches padding the character cap cannot see, which is why it is not a duplicate bound',
+    R.shortPadded.chars <= 150 && R.shortPadded.fault !== null && R.shortPadded.ok === false,
+    JSON.stringify(R.shortPadded));
+  t('10d: the 150-character limit is UNCHANGED — the fix was to narrow the field, never to widen ' +
+    'its budget',
+    R.bounds.some(b => b.kind === 'max' && b.unit === 'chars' && b.value === 150),
+    JSON.stringify(R.bounds));
+  t('10e: the shape is declared to the model from the same table the validator reads — word range ' +
+    'and one-clause rule both stated in the dispatched prompt',
+    /8–22 words, ONE clause/.test(batchSys) && /ONE CLAUSE of 8–22 words/.test(batchSys)
+      && /no em dash, no semicolon, no parenthetical, no second sentence/.test(batchSys),
+    JSON.stringify((batchSys.match(/[^\n]*ONE CLAUSE[^\n]*/g) || []).slice(0, 1)));
+  t('10f: canonical_truth is told what it does NOT own — behaviour, applicability and the ' +
+    'reader\'s reading are named as other fields\' jobs',
+    /Do NOT explain or justify/.test(batchSys) && /belongs to "unique_prediction"/.test(batchSys)
+      && /belongs to "applicability_conditions"/.test(batchSys) && /planner downstream/.test(batchSys),
+    'the ownership statement is missing from the dispatched prompt');
 }
 
 console.log(`\n${'─'.repeat(84)}\n  ${pass} passed · ${fail} failed\n`);

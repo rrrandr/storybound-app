@@ -65,16 +65,13 @@ const PRIOR = (() => {
 const EV_RAW = '_portfolio_sample_raw.txt';
 const EV_PARSED = '_portfolio_sample_evidence.json';
 
-// REQUESTED, NOT YET GRANTED at the time of writing. Both figures moved for stated reasons and
-// neither may be carried over from the last authorisation:
-//   · the per-call worst case is $0.00739605. It rose from $0.00731745 because the prompt now
-//     spells out every bound and states an obligation per field — the fix for the hidden-bound
-//     defect costs input tokens — and then came back down when the worked examples were removed;
-//   · the conservative prior now carries the second measured sample ($0.00228660), so the old
-//     cumulative ceiling would count the same headroom twice.
-const CAP_ADDITIONAL = 0.00739605;
-const PRIOR_UPPER_BOUND = 0.02937445;   // 0.02708785 conservative + 0.00228660 measured
-const CAP_CUMULATIVE = 0.03677050;      // PRIOR_UPPER_BOUND + CAP_ADDITIONAL
+// REQUESTED, NOT YET GRANTED. Both figures move every time a call is made or the prompt changes,
+// and neither may be carried over from a previous authorisation: the conservative prior now
+// carries the third sample's measured cost ($0.00348930), and the per-call worst case reflects
+// the current prompt. Reusing an older ceiling would count the same headroom twice.
+const CAP_ADDITIONAL = 0.00740970;
+const PRIOR_UPPER_BOUND = 0.03286375;   // 0.02937445 conservative + 0.00348930 measured
+const CAP_CUMULATIVE = 0.04027345;      // PRIOR_UPPER_BOUND + CAP_ADDITIONAL
 
 const browser = await chromium.launch({ headless: true });
 const ctx = await browser.newContext();
@@ -248,10 +245,19 @@ const evidence = (() => {
   const body = LOSE_BODY === 'drop' ? null
              : LOSE_BODY === 'length' ? String((R.rawBody || '').length)
              : R.rawBody;
-  const wrote = { raw: false, parsed: false, bytes: 0, sha256: null };
+  // ── ARCHIVAL, NOT JUST PERSISTENT ──
+  // Writing to a fixed filename fixed "the body was never written down" and left "the body is
+  // overwritten by the next run": the second live sample's portfolios were destroyed by the
+  // third, and calibration had to fall back on sentences quoted in conversation. Each run also
+  // writes an immutable stamped copy, so no future sample can cost an earlier one.
+  const STAMP = new Date().toISOString().replace(/[:.]/g, '-');
+  const wrote = { raw: false, parsed: false, bytes: 0, sha256: null, archive: null };
   try {
     if (body != null) {
       fs.writeFileSync(EV_RAW, body);
+      try { fs.mkdirSync('_portfolio_samples', { recursive: true });
+            wrote.archive = '_portfolio_samples/' + STAMP + '.raw.txt';
+            fs.writeFileSync(wrote.archive, body); } catch (_) {}
       wrote.raw = true;
       wrote.bytes = Buffer.byteLength(body);
       wrote.sha256 = crypto.createHash('sha256').update(body).digest('hex');
@@ -275,6 +281,8 @@ const evidence = (() => {
       requestCensus: { dispatched: seen.batch.length, aborted: seen.aborted, escaped: seen.escaped.length },
     }, null, 2));
     wrote.parsed = true;
+    try { fs.writeFileSync('_portfolio_samples/' + STAMP + '.evidence.json',
+      fs.readFileSync(EV_PARSED)); } catch (_) {}
   } catch (e) { wrote.parsedError = String(e && e.message); }
   return wrote;
 })();
@@ -421,7 +429,7 @@ if (DRY) {
   const M = PRIOR.RATES[CONTRACT.model];
   const worst = (inTok / 1e6) * M.in + ((req ? req.body.max_tokens : 0) / 1e6) * M.out;
   console.log(`\n${'─'.repeat(84)}\n COST — unrounded`);
-  console.log(`   recorded so far, from the ledger (6 paid calls)          $${PRIOR.total.toFixed(8)}`);
+  console.log(`   recorded so far, from the ledger (7 paid calls)          $${PRIOR.total.toFixed(8)}`);
   console.log(`   this call, worst case at max_tokens ${req && req.body.max_tokens}          $${worst.toFixed(8)}`);
   console.log(`   cumulative if billed to the ceiling, recorded prior      $${(PRIOR.total + worst).toFixed(8)}`);
   console.log(`   cumulative against the CONSERVATIVE prior (the guard)   $${(PRIOR_UPPER_BOUND + worst).toFixed(8)}`);

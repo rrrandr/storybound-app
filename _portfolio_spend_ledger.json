@@ -55,7 +55,13 @@
       "model": "mistral-small-latest",
       "prompt_tokens": 1380,
       "completion_tokens": 3466
+    },
+    {
+      "what": "2026-08-30 third production-path sample (craft contract, 0/3 on truth length)",
+      "model": "mistral-small-latest",
+      "prompt_tokens": 1934,
+      "completion_tokens": 5332
     }
   ],
-  "total": 0.0266767
+  "total": 0.030166000000000002
 }
