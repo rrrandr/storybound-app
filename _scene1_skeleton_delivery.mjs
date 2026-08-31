@@ -800,6 +800,13 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
   const logs = [];
   // 400, not 220: a fault list is truncated by this line, and a needle assertion that reads the
   // truncated text reports a check as broken when the check fired and the tail was cut.
+  // TEST-ONLY INVOCATION TRACE. Production emits nothing unless a sink is installed, so this
+  // costs the app nothing and keeps the event stream out of state and telemetry. It exists to
+  // answer "was the subplot scheduled, cancelled, or never started" without guessing.
+  await page.addInitScript(() => {
+    window.__invEvents = [];
+    window.__invTrace = (e) => { try { window.__invEvents.push(e.event + ':' + JSON.stringify(e.detail)); } catch (_) {} };
+  });
   page.on('console', m => { const x=m.text(); if (/SCENE1:|SKELETON|PLANNER/.test(x)) logs.push(x.slice(0,400)); });
   page.on('pageerror', e => logs.push('PAGEERROR ' + String(e.message).slice(0,200)));
 
@@ -890,7 +897,7 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
       s.storyId = priorStory;
       bibleProbe = { dedupe, retry, ownership };
     }
-    return { threw, bibleProbe,
+    return { threw, bibleProbe, invEvents: (window.__invEvents || []).slice(0, 40),
       // Eligibility now comes from the STAGE CONTRACT when the seed is authoritative; the old
       // heuristic is kept alongside so the harness can prove they differ where it matters.
       stage: (window._scene1StageContract ? window._scene1StageContract(s) : null),
@@ -2136,7 +2143,8 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
   t('X13: the main arm matches its exact request census — one A-plot generator, ZERO corrections, ' +
     'one compression, and every other kind pinned',
     census(G, PINNED_FULL, BOUNDED_FULL).length === 0,
-    JSON.stringify(census(G, PINNED_FULL, BOUNDED_FULL)));
+    JSON.stringify(census(G, PINNED_FULL, BOUNDED_FULL))
+      + '\n      invocation trace: ' + JSON.stringify((G.invEvents || []).filter(x => /subplot|fatal|begin/.test(x)).slice(0, 10)));
   t('X13b: the guard arm matches its own exact census — same chain and setup, no author call, ' +
     'no post-author lane, no subplot pass',
     census(GG, EXPECT_GUARD, BOUNDED_GUARD).length === 0,
