@@ -1,0 +1,126 @@
+{
+  "portfolioAttach": {
+    "ok": true,
+    "code": "attached",
+    "facets": 1
+  },
+  "facetIds": [
+    "gen:ent_x3a_jess:v1:value"
+  ],
+  "commit": {
+    "ok": true,
+    "sceneUid": "S1",
+    "spent": [
+      {
+        "canonicalId": "ent:jess",
+        "facet_id": "gen:ent_x3a_jess:v1:value",
+        "category": "value"
+      }
+    ],
+    "appearances": [],
+    "unresolved": []
+  },
+  "schedRowAfterScene1": {
+    "character_id": "ent:jess",
+    "last_cplus_scene_uid": "S1",
+    "last_cplus_scene_ordinal": 1,
+    "last_cplus_issue": 1,
+    "meaningful_appearances_since_cplus": 0,
+    "last_appearance_ordinal": 1,
+    "used_facet_ids": [
+      "gen:ent_x3a_jess:v1:value"
+    ],
+    "used_categories": [
+      "value"
+    ],
+    "cplus_count": 1
+  },
+  "commitFieldCoverage": [
+    {
+      "field": "facet_id",
+      "stored": true
+    },
+    {
+      "field": "category",
+      "stored": true
+    },
+    {
+      "field": "scene_uid",
+      "stored": true
+    },
+    {
+      "field": "ordinal",
+      "stored": true
+    },
+    {
+      "field": "issue",
+      "stored": true
+    },
+    {
+      "field": "expression_mode",
+      "stored": false
+    },
+    {
+      "field": "visible_action",
+      "stored": false
+    },
+    {
+      "field": "pc_interpretation",
+      "stored": false
+    },
+    {
+      "field": "continuity_class",
+      "stored": false
+    },
+    {
+      "field": "episodic_or_signature",
+      "stored": false
+    }
+  ],
+  "scene18": {
+    "directiveChars": 0,
+    "mentionsJess": false,
+    "mentionsDecolletage": false,
+    "mentionsFacetId": false,
+    "excerpt": ""
+  },
+  "scene18Storage": {
+    "entityStillThere": true,
+    "facetsStillThere": 1,
+    "schedRow": {
+      "character_id": "ent:jess",
+      "last_cplus_scene_uid": "S1",
+      "last_cplus_scene_ordinal": 1,
+      "last_cplus_issue": 1,
+      "meaningful_appearances_since_cplus": 0,
+      "last_appearance_ordinal": 1,
+      "used_facet_ids": [
+        "gen:ent_x3a_jess:v1:value"
+      ],
+      "used_categories": [
+        "value"
+      ],
+      "cplus_count": 1
+    }
+  },
+  "resetCalled": "inlined (the reset is not exported; same two assignments)",
+  "issue2": {
+    "before": {
+      "entities": 3,
+      "schedRows": 1,
+      "disclosure": 0
+    },
+    "after": {
+      "relLedgerIsNull": true,
+      "disclosureEmptied": true,
+      "schedRows": 0
+    },
+    "memoAfter": 0
+  },
+  "contradictionGates": {
+    "candidateGuards": [
+      "detectDiaryContradiction",
+      "validateDiaryContradiction"
+    ]
+  }
+}
