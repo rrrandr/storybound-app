@@ -330,6 +330,19 @@ function plannerReply(usr, mutate) {
   // does not exist there), and a hard-coded id cannot fail when the source stops supplying it.
   // Modes, facet ids and applicability conditions are read from the dispatched candidate block.
   const CAND = candidatesFromPrompt(usr);
+  // ── AN ACT MUST ENGAGE THIS SCENE ──
+  // A visible_action that touches no object, no person and nothing from the scene's own material
+  // is ambience, and production refuses it. These fixture behaviours were written for a ceremony
+  // clearing and are reused in a customs house, so they engaged nothing there and aborted the
+  // run. The scene's facts are in the packet; the act is anchored to one of them rather than
+  // rewritten, so what each behaviour SHOWS is unchanged.
+  const FACTS = [...usr.matchAll(/^ {2}(E\d+): (.+)$/gm)].map(m => m[2].trim());
+  const FACT_WORDS = new Set(FACTS.flatMap(f => (f.toLowerCase().match(/[a-z]{5,}/g) || [])));
+  const groundAct = (act) => {
+    const w = (String(act).toLowerCase().match(/[a-z]{5,}/g) || []);
+    if (w.some(x => FACT_WORDS.has(x))) return act;
+    return FACTS.length ? String(act).replace(/\.$/, '') + ' at ' + FACTS[0] : act;
+  };
   let cp = cast.filter(n => n !== PCN)
     .map(n => {
       const c = CAND[n] || {}; const opt = (c.options || [])[0];
@@ -338,7 +351,7 @@ function plannerReply(usr, mutate) {
       return { character:n, mode: ((c.modes || [])[0] || 'IN_PERSON'),
                ...(opt ? { option_id: opt.option_id } : {}),
                ...(opt ? { expression_mode: 'CONTROL' } : {}),
-               first_mention:true, behavior: R.behavior, visible_action: R.behavior,
+               first_mention:true, behavior: groundAct(R.behavior), visible_action: groundAct(R.behavior),
                // NO AUTHORED PSYCHOLOGY ON RECORD is the one case where the planner still writes
                // the read; where an option EXISTS, sending one is the model rewriting canon.
                ...(opt ? {} : { character_revelation: R.character_revelation }),
@@ -1705,7 +1718,13 @@ console.log(`\n${'─'.repeat(90)}\n  multi-person scenes keep the interlocutor 
   t('S9 a two-person ASSIGNMENT stage keeps interlocutor_placement',
     /"interlocutor_placement"/.test(dpu) && (D.eligible || []).length === 2
       && D.author.length === 1,
-    `cast=${JSON.stringify(D.eligible)} author=${D.author.length}`);
+    // ORDERED TRACE ON FAILURE. "author=0 and no fault" is not a diagnosable state: it may be a
+    // correct abort with a silent path, or a fatal that bypasses diagnostics entirely. The trace
+    // says which, in the order the chain executes.
+    `cast=${JSON.stringify(D.eligible)} author=${D.author.length} planner=${D.planner.length}\n`
+      + '      trace:\n        ' + (D.logs || [])
+          .filter(l => /STAGE|CPLUS|PORTFOLIO|SKELETON|ABORT|PLANNER|FACT-MANIFEST/.test(l))
+          .map(l => l.slice(0, 210)).join('\n        '));
   t('S9 the offstage love interest is not staged by the assignment',
     !(D.eligible || []).includes('Julian'), JSON.stringify(D.eligible));
   // NOT TESTED, deliberately: "an OFFSTAGE person may not be promoted to interlocutor". The guard
@@ -1880,8 +1899,11 @@ for (const [mutate, label, junk] of [
         && !/character_revelation/.test(sys)
         && (!seren.character_revelation || sys.indexOf(seren.character_revelation) === -1);
     })(),
-    `authorCalls=${R.author.length} sourced=${JSON.stringify(((R.skeleton && R.skeleton.cp) || [])
-      .filter(c => /Seren/i.test(String(c.character || ''))).map(c => ({ ch: c.character, f: !!c.facet_id })))}`);
+    `authorCalls=${R.author.length} planner=${R.planner.length} sourced=${JSON.stringify(((R.skeleton && R.skeleton.cp) || [])
+      .filter(c => /Seren/i.test(String(c.character || ''))).map(c => ({ ch: c.character, f: !!c.facet_id })))}\n`
+      + '      trace:\n        ' + (R.logs || [])
+          .filter(l => /STAGE|CPLUS|PORTFOLIO|SKELETON|ABORT|PLANNER|FACT-MANIFEST/.test(l))
+          .map(l => l.slice(0, 210)).join('\n        '));
 }
 console.log('');
 
