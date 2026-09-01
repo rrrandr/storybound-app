@@ -1,0 +1,44 @@
+{
+  "method": "utf8-byte bound, 1 input token per byte + protocol overhead; response at hard max_tokens",
+  "label": "conservative authorization bound (NOT tokenizer-measured)",
+  "rateIn": 0.15,
+  "rateOut": 0.6,
+  "protocolOverheadTokens": 200,
+  "measured": {
+    "privateViewBytes": 3010,
+    "realSceneBytes": 3625,
+    "sceneAtCapBytes": 24000
+  },
+  "calls": [
+    {
+      "name": "initial audit",
+      "inBytes": 28410,
+      "outMax": 400,
+      "inTok": 28610,
+      "inCost": 0.0042915,
+      "outCost": 0.00024,
+      "cost": 0.0045315
+    },
+    {
+      "name": "targeted repair",
+      "inBytes": 10810,
+      "outMax": 900,
+      "inTok": 11010,
+      "inCost": 0.0016515,
+      "outCost": 0.00054,
+      "cost": 0.0021915
+    },
+    {
+      "name": "verification audit",
+      "inBytes": 28410,
+      "outMax": 400,
+      "inTok": 28610,
+      "inCost": 0.0042915,
+      "outCost": 0.00024,
+      "cost": 0.0045315
+    }
+  ],
+  "perSceneAllThree": 0.0112545,
+  "twentySceneWorstCase": 0.22509,
+  "twentySceneAuditOnly": 0.09063
+}
