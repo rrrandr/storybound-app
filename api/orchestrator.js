@@ -288,7 +288,14 @@ const ALLOWED_MODELS = {
 const DENIED_OPENAI_ROLES = {
   CHARACTER_PORTFOLIO: 'portfolio authoring routes through Mistral (the Scene-1 planner\'s model). '
     + 'A blinded A/B found the expensive OpenAI model produced the most interchangeable psychology; '
-    + 'this role was only ever here because gpt-4o-mini was the scaffold\'s inherited fallback.'
+    + 'this role was only ever here because gpt-4o-mini was the scaffold\'s inherited fallback.',
+  // Denied so a Mistral outage cannot silently become an OpenAI bill under a borrowed role. If
+  // the auditor cannot run it must fail LOUDLY to `unknown`, which is a verdict the caller
+  // already handles — a quiet fallback would be a second provider judging character canon with
+  // nobody having chosen it.
+  CHARACTER_CANON_AUDITOR: 'canon auditing routes through Mistral (mistral-small-latest). This '
+    + 'role must fail to `unknown` rather than fall back to another provider: an unavailable '
+    + 'auditor is an unanswered question, never a compatible verdict.'
 };
 
 const DEFAULT_MODELS = {

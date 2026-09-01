@@ -105,8 +105,38 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    // Determine model — if not provided, select by role
-    const requestedModel = model || (role === 'PROMPT_PREPROCESSOR' ? 'mistral-small-latest' : 'mistral-medium-latest');
+    // ══════════════════════════════════════════════════════════════════════════════════
+    //  CHARACTER_CANON_AUDITOR — A RECURRING PAID ROLE, GATED SERVER-SIDE
+    //
+    //  This role fires once per finalized scene that has canon to protect, so enabling it is a
+    //  standing cost decision, not a per-call one. The gate is HERE, on an environment
+    //  variable, because a flag the client owns is a flag anyone with a console can switch on:
+    //  client state cannot be allowed to enable spend. Default OFF — absent means off.
+    //
+    //  The refusal is NAMED. A caller that gets this back must report auditor_not_enabled and
+    //  must never read it as "no contradiction found": an unasked question has no answer, and
+    //  the whole point of the role is that silence is not a pass.
+    // ══════════════════════════════════════════════════════════════════════════════════
+    if (role === 'CHARACTER_CANON_AUDITOR') {
+      const _enabled = String(process.env.SB_CANON_AUDITOR_ENABLED || '').trim() === '1';
+      if (!_enabled) {
+        console.warn('[MISTRAL-PROXY] CHARACTER_CANON_AUDITOR is not enabled on this deployment '
+          + '(SB_CANON_AUDITOR_ENABLED is unset) — refusing, and this is NOT a compatible verdict');
+        return res.status(403).json({
+          error: 'Character canon auditor is not enabled on this deployment',
+          code: 'AUDITOR_NOT_ENABLED',
+          verdict: 'auditor_not_enabled'
+        });
+      }
+    }
+
+    // Determine model — if not provided, select by role.
+    // CHARACTER_CANON_AUDITOR pins mistral-small-latest: it is a character-psychology judgement,
+    // and Mistral is where that work already lives. That is a REASONABLE INITIAL ROUTE chosen on
+    // the portfolio evidence, NOT a completed evaluation of auditing quality — the portfolio A/B
+    // measured psychology GENERATION, and judging compatibility is a different task.
+    const requestedModel = model || (role === 'PROMPT_PREPROCESSOR' ? 'mistral-small-latest'
+      : role === 'CHARACTER_CANON_AUDITOR' ? 'mistral-small-latest' : 'mistral-medium-latest');
 
     if (!ALLOWED_MISTRAL_MODELS.includes(requestedModel)) {
       console.error(`[MISTRAL-PROXY] Model "${requestedModel}" not in allowlist.`);

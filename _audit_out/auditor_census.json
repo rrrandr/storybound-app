@@ -1,0 +1,37 @@
+[
+  {
+    "path": "/api/mistral-proxy",
+    "role": "CHARACTER_CANON_AUDITOR",
+    "model": "mistral-small-latest",
+    "max_tokens": 400,
+    "sysChars": 2020
+  },
+  {
+    "path": "/api/mistral-proxy",
+    "role": "CHARACTER_CANON_AUDITOR",
+    "model": "mistral-small-latest",
+    "max_tokens": 400,
+    "sysChars": 1977
+  },
+  {
+    "path": "/api/mistral-proxy",
+    "role": "CHARACTER_CANON_AUDITOR",
+    "model": "mistral-small-latest",
+    "max_tokens": 400,
+    "sysChars": 1920
+  },
+  {
+    "path": "/api/mistral-proxy",
+    "role": "CHARACTER_CANON_AUDITOR",
+    "model": "mistral-small-latest",
+    "max_tokens": 400,
+    "sysChars": 1920
+  },
+  {
+    "path": "/api/mistral-proxy",
+    "role": "CHARACTER_CANON_AUDITOR",
+    "model": "mistral-small-latest",
+    "max_tokens": 400,
+    "sysChars": 1951
+  }
+]
