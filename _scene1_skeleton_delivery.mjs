@@ -398,7 +398,9 @@ function plannerReply(usr, mutate) {
   if (mutate === 'fmfalse')        cp = cp.map((c,i) => i === 0 ? { ...c, first_mention:false } : c);
   if (mutate === 'fmmissing')      cp = cp.map((c,i) => { if (i !== 0) return c; const { first_mention, ...r } = c; return r; });
   if (mutate === 'fmstring')       cp = cp.map((c,i) => i === 0 ? { ...c, first_mention:'false' } : c);
-  if (mutate === 'emptyangle')     cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'   ' } : c);
+  // `visible_action` is the field the model fills; `behavior` is the legacy alias fed from it.
+  // Blanking only the alias no longer blanks the act, so both go.
+  if (mutate === 'emptyangle')     cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'   ', visible_action:'   ' } : c);
   if (mutate === 'placeholderang') cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'N/A' } : c);
   if (mutate === 'thinangle')      cp = cp.map((c,i) => i === 0 ? { ...c, behavior:'is sad' } : c);
   if (mutate === 'noep')           ep = undefined;
@@ -441,22 +443,40 @@ function plannerReply(usr, mutate) {
     const wantK = mutate === 'caringOnKindnessFacet';
     const barefoot = (CO.facts.filter(f => /barefoot|nothing|guest/i.test(f.text))[0] || {}).id;
     const rite     = (CO.facts.filter(f => /ceremon|rite|generations/i.test(f.text))[0] || {}).id;
-    cp = cp.map(c => /Dohkar/i.test(c.character)
-      ? { ...c,
-          facet_id: wantK ? 'presiding_dohkar_kindness_to_the_poor' : 'presiding_dohkar_ritual_contempt',
-          pressure_id: wantK ? 'p_someone_present_who_came' : 'p_rite_he_has_performed',
-          pressure_evidence_ids: [wantK ? barefoot : rite].filter(Boolean),
-          behavior: 'he steps aside for the guest at the edge like someone who cares deeply where they stand' }
-      : c);
+    // The facet is chosen by choosing an OPTION now — facet_id and pressure_id written here are
+    // discarded on resolution. The option whose truth is the kindness/contempt one is selected by
+    // matching the option's own truth text, read from the packet.
+    void barefoot; void rite;
+    cp = cp.map(c => {
+      if (!/Dohkar/i.test(c.character)) return c;
+      const cd = CAND[c.character] || {};
+      const want = (cd.options || []).find(o => wantK
+        ? /kind|generous|poor|nothing/i.test(o.truth)
+        : /ceremon|rite|attention|contempt|routine/i.test(o.truth)) || (cd.options || [])[0];
+      const act = 'he steps aside for the guest at the edge like someone who cares deeply where they stand';
+      const kw = (x) => (String(x).toLowerCase().match(/[a-z]{5,}/g) || []).slice(0, 6).join(' ');
+      return want ? { ...c, option_id: want.option_id, behavior: act, visible_action: act,
+        // Rebuilt for the option this mutation selects: a bridge left describing a different
+        // option fails the bridge gate, and the case would be red for a reason it does not test.
+        revelation_bridge: 'this act is how ' + kw(want.truth) + ' surfaces, and this scene is the '
+          + 'case where ' + kw(want.pressure) } : c;
+    });
   }
+  // ── THE SAME DEFECT, IN THE FORM THAT IS STILL REACHABLE ──
+  // This used to hang a facet on evidence that does not establish it, by writing facet_id,
+  // pressure_id and evidence directly. Under the option contract those three are resolved from
+  // the backend and anything the model writes there is discarded, so the old mutation is inert —
+  // which is the point of the contract. The surviving form of "asserted a binding the material
+  // does not support" is to cite one option while the bridge explains a different one.
   if (mutate === 'contemptOverJealousyEvidence') {
-    const jul = (CO.facts.filter(f => /Julian|observer|edge/i.test(f.text))[0] || {}).id;
-    cp = cp.map(c => /Dohkar/i.test(c.character) && jul
-      ? { ...c, facet_id: 'presiding_dohkar_ritual_contempt',
-          pressure_id: 'p_procedural_step_nobody_checks', pressure_evidence_ids: [jul] }
-      : c);
+    cp = cp.map(c => {
+      if (!/Dohkar/i.test(c.character)) return c;   // the original targeted this character alone
+      const cd = CAND[c.character] || {};
+      const alt = (cd.options || [])[1];
+      return alt ? { ...c, option_id: alt.option_id } : c;   // bridge still describes option[0]
+    });
   }
-  if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ behavior, ...r }) => r)(c) : c);
+  if (mutate === 'readMissing')   cp = cp.map((c,i) => i === 0 ? (({ behavior, visible_action, ...r }) => r)(c) : c);
   if (mutate === 'readVoiceDrops') cp = cp.map((c,i) => i === 0
     ? { ...c, behavior:'his voice drops to a murmur as he intones the final clause', character_revelation:'he speaks more quietly at the end' } : c);
   if (mutate === 'readBreathHitch') cp = cp.map((c,i) => i === 0
@@ -840,7 +860,10 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
     window.__invEvents = [];
     window.__invTrace = (e) => { try { window.__invEvents.push(e.event + ':' + JSON.stringify(e.detail)); } catch (_) {} };
   });
-  page.on('console', m => { const x=m.text(); if (/SCENE1:|SKELETON|PLANNER/.test(x)) logs.push(x.slice(0,400)); });
+  page.on('console', m => { const x=m.text(); // PORTFOLIO is included because the grounding gate reports there: without it a run that aborts
+  // before the planner shows an empty cast and no reason, which is how two cases looked like
+  // fixture bugs when they were a refusal working as designed.
+  if (/SCENE1:|SKELETON|PLANNER|PORTFOLIO/.test(x)) logs.push(x.slice(0,400)); });
   page.on('pageerror', e => logs.push('PAGEERROR ' + String(e.message).slice(0,200)));
 
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
@@ -1749,9 +1772,12 @@ for (const [mutate, label, needle] of [
   ['caringOnContemptFacet',
                        'a "cares deeply" read attached to the CONTEMPT facet it inverts',
                                                                              'breaks a guardrail on this character'],
+  // The old fault — "none of the evidence it cites establishes it" — is unreachable now: the model
+  // cites no evidence, so it cannot cite the wrong evidence. The surviving form of the same defect
+  // is a binding the material does not support, and the bridge is where that shows.
   ['contemptOverJealousyEvidence',
-                       'his FIRST facet hung on evidence that does not establish it',
-                                                                             'none of the evidence it cites establishes it'],
+                       'a facet bound to a condition the account does not support',
+                                                                             'bridge never refers to'],
 ]) {
   const R = await run({ hot: false, mutate });
   const invalid = R.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ');
@@ -2049,9 +2075,14 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
   t('X1: the generated portfolio is SELECTABLE — five facets on the canonical entity, five categories',
     facets.length === 5 && new Set(facets.map(f => f.cat)).size === 5,
     JSON.stringify(facets.map(f => f.cat)));
-  t('X2: the PLANNER request offers all five, each under its backend-owned facet_id',
-    facets.length === 5 && facets.every(f => pu.includes('facet_id: ' + f.id)),
-    JSON.stringify(facets.filter(f => !pu.includes('facet_id: ' + f.id)).map(f => f.id)));
+  // The offer is GROUNDED OPTIONS now. Only conditions this scene proves are offered, so "all
+  // five facets appear" is deliberately no longer the contract — an ungrounded facet is exactly
+  // what must not be offered. What must hold is that every OPTION is backend-composed and that no
+  // separable evidence field survives for the model to fill.
+  t('X2: the PLANNER request offers backend-composed OPTIONS, and no separable evidence field',
+    /option_id: OPT-\d+/.test(pu) && !/pressure_evidence_ids/.test(pu),
+    JSON.stringify({ options: (pu.match(/option_id: OPT-\d+/g) || []).length,
+                     separableEvidence: /pressure_evidence_ids/.test(pu) }));
   t('X3: …and all five canonical truths are legible as choices',
     facets.length === 5 && facets.every(f => pu.includes(f.truth)),
     JSON.stringify(facets.filter(f => !pu.includes(f.truth)).map(f => f.cat)));
