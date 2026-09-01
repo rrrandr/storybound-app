@@ -41,15 +41,14 @@ async function capture() {
   // Nothing is normalised after capture — the bytes are compared exactly as they were sent.
   await page.addInitScript(() => {
     try { window.localStorage.setItem('sb_crisis_cat_cursor', '0'); } catch (_) {}
-    try {
-      var seed = 0x9e3779b9;                        // fixed; any constant would do
-      Math.random = function () {
-        seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
-        var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-      };
-    } catch (_) {}
+    // ── A CONSTANT, NOT A SEEDED SEQUENCE ──
+    // A seeded PRNG was tried first and was NOT enough: it makes the sequence reproducible, but
+    // every consumer's VALUE depends on its position in that sequence, and the position shifts
+    // whenever anything upstream consumes a different number of draws — which it does, because
+    // some of these paths race. Two runs of the same build still disagreed on LI-ARRIVAL. A
+    // constant is position-independent, so every consumer sees the same value no matter when it
+    // asks. The determinism control below is what proved the difference between the two.
+    try { Math.random = function () { return 0.42; }; } catch (_) {}
   });
   let planner = null;
   const blocked = [];
@@ -127,7 +126,7 @@ if (cmd === 'record') {
   console.log(`\n${'═'.repeat(74)}\nSCENE-1 PROMPT FINGERPRINT — ${label}\n${'═'.repeat(74)}`);
   console.log(` system : ${h1.sysLen} chars  ${h1.sys.slice(0, 16)}`);
   console.log(` user   : ${h1.usrLen} chars  ${h1.usr.slice(0, 16)}`);
-  console.log(` pinned : seeded PRNG + sb_crisis_cat_cursor=0 (variation held constant, not removed)`);
+  console.log(` pinned : Math.random()=0.42 + sb_crisis_cat_cursor=0 (variation held constant, not removed)`);
   console.log(` DETERMINISM CONTROL (two runs, same build): ${stable ? '✓ IDENTICAL' : '✗ NOT STABLE'}`);
   if (!stable) console.log('   → a byte-identical claim is not measurable until this is stable; see the .b.* files');
   console.log(`${'─'.repeat(74)}\n`);

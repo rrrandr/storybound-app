@@ -1,0 +1,10 @@
+{
+  "label": "after-step1-v2",
+  "sys": "2508954bf9818343289e6251ab7eaffc250820514f60b18869016871541d20f7",
+  "usr": "fa8847eb6db2581af05b3e78675b4931fbe98fccce38ee226e1e2ea6fb311c22",
+  "sysLen": 4239,
+  "usrLen": 63345,
+  "stable": true,
+  "model": "mistral-small-latest",
+  "max_tokens": 2921
+}
