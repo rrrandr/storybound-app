@@ -1,0 +1,119 @@
+[
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "You are a canonicalization and normalization engine for Storybound.\n\nYou do NOT write pros",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorabl",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memo",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "You are designing an R-PLOT — a tiny narrative planning object that tracks WHAT IS HAPPENI",
+    "dispatched": false
+  },
+  {
+    "path": "/api/proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "sysHead": "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine.\n\nYour ",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine.\n\nYour ",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o",
+    "sysHead": "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine.\n\nYour ",
+    "dispatched": false
+  },
+  {
+    "path": "/api/deepseek-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "deepseek-v4-pro",
+    "sysHead": "You are the A-PLOT GENERATOR for Storybound, an interactive romance fiction engine.\n\nYour ",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorabl",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memo",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel.\nYour ",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel.\nYour ",
+    "dispatched": false
+  },
+  {
+    "path": "/api/proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance visual novel.\nYour ",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this character's ONE memorabl",
+    "dispatched": false
+  },
+  {
+    "path": "/api/chatgpt-proxy",
+    "bucket": "OTHER-MODEL-BLOCKED",
+    "model": "gpt-4o-mini",
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love interest's ONE memo",
+    "dispatched": false
+  },
+  {
+    "path": "/api/mistral-proxy",
+    "bucket": "PLANNER",
+    "dispatched": false,
+    "kind": "PLANNER-DRY-LOCAL",
+    "offered": 9,
+    "sysChars": 6177,
+    "usrChars": 68774
+  },
+  {
+    "path": "/api/bug-report-awards?userId=00000000-0000-0000-0000-000000000001",
+    "bucket": "NON-MODEL-BLOCKED",
+    "dispatched": false
+  }
+]

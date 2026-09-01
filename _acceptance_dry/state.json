@@ -1,0 +1,16 @@
+{
+  "cpCoverage": {
+    "manifestId": "fm:8ec83b04-216",
+    "corpusVersion": 2,
+    "candidates": 3,
+    "grounded": 2,
+    "skipped": [
+      "Julian"
+    ],
+    "diagnostic": "no_owned_pressure_evidence",
+    "ok": false
+  },
+  "cpOptions": [],
+  "skeletonFatal": "no opening_spine and no recognised spine fields at top level",
+  "err": null
+}

@@ -1,0 +1,15 @@
+[EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=766 scene=1 via=_buildFatelandsWishCoreDirective <- http://localhost:3000/app.js?v=20260901a-evidence-ownership:252868:515 <- handleBeginStory text=" The First Sacrifice THE TWIST — steps 5-6, shaped by what
+[SCENE1:PATTERN-GATE] region-particular opener → thornwild
+[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_thornwild; summons/social/reckoning shapes suppressed)
+[SCENE1:FP] saved opening fingerprint: region_thornwild — recent: [region_thornwild]
+[SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)
+[SCENE1:FACT-MANIFEST] fm:8ec83b04-216 · 7 fact(s) · story=acceptance-1788243160951
+[SCENE1:CPLUS:NO-OWNED-EVIDENCE] 1 candidate(s) have no owned pressure evidence in this scene (Julian) — manifest fm:8ec83b04-216. They are not offered; the scene plans without them. This is a C+ coverage failure, never a story failure.
+[SCENE1:CPLUS:OPTIONS] 9 grounded option(s) across 2 candidate(s) · starved: 1
+[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]
+[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=7010 → max_tokens=2921 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)
+[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)
+[SCENE1:ENVELOPE] spine contract declares 17 field(s)
+[SCENE1:ENVELOPE:FAULT] no opening_spine and no recognised spine fields at top level
+[SCENE1:SCAFFOLD] skipped (no opening_spine and no recognised spine fields at top level) — prose path unchanged
+[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: no opening_spine and no recognised spine fields at top level

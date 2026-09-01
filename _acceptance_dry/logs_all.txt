@@ -1,0 +1,274 @@
+Loading the stylesheet 'https://p.typekit.net/p.css?s=1&k=bzl3zth&ht=tk&f=720.721.722.22354.22355.30184.30186.45912&a=23276850&app=typekit&e=css' violates the following Content Security Policy directive: "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://use.typekit.net". Note th
+[ORCHESTRATION] Storybound AI Orchestration Client initialized
+[BAKED] starter-scenes.js loaded — 3 package(s), 3 still PLACEHOLDER: starter_the_first_taste, starter_glass_house, starter_first_sacrifice
+[GN DEV] Dev tools IIFE executing...
+%c[Card Designer] Ready — Ctrl+Shift+D to toggle | _resetCardDesigner() to clear mods color: #d4a844
+Executing inline script violates the following Content Security Policy directive 'script-src 'self' https://cdn.jsdelivr.net https://js.stripe.com https://use.typekit.net'. Either the 'unsafe-inline' keyword, a hash ('sha256-rh22l1VHiHeOFds7l3h60nicRfgju77rXlx3IPUVD+M='), or a nonce ('nonce-...') is
+[FATE] DOMContentLoaded — initializing
+[BETA] beta_session_started {"ua":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/","storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal
+[CONTENT REGISTER] FULL_WEB (full) — platform: web
+%c[LENS] perception-lens editorial pass ready — author-prompt-free, rotation+de-prime guarded color:#7ec77e;font-weight:bold
+%c[CGLENS] CG signature-lens pass ready — caption-only, ≤1/scene, shared anti-calc/CDS color:#7ec77e;font-weight:bold
+[Phase1LI] UI wired (collapse cover + name-input reactivity)
+%c[GROK:HONEST] harness ready color:#7ec77e;font-weight:bold
+%c[STORYBOUND TELEMETRY] Console helpers ready:
+  copyConsole()              → copy all captured logs (last 5000)
+  copyConsole({filter:"NIL"})→ copy filtered subset
+  copyConsole({limit:50})    → copy last N lines
+  dumpNILState()             → print + copy current NIL/ERA/OAS state
+  clearConsoleB
+%c[GROK:HONEST] harness ready ✓ — run: await window._scene1GrokHonestTest({pairs:3}) color:#7ec77e;font-weight:bold
+[GEMMA_TURN] Turn-based collaborative system initialized.
+[GEMMA_READ_ORB] Read Orb + Stay-in-Character system initialized.
+[NMD] Seeded Volume 1 with Entry 1.
+%c[FF-SPECULATIVE] phase-2 harness ready — await window._ffSpeculativeAudit({source:"The Winds of Winter", embody:"Arya", baseContinuity:"book"}) color:#7ec77e;font-weight:bold
+%c[FF-CROSSOVER] harness ready — await window._ffCrossoverModeAudit() · await window._ffCrossoverAudit({character:"Miles Morales", world:"Old Man Logan"}) color:#7ec77e;font-weight:bold
+%c[ARC-AUDIT] harness ready — await window._ffCanonArcAudit({source:"Old Man Logan (2008)", embody:"Logan"}) color:#7ec77e;font-weight:bold
+%c[PACING-AUDIT] harness ready — await window._pacingArcAudit() on a loaded ORIGINAL story (or pass {aplot,tier}) color:#7ec77e;font-weight:bold
+%c[ORIG-DIVERGE] harness ready — window._origDivergenceAudit() · kill: window.__origDivergence=false color:#7ec77e;font-weight:bold
+%c[SPINE:BAKEOFF] harness ready — window._spineModelBakeoff({recommend:true}) color:#7ec77e;font-weight:bold
+%c[SPINE:ADV] harness ready — window._spineAdvancementBakeoff({rows,recommend:true}) color:#7ec77e;font-weight:bold
+[CG:HELPERS] ready=true
+[STORY:SHAPE] Button label updated: Enter Your Story | canContinue: false
+[ModeCards] Initialized 4 mode cards
+[Corridor] Initializing 9-row corridor system with DOM mount/unmount...
+[Corridor] Header height measurement returned 0 — keeping default (80px), will retry on next trigger
+[Corridor] Stored 2 elements for stage: authorship
+[Corridor] Stored 3 elements for stage: identity
+[Corridor] Stored 3 elements for stage: playermask
+[Corridor] Stored 3 elements for stage: storybeau
+[Corridor] Stored 1 elements for stage: world
+[Corridor] Stored 1 elements for stage: tone
+[Corridor] Stored 1 elements for stage: pressure
+[Corridor] Stored 3 elements for stage: pov
+[Corridor] Stored 2 elements for stage: length
+[Corridor] Stored 2 elements for stage: dynamic
+[Corridor] Stored 1 elements for stage: beginstory
+The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio
+[Sparkle] Started emitter: guidedFateSparkles (profile: guidedFate, continuous)
+[Authorship] Choice reset
+[Corridor] Authorship mount: Reset authorship choice for re-selection
+[Corridor] DOM updated. Mounted row 0: authorship
+[Ghost Steps] Initialized 8 ghost step placeholders
+[DSP] Hidden — stage authorship
+[Corridor Nav] Navigation affordances initialized
+[Corridor] Initialization complete. Active row: 0
+[Corridor] Row store initialized with 11 stages
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+[GOOD_REASONS] Mechanic + library variant system initialized.
+[REINCARNATION] System initialized
+[FATE_EVENT] System initialized. Active: false
+[PROMO] Seasonal promotions initialized. Active: none
+[DevHUD] Dev HUD ready — press ` to toggle
+[BOOT] Complete — flushed 0 deferred task(s)
+[QA] Not enabled — host: localhost | _isQaHost: true | _devBypass: false
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+[SUMMON:ALIGN] figure: left=-110, bottom=-159, w=217, h=516 | bell: bottom=710, left=12, viewport=720
+[BETA] geo_gate_decision {"country":null,"signal":"ip","blocked":false,"storyId":null,"fateMode":null,"turnCount":0,"userLanguage":"en","storyLanguage":"en","generationLanguage":"en","storyPath":"normal"}
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=eq.completed&resumed_at=is.null&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.
+[BOOT] Found unresumed purchase intent: undefined | type: undefined
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has 
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?id=eq.undefined' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has 
+[BeginStory] handleBeginStory() called
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+[ISSUE-PURCHASE] charged 60F (issue_purchase_literary, issue=1, opid=2b89dd0e-2d7a-42e2-9646-de706ac2663d)
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[BeginStory] DEBUG state.picks: {"world":"Fantasy","tone":"Earnest","genre":"Billionaire","pressure":"PowerControl","flavor":"Arcane Binding","dynamic":"Enemies","era":null,"pov":"First","worldSubtype":"arcane_binding","length":"taste","pcSpecies":"First Favored","liSpecies":"First Favored","identit
+[BeginStory] DEBUG state.archetype: {"primary":"BEAUTIFUL_RUIN","modifier":null}
+[BeginStory] DEBUG state.mode: solo state.storyLength: fling
+[BeginStory] Past _beginStoryInProgress guard, entering main flow
+[OPENING:TEMP] selected=HOT_CRISIS · FATELANDS-WISH-DEMO (first-ever Fatelands / dev)
+[ACCESS:RESOLVER] Decision: {"decisionId":"NEW_STARTER_FREE","allowed":true,"costType":"free","reason":"starter_story_free","uiAction":"none","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":true,"globalFortuneCount":0,"storyId":"acceptance-1788243160951","isNewStory":true,"isConti
+[FANTASY_CORE] Entropy initialized: {"fantasy_region_focus":"the_thornwild","fantasy_magic_cost_model":"lifespan_decay","fantasy_power_legitimacy":"divine_marked","fantasy_political_pressure":"rebellion_underclass","fantasy_favor_amplitude":"fracturing"}
+[FANTASY_CORE] Fatelands region bound: the_thornwild {seat: null, governance: Oath of the Root (internal enforcement by Keepers), status: Outside political structure — sealed community, reality: Populated by humans at various stages of Becoming, magicBias: occult}
+[CONSPIRACY] tracks selected — local="haunted_mill" regional="thornwild" (aplot) world="the_piercing" region=the_thornwild
+[CONSPIRACY-AUDIT] REGIONAL selected (this feeds the A-plot skeleton)
+  REGIONAL: The Becoming of Thornwild  [stage 1/6, layer=public]
+    False objective : Why is everyone obeying the Keepers?
+    Invalidates     : that the Keepers are tyrants ruling Thornwild by force
+    Reveal          : They ar
+[SPECIES] PC = declared_seed: First Favored
+[SPECIES:PREGEN] LI species resolved pre-Scene-1: First Favored · source=declared_seed
+[FORTUNE STATE] before_fortune_gate {drip: 0, storypass: 0, subscription: 0, purchased: 0, global: 9999}
+[BeginStory] GATE DEBUG: {isNewStory: true, hasActiveStorypass: false, storypassFortunes: 0, totalFortunes: 9999, subscribed: true}
+[EmergentLI] Mode GATED → directed (emergent is Thirst-only for now; worldSubtype=arcane_binding)
+[Modifier] No secondary assigned (75% path)
+[FF-CANON-AUTH] false reason=nonff
+[BeginStory] All validation passed — proceeding to story generation
+[BeginStory] Story mode: participatory
+[VISUAL_CANON] Story visual style seeded: {paletteFamily: soft naturals — honey, sage, wheat, warm stone, lightingLanguage: god-ray shafts through atmospheric fog, textureStyle: photorealistic — sharp detail, natural grain, lens-accurate depth of field, compositionBias: voyeuristic — framed through 
+[READER] enterReaderView: _readerPage= 0 USE_OPENING_BOOK= false
+[FATE] initFateCards called
+[FATE] Bind flags reset — ready for rebind
+[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}
+[FATE] Rebinding existing cards
+[FATE] Existing cards rebound: 5
+[FATE] initFateCards bound
+[COVER:BEGIN] Showing CSS 3D white book placeholder
+[BeginStory] Phase 2 complete — starting loader and API calls
+[Sparkle] Stopped emitter: guidedFateSparkles
+[FATE-VISUALS] guided-fate full-screen sparkles torn down at story begin
+Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no fu
+Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no fu
+Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no fu
+Connecting to 'http://sb-test.localhost/rest/v1/user_events' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.googleapis.com". The policy is report-only, so the violation has been logged but no fu
+Failed to load resource: net::ERR_FAILED
+[NORMALIZATION ERROR] TypeError: Failed to fetch
+    at callNormalizationLayer (http://localhost:3000/app.js?v=20260901a-evidence-ownership:16951:29)
+    at handleBeginStory (http://localhost:3000/app.js?v=20260901a-evidence-ownership:251494:36)
+[DEV:StoryGen] world: Fantasy | tone: Earnest | genre: Billionaire → powerRole: Arcane Sovereign | powerFrame: Ruler | intensity: Steamy
+[DEV:WorldResolve] world: Fantasy | genre: Billionaire → powerFrame: Ruler | prehistoricForbid: false
+[COLD-GATE] hot-first-draft override: _hot=true · temp=HOT_CRISIS · turn=0 → INJECTED (system, top of prose-stack)
+[ROMANCE-ENGINE] "Enemies" + "arcane_binding" → COLLISION · acquaintance=KNOWN_ADVERSARY · scene1Presence=PROXY · validSet=[COLLISION,LOOMING_PRESENCE,SHARED_HISTORY] · set default
+[LI-ARRIVAL] FROM_START (engine=?, deferIntent=false, recent=FROM_START)
+[PAIR-DYNAMIC] resolved — OPEN_VEIN × BEAUTIFUL_RUIN · engine=COLLISION · acq=KNOWN_ADVERSARY · scene1Presence=PROXY · encounter=MET · (OPEN_VEIN) INWARD TRANSLATION — events move THROUGH her body before they exist as events. The world arrives as feeling ...
+[CANONICAL-CHARACTERS] (commit@pre-bible)  LI: name="Julian" · mask=BEAUTIFUL_RUIN · source=seed · committed=✓
+[DEEP-TRIO] role=PC arch=OPEN_VEIN wound=PUBLIC crisis=PUBLIC_EXPOSURE
+[SIGFEAT] picked="burn" · recent=[burn] · scar_cooldown=N asym_cooldown=N
+[DEEP-TRIO] role=LI arch=BEAUTIFUL_RUIN wound=PARTNER hunger=WANTED_REAL_SELF
+[LI-BUILD] single male LI, non-privation world → hero build pool (tall/broad/impressive)
+[LI-HAIR] single LI, non-plucking-culture → bald/receding/thinning filtered from hair pool
+[SIGFEAT] picked="quick_flush" · recent=[quick_flush,burn] · scar_cooldown=N asym_cooldown=N
+[FL-REGION-LI] key=the_thornwild | comp="a beast-handler the predators of t…"
+[LIT:SPINE] awaiting 2 character Bible(s) before R-plot (PC+LI — wounds are Bible-native in the inverted chain)
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.sup
+Connecting to 'http://sb-test.localhost/rest/v1/purchase_intents?select=*&user_id=eq.00000000-0000-0000-0000-000000000001&status=in.%28completed%2Cpending%29&order=created_at.desc&limit=1' violates the following Content Security Policy directive: "connect-src 'self' https://*.supabase.co wss://*.sup
+Failed to load resource: net::ERR_FAILED
+[PC-BODY-BIBLE] generator errored (non-fatal): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[LI-BODY-BIBLE] generator errored (non-fatal): Failed to fetch
+[LIT:SPINE] character Bibles ready (17ms) — pc=n li=n (antag deferred until after A-plot)
+[PAIRBOND] skipped — Bibles not both ready (pc=n li=n)
+[R-PLOT] generating (INVERTED chain — relationship planning object fires BEFORE A-plot, from Pair Dynamic + Bibles)
+[STORY-SPINE] shape=RISE_FALL_RISE worldArc=∅ world=fatelands tier=fling
+[CHECKOUT_RETURN] Success return (localStorage fallback) — tier: null | story: null | has pending state: false
+[CHECKOUT_RETURN] Corridor complete (no saved story) — auto-beginning literary story
+Failed to load resource: net::ERR_FAILED
+[R-PLOT] generator errored (non-fatal): Failed to fetch
+[R-PLOT] generation complete (6ms) — rPlot=absent (Bible prerequisites incomplete: pcBible=n liBible=n)
+[A-PLOT:SHAPE] selected: Caretaking (OPEN_VEIN × BEAUTIFUL_RUIN) — legacy pressure-first pick
+[A-PLOT:READER-Q] Can this man actually love somebody?
+[A-PLOT:PRESSURE-TYPE] escalating dependency
+[A-PLOT:ROMANCE-ENGINE] classified as: COLLISION (Collision) — Scene 1 question: What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?
+[CRISIS] category=DANGER (dedicated persistent cursor — no repeat until all 6 cycle)
+[A-PLOT:FATELANDS-LIGHTHOUSE] ──────────────────────────────────────
+  RESOLVED:    broken_vow_bond
+  CERTAINTY:   "I was certain of US"
+  WHY:         default (no strong signals)
+  SCORE:       0 (losers: wrong_wish:0, syzygy:0, fold:0)
+  HISTORY:     []
+  TIER:        fling — opening allowed; resolution depth tier-gated downstream
+[A-PLOT] provider chain (Grok-first, health-aware): Grok-4.1-reasoning → GPT-4o-mini → GPT-4o → DeepSeek-V4-Pro
+Failed to load resource: net::ERR_FAILED
+[A-PLOT] Grok-4.1-reasoning failed in 31ms: Failed to fetch — marked dead for session, trying next provider
+Failed to load resource: net::ERR_FAILED
+[A-PLOT] GPT-4o-mini failed in 21ms: Failed to fetch — marked dead for session, trying next provider
+Failed to load resource: net::ERR_FAILED
+[A-PLOT] GPT-4o failed in 9ms: Failed to fetch — marked dead for session, trying next provider
+Failed to load resource: net::ERR_FAILED
+[A-PLOT] DeepSeek-V4-Pro failed in 11ms: Failed to fetch — marked dead for session
+[A-PLOT] Init failed (story continues without A-plot): A-plot generation failed across all 4 providers (last error: Failed to fetch)
+[ANT-BODY-BIBLE] skipped — shape=?, antagonist=?
+[LIT:SPINE] antagonist Bible (0ms) — antag=n (not eligible / shape C / unnamed)
+[SPINE] flavor=arcane_binding · spine=GENERIC (gpt-4o-mini)
+[CG:SCAFFOLD] generation start (arcane_binding, gpt-4o-mini)
+[DEEP-TRIO] role=PC arch=OPEN_VEIN wound=MENTOR crisis=BETRAYAL_REVEALED
+[DEEP-TRIO] role=LI arch=BEAUTIFUL_RUIN wound=PARENTAL hunger=MET_AS_EQUAL
+[LI-BUILD] single male LI, non-privation world → hero build pool (tall/broad/impressive)
+[LI-HAIR] single LI, non-plucking-culture → bald/receding/thinning filtered from hair pool
+[ANT-BODY-BIBLE] skipped — shape=?, antagonist=?
+[CG:SCAFFOLD] awaiting 3 Bible(s) before spine (P2 sequencing — latency over cost)
+Failed to load resource: net::ERR_FAILED
+[PC-BODY-BIBLE] generator errored (non-fatal): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[LI-BODY-BIBLE] generator errored (non-fatal): Failed to fetch
+[CG:SCAFFOLD] Bibles ready (15ms) — pc=n li=n antag=n
+Failed to load resource: net::ERR_FAILED
+[CG:SCAFFOLD] primary gpt-4o-mini failed/empty (Failed to fetch) — backup 1: gpt-4o-mini
+Failed to load resource: net::ERR_FAILED
+[CG:SCAFFOLD] gpt-4o-mini backup failed (Failed to fetch) — backup 2: grok
+Failed to load resource: net::ERR_FAILED
+[CG:SCAFFOLD] generation FAILED — scene proceeds without scaffold: Failed to fetch
+[FATE ANCHOR] Resolved: {present: true, type: deck, lossEligible: true, world: Fantasy}
+[STORYPASS] Eligibility computed at creation: true (length: fling )
+[STORY:SHAPE] Snapshot stored: {world: Fantasy, genre: Billionaire, tone: Earnest, dynamic: Enemies, pov: First}
+[EMIT] WISH_AUTHORING_CORE gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=766 scene=1 via=_buildFatelandsWishCoreDirective <- http://localhost:3000/app.js?v=20260901a-evidence-ownership:252868:515 <- handleBeginStory text=" The First Sacrifice THE TWIST — steps 5-6, shaped by what
+[EMIT] WISH_ADJUDICATION gate=OPEN spineLoadBearing=no openWithoutSpine=true gateTextChars=766 scene=1 via=_buildFatelandsWishAdjudicationDirective <- http://localhost:3000/app.js?v=20260901a-evidence-ownership:252868:629 <- handleBeginStory text=" The First Sacrifice THE TWIST — steps 5-6, shaped b
+[SCENE1:PATTERN-GATE] region-particular opener → thornwild
+[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_thornwild; summons/social/reckoning shapes suppressed)
+[SCENE1:FP] saved opening fingerprint: region_thornwild — recent: [region_thornwild]
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
+[SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)
+[ONBOARD_WINDOW] story count → 1 (ordinal 1; window covers stories 1-3)
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DEMAND-HINT] axis="Say it plainly — or let it show without words?" source=scene1_micro_decision universal=1 pressure=?
+[PREF-RESOLVE] axis=demand_hint mode=full_probe value=- confidence=0.00 reason=onboarding_keep_axis_visible
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+STORYBOUND FINAL PROMPT PAYLOAD
+{mode: solo, tier: free, fourAxis: Object, archetype: Object, ancestry: Object}
+console.groupEnd
+STORYBOUND VALIDATION PASSED - Proceeding to model call
+[TITLE:PRE] Title already exists, skipping: The First Sacrifice
+[DEEP-TRIO] role=PC arch=OPEN_VEIN wound=PARTNER crisis=REPUTATION_ATTACK
+[PHRASE-LEDGER] seeded 9 starter cooldown item(s).
+[DEEP-TRIO] role=LI arch=BEAUTIFUL_RUIN wound=PUBLIC hunger=WANTED_REAL_SELF
+[LI-BUILD] single male LI, non-privation world → hero build pool (tall/broad/impressive)
+[LI-HAIR] single LI, non-plucking-culture → bald/receding/thinning filtered from hair pool
+[ANT-BODY-BIBLE] skipped — shape=?, antagonist=?
+Failed to load resource: net::ERR_FAILED
+[PC-BODY-BIBLE] generator errored (non-fatal): Failed to fetch
+Failed to load resource: net::ERR_FAILED
+[LI-BODY-BIBLE] generator errored (non-fatal): Failed to fetch
+[SCENE-ASSIGNMENT] scene=1 source=plan-scene setting=null event="THE WISH — steps 1-4 of the twist sequence ONLY. Scene 1 does three things and then STOPS:"
+[SCENE1:FACT-MANIFEST] fm:8ec83b04-216 · 7 fact(s) · story=acceptance-1788243160951
+[SCENE1:CPLUS:NO-OWNED-EVIDENCE] 1 candidate(s) have no owned pressure evidence in this scene (Julian) — manifest fm:8ec83b04-216. They are not offered; the scene plans without them. This is a C+ coverage failure, never a story failure.
+[SCENE1:CPLUS:OPTIONS] 9 grounded option(s) across 2 candidate(s) · starved: 1
+[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]
+[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=7010 → max_tokens=2921 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)
+[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)
+[SCENE1:ENVELOPE] spine contract declares 17 field(s)
+[SCENE1:ENVELOPE:FAULT] no opening_spine and no recognised spine fields at top level
+[SCENE1:SCAFFOLD] skipped (no opening_spine and no recognised spine fields at top level) — prose path unchanged
+[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: no opening_spine and no recognised spine fields at top level
+[BeginStory] Error: Error: Scene 1 aborted: no opening_spine and no recognised spine fields at top level
+    at handleBeginStory (http://localhost:3000/app.js?v=20260901a-evidence-ownership:263782:20)
+[BeginStory] handleBeginStory() called
+[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.
+[BeginStory] DEBUG state.picks: {"world":"Fantasy","tone":"Earnest","genre":"Billionaire","pressure":"PowerControl","flavor":"Arcane Binding","dynamic":"Enemies","era":null,"pov":"First","worldSubtype":"arcane_binding","length":"taste","pcSpecies":"First Favored","liSpecies":"First Favored","identit
+[BeginStory] DEBUG state.archetype: {"primary":"BEAUTIFUL_RUIN","modifier":null}
+[BeginStory] DEBUG state.mode: solo state.storyLength: fling
+[BeginStory] Past _beginStoryInProgress guard, entering main flow
+[ACCESS:RESOLVER] Decision: {"decisionId":"CONTINUE_BLOCKED_NO_FUNDS","allowed":false,"costType":"blocked","reason":"no_fortunes","uiAction":"show_paywall","meta":{"requiresPremiumWorld":true,"hasUsableFortunesForNewStory":false,"globalFortuneCount":0,"storyId":"acceptance-1788243160951","isNewStory
+[Corridor] Unresolved rows: playermask
+[BeginStory] EXITING — corridor validation failed
+[BeginStory] DEBUG corridorSelections: []
+Failed to load resource: net::ERR_FAILED
+[bug-report] award check threw: Failed to fetch
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+[CHECKOUT_RETURN] Late profile re-sync (4000ms) — fortunes: undefined | subscribed: undefined
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+[TEMPT:CRACKLE] segmented into 2 discrete crackles
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+[CHECKOUT_RETURN] Late profile re-sync (12000ms) — fortunes: undefined | subscribed: undefined
+[GN DEV] Provider: gemini | Model: gemini-3.1-flash-image-preview
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+Connecting to 'http://sb-test.localhost/rest/v1/profiles?select=tier%2Cfortunes%2Cis_subscriber%2Csubscription_tier%2Cage_confirmed%2Ctos_version%2Cprivacy_version%2Cadult_ack_version%2Cromance_preferences%2Cavoidances%2Cfirst_tempt_fate_vision_triggered%2Cattraction_profile%2Cbilling_status%2Cbilli
+[ENTITLEMENT] syncTierFromAccess: {access: free, tier: free, subscriptionTier: null, subscribed: false, keyholeMarked: false}
+Profile hydrated. Subscribed: false | Tier: free | Keyhole: false | Fortunes: 0 | Resonance: Quiet
+[CHECKOUT_RETURN] Late profile re-sync (25000ms) — fortunes: undefined | subscribed: undefined
