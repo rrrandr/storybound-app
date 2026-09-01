@@ -1,0 +1,523 @@
+{
+  "rows": [
+    {
+      "n": 1,
+      "authorized": false,
+      "authorityCode": "no-stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael",
+        "Julian",
+        "Seren",
+        "the presiding Dohkar"
+      ],
+      "inferredPresence": 0,
+      "facts": 4,
+      "poisonedFacts": 0,
+      "ownersByRef": {
+        "named:seren": 2,
+        "role:first_sacrifice_presiding_dohkar": 2
+      },
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "Julian",
+        "Seren",
+        "the presiding Dohkar"
+      ],
+      "declined": []
+    },
+    {
+      "n": 2,
+      "authorized": true,
+      "authorityCode": null,
+      "fingerprint": "stage:v1:a5fec2be:212",
+      "presence": [
+        "Lirael:IN_PERSON",
+        "Seren:IN_PERSON",
+        "Julian:IN_PERSON",
+        "the presiding Dohkar:IN_PERSON"
+      ],
+      "legacyOnStage": [],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "Seren",
+        "Julian",
+        "the presiding Dohkar"
+      ],
+      "declined": []
+    },
+    {
+      "n": 3,
+      "authorized": true,
+      "authorityCode": null,
+      "fingerprint": "stage:v1:4173601e:212",
+      "presence": [
+        "Lirael:IN_PERSON",
+        "Seren:IN_PERSON",
+        "Julian:IN_PERSON",
+        "the presiding Dohkar:IN_PERSON"
+      ],
+      "legacyOnStage": [],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "Seren",
+        "Julian",
+        "the presiding Dohkar"
+      ],
+      "declined": []
+    },
+    {
+      "n": 4,
+      "authorized": true,
+      "authorityCode": null,
+      "fingerprint": "stage:v1:358bcae9:696",
+      "presence": [
+        "Lirael:IN_PERSON",
+        "the Chayr:IN_PERSON",
+        "the presiding Dohkar:IN_PERSON",
+        "the second Dohkar:IN_PERSON",
+        "Julian:REPORTED"
+      ],
+      "legacyOnStage": [],
+      "inferredPresence": 0,
+      "facts": 3,
+      "poisonedFacts": 0,
+      "ownersByRef": {
+        "role:first_sacrifice_inquiry_chayr": 1,
+        "role:first_sacrifice_presiding_dohkar": 1,
+        "role:first_sacrifice_second_dohkar": 1,
+        "pc:lirael": 1
+      },
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "the Chayr",
+        "the presiding Dohkar",
+        "the second Dohkar"
+      ],
+      "declined": [
+        "Julian:no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity",
+        "Seren:no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity"
+      ]
+    },
+    {
+      "n": 5,
+      "authorized": true,
+      "authorityCode": null,
+      "fingerprint": "stage:v1:1d431527:384",
+      "presence": [
+        "Lirael:IN_PERSON",
+        "Julian:IN_PERSON",
+        "the Chayr:REPORTED"
+      ],
+      "legacyOnStage": [],
+      "inferredPresence": 1,
+      "facts": 2,
+      "poisonedFacts": 0,
+      "ownersByRef": {
+        "named:julian": 2
+      },
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "Julian"
+      ],
+      "declined": [
+        "the Chayr:no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity",
+        "Seren:no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity"
+      ]
+    },
+    {
+      "n": 6,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 6 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a na",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 7,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 7 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a na",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 8,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 8 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a na",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 9,
+      "authorized": true,
+      "authorityCode": null,
+      "fingerprint": "stage:v1:d7e91305:137",
+      "presence": [
+        "Lirael:IN_PERSON",
+        "Julian:RECALLED"
+      ],
+      "legacyOnStage": [],
+      "inferredPresence": 1,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "Julian"
+      ],
+      "declined": [
+        "Seren:no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity"
+      ]
+    },
+    {
+      "n": 10,
+      "authorized": true,
+      "authorityCode": null,
+      "fingerprint": "stage:v1:52eeffe1:234",
+      "presence": [
+        "Lirael:IN_PERSON",
+        "Julian:IN_PERSON"
+      ],
+      "legacyOnStage": [],
+      "inferredPresence": 1,
+      "facts": 1,
+      "poisonedFacts": 0,
+      "ownersByRef": {
+        "named:julian": 1
+      },
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "Julian"
+      ],
+      "declined": [
+        "Seren:no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity"
+      ]
+    },
+    {
+      "n": 11,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 11 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a n",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 12,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 12 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a n",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 13,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 13 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a n",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 14,
+      "authorized": true,
+      "authorityCode": null,
+      "fingerprint": "stage:v1:3be2b60c:321",
+      "presence": [
+        "Lirael:IN_PERSON",
+        "Julian:IN_PERSON",
+        "the Chayr:IN_PERSON"
+      ],
+      "legacyOnStage": [],
+      "inferredPresence": 1,
+      "facts": 1,
+      "poisonedFacts": 0,
+      "ownersByRef": {
+        "role:first_sacrifice_inquiry_chayr": 1
+      },
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "Julian",
+        "the Chayr"
+      ],
+      "declined": [
+        "Seren:no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity"
+      ]
+    },
+    {
+      "n": 15,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 15 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a n",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 16,
+      "authorized": true,
+      "authorityCode": null,
+      "fingerprint": "stage:v1:ed739810:236",
+      "presence": [
+        "Lirael:IN_PERSON",
+        "Julian:IN_PERSON"
+      ],
+      "legacyOnStage": [],
+      "inferredPresence": 1,
+      "facts": 1,
+      "poisonedFacts": 0,
+      "ownersByRef": {
+        "named:julian": 1
+      },
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": true,
+      "cplusFault": null,
+      "candidates": [
+        "Lirael",
+        "Julian"
+      ],
+      "declined": [
+        "Seren:no mention opportunity in this scene — roster or roster-adjacent membership only, and membership is not an opportunity"
+      ]
+    },
+    {
+      "n": 17,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 17 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a n",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 18,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 18 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a n",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 19,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 19 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a n",
+      "candidates": [],
+      "declined": []
+    },
+    {
+      "n": 20,
+      "authorized": false,
+      "authorityCode": "no_structured_stage",
+      "fingerprint": null,
+      "presence": [],
+      "legacyOnStage": [
+        "Lirael"
+      ],
+      "inferredPresence": 0,
+      "facts": 0,
+      "poisonedFacts": 0,
+      "ownersByRef": {},
+      "refFaults": 0,
+      "developments": 0,
+      "cplusOk": false,
+      "cplusFault": "scene 20 has no AUTHORITATIVE stage: no_structured_stage. A roster is not a stage, and a n",
+      "candidates": [],
+      "declined": []
+    }
+  ],
+  "classes": {
+    "A": [
+      4,
+      5,
+      10,
+      14,
+      16
+    ],
+    "B": [
+      2,
+      3,
+      9
+    ],
+    "C": [
+      6,
+      7,
+      8,
+      11,
+      12,
+      13,
+      15,
+      17,
+      18,
+      19,
+      20
+    ]
+  },
+  "integrity": {
+    "inferredPresence": 5,
+    "refFaults": 0,
+    "poisoned": 0,
+    "escaped": 0
+  }
+}
