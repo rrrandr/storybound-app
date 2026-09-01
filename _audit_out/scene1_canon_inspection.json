@@ -1,0 +1,154 @@
+{
+  "ledgerExistsAtScene1": false,
+  "ledgerEntityCount": 0,
+  "stageOk": true,
+  "stageFault": null,
+  "onStage": [
+    "pc:lirael",
+    "named:julian",
+    "named:seren",
+    "role:first_sacrifice_presiding_dohkar"
+  ],
+  "offStage": [],
+  "per": [
+    {
+      "id": "pc:lirael",
+      "label": "Lirael",
+      "entityExists": false,
+      "canonSourceCount": 0,
+      "canonForReturnedNull": false,
+      "latentFacets": 2,
+      "latentProhibitions": 0,
+      "revealedFacets": 0
+    },
+    {
+      "id": "named:julian",
+      "label": "Julian",
+      "entityExists": false,
+      "canonSourceCount": 0,
+      "canonForReturnedNull": false,
+      "latentFacets": 2,
+      "latentProhibitions": 0,
+      "revealedFacets": 0
+    },
+    {
+      "id": "named:seren",
+      "label": "Seren",
+      "entityExists": false,
+      "canonSourceCount": 0,
+      "canonForReturnedNull": false,
+      "latentFacets": 3,
+      "latentProhibitions": 0,
+      "revealedFacets": 0
+    },
+    {
+      "id": "role:first_sacrifice_presiding_dohkar",
+      "label": "the presiding Dohkar",
+      "entityExists": false,
+      "canonSourceCount": 0,
+      "canonForReturnedNull": false,
+      "latentFacets": 5,
+      "latentProhibitions": 3,
+      "revealedFacets": 0
+    }
+  ],
+  "seedRows": [
+    {
+      "key": "pc:lirael",
+      "label": "Lirael",
+      "facets": 2,
+      "prohibitions": 0
+    },
+    {
+      "key": "named:julian",
+      "label": "Julian",
+      "facets": 2,
+      "prohibitions": 0
+    },
+    {
+      "key": "named:seren",
+      "label": "Seren",
+      "facets": 3,
+      "prohibitions": 1
+    },
+    {
+      "key": "role:first_sacrifice_presiding_dohkar",
+      "label": "the presiding Dohkar",
+      "facets": 5,
+      "prohibitions": 9
+    }
+  ],
+  "protectedCount": 4,
+  "viewOk": true,
+  "viewChars": 794,
+  "view": "\nESTABLISHED CHARACTER CANON — what these people have already shown the reader. Stay compatible with the MECHANISM, not with a surface detail: the same truth may look different in a different room. Nothing here may be contradicted; nothing here has to be mentioned.\n  • the presiding Dohkar — something about them is not yet on the page; do not settle it here, and never write “compulsively teaches”, “cannot help correcting” or “a natural teacher”\n  • the presiding Dohkar — something about them is not yet on the page; do not settle it here, and never write “cannot be bothered” or “does not care what it costs”\n  • the presiding Dohkar — something about them is not yet on the page; do not settle it here, and never write “kind to the poor”, “gentle with the destitute” or “a soft spot for”\n",
+  "coverage": {
+    "canonBearingSubjects": 4,
+    "renderablyProtectedSubjects": 1,
+    "auditorOnlySubjects": 3,
+    "unrenderableLatentFacets": 9,
+    "subjects": [
+      {
+        "canonicalId": "pc:lirael",
+        "label": "Lirael",
+        "facets": 2,
+        "authorSafe": 0,
+        "auditorOnly": 2,
+        "protection": "auditor_only"
+      },
+      {
+        "canonicalId": "named:julian",
+        "label": "Julian",
+        "facets": 2,
+        "authorSafe": 0,
+        "auditorOnly": 2,
+        "protection": "auditor_only"
+      },
+      {
+        "canonicalId": "named:seren",
+        "label": "Seren",
+        "facets": 3,
+        "authorSafe": 0,
+        "auditorOnly": 3,
+        "protection": "auditor_only"
+      },
+      {
+        "canonicalId": "role:first_sacrifice_presiding_dohkar",
+        "label": "the presiding Dohkar",
+        "facets": 5,
+        "authorSafe": 3,
+        "auditorOnly": 2,
+        "protection": "creative+auditor"
+      }
+    ]
+  },
+  "auditChars": 2928,
+  "auditText": "\nCHARACTER CANON — PRIVATE TO THIS CHECK. It includes truths the reader has NOT been shown. You are checking compatibility only. Do NOT quote, paraphrase, restate or hint at any unrevealed truth in your output; return the verdict fields and nothing else.\n  • Lirael — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives.\n  • Lirael — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): Failing is survivable; failing where it can be witnessed and recounted is not, so she manages the audience as much as the task.\n  • Julian — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): He is accustomed to being respected without asserting rank; when a room becomes performative, he grows quieter rather than competing for its attention.\n  • Julian — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): He remains attentive at the edge of consequential moments and does not volunteer the full extent of what he has noticed or understood.\n  • Seren — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): Her compassion is genuine but requires an audience; she needs her goodness to be seen and approved before it feels real to her.\n  • Seren — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): Correction and rehearsal have made self-control a mastery she can hold through failure; she treats being corrected as something to perfect, not to survive.\n  • Seren — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): She avoids naming another person's wound plainly because she believes softening and blurring it is kinder than making them endure direct recognition.\n  • the presiding Dohkar — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): Routine ceremony rarely deserves his full attention, and he makes little effort to disguise that judgment.\n  • the presiding Dohkar — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): Public honour paid to a peer makes him newly attentive to rank, merit, and whether the recognition was deserved.\n  • the presiding Dohkar — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): With children he turns mistakes, questions and even play into lessons; teaching is his habitual form of attention. (incompatible with “compulsively teaches”, “cannot help correcting” or “a natural teacher”)\n  • the presiding Dohkar — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): In questions of sacrifice he assumes his judgement carries an authority that other people have not earned. (incompatible with “cannot be bothered” or “does not care what it costs”)\n  • the presiding Dohkar — TRUE BUT NOT YET SHOWN TO THE READER (do not disclose): With people who have little and cannot confer status he becomes practical, patient and unexpectedly kind. (incompatible with “kind to the poor”, “gentle with the destitute” or “a soft spot for”)\n",
+  "rawGuards": [
+    "(?:performance|something|thing)\\s+to\\s+(?:master|perfect)[^.]{0,40}?\\bnot\\b[^.]{0,40}?(?:wound|survive|endure|suffer)",
+    "bored by the (?:rite|ceremony|ritual)|does not (?:care about|hide his contempt for) the (?:rite|ceremony)",
+    "jealous of|envies|resents (?:his|their) standing|wonders whether .{0,20}deserved",
+    "cannot be bothered|indifferent to the (?:rite|ceremony)",
+    "compulsively teaches|cannot help correcting|is a natural teacher",
+    "cannot be bothered|does not deserve his attention",
+    "assumes his judge?ment|arrogant about sacrifice|believes he alone (?:knows|decides)",
+    "cannot be bothered|does not care what it costs",
+    "kind to the poor|gentle with the destitute|has a soft spot for",
+    "cannot be bothered|contemptuous of everyone"
+  ],
+  "truths": [
+    "She knows the procedure better than she has ever performed it, and the gap between knowing and doing is where her fear lives.",
+    "Failing is survivable; failing where it can be witnessed and recounted is not, so she manages the audience as much as the task.",
+    "He is accustomed to being respected without asserting rank; when a room becomes performative, he grows quieter rather than competing for its attention.",
+    "He remains attentive at the edge of consequential moments and does not volunteer the full extent of what he has noticed or understood.",
+    "Her compassion is genuine but requires an audience; she needs her goodness to be seen and approved before it feels real to her.",
+    "Correction and rehearsal have made self-control a mastery she can hold through failure; she treats being corrected as something to perfect, not to survive.",
+    "She avoids naming another person's wound plainly because she believes softening and blurring it is kinder than making them endure direct recognition.",
+    "Routine ceremony rarely deserves his full attention, and he makes little effort to disguise that judgment.",
+    "Public honour paid to a peer makes him newly attentive to rank, merit, and whether the recognition was deserved.",
+    "With children he turns mistakes, questions and even play into lessons; teaching is his habitual form of attention.",
+    "In questions of sacrifice he assumes his judgement carries an authority that other people have not earned.",
+    "With people who have little and cannot confer status he becomes practical, patient and unexpectedly kind."
+  ],
+  "unrenderableLatent": 9
+}

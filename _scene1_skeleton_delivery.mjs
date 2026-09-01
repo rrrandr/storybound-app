@@ -1657,7 +1657,7 @@ console.log(`\n${'═'.repeat(90)}\nPART S — SOLO STAGE CONTRACT\n${'═'.repe
   const J = await run({ hot: false, solo: true, mutate: 'julianRef' });
   t('S7 established offstage Julian may be REFERENCED without rejection',
     J.author.length === 1 && !J.logs.some(l => /IDENTITY:INVENTED/.test(l)),
-    `author=${J.author.length} fatal=${(J.logs.find(l=>/IDENTITY:INVENTED/.test(l))||'').slice(0,140)}`);
+    `author=${J.author.length} planner=${J.planner.length} fatal=${(J.logs.find(l=>/IDENTITY:INVENTED/.test(l))||'').slice(0,140)}\n      LOGS: ${J.logs.slice(-6).join(' || ').slice(0,700)}`);
   const JS = await run({ hot: false, solo: true, mutate: 'julianStaged' });
   t('S7 …but Julian may NOT be staged into the room',
     JS.author.length === 0

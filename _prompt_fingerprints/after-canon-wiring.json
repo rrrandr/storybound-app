@@ -1,0 +1,10 @@
+{
+  "label": "after-canon-wiring",
+  "sys": "2508954bf9818343289e6251ab7eaffc250820514f60b18869016871541d20f7",
+  "usr": "14efd9a691fea7f2533e744f16a9e4ab469b05c5ccf41ee62565ebb74f565116",
+  "sysLen": 4239,
+  "usrLen": 64139,
+  "stable": true,
+  "model": "mistral-small-latest",
+  "max_tokens": 2921
+}

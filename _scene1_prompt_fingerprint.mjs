@@ -155,5 +155,35 @@ if (cmd === 'compare') {
   process.exit(same ? 0 : 1);
 }
 
-console.log('usage: record <label> | compare <a> <b>');
+if (cmd === 'diff') {
+  // A REBASELINE HAS TO BE ARGUED, NOT ASSERTED. This shows exactly which lines the prompt
+  // gained and lost, and whether every added line belongs to the one block we intended to add.
+  const A = { sys: fs.readFileSync(`${DIR}/${a}.sys.txt`, 'utf8'), usr: fs.readFileSync(`${DIR}/${a}.usr.txt`, 'utf8') };
+  const B = { sys: fs.readFileSync(`${DIR}/${b}.sys.txt`, 'utf8'), usr: fs.readFileSync(`${DIR}/${b}.usr.txt`, 'utf8') };
+  console.log(`\n${'═'.repeat(74)}\nSTRUCTURAL DIFF — ${a} → ${b}\n${'═'.repeat(74)}`);
+  let verdict = true;
+  for (const part of ['sys', 'usr']) {
+    const la = A[part].split('\n'), lb = B[part].split('\n');
+    const setA = new Map(); la.forEach(l => setA.set(l, (setA.get(l) || 0) + 1));
+    const setB = new Map(); lb.forEach(l => setB.set(l, (setB.get(l) || 0) + 1));
+    const added = [], removed = [];
+    setB.forEach((n, l) => { const d = n - (setA.get(l) || 0); for (let i = 0; i < d; i++) added.push(l); });
+    setA.forEach((n, l) => { const d = n - (setB.get(l) || 0); for (let i = 0; i < d; i++) removed.push(l); });
+    // Every added line must belong to the canon block: its header, or a bullet under it.
+    const isCanon = (l) => /ESTABLISHED CHARACTER CANON/.test(l)
+      || /^\s*•\s.*(not yet on the page|established:|ALWAYS TRUE:|last shown by:|signature the reader)/.test(l)
+      || l.trim() === '';
+    const stray = added.filter(l => !isCanon(l));
+    console.log(`\n ${part}: +${added.length} / -${removed.length} lines`);
+    added.slice(0, 6).forEach(l => console.log(`   + ${l.slice(0, 130)}`));
+    removed.slice(0, 4).forEach(l => console.log(`   - ${l.slice(0, 130)}`));
+    if (removed.length) { verdict = false; console.log(`   ✗ ${removed.length} line(s) REMOVED — a rebaseline may only ADD`); }
+    if (stray.length) { verdict = false; console.log(`   ✗ ${stray.length} added line(s) are NOT part of the canon block:`); stray.slice(0, 4).forEach(l => console.log(`       ${l.slice(0, 130)}`)); }
+    if (!removed.length && !stray.length) console.log(`   ✓ every change is the canon block, nothing else`);
+  }
+  console.log(`${'─'.repeat(74)}\n ${verdict ? '✓ THE ONLY SEMANTIC ADDITION IS THE CANON BLOCK' : '✗ THE DIFF CONTAINS MORE THAN THE CANON BLOCK'}\n`);
+  process.exit(verdict ? 0 : 1);
+}
+
+console.log('usage: record <label> | compare <a> <b> | diff <a> <b>');
 process.exit(2);
