@@ -117,13 +117,16 @@ module.exports = async function handler(req, res) {
     //  must never read it as "no contradiction found": an unasked question has no answer, and
     //  the whole point of the role is that silence is not a pass.
     // ══════════════════════════════════════════════════════════════════════════════════
-    if (role === 'CHARACTER_CANON_AUDITOR') {
+    // ONE flag governs BOTH roles. Enabling the auditor without repair would find
+    // contradictions with no recovery; enabling repair without the auditor would have nothing
+    // to repair against. They are a single capability and are gated as one.
+    if (role === 'CHARACTER_CANON_AUDITOR' || role === 'CHARACTER_CANON_REPAIR') {
       const _enabled = String(process.env.SB_CANON_AUDITOR_ENABLED || '').trim() === '1';
       if (!_enabled) {
-        console.warn('[MISTRAL-PROXY] CHARACTER_CANON_AUDITOR is not enabled on this deployment '
+        console.warn('[MISTRAL-PROXY] ' + role + ' is not enabled on this deployment '
           + '(SB_CANON_AUDITOR_ENABLED is unset) — refusing, and this is NOT a compatible verdict');
         return res.status(403).json({
-          error: 'Character canon auditor is not enabled on this deployment',
+          error: 'Character canon auditing/repair is not enabled on this deployment',
           code: 'AUDITOR_NOT_ENABLED',
           verdict: 'auditor_not_enabled'
         });
@@ -136,7 +139,8 @@ module.exports = async function handler(req, res) {
     // the portfolio evidence, NOT a completed evaluation of auditing quality — the portfolio A/B
     // measured psychology GENERATION, and judging compatibility is a different task.
     const requestedModel = model || (role === 'PROMPT_PREPROCESSOR' ? 'mistral-small-latest'
-      : role === 'CHARACTER_CANON_AUDITOR' ? 'mistral-small-latest' : 'mistral-medium-latest');
+      : (role === 'CHARACTER_CANON_AUDITOR' || role === 'CHARACTER_CANON_REPAIR') ? 'mistral-small-latest'
+      : 'mistral-medium-latest');
 
     if (!ALLOWED_MISTRAL_MODELS.includes(requestedModel)) {
       console.error(`[MISTRAL-PROXY] Model "${requestedModel}" not in allowlist.`);

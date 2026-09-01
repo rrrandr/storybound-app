@@ -293,6 +293,9 @@ const DENIED_OPENAI_ROLES = {
   // the auditor cannot run it must fail LOUDLY to `unknown`, which is a verdict the caller
   // already handles — a quiet fallback would be a second provider judging character canon with
   // nobody having chosen it.
+  CHARACTER_CANON_REPAIR: 'canon repair routes through Mistral, under the same capability as '
+    + 'the auditor. A repair that silently fell to another provider would be an unreviewed pen '
+    + 'on finished prose.',
   CHARACTER_CANON_AUDITOR: 'canon auditing routes through Mistral (mistral-small-latest). This '
     + 'role must fail to `unknown` rather than fall back to another provider: an unavailable '
     + 'auditor is an unanswered question, never a compatible verdict.'
