@@ -1,0 +1,10 @@
+{
+  "label": "baseline-abfc679",
+  "sys": "f29cadfa85c830a4d58d2ba1b35bdeb034cd2d46dc92b9b7f0af7ccd62d4ffb5",
+  "usr": "c18b48e60867a3a4da19ed2d2bcc7519de36f163d9407970580efcbc53154744",
+  "sysLen": 6177,
+  "usrLen": 68727,
+  "stable": true,
+  "model": "mistral-small-latest",
+  "max_tokens": 2921
+}
