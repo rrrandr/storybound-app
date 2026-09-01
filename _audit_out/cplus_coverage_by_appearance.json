@@ -1,0 +1,390 @@
+{
+  "scenes": [
+    {
+      "n": 1,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "Julian",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "due_no_owned_evidence"
+        },
+        {
+          "label": "Seren",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": true,
+          "bucket": "assigned"
+        },
+        {
+          "label": "the presiding Dohkar",
+          "presence": "IN_PERSON",
+          "status": "DEFERRED",
+          "reason": "density_cap",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": false,
+          "bucket": "density_deferred"
+        }
+      ],
+      "assignedCount": 1
+    },
+    {
+      "n": 2,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "Seren",
+          "presence": "IN_PERSON",
+          "status": "SUPPRESSED",
+          "reason": "cooldown",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "cooldown_suppressed"
+        },
+        {
+          "label": "Julian",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "due_no_owned_evidence"
+        },
+        {
+          "label": "the presiding Dohkar",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "due_no_owned_evidence"
+        }
+      ],
+      "assignedCount": 0
+    },
+    {
+      "n": 3,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "Seren",
+          "presence": "IN_PERSON",
+          "status": "SUPPRESSED",
+          "reason": "cooldown",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "cooldown_suppressed"
+        },
+        {
+          "label": "Julian",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "due_no_owned_evidence"
+        },
+        {
+          "label": "the presiding Dohkar",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "due_no_owned_evidence"
+        }
+      ],
+      "assignedCount": 0
+    },
+    {
+      "n": 4,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "the Chayr",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": true,
+          "bucket": "assigned"
+        },
+        {
+          "label": "the presiding Dohkar",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": true,
+          "bucket": "assigned"
+        },
+        {
+          "label": "the second Dohkar",
+          "presence": "IN_PERSON",
+          "status": "DEFERRED",
+          "reason": "density_cap",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": false,
+          "bucket": "density_deferred"
+        },
+        {
+          "label": "Julian",
+          "presence": "REPORTED",
+          "status": "DEFERRED",
+          "reason": "density_cap",
+          "ownedEvidence": false,
+          "offered": false,
+          "assigned": false,
+          "bucket": "density_deferred"
+        }
+      ],
+      "assignedCount": 2
+    },
+    {
+      "n": 5,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "Julian",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "introduction_floor",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": true,
+          "bucket": "assigned"
+        },
+        {
+          "label": "the Chayr",
+          "presence": "REPORTED",
+          "status": "SUPPRESSED",
+          "reason": "cooldown",
+          "ownedEvidence": false,
+          "offered": false,
+          "assigned": false,
+          "bucket": "cooldown_suppressed"
+        }
+      ],
+      "assignedCount": 1
+    },
+    {
+      "n": 6,
+      "presenceKnown": false,
+      "viaDisclosure": [
+        "Julian"
+      ],
+      "recorded": 1
+    },
+    {
+      "n": 7,
+      "presenceKnown": false,
+      "viaDisclosure": [],
+      "recorded": 0
+    },
+    {
+      "n": 8,
+      "presenceKnown": false,
+      "viaDisclosure": [
+        "Julian"
+      ],
+      "recorded": 1
+    },
+    {
+      "n": 9,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "Julian",
+          "presence": "RECALLED",
+          "status": "REQUIRED",
+          "reason": "return_after_absence",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "due_no_owned_evidence"
+        }
+      ],
+      "assignedCount": 0
+    },
+    {
+      "n": 10,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "Julian",
+          "presence": "IN_PERSON",
+          "status": "ALLOWED",
+          "reason": "eligible",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": true,
+          "bucket": "assigned"
+        }
+      ],
+      "assignedCount": 1
+    },
+    {
+      "n": 11,
+      "presenceKnown": false,
+      "viaDisclosure": [],
+      "recorded": 0
+    },
+    {
+      "n": 12,
+      "presenceKnown": false,
+      "viaDisclosure": [],
+      "recorded": 0
+    },
+    {
+      "n": 13,
+      "presenceKnown": false,
+      "viaDisclosure": [],
+      "recorded": 0
+    },
+    {
+      "n": 14,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "Julian",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "return_after_absence",
+          "ownedEvidence": false,
+          "offered": true,
+          "assigned": false,
+          "bucket": "due_no_owned_evidence"
+        },
+        {
+          "label": "the Chayr",
+          "presence": "IN_PERSON",
+          "status": "REQUIRED",
+          "reason": "return_after_absence",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": true,
+          "bucket": "assigned"
+        }
+      ],
+      "assignedCount": 1
+    },
+    {
+      "n": 15,
+      "presenceKnown": false,
+      "viaDisclosure": [
+        "Julian"
+      ],
+      "recorded": 1
+    },
+    {
+      "n": 16,
+      "presenceKnown": true,
+      "appearances": [
+        {
+          "label": "Julian",
+          "presence": "IN_PERSON",
+          "status": "ALLOWED",
+          "reason": "eligible",
+          "ownedEvidence": true,
+          "offered": true,
+          "assigned": true,
+          "bucket": "assigned"
+        }
+      ],
+      "assignedCount": 1
+    },
+    {
+      "n": 17,
+      "presenceKnown": false,
+      "viaDisclosure": [
+        "Julian"
+      ],
+      "recorded": 1
+    },
+    {
+      "n": 18,
+      "presenceKnown": false,
+      "viaDisclosure": [
+        "Julian"
+      ],
+      "recorded": 1
+    },
+    {
+      "n": 19,
+      "presenceKnown": false,
+      "viaDisclosure": [],
+      "recorded": 0
+    },
+    {
+      "n": 20,
+      "presenceKnown": false,
+      "viaDisclosure": [],
+      "recorded": 0
+    }
+  ],
+  "perChar": {
+    "Julian": {
+      "appearances": 14,
+      "assigned": 3,
+      "density_deferred": 1,
+      "cooldown_suppressed": 0,
+      "ineligible_not_offered": 0,
+      "due_no_owned_evidence": 5,
+      "legacy_no_opportunity": 5
+    },
+    "Seren": {
+      "appearances": 3,
+      "assigned": 1,
+      "density_deferred": 0,
+      "cooldown_suppressed": 2,
+      "ineligible_not_offered": 0,
+      "due_no_owned_evidence": 0,
+      "legacy_no_opportunity": 0
+    },
+    "the presiding Dohkar": {
+      "appearances": 4,
+      "assigned": 1,
+      "density_deferred": 1,
+      "cooldown_suppressed": 0,
+      "ineligible_not_offered": 0,
+      "due_no_owned_evidence": 2,
+      "legacy_no_opportunity": 0
+    },
+    "the Chayr": {
+      "appearances": 3,
+      "assigned": 2,
+      "density_deferred": 0,
+      "cooldown_suppressed": 1,
+      "ineligible_not_offered": 0,
+      "due_no_owned_evidence": 0,
+      "legacy_no_opportunity": 0
+    },
+    "the second Dohkar": {
+      "appearances": 1,
+      "assigned": 0,
+      "density_deferred": 1,
+      "cooldown_suppressed": 0,
+      "ineligible_not_offered": 0,
+      "due_no_owned_evidence": 0,
+      "legacy_no_opportunity": 0
+    }
+  }
+}
