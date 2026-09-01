@@ -1,0 +1,245 @@
+{
+  "corpus": {
+    "manifestId": "fm:18831b82-365",
+    "storyId": "own-audit",
+    "corpusVersion": 2,
+    "sceneNumber": 1,
+    "facts": [
+      {
+        "evidence_id": "E1",
+        "field": "setting",
+        "type": "place",
+        "provenance": "assignment.setting",
+        "participants": [],
+        "groundableRefs": [],
+        "pressureEligible": false,
+        "text": "the customs house"
+      },
+      {
+        "evidence_id": "E2",
+        "field": "present",
+        "type": "roster",
+        "provenance": "assignment.participants",
+        "participants": [
+          {
+            "ref": "pc:lirael",
+            "role": "present",
+            "label": "Lirael"
+          },
+          {
+            "ref": "named:seren",
+            "role": "present",
+            "label": "Seren"
+          }
+        ],
+        "groundableRefs": [],
+        "pressureEligible": false,
+        "text": "Lirael, Seren"
+      },
+      {
+        "evidence_id": "E3",
+        "field": "about-to-happen",
+        "type": "event",
+        "provenance": "assignment.event",
+        "participants": [],
+        "groundableRefs": [],
+        "pressureEligible": false,
+        "text": "She counts what she has already signed for"
+      },
+      {
+        "evidence_id": "E4",
+        "field": "narrator",
+        "type": "narrator",
+        "provenance": "identity.playerMaskDescription",
+        "participants": [
+          {
+            "ref": "pc:lirael",
+            "role": "subject"
+          }
+        ],
+        "groundableRefs": [
+          "pc:lirael"
+        ],
+        "pressureEligible": true,
+        "text": "she says the true thing before she has decided to"
+      },
+      {
+        "evidence_id": "E5",
+        "field": "mention",
+        "type": "mention",
+        "provenance": "assignment.mentionedOnly",
+        "participants": [
+          {
+            "ref": "named:tomas_reyne",
+            "role": "mentioned",
+            "label": "Tomas Reyne"
+          }
+        ],
+        "groundableRefs": [],
+        "pressureEligible": false,
+        "text": "Tomas Reyne is referred to but is not on stage"
+      }
+    ],
+    "fingerprint": "18831b82-365"
+  },
+  "facts": [
+    {
+      "id": "E1",
+      "type": "place",
+      "provenance": "assignment.setting",
+      "owners": [],
+      "groundable": [],
+      "pressureEligible": false,
+      "text": "the customs house"
+    },
+    {
+      "id": "E2",
+      "type": "roster",
+      "provenance": "assignment.participants",
+      "owners": [
+        "present:pc:lirael",
+        "present:named:seren"
+      ],
+      "groundable": [],
+      "pressureEligible": false,
+      "text": "Lirael, Seren"
+    },
+    {
+      "id": "E3",
+      "type": "event",
+      "provenance": "assignment.event",
+      "owners": [],
+      "groundable": [],
+      "pressureEligible": false,
+      "text": "She counts what she has already signed for"
+    },
+    {
+      "id": "E4",
+      "type": "narrator",
+      "provenance": "identity.playerMaskDescription",
+      "owners": [
+        "subject:pc:lirael"
+      ],
+      "groundable": [
+        "pc:lirael"
+      ],
+      "pressureEligible": true,
+      "text": "she says the true thing before she has decided to"
+    },
+    {
+      "id": "E5",
+      "type": "mention",
+      "provenance": "assignment.mentionedOnly",
+      "owners": [
+        "mentioned:named:tomas_reyne"
+      ],
+      "groundable": [],
+      "pressureEligible": false,
+      "text": "Tomas Reyne is referred to but is not on stage"
+    }
+  ],
+  "pcFactVsSeren": [],
+  "pcFactVsPc": [],
+  "settingOnly": [],
+  "castOnly": [],
+  "nameOnly": [],
+  "mentionOnly": [],
+  "narratorVsPc": [
+    {
+      "option_id": "OPT-1",
+      "recipient": "Lirael",
+      "recipient_id": "pc:lirael",
+      "facet_id": "F1",
+      "category": "habit",
+      "truth": "She withholds her help until someone states plainly what they want.",
+      "pressure_id": "p",
+      "pressure_text": "the condition",
+      "evidence_ids": [
+        "E4"
+      ],
+      "evidence_texts": [
+        "she says the true thing before she has decided to"
+      ]
+    }
+  ],
+  "narratorVsSeren": [],
+  "ownedFacts": [
+    {
+      "id": "E1",
+      "type": "place",
+      "groundable": [],
+      "pressureEligible": false
+    },
+    {
+      "id": "E2",
+      "type": "roster",
+      "groundable": [],
+      "pressureEligible": false
+    },
+    {
+      "id": "E3",
+      "type": "event",
+      "groundable": [
+        "named:seren"
+      ],
+      "pressureEligible": true
+    },
+    {
+      "id": "E4",
+      "type": "narrator",
+      "groundable": [
+        "pc:lirael"
+      ],
+      "pressureEligible": true
+    },
+    {
+      "id": "E5",
+      "type": "mention",
+      "groundable": [],
+      "pressureEligible": false
+    }
+  ],
+  "ownedVsSeren": [
+    {
+      "option_id": "OPT-1",
+      "recipient": "Seren",
+      "recipient_id": "named:seren",
+      "facet_id": "F1",
+      "category": "habit",
+      "truth": "She withholds her help until someone states plainly what they want.",
+      "pressure_id": "p",
+      "pressure_text": "the condition",
+      "evidence_ids": [
+        "E3"
+      ],
+      "evidence_texts": [
+        "Seren asks twice for a receipt she has already been given"
+      ]
+    }
+  ],
+  "ownedVsOther": [],
+  "swapped": [
+    {
+      "option_id": "OPT-1",
+      "recipient": "Tomas Reyne",
+      "recipient_id": "named:seren",
+      "facet_id": "F1",
+      "category": "habit",
+      "truth": "She withholds her help until someone states plainly what they want.",
+      "pressure_id": "p",
+      "pressure_text": "the condition",
+      "evidence_ids": [
+        "E3"
+      ],
+      "evidence_texts": [
+        "Seren asks twice for a receipt she has already been given"
+      ]
+    }
+  ],
+  "fingerprints": {
+    "v1Style": "7f1d5f0c-30",
+    "v2": "18831b82-365",
+    "version": 2
+  },
+  "engagementText": "the customs house Lirael, Seren She counts what she has already signed for she says the true thing before she has decided to Tomas Reyne is referred to but is not on stage"
+}

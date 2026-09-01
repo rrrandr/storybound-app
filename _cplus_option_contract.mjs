@@ -47,16 +47,28 @@ try {
         pressures: [ { pressure_id: 'p_betrayed', text: 'When someone she trusted proves unworthy',
                        evidence_requires: 'broke a promise|betrayed|went back on' } ] },
     ];
+    // Facts carry TYPE and OWNERSHIP now: pressure grounding requires a fact that can establish
+    // psychology at all and that is about THIS candidate. E1 is Mara-owned behaviour; E2 and E3
+    // are scene material an act may engage but which reveal nobody.
+    const OWNER = 'named:mara';
     const facts = [
-      { evidence_id: 'E1', text: 'the clerk assumes she will wait as she always waits' },
-      { evidence_id: 'E2', text: 'the ledger is open on the counter' },
-      { evidence_id: 'E3', text: 'the tide turns at dawn' },
+      { evidence_id: 'E1', type: 'event', provenance: 'assignment.eventParticipants',
+        participants: [{ ref: OWNER, role: 'actor' }], groundableRefs: [OWNER], pressureEligible: true,
+        text: 'the clerk assumes she will wait as she always waits' },
+      { evidence_id: 'E2', type: 'place', provenance: 'assignment.setting',
+        participants: [], groundableRefs: [], pressureEligible: false,
+        text: 'the ledger is open on the counter' },
+      { evidence_id: 'E3', type: 'place', provenance: 'assignment.setting',
+        participants: [], groundableRefs: [], pressureEligible: false,
+        text: 'the tide turns at dawn' },
     ];
-    const options = window._cpBuildGroundedOptions([{ label: 'Mara Dunn', id: 'named:mara', facets }], facts);
+    const options = window._cpBuildGroundedOptions([{ label: 'Mara Dunn', id: OWNER, facets }], facts);
+    // The SAME facts, a different candidate: E1 is Mara's, so it grounds nothing for Tomas.
     const other   = window._cpBuildGroundedOptions([{ label: 'Tomas Reyne', id: 'named:tomas', facets }], facts);
     // Zero-grounded case: a corpus that proves nothing.
-    const starved = window._cpBuildGroundedOptions([{ label: 'Mara Dunn', id: 'named:mara', facets }],
-      [{ evidence_id: 'E1', text: 'the tide turns at dawn' }]);
+    const starved = window._cpBuildGroundedOptions([{ label: 'Mara Dunn', id: OWNER, facets }],
+      [{ evidence_id: 'E1', type: 'place', provenance: 'assignment.setting', participants: [],
+         groundableRefs: [], pressureEligible: false, text: 'the tide turns at dawn' }]);
     return { MODES, options, other, starved, facts,
              paidAssignments: PAID.assignments.map(a => ({ character: a.character, pressure_id: a.pressure_id,
                evidence: a.pressureEvidence, behavior: a.behavior, pcEffect: a.pcEffect })) };
@@ -81,10 +93,11 @@ try {
   t('1d: a recipient the scene proves nothing for yields ZERO options, which is what triggers the ' +
     'abort before the planner is paid',
     R.starved.length === 0, JSON.stringify(R.starved));
-  t('1e: every option carries a recipient, so no option can be selected across characters',
-    R.options.every(o => o.recipient === 'Mara Dunn') && R.other.every(o => o.recipient === 'Tomas Reyne')
+  t('1e: every option carries a recipient, and a fact owned by one candidate grounds NOTHING for ' +
+    'another — ownership is checked, not just recipient labelling',
+    R.options.every(o => o.recipient === 'Mara Dunn') && R.other.length === 0
       && R.options[0].option_id !== undefined,
-    JSON.stringify([R.options[0], R.other[0]].map(o => o && [o.option_id, o.recipient])));
+    JSON.stringify({ mara: R.options.map(o => o.option_id), tomas: R.other.length }));
   t('1f: the seven expression modes are published by production, not remembered here',
     Array.isArray(R.MODES) && R.MODES.length === 7 && R.MODES.indexOf('LEAK') !== -1,
     JSON.stringify(R.MODES));

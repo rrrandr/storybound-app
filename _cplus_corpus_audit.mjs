@@ -191,12 +191,13 @@ console.log('\n E · THE PROVIDER GATE — GROUNDED BEFORE PARKED');
   await pg.waitForFunction(() => window._cpBuildGroundedOptions && window._cpFactFingerprint, { timeout:60000 });
   const E = await pg.evaluate(({ ARCHIVED, factsB }) => {
     const opts = (facets, facts) => window._cpBuildGroundedOptions(
-      [{ label: 'Subject', id: 'x', facets }], facts);
+      [{ label: 'Subject', id: 'named:mara', facets }], facts);
     // The archived portfolio, as production normalised it, against the real corpus.
     const need = window.__PORTFOLIO_SCHEMA_FIELDS.requiredFacetCount;
     const v = window._validatePortfolioResponse({ characterPortfolios: [ARCHIVED[0]] },
       { eligible:true, subject_ref: ARCHIVED[0].subject_ref, required_facet_count: need,
         reference_label:'Mara Dunn' }, { pendingAuthority:true, requireContrast:true });
+    // The archived portfolio against the REAL corpus — ownerless, and therefore grounding nothing.
     const archivedOpts = v.ok ? opts(v.facets, factsB) : null;
     // A portfolio with ONE currently grounded condition and several future-only ones.
     const mixed = [
@@ -208,9 +209,22 @@ console.log('\n E · THE PROVIDER GATE — GROUNDED BEFORE PARKED');
       { facet_id:'A2', category:'value', canonical_truth:'She will not be hurried past her own caution.',
         possible_pressures: [ { pressure_id:'p_coronation', text:'at a coronation she has not attended', evidence_requires:'coronation|crown' } ] },
     ];
-    const mixedOpts = opts(mixed, factsB);
+    // Facts are typed and owned now. The audit's corpusB was reconstructed from stage text alone,
+    // so it carries no ownership and — correctly — grounds nothing. To exercise the provider gate
+    // the fixture supplies a fact owned by the subject, which is exactly what the contract asks
+    // a scene to contain before a portfolio can be parked for someone.
+    const OWNER = 'named:mara';
+    const ownedFacts = factsB.map((f, i) => ({ ...f,
+      type: i === 2 ? 'event' : 'place',
+      provenance: i === 2 ? 'assignment.eventParticipants' : 'assignment.setting',
+      participants: i === 2 ? [{ ref: OWNER, role: 'actor' }] : [],
+      groundableRefs: i === 2 ? [OWNER] : [],
+      pressureEligible: i === 2 }));
+    const mixedOpts = opts(mixed, ownedFacts);
     // The same portfolio against a DIFFERENT scene.
-    const otherFacts = [{ evidence_id:'E1', field:'setting', text:'the coronation hall' }];
+    const otherFacts = [{ evidence_id:'E1', field:'setting', type:'event',
+      provenance:'assignment.eventParticipants', participants:[{ ref: OWNER, role:'actor' }],
+      groundableRefs:[OWNER], pressureEligible:true, text:'she waits in the coronation hall' }];
     const staleOpts = opts(mixed, otherFacts);
     return { archivedOk: v.ok, archivedOptions: (archivedOpts || []).length,
              mixedOptions: mixedOpts.length, mixedIds: mixedOpts.map(o => o.facet_id + '/' + o.pressure_id),

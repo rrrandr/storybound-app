@@ -124,8 +124,24 @@ const setup = n => page.evaluate((n) => {
   Object.assign(s, { storyId: 'batch-' + Math.random().toString(36).slice(2, 7),
     _relationshipLedger: null, _pendingAdmission: null, loveInterestName: 'Julian' });
   const cands = [];
-  for (let i = 0; i < n; i++) cands.push({ id: 'named:p' + i, label: 'Person ' + i,
+  // The candidate id IS the roster ref: the stage mints 'named:' + slug(label), so a fixture that
+  // invents its own id attributes evidence to somebody the roster has never heard of — which the
+  // validator correctly refuses, and which is the same mistake as composing a ref from a label.
+  for (let i = 0; i < n; i++) cands.push({ id: 'named:person_' + i, label: 'Person ' + i,
     aliases: ['Person ' + i], providerOwner: 'ordinary/emergent name-only' });
+  // ── A SCENE THAT OWNS EVIDENCE ABOUT THEM ──
+  // No portfolio is bought for a subject this scene owns nothing about, so a batch fixture whose
+  // people appear in no beat now buys nothing and this suite measures an empty request. Each
+  // person acts in their own beat, separately attributed, so each is a legitimate purchase.
+  const planId = 'batch_scene_' + n;
+  window.STARTER_PLANS[planId] = { scenes: [{ n: 1,
+    goal: 'the customs house works through what has already been signed for',
+    setting: 'the customs house',
+    participants: cands.map(c => c.label),
+    eventFacts: cands.map((c, i) => ({
+      text: c.label + ' counts the customs house manifest aloud and signs for what is already recorded',
+      participants: [{ ref: 'named:person_' + i, role: 'actor', label: c.label }] })) }] };
+  s._starterId = planId; s._skipCorridorValidation = true;
   const m = n ? window._captureAdmissionManifest(s, cands, { invocationId: 'inv-b', lineage: 'L-batch' }) : null;
   return m;
 }, n);

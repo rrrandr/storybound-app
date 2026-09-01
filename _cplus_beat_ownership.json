@@ -1,0 +1,201 @@
+{
+  "seedKeys": [
+    "pc:lirael",
+    "named:julian",
+    "named:seren",
+    "role:first_sacrifice_presiding_dohkar"
+  ],
+  "roster": [
+    {
+      "id": "pc:lirael",
+      "label": "Lirael",
+      "kind": "pc"
+    },
+    {
+      "id": "named:julian",
+      "label": "Julian",
+      "kind": "named"
+    },
+    {
+      "id": "named:seren",
+      "label": "Seren",
+      "kind": "named"
+    },
+    {
+      "id": "role:first_sacrifice_presiding_dohkar",
+      "label": "the presiding Dohkar",
+      "kind": "role"
+    }
+  ],
+  "rosterRefs": {
+    "dohkar": "role:first_sacrifice_presiding_dohkar",
+    "seren": "named:seren",
+    "julian": "named:julian"
+  },
+  "facts": [
+    {
+      "id": "E1",
+      "type": "place",
+      "provenance": "assignment.setting",
+      "groundable": [],
+      "eligible": false,
+      "text": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil"
+    },
+    {
+      "id": "E2",
+      "type": "roster",
+      "provenance": "assignment.participants",
+      "groundable": [],
+      "eligible": false,
+      "text": "Lirael, Julian, Seren, the presiding Dohkar"
+    },
+    {
+      "id": "E3",
+      "type": "event",
+      "provenance": "assignment.eventFacts",
+      "groundable": [
+        "named:seren"
+      ],
+      "eligible": true,
+      "text": "Seren names her offering aloud before the wish — her earliest memory, th"
+    },
+    {
+      "id": "E4",
+      "type": "event",
+      "provenance": "assignment.eventFacts",
+      "groundable": [
+        "named:seren"
+      ],
+      "eligible": true,
+      "text": "Seren abandons the practiced wish in front of the whole assembly and spe"
+    },
+    {
+      "id": "E5",
+      "type": "event",
+      "provenance": "assignment.eventFacts",
+      "groundable": [
+        "role:first_sacrifice_presiding_dohkar"
+      ],
+      "eligible": true,
+      "text": "The presiding Dohkar holds the rite to its fixed order — invocation, the"
+    },
+    {
+      "id": "E6",
+      "type": "event",
+      "provenance": "assignment.eventFacts",
+      "groundable": [
+        "role:first_sacrifice_presiding_dohkar"
+      ],
+      "eligible": true,
+      "text": "The presiding Dohkar, trained, perceives the finer misalignment sooner t"
+    },
+    {
+      "id": "E7",
+      "type": "narrator",
+      "provenance": "identity.playerMaskDescription",
+      "groundable": [
+        "pc:lirael"
+      ],
+      "eligible": true,
+      "text": "You (the PC) have been assigned to SUPERVISE this First Sacrifice — your"
+    }
+  ],
+  "dohkar": {
+    "key": "role:first_sacrifice_presiding_dohkar",
+    "facets": 5,
+    "options": [
+      {
+        "id": "OPT-1",
+        "pressure": "p_rite_he_has_performed",
+        "ev": [
+          "E5"
+        ]
+      },
+      {
+        "id": "OPT-2",
+        "pressure": "p_procedural_step_nobody_checks",
+        "ev": [
+          "E5"
+        ]
+      },
+      {
+        "id": "OPT-3",
+        "pressure": "p_offering_being_named_aloud",
+        "ev": [
+          "E5"
+        ]
+      },
+      {
+        "id": "OPT-4",
+        "pressure": "p_cost_he_judges_too",
+        "ev": [
+          "E5"
+        ]
+      }
+    ]
+  },
+  "seren": {
+    "key": "named:seren",
+    "facets": 3,
+    "options": [
+      {
+        "id": "OPT-1",
+        "pressure": "p_observed_by_people_whose",
+        "ev": [
+          "E4"
+        ]
+      },
+      {
+        "id": "OPT-2",
+        "pressure": "p_chance_to_be_visibly",
+        "ev": [
+          "E3",
+          "E4"
+        ]
+      },
+      {
+        "id": "OPT-3",
+        "pressure": "p_rehearsed_procedure_going_wrong",
+        "ev": [
+          "E3",
+          "E4"
+        ]
+      },
+      {
+        "id": "OPT-4",
+        "pressure": "p_someone_s_pain_becomes",
+        "ev": [
+          "E3",
+          "E4"
+        ]
+      },
+      {
+        "id": "OPT-5",
+        "pressure": "p_precision_would_embarrass_a",
+        "ev": [
+          "E4"
+        ]
+      }
+    ]
+  },
+  "julian": {
+    "key": "named:julian",
+    "facets": 2,
+    "options": 0
+  },
+  "lirael": 0,
+  "serenOnDohkarWords": [],
+  "dohkarOnSerenWords": [],
+  "refFaults": [],
+  "unknownRef": {
+    "faults": [
+      {
+        "where": "eventFacts[0]",
+        "ref": "named:someone_invented",
+        "role": "actor",
+        "reason": "ref is not on this scene's roster"
+      }
+    ],
+    "survivingParticipants": []
+  }
+}

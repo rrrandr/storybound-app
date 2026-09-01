@@ -32,6 +32,12 @@ const mk = hot => instrument(force(force(SRC, '_litLiteActive', 'false'), '_hotF
 
 const PROSE = buildScene1Prose(NONTOKEN_A);
 import { configBody, installSession, isAuthOrigin } from './_test_session_env.mjs';
+
+// Names production actually OFFERED a Character+ option to on the most recent planner request.
+// Module scope, because plannerReply assigns it and every delivery assertion reads it: an
+// undeclared assignment throws inside the route handler, the request never fulfils, and the
+// page dies with "Target page has been closed" — which reads like an environment fault.
+let LAST_OFFERED = [];
 // config is handled separately now — see _test_session_env.mjs: fulfilling it with {} stopped the
 // runtime leak and also silently unauthenticated every run, so Scene 1 was refused at the purchase
 // gate and all 344 assertions below were measuring a chain that never executed.
@@ -343,7 +349,19 @@ function plannerReply(usr, mutate) {
     if (w.some(x => FACT_WORDS.has(x))) return act;
     return FACTS.length ? String(act).replace(/\.$/, '') + ' at ' + FACTS[0] : act;
   };
+  // ── ONLY WHO WAS OFFERED ──
+  // A starved candidate is WITHDRAWN from the packet now, so assigning them would be inventing a
+  // recipient the request never listed — which production rightly refuses, taking the whole
+  // skeleton with it. The reply assigns exactly who was offered, which is what a planner can do.
+  // ── THE OFFERED SET, CAPTURED ONCE ──
+  // Every delivery assertion derives from this rather than from the staged cast: "the full cast
+  // receives C+" stopped being a truthful contract the moment psychology required scene evidence.
+  // A candidate with no owned, matching evidence is WITHDRAWN by production, and forcing a beat
+  // onto them is precisely what the ownership model exists to prevent.
+  LAST_OFFERED = cast.filter(n => n !== PCN)
+    .filter(n => (CAND[n] && (CAND[n].options || []).length > 0));
   let cp = cast.filter(n => n !== PCN)
+    .filter(n => (CAND[n] && (CAND[n].options || []).length > 0))
     .map(n => {
       const c = CAND[n] || {}; const opt = (c.options || [])[0];
       const R = READS[n] || READ_FALLBACK(n);
@@ -367,7 +385,13 @@ function plannerReply(usr, mutate) {
     });
   // Anchors are the prefilled SENTINELS, copied back untouched, as the template asks.
   spine.staged_characters = spine.staged_characters.map(c =>
-    ({ ...c, anchor_beat: c.name === PCN ? 'FROM_PC_OPENING_FUSION' : 'FROM_CHARACTER_PLUS' }));
+    // A planner may only cite FROM_CHARACTER_PLUS for someone it was actually OFFERED a C+ for.
+    // A withdrawn candidate is still staged and still needs an anchor — they simply have no C+ to
+    // derive it from, so the reply writes one. Leaving the sentinel there would strand it in
+    // state with nothing to resolve it, which is what U8c exists to catch.
+    ({ ...c, anchor_beat: c.name === PCN ? 'FROM_PC_OPENING_FUSION'
+        : (LAST_OFFERED.includes(c.name) ? 'FROM_CHARACTER_PLUS'
+           : 'stands where the assembly can see ' + c.name + ' without moving') }));
   let pof = { character:PCN, placement:'PC_FIRST_EMBODIED_BEAT',
     character_angle:'rehearsed steadiness that does not survive contact',
     environment_target:ANCHOR, environment_axis:'ritual', beat:POF_BEAT };
@@ -730,7 +754,7 @@ process.on('uncaughtException', async (e) => { await closeBrowser(); console.err
 process.on('unhandledRejection', async (e) => { await closeBrowser(); console.error(e); process.exit(1); });
 process.on('exit', () => { try { browser.close(); } catch (_) {} });
 
-async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc }) {
+async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, kindnessScene }) {
   const ctx = await newCtx();
   try {
   const page = await ctx.newPage();
@@ -881,7 +905,7 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
 
   await page.goto('http://localhost:3000/', { waitUntil:'commit', timeout:60000 });
   await page.waitForFunction(() => window.state && window.handleBeginStory && window.STARTER_STORIES, { timeout:120000 });
-  const res = await page.evaluate(async ({ solo, duo, pollute, genPortfolio }) => {
+  const res = await page.evaluate(async ({ solo, duo, pollute, genPortfolio, kindnessScene }) => {
     const s = window.state;
     // ISOLATION SELF-CONTROL. Measured FIRST, before anything this case does: if a previous
     // case's pollution were visible here, context isolation is not doing its job and every
@@ -908,9 +932,14 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
       // source. Staging him through the plan's participants is what makes him a C+ candidate, so
       // this proves the whole chain in one run: attached portfolio → provider → planner choices →
       // one selected truth in the author request.
+      // The antagonist ACTS in this scene, and the plan says so structurally — without an owned
+      // fact he is offered no option and the whole generated-portfolio arm has nothing to test.
       window.STARTER_PLANS['test_genpf'] = { scenes: [{ n:1,
-        goal:'She counts what she has already signed for', setting:'the customs house',
-        participants:['Lirael', 'Marcus Vale'] }] };
+        goal:'Marcus Vale reads the clause aloud and refuses to sign what she has already counted',
+        setting:'the customs house',
+        participants:['Lirael', 'Marcus Vale'],
+        eventFacts:[{ text:'Marcus Vale reads the clause aloud, in order, and refuses to sign the manifest she has already counted',
+                      participants:[{ ref:'named:marcus_vale', role:'actor', label:'Marcus Vale' }] }] }] };
       s._starterId = 'test_genpf';
       // NOTHING IS STAGED BY HAND HERE — not the A-plot, not the canonical entity, not the
       // portfolio. The A-plot response declares a PERSON antagonist; production normalises it,
@@ -921,8 +950,11 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
       // presence is 'assignment'. Julian stays the love interest and therefore OFFSTAGE — which
       // is what lets us prove an offstage person may not be promoted to interlocutor.
       window.STARTER_PLANS['test_duo'] = { scenes: [{ n:1,
-        goal:'She counts what she has already signed for', setting:'the customs house',
-        participants:['Lirael', 'Seren'] }] };
+        goal:'Seren checks the faces at the counter before she signs what has already been counted',
+        setting:'the customs house',
+        participants:['Lirael', 'Seren'],
+        eventFacts:[{ text:'Seren checks the faces around the counter twice, in front of everyone, before she will sign what has already been counted',
+                      participants:[{ ref:'named:seren', role:'actor', label:'Seren' }] }] }] };
       s._starterId = 'test_duo';
     } else if (solo) {
       s._scene1Mission = 'She waits alone in the customs house before the tide turns, counting what she has already signed for';
@@ -930,6 +962,23 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
       Object.assign(s, { _starterId: def.id, is_starter_story: true, immutableTitle: def.title });
     }
     s.picks.identity = s.identity; s._skipCorridorValidation = true;
+    // ── A TEST-ONLY SCENE FOR GUARDRAIL SCOPING ──
+    // The guardrail cases need the Dohkar's KINDNESS facet to have a grounded option, and the
+    // canonical seed scene gives him no beat that activates it — correctly, because he does no
+    // such thing in the First Sacrifice. Inventing one into the seed would put content in the
+    // canon to satisfy a test. This adds the owned fact HERE, in the fixture, for the arms that
+    // are about guardrail SCOPING rather than about the seed's story.
+    if (kindnessScene) {
+      try {
+        const seed = window._activeSeed ? window._activeSeed(s) : null;
+        if (seed && seed.sceneOne) {
+          seed.sceneOne.eventFacts = (seed.sceneOne.eventFacts || []).concat([{
+            text: 'The presiding Dohkar steps aside for a barefoot guest who arrived with nothing and gives them his own place at the edge',
+            participants: [{ ref: 'role:first_sacrifice_presiding_dohkar', role: 'actor',
+                             label: 'the presiding Dohkar' }] }]);
+        }
+      } catch (_) {}
+    }
     let threw = null;
     try { await Promise.race([window.handleBeginStory(), new Promise(x=>setTimeout(x,120000))]); }
     catch(e){ threw = String(e && e.message); }
@@ -967,6 +1016,7 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
       bibleProbe = { dedupe, retry, ownership };
     }
     return { threw, bibleProbe, invEvents: (window.__invEvents || []).slice(0, 40),
+             cplusCoverage: (window.state && window.state._scene1CPlusCoverage) || null,
       // Eligibility now comes from the STAGE CONTRACT when the seed is authoritative; the old
       // heuristic is kept alongside so the harness can prove they differ where it matters.
       stage: (window._scene1StageContract ? window._scene1StageContract(s) : null),
@@ -1020,8 +1070,9 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc })
         try { window.__ISOLATION_SENTINEL = 1; window.localStorage.setItem('__isolation_sentinel', '1');
               window.state.__isolationJunk = 'this must not survive'; return true; } catch (_) { return false; }
       })() };
-  }, { solo: !!solo, duo: !!duo, pollute: !!pollute, genPortfolio: genPortfolio || null });
-  return { planner, author, scaffold, kinds, unknownModel, ambiguous, escaped, unknown, logs,
+  }, { solo: !!solo, duo: !!duo, pollute: !!pollute, genPortfolio: genPortfolio || null,
+       kindnessScene: !!kindnessScene });
+  return { offered: LAST_OFFERED.slice(), planner, author, scaffold, kinds, unknownModel, ambiguous, escaped, unknown, logs,
            srcMutated: _srcMutated, mutationTargets: _mutationTargets, ...res };
   } finally { await ctx.close().catch(() => {}); }
 }
@@ -1048,9 +1099,17 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     'skeleton is empty — the client is reading a response shape mistral-proxy never returns');
   // Not an obligation any more — cardinality follows pressure. This fixture assigns one per
   // candidate, so it still proves NOTHING IS TRUNCATED between planner and normaliser.
-  t(`${label} 3: the fixture's full C+ set survives delivery, none truncated`,
-    R.eligible && R.skeleton && R.skeleton.cp && R.skeleton.cp.length === R.eligible.length,
-    `eligible=${R.eligible && R.eligible.length} cp=${R.skeleton && R.skeleton.cp && R.skeleton.cp.length}`);
+  // ── EVERY OFFERED CANDIDATE SURVIVES — NOT THE FULL CAST ──
+  // "The whole cast receives C+" stopped being a truthful contract when psychology started
+  // requiring scene evidence: a candidate this scene owns nothing about is WITHDRAWN, and
+  // asserting they still get a beat would demand psychology be forced onto them.
+  // The PC's entry is SYNTHESISED by production for accounting — her beat is pc_opening_fusion's,
+  // not a Character+ — so the comparison is over the non-PC entries the planner actually filled.
+  t(`${label} 3: every OFFERED candidate survives delivery, none truncated`,
+    R.offered && R.offered.length > 0 && R.skeleton && R.skeleton.cp
+      && (R.skeleton.cp || []).filter(c => c.character !== 'Lirael').length === R.offered.length
+      && R.offered.every(n => (R.skeleton.cp || []).some(c => c.character === n)),
+    `offered=${JSON.stringify(R.offered)} cp=${JSON.stringify((R.skeleton && R.skeleton.cp || []).map(c => c.character))}`);
   t(`${label} 4: E+ and fusion survive normalization`,
     R.skeleton && R.skeleton.ep && R.skeleton.ep.target === 'the spiralgrass'
     && R.skeleton.ep.axis === 'ritual' && R.skeleton.fu && R.skeleton.fu.beat,
@@ -1303,10 +1362,13 @@ for (const [mutate, label, expect] of [
     R.logs.filter(l => /INVALID|ABORT/.test(l)).slice(0,1).join(''));
   if (expect.alias) {
     t(`   "${mutate}" — canonical label stored, alias logged`,
-      ok && cp.length === (R.eligible || []).length
-        && cp.every(n => (R.eligible || []).includes(n))
+      // Against the OFFERED set plus the PC's synthesised entry — the staged cast is no longer the
+      // right comparison, because a candidate with no owned evidence is withdrawn and never had a
+      // label to canonicalise.
+      ok && cp.filter(n => n !== 'Lirael').length === (R.offered || []).length
+        && (R.offered || []).every(n => cp.includes(n))
         && R.logs.some(l => /SCENE1:ALIAS/.test(l)),
-      `cp=${JSON.stringify(cp)} eligible=${JSON.stringify(R.eligible)}`);
+      `cp=${JSON.stringify(cp)} offered=${JSON.stringify(R.offered)}`);
   }
   if (expect.lifted || expect.staged) {
     t(`   "${mutate}" — normalization telemetry emitted`,
@@ -1708,9 +1770,12 @@ console.log(`\n${'─'.repeat(90)}\n  multi-person scenes keep the interlocutor 
     /INTERLOCUTOR ON FIRST MENTION/.test(authorAll));
   t('S8 the solo-interaction validator does NOT run on a multi-person stage',
     !M.logs.some(l => /SCENE1:SOLO:INTERACTION/.test(l)) && M.author.length === 1);
-  t('S8 multi-person plan is still ACCEPTED end to end',
-    M.author.length === 1 && (M.skeleton && M.skeleton.cp || []).length === (M.eligible || []).length,
-    `author=${M.author.length} cp=${(M.skeleton && M.skeleton.cp || []).length} cast=${(M.eligible||[]).length}`);
+  t('S8 multi-person plan is still ACCEPTED end to end, every OFFERED candidate delivered',
+    // Non-PC entries only: the PC's is synthesised for accounting, not planned as a Character+.
+    M.author.length === 1 && (M.offered || []).length > 0
+      && (M.skeleton && M.skeleton.cp || []).filter(c => c.character !== 'Lirael').length
+         === (M.offered || []).length,
+    `author=${M.author.length} cp=${(M.skeleton && M.skeleton.cp || []).length} offered=${JSON.stringify(M.offered)}`);
 
   // A TWO-PERSON ASSIGNMENT stage, with the love interest left off it.
   const D = await run({ hot: false, duo: true, mutate: null });
@@ -1818,7 +1883,7 @@ console.log('');
 // overwrite with, which the unseeded case below proves.
 // ══════════════════════════════════════════════════════════════════════════════════════════
 {
-  const K = await run({ hot: false, mutate: 'caringOnKindnessFacet' });
+  const K = await run({ hot: false, mutate: 'caringOnKindnessFacet', kindnessScene: true });
   t('   a scoped guardrail stays SILENT on the facet it does not police (same words, kindness facet)',
     K.author.length === 1 && !/SCENE1:ABORT/.test(K.logs.join(' ')),
     `authorCalls=${K.author.length} | ${K.logs.filter(l=>/INVALID/.test(l)).slice(0,1).join('').slice(0,200)}`);
@@ -1985,8 +2050,10 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
                      pcAnchor: (R.staged||[]).filter(c=>c.name===pcLabel).map(c=>c.anchor_beat)[0],
                      beat, epTarget: ep && ep.target, pofTarget: pof && pof.environment_target }));
   t(`${label} U8b: every NON-PC staged anchor is DERIVED from that person's C+ angle`,
-    (R.staged || []).filter(c => c.name !== pcLabel && c.presence_mode === 'IN_PERSON').length > 0
-      && (R.staged || []).filter(c => c.name !== pcLabel && c.presence_mode === 'IN_PERSON').every(c => {
+    // Only an OFFERED person has a C+ angle to derive an anchor from; a withdrawn one is staged
+    // and simply carries no C+-derived beat, which is the whole point of failing C+ closed.
+    (R.staged || []).filter(c => c.name !== pcLabel && (R.offered || []).includes(c.name)).length > 0
+      && (R.staged || []).filter(c => c.name !== pcLabel && (R.offered || []).includes(c.name)).every(c => {
         const m = (sk.cp || []).find(x => x.character === c.name);
         return !!m && String(c.anchor_beat || '').trim() === String(m.angle || '').trim();
       }),
@@ -2009,9 +2076,12 @@ for (const [label, hot] of [['HEAVY', false], ['HOTFAST', true]]) {
     });
     return seen;
   };
-  t(`${label} U9: every NON-PC staged character still gets exactly one independent C+ line`,
-    nonPc.length > 0 && nonPc.every(n => cpBlocks(n) === 1),
-    JSON.stringify(nonPc.map(n => [n, cpBlocks(n)])));
+  t(`${label} U9: every OFFERED non-PC character gets exactly one independent C+ line, and a ` +
+    `withdrawn one gets none`,
+    (R.offered || []).length > 0
+      && (R.offered || []).every(n => cpBlocks(n) === 1)
+      && nonPc.filter(n => !(R.offered || []).includes(n)).every(n => cpBlocks(n) === 0),
+    JSON.stringify({ offered: R.offered, counts: nonPc.map(n => [n, cpBlocks(n)]) }));
   t(`${label} U9b: …and no non-PC angle is a duplicate of the opening beat`,
     !!beat && (sk.cp || []).filter(c => c.character !== pcLabel)
       .every(c => String(c.angle).trim() !== String(beat).trim()));
@@ -2105,9 +2175,16 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
     /option_id: OPT-\d+/.test(pu) && !/pressure_evidence_ids/.test(pu),
     JSON.stringify({ options: (pu.match(/option_id: OPT-\d+/g) || []).length,
                      separableEvidence: /pressure_evidence_ids/.test(pu) }));
-  t('X3: …and all five canonical truths are legible as choices',
-    facets.length === 5 && facets.every(f => pu.includes(f.truth)),
-    JSON.stringify(facets.filter(f => !pu.includes(f.truth)).map(f => f.cat)));
+  // Five STORED facets is a provider-level invariant; five CURRENTLY APPLICABLE ones is not, and
+  // delivery must not pretend otherwise. What must be legible is every truth actually offered.
+  t('X3: …and every OFFERED canonical truth is legible as a choice',
+    facets.length === 5
+      && facets.filter(f => pu.includes(f.truth)).length > 0
+      && (pu.match(/truth \(fixed, not yours to rewrite\):/g) || []).length
+         === facets.filter(f => pu.includes(f.truth)).length,
+    JSON.stringify({ stored: facets.length,
+                     offered: facets.filter(f => pu.includes(f.truth)).map(f => f.cat),
+                     optionBlocks: (pu.match(/truth \(fixed, not yours to rewrite\):/g) || []).length }));
 
   const cp = (G.skeleton && G.skeleton.cp) || [];
   const chosen = cp.filter(c => /Marcus Vale/i.test(String(c.character || '')))[0] || null;
@@ -2159,19 +2236,29 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
   // The selected facet's guardrail must fire; one scoped to a facet nobody chose must not.
   const selCat = selected ? selected.cat : null;
   const othCat = others.length ? others[0].cat : null;
+  // ── A MISSING GUARD ARM IS A NAMED RESULT, NEVER A NULL ──
+  // When the targeted option does not exist the arm cannot run, and returning null let a later
+  // assertion dereference it and take the whole suite down at the last case. It says so instead,
+  // and the assertions below report "not dispatched" rather than pretending to have measured.
+  const NOT_DISPATCHED = { notDispatched: true, reason: 'targeted option not offered in this scene',
+    author: [], planner: [], logs: [], unknownModel: [], ambiguous: [], escaped: [], kinds: {},
+    skeleton: null, genPfGuards: [] };
   const GG = selCat && othCat ? await run({ hot: false, mutate: null, genPortfolio: { guards: [
       // Scoped by SLOT — the only facet vocabulary the model is given. The backend resolves the
       // slot to its derived category and then to facet ids.
       { forbid: "checks the youth's hands", facets: [SLOT_FOR_CATEGORY(selCat)], why: 'GUARD-ON-SELECTED-FACET' },
       { forbid: 'before the words',         facets: [SLOT_FOR_CATEGORY(othCat)], why: 'GUARD-ON-UNSELECTED-FACET' },
-    ] } }) : null;
+    ] } }) : NOT_DISPATCHED;
   const invalid = GG ? GG.logs.filter(l => /SKELETON:INVALID/.test(l)).join(' | ') : '';
+  t('X11a: the guardrail arm targets an option this scene actually offers — otherwise the two ' +
+    'assertions below would pass by never running',
+    !GG.notDispatched, GG.reason || 'dispatched');
   t('X11: a guardrail scoped to the SELECTED facet reaches validation and fires',
-    !!GG && GG.author.length === 0 && invalid.includes('GUARD-ON-SELECTED-FACET'),
+    !GG.notDispatched && GG.author.length === 0 && invalid.includes('GUARD-ON-SELECTED-FACET'),
     `scoped to [${selCat}] · authorCalls=${GG && GG.author.length} | ${invalid.slice(0, 200) || '(no INVALID log)'}`);
   const gg = (GG && GG.genPfGuards) || [];
   t('X12: …while a guardrail scoped to a facet nobody selected does not fire',
-    !!GG && !invalid.includes('GUARD-ON-UNSELECTED-FACET')
+    !GG.notDispatched && !invalid.includes('GUARD-ON-UNSELECTED-FACET')
       // …and it was PRESENT to fire: both guardrails attached, each scoped to exactly one facet id.
       && gg.length === 2 && gg.every(g => g.facets.length === 1)
       && gg.some(g => g.why === 'GUARD-ON-UNSELECTED-FACET'),
@@ -2238,12 +2325,12 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
       + '\n      invocation trace: ' + JSON.stringify((G.invEvents || []).filter(x => /subplot|fatal|begin/.test(x)).slice(0, 10)));
   t('X13b: the guard arm matches its own exact census — same chain and setup, no author call, ' +
     'no post-author lane, no subplot pass',
-    census(GG, EXPECT_GUARD, BOUNDED_GUARD).length === 0,
-    JSON.stringify(census(GG, EXPECT_GUARD, BOUNDED_GUARD)));
+    !GG.notDispatched && census(GG, EXPECT_GUARD, BOUNDED_GUARD).length === 0,
+    GG.notDispatched ? 'not dispatched: ' + GG.reason : JSON.stringify(census(GG, EXPECT_GUARD, BOUNDED_GUARD)));
   t('X13c: every model request matched EXACTLY ONE signature — none unnamed, none ambiguous, ' +
     'and nothing answered generically',
     G.unknownModel.length === 0 && G.ambiguous.length === 0
-      && !!GG && GG.unknownModel.length === 0 && GG.ambiguous.length === 0,
+      && !GG.notDispatched && GG.unknownModel.length === 0 && GG.ambiguous.length === 0,
     JSON.stringify({ unnamed: [...G.unknownModel, ...GG.unknownModel].slice(0, 3),
                      ambiguous: [...G.ambiguous, ...GG.ambiguous].map(x => x.matched).slice(0, 3) }));
   // ── MUTATION CONTROL ── the production invocation deleted from the SERVED source. Everything
@@ -2267,9 +2354,13 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
   const mxPu = (MX.planner[0] || {}).user || '';
   const mxCp = ((MX.skeleton && MX.skeleton.cp) || [])
     .filter(c => /Marcus Vale/i.test(String(c.character || '')))[0] || null;
-  t('X15b: …and the PLANNER was offered nothing — no facet id reaches the request, and his ' +
-    'assignment comes back with no selected facet_id',
-    facets.every(f => !mxPu.includes(f.id)) && !!mxCp && !mxCp.facet_id,
+  // With nothing attached he has no facets, therefore no grounded option, therefore no offer —
+  // so he is WITHDRAWN rather than handed an assignment with an empty facet_id. That is stronger
+  // than the old expectation: previously a candidate with no psychology still received a beat the
+  // planner had to invent psychology for, which is the failure this whole provider exists to stop.
+  t('X15b: …and the PLANNER was offered nothing — no facet id reaches the request, and he receives ' +
+    'NO assignment at all rather than an empty one',
+    facets.every(f => !mxPu.includes(f.id)) && !mxCp,
     JSON.stringify({ leakedIds: facets.filter(f => mxPu.includes(f.id)).map(f => f.id),
                      cp: mxCp && { character: mxCp.character, facet_id: mxCp.facet_id || null } }));
   // ── THE CORRECTION BUCKET, EXERCISED ──

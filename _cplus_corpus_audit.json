@@ -38,7 +38,7 @@
   "parked": [
     {
       "label": "Mara Dunn",
-      "invocation": "inv:mthyg82j-tcj0jf",
+      "invocation": "inv:mti87gtc-4hyshk",
       "storyId": "corpus-audit",
       "facets": [
         {
@@ -117,6 +117,7 @@
   "matched": 0,
   "total": 10,
   "logs": [
-    "[SCENE1:CPLUS:NO-GROUNDED-OPTION] no grounded Character+ option for \"Mara Dunn\" — this scene proves none of their applicability conditions, so there is nothing to offer the planner"
+    "[SCENE1:CPLUS:NO-OWNED-EVIDENCE] 1 candidate(s) have no owned pressure evidence in this scene (Mara Dunn) — manifest fm:196fa802-178. They are not offered; the scene plans without them. This is a C+ coverage failure, never a story failure.",
+    "[SCENE1:CPLUS:OPTIONS] 0 grounded option(s) across 0 candidate(s) · starved: 1"
   ]
 }

@@ -133,11 +133,20 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
         // reply can only use an option the request actually carried. Facet, pressure and evidence
         // are no longer separable fields: they are resolved from the option by the backend.
         const packetAll = sys + '\n' + usr;
-        const optM = packetAll.match(/option_id: (OPT-\d+)\n\s+truth \(fixed, not yours to rewrite\): ([^\n]+)\n\s+applies here because: ([^\n]+)/);
-        const oid = optM ? optM[1] : null;
-        const oTruth = optM ? optM[2] : '';
-        const oPress = optM ? optM[3] : '';
-        const w = (x, n) => (String(x).toLowerCase().match(/[a-z]{5,}/g) || []).slice(0, 6).join(' ');
+        // ── ONE ENTRY PER OFFERED CANDIDATE ──
+        // The regime requires every offered candidate to be assigned, and the offer is per person.
+        // The packet closes each person's block with "belongs to <label> ALONE", so the sections
+        // are segmented on that and each contributes its own first option — never one person's
+        // option written under another's name.
+        const OFFERS = [];
+        const seg = packetAll.split(/⟂ Everything in this packet belongs to /);
+        for (let i = 1; i < seg.length; i++) {
+          const label = (seg[i].match(/^([^\n]*?) ALONE/) || [])[1];
+          const block = seg[i - 1];
+          const m = block.match(/option_id: (OPT-\d+)\n\s+truth \(fixed, not yours to rewrite\): ([^\n]+)\n\s+applies here because: ([^\n]+)/);
+          if (label && m) OFFERS.push({ label: label.trim(), option_id: m[1], truth: m[2], pressure: m[3] });
+        }
+        const w = (x) => (String(x).toLowerCase().match(/[a-z]{5,}/g) || []).slice(0, 6).join(' ');
         const op = (usr.match(/^    · ([A-Z_]{6,})  —  /m) || [])[1] || null;
         out = { opening_spine: {
             pressure_source_type:'institutional', pressure_source:'the customs house',
@@ -150,21 +159,23 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
             reader_state:{ knows:'x', believes:'x', wondering:'x', must_not_confuse:'x' },
             pc_body_callback:'decision', li_body_callback:'opening', antagonist_body_callback:null,
             perceptual_signature_beat:'the customs house',
+            // Every required on-stage person, staged. Tom Reed is a participant now — his
+            // invocation buys a portfolio for him, and a person cannot be attributed evidence
+            // without being on the roster — so the reply must stage him like anyone else.
             staged_characters:[{ name:'Lirael', presence:'IN_PERSON', anchor_beat:'FROM_PC_OPENING_FUSION' },
-                               { name:'Mara Dunn', presence:'IN_PERSON', anchor_beat:'FROM_CHARACTER_PLUS' }] },
+                               { name:'Mara Dunn', presence:'IN_PERSON', anchor_beat:'FROM_CHARACTER_PLUS' },
+                               { name:'Tom Reed', presence:'IN_PERSON', anchor_beat:'FROM_CHARACTER_PLUS' }] },
           scene_skeleton: {
-            character_plus: [{ character:'Mara Dunn', mode:'IN_PERSON',
-              ...(oid ? { option_id: oid } : {}),
+            character_plus: OFFERS.map(o => ({ character: o.label, mode:'IN_PERSON',
+              option_id: o.option_id,
               expression_mode:'CONTROL', first_mention:true,
               visible_action:'says the customs house clause number instead of the clause',
               behavior_object_ids:[], behavior_person_ids:[],
-              // Shares language with the option's own truth and condition, which is what the
-              // bridge gate checks — built from the packet, never guessed.
-              revelation_bridge:'naming the clause instead of reading it is how ' + w(oTruth)
-                + ' surfaces, and this scene is the case where ' + w(oPress),
+              revelation_bridge:'naming the clause instead of reading it is how ' + w(o.truth)
+                + ' surfaces, and this scene is the case where ' + w(o.pressure),
               ...(op ? { pc_lens_operation: op } : {}),
-              pc_interpretation:'Mara is not being obstructive — she is making him ask for the thing '
-                + 'he wants rather than assume it' }],
+              pc_interpretation: o.label.split(' ')[0] + ' is not being obstructive — they are making '
+                + 'the other person ask for the thing they want rather than assume it' })),
             environment_plus:{ target:'the customs house', axis:'use',
               beat:'the customs house counter is worn pale where every manifest has crossed it' },
             fusion:null,
@@ -231,9 +242,29 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
         identity:{ playerName:'Lirael', partnerName:'Julian' },
         renderMode: staged ? 'staged' : 'literary', currentEngine:'literary', storyId:'pa-chain', myUid:'probe' });
       // An UNSEEDED plan whose only ordinary candidate exists in no seed and no registry.
+      // ── THE EVENT IS ATTRIBUTED ──
+      // Under the ownership contract a scene that only says WHAT happens grounds nobody: the
+      // sentence has no subject the backend can trust, so no pressure is provable and no
+      // portfolio may be parked. This plan states whose behaviour the event describes, which is
+      // what a real plan must now do for a candidate to be assignable at all.
+      // Both people whose portfolios this chain buys ACT in the event, and both are attributed.
+      // Attributing someone to an event they are not in would be a false ownership claim — the
+      // sentence names what each of them does, so the structured attribution is true of it.
       window.STARTER_PLANS['pa_chain'] = { scenes: [{ n:1,
-        goal:'She counts what she has already signed for', setting:'the customs house',
-        participants:['Lirael', 'Mara Dunn'] }] };
+        goal:'Mara Dunn counts aloud what the house has already signed for while Tom Reed refuses to initial the page',
+        setting:'the customs house',
+        // Both are staged, so both are on the roster and both refs validate — an attributed ref
+        // that is not on the roster poisons its whole fact, which is what happened when Tom Reed
+        // was attributed without being staged and Mara lost her grounding with him.
+        participants:['Lirael', 'Mara Dunn', 'Tom Reed'],
+        // SEPARATE beats, separately owned: one fact naming both would let each ground on the
+        // other's words, which is the leak the per-beat model exists to close.
+        eventFacts:[
+          { text:'Mara Dunn counts aloud what the customs house has already signed for, twice',
+            participants:[{ ref:'named:mara_dunn', role:'actor', label:'Mara Dunn' }] },
+          { text:'Tom Reed refuses to initial the page the house has already signed for',
+            participants:[{ ref:'named:tom_reed', role:'actor', label:'Tom Reed' }] },
+        ] }] };
       s._starterId = 'pa_chain';
       s.picks.identity = s.identity; s._skipCorridorValidation = true;
 
@@ -382,9 +413,15 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
     const ref = res.cand && res.cand.ref;
     const checks = {
       'C1 production captured a manifest at its own pre-planner seam and issued exactly one real batch request':
-        { ok: batchCalls === 1 && !!res.manifestSeen && res.manifestSeen.candidates.length === 1
-              && res.manifestSeen.candidates[0].label === 'Mara Dunn',
-          detail: JSON.stringify({ batchCalls, n: res.manifestSeen && res.manifestSeen.candidates.length }) },
+        // TWO ordinary candidates now, in ONE batch request. Tom Reed is staged because his
+        // invocation buys a portfolio for him, and an attributed ref that is not on the roster
+        // poisons its fact — so he is either on stage and legitimately attributed, or he has no
+        // evidence and no portfolio. What still matters here is that a single request covers both.
+        { ok: batchCalls === 1 && !!res.manifestSeen && res.manifestSeen.candidates.length === 2
+              && res.manifestSeen.candidates.some(c => c.label === 'Mara Dunn'),
+          detail: JSON.stringify({ batchCalls,
+            n: res.manifestSeen && res.manifestSeen.candidates.length,
+            labels: res.manifestSeen && res.manifestSeen.candidates.map(c => c.label) }) },
       // The offer is GROUNDED OPTIONS now, not a facet list. Only pressures this scene actually
       // proves are offered, so "all five facets reach the planner" is no longer the contract —
       // and it should not be: an ungrounded facet is precisely what must NOT be offered. What
@@ -396,10 +433,16 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
               && !/pressure_evidence_ids/.test(planner),
           detail: 'options = ' + ((planner || '').match(/option_id: OPT-\d+/g) || []).length
                 + ' · separable evidence field present = ' + /pressure_evidence_ids/.test(planner || '') },
-      'C3 exactly ONE selected truth reached the AUTHOR, and no ref or portfolio did':
-        { ok: !!author && (author.match(/SOURCE TRUTH — DO NOT STATE: /g) || []).length === 1
+      // ONE truth PER ASSIGNED RECIPIENT — two of them now, because two people are staged and
+      // both are grounded. What must never happen is a recipient carrying two truths, or a ref or
+      // portfolio reaching the author at all.
+      'C3 exactly ONE selected truth per assigned recipient reached the AUTHOR, and no ref or portfolio did':
+        { ok: !!author
+              && (author.match(/SOURCE TRUTH — DO NOT STATE: /g) || []).length
+                 === (res.manifestSeen ? res.manifestSeen.candidates.length : -1)
               && !!ref && author.indexOf(ref) === -1 && !/candidate_ref|subject_ref/.test(author),
-          detail: 'source truths = ' + ((author || '').match(/SOURCE TRUTH — DO NOT STATE: /g) || []).length },
+          detail: 'source truths = ' + ((author || '').match(/SOURCE TRUTH — DO NOT STATE: /g) || []).length
+                + ' · recipients = ' + (res.manifestSeen && res.manifestSeen.candidates.length) },
       'C4 the page mounted, and the invocation bound to that scene UID by the prose it produced':
         { ok: !!res.uid && !!res.rec && res.rec.hasProseFp === true && res.rec.sceneUid === res.uid,
           detail: JSON.stringify({ uid: res.uid, rec: res.rec }) },
@@ -418,9 +461,12 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
         { ok: res.clerkAdmitted === false || res.clerkAdmitted === true,   // either is fine; it must not be promoted
           detail: 'clerk holds no promoted portfolio (promotion is keyed by ref, not name)' },
       'C9a the batch ran ONCE, its roster held only the ordinary/emergent subject, and the ownership-excluded candidates never reached it':
-        { ok: batchCalls === 1 && batchRosters.length === 1 && batchRosters[0].length === 1
-              && !!res.manifestSeen && res.manifestSeen.candidates.length === 1
-              && res.manifestSeen.candidates[0].providerOwner === 'ordinary/emergent name-only',
+        // TWO ordinary subjects in ONE roster now. The claim that matters is unchanged: one call,
+        // and every subject on it is ordinary/emergent — the ownership-excluded candidates (seed
+        // cast, the LI, the antagonist) never reach it.
+        { ok: batchCalls === 1 && batchRosters.length === 1 && batchRosters[0].length === 2
+              && !!res.manifestSeen && res.manifestSeen.candidates.length === 2
+              && res.manifestSeen.candidates.every(c => c.providerOwner === 'ordinary/emergent name-only'),
           detail: JSON.stringify({ calls: batchCalls, roster: batchRosters,
             owners: (res.manifestSeen && res.manifestSeen.candidates || []).map(c => c.providerOwner) }) },
       'C9b a RESTORED provider read still resolves all five facets, five categories, as generated_cast':

@@ -120,7 +120,11 @@ const ONLY = process.env.RP_ONLY ? process.env.RP_ONLY.split(',') : null;
 const VARIANTS = [
   { key: 'archive_zero_options', why: 'the ARCHIVED portfolios ground to nothing in this scene, so ' +
       'the run aborts BEFORE the planner is paid — which is what should have happened',
-    useArchive: true, expectFaults: /no grounded Character\+ option/, mutate: null },
+    // Fail C+ closed, not the story: the archived portfolios ground to nothing here, so those
+    // candidates are WITHDRAWN and the scene plans without them. The old expectation was a fatal
+    // abort, which took the reader's scene down to protect a beat that was never available.
+    useArchive: true, expectFaults: /no owned pressure evidence|has no condition this scene puts in play/,
+    mutate: null },
   { key: 'good_deliberate', why: 'a deliberate act that engages a person and a bridge that connects',
     expectFaults: false, mutate: null },
   { key: 'somatic_reading', why: 'the purchased reply\'s PC reading — a sensation in her own body',
@@ -234,9 +238,22 @@ try {
           fortunes:9999999, intensity:'Steamy', pov:'first_person',
           identity:{ playerName:'Lirael', partnerName:'Julian' },
           renderMode:'literary', currentEngine:'literary', storyId:'opt-replay', myUid:'probe' });
+        // Each person acts in their OWN beat, separately attributed to the roster's own refs, so
+        // each has owned evidence and can be offered an option. Without this the scene owns
+        // nothing about any of them, they are all withdrawn, and every case below has no
+        // assignment to mutate — which is the ownership model working, not the gates failing.
         window.STARTER_PLANS['opt_replay'] = { scenes: [{ n:1,
-          goal:'She counts what she has already signed for', setting:'the customs house',
-          participants:['Lirael', 'Mara Dunn', 'Tomas Reyne', 'Halden Roe'] }] };
+          goal:'the customs house works through what has already been signed for',
+          setting:'the customs house',
+          participants:['Lirael', 'Mara Dunn', 'Tomas Reyne', 'Halden Roe'],
+          eventFacts:[
+            { text:'Mara Dunn counts the customs house manifest aloud and will not sign what is already recorded',
+              participants:[{ ref:'named:mara_dunn', role:'actor', label:'Mara Dunn' }] },
+            { text:'Tomas Reyne reads the clause aloud at the counter and waits to be contradicted',
+              participants:[{ ref:'named:tomas_reyne', role:'actor', label:'Tomas Reyne' }] },
+            { text:'Halden Roe signs for the customs house manifest on behalf of someone who has not arrived',
+              participants:[{ ref:'named:halden_roe', role:'actor', label:'Halden Roe' }] },
+          ] }] };
         s._starterId = 'opt_replay'; s.picks.identity = s.identity; s._skipCorridorValidation = true;
         window._generatePendingPortfolios = async function (manifest, st) {
           st = st || window.state;
@@ -260,7 +277,7 @@ try {
         console.error = function(){ try{logs.push([].join.call(arguments,' '));}catch(_){} return realErr.apply(console,arguments); };
         console.log = function(){ try{logs.push([].join.call(arguments,' '));}catch(_){} return realLog.apply(console,arguments); };
         try { await Promise.race([window.handleBeginStory(), new Promise(x => setTimeout(x, 150000))]); } catch (_) {}
-        return { logs: logs.filter(x => /SKELETON:INVALID|CPLUS|SCENE1:SCAFFOLD|OPTIONS/.test(x)).map(x => x.slice(0, 700)) };
+        return { logs: logs.filter(x => /SKELETON:INVALID|CPLUS|SCENE1:SCAFFOLD|OPTIONS|PORTFOLIO/.test(x)).map(x => x.slice(0, 700)) };
       }, { ARCHIVED: V.useArchive ? ARCHIVED : FIXTURE });
       results[V.key] = { logs: r.logs, offered };
     } finally { await ctx.close().catch(() => {}); }
@@ -272,14 +289,22 @@ console.log(`\n${'═'.repeat(88)}\nC+ OPTION CONTRACT — REPLAY ON THE REAL VA
 // scene, so its environment_plus names a ledger this replay's scene lacks — a real fault, and
 // nothing to do with C+. Asserting on the whole fault list would let an unrelated failure mask a
 // C+ gate that had stopped working, and would fail every accept arm for a reason it does not test.
+// TWO DIFFERENT THINGS, KEPT APART.
+// A VALIDATION fault is the assignment under test being refused. A WITHDRAWAL is a different
+// candidate having no owned evidence — correct behaviour that says nothing about this assignment,
+// and collecting it as a fault made every accept arm fail for someone else's absence.
 const faultsOf = (k) => (results[k] && results[k].logs || [])
-  .filter(x => /INVALID|SCAFFOLD] skipped|NO-GROUNDED-OPTION/.test(x))
+  .filter(x => /INVALID|SCAFFOLD] skipped/.test(x))
   .join(' ')
   .split(/ · |; /)
-  .filter(x => /character_plus|grounded Character\+ option/.test(x))
+  .filter(x => /character_plus/.test(x))
+  .join(' · ');
+const withdrawalOf = (k) => (results[k] && results[k].logs || [])
+  .filter(x => /NO-OWNED-EVIDENCE|no owned pressure evidence|no condition this scene puts in play/.test(x))
   .join(' · ');
 for (const V of VARIANTS.filter(v => !ONLY || ONLY.indexOf(v.key) !== -1)) {
-  const f = faultsOf(V.key);
+  // The archive arm is about WITHDRAWAL, not about a refused assignment.
+  const f = V.useArchive ? withdrawalOf(V.key) : faultsOf(V.key);
   if (V.expectFaults === false) {
     t(`${V.key}: ACCEPTED — ${V.why}`, !f, (f || '').slice(0, 300));
   } else {
