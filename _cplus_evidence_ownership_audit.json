@@ -1,0 +1,143 @@
+{
+  "FACTS": [
+    {
+      "evidence_id": "E1",
+      "field": "setting",
+      "text": "the customs house"
+    },
+    {
+      "evidence_id": "E2",
+      "field": "present",
+      "text": "Lirael, Seren"
+    },
+    {
+      "evidence_id": "E3",
+      "field": "about-to-happen",
+      "text": "She counts what she has already signed for"
+    }
+  ],
+  "crossCharacter": [
+    {
+      "option_id": "OPT-1",
+      "recipient": "Seren",
+      "recipient_id": "named:x",
+      "facet_id": "F1",
+      "category": "habit",
+      "truth": "She withholds her help until someone states plainly what they want.",
+      "pressure_id": "p_counts",
+      "pressure_text": "when a count is already signed for",
+      "evidence_ids": [
+        "E3"
+      ],
+      "evidence_texts": [
+        "She counts what she has already signed for"
+      ]
+    }
+  ],
+  "castListOnly": [
+    {
+      "option_id": "OPT-1",
+      "recipient": "Seren",
+      "recipient_id": "named:x",
+      "facet_id": "F1",
+      "category": "habit",
+      "truth": "She withholds her help until someone states plainly what they want.",
+      "pressure_id": "p_seren",
+      "pressure_text": "when Seren is present",
+      "evidence_ids": [
+        "E2"
+      ],
+      "evidence_texts": [
+        "Lirael, Seren"
+      ]
+    }
+  ],
+  "settingOnly": [
+    {
+      "option_id": "OPT-1",
+      "recipient": "Seren",
+      "recipient_id": "named:x",
+      "facet_id": "F1",
+      "category": "habit",
+      "truth": "She withholds her help until someone states plainly what they want.",
+      "pressure_id": "p_house",
+      "pressure_text": "when she is in the customs house",
+      "evidence_ids": [
+        "E1"
+      ],
+      "evidence_texts": [
+        "the customs house"
+      ]
+    }
+  ],
+  "nameOnly": [
+    {
+      "option_id": "OPT-1",
+      "recipient": "Seren",
+      "recipient_id": "named:x",
+      "facet_id": "F1",
+      "category": "habit",
+      "truth": "She withholds her help until someone states plainly what they want.",
+      "pressure_id": "p_name",
+      "pressure_text": "when she is named",
+      "evidence_ids": [
+        "E2"
+      ],
+      "evidence_texts": [
+        "Lirael, Seren"
+      ]
+    }
+  ],
+  "withBehavioural": {
+    "facts": [
+      {
+        "evidence_id": "E1",
+        "field": "setting",
+        "text": "the customs house"
+      },
+      {
+        "evidence_id": "E2",
+        "field": "present",
+        "text": "Lirael, Seren"
+      },
+      {
+        "evidence_id": "E3",
+        "field": "about-to-happen",
+        "text": "She counts what she has already signed for"
+      },
+      {
+        "evidence_id": "E4",
+        "field": "about-to-happen",
+        "text": "Seren asks twice for a receipt she has already been given"
+      }
+    ],
+    "opts": [
+      {
+        "option_id": "OPT-1",
+        "recipient": "Seren",
+        "recipient_id": "named:x",
+        "facet_id": "F1",
+        "category": "habit",
+        "truth": "She withholds her help until someone states plainly what they want.",
+        "pressure_id": "p_asks",
+        "pressure_text": "when she has to ask twice for what she is owed",
+        "evidence_ids": [
+          "E4"
+        ],
+        "evidence_texts": [
+          "Seren asks twice for a receipt she has already been given"
+        ]
+      }
+    ]
+  },
+  "factKeys": [
+    "evidence_id",
+    "field",
+    "text"
+  ],
+  "corpusFields": [
+    "setting",
+    "present",
+    "about-to-happen"
+  ]
+}
