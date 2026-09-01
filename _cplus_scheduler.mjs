@@ -288,6 +288,54 @@ await fresh('sched-density-realisable');
      JSON.stringify(r.realisable));
 }
 
+// ══ 7c. A DEFERRED CANDIDATE MUST ACTUALLY GET THE NEXT SLOT ══
+// Deterministic ordering is what makes density a stagger rather than a cull — but determinism
+// cuts both ways: if the ordering is stable AND the same characters keep coming due, the same
+// third candidate is deferred forever and "staggered" quietly means "never". This walks three
+// simultaneously-due candidates across consecutive scenes and asserts the deferred one is served
+// next, out of the ledger rather than out of luck.
+await fresh('sched-starvation');
+{
+  const r = await page.evaluate(() => {
+    const ids = {};
+    ['A', 'B', 'C'].forEach(n => { ids[n] = window._relEntityForName(n, { create: true }); });
+    const cands = () => ['A', 'B', 'C'].map(n => ({ label: n, canonicalId: ids[n], facet_ids: ['f1:' + n, 'f2:' + n] }));
+    const trace = [];
+    // Scene 1 — an opening: all three are introductions, the cap serves two.
+    const s1 = window._cpSchedule(cands(), { ordinal: 1, issue: 1, opening: true });
+    trace.push({ scene: 1, d: s1.decisions.map(x => x.label + ':' + x.status) });
+    // Commit what the cap allowed. The third was on stage and simply did not receive a beat.
+    window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
+      delivered: s1.decisions.filter(x => x.status !== 'DEFERRED')
+        .map(x => ({ canonicalId: x.canonicalId, facet_id: x.preferFacetIds[0], category: 'value' })),
+      appeared: s1.decisions.filter(x => x.status === 'DEFERRED').map(x => ({ canonicalId: x.canonicalId })) });
+    const s2 = window._cpSchedule(cands(), { ordinal: 2, issue: 1 });
+    trace.push({ scene: 2, d: s2.decisions.map(x => x.label + ':' + x.status + ':' + x.reason) });
+    return { trace, s1: s1.decisions, s2: s2.decisions,
+             rows: ['A', 'B', 'C'].map(n => ({ n, row: window._cpSchedRow(ids[n]) })) };
+  });
+  const deferred1 = r.s1.filter(d => d.status === 'DEFERRED').map(d => d.label);
+  ok('scene 1: the cap serves two and defers exactly one',
+     deferred1.length === 1 && r.s1.filter(d => d.status !== 'DEFERRED').length === 2, JSON.stringify(r.trace[0]));
+
+  const held = deferred1[0];
+  const next = r.s2.find(d => d.label === held);
+  ok(`scene 2: the deferred candidate (${held}) is served, not deferred again`,
+     next && (next.status === 'REQUIRED' || next.status === 'ALLOWED'), JSON.stringify(next));
+  ok('scene 2: the two who were served are now on cooldown, which is what frees the slot',
+     r.s2.filter(d => d.label !== held).every(d => d.status === 'SUPPRESSED' && d.reason === 'cooldown'),
+     JSON.stringify(r.trace[1]));
+  ok('the deferred candidate reached scene 2 with an appearance on the books, not a blank row',
+     (r.rows.find(x => x.n === held).row || {}).meaningful_appearances_since_cplus === 1,
+     JSON.stringify(r.rows.find(x => x.n === held)));
+  ok('★ nobody is starved: across the two scenes all three are served exactly once',
+     ['A', 'B', 'C'].every(n => {
+       const inS1 = r.s1.find(d => d.label === n).status !== 'DEFERRED';
+       const inS2 = ['REQUIRED', 'ALLOWED'].indexOf(r.s2.find(d => d.label === n).status) !== -1;
+       return inS1 !== inS2;                      // served in exactly one of the two scenes
+     }), JSON.stringify(r.trace));
+}
+
 // ══ 8. THE OFFER FILTER ══
 await fresh('sched-filter');
 {
