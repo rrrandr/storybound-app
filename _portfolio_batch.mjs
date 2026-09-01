@@ -8,6 +8,8 @@
 // usage: node _portfolio_batch.mjs   (needs vercel dev on :3000) — every request intercepted
 import { chromium } from 'playwright-core';
 import fs from 'fs';
+// Declared here because the grounding pre-step below runs before the fixture is defined.
+let SCENE_WORDS = ['customs', 'house'];
 let pass = 0, fail = 0;
 const t = (n, c, d) => { if (c) { pass++; console.log(`  ✓ ${n}`); } else { fail++; console.log(`  ✗ ${n}${d ? `\n      ${d}` : ''}`); } };
 try {
@@ -33,6 +35,7 @@ await page.route('**/api/**', async route => {
   const sys = String(((b && b.messages || []).find(m => m.role === 'system') || {}).content || '');
   if (/You author CHARACTER PORTFOLIOS/.test(sys)) {
     const refs = [...sys.matchAll(/subject_ref: (\S+)/g)].map(m => m[1]);
+    captureSceneWords(sys);   // before the responder builds a reply, so its conditions can ground
     reqs.batch.push({ refs, max_tokens: b.max_tokens, role: b.role, model: b.model, url: u, sys });
     const content = rawOverride ? String(rawOverride(refs))
       : JSON.stringify(responder ? responder(refs, reqs.batch.length) : { characterPortfolios: [] });
@@ -44,8 +47,46 @@ await page.route('**/api/**', async route => {
 });
 await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded' });
 await page.waitForFunction(() => typeof window._generatePendingPortfolios === 'function', { timeout: 30000 });
+// ── GROUND THE FIXTURE IN THE SCENE THIS SUITE ACTUALLY RESOLVES ──
+// A portfolio is refused before parking unless one of its conditions is grounded in the current
+// scene's facts. This suite tests BATCH mechanics, not grounding, so its fixture must satisfy the
+// gate rather than trip it — and the honest way is to write conditions the real manifest can
+// answer, read from production, instead of words invented in this file.
+{
+  const facts = await page.evaluate(() => {
+    try {
+      const st = window.state;
+      if (!st._scene1FactManifest && typeof window._scene1StageContract === 'function') {
+        const stg = window._scene1StageContract(st);
+        if (stg && stg.ok && window._cpFactManifest) window._cpFactManifest(stg, st);
+      }
+      return ((st._scene1FactManifest || {}).facts || []).map(f => f.text);
+    } catch (_) { return []; }
+  });
+  const w = [...new Set(facts.join(' ').toLowerCase().match(/[a-z]{5,}/g) || [])];
+  if (w.length >= 2) SCENE_WORDS = w.slice(0, 8);
+  if (process.env.PB_DIAG) console.log('   [manifest words] ' + JSON.stringify(SCENE_WORDS));
+}
 
 const DIMS = ['value','insecurity','defense','relationship','exception'];
+// ── EVIDENCE WORDS COME FROM THE SCENE THE PROMPT SHOWS ──
+// A portfolio is now refused before parking unless at least one of its conditions is grounded in
+// this scene's facts. Fixture words invented in this file cannot satisfy that — and should not:
+// the whole point is that conditions must be answerable by the scene. The prompt carries the
+// facts as plain text, so the fixture reads them and writes conditions the scene can actually
+// answer, exactly as a scene-aware generator would.
+let SCENE_BLOCK_SEEN = false;
+function captureSceneWords(sys) {
+  const block = (sys.match(/THE SCENE THEY ARE ABOUT TO APPEAR IN[^\n]*\n([\s\S]*?)\n\n/) || [])[1] || '';
+  const words = [...new Set((block.toLowerCase().match(/[a-z]{5,}/g) || []))];
+  if (words.length >= 2) { SCENE_WORDS = words.slice(0, 8); SCENE_BLOCK_SEEN = true; }
+  if (process.env.PB_DIAG) console.log('   [scene marker in prompt] '
+    + /THE SCENE THEY ARE ABOUT TO APPEAR IN/.test(sys) + ' · promptLen=' + sys.length);
+  if (process.env.PB_DIAG) console.log('   [scene words] block=' + (block ? block.length : 0)
+    + ' chars · words=' + JSON.stringify(SCENE_WORDS));
+  return SCENE_WORDS;
+}
+const ew = (i) => [SCENE_WORDS[i % SCENE_WORDS.length], SCENE_WORDS[(i + 1) % SCENE_WORDS.length]];
 // A response that satisfies the CRAFT contract as well as the structural one: third person
 // throughout, every truth a mechanism this person runs on rather than a maxim, every prediction
 // naming a fresh pressure and the choice made under it, and the exception naming which slot it
@@ -74,7 +115,8 @@ const FIVE = refs => ({ subject_ref: refs,
   not_explained_by: i === 4
     ? 'could be mistaken for the relationship facet, but that one is the pattern and this is where it stops'
     : 'could be mistaken for facet ' + ((i + 1) % 5 + 1) + ', but that one is about something else',
-  applicability_conditions: [{ text:w1, evidence_words:e1.split('|') }, { text:w2, evidence_words:e2.split('|') }],
+  // Grounded in THIS scene, read from the dispatched prompt rather than invented here.
+  applicability_conditions: [{ text:w1, evidence_words: ew(i) }, { text:w2, evidence_words: ew(i + 1) }],
   forbidden_restatements: [{ forbid:'is predictable', why:'the truth stated, not shown' }] })) });
 
 const setup = n => page.evaluate((n) => {

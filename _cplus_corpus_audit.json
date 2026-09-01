@@ -1,0 +1,122 @@
+{
+  "corpusA": {
+    "source": "_portfolio_sample_request.json (the dispatched generation request)",
+    "invocation": "inv-sample",
+    "storyId": "(none — the sample drives _generatePendingPortfolios directly)",
+    "factIds": [],
+    "facts": [],
+    "hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "corpusB": {
+    "source": "_cpFactCorpus(stage) — the scene the planner is being built for",
+    "invocation": "(scene-1 chain)",
+    "storyId": "corpus-audit",
+    "factIds": [
+      "E1",
+      "E2",
+      "E3"
+    ],
+    "facts": [
+      {
+        "evidence_id": "E1",
+        "field": "setting",
+        "text": "the customs house"
+      },
+      {
+        "evidence_id": "E2",
+        "field": "present",
+        "text": "Lirael, Mara Dunn"
+      },
+      {
+        "evidence_id": "E3",
+        "field": "about-to-happen",
+        "text": "She counts what she has already signed for"
+      }
+    ],
+    "hash": "26a4b84d3be0886d33b1ecb4ddddeb818cda531eb0870ba3fab6e4a073462d61"
+  },
+  "parked": [
+    {
+      "label": "Mara Dunn",
+      "invocation": "inv:mthyg82j-tcj0jf",
+      "storyId": "corpus-audit",
+      "facets": [
+        {
+          "cat": "value",
+          "truth": "She measures worth by loyalty that survives betrayal without apology or explanation.",
+          "pressures": [
+            {
+              "text": "When she feels her standards are being mocked or ignored",
+              "requires": "mock|standards|ignored|mocked"
+            },
+            {
+              "text": "When someone she trusted proves unworthy",
+              "requires": "trusted|unworthy|betrayal|proves"
+            }
+          ]
+        },
+        {
+          "cat": "insecurity",
+          "truth": "She fears that devotion without visible return cheapens her existence.",
+          "pressures": [
+            {
+              "text": "When her efforts are met with indifference or routine acceptance",
+              "requires": "indifference|routine|acceptance|efforts"
+            },
+            {
+              "text": "When she notices a relationship becoming one-sided",
+              "requires": "one-sided|notices|relationship|becoming"
+            }
+          ]
+        },
+        {
+          "cat": "habit",
+          "truth": "She weaponizes withdrawal of care to force others to name what they truly want.",
+          "pressures": [
+            {
+              "text": "When she detects emotional dishonesty or avoidance",
+              "requires": "dishonesty|avoidance|detects|emotional"
+            },
+            {
+              "text": "When someone assumes her presence is automatic",
+              "requires": "assumes|automatic|presence|someone"
+            }
+          ]
+        },
+        {
+          "cat": "relationship_pattern",
+          "truth": "She tests loyalty by giving small, unasked-for gifts that force the recipient to reciprocate or admit they don’t care.",
+          "pressures": [
+            {
+              "text": "When forming new connections where trust is uncertain",
+              "requires": "forming|trust|uncertain"
+            },
+            {
+              "text": "When she suspects someone is using her",
+              "requires": "suspects|using|someone"
+            }
+          ]
+        },
+        {
+          "cat": "contradiction",
+          "truth": "She suspends her need for visible return when someone risks their safety for hers.",
+          "pressures": [
+            {
+              "text": "When someone acts without calculation to protect her",
+              "requires": "calculation|protect|acts|without"
+            },
+            {
+              "text": "When she witnesses selfless courage",
+              "requires": "selfless|courage|witnesses"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "matched": 0,
+  "total": 10,
+  "logs": [
+    "[SCENE1:CPLUS:NO-GROUNDED-OPTION] no grounded Character+ option for \"Mara Dunn\" — this scene proves none of their applicability conditions, so there is nothing to offer the planner"
+  ]
+}

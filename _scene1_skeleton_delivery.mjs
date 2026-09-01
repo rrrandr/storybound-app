@@ -665,7 +665,30 @@ async function preflight(url = 'http://localhost:3000/') {
 }
 await preflight();
 
-const browser = await chromium.launch({ headless: true });
+// ── THE BROWSER IS RECYCLED, NOT NURSED ──
+// One browser served every context in this suite: roughly sixty of them, each loading a
+// three-hundred-thousand-line application. It died of exhaustion partway through the mutation
+// loop — twice at the same stage — and reported it as "Target page, context or browser has been
+// closed", which reads like a harness bug and is really a resource ceiling. Recycling on a fixed
+// count is deterministic; waiting for it to fall over is not.
+let browser = await chromium.launch({ headless: true });
+let _ctxIssued = 0, _browserGeneration = 1, _ctxLive = 0;
+const CTX_PER_BROWSER = 10;
+async function newCtx() {
+  // RECYCLE ONLY WHEN NOTHING IS OPEN. One probe builds a second context while another is still
+  // in use; closing the browser underneath it produced the very "Target page has been closed"
+  // this recycling exists to prevent — the fix reproducing the fault it was fixing.
+  if (_ctxIssued >= CTX_PER_BROWSER && _ctxLive === 0) {
+    await browser.close().catch(() => {});
+    browser = await chromium.launch({ headless: true });
+    _ctxIssued = 0; _browserGeneration++;
+  }
+  _ctxIssued++; _ctxLive++;
+  const c = await browser.newContext();
+  const _close = c.close.bind(c);
+  c.close = async function () { _ctxLive = Math.max(0, _ctxLive - 1); return _close(); };
+  return c;
+}
 let _closing = false;
 const closeBrowser = async () => { if (_closing) return; _closing = true; try { await browser.close(); } catch (_) {} };
 // A throw anywhere must not strand Chromium children — the old suite left them behind on every
@@ -675,7 +698,7 @@ process.on('unhandledRejection', async (e) => { await closeBrowser(); console.er
 process.on('exit', () => { try { browser.close(); } catch (_) {} });
 
 async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc }) {
-  const ctx = await browser.newContext();
+  const ctx = await newCtx();
   try {
   const page = await ctx.newPage();
   page.setDefaultTimeout(180000); page.setDefaultNavigationTimeout(180000);
@@ -1366,7 +1389,7 @@ console.log('');
   // Parsed from the SAME dispatched text the planner received, so a field added to the schema
   // later cannot silently become unreconciled.
   const declared = await (async () => {
-    const c2 = await browser.newContext();
+    const c2 = await newCtx();
     try {
       const p2 = await c2.newPage();
       p2.setDefaultTimeout(180000); p2.setDefaultNavigationTimeout(180000);
