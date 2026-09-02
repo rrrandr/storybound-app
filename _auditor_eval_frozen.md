@@ -38,26 +38,49 @@ Pairing is deliberate: every contradiction case has a matched compatible twin us
 character and the same canon, so a judge that simply answers "contradiction" to everything fails,
 and so does one that answers "compatible" to everything.
 
-## SCORING
+## SCORING — TWO INDEPENDENT AXES
 
-Blind: verdicts are recorded per case id with the expectations hidden, then joined afterwards.
-The expected column above is committed here so it cannot be adjusted to whatever comes back.
+**AMENDED 2026-09-01, before the harness existed and before any dispatch.** The original bar said
+"no compatible or development case falsely rejected", which conflated two different things: what
+the AUDITOR classified, and what the BACKEND decided to do about it. Under that wording a
+CORRECT refusal of an unauthorized development would have scored as a false rejection — and,
+worse, an incorrect `compatible` verdict could have passed by producing an agreeable publication
+outcome. They are scored separately.
 
-## ACTIVATION BAR — all four, no exceptions
+### AXIS 1 — the auditor's CLASSIFICATION (is the judge accurate?)
 
-1. **No contradiction missed.** Cases 2, 5, 9, 11 must each return `contradiction`.
-2. **No compatible or development case falsely rejected.** Cases 1, 3, 4, 6, 10, 12 must return
-   `compatible`; 7 and 8 must return `possible_development`.
-3. **No latent truth leaked.** No response may quote, paraphrase or hint at any unrevealed truth.
-   Checked mechanically against every latent truth string in the private view.
-4. **No invented refs.** Every `subject_ref` must be one this scene offered; no duplicates.
+| case | expected verdict |
+|---|---|
+| 1, 3, 4, 6, 10, 12 | `compatible` |
+| 2, 5, 9, 11 | `contradiction` |
+| **7 and 8** | **`possible_development` — BOTH of them** |
 
-Any single failure = DO NOT ENABLE. A pass = proceed to the recurring-cost decision, which is
-still a separate authorization.
+Cases 7 and 8 are the same prose. The auditor MUST classify them identically, because the
+authored development is invisible to it: authorization is a backend fact, not a readable one. A
+judge that returns different verdicts for 7 and 8 is reading something it should not have.
+
+### AXIS 2 — the backend's PUBLICATION DECISION (is the machinery right?)
+
+| case | expected |
+|---|---|
+| 1, 3, 4, 6, 10, 12 | commit ALLOWED |
+| 2, 5, 9, 11 | commit REFUSED |
+| **7** (authored development present) | commit **ALLOWED** |
+| **8** (no authored development) | commit **REFUSED** |
+| any `unknown` | commit REFUSED |
+
+Axis 2 is deterministic backend logic already proven at 735 assertions; it is scored here to
+confirm the two halves compose, not to re-establish it.
+
+Blind: verdicts are recorded per case id with expectations hidden, then joined afterwards. The
+expectations above are committed so they cannot be adjusted to whatever comes back.
 
 ## MECHANICS
 
 - production's dormant auditor path, unchanged, enabled only in-harness under interception
+- TWELVE INDEPENDENT production-shaped calls, one per case. NOT batched: batching would test a
+  different contract from the one that ships, and would let cases contaminate each other — a
+  judge that saw case 2 in the same context as case 3 is not judging case 3 alone.
 - ONE attempt per case; no repair, no retry, no OpenAI fallback (denied at the proxy)
 - raw responses persisted the instant they arrive, before any scoring
 - **latent truths never enter logs, reports or artifacts** — the harness writes verdicts, reason
