@@ -151,9 +151,11 @@ const LEG = await page.evaluate(() => {
       possible_pressures: [{ text: 'being told to do something', evidence_requires: 'told' }],
       forbidden_restatements: [{ forbid: 'is careful', why: 'label, not mechanism' }] }], { provenance: 'generated_cast' });
   const f = window._relLedger().entities[id].authorProfile.cPlusFacets.map(x => x.facet_id);
-  // A scheduler row from BEFORE continuity existed: a spent facet and no manifestation record.
+  // A scheduler row from BEFORE continuity existed: a SPENT facet and no manifestation record.
+  // `verified` is stated because "spent" is exactly what this fixture is constructing — an
+  // unverified beat is an appearance and would leave the row unspent, testing nothing.
   window._cpCommitScene({ sceneUid: 'L1', ordinal: 2, issue: 1,
-    delivered: [{ canonicalId: id, facet_id: f[0], category: 'value' }], appeared: [] });
+    delivered: [{ canonicalId: id, facet_id: f[0], category: 'value', verified: true }], appeared: [] });
   delete window._relLedger().entities[id].cplusContinuity;        // the legacy shape
   const migrated = window._cpContinuityFor(id) || (window._cpFacetStateFor(id, f[0]), window._cpContinuityFor(id));
   return { f, spentState: window._cpFacetStateFor(id, f[0]), unusedState: window._cpFacetStateFor(id, f[1]),

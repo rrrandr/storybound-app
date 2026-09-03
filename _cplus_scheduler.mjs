@@ -95,7 +95,7 @@ await fresh('sched-cooldown');
     // A real entity, so the canonical id is a canonical id and not a label in disguise.
     const id = window._relEntityForName('Mara Dunn', { create: true });
     const c = window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     return { id, c, row: window._cpSchedRow(id) };
   });
   ok('commit records the spend on the canonical row',
@@ -127,7 +127,7 @@ await fresh('sched-override');
   const id = await page.evaluate(() => {
     const id = window._relEntityForName('Mara Dunn', { create: true });
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     return id;
   });
   const withOv = await page.evaluate((id) => window._cpSchedule(
@@ -157,7 +157,7 @@ await fresh('sched-recurrence');
   const id = await page.evaluate(() => {
     const id = window._relEntityForName('Tom Reed', { create: true });
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     [2, 3, 4].forEach(n => window._cpCommitScene({ sceneUid: 'S' + n, ordinal: n, issue: 1,
       delivered: [], appeared: [{ canonicalId: id }] }));
     return id;
@@ -173,7 +173,7 @@ await fresh('sched-recurrence');
   // THE ORDERING CLAIM ITSELF: the floor must win while the cooldown is ALSO true.
   const clash = await page.evaluate((id) => {
     window._cpCommitScene({ sceneUid: 'S5', ordinal: 5, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:defense', category: 'defense' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:defense', category: 'defense', verified: true }], appeared: [] });
     [6, 7, 8].forEach(n => window._cpCommitScene({ sceneUid: 'S' + n, ordinal: n, issue: 1,
       delivered: [], appeared: [{ canonicalId: id }] }));
     // ordinal 6 is INSIDE the cooldown from the scene-5 beat, and the floor is also satisfied.
@@ -191,7 +191,7 @@ await fresh('sched-return');
   const id = await page.evaluate(() => {
     const id = window._relEntityForName('Seren', { create: true });
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     return id;
   });
   const away = await page.evaluate((id) => window._cpSchedule(
@@ -215,7 +215,7 @@ await fresh('sched-opening');
   const r = await page.evaluate(() => {
     const id = window._relEntityForName('Seren', { create: true });
     window._cpCommitScene({ sceneUid: 'OLD', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     return { opening: window._cpSchedule([{ label: 'Seren', canonicalId: id, facet_ids: ['f:value', 'f:defense'] }],
                { ordinal: 1, issue: 1, opening: true }).decisions[0],
              normal:  window._cpSchedule([{ label: 'Seren', canonicalId: id, facet_ids: ['f:value', 'f:defense'] }],
@@ -307,7 +307,8 @@ await fresh('sched-starvation');
     // Commit what the cap allowed. The third was on stage and simply did not receive a beat.
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
       delivered: s1.decisions.filter(x => x.status !== 'DEFERRED')
-        .map(x => ({ canonicalId: x.canonicalId, facet_id: x.preferFacetIds[0], category: 'value' })),
+        .map(x => ({ canonicalId: x.canonicalId, facet_id: x.preferFacetIds[0], category: 'value',
+                     verified: true })),   // these two RECEIVED their beat; the third only appeared
       appeared: s1.decisions.filter(x => x.status === 'DEFERRED').map(x => ({ canonicalId: x.canonicalId })) });
     const s2 = window._cpSchedule(cands(), { ordinal: 2, issue: 1 });
     trace.push({ scene: 2, d: s2.decisions.map(x => x.label + ':' + x.status + ':' + x.reason) });
@@ -368,9 +369,9 @@ await fresh('sched-idem');
   const r = await page.evaluate(() => {
     const id = window._relEntityForName('Mara Dunn', { create: true });
     const a = window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     const b = window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     const noUid = window._cpCommitScene({ ordinal: 2, delivered: [{ canonicalId: id, facet_id: 'x' }] });
     return { a, b, noUid, row: window._cpSchedRow(id) };
   });
@@ -388,7 +389,7 @@ await fresh('sched-identity');
     const a = window._relEntityForName('Jordan', { create: true, canonicalId: 'cast-1' });
     const b = window._relEntityForName('Jordan', { create: true, canonicalId: 'cast-2' });
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: a, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: a, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     // A candidate carrying only the shared LABEL must not inherit either person's history.
     const byLabel = window._cpSchedule([{ label: 'Jordan', facet_ids: ['f:value'] }], { ordinal: 2, issue: 1 });
     // The candidate carrying the real id must.
@@ -413,7 +414,7 @@ await fresh('sched-supersede');
     const roleId = window._relRoleEntity ? window._relRoleEntity(window._relPcId(), 'mother', { label: 'her mother' }) : null;
     if (!roleId) return { skipped: true };
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: roleId, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: roleId, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     const named = window._relEntityForName('Alaric', { create: true });
     const led = window.state._relationshipLedger;
     led.entities[roleId].supersededBy = named;                 // the role resolves to a person
@@ -441,10 +442,10 @@ await fresh('sched-merge');
     const roleId = window._relRoleEntity(window._relPcId(), 'mother', { label: 'her mother' });
     const named = window._relEntityForName('Alaric', { create: true });
     window._cpCommitScene({ sceneUid: 'R1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: roleId, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: roleId, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     window._cpCommitScene({ sceneUid: 'R2', ordinal: 2, issue: 1, delivered: [], appeared: [{ canonicalId: roleId }] });
     window._cpCommitScene({ sceneUid: 'N1', ordinal: 4, issue: 1,
-      delivered: [{ canonicalId: named, facet_id: 'f:defense', category: 'defense' }], appeared: [] });
+      delivered: [{ canonicalId: named, facet_id: 'f:defense', category: 'defense', verified: true }], appeared: [] });
     window.state._relationshipLedger.entities[roleId].supersededBy = named;
     const row = window._cpSchedRow(named);
     return { roleId, named, row, dump: window._cpSchedDump() };
@@ -486,7 +487,7 @@ await fresh('sched-merge');
     window.state._relationshipLedger = null;
     const id = window._relEntityForName('Mara Dunn', { create: true });
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     const inA = window._cpSchedule([{ label: 'Mara Dunn', canonicalId: id, facet_ids: ['f:value'] }], { ordinal: 2 });
     window.state.storyId = 'story-B';                      // a different story, same state object
     const inB = window._cpSchedule([{ label: 'Mara Dunn', canonicalId: id, facet_ids: ['f:value'] }], { ordinal: 2 });
@@ -504,7 +505,7 @@ await fresh('sched-merge');
     window.state._relationshipLedger = null;
     const id = window._relEntityForName('Mara Dunn', { create: true });
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     const snap = JSON.stringify(window.state._relationshipLedger);      // the save path's shape
     window.state._relationshipLedger = null;                            // reload
     window.state._relationshipLedger = JSON.parse(snap);
@@ -523,7 +524,7 @@ await fresh('sched-merge');
     window.state._relationshipLedger = null;
     const id = window._relEntityForName('Mara Dunn', { create: true });
     window._cpCommitScene({ sceneUid: 'S1', ordinal: 1, issue: 1,
-      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value' }], appeared: [] });
+      delivered: [{ canonicalId: id, facet_id: 'f:value', category: 'value', verified: true }], appeared: [] });
     // CONTROL A: corrupt the row's ordinal so the cooldown cannot be computed as recent.
     const row = window._cpSchedRow(id);
     const keep = row.last_cplus_scene_ordinal;

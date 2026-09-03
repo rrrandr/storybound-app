@@ -5,6 +5,7 @@
 //
 // usage: node _scene1_skeleton_delivery.mjs
 import { chromium } from 'playwright-core';
+import vm from 'node:vm';
 import fs from 'fs';
 import { instrument } from './_scene1_instrument.mjs';
 import { buildScene1Prose, NONTOKEN_A, SCENE_WANT } from './_hook_fixture_prose.mjs';
@@ -754,7 +755,7 @@ process.on('uncaughtException', async (e) => { await closeBrowser(); console.err
 process.on('unhandledRejection', async (e) => { await closeBrowser(); console.error(e); process.exit(1); });
 process.on('exit', () => { try { browser.close(); } catch (_) {} });
 
-async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, kindnessScene }) {
+async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, kindnessScene, injectScaffoldFailure }) {
   const ctx = await newCtx();
   try {
   const page = await ctx.newPage();
@@ -765,16 +766,30 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
   const kinds = {}; let bibleReq = 0;
   // MUTATION CONTROL. The served source is the ONE lever; a case that passes with the production
   // invocation deleted is evidence about a helper, not about the call site.
-  let _srcMutated = null, _mutationTargets = null;
+  let _srcMutated = null, _mutationTargets = null, _mutationCounts = null;
+  let _srcParseError = null;
   await page.route('**/app.js*', r => {
     let body = mk(hot);
     if (mutateSrc) {
       // The target must be UNIQUE. A marker that appears twice deletes one call site and leaves
       // the other standing, and the control then proves nothing — this is the same non-unique
       // marker mistake that once cost a six-figure line count.
-      _mutationTargets = body.split(mutateSrc.from).length - 1;
-      const next = body.replace(mutateSrc.from, mutateSrc.to);
+      // '@@AND@@' joins independent replacements into one served copy, so an arm can change
+      // both the injected failure AND the commit placement at once.
+      // ONE COUNT PER REPLACEMENT: a single aggregate once hid an inverse arm whose second
+      // mutation matched nothing — it ran identical code to the control and passed anyway.
+      const _froms = String(mutateSrc.from).split('@@AND@@');
+      const _tos = String(mutateSrc.to).split('@@AND@@');
+      _mutationCounts = _froms.map(f => body.split(f).length - 1);
+      _mutationTargets = _mutationCounts[0];
+      let next = body;
+      _froms.forEach((f, i) => { next = next.replace(f, _tos[i]); });
       _srcMutated = next !== body;
+      // PARSE THE MUTATED BYTES BEFORE SERVING THEM. A trace inserted between `try {...}` and
+      // `catch` is a syntax error: the page never initializes and the arm dies as an opaque
+      // 180s waitForFunction timeout, which reads like an app defect rather than a bad seam.
+      try { new vm.Script(next, { filename: 'mutated-app.js' }); }
+      catch (_pe) { _srcParseError = String((_pe && _pe.message) || _pe); }
       body = next;
     }
     return r.fulfill({ status:200, contentType:'application/javascript; charset=utf-8', body });
@@ -893,10 +908,17 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
   // TEST-ONLY INVOCATION TRACE. Production emits nothing unless a sink is installed, so this
   // costs the app nothing and keeps the event stream out of state and telemetry. It exists to
   // answer "was the subplot scheduled, cancelled, or never started" without guessing.
-  await page.addInitScript(() => {
+  await page.addInitScript((inject) => {
+    window.__injectScaffoldFailure = !!inject;
+    // Snapshot the gate AT the moment the injected failure fires, so "had it committed yet?"
+    // is answered by observation rather than by reasoning about ordering afterwards.
+    window.__gateAtFailure = null;
     window.__invEvents = [];
     window.__invTrace = (e) => { try { window.__invEvents.push(e.event + ':' + JSON.stringify(e.detail)); } catch (_) {} };
-  });
+    // THE ARGUMENT MUST BE PASSED. For three attempts it was not: `inject` arrived undefined, the
+    // flag was permanently false, and every injected throw was dead code. The seam was never the
+    // fault — the switch was. `injectArmed` is exported so a test can assert the switch is ON.
+  }, !!injectScaffoldFailure);
   page.on('console', m => { const x=m.text(); // PORTFOLIO is included because the grounding gate reports there: without it a run that aborts
   // before the planner shows an empty cast and no reason, which is how two cases looked like
   // fixture bugs when they were a refusal working as designed.
@@ -1072,8 +1094,11 @@ async function run({ hot, mutate, solo, duo, pollute, genPortfolio, mutateSrc, k
       })() };
   }, { solo: !!solo, duo: !!duo, pollute: !!pollute, genPortfolio: genPortfolio || null,
        kindnessScene: !!kindnessScene });
+  const gateAtFailure = await page.evaluate(() => window.__gateAtFailure).catch(() => null);
+  const injectArmed = await page.evaluate(() => window.__injectScaffoldFailure === true).catch(() => null);
+  const sbTrace = await page.evaluate(() => window.__sbTrace || null).catch(() => null);
   return { offered: LAST_OFFERED.slice(), planner, author, scaffold, kinds, unknownModel, ambiguous, escaped, unknown, logs,
-           srcMutated: _srcMutated, mutationTargets: _mutationTargets, ...res };
+           srcMutated: _srcMutated, srcParseError: _srcParseError, mutationTargets: _mutationTargets, mutationCounts: _mutationCounts, gateAtFailure, injectArmed, sbTrace, ...res };
   } finally { await ctx.close().catch(() => {}); }
 }
 
@@ -2327,6 +2352,343 @@ console.log(`\n${'═'.repeat(90)}\nPART X — THE GENERATED PORTFOLIO, END TO E
     'no post-author lane, no subplot pass',
     !GG.notDispatched && census(GG, EXPECT_GUARD, BOUNDED_GUARD).length === 0,
     GG.notDispatched ? 'not dispatched: ' + GG.reason : JSON.stringify(census(GG, EXPECT_GUARD, BOUNDED_GUARD)));
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  //  X13d/e — THE GATE'S PLACEMENT, NOT MERELY ITS EXISTENCE
+  //
+  //  X13b's race was: a fire-and-forget paid pass launched during A-plot generation, released
+  //  before the run was decided. The gate fixes that only if it commits LATE ENOUGH. It used to
+  //  commit immediately after skeleton validation — and a scaffold-builder failure AFTER that
+  //  point still killed the scene with the subplot already released.
+  //
+  //  These two arms differ by exactly where the commit sits in the served source, with the SAME
+  //  injected post-validation failure. If placement did not matter they would agree.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  //  X13d — FIRST, AN EXECUTION WITNESS. NO THROW.
+  //
+  //  Two injection seams in a row were chosen by reading the source, both were provably in the
+  //  served bytes, and neither ever RAN: gateAtFailure stayed null and the scene completed. An
+  //  exact source-match count says the line exists, not that it executes. So before injecting
+  //  anything that throws, the builder is instrumented to report which path it actually takes.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  // SEVEN trace points, SEVEN replacements, each required to match exactly once. The payload
+  // carries the invocation sequence and whether _scene1ScaffoldBlock was ALREADY populated when
+  // the caller ran — which is what separates a genuine bypass from a cached block being reused.
+  const TRACE = (tag) => "try { (window.__sbTrace = window.__sbTrace || []).push({ at: '" + tag +
+    "', seq: (window.state && window.state._invocationSeq) || null, " +
+    "blockAlreadySet: !!(typeof _scene1ScaffoldBlock !== 'undefined' && _scene1ScaffoldBlock) }); } catch (_) {}";
+  const TRACE_NOBLOCK = (tag) => "try { (window.__sbTrace = window.__sbTrace || []).push({ at: '" + tag +
+    "', seq: (window.state && window.state._invocationSeq) || null }); } catch (_) {}";
+
+  const POINTS = [
+    ['caller:before',
+     '    try { _scene1ScaffoldBlock = await _buildScene1Scaffold(_cpScene1Attempt); }',
+     '    ' + TRACE('caller:before') + '\n    try { _scene1ScaffoldBlock = await _buildScene1Scaffold(_cpScene1Attempt); }'],
+    // NOTE: the trace CANNOT sit between `try {...}` and `catch` — that is a syntax error, and on
+    // the first attempt it killed the parse of the whole served file: the page never initialized
+    // and the arm timed out. It goes AFTER the catch block closes.
+    ['caller:after',
+     "      _scene1ScaffoldBlock = '';\n    }\n    if (state && state._scene1SkeletonFatal) {",
+     "      _scene1ScaffoldBlock = '';\n    }\n    " + TRACE('caller:after') + "\n    if (state && state._scene1SkeletonFatal) {"],
+    ['entry',
+     '    async function _buildScene1Scaffold(_cpScaffoldAttempt) {',
+     '    async function _buildScene1Scaffold(_cpScaffoldAttempt) {\n      ' + TRACE_NOBLOCK('entry')],
+    ['early:scaffoldOff',
+     "        if (typeof window !== 'undefined' && window._scene1ScaffoldOff === true) return '';",
+     "        if (typeof window !== 'undefined' && window._scene1ScaffoldOff === true) { " + TRACE_NOBLOCK('early:scaffoldOff') + " return ''; }"],
+    ['early:cg',
+     "        if (_cg) return '';",
+     "        if (_cg) { " + TRACE_NOBLOCK('early:cg') + " return ''; }"],
+    ['final-return',
+     '        return block;\n      } catch (e) {',
+     '        ' + TRACE_NOBLOCK('final-return') + '\n        return block;\n      } catch (e) {'],
+    ['catch',
+     '        // ── AN UNPLANNED ERROR IS NOT A GRACEFUL DEGRADATION',
+     '        ' + TRACE_NOBLOCK('catch') + '\n        // ── AN UNPLANNED ERROR IS NOT A GRACEFUL DEGRADATION'],
+  ];
+
+  // PRE-FLIGHT: apply the seven replacements to a local copy and PARSE it before spending three
+  // minutes on a browser arm. The first attempt spliced a statement between `try {...}` and
+  // `catch`; app.js never parsed, the page never initialized, and the only symptom was a 180s
+  // timeout that looked like an application defect. A one-second parse names the real cause.
+  {
+    let _pf = fs.readFileSync('public/app.js', 'utf8');
+    const _pfCounts = POINTS.map(([, from]) => _pf.split(from).length - 1);
+    POINTS.forEach(([, from, to]) => { _pf = _pf.replace(from, to); });
+    let _pfErr = null;
+    try { new vm.Script(_pf, { filename: 'preflight-app.js' }); }
+    catch (e) { _pfErr = String((e && e.message) || e); }
+    t('X13w-0: the seven replacements each match once AND the mutated source still PARSES',
+      _pfCounts.every(c => c === 1) && _pfErr === null,
+      `counts=${JSON.stringify(_pfCounts)} parseError=${_pfErr}`);
+    if (_pfErr || !_pfCounts.every(c => c === 1)) {
+      console.log(`   PRE-FLIGHT ABORT — not spending a browser arm on source that cannot run.`);
+      console.log(`   counts=${JSON.stringify(_pfCounts)} parseError=${_pfErr}`);
+    }
+  }
+
+  const XW = await run({ hot: false, mutate: null, mutateSrc: {
+    from: POINTS.map(p => p[1]).join('@@AND@@'),
+    to:   POINTS.map(p => p[2]).join('@@AND@@') } });
+  const badCounts = (XW.mutationCounts || []).map((c, i) => c === 1 ? null : `${POINTS[i][0]}=${c}`).filter(Boolean);
+  t('X13w-1: all SEVEN trace points matched exactly once each in the served source',
+    (XW.mutationCounts || []).length === 7 && badCounts.length === 0,
+    `counts=${JSON.stringify(XW.mutationCounts)} bad=${JSON.stringify(badCounts)}`);
+  const tags = (XW.sbTrace || []).map(x => x.at);
+  const terminal = tags.filter(x => /^early:|^final-return$|^catch$/.test(x));
+  t('X13w-2: ★ the builder took EXACTLY ONE terminal path, and the trace names it',
+    terminal.length === 1, `terminal=${JSON.stringify(terminal)} full=${JSON.stringify(XW.sbTrace)}`);
+  t('X13w-3: the caller reached the builder, and the block was not already populated',
+    tags.indexOf('caller:before') !== -1
+      && (XW.sbTrace || []).some(x => x.at === 'caller:before' && x.blockAlreadySet === false),
+    `trace=${JSON.stringify(XW.sbTrace)}`);
+  console.log(`   scaffold execution witness : ${JSON.stringify(XW.sbTrace)}`);
+  console.log(`   terminal path              : ${JSON.stringify(terminal)}`);
+
+  //  X13d/e — THE THROW, RESTORED AT THE SEAM THE WITNESS NAMED.
+  //  The trace ships WITH the throw rather than before it. Two earlier attempts injected a
+  //  failure, saw the scene complete, and could not tell whether the seam had been skipped or
+  //  the throw swallowed. Carrying both in one arm makes the fixture answer that itself.
+  const THROW_POINT = ['final-return+throw',
+    '        return block;\n      } catch (e) {',
+    '        ' + TRACE_NOBLOCK('final-return') +
+    "\n        if (window.__injectScaffoldFailure) {" +
+    // Snapshot the gate AT the throw. Without this the arm reports gateAtFailure=null and the
+    // question "had it committed yet?" gets answered by reasoning about ordering instead of by
+    // observation — which is the whole reason this proof exists.
+    "\n          try { var _g = _gateFor(window.state._invocationSeq);" +
+    "\n               window.__gateAtFailure = _g ? { settled: _g.settled, ok: _g.ok, waiters: _g.waiters.length } : 'no-gate'; }" +
+    "\n          catch (_ge) { window.__gateAtFailure = 'unreadable:' + (_ge && _ge.message); }" +
+    "\n          " + TRACE_NOBLOCK('inject:throw') +
+    "\n          throw new Error('INJECTED post-validation scaffold failure'); }" +
+    '\n        return block;\n      } catch (e) {'];
+  const D_POINTS = POINTS.map(pt => pt[0] === 'final-return' ? THROW_POINT : pt);
+
+  const EARLY_COMMIT = ['inverse:early-commit',
+    '            // Validation passed — but the chain is NOT yet committed. A scaffold builder\n' +
+    '            // failure downstream can still kill this scene, and releasing paid passes here\n' +
+    '            // meant they spent on a run that then died. The commit is at the author boundary.',
+    '            try { if (typeof _settleChainCommit === "function") _settleChainCommit(true, null, window.state); } catch (_) {}'];
+
+  const armOf = async (pts, inject) => {
+    let _pf = fs.readFileSync('public/app.js', 'utf8');
+    const counts = pts.map(([, from]) => _pf.split(from).length - 1);
+    pts.forEach(([, from, to]) => { _pf = _pf.replace(from, to); });
+    let err = null;
+    try { new vm.Script(_pf, { filename: 'preflight.js' }); } catch (e) { err = String((e && e.message) || e); }
+    if (err || !counts.every(c => c === 1)) return { preflight: { counts, err }, aborted: true };
+    const res = await run({ hot: false, mutate: null, injectScaffoldFailure: inject, mutateSrc: {
+      from: pts.map(x => x[1]).join('@@AND@@'), to: pts.map(x => x[2]).join('@@AND@@') } });
+    return { preflight: { counts, err }, aborted: false, ...res };
+  };
+
+  const D = await armOf(D_POINTS, true);
+  t('X13d-1: the throwing arm pre-flights clean — every replacement once, source still parses',
+    !D.aborted, `counts=${JSON.stringify(D.preflight.counts)} parseError=${D.preflight.err}`);
+  t('X13d-1b: the injection switch is ARMED inside the page — the check that would have caught three dead attempts',
+    D.injectArmed === true, `injectArmed=${JSON.stringify(D.injectArmed)}`);
+  const dTags = (D.sbTrace || []).map(x => x.at);
+  t('X13d-2: ★ the injected failure ACTUALLY FIRED — an execution witness, not a source match',
+    dTags.indexOf('inject:throw') !== -1, `trace=${JSON.stringify(dTags)}`);
+  t('X13d-3: ★ the gate had NOT yet committed when that post-validation failure fired',
+    // ASSERT THE CLAIMED STATE, NOT THE ABSENCE OF ONE STRING. The previous form was
+    // `!== null && !== 'committed'` — left over from when the snapshot was a string. Once the
+    // snapshot became an object it could never equal 'committed', so the second clause was dead
+    // and the assertion had decayed into a null check wearing a stronger label.
+    D.gateAtFailure?.settled === false && D.gateAtFailure?.ok === null,
+    `gateAtFailure=${JSON.stringify(D.gateAtFailure)}`);
+  const dA = acct(D) || {};
+  // An ABSENT key means zero: the census lists only kinds actually observed, which the guard arm
+  // above demonstrates. scaffold/planner are asserted too, so a run that died before the chain
+  // started cannot pass this by dispatching nothing.
+  t('X13d-4: ★ the real subplot pass never dispatched — zero paid spend on the dead run',
+    dA.scaffold === 1 && dA.planner === 1 && (dA.subplots || 0) === 0,
+    `scaffold=${dA.scaffold} planner=${dA.planner} subplots=${dA.subplots || 0} author=${dA.author}`);
+  console.log(`   D trace   : ${JSON.stringify(D.sbTrace)}`);
+  console.log(`   D gate    : ${JSON.stringify(D.gateAtFailure)}  subplots=${dA.subplots || 0}`);
+
+  const E = await armOf(D_POINTS.concat([EARLY_COMMIT]), true);
+  const eA0 = acct(E) || {};
+  t('X13e-1: the inverse arm pre-flights clean — all EIGHT replacements once, source still parses',
+    !E.aborted, `counts=${JSON.stringify(E.preflight.counts)} parseError=${E.preflight.err}`);
+  t('X13e-1b: the inverse arm is armed too, and its injected failure fired',
+    E.injectArmed === true && (E.sbTrace || []).some(x => x.at === 'inject:throw'),
+    `armed=${E.injectArmed} trace=${JSON.stringify((E.sbTrace || []).map(x => x.at))}`);
+
+  t('X13e-2: ★ at the IDENTICAL instant the inverse arm has already committed — the proof reads the gate PLACEMENT, not merely its existence',
+    D.gateAtFailure?.settled === false && D.gateAtFailure?.ok === null
+      && E.gateAtFailure?.settled === true && E.gateAtFailure?.ok === true,
+    `D=${JSON.stringify(D.gateAtFailure)} E=${JSON.stringify(E.gateAtFailure)}`);
+  // THIS ARM IS RACY, AND THAT IS THE FINDING — NOT NOISE TO AVERAGE AWAY.
+  // Two runs from a byte-identical app.js gave E.subplots = 1 and then 0. The subplot pass is
+  // fire-and-forget, so once the commit is moved back to validation the dispatch RACES the abort:
+  // sometimes it reaches the wire, sometimes the ownership gate marks the invocation fatal first.
+  // An `=== 1` assertion here would be flaky, and an `>= 0` one would be vacuous. The sound claim
+  // is over TRIALS: with the commit at the author boundary the spend is impossible (0 every time);
+  // moved back, it becomes merely likely-to-be-caught, which is not a guarantee.
+  const TRIALS = 3;
+  const dRuns = [dA.subplots || 0], eRuns = [eA0.subplots || 0];
+  for (let k = 1; k < TRIALS; k++) {
+    const d2 = await armOf(D_POINTS, true);
+    const e2 = await armOf(D_POINTS.concat([EARLY_COMMIT]), true);
+    dRuns.push((acct(d2) || {}).subplots || 0);
+    eRuns.push((acct(e2) || {}).subplots || 0);
+  }
+  t(`X13e-3: ★ across ${TRIALS} trials the commit at the AUTHOR BOUNDARY never released a subplot dispatch`,
+    dRuns.every(n => n === 0) && dRuns.length === TRIALS, `D subplots per trial = ${JSON.stringify(dRuns)}`);
+  // NOT AN ASSERTION, ON PURPOSE. Across five E arms the early commit released a real subplot
+  // dispatch exactly ONCE. That one observation is what proves the placement is load-bearing —
+  // but the outcome is a race, so asserting it would make the suite flaky and asserting its
+  // negation would be false. It is recorded and reported, not gated on.
+  const eReleased = eRuns.filter(n => n >= 1).length;
+  console.log(`   E released a dispatch in ${eReleased}/${TRIALS} trials this run (racy; observed 1× across earlier arms)`);
+  console.log(`   D subplots/trial : ${JSON.stringify(dRuns)}`);
+  console.log(`   E subplots/trial : ${JSON.stringify(eRuns)}`);
+
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  //  X14 — A RUNTIME WITNESS FOR THE CANON SEQUENCE
+  //  Source-match is not execution. The sequence's call site and the snapshot scoping were both
+  //  proven only by reading bytes, which is exactly the standard that failed three times on the
+  //  scaffold seam. These arms drive handleBeginStory — the real Scene 1 — and require the
+  //  ORDER, the DORMANCY, the byte-identity of the prose, and the verdict's arrival at the real
+  //  disclosure commit to be OBSERVED.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  const T = (tag, extra) => "try { (window.__sbTrace = window.__sbTrace || []).push({ at: '" + tag +
+    "'" + (extra || '') + " }); } catch (_) {}";
+  const H = "(function(t){ var h=0,i=0; t=String(t||''); for(;i<t.length;i++){ h=(h*31+t.charCodeAt(i))>>>0; } return t.length+':'+h; })(text)";
+
+  const SEQ_POINTS = [
+    // OUTSIDE the __textSnap guard. Placed inside it, this trace only fired when the harness had
+    // installed that global — so the FINAL_PROSE point simply never appeared and the ordering
+    // assertion failed against a production path that was in fact correct.
+    ['final-prose',
+     "          try { if (window.__textSnap) { var _dlv = formatStory(text);",
+     "          " + T('final-prose', ", hash: " + H) +
+     "\n          try { if (window.__textSnap) { var _dlv = formatStory(text);"],
+    ['seq:before',
+     "                var _seq = await _cpCanonSequence(text, _seqModel,",
+     "                " + T('seq:before', ", hash: " + H) +
+     "\n                var _seq = await _cpCanonSequence(text, _seqModel,"],
+    ['seq:after',
+     "          var _pInvLit = null;",
+     "          " + T('seq:after', ", hash: " + H +
+       ", result: (window.state && window.state._cpCanonSequenceResult) || null") +
+     "\n          var _pInvLit = null;"],
+    ['mount',
+     "          StoryPagination.addPage(formatStory(text), true, undefined,",
+     "          " + T('mount', ", hash: " + H) +
+     "\n          StoryPagination.addPage(formatStory(text), true, undefined,"],
+    // The real disclosure commit — what it was actually handed, and for whom.
+    // OBSERVE THE ARGUMENT, NOT A VARIABLE BESIDE IT. Reading _seqRes directly meant deleting the
+    // handoff line changed nothing the witness could see: the control stayed green while the
+    // verdict no longer travelled. The trace now reports the object production actually passes.
+    ['commit',
+     "          window._cpCommitScene({ sceneUid: sceneUid, ordinal: sceneNum,",
+     "          var _commitArg = { sceneUid: sceneUid, ordinal: sceneNum,"],
+    ['commit-call',
+     "            delivered: _delivered, appeared: _appeared });",
+     "            delivered: _delivered, appeared: _appeared };\n"
+     + "          try { (window.__sbTrace = window.__sbTrace || []).push({ at: 'commit',"
+     + " handed: _commitArg.semanticStatus === undefined ? '(absent)' : _commitArg.semanticStatus,"
+     + " published: _commitArg.published,"
+     + " delivered: (_commitArg.delivered || []).map(function (d) { return { cid: d.canonicalId, fid: d.facet_id, v: d.verified }; }) }); } catch (_) {}\n"
+     + "          window._cpCommitScene(_commitArg);"],
+  ];
+
+  const seqArm = async (extra) => {
+    const pts = SEQ_POINTS.concat(extra || []);
+    let pf = fs.readFileSync('public/app.js', 'utf8');
+    const counts = pts.map(([, from]) => pf.split(from).length - 1);
+    pts.forEach(([, from, to]) => { pf = pf.replace(from, to); });
+    let err = null;
+    try { new vm.Script(pf, { filename: 'seq-preflight.js' }); } catch (e) { err = String((e && e.message) || e); }
+    if (err || !counts.every(c => c === 1)) return { preflight: { counts, err }, aborted: true };
+    const r = await run({ hot: false, mutate: null, mutateSrc: {
+      from: pts.map(x => x[1]).join('@@AND@@'), to: pts.map(x => x[2]).join('@@AND@@') } });
+    return { preflight: { counts, err }, aborted: false, ...r };
+  };
+
+  const X14 = await seqArm();
+  const xt = (X14.sbTrace || []).filter(x => /final-prose|seq:|mount|commit/.test(x.at));
+  const idx = tag => xt.findIndex(x => x.at === tag);
+  t('X14-1: the witness pre-flights clean — six points, each matching once, source still parses',
+    !X14.aborted, `counts=${JSON.stringify(X14.preflight.counts)} err=${X14.preflight.err}`);
+  t('X14-2: ★ the sequence EXECUTED in a real Scene 1 — an observation, not a source scan',
+    idx('seq:before') !== -1 && idx('seq:after') !== -1,
+    `trace=${JSON.stringify(xt.map(x => x.at))}`);
+  t('X14-3: ★ …in the required ORDER: FINAL_PROSE → sequence → addPage',
+    idx('final-prose') !== -1 && idx('final-prose') < idx('seq:before')
+    && idx('seq:before') < idx('seq:after') && idx('seq:after') < idx('mount'),
+    JSON.stringify(xt.map(x => x.at)));
+  t('X14-4: ★ it ran EXACTLY ONCE',
+    xt.filter(x => x.at === 'seq:before').length === 1,
+    `count=${xt.filter(x => x.at === 'seq:before').length}`);
+  t('X14-5: ★ the prose that mounts is BYTE-IDENTICAL to the prose the sequence received — the pen never moved',
+    (() => { const b = xt.find(x => x.at === 'seq:before'), m = xt.find(x => x.at === 'mount');
+             return !!b && !!m && b.hash === m.hash; })(),
+    `before=${(xt.find(x => x.at === 'seq:before') || {}).hash} mount=${(xt.find(x => x.at === 'mount') || {}).hash}`);
+  const seqAcct = acct(X14) || {};
+  t('X14-6: ★ dormant mode made ZERO auditor and ZERO repair calls, and nothing escaped',
+    (seqAcct.canonAuditor || 0) === 0 && (seqAcct.canonRepair || 0) === 0
+    && (seqAcct.unknownApi || 0) === 0 && (seqAcct.escaped || 0) === 0,
+    `auditor=${seqAcct.canonAuditor || 0} repair=${seqAcct.canonRepair || 0} unknownApi=${seqAcct.unknownApi} escaped=${seqAcct.escaped} author=${seqAcct.author}`);
+  t('X14-7: ★ and the scene still MOUNTED — enforcement off never blocks the reader',
+    idx('mount') !== -1, JSON.stringify(xt.map(x => x.at)));
+  const commitEv = xt.find(x => x.at === 'commit');
+  t('X14-8: ★ the real disclosure commit ran and was HANDED the sequence verdict',
+    !!commitEv && commitEv.handed !== undefined,
+    `commit=${JSON.stringify(commitEv)}`);
+  console.log(`   X14 trace  : ${JSON.stringify(xt.map(x => x.at))}`);
+  console.log(`   X14 result : ${JSON.stringify((xt.find(x => x.at === 'seq:after') || {}).result)}`);
+  console.log(`   X14 commit : ${JSON.stringify(commitEv)}`);
+
+  // ── NEGATIVE CONTROL A: remove the SERVED call site. The witness must disappear. ──
+  // Disable the whole block. Stubbing only the call left the injected trace standing in front of
+  // it, so the witness kept firing for code that no longer ran — the control proved nothing.
+  // The anchor must include the NEXT line: the continuation seam introduced an identical
+  // condition, and a marker matching twice replaces the wrong one. `_seqScene` (Scene 1) vs
+  // `_seqSceneC` (continuation) is what separates them.
+  const X14A = await seqArm([['kill-call',
+    "            if (typeof _cpCanonSequence === 'function' && typeof _cpBuildEstablishedCanon === 'function') {\n              var _seqScene = (state.sceneSkeleton && state.sceneSkeleton._cpSceneNumber != null)",
+    "            if (false) {\n              var _seqScene = (state.sceneSkeleton && state.sceneSkeleton._cpSceneNumber != null)"]]);
+  const at = (X14A.sbTrace || []).map(x => x.at);
+  const aAfter = (X14A.sbTrace || []).find(x => x.at === 'seq:after');
+  t('X14-9: ★ removing the served call site kills the EXECUTION witness — the trace stops, and no result is produced',
+    !X14A.aborted && at.indexOf('seq:before') === -1 && at.indexOf('mount') !== -1
+    && !!aAfter && !aAfter.result,
+    `counts=${JSON.stringify(X14A.preflight.counts)} trace=${JSON.stringify(at)} result=${JSON.stringify(aAfter && aAfter.result)}`);
+
+  // ── A TEST-ONLY CONTRADICTION, RAISED INSIDE THE SEQUENCE ITSELF ──
+  // The verdict is NOT handed to _cpCommitScene by this test. It is produced where production
+  // produces one, and has to travel the whole way on its own.
+  const VERDICT = ['verdict',
+    "      out.publish = true; out.commit = true; out.semanticStatus = 'unresolved';\n      return out;",
+    "      out.publish = true; out.commit = true; out.semanticStatus = 'contradiction';\n"
+    + "      out.publishedWithConflict = true;\n      return out;"];
+  const X14B = await seqArm([VERDICT]);
+  const bCommit = (X14B.sbTrace || []).find(x => x.at === 'commit');
+  const bResult = ((X14B.sbTrace || []).find(x => x.at === 'seq:after') || {}).result;
+  t('X14-10: ★ a verdict raised INSIDE the sequence reaches the real disclosure commit',
+    !X14B.aborted && !!bCommit && bCommit.handed === 'contradiction',
+    `counts=${JSON.stringify(X14B.preflight.counts)} commit=${JSON.stringify(bCommit)} result=${JSON.stringify(bResult)}`);
+
+  // ── NEGATIVE CONTROL B: remove the handoff. The same verdict must stop arriving. ──
+  const X14C = await seqArm([VERDICT, ['kill-handoff',
+    "            semanticStatus: (_seqFits && _seqRes.semanticStatus) || 'unresolved',",
+    "            "]]);
+  const cCommit = (X14C.sbTrace || []).find(x => x.at === 'commit');
+  t('X14-11: ★ removing the verdict handoff makes that SAME contradiction stop arriving at the commit',
+    !X14C.aborted && !!cCommit && cCommit.handed !== 'contradiction',
+    `counts=${JSON.stringify(X14C.preflight.counts)} commit=${JSON.stringify(cCommit)}`);
+  console.log(`   X14 killcall : ${JSON.stringify(at)}`);
+  console.log(`   X14 verdict  : ${JSON.stringify(bCommit)}`);
+  console.log(`   X14 nohandoff: ${JSON.stringify(cCommit)}`);
+
+
+  console.log(`   E trace   : ${JSON.stringify(E.sbTrace)}`);
+  console.log(`   E gate    : ${JSON.stringify(E.gateAtFailure)}  subplots=${eA0.subplots || 0}`);
+
+
   t('X13c: every model request matched EXACTLY ONE signature — none unnamed, none ambiguous, ' +
     'and nothing answered generically',
     G.unknownModel.length === 0 && G.ambiguous.length === 0

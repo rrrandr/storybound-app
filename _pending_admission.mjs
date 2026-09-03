@@ -426,6 +426,17 @@ let POS = null;   // the positive arm's environment evidence, read by section 9
     ['promotion',          'var _pr = window._promotePendingPortfolio(window.state, sceneUid, _ref, _cid);',
                            'var _pr = { ok: false, code: "MUTATION CONTROL" };',
                            M => !(M.res.cand || {}).promotedTo && M.res.facetsAfter === 0, {}],
+    // FINDING 2's control. Removing the production verifier must strip the VERIFIED state from a
+    // beat the prose really performed. If C10a/b still passed with this gone, they would be
+    // reading a value the fixture supplied rather than one production computed.
+    ['cplus verification', 'var _v = _cpVerifyBeatInProse(sceneText, _act, c && c.character, { otherLabels: _others });',
+                           'var _v = { verified: false, matched: 0, total: 0, reason: "MUTATION CONTROL" };',
+                           M => {
+                             const m = M.res.cpVerify && M.res.cpVerify['Mara Dunn'];
+                             if (!m) return false;   // no manifestation at all = vacuous, not a pass
+                             return m.manifestations.every(x => x.verification !== 'verified')
+                                 && m.facets.every(f => f.disclosureStatus !== 'revealed');
+                           }, {}],
 
   ];
   for (const [label, from, to, check, opts] of MUTS) {

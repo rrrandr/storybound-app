@@ -91,6 +91,10 @@ const AUTH = await page.evaluate(() => {
     wrongSubject:  window._cpDevelopmentAuthorized(V('named:other', 'gen:x:v1:value'), { stage }),
     noDevelopment: window._cpDevelopmentAuthorized(V('named:jess', 'gen:x:v1:value'), { stage: bare }),
     noStage:       window._cpDevelopmentAuthorized(V('named:jess', 'gen:x:v1:value'), {}),
+    // THE CASE THIS SUITE NEVER TRIED. Every fixture above supplies a facet, so `!fid ||` —
+    // which authorised a verdict naming NO facet — passed all 18 assertions unchallenged.
+    noFacet:       window._cpDevelopmentAuthorized(V('named:jess', null), { stage }),
+    emptyFacet:    window._cpDevelopmentAuthorized(V('named:jess', ''), { stage }),
   };
 });
 ok('★ an authored development authorises exactly its own subject+facet', AUTH.authorized === true, JSON.stringify(AUTH));
@@ -98,6 +102,8 @@ ok('★ it does NOT authorise a different facet of the same character', AUTH.wro
 ok('★ …nor the same facet on a different character', AUTH.wrongSubject === false, JSON.stringify(AUTH));
 ok('★ with NO authored development, possible_development is unauthorised', AUTH.noDevelopment === false, JSON.stringify(AUTH));
 ok('★ …and with no stage at all it is unauthorised — never authorised by absence', AUTH.noStage === false, JSON.stringify(AUTH));
+ok('★ a verdict naming NO facet is unauthorised — an authored development covers ONE facet, not the character',
+   AUTH.noFacet === false && AUTH.emptyFacet === false, JSON.stringify(AUTH));
 
 // ── END TO END THROUGH THE COMMIT DECISION ──
 const E2E = await page.evaluate(() => {

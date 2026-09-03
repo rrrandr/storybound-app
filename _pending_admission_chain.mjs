@@ -379,7 +379,36 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
       const facetsAfter = promotedTo
         ? (window._facetsForCharacter({ id: promotedTo, label:'Mara Dunn', aliases:['Mara Dunn'] }, s, { sceneNumber: 2 }) || [])
         : [];
-      return { beginThrew, uid, beforeSnap, restoreEvidence, orderEvidence, drained, restoredRead,
+      // ── FINDING 2: WAS THE BEAT VERIFIED AGAINST THE PROSE THE READER GOT? ──
+      // Read straight off the ledger entities, not from a helper the test could steer. Both staged
+      // people carry the SAME directed action ("says the clause number instead of the clause").
+      // The prose has Mara doing it and Tom saying nothing at all, so a real verifier must split
+      // them. Nothing here supplies `verified`.
+      const cpVerify = (function () {
+        try {
+          var out = {};
+          var ents = (L && L.entities) || {};
+          Object.keys(ents).forEach(function (k) {
+            var e = ents[k];
+            var c = e && e.cplusContinuity;
+            if (!c || !Array.isArray(c.manifestations) || !c.manifestations.length) return;
+            var label = e.label || e.name || k;
+            out[label] = {
+              manifestations: c.manifestations.map(function (m) {
+                return { facet_id: m.facet_id, verification: m.verification, relation: m.relation }; }),
+              // `byFacetId`, not `facets` — reading the wrong key returned [] and made a
+              // present, correct revealed-state look absent.
+              facets: Object.keys(c.byFacetId || {}).map(function (fid) {
+                var st2 = c.byFacetId[fid];
+                return { facet_id: fid, disclosureStatus: st2.disclosureStatus,
+                         verifiedCount: st2.verifiedCount || 0,
+                         manifestationCount: st2.manifestationCount || 0 }; })
+            };
+          });
+          return out;
+        } catch (e) { return { error: String((e && e.message) || e) }; }
+      })();
+      return { cpVerify, beginThrew, uid, beforeSnap, restoreEvidence, orderEvidence, drained, restoredRead,
                trace: window.__admitTrace.slice(0, 80),
                pageUids: window.StoryPagination.getPageUids(),
                metaByUid: window.StoryPagination.getPageUids().map(function (u) {
@@ -485,6 +514,32 @@ export async function chain(browser, SRC, { mutateSrc, badEcho, staged, restoreB
           detail: JSON.stringify({
             inPlanner: (String(planner || '').match(/"(?:dimension|unique_prediction|not_explained_by|identity_signature)"|\b(?:unique_prediction|not_explained_by|identity_signature)\b/g) || []).slice(0, 3),
             inAuthor: (String(author || '').match(/"(?:dimension|unique_prediction|not_explained_by|identity_signature)"|\b(?:unique_prediction|not_explained_by|identity_signature)\b/g) || []).slice(0, 3) }) },
+      // ── FINDING 2 (Codex): production never passed `verified:true`, so no facet was ever
+      // promoted to `revealed` and the whole directed/verified distinction was dead in the
+      // product while the suites passed `verified: true` by hand and looked green.
+      'C10a the beat the PROSE actually performed committed as VERIFIED — production called the verifier, the test supplied nothing':
+        { ok: (() => {
+            const m = res.cpVerify && res.cpVerify['Mara Dunn'];
+            return !!m && m.manifestations.some(x => x.verification === 'verified');
+          })(),
+          detail: JSON.stringify(res.cpVerify && res.cpVerify['Mara Dunn']) },
+      'C10b …and that facet is now REVEALED, with a verified count — reader-facing canon follows the page, not the plan':
+        { ok: (() => {
+            const m = res.cpVerify && res.cpVerify['Mara Dunn'];
+            return !!m && m.facets.some(f => f.disclosureStatus === 'revealed' && f.verifiedCount >= 1);
+          })(),
+          detail: JSON.stringify(res.cpVerify && res.cpVerify['Mara Dunn'] && res.cpVerify['Mara Dunn'].facets) },
+      // THE DISCRIMINATION, NOT MERELY THE POSITIVE. Same directed action, same scene, same commit:
+      // Tom "said nothing at all". If he also came back verified, the verifier is rubber-stamping
+      // and C10a proves nothing.
+      'C10c the beat the prose DECLINED to render stayed DIRECTED and was never revealed':
+        { ok: (() => {
+            const t2 = res.cpVerify && res.cpVerify['Tom Reed'];
+            if (!t2) return true;   // absent is acceptable: no manifestation at all is not a false verify
+            return t2.manifestations.every(x => x.verification !== 'verified')
+                && t2.facets.every(f => f.disclosureStatus !== 'revealed' && (f.verifiedCount || 0) === 0);
+          })(),
+          detail: JSON.stringify(res.cpVerify && res.cpVerify['Tom Reed']) },
       'C9 nothing escaped the harness':
         { ok: escaped.length === 0, detail: JSON.stringify(escaped.slice(0, 2)) },
     };

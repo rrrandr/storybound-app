@@ -69,13 +69,18 @@ const FX = await buildFixture();
 // ══ 1. THE AUTHOR DIRECTIVE ══
 const AUT = await page.evaluate(() => {
   const s = window.state;
-  s.sceneSkeleton = { environment_anchor: 'the customs hall', tension_rhythm: 'rising' };
+  // _cpSceneNumber mirrors what production stamps on every skeleton it builds. The snapshot is
+  // scene- and invocation-scoped now, and a fixture that omits the stamp reads as ABSENT — which
+  // is correct behaviour, but it would silently stop this suite from testing delivery at all.
+  s._invocationSeq = 3;
+  s._invocationSeq = s._invocationSeq || 3; s._cpAttemptId = s._cpAttemptId || 'cpa:test-1'; s.sceneSkeleton = { _cpSceneNumber: 1, _cpAttemptId: 'cpa:test-1', environment_anchor: 'the customs hall', tension_rhythm: 'rising', _cpSceneNumber: 1 };
   // Production's own builder, with the stage resolver pointed at the fixture stage.
   // The author reads the invocation's snapshot. Building it here is exactly what the planner
   // seam does — one model, one render — so this drives the real path rather than a second one.
   const model = window._cpBuildEstablishedCanon(s.__wiringStage, {});
   const view = window._cpCanonView(model, 'creative', {});
-  s._cpCanonSnapshot = { storyId: s.storyId, text: view.text, entries: model.entries.length,
+  s.sceneSkeleton._cpCanonSnapshot = { storyId: s.storyId, sceneNumber: 1, attemptId: (s._cpAttemptId || 'cpa:test-1'), invocationSeq: 3,
+                         text: view.text, entries: model.entries.length,
                          ok: view.ok, code: view.code };
   const d = window.buildSkeletonDirective ? window.buildSkeletonDirective() : '';
   return { chars: d.length, text: d };
@@ -164,9 +169,9 @@ const CTRL = await page.evaluate(() => {
   const s = window.state;
   const model = window._cpBuildEstablishedCanon(s.__wiringStage, {});
   const view = window._cpCanonView(model, 'creative', {});
-  s._cpCanonSnapshot = { storyId: s.storyId, text: view.text, entries: model.entries.length, ok: true, code: null };
+  s.sceneSkeleton._cpCanonSnapshot = { storyId: s.storyId, sceneNumber: 1, attemptId: (s._cpAttemptId || 'cpa:test-1'), invocationSeq: s._invocationSeq || 3, text: view.text, entries: model.entries.length, ok: true, code: null };
   const withIt = window.buildSkeletonDirective();
-  s._cpCanonSnapshot = null;                       // the projection never ran for this invocation
+  s.sceneSkeleton._cpCanonSnapshot = null;                       // the projection never ran for this invocation
   const without = window.buildSkeletonDirective();
   return { withIt: /ESTABLISHED CHARACTER CANON/.test(withIt), without: /ESTABLISHED CHARACTER CANON/.test(without),
            withLen: withIt.length, withoutLen: without.length };
@@ -182,12 +187,12 @@ const REFUSE = await page.evaluate(() => {
   const s = window.state;
   // the fixture story, five protected characters (rebuilt immediately above)
   const model = window._cpBuildEstablishedCanon(s.__wiringStage, {});
-  s._cpCanonSnapshot = { storyId: s.storyId, text: '', entries: model.entries.length,
+  s.sceneSkeleton._cpCanonSnapshot = { storyId: s.storyId, sceneNumber: 1, attemptId: (s._cpAttemptId || 'cpa:test-1'), invocationSeq: s._invocationSeq || 3, text: '', entries: model.entries.length,
                          ok: false, code: 'canon_budget_exceeded' };
   let threw = null, produced = null;
   try { produced = window.buildSkeletonDirective(); } catch (e) { threw = String(e && e.message); }
   const fault = s._cpCanonFault;
-  s._cpCanonSnapshot = null;
+  s.sceneSkeleton._cpCanonSnapshot = null;
   return { threw, produced: produced === null ? null : produced.length, fault };
 });
 ok('★ AUTHOR: a refused projection with protected characters THROWS — no directive is produced',
@@ -208,11 +213,11 @@ const REFUSE_EMPTY = await page.evaluate(() => {
   s.storyId = 'wiring-none'; s._relationshipLedger = null;
   const id = window._relEntityForName('Nobody', { create: true });
   // A refusal with NOBODY protected: entries = 0, so the author must proceed.
-  s._cpCanonSnapshot = { storyId: s.storyId, text: '', entries: 0, ok: false,
+  s.sceneSkeleton._cpCanonSnapshot = { storyId: s.storyId, sceneNumber: 1, attemptId: (s._cpAttemptId || 'cpa:test-1'), invocationSeq: s._invocationSeq || 3, text: '', entries: 0, ok: false,
                          code: 'canon_budget_exceeded' };
   let threw = null, produced = null;
   try { produced = window.buildSkeletonDirective(); } catch (e) { threw = String(e && e.message); }
-  s._cpCanonSnapshot = null;
+  s.sceneSkeleton._cpCanonSnapshot = null;
   s.storyId = _prevStory; s._relationshipLedger = _prevLedger;      // given back
   return { threw, produced: produced === null ? null : produced.length };
 });
@@ -243,7 +248,7 @@ const NOREBUILD = await page.evaluate(() => {
   const s = window.state;
   const model = window._cpBuildEstablishedCanon(s.__wiringStage, {});
   const view = window._cpCanonView(model, 'creative', {});
-  s._cpCanonSnapshot = { storyId: s.storyId, text: view.text, entries: model.entries.length, ok: true, code: null };
+  s.sceneSkeleton._cpCanonSnapshot = { storyId: s.storyId, sceneNumber: 1, attemptId: (s._cpAttemptId || 'cpa:test-1'), invocationSeq: s._invocationSeq || 3, text: view.text, entries: model.entries.length, ok: true, code: null };
   let builds = 0, stages = 0, views = 0;
   const rb = window._cpBuildEstablishedCanon, rv = window._cpCanonView, rs = window._sceneStageContract;
   window._cpBuildEstablishedCanon = function () { builds++; return rb.apply(null, arguments); };
@@ -251,7 +256,7 @@ const NOREBUILD = await page.evaluate(() => {
   window._sceneStageContract = function () { stages++; return rs.apply(null, arguments); };
   const d = window.buildSkeletonDirective();
   window._cpBuildEstablishedCanon = rb; window._cpCanonView = rv; window._sceneStageContract = rs;
-  s._cpCanonSnapshot = null;
+  s.sceneSkeleton._cpCanonSnapshot = null;
   return { builds, views, stages, gotCanon: /ESTABLISHED CHARACTER CANON/.test(d) };
 });
 ok('★ the author builds NO model, renders NO view and resolves NO stage — it reads the snapshot',
@@ -263,10 +268,10 @@ const FOREIGN = await page.evaluate(() => {
   const s = window.state;
   const model = window._cpBuildEstablishedCanon(s.__wiringStage, {});
   const view = window._cpCanonView(model, 'creative', {});
-  s._cpCanonSnapshot = { storyId: 'some-other-story', text: view.text,
+  s.sceneSkeleton._cpCanonSnapshot = { storyId: 'some-other-story', sceneNumber: 1, attemptId: (s._cpAttemptId || 'cpa:test-1'), invocationSeq: s._invocationSeq || 3, text: view.text,
                          entries: model.entries.length, ok: true, code: null };
   const d = window.buildSkeletonDirective();
-  s._cpCanonSnapshot = null;
+  s.sceneSkeleton._cpCanonSnapshot = null;
   return { gotCanon: /ESTABLISHED CHARACTER CANON/.test(d) };
 });
 ok('★ a snapshot stamped with another storyId is ignored, not borrowed',
