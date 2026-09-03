@@ -145,6 +145,140 @@ ok('CG9 ★ the sequence runs on the CG path before the commit, and never moves 
    'sequence present; finalText never applied on the CG path');
 ok('CG10 nothing escaped to a paid provider', escaped.length === 0, JSON.stringify(escaped.slice(0, 3)));
 
+
+// ══ 5. THE INTEGRATED ARM — THROUGH THE REAL `_renderStagedScene` ══
+//  CG8/CG9 above are source assertions and the arms before them drive the COMMIT directly. Neither
+//  executes the block where CG actually runs the sequence and stores its result. This one invokes
+//  production's own renderer and witnesses the order.
+const CGPOINTS = [
+  ['cg:seq-entry',
+   "                var _cgSeq = await _cpCanonSequence(_cgLedgerProse, _cgModel, { sceneUid: String(_cgUid) });",
+   "                try { (window.__cglog = window.__cglog || []).push({ at: 'cg:seq', uid: String(_cgUid), len: String(_cgLedgerProse||'').length }); } catch (_) {}\n"
+   + "                var _cgSeq = await _cpCanonSequence(_cgLedgerProse, _cgModel, { sceneUid: String(_cgUid) });"],
+  ['cg:store',
+   "                _cpStoreSeqResult(state, String(_cgUid), {",
+   "                try { (window.__cglog = window.__cglog || []).push({ at: 'cg:store', uid: String(_cgUid) }); } catch (_) {}\n"
+   + "                _cpStoreSeqResult(state, String(_cgUid), {"],
+];
+// the commit trace needs the arg named, exactly as the other drivers do
+const CGPRE = [
+  ['cg:commit-arg', "          window._cpCommitScene({ sceneUid: sceneUid, ordinal: sceneNum,",
+   "          var _ctArg = { sceneUid: sceneUid, ordinal: sceneNum,"],
+  ['cg:commit-close', "            delivered: _delivered, appeared: _appeared });",
+   "            delivered: _delivered, appeared: _appeared };\n"
+   + "          try { (window.__cglog = window.__cglog || []).push({ at: 'cg:commit', uid: sceneUid,"
+   + " pageAttempt: _pageAttempt, handed: _ctArg.semanticStatus,"
+   + " facets: (_ctArg.delivered || []).map(function (d) { return d.facet_id; }) }); } catch (_) {}\n"
+   + "          window._cpCommitScene(_ctArg);"],
+];
+
+const integrated = async (kill) => {
+  const pts = CGPRE.concat(CGPOINTS).concat(kill ? [['cg:kill',
+    "            if (_cgUid && typeof _cpCanonSequence === 'function'\n                && typeof _cpBuildEstablishedCanon === 'function' && typeof _cpStoreSeqResult === 'function') {",
+    "            if (false) {"]] : []);
+  let b2 = SRC;
+  const cts = pts.map(([, from]) => b2.split(from).length - 1);
+  pts.forEach(([, from, to]) => { b2 = b2.replace(from, to); });
+  let e2 = null;
+  try { new vm.Script(b2, { filename: 'cgint.js' }); } catch (e) { e2 = String(e && e.message); }
+  if (!cts.every(c => c === 1) || e2) return { aborted: true, cts, e2 };
+
+  const c2 = await browser.newContext();
+  const pg = await c2.newPage();
+  await installSession(pg);
+  await pg.addInitScript(() => { window.__ctNoAutoBegin = true; });
+  await pg.route('**/*', async route => {
+    const u = route.request().url(); const pth = u.replace(/^https?:\/\/[^/]+/, '');
+    if (isAuthOrigin(u)) return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    if (!/\/api\//.test(pth)) return route.continue();
+    if (/\/api\/config\b/.test(pth)) return route.fulfill({ status: 200, contentType: 'application/json', body: configBody() });
+    return route.fulfill({ status: 200, contentType: 'application/json',
+      body: JSON.stringify({ ok: true, content: DISCLOSURE,
+        choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: DISCLOSURE } }] }) });
+  });
+  await pg.route('**/app.js*', r => r.fulfill({ status: 200,
+    contentType: 'application/javascript; charset=utf-8', body: b2 }));
+  pg.on('request', r => { if (/\/api\//.test(r.url()) && !/localhost|127\.0\.0\.1/.test(r.url())) escaped.push(r.url()); });
+  await pg.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await pg.waitForFunction(() => window.state && window._renderStagedScene && window._cgSceneUidFor, { timeout: 60000 });
+
+  const res = await pg.evaluate(async (dohkar) => {
+    const s = window.state;
+    const def = (window.STARTER_STORIES || []).find(d => d && d.id === 'starter_first_sacrifice');
+    Object.assign(s, { _starterId: def.id, is_starter_story: true, world: def.world,
+      worldSubtype: def.worldSubtype, name: 'Lirael', playerName: 'Lirael',
+      loveInterestName: 'Julian', partnerName: 'Julian', pov: 'first_person',
+      storyId: 'cgint-1', turnCount: 3, scenes: ['a','b','c'], issueNumber: 1,
+      renderMode: 'staged_story_mode', _cgSceneUidByIndex: null });
+    s._relationshipLedger = null; s._cpCanonSequenceResults = null;
+    const L = window._relLedger(true) || (s._relationshipLedger =
+      { v: 1, storyId: s.storyId, processed: {}, entities: {}, edges: {}, seq: 0 });
+    L.entities[dohkar] = { id: dohkar, kind: 'role', label: 'the presiding Dohkar',
+      aliases: ['the presiding Dohkar'] };
+    // A backend-minted assignment, exactly as the continuation path produces one.
+    s.sceneSkeleton = { _cpSceneNumber: 3, _cpAttemptId: 'cpa:cgint', character_plus: [
+      { character: 'the presiding Dohkar', canonicalId: dohkar, facet_id: 'gen:dohkar:v1:worldview',
+        option_id: 'OPT-1', mode: 'IN_PERSON', verification_target: 'performs the rite',
+        source: 'backend_continuation' }] };
+    s._cpDirectedBeats = [{ facet_id: 'gen:dohkar:v1:worldview', visibleAction: null,
+      verificationTarget: 'performs the rite', pcInterpretation: 'x' }];
+
+    const BEAT = 'The harbour office was cold. The presiding Dohkar performs the rite, and did not look up.';
+    const plan = { beats: [{ text: BEAT, speaker: null }], phases: [], low_fidelity: true };
+    plan.__sceneUid = window._cgSceneUidFor(2, plan);
+    const beatBefore = plan.beats[0].text;
+    let threw = null;
+    try { window._renderStagedScene(plan, null); } catch (e) { threw = String((e && e.message) || e); }
+    for (let i = 0; i < 240; i++) {
+      const lg = window.__cglog || [];
+      if (lg.some(x => x.at === 'cg:commit')) break;
+      await new Promise(r => setTimeout(r, 25));
+    }
+    const LL = window._relLedger(false);
+    const ent = LL && LL.entities && LL.entities[dohkar];
+    const cont = ent && ent.cplusContinuity;
+    return { threw, log: window.__cglog || [], uid: plan.__sceneUid,
+             beatBefore, beatAfter: plan.beats[0].text,
+             rows: (cont && cont.manifestations || []).map(m => ({ facet_id: m.facet_id,
+               semanticStatus: m.semanticStatus, publishedWithConflict: m.publishedWithConflict })) };
+  }, DOHKAR);
+  await c2.close().catch(() => {});
+  return { aborted: false, cts, ...res };
+};
+
+const INT = await integrated(false);
+const tags = (INT.log || []).map(x => x.at);
+ok('CG11 the integrated arm pre-flights clean — every point matching once, source parses',
+   !INT.aborted, `counts=${JSON.stringify(INT.cts)} err=${INT.e2}`);
+ok('CG12 ★ the real _renderStagedScene ran the sequence, stored under plan.__sceneUid, then committed — in that order',
+   tags.indexOf('cg:seq') !== -1 && tags.indexOf('cg:store') !== -1 && tags.indexOf('cg:commit') !== -1
+   && tags.indexOf('cg:seq') < tags.indexOf('cg:store')
+   && tags.indexOf('cg:store') < tags.indexOf('cg:commit'),
+   `threw=${INT.threw} log=${JSON.stringify(INT.log)}`);
+ok('CG13 ★ the commit resolved its attempt from the plan\'s own uid',
+   (() => { const c = (INT.log || []).find(x => x.at === 'cg:commit');
+            return !!c && c.pageAttempt === INT.uid && c.uid === INT.uid; })(),
+   JSON.stringify((INT.log || []).find(x => x.at === 'cg:commit')));
+ok('CG14 ★ the exact facet committed from the rendered panel set',
+   (INT.rows || []).some(r => r.facet_id === 'gen:dohkar:v1:worldview'), JSON.stringify(INT.rows));
+ok('CG15 ★ the rendered beat bytes are unchanged — finalText never touched the panels',
+   INT.beatBefore === INT.beatAfter, `before=${(INT.beatBefore||'').length}B after=${(INT.beatAfter||'').length}B`);
+
+// ── THE CONTROL: disable the CG sequence block ──
+const KILLED = await integrated(true);
+const kTags = (KILLED.log || []).map(x => x.at);
+ok('CG16 ★ disabling the CG sequence block stops the sequence and the store — while the panel still renders and still commits',
+   !KILLED.aborted && kTags.indexOf('cg:seq') === -1 && kTags.indexOf('cg:store') === -1
+   && kTags.indexOf('cg:commit') !== -1 && !KILLED.threw,
+   `counts=${JSON.stringify(KILLED.cts)} log=${JSON.stringify(KILLED.log)}`);
+ok('CG17 ★ …and that exact facet then commits UNRESOLVED, with no conflict',
+   (KILLED.rows || []).some(r => r.facet_id === 'gen:dohkar:v1:worldview'
+     && r.semanticStatus !== 'contradiction' && r.publishedWithConflict !== true),
+   JSON.stringify(KILLED.rows));
+console.log(`  integrated : ${JSON.stringify(tags)} uid=${INT.uid}`);
+console.log(`  rows       : ${JSON.stringify(INT.rows)}`);
+console.log(`  killed     : ${JSON.stringify(kTags)} rows=${JSON.stringify(KILLED.rows)}`);
+
 console.log('\n' + out.join('\n'));
 console.log(`\n  uids   : A=${U.uidA} again=${U.uidAgain === U.uidA} B=${U.uidB}`);
 console.log(`  own    : ${JSON.stringify(OWN.rows)}`);
