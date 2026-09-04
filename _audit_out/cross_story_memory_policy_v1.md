@@ -1,6 +1,6 @@
 # CROSS-STORY MEMORY — DECISION PROPOSAL v1
 
-**STATUS: PROPOSED, NOT APPROVED. Nothing is built. No model calls.**
+**STATUS: POLICY DECIDED 2026-09-03. Not built. No model calls. Build is not authorised.**
 Written against `public/app.js` @ `9151da2`.
 
 ---
@@ -95,13 +95,23 @@ Every one identity-pinned, through the real path, with a control observed to fai
 
 ---
 
-## 6 · What I need decided
+## 6 · DECIDED — v1 scope
 
-1. **Is the scope table right?** Specifically: should `recurring_signature` carry, or is even
-   that too much for a first version?
-2. **Who may be linked** — any character, or love interests and named recurring figures only?
-3. **Where does the user do this** — end-of-story surface, library, or the character sheet?
-4. **Write-back**: may a later story promote *new* canon into the persona, or is a persona
-   frozen at creation? Frozen is simpler and safer for v1.
+Deliberately narrow. Recorded 2026-09-03.
 
-No implementation until these are answered.
+1. **Carry recurring signatures only, and only when `revealed` AND `verifiedCount ≥ 1`.**
+   Narrower than the table in §2: an episodic revealed facet does NOT carry in v1. What crosses
+   a story boundary is a standing signature the reader has actually seen more than once.
+2. **Any character may be linked.** The explicit user action is the safeguard — not a whitelist
+   of roles. A person choosing to carry someone is the consent.
+3. **Linking lives on the finished-story character sheet.** Revocation gets a library view later;
+   it is not required for the first version but the link must be revocable from day one.
+4. **A persona is FROZEN at creation. No write-back in v1.** A later story may adopt it and may
+   develop that character locally, but nothing flows back. Promotion, if it is ever wanted, is a
+   separate feature with its own consent.
+
+Everything in §5 remains the acceptance bar, with test 2 tightened to the rule in (1):
+an episodic revealed facet must NOT carry, named individually alongside the latent and
+conflicted cases.
+
+**Cross-story work stops here.** No implementation is authorised.
