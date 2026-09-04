@@ -1,0 +1,56 @@
+{
+  "v": 1,
+  "rubricSha": "36a37aad3082c0a2",
+  "builtAt": "2026-09-04T01:32:05.938Z",
+  "note": "BLIND PACK — case ids and prose only. No canon, no expected verdicts.",
+  "cases": [
+    {
+      "id": "case-1",
+      "prose": "<<ARCHIVED PROSE FOR case-1 — attached at authorization>>"
+    },
+    {
+      "id": "case-2",
+      "prose": "<<ARCHIVED PROSE FOR case-2 — attached at authorization>>"
+    },
+    {
+      "id": "case-3",
+      "prose": "<<ARCHIVED PROSE FOR case-3 — attached at authorization>>"
+    },
+    {
+      "id": "case-4",
+      "prose": "<<ARCHIVED PROSE FOR case-4 — attached at authorization>>"
+    },
+    {
+      "id": "case-5",
+      "prose": "<<ARCHIVED PROSE FOR case-5 — attached at authorization>>"
+    },
+    {
+      "id": "case-6",
+      "prose": "<<ARCHIVED PROSE FOR case-6 — attached at authorization>>"
+    },
+    {
+      "id": "case-7",
+      "prose": "<<ARCHIVED PROSE FOR case-7 — attached at authorization>>"
+    },
+    {
+      "id": "case-8",
+      "prose": "<<ARCHIVED PROSE FOR case-8 — attached at authorization>>"
+    },
+    {
+      "id": "case-9",
+      "prose": "<<ARCHIVED PROSE FOR case-9 — attached at authorization>>"
+    },
+    {
+      "id": "case-10",
+      "prose": "<<ARCHIVED PROSE FOR case-10 — attached at authorization>>"
+    },
+    {
+      "id": "case-11",
+      "prose": "<<ARCHIVED PROSE FOR case-11 — attached at authorization>>"
+    },
+    {
+      "id": "case-12",
+      "prose": "<<ARCHIVED PROSE FOR case-12 — attached at authorization>>"
+    }
+  ]
+}

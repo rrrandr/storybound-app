@@ -1,0 +1,68 @@
+{
+  "v": 1,
+  "rubricSha": "36a37aad3082c0a2",
+  "builtAt": "2026-09-04T01:32:05.938Z",
+  "note": "SEALED KEY — expected verdicts. Never opened before scoring is written down.",
+  "cases": [
+    {
+      "id": "case-1",
+      "klass": "generated NPC",
+      "expected": "`compatible`"
+    },
+    {
+      "id": "case-2",
+      "klass": "generated NPC",
+      "expected": "`contradiction`"
+    },
+    {
+      "id": "case-3",
+      "klass": "generated NPC",
+      "expected": "`compatible`"
+    },
+    {
+      "id": "case-4",
+      "klass": "generated NPC",
+      "expected": "`compatible` for the protected subject"
+    },
+    {
+      "id": "case-5",
+      "klass": "seed NPC (Seren)",
+      "expected": "`contradiction`"
+    },
+    {
+      "id": "case-6",
+      "klass": "seed NPC (Seren)",
+      "expected": "`compatible`"
+    },
+    {
+      "id": "case-7",
+      "klass": "antagonist (the Dohkar)",
+      "expected": "`possible_development` + backend-authorized"
+    },
+    {
+      "id": "case-8",
+      "klass": "antagonist (the Dohkar)",
+      "expected": "`possible_development` + UNAUTHORIZED → handled as contradiction"
+    },
+    {
+      "id": "case-9",
+      "klass": "LI (Julian)",
+      "expected": "`contradiction` (reason: `latent_disclosed`)"
+    },
+    {
+      "id": "case-10",
+      "klass": "LI (Julian)",
+      "expected": "`compatible`"
+    },
+    {
+      "id": "case-11",
+      "klass": "PC (Lirael)",
+      "expected": "`contradiction`"
+    },
+    {
+      "id": "case-12",
+      "klass": "PC (Lirael)",
+      "expected": "`compatible`"
+    }
+  ]
+}
