@@ -100,8 +100,22 @@ const pack = { v: 1, rubricSha: RUBRIC_SHA, builtAt: new Date().toISOString(),
 const key = { v: 1, rubricSha: RUBRIC_SHA, builtAt: pack.builtAt,
   note: 'SEALED KEY — expected verdicts. Never opened before scoring is written down.',
   cases: CASE_IDS.map(c => ({ id: c.id, klass: c.klass, expected: c.expected })) };
-fs.writeFileSync('_audit_out/eval_blind_pack.json', JSON.stringify(pack, null, 2));
-fs.writeFileSync('_audit_out/eval_sealed_key.json', JSON.stringify(key, null, 2));
+// ── A FROZEN ARTIFACT DOES NOT MOVE BECAUSE A TEST RAN ──
+// These two files are the evaluation's blinding boundary. Rewriting them on every run put a
+// fresh `builtAt` into the working tree each time the suite executed, which makes an audit
+// artifact look edited when nothing about the evaluation changed — and a frozen artifact that
+// churns is one nobody can tell has been tampered with. Write ONLY when the substantive
+// content differs; `builtAt` is carried over from the existing file when it does not.
+function writeFrozen(path, obj) {
+  const strip = o => { const { builtAt, ...rest } = o; return JSON.stringify(rest); };
+  let prior = null;
+  try { prior = JSON.parse(fs.readFileSync(path, 'utf8')); } catch (_) {}
+  if (prior && strip(prior) === strip(obj)) return { wrote: false, builtAt: prior.builtAt };
+  fs.writeFileSync(path, JSON.stringify(obj, null, 2));
+  return { wrote: true, builtAt: obj.builtAt };
+}
+const _wrotePack = writeFrozen('_audit_out/eval_blind_pack.json', pack);
+const _wroteKey  = writeFrozen('_audit_out/eval_sealed_key.json', key);
 
 ok('E2 the frozen rubric yielded 12 case ids, and both artifacts carry its hash',
    CASE_IDS.length === 12 && pack.rubricSha === RUBRIC_SHA && key.rubricSha === RUBRIC_SHA,
@@ -112,6 +126,12 @@ ok('E3 ★ the blind pack contains NO expected verdict — a scorer holding it c
 ok('E4 ★ neither artifact leaks a line of the private canon view',
    CANON.truths.every(t => packStr.indexOf(t) === -1 && JSON.stringify(key).indexOf(t) === -1),
    `checked ${CANON.truths.length} truths`);
+ok('E5a ★ a run that changes nothing does not touch the frozen artifacts on disk',
+   _wrotePack.wrote === false && _wroteKey.wrote === false,
+   `pack rewritten=${_wrotePack.wrote} key rewritten=${_wroteKey.wrote} — true is correct ONLY on the run that first creates them or when the case set genuinely changes`);
+ok('E5b the artifacts on disk still carry the frozen rubric hash',
+   _wrotePack.builtAt && _wroteKey.builtAt && _wrotePack.builtAt === _wroteKey.builtAt,
+   `pack builtAt=${_wrotePack.builtAt} key builtAt=${_wroteKey.builtAt}`);
 ok('E5 the pack and the key are separate files — blinding is structural, not a promise',
    fs.existsSync('_audit_out/eval_blind_pack.json') && fs.existsSync('_audit_out/eval_sealed_key.json'),
    'two files written');
