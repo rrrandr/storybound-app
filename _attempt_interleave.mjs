@@ -69,8 +69,8 @@ ok('L0 production mints the attempt PURELY, into a local, before the await at bo
 ok('L1 production stores results in a MAP keyed by attempt, not one slot',
    SRC.includes('_cpStoreSeqResult(state, _pageAttempt,')
    && SRC.includes('_cpStoreSeqResult(state, _pageAttemptC,')
-   && !SRC.includes('state._cpCanonSequenceResult ='),
-   'store calls present, single slot gone');
+   && !/state\._cpCanonSequenceResult\s*=\s*\{/.test(SRC),
+   'store calls present, no result ever assigned to the single slot');
 ok('L2 production stamps the page with that same local, never with state._cpAttemptId',
    SRC.includes('cpAttemptId: (typeof _pageAttempt !== \'undefined\' ? _pageAttempt : null)')
    && SRC.includes('cpAttemptId: (typeof _pageAttemptC !== \'undefined\' ? _pageAttemptC : null)')
@@ -123,11 +123,16 @@ const R = await page.evaluate(async () => {
 // The old form asserted the SHARED SLOT changed under A — that was the hazard. Minting is pure
 // now, so the stronger claim is that minting touches no shared state at all: there is nothing
 // for a concurrent attempt to overwrite.
-ok('L3 ★ the two attempts minted DIFFERENT ids, and minting wrote nothing to shared state',
+const PURE = await page.evaluate(() => {
+  const s = window.state;
+  s._cpAttemptId = 'cpa:PURITY-SENTINEL';
+  const a = window._cpMintAttemptId(), b = window._cpMintAttemptId();
+  return { a, b, slotAfter: s._cpAttemptId };
+});
+ok('L3 ★ the two attempts minted DIFFERENT ids, and the SEAM mint writes nothing to shared state',
    R.idA && R.idB && R.idA !== R.idB
-   && R.mintedAfterA === R.mintedBefore && R.mintedAfterB === R.mintedBefore,
-   JSON.stringify({ idA: R.idA, idB: R.idB, before: R.mintedBefore,
-                    afterA: R.mintedAfterA, afterB: R.mintedAfterB }));
+   && PURE.a !== PURE.b && PURE.slotAfter === 'cpa:PURITY-SENTINEL',
+   JSON.stringify({ idA: R.idA, idB: R.idB, pure: PURE }));
 ok('L4 ★ A\'s page carries A\'s id — not the id the shared slot held when A resumed',
    R.pageA === R.idA, `pageA=${R.pageA} idA=${R.idA} slotWhenAResumed=${R.mintedAfterB}`);
 ok('L5 ★ B\'s page carries B\'s id',

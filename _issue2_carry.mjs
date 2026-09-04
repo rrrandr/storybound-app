@@ -169,6 +169,92 @@ ok('I7 the transition logged a CARRY, not a refusal',
    JSON.stringify(logs.filter(l => /ISSUE-CONTINUITY/.test(l))));
 ok('I8 nothing escaped to a paid provider', escaped.length === 0, JSON.stringify(escaped.slice(0, 3)));
 
+
+// ══════════════════════════════════════════════════════════════════════════════════════════
+//  THE OTHER SIDE OF THE LINE — startNewInWorld CARRIES NOTHING
+//  Same-cast continuation and a genuinely new story are different transitions. The first must
+//  keep verified memory through any number of id remints; the second must open with nobody
+//  known and no canon artifact from the story before it.
+// ══════════════════════════════════════════════════════════════════════════════════════════
+const NW = await page.evaluate(async ([dohkar, facet]) => {
+  const s = window.state;
+  // Rebuild a populated story: entities, a verified manifestation, and every canon artifact the
+  // C+ work introduced. If any of these survive, a stranger's history has entered a new story.
+  s.storyId = 'newworld-src';
+  s._relationshipLedger = { v: 1, storyId: s.storyId, processed: {}, entities: {}, edges: {}, seq: 0 };
+  const L = window._relLedger(true);
+  L.entities[dohkar] = { id: dohkar, kind: 'role', label: 'the presiding Dohkar', aliases: ['the presiding Dohkar'] };
+  window._cpCommitScene({ sceneUid: 'nw-1', ordinal: 2, issue: 1, semanticStatus: 'contradiction',
+    published: true, delivered: [{ canonicalId: dohkar, facet_id: facet, category: 'value', verified: true }],
+    appeared: [] });
+  s._cpGeneratedStage = { '4': { ok: true, storyId: s.storyId, provenance: 'planner_stage',
+    participants: [{ ref: dohkar, presence: 'IN_PERSON', label: 'the presiding Dohkar' }], eventFacts: [] } };
+  s._cpCanonSequenceResults = { 'cpa:old': { storyId: s.storyId, attemptId: 'cpa:old',
+    semanticStatus: 'contradiction', publishedWithConflict: true, consumed: false } };
+  s._cpCanonSnapshot = { storyId: s.storyId, sceneNumber: 1, attemptId: 'cpa:old', text: 'OLD-CANON', ok: true };
+  s._cpAttemptId = 'cpa:old';
+  s._cpDirectedBeats = [{ facet_id: facet }];
+  s._cpContinuationContract = { sceneNumber: 4, ok: true };
+
+  const before = {
+    entities: Object.keys(L.entities),
+    manifestations: ((L.entities[dohkar].cplusContinuity || {}).manifestations || [])
+      .map(m => ({ facet_id: m.facet_id, verification: m.verification })),
+    genStage: !!s._cpGeneratedStage, results: Object.keys(s._cpCanonSequenceResults || {}).length,
+    snapshot: !!s._cpCanonSnapshot, attemptId: s._cpAttemptId, storyId: s.storyId };
+
+  let threw = null;
+  try { await window.startNewInWorld(); } catch (e) { threw = String((e && e.message) || e); }
+  await new Promise(r => setTimeout(r, 300));
+
+  const L2 = window._relLedger(false);
+  return { threw, before, after: {
+    storyId: s.storyId,
+    ledgerRaw: Object.keys(((s._relationshipLedger || {}).entities) || {}),
+    ledgerRead: Object.keys(((L2 || {}).entities) || {}),
+    genStage: s._cpGeneratedStage, results: s._cpCanonSequenceResults,
+    snapshot: s._cpCanonSnapshot, attemptId: s._cpAttemptId,
+    directed: s._cpDirectedBeats, contract: s._cpContinuationContract,
+    carryAdopt: s._relLedgerCarryAdopt } };
+}, ['role:first_sacrifice_presiding_dohkar', 'f:nw']);
+
+ok('N1 the fixture really was populated — a verified manifestation existed before the transition',
+   NW.before.manifestations.some(m => m.facet_id === 'f:nw' && m.verification === 'verified')
+   && NW.before.entities.indexOf('role:first_sacrifice_presiding_dohkar') !== -1,
+   JSON.stringify(NW.before));
+ok('N2 startNewInWorld completed and minted a different story',
+   !NW.threw && NW.after.storyId && NW.after.storyId !== NW.before.storyId,
+   `threw=${NW.threw} before=${NW.before.storyId} after=${NW.after.storyId}`);
+ok('N3 ★ the character ledger did NOT carry — the new story opens with nobody known',
+   NW.after.ledgerRead.indexOf('role:first_sacrifice_presiding_dohkar') === -1
+   && NW.after.ledgerRaw.indexOf('role:first_sacrifice_presiding_dohkar') === -1,
+   `raw=${JSON.stringify(NW.after.ledgerRaw)} read=${JSON.stringify(NW.after.ledgerRead)}`);
+ok('N4 ★ no canon artifact survived — generated stage, verdict map, snapshot, attempt id, beats, contract',
+   !NW.after.genStage && !NW.after.results && !NW.after.snapshot && !NW.after.attemptId
+   && !(NW.after.directed && NW.after.directed.length) && !NW.after.contract,
+   JSON.stringify({ genStage: NW.after.genStage, results: NW.after.results,
+                    snapshot: NW.after.snapshot, attemptId: NW.after.attemptId,
+                    directed: NW.after.directed, contract: NW.after.contract }));
+ok('N5 ★ and no carry was ARMED — the adopt flag belongs to the same-cast path only',
+   !NW.after.carryAdopt, `carryAdopt=${JSON.stringify(NW.after.carryAdopt)}`);
+
+// A stale generated stage keyed by scene number must not be readable under a different story.
+const NW2 = await page.evaluate((dohkar) => {
+  const s = window.state;
+  s.storyId = 'other-story';
+  s._cpGeneratedStage = { '4': { ok: true, storyId: 'the-previous-story', provenance: 'planner_stage',
+    participants: [{ ref: dohkar, presence: 'IN_PERSON', label: 'x' }], eventFacts: [] } };
+  const st = window._sceneStageContract(s, 4);
+  return { ok: !!(st && st.ok), source: st && st.source, fault: st && st.fault };
+}, 'role:first_sacrifice_presiding_dohkar');
+ok('N6 ★ a generated stage from ANOTHER story is not authoritative here — it is keyed by scene number, so it is checked by story too',
+   NW2.ok === false || !/^generated:/.test(String(NW2.source)),
+   JSON.stringify(NW2));
+
+console.log(`\n  newWorld : before=${JSON.stringify(NW.before.entities)} → after=${JSON.stringify(NW.after.ledgerRead)}`);
+console.log(`  artifacts: ${JSON.stringify({ genStage: NW.after.genStage, results: NW.after.results, snapshot: NW.after.snapshot, attemptId: NW.after.attemptId })}`);
+console.log(`  foreignStage: ${JSON.stringify(NW2)}`);
+
 console.log('\n' + out.join('\n'));
 console.log(`\n  before : story=${BEFORE.storyId} entities=${JSON.stringify(BEFORE.entities)}`);
 console.log(`  after  : story=${AFTER.storyId} stamp=${AFTER.ledgerStamp} entities=${JSON.stringify(AFTER.entitiesRaw)}`);
