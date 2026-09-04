@@ -89,7 +89,101 @@
       }
     } catch (_) { /* cost capture is non-critical; never block generation */ }
     _logPromptProfile(profileLabel, modelName || data.model, data.usage);
+    _xaiLedgerRecord(profileLabel, modelName || data.model, data.usage,
+                     _lastReasoningEffort, _lastReasoningSource);
   }
+
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  //  THE xAI USAGE LEDGER — EXACT, OR EXPLICITLY UNKNOWN
+  //
+  //  xAI returns reasoning_tokens in completion_tokens_details and bills them at the FULL
+  //  completion rate. They are the one dimension no request parameter bounds, so the only
+  //  honest account of them is the one the response hands back.
+  //
+  //  ABSENT IS NOT ZERO. The debug profiler beside this uses `|| 0`, which turns a field the
+  //  provider did not send into a confident claim that nothing was spent. Every field here is
+  //  null when unreported, and every null is NAMED in `missing`, so a total either includes a
+  //  measured number or refuses to be a total at all.
+  // ══════════════════════════════════════════════════════════════════════════════════════
+  var _lastReasoningEffort = null;   // set at request build; read here, one call later
+  var _lastReasoningSource = null;   // 'explicit' | 'provider-default / unconfigured'
+  function _num(v) { return (typeof v === 'number' && isFinite(v)) ? v : null; }
+  function _xaiLedgerRecord(label, model, usage, effort, effortSource) {
+    try {
+      if (typeof window === 'undefined' || !window.state) return;
+      if (!/grok/i.test(String(model || ''))) return;          // xAI roles only
+      var u = usage || {};
+      var pd = u.prompt_tokens_details || u.input_tokens_details || {};
+      var cd = u.completion_tokens_details || u.output_tokens_details || {};
+      var rec = {
+        label: label || null,
+        model: String(model || '') || null,
+        reasoningEffort: effort || null,
+        reasoningEffortSource: effortSource || 'provider-default / unconfigured',
+        promptTokens: _num(u.prompt_tokens != null ? u.prompt_tokens : u.input_tokens),
+        cachedTokens: _num(pd.cached_tokens),
+        visibleTokens: _num(u.completion_tokens != null ? u.completion_tokens : u.output_tokens),
+        reasoningTokens: _num(cd.reasoning_tokens),
+        usagePresent: !!usage,
+        at: Date.now()
+      };
+      // `missing` names UNREPORTED USAGE FIELDS only. The reasoning level is a request setting,
+      // not something the provider failed to send, so it is tracked separately.
+      rec.missing = ['promptTokens','cachedTokens','visibleTokens','reasoningTokens']
+        .filter(function (k) { return rec[k] === null; });
+      (window.state._xaiLedger = window.state._xaiLedger || []).push(rec);
+      try {
+        console.log('[XAI-LEDGER] ' + rec.label + ' · ' + rec.model
+          + ' · effort=' + (rec.reasoningEffort || rec.reasoningEffortSource)
+          + ' prompt=' + (rec.promptTokens === null ? 'UNKNOWN' : rec.promptTokens)
+          + ' cached=' + (rec.cachedTokens === null ? 'UNKNOWN' : rec.cachedTokens)
+          + ' visible=' + (rec.visibleTokens === null ? 'UNKNOWN' : rec.visibleTokens)
+          + ' reasoning=' + (rec.reasoningTokens === null ? 'UNKNOWN' : rec.reasoningTokens));
+      } catch (_) {}
+    } catch (_) { /* observation only; never block generation */ }
+  }
+
+  // Published xAI rates, read 2026-09-04. A prompt at or over 200k bills EVERY token in that
+  // request at the higher tier — the tier is per request, not per token band.
+  var _XAI_RATES = {
+    lo: { input: 1.25e-6, cached: 0.20e-6, output: 2.50e-6 },
+    hi: { input: 2.50e-6, cached: 0.40e-6, output: 5.00e-6 },
+    tierAt: 200000
+  };
+  if (typeof window !== 'undefined') window._xaiLedgerReport = function () {
+    var rows = ((window.state || {})._xaiLedger) || [];
+    var total = 0, unknown = [], upperBound = [];
+    var out = rows.map(function (r, i) {
+      if (r.missing.indexOf('promptTokens') !== -1 || r.missing.indexOf('visibleTokens') !== -1
+          || r.missing.indexOf('reasoningTokens') !== -1) {
+        unknown.push({ call: i, label: r.label, missing: r.missing.slice() });
+        return { call: i, label: r.label, model: r.model, effort: r.reasoningEffort,
+                 cost: 'UNKNOWN', missing: r.missing.slice() };
+      }
+      var t = r.promptTokens >= _XAI_RATES.tierAt ? _XAI_RATES.hi : _XAI_RATES.lo;
+      // AN UNKNOWN CACHE COUNT IS NOT AN UNKNOWN COST. Treating it as zero prices those tokens
+      // at the FULL input rate — it forfeits a discount, so it can only overstate. That is a
+      // legitimate UPPER BOUND and is labelled as one; it is never called exact.
+      var cachedKnown = r.cachedTokens !== null;
+      var cached = cachedKnown ? r.cachedTokens : 0;
+      var billedPrompt = Math.max(0, r.promptTokens - cached);
+      // reasoning bills at the FULL completion rate, per xAI's usage-and-pricing page
+      var c = billedPrompt * t.input + cached * t.cached
+            + (r.visibleTokens + r.reasoningTokens) * t.output;
+      total += c;
+      if (!cachedKnown) upperBound.push({ call: i, label: r.label, why: 'cachedTokens unreported' });
+      return { call: i, label: r.label, model: r.model, effort: r.reasoningEffort,
+               prompt: r.promptTokens, cached: cachedKnown ? cached : 'UNKNOWN→billed as input',
+               visible: r.visibleTokens, reasoning: r.reasoningTokens,
+               tier: r.promptTokens >= _XAI_RATES.tierAt ? '>=200k' : '<200k',
+               exact: cachedKnown, cost: c, missing: r.missing.slice() };
+    });
+    return { calls: out, xaiTotal: unknown.length ? 'UNKNOWN' : total,
+             totalIsExact: unknown.length === 0 && upperBound.length === 0,
+             totalIsUpperBound: unknown.length === 0 && upperBound.length > 0,
+             unknownCalls: unknown, upperBoundCalls: upperBound,
+             complete: unknown.length === 0 };
+  };
 
   // ── [PROMPT-PROFILE] — dev instrumentation (2026-06-17) ────────────────────
   // Pure observation (never alters generation). Logs prompt / reasoning / visible
@@ -177,6 +271,10 @@
     SD_FALLBACK_MODEL: 'mistral-medium-latest',   // Mistral: Tier-3 terminal fallback
     RENDERER_MODEL: 'grok-4-1-fast-non-reasoning',   // Grok: Visual bible, visualization prompts ONLY
     SCENE_RENDERER_MODEL: 'grok-4-1-fast-reasoning',   // Grok: Intense scenes (SD-gated, entitlement-checked)
+    // DELIBERATELY UNSET. Set to 'none' | 'low' | 'medium' | 'high' to send an explicit level;
+    // left null, the request omits the field entirely and behaviour is unchanged. Choose this
+    // from measured reasoning-token data after one real run, not from an assumption.
+    XAI_REASONING_EFFORT: null,
     NARRATIVE_AUTHOR_MODEL: 'grok-4.3',                 // Grok 4.3: the SCENE AUTHOR (literary + CG prose). Roman 2026-06-20 editorial-budget reframe — same author everywhere; editorial effort scales with scene tier. Proxy auto-falls-back to grok-4-1-fast-reasoning on 400/404.
     FATE_STRUCTURAL_MODEL: 'gpt-4o-mini',
     FATE_ELEVATION_MODEL: 'gpt-4o-mini',
@@ -1358,6 +1456,29 @@
       max_tokens: options.max_tokens || 1500
     };
 
+    // ── THE REASONING LEVEL IS STATED, NEVER INHERITED ──
+    // Reasoning tokens bill at the FULL completion rate and no request parameter bounds them, so
+    // leaving the level to an undocumented provider default means the most expensive dimension of
+    // the most expensive call is set by something nobody chose. It is named here, recorded on the
+    // ledger, and reported beside the cost it produced.
+    //
+    // 'high' matches this codebase's own stated intent for Grok authoring (see the grokBody helper
+    // in app.js, which has always passed 'high'). If the provider default was lower, making this
+    // explicit RAISES spend — that is the point: it becomes a decision with a number attached.
+    if (/grok/i.test(String(modelResolved || ''))) {
+      // UNCONFIGURED MEANS UNCHANGED. Sending a level nobody chose would alter every Grok call's
+      // behaviour on an ASSUMPTION about what the provider default is — and could raise spend to
+      // prove a point about explicitness. The request is left exactly as it was; the ledger
+      // records that the level was not configured, which is the honest thing to know.
+      var _effort = options.reasoningEffort || CONFIG.XAI_REASONING_EFFORT || null;
+      if (_effort) payload.reasoning_effort = _effort;
+      _lastReasoningEffort = _effort;
+      _lastReasoningSource = _effort ? 'explicit' : 'provider-default / unconfigured';
+    } else {
+      _lastReasoningEffort = null;
+      _lastReasoningSource = null;
+    }
+
     // Add JSON mode if requested
     if (options.jsonMode) {
       payload.response_format = { type: 'json_object' };
@@ -1394,6 +1515,35 @@
     for (let _attempt = 1; _attempt <= _maxAttempts; _attempt++) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), _timeoutMs);
+      // ══════════════════════════════════════════════════════════════════════════════════
+      //  OWNERSHIP, AS THE LAST THING BEFORE THE MONEY
+      //  A caller may hold a ticket for the invocation this request belongs to. Checking it
+      //  HERE — with no statement between the check and the fetch — is the only placement a
+      //  later edit cannot quietly widen: any await inserted above this line reopens a window,
+      //  any await inserted below it is inside the request. It validates the INVOCATION, not
+      //  merely the story: a superseded run and an abandoned run are both dead, and both used
+      //  to be able to spend.
+      // ══════════════════════════════════════════════════════════════════════════════════
+      if (options.ownershipTicket && typeof window !== 'undefined'
+          && typeof window._invocationAlive === 'function'
+          && !window._invocationAlive(options.ownershipTicket, window.state)) {
+        clearTimeout(timeoutId);
+        try { console.log('[DISPATCH-GATE] refused at the wire — the invocation that requested this '
+          + 'is no longer live (role=' + role + '); nothing was spent.'); } catch (_) {}
+        try { if (window.__invTrace) window.__invTrace({ event: 'dispatch:refused', at: Date.now(),
+          detail: { role: role, ticketSeq: options.ownershipTicket.seq } }); } catch (_) {}
+        // ── A NAMED, NON-TRANSIENT EXCEPTION, NOT A SENTINEL ──
+        // This function's contract is "a string, or it throws". Returning an object here made
+        // cancellation indistinguishable from model output to every caller that stringifies the
+        // result — it would have become the literal text "[object Object]" inside a scene.
+        // It is also explicitly NOT retryable: the run is over, and retrying is the one response
+        // that must never follow.
+        var _own = new Error('ownership refused: the invocation that requested this is no longer live');
+        _own.name = 'OwnershipRefusedError';
+        _own._ownershipRefused = true;
+        _own._transient = false;
+        throw _own;
+      }
       try {
         const res = await fetch(_proxyUrl, {
           method: 'POST',
