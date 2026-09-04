@@ -1,0 +1,315 @@
+{
+  "role": "NARRATIVE_AUTHOR",
+  "model": null,
+  "max_tokens": 2400,
+  "reasoning": null,
+  "systemBytes": 155435,
+  "userBytes": 171307,
+  "totalBytes": 326742,
+  "inputBoundTokens": 326942,
+  "census": {
+    "scaffold": 1,
+    "planner": 1,
+    "author": 1,
+    "kinds": {
+      "canonicalizer": 2,
+      "characterSheet": 6,
+      "rplot": 1,
+      "aplotGenerator": 1,
+      "aplotCompression": 1,
+      "antagonistBodyBible": 1,
+      "woundSwapTest": 1,
+      "scaffold": 1,
+      "planner": 1,
+      "author": 1,
+      "subplots": 1,
+      "pa_lineEditor": 1,
+      "pa_mechanicalFix": 2,
+      "pa_continuation": 2,
+      "pa_gravity": 1,
+      "pa_bannedPhrase": 2,
+      "pa_archetype": 1,
+      "pa_liBibleField": 1,
+      "pa_reparagraph": 2,
+      "pa_perception": 1,
+      "pa_calcification": 1,
+      "pa_voiceAnchor": 1,
+      "pa_preciseEditor": 1,
+      "pa_memory": 1
+    }
+  },
+  "calls": [
+    {
+      "kind": "canonicalizer",
+      "role": "NORMALIZATION",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "reasoning": null,
+      "bytes": 6501
+    },
+    {
+      "kind": "canonicalizer",
+      "role": "NORMALIZATION",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "reasoning": null,
+      "bytes": 6501
+    },
+    {
+      "kind": "characterSheet",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2500,
+      "reasoning": null,
+      "bytes": 31944
+    },
+    {
+      "kind": "characterSheet",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 3000,
+      "reasoning": null,
+      "bytes": 63972
+    },
+    {
+      "kind": "rplot",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1200,
+      "reasoning": null,
+      "bytes": 12289
+    },
+    {
+      "kind": "aplotGenerator",
+      "role": "STRUCTURE_GENERATOR",
+      "model": null,
+      "max_tokens": 3000,
+      "reasoning": null,
+      "bytes": 78008
+    },
+    {
+      "kind": "aplotCompression",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "reasoning": null,
+      "bytes": 9627
+    },
+    {
+      "kind": "antagonistBodyBible",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1100,
+      "reasoning": null,
+      "bytes": 18458
+    },
+    {
+      "kind": "woundSwapTest",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "reasoning": null,
+      "bytes": 5396
+    },
+    {
+      "kind": "characterSheet",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2500,
+      "reasoning": null,
+      "bytes": 32028
+    },
+    {
+      "kind": "characterSheet",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 3000,
+      "reasoning": null,
+      "bytes": 64077
+    },
+    {
+      "kind": "scaffold",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 5900,
+      "reasoning": null,
+      "bytes": 30072
+    },
+    {
+      "kind": "characterSheet",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2500,
+      "reasoning": null,
+      "bytes": 34996
+    },
+    {
+      "kind": "characterSheet",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 3000,
+      "reasoning": null,
+      "bytes": 68924
+    },
+    {
+      "kind": "planner",
+      "role": "PROMPT_PREPROCESSOR",
+      "model": "mistral-small-latest",
+      "max_tokens": 2400,
+      "reasoning": "none",
+      "bytes": 89461
+    },
+    {
+      "kind": "author",
+      "role": "NARRATIVE_AUTHOR",
+      "model": null,
+      "max_tokens": 2400,
+      "reasoning": null,
+      "bytes": 326742
+    },
+    {
+      "kind": "subplots",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1500,
+      "reasoning": null,
+      "bytes": 4040
+    },
+    {
+      "kind": "pa_lineEditor",
+      "role": "NARRATIVE_AUTHOR",
+      "model": null,
+      "max_tokens": 900,
+      "reasoning": null,
+      "bytes": 4608
+    },
+    {
+      "kind": "pa_mechanicalFix",
+      "role": null,
+      "model": "mistral-small-latest",
+      "max_tokens": 2400,
+      "reasoning": null,
+      "bytes": 3370
+    },
+    {
+      "kind": "pa_mechanicalFix",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2400,
+      "reasoning": null,
+      "bytes": 3370
+    },
+    {
+      "kind": "pa_continuation",
+      "role": "SPECIALIST_RENDERER",
+      "model": null,
+      "max_tokens": 110,
+      "reasoning": null,
+      "bytes": 2643
+    },
+    {
+      "kind": "pa_continuation",
+      "role": "SPECIALIST_RENDERER",
+      "model": null,
+      "max_tokens": 110,
+      "reasoning": null,
+      "bytes": 2648
+    },
+    {
+      "kind": "pa_gravity",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1400,
+      "reasoning": null,
+      "bytes": 13772
+    },
+    {
+      "kind": "pa_bannedPhrase",
+      "role": "SPECIALIST_RENDERER",
+      "model": null,
+      "max_tokens": 500,
+      "reasoning": null,
+      "bytes": 3387
+    },
+    {
+      "kind": "pa_archetype",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "reasoning": null,
+      "bytes": 6538
+    },
+    {
+      "kind": "pa_liBibleField",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 240,
+      "reasoning": null,
+      "bytes": 2356
+    },
+    {
+      "kind": "pa_bannedPhrase",
+      "role": "SPECIALIST_RENDERER",
+      "model": null,
+      "max_tokens": 500,
+      "reasoning": null,
+      "bytes": 3387
+    },
+    {
+      "kind": "pa_reparagraph",
+      "role": "SPECIALIST_RENDERER",
+      "model": null,
+      "max_tokens": 4000,
+      "reasoning": null,
+      "bytes": 6745
+    },
+    {
+      "kind": "pa_reparagraph",
+      "role": "SPECIALIST_RENDERER",
+      "model": "mistral-small-latest",
+      "max_tokens": 4000,
+      "reasoning": null,
+      "bytes": 6745
+    },
+    {
+      "kind": "pa_perception",
+      "role": "SPECIALIST_RENDERER",
+      "model": null,
+      "max_tokens": 3600,
+      "reasoning": null,
+      "bytes": 6719
+    },
+    {
+      "kind": "pa_calcification",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "reasoning": null,
+      "bytes": 4120
+    },
+    {
+      "kind": "pa_voiceAnchor",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o",
+      "max_tokens": 400,
+      "reasoning": null,
+      "bytes": 4905
+    },
+    {
+      "kind": "pa_preciseEditor",
+      "role": "LINE_EDITOR",
+      "model": "mistral-small-latest",
+      "max_tokens": 1509,
+      "reasoning": null,
+      "bytes": 4481
+    },
+    {
+      "kind": "pa_memory",
+      "role": "PRIMARY_AUTHOR",
+      "model": "gpt-4o-mini",
+      "max_tokens": 800,
+      "reasoning": null,
+      "bytes": 6083
+    }
+  ]
+}
