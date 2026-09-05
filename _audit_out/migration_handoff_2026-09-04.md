@@ -221,7 +221,9 @@ regenerated from its provider's dashboard.
 1. Clone the repo and check out `fix/procedural-container-rootout`. Confirm the head is
    `9b82320` — if it is not, the branch did not travel and the work is still only on the old Mac.
 2. Node 25.x (the toolchain in use), then `npm install`.
-3. `npx playwright install chromium` — every harness here drives a real page.
+3. `node node_modules/playwright-core/cli.js install chromium` — every harness here drives a real
+   page. Use the repository-pinned installer, not `npx playwright install chromium`: npx can
+   download a newer browser build that the pinned `playwright-core` cannot launch.
 
 **Environment**
 
