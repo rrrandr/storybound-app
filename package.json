@@ -7,7 +7,9 @@
     "verify:geo": "node scripts/geo-gate/test.js",
     "verify:sacred": "node scripts/sacred-figure-guard/test.js",
     "verify:baked": "node scripts/verify-baked-scene1.mjs",
-    "verify:economy": "node scripts/verify-starter-economy.mjs"
+    "verify:economy": "node scripts/verify-starter-economy.mjs",
+    "verify:files": "node scripts/verify-runtime-files.mjs",
+    "verify:security": "node scripts/verify-fortune-security.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
