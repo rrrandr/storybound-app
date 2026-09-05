@@ -75,7 +75,18 @@ async function run(optIn) {
     } else if (/scene-structure planner for the OPENING scene/.test(sys)) {
       planner.push({ url, model: b.model, temperature: b.temperature, max_tokens: b.max_tokens,
                      reasoning_effort: b.reasoning_effort, response_format: b.response_format });
-      out = JSON.stringify(SCAFFOLD);
+      // Nested envelope (Commit B part 2). The skeleton is derived from the ELIGIBLE CAST the
+      // request advertises, so this fixture cannot drift from the contract it is exercising.
+      const _m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
+      const _cast = _m ? _m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
+      out = JSON.stringify({
+        opening_spine: SCAFFOLD,
+        scene_skeleton: {
+          character_plus: _cast.map(n => ({ character: n, first_mention: true, angle: 'holds the room steady at cost' })),
+          environment_plus: { target: 'the shrine table', axis: 'ritual' },
+          fusion: null,
+        },
+      });
     } else if (b && b.role === 'SPECIALIST_RENDERER' && /mistral-proxy/.test(url) && /paragraph/i.test(usr)) {
       surgical.push({ url, userLen: usr.length });          // must never fire
       out = ORIGINAL;

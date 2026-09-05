@@ -3,9 +3,23 @@
 // toward the open beat; between beats it holds (on-premise complications). Does the arc finally pace across all 20?
 import fs from 'fs';
 const PROXY='http://localhost:3000/api/chatgpt-proxy',MODEL='gpt-4o';
-const DIR='/private/tmp/claude-501/-Users-romantsukerman-storybound-app/a08d0758-843c-4e0e-a5e2-c3f532b66c76/scratchpad/verify/worldsim';
+// DIR: write BESIDE the repo — the 2026-08-11 session scratchpad was wiped and took the only copy of the
+// 20 committed beats with it (had to re-run). Experiment outputs that a later step CONSUMES must be durable.
+const DIR=process.env.OUTDIR||'_worldsim_out';
 const SIM_SYS=eval('['+fs.readFileSync('_worldsim_symmetric.mjs','utf8').match(/const SIM_SYS=\[([\s\S]*?)\]\.join\('\\n'\);/)[1]+'].join("\\n")');
-const ENUM_SYS='You are a scene PLANNER. Given a WORLD-STATE IR and the current STORY GOAL, list DISTINCT irreversible events LICENSED by the IR, each a NEW fact. Prioritize events advancing the goal; also include complications. Return STRICT JSON {"events":["<event>",...]} ~10.';
+// CONCRETENESS ported from _density.mjs (2026-08-11). The original wording ("list DISTINCT irreversible events")
+// lacked the hard concreteness constraint that `project_world_simulator` records as THE critical simulator
+// requirement (v1 collapsed 8/8 on abstract theme-labels). Without it this harness emitted relationship-SUMMARIES
+// ("solidifying their trust") and handed 8/20 scenes to a nameless "sympathetic council member".
+const ENUM_SYS=[
+ 'You are a scene PLANNER. Given a WORLD-STATE IR and the current STORY GOAL, list DISTINCT irreversible events LICENSED by the IR, each a NEW fact.',
+ 'HARD — CONCRETENESS: every event must be a SPECIFIC MOMENT A READER WATCHES HAPPEN, naming a specific actor and a specific action/object.',
+ '  GOOD: "he lies to the guard to cover for her" · "she finds his name inked in the journal margin" · "the council seals the archive door while she is still inside".',
+ '  BANNED: relationship-summaries or state-labels — "their trust solidifies", "their emotional connection deepens", "this brings them closer to confessing", "suspicion grows", "scrutiny intensifies". If it names a FEELING or a TREND instead of a moment, rewrite it as the moment that would make a reader infer it.',
+ 'HARD — WHO THE STORY IS ABOUT: at least 8 of your ~10 events must put one of the two LEADS on stage as the actor or the target. Institutions and minor functionaries (a council member, a clerk, a witness) may PRESSURE the leads, but must not become the subject of the scene. Never build an event whose actor and target are both minor figures.',
+ 'Prioritize events advancing the goal; also include complications.',
+ 'Return STRICT JSON {"events":["<concrete scene-event>",...]} ~10.'
+].join('\n');
 const BUDGET_SYS='Given FORBIDDEN OUTCOMES (must NOT happen yet) and candidate EVENTS, return indices that would achieve, resolve, or substantially pre-empt ANY forbidden outcome. Strict. Return STRICT JSON {"blocked":[indices]}.';
 const SELECT_SYS='Given candidate EVENTS and a STORY GOAL, return the index best advancing the goal (or -1) and whether it FULLY ACHIEVES it. Return STRICT JSON {"best":<idx or -1>,"achieves":true|false}.';
 const RES_LOCKS=[{ob:'The ritual debt over Julian is resolved/collected/paid/lifted',u:18},{ob:'Julian is exonerated/cleared',u:18},{ob:'The true wish-maker is fully exposed/named/caught',u:19},{ob:'Julian abandons the conflict for a new life',u:99}];

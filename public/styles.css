@@ -2793,19 +2793,31 @@ body.oas-active.gn-viewing-past .gn-scene-actions-row {
     border-radius: 6px;
 }
 
-/* Frontispiece page: cap map height so the page-nav controls below stay in-viewport
-   on wide windows. On narrow windows the width constraint binds first and behaves
-   as before. Image keeps natural aspect ratio via width:auto + height:auto. */
+/* Frontispiece map: as LARGE as possible while preserving aspect (contain), centered. The 180px this used to
+   reserve was for page-nav controls that are HIDDEN while the map is up (see #storyContent.frontispiece-active),
+   so the map may use the FULL viewport. The asset is SQUARE (1024×1024): in a wide window it fills the HEIGHT
+   (bars on the sides), in a tall window it fills the WIDTH — the largest it can be without stretch or crop.
+   (Roman 2026-07-23) */
 #fatelandsFrontispiece .fatelands-map-img {
-    max-height: calc(100vh - 180px);
+    max-height: calc(100vh - 16px);
+    max-width: 100%;
     width: auto;
     height: auto;
-    max-width: 100%;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0;
+    display: block;
+    /* "framed on a dark table" — a soft shadow so the map reads as resting on the surface, not floating in a gap. */
+    box-shadow: 0 12px 44px rgba(0, 0, 0, 0.60), 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 #fatelandsFrontispiece .sb-curl-page-front {
     text-align: center;
+}
+/* Only while the map is the active page: make the page a full-viewport stage and CENTER the map in it
+   (both axes), so the contain-fit sits in the middle rather than top-aligned. */
+#storyContent.frontispiece-active #fatelandsFrontispiece .sb-curl-page-front {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100vh - 16px);
 }
 
 /* ── Fatelands Loupe — cinematic region zoom ── */
@@ -7959,6 +7971,122 @@ body.library-zoom-active .library-book.mode-spine:hover .book-3d {
 .library-book.mode-spine .book-spine {
     opacity: 1;
 }
+
+/* ── SPINE WRAP ART — the dust jacket continues around the spine ──────────────
+   Opted into per book with `spineWrapsBackCover` (see _spineWrapContentHTML in
+   app.js, which explains the mirror geometry). The back-cover art is exactly
+   back-cover aspect, so the spine shows the art's spine-adjacent edge MIRRORED:
+
+     background-size: auto 100%  — lays the image out at the height of the spine,
+       which is the height of the back cover, so the art is at EXACTLY the back
+       cover's rendered scale at any --book-zoom and in the zoom overlay too.
+     background-position: right center — takes the spine-adjacent (right) edge.
+     transform: scaleX(-1) — mirrors it, so the art's extreme right column lands
+       on the spine's LEFT edge, which is the edge that meets the back cover.
+
+   Selectors carry `.book-spine.book-spine--wrap` (two classes on one element) so
+   they outrank the literary gold-board rules at `.book-3d:has(.book-front-text)`,
+   and they hang off .book-3d — NOT .library-book — because the zoom overlay
+   reparents .book-3d into #zoomBookContainer and would drop a .library-book
+   ancestor. */
+.book-spine .spine-wrap-art {
+    position: absolute;
+    inset: 0;
+    background-repeat: no-repeat;
+    background-size: auto 100%;
+    background-position: right center;
+    transform: scaleX(-1);
+    pointer-events: none;
+    z-index: 0;                     /* under the ::after curvature shading (z1) */
+    /* The mirror is pixel-exact at the seam but doubles recognisable faces a few
+       millimetres in. Sitting the whole strip down in brightness lets the seam
+       read as "the crowd keeps going round the curve" instead of as a reflection
+       — and a spine genuinely is the shadowed part of a jacket. */
+    filter: brightness(0.78) saturate(0.92);
+}
+/* Board colour behind the art — matters only while the image loads, and in the
+   sliver the mirrored strip cannot cover. Gold would flash on load. */
+.book-3d .book-spine.book-spine--wrap {
+    background: #17120d;
+}
+/* Neutral cylinder shading. Both the base (dark) and literary (cream-gold ridge)
+   ::after treatments wash a photographic spine out; this keeps the rounded-board
+   read with hinge troughs but lets the art through. */
+.book-3d .book-spine.book-spine--wrap::after {
+    background:
+        linear-gradient(90deg, transparent 34%, rgba(255,255,255,0.10) 50%, transparent 66%),
+        linear-gradient(90deg,
+            rgba(0,0,0,0.80) 0%,
+            rgba(0,0,0,0.42) 14%,
+            rgba(0,0,0,0.12) 34%,
+            rgba(0,0,0,0.12) 66%,
+            rgba(0,0,0,0.42) 86%,
+            rgba(0,0,0,0.80) 100%);
+}
+/* Title over the art. The literary rule paints spine type near-black for the gold
+   board; over a dusk-lit crowd it has to invert to light type on a soft scrim. */
+.book-3d .book-spine.book-spine--wrap .spine-text.spine-text--over-art {
+    position: relative;
+    z-index: 2;
+    color: #f7f1e4;
+    opacity: 1;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.95),
+        0 0 9px rgba(0, 0, 0, 0.85);
+    padding: 8% 0;
+    background: linear-gradient(90deg,
+        rgba(0,0,0,0) 0%,
+        rgba(0,0,0,0.46) 26%,
+        rgba(0,0,0,0.46) 74%,
+        rgba(0,0,0,0) 100%);
+}
+/* The byline rides the spine with the title (Roman 2026-08-11). The literary rule
+   `.book-3d:has(.book-front-text) .spine-author { display:none }` drops it in favour
+   of a longer title, so re-show it here at 2 classes deeper. Slightly smaller and a
+   touch dimmer than the title, the usual spine hierarchy. */
+.book-3d .book-spine.book-spine--wrap .spine-text--over-art .spine-author {
+    display: inline;
+    font-size: 0.82em;
+    font-weight: 600;
+    opacity: 0.88;
+    letter-spacing: 0.06em;
+}
+/* Zoom overlay: `#zoomBookContainer .book-3d:has(.book-front-text) .book-spine
+   .spine-text` forces near-black type for the GOLD board (specificity 1-4-0) and
+   would beat the class-only rule above (0-5-0) — leaving the title unreadable on
+   the dark crowd art. Restate it id-scoped at 1-5-0. The zoom's other spine rules
+   only touch box-shadow, so the board colour and ::after shading carry over. */
+#zoomBookContainer .book-3d .book-spine.book-spine--wrap .spine-text.spine-text--over-art {
+    color: #f7f1e4;
+    opacity: 1;
+}
+
+/* ── COVER CREDIT — byline stamped along the bottom edge of an ART front cover ──
+   Opt in per book with `creditOnCoverArt` (see _coverCreditHTML in app.js). The
+   stock .book-front-author is a flow child of .book-front-text and so sits UNDER
+   the authored cover <img> (z2); this rides above it at z3. Lora, to match the
+   spine and the rest of the jacket furniture. */
+.book-front .book-cover-credit {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 5.5%;
+    z-index: 3;
+    text-align: center;
+    font-family: 'Lora', serif;
+    font-size: 0.46em;
+    font-weight: 600;
+    color: #f6f0e4;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.95),
+        0 0 12px rgba(0, 0, 0, 0.75);
+    pointer-events: none;
+}
+
 .spine-text {
     writing-mode: vertical-rl;
     text-orientation: mixed;
@@ -38729,4 +38857,75 @@ body.ic-no-previous #gnCoverPageBtn { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .lore-pulse { animation: none; }
   #loreTip, .lore-onboard { transition: none; }
+}
+
+/* ═══ FATEBOUND CROSSOVER (Roman 2026-07-23) — mystery-conspiracy reveal + burn-over title rebrand ═══ */
+.fb-crossover-overlay {
+  position: fixed; inset: 0; z-index: 4200;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, rgba(34,10,3,0.86), rgba(0,0,0,0.95));
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  opacity: 0; animation: fbOverlayIn 0.5s ease forwards;
+}
+@keyframes fbOverlayIn { to { opacity: 1; } }
+.fb-crossover-card {
+  text-align: center; max-width: 520px; padding: 2.2rem 2.4rem;
+  opacity: 0; transform: translateY(10px) scale(0.98);
+  animation: fbCardIn 0.6s 0.15s cubic-bezier(.2,.8,.2,1) forwards;
+}
+@keyframes fbCardIn { to { opacity: 1; transform: translateY(0) scale(1); } }
+.fb-crossover-eyebrow {
+  font-size: 0.72rem; letter-spacing: 0.34em; text-transform: uppercase;
+  color: #d98a4a; opacity: 0.85; margin-bottom: 0.85rem;
+}
+.fb-crossover-title {
+  font-family: Georgia, 'Times New Roman', serif; font-size: 2rem; line-height: 1.15;
+  color: #f4e3c8; margin: 0;
+  text-shadow: 0 0 18px rgba(230,120,40,0.55), 0 0 3px rgba(255,180,90,0.6);
+  animation: fbEmberPulse 2.6s ease-in-out infinite;
+}
+@keyframes fbEmberPulse {
+  0%,100% { text-shadow: 0 0 14px rgba(230,120,40,0.40), 0 0 3px rgba(255,180,90,0.5); }
+  50%     { text-shadow: 0 0 24px rgba(240,140,50,0.70), 0 0 6px rgba(255,200,120,0.7); }
+}
+.fb-crossover-sub { color: #cbb79a; font-size: 0.95rem; line-height: 1.5; margin: 0.9rem 0 1.7rem; opacity: 0.92; }
+.fb-crossover-btn {
+  cursor: pointer; font: inherit; font-size: 0.95rem; letter-spacing: 0.06em;
+  color: #1a0d05; background: linear-gradient(180deg, #f0b060, #d98a3a);
+  border: none; border-radius: 999px; padding: 0.72rem 1.9rem;
+  box-shadow: 0 0 22px rgba(230,130,50,0.5); transition: transform .15s ease, box-shadow .15s ease;
+}
+.fb-crossover-btn:hover  { transform: translateY(-1px); box-shadow: 0 0 30px rgba(240,150,60,0.78); }
+.fb-crossover-btn:focus-visible { outline: 2px solid #ffd9a0; outline-offset: 3px; }
+
+/* burn-over title effect (applied inside #storyTitle / #gnStoryTitle) */
+.fb-burn { position: relative; display: inline-block; }
+.fb-burn-old { display: inline-block; }
+.fb-burn-new { position: absolute; left: 0; top: 0; white-space: nowrap; color: #f4e3c8; opacity: 0; }
+.fb-burn.run .fb-burn-old { animation: fbOldChar 1.1s ease forwards; }
+.fb-burn.run .fb-burn-new { animation: fbNewIgnite 1.4s 0.5s ease forwards; }
+.fb-burn.run::after {
+  content: ''; position: absolute; top: -20%; height: 140%; width: 22%; left: -25%;
+  background: linear-gradient(90deg, transparent, rgba(255,150,50,0.9), rgba(255,224,150,1), rgba(255,150,50,0.9), transparent);
+  filter: blur(2px); mix-blend-mode: screen; pointer-events: none;
+  animation: fbSweep 1.5s ease forwards;
+}
+@keyframes fbOldChar {
+  0%   { color: inherit; text-shadow: none; opacity: 1; }
+  45%  { color: #ff8a3a; text-shadow: 0 0 10px rgba(255,120,40,0.9); }
+  75%  { color: #3a1c0c; text-shadow: 0 0 6px rgba(120,40,10,0.7); opacity: 0.5; filter: blur(0.4px); }
+  100% { color: #1a0d05; opacity: 0; filter: blur(1px); }
+}
+@keyframes fbNewIgnite {
+  0%   { opacity: 0; text-shadow: 0 0 26px rgba(255,170,70,0), 0 0 4px rgba(255,220,140,0); letter-spacing: 0.02em; }
+  30%  { opacity: 1; color: #ffd28a; text-shadow: 0 0 26px rgba(255,170,70,0.95), 0 0 6px rgba(255,220,140,0.9); }
+  100% { opacity: 1; color: #f4e3c8; text-shadow: 0 0 12px rgba(230,120,40,0.4); letter-spacing: 0; }
+}
+@keyframes fbSweep { from { left: -25%; } to { left: 115%; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fb-crossover-overlay, .fb-crossover-card, .fb-crossover-title { animation: none; opacity: 1; transform: none; }
+  .fb-burn.run .fb-burn-old { animation: none; opacity: 0; }
+  .fb-burn.run .fb-burn-new { animation: none; opacity: 1; color: #f4e3c8; }
+  .fb-burn.run::after { display: none; }
 }

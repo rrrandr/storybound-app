@@ -2,7 +2,10 @@
 // It must never open _portfolio_ab_KEY.json.
 import { chromium } from 'playwright-core';
 import fs from 'fs';
-const raw = JSON.parse(fs.readFileSync('_portfolio_ab_raw.json', 'utf8'));
+const SRC_FILE = process.argv[2] || '_portfolio_ab_raw.json';
+const src = JSON.parse(fs.readFileSync(SRC_FILE, 'utf8'));
+// A single-sample file has {content}; the A/B file has {A:{content},B:{content}}.
+const raw = src.A ? src : { A: { status: src.status, usage: src.usage, content: src.content } };
 const REFS = { 'cand:AB-present-0001': 'Mara Dunn', 'cand:AB-absent-0002': 'Tomas Reyne',
                'cand:AB-recurring-0003': 'Halden Roe' };
 const EVIDENCE = {
@@ -20,7 +23,8 @@ await page.goto('http://localhost:3000/', { waitUntil: 'domcontentloaded', timeo
 await page.waitForFunction(() => typeof window._validatePortfolioResponse === 'function', { timeout: 30000 });
 
 const report = {};
-for (const arm of ['A','B']) {
+const ARMS = src.A ? ['A','B'] : ['A'];
+for (const arm of ARMS) {
   const out = { status: raw[arm].status, usage: raw[arm].usage, parsed: null, subjects: {}, note: null };
   let parsed = null;
   try { const c = raw[arm].content || ''; const l=c.indexOf('{'), r=c.lastIndexOf('}');
@@ -65,8 +69,8 @@ for (const arm of ['A','B']) {
   }
   report[arm] = out;
 }
-fs.writeFileSync('_portfolio_ab_structural.json', JSON.stringify(report, null, 2));
-for (const arm of ['A','B']) {
+fs.writeFileSync(SRC_FILE.replace('_raw', '_structural'), JSON.stringify(report, null, 2));
+for (const arm of ARMS) {
   const o = report[arm];
   console.log(`\n══ OUTPUT ${arm} ══  HTTP ${o.status} · in ${o.usage.prompt_tokens} / out ${o.usage.completion_tokens} tokens`);
   if (o.note) { console.log('   ' + o.note); continue; }

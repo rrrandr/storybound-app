@@ -101,7 +101,12 @@ async function run(mode) {
                     reasoning_effort: b.reasoning_effort, response_format: b.response_format, url });
       out = ORIGINAL;
     } else if (/scene-structure planner for the OPENING scene/.test(sys)) {
-      out = JSON.stringify(SCAFFOLD);
+      // Nested envelope (Commit B part 2); skeleton derived from the advertised eligible cast.
+      const _m = usr.match(/ELIGIBLE CAST \((\d+)\)[^\n]*\n([\s\S]*?)\nExactly one/);
+      const _cast = _m ? _m[2].split('\n').map(x => x.replace(/^\s*•\s*/, '').trim()).filter(Boolean) : [];
+      out = JSON.stringify({ opening_spine: SCAFFOLD, scene_skeleton: {
+        character_plus: _cast.map(n => ({ character: n, first_mention: true, angle: 'holds the room steady at cost' })),
+        environment_plus: { target: 'the shrine table', axis: 'ritual' }, fusion: null } });
     } else if (b && b.role === 'SPECIALIST_RENDERER' && /mistral-proxy/.test(url) && /paragraph/i.test(usr)) {
       // the surgical editor: its user prompt carries the paragraph-level FIX instructions
       surgical.push({ system: sys, user: usr, max_tokens: b.max_tokens, temperature: b.temperature,

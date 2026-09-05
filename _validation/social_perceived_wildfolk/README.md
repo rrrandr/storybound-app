@@ -53,3 +53,12 @@ demeaning assumption about the Wildfolk character. Only PC/LI identity + who-is-
 ## Out of scope (separate tickets)
 - **Ticket B:** mirror the terminal owner into the speculative pre-warm path (283071) + stable literary-turn harness.
 - **C3 First-Favored "Disfavored" register:** a distinct perspective-owner (proven separate by the A/B).
+
+## TESTING GOTCHA (2026-08-02) — localhost forces HOT_CRISIS openings
+`_pickOpeningTemperature` (app.js ~54852) has a DEV OVERRIDE: on localhost/dev it ALWAYS returns
+HOT_CRISIS (opt out: `window._forceHotOpener = false`), plus a FATELANDS-WISH-DEMO force (~54826) on
+"first-ever Fatelands" (suppress: `localStorage.setItem('sb_witnessed_fatelands_wish_ritual','1')`).
+HOT_CRISIS triggers the "a PERSON acts on the protagonist by sentence 1-2" opening directive → every
+headless opening converges on "hostile authority accosts the PC." **Any opening-DIVERSITY test on
+localhost MUST set `window._forceHotOpener=false` + suppress the wish-demo, or the convergence you
+measure is the dev override, not the product.** (Cost this lesson a near-false "mode collapse" report.)

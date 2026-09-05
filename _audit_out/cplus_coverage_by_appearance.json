@@ -56,10 +56,10 @@
           "presence": "IN_PERSON",
           "status": "REQUIRED",
           "reason": "introduction_floor",
-          "ownedEvidence": false,
+          "ownedEvidence": true,
           "offered": true,
-          "assigned": false,
-          "bucket": "due_no_owned_evidence"
+          "assigned": true,
+          "bucket": "assigned"
         },
         {
           "label": "the presiding Dohkar",
@@ -72,7 +72,7 @@
           "bucket": "due_no_owned_evidence"
         }
       ],
-      "assignedCount": 0
+      "assignedCount": 1
     },
     {
       "n": 3,
@@ -91,12 +91,12 @@
         {
           "label": "Julian",
           "presence": "IN_PERSON",
-          "status": "REQUIRED",
-          "reason": "introduction_floor",
+          "status": "SUPPRESSED",
+          "reason": "cooldown",
           "ownedEvidence": false,
           "offered": true,
           "assigned": false,
-          "bucket": "due_no_owned_evidence"
+          "bucket": "cooldown_suppressed"
         },
         {
           "label": "the presiding Dohkar",
@@ -148,12 +148,12 @@
         {
           "label": "Julian",
           "presence": "REPORTED",
-          "status": "DEFERRED",
-          "reason": "density_cap",
+          "status": "SUPPRESSED",
+          "reason": "cooldown",
           "ownedEvidence": false,
           "offered": false,
           "assigned": false,
-          "bucket": "density_deferred"
+          "bucket": "cooldown_suppressed"
         }
       ],
       "assignedCount": 2
@@ -165,8 +165,8 @@
         {
           "label": "Julian",
           "presence": "IN_PERSON",
-          "status": "REQUIRED",
-          "reason": "introduction_floor",
+          "status": "ALLOWED",
+          "reason": "eligible",
           "ownedEvidence": true,
           "offered": true,
           "assigned": true,
@@ -343,11 +343,11 @@
   "perChar": {
     "Julian": {
       "appearances": 14,
-      "assigned": 3,
-      "density_deferred": 1,
-      "cooldown_suppressed": 0,
+      "assigned": 4,
+      "density_deferred": 0,
+      "cooldown_suppressed": 2,
       "ineligible_not_offered": 0,
-      "due_no_owned_evidence": 5,
+      "due_no_owned_evidence": 3,
       "legacy_no_opportunity": 5
     },
     "Seren": {

@@ -5,7 +5,7 @@
 import { chromium } from 'playwright-core';
 import fs from 'fs';
 const log = (...a) => console.error(...a);
-const OUTDIR = '_validate_out/issue3';
+const OUTDIR = '_validate_out/issue4';
 fs.mkdirSync(OUTDIR, { recursive: true });
 fs.writeFileSync(OUTDIR + '/.writetest', 'ok'); fs.unlinkSync(OUTDIR + '/.writetest');
 log('[preflight] output dir writable: ' + OUTDIR);
