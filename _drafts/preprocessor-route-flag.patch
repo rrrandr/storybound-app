@@ -1,0 +1,78 @@
+# Ministral preprocessor routing — DRAFT, NOT APPLIED
+#
+# Base commit: 9b82320 (the quota governor). Applies cleanly to public/app.js at that commit.
+#
+# WHAT IT DOES
+#   Adds `window._preprocessorRoute` ('small' | '8b' | '14b') to the Scene-1 PROMPT_PREPROCESSOR
+#   dispatch, selecting between mistral-small-latest, ministral-8b-2512 and ministral-14b-2512,
+#   and omits `reasoning_effort` for the Ministral models (they do not accept the parameter).
+#   The json_object contract is unchanged.
+#
+# WHY IT IS NOT COMMITTED
+#   The default is 'small', so applying it changes nothing by itself — but it is the first half
+#   of a routing change, and the second half (the proxy allowlist, in the sibling patch) is what
+#   makes it reachable. Neither should land before the prerequisites in
+#   _audit_out/migration_handoff_2026-09-04.md §7 are met: notably a frozen input corpus for the
+#   preprocessor (which means storing prompt content — an open scope decision) and an authorized
+#   spend ceiling for the 8B-vs-14B comparison.
+#
+# MEASURED CONTEXT
+#   The preprocessor request is ~85 KB (~21k nominal tokens) and does not fit Mistral Small's
+#   20,000 TPM bucket. Both 8B (625k TPM / 3.13 RPS) and 14B (937.5k TPM / 0.5 RPS) solve
+#   throughput, so the choice is contract quality, not capacity. 14B has the TIGHTEST rate in the
+#   family — one request per 2 s — despite the second-largest TPM.
+#
+--- a/public/app.js	2026-09-04 23:47:45
++++ b/public/app.js
+@@ -264203,22 +264203,44 @@
+           } catch (_) {}
+           return null;
+         };
++        // ── PROMPT_PREPROCESSOR ROUTE (Roman 2026-09-04) — FLAG-GATED, DEFAULT OFF ──
++        // This request measured 77.9-85.1 KB (~19.5-21.3k nominal tokens) against Mistral
++        // Small's 20,000 TPM bucket: one call very nearly exhausts the minute on its own,
++        // leaving no room for its own output, and it took 429s on every attempt in the live
++        // run — which is what stopped the scene before the author ever ran.
++        //
++        // Ministral 8B is a SEPARATE bucket (625,000 TPM / 3.13 RPS), where the same request
++        // is ~3.4% of the minute. Model IDs and capabilities verified against current docs:
++        // ministral-8b-2512 and ministral-14b-2512 both carry 256k context and structured
++        // outputs, and NEITHER accepts reasoning_effort — the proxy now drops it for them, so
++        // the json_object contract below is preserved exactly and nothing else changes.
++        //
++        // DEFAULT IS 'small': committed behaviour is identical until someone sets the flag.
++        // Switching it is a routing change and needs its own decision plus a validated
++        // acceptance run against a frozen input corpus — neither has happened yet.
++        var _ppRoute = (typeof window !== 'undefined' && window._preprocessorRoute) || 'small';
++        var _PP_MODELS = { small: 'mistral-small-latest', '8b': 'ministral-8b-2512', '14b': 'ministral-14b-2512' };
++        var _ppModel = _PP_MODELS[_ppRoute] || _PP_MODELS.small;
++        var _ppTakesReasoning = /mistral-(small|medium)/.test(_ppModel);
+         var _doScaffoldCall = async function (extraUsrSuffix) {
+           _plannerAttempts++;
+-          var _res = await fetch('/api/mistral-proxy', {
+-            method: 'POST',
+-            headers: { 'Content-Type': 'application/json' },
+-            body: JSON.stringify({
+-              role: 'PROMPT_PREPROCESSOR', model: 'mistral-small-latest',
++          var _ppBody = {
++              role: 'PROMPT_PREPROCESSOR', model: _ppModel,
+               temperature: 0.4,
+               max_tokens: _SCAFFOLD_MAX_TOKENS,
+-              reasoning_effort: 'none',
+               response_format: { type: 'json_object' },
+               messages: [
+                 { role: 'system', content: sys },
+                 { role: 'user', content: usr + (extraUsrSuffix || '') }
+               ]
+-            })
++          };
++          // 'none' is meaningful on Small — it suppresses the author-class default the proxy
++          // would otherwise apply — and meaningless on Ministral, which has no such parameter.
++          if (_ppTakesReasoning) _ppBody.reasoning_effort = 'none';
++          var _res = await fetch('/api/mistral-proxy', {
++            method: 'POST',
++            headers: { 'Content-Type': 'application/json' },
++            body: JSON.stringify(_ppBody)
+           });
+           if (!_res.ok) {
+             // A TRANSPORT failure is a planning failure: rate-limit, auth or outage all leave

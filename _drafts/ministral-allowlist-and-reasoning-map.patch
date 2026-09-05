@@ -1,0 +1,64 @@
+# Mistral proxy: Ministral allowlist + reasoning capability map — DRAFT, NOT APPLIED
+#
+# Base commit: 9b82320 (the quota governor). Applies cleanly to api/mistral-proxy.js at that commit.
+#
+# WHAT IT DOES
+#   1. Adds ministral-8b-2512, ministral-14b-2512 and ministral-3b-2512 to
+#      ALLOWED_MISTRAL_MODELS. Without this the proxy REJECTS those models before dispatch,
+#      which is why the sibling client patch is inert on its own.
+#   2. Adds an explicit per-model capability map (_NO_REASONING_PARAM) naming exactly the three
+#      Ministral ids, and drops reasoning_effort for them. Deliberately NOT a /mistral-(small|
+#      medium)/ pattern: a broad rule would silently strip the parameter from any future model
+#      whose name did not match, including ones that DO support it.
+#
+# WHY IT IS NOT COMMITTED
+#   This is the half that makes Ministral routing reachable. api/_mistral-governor.js already
+#   carries their limits as configuration (3B 1.3M TPM / 12.5 RPS, 8B 625k / 3.13,
+#   14B 937.5k / 0.5, dated to the account Limits page) — that is inert while this allowlist
+#   entry is absent. Landing this without the §7 prerequisites would make an unvalidated route
+#   dispatchable.
+#
+--- a/api/mistral-proxy.js
++++ b/api/mistral-proxy.js
+@@ -22,7 +22,16 @@
+   'mistral-medium-latest',
+   'mistral-large-latest',
+   'mistral-small-latest',
+-  'mistral-small-2603'    // Mistral Small 4 (119B/6.5B active, 256k ctx, $0.15/$0.60 per M) — author A/B (Roman 2026-07-23)
++  'mistral-small-2603',   // Mistral Small 4 (119B/6.5B active, 256k ctx, $0.15/$0.60 per M) — author A/B (Roman 2026-07-30),
++  // ── MINISTRAL 3 FAMILY (Roman 2026-09-04) ──
++  // Added so utility work can leave Mistral Small's 20,000 TPM bucket, which one
++  // 85 KB PROMPT_PREPROCESSOR request (~21k tokens) very nearly exhausts on its own.
++  // These are SEPARATE per-model buckets: 8B 625,000 TPM / 3.13 RPS, 14B 937,500 TPM,
++  // 3B 1,300,000 TPM. Allowlisting does not route anything — the client decides, and the
++  // only client route added today is flag-gated OFF.
++  'ministral-8b-2512',    // Ministral 3 8B  — 256k ctx, structured outputs, $0.15/M
++  'ministral-14b-2512',   // Ministral 3 14B — 256k ctx, structured outputs, $0.20/M
++  'ministral-3b-2512'     // Ministral 3 3B  — 256k ctx, structured outputs, $0.10/M
+ ];
+ 
+ // ── QUOTA GOVERNOR BOOTSTRAP ──
+@@ -272,6 +281,23 @@
+         if (_explicit === null && isAuthorClass && /mistral-small/.test(String(requestedModel))) {
+           effort = 'high';
+           console.log('[MISTRAL-PROXY] author-class payload — defaulting reasoning_effort=high');
++        }
++        // ── PER-MODEL CAPABILITY, NOT A PATTERN ──
++        // An earlier draft matched /mistral-(small|medium)/ and stripped reasoning_effort from
++        // everything else. That is a broad rule standing in for knowledge we do not have: it
++        // would silently strip the parameter from any future model whose name does not match,
++        // including ones that DO support it. Only the three Ministral IDs are known — verified
++        // against their model cards — to omit it, so only they are named here. Anything not
++        // listed is passed through unchanged and the provider decides.
++        const _NO_REASONING_PARAM = {
++          'ministral-3b-2512': true,
++          'ministral-8b-2512': true,
++          'ministral-14b-2512': true
++        };
++        const _takesReasoning = !_NO_REASONING_PARAM[String(requestedModel)];
++        if (effort && !_takesReasoning) {
++          console.log(`[MISTRAL-PROXY] dropping reasoning_effort=${effort} — ${requestedModel} does not accept it`);
++          effort = null; _effortUsed = null;
+         }
+         if (effort) body.reasoning_effort = effort;   // includes the explicit 'none'
+         if (response_format) body.response_format = response_format;
