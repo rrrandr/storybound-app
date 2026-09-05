@@ -1,0 +1,30 @@
+{
+  "map": [
+    {
+      "pair": "dialogue-subtext",
+      "A": "high",
+      "B": "none"
+    },
+    {
+      "pair": "emotional-inference",
+      "A": "none",
+      "B": "high"
+    },
+    {
+      "pair": "lore-fidelity",
+      "A": "high",
+      "B": "none"
+    },
+    {
+      "pair": "action-staging",
+      "A": "high",
+      "B": "none"
+    },
+    {
+      "pair": "hard-continuity",
+      "A": "high",
+      "B": "none"
+    }
+  ],
+  "sealedAt": "2026-08-15T07:26:36.213Z"
+}

@@ -1,0 +1,62 @@
+{
+  "mode": "real",
+  "appJsSha": "e06958b61ac78ea0",
+  "at": "2026-09-04T15:42:07.927Z",
+  "origin": "https://storybound.love",
+  "env": {
+    "host": "storybound.love",
+    "isDevMode": false,
+    "overridesPresent": []
+  },
+  "wallMs": 114382,
+  "threw": null,
+  "runnerObservedModelHits": 12,
+  "cost": {
+    "dispatchCount": 1,
+    "byProvider": {
+      "openai": {
+        "calls": 1,
+        "prompt": 9624,
+        "cached": 0,
+        "visible": 1791,
+        "reasoning": 0,
+        "incomplete": 0
+      }
+    },
+    "calls": [
+      {
+        "call": 0,
+        "provider": "openai",
+        "label": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "prompt": 9624,
+        "cached": 0,
+        "visible": 1791,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      }
+    ],
+    "xaiCost": 0,
+    "xaiCostIsExact": true,
+    "unpricedCalls": [
+      {
+        "call": 0,
+        "label": "PRIMARY_AUTHOR",
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      }
+    ],
+    "incompleteCalls": [],
+    "allInTotal": "PARTIAL — xAI priced; 1 non-xAI call(s) unpriced"
+  },
+  "xai": {
+    "calls": [],
+    "xaiTotal": 0,
+    "totalIsExact": true,
+    "totalIsUpperBound": false,
+    "unknownCalls": [],
+    "upperBoundCalls": [],
+    "complete": true
+  }
+}

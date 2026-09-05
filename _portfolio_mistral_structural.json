@@ -1,0 +1,84 @@
+{
+  "A": {
+    "status": 200,
+    "usage": {
+      "prompt_tokens": 680,
+      "total_tokens": 3879,
+      "completion_tokens": 3199,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "service_tier": "standard"
+    },
+    "parsed": true,
+    "subjects": {
+      "Mara Dunn": {
+        "present": true,
+        "valid": false,
+        "code": "malformed",
+        "errors": [
+          "facet_0_condition_0_supplied_a_pattern_not_words"
+        ],
+        "facets": 5,
+        "categories": 5,
+        "selfSimilarityMax": 0,
+        "selfSimilarityMean": 0,
+        "conditionsEchoingEvidence": 0,
+        "conditionCount": 10,
+        "truths": [
+          "She trusts precision over effort and measures people by whether they notice the detail.",
+          "She performs redundant checks not to verify, but to confirm she is still in control.",
+          "She dreads being the one who breaks the ledger’s chain of custody.",
+          "She values accountability so highly that she treats slip-ups as moral failures.",
+          "She hides her own mistakes by making them someone else’s responsibility."
+        ]
+      },
+      "Tomas Reyne": {
+        "present": true,
+        "valid": false,
+        "code": "malformed",
+        "errors": [
+          "facet_0_condition_0_supplied_a_pattern_not_words"
+        ],
+        "facets": 5,
+        "categories": 5,
+        "selfSimilarityMax": 0.091,
+        "selfSimilarityMean": 0.009,
+        "conditionsEchoingEvidence": 0,
+        "conditionCount": 10,
+        "truths": [
+          "He sees every conversation as a negotiation where the first offer is never the last.",
+          "He dreads being trapped in a role he cannot revise.",
+          "He wants to shape outcomes so thoroughly that nothing can surprise him.",
+          "He rehearses conversations in advance to preempt objections.",
+          "He pushes others to act while keeping his own role ambiguous."
+        ]
+      },
+      "Halden Roe": {
+        "present": true,
+        "valid": false,
+        "code": "malformed",
+        "errors": [
+          "facet_0_category_invalid:loyalty"
+        ],
+        "facets": 5,
+        "categories": 5,
+        "selfSimilarityMax": 0.182,
+        "selfSimilarityMean": 0.07,
+        "conditionsEchoingEvidence": 0,
+        "conditionCount": 10,
+        "truths": [
+          "He privileges the ledger’s continuity over the individuals who depend on it.",
+          "He values timeless systems more than timely outcomes.",
+          "He fears being the one who breaks the ledger’s unbroken chain.",
+          "He knows the ledger’s history better than anyone else alive.",
+          "He keeps the ledger alive by delaying its use for others."
+        ]
+      }
+    },
+    "note": null,
+    "returned": 3,
+    "crossSubjectMax": 0.5,
+    "crossSubjectMean": 0.02
+  }
+}

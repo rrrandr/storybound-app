@@ -1,0 +1,198 @@
+{
+ "entities": {
+  "Seren": {
+   "beliefs": [
+    {
+     "id": "seren-1",
+     "type": "behaviour",
+     "fact": "When performing an invocation she lets her coral hair fall forward so the words appear spontaneous.",
+     "lastTick": 1,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene1_final.txt",
+       "as": "When performing an invocation she lets her coral hair fall forward so the words appear spontaneous.",
+       "origin": "observed"
+      }
+     ]
+    }
+   ],
+   "spent": [
+    {
+     "slot": "A",
+     "scene": "_validate_out/serial10b/scene1_final.txt",
+     "tick": 1
+    }
+   ]
+  },
+  "spiralgrass": {
+   "beliefs": [
+    {
+     "id": "spiralgrass-1",
+     "type": "object",
+     "fact": "A patch beneath a kneeling figure darkens to the color of old blood during an offering.",
+     "lastTick": 1,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene1_final.txt",
+       "as": "A patch beneath a kneeling figure darkens to the color of old blood during an offering.",
+       "origin": "observed"
+      }
+     ],
+     "significance": "unknown"
+    }
+   ]
+  },
+  "tarot deck": {
+   "beliefs": [
+    {
+     "id": "tarotdeck-1",
+     "type": "object",
+     "fact": "It is the narrator's great-grandmother's deck and is held during moments of decision.",
+     "lastTick": 1,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene1_final.txt",
+       "as": "It is the narrator's great-grandmother's deck and is held during moments of decision.",
+       "origin": "observed"
+      }
+     ],
+     "significance": "unknown"
+    }
+   ]
+  },
+  "the deck": {
+   "beliefs": [
+    {
+     "id": "thedeck-1",
+     "type": "object",
+     "fact": "It is always warm in the narrator's hand.",
+     "lastTick": 2,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene3_final.txt",
+       "as": "It is always warm in the narrator's hand.",
+       "origin": "observed"
+      }
+     ],
+     "significance": "unknown"
+    }
+   ]
+  },
+  "Tempt Fate": {
+   "beliefs": [
+    {
+     "id": "temptfate-1",
+     "type": "object",
+     "fact": "Grandma never let the narrator play with that card.",
+     "lastTick": 2,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene3_final.txt",
+       "as": "Grandma never let the narrator play with that card.",
+       "origin": "observed"
+      }
+     ],
+     "significance": "unknown"
+    }
+   ]
+  },
+  "Dohkar": {
+   "beliefs": [
+    {
+     "id": "dohkar-1",
+     "type": "behaviour",
+     "fact": "When asserting authority he stays still and makes others come to him",
+     "lastTick": 3,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene5_final.txt",
+       "as": "When asserting authority he stays still and makes others come to him",
+       "origin": "observed"
+      }
+     ]
+    }
+   ],
+   "spent": [
+    {
+     "slot": "C",
+     "scene": "_validate_out/serial10b/scene5_final.txt",
+     "tick": 3
+    },
+    {
+     "slot": "E",
+     "scene": "_validate_out/serial10b/scene6_final.txt",
+     "tick": 4
+    }
+   ]
+  },
+  "the scroll": {
+   "beliefs": [
+    {
+     "id": "thescroll-1",
+     "type": "object",
+     "fact": "Julian’s name is inscribed on it in ancient script",
+     "lastTick": 3,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene5_final.txt",
+       "as": "Julian’s name is inscribed on it in ancient script",
+       "origin": "observed"
+      }
+     ],
+     "significance": "unknown"
+    }
+   ]
+  },
+  "Julian": {
+   "beliefs": [
+    {
+     "id": "julian-1",
+     "type": "behaviour",
+     "fact": "When focused on the sigil he remains completely still except for once turning the ring on his left hand",
+     "lastTick": 4,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene6_final.txt",
+       "as": "When focused on the sigil he remains completely still except for once turning the ring on his left hand",
+       "origin": "observed"
+      }
+     ]
+    }
+   ]
+  },
+  "the tapestry": {
+   "beliefs": [
+    {
+     "id": "thetapestry-1",
+     "type": "object",
+     "fact": "Touching its edge causes the sigil on the palm to pulse sharply and flare light across the room",
+     "lastTick": 4,
+     "origin": "observed",
+     "seen": [
+      {
+       "scene": "_validate_out/serial10b/scene6_final.txt",
+       "as": "Touching its edge causes the sigil on the palm to pulse sharply and flare light across the room",
+       "origin": "observed"
+      }
+     ],
+     "significance": "unknown"
+    }
+   ]
+  }
+ },
+ "scenes": [
+  "_validate_out/serial10b/scene1_final.txt",
+  "_validate_out/serial10b/scene3_final.txt",
+  "_validate_out/serial10b/scene5_final.txt",
+  "_validate_out/serial10b/scene6_final.txt"
+ ],
+ "shells": {}
+}

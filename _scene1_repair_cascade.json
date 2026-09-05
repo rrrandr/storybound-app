@@ -1,0 +1,204 @@
+{
+ "A": {
+  "mode": "drift",
+  "surgical": [
+   {
+    "system": "You are a precision editor for romance fiction prose. You receive:\n  1. A draft scene from a senior writer.\n  2. A list of specific structural violations.\n\nYour job: rewrite ONLY the violating sentences/paragraphs. Leave EVERYTHING else BYTE-IDENTICAL.\n\nCRITICAL RULES:\n  - Return the COMPLETE prose ",
+    "user": "DRAFT PROSE (to be edited):\n\nLirael turned toward the moment while the hall held its breath. Seren reached for the regret while the hall held its breath. Kesh turned toward the matter while the hall held its breath. \"Set it down where they can see,\" Seren said. Maren reached for the wonder while the hall held its breath. Lirael turned toward the moment while the hall held its breath. The glow along the far wall had not shifted since dawn. Seren reached for the ritual while the hall held its breath. Kesh turned toward the answer while the hall held its breath. Maren reached for the regret while",
+    "max_tokens": 3500,
+    "temperature": 0.3,
+    "url": "/api/mistral-proxy"
+   }
+  ],
+  "author": [
+   {
+    "system": "\n═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══\n(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS within these laws. If a doctrine clause and an architecture law conflict, the architecture law wins.)\n\nLAW 1 — HIERARCHY (R-PLOT IS PRIMARY; A-PLOT IS PRESSURE",
+    "user": "\n═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══\n1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelings about it. At any important moment they should know where we are, what physically happened, what t",
+    "max_tokens": 700,
+    "temperature": 0.8,
+    "url": "/api/proxy"
+   }
+  ],
+  "escaped": [],
+  "unknown": [],
+  "logs": [
+   "[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).",
+   "[SCENE1-GATE] Initial HARD failures: hook(no_object_token)",
+   "[SCENE1-GATE] DIAGNOSTIC surgical repair ENABLED by developer opt-in — hard failures (hook) will issue up to 2 PAID mistral-small call(s) whose output is still discarded unless window._scene1GateAccep",
+   "[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)",
+   "[SCENE1-GATE] Surgical edit 1 REJECTED — drift detected: paragraph delta 4 exceeds max 2 (6 → 2). Keeping original draft for mechanical fallback.",
+   "[SCENE1-GATE] Shipping WHOLE draft with unresolved HARD fail(s) after 1 Haiku surgical edit(s) — mechanical tail-truncation DISABLED (Haiku-only policy). Unresolved: hook. (For more Haiku passes on ha",
+   "[SCENE1-GATE:RESCUE] this scene=still_failed · n=1 gated scenes — pass1 cleared 0% · pass2 cleared +0% · still-failed 100%  [PASS-2 RESCUE VALUE = +0% of gated scenes — if this stays low, set window._",
+   "[SCENE1-GATE] Appended mandated closer to scene tail (final beat is now the tarot line).",
+   "[SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass)."
+  ],
+  "maxAttempts": 2,
+  "regenCount": 1,
+  "boundarySites": [
+   252463
+  ],
+  "fingerprint": {
+   "variant": "hotfast",
+   "sysLen": 146187,
+   "userLen": 156274,
+   "maxTokens": 700
+  }
+ },
+ "B": {
+  "mode": "still-failing",
+  "surgical": [
+   {
+    "system": "You are a precision editor for romance fiction prose. You receive:\n  1. A draft scene from a senior writer.\n  2. A list of specific structural violations.\n\nYour job: rewrite ONLY the violating sentences/paragraphs. Leave EVERYTHING else BYTE-IDENTICAL.\n\nCRITICAL RULES:\n  - Return the COMPLETE prose ",
+    "user": "DRAFT PROSE (to be edited):\n\nLirael turned toward the moment while the hall held its breath. Seren reached for the regret while the hall held its breath. Kesh turned toward the matter while the hall held its breath. \"Set it down where they can see,\" Seren said. Maren reached for the wonder while the hall held its breath. Lirael turned toward the moment while the hall held its breath. The glow along the far wall had not shifted since dawn. Seren reached for the ritual while the hall held its breath. Kesh turned toward the answer while the hall held its breath. Maren reached for the regret while",
+    "max_tokens": 3500,
+    "temperature": 0.3,
+    "url": "/api/mistral-proxy"
+   },
+   {
+    "system": "You are a precision editor for romance fiction prose. You receive:\n  1. A draft scene from a senior writer.\n  2. A list of specific structural violations.\n\nYour job: rewrite ONLY the violating sentences/paragraphs. Leave EVERYTHING else BYTE-IDENTICAL.\n\nCRITICAL RULES:\n  - Return the COMPLETE prose ",
+    "user": "DRAFT PROSE (to be edited):\n\nLirael turned toward the moment while the hall held its breath. Seren reached for the regret while the hall held its breath. Kesh turned toward the matter while the hall held its breath. \"Set it down where they can see,\" Seren said. Maren reached for the wonder while the hall held its breath. Lirael turned toward the moment while the hall held its breath. The glow along the far wall had not shifted since dawn. Seren reached for the ritual while the hall held its breath. Kesh turned toward the answer while the hall held its breath. Maren reached for the regret while",
+    "max_tokens": 3500,
+    "temperature": 0.3,
+    "url": "/api/mistral-proxy"
+   }
+  ],
+  "author": [
+   {
+    "system": "\n═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══\n(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS within these laws. If a doctrine clause and an architecture law conflict, the architecture law wins.)\n\nLAW 1 — HIERARCHY (R-PLOT IS PRIMARY; A-PLOT IS PRESSURE",
+    "user": "\n═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══\n1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelings about it. At any important moment they should know where we are, what physically happened, what t",
+    "max_tokens": 700,
+    "temperature": 0.8,
+    "url": "/api/proxy"
+   }
+  ],
+  "escaped": [],
+  "unknown": [],
+  "logs": [
+   "[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).",
+   "[SCENE1-GATE] Initial HARD failures: hook(no_object_token)",
+   "[SCENE1-GATE] DIAGNOSTIC surgical repair ENABLED by developer opt-in — hard failures (hook) will issue up to 2 PAID mistral-small call(s) whose output is still discarded unless window._scene1GateAccep",
+   "[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)",
+   "[SCENE1-GATE] Surgical edit 1 drift-OK (paras 6→6, word-ratio 1.00) — validating against gate",
+   "[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).",
+   "[SCENE1-GATE] Regen attempt 1 still failing: hook(no_object_token)",
+   "[SCENE1-GATE] ACCEPT SUPPRESSED — regen scored better but the draft is kept (pen removed)",
+   "[SCENE1-GATE] Surgical edit attempt 2 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)",
+   "[SCENE1-GATE] Surgical edit 2 drift-OK (paras 6→6, word-ratio 1.00) — validating against gate",
+   "[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).",
+   "[SCENE1-GATE] Regen attempt 2 still failing: hook(no_object_token)",
+   "[SCENE1-GATE] ACCEPT SUPPRESSED — regen scored better but the draft is kept (pen removed)",
+   "[SCENE1-GATE] Shipping WHOLE draft with unresolved HARD fail(s) after 2 Haiku surgical edit(s) — mechanical tail-truncation DISABLED (Haiku-only policy). Unresolved: hook. (For more Haiku passes on ha",
+   "[SCENE1-GATE:RESCUE] this scene=still_failed · n=1 gated scenes — pass1 cleared 0% · pass2 cleared +0% · still-failed 100%  [PASS-2 RESCUE VALUE = +0% of gated scenes — if this stays low, set window._",
+   "[SCENE1-GATE] Appended mandated closer to scene tail (final beat is now the tarot line).",
+   "[SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass)."
+  ],
+  "maxAttempts": 2,
+  "regenCount": 2,
+  "boundarySites": [
+   252463
+  ],
+  "fingerprint": {
+   "variant": "hotfast",
+   "sysLen": 146351,
+   "userLen": 155432,
+   "maxTokens": 700
+  }
+ },
+ "C": {
+  "mode": "accept-default",
+  "surgical": [
+   {
+    "system": "You are a precision editor for romance fiction prose. You receive:\n  1. A draft scene from a senior writer.\n  2. A list of specific structural violations.\n\nYour job: rewrite ONLY the violating sentences/paragraphs. Leave EVERYTHING else BYTE-IDENTICAL.\n\nCRITICAL RULES:\n  - Return the COMPLETE prose ",
+    "user": "DRAFT PROSE (to be edited):\n\nLirael turned toward the moment while the hall held its breath. Seren reached for the regret while the hall held its breath. Kesh turned toward the matter while the hall held its breath. \"Set it down where they can see,\" Seren said. Maren reached for the wonder while the hall held its breath. Lirael turned toward the moment while the hall held its breath. The glow along the far wall had not shifted since dawn. Seren reached for the ritual while the hall held its breath. Kesh turned toward the answer while the hall held its breath. Maren reached for the regret while",
+    "max_tokens": 3500,
+    "temperature": 0.3,
+    "url": "/api/mistral-proxy"
+   }
+  ],
+  "author": [
+   {
+    "system": "\n═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══\n(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS within these laws. If a doctrine clause and an architecture law conflict, the architecture law wins.)\n\nLAW 1 — HIERARCHY (R-PLOT IS PRIMARY; A-PLOT IS PRESSURE",
+    "user": "\n═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══\n1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelings about it. At any important moment they should know where we are, what physically happened, what t",
+    "max_tokens": 700,
+    "temperature": 0.8,
+    "url": "/api/proxy"
+   }
+  ],
+  "escaped": [],
+  "unknown": [
+   "/api/beta-events"
+  ],
+  "logs": [
+   "[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).",
+   "[SCENE1-GATE] Initial HARD failures: hook(no_object_token)",
+   "[SCENE1-GATE] DIAGNOSTIC surgical repair ENABLED by developer opt-in — hard failures (hook) will issue up to 2 PAID mistral-small call(s) whose output is still discarded unless window._scene1GateAccep",
+   "[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)",
+   "[SCENE1-GATE] Surgical edit 1 drift-OK (paras 6→6, word-ratio 1.00) — validating against gate",
+   "[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).",
+   "[SCENE1-GATE] Regen attempt 1 accepted — all (non-decision) checks pass, soft fails cleared.",
+   "[SCENE1-GATE] ACCEPT SUPPRESSED — regen scored better but the draft is kept (pen removed)",
+   "[SCENE1-GATE] Sonnet polish SKIPPED (cost-cut 2026-05-30 — polish drifted structure on most live runs; Haiku regen ships as canonical).",
+   "[SCENE1-GATE:RESCUE] this scene=pass1 · n=1 gated scenes — pass1 cleared 100% · pass2 cleared +0% · still-failed 0%  [PASS-2 RESCUE VALUE = +0% of gated scenes — if this stays low, set window._scene1R",
+   "[SCENE1-GATE] Appended mandated closer to scene tail (final beat is now the tarot line).",
+   "[SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass)."
+  ],
+  "maxAttempts": 2,
+  "regenCount": 1,
+  "boundarySites": [
+   252466
+  ],
+  "fingerprint": {
+   "variant": "hotfast",
+   "sysLen": 146652,
+   "userLen": 156684,
+   "maxTokens": 700
+  }
+ },
+ "D": {
+  "mode": "accept-on",
+  "surgical": [
+   {
+    "system": "You are a precision editor for romance fiction prose. You receive:\n  1. A draft scene from a senior writer.\n  2. A list of specific structural violations.\n\nYour job: rewrite ONLY the violating sentences/paragraphs. Leave EVERYTHING else BYTE-IDENTICAL.\n\nCRITICAL RULES:\n  - Return the COMPLETE prose ",
+    "user": "DRAFT PROSE (to be edited):\n\nLirael turned toward the moment while the hall held its breath. Seren reached for the regret while the hall held its breath. Kesh turned toward the matter while the hall held its breath. \"Set it down where they can see,\" Seren said. Maren reached for the wonder while the hall held its breath. Lirael turned toward the moment while the hall held its breath. The glow along the far wall had not shifted since dawn. Seren reached for the ritual while the hall held its breath. Kesh turned toward the answer while the hall held its breath. Maren reached for the regret while",
+    "max_tokens": 3500,
+    "temperature": 0.3,
+    "url": "/api/mistral-proxy"
+   }
+  ],
+  "author": [
+   {
+    "system": "\n═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══\n(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS within these laws. If a doctrine clause and an architecture law conflict, the architecture law wins.)\n\nLAW 1 — HIERARCHY (R-PLOT IS PRIMARY; A-PLOT IS PRESSURE",
+    "user": "\n═══ AUTHOR FLOOR (HARD — outranks style, ornament and mystery) ═══\n1. INTERIORITY DECODES; IT DOES NOT ENCODE. A reader must never have to reconstruct the external situation from a character's feelings about it. At any important moment they should know where we are, what physically happened, what t",
+    "max_tokens": 700,
+    "temperature": 0.8,
+    "url": "/api/proxy"
+   }
+  ],
+  "escaped": [],
+  "unknown": [],
+  "logs": [
+   "[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).",
+   "[SCENE1-GATE] Initial HARD failures: hook(no_object_token)",
+   "[SCENE1-GATE] DIAGNOSTIC surgical repair ENABLED by developer opt-in — hard failures (hook) will issue up to 2 PAID mistral-small call(s) whose output is still discarded unless window._scene1GateAccep",
+   "[SCENE1-GATE] Surgical edit attempt 1 → mistral-small (targeted rewrite, preserves voice/length/architecture; Haiku BANNED for prose, Roman 2026-06-26)",
+   "[SCENE1-GATE] Surgical edit 1 drift-OK (paras 6→6, word-ratio 1.00) — validating against gate",
+   "[SCENE1-GATE:TAROT] body-content check skipped — mandated closer carries the deck anchor (cost-cut 2026-05-30).",
+   "[SCENE1-GATE] Regen attempt 1 accepted — all (non-decision) checks pass, soft fails cleared.",
+   "[SCENE1-GATE] Sonnet polish SKIPPED (cost-cut 2026-05-30 — polish drifted structure on most live runs; Haiku regen ships as canonical).",
+   "[SCENE1-GATE:RESCUE] this scene=pass1 · n=1 gated scenes — pass1 cleared 100% · pass2 cleared +0% · still-failed 0%  [PASS-2 RESCUE VALUE = +0% of gated scenes — if this stays low, set window._scene1R",
+   "[SCENE1-GATE] Appended mandated closer to scene tail (final beat is now the tarot line).",
+   "[SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass)."
+  ],
+  "maxAttempts": 2,
+  "regenCount": 1,
+  "boundarySites": [
+   252466
+  ],
+  "fingerprint": {
+   "variant": "hotfast",
+   "sysLen": 146567,
+   "userLen": 156227,
+   "maxTokens": 700
+  }
+ }
+}

@@ -1,0 +1,320 @@
+{
+  "mode": "dry",
+  "archive": "_portfolio_samples/2026-08-31T03-10-58-793Z.raw.txt",
+  "plannerRequest": null,
+  "plannerResponse": null,
+  "authorDirective": null,
+  "auditorMatched": [],
+  "subplotMatched": [],
+  "otherMatched": [
+    "You are a canonicalization and normalization eng",
+    "You are a canonicalization and normalization eng",
+    "DISTINGUISHING FEATURE (anti-calcification ROTAT",
+    "DISTINGUISHING FEATURE (anti-calcification ROTAT",
+    "You are designing an R-PLOT — a tiny narrative p",
+    "You are the A-PLOT GENERATOR for Storybound, an ",
+    "You are compressing the procedural A-plot of a r",
+    "You are generating an ANTAGONIST BODY BIBLE for ",
+    "You are a story-structure auditor applying ONE t",
+    "DISTINGUISHING FEATURE (anti-calcification ROTAT",
+    "DISTINGUISHING FEATURE (anti-calcification ROTAT",
+    "You are generating an ANTAGONIST BODY BIBLE for ",
+    "You are a CONTINUITY ARCHITECT for a serialized ",
+    "DISTINGUISHING FEATURE (anti-calcification ROTAT",
+    "DISTINGUISHING FEATURE (anti-calcification ROTAT",
+    "You are generating an ANTAGONIST BODY BIBLE for "
+  ],
+  "backendCandidates": [
+    {
+      "label": "Mara Dunn",
+      "ref": "cand:b067827f-b502-4404-a773-4825f02fcfdf",
+      "status": "ready",
+      "facets": [
+        {
+          "cat": "value",
+          "truth": "She measures worth by loyalty that survives betrayal without apology or explanation.",
+          "pressures": [
+            {
+              "text": "When she feels her standards are being mocked or ignored",
+              "evidence": "mock|standards|ignored|mocked"
+            },
+            {
+              "text": "When someone she trusted proves unworthy",
+              "evidence": "trusted|unworthy|betrayal|proves"
+            }
+          ]
+        },
+        {
+          "cat": "insecurity",
+          "truth": "She fears that devotion without visible return cheapens her existence.",
+          "pressures": [
+            {
+              "text": "When her efforts are met with indifference or routine acceptance",
+              "evidence": "indifference|routine|acceptance|efforts"
+            },
+            {
+              "text": "When she notices a relationship becoming one-sided",
+              "evidence": "one-sided|notices|relationship|becoming"
+            }
+          ]
+        },
+        {
+          "cat": "habit",
+          "truth": "She weaponizes withdrawal of care to force others to name what they truly want.",
+          "pressures": [
+            {
+              "text": "When she detects emotional dishonesty or avoidance",
+              "evidence": "dishonesty|avoidance|detects|emotional"
+            },
+            {
+              "text": "When someone assumes her presence is automatic",
+              "evidence": "assumes|automatic|presence|someone"
+            }
+          ]
+        },
+        {
+          "cat": "relationship_pattern",
+          "truth": "She tests loyalty by giving small, unasked-for gifts that force the recipient to reciprocate or admit they don’t care.",
+          "pressures": [
+            {
+              "text": "When forming new connections where trust is uncertain",
+              "evidence": "forming|trust|uncertain"
+            },
+            {
+              "text": "When she suspects someone is using her",
+              "evidence": "suspects|using|someone"
+            }
+          ]
+        },
+        {
+          "cat": "contradiction",
+          "truth": "She suspends her need for visible return when someone risks their safety for hers.",
+          "pressures": [
+            {
+              "text": "When someone acts without calculation to protect her",
+              "evidence": "calculation|protect|acts|without"
+            },
+            {
+              "text": "When she witnesses selfless courage",
+              "evidence": "selfless|courage|witnesses"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Tomas Reyne",
+      "ref": "cand:fb74a3df-2875-48f5-b513-955d4a683604",
+      "status": "ready",
+      "facets": [
+        {
+          "cat": "value",
+          "truth": "He prizes the feeling of being understood without having to explain himself.",
+          "pressures": [
+            {
+              "text": "When he feels exposed or vulnerable",
+              "evidence": "exposed|vulnerable|feels|exposure"
+            },
+            {
+              "text": "When he wants to bond quickly with someone",
+              "evidence": "bond|quickly|wants|someone"
+            }
+          ]
+        },
+        {
+          "cat": "insecurity",
+          "truth": "He fears that revealing his true thoughts will make him less appealing.",
+          "pressures": [
+            {
+              "text": "When he has shared something personal",
+              "evidence": "shared|personal|something"
+            },
+            {
+              "text": "When someone seems to be looking too closely at him",
+              "evidence": "looking|closely|someone|seems"
+            }
+          ]
+        },
+        {
+          "cat": "habit",
+          "truth": "He camouflages his intentions by making himself entertaining before anyone can question them.",
+          "pressures": [
+            {
+              "text": "When he feels cornered or interrogated",
+              "evidence": "cornered|interrogated|feels|interrogation"
+            },
+            {
+              "text": "When his competence is being tested",
+              "evidence": "competence|tested|being|test"
+            }
+          ]
+        },
+        {
+          "cat": "relationship_pattern",
+          "truth": "He gives people the version of himself he thinks they want, then resents them for not loving that version.",
+          "pressures": [
+            {
+              "text": "When he is trying to impress someone new",
+              "evidence": "impress|someone|trying"
+            },
+            {
+              "text": "When he volunteers for a favor",
+              "evidence": "volunteers|favor|when"
+            }
+          ]
+        },
+        {
+          "cat": "contradiction",
+          "truth": "He drops all pretense when faced with someone who is completely indifferent to his charm.",
+          "pressures": [
+            {
+              "text": "When someone does not react to his attempts to engage",
+              "evidence": "react|attempts|engage|does not"
+            },
+            {
+              "text": "When he notices someone’s boredom is genuine",
+              "evidence": "boredom|genuine|notices|notice"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "label": "Halden Roe",
+      "ref": "cand:7cf79a08-a5cc-4d0e-ae0a-5f4b0d8baf9b",
+      "status": "ready",
+      "facets": [
+        {
+          "cat": "value",
+          "truth": "He believes strength should always serve the well-being of the people he claims.",
+          "pressures": [
+            {
+              "text": "When someone under his care is vulnerable or exposed",
+              "evidence": "vulnerable|exposed|under|care"
+            },
+            {
+              "text": "When a person’s competence is questioned unfairly",
+              "evidence": "competence|questioned|unfairly|person"
+            }
+          ]
+        },
+        {
+          "cat": "insecurity",
+          "truth": "He fears that caring too much will expose him as weak when he is most needed.",
+          "pressures": [
+            {
+              "text": "When he has done something kind without an agenda",
+              "evidence": "kind|agenda|without|done"
+            },
+            {
+              "text": "When he senses someone discovering his hidden efforts",
+              "evidence": "discovering|hidden|senses|efforts"
+            }
+          ]
+        },
+        {
+          "cat": "habit",
+          "truth": "He presents himself as a fixed point so that others will rely on him, then uses that reliance to justify his interventions.",
+          "pressures": [
+            {
+              "text": "When a situation requires decisive action but no one steps forward",
+              "evidence": "decisive|action|situation|requires"
+            },
+            {
+              "text": "When he notices hesitation that could harm someone",
+              "evidence": "hesitation|harm|notice|could"
+            }
+          ]
+        },
+        {
+          "cat": "relationship_pattern",
+          "truth": "He makes himself indispensably useful to the people he trusts, then expects absolute faith in return.",
+          "pressures": [
+            {
+              "text": "When he has invested significant time or skill in someone",
+              "evidence": "significant|skill|someone|invested"
+            },
+            {
+              "text": "When he suspects a close friend might need him",
+              "evidence": "suspects|friend|might"
+            }
+          ]
+        },
+        {
+          "cat": "contradiction",
+          "truth": "He disregards his own rules when someone’s need forces him to choose between their well-being and his reputation.",
+          "pressures": [
+            {
+              "text": "When someone he trusts is being unfairly judged",
+              "evidence": "unfairly|judged|trusts|someone"
+            },
+            {
+              "text": "When following protocol would harm an innocent person",
+              "evidence": "protocol|harm|innocent|following"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "injection": {
+    "calls": 0,
+    "parked": [
+      {
+        "label": "Mara Dunn",
+        "ok": true,
+        "code": "parked",
+        "facets": 5,
+        "dropped": 3
+      },
+      {
+        "label": "Tomas Reyne",
+        "ok": true,
+        "code": "parked",
+        "facets": 5,
+        "dropped": 3
+      },
+      {
+        "label": "Halden Roe",
+        "ok": true,
+        "code": "parked",
+        "facets": 5,
+        "dropped": 1
+      }
+    ],
+    "rejected": []
+  },
+  "requestCensus": {
+    "plannerDispatched": 0,
+    "plannerSeen": 0,
+    "authorAborted": 0,
+    "portfolio": 0,
+    "subplot": 0,
+    "auditor": 0,
+    "otherIntercepted": 16,
+    "escaped": 0
+  },
+  "procsBefore": {
+    "vercelNode": "0",
+    "vercelDev": "2"
+  },
+  "procsAfter": {
+    "vercelNode": "0",
+    "vercelDev": "2"
+  },
+  "guardBlocked": null,
+  "worstCase": null,
+  "threw": null,
+  "logs": [
+    "W [PORTFOLIO] rejected (absent): characterPortfolios_absent — the rest of the scaffold is unaffected and this stays retryable",
+    "L [SCENE1:PATTERN-GATE] region-particular opener → pulse",
+    "L [SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_pulse; summons/social/reckoning shapes suppressed)",
+    "L [SCENE1:FP] saved opening fingerprint: region_pulse — recent: region_pulse",
+    "L [ADMIT:PENDING] captured 3 candidate ref(s) for invocation inv:mthya6hz-jke9i1",
+    "W [PORTFOLIO:EVIDENCE-NORMALIZED] cand:b067827f-b502-4404-a773-4825f02fcfdf — dropped 3 literal(s): \"new\"@facet_3_condition_0_word_1(not_a_plain_word), \"suspects\"@facet_3_condition_1_word_3(duplicate), \"courage\"@facet_4_",
+    "W [PORTFOLIO:EVIDENCE-NORMALIZED] cand:fb74a3df-2875-48f5-b513-955d4a683604 — dropped 3 literal(s): \"has\"@facet_1_condition_0_word_3(not_a_plain_word), \"new\"@facet_3_condition_0_word_1(not_a_plain_word), \"for\"@facet_3_co",
+    "W [PORTFOLIO:EVIDENCE-NORMALIZED] cand:7cf79a08-a5cc-4d0e-ae0a-5f4b0d8baf9b — dropped 1 literal(s): \"suspects\"@facet_3_condition_1_word_3(duplicate). The remaining literals build the matcher; nothing was shortened or inv",
+    "L [SCENE1:FACT-MANIFEST] fm:c46c401f-112 · 3 fact(s) · story=planner-sample",
+    "W [SCENE1:SCAFFOLD] skipped (no grounded Character+ option for \"Mara Dunn\", \"Tomas Reyne\", \"Halden Roe\" — this scene proves none of their applicability conditions, so there is nothing to offer the planner) — prose path u"
+  ]
+}

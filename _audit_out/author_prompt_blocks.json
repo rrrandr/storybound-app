@@ -1,0 +1,328 @@
+{
+  "systemBytes": 153048,
+  "userBytes": 181772,
+  "system": [
+    {
+      "label": "(preamble)",
+      "bytes": 1
+    },
+    {
+      "label": "STORYBOUND ARCHITECTURE LAWS — PHASE 1",
+      "bytes": 6269
+    },
+    {
+      "label": "END ARCHITECTURE LAWS",
+      "bytes": 43
+    },
+    {
+      "label": "STORYBOUND NARRATIVE ENGINE",
+      "bytes": 7669
+    },
+    {
+      "label": "END ENGINE HEADER",
+      "bytes": 26
+    },
+    {
+      "label": "SCENE DUTY (romance is ONE duty, NOT the default gravity)",
+      "bytes": 3001
+    },
+    {
+      "label": "END SCENE DUTY",
+      "bytes": 537
+    },
+    {
+      "label": "(rule)",
+      "bytes": 607
+    },
+    {
+      "label": "(rule)",
+      "bytes": 1147
+    },
+    {
+      "label": "WORLD PHYSICS LOCK:",
+      "bytes": 2775
+    },
+    {
+      "label": "REALITY MODEL:",
+      "bytes": 1622
+    },
+    {
+      "label": "BLOODLINES:",
+      "bytes": 1602
+    },
+    {
+      "label": "PHYSIOLOGY:",
+      "bytes": 3334
+    },
+    {
+      "label": "PERCEPTION OF WEAVE-SCRIPT:",
+      "bytes": 272
+    },
+    {
+      "label": "CULTURAL PHILOSOPHY:",
+      "bytes": 280
+    },
+    {
+      "label": "THEMATIC IDENTITY:",
+      "bytes": 13274
+    },
+    {
+      "label": "FATELANDS COSMOLOGY:",
+      "bytes": 1441
+    },
+    {
+      "label": "FORBIDDEN TERMINOLOGY:",
+      "bytes": 772
+    },
+    {
+      "label": "FATELANDS LUNAR CULTURE:",
+      "bytes": 903
+    },
+    {
+      "label": "FANTASY WORLD INTEGRITY:",
+      "bytes": 5158
+    },
+    {
+      "label": "CANONICAL UNITS:",
+      "bytes": 2647
+    },
+    {
+      "label": "STYLE RULES:",
+      "bytes": 1800
+    },
+    {
+      "label": "STORYTELLER ENFORCEMENT:",
+      "bytes": 1905
+    },
+    {
+      "label": "BEHAVIORAL NICKNAME QUIRK:",
+      "bytes": 4937
+    },
+    {
+      "label": "STORY SCAFFOLD (gravitational guidance — NOT an outline)",
+      "bytes": 80
+    },
+    {
+      "label": "ISSUE ARCS:",
+      "bytes": 380
+    },
+    {
+      "label": "END SCAFFOLD",
+      "bytes": 29233
+    },
+    {
+      "label": "BEHAVIORAL DEMONSTRATION (HARDEST — Roman 2026-06-01)",
+      "bytes": 2317
+    },
+    {
+      "label": "FOUR-LAYER OBSERVATION HIERARCHY (HARD — Roman 2026-06-01 regime",
+      "bytes": 1889
+    },
+    {
+      "label": "WHO GETS CHARACTER+ — EVERY NAMED OR STORY-IMPORTANT PERSON",
+      "bytes": 2425
+    },
+    {
+      "label": "CHARACTER CAUSALITY (CHARACTER+) — ROTATE MECHANISMS, NEVER SURF",
+      "bytes": 6319
+    },
+    {
+      "label": "LOVE INTEREST: ATTRACTION IS A JUDGEMENT, NOT A DESCRIPTION",
+      "bytes": 2332
+    },
+    {
+      "label": "YOU ARE WRITING AS S. TORY BOUND",
+      "bytes": 20052
+    },
+    {
+      "label": "STORYBOUND+ — EVERYTHING HAS A SECRET, AND ONLY THIS PC CAN SEE ",
+      "bytes": 3964
+    },
+    {
+      "label": "A CAMERA CAN SEE A TELL. ONLY A PERCEPTIVE PROTAGONIST CAN INTER",
+      "bytes": 13022
+    },
+    {
+      "label": "EMOTIONAL PHYSICS: REACTIONS HAVE CAUSES",
+      "bytes": 9014
+    }
+  ],
+  "user": [
+    {
+      "label": "(preamble)",
+      "bytes": 1
+    },
+    {
+      "label": "AUTHOR FLOOR (HARD — outranks style, ornament and mystery)",
+      "bytes": 1112
+    },
+    {
+      "label": "MODE: ROMANTASY",
+      "bytes": 733
+    },
+    {
+      "label": "(rule)",
+      "bytes": 218
+    },
+    {
+      "label": "(rule)",
+      "bytes": 3044
+    },
+    {
+      "label": "(rule)",
+      "bytes": 235
+    },
+    {
+      "label": "(rule)",
+      "bytes": 25675
+    },
+    {
+      "label": "(rule)",
+      "bytes": 166
+    },
+    {
+      "label": "SCENE COMPOSITION",
+      "bytes": 18
+    },
+    {
+      "label": "(rule)",
+      "bytes": 622
+    },
+    {
+      "label": "(rule)",
+      "bytes": 166
+    },
+    {
+      "label": "OPENING RULE",
+      "bytes": 13
+    },
+    {
+      "label": "(rule)",
+      "bytes": 828
+    },
+    {
+      "label": "(rule)",
+      "bytes": 202
+    },
+    {
+      "label": "(rule)",
+      "bytes": 794
+    },
+    {
+      "label": "(rule)",
+      "bytes": 192
+    },
+    {
+      "label": "(rule)",
+      "bytes": 1355
+    },
+    {
+      "label": "NON-NEGOTIABLE RULES:",
+      "bytes": 1637
+    },
+    {
+      "label": "TEXTURE OVER SUMMARY:",
+      "bytes": 298
+    },
+    {
+      "label": "(rule)",
+      "bytes": 270
+    },
+    {
+      "label": "(rule)",
+      "bytes": 1140
+    },
+    {
+      "label": "FIRST LINE MUST:",
+      "bytes": 273
+    },
+    {
+      "label": "WORLD TEXTURE EMERGES AFTER:",
+      "bytes": 338
+    },
+    {
+      "label": "WITHIN FIRST 150 WORDS:",
+      "bytes": 257
+    },
+    {
+      "label": "WITHIN FIRST 350 WORDS:",
+      "bytes": 2654
+    },
+    {
+      "label": "ANTI-LAZINESS CHECK:",
+      "bytes": 208
+    },
+    {
+      "label": "NO OBSERVER MODE:",
+      "bytes": 1479
+    },
+    {
+      "label": "(rule)",
+      "bytes": 238
+    },
+    {
+      "label": "(rule)",
+      "bytes": 11459
+    },
+    {
+      "label": "BOTH OPTIONS MUST:",
+      "bytes": 1254
+    },
+    {
+      "label": "INVALID EXAMPLES:",
+      "bytes": 1099
+    },
+    {
+      "label": "(rule)",
+      "bytes": 350
+    },
+    {
+      "label": "HOOK TYPE IS DETERMINED BY THE SCENE'S ACTUAL CONTENT, NOT BY TH",
+      "bytes": 2160
+    },
+    {
+      "label": "(rule)",
+      "bytes": 214
+    },
+    {
+      "label": "(rule)",
+      "bytes": 822
+    },
+    {
+      "label": "(rule)",
+      "bytes": 166
+    },
+    {
+      "label": "POV REMINDER",
+      "bytes": 13
+    },
+    {
+      "label": "(rule)",
+      "bytes": 327
+    },
+    {
+      "label": "SCENE 1 ONBOARDING ORCHESTRATION (HARD — applies on top of every",
+      "bytes": 20211
+    },
+    {
+      "label": "SCENE 1 MANDATED FRAME (DURING ONBOARDING ONLY — first 3 stories",
+      "bytes": 5951
+    },
+    {
+      "label": "END SCENE 1 MANDATED FRAME",
+      "bytes": 49252
+    },
+    {
+      "label": "FATELANDS FIRST-STORY WISH DEMONSTRATION (HARD — this Scene-1 TE",
+      "bytes": 42209
+    },
+    {
+      "label": "(rule)",
+      "bytes": 1998
+    },
+    {
+      "label": "(rule)",
+      "bytes": 122
+    }
+  ]
+}

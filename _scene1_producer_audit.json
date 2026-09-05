@@ -1,0 +1,1062 @@
+{
+ "seen": [
+  {
+   "id": 1,
+   "sig": "/api/chatgpt-proxy | NORMALIZATION | gpt-4o-mini | You are a canonicalization and normalization engine for Stor",
+   "url": "/api/chatgpt-proxy",
+   "role": "NORMALIZATION",
+   "model": "gpt-4o-mini",
+   "max_tokens": 500,
+   "temperature": 0
+  },
+  {
+   "id": 2,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 2500,
+   "temperature": 0.6
+  },
+  {
+   "id": 3,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0.6
+  },
+  {
+   "id": 4,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are designing an R-PLOT — a tiny narrative planning obje",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 1200,
+   "temperature": 0.6
+  },
+  {
+   "id": 5,
+   "sig": "/api/proxy | STRUCTURE_GENERATOR | - | You are the A-PLOT GENERATOR for Storybound, an interactive ",
+   "url": "/api/proxy",
+   "role": "STRUCTURE_GENERATOR",
+   "max_tokens": 3000,
+   "temperature": 0.65
+  },
+  {
+   "id": 6,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0
+  },
+  {
+   "id": 7,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are the A-PLOT GENERATOR for Storybound, an interactive ",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0.65
+  },
+  {
+   "id": 8,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0
+  },
+  {
+   "id": 9,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o | You are the A-PLOT GENERATOR for Storybound, an interactive ",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o",
+   "max_tokens": 3000,
+   "temperature": 0.65
+  },
+  {
+   "id": 10,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0
+  },
+  {
+   "id": 11,
+   "sig": "/api/deepseek-proxy | STRUCTURE_GENERATOR | deepseek-v4-pro | You are the A-PLOT GENERATOR for Storybound, an interactive ",
+   "url": "/api/deepseek-proxy",
+   "role": "STRUCTURE_GENERATOR",
+   "model": "deepseek-v4-pro",
+   "max_tokens": 3000,
+   "temperature": 0.65
+  },
+  {
+   "id": 12,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0
+  },
+  {
+   "id": 13,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 2500,
+   "temperature": 0.6
+  },
+  {
+   "id": 14,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0.6
+  },
+  {
+   "id": 15,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a CONTINUITY ARCHITECT for a serialized arcane bindi",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 2000,
+   "temperature": 0.7
+  },
+  {
+   "id": 16,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 2500,
+   "temperature": 0.6
+  },
+  {
+   "id": 17,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0.6
+  },
+  {
+   "id": 18,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a scene-structure planner for the OPENING scene of a",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 1200,
+   "temperature": 0.4
+  },
+  {
+   "id": 19,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a scene-structure planner for the OPENING scene of a",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 1200,
+   "temperature": 0.4
+  },
+  {
+   "id": 20,
+   "sig": "/api/proxy | NARRATIVE_AUTHOR | - |  ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three",
+   "url": "/api/proxy",
+   "role": "NARRATIVE_AUTHOR",
+   "max_tokens": 2400,
+   "temperature": 0.8
+  },
+  {
+   "id": 21,
+   "sig": "/api/proxy | NARRATIVE_AUTHOR | - | You are a ruthless line-editor for romance prose. Find the u",
+   "url": "/api/proxy",
+   "role": "NARRATIVE_AUTHOR",
+   "max_tokens": 900,
+   "temperature": 0.8
+  },
+  {
+   "id": 22,
+   "sig": "/api/mistral-proxy | - | mistral-small-latest | Fix ONLY mechanical defects in this scene: broken or incompl",
+   "url": "/api/mistral-proxy",
+   "model": "mistral-small-latest",
+   "max_tokens": 2400,
+   "temperature": 0.2
+  },
+  {
+   "id": 23,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | Fix ONLY mechanical defects in this scene: broken or incompl",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 2400,
+   "temperature": 0.2
+  },
+  {
+   "id": 24,
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write",
+   "url": "/api/proxy",
+   "role": "SPECIALIST_RENDERER",
+   "max_tokens": 110,
+   "temperature": 0.85
+  },
+  {
+   "id": 25,
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write",
+   "url": "/api/proxy",
+   "role": "SPECIALIST_RENDERER",
+   "max_tokens": 110,
+   "temperature": 0.85
+  },
+  {
+   "id": 26,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are an editorial auditor measuring EMOTIONAL GRAVITY in ",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 1400,
+   "temperature": 0.2
+  },
+  {
+   "id": 27,
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You audit prose for BANNED-phrase reuse. The user sends a BA",
+   "url": "/api/proxy",
+   "role": "SPECIALIST_RENDERER",
+   "max_tokens": 500,
+   "temperature": 0
+  },
+  {
+   "id": 28,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a craft auditor measuring ARCHETYPE MANIFESTATION CO",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 400,
+   "temperature": 0.2
+  },
+  {
+   "id": 29,
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You audit prose for BANNED-phrase reuse. The user sends a BA",
+   "url": "/api/proxy",
+   "role": "SPECIALIST_RENDERER",
+   "max_tokens": 500,
+   "temperature": 0
+  },
+  {
+   "id": 30,
+   "sig": "/api/mistral-proxy | SPECIALIST_RENDERER | mistral-small-latest | You are a precision editor for romance fiction prose. You re",
+   "url": "/api/mistral-proxy",
+   "role": "SPECIALIST_RENDERER",
+   "model": "mistral-small-latest",
+   "max_tokens": 3500,
+   "temperature": 0.3
+  },
+  {
+   "id": 31,
+   "sig": "/api/mistral-proxy | SPECIALIST_RENDERER | mistral-small-latest | You are a precision editor for romance fiction prose. You re",
+   "url": "/api/mistral-proxy",
+   "role": "SPECIALIST_RENDERER",
+   "model": "mistral-small-latest",
+   "max_tokens": 3500,
+   "temperature": 0.3
+  },
+  {
+   "id": 32,
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are S. Tory Bound's PERCEPTION EDITOR. The scene below i",
+   "url": "/api/proxy",
+   "role": "SPECIALIST_RENDERER",
+   "max_tokens": 3600,
+   "temperature": 0.6
+  },
+  {
+   "id": 33,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a calcification detector for a serial-fiction engine",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 400,
+   "temperature": 0.2
+  },
+  {
+   "id": 34,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | ",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 3000,
+   "temperature": 0.7
+  },
+  {
+   "id": 35,
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write",
+   "url": "/api/proxy",
+   "role": "SPECIALIST_RENDERER",
+   "max_tokens": 110,
+   "temperature": 0.85
+  },
+  {
+   "id": 36,
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write",
+   "url": "/api/proxy",
+   "role": "SPECIALIST_RENDERER",
+   "max_tokens": 110,
+   "temperature": 0.85
+  },
+  {
+   "id": 37,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are an editorial auditor measuring EMOTIONAL GRAVITY in ",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 1400,
+   "temperature": 0.2
+  },
+  {
+   "id": 38,
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You audit prose for BANNED-phrase reuse. The user sends a BA",
+   "url": "/api/proxy",
+   "role": "SPECIALIST_RENDERER",
+   "max_tokens": 500,
+   "temperature": 0
+  },
+  {
+   "id": 39,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a craft auditor measuring ARCHETYPE MANIFESTATION CO",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 400,
+   "temperature": 0.2
+  },
+  {
+   "id": 40,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o | ",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o",
+   "max_tokens": 400,
+   "temperature": 0.4
+  },
+  {
+   "id": 41,
+   "sig": "/api/mistral-proxy | LINE_EDITOR | mistral-small-latest | You are a precise line-editor, not a writer. You will be giv",
+   "url": "/api/mistral-proxy",
+   "role": "LINE_EDITOR",
+   "model": "mistral-small-latest",
+   "max_tokens": 1561,
+   "temperature": 0.2
+  },
+  {
+   "id": 42,
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are the CHARACTER MEMORY EXTRACTOR for an interactive ro",
+   "url": "/api/chatgpt-proxy",
+   "role": "PRIMARY_AUTHOR",
+   "model": "gpt-4o-mini",
+   "max_tokens": 800,
+   "temperature": 0.2
+  }
+ ],
+ "unknown": [
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | NORMALIZATION | gpt-4o-mini | You are a canonicalization and normalization engine for Stor",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are designing an R-PLOT — a tiny narrative planning obje",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | STRUCTURE_GENERATOR | - | You are the A-PLOT GENERATOR for Storybound, an interactive ",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are the A-PLOT GENERATOR for Storybound, an interactive ",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o | You are the A-PLOT GENERATOR for Storybound, an interactive ",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/deepseek-proxy",
+   "sig": "/api/deepseek-proxy | STRUCTURE_GENERATOR | deepseek-v4-pro | You are the A-PLOT GENERATOR for Storybound, an interactive ",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a CONTINUITY ARCHITECT for a serialized arcane bindi",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a scene-structure planner for the OPENING scene of a",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a scene-structure planner for the OPENING scene of a",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | NARRATIVE_AUTHOR | - |  ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | NARRATIVE_AUTHOR | - | You are a ruthless line-editor for romance prose. Find the u",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/mistral-proxy",
+   "sig": "/api/mistral-proxy | - | mistral-small-latest | Fix ONLY mechanical defects in this scene: broken or incompl",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | Fix ONLY mechanical defects in this scene: broken or incompl",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are an editorial auditor measuring EMOTIONAL GRAVITY in ",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You audit prose for BANNED-phrase reuse. The user sends a BA",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a craft auditor measuring ARCHETYPE MANIFESTATION CO",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You audit prose for BANNED-phrase reuse. The user sends a BA",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/mistral-proxy",
+   "sig": "/api/mistral-proxy | SPECIALIST_RENDERER | mistral-small-latest | You are a precision editor for romance fiction prose. You re",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/mistral-proxy",
+   "sig": "/api/mistral-proxy | SPECIALIST_RENDERER | mistral-small-latest | You are a precision editor for romance fiction prose. You re",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are S. Tory Bound's PERCEPTION EDITOR. The scene below i",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a calcification detector for a serial-fiction engine",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | ",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are an editorial auditor measuring EMOTIONAL GRAVITY in ",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/proxy",
+   "sig": "/api/proxy | SPECIALIST_RENDERER | - | You audit prose for BANNED-phrase reuse. The user sends a BA",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a craft auditor measuring ARCHETYPE MANIFESTATION CO",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o | ",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/mistral-proxy",
+   "sig": "/api/mistral-proxy | LINE_EDITOR | mistral-small-latest | You are a precise line-editor, not a writer. You will be giv",
+   "kind": "unregistered model signature"
+  },
+  {
+   "url": "/api/chatgpt-proxy",
+   "sig": "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are the CHARACTER MEMORY EXTRACTOR for an interactive ro",
+   "kind": "unregistered model signature"
+  }
+ ],
+ "out": {
+  "reqLog": [
+   {
+    "url": "/api/config",
+    "sysHead": "",
+    "usrLen": 0,
+    "stack": "at window.fetch (<anonymous>:16:19) << at app.js?v=20260824v-skelcompat:96:25 << at app.js?v=20260824v-skelcompat:300930:3"
+   },
+   {
+    "url": "/api/geo",
+    "sysHead": "",
+    "usrLen": 0,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _geoSoftGate (app.js?v=20260824v-skelcompat:7166:23) << at app.js?v=20260824v-skelcompat:7181:42"
+   },
+   {
+    "url": "/api/consume-fortune",
+    "sysHead": "",
+    "usrLen": 0,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _chargeIssuePurchase (app.js?v=20260824v-skelcompat:126659:24) << at handleBeginStory (app.js?v=20260824v-skelcompat:242906:31) << at eval (eval at evaluate (:311:30), <anonymous>:37:36) << at UtilityScript.evaluate (<anonymous>:313:16) << at UtilityScript.<anonymous> (<anonymous>:1:44)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "NORMALIZATION",
+    "model": "gpt-4o-mini",
+    "temperature": 0,
+    "max_tokens": 500,
+    "sysHead": "You are a canonicalization and normalization engine for Storybound. Y",
+    "usrLen": 113,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callNormalizationLayer (app.js?v=20260824v-skelcompat:16901:29) << at handleBeginStory (app.js?v=20260824v-skelcompat:243838:36) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.6,
+    "max_tokens": 2500,
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this char",
+    "usrLen": 22531,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _generatePCBodyBible (app.js?v=20260824v-skelcompat:241491:25) << at handleBeginStory (app.js?v=20260824v-skelcompat:244776:94) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.6,
+    "max_tokens": 3000,
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love",
+    "usrLen": 42444,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _generateLIBodyBible (app.js?v=20260824v-skelcompat:242525:25) << at handleBeginStory (app.js?v=20260824v-skelcompat:244777:94) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.6,
+    "max_tokens": 1200,
+    "sysHead": "You are designing an R-PLOT — a tiny narrative planning object that tr",
+    "usrLen": 4584,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _generateRPlot (app.js?v=20260824v-skelcompat:250298:25) << at _ensureRPlot (app.js?v=20260824v-skelcompat:252223:15) << at handleBeginStory (app.js?v=20260824v-skelcompat:244839:17) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "STRUCTURE_GENERATOR",
+    "temperature": 0.65,
+    "max_tokens": 3000,
+    "sysHead": "You are the A-PLOT GENERATOR for Storybound, an interactive romance fi",
+    "usrLen": 16498,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callOneProvider (app.js?v=20260824v-skelcompat:60603:25) << at generateAPlot (app.js?v=20260824v-skelcompat:60735:24) << at _runInitAPlot (app.js?v=20260824v-skelcompat:61021:28) << at initAPlot (app.js?v=20260824v-skelcompat:61007:16) << at handleBeginStory (app.js?v=20260824v-skelcompat:244912:17) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0,
+    "max_tokens": 3000,
+    "sysHead": "You are a JSON repair tool. The user message is text that was meant to",
+    "usrLen": 2758,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callOneProvider (app.js?v=20260824v-skelcompat:60643:33) << at async generateAPlot (app.js?v=20260824v-skelcompat:60735:18) << at async _runInitAPlot (app.js?v=20260824v-skelcompat:61021:22) << at async initAPlot (app.js?v=20260824v-skelcompat:61009:18) << at async handleBeginStory (app.js?v=20260824v-skelcompat:244912:11) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.65,
+    "max_tokens": 3000,
+    "sysHead": "You are the A-PLOT GENERATOR for Storybound, an interactive romance fi",
+    "usrLen": 16498,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callOneProvider (app.js?v=20260824v-skelcompat:60603:25) << at generateAPlot (app.js?v=20260824v-skelcompat:60735:24) << at async _runInitAPlot (app.js?v=20260824v-skelcompat:61021:22) << at async initAPlot (app.js?v=20260824v-skelcompat:61009:18) << at async handleBeginStory (app.js?v=20260824v-skelcompat:244912:11) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0,
+    "max_tokens": 3000,
+    "sysHead": "You are a JSON repair tool. The user message is text that was meant to",
+    "usrLen": 2758,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callOneProvider (app.js?v=20260824v-skelcompat:60643:33) << at async generateAPlot (app.js?v=20260824v-skelcompat:60735:18) << at async _runInitAPlot (app.js?v=20260824v-skelcompat:61021:22) << at async initAPlot (app.js?v=20260824v-skelcompat:61009:18) << at async handleBeginStory (app.js?v=20260824v-skelcompat:244912:11) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o",
+    "temperature": 0.65,
+    "max_tokens": 3000,
+    "sysHead": "You are the A-PLOT GENERATOR for Storybound, an interactive romance fi",
+    "usrLen": 16498,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callOneProvider (app.js?v=20260824v-skelcompat:60603:25) << at generateAPlot (app.js?v=20260824v-skelcompat:60735:24) << at async _runInitAPlot (app.js?v=20260824v-skelcompat:61021:22) << at async initAPlot (app.js?v=20260824v-skelcompat:61009:18) << at async handleBeginStory (app.js?v=20260824v-skelcompat:244912:11) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0,
+    "max_tokens": 3000,
+    "sysHead": "You are a JSON repair tool. The user message is text that was meant to",
+    "usrLen": 2758,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callOneProvider (app.js?v=20260824v-skelcompat:60643:33) << at async generateAPlot (app.js?v=20260824v-skelcompat:60735:18) << at async _runInitAPlot (app.js?v=20260824v-skelcompat:61021:22) << at async initAPlot (app.js?v=20260824v-skelcompat:61009:18) << at async handleBeginStory (app.js?v=20260824v-skelcompat:244912:11) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/deepseek-proxy",
+    "role": "STRUCTURE_GENERATOR",
+    "model": "deepseek-v4-pro",
+    "temperature": 0.65,
+    "max_tokens": 3000,
+    "sysHead": "You are the A-PLOT GENERATOR for Storybound, an interactive romance fi",
+    "usrLen": 16498,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callOneProvider (app.js?v=20260824v-skelcompat:60603:25) << at generateAPlot (app.js?v=20260824v-skelcompat:60735:24) << at async _runInitAPlot (app.js?v=20260824v-skelcompat:61021:22) << at async initAPlot (app.js?v=20260824v-skelcompat:61009:18) << at async handleBeginStory (app.js?v=20260824v-skelcompat:244912:11) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0,
+    "max_tokens": 3000,
+    "sysHead": "You are a JSON repair tool. The user message is text that was meant to",
+    "usrLen": 2802,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callOneProvider (app.js?v=20260824v-skelcompat:60643:33) << at async generateAPlot (app.js?v=20260824v-skelcompat:60735:18) << at async _runInitAPlot (app.js?v=20260824v-skelcompat:61021:22) << at async initAPlot (app.js?v=20260824v-skelcompat:61009:18) << at async handleBeginStory (app.js?v=20260824v-skelcompat:244912:11) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.6,
+    "max_tokens": 2500,
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this char",
+    "usrLen": 22511,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _generatePCBodyBible (app.js?v=20260824v-skelcompat:241491:25) << at _runEnsureCGScaffold (app.js?v=20260824v-skelcompat:205161:90) << at _ensureCGScaffold (app.js?v=20260824v-skelcompat:205127:20) << at handleBeginStory (app.js?v=20260824v-skelcompat:244937:58) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.6,
+    "max_tokens": 3000,
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love",
+    "usrLen": 42444,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _generateLIBodyBible (app.js?v=20260824v-skelcompat:242525:25) << at _runEnsureCGScaffold (app.js?v=20260824v-skelcompat:205162:90) << at _ensureCGScaffold (app.js?v=20260824v-skelcompat:205127:20) << at handleBeginStory (app.js?v=20260824v-skelcompat:244937:58) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.7,
+    "max_tokens": 2000,
+    "sysHead": "You are a CONTINUITY ARCHITECT for a serialized arcane binding romance",
+    "usrLen": 4821,
+    "stack": "at window.fetch (<anonymous>:16:19) << at Object.callChatGPT (orchestration-client.js?v=20260730a-mistral-fallback:1398:27) << at _buildCGScaffold (app.js?v=20260824v-skelcompat:204589:26) << at _runEnsureCGScaffold (app.js?v=20260824v-skelcompat:205173:28) << at async _ensureCGScaffold (app.js?v=20260824v-skelcompat:205129:18) << at async handleBeginStory (app.js?v=20260824v-skelcompat:244937:52) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.6,
+    "max_tokens": 2500,
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this char",
+    "usrLen": 23220,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _generatePCBodyBible (app.js?v=20260824v-skelcompat:241491:25) << at _buildScene1Scaffold (app.js?v=20260824v-skelcompat:252348:108) << at handleBeginStory (app.js?v=20260824v-skelcompat:254657:40) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.6,
+    "max_tokens": 3000,
+    "sysHead": "DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD): this love",
+    "usrLen": 43648,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _generateLIBodyBible (app.js?v=20260824v-skelcompat:242525:25) << at _buildScene1Scaffold (app.js?v=20260824v-skelcompat:252349:108) << at handleBeginStory (app.js?v=20260824v-skelcompat:254657:40) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.4,
+    "max_tokens": 1200,
+    "sysHead": "You are a scene-structure planner for the OPENING scene of an interact",
+    "usrLen": 48740,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _doScaffoldCall (app.js?v=20260824v-skelcompat:252962:28) << at _buildScene1Scaffold (app.js?v=20260824v-skelcompat:253006:26) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254657:34) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.4,
+    "max_tokens": 1200,
+    "sysHead": "You are a scene-structure planner for the OPENING scene of an interact",
+    "usrLen": 49115,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _doScaffoldCall (app.js?v=20260824v-skelcompat:252962:28) << at _buildScene1Scaffold (app.js?v=20260824v-skelcompat:253017:26) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254657:34) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "NARRATIVE_AUTHOR",
+    "temperature": 0.8,
+    "max_tokens": 2400,
+    "sysHead": " ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three laws are ",
+    "usrLen": 182506,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callGrokNarrativeAuthor (orchestration-client.js?v=20260730a-mistral-fallback:2382:23) << at _grokAuthor (orchestration-client.js?v=20260730a-mistral-fallback:2669:14) << at Object._grokLiteraryAuthor (orchestration-client.js?v=20260730a-mistral-fallback:2678:32) << at callChat (app.js?v=20260824v-skelcompat:257915:56) << at handleBeginStory (app.js?v=20260824v-skelcompat:254860:26) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "NARRATIVE_AUTHOR",
+    "temperature": 0.8,
+    "max_tokens": 900,
+    "sysHead": "You are a ruthless line-editor for romance prose. Find the up-to-FIVE ",
+    "usrLen": 2802,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callGrokNarrativeAuthor (orchestration-client.js?v=20260730a-mistral-fallback:2382:23) << at Object._grokLiteraryAuthor (orchestration-client.js?v=20260730a-mistral-fallback:2741:36) << at async callChat (app.js?v=20260824v-skelcompat:257915:19) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254860:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/mistral-proxy",
+    "model": "mistral-small-latest",
+    "temperature": 0.2,
+    "max_tokens": 2400,
+    "sysHead": "Fix ONLY mechanical defects in this scene: broken or incomplete senten",
+    "usrLen": 2802,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _mistralRepairPass (orchestration-client.js?v=20260730a-mistral-fallback:2525:23) << at Object._grokLiteraryAuthor (orchestration-client.js?v=20260730a-mistral-fallback:2768:24) << at async callChat (app.js?v=20260824v-skelcompat:257915:19) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254860:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "max_tokens": 2400,
+    "sysHead": "Fix ONLY mechanical defects in this scene: broken or incomplete senten",
+    "usrLen": 2802,
+    "stack": "at window.fetch (<anonymous>:16:19) << at callChatGPT (orchestration-client.js?v=20260730a-mistral-fallback:1398:27) << at _mistralRepairPass (orchestration-client.js?v=20260730a-mistral-fallback:2543:24) << at async Object._grokLiteraryAuthor (orchestration-client.js?v=20260730a-mistral-fallback:2768:18) << at async callChat (app.js?v=20260824v-skelcompat:257915:19) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254860:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9)"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "SPECIALIST_RENDERER",
+    "temperature": 0.85,
+    "max_tokens": 110,
+    "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TW",
+    "usrLen": 1463,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _genDemandHintExpansionText (app.js?v=20260824v-skelcompat:294051:23) << at _populatePrewriteCache (app.js?v=20260824v-skelcompat:258744:50) << at callChat (app.js?v=20260824v-skelcompat:258752:17) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254860:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "SPECIALIST_RENDERER",
+    "temperature": 0.85,
+    "max_tokens": 110,
+    "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TW",
+    "usrLen": 1463,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _genDemandHintExpansionText (app.js?v=20260824v-skelcompat:294051:23) << at _populatePrewriteCache (app.js?v=20260824v-skelcompat:258744:93) << at callChat (app.js?v=20260824v-skelcompat:258752:17) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254860:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "max_tokens": 1400,
+    "sysHead": "You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance ",
+    "usrLen": 7825,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _auditPost (app.js?v=20260824v-skelcompat:5757:21) << at _auditSceneEmotionalGravity (app.js?v=20260824v-skelcompat:7882:25) << at callChat (app.js?v=20260824v-skelcompat:259249:24) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254860:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "SPECIALIST_RENDERER",
+    "temperature": 0,
+    "max_tokens": 500,
+    "sysHead": "You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST ",
+    "usrLen": 3040,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _phraseLedgerGrok (app.js?v=20260824v-skelcompat:53721:23) << at _auditBannedPhraseLeakage (app.js?v=20260824v-skelcompat:53804:23) << at callChat (app.js?v=20260824v-skelcompat:259275:32) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254860:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "max_tokens": 400,
+    "sysHead": "You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in ",
+    "usrLen": 5150,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _auditPost (app.js?v=20260824v-skelcompat:5757:21) << at _classifyArchetypeManifestation (app.js?v=20260824v-skelcompat:251559:25) << at callChat (app.js?v=20260824v-skelcompat:259295:24) << at async handleBeginStory (app.js?v=20260824v-skelcompat:254860:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "SPECIALIST_RENDERER",
+    "temperature": 0,
+    "max_tokens": 500,
+    "sysHead": "You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST ",
+    "usrLen": 3040,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _phraseLedgerGrok (app.js?v=20260824v-skelcompat:53721:23) << at _auditBannedPhraseLeakage (app.js?v=20260824v-skelcompat:53804:23) << at handleBeginStory (app.js?v=20260824v-skelcompat:254886:236) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/mistral-proxy",
+    "role": "SPECIALIST_RENDERER",
+    "model": "mistral-small-latest",
+    "temperature": 0.3,
+    "max_tokens": 3500,
+    "sysHead": "You are a precision editor for romance fiction prose. You receive: 1",
+    "usrLen": 4149,
+    "stack": "at window.fetch (<anonymous>:16:19) << at handleBeginStory (app.js?v=20260824v-skelcompat:255663:50) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/mistral-proxy",
+    "role": "SPECIALIST_RENDERER",
+    "model": "mistral-small-latest",
+    "temperature": 0.3,
+    "max_tokens": 3500,
+    "sysHead": "You are a precision editor for romance fiction prose. You receive: 1",
+    "usrLen": 4149,
+    "stack": "at window.fetch (<anonymous>:16:19) << at handleBeginStory (app.js?v=20260824v-skelcompat:255663:50) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "SPECIALIST_RENDERER",
+    "temperature": 0.6,
+    "max_tokens": 3600,
+    "sysHead": "You are S. Tory Bound's PERCEPTION EDITOR. The scene below is already ",
+    "usrLen": 6367,
+    "stack": "at window.fetch (<anonymous>:16:19) << at window._applyPerceptionLens (app.js?v=20260824v-skelcompat:24348:25) << at handleBeginStory (app.js?v=20260824v-skelcompat:256528:138) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "max_tokens": 400,
+    "sysHead": "You are a calcification detector for a serial-fiction engine. You read",
+    "usrLen": 3011,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _auditPost (app.js?v=20260824v-skelcompat:5757:21) << at _extractAndRecordScene1SignaturePhrases (app.js?v=20260824v-skelcompat:55451:23) << at app.js?v=20260824v-skelcompat:256341:31"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.7,
+    "max_tokens": 3000,
+    "sysHead": "",
+    "usrLen": 4000,
+    "stack": "at window.fetch (<anonymous>:16:19) << at Object.callChatGPT (orchestration-client.js?v=20260730a-mistral-fallback:1398:27) << at callChat (app.js?v=20260824v-skelcompat:257920:56) << at _synChat (app.js?v=20260824v-skelcompat:256715:36) << at handleBeginStory (app.js?v=20260824v-skelcompat:257040:26) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "SPECIALIST_RENDERER",
+    "temperature": 0.85,
+    "max_tokens": 110,
+    "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TW",
+    "usrLen": 1463,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _genDemandHintExpansionText (app.js?v=20260824v-skelcompat:294051:23) << at _populatePrewriteCache (app.js?v=20260824v-skelcompat:258744:50) << at callChat (app.js?v=20260824v-skelcompat:258752:17) << at async handleBeginStory (app.js?v=20260824v-skelcompat:257040:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "SPECIALIST_RENDERER",
+    "temperature": 0.85,
+    "max_tokens": 110,
+    "sysHead": "You are the same narrator continuing THIS exact scene. Write ONE or TW",
+    "usrLen": 1463,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _genDemandHintExpansionText (app.js?v=20260824v-skelcompat:294051:23) << at _populatePrewriteCache (app.js?v=20260824v-skelcompat:258744:93) << at callChat (app.js?v=20260824v-skelcompat:258752:17) << at async handleBeginStory (app.js?v=20260824v-skelcompat:257040:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "max_tokens": 1400,
+    "sysHead": "You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance ",
+    "usrLen": 7825,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _auditPost (app.js?v=20260824v-skelcompat:5757:21) << at _auditSceneEmotionalGravity (app.js?v=20260824v-skelcompat:7882:25) << at callChat (app.js?v=20260824v-skelcompat:259249:24) << at async handleBeginStory (app.js?v=20260824v-skelcompat:257040:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/proxy",
+    "role": "SPECIALIST_RENDERER",
+    "temperature": 0,
+    "max_tokens": 500,
+    "sysHead": "You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST ",
+    "usrLen": 3040,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _phraseLedgerGrok (app.js?v=20260824v-skelcompat:53721:23) << at _auditBannedPhraseLeakage (app.js?v=20260824v-skelcompat:53804:23) << at callChat (app.js?v=20260824v-skelcompat:259275:32) << at async handleBeginStory (app.js?v=20260824v-skelcompat:257040:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "max_tokens": 400,
+    "sysHead": "You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in ",
+    "usrLen": 5150,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _auditPost (app.js?v=20260824v-skelcompat:5757:21) << at _classifyArchetypeManifestation (app.js?v=20260824v-skelcompat:251559:25) << at callChat (app.js?v=20260824v-skelcompat:259295:24) << at async handleBeginStory (app.js?v=20260824v-skelcompat:257040:20) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o",
+    "temperature": 0.4,
+    "max_tokens": 400,
+    "sysHead": "",
+    "usrLen": 4885,
+    "stack": "at window.fetch (<anonymous>:16:19) << at Object.callChatGPT (orchestration-client.js?v=20260730a-mistral-fallback:1398:27) << at generateVoiceAnchor (app.js?v=20260824v-skelcompat:79928:63) << at handleBeginStory (app.js?v=20260824v-skelcompat:257164:13) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/mistral-proxy",
+    "role": "LINE_EDITOR",
+    "model": "mistral-small-latest",
+    "temperature": 0.2,
+    "max_tokens": 1561,
+    "sysHead": "You are a precise line-editor, not a writer. You will be given a FINIS",
+    "usrLen": 4179,
+    "stack": "at window.fetch (<anonymous>:16:19) << at app.js?v=20260824v-skelcompat:4982:23 << at _cheapLineEdit (app.js?v=20260824v-skelcompat:5005:7) << at _targetedSceneEdit (app.js?v=20260824v-skelcompat:256074:37) << at handleBeginStory (app.js?v=20260824v-skelcompat:257277:32) << at async eval (eval at evaluate (:311:30), <anonymous>:37:9) << at async <anonymous>:337:30"
+   },
+   {
+    "url": "/api/chatgpt-proxy",
+    "role": "PRIMARY_AUTHOR",
+    "model": "gpt-4o-mini",
+    "temperature": 0.2,
+    "max_tokens": 800,
+    "sysHead": "You are the CHARACTER MEMORY EXTRACTOR for an interactive romance stor",
+    "usrLen": 2948,
+    "stack": "at window.fetch (<anonymous>:16:19) << at _extractCharacterDisclosure (app.js?v=20260824v-skelcompat:30138:23) << at app.js?v=20260824v-skelcompat:31088:18"
+   }
+  ],
+  "markers": [
+   20
+  ],
+  "pages": 1,
+  "textLen": 2951,
+  "scenes": 0,
+  "turnCount": 0,
+  "titleShown": false
+ },
+ "logs": [
+  "[PACT:FLIP] flipped card 1 pact=privacy | classList now: pact-card pact-card-privacy flipped",
+  "[PREWRITE] author_appendix=false fallback_generated=true (cache populated at finalize · full-scene context)",
+  "[SCENE1:GRAVITY] no JSON in response",
+  "[PHRASE-LEDGER:AUDIT] scene 1 clean — 0 of 9 banned phrase(s) leaked.",
+  "[VOICE_ANCHOR] Generated (2802 chars)",
+  "[CHEAP-EDIT] scene1-edit DRIFTED (len 3042→2802 or opening changed) — keeping the ORIGINAL draft rather than re-rolling.",
+  "[LINE-EDIT] SEMANTIC label \"scene1-edit\" — pen off by default; reporting, not rewriting. Restore with window._semanticRewritePenOff = false.",
+  "[SINGLE-CRISIS:ENFORCE] fired=false primary=the crisis the scene opens inside removed=[] → after=0 families []",
+  "[PROSE:CAST-ENFORCE] fired=true kept=[PC, Julian, Seren] deferred=[Dohkar] (repaired — re-named cast unnamed; shipped scene enforced)",
+  "[SCENE1:GRAVITY:REPAIR] skipped — load-enforcement already compressed business this scene.",
+  "[STAGED:INTERCEPT-CHECK] standard mount — _isStagedMode(): false | renderMode: literary | _stagedAwaitingProse: undefined | _stagedScene1Initiated: undefined",
+  "[FORMAT:AUDIT] source=scene1-pre-final-normalize fused=0",
+  "[FORMAT:FINAL-NORMALIZE] fired=false (no fused boundaries)",
+  "[FORMAT:AUDIT] source=scene1-mount fused=0",
+  "[PROSE:DEDUP] scene1 removed 3 verbatim-duplicate sentence(s) within the scene",
+  "[LORE-LEDGER] scene 1 · candidates=0 glossed=0 ledger=0",
+  "[SCENE-AMB] region override → ocean (pulse_point)",
+  "[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}",
+  "[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}",
+  "[ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}",
+  "[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}",
+  "[ENTITLEMENT] syncTierFromAccess: {access: sub, tier: storied, subscriptionTier: null, subscribed: true, keyholeMarked: false}",
+  "[ENTITLEMENT] applyLengthLocks: {access: sub, currentStoryLength: fling, cardsFound: 0}",
+  "[READER-MODE] OFF — present-tense play resumes",
+  "[DECK_MANDATE] ON (dev) — default. Use window._forceMandateOff() or set window._forceDeckMandate=false for palate-cleanser testing.",
+  "[DECK:EXAMINE] literary — scroll trigger + MANDATORY Submit gate armed (story 1)",
+  "[STORY:READY] Scene 1 text mounted — story ready for display",
+  "[SETTING-IMG:READY] Setting image loaded — ready for display",
+  "[FATE-WISH] demo first-choice spread: 5 cards, wishCards=1 (cap 1), authored non-wish=4",
+  "[FATE] dealFateCards complete — cards bound",
+  "[FATE] initFateCards called",
+  "[FATE] Bind flags reset — ready for rebind",
+  "[FATE] FX functions status: {startSparkleCycle: true, stopSparkleCycle: true, startFireflyEmanation: true, stopAllEmanations: true, triggerGoldenFlow: true}",
+  "[FATE] Rebinding existing cards",
+  "[FATE] Existing cards rebound: 5",
+  "[FATE] initFateCards bound",
+  "[DEBUG PAGE STATE] cover setTimeout: _bookPageIndex= 0 coverMode= PHASE_1_FORGED",
+  "[COVER:v1] Skipping PHASE_1_FORGED fallback — Minimal Cover owns cover",
+  "[PACT:FLIP] flipped card 2 pact=adult | classList now: pact-card pact-card-adult flipped",
+  "[TEMPT:CRACKLE] segmented into 2 discrete crackles"
+ ]
+}

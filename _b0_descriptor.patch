@@ -1,0 +1,142 @@
+diff --git a/public/app.js b/public/app.js
+index 1689a34..273be9b 100644
+--- a/public/app.js
++++ b/public/app.js
+@@ -254831,37 +254831,93 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the
+         if (window._editorialPass && (state.turnCount || 0) === 0) { try { _editorialPlanBlock = (await window._runEditorialPass(state)) || ''; try { console.log('[EDITORIAL-PASS] block.len=' + _editorialPlanBlock.length); } catch (_) {} } catch (_edErr) { try { console.log('[EDITORIAL-PASS] error ' + (_edErr && _edErr.message)); } catch (_) {} } }
+         // Dead Scene-1 Grok-candidate call-site REMOVED 2026-07-13 (#7); text stays undefined so
+         // the lite / hot-fast / heavy branch chain below runs exactly as in default-OFF production.
++        //
++        // ── CANONICAL SCENE-1 REQUEST DESCRIPTORS (B0, 2026-08-24) ───────────────────────
++        // The three author branches are MUTUALLY EXCLUSIVE — an else-if chain over a variable
++        // that is undefined at entry — so exactly ONE request is ever dispatched. Each branch
++        // now DESCRIBES its request and a single boundary below captures, validates, records
++        // and dispatches it. Previously each branch called callChat itself and the "audit
++        // prompt" was rebuilt AFTER dispatch from _s1StructTail: a synthetic string that could
++        // drift from what was actually sent. Same defect the continuation path closed in
++        // 51b0032 / 2275ab7 with finalAuthorSystemPrompt.
++        //
++        // SHARED PREFIX ONLY. HOTFAST and HEAVY are NOT byte-identical: HOTFAST ends with
++        // _buildHotFastDirective(), HEAVY with _s1LenGuide + _s1ContractCond. The common
++        // prefix is hoisted once; the divergent tails stay variant-specific, and LITE keeps
++        // its own canonical prompt entirely (its builder is shared with the continuation path,
++        // so threading Scene-1 scaffold components into it would change other paths).
++        var _s1UserCommon = _buildAuthorFloorDirective(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() + (typeof _buildCharacterPlusStateful === 'function' ? _buildCharacterPlusStateful() : '') + _editorialPlanBlock + introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '');
++        var _s1Req = null;
+         if (typeof text === 'undefined' && _litLiteActive()) {
+             var _ll1 = _buildLitLitePrompt({ act: 'Open the story — write Scene 1.', dia: '' });
+-            _logLitLitePromptBreakdown(_ll1, (state.sysPrompt + introPrompt + _scene1Appendix + _scene1ScaffoldBlock).length);
+             window._litLiteLastSceneMode = 'lite';
+-            var __snapPrev_251507 = text;   // LANE-2: prose BEFORE this authoritative assignment
+-            text = await callChat([
+-                { role: 'system', content: _ll1.system },
+-                { role: 'user', content: 'Begin the story. Write Scene 1.' }
+-            ], 0.7, { max_tokens: 2400 });
+-            try { if (window.__textSnap) window.__textSnap.push({ site: 251507, label: 'callChat', mutationClass: 'model', before: String(__snapPrev_251507||''), after: String(text||''), changed: String(text||'')!==String(__snapPrev_251507||'') }); } catch (_) {}
+-            try { _litLiteFailureScan(text); } catch (_llScan1) {}
++            _s1Req = { variant: 'lite', site: 251507,
++                system: _ll1.system,
++                user: 'Begin the story. Write Scene 1.',
++                temperature: 0.7, opts: { max_tokens: 2400 } };
+         } else if (typeof text === 'undefined' && typeof _hotFastActive === 'function' && _hotFastActive()) {
+             // HOT&FAST (Roman 2026-06-26): same HEAVY machinery (deck opener / micro-axis are
+             // already baked into introPrompt+appendix; HOT directive reused) but a SHORT first
+-            // pass — lower max_tokens HARD-caps length at the API level so the ~250–400w
+-            // directive isn't merely advisory (the lesson from the 900–1100 A/B: length asks
++            // pass — lower max_tokens HARD-caps length at the API level so the ~250-400w
++            // directive isn't merely advisory (the lesson from the 900-1100 A/B: length asks
+             // alone don't bind). The HARD CONTRACT carries the short-hot length branch.
+             try { console.log('[HOTFAST:ENABLED] short hot-crisis Scene-1 path'); } catch (_) {}
+-            var __snapPrev_251519 = text;   // LANE-2: prose BEFORE this authoritative assignment
+-            text = await callChat([
+-                {role:'system', content: state.sysPrompt},
+-                {role:'user', content: _buildAuthorFloorDirective(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() + (typeof _buildCharacterPlusStateful === 'function' ? _buildCharacterPlusStateful() : '') + _editorialPlanBlock + introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + (typeof _buildHotFastDirective === 'function' ? _buildHotFastDirective() : '') + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor()}
+-            ], 0.7, { max_tokens: 700 });
+-            try { if (window.__textSnap) window.__textSnap.push({ site: 251519, label: 'callChat', mutationClass: 'model', before: String(__snapPrev_251519||''), after: String(text||''), changed: String(text||'')!==String(__snapPrev_251519||'') }); } catch (_) {}
++            _s1Req = { variant: 'hotfast', site: 251519,
++                system: state.sysPrompt,
++                user: _s1UserCommon + (typeof _buildHotFastDirective === 'function' ? _buildHotFastDirective() : '') + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor(),
++                temperature: 0.7, opts: { max_tokens: 700 } };
+         } else if (typeof text === 'undefined') {
+-            var __snapPrev_251524 = text;   // LANE-2: prose BEFORE this authoritative assignment
++            _s1Req = { variant: 'heavy', site: 251524,
++                system: state.sysPrompt,
++                user: _s1UserCommon + _s1LenGuide + _s1ContractCond + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor(),
++                temperature: 0.7, opts: { max_tokens: 2400 } };
++        }
++        if (_s1Req) {
++            // ONE AUTHORITATIVE PRE-DISPATCH BOUNDARY. Every observer below reads the EXACT
++            // strings about to be sent — no reconstruction, no approximation.
++            const _s1Frozen = Object.freeze({
++                variant: _s1Req.variant,
++                system: String(_s1Req.system || ''),
++                user: String(_s1Req.user || ''),
++                temperature: _s1Req.temperature,
++                maxTokens: _s1Req.opts.max_tokens
++            });
++            // OBSERVABILITY CORRECTION (not a prompt change): LITE's breakdown previously
++            // measured (sysPrompt + introPrompt + _scene1Appendix + _scene1ScaffoldBlock) —
++            // a string LITE never sends, since its messages come from _buildLitLitePrompt and
++            // a one-line user instruction. It now measures the dispatched system + user.
++            if (_s1Frozen.variant === 'lite') {
++                try { _logLitLitePromptBreakdown(_ll1, (_s1Frozen.system + _s1Frozen.user).length); } catch (_) {}
++            }
++            try {
++                if (typeof validateStoryPromptSize === 'function') {
++                    validateStoryPromptSize(_s1Frozen.system + _s1Frozen.user, 'scene1-' + _s1Frozen.variant);
++                }
++            } catch (_) {}
++            try {
++                window.state._lastScene1AuditPrompt = {
++                    variant: _s1Frozen.variant, system: _s1Frozen.system, user: _s1Frozen.user,
++                    temperature: _s1Frozen.temperature, maxTokens: _s1Frozen.maxTokens,
++                    capturedAt: 'pre-dispatch'
++                };
++                window.__scene1RequestFingerprint = {
++                    variant: _s1Frozen.variant, sysLen: _s1Frozen.system.length,
++                    userLen: _s1Frozen.user.length, maxTokens: _s1Frozen.maxTokens
++                };
++            } catch (_) {}
++            // Drift assertion immediately before dispatch.
++            if (_s1Req.system !== _s1Frozen.system || _s1Req.user !== _s1Frozen.user
++                || _s1Req.opts.max_tokens !== _s1Frozen.maxTokens) {
++                console.warn('[SCENE1:DRIFT] descriptor mutated between capture and dispatch — variant '
++                    + _s1Frozen.variant);
++            }
++            var __snapPrevS1 = text;   // LANE-2: prose BEFORE this authoritative assignment
+             text = await callChat([
+-                {role:'system', content: state.sysPrompt},
+-                {role:'user', content: _buildAuthorFloorDirective(state) + _buildA50ModeDirective() + _buildStagingFloorDirective() + (typeof _buildCharacterPlusStateful === 'function' ? _buildCharacterPlusStateful() : '') + _editorialPlanBlock + introPrompt + _scene1Appendix + _scene1ScaffoldBlock + (typeof _buildPicturabilityMandate === 'function' ? '\n' + _buildPicturabilityMandate() : '') + (typeof _buildHotCrisisOpenerProseDirective === 'function' ? '\n' + _buildHotCrisisOpenerProseDirective() : '') + (typeof _buildFatelandsWishDemoOpenerDirective === 'function' ? '\n' + _buildFatelandsWishDemoOpenerDirective() : '') + _s1LenGuide + _s1ContractCond + _buildPerTurnCharMemory() + _perceivedWildfolkForAuthor()}
+-            ], 0.7, { max_tokens: 2400 });
+-            try { if (window.__textSnap) window.__textSnap.push({ site: 251524, label: 'callChat', mutationClass: 'model', before: String(__snapPrev_251524||''), after: String(text||''), changed: String(text||'')!==String(__snapPrev_251524||'') }); } catch (_) {}
++                { role: 'system', content: _s1Frozen.system },
++                { role: 'user', content: _s1Frozen.user }
++            ], _s1Frozen.temperature, _s1Req.opts);
++            try { if (window.__textSnap) window.__textSnap.push({ site: _s1Req.site, label: 'callChat', mutationClass: 'model', before: String(__snapPrevS1||''), after: String(text||''), changed: String(text||'')!==String(__snapPrevS1||'') }); } catch (_) {}
++            if (_s1Frozen.variant === 'lite') { try { _litLiteFailureScan(text); } catch (_llScan1) {} }
+         }
+         // STATE-CHANGE MARKER instrumentation + strip (Roman 2026-07-24): did the renderer stage the
+         // <<STATE_CHANGE>> beat, and WHERE (word position)? This is the experimental signal — if the
+@@ -254894,7 +254950,21 @@ Generate the synopsis now. The protagonist MUST be named ${pKernel}. Depict the
+           // Cache the assembled Scene-1 prompt so window._scene1AuditCompare() (RAW
+           // Sonnet/Grok) + window._scene1HeavyVsLiteCompare() (HEAVY vs fair-LITE prompt
+           // mass) can regenerate on demand (Roman 2026-06-14 QA tools, read-only).
+-          try { window.state._lastScene1AuditPrompt = { system: _s1AuditSys, structuralTail: _s1StructTail, user: 'Open the story — write Scene 1.', world: state.worldSubtype || '', li: state.loveInterestName || '', pc: state.playerName || '' }; } catch (_) {}
++          // B0: MERGE, never overwrite. The pre-dispatch capture above is the authoritative
++          // record of the dispatched pair. _s1AuditSys / _s1StructTail are retained because
++          // _grokSceneShadow (next line) genuinely consumes them and because the read-only QA
++          // tools (_scene1AuditCompare / _scene1HeavyVsLiteCompare) require .structuralTail.
++          // They are recorded as clearly-named RECONSTRUCTIONS, not as the dispatched prompt.
++          try {
++            var _s1Prev = (window.state && window.state._lastScene1AuditPrompt) || null;
++            window.state._lastScene1AuditPrompt = Object.assign({}, _s1Prev || {}, {
++              structuralTail: _s1StructTail,
++              reconstructedSystem: _s1AuditSys,
++              combined: String((_s1Prev && _s1Prev.system) || '') + String((_s1Prev && _s1Prev.user) || ''),
++              // legacy field name kept for the QA tools that read .system expecting prompt mass
++              system: (_s1Prev && _s1Prev.system) ? _s1Prev.system : _s1AuditSys
++            });
++          } catch (_) {}
+           await _grokSceneShadow({ act: 'Open the story — write Scene 1.', dia: '' }, text, _s1AuditSys, 'Open the story — write Scene 1.');
+         } catch (_dsh1) {}
+ 

@@ -1,0 +1,152 @@
+{
+ "/api/chatgpt-proxy | NORMALIZATION | gpt-4o-mini | You are a canonicalization and normalization engine for Stor": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | DISTINGUISHING FEATURE (anti-calcification ROTATION — HARD):": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are designing an R-PLOT — a tiny narrative planning obje": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/proxy | STRUCTURE_GENERATOR | - | You are the A-PLOT GENERATOR for Storybound, an interactive ": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a JSON repair tool. The user message is text that wa": {
+  "kind": "json",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are the A-PLOT GENERATOR for Storybound, an interactive ": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o | You are the A-PLOT GENERATOR for Storybound, an interactive ": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/deepseek-proxy | STRUCTURE_GENERATOR | deepseek-v4-pro | You are the A-PLOT GENERATOR for Storybound, an interactive ": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a CONTINUITY ARCHITECT for a serialized arcane bindi": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a scene-structure planner for the OPENING scene of a": {
+  "kind": "json",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/proxy | NARRATIVE_AUTHOR | - |  ═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══ (These three": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/proxy | NARRATIVE_AUTHOR | - | You are a ruthless line-editor for romance prose. Find the u": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/mistral-proxy | - | mistral-small-latest | Fix ONLY mechanical defects in this scene: broken or incompl": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | Fix ONLY mechanical defects in this scene: broken or incompl": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/proxy | SPECIALIST_RENDERER | - | You are the same narrator continuing THIS exact scene. Write": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are an editorial auditor measuring EMOTIONAL GRAVITY in ": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/proxy | SPECIALIST_RENDERER | - | You audit prose for BANNED-phrase reuse. The user sends a BA": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a craft auditor measuring ARCHETYPE MANIFESTATION CO": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/mistral-proxy | SPECIALIST_RENDERER | mistral-small-latest | You are a precision editor for romance fiction prose. You re": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/proxy | SPECIALIST_RENDERER | - | You are S. Tory Bound's PERCEPTION EDITOR. The scene below i": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are a calcification detector for a serial-fiction engine": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | ": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o | ": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/mistral-proxy | LINE_EDITOR | mistral-small-latest | You are a precise line-editor, not a writer. You will be giv": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ },
+ "/api/chatgpt-proxy | PRIMARY_AUTHOR | gpt-4o-mini | You are the CHARACTER MEMORY EXTRACTOR for an interactive ro": {
+  "kind": "prose",
+  "json": {
+   "note": "FILL ME"
+  }
+ }
+}

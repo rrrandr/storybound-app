@@ -1,0 +1,96 @@
+{
+  "portfolios": null,
+  "report": {
+    "ok": false,
+    "code": "subjects_unresolved",
+    "parked": [],
+    "unresolved": [
+      "cand:cb7c7b7a-afdb-4812-91a7-5caacb276df2",
+      "cand:d1d1486c-1729-4e12-8797-347398f4a6aa",
+      "cand:9d1a916f-04fb-430e-852c-f38c19cd1706"
+    ],
+    "calls": 1,
+    "requested": 3,
+    "diagnostics": [
+      {
+        "subject_ref": "cand:cb7c7b7a-afdb-4812-91a7-5caacb276df2",
+        "stage": "response",
+        "code": "transport_failure",
+        "detail": "Failed to fetch"
+      },
+      {
+        "subject_ref": "cand:d1d1486c-1729-4e12-8797-347398f4a6aa",
+        "stage": "response",
+        "code": "transport_failure",
+        "detail": "Failed to fetch"
+      },
+      {
+        "subject_ref": "cand:9d1a916f-04fb-430e-852c-f38c19cd1706",
+        "stage": "response",
+        "code": "transport_failure",
+        "detail": "Failed to fetch"
+      }
+    ],
+    "usage": []
+  },
+  "diagnostics": [
+    {
+      "subject_ref": "cand:cb7c7b7a-afdb-4812-91a7-5caacb276df2",
+      "stage": "response",
+      "code": "transport_failure",
+      "detail": "Failed to fetch"
+    },
+    {
+      "subject_ref": "cand:d1d1486c-1729-4e12-8797-347398f4a6aa",
+      "stage": "response",
+      "code": "transport_failure",
+      "detail": "Failed to fetch"
+    },
+    {
+      "subject_ref": "cand:9d1a916f-04fb-430e-852c-f38c19cd1706",
+      "stage": "response",
+      "code": "transport_failure",
+      "detail": "Failed to fetch"
+    }
+  ],
+  "usage": [],
+  "providerMeta": null,
+  "verdicts": [
+    {
+      "label": "Mara Dunn",
+      "status": "pending",
+      "facets": 0
+    },
+    {
+      "label": "Tomas Reyne",
+      "status": "pending",
+      "facets": 0
+    },
+    {
+      "label": "Halden Roe",
+      "status": "pending",
+      "facets": 0
+    }
+  ],
+  "manifest": [
+    {
+      "label": "Mara Dunn",
+      "ref": "cand:cb7c7b7a-afdb-4812-91a7-5caacb276df2"
+    },
+    {
+      "label": "Tomas Reyne",
+      "ref": "cand:d1d1486c-1729-4e12-8797-347398f4a6aa"
+    },
+    {
+      "label": "Halden Roe",
+      "ref": "cand:9d1a916f-04fb-430e-852c-f38c19cd1706"
+    }
+  ],
+  "rawBytes": 0,
+  "rawSha256": null,
+  "requestCensus": {
+    "dispatched": 1,
+    "aborted": 4,
+    "escaped": 0
+  }
+}

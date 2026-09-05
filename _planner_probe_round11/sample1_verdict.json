@@ -1,0 +1,116 @@
+{
+  "stage": {
+    "ok": true,
+    "fault": null,
+    "source": "seed.sceneOne",
+    "settingOwner": "seed",
+    "presenceOwner": "seed",
+    "setting": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "presentText": "SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never \"elder\" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests.",
+    "onStage": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "offStage": []
+  },
+  "assignments": {
+    "sceneKey": 1,
+    "source": "scene1-merged-planner",
+    "character_plus": [
+      {
+        "character": "Lirael",
+        "first_mention": true,
+        "angle": "presses her palm to the spiralgrass, feeling its damp give beneath her fingers"
+      },
+      {
+        "character": "Julian",
+        "first_mention": true,
+        "angle": "watches her from the edge of the clearing, unmoving as the veil-canopy"
+      },
+      {
+        "character": "Seren",
+        "first_mention": true,
+        "angle": "kneels in the spiralgrass, mouth shaping the wish before the words are done"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "first_mention": true,
+        "angle": "eyes flick to Lirael, waiting for the signal she cannot give"
+      }
+    ],
+    "environment_plus": {
+      "target": "the long white weeping-willow veil-canopy",
+      "axis": "ritual",
+      "beat": "hangs lower on the left where generations of petitioners have pulled it aside to kneel"
+    },
+    "fusion": null,
+    "status": "planned",
+    "pc_opening_fusion": {
+      "character": "Lirael",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "character_angle": "her body’s reflexive alignment with the earth beneath her, the spiralgrass yielding to her weight",
+      "environment_target": "the long white weeping-willow veil-canopy",
+      "environment_axis": "ritual",
+      "beat": "My palm flattened against the spiralgrass, feeling its damp give beneath me—the same yielding I refuse to let Seren feel when the wish twists her bones."
+    }
+  },
+  "newSchema": {
+    "pcLabel": "Lirael",
+    "epBeat": "hangs lower on the left where generations of petitioners have pulled it aside to kneel",
+    "epBeatGrounded": true,
+    "pof": {
+      "character": "Lirael",
+      "placement": "PC_FIRST_EMBODIED_BEAT",
+      "character_angle": "her body’s reflexive alignment with the earth beneath her, the spiralgrass yielding to her weight",
+      "environment_target": "the long white weeping-willow veil-canopy",
+      "environment_axis": "ritual",
+      "beat": "My palm flattened against the spiralgrass, feeling its damp give beneath me—the same yielding I refuse to let Seren feel when the wish twists her bones."
+    },
+    "pofTargetMatches": true,
+    "pofIsPc": true,
+    "pcCpAngle": "presses her palm to the spiralgrass, feeling its damp give beneath her fingers",
+    "pcCpIsTheBeat": false,
+    "pcAnchor": null,
+    "pcAnchorIsTheBeat": false,
+    "nonPcCp": [
+      {
+        "who": "Julian",
+        "angle": "watches her from the edge of the clearing, unmoving as the veil-canopy"
+      },
+      {
+        "who": "Seren",
+        "angle": "kneels in the spiralgrass, mouth shaping the wish before the words are done"
+      },
+      {
+        "who": "the presiding Dohkar",
+        "angle": "eyes flick to Lirael, waiting for the signal she cannot give"
+      }
+    ]
+  },
+  "fatal": null,
+  "attempts": 1,
+  "retryReason": null,
+  "usage": {
+    "prompt_tokens": 14081,
+    "total_tokens": 15017,
+    "completion_tokens": 936,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "finish": "stop",
+  "cost": 0.00267375,
+  "angleRejections": [],
+  "logs": [
+    "[SCENE1:LI-PRESENCE] the STAGE CONTRACT places the love interest on stage — forcing _scene1LIOnStage=true (authoritative over the engine pick; prevents the payload telling the author both that he is present and that he must not be)",
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=4930 → max_tokens=2055 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:SKELETON] C+ 4/4 assigned [Lirael, Julian, Seren, the presiding Dohkar] · E+ the long white weeping-willow veil-canopy/ritual · fusion null",
+    "[SCENE1:STAGE] physical=[] · phone=[] · total=4",
+    "[SCENE1:SKELETON:DELIVERED] 4927 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)"
+  ]
+}

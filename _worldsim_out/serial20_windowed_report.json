@@ -1,0 +1,261 @@
+{
+  "BEATS": [
+    {
+      "m": "A reluctant alliance forms between Lirael and Julian",
+      "f": 1,
+      "c": 5
+    },
+    {
+      "m": "A real clue to the true wish-maker surfaces",
+      "f": 3,
+      "c": 7
+    },
+    {
+      "m": "Lirael and Julian come to genuinely trust each other",
+      "f": 5,
+      "c": 9
+    },
+    {
+      "m": "Lirael and Julian grow emotionally dependent",
+      "f": 8,
+      "c": 13
+    },
+    {
+      "m": "The true wish-maker becomes strongly suspected",
+      "f": 11,
+      "c": 15
+    },
+    {
+      "m": "Lirael and Julian nearly confess their feelings but stop short",
+      "f": 14,
+      "c": 17
+    },
+    {
+      "m": "Lirael and Julian are forced apart on a cliffhanger",
+      "f": 18,
+      "c": 20
+    }
+  ],
+  "RES_LOCKS": [
+    {
+      "ob": "The ritual debt over Julian is resolved/collected/paid/lifted",
+      "u": 18
+    },
+    {
+      "ob": "Julian is exonerated/cleared",
+      "u": 18
+    },
+    {
+      "ob": "The true wish-maker is fully exposed/named/caught",
+      "u": 19
+    },
+    {
+      "ob": "Julian abandons the conflict for a new life",
+      "u": 99
+    }
+  ],
+  "logs": [
+    {
+      "scene": 1,
+      "goal": "A reluctant alliance forms between Lirael and Julian",
+      "blocked": 7,
+      "surv": 3,
+      "achieved": false,
+      "behind": false,
+      "picked": "A council member sympathetic to Julian's plight offers to help him in exchange for a favor."
+    },
+    {
+      "scene": 2,
+      "goal": "A reluctant alliance forms between Lirael and Julian",
+      "blocked": 5,
+      "surv": 5,
+      "achieved": false,
+      "behind": false,
+      "picked": "Lirael discovers the council member's connection to Julian and sees an opportunity for an alliance."
+    },
+    {
+      "scene": 3,
+      "goal": "A reluctant alliance forms between Lirael and Julian",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": false,
+      "behind": false,
+      "picked": "Lirael and the council member reach a preliminary agreement to collaborate."
+    },
+    {
+      "scene": 4,
+      "goal": "A reluctant alliance forms between Lirael and Julian",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": false,
+      "behind": false,
+      "picked": "Julian becomes aware of Lirael and the council member's alliance, increasing his anxiety about being exposed."
+    },
+    {
+      "scene": 5,
+      "goal": "A reluctant alliance forms between Lirael and Julian",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": true,
+      "behind": false,
+      "picked": "Lirael proposes a temporary alliance with Julian to protect their mutual interests against the council's scrutiny."
+    },
+    {
+      "scene": 6,
+      "goal": "A real clue to the true wish-maker surfaces",
+      "blocked": 6,
+      "surv": 4,
+      "achieved": false,
+      "behind": false,
+      "picked": "A council member overhears Julian and Lirael discussing their alliance and suspects there is more to Julian's story"
+    },
+    {
+      "scene": 7,
+      "goal": "A real clue to the true wish-maker surfaces",
+      "blocked": 1,
+      "surv": 9,
+      "achieved": true,
+      "behind": false,
+      "picked": "A witness comes forward with information that challenges Julian's cover story."
+    },
+    {
+      "scene": 8,
+      "goal": "Lirael and Julian come to genuinely trust each other",
+      "blocked": 7,
+      "surv": 3,
+      "achieved": true,
+      "behind": false,
+      "picked": "Julian and Lirael form a secret pact to support each other against external pressures, solidifying their trust."
+    },
+    {
+      "scene": 9,
+      "goal": "Lirael and Julian grow emotionally dependent",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": true,
+      "behind": false,
+      "picked": "Council scrutiny intensifies, driving Julian and Lirael to plan more closely together, enhancing their emotional connection."
+    },
+    {
+      "scene": 10,
+      "goal": "(hold)",
+      "blocked": 4,
+      "surv": 6,
+      "achieved": false,
+      "behind": null,
+      "picked": "The Council discovers an inconsistency in Julian's cover story."
+    },
+    {
+      "scene": 11,
+      "goal": "The true wish-maker becomes strongly suspected",
+      "blocked": 6,
+      "surv": 4,
+      "achieved": false,
+      "behind": false,
+      "picked": "A Council Member sympathetic to Julian is asked to explain their past interactions with him."
+    },
+    {
+      "scene": 12,
+      "goal": "The true wish-maker becomes strongly suspected",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": true,
+      "behind": false,
+      "picked": "The Sympathetic Council Member is forced to testify about their interactions with Julian, raising suspicions about his true identity."
+    },
+    {
+      "scene": 13,
+      "goal": "(hold)",
+      "blocked": 7,
+      "surv": 3,
+      "achieved": false,
+      "behind": null,
+      "picked": "The Sympathetic Council Member is overheard discussing the testimony with a known rival."
+    },
+    {
+      "scene": 14,
+      "goal": "Lirael and Julian nearly confess their feelings but stop short",
+      "blocked": 5,
+      "surv": 4,
+      "achieved": false,
+      "behind": false,
+      "picked": "Julian is forced to explain their actions to Lirael, bringing them closer to confessing their feelings."
+    },
+    {
+      "scene": 15,
+      "goal": "Lirael and Julian nearly confess their feelings but stop short",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": true,
+      "behind": false,
+      "picked": "Julian and Lirael share a vulnerable moment where they almost confess their feelings but decide not to risk it yet."
+    },
+    {
+      "scene": 16,
+      "goal": "(hold)",
+      "blocked": 5,
+      "surv": 5,
+      "achieved": false,
+      "behind": null,
+      "picked": "Lirael receives an anonymous warning about the council's intentions, escalating her fear of exposure."
+    },
+    {
+      "scene": 17,
+      "goal": "(hold)",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": false,
+      "behind": null,
+      "picked": "The council discovers evidence of a meeting between Lirael and an unknown ally, exacerbating their scrutiny."
+    },
+    {
+      "scene": 18,
+      "goal": "Lirael and Julian are forced apart on a cliffhanger",
+      "blocked": 7,
+      "surv": 3,
+      "achieved": true,
+      "behind": false,
+      "picked": "Julian struggles to maintain his cover story as the council's evidence mounts."
+    },
+    {
+      "scene": 19,
+      "goal": "(hold)",
+      "blocked": 5,
+      "surv": 5,
+      "achieved": false,
+      "behind": null,
+      "picked": "Lirael takes a risky action to destroy key evidence held by the Council."
+    },
+    {
+      "scene": 20,
+      "goal": "(hold)",
+      "blocked": 5,
+      "surv": 5,
+      "achieved": false,
+      "behind": null,
+      "picked": "Lirael receives an anonymous tip about a potential inside informant within the Council."
+    }
+  ],
+  "committed": [
+    "A council member sympathetic to Julian's plight offers to help him in exchange for a favor.",
+    "Lirael discovers the council member's connection to Julian and sees an opportunity for an alliance.",
+    "Lirael and the council member reach a preliminary agreement to collaborate.",
+    "Julian becomes aware of Lirael and the council member's alliance, increasing his anxiety about being exposed.",
+    "Lirael proposes a temporary alliance with Julian to protect their mutual interests against the council's scrutiny.",
+    "A council member overhears Julian and Lirael discussing their alliance and suspects there is more to Julian's story",
+    "A witness comes forward with information that challenges Julian's cover story.",
+    "Julian and Lirael form a secret pact to support each other against external pressures, solidifying their trust.",
+    "Council scrutiny intensifies, driving Julian and Lirael to plan more closely together, enhancing their emotional connection.",
+    "The Council discovers an inconsistency in Julian's cover story.",
+    "A Council Member sympathetic to Julian is asked to explain their past interactions with him.",
+    "The Sympathetic Council Member is forced to testify about their interactions with Julian, raising suspicions about his true identity.",
+    "The Sympathetic Council Member is overheard discussing the testimony with a known rival.",
+    "Julian is forced to explain their actions to Lirael, bringing them closer to confessing their feelings.",
+    "Julian and Lirael share a vulnerable moment where they almost confess their feelings but decide not to risk it yet.",
+    "Lirael receives an anonymous warning about the council's intentions, escalating her fear of exposure.",
+    "The council discovers evidence of a meeting between Lirael and an unknown ally, exacerbating their scrutiny.",
+    "Julian struggles to maintain his cover story as the council's evidence mounts.",
+    "Lirael takes a risky action to destroy key evidence held by the Council.",
+    "Lirael receives an anonymous tip about a potential inside informant within the Council."
+  ]
+}

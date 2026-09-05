@@ -1,0 +1,77 @@
+{
+  "stage": {
+    "ok": true,
+    "fault": null,
+    "source": "seed.sceneOne",
+    "settingOwner": "seed",
+    "presenceOwner": "seed",
+    "setting": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "presentText": "SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never \"elder\" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests.",
+    "onStage": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "offStage": []
+  },
+  "assignments": {
+    "sceneKey": 1,
+    "source": "scene1-merged-planner",
+    "character_plus": [
+      {
+        "character": "Lirael",
+        "first_mention": true,
+        "angle": "pull the band lower, exposing my teeth, and the fabric snags on the crook of my front tooth"
+      },
+      {
+        "character": "Seren",
+        "first_mention": true,
+        "angle": "fingers tighten on the offering bowl, knuckles white"
+      },
+      {
+        "character": "Julian",
+        "first_mention": true,
+        "angle": "still at the edge of the gathering, the way his presence rearranges the air"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "first_mention": true,
+        "angle": "voice rises, mid-verse, eyes flicking between Seren and the covered mouth"
+      }
+    ],
+    "environment_plus": {
+      "target": "the gossamer band across my mouth",
+      "axis": "damage"
+    },
+    "fusion": {
+      "character": "Lirael",
+      "target": "the gossamer band across my mouth",
+      "beat": "I pull the band lower, exposing my teeth, and the fabric snags on the crook of my front tooth"
+    },
+    "status": "planned"
+  },
+  "fatal": null,
+  "attempts": 1,
+  "retryReason": null,
+  "usage": {
+    "prompt_tokens": 17820,
+    "total_tokens": 18714,
+    "completion_tokens": 894,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "finish": "stop",
+  "cost": 0.0032094000000000003,
+  "angleRejections": [],
+  "logs": [
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=4930 → max_tokens=2055 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:SKELETON] C+ 4/4 assigned [Lirael, Seren, Julian, the presiding Dohkar] · E+ the gossamer band across my mouth/damage · fusion Lirael+the gossamer band across my mouth",
+    "[SCENE1:STAGE] physical=[] · phone=[] · total=0",
+    "[SCENE1:SKELETON:DELIVERED] 2512 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)"
+  ]
+}

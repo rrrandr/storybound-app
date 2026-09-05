@@ -1,0 +1,70 @@
+{
+  "eligible": [
+    "Lirael",
+    "Seren",
+    "Julian",
+    "the presiding Dohkar"
+  ],
+  "assignments": {
+    "sceneKey": 1,
+    "source": "scene1-merged-planner",
+    "character_plus": [
+      {
+        "character": "Lirael",
+        "first_mention": true,
+        "angle": "a woman clinging to the illusion of worthiness"
+      },
+      {
+        "character": "Seren",
+        "first_mention": true,
+        "angle": "a former mentor who wields precision like a weapon"
+      },
+      {
+        "character": "Julian",
+        "first_mention": true,
+        "angle": "a name that carries more weight than it should"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "first_mention": true,
+        "angle": "an authority whose judgment will decide her fate"
+      }
+    ],
+    "environment_plus": {
+      "target": "gallery hallway",
+      "axis": "damage"
+    },
+    "fusion": null,
+    "status": "planned"
+  },
+  "sceneSkeleton": {
+    "character_plus": [
+      {
+        "character": "Lirael",
+        "first_mention": true,
+        "angle": "a woman clinging to the illusion of worthiness"
+      },
+      {
+        "character": "Seren",
+        "first_mention": true,
+        "angle": "a former mentor who wields precision like a weapon"
+      },
+      {
+        "character": "Julian",
+        "first_mention": true,
+        "angle": "a name that carries more weight than it should"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "first_mention": true,
+        "angle": "an authority whose judgment will decide her fate"
+      }
+    ],
+    "environment_plus": {
+      "target": "gallery hallway",
+      "axis": "damage"
+    },
+    "fusion": null
+  },
+  "skeletonFatal": null
+}

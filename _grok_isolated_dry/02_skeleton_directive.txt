@@ -1,0 +1,25 @@
+Narrative skeleton for this scene:
+• pacing: undefined
+• dialogue ratio: undefined
+• emotional density: undefined
+• beat rhythm: undefined
+• tension rhythm: undefined
+Preserve this structural rhythm unless the scene requires deviation.
+
+CHARACTER+ ASSIGNED THIS SCENE — one beat per person listed, at their FIRST mention:
+  • Lirael (first mention — the beat lands here) — read: adjusts the ceremonial cloth with deliberate slowness, the motion a quiet claim that her voice is not the only thing worth hearing
+  • Julian (first mention — the beat lands here) — read: still over the edge of his sleeve, measuring the distance between them and the center of the circle
+  • Seren (first mention — the beat lands here) — read: kneels with Veilweave gown catching the light, her throat bare and vulnerable
+  • the presiding Dohkar (first mention — the beat lands here) — read: voice rising to call the breach before Lirael can stop it
+  The angle is WHAT TO READ, not words to use. Write it as this POV would see it.
+
+ENVIRONMENT+ ASSIGNED THIS SCENE (required): the long white weeping-willow veil-canopy draping down from the pale mated-pair trees — through the axis of ritual. What has it become because of what happened to it? Not symbolism, not atmosphere.
+FUSION — one sentence in which Lirael and the long white weeping-willow veil-canopy draping down from the pale mated-pair trees reveal each other: lets her fingers trail along the veil’s edge, feeling the weight of the ritual she is supposed to uphold
+
+THESE ASSIGNMENTS ARE BOUND TO THE SCENE AS IT IS (HARD):
+  • RESOLVED WHERE (seed): Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the "veil" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.
+  • PHYSICALLY PRESENT: Lirael, Julian, Seren, the presiding Dohkar
+  • Do NOT relocate the scene to reach a target. Every assignment above refers to THIS place, already described above as immutable.
+  • Do NOT materialise anyone not physically present. Being referenced, remembered, named, messaged or heard does not put a person in the room.
+  • If an assignment seems to contradict the immutable scene, the SCENE wins and the contradiction is a bug — render the scene, do not invent a compromise.
+  • Lirael narrates as "I" and is not named in the prose: her beat lands at her first embodied action or self-reference, not at a name.

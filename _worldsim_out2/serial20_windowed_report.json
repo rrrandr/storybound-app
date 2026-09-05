@@ -1,0 +1,261 @@
+{
+  "BEATS": [
+    {
+      "m": "A reluctant alliance forms between Lirael and Julian",
+      "f": 1,
+      "c": 5
+    },
+    {
+      "m": "A real clue to the true wish-maker surfaces",
+      "f": 3,
+      "c": 7
+    },
+    {
+      "m": "Lirael and Julian come to genuinely trust each other",
+      "f": 5,
+      "c": 9
+    },
+    {
+      "m": "Lirael and Julian grow emotionally dependent",
+      "f": 8,
+      "c": 13
+    },
+    {
+      "m": "The true wish-maker becomes strongly suspected",
+      "f": 11,
+      "c": 15
+    },
+    {
+      "m": "Lirael and Julian nearly confess their feelings but stop short",
+      "f": 14,
+      "c": 17
+    },
+    {
+      "m": "Lirael and Julian are forced apart on a cliffhanger",
+      "f": 18,
+      "c": 20
+    }
+  ],
+  "RES_LOCKS": [
+    {
+      "ob": "The ritual debt over Julian is resolved/collected/paid/lifted",
+      "u": 18
+    },
+    {
+      "ob": "Julian is exonerated/cleared",
+      "u": 18
+    },
+    {
+      "ob": "The true wish-maker is fully exposed/named/caught",
+      "u": 19
+    },
+    {
+      "ob": "Julian abandons the conflict for a new life",
+      "u": 99
+    }
+  ],
+  "logs": [
+    {
+      "scene": 1,
+      "goal": "A reluctant alliance forms between Lirael and Julian",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": true,
+      "behind": false,
+      "picked": "Lirael confronts Julian about the journal, forcing him to admit he was researching the wish for personal reasons unrelated to the current crisis."
+    },
+    {
+      "scene": 2,
+      "goal": "(hold)",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": false,
+      "behind": null,
+      "picked": "The council intercepts a message between Julian and Lirael, heightening their suspicion of Julian's involvement."
+    },
+    {
+      "scene": 3,
+      "goal": "A real clue to the true wish-maker surfaces",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": true,
+      "behind": false,
+      "picked": "Lirael finds an ancient artifact in the ruins that pulses with energy, possibly linked to the ritual's origin."
+    },
+    {
+      "scene": 4,
+      "goal": "(hold)",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": false,
+      "behind": null,
+      "picked": "A council member voices suspicion of Lirael's involvement with the artifact, pressuring her to reveal her findings."
+    },
+    {
+      "scene": 5,
+      "goal": "Lirael and Julian come to genuinely trust each other",
+      "blocked": 7,
+      "surv": 3,
+      "achieved": true,
+      "behind": false,
+      "picked": "Julian deliberately misleads a council member about his whereabouts during the artifact incident to protect Lirael."
+    },
+    {
+      "scene": 6,
+      "goal": "(hold)",
+      "blocked": 10,
+      "surv": 0,
+      "achieved": false,
+      "behind": null,
+      "picked": "Julian receives a summons from the council demanding his presence for further questioning about the artifact incident."
+    },
+    {
+      "scene": 7,
+      "goal": "(hold)",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": false,
+      "behind": null,
+      "picked": "Julian leaves the council chamber visibly shaken, catching the attention of a council aide who begins to tail him."
+    },
+    {
+      "scene": 8,
+      "goal": "Lirael and Julian grow emotionally dependent",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": false,
+      "behind": false,
+      "picked": "Julian confides in Lirael about the council aide following him, showing his vulnerability."
+    },
+    {
+      "scene": 9,
+      "goal": "Lirael and Julian grow emotionally dependent",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": false,
+      "behind": false,
+      "picked": "Julian narrowly escapes a council patrol by hiding in a crowded marketplace, feeling Lirael's absence keenly."
+    },
+    {
+      "scene": 10,
+      "goal": "Lirael and Julian grow emotionally dependent",
+      "blocked": 5,
+      "surv": 5,
+      "achieved": false,
+      "behind": false,
+      "picked": "Lirael, hidden behind a market stall, manages to slip a note into Julian's pocket without being seen by the council patrol, indicating a safe meeting place."
+    },
+    {
+      "scene": 11,
+      "goal": "Lirael and Julian grow emotionally dependent",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": false,
+      "behind": false,
+      "picked": "Lirael and Julian exchange a brief, meaningful glance across the crowded marketplace, unnoticed by others."
+    },
+    {
+      "scene": 12,
+      "goal": "Lirael and Julian grow emotionally dependent",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": true,
+      "behind": false,
+      "picked": "Julian receives a small token from Lirael during their brief encounter, symbolizing her support."
+    },
+    {
+      "scene": 13,
+      "goal": "The true wish-maker becomes strongly suspected",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": true,
+      "behind": false,
+      "picked": "A council aide observes Julian leaving the meeting place with the artifact, deepening their suspicion about his clandestine actions."
+    },
+    {
+      "scene": 14,
+      "goal": "Lirael and Julian nearly confess their feelings but stop short",
+      "blocked": 4,
+      "surv": 6,
+      "achieved": false,
+      "behind": false,
+      "picked": "Julian lies to a council aide to protect Lirael, claiming he acted alone."
+    },
+    {
+      "scene": 15,
+      "goal": "Lirael and Julian nearly confess their feelings but stop short",
+      "blocked": 4,
+      "surv": 6,
+      "achieved": false,
+      "behind": false,
+      "picked": "Julian and Lirael examine the artifact together in a secluded alcove, ensuring no one sees them."
+    },
+    {
+      "scene": 16,
+      "goal": "Lirael and Julian nearly confess their feelings but stop short",
+      "blocked": 3,
+      "surv": 7,
+      "achieved": true,
+      "behind": false,
+      "picked": "Lirael and Julian narrowly avoid being seen together by a high-ranking council member while leaving the library."
+    },
+    {
+      "scene": 17,
+      "goal": "(hold)",
+      "blocked": 1,
+      "surv": 9,
+      "achieved": false,
+      "behind": null,
+      "picked": "Julian fabricates a false alibi for his whereabouts when questioned by a council aide."
+    },
+    {
+      "scene": 18,
+      "goal": "Lirael and Julian are forced apart on a cliffhanger",
+      "blocked": 5,
+      "surv": 5,
+      "achieved": false,
+      "behind": false,
+      "picked": "Julian confronts Lirael about the increasing risk and she insists on continuing their covert investigation."
+    },
+    {
+      "scene": 19,
+      "goal": "Lirael and Julian are forced apart on a cliffhanger",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": true,
+      "behind": false,
+      "picked": "The council seals the main entrance of the archives just as Lirael slips into a hidden passage."
+    },
+    {
+      "scene": 20,
+      "goal": "(hold)",
+      "blocked": 2,
+      "surv": 8,
+      "achieved": false,
+      "behind": null,
+      "picked": "Lirael discovers a hidden chamber within the archives, filled with forbidden texts."
+    }
+  ],
+  "committed": [
+    "Lirael confronts Julian about the journal, forcing him to admit he was researching the wish for personal reasons unrelated to the current crisis.",
+    "The council intercepts a message between Julian and Lirael, heightening their suspicion of Julian's involvement.",
+    "Lirael finds an ancient artifact in the ruins that pulses with energy, possibly linked to the ritual's origin.",
+    "A council member voices suspicion of Lirael's involvement with the artifact, pressuring her to reveal her findings.",
+    "Julian deliberately misleads a council member about his whereabouts during the artifact incident to protect Lirael.",
+    "Julian receives a summons from the council demanding his presence for further questioning about the artifact incident.",
+    "Julian leaves the council chamber visibly shaken, catching the attention of a council aide who begins to tail him.",
+    "Julian confides in Lirael about the council aide following him, showing his vulnerability.",
+    "Julian narrowly escapes a council patrol by hiding in a crowded marketplace, feeling Lirael's absence keenly.",
+    "Lirael, hidden behind a market stall, manages to slip a note into Julian's pocket without being seen by the council patrol, indicating a safe meeting place.",
+    "Lirael and Julian exchange a brief, meaningful glance across the crowded marketplace, unnoticed by others.",
+    "Julian receives a small token from Lirael during their brief encounter, symbolizing her support.",
+    "A council aide observes Julian leaving the meeting place with the artifact, deepening their suspicion about his clandestine actions.",
+    "Julian lies to a council aide to protect Lirael, claiming he acted alone.",
+    "Julian and Lirael examine the artifact together in a secluded alcove, ensuring no one sees them.",
+    "Lirael and Julian narrowly avoid being seen together by a high-ranking council member while leaving the library.",
+    "Julian fabricates a false alibi for his whereabouts when questioned by a council aide.",
+    "Julian confronts Lirael about the increasing risk and she insists on continuing their covert investigation.",
+    "The council seals the main entrance of the archives just as Lirael slips into a hidden passage.",
+    "Lirael discovers a hidden chamber within the archives, filled with forbidden texts."
+  ]
+}

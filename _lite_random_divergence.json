@@ -1,0 +1,406 @@
+{
+ "base": [
+  {
+   "i": 5150,
+   "site": "_applyToneVoice (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.403102"
+  },
+  {
+   "i": 5151,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.109671"
+  },
+  {
+   "i": 5152,
+   "site": "_applyToneVoice (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.408648"
+  },
+  {
+   "i": 5153,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.323859"
+  },
+  {
+   "i": 5154,
+   "site": "_applyToneVoice (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.614317"
+  },
+  {
+   "i": 5155,
+   "site": "_injectHeroName (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.127527"
+  },
+  {
+   "i": 5156,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.955248"
+  },
+  {
+   "i": 5157,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.491369"
+  },
+  {
+   "i": 5158,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.943973"
+  },
+  {
+   "i": 5159,
+   "site": "_applyToneVoice (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.018374"
+  },
+  {
+   "i": 5160,
+   "site": "_injectHeroName (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.616952"
+  },
+  {
+   "i": 5161,
+   "site": "_pickFateTitle (app.js) << app.js",
+   "v": "0.450075"
+  },
+  {
+   "i": 5162,
+   "site": "_fateWishScoreSalience (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2026:24) << buildFateDeck (http://localhost:3000/fatecards",
+   "v": "0.421212"
+  },
+  {
+   "i": 5163,
+   "site": "_fateWishBuildCandidates (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2087:65) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.666623"
+  },
+  {
+   "i": 5164,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.186132"
+  },
+  {
+   "i": 5165,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.439827"
+  },
+  {
+   "i": 5166,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.426813"
+  },
+  {
+   "i": 5167,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.196308"
+  },
+  {
+   "i": 5168,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.345312"
+  },
+  {
+   "i": 5169,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.931021"
+  },
+  {
+   "i": 5170,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.289281"
+  },
+  {
+   "i": 5171,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.513628"
+  },
+  {
+   "i": 5172,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.846913"
+  },
+  {
+   "i": 5173,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.108869"
+  },
+  {
+   "i": 5174,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.826290"
+  },
+  {
+   "i": 5175,
+   "site": "startTemptElectricity (app.js) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3165:51) << handleBeginSto",
+   "v": "0.512642"
+  },
+  {
+   "i": 5176,
+   "site": "createArc (app.js) << startTemptElectricity (app.js) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3165",
+   "v": "0.481583"
+  },
+  {
+   "i": 5177,
+   "site": "createArc (app.js) << startTemptElectricity (app.js) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3165",
+   "v": "0.219300"
+  },
+  {
+   "i": 5178,
+   "site": "startTemptElectricity (app.js) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3165:51) << handleBeginSto",
+   "v": "0.516835"
+  },
+  {
+   "i": 5179,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.945169"
+  },
+  {
+   "i": 5180,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.458235"
+  },
+  {
+   "i": 5181,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.650328"
+  },
+  {
+   "i": 5182,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.520313"
+  },
+  {
+   "i": 5183,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.275384"
+  },
+  {
+   "i": 5184,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.317298"
+  },
+  {
+   "i": 5185,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.555825"
+  },
+  {
+   "i": 5186,
+   "site": "startTemptElectricity (app.js) << rebindExistingFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3407:55) << window.init",
+   "v": "0.050571"
+  },
+  {
+   "i": 5187,
+   "site": "createArc (app.js) << startTemptElectricity (app.js) << rebindExistingFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3",
+   "v": "0.189473"
+  },
+  {
+   "i": 5188,
+   "site": "createArc (app.js) << startTemptElectricity (app.js) << rebindExistingFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3",
+   "v": "0.182564"
+  },
+  {
+   "i": 5189,
+   "site": "startTemptElectricity (app.js) << rebindExistingFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3407:55) << window.init",
+   "v": "0.461016"
+  }
+ ],
+ "cand": [
+  {
+   "i": 5152,
+   "site": "_applyToneVoice (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.408648"
+  },
+  {
+   "i": 5153,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.323859"
+  },
+  {
+   "i": 5154,
+   "site": "_applyToneVoice (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.614317"
+  },
+  {
+   "i": 5155,
+   "site": "_injectHeroName (app.js) << _generateLocalTitle (app.js) << routeTitleGeneration (app.js)",
+   "v": "0.127527"
+  },
+  {
+   "i": 5156,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.955248"
+  },
+  {
+   "i": 5157,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.491369"
+  },
+  {
+   "i": 5158,
+   "site": "pick (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.943973"
+  },
+  {
+   "i": 5159,
+   "site": "_applyToneVoice (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.018374"
+  },
+  {
+   "i": 5160,
+   "site": "_injectHeroName (app.js) << _generateLocalTitle (app.js) << handleBeginStory (app.js)",
+   "v": "0.616952"
+  },
+  {
+   "i": 5161,
+   "site": "_pickFateTitle (app.js) << app.js",
+   "v": "0.450075"
+  },
+  {
+   "i": 5162,
+   "site": "app.js",
+   "v": "0.421212"
+  },
+  {
+   "i": 5163,
+   "site": "_fateWishScoreSalience (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2026:24) << buildFateDeck (http://localhost:3000/fatecards",
+   "v": "0.666623"
+  },
+  {
+   "i": 5164,
+   "site": "_fateWishBuildCandidates (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2087:65) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.186132"
+  },
+  {
+   "i": 5165,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.439827"
+  },
+  {
+   "i": 5166,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.426813"
+  },
+  {
+   "i": 5167,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.196308"
+  },
+  {
+   "i": 5168,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.345312"
+  },
+  {
+   "i": 5169,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2271:97 << Array.map (<anonymous>) << buildFateDeck (http://localhost:3000/fatecar",
+   "v": "0.931021"
+  },
+  {
+   "i": 5170,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.289281"
+  },
+  {
+   "i": 5171,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.513628"
+  },
+  {
+   "i": 5172,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.846913"
+  },
+  {
+   "i": 5173,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.108869"
+  },
+  {
+   "i": 5174,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.826290"
+  },
+  {
+   "i": 5175,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.512642"
+  },
+  {
+   "i": 5176,
+   "site": "http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:2928:68 << Array.sort (<anonymous>) << window.dealFateCards (http://localhost:3000",
+   "v": "0.481583"
+  },
+  {
+   "i": 5177,
+   "site": "startTemptElectricity (app.js) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3165:51) << handleBeginSto",
+   "v": "0.219300"
+  },
+  {
+   "i": 5178,
+   "site": "createArc (app.js) << startTemptElectricity (app.js) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3165",
+   "v": "0.516835"
+  },
+  {
+   "i": 5179,
+   "site": "createArc (app.js) << startTemptElectricity (app.js) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3165",
+   "v": "0.945169"
+  },
+  {
+   "i": 5180,
+   "site": "startTemptElectricity (app.js) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3165:51) << handleBeginSto",
+   "v": "0.458235"
+  },
+  {
+   "i": 5181,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.650328"
+  },
+  {
+   "i": 5182,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.520313"
+  },
+  {
+   "i": 5183,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.275384"
+  },
+  {
+   "i": 5184,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.317298"
+  },
+  {
+   "i": 5185,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.555825"
+  },
+  {
+   "i": 5186,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.050571"
+  },
+  {
+   "i": 5187,
+   "site": "applyCardGleam (app.js) << NodeList.forEach (<anonymous>) << window.dealFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice",
+   "v": "0.189473"
+  },
+  {
+   "i": 5188,
+   "site": "startTemptElectricity (app.js) << rebindExistingFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3407:55) << window.init",
+   "v": "0.182564"
+  },
+  {
+   "i": 5189,
+   "site": "createArc (app.js) << startTemptElectricity (app.js) << rebindExistingFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3",
+   "v": "0.461016"
+  },
+  {
+   "i": 5190,
+   "site": "createArc (app.js) << startTemptElectricity (app.js) << rebindExistingFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3",
+   "v": "0.604354"
+  },
+  {
+   "i": 5191,
+   "site": "startTemptElectricity (app.js) << rebindExistingFateCards (http://localhost:3000/fatecards.js?v=20260716-wish-demo-firstchoice:3407:55) << window.init",
+   "v": "0.654445"
+  }
+ ]
+}

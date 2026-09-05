@@ -1,0 +1,47 @@
+{
+  "stage": {
+    "ok": true,
+    "fault": null,
+    "source": "assignment:scene-mission",
+    "settingOwner": "planner",
+    "presenceOwner": "planner",
+    "setting": "",
+    "presentText": "",
+    "onStage": [
+      "Lirael"
+    ],
+    "offStage": [
+      {
+        "name": "the one who draws them forward",
+        "reason": "roster member not staged in this scene"
+      },
+      {
+        "name": "Julian",
+        "reason": "roster member not staged in this scene"
+      }
+    ]
+  },
+  "assignments": null,
+  "fatal": "planner owned presence and staged no IN_PERSON character besides the narrator",
+  "attempts": 1,
+  "retryReason": null,
+  "usage": {
+    "prompt_tokens": 14512,
+    "total_tokens": 15199,
+    "completion_tokens": 687,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "finish": "stop",
+  "cost": 0.002589,
+  "angleRejections": [],
+  "logs": [
+    "[SCENE1:STAGE] source=assignment:scene-mission settingOwner=planner presenceOwner=planner (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Lirael] offStage=[the one who draws them forward, Julian]",
+    "[SCENE1:PLANNER] eligible cast (1): [Lirael] · chars=3820 → max_tokens=1800 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:STAGE:UNRESOLVED] planner owned presence and staged no IN_PERSON character besides the narrator",
+    "[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: planner owned presence and staged no IN_PERSON character besides the narrator"
+  ]
+}

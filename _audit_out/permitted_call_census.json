@@ -1,0 +1,36 @@
+{
+  "builtFrom": "dry rehearsal 2026-09-04T15:34:30.750Z",
+  "appJsSha": "e06958b61ac78ea0",
+  "providers": [
+    "mistral",
+    "openai",
+    "xai"
+  ],
+  "routes": [
+    "/api/chatgpt-proxy",
+    "/api/mistral-proxy",
+    "/api/proxy"
+  ],
+  "roles": [
+    "?",
+    "LINE_EDITOR",
+    "NARRATIVE_AUTHOR",
+    "NORMALIZATION",
+    "PRIMARY_AUTHOR",
+    "PROMPT_PREPROCESSOR",
+    "SPECIALIST_RENDERER",
+    "STRUCTURE_GENERATOR"
+  ],
+  "byRouteAndRole": {
+    "/api/chatgpt-proxy|NORMALIZATION": 2,
+    "/api/chatgpt-proxy|PRIMARY_AUTHOR": 21,
+    "/api/proxy|STRUCTURE_GENERATOR": 1,
+    "/api/mistral-proxy|PROMPT_PREPROCESSOR": 1,
+    "/api/proxy|NARRATIVE_AUTHOR": 2,
+    "/api/mistral-proxy|?": 1,
+    "/api/proxy|SPECIALIST_RENDERER": 18,
+    "/api/mistral-proxy|SPECIALIST_RENDERER": 1,
+    "/api/mistral-proxy|LINE_EDITOR": 1
+  },
+  "dryDispatchCount": 48
+}

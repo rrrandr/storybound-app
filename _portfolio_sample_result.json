@@ -1,0 +1,106 @@
+{
+  "report": {
+    "ok": false,
+    "code": "subjects_unresolved",
+    "parked": [
+      "cand:e161a5f1-ff35-4a21-9b83-ea9072e4672d"
+    ],
+    "unresolved": [
+      "cand:9ce7653a-e945-43c7-a9c4-642324e33636",
+      "cand:fd1df844-3ed0-4d39-8462-7c44df58e44a"
+    ],
+    "calls": 1,
+    "requested": 3,
+    "diagnostics": [
+      {
+        "subject_ref": "cand:9ce7653a-e945-43c7-a9c4-642324e33636",
+        "stage": "schema",
+        "code": "subject_schema_invalid",
+        "validatorCode": "malformed",
+        "fields": [
+          "facet_3_condition_0_word_1_not_a_plain_word"
+        ]
+      },
+      {
+        "subject_ref": "cand:fd1df844-3ed0-4d39-8462-7c44df58e44a",
+        "stage": "schema",
+        "code": "subject_schema_invalid",
+        "validatorCode": "malformed",
+        "fields": [
+          "facet_1_condition_0_word_3_not_a_plain_word"
+        ]
+      }
+    ],
+    "usage": [
+      {
+        "usage": {
+          "prompt_tokens": 2035,
+          "total_tokens": 6277,
+          "completion_tokens": 4242,
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          },
+          "service_tier": "standard"
+        },
+        "finish_reason": "stop",
+        "model": "mistral-small-latest"
+      }
+    ]
+  },
+  "verdicts": [
+    {
+      "label": "Mara Dunn",
+      "status": "pending",
+      "facets": 0
+    },
+    {
+      "label": "Tomas Reyne",
+      "status": "pending",
+      "facets": 0
+    },
+    {
+      "label": "Halden Roe",
+      "status": "ready",
+      "facets": 5
+    }
+  ],
+  "manifest": [
+    {
+      "label": "Mara Dunn",
+      "ref": "cand:9ce7653a-e945-43c7-a9c4-642324e33636"
+    },
+    {
+      "label": "Tomas Reyne",
+      "ref": "cand:fd1df844-3ed0-4d39-8462-7c44df58e44a"
+    },
+    {
+      "label": "Halden Roe",
+      "ref": "cand:e161a5f1-ff35-4a21-9b83-ea9072e4672d"
+    }
+  ],
+  "providerMeta": {
+    "usage": {
+      "prompt_tokens": 2035,
+      "total_tokens": 6277,
+      "completion_tokens": 4242,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "service_tier": "standard"
+    },
+    "finish_reason": "stop",
+    "model": "mistral-small-latest"
+  },
+  "rawCaptured": 1,
+  "productionLogs": [
+    "[ADMIT:PENDING] captured 3 candidate ref(s) for invocation inv-sample",
+    "[PORTFOLIO:BATCH] \"Mara Dunn\" rejected (malformed: facet_3_condition_0_word_1_not_a_plain_word) — left unresolved, retryable",
+    "[PORTFOLIO:BATCH] \"Tomas Reyne\" rejected (malformed: facet_1_condition_0_word_3_not_a_plain_word) — left unresolved, retryable"
+  ],
+  "rawResponse": null,
+  "requestCensus": {
+    "dispatched": 1,
+    "aborted": 5,
+    "escaped": 0
+  }
+}

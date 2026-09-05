@@ -1,0 +1,275 @@
+{
+  "mode": "dry",
+  "appJsSha": "99e86f3fa37e4bd6",
+  "at": "2026-09-04T19:13:37.925Z",
+  "origin": "https://storybound.love",
+  "env": {
+    "host": "storybound.love",
+    "isDevMode": false,
+    "overridesPresent": []
+  },
+  "wallMs": 15639,
+  "threw": null,
+  "runnerObservedModelHits": 49,
+  "cost": {
+    "dispatchCount": 11,
+    "byProvider": {
+      "openai": {
+        "calls": 8,
+        "prompt": 8,
+        "cached": 0,
+        "visible": 8,
+        "reasoning": 0,
+        "incomplete": 0
+      },
+      "xai": {
+        "calls": 2,
+        "prompt": 2,
+        "cached": 0,
+        "visible": 2,
+        "reasoning": 0,
+        "incomplete": 0
+      },
+      "mistral": {
+        "calls": 1,
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "incomplete": 0
+      }
+    },
+    "calls": [
+      {
+        "call": 0,
+        "provider": "openai",
+        "label": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      },
+      {
+        "call": 1,
+        "provider": "xai",
+        "label": "narrative_author",
+        "model": "grok-4.3",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": 0.0000037500000000000005,
+        "missing": []
+      },
+      {
+        "call": 2,
+        "provider": "openai",
+        "label": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      },
+      {
+        "call": 3,
+        "provider": "xai",
+        "label": "narrative_author",
+        "model": "grok-4.3",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": 0.0000037500000000000005,
+        "missing": []
+      },
+      {
+        "call": 4,
+        "provider": "mistral",
+        "label": "repair",
+        "model": "mistral-small-latest",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      },
+      {
+        "call": 5,
+        "provider": "openai",
+        "label": "mistral_small_repair",
+        "model": "gpt-4o-mini",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      },
+      {
+        "call": 6,
+        "provider": "openai",
+        "label": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      },
+      {
+        "call": 7,
+        "provider": "openai",
+        "label": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      },
+      {
+        "call": 8,
+        "provider": "openai",
+        "label": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      },
+      {
+        "call": 9,
+        "provider": "openai",
+        "label": "PRIMARY_AUTHOR",
+        "model": "gpt-4o-mini",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      },
+      {
+        "call": 10,
+        "provider": "openai",
+        "label": "PRIMARY_AUTHOR",
+        "model": "gpt-4o",
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "cost": "UNPRICED",
+        "missing": []
+      }
+    ],
+    "xaiCost": 0.000007500000000000001,
+    "xaiCostIsExact": true,
+    "unpricedCalls": [
+      {
+        "call": 0,
+        "label": "PRIMARY_AUTHOR",
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      },
+      {
+        "call": 2,
+        "label": "PRIMARY_AUTHOR",
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      },
+      {
+        "call": 4,
+        "label": "repair",
+        "provider": "mistral",
+        "model": "mistral-small-latest"
+      },
+      {
+        "call": 5,
+        "label": "mistral_small_repair",
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      },
+      {
+        "call": 6,
+        "label": "PRIMARY_AUTHOR",
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      },
+      {
+        "call": 7,
+        "label": "PRIMARY_AUTHOR",
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      },
+      {
+        "call": 8,
+        "label": "PRIMARY_AUTHOR",
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      },
+      {
+        "call": 9,
+        "label": "PRIMARY_AUTHOR",
+        "provider": "openai",
+        "model": "gpt-4o-mini"
+      },
+      {
+        "call": 10,
+        "label": "PRIMARY_AUTHOR",
+        "provider": "openai",
+        "model": "gpt-4o"
+      }
+    ],
+    "incompleteCalls": [],
+    "allInTotal": "PARTIAL — xAI priced; 9 non-xAI call(s) unpriced"
+  },
+  "xai": {
+    "calls": [
+      {
+        "call": 0,
+        "label": "narrative_author",
+        "model": "grok-4.3",
+        "effort": null,
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "tier": "<200k",
+        "exact": true,
+        "cost": 0.0000037500000000000005,
+        "missing": []
+      },
+      {
+        "call": 1,
+        "label": "narrative_author",
+        "model": "grok-4.3",
+        "effort": null,
+        "prompt": 1,
+        "cached": 0,
+        "visible": 1,
+        "reasoning": 0,
+        "tier": "<200k",
+        "exact": true,
+        "cost": 0.0000037500000000000005,
+        "missing": []
+      }
+    ],
+    "xaiTotal": 0.000007500000000000001,
+    "totalIsExact": true,
+    "totalIsUpperBound": false,
+    "unknownCalls": [],
+    "upperBoundCalls": [],
+    "complete": true
+  }
+}

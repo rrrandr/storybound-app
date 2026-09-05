@@ -1,0 +1,1860 @@
+{
+ "mode": "literary",
+ "target": 12,
+ "capturedScenes": 12,
+ "arm": "600",
+ "runLabel": "600_r1",
+ "contWindow": {
+  "dist": {
+   "literary|fallback_char_slice|scene_cap": {
+    "n": 1,
+    "chars": 592,
+    "tok": 148
+   },
+   "explicit|1_scene|floor_met": {
+    "n": 6,
+    "chars": 22006,
+    "tok": 5501
+   },
+   "explicit|2_scenes|floor_met": {
+    "n": 6,
+    "chars": 28948,
+    "tok": 7237
+   }
+  },
+  "samples": [
+   {
+    "chars": 592,
+    "tok": 148,
+    "source": "fallback_char_slice",
+    "stop": "scene_cap",
+    "regime": "literary"
+   },
+   {
+    "chars": 3493,
+    "tok": 873,
+    "source": "1_scene",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 4477,
+    "tok": 1119,
+    "source": "1_scene",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 3908,
+    "tok": 977,
+    "source": "1_scene",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 3908,
+    "tok": 977,
+    "source": "1_scene",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 5544,
+    "tok": 1386,
+    "source": "2_scenes",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 5544,
+    "tok": 1386,
+    "source": "2_scenes",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 3093,
+    "tok": 773,
+    "source": "1_scene",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 5322,
+    "tok": 1331,
+    "source": "2_scenes",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 4360,
+    "tok": 1090,
+    "source": "2_scenes",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 4453,
+    "tok": 1113,
+    "source": "2_scenes",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 3725,
+    "tok": 931,
+    "source": "2_scenes",
+    "stop": "floor_met",
+    "regime": "explicit"
+   },
+   {
+    "chars": 3127,
+    "tok": 782,
+    "source": "1_scene",
+    "stop": "floor_met",
+    "regime": "explicit"
+   }
+  ],
+  "arm": {
+   "floorChars": 600,
+   "ceilChars": 11000,
+   "maxScenes": 0
+  }
+ },
+ "meta": {
+  "renderMode": "literary",
+  "currentEngine": "literary",
+  "storyLength": "fling",
+  "world": "billionaire",
+  "worldSubtype": "billionaire_modern",
+  "dynamic": "enemies_to_lovers",
+  "archetype": {
+   "primary": "DARK_VICE",
+   "modifier": null,
+   "bound": false,
+   "canonicalLIId": null,
+   "boundAtScene": null
+  },
+  "loveInterestName": "Dorian",
+  "name": "Mara",
+  "intensity": "Steamy",
+  "pov": "first_person",
+  "runThesis": "Can this man actually love somebody?",
+  "aPlot": {
+   "tier": "fling",
+   "pattern": "B",
+   "goal": "Force Dorian into a public co-hosting arrangement with Mara to restore the project's funding before the next charity gala, requiring him to openly affirm trust in her need for connection.",
+   "namedClock": "next charity gala",
+   "clockUnit": "days",
+   "totalClockUnits": 14,
+   "timelineLength": 40,
+   "currentTurn": 11,
+   "milestones": [
+    {
+     "atScene": 5,
+     "atPercent": 12,
+     "kind": "setup",
+     "event": "Dorian proposes the forced co-hosting arrangement to salvage the grant, binding them publicly.",
+     "emotional_conductivity": "PC glimpses his guarded deflection softening when she openly admits her humiliation, creating first flicker of his hunger for her vulnerability.",
+     "triggered": true
+    },
+    {
+     "atScene": 18,
+     "atPercent": 45,
+     "kind": "midpoint_reversal",
+     "event": "Ex-partner confronts Dorian at a planning meeting, forcing him to defend the arrangement.",
+     "emotional_conductivity": "MEDIUM: PC sees his trust fracture exposed in real time, shifting power as she offers comfort he cannot yet accept.",
+     "triggered": false
+    },
+    {
+     "atScene": 30,
+     "atPercent": 75,
+     "kind": "dark_night",
+     "event": "Private rehearsal for the gala collapses when Dorian withdraws emotionally after a moment of near-trust.",
+     "emotional_conductivity": "HEAVY: Forces both to confront whether his guarded heart can ever choose her need without fearing betrayal.",
+     "triggered": false
+    },
+    {
+     "atScene": 35,
+     "atPercent": 88,
+     "kind": "crisis",
+     "event": "At the gala they must decide publicly whether to affirm the partnership or let the grant die.",
+     "emotional_conductivity": "HEAVY: Romance climax pins here as he must choose to trust her vulnerability openly or protect himself, costing either the relationship or his guarded safety.",
+     "triggered": false
+    },
+    {
+     "atScene": 40,
+     "atPercent": 100,
+     "kind": "resolution",
+     "event": "Dorian publicly restores the grant and names Mara's need as the reason, but an unexpected consequence from his ex surfaces.",
+     "emotional_conductivity": "LIGHT: Quiet rhythm of shared competence in the aftermath reveals the cost of his choice while leaving a post-resolution hook.",
+     "triggered": false
+    }
+   ],
+   "stakesIfFail": "Dorian stays emotionally guarded and Mara learns once more that seeking connection leads to public abandonment, confirming neither can trust the other.",
+   "stakesIfWin": "Dorian risks trusting her open need and Mara receives the public affirmation of connection she has craved since childhood, proving he can love without consequence.",
+   "resolutionShape": "complete-plus-cliffhanger",
+   "cliffhangerHook": "His ex-partner's public response to the gala affirmation threatens to expose the private trust they just risked.",
+   "antagonistOrAntiForce": "Dorian's ex-partner who questions his choices and pressures him to withdraw support",
+   "antagonistPersonalTie": "ex-partner who betrayed him years ago and now questions his decision to support Mara [Shape B — agent]",
+   "antagonistShape": "B",
+   "personalStakePC": "her unresolved ache for approval and connection from her father's abandonment, threatened if Dorian chooses guarded distance over choosing her publicly",
+   "personalStakeLI": "his quiet pain from his ex-partner's betrayal, threatened if he risks trusting Mara's open vulnerability and gets betrayed again",
+   "plotShape": "FORCED_ARRANGEMENT",
+   "pcWound": "Her father abandoned the family when she was twelve, leaving an unresolved ache for approval and connection that still lingers today.",
+   "liWound": "His ex-partner's betrayal after years of loyalty left him questioning his ability to trust, a pain he carries quietly.",
+   "woundSurfacingMechanism": "The gala revocation publicly humiliates Mara by exposing her need for Dorian's approval, while his decision to revoke reopens his trust wound from the ex who now questions his support for her.",
+   "woundLoadBearingProof": "WOUND: Her father's abandonment at twelve and his ex-partner's betrayal after loyalty. CIRCUMSTANCE: Gala revocation forces public co-hosting arrangement that requires open trust. DEPENDENCY: Without these wounds the LI would not be the one whose guarded vulnerability she must trust to restore funding and whose hunger for her open need makes him uniquely able to either heal or reopen her ache for connection.",
+   "pcWoundCategory": "PUBLIC",
+   "liWoundCategory": "PARTNER",
+   "liEmotionalNeedFromPC": "He craves the way Mara lets herself need comfort openly in public after the humiliation, offering a glimpse of the vulnerability he has been deprived of since his ex-partner's betrayal.",
+   "pcUnknowinglySatisfies": "Her habit of openly seeking connection and comfort in moments of vulnerability rather than disguising it behind strength unknowingly answers his hunger for someone who embraces need without hesitation or fear of consequence.",
+   "naturalSeparationBeats": [
+    "Dorian's foundation obligations pull him into private meetings without her",
+    "Mara's project site visits require her physical absence during planning windows"
+   ],
+   "naturalProximityBeats": [
+    "Forced joint rehearsals for the gala place them alone after hours",
+    "A last-minute venue crisis requires them to handle logistics side by side"
+   ],
+   "sourceWorld": "billionaire",
+   "sourceFlavor": "billionaire_modern",
+   "sourceWorldSubtype": "billionaire_modern",
+   "generatedAt": 1784509951946,
+   "continuationOf": null,
+   "storyShape": "CARETAKING",
+   "storyShapeLabel": "Caretaking",
+   "readerQuestion": "Can this man actually love somebody?",
+   "romanceEngine": "COLLISION",
+   "desireQuestion": "What present-tense force is already pressing on her — and (if known adversaries) how is HE behind it?",
+   "scene1Compressed": {
+    "pressure_sentence": "Mara awakens to the realization that her chance for connection with Dorian hangs by a thread.",
+    "emotional_consequence": "She feels the weight of abandonment creeping in, a familiar ache tightening around her heart.",
+    "li_entanglement_one_line": "Dorian's quiet presence amplifies her longing, making his potential rejection feel like the ultimate betrayal.",
+    "generated_at": 1784509954214
+   },
+   "_woundLIIntegration": {
+    "verdict": "INTEGRATED",
+    "mode": "INTERACTION",
+    "interactionType": "reopens",
+    "causeBasin": false,
+    "swapTest": "Replacing Dorian with a different DARK_VICE would break the wound's role, as the new character would not uniquely challenge Mara's need for connection or reopen her unresolved ache for approval.",
+    "link": "Dorian's guarded vulnerability and his own trust issues uniquely interact with Mara's need for connection, making him the only one who can both challenge and potentially heal her wound.",
+    "fix": "",
+    "ms": 3520
+   }
+  },
+  "rPlot": {
+   "coreTension": "she seeks connection while he guards his vulnerability",
+   "relationshipQuestion": "Will they learn to trust each other despite their wounds?",
+   "escalationAxis": "trust",
+   "issueRelationshipStates": [
+    "she feels drawn to his confident deflection",
+    "he challenges her vulnerability with sharp honesty"
+   ],
+   "issuePressures": [
+    "her desire for connection intensifies against his walls",
+    "his defensive tactics create a rift she can't ignore"
+   ],
+   "relationshipMilestones": [
+    "the moment she shares a secret he already knows",
+    "the first time he reveals a crack in his armor",
+    "the night they both confront their fears head-on"
+   ],
+   "_generatedAt": 1784509893593,
+   "_sourceModel": "haiku-4-5",
+   "_issueCount": 2,
+   "_auditFingerprint": "STRONG",
+   "_auditFingerprintReason": "The core tension of seeking connection versus guarding vulnerability is specific to the OPEN_VEIN and DARK_VICE archetypes, making it unlikely to fit another pair without significant changes.",
+   "_auditSequence": "PASS",
+   "_auditSequenceReason": "The progression from her attraction to his deflection to his challenge of her vulnerability clearly escalates the trust dynamic between them.",
+   "_auditMs": 2519,
+   "_auditSceneLastVerdict": "PRESENT",
+   "_auditSceneLastReason": "The state is enacted through the direct exchange between the characters as they confront their vulnerabilities in front of an audience, effectively capturing the tension of seeking connection despite guardedness.",
+   "_auditSceneLastPresenceMode": "ONSTAGE",
+   "_auditSceneLastEmbodiment": "MIXED",
+   "_auditSceneLastEmbodimentReason": "While there are embodied moments, such as 'Dorian’s gaze held mine' and 'the words landed like a hand on the back of my neck,' the prose also includes explanatory elements like 'My father’s abandonment at twelve had left me fluent in the language of sudden departures,' which carries the state.",
+   "_auditSceneLastMs": 3625
+  },
+  "liBodyBible": {
+   "age": 35,
+   "ancestry": "",
+   "height": "6'2\"",
+   "build": "broad-shouldered and impressively built",
+   "hair": "dark brown, thick and slightly tousled, worn long enough to brush against his forehead",
+   "complexion": "warm olive, a small birthmark just above his left wrist",
+   "face": "a rugged, angular face that carries a hint of mischief beneath its seriousness",
+   "eye_color": "hazel that deepens when he's intrigued",
+   "voice_quality": "deep and resonant, with a gravelly undertone that commands attention",
+   "hands_quality": "long-fingered and deft, often gesturing expressively when he speaks",
+   "mouth_quality": "full lips that curve slightly when he smiles, revealing a playful side",
+   "holding_style": "holds a drink with a loose grip, as if he’s casually aware of its presence without needing it",
+   "signature_feature": "a small silver hoop earring in his left ear that catches the light",
+   "second_celebrated_feature": "the way his eyebrows arch slightly when he’s amused, hinting at his playful nature",
+   "focus_tell": "his gaze narrows, fixing on her with an intensity that feels like an invitation to share a secret",
+   "restraint_tell": "his fingers flex slightly, as if he’s holding back the urge to reach out",
+   "interest_tell": "he leans in just a bit more than necessary, creating a bubble of intimacy around them",
+   "frustration_tell": "he rubs the back of his neck, a subtle sign of his agitation",
+   "desire_tell": "his breath hitches slightly, a barely audible sound that betrays his interest",
+   "signature_habits": [
+    "always carries a book, often a classic novel he quotes from unexpectedly",
+    "has a habit of tapping his fingers rhythmically when he’s lost in thought",
+    "never orders the same drink twice, preferring to experiment with flavors",
+    "often makes a point to remember small details about people he meets",
+    "takes the stairs instead of the elevator, enjoying the chance to be alone with his thoughts"
+   ],
+   "self_conscious_feature": "his slight lisp, which he sometimes feels makes him seem less authoritative despite his stature",
+   "signature_behavior": "approaches conversations like a game, inviting others to play along with him",
+   "deflection_pattern": "uses humor to deflect more serious topics, making light of heavy moments",
+   "attraction_manifestation": "he names her unspoken desires, framing them as if they are already shared truths between them",
+   "defining_anecdote": "He once interrupted a tense board meeting with a joke that had everyone laughing, diffusing the tension and revealing his knack for turning serious moments into opportunities for connection.",
+   "secondary_anecdote_different_register": "At a charity event, he took the time to personally thank each volunteer, remembering their names and stories, showing a side of him that cared deeply about the people around him.",
+   "emotional_weather": "wounded but functional — he has gotten very good at being slightly hurt without bothering anyone",
+   "wound": {
+    "core": "His ex-partner's betrayal after years of loyalty left him questioning his ability to trust, a pain he carries quietly.",
+    "category": "PARTNER",
+    "surfacing_hint": "a sudden confrontation with a former lover who questions his choices."
+   },
+   "signature_kink": {
+    "deprivation": "the ability to trust without consequence; the freedom to be vulnerable without fear of betrayal",
+    "hunger": "someone who allows herself to need comfort openly, without disguising her vulnerability",
+    "attraction_pattern": "he keeps noticing the way she lets herself need comfort in public, which offers him a glimpse of the vulnerability he craves.",
+    "origin": "because his ex-partner's betrayal left him unable to trust vulnerability, he eroticizes her openness to need.",
+    "fits_what_kind_of_person": "someone who embraces her imperfections and shares her truths without hesitation"
+   },
+   "pc_keenly_notices": [
+    "the way his laughter brightens the room, transforming the atmosphere",
+    "the small silver hoop earring that glints in the light, a detail that draws her eye",
+    "his deep, gravelly voice, which sends warmth through her whenever he speaks",
+    "the intensity in his hazel eyes when he focuses on her, making her feel seen",
+    "the subtle flex of his fingers when he holds back from reaching for her"
+   ],
+   "desire_register_exemplars": [
+    "the way his fingers flex slightly when he holds back, sending a warmth blooming in her chest",
+    "how his laughter brightens the room, making her stomach flutter with anticipation",
+    "the glint of his silver earring as he leans closer, causing her breath to catch",
+    "the intensity in his hazel eyes when he focuses on her, igniting a spark at the base of her throat",
+    "his deep voice that resonates in her ears, making her heart race whenever he speaks her name"
+   ],
+   "desire_register_exemplars_cg": [
+    "CLOSE ON — the glint of his silver hoop earring as he tilts his head, CUT TO her — a breath catches in her throat, warmth spreading through her.",
+    "INSERT — the way his fingers flex slightly when he holds back, CUT TO her — warmth blooms in her chest, a flutter of anticipation.",
+    "CLOSE ON — the intensity in his hazel eyes as he focuses on her, CUT TO her — a spark ignites at the base of her throat.",
+    "MATCH CUT — the deep resonance of his voice filling the room, CUT TO her — her heart races, caught in the rhythm of his words.",
+    "INSERT — the way his laughter brightens the atmosphere, CUT TO her — a smile spreads across her face, lightening her spirit."
+   ]
+  },
+  "pcBodyBible": {
+   "age": 28,
+   "ancestry": "",
+   "height": "five feet five inches",
+   "build": "slender but strong",
+   "hair": "chestnut brown, wavy, usually worn loose around her shoulders",
+   "complexion": "warm beige, a small mole near her right temple",
+   "face": "a soft, approachable face that radiates warmth and sincerity",
+   "signature_feature": "a strong set of laugh-lines that crinkle at the corners of her eyes, telling stories of joy and warmth",
+   "second_celebrated_feature": "the way she leans in slightly when someone is speaking, as if drawing their words into her heart",
+   "stress_tic": "she twists a loose strand of hair around her finger, a small ritual that brings her comfort",
+   "desire_tell": "a quickening in her breath that catches in her throat when she feels drawn to someone",
+   "impatience_tell": "she taps her foot in a steady rhythm against the floor, a subtle but persistent beat",
+   "confidence_tell": "she stands a fraction taller, her shoulders back, when she knows she has something important to say",
+   "vulnerability_tell": "her fingers fidget with the hem of her shirt when she feels exposed or uncertain",
+   "emotional_weather": "meaning-hungry — every moment feels charged with potential, as if she is waiting for something significant to happen",
+   "core_contradiction": "wants to be seen and understood but fears that revealing herself will lead to rejection",
+   "private_hope": "to be accepted for who she truly is, without needing to hide behind a facade of strength",
+   "current_crisis": {
+    "event": "The charity gala crowd falls silent when the emcee reads a sudden update: Dorian’s foundation has revoked its matching grant, freezing her project’s funding mid-speech.",
+    "time_since_impact": "twenty minutes",
+    "hottest_emotion": "humiliation",
+    "immediate_want": "to escape the spotlight and find a safe place to breathe",
+    "immediate_fear": "everyone has seen her at her worst and is judging her for it",
+    "refusal": "ask anyone for help, even though she feels utterly lost",
+    "li_complication": "Without his signature, the room sees her plea for support as a direct challenge to his authority.",
+    "li_load_bearing_role": "patronage_withdrawn"
+   },
+   "wound": {
+    "core": "her father abandoned the family when she was twelve, leaving her with an unresolved ache for approval and connection that still lingers today.",
+    "category": "PUBLIC",
+    "surfacing_hint": "a public scandal that threatens to expose her past failures and insecurities"
+   },
+   "signature_habits": [
+    "always counts the number of people in a room before entering",
+    "always orders the same drink at the bar, a personal ritual she finds comforting",
+    "never finishes her sentences when she feels nervous, trailing off instead",
+    "always remembers the birthdays of acquaintances, even if she doesn't know them well",
+    "always has a notebook with her, filled with thoughts and sketches of things that inspire her"
+   ],
+   "self_conscious_feature": "her expressive face, which she feels betrays her emotions too easily, making her vulnerable in professional settings.",
+   "li_keenly_aware_of": [
+    "the way her laughter seems to light up the room, drawing people in",
+    "the faint scent of her jasmine perfume that lingers in the air",
+    "the way her eyes sparkle with genuine curiosity when she listens to others"
+   ]
+  },
+  "antagonistBodyBible": {
+   "archetype": "BUREAUCRATIC_COLD",
+   "archetype_signature": "His presence is a meticulously crafted armor of authority; he stands with precise posture, always maintaining the distance that feels more like an examination than a conversation. Every question he poses is layered with the weight of procedure, as if he is not just speaking but assessing.",
+   "ex_romance_archetype": null,
+   "corrupted_warmth_tell": null,
+   "height": "tall, commanding presence",
+   "build": "slim, the kind that suggests both agility and control",
+   "hair": "dark brown, slicked back, meticulously styled",
+   "complexion": "fair, a faint crease at the corner of his mouth that suggests a habitual frown",
+   "eye_color": "steel blue, the kind that feels like a constant evaluation",
+   "signature_feature": "a habit of standing one foot inside the conversational distance and not adjusting, as if daring her to step back",
+   "voice_quality": "coldly measured, each word pronounced as if it were a carefully chosen tool",
+   "hands_quality": "long-fingered, always gesturing with precision, as if orchestrating the conversation",
+   "eyes_register": "appraising — like a buyer, always calculating her worth",
+   "proximity_default": "always one half-step closer than the conversation needs — and never adjusts when she steps back",
+   "pc_keeps_noticing": [
+    "his hands when he flips through documents, the cold precision in his gestures",
+    "the way he uses her name as if it were a form to be filled out",
+    "the meticulous way he aligns objects on the table before speaking",
+    "the small pause he takes before responding, as if weighing the impact of his words",
+    "the way his gaze lingers just a moment too long when she falters"
+   ],
+   "targeting_tell": "his attention finds her in a room and stays a beat too long before moving on, as if she were a point on a checklist",
+   "control_tell": "he sits down before he is invited and the room re-files itself around him, as if his presence demands acknowledgment",
+   "pleasure_tell": "the corner of his mouth pulls a quarter-inch when she stumbles over her words, a flicker of satisfaction at her discomfort",
+   "escalation_tell": "his shoulders square; he is done being polite, and the room feels suddenly smaller",
+   "softness_seam": "he glances at an old family photo on his desk, and for a fleeting moment, the mask slips, revealing the weight of unspoken regret"
+  }
+ },
+ "scenes": [
+  {
+   "idx": 1,
+   "hookCalls": 1,
+   "turnCount": 0,
+   "meta": {},
+   "sceneInIssue": 0,
+   "isLastSceneOfIssue": false,
+   "text": "[CHARACTERS: Mara:F, Iris:F, Emcee:M]\n[TITLE: \"Gala's Silent Spotlight\"]\n[SYNOPSIS: \"At a charity gala honoring foundation grants, Mara endures sudden public exposure when the emcee announces damaging news tied to her floral contracts. Whispers ripple through the marble hall as every gaze fixes on her, and an absent power's reach makes isolation feel like the only option left hanging.\"]\n\nThe room falls silent as the emcee reads the news, every eye turning toward me, waiting for my reaction.\n\nMy heel knocked once against the marble, the tap swallowed by the sudden quiet.\n\nThe chandeliers hummed above me, a steady note that filled the space between each exhale.\n\nSay it plainly — or let it show without words?\n\nIris — old mentor, her silver hair catching the light as she leans in, her cheek caught the edge of a passing server's tray — touched my elbow. \"The grant committee will want a statement by morning. They mentioned Dorian's name in the same breath.\"\n\nMy sleeve brushed the cold stem of a water glass, leaving a single wet streak on the cuff. The marble floor beneath my heels felt colder than it should, reflecting the chandeliers in fractured points of light. The heel of my shoe caught on a grout line, the scrape loud enough to turn two heads while the crowd's murmurs built like distant traffic.\n\nIris stayed close, her voice low. \"You don't have to answer them tonight. But if you stay silent, the board will fill the gaps themselves.\"\n\nThe news had named my largest supplier contract, the one that kept the shop afloat, and linked it to questions about influence peddling. Every donor here knew the foundation's rules on transparency. I felt the pull of wanting someone who would cut through the performance without demanding I explain myself first.\n\nIris waited. The room's attention pressed like heat from the overhead lights.\n\nMy hand tightened around my great-grandmother's old tarot deck. I didn't remember bringing it. I toyed with the idea of letting the cards decide.",
+   "action": "(begin)",
+   "dialogue": "",
+   "staged": [],
+   "probe": {},
+   "probeFresh": false,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 1,
+    "liEyeColor": 0,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 0,
+    "chandeliersBallroom": 2,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": null,
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1
+    }
+   }
+  },
+  {
+   "idx": 2,
+   "hookCalls": 2,
+   "turnCount": 0,
+   "meta": {},
+   "sceneInIssue": 1,
+   "isLastSceneOfIssue": false,
+   "text": "The emcee’s voice cracked on the final syllable of the announcement, and every head in the ballroom swung toward me like iron filings to a magnet. Iris’s fingers dug into my wrist, trying to steer me toward the side exit, but I planted my heels on the marble and refused to move.\n\n“I acknowledge the significance of this situation,” I said, voice carrying across the sudden hush. “For the project, for the donors who believed in it, and for everyone counting on the matching funds that just disappeared.”\n\nA ripple of whispers rose from the nearest tables. Someone’s phone camera clicked once, then again. Iris froze beside me, her breath sharp.\n\n“You’re making it worse,” she muttered, but she didn’t pull again.\n\nAcross the cleared space, Dorian Hale turned fully at the sound of my voice. The small silver hoop in his left ear caught the chandelier light as he moved, a single bright point against the dark line of his suit. He had been speaking with the event chair; now he left the man mid-sentence and crossed the floor with the unhurried stride of someone who already knew the room would rearrange itself around him.\n\nThe foundation’s decision wasn’t his alone, he said when he reached me, but the optics required a joint statement. Under the weight of every eye on us, he agreed to the public co-hosting arrangement on the spot. The board would expect both our names on the revised press release by morning.\n\nI felt the old ache tighten behind my ribs. My father’s abandonment at twelve had left me fluent in the language of sudden departures; I had learned early how to stand in an emptying room and still claim the space. The words left me before I could weigh them.\n\n“My father walked out when I was twelve,” I said quietly, only for him. “I’ve spent every year since making sure nothing I built could be taken the same way.”\n\nDorian’s gaze held mine. He already knew. I saw it in the slight deepening of hazel, the way his mouth tightened at one corner as if the fact had been waiting for the right silence.\n\n“I’ve spent years wondering whether anyone would ever trust me with something this fragile again,” he answered, voice low enough that only I heard the admission. “The project. The foundation’s reputation. You.”\n\nThe words landed like a hand on the back of my neck. The crowd was still watching, the emcee still holding the microphone like a live wire, yet the space between us felt smaller than the marble floor should have allowed. Iris shifted beside me, ready to intervene, but Dorian did not look away.\n\nA server passed with a tray of untouched glasses; the crystal rang faintly as someone brushed the edge. The sound cut through the tension the way laughter sometimes does at the wrong moment, sharp and oddly intimate.\n\nDorian’s hand rose to the opposite wrist, thumb and forefinger twisting the cufflink once, a slow, unconscious motion that anchored whatever he was deciding not to say. He had agreed to stand beside me publicly. He had named the exact fear I had tried to keep hidden. The room waited for whatever came next, and nothing in the air suggested it would be simple.",
+   "action": "I stand my ground instead of backing down.",
+   "dialogue": "I'm not going to pretend this doesn't matter.",
+   "staged": [],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "protagonist",
+      "presence_mode": "IN_PERSON",
+      "role": "protagonist"
+     },
+     {
+      "name": "Iris",
+      "presence_mode": "IN_PERSON",
+      "role": "supportive friend"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": true,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 2,
+    "liEyeColor": 0,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 0,
+    "chandeliersBallroom": 4,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1
+    }
+   }
+  },
+  {
+   "idx": 3,
+   "hookCalls": 3,
+   "turnCount": 1,
+   "meta": {},
+   "sceneInIssue": 2,
+   "isLastSceneOfIssue": false,
+   "text": "A hairline crack in the floor tile caught the heel of my shoe before I could take another step toward the side exit. Iris’s grip on my wrist didn’t loosen, but her nails bit harder. The emcee’s voice still crackled from the speakers above our heads, a broken announcement about the gala’s new timeline—something about a late vendor, a delay, a cascade of dominoes I couldn’t track.\n\nDorian’s chestnut eyes locked onto mine, raw and unguarded in a way I hadn’t seen since the night he’d watched me argue the Stark merger with Jordan Cole. The small scar beside his left eyebrow pulled when he blinked, a thin line the color of old paper. His shoulders shifted forward just enough to cut the noise between us.\n\n“You want the truth?” His thumb dragged once along the base of the glass, leaving a wet streak that widened toward the rim. “I want to know why you’re still here.”\n\nThe words landed. My heel rocked once against the floor tile, the sound small and sharp under the distant clink of cutlery. I could feel Iris’s breath against my neck, her silence heavier than words. “Because the board expects it,” I said, voice steady only because I’d rehearsed this moment a dozen times in my head. “Because someone has to answer for the missing funds.”\n\nDorian exhaled through his nose, slow and deliberate. “That’s not what I asked.” His gaze narrowed, fixing on the space between my eyebrows, the way it always did when he was about to press. “Tell me what you *actually* want from me.”\n\nThe question hung between us. My fingers, still brushing the marble, stilled. The marble was cold. The chandeliers were warm. The weight of his stare was the only temperature that mattered. I wanted to reach for him. I wanted to step back. I wanted to trust the way his voice dropped half a register when he was serious.\n\nInstead, I lied. “I want you to do your job.”\n\nDorian’s mouth quirked, but there was no humor in it. “You always do that,” he said, tilting his head just enough to catch the light on his scar. “Answer the question you think I asked.” His thumb traced the rim of his glass, the motion so controlled it felt like a dare. “Try again.”\n\nIris’s fingers twitched against my wrist, a silent warning or a plea—I couldn’t tell which. The marble floor gleamed under our feet. Somewhere beyond the ballroom doors, the gala hummed with anticipation, with expectation, with the kind of pressure that could shatter glass.\n\nDorian took a step closer. Close enough that bergamot rose from his collar and the ice in his glass shifted with a faint click. Close enough that the scar at his temple caught the light when he swallowed.\n\n“Tell me the truth,” he repeated, voice low enough that Iris wouldn’t hear. “What do you *want*?”\n\nThe question settled in my sternum. I wanted him to see me. I wanted him to choose me. I wanted to stop being afraid that his care would unravel me completely.\n\nI swallowed. “I want to know that you’ll still be here when it matters.”\n\nDorian’s breath hitched, just for a second. His fingers, still curved around the glass, didn’t move. The marble floor stretched between us, slick with reflected light and unspoken words. Somewhere in the distance, a glass shattered. The noise didn’t startle me. I was already falling.",
+   "action": "I push for the truth about what he's really doing here.",
+   "dialogue": "Tell me what you actually want from me.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    },
+    {
+     "name": "Iris",
+     "presence_mode": "IN_PERSON",
+     "role": "supporting character"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "Iris",
+      "presence_mode": "IN_PERSON",
+      "role": "friend"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": true,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 3,
+    "liEyeColor": 0,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 0,
+    "chandeliersBallroom": 6,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 1,
+     "grip wrist": 1,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 1,
+     "light scar": 1,
+     "twitched against wrist": 1,
+     "enough scar": 1,
+     "low enough iris": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 1,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 1
+    }
+   }
+  },
+  {
+   "idx": 4,
+   "hookCalls": 4,
+   "turnCount": 2,
+   "meta": {},
+   "sceneInIssue": 3,
+   "isLastSceneOfIssue": false,
+   "text": "The marble under my heel cracked just enough to catch the sound, a thin fissure that ran like a fault line through the polished floor. Iris’s grip on my wrist didn’t ease, but her nails dug in—sharp, deliberate. The emcee’s voice still wheezed from the speakers above us, a broken announcement about the gala’s new timeline, something about a late vendor, a delay, a cascade of dominoes I couldn’t track. The words blurred. The weight in my sternum didn’t.\n\nFootsteps—slow, measured—approached from the corridor behind me. I didn’t turn. I knew the cadence. The rhythm of a man who carried too much silence in his lungs. Dorian stepped into the light of the boardroom, his angular frame cutting through the glow of recessed fixtures. The angle of his jaw was sharper than I remembered, the kind of face that didn’t turn heads so much as turn women toward him. His dark brown hair, thick and tousled, brushed the edge of his forehead, catching the overhead light like a blade that had never dulled.\n\nHis gaze locked onto mine, unhurried, the way it always did when he was about to press. The small silver hoop in his left ear glinted, a quiet rebellion against the suit he wore. He exhaled through his nose, slow and deliberate, the way he did when he was bracing for something he didn’t want to say. “You’re still here,” he murmured, his voice low enough that Iris wouldn’t catch the edge of it. “Good.”\n\nIris’s breath hitched against my neck, her silence heavier than words. “I couldn’t leave,” I said, my voice steady only because I’d rehearsed it a dozen times in my head. “The board expects it.”\n\nDorian tilted his head just enough to catch the light on the scar beside his left eyebrow, the thin line the color of old paper. “That’s not what I asked.”\n\nIce in his glass clicked once against his ring. Bergamot rose from his collar, sharp and clean, and the ice in his glass shifted with a faint click. “Try again.”\n\nIris’s cuff brushed my knuckles, the metal clasp cold. A vent hummed under the baseboard, stirring the hem of Iris’s dress. Somewhere in the distance, a glass shattered. The noise didn’t startle me. I was already falling.\n\nI swallowed, my fingers twisting around the bracelet I wore—a delicate curve of silver at my wrist, a reminder of my own fragility. “I want to know that you’ll still be here when it matters.”\n\nDorian’s breath hitched, just for a second. His fingers, still curved around the glass, didn’t move. The marble floor gleamed under our feet. Somewhere beyond the boardroom doors, the gala hummed with anticipation, with expectation, with the kind of pressure that could shatter glass.\n\nHe took a step closer. Close enough that the scar at his temple caught the light when he swallowed. Close enough that the hoop in his ear caught the light, too, a quiet rebellion against the suit he wore.\n\n“Tell me the truth,” he repeated, voice pitched so the words stayed between us. “What do you *want*?”\n\nThe question settled in my sternum. The wanting had been there long enough that choosing felt like remembering rather than deciding. I swallowed. “I want to force you into a public co-hosting arrangement with me.”\n\nDorian’s mouth quirked, but there was no humor in it. “You always do that,” he said, the tendon in his neck pulling tight when he swallowed. “Answer the question you think I asked.”\n\nHis thumb traced the rim of his glass, the motion so controlled it felt like a dare. “Try again.”\n\nIris’s fingers twitched against my wrist, a silent warning or a plea—I couldn’t tell which. The marble floor stretched between us, slick with reflected light and unspoken words. Somewhere in the distance, the gala hummed with anticipation, with expectation, with the kind of pressure that could shatter glass.\n\nDorian’s gaze narrowed on the space between my eyebrows, the way it always did when he was about to press. “Tell me the truth,” he repeated, voice low enough that Iris wouldn’t hear. “What do you *want*?”\n\nThe question settled in my sternum. The wanting had been there long enough that choosing felt like remembering rather than deciding. I swallowed. “I want to know that you’ll still be here when it matters.”",
+   "action": "I follow the thread I'm not supposed to notice.",
+   "dialogue": "",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    },
+    {
+     "name": "Iris",
+     "presence_mode": "IN_PERSON",
+     "role": "antagonist"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "protagonist",
+      "presence_mode": "IN_PERSON",
+      "role": "protagonist"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": true,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 4,
+    "liEyeColor": 0,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 0,
+    "chandeliersBallroom": 6,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 1,
+     "grip wrist": 2,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 2,
+     "light scar": 2,
+     "twitched against wrist": 2,
+     "enough scar": 2,
+     "low enough iris": 3,
+     "angular frame": 1,
+     "angle jaw": 1,
+     "dark brown hair": 1,
+     "edge forehead": 1,
+     "hitched against neck": 1,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 1,
+     "tendon neck": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 3,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 3,
+     "fissure that ran like a fault line through the polished floor": 1,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 1,
+     "the way he did when he was bracing for": 1,
+     "with the kind of pressure that could split steel": 2
+    }
+   }
+  },
+  {
+   "idx": 5,
+   "hookCalls": 6,
+   "turnCount": 4,
+   "meta": {},
+   "sceneInIssue": 4,
+   "isLastSceneOfIssue": false,
+   "text": "Iris’s grip finally loosened as Dorian turned fully toward me, the marble floor echoing the shift of his weight like a held breath released too soon. The emcee’s fractured voice still droned overhead, but it was his eyes that cut through the noise—steady, already reading the accusation before I could soften it.\n\nI had just laid it bare: the hidden threads I’d uncovered, the careful distance he’d maintained while the board’s expectations tightened around us both. No more evasion. The words hung between us, raw and unsparing, forcing the air thinner.\n\nHe didn’t flinch. Instead, a slow, edged smile touched his mouth, the kind that invited the next step while warning it might cost more than either of us had planned. “You always did prefer the direct cut,” he said, voice low enough that the crowd beyond us stayed oblivious. “Even when it leaves us both bleeding in the same room.”\n\nThe tray of untouched glasses caught the overhead light between us, cold crystal against the charged space. My pulse answered before I could name it, a heat rising at the base of my throat that had nothing to do with the gala’s timeline and everything to do with how close he stood—close enough that retreating would read as retreat, and staying meant admitting the pull I’d tried to bury under evidence and suspicion.\n\nHe leaned in just enough that the scent of his cologne, something unlabelled and quietly expensive, reached me. “Tell me what you actually want from me,” he murmured, the question landing like a dare wrapped in invitation. Then silence stretched, deliberate, giving me room to answer or walk away while his thumb traced the rim of a glass between us, refusing to let the moment dissolve into logistics.\n\nI felt the fracture in the floor under my heel again, a small, private fault line mirroring the one opening in my chest. The board clock kept ticking somewhere behind the music and murmured conversations, but here, with him between me and the exit, the real pressure was whether I would name what I needed or let the distance win again.\n\n<!--sceneDuty: interwoven | attraction: leaking-->",
+   "action": "I confront him with what I found.",
+   "dialogue": "I know what you've been hiding. Don't lie to me.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "Iris",
+      "presence_mode": "IN_PERSON",
+      "role": "friend"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": true,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 5,
+    "liEyeColor": 0,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 0,
+    "chandeliersBallroom": 6,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 1,
+     "grip wrist": 3,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 3,
+     "light scar": 3,
+     "twitched against wrist": 3,
+     "enough scar": 2,
+     "low enough iris": 5,
+     "angular frame": 2,
+     "angle jaw": 1,
+     "dark brown hair": 2,
+     "edge forehead": 2,
+     "hitched against neck": 2,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 2,
+     "tendon neck": 1,
+     "angular jaw": 1,
+     "weight every gaze": 2
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 4,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 5,
+     "fissure that ran like a fault line through the polished floor": 2,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 2,
+     "the way he did when he was bracing for": 2,
+     "with the kind of pressure that could split steel": 2,
+     "shadow that moved like a blade when he turned his head": 1
+    }
+   }
+  },
+  {
+   "idx": 6,
+   "hookCalls": 7,
+   "turnCount": 5,
+   "meta": {},
+   "sceneInIssue": 5,
+   "isLastSceneOfIssue": false,
+   "text": "The words left my mouth before I could swallow them back. “This can’t happen. You know that.” I felt the slip the instant it happened—my guard thinning for one unguarded second, the way it always did when the vents hummed louder than the piano—and I caught myself too late, the admission already hanging between us on the marble.\n\nDorian’s heel had scuffed the table leg when he moved, the sound small but final. His eyes stayed on me, steady, the kind of attention that made the tray’s untouched glasses ring once against each other. The piano drifted on through the vents, a thread of sound that didn’t belong to either of us.\n\nHe didn’t answer right away. One hand stayed at his side, fingers loose, but I saw the way his shoulders set and then deliberately eased, as though he were choosing not to close the last inch of distance. The untouched glasses on the tray beside us caught the light in clean, cold lines.\n\n“I know what you’re protecting,” he said at last, voice low enough that it didn’t carry. “I just haven’t decided whether you’re protecting it from me or from yourself.”\n\nThe line landed with that quiet precision he used when he wanted me to hear the difference between what he said and what he meant. My weight stayed on my heels—and I stayed where I was, one heel pressing the seam in the floor tile.\n\nHe waited. The silence stretched, not empty, just held. I could feel the board’s deadline pressing at the edges of the room, the gala clock still running, but none of it moved the fact that he had cornered the moment before I was ready to meet it.\n\nMy heel pressed harder against the seam in the tile. I didn’t step back.",
+   "action": "I let my guard down for a moment, then catch myself.",
+   "dialogue": "This can't happen. You know that.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    },
+    {
+     "name": "Iris",
+     "presence_mode": "IN_PERSON",
+     "role": "antagonist"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "Iris",
+      "presence_mode": "IN_PERSON",
+      "role": "colleague"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": true,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 6,
+    "liEyeColor": 0,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 0,
+    "chandeliersBallroom": 6,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 1,
+     "grip wrist": 3,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 3,
+     "light scar": 3,
+     "twitched against wrist": 3,
+     "enough scar": 2,
+     "low enough iris": 5,
+     "angular frame": 2,
+     "angle jaw": 1,
+     "dark brown hair": 3,
+     "edge forehead": 3,
+     "hitched against neck": 2,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 2,
+     "tendon neck": 1,
+     "angular jaw": 1,
+     "weight every gaze": 2,
+     "felt shoulders": 1,
+     "already left mouth": 1,
+     "chain throat": 1,
+     "left hand": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 4,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 5,
+     "fissure that ran like a fault line through the polished floor": 2,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 2,
+     "the way he did when he was bracing for": 2,
+     "with the kind of pressure that could split steel": 2,
+     "shadow that moved like a blade when he turned his head": 1,
+     "it felt like she was holding me in place for": 1,
+     "the way they did when i forgot the room": 1
+    }
+   }
+  },
+  {
+   "idx": 7,
+   "hookCalls": 8,
+   "turnCount": 6,
+   "meta": {},
+   "sceneInIssue": 7,
+   "isLastSceneOfIssue": false,
+   "text": "The words left my mouth before I could weigh what they would take from me. The arrangement would bind us in public view, every glance and gesture open to the board’s judgment and the whispers that already circled like vultures. I felt the loss of the small distance I had kept between us settle in my chest like a held breath I could no longer release.\n\nDorian’s heel had already stilled against the marble. He studied me across the narrow space, the low light from the overhead fixtures catching a tendon that stood out along his neck when he swallowed and the way his shoulders had settled, deliberately loose. “You say that like you’ve already counted the cost,” he said, voice low and edged with something that almost sounded like approval. “Most people lie to themselves first.”\n\nThe tray of untouched glasses sat between us on the narrow console, their surfaces reflecting fractured pieces of the room. I could feel the space between us shrink by the width of one unsteady inhale. The tray’s edge cut a cold line across my wrist where my sleeve had ridden up. My fingers twitched at my side before I caught them, the impulse to reach across the gap and steady myself against him rising faster than reason.\n\nHe took half a step forward, close enough that the scent of his cologne—something clean and unlabelled—cut through the cooler air. “If you’re choosing this, Mara, I need to know you mean it when the cameras are on and the questions start. No half-measures that leave me guessing which version of you I’m standing beside.”\n\nSilence stretched between us, weighted by everything we had not said since the board’s demand landed. I could hear the distant murmur of the event staff beyond the doors, the faint scrape of a chair being moved, but none of it reached the space we occupied. My heel slid half an inch across the floor before I locked my ankle.\n\nHe did not look away. The restraint in his posture was its own provocation, a line he held without apology, and the console edge bit into my palm where I pressed down. I had sworn I would not let this arrangement become another place where I reached for him first. The choice I had just made made that promise impossible to keep.\n\nThe clock on the far wall ticked once, marking the hours until the next rehearsal. The arrangement would force us into the same rooms again and again, and the cost I had agreed to pay would arrive in every public moment where my need for him showed.\n\n<!--sceneDuty: interwoven | attraction: leaking-->",
+   "action": "I make a choice that costs me something.",
+   "dialogue": "If this is the price, I'll pay it.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "protagonist",
+      "presence_mode": "IN_PERSON",
+      "role": "protagonist"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": true,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 8,
+    "liEyeColor": 0,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 0,
+    "chandeliersBallroom": 6,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 3,
+     "grip wrist": 3,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 3,
+     "light scar": 3,
+     "twitched against wrist": 3,
+     "enough scar": 2,
+     "low enough iris": 6,
+     "angular frame": 2,
+     "angle jaw": 1,
+     "dark brown hair": 3,
+     "edge forehead": 3,
+     "hitched against neck": 2,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 2,
+     "tendon neck": 1,
+     "angular jaw": 1,
+     "weight every gaze": 2,
+     "felt shoulders": 1,
+     "already left mouth": 1,
+     "chain throat": 1,
+     "left hand": 1,
+     "catch throat": 1,
+     "locked around wrist": 1,
+     "lingered lips": 1,
+     "inside wrist": 1,
+     "damp upper lip": 1,
+     "bracelet wrist": 1,
+     "cool against skin": 1,
+     "against window frame": 1,
+     "member cleared throat": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 4,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 5,
+     "fissure that ran like a fault line through the polished floor": 2,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 2,
+     "the way he did when he was bracing for": 2,
+     "with the kind of pressure that could split steel": 2,
+     "shadow that moved like a blade when he turned his head": 1,
+     "it felt like she was holding me in place for": 1,
+     "the way they did when i forgot the room": 1,
+     "caught the light like a held breath": 1,
+     "the way they did when something inside him braced": 1,
+     "grounding each word like a weight i had chosen to carry": 1,
+     "intensity that felt like an invitation to share a secret": 1
+    }
+   }
+  },
+  {
+   "idx": 8,
+   "hookCalls": 9,
+   "turnCount": 7,
+   "meta": {},
+   "sceneInIssue": 8,
+   "isLastSceneOfIssue": false,
+   "text": "The soft echo of distant conversation drifted through the vents, carrying the board’s polished hunger for leverage. I refused the easy way out he offered, my heel catching once on the raised edge of a vent grate as I met his eyes.\n\n“I want the truth.”\n\nDorian’s broad shoulders filled the space between us, dark brown hair falling slightly over his forehead, the small silver hoop in his left ear catching the overhead light. He leaned in a fraction closer than the moment required, the air between us narrowing until the vent draft hit only one side of my face. The hoop in his ear tilted as he tipped his head, the metal flashing once.\n\n“You already have part of it,” he said, voice low. “My ex-partner Alexis pushed the revocation. She still holds old leverage from when she betrayed me years ago, and she’s using your project to test whether I’ll fold again.”\n\nThe admission landed like a hinge turning. I felt the weight of it settle between my ribs. He had been watching the same fracture line I carried since I was twelve, the one that made approval feel like oxygen.\n\nDorian’s mouth curved, not quite a smile. “The gala on the fifteenth stands. I’ll stand beside you publicly. But only if you share one story—the real reason you need this connection so badly. No shields.”\n\nI nodded once, the fabric of my dress brushing my fingertips in a nervous gesture I couldn’t quite control. The distant conversation faded to nothing.\n\nThen his wrist turned, the cufflink clicking once against the table edge he had placed on the side table earlier. The edges of a memo showed beneath the flap—his own internal notes on the project’s donor list, cross-referenced with Alexis’s holdings. He had been using the entire arrangement as cover to pull her out of hiding.\n\nThe truth I had demanded now sat between us, heavier than the arrangement itself.\n\nHe waited, knuckles whitening as he pressed the folder flap flat with the side of his hand.\n\n<!--sceneDuty: interwoven | attraction: foreground-->",
+   "action": "I refuse the easy way out he offers.",
+   "dialogue": "I don't want your help. I want the truth.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "Mara",
+      "presence_mode": "IN_PERSON",
+      "role": "protagonist"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": true,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 9,
+    "liEyeColor": 0,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 0,
+    "chandeliersBallroom": 6,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 3,
+     "grip wrist": 3,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 3,
+     "light scar": 3,
+     "twitched against wrist": 3,
+     "enough scar": 2,
+     "low enough iris": 6,
+     "angular frame": 2,
+     "angle jaw": 1,
+     "dark brown hair": 4,
+     "edge forehead": 3,
+     "hitched against neck": 2,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 2,
+     "tendon neck": 1,
+     "angular jaw": 1,
+     "weight every gaze": 2,
+     "felt shoulders": 1,
+     "already left mouth": 1,
+     "chain throat": 1,
+     "left hand": 1,
+     "catch throat": 1,
+     "locked around wrist": 1,
+     "lingered lips": 1,
+     "inside wrist": 1,
+     "damp upper lip": 1,
+     "bracelet wrist": 1,
+     "cool against skin": 1,
+     "against window frame": 1,
+     "member cleared throat": 1,
+     "met eyes": 1,
+     "broad shoulders": 1,
+     "slightly forehead": 1,
+     "then wrist": 1,
+     "side hand": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 4,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 5,
+     "fissure that ran like a fault line through the polished floor": 2,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 2,
+     "the way he did when he was bracing for": 2,
+     "with the kind of pressure that could split steel": 2,
+     "shadow that moved like a blade when he turned his head": 1,
+     "it felt like she was holding me in place for": 1,
+     "the way they did when i forgot the room": 1,
+     "caught the light like a held breath": 1,
+     "the way they did when something inside him braced": 1,
+     "grounding each word like a weight i had chosen to carry": 1,
+     "intensity that felt like an invitation to share a secret": 1,
+     "the admission landed like a hinge turning": 1
+    }
+   }
+  },
+  {
+   "idx": 9,
+   "hookCalls": 10,
+   "turnCount": 8,
+   "meta": {},
+   "sceneInIssue": 9,
+   "isLastSceneOfIssue": false,
+   "text": "The stark contrast of polished marble and shadows held the room as I closed the distance between us, my steps deliberate on the cool surface.\n\n\"Stop talking.\"\n\nDorian's hand paused mid-twist at the cufflink on his opposite wrist. His hazel eyes fixed on me with that narrowing intensity, the kind that felt like an invitation to share a secret. The silver hoop in his left ear clicked once against his collar when he tilted his head.\n\nThe board members beyond the glass partition shifted, their murmurs a low ripple that reminded us both the gala clock was still running. One of them checked a phone, the case tapping twice against the glass partition.\n\nI kept my fingers twisting a loose strand of hair, the familiar motion steadying me even as the space between us thinned. \"You want me to tell my story at the gala. Fine. But you stand there with me and affirm the partnership publicly. No hedging. No distance.\"\n\nHis breath quickened, the lean forward almost imperceptible before he caught it. The dark brown hair falling across his forehead brushed his lashes when he blinked. \"You know what that costs me,\" he said, voice low. \"The board already questions whether I can separate the work from the woman. If I affirm it out loud, they won't just whisper. They'll dig. My ex used the foundation the same way once. I can't afford to look like I'm repeating the mistake.\"\n\nThe marble stayed cold under my heels. I didn't step back. \"Then stop hiding behind her betrayal. This isn't about her. It's about whether you can choose connection without treating it like a weakness.\"\n\nDorian's mouth curved, not quite a smile, the full line of it holding the same guarded edge he'd carried since the first time we'd spoken. He didn't reach for me. A faint trace of his aftershave reached me on the next slow exhale.\n\nA board member's thumbnail scraped the glass partition twice before he looked back at us.\n\nI held his gaze. The story he wanted from me would lay everything bare. The one he carried still sat between us like a line neither had crossed.",
+   "action": "I close the distance between us.",
+   "dialogue": "Stop talking.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "protagonist",
+      "presence_mode": "IN_PERSON",
+      "role": "protagonist"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": true,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 10,
+    "liEyeColor": 1,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 1,
+    "chandeliersBallroom": 6,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 4,
+     "grip wrist": 3,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 3,
+     "light scar": 3,
+     "twitched against wrist": 3,
+     "enough scar": 2,
+     "low enough iris": 6,
+     "angular frame": 2,
+     "angle jaw": 1,
+     "dark brown hair": 5,
+     "edge forehead": 3,
+     "hitched against neck": 2,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 2,
+     "tendon neck": 1,
+     "angular jaw": 1,
+     "weight every gaze": 2,
+     "felt shoulders": 1,
+     "already left mouth": 1,
+     "chain throat": 1,
+     "left hand": 1,
+     "catch throat": 1,
+     "locked around wrist": 1,
+     "lingered lips": 1,
+     "inside wrist": 1,
+     "damp upper lip": 1,
+     "bracelet wrist": 1,
+     "cool against skin": 1,
+     "against window frame": 1,
+     "member cleared throat": 1,
+     "met eyes": 1,
+     "broad shoulders": 1,
+     "slightly forehead": 1,
+     "then wrist": 1,
+     "side hand": 1,
+     "dorian's hand": 1,
+     "hazel eyes": 1,
+     "kept fingers": 1,
+     "loose strand hair": 1,
+     "falling across forehead": 1,
+     "brushed lashes": 1,
+     "dorian's mouth": 1,
+     "held gaze": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 4,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 5,
+     "fissure that ran like a fault line through the polished floor": 2,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 2,
+     "the way he did when he was bracing for": 2,
+     "with the kind of pressure that could split steel": 2,
+     "shadow that moved like a blade when he turned his head": 1,
+     "it felt like she was holding me in place for": 1,
+     "the way they did when i forgot the room": 1,
+     "caught the light like a held breath": 1,
+     "the way they did when something inside him braced": 1,
+     "grounding each word like a weight i had chosen to carry": 1,
+     "intensity that felt like an invitation to share a secret": 1,
+     "the admission landed like a hinge turning": 1,
+     "kind that felt like an invitation to share a secret": 1,
+     "afford to look like i'm repeating the mistake": 1,
+     "sat between us like a line neither had crossed": 1
+    }
+   }
+  },
+  {
+   "idx": 10,
+   "hookCalls": 11,
+   "turnCount": 9,
+   "meta": {},
+   "sceneInIssue": 10,
+   "isLastSceneOfIssue": false,
+   "text": "I took a step back, the marble cold under my heel, the space between us suddenly too narrow for the way my chest tightened. “I shouldn’t be here.”\n\nDorian’s gaze narrowed, fixing on me with that intensity that always felt like an invitation to share a secret. His dark brown hair fell across his forehead as he tilted his head, the small silver hoop in his left ear catching the light from the chandeliers above. The board members beyond the glass shifted, their murmurs a low ripple that reminded us the gala clock kept running.\n\nHe didn’t move closer. Instead his hand resumed its slow twist at the cufflink on his opposite wrist, the motion steady, deliberate. “You just demanded visibility,” he said, voice low. “Now you’re the one stepping away.”\n\nMy breath quickened, catching in my throat before I could school it. The fear was sharper than the want, the old reflex of guarding what could be taken. I kept my fingers twisting the loose strand of hair at my shoulder, the familiar motion the only thing that steadied me.\n\nDorian’s mouth curved, not quite a smile. “The gala is at risk if we don’t do this together. They’ll cancel the funding before the night is over unless the partnership looks real. I can’t defend it alone. Not when my ex already used the same foundation to hide what she was doing.”\n\nThe revelation landed without fanfare, just the weight of another truth he had carried quietly. He looked at me as if waiting to see whether I would retreat further or hold the line we had both drawn.\n\nI stayed where I was, one step back, the distance small but deliberate. The chandeliers flickered overhead, their light throwing shadows across the polished floor between us.\n\n<!--sceneDuty: romantic_progression | attraction: foreground-->",
+   "action": "I pull back, suddenly afraid of how much I want this.",
+   "dialogue": "I shouldn't be here.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "protagonist",
+      "presence_mode": "IN_PERSON",
+      "role": "protagonist"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": false,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 11,
+    "liEyeColor": 1,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 1,
+    "chandeliersBallroom": 8,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 5,
+     "grip wrist": 3,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 3,
+     "light scar": 3,
+     "twitched against wrist": 3,
+     "enough scar": 2,
+     "low enough iris": 6,
+     "angular frame": 2,
+     "angle jaw": 1,
+     "dark brown hair": 6,
+     "edge forehead": 3,
+     "hitched against neck": 2,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 2,
+     "tendon neck": 1,
+     "angular jaw": 1,
+     "weight every gaze": 2,
+     "felt shoulders": 1,
+     "already left mouth": 1,
+     "chain throat": 1,
+     "left hand": 1,
+     "catch throat": 1,
+     "locked around wrist": 1,
+     "lingered lips": 1,
+     "inside wrist": 1,
+     "damp upper lip": 1,
+     "bracelet wrist": 1,
+     "cool against skin": 1,
+     "against window frame": 1,
+     "member cleared throat": 1,
+     "met eyes": 1,
+     "broad shoulders": 1,
+     "slightly forehead": 1,
+     "then wrist": 1,
+     "side hand": 1,
+     "dorian's hand": 1,
+     "hazel eyes": 1,
+     "kept fingers": 2,
+     "loose strand hair": 2,
+     "falling across forehead": 1,
+     "brushed lashes": 1,
+     "dorian's mouth": 1,
+     "held gaze": 1,
+     "fell across forehead": 1,
+     "instead hand": 1,
+     "catching throat": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 4,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 5,
+     "fissure that ran like a fault line through the polished floor": 2,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 2,
+     "the way he did when he was bracing for": 2,
+     "with the kind of pressure that could split steel": 2,
+     "shadow that moved like a blade when he turned his head": 1,
+     "it felt like she was holding me in place for": 1,
+     "the way they did when i forgot the room": 1,
+     "caught the light like a held breath": 1,
+     "the way they did when something inside him braced": 1,
+     "grounding each word like a weight i had chosen to carry": 1,
+     "intensity that felt like an invitation to share a secret": 1,
+     "the admission landed like a hinge turning": 1,
+     "kind that felt like an invitation to share a secret": 1,
+     "afford to look like i'm repeating the mistake": 1,
+     "sat between us like a line neither had crossed": 1,
+     "too narrow for the way my chest tightened": 1,
+     "that always felt like an invitation to share a secret": 1,
+     "looked at me as if waiting to see whether i would retreat": 1
+    }
+   }
+  },
+  {
+   "idx": 11,
+   "hookCalls": 12,
+   "turnCount": 10,
+   "meta": {},
+   "sceneInIssue": 11,
+   "isLastSceneOfIssue": false,
+   "text": "The polished marble floor caught every shift of weight, every flicker of hesitation, its surface turning the low light into fractured lines that stretched between us like fault lines. I kept my heels planted there, the cool reflection anchoring me as the board’s murmurs pressed through the glass.\n\n“They chose an unsuitable target for confrontation,” I said, voice steady, cutting through the space that Dorian’s silence had left open. My jaw set with the same quiet determination that always surfaced when the ground tried to tilt beneath me.\n\nThe cufflink clicked once against the watch case when his thumbnail caught the edge. His eyes dropped to my mouth and stayed there while the board’s voices continued on the far side of the glass. The silver hoop at his ear caught the light when he tilted his head, a small, deliberate motion that made the room feel smaller.\n\nThe board members beyond the partition shifted again, their voices a low current. One of them tapped a phone against the glass, the sound sharp in the charged air. I did not look away from Dorian. Each time he answered a question with another question, the pause before my reply stretched half a second longer. It was time to name it.\n\n“You’ve been shielding yourself with logistics and old betrayals,” I continued, the words landing between us on the marble. “That ends now if you want my story at the gala.”\n\nHis breath left him on a slow exhale. A single strand of hair lifted with his exhale and settled back against his temple. “The board already doubts whether I can keep the lines clear,” he said, low. “If I stand with you publicly they will look for cracks. My ex made certain of that once. I cannot afford to hand them another reason to question whether I can be trusted with anything that matters.”\n\nThe admission hung there, raw and unarmored. I felt it land in the same place his gaze had touched a moment earlier—something unsteady, something that made the proposal I was about to offer feel both necessary and dangerous.\n\n“Then we give them no cracks to exploit,” I said. “We co-host the gala together. Visible. United. The partnership on display so they cannot twist it into something hidden or weak.”\n\nMy right heel lifted a fraction, then settled again against the seam in the stone. Dorian’s mouth curved, not quite a smile, the line of it holding the same careful edge he had carried since the first time we had spoken. He did not step back. The aftershave he wore reached me again, faint and grounding, while the board’s low voices continued on the other side of the glass.\n\nThe decision settled between us like a line neither could cross without consequence. The gala clock kept running. So did the question of whether he would choose to stand in the light beside me or retreat behind the wall he had built for himself.",
+   "action": "I decide to fight back on my own terms.",
+   "dialogue": "They picked the wrong person to corner.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "protagonist",
+      "presence_mode": "IN_PERSON",
+      "role": "protagonist"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": false,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 12,
+    "liEyeColor": 1,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 1,
+    "chandeliersBallroom": 8,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 5,
+     "grip wrist": 3,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 3,
+     "light scar": 3,
+     "twitched against wrist": 3,
+     "enough scar": 2,
+     "low enough iris": 6,
+     "angular frame": 2,
+     "angle jaw": 1,
+     "dark brown hair": 6,
+     "edge forehead": 3,
+     "hitched against neck": 2,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 2,
+     "tendon neck": 1,
+     "angular jaw": 1,
+     "weight every gaze": 2,
+     "felt shoulders": 1,
+     "already left mouth": 1,
+     "chain throat": 1,
+     "left hand": 1,
+     "catch throat": 1,
+     "locked around wrist": 1,
+     "lingered lips": 1,
+     "inside wrist": 1,
+     "damp upper lip": 1,
+     "bracelet wrist": 1,
+     "cool against skin": 1,
+     "against window frame": 1,
+     "member cleared throat": 1,
+     "met eyes": 1,
+     "broad shoulders": 1,
+     "slightly forehead": 1,
+     "then wrist": 1,
+     "side hand": 1,
+     "dorian's hand": 1,
+     "hazel eyes": 1,
+     "kept fingers": 2,
+     "loose strand hair": 2,
+     "falling across forehead": 1,
+     "brushed lashes": 1,
+     "dorian's mouth": 1,
+     "held gaze": 1,
+     "fell across forehead": 1,
+     "instead hand": 1,
+     "catching throat": 1,
+     "dropped mouth": 1,
+     "single strand hair": 1,
+     "back against temple": 1,
+     "cannot afford hand": 1,
+     "same place gaze": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 4,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 5,
+     "fissure that ran like a fault line through the polished floor": 2,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 2,
+     "the way he did when he was bracing for": 2,
+     "with the kind of pressure that could split steel": 2,
+     "shadow that moved like a blade when he turned his head": 1,
+     "it felt like she was holding me in place for": 1,
+     "the way they did when i forgot the room": 1,
+     "caught the light like a held breath": 1,
+     "the way they did when something inside him braced": 1,
+     "grounding each word like a weight i had chosen to carry": 1,
+     "intensity that felt like an invitation to share a secret": 1,
+     "the admission landed like a hinge turning": 1,
+     "kind that felt like an invitation to share a secret": 1,
+     "afford to look like i'm repeating the mistake": 1,
+     "sat between us like a line neither had crossed": 1,
+     "too narrow for the way my chest tightened": 1,
+     "that always felt like an invitation to share a secret": 1,
+     "looked at me as if waiting to see whether i would retreat": 1,
+     "settled between us like a line neither could cross without consequence": 1
+    }
+   }
+  },
+  {
+   "idx": 12,
+   "hookCalls": 13,
+   "turnCount": 11,
+   "meta": {},
+   "sceneInIssue": 12,
+   "isLastSceneOfIssue": false,
+   "text": "The echo of footsteps on polished marble broke the moment I had just created, each tap drawing closer like a judgment I could not outrun. I stood my ground, my heel catching once on an uneven seam in the stone, and the words came before I could swallow them back.\n\n\"Reveal personal truth before proceeding,\" I said, the breath catching in my throat the way it always did when the weight of my own history pressed outward. \"My father left when I was twelve. I have spent every year since measuring my worth by whether people stay, by whether I can earn the kind of connection that does not vanish the moment it is tested.\"\n\nDorian’s left foot edged forward half an inch that felt like an invitation to share a secret he already held. His heel dragged once across the marble, the scrape loud in the pause. The board’s low voices continued on the far side of the glass, but they might as well have belonged to another room.\n\nHe did not look away. “I knew,” he said quietly. “Not the details, but the shape of it. The way you reach for steadiness even when the ground is shifting under you. I saw it the first time we spoke, and I have watched it since.”\n\nThe admission landed with the weight of something he had chosen not to say until now. My tongue stuck for a half-second to the roof of my mouth. The secret I had guarded so carefully was not new to him, and that knowledge rearranged the space between us more than the proposal itself. He had seen the fracture and stayed anyway.\n\nI forced myself to meet his eyes. “Then you understand why this co-hosting arrangement cannot be another performance. If we do this, I will not hide what I need from you in public. That is the cost. You decide whether you can stand beside it.”\n\nHis shoulders set, then deliberately eased. His shoulders rose a fraction before settling again. The footsteps had stopped somewhere behind the partition, and the silence that followed felt like the moment before a door either opened or sealed shut.\n\nHe exhaled through his nose, the sound small and precise. “I have spent years keeping my own fractures out of sight. Your willingness to name yours changes the terms. I will not pretend otherwise.”\n\nThe board members shifted again on the far side of the glass, their presence a reminder that the clock had not stopped. Dorian remained exactly where he was, close enough that the faint trace of his aftershave reached me, close enough that turning away would require a deliberate step I was not yet ready to take.\n\nI waited for the next words, for the line he would draw or cross. The marble reflected the faint tremor in my own hands before I stilled them. Whatever came next would decide whether the arrangement bound us or simply exposed us both.",
+   "action": "I expose the secret I've been protecting.",
+   "dialogue": "You should know the truth about me before this goes further.",
+   "staged": [
+    {
+     "name": "Mara",
+     "presence_mode": "IN_PERSON",
+     "role": "protagonist"
+    },
+    {
+     "name": "Dorian",
+     "presence_mode": "IN_PERSON",
+     "role": "love interest"
+    }
+   ],
+   "probe": {
+    "depicted_li_gender": "male",
+    "depicted_pc_gender": "female",
+    "present_characters": [
+     {
+      "name": "Dorian",
+      "presence_mode": "IN_PERSON",
+      "role": "love interest"
+     },
+     {
+      "name": "protagonist",
+      "presence_mode": "IN_PERSON",
+      "role": "protagonist"
+     }
+    ],
+    "location_change": {
+     "changed": false,
+     "transition_shown": false,
+     "reason": null
+    }
+   },
+   "probeFresh": false,
+   "descLedger": {
+    "issueKey": "5575ef59-e7a4-4659-9e06-3d699fdcf822:1",
+    "scenes": 13,
+    "liEyeColor": 1,
+    "liGreySilver": 1,
+    "widowsPeak": 0,
+    "pcHair": 1,
+    "chandeliersBallroom": 8,
+    "galaEntrance": 0,
+    "eventNames": {},
+    "pcOutfit": "suit",
+    "featurePhrases": {
+     "hall every gaze": 1,
+     "every eye": 1,
+     "silver hair": 1,
+     "dug wrist": 1,
+     "restless eyes": 1,
+     "weight every eye": 1,
+     "way mouth": 1,
+     "corners eyes": 1,
+     "back neck": 1,
+     "opposite wrist": 5,
+     "grip wrist": 3,
+     "chestnut eyes": 1,
+     "small scar": 1,
+     "could feel iris": 1,
+     "breath against neck": 1,
+     "exhaled through nose": 4,
+     "light scar": 3,
+     "twitched against wrist": 3,
+     "enough scar": 2,
+     "low enough iris": 6,
+     "angular frame": 2,
+     "angle jaw": 1,
+     "dark brown hair": 6,
+     "edge forehead": 3,
+     "hitched against neck": 2,
+     "cuff brushed knuckles": 1,
+     "hem iris": 1,
+     "silver wrist": 2,
+     "tendon neck": 1,
+     "angular jaw": 1,
+     "weight every gaze": 2,
+     "felt shoulders": 1,
+     "already left mouth": 1,
+     "chain throat": 1,
+     "left hand": 1,
+     "catch throat": 1,
+     "locked around wrist": 1,
+     "lingered lips": 1,
+     "inside wrist": 1,
+     "damp upper lip": 1,
+     "bracelet wrist": 1,
+     "cool against skin": 1,
+     "against window frame": 1,
+     "member cleared throat": 1,
+     "met eyes": 1,
+     "broad shoulders": 1,
+     "slightly forehead": 1,
+     "then wrist": 1,
+     "side hand": 1,
+     "dorian's hand": 1,
+     "hazel eyes": 1,
+     "kept fingers": 2,
+     "loose strand hair": 2,
+     "falling across forehead": 1,
+     "brushed lashes": 1,
+     "dorian's mouth": 1,
+     "held gaze": 1,
+     "fell across forehead": 1,
+     "instead hand": 1,
+     "catching throat": 2,
+     "dropped mouth": 1,
+     "single strand hair": 1,
+     "back against temple": 1,
+     "cannot afford hand": 1,
+     "same place gaze": 1,
+     "roof mouth": 1,
+     "meet eyes": 1,
+     "own hands": 1
+    },
+    "distinctivePhrases": {
+     "makes isolation feel like the only option left hanging": 1,
+     "room's attention pressed like heat from the overhead lights": 1,
+     "swung toward me like iron filings to a magnet": 1,
+     "the way his mouth tightened at one corner as": 1,
+     "the kind of face that made a room reset itself": 1,
+     "the words landed like a hand on the back of my": 1,
+     "holding the microphone like a live wire": 1,
+     "through the tension the way laughter sometimes does at the wrong moment": 1,
+     "the way it always did when he was about": 4,
+     "wanted to trust the way his voice dropped half a register when": 1,
+     "with the kind of pressure that could shatter glass": 1,
+     "that choosing felt like remembering rather than deciding": 5,
+     "fissure that ran like a fault line through the polished floor": 2,
+     "the kind of face that didn": 1,
+     "the overhead light like a blade that had never dulled": 2,
+     "the way he did when he was bracing for": 2,
+     "with the kind of pressure that could split steel": 2,
+     "shadow that moved like a blade when he turned his head": 1,
+     "it felt like she was holding me in place for": 1,
+     "the way they did when i forgot the room": 1,
+     "caught the light like a held breath": 1,
+     "the way they did when something inside him braced": 1,
+     "grounding each word like a weight i had chosen to carry": 1,
+     "intensity that felt like an invitation to share a secret": 1,
+     "the admission landed like a hinge turning": 1,
+     "kind that felt like an invitation to share a secret": 1,
+     "afford to look like i'm repeating the mistake": 1,
+     "sat between us like a line neither had crossed": 1,
+     "too narrow for the way my chest tightened": 1,
+     "that always felt like an invitation to share a secret": 1,
+     "looked at me as if waiting to see whether i would retreat": 1,
+     "settled between us like a line neither could cross without consequence": 1,
+     "tap drawing closer like a judgment i could not outrun": 1,
+     "in my throat the way it always did when the weight of": 1,
+     "inch that felt like an invitation to share a secret he": 1,
+     "the way you reach for steadiness even when the": 1,
+     "that followed felt like the moment before a door either opened": 1
+    }
+   }
+  }
+ ]
+}

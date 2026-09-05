@@ -1,0 +1,149 @@
+{
+  "_doc": "GOLDEN IR CORPUS (Roman 2026-07-24) — a DELIBERATELY-DESIGNED, fixed benchmark for renderer comparison (Tier 2). NOT random planner output — hand-authored to span scene STRUCTURES (not genres), each a valid decision-forcing IR that passes the per-branch counterfactual gate (delete the state_change → BOTH options break). Every future renderer experiment (Grok / GPT-4o / Mistral / two-part Grok) runs on these EXACT inputs, so the question becomes 'given the same story, which renderer stages it best?' — not 'did the planner get lucky?'. Tags let us spot patterns like 'model X excels at quiet COLD, model Y at HOT physical'.",
+  "irs": [
+    {
+      "id": "creature-containment",
+      "tags": { "temp": "hot", "mode": "physical", "genre": "fantasy", "relationship": "warden/lost-mentor", "hinge": "containment-breach" },
+      "pressure_sentence": "The warded beast in the vault has been restless for days and the old seals are failing.",
+      "emotional_consequence": "She is the last warden who remembers the binding-words, and she is terrified she has forgotten them.",
+      "li_entanglement_one_line": "The one who taught her the wards vanished the last time a seal broke — his name is the last thing she wants in her mouth now.",
+      "state_change_precondition": "The beast is still behind the wards; the containment still holds.",
+      "state_change": "The final seal cracks and the beast's forelimb tears through into the chamber.",
+      "forces_choice": "forces her to choose between spending the last binding-word to re-seal it here, or driving it back toward the occupied halls to buy time",
+      "branch_a_delete_test": "Spending the last binding-word is impossible while the seals still hold — there is nothing loose to bind.",
+      "branch_b_delete_test": "Driving it back is meaningless if it never broke through — there is nothing in the chamber to drive."
+    },
+    {
+      "id": "overheard-confession",
+      "tags": { "temp": "hot", "mode": "social", "genre": "romance", "relationship": "love-interest-present", "hinge": "overheard-confession" },
+      "pressure_sentence": "She has spent the whole party keeping one truth off her face.",
+      "emotional_consequence": "Saying it aloud even once would cost her the careful distance she has built to survive wanting him.",
+      "li_entanglement_one_line": "He is the truth she has been keeping — and he is somewhere in these rooms.",
+      "state_change_precondition": "He has not heard her say it; the confession is still only hers.",
+      "state_change": "The music cuts out exactly as she says his name and what she wants, and he is standing in the doorway.",
+      "forces_choice": "forces her to choose between owning the words to his face now, or laughing them off as a joke before the room decides for her",
+      "branch_a_delete_test": "Owning them to his face is impossible if he never heard — there is nothing for him to answer.",
+      "branch_b_delete_test": "Laughing them off is pointless if no one heard — there is nothing to cover."
+    },
+    {
+      "id": "quiet-discovery",
+      "tags": { "temp": "cold", "mode": "social", "genre": "mystery", "relationship": "family", "hinge": "quiet-discovery-reframes" },
+      "pressure_sentence": "She has been cataloguing her late father's study for a week, telling herself it means nothing.",
+      "emotional_consequence": "She has believed one version of who her father was her entire life.",
+      "li_entanglement_one_line": "His old partner keeps calling, and she keeps not answering.",
+      "state_change_precondition": "The ledger still reads as ordinary accounts; nothing yet contradicts the father she knew.",
+      "state_change": "A loose page slips from the ledger's spine, in her mother's hand, dated a year after her mother was supposed to have died.",
+      "forces_choice": "forces her to choose between finishing the catalogue as if she never saw it, or following the date to whoever her mother became",
+      "branch_a_delete_test": "Cataloguing as if she never saw it is meaningless if the page never surfaced — there is nothing to un-see.",
+      "branch_b_delete_test": "Following the date is impossible before the page exists — there is no date to follow."
+    },
+    {
+      "id": "thought-dead-returns",
+      "tags": { "temp": "hot", "mode": "social", "genre": "reunion", "relationship": "love-interest-returns", "hinge": "thought-dead-returns" },
+      "pressure_sentence": "She has finally, after three years, stopped setting a second place at the table.",
+      "emotional_consequence": "Grief became the thing she learned to live inside; she is not sure she survives it being wrong.",
+      "li_entanglement_one_line": "He is the one she buried — or the one she was told to bury.",
+      "state_change_precondition": "He is dead, as far as she and everyone in the room knows.",
+      "state_change": "The man at the back of the memorial lifts his head, and it is unmistakably him, alive.",
+      "forces_choice": "forces her to choose between crossing the room to claim him in front of everyone who mourned him, or slipping out to reach him before the questions start",
+      "branch_a_delete_test": "Claiming him publicly is impossible if he stayed dead — there is no one to cross to.",
+      "branch_b_delete_test": "Reaching him first is meaningless if he never returned — there is no one to reach."
+    },
+    {
+      "id": "ally-switches-sides",
+      "tags": { "temp": "hot", "mode": "social", "genre": "betrayal", "relationship": "trusted-ally", "hinge": "ally-turns" },
+      "pressure_sentence": "She has staked the whole plan on the one person she never doubted.",
+      "emotional_consequence": "Trust has always been the thing she rations, and she spent all of it here.",
+      "li_entanglement_one_line": "The ally is the person the love interest warned her about, once.",
+      "state_change_precondition": "Her ally is still on her side, as far as the room believes.",
+      "state_change": "Her ally stands, crosses the floor, and hands the sealed plan to the rival.",
+      "forces_choice": "forces her to choose between exposing what the ally just carried across, or salvaging the one piece of the plan the rival does not yet understand",
+      "branch_a_delete_test": "Exposing the handoff is impossible before it happens — there is nothing yet to expose.",
+      "branch_b_delete_test": "Salvaging the misunderstood piece is meaningless if the plan never left her hands — the rival holds nothing."
+    },
+    {
+      "id": "oath-law-activates",
+      "tags": { "temp": "hot", "mode": "physical", "genre": "fantasy", "relationship": "oath-bound", "hinge": "magical-law-activates" },
+      "pressure_sentence": "She has worn the oath-mark for a year and never once tested its edge.",
+      "emotional_consequence": "She built a life inside the small freedoms the oath still allowed her.",
+      "li_entanglement_one_line": "He swore the same oath; his mark and hers were bound the same night.",
+      "state_change_precondition": "The oath is dormant; she has not yet spoken a word that triggers it.",
+      "state_change": "She says the forbidden name to warn him, and the oath-mark flares and begins to close her throat.",
+      "forces_choice": "forces her to choose between finishing the warning and letting the oath take her voice, or swallowing it to keep the voice she needs to survive",
+      "branch_a_delete_test": "Finishing the warning at the oath's cost is impossible while the mark sleeps — nothing is closing her throat.",
+      "branch_b_delete_test": "Swallowing the warning to save her voice is meaningless if the oath never woke — her voice was never at risk."
+    },
+    {
+      "id": "forced-cooperation",
+      "tags": { "temp": "hot", "mode": "physical", "genre": "enemies", "relationship": "rival", "hinge": "forced-cooperation" },
+      "pressure_sentence": "She would rather do anything than be locked in a room with him.",
+      "emotional_consequence": "Every truce she has ever made has been used against her.",
+      "li_entanglement_one_line": "He is the rival who took the thing she wanted most, and smiled doing it.",
+      "state_change_precondition": "They are adversaries with no reason to work together; nothing yet binds their fates.",
+      "state_change": "The doors seal and the room announces that only both their access-codes together will open it before the oxygen runs out.",
+      "forces_choice": "forces her to choose between giving him her half of the code and trusting he enters his, or holding it back to make him commit first",
+      "branch_a_delete_test": "Giving him her code is meaningless if the doors never sealed — there is nothing to open.",
+      "branch_b_delete_test": "Making him commit first is impossible before their fates are locked together — there is no shared lock yet."
+    },
+    {
+      "id": "public-revelation",
+      "tags": { "temp": "hot", "mode": "social", "genre": "family-drama", "relationship": "guarded-respect", "hinge": "public-revelation" },
+      "pressure_sentence": "Her family's ruin is a secret she has carried alone for months.",
+      "emotional_consequence": "She has held the family's face together with her own hands.",
+      "li_entanglement_one_line": "He is the one person whose respect she cannot afford to lose tonight.",
+      "state_change_precondition": "The debts are private; no one in the room knows.",
+      "state_change": "The creditor reads the family's debts aloud to the whole table.",
+      "forces_choice": "forces her to choose between denying the numbers to the room's faces, or owning them and asking, publicly, for terms",
+      "branch_a_delete_test": "Denying the numbers publicly is impossible before they are read — there is nothing public to deny.",
+      "branch_b_delete_test": "Owning them publicly is meaningless if they were never spoken — there is nothing to own."
+    },
+    {
+      "id": "found-object",
+      "tags": { "temp": "cold", "mode": "social", "genre": "romance", "relationship": "ex/almost-reunion", "hinge": "found-object-reframes" },
+      "pressure_sentence": "She has been packing up the apartment they shared, moving slowly on purpose.",
+      "emotional_consequence": "She has let herself believe the ending was clean.",
+      "li_entanglement_one_line": "He is the one who left, and the one whose handwriting she keeps almost-recognizing.",
+      "state_change_precondition": "The breakup still means what she decided it meant; nothing contradicts her version.",
+      "state_change": "Behind a stuck drawer she finds the letter he wrote but never sent, dated the day he left.",
+      "forces_choice": "forces her to choose between reading it and letting his side change the ending, or burning it unread to keep the ending she can live with",
+      "branch_a_delete_test": "Reading his unsent side is impossible before the letter surfaces — there is nothing to read.",
+      "branch_b_delete_test": "Burning it to protect her version is meaningless if it never existed — there is nothing to destroy."
+    },
+    {
+      "id": "cover-blown",
+      "tags": { "temp": "hot", "mode": "social", "genre": "thriller", "relationship": "hidden-identity", "hinge": "cover-blown" },
+      "pressure_sentence": "She has lived under a borrowed name for two years without a single slip.",
+      "emotional_consequence": "The name is a wall, and behind it is someone she cannot afford to be again.",
+      "li_entanglement_one_line": "He knows her only as the borrowed name — and she has started to want him to know the real one.",
+      "state_change_precondition": "Her cover holds; no one here has connected her to who she was.",
+      "state_change": "A man from her old life walks in, meets her eyes, and says her real name across the room.",
+      "forces_choice": "forces her to choose between denying the name and playing the stranger, or answering to it and pulling him outside before he says more",
+      "branch_a_delete_test": "Playing the stranger is meaningless if the name was never spoken — there is nothing to deny.",
+      "branch_b_delete_test": "Pulling him outside to contain it is impossible before he speaks — there is nothing yet to contain."
+    },
+    {
+      "id": "disaster-in-progress",
+      "tags": { "temp": "hot", "mode": "physical", "genre": "contemporary", "relationship": "patron/romance", "hinge": "disaster-in-progress" },
+      "pressure_sentence": "The gallery opening is the night her whole career rests on.",
+      "emotional_consequence": "She has spent everything, financially and otherwise, on this one room.",
+      "li_entanglement_one_line": "He funded half of it, and she has not decided what she owes him for it.",
+      "state_change_precondition": "The room is intact; the show is still whole.",
+      "state_change": "A support cable snaps and the largest canvas — the one everyone came for — begins tearing itself off the wall.",
+      "forces_choice": "forces her to choose between throwing herself under the falling piece to save the work, or letting it fall and pulling the nearest guest out of its path",
+      "branch_a_delete_test": "Saving the falling piece is impossible before the cable snaps — nothing is falling.",
+      "branch_b_delete_test": "Pulling a guest from its path is meaningless if it never fell — no one is in danger."
+    },
+    {
+      "id": "dependent-reveal",
+      "tags": { "temp": "cold", "mode": "social", "genre": "family", "relationship": "guardian", "hinge": "dependent-does-irreversible" },
+      "pressure_sentence": "She has raised her younger brother since their parents died, and tonight's fragile dinner is meant to prove she can.",
+      "emotional_consequence": "Every eye at the table is measuring whether she is enough.",
+      "li_entanglement_one_line": "The man across from her could help them or take the boy — she is not yet sure which.",
+      "state_change_precondition": "Her brother is still keeping the secret they agreed to keep.",
+      "state_change": "Her brother stands and blurts the thing they swore to hide, to the whole table.",
+      "forces_choice": "forces her to choose between backing his blurted truth in front of everyone, or overriding him to protect the story they need the table to believe",
+      "branch_a_delete_test": "Backing his truth is impossible before he speaks it — there is nothing said to back.",
+      "branch_b_delete_test": "Overriding him to protect the story is meaningless if he stayed quiet — there is nothing to override."
+    }
+  ]
+}

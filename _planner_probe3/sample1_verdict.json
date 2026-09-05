@@ -1,0 +1,77 @@
+{
+  "stage": {
+    "ok": true,
+    "fault": null,
+    "source": "seed.sceneOne",
+    "settingOwner": "seed",
+    "presenceOwner": "seed",
+    "setting": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "presentText": "SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never \"elder\" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests.",
+    "onStage": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "offStage": []
+  },
+  "assignments": {
+    "sceneKey": 1,
+    "source": "scene1-merged-planner",
+    "character_plus": [
+      {
+        "character": "Lirael",
+        "first_mention": true,
+        "angle": "presses palms to thighs to still the shake in her wrists, the tremor that always comes when she’s about to break a rule"
+      },
+      {
+        "character": "Julian",
+        "first_mention": true,
+        "angle": "stands perfectly still at the edge of the gathering, his presence a weight no one else acknowledges"
+      },
+      {
+        "character": "Seren",
+        "first_mention": true,
+        "angle": "kneels with her hands trembling, her voice cracking on the final vow as the wish twists her devotion"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "first_mention": true,
+        "angle": "locks her gaze onto Lirael, waiting for the signal to halt the rite before the harmony curdles further"
+      }
+    ],
+    "environment_plus": {
+      "target": "the crimson spiralgrass carpet under Seren’s knees",
+      "axis": "damage"
+    },
+    "fusion": {
+      "character": "Lirael",
+      "target": "the crimson spiralgrass carpet under Seren’s knees",
+      "beat": "I watch the grass flatten where Seren kneels, the fibers darkening with something that isn’t dew"
+    },
+    "status": "planned"
+  },
+  "fatal": null,
+  "attempts": 1,
+  "retryReason": null,
+  "usage": {
+    "prompt_tokens": 15008,
+    "total_tokens": 15868,
+    "completion_tokens": 860,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "finish": "stop",
+  "cost": 0.0027672,
+  "angleRejections": [],
+  "logs": [
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=4930 → max_tokens=2055 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:SKELETON] C+ 4/4 assigned [Lirael, Julian, Seren, the presiding Dohkar] · E+ the crimson spiralgrass carpet under Seren’s knees/damage · fusion Lirael+the crimson spiralgrass carpet under Seren’s knees",
+    "[SCENE1:STAGE] physical=[Lirael, Julian, Seren] · phone=[] · total=4",
+    "[SCENE1:SKELETON:DELIVERED] 2678 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)"
+  ]
+}

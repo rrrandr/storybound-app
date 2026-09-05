@@ -1,0 +1,244 @@
+{
+  "threw": null,
+  "fatal": "scaffold JSON unrecoverable: Expected ',' or ']' after array element in JSON at position 7921 (line 1 column 7922) / repair also failed: Expected ',' or ']' after array element in JSON at position 7921 (line 1 column 7922)",
+  "attempts": 1,
+  "retryReason": null,
+  "pcMaskResolved": "OPEN_VEIN",
+  "liArchetype": "BEAUTIFUL_RUIN",
+  "contract": {
+    "sceneNumber": 1,
+    "regime": "fully-covered",
+    "pcMask": "OPEN_VEIN",
+    "pcLensLabel": "Open Vein",
+    "populations": {
+      "ordinary": 3,
+      "sourced": 3,
+      "unsourced": 0
+    },
+    "byLabel": {
+      "julian": {
+        "id": "named:julian",
+        "label": "Julian",
+        "aliases": [
+          "Julian"
+        ],
+        "presenceStated": true,
+        "modes": [
+          "IN_PERSON"
+        ],
+        "facets": [
+          {
+            "facet_id": "julian_status_without_display",
+            "category": "habit",
+            "canonical_truth": "He is accustomed to being respected without asserting rank; when a room becomes performative, he grows quieter rather than competing for its attention.",
+            "forbidden_restatements": [],
+            "pressures": [
+              {
+                "pressure_id": "p_gathering_where_standing_is",
+                "text": "a gathering where standing is being displayed"
+              },
+              {
+                "pressure_id": "p_someone_competing_for_the",
+                "text": "someone competing for the room's attention"
+              }
+            ],
+            "possible_pressures": [
+              "a gathering where standing is being displayed",
+              "someone competing for the room's attention"
+            ]
+          },
+          {
+            "facet_id": "julian_notices_without_volunteering",
+            "category": "relationship_pattern",
+            "canonical_truth": "He remains attentive at the edge of consequential moments and does not volunteer the full extent of what he has noticed or understood.",
+            "forbidden_restatements": [],
+            "pressures": [
+              {
+                "pressure_id": "p_consequential_moment_he_has",
+                "text": "a consequential moment he has no official part in"
+              },
+              {
+                "pressure_id": "p_room_reaching_for_an",
+                "text": "the room reaching for an explanation he could supply"
+              }
+            ],
+            "possible_pressures": [
+              "a consequential moment he has no official part in",
+              "the room reaching for an explanation he could supply"
+            ]
+          }
+        ],
+        "facet_ids": [
+          "julian_status_without_display",
+          "julian_notices_without_volunteering"
+        ],
+        "guardrails": [
+          {
+            "forbid": "contempt|disdain|cannot be bothered|refus\\w* to acknowledge|beneath him|unimpressed by the (?:rite|ceremony)",
+            "why": "his quiet is security, not contempt — contempt for the ceremony is the presiding Dohkar's truth, not his"
+          },
+          {
+            "forbid": "challenge to her|challenging her|undermin\\w+ her|contest\\w* her authority|assert\\w* (?:his )?dominance",
+            "why": "he does not compete for a room; reading him as adversarial to the PC inverts the facet"
+          },
+          {
+            "forbid": "suspicio\\w+|hiding something|conceal\\w+|secret\\w*|knows (?:more|something)\\b|chosen not to (?:say|tell)|will not say|keeps? it to himself|withhold\\w+",
+            "why": "seed constraint: Julian must never read as suspicious, and the PC must never consciously suspect him, before Scene 8"
+          }
+        ]
+      },
+      "seren": {
+        "id": "named:seren",
+        "label": "Seren",
+        "aliases": [
+          "Seren"
+        ],
+        "presenceStated": true,
+        "modes": [
+          "IN_PERSON"
+        ],
+        "facets": [
+          {
+            "facet_id": "seren_goodness_needs_witness",
+            "category": "value",
+            "canonical_truth": "Her compassion is genuine but requires an audience; she needs her goodness to be seen and approved before it feels real to her.",
+            "forbidden_restatements": [],
+            "pressures": [
+              {
+                "pressure_id": "p_observed_by_people_whose",
+                "text": "observed by people whose approval she wants"
+              },
+              {
+                "pressure_id": "p_chance_to_be_visibly",
+                "text": "a chance to be visibly good at someone else's cost"
+              }
+            ],
+            "possible_pressures": [
+              "observed by people whose approval she wants",
+              "a chance to be visibly good at someone else's cost"
+            ]
+          },
+          {
+            "facet_id": "seren_trained_composure",
+            "category": "competence",
+            "canonical_truth": "Correction and rehearsal have made self-control a mastery she can hold through failure; she treats being corrected as something to perfect, not to survive.",
+            "forbidden_restatements": [
+              {
+                "forbid": "(?:performance|something|thing)\\s+to\\s+(?:master|perfect)[^.]{0,40}?\\bnot\\b[^.]{0,40}?(?:wound|survive|endure|suffer)",
+                "why": "this is the canonical truth's own \"to perfect, not to survive\" antithesis with the nouns swapped — a restatement, not a revelation"
+              }
+            ],
+            "pressures": [
+              {
+                "pressure_id": "p_public_correction",
+                "text": "public correction"
+              },
+              {
+                "pressure_id": "p_rehearsed_procedure_going_wrong",
+                "text": "a rehearsed procedure going wrong"
+              }
+            ],
+            "possible_pressures": [
+              "public correction",
+              "a rehearsed procedure going wrong"
+            ]
+          },
+          {
+            "facet_id": "seren_delicacy_over_truth",
+            "category": "relationship_pattern",
+            "canonical_truth": "She avoids naming another person's wound plainly because she believes softening and blurring it is kinder than making them endure direct recognition.",
+            "forbidden_restatements": [],
+            "pressures": [
+              {
+                "pressure_id": "p_someone_s_pain_becomes",
+                "text": "someone's pain becomes nameable in public"
+              },
+              {
+                "pressure_id": "p_precision_would_embarrass_a",
+                "text": "precision would embarrass a person she cares about"
+              }
+            ],
+            "possible_pressures": [
+              "someone's pain becomes nameable in public",
+              "precision would embarrass a person she cares about"
+            ]
+          }
+        ],
+        "facet_ids": [
+          "seren_goodness_needs_witness",
+          "seren_trained_composure",
+          "seren_delicacy_over_truth"
+        ],
+        "guardrails": [
+          {
+            "forbid": "frightened|terrified|overwhelmed|panick\\w+|too young to understand|does not understand what",
+            "why": "the poise is the point — a frightened child cannot make the choice this scene turns on"
+          }
+        ]
+      },
+      "the presiding dohkar": {
+        "id": "role:the_presiding_dohkar",
+        "label": "the presiding Dohkar",
+        "aliases": [
+          "the presiding Dohkar",
+          "Dohkar",
+          "the Dohkar",
+          "presiding Dohkar"
+        ],
+        "presenceStated": true,
+        "modes": [
+          "IN_PERSON"
+        ],
+        "facets": [
+          {
+            "facet_id": "presiding_dohkar_ritual_contempt",
+            "category": "worldview",
+            "canonical_truth": "He cannot be bothered to pretend this ceremony deserves his attention.",
+            "forbidden_restatements": [],
+            "pressures": [
+              {
+                "pressure_id": "p_rite_he_has_performed",
+                "text": "a rite he has performed many times"
+              },
+              {
+                "pressure_id": "p_procedural_step_nobody_checks",
+                "text": "a procedural step nobody checks"
+              }
+            ],
+            "possible_pressures": [
+              "a rite he has performed many times",
+              "a procedural step nobody checks"
+            ]
+          }
+        ],
+        "facet_ids": [
+          "presiding_dohkar_ritual_contempt"
+        ],
+        "guardrails": [
+          {
+            "forbid": "invested|reverent|moved by|protective of|cares deeply|takes it seriously",
+            "why": "the inverse of his one authored truth — if the rite matters to him, this is not his facet"
+          }
+        ]
+      }
+    },
+    "declined": [],
+    "ownershipExcluded": [
+      {
+        "label": "Lirael",
+        "ownedBy": "pc_opening_fusion"
+      }
+    ]
+  },
+  "groundText": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration. \n SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never \"elder\" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests. \n THE SEQUENCE, IN ORDER - EACH BEAT A SEPARATE EVENT. (1) THE RITE HAS A FIXED ORDER: invocation, then SACRIFICE, then desire. The cost is spoken BEFORE the miracle so the assembly hears what is being paid. SEREN — Seren making her First Sacrifice — has a PREPARED wish rehearsed with you over months, and it is SELF-DIRECTED as the rite requires - what she is willing to become, or something for her own people. Her offering is a MEMORY: First Favored give memories, because a memory is the one thing you cannot get back and cannot fake giving. She names it aloud - her earliest memory, or the memory of the moment she chose this path - and the reader HEARS the exact thing she is surrendering before anything goes wrong. She begins the invocation and you relax, because you know every word of it. (2) Then she looks at YOU, and abandons the practiced wish. She KNOWS the rule - she has recited it back to you - and in front of the whole assembly she spends her First Sacrifice on you instead. This is NOT innocence. It is VANITY WEARING COMPASSION: the First Sacrifice is meant to reveal who you are willing to become, and she uses hers to let everyone see what a good person she is. She chooses the beautiful mistake. And because she is trying not to embarrass you by naming the wound out loud, she blurs it: she asks that you FIND THE ONE YOU LOST. She thinks the delicacy is kindness. It is imprecision, and imprecision is what Fate feeds on. (3) WHAT IS ACTUALLY WRONG — and it is NOT that she wished for someone else. A First Favored may wish for a sibling, a parent, a friend, their village; wishing outward is honourable and common. The violation is that she spent HER First Sacrifice using ANOTHER PERSON'S UNRESOLVED WOUND as the stage for her own virtue, and she described it too loosely to bind. DO NOT WRITE ANY OF THIS DOWN. The reader must never be handed a list of violations, a count of fractures, or a phrase like 'the beneficiary was not the wisher' or 'the target had no name' — those are design notes, not prose. What reaches the page is only: Seren changed the wish, Lirael knows instantly what that costs, the Dohkar reacts, and Fate answers the words as spoken. The reader infers the rule from the consequence, never before it. (4) EVERY First Favored present senses that something has gone wrong - this is not a rare gift of yours. The trained ones (you, the presiding Dohkar, Julian) perceive the finer misalignment sooner. What you have that they do not is CONTEXT: you know where the wording came from, and you know Seren mistook what you actually wanted (an answer) for what she asked Fate to give you (a person). So you understand WHY it is failing before anyone else can diagnose it. (5) You are sealed and forbidden to interfere - and intervening now will look like manipulating your own ward's rite for your own benefit, because the wish is ABOUT YOU. That is what makes the choice cost something. (6) You tear the gossamer mouth-band away and move toward her anyway. (7) THE TWIST IS IMMEDIATE AND IN THE ROOM. Fate is not malicious and not a genie; it is exacting, and it punishes imprecision the instant the words finish. It does NOT deliver a delayed irony the reader discovers chapters later - that is a plot reveal, not a twist. Someone ALREADY PRESENT rises, or something already true becomes undeniable, and the assembly can point at WHICH WORD BENT. 'The one she lost' is the hinge: it can mean the father, or it can mean whoever Lirael most recently buried, or it can mean a man who is found and immediately leaves - 'You asked that she find the one she lost. She has.' Then he goes. The words are honoured exactly; the intent is denied exactly. Someone in the clearing should be able to say aloud which word did it. This is SEPARATE from and additional to whatever price Fate takes. Fate MANIFESTS NOTHING: no apparition, no summoned figure, no vision, no face out of the trees, no display. It rearranges what is ALREADY REAL so the literal words come true by an ordinary-looking route - someone present says or does what they would never otherwise have said or done, a thing already in the clearing turns out to be evidence, a person who knows the answer is put where they cannot avoid giving it. As it lands it should be mistakable for coincidence; the horror is in what the coincidence proves, and it arrives a beat later than the event itself. (8) Because you moved at that instant, and because the wish was for YOU, the assembly draws the obvious inference. No magical law of touch or transfer exists or is needed; this is ordinary human misattribution, and it is enough to put your Dohkar qualification in jeopardy. \n You (the PC) have been assigned to SUPERVISE this First Sacrifice — your first time. Your task: read the alignment of everyone present, above all Seren, and be ready to halt and re-align the wish before it can twist. As the officiating Sacrificiant your mouth is ceremonially COVERED for the rite — a gossamer band tied across it — so you cannot cleanly speak. The band is DECORUM, not machinery: it muffles you and does nothing else. Nothing is sealed, bound, circled or charged; pulling it away breaks no spell and releases no force — it breaks protocol only, in front of witnesses.   if the wish begins to twist, your alarm can only be a muffled cry behind the cloth and the look in your eyes.",
+  "staged": [],
+  "onStage": [
+    "Lirael",
+    "Julian",
+    "Seren",
+    "the presiding Dohkar"
+  ],
+  "setting": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+  "cp": null,
+  "pof": null
+}

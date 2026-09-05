@@ -1,0 +1,809 @@
+{
+  "corpus": "/private/tmp/claude-501/-Users-romantsukerman-storybound-app/564e636e-ec4e-4bd6-9260-4dce17cb1833/scratchpad/fl6.json",
+  "agg": {
+    "scenesJudged": 6,
+    "beats": 37,
+    "transitions": 31,
+    "beatFail": {
+      "who_acts": 0,
+      "goal_no": 4,
+      "change_clear": 0,
+      "present_info": 0,
+      "referent": 5,
+      "prediction": 1
+    },
+    "transFail": {
+      "causal_clear": 3,
+      "agency_continuous": 0,
+      "goal_continuous": 3
+    },
+    "beatFailTotal": 10,
+    "transFailTotal": 3,
+    "pullPass": 6,
+    "pullTotal": 6,
+    "badPulls": [],
+    "presentInfoIssues": [],
+    "referentIssues": [
+      "S3 b1: the gathering",
+      "S3 b5: the deck and card",
+      "S4 b5: what she’d done wrong",
+      "S4 b7: chains beneath the isles",
+      "S6 b6: 'the chains' and 'hidden mechanism' have no prior antecedent"
+    ],
+    "transReasons": [
+      "S2 b2->b3: no shown reason for sudden speech after revelation",
+      "S2 b3->b4: memory intrudes without link to spoken line",
+      "S2 b5->b6: deck focus returns without shown trigger from decision"
+    ]
+  },
+  "results": [
+    {
+      "i": 0,
+      "turnCount": 0,
+      "sceneInIssue": 0,
+      "v": {
+        "beats": [
+          {
+            "n": 1,
+            "label": "Blight hits the gathering",
+            "who_acts": true,
+            "goal_clear": "na",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 2,
+            "label": "See frozen Favored",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 3,
+            "label": "Lirra's ritual attempt",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 4,
+            "label": "Favored awaken, Lirra cold",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 5,
+            "label": "Debt claimed, tarot considered",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          }
+        ],
+        "transitions": [
+          {
+            "from": 1,
+            "to": 2,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          }
+        ],
+        "scene_end_pull": true,
+        "scene_end_answer": "pending cost of the ritual"
+      }
+    },
+    {
+      "i": 1,
+      "turnCount": 0,
+      "sceneInIssue": 1,
+      "v": {
+        "beats": [
+          {
+            "n": 1,
+            "label": "Post-ritual ground and hush",
+            "who_acts": true,
+            "goal_clear": "na",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 2,
+            "label": "Chains tighten and feed",
+            "who_acts": true,
+            "goal_clear": "na",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 3,
+            "label": "Narrator speaks significance",
+            "who_acts": true,
+            "goal_clear": "no",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": false
+          },
+          {
+            "n": 4,
+            "label": "Uninvited Kael memory",
+            "who_acts": true,
+            "goal_clear": "na",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 5,
+            "label": "Decision to seek Kael",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 6,
+            "label": "Deck and card appear",
+            "who_acts": true,
+            "goal_clear": "no",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          }
+        ],
+        "transitions": [
+          {
+            "from": 1,
+            "to": 2,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "causal_clear": false,
+            "agency_continuous": true,
+            "goal_continuous": false,
+            "reason": "no shown reason for sudden speech after revelation"
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "causal_clear": false,
+            "agency_continuous": true,
+            "goal_continuous": false,
+            "reason": "memory intrudes without link to spoken line"
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 5,
+            "to": 6,
+            "causal_clear": false,
+            "agency_continuous": true,
+            "goal_continuous": false,
+            "reason": "deck focus returns without shown trigger from decision"
+          }
+        ],
+        "scene_end_pull": true,
+        "scene_end_answer": "unresolved wish for a way in"
+      }
+    },
+    {
+      "i": 2,
+      "turnCount": 1,
+      "sceneInIssue": 2,
+      "v": {
+        "beats": [
+          {
+            "n": 1,
+            "label": "Pushing through tavern crowd",
+            "who_acts": true,
+            "goal_clear": "no",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": false,
+            "referent_note": "the gathering",
+            "prediction_possible": true
+          },
+          {
+            "n": 2,
+            "label": "Spotting Kael at table",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 3,
+            "label": "Approaching despite reluctance",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 4,
+            "label": "Demanding what he wants",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 5,
+            "label": "His answer and deck reveal",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": false,
+            "referent_note": "the deck and card",
+            "prediction_possible": true
+          }
+        ],
+        "transitions": [
+          {
+            "from": 1,
+            "to": 2,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          }
+        ],
+        "scene_end_pull": true,
+        "scene_end_answer": "pending reply to his demand plus deck"
+      }
+    },
+    {
+      "i": 3,
+      "turnCount": 2,
+      "sceneInIssue": 3,
+      "v": {
+        "beats": [
+          {
+            "n": 1,
+            "label": "Lanterns, scent, door opens",
+            "who_acts": true,
+            "goal_clear": "na",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 2,
+            "label": "Man enters, scar itches",
+            "who_acts": true,
+            "goal_clear": "no",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 3,
+            "label": "Stand, card appears",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 4,
+            "label": "Approach table, first line",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 5,
+            "label": "Dialogue exchange escalates",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": false,
+            "referent_note": "what she’d done wrong"
+          },
+          {
+            "n": 6,
+            "label": "He stands, final offer",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 7,
+            "label": "Card burns, chains answer",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": false,
+            "referent_note": "chains beneath the isles"
+          }
+        ],
+        "transitions": [
+          {
+            "from": 1,
+            "to": 2,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 5,
+            "to": 6,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          }
+        ],
+        "scene_end_pull": true,
+        "scene_end_answer": "imminent choice with deck"
+      }
+    },
+    {
+      "i": 4,
+      "turnCount": 3,
+      "sceneInIssue": 4,
+      "v": {
+        "beats": [
+          {
+            "n": 1,
+            "label": "Bar and deck observation",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 2,
+            "label": "Kael's arrival and gesture",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 3,
+            "label": "Drink order and atmosphere",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 4,
+            "label": "Confrontation begins",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 5,
+            "label": "Dialogue exchange on chains",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 6,
+            "label": "Final question and deck",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          }
+        ],
+        "transitions": [
+          {
+            "from": 1,
+            "to": 2,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 5,
+            "to": 6,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          }
+        ],
+        "scene_end_pull": true,
+        "scene_end_answer": "pending answer to what she wants"
+      }
+    },
+    {
+      "i": 5,
+      "turnCount": 4,
+      "sceneInIssue": 5,
+      "v": {
+        "beats": [
+          {
+            "n": 1,
+            "label": "Door opens into alcove",
+            "who_acts": true,
+            "goal_clear": "na",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 2,
+            "label": "Narrator states impossibility",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 3,
+            "label": "Kael's delayed reply",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 4,
+            "label": "Kael questions the visit",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 5,
+            "label": "Narrator feels physical pull",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 6,
+            "label": "Kael reveals Veyra's role",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": false,
+            "referent_note": "'the chains' and 'hidden mechanism' have no prior antecedent",
+            "prediction_possible": true
+          },
+          {
+            "n": 7,
+            "label": "Narrator's guard slips then returns",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          },
+          {
+            "n": 8,
+            "label": "Kael accepts the tension",
+            "who_acts": true,
+            "goal_clear": "yes",
+            "change_clear": true,
+            "present_info_clear": true,
+            "present_info_issue": "",
+            "referent_ok": true,
+            "referent_note": "",
+            "prediction_possible": true
+          }
+        ],
+        "transitions": [
+          {
+            "from": 1,
+            "to": 2,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 2,
+            "to": 3,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 3,
+            "to": 4,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 4,
+            "to": 5,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 5,
+            "to": 6,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 6,
+            "to": 7,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          },
+          {
+            "from": 7,
+            "to": 8,
+            "causal_clear": true,
+            "agency_continuous": true,
+            "goal_continuous": true,
+            "reason": ""
+          }
+        ],
+        "scene_end_pull": true,
+        "scene_end_answer": "imminent forbidden next step"
+      }
+    }
+  ]
+}

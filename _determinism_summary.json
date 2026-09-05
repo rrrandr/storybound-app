@@ -1,0 +1,61 @@
+{
+  "status": "USABLE",
+  "reason": "criterion_met",
+  "benchmark": "A v1",
+  "iqs": "v1.0",
+  "prompt": "v1.0",
+  "model": "gemini-2.5-flash",
+  "samples_planned": 20,
+  "samples_completed": 20,
+  "fixtures": {
+    "A1": {
+      "n": 10,
+      "target": 10,
+      "pass": true,
+      "criteria": {
+        "parse": true,
+        "class_set": true,
+        "magnitude": true,
+        "no_flip": true
+      },
+      "totals": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "by_class": {}
+    },
+    "A2": {
+      "n": 10,
+      "target": 10,
+      "pass": true,
+      "criteria": {
+        "parse": true,
+        "class_set": true,
+        "magnitude": true,
+        "no_flip": true
+      },
+      "totals": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "by_class": {}
+    }
+  },
+  "timestamp": "2026-07-21T22:42:03.412Z"
+}

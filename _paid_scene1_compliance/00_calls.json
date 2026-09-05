@@ -1,0 +1,283 @@
+{
+  "calls": [
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "temperature": 0,
+      "sysLen": 6332,
+      "usrLen": 113,
+      "status": 200,
+      "ms": 4154
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "temperature": 0,
+      "sysLen": 6332,
+      "usrLen": 113,
+      "status": 200,
+      "ms": 3944
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2500,
+      "temperature": 0.6,
+      "sysLen": 8679,
+      "usrLen": 22531,
+      "status": 200,
+      "ms": 15250
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 3000,
+      "temperature": 0.6,
+      "sysLen": 19703,
+      "usrLen": 42444,
+      "status": 200,
+      "ms": 19805
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "other",
+      "model": "mistral-small-latest",
+      "max_tokens": 600,
+      "temperature": 0.97,
+      "sysLen": 786,
+      "usrLen": 54,
+      "status": 200,
+      "ms": 5413
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "other",
+      "model": "mistral-small-latest",
+      "max_tokens": 600,
+      "temperature": 0.97,
+      "sysLen": 774,
+      "usrLen": 54,
+      "status": 200,
+      "ms": 2620
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1800,
+      "temperature": 0.55,
+      "sysLen": 3705,
+      "usrLen": 2301,
+      "status": 200,
+      "ms": 5682
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1200,
+      "temperature": 0.6,
+      "sysLen": 6724,
+      "usrLen": 5931,
+      "status": 200,
+      "ms": 3067
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "temperature": 0.3,
+      "sysLen": 1409,
+      "usrLen": 915,
+      "status": 200,
+      "ms": 2662
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "other",
+      "max_tokens": 3000,
+      "temperature": 0.65,
+      "sysLen": 55815,
+      "usrLen": 35208,
+      "status": 200,
+      "ms": 30977
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "temperature": 0.5,
+      "sysLen": 1876,
+      "usrLen": 8375,
+      "status": 200,
+      "ms": 3795
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "temperature": 0.3,
+      "sysLen": 3565,
+      "usrLen": 2770,
+      "status": 200,
+      "ms": 3153
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2000,
+      "temperature": 0.7,
+      "response_format": {
+        "type": "json_object"
+      },
+      "sysLen": 15442,
+      "usrLen": 19946,
+      "status": 200,
+      "ms": 12939
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "other",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1500,
+      "temperature": 0.7,
+      "sysLen": 3151,
+      "usrLen": 2031,
+      "status": 200,
+      "ms": 5100
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "PLANNER",
+      "model": "mistral-small-latest",
+      "max_tokens": 2055,
+      "temperature": 0.4,
+      "reasoning_effort": "none",
+      "response_format": {
+        "type": "json_object"
+      },
+      "sysLen": 6177,
+      "usrLen": 78938,
+      "status": 200,
+      "ms": 8654
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "AUTHOR",
+      "max_tokens": 2400,
+      "temperature": 0.8,
+      "sysLen": 150352,
+      "usrLen": 201966,
+      "status": 200,
+      "ms": 22689
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT"
+    }
+  ],
+  "hotFast": false,
+  "pageError": null,
+  "imagesBlocked": 0,
+  "blockedAfterDraft": 14,
+  "logs": [
+    "[A-PLOT:SCENE1-COMPRESS] generated in 3800ms · pressure=\"She feels the world shifting beneath her as her wish spirals out of control.\"",
+    "[SCENE1:PATTERN-GATE] region-particular opener → gloamwater",
+    "[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_gloamwater; summons/social/reckoning shapes suppressed)",
+    "[SCENE1:FP] saved opening fingerprint: region_gloamwater — recent: [region_gloamwater]",
+    "[SCENE1:ROMANCE-PACKET] derived · shape=anticipation · engine=COLLISION · fixations=5",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Seren, Julian, the presiding Dohkar] · chars=4930 → max_tokens=2055 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:SKELETON] C+ 4/4 assigned [Lirael, Seren, Julian, the presiding Dohkar] · E+ gallery hallway/damage · fusion null",
+    "[SCENE1:STAGE] physical=[] · phone=[] · total=0",
+    "[SCENE1:CAST] on-page=0 [] · referenced=0 [] · named-besides-LI=0 ⟹ ✓ within cap (≤1 named actor besides the LI).",
+    "[SCENE1:SCAFFOLD] micro_decision: library-only (Haiku no longer generates this field): \"Say it plainly — or let it show without words?\"",
+    "[SCENE1:SCAFFOLD] built in 8678ms | hook=\"\" pc=textile designer setting=gallery hallway shape=magical_or_physical_anomaly echo=false micro=@1 \"Say it plainly — or let it show without words?\" variety=guarded deck=frame-owned(deferred)",
+    "[SCENE1:SCAFFOLD:TEXTURE]\n  scene_want:                 (empty — Haiku set null; PC desire-bridge OFF for this scene — observe live)\n  interlocutor_placement:     (empty — Haiku set null OR no interlocutor in scene)\n  li_texture_beat:            (empty — Haiku",
+    "[SCENE1:PROMPT-SIZES] total=295258c(~73815t) | sysPrompt(prose stack)=149337c · introPrompt=92094c · scaffold=9102c · appendix=35921c · picturability=8804c  → window._promptMassAudit() for the sysPrompt section breakdown",
+    "[SCENE1:LENGTH-GUIDANCE] appended (700-870w, hot framing)",
+    "[SCENE1:SKELETON:DELIVERED] 1015 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)",
+    "[PROSE:CAST] 2 named actor(s) besides PC + LI in the PROSE: [Seren, Dohkar] ⟹ ✗ OVER CAP — the rule is MAX ONE (PC + LI + one other). The scaffold-manifest cap [SCENE1:CAST] only sees Haiku-staged characters and missed these; Sonnet introduced them freely. Rol",
+    "[OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=1 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=2 · protagonist-distress-share=50% · external-",
+    "[SCENE1:PROCEDURAL-VOCAB] clean (0 procedural-noun hits) — doctrine held in the prose layer.",
+    "[SCENE1:COLLISION-LI-PRESENCE] COLLISION/PROXY + Julian named 2× — present-adversary plan; presence is correct.",
+    "[SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.",
+    "[SCENE1-GATE] Mandated closer already in final paragraph — bypassing gate (contract honored).",
+    "[SCENE1-GATE] All checks passed on first attempt.",
+    "[SCENE1:VAL] {outcome: pass, hookPass: true, decisionPass: true, decisionBasePass: true, decisionShapePass: true}",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"My hand tightened around my great-grandmother's old tarot deck.\"",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"I toyed with the idea of letting the cards decide.\"",
+    "[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).",
+    "[SCENE1:GRAVITY] HTTP 0",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"My hand tightened around my great-grandmother's old tarot deck.\"",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"I toyed with the idea of letting the cards decide.\"",
+    "[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).",
+    "[SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass).",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"My hand tightened around my great-grandmother's old tarot deck.\"",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"I toyed with the idea of letting the cards decide.\"",
+    "[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).",
+    "[SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.",
+    "[INTERIORITY] analysis=2 · experience=3 · analysis-share=40% — mixed [hypothesis: cold ↔ analysis replacing experience; correlate with SCENE1:DESIRE]"
+  ]
+}

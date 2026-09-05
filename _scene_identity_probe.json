@@ -1,0 +1,141 @@
+{
+ "rows": [
+  {
+   "hook": "LITERARY",
+   "scenesLen": 0,
+   "turnCount": 0,
+   "derived": 1,
+   "storyId": "probe_story_1",
+   "storyturn": "ST1",
+   "gnSceneIndex": null,
+   "renderMode": "literary",
+   "pageIndex": 0,
+   "pagesLen": 1,
+   "sceneKeys": null,
+   "fpDup": false,
+   "textLen": 0
+  },
+  {
+   "hook": "LITERARY",
+   "scenesLen": 1,
+   "turnCount": 1,
+   "derived": 1,
+   "storyId": "probe_story_1",
+   "storyturn": "ST1",
+   "gnSceneIndex": null,
+   "renderMode": "literary",
+   "pageIndex": 0,
+   "pagesLen": 1,
+   "sceneKeys": "title,synopsis,text,fateCard",
+   "fpDup": false,
+   "textLen": 254
+  },
+  {
+   "hook": "LITERARY",
+   "scenesLen": 1,
+   "turnCount": 2,
+   "derived": 2,
+   "storyId": "probe_story_1",
+   "storyturn": "ST1",
+   "gnSceneIndex": null,
+   "renderMode": "literary",
+   "pageIndex": 1,
+   "pagesLen": 2,
+   "sceneKeys": "title,synopsis,text,fateCard",
+   "fpDup": false,
+   "textLen": 254
+  },
+  {
+   "hook": "LITERARY",
+   "scenesLen": 1,
+   "turnCount": 2,
+   "derived": 2,
+   "storyId": "probe_story_1",
+   "storyturn": "ST1",
+   "gnSceneIndex": null,
+   "renderMode": "literary",
+   "pageIndex": 0,
+   "pagesLen": 2,
+   "sceneKeys": "title,synopsis,text,fateCard",
+   "fpDup": false,
+   "textLen": 254
+  },
+  {
+   "hook": "LITERARY",
+   "scenesLen": 1,
+   "turnCount": 2,
+   "derived": 2,
+   "storyId": "probe_story_1",
+   "storyturn": "ST1",
+   "gnSceneIndex": null,
+   "renderMode": "literary",
+   "pageIndex": 0,
+   "pagesLen": 2,
+   "sceneKeys": "title,synopsis,text,fateCard",
+   "fpDup": false,
+   "textLen": 254
+  },
+  {
+   "hook": "LITERARY",
+   "scenesLen": 1,
+   "turnCount": 2,
+   "derived": 2,
+   "storyId": "probe_story_1",
+   "storyturn": "ST1",
+   "gnSceneIndex": null,
+   "renderMode": "literary",
+   "pageIndex": 1,
+   "pagesLen": 2,
+   "sceneKeys": "title,synopsis,text,fateCard",
+   "fpDup": false,
+   "textLen": 254
+  },
+  {
+   "hook": "CG",
+   "scenesLen": 2,
+   "turnCount": 5,
+   "derived": 5,
+   "storyId": "probe_story_1",
+   "storyturn": "ST1",
+   "gnSceneIndex": null,
+   "renderMode": "staged_story_mode",
+   "pageIndex": 1,
+   "pagesLen": 2,
+   "sceneKeys": "title,synopsis,text,fateCard",
+   "fpDup": false,
+   "textLen": 265
+  }
+ ],
+ "attempts": [
+  {
+   "url": "/api/csp-report",
+   "method": "POST",
+   "paid": false
+  },
+  {
+   "url": "/api/config",
+   "method": "GET",
+   "paid": false
+  },
+  {
+   "url": "/api/csp-report",
+   "method": "POST",
+   "paid": false
+  },
+  {
+   "url": "/api/geo",
+   "method": "GET",
+   "paid": false
+  },
+  {
+   "url": "/api/proxy",
+   "method": "POST",
+   "paid": true
+  },
+  {
+   "url": "/api/proxy",
+   "method": "POST",
+   "paid": true
+  }
+ ]
+}

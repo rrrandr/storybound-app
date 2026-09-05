@@ -1,0 +1,42 @@
+{
+  "stage": {
+    "ok": true,
+    "fault": null,
+    "source": "assignment:scene-mission",
+    "settingOwner": "planner",
+    "presenceOwner": "narrator-only",
+    "setting": "",
+    "presentText": "",
+    "onStage": [
+      "Lirael"
+    ],
+    "offStage": [
+      {
+        "name": "Julian",
+        "reason": "mentioned in the scene mission, never staged — mention is not presence"
+      }
+    ]
+  },
+  "assignments": null,
+  "fatal": "scene_skeleton is present BOTH at the envelope top level and inside opening_spine — refusing to choose between two skeletons",
+  "attempts": 1,
+  "retryReason": null,
+  "usage": {
+    "prompt_tokens": 14776,
+    "total_tokens": 15481,
+    "completion_tokens": 705,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "service_tier": "standard"
+  },
+  "finish": "stop",
+  "cost": 0.0026394,
+  "angleRejections": [],
+  "logs": [
+    "[SCENE1:STAGE] source=assignment:scene-mission settingOwner=planner presenceOwner=narrator-only (PENDING — planner owns part of the stage) settingSource=planner-pending onStage=[Lirael] offStage=[Julian]",
+    "[SCENE1:PLANNER] eligible cast (1): [Lirael] · chars=3820 → max_tokens=1800 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: scene_skeleton is present BOTH at the envelope top level and inside opening_spine — refusing to choose between two skeletons"
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "story": "/private/tmp/claude-501/-Users-romantsukerman-storybound-app/564e636e-ec4e-4bd6-9260-4dce17cb1833/scratchpad/spec_confirm/run.json",
+  "results": [
+    {
+      "scene": 1,
+      "move": "Kael lunges forward, grabbing Sekka's arm to prevent her from being pulled under.",
+      "move_executed": "no",
+      "prose_dramatizes": "The first-person narrator stumbles as a chain yanks their ankles during an elder's ritual sacrifice to control fire in the grove.",
+      "dominating_input": "atmosphere",
+      "flattened_into": "atmospheric ritual description and internal tension",
+      "move_type": "visible_event",
+      "state_change_ownership": "absent",
+      "outcome_delivered": "missed",
+      "evidence": "The chain still pulled at my ankles."
+    },
+    {
+      "scene": 2,
+      "move": "The chain suddenly snaps taut, dragging Sekka closer to the depths.",
+      "move_executed": "no",
+      "prose_dramatizes": "Sekka resists repeated chain tugs while affirming the elder's sacrifice, then receives Kael's anchoring grip amid relational tension.",
+      "dominating_input": "emotional_continuity",
+      "flattened_into": "resistance to the pull plus elder-cost debate and Kael arrival",
+      "move_type": "visible_event",
+      "state_change_ownership": "absent",
+      "outcome_delivered": "missed",
+      "evidence": "The chain yanked again, harder this time"
+    },
+    {
+      "scene": 3,
+      "move": "Veyra gestures, and the chains shimmer, revealing glowing traces leading to Sekka's past.",
+      "move_executed": "no",
+      "prose_dramatizes": "The scene dramatizes an intimate emotional standoff and confrontation between the narrator and Kael over his intentions, her past burdens, and the binding chains.",
+      "dominating_input": "emotional_continuity",
+      "flattened_into": "the same accusation/standoff about the past and chains",
+      "move_type": "visible_event",
+      "state_change_ownership": "absent",
+      "outcome_delivered": "missed",
+      "evidence": "The Weave-Script on his skin brightened where it met mine"
+    },
+    {
+      "scene": 4,
+      "move": "The chains pulse brightly, illuminating a vision of Kael's past traumas intertwined with Sekka's wish.",
+      "move_executed": "no",
+      "prose_dramatizes": "The scene dramatizes a tense physical and verbal standoff between the narrator and Kael, with chain-pulling and mist as background details.",
+      "dominating_input": "emotional_continuity",
+      "flattened_into": "tense dialogue and physical proximity standoff",
+      "move_type": "visible_event",
+      "state_change_ownership": "absent",
+      "outcome_delivered": "missed",
+      "evidence": "The chain rattled once, as if offended by the contact"
+    },
+    {
+      "scene": 5,
+      "move": "A sudden gust of wind tears the ceremonial cloth, pushing Sekka away from Kael.",
+      "move_executed": "no",
+      "prose_dramatizes": "The scene dramatizes a tense, intimate dialogue and physical standoff between the narrator and Kael about freedom, presence, and haunting, amid mist, chains, and Weave-Script glow.",
+      "dominating_input": "emotional_continuity",
+      "flattened_into": "tense dialogue and emotional standoff",
+      "move_type": "visible_event",
+      "state_change_ownership": "absent",
+      "outcome_delivered": "missed",
+      "evidence": "A thread of mist caught and tore on his next inhale."
+    }
+  ]
+}

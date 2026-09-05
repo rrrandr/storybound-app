@@ -1,0 +1,210 @@
+{
+  "assignments": {
+    "sceneKey": 1,
+    "source": "scene1-merged-planner",
+    "character_plus": [
+      {
+        "character": "Lirael",
+        "first_mention": true,
+        "angle": "adjusts the ceremonial cloth with deliberate slowness, the motion a quiet claim that her voice is not the only thing worth hearing"
+      },
+      {
+        "character": "Julian",
+        "first_mention": true,
+        "angle": "still over the edge of his sleeve, measuring the distance between them and the center of the circle"
+      },
+      {
+        "character": "Seren",
+        "first_mention": true,
+        "angle": "kneels with Veilweave gown catching the light, her throat bare and vulnerable"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "first_mention": true,
+        "angle": "voice rising to call the breach before Lirael can stop it"
+      }
+    ],
+    "environment_plus": {
+      "target": "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+      "axis": "ritual"
+    },
+    "fusion": {
+      "character": "Lirael",
+      "target": "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+      "beat": "lets her fingers trail along the veil’s edge, feeling the weight of the ritual she is supposed to uphold"
+    },
+    "status": "planned"
+  },
+  "sceneSkeleton": {
+    "character_plus": [
+      {
+        "character": "Lirael",
+        "first_mention": true,
+        "angle": "adjusts the ceremonial cloth with deliberate slowness, the motion a quiet claim that her voice is not the only thing worth hearing"
+      },
+      {
+        "character": "Julian",
+        "first_mention": true,
+        "angle": "still over the edge of his sleeve, measuring the distance between them and the center of the circle"
+      },
+      {
+        "character": "Seren",
+        "first_mention": true,
+        "angle": "kneels with Veilweave gown catching the light, her throat bare and vulnerable"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "first_mention": true,
+        "angle": "voice rising to call the breach before Lirael can stop it"
+      }
+    ],
+    "environment_plus": {
+      "target": "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+      "axis": "ritual"
+    },
+    "fusion": {
+      "character": "Lirael",
+      "target": "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+      "beat": "lets her fingers trail along the veil’s edge, feeling the weight of the ritual she is supposed to uphold"
+    }
+  },
+  "stageResolved": {
+    "ok": true,
+    "fault": null,
+    "authoritative": true,
+    "source": "seed.sceneOne",
+    "settingOwner": "seed",
+    "presenceOwner": "seed",
+    "pending": false,
+    "settingSource": "seed",
+    "setting": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "presentText": "SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never \"elder\" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests.",
+    "aboutToHappen": "THE SEQUENCE, IN ORDER - EACH BEAT A SEPARATE EVENT. (1) THE RITE HAS A FIXED ORDER: invocation, then SACRIFICE, then desire. The cost is spoken BEFORE the miracle so the assembly hears what is being paid. SEREN — Seren making her First Sacrifice — has a PREPARED wish rehearsed with you over months, and it is SELF-DIRECTED as the rite requires - what she is willing to become, or something for her own people. Her offering is a MEMORY: First Favored give memories, because a memory is the one thing you cannot get back and cannot fake giving. She names it aloud - her earliest memory, or the memory of the moment she chose this path - and the reader HEARS the exact thing she is surrendering before anything goes wrong. She begins the invocation and you relax, because you know every word of it. (2) Then she looks at YOU, and abandons the practiced wish. She KNOWS the rule - she has recited it back to you - and in front of the whole assembly she spends her First Sacrifice on you instead. This is NOT innocence. It is VANITY WEARING COMPASSION: the First Sacrifice is meant to reveal who you are willing to become, and she uses hers to let everyone see what a good person she is. She chooses the beautiful mistake. And because she is trying not to embarrass you by naming the wound out loud, she blurs it: she asks that you FIND THE ONE YOU LOST. She thinks the delicacy is kindness. It is imprecision, and imprecision is what Fate feeds on. (3) WHAT IS ACTUALLY WRONG — and it is NOT that she wished for someone else. A First Favored may wish for a sibling, a parent, a friend, their village; wishing outward is honourable and common. The violation is that she spent HER First Sacrifice using ANOTHER PERSON'S UNRESOLVED WOUND as the stage for her own virtue, and she described it too loosely to bind. DO NOT WRITE ANY OF THIS DOWN. The reader must never be handed a list of violations, a count of fractures, or a phrase like 'the beneficiary was not the wisher' or 'the target had no name' — those are design notes, not prose. What reaches the page is only: Seren changed the wish, Lirael knows instantly what that costs, the Dohkar reacts, and Fate answers the words as spoken. The reader infers the rule from the consequence, never before it. (4) EVERY First Favored present senses that something has gone wrong - this is not a rare gift of yours. The trained ones (you, the presiding Dohkar, Julian) perceive the finer misalignment sooner. What you have that they do not is CONTEXT: you know where the wording came from, and you know Seren mistook what you actually wanted (an answer) for what she asked Fate to give you (a person). So you understand WHY it is failing before anyone else can diagnose it. (5) You are sealed and forbidden to interfere - and intervening now will look like manipulating your own ward's rite for your own benefit, because the wish is ABOUT YOU. That is what makes the choice cost something. (6) You tear the gossamer mouth-band away and move toward her anyway. (7) THE TWIST IS IMMEDIATE AND IN THE ROOM. Fate is not malicious and not a genie; it is exacting, and it punishes imprecision the instant the words finish. It does NOT deliver a delayed irony the reader discovers chapters later - that is a plot reveal, not a twist. Someone ALREADY PRESENT rises, or something already true becomes undeniable, and the assembly can point at WHICH WORD BENT. 'The one she lost' is the hinge: it can mean the father, or it can mean whoever Lirael most recently buried, or it can mean a man who is found and immediately leaves - 'You asked that she find the one she lost. She has.' Then he goes. The words are honoured exactly; the intent is denied exactly. Someone in the clearing should be able to say aloud which word did it. This is SEPARATE from and additional to whatever price Fate takes. Fate MANIFESTS NOTHING: no apparition, no summoned figure, no vision, no face out of the trees, no display. It rearranges what is ALREADY REAL so the literal words come true by an ordinary-looking route - someone present says or does what they would never otherwise have said or done, a thing already in the clearing turns out to be evidence, a person who knows the answer is put where they cannot avoid giving it. As it lands it should be mistakable for coincidence; the horror is in what the coincidence proves, and it arrives a beat later than the event itself. (8) Because you moved at that instant, and because the wish was for YOU, the assembly draws the obvious inference. No magical law of touch or transfer exists or is needed; this is ordinary human misattribution, and it is enough to put your Dohkar qualification in jeopardy.",
+    "narratorLens": "You (the PC) have been assigned to SUPERVISE this First Sacrifice — your first time. Your task: read the alignment of everyone present, above all Seren, and be ready to halt and re-align the wish before it can twist. As the officiating Sacrificiant your mouth is ceremonially COVERED for the rite — a gossamer band tied across it — so you cannot cleanly speak. The band is DECORUM, not machinery: it muffles you and does nothing else. Nothing is sealed, bound, circled or charged; pulling it away breaks no spell and releases no force — it breaks protocol only, in front of witnesses.   if the wish begins to twist, your alarm can only be a muffled cry behind the cloth and the look in your eyes.",
+    "pcName": "Lirael",
+    "pcFirstPerson": true,
+    "onStage": [
+      {
+        "id": "pc:lirael",
+        "label": "Lirael",
+        "kind": "pc",
+        "aliases": [
+          "Lirael",
+          "the narrator",
+          "narrator",
+          "the protagonist",
+          "protagonist"
+        ],
+        "source": "identity:state.playerName",
+        "presence": "IN_PERSON"
+      },
+      {
+        "id": "named:julian",
+        "label": "Julian",
+        "kind": "named",
+        "aliases": [
+          "Julian"
+        ],
+        "source": "seed.cast ∩ sceneOne.present",
+        "presence": "IN_PERSON"
+      },
+      {
+        "id": "named:seren",
+        "label": "Seren",
+        "kind": "named",
+        "aliases": [
+          "Seren"
+        ],
+        "source": "seed.cast ∩ sceneOne.present",
+        "presence": "IN_PERSON"
+      },
+      {
+        "id": "role:the_presiding_dohkar",
+        "label": "the presiding Dohkar",
+        "kind": "role",
+        "aliases": [
+          "the presiding Dohkar",
+          "Dohkar",
+          "the Dohkar",
+          "presiding Dohkar"
+        ],
+        "source": "seed.sceneOne.present (CAPS role figure)",
+        "presence": "IN_PERSON"
+      }
+    ],
+    "offStage": [],
+    "groundText": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration. SEREN, kneeling — the youth making her First Sacrifice. Lirael's ward: they have trained together for months and she can recite the rule she is about to break. Name her early and use the name; she is a character, not a role. A senior DOHKAR (never \"elder\" — First Favored are a professional order: Dohkar / Profer / Chayr) presiding over the rite. JULIAN at the edge of the gathering, perfectly still, here only as an observer. The assembled First Favored family and guests. THE SEQUENCE, IN ORDER - EACH BEAT A SEPARATE EVENT. (1) THE RITE HAS A FIXED ORDER: invocation, then SACRIFICE, then desire. The cost is spoken BEFORE the miracle so the assembly hears what is being paid. SEREN — Seren making her First Sacrifice — has a PREPARED wish rehearsed with you over months, and it is SELF-DIRECTED as the rite requires - what she is willing to become, or something for her own people. Her offering is a MEMORY: First Favored give memories, because a memory is the one thing you cannot get back and cannot fake giving. She names it aloud - her earliest memory, or the memory of the moment she chose this path - and the reader HEARS the exact thing she is surrendering before anything goes wrong. She begins the invocation and you relax, because you know every word of it. (2) Then she looks at YOU, and abandons the practiced wish. She KNOWS the rule - she has recited it back to you - and in front of the whole assembly she spends her First Sacrifice on you instead. This is NOT innocence. It is VANITY WEARING COMPASSION: the First Sacrifice is meant to reveal who you are willing to become, and she uses hers to let everyone see what a good person she is. She chooses the beautiful mistake. And because she is trying not to embarrass you by naming the wound out loud, she blurs it: she asks that you FIND THE ONE YOU LOST. She thinks the delicacy is kindness. It is imprecision, and imprecision is what Fate feeds on. (3) WHAT IS ACTUALLY WRONG — and it is NOT that she wished for someone else. A First Favored may wish for a sibling, a parent, a friend, their village; wishing outward is honourable and common. The violation is that she spent HER First Sacrifice using ANOTHER PERSON'S UNRESOLVED WOUND as the stage for her own virtue, and she described it too loosely to bind. DO NOT WRITE ANY OF THIS DOWN. The reader must never be handed a list of violations, a count of fractures, or a phrase like 'the beneficiary was not the wisher' or 'the target had no name' — those are design notes, not prose. What reaches the page is only: Seren changed the wish, Lirael knows instantly what that costs, the Dohkar reacts, and Fate answers the words as spoken. The reader infers the rule from the consequence, never before it. (4) EVERY First Favored present senses that something has gone wrong - this is not a rare gift of yours. The trained ones (you, the presiding Dohkar, Julian) perceive the finer misalignment sooner. What you have that they do not is CONTEXT: you know where the wording came from, and you know Seren mistook what you actually wanted (an answer) for what she asked Fate to give you (a person). So you understand WHY it is failing before anyone else can diagnose it. (5) You are sealed and forbidden to interfere - and intervening now will look like manipulating your own ward's rite for your own benefit, because the wish is ABOUT YOU. That is what makes the choice cost something. (6) You tear the gossamer mouth-band away and move toward her anyway. (7) THE TWIST IS IMMEDIATE AND IN THE ROOM. Fate is not malicious and not a genie; it is exacting, and it punishes imprecision the instant the words finish. It does NOT deliver a delayed irony the reader discovers chapters later - that is a plot reveal, not a twist. Someone ALREADY PRESENT rises, or something already true becomes undeniable, and the assembly can point at WHICH WORD BENT. 'The one she lost' is the hinge: it can mean the father, or it can mean whoever Lirael most recently buried, or it can mean a man who is found and immediately leaves - 'You asked that she find the one she lost. She has.' Then he goes. The words are honoured exactly; the intent is denied exactly. Someone in the clearing should be able to say aloud which word did it. This is SEPARATE from and additional to whatever price Fate takes. Fate MANIFESTS NOTHING: no apparition, no summoned figure, no vision, no face out of the trees, no display. It rearranges what is ALREADY REAL so the literal words come true by an ordinary-looking route - someone present says or does what they would never otherwise have said or done, a thing already in the clearing turns out to be evidence, a person who knows the answer is put where they cannot avoid giving it. As it lands it should be mistakable for coincidence; the horror is in what the coincidence proves, and it arrives a beat later than the event itself. (8) Because you moved at that instant, and because the wish was for YOU, the assembly draws the obvious inference. No magical law of touch or transfer exists or is needed; this is ordinary human misattribution, and it is enough to put your Dohkar qualification in jeopardy. You (the PC) have been assigned to SUPERVISE this First Sacrifice — your first time. Your task: read the alignment of everyone present, above all Seren, and be ready to halt and re-align the wish before it can twist. As the officiating Sacrificiant your mouth is ceremonially COVERED for the rite — a gossamer band tied across it — so you cannot cleanly speak. The band is DECORUM, not machinery: it muffles you and does nothing else. Nothing is sealed, bound, circled or charged; pulling it away breaks no spell and releases no force — it breaks protocol only, in front of witnesses.   if the wish begins to twist, your alarm can only be a muffled cry behind the cloth and the look in your eyes.",
+    "pcResolvedName": "Lirael",
+    "pcNameSource": "state.playerName",
+    "pcAliases": [
+      "Lirael",
+      "the narrator",
+      "narrator",
+      "the protagonist",
+      "protagonist"
+    ],
+    "aliasIndex": {
+      "lirael": "pc:lirael",
+      "the narrator": "pc:lirael",
+      "narrator": "pc:lirael",
+      "the protagonist": "pc:lirael",
+      "protagonist": "pc:lirael",
+      "julian": "named:julian",
+      "seren": "named:seren",
+      "the presiding dohkar": "role:the_presiding_dohkar",
+      "dohkar": "role:the_presiding_dohkar",
+      "the dohkar": "role:the_presiding_dohkar",
+      "presiding dohkar": "role:the_presiding_dohkar"
+    },
+    "byId": {
+      "pc:lirael": {
+        "id": "pc:lirael",
+        "label": "Lirael",
+        "kind": "pc",
+        "aliases": [
+          "Lirael",
+          "the narrator",
+          "narrator",
+          "the protagonist",
+          "protagonist"
+        ],
+        "source": "identity:state.playerName",
+        "presence": "IN_PERSON"
+      },
+      "named:julian": {
+        "id": "named:julian",
+        "label": "Julian",
+        "kind": "named",
+        "aliases": [
+          "Julian"
+        ],
+        "source": "seed.cast ∩ sceneOne.present",
+        "presence": "IN_PERSON"
+      },
+      "named:seren": {
+        "id": "named:seren",
+        "label": "Seren",
+        "kind": "named",
+        "aliases": [
+          "Seren"
+        ],
+        "source": "seed.cast ∩ sceneOne.present",
+        "presence": "IN_PERSON"
+      },
+      "role:the_presiding_dohkar": {
+        "id": "role:the_presiding_dohkar",
+        "label": "the presiding Dohkar",
+        "kind": "role",
+        "aliases": [
+          "the presiding Dohkar",
+          "Dohkar",
+          "the Dohkar",
+          "presiding Dohkar"
+        ],
+        "source": "seed.sceneOne.present (CAPS role figure)",
+        "presence": "IN_PERSON"
+      }
+    }
+  },
+  "skeletonFatal": null
+}

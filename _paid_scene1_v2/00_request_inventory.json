@@ -1,0 +1,2049 @@
+{
+  "paid": [
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "temperature": 0,
+      "sysLen": 6332,
+      "usrLen": 113,
+      "status": 200,
+      "ms": 4989,
+      "usage": {
+        "prompt_tokens": 1891,
+        "completion_tokens": 20,
+        "total_tokens": 1911,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "temperature": 0,
+      "sysLen": 6332,
+      "usrLen": 113,
+      "status": 200,
+      "ms": 3266,
+      "usage": {
+        "prompt_tokens": 1890,
+        "completion_tokens": 19,
+        "total_tokens": 1909,
+        "prompt_tokens_details": {
+          "cached_tokens": 1792,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2500,
+      "temperature": 0.6,
+      "sysLen": 8685,
+      "usrLen": 22531,
+      "status": 200,
+      "ms": 13263,
+      "usage": {
+        "prompt_tokens": 7289,
+        "completion_tokens": 737,
+        "total_tokens": 8026,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 3000,
+      "temperature": 0.6,
+      "sysLen": 19686,
+      "usrLen": 42444,
+      "status": 200,
+      "ms": 14900,
+      "usage": {
+        "prompt_tokens": 14915,
+        "completion_tokens": 1137,
+        "total_tokens": 16052,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "PREREQ",
+      "model": "mistral-small-latest",
+      "max_tokens": 500,
+      "temperature": 0.9,
+      "sysLen": 1241,
+      "usrLen": 33,
+      "status": 200,
+      "ms": 2993,
+      "usage": {
+        "prompt_tokens": 359,
+        "total_tokens": 486,
+        "completion_tokens": 127,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1800,
+      "temperature": 0.55,
+      "sysLen": 3705,
+      "usrLen": 1948,
+      "status": 200,
+      "ms": 5808,
+      "usage": {
+        "prompt_tokens": 1344,
+        "completion_tokens": 377,
+        "total_tokens": 1721,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1200,
+      "temperature": 0.6,
+      "sysLen": 6724,
+      "usrLen": 5601,
+      "status": 200,
+      "ms": 3407,
+      "usage": {
+        "prompt_tokens": 2872,
+        "completion_tokens": 152,
+        "total_tokens": 3024,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "temperature": 0.3,
+      "sysLen": 1409,
+      "usrLen": 891,
+      "status": 200,
+      "ms": 3227,
+      "usage": {
+        "prompt_tokens": 539,
+        "completion_tokens": 86,
+        "total_tokens": 625,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "PREREQ",
+      "max_tokens": 3000,
+      "temperature": 0.65,
+      "sysLen": 55145,
+      "usrLen": 34787,
+      "status": 200,
+      "ms": 18053,
+      "usage": {
+        "prompt_tokens": 20043,
+        "completion_tokens": 1142,
+        "total_tokens": 21888,
+        "prompt_tokens_details": {
+          "text_tokens": 20043,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 703,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 294646500
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "temperature": 0.5,
+      "sysLen": 1876,
+      "usrLen": 8260,
+      "status": 200,
+      "ms": 4656,
+      "usage": {
+        "prompt_tokens": 2309,
+        "completion_tokens": 217,
+        "total_tokens": 2526,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "temperature": 0.3,
+      "sysLen": 3565,
+      "usrLen": 2567,
+      "status": 200,
+      "ms": 2495,
+      "usage": {
+        "prompt_tokens": 1442,
+        "completion_tokens": 117,
+        "total_tokens": 1559,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2000,
+      "temperature": 0.7,
+      "sysLen": 15442,
+      "usrLen": 19149,
+      "status": 200,
+      "ms": 11206,
+      "usage": {
+        "prompt_tokens": 8058,
+        "completion_tokens": 901,
+        "total_tokens": 8959,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1500,
+      "temperature": 0.7,
+      "sysLen": 3151,
+      "usrLen": 1672,
+      "status": 200,
+      "ms": 6042,
+      "usage": {
+        "prompt_tokens": 1116,
+        "completion_tokens": 346,
+        "total_tokens": 1462,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "PLANNER",
+      "model": "mistral-small-latest",
+      "max_tokens": 2055,
+      "temperature": 0.4,
+      "reasoning_effort": "none",
+      "sysLen": 6177,
+      "usrLen": 83721,
+      "status": 200,
+      "ms": 8960,
+      "usage": {
+        "prompt_tokens": 22698,
+        "total_tokens": 23722,
+        "completion_tokens": 1024,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "escaped": true
+    }
+  ],
+  "inventory": [
+    {
+      "url": "/",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192077
+    },
+    {
+      "url": "/npm/@supabase/supabase-js@2",
+      "host": "cdn.jsdelivr.net",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192348
+    },
+    {
+      "url": "/css2?family=Lora:ital,wght@0,400;0,600;1,400;1,600&display=swap",
+      "host": "fonts.googleapis.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192348
+    },
+    {
+      "url": "/css2?family=Merriweather:wght@300;400;700&family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@400;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;700&family=Bungee&display=swap",
+      "host": "fonts.googleapis.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192349
+    },
+    {
+      "url": "/css2?family=Grenze+Gotisch:wght@400;700&family=Allura&family=Glass+Antiqua&family=Eagle+Lake&family=Smooch+Sans:wght@300;500&family=Pinyon+Script&display=swap",
+      "host": "fonts.googleapis.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192349
+    },
+    {
+      "url": "/css2?family=Dancing+Script&family=Caveat&family=Patrick+Hand&family=Architects+Daughter&family=Satisfy&family=Indie+Flower&family=Kalam&family=Shadows+Into+Light&family=Marck+Script&family=Just+Another+Hand&family=Amatic+SC&family=Permanent+Marker&family=Sacramento&family=Coming+Soon&family=Rock+Salt&family=Pacifico&family=Handlee&family=Covered+By+Your+Grace&family=Reenie+Beanie&family=Gloria+Hallelujah&family=Gochi+Hand&family=Fredericka+the+Great&family=Homemade+Apple&family=Yellowtail&family=Crafty+Girls&display=swap",
+      "host": "fonts.googleapis.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192349
+    },
+    {
+      "url": "/bzl3zth.css",
+      "host": "use.typekit.net",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192349
+    },
+    {
+      "url": "/styles.css?v=20260824v-nilgate",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192349
+    },
+    {
+      "url": "/assets/splash/gala.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192349
+    },
+    {
+      "url": "/assets/splash/gala-title.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192349
+    },
+    {
+      "url": "/assets/splash/splash-mobile-bg.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192452
+    },
+    {
+      "url": "/assets/splash/splash-mobile-type.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192453
+    },
+    {
+      "url": "/assets/ui/burger-keyhole-ornate.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192453
+    },
+    {
+      "url": "/sound.js?v=20260606-tempt-crackle-segmented",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192453
+    },
+    {
+      "url": "/fatecards.js?v=20260716-wish-demo-firstchoice",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192453
+    },
+    {
+      "url": "/orchestration-client.js?v=20260730a-mistral-fallback",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192453
+    },
+    {
+      "url": "/badgeEngine.js?v=20260609-badge-error-surface",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192453
+    },
+    {
+      "url": "/relational-shape-classifier.js?v=20260525-shared-authority",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192454
+    },
+    {
+      "url": "/invariant-runtime-v0.js?v=20260729c-spine-integration",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192456
+    },
+    {
+      "url": "/app.js?v=20260826f-dup-collapse",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192456
+    },
+    {
+      "url": "/card-designer.js?v=20260318c",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192456
+    },
+    {
+      "url": "/guide-entries.js?v=20260727e-quiet-teen",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192456
+    },
+    {
+      "url": "/guide-preview.js?v=20260727h-worldfonts",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192456
+    },
+    {
+      "url": "/transition-retry-experiment.js?v=20260728b",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192456
+    },
+    {
+      "url": "/momentum-eval.js?v=20260728a",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/ui/back-arrow.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/Concierge/gold-bell-splat.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/ui/Fortunes-Icon.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/WHITE-tarot-back.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/WHITE-Trust.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/WHITE-Discretion.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/WHIT-Desire.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-Taste-back.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-Taste-face.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-Indulge-back.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-Indulge-face.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/White-Fortunes-back.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/White-Fortunes-front.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192458
+    },
+    {
+      "url": "/assets/card-art/cards/White-Membership-back.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/White-Membership-front.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-back-Solo.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-Solo-face.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-back-Couple.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-Couplet-face.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-back-Stranger.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-Stranger-face.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Black-back-ForbiddenLibrary.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-front-ForbiddenLibrary.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Fatelands/Fatelands-Map-Final.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/ui/storybound-keyhole-black.png?v=20260429",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/full-curtain.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/curtain-L.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/curatin-R.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/masks/BeautifulRuin.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/masks/DarkVice.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/masks/HeartWarden.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/masks/ArmoredFox.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/masks/EternalFlame.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/masks/OpenVein.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/masks/Spellbinder.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/concierge-bell.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Concierge/Concierge-welcome.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Forbidde-Library-Art/greyed-vitrine.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/assets/Forbidde-Library-Art/full-vitrine.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192468
+    },
+    {
+      "url": "/p.css?s=1&k=bzl3zth&ht=tk&f=720.721.722.22354.22355.30184.30186.45912&a=23276850&app=typekit&e=css",
+      "host": "p.typekit.net",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192508
+    },
+    {
+      "url": "/api/csp-report",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766192508
+    },
+    {
+      "url": "/s/lora/v37/0QIvMX1D_JOuMwr7I_FMl_E.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192849
+    },
+    {
+      "url": "/assets/ui/Black-Gold-400x112.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192849
+    },
+    {
+      "url": "/assets/Concierge/gold-bell-splat.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192849
+    },
+    {
+      "url": "/assets/ui/Concierge-panel.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192850
+    },
+    {
+      "url": "/s/lora/v37/0QIhMX1D_JOuMw_LIftLtfOm8w.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766192850
+    },
+    {
+      "url": "/api/config",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": true,
+      "t": 1787766200504
+    },
+    {
+      "url": "/s/lora/v37/0QIvMX1D_JOuM2T7I_FMl_GW8g.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766200538
+    },
+    {
+      "url": "/api/csp-report",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766200538
+    },
+    {
+      "url": "/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Uncial+Antiqua&family=MedievalSharp&family=Zilla+Slab:wght@400;600;700&family=Orbitron:wght@500;700&family=Chakra+Petch:wght@400;500&family=Special+Elite&family=Architects+Daughter&display=swap",
+      "host": "fonts.googleapis.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766200551
+    },
+    {
+      "url": "/s/lora/v37/0QI8MX1D_JOuMw_hLdO6T2wV9KnW-MoFoq92nPWc3ZyhTg.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766200590
+    },
+    {
+      "url": "/api/geo",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": true,
+      "t": 1787766201427
+    },
+    {
+      "url": "/assets/Forbidde-Library-Art/forbidden-library-ambience.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201436
+    },
+    {
+      "url": "/assets/Concierge/bell-ring.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201602
+    },
+    {
+      "url": "/assets/ui/card-flip.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201606
+    },
+    {
+      "url": "/assets/ui/card-dissipate.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201606
+    },
+    {
+      "url": "/assets/ui/petition-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201606
+    },
+    {
+      "url": "/assets/ui/tempt-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201606
+    },
+    {
+      "url": "/assets/ui/begin-story.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201606
+    },
+    {
+      "url": "/assets/ui/button-tap.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/ui/paper-slide.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/ui/sparkle-up.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/ui/zoom-sparkle-loop.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/ui/tempt-dry-thunder.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/ui/tempt-electric-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/ui/book-pull-1.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/ui/book-pull-2.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/ui/book-pull-3.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/intimacy/oas-fire-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/intimacy/oas-heartbeat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201607
+    },
+    {
+      "url": "/assets/intimacy/oas-hold-beat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201609
+    },
+    {
+      "url": "/assets/intimacy/oas-male-breath.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201609
+    },
+    {
+      "url": "/assets/audio/ambient/heavy_girl_breathing.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201609
+    },
+    {
+      "url": "/assets/intimacy/oas-male-sigh.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201609
+    },
+    {
+      "url": "/s/lora/v37/0QIvMX1D_JOuMwX7I_FMl_GW8g.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201656
+    },
+    {
+      "url": "/s/lora/v37/0QIvMX1D_JOuMw77I_FMl_GW8g.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201656
+    },
+    {
+      "url": "/assets/Concierge/concierge-bell-small.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201658
+    },
+    {
+      "url": "/api/consume-fortune",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766201677
+    },
+    {
+      "url": "/assets/Concierge/bell-ring.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201691
+    },
+    {
+      "url": "/assets/ui/card-flip.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201691
+    },
+    {
+      "url": "/assets/ui/card-dissipate.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201691
+    },
+    {
+      "url": "/assets/ui/petition-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201692
+    },
+    {
+      "url": "/assets/ui/tempt-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201692
+    },
+    {
+      "url": "/assets/ui/begin-story.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201692
+    },
+    {
+      "url": "/assets/ui/button-tap.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/ui/paper-slide.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/ui/sparkle-up.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/ui/zoom-sparkle-loop.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/ui/tempt-dry-thunder.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/ui/tempt-electric-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/intimacy/oas-fire-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/intimacy/oas-heartbeat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/intimacy/oas-hold-beat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/intimacy/oas-male-breath.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/audio/ambient/heavy_girl_breathing.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/intimacy/oas-male-sigh.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201695
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-back.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-front-Temptation.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-front-Boundary.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-front-Reversal.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-front-Silence.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-front-Confession.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-back-PetitionFate.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-Gold-PetitionFate-front.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-RED-back-TemptFate.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/card-art/cards/Tarot-RED-front-TemptFate.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201697
+    },
+    {
+      "url": "/assets/Forbidde-Library-Art/2-inch-side-edge.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201749
+    },
+    {
+      "url": "/assets/Forbidde-Library-Art/2-inch-top-edge.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201749
+    },
+    {
+      "url": "/assets/Forbidde-Library-Art/2-inch-bottom-edge.jpg",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201749
+    },
+    {
+      "url": "/assets/ui/Black-Gold-120x36.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201749
+    },
+    {
+      "url": "/assets/ui/Fortunes-pill.png",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201755
+    },
+    {
+      "url": "/s/uncialantiqua/v22/N0bM2S5WOex4OUbESzoESK-i-MfWQZRjBjSE.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201755
+    },
+    {
+      "url": "/s/medievalsharp/v28/EvOJzAlL3oU5AQl2mP5KdgptMqhwMinUPDg.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201755
+    },
+    {
+      "url": "/af/2a45ac/00000000000000007735ddce/31/l?primer=7cdcb44be4a7db8877ffa5c0007b8dd865b3bbc383831fe2ea177f62257a9191&fvd=n4&v=3",
+      "host": "use.typekit.net",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201755
+    },
+    {
+      "url": "/s/lora/v37/0QIvMX1D_JOuM3b7I_FMl_GW8g.woff2",
+      "host": "fonts.gstatic.com",
+      "method": "GET",
+      "api": false,
+      "t": 1787766201755
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766201755
+    },
+    {
+      "url": "/assets/Concierge/bell-ring.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202022
+    },
+    {
+      "url": "/assets/ui/card-flip.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202022
+    },
+    {
+      "url": "/assets/ui/card-dissipate.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/petition-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/tempt-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/begin-story.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/button-tap.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/paper-slide.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/sparkle-up.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/zoom-sparkle-loop.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/tempt-dry-thunder.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/ui/tempt-electric-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/intimacy/oas-fire-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/intimacy/oas-heartbeat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202025
+    },
+    {
+      "url": "/assets/intimacy/oas-hold-beat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202026
+    },
+    {
+      "url": "/assets/intimacy/oas-male-breath.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202026
+    },
+    {
+      "url": "/assets/audio/ambient/heavy_girl_breathing.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202026
+    },
+    {
+      "url": "/assets/intimacy/oas-male-sigh.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202026
+    },
+    {
+      "url": "/assets/Concierge/bell-ring.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202269
+    },
+    {
+      "url": "/assets/ui/card-flip.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202270
+    },
+    {
+      "url": "/assets/ui/card-dissipate.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202270
+    },
+    {
+      "url": "/assets/ui/petition-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/ui/tempt-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/ui/begin-story.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/ui/button-tap.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/ui/paper-slide.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/ui/sparkle-up.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/ui/zoom-sparkle-loop.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/ui/tempt-dry-thunder.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/ui/tempt-electric-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/intimacy/oas-fire-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/intimacy/oas-heartbeat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/intimacy/oas-hold-beat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/intimacy/oas-male-breath.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/audio/ambient/heavy_girl_breathing.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/intimacy/oas-male-sigh.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202273
+    },
+    {
+      "url": "/assets/Concierge/bell-ring.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202518
+    },
+    {
+      "url": "/assets/ui/card-flip.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202519
+    },
+    {
+      "url": "/assets/ui/card-dissipate.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202519
+    },
+    {
+      "url": "/assets/ui/petition-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/ui/tempt-zoom.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/ui/begin-story.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/ui/button-tap.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/ui/paper-slide.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/ui/sparkle-up.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/ui/zoom-sparkle-loop.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/ui/tempt-dry-thunder.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/ui/tempt-electric-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/intimacy/oas-fire-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/intimacy/oas-heartbeat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202521
+    },
+    {
+      "url": "/assets/intimacy/oas-hold-beat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202522
+    },
+    {
+      "url": "/assets/intimacy/oas-male-breath.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202522
+    },
+    {
+      "url": "/assets/audio/ambient/heavy_girl_breathing.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202522
+    },
+    {
+      "url": "/assets/intimacy/oas-male-sigh.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202522
+    },
+    {
+      "url": "/assets/ui/begin-story.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202868
+    },
+    {
+      "url": "/assets/ui/button-tap.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202868
+    },
+    {
+      "url": "/assets/ui/paper-slide.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/ui/sparkle-up.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/ui/zoom-sparkle-loop.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/ui/tempt-dry-thunder.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/ui/tempt-electric-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/intimacy/oas-fire-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/intimacy/oas-heartbeat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/intimacy/oas-hold-beat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/intimacy/oas-male-breath.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/audio/ambient/heavy_girl_breathing.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/intimacy/oas-male-sigh.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766202870
+    },
+    {
+      "url": "/assets/ui/begin-story.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203119
+    },
+    {
+      "url": "/assets/ui/button-tap.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203119
+    },
+    {
+      "url": "/assets/ui/paper-slide.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203119
+    },
+    {
+      "url": "/assets/ui/sparkle-up.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203121
+    },
+    {
+      "url": "/assets/ui/zoom-sparkle-loop.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203121
+    },
+    {
+      "url": "/assets/ui/tempt-dry-thunder.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203121
+    },
+    {
+      "url": "/assets/ui/tempt-electric-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203121
+    },
+    {
+      "url": "/assets/intimacy/oas-fire-crackle.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203121
+    },
+    {
+      "url": "/assets/intimacy/oas-heartbeat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203121
+    },
+    {
+      "url": "/assets/intimacy/oas-hold-beat.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203121
+    },
+    {
+      "url": "/assets/intimacy/oas-male-breath.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203122
+    },
+    {
+      "url": "/assets/audio/ambient/heavy_girl_breathing.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203122
+    },
+    {
+      "url": "/assets/intimacy/oas-male-sigh.mp3",
+      "host": "localhost:3000",
+      "method": "GET",
+      "api": false,
+      "t": 1787766203122
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766206753
+    },
+    {
+      "url": "/api/beta-events",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766209429
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766210047
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766210057
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766223350
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766226349
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766232163
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766235573
+    },
+    {
+      "url": "/api/proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766235585
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766253646
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766258312
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766258318
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766269534
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "host": "localhost:3000",
+      "method": "POST",
+      "api": true,
+      "t": 1787766269562
+    }
+  ],
+  "imagesBlocked": 0,
+  "blockedAfterDraft": 0,
+  "secondAuthorAttempts": 0,
+  "preflight": {
+    "armA50": "undefined",
+    "a50BlockEmpty": true,
+    "hotFast": false
+  },
+  "hotFast": false,
+  "pageError": null,
+  "logs": [
+    "[A-PLOT:SCENE1-COMPRESS] generated in 4660ms · pressure=\"Lirael awakens to the weight of her sister's life hanging in the balance of a fa...\"",
+    "[RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1",
+    "[SCENE1:PATTERN-GATE] region-particular opener → pulse",
+    "[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_pulse; summons/social/reckoning shapes suppressed)",
+    "[SCENE1:FP] saved opening fingerprint: region_pulse — recent: [region_pulse]",
+    "[SCENE1:LI-ABSENT] Deck mandate active — overriding _scene1LIOnStage=true to false (LI must be absent during onboarding window)",
+    "[SCENE1:ROMANCE-PACKET] derived · shape=anticipation · engine=COLLISION · fixations=5",
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=4930 → max_tokens=2055 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 18 field(s)",
+    "[SCENE1:ENVELOPE:NORMALISED] moved 1 field(s) to their declared position: scene_skeleton (opening_spine -> top level) — values moved intact; every semantic validator still runs",
+    "[SCENE1:ANGLE:REJECTED] code=DIAGNOSIS character=\"Seren\" angle=\"kneels with Veilweave gown catching the light, her throat bare and vulnerable\" tested=\"kneels with Veilweave gown catching the light, her throat bare and vulnerable\" reason=matched a diagnosis shape (\"vulnerable\") — this states a conclu",
+    "[SCENE1:SKELETON:INVALID] 4 fault(s) — character_plus \"Seren\" angle rejected [DIAGNOSIS]: matched a diagnosis shape (\"vulnerable\") — this states a conclusion ABOUT the person rather than a beat the author can put on the page — \"kneels with Veilweave gown catching the light, her throat bare and vulne",
+    "[SCENE1:SCAFFOLD] skipped (scene_skeleton invalid: character_plus \"Seren\" angle rejected [DIAGNOSIS]: matched a diagnosis shape (\"vulnerable\") — this states a conclusion ABOUT the person rather than a beat the author can put on the page — \"kneels with Veilweave gown catching the light, her throat ba",
+    "[SCENE1:ABORT] opening planner produced an unusable skeleton — refusing to author Scene 1 without it: character_plus \"Seren\" angle rejected [DIAGNOSIS]: matched a diagnosis shape (\"vulnerable\") — this states a conclusion ABOUT the person rather than a beat the author can put on the page — \"kneels wi"
+  ]
+}

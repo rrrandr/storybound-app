@@ -1,0 +1,95 @@
+{
+  "moves": [
+    "scene_skeleton↑"
+  ],
+  "fault": null,
+  "createdSpine": false,
+  "envelope": {
+    "opening_spine": {
+      "pressure_source_type": "moral",
+      "pressure_source": "Seren’s First Sacrifice is already twisting the wish mid-ritual, and the presiding Dohkar’s voice is rising to call the breach before Lirael can stop it",
+      "hook_object": null,
+      "opening_beat": "Seren’s hands tremble as the wish curls into something unrecognizable, the Dohkar’s voice cutting through the murmurs",
+      "rising_beats": [
+        "Lirael’s muffled cry behind the cloth goes unheard over the ritual chant",
+        "Julian’s stillness at the edge of the circle feels like a judgment she cannot face"
+      ],
+      "decision_beat": "Tear the cloth away and speak the truth, or let the rite burn itself out in silence?",
+      "pc_career": "wish-alignment technician",
+      "opening_setting": "Veilwood ceremony clearing",
+      "environment_elements": [
+        "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+        "the deep-crimson carpet of braided mated-pair spiralgrass"
+      ],
+      "li_texture_beat": "opening: the way his fingers still over the edge of his own sleeve, as if measuring the distance between them and the center of the circle — I feel the pulse in my throat where the cloth bites",
+      "interlocutor_placement": "Seren — the youth making her First Sacrifice, her Veilweave gown catching the light, her throat bare and vulnerable",
+      "pc_wound_anchor": "opening: the cloth across her mouth presses too hard, the pressure echoes the silence she once couldn’t break",
+      "pc_self_presentation_beat": "opening: she adjusts the ceremonial cloth with deliberate slowness, the motion a quiet claim that her voice is not the only thing worth hearing",
+      "scene_want": "wants the ritual to hold long enough for her to decide without Seren seeing the panic she cannot voice",
+      "scene_mission": "stop the wish from twisting before the Dohkar calls the breach",
+      "reader_state": {
+        "knows": "Seren’s First Sacrifice is twisting the wish mid-ritual, and the Dohkar’s voice is rising to call the breach",
+        "believes": "Lirael’s muffled cry and the cloth across her mouth mean she cannot stop the rite in time",
+        "wondering": "why Julian is watching from the edge of the circle",
+        "must_not_confuse": "who is making the wish, who is supervising it, and why the cloth is only protocol"
+      },
+      "pc_body_callback": "opening — stress_tic (the grandmother's ring)",
+      "staged_characters": [
+        {
+          "name": "Lirael",
+          "presence": "IN_PERSON",
+          "anchor_beat": "opening"
+        },
+        {
+          "name": "Julian",
+          "presence": "IN_PERSON",
+          "anchor_beat": "opening"
+        },
+        {
+          "name": "Seren",
+          "presence": "IN_PERSON",
+          "anchor_beat": "opening"
+        },
+        {
+          "name": "the presiding Dohkar",
+          "presence": "IN_PERSON",
+          "anchor_beat": "opening"
+        }
+      ]
+    },
+    "scene_skeleton": {
+      "character_plus": [
+        {
+          "character": "Lirael",
+          "first_mention": true,
+          "angle": "adjusts the ceremonial cloth with deliberate slowness, the motion a quiet claim that her voice is not the only thing worth hearing"
+        },
+        {
+          "character": "Julian",
+          "first_mention": true,
+          "angle": "still over the edge of his sleeve, measuring the distance between them and the center of the circle"
+        },
+        {
+          "character": "Seren",
+          "first_mention": true,
+          "angle": "kneels with Veilweave gown catching the light, her throat bare and vulnerable"
+        },
+        {
+          "character": "the presiding Dohkar",
+          "first_mention": true,
+          "angle": "voice rising to call the breach before Lirael can stop it"
+        }
+      ],
+      "environment_plus": {
+        "target": "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+        "axis": "ritual"
+      },
+      "fusion": {
+        "character": "Lirael",
+        "target": "the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+        "beat": "lets her fingers trail along the veil’s edge, feeling the weight of the ritual she is supposed to uphold"
+      }
+    }
+  },
+  "declaredFieldCount": 18
+}

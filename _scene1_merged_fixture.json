@@ -1,0 +1,122 @@
+{
+  "opening_spine": {
+    "pressure_source_type": "institutional",
+    "pressure_source": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "hook_object": "the gossamer witness band",
+    "opening_beat": "opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening opening",
+    "rising_beats": [
+      "rising rising rising rising rising rising rising rising rising rising rising rising rising rising rising rising rising rising",
+      "rising rising rising rising rising rising rising rising rising rising rising rising rising rising rising rising rising rising"
+    ],
+    "decision_beat": "decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision decision",
+    "pc_career": "shrine witness",
+    "opening_setting": "the shrine hall",
+    "li_texture_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "interlocutor_placement": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "pc_wound_anchor": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "pc_self_presentation_beat": "decision",
+    "scene_want": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "scene_mission": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "reader_state": {
+      "knows": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+      "suspects": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+      "misreads": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+    },
+    "mission_family": "extraction",
+    "mission_attempt": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "immediate_result": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "pc_body_callback": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "li_body_callback": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "antagonist_body_callback": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "perceptual_signature_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide",
+    "staged_characters": [
+      {
+        "name": "the protagonist",
+        "anchor_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+      },
+      {
+        "name": "Julian",
+        "anchor_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+      },
+      {
+        "name": "Seren",
+        "anchor_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+      },
+      {
+        "name": "the presiding Dohkar",
+        "anchor_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+      },
+      {
+        "name": "the ash-warden",
+        "anchor_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+      },
+      {
+        "name": "the second witness",
+        "anchor_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+      },
+      {
+        "name": "the archivist",
+        "anchor_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+      },
+      {
+        "name": "the door-keeper",
+        "anchor_beat": "she understands that the wish she made in the hall has already begun to cost her something she cannot name yet, and the assembly is watching her decide"
+      }
+    ]
+  },
+  "scene_skeleton": {
+    "environment_anchor": "the shrine hall's ash-scored table",
+    "beat_style": "escalating-procedural",
+    "tension_rhythm": "slow-tighten-then-break",
+    "character_plus": [
+      {
+        "character": "the protagonist",
+        "first_mention": true,
+        "angle": "angle angle angle angle angle angle angle angle angle angle angle angle angle angle"
+      },
+      {
+        "character": "Julian",
+        "first_mention": true,
+        "angle": "angle angle angle angle angle angle angle angle angle angle angle angle angle angle"
+      },
+      {
+        "character": "Seren",
+        "first_mention": true,
+        "angle": "angle angle angle angle angle angle angle angle angle angle angle angle angle angle"
+      },
+      {
+        "character": "the presiding Dohkar",
+        "first_mention": true,
+        "angle": "angle angle angle angle angle angle angle angle angle angle angle angle angle angle"
+      },
+      {
+        "character": "the ash-warden",
+        "first_mention": true,
+        "angle": "angle angle angle angle angle angle angle angle angle angle angle angle angle angle"
+      },
+      {
+        "character": "the second witness",
+        "first_mention": true,
+        "angle": "angle angle angle angle angle angle angle angle angle angle angle angle angle angle"
+      },
+      {
+        "character": "the archivist",
+        "first_mention": true,
+        "angle": "angle angle angle angle angle angle angle angle angle angle angle angle angle angle"
+      },
+      {
+        "character": "the door-keeper",
+        "first_mention": true,
+        "angle": "angle angle angle angle angle angle angle angle angle angle angle angle angle angle"
+      }
+    ],
+    "environment_plus": {
+      "target": "the gossamer witness band",
+      "axis": "ritual"
+    },
+    "fusion": {
+      "character": "Seren",
+      "target": "the gossamer witness band"
+    }
+  }
+}

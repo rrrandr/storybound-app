@@ -1,0 +1,574 @@
+{
+  "paid": [
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "sysLen": 6332,
+      "usrLen": 113,
+      "status": 200,
+      "ms": 4077,
+      "usage": {
+        "prompt_tokens": 1891,
+        "completion_tokens": 20,
+        "total_tokens": 1911,
+        "prompt_tokens_details": {
+          "cached_tokens": 1792,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "sysLen": 6332,
+      "usrLen": 113,
+      "status": 200,
+      "ms": 3341,
+      "usage": {
+        "prompt_tokens": 1890,
+        "completion_tokens": 19,
+        "total_tokens": 1909,
+        "prompt_tokens_details": {
+          "cached_tokens": 1792,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2500,
+      "sysLen": 8703,
+      "usrLen": 22531,
+      "status": 200,
+      "ms": 12828,
+      "usage": {
+        "prompt_tokens": 7288,
+        "completion_tokens": 779,
+        "total_tokens": 8067,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "PREREQ",
+      "model": "mistral-small-latest",
+      "max_tokens": 500,
+      "sysLen": 1241,
+      "usrLen": 33,
+      "status": 200,
+      "ms": 4969,
+      "usage": {
+        "prompt_tokens": 359,
+        "total_tokens": 484,
+        "completion_tokens": 125,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 3000,
+      "sysLen": 19756,
+      "usrLen": 42444,
+      "status": 200,
+      "ms": 18109,
+      "usage": {
+        "prompt_tokens": 14942,
+        "completion_tokens": 1271,
+        "total_tokens": 16213,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1800,
+      "sysLen": 3705,
+      "usrLen": 1999,
+      "status": 200,
+      "ms": 5188,
+      "usage": {
+        "prompt_tokens": 1367,
+        "completion_tokens": 382,
+        "total_tokens": 1749,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1200,
+      "sysLen": 6724,
+      "usrLen": 5750,
+      "status": 200,
+      "ms": 2545,
+      "usage": {
+        "prompt_tokens": 2922,
+        "completion_tokens": 141,
+        "total_tokens": 3063,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "sysLen": 1409,
+      "usrLen": 886,
+      "status": 200,
+      "ms": 3206,
+      "usage": {
+        "prompt_tokens": 542,
+        "completion_tokens": 85,
+        "total_tokens": 627,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "PREREQ",
+      "max_tokens": 3000,
+      "sysLen": 55889,
+      "usrLen": 34894,
+      "status": 200,
+      "ms": 18669,
+      "usage": {
+        "prompt_tokens": 20179,
+        "completion_tokens": 1190,
+        "total_tokens": 22150,
+        "prompt_tokens_details": {
+          "text_tokens": 20179,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 781,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 299496500
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "sysLen": 1876,
+      "usrLen": 8250,
+      "status": 200,
+      "ms": 3602,
+      "usage": {
+        "prompt_tokens": 2304,
+        "completion_tokens": 184,
+        "total_tokens": 2488,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "sysLen": 3565,
+      "usrLen": 2659,
+      "status": 200,
+      "ms": 2311,
+      "usage": {
+        "prompt_tokens": 1460,
+        "completion_tokens": 106,
+        "total_tokens": 1566,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2000,
+      "sysLen": 15442,
+      "usrLen": 19642,
+      "status": 200,
+      "ms": 11791,
+      "usage": {
+        "prompt_tokens": 8191,
+        "completion_tokens": 871,
+        "total_tokens": 9062,
+        "prompt_tokens_details": {
+          "cached_tokens": 3072,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "PLANNER-REPLAYED",
+      "escaped": false,
+      "compat": {
+        "savedCast": [
+          "Lirael",
+          "Julian",
+          "Seren",
+          "the presiding Dohkar"
+        ],
+        "liveCast": [
+          "Lirael",
+          "Julian",
+          "Seren",
+          "the presiding Dohkar"
+        ],
+        "savedWhere": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+        "liveWhere": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+        "castMatch": true,
+        "whereMatch": true,
+        "seedMatch": true
+      }
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1500,
+      "sysLen": 3151,
+      "usrLen": 1693,
+      "status": 200,
+      "ms": 4902,
+      "usage": {
+        "prompt_tokens": 1119,
+        "completion_tokens": 359,
+        "total_tokens": 1478,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "AUTHOR",
+      "max_tokens": 2400,
+      "sysLen": 150829,
+      "usrLen": 234518,
+      "status": 200,
+      "ms": 31881,
+      "usage": {
+        "prompt_tokens": 86904,
+        "completion_tokens": 801,
+        "total_tokens": 89146,
+        "prompt_tokens_details": {
+          "text_tokens": 86904,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 128
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 1441,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 1141006000
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by priority: (1) HIGHEST — a physical descriptor / gestur",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are a ruthless line-editor for romance prose. Find the up-to-FIVE worst spans, by priority: (1) HIGHEST — a physical descriptor / gestur",
+      "escaped": false
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragments or tense breaks left by an edit, e.g. a parti",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "Fix ONLY mechanical defects in this scene: broken or incomplete sentences (including fragments or tense breaks left by an edit, e.g. a parti",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are an editorial auditor. Read the SCENE PROSE and return TWO orthogonal judgments about how the prose enacted (or failed to enact) the ",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are an editorial auditor measuring EMOTIONAL GRAVITY in a romance scene. The ONE question: WHO (or WHAT) is the reader thinking about / ",
+      "escaped": false
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report which banned phrases appear in the scene EITHER ve",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are a craft auditor measuring ARCHETYPE MANIFESTATION COLLAPSE in a romance scene. An archetype is a MOVEMENT (a way of responding under",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You audit WHICH love-interest Bible field an offstage MEMORY was drawn from, and how much DESIRE it carries. The memory is what the protagon",
+      "escaped": false
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You audit prose for BANNED-phrase reuse. The user sends a BANNED LIST and a SCENE. Report which banned phrases appear in the scene EITHER ve",
+      "escaped": false
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are a copy editor. Re-paragraph the SCENE the user sends for standard novel dialogue formatting.\nRULES:\n1. Each speaker's spoken turn si",
+      "escaped": false
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are a copy editor. Re-paragraph the SCENE the user sends for standard novel dialogue formatting.\nRULES:\n1. Each speaker's spoken turn si",
+      "escaped": false
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are S. Tory Bound's PERCEPTION EDITOR. The scene below is already written and already works. Perception lenses are a SCARCE resource — t",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "You are a calcification detector for a serial-fiction engine. You read ONE scene and extract the SIGNATURE PHRASINGS — specific 3-10 word ph",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "PREREQ",
+      "sysHead": "",
+      "escaped": false
+    }
+  ],
+  "compat": {
+    "savedCast": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "liveCast": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "savedWhere": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "liveWhere": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "castMatch": true,
+    "whereMatch": true,
+    "seedMatch": true
+  },
+  "preflight": {
+    "armA50": "undefined",
+    "a50BlockEmpty": true,
+    "hotFast": false
+  },
+  "imagesBlocked": 0,
+  "blockedAfterDraft": 15,
+  "secondAuthorAttempts": 0,
+  "hotFast": false,
+  "pageError": null,
+  "logs": [
+    "[A-PLOT:SCENE1-COMPRESS] generated in 3606ms · pressure=\"A dark secret from her family's past is on the verge of being exposed.\"",
+    "[RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1",
+    "[SCENE1:PATTERN-GATE] region-particular opener → thornwild",
+    "[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_thornwild; summons/social/reckoning shapes suppressed)",
+    "[SCENE1:FP] saved opening fingerprint: region_thornwild — recent: [region_thornwild]",
+    "[SCENE1:ROMANCE-PACKET] derived · shape=anticipation · engine=COLLISION · fixations=5",
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=4930 → max_tokens=2055 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 18 field(s)",
+    "[SCENE1:ENVELOPE:NORMALISED] moved 1 field(s) to their declared position: scene_skeleton (opening_spine -> top level) — values moved intact; every semantic validator still runs",
+    "[SCENE1:ANGLE:CONCRETE-OVERRIDE] \"vulnerable\" allowed by physical action (\"kneels\") in: kneels with Veilweave gown catching the light, her throat bare and vulnerable",
+    "[SCENE1:FUSION:OK] concrete interaction (\"trail\") with the assigned target (\"veil\"); a following interpretive clause does not invalidate it",
+    "[SCENE1:SKELETON] C+ 4/4 assigned [Lirael, Julian, Seren, the presiding Dohkar] · E+ the long white weeping-willow veil-canopy draping down from the pale mated-pair trees/ritual · fusion Lirael+the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+    "[SCENE1:STAGE] physical=[] · phone=[] · total=4",
+    "[SCENE1:CAST] on-page=0 [] · referenced=3 [Julian, Seren, the presiding Dohkar] · named-besides-LI=2 ⟹ ✗ NAMED-ENTITY OVERLOAD — 2 named actors besides the LI [Seren, the presiding Dohkar]; the rule is MAX ONE (PC + LI + one other). The A-plot premise is naming the wound-source AND the antagonist AN",
+    "[SCENE1:SCAFFOLD] micro_decision: library-only (Haiku no longer generates this field): \"Say it plainly — or let it show without words?\"",
+    "[SCENE1:SCAFFOLD] built in 36ms | hook=\"\" pc=wish-alignment technician setting=Veilwood ceremony clearing shape=magical_or_physical_anomaly echo=false micro=@1 \"Say it plainly — or let it show without words?\" variety=guarded deck=frame-owned(deferred)",
+    "[SCENE1:SCAFFOLD:TEXTURE]\n  scene_want:                 \"wants the ritual to hold long enough for her to decide without Seren seeing the panic she cannot voice\"\n  interlocutor_placement:     \"Seren — the youth making her First Sacrifice, her Veilweave gown catching the light, her throat bare and vul",
+    "[SCENE1:PROMPT-SIZES] total=324668c(~81167t) | sysPrompt(prose stack)=148130c · introPrompt=101714c · scaffold=28970c · appendix=36974c · picturability=8880c  → window._promptMassAudit() for the sysPrompt section breakdown",
+    "[SCENE1:LENGTH-GUIDANCE] appended (700-870w, hot framing)",
+    "[SCENE1:SKELETON:DELIVERED] 2699 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)",
+    "[PROSE:CAST] 2 named actor(s) besides PC + LI in the PROSE: [Seren, Dohkar] ⟹ ✗ OVER CAP — the rule is MAX ONE (PC + LI + one other). The scaffold-manifest cap [SCENE1:CAST] only sees Haiku-staged characters and missed these; Sonnet introduced them freely. Role-noun all but one (\"her sister\" / \"the ",
+    "[OPENING:TEMP:v2] rendered=COLD_DISRUPTION (selected=HOT_CRISIS) — ⚠ selected HOT_CRISIS → rendered COLD_DISRUPTION · crisis-intensity=1 · in-motion=0 (0 — reflective/reported, not in-progress) · emotional-urgency=1 · protagonist-distress-share=100% · external-plot-share=0% [v2 in-motion-aware heuri",
+    "[SCENE1:PROCEDURAL-VOCAB] 1 governance/legal/financial noun(s) in Scene 1 prose (governance:1).",
+    "[SCENE1:COLLISION-LI-PRESENCE] COLLISION/PROXY + Julian named 3× — present-adversary plan; presence is correct.",
+    "[SCENE1:LI-AS-FIXER-FRAMING] 0 fixer-shaped phrases — vulnerability is in the activation register.",
+    "[SCENE1-GATE] pressure_source_ok=true type=moral — object token not required for non-object pressure",
+    "[SCENE1-GATE] All checks passed on first attempt.",
+    "[SCENE1-GATE] Appended mandated closer to scene tail (final beat is now the tarot line).",
+    "[SCENE1:VAL] {outcome: pass, hookPass: true, decisionPass: true, decisionBasePass: true, decisionShapePass: true}",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 86%): \"My hand tightened around my great-grandmother’s old tarot deck.\"",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"I toyed with the idea of letting the cards decide.\"",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"My hand tightened around my great-grandmother's old tarot deck.\"",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"I toyed with the idea of letting the cards decide.\"",
+    "[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).",
+    "[SCENE1:GRAVITY] HTTP 0",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"My hand tightened around my great-grandmother's old tarot deck.\"",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"I toyed with the idea of letting the cards decide.\"",
+    "[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).",
+    "[SCENE1-GATE:FINAL] Re-asserted mandated frame (opener and/or closer lost during a late regen pass).",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"My hand tightened around my great-grandmother's old tarot deck.\"",
+    "[SCENE1-FRAME] Dropped fuzzy mandated-closer echo (overlap 100%): \"I toyed with the idea of letting the cards decide.\"",
+    "[SCENE1-FRAME] Appended mandated closer (model omitted it / replaced a junk ending).",
+    "[SCENE1-FRAME:POST-PASS] Re-asserted verbatim mandated closer after post-gate mutators.",
+    "[INTERIORITY] analysis=0 · experience=7 · analysis-share=0% — ✓ experience-led [hypothesis: cold ↔ analysis replacing experience; correlate with SCENE1:DESIRE]"
+  ]
+}

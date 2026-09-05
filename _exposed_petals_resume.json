@@ -1,0 +1,76 @@
+{
+ "picks": {
+  "world": "billionaire",
+  "tone": "Earnest",
+  "genre": "Billionaire",
+  "pressure": "PowerControl",
+  "flavor": "affair",
+  "dynamic": "enemies_to_lovers",
+  "era": null,
+  "pov": "First",
+  "worldSubtype": "billionaire_modern",
+  "playermask": "OPEN_VEIN",
+  "identity": {
+   "playerName": "Mara",
+   "partnerName": "Dorian",
+   "displayPlayerName": "Mara",
+   "displayPartnerName": "Dorian"
+  }
+ },
+ "world": "billionaire",
+ "worldSubtype": "billionaire_modern",
+ "flavor": "billionaire_modern",
+ "storyLength": "affair",
+ "tier": "storied",
+ "dynamic": "enemies_to_lovers",
+ "loveInterestName": "Dorian",
+ "liGender": "male",
+ "archetype": {
+  "primary": "DARK_VICE",
+  "modifier": "SPELLBINDER",
+  "bound": false,
+  "canonicalLIId": null,
+  "boundAtScene": null
+ },
+ "name": "Mara",
+ "playerName": "Mara",
+ "partnerName": "Dorian",
+ "pov": "first_person",
+ "identity": {
+  "playerName": "Mara",
+  "partnerName": "Dorian",
+  "displayPlayerName": "Mara",
+  "displayPartnerName": "Dorian"
+ },
+ "series_id": "e2e-series-1",
+ "issueIndexInRun": 2,
+ "_prefMemory": {
+  "demand_hint": {
+   "value": "direct",
+   "confidence": 0.6,
+   "source": "probe",
+   "storyId": "57dd67b7-12aa-4036-b18c-85a73b484694",
+   "seriesId": "e2e-series-1",
+   "lastAskedIssue": 1,
+   "lastUsedIssue": 1,
+   "ctx": {
+    "flavor": "affair",
+    "worldSubtype": "billionaire_modern",
+    "storyturn": "ST1"
+   }
+  }
+ },
+ "relationship_phase": "together",
+ "intimacyPhase": false,
+ "scene1DirectnessSignal": "direct",
+ "storySpine": {
+  "storyShapes": [
+   "RISE_FALL_RISE"
+  ],
+  "worldArcs": [
+   "PUBLIC_SCANDAL"
+  ],
+  "worldKey": "modern",
+  "tier": "affair"
+ }
+}

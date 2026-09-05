@@ -1,0 +1,437 @@
+{
+  "paid": [
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "sysLen": 6332,
+      "usrLen": 113,
+      "status": 200,
+      "ms": 4022,
+      "usage": {
+        "prompt_tokens": 1891,
+        "completion_tokens": 20,
+        "total_tokens": 1911,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "sysLen": 6332,
+      "usrLen": 113,
+      "status": 200,
+      "ms": 3602,
+      "usage": {
+        "prompt_tokens": 1890,
+        "completion_tokens": 19,
+        "total_tokens": 1909,
+        "prompt_tokens_details": {
+          "cached_tokens": 1792,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2500,
+      "sysLen": 9868,
+      "usrLen": 22531,
+      "status": 200,
+      "ms": 10360,
+      "usage": {
+        "prompt_tokens": 7561,
+        "completion_tokens": 751,
+        "total_tokens": 8312,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "PREREQ",
+      "model": "mistral-small-latest",
+      "max_tokens": 500,
+      "sysLen": 1278,
+      "usrLen": 33,
+      "status": 200,
+      "ms": 4160,
+      "usage": {
+        "prompt_tokens": 372,
+        "total_tokens": 498,
+        "completion_tokens": 126,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 3000,
+      "sysLen": 19061,
+      "usrLen": 42444,
+      "status": 200,
+      "ms": 17260,
+      "usage": {
+        "prompt_tokens": 14710,
+        "completion_tokens": 1207,
+        "total_tokens": 15917,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "PREREQ",
+      "model": "mistral-small-latest",
+      "max_tokens": 500,
+      "sysLen": 1241,
+      "usrLen": 33,
+      "status": 200,
+      "ms": 3918,
+      "usage": {
+        "prompt_tokens": 359,
+        "total_tokens": 517,
+        "completion_tokens": 158,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "service_tier": "standard"
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1800,
+      "sysLen": 3705,
+      "usrLen": 2036,
+      "status": 200,
+      "ms": 6336,
+      "usage": {
+        "prompt_tokens": 1368,
+        "completion_tokens": 423,
+        "total_tokens": 1791,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 1200,
+      "sysLen": 6724,
+      "usrLen": 5588,
+      "status": 200,
+      "ms": 3049,
+      "usage": {
+        "prompt_tokens": 2874,
+        "completion_tokens": 168,
+        "total_tokens": 3042,
+        "prompt_tokens_details": {
+          "cached_tokens": 1024,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "sysLen": 1409,
+      "usrLen": 946,
+      "status": 200,
+      "ms": 2601,
+      "usage": {
+        "prompt_tokens": 552,
+        "completion_tokens": 89,
+        "total_tokens": 641,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "PREREQ",
+      "max_tokens": 3000,
+      "sysLen": 54498,
+      "usrLen": 34322,
+      "status": 200,
+      "ms": 19527,
+      "usage": {
+        "prompt_tokens": 19768,
+        "completion_tokens": 1167,
+        "total_tokens": 21778,
+        "prompt_tokens_details": {
+          "text_tokens": 19768,
+          "audio_tokens": 0,
+          "image_tokens": 0,
+          "cached_tokens": 192
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 843,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        },
+        "num_sources_used": 0,
+        "cost_in_usd_ticks": 295334000
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 400,
+      "sysLen": 1876,
+      "usrLen": 8300,
+      "status": 200,
+      "ms": 4338,
+      "usage": {
+        "prompt_tokens": 2304,
+        "completion_tokens": 221,
+        "total_tokens": 2525,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 500,
+      "sysLen": 3565,
+      "usrLen": 2571,
+      "status": 200,
+      "ms": 2840,
+      "usage": {
+        "prompt_tokens": 1430,
+        "completion_tokens": 129,
+        "total_tokens": 1559,
+        "prompt_tokens_details": {
+          "cached_tokens": 0,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ",
+      "model": "gpt-4o-mini",
+      "max_tokens": 2000,
+      "sysLen": 15442,
+      "usrLen": 19344,
+      "status": 200,
+      "ms": 14709,
+      "usage": {
+        "prompt_tokens": 8114,
+        "completion_tokens": 937,
+        "total_tokens": 9051,
+        "prompt_tokens_details": {
+          "cached_tokens": 3072,
+          "audio_tokens": 0
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 0,
+          "audio_tokens": 0,
+          "accepted_prediction_tokens": 0,
+          "rejected_prediction_tokens": 0
+        }
+      },
+      "escaped": true
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "PLANNER-REPLAYED",
+      "escaped": false,
+      "compat": {
+        "savedCast": [
+          "Lirael",
+          "Julian",
+          "Seren",
+          "the presiding Dohkar"
+        ],
+        "liveCast": [
+          "Lirael",
+          "Julian",
+          "Seren",
+          "the presiding Dohkar"
+        ],
+        "savedWhere": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+        "liveWhere": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+        "castMatch": true,
+        "whereMatch": true,
+        "seedMatch": true
+      }
+    },
+    {
+      "url": "/api/proxy",
+      "kind": "AUTHOR-DRY-BLOCKED",
+      "sysLen": 157695,
+      "usrLen": 221638,
+      "escaped": false
+    },
+    {
+      "url": "/api/mistral-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "AUTHOR",
+      "sysHead": "\n═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══\n(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "BLOCKED-AFTER-DRAFT",
+      "wouldHaveBeen": "AUTHOR",
+      "sysHead": "\n═══ STORYBOUND ARCHITECTURE LAWS — PHASE 1 ═══\n(These three laws are the LOAD-BEARING contract for Scene 1. Every doctrine below INTERPRETS",
+      "escaped": false
+    },
+    {
+      "url": "/api/chatgpt-proxy",
+      "kind": "PREREQ-INFLIGHT-DROPPED",
+      "escaped": false,
+      "note": "route.fetch: Request context disposed.\nCall log:\n\u001b[2m  - → POST http://localhost"
+    }
+  ],
+  "compat": {
+    "savedCast": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "liveCast": [
+      "Lirael",
+      "Julian",
+      "Seren",
+      "the presiding Dohkar"
+    ],
+    "savedWhere": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "liveWhere": "Dawn in a Veilwood ceremony clearing: the long white weeping-willow veil-canopy drapes down from the pale mated-pair trees (the \"veil\" is the trees’ hanging leaf-curtains — NOT fabric), the floor a deep-crimson carpet of braided mated-pair spiralgrass; roughly two dozen First Favored assembled — Seren’s family and guests, a many-hued people — barefoot in gossamer Veilweave. A solemn-but-festive coming-of-age mood: everyone expects the rite to end in celebration.",
+    "castMatch": true,
+    "whereMatch": true,
+    "seedMatch": true
+  },
+  "preflight": {
+    "armA50": "undefined",
+    "a50BlockEmpty": true,
+    "hotFast": false
+  },
+  "imagesBlocked": 0,
+  "blockedAfterDraft": 2,
+  "secondAuthorAttempts": 2,
+  "hotFast": false,
+  "pageError": null,
+  "logs": [
+    "[A-PLOT:SCENE1-COMPRESS] generated in 4348ms · pressure=\"Lirael feels the unraveling spell tightening around her as the vow-thread frays ...\"",
+    "[RUN-LEDGER] recorded — dynamic=Enemies · engine=COLLISION · li_presence=OFFSTAGE · li_gravity=? (?) · ledger size 1",
+    "[SCENE1:PATTERN-GATE] region-particular opener → veilwood",
+    "[SCENE1:PATTERN-GATE] FATELANDS-WISH-DEMO → region-particular catastrophe (shape=region_veilwood; summons/social/reckoning shapes suppressed)",
+    "[SCENE1:FP] saved opening fingerprint: region_veilwood — recent: [region_veilwood]",
+    "[SCENE1:ROMANCE-PACKET] derived · shape=anticipation · engine=COLLISION · fixations=5",
+    "[SCENE1:STAGE] source=seed.sceneOne settingOwner=seed presenceOwner=seed settingSource=seed onStage=[Lirael, Julian, Seren, the presiding Dohkar] offStage=[]",
+    "[SCENE1:PLANNER] eligible cast (4): [Lirael, Julian, Seren, the presiding Dohkar] · chars=4930 → max_tokens=2055 (N_staged_max = N_eligible; staged_characters is an OUTPUT and never sizes the request)",
+    "[SCENE1:PLANNER:ATTEMPTS] 1 (no retry)",
+    "[SCENE1:ENVELOPE] spine contract declares 18 field(s)",
+    "[SCENE1:ENVELOPE:NORMALISED] moved 1 field(s) to their declared position: scene_skeleton (opening_spine -> top level) — values moved intact; every semantic validator still runs",
+    "[SCENE1:ANGLE:CONCRETE-OVERRIDE] \"vulnerable\" allowed by physical action (\"kneels\") in: kneels with Veilweave gown catching the light, her throat bare and vulnerable",
+    "[SCENE1:FUSION:OK] concrete interaction (\"trail\") with the assigned target (\"veil\"); a following interpretive clause does not invalidate it",
+    "[SCENE1:SKELETON] C+ 4/4 assigned [Lirael, Julian, Seren, the presiding Dohkar] · E+ the long white weeping-willow veil-canopy draping down from the pale mated-pair trees/ritual · fusion Lirael+the long white weeping-willow veil-canopy draping down from the pale mated-pair trees",
+    "[SCENE1:STAGE] physical=[] · phone=[] · total=4",
+    "[SCENE1:CAST] on-page=0 [] · referenced=3 [Julian, Seren, the presiding Dohkar] · named-besides-LI=2 ⟹ ✗ NAMED-ENTITY OVERLOAD — 2 named actors besides the LI [Seren, the presiding Dohkar]; the rule is MAX ONE (PC + LI + one other). The A-plot premise is naming the wound-source AND the antagonist AN",
+    "[SCENE1:SCAFFOLD] micro_decision: library-only (Haiku no longer generates this field): \"Say it plainly — or let it show without words?\"",
+    "[SCENE1:SCAFFOLD] built in 29ms | hook=\"\" pc=wish-alignment technician setting=Veilwood ceremony clearing shape=magical_or_physical_anomaly echo=false micro=@1 \"Say it plainly — or let it show without words?\" variety=guarded deck=frame-owned(deferred)",
+    "[SCENE1:SCAFFOLD:TEXTURE]\n  scene_want:                 \"wants the ritual to hold long enough for her to decide without Seren seeing the panic she cannot voice\"\n  interlocutor_placement:     \"Seren — the youth making her First Sacrifice, her Veilweave gown catching the light, her throat bare and vul",
+    "[SCENE1:PROMPT-SIZES] total=320589c(~80147t) | sysPrompt(prose stack)=154996c · introPrompt=92120c · scaffold=28990c · appendix=35661c · picturability=8822c  → window._promptMassAudit() for the sysPrompt section breakdown",
+    "[SCENE1:LENGTH-GUIDANCE] appended (700-870w, hot framing)",
+    "[SCENE1:SKELETON:DELIVERED] 2699 chars appended to the heavy SYSTEM prompt (pre-freeze, pre-observer)"
+  ]
+}
