@@ -1,0 +1,10 @@
+import { chromium } from 'playwright-core';
+const b=await chromium.launch({headless:true});
+const p=await (await b.newContext()).newPage();
+const errs=[]; p.on('pageerror',e=>errs.push(String(e).slice(0,160)));
+await p.goto('http://localhost:3000/',{waitUntil:'domcontentloaded',timeout:60000});
+await p.waitForTimeout(6000);
+const ok=await p.evaluate(()=>({state:!!window.state, tse:typeof window._targetedSceneEdit, starters:!!window.STARTER_STORIES}));
+console.log('state=%s  _targetedSceneEdit=%s  starters=%s', ok.state, ok.tse, ok.starters);
+console.log('pageerrors:', errs.length); errs.slice(0,4).forEach(e=>console.log('   ',e));
+await b.close();

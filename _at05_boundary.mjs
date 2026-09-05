@@ -1,0 +1,12 @@
+import { chromium } from 'playwright-core';
+import fs from 'fs';
+const D='_validate_out/at05_r1';
+const raw=fs.readFileSync(`${D}/raw_author_1.txt`,'utf8');
+const dlv=fs.readFileSync(`${D}/final.txt`,'utf8');
+const b=await chromium.launch({headless:true});
+const p=await (await b.newContext()).newPage();
+await p.goto('http://localhost:3000/',{waitUntil:'domcontentloaded',timeout:60000});
+await p.waitForFunction(()=>window._finalProseAudit,{timeout:90000});
+const r=await p.evaluate(([a,d])=>window._finalProseAudit(a,d),[raw,dlv]);
+console.log(`  raw ${raw.length} → delivered ${dlv.length}   ${r.status}   ${r.findings.join(' | ')||'clean'}`);
+await b.close();
